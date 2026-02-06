@@ -208,6 +208,61 @@ func TestGroup_NestedGroups(t *testing.T) {
 	}
 }
 
+// TestGroup_InvalidNodesParam tests error for non-array nodes value.
+func TestGroup_InvalidNodesParam(t *testing.T) {
+	ctx := context.Background()
+
+	grp := group.New()
+
+	params := map[string]interface{}{
+		"mode":  "sequential",
+		"nodes": "not-an-array",
+	}
+
+	_, err := grp.Execute(ctx, params)
+	if err == nil {
+		t.Fatal("Expected error for non-array nodes, got nil")
+	}
+}
+
+// TestGroup_MissingNodesParam tests behavior when no nodes key is provided.
+func TestGroup_MissingNodesParam(t *testing.T) {
+	ctx := context.Background()
+
+	grp := group.New()
+
+	params := map[string]interface{}{
+		"mode": "sequential",
+	}
+
+	result, err := grp.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	if output["executed"] != 0 {
+		t.Errorf("executed = %v, want 0", output["executed"])
+	}
+}
+
+// TestGroup_ModeNotString tests error when mode is not a string type.
+func TestGroup_ModeNotString(t *testing.T) {
+	ctx := context.Background()
+
+	grp := group.New()
+
+	params := map[string]interface{}{
+		"mode":  123,
+		"nodes": []interface{}{},
+	}
+
+	_, err := grp.Execute(ctx, params)
+	if err == nil {
+		t.Fatal("Expected error for non-string mode, got nil")
+	}
+}
+
 // TestGroup_ContextCancellation verifies proper context cancellation handling.
 //
 // When workflow is cancelled, group execution should stop gracefully.

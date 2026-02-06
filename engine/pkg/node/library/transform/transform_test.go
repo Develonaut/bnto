@@ -267,6 +267,112 @@ func TestTransform_MissingExpression(t *testing.T) {
 	}
 }
 
+// TestTransform_MappingNonStringExpression tests mapping with non-string expression value.
+func TestTransform_MappingNonStringExpression(t *testing.T) {
+	ctx := context.Background()
+
+	tr := transform.New()
+
+	params := map[string]interface{}{
+		"mappings": map[string]interface{}{
+			"field1": 123, // Not a string expression
+		},
+		"_context": map[string]interface{}{},
+	}
+
+	_, err := tr.Execute(ctx, params)
+	if err == nil {
+		t.Fatal("Expected error for non-string mapping expression, got nil")
+	}
+}
+
+// TestTransform_MappingInvalidExpression tests mapping with invalid expression syntax.
+func TestTransform_MappingInvalidExpression(t *testing.T) {
+	ctx := context.Background()
+
+	tr := transform.New()
+
+	params := map[string]interface{}{
+		"mappings": map[string]interface{}{
+			"field1": "invalid syntax {{",
+		},
+		"_context": map[string]interface{}{},
+	}
+
+	_, err := tr.Execute(ctx, params)
+	if err == nil {
+		t.Fatal("Expected error for invalid mapping expression, got nil")
+	}
+}
+
+// TestTransform_MappingRuntimeError tests mapping with expression that fails at runtime.
+func TestTransform_MappingRuntimeError(t *testing.T) {
+	ctx := context.Background()
+
+	tr := transform.New()
+
+	params := map[string]interface{}{
+		"mappings": map[string]interface{}{
+			"field1": "nonExistentVar",
+		},
+		"_context": map[string]interface{}{
+			"other": "value",
+		},
+	}
+
+	// This will fail to compile since nonExistentVar is not in the env
+	_, err := tr.Execute(ctx, params)
+	if err == nil {
+		t.Fatal("Expected error for undefined variable in mapping, got nil")
+	}
+}
+
+// TestTransform_MappingNoContext tests mapping with no _context provided.
+func TestTransform_MappingNoContext(t *testing.T) {
+	ctx := context.Background()
+
+	tr := transform.New()
+
+	params := map[string]interface{}{
+		"mappings": map[string]interface{}{
+			"field1": "1 + 2",
+		},
+	}
+
+	result, err := tr.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	mapped := output["mapped"].(map[string]interface{})
+
+	if mapped["field1"] != 3 {
+		t.Errorf("field1 = %v, want 3", mapped["field1"])
+	}
+}
+
+// TestTransform_ExpressionNoContext tests expression with no _context provided.
+func TestTransform_ExpressionNoContext(t *testing.T) {
+	ctx := context.Background()
+
+	tr := transform.New()
+
+	params := map[string]interface{}{
+		"expression": "1 + 2 + 3",
+	}
+
+	result, err := tr.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	if output["result"] != 6 {
+		t.Errorf("result = %v, want 6", output["result"])
+	}
+}
+
 // TestTransform_NestedObjects tests working with nested data
 func TestTransform_NestedObjects(t *testing.T) {
 	ctx := context.Background()

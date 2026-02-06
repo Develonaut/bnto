@@ -48,17 +48,17 @@ Solidify the engine, restructure the repo, establish the development environment
   - Test now passes with `-race` flag
 
 ### 0.2 Engine Solidification (TDD)
-- [ ] Unit tests for every node type (target >90% coverage)
-  - [ ] edit-fields
-  - [ ] filesystem (including new `list` operation)
-  - [ ] group
-  - [ ] http-request
-  - [ ] image (resize, export, composite)
-  - [ ] loop (forEach, times, while)
-  - [ ] parallel
-  - [ ] shell-command (including retry/stall)
-  - [ ] spreadsheet
-  - [ ] transform
+- [x] Unit tests for every node type (target >90% coverage)
+  - [x] edit-fields (90.0%)
+  - [x] filesystem (90.2%)
+  - [x] group (100.0%)
+  - [x] http-request (91.5%)
+  - [x] image (90.6%)
+  - [x] loop (98.6%)
+  - [x] parallel (90.7%)
+  - [x] shell-command (93.3%)
+  - [x] spreadsheet (90.5%)
+  - [x] transform (93.9%)
 - [ ] Integration tests using fixture .bento.json files
   - [ ] Create "Resize Images" fixture (loop + image resize)
   - [ ] Create "CSV Data Pipeline" fixture (spreadsheet + loop + transform)

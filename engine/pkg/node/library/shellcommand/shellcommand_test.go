@@ -571,6 +571,193 @@ func TestShellCommand_StallDetectionWithRetry(t *testing.T) {
 	}
 }
 
+// TestShellCommand_MissingCommand tests error for missing command parameter.
+func TestShellCommand_MissingCommand(t *testing.T) {
+	ctx := context.Background()
+
+	sc := shellcommand.New()
+
+	params := map[string]interface{}{
+		"args": []interface{}{"-la"},
+	}
+
+	_, err := sc.Execute(ctx, params)
+	if err == nil {
+		t.Fatal("Expected error for missing command, got nil")
+	}
+}
+
+// TestShellCommand_TimeoutAsFloat tests timeout provided as float64 (JSON numbers).
+func TestShellCommand_TimeoutAsFloat(t *testing.T) {
+	ctx := context.Background()
+
+	sc := shellcommand.New()
+
+	params := map[string]interface{}{
+		"command": "echo",
+		"args":    []interface{}{"test"},
+		"timeout": float64(30),
+	}
+
+	result, err := sc.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	if output["exitCode"].(int) != 0 {
+		t.Errorf("exitCode = %v, want 0", output["exitCode"])
+	}
+}
+
+// TestShellCommand_TimeoutAsString tests timeout provided as string (from template resolution).
+func TestShellCommand_TimeoutAsString(t *testing.T) {
+	ctx := context.Background()
+
+	sc := shellcommand.New()
+
+	params := map[string]interface{}{
+		"command": "echo",
+		"args":    []interface{}{"test"},
+		"timeout": "30",
+	}
+
+	result, err := sc.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	if output["exitCode"].(int) != 0 {
+		t.Errorf("exitCode = %v, want 0", output["exitCode"])
+	}
+}
+
+// TestShellCommand_ExtractIntFloat tests extractInt with float64 values.
+func TestShellCommand_ExtractIntFloat(t *testing.T) {
+	ctx := context.Background()
+
+	sc := shellcommand.New()
+
+	params := map[string]interface{}{
+		"command":      "echo",
+		"args":         []interface{}{"test"},
+		"retry":        float64(2),
+		"retryDelay":   float64(0),
+		"stallTimeout": "5",
+	}
+
+	result, err := sc.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	if output["exitCode"].(int) != 0 {
+		t.Errorf("exitCode = %v, want 0", output["exitCode"])
+	}
+}
+
+// TestShellCommand_RetryWithDelay tests retry with non-zero delay.
+func TestShellCommand_RetryWithDelay(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping retry test on Windows")
+	}
+
+	ctx := context.Background()
+	sc := shellcommand.New()
+
+	var outputLines []string
+	var mu sync.Mutex
+	onOutput := func(line string) {
+		mu.Lock()
+		outputLines = append(outputLines, line)
+		mu.Unlock()
+	}
+
+	// Command that always times out — with retry=1 and delay=1
+	params := map[string]interface{}{
+		"command":    "sleep",
+		"args":       []interface{}{"10"},
+		"timeout":    1,
+		"retry":      1,
+		"retryDelay": 1,
+		"_onOutput":  onOutput,
+	}
+
+	start := time.Now()
+	_, err := sc.Execute(ctx, params)
+	duration := time.Since(start)
+
+	if err == nil {
+		t.Fatal("Expected error after retries, got nil")
+	}
+
+	// Should take at least 2 seconds (1s timeout + 1s delay + 1s timeout)
+	if duration < 2*time.Second {
+		t.Errorf("Expected at least 2s for retry with delay, got %v", duration)
+	}
+}
+
+// TestShellCommand_NonStringArg tests error for non-string argument.
+func TestShellCommand_NonStringArg(t *testing.T) {
+	ctx := context.Background()
+
+	sc := shellcommand.New()
+
+	params := map[string]interface{}{
+		"command": "echo",
+		"args":    []interface{}{123},
+	}
+
+	_, err := sc.Execute(ctx, params)
+	if err == nil {
+		t.Fatal("Expected error for non-string arg, got nil")
+	}
+}
+
+// TestShellCommand_StreamingWithoutCallback tests streaming mode without callback.
+func TestShellCommand_StreamingWithoutCallback(t *testing.T) {
+	ctx := context.Background()
+
+	sc := shellcommand.New()
+
+	params := map[string]interface{}{
+		"command": "echo",
+		"args":    []interface{}{"hello"},
+		"stream":  true,
+		// No _onOutput callback — should fall through to buffered execution
+	}
+
+	result, err := sc.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	stdout := output["stdout"].(string)
+
+	if !strings.Contains(stdout, "hello") {
+		t.Errorf("stdout = %q, want to contain 'hello'", stdout)
+	}
+}
+
+// TestShellCommand_CommandNotFound tests execution of nonexistent command.
+func TestShellCommand_CommandNotFound(t *testing.T) {
+	ctx := context.Background()
+
+	sc := shellcommand.New()
+
+	params := map[string]interface{}{
+		"command": "nonexistent-command-xyz-12345",
+	}
+
+	_, err := sc.Execute(ctx, params)
+	if err == nil {
+		t.Fatal("Expected error for nonexistent command, got nil")
+	}
+}
+
 // TestShellCommand_NoStallWhenOutputContinues tests that active output prevents stall detection.
 func TestShellCommand_NoStallWhenOutputContinues(t *testing.T) {
 	if runtime.GOOS == "windows" {

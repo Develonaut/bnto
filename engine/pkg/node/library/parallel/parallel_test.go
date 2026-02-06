@@ -235,6 +235,208 @@ func TestParallel_EmptyTasks(t *testing.T) {
 	}
 }
 
+// TestParallel_SingleTask tests executing a single task.
+func TestParallel_SingleTask(t *testing.T) {
+	ctx := context.Background()
+
+	p := parallel.New()
+
+	params := map[string]interface{}{
+		"tasks": []interface{}{
+			map[string]interface{}{"id": "only-one"},
+		},
+	}
+
+	result, err := p.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	results := output["results"].([]interface{})
+
+	if len(results) != 1 {
+		t.Errorf("len(results) = %d, want 1", len(results))
+	}
+}
+
+// TestParallel_InvalidMaxWorkers tests with 0 maxWorkers (should use default).
+func TestParallel_InvalidMaxWorkers(t *testing.T) {
+	ctx := context.Background()
+
+	p := parallel.New()
+
+	tasks := []interface{}{
+		map[string]interface{}{"id": 1},
+		map[string]interface{}{"id": 2},
+	}
+
+	params := map[string]interface{}{
+		"tasks":      tasks,
+		"maxWorkers": 0, // Invalid, should use default (len(tasks))
+	}
+
+	result, err := p.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	results := output["results"].([]interface{})
+
+	if len(results) != 2 {
+		t.Errorf("len(results) = %d, want 2", len(results))
+	}
+}
+
+// TestParallel_MaxWorkersFloat64 tests maxWorkers as float64 (JSON numbers).
+func TestParallel_MaxWorkersFloat64(t *testing.T) {
+	ctx := context.Background()
+
+	p := parallel.New()
+
+	tasks := []interface{}{
+		map[string]interface{}{"id": 1},
+		map[string]interface{}{"id": 2},
+		map[string]interface{}{"id": 3},
+	}
+
+	params := map[string]interface{}{
+		"tasks":      tasks,
+		"maxWorkers": float64(2),
+	}
+
+	result, err := p.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	results := output["results"].([]interface{})
+
+	if len(results) != 3 {
+		t.Errorf("len(results) = %d, want 3", len(results))
+	}
+}
+
+// TestParallel_InvalidTasksParam tests with non-array tasks parameter.
+func TestParallel_InvalidTasksParam(t *testing.T) {
+	ctx := context.Background()
+
+	p := parallel.New()
+
+	params := map[string]interface{}{
+		"tasks": "not-an-array",
+	}
+
+	_, err := p.Execute(ctx, params)
+	if err == nil {
+		t.Fatal("Expected error for non-array tasks, got nil")
+	}
+}
+
+// TestParallel_NegativeMaxWorkers tests with negative maxWorkers.
+func TestParallel_NegativeMaxWorkers(t *testing.T) {
+	ctx := context.Background()
+
+	p := parallel.New()
+
+	tasks := []interface{}{
+		map[string]interface{}{"id": 1},
+	}
+
+	params := map[string]interface{}{
+		"tasks":      tasks,
+		"maxWorkers": -1, // Negative, should use default
+	}
+
+	result, err := p.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	results := output["results"].([]interface{})
+
+	if len(results) != 1 {
+		t.Errorf("len(results) = %d, want 1", len(results))
+	}
+}
+
+// TestParallel_PartialFailureCollectAll tests some tasks fail while others succeed.
+func TestParallel_PartialFailureCollectAll(t *testing.T) {
+	ctx := context.Background()
+
+	p := parallel.New()
+
+	tasks := []interface{}{
+		map[string]interface{}{"id": 1, "shouldError": false},
+		map[string]interface{}{"id": 2, "shouldError": true},
+		map[string]interface{}{"id": 3, "shouldError": false},
+	}
+
+	params := map[string]interface{}{
+		"tasks":         tasks,
+		"maxWorkers":    1, // Sequential to make results deterministic
+		"errorStrategy": "collectAll",
+		"_shouldError": func(task map[string]interface{}) bool {
+			val, _ := task["shouldError"].(bool)
+			return val
+		},
+	}
+
+	result, err := p.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute should not fail with collectAll, got: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	errors, ok := output["errors"].([]interface{})
+	if !ok {
+		t.Fatal("Expected errors array")
+	}
+
+	if len(errors) != 1 {
+		t.Errorf("len(errors) = %d, want 1", len(errors))
+	}
+
+	results := output["results"].([]interface{})
+	if len(results) != 3 {
+		t.Errorf("len(results) = %d, want 3", len(results))
+	}
+}
+
+// TestParallel_NonMapTask tests task that is not a map (used with _shouldError).
+func TestParallel_NonMapTask(t *testing.T) {
+	ctx := context.Background()
+
+	p := parallel.New()
+
+	// Tasks are strings, not maps — _shouldError checks for map type
+	tasks := []interface{}{"string-task-1", "string-task-2"}
+
+	params := map[string]interface{}{
+		"tasks": tasks,
+		"_shouldError": func(task map[string]interface{}) bool {
+			return true
+		},
+	}
+
+	result, err := p.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	results := output["results"].([]interface{})
+
+	// Tasks are strings, not maps, so _shouldError can't cast them,
+	// and they succeed
+	if len(results) != 2 {
+		t.Errorf("len(results) = %d, want 2", len(results))
+	}
+}
+
 // TestParallel_DefaultWorkers tests default worker pool size
 func TestParallel_DefaultWorkers(t *testing.T) {
 	ctx := context.Background()
