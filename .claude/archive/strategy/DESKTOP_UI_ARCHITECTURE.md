@@ -1,7 +1,12 @@
 # Desktop UI Architecture Strategy
 **Bento React Frontend Evaluation**
 
+> **2026-02-06 UPDATE:** Evaluation remains valid. Wails is confirmed as the choice.
+> See [CLOUD_DESKTOP_STRATEGY.md](CLOUD_DESKTOP_STRATEGY.md) for how this fits into the full product strategy.
+> Target **Wails v2** (stable). Desktop is **Phase 3**.
+
 **Date:** 2025-10-22
+**Updated:** 2026-02-06
 **Purpose:** Evaluate architectural approaches for adding a React-based desktop UI to the Bento Go CLI
 
 ---

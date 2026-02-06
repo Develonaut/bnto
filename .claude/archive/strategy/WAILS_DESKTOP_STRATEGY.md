@@ -1,8 +1,13 @@
 # Bento Desktop - Wails Implementation Strategy
 
+> **2026-02-06 UPDATE:** This document is superseded by [CLOUD_DESKTOP_STRATEGY.md](CLOUD_DESKTOP_STRATEGY.md).
+> Key changes: **Target Wails v2** (not v3 — v3 is still alpha). Desktop is now **Phase 3** (after cloud MVP).
+> The architecture and rationale below remain valid, but the timeline and version target have changed.
+
 **Date:** 2025-10-22
-**Status:** Strategy Approved, Ready for Implementation
-**Framework:** Wails v3 + React + TypeScript
+**Updated:** 2026-02-06
+**Status:** Valid architecture, deferred to Phase 3 (see CLOUD_DESKTOP_STRATEGY.md)
+**Framework:** Wails v2 (stable) + React + TypeScript
 
 ---
 

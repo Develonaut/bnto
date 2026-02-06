@@ -1,7 +1,13 @@
 # Bento Box UI - Proof of Concept
 **Visual Workflow Builder with Drag & Drop Compartments**
 
+> **2026-02-06 UPDATE:** Visual editor is now **Phase 4** in [CLOUD_DESKTOP_STRATEGY.md](CLOUD_DESKTOP_STRATEGY.md).
+> Phase 1 (cloud MVP) uses a JSON code editor (Monaco/CodeMirror). This PoC concept is valid
+> but deferred until after monetization justifies the investment.
+
 **Date:** 2025-10-22
+**Updated:** 2026-02-06
+**Status:** Concept valid, deferred to Phase 4
 **Goal:** Validate bento box metaphor for workflow building with elegant animations
 **Inspiration:** Mini Motorways aesthetic + traditional bento box compartments
 
