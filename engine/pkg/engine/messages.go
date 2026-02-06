@@ -34,7 +34,7 @@ var errorEmojis = []string{
 }
 
 // statusWordsRunning contains fun status words for running nodes.
-// Source: .claude/STATUS_WORDS.md (synchronized with pkg/tui/sushi.go)
+// Source: .claude/STATUS_WORDS.md
 var statusWordsRunning = []string{
 	"Tasting",
 	"Sampling",
@@ -47,7 +47,7 @@ var statusWordsRunning = []string{
 }
 
 // statusWordsCompleted contains fun status words for completed nodes.
-// Source: .claude/STATUS_WORDS.md (synchronized with pkg/tui/sushi.go)
+// Source: .claude/STATUS_WORDS.md
 var statusWordsCompleted = []string{
 	"Savored",
 	"Devoured",

@@ -2,17 +2,16 @@
   "id": "folder-setup",
   "type": "group",
   "version": "1.0.0",
-  "name": "Product Folder Setup",
+  "name": "CSV Folder Setup",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Creates folder structure for each product from CSV. Demonstrates loop node with forEach mode and context passing from CSV reader to file-system operations.",
-    "usage": "bento run folder-setup.bento.json",
-    "example": "Reads tests/fixtures/products-test.csv and creates products/Combat Dog (Supplies)/, products/Combat Dog (Gas Mask)/, products/Combat Dog (Attack)/",
-    "tags": ["phase8", "folders", "loop", "filesystem", "csv"],
-    "phase": "8.3",
+    "description": "Creates folder structure for each row from CSV. Demonstrates loop node with forEach mode and context passing from CSV reader to file-system operations.",
+    "usage": "bento run csv-to-folders.bento.json",
+    "example": "Reads tests/fixtures/test-data.csv and creates output/Test Item A/, output/Test Item B/, output/Test Item C/",
+    "tags": ["folders", "loop", "filesystem", "csv"],
     "demonstrates": ["forEach loop", "template resolution", "context passing", "nested node execution"]
   },
   "parameters": {},
@@ -23,18 +22,18 @@
       "id": "read-csv",
       "type": "spreadsheet",
       "version": "1.0.0",
-      "name": "Read Products CSV",
+      "name": "Read Data CSV",
       "position": {
         "x": 100,
         "y": 100
       },
       "metadata": {
-        "description": "Reads product CSV and outputs array of row maps with keys: sku, name, description, category"
+        "description": "Reads CSV and outputs array of row maps with keys: id, name, description, category"
       },
       "parameters": {
         "operation": "read",
         "format": "csv",
-        "path": "tests/fixtures/products-test.csv",
+        "path": "tests/fixtures/test-data.csv",
         "hasHeaders": true
       },
       "inputPorts": [],
@@ -49,13 +48,13 @@
       "id": "create-folders",
       "type": "loop",
       "version": "1.0.0",
-      "name": "Create Folder for Each Product",
+      "name": "Create Folder for Each Row",
       "position": {
         "x": 300,
         "y": 100
       },
       "metadata": {
-        "description": "Loops through each product row and creates its folder. Uses {{index . \"read-csv\" \"rows\"}} to access the CSV data from the previous node. Inside the loop, {{.item.name}} accesses the current row's name field."
+        "description": "Loops through each row and creates its folder. Uses {{index . \"read-csv\" \"rows\"}} to access the CSV data from the previous node. Inside the loop, {{.item.name}} accesses the current row's name field."
       },
       "parameters": {
         "mode": "forEach",
@@ -74,17 +73,17 @@
           "id": "mkdir",
           "type": "file-system",
           "version": "1.0.0",
-          "name": "Create Product Directory",
+          "name": "Create Directory",
           "position": {
             "x": 100,
             "y": 100
           },
           "metadata": {
-            "description": "Creates products/[product name]/ directory for the current product. The {{.item.name}} template resolves to the SKU value from the current CSV row (e.g., MOCK-001). The 'recursive: true' parameter ensures parent directories are created if needed."
+            "description": "Creates output/[item name]/ directory for the current row. The {{.item.name}} template resolves to the name value from the current CSV row. The 'recursive: true' parameter ensures parent directories are created if needed."
           },
           "parameters": {
             "operation": "mkdir",
-            "path": "products/{{.item.name}}",
+            "path": "output/{{.item.name}}",
             "recursive": true
           },
           "inputPorts": [],

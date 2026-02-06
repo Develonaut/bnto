@@ -148,8 +148,7 @@ func TestLogger_WithContext(t *testing.T) {
 }
 
 // TestLogger_StreamingCallback verifies that the streaming callback mechanism
-// works for real-time output from long-running processes (like Blender).
-// This is CRITICAL for Phase 8.
+// works for real-time output from long-running processes.
 func TestLogger_StreamingCallback(t *testing.T) {
 	var buf bytes.Buffer
 	var streamLines []string
@@ -162,21 +161,21 @@ func TestLogger_StreamingCallback(t *testing.T) {
 		},
 	})
 
-	// Simulate Blender output streaming
-	logger.Stream("Fra:1 Mem:12.00M (Peak 12.00M) | Rendering 1/100")
-	logger.Stream("Fra:2 Mem:12.00M (Peak 12.00M) | Rendering 2/100")
-	logger.Stream("Fra:3 Mem:12.00M (Peak 12.00M) | Rendering 3/100")
+	// Simulate external process output streaming
+	logger.Stream("Processing frame 1/100")
+	logger.Stream("Processing frame 2/100")
+	logger.Stream("Processing frame 3/100")
 
 	if len(streamLines) != 3 {
 		t.Errorf("Expected 3 stream lines, got %d", len(streamLines))
 	}
 
-	if streamLines[0] != "Fra:1 Mem:12.00M (Peak 12.00M) | Rendering 1/100" {
-		t.Errorf("Stream line 0 = %q, want Blender frame 1 output", streamLines[0])
+	if streamLines[0] != "Processing frame 1/100" {
+		t.Errorf("Stream line 0 = %q, want frame 1 output", streamLines[0])
 	}
 
-	if streamLines[2] != "Fra:3 Mem:12.00M (Peak 12.00M) | Rendering 3/100" {
-		t.Errorf("Stream line 2 = %q, want Blender frame 3 output", streamLines[2])
+	if streamLines[2] != "Processing frame 3/100" {
+		t.Errorf("Stream line 2 = %q, want frame 3 output", streamLines[2])
 	}
 }
 

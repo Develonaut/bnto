@@ -2,7 +2,7 @@
 //
 // This file contains helpers for creating user-friendly output with:
 //   - Duration formatting (ms, seconds, minutes)
-//   - Success/error boxes for visual emphasis
+//   - Success/error/info messages
 //   - Consistent emoji usage
 package main
 
@@ -11,8 +11,6 @@ import (
 	"math/rand"
 	"strings"
 	"time"
-
-	"github.com/Develonaut/bento/pkg/tui"
 )
 
 // formatDuration formats a duration for human readability.
@@ -44,66 +42,43 @@ func printSuccess(message string) {
 	fmt.Printf("\n%s %s\n", emoji, message)
 }
 
-// printError prints an error message with random error emoji and color-coded text.
+// printError prints an error message with random error emoji.
 func printError(message string) {
 	emoji := errorEmojis[rand.Intn(len(errorEmojis))]
-	manager := tui.NewManager()
-	theme := manager.GetTheme()
-	fmt.Printf("\n%s %s\n", emoji, theme.Error.Render(message))
+	fmt.Printf("\n%s %s\n", emoji, message)
 }
 
-// Approved sushi emojis for info messages (from .claude/EMOJIS.md)
-var sushiEmojis = []string{
+// Info emojis for general messages
+var infoEmojis = []string{
 	"🍣", "🍙", "🥢", "🍥", "🍱", "🍜", "🍡", "🍢",
 	"🦐", "🦑", "🐟", "🍤", "🥟", "🥡", "🍶", "🍵", "🥠", "🧋",
 }
 
 // Success emojis for completed operations
 var successEmojis = []string{
-	"🍱", // bento box
-	"🍣", // sushi
-	"🍜", // ramen bowl (steaming deliciousness)
-	"🍡", // dango (sweet success)
-	"🍥", // fish cake with swirl
-	"🥢", // chopsticks (completing the meal)
-	"🍵", // teacup (relaxing after success)
-	"🍶", // sake bottle (celebrating)
-	"🥟", // dumpling
-	"🍙", // rice ball/onigiri
-	"✨", // sparkles
-	"🎉", // tada/party popper
+	"🍱", "🍣", "🍜", "🍡", "🍥", "🥢", "🍵", "🍶",
+	"🥟", "🍙", "✨", "🎉",
 }
 
 // Error emojis for failed operations
 var errorEmojis = []string{
-	"👹",  // oni mask (Japanese demon)
-	"👺",  // tengu/goblin mask
-	"💀",  // skull
-	"☠️", // skull and crossbones
-	"💥",  // collision/explosion
-	"🔥",  // fire
-	"⚠️", // warning
-	"❌",  // cross mark
-	"🚫",  // no entry
-	"🤢",  // nauseated/sick face
+	"👹", "👺", "💀", "☠️", "💥", "🔥", "⚠️", "❌", "🚫", "🤢",
 }
 
-// Error status words for failed bentos (from .claude/STATUS_WORDS.md)
+// Error status words for failed operations
 var errorStatusWords = []string{
-	"Spoiled", "Burnt", "Dropped", "Ruined",
-	"Failed", "Overcooked", "Undercooked",
+	"Spoiled", "Burnt", "Dropped", "Ruined", "Failed",
 }
 
-// printInfo prints an info message with random sushi emoji.
-// Randomly picks from approved sushi emoji list for fun variety.
+// printInfo prints an info message with random emoji.
+// Uses bento box emoji for branding on "Running bento:" messages.
 func printInfo(message string) {
-	// Use bento box emoji 🍱 for branding on "Running bento:" messages
 	if strings.HasPrefix(message, "Running bento:") {
 		fmt.Printf("🍱 %s\n", message)
 		return
 	}
 
-	emoji := sushiEmojis[rand.Intn(len(sushiEmojis))]
+	emoji := infoEmojis[rand.Intn(len(infoEmojis))]
 	fmt.Printf("%s %s\n", emoji, message)
 }
 

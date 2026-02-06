@@ -116,7 +116,7 @@ func TestValidator_MissingVersion(t *testing.T) {
 }
 
 // Test: Invalid node type should fail
-func TestValidator_InvalidNetaType(t *testing.T) {
+func TestValidator_InvalidNodeType(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 

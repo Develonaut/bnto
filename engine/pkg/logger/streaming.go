@@ -7,15 +7,11 @@ import (
 )
 
 // StreamReader wraps an io.Reader and calls a callback for each line.
-// Used by shell-command node to stream output from long-running processes
-// like Blender renders in real-time.
-//
-// This is CRITICAL for Phase 8: Blender renders can take minutes or hours,
-// and users need to see progress in real-time, not buffered at the end.
+// Used by shell-command node to stream output from long-running processes in real-time.
 //
 // Example usage with exec.Command:
 //
-//	cmd := exec.Command("blender", args...)
+//	cmd := exec.Command("process", args...)
 //	stdout, _ := cmd.StdoutPipe()
 //
 //	go func() {

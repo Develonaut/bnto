@@ -23,7 +23,7 @@ func validateTransferParams(params map[string]interface{}) (source, dest string,
 }
 
 // copy copies a file from source to destination.
-func (f *FileSystemNeta) copy(params map[string]interface{}) (interface{}, error) {
+func (f *FileSystemNode) copy(params map[string]interface{}) (interface{}, error) {
 	source, dest, err := validateTransferParams(params)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (f *FileSystemNeta) copy(params map[string]interface{}) (interface{}, error
 }
 
 // move moves/renames a file.
-func (f *FileSystemNeta) move(params map[string]interface{}) (interface{}, error) {
+func (f *FileSystemNode) move(params map[string]interface{}) (interface{}, error) {
 	source, dest, err := validateTransferParams(params)
 	if err != nil {
 		return nil, err

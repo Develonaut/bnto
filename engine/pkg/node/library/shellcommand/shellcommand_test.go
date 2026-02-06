@@ -4,6 +4,7 @@ import (
 	"context"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -148,7 +149,6 @@ func TestShellCommand_ExitCode(t *testing.T) {
 }
 
 // TestShellCommand_ConfigurableTimeout tests that timeout can be configured.
-// CRITICAL FOR PHASE 8: Blender renders take 5-30 minutes.
 func TestShellCommand_ConfigurableTimeout(t *testing.T) {
 	ctx := context.Background()
 
@@ -228,7 +228,6 @@ func TestShellCommand_Timeout(t *testing.T) {
 }
 
 // TestShellCommand_StreamingOutput tests streaming output callback.
-// CRITICAL FOR PHASE 8: Stream Blender render progress line-by-line.
 func TestShellCommand_StreamingOutput(t *testing.T) {
 	ctx := context.Background()
 
@@ -278,7 +277,6 @@ func TestShellCommand_StreamingOutput(t *testing.T) {
 }
 
 // TestShellCommand_LongRunning tests long-running commands.
-// CRITICAL FOR PHASE 8: Blender renders can take many minutes.
 func TestShellCommand_LongRunning(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping long-running test in short mode")
@@ -490,8 +488,11 @@ func TestShellCommand_StallDetection(t *testing.T) {
 	sc := shellcommand.New()
 
 	var outputLines []string
+	var mu sync.Mutex
 	onOutput := func(line string) {
+		mu.Lock()
 		outputLines = append(outputLines, line)
+		mu.Unlock()
 	}
 
 	// Command that outputs once then stalls

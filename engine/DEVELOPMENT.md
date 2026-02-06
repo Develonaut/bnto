@@ -128,7 +128,7 @@ bento/
 │   │   ├── test_utilities.go
 │   │   └── helpers_test.go
 │   └── fixtures/          # Test data files
-│       └── products-test.csv
+│       └── test-data.csv
 │
 ├── examples/              # Example bento files
 │   └── csv-reader.bento.json

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/tui"
 	"github.com/Develonaut/bento/pkg/node"
 )
 
@@ -25,11 +24,7 @@ func TestLoopErrorPropagation(t *testing.T) {
 
 	// Create execution environment
 	p := createTestRegistry()
-	manager := tui.NewManager()
-	theme := manager.GetTheme()
-	palette := manager.GetPalette()
-	messenger := tui.NewSimpleMessenger(theme, palette)
-	eng := engine.NewWithMessenger(p, nil, messenger)
+	eng := engine.New(p, nil)
 
 	// Execute the bento - we expect it to FAIL
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -255,11 +250,7 @@ third,3`
 
 	// Create execution environment
 	p := createTestRegistry()
-	manager := tui.NewManager()
-	theme := manager.GetTheme()
-	palette := manager.GetPalette()
-	messenger := tui.NewSimpleMessenger(theme, palette)
-	eng := engine.NewWithMessenger(p, nil, messenger)
+	eng := engine.New(p, nil)
 
 	// Execute
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

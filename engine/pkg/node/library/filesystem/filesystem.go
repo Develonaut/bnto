@@ -35,7 +35,7 @@
 //	// Delete with glob pattern
 //	params := map[string]interface{}{
 //	    "operation": "delete",
-//	    "path": "products/*/render-*.png",
+//	    "path": "output/*/temp-*.png",
 //	}
 //
 //	// List files with glob pattern
@@ -56,12 +56,12 @@ import (
 	"github.com/Develonaut/bento/pkg/node"
 )
 
-// FileSystemNeta implements file system operations.
-type FileSystemNeta struct{}
+// FileSystemNode implements file system operations.
+type FileSystemNode struct{}
 
 // New creates a new filesystem node instance.
 func New() node.Executable {
-	return &FileSystemNeta{}
+	return &FileSystemNode{}
 }
 
 // Execute performs a file system operation based on the provided parameters.
@@ -75,7 +75,7 @@ func New() node.Executable {
 //   - dest (string, required for copy/move): Destination path
 //
 // Returns a map with operation-specific results.
-func (f *FileSystemNeta) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
+func (f *FileSystemNode) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
 	// Extract operation
 	operation, ok := params["operation"].(string)
 	if !ok {

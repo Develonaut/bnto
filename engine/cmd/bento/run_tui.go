@@ -11,14 +11,14 @@ import (
 	"time"
 
 	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/tui"
 	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bento/pkg/paths"
 )
 
 // executeTUI executes bento with detailed log output to stdout.
 func executeTUI(def *node.Definition) error {
-	// Create pantry and file logger
-	p := createPantry()
+	// Create registry and file logger
+	p := createRegistry()
 	logger, logFile, err := createFileLogger()
 	if err != nil {
 		printError(fmt.Sprintf("Warning: Failed to create log file: %v", err))
@@ -33,26 +33,23 @@ func executeTUI(def *node.Definition) error {
 		logger = createDualLogger(logger)
 	}
 
-	// Create chef with logger (no messenger for TUI mode)
-	chef := engine.New(p, logger)
+	// Create engine with logger (no messenger for log output mode)
+	eng := engine.New(p, logger)
 
-	// Load slowMo delay from config for animations
-	slowMoMs := tui.LoadSlowMoDelay()
-	chef.SetSlowMoDelay(time.Duration(slowMoMs) * time.Millisecond)
+	// Load slowMo delay from config
+	slowMoMs := paths.LoadSlowMoDelay()
+	eng.SetSlowMoDelay(time.Duration(slowMoMs) * time.Millisecond)
 
 	// Execute bento
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutFlag)
 	defer cancel()
 
-	result, err := chef.Serve(ctx, def)
+	result, err := eng.Serve(ctx, def)
 
 	if err != nil {
-		// Error message is already logged by itamae
 		os.Exit(1)
 	}
 
-	// Success message is already logged by itamae
-	// Just exit cleanly
 	_ = result
 	return nil
 }

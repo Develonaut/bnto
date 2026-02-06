@@ -12,7 +12,7 @@ import (
 
 // Logger wraps slog.Logger using charm/log as the handler for beautiful output.
 // It provides structured logging with charm's beautiful formatting,
-// as well as streaming for long-running processes like Blender renders.
+// as well as streaming for long-running processes.
 type Logger struct {
 	sl       *slog.Logger
 	handler  *log.Logger
@@ -137,9 +137,9 @@ func (l *Logger) With(args ...any) *Logger {
 	}
 }
 
-// Stream outputs a line for streaming processes (like Blender renders).
+// Stream outputs a line for streaming processes.
 // This bypasses normal log levels and calls the OnStream callback if set.
-// Critical for Phase 8: real-time output from shell-command node.
+// Used for real-time output from long-running shell commands and external processes.
 //
 // If OnStream callback is set, it handles all output (including file logging).
 // Otherwise, log to info level for default visibility.

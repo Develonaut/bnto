@@ -7,26 +7,24 @@ import (
 	"github.com/Develonaut/bento/pkg/node/library/loop"
 )
 
-// TestLoop_ForEach tests forEach mode - iterating over array/slice
-// CRITICAL FOR PHASE 8: Loop through CSV rows
+// TestLoop_ForEach tests forEach mode - iterating over array/slice.
 func TestLoop_ForEach(t *testing.T) {
 	ctx := context.Background()
 
-	loopNeta := loop.New()
+	loopNode := loop.New()
 
-	// Simulate CSV rows
-	csvData := []interface{}{
-		map[string]interface{}{"sku": "PROD-001", "name": "Product A"},
-		map[string]interface{}{"sku": "PROD-002", "name": "Product B"},
-		map[string]interface{}{"sku": "PROD-003", "name": "Product C"},
+	items := []interface{}{
+		map[string]interface{}{"id": "item-1", "label": "Alpha"},
+		map[string]interface{}{"id": "item-2", "label": "Beta"},
+		map[string]interface{}{"id": "item-3", "label": "Gamma"},
 	}
 
 	params := map[string]interface{}{
 		"mode":  "forEach",
-		"items": csvData,
+		"items": items,
 	}
 
-	result, err := loopNeta.Execute(ctx, params)
+	result, err := loopNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -60,14 +58,14 @@ func TestLoop_ForEach(t *testing.T) {
 func TestLoop_Times(t *testing.T) {
 	ctx := context.Background()
 
-	loopNeta := loop.New()
+	loopNode := loop.New()
 
 	params := map[string]interface{}{
 		"mode":  "times",
 		"count": 5,
 	}
 
-	result, err := loopNeta.Execute(ctx, params)
+	result, err := loopNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -84,7 +82,7 @@ func TestLoop_Times(t *testing.T) {
 func TestLoop_While(t *testing.T) {
 	ctx := context.Background()
 
-	loopNeta := loop.New()
+	loopNode := loop.New()
 
 	// Create a counter in context that will be incremented
 	params := map[string]interface{}{
@@ -95,7 +93,7 @@ func TestLoop_While(t *testing.T) {
 		},
 	}
 
-	result, err := loopNeta.Execute(ctx, params)
+	result, err := loopNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -113,7 +111,7 @@ func TestLoop_While(t *testing.T) {
 func TestLoop_ContextPassing(t *testing.T) {
 	ctx := context.Background()
 
-	loopNeta := loop.New()
+	loopNode := loop.New()
 
 	items := []interface{}{
 		map[string]interface{}{"value": 1},
@@ -126,7 +124,7 @@ func TestLoop_ContextPassing(t *testing.T) {
 		"items": items,
 	}
 
-	result, err := loopNeta.Execute(ctx, params)
+	result, err := loopNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -144,7 +142,7 @@ func TestLoop_ContextPassing(t *testing.T) {
 func TestLoop_BreakCondition(t *testing.T) {
 	ctx := context.Background()
 
-	loopNeta := loop.New()
+	loopNode := loop.New()
 
 	items := []interface{}{
 		map[string]interface{}{"value": 1},
@@ -160,7 +158,7 @@ func TestLoop_BreakCondition(t *testing.T) {
 		"breakCondition": "item.value >= 3",
 	}
 
-	result, err := loopNeta.Execute(ctx, params)
+	result, err := loopNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -178,14 +176,14 @@ func TestLoop_BreakCondition(t *testing.T) {
 func TestLoop_EmptyItems(t *testing.T) {
 	ctx := context.Background()
 
-	loopNeta := loop.New()
+	loopNode := loop.New()
 
 	params := map[string]interface{}{
 		"mode":  "forEach",
 		"items": []interface{}{},
 	}
 
-	result, err := loopNeta.Execute(ctx, params)
+	result, err := loopNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -202,13 +200,13 @@ func TestLoop_EmptyItems(t *testing.T) {
 func TestLoop_InvalidMode(t *testing.T) {
 	ctx := context.Background()
 
-	loopNeta := loop.New()
+	loopNode := loop.New()
 
 	params := map[string]interface{}{
 		"mode": "invalid",
 	}
 
-	_, err := loopNeta.Execute(ctx, params)
+	_, err := loopNode.Execute(ctx, params)
 	if err == nil {
 		t.Fatal("Expected error for invalid mode, got nil")
 	}

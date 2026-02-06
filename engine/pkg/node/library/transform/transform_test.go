@@ -119,8 +119,8 @@ func TestTransform_ArrayMap(t *testing.T) {
 		"expression": "map(items, #.id)",
 		"_context": map[string]interface{}{
 			"items": []interface{}{
-				map[string]interface{}{"id": "PROD-001", "title": "Product A"},
-				map[string]interface{}{"id": "PROD-002", "title": "Product B"},
+				map[string]interface{}{"id": "REC-001", "title": "Alpha"},
+				map[string]interface{}{"id": "REC-002", "title": "Beta"},
 			},
 		},
 	}
@@ -140,12 +140,12 @@ func TestTransform_ArrayMap(t *testing.T) {
 		t.Errorf("len(result) = %d, want 2", len(resultVal))
 	}
 
-	if resultVal[0] != "PROD-001" {
-		t.Errorf("result[0] = %v, want PROD-001", resultVal[0])
+	if resultVal[0] != "REC-001" {
+		t.Errorf("result[0] = %v, want REC-001", resultVal[0])
 	}
 
-	if resultVal[1] != "PROD-002" {
-		t.Errorf("result[1] = %v, want PROD-002", resultVal[1])
+	if resultVal[1] != "REC-002" {
+		t.Errorf("result[1] = %v, want REC-002", resultVal[1])
 	}
 }
 

@@ -18,7 +18,7 @@
 //	    "timeout": 30,  // seconds
 //	}
 //
-//	result, err := httpNeta.Execute(ctx, params)
+//	result, err := httpNode.Execute(ctx, params)
 //
 // The result contains:
 //   - statusCode: HTTP status code (200, 404, etc.)
@@ -40,12 +40,12 @@ const (
 	DefaultTimeout = 30
 )
 
-// HTTPNeta implements HTTP request functionality.
-type HTTPNeta struct{}
+// HTTPNode implements HTTP request functionality.
+type HTTPNode struct{}
 
 // New creates a new HTTP node instance.
 func New() node.Executable {
-	return &HTTPNeta{}
+	return &HTTPNode{}
 }
 
 // Execute performs an HTTP request based on the provided parameters.
@@ -64,7 +64,7 @@ func New() node.Executable {
 //   - body (map[string]interface{}): Parsed JSON response (or empty if saveToFile is used)
 //   - headers (map[string]string): Response headers
 //   - filePath (string): Path where file was saved (only if saveToFile is used)
-func (h *HTTPNeta) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
+func (h *HTTPNode) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
 	reqParams, err := extractRequestParams(params)
 	if err != nil {
 		return nil, err

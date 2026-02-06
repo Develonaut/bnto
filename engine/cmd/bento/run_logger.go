@@ -11,14 +11,14 @@ import (
 	"strings"
 
 	"github.com/Develonaut/bento/pkg/logs"
-	"github.com/Develonaut/bento/pkg/tui"
+	"github.com/Develonaut/bento/pkg/paths"
 	"github.com/Develonaut/bento/pkg/logger"
 )
 
 // createFileLogger creates a logger that writes to {bento-home}/logs/
 // Returns the logger, the log file (for cleanup), and any error.
 func createFileLogger() (*logger.Logger, *os.File, error) {
-	bentoHome := tui.LoadBentoHome()
+	bentoHome := paths.LoadBentoHome()
 
 	// Ensure logs directory exists
 	if err := logs.EnsureLogsDirectory(bentoHome); err != nil {

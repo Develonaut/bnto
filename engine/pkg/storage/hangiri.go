@@ -38,8 +38,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Develonaut/bento/pkg/tui"
 	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bento/pkg/paths"
 )
 
 // StorageType represents different types of storage subdirectories.
@@ -68,7 +68,7 @@ func New(baseDir string) *Storage {
 // NewDefaultStorage creates a Storage instance using the configured bento home directory.
 // Falls back to ~/.bento/ if no custom directory is configured.
 func NewDefaultStorage() *Storage {
-	return New(tui.LoadBentoHome())
+	return New(paths.LoadBentoHome())
 }
 
 // expandHome expands ~ to the user's home directory.

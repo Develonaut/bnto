@@ -2,17 +2,16 @@
   "id": "folder-setup-overlays",
   "type": "group",
   "version": "1.0.0",
-  "name": "Product Folders with Overlays",
+  "name": "CSV Folders with Overlays",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Creates folder structure for each product from CSV and copies indexed overlay files into each folder. Uses row index to match overlay files (0.png, 1.png, etc.) to their corresponding product folders.",
+    "description": "Creates folder structure for each row from CSV and copies indexed overlay files into each folder. Uses row index to match overlay files (0.png, 1.png, etc.) to their corresponding folders.",
     "usage": "bento run csv-to-folders-with-overlays.bento.json",
-    "example": "Reads CSV and creates products/Combat Dog (Supplies)/ with overlay 0.png, products/Combat Dog (Gas Mask)/ with overlay 1.png, etc.",
-    "tags": ["phase8", "folders", "loop", "filesystem", "csv", "overlays"],
-    "phase": "8.3",
+    "example": "Reads CSV and creates output/Test Item A/ with overlay 0.png, output/Test Item B/ with overlay 1.png, etc.",
+    "tags": ["folders", "loop", "filesystem", "csv", "overlays"],
     "demonstrates": ["forEach loop", "template resolution", "context passing", "index-based file operations"]
   },
   "parameters": {},
@@ -23,18 +22,18 @@
       "id": "read-csv",
       "type": "spreadsheet",
       "version": "1.0.0",
-      "name": "Read Products CSV",
+      "name": "Read Data CSV",
       "position": {
         "x": 100,
         "y": 100
       },
       "metadata": {
-        "description": "Reads product CSV and outputs array of row maps with keys: sku, name, description, category"
+        "description": "Reads CSV and outputs array of row maps with keys: id, name, description, category"
       },
       "parameters": {
         "operation": "read",
         "format": "csv",
-        "path": "tests/fixtures/products-test.csv",
+        "path": "tests/fixtures/test-data.csv",
         "hasHeaders": true
       },
       "inputPorts": [],
@@ -55,7 +54,7 @@
         "y": 100
       },
       "metadata": {
-        "description": "Loops through each product row, creates its folder, and copies the matching overlay file based on row index. Uses {{index . \"read-csv\" \"rows\"}} to access CSV data. Inside the loop, {{.item.name}} accesses the current row's name and {{.index}} accesses the row index (0, 1, 2, etc.)."
+        "description": "Loops through each row, creates its folder, and copies the matching overlay file based on row index. Uses {{index . \"read-csv\" \"rows\"}} to access CSV data. Inside the loop, {{.item.name}} accesses the current row's name and {{.index}} accesses the row index (0, 1, 2, etc.)."
       },
       "parameters": {
         "mode": "forEach",
@@ -74,17 +73,17 @@
           "id": "mkdir",
           "type": "file-system",
           "version": "1.0.0",
-          "name": "Create Product Directory",
+          "name": "Create Directory",
           "position": {
             "x": 100,
             "y": 100
           },
           "metadata": {
-            "description": "Creates products/[product name]/ directory for the current product. The {{.item.name}} template resolves to the product name from the current CSV row. The 'recursive: true' parameter ensures parent directories are created if needed."
+            "description": "Creates output/[item name]/ directory for the current row. The {{.item.name}} template resolves to the name from the current CSV row. The 'recursive: true' parameter ensures parent directories are created if needed."
           },
           "parameters": {
             "operation": "mkdir",
-            "path": "products/{{.item.name}}",
+            "path": "output/{{.item.name}}",
             "recursive": true
           },
           "inputPorts": [],
@@ -100,12 +99,12 @@
             "y": 200
           },
           "metadata": {
-            "description": "Copies the overlay file that matches the current row index. For row 0, copies tests/fixtures/overlays/0.png to products/[product name]/overlay.png. The {{.index}} template resolves to the current iteration index (0, 1, 2, etc.)."
+            "description": "Copies the overlay file that matches the current row index. For row 0, copies tests/fixtures/overlays/0.png to output/[item name]/overlay.png. The {{.index}} template resolves to the current iteration index (0, 1, 2, etc.)."
           },
           "parameters": {
             "operation": "copy",
             "source": "tests/fixtures/overlays/{{.index}}.png",
-            "dest": "products/{{.item.name}}/overlay.png"
+            "dest": "output/{{.item.name}}/overlay.png"
           },
           "inputPorts": [],
           "outputPorts": []

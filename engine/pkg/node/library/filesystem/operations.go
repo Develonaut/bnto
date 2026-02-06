@@ -9,7 +9,7 @@ import (
 )
 
 // read reads the contents of a file.
-func (f *FileSystemNeta) read(params map[string]interface{}) (interface{}, error) {
+func (f *FileSystemNode) read(params map[string]interface{}) (interface{}, error) {
 	path, ok := params["path"].(string)
 	if !ok {
 		return nil, fmt.Errorf("path parameter is required and must be a string")
@@ -27,7 +27,7 @@ func (f *FileSystemNeta) read(params map[string]interface{}) (interface{}, error
 }
 
 // write writes content to a file.
-func (f *FileSystemNeta) write(params map[string]interface{}) (interface{}, error) {
+func (f *FileSystemNode) write(params map[string]interface{}) (interface{}, error) {
 	path, ok := params["path"].(string)
 	if !ok {
 		return nil, fmt.Errorf("path parameter is required and must be a string")
@@ -61,7 +61,7 @@ func (f *FileSystemNeta) write(params map[string]interface{}) (interface{}, erro
 }
 
 // mkdir creates a directory.
-func (f *FileSystemNeta) mkdir(params map[string]interface{}) (interface{}, error) {
+func (f *FileSystemNode) mkdir(params map[string]interface{}) (interface{}, error) {
 	path, ok := params["path"].(string)
 	if !ok {
 		return nil, fmt.Errorf("path parameter is required and must be a string")
@@ -79,7 +79,7 @@ func (f *FileSystemNeta) mkdir(params map[string]interface{}) (interface{}, erro
 }
 
 // exists checks if a file or directory exists.
-func (f *FileSystemNeta) exists(params map[string]interface{}) (interface{}, error) {
+func (f *FileSystemNode) exists(params map[string]interface{}) (interface{}, error) {
 	path, ok := params["path"].(string)
 	if !ok {
 		return nil, fmt.Errorf("path parameter is required and must be a string")

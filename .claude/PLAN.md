@@ -35,6 +35,18 @@ Solidify the engine, restructure the repo, establish the development environment
 - [x] Update `.claude/` docs to reflect new paths
 - [x] Fix integration tests (missed old sushi names in test code)
 
+### 0.1b Codebase Cleanup
+- [x] Remove interactive TUI package (`pkg/tui/` — 45+ files, ~3,500 lines)
+  - Not in scope for current development phase
+  - Deleted entire `pkg/tui/` directory and `cmd/bento/tui.go`
+  - Updated all consumers to use `pkg/paths` for config loading
+  - Removed `configThemeCmd`, `configSlowMoCmd` (TUI-specific)
+  - Removed bubbletea, bubbles, huh, teatest dependencies
+  - Simplified CLI output (plain text errors, no lipgloss in CLI)
+- [x] Fix shellcommand StallDetection race condition
+  - Added `sync.Mutex` to test callback closure
+  - Test now passes with `-race` flag
+
 ### 0.2 Engine Solidification (TDD)
 - [ ] Unit tests for every node type (target >90% coverage)
   - [ ] edit-fields

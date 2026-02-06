@@ -89,10 +89,9 @@ engine/pkg/
 ├── storage/      # Persistent storage ONLY
 ├── node/         # Node type definitions and implementations
 ├── validator/    # Workflow validation ONLY
-├── paths/        # Path resolution ONLY
+├── paths/        # Path resolution + config loading ONLY
 ├── logger/       # Logging ONLY
-├── secrets/      # Secrets management ONLY
-└── tui/          # Terminal UI ONLY (internal/beta)
+└── secrets/      # Secrets management ONLY
 ```
 
 ### 5. TypeScript Package Guidelines

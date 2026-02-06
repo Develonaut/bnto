@@ -5,15 +5,13 @@
 //   - times: Repeat N times with index counter
 //   - while: Loop while a condition evaluates to true
 //
-// CRITICAL FOR PHASE 8: Used to process CSV rows (array of maps).
-//
 // Example forEach usage:
 //
 //	params := map[string]interface{}{
 //	    "mode": "forEach",
 //	    "items": []interface{}{
-//	        map[string]interface{}{"sku": "PROD-001"},
-//	        map[string]interface{}{"sku": "PROD-002"},
+//	        map[string]interface{}{"id": "item-1"},
+//	        map[string]interface{}{"id": "item-2"},
 //	    },
 //	}
 //	result, err := loopNode.Execute(ctx, params)

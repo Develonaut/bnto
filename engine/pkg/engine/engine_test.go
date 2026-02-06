@@ -89,7 +89,7 @@ func TestItamae_ContextPassing(t *testing.T) {
 				Type: "edit-fields",
 				Parameters: map[string]interface{}{
 					"values": map[string]interface{}{
-						"productName": "Widget",
+						"itemName": "Alpha",
 					},
 				},
 			},
@@ -98,7 +98,7 @@ func TestItamae_ContextPassing(t *testing.T) {
 				Type: "edit-fields",
 				Parameters: map[string]interface{}{
 					"values": map[string]interface{}{
-						"title": "{{.setname.productName}}",
+						"title": "{{.setname.itemName}}",
 					},
 				},
 			},
@@ -126,8 +126,8 @@ func TestItamae_ContextPassing(t *testing.T) {
 		t.Fatalf("usename output is not map[string]interface{}")
 	}
 
-	if output["title"] != "Widget" {
-		t.Errorf("title = %v, want Widget (template should be resolved)", output["title"])
+	if output["title"] != "Alpha" {
+		t.Errorf("title = %v, want Alpha (template should be resolved)", output["title"])
 	}
 }
 
@@ -278,8 +278,8 @@ func TestItamae_ContextCancellation(t *testing.T) {
 	}
 }
 
-// TestItamae_GroupNeta tests nested group execution
-func TestItamae_GroupNeta(t *testing.T) {
+// TestEngine_GroupNode tests nested group execution
+func TestEngine_GroupNode(t *testing.T) {
 	ctx := context.Background()
 
 	// Bento with a nested group

@@ -56,7 +56,7 @@ func expandSpecialMarkers(path string) string {
 
 // CompressPath converts absolute paths to use special markers for portability.
 // This is the inverse of ResolvePath - useful for displaying paths in a platform-independent way.
-// Example: "/Users/Ryan/Library/CloudStorage/GoogleDrive-email/My Drive/foo" -> "{{GDRIVE}}/foo"
+// Example: "/Users/username/Library/CloudStorage/GoogleDrive-email/My Drive/foo" -> "{{GDRIVE}}/foo"
 func CompressPath(path string) string {
 	if path == "" {
 		return ""

@@ -11,22 +11,13 @@ import (
 	"time"
 
 	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/tui"
 	"github.com/Develonaut/bento/pkg/node"
 )
 
 // executeSimple executes bento with simple single-line progress (non-TTY mode).
 func executeSimple(def *node.Definition) error {
-	// Get theme and palette from miso manager
-	manager := tui.NewManager()
-	theme := manager.GetTheme()
-	palette := manager.GetPalette()
-
-	// Create simple messenger that prints to stdout
-	messenger := tui.NewSimpleMessenger(theme, palette)
-
-	// Create pantry and file logger (always log to file)
-	p := createPantry()
+	// Create registry and file logger (always log to file)
+	p := createRegistry()
 	logger, logFile, err := createFileLogger()
 	if err != nil {
 		printError(fmt.Sprintf("Warning: Failed to create log file: %v", err))
@@ -41,15 +32,15 @@ func executeSimple(def *node.Definition) error {
 		logger = createDualLogger(logger)
 	}
 
-	// Create chef with messenger
-	chef := engine.NewWithMessenger(p, logger, messenger)
+	// Create engine (nil messenger — no progress output in simple mode)
+	eng := engine.New(p, logger)
 
 	// Execute bento
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutFlag)
 	defer cancel()
 
 	start := time.Now()
-	result, err := chef.Serve(ctx, def)
+	result, err := eng.Serve(ctx, def)
 	duration := time.Since(start)
 
 	if err != nil {

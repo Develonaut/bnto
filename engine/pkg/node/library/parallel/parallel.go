@@ -15,7 +15,7 @@
 //	    "maxWorkers": 5,
 //	    "errorStrategy": "failFast",
 //	}
-//	result, err := parallelNeta.Execute(ctx, params)
+//	result, err := parallelNode.Execute(ctx, params)
 //
 // Learn more about Go concurrency: https://go.dev/tour/concurrency/1
 package parallel

@@ -132,8 +132,8 @@ type Edge struct {
 //
 //	fields := FieldsConfig{
 //	    Values: map[string]interface{}{
-//	        "name": "Product A",
-//	        "sku":  "PROD-001",
+//	        "name":  "Item A",
+//	        "label": "REC-001",
 //	    },
 //	    KeepOnlySet: true,  // Only output fields that are explicitly set
 //	}

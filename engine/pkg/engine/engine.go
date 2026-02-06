@@ -34,7 +34,6 @@ import (
 )
 
 // ProgressMessenger receives execution progress events.
-// Used by tui package for TUI/CLI progress display.
 // Optional - nil check before use.
 type ProgressMessenger interface {
 	SendNodeStarted(path, name, nodeType string)
@@ -82,9 +81,7 @@ func New(r *registry.Registry, log *logger.Logger) *Engine {
 }
 
 // NewWithMessenger creates an Engine with progress messaging.
-// Messenger is used for TUI/CLI progress updates.
 // Both logger and messenger are optional - can be nil.
-// Automatically loads slowMo delay from config for TUI animations.
 func NewWithMessenger(r *registry.Registry, log *logger.Logger, messenger ProgressMessenger) *Engine {
 	// Note: Import tui here would create circular dependency, so we'll set slowMo from outside
 	return &Engine{

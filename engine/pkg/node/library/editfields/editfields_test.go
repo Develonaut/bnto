@@ -11,10 +11,6 @@ import (
 //
 // This is the most basic use case: setting fields to literal values
 // without any template processing.
-//
-// Example workflow usage:
-//
-//	User wants to set product.name = "Product A" and product.sku = "PROD-001"
 func TestEditFields_SetStaticValues(t *testing.T) {
 	ctx := context.Background()
 
@@ -22,8 +18,8 @@ func TestEditFields_SetStaticValues(t *testing.T) {
 
 	params := map[string]interface{}{
 		"values": map[string]interface{}{
-			"name": "Product A",
-			"sku":  "PROD-001",
+			"name":  "Item A",
+			"label": "REC-001",
 		},
 	}
 
@@ -37,12 +33,12 @@ func TestEditFields_SetStaticValues(t *testing.T) {
 		t.Fatal("Expected map[string]interface{} result")
 	}
 
-	if output["name"] != "Product A" {
-		t.Errorf("name = %v, want Product A", output["name"])
+	if output["name"] != "Item A" {
+		t.Errorf("name = %v, want Item A", output["name"])
 	}
 
-	if output["sku"] != "PROD-001" {
-		t.Errorf("sku = %v, want PROD-001", output["sku"])
+	if output["label"] != "REC-001" {
+		t.Errorf("label = %v, want REC-001", output["label"])
 	}
 }
 
@@ -50,11 +46,6 @@ func TestEditFields_SetStaticValues(t *testing.T) {
 //
 // This tests the core template engine integration using text/template.
 // Templates can reference data from previous node in the workflow.
-//
-// Example workflow usage:
-//
-//	HTTP node fetches {"product": {"name": "Widget", "id": 123}}
-//	Edit-fields node uses templates to create filename: "product-123.png"
 func TestEditFields_TemplateVariables(t *testing.T) {
 	ctx := context.Background()
 
@@ -62,16 +53,16 @@ func TestEditFields_TemplateVariables(t *testing.T) {
 
 	// Context from previous node (passed by engine)
 	prevContext := map[string]interface{}{
-		"product": map[string]interface{}{
-			"name": "Widget",
+		"record": map[string]interface{}{
+			"name": "Alpha",
 			"id":   123,
 		},
 	}
 
 	params := map[string]interface{}{
 		"values": map[string]interface{}{
-			"title":    "{{.product.name}}",
-			"filename": "product-{{.product.id}}.png",
+			"title":    "{{.record.name}}",
+			"filename": "output-{{.record.id}}.png",
 		},
 		"_context": prevContext,
 	}
@@ -83,12 +74,12 @@ func TestEditFields_TemplateVariables(t *testing.T) {
 
 	output := result.(map[string]interface{})
 
-	if output["title"] != "Widget" {
-		t.Errorf("title = %v, want Widget", output["title"])
+	if output["title"] != "Alpha" {
+		t.Errorf("title = %v, want Alpha", output["title"])
 	}
 
-	if output["filename"] != "product-123.png" {
-		t.Errorf("filename = %v, want product-123.png", output["filename"])
+	if output["filename"] != "output-123.png" {
+		t.Errorf("filename = %v, want output-123.png", output["filename"])
 	}
 }
 

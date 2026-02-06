@@ -11,7 +11,7 @@ import (
 )
 
 // handleResponse processes the HTTP response and returns the result.
-func (h *HTTPNeta) handleResponse(resp *http.Response, saveToFile string) (interface{}, error) {
+func (h *HTTPNode) handleResponse(resp *http.Response, saveToFile string) (interface{}, error) {
 	responseHeaders := collectResponseHeaders(resp)
 
 	if saveToFile != "" {
@@ -33,7 +33,7 @@ func collectResponseHeaders(resp *http.Response) map[string]string {
 }
 
 // handleFileSave saves response body to file and returns metadata.
-func (h *HTTPNeta) handleFileSave(
+func (h *HTTPNode) handleFileSave(
 	resp *http.Response,
 	filePath string,
 	headers map[string]string,
@@ -51,7 +51,7 @@ func (h *HTTPNeta) handleFileSave(
 }
 
 // handleJSONResponse parses response body as JSON.
-func (h *HTTPNeta) handleJSONResponse(
+func (h *HTTPNode) handleJSONResponse(
 	resp *http.Response,
 	headers map[string]string,
 ) (interface{}, error) {

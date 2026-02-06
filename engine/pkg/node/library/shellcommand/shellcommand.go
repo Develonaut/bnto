@@ -1,10 +1,9 @@
 // Package shellcommand provides shell command execution for the bento workflow system.
 //
 // The shellcommand node allows you to execute shell commands and capture their output.
-// This is CRITICAL for Phase 8 (Blender automation) which requires:
-//   - Long-running commands (5-30 minute Blender renders)
-//   - Streaming output (line-by-line render progress)
-//   - Configurable timeouts
+// It supports:
+//   - Long-running commands with configurable timeouts
+//   - Streaming output (line-by-line progress)
 //   - Exit code capture
 //   - Stall detection and automatic retry
 //
@@ -56,7 +55,7 @@ var ErrStallDetected = errors.New("process stalled: no output received within ti
 const (
 	// DefaultTimeout is the default command timeout in seconds.
 	// Set to 2 minutes for typical commands, but can be overridden
-	// for long-running operations like Blender renders (30+ minutes).
+	// for long-running operations (30+ minutes).
 	DefaultTimeout = 120
 
 	// DefaultStallTimeout is the default stall detection timeout in seconds.
@@ -72,8 +71,8 @@ const (
 	DefaultRetryDelay = 5
 )
 
-// ShellCommandNeta implements shell command execution.
-type ShellCommandNeta struct{}
+// ShellCommandNode implements shell command execution.
+type ShellCommandNode struct{}
 
 // commandParams holds extracted and validated command parameters.
 type commandParams struct {
@@ -89,7 +88,7 @@ type commandParams struct {
 
 // New creates a new shellcommand node instance.
 func New() node.Executable {
-	return &ShellCommandNeta{}
+	return &ShellCommandNode{}
 }
 
 // Execute runs a shell command based on the provided parameters.
@@ -108,7 +107,7 @@ func New() node.Executable {
 //   - stdout (string): Standard output
 //   - stderr (string): Standard error
 //   - exitCode (int): Exit code (0 = success)
-func (s *ShellCommandNeta) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
+func (s *ShellCommandNode) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
 	cmdParams, err := s.extractCommandParams(params)
 	if err != nil {
 		return nil, err
@@ -125,7 +124,7 @@ func (s *ShellCommandNeta) Execute(ctx context.Context, params map[string]interf
 }
 
 // executeWithRetry executes the command with optional retry logic.
-func (s *ShellCommandNeta) executeWithRetry(ctx context.Context, cmdParams *commandParams) (interface{}, error) {
+func (s *ShellCommandNode) executeWithRetry(ctx context.Context, cmdParams *commandParams) (interface{}, error) {
 	var lastErr error
 	maxAttempts := cmdParams.retry + 1 // retry=0 means 1 attempt, retry=10 means 11 attempts
 
@@ -166,7 +165,7 @@ func (s *ShellCommandNeta) executeWithRetry(ctx context.Context, cmdParams *comm
 }
 
 // executeSingleAttempt executes one attempt of the command.
-func (s *ShellCommandNeta) executeSingleAttempt(ctx context.Context, cmdParams *commandParams, attempt, maxAttempts int) (interface{}, error) {
+func (s *ShellCommandNode) executeSingleAttempt(ctx context.Context, cmdParams *commandParams, attempt, maxAttempts int) (interface{}, error) {
 	cmdCtx, cancel := context.WithTimeout(ctx, time.Duration(cmdParams.timeout)*time.Second)
 	defer cancel()
 
@@ -184,7 +183,7 @@ func (s *ShellCommandNeta) executeSingleAttempt(ctx context.Context, cmdParams *
 }
 
 // extractCommandParams extracts and validates command parameters from the params map.
-func (s *ShellCommandNeta) extractCommandParams(params map[string]interface{}) (*commandParams, error) {
+func (s *ShellCommandNode) extractCommandParams(params map[string]interface{}) (*commandParams, error) {
 	command, ok := params["command"].(string)
 	if !ok {
 		return nil, fmt.Errorf("command parameter is required and must be a string")
@@ -216,7 +215,7 @@ func (s *ShellCommandNeta) extractCommandParams(params map[string]interface{}) (
 }
 
 // extractInt extracts an int value from params, handling int, float64, and string types.
-func (s *ShellCommandNeta) extractInt(params map[string]interface{}, key string, defaultVal int) int {
+func (s *ShellCommandNode) extractInt(params map[string]interface{}, key string, defaultVal int) int {
 	if v, ok := params[key].(int); ok {
 		return v
 	}
@@ -232,7 +231,7 @@ func (s *ShellCommandNeta) extractInt(params map[string]interface{}, key string,
 }
 
 // extractArgs extracts and validates command arguments.
-func (s *ShellCommandNeta) extractArgs(params map[string]interface{}) ([]string, error) {
+func (s *ShellCommandNode) extractArgs(params map[string]interface{}) ([]string, error) {
 	argsRaw, ok := params["args"].([]interface{})
 	if !ok {
 		return nil, nil
@@ -250,7 +249,7 @@ func (s *ShellCommandNeta) extractArgs(params map[string]interface{}) ([]string,
 }
 
 // extractTimeout extracts timeout value, handling int, float64, and string from templates.
-func (s *ShellCommandNeta) extractTimeout(params map[string]interface{}) int {
+func (s *ShellCommandNode) extractTimeout(params map[string]interface{}) int {
 	if t, ok := params["timeout"].(int); ok {
 		return t
 	}
@@ -267,7 +266,7 @@ func (s *ShellCommandNeta) extractTimeout(params map[string]interface{}) int {
 }
 
 // executeStreaming runs a command with streaming output.
-func (s *ShellCommandNeta) executeStreaming(cmdCtx context.Context, cmd *exec.Cmd, params *commandParams) (interface{}, error) {
+func (s *ShellCommandNode) executeStreaming(cmdCtx context.Context, cmd *exec.Cmd, params *commandParams) (interface{}, error) {
 	var stdoutBuilder, stderrBuilder strings.Builder
 
 	stdoutPipe, err := cmd.StdoutPipe()
@@ -292,7 +291,7 @@ func (s *ShellCommandNeta) executeStreaming(cmdCtx context.Context, cmd *exec.Cm
 }
 
 // streamOutput reads from a pipe line-by-line and optionally calls a callback.
-func (s *ShellCommandNeta) streamOutput(pipe io.ReadCloser, builder *strings.Builder, callback func(string)) {
+func (s *ShellCommandNode) streamOutput(pipe io.ReadCloser, builder *strings.Builder, callback func(string)) {
 	scanner := bufio.NewScanner(pipe)
 	go func() {
 		for scanner.Scan() {
@@ -308,7 +307,7 @@ func (s *ShellCommandNeta) streamOutput(pipe io.ReadCloser, builder *strings.Bui
 
 // executeStreamingWithStallDetection runs a command with stall detection.
 // If no output is received for stallTimeout seconds, the process is killed.
-func (s *ShellCommandNeta) executeStreamingWithStallDetection(
+func (s *ShellCommandNode) executeStreamingWithStallDetection(
 	cmdCtx context.Context,
 	cmd *exec.Cmd,
 	params *commandParams,
@@ -395,7 +394,7 @@ func (s *ShellCommandNeta) executeStreamingWithStallDetection(
 
 // streamOutputWithActivity reads from a pipe and signals activity on any data received.
 // Uses byte-level reading to detect activity from programs that use \r for progress updates.
-func (s *ShellCommandNeta) streamOutputWithActivity(
+func (s *ShellCommandNode) streamOutputWithActivity(
 	pipe io.ReadCloser,
 	builder *strings.Builder,
 	callback func(string),
@@ -457,7 +456,7 @@ func (s *ShellCommandNeta) streamOutputWithActivity(
 }
 
 // executeBuffered runs a command with buffered output.
-func (s *ShellCommandNeta) executeBuffered(cmdCtx context.Context, cmd *exec.Cmd, timeout int) (interface{}, error) {
+func (s *ShellCommandNode) executeBuffered(cmdCtx context.Context, cmd *exec.Cmd, timeout int) (interface{}, error) {
 	var stdoutBuilder, stderrBuilder strings.Builder
 
 	cmd.Stdout = &stdoutBuilder
@@ -468,7 +467,7 @@ func (s *ShellCommandNeta) executeBuffered(cmdCtx context.Context, cmd *exec.Cmd
 }
 
 // handleCommandResult processes command execution results and errors.
-func (s *ShellCommandNeta) handleCommandResult(cmdCtx context.Context, err error, stdout, stderr *strings.Builder, timeout int) (interface{}, error) {
+func (s *ShellCommandNode) handleCommandResult(cmdCtx context.Context, err error, stdout, stderr *strings.Builder, timeout int) (interface{}, error) {
 	// Check context errors first, but include the original error for debugging
 	if cmdCtx.Err() == context.DeadlineExceeded {
 		return nil, fmt.Errorf("command timeout after %d seconds (original error: %v)", timeout, err)

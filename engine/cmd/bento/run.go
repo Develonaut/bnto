@@ -1,7 +1,7 @@
 // Package main implements the run command for executing bentos.
 //
 // The run command loads a bento definition from a JSON file and executes it
-// using the itamae orchestration engine. It provides real-time progress updates
+// using the orchestration engine. It provides real-time progress updates
 // and displays execution results.
 package main
 
@@ -24,7 +24,7 @@ import (
 	editfields "github.com/Develonaut/bento/pkg/node/library/editfields"
 	filesystem "github.com/Develonaut/bento/pkg/node/library/filesystem"
 	group "github.com/Develonaut/bento/pkg/node/library/group"
-	httpneta "github.com/Develonaut/bento/pkg/node/library/http"
+	httpnode "github.com/Develonaut/bento/pkg/node/library/http"
 	image "github.com/Develonaut/bento/pkg/node/library/image"
 	loop "github.com/Develonaut/bento/pkg/node/library/loop"
 	parallel "github.com/Develonaut/bento/pkg/node/library/parallel"
@@ -132,7 +132,7 @@ func loadBento(path string) (*node.Definition, error) {
 		}
 	}
 
-	// Strategy 3: Try loading from hangiri storage
+	// Strategy 3: Try loading from storage
 	return loadBentoFromStorage(path)
 }
 
@@ -160,7 +160,7 @@ func loadBentoFromFile(path string) (*node.Definition, error) {
 	return &def, nil
 }
 
-// loadBentoFromStorage loads a bento from hangiri storage by name.
+// loadBentoFromStorage loads a bento from storage by name.
 func loadBentoFromStorage(name string) (*node.Definition, error) {
 	// Strip .bento.json extension if provided
 	name = strings.TrimSuffix(name, ".bento.json")
@@ -176,15 +176,15 @@ func loadBentoFromStorage(name string) (*node.Definition, error) {
 	return def, nil
 }
 
-// createPantry creates and populates the registry with all node types.
-func createPantry() *registry.Registry {
+// createRegistry creates and populates the registry with all node types.
+func createRegistry() *registry.Registry {
 	p := registry.New()
 
 	// Register all node types
 	p.RegisterFactory("edit-fields", func() node.Executable { return editfields.New() })
 	p.RegisterFactory("file-system", func() node.Executable { return filesystem.New() })
 	p.RegisterFactory("group", func() node.Executable { return group.New() })
-	p.RegisterFactory("http-request", func() node.Executable { return httpneta.New() })
+	p.RegisterFactory("http-request", func() node.Executable { return httpnode.New() })
 	p.RegisterFactory("image", func() node.Executable { return image.New() })
 	p.RegisterFactory("loop", func() node.Executable { return loop.New() })
 	p.RegisterFactory("parallel", func() node.Executable { return parallel.New() })

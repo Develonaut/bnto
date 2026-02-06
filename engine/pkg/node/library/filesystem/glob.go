@@ -9,8 +9,8 @@ import (
 )
 
 // delete deletes a file or files matching a glob pattern.
-// Supports both single file paths and glob patterns (e.g., "*.png", "render-*.png").
-func (f *FileSystemNeta) delete(params map[string]interface{}) (interface{}, error) {
+// Supports both single file paths and glob patterns (e.g., "*.png", "output-*.png").
+func (f *FileSystemNode) delete(params map[string]interface{}) (interface{}, error) {
 	path, ok := params["path"].(string)
 	if !ok {
 		return nil, fmt.Errorf("path parameter is required and must be a string")
@@ -26,7 +26,7 @@ func (f *FileSystemNeta) delete(params map[string]interface{}) (interface{}, err
 }
 
 // deleteGlobPattern deletes all files matching a glob pattern.
-func (f *FileSystemNeta) deleteGlobPattern(pattern string) (interface{}, error) {
+func (f *FileSystemNode) deleteGlobPattern(pattern string) (interface{}, error) {
 	// Expand glob pattern
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
@@ -50,7 +50,7 @@ func (f *FileSystemNeta) deleteGlobPattern(pattern string) (interface{}, error) 
 }
 
 // deleteSingleFile deletes a single file.
-func (f *FileSystemNeta) deleteSingleFile(path string) (interface{}, error) {
+func (f *FileSystemNode) deleteSingleFile(path string) (interface{}, error) {
 	err := os.Remove(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete file: %w", err)
@@ -65,7 +65,7 @@ func (f *FileSystemNeta) deleteSingleFile(path string) (interface{}, error) {
 // list lists all files matching a pattern or in a directory.
 // Supports glob patterns (e.g., "*.png", "images/*.jpg") or directory paths.
 // Returns an array of file paths that can be used with loop nodes.
-func (f *FileSystemNeta) list(params map[string]interface{}) (interface{}, error) {
+func (f *FileSystemNode) list(params map[string]interface{}) (interface{}, error) {
 	path, ok := params["path"].(string)
 	if !ok {
 		return nil, fmt.Errorf("path parameter is required and must be a string")
@@ -95,7 +95,7 @@ func (f *FileSystemNeta) list(params map[string]interface{}) (interface{}, error
 
 // listGlobPattern lists all files matching a glob pattern.
 // Supports brace expansion like *.{jpg,png} which Go's filepath.Glob doesn't.
-func (f *FileSystemNeta) listGlobPattern(pattern string) (interface{}, error) {
+func (f *FileSystemNode) listGlobPattern(pattern string) (interface{}, error) {
 	// Expand brace patterns into multiple glob patterns
 	patterns := expandBracePattern(pattern)
 
@@ -153,7 +153,7 @@ func expandBracePattern(pattern string) []string {
 }
 
 // listDirectory lists all files in a directory (non-recursive).
-func (f *FileSystemNeta) listDirectory(dirPath string) (interface{}, error) {
+func (f *FileSystemNode) listDirectory(dirPath string) (interface{}, error) {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory: %w", err)

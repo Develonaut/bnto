@@ -12,6 +12,22 @@ tasks:
     dir: ./engine
     cmds: [go test -race ./...]
 
+  test:engine:
+    desc: Run engine tests only (excludes TUI and integration)
+    dir: ./engine
+    cmds:
+      - go test -race ./cmd/... ./pkg/engine/... ./pkg/logger/... ./pkg/logs/... ./pkg/node/... ./pkg/paths/... ./pkg/registry/... ./pkg/secrets/... ./pkg/storage/... ./pkg/validator/... ./tests/mocks/...
+
+  test:integration:
+    desc: Run integration tests (auto-builds bento binary)
+    dir: ./engine
+    cmds: [go test -race -v ./tests/integration/...]
+
+  install:
+    desc: Install bento binary to $GOPATH/bin
+    dir: ./engine
+    cmds: [go install ./cmd/bento]
+
   vet:
     desc: Run go vet on all packages
     dir: ./engine

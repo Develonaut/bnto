@@ -54,7 +54,7 @@ func VerifyFileExists(t *testing.T, path string) {
 }
 
 // VerifyFileCount checks number of files matching pattern.
-// pattern should be a glob pattern like "*.png" or "render-*.webp"
+// pattern should be a glob pattern like "*.png" or "output-*.webp"
 // Fails the test if the count doesn't match expected.
 func VerifyFileCount(t *testing.T, dir, pattern string, expected int) {
 	t.Helper()

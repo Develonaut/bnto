@@ -77,7 +77,7 @@ func (i *Engine) prepareNodeParams(def *node.Definition, execCtx *executionConte
 	params["_onOutput"] = func(line string) {
 		if i.logger != nil {
 			// Stream output with breadcrumb context (no tree indentation)
-			// This is used for Blender/external process output
+			// This is used for long-running external process output
 			breadcrumb := execCtx.getBreadcrumb()
 			if breadcrumb != "" {
 				formattedLine := formatStreamingOutput(breadcrumb, line)
@@ -144,8 +144,8 @@ func (i *Engine) logExecutionComplete(def *node.Definition, execCtx *executionCo
 }
 
 // formatStreamingOutput formats streaming output with colored breadcrumb and tool prefixes.
-// Example: Node1:Node2 [BLENDER] message
-// Breadcrumb nodes are colored in different shades, [BLENDER] is orange.
+// Example: Node1:Node2 [TOOL] message
+// Breadcrumb nodes are colored in different shades, tool prefixes are colored by type.
 func formatStreamingOutput(breadcrumb, line string) string {
 	var result strings.Builder
 
@@ -172,7 +172,7 @@ func formatStreamingOutput(breadcrumb, line string) string {
 		result.WriteString(" ")
 	}
 
-	// Detect and style tool prefixes like [BLENDER], [PYTHON], etc.
+	// Detect and style tool prefixes like [PYTHON], [NODE], etc.
 	toolPrefixRegex := regexp.MustCompile(`^\[([A-Z]+)\]\s*`)
 	if matches := toolPrefixRegex.FindStringSubmatch(line); matches != nil {
 		toolName := matches[1]
@@ -181,8 +181,6 @@ func formatStreamingOutput(breadcrumb, line string) string {
 		// Define colors for different tools
 		var toolColor lipgloss.Color
 		switch toolName {
-		case "BLENDER":
-			toolColor = lipgloss.Color("#FF6C00") // Blender orange
 		case "PYTHON":
 			toolColor = lipgloss.Color("#3776AB") // Python blue
 		case "NODE":

@@ -9,16 +9,14 @@ import (
 	"github.com/Develonaut/bento/pkg/node/library/spreadsheet"
 )
 
-// TestSpreadsheet_ReadCSV tests reading CSV with headers
-// CRITICAL FOR PHASE 8: Read product CSV
+// TestSpreadsheet_ReadCSV tests reading CSV with headers.
 func TestSpreadsheet_ReadCSV(t *testing.T) {
 	ctx := context.Background()
 
-	// Create test CSV
-	csvContent := `sku,name,description
-PROD-001,Product A,Description A
-PROD-002,Product B,Description B
-PROD-003,Product C,Description C`
+	csvContent := `id,name,description
+REC-001,Alpha,Description A
+REC-002,Beta,Description B
+REC-003,Gamma,Description C`
 
 	tmpfile, err := os.CreateTemp("", "test-*.csv")
 	if err != nil {
@@ -58,16 +56,16 @@ PROD-003,Product C,Description C`
 		t.Errorf("len(rows) = %d, want 3", len(rows))
 	}
 
-	if rows[0]["sku"] != "PROD-001" {
-		t.Errorf("rows[0].sku = %v, want PROD-001", rows[0]["sku"])
+	if rows[0]["id"] != "REC-001" {
+		t.Errorf("rows[0].id = %v, want REC-001", rows[0]["id"])
 	}
 
-	if rows[0]["name"] != "Product A" {
-		t.Errorf("rows[0].name = %v, want Product A", rows[0]["name"])
+	if rows[0]["name"] != "Alpha" {
+		t.Errorf("rows[0].name = %v, want Alpha", rows[0]["name"])
 	}
 
-	if rows[2]["sku"] != "PROD-003" {
-		t.Errorf("rows[2].sku = %v, want PROD-003", rows[2]["sku"])
+	if rows[2]["id"] != "REC-003" {
+		t.Errorf("rows[2].id = %v, want REC-003", rows[2]["id"])
 	}
 }
 
@@ -81,8 +79,8 @@ func TestSpreadsheet_WriteCSV(t *testing.T) {
 	defer os.Remove(tmpfile)
 
 	rows := []map[string]interface{}{
-		{"sku": "PROD-001", "name": "Product A"},
-		{"sku": "PROD-002", "name": "Product B"},
+		{"id": "REC-001", "name": "Alpha"},
+		{"id": "REC-002", "name": "Beta"},
 	}
 
 	params := map[string]interface{}{
@@ -120,8 +118,8 @@ func TestSpreadsheet_ReadExcel(t *testing.T) {
 
 	// First write an Excel file
 	rows := []map[string]interface{}{
-		{"sku": "PROD-001", "name": "Product A", "price": "10.50"},
-		{"sku": "PROD-002", "name": "Product B", "price": "20.00"},
+		{"id": "REC-001", "name": "Alpha", "value": "10.50"},
+		{"id": "REC-002", "name": "Beta", "value": "20.00"},
 	}
 
 	writeParams := map[string]interface{}{
@@ -158,8 +156,8 @@ func TestSpreadsheet_ReadExcel(t *testing.T) {
 		t.Errorf("len(rows) = %d, want 2", len(rows2))
 	}
 
-	if rows2[0]["sku"] != "PROD-001" {
-		t.Errorf("rows[0].sku = %v, want PROD-001", rows2[0]["sku"])
+	if rows2[0]["id"] != "REC-001" {
+		t.Errorf("rows[0].id = %v, want REC-001", rows2[0]["id"])
 	}
 }
 
@@ -200,9 +198,9 @@ func TestSpreadsheet_MalformedCSV(t *testing.T) {
 	ctx := context.Background()
 
 	// Create malformed CSV (mismatched columns)
-	csvContent := `sku,name,description
-PROD-001,Product A
-PROD-002,Product B,Description B,Extra`
+	csvContent := `id,name,description
+REC-001,Alpha
+REC-002,Beta,Description B,Extra`
 
 	tmpfile, err := os.CreateTemp("", "test-malformed-*.csv")
 	if err != nil {
@@ -237,13 +235,13 @@ PROD-002,Product B,Description B,Extra`
 	}
 }
 
-// TestSpreadsheet_CSVWithHeaders tests CSV with custom headers
+// TestSpreadsheet_CSVWithHeaders tests CSV with custom headers.
 func TestSpreadsheet_CSVWithHeaders(t *testing.T) {
 	ctx := context.Background()
 
-	csvContent := `SKU,Product Name,Price
-PROD-001,Widget,10.50
-PROD-002,Gadget,20.00`
+	csvContent := `ID,Item Name,Value
+REC-001,Alpha,10.50
+REC-002,Beta,20.00`
 
 	tmpfile, err := os.CreateTemp("", "test-headers-*.csv")
 	if err != nil {
@@ -277,8 +275,8 @@ PROD-002,Gadget,20.00`
 	}
 
 	// Headers should be preserved
-	if rows[0]["SKU"] != "PROD-001" {
-		t.Errorf("rows[0].SKU = %v, want PROD-001", rows[0]["SKU"])
+	if rows[0]["ID"] != "REC-001" {
+		t.Errorf("rows[0].ID = %v, want REC-001", rows[0]["ID"])
 	}
 }
 

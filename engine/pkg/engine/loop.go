@@ -9,7 +9,7 @@ import (
 )
 
 // executeLoop executes a loop node.
-// Critical for Phase 8: CSV iteration for product automation.
+// Supports forEach, times, and while loop modes for iterating over collections or ranges.
 func (i *Engine) executeLoop(
 	ctx context.Context,
 	def *node.Definition,

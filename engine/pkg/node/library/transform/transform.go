@@ -21,7 +21,7 @@
 //	        "years": 25,
 //	    },
 //	}
-//	result, err := transformNeta.Execute(ctx, params)
+//	result, err := transformNode.Execute(ctx, params)
 //
 // Learn more about expr: https://github.com/expr-lang/expr
 package transform

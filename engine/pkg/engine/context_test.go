@@ -14,35 +14,35 @@ func TestResolveStringWithBasename(t *testing.T) {
 	}{
 		{
 			name:     "basename with full path",
-			template: "{{basename .PRODUCT_PATH}}",
+			template: "{{basename .DATA_PATH}}",
 			envVars: map[string]string{
-				"PRODUCT_PATH": "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Combat Dog (Supplies)",
+				"DATA_PATH": "/tmp/test-data/items/alpha-item",
 			},
-			want: "Combat Dog (Supplies)",
+			want: "alpha-item",
 		},
 		{
 			name:     "basename with simple path",
-			template: "{{basename .PRODUCT_PATH}}",
+			template: "{{basename .DATA_PATH}}",
 			envVars: map[string]string{
-				"PRODUCT_PATH": "/path/to/product",
+				"DATA_PATH": "/path/to/item",
 			},
-			want: "product",
+			want: "item",
 		},
 		{
 			name:     "basename in filename",
-			template: "{{basename .PRODUCT_PATH}}_001.png",
+			template: "{{basename .DATA_PATH}}_001.png",
 			envVars: map[string]string{
-				"PRODUCT_PATH": "/path/to/Combat Engineer",
+				"DATA_PATH": "/path/to/Test Item A",
 			},
-			want: "Combat Engineer_001.png",
+			want: "Test Item A_001.png",
 		},
 		{
 			name:     "basename with trailing slash",
-			template: "{{basename .PRODUCT_PATH}}",
+			template: "{{basename .DATA_PATH}}",
 			envVars: map[string]string{
-				"PRODUCT_PATH": "/path/to/product/",
+				"DATA_PATH": "/path/to/item/",
 			},
-			want: "product",
+			want: "item",
 		},
 	}
 
@@ -69,11 +69,11 @@ func TestResolveStringWithBasename(t *testing.T) {
 // TestTemplateWithBasenameInArgs tests basename in command args.
 func TestTemplateWithBasenameInArgs(t *testing.T) {
 	ctx := newExecutionContext()
-	ctx.nodeData["PRODUCT_PATH"] = "/Users/Ryan/Products/Combat Dog (Supplies)"
+	ctx.nodeData["DATA_PATH"] = "/tmp/test-data/items/Test Item A"
 
-	template := "--filename-prefix {{basename .PRODUCT_PATH}}"
+	template := "--filename-prefix {{basename .DATA_PATH}}"
 	result := ctx.resolveString(template)
-	want := "--filename-prefix Combat Dog (Supplies)"
+	want := "--filename-prefix Test Item A"
 
 	if result != want {
 		t.Errorf("resolveString(%q) = %q, want %q", template, result, want)

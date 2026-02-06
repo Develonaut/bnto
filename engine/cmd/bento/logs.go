@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/Develonaut/bento/pkg/logs"
-	"github.com/Develonaut/bento/pkg/tui"
+	"github.com/Develonaut/bento/pkg/paths"
 	"github.com/spf13/cobra"
 )
 
@@ -42,7 +42,7 @@ func init() {
 
 // runLogs executes the logs command logic.
 func runLogs(cmd *cobra.Command, args []string) error {
-	bentoHome := tui.LoadBentoHome()
+	bentoHome := paths.LoadBentoHome()
 
 	// Ensure logs directory exists (create if needed)
 	if err := logs.EnsureLogsDirectory(bentoHome); err != nil {

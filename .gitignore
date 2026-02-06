@@ -46,6 +46,7 @@ vendor/
 # Test outputs - generated during test runs
 /products/
 /tests/output/
+engine/output/
 *.webp
 render-*.png
 

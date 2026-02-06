@@ -6,8 +6,8 @@
 //
 // # Common Use Cases
 //
-//   - Setting metadata fields on products (name, SKU, description)
-//   - Constructing file paths dynamically from product IDs
+//   - Setting metadata fields (name, label, description)
+//   - Constructing file paths dynamically from record IDs
 //   - Building URLs using data from API responses
 //   - Creating folder names based on workflow data
 //
@@ -16,9 +16,9 @@
 // Edit-fields uses Go's text/template package. Templates can reference data from
 // the workflow's execution context using dot notation:
 //
-//	"{{.product.name}}"           // Access nested fields
-//	"product-{{.product.id}}.png" // Mix static text and templates
-//	"{{index .items 0}}"          // Access array elements
+//	"{{.record.name}}"           // Access nested fields
+//	"output-{{.record.id}}.png"  // Mix static text and templates
+//	"{{index .items 0}}"         // Access array elements
 //
 // Learn more: https://pkg.go.dev/text/template
 //
@@ -28,18 +28,18 @@
 //
 //	params := map[string]interface{}{
 //	    "values": map[string]interface{}{
-//	        "name": "Product A",              // Static value
-//	        "sku":  "{{.product.sku}}",       // Template value
+//	        "name":  "Item A",               // Static value
+//	        "label": "{{.record.label}}",    // Template value
 //	    },
 //	    "_context": map[string]interface{}{  // From previous nodes
-//	        "product": map[string]interface{}{
-//	            "sku": "PROD-001",
+//	        "record": map[string]interface{}{
+//	            "label": "REC-001",
 //	        },
 //	    },
 //	}
 //
 //	result, _ := ef.Execute(ctx, params)
-//	// result = {"name": "Product A", "sku": "PROD-001"}
+//	// result = {"name": "Item A", "label": "REC-001"}
 package editfields
 
 import (

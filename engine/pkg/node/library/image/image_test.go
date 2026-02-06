@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	imageneta "github.com/Develonaut/bento/pkg/node/library/image"
+	imagenode "github.com/Develonaut/bento/pkg/node/library/image"
 )
 
 // createTestImage creates a simple test PNG image
@@ -49,7 +49,7 @@ func TestImage_Resize(t *testing.T) {
 	outputPath := strings.Replace(inputPath, ".png", "-resized.png", 1)
 	defer os.Remove(outputPath)
 
-	imgNeta := imageneta.New()
+	imgNode := imagenode.New()
 
 	params := map[string]interface{}{
 		"operation": "resize",
@@ -59,7 +59,7 @@ func TestImage_Resize(t *testing.T) {
 		"height":    300,
 	}
 
-	result, err := imgNeta.Execute(ctx, params)
+	result, err := imgNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -79,8 +79,7 @@ func TestImage_Resize(t *testing.T) {
 	}
 }
 
-// TestImage_ConvertToWebP tests format conversion to WebP
-// CRITICAL FOR PHASE 8: Blender outputs PNG, optimize to WebP
+// TestImage_ConvertToWebP tests format conversion to WebP.
 func TestImage_ConvertToWebP(t *testing.T) {
 	ctx := context.Background()
 
@@ -90,7 +89,7 @@ func TestImage_ConvertToWebP(t *testing.T) {
 	outputPath := strings.Replace(inputPath, ".png", ".webp", 1)
 	defer os.Remove(outputPath)
 
-	imgNeta := imageneta.New()
+	imgNode := imagenode.New()
 
 	params := map[string]interface{}{
 		"operation": "convert",
@@ -100,7 +99,7 @@ func TestImage_ConvertToWebP(t *testing.T) {
 		"quality":   80,
 	}
 
-	result, err := imgNeta.Execute(ctx, params)
+	result, err := imgNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -128,7 +127,7 @@ func TestImage_Optimize(t *testing.T) {
 	outputPath := strings.Replace(inputPath, ".png", "-optimized.webp", 1)
 	defer os.Remove(outputPath)
 
-	imgNeta := imageneta.New()
+	imgNode := imagenode.New()
 
 	params := map[string]interface{}{
 		"operation": "optimize",
@@ -137,7 +136,7 @@ func TestImage_Optimize(t *testing.T) {
 		"quality":   60, // Lower quality for smaller file
 	}
 
-	result, err := imgNeta.Execute(ctx, params)
+	result, err := imgNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -166,7 +165,7 @@ func TestImage_BatchOperations(t *testing.T) {
 		}
 	}()
 
-	imgNeta := imageneta.New()
+	imgNode := imagenode.New()
 
 	params := map[string]interface{}{
 		"operation": "batch",
@@ -175,7 +174,7 @@ func TestImage_BatchOperations(t *testing.T) {
 		"quality":   80,
 	}
 
-	result, err := imgNeta.Execute(ctx, params)
+	result, err := imgNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -208,7 +207,7 @@ func TestImage_MaintainAspectRatio(t *testing.T) {
 	outputPath := strings.Replace(inputPath, ".png", "-resized.png", 1)
 	defer os.Remove(outputPath)
 
-	imgNeta := imageneta.New()
+	imgNode := imagenode.New()
 
 	params := map[string]interface{}{
 		"operation":      "resize",
@@ -218,7 +217,7 @@ func TestImage_MaintainAspectRatio(t *testing.T) {
 		"maintainAspect": true, // Should calculate height automatically
 	}
 
-	result, err := imgNeta.Execute(ctx, params)
+	result, err := imgNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -238,7 +237,7 @@ func TestImage_MaintainAspectRatio(t *testing.T) {
 func TestImage_InvalidInput(t *testing.T) {
 	ctx := context.Background()
 
-	imgNeta := imageneta.New()
+	imgNode := imagenode.New()
 
 	params := map[string]interface{}{
 		"operation": "resize",
@@ -246,7 +245,7 @@ func TestImage_InvalidInput(t *testing.T) {
 		"output":    "/tmp/output.png",
 	}
 
-	_, err := imgNeta.Execute(ctx, params)
+	_, err := imgNode.Execute(ctx, params)
 	if err == nil {
 		t.Fatal("Expected error for nonexistent input, got nil")
 	}
@@ -256,13 +255,13 @@ func TestImage_InvalidInput(t *testing.T) {
 func TestImage_InvalidOperation(t *testing.T) {
 	ctx := context.Background()
 
-	imgNeta := imageneta.New()
+	imgNode := imagenode.New()
 
 	params := map[string]interface{}{
 		"operation": "invalid",
 	}
 
-	_, err := imgNeta.Execute(ctx, params)
+	_, err := imgNode.Execute(ctx, params)
 	if err == nil {
 		t.Fatal("Expected error for invalid operation, got nil")
 	}
@@ -278,7 +277,7 @@ func TestImage_DefaultQuality(t *testing.T) {
 	outputPath := strings.Replace(inputPath, ".png", ".webp", 1)
 	defer os.Remove(outputPath)
 
-	imgNeta := imageneta.New()
+	imgNode := imagenode.New()
 
 	params := map[string]interface{}{
 		"operation": "convert",
@@ -288,7 +287,7 @@ func TestImage_DefaultQuality(t *testing.T) {
 		// No quality specified - should use default (80)
 	}
 
-	result, err := imgNeta.Execute(ctx, params)
+	result, err := imgNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -311,7 +310,7 @@ func TestImage_JPEGConversion(t *testing.T) {
 	outputPath := strings.Replace(inputPath, ".png", ".jpg", 1)
 	defer os.Remove(outputPath)
 
-	imgNeta := imageneta.New()
+	imgNode := imagenode.New()
 
 	params := map[string]interface{}{
 		"operation": "convert",
@@ -321,7 +320,7 @@ func TestImage_JPEGConversion(t *testing.T) {
 		"quality":   90,
 	}
 
-	result, err := imgNeta.Execute(ctx, params)
+	result, err := imgNode.Execute(ctx, params)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}

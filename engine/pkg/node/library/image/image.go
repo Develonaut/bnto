@@ -6,8 +6,6 @@
 //   - Optimization (quality settings)
 //   - Batch processing
 //
-// CRITICAL FOR PHASE 8: Used to optimize Blender PNG outputs to WebP.
-//
 // Pure Go implementation using:
 // - disintegration/imaging: Image resizing and format conversion
 // - gen2brain/webp: WebP encoding (no CGO required)
@@ -18,16 +16,16 @@
 // Performance is acceptable for CLI use (~200-250ms per 1920x1080 PNG → WebP)
 // while maintaining the portability promise in README.
 //
-// Example WebP optimization:
+// Example WebP conversion:
 //
 //	params := map[string]interface{}{
 //	    "operation": "convert",
-//	    "input": "render.png",
-//	    "output": "render.webp",
+//	    "input": "photo.png",
+//	    "output": "photo.webp",
 //	    "format": "webp",
 //	    "quality": 80,
 //	}
-//	result, err := imageNeta.Execute(ctx, params)
+//	result, err := imageNode.Execute(ctx, params)
 package image
 
 import (

@@ -1,21 +1,20 @@
 // Package spreadsheet provides CSV and Excel file operations.
 //
 // The spreadsheet node supports:
-//   - CSV read/write with headers (critical for Phase 8)
+//   - CSV read/write with headers
 //   - Excel read/write using excelize library
 //   - Graceful handling of missing/extra columns
 //
-// CRITICAL FOR PHASE 8: Used to read product CSV files.
-// Outputs array of maps: [{"sku": "PROD-001", "name": "Product A"}, ...]
+// Outputs array of maps: [{"id": "REC-001", "name": "Alpha"}, ...]
 //
 // Example CSV read:
 //
 //	params := map[string]interface{}{
 //	    "operation": "read",
 //	    "format": "csv",
-//	    "path": "products.csv",
+//	    "path": "data.csv",
 //	}
-//	result, err := spreadsheetNeta.Execute(ctx, params)
+//	result, err := spreadsheetNode.Execute(ctx, params)
 //	// result["rows"] = []map[string]interface{}{ ... }
 //
 // Learn more about CSV in Go: https://pkg.go.dev/encoding/csv

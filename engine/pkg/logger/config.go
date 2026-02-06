@@ -56,14 +56,13 @@ type Config struct {
 	Output io.Writer
 
 	// OnStream is called for streaming output (optional).
-	// Used for real-time output from long-running processes like Blender.
-	// Critical for Phase 8: shell-command node streaming.
+	// Used for real-time output from long-running shell commands and external processes.
 	OnStream StreamCallback
 }
 
 // StreamCallback is called for each line of streaming output.
 // Used by shell-command node to provide real-time feedback
-// from long-running processes like Blender renders.
+// from long-running external processes.
 type StreamCallback func(line string)
 
 // Level represents a log level for filtering messages.

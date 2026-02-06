@@ -11,7 +11,7 @@ import (
 )
 
 // buildRequest creates an HTTP request with headers and body.
-func (h *HTTPNeta) buildRequest(
+func (h *HTTPNode) buildRequest(
 	ctx context.Context,
 	reqParams *requestParams,
 	params map[string]interface{},
@@ -36,7 +36,7 @@ func (h *HTTPNeta) buildRequest(
 }
 
 // prepareURL adds query parameters to the base URL.
-func (h *HTTPNeta) prepareURL(baseURL string, params map[string]interface{}) (string, error) {
+func (h *HTTPNode) prepareURL(baseURL string, params map[string]interface{}) (string, error) {
 	if queryParams, ok := params["queryParams"].(map[string]interface{}); ok {
 		urlStr, err := addQueryParams(baseURL, queryParams)
 		if err != nil {
@@ -48,7 +48,7 @@ func (h *HTTPNeta) prepareURL(baseURL string, params map[string]interface{}) (st
 }
 
 // prepareRequestBody marshals the request body to JSON.
-func (h *HTTPNeta) prepareRequestBody(params map[string]interface{}) (io.Reader, error) {
+func (h *HTTPNode) prepareRequestBody(params map[string]interface{}) (io.Reader, error) {
 	body, ok := params["body"].(map[string]interface{})
 	if !ok {
 		return nil, nil
@@ -62,7 +62,7 @@ func (h *HTTPNeta) prepareRequestBody(params map[string]interface{}) (io.Reader,
 }
 
 // setRequestHeaders sets Content-Type and custom headers on the request.
-func (h *HTTPNeta) setRequestHeaders(req *http.Request, reqBody io.Reader, params map[string]interface{}) {
+func (h *HTTPNode) setRequestHeaders(req *http.Request, reqBody io.Reader, params map[string]interface{}) {
 	if reqBody != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -77,7 +77,7 @@ func (h *HTTPNeta) setRequestHeaders(req *http.Request, reqBody io.Reader, param
 }
 
 // executeRequest executes the HTTP request with timeout.
-func (h *HTTPNeta) executeRequest(req *http.Request, timeout int) (*http.Response, error) {
+func (h *HTTPNode) executeRequest(req *http.Request, timeout int) (*http.Response, error) {
 	client := &http.Client{
 		Timeout: time.Duration(timeout) * time.Second,
 	}
