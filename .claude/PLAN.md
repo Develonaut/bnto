@@ -105,8 +105,9 @@ Ship a working web app where users can upload, edit, and run workflows.
   - 12 handler tests + 8 execution manager tests (20 total, all pass with -race)
   - `net/http/httptest` for in-process testing
   - Tests cover: validate, CRUD workflows, async run+poll, CORS, error cases
-- [ ] Contract tests
-  - API responses match TypeScript types in `@bento/core`
+- [x] Contract tests
+  - 6 contract tests verify Go JSON responses match `@bento/core` TypeScript types
+  - TS types updated to match actual Go API shapes (WorkflowDefinition, Execution, etc.)
 
 ### 1.2 Convex Setup
 - [ ] Deploy Convex on Railway via template
