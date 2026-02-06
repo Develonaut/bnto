@@ -16,21 +16,21 @@ import (
 	"github.com/mattn/go-isatty"
 
 	"github.com/Develonaut/bento/pkg/storage"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/Develonaut/bento/pkg/validator"
 	"github.com/Develonaut/bento/pkg/registry"
 	"github.com/spf13/cobra"
 
-	editfields "github.com/Develonaut/bento/pkg/neta/library/editfields"
-	filesystem "github.com/Develonaut/bento/pkg/neta/library/filesystem"
-	group "github.com/Develonaut/bento/pkg/neta/library/group"
-	httpneta "github.com/Develonaut/bento/pkg/neta/library/http"
-	image "github.com/Develonaut/bento/pkg/neta/library/image"
-	loop "github.com/Develonaut/bento/pkg/neta/library/loop"
-	parallel "github.com/Develonaut/bento/pkg/neta/library/parallel"
-	shellcommand "github.com/Develonaut/bento/pkg/neta/library/shellcommand"
-	spreadsheet "github.com/Develonaut/bento/pkg/neta/library/spreadsheet"
-	transform "github.com/Develonaut/bento/pkg/neta/library/transform"
+	editfields "github.com/Develonaut/bento/pkg/node/library/editfields"
+	filesystem "github.com/Develonaut/bento/pkg/node/library/filesystem"
+	group "github.com/Develonaut/bento/pkg/node/library/group"
+	httpneta "github.com/Develonaut/bento/pkg/node/library/http"
+	image "github.com/Develonaut/bento/pkg/node/library/image"
+	loop "github.com/Develonaut/bento/pkg/node/library/loop"
+	parallel "github.com/Develonaut/bento/pkg/node/library/parallel"
+	shellcommand "github.com/Develonaut/bento/pkg/node/library/shellcommand"
+	spreadsheet "github.com/Develonaut/bento/pkg/node/library/spreadsheet"
+	transform "github.com/Develonaut/bento/pkg/node/library/transform"
 )
 
 var (
@@ -82,7 +82,7 @@ func runRun(cmd *cobra.Command, args []string) error {
 }
 
 // loadAndValidate loads and validates a bento.
-func loadAndValidate(bentoPath string) (*neta.Definition, error) {
+func loadAndValidate(bentoPath string) (*node.Definition, error) {
 	def, err := loadBento(bentoPath)
 	if err != nil {
 		printError(fmt.Sprintf("Failed to load bento: %v", err))
@@ -118,7 +118,7 @@ func isTTY() bool {
 //	bento examples/workflow.bento.json
 //	bento examples/workflow
 //	bento my-workflow
-func loadBento(path string) (*neta.Definition, error) {
+func loadBento(path string) (*node.Definition, error) {
 	// Strategy 1: Try path as-is
 	if isValidFilePath(path) {
 		return loadBentoFromFile(path)
@@ -146,13 +146,13 @@ func isValidFilePath(path string) bool {
 }
 
 // loadBentoFromFile loads a bento from a specific file path.
-func loadBentoFromFile(path string) (*neta.Definition, error) {
+func loadBentoFromFile(path string) (*node.Definition, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	var def neta.Definition
+	var def node.Definition
 	if err := json.Unmarshal(data, &def); err != nil {
 		return nil, fmt.Errorf("failed to parse JSON: %w", err)
 	}
@@ -161,7 +161,7 @@ func loadBentoFromFile(path string) (*neta.Definition, error) {
 }
 
 // loadBentoFromStorage loads a bento from hangiri storage by name.
-func loadBentoFromStorage(name string) (*neta.Definition, error) {
+func loadBentoFromStorage(name string) (*node.Definition, error) {
 	// Strip .bento.json extension if provided
 	name = strings.TrimSuffix(name, ".bento.json")
 
@@ -176,34 +176,34 @@ func loadBentoFromStorage(name string) (*neta.Definition, error) {
 	return def, nil
 }
 
-// createPantry creates and populates the registry with all neta types.
+// createPantry creates and populates the registry with all node types.
 func createPantry() *registry.Registry {
 	p := registry.New()
 
-	// Register all neta types
-	p.RegisterFactory("edit-fields", func() neta.Executable { return editfields.New() })
-	p.RegisterFactory("file-system", func() neta.Executable { return filesystem.New() })
-	p.RegisterFactory("group", func() neta.Executable { return group.New() })
-	p.RegisterFactory("http-request", func() neta.Executable { return httpneta.New() })
-	p.RegisterFactory("image", func() neta.Executable { return image.New() })
-	p.RegisterFactory("loop", func() neta.Executable { return loop.New() })
-	p.RegisterFactory("parallel", func() neta.Executable { return parallel.New() })
-	p.RegisterFactory("shell-command", func() neta.Executable { return shellcommand.New() })
-	p.RegisterFactory("spreadsheet", func() neta.Executable { return spreadsheet.New() })
-	p.RegisterFactory("transform", func() neta.Executable { return transform.New() })
+	// Register all node types
+	p.RegisterFactory("edit-fields", func() node.Executable { return editfields.New() })
+	p.RegisterFactory("file-system", func() node.Executable { return filesystem.New() })
+	p.RegisterFactory("group", func() node.Executable { return group.New() })
+	p.RegisterFactory("http-request", func() node.Executable { return httpneta.New() })
+	p.RegisterFactory("image", func() node.Executable { return image.New() })
+	p.RegisterFactory("loop", func() node.Executable { return loop.New() })
+	p.RegisterFactory("parallel", func() node.Executable { return parallel.New() })
+	p.RegisterFactory("shell-command", func() node.Executable { return shellcommand.New() })
+	p.RegisterFactory("spreadsheet", func() node.Executable { return spreadsheet.New() })
+	p.RegisterFactory("transform", func() node.Executable { return transform.New() })
 
 	return p
 }
 
 // validateBento validates the bento definition before execution.
-func validateBento(def *neta.Definition) error {
+func validateBento(def *node.Definition) error {
 	validator := validator.New()
 	ctx := context.Background()
 	return validator.Validate(ctx, def)
 }
 
 // showDryRun displays what would be executed without running.
-func showDryRun(def *neta.Definition) error {
+func showDryRun(def *node.Definition) error {
 	printInfo("DRY RUN MODE - No execution will occur")
 	fmt.Printf("\nWould execute bento: %s\n", def.Name)
 	fmt.Printf("Total nodes to execute: %d\n\n", len(def.Nodes))

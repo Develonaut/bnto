@@ -12,9 +12,9 @@ var (
 	// Breadcrumb colors
 	colorBreadcrumb = lipgloss.NewStyle().Foreground(lipgloss.Color("205")) // Hot Pink
 
-	// NETA type colors
-	colorNETALabel = lipgloss.NewStyle().Foreground(lipgloss.Color("51"))  // Cyan
-	colorNETAType  = lipgloss.NewStyle().Foreground(lipgloss.Color("141")) // Purple
+	// NODE type colors
+	colorNODELabel = lipgloss.NewStyle().Foreground(lipgloss.Color("51"))  // Cyan
+	colorNODEType  = lipgloss.NewStyle().Foreground(lipgloss.Color("141")) // Purple
 
 	// Status word colors
 	colorStatusRunning   = lipgloss.NewStyle().Foreground(lipgloss.Color("220")) // Gold (for running)
@@ -28,7 +28,7 @@ var (
 )
 
 // colorizeMessage applies colors to different parts of a log message.
-// Format: "[breadcrumb] StatusWord NETA:type name (duration, progress%)"
+// Format: "[breadcrumb] StatusWord NODE:type name (duration, progress%)"
 func colorizeMessage(text string, isRunning bool, isSuccess bool, isFailed bool) string {
 	// Handle breadcrumb at start [Parent:Child]
 	breadcrumbRegex := regexp.MustCompile(`^\[([^\]]+)\]\s+`)
@@ -37,12 +37,12 @@ func colorizeMessage(text string, isRunning bool, isSuccess bool, isFailed bool)
 		return colorBreadcrumb.Render(breadcrumb) + " "
 	})
 
-	// Colorize "NETA:type" pattern
-	netaRegex := regexp.MustCompile(`NETA:([a-z-]+)`)
-	text = netaRegex.ReplaceAllStringFunc(text, func(match string) string {
+	// Colorize "NODE:type" pattern
+	nodeRegex := regexp.MustCompile(`NODE:([a-z-]+)`)
+	text = nodeRegex.ReplaceAllStringFunc(text, func(match string) string {
 		parts := strings.Split(match, ":")
 		if len(parts) == 2 {
-			return colorNETALabel.Render("NETA") + ":" + colorNETAType.Render(parts[1])
+			return colorNODELabel.Render("NODE") + ":" + colorNODEType.Render(parts[1])
 		}
 		return match
 	})

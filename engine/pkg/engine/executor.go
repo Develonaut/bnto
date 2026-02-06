@@ -3,13 +3,13 @@ package engine
 import (
 	"context"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // executeNode executes a single node (handles all node types).
 func (i *Engine) executeNode(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 	result *Result,
 ) error {
@@ -32,7 +32,7 @@ func (i *Engine) checkContextCancellation(ctx context.Context) error {
 // dispatchNodeType routes to appropriate executor based on node type.
 func (i *Engine) dispatchNodeType(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 	result *Result,
 ) error {
@@ -66,8 +66,8 @@ func (i *Engine) executeGraph(ctx context.Context, g *graph, execCtx *executionC
 }
 
 // processNextNode processes the next node in the queue.
-func (i *Engine) processNextNode(ctx context.Context, queue []*neta.Definition, executed map[string]bool,
-	g *graph, execCtx *executionContext, result *Result) (*neta.Definition, []*neta.Definition, error) {
+func (i *Engine) processNextNode(ctx context.Context, queue []*node.Definition, executed map[string]bool,
+	g *graph, execCtx *executionContext, result *Result) (*node.Definition, []*node.Definition, error) {
 	if err := i.checkContextCancellation(ctx); err != nil {
 		return nil, queue, err
 	}
@@ -82,14 +82,14 @@ func (i *Engine) processNextNode(ctx context.Context, queue []*neta.Definition, 
 }
 
 // dequeueNode removes and returns the first node from queue.
-func (i *Engine) dequeueNode(queue []*neta.Definition) (*neta.Definition, []*neta.Definition) {
+func (i *Engine) dequeueNode(queue []*node.Definition) (*node.Definition, []*node.Definition) {
 	return queue[0], queue[1:]
 }
 
 // executeAndMarkNode executes a node and marks it as executed.
 func (i *Engine) executeAndMarkNode(
 	ctx context.Context,
-	node *neta.Definition,
+	node *node.Definition,
 	g *graph,
 	executed map[string]bool,
 	execCtx *executionContext,
@@ -108,8 +108,8 @@ func (i *Engine) enqueueReadyTargets(
 	g *graph,
 	nodeID string,
 	executed map[string]bool,
-	queue []*neta.Definition,
-) []*neta.Definition {
+	queue []*node.Definition,
+) []*node.Definition {
 	for _, target := range g.getTargets(nodeID) {
 		if g.isReady(target.ID) && !executed[target.ID] {
 			queue = append(queue, target)

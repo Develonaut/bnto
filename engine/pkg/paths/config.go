@@ -1,8 +1,4 @@
-// Package kombu provides configuration management and persistence for bento.
-//
-// Kombu (昆布 - kelp/seaweed) is a foundational ingredient in Japanese cooking,
-// used to make dashi stock. Similarly, this package provides foundational
-// configuration utilities that other packages depend on.
+// Package paths provides configuration management and persistence for bento.
 //
 // This package manages:
 //   - Bento home directory configuration
@@ -29,7 +25,7 @@ var configDir = func() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Store config in ~/.bento/config/ subdirectory for consistency with hangiri storage structure
+	// Store config in ~/.bento/config/ subdirectory for consistency with storage structure
 	return filepath.Join(home, ".bento", "config"), nil
 }
 

@@ -19,8 +19,8 @@ func TestLogger_Output(t *testing.T) {
 	})
 
 	logger.Info("Executing HTTP request",
-		"neta_type", "http-request",
-		"neta_id", "node-1")
+		"node_type", "http-request",
+		"node_id", "node-1")
 
 	output := buf.String()
 
@@ -28,12 +28,12 @@ func TestLogger_Output(t *testing.T) {
 		t.Errorf("Output should contain message: %s", output)
 	}
 
-	if !strings.Contains(output, "neta_type") || !strings.Contains(output, "http-request") {
-		t.Errorf("Output should contain neta_type=http-request: %s", output)
+	if !strings.Contains(output, "node_type") || !strings.Contains(output, "http-request") {
+		t.Errorf("Output should contain node_type=http-request: %s", output)
 	}
 
-	if !strings.Contains(output, "neta_id") || !strings.Contains(output, "node-1") {
-		t.Errorf("Output should contain neta_id=node-1: %s", output)
+	if !strings.Contains(output, "node_id") || !strings.Contains(output, "node-1") {
+		t.Errorf("Output should contain node_id=node-1: %s", output)
 	}
 }
 
@@ -129,12 +129,12 @@ func TestLogger_WithContext(t *testing.T) {
 		Output: &buf,
 	})
 
-	// Create logger with context (like itamae would do)
+	// Create logger with context (like the engine would do)
 	contextLogger := logger.With(
 		"trace_id", "trace-123",
 		"bento_id", "my-workflow")
 
-	contextLogger.Info("Executing neta")
+	contextLogger.Info("Executing node")
 
 	output := buf.String()
 
@@ -181,7 +181,7 @@ func TestLogger_StreamingCallback(t *testing.T) {
 }
 
 // TestLogger_ContextHelpers verifies that the context helper functions
-// (WithBentoID, WithNetaID, etc.) work correctly.
+// (WithBentoID, WithNodeID, etc.) work correctly.
 func TestLogger_ContextHelpers(t *testing.T) {
 	var buf bytes.Buffer
 
@@ -192,8 +192,8 @@ func TestLogger_ContextHelpers(t *testing.T) {
 
 	// Use helper functions to add context
 	log = logger.WithBentoID(log, "workflow-123")
-	log = logger.WithNetaID(log, "neta-456")
-	log = logger.WithNetaType(log, "http-request")
+	log = logger.WithNodeID(log, "node-456")
+	log = logger.WithNodeType(log, "http-request")
 
 	log.Info("Test message")
 
@@ -203,12 +203,12 @@ func TestLogger_ContextHelpers(t *testing.T) {
 		t.Errorf("Output should contain bento_id: %s", output)
 	}
 
-	if !strings.Contains(output, "neta-456") {
-		t.Errorf("Output should contain neta_id: %s", output)
+	if !strings.Contains(output, "node-456") {
+		t.Errorf("Output should contain node_id: %s", output)
 	}
 
 	if !strings.Contains(output, "http-request") {
-		t.Errorf("Output should contain neta_type: %s", output)
+		t.Errorf("Output should contain node_type: %s", output)
 	}
 }
 

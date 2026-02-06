@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -79,13 +79,13 @@ func loadBentos() ([]list.Item, error) {
 }
 
 // loadBentoDefinition loads a bento from file
-func loadBentoDefinition(path string) (*neta.Definition, error) {
+func loadBentoDefinition(path string) (*node.Definition, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read bento: %w", err)
 	}
 
-	var def neta.Definition
+	var def node.Definition
 	if err := json.Unmarshal(data, &def); err != nil {
 		return nil, fmt.Errorf("failed to parse bento: %w", err)
 	}
@@ -144,7 +144,7 @@ func (m Model) executeBentoAsync(logChan chan string) (tea.Cmd, tea.Cmd) {
 			return executionCompleteMsg{err: err}
 		}
 
-		// Create pantry
+		// Create registry
 		p := createTUIPantry()
 
 		// Create logger that writes to both file and TUI

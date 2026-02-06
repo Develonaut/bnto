@@ -3,7 +3,7 @@ package engine
 import (
 	"sync"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // graphNode represents a node in the flattened execution graph for progress tracking.
@@ -38,7 +38,7 @@ type executionState struct {
 // analyzeGraph flattens the bento definition into an execution graph.
 // Groups are transparent (children are flattened).
 // Loops are opaque (count as single node, children hidden).
-func analyzeGraph(def *neta.Definition) *executionGraph {
+func analyzeGraph(def *node.Definition) *executionGraph {
 	graph := &executionGraph{
 		Nodes: make(map[string]*graphNode),
 	}
@@ -47,7 +47,7 @@ func analyzeGraph(def *neta.Definition) *executionGraph {
 }
 
 // analyzeNode recursively analyzes a node and adds it to the graph.
-func analyzeNode(def *neta.Definition, graph *executionGraph, level int) {
+func analyzeNode(def *node.Definition, graph *executionGraph, level int) {
 	switch def.Type {
 	case "group", "parallel":
 		analyzeGroupNode(def, graph, level)
@@ -59,24 +59,24 @@ func analyzeNode(def *neta.Definition, graph *executionGraph, level int) {
 }
 
 // analyzeGroupNode flattens group children (groups are transparent in progress graph).
-func analyzeGroupNode(def *neta.Definition, graph *executionGraph, level int) {
+func analyzeGroupNode(def *node.Definition, graph *executionGraph, level int) {
 	for i := range def.Nodes {
 		analyzeNode(&def.Nodes[i], graph, level)
 	}
 }
 
 // analyzeLoopNode adds loop as single node (loop children execute internally).
-func analyzeLoopNode(def *neta.Definition, graph *executionGraph, level int) {
+func analyzeLoopNode(def *node.Definition, graph *executionGraph, level int) {
 	addNodeToGraph(def, graph, level)
 }
 
 // analyzeLeafNode adds a leaf node to the graph.
-func analyzeLeafNode(def *neta.Definition, graph *executionGraph, level int) {
+func analyzeLeafNode(def *node.Definition, graph *executionGraph, level int) {
 	addNodeToGraph(def, graph, level)
 }
 
 // addNodeToGraph creates a graph node and adds it with its weight.
-func addNodeToGraph(def *neta.Definition, graph *executionGraph, level int) {
+func addNodeToGraph(def *node.Definition, graph *executionGraph, level int) {
 	weight := getNodeWeight(def.Type)
 	graph.Nodes[def.ID] = &graphNode{
 		ID:     def.ID,

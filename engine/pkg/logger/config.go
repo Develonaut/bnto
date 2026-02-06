@@ -1,7 +1,4 @@
-// Package shoyu provides structured logging for the bento system.
-//
-// "Shoyu" (醤油 - soy sauce) adds flavor and transparency—our logger provides
-// observability into bento workflow execution.
+// Package logger provides structured logging for the bento system.
 //
 // The logger wraps Go's standard library log/slog for high-performance,
 // zero-allocation logging with both structured (JSON) and human-readable
@@ -20,13 +17,13 @@
 //
 // # Usage
 //
-//	logger := shoyu.New(shoyu.Config{
-//	    Level:  shoyu.LevelInfo,
-//	    Format: shoyu.FormatConsole,
+//	logger := logger.New(logger.Config{
+//	    Level:  logger.LevelInfo,
+//	    Format: logger.FormatConsole,
 //	})
 //
 //	logger.Info("Executing HTTP request",
-//	    "neta_type", "http-request",
+//	    "node_type", "http-request",
 //	    "url", "https://api.example.com")
 //
 // # Common Pitfalls
@@ -60,12 +57,12 @@ type Config struct {
 
 	// OnStream is called for streaming output (optional).
 	// Used for real-time output from long-running processes like Blender.
-	// Critical for Phase 8: shell-command neta streaming.
+	// Critical for Phase 8: shell-command node streaming.
 	OnStream StreamCallback
 }
 
 // StreamCallback is called for each line of streaming output.
-// Used by shell-command neta to provide real-time feedback
+// Used by shell-command node to provide real-time feedback
 // from long-running processes like Blender renders.
 type StreamCallback func(line string)
 

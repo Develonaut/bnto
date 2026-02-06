@@ -17,8 +17,8 @@
 //
 // # Context Management
 //
-// The engine passes data between neta through an execution context.
-// Each neta's output becomes available to downstream neta via template variables.
+// The engine passes data between node through an execution context.
+// Each node's output becomes available to downstream nodes via template variables.
 //
 // Learn more about context.Context: https://go.dev/blog/context
 package engine
@@ -28,7 +28,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/Develonaut/bento/pkg/registry"
 	"github.com/Develonaut/bento/pkg/logger"
 )
@@ -110,7 +110,7 @@ func (i *Engine) OnProgress(callback ProgressCallback) {
 // Returns:
 //   - *Result: Execution result with outputs from all nodes
 //   - error: Any error that occurred during execution
-func (i *Engine) Serve(ctx context.Context, def *neta.Definition) (*Result, error) {
+func (i *Engine) Serve(ctx context.Context, def *node.Definition) (*Result, error) {
 	start := time.Now()
 
 	// Analyze graph structure and initialize execution state

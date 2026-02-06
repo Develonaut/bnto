@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/Develonaut/bento/pkg/storage"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/spf13/cobra"
 )
 
@@ -65,7 +65,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 }
 
 // createStorageBento creates a bento in ~/.bento/bentos/ using hangiri storage.
-func createStorageBento(name string, template *neta.Definition) error {
+func createStorageBento(name string, template *node.Definition) error {
 	printInfo(fmt.Sprintf("Creating new bento: %s", name))
 
 	storage := storage.NewDefaultStorage()
@@ -89,7 +89,7 @@ func createStorageBento(name string, template *neta.Definition) error {
 }
 
 // createLocalBento creates a bento in the current directory.
-func createLocalBento(name string, template *neta.Definition) error {
+func createLocalBento(name string, template *node.Definition) error {
 	fileName := name + ".bento.json"
 
 	printInfo(fmt.Sprintf("Creating new bento: %s", name))
@@ -126,46 +126,46 @@ func showNextSteps(nameOrPath string, isLocal bool) {
 }
 
 // createTemplate creates a template bento definition.
-func createTemplate(name string) *neta.Definition {
-	return &neta.Definition{
+func createTemplate(name string) *node.Definition {
+	return &node.Definition{
 		ID:      name,
 		Type:    "group",
 		Version: "1.0.0",
 		Name:    formatName(name),
-		Position: neta.Position{
+		Position: node.Position{
 			X: 0,
 			Y: 0,
 		},
-		Metadata: neta.Metadata{
+		Metadata: node.Metadata{
 			Tags: []string{"template"},
 		},
 		Parameters:  make(map[string]interface{}),
-		InputPorts:  []neta.Port{},
-		OutputPorts: []neta.Port{},
-		Nodes:       []neta.Definition{createSampleNode()},
-		Edges:       []neta.Edge{},
+		InputPorts:  []node.Port{},
+		OutputPorts: []node.Port{},
+		Nodes:       []node.Definition{createSampleNode()},
+		Edges:       []node.Edge{},
 	}
 }
 
 // createSampleNode creates a sample edit-fields node.
-func createSampleNode() neta.Definition {
-	return neta.Definition{
+func createSampleNode() node.Definition {
+	return node.Definition{
 		ID:      "sample-1",
 		Type:    "edit-fields",
 		Version: "1.0.0",
 		Name:    "Sample Node",
-		Position: neta.Position{
+		Position: node.Position{
 			X: 100,
 			Y: 100,
 		},
-		Metadata: neta.Metadata{},
+		Metadata: node.Metadata{},
 		Parameters: map[string]interface{}{
 			"values": map[string]interface{}{
 				"message": "Hello from bento!",
 			},
 		},
-		InputPorts:  []neta.Port{},
-		OutputPorts: []neta.Port{},
+		InputPorts:  []node.Port{},
+		OutputPorts: []node.Port{},
 	}
 }
 
@@ -178,7 +178,7 @@ func formatName(name string) string {
 }
 
 // writeTemplate writes the template to a JSON file.
-func writeTemplate(fileName string, template *neta.Definition) error {
+func writeTemplate(fileName string, template *node.Definition) error {
 	data, err := json.MarshalIndent(template, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to serialize template: %w", err)

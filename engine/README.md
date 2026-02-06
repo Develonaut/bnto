@@ -2,23 +2,23 @@
 
 **Go execution engine for Bento workflow automation.**
 
-This directory contains the core Go CLI and execution engine. It handles workflow parsing, validation, orchestration, and all neta type execution.
+This directory contains the core Go CLI and execution engine. It handles workflow parsing, validation, orchestration, and all node type execution.
 
 ## Packages
 
 | Package | Purpose |
 |---------|---------|
 | `engine` | Workflow orchestration and execution |
-| `registry` | Neta type registration and lookup |
+| `registry` | Node type registration and lookup |
 | `storage` | Persistent storage layer |
 | `validator` | Workflow definition validation |
 | `paths` | Path resolution and config management |
 | `logger` | Structured logging |
 | `secrets` | Encrypted secrets management |
 | `tui` | Terminal UI (Bubble Tea) |
-| `neta` | All workflow node type implementations |
+| `node` | All workflow node type implementations |
 
-## Neta Types
+## Node Types
 
 | Type | Purpose |
 |------|---------|

@@ -16,7 +16,7 @@ import (
 
 // TestImageOptimize_ConvertsToWebP validates the image optimization bento.
 // Tests:
-// 1. Parallel neta executes 8 image conversions with maxConcurrency: 4
+// 1. Parallel node executes 8 image conversions with maxConcurrency: 4
 // 2. Converts 8 PNG files to WebP format
 // 3. Deletes original PNG files after conversion
 // 4. Validates parallel execution provides speedup
@@ -100,7 +100,7 @@ func TestImageOptimize_ConvertsToWebP(t *testing.T) {
 	t.Log("✓ Verified WebP file format (RIFF...WEBP signature)")
 	t.Log("✓ Original PNG files deleted")
 	t.Logf("✓ Completed in %v (parallel execution)", duration)
-	t.Log("✓ Validated parallel neta with maxConcurrency: 4")
+	t.Log("✓ Validated parallel node with maxConcurrency: 4")
 }
 
 // TestImageOptimize_ParallelPerformance validates parallel execution speedup.
@@ -162,7 +162,7 @@ func TestImageOptimize_ParallelPerformance(t *testing.T) {
 }
 
 // TestImageOptimize_MissingSourceFiles validates error handling.
-// When source PNG files don't exist, the image neta should fail gracefully.
+// When source PNG files don't exist, the image node should fail gracefully.
 func TestImageOptimize_MissingSourceFiles(t *testing.T) {
 	projectRoot := "../../"
 
@@ -192,7 +192,7 @@ func TestImageOptimize_MissingSourceFiles(t *testing.T) {
 	assert.Equal(t, 0, len(matches), "Should not create any WebP files when source PNGs missing")
 
 	t.Log("✓ Correctly failed with missing source files")
-	t.Log("✓ Validated error handling for image neta")
+	t.Log("✓ Validated error handling for image node")
 }
 
 // createTestPNG creates a small test PNG file with a solid color.

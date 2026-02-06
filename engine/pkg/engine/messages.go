@@ -34,7 +34,7 @@ var errorEmojis = []string{
 }
 
 // statusWordsRunning contains fun status words for running nodes.
-// Source: .claude/STATUS_WORDS.md (synchronized with pkg/miso/sushi.go)
+// Source: .claude/STATUS_WORDS.md (synchronized with pkg/tui/sushi.go)
 var statusWordsRunning = []string{
 	"Tasting",
 	"Sampling",
@@ -47,7 +47,7 @@ var statusWordsRunning = []string{
 }
 
 // statusWordsCompleted contains fun status words for completed nodes.
-// Source: .claude/STATUS_WORDS.md (synchronized with pkg/miso/sushi.go)
+// Source: .claude/STATUS_WORDS.md (synchronized with pkg/tui/sushi.go)
 var statusWordsCompleted = []string{
 	"Savored",
 	"Devoured",
@@ -107,16 +107,15 @@ func msgBentoFailed(duration string) logMessage {
 	}
 }
 
-// msgNetaStarted creates a message for neta execution start.
-func msgNetaStarted() logMessage {
+// msgNodeStarted creates a message for node execution start.
+func msgNodeStarted() logMessage {
 	return logMessage{
-		emoji: "", // No emoji for individual neta logs
-		text:  "Executing neta",
+		emoji: "", // No emoji for individual node logs
+		text:  "Executing node",
 	}
 }
 
 // msgGroupStarted creates a message for group execution start.
-// Format: "[Parent:Child] Tasting NETA:group name"
 func msgGroupStarted(breadcrumb, name string) logMessage {
 	statusWord := getStatusWord(name, true)
 	prefix := ""
@@ -125,13 +124,13 @@ func msgGroupStarted(breadcrumb, name string) logMessage {
 	}
 	return logMessage{
 		emoji:     "",
-		text:      prefix + " " + statusWord + " NETA:group " + name,
+		text:      prefix + " " + statusWord + " NODE:group " + name,
 		isRunning: true,
 	}
 }
 
 // msgGroupCompleted creates a message for group execution completion.
-// Format: "[Parent:Child] Finished NETA:group name (2ms)"
+// Format: "[Parent:Child] Finished NODE:group name (2ms)"
 func msgGroupCompleted(breadcrumb, name, duration string) logMessage {
 	statusWord := getStatusWord(name, false)
 	prefix := ""
@@ -140,13 +139,13 @@ func msgGroupCompleted(breadcrumb, name, duration string) logMessage {
 	}
 	return logMessage{
 		emoji:     "",
-		text:      prefix + " " + statusWord + " NETA:group " + name + " (" + duration + ")",
+		text:      prefix + " " + statusWord + " NODE:group " + name + " (" + duration + ")",
 		isSuccess: true,
 	}
 }
 
 // msgLoopStarted creates a message for loop execution start.
-// Format: "[Parent:Child] Sampling NETA:loop name"
+// Format: "[Parent:Child] Sampling NODE:loop name"
 func msgLoopStarted(breadcrumb, name string) logMessage {
 	statusWord := getStatusWord(name, true)
 	prefix := ""
@@ -155,13 +154,13 @@ func msgLoopStarted(breadcrumb, name string) logMessage {
 	}
 	return logMessage{
 		emoji:     "",
-		text:      prefix + " " + statusWord + " NETA:loop " + name,
+		text:      prefix + " " + statusWord + " NODE:loop " + name,
 		isRunning: true,
 	}
 }
 
 // msgLoopCompleted creates a message for loop execution completion.
-// Format: "[Parent:Child] Perfected NETA:loop name (2ms, 75%)"
+// Format: "[Parent:Child] Perfected NODE:loop name (2ms, 75%)"
 func msgLoopCompleted(breadcrumb, name, duration string, progressPct int) logMessage {
 	statusWord := getStatusWord(name, false)
 	prefix := ""
@@ -170,13 +169,13 @@ func msgLoopCompleted(breadcrumb, name, duration string, progressPct int) logMes
 	}
 	return logMessage{
 		emoji:     "",
-		text:      fmt.Sprintf("%s %s NETA:loop %s (%s, %d%%)", prefix, statusWord, name, duration, progressPct),
+		text:      fmt.Sprintf("%s %s NODE:loop %s (%s, %d%%)", prefix, statusWord, name, duration, progressPct),
 		isSuccess: true,
 	}
 }
 
 // msgChildNodeStarted creates a message for child node execution start.
-// Format: "[Parent:Child] Tasting NETA:type name"
+// Format: "[Parent:Child] Tasting NODE:type name"
 func msgChildNodeStarted(breadcrumb, nodeType, name string) logMessage {
 	statusWord := getStatusWord(name, true)
 	prefix := ""
@@ -185,13 +184,13 @@ func msgChildNodeStarted(breadcrumb, nodeType, name string) logMessage {
 	}
 	return logMessage{
 		emoji:     "",
-		text:      prefix + " " + statusWord + " NETA:" + nodeType + " " + name,
+		text:      prefix + " " + statusWord + " NODE:" + nodeType + " " + name,
 		isRunning: true,
 	}
 }
 
 // msgChildNodeCompleted creates a message for child node execution completion.
-// Format: "[Parent:Child] Devoured NETA:type name (2ms, 10%)"
+// Format: "[Parent:Child] Devoured NODE:type name (2ms, 10%)"
 func msgChildNodeCompleted(breadcrumb, nodeType, name, duration string, progressPct int) logMessage {
 	statusWord := getStatusWord(name, false)
 	prefix := ""
@@ -200,7 +199,7 @@ func msgChildNodeCompleted(breadcrumb, nodeType, name, duration string, progress
 	}
 	return logMessage{
 		emoji:     "",
-		text:      fmt.Sprintf("%s %s NETA:%s %s (%s, %d%%)", prefix, statusWord, nodeType, name, duration, progressPct),
+		text:      fmt.Sprintf("%s %s NODE:%s %s (%s, %d%%)", prefix, statusWord, nodeType, name, duration, progressPct),
 		isSuccess: true,
 	}
 }

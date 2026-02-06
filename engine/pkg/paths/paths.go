@@ -1,8 +1,4 @@
-// Package kombu provides path resolution utilities.
-//
-// Kombu (昆布 - kelp/seaweed) is a foundational ingredient in Japanese cooking,
-// used to make dashi stock. Similarly, this package provides foundational path
-// resolution that other packages depend on.
+// Package paths provides path resolution utilities.
 //
 // Features:
 //   - Cross-platform path resolution

@@ -7,16 +7,16 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/Develonaut/bento/pkg/registry"
 )
 
-// MockNeta is a test implementation of neta.Executable.
-type MockNeta struct {
+// MockNode is a test implementation of node.Executable.
+type MockNode struct {
 	name string
 }
 
-func (m *MockNeta) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
+func (m *MockNode) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
 	return map[string]interface{}{"mock": m.name}, nil
 }
 
@@ -26,12 +26,12 @@ func TestPantry_RegisterFactoryAndGetNew(t *testing.T) {
 	p := registry.New()
 
 	// Register a factory function
-	p.RegisterFactory("test-neta", func() neta.Executable {
-		return &MockNeta{name: "test-neta"}
+	p.RegisterFactory("test-node", func() node.Executable {
+		return &MockNode{name: "test-node"}
 	})
 
 	// Retrieve a new instance
-	instance, err := p.GetNew("test-neta")
+	instance, err := p.GetNew("test-node")
 	if err != nil {
 		t.Fatalf("GetNew failed: %v", err)
 	}
@@ -51,8 +51,8 @@ func TestPantry_RegisterFactoryAndGetNew(t *testing.T) {
 		t.Fatal("Result is not a map")
 	}
 
-	if resultMap["mock"] != "test-neta" {
-		t.Errorf("Expected mock='test-neta', got %v", resultMap["mock"])
+	if resultMap["mock"] != "test-node" {
+		t.Errorf("Expected mock='test-node', got %v", resultMap["mock"])
 	}
 }
 
@@ -62,11 +62,11 @@ func TestPantry_GetUnregistered(t *testing.T) {
 	p := registry.New()
 
 	// Register some types so the error can list them
-	p.RegisterFactory("type-a", func() neta.Executable {
-		return &MockNeta{name: "a"}
+	p.RegisterFactory("type-a", func() node.Executable {
+		return &MockNode{name: "a"}
 	})
-	p.RegisterFactory("type-b", func() neta.Executable {
-		return &MockNeta{name: "b"}
+	p.RegisterFactory("type-b", func() node.Executable {
+		return &MockNode{name: "b"}
 	})
 
 	// Try to get unregistered type
@@ -98,14 +98,14 @@ func TestPantry_List(t *testing.T) {
 	p := registry.New()
 
 	// Register multiple types
-	p.RegisterFactory("type-a", func() neta.Executable {
-		return &MockNeta{name: "a"}
+	p.RegisterFactory("type-a", func() node.Executable {
+		return &MockNode{name: "a"}
 	})
-	p.RegisterFactory("type-b", func() neta.Executable {
-		return &MockNeta{name: "b"}
+	p.RegisterFactory("type-b", func() node.Executable {
+		return &MockNode{name: "b"}
 	})
-	p.RegisterFactory("type-c", func() neta.Executable {
-		return &MockNeta{name: "c"}
+	p.RegisterFactory("type-c", func() node.Executable {
+		return &MockNode{name: "c"}
 	})
 
 	// List all types
@@ -139,8 +139,8 @@ func TestPantry_ConcurrentAccess(t *testing.T) {
 	// Register initial types
 	for i := 0; i < 10; i++ {
 		typeNum := i
-		p.RegisterFactory(fmt.Sprintf("type-%d", i), func() neta.Executable {
-			return &MockNeta{name: fmt.Sprintf("neta-%d", typeNum)}
+		p.RegisterFactory(fmt.Sprintf("type-%d", i), func() node.Executable {
+			return &MockNode{name: fmt.Sprintf("node-%d", typeNum)}
 		})
 	}
 
@@ -193,8 +193,8 @@ func TestPantry_FactoryPattern(t *testing.T) {
 	p := registry.New()
 
 	// Register a factory
-	p.RegisterFactory("test-type", func() neta.Executable {
-		return &MockNeta{name: "test"}
+	p.RegisterFactory("test-type", func() node.Executable {
+		return &MockNode{name: "test"}
 	})
 
 	// Get two instances
@@ -220,13 +220,13 @@ func TestPantry_DuplicateRegistration(t *testing.T) {
 	p := registry.New()
 
 	// Register first factory
-	p.RegisterFactory("test-type", func() neta.Executable {
-		return &MockNeta{name: "first"}
+	p.RegisterFactory("test-type", func() node.Executable {
+		return &MockNode{name: "first"}
 	})
 
 	// Register second factory with same name
-	p.RegisterFactory("test-type", func() neta.Executable {
-		return &MockNeta{name: "second"}
+	p.RegisterFactory("test-type", func() node.Executable {
+		return &MockNode{name: "second"}
 	})
 
 	// Get instance
@@ -252,8 +252,8 @@ func TestPantry_Has(t *testing.T) {
 	p := registry.New()
 
 	// Register a type
-	p.RegisterFactory("existing-type", func() neta.Executable {
-		return &MockNeta{name: "exists"}
+	p.RegisterFactory("existing-type", func() node.Executable {
+		return &MockNode{name: "exists"}
 	})
 
 	// Test Has with existing type
@@ -274,17 +274,17 @@ func TestPantry_EmptyPantry(t *testing.T) {
 	// List should return empty slice
 	types := p.List()
 	if len(types) != 0 {
-		t.Errorf("Empty pantry should list 0 types, got %d", len(types))
+		t.Errorf("Empty registry should list 0 types, got %d", len(types))
 	}
 
 	// GetNew should return error
 	_, err := p.GetNew("any-type")
 	if err == nil {
-		t.Error("GetNew on empty pantry should return error")
+		t.Error("GetNew on empty registry should return error")
 	}
 
 	// Has should return false
 	if p.Has("any-type") {
-		t.Error("Has on empty pantry should return false")
+		t.Error("Has on empty registry should return false")
 	}
 }

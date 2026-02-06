@@ -12,7 +12,7 @@ import (
 
 // TestMockRender_CreatesPNGs validates the mock render bento.
 // Tests:
-// 1. Runs mock Blender script via shell-command neta
+// 1. Runs mock Blender script via shell-command node
 // 2. Verifies 8 PNG files are created (render-1.png through render-8.png)
 // 3. Verifies streaming output shows progress incrementally
 func TestMockRender_CreatesPNGs(t *testing.T) {
@@ -84,7 +84,7 @@ func TestMockRender_CreatesPNGs(t *testing.T) {
 	t.Log("✓ Created 8 PNG files (render-1.png through render-8.png)")
 	t.Log("✓ Validated PNG file format")
 	t.Log("✓ Validated streaming progress output")
-	t.Log("✓ Validated shell-command neta with long-running process")
+	t.Log("✓ Validated shell-command node with long-running process")
 }
 
 // TestMockRender_StreamingProgress validates streaming output behavior.

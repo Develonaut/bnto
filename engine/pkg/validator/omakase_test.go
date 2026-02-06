@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/Develonaut/bento/pkg/validator"
 )
 
@@ -14,7 +14,7 @@ func TestValidator_ValidDefinition(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "node-1",
 		Type:    "http-request",
 		Version: "1.0.0",
@@ -23,10 +23,10 @@ func TestValidator_ValidDefinition(t *testing.T) {
 			"url":    "https://api.example.com/users",
 			"method": "GET",
 		},
-		InputPorts: []neta.Port{
+		InputPorts: []node.Port{
 			{ID: "in-1", Name: "input"},
 		},
-		OutputPorts: []neta.Port{
+		OutputPorts: []node.Port{
 			{ID: "out-1", Name: "output"},
 		},
 	}
@@ -42,7 +42,7 @@ func TestValidator_MissingID(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		Type:    "http-request",
 		Version: "1.0.0",
 		Name:    "Fetch Data",
@@ -68,7 +68,7 @@ func TestValidator_MissingType(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "node-1",
 		Version: "1.0.0",
 		Name:    "Fetch Data",
@@ -94,7 +94,7 @@ func TestValidator_MissingVersion(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:   "node-1",
 		Type: "http-request",
 		Name: "Fetch Data",
@@ -115,12 +115,12 @@ func TestValidator_MissingVersion(t *testing.T) {
 	}
 }
 
-// Test: Invalid neta type should fail
+// Test: Invalid node type should fail
 func TestValidator_InvalidNetaType(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "node-1",
 		Type:    "invalid-type",
 		Version: "1.0.0",
@@ -129,7 +129,7 @@ func TestValidator_InvalidNetaType(t *testing.T) {
 
 	err := validator.Validate(ctx, def)
 	if err == nil {
-		t.Fatal("Expected validation error for invalid neta type")
+		t.Fatal("Expected validation error for invalid node type")
 	}
 
 	errMsg := err.Error()
@@ -143,7 +143,7 @@ func TestValidator_HTTPMissingURL(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "node-1",
 		Type:    "http-request",
 		Version: "1.0.0",
@@ -172,7 +172,7 @@ func TestValidator_HTTPInvalidMethod(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "node-1",
 		Type:    "http-request",
 		Version: "1.0.0",
@@ -201,7 +201,7 @@ func TestValidator_HTTPValidMethods(t *testing.T) {
 	methods := []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 
 	for _, method := range methods {
-		def := &neta.Definition{
+		def := &node.Definition{
 			ID:      "node-1",
 			Type:    "http-request",
 			Version: "1.0.0",
@@ -219,17 +219,17 @@ func TestValidator_HTTPValidMethods(t *testing.T) {
 	}
 }
 
-// Test: Validate group neta with nested nodes
+// Test: Validate group node with nested nodes
 func TestValidator_GroupWithNestedNodes(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "group-1",
 		Type:    "group",
 		Version: "1.0.0",
 		Name:    "Main Group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:      "node-1",
 				Type:    "edit-fields",
@@ -252,7 +252,7 @@ func TestValidator_GroupWithNestedNodes(t *testing.T) {
 				},
 			},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{
 				ID:     "edge-1",
 				Source: "node-1",
@@ -272,12 +272,12 @@ func TestValidator_InvalidEdgeSource(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "group-1",
 		Type:    "group",
 		Version: "1.0.0",
 		Name:    "Main Group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:      "node-1",
 				Type:    "edit-fields",
@@ -290,7 +290,7 @@ func TestValidator_InvalidEdgeSource(t *testing.T) {
 				},
 			},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{
 				ID:     "edge-1",
 				Source: "nonexistent-node",
@@ -315,12 +315,12 @@ func TestValidator_InvalidEdgeTarget(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "group-1",
 		Type:    "group",
 		Version: "1.0.0",
 		Name:    "Main Group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:      "node-1",
 				Type:    "edit-fields",
@@ -333,7 +333,7 @@ func TestValidator_InvalidEdgeTarget(t *testing.T) {
 				},
 			},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{
 				ID:     "edge-1",
 				Source: "node-1",
@@ -353,12 +353,12 @@ func TestValidator_InvalidEdgeTarget(t *testing.T) {
 	}
 }
 
-// Test: Loop neta with invalid mode should fail
+// Test: Loop node with invalid mode should fail
 func TestValidator_LoopInvalidMode(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "node-1",
 		Type:    "loop",
 		Version: "1.0.0",
@@ -374,7 +374,7 @@ func TestValidator_LoopInvalidMode(t *testing.T) {
 	}
 }
 
-// Test: Loop neta with valid modes should pass
+// Test: Loop node with valid modes should pass
 func TestValidator_LoopValidModes(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
@@ -390,7 +390,7 @@ func TestValidator_LoopValidModes(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		def := &neta.Definition{
+		def := &node.Definition{
 			ID:      "node-1",
 			Type:    "loop",
 			Version: "1.0.0",
@@ -408,12 +408,12 @@ func TestValidator_LoopValidModes(t *testing.T) {
 	}
 }
 
-// Test: File-system neta with invalid operation should fail
+// Test: File-system node with invalid operation should fail
 func TestValidator_FileSystemInvalidOperation(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "node-1",
 		Type:    "file-system",
 		Version: "1.0.0",
@@ -434,7 +434,7 @@ func TestValidator_ShellCommandMissingCommand(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "node-1",
 		Type:    "shell-command",
 		Version: "1.0.0",
@@ -455,12 +455,12 @@ func TestValidator_ShellCommandMissingCommand(t *testing.T) {
 	}
 }
 
-// Test: Edit-fields neta should validate
+// Test: Edit-fields node should validate
 func TestValidator_EditFieldsValid(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "node-1",
 		Type:    "edit-fields",
 		Version: "1.0.0",
@@ -484,18 +484,18 @@ func TestValidator_NestedGroups(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "group-1",
 		Type:    "group",
 		Version: "1.0.0",
 		Name:    "Outer Group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:      "inner-group",
 				Type:    "group",
 				Version: "1.0.0",
 				Name:    "Inner Group",
-				Nodes: []neta.Definition{
+				Nodes: []node.Definition{
 					{
 						ID:      "node-1",
 						Type:    "edit-fields",
@@ -523,12 +523,12 @@ func TestValidator_InvalidChildNode(t *testing.T) {
 	validator := validator.New()
 	ctx := context.Background()
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "group-1",
 		Type:    "group",
 		Version: "1.0.0",
 		Name:    "Main Group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:   "node-1",
 				Type: "http-request",

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
-// executeGroup executes a group neta (container with child nodes).
-func (i *Engine) executeGroup(ctx context.Context, def *neta.Definition, execCtx *executionContext, result *Result) error {
+// executeGroup executes a group node (container with child nodes).
+func (i *Engine) executeGroup(ctx context.Context, def *node.Definition, execCtx *executionContext, result *Result) error {
 	i.logGroupStart(def, execCtx)
 	if len(def.Nodes) == 0 {
 		return i.handleEmptyGroup(def)
@@ -25,7 +25,7 @@ func (i *Engine) executeGroup(ctx context.Context, def *neta.Definition, execCtx
 // executeGroupNodes builds graph and executes all child nodes.
 func (i *Engine) executeGroupNodes(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 	result *Result,
 	start time.Time,
@@ -38,7 +38,7 @@ func (i *Engine) executeGroupNodes(
 }
 
 // logGroupStart logs and notifies at the start of group execution.
-func (i *Engine) logGroupStart(def *neta.Definition, execCtx *executionContext) {
+func (i *Engine) logGroupStart(def *node.Definition, execCtx *executionContext) {
 	i.notifyProgress(def.ID, "starting")
 
 	if i.messenger != nil {
@@ -52,7 +52,7 @@ func (i *Engine) logGroupStart(def *neta.Definition, execCtx *executionContext) 
 }
 
 // handleEmptyGroup handles execution of an empty group.
-func (i *Engine) handleEmptyGroup(def *neta.Definition) error {
+func (i *Engine) handleEmptyGroup(def *node.Definition) error {
 	i.notifyProgress(def.ID, "completed")
 	if i.messenger != nil {
 		i.messenger.SendNodeCompleted(def.ID, 0, nil)
@@ -61,7 +61,7 @@ func (i *Engine) handleEmptyGroup(def *neta.Definition) error {
 }
 
 // buildAndValidateGraph builds execution graph and validates for cycles.
-func (i *Engine) buildAndValidateGraph(def *neta.Definition, start time.Time) (*graph, error) {
+func (i *Engine) buildAndValidateGraph(def *node.Definition, start time.Time) (*graph, error) {
 	g, err := i.buildGraphWithErrorHandling(def, start)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (i *Engine) buildAndValidateGraph(def *neta.Definition, start time.Time) (*
 }
 
 // buildGraphWithErrorHandling builds graph with messenger notification on error.
-func (i *Engine) buildGraphWithErrorHandling(def *neta.Definition, start time.Time) (*graph, error) {
+func (i *Engine) buildGraphWithErrorHandling(def *node.Definition, start time.Time) (*graph, error) {
 	g, err := buildGraph(def)
 	if err != nil {
 		i.notifyGraphError(def.ID, start, err)
@@ -85,7 +85,7 @@ func (i *Engine) buildGraphWithErrorHandling(def *neta.Definition, start time.Ti
 }
 
 // validateNoCycles checks for circular dependencies.
-func (i *Engine) validateNoCycles(g *graph, def *neta.Definition, start time.Time) error {
+func (i *Engine) validateNoCycles(g *graph, def *node.Definition, start time.Time) error {
 	if g.hasCycle() {
 		err := newNodeError(def.ID, "group", "validate", fmt.Errorf("circular dependency detected"))
 		i.notifyGraphError(def.ID, start, err)
@@ -104,7 +104,7 @@ func (i *Engine) notifyGraphError(nodeID string, start time.Time, err error) {
 // executeGroupGraph executes the group's graph in topological order.
 func (i *Engine) executeGroupGraph(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	g *graph,
 	execCtx *executionContext,
 	result *Result,
@@ -121,7 +121,7 @@ func (i *Engine) executeGroupGraph(
 }
 
 // logGroupComplete logs completion of group execution.
-func (i *Engine) logGroupComplete(def *neta.Definition, execCtx *executionContext, duration time.Duration) {
+func (i *Engine) logGroupComplete(def *node.Definition, execCtx *executionContext, duration time.Duration) {
 	i.notifyProgress(def.ID, "completed")
 
 	if i.messenger != nil {

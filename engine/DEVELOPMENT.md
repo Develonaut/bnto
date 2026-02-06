@@ -113,14 +113,14 @@ bento/
 │       └── main_test.go    # CLI integration tests
 │
 ├── pkg/                    # Reusable packages (the "library" code)
-│   ├── neta/              # Neta (node) types
+│   ├── node/              # Node (node) types
 │   │   ├── spreadsheet/   # CSV/Excel reading
 │   │   ├── http/          # HTTP requests
 │   │   ├── transform/     # Data transformation
 │   │   └── ...
-│   ├── itamae/            # Orchestration engine
-│   ├── miso/              # UI components (progress bars, etc.)
-│   └── shoyu/             # Logging utilities
+│   ├── engine/            # Orchestration engine
+│   ├── tui/               # UI components (progress bars, etc.)
+│   └── logger/            # Logging utilities
 │
 ├── tests/
 │   ├── integration/       # End-to-end integration tests
@@ -212,7 +212,7 @@ go test -v ./...
 go test -race ./...
 
 # Run tests in specific package
-go test ./pkg/neta/spreadsheet/...
+go test ./pkg/node/spreadsheet/...
 go test ./tests/integration/...
 go test ./cmd/bento/...
 ```
@@ -351,33 +351,33 @@ func TestMyCommand_Works(t *testing.T) {
 go run ./cmd/bento mycommand
 ```
 
-### Adding a New Neta Type
+### Adding a New Node Type
 
-1. Create package in `pkg/neta/`:
+1. Create package in `pkg/node/`:
 ```bash
-mkdir -p pkg/neta/myneta
-touch pkg/neta/myneta/myneta.go
+mkdir -p pkg/node/mynode
+touch pkg/node/mynode/mynode.go
 ```
 
 2. Implement the `Executable` interface:
 ```go
-package myneta
+package mynode
 
 import "context"
 
-type MyNeta struct{}
+type MyNode struct{}
 
-func (n *MyNeta) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
+func (n *MyNode) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
     // Implementation
     return nil, nil
 }
 ```
 
-3. Register in the pantry (neta registry)
+3. Register in the registry
 
 4. Add tests:
 ```bash
-touch pkg/neta/myneta/myneta_test.go
+touch pkg/node/mynode/mynode_test.go
 ```
 
 ### Creating Integration Tests
@@ -736,7 +736,7 @@ import "context"
 import "github.com/spf13/cobra"
 
 // This project's packages
-import "github.com/Develonaut/bento/pkg/neta"
+import "github.com/Develonaut/bento/pkg/node"
 ```
 
 ---

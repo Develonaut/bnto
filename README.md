@@ -2,7 +2,7 @@
 
 **High-performance workflow automation — CLI, desktop, and cloud.**
 
-Bento lets you define automated workflows as `.bento.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests. Workflows are composable "neta" (ingredients) connected together like a carefully crafted bento box.
+Bento lets you define automated workflows as `.bento.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests. Workflows are built from composable nodes connected together to automate complex multi-step processes.
 
 ## Why Bento?
 
@@ -12,7 +12,7 @@ Bento lets you define automated workflows as `.bento.json` files that orchestrat
 - **Simple:** JSON-based workflow definitions, no code required
 - **Open Source:** Everything runs locally for free — cloud is optional convenience
 
-## Workflow Nodes (Neta)
+## Workflow Nodes
 
 | Node Type | Purpose |
 |-----------|---------|
@@ -90,7 +90,7 @@ This is a monorepo with a Go execution engine and TypeScript frontend packages:
 bento/
 ├── engine/              # Go CLI + execution engine
 │   ├── cmd/bento/       # CLI binary
-│   ├── pkg/             # Go packages (engine, registry, neta types, etc.)
+│   ├── pkg/             # Go packages (engine, registry, node types, etc.)
 │   └── tests/           # Integration tests + fixtures
 ├── apps/
 │   ├── web/             # Next.js cloud app (Phase 1)
@@ -132,7 +132,7 @@ task ui:dev              # Frontend dev server
 
 Bento follows the **Bento Box Principle** — every file, function, and package does one thing well.
 
-- **Go Engine** (`engine/`): Workflow execution, validation, all neta types
+- **Go Engine** (`engine/`): Workflow execution, validation, all node types
 - **@bento/core**: Transport-agnostic API — same interface for cloud (Convex), desktop (Wails), and REST
 - **@bento/ui**: Shared design system across web and desktop
 - **@bento/editor**: Workflow editor (JSON for now, visual drag-and-drop later)

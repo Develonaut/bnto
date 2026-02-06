@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // NodeStatus represents node execution state.
@@ -69,7 +69,7 @@ type NodeCompletedMsg struct {
 
 // ExecutionInitMsg initializes the executor with bento definition.
 type ExecutionInitMsg struct {
-	Definition *neta.Definition
+	Definition *node.Definition
 }
 
 // ExecutionCompleteMsg signals that bento execution is complete.
@@ -87,7 +87,7 @@ type LoopChildMsg struct {
 }
 
 // NewExecutor creates an executor for the given bento definition.
-func NewExecutor(def *neta.Definition, theme *Theme, palette Palette) Executor {
+func NewExecutor(def *node.Definition, theme *Theme, palette Palette) Executor {
 	sequence := NewSequenceWithTheme(theme, palette)
 	spinner := NewSpinner(palette)
 

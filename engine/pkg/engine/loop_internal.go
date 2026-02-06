@@ -4,25 +4,25 @@ import (
 	"context"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // executeNodeInternal executes a node without state tracking (for loop children).
 func (i *Engine) executeNodeInternal(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 ) (interface{}, error) {
 	i.logInternalNodeStart(def, execCtx)
 
-	netaImpl, err := i.loadNetaForInternal(def)
+	nodeImpl, err := i.loadNodeForInternal(def)
 	if err != nil {
 		return nil, err
 	}
 
 	params := i.prepareInternalNodeParams(def, execCtx)
 
-	output, duration, err := i.executeInternalNode(ctx, netaImpl, params)
+	output, duration, err := i.executeInternalNode(ctx, nodeImpl, params)
 	if err != nil {
 		return nil, newNodeError(def.ID, def.Type, "execute", err)
 	}
@@ -32,25 +32,25 @@ func (i *Engine) executeNodeInternal(
 }
 
 // logInternalNodeStart logs execution start for internal node.
-func (i *Engine) logInternalNodeStart(def *neta.Definition, execCtx *executionContext) {
+func (i *Engine) logInternalNodeStart(def *node.Definition, execCtx *executionContext) {
 	if i.logger != nil {
 		msg := msgChildNodeStarted(execCtx.getBreadcrumb(), def.Type, def.Name)
 		i.logger.Info(msg.format())
 	}
 }
 
-// loadNetaForInternal loads neta implementation for internal execution.
-func (i *Engine) loadNetaForInternal(def *neta.Definition) (neta.Executable, error) {
-	netaImpl, err := i.registry.GetNew(def.Type)
+// loadNodeForInternal loads node implementation for internal execution.
+func (i *Engine) loadNodeForInternal(def *node.Definition) (node.Executable, error) {
+	nodeImpl, err := i.registry.GetNew(def.Type)
 	if err != nil {
-		return nil, newNodeError(def.ID, def.Type, "get neta", err)
+		return nil, newNodeError(def.ID, def.Type, "get node", err)
 	}
-	return netaImpl, nil
+	return nodeImpl, nil
 }
 
 // prepareInternalNodeParams prepares parameters for internal node execution.
 func (i *Engine) prepareInternalNodeParams(
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 ) map[string]interface{} {
 	params := make(map[string]interface{})
@@ -73,20 +73,20 @@ func (i *Engine) prepareInternalNodeParams(
 	return params
 }
 
-// executeInternalNode executes neta and tracks duration.
+// executeInternalNode executes node and tracks duration.
 func (i *Engine) executeInternalNode(
 	ctx context.Context,
-	netaImpl neta.Executable,
+	nodeImpl node.Executable,
 	params map[string]interface{},
 ) (interface{}, time.Duration, error) {
 	start := time.Now()
-	output, err := netaImpl.Execute(ctx, params)
+	output, err := nodeImpl.Execute(ctx, params)
 	return output, time.Since(start), err
 }
 
 // logInternalNodeComplete logs completion for internal node.
 func (i *Engine) logInternalNodeComplete(
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 	duration time.Duration,
 ) {

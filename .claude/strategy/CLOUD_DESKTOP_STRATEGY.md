@@ -78,7 +78,7 @@ The layered abstraction (shared `@bento/core` → multiple clients → single Go
 │  bento run, bento validate, bento list                   │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐   │
 │  │ engine   │ │ registry │ │ storage  │ │ paths    │   │
-│  │(orchestr)│ │(neta reg)│ │(persist) │ │(resolve) │   │
+│  │(orchestr)│ │(node reg)│ │(persist) │ │(resolve) │   │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘   │
 │  TUI — internal/beta, NOT public                         │
 └─────────────────────────────────────────────────────────┘
@@ -187,14 +187,14 @@ packages/
 - Keeps the API surface small, consistent, and well-documented
 - The Go service on Railway wraps CLI operations (same logic, exposed via HTTP)
 - Desktop (Wails) calls the same underlying Go functions that the CLI calls
-- The TUI (miso/Bubble Tea) is internal/beta — not public-facing
+- The TUI (Bubble Tea) is internal/beta — not public-facing
 
 ### 3.6 Go Backend on Railway for Execution
 
 **Decision:** Separate Go service on Railway that wraps CLI operations as HTTP endpoints.
 
 **Rationale:**
-- The Go execution engine (itamae) is the compute-heavy part
+- The Go execution engine is the compute-heavy part
 - Convex handles state/real-time, Go handles execution
 - Go service receives execution requests, streams progress back via Convex mutations
 - Scales independently from the frontend
@@ -235,9 +235,9 @@ subscriptions  → { userId, plan, stripeId, status, currentPeriodEnd }
 
 ## 5. Cloud Execution Model
 
-### Neta Type Support in Cloud
+### Node Type Support in Cloud
 
-| Neta Type | Cloud Support | Notes |
+| Node Type | Cloud Support | Notes |
 |-----------|--------------|-------|
 | edit-fields | Full | Pure data transformation |
 | http-request | Full | Works identically |
@@ -254,7 +254,7 @@ subscriptions  → { userId, plan, stripeId, status, currentPeriodEnd }
 
 - Users upload files through the web UI → stored in Convex file storage
 - Workflow nodes reference files by Convex file ID instead of local paths
-- Cloud `file-system` neta operates on a virtual workspace (temp directory per execution)
+- Cloud `file-system` node operates on a virtual workspace (temp directory per execution)
 - Results (output files) downloadable from Convex after execution
 
 ### Timeout Strategy
@@ -303,18 +303,18 @@ Phase 2: Build Frontend (Next.js + React)
 
 #### Layer 1: Go Engine (CLI)
 
-**Goal:** Every CLI operation is tested. Every neta type has unit + integration tests.
+**Goal:** Every CLI operation is tested. Every node type has unit + integration tests.
 
 **Approach:** Simulate what a user wants from the UI by writing bentos and running them against the CLI.
 
 | Test Type | What It Covers | Runner |
 |-----------|---------------|--------|
-| Unit tests | Individual neta execution, template resolution, validation | `go test ./pkg/...` |
+| Unit tests | Individual node execution, template resolution, validation | `go test ./pkg/...` |
 | Integration tests | Multi-node workflows, loops, parallel execution, edge cases | `go test ./tests/integration/...` |
 | CLI smoke tests | `bento run`, `bento validate`, `bento list` with real .bento.json files | Shell scripts or `go test` with `os/exec` |
 | Fixture bentos | Real-world workflows in `tests/fixtures/` that exercise common patterns | Executed by integration tests |
 
-**What "solidified" means:** All existing neta types have >90% test coverage. All CLI commands have smoke tests. A comprehensive fixture suite of .bento.json files covers the patterns users will build in the UI.
+**What "solidified" means:** All existing node types have >90% test coverage. All CLI commands have smoke tests. A comprehensive fixture suite of .bento.json files covers the patterns users will build in the UI.
 
 **Key insight:** The fixture bentos ARE the user stories. "Compress PNGs" as a bento file, "Fetch API and transform", "Batch resize images" — these test the engine AND define the templates we'll ship in the cloud product.
 
@@ -395,17 +395,17 @@ Push to main →
 
 ### Phase 0: Engine Solidification (TDD Foundation)
 
-**Goal:** The Go engine is bulletproof. Every neta type, every CLI command, every edge case is tested.
+**Goal:** The Go engine is bulletproof. Every node type, every CLI command, every edge case is tested.
 
 **Scope:**
-- Comprehensive unit tests for all 10 neta types (>90% coverage target)
+- Comprehensive unit tests for all 10 node types (>90% coverage target)
 - Integration tests using fixture .bento.json files that represent real user workflows
 - CLI smoke tests for `bento run`, `bento validate`, `bento list`
 - Fixture bentos that double as cloud templates:
-  - "Compress PNGs" — image neta with resize/export
-  - "Batch resize images" — loop + image neta
-  - "Fetch API data" — http-request + transform neta
-  - "CSV to folders" — spreadsheet + filesystem neta
+  - "Compress PNGs" — image node with resize/export
+  - "Batch resize images" — loop + image node
+  - "Fetch API data" — http-request + transform node
+  - "CSV to folders" — spreadsheet + filesystem node
   - "Edit fields pipeline" — edit-fields + transform chain
 - Fix any bugs discovered during test writing
 - Document the public API surface (what the CLI exposes = what the API layer will wrap)
@@ -445,11 +445,11 @@ Push to main →
 
 **Scope:**
 - Cloud file upload/download (Convex file storage)
-- Cloud file-system neta (operates on uploaded files, not local paths)
+- Cloud file-system node (operates on uploaded files, not local paths)
 - Execution history with detailed logs (re-run previous executions)
 - Workflow versioning and duplication
 - Better template library (more pre-built bentos)
-- Improved JSON editor (syntax validation, auto-complete for neta types)
+- Improved JSON editor (syntax validation, auto-complete for node types)
 - Extended test suite: file upload/download flows, history pagination, versioning
 
 ### Phase 3: Desktop App (Free Product)
@@ -460,7 +460,7 @@ Push to main →
 - Bootstrap Wails v2 desktop app (from MONOREPO_STRUCTURE.md plan)
 - Reuse @bento/ui and @bento/editor packages from web
 - WailsClient implements BentoAPI via @bento/core (direct Go bindings)
-- Full local execution (all 10+ neta types including shell-command)
+- Full local execution (all 10+ node types including shell-command)
 - Purely local — no account required, no cloud connectivity, no sync
 - Desktop and cloud are separate products with a shared UI
 - Component tests for Wails-specific integration
@@ -495,7 +495,7 @@ The web app is paid, but new users get a **perpetual free tier with monthly run 
 - Monthly refresh keeps free users coming back (not a one-and-done trial)
 - Users accumulate workflows over time, increasing switching cost
 - 5 runs/month is enough to stay engaged but not enough for production use
-- No feature gating — all neta types available on free tier, limit is execution count only
+- No feature gating — all node types available on free tier, limit is execution count only
 - Workflows persist forever — constant reminder of value
 
 ### Tier Structure (Sketch)
@@ -527,7 +527,7 @@ What the cloud service sells:
 - **Hosting and running the code for you** — no setup, no local machine dependency
 - **Managed infrastructure** — we handle the servers, you click Run
 
-Every neta type, every capability — it's all in the open source repo. The cloud's value proposition is pure convenience, not proprietary features.
+Every node type, every capability — it's all in the open source repo. The cloud's value proposition is pure convenience, not proprietary features.
 
 ---
 

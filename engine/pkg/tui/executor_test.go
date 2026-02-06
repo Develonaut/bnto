@@ -12,14 +12,14 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 
 	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/Develonaut/bento/pkg/registry"
 )
 
 // TestExecutorSingleNodeSuccess tests successful execution of a single node.
 func TestExecutorSingleNodeSuccess(t *testing.T) {
 	// Create a simple bento with one node
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:   "test-bento",
 		Name: "Test Bento",
 		Type: "test-node",
@@ -76,11 +76,11 @@ func TestExecutorSingleNodeSuccess(t *testing.T) {
 // TestExecutorMultipleNodes tests execution of multiple nodes.
 func TestExecutorMultipleNodes(t *testing.T) {
 	// Create a bento with multiple nodes
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:   "multi-bento",
 		Name: "Multi Node Bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:   "node1",
 				Name: "First Node",
@@ -157,7 +157,7 @@ func TestExecutorMultipleNodes(t *testing.T) {
 
 // TestExecutorFailure tests execution failure handling.
 func TestExecutorFailure(t *testing.T) {
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:   "failing-bento",
 		Name: "Failing Bento",
 		Type: "test-node",
@@ -210,16 +210,16 @@ func TestExecutorFailure(t *testing.T) {
 	}
 }
 
-// TestExecutorWithRealItamae tests executor with actual itamae execution.
+// TestExecutorWithRealItamae tests executor with actual engine execution.
 func TestExecutorWithRealItamae(t *testing.T) {
-	// Create pantry and register test neta
+	// Create registry and register test node
 	p := registry.New()
-	p.RegisterFactory("test-node", func() neta.Executable {
+	p.RegisterFactory("test-node", func() node.Executable {
 		return &testExecutable{output: map[string]interface{}{"result": "success"}}
 	})
 
 	// Create bento definition
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:   "real-test",
 		Name: "Real Execution Test",
 		Type: "test-node",
@@ -236,7 +236,7 @@ func TestExecutorWithRealItamae(t *testing.T) {
 	// Create messenger
 	messenger := NewBubbletMessenger(program)
 
-	// Create itamae with messenger (no logger for clean test)
+	// Create engine with messenger (no logger for clean test)
 	chef := engine.NewWithMessenger(p, nil, messenger)
 
 	// Send init message
@@ -271,7 +271,7 @@ func TestExecutorWithRealItamae(t *testing.T) {
 
 // TestExecutorNodeStateTransitions tests that nodes transition through states correctly.
 func TestExecutorNodeStateTransitions(t *testing.T) {
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:   "transition-test",
 		Name: "State Transition Test",
 		Type: "test-node",
@@ -337,7 +337,7 @@ func TestExecutorNodeStateTransitions(t *testing.T) {
 	}
 }
 
-// testExecutable is a mock neta for testing.
+// testExecutable is a mock node for testing.
 type testExecutable struct {
 	output map[string]interface{}
 	err    error

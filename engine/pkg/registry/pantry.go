@@ -1,19 +1,18 @@
-// Package pantry provides a thread-safe registry for neta types.
+// Package registry provides a thread-safe registry for node types.
 //
-// Like a well-organized pantry stores ingredients, this package stores and
-// provides access to all available neta implementations.
+// This package stores and provides access to all available node implementations.
 //
 // # Usage
 //
-//	p := pantry.New()
+//	p := registry.New()
 //
-//	// Register a neta factory
-//	p.RegisterFactory("http-request", func() neta.Executable {
-//	    return httpneta.New()
+//	// Register a node factory
+//	p.RegisterFactory("http-request", func() node.Executable {
+//	    return httpnode.New()
 //	})
 //
 //	// Retrieve a new instance
-//	netaInstance, err := p.GetNew("http-request")
+//	nodeInstance, err := p.GetNew("http-request")
 //
 //	// List all registered types
 //	types := p.List()
@@ -23,17 +22,17 @@
 //
 // # Thread Safety
 //
-// The pantry uses sync.RWMutex to ensure safe concurrent access from multiple
+// The registry uses sync.RWMutex to ensure safe concurrent access from multiple
 // goroutines. Multiple readers can access simultaneously (GetNew, List, Has),
 // but writes (RegisterFactory) are exclusive.
 //
 // # Factory Pattern
 //
-// The pantry uses the factory pattern to create NEW instances of neta on each
-// GetNew() call. This prevents shared state between neta instances, which is
+// The registry uses the factory pattern to create NEW instances of nodes on each
+// GetNew() call. This prevents shared state between node instances, which is
 // critical for:
 //   - Running multiple workflow iterations without state leakage
-//   - Parallel execution of neta in the future
+//   - Parallel execution of nodes in the future
 //   - Isolated testing
 //
 // Learn more:
@@ -46,48 +45,48 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
-// Factory is a function that creates a new neta instance.
+// Factory is a function that creates a new node instance.
 //
 // Each call to the factory should return a NEW instance, not a shared one.
-// This ensures that neta instances are isolated and don't share state.
+// This ensures that node instances are isolated and don't share state.
 //
 // Example:
 //
-//	factory := func() neta.Executable {
-//	    return httpneta.New()  // Returns new instance
+//	factory := func() node.Executable {
+//	    return httpnode.New()  // Returns new instance
 //	}
-type Factory func() neta.Executable
+type Factory func() node.Executable
 
-// Pantry is a thread-safe registry for neta types.
+// Registry is a thread-safe registry for node types.
 //
-// It stores factory functions that create new instances of neta on demand.
-// The pantry uses sync.RWMutex for thread-safe concurrent access.
+// It stores factory functions that create new instances of nodes on demand.
+// The registry uses sync.RWMutex for thread-safe concurrent access.
 type Registry struct {
 	mu        sync.RWMutex       // Protects the factories map
 	factories map[string]Factory // Type name -> factory function
 }
 
-// New creates a new empty Pantry.
+// New creates a new empty Registry.
 //
-// The pantry starts empty. Use RegisterFactory to add neta types.
+// The registry starts empty. Use RegisterFactory to add node types.
 func New() *Registry {
 	return &Registry{
 		factories: make(map[string]Factory),
 	}
 }
 
-// RegisterFactory registers a neta type with a factory function.
+// RegisterFactory registers a node type with a factory function.
 //
 // The factory function should return a NEW instance each time it's called.
 // If a type is already registered, this will overwrite it (last wins).
 //
 // Example:
 //
-//	p.RegisterFactory("http-request", func() neta.Executable {
-//	    return httpneta.New()
+//	p.RegisterFactory("http-request", func() node.Executable {
+//	    return httpnode.New()
 //	})
 //
 // Thread-safe: Uses write lock (exclusive access).
@@ -98,7 +97,7 @@ func (p *Registry) RegisterFactory(typeName string, factory Factory) {
 	p.factories[typeName] = factory
 }
 
-// GetNew creates and returns a new instance of the specified neta type.
+// GetNew creates and returns a new instance of the specified node type.
 //
 // Returns an error if the type is not registered. The error message includes
 // the requested type name and a list of all available types.
@@ -107,18 +106,18 @@ func (p *Registry) RegisterFactory(typeName string, factory Factory) {
 //
 //	instance, err := p.GetNew("http-request")
 //	if err != nil {
-//	    log.Fatalf("Failed to get neta: %v", err)
+//	    log.Fatalf("Failed to get node: %v", err)
 //	}
 //
 // Thread-safe: Uses read lock (allows concurrent access).
-func (p *Registry) GetNew(typeName string) (neta.Executable, error) {
+func (p *Registry) GetNew(typeName string) (node.Executable, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
 	factory, exists := p.factories[typeName]
 	if !exists {
 		return nil, fmt.Errorf(
-			"neta type '%s' is not registered in pantry. Available types: %v",
+			"node type '%s' is not registered in registry. Available types: %v",
 			typeName,
 			p.listUnsafe(),
 		)
@@ -127,7 +126,7 @@ func (p *Registry) GetNew(typeName string) (neta.Executable, error) {
 	return factory(), nil
 }
 
-// List returns all registered neta type names in sorted order.
+// List returns all registered node type names in sorted order.
 //
 // Returns an empty slice if no types are registered.
 // The list is sorted alphabetically for consistent output.
@@ -164,14 +163,14 @@ func (p *Registry) listUnsafe() []string {
 	return types
 }
 
-// Has checks if a neta type is registered.
+// Has checks if a node type is registered.
 //
 // Returns true if the type is registered, false otherwise.
 //
 // Example:
 //
 //	if p.Has("http-request") {
-//	    fmt.Println("HTTP request neta is available")
+//	    fmt.Println("HTTP request node is available")
 //	}
 //
 // Thread-safe: Uses read lock (allows concurrent access).

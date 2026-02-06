@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
-// executeLoop executes a loop neta.
+// executeLoop executes a loop node.
 // Critical for Phase 8: CSV iteration for product automation.
 func (i *Engine) executeLoop(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 	result *Result,
 ) error {
@@ -63,7 +63,7 @@ func (i *Engine) executeLoop(
 // executeWhile executes a while loop.
 func (i *Engine) executeWhile(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 	result *Result,
 ) error {

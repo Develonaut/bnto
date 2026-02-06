@@ -36,7 +36,7 @@ Solidify the engine, restructure the repo, establish the development environment
 - [x] Fix integration tests (missed old sushi names in test code)
 
 ### 0.2 Engine Solidification (TDD)
-- [ ] Unit tests for every neta type (target >90% coverage)
+- [ ] Unit tests for every node type (target >90% coverage)
   - [ ] edit-fields
   - [ ] filesystem (including new `list` operation)
   - [ ] group
@@ -151,7 +151,7 @@ Make the product feel complete for individual users.
 ### 2.1 Cloud File Handling
 - [ ] File upload UI (drag & drop)
 - [ ] Convex file storage integration
-- [ ] Cloud filesystem neta (operates on uploaded files)
+- [ ] Cloud filesystem node (operates on uploaded files)
 - [ ] File download after execution
 - [ ] Storage limit enforcement per tier
 
@@ -168,7 +168,7 @@ Make the product feel complete for individual users.
 - [ ] Expanded template library
 
 ### 2.4 Editor Improvements
-- [ ] Auto-complete for neta type names
+- [ ] Auto-complete for node type names
 - [ ] Inline validation with error highlighting
 - [ ] Parameter documentation on hover
 
@@ -186,7 +186,7 @@ Free local desktop app using Wails v2 + shared React components.
 ### 3.2 Desktop Integration
 - [ ] `WailsClient` implements `BentoAPI` in `@bento/core`
 - [ ] Reuse `@bento/ui` and `@bento/editor` from web
-- [ ] Full local execution (all neta types including shell-command)
+- [ ] Full local execution (all node types including shell-command)
 - [ ] Local file browser for selecting .bento.json files
 
 ### 3.3 Desktop Distribution
@@ -209,7 +209,7 @@ Revenue and the next-gen editing experience.
 
 ### 4.2 Visual Workflow Editor
 - [ ] Drag-and-drop node canvas (React Flow or custom)
-- [ ] Node palette with all neta types
+- [ ] Node palette with all node types
 - [ ] Property editor per node
 - [ ] Edge connections between nodes
 - [ ] JSON ↔ visual round-trip (edit in either mode)

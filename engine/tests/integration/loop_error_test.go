@@ -10,7 +10,7 @@ import (
 
 	"github.com/Develonaut/bento/pkg/engine"
 	"github.com/Develonaut/bento/pkg/tui"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // TestLoopErrorPropagation tests that errors from nodes inside a loop
@@ -77,7 +77,7 @@ func TestLoopErrorPropagation(t *testing.T) {
 
 // createLoopWithFailingNode creates a bento definition with a loop
 // that contains a node that will fail.
-func createLoopWithFailingNode(t *testing.T) *neta.Definition {
+func createLoopWithFailingNode(t *testing.T) *node.Definition {
 	t.Helper()
 
 	// Create a bento with a forEach loop over 3 items
@@ -134,7 +134,7 @@ func createLoopWithFailingNode(t *testing.T) *neta.Definition {
 		"edges": []
 	}`
 
-	var def neta.Definition
+	var def node.Definition
 	if err := json.Unmarshal([]byte(bentoJSON), &def); err != nil {
 		t.Fatalf("Failed to parse test bento: %v", err)
 	}
@@ -248,7 +248,7 @@ third,3`
 		]
 	}`
 
-	var def neta.Definition
+	var def node.Definition
 	if err := json.Unmarshal([]byte(bentoJSON), &def); err != nil {
 		t.Fatalf("Failed to parse test bento: %v", err)
 	}

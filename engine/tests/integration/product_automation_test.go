@@ -130,6 +130,6 @@ func verifyStreamingOutput(t *testing.T, output string) {
 }
 
 // TODO: Add error handling tests in future phase
-// These tests require http-request neta to fail on 4xx/5xx responses
+// These tests require http-request node to fail on 4xx/5xx responses
 // Currently it just returns the response without treating it as an error
 // See Phase 8.8 or 9.x for proper error handling implementation

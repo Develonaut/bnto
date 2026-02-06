@@ -12,11 +12,11 @@ import (
 
 	"github.com/Develonaut/bento/pkg/engine"
 	"github.com/Develonaut/bento/pkg/tui"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // executeTUI executes bento with detailed log output to stdout.
-func executeTUI(def *neta.Definition) error {
+func executeTUI(def *node.Definition) error {
 	// Create pantry and file logger
 	p := createPantry()
 	logger, logFile, err := createFileLogger()

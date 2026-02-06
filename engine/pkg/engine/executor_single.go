@@ -6,37 +6,37 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/charmbracelet/lipgloss"
 )
 
-// executeSingle executes a single (non-group) neta.
-func (i *Engine) executeSingle(ctx context.Context, def *neta.Definition, execCtx *executionContext, result *Result) error {
+// executeSingle executes a single (non-group) node.
+func (i *Engine) executeSingle(ctx context.Context, def *node.Definition, execCtx *executionContext, result *Result) error {
 	i.logExecutionStart(def, execCtx)
-	netaImpl, err := i.loadNetaImplementation(def)
+	nodeImpl, err := i.loadNodeImplementation(def)
 	if err != nil {
 		return err
 	}
-	if err := i.executeAndRecordNeta(ctx, def, netaImpl, execCtx, result); err != nil {
+	if err := i.executeAndRecordNode(ctx, def, nodeImpl, execCtx, result); err != nil {
 		return err
 	}
 	return nil
 }
 
-// loadNetaImplementation loads neta from pantry with error wrapping.
-func (i *Engine) loadNetaImplementation(def *neta.Definition) (neta.Executable, error) {
-	netaImpl, err := i.registry.GetNew(def.Type)
+// loadNodeImplementation loads node from registry with error wrapping.
+func (i *Engine) loadNodeImplementation(def *node.Definition) (node.Executable, error) {
+	nodeImpl, err := i.registry.GetNew(def.Type)
 	if err != nil {
-		return nil, newNodeError(def.ID, def.Type, "get neta", err)
+		return nil, newNodeError(def.ID, def.Type, "get node", err)
 	}
-	return netaImpl, nil
+	return nodeImpl, nil
 }
 
-// executeAndRecordNeta executes neta and records results.
-func (i *Engine) executeAndRecordNeta(ctx context.Context, def *neta.Definition, netaImpl neta.Executable,
+// executeAndRecordNode executes node and records results.
+func (i *Engine) executeAndRecordNode(ctx context.Context, def *node.Definition, nodeImpl node.Executable,
 	execCtx *executionContext, result *Result) error {
-	params := i.prepareNetaParams(def, execCtx)
-	output, duration, err := i.executeNetaWithTiming(ctx, netaImpl, params)
+	params := i.prepareNodeParams(def, execCtx)
+	output, duration, err := i.executeNodeWithTiming(ctx, nodeImpl, params)
 	i.sendNodeCompleted(def.ID, duration, err)
 	if err != nil {
 		return newNodeError(def.ID, def.Type, "execute", err)
@@ -47,7 +47,7 @@ func (i *Engine) executeAndRecordNeta(ctx context.Context, def *neta.Definition,
 }
 
 // logExecutionStart logs and notifies at the start of node execution.
-func (i *Engine) logExecutionStart(def *neta.Definition, execCtx *executionContext) {
+func (i *Engine) logExecutionStart(def *node.Definition, execCtx *executionContext) {
 	i.notifyProgress(def.ID, "starting")
 
 	// Mark node as executing in execution state
@@ -59,15 +59,15 @@ func (i *Engine) logExecutionStart(def *neta.Definition, execCtx *executionConte
 	}
 
 	if i.logger != nil {
-		msg := msgNetaStarted()
+		msg := msgNodeStarted()
 		i.logger.Debug(msg.format(),
-			"neta_id", def.ID,
-			"neta_type", def.Type)
+			"node_id", def.ID,
+			"node_type", def.Type)
 	}
 }
 
-// prepareNetaParams prepares execution parameters with context resolution.
-func (i *Engine) prepareNetaParams(def *neta.Definition, execCtx *executionContext) map[string]interface{} {
+// prepareNodeParams prepares execution parameters with context resolution.
+func (i *Engine) prepareNodeParams(def *node.Definition, execCtx *executionContext) map[string]interface{} {
 	params := make(map[string]interface{})
 	for k, v := range def.Parameters {
 		params[k] = execCtx.resolveValue(v)
@@ -91,14 +91,14 @@ func (i *Engine) prepareNetaParams(def *neta.Definition, execCtx *executionConte
 	return params
 }
 
-// executeNetaWithTiming executes a neta and tracks duration.
-func (i *Engine) executeNetaWithTiming(
+// executeNodeWithTiming executes a node and tracks duration.
+func (i *Engine) executeNodeWithTiming(
 	ctx context.Context,
-	netaImpl neta.Executable,
+	nodeImpl node.Executable,
 	params map[string]interface{},
 ) (interface{}, time.Duration, error) {
 	start := time.Now()
-	output, err := netaImpl.Execute(ctx, params)
+	output, err := nodeImpl.Execute(ctx, params)
 	duration := time.Since(start)
 
 	if i.slowMoDelay > 0 {
@@ -132,7 +132,7 @@ func (i *Engine) storeExecutionResult(
 }
 
 // logExecutionComplete logs completion with progress tracking.
-func (i *Engine) logExecutionComplete(def *neta.Definition, execCtx *executionContext, duration time.Duration) {
+func (i *Engine) logExecutionComplete(def *node.Definition, execCtx *executionContext, duration time.Duration) {
 	i.notifyProgress(def.ID, "completed")
 
 	if i.logger != nil {

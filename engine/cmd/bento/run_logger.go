@@ -75,7 +75,7 @@ func createDualLogger(fileLogger *logger.Logger) *logger.Logger {
 	return logger.New(logger.Config{
 		Level: level,
 		// Enable streaming output for long-running processes
-		// This outputs lines from shell-command neta in real-time
+		// This outputs lines from shell-command node in real-time
 		OnStream: func(line string) {
 			// Always write to file for record-keeping
 			if fileLogger != nil {

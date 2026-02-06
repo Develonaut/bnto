@@ -13,14 +13,14 @@ import (
 
 	"github.com/Develonaut/bento/pkg/engine"
 	"github.com/Develonaut/bento/pkg/tui"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/Develonaut/bento/pkg/registry"
 
-	editfields "github.com/Develonaut/bento/pkg/neta/library/editfields"
-	filesystem "github.com/Develonaut/bento/pkg/neta/library/filesystem"
-	group "github.com/Develonaut/bento/pkg/neta/library/group"
-	loop "github.com/Develonaut/bento/pkg/neta/library/loop"
-	spreadsheet "github.com/Develonaut/bento/pkg/neta/library/spreadsheet"
+	editfields "github.com/Develonaut/bento/pkg/node/library/editfields"
+	filesystem "github.com/Develonaut/bento/pkg/node/library/filesystem"
+	group "github.com/Develonaut/bento/pkg/node/library/group"
+	loop "github.com/Develonaut/bento/pkg/node/library/loop"
+	spreadsheet "github.com/Develonaut/bento/pkg/node/library/spreadsheet"
 )
 
 // TestUserSimulation_ProductFolderWorkflow simulates a real user workflow:
@@ -59,7 +59,7 @@ func TestUserSimulation_ProductFolderWorkflow(t *testing.T) {
 		t.Fatalf("Failed to load example bento: %v", err)
 	}
 
-	var def neta.Definition
+	var def node.Definition
 	if err := json.Unmarshal(data, &def); err != nil {
 		t.Fatalf("Failed to parse example bento: %v", err)
 	}
@@ -136,22 +136,22 @@ func TestUserSimulation_ProductFolderWorkflow(t *testing.T) {
 	t.Log("This test validates:")
 	t.Log("  - Real-world user workflow (load example -> validate -> run -> verify)")
 	t.Log("  - Loading actual example bento files from examples/")
-	t.Log("  - CSV reading with spreadsheet neta")
+	t.Log("  - CSV reading with spreadsheet node")
 	t.Log("  - Loop iteration over CSV rows")
 	t.Log("  - Dynamic folder creation with context variables")
 	t.Log("  - Messenger progress output for user feedback")
 }
 
-// createTestRegistry creates a registry with all necessary neta for testing.
+// createTestRegistry creates a registry with all necessary node for testing.
 func createTestRegistry() *registry.Registry {
 	p := registry.New()
 
-	// Register all neta types used in tests
-	p.RegisterFactory("edit-fields", func() neta.Executable { return editfields.New() })
-	p.RegisterFactory("file-system", func() neta.Executable { return filesystem.New() })
-	p.RegisterFactory("group", func() neta.Executable { return group.New() })
-	p.RegisterFactory("loop", func() neta.Executable { return loop.New() })
-	p.RegisterFactory("spreadsheet", func() neta.Executable { return spreadsheet.New() })
+	// Register all node types used in tests
+	p.RegisterFactory("edit-fields", func() node.Executable { return editfields.New() })
+	p.RegisterFactory("file-system", func() node.Executable { return filesystem.New() })
+	p.RegisterFactory("group", func() node.Executable { return group.New() })
+	p.RegisterFactory("loop", func() node.Executable { return loop.New() })
+	p.RegisterFactory("spreadsheet", func() node.Executable { return spreadsheet.New() })
 
 	return p
 }
@@ -191,7 +191,7 @@ func TestUserSimulation_ProductFolderWithOverlaysWorkflow(t *testing.T) {
 		t.Fatalf("Failed to load example bento: %v", err)
 	}
 
-	var def neta.Definition
+	var def node.Definition
 	if err := json.Unmarshal(data, &def); err != nil {
 		t.Fatalf("Failed to parse example bento: %v", err)
 	}
@@ -293,7 +293,7 @@ func TestUserSimulation_ProductFolderWithOverlaysWorkflow(t *testing.T) {
 	t.Log("This test validates:")
 	t.Log("  - Real-world user workflow (load example -> validate -> run -> verify)")
 	t.Log("  - Loading actual example bento files from examples/")
-	t.Log("  - CSV reading with spreadsheet neta")
+	t.Log("  - CSV reading with spreadsheet node")
 	t.Log("  - Loop iteration over CSV rows with index tracking")
 	t.Log("  - Dynamic folder creation with context variables")
 	t.Log("  - Index-based file copying ({{.index}} template)")

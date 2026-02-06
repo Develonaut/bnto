@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/Develonaut/bento/pkg/storage"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // Test: Save and load a bento definition
@@ -20,7 +20,7 @@ func TestStorage_SaveAndLoad(t *testing.T) {
 	storage := storage.New(tempDir)
 
 	// Create test definition
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "node-1",
 		Type:    "http-request",
 		Version: "1.0.0",
@@ -59,8 +59,8 @@ func TestStorage_List(t *testing.T) {
 	storage := storage.New(tempDir)
 
 	// Save multiple bentos
-	def1 := &neta.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
-	def2 := &neta.Definition{ID: "2", Type: "http-request", Version: "1.0.0"}
+	def1 := &node.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
+	def2 := &node.Definition{ID: "2", Type: "http-request", Version: "1.0.0"}
 
 	if err := storage.Save(ctx, "workflow-1", def1); err != nil {
 		t.Fatalf("Failed to save workflow-1: %v", err)
@@ -88,7 +88,7 @@ func TestStorage_Delete(t *testing.T) {
 	storage := storage.New(tempDir)
 
 	// Save
-	def := &neta.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
+	def := &node.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
 	if err := storage.Save(ctx, "test", def); err != nil {
 		t.Fatalf("Failed to save test workflow: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestStorage_InvalidName(t *testing.T) {
 	tempDir := t.TempDir()
 	storage := storage.New(tempDir)
 
-	def := &neta.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
+	def := &node.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
 
 	// Try directory traversal attack
 	invalidNames := []string{
@@ -154,18 +154,18 @@ func TestStorage_NestedGroups(t *testing.T) {
 	storage := storage.New(tempDir)
 
 	// Create nested structure
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "main-group",
 		Type:    "group",
 		Version: "1.0.0",
 		Name:    "Main Group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:      "sub-group",
 				Type:    "group",
 				Version: "1.0.0",
 				Name:    "Sub Group",
-				Nodes: []neta.Definition{
+				Nodes: []node.Definition{
 					{
 						ID:      "nested-node",
 						Type:    "edit-fields",
@@ -178,10 +178,10 @@ func TestStorage_NestedGroups(t *testing.T) {
 						},
 					},
 				},
-				Edges: []neta.Edge{},
+				Edges: []node.Edge{},
 			},
 		},
-		Edges: []neta.Edge{},
+		Edges: []node.Edge{},
 	}
 
 	// Save
@@ -221,7 +221,7 @@ func TestStorage_RoundTrip(t *testing.T) {
 	tempDir := t.TempDir()
 	storage := storage.New(tempDir)
 
-	original := &neta.Definition{
+	original := &node.Definition{
 		ID:      "round-trip-test",
 		Type:    "group",
 		Version: "1.0.0",
@@ -257,7 +257,7 @@ func TestStorage_PrettyPrint(t *testing.T) {
 	tempDir := t.TempDir()
 	storage := storage.New(tempDir)
 
-	def := &neta.Definition{
+	def := &node.Definition{
 		ID:      "my-bento",
 		Type:    "group",
 		Version: "1.0.0",
@@ -296,7 +296,7 @@ func TestStorage_EmptyName(t *testing.T) {
 	tempDir := t.TempDir()
 	storage := storage.New(tempDir)
 
-	def := &neta.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
+	def := &node.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
 
 	err := storage.Save(ctx, "", def)
 	if err == nil {
@@ -310,7 +310,7 @@ func TestStorage_ReservedNames(t *testing.T) {
 	tempDir := t.TempDir()
 	storage := storage.New(tempDir)
 
-	def := &neta.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
+	def := &node.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
 
 	reservedNames := []string{"CON", "PRN", "AUX", "NUL", "COM1", "LPT1"}
 
@@ -331,7 +331,7 @@ func TestStorage_ContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	def := &neta.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
+	def := &node.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
 
 	// Should fail immediately
 	err := storage.Save(ctx, "test", def)

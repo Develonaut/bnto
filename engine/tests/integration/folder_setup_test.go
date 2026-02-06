@@ -9,8 +9,8 @@ import (
 )
 
 // TestFolderSetup_CreateProductFolders tests the folder setup bento.
-// This validates that the loop neta correctly iterates over CSV rows
-// and that the file-system neta creates directories for each product.
+// This validates that the loop node correctly iterates over CSV rows
+// and that the file-system node creates directories for each product.
 func TestFolderSetup_CreateProductFolders(t *testing.T) {
 	projectRoot := "../../"
 
@@ -48,7 +48,7 @@ func TestFolderSetup_CreateProductFolders(t *testing.T) {
 	assert.True(t, info.IsDir(), "products/Combat Dog (Attack) should be a directory")
 
 	t.Log("✓ Successfully created folders for 3 products")
-	t.Log("✓ Validated loop neta with forEach mode")
+	t.Log("✓ Validated loop node with forEach mode")
 	t.Log("✓ Validated context passing from CSV to loop")
 }
 

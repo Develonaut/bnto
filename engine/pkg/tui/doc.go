@@ -1,4 +1,4 @@
-// Package miso provides a Terminal User Interface (TUI) for the Bento CLI.
+// Package tui provides a Terminal User Interface (TUI) for the Bento CLI.
 //
 // The TUI allows users to interactively select and execute bentos, manage
 // secrets and variables, configure settings, and view execution logs in real-time.

@@ -94,7 +94,7 @@ func TestLoadSavedTheme_NoFile(t *testing.T) {
 }
 
 // TestLoadSavedTheme_InvalidContent verifies that invalid content is returned as-is.
-// Note: Validation happens in the miso layer, kombu just reads/writes strings.
+// Note: Validation happens in the tui layer, paths just reads/writes strings.
 func TestLoadSavedTheme_InvalidContent(t *testing.T) {
 	tmpDir := t.TempDir()
 	originalConfigDir := configDir
@@ -113,7 +113,7 @@ func TestLoadSavedTheme_InvalidContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Kombu returns raw string - validation happens in miso layer
+	// paths returns raw string - validation happens in tui layer
 	theme := LoadSavedTheme()
 	if theme != testContent {
 		t.Errorf("LoadSavedTheme() = %s, want %s", theme, testContent)

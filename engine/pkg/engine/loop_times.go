@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // executeTimes executes a times loop (repeat N times) AS A LEAF NODE.
 func (i *Engine) executeTimes(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 	result *Result,
 ) error {
@@ -37,7 +37,7 @@ func (i *Engine) executeTimes(
 // executeTimesIterations executes all times loop iterations and returns results.
 func (i *Engine) executeTimesIterations(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	count int,
 	execCtx *executionContext,
 ) ([]interface{}, error) {
@@ -65,7 +65,7 @@ func (i *Engine) executeTimesIterations(
 // executeTimesIteration executes one iteration (INTERNAL - not tracked in graph).
 func (i *Engine) executeTimesIteration(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	iteration int,
 	total int,
 	execCtx *executionContext,
@@ -78,7 +78,7 @@ func (i *Engine) executeTimesIteration(
 }
 
 // extractTimesCount extracts and validates count parameter for times loop.
-func (i *Engine) extractTimesCount(def *neta.Definition) (int, error) {
+func (i *Engine) extractTimesCount(def *node.Definition) (int, error) {
 	countParam := def.Parameters["count"]
 	count, ok := countParam.(float64)
 	if !ok {

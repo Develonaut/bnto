@@ -1,14 +1,10 @@
-// Package hangiri provides persistent storage for bento data.
-//
-// "Hangiri" (半切り - wooden tub for sushi rice) stores bento-related data
-// on disk as JSON files, allowing bentos, secrets, and other data to be saved,
-// loaded, and reused.
+// Package storage provides persistent storage for bento data.
 //
 // Storage structure:
 //
 //	~/.bento/
 //	  bentos/     - User-created workflow definitions
-//	  secrets/    - API keys, credentials, etc. (managed by wasabi)
+//	  secrets/    - API keys, credentials, etc.
 //	  templates/  - Reusable workflow templates
 //	  config/     - Configuration files (themes, preferences)
 //	  cache/      - Temporary/cached data
@@ -18,7 +14,7 @@
 // # Usage
 //
 //	// Create a storage instance
-//	storage := hangiri.NewDefaultStorage()
+//	storage := storage.NewDefaultStorage()
 //
 //	// Save a bento
 //	err := storage.SaveBento(ctx, "my-workflow", definition)
@@ -43,7 +39,7 @@ import (
 	"strings"
 
 	"github.com/Develonaut/bento/pkg/tui"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // StorageType represents different types of storage subdirectories.
@@ -108,7 +104,7 @@ func (s *Storage) getBentoPath(name string) string {
 //
 // The bento is saved as <name>.bento.json in the bentos directory.
 // Returns an error if the name is invalid or if writing fails.
-func (s *Storage) SaveBento(ctx context.Context, name string, def *neta.Definition) error {
+func (s *Storage) SaveBento(ctx context.Context, name string, def *node.Definition) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -137,7 +133,7 @@ func (s *Storage) SaveBento(ctx context.Context, name string, def *neta.Definiti
 // LoadBento loads a bento definition from ~/.bento/bentos/
 //
 // Returns an error if the bento doesn't exist or cannot be parsed.
-func (s *Storage) LoadBento(ctx context.Context, name string) (*neta.Definition, error) {
+func (s *Storage) LoadBento(ctx context.Context, name string) (*node.Definition, error) {
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}

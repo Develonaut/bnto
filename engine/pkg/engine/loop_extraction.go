@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // splitPreservingURLs splits a space-separated string of URLs.
@@ -25,7 +25,7 @@ func splitPreservingURLs(s string) []string {
 
 // extractLoopItems extracts and validates items for forEach loop.
 func (i *Engine) extractLoopItems(
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 ) ([]interface{}, error) {
 	itemsParam := def.Parameters["items"]
@@ -51,7 +51,7 @@ func (i *Engine) extractLoopItems(
 
 // convertToInterfaceArray converts resolved value to []interface{}.
 func (i *Engine) convertToInterfaceArray(
-	def *neta.Definition,
+	def *node.Definition,
 	resolved interface{},
 ) ([]interface{}, error) {
 	switch v := resolved.(type) {

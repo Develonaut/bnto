@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // executeForEach executes a forEach loop AS A LEAF NODE.
 // The loop is a single unit in the progress graph, with children executing internally.
 func (i *Engine) executeForEach(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 	result *Result,
 ) error {
@@ -36,7 +36,7 @@ func (i *Engine) executeForEach(
 }
 
 // initializeLoopExecution sets up loop state and logging.
-func (i *Engine) initializeLoopExecution(def *neta.Definition, execCtx *executionContext) {
+func (i *Engine) initializeLoopExecution(def *node.Definition, execCtx *executionContext) {
 	i.state.setNodeState(def.ID, "executing")
 	i.state.setNodeProgress(def.ID, 0, "Starting loop")
 
@@ -48,7 +48,7 @@ func (i *Engine) initializeLoopExecution(def *neta.Definition, execCtx *executio
 
 // finalizeLoopExecution completes loop execution and stores results.
 func (i *Engine) finalizeLoopExecution(
-	def *neta.Definition,
+	def *node.Definition,
 	loopResults []interface{},
 	execCtx *executionContext,
 	result *Result,
@@ -72,7 +72,7 @@ func (i *Engine) finalizeLoopExecution(
 }
 
 // checkLoopCancellation checks if context is cancelled.
-func (i *Engine) checkLoopCancellation(ctx context.Context, def *neta.Definition) error {
+func (i *Engine) checkLoopCancellation(ctx context.Context, def *node.Definition) error {
 	select {
 	case <-ctx.Done():
 		i.state.setNodeState(def.ID, "error")
@@ -83,7 +83,7 @@ func (i *Engine) checkLoopCancellation(ctx context.Context, def *neta.Definition
 }
 
 // reportLoopProgress reports partial progress for current iteration.
-func (i *Engine) reportLoopProgress(def *neta.Definition, idx, total int) {
+func (i *Engine) reportLoopProgress(def *node.Definition, idx, total int) {
 	progress := (idx * 100) / total
 	message := fmt.Sprintf("Iteration %d/%d", idx+1, total)
 	i.state.setNodeProgress(def.ID, progress, message)
@@ -97,7 +97,7 @@ func (i *Engine) reportLoopProgress(def *neta.Definition, idx, total int) {
 }
 
 // logLoopIterationError logs an error during loop iteration.
-func (i *Engine) logLoopIterationError(def *neta.Definition, idx int, err error) {
+func (i *Engine) logLoopIterationError(def *node.Definition, idx int, err error) {
 	if i.logger != nil {
 		i.logger.Error("│  │   ✗ Loop iteration failed",
 			"loop_id", def.ID,

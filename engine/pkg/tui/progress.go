@@ -1,4 +1,4 @@
-// Package miso provides terminal output "seasoning" - themed styling and progress display.
+// Package tui provides terminal styling and progress display.
 //
 // Bubbletea progress display using daemon-combo pattern.
 package tui

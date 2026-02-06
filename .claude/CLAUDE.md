@@ -85,9 +85,9 @@ Every file, function, and package does ONE thing well. See [BENTO_BOX_PRINCIPLE.
 // Each package has one responsibility
 engine/pkg/
 ├── engine/       # Orchestration ONLY
-├── registry/     # Neta type registration ONLY
+├── registry/     # Node type registration ONLY
 ├── storage/      # Persistent storage ONLY
-├── neta/         # Node type definitions and implementations
+├── node/         # Node type definitions and implementations
 ├── validator/    # Workflow validation ONLY
 ├── paths/        # Path resolution ONLY
 ├── logger/       # Logging ONLY
@@ -146,7 +146,7 @@ bento/
 
 | Layer              | Technology                                    |
 | ------------------ | --------------------------------------------- |
-| **Engine**         | Go (CLI, execution, all neta types)           |
+| **Engine**         | Go (CLI, execution, all node types)           |
 | **Desktop**        | Wails v2 (Go + system webview)                |
 | **Web Frontend**   | Next.js (React, server-side rendering)        |
 | **Cloud Backend**  | Convex (self-hosted on Railway via template)   |
@@ -305,8 +305,8 @@ For EACH file you modified, verify:
 
 - [ ] **Go Package Boundaries**: Does each Go package stay in its lane?
   - `engine/` orchestrates, doesn't do I/O
-  - `registry/` registers neta types, doesn't execute them
-  - `neta/` types execute, don't know about other neta types
+  - `registry/` registers node types, doesn't execute them
+  - `node/` types execute, don't know about other node types
   - No circular dependencies between packages
 
 - [ ] **Single Responsibility**: Is each file/function small and focused?
@@ -377,7 +377,7 @@ For EACH TypeScript file you created or modified:
 For EACH significant change, evaluate if tests are needed:
 
 - [ ] **Does this code need tests?** Consider:
-  - Go engine logic (neta execution, validation, path resolution) → YES, unit tests
+  - Go engine logic (node execution, validation, path resolution) → YES, unit tests
   - Go API endpoints → YES, integration tests with httptest
   - TypeScript API client logic → YES, unit tests with mocks
   - Pure utility functions → YES, unit tests
@@ -385,7 +385,7 @@ For EACH significant change, evaluate if tests are needed:
   - Configuration or type-only changes → NO
 
 - [ ] **What type of tests?**
-  - **Go unit tests**: Neta types, engine execution, validators, path resolution
+  - **Go unit tests**: Node types, engine execution, validators, path resolution
   - **Go integration tests**: End-to-end workflow execution with fixture .bento.json files
   - **TS unit tests**: API client logic, utility functions
   - **E2E tests**: Critical user flows (upload workflow → run → see results)

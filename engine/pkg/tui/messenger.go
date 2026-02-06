@@ -124,18 +124,18 @@ func (m *SimpleMessenger) SendNodeCompleted(path string, duration time.Duration,
 	delete(m.nodeInfo, path)
 
 	if err != nil {
-		// Print: Failed NETA:file-system Create Product Directory… (error message)
+		// Print: Failed NODE:file-system Create Product Directory… (error message)
 		statusWord := getStatusLabel(StepFailed, info.name)
-		fmt.Printf("  %s NETA:%s %s… %s\n",
+		fmt.Printf("  %s NODE:%s %s… %s\n",
 			m.theme.Error.Render(statusWord),
 			info.nodeType,
 			info.name,
 			m.theme.Error.Render(err.Error()))
 	} else {
-		// Print: Perfected NETA:spreadsheet Read Products CSV… (2ms)
+		// Print: Perfected NODE:spreadsheet Read Products CSV… (2ms)
 		statusWord := getStatusLabel(StepCompleted, info.name)
 		durationStr := formatSimpleDuration(duration)
-		fmt.Printf("  %s NETA:%s %s… %s\n",
+		fmt.Printf("  %s NODE:%s %s… %s\n",
 			m.theme.Success.Render(statusWord),
 			info.nodeType,
 			info.name,
@@ -199,7 +199,7 @@ func (m *CallbackMessenger) SendNodeCompleted(path string, duration time.Duratio
 	var logLine string
 	if err != nil {
 		statusWord := getStatusLabel(StepFailed, info.name)
-		logLine = fmt.Sprintf("  %s NETA:%s %s… %s\n",
+		logLine = fmt.Sprintf("  %s NODE:%s %s… %s\n",
 			m.theme.Error.Render(statusWord),
 			info.nodeType,
 			info.name,
@@ -207,7 +207,7 @@ func (m *CallbackMessenger) SendNodeCompleted(path string, duration time.Duratio
 	} else {
 		statusWord := getStatusLabel(StepCompleted, info.name)
 		durationStr := formatSimpleDuration(duration)
-		logLine = fmt.Sprintf("  %s NETA:%s %s… %s\n",
+		logLine = fmt.Sprintf("  %s NODE:%s %s… %s\n",
 			m.theme.Success.Render(statusWord),
 			info.nodeType,
 			info.name,

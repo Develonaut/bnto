@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/Develonaut/bento/pkg/storage"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/spf13/cobra"
 )
 
@@ -176,7 +176,7 @@ func extractBentoInfo(path string) bentoInfo {
 }
 
 // countNodes counts the number of nodes in a bento.
-func countNodes(def *neta.Definition) int {
+func countNodes(def *node.Definition) int {
 	return len(def.Nodes)
 }
 

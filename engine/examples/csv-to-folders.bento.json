@@ -8,7 +8,7 @@
     "y": 0
   },
   "metadata": {
-    "description": "Creates folder structure for each product from CSV. Demonstrates loop neta with forEach mode and context passing from CSV reader to file-system operations.",
+    "description": "Creates folder structure for each product from CSV. Demonstrates loop node with forEach mode and context passing from CSV reader to file-system operations.",
     "usage": "bento run folder-setup.bento.json",
     "example": "Reads tests/fixtures/products-test.csv and creates products/Combat Dog (Supplies)/, products/Combat Dog (Gas Mask)/, products/Combat Dog (Attack)/",
     "tags": ["phase8", "folders", "loop", "filesystem", "csv"],

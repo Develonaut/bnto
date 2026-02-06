@@ -8,7 +8,7 @@ import (
 // createCustomStyles creates custom styles for log output.
 // This configures colors for:
 // - Log levels (INFO, DEBUG, WARN, ERROR)
-// - Breadcrumb fields (bento name, neta type, neta name)
+// - Breadcrumb fields (bento name, node type, node name)
 func createCustomStyles() *log.Styles {
 	styles := log.DefaultStyles()
 
@@ -37,11 +37,11 @@ func createCustomStyles() *log.Styles {
 	styles.Keys["bento"] = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("205")) // Hot Pink (for bento name)
 
-	styles.Keys["neta_type"] = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("51")) // Cyan (for neta type)
+	styles.Keys["node_type"] = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("51")) // Cyan (for node type)
 
-	styles.Keys["neta_name"] = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("118")) // Green (for neta name)
+	styles.Keys["node_name"] = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("118")) // Green (for node name)
 
 	styles.Keys["status"] = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("141")) // Purple (for status words)
@@ -56,10 +56,10 @@ func createCustomStyles() *log.Styles {
 	styles.Values["bento"] = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("205")) // Hot Pink
 
-	styles.Values["neta_type"] = lipgloss.NewStyle().
+	styles.Values["node_type"] = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("51")) // Cyan
 
-	styles.Values["neta_name"] = lipgloss.NewStyle().
+	styles.Values["node_name"] = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("118")) // Green
 
 	styles.Values["status"] = lipgloss.NewStyle().

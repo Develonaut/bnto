@@ -8,7 +8,7 @@ import (
 
 // TestCSVReader_Integration tests the CSV reader bento end-to-end.
 // This is the first real integration test validating that:
-// - Spreadsheet neta works with real CSV files
+// - Spreadsheet node works with real CSV files
 // - Bento definitions load and execute correctly
 // - Test infrastructure from Phase 8.1 is functional
 func TestCSVReader_Integration(t *testing.T) {
@@ -31,24 +31,24 @@ func TestCSVReader_Integration(t *testing.T) {
 		t.Errorf("Expected '1 nodes executed' in output. Got: %s", output)
 	}
 
-	// Verify the CSV reader neta was executed
-	if !strings.Contains(output, "neta_id=read-csv") {
-		t.Errorf("Expected 'neta_id=read-csv' in output. Got: %s", output)
+	// Verify the CSV reader node was executed
+	if !strings.Contains(output, "node_id=read-csv") {
+		t.Errorf("Expected 'node_id=read-csv' in output. Got: %s", output)
 	}
 
-	// Verify the neta type is spreadsheet
-	if !strings.Contains(output, "neta_type=spreadsheet") {
-		t.Errorf("Expected 'neta_type=spreadsheet' in output. Got: %s", output)
+	// Verify the node type is spreadsheet
+	if !strings.Contains(output, "node_type=spreadsheet") {
+		t.Errorf("Expected 'node_type=spreadsheet' in output. Got: %s", output)
 	}
 
-	// Verify the neta completed successfully
-	if !strings.Contains(output, "✓ Neta completed") {
-		t.Errorf("Expected '✓ Neta completed' in output. Got: %s", output)
+	// Verify the node completed successfully
+	if !strings.Contains(output, "✓ Node completed") {
+		t.Errorf("Expected '✓ Node completed' in output. Got: %s", output)
 	}
 
 	t.Log("CSV Reader bento executed successfully")
 	t.Log("Validated:")
-	t.Log("  - Spreadsheet neta loads and executes")
+	t.Log("  - Spreadsheet node loads and executes")
 	t.Log("  - CSV file (tests/fixtures/products-test.csv) is read")
 	t.Log("  - Bento definition parses correctly")
 	t.Log("  - Integration test infrastructure works")

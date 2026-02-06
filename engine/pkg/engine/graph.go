@@ -3,20 +3,20 @@ package engine
 import (
 	"fmt"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // graph represents a directed graph for node execution order.
 type graph struct {
-	nodes    map[string]*neta.Definition // Node ID -> Definition
+	nodes    map[string]*node.Definition // Node ID -> Definition
 	edges    map[string][]string         // Node ID -> List of target IDs
 	incoming map[string]int              // Node ID -> Count of incoming edges
 }
 
 // buildGraph creates a graph from a bento definition.
-func buildGraph(def *neta.Definition) (*graph, error) {
+func buildGraph(def *node.Definition) (*graph, error) {
 	g := &graph{
-		nodes:    make(map[string]*neta.Definition),
+		nodes:    make(map[string]*node.Definition),
 		edges:    make(map[string][]string),
 		incoming: make(map[string]int),
 	}
@@ -46,8 +46,8 @@ func buildGraph(def *neta.Definition) (*graph, error) {
 }
 
 // getStartNodes returns all nodes with no incoming edges.
-func (g *graph) getStartNodes() []*neta.Definition {
-	var starts []*neta.Definition
+func (g *graph) getStartNodes() []*node.Definition {
+	var starts []*node.Definition
 
 	for nodeID, count := range g.incoming {
 		if count == 0 {
@@ -59,13 +59,13 @@ func (g *graph) getStartNodes() []*neta.Definition {
 }
 
 // getTargets returns all target nodes for a given source node.
-func (g *graph) getTargets(nodeID string) []*neta.Definition {
+func (g *graph) getTargets(nodeID string) []*node.Definition {
 	targetIDs := g.edges[nodeID]
 	if len(targetIDs) == 0 {
 		return nil
 	}
 
-	targets := make([]*neta.Definition, 0, len(targetIDs))
+	targets := make([]*node.Definition, 0, len(targetIDs))
 	for _, targetID := range targetIDs {
 		if node, ok := g.nodes[targetID]; ok {
 			targets = append(targets, node)

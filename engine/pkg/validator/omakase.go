@@ -1,47 +1,43 @@
-// Package omakase provides validation for bento files and neta definitions.
-//
-// "Omakase" (おまかせ - "I'll leave it up to you" / "chef's choice") ensures all neta
-// are properly configured before execution, just as a sushi chef validates ingredients
-// before serving.
+// Package validator provides validation for bento files and node definitions.
 //
 // The package validates:
 //   - Core structure (ID, Type, Version required fields)
-//   - Neta-specific parameters (URL for http-request, mode for loop, etc.)
-//   - Nested structures (group neta with child nodes and edges)
+//   - Node-specific parameters (URL for http-request, mode for loop, etc.)
+//   - Nested structures (group node with child nodes and edges)
 //   - Edge validity (source and target nodes must exist)
 //
 // # Usage
 //
-//	validator := omakase.New()
+//	validator := validator.New()
 //
-//	// Validate a neta definition
-//	if err := validator.Validate(ctx, netaDef); err != nil {
-//	    log.Fatalf("Invalid neta: %v", err)
+//	// Validate a node definition
+//	if err := validator.Validate(ctx, nodeDef); err != nil {
+//	    log.Fatalf("Invalid node: %v", err)
 //	}
 //
 //	// Pre-flight checks (environment, commands, API keys)
-//	if err := validator.PreflightCheck(ctx, netaDef); err != nil {
+//	if err := validator.PreflightCheck(ctx, nodeDef); err != nil {
 //	    log.Fatalf("Pre-flight check failed: %v", err)
 //	}
 //
-// All validation errors include the neta ID and clear, actionable error messages.
+// All validation errors include the node ID and clear, actionable error messages.
 package validator
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
-// Validator validates neta definitions and performs pre-flight checks.
+// Validator validates node definitions and performs pre-flight checks.
 type Validator struct {
-	// validators holds neta-specific validation functions
+	// validators holds node-specific validation functions
 	validators map[string]ValidatorFunc
 }
 
-// ValidatorFunc is a function that validates neta-specific parameters.
-type ValidatorFunc func(*neta.Definition) error
+// ValidatorFunc is a function that validates node-specific parameters.
+type ValidatorFunc func(*node.Definition) error
 
 // New creates a new Validator with all validators registered.
 func New() *Validator {
@@ -49,7 +45,7 @@ func New() *Validator {
 		validators: make(map[string]ValidatorFunc),
 	}
 
-	// Register neta-specific validators
+	// Register node-specific validators
 	v.validators["http-request"] = validateHTTPRequest
 	v.validators["file-system"] = validateFileSystem
 	v.validators["shell-command"] = validateShellCommand
@@ -64,11 +60,11 @@ func New() *Validator {
 	return v
 }
 
-// Validate validates a neta definition.
+// Validate validates a node definition.
 //
 // Returns a clear, actionable error message if validation fails.
-// The error message always includes the neta ID for debugging.
-func (v *Validator) Validate(ctx context.Context, def *neta.Definition) error {
+// The error message always includes the node ID for debugging.
+func (v *Validator) Validate(ctx context.Context, def *node.Definition) error {
 	// Check for cancellation
 	if ctx.Err() != nil {
 		return ctx.Err()
@@ -84,7 +80,7 @@ func (v *Validator) Validate(ctx context.Context, def *neta.Definition) error {
 }
 
 // validateCoreAndType validates core structure and type.
-func (v *Validator) validateCoreAndType(def *neta.Definition) error {
+func (v *Validator) validateCoreAndType(def *node.Definition) error {
 	if err := v.validateCore(def); err != nil {
 		return err
 	}
@@ -92,7 +88,7 @@ func (v *Validator) validateCoreAndType(def *neta.Definition) error {
 }
 
 // validateSpecificAndNested validates type-specific params and nested nodes.
-func (v *Validator) validateSpecificAndNested(ctx context.Context, def *neta.Definition) error {
+func (v *Validator) validateSpecificAndNested(ctx context.Context, def *node.Definition) error {
 	if err := v.validateTypeSpecific(def); err != nil {
 		return err
 	}
@@ -104,32 +100,32 @@ func (v *Validator) validateSpecificAndNested(ctx context.Context, def *neta.Def
 }
 
 // validateCore validates core required fields.
-func (v *Validator) validateCore(def *neta.Definition) error {
+func (v *Validator) validateCore(def *node.Definition) error {
 	if def.ID == "" {
-		return fmt.Errorf("neta is missing required field 'id'")
+		return fmt.Errorf("node is missing required field 'id'")
 	}
 
 	if def.Type == "" {
-		return fmt.Errorf("neta '%s' is missing required field 'type'", def.ID)
+		return fmt.Errorf("node '%s' is missing required field 'type'", def.ID)
 	}
 
 	if def.Version == "" {
-		return fmt.Errorf("neta '%s' is missing required field 'version'", def.ID)
+		return fmt.Errorf("node '%s' is missing required field 'version'", def.ID)
 	}
 
 	return nil
 }
 
-// validateType validates that the neta type is known.
-func (v *Validator) validateType(def *neta.Definition) error {
+// validateType validates that the node type is known.
+func (v *Validator) validateType(def *node.Definition) error {
 	if _, exists := v.validators[def.Type]; !exists {
-		return fmt.Errorf("neta '%s' has unknown type '%s'", def.ID, def.Type)
+		return fmt.Errorf("node '%s' has unknown type '%s'", def.ID, def.Type)
 	}
 	return nil
 }
 
-// validateTypeSpecific validates neta-specific parameters.
-func (v *Validator) validateTypeSpecific(def *neta.Definition) error {
+// validateTypeSpecific validates node-specific parameters.
+func (v *Validator) validateTypeSpecific(def *node.Definition) error {
 	validatorFunc := v.validators[def.Type]
 	if validatorFunc == nil {
 		return nil
@@ -138,8 +134,8 @@ func (v *Validator) validateTypeSpecific(def *neta.Definition) error {
 	return validatorFunc(def)
 }
 
-// validateGroup validates group neta (nested nodes and edges).
-func (v *Validator) validateGroup(ctx context.Context, def *neta.Definition) error {
+// validateGroup validates group node (nested nodes and edges).
+func (v *Validator) validateGroup(ctx context.Context, def *node.Definition) error {
 	// Validate child nodes
 	if err := v.validateChildNodes(ctx, def); err != nil {
 		return err
@@ -150,7 +146,7 @@ func (v *Validator) validateGroup(ctx context.Context, def *neta.Definition) err
 }
 
 // validateChildNodes validates all child nodes in a group.
-func (v *Validator) validateChildNodes(ctx context.Context, def *neta.Definition) error {
+func (v *Validator) validateChildNodes(ctx context.Context, def *node.Definition) error {
 	for _, child := range def.Nodes {
 		if err := v.Validate(ctx, &child); err != nil {
 			return fmt.Errorf("invalid child node in group '%s': %w", def.ID, err)
@@ -160,7 +156,7 @@ func (v *Validator) validateChildNodes(ctx context.Context, def *neta.Definition
 }
 
 // validateEdges validates that all edges reference existing nodes.
-func (v *Validator) validateEdges(def *neta.Definition) error {
+func (v *Validator) validateEdges(def *node.Definition) error {
 	nodeIDs := buildNodeIDMap(def.Nodes)
 
 	for _, edge := range def.Edges {
@@ -177,7 +173,7 @@ func (v *Validator) validateEdges(def *neta.Definition) error {
 }
 
 // buildNodeIDMap creates a map of node IDs for quick lookup.
-func buildNodeIDMap(nodes []neta.Definition) map[string]bool {
+func buildNodeIDMap(nodes []node.Definition) map[string]bool {
 	nodeIDs := make(map[string]bool)
 	for _, node := range nodes {
 		nodeIDs[node.ID] = true
@@ -194,7 +190,7 @@ func buildNodeIDMap(nodes []neta.Definition) map[string]bool {
 //   - Recursively checking child nodes in groups and loops
 //
 // Returns a clear error message if any pre-flight check fails.
-func (v *Validator) PreflightCheck(ctx context.Context, def *neta.Definition) error {
+func (v *Validator) PreflightCheck(ctx context.Context, def *node.Definition) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -209,7 +205,7 @@ func (v *Validator) PreflightCheck(ctx context.Context, def *neta.Definition) er
 }
 
 // preflightTypeSpecific performs type-specific preflight checks.
-func (v *Validator) preflightTypeSpecific(def *neta.Definition) error {
+func (v *Validator) preflightTypeSpecific(def *node.Definition) error {
 	switch def.Type {
 	case "shell-command":
 		return preflightShellCommand(def)
@@ -224,7 +220,7 @@ func (v *Validator) preflightTypeSpecific(def *neta.Definition) error {
 }
 
 // preflightRecursive performs preflight checks on child nodes.
-func (v *Validator) preflightRecursive(ctx context.Context, def *neta.Definition) error {
+func (v *Validator) preflightRecursive(ctx context.Context, def *node.Definition) error {
 	if def.Type != "group" && def.Type != "loop" {
 		return nil
 	}

@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 	"github.com/Develonaut/bento/pkg/validator"
 	"github.com/spf13/cobra"
 )
@@ -51,7 +51,7 @@ func runValidate(cmd *cobra.Command, args []string) error {
 }
 
 // loadBentoForValidate loads a bento and prints status.
-func loadBentoForValidate(bentoPath string) (*neta.Definition, error) {
+func loadBentoForValidate(bentoPath string) (*node.Definition, error) {
 	def, err := loadBento(bentoPath)
 	if err != nil {
 		printError(fmt.Sprintf("Failed to load bento: %v", err))
@@ -63,7 +63,7 @@ func loadBentoForValidate(bentoPath string) (*neta.Definition, error) {
 }
 
 // validateForValidate validates the bento definition.
-func validateForValidate(def *neta.Definition) error {
+func validateForValidate(def *node.Definition) error {
 	validator := validator.New()
 	ctx := context.Background()
 

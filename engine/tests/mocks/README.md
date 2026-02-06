@@ -170,7 +170,7 @@ Following the **Bento Box Principle**:
 
 After Phase 8.1, these mocks will be used in:
 - Phase 8.2: CSV Reader bento tests
-- Phase 8.3: HTTP Request neta tests (with Figma mock)
+- Phase 8.3: HTTP Request node tests (with Figma mock)
 - Phase 8.4: Blender integration tests (with Blender mock)
 - Phase 8.5: Full end-to-end product automation test
 

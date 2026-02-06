@@ -1,21 +1,21 @@
 package logger
 
 // Context helper functions for adding bento-specific fields to loggers.
-// These functions are used by itamae to tag logs with workflow context.
+// These functions are used by the engine to tag logs with workflow context.
 //
 // Usage:
 //
-//	logger := shoyu.New(shoyu.Config{...})
+//	logger := logger.New(logger.Config{...})
 //
 //	// Add context for a specific workflow
-//	logger = shoyu.WithBentoID(logger, "my-workflow")
-//	logger = shoyu.WithNetaID(logger, "node-1")
+//	logger = logger.WithBentoID(logger, "my-workflow")
+//	logger = logger.WithNodeID(logger, "node-1")
 //
 //	// Now all logs will include these fields
-//	logger.Info("Executing neta")
+//	logger.Info("Executing node")
 
 // WithBentoID adds bento_id to the logger context.
-// The itamae will use this to tag all logs from a specific workflow.
+// The engine uses this to tag all logs from a specific workflow.
 //
 // The bento_id helps identify which workflow instance generated a log,
 // which is critical for debugging parallel workflow executions.
@@ -23,20 +23,20 @@ func WithBentoID(logger *Logger, bentoID string) *Logger {
 	return logger.With("bento_id", bentoID)
 }
 
-// WithNetaID adds neta_id to the logger context.
-// Used to track which neta (ingredient) is currently executing.
+// WithNodeID adds node_id to the logger context.
+// Used to track which node is currently executing.
 //
 // This helps identify exactly which step in a workflow generated a log,
-// making it easier to debug complex workflows with many neta.
-func WithNetaID(logger *Logger, netaID string) *Logger {
-	return logger.With("neta_id", netaID)
+// making it easier to debug complex workflows with many nodes.
+func WithNodeID(logger *Logger, nodeID string) *Logger {
+	return logger.With("node_id", nodeID)
 }
 
-// WithNetaType adds neta_type to the logger context.
-// Used to tag logs with the type of neta being executed.
+// WithNodeType adds node_type to the logger context.
+// Used to tag logs with the type of node being executed.
 //
-// Example neta types: "http-request", "shell-command", "edit-fields"
-// This helps filter and analyze logs by neta type.
-func WithNetaType(logger *Logger, netaType string) *Logger {
-	return logger.With("neta_type", netaType)
+// Example node types: "http-request", "shell-command", "edit-fields"
+// This helps filter and analyze logs by node type.
+func WithNodeType(logger *Logger, nodeType string) *Logger {
+	return logger.With("node_type", nodeType)
 }

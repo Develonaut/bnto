@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // Legacy methods for backward compatibility
@@ -12,13 +12,13 @@ import (
 
 // Save saves a bento definition using the legacy API.
 // Deprecated: Use SaveBento instead.
-func (s *Storage) Save(ctx context.Context, name string, def *neta.Definition) error {
+func (s *Storage) Save(ctx context.Context, name string, def *node.Definition) error {
 	return s.SaveBento(ctx, name, def)
 }
 
 // Load loads a bento definition using the legacy API.
 // Deprecated: Use LoadBento instead.
-func (s *Storage) Load(ctx context.Context, name string) (*neta.Definition, error) {
+func (s *Storage) Load(ctx context.Context, name string) (*node.Definition, error) {
 	return s.LoadBento(ctx, name)
 }
 
@@ -35,13 +35,13 @@ func (s *Storage) Delete(ctx context.Context, name string) error {
 }
 
 // marshal serializes a definition to JSON with indentation.
-func (s *Storage) marshal(def *neta.Definition) ([]byte, error) {
+func (s *Storage) marshal(def *node.Definition) ([]byte, error) {
 	return json.MarshalIndent(def, "", "  ")
 }
 
 // unmarshal deserializes JSON data to a definition.
-func (s *Storage) unmarshal(data []byte) (*neta.Definition, error) {
-	var def neta.Definition
+func (s *Storage) unmarshal(data []byte) (*node.Definition, error) {
+	var def node.Definition
 	if err := json.Unmarshal(data, &def); err != nil {
 		return nil, err
 	}

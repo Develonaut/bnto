@@ -6,11 +6,11 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // preflightShellCommand checks if the command exists in PATH.
-func preflightShellCommand(def *neta.Definition) error {
+func preflightShellCommand(def *node.Definition) error {
 	command, ok := def.Parameters["command"].(string)
 	if !ok {
 		return nil // Already validated by validateShellCommand
@@ -19,7 +19,7 @@ func preflightShellCommand(def *neta.Definition) error {
 	// Check if command exists in PATH
 	_, err := exec.LookPath(command)
 	if err != nil {
-		return fmt.Errorf("shell-command neta '%s': command '%s' not found in PATH. Please install it first",
+		return fmt.Errorf("shell-command node '%s': command '%s' not found in PATH. Please install it first",
 			def.ID, command)
 	}
 
@@ -27,7 +27,7 @@ func preflightShellCommand(def *neta.Definition) error {
 }
 
 // preflightHTTPRequest checks for required environment variables in URL/headers.
-func preflightHTTPRequest(def *neta.Definition) error {
+func preflightHTTPRequest(def *node.Definition) error {
 	if err := checkURLEnvVars(def); err != nil {
 		return err
 	}
@@ -35,13 +35,13 @@ func preflightHTTPRequest(def *neta.Definition) error {
 }
 
 // checkURLEnvVars validates environment variables in URL.
-func checkURLEnvVars(def *neta.Definition) error {
+func checkURLEnvVars(def *node.Definition) error {
 	url, _ := def.Parameters["url"].(string)
 	envVars := extractEnvVars(url)
 
 	for _, envVar := range envVars {
 		if os.Getenv(envVar) == "" {
-			return fmt.Errorf("http-request neta '%s': environment variable '%s' not set (required in URL)",
+			return fmt.Errorf("http-request node '%s': environment variable '%s' not set (required in URL)",
 				def.ID, envVar)
 		}
 	}
@@ -49,7 +49,7 @@ func checkURLEnvVars(def *neta.Definition) error {
 }
 
 // checkHeaderEnvVars validates environment variables in headers.
-func checkHeaderEnvVars(def *neta.Definition) error {
+func checkHeaderEnvVars(def *node.Definition) error {
 	headers, ok := def.Parameters["headers"].(map[string]string)
 	if !ok {
 		return nil
@@ -64,11 +64,11 @@ func checkHeaderEnvVars(def *neta.Definition) error {
 }
 
 // checkHeaderValue validates environment variables in a single header value.
-func checkHeaderValue(def *neta.Definition, key, value string) error {
+func checkHeaderValue(def *node.Definition, key, value string) error {
 	envVars := extractEnvVars(value)
 	for _, envVar := range envVars {
 		if os.Getenv(envVar) == "" {
-			return fmt.Errorf("http-request neta '%s': environment variable '%s' not set (required in header '%s')",
+			return fmt.Errorf("http-request node '%s': environment variable '%s' not set (required in header '%s')",
 				def.ID, envVar, key)
 		}
 	}
@@ -76,7 +76,7 @@ func checkHeaderValue(def *neta.Definition, key, value string) error {
 }
 
 // preflightFileSystem checks if file paths exist for read operations.
-func preflightFileSystem(def *neta.Definition) error {
+func preflightFileSystem(def *node.Definition) error {
 	operation, _ := def.Parameters["operation"].(string)
 	path, ok := def.Parameters["path"].(string)
 	if !ok {
@@ -91,7 +91,7 @@ func preflightFileSystem(def *neta.Definition) error {
 	// For read/copy operations, check source file exists (only if no templates)
 	if (operation == "read" || operation == "copy") && !containsTemplates(path) {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			return fmt.Errorf("file-system neta '%s': file not found: %s", def.ID, path)
+			return fmt.Errorf("file-system node '%s': file not found: %s", def.ID, path)
 		}
 	}
 
@@ -103,7 +103,7 @@ func preflightFileSystem(def *neta.Definition) error {
 			}
 			if !containsTemplates(source) {
 				if _, err := os.Stat(source); os.IsNotExist(err) {
-					return fmt.Errorf("file-system neta '%s': source file not found: %s", def.ID, source)
+					return fmt.Errorf("file-system node '%s': source file not found: %s", def.ID, source)
 				}
 			}
 		}
@@ -168,7 +168,7 @@ func findNextVar(s string) (string, string, bool) {
 }
 
 // preflightSpreadsheet checks CSV file exists and environment variables in path.
-func preflightSpreadsheet(def *neta.Definition) error {
+func preflightSpreadsheet(def *node.Definition) error {
 	operation, _ := def.Parameters["operation"].(string)
 	if operation != "read" {
 		return nil
@@ -187,7 +187,7 @@ func preflightSpreadsheet(def *neta.Definition) error {
 	// Check file exists (only if no templates like {{.index}})
 	if !containsTemplates(path) {
 		if _, err := os.Stat(path); os.IsNotExist(err) {
-			return fmt.Errorf("spreadsheet neta '%s': CSV file not found: %s", def.ID, path)
+			return fmt.Errorf("spreadsheet node '%s': CSV file not found: %s", def.ID, path)
 		}
 	}
 
@@ -195,11 +195,11 @@ func preflightSpreadsheet(def *neta.Definition) error {
 }
 
 // checkPathEnvVars validates environment variables in a file path.
-func checkPathEnvVars(def *neta.Definition, path string) error {
+func checkPathEnvVars(def *node.Definition, path string) error {
 	envVars := extractEnvVars(path)
 	for _, envVar := range envVars {
 		if os.Getenv(envVar) == "" {
-			return fmt.Errorf("neta '%s': environment variable '%s' not set (required in path: %s)",
+			return fmt.Errorf("node '%s': environment variable '%s' not set (required in path: %s)",
 				def.ID, envVar, path)
 		}
 	}

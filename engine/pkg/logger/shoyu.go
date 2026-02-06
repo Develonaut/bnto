@@ -122,13 +122,13 @@ func (l *Logger) ErrorContext(ctx context.Context, msg string, args ...any) {
 }
 
 // With creates a child logger with additional context fields.
-// This is used by itamae to add trace IDs, bento IDs, neta IDs, etc.
+// This is used by the engine to add trace IDs, bento IDs, node IDs, etc.
 //
 // Example:
 //
 //	contextLogger := logger.With(
 //	    "bento_id", "my-workflow",
-//	    "neta_id", "node-1")
+//	    "node_id", "node-1")
 func (l *Logger) With(args ...any) *Logger {
 	return &Logger{
 		sl:       l.sl.With(args...),
@@ -139,7 +139,7 @@ func (l *Logger) With(args ...any) *Logger {
 
 // Stream outputs a line for streaming processes (like Blender renders).
 // This bypasses normal log levels and calls the OnStream callback if set.
-// Critical for Phase 8: real-time output from shell-command neta.
+// Critical for Phase 8: real-time output from shell-command node.
 //
 // If OnStream callback is set, it handles all output (including file logging).
 // Otherwise, log to info level for default visibility.

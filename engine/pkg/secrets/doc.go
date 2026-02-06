@@ -35,7 +35,7 @@
 // Wasabi enforces strict separation between configuration and secrets:
 //
 //   - {{SECRETS.X}} - Resolved by wasabi from keychain (sensitive data)
-//   - {{.X}} - Resolved by itamae from environment/context (configuration)
+//   - {{.X}} - Resolved by engine from environment/context (configuration)
 //
 // This separation prevents accidental exposure of secrets and makes security
 // auditing straightforward.
@@ -67,9 +67,9 @@
 //   - Each secret must be explicitly set before use
 //   - No default or placeholder values
 //
-// # Integration with Itamae
+// # Integration with Engine
 //
-// The itamae executor automatically resolves {{SECRETS.X}} placeholders before
-// executing neta, ensuring secrets are available when needed but never exposed
+// The engine executor automatically resolves {{SECRETS.X}} placeholders before
+// executing nodes, ensuring secrets are available when needed but never exposed
 // in bento definitions or version control.
 package secrets

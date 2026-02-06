@@ -7,7 +7,7 @@ import (
 )
 
 // StreamReader wraps an io.Reader and calls a callback for each line.
-// Used by shell-command neta to stream output from long-running processes
+// Used by shell-command node to stream output from long-running processes
 // like Blender renders in real-time.
 //
 // This is CRITICAL for Phase 8: Blender renders can take minutes or hours,
@@ -19,7 +19,7 @@ import (
 //	stdout, _ := cmd.StdoutPipe()
 //
 //	go func() {
-//	    if err := shoyu.StreamReader(stdout, logger, func(line string) {
+//	    if err := logger.StreamReader(stdout, logger, func(line string) {
 //	        logger.Stream(line)  // Stream to user in real-time
 //	    }); err != nil {
 //	        logger.Error("stream error", "error", err)

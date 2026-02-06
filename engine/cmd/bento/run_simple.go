@@ -12,11 +12,11 @@ import (
 
 	"github.com/Develonaut/bento/pkg/engine"
 	"github.com/Develonaut/bento/pkg/tui"
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // executeSimple executes bento with simple single-line progress (non-TTY mode).
-func executeSimple(def *neta.Definition) error {
+func executeSimple(def *node.Definition) error {
 	// Get theme and palette from miso manager
 	manager := tui.NewManager()
 	theme := manager.GetTheme()

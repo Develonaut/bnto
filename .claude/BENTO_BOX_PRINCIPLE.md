@@ -13,7 +13,7 @@ Every file, function, and package should do ONE thing and do it well.
 
 ```go
 // ✅ GOOD - One responsibility
-// pkg/neta/http/client.go
+// pkg/node/http/client.go
 package http
 
 func Execute(ctx context.Context, req Request) (Response, error) {
@@ -52,17 +52,17 @@ pkg/
 **Well-defined interfaces between compartments**
 
 ```go
-// ✅ Neta (ingredient) interface - simple, clear
+// ✅ Node (ingredient) interface - simple, clear
 type Executable interface {
     Execute(ctx context.Context, params map[string]interface{}) (interface{}, error)
 }
 
-// ✅ Engine uses Neta through interface
+// ✅ Engine uses Node through interface
 type Engine struct {
     registry *registry.Registry
 }
 
-func (e *Engine) Prepare(ctx context.Context, def neta.Definition) (Result, error) {
+func (e *Engine) Prepare(ctx context.Context, def node.Definition) (Result, error) {
     executable, err := e.registry.Get(def.Type)
     // ...
 }
@@ -73,7 +73,7 @@ func (e *Engine) Prepare(ctx context.Context, def neta.Definition) (Result, erro
 
 ```go
 // Small, focused functions that compose
-func (e *Engine) Prepare(ctx context.Context, def neta.Definition) (Result, error) {
+func (e *Engine) Prepare(ctx context.Context, def node.Definition) (Result, error) {
     if def.IsGroup() {
         return e.prepareGroup(ctx, def)
     }
@@ -109,10 +109,10 @@ type Definition struct {
 ### Package Organization
 ```go
 // One concept per package
-pkg/neta/http/          # HTTP neta only
-pkg/neta/transform/     # Transform neta only
+pkg/node/http/          # HTTP node only
+pkg/node/transform/     # Transform node only
 pkg/engine/             # Orchestration only
-pkg/registry/           # Neta type registry only
+pkg/registry/           # Node type registry only
 pkg/storage/            # Persistent storage only
 ```
 
@@ -155,10 +155,10 @@ type SuperEngine struct {
 ### Premature Abstraction
 ```go
 // ❌ Creating interfaces before you need them
-type NetaFactory interface {
-    Create() Neta
+type NodeFactory interface {
+    Create() Node
     Validate() error
-    Transform() Neta
+    Transform() Node
     // ... 10 more methods you don't use
 }
 ```

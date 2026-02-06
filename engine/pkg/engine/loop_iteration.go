@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
 // executeForEachIterations executes all loop iterations and returns results.
 // Supports concurrent execution via maxConcurrency parameter.
 func (i *Engine) executeForEachIterations(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	items []interface{},
 	execCtx *executionContext,
 ) ([]interface{}, error) {
@@ -28,7 +28,7 @@ func (i *Engine) executeForEachIterations(
 }
 
 // getLoopConcurrency extracts maxConcurrency parameter from loop definition.
-func (i *Engine) getLoopConcurrency(def *neta.Definition) int {
+func (i *Engine) getLoopConcurrency(def *node.Definition) int {
 	if mc, ok := def.Parameters["maxConcurrency"]; ok {
 		if mcInt, ok := mc.(int); ok {
 			return mcInt
@@ -43,7 +43,7 @@ func (i *Engine) getLoopConcurrency(def *neta.Definition) int {
 // executeForEachSequential executes iterations sequentially (original behavior).
 func (i *Engine) executeForEachSequential(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	items []interface{},
 	execCtx *executionContext,
 ) ([]interface{}, error) {
@@ -79,7 +79,7 @@ func (i *Engine) executeForEachSequential(
 // executeForEachConcurrent executes iterations concurrently with worker pool.
 func (i *Engine) executeForEachConcurrent(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	items []interface{},
 	execCtx *executionContext,
 	maxConcurrency int,
@@ -149,7 +149,7 @@ func (i *Engine) executeForEachConcurrent(
 }
 
 // getLoopContinueOnError checks if loop should continue on iteration errors.
-func (i *Engine) getLoopContinueOnError(def *neta.Definition) bool {
+func (i *Engine) getLoopContinueOnError(def *node.Definition) bool {
 	if coe, ok := def.Parameters["continueOnError"]; ok {
 		if coeBool, ok := coe.(bool); ok {
 			return coeBool
@@ -161,7 +161,7 @@ func (i *Engine) getLoopContinueOnError(def *neta.Definition) bool {
 // executeLoopIteration executes one iteration (INTERNAL - not tracked in graph).
 func (i *Engine) executeLoopIteration(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	item interface{},
 	idx int,
 	total int,
@@ -177,7 +177,7 @@ func (i *Engine) executeLoopIteration(
 // executeIterationChildren executes all child nodes for one iteration.
 func (i *Engine) executeIterationChildren(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	idx int,
 	total int,
 	iterCtx *executionContext,

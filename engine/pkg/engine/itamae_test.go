@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/neta"
-	"github.com/Develonaut/bento/pkg/neta/library/editfields"
+	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bento/pkg/node/library/editfields"
 	"github.com/Develonaut/bento/pkg/registry"
 	"github.com/Develonaut/bento/pkg/logger"
 )
@@ -17,12 +17,12 @@ func TestItamae_LinearExecution(t *testing.T) {
 	ctx := context.Background()
 
 	// Create bento: node-1 → node-2 → node-3
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:      "linear-bento",
 		Type:    "group",
 		Version: "1.0.0",
 		Name:    "Linear Bento",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:   "node-1",
 				Type: "edit-fields",
@@ -45,15 +45,15 @@ func TestItamae_LinearExecution(t *testing.T) {
 				},
 			},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{ID: "edge-1", Source: "node-1", Target: "node-2"},
 			{ID: "edge-2", Source: "node-2", Target: "node-3"},
 		},
 	}
 
-	// Create itamae
+	// Create engine
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
@@ -80,10 +80,10 @@ func TestItamae_ContextPassing(t *testing.T) {
 	ctx := context.Background()
 
 	// Bento: set name → use name in template
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:   "context-bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:   "setname",
 				Type: "edit-fields",
@@ -103,13 +103,13 @@ func TestItamae_ContextPassing(t *testing.T) {
 				},
 			},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{ID: "edge-1", Source: "setname", Target: "usename"},
 		},
 	}
 
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
@@ -135,11 +135,11 @@ func TestItamae_ContextPassing(t *testing.T) {
 func TestItamae_ErrorHandling(t *testing.T) {
 	ctx := context.Background()
 
-	// Bento with an invalid neta type
-	bento := &neta.Definition{
+	// Bento with an invalid node type
+	bento := &node.Definition{
 		ID:   "error-bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:   "node-1",
 				Type: "edit-fields",
@@ -162,14 +162,14 @@ func TestItamae_ErrorHandling(t *testing.T) {
 				},
 			},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{ID: "edge-1", Source: "node-1", Target: "bad-node"},
 			{ID: "edge-2", Source: "bad-node", Target: "node-3"},
 		},
 	}
 
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
@@ -179,7 +179,7 @@ func TestItamae_ErrorHandling(t *testing.T) {
 
 	// Should return error
 	if err == nil {
-		t.Fatal("Expected error from invalid neta type")
+		t.Fatal("Expected error from invalid node type")
 	}
 
 	// Error should mention which node failed
@@ -197,22 +197,22 @@ func TestItamae_ErrorHandling(t *testing.T) {
 func TestItamae_ProgressTracking(t *testing.T) {
 	ctx := context.Background()
 
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:   "progress-bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
 			{ID: "node-2", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 2}}},
 			{ID: "node-3", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 3}}},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{ID: "edge-1", Source: "node-1", Target: "node-2"},
 			{ID: "edge-2", Source: "node-2", Target: "node-3"},
 		},
 	}
 
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
@@ -242,22 +242,22 @@ func TestItamae_ContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Bento with multiple nodes
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:   "cancellation-bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
 			{ID: "node-2", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 2}}},
 			{ID: "node-3", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 3}}},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{ID: "edge-1", Source: "node-1", Target: "node-2"},
 			{ID: "edge-2", Source: "node-2", Target: "node-3"},
 		},
 	}
 
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
@@ -283,10 +283,10 @@ func TestItamae_GroupNeta(t *testing.T) {
 	ctx := context.Background()
 
 	// Bento with a nested group
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:   "group-bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:   "outer-1",
 				Type: "edit-fields",
@@ -297,7 +297,7 @@ func TestItamae_GroupNeta(t *testing.T) {
 			{
 				ID:   "nested-group",
 				Type: "group",
-				Nodes: []neta.Definition{
+				Nodes: []node.Definition{
 					{
 						ID:   "inner-1",
 						Type: "edit-fields",
@@ -313,7 +313,7 @@ func TestItamae_GroupNeta(t *testing.T) {
 						},
 					},
 				},
-				Edges: []neta.Edge{
+				Edges: []node.Edge{
 					{ID: "inner-edge", Source: "inner-1", Target: "inner-2"},
 				},
 			},
@@ -325,14 +325,14 @@ func TestItamae_GroupNeta(t *testing.T) {
 				},
 			},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{ID: "edge-1", Source: "outer-1", Target: "nested-group"},
 			{ID: "edge-2", Source: "nested-group", Target: "outer-2"},
 		},
 	}
 
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
@@ -354,10 +354,10 @@ func TestItamae_GroupNeta(t *testing.T) {
 func TestItamae_EmptyBento(t *testing.T) {
 	ctx := context.Background()
 
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:    "empty-bento",
 		Type:  "group",
-		Nodes: []neta.Definition{},
+		Nodes: []node.Definition{},
 	}
 
 	p := registry.New()
@@ -383,19 +383,19 @@ func TestItamae_DisconnectedNodes(t *testing.T) {
 	ctx := context.Background()
 
 	// Nodes without edges should all execute (no ordering constraint)
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:   "disconnected-bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
 			{ID: "node-2", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 2}}},
 			{ID: "node-3", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 3}}},
 		},
-		Edges: []neta.Edge{}, // No edges
+		Edges: []node.Edge{}, // No edges
 	}
 
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
@@ -416,16 +416,16 @@ func TestItamae_DisconnectedNodes(t *testing.T) {
 func TestItamae_Duration(t *testing.T) {
 	ctx := context.Background()
 
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:   "duration-bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
 		},
 	}
 
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
@@ -448,22 +448,22 @@ func TestItamae_MultipleStartNodes(t *testing.T) {
 	ctx := context.Background()
 
 	// Two start nodes converging into one end node
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:   "multi-start-bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{ID: "start-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
 			{ID: "start-2", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 2}}},
 			{ID: "end", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 3}}},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{ID: "edge-1", Source: "start-1", Target: "end"},
 			{ID: "edge-2", Source: "start-2", Target: "end"},
 		},
 	}
 
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
@@ -489,22 +489,22 @@ func TestItamae_WeightedProgress(t *testing.T) {
 	// After node-1: 50/150 = 33%
 	// After node-2: 100/150 = 66%
 	// After node-3: 150/150 = 100%
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:   "weighted-progress-bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
 			{ID: "node-2", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 2}}},
 			{ID: "node-3", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 3}}},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{ID: "edge-1", Source: "node-1", Target: "node-2"},
 			{ID: "edge-2", Source: "node-2", Target: "node-3"},
 		},
 	}
 
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelDebug})
@@ -544,10 +544,10 @@ func TestItamae_LoopIterationProgress(t *testing.T) {
 	ctx := context.Background()
 
 	// Create bento with a times loop (3 iterations)
-	bento := &neta.Definition{
+	bento := &node.Definition{
 		ID:   "loop-progress-bento",
 		Type: "group",
-		Nodes: []neta.Definition{
+		Nodes: []node.Definition{
 			{
 				ID:   "before-loop",
 				Type: "edit-fields",
@@ -564,7 +564,7 @@ func TestItamae_LoopIterationProgress(t *testing.T) {
 					"mode":  "times",
 					"count": float64(3),
 				},
-				Nodes: []neta.Definition{
+				Nodes: []node.Definition{
 					{
 						ID:   "loop-child",
 						Type: "edit-fields",
@@ -582,14 +582,14 @@ func TestItamae_LoopIterationProgress(t *testing.T) {
 				},
 			},
 		},
-		Edges: []neta.Edge{
+		Edges: []node.Edge{
 			{ID: "edge-1", Source: "before-loop", Target: "test-loop"},
 			{ID: "edge-2", Source: "test-loop", Target: "after-loop"},
 		},
 	}
 
 	p := registry.New()
-	p.RegisterFactory("edit-fields", func() neta.Executable {
+	p.RegisterFactory("edit-fields", func() node.Executable {
 		return editfields.New()
 	})
 	logger := logger.New(logger.Config{Level: logger.LevelDebug})

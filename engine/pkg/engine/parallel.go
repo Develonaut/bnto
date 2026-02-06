@@ -5,14 +5,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/Develonaut/bento/pkg/node"
 )
 
-// executeParallel executes a parallel neta.
+// executeParallel executes a parallel node.
 // Runs all child nodes concurrently using goroutines.
 func (i *Engine) executeParallel(
 	ctx context.Context,
-	def *neta.Definition,
+	def *node.Definition,
 	execCtx *executionContext,
 	result *Result,
 ) error {
@@ -68,7 +68,7 @@ func (i *Engine) executeParallel(
 		child := &def.Nodes[idx]
 
 		wg.Add(1)
-		go func(node *neta.Definition) {
+		go func(node *node.Definition) {
 			defer wg.Done()
 
 			// Acquire semaphore if concurrency limited

@@ -25,23 +25,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `bento wasabi set/get/list/delete` CLI commands
   - `{{SECRETS.X}}` template namespace for secrets (separate from `{{.X}}` config)
   - OS-native keychain integration (macOS Keychain, Windows Credential Manager, Linux Secret Service)
-  - Automatic secret resolution in itamae execution context
+  - Automatic secret resolution in engine execution context
   - File-based backend for isolated test storage
   - Comprehensive test suite with 11 passing tests
 - Phase 8.5: Mock Render Bento with streaming output validation
   - Real-time streaming output from long-running shell commands
-  - `_onOutput` callback injection in itamae executor
+  - `_onOutput` callback injection in engine executor
   - `OnStream` logger callback for incremental output display
   - Mock Blender script for fast integration testing
   - Streaming progress validation tests (line-by-line output ordering)
 - Phase 8.4: API Fetch Bento with HTTP request chaining and file downloads
-- `saveToFile` parameter for http-request neta (download responses to files)
-- `queryParams` parameter for http-request neta (URL query string support)
+- `saveToFile` parameter for http-request node (download responses to files)
+- `queryParams` parameter for http-request node (URL query string support)
 - Environment variable loading in execution context (templates can access env vars)
 - Mock Figma server with actual PNG image serving
 - Integration tests for API workflows with race detector validation
 - Phase 8.3: Folder Setup Bento integration test with forEach loop
-- Loop neta nested node execution support
+- Loop node nested node execution support
 - Enhanced template resolution for arrays and maps (not just strings)
 - Type conversion for CSV output arrays ([]map[string]interface{} → []interface{})
 - Integration test for idempotent folder creation
@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Extracted `validateTransferParams()` helper for code reuse
   - Reduced `copy()` function from 37 to 29 lines (Bento Box compliance)
   - Removed redundant comments from transfer operations
-- Enhanced itamae context resolution to support secrets-first template resolution
+- Enhanced engine context resolution to support secrets-first template resolution
 - Improved error visibility for missing secrets (stderr warnings instead of silent failures)
 - Optimized regex compilation in wasabi (compiled once at package level)
 - Removed Close() method from wasabi.Manager (YAGNI principle)
@@ -82,7 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Race condition in parallel execution (removed concurrent map write to shared execCtx)
-  - Removed unsafe `execCtx.set()` call from parallel goroutines (pkg/itamae/parallel.go:84)
+  - Removed unsafe `execCtx.set()` call from parallel goroutines (pkg/engine/parallel.go:84)
   - Outputs now only written to mutex-protected `result.NodeOutputs`
   - Validated with race detector (`go test -race`)
 - Enhanced filesystem delete operation to support glob patterns
@@ -110,33 +110,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Charm CLI integration with beautiful output
 - Progress display with Bubbletea TUI
 
-#### Phase 7: Visual Feedback (Miso Package)
+#### Phase 7: Visual Feedback (TUI Package)
 - Bubbletea-based progress display
 - Daemon-combo pattern for running Bubbletea in background
 - Multi-step progress tracking
 - Spinner and progress bar components
 - Status update system
 
-#### Phase 6: Orchestration Engine (Itamae Package)
+#### Phase 6: Orchestration Engine
 - Bento orchestration engine
 - Group execution with dependency resolution
-- Context passing between neta
+- Context passing between node
 - Edge-based execution flow
 - Error handling and validation
 - Template variable substitution
 
-#### Phase 5: Neta Registry (Pantry Package)
-- Neta type registry system
-- Factory pattern for neta instantiation
-- Built-in neta types registration
-- Extensible architecture for custom neta
+#### Phase 5: Node Registry
+- Node type registry system
+- Factory pattern for node instantiation
+- Built-in node types registration
+- Extensible architecture for custom node
 
 #### Phases 2-4: Core Infrastructure
-- **Shoyu** (pkg/shoyu): Logging with charm/log integration
-- **Omakase** (pkg/omakase): Configuration management
-- **Hangiri** (pkg/hangiri): Core models and definitions
+- **Logger** (pkg/logger): Structured logging
+- **Validator** (pkg/validator): Workflow validation
+- **Storage** (pkg/storage): Persistent storage
 
-#### Neta Implementations
+#### Node Implementations
 - **spreadsheet**: Read/write CSV and Excel files
 - **http-request**: HTTP client with full request support
 - **transform**: Data transformation with templates
@@ -146,7 +146,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **image**: Image processing and optimization
 - **loop**: Iterate over collections
 - **parallel**: Concurrent execution
-- **group**: Orchestrate multiple neta
+- **group**: Orchestrate multiple node
 
 ### Documentation
 - Bento Box Principle (coding philosophy)
@@ -188,7 +188,7 @@ We're currently in **Phase 8** of development, building integration tests and va
 ### Upcoming Versions
 
 - **0.2.0**: Phase 8 completion (real-world integration tests)
-- **0.3.0**: Additional neta types and features
+- **0.3.0**: Additional node types and features
 - **0.4.0**: Performance optimizations
 - **0.5.0**: Enhanced error handling and validation
 - **1.0.0**: Stable API, production-ready release

@@ -49,7 +49,7 @@ bento/
 │   │   └── bento/                   # CLI binary
 │   ├── pkg/
 │   │   ├── engine/                  # Orchestration (executor)
-│   │   ├── registry/                # Neta type registry
+│   │   ├── registry/                # Node type registry
 │   │   ├── storage/                 # Persistent storage
 │   │   ├── tui/                     # Terminal UI (Bubble Tea)
 │   │   ├── paths/                   # Path resolution
@@ -57,7 +57,7 @@ bento/
 │   │   ├── logger/                  # Logging
 │   │   ├── secrets/                 # Secrets management
 │   │   ├── logs/                    # Log management
-│   │   └── neta/                    # Node types (10+ neta types)
+│   │   └── node/                    # Node types (10+ node types)
 │   ├── tests/
 │   │   ├── integration/             # End-to-end workflow tests
 │   │   ├── fixtures/                # Test fixture files
@@ -169,8 +169,8 @@ type BentoService struct {
 }
 
 // CLI, Wails desktop, and HTTP server all use BentoService
-func (s *BentoService) RunWorkflow(ctx context.Context, def *neta.Definition) (*Result, error)
-func (s *BentoService) ValidateWorkflow(ctx context.Context, def *neta.Definition) ([]string, error)
+func (s *BentoService) RunWorkflow(ctx context.Context, def *node.Definition) (*Result, error)
+func (s *BentoService) ValidateWorkflow(ctx context.Context, def *node.Definition) ([]string, error)
 func (s *BentoService) ListWorkflows(ctx context.Context) ([]string, error)
 ```
 
