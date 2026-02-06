@@ -58,3 +58,4 @@ node_modules/
 .turbo/
 dist/
 .next/
+apps/api/server
