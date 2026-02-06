@@ -75,11 +75,12 @@ Solidify the engine, restructure the repo, establish the development environment
   - Every CLI command mapped to BentoService method with inputs/outputs
 
 ### 0.3 Quality Gates
-- [ ] `go test ./engine/pkg/... -race` passes (all packages)
-- [ ] `go build ./engine/cmd/bento` succeeds
-- [ ] `go vet ./engine/...` clean
-- [ ] All fixture bentos validate and execute correctly
-- [ ] Test coverage report generated and reviewed
+- [x] `go test ./engine/pkg/... -race` passes (all packages)
+- [x] `go build ./engine/cmd/bento` succeeds
+- [x] `go vet ./engine/...` clean
+- [x] All fixture bentos validate and execute correctly
+- [x] Test coverage report generated and reviewed
+  - Node types: 88–100%, api: 80.6%, registry: 100%, engine: 58.2%
 
 ---
 
