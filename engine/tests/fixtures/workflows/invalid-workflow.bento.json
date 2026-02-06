@@ -1,0 +1,29 @@
+{
+  "id": "invalid-workflow",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Invalid Workflow",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Intentionally invalid workflow for testing validation errors."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "nodes": [
+    {
+      "id": "bad-request",
+      "type": "http-request",
+      "version": "1.0.0",
+      "name": "Bad Request",
+      "position": { "x": 100, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "method": "GET"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    }
+  ],
+  "edges": []
+}

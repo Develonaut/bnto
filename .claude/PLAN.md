@@ -59,17 +59,17 @@ Solidify the engine, restructure the repo, establish the development environment
   - [x] shell-command (93.3%)
   - [x] spreadsheet (90.5%)
   - [x] transform (93.9%)
-- [ ] Integration tests using fixture .bento.json files
-  - [ ] Create "Resize Images" fixture (loop + image resize)
-  - [ ] Create "CSV Data Pipeline" fixture (spreadsheet + loop + transform)
-  - [ ] Create "Image Composite" fixture (filesystem list + loop + image composite)
-  - [ ] Create "HTTP + Transform" fixture (http-request + transform chain)
-  - [ ] Create "Edit Fields Pipeline" fixture (edit-fields + transform)
-- [ ] CLI smoke tests
-  - [ ] `bento run` with each fixture (validates end-to-end)
-  - [ ] `bento validate` with valid and invalid bentos
-  - [ ] `bento list` returns expected results
-  - [ ] `--dry-run` flag works correctly
+- [x] Integration tests using fixture .bento.json files
+  - [x] Create "Resize Images" fixture (loop + image resize)
+  - [x] Create "CSV Data Pipeline" fixture (spreadsheet + loop + transform)
+  - [x] Create "Image Composite" fixture (filesystem list + loop + image composite)
+  - [x] Create "HTTP + Transform" fixture (http-request + transform chain)
+  - [x] Create "Edit Fields Pipeline" fixture (edit-fields + transform)
+- [x] CLI smoke tests
+  - [x] `bento run` with each fixture (validates end-to-end)
+  - [x] `bento validate` with valid and invalid bentos
+  - [x] `bento list` returns expected results
+  - [x] `--dry-run` flag works correctly
 - [ ] Document the public API surface
   - What the CLI exposes = what the API layer will wrap
   - Every CLI command's inputs, outputs, and error cases

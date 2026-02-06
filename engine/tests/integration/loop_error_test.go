@@ -23,7 +23,7 @@ func TestLoopErrorPropagation(t *testing.T) {
 	bentoDef := createLoopWithFailingNode(t)
 
 	// Create execution environment
-	p := createTestRegistry()
+	p := createRegistry()
 	eng := engine.New(p, nil)
 
 	// Execute the bento - we expect it to FAIL
@@ -249,7 +249,7 @@ third,3`
 	}
 
 	// Create execution environment
-	p := createTestRegistry()
+	p := createRegistry()
 	eng := engine.New(p, nil)
 
 	// Execute

@@ -1,0 +1,52 @@
+{
+  "id": "http-transform",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "HTTP Transform",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Fetches data from an API and transforms the response."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "nodes": [
+    {
+      "id": "fetchData",
+      "type": "http-request",
+      "version": "1.0.0",
+      "name": "Fetch Items",
+      "position": { "x": 100, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "url": "{{.TEST_API_URL}}/api/items",
+        "method": "GET"
+      },
+      "inputPorts": [],
+      "outputPorts": [{ "id": "out-1", "name": "response" }]
+    },
+    {
+      "id": "transformResponse",
+      "type": "transform",
+      "version": "1.0.0",
+      "name": "Transform Response",
+      "position": { "x": 300, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mappings": {
+          "itemCount": "len(fetchData[\"body\"][\"items\"])",
+          "statusOk": "fetchData[\"statusCode\"] == 200"
+        }
+      },
+      "inputPorts": [{ "id": "in-1", "name": "data" }],
+      "outputPorts": [{ "id": "out-1", "name": "result" }]
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "fetchData",
+      "target": "transformResponse"
+    }
+  ]
+}

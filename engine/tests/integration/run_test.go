@@ -13,13 +13,6 @@ import (
 
 	"github.com/Develonaut/bento/pkg/engine"
 	"github.com/Develonaut/bento/pkg/node"
-	"github.com/Develonaut/bento/pkg/registry"
-
-	editfields "github.com/Develonaut/bento/pkg/node/library/editfields"
-	filesystem "github.com/Develonaut/bento/pkg/node/library/filesystem"
-	group "github.com/Develonaut/bento/pkg/node/library/group"
-	loop "github.com/Develonaut/bento/pkg/node/library/loop"
-	spreadsheet "github.com/Develonaut/bento/pkg/node/library/spreadsheet"
 )
 
 // TestUserSimulation_ItemFolderWorkflow simulates a real user workflow:
@@ -76,7 +69,7 @@ func TestUserSimulation_ItemFolderWorkflow(t *testing.T) {
 	t.Log("")
 
 	// Create registry and engine
-	p := createTestRegistry()
+	p := createRegistry()
 	eng := engine.New(p, nil)
 
 	// Execute (this is what happens when user runs 'bento run')
@@ -124,20 +117,6 @@ func TestUserSimulation_ItemFolderWorkflow(t *testing.T) {
 	t.Logf("✓ User successfully created %d item folders from CSV", len(expectedItems))
 	t.Logf("✓ Workflow completed in %s", executionTime)
 	t.Log("✓ All folders verified and accessible")
-}
-
-// createTestRegistry creates a registry with all necessary node for testing.
-func createTestRegistry() *registry.Registry {
-	p := registry.New()
-
-	// Register all node types used in tests
-	p.RegisterFactory("edit-fields", func() node.Executable { return editfields.New() })
-	p.RegisterFactory("file-system", func() node.Executable { return filesystem.New() })
-	p.RegisterFactory("group", func() node.Executable { return group.New() })
-	p.RegisterFactory("loop", func() node.Executable { return loop.New() })
-	p.RegisterFactory("spreadsheet", func() node.Executable { return spreadsheet.New() })
-
-	return p
 }
 
 // TestUserSimulation_ItemFolderWithOverlaysWorkflow simulates a real user workflow:
@@ -193,7 +172,7 @@ func TestUserSimulation_ItemFolderWithOverlaysWorkflow(t *testing.T) {
 	t.Log("")
 
 	// Create registry and engine
-	p := createTestRegistry()
+	p := createRegistry()
 	eng := engine.New(p, nil)
 
 	// Execute (this is what happens when user runs 'bento run')

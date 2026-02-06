@@ -1,0 +1,71 @@
+{
+  "id": "csv-data-pipeline",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "CSV Data Pipeline",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Reads CSV data, loops through rows, and transforms each row."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "nodes": [
+    {
+      "id": "readCSV",
+      "type": "spreadsheet",
+      "version": "1.0.0",
+      "name": "Read Test CSV",
+      "position": { "x": 100, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "operation": "read",
+        "format": "csv",
+        "path": "tests/fixtures/test-data.csv",
+        "hasHeaders": true
+      },
+      "inputPorts": [],
+      "outputPorts": [{ "id": "out-1", "name": "rows" }]
+    },
+    {
+      "id": "processLoop",
+      "type": "loop",
+      "version": "1.0.0",
+      "name": "Process Each Row",
+      "position": { "x": 300, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "forEach",
+        "items": "{{index . \"readCSV\" \"rows\"}}"
+      },
+      "inputPorts": [{ "id": "in-1", "name": "items" }],
+      "outputPorts": [],
+      "nodes": [
+        {
+          "id": "transformRow",
+          "type": "transform",
+          "version": "1.0.0",
+          "name": "Transform Row",
+          "position": { "x": 100, "y": 100 },
+          "metadata": {},
+          "parameters": {
+            "mappings": {
+              "displayName": "item[\"name\"] + \" - \" + item[\"scale\"]",
+              "hasDescription": "len(item[\"description\"]) > 0"
+            }
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        }
+      ],
+      "edges": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "readCSV",
+      "target": "processLoop"
+    }
+  ]
+}
