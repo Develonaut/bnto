@@ -13,8 +13,7 @@ engine/bento
 # Output of the go coverage tool
 *.out
 
-# Go workspace file
-go.work
+# Go workspace file (go.work IS committed — needed for monorepo)
 
 # Dependency directories
 vendor/

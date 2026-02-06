@@ -18,9 +18,13 @@ bento/
 ├── pnpm-workspace.yaml              # pnpm workspace config
 ├── turbo.json                       # Turborepo task config
 ├── pnpm-lock.yaml
-├── Taskfile.yml                     # Go orchestration (engine builds/tests)
+├── Taskfile.yml                     # Go + cross-cutting orchestration
+├── go.work                          # Go workspace (engine + apps/api)
 │
 ├── apps/
+│   ├── api/                         # Go HTTP API server (Phase 1)
+│   │   ├── go.mod                   # module github.com/Develonaut/bento-api
+│   │   └── cmd/server/              # Server binary (thin consumer of engine)
 │   ├── web/                         # @bento/web — Next.js cloud app (Phase 1)
 │   └── desktop/                     # @bento/desktop — Wails frontend (Phase 3)
 │
@@ -42,7 +46,7 @@ bento/
 │           └── src/
 │               └── index.ts
 │
-├── engine/                          # All Go code
+├── engine/                          # Pure Go engine (core logic only)
 │   ├── go.mod                       # module github.com/Develonaut/bento
 │   ├── go.sum
 │   ├── cmd/
@@ -51,7 +55,6 @@ bento/
 │   │   ├── engine/                  # Orchestration (executor)
 │   │   ├── registry/                # Node type registry
 │   │   ├── storage/                 # Persistent storage
-│   │   ├── tui/                     # Terminal UI (Bubble Tea)
 │   │   ├── paths/                   # Path resolution
 │   │   ├── validator/               # Workflow validation
 │   │   ├── logger/                  # Logging
@@ -82,6 +85,8 @@ bento/
 | Package manager | **pnpm workspaces** | Fast, efficient, workspace linking |
 | Package namespace | **`@bento/`** directory (n8n pattern) | Visual grouping of internal packages |
 | Go module path | **`github.com/Develonaut/bento`** | Unchanged — Go resolves relative to go.mod |
+| Go workspace | **`go.work` at repo root** | Connects engine/ and apps/api/ modules locally |
+| API server location | **`apps/api/`** | Follows Turborepo convention; engine stays pure ([decision](../decisions/API_SERVER_LOCATION.md)) |
 | API abstraction | **`@bento/core` with provider pattern** | Same UI code, different backends |
 
 ---
@@ -160,18 +165,25 @@ Apps compose via React context:
 
 ## Go API Service Layer
 
-Future `engine/internal/api/` provides a shared service interface:
+`engine/internal/api/` provides a shared service interface consumed by CLI, API server, and Wails:
 
 ```go
+// engine/internal/api/ — shared logic, no transport concerns
 type BentoService struct {
     registry *registry.Registry
     storage  *storage.Storage
 }
 
-// CLI, Wails desktop, and HTTP server all use BentoService
 func (s *BentoService) RunWorkflow(ctx context.Context, def *node.Definition) (*Result, error)
 func (s *BentoService) ValidateWorkflow(ctx context.Context, def *node.Definition) ([]string, error)
 func (s *BentoService) ListWorkflows(ctx context.Context) ([]string, error)
+```
+
+The HTTP transport layer lives in `apps/api/` (separate Go module, linked via `go.work`):
+
+```go
+// apps/api/ — HTTP handlers wrapping BentoService
+// Thin layer: routing, request parsing, response serialization
 ```
 
 ---

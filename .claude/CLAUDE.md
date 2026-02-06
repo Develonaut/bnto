@@ -117,8 +117,10 @@ bento/
 ├── package.json                 # Turborepo root workspace
 ├── pnpm-workspace.yaml          # pnpm workspace config
 ├── turbo.json                   # Turborepo task config
-├── Taskfile.yml                 # Go engine orchestration
+├── Taskfile.yml                 # Go + cross-cutting orchestration
+├── go.work                      # Go workspace (engine + apps/api)
 ├── apps/
+│   ├── api/                     # Go HTTP API server (imports engine)
 │   ├── web/                     # @bento/web — Next.js cloud app
 │   └── desktop/                 # @bento/desktop — Wails frontend
 ├── packages/

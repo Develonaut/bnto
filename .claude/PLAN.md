@@ -88,15 +88,16 @@ Solidify the engine, restructure the repo, establish the development environment
 Ship a working web app where users can upload, edit, and run workflows.
 
 ### 1.1 Go API Server
-- [ ] Create `engine/cmd/bento-server/`
-  - HTTP handlers wrapping engine operations
+- [x] Set up `apps/api/` as separate Go module with `go.work` workspace
+- [ ] Create `engine/internal/api/` service layer
+  - `BentoService` interface shared by CLI, HTTP server, and Wails
+  - Decouple from CLI-specific code
+- [ ] Create `apps/api/` HTTP server
+  - HTTP handlers wrapping BentoService
   - `/api/run` — start async execution, return execution ID
   - `/api/validate` — validate a workflow definition
   - `/api/workflows` — list/get/save workflows
   - `/api/executions/:id` — get execution status
-- [ ] Create `engine/internal/api/` service layer
-  - `BentoService` interface shared by CLI and HTTP server
-  - Decouple from CLI-specific code
 - [ ] API integration tests
   - Every endpoint tested (happy path + error cases)
   - Use `net/http/httptest` for in-process testing
