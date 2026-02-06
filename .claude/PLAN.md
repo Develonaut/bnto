@@ -11,7 +11,7 @@ Every task below feeds into the next. Work top to bottom. Don't skip ahead.
 Solidify the engine, restructure the repo, establish the development environment.
 
 ### 0.1 Monorepo Setup
-- [ ] Rename Go packages from sushi names to simple names
+- [x] Rename Go packages from sushi names to simple names
   - itamae → engine, pantry → registry, hangiri → storage
   - miso → tui, kombu → paths, omakase → validator
   - shoyu → logger, wasabi → secrets

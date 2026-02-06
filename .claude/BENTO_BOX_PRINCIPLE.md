@@ -57,13 +57,13 @@ type Executable interface {
     Execute(ctx context.Context, params map[string]interface{}) (interface{}, error)
 }
 
-// ✅ Itamae (chef) uses Neta through interface
-type Itamae struct {
-    pantry *pantry.Pantry
+// ✅ Engine uses Neta through interface
+type Engine struct {
+    registry *registry.Registry
 }
 
-func (i *Itamae) Prepare(ctx context.Context, def neta.Definition) (Result, error) {
-    executable, err := i.pantry.Get(def.Type)
+func (e *Engine) Prepare(ctx context.Context, def neta.Definition) (Result, error) {
+    executable, err := e.registry.Get(def.Type)
     // ...
 }
 ```
@@ -73,15 +73,15 @@ func (i *Itamae) Prepare(ctx context.Context, def neta.Definition) (Result, erro
 
 ```go
 // Small, focused functions that compose
-func (i *Itamae) Prepare(ctx context.Context, def neta.Definition) (Result, error) {
+func (e *Engine) Prepare(ctx context.Context, def neta.Definition) (Result, error) {
     if def.IsGroup() {
-        return i.prepareGroup(ctx, def)
+        return e.prepareGroup(ctx, def)
     }
-    return i.prepareSingle(ctx, def)
+    return e.prepareSingle(ctx, def)
 }
 
-func (i *Itamae) prepareSingle(...) (Result, error) { }
-func (i *Itamae) prepareGroup(...) (Result, error) { }
+func (e *Engine) prepareSingle(...) (Result, error) { }
+func (e *Engine) prepareGroup(...) (Result, error) { }
 ```
 
 ### 5. YAGNI 🥗
@@ -111,7 +111,9 @@ type Definition struct {
 // One concept per package
 pkg/neta/http/          # HTTP neta only
 pkg/neta/transform/     # Transform neta only
-pkg/itamae/             # Orchestration only
+pkg/engine/             # Orchestration only
+pkg/registry/           # Neta type registry only
+pkg/storage/            # Persistent storage only
 ```
 
 ### File Size
@@ -145,7 +147,7 @@ pkg/itamae/             # Orchestration only
 ### God Objects
 ```go
 // ❌ One struct does everything
-type SuperItamae struct {
+type SuperEngine struct {
     // Does execution, validation, formatting, logging, storage...
 }
 ```

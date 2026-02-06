@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/itamae"
-	"github.com/Develonaut/bento/pkg/miso"
+	"github.com/Develonaut/bento/pkg/engine"
+	"github.com/Develonaut/bento/pkg/tui"
 	"github.com/Develonaut/bento/pkg/neta"
-	"github.com/Develonaut/bento/pkg/pantry"
+	"github.com/Develonaut/bento/pkg/registry"
 
 	editfields "github.com/Develonaut/bento/pkg/neta/library/editfields"
 	filesystem "github.com/Develonaut/bento/pkg/neta/library/filesystem"

@@ -10,8 +10,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/itamae"
-	"github.com/Develonaut/bento/pkg/miso"
+	"github.com/Develonaut/bento/pkg/engine"
+	"github.com/Develonaut/bento/pkg/tui"
 	"github.com/Develonaut/bento/pkg/neta"
 )
 
@@ -34,10 +34,10 @@ func executeTUI(def *neta.Definition) error {
 	}
 
 	// Create chef with logger (no messenger for TUI mode)
-	chef := itamae.New(p, logger)
+	chef := engine.New(p, logger)
 
 	// Load slowMo delay from config for animations
-	slowMoMs := miso.LoadSlowMoDelay()
+	slowMoMs := tui.LoadSlowMoDelay()
 	chef.SetSlowMoDelay(time.Duration(slowMoMs) * time.Millisecond)
 
 	// Execute bento

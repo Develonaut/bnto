@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/miso"
+	"github.com/Develonaut/bento/pkg/tui"
 )
 
 // formatDuration formats a duration for human readability.
@@ -47,7 +47,7 @@ func printSuccess(message string) {
 // printError prints an error message with random error emoji and color-coded text.
 func printError(message string) {
 	emoji := errorEmojis[rand.Intn(len(errorEmojis))]
-	manager := miso.NewManager()
+	manager := tui.NewManager()
 	theme := manager.GetTheme()
 	fmt.Printf("\n%s %s\n", emoji, theme.Error.Render(message))
 }

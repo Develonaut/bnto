@@ -15,10 +15,10 @@ import (
 
 	"github.com/mattn/go-isatty"
 
-	"github.com/Develonaut/bento/pkg/hangiri"
+	"github.com/Develonaut/bento/pkg/storage"
 	"github.com/Develonaut/bento/pkg/neta"
-	"github.com/Develonaut/bento/pkg/omakase"
-	"github.com/Develonaut/bento/pkg/pantry"
+	"github.com/Develonaut/bento/pkg/validator"
+	"github.com/Develonaut/bento/pkg/registry"
 	"github.com/spf13/cobra"
 
 	editfields "github.com/Develonaut/bento/pkg/neta/library/editfields"
@@ -165,7 +165,7 @@ func loadBentoFromStorage(name string) (*neta.Definition, error) {
 	// Strip .bento.json extension if provided
 	name = strings.TrimSuffix(name, ".bento.json")
 
-	storage := hangiri.NewDefaultStorage()
+	storage := storage.NewDefaultStorage()
 	ctx := context.Background()
 
 	def, err := storage.LoadBento(ctx, name)
@@ -176,9 +176,9 @@ func loadBentoFromStorage(name string) (*neta.Definition, error) {
 	return def, nil
 }
 
-// createPantry creates and populates the pantry with all neta types.
-func createPantry() *pantry.Pantry {
-	p := pantry.New()
+// createPantry creates and populates the registry with all neta types.
+func createPantry() *registry.Registry {
+	p := registry.New()
 
 	// Register all neta types
 	p.RegisterFactory("edit-fields", func() neta.Executable { return editfields.New() })
@@ -197,7 +197,7 @@ func createPantry() *pantry.Pantry {
 
 // validateBento validates the bento definition before execution.
 func validateBento(def *neta.Definition) error {
-	validator := omakase.New()
+	validator := validator.New()
 	ctx := context.Background()
 	return validator.Validate(ctx, def)
 }
@@ -232,7 +232,7 @@ func showDryRun(def *neta.Definition) error {
 	return nil
 }
 
-// createValidator creates a new omakase validator.
-func createValidator() *omakase.Validator {
-	return omakase.New()
+// createValidator creates a new validator.
+func createValidator() *validator.Validator {
+	return validator.New()
 }

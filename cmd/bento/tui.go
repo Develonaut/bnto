@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"github.com/Develonaut/bento/pkg/miso"
+	"github.com/Develonaut/bento/pkg/tui"
 )
 
 var tuiCmd = &cobra.Command{
@@ -21,7 +21,7 @@ var tuiCmd = &cobra.Command{
 
 func runTUI() {
 	// Create TUI model
-	m, err := miso.NewTUI()
+	m, err := tui.NewTUI()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)

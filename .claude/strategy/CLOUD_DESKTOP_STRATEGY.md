@@ -77,10 +77,10 @@ The layered abstraction (shared `@bento/core` → multiple clients → single Go
 │  Go Engine (CLI commands = the stable public API)        │
 │  bento run, bento validate, bento list                   │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐   │
-│  │ itamae   │ │ pantry   │ │ hangiri  │ │ kombu    │   │
-│  │(executor)│ │(registry)│ │(storage) │ │(paths)   │   │
+│  │ engine   │ │ registry │ │ storage  │ │ paths    │   │
+│  │(orchestr)│ │(neta reg)│ │(persist) │ │(resolve) │   │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘   │
-│  TUI (miso) — internal/beta, NOT public                  │
+│  TUI — internal/beta, NOT public                         │
 └─────────────────────────────────────────────────────────┘
 ```
 

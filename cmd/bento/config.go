@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/Develonaut/bento/pkg/miso"
+	"github.com/Develonaut/bento/pkg/tui"
 )
 
 var configCmd = &cobra.Command{
@@ -95,8 +95,8 @@ func init() {
 func runConfigTheme(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		// Show current theme
-		variant := miso.LoadSavedTheme()
-		palette := miso.GetPalette(variant)
+		variant := tui.LoadSavedTheme()
+		palette := tui.GetPalette(variant)
 
 		printInfo(fmt.Sprintf("Current theme: %s", variant))
 		printInfo(fmt.Sprintf("  Primary color: %s", palette.Primary))
@@ -106,10 +106,10 @@ func runConfigTheme(cmd *cobra.Command, args []string) error {
 
 	// Set theme
 	variantName := args[0]
-	variant := miso.Variant(variantName)
+	variant := tui.Variant(variantName)
 
 	// Validate variant
-	validVariants := miso.AllVariants()
+	validVariants := tui.AllVariants()
 	isValid := false
 	for _, v := range validVariants {
 		if v == variant {
@@ -122,19 +122,19 @@ func runConfigTheme(cmd *cobra.Command, args []string) error {
 		printError(fmt.Sprintf("Invalid theme: %s", variantName))
 		fmt.Println("\nAvailable themes:")
 		for _, v := range validVariants {
-			p := miso.GetPalette(v)
+			p := tui.GetPalette(v)
 			fmt.Printf("  %s - %s\n", v, p.Primary)
 		}
 		return fmt.Errorf("invalid theme variant")
 	}
 
 	// Save theme
-	if err := miso.SaveTheme(variant); err != nil {
+	if err := tui.SaveTheme(variant); err != nil {
 		printError(fmt.Sprintf("Failed to save theme: %v", err))
 		return err
 	}
 
-	palette := miso.GetPalette(variant)
+	palette := tui.GetPalette(variant)
 	printSuccess(fmt.Sprintf("Theme set to %s (%s)", variant, palette.Primary))
 	return nil
 }
@@ -143,7 +143,7 @@ func runConfigTheme(cmd *cobra.Command, args []string) error {
 func runConfigSlowMo(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		// Show current slowMo
-		ms := miso.LoadSlowMoDelay()
+		ms := tui.LoadSlowMoDelay()
 		printInfo(fmt.Sprintf("Current slowMo delay: %dms", ms))
 		return nil
 	}
@@ -160,7 +160,7 @@ func runConfigSlowMo(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid slowMo value")
 	}
 
-	if err := miso.SaveSlowMoDelay(ms); err != nil {
+	if err := tui.SaveSlowMoDelay(ms); err != nil {
 		printError(fmt.Sprintf("Failed to save slowMo delay: %v", err))
 		return err
 	}
@@ -173,7 +173,7 @@ func runConfigSlowMo(cmd *cobra.Command, args []string) error {
 func runConfigHome(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		// Show current home
-		home := miso.LoadBentoHome()
+		home := tui.LoadBentoHome()
 		printInfo(fmt.Sprintf("Current bento home: %s", home))
 		return nil
 	}
@@ -192,7 +192,7 @@ func runConfigHome(cmd *cobra.Command, args []string) error {
 	}
 
 	// Save the new home
-	if err := miso.SaveBentoHome(newHome); err != nil {
+	if err := tui.SaveBentoHome(newHome); err != nil {
 		printError(fmt.Sprintf("Failed to save bento home: %v", err))
 		return err
 	}
@@ -205,9 +205,9 @@ func runConfigHome(cmd *cobra.Command, args []string) error {
 // runConfigList lists all configuration options.
 func runConfigList(cmd *cobra.Command, args []string) error {
 	// Show current settings
-	variant := miso.LoadSavedTheme()
-	slowMo := miso.LoadSlowMoDelay()
-	home := miso.LoadBentoHome()
+	variant := tui.LoadSavedTheme()
+	slowMo := tui.LoadSlowMoDelay()
+	home := tui.LoadBentoHome()
 
 	fmt.Println("Current Configuration:")
 	fmt.Printf("  Theme: %s\n", variant)
@@ -217,8 +217,8 @@ func runConfigList(cmd *cobra.Command, args []string) error {
 
 	// List all themes
 	fmt.Println("Available Themes:")
-	for _, v := range miso.AllVariants() {
-		p := miso.GetPalette(v)
+	for _, v := range tui.AllVariants() {
+		p := tui.GetPalette(v)
 		current := ""
 		if v == variant {
 			current = " (current)"

@@ -10,20 +10,20 @@ import (
 	"os"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/itamae"
-	"github.com/Develonaut/bento/pkg/miso"
+	"github.com/Develonaut/bento/pkg/engine"
+	"github.com/Develonaut/bento/pkg/tui"
 	"github.com/Develonaut/bento/pkg/neta"
 )
 
 // executeSimple executes bento with simple single-line progress (non-TTY mode).
 func executeSimple(def *neta.Definition) error {
 	// Get theme and palette from miso manager
-	manager := miso.NewManager()
+	manager := tui.NewManager()
 	theme := manager.GetTheme()
 	palette := manager.GetPalette()
 
 	// Create simple messenger that prints to stdout
-	messenger := miso.NewSimpleMessenger(theme, palette)
+	messenger := tui.NewSimpleMessenger(theme, palette)
 
 	// Create pantry and file logger (always log to file)
 	p := createPantry()
@@ -42,7 +42,7 @@ func executeSimple(def *neta.Definition) error {
 	}
 
 	// Create chef with messenger
-	chef := itamae.NewWithMessenger(p, logger, messenger)
+	chef := engine.NewWithMessenger(p, logger, messenger)
 
 	// Execute bento
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutFlag)

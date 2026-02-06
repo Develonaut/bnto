@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Develonaut/bento/pkg/wasabi"
+	"github.com/Develonaut/bento/pkg/secrets"
 	"github.com/spf13/cobra"
 )
 
@@ -110,7 +110,7 @@ func runSecretsSet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid secret key format")
 	}
 
-	mgr, err := wasabi.NewManager()
+	mgr, err := secrets.NewManager()
 	if err != nil {
 		printError(fmt.Sprintf("Failed to initialize secrets manager: %v", err))
 		return err
@@ -130,7 +130,7 @@ func runSecretsSet(cmd *cobra.Command, args []string) error {
 func runSecretsGet(cmd *cobra.Command, args []string) error {
 	key := args[0]
 
-	mgr, err := wasabi.NewManager()
+	mgr, err := secrets.NewManager()
 	if err != nil {
 		printError(fmt.Sprintf("Failed to initialize secrets manager: %v", err))
 		return err
@@ -150,7 +150,7 @@ func runSecretsGet(cmd *cobra.Command, args []string) error {
 
 // runSecretsList lists all secret keys.
 func runSecretsList(cmd *cobra.Command, args []string) error {
-	mgr, err := wasabi.NewManager()
+	mgr, err := secrets.NewManager()
 	if err != nil {
 		printError(fmt.Sprintf("Failed to initialize secrets manager: %v", err))
 		return err
@@ -180,7 +180,7 @@ func runSecretsList(cmd *cobra.Command, args []string) error {
 func runSecretsDelete(cmd *cobra.Command, args []string) error {
 	key := args[0]
 
-	mgr, err := wasabi.NewManager()
+	mgr, err := secrets.NewManager()
 	if err != nil {
 		printError(fmt.Sprintf("Failed to initialize secrets manager: %v", err))
 		return err

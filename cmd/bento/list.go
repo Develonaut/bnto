@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Develonaut/bento/pkg/hangiri"
+	"github.com/Develonaut/bento/pkg/storage"
 	"github.com/Develonaut/bento/pkg/neta"
 	"github.com/spf13/cobra"
 )
@@ -53,9 +53,9 @@ func runList(cmd *cobra.Command, args []string) error {
 	return runListFromStorage()
 }
 
-// runListFromStorage lists bentos from ~/.bento/bentos/ using hangiri.
+// runListFromStorage lists bentos from ~/.bento/bentos/ using storage.
 func runListFromStorage() error {
-	storage := hangiri.NewDefaultStorage()
+	storage := storage.NewDefaultStorage()
 	ctx := context.Background()
 
 	names, err := storage.ListBentos(ctx)

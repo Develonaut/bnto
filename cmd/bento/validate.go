@@ -10,7 +10,7 @@ import (
 	"fmt"
 
 	"github.com/Develonaut/bento/pkg/neta"
-	"github.com/Develonaut/bento/pkg/omakase"
+	"github.com/Develonaut/bento/pkg/validator"
 	"github.com/spf13/cobra"
 )
 
@@ -64,7 +64,7 @@ func loadBentoForValidate(bentoPath string) (*neta.Definition, error) {
 
 // validateForValidate validates the bento definition.
 func validateForValidate(def *neta.Definition) error {
-	validator := omakase.New()
+	validator := validator.New()
 	ctx := context.Background()
 
 	if err := validator.Validate(ctx, def); err != nil {

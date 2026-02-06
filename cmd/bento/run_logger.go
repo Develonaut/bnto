@@ -11,14 +11,14 @@ import (
 	"strings"
 
 	"github.com/Develonaut/bento/pkg/logs"
-	"github.com/Develonaut/bento/pkg/miso"
-	"github.com/Develonaut/bento/pkg/shoyu"
+	"github.com/Develonaut/bento/pkg/tui"
+	"github.com/Develonaut/bento/pkg/logger"
 )
 
 // createFileLogger creates a logger that writes to {bento-home}/logs/
 // Returns the logger, the log file (for cleanup), and any error.
-func createFileLogger() (*shoyu.Logger, *os.File, error) {
-	bentoHome := miso.LoadBentoHome()
+func createFileLogger() (*logger.Logger, *os.File, error) {
+	bentoHome := tui.LoadBentoHome()
 
 	// Ensure logs directory exists
 	if err := logs.EnsureLogsDirectory(bentoHome); err != nil {
@@ -49,12 +49,12 @@ func createFileLogger() (*shoyu.Logger, *os.File, error) {
 		return nil, nil, fmt.Errorf("failed to open log file: %w", err)
 	}
 
-	level := shoyu.LevelInfo
+	level := logger.LevelInfo
 	if verboseFlag {
-		level = shoyu.LevelDebug
+		level = logger.LevelDebug
 	}
 
-	logger := shoyu.New(shoyu.Config{
+	logger := logger.New(logger.Config{
 		Level:  level,
 		Output: logFile,
 	})
@@ -66,13 +66,13 @@ func createFileLogger() (*shoyu.Logger, *os.File, error) {
 }
 
 // createDualLogger creates a logger that writes to both file and stdout.
-func createDualLogger(fileLogger *shoyu.Logger) *shoyu.Logger {
-	level := shoyu.LevelInfo
+func createDualLogger(fileLogger *logger.Logger) *logger.Logger {
+	level := logger.LevelInfo
 	if verboseFlag {
-		level = shoyu.LevelDebug
+		level = logger.LevelDebug
 	}
 
-	return shoyu.New(shoyu.Config{
+	return logger.New(logger.Config{
 		Level: level,
 		// Enable streaming output for long-running processes
 		// This outputs lines from shell-command neta in real-time

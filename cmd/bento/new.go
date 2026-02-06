@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Develonaut/bento/pkg/hangiri"
+	"github.com/Develonaut/bento/pkg/storage"
 	"github.com/Develonaut/bento/pkg/neta"
 	"github.com/spf13/cobra"
 )
@@ -68,7 +68,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 func createStorageBento(name string, template *neta.Definition) error {
 	printInfo(fmt.Sprintf("Creating new bento: %s", name))
 
-	storage := hangiri.NewDefaultStorage()
+	storage := storage.NewDefaultStorage()
 	ctx := context.Background()
 
 	// Check if bento already exists
