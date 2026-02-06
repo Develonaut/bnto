@@ -50,6 +50,7 @@ type executionKeyMap struct {
 	ScrollDown key.Binding
 	PageUp     key.Binding
 	PageDown   key.Binding
+	Retry      key.Binding
 	Back       key.Binding
 	Quit       key.Binding
 }
@@ -185,6 +186,10 @@ func newExecutionKeyMap() executionKeyMap {
 		PageDown: key.NewBinding(
 			key.WithKeys("pgdown", "f", " "),
 			key.WithHelp("pgdn/f", "page down"),
+		),
+		Retry: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "retry"),
 		),
 		Back: key.NewBinding(
 			key.WithKeys("esc"),

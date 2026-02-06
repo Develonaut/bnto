@@ -73,7 +73,7 @@ func validateFileSystem(def *neta.Definition) error {
 
 	// Validate operation value
 	if !isValidFileOperation(operation) {
-		return fmt.Errorf("file-system neta '%s' has invalid operation '%s' (must be read, write, copy, move, delete, mkdir, or exists)",
+		return fmt.Errorf("file-system neta '%s' has invalid operation '%s' (must be read, write, copy, move, delete, mkdir, exists, or list)",
 			def.ID, operation)
 	}
 
@@ -160,6 +160,7 @@ func isValidFileOperation(operation string) bool {
 		"delete": true,
 		"mkdir":  true,
 		"exists": true,
+		"list":   true,
 	}
 	return validOps[operation]
 }

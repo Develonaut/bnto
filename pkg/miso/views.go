@@ -102,7 +102,7 @@ func (m Model) viewExecution() string {
 	// Help text from key bindings
 	helpStr := helpText(palette, m.executionKeys.ScrollUp, m.executionKeys.ScrollDown,
 		m.executionKeys.PageUp, m.executionKeys.PageDown,
-		m.executionKeys.Back, m.executionKeys.Quit)
+		m.executionKeys.Retry, m.executionKeys.Back, m.executionKeys.Quit)
 	help := lipgloss.NewStyle().
 		Padding(0, 2).
 		Faint(true).

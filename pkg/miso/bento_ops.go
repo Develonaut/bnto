@@ -126,7 +126,7 @@ func (m Model) runBento() (tea.Model, tea.Cmd) {
 // 2. startCmd - a command that sends the cancel function to the model
 func (m Model) executeBentoAsync(logChan chan string) (tea.Cmd, tea.Cmd) {
 	// Create context and cancel function
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Hour)
 
 	// Return start message with cancel function immediately
 	startCmd := func() tea.Msg {

@@ -379,3 +379,233 @@ func TestShellCommand_DefaultTimeout(t *testing.T) {
 		t.Errorf("exitCode = %v, want 0", output["exitCode"])
 	}
 }
+
+// TestShellCommand_RetryOnTimeout tests that commands are retried on timeout.
+func TestShellCommand_RetryOnTimeout(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping retry test on Windows")
+	}
+
+	ctx := context.Background()
+	sc := shellcommand.New()
+
+	// This command sleeps longer than the timeout - will timeout and retry
+	params := map[string]interface{}{
+		"command":    "sleep",
+		"args":       []interface{}{"5"},
+		"timeout":    1, // 1 second timeout
+		"retry":      2,
+		"retryDelay": 0, // No delay for faster test
+	}
+
+	start := time.Now()
+	_, err := sc.Execute(ctx, params)
+	duration := time.Since(start)
+
+	if err == nil {
+		t.Fatal("Expected error after all retries exhausted, got nil")
+	}
+
+	// Should fail after 3 attempts
+	if !strings.Contains(err.Error(), "3 attempts") {
+		t.Errorf("Expected '3 attempts' in error, got: %v", err)
+	}
+
+	// Should complete in about 3 seconds (3 attempts * 1 second timeout each)
+	if duration < 2*time.Second || duration > 6*time.Second {
+		t.Errorf("Unexpected duration: %v (expected ~3s)", duration)
+	}
+}
+
+// TestShellCommand_RetrySucceedsAfterStall tests retry recovers after stall.
+func TestShellCommand_RetrySucceedsAfterStall(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping retry test on Windows")
+	}
+
+	ctx := context.Background()
+	sc := shellcommand.New()
+
+	// Use a temp file to track attempts
+	tmpFile := "/tmp/bento_retry_test_stall"
+
+	// Clean up before test
+	params := map[string]interface{}{
+		"command": "rm",
+		"args":    []interface{}{"-f", tmpFile},
+	}
+	sc.Execute(ctx, params)
+
+	// Command that stalls on first attempt, succeeds on second
+	// First attempt: create marker file and stall
+	// Second attempt: see marker file, succeed immediately
+	params = map[string]interface{}{
+		"command": "sh",
+		"args": []interface{}{"-c", `
+			if [ -f "` + tmpFile + `" ]; then
+				rm "` + tmpFile + `"
+				echo "success"
+				exit 0
+			else
+				touch "` + tmpFile + `"
+				echo "stalling..."
+				sleep 10
+			fi
+		`},
+		"stream":       true,
+		"timeout":      30,
+		"stallTimeout": 1, // Kill after 1 second
+		"retry":        2,
+		"retryDelay":   0,
+	}
+
+	start := time.Now()
+	result, err := sc.Execute(ctx, params)
+	duration := time.Since(start)
+
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	stdout := output["stdout"].(string)
+
+	if !strings.Contains(stdout, "success") {
+		t.Errorf("Expected 'success' in output, got: %s", stdout)
+	}
+
+	// Should complete in about 1-2 seconds (first stalls for 1s, second succeeds)
+	if duration > 5*time.Second {
+		t.Errorf("Took too long: %v", duration)
+	}
+}
+
+// TestShellCommand_StallDetection tests that stall detection kills hung processes.
+func TestShellCommand_StallDetection(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping stall detection test on Windows")
+	}
+
+	ctx := context.Background()
+	sc := shellcommand.New()
+
+	var outputLines []string
+	onOutput := func(line string) {
+		outputLines = append(outputLines, line)
+	}
+
+	// Command that outputs once then stalls
+	params := map[string]interface{}{
+		"command": "sh",
+		"args": []interface{}{"-c", `
+			echo "Starting..."
+			sleep 10
+			echo "This should not appear"
+		`},
+		"stream":       true,
+		"_onOutput":    onOutput,
+		"timeout":      30,          // Long overall timeout
+		"stallTimeout": 2,           // Kill after 2 seconds of no output
+		"retry":        0,           // No retries for this test
+	}
+
+	start := time.Now()
+	_, err := sc.Execute(ctx, params)
+	duration := time.Since(start)
+
+	// Should fail due to stall
+	if err == nil {
+		t.Fatal("Expected stall detection error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "stalled") {
+		t.Errorf("Expected 'stalled' in error, got: %v", err)
+	}
+
+	// Should complete in about 2-3 seconds (stallTimeout), not 10 seconds
+	if duration > 5*time.Second {
+		t.Errorf("Stall detection took too long: %v", duration)
+	}
+}
+
+// TestShellCommand_StallDetectionWithRetry tests stall detection combined with retry.
+func TestShellCommand_StallDetectionWithRetry(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping stall detection test on Windows")
+	}
+
+	ctx := context.Background()
+	sc := shellcommand.New()
+
+	// Command that always stalls - with retry=2, should attempt 3 times
+	params := map[string]interface{}{
+		"command": "sh",
+		"args": []interface{}{"-c", `
+			echo "Attempt..."
+			sleep 10
+		`},
+		"stream":       true,
+		"timeout":      30,
+		"stallTimeout": 1, // Kill after 1 second of no output
+		"retry":        2, // Retry 2 times (3 total attempts)
+		"retryDelay":   0, // No delay for faster test
+	}
+
+	start := time.Now()
+	_, err := sc.Execute(ctx, params)
+	duration := time.Since(start)
+
+	// Should fail after all retries
+	if err == nil {
+		t.Fatal("Expected error after retries exhausted, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "3 attempts") {
+		t.Errorf("Expected '3 attempts' in error, got: %v", err)
+	}
+
+	// Should complete in about 3-6 seconds (3 attempts * ~1-2 seconds each)
+	if duration > 10*time.Second {
+		t.Errorf("Stall detection with retry took too long: %v", duration)
+	}
+}
+
+// TestShellCommand_NoStallWhenOutputContinues tests that active output prevents stall detection.
+func TestShellCommand_NoStallWhenOutputContinues(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping stall detection test on Windows")
+	}
+
+	ctx := context.Background()
+	sc := shellcommand.New()
+
+	// Command that outputs continuously - should NOT trigger stall
+	params := map[string]interface{}{
+		"command": "sh",
+		"args": []interface{}{"-c", `
+			for i in 1 2 3 4 5; do
+				echo "Line $i"
+				sleep 0.5
+			done
+		`},
+		"stream":       true,
+		"timeout":      30,
+		"stallTimeout": 2, // 2 second stall timeout
+	}
+
+	result, err := sc.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed (should not stall): %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	stdout := output["stdout"].(string)
+
+	// Should have all 5 lines
+	for i := 1; i <= 5; i++ {
+		expected := "Line " + string('0'+byte(i))
+		if !strings.Contains(stdout, expected) {
+			t.Errorf("Expected '%s' in output, got: %s", expected, stdout)
+		}
+	}
+}

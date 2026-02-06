@@ -23,11 +23,8 @@ func (i *Image) resize(ctx context.Context, params map[string]interface{}) (inte
 
 	width := getIntParam(params, "width", 0)
 	height := getIntParam(params, "height", 0)
+	scale := getIntParam(params, "scale", 100) // percentage scale (100 = no change)
 	maintainAspect := getBoolParam(params, "maintainAspect", true)
-
-	if width == 0 && height == 0 {
-		return nil, fmt.Errorf("either width or height must be specified")
-	}
 
 	img, err := imaging.Open(input)
 	if err != nil {
@@ -35,7 +32,10 @@ func (i *Image) resize(ctx context.Context, params map[string]interface{}) (inte
 	}
 
 	var resized stdimage.Image
-	if maintainAspect {
+	// If both width and height are 0, keep original dimensions (just convert format)
+	if width == 0 && height == 0 {
+		resized = img
+	} else if maintainAspect {
 		resized = imaging.Resize(img, width, height, imaging.Lanczos)
 	} else {
 		if width == 0 {
@@ -45,6 +45,15 @@ func (i *Image) resize(ctx context.Context, params map[string]interface{}) (inte
 			height = img.Bounds().Dy()
 		}
 		resized = imaging.Resize(img, width, height, imaging.Lanczos)
+	}
+
+	// Apply percentage scale if not 100%
+	if scale > 0 && scale < 100 {
+		currentWidth := resized.Bounds().Dx()
+		currentHeight := resized.Bounds().Dy()
+		newWidth := currentWidth * scale / 100
+		newHeight := currentHeight * scale / 100
+		resized = imaging.Resize(resized, newWidth, newHeight, imaging.Lanczos)
 	}
 
 	if err := i.exportImage(resized, output, params); err != nil {

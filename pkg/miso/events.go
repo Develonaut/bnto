@@ -237,6 +237,17 @@ func (m Model) updateExecution(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "pgdown", "f", " ":
 			m.logViewport.HalfPageDown()
 			return m, nil
+		case "r":
+			// Cancel current execution if running
+			if m.executing && m.executionCancel != nil {
+				m.executionCancel()
+				m.executing = false
+				m.executionCancel = nil
+			}
+			// Clear logs and restart execution
+			m.logs = ""
+			m.logViewport.SetContent("")
+			return m.startExecution()
 		}
 	}
 

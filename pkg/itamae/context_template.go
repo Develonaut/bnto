@@ -107,6 +107,11 @@ func (ec *executionContext) resolveExactTemplate(s string) interface{} {
 	trimmed := strings.TrimSpace(s)
 	expr := strings.TrimSpace(trimmed[2 : len(trimmed)-2])
 
+	// Handle "split .VAR \"delimiter\"" syntax - returns []interface{} for loop compatibility
+	if strings.HasPrefix(expr, "split ") {
+		return ec.resolveSplitExpression(expr)
+	}
+
 	// Handle "index . \"key1\" \"key2\"..." syntax
 	if strings.HasPrefix(expr, "index .") {
 		return ec.resolveIndexExpression(expr)
@@ -118,6 +123,66 @@ func (ec *executionContext) resolveExactTemplate(s string) interface{} {
 	}
 
 	return nil
+}
+
+// resolveSplitExpression resolves {{split .VAR "delimiter"}} expressions.
+// Returns []interface{} for compatibility with loop items.
+func (ec *executionContext) resolveSplitExpression(expr string) interface{} {
+	// Parse: split .VAR "delimiter"
+	// Find the variable reference (starts with .)
+	parts := strings.SplitN(expr, " ", 3)
+	if len(parts) < 3 || parts[0] != "split" {
+		return nil
+	}
+
+	varRef := parts[1]
+	delimiterPart := parts[2]
+
+	// Extract variable value - try multiple approaches
+	var varValue string
+	if strings.HasPrefix(varRef, ".") {
+		varName := varRef[1:]
+
+		// First try direct lookup in nodeData
+		if ec.nodeData != nil {
+			if val, ok := ec.nodeData[varName]; ok {
+				switch v := val.(type) {
+				case string:
+					varValue = v
+				case interface{}:
+					if s, ok := v.(string); ok {
+						varValue = s
+					}
+				}
+			}
+		}
+
+		// If not found, try resolveDotExpression
+		if varValue == "" {
+			val := ec.resolveDotExpression(varName)
+			if s, ok := val.(string); ok {
+				varValue = s
+			}
+		}
+
+		if varValue == "" {
+			return nil
+		}
+	} else {
+		return nil
+	}
+
+	// Extract delimiter (remove quotes)
+	delimiter := strings.Trim(delimiterPart, "\"")
+
+	// Split and convert to []interface{} for loop compatibility
+	splitResult := strings.Split(varValue, delimiter)
+	result := make([]interface{}, len(splitResult))
+	for i, v := range splitResult {
+		result[i] = strings.TrimSpace(v)
+	}
+
+	return result
 }
 
 // resolveIndexExpression resolves {{index . "key1" "key2"}} expressions.
@@ -190,6 +255,17 @@ func containsTemplate(s string) bool {
 // templateFuncs returns custom template functions.
 func templateFuncs() template.FuncMap {
 	return template.FuncMap{
-		"basename": filepath.Base,
+		"basename":      filepath.Base,
+		"dir":           filepath.Dir,
+		"basenameNoExt": basenameNoExt,
+		"split":         strings.Split,
 	}
+}
+
+// basenameNoExt returns the filename without extension.
+// Example: "/path/to/image.png" -> "image"
+func basenameNoExt(path string) string {
+	base := filepath.Base(path)
+	ext := filepath.Ext(base)
+	return strings.TrimSuffix(base, ext)
 }

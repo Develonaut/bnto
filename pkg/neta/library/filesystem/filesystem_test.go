@@ -337,3 +337,189 @@ func TestFileSystem_MissingPath(t *testing.T) {
 		t.Fatal("Expected error for missing path, got nil")
 	}
 }
+
+// TestFileSystem_ListGlobPattern tests listing files with a glob pattern.
+func TestFileSystem_ListGlobPattern(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temp directory with test files
+	tmpdir := t.TempDir()
+
+	// Create test files
+	testFiles := []string{"test1.txt", "test2.txt", "test3.png", "data.json"}
+	for _, fname := range testFiles {
+		f, err := os.Create(filepath.Join(tmpdir, fname))
+		if err != nil {
+			t.Fatalf("Failed to create test file: %v", err)
+		}
+		f.Close()
+	}
+
+	fs := filesystem.New()
+
+	// Test listing only .txt files
+	params := map[string]interface{}{
+		"operation": "list",
+		"path":      filepath.Join(tmpdir, "*.txt"),
+	}
+
+	result, err := fs.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	files := output["files"].([]interface{})
+	count := output["count"].(int)
+
+	if count != 2 {
+		t.Errorf("count = %d, want 2", count)
+	}
+
+	if len(files) != 2 {
+		t.Errorf("len(files) = %d, want 2", len(files))
+	}
+
+	// Verify all returned files are .txt
+	for _, f := range files {
+		fpath := f.(string)
+		if !strings.HasSuffix(fpath, ".txt") {
+			t.Errorf("Expected .txt file, got: %s", fpath)
+		}
+	}
+}
+
+// TestFileSystem_ListDirectory tests listing all files in a directory.
+func TestFileSystem_ListDirectory(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temp directory with test files
+	tmpdir := t.TempDir()
+
+	// Create test files
+	testFiles := []string{"file1.txt", "file2.png", "file3.json"}
+	for _, fname := range testFiles {
+		f, err := os.Create(filepath.Join(tmpdir, fname))
+		if err != nil {
+			t.Fatalf("Failed to create test file: %v", err)
+		}
+		f.Close()
+	}
+
+	// Create a subdirectory (should be excluded from listing)
+	subdir := filepath.Join(tmpdir, "subdir")
+	if err := os.Mkdir(subdir, 0755); err != nil {
+		t.Fatalf("Failed to create subdirectory: %v", err)
+	}
+
+	fs := filesystem.New()
+
+	params := map[string]interface{}{
+		"operation": "list",
+		"path":      tmpdir,
+	}
+
+	result, err := fs.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	files := output["files"].([]interface{})
+	count := output["count"].(int)
+
+	// Should list 3 files (not the subdirectory)
+	if count != 3 {
+		t.Errorf("count = %d, want 3", count)
+	}
+
+	if len(files) != 3 {
+		t.Errorf("len(files) = %d, want 3", len(files))
+	}
+
+	// Verify all returned paths are files (not directories)
+	for _, f := range files {
+		fpath := f.(string)
+		info, err := os.Stat(fpath)
+		if err != nil {
+			t.Errorf("Failed to stat file: %v", err)
+			continue
+		}
+		if info.IsDir() {
+			t.Errorf("Expected file, got directory: %s", fpath)
+		}
+	}
+}
+
+// TestFileSystem_ListSingleFile tests listing a single file path.
+func TestFileSystem_ListSingleFile(t *testing.T) {
+	ctx := context.Background()
+
+	// Create temp file
+	tmpfile, err := os.CreateTemp("", "test-list-single-*.txt")
+	if err != nil {
+		t.Fatalf("Failed to create temp file: %v", err)
+	}
+	tmpfile.Close()
+	defer os.Remove(tmpfile.Name())
+
+	fs := filesystem.New()
+
+	params := map[string]interface{}{
+		"operation": "list",
+		"path":      tmpfile.Name(),
+	}
+
+	result, err := fs.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	files := output["files"].([]interface{})
+	count := output["count"].(int)
+
+	if count != 1 {
+		t.Errorf("count = %d, want 1", count)
+	}
+
+	if len(files) != 1 {
+		t.Errorf("len(files) = %d, want 1", len(files))
+	}
+
+	if files[0] != tmpfile.Name() {
+		t.Errorf("files[0] = %v, want %v", files[0], tmpfile.Name())
+	}
+}
+
+// TestFileSystem_ListEmptyDirectory tests listing an empty directory.
+func TestFileSystem_ListEmptyDirectory(t *testing.T) {
+	ctx := context.Background()
+
+	// Create empty temp directory
+	tmpdir := t.TempDir()
+
+	fs := filesystem.New()
+
+	params := map[string]interface{}{
+		"operation": "list",
+		"path":      tmpdir,
+	}
+
+	result, err := fs.Execute(ctx, params)
+	if err != nil {
+		t.Fatalf("Execute failed: %v", err)
+	}
+
+	output := result.(map[string]interface{})
+	files := output["files"].([]interface{})
+	count := output["count"].(int)
+
+	if count != 0 {
+		t.Errorf("count = %d, want 0", count)
+	}
+
+	if len(files) != 0 {
+		t.Errorf("len(files) = %d, want 0", len(files))
+	}
+}

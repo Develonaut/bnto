@@ -8,6 +8,7 @@
 //   - delete: Delete a file or glob pattern
 //   - mkdir: Create a directory
 //   - exists: Check if a file or directory exists
+//   - list: List files matching a pattern or in a directory
 //
 // Example usage:
 //
@@ -37,6 +38,12 @@
 //	    "path": "products/*/render-*.png",
 //	}
 //
+//	// List files with glob pattern
+//	params := map[string]interface{}{
+//	    "operation": "list",
+//	    "path": "images/*.jpg",
+//	}
+//
 // Learn more about Go's os and io packages:
 // https://pkg.go.dev/os
 // https://pkg.go.dev/io
@@ -61,7 +68,7 @@ func New() neta.Executable {
 //
 // Parameters:
 //   - operation (string, required): The operation to perform
-//     (read, write, copy, move, delete, mkdir, exists)
+//     (read, write, copy, move, delete, mkdir, exists, list)
 //   - path (string, required for most operations): The file/directory path
 //   - content (string, required for write): Content to write
 //   - source (string, required for copy/move): Source path
@@ -91,6 +98,8 @@ func (f *FileSystemNeta) Execute(ctx context.Context, params map[string]interfac
 		return f.mkdir(params)
 	case "exists":
 		return f.exists(params)
+	case "list":
+		return f.list(params)
 	default:
 		return nil, fmt.Errorf("unsupported operation: %s", operation)
 	}
