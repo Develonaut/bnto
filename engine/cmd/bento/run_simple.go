@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Develonaut/bento/pkg/api"
 	"github.com/Develonaut/bento/pkg/engine"
 	"github.com/Develonaut/bento/pkg/node"
 )
@@ -17,7 +18,7 @@ import (
 // executeSimple executes bento with simple single-line progress (non-TTY mode).
 func executeSimple(def *node.Definition) error {
 	// Create registry and file logger (always log to file)
-	p := createRegistry()
+	p := api.DefaultRegistry()
 	logger, logFile, err := createFileLogger()
 	if err != nil {
 		printError(fmt.Sprintf("Warning: Failed to create log file: %v", err))

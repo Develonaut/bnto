@@ -52,6 +52,7 @@ bento/
 │   ├── cmd/
 │   │   └── bento/                   # CLI binary
 │   ├── pkg/
+│   │   ├── api/                     # Shared service layer (BentoService)
 │   │   ├── engine/                  # Orchestration (executor)
 │   │   ├── registry/                # Node type registry
 │   │   ├── storage/                 # Persistent storage
@@ -165,18 +166,35 @@ Apps compose via React context:
 
 ## Go API Service Layer
 
-`engine/internal/api/` provides a shared service interface consumed by CLI, API server, and Wails:
+`engine/pkg/api/` provides a shared service layer consumed by CLI, HTTP server, and Wails.
+Uses `pkg/` (not `internal/`) so `apps/api/` (a separate Go module via `go.work`) can import it.
+
+### CLI → API Mapping
+
+| CLI Command | BentoService Method | Input | Output |
+|---|---|---|---|
+| `bento run <file>` | `RunWorkflow(ctx, def, opts)` | `*node.Definition`, `RunOptions` | `*RunResult` |
+| `bento run --dry-run` | `DryRunWorkflow(ctx, def)` | `*node.Definition` | `*DryRunResult` |
+| `bento validate <file>` | `ValidateWorkflow(ctx, def)` | `*node.Definition` | `*ValidationResult` |
+| `bento list` | `ListWorkflows(ctx)` | — | `[]WorkflowSummary` |
+| load from storage | `GetWorkflow(ctx, name)` | name string | `*node.Definition` |
+| save to storage | `SaveWorkflow(ctx, name, def)` | name, `*node.Definition` | error |
+| delete from storage | `DeleteWorkflow(ctx, name)` | name string | error |
+
+**Key decisions:**
+- BentoService accepts `*node.Definition` — file path resolution stays in CLI
+- `RunOptions` includes timeout, progress callback, and logger
+- `DefaultRegistry()` consolidates all 10 node type registrations in one place
+- Directory listing (`bento list <dir>`) stays CLI-only — the API uses storage
 
 ```go
-// engine/internal/api/ — shared logic, no transport concerns
-type BentoService struct {
-    registry *registry.Registry
-    storage  *storage.Storage
-}
+// engine/pkg/api/ — shared logic, no transport concerns
+svc := api.New(api.DefaultRegistry(), store)
 
-func (s *BentoService) RunWorkflow(ctx context.Context, def *node.Definition) (*Result, error)
-func (s *BentoService) ValidateWorkflow(ctx context.Context, def *node.Definition) ([]string, error)
-func (s *BentoService) ListWorkflows(ctx context.Context) ([]string, error)
+result, err := svc.RunWorkflow(ctx, def, api.RunOptions{
+    Timeout:    30 * time.Second,
+    OnProgress: func(nodeID, status string) { /* ... */ },
+})
 ```
 
 The HTTP transport layer lives in `apps/api/` (separate Go module, linked via `go.work`):

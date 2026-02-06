@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Develonaut/bento/pkg/api"
 	"github.com/Develonaut/bento/pkg/engine"
 	"github.com/Develonaut/bento/pkg/node"
 	"github.com/Develonaut/bento/pkg/paths"
@@ -18,7 +19,7 @@ import (
 // executeTUI executes bento with detailed log output to stdout.
 func executeTUI(def *node.Definition) error {
 	// Create registry and file logger
-	p := createRegistry()
+	p := api.DefaultRegistry()
 	logger, logFile, err := createFileLogger()
 	if err != nil {
 		printError(fmt.Sprintf("Warning: Failed to create log file: %v", err))

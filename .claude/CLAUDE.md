@@ -84,6 +84,7 @@ Every file, function, and package does ONE thing well. See [BENTO_BOX_PRINCIPLE.
 ```go
 // Each package has one responsibility
 engine/pkg/
+├── api/          # Shared service layer (BentoService, DefaultRegistry)
 ├── engine/       # Orchestration ONLY
 ├── registry/     # Node type registration ONLY
 ├── storage/      # Persistent storage ONLY

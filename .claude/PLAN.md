@@ -70,9 +70,9 @@ Solidify the engine, restructure the repo, establish the development environment
   - [x] `bento validate` with valid and invalid bentos
   - [x] `bento list` returns expected results
   - [x] `--dry-run` flag works correctly
-- [ ] Document the public API surface
-  - What the CLI exposes = what the API layer will wrap
-  - Every CLI command's inputs, outputs, and error cases
+- [x] Document the public API surface
+  - CLI → API mapping table in MONOREPO_STRUCTURE.md
+  - Every CLI command mapped to BentoService method with inputs/outputs
 
 ### 0.3 Quality Gates
 - [ ] `go test ./engine/pkg/... -race` passes (all packages)
@@ -89,9 +89,10 @@ Ship a working web app where users can upload, edit, and run workflows.
 
 ### 1.1 Go API Server
 - [x] Set up `apps/api/` as separate Go module with `go.work` workspace
-- [ ] Create `engine/internal/api/` service layer
-  - `BentoService` interface shared by CLI, HTTP server, and Wails
-  - Decouple from CLI-specific code
+- [x] Create `engine/pkg/api/` service layer
+  - `BentoService` struct shared by CLI, HTTP server, and Wails
+  - `DefaultRegistry()` consolidates node type registration
+  - CLI refactored to use `api.DefaultRegistry()`
 - [ ] Create `apps/api/` HTTP server
   - HTTP handlers wrapping BentoService
   - `/api/run` — start async execution, return execution ID
