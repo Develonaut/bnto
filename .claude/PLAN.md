@@ -15,10 +15,10 @@ Solidify the engine, restructure the repo, establish the development environment
   - itamae → engine, pantry → registry, hangiri → storage
   - miso → tui, kombu → paths, omakase → validator
   - shoyu → logger, wasabi → secrets
-- [ ] Move Go code to `engine/` directory
-  - Move `cmd/`, `pkg/`, `internal/`, `go.mod`, `go.sum`, `examples/`, `tests/`
-  - Update `go.mod` module path
-  - Update all import paths
+- [x] Move Go code to `engine/` directory
+  - Moved `cmd/`, `pkg/`, `tests/`, `examples/`, `go.mod`, `go.sum`, docs
+  - Module path unchanged (github.com/Develonaut/bento)
+  - No import path changes needed (Go resolves relative to go.mod)
 - [ ] Set up monorepo root
   - `Taskfile.yml` at root (Go orchestration)
   - `ui/` directory with `pnpm-workspace.yaml` and `turbo.json`
