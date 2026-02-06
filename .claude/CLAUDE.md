@@ -208,8 +208,12 @@ All execution flows through `@bento/core` → backend (Convex or Wails) → Go e
 ```bash
 # Go engine (via Taskfile)
 task build              # Build bento CLI binary
-task test               # Run Go tests with race detector
-task vet                # Run go vet
+task test               # Run engine tests with race detector
+task vet                # Run go vet on all Go packages
+
+# API server
+task api:build          # Build API server binary
+task api:test           # Run API server tests with race detector
 
 # Frontend (via Turborepo)
 task ui:build           # Build all TS packages (with Turbo caching)
@@ -218,8 +222,9 @@ task ui:dev             # Start web app dev server
 task ui:lint            # Lint all TS packages
 
 # Everything
-task build:all          # Build engine + frontend
-task test:all           # Test engine + frontend
+task build:all          # Build engine + API + frontend
+task test:all           # Test engine + API + frontend
+task check              # Full quality gate (vet + test + build)
 ```
 
 ---
@@ -278,9 +283,10 @@ Before completing any task, verify:
 Run all automated checks:
 
 ```bash
-# Go engine checks
+# Go checks
 task vet                # go vet — must pass clean
-task test               # go test -race — must pass
+task test               # engine go test -race — must pass
+task api:test           # API server go test -race — must pass
 
 # Frontend checks
 task ui:build           # TypeScript compilation — must pass

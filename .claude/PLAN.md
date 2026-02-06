@@ -94,15 +94,17 @@ Ship a working web app where users can upload, edit, and run workflows.
   - `BentoService` struct shared by CLI, HTTP server, and Wails
   - `DefaultRegistry()` consolidates node type registration
   - CLI refactored to use `api.DefaultRegistry()`
-- [ ] Create `apps/api/` HTTP server
-  - HTTP handlers wrapping BentoService
-  - `/api/run` — start async execution, return execution ID
-  - `/api/validate` — validate a workflow definition
-  - `/api/workflows` — list/get/save workflows
-  - `/api/executions/:id` — get execution status
-- [ ] API integration tests
-  - Every endpoint tested (happy path + error cases)
-  - Use `net/http/httptest` for in-process testing
+- [x] Create `apps/api/` HTTP server
+  - HTTP handlers wrapping BentoService (stdlib `net/http` with Go 1.25 routing)
+  - `POST /api/run` — async execution with in-memory tracking, returns 202 + ID
+  - `POST /api/validate` — validate a workflow definition
+  - `GET/POST/DELETE /api/workflows` — list/get/save/delete workflows
+  - `GET /api/executions/{id}` — poll execution status + progress
+  - CORS middleware, graceful shutdown, background cleanup of expired executions
+- [x] API integration tests
+  - 12 handler tests + 8 execution manager tests (20 total, all pass with -race)
+  - `net/http/httptest` for in-process testing
+  - Tests cover: validate, CRUD workflows, async run+poll, CORS, error cases
 - [ ] Contract tests
   - API responses match TypeScript types in `@bento/core`
 
