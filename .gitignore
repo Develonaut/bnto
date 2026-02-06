@@ -5,6 +5,7 @@
 *.so
 *.dylib
 /bento
+engine/bento
 
 # Test binary, built with `go test -c`
 *.test
@@ -51,3 +52,9 @@ render-*.png
 # Environment
 .env
 .env.local
+
+# Node.js / Frontend
+node_modules/
+.turbo/
+dist/
+.next/

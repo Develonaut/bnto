@@ -106,25 +106,27 @@ We need a build orchestrator that handles both ecosystems. The previous strategy
 
 4. **pnpm does the heavy lifting.** Even without Turborepo, `pnpm -r build` handles dependency ordering. Turborepo adds caching on top — valuable but not critical at small scale.
 
-### Concrete Setup
+### Concrete Setup (Implemented)
 
 ```
 bento/
-├── Taskfile.yml              # Root orchestrator (Go + calls into ui/)
-├── go.mod                    # Go module
-├── cmd/                      # Go commands
-├── pkg/                      # Go packages
-└── ui/                       # Frontend monorepo
-    ├── turbo.json            # Turborepo config (added in Phase 1)
-    ├── pnpm-workspace.yaml   # pnpm workspace config
-    ├── package.json          # Root package.json (turbo scripts)
-    ├── apps/
-    │   ├── web/              # Next.js
-    │   └── desktop/          # Wails frontend (Vite)
-    └── packages/
-        ├── core/             # @bento/core
-        ├── ui/               # @bento/ui
-        └── editor/           # @bento/editor
+├── package.json              # Turborepo root workspace
+├── pnpm-workspace.yaml       # pnpm workspace config
+├── turbo.json                # Turborepo task config
+├── Taskfile.yml              # Go orchestration
+├── apps/
+│   ├── web/                  # @bento/web (Next.js)
+│   └── desktop/              # @bento/desktop (Wails frontend)
+├── packages/
+│   └── @bento/               # Scoped internal packages (n8n pattern)
+│       ├── core/             # @bento/core
+│       ├── ui/               # @bento/ui
+│       └── editor/           # @bento/editor
+└── engine/                   # All Go code
+    ├── go.mod
+    ├── cmd/bento/
+    ├── pkg/
+    └── tests/
 ```
 
 **Root Taskfile.yml:**
@@ -132,33 +134,34 @@ bento/
 version: '3'
 
 tasks:
-  # Go tasks
+  # Go tasks (engine/)
   build:
+    dir: ./engine
     cmds: [go build ./cmd/bento]
   test:
+    dir: ./engine
     cmds: [go test -race ./...]
-  lint:
-    cmds: [golangci-lint run]
 
-  # Frontend tasks (delegates to Turborepo)
+  # Frontend tasks (Turborepo at root)
   ui:build:
-    dir: ./ui
     cmds: [pnpm turbo run build]
   ui:dev:
-    dir: ./ui
     cmds: [pnpm --filter @bento/web dev]
   ui:test:
-    dir: ./ui
     cmds: [pnpm turbo run test]
 
   # Cross-cutting
   build:all:
-    cmds: [task build, task ui:build]
+    cmds:
+      - task: build
+      - task: ui:build
   test:all:
-    cmds: [task test, task ui:test]
+    cmds:
+      - task: test
+      - task: ui:test
 ```
 
-**ui/turbo.json:**
+**turbo.json (at root):**
 ```json
 {
   "$schema": "https://turbo.build/schema.json",

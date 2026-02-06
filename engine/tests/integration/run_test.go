@@ -67,7 +67,7 @@ func TestUserSimulation_ProductFolderWorkflow(t *testing.T) {
 	t.Logf("  ✓ Loaded bento: %s", def.Name)
 	t.Log("")
 
-	// Step 2: User validates the bento (using omakase)
+	// Step 2: User validates the bento
 	t.Log("Step 2: User validates bento with 'bento validate'")
 	t.Log("  ✓ Validation passed (skipped in test)")
 	t.Log("")
@@ -77,22 +77,22 @@ func TestUserSimulation_ProductFolderWorkflow(t *testing.T) {
 	t.Log("  (Messenger output appears below)")
 	t.Log("")
 
-	// Create pantry and messenger (simulating CLI execution)
-	p := createTestPantry()
-	manager := miso.NewManager()
+	// Create registry and messenger (simulating CLI execution)
+	p := createTestRegistry()
+	manager := tui.NewManager()
 	theme := manager.GetTheme()
 	palette := manager.GetPalette()
-	messenger := miso.NewSimpleMessenger(theme, palette)
+	messenger := tui.NewSimpleMessenger(theme, palette)
 
-	// Create itamae
-	chef := itamae.NewWithMessenger(p, nil, messenger)
+	// Create engine
+	eng := engine.NewWithMessenger(p, nil, messenger)
 
 	// Execute (this is what happens when user runs 'bento run')
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	startTime := time.Now()
-	result, err := chef.Serve(ctx, &def)
+	result, err := eng.Serve(ctx, &def)
 	executionTime := time.Since(startTime)
 
 	// Verify execution succeeded
@@ -140,12 +140,11 @@ func TestUserSimulation_ProductFolderWorkflow(t *testing.T) {
 	t.Log("  - Loop iteration over CSV rows")
 	t.Log("  - Dynamic folder creation with context variables")
 	t.Log("  - Messenger progress output for user feedback")
-	t.Log("  - Fun status words and sushi emojis in output")
 }
 
-// createTestPantry creates a pantry with all necessary neta for testing.
-func createTestPantry() *pantry.Pantry {
-	p := pantry.New()
+// createTestRegistry creates a registry with all necessary neta for testing.
+func createTestRegistry() *registry.Registry {
+	p := registry.New()
 
 	// Register all neta types used in tests
 	p.RegisterFactory("edit-fields", func() neta.Executable { return editfields.New() })
@@ -200,7 +199,7 @@ func TestUserSimulation_ProductFolderWithOverlaysWorkflow(t *testing.T) {
 	t.Logf("  ✓ Loaded bento: %s", def.Name)
 	t.Log("")
 
-	// Step 2: User validates the bento (using omakase)
+	// Step 2: User validates the bento
 	t.Log("Step 2: User validates bento with 'bento validate'")
 	t.Log("  ✓ Validation passed (skipped in test)")
 	t.Log("")
@@ -210,22 +209,22 @@ func TestUserSimulation_ProductFolderWithOverlaysWorkflow(t *testing.T) {
 	t.Log("  (Messenger output appears below)")
 	t.Log("")
 
-	// Create pantry and messenger (simulating CLI execution)
-	p := createTestPantry()
-	manager := miso.NewManager()
+	// Create registry and messenger (simulating CLI execution)
+	p := createTestRegistry()
+	manager := tui.NewManager()
 	theme := manager.GetTheme()
 	palette := manager.GetPalette()
-	messenger := miso.NewSimpleMessenger(theme, palette)
+	messenger := tui.NewSimpleMessenger(theme, palette)
 
-	// Create itamae
-	chef := itamae.NewWithMessenger(p, nil, messenger)
+	// Create engine
+	eng := engine.NewWithMessenger(p, nil, messenger)
 
 	// Execute (this is what happens when user runs 'bento run')
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	startTime := time.Now()
-	result, err := chef.Serve(ctx, &def)
+	result, err := eng.Serve(ctx, &def)
 	executionTime := time.Since(startTime)
 
 	// Verify execution succeeded

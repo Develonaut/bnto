@@ -39,7 +39,7 @@ func TestNewManager(t *testing.T) {
 // TestSetVariant verifies variant switching.
 func TestSetVariant(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Cleanup(kombu.SetConfigDirForTesting(tmpDir))
+	t.Cleanup(paths.SetConfigDirForTesting(tmpDir))
 
 	m := NewManager()
 
@@ -65,7 +65,7 @@ func TestSetVariant(t *testing.T) {
 // TestNextVariant verifies cycling through variants.
 func TestNextVariant(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Cleanup(kombu.SetConfigDirForTesting(tmpDir))
+	t.Cleanup(paths.SetConfigDirForTesting(tmpDir))
 
 	m := NewManager()
 	m.SetVariant(VariantNasu) // Start with first variant
@@ -102,7 +102,7 @@ func TestNextVariant(t *testing.T) {
 // TestCurrentVariant verifies global current variant tracking.
 func TestCurrentVariant(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Cleanup(kombu.SetConfigDirForTesting(tmpDir))
+	t.Cleanup(paths.SetConfigDirForTesting(tmpDir))
 
 	m := NewManager()
 	m.SetVariant(VariantToro)

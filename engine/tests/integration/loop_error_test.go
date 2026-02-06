@@ -24,19 +24,19 @@ func TestLoopErrorPropagation(t *testing.T) {
 	bentoDef := createLoopWithFailingNode(t)
 
 	// Create execution environment
-	p := createTestPantry()
-	manager := miso.NewManager()
+	p := createTestRegistry()
+	manager := tui.NewManager()
 	theme := manager.GetTheme()
 	palette := manager.GetPalette()
-	messenger := miso.NewSimpleMessenger(theme, palette)
-	chef := itamae.NewWithMessenger(p, nil, messenger)
+	messenger := tui.NewSimpleMessenger(theme, palette)
+	eng := engine.NewWithMessenger(p, nil, messenger)
 
 	// Execute the bento - we expect it to FAIL
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	t.Log("Executing bento with failing loop node...")
-	result, err := chef.Serve(ctx, bentoDef)
+	result, err := eng.Serve(ctx, bentoDef)
 
 	// Verify execution FAILED (this is the correct behavior)
 	if err == nil {
@@ -254,19 +254,19 @@ third,3`
 	}
 
 	// Create execution environment
-	p := createTestPantry()
-	manager := miso.NewManager()
+	p := createTestRegistry()
+	manager := tui.NewManager()
 	theme := manager.GetTheme()
 	palette := manager.GetPalette()
-	messenger := miso.NewSimpleMessenger(theme, palette)
-	chef := itamae.NewWithMessenger(p, nil, messenger)
+	messenger := tui.NewSimpleMessenger(theme, palette)
+	eng := engine.NewWithMessenger(p, nil, messenger)
 
 	// Execute
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	t.Log("Executing bento with partial loop...")
-	result, err := chef.Serve(ctx, &def)
+	result, err := eng.Serve(ctx, &def)
 
 	// Should fail (overlay 3.png doesn't exist, will fail on iteration 2)
 	if err != nil {

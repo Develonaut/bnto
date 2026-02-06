@@ -86,21 +86,23 @@ The layered abstraction (shared `@bento/core` → multiple clients → single Go
 
 ### Frontend Package Structure
 
+Standard Turborepo layout at repo root with `@bento/` namespace (n8n pattern):
+
 ```
-ui/
-├── apps/
-│   ├── web/          # Next.js (Railway, cloud auth) — consumes @bento/ui
-│   └── desktop/      # Vite/React (Wails v2) — consumes @bento/ui
-└── packages/
-    ├── core/         # @bento/core — THE API layer. All backend communication.
-    │                 #   Exposes methods like core.workflows.run()
-    │                 #   Internally uses ConvexClient, WailsClient, or RestClient
-    │                 #   Consumer code has NO idea how it talks to the backend
-    ├── ui/           # @bento/ui — shadcn thin wrappers (Button, Card, Dialog)
-    │                 #   Pure presentational. Uses shadcn as primitives.
-    │                 #   Ready for future customization without changing consumers.
-    └── editor/       # @bento/editor — Workflow editor (JSON editor for MVP)
-                      #   Consumes @bento/ui for primitives, @bento/core for data
+apps/
+├── web/                  # @bento/web — Next.js (Railway, cloud auth)
+└── desktop/              # @bento/desktop — Vite/React (Wails v2)
+packages/
+└── @bento/               # Scoped internal packages
+    ├── core/             # @bento/core — THE API layer. All backend communication.
+    │                     #   Exposes methods like core.workflows.run()
+    │                     #   Internally uses ConvexClient, WailsClient, or RestClient
+    │                     #   Consumer code has NO idea how it talks to the backend
+    ├── ui/               # @bento/ui — shadcn thin wrappers (Button, Card, Dialog)
+    │                     #   Pure presentational. Uses shadcn as primitives.
+    │                     #   Ready for future customization without changing consumers.
+    └── editor/           # @bento/editor — Workflow editor (JSON editor for MVP)
+                          #   Consumes @bento/ui for primitives, @bento/core for data
 ```
 
 ### Why Thin shadcn Wrappers

@@ -1,0 +1,16 @@
+{
+  "name": "@bento/web",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "echo \"Phase 1: Next.js app\"",
+    "dev": "echo \"Phase 1: Next.js dev server\"",
+    "test": "echo \"No tests yet\"",
+    "lint": "echo \"No linter yet\""
+  },
+  "dependencies": {
+    "@bento/core": "workspace:*",
+    "@bento/ui": "workspace:*",
+    "@bento/editor": "workspace:*"
+  }
+}

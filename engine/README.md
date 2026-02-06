@@ -1,115 +1,56 @@
-# 🍱 Bento
+# Bento Engine
 
-**High-performance workflow automation CLI written in Go**
+**Go execution engine for Bento workflow automation.**
 
-Bento is a complete rewrite of Atomiton's core execution engine, designed to be fast, portable, and powerful. Build automated workflows using composable "neta" (ingredients) that can be connected together like a carefully crafted bento box.
+This directory contains the core Go CLI and execution engine. It handles workflow parsing, validation, orchestration, and all neta type execution.
 
-## Why Bento?
+## Packages
 
-- **🚀 Fast:** 15-30x faster startup than Node.js, 6x less memory
-- **📦 Small:** 20MB single binary vs 202MB node_modules
-- **🎯 Portable:** Cross-platform (Linux, macOS, Windows)
-- **⚡ Powerful:** True parallelism with goroutines
-- **🎨 Simple:** JSON-based workflow files (`.bento.json`)
+| Package | Purpose |
+|---------|---------|
+| `engine` | Workflow orchestration and execution |
+| `registry` | Neta type registration and lookup |
+| `storage` | Persistent storage layer |
+| `validator` | Workflow definition validation |
+| `paths` | Path resolution and config management |
+| `logger` | Structured logging |
+| `secrets` | Encrypted secrets management |
+| `tui` | Terminal UI (Bubble Tea) |
+| `neta` | All workflow node type implementations |
 
-## Commands
+## Neta Types
+
+| Type | Purpose |
+|------|---------|
+| `edit-fields` | Field editing with Go templates |
+| `http-request` | HTTP client with retry support |
+| `file-system` | File operations (copy, move, mkdir, list) |
+| `shell-command` | Shell execution with stall detection |
+| `group` | Sequential/parallel node execution |
+| `loop` | Iteration (forEach, times, while) |
+| `parallel` | Advanced parallel execution |
+| `spreadsheet` | Excel/CSV reading and processing |
+| `image` | Image resize, export, composite |
+| `transform` | Data transformation via expressions |
+
+## Build & Test
 
 ```bash
-bento run workflow.bento.json      # Execute a bento workflow
-bento validate workflow.bento.json # Validate a bento file
-bento list                         # List available bentos
-bento new my-workflow              # Create a new bento
-bento docs readme                  # View docs with glow
-bento secrets set KEY VALUE        # Manage secrets securely
+# From repo root (via Taskfile)
+task build    # Build CLI binary
+task test     # Run tests with race detector
+task vet      # Run go vet
+
+# Or directly
+cd engine
+go build ./cmd/bento
+go test -race ./...
 ```
 
-## Architecture
+## Module
 
-Bento uses a sushi-themed package architecture:
-
-- **neta** (ネタ) - "Ingredients" - Core workflow node types
-- **itamae** (板前) - "Sushi Chef" - Orchestration engine
-- **pantry** - Registry of available neta types
-- **hangiri** (はんぎり) - "Wooden Rice Tub" - Storage layer
-- **shoyu** - "Soy Sauce" - Structured logging
-- **omakase** - "Chef's Choice" - Validation
-
-## Workflow Nodes (Neta)
-
-All 10 neta types from Atomiton, ported to Go:
-
-1. **edit-fields** - Field editor with templates
-2. **http-request** - HTTP client
-3. **file-system** - File operations
-4. **shell-command** - Execute shell commands
-5. **group** - Sequential/parallel execution
-6. **loop** - Iteration (forEach, times, while)
-7. **parallel** - Advanced parallelism
-8. **spreadsheet** - Excel/CSV processing
-9. **image** - Image processing (govips)
-10. **transform** - Data transformation (expr)
-
-## Example Workflow
-
-```json
-{
-  "id": "product-automation",
-  "type": "group",
-  "version": "1.0.0",
-  "name": "Product Photo Automation",
-  "nodes": [
-    {
-      "id": "read-csv",
-      "type": "spreadsheet",
-      "parameters": {
-        "operation": "read",
-        "format": "csv",
-        "path": "products.csv"
-      }
-    },
-    {
-      "id": "process-products",
-      "type": "loop",
-      "parameters": {
-        "mode": "forEach",
-        "items": "{{.read-csv.rows}}"
-      }
-    }
-  ]
-}
+```
+module github.com/Develonaut/bento
 ```
 
-## Development Roadmap
-
-See [.claude/README.md](./.claude/README.md) for detailed project overview and roadmap.
-
-Phase-by-phase implementation strategy in [.claude/strategy/](./.claude/strategy/).
-
-## Bento Box Principle
-
-Bento follows the **Bento Box Principle**:
-
-- 🍙 Single Responsibility per file/package
-- 🚫 No utility grab bags
-- 🔲 Clear boundaries (interfaces)
-- 🧩 Composable (small, focused components)
-- ✂️ YAGNI (no future-proofing)
-
-See [.claude/BENTO_BOX_PRINCIPLE.md](./.claude/BENTO_BOX_PRINCIPLE.md) for details.
-
-## Documentation
-
-- [Project Overview](./.claude/README.md)
-- [Package Naming](./.claude/PACKAGE_NAMING.md)
-- [Bento Box Principle](./.claude/BENTO_BOX_PRINCIPLE.md)
-- [Approved Emojis](./.claude/EMOJIS.md) 🍱
-- [Phase Documents](./.claude/strategy/)
-
-## License
-
-MIT
-
----
-
-**Status:** 🏗️ In Development
-**Goal:** Rock-solid CLI for workflow automation with true parallelism and blazing speed
+The module path is unchanged from the original repo. Go resolves all imports relative to `go.mod` in this directory.

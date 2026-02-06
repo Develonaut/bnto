@@ -19,14 +19,21 @@ Solidify the engine, restructure the repo, establish the development environment
   - Moved `cmd/`, `pkg/`, `tests/`, `examples/`, `go.mod`, `go.sum`, docs
   - Module path unchanged (github.com/Develonaut/bento)
   - No import path changes needed (Go resolves relative to go.mod)
-- [ ] Set up monorepo root
-  - `Taskfile.yml` at root (Go orchestration)
-  - `ui/` directory with `pnpm-workspace.yaml` and `turbo.json`
-  - `ui/packages/core/` stub (`@bento/core`)
-  - `ui/packages/ui/` stub (`@bento/ui`)
-  - `ui/packages/editor/` stub (`@bento/editor`)
-- [ ] Verify everything builds and tests pass from new structure
-- [ ] Update `.claude/` docs to reflect new paths
+- [x] Set up monorepo root (standard Turborepo layout)
+  - `Taskfile.yml` at root (Go orchestration via `task build`, `task test`)
+  - `turbo.json`, `package.json`, `pnpm-workspace.yaml` at root
+  - `packages/@bento/core/` (`@bento/core` — API layer with BentoAPI interface)
+  - `packages/@bento/ui/` (`@bento/ui` — design system)
+  - `packages/@bento/editor/` (`@bento/editor` — workflow editor)
+  - `apps/web/` (`@bento/web` — Next.js stub)
+  - `apps/desktop/` (`@bento/desktop` — Wails stub)
+  - `@bento/` namespace directory (n8n pattern) for internal packages
+- [x] Verify everything builds and tests pass from new structure
+  - `task build` — Go engine builds
+  - `task ui:build` — Turborepo builds all 5 packages in dependency order
+  - `task build:all` — Full cross-cutting build verified
+- [x] Update `.claude/` docs to reflect new paths
+- [x] Fix integration tests (missed old sushi names in test code)
 
 ### 0.2 Engine Solidification (TDD)
 - [ ] Unit tests for every neta type (target >90% coverage)

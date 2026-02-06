@@ -91,7 +91,7 @@ func TestResolvePath_EmptyString(t *testing.T) {
 func TestDetectGoogleDrive(t *testing.T) {
 	// This test verifies that DetectGoogleDrive doesn't crash
 	// We can't reliably test the actual detection without a Google Drive setup
-	path := kombu.DetectGoogleDrive()
+	path := paths.DetectGoogleDrive()
 
 	// On Mac, if Google Drive is installed, path should contain "My Drive"
 	if runtime.GOOS == "darwin" && path != "" {
@@ -106,7 +106,7 @@ func TestDetectGoogleDrive(t *testing.T) {
 
 func TestDetectDropbox(t *testing.T) {
 	// This test verifies that DetectDropbox doesn't crash
-	path := kombu.DetectDropbox()
+	path := paths.DetectDropbox()
 
 	// Just verify it returns a string (empty is OK if Dropbox isn't installed)
 	t.Logf("Detected Dropbox path: %s", path)
@@ -114,7 +114,7 @@ func TestDetectDropbox(t *testing.T) {
 
 func TestDetectOneDrive(t *testing.T) {
 	// This test verifies that DetectOneDrive doesn't crash
-	path := kombu.DetectOneDrive()
+	path := paths.DetectOneDrive()
 
 	// Just verify it returns a string (empty is OK if OneDrive isn't installed)
 	t.Logf("Detected OneDrive path: %s", path)
@@ -175,7 +175,7 @@ func TestExpandSpecialMarkers_GoogleDrive(t *testing.T) {
 	}
 
 	// If Google Drive is detected, path should be expanded
-	gdrivePath := kombu.DetectGoogleDrive()
+	gdrivePath := paths.DetectGoogleDrive()
 	if gdrivePath != "" {
 		expected := filepath.Join(gdrivePath, "Projects", "MyProject")
 		if expanded != expected {

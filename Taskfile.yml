@@ -1,0 +1,48 @@
+version: '3'
+
+tasks:
+  # Go tasks (engine/)
+  build:
+    desc: Build the bento CLI binary
+    dir: ./engine
+    cmds: [go build ./cmd/bento]
+
+  test:
+    desc: Run all Go tests with race detector
+    dir: ./engine
+    cmds: [go test -race ./...]
+
+  vet:
+    desc: Run go vet on all packages
+    dir: ./engine
+    cmds: [go vet ./...]
+
+  # Frontend tasks
+  ui:build:
+    desc: Build all frontend packages
+    cmds: [pnpm turbo run build]
+
+  ui:dev:
+    desc: Start the web app in dev mode
+    cmds: [pnpm --filter @bento/web dev]
+
+  ui:test:
+    desc: Run all frontend tests
+    cmds: [pnpm turbo run test]
+
+  ui:lint:
+    desc: Lint all frontend packages
+    cmds: [pnpm turbo run lint]
+
+  # Cross-cutting
+  build:all:
+    desc: Build everything (engine + frontend)
+    cmds:
+      - task: build
+      - task: ui:build
+
+  test:all:
+    desc: Test everything (engine + frontend)
+    cmds:
+      - task: test
+      - task: ui:test

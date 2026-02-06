@@ -1,0 +1,141 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      turbo:
+        specifier: ^2.0.0
+        version: 2.8.3
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+
+  apps/desktop:
+    dependencies:
+      '@bento/core':
+        specifier: workspace:*
+        version: link:../../packages/@bento/core
+      '@bento/editor':
+        specifier: workspace:*
+        version: link:../../packages/@bento/editor
+      '@bento/ui':
+        specifier: workspace:*
+        version: link:../../packages/@bento/ui
+
+  apps/web:
+    dependencies:
+      '@bento/core':
+        specifier: workspace:*
+        version: link:../../packages/@bento/core
+      '@bento/editor':
+        specifier: workspace:*
+        version: link:../../packages/@bento/editor
+      '@bento/ui':
+        specifier: workspace:*
+        version: link:../../packages/@bento/ui
+
+  packages/@bento/core:
+    devDependencies:
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+
+  packages/@bento/editor:
+    dependencies:
+      '@bento/core':
+        specifier: workspace:*
+        version: link:../core
+      '@bento/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+
+  packages/@bento/ui:
+    dependencies:
+      '@bento/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+
+packages:
+
+  turbo-darwin-64@2.8.3:
+    resolution: {integrity: sha512-4kXRLfcygLOeNcP6JquqRLmGB/ATjjfehiojL2dJkL7GFm3SPSXbq7oNj8UbD8XriYQ5hPaSuz59iF1ijPHkTw==}
+    cpu: [x64]
+    os: [darwin]
+
+  turbo-darwin-arm64@2.8.3:
+    resolution: {integrity: sha512-xF7uCeC0UY0Hrv/tqax0BMbFlVP1J/aRyeGQPZT4NjvIPj8gSPDgFhfkfz06DhUwDg5NgMo04uiSkAWE8WB/QQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  turbo-linux-64@2.8.3:
+    resolution: {integrity: sha512-vxMDXwaOjweW/4etY7BxrXCSkvtwh0PbwVafyfT1Ww659SedUxd5rM3V2ZCmbwG8NiCfY7d6VtxyHx3Wh1GoZA==}
+    cpu: [x64]
+    os: [linux]
+
+  turbo-linux-arm64@2.8.3:
+    resolution: {integrity: sha512-mQX7uYBZFkuPLLlKaNe9IjR1JIef4YvY8f21xFocvttXvdPebnq3PK1Zjzl9A1zun2BEuWNUwQIL8lgvN9Pm3Q==}
+    cpu: [arm64]
+    os: [linux]
+
+  turbo-windows-64@2.8.3:
+    resolution: {integrity: sha512-YLGEfppGxZj3VWcNOVa08h6ISsVKiG85aCAWosOKNUjb6yErWEuydv6/qImRJUI+tDLvDvW7BxopAkujRnWCrw==}
+    cpu: [x64]
+    os: [win32]
+
+  turbo-windows-arm64@2.8.3:
+    resolution: {integrity: sha512-afTUGKBRmOJU1smQSBnFGcbq0iabAPwh1uXu2BVk7BREg30/1gMnJh9DFEQTah+UD3n3ru8V55J83RQNFfqoyw==}
+    cpu: [arm64]
+    os: [win32]
+
+  turbo@2.8.3:
+    resolution: {integrity: sha512-8Osxz5Tu/Dw2kb31EAY+nhq/YZ3wzmQSmYa1nIArqxgCAldxv9TPlrAiaBUDVnKA4aiPn0OFBD1ACcpc5VFOAQ==}
+    hasBin: true
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+snapshots:
+
+  turbo-darwin-64@2.8.3:
+    optional: true
+
+  turbo-darwin-arm64@2.8.3:
+    optional: true
+
+  turbo-linux-64@2.8.3:
+    optional: true
+
+  turbo-linux-arm64@2.8.3:
+    optional: true
+
+  turbo-windows-64@2.8.3:
+    optional: true
+
+  turbo-windows-arm64@2.8.3:
+    optional: true
+
+  turbo@2.8.3:
+    optionalDependencies:
+      turbo-darwin-64: 2.8.3
+      turbo-darwin-arm64: 2.8.3
+      turbo-linux-64: 2.8.3
+      turbo-linux-arm64: 2.8.3
+      turbo-windows-64: 2.8.3
+      turbo-windows-arm64: 2.8.3
+
+  typescript@5.9.3: {}
