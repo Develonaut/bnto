@@ -50,6 +50,21 @@ tasks:
     desc: Lint all frontend packages
     cmds: [pnpm turbo run lint]
 
+  # Quality gate
+  check:
+    desc: Run all quality checks (vet, test with coverage, build)
+    dir: ./engine
+    cmds:
+      - echo "=== go vet ==="
+      - go vet ./...
+      - echo "=== go test -race -cover ==="
+      - go test -race -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out | tail -1
+      - rm coverage.out
+      - echo "=== go build ==="
+      - go build ./cmd/bento
+      - echo "=== all checks passed ==="
+
   # Cross-cutting
   build:all:
     desc: Build everything (engine + frontend)
