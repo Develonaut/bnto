@@ -137,7 +137,9 @@ Ship a working web app where users can upload, edit, and run workflows.
   - `railway.toml`: Dockerfile path + health check config
   - Service: `bento-web` on Railway (`bento-web-production.up.railway.app`)
   - Convex `_generated/` types checked into git (needed for CI/CD builds)
-- [ ] Verify: unauthenticated → splash, authenticated + not whitelisted → waitlist message, whitelisted → app shell
+- [x] Verify: unauthenticated → splash, authenticated + not whitelisted → waitlist message, whitelisted → app shell
+  - Playwright E2E tests cover splash gate, auth redirect, sign-in form
+  - Screenshots committed for visual regression tracking
 
 ### 1.3 Frontend — @bento/core
 - [ ] Set up Zustand for client state (editor store, UI store)
@@ -172,7 +174,10 @@ Ship a working web app where users can upload, edit, and run workflows.
   - [ ] Results — output download, execution logs
 - [ ] Pre-built templates (the fixture bentos from Phase 0)
   - "Resize Images", "CSV Data Pipeline", "Image Composite"
-- [ ] Playwright E2E tests
+- [x] Playwright E2E test infrastructure
+  - Chromium-only, port 3100, `task e2e` command, screenshots committed
+  - 6 tests: splash gate (4), navigation/auth (2)
+- [ ] Playwright E2E tests for app features
   - [ ] Sign up flow
   - [ ] Upload workflow → edit → run → see results
   - [ ] Template selection → run → download results
