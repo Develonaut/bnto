@@ -78,6 +78,12 @@ tasks:
       - cd apps/api && go build ./cmd/server
       - echo "=== all checks passed ==="
 
+  # E2E tests
+  e2e:
+    desc: Run Playwright E2E tests (headless)
+    dir: ./apps/web
+    cmds: [pnpm exec playwright test]
+
   # Cross-cutting
   build:all:
     desc: Build everything (engine + API + frontend)

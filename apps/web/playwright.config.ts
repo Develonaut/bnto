@@ -1,0 +1,37 @@
+import { defineConfig, devices } from "@playwright/test";
+import path from "path";
+
+const port = 3100;
+
+export default defineConfig({
+  testDir: "./e2e",
+  snapshotPathTemplate: path.join(
+    "e2e",
+    "__screenshots__",
+    "{testFileName}",
+    "{arg}{ext}"
+  ),
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  reporter: "html",
+  use: {
+    baseURL: `http://localhost:${port}`,
+    trace: "on-first-retry",
+  },
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
+  webServer: {
+    command: `pnpm dev --port ${port}`,
+    url: `http://localhost:${port}`,
+    reuseExistingServer: !process.env.CI,
+    env: {
+      BENTO_PASSPHRASE: "testpassphrase",
+    },
+  },
+});

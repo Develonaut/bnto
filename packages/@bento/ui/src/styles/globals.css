@@ -7,9 +7,9 @@
 @source "../../../../apps/web/**/*.{ts,tsx}";
 
 :root {
-  --background: oklch(1 0 0);
+  --background: oklch(0.9801 0.0074 80.7212);
   --foreground: oklch(0.217 0.0086 59.1838);
-  --card: oklch(0.9801 0.0074 80.7212);
+  --card: oklch(1 0 0);
   --card-foreground: oklch(0.217 0.0086 59.1838);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.217 0.0086 59.1838);

@@ -9,6 +9,7 @@ engine/bento
 
 # Test binary, built with `go test -c`
 *.test
+!.env.test
 
 # Output of the go coverage tool
 *.out
@@ -59,5 +60,10 @@ node_modules/
 dist/
 .next/
 apps/api/server
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
 
 # Convex (keep _generated/ checked in — needed for CI/CD builds)
