@@ -40,11 +40,25 @@ bento/
 │       │   ├── tsconfig.json
 │       │   └── src/
 │       │       └── index.ts
-│       └── editor/                  # @bento/editor — Workflow editor components
+│       ├── editor/                  # @bento/editor — Workflow editor components
+│       │   ├── package.json
+│       │   ├── tsconfig.json
+│       │   └── src/
+│       │       └── index.ts
+│       └── backend/                # @bento/backend — Convex functions (cloud backend)
 │           ├── package.json
 │           ├── tsconfig.json
-│           └── src/
-│               └── index.ts
+│           ├── .env.local           # Symlink → root .env.local
+│           └── convex/
+│               ├── schema.ts        # Tables + authTables + indexes
+│               ├── auth.ts          # Password provider config
+│               ├── auth.config.ts   # Auth provider config
+│               ├── http.ts          # Auth HTTP routes
+│               ├── users.ts         # User queries + mutations
+│               ├── workflows.ts     # Workflow CRUD
+│               ├── executions.ts    # Execution tracking + Go API proxy
+│               ├── executionLogs.ts # Log queries + mutations
+│               └── crons.ts         # Monthly run counter reset
 │
 ├── engine/                          # Pure Go engine (core logic only)
 │   ├── go.mod                       # module github.com/Develonaut/bento

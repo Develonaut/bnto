@@ -110,14 +110,14 @@ Ship a working web app where users can upload, edit, and run workflows.
   - TS types updated to match actual Go API shapes (WorkflowDefinition, Execution, etc.)
 
 ### 1.2 Convex Setup
-- [ ] Deploy Convex on Railway via template
-- [ ] Define Convex schema (users, workflows, executions, executionLogs, files)
-- [ ] Implement Convex functions
+- [x] Deploy Convex on Railway via template
+- [x] Define Convex schema (users, workflows, executions, executionLogs)
+- [x] Implement Convex functions
   - Queries: list workflows, get execution status, get logs
   - Mutations: save workflow, update execution progress, insert logs
-  - Actions: proxy execution requests to Go backend
-- [ ] Convex Auth (email/password for MVP)
-- [ ] Run counter logic (runsUsed, runLimit, monthly reset cron)
+  - Actions: proxy execution requests to Go backend (poll-based)
+- [x] Convex Auth (email/password via @convex-dev/auth Password provider)
+- [x] Run counter logic (runsUsed, runLimit, monthly reset cron)
 
 ### 1.3 Frontend — @bento/core
 - [ ] Implement `BentoAPI` TypeScript interface
