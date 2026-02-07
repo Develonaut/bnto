@@ -60,5 +60,4 @@ dist/
 .next/
 apps/api/server
 
-# Convex
-**/convex/_generated/
+# Convex (keep _generated/ checked in — needed for CI/CD builds)
