@@ -125,6 +125,13 @@ Ship a working web app where users can upload, edit, and run workflows.
 - [x] Sign-in page (Convex Auth email/password)
 - [x] Whitelist gate — only approved users see the app behind the splash
 - [x] App shell layout (authenticated + whitelisted users only)
+- [x] Passphrase gate on splash page
+  - CLI-style input, server-side validation via `BENTO_PASSPHRASE` env var
+  - Cookie remembers access (30 days), reveals Sign In / Sign Up buttons
+  - `POST /api/verify-passphrase` API route
+- [x] Global nav bar with theme toggle
+  - Fixed top bar: "Bento" left, ThemeToggle right (in root layout)
+  - Removed per-page theme toggles (dashboard, etc.)
 - [ ] Deploy to Railway — splash screen live at public URL
 - [ ] Verify: unauthenticated → splash, authenticated + not whitelisted → waitlist message, whitelisted → app shell
 
@@ -137,9 +144,13 @@ Ship a working web app where users can upload, edit, and run workflows.
 - [ ] Unit tests for core package with mock adapters
 
 ### 1.4 Frontend — @bento/ui
-- [ ] Initialize shadcn with Bento theme tokens
-- [ ] Light/dark mode from day one
-- [ ] Core components: Button, Card, Input, Dialog, Select
+- [x] Initialize shadcn with Bento theme tokens
+  - `components.json`, `globals.css` with CSS variables for light/dark themes
+  - Primitives layer (shadcn raw) + shared layer (thin wrappers)
+- [x] Light/dark mode from day one
+  - ThemeProvider (next-themes), ThemeToggle component, global nav integration
+- [x] Core primitives: Button, Card, Input, Label
+- [ ] Additional primitives: Dialog, Select, Tabs, Toast
 - [ ] Bento-specific: WorkflowCard, RunButton, StatusBadge
 
 ### 1.5 Frontend — @bento/editor
