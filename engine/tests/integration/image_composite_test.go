@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/engine"
+	"github.com/Develonaut/bnto/pkg/engine"
 )
 
 func TestImageComposite(t *testing.T) {
@@ -17,7 +17,7 @@ func TestImageComposite(t *testing.T) {
 	t.Setenv("COMPOSITE_OUTPUT", tmpDir)
 
 	reg := createRegistry()
-	result := executeFixture(t, "tests/fixtures/workflows/image-composite.bento.json", reg, 30*time.Second)
+	result := executeFixture(t, "tests/fixtures/workflows/image-composite.bnto.json", reg, 30*time.Second)
 
 	if result.Status != engine.StatusSuccess {
 		t.Fatalf("Expected success, got %s", result.Status)

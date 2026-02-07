@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // ValidateWorkflow validates a workflow definition.
@@ -11,7 +11,7 @@ import (
 // Runs structural validation (required fields, known types, valid edges)
 // and preflight checks (commands exist, env vars set, files accessible).
 // Returns a structured result with all validation errors collected.
-func (s *BentoService) ValidateWorkflow(ctx context.Context, def *node.Definition) (*ValidationResult, error) {
+func (s *BntoService) ValidateWorkflow(ctx context.Context, def *node.Definition) (*ValidationResult, error) {
 	var errors []string
 
 	if err := s.validator.Validate(ctx, def); err != nil {

@@ -1,8 +1,8 @@
 package integration
 
 import (
-	"github.com/Develonaut/bento/pkg/api"
-	"github.com/Develonaut/bento/pkg/registry"
+	"github.com/Develonaut/bnto/pkg/api"
+	"github.com/Develonaut/bnto/pkg/registry"
 )
 
 // createRegistry returns a registry with all built-in node types.

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/styles/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "components": "@bnto/ui/components/primitives",
+    "utils": "@bnto/ui/lib/utils",
+    "ui": "@bnto/ui/components/primitives",
+    "lib": "@bnto/ui/lib",
+    "hooks": "@bnto/ui/hooks"
+  }
+}

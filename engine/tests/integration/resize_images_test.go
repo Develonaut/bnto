@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/engine"
+	"github.com/Develonaut/bnto/pkg/engine"
 )
 
 func TestResizeImages(t *testing.T) {
@@ -17,7 +17,7 @@ func TestResizeImages(t *testing.T) {
 	t.Setenv("RESIZE_OUTPUT", tmpDir)
 
 	reg := createRegistry()
-	result := executeFixture(t, "tests/fixtures/workflows/resize-images.bento.json", reg, 30*time.Second)
+	result := executeFixture(t, "tests/fixtures/workflows/resize-images.bnto.json", reg, 30*time.Second)
 
 	if result.Status != engine.StatusSuccess {
 		t.Fatalf("Expected success, got %s", result.Status)

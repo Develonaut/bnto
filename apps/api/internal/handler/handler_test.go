@@ -8,15 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/api"
-	"github.com/Develonaut/bento/pkg/node"
-	"github.com/Develonaut/bento/pkg/storage"
+	"github.com/Develonaut/bnto/pkg/api"
+	"github.com/Develonaut/bnto/pkg/node"
+	"github.com/Develonaut/bnto/pkg/storage"
 
-	"github.com/Develonaut/bento-api/internal/execution"
-	"github.com/Develonaut/bento-api/internal/server"
+	"github.com/Develonaut/bnto-api/internal/execution"
+	"github.com/Develonaut/bnto-api/internal/server"
 )
 
-// newTestServer creates a test server with a real BentoService and temp storage.
+// newTestServer creates a test server with a real BntoService and temp storage.
 func newTestServer(t *testing.T) http.Handler {
 	t.Helper()
 	reg := api.DefaultRegistry()

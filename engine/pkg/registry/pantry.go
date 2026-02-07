@@ -45,7 +45,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // Factory is a function that creates a new node instance.

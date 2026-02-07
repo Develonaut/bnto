@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/node/library/editfields"
+	"github.com/Develonaut/bnto/pkg/node/library/editfields"
 )
 
 // TestEditFields_SetStaticValues verifies setting static field values.

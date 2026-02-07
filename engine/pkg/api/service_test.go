@@ -3,7 +3,7 @@ package api
 import (
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/storage"
+	"github.com/Develonaut/bnto/pkg/storage"
 )
 
 func TestNew(t *testing.T) {

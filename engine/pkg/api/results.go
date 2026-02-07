@@ -1,6 +1,6 @@
-// Package api provides the shared service layer for bento operations.
+// Package api provides the shared service layer for bnto operations.
 //
-// BentoService is consumed by the CLI, HTTP server (apps/api/), and
+// BntoService is consumed by the CLI, HTTP server (apps/api/), and
 // Wails desktop app. It encapsulates workflow execution, validation,
 // and storage behind a single, transport-agnostic interface.
 //

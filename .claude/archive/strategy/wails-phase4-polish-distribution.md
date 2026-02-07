@@ -1,5 +1,5 @@
 # Phase 4: Polish & Distribution
-**Bento Desktop - Wails Implementation**
+**Bnto Desktop - Wails Implementation**
 
 **Duration:** 2 weeks
 **Goal:** Production-ready application with distribution packages
@@ -60,10 +60,10 @@ func NewManager() (*Manager, error) {
         return nil, err
     }
 
-    bentoDir := filepath.Join(configDir, "Bento")
-    os.MkdirAll(bentoDir, 0755)
+    bntoDir := filepath.Join(configDir, "Bnto")
+    os.MkdirAll(bntoDir, 0755)
 
-    path := filepath.Join(bentoDir, "settings.json")
+    path := filepath.Join(bntoDir, "settings.json")
 
     mgr := &Manager{
         path: path,
@@ -116,7 +116,7 @@ func (m *Manager) Update(updates map[string]interface{}) error {
 func getDefaultWorkflowDirs() []string {
     home, _ := os.UserHomeDir()
     return []string{
-        filepath.Join(home, "Bento", "Workflows"),
+        filepath.Join(home, "Bnto", "Workflows"),
         "./examples",
     }
 }
@@ -124,9 +124,9 @@ func getDefaultWorkflowDirs() []string {
 
 2. Integrate settings into App
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
-import "github.com/yourusername/bento/internal/desktop/settings"
+import "github.com/yourusername/bnto/internal/desktop/settings"
 
 type App struct {
     ctx         context.Context
@@ -288,7 +288,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
 - `frontend/src/components/Settings/Settings.css`
 
 **Files Modified:**
-- `cmd/bento-desktop/app.go`
+- `cmd/bnto-desktop/app.go`
 
 ---
 
@@ -462,7 +462,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 1. Add system tray to App
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
 import "github.com/wailsapp/wails/v2/pkg/menu"
 
@@ -501,11 +501,11 @@ func embedSystemTrayIcon() []byte {
 
 2. Add tray menu items
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
 func (a *App) createSystemTray() *menu.Menu {
     return menu.NewMenu().
-        AddText("Bento Desktop", nil).
+        AddText("Bnto Desktop", nil).
         AddSeparator().
         AddText("Show", func(_ *menu.CallbackData) {
             runtime.WindowShow(a.ctx)
@@ -529,12 +529,12 @@ func (a *App) createSystemTray() *menu.Menu {
 - [ ] Works on all platforms (Windows, macOS, Linux)
 
 **Files Modified:**
-- `cmd/bento-desktop/main.go`
-- `cmd/bento-desktop/app.go`
+- `cmd/bnto-desktop/main.go`
+- `cmd/bnto-desktop/app.go`
 
 **Files Created:**
-- `cmd/bento-desktop/assets/tray-icon.png`
-- `cmd/bento-desktop/assets/tray-icon@2x.png`
+- `cmd/bnto-desktop/assets/tray-icon.png`
+- `cmd/bnto-desktop/assets/tray-icon@2x.png`
 
 ---
 
@@ -678,11 +678,11 @@ export function ShortcutsModal({ onClose }: { onClose: () => void }) {
 # scripts/build-all.sh
 #!/bin/bash
 
-echo "Building Bento Desktop for all platforms..."
+echo "Building Bnto Desktop for all platforms..."
 
 # macOS (Universal)
 echo "Building for macOS..."
-cd cmd/bento-desktop
+cd cmd/bnto-desktop
 wails build -platform darwin/universal -clean
 
 # Windows (AMD64)
@@ -694,7 +694,7 @@ echo "Building for Linux..."
 wails build -platform linux/amd64
 
 echo "Builds complete!"
-echo "Binaries located in cmd/bento-desktop/build/bin/"
+echo "Binaries located in cmd/bnto-desktop/build/bin/"
 ```
 
 2. Add Makefile targets
@@ -703,13 +703,13 @@ echo "Binaries located in cmd/bento-desktop/build/bin/"
 .PHONY: build-desktop-mac build-desktop-windows build-desktop-linux build-desktop-all
 
 build-desktop-mac:
-	cd cmd/bento-desktop && wails build -platform darwin/universal
+	cd cmd/bnto-desktop && wails build -platform darwin/universal
 
 build-desktop-windows:
-	cd cmd/bento-desktop && wails build -platform windows/amd64
+	cd cmd/bnto-desktop && wails build -platform windows/amd64
 
 build-desktop-linux:
-	cd cmd/bento-desktop && wails build -platform linux/amd64
+	cd cmd/bnto-desktop && wails build -platform linux/amd64
 
 build-desktop-all: build-desktop-mac build-desktop-windows build-desktop-linux
 	@echo "All desktop builds complete"
@@ -717,10 +717,10 @@ build-desktop-all: build-desktop-mac build-desktop-windows build-desktop-linux
 
 3. Configure wails.json for each platform
 ```json
-// cmd/bento-desktop/wails.json
+// cmd/bnto-desktop/wails.json
 {
-  "name": "bento-desktop",
-  "outputfilename": "Bento Desktop",
+  "name": "bnto-desktop",
+  "outputfilename": "Bnto Desktop",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "author": {
@@ -728,11 +728,11 @@ build-desktop-all: build-desktop-mac build-desktop-windows build-desktop-linux
     "email": "you@example.com"
   },
   "info": {
-    "companyName": "Bento",
-    "productName": "Bento Desktop",
+    "companyName": "Bnto",
+    "productName": "Bnto Desktop",
     "productVersion": "1.0.0",
     "copyright": "Copyright 2025",
-    "comments": "Visual workflow editor for Bento"
+    "comments": "Visual workflow editor for Bnto"
   },
   "nsisType": "multiple",
   "obfuscated": false,
@@ -756,7 +756,7 @@ build-desktop-all: build-desktop-mac build-desktop-windows build-desktop-linux
 
 **Files Modified:**
 - `Makefile`
-- `cmd/bento-desktop/wails.json`
+- `cmd/bnto-desktop/wails.json`
 
 ---
 
@@ -771,11 +771,11 @@ build-desktop-all: build-desktop-mac build-desktop-windows build-desktop-linux
 # scripts/package-mac.sh
 #!/bin/bash
 
-APP_NAME="Bento Desktop"
+APP_NAME="Bnto Desktop"
 VERSION="1.0.0"
-DMG_NAME="BentoDesktop-${VERSION}.dmg"
+DMG_NAME="BntoDesktop-${VERSION}.dmg"
 
-cd cmd/bento-desktop/build/bin
+cd cmd/bnto-desktop/build/bin
 
 # Create temporary DMG directory
 mkdir -p dmg
@@ -795,13 +795,13 @@ echo "DMG created: ${DMG_NAME}"
 
 2. Windows: Configure NSIS installer (via Wails)
 ```json
-// cmd/bento-desktop/wails.json
+// cmd/bnto-desktop/wails.json
 {
   "info": {
-    "productName": "Bento Desktop",
+    "productName": "Bnto Desktop",
     "productVersion": "1.0.0",
     "copyright": "Copyright 2025",
-    "comments": "Visual workflow editor for Bento"
+    "comments": "Visual workflow editor for Bnto"
   },
   "nsisType": "multiple"
 }
@@ -812,10 +812,10 @@ echo "DMG created: ${DMG_NAME}"
 # scripts/package-linux.sh
 #!/bin/bash
 
-APP_NAME="BentoDesktop"
+APP_NAME="BntoDesktop"
 VERSION="1.0.0"
 
-cd cmd/bento-desktop/build/bin
+cd cmd/bnto-desktop/build/bin
 
 # Create AppDir structure
 mkdir -p AppDir/usr/bin
@@ -823,20 +823,20 @@ mkdir -p AppDir/usr/share/applications
 mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
 
 # Copy binary
-cp bento-desktop AppDir/usr/bin/
+cp bnto-desktop AppDir/usr/bin/
 
 # Create .desktop file
-cat > AppDir/usr/share/applications/bento-desktop.desktop << EOF
+cat > AppDir/usr/share/applications/bnto-desktop.desktop << EOF
 [Desktop Entry]
-Name=Bento Desktop
-Exec=bento-desktop
-Icon=bento-desktop
+Name=Bnto Desktop
+Exec=bnto-desktop
+Icon=bnto-desktop
 Type=Application
 Categories=Development;
 EOF
 
 # Copy icon
-cp ../../assets/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/bento-desktop.png
+cp ../../assets/icon.png AppDir/usr/share/icons/hicolor/256x256/apps/bnto-desktop.png
 
 # Create AppImage (requires appimagetool)
 appimagetool AppDir "${APP_NAME}-${VERSION}-x86_64.AppImage"
@@ -891,7 +891,7 @@ type Checker struct {
 func NewChecker(version string) *Checker {
     return &Checker{
         currentVersion: version,
-        checkURL:       "https://releases.bento.example.com/latest.json",
+        checkURL:       "https://releases.bnto.example.com/latest.json",
     }
 }
 
@@ -917,7 +917,7 @@ func (c *Checker) CheckForUpdates() (*Release, error) {
 
 2. Add update notification
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
 func (a *App) CheckForUpdates() (*updates.Release, error) {
     checker := updates.NewChecker("1.0.0") // From build
@@ -987,19 +987,19 @@ export function UpdateNotification() {
 - [ ] `frontend/src/theme/` - Theme system
 - [ ] `frontend/src/components/Settings/` - Settings UI
 - [ ] `frontend/src/hooks/useKeyboardShortcuts.ts` - Keyboard shortcuts
-- [ ] Updated `cmd/bento-desktop/main.go` - System tray integration
+- [ ] Updated `cmd/bnto-desktop/main.go` - System tray integration
 
 ### Build & Distribution
 
 - [ ] `scripts/build-all.sh` - Cross-platform build script
 - [ ] `scripts/package-all.sh` - Packaging script
 - [ ] `Makefile` - Build targets
-- [ ] `cmd/bento-desktop/wails.json` - Build configuration
+- [ ] `cmd/bnto-desktop/wails.json` - Build configuration
 
 ### Documentation
 
-- [ ] `cmd/bento-desktop/INSTALL.md` - Installation instructions
-- [ ] `cmd/bento-desktop/BUILDING.md` - Build instructions
+- [ ] `cmd/bnto-desktop/INSTALL.md` - Installation instructions
+- [ ] `cmd/bnto-desktop/BUILDING.md` - Build instructions
 - [ ] Updated `README.md` - Download links and getting started
 
 ---
@@ -1137,7 +1137,7 @@ Before releasing v1.0.0:
 ## Colossus Review Prompt
 
 ```
-I've completed Phase 4 (Polish & Distribution) for Bento Desktop.
+I've completed Phase 4 (Polish & Distribution) for Bnto Desktop.
 
 This is the FINAL phase before release. Please conduct a thorough review:
 
@@ -1168,7 +1168,7 @@ This is the FINAL phase before release. Please conduct a thorough review:
    - Check BUILDING.md accuracy
    - Verify README.md is up to date
 
-6. Run the code-review command: /code-review cmd/bento-desktop/ internal/desktop/
+6. Run the code-review command: /code-review cmd/bnto-desktop/ internal/desktop/
 
 Key areas to scrutinize:
 - Is settings persistence robust?

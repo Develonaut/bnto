@@ -1,6 +1,6 @@
-# Bento Engine
+# Bnto Engine
 
-**Go execution engine for Bento workflow automation.**
+**Go execution engine for Bnto workflow automation.**
 
 This directory contains the core Go CLI and execution engine. It handles workflow parsing, validation, orchestration, and all node type execution.
 
@@ -43,14 +43,14 @@ task vet      # Run go vet
 
 # Or directly
 cd engine
-go build ./cmd/bento
+go build ./cmd/bnto
 go test -race ./...
 ```
 
 ## Module
 
 ```
-module github.com/Develonaut/bento
+module github.com/Develonaut/bnto
 ```
 
 The module path is unchanged from the original repo. Go resolves all imports relative to `go.mod` in this directory.

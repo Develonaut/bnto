@@ -8,7 +8,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/Develonaut/bento/pkg/paths"
+	"github.com/Develonaut/bnto/pkg/paths"
 )
 
 // resolveValue recursively resolves template strings in a value.
@@ -62,7 +62,7 @@ func (ec *executionContext) executeGoTemplate(s string) string {
 // resolveString resolves template syntax in a string.
 // Resolution order:
 //  1. {{SECRETS.X}} - Keychain secrets
-//  2. {{BENTO_HOME}}, {{GDRIVE}}, etc. - Special path markers
+//  2. {{BNTO_HOME}}, {{GDRIVE}}, etc. - Special path markers
 //  3. {{.X}} - Go template variables from context
 //
 // If the string is ONLY a template (no literal text), return the actual value.
@@ -71,7 +71,7 @@ func (ec *executionContext) resolveString(s string) interface{} {
 	// Step 1: Resolve {{SECRETS.X}} placeholders from keychain
 	resolvedSecrets := ec.resolveSecretsInString(s)
 
-	// Step 2: Resolve special path markers ({{BENTO_HOME}}, {{GDRIVE}}, etc.)
+	// Step 2: Resolve special path markers ({{BNTO_HOME}}, {{GDRIVE}}, etc.)
 	resolvedPaths, err := paths.ResolvePath(resolvedSecrets)
 	if err != nil {
 		// If path resolution fails, continue with original string

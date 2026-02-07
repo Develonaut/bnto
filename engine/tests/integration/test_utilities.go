@@ -1,5 +1,5 @@
-// Package integration provides end-to-end integration tests for bento execution.
-// Tests in this package execute the full bento binary against real fixture files
+// Package integration provides end-to-end integration tests for bnto execution.
+// Tests in this package execute the full bnto binary against real fixture files
 // to validate complete workflows and integrations.
 package integration
 
@@ -10,12 +10,12 @@ import (
 	"testing"
 )
 
-// RunBento executes a bento file and returns output.
+// RunBnto executes a bnto file and returns output.
 // envVars is a map of environment variable key-value pairs to set.
-func RunBento(t *testing.T, bentoPath string, envVars map[string]string) (string, error) {
+func RunBnto(t *testing.T, bntoPath string, envVars map[string]string) (string, error) {
 	t.Helper()
 
-	cmd := exec.Command("bento", "run", bentoPath)
+	cmd := exec.Command("bnto", "run", bntoPath)
 
 	// Set working directory to project root (two levels up from tests/integration)
 	wd, err := os.Getwd()

@@ -4,14 +4,14 @@ package server
 import (
 	"net/http"
 
-	"github.com/Develonaut/bento/pkg/api"
+	"github.com/Develonaut/bnto/pkg/api"
 
-	"github.com/Develonaut/bento-api/internal/execution"
-	"github.com/Develonaut/bento-api/internal/handler"
+	"github.com/Develonaut/bnto-api/internal/execution"
+	"github.com/Develonaut/bnto-api/internal/handler"
 )
 
 // New creates an http.Handler with all routes registered.
-func New(svc *api.BentoService, mgr *execution.Manager) http.Handler {
+func New(svc *api.BntoService, mgr *execution.Manager) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /api/run", handler.RunWorkflow(svc, mgr))

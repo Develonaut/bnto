@@ -5,7 +5,7 @@
 - [ ] **`golangci-lint run`** - Zero warnings
 - [ ] **`go test -v ./...`** - All tests pass
 - [ ] **`go test -race ./...`** - Race detector clean
-- [ ] **`go build ./cmd/bento`** - Builds successfully
+- [ ] **`go build ./cmd/bnto`** - Builds successfully
 - [ ] **`go mod tidy`** - Dependencies clean
 
 ### Code Quality
@@ -127,7 +127,7 @@ When using this checklist:
    go fmt ./...
    golangci-lint run
    go test -v -race ./...
-   go build ./cmd/bento
+   go build ./cmd/bnto
    go mod tidy
    ```
 

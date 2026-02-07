@@ -2,7 +2,7 @@
 
 **Document Version:** 1.0
 **Created:** 2025-10-20
-**Purpose:** Define TDD-driven strategy for enhancing bento's dry-run capabilities to provide comprehensive execution preview and side effect analysis
+**Purpose:** Define TDD-driven strategy for enhancing bnto's dry-run capabilities to provide comprehensive execution preview and side effect analysis
 
 ---
 
@@ -10,8 +10,8 @@
 
 ### Problem Statement
 
-The current `--dry-run` flag in bento provides minimal insight into what a workflow will actually do. It only shows:
-- Bento name
+The current `--dry-run` flag in bnto provides minimal insight into what a workflow will actually do. It only shows:
+- Bnto name
 - Total node count
 - Node list with IDs/types (if --verbose)
 - Basic validation status
@@ -33,7 +33,7 @@ For workflows like product automation (CSV ingestion → folder creation → ove
 
 ### Goal
 
-Implement production-quality dry-run capabilities that provide comprehensive execution preview, enabling users to understand exactly what a bento will do before running it.
+Implement production-quality dry-run capabilities that provide comprehensive execution preview, enabling users to understand exactly what a bnto will do before running it.
 
 ---
 
@@ -41,12 +41,12 @@ Implement production-quality dry-run capabilities that provide comprehensive exe
 
 ### Implementation Location
 
-**File:** `cmd/bento/run.go` (lines 238-254)
+**File:** `cmd/bnto/run.go` (lines 238-254)
 
 ```go
 func showDryRun(def *neta.Definition) error {
     printInfo("DRY RUN MODE - No execution will occur")
-    fmt.Printf("\nWould execute bento: %s\n", def.Name)
+    fmt.Printf("\nWould execute bnto: %s\n", def.Name)
     fmt.Printf("Total nodes to execute: %d\n\n", len(def.Nodes))
 
     if verboseFlag {
@@ -57,15 +57,15 @@ func showDryRun(def *neta.Definition) error {
     }
 
     fmt.Println("\nValidation: ✓ Passed")
-    printSuccess("Dry run complete. Use 'bento run' without --dry-run to execute.")
+    printSuccess("Dry run complete. Use 'bnto run' without --dry-run to execute.")
     return nil
 }
 ```
 
 ### Architecture Overview
 
-**Bento Execution Flow:**
-1. Load bento definition (`neta.Definition`)
+**Bnto Execution Flow:**
+1. Load bnto definition (`neta.Definition`)
 2. Create Itamae orchestrator
 3. Execute each node via `neta.Executable` interface
 4. Pass context between nodes via `map[string]interface{}`
@@ -198,11 +198,11 @@ const (
 Replace the current simple implementation with a comprehensive simulator:
 
 ```go
-// cmd/bento/run.go
+// cmd/bnto/run.go
 
 func showDryRun(def *neta.Definition, itamae *itamae.Itamae) error {
     printInfo("DRY RUN MODE - No execution will occur")
-    fmt.Printf("\nWould execute bento: %s\n", def.Name)
+    fmt.Printf("\nWould execute bnto: %s\n", def.Name)
     fmt.Printf("Total nodes: %d\n\n", len(def.Nodes))
 
     // Create dry-run simulator
@@ -226,7 +226,7 @@ func showDryRun(def *neta.Definition, itamae *itamae.Itamae) error {
 New component to orchestrate dry-run simulation:
 
 ```go
-// cmd/bento/dryrun.go
+// cmd/bnto/dryrun.go
 
 type DryRunSimulator struct {
     itamae *itamae.Itamae
@@ -240,7 +240,7 @@ func NewDryRunSimulator(itamae *itamae.Itamae) *DryRunSimulator {
     }
 }
 
-// Simulate walks through the bento definition and simulates each node.
+// Simulate walks through the bnto definition and simulates each node.
 func (s *DryRunSimulator) Simulate(ctx context.Context, def *neta.Definition) ([]neta.DryRunResult, error) {
     // Implementation will recursively simulate each node
     // following the same execution order as real execution
@@ -314,15 +314,15 @@ func TestFileSystemNeta_DryRun_CopyFile(t *testing.T) {
 }
 ```
 
-**Test File:** `cmd/bento/dryrun_test.go`
+**Test File:** `cmd/bnto/dryrun_test.go`
 
 ```go
 func TestDryRunSimulator_FileSystemOperations(t *testing.T) {
-    // Given: bento with file-system operations
-    bento := createTestBento(t, `{
+    // Given: bnto with file-system operations
+    bnto := createTestBnto(t, `{
         "id": "test",
-        "type": "bento",
-        "name": "Test Bento",
+        "type": "bnto",
+        "name": "Test Bnto",
         "nodes": [{
             "id": "create-dir",
             "type": "file-system",
@@ -337,7 +337,7 @@ func TestDryRunSimulator_FileSystemOperations(t *testing.T) {
     simulator := NewDryRunSimulator(createItamae(t))
 
     // When: Simulate is called
-    results, err := simulator.Simulate(context.Background(), bento)
+    results, err := simulator.Simulate(context.Background(), bnto)
 
     // Then: Should return preview of operations
     require.NoError(t, err)
@@ -352,8 +352,8 @@ func TestDryRunSimulator_FileSystemOperations(t *testing.T) {
 
 1. Create `pkg/neta/dryrun.go` with interfaces
 2. Implement `DryRun()` method on file-system neta
-3. Create `cmd/bento/dryrun.go` with simulator
-4. Update `cmd/bento/run.go` to use simulator
+3. Create `cmd/bnto/dryrun.go` with simulator
+4. Update `cmd/bnto/run.go` to use simulator
 
 #### REFACTOR: Clean Up Implementation
 
@@ -372,11 +372,11 @@ func TestDryRunSimulator_FileSystemOperations(t *testing.T) {
 
 ```go
 func TestDryRunSimulator_TemplateResolution(t *testing.T) {
-    // Given: bento with templated paths
-    bento := createTestBento(t, `{
+    // Given: bnto with templated paths
+    bnto := createTestBnto(t, `{
         "id": "test",
-        "type": "bento",
-        "name": "Test Bento",
+        "type": "bnto",
+        "name": "Test Bnto",
         "nodes": [{
             "id": "create-dir",
             "type": "file-system",
@@ -398,7 +398,7 @@ func TestDryRunSimulator_TemplateResolution(t *testing.T) {
     simulator := NewDryRunSimulator(createItamae(t))
 
     // When: Simulate is called
-    results, err := simulator.Simulate(context.Background(), bento, params)
+    results, err := simulator.Simulate(context.Background(), bnto, params)
 
     // Then: Should show resolved path
     require.NoError(t, err)
@@ -482,7 +482,7 @@ func TestLoopNeta_DryRun_ForEach(t *testing.T) {
 
 ### Phase 4: Integration Tests (RED → GREEN → REFACTOR)
 
-**Goal:** End-to-end testing with real bento files
+**Goal:** End-to-end testing with real bnto files
 
 #### RED: Write Failing Tests
 
@@ -490,14 +490,14 @@ func TestLoopNeta_DryRun_ForEach(t *testing.T) {
 
 ```go
 func TestDryRun_ProductAutomation(t *testing.T) {
-    // Given: product automation bento
-    bentoPath := "examples/product-automation.bento.json"
+    // Given: product automation bnto
+    bntoPath := "examples/product-automation.bnto.json"
     envVars := map[string]string{
         "INPUT_CSV": "tests/fixtures/products-test.csv",
     }
 
     // When: Run with --dry-run flag
-    output, err := RunBentoDryRun(t, bentoPath, envVars)
+    output, err := RunBntoDryRun(t, bntoPath, envVars)
 
     // Then: Should show comprehensive preview
     require.NoError(t, err)
@@ -530,11 +530,11 @@ func TestDryRun_ProductAutomation(t *testing.T) {
 }
 
 func TestDryRun_FolderSetup(t *testing.T) {
-    // Given: folder setup bento
-    bentoPath := "examples/folder-setup.bento.json"
+    // Given: folder setup bnto
+    bntoPath := "examples/folder-setup.bnto.json"
 
     // When: Run with --dry-run flag
-    output, err := RunBentoDryRun(t, bentoPath, nil)
+    output, err := RunBntoDryRun(t, bntoPath, nil)
 
     // Then: Should show folder creation preview
     require.NoError(t, err)
@@ -547,10 +547,10 @@ func TestDryRun_FolderSetup(t *testing.T) {
     assert.Contains(t, output, "Resolved: products/Combat Dog (Supplies)")
 }
 
-// Helper function to run bento with dry-run flag
-func RunBentoDryRun(t *testing.T, bentoPath string, envVars map[string]string) (string, error) {
+// Helper function to run bnto with dry-run flag
+func RunBntoDryRun(t *testing.T, bntoPath string, envVars map[string]string) (string, error) {
     t.Helper()
-    cmd := exec.Command("bento", "run", bentoPath, "--dry-run", "--verbose")
+    cmd := exec.Command("bnto", "run", bntoPath, "--dry-run", "--verbose")
 
     // Set environment variables
     if envVars != nil {
@@ -583,10 +583,10 @@ func RunBentoDryRun(t *testing.T, bentoPath string, envVars map[string]string) (
 
 ```go
 func TestDryRunSimulator_DetectConflicts(t *testing.T) {
-    // Given: bento with conflicting file operations
-    bento := createTestBento(t, `{
+    // Given: bnto with conflicting file operations
+    bnto := createTestBnto(t, `{
         "id": "test",
-        "type": "bento",
+        "type": "bnto",
         "name": "Conflicting Operations",
         "nodes": [
             {
@@ -613,7 +613,7 @@ func TestDryRunSimulator_DetectConflicts(t *testing.T) {
     simulator := NewDryRunSimulator(createItamae(t))
 
     // When: Simulate is called
-    results, err := simulator.Simulate(context.Background(), bento)
+    results, err := simulator.Simulate(context.Background(), bnto)
 
     // Then: Should detect conflict
     require.NoError(t, err)
@@ -684,7 +684,7 @@ func TestDryRunSimulator_DetectConflicts(t *testing.T) {
 ### Performance Requirements
 
 - [ ] Dry-run completes in <5% of normal execution time
-- [ ] Memory usage is reasonable for large bentos (<100MB)
+- [ ] Memory usage is reasonable for large bntos (<100MB)
 - [ ] Output is readable and not overwhelming
 
 ### User Experience Requirements
@@ -719,11 +719,11 @@ func TestDryRunSimulator_DetectConflicts(t *testing.T) {
 ## Colossus Implementation Prompt
 
 ```
-CONTEXT: Bento is a workflow automation CLI tool written in Go. Users execute workflows called "bentos" which are JSON files defining a series of operations (called "neta"). The current --dry-run flag is very basic and only shows a list of nodes without any execution preview or side effect analysis.
+CONTEXT: Bnto is a workflow automation CLI tool written in Go. Users execute workflows called "bntos" which are JSON files defining a series of operations (called "neta"). The current --dry-run flag is very basic and only shows a list of nodes without any execution preview or side effect analysis.
 
-PROBLEM: Users need comprehensive dry-run capabilities to preview what a bento will do before executing it, especially for workflows that create files, make API calls, or process large datasets.
+PROBLEM: Users need comprehensive dry-run capabilities to preview what a bnto will do before executing it, especially for workflows that create files, make API calls, or process large datasets.
 
-TASK: Implement production-quality dry-run capabilities for bento following Test-Driven Development (TDD) methodology.
+TASK: Implement production-quality dry-run capabilities for bnto following Test-Driven Development (TDD) methodology.
 
 REQUIREMENTS:
 
@@ -749,15 +749,15 @@ REQUIREMENTS:
    - Recursively call DryRun() on child nodes for previewed iterations
    - Add unit tests FIRST
 
-4. DRY-RUN SIMULATOR (cmd/bento/dryrun.go)
+4. DRY-RUN SIMULATOR (cmd/bnto/dryrun.go)
    - Create DryRunSimulator struct
-   - Implement Simulate() method to walk bento definition
+   - Implement Simulate() method to walk bnto definition
    - Collect results from all nodes
    - Detect resource conflicts (multiple writes to same file)
    - Format and display results in readable format
    - Add unit tests FIRST
 
-5. INTEGRATION WITH RUN COMMAND (cmd/bento/run.go)
+5. INTEGRATION WITH RUN COMMAND (cmd/bnto/run.go)
    - Update showDryRun() to use DryRunSimulator
    - Pass Itamae instance to simulator
    - Display results with clear formatting
@@ -765,11 +765,11 @@ REQUIREMENTS:
    - Ensure --verbose flag provides additional detail
 
 6. INTEGRATION TESTS (tests/integration/dryrun_test.go)
-   - Create integration tests for product-automation.bento.json
-   - Create integration tests for folder-setup.bento.json
+   - Create integration tests for product-automation.bnto.json
+   - Create integration tests for folder-setup.bnto.json
    - Verify no actual execution occurs (no files created)
    - Verify output contains expected preview information
-   - Use existing test helpers (RunBento, CleanupTestDir, etc.)
+   - Use existing test helpers (RunBnto, CleanupTestDir, etc.)
 
 7. ADDITIONAL NETA IMPLEMENTATIONS
    - http-request: Preview URLs, methods, headers
@@ -809,7 +809,7 @@ CONSTRAINTS:
 
 5. CODE ORGANIZATION
    - Keep packages focused and cohesive
-   - Follow existing bento code structure
+   - Follow existing bnto code structure
    - Use existing utilities (template engine, context passing)
    - Add clear godoc comments for all public interfaces
 
@@ -819,8 +819,8 @@ Phase 1: Core Infrastructure (DO THIS FIRST)
 - Write tests for DryRunnable interface
 - Create pkg/neta/dryrun.go with interfaces
 - Implement DryRun() for file-system neta
-- Write cmd/bento/dryrun.go with simulator
-- Update cmd/bento/run.go to use simulator
+- Write cmd/bnto/dryrun.go with simulator
+- Update cmd/bnto/run.go to use simulator
 - Verify all tests pass
 
 Phase 2: Template Resolution
@@ -836,9 +836,9 @@ Phase 3: Loop Preview
 - Verify tests pass
 
 Phase 4: Integration Tests
-- Write end-to-end tests with real bento files
-- Test product-automation.bento.json dry-run
-- Test folder-setup.bento.json dry-run
+- Write end-to-end tests with real bnto files
+- Test product-automation.bnto.json dry-run
+- Test folder-setup.bnto.json dry-run
 - Verify no actual execution occurs
 - Verify tests pass
 
@@ -865,11 +865,11 @@ SUCCESS CRITERIA:
 - Documentation is complete
 
 REFERENCE FILES:
-- cmd/bento/run.go (current dry-run implementation, lines 238-254)
+- cmd/bnto/run.go (current dry-run implementation, lines 238-254)
 - pkg/neta/executable.go (interface to extend, lines 47-66)
-- pkg/neta/definition.go (bento structure, lines 49-63)
+- pkg/neta/definition.go (bnto structure, lines 49-63)
 - tests/integration/product_automation_test.go (example integration test)
-- examples/product-automation.bento.json (real-world example)
+- examples/product-automation.bnto.json (real-world example)
 
 START WITH: Phase 1, write tests FIRST (TDD), commit after GREEN phase.
 ```
@@ -878,7 +878,7 @@ START WITH: Phase 1, write tests FIRST (TDD), commit after GREEN phase.
 
 ## References
 
-- Current dry-run implementation: `cmd/bento/run.go:238-254`
+- Current dry-run implementation: `cmd/bnto/run.go:238-254`
 - Neta interface: `pkg/neta/executable.go:47-66`
 - Integration test examples: `tests/integration/product_automation_test.go`
 - Go Proverbs: https://go-proverbs.github.io/

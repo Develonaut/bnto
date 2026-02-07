@@ -1,4 +1,4 @@
-# Go Versioning Guide for Bento
+# Go Versioning Guide for Bnto
 
 ## Understanding Go Versioning
 
@@ -54,7 +54,7 @@ Release 1.0.0 when:
 - ✅ Breaking changes are rare
 - ✅ Ready to maintain backward compatibility
 
-**For bento:** After Phase 8 completes successfully!
+**For bnto:** After Phase 8 completes successfully!
 
 ---
 
@@ -76,18 +76,18 @@ git tag v1.2.3  // Version is a git tag
 
 ### 2. The Version Variable
 
-The version shown by `bento version` comes from a build-time variable:
+The version shown by `bnto version` comes from a build-time variable:
 
 **In code:**
 ```go
-// cmd/bento/main.go
+// cmd/bnto/main.go
 var version = "dev"  // Default for development
 ```
 
 **At build time:**
 ```bash
 # Set version during build
-go build -ldflags "-X main.version=v0.2.0" ./cmd/bento
+go build -ldflags "-X main.version=v0.2.0" ./cmd/bnto
 ```
 
 ### 3. go.mod File
@@ -95,7 +95,7 @@ go build -ldflags "-X main.version=v0.2.0" ./cmd/bento
 The `go.mod` file declares the **module path**, not the version:
 
 ```go
-module github.com/Develonaut/bento
+module github.com/Develonaut/bnto
 
 go 1.21
 ```
@@ -121,7 +121,7 @@ Move items from `[Unreleased]` to a new version section:
 
 ### Added
 - Phase 8.3 integration tests
-- HTTP request bento example
+- HTTP request bnto example
 ```
 
 #### 2. Commit the Changelog
@@ -224,18 +224,18 @@ git push origin v0.2.1
 
 ```bash
 # Normal dev build (version = "dev")
-go build ./cmd/bento
-./bento version
-# Output: bento version dev
+go build ./cmd/bnto
+./bnto version
+# Output: bnto version dev
 ```
 
 ### For Release
 
 ```bash
 # Build with specific version
-go build -ldflags "-X main.version=v0.2.0" -o bento ./cmd/bento
-./bento version
-# Output: bento version v0.2.0
+go build -ldflags "-X main.version=v0.2.0" -o bnto ./cmd/bnto
+./bnto version
+# Output: bnto version v0.2.0
 ```
 
 ### Using Makefile (Recommended)
@@ -246,14 +246,14 @@ Create a `Makefile`:
 VERSION ?= $(shell git describe --tags --always --dirty)
 
 build:
-	go build -ldflags "-X main.version=$(VERSION)" -o bento ./cmd/bento
+	go build -ldflags "-X main.version=$(VERSION)" -o bnto ./cmd/bnto
 
 install:
-	go install -ldflags "-X main.version=$(VERSION)" ./cmd/bento
+	go install -ldflags "-X main.version=$(VERSION)" ./cmd/bnto
 
 release:
 	@echo "Building release for version $(VERSION)"
-	go build -ldflags "-X main.version=$(VERSION)" -o bento ./cmd/bento
+	go build -ldflags "-X main.version=$(VERSION)" -o bnto ./cmd/bnto
 ```
 
 Then:
@@ -334,9 +334,9 @@ git show v0.2.0
 ### Current Version in Code
 
 ```bash
-go run ./cmd/bento version
+go run ./cmd/bnto version
 # or
-bento version
+bnto version
 ```
 
 ### Latest Tag
@@ -360,7 +360,7 @@ git describe --tags --abbrev=0
 
 ---
 
-## Recommended Workflow for Bento
+## Recommended Workflow for Bnto
 
 ### After Completing Each Phase
 
@@ -410,7 +410,7 @@ git push origin v0.X.0
 git tag -d v0.X.0
 
 # Build with version
-go build -ldflags "-X main.version=$(git describe --tags)" ./cmd/bento
+go build -ldflags "-X main.version=$(git describe --tags)" ./cmd/bnto
 ```
 
 ---

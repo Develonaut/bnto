@@ -4,7 +4,7 @@ import { resolve } from "path";
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: resolve(__dirname, "../../"),
-  transpilePackages: ["@bento/auth", "@bento/core", "@bento/ui", "@bento/editor"],
+  transpilePackages: ["@bnto/auth", "@bnto/core", "@bnto/ui", "@bnto/editor"],
   devIndicators: false,
 };
 

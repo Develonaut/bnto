@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // executeParallel executes a parallel node.

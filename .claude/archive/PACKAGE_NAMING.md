@@ -1,6 +1,6 @@
-# 🍱 Bento Packages
+# 🍱 Bnto Packages
 
-This directory contains the core packages for Bento, organized using sushi/bento-themed names that reflect each package's purpose.
+This directory contains the core packages for Bnto, organized using sushi/bnto-themed names that reflect each package's purpose.
 
 ## Package Overview
 
@@ -47,9 +47,9 @@ A thread-safe registry that stores and provides lookup for all available node ty
 ### 🥡 hangiri (`pkg/hangiri/`)
 **重箱** - "Stacked Boxes" - Traditional Japanese stacked food containers
 
-The storage layer for managing .bento.yaml files and execution history. Like stacked boxes holding organized meals, hangiri manages your workflow files and tracks execution records.
+The storage layer for managing .bnto.yaml files and execution history. Like stacked boxes holding organized meals, hangiri manages your workflow files and tracks execution records.
 
-- .bento.yaml file parsing
+- .bnto.yaml file parsing
 - Workflow file management
 - Execution history tracking
 - File discovery and indexing
@@ -78,7 +78,7 @@ The Bubble Tea TUI (Terminal User Interface) - the interactive "shop" where user
 
 A foundation package providing cross-platform path resolution utilities. Like kombu forms the base of many Japanese dishes, this package provides the foundational path resolution that other packages depend on.
 
-- Path marker resolution ({{BENTO_HOME}}, {{GDRIVE}}, etc.)
+- Path marker resolution ({{BNTO_HOME}}, {{GDRIVE}}, etc.)
 - Cloud storage auto-detection
 - Environment variable expansion
 - Configuration file management
@@ -124,7 +124,7 @@ Each package is kept small and focused:
 
 ## The Sushi Theme
 
-The naming reflects the organized, compartmentalized nature of both bento boxes and our architecture:
+The naming reflects the organized, compartmentalized nature of both bnto boxes and our architecture:
 
 - **Neta** = The ingredients/nodes
 - **Kombu** = Foundational kelp for dashi stock
@@ -133,4 +133,4 @@ The naming reflects the organized, compartmentalized nature of both bento boxes 
 - **hangiri** = Stacked containers for organized storage
 - **Omise** = The shop where customers interact
 
-Just as a bento box contains organized compartments with different foods, our workflow system contains organized packages with focused responsibilities. 🍱
+Just as a bnto box contains organized compartments with different foods, our workflow system contains organized packages with focused responsibilities. 🍱

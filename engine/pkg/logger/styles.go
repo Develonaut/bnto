@@ -8,7 +8,7 @@ import (
 // createCustomStyles creates custom styles for log output.
 // This configures colors for:
 // - Log levels (INFO, DEBUG, WARN, ERROR)
-// - Breadcrumb fields (bento name, node type, node name)
+// - Breadcrumb fields (bnto name, node type, node name)
 func createCustomStyles() *log.Styles {
 	styles := log.DefaultStyles()
 
@@ -34,8 +34,8 @@ func createCustomStyles() *log.Styles {
 		Foreground(lipgloss.Color("196")) // Bright Red
 
 	// Customize key colors for breadcrumb fields
-	styles.Keys["bento"] = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("205")) // Hot Pink (for bento name)
+	styles.Keys["bnto"] = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("205")) // Hot Pink (for bnto name)
 
 	styles.Keys["node_type"] = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("51")) // Cyan (for node type)
@@ -53,7 +53,7 @@ func createCustomStyles() *log.Styles {
 		Foreground(lipgloss.Color("208")) // Orange (for progress %)
 
 	// Customize value colors to match keys
-	styles.Values["bento"] = lipgloss.NewStyle().
+	styles.Values["bnto"] = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("205")) // Hot Pink
 
 	styles.Values["node_type"] = lipgloss.NewStyle().

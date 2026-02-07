@@ -1,7 +1,7 @@
 # Atomiton Package Audit for Go CLI Migration
 
 **Date:** 2025-10-18
-**Purpose:** Identify core packages from Atomiton TypeScript codebase to port to Go for Bentobox CLI
+**Purpose:** Identify core packages from Atomiton TypeScript codebase to port to Go for Bntobox CLI
 **Scope:** Focus on architecture foundation, NOT UI/TUI components
 
 ---
@@ -409,13 +409,13 @@ func Delay(ms int) {
 
 **Go Translation:**
 ```go
-cmd/bentobox/
+cmd/bntobox/
 ├── main.go
 ├── commands/
-│   ├── run.go         # bentobox run flow.yaml
-│   ├── validate.go    # bentobox validate flow.yaml
-│   ├── list.go        # bentobox list
-│   └── create.go      # bentobox create
+│   ├── run.go         # bntobox run flow.yaml
+│   ├── validate.go    # bntobox validate flow.yaml
+│   ├── list.go        # bntobox list
+│   └── create.go      # bntobox create
 └── tui/               # Bubble Tea (later phase)
     ├── app.go
     ├── models/
@@ -425,7 +425,7 @@ cmd/bentobox/
 import "github.com/spf13/cobra"
 
 var rootCmd = &cobra.Command{
-    Use:   "bentobox",
+    Use:   "bntobox",
     Short: "Workflow automation CLI",
 }
 
@@ -642,19 +642,19 @@ go run main.go run complex-flow.yaml --progress  # ✅ Shows progress
 
 ```
 ✅ Basic CLI commands (Cobra)
-    - bentobox run flow.yaml
-    - bentobox validate flow.yaml
-    - bentobox list
-    - bentobox create
+    - bntobox run flow.yaml
+    - bntobox validate flow.yaml
+    - bntobox list
+    - bntobox create
 ✅ Configuration management (Viper)
 ✅ Progress output (text-based)
 ```
 
 **Deliverable:** Usable CLI tool
 ```bash
-bentobox run workflow.yaml
-bentobox validate workflow.yaml
-bentobox list ~/flows
+bntobox run workflow.yaml
+bntobox validate workflow.yaml
+bntobox list ~/flows
 ```
 
 ---
@@ -693,9 +693,9 @@ bentobox list ~/flows
 ## Go Package Structure Recommendation
 
 ```
-bentobox/
+bntobox/
 ├── cmd/
-│   └── bentobox/              # CLI entry point
+│   └── bntobox/              # CLI entry point
 │       ├── main.go
 │       ├── commands/
 │       │   ├── run.go
@@ -778,7 +778,7 @@ bentobox/
 
 ```go
 // go.mod
-module github.com/bentobox/bentobox
+module github.com/bntobox/bntobox
 
 go 1.23
 
@@ -1006,7 +1006,7 @@ func TestConductorExecution(t *testing.T) {
 ## Next Steps
 
 1. **Review this audit** - Validate package selection
-2. **Create Go project structure** - Set up bentobox repository
+2. **Create Go project structure** - Set up bntobox repository
 3. **Start Phase 1** - Port yaml, utils, storage
 4. **Proof of concept** - Validate architecture with simple flow execution
 5. **Iterate** - Build incrementally following roadmap

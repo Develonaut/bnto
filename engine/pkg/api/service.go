@@ -1,35 +1,35 @@
 package api
 
 import (
-	"github.com/Develonaut/bento/pkg/node"
-	"github.com/Develonaut/bento/pkg/registry"
-	"github.com/Develonaut/bento/pkg/storage"
-	"github.com/Develonaut/bento/pkg/validator"
+	"github.com/Develonaut/bnto/pkg/node"
+	"github.com/Develonaut/bnto/pkg/registry"
+	"github.com/Develonaut/bnto/pkg/storage"
+	"github.com/Develonaut/bnto/pkg/validator"
 
-	editfields "github.com/Develonaut/bento/pkg/node/library/editfields"
-	filesystem "github.com/Develonaut/bento/pkg/node/library/filesystem"
-	group "github.com/Develonaut/bento/pkg/node/library/group"
-	httpnode "github.com/Develonaut/bento/pkg/node/library/http"
-	image "github.com/Develonaut/bento/pkg/node/library/image"
-	loop "github.com/Develonaut/bento/pkg/node/library/loop"
-	parallel "github.com/Develonaut/bento/pkg/node/library/parallel"
-	shellcommand "github.com/Develonaut/bento/pkg/node/library/shellcommand"
-	spreadsheet "github.com/Develonaut/bento/pkg/node/library/spreadsheet"
-	transform "github.com/Develonaut/bento/pkg/node/library/transform"
+	editfields "github.com/Develonaut/bnto/pkg/node/library/editfields"
+	filesystem "github.com/Develonaut/bnto/pkg/node/library/filesystem"
+	group "github.com/Develonaut/bnto/pkg/node/library/group"
+	httpnode "github.com/Develonaut/bnto/pkg/node/library/http"
+	image "github.com/Develonaut/bnto/pkg/node/library/image"
+	loop "github.com/Develonaut/bnto/pkg/node/library/loop"
+	parallel "github.com/Develonaut/bnto/pkg/node/library/parallel"
+	shellcommand "github.com/Develonaut/bnto/pkg/node/library/shellcommand"
+	spreadsheet "github.com/Develonaut/bnto/pkg/node/library/spreadsheet"
+	transform "github.com/Develonaut/bnto/pkg/node/library/transform"
 )
 
-// BentoService provides the shared service layer for bento operations.
+// BntoService provides the shared service layer for bnto operations.
 // Used by CLI, HTTP server (apps/api/), and Wails desktop app.
-type BentoService struct {
+type BntoService struct {
 	registry  *registry.Registry
 	storage   *storage.Storage
 	validator *validator.Validator
 }
 
-// New creates a BentoService with the given registry and storage.
+// New creates a BntoService with the given registry and storage.
 // A validator is created automatically.
-func New(reg *registry.Registry, store *storage.Storage) *BentoService {
-	return &BentoService{
+func New(reg *registry.Registry, store *storage.Storage) *BntoService {
+	return &BntoService{
 		registry:  reg,
 		storage:   store,
 		validator: validator.New(),

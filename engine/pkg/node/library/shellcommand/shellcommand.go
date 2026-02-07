@@ -1,4 +1,4 @@
-// Package shellcommand provides shell command execution for the bento workflow system.
+// Package shellcommand provides shell command execution for the bnto workflow system.
 //
 // The shellcommand node allows you to execute shell commands and capture their output.
 // It supports:
@@ -46,7 +46,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // ErrStallDetected is returned when the process produces no output for stallTimeout seconds.
@@ -113,9 +113,9 @@ func (s *ShellCommandNode) Execute(ctx context.Context, params map[string]interf
 		return nil, err
 	}
 
-	// Debug: log stall detection config via callback (appears in bento logs)
+	// Debug: log stall detection config via callback (appears in bnto logs)
 	if cmdParams.onOutput != nil && (cmdParams.stallTimeout > 0 || cmdParams.retry > 0) {
-		debugMsg := fmt.Sprintf("[bento-shellcmd] command=%s stream=%v stallTimeout=%d retry=%d",
+		debugMsg := fmt.Sprintf("[bnto-shellcmd] command=%s stream=%v stallTimeout=%d retry=%d",
 			cmdParams.command, cmdParams.stream, cmdParams.stallTimeout, cmdParams.retry)
 		cmdParams.onOutput(debugMsg)
 	}
@@ -137,7 +137,7 @@ func (s *ShellCommandNode) executeWithRetry(ctx context.Context, cmdParams *comm
 		// Wait before retry (not on first attempt)
 		if attempt > 0 && cmdParams.retryDelay > 0 {
 			if cmdParams.onOutput != nil {
-				retryMsg := fmt.Sprintf("[bento] RETRY attempt %d/%d after %ds delay",
+				retryMsg := fmt.Sprintf("[bnto] RETRY attempt %d/%d after %ds delay",
 					attempt+1, maxAttempts, cmdParams.retryDelay)
 				cmdParams.onOutput(retryMsg)
 			}
@@ -366,9 +366,9 @@ func (s *ShellCommandNode) executeStreamingWithStallDetection(
 				mu.Lock()
 				stalled = true
 				mu.Unlock()
-				// Log stall detection via callback (appears in bento logs)
+				// Log stall detection via callback (appears in bnto logs)
 				if params.onOutput != nil {
-					stallMsg := fmt.Sprintf("[bento] STALL DETECTED after %d seconds (received %d activity signals before stall)", params.stallTimeout, activityCount)
+					stallMsg := fmt.Sprintf("[bnto] STALL DETECTED after %d seconds (received %d activity signals before stall)", params.stallTimeout, activityCount)
 					params.onOutput(stallMsg)
 				}
 				cancel() // Cancel the context to kill the process

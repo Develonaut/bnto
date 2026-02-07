@@ -1,9 +1,9 @@
-// Package wasabi provides secure secrets management for Bento workflows.
+// Package wasabi provides secure secrets management for Bnto workflows.
 //
 // # Overview
 //
 // Wasabi handles the "spicy stuff" 🟢 - API tokens, credentials, and other
-// sensitive data that shouldn't be hardcoded in bento definitions or committed
+// sensitive data that shouldn't be hardcoded in bnto definitions or committed
 // to version control.
 //
 // # Storage
@@ -15,9 +15,9 @@
 //
 // This ensures secrets are encrypted at rest and only accessible to the user.
 //
-// # Usage in Bentos
+// # Usage in Bntos
 //
-// Secrets are accessed using the {{SECRETS.X}} namespace in bento templates:
+// Secrets are accessed using the {{SECRETS.X}} namespace in bnto templates:
 //
 //	{
 //	  "id": "fetch-designs",
@@ -42,19 +42,19 @@
 //
 // # CLI Commands
 //
-// Secrets are managed via the bento CLI:
+// Secrets are managed via the bnto CLI:
 //
-//	bento wasabi set FIGMA_TOKEN figd_your_token_here
-//	bento wasabi get FIGMA_TOKEN
-//	bento wasabi list
-//	bento wasabi delete FIGMA_TOKEN
+//	bnto wasabi set FIGMA_TOKEN figd_your_token_here
+//	bnto wasabi get FIGMA_TOKEN
+//	bnto wasabi list
+//	bnto wasabi delete FIGMA_TOKEN
 //
 // # Testing
 //
 // For testing, wasabi supports file-based storage to avoid keychain prompts:
 //
 //	mgr, _ := NewManagerWithConfig(ManagerConfig{
-//	    ServiceName: "bento-test",
+//	    ServiceName: "bnto-test",
 //	    KeyringDir:  "/tmp/test-keyring",
 //	})
 //
@@ -71,5 +71,5 @@
 //
 // The engine executor automatically resolves {{SECRETS.X}} placeholders before
 // executing nodes, ensuring secrets are available when needed but never exposed
-// in bento definitions or version control.
+// in bnto definitions or version control.
 package secrets

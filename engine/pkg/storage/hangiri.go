@@ -1,32 +1,32 @@
-// Package storage provides persistent storage for bento data.
+// Package storage provides persistent storage for bnto data.
 //
 // Storage structure:
 //
-//	~/.bento/
-//	  bentos/     - User-created workflow definitions
+//	~/.bnto/
+//	  bntos/     - User-created workflow definitions
 //	  secrets/    - API keys, credentials, etc.
 //	  templates/  - Reusable workflow templates
 //	  config/     - Configuration files (themes, preferences)
 //	  cache/      - Temporary/cached data
 //
-// File format: <name>.bento.json (for bentos), <name>.json (for others)
+// File format: <name>.bnto.json (for bntos), <name>.json (for others)
 //
 // # Usage
 //
 //	// Create a storage instance
 //	storage := storage.NewDefaultStorage()
 //
-//	// Save a bento
-//	err := storage.SaveBento(ctx, "my-workflow", definition)
+//	// Save a bnto
+//	err := storage.SaveBnto(ctx, "my-workflow", definition)
 //
-//	// Load a bento by name
-//	def, err := storage.LoadBento(ctx, "my-workflow")
+//	// Load a bnto by name
+//	def, err := storage.LoadBnto(ctx, "my-workflow")
 //
-//	// List all bentos
-//	names, err := storage.ListBentos(ctx)
+//	// List all bntos
+//	names, err := storage.ListBntos(ctx)
 //
-//	// Delete a bento
-//	err := storage.DeleteBento(ctx, "my-workflow")
+//	// Delete a bnto
+//	err := storage.DeleteBnto(ctx, "my-workflow")
 //
 // Security: All names are validated to prevent directory traversal attacks.
 package storage
@@ -38,37 +38,37 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Develonaut/bento/pkg/node"
-	"github.com/Develonaut/bento/pkg/paths"
+	"github.com/Develonaut/bnto/pkg/node"
+	"github.com/Develonaut/bnto/pkg/paths"
 )
 
 // StorageType represents different types of storage subdirectories.
 type StorageType string
 
 const (
-	StorageTypeBentos    StorageType = "bentos"
+	StorageTypeBntos    StorageType = "bntos"
 	StorageTypeSecrets   StorageType = "secrets"
 	StorageTypeTemplates StorageType = "templates"
 	StorageTypeConfig    StorageType = "config"
 	StorageTypeCache     StorageType = "cache"
 )
 
-// Storage manages persistent storage of bento-related data.
+// Storage manages persistent storage of bnto-related data.
 type Storage struct {
 	baseDir string
 }
 
 // New creates a new Storage instance with a custom base directory.
 //
-// baseDir is the root directory (typically ~/.bento/)
+// baseDir is the root directory (typically ~/.bnto/)
 func New(baseDir string) *Storage {
 	return &Storage{baseDir: expandHome(baseDir)}
 }
 
-// NewDefaultStorage creates a Storage instance using the configured bento home directory.
-// Falls back to ~/.bento/ if no custom directory is configured.
+// NewDefaultStorage creates a Storage instance using the configured bnto home directory.
+// Falls back to ~/.bnto/ if no custom directory is configured.
 func NewDefaultStorage() *Storage {
-	return New(paths.LoadBentoHome())
+	return New(paths.LoadBntoHome())
 }
 
 // expandHome expands ~ to the user's home directory.
@@ -93,18 +93,18 @@ func (s *Storage) ensureStorageDir(storageType StorageType) error {
 	return os.MkdirAll(dir, 0755)
 }
 
-// getBentoPath returns the full file path for a bento name.
-func (s *Storage) getBentoPath(name string) string {
-	// Strip .bento.json extension if present
-	name = strings.TrimSuffix(name, ".bento.json")
-	return filepath.Join(s.getStorageDir(StorageTypeBentos), name+".bento.json")
+// getBntoPath returns the full file path for a bnto name.
+func (s *Storage) getBntoPath(name string) string {
+	// Strip .bnto.json extension if present
+	name = strings.TrimSuffix(name, ".bnto.json")
+	return filepath.Join(s.getStorageDir(StorageTypeBntos), name+".bnto.json")
 }
 
-// SaveBento saves a bento definition to ~/.bento/bentos/
+// SaveBnto saves a bnto definition to ~/.bnto/bntos/
 //
-// The bento is saved as <name>.bento.json in the bentos directory.
+// The bnto is saved as <name>.bnto.json in the bntos directory.
 // Returns an error if the name is invalid or if writing fails.
-func (s *Storage) SaveBento(ctx context.Context, name string, def *node.Definition) error {
+func (s *Storage) SaveBnto(ctx context.Context, name string, def *node.Definition) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -113,27 +113,27 @@ func (s *Storage) SaveBento(ctx context.Context, name string, def *node.Definiti
 		return err
 	}
 
-	if err := s.ensureStorageDir(StorageTypeBentos); err != nil {
+	if err := s.ensureStorageDir(StorageTypeBntos); err != nil {
 		return err
 	}
 
 	data, err := s.marshal(def)
 	if err != nil {
-		return fmt.Errorf("failed to serialize bento '%s': %w", name, err)
+		return fmt.Errorf("failed to serialize bnto '%s': %w", name, err)
 	}
 
-	path := s.getBentoPath(name)
+	path := s.getBntoPath(name)
 	if err := os.WriteFile(path, data, 0644); err != nil {
-		return fmt.Errorf("failed to write bento '%s': %w", name, err)
+		return fmt.Errorf("failed to write bnto '%s': %w", name, err)
 	}
 
 	return nil
 }
 
-// LoadBento loads a bento definition from ~/.bento/bentos/
+// LoadBnto loads a bnto definition from ~/.bnto/bntos/
 //
-// Returns an error if the bento doesn't exist or cannot be parsed.
-func (s *Storage) LoadBento(ctx context.Context, name string) (*node.Definition, error) {
+// Returns an error if the bnto doesn't exist or cannot be parsed.
+func (s *Storage) LoadBnto(ctx context.Context, name string) (*node.Definition, error) {
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
@@ -142,51 +142,51 @@ func (s *Storage) LoadBento(ctx context.Context, name string) (*node.Definition,
 		return nil, err
 	}
 
-	path := s.getBentoPath(name)
+	path := s.getBntoPath(name)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("bento '%s' not found", name)
+			return nil, fmt.Errorf("bnto '%s' not found", name)
 		}
-		return nil, fmt.Errorf("failed to read bento '%s': %w", name, err)
+		return nil, fmt.Errorf("failed to read bnto '%s': %w", name, err)
 	}
 
 	def, err := s.unmarshal(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse bento '%s': %w", name, err)
+		return nil, fmt.Errorf("failed to parse bnto '%s': %w", name, err)
 	}
 
 	return def, nil
 }
 
-// ListBentos returns all saved bento names from ~/.bento/bentos/
-func (s *Storage) ListBentos(ctx context.Context) ([]string, error) {
+// ListBntos returns all saved bnto names from ~/.bnto/bntos/
+func (s *Storage) ListBntos(ctx context.Context) ([]string, error) {
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
 
-	if err := s.ensureStorageDir(StorageTypeBentos); err != nil {
+	if err := s.ensureStorageDir(StorageTypeBntos); err != nil {
 		return nil, err
 	}
 
-	dir := s.getStorageDir(StorageTypeBentos)
+	dir := s.getStorageDir(StorageTypeBntos)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list bentos: %w", err)
+		return nil, fmt.Errorf("failed to list bntos: %w", err)
 	}
 
 	var names []string
 	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".bento.json") {
-			name := strings.TrimSuffix(entry.Name(), ".bento.json")
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".bnto.json") {
+			name := strings.TrimSuffix(entry.Name(), ".bnto.json")
 			names = append(names, name)
 		}
 	}
 	return names, nil
 }
 
-// DeleteBento removes a bento from ~/.bento/bentos/
-func (s *Storage) DeleteBento(ctx context.Context, name string) error {
+// DeleteBnto removes a bnto from ~/.bnto/bntos/
+func (s *Storage) DeleteBnto(ctx context.Context, name string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -195,23 +195,23 @@ func (s *Storage) DeleteBento(ctx context.Context, name string) error {
 		return err
 	}
 
-	path := s.getBentoPath(name)
+	path := s.getBntoPath(name)
 	if err := os.Remove(path); err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("bento '%s' not found", name)
+			return fmt.Errorf("bnto '%s' not found", name)
 		}
-		return fmt.Errorf("failed to delete bento '%s': %w", name, err)
+		return fmt.Errorf("failed to delete bnto '%s': %w", name, err)
 	}
 
 	return nil
 }
 
-// BentoExists checks if a bento exists in storage.
-func (s *Storage) BentoExists(ctx context.Context, name string) bool {
+// BntoExists checks if a bnto exists in storage.
+func (s *Storage) BntoExists(ctx context.Context, name string) bool {
 	if err := validateName(name); err != nil {
 		return false
 	}
-	path := s.getBentoPath(name)
+	path := s.getBntoPath(name)
 	_, err := os.Stat(path)
 	return err == nil
 }

@@ -1,5 +1,5 @@
 # Desktop UI Architecture Strategy
-**Bento React Frontend Evaluation**
+**Bnto React Frontend Evaluation**
 
 > **2026-02-06 UPDATE:** Evaluation remains valid. Wails is confirmed as the choice.
 > See [CLOUD_DESKTOP_STRATEGY.md](CLOUD_DESKTOP_STRATEGY.md) for how this fits into the full product strategy.
@@ -7,23 +7,23 @@
 
 **Date:** 2025-10-22
 **Updated:** 2026-02-06
-**Purpose:** Evaluate architectural approaches for adding a React-based desktop UI to the Bento Go CLI
+**Purpose:** Evaluate architectural approaches for adding a React-based desktop UI to the Bnto Go CLI
 
 ---
 
 ## Executive Summary
 
-This document evaluates multiple architectural approaches for building a desktop application that combines Bento's existing Go CLI functionality with a React-based user interface. After analyzing five distinct approaches, **Wails** emerges as the recommended solution due to its purpose-built design for Go+React desktop apps, native webview performance, and seamless Go-JavaScript interoperability.
+This document evaluates multiple architectural approaches for building a desktop application that combines Bnto's existing Go CLI functionality with a React-based user interface. After analyzing five distinct approaches, **Wails** emerges as the recommended solution due to its purpose-built design for Go+React desktop apps, native webview performance, and seamless Go-JavaScript interoperability.
 
 ---
 
-## Current State: Bento CLI Architecture
+## Current State: Bnto CLI Architecture
 
 ### Core Components
 
 ```
-bento/
-├── cmd/bento/           # CLI commands (run, validate, list, new, etc.)
+bnto/
+├── cmd/bnto/           # CLI commands (run, validate, list, new, etc.)
 ├── pkg/
 │   ├── neta/           # Workflow node types (10 types)
 │   ├── itamae/         # Orchestration engine
@@ -48,7 +48,7 @@ From `.claude/TODO.md`:
 1. Clean up run logs
 2. Make command names straightforward
 3. **Charm TUI** (terminal UI)
-4. **Charm TUI Bento Editor** (terminal-based editor)
+4. **Charm TUI Bnto Editor** (terminal-based editor)
 
 ---
 
@@ -70,7 +70,7 @@ From `.claude/TODO.md`:
 │  ├─ Method binding (Go → JS)         │
 │  └─ Event system                     │
 ├─────────────────────────────────────┤
-│  Go Backend (Existing Bento Pkgs)    │
+│  Go Backend (Existing Bnto Pkgs)    │
 │  ├─ itamae (orchestration)           │
 │  ├─ neta (workflow nodes)            │
 │  └─ All existing packages            │
@@ -98,7 +98,7 @@ From `.claude/TODO.md`:
 **Development Workflow:**
 ```bash
 # Initialize new Wails+React project
-wails init -n bento-desktop -t react-ts
+wails init -n bnto-desktop -t react-ts
 
 # Development mode (hot reload)
 wails dev
@@ -115,7 +115,7 @@ type App struct {
 }
 
 func (a *App) RunWorkflow(path string) string {
-    // Call existing Bento packages
+    // Call existing Bnto packages
     result := itamae.Execute(path)
     return result
 }
@@ -127,7 +127,7 @@ import { RunWorkflow } from '../wailsjs/go/main/App'
 
 function WorkflowRunner() {
     const run = async () => {
-        const result = await RunWorkflow('/path/to/workflow.bento.json')
+        const result = await RunWorkflow('/path/to/workflow.bnto.json')
         console.log(result)
     }
 }
@@ -140,7 +140,7 @@ function WorkflowRunner() {
 - ✅ Type-safe Go↔JS communication
 - ✅ No CGO dependencies on Windows
 - ✅ Active community, well-documented
-- ✅ Can reuse 100% of existing Bento Go code
+- ✅ Can reuse 100% of existing Bnto Go code
 - ✅ Cross-platform (Windows/macOS/Linux)
 - ✅ App Store compatible
 
@@ -153,7 +153,7 @@ function WorkflowRunner() {
 **Alignment with Bento Box Principle:**
 - ✅ Single responsibility: UI layer separate from CLI
 - ✅ Clear boundaries: Wails bridge defines interface
-- ✅ Composable: Reuses existing Bento packages
+- ✅ Composable: Reuses existing Bnto packages
 - ⚠️ Small concern: May need wrapper layer for Wails-specific code
 
 ---
@@ -171,7 +171,7 @@ function WorkflowRunner() {
 │  Main Process (Node.js)              │
 │  └─ child_process spawns Go binary   │
 ├─────────────────────────────────────┤
-│  Go Backend (Bento CLI)              │
+│  Go Backend (Bnto CLI)              │
 │  ├─ HTTP/gRPC server OR              │
 │  └─ stdin/stdout communication       │
 ├─────────────────────────────────────┤
@@ -192,7 +192,7 @@ func main() {
 
 ```typescript
 // Electron Main Process
-const go = spawn('./bento-server')
+const go = spawn('./bnto-server')
 
 // React (via IPC)
 ipcRenderer.send('run-workflow', path)
@@ -221,7 +221,7 @@ for scanner.Scan() {
 - ❌ Slower startup (~500ms+)
 - ❌ Complex IPC layer (Electron ↔ Go)
 - ❌ Requires Node.js + Go runtime
-- ❌ Goes against Bento's "small binary" goal
+- ❌ Goes against Bnto's "small binary" goal
 
 **Alignment with Bento Box Principle:**
 - ⚠️ Violates "small, focused" principle (200MB binary)
@@ -243,7 +243,7 @@ for scanner.Scan() {
 │  Rust Backend (Tauri Core)           │
 │  └─ Spawns Go binary as sidecar      │
 ├─────────────────────────────────────┤
-│  Go Backend (Bento CLI)              │
+│  Go Backend (Bnto CLI)              │
 │  └─ HTTP/gRPC or stdin/stdout        │
 ├─────────────────────────────────────┤
 │  Native WebView (OS-provided)        │
@@ -279,7 +279,7 @@ for scanner.Scan() {
 │  Option 4A: Packaged Together       │
 ├─────────────────────────────────────┤
 │  Go Backend (embedded HTTP server)   │
-│  ├─ Bento packages                   │
+│  ├─ Bnto packages                   │
 │  └─ Serves embedded React SPA        │
 │     (via embed.FS)                   │
 ├─────────────────────────────────────┤
@@ -345,7 +345,7 @@ func main() {
 │  Fyne/Gio UI Framework (Go)          │
 │  └─ Declarative UI in Go             │
 ├─────────────────────────────────────┤
-│  Bento Packages (Go)                 │
+│  Bnto Packages (Go)                 │
 │  └─ Direct function calls            │
 └─────────────────────────────────────┘
 ```
@@ -356,10 +356,10 @@ import "fyne.io/fyne/v2/app"
 
 func main() {
     a := app.New()
-    w := a.NewWindow("Bento")
+    w := a.NewWindow("Bnto")
 
     w.SetContent(widget.NewButton("Run Workflow", func() {
-        // Direct calls to Bento packages
+        // Direct calls to Bnto packages
         itamae.Execute(ctx, workflow)
     }))
 
@@ -370,7 +370,7 @@ func main() {
 **Pros:**
 - ✅ Pure Go (no additional languages)
 - ✅ Smallest binaries (~10-15MB)
-- ✅ Direct integration with Bento
+- ✅ Direct integration with Bnto
 - ✅ Fastest performance
 - ✅ Simple deployment
 
@@ -402,7 +402,7 @@ func main() {
 | **Learning Curve** | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
 | **Desktop Features** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ |
 | **Distribution** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Bento Alignment** | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **Bnto Alignment** | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 
 ---
 
@@ -413,8 +413,8 @@ func main() {
 **Rationale:**
 
 1. **Purpose-Built for Go + React**: Wails is specifically designed for this exact use case
-2. **Performance Aligned with Bento Goals**: Maintains the small binary and fast startup that define Bento
-3. **Seamless Integration**: Can reuse 100% of existing Bento packages without modification
+2. **Performance Aligned with Bnto Goals**: Maintains the small binary and fast startup that define Bnto
+3. **Seamless Integration**: Can reuse 100% of existing Bnto packages without modification
 4. **Type Safety**: Auto-generated TypeScript definitions prevent runtime errors
 5. **Developer Experience**: Hot reload, familiar React tooling, Go backend development
 6. **Production Ready**: App Store compliant, cross-platform, no CGO on Windows
@@ -422,7 +422,7 @@ func main() {
 ### Architecture Design
 
 ```
-bento-desktop/
+bnto-desktop/
 ├── main.go                      # Wails app entry point
 ├── app.go                       # App struct with methods
 ├── frontend/
@@ -442,7 +442,7 @@ bento-desktop/
 │       ├── workflows.go         # Workflow management for desktop
 │       ├── settings.go          # Desktop-specific settings
 │       └── bridge.go            # Wails bridge logic
-└── pkg/                         # Existing Bento packages (unchanged)
+└── pkg/                         # Existing Bnto packages (unchanged)
     ├── neta/
     ├── itamae/
     └── ...
@@ -497,20 +497,20 @@ src/
 ├── services/
 │   └── api.ts                   # Wrapper around wailsjs
 └── types/
-    └── bento.ts                 # TypeScript types (from Go)
+    └── bnto.ts                 # TypeScript types (from Go)
 ```
 
 ---
 
 ## Alternative/Hybrid Approach: Wails + Charm TUI
 
-Given that the roadmap includes **Charm TUI** and **Charm TUI Bento Editor**, consider a hybrid approach:
+Given that the roadmap includes **Charm TUI** and **Charm TUI Bnto Editor**, consider a hybrid approach:
 
 ### Strategy: Three Interfaces, One Codebase
 
 ```
 ┌─────────────────────────────────────────────────┐
-│           Bento Core Packages (pkg/)            │
+│           Bnto Core Packages (pkg/)            │
 │    (neta, itamae, pantry, hangiri, etc.)        │
 └─────────────────────────────────────────────────┘
                       │
@@ -529,11 +529,11 @@ Given that the roadmap includes **Charm TUI** and **Charm TUI Bento Editor**, co
 
 **Implementation:**
 ```
-bento/
+bnto/
 ├── cmd/
-│   ├── bento/              # CLI (existing)
-│   ├── bento-tui/          # Charm TUI (planned)
-│   └── bento-desktop/      # Wails desktop app (new)
+│   ├── bnto/              # CLI (existing)
+│   ├── bnto-tui/          # Charm TUI (planned)
+│   └── bnto-desktop/      # Wails desktop app (new)
 └── pkg/                    # Shared packages (unchanged)
 ```
 
@@ -549,7 +549,7 @@ Each interface would:
 
 ### Phase 1: Proof of Concept (Week 1-2)
 - Set up Wails project with React + TypeScript
-- Expose 3-5 core Bento functions
+- Expose 3-5 core Bnto functions
 - Build minimal workflow runner UI
 - Validate Go ↔ React communication
 - **Deliverable**: Demo running a simple workflow
@@ -671,7 +671,7 @@ make release-all     # CLI + TUI + Desktop binaries
 - ✅ You value simplicity over native desktop features
 
 ### Reconsider Requirements If:
-- ❌ Electron is being considered (conflicts with Bento's goals)
+- ❌ Electron is being considered (conflicts with Bnto's goals)
 - ❌ Tauri is being considered (unnecessary Rust layer)
 - ❌ Pure Go UI is acceptable (then skip React requirement)
 
@@ -686,8 +686,8 @@ make release-all     # CLI + TUI + Desktop binaries
 
 2. **POC Development** (if proceeding with Wails)
    - Install Wails CLI: `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
-   - Initialize project: `wails init -n bento-desktop -t react-ts`
-   - Expose 3-5 Bento functions
+   - Initialize project: `wails init -n bnto-desktop -t react-ts`
+   - Expose 3-5 Bnto functions
    - Build simple workflow runner UI
    - Evaluate developer experience
 
@@ -732,7 +732,7 @@ make release-all     # CLI + TUI + Desktop binaries
 
 **Key Success Factors:**
 - Maintain Bento Box Principle (clean separation)
-- Reuse 100% of existing Bento packages
+- Reuse 100% of existing Bnto packages
 - Keep CLI, TUI, and Desktop as separate interfaces
 - Monitor binary size and performance
 - Provide clear use cases for each interface

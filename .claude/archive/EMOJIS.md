@@ -1,4 +1,4 @@
-# 🍱 Approved Emojis for Bento
+# 🍱 Approved Emojis for Bnto
 
 ## Usage Guidelines
 
@@ -18,7 +18,7 @@ var Sushi = []string{
     "🍙", // onigiri
     "🥢", // chopsticks
     "🍥", // fish cake
-    "🍱", // bento box - PRIMARY ICON
+    "🍱", // bnto box - PRIMARY ICON
     "🍜", // ramen
     "🍡", // dango
     "🍢", // oden
@@ -45,19 +45,19 @@ var Sushi = []string{
 
 ## Suggested Usage
 
-- **🍱 Success:** "Bento served successfully!"
+- **🍱 Success:** "Bnto served successfully!"
 - **🍙 Neta:** Reference to individual workflow nodes
 - **👨‍🍳 Itamae:** Reference to orchestration engine
 - **🥢 Preparation:** Building, preparing workflows
 - **🍣 Execution:** Running workflows
 - **🦐 Data:** Input/output data
 - **🍵 Logging:** Progress updates, tailing
-- **🥡 Storage:** File operations, saving bentos
+- **🥡 Storage:** File operations, saving bntos
 
 ## Examples
 
 ```
-✓ 🍱 Bento served in 1.2s
+✓ 🍱 Bnto served in 1.2s
 ✓ 🍙 3 neta executed successfully
 ✗ ⚠️  Blender render failed (product-23.png)
 ⟳ 🍵 Rendering product 45/100... 67% complete

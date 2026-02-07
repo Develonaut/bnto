@@ -1,0 +1,38 @@
+{
+  "id": "test",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Test",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "tags": [
+      "template"
+    ]
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "nodes": [
+    {
+      "id": "sample-1",
+      "type": "edit-fields",
+      "version": "1.0.0",
+      "name": "Sample Node",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "values": {
+          "message": "Hello from bnto!"
+        }
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    }
+  ]
+}

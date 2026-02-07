@@ -1,4 +1,4 @@
-// Package handler provides HTTP handlers for the bento API.
+// Package handler provides HTTP handlers for the bnto API.
 package handler
 
 import (

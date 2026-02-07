@@ -7,8 +7,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/node"
-	"github.com/Develonaut/bento/pkg/registry"
+	"github.com/Develonaut/bnto/pkg/node"
+	"github.com/Develonaut/bnto/pkg/registry"
 )
 
 // MockNode is a test implementation of node.Executable.

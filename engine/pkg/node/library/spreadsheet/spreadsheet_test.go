@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/node/library/spreadsheet"
+	"github.com/Develonaut/bnto/pkg/node/library/spreadsheet"
 	"github.com/xuri/excelize/v2"
 )
 

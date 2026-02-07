@@ -1,5 +1,5 @@
 # Phase 3: Visual Workflow Editor
-**Bento Desktop - Wails Implementation**
+**Bnto Desktop - Wails Implementation**
 
 **Duration:** 5-6 weeks
 **Goal:** Build visual drag-and-drop workflow editor with real-time validation
@@ -30,7 +30,7 @@
 
 **Installation:**
 ```bash
-cd cmd/bento-desktop/frontend
+cd cmd/bnto-desktop/frontend
 npm install reactflow
 ```
 
@@ -173,17 +173,17 @@ export function WorkflowEditor() {
 
 ### Task 2: Custom Node Components
 
-**Objective:** Create custom React Flow nodes for each Bento node type
+**Objective:** Create custom React Flow nodes for each Bnto node type
 
 **Steps:**
 
-1. Create base BentoNode component
+1. Create base BntoNode component
 ```typescript
-// frontend/src/components/WorkflowEditor/nodes/BentoNode.tsx
+// frontend/src/components/WorkflowEditor/nodes/BntoNode.tsx
 import { memo } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
 
-export interface BentoNodeData {
+export interface BntoNodeData {
     id: string
     type: string
     name: string
@@ -191,9 +191,9 @@ export interface BentoNodeData {
     status?: 'idle' | 'running' | 'completed' | 'failed'
 }
 
-export const BentoNode = memo(({ data, selected }: NodeProps<BentoNodeData>) => {
+export const BntoNode = memo(({ data, selected }: NodeProps<BntoNodeData>) => {
     return (
-        <div className={`bento-node ${data.type} ${selected ? 'selected' : ''} ${data.status || ''}`}>
+        <div className={`bnto-node ${data.type} ${selected ? 'selected' : ''} ${data.status || ''}`}>
             <Handle type="target" position={Position.Top} />
 
             <div className="node-header">
@@ -254,10 +254,10 @@ function getStatusIcon(status: string): string {
 ```typescript
 // frontend/src/components/WorkflowEditor/nodeTypes.ts
 import { NodeTypes } from 'reactflow'
-import { BentoNode } from './nodes/BentoNode'
+import { BntoNode } from './nodes/BntoNode'
 
 export const nodeTypes: NodeTypes = {
-    'bento-node': BentoNode,
+    'bnto-node': BntoNode,
 }
 ```
 
@@ -287,8 +287,8 @@ export function WorkflowCanvas({ ... }: WorkflowCanvasProps) {
 - [ ] Selection highlights node
 
 **Files Created:**
-- `frontend/src/components/WorkflowEditor/nodes/BentoNode.tsx`
-- `frontend/src/components/WorkflowEditor/nodes/BentoNode.css`
+- `frontend/src/components/WorkflowEditor/nodes/BntoNode.tsx`
+- `frontend/src/components/WorkflowEditor/nodes/BntoNode.css`
 - `frontend/src/components/WorkflowEditor/nodeTypes.ts`
 
 ---
@@ -429,7 +429,7 @@ export function WorkflowCanvas({ ... }: WorkflowCanvasProps) {
 
             const newNode: Node = {
                 id: `${nodeType}-${Date.now()}`,
-                type: 'bento-node',
+                type: 'bnto-node',
                 position,
                 data: {
                     type: nodeType,
@@ -700,9 +700,9 @@ function validateParameter(name: string, value: any, schema: any): string | null
 
 ---
 
-### Task 5: Workflow Serialization (Editor ↔ Bento Format)
+### Task 5: Workflow Serialization (Editor ↔ Bnto Format)
 
-**Objective:** Convert React Flow graph to/from Bento workflow format
+**Objective:** Convert React Flow graph to/from Bnto workflow format
 
 **Steps:**
 
@@ -712,7 +712,7 @@ function validateParameter(name: string, value: any, schema: any): string | null
 import { Node, Edge } from 'reactflow'
 import { neta } from '../../wailsjs/go/models'
 
-export function reactFlowToBento(nodes: Node[], edges: Edge[]): neta.Definition {
+export function reactFlowToBnto(nodes: Node[], edges: Edge[]): neta.Definition {
     return {
         id: generateWorkflowId(),
         type: 'group',
@@ -739,13 +739,13 @@ export function reactFlowToBento(nodes: Node[], edges: Edge[]): neta.Definition 
     }
 }
 
-export function bentoToReactFlow(def: neta.Definition): {
+export function bntoToReactFlow(def: neta.Definition): {
     nodes: Node[]
     edges: Edge[]
 } {
     const nodes: Node[] = (def.nodes || []).map(node => ({
         id: node.id,
-        type: 'bento-node',
+        type: 'bnto-node',
         position: node.position || { x: 0, y: 0 },
         data: {
             id: node.id,
@@ -769,11 +769,11 @@ export function bentoToReactFlow(def: neta.Definition): {
 
 2. Add save/load methods to App
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
 func (a *App) SaveWorkflowFromEditor(nodes []map[string]interface{}, edges []map[string]interface{}, metadata map[string]interface{}) error {
-    // Convert React Flow data to Bento Definition
-    def := convertToBentoDefinition(nodes, edges, metadata)
+    // Convert React Flow data to Bnto Definition
+    def := convertToBntoDefinition(nodes, edges, metadata)
 
     // Save to file
     path := metadata["path"].(string)
@@ -800,7 +800,7 @@ func (a *App) LoadWorkflowForEditor(path string) (map[string]interface{}, error)
 ```typescript
 // frontend/src/components/WorkflowEditor/WorkflowEditor.tsx
 import { SaveWorkflowFromEditor, LoadWorkflowForEditor } from '../../../wailsjs/go/main/App'
-import { reactFlowToBento, bentoToReactFlow } from './converters'
+import { reactFlowToBnto, bntoToReactFlow } from './converters'
 
 export function WorkflowEditor({ workflowPath }: { workflowPath?: string }) {
     const [nodes, setNodes] = useState<Node[]>([])
@@ -815,14 +815,14 @@ export function WorkflowEditor({ workflowPath }: { workflowPath?: string }) {
 
     const loadWorkflow = async (path: string) => {
         const data = await LoadWorkflowForEditor(path)
-        const { nodes: newNodes, edges: newEdges } = bentoToReactFlow(data.definition)
+        const { nodes: newNodes, edges: newEdges } = bntoToReactFlow(data.definition)
         setNodes(newNodes)
         setEdges(newEdges)
         setMetadata(data.metadata)
     }
 
     const saveWorkflow = async () => {
-        const def = reactFlowToBento(nodes, edges)
+        const def = reactFlowToBnto(nodes, edges)
         await SaveWorkflowFromEditor(nodes, edges, { ...metadata, ...def })
     }
 
@@ -844,8 +844,8 @@ export function WorkflowEditor({ workflowPath }: { workflowPath?: string }) {
 ```
 
 **Acceptance Criteria:**
-- [ ] Can save workflow from editor to .bento.json file
-- [ ] Can load workflow from .bento.json into editor
+- [ ] Can save workflow from editor to .bnto.json file
+- [ ] Can load workflow from .bnto.json into editor
 - [ ] Node positions are preserved
 - [ ] Node parameters are preserved
 - [ ] Edges are preserved
@@ -856,7 +856,7 @@ export function WorkflowEditor({ workflowPath }: { workflowPath?: string }) {
 - `frontend/src/components/WorkflowEditor/converters.test.ts`
 
 **Files Modified:**
-- `cmd/bento-desktop/app.go`
+- `cmd/bnto-desktop/app.go`
 - `frontend/src/components/WorkflowEditor/WorkflowEditor.tsx`
 
 ---
@@ -869,7 +869,7 @@ export function WorkflowEditor({ workflowPath }: { workflowPath?: string }) {
 
 1. Add validation method to App
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
 type ValidationResult struct {
     Valid  bool     `json:"valid"`
@@ -877,7 +877,7 @@ type ValidationResult struct {
 }
 
 func (a *App) ValidateWorkflowFromEditor(nodes []map[string]interface{}, edges []map[string]interface{}) (*ValidationResult, error) {
-    def := convertToBentoDefinition(nodes, edges, nil)
+    def := convertToBntoDefinition(nodes, edges, nil)
 
     errors := omakase.Validate(def)
 
@@ -936,7 +936,7 @@ export function WorkflowEditor() {
 - [ ] Shows specific error messages
 
 **Files Modified:**
-- `cmd/bento-desktop/app.go`
+- `cmd/bnto-desktop/app.go`
 - `frontend/src/components/WorkflowEditor/WorkflowEditor.tsx`
 
 ---
@@ -949,14 +949,14 @@ export function WorkflowEditor() {
 - [ ] `frontend/src/components/WorkflowEditor/WorkflowCanvas.tsx` - Canvas
 - [ ] `frontend/src/components/WorkflowEditor/NodePalette.tsx` - Node palette
 - [ ] `frontend/src/components/WorkflowEditor/PropertyPanel.tsx` - Property editor
-- [ ] `frontend/src/components/WorkflowEditor/nodes/BentoNode.tsx` - Custom nodes
+- [ ] `frontend/src/components/WorkflowEditor/nodes/BntoNode.tsx` - Custom nodes
 - [ ] `frontend/src/components/WorkflowEditor/converters.ts` - Format conversion
-- [ ] Updated `cmd/bento-desktop/app.go` - Editor methods
+- [ ] Updated `cmd/bnto-desktop/app.go` - Editor methods
 
 ### Documentation Deliverables
 
-- [ ] `cmd/bento-desktop/EDITOR_GUIDE.md` - Editor usage guide
-- [ ] Updated `cmd/bento-desktop/ARCHITECTURE.md` - Document editor architecture
+- [ ] `cmd/bnto-desktop/EDITOR_GUIDE.md` - Editor usage guide
+- [ ] Updated `cmd/bnto-desktop/ARCHITECTURE.md` - Document editor architecture
 
 ---
 
@@ -1050,7 +1050,7 @@ After completing Phase 3:
 ## Colossus Review Prompt
 
 ```
-I've completed Phase 3 (Visual Workflow Editor) for Bento Desktop.
+I've completed Phase 3 (Visual Workflow Editor) for Bnto Desktop.
 
 Before marking this phase complete, please:
 
@@ -1072,7 +1072,7 @@ Before marking this phase complete, please:
 
 4. Verify all Task Acceptance Criteria are met (listed in wails-phase3-workflow-editor.md)
 
-5. Run the code-review command: /code-review cmd/bento-desktop/frontend/src/components/WorkflowEditor/
+5. Run the code-review command: /code-review cmd/bnto-desktop/frontend/src/components/WorkflowEditor/
 
 Key areas to scrutinize:
 - Are converters.ts functions pure and well-tested?

@@ -1,11 +1,11 @@
 # Atomiton Progress Tracking Analysis
 
 **Date:** 2025-10-21
-**Purpose:** Learn from Atomiton's conductor package to improve Bento's itamae loop progress tracking
+**Purpose:** Learn from Atomiton's conductor package to improve Bnto's itamae loop progress tracking
 
 ## Executive Summary
 
-Atomiton uses a **weight-based progress system** that counts static graph structure, not dynamic loop iterations. This is the same approach Bento currently uses, which causes the progress inaccuracies you've observed.
+Atomiton uses a **weight-based progress system** that counts static graph structure, not dynamic loop iterations. This is the same approach Bnto currently uses, which causes the progress inaccuracies you've observed.
 
 **Key Finding:** Atomiton does NOT solve the loop iteration counting problem. They accept that progress tracks the graph structure, not runtime iterations.
 
@@ -41,7 +41,7 @@ export function calculateProgress(state: ExecutionGraphState): number {
 - Progress is **cached** and only recalculated on state mutations
 - Total weight is calculated once at graph initialization
 
-### Bento's Current Approach
+### Bnto's Current Approach
 
 **File:** `/pkg/itamae/executor.go` (lines 122-127)
 
@@ -114,7 +114,7 @@ export const loopExecutable = createExecutable<LoopParameters>(
 3. Report progress as a single unit (0% → 100%)
 4. Do NOT expose child nodes to the graph analyzer
 
-### Bento's Loop Implementation
+### Bnto's Loop Implementation
 
 **File:** `/pkg/itamae/loop_foreach.go`
 
@@ -147,7 +147,7 @@ func (i *Itamae) executeForEach(
 }
 ```
 
-**Bento loops are CONTAINER NODES** - they:
+**Bnto loops are CONTAINER NODES** - they:
 1. Execute child nodes multiple times
 2. Child nodes get counted in `countExecutableNodes()`
 3. Progress tracking sees the child nodes complete multiple times
@@ -203,7 +203,7 @@ executionGraphStore.subscribe((state: ExecutionGraphState) => {
 });
 ```
 
-### Bento's Event System
+### Bnto's Event System
 
 **File:** `/pkg/itamae/messages.go`
 
@@ -422,7 +422,7 @@ func (i *Itamae) setNodeProgress(nodeID string, progress int, message string) {
 }
 ```
 
-## 5. Recommendations for Bento
+## 5. Recommendations for Bnto
 
 ### Option A: Keep Container Loops, Fix Progress Tracking
 
@@ -672,7 +672,7 @@ func (i *Itamae) calculateProgress() int {
 }
 ```
 
-## 6. Recommended Approach for Bento
+## 6. Recommended Approach for Bnto
 
 **Use Option B: Leaf Node Loops** (Atomiton's approach)
 
@@ -868,7 +868,7 @@ executionGraphStore.subscribe((state: ExecutionGraphState) => {
 nodes: Map<string, ExecutionGraphNode>
 ```
 
-**Bento:** Should use map[string]*nodeState
+**Bnto:** Should use map[string]*nodeState
 ```go
 type executionState struct {
     nodes map[string]*nodeState  // O(1) lookups
@@ -878,7 +878,7 @@ type executionState struct {
 ### Concurrency
 
 **Atomiton:** JavaScript is single-threaded, no locks needed
-**Bento:** Go is concurrent, requires careful locking
+**Bnto:** Go is concurrent, requires careful locking
 
 ```go
 // Read-heavy workload: prefer RWMutex
@@ -905,7 +905,7 @@ func (s *progressState) setProgress(p int) {
 ### Progress Calculation Frequency
 
 **Atomiton:** O(n) on mutations, O(1) on reads (cached)
-**Bento:** Should match this pattern
+**Bnto:** Should match this pattern
 
 ```go
 // GOOD - Cache and only recalculate on mutations
@@ -978,7 +978,7 @@ Atomiton provides excellent patterns for:
 - ✅ Partial progress during execution
 - ✅ Clean separation of concerns
 
-However, Atomiton **does NOT solve the loop iteration counting problem**. They treat loops as leaf nodes that report 0% → 100%, which is the recommended approach for Bento.
+However, Atomiton **does NOT solve the loop iteration counting problem**. They treat loops as leaf nodes that report 0% → 100%, which is the recommended approach for Bnto.
 
 **Next Steps:**
 1. Implement Option B (Leaf Node Loops)

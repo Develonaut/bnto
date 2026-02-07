@@ -2,13 +2,13 @@
 
 **Date:** 2026-02-06
 **Status:** Decision Required
-**Context:** Choosing between Taskfile.dev, Turborepo, or a hybrid for Bento's polyglot monorepo
+**Context:** Choosing between Taskfile.dev, Turborepo, or a hybrid for Bnto's polyglot monorepo
 
 ---
 
 ## The Problem
 
-Bento's monorepo will contain both Go and TypeScript code:
+Bnto's monorepo will contain both Go and TypeScript code:
 
 | Component | Language | Build Tool |
 |-----------|----------|-----------|
@@ -16,9 +16,9 @@ Bento's monorepo will contain both Go and TypeScript code:
 | HTTP API Server | Go | `go build`, `go test` |
 | Wails Desktop | Go + Vite/React | `wails build`, pnpm |
 | Next.js Web App | TypeScript/React | `next build`, pnpm |
-| @bento/core | TypeScript | `tsc`, pnpm |
-| @bento/ui | TypeScript | `tsc`, pnpm |
-| @bento/editor | TypeScript | `tsc`, pnpm |
+| @bnto/core | TypeScript | `tsc`, pnpm |
+| @bnto/ui | TypeScript | `tsc`, pnpm |
+| @bnto/editor | TypeScript | `tsc`, pnpm |
 
 We need a build orchestrator that handles both ecosystems. The previous strategy chose Taskfile.dev. The user prefers Turborepo from past experience. This document evaluates the options.
 
@@ -109,22 +109,22 @@ We need a build orchestrator that handles both ecosystems. The previous strategy
 ### Concrete Setup (Implemented)
 
 ```
-bento/
+bnto/
 ├── package.json              # Turborepo root workspace
 ├── pnpm-workspace.yaml       # pnpm workspace config
 ├── turbo.json                # Turborepo task config
 ├── Taskfile.yml              # Go orchestration
 ├── apps/
-│   ├── web/                  # @bento/web (Next.js)
-│   └── desktop/              # @bento/desktop (Wails frontend)
+│   ├── web/                  # @bnto/web (Next.js)
+│   └── desktop/              # @bnto/desktop (Wails frontend)
 ├── packages/
-│   └── @bento/               # Scoped internal packages (n8n pattern)
-│       ├── core/             # @bento/core
-│       ├── ui/               # @bento/ui
-│       └── editor/           # @bento/editor
+│   └── @bnto/               # Scoped internal packages (n8n pattern)
+│       ├── core/             # @bnto/core
+│       ├── ui/               # @bnto/ui
+│       └── editor/           # @bnto/editor
 └── engine/                   # All Go code
     ├── go.mod
-    ├── cmd/bento/
+    ├── cmd/bnto/
     ├── pkg/
     └── tests/
 ```
@@ -137,7 +137,7 @@ tasks:
   # Go tasks (engine/)
   build:
     dir: ./engine
-    cmds: [go build ./cmd/bento]
+    cmds: [go build ./cmd/bnto]
   test:
     dir: ./engine
     cmds: [go test -race ./...]
@@ -146,7 +146,7 @@ tasks:
   ui:build:
     cmds: [pnpm turbo run build]
   ui:dev:
-    cmds: [pnpm --filter @bento/web dev]
+    cmds: [pnpm --filter @bnto/web dev]
   ui:test:
     cmds: [pnpm turbo run test]
 

@@ -1,13 +1,13 @@
-// Package paths provides configuration management and persistence for bento.
+// Package paths provides configuration management and persistence for bnto.
 //
 // This package manages:
-//   - Bento home directory configuration
+//   - Bnto home directory configuration
 //   - Theme/variant persistence
 //   - Verbose logging settings
 //   - Slow-motion execution delay
 //   - Save directory preferences
 //
-// All configuration is stored in ~/.bento/config/ with individual files
+// All configuration is stored in ~/.bnto/config/ with individual files
 // per setting for simplicity and atomicity.
 package paths
 
@@ -18,43 +18,43 @@ import (
 	"strings"
 )
 
-// configDir returns the bento config directory path.
+// configDir returns the bnto config directory path.
 // Mutable var allows mocking in tests.
 var configDir = func() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	// Store config in ~/.bento/config/ subdirectory for consistency with storage structure
-	return filepath.Join(home, ".bento", "config"), nil
+	// Store config in ~/.bnto/config/ subdirectory for consistency with storage structure
+	return filepath.Join(home, ".bnto", "config"), nil
 }
 
-// bentoHomeConfigPath returns the path to the bento home config file.
-func bentoHomeConfigPath() (string, error) {
+// bntoHomeConfigPath returns the path to the bnto home config file.
+func bntoHomeConfigPath() (string, error) {
 	dir, err := configDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "bentohome"), nil
+	return filepath.Join(dir, "bntohome"), nil
 }
 
-// LoadBentoHome loads the configured bento home directory from disk.
-// Returns the default ~/.bento if no custom home is configured.
+// LoadBntoHome loads the configured bnto home directory from disk.
+// Returns the default ~/.bnto if no custom home is configured.
 // Automatically resolves {{GDRIVE}} and other special markers.
-func LoadBentoHome() string {
-	path, err := bentoHomeConfigPath()
+func LoadBntoHome() string {
+	path, err := bntoHomeConfigPath()
 	if err != nil {
-		return defaultBentoHome()
+		return defaultBntoHome()
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return defaultBentoHome()
+		return defaultBntoHome()
 	}
 
 	dir := strings.TrimSpace(string(data))
 	if dir == "" {
-		return defaultBentoHome()
+		return defaultBntoHome()
 	}
 
 	return resolveCloudMarkers(dir)
@@ -62,7 +62,7 @@ func LoadBentoHome() string {
 
 // resolveCloudMarkers resolves {{GDRIVE}}, {{DROPBOX}}, {{ONEDRIVE}} in path.
 // Note: Can't call ResolvePath here due to circular dependency
-// (ResolvePath → LoadBentoHome → ResolvePath).
+// (ResolvePath → LoadBntoHome → ResolvePath).
 // We safely resolve cloud markers without recursion.
 func resolveCloudMarkers(path string) string {
 	resolved := path
@@ -80,9 +80,9 @@ func replaceMarkerIfDetected(path, marker, cloudPath string) string {
 	return path
 }
 
-// SaveBentoHome saves the bento home directory to disk.
-// Creates ~/.bento directory if it doesn't exist.
-func SaveBentoHome(dir string) error {
+// SaveBntoHome saves the bnto home directory to disk.
+// Creates ~/.bnto directory if it doesn't exist.
+func SaveBntoHome(dir string) error {
 	confDir, err := configDir()
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func SaveBentoHome(dir string) error {
 		return err
 	}
 
-	path, err := bentoHomeConfigPath()
+	path, err := bntoHomeConfigPath()
 	if err != nil {
 		return err
 	}
@@ -101,13 +101,13 @@ func SaveBentoHome(dir string) error {
 	return os.WriteFile(path, []byte(dir), 0644)
 }
 
-// defaultBentoHome returns the default bento home directory.
-func defaultBentoHome() string {
+// defaultBntoHome returns the default bnto home directory.
+func defaultBntoHome() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "./.bento"
+		return "./.bnto"
 	}
-	return filepath.Join(home, ".bento")
+	return filepath.Join(home, ".bnto")
 }
 
 // themeConfigPath returns the path to the theme config file.
@@ -136,7 +136,7 @@ func LoadSavedTheme() string {
 }
 
 // SaveTheme saves the theme variant to disk.
-// Creates ~/.bento directory if it doesn't exist.
+// Creates ~/.bnto directory if it doesn't exist.
 func SaveTheme(variant string) error {
 	dir, err := configDir()
 	if err != nil {
@@ -192,7 +192,7 @@ func LoadSlowMoDelay() int {
 }
 
 // SaveSlowMoDelay saves the slowMo delay (in milliseconds) to disk.
-// Creates ~/.bento directory if it doesn't exist.
+// Creates ~/.bnto directory if it doesn't exist.
 func SaveSlowMoDelay(ms int) error {
 	dir, err := configDir()
 	if err != nil {
@@ -221,8 +221,8 @@ func saveDirConfigPath() (string, error) {
 	return filepath.Join(dir, "savedir"), nil
 }
 
-// LoadSaveDirectory loads the saved bentos directory from disk.
-// Returns ~/.bento as default if no saved value or on error.
+// LoadSaveDirectory loads the saved bntos directory from disk.
+// Returns ~/.bnto as default if no saved value or on error.
 func LoadSaveDirectory() string {
 	path, err := saveDirConfigPath()
 	if err != nil {
@@ -242,8 +242,8 @@ func LoadSaveDirectory() string {
 	return dir
 }
 
-// SaveSaveDirectory saves the bentos directory to disk.
-// Creates ~/.bento directory if it doesn't exist.
+// SaveSaveDirectory saves the bntos directory to disk.
+// Creates ~/.bnto directory if it doesn't exist.
 func SaveSaveDirectory(dir string) error {
 	confDir, err := configDir()
 	if err != nil {
@@ -267,9 +267,9 @@ func SaveSaveDirectory(dir string) error {
 func defaultSaveDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "./.bento"
+		return "./.bnto"
 	}
-	return filepath.Join(home, ".bento")
+	return filepath.Join(home, ".bnto")
 }
 
 // verboseConfigPath returns the path to the verbose config file.
@@ -299,7 +299,7 @@ func LoadVerboseLogging() bool {
 }
 
 // SaveVerboseLogging saves the verbose logging setting to disk.
-// Creates ~/.bento directory if it doesn't exist.
+// Creates ~/.bnto directory if it doesn't exist.
 func SaveVerboseLogging(enabled bool) error {
 	dir, err := configDir()
 	if err != nil {

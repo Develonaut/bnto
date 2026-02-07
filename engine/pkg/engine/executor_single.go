@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 	"github.com/charmbracelet/lipgloss"
 )
 

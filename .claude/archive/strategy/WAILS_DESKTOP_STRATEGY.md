@@ -1,4 +1,4 @@
-# Bento Desktop - Wails Implementation Strategy
+# Bnto Desktop - Wails Implementation Strategy
 
 > **2026-02-06 UPDATE:** This document is superseded by [CLOUD_DESKTOP_STRATEGY.md](CLOUD_DESKTOP_STRATEGY.md).
 > Key changes: **Target Wails v2** (not v3 — v3 is still alpha). Desktop is now **Phase 3** (after cloud MVP).
@@ -13,7 +13,7 @@
 
 ## Executive Summary
 
-This strategy outlines the implementation of a React-based desktop UI for Bento using the Wails framework. Wails was selected for its purpose-built Go+React integration, small binary size (~10-15MB), and seamless type-safe communication between Go and JavaScript.
+This strategy outlines the implementation of a React-based desktop UI for Bnto using the Wails framework. Wails was selected for its purpose-built Go+React integration, small binary size (~10-15MB), and seamless type-safe communication between Go and JavaScript.
 
 ---
 
@@ -28,9 +28,9 @@ This strategy outlines the implementation of a React-based desktop UI for Bento 
 | Type Safety | Auto-generated TS ✅ | Manual ⚠️ | Manual ⚠️ |
 | Startup Time | <50ms ✅ | ~500ms ❌ | <100ms ✅ |
 | Learning Curve | Medium ✅ | Easy ✅ | Hard ❌ |
-| Bento Alignment | High ✅ | Low ❌ | Medium ⚠️ |
+| Bnto Alignment | High ✅ | Low ❌ | Medium ⚠️ |
 
-**Winner:** Wails aligns perfectly with Bento's goals of small binaries, fast performance, and Go-first architecture.
+**Winner:** Wails aligns perfectly with Bnto's goals of small binaries, fast performance, and Go-first architecture.
 
 ---
 
@@ -40,7 +40,7 @@ This strategy outlines the implementation of a React-based desktop UI for Bento 
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│         Bento Desktop Application (Single Binary)    │
+│         Bnto Desktop Application (Single Binary)    │
 ├─────────────────────────────────────────────────────┤
 │  Layer 1: React Frontend (Vite + TypeScript)         │
 │  ├─ WorkflowEditor.tsx                               │
@@ -56,7 +56,7 @@ This strategy outlines the implementation of a React-based desktop UI for Bento 
 │  ├─ Event system (runtime.EventsEmit)                │
 │  └─ Type safety enforcement                          │
 ├─────────────────────────────────────────────────────┤
-│  Layer 3: Go Backend (100% Existing Bento Packages)  │
+│  Layer 3: Go Backend (100% Existing Bnto Packages)  │
 │  ├─ neta/ (workflow nodes)                           │
 │  ├─ itamae/ (orchestration engine)                   │
 │  ├─ pantry/ (node registry)                          │
@@ -76,10 +76,10 @@ This strategy outlines the implementation of a React-based desktop UI for Bento 
 ### Directory Structure
 
 ```
-bento/
+bnto/
 ├── cmd/
-│   ├── bento/                  # Existing CLI (unchanged)
-│   └── bento-desktop/          # NEW: Wails desktop app
+│   ├── bnto/                  # Existing CLI (unchanged)
+│   └── bnto-desktop/          # NEW: Wails desktop app
 │       ├── main.go             # Wails entry point
 │       ├── app.go              # App struct with exported methods
 │       ├── build/              # Build artifacts
@@ -118,7 +118,7 @@ Instead of replacing the CLI, **add desktop UI as a complementary interface**:
 
 ```
 ┌────────────────────────────────────────────┐
-│      Bento Core Packages (pkg/)            │
+│      Bnto Core Packages (pkg/)            │
 │   Shared: neta, itamae, pantry, etc.       │
 └────────────────────────────────────────────┘
                     │
@@ -156,8 +156,8 @@ package main
 
 import (
     "context"
-    "github.com/yourusername/bento/pkg/itamae"
-    "github.com/yourusername/bento/pkg/neta"
+    "github.com/yourusername/bnto/pkg/itamae"
+    "github.com/yourusername/bnto/pkg/neta"
 )
 
 type App struct {
@@ -215,7 +215,7 @@ function WorkflowRunner() {
 
     return (
         <div>
-            <button onClick={() => loadWorkflow('/path/to/workflow.bento.json')}>
+            <button onClick={() => loadWorkflow('/path/to/workflow.bnto.json')}>
                 Load
             </button>
             <button onClick={runWorkflow}>Run</button>
@@ -307,7 +307,7 @@ Each phase has a detailed document with specific tasks, acceptance criteria, and
 ### Single Responsibility ✅
 
 Each component has one purpose:
-- `cmd/bento-desktop/app.go` - Wails bridge methods only
+- `cmd/bnto-desktop/app.go` - Wails bridge methods only
 - `internal/desktop/workflows/` - Desktop workflow management only
 - `frontend/src/components/WorkflowEditor.tsx` - Visual editing only
 
@@ -358,7 +358,7 @@ func (h *Hangiri) Load(path string) (*neta.Definition, error) {
 
 ### Composable ✅
 
-Desktop app composes existing Bento packages without modifying them.
+Desktop app composes existing Bnto packages without modifying them.
 
 ### YAGNI ✅
 
@@ -384,11 +384,11 @@ internal/desktop/settings/preferences_test.go
 
 ```go
 // Wails bridge integration
-cmd/bento-desktop/app_test.go
+cmd/bnto-desktop/app_test.go
 
 func TestAppLoadWorkflow(t *testing.T) {
     app := NewApp()
-    def, err := app.LoadWorkflow("testdata/simple.bento.json")
+    def, err := app.LoadWorkflow("testdata/simple.bnto.json")
     assert.NoError(t, err)
     assert.Equal(t, "simple-workflow", def.ID)
 }
@@ -420,10 +420,10 @@ go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
 # Initialize project (Phase 1)
 cd cmd
-wails init -n bento-desktop -t react-ts
+wails init -n bnto-desktop -t react-ts
 
 # Development mode (hot reload)
-cd cmd/bento-desktop
+cd cmd/bnto-desktop
 wails dev
 
 # Frontend only (fast refresh)
@@ -450,13 +450,13 @@ wails build -platform linux/amd64
 .PHONY: dev-desktop build-desktop build-desktop-all
 
 dev-desktop:
-	cd cmd/bento-desktop && wails dev
+	cd cmd/bnto-desktop && wails dev
 
 build-desktop:
-	cd cmd/bento-desktop && wails build
+	cd cmd/bnto-desktop && wails build
 
 build-desktop-all:
-	cd cmd/bento-desktop && \
+	cd cmd/bnto-desktop && \
 	wails build -platform darwin/universal && \
 	wails build -platform windows/amd64 && \
 	wails build -platform linux/amd64
@@ -546,7 +546,7 @@ release-all: build build-desktop-all
 ## Next Steps
 
 1. **Review this strategy document**
-   - Confirm approach aligns with Bento goals
+   - Confirm approach aligns with Bnto goals
    - Confirm 14-week timeline is acceptable
    - Confirm Wails is approved
 
@@ -579,7 +579,7 @@ release-all: build build-desktop-all
 - Wails GitHub: https://github.com/wailsapp/wails
 - React Flow (for visual editor): https://reactflow.dev/
 
-### Bento Documentation
+### Bnto Documentation
 - Bento Box Principle: `.claude/BENTO_BOX_PRINCIPLE.md`
 - Go Standards Review: `.claude/GO_STANDARDS_REVIEW.md`
 - Package Naming: `.claude/PACKAGE_NAMING.md`

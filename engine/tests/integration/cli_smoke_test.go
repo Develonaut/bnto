@@ -8,16 +8,16 @@ import (
 	"testing"
 )
 
-// CLI smoke tests exercise the bento binary against real fixture files.
-// These complement cmd/bento/commands_test.go (which uses synthetic bentos)
+// CLI smoke tests exercise the bnto binary against real fixture files.
+// These complement cmd/bnto/commands_test.go (which uses synthetic bntos)
 // by testing with actual multi-node workflow fixtures.
 
 func TestCLI_RunEditFieldsPipeline(t *testing.T) {
-	skipIfNoBento(t)
+	skipIfNoBnto(t)
 
-	output, err := RunBento(t, "tests/fixtures/workflows/edit-fields-pipeline.bento.json", nil)
+	output, err := RunBnto(t, "tests/fixtures/workflows/edit-fields-pipeline.bnto.json", nil)
 	if err != nil {
-		t.Fatalf("bento run failed: %v\nOutput: %s", err, output)
+		t.Fatalf("bnto run failed: %v\nOutput: %s", err, output)
 	}
 
 	if !strings.Contains(output, "Delicious") {
@@ -26,11 +26,11 @@ func TestCLI_RunEditFieldsPipeline(t *testing.T) {
 }
 
 func TestCLI_RunCSVPipeline(t *testing.T) {
-	skipIfNoBento(t)
+	skipIfNoBnto(t)
 
-	output, err := RunBento(t, "tests/fixtures/workflows/csv-data-pipeline.bento.json", nil)
+	output, err := RunBnto(t, "tests/fixtures/workflows/csv-data-pipeline.bnto.json", nil)
 	if err != nil {
-		t.Fatalf("bento run failed: %v\nOutput: %s", err, output)
+		t.Fatalf("bnto run failed: %v\nOutput: %s", err, output)
 	}
 
 	if !strings.Contains(output, "Delicious") {
@@ -39,11 +39,11 @@ func TestCLI_RunCSVPipeline(t *testing.T) {
 }
 
 func TestCLI_ValidateValidFixture(t *testing.T) {
-	skipIfNoBento(t)
+	skipIfNoBnto(t)
 
-	output, err := runBentoValidate(t, "tests/fixtures/workflows/edit-fields-pipeline.bento.json")
+	output, err := runBntoValidate(t, "tests/fixtures/workflows/edit-fields-pipeline.bnto.json")
 	if err != nil {
-		t.Fatalf("bento validate failed: %v\nOutput: %s", err, output)
+		t.Fatalf("bnto validate failed: %v\nOutput: %s", err, output)
 	}
 
 	lower := strings.ToLower(output)
@@ -53,9 +53,9 @@ func TestCLI_ValidateValidFixture(t *testing.T) {
 }
 
 func TestCLI_ValidateInvalidFixture(t *testing.T) {
-	skipIfNoBento(t)
+	skipIfNoBnto(t)
 
-	output, err := runBentoValidate(t, "tests/fixtures/workflows/invalid-workflow.bento.json")
+	output, err := runBntoValidate(t, "tests/fixtures/workflows/invalid-workflow.bnto.json")
 	if err == nil {
 		t.Fatalf("Expected validation to fail, but it succeeded.\nOutput: %s", output)
 	}
@@ -67,15 +67,15 @@ func TestCLI_ValidateInvalidFixture(t *testing.T) {
 }
 
 func TestCLI_ListFixtureDir(t *testing.T) {
-	skipIfNoBento(t)
+	skipIfNoBnto(t)
 
-	output, err := runBentoList(t, "tests/fixtures/workflows")
+	output, err := runBntoList(t, "tests/fixtures/workflows")
 	if err != nil {
-		t.Fatalf("bento list failed: %v\nOutput: %s", err, output)
+		t.Fatalf("bnto list failed: %v\nOutput: %s", err, output)
 	}
 
-	if !strings.Contains(output, "bento.json") {
-		t.Errorf("Expected .bento.json files listed, got: %s", output)
+	if !strings.Contains(output, "bnto.json") {
+		t.Errorf("Expected .bnto.json files listed, got: %s", output)
 	}
 
 	if !strings.Contains(output, "found") {
@@ -84,11 +84,11 @@ func TestCLI_ListFixtureDir(t *testing.T) {
 }
 
 func TestCLI_DryRunFixture(t *testing.T) {
-	skipIfNoBento(t)
+	skipIfNoBnto(t)
 
-	output, err := runBentoDryRun(t, "tests/fixtures/workflows/edit-fields-pipeline.bento.json")
+	output, err := runBntoDryRun(t, "tests/fixtures/workflows/edit-fields-pipeline.bnto.json")
 	if err != nil {
-		t.Fatalf("bento --dry-run failed: %v\nOutput: %s", err, output)
+		t.Fatalf("bnto --dry-run failed: %v\nOutput: %s", err, output)
 	}
 
 	if !strings.Contains(output, "DRY RUN") {
@@ -100,28 +100,28 @@ func TestCLI_DryRunFixture(t *testing.T) {
 	}
 }
 
-// skipIfNoBento skips the test if the bento binary is not in PATH.
-func skipIfNoBento(t *testing.T) {
+// skipIfNoBnto skips the test if the bnto binary is not in PATH.
+func skipIfNoBnto(t *testing.T) {
 	t.Helper()
-	if _, err := exec.LookPath("bento"); err != nil {
-		t.Skip("bento binary not in PATH, skipping CLI smoke test")
+	if _, err := exec.LookPath("bnto"); err != nil {
+		t.Skip("bnto binary not in PATH, skipping CLI smoke test")
 	}
 }
 
-// runBentoValidate executes bento validate on a fixture file.
-func runBentoValidate(t *testing.T, bentoPath string) (string, error) {
+// runBntoValidate executes bnto validate on a fixture file.
+func runBntoValidate(t *testing.T, bntoPath string) (string, error) {
 	t.Helper()
-	return runBentoCommand(t, "validate", bentoPath, nil)
+	return runBntoCommand(t, "validate", bntoPath, nil)
 }
 
-// runBentoList executes bento list on a directory.
-func runBentoList(t *testing.T, dir string) (string, error) {
+// runBntoList executes bnto list on a directory.
+func runBntoList(t *testing.T, dir string) (string, error) {
 	t.Helper()
-	return runBentoCommand(t, "list", dir, nil)
+	return runBntoCommand(t, "list", dir, nil)
 }
 
-// runBentoDryRun executes bento run --dry-run on a fixture file.
-func runBentoDryRun(t *testing.T, bentoPath string) (string, error) {
+// runBntoDryRun executes bnto run --dry-run on a fixture file.
+func runBntoDryRun(t *testing.T, bntoPath string) (string, error) {
 	t.Helper()
 
 	wd, err := os.Getwd()
@@ -130,7 +130,7 @@ func runBentoDryRun(t *testing.T, bentoPath string) (string, error) {
 	}
 	projectRoot := filepath.Join(wd, "../..")
 
-	cmd := exec.Command("bento", "run", bentoPath, "--dry-run")
+	cmd := exec.Command("bnto", "run", bntoPath, "--dry-run")
 	cmd.Dir = projectRoot
 	cmd.Env = os.Environ()
 
@@ -138,8 +138,8 @@ func runBentoDryRun(t *testing.T, bentoPath string) (string, error) {
 	return string(output), err
 }
 
-// runBentoCommand executes a bento subcommand from the project root.
-func runBentoCommand(t *testing.T, subcommand, arg string, envVars map[string]string) (string, error) {
+// runBntoCommand executes a bnto subcommand from the project root.
+func runBntoCommand(t *testing.T, subcommand, arg string, envVars map[string]string) (string, error) {
 	t.Helper()
 
 	wd, err := os.Getwd()
@@ -148,7 +148,7 @@ func runBentoCommand(t *testing.T, subcommand, arg string, envVars map[string]st
 	}
 	projectRoot := filepath.Join(wd, "../..")
 
-	cmd := exec.Command("bento", subcommand, arg)
+	cmd := exec.Command("bnto", subcommand, arg)
 	cmd.Dir = projectRoot
 	cmd.Env = os.Environ()
 	for k, v := range envVars {

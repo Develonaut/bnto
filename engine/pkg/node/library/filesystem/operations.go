@@ -38,15 +38,15 @@ func (f *FileSystemNode) write(params map[string]interface{}) (interface{}, erro
 		return nil, fmt.Errorf("content parameter is required and must be a string")
 	}
 
-	// Check .bentoignore in the target directory
+	// Check .bntoignore in the target directory
 	dir := filepath.Dir(path)
-	bentoIgnore, err := LoadBentoIgnore(dir)
+	bntoIgnore, err := LoadBntoIgnore(dir)
 	if err != nil {
-		// If we can't load .bentoignore, log warning but continue
+		// If we can't load .bntoignore, log warning but continue
 		// (don't want to break existing workflows)
-		fmt.Fprintf(os.Stderr, "Warning: failed to load .bentoignore: %v\n", err)
-	} else if bentoIgnore.ShouldIgnore(path) {
-		return nil, fmt.Errorf("file %s is protected by .bentoignore and cannot be overwritten", path)
+		fmt.Fprintf(os.Stderr, "Warning: failed to load .bntoignore: %v\n", err)
+	} else if bntoIgnore.ShouldIgnore(path) {
+		return nil, fmt.Errorf("file %s is protected by .bntoignore and cannot be overwritten", path)
 	}
 
 	err = os.WriteFile(path, []byte(content), 0644)

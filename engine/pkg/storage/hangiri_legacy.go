@@ -4,34 +4,34 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // Legacy methods for backward compatibility
-// These maintain the old API but delegate to the new bento-specific methods.
+// These maintain the old API but delegate to the new bnto-specific methods.
 
-// Save saves a bento definition using the legacy API.
-// Deprecated: Use SaveBento instead.
+// Save saves a bnto definition using the legacy API.
+// Deprecated: Use SaveBnto instead.
 func (s *Storage) Save(ctx context.Context, name string, def *node.Definition) error {
-	return s.SaveBento(ctx, name, def)
+	return s.SaveBnto(ctx, name, def)
 }
 
-// Load loads a bento definition using the legacy API.
-// Deprecated: Use LoadBento instead.
+// Load loads a bnto definition using the legacy API.
+// Deprecated: Use LoadBnto instead.
 func (s *Storage) Load(ctx context.Context, name string) (*node.Definition, error) {
-	return s.LoadBento(ctx, name)
+	return s.LoadBnto(ctx, name)
 }
 
-// List returns all saved bento names using the legacy API.
-// Deprecated: Use ListBentos instead.
+// List returns all saved bnto names using the legacy API.
+// Deprecated: Use ListBntos instead.
 func (s *Storage) List(ctx context.Context) ([]string, error) {
-	return s.ListBentos(ctx)
+	return s.ListBntos(ctx)
 }
 
-// Delete removes a bento using the legacy API.
-// Deprecated: Use DeleteBento instead.
+// Delete removes a bnto using the legacy API.
+// Deprecated: Use DeleteBnto instead.
 func (s *Storage) Delete(ctx context.Context, name string) error {
-	return s.DeleteBento(ctx, name)
+	return s.DeleteBnto(ctx, name)
 }
 
 // marshal serializes a definition to JSON with indentation.

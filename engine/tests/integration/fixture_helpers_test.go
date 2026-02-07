@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/node"
-	"github.com/Develonaut/bento/pkg/registry"
+	"github.com/Develonaut/bnto/pkg/engine"
+	"github.com/Develonaut/bnto/pkg/node"
+	"github.com/Develonaut/bnto/pkg/registry"
 )
 
-// loadFixture reads and unmarshals a .bento.json fixture file.
+// loadFixture reads and unmarshals a .bnto.json fixture file.
 func loadFixture(t *testing.T, path string) *node.Definition {
 	t.Helper()
 

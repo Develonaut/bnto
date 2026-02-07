@@ -1,6 +1,6 @@
-// Package integration provides end-to-end integration tests for bento execution.
+// Package integration provides end-to-end integration tests for bnto execution.
 //
-// These tests simulate real user workflows by executing actual bentos
+// These tests simulate real user workflows by executing actual bntos
 // from the examples/ folder with real data.
 package integration
 
@@ -11,14 +11,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/engine"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // TestUserSimulation_ItemFolderWorkflow simulates a real user workflow:
-// 1. Load actual example bento from examples/ folder
-// 2. Validate the bento (optional)
-// 3. Execute the bento
+// 1. Load actual example bnto from examples/ folder
+// 2. Validate the bnto (optional)
+// 3. Execute the bnto
 // 4. Verify results
 //
 // This tests the complete end-to-end user experience using the ACTUAL
@@ -41,38 +41,38 @@ func TestUserSimulation_ItemFolderWorkflow(t *testing.T) {
 	}
 	defer func() { _ = os.Chdir(originalWd) }() // Restore original directory after test
 
-	// Step 1: User loads the example bento
-	t.Log("Step 1: User runs 'bento run examples/csv-to-folders.bento.json'")
-	bentoPath := "examples/csv-to-folders.bento.json"
+	// Step 1: User loads the example bnto
+	t.Log("Step 1: User runs 'bnto run examples/csv-to-folders.bnto.json'")
+	bntoPath := "examples/csv-to-folders.bnto.json"
 
-	// Load the actual example bento file
-	data, err := os.ReadFile(bentoPath)
+	// Load the actual example bnto file
+	data, err := os.ReadFile(bntoPath)
 	if err != nil {
-		t.Fatalf("Failed to load example bento: %v", err)
+		t.Fatalf("Failed to load example bnto: %v", err)
 	}
 
 	var def node.Definition
 	if err := json.Unmarshal(data, &def); err != nil {
-		t.Fatalf("Failed to parse example bento: %v", err)
+		t.Fatalf("Failed to parse example bnto: %v", err)
 	}
 
-	t.Logf("  ✓ Loaded bento: %s", def.Name)
+	t.Logf("  ✓ Loaded bnto: %s", def.Name)
 	t.Log("")
 
-	// Step 2: User validates the bento
-	t.Log("Step 2: User validates bento with 'bento validate'")
+	// Step 2: User validates the bnto
+	t.Log("Step 2: User validates bnto with 'bnto validate'")
 	t.Log("  ✓ Validation passed (skipped in test)")
 	t.Log("")
 
-	// Step 3: User runs the bento
-	t.Log("Step 3: Bento execution begins")
+	// Step 3: User runs the bnto
+	t.Log("Step 3: Bnto execution begins")
 	t.Log("")
 
 	// Create registry and engine
 	p := createRegistry()
 	eng := engine.New(p, nil)
 
-	// Execute (this is what happens when user runs 'bento run')
+	// Execute (this is what happens when user runs 'bnto run')
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -100,7 +100,7 @@ func TestUserSimulation_ItemFolderWorkflow(t *testing.T) {
 		"Test Item C",
 	}
 
-	// The example bento creates folders in output/ (from project root)
+	// The example bnto creates folders in output/ (from project root)
 	outputDir := "output"
 
 	for _, itemName := range expectedItems {
@@ -120,8 +120,8 @@ func TestUserSimulation_ItemFolderWorkflow(t *testing.T) {
 }
 
 // TestUserSimulation_ItemFolderWithOverlaysWorkflow simulates a real user workflow:
-// 1. Load actual example bento from examples/ folder
-// 2. Execute the bento with indexed overlay copying
+// 1. Load actual example bnto from examples/ folder
+// 2. Execute the bnto with indexed overlay copying
 // 3. Verify folders and overlay files were created correctly
 //
 // This tests the complete end-to-end workflow for creating folders from CSV
@@ -144,38 +144,38 @@ func TestUserSimulation_ItemFolderWithOverlaysWorkflow(t *testing.T) {
 	}
 	defer func() { _ = os.Chdir(originalWd) }() // Restore original directory after test
 
-	// Step 1: User loads the example bento
-	t.Log("Step 1: User runs 'bento run examples/csv-to-folders-with-overlays.bento.json'")
-	bentoPath := "examples/csv-to-folders-with-overlays.bento.json"
+	// Step 1: User loads the example bnto
+	t.Log("Step 1: User runs 'bnto run examples/csv-to-folders-with-overlays.bnto.json'")
+	bntoPath := "examples/csv-to-folders-with-overlays.bnto.json"
 
-	// Load the actual example bento file
-	data, err := os.ReadFile(bentoPath)
+	// Load the actual example bnto file
+	data, err := os.ReadFile(bntoPath)
 	if err != nil {
-		t.Fatalf("Failed to load example bento: %v", err)
+		t.Fatalf("Failed to load example bnto: %v", err)
 	}
 
 	var def node.Definition
 	if err := json.Unmarshal(data, &def); err != nil {
-		t.Fatalf("Failed to parse example bento: %v", err)
+		t.Fatalf("Failed to parse example bnto: %v", err)
 	}
 
-	t.Logf("  ✓ Loaded bento: %s", def.Name)
+	t.Logf("  ✓ Loaded bnto: %s", def.Name)
 	t.Log("")
 
-	// Step 2: User validates the bento
-	t.Log("Step 2: User validates bento with 'bento validate'")
+	// Step 2: User validates the bnto
+	t.Log("Step 2: User validates bnto with 'bnto validate'")
 	t.Log("  ✓ Validation passed (skipped in test)")
 	t.Log("")
 
-	// Step 3: User runs the bento
-	t.Log("Step 3: Bento execution begins")
+	// Step 3: User runs the bnto
+	t.Log("Step 3: Bnto execution begins")
 	t.Log("")
 
 	// Create registry and engine
 	p := createRegistry()
 	eng := engine.New(p, nil)
 
-	// Execute (this is what happens when user runs 'bento run')
+	// Execute (this is what happens when user runs 'bnto run')
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -206,7 +206,7 @@ func TestUserSimulation_ItemFolderWithOverlaysWorkflow(t *testing.T) {
 		{"Test Item C", 2},
 	}
 
-	// The example bento creates folders in output/ (from project root)
+	// The example bnto creates folders in output/ (from project root)
 	outputDir := "output"
 
 	for _, item := range expectedItems {

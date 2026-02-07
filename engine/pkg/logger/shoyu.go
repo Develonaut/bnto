@@ -122,12 +122,12 @@ func (l *Logger) ErrorContext(ctx context.Context, msg string, args ...any) {
 }
 
 // With creates a child logger with additional context fields.
-// This is used by the engine to add trace IDs, bento IDs, node IDs, etc.
+// This is used by the engine to add trace IDs, bnto IDs, node IDs, etc.
 //
 // Example:
 //
 //	contextLogger := logger.With(
-//	    "bento_id", "my-workflow",
+//	    "bnto_id", "my-workflow",
 //	    "node_id", "node-1")
 func (l *Logger) With(args ...any) *Logger {
 	return &Logger{

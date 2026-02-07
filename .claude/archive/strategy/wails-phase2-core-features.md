@@ -1,5 +1,5 @@
 # Phase 2: Core Features
-**Bento Desktop - Wails Implementation**
+**Bnto Desktop - Wails Implementation**
 
 **Duration:** 3-4 weeks
 **Goal:** Build production-ready workflow execution and monitoring UI
@@ -110,7 +110,7 @@ function WorkflowCard({ workflow, onSelect }: {
 
 2. Add Go methods for workflow listing
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
 type WorkflowEntry struct {
     Path         string `json:"path"`
@@ -125,7 +125,7 @@ func (a *App) ListWorkflows() ([]WorkflowEntry, error) {
 
     var entries []WorkflowEntry
     for _, dir := range dirs {
-        files, err := filepath.Glob(filepath.Join(dir, "*.bento.json"))
+        files, err := filepath.Glob(filepath.Join(dir, "*.bnto.json"))
         if err != nil {
             continue
         }
@@ -152,8 +152,8 @@ func (a *App) ListWorkflows() ([]WorkflowEntry, error) {
 func (a *App) getWorkflowDirectories() []string {
     // TODO: Get from settings in Phase 4
     return []string{
-        "/Users/Ryan/Code/bento/examples",
-        filepath.Join(os.Getenv("HOME"), "Bento", "Workflows"),
+        "/Users/Ryan/Code/bnto/examples",
+        filepath.Join(os.Getenv("HOME"), "Bnto", "Workflows"),
     }
 }
 
@@ -164,7 +164,7 @@ func (a *App) GetWorkflowInfo(path string) (*neta.Definition, error) {
 
 3. Add favorites functionality
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
 func (a *App) AddFavorite(path string) error {
     // TODO: Persist to settings
@@ -194,7 +194,7 @@ func (a *App) ListFavorites() ([]string, error) {
 - `frontend/src/components/WorkflowBrowser/WorkflowBrowser.css`
 
 **Files Modified:**
-- `cmd/bento-desktop/app.go`
+- `cmd/bnto-desktop/app.go`
 
 ---
 
@@ -212,8 +212,8 @@ package execution
 import (
     "context"
     "sync"
-    "github.com/yourusername/bento/pkg/itamae"
-    "github.com/yourusername/bento/pkg/neta"
+    "github.com/yourusername/bnto/pkg/itamae"
+    "github.com/yourusername/bnto/pkg/neta"
 )
 
 type Manager struct {
@@ -295,10 +295,10 @@ func generateID() string {
 
 2. Add execution methods to App
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
 import (
-    "github.com/yourusername/bento/cmd/bento-desktop/internal/desktop/execution"
+    "github.com/yourusername/bnto/cmd/bnto-desktop/internal/desktop/execution"
 )
 
 type App struct {
@@ -374,7 +374,7 @@ func (a *App) monitorExecution(id string) {
 - `internal/desktop/execution/manager_test.go`
 
 **Files Modified:**
-- `cmd/bento-desktop/app.go`
+- `cmd/bnto-desktop/app.go`
 
 ---
 
@@ -568,7 +568,7 @@ func (m *Manager) addLog(executionID string, entry LogEntry) {
 
 2. Add log retrieval methods
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
 func (a *App) GetExecutionLogs(id string) ([]execution.LogEntry, error) {
     exec, err := a.execMgr.GetStatus(id)
@@ -677,7 +677,7 @@ function LogEntry({ log }: { log: LogEntry }) {
 
 **Files Modified:**
 - `internal/desktop/execution/manager.go`
-- `cmd/bento-desktop/app.go`
+- `cmd/bnto-desktop/app.go`
 
 ---
 
@@ -689,7 +689,7 @@ function LogEntry({ log }: { log: LogEntry }) {
 
 1. Add node library methods
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 
 type NodeTypeInfo struct {
     Type        string            `json:"type"`
@@ -875,7 +875,7 @@ function NodeDetails({ nodeType }: { nodeType: string }) {
 - `frontend/src/components/NodeLibrary/NodeLibrary.css`
 
 **Files Modified:**
-- `cmd/bento-desktop/app.go`
+- `cmd/bnto-desktop/app.go`
 
 ---
 
@@ -904,7 +904,7 @@ export default function App() {
     return (
         <div className="app">
             <nav className="sidebar">
-                <h1>Bento Desktop</h1>
+                <h1>Bnto Desktop</h1>
                 <button onClick={() => setActiveView('browser')}>Workflows</button>
                 <button onClick={() => setActiveView('execute')}>Execute</button>
                 <button onClick={() => setActiveView('logs')}>Logs</button>
@@ -1006,12 +1006,12 @@ export default function App() {
 - [ ] `frontend/src/components/LogViewer/` - Log display
 - [ ] `frontend/src/components/NodeLibrary/` - Node documentation
 - [ ] `internal/desktop/execution/` - Execution manager
-- [ ] Updated `cmd/bento-desktop/app.go` - All new methods
+- [ ] Updated `cmd/bnto-desktop/app.go` - All new methods
 
 ### Documentation Deliverables
 
-- [ ] Updated `cmd/bento-desktop/ARCHITECTURE.md` - Document new features
-- [ ] `cmd/bento-desktop/USER_GUIDE.md` - Basic usage guide
+- [ ] Updated `cmd/bnto-desktop/ARCHITECTURE.md` - Document new features
+- [ ] `cmd/bnto-desktop/USER_GUIDE.md` - Basic usage guide
 
 ---
 
@@ -1065,7 +1065,7 @@ func TestExecutionManager(t *testing.T) {
     mgr := NewManager()
 
     // Load test workflow
-    def, _ := hangiri.Load("testdata/simple.bento.json")
+    def, _ := hangiri.Load("testdata/simple.bnto.json")
 
     // Start execution
     execID, err := mgr.Start(context.Background(), def)
@@ -1128,7 +1128,7 @@ After completing Phase 2:
 ## Colossus Review Prompt
 
 ```
-I've completed Phase 2 (Core Features) for Bento Desktop.
+I've completed Phase 2 (Core Features) for Bnto Desktop.
 
 Before marking this phase complete, please:
 
@@ -1150,7 +1150,7 @@ Before marking this phase complete, please:
 
 4. Verify all Task Acceptance Criteria are met (listed in wails-phase2-core-features.md)
 
-5. Run the code-review command: /code-review cmd/bento-desktop/ internal/desktop/
+5. Run the code-review command: /code-review cmd/bnto-desktop/ internal/desktop/
 
 Key areas to scrutinize:
 - Is execution/manager.go properly isolated and tested?

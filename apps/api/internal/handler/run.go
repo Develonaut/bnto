@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/api"
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/api"
+	"github.com/Develonaut/bnto/pkg/node"
 
-	"github.com/Develonaut/bento-api/internal/execution"
+	"github.com/Develonaut/bnto-api/internal/execution"
 )
 
 // runRequest is the JSON body for POST /api/run.
@@ -21,7 +21,7 @@ type runRequest struct {
 
 // RunWorkflow returns an http.HandlerFunc for POST /api/run.
 // It starts an async execution and returns 202 with the execution ID.
-func RunWorkflow(svc *api.BentoService, mgr *execution.Manager) http.HandlerFunc {
+func RunWorkflow(svc *api.BntoService, mgr *execution.Manager) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req runRequest
 		if err := decodeBody(r, &req); err != nil {
@@ -49,7 +49,7 @@ func RunWorkflow(svc *api.BentoService, mgr *execution.Manager) http.HandlerFunc
 }
 
 // runAsync executes a workflow in the background, updating the manager.
-func runAsync(svc *api.BentoService, mgr *execution.Manager, id string, def *node.Definition, timeout time.Duration) {
+func runAsync(svc *api.BntoService, mgr *execution.Manager, id string, def *node.Definition, timeout time.Duration) {
 	mgr.SetRunning(id)
 
 	opts := api.RunOptions{

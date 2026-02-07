@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/node/library/group"
+	"github.com/Develonaut/bnto/pkg/node/library/group"
 )
 
 // TestGroup_SequentialExecution verifies sequential execution of child nodes.

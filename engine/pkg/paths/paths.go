@@ -20,7 +20,7 @@ import (
 //   - {{GDRIVE}} - Google Drive root
 //   - {{DROPBOX}} - Dropbox root
 //   - {{ONEDRIVE}} - OneDrive root
-//   - {{BENTO_HOME}} - Configured bento home
+//   - {{BNTO_HOME}} - Configured bnto home
 //   - ${VAR} or $VAR - Environment variables
 func ResolvePath(path string) (string, error) {
 	if path == "" {
@@ -42,9 +42,9 @@ func ResolvePath(path string) (string, error) {
 
 // expandSpecialMarkers replaces special markers with platform-specific paths
 func expandSpecialMarkers(path string) string {
-	// Expand markers in order: BENTO_HOME first, then cloud storage
-	if strings.Contains(path, "{{BENTO_HOME}}") {
-		path = strings.ReplaceAll(path, "{{BENTO_HOME}}", LoadBentoHome())
+	// Expand markers in order: BNTO_HOME first, then cloud storage
+	if strings.Contains(path, "{{BNTO_HOME}}") {
+		path = strings.ReplaceAll(path, "{{BNTO_HOME}}", LoadBntoHome())
 	}
 
 	path = replaceMarkerIfDetected(path, "{{GDRIVE}}", DetectGoogleDrive())
@@ -74,7 +74,7 @@ func CompressPath(path string) string {
 	if compressed, ok := tryCompressWithMarker(cleaned, DetectOneDrive(), "{{ONEDRIVE}}"); ok {
 		return compressed
 	}
-	if compressed, ok := tryCompressWithMarker(cleaned, LoadBentoHome(), "{{BENTO_HOME}}"); ok {
+	if compressed, ok := tryCompressWithMarker(cleaned, LoadBntoHome(), "{{BNTO_HOME}}"); ok {
 		return compressed
 	}
 

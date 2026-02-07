@@ -8,7 +8,7 @@ test.describe("Splash page", () => {
   test("loads with hero content and passphrase input", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.locator("h1")).toHaveText("Bento");
+    await expect(page.locator("h1")).toHaveText("Bnto");
     await expect(page.getByText("Workflow automation, simplified.")).toBeVisible();
     await expect(page.getByPlaceholder("Enter passphrase")).toBeVisible();
     await expect(page.getByRole("link", { name: "Sign In" })).not.toBeVisible();
@@ -54,7 +54,7 @@ test.describe("Splash page", () => {
     await expect(page.getByRole("link", { name: "Sign In" })).toBeVisible();
 
     await page.waitForFunction(() =>
-      document.cookie.includes("bento-access=granted")
+      document.cookie.includes("bnto-access=granted")
     );
     await page.reload();
 

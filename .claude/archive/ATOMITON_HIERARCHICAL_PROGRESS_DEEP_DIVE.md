@@ -467,7 +467,7 @@ The difference is in the **executor**:
 
 ---
 
-## 6. Implementation Pattern for Bento
+## 6. Implementation Pattern for Bnto
 
 ### Recommended Approach: Flat Graph with Weighted Progress
 
@@ -665,9 +665,9 @@ func (i *Itamae) executeForEachLoop(
 }
 ```
 
-### Key Differences from Current Bento Implementation
+### Key Differences from Current Bnto Implementation
 
-| Aspect | Current Bento | Recommended (Atomiton Style) |
+| Aspect | Current Bnto | Recommended (Atomiton Style) |
 |--------|---------------|------------------------------|
 | **Loop children** | Counted in graph | NOT counted in graph |
 | **Progress calculation** | Simple count | Weighted sum |
@@ -743,7 +743,7 @@ func (i *Itamae) executeForEachLoop(
 
 ---
 
-## 8. Key Takeaways for Bento
+## 8. Key Takeaways for Bnto
 
 1. **Flatten the graph** - Don't track hierarchy, flatten all leaf nodes into a single map
 2. **Loops as leaf nodes** - Don't expose loop children to the graph analyzer
@@ -775,7 +775,7 @@ func (i *Itamae) executeForEachLoop(
 
 **Context:** You are Colossus, the Go standards guardian who prevents reinventing wheels, ensures idiomatic Go, and maintains clean module boundaries. You have been given this analysis document that shows how Atomiton (our TypeScript predecessor) implements accurate progress tracking for graph execution.
 
-**Goal:** Implement accurate progress tracking in Bento's itamae executor that will provide precise progress reporting in both logs and the TUI progress bar. The progress tracking must handle loops correctly and follow Go idioms.
+**Goal:** Implement accurate progress tracking in Bnto's itamae executor that will provide precise progress reporting in both logs and the TUI progress bar. The progress tracking must handle loops correctly and follow Go idioms.
 
 ### Current Problem
 
@@ -833,7 +833,7 @@ type executionGraph struct {
     TotalWeight int
 }
 
-// analyzeGraph flattens the bento definition into an execution graph
+// analyzeGraph flattens the bnto definition into an execution graph
 // Groups are transparent (children are flattened)
 // Loops are opaque (count as single node, children hidden)
 func analyzeGraph(def *neta.Definition) *executionGraph {
@@ -915,7 +915,7 @@ type executionState struct {
     mu             sync.RWMutex
 }
 
-// Itamae orchestrates bento execution
+// Itamae orchestrates bnto execution
 type Itamae struct {
     pantry      *pantry.Pantry
     logger      *shoyu.Logger
@@ -1025,7 +1025,7 @@ func (i *Itamae) Serve(ctx context.Context, def *neta.Definition) (*Result, erro
     }
 
     if i.logger != nil {
-        msg := msgBentoStarted(def.Name)
+        msg := msgBntoStarted(def.Name)
         i.logger.Info(msg.format())
     }
 
@@ -1372,7 +1372,7 @@ pkg/miso/executor.go             # Modify - receive progress from messenger
 5. Update log messages with progress
 6. Update TUI to use new progress
 7. Add comprehensive tests
-8. Verify with example bentos
+8. Verify with example bntos
 
 ### Anti-Patterns to Avoid
 

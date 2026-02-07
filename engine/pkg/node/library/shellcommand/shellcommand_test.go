@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/node/library/shellcommand"
+	"github.com/Develonaut/bnto/pkg/node/library/shellcommand"
 )
 
 // TestShellCommand_BasicExecution tests basic command execution.
@@ -425,7 +425,7 @@ func TestShellCommand_RetrySucceedsAfterStall(t *testing.T) {
 	sc := shellcommand.New()
 
 	// Use a temp file to track attempts
-	tmpFile := "/tmp/bento_retry_test_stall"
+	tmpFile := "/tmp/bnto_retry_test_stall"
 
 	// Clean up before test
 	params := map[string]interface{}{

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { Button, Input } from "@bento/ui";
+import { Button, Input } from "@bnto/ui";
 
 export default function SplashPage() {
   const [unlocked, setUnlocked] = useState(false);
@@ -11,7 +11,7 @@ export default function SplashPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (document.cookie.includes("bento-access=granted")) {
+    if (document.cookie.includes("bnto-access=granted")) {
       setUnlocked(true);
     }
   }, []);
@@ -42,7 +42,7 @@ export default function SplashPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
-      <h1 className="text-5xl font-bold tracking-tight">Bento</h1>
+      <h1 className="text-5xl font-bold tracking-tight">Bnto</h1>
       <p className="mt-4 text-lg text-muted-foreground">
         Workflow automation, simplified.
       </p>

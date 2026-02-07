@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 
-	"github.com/Develonaut/bento-api/internal/execution"
+	"github.com/Develonaut/bnto-api/internal/execution"
 )
 
 // Contract tests verify that Go API JSON responses match the TypeScript
-// types defined in @bento/core. If these tests break, the TS types
+// types defined in @bnto/core. If these tests break, the TS types
 // must be updated to match (or vice versa).
 
 // TestContract_ValidationResult verifies POST /api/validate returns

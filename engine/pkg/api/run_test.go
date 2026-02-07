@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/node"
-	"github.com/Develonaut/bento/pkg/storage"
+	"github.com/Develonaut/bnto/pkg/node"
+	"github.com/Develonaut/bnto/pkg/storage"
 )
 
-// loadFixture reads a .bento.json fixture file relative to the engine root.
+// loadFixture reads a .bnto.json fixture file relative to the engine root.
 func loadFixture(t *testing.T, path string) *node.Definition {
 	t.Helper()
 	data, err := os.ReadFile(path)
@@ -43,7 +43,7 @@ func chdirToEngineRoot(t *testing.T) {
 func TestRunWorkflow_Success(t *testing.T) {
 	chdirToEngineRoot(t)
 	svc := newTestService(t)
-	def := loadFixture(t, "tests/fixtures/workflows/edit-fields-pipeline.bento.json")
+	def := loadFixture(t, "tests/fixtures/workflows/edit-fields-pipeline.bnto.json")
 
 	result, err := svc.RunWorkflow(context.Background(), def, RunOptions{
 		Timeout: 30 * time.Second,
@@ -131,7 +131,7 @@ func TestRunWorkflow_Timeout(t *testing.T) {
 func TestRunWorkflow_Progress(t *testing.T) {
 	chdirToEngineRoot(t)
 	svc := newTestService(t)
-	def := loadFixture(t, "tests/fixtures/workflows/edit-fields-pipeline.bento.json")
+	def := loadFixture(t, "tests/fixtures/workflows/edit-fields-pipeline.bnto.json")
 
 	var mu sync.Mutex
 	var events []string
@@ -213,7 +213,7 @@ func TestRunWorkflow_ValidationError(t *testing.T) {
 	}
 }
 
-func newTestServiceWithStorage(t *testing.T) (*BentoService, string) {
+func newTestServiceWithStorage(t *testing.T) (*BntoService, string) {
 	t.Helper()
 	dir := t.TempDir()
 	return New(DefaultRegistry(), storage.New(dir)), dir

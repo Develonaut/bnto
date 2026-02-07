@@ -3,7 +3,7 @@ package engine
 import (
 	"fmt"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // graph represents a directed graph for node execution order.
@@ -13,7 +13,7 @@ type graph struct {
 	incoming map[string]int              // Node ID -> Count of incoming edges
 }
 
-// buildGraph creates a graph from a bento definition.
+// buildGraph creates a graph from a bnto definition.
 func buildGraph(def *node.Definition) (*graph, error) {
 	g := &graph{
 		nodes:    make(map[string]*node.Definition),

@@ -8,8 +8,8 @@
 **Date:** 2025-10-22
 **Updated:** 2026-02-06
 **Status:** Concept valid, deferred to Phase 4
-**Goal:** Validate bento box metaphor for workflow building with elegant animations
-**Inspiration:** Mini Motorways aesthetic + traditional bento box compartments
+**Goal:** Validate bnto box metaphor for workflow building with elegant animations
+**Inspiration:** Mini Motorways aesthetic + traditional bnto box compartments
 
 ---
 
@@ -17,7 +17,7 @@
 
 ### The Bento Box Metaphor
 
-Instead of a traditional node graph editor (like React Flow), create a **literal bento box** interface:
+Instead of a traditional node graph editor (like React Flow), create a **literal bnto box** interface:
 
 ```
 ┌─────────────────────────────────────┐
@@ -40,8 +40,8 @@ Instead of a traditional node graph editor (like React Flow), create a **literal
 ### Key Visual Concepts
 
 1. **Ingredients (Neta)** - Individual task boxes you drag in
-2. **Compartments** - Sections within the bento box
-3. **Nested Boxes** - Groups/loops create sub-boxes (like multi-tier bento boxes)
+2. **Compartments** - Sections within the bnto box
+3. **Nested Boxes** - Groups/loops create sub-boxes (like multi-tier bnto boxes)
 4. **Flow** - Sequential placement (left to right, top to bottom)
 5. **Bobbling/Settling** - Smooth animations when dropping items
 
@@ -101,7 +101,7 @@ Instead of a traditional node graph editor (like React Flow), create a **literal
 
 ### Phase 1: Basic Bento Box (Week 1)
 
-**Goal:** Single-level bento box with draggable ingredients
+**Goal:** Single-level bnto box with draggable ingredients
 
 **Features:**
 1. Ingredient Palette (sidebar)
@@ -313,7 +313,7 @@ const nodeStyles = {
 ## Project Structure
 
 ```
-~/Code/bento-box-ui-poc/
+~/Code/bnto-box-ui-poc/
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
@@ -332,10 +332,10 @@ const nodeStyles = {
 │   │   │   ├── button.tsx
 │   │   │   ├── card.tsx
 │   │   │   └── ...
-│   │   ├── BentoBox/
-│   │   │   ├── BentoBox.tsx    # Main canvas
-│   │   │   ├── BentoItem.tsx   # Individual neta card
-│   │   │   ├── BentoGroup.tsx  # Nested container
+│   │   ├── BntoBox/
+│   │   │   ├── BntoBox.tsx    # Main canvas
+│   │   │   ├── BntoItem.tsx   # Individual neta card
+│   │   │   ├── BntoGroup.tsx  # Nested container
 │   │   │   └── DropZone.tsx    # Drop target
 │   │   ├── Palette/
 │   │   │   ├── Palette.tsx     # Ingredient sidebar
@@ -361,8 +361,8 @@ const nodeStyles = {
 ```bash
 # Create project
 cd ~/Code
-npm create vite@latest bento-box-ui-poc -- --template react-ts
-cd bento-box-ui-poc
+npm create vite@latest bnto-box-ui-poc -- --template react-ts
+cd bnto-box-ui-poc
 
 # Install dependencies
 npm install
@@ -381,15 +381,15 @@ npm install lucide-react  # Icons
 
 **Day 1-2: Setup & Layout**
 - Configure Tailwind with cream color palette
-- Create basic layout (Palette sidebar + BentoBox canvas)
+- Create basic layout (Palette sidebar + BntoBox canvas)
 - Set up shadcn/ui components
-- Create base components (BentoBox, Palette, BentoItem)
+- Create base components (BntoBox, Palette, BntoItem)
 
 **Day 3-4: Drag & Drop**
 - Implement @dnd-kit draggable/droppable
-- Drag from Palette to BentoBox
+- Drag from Palette to BntoBox
 - Drop animation with Framer Motion (bobble effect)
-- Auto-layout of items in BentoBox
+- Auto-layout of items in BntoBox
 
 **Day 5: Visual Polish**
 - Apply cream color palette
@@ -397,12 +397,12 @@ npm install lucide-react  # Icons
 - Card hover effects
 - Smooth transitions
 
-**Deliverable:** Can drag ingredients into bento box with smooth animations
+**Deliverable:** Can drag ingredients into bnto box with smooth animations
 
 ### Week 2: Nested Boxes (Phase 2)
 
 **Day 1-2: Container Components**
-- Create BentoGroup component (nested box)
+- Create BntoGroup component (nested box)
 - Implement nested drop zones
 - Visual hierarchy (shadows, borders)
 - Drag neta into groups
@@ -440,7 +440,7 @@ npm install lucide-react  # Icons
 - Add sound effects (optional, just for demo)
 - Record demo video
 
-**Deliverable:** Polished, delightful bento box UI PoC
+**Deliverable:** Polished, delightful bnto box UI PoC
 
 ---
 
@@ -521,9 +521,9 @@ const hoverAnimation = {
 
 ## Component Examples
 
-### BentoItem (Ingredient Card)
+### BntoItem (Ingredient Card)
 ```typescript
-interface BentoItemProps {
+interface BntoItemProps {
   id: string
   type: string
   name: string
@@ -533,7 +533,7 @@ interface BentoItemProps {
   onClick?: () => void
 }
 
-export function BentoItem({ id, type, name, color, icon, onDelete, onClick }: BentoItemProps) {
+export function BntoItem({ id, type, name, color, icon, onDelete, onClick }: BntoItemProps) {
   return (
     <motion.div
       layout
@@ -569,9 +569,9 @@ export function BentoItem({ id, type, name, color, icon, onDelete, onClick }: Be
 }
 ```
 
-### BentoGroup (Nested Container)
+### BntoGroup (Nested Container)
 ```typescript
-interface BentoGroupProps {
+interface BntoGroupProps {
   id: string
   type: 'loop' | 'group'
   children: React.ReactNode
@@ -579,7 +579,7 @@ interface BentoGroupProps {
   onToggle: () => void
 }
 
-export function BentoGroup({ id, type, children, expanded, onToggle }: BentoGroupProps) {
+export function BntoGroup({ id, type, children, expanded, onToggle }: BntoGroupProps) {
   return (
     <motion.div
       layout
@@ -626,7 +626,7 @@ export function BentoGroup({ id, type, children, expanded, onToggle }: BentoGrou
 - [ ] Everything feels tactile and responsive
 
 ### Functional Goals
-- [ ] Can drag ingredients from palette to bento box
+- [ ] Can drag ingredients from palette to bnto box
 - [ ] Can drag loop/group to create nested boxes
 - [ ] Can drag ingredients into nested boxes
 - [ ] Can reorder items within boxes
@@ -656,7 +656,7 @@ export function BentoGroup({ id, type, children, expanded, onToggle }: BentoGrou
 2. **Enhanced Features**
    - Visual connectors (lines between items)
    - Conditional branches (if/else compartments)
-   - Templates (pre-made bento boxes)
+   - Templates (pre-made bnto boxes)
    - Search/filter palette
    - Undo/redo
    - Copy/paste
@@ -678,21 +678,21 @@ export function BentoGroup({ id, type, children, expanded, onToggle }: BentoGrou
 ## Demo Scenarios
 
 ### Scenario 1: Simple HTTP → File Workflow
-1. Drag "HTTP Request" into bento box (bobbles and settles)
-2. Drag "File Write" into bento box (smoothly positions next to HTTP)
+1. Drag "HTTP Request" into bnto box (bobbles and settles)
+2. Drag "File Write" into bnto box (smoothly positions next to HTTP)
 3. Click items to configure
 4. Workflow complete!
 
 ### Scenario 2: Loop with Nested Tasks
-1. Drag "CSV Read" into bento box
-2. Drag "Loop" into bento box (creates nested container)
+1. Drag "CSV Read" into bnto box
+2. Drag "Loop" into bnto box (creates nested container)
 3. Drag "Edit Fields" into loop box (smoothly drops into nested area)
 4. Drag "Image Process" into loop box (repositions with smooth animation)
-5. Drag "Email Send" into main bento box (after loop)
+5. Drag "Email Send" into main bnto box (after loop)
 6. Collapse loop to see summary
 
 ### Scenario 3: Complex Nested Structure
-1. Create main bento box workflow
+1. Create main bnto box workflow
 2. Add Group container
 3. Add Parallel container inside Group
 4. Add multiple tasks inside Parallel
@@ -705,7 +705,7 @@ export function BentoGroup({ id, type, children, expanded, onToggle }: BentoGrou
 
 Through this PoC, we want to validate:
 
-1. **Is the bento box metaphor intuitive?**
+1. **Is the bnto box metaphor intuitive?**
    - Do users understand where to drag things?
    - Is nesting clear?
    - Does it feel natural?
@@ -762,5 +762,5 @@ Through this PoC, we want to validate:
 ---
 
 **Status:** Ready to implement
-**Location:** `~/Code/bento-box-ui-poc/`
+**Location:** `~/Code/bnto-box-ui-poc/`
 **Decision Point:** After PoC, decide whether to use for Wails Phase 3 or stick with React Flow

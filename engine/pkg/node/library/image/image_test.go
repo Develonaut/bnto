@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	imagenode "github.com/Develonaut/bento/pkg/node/library/image"
+	imagenode "github.com/Develonaut/bnto/pkg/node/library/image"
 )
 
 // createTestImage creates a simple test PNG image
@@ -650,15 +650,15 @@ func TestImage_DetermineFormatFromExtension(t *testing.T) {
 	}
 }
 
-// TestImage_BentoIgnoreProtection tests .bentoignore blocks overwriting protected files.
-func TestImage_BentoIgnoreProtection(t *testing.T) {
+// TestImage_BntoIgnoreProtection tests .bntoignore blocks overwriting protected files.
+func TestImage_BntoIgnoreProtection(t *testing.T) {
 	ctx := context.Background()
 
 	tmpDir := t.TempDir()
 
-	// Create .bentoignore that protects *.png
-	bentoIgnorePath := filepath.Join(tmpDir, ".bentoignore")
-	if err := os.WriteFile(bentoIgnorePath, []byte("*.png\n"), 0644); err != nil {
+	// Create .bntoignore that protects *.png
+	bntoIgnorePath := filepath.Join(tmpDir, ".bntoignore")
+	if err := os.WriteFile(bntoIgnorePath, []byte("*.png\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -679,11 +679,11 @@ func TestImage_BentoIgnoreProtection(t *testing.T) {
 
 	_, err := imgNode.Execute(ctx, params)
 	if err == nil {
-		t.Fatal("Expected error for .bentoignore protected file, got nil")
+		t.Fatal("Expected error for .bntoignore protected file, got nil")
 	}
 
-	if !strings.Contains(err.Error(), "bentoignore") && !strings.Contains(err.Error(), "protected") {
-		t.Errorf("Expected bentoignore-related error, got: %v", err)
+	if !strings.Contains(err.Error(), "bntoignore") && !strings.Contains(err.Error(), "protected") {
+		t.Errorf("Expected bntoignore-related error, got: %v", err)
 	}
 }
 
@@ -970,17 +970,17 @@ func TestImage_DetermineFormatUnknownExtension(t *testing.T) {
 	}
 }
 
-// TestImage_BentoIgnoreWithPathPattern tests .bentoignore with path-containing patterns.
-func TestImage_BentoIgnoreWithPathPattern(t *testing.T) {
+// TestImage_BntoIgnoreWithPathPattern tests .bntoignore with path-containing patterns.
+func TestImage_BntoIgnoreWithPathPattern(t *testing.T) {
 	ctx := context.Background()
 
 	tmpDir := t.TempDir()
 	subDir := filepath.Join(tmpDir, "images")
 	os.Mkdir(subDir, 0755)
 
-	// Create .bentoignore in subdir that protects using path pattern
-	bentoIgnorePath := filepath.Join(subDir, ".bentoignore")
-	if err := os.WriteFile(bentoIgnorePath, []byte("images/protected.png\n"), 0644); err != nil {
+	// Create .bntoignore in subdir that protects using path pattern
+	bntoIgnorePath := filepath.Join(subDir, ".bntoignore")
+	if err := os.WriteFile(bntoIgnorePath, []byte("images/protected.png\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1000,20 +1000,20 @@ func TestImage_BentoIgnoreWithPathPattern(t *testing.T) {
 
 	_, err := imgNode.Execute(ctx, params)
 	// The path pattern may or may not match depending on how the path resolves.
-	// What matters is the bentoignore code is exercised.
+	// What matters is the bntoignore code is exercised.
 	_ = err
 }
 
-// TestImage_BentoIgnoreLoadFromDirectory tests loading bentoignore with comments and blanks.
-func TestImage_BentoIgnoreLoadFromDirectory(t *testing.T) {
+// TestImage_BntoIgnoreLoadFromDirectory tests loading bntoignore with comments and blanks.
+func TestImage_BntoIgnoreLoadFromDirectory(t *testing.T) {
 	ctx := context.Background()
 
 	tmpDir := t.TempDir()
 
-	// Create .bentoignore with comments and blank lines
-	bentoIgnorePath := filepath.Join(tmpDir, ".bentoignore")
+	// Create .bntoignore with comments and blank lines
+	bntoIgnorePath := filepath.Join(tmpDir, ".bntoignore")
 	content := "# This is a comment\n\n*.original\n# Another comment\nbackup/*\n"
-	if err := os.WriteFile(bentoIgnorePath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(bntoIgnorePath, []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1034,7 +1034,7 @@ func TestImage_BentoIgnoreLoadFromDirectory(t *testing.T) {
 
 	_, err := imgNode.Execute(ctx, params)
 	if err == nil {
-		t.Fatal("Expected error for .bentoignore protected file, got nil")
+		t.Fatal("Expected error for .bntoignore protected file, got nil")
 		os.Remove(outputPath)
 	}
 }

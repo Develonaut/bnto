@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/engine"
+	"github.com/Develonaut/bnto/pkg/engine"
 )
 
 func TestEditFieldsPipeline(t *testing.T) {
@@ -12,7 +12,7 @@ func TestEditFieldsPipeline(t *testing.T) {
 	defer restore()
 
 	reg := createRegistry()
-	result := executeFixture(t, "tests/fixtures/workflows/edit-fields-pipeline.bento.json", reg, 10*time.Second)
+	result := executeFixture(t, "tests/fixtures/workflows/edit-fields-pipeline.bnto.json", reg, 10*time.Second)
 
 	if result.Status != engine.StatusSuccess {
 		t.Fatalf("Expected success, got %s", result.Status)
@@ -24,8 +24,8 @@ func TestEditFieldsPipeline(t *testing.T) {
 		t.Fatal("setFields output missing or wrong type")
 	}
 
-	if name, _ := setFieldsOut["productName"].(string); name != "Bento Widget" {
-		t.Errorf("productName = %q, want %q", name, "Bento Widget")
+	if name, _ := setFieldsOut["productName"].(string); name != "Bnto Widget" {
+		t.Errorf("productName = %q, want %q", name, "Bnto Widget")
 	}
 	if category, _ := setFieldsOut["category"].(string); category != "tools" {
 		t.Errorf("category = %q, want %q", category, "tools")
@@ -45,8 +45,8 @@ func TestEditFieldsPipeline(t *testing.T) {
 		t.Fatal("transformFields mapped output missing")
 	}
 
-	if label, _ := mapped["label"].(string); label != "Bento Widget - tools" {
-		t.Errorf("label = %q, want %q", label, "Bento Widget - tools")
+	if label, _ := mapped["label"].(string); label != "Bnto Widget - tools" {
+		t.Errorf("label = %q, want %q", label, "Bnto Widget - tools")
 	}
 	if hasPrice, _ := mapped["hasPrice"].(bool); !hasPrice {
 		t.Error("hasPrice should be true")

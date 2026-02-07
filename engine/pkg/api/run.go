@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/logger"
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/engine"
+	"github.com/Develonaut/bnto/pkg/logger"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // RunOptions configures a workflow execution.
@@ -22,7 +22,7 @@ type RunOptions struct {
 // accepts an already-loaded Definition. Timeout and cancellation are
 // handled via the provided context; RunOptions.Timeout adds an
 // additional deadline on top of the context.
-func (s *BentoService) RunWorkflow(ctx context.Context, def *node.Definition, opts RunOptions) (*RunResult, error) {
+func (s *BntoService) RunWorkflow(ctx context.Context, def *node.Definition, opts RunOptions) (*RunResult, error) {
 	if err := s.validator.Validate(ctx, def); err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (s *BentoService) RunWorkflow(ctx context.Context, def *node.Definition, op
 //
 // No nodes are actually run. Returns validation status plus a list of
 // every node that would participate in execution.
-func (s *BentoService) DryRunWorkflow(ctx context.Context, def *node.Definition) (*DryRunResult, error) {
+func (s *BntoService) DryRunWorkflow(ctx context.Context, def *node.Definition) (*DryRunResult, error) {
 	vr, err := s.ValidateWorkflow(ctx, def)
 	if err != nil {
 		return nil, err

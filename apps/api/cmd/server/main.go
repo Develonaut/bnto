@@ -1,6 +1,6 @@
-// Package main is the entry point for the bento API server.
+// Package main is the entry point for the bnto API server.
 //
-// The API server exposes the bento engine over HTTP, allowing
+// The API server exposes the bnto engine over HTTP, allowing
 // the web frontend to run, validate, and manage workflows.
 package main
 
@@ -13,11 +13,11 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/api"
-	"github.com/Develonaut/bento/pkg/storage"
+	"github.com/Develonaut/bnto/pkg/api"
+	"github.com/Develonaut/bnto/pkg/storage"
 
-	"github.com/Develonaut/bento-api/internal/execution"
-	"github.com/Develonaut/bento-api/internal/server"
+	"github.com/Develonaut/bnto-api/internal/execution"
+	"github.com/Develonaut/bnto-api/internal/server"
 )
 
 func main() {
@@ -49,7 +49,7 @@ func main() {
 	defer stop()
 
 	go func() {
-		fmt.Printf("bento api listening on :%s\n", port)
+		fmt.Printf("bnto api listening on :%s\n", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server error: %v", err)
 		}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSignIn } from "@bento/auth";
+import { useSignIn } from "@bnto/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-} from "@bento/ui";
+} from "@bnto/ui";
 
 export default function SignInPage() {
   const signIn = useSignIn();

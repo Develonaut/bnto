@@ -1,4 +1,4 @@
-# Bento Monorepo Structure
+# Bnto Monorepo Structure
 **Go Backend + React Frontend with Transport-Agnostic API Layer**
 
 **Date:** 2025-12-15
@@ -13,7 +13,7 @@
 Standard Turborepo layout with Go engine alongside TypeScript packages:
 
 ```
-bento/
+bnto/
 ├── package.json                     # Turborepo root workspace
 ├── pnpm-workspace.yaml              # pnpm workspace config
 ├── turbo.json                       # Turborepo task config
@@ -23,35 +23,35 @@ bento/
 │
 ├── apps/
 │   ├── api/                         # Go HTTP API server (Phase 1)
-│   │   ├── go.mod                   # module github.com/Develonaut/bento-api
+│   │   ├── go.mod                   # module github.com/Develonaut/bnto-api
 │   │   └── cmd/server/              # Server binary (thin consumer of engine)
-│   ├── web/                         # @bento/web — Next.js cloud app (Phase 1)
-│   └── desktop/                     # @bento/desktop — Wails frontend (Phase 3)
+│   ├── web/                         # @bnto/web — Next.js cloud app (Phase 1)
+│   └── desktop/                     # @bnto/desktop — Wails frontend (Phase 3)
 │
 ├── packages/
-│   └── @bento/                      # Scoped internal packages (n8n pattern)
-│       ├── core/                    # @bento/core — Transport-agnostic API layer
+│   └── @bnto/                      # Scoped internal packages (n8n pattern)
+│       ├── core/                    # @bnto/core — Transport-agnostic API layer
 │       │   ├── package.json
 │       │   ├── tsconfig.json
 │       │   └── src/
-│       │       └── index.ts         # BentoAPI interface + types
-│       ├── ui/                      # @bento/ui — Design system (shadcn wrappers)
-│       │   ├── package.json
-│       │   ├── tsconfig.json
-│       │   └── src/
-│       │       └── index.ts
-│       ├── editor/                  # @bento/editor — Workflow editor components
+│       │       └── index.ts         # BntoAPI interface + types
+│       ├── ui/                      # @bnto/ui — Design system (shadcn wrappers)
 │       │   ├── package.json
 │       │   ├── tsconfig.json
 │       │   └── src/
 │       │       └── index.ts
-│       ├── auth/                   # @bento/auth — Cloud auth (wraps @convex-dev/auth)
+│       ├── editor/                  # @bnto/editor — Workflow editor components
+│       │   ├── package.json
+│       │   ├── tsconfig.json
+│       │   └── src/
+│       │       └── index.ts
+│       ├── auth/                   # @bnto/auth — Cloud auth (wraps @convex-dev/auth)
 │       │   ├── package.json
 │       │   ├── tsconfig.json
 │       │   └── src/
 │       │       ├── index.ts        # Provider + hooks (client)
 │       │       └── middleware.ts   # Next.js middleware helpers (server)
-│       └── backend/                # @bento/backend — Convex functions (cloud backend)
+│       └── backend/                # @bnto/backend — Convex functions (cloud backend)
 │           ├── package.json
 │           ├── tsconfig.json
 │           ├── .env.local           # Symlink → root .env.local
@@ -67,12 +67,12 @@ bento/
 │               └── crons.ts         # Monthly run counter reset
 │
 ├── engine/                          # Pure Go engine (core logic only)
-│   ├── go.mod                       # module github.com/Develonaut/bento
+│   ├── go.mod                       # module github.com/Develonaut/bnto
 │   ├── go.sum
 │   ├── cmd/
-│   │   └── bento/                   # CLI binary
+│   │   └── bnto/                   # CLI binary
 │   ├── pkg/
-│   │   ├── api/                     # Shared service layer (BentoService)
+│   │   ├── api/                     # Shared service layer (BntoService)
 │   │   ├── engine/                  # Orchestration (executor)
 │   │   ├── registry/                # Node type registry
 │   │   ├── storage/                 # Persistent storage
@@ -86,7 +86,7 @@ bento/
 │   │   ├── integration/             # End-to-end workflow tests
 │   │   ├── fixtures/                # Test fixture files
 │   │   └── mocks/                   # Mock implementations
-│   └── examples/                    # Example .bento.json files
+│   └── examples/                    # Example .bnto.json files
 │
 └── .claude/                         # Project strategy and decisions
     ├── PLAN.md
@@ -104,30 +104,30 @@ bento/
 | Root orchestrator | **Taskfile.dev** | Polyglot, Go-native, Wails-aligned |
 | Frontend orchestrator | **Turborepo** | Caching, dependency graph, standard layout |
 | Package manager | **pnpm workspaces** | Fast, efficient, workspace linking |
-| Package namespace | **`@bento/`** directory (n8n pattern) | Visual grouping of internal packages |
-| Go module path | **`github.com/Develonaut/bento`** | Unchanged — Go resolves relative to go.mod |
+| Package namespace | **`@bnto/`** directory (n8n pattern) | Visual grouping of internal packages |
+| Go module path | **`github.com/Develonaut/bnto`** | Unchanged — Go resolves relative to go.mod |
 | Go workspace | **`go.work` at repo root** | Connects engine/ and apps/api/ modules locally |
 | API server location | **`apps/api/`** | Follows Turborepo convention; engine stays pure ([decision](../decisions/API_SERVER_LOCATION.md)) |
-| API abstraction | **`@bento/core` with provider pattern** | Same UI code, different backends |
+| API abstraction | **`@bnto/core` with provider pattern** | Same UI code, different backends |
 
 ---
 
 ## Package Dependency Graph
 
 ```
-@bento/web ──────┬──→ @bento/auth ──→ @bento/backend (cloud auth only)
-                  ├──→ @bento/editor ──→ @bento/ui ──→ @bento/core
-@bento/desktop ──┘    (desktop skips @bento/auth)
+@bnto/web ──────┬──→ @bnto/auth ──→ @bnto/backend (cloud auth only)
+                  ├──→ @bnto/editor ──→ @bnto/ui ──→ @bnto/core
+@bnto/desktop ──┘    (desktop skips @bnto/auth)
 ```
 
 | Package | Dependencies | Purpose |
 |---------|-------------|---------|
-| `@bento/core` | zustand, @tanstack/react-query, @convex-dev/react-query, convex | Hooks, types, Zustand stores, React Query + transport adapters |
-| `@bento/auth` | `@convex-dev/auth`, `convex`, `@bento/backend` | Cloud auth — provider, hooks, middleware (web only) |
-| `@bento/ui` | `@bento/core` | shadcn thin wrappers — design system |
-| `@bento/editor` | `@bento/core`, `@bento/ui` | JSON editor (Phase 1), visual editor (Phase 4) |
-| `@bento/web` | `@bento/auth`, `@bento/core`, `@bento/ui`, `@bento/editor` | Next.js cloud app |
-| `@bento/desktop` | `@bento/core`, `@bento/ui`, `@bento/editor` | Wails v2 local desktop app (no @bento/auth) |
+| `@bnto/core` | zustand, @tanstack/react-query, @convex-dev/react-query, convex | Hooks, types, Zustand stores, React Query + transport adapters |
+| `@bnto/auth` | `@convex-dev/auth`, `convex`, `@bnto/backend` | Cloud auth — provider, hooks, middleware (web only) |
+| `@bnto/ui` | `@bnto/core` | shadcn thin wrappers — design system |
+| `@bnto/editor` | `@bnto/core`, `@bnto/ui` | JSON editor (Phase 1), visual editor (Phase 4) |
+| `@bnto/web` | `@bnto/auth`, `@bnto/core`, `@bnto/ui`, `@bnto/editor` | Next.js cloud app |
+| `@bnto/desktop` | `@bnto/core`, `@bnto/ui`, `@bnto/editor` | Wails v2 local desktop app (no @bnto/auth) |
 
 ---
 
@@ -153,7 +153,7 @@ task test:all        # Test engine + frontend
 
 ## API Abstraction Layer
 
-The core architectural pattern — `@bento/core` provides transport-agnostic React hooks backed by React Query and Zustand:
+The core architectural pattern — `@bnto/core` provides transport-agnostic React hooks backed by React Query and Zustand:
 
 **State separation:**
 - **Zustand** — client-only state (editor content, selected workflow, UI preferences)
@@ -163,24 +163,24 @@ The core architectural pattern — `@bento/core` provides transport-agnostic Rea
 - **Convex adapter** — web: React Query + `@convex-dev/react-query` (preserves real-time subscriptions)
 - **Wails adapter** — desktop: React Query + Wails Go bindings (`window.go.main.App.*`)
 
-`@bento/core` detects the runtime environment and swaps adapters internally. Desktop (Wails v2) renders the same React frontend in a system webview — there is no separate desktop frontend.
+`@bnto/core` detects the runtime environment and swaps adapters internally. Desktop (Wails v2) renders the same React frontend in a system webview — there is no separate desktop frontend.
 
 ```typescript
-// @bento/core — components use these hooks (any platform)
-import { useWorkflows, useExecution, useRunWorkflow } from "@bento/core";
+// @bnto/core — components use these hooks (any platform)
+import { useWorkflows, useExecution, useRunWorkflow } from "@bnto/core";
 
 const workflows = useWorkflows();           // React Query under the hood
 const execution = useExecution(id);         // real-time via Convex or polling via Wails
 const { mutate: run } = useRunWorkflow();   // mutation via appropriate adapter
 
-// Under the hood, @bento/core detects the environment:
+// Under the hood, @bnto/core detects the environment:
 // Web:     React Query + @convex-dev/react-query adapter → Convex
 // Desktop: React Query + Wails adapter → Go engine bindings
 ```
 
 ```typescript
 // Zustand stores for client-only state (not server data)
-import { useEditorStore, useUIStore } from "@bento/core";
+import { useEditorStore, useUIStore } from "@bnto/core";
 
 const { content, setContent } = useEditorStore();
 const { theme, toggleTheme } = useUIStore();
@@ -195,21 +195,21 @@ Uses `pkg/` (not `internal/`) so `apps/api/` (a separate Go module via `go.work`
 
 ### CLI → API Mapping
 
-| CLI Command | BentoService Method | Input | Output |
+| CLI Command | BntoService Method | Input | Output |
 |---|---|---|---|
-| `bento run <file>` | `RunWorkflow(ctx, def, opts)` | `*node.Definition`, `RunOptions` | `*RunResult` |
-| `bento run --dry-run` | `DryRunWorkflow(ctx, def)` | `*node.Definition` | `*DryRunResult` |
-| `bento validate <file>` | `ValidateWorkflow(ctx, def)` | `*node.Definition` | `*ValidationResult` |
-| `bento list` | `ListWorkflows(ctx)` | — | `[]WorkflowSummary` |
+| `bnto run <file>` | `RunWorkflow(ctx, def, opts)` | `*node.Definition`, `RunOptions` | `*RunResult` |
+| `bnto run --dry-run` | `DryRunWorkflow(ctx, def)` | `*node.Definition` | `*DryRunResult` |
+| `bnto validate <file>` | `ValidateWorkflow(ctx, def)` | `*node.Definition` | `*ValidationResult` |
+| `bnto list` | `ListWorkflows(ctx)` | — | `[]WorkflowSummary` |
 | load from storage | `GetWorkflow(ctx, name)` | name string | `*node.Definition` |
 | save to storage | `SaveWorkflow(ctx, name, def)` | name, `*node.Definition` | error |
 | delete from storage | `DeleteWorkflow(ctx, name)` | name string | error |
 
 **Key decisions:**
-- BentoService accepts `*node.Definition` — file path resolution stays in CLI
+- BntoService accepts `*node.Definition` — file path resolution stays in CLI
 - `RunOptions` includes timeout, progress callback, and logger
 - `DefaultRegistry()` consolidates all 10 node type registrations in one place
-- Directory listing (`bento list <dir>`) stays CLI-only — the API uses storage
+- Directory listing (`bnto list <dir>`) stays CLI-only — the API uses storage
 
 ```go
 // engine/pkg/api/ — shared logic, no transport concerns
@@ -224,7 +224,7 @@ result, err := svc.RunWorkflow(ctx, def, api.RunOptions{
 The HTTP transport layer lives in `apps/api/` (separate Go module, linked via `go.work`):
 
 ```go
-// apps/api/ — HTTP handlers wrapping BentoService
+// apps/api/ — HTTP handlers wrapping BntoService
 // Thin layer: routing, request parsing, response serialization
 ```
 

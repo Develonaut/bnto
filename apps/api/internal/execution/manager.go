@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/api"
+	"github.com/Develonaut/bnto/pkg/api"
 )
 
 // Status constants for execution lifecycle.

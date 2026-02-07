@@ -1,6 +1,6 @@
-// Package node provides the core node type definitions for the bento workflow system.
+// Package node provides the core node type definitions for the bnto workflow system.
 //
-// In bento, workflows are composed of nodes - individual execution units
+// In bnto, workflows are composed of nodes - individual execution units
 // that can be connected together to form complex automation workflows.
 //
 // Every node must implement the Executable interface and can be serialized to/from JSON.
@@ -35,7 +35,7 @@
 // Learn more about Go packages: https://go.dev/doc/code
 package node
 
-// Definition represents a single node in a bento workflow.
+// Definition represents a single node in a bnto workflow.
 //
 // Each node has:
 //   - A unique ID within the workflow

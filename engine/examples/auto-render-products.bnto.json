@@ -1,0 +1,214 @@
+{
+  "id": "auto-render-products",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Auto-Render Products with Blender",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Automatically renders all Sanctified Legion products that have model.stl files. For each product, creates renders/ folder and generates 8 PNG renders at 45° rotation increments using Blender.",
+    "usage": "bnto run auto-render-products",
+    "requirements": "Requires Blender with Photographer addon and BENTO_import_and_setup_and_render.py script",
+    "tags": ["blender", "rendering", "3d", "automation", "batch"],
+    "demonstrates": ["forEach loop", "shell-command", "Blender automation", "long-running commands"]
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "nodes": [
+    {
+      "id": "read-products-csv",
+      "type": "spreadsheet",
+      "version": "1.0.0",
+      "name": "Read Products CSV",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "metadata": {
+        "description": "Reads products.csv to get list of all products"
+      },
+      "parameters": {
+        "operation": "read",
+        "format": "csv",
+        "path": "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/products.csv",
+        "hasHeaders": true
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "rows"
+        }
+      ]
+    },
+    {
+      "id": "render-all-products",
+      "type": "loop",
+      "version": "1.0.0",
+      "name": "Render All Products",
+      "position": {
+        "x": 300,
+        "y": 100
+      },
+      "metadata": {
+        "description": "Loops through each product and renders it with Blender if model.stl exists"
+      },
+      "parameters": {
+        "mode": "forEach",
+        "items": "{{index . \"read-products-csv\" \"rows\"}}",
+        "showProgress": true,
+        "continueOnError": true
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "items"
+        }
+      ],
+      "outputPorts": [],
+      "nodes": [
+        {
+          "id": "check-model-exists",
+          "type": "file-system",
+          "version": "1.0.0",
+          "name": "Check model.stl Exists",
+          "position": {
+            "x": 100,
+            "y": 50
+          },
+          "metadata": {
+            "description": "Verifies model.stl exists before attempting render. If missing, loop continues to next product."
+          },
+          "parameters": {
+            "operation": "read",
+            "path": "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/model.stl"
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "check-overlay-exists",
+          "type": "file-system",
+          "version": "1.0.0",
+          "name": "Check overlay.png Exists",
+          "position": {
+            "x": 100,
+            "y": 75
+          },
+          "metadata": {
+            "description": "Verifies overlay.png exists before attempting render. If missing, loop continues to next product."
+          },
+          "parameters": {
+            "operation": "read",
+            "path": "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/overlay.png"
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "set-render-defaults",
+          "type": "edit-fields",
+          "version": "1.0.0",
+          "name": "Set Render Settings with Defaults",
+          "position": {
+            "x": 100,
+            "y": 85
+          },
+          "metadata": {
+            "description": "Sets render settings from CSV, using defaults if columns are missing"
+          },
+          "parameters": {
+            "values": {
+              "colorTheme": "{{if .item.renderTheme}}{{.item.renderTheme}}{{else}}stormcaller{{end}}",
+              "zoomMultiplier": "{{if .item.zoomMultiplier}}{{.item.zoomMultiplier}}{{else}}1.0{{end}}",
+              "offsetModifier": "{{if .item.offsetModifier}}{{.item.offsetModifier}}{{else}}0.0{{end}}",
+              "filenamePrefix": "{{.item.name}}"
+            }
+          },
+          "inputPorts": [],
+          "outputPorts": [
+            {
+              "id": "out-1",
+              "name": "settings"
+            }
+          ]
+        },
+        {
+          "id": "create-renders-dir",
+          "type": "file-system",
+          "version": "1.0.0",
+          "name": "Create Renders Directory",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "metadata": {
+            "description": "Creates the renders/ subdirectory for this product"
+          },
+          "parameters": {
+            "operation": "mkdir",
+            "path": "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/renders",
+            "recursive": true
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "render-product",
+          "type": "shell-command",
+          "version": "1.0.0",
+          "name": "Render Product with Blender",
+          "position": {
+            "x": 100,
+            "y": 200
+          },
+          "metadata": {
+            "description": "Invokes Blender to render the product. Uses model.stl and overlay.png to create 8 rotational renders with the 'stormcaller' color theme."
+          },
+          "parameters": {
+            "command": "/Applications/Blender.app/Contents/MacOS/Blender",
+            "args": [
+              "-b",
+              "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Blender/BENTO_Product_Renders.blend",
+              "-P",
+              "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Blender/_Scripts/BENTO_import_and_setup_and_render.py",
+              "--",
+              "--stl-path",
+              "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/model.stl",
+              "--overlay-path",
+              "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/overlay.png",
+              "--output-dir",
+              "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/renders",
+              "--color-theme",
+              "{{index . \"set-render-defaults\" \"colorTheme\"}}",
+              "--filename-prefix",
+              "{{index . \"set-render-defaults\" \"filenamePrefix\"}}",
+              "--zoom-multiplier",
+              "{{index . \"set-render-defaults\" \"zoomMultiplier\"}}",
+              "--offset-modifier",
+              "{{index . \"set-render-defaults\" \"offsetModifier\"}}",
+              "--quiet"
+            ],
+            "timeout": 1800,
+            "stream": true
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        }
+      ],
+      "edges": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "read-products-csv",
+      "target": "render-all-products",
+      "sourcePort": "out-1",
+      "targetPort": "in-1"
+    }
+  ]
+}

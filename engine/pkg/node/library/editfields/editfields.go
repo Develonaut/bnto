@@ -1,6 +1,6 @@
 // Package editfields provides a node for editing field values using static values or templates.
 //
-// The edit-fields node is one of the most commonly used node types in bento workflows.
+// The edit-fields node is one of the most commonly used node types in bnto workflows.
 // It allows setting field values either as literal values or using Go templates that
 // reference data from previous node in the workflow.
 //
@@ -49,7 +49,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // EditFields implements the edit-fields node type.

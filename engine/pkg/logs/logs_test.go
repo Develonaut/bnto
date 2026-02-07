@@ -27,7 +27,7 @@ func TestGetMostRecentLog_SingleFile(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Create a single log file
-	logFile := "bento_2025-10-20_13-30-45.log"
+	logFile := "bnto_2025-10-20_13-30-45.log"
 	createTestLogFile(t, tmpDir, logFile, "test log content")
 
 	result, err := GetMostRecentLog(tmpDir)
@@ -46,13 +46,13 @@ func TestGetMostRecentLog_MultipleFiles(t *testing.T) {
 	// Create multiple log files with explicit timestamps
 	now := time.Now()
 
-	oldLog := "bento_2025-10-19_10-00-00.log"
+	oldLog := "bnto_2025-10-19_10-00-00.log"
 	createTestLogFileWithTime(t, tmpDir, oldLog, "old log", now.Add(-2*time.Hour))
 
-	newerLog := "bento_2025-10-20_12-00-00.log"
+	newerLog := "bnto_2025-10-20_12-00-00.log"
 	createTestLogFileWithTime(t, tmpDir, newerLog, "newer log", now.Add(-1*time.Hour))
 
-	newestLog := "bento_2025-10-20_14-00-00.log"
+	newestLog := "bnto_2025-10-20_14-00-00.log"
 	createTestLogFileWithTime(t, tmpDir, newestLog, "newest log", now)
 
 	result, err := GetMostRecentLog(tmpDir)
@@ -75,7 +75,7 @@ func TestGetMostRecentLog_IgnoresDirectories(t *testing.T) {
 	}
 
 	// Create a log file
-	logFile := "bento_2025-10-20_13-30-45.log"
+	logFile := "bnto_2025-10-20_13-30-45.log"
 	createTestLogFile(t, tmpDir, logFile, "test log")
 
 	result, err := GetMostRecentLog(tmpDir)
@@ -118,13 +118,13 @@ func TestListLogFiles_MultipleFiles(t *testing.T) {
 	// Create log files with explicit timestamps
 	now := time.Now()
 
-	log1 := "bento_2025-10-19_10-00-00.log"
+	log1 := "bnto_2025-10-19_10-00-00.log"
 	createTestLogFileWithTime(t, tmpDir, log1, "log 1", now.Add(-2*time.Hour))
 
-	log2 := "bento_2025-10-20_12-00-00.log"
+	log2 := "bnto_2025-10-20_12-00-00.log"
 	createTestLogFileWithTime(t, tmpDir, log2, "log 2", now.Add(-1*time.Hour))
 
-	log3 := "bento_2025-10-20_14-00-00.log"
+	log3 := "bnto_2025-10-20_14-00-00.log"
 	createTestLogFileWithTime(t, tmpDir, log3, "log 3", now)
 
 	files, err := ListLogFiles(tmpDir)
@@ -160,7 +160,7 @@ func TestListLogFiles_IgnoresDirectories(t *testing.T) {
 	}
 
 	// Create log file
-	logFile := "bento_2025-10-20_13-30-45.log"
+	logFile := "bnto_2025-10-20_13-30-45.log"
 	createTestLogFile(t, tmpDir, logFile, "test log")
 
 	files, err := ListLogFiles(tmpDir)
@@ -183,9 +183,9 @@ func TestGetLogsDirectory(t *testing.T) {
 		t.Fatalf("Expected no error getting logs directory, got: %v", err)
 	}
 
-	// Should contain .bento/logs in path
-	if !contains(path, ".bento") || !contains(path, "logs") {
-		t.Errorf("Expected path to contain .bento/logs, got: %s", path)
+	// Should contain .bnto/logs in path
+	if !contains(path, ".bnto") || !contains(path, "logs") {
+		t.Errorf("Expected path to contain .bnto/logs, got: %s", path)
 	}
 }
 
@@ -218,7 +218,7 @@ func TestEnsureLogsDirectory(t *testing.T) {
 func TestGenerateLogFileName(t *testing.T) {
 	fileName := GenerateLogFileName()
 
-	expected := "bento.log"
+	expected := "bnto.log"
 	if fileName != expected {
 		t.Errorf("Expected file name %s, got: %s", expected, fileName)
 	}

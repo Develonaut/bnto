@@ -1,16 +1,16 @@
-# Bento Cloud + Desktop Strategy
+# Bnto Cloud + Desktop Strategy
 
 **Date:** 2026-02-06
 **Status:** Strategy Document — Ready for Review
 **Supersedes:** Extends MONOREPO_STRUCTURE.md, informs WAILS_DESKTOP_STRATEGY.md
-**Goal:** Evolve Bento from a Go CLI/TUI into two products sharing a frontend
+**Goal:** Evolve Bnto from a Go CLI/TUI into two products sharing a frontend
 
 ---
 
 ## Products
 
-- **Bento Desktop** (free): Download and run locally, no account needed
-- **Bento Cloud** (paid): Web app on Railway + Convex, runs workflows in the cloud
+- **Bnto Desktop** (free): Download and run locally, no account needed
+- **Bnto Cloud** (paid): Web app on Railway + Convex, runs workflows in the cloud
 
 ---
 
@@ -44,7 +44,7 @@
 
 ### Architecture Feasibility
 
-The layered abstraction (shared `@bento/core` → multiple clients → single Go engine) is well-established pattern. pnpm workspaces handle sharing React packages between Vite (Wails) and Next.js cleanly. Go compiles for Railway (first-class citizen) and cross-compiles for all desktop platforms trivially.
+The layered abstraction (shared `@bnto/core` → multiple clients → single Go engine) is well-established pattern. pnpm workspaces handle sharing React packages between Vite (Wails) and Next.js cleanly. Go compiles for Railway (first-class citizen) and cross-compiles for all desktop platforms trivially.
 
 **Verdict: Feasible.** No blockers identified. All infrastructure claims verified.
 
@@ -64,7 +64,7 @@ The layered abstraction (shared `@bento/core` → multiple clients → single Go
 └─────────┼──────────────────┼──────────────────┼─────────┘
           │                  │                  │
 ┌─────────▼──────────────────▼──────────────────▼─────────┐
-│  @bento/core — THE abstraction layer                     │
+│  @bnto/core — THE abstraction layer                     │
 │  Exposes: useWorkflows(), useExecution(), useRunWorkflow()│
 │  Consumer code knows NOTHING about what's below          │
 │  ┌─────────────┐  ┌──────────────┐                      │
@@ -81,7 +81,7 @@ The layered abstraction (shared `@bento/core` → multiple clients → single Go
          │               │               │
 ┌────────▼───────────────▼───────────────▼────────────────┐
 │  Go Engine (CLI commands = the stable public API)        │
-│  bento run, bento validate, bento list                   │
+│  bnto run, bnto validate, bnto list                   │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐   │
 │  │ engine   │ │ registry │ │ storage  │ │ paths    │   │
 │  │(orchestr)│ │(node reg)│ │(persist) │ │(resolve) │   │
@@ -92,39 +92,39 @@ The layered abstraction (shared `@bento/core` → multiple clients → single Go
 
 ### Frontend Package Structure
 
-Standard Turborepo layout at repo root with `@bento/` namespace (n8n pattern):
+Standard Turborepo layout at repo root with `@bnto/` namespace (n8n pattern):
 
 ```
 apps/
-├── web/                  # @bento/web — Next.js (Railway, cloud auth)
-└── desktop/              # @bento/desktop — Vite/React (Wails v2)
+├── web/                  # @bnto/web — Next.js (Railway, cloud auth)
+└── desktop/              # @bnto/desktop — Vite/React (Wails v2)
 packages/
-└── @bento/               # Scoped internal packages
-    ├── core/             # @bento/core — THE API layer. All backend communication.
+└── @bnto/               # Scoped internal packages
+    ├── core/             # @bnto/core — THE API layer. All backend communication.
     │                     #   Exposes hooks: useWorkflows(), useExecution(), etc.
     │                     #   Zustand for client state, React Query for server state
     │                     #   Runtime detection swaps transport (Convex vs Wails)
     │                     #   Consumer code has NO idea how it talks to the backend
-    ├── ui/               # @bento/ui — shadcn thin wrappers (Button, Card, Dialog)
+    ├── ui/               # @bnto/ui — shadcn thin wrappers (Button, Card, Dialog)
     │                     #   Pure presentational. Uses shadcn as primitives.
     │                     #   Ready for future customization without changing consumers.
-    └── editor/           # @bento/editor — Workflow editor (JSON editor for MVP)
-                          #   Consumes @bento/ui for primitives, @bento/core for data
+    └── editor/           # @bnto/editor — Workflow editor (JSON editor for MVP)
+                          #   Consumes @bnto/ui for primitives, @bnto/core for data
 ```
 
 ### Why Thin shadcn Wrappers
 
-`@bento/ui` components are thin wrappers around shadcn today. Tomorrow you can customize internals (animations, theming, behavior) without touching any consumer code. The abstraction pays off when you want a consistent Bento look-and-feel across web and desktop.
+`@bnto/ui` components are thin wrappers around shadcn today. Tomorrow you can customize internals (animations, theming, behavior) without touching any consumer code. The abstraction pays off when you want a consistent Bnto look-and-feel across web and desktop.
 
 ### UI as Design System
 
-`@bento/ui` IS the design system — not just components, but the single source of truth for appearance:
+`@bnto/ui` IS the design system — not just components, but the single source of truth for appearance:
 
 - shadcn components are the primitives — wrappers are thin today
 - Light and dark mode working out of the box from day one
 - Theming is centralized — changing theme tokens updates everything
 - The Next.js app is a thin composition layer — import components, compose into pages
-- Single responsibility: `@bento/ui` owns appearance, `@bento/core` owns data, apps own composition/routing
+- Single responsibility: `@bnto/ui` owns appearance, `@bnto/core` owns data, apps own composition/routing
 
 ---
 
@@ -141,7 +141,7 @@ packages/
 - Cross-compiles trivially for all desktop platforms
 - Can compile to WebAssembly if browser execution ever needed
 - The only faster alternative is Rust, at 10x development cost
-- TypeScript would sacrifice the performance advantage that differentiates Bento
+- TypeScript would sacrifice the performance advantage that differentiates Bnto
 
 ### 3.2 Wails v2 for Desktop (Not Tauri or Electron)
 
@@ -177,19 +177,19 @@ packages/
 **Rationale:**
 - Real-time subscriptions for execution progress (sub-50ms updates)
 - Built-in auth (Convex Auth for magic links, OAuth, email/password)
-- Document model maps naturally to Bento's JSON workflow definitions
+- Document model maps naturally to Bnto's JSON workflow definitions
 - Workflow component (`@convex-dev/workflow`) for long-running executions
 - File storage API for uploaded files
 - Self-hosted on Railway keeps all infrastructure in one place
 
-**License note:** Convex self-hosted uses the Functional Source License (FSL) Apache 2.0 — source-available with a non-compete restriction that converts to Apache 2.0 after two years. This is fine for Bento's use case (we're not reselling Convex), but it's not truly "open source" in the OSI sense. Worth noting for documentation accuracy.
+**License note:** Convex self-hosted uses the Functional Source License (FSL) Apache 2.0 — source-available with a non-compete restriction that converts to Apache 2.0 after two years. This is fine for Bnto's use case (we're not reselling Convex), but it's not truly "open source" in the OSI sense. Worth noting for documentation accuracy.
 
 ### 3.5 CLI as the Stable Public API
 
 **Decision:** The CLI is the primary interface to the Go engine. All consumers trigger CLI operations.
 
 **Rationale:**
-- The CLI (`bento run`, `bento validate`, `bento list`) is already tested and stable
+- The CLI (`bnto run`, `bnto validate`, `bnto list`) is already tested and stable
 - Every operation the web or desktop needs maps to a CLI command
 - Keeps the API surface small, consistent, and well-documented
 - The Go service on Railway wraps CLI operations (same logic, exposed via HTTP)
@@ -226,7 +226,7 @@ packages/
 - Handles caching, background refetching, loading/error states, optimistic updates
 - `@convex-dev/react-query` adapter preserves Convex real-time subscriptions through React Query's interface
 - Desktop (Wails) path uses React Query with Wails adapter — same hook API, different transport
-- Universal layer means `@bento/core` hooks work identically on web and desktop
+- Universal layer means `@bnto/core` hooks work identically on web and desktop
 - Components never know if data comes from Convex subscriptions or Wails Go bindings
 
 ### 3.9 Desktop Shares the Web Frontend
@@ -234,7 +234,7 @@ packages/
 **Decision:** Wails v2 renders the same React frontend in a system webview. No separate desktop frontend.
 
 **Rationale:**
-- `@bento/core` detects the runtime environment (browser vs Wails webview) and swaps the transport adapter internally
+- `@bnto/core` detects the runtime environment (browser vs Wails webview) and swaps the transport adapter internally
 - Components, hooks, and UI are 100% shared between web and desktop
 - Only the transport layer differs: Convex adapter (web) vs Wails adapter (desktop calling Go bindings)
 - Reduces maintenance burden — one frontend codebase, two deployment targets
@@ -332,7 +332,7 @@ Phase 2: Build Frontend (Next.js + React)
 
 ### Why Bottom-Up
 
-1. **The engine IS the product.** If `bento run` doesn't work correctly, nothing above it matters.
+1. **The engine IS the product.** If `bnto run` doesn't work correctly, nothing above it matters.
 2. **Tests as specification.** Writing tests for the CLI first means we define exactly what the API needs to expose — the tests ARE the spec.
 3. **Agentic development.** AI agents can verify their own work by running tests. Without automated verification at each layer, agents can't confirm correctness.
 4. **Confidence compounds.** When the API layer is built on a tested engine, you know bugs are in the API layer, not the engine. When the UI is built on a tested API, you know bugs are in the UI, not the API.
@@ -343,27 +343,27 @@ Phase 2: Build Frontend (Next.js + React)
 
 **Goal:** Every CLI operation is tested. Every node type has unit + integration tests.
 
-**Approach:** Simulate what a user wants from the UI by writing bentos and running them against the CLI.
+**Approach:** Simulate what a user wants from the UI by writing bntos and running them against the CLI.
 
 | Test Type | What It Covers | Runner |
 |-----------|---------------|--------|
 | Unit tests | Individual node execution, template resolution, validation | `go test ./pkg/...` |
 | Integration tests | Multi-node workflows, loops, parallel execution, edge cases | `go test ./tests/integration/...` |
-| CLI smoke tests | `bento run`, `bento validate`, `bento list` with real .bento.json files | Shell scripts or `go test` with `os/exec` |
-| Fixture bentos | Real-world workflows in `tests/fixtures/` that exercise common patterns | Executed by integration tests |
+| CLI smoke tests | `bnto run`, `bnto validate`, `bnto list` with real .bnto.json files | Shell scripts or `go test` with `os/exec` |
+| Fixture bntos | Real-world workflows in `tests/fixtures/` that exercise common patterns | Executed by integration tests |
 
-**What "solidified" means:** All existing node types have >90% test coverage. All CLI commands have smoke tests. A comprehensive fixture suite of .bento.json files covers the patterns users will build in the UI.
+**What "solidified" means:** All existing node types have >90% test coverage. All CLI commands have smoke tests. A comprehensive fixture suite of .bnto.json files covers the patterns users will build in the UI.
 
-**Key insight:** The fixture bentos ARE the user stories. "Compress PNGs" as a bento file, "Fetch API and transform", "Batch resize images" — these test the engine AND define the templates we'll ship in the cloud product.
+**Key insight:** The fixture bntos ARE the user stories. "Compress PNGs" as a bnto file, "Fetch API and transform", "Batch resize images" — these test the engine AND define the templates we'll ship in the cloud product.
 
 #### Layer 2: Go API Service (HTTP)
 
-**Goal:** Every API endpoint is tested. Contract tests ensure the API matches what `@bento/core` expects.
+**Goal:** Every API endpoint is tested. Contract tests ensure the API matches what `@bnto/core` expects.
 
 | Test Type | What It Covers | Runner |
 |-----------|---------------|--------|
 | API integration tests | Each endpoint returns correct responses for valid/invalid input | `go test` with `net/http/httptest` |
-| Contract tests | API responses match TypeScript type definitions in `@bento/core` | JSON schema validation or generated contract tests |
+| Contract tests | API responses match TypeScript type definitions in `@bnto/core` | JSON schema validation or generated contract tests |
 | Load tests | Concurrent execution requests, progress streaming under load | `go test -bench` or k6 |
 | Railway integration tests | Deployment works, services communicate, Convex mutations land | CI pipeline on Railway (staging environment) |
 
@@ -371,12 +371,12 @@ Phase 2: Build Frontend (Next.js + React)
 
 #### Layer 3: Frontend (Next.js + Wails)
 
-**Goal:** Core user flows work end-to-end. The UI is a thin composition layer — most logic lives in `@bento/core`.
+**Goal:** Core user flows work end-to-end. The UI is a thin composition layer — most logic lives in `@bnto/core`.
 
 | Test Type | What It Covers | Runner |
 |-----------|---------------|--------|
-| Component tests | `@bento/ui` components render correctly, handle states | Vitest + React Testing Library |
-| Core package tests | `@bento/core` methods work with mock and real backends | Vitest |
+| Component tests | `@bnto/ui` components render correctly, handle states | Vitest + React Testing Library |
+| Core package tests | `@bnto/core` methods work with mock and real backends | Vitest |
 | E2E tests | User flows: upload workflow → edit → run → see results | Playwright against staging |
 | Visual regression | UI doesn't break across changes | Playwright screenshots |
 
@@ -400,17 +400,17 @@ Agents (Claude, CI bots) follow this loop at every layer:
 # Layer 1: Engine
 go test ./pkg/... -race -count=1
 go test ./tests/integration/... -race -count=1
-bento validate tests/fixtures/*.bento.json
-bento run tests/fixtures/smoke-test.bento.json --dry-run
+bnto validate tests/fixtures/*.bnto.json
+bnto run tests/fixtures/smoke-test.bnto.json --dry-run
 
 # Layer 2: API
-go test ./cmd/bento-server/... -race -count=1
+go test ./cmd/bnto-server/... -race -count=1
 # Contract tests TBD
 
 # Layer 3: Frontend
-pnpm --filter @bento/core test
-pnpm --filter @bento/ui test
-pnpm --filter @bento/web exec playwright test
+pnpm --filter @bnto/core test
+pnpm --filter @bnto/ui test
+pnpm --filter @bnto/web exec playwright test
 
 # All layers
 task test:all
@@ -437,9 +437,9 @@ Push to main →
 
 **Scope:**
 - Comprehensive unit tests for all 10 node types (>90% coverage target)
-- Integration tests using fixture .bento.json files that represent real user workflows
-- CLI smoke tests for `bento run`, `bento validate`, `bento list`
-- Fixture bentos that double as cloud templates:
+- Integration tests using fixture .bnto.json files that represent real user workflows
+- CLI smoke tests for `bnto run`, `bnto validate`, `bnto list`
+- Fixture bntos that double as cloud templates:
   - "Compress PNGs" — image node with resize/export
   - "Batch resize images" — loop + image node
   - "Fetch API data" — http-request + transform node
@@ -448,7 +448,7 @@ Push to main →
 - Fix any bugs discovered during test writing
 - Document the public API surface (what the CLI exposes = what the API layer will wrap)
 
-**Verification:** `go test ./... -race` passes. All fixture bentos validate and run correctly.
+**Verification:** `go test ./... -race` passes. All fixture bntos validate and run correctly.
 
 **This is the most important phase.** Everything above the engine depends on it being correct.
 
@@ -459,17 +459,17 @@ Push to main →
 **Scope:**
 - Go API service wrapping CLI operations as HTTP endpoints
   - API integration tests for every endpoint
-  - Contract tests matching `@bento/core` types
+  - Contract tests matching `@bnto/core` types
 - Next.js app with basic auth (Convex Auth, email/password)
 - JSON code editor as the primary interface:
-  - Upload an existing .bento.json file (populates the editor)
-  - OR start from a template (the fixture bentos from Phase 0)
+  - Upload an existing .bnto.json file (populates the editor)
+  - OR start from a template (the fixture bntos from Phase 0)
   - Edit the JSON directly in-browser (Monaco editor or CodeMirror)
   - Hit "Run" to execute
 - Execute on the Go backend (Railway)
 - Real-time progress via Convex subscriptions
 - Support: edit-fields, http-request, transform, image, spreadsheet, group, loop, parallel
-- Workflow list showing saved bentos with last run status
+- Workflow list showing saved bntos with last run status
 - Run counter: "X runs remaining this month"
 - Playwright E2E tests for core flows: sign up → upload → edit → run → see results
 
@@ -486,7 +486,7 @@ Push to main →
 - Cloud file-system node (operates on uploaded files, not local paths)
 - Execution history with detailed logs (re-run previous executions)
 - Workflow versioning and duplication
-- Better template library (more pre-built bentos)
+- Better template library (more pre-built bntos)
 - Improved JSON editor (syntax validation, auto-complete for node types)
 - Extended test suite: file upload/download flows, history pagination, versioning
 
@@ -497,7 +497,7 @@ Push to main →
 **Scope:**
 - Bootstrap Wails v2 desktop app (from MONOREPO_STRUCTURE.md plan)
 - Same React frontend as web — Wails webview renders the shared React code
-- `@bento/core` runtime detection routes requests to Wails Go bindings instead of Convex
+- `@bnto/core` runtime detection routes requests to Wails Go bindings instead of Convex
 - React Query + Wails adapter replaces React Query + Convex adapter (same hook API)
 - Full local execution (all 10+ node types including shell-command)
 - Purely local — no account required, no cloud connectivity, no sync
@@ -560,7 +560,7 @@ Team/org tiers come later, only if demand justifies it.
 
 ## 9. Open Source Philosophy
 
-Bento is and stays **open source**. The paid cloud service is not about locking people out — it's about convenience. Anyone can pull the repo, build the binary, and run Bento themselves for free.
+Bnto is and stays **open source**. The paid cloud service is not about locking people out — it's about convenience. Anyone can pull the repo, build the binary, and run Bnto themselves for free.
 
 What the cloud service sells:
 - **Hosting and running the code for you** — no setup, no local machine dependency
@@ -593,7 +593,7 @@ This is a "figure out costs before committing to prices" approach. Launch lean, 
 | shell-command unusable in cloud | Medium | Certain | Disable in MVP, add allowlist later, position desktop for power users |
 | Convex self-hosting complexity | Medium | Low | Railway template simplifies; fallback to Convex Cloud if issues arise |
 | Convex FSL license restrictions | Low | Low | We're not competing with Convex — FSL allows our use case completely |
-| Sharing React components across Vite and Next.js | Low | Low | pnpm workspaces + @bento/ui package pattern handles this cleanly |
+| Sharing React components across Vite and Next.js | Low | Low | pnpm workspaces + @bnto/ui package pattern handles this cleanly |
 | Wails v2 lacks features v3 would provide | Low | Low | v2 is stable and sufficient for MVP. v3 features (multi-window, system tray) aren't needed |
 | Solo developer scope creep | High | High | Ruthless MVP scoping. JSON editor + templates, not visual editor. No team features. Phase 0 TDD prevents building on shaky foundations. |
 | Cloud file handling complexity | Medium | Medium | Start with in-memory processing only (upload → process → download). Persistent cloud storage is Phase 2. |
@@ -617,7 +617,7 @@ This is a "figure out costs before committing to prices" approach. Launch lean, 
 ## Verification Checklist
 
 - [x] Strategy document internally consistent
-- [x] BentoAPI interface design supports ConvexClient, WailsClient, and RestClient
+- [x] BntoAPI interface design supports ConvexClient, WailsClient, and RestClient
 - [x] Railway can host all three services (Next.js, Go, Convex) — confirmed via templates and docs
 - [x] pnpm workspace structure supports sharing packages between Vite and Next.js apps
 - [x] Convex self-hosting feasibility confirmed (FSL license, Railway template)

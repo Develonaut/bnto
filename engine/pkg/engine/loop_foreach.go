@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // executeForEach executes a forEach loop AS A LEAF NODE.

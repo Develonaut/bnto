@@ -267,7 +267,7 @@ func setupTestManager(t *testing.T) *Manager {
 
 	// Create manager with isolated keyring
 	mgr, err := NewManagerWithConfig(ManagerConfig{
-		ServiceName: "bento-test",
+		ServiceName: "bnto-test",
 		KeyringDir:  tempDir,
 	})
 	require.NoError(t, err, "Should create test manager")

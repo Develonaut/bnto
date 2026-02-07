@@ -1,4 +1,4 @@
-# Go Standards Review - Bento Codebase
+# Go Standards Review - Bnto Codebase
 **Date**: 2025-10-19
 **Phase**: Pre-Phase 8
 **Reviewer**: Colossus (Go Standards Guardian)
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The Bento codebase demonstrates **exemplary Go standards compliance** with strong adherence to Go idioms, best practices, and the Bento Box Principle. The code is well-organized, properly tested, and follows Go conventions throughout.
+The Bnto codebase demonstrates **exemplary Go standards compliance** with strong adherence to Go idioms, best practices, and the Bento Box Principle. The code is well-organized, properly tested, and follows Go conventions throughout.
 
 **Overall Rating**: 9/10
 
@@ -24,7 +24,7 @@ The Bento codebase demonstrates **exemplary Go standards compliance** with stron
 
 ### Areas for Improvement
 - ⚠️ High usage of `interface{}` (599 occurrences) - unavoidable for workflow engine
-- ⚠️ 5 `init()` functions in cmd/bento (acceptable for CLI setup)
+- ⚠️ 5 `init()` functions in cmd/bnto (acceptable for CLI setup)
 - 💡 35 external dependencies (reasonable for a feature-rich CLI)
 
 ---
@@ -37,10 +37,10 @@ The Bento codebase demonstrates **exemplary Go standards compliance** with stron
 Every package has comprehensive package-level documentation following Go conventions:
 
 ```go
-// Package itamae provides the orchestration engine for executing bentos.
+// Package itamae provides the orchestration engine for executing bntos.
 //
 // "Itamae" (板前 - "sushi chef") is the skilled chef who coordinates every
-// aspect of sushi preparation. Similarly, the itamae orchestrates bento
+// aspect of sushi preparation. Similarly, the itamae orchestrates bnto
 // execution, managing data flow, concurrency, and error handling.
 ```
 
@@ -88,7 +88,7 @@ func (i *Itamae) Serve(ctx context.Context, def *neta.Definition) (*Result, erro
 }
 ```
 
-**Found in**: `/Users/Ryan/Code/bento/pkg/itamae/executor.go:17-22`
+**Found in**: `/Users/Ryan/Code/bnto/pkg/itamae/executor.go:17-22`
 
 ### Go Proverbs Adherence
 **Rating**: Excellent
@@ -232,9 +232,9 @@ default:
 ```
 
 **Found in**:
-- `/Users/Ryan/Code/bento/pkg/itamae/executor.go:18-22`
-- `/Users/Ryan/Code/bento/pkg/itamae/loop.go:67-70`
-- `/Users/Ryan/Code/bento/pkg/itamae/executor.go:145-149`
+- `/Users/Ryan/Code/bnto/pkg/itamae/executor.go:18-22`
+- `/Users/Ryan/Code/bnto/pkg/itamae/loop.go:67-70`
+- `/Users/Ryan/Code/bnto/pkg/itamae/executor.go:145-149`
 
 ### Error Types
 **Rating**: Excellent
@@ -310,8 +310,8 @@ wg.Wait()
 
 ```bash
 $ go test -race ./...
-ok  	github.com/Develonaut/bento/pkg/pantry	(cached)
-ok  	github.com/Develonaut/bento/pkg/itamae	(cached)
+ok  	github.com/Develonaut/bnto/pkg/pantry	(cached)
+ok  	github.com/Develonaut/bnto/pkg/itamae	(cached)
 # All tests pass with -race
 ```
 
@@ -338,7 +338,7 @@ func (p *Pantry) GetNew(typeName string) (neta.Executable, error) {
 ```
 
 **Concurrent access test**: 100 goroutines, no race conditions ✅
-**Test location**: `/Users/Ryan/Code/bento/pkg/pantry/pantry_test.go:136-188`
+**Test location**: `/Users/Ryan/Code/bnto/pkg/pantry/pantry_test.go:136-188`
 
 ---
 
@@ -361,17 +361,17 @@ func TestPantry_FactoryPattern(t *testing.T)
 **Rating**: Excellent
 
 Comprehensive test coverage:
-- `/Users/Ryan/Code/bento/pkg/pantry/pantry_test.go`: 291 lines
-- `/Users/Ryan/Code/bento/pkg/itamae/itamae_test.go`: 482 lines
+- `/Users/Ryan/Code/bnto/pkg/pantry/pantry_test.go`: 291 lines
+- `/Users/Ryan/Code/bnto/pkg/itamae/itamae_test.go`: 482 lines
 
 All packages have tests:
 ```
-ok  	github.com/Develonaut/bento/pkg/hangiri
-ok  	github.com/Develonaut/bento/pkg/itamae
-ok  	github.com/Develonaut/bento/pkg/neta
-ok  	github.com/Develonaut/bento/pkg/neta/library/editfields
-ok  	github.com/Develonaut/bento/pkg/pantry
-ok  	github.com/Develonaut/bento/pkg/shoyu
+ok  	github.com/Develonaut/bnto/pkg/hangiri
+ok  	github.com/Develonaut/bnto/pkg/itamae
+ok  	github.com/Develonaut/bnto/pkg/neta
+ok  	github.com/Develonaut/bnto/pkg/neta/library/editfields
+ok  	github.com/Develonaut/bnto/pkg/pantry
+ok  	github.com/Develonaut/bnto/pkg/shoyu
 ```
 
 ### Test Quality
@@ -380,7 +380,7 @@ ok  	github.com/Develonaut/bento/pkg/shoyu
 **Good practices**:
 - Clear test names describing behavior
 - Tests are deterministic
-- Edge cases covered (empty bento, cancellation, errors)
+- Edge cases covered (empty bnto, cancellation, errors)
 - Concurrent access tested
 - Mock implementations properly isolated
 
@@ -389,7 +389,7 @@ ok  	github.com/Develonaut/bento/pkg/shoyu
 func TestItamae_LinearExecution(t *testing.T)       // Happy path
 func TestItamae_ErrorHandling(t *testing.T)         // Error cases
 func TestItamae_ContextCancellation(t *testing.T)   // Cancellation
-func TestItamae_EmptyBento(t *testing.T)            // Edge case
+func TestItamae_EmptyBnto(t *testing.T)            // Edge case
 ```
 
 ---
@@ -435,7 +435,7 @@ All package names follow Go conventions:
 
 Verified with:
 ```bash
-$ go mod graph | grep "github.com/Develonaut/bento"
+$ go mod graph | grep "github.com/Develonaut/bnto"
 # 16 internal imports, all acyclic
 ```
 
@@ -472,17 +472,17 @@ Execute(ctx context.Context, params map[string]interface{}) (interface{}, error)
 
 ---
 
-### ⚠️ 2. init() Functions in cmd/bento
+### ⚠️ 2. init() Functions in cmd/bnto
 
-**Finding**: 5 `init()` functions in cmd/bento/*.go
+**Finding**: 5 `init()` functions in cmd/bnto/*.go
 
 **Location**:
 ```
-/Users/Ryan/Code/bento/cmd/bento/box.go
-/Users/Ryan/Code/bento/cmd/bento/savor.go
-/Users/Ryan/Code/bento/cmd/bento/sample.go
-/Users/Ryan/Code/bento/cmd/bento/menu.go
-/Users/Ryan/Code/bento/cmd/bento/main.go
+/Users/Ryan/Code/bnto/cmd/bnto/box.go
+/Users/Ryan/Code/bnto/cmd/bnto/savor.go
+/Users/Ryan/Code/bnto/cmd/bnto/sample.go
+/Users/Ryan/Code/bnto/cmd/bnto/menu.go
+/Users/Ryan/Code/bnto/cmd/bnto/main.go
 ```
 
 **Example**:
@@ -623,7 +623,7 @@ Colossus checked for common Go anti-patterns:
 
 **"This is exemplary Go code. Ship it."**
 
-The Bento codebase represents some of the best Go practices I've reviewed:
+The Bnto codebase represents some of the best Go practices I've reviewed:
 
 1. **Idiomatic Go**: Every file follows Go conventions
 2. **Bento Box Compliance**: Perfect compartmentalization

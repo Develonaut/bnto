@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/node"
-	"github.com/Develonaut/bento/pkg/storage"
+	"github.com/Develonaut/bnto/pkg/node"
+	"github.com/Develonaut/bnto/pkg/storage"
 )
 
-func newTestService(t *testing.T) *BentoService {
+func newTestService(t *testing.T) *BntoService {
 	t.Helper()
 	return New(DefaultRegistry(), storage.New(t.TempDir()))
 }

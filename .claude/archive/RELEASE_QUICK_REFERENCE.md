@@ -78,7 +78,7 @@ git ls-remote --tags origin # See it on GitHub
 
 ```bash
 # View current version
-bento version
+bnto version
 
 # View all releases
 git tag
@@ -178,7 +178,7 @@ git tag | grep v0.2.0
 
 **Done!** Users can now install with:
 ```bash
-go install github.com/Develonaut/bento/cmd/bento@v0.2.0
+go install github.com/Develonaut/bnto/cmd/bnto@v0.2.0
 ```
 
 ---
@@ -219,4 +219,4 @@ For detailed guide, see:
 
 **🎯 Pro Tip:** Follow this card every time. Consistency is key!
 
-**🔖 Bookmark this:** `bento/.claude/RELEASE_QUICK_REFERENCE.md`
+**🔖 Bookmark this:** `bnto/.claude/RELEASE_QUICK_REFERENCE.md`

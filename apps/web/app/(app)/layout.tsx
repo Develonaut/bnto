@@ -1,7 +1,7 @@
 "use client";
 
-import { useAuth, useIsWhitelisted } from "@bento/auth";
-import { Card, CardHeader, CardTitle, CardContent } from "@bento/ui";
+import { useAuth, useIsWhitelisted } from "@bnto/auth";
+import { Card, CardHeader, CardTitle, CardContent } from "@bnto/ui";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { isLoading, isAuthenticated } = useAuth();

@@ -20,14 +20,14 @@ func (i *Image) exportImage(img stdimage.Image, output string, params map[string
 	quality := getIntParam(params, "quality", 80)
 	format := determineFormat(output, params)
 
-	// Check .bentoignore in the target directory
+	// Check .bntoignore in the target directory
 	dir := filepath.Dir(output)
-	bentoIgnore, err := loadBentoIgnore(dir)
+	bntoIgnore, err := loadBntoIgnore(dir)
 	if err != nil {
-		// If we can't load .bentoignore, log warning but continue
-		fmt.Fprintf(os.Stderr, "Warning: failed to load .bentoignore: %v\n", err)
-	} else if bentoIgnore.shouldIgnore(output) {
-		return fmt.Errorf("file %s is protected by .bentoignore and cannot be overwritten", output)
+		// If we can't load .bntoignore, log warning but continue
+		fmt.Fprintf(os.Stderr, "Warning: failed to load .bntoignore: %v\n", err)
+	} else if bntoIgnore.shouldIgnore(output) {
+		return fmt.Errorf("file %s is protected by .bntoignore and cannot be overwritten", output)
 	}
 
 	data, err := encodeImage(img, format, quality)

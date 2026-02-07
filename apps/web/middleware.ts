@@ -2,7 +2,7 @@ import {
   authMiddleware,
   createRouteMatcher,
   middlewareRedirect,
-} from "@bento/auth/middleware";
+} from "@bnto/auth/middleware";
 
 const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
 

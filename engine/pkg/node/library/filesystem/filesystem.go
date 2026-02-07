@@ -1,4 +1,4 @@
-// Package filesystem provides file system operations for the bento workflow system.
+// Package filesystem provides file system operations for the bnto workflow system.
 //
 // The filesystem node allows you to perform common file operations:
 //   - read: Read file contents
@@ -53,7 +53,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // FileSystemNode implements file system operations.

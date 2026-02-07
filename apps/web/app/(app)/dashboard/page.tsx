@@ -1,7 +1,7 @@
 "use client";
 
-import { useCurrentUser, useSignOut } from "@bento/auth";
-import { Button } from "@bento/ui";
+import { useCurrentUser, useSignOut } from "@bnto/auth";
+import { Button } from "@bnto/ui";
 
 export default function DashboardPage() {
   const user = useCurrentUser();

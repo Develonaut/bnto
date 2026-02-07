@@ -1,6 +1,6 @@
-# Bento Master Plan
+# Bnto Master Plan
 
-**The checklist for building Bento Desktop + Bento Cloud.**
+**The checklist for building Bnto Desktop + Bnto Cloud.**
 
 Every task below feeds into the next. Work top to bottom. Don't skip ahead.
 
@@ -17,17 +17,17 @@ Solidify the engine, restructure the repo, establish the development environment
   - shoyu → logger, wasabi → secrets
 - [x] Move Go code to `engine/` directory
   - Moved `cmd/`, `pkg/`, `tests/`, `examples/`, `go.mod`, `go.sum`, docs
-  - Module path unchanged (github.com/Develonaut/bento)
+  - Module path unchanged (github.com/Develonaut/bnto)
   - No import path changes needed (Go resolves relative to go.mod)
 - [x] Set up monorepo root (standard Turborepo layout)
   - `Taskfile.yml` at root (Go orchestration via `task build`, `task test`)
   - `turbo.json`, `package.json`, `pnpm-workspace.yaml` at root
-  - `packages/@bento/core/` (`@bento/core` — API layer with BentoAPI interface)
-  - `packages/@bento/ui/` (`@bento/ui` — design system)
-  - `packages/@bento/editor/` (`@bento/editor` — workflow editor)
-  - `apps/web/` (`@bento/web` — Next.js stub)
-  - `apps/desktop/` (`@bento/desktop` — Wails stub)
-  - `@bento/` namespace directory (n8n pattern) for internal packages
+  - `packages/@bnto/core/` (`@bnto/core` — API layer with BntoAPI interface)
+  - `packages/@bnto/ui/` (`@bnto/ui` — design system)
+  - `packages/@bnto/editor/` (`@bnto/editor` — workflow editor)
+  - `apps/web/` (`@bnto/web` — Next.js stub)
+  - `apps/desktop/` (`@bnto/desktop` — Wails stub)
+  - `@bnto/` namespace directory (n8n pattern) for internal packages
 - [x] Verify everything builds and tests pass from new structure
   - `task build` — Go engine builds
   - `task ui:build` — Turborepo builds all 5 packages in dependency order
@@ -38,7 +38,7 @@ Solidify the engine, restructure the repo, establish the development environment
 ### 0.1b Codebase Cleanup
 - [x] Remove interactive TUI package (`pkg/tui/` — 45+ files, ~3,500 lines)
   - Not in scope for current development phase
-  - Deleted entire `pkg/tui/` directory and `cmd/bento/tui.go`
+  - Deleted entire `pkg/tui/` directory and `cmd/bnto/tui.go`
   - Updated all consumers to use `pkg/paths` for config loading
   - Removed `configThemeCmd`, `configSlowMoCmd` (TUI-specific)
   - Removed bubbletea, bubbles, huh, teatest dependencies
@@ -59,26 +59,26 @@ Solidify the engine, restructure the repo, establish the development environment
   - [x] shell-command (93.3%)
   - [x] spreadsheet (90.5%)
   - [x] transform (93.9%)
-- [x] Integration tests using fixture .bento.json files
+- [x] Integration tests using fixture .bnto.json files
   - [x] Create "Resize Images" fixture (loop + image resize)
   - [x] Create "CSV Data Pipeline" fixture (spreadsheet + loop + transform)
   - [x] Create "Image Composite" fixture (filesystem list + loop + image composite)
   - [x] Create "HTTP + Transform" fixture (http-request + transform chain)
   - [x] Create "Edit Fields Pipeline" fixture (edit-fields + transform)
 - [x] CLI smoke tests
-  - [x] `bento run` with each fixture (validates end-to-end)
-  - [x] `bento validate` with valid and invalid bentos
-  - [x] `bento list` returns expected results
+  - [x] `bnto run` with each fixture (validates end-to-end)
+  - [x] `bnto validate` with valid and invalid bntos
+  - [x] `bnto list` returns expected results
   - [x] `--dry-run` flag works correctly
 - [x] Document the public API surface
   - CLI → API mapping table in MONOREPO_STRUCTURE.md
-  - Every CLI command mapped to BentoService method with inputs/outputs
+  - Every CLI command mapped to BntoService method with inputs/outputs
 
 ### 0.3 Quality Gates
 - [x] `go test ./engine/pkg/... -race` passes (all packages)
-- [x] `go build ./engine/cmd/bento` succeeds
+- [x] `go build ./engine/cmd/bnto` succeeds
 - [x] `go vet ./engine/...` clean
-- [x] All fixture bentos validate and execute correctly
+- [x] All fixture bntos validate and execute correctly
 - [x] Test coverage report generated and reviewed
   - Node types: 88–100%, api: 80.6%, registry: 100%, engine: 58.2%
 
@@ -91,11 +91,11 @@ Ship a working web app where users can upload, edit, and run workflows.
 ### 1.1 Go API Server
 - [x] Set up `apps/api/` as separate Go module with `go.work` workspace
 - [x] Create `engine/pkg/api/` service layer
-  - `BentoService` struct shared by CLI, HTTP server, and Wails
+  - `BntoService` struct shared by CLI, HTTP server, and Wails
   - `DefaultRegistry()` consolidates node type registration
   - CLI refactored to use `api.DefaultRegistry()`
 - [x] Create `apps/api/` HTTP server
-  - HTTP handlers wrapping BentoService (stdlib `net/http` with Go 1.25 routing)
+  - HTTP handlers wrapping BntoService (stdlib `net/http` with Go 1.25 routing)
   - `POST /api/run` — async execution with in-memory tracking, returns 202 + ID
   - `POST /api/validate` — validate a workflow definition
   - `GET/POST/DELETE /api/workflows` — list/get/save/delete workflows
@@ -106,7 +106,7 @@ Ship a working web app where users can upload, edit, and run workflows.
   - `net/http/httptest` for in-process testing
   - Tests cover: validate, CRUD workflows, async run+poll, CORS, error cases
 - [x] Contract tests
-  - 6 contract tests verify Go JSON responses match `@bento/core` TypeScript types
+  - 6 contract tests verify Go JSON responses match `@bnto/core` TypeScript types
   - TS types updated to match actual Go API shapes (WorkflowDefinition, Execution, etc.)
 
 ### 1.2 Convex Setup
@@ -126,25 +126,25 @@ Ship a working web app where users can upload, edit, and run workflows.
 - [x] Whitelist gate — only approved users see the app behind the splash
 - [x] App shell layout (authenticated + whitelisted users only)
 - [x] Passphrase gate on splash page
-  - CLI-style input, server-side validation via `BENTO_PASSPHRASE` env var
+  - CLI-style input, server-side validation via `BNTO_PASSPHRASE` env var
   - Cookie remembers access (30 days), reveals Sign In / Sign Up buttons
   - `POST /api/verify-passphrase` API route
 - [x] Global nav bar with theme toggle
-  - Fixed top bar: "Bento" left, ThemeToggle right (in root layout)
+  - Fixed top bar: "Bnto" left, ThemeToggle right (in root layout)
   - Removed per-page theme toggles (dashboard, etc.)
 - [x] Deploy to Railway — splash screen live at public URL
   - `Dockerfile.web`: multi-stage pnpm monorepo build, Next.js standalone output
   - `railway.toml`: Dockerfile path + health check config
-  - Service: `bento-web` on Railway (`bento-web-production.up.railway.app`)
+  - Service: `bnto-web` on Railway (`bnto-web-production.up.railway.app`)
   - Convex `_generated/` types checked into git (needed for CI/CD builds)
 - [x] Verify: unauthenticated → splash, authenticated + not whitelisted → waitlist message, whitelisted → app shell
   - Playwright E2E tests cover splash gate, auth redirect, sign-in form
   - Screenshots committed for visual regression tracking
 
-### 1.3 Frontend — @bento/core
-- [N/A] ~~Set up Zustand for client state~~ (deferred — no client state needs until @bento/editor Phase 1.5)
+### 1.3 Frontend — @bnto/core
+- [N/A] ~~Set up Zustand for client state~~ (deferred — no client state needs until @bnto/editor Phase 1.5)
 - [x] Set up React Query with `@convex-dev/react-query` adapter
-  - `BentoCoreProvider` creates `ConvexReactClient` + `ConvexQueryClient` + `QueryClientProvider`
+  - `BntoCoreProvider` creates `ConvexReactClient` + `ConvexQueryClient` + `QueryClientProvider`
   - Also wraps `ConvexAuthNextjsProvider` so `useConvex()`/`useConvexAuth()` work app-wide
   - Source-based exports (no `dist/` build step — Next.js `transpilePackages` compiles from source)
 - [x] Runtime detection (browser vs Wails webview) for transport switching
@@ -158,30 +158,30 @@ Ship a working web app where users can upload, edit, and run workflows.
   - Each mutation wraps `useMutation` + adapter mutation factory (`useConvexMutation`)
 - [N/A] ~~Unit tests for core package with mock adapters~~ (hooks are thin wrappers — `tsc --noEmit` validates; tests come when logic is added)
 
-### 1.4 Frontend — @bento/ui
-- [x] Initialize shadcn with Bento theme tokens
+### 1.4 Frontend — @bnto/ui
+- [x] Initialize shadcn with Bnto theme tokens
   - `components.json`, `globals.css` with CSS variables for light/dark themes
   - Primitives layer (shadcn raw) + shared layer (thin wrappers)
 - [x] Light/dark mode from day one
   - ThemeProvider (next-themes), ThemeToggle component, global nav integration
 - [x] Core primitives: Button, Card, Input, Label
 - [ ] Additional primitives: Dialog, Select, Tabs, Toast
-- [ ] Bento-specific: WorkflowCard, RunButton, StatusBadge
+- [ ] Bnto-specific: WorkflowCard, RunButton, StatusBadge
 
-### 1.5 Frontend — @bento/editor
+### 1.5 Frontend — @bnto/editor
 - [ ] JSON editor component (Monaco or CodeMirror)
-- [ ] Schema validation for .bento.json format
-- [ ] Syntax highlighting for bento-specific fields
+- [ ] Schema validation for .bnto.json format
+- [ ] Syntax highlighting for bnto-specific fields
 
 ### 1.6 Next.js Web App
 - [ ] Create `ui/apps/web/` with Next.js + Convex integration
 - [ ] Pages:
   - [ ] Landing / sign-up / sign-in (Convex Auth)
   - [ ] Dashboard — list saved workflows, "X runs remaining"
-  - [ ] Editor — upload .bento.json or start from template, edit, run
+  - [ ] Editor — upload .bnto.json or start from template, edit, run
   - [ ] Execution — real-time progress via Convex subscription
   - [ ] Results — output download, execution logs
-- [ ] Pre-built templates (the fixture bentos from Phase 0)
+- [ ] Pre-built templates (the fixture bntos from Phase 0)
   - "Resize Images", "CSV Data Pipeline", "Image Composite"
 - [x] Playwright E2E test infrastructure
   - Chromium-only, port 3100, `task e2e` command, screenshots committed
@@ -237,15 +237,15 @@ Make the product feel complete for individual users.
 Free local desktop app using Wails v2 + shared React components.
 
 ### 3.1 Wails Setup
-- [ ] Create `engine/cmd/bento-desktop/`
+- [ ] Create `engine/cmd/bnto-desktop/`
 - [ ] Wails v2 project with Vite + React
 - [ ] Go ↔ React bindings via Wails
 
 ### 3.2 Desktop Integration
-- [ ] `WailsClient` implements `BentoAPI` in `@bento/core`
-- [ ] Reuse `@bento/ui` and `@bento/editor` from web
+- [ ] `WailsClient` implements `BntoAPI` in `@bnto/core`
+- [ ] Reuse `@bnto/ui` and `@bnto/editor` from web
 - [ ] Full local execution (all node types including shell-command)
-- [ ] Local file browser for selecting .bento.json files
+- [ ] Local file browser for selecting .bnto.json files
 
 ### 3.3 Desktop Distribution
 - [ ] macOS build (.app bundle, code signing)

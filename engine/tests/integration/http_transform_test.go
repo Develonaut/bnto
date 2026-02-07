@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/engine"
+	"github.com/Develonaut/bnto/pkg/engine"
 )
 
 func TestHTTPTransform(t *testing.T) {
@@ -34,7 +34,7 @@ func TestHTTPTransform(t *testing.T) {
 	t.Setenv("TEST_API_URL", server.URL)
 
 	reg := createRegistry()
-	result := executeFixture(t, "tests/fixtures/workflows/http-transform.bento.json", reg, 10*time.Second)
+	result := executeFixture(t, "tests/fixtures/workflows/http-transform.bnto.json", reg, 10*time.Second)
 
 	if result.Status != engine.StatusSuccess {
 		t.Fatalf("Expected success, got %s", result.Status)

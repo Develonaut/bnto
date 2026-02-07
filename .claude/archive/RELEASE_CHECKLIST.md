@@ -1,6 +1,6 @@
 # 📋 Release Checklist
 
-A step-by-step guide for creating releases in the bento project.
+A step-by-step guide for creating releases in the bnto project.
 
 **Use this checklist every time you're ready to release a new version.**
 
@@ -240,7 +240,7 @@ git push --tags
 
 **6.3 Verify on GitHub**
 
-1. Go to: https://github.com/Develonaut/bento/tags
+1. Go to: https://github.com/Develonaut/bnto/tags
 2. You should see `v0.2.0` in the list
 3. Click on it to view details
 
@@ -249,7 +249,7 @@ git push --tags
 ### Step 7: Create GitHub Release (Optional but Recommended)
 
 **7.1 Go to GitHub Releases**
-- Navigate to: https://github.com/Develonaut/bento/releases
+- Navigate to: https://github.com/Develonaut/bnto/releases
 - Click "Draft a new release"
 
 **7.2 Fill in release details**
@@ -272,7 +272,7 @@ git push --tags
 ### Fixed
 - Linting errors in progress tests
 
-**Full Changelog**: https://github.com/Develonaut/bento/blob/main/CHANGELOG.md
+**Full Changelog**: https://github.com/Develonaut/bnto/blob/main/CHANGELOG.md
 ```
 
 **7.3 Publish release**
@@ -307,7 +307,7 @@ git ls-remote --tags origin
 **8.4 Test installation (optional)**
 ```bash
 # Others can now install with:
-go install github.com/Develonaut/bento/cmd/bento@v0.2.0
+go install github.com/Develonaut/bnto/cmd/bnto@v0.2.0
 ```
 
 ---
@@ -321,7 +321,7 @@ If you have users or a team:
 ## Installation
 
 ```bash
-go install github.com/Develonaut/bento/cmd/bento@v0.2.0
+go install github.com/Develonaut/bnto/cmd/bnto@v0.2.0
 ```
 ```
 
@@ -550,7 +550,7 @@ Before you finish:
 - [ ] "chore: Release vX.Y.Z" commit created
 - [ ] Git tag created with `git tag -a vX.Y.Z -m "message"`
 - [ ] Both commit and tag pushed to GitHub
-- [ ] Tag visible on GitHub: github.com/Develonaut/bento/tags
+- [ ] Tag visible on GitHub: github.com/Develonaut/bnto/tags
 - [ ] GitHub release created (optional)
 - [ ] Tests still passing
 - [ ] Version number follows SemVer

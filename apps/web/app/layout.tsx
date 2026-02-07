@@ -4,7 +4,7 @@ import { Nav } from "./nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Bento",
+  title: "Bnto",
   description: "Workflow automation, simplified.",
 };
 

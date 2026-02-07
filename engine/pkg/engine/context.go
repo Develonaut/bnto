@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Develonaut/bento/pkg/secrets"
+	"github.com/Develonaut/bnto/pkg/secrets"
 )
 
 // executionContext holds data passed between nodes during execution.

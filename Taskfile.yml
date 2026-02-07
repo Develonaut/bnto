@@ -3,9 +3,9 @@ version: '3'
 tasks:
   # Go tasks (engine/)
   build:
-    desc: Build the bento CLI binary
+    desc: Build the bnto CLI binary
     dir: ./engine
-    cmds: [go build ./cmd/bento]
+    cmds: [go build ./cmd/bnto]
 
   test:
     desc: Run all Go tests with race detector
@@ -19,14 +19,14 @@ tasks:
       - go test -race ./cmd/... ./pkg/engine/... ./pkg/logger/... ./pkg/logs/... ./pkg/node/... ./pkg/paths/... ./pkg/registry/... ./pkg/secrets/... ./pkg/storage/... ./pkg/validator/... ./tests/mocks/...
 
   test:integration:
-    desc: Run integration tests (auto-builds bento binary)
+    desc: Run integration tests (auto-builds bnto binary)
     dir: ./engine
     cmds: [go test -race -v ./tests/integration/...]
 
   install:
-    desc: Install bento binary to $GOPATH/bin
+    desc: Install bnto binary to $GOPATH/bin
     dir: ./engine
-    cmds: [go install ./cmd/bento]
+    cmds: [go install ./cmd/bnto]
 
   vet:
     desc: Run go vet on all Go packages
@@ -51,7 +51,7 @@ tasks:
 
   ui:dev:
     desc: Start the web app in dev mode
-    cmds: [pnpm --filter @bento/web dev]
+    cmds: [pnpm --filter @bnto/web dev]
 
   ui:test:
     desc: Run all frontend tests
@@ -74,7 +74,7 @@ tasks:
       - echo "=== api tests ==="
       - go test -race ./apps/api/...
       - echo "=== go build ==="
-      - cd engine && go build ./cmd/bento
+      - cd engine && go build ./cmd/bnto
       - cd apps/api && go build ./cmd/server
       - echo "=== all checks passed ==="
 

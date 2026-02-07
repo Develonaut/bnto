@@ -6,7 +6,7 @@
 
 ## Problem Statement
 
-Current Bento implementation:
+Current Bnto implementation:
 - Counts loop child nodes in static graph structure
 - Each loop iteration increments `completedNodes`
 - Progress jumps incorrectly (e.g., 66% → 100% → 100% as iterations repeat)
@@ -14,7 +14,7 @@ Current Bento implementation:
 
 Example:
 ```
-Bento with 3 nodes: [node1, loop(2 iterations, 1 child), node3]
+Bnto with 3 nodes: [node1, loop(2 iterations, 1 child), node3]
 Static count: 4 nodes (node1 + child + child + node3)
 
 Execution:
@@ -459,7 +459,7 @@ func msgLoopCompleted(depth int, mode string, iterations int) logMessage {
 ### Test 1: Simple Loop Progress
 ```go
 func TestLoopProgress(t *testing.T) {
-    // Bento: forEach loop with 3 iterations
+    // Bnto: forEach loop with 3 iterations
     def := &neta.Definition{
         ID:   "root",
         Type: "group",
@@ -533,7 +533,7 @@ After implementation, verify:
 **Memory Impact:** Minimal
 - 2 new maps: `nodeProgress` and `nodeMessages`
 - Size: O(n) where n = number of nodes
-- Typical bento: 10-50 nodes = ~1KB overhead
+- Typical bnto: 10-50 nodes = ~1KB overhead
 
 **Concurrency:** Safe
 - `sync.RWMutex` protects progress state
@@ -543,7 +543,7 @@ After implementation, verify:
 **Calculation Cost:** O(n)
 - Calculated on each node completion
 - Cached in `calculateProgress()` result
-- Typical bento: <1ms calculation time
+- Typical bnto: <1ms calculation time
 
 ## Go Idioms Applied
 

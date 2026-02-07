@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/node/library/filesystem"
+	"github.com/Develonaut/bnto/pkg/node/library/filesystem"
 )
 
 // TestFileSystem_ReadFile tests reading a file.
@@ -21,7 +21,7 @@ func TestFileSystem_ReadFile(t *testing.T) {
 	}
 	defer os.Remove(tmpfile.Name())
 
-	content := "Hello, bento!"
+	content := "Hello, bnto!"
 	if _, err := tmpfile.WriteString(content); err != nil {
 		t.Fatalf("Failed to write to temp file: %v", err)
 	}
@@ -658,15 +658,15 @@ func TestFileSystem_WriteCreatesParentDirs(t *testing.T) {
 	// Either way, the write code path is exercised
 }
 
-// TestFileSystem_WriteBentoIgnoreProtection tests write respects .bentoignore.
-func TestFileSystem_WriteBentoIgnoreProtection(t *testing.T) {
+// TestFileSystem_WriteBntoIgnoreProtection tests write respects .bntoignore.
+func TestFileSystem_WriteBntoIgnoreProtection(t *testing.T) {
 	ctx := context.Background()
 
 	tmpdir := t.TempDir()
 
-	// Create .bentoignore
-	bentoIgnore := filepath.Join(tmpdir, ".bentoignore")
-	if err := os.WriteFile(bentoIgnore, []byte("*.protected\n"), 0644); err != nil {
+	// Create .bntoignore
+	bntoIgnore := filepath.Join(tmpdir, ".bntoignore")
+	if err := os.WriteFile(bntoIgnore, []byte("*.protected\n"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -680,11 +680,11 @@ func TestFileSystem_WriteBentoIgnoreProtection(t *testing.T) {
 
 	_, err := fs.Execute(ctx, params)
 	if err == nil {
-		t.Fatal("Expected error for .bentoignore protected file, got nil")
+		t.Fatal("Expected error for .bntoignore protected file, got nil")
 	}
 
-	if !strings.Contains(err.Error(), "bentoignore") && !strings.Contains(err.Error(), "protected") {
-		t.Errorf("Expected bentoignore-related error, got: %v", err)
+	if !strings.Contains(err.Error(), "bntoignore") && !strings.Contains(err.Error(), "protected") {
+		t.Errorf("Expected bntoignore-related error, got: %v", err)
 	}
 }
 

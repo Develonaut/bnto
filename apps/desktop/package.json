@@ -1,5 +1,5 @@
 {
-  "name": "@bento/desktop",
+  "name": "@bnto/desktop",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -9,8 +9,8 @@
     "lint": "echo \"No linter yet\""
   },
   "dependencies": {
-    "@bento/core": "workspace:*",
-    "@bento/ui": "workspace:*",
-    "@bento/editor": "workspace:*"
+    "@bnto/core": "workspace:*",
+    "@bnto/ui": "workspace:*",
+    "@bnto/editor": "workspace:*"
   }
 }

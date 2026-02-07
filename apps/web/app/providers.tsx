@@ -1,13 +1,13 @@
-import { BentoAuthProvider } from "@bento/auth/provider";
-import { BentoCoreProvider } from "@bento/core/provider";
+import { BntoAuthProvider } from "@bnto/auth/provider";
+import { BntoCoreProvider } from "@bnto/core/provider";
 import { ThemeProvider } from "./theme-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <BentoAuthProvider>
-      <BentoCoreProvider>
+    <BntoAuthProvider>
+      <BntoCoreProvider>
         <ThemeProvider>{children}</ThemeProvider>
-      </BentoCoreProvider>
-    </BentoAuthProvider>
+      </BntoCoreProvider>
+    </BntoAuthProvider>
   );
 }

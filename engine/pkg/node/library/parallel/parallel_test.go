@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/node/library/parallel"
+	"github.com/Develonaut/bnto/pkg/node/library/parallel"
 )
 
 // TestParallel_ConcurrentExecution tests running multiple tasks concurrently

@@ -31,7 +31,7 @@ export default defineConfig({
     url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
     env: {
-      BENTO_PASSPHRASE: "testpassphrase",
+      BNTO_PASSPHRASE: "testpassphrase",
     },
   },
 });

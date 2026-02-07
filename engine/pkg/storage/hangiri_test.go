@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/storage"
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/storage"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
-// Test: Save and load a bento definition
+// Test: Save and load a bnto definition
 func TestStorage_SaveAndLoad(t *testing.T) {
 	ctx := context.Background()
 	tempDir := t.TempDir() // Go creates temp dir, cleans up after test
@@ -52,13 +52,13 @@ func TestStorage_SaveAndLoad(t *testing.T) {
 	}
 }
 
-// Test: List saved bentos
+// Test: List saved bntos
 func TestStorage_List(t *testing.T) {
 	ctx := context.Background()
 	tempDir := t.TempDir()
 	storage := storage.New(tempDir)
 
-	// Save multiple bentos
+	// Save multiple bntos
 	def1 := &node.Definition{ID: "1", Type: "edit-fields", Version: "1.0.0"}
 	def2 := &node.Definition{ID: "2", Type: "http-request", Version: "1.0.0"}
 
@@ -81,7 +81,7 @@ func TestStorage_List(t *testing.T) {
 	}
 }
 
-// Test: Delete a bento
+// Test: Delete a bnto
 func TestStorage_Delete(t *testing.T) {
 	ctx := context.Background()
 	tempDir := t.TempDir()
@@ -106,7 +106,7 @@ func TestStorage_Delete(t *testing.T) {
 	}
 }
 
-// Test: Load non-existent bento fails gracefully
+// Test: Load non-existent bnto fails gracefully
 func TestStorage_LoadNotFound(t *testing.T) {
 	ctx := context.Background()
 	tempDir := t.TempDir()
@@ -258,10 +258,10 @@ func TestStorage_PrettyPrint(t *testing.T) {
 	storage := storage.New(tempDir)
 
 	def := &node.Definition{
-		ID:      "my-bento",
+		ID:      "my-bnto",
 		Type:    "group",
 		Version: "1.0.0",
-		Name:    "My Bento",
+		Name:    "My Bnto",
 	}
 
 	err := storage.Save(ctx, "pretty-test", def)
@@ -269,8 +269,8 @@ func TestStorage_PrettyPrint(t *testing.T) {
 		t.Fatalf("Save failed: %v", err)
 	}
 
-	// Read file directly - now in bentos/ subdirectory with .bento.json extension
-	path := filepath.Join(tempDir, "bentos", "pretty-test.bento.json")
+	// Read file directly - now in bntos/ subdirectory with .bnto.json extension
+	path := filepath.Join(tempDir, "bntos", "pretty-test.bnto.json")
 	content, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("Failed to read file: %v", err)
@@ -279,7 +279,7 @@ func TestStorage_PrettyPrint(t *testing.T) {
 	contentStr := string(content)
 
 	// Should have 2-space indentation
-	if !strings.Contains(contentStr, "  \"id\": \"my-bento\"") {
+	if !strings.Contains(contentStr, "  \"id\": \"my-bnto\"") {
 		t.Error("JSON should be pretty-printed with 2-space indentation")
 	}
 

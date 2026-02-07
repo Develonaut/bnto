@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // executeNodeInternal executes a node without state tracking (for loop children).

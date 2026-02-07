@@ -19,9 +19,9 @@ Mock HTTP server that simulates the Figma API for testing.
 **Usage:**
 
 ```go
-import "github.com/Develonaut/bento/tests/mocks"
+import "github.com/Develonaut/bnto/tests/mocks"
 
-func TestMyBento(t *testing.T) {
+func TestMyBnto(t *testing.T) {
     server := mocks.NewFigmaServer()
     defer server.Close()
 
@@ -125,11 +125,11 @@ package integration_test
 
 import (
     "testing"
-    "github.com/Develonaut/bento/tests/mocks"
-    "github.com/Develonaut/bento/tests/integration"
+    "github.com/Develonaut/bnto/tests/mocks"
+    "github.com/Develonaut/bnto/tests/integration"
 )
 
-func TestProductBento(t *testing.T) {
+func TestProductBnto(t *testing.T) {
     // Start mock Figma server
     figmaServer := mocks.NewFigmaServer()
     defer figmaServer.Close()
@@ -138,16 +138,16 @@ func TestProductBento(t *testing.T) {
     tmpDir, cleanup := integration.CreateTempDir(t, "product-test-")
     defer cleanup()
 
-    // Run bento with mocks
+    // Run bnto with mocks
     envVars := map[string]string{
         "FIGMA_API_URL": figmaServer.URL,
         "BLENDER_CMD": "./tests/mocks/blender-mock.sh",
         "OUTPUT_DIR": tmpDir,
     }
 
-    output, err := integration.RunBento(t, "product.bento.json", envVars)
+    output, err := integration.RunBnto(t, "product.bnto.json", envVars)
     if err != nil {
-        t.Fatalf("Bento failed: %v\nOutput: %s", err, output)
+        t.Fatalf("Bnto failed: %v\nOutput: %s", err, output)
     }
 
     // Verify outputs
@@ -169,7 +169,7 @@ Following the **Bento Box Principle**:
 ## Next Steps
 
 After Phase 8.1, these mocks will be used in:
-- Phase 8.2: CSV Reader bento tests
+- Phase 8.2: CSV Reader bnto tests
 - Phase 8.3: HTTP Request node tests (with Figma mock)
 - Phase 8.4: Blender integration tests (with Blender mock)
 - Phase 8.5: Full end-to-end product automation test

@@ -1,4 +1,4 @@
-// Package integration provides end-to-end integration tests for bento execution.
+// Package integration provides end-to-end integration tests for bnto execution.
 package integration
 
 import (
@@ -8,37 +8,37 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/engine"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // TestLoopErrorPropagation tests that errors from nodes inside a loop
-// are properly propagated and cause the bento execution to fail.
+// are properly propagated and cause the bnto execution to fail.
 func TestLoopErrorPropagation(t *testing.T) {
 	t.Log("=== Testing Loop Error Propagation ===")
-	t.Log("Verify that a failing node inside a loop causes the bento to fail")
+	t.Log("Verify that a failing node inside a loop causes the bnto to fail")
 	t.Log("")
 
-	// Create a bento with a loop that contains a failing node
-	bentoDef := createLoopWithFailingNode(t)
+	// Create a bnto with a loop that contains a failing node
+	bntoDef := createLoopWithFailingNode(t)
 
 	// Create execution environment
 	p := createRegistry()
 	eng := engine.New(p, nil)
 
-	// Execute the bento - we expect it to FAIL
+	// Execute the bnto - we expect it to FAIL
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	t.Log("Executing bento with failing loop node...")
-	result, err := eng.Serve(ctx, bentoDef)
+	t.Log("Executing bnto with failing loop node...")
+	result, err := eng.Serve(ctx, bntoDef)
 
 	// Verify execution FAILED (this is the correct behavior)
 	if err == nil {
-		t.Fatal("Expected bento execution to fail, but it succeeded")
+		t.Fatal("Expected bnto execution to fail, but it succeeded")
 	}
 
-	t.Logf("✓ Bento execution failed as expected: %v", err)
+	t.Logf("✓ Bnto execution failed as expected: %v", err)
 
 	// Verify error message contains information about the failing node
 	errStr := err.Error()
@@ -66,18 +66,18 @@ func TestLoopErrorPropagation(t *testing.T) {
 	t.Log("")
 	t.Log("=== Loop Error Propagation Test Complete ===")
 	t.Log("✓ Errors from loop child nodes are properly propagated")
-	t.Log("✓ Bento execution fails when loop nodes fail")
+	t.Log("✓ Bnto execution fails when loop nodes fail")
 	t.Log("✓ Error messages provide diagnostic information")
 }
 
-// createLoopWithFailingNode creates a bento definition with a loop
+// createLoopWithFailingNode creates a bnto definition with a loop
 // that contains a node that will fail.
 func createLoopWithFailingNode(t *testing.T) *node.Definition {
 	t.Helper()
 
-	// Create a bento with a forEach loop over 3 items
+	// Create a bnto with a forEach loop over 3 items
 	// The loop contains a file-system copy node with invalid parameters
-	bentoJSON := `{
+	bntoJSON := `{
 		"id": "test-loop-error",
 		"type": "group",
 		"version": "1.0.0",
@@ -130,8 +130,8 @@ func createLoopWithFailingNode(t *testing.T) *node.Definition {
 	}`
 
 	var def node.Definition
-	if err := json.Unmarshal([]byte(bentoJSON), &def); err != nil {
-		t.Fatalf("Failed to parse test bento: %v", err)
+	if err := json.Unmarshal([]byte(bntoJSON), &def); err != nil {
+		t.Fatalf("Failed to parse test bnto: %v", err)
 	}
 
 	return &def
@@ -168,11 +168,11 @@ third,3`
 	}
 	defer os.Remove(testCSVPath)
 
-	// Create a bento that:
+	// Create a bnto that:
 	// 1. Reads CSV (3 rows)
 	// 2. Loops over rows
 	// 3. On iteration 1 (index 1), tries to copy a file that doesn't exist
-	bentoJSON := `{
+	bntoJSON := `{
 		"id": "test-partial-loop",
 		"type": "group",
 		"version": "1.0.0",
@@ -244,8 +244,8 @@ third,3`
 	}`
 
 	var def node.Definition
-	if err := json.Unmarshal([]byte(bentoJSON), &def); err != nil {
-		t.Fatalf("Failed to parse test bento: %v", err)
+	if err := json.Unmarshal([]byte(bntoJSON), &def); err != nil {
+		t.Fatalf("Failed to parse test bnto: %v", err)
 	}
 
 	// Create execution environment
@@ -256,12 +256,12 @@ third,3`
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	t.Log("Executing bento with partial loop...")
+	t.Log("Executing bnto with partial loop...")
 	result, err := eng.Serve(ctx, &def)
 
 	// Should fail (overlay 3.png doesn't exist, will fail on iteration 2)
 	if err != nil {
-		t.Logf("✓ Bento failed as expected: %v", err)
+		t.Logf("✓ Bnto failed as expected: %v", err)
 	}
 
 	// Check that we have partial results

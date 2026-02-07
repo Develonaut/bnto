@@ -1,5 +1,5 @@
 {
-  "name": "@bento/web",
+  "name": "@bnto/web",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -11,10 +11,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@bento/auth": "workspace:*",
-    "@bento/core": "workspace:*",
-    "@bento/ui": "workspace:*",
-    "@bento/editor": "workspace:*",
+    "@bnto/auth": "workspace:*",
+    "@bnto/core": "workspace:*",
+    "@bnto/ui": "workspace:*",
+    "@bnto/editor": "workspace:*",
     "next": "^15.0.0",
     "next-themes": "^0.4.4",
     "react": "^19.0.0",

@@ -1,6 +1,6 @@
-// Package engine provides the orchestration engine for executing bentos.
+// Package engine provides the orchestration engine for executing bntos.
 //
-// The engine orchestrates bento execution, managing data flow, concurrency,
+// The engine orchestrates bnto execution, managing data flow, concurrency,
 // and error handling.
 //
 // # Usage
@@ -9,8 +9,8 @@
 //	logger := logger.New(logger.Config{Level: logger.LevelInfo})
 //	eng := engine.New(r, logger)
 //
-//	// Execute a bento
-//	result, err := eng.Serve(ctx, bentoDef)
+//	// Execute a bnto
+//	result, err := eng.Serve(ctx, bntoDef)
 //	if err != nil {
 //	    log.Fatalf("Execution failed: %v", err)
 //	}
@@ -28,9 +28,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/node"
-	"github.com/Develonaut/bento/pkg/registry"
-	"github.com/Develonaut/bento/pkg/logger"
+	"github.com/Develonaut/bnto/pkg/node"
+	"github.com/Develonaut/bnto/pkg/registry"
+	"github.com/Develonaut/bnto/pkg/logger"
 )
 
 // ProgressMessenger receives execution progress events.
@@ -41,7 +41,7 @@ type ProgressMessenger interface {
 	SendLoopChild(loopPath, childName string, index, total int)
 }
 
-// Engine orchestrates bento execution.
+// Engine orchestrates bnto execution.
 type Engine struct {
 	registry    *registry.Registry
 	logger      *logger.Logger    // Optional - can be nil
@@ -54,7 +54,7 @@ type Engine struct {
 // ProgressCallback is called when a node starts/completes execution.
 type ProgressCallback func(nodeID string, status string)
 
-// Result contains the result of a bento execution.
+// Result contains the result of a bnto execution.
 type Result struct {
 	Status        Status                 // Execution status
 	NodesExecuted int                    // Number of nodes executed
@@ -102,7 +102,7 @@ func (i *Engine) OnProgress(callback ProgressCallback) {
 	i.onProgress = callback
 }
 
-// Serve executes a bento definition.
+// Serve executes a bnto definition.
 //
 // Returns:
 //   - *Result: Execution result with outputs from all nodes
@@ -115,7 +115,7 @@ func (i *Engine) Serve(ctx context.Context, def *node.Definition) (*Result, erro
 	i.state = newExecutionState(graph)
 
 	if i.logger != nil {
-		msg := msgBentoStarted(def.Name)
+		msg := msgBntoStarted(def.Name)
 		i.logger.Info(msg.format())
 	}
 
@@ -126,7 +126,7 @@ func (i *Engine) Serve(ctx context.Context, def *node.Definition) (*Result, erro
 	// Create execution context
 	execCtx := newExecutionContext()
 
-	// Execute the bento
+	// Execute the bnto
 	err := i.executeNode(ctx, def, execCtx, result)
 
 	result.Duration = time.Since(start)
@@ -137,7 +137,7 @@ func (i *Engine) Serve(ctx context.Context, def *node.Definition) (*Result, erro
 
 		if i.logger != nil {
 			durationStr := formatDuration(result.Duration)
-			msg := msgBentoFailed(durationStr)
+			msg := msgBntoFailed(durationStr)
 			i.logger.Error(msg.format())
 			i.logger.Error("Error: " + err.Error())
 		}
@@ -149,7 +149,7 @@ func (i *Engine) Serve(ctx context.Context, def *node.Definition) (*Result, erro
 
 	if i.logger != nil {
 		durationStr := formatDuration(result.Duration)
-		msg := msgBentoCompleted(durationStr)
+		msg := msgBntoCompleted(durationStr)
 		i.logger.Info(msg.format())
 	}
 

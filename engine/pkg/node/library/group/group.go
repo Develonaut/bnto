@@ -59,7 +59,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // ExecutionMode represents how child node are executed.

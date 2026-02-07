@@ -1,4 +1,4 @@
-// Package http provides HTTP request functionality for the bento workflow system.
+// Package http provides HTTP request functionality for the bnto workflow system.
 //
 // The http node allows you to make HTTP requests (GET, POST, PUT, DELETE, etc.)
 // to external APIs and services. It supports:
@@ -32,7 +32,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 const (

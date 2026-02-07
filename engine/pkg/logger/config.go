@@ -1,4 +1,4 @@
-// Package logger provides structured logging for the bento system.
+// Package logger provides structured logging for the bnto system.
 //
 // The logger wraps Go's standard library log/slog for high-performance,
 // zero-allocation logging with both structured (JSON) and human-readable

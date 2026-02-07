@@ -2,7 +2,7 @@
 
 ## Core Philosophy
 
-Like a traditional Japanese bento box where each compartment serves a specific purpose and contains carefully prepared items, our codebase should exhibit the same level of organization and intention.
+Like a traditional Japanese bnto box where each compartment serves a specific purpose and contains carefully prepared items, our codebase should exhibit the same level of organization and intention.
 
 ## The Five Principles
 
@@ -173,7 +173,7 @@ type NodeFactory interface {
 
 ## Remember
 
-> A well-organized bento box is a joy to eat.
+> A well-organized bnto box is a joy to eat.
 > A well-organized codebase is a joy to maintain.
 
 **Keep your code compartmentalized!** 🍱

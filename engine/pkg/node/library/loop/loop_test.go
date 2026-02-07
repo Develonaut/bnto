@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/node/library/loop"
+	"github.com/Develonaut/bnto/pkg/node/library/loop"
 )
 
 // TestLoop_ForEach tests forEach mode - iterating over array/slice.

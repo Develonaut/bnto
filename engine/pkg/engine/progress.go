@@ -3,7 +3,7 @@ package engine
 import (
 	"sync"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // graphNode represents a node in the flattened execution graph for progress tracking.
@@ -35,7 +35,7 @@ type executionState struct {
 	mu             sync.RWMutex
 }
 
-// analyzeGraph flattens the bento definition into an execution graph.
+// analyzeGraph flattens the bnto definition into an execution graph.
 // Groups are transparent (children are flattened).
 // Loops are opaque (count as single node, children hidden).
 func analyzeGraph(def *node.Definition) *executionGraph {

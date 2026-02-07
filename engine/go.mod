@@ -1,4 +1,4 @@
-module github.com/Develonaut/bento
+module github.com/Develonaut/bnto
 
 go 1.25.0
 

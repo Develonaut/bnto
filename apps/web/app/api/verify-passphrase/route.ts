@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ valid: false }, { status: 400 });
   }
 
-  const secret = process.env.BENTO_PASSPHRASE ?? "hotdogbowl";
+  const secret = process.env.BNTO_PASSPHRASE ?? "hotdogbowl";
   const valid = passphrase.trim().toLowerCase() === secret.toLowerCase();
 
   if (!valid) {
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ valid: true });
-  response.cookies.set("bento-access", "granted", {
+  response.cookies.set("bnto-access", "granted", {
     path: "/",
     maxAge: 60 * 60 * 24 * 30, // 30 days
     httpOnly: false,

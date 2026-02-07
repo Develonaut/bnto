@@ -77,32 +77,32 @@ func getStatusWord(name string, isRunning bool) string {
 	return statusWordsCompleted[hash%uint32(len(statusWordsCompleted))]
 }
 
-// msgBentoStarted creates a message for bento execution start.
-// Format matches CLI output: "🍱 Running Bento: [name]"
-func msgBentoStarted(name string) logMessage {
+// msgBntoStarted creates a message for bnto execution start.
+// Format matches CLI output: "🍱 Running Bnto: [name]"
+func msgBntoStarted(name string) logMessage {
 	return logMessage{
 		emoji:     "🍱",
-		text:      "Running Bento: " + name,
+		text:      "Running Bnto: " + name,
 		isRunning: true,
 	}
 }
 
-// msgBentoCompleted creates a message for bento execution completion.
-// Format: "🍱 Delicious! Bento executed successfully in [duration]"
-func msgBentoCompleted(duration string) logMessage {
+// msgBntoCompleted creates a message for bnto execution completion.
+// Format: "🍱 Delicious! Bnto executed successfully in [duration]"
+func msgBntoCompleted(duration string) logMessage {
 	return logMessage{
-		emoji:     "🍱", // Always use bento box emoji for consistency
-		text:      "Delicious! Bento executed successfully in " + duration,
+		emoji:     "🍱", // Always use bnto box emoji for consistency
+		text:      "Delicious! Bnto executed successfully in " + duration,
 		isSuccess: true,
 	}
 }
 
-// msgBentoFailed creates a message for bento execution failure.
-// Format: "❌ Failed! Bento execution failed in [duration]"
-func msgBentoFailed(duration string) logMessage {
+// msgBntoFailed creates a message for bnto execution failure.
+// Format: "❌ Failed! Bnto execution failed in [duration]"
+func msgBntoFailed(duration string) logMessage {
 	return logMessage{
 		emoji:    randomErrorEmoji(),
-		text:     "Failed! Bento execution failed in " + duration,
+		text:     "Failed! Bnto execution failed in " + duration,
 		isFailed: true,
 	}
 }

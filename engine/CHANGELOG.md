@@ -8,13 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Phase 8.7: Product Automation Master Bento** - Complete end-to-end workflow integration
-  - Master bento combining all Phase 8 components (CSV → Folders → Figma API → Blender → WebP)
+- **Phase 8.7: Product Automation Master Bnto** - Complete end-to-end workflow integration
+  - Master bnto combining all Phase 8 components (CSV → Folders → Figma API → Blender → WebP)
   - Integration test validating complete product automation workflow
   - Template resolution inside forEach loop contexts (fixed context passing)
   - Performance: 17.7s for 3 products (5.9s per product) with mocks
   - Demonstrates: CSV reading, loops, HTTP requests, shell commands, parallel optimization, file operations
-- Phase 8.6: Image Optimization Bento with parallel WebP conversion
+- Phase 8.6: Image Optimization Bnto with parallel WebP conversion
   - Integration tests for parallel image conversion (8 PNGs to WebP)
   - Glob pattern support for filesystem delete operation (`render-*.png`)
   - File-level documentation for filesystem package modules
@@ -22,34 +22,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `validateTransferParams()` helper for DRY parameter validation
   - Complete test coverage (9 filesystem tests + 3 integration tests)
 - **Wasabi Package**: Secure secrets management with OS-native keychain storage
-  - `bento wasabi set/get/list/delete` CLI commands
+  - `bnto wasabi set/get/list/delete` CLI commands
   - `{{SECRETS.X}}` template namespace for secrets (separate from `{{.X}}` config)
   - OS-native keychain integration (macOS Keychain, Windows Credential Manager, Linux Secret Service)
   - Automatic secret resolution in engine execution context
   - File-based backend for isolated test storage
   - Comprehensive test suite with 11 passing tests
-- Phase 8.5: Mock Render Bento with streaming output validation
+- Phase 8.5: Mock Render Bnto with streaming output validation
   - Real-time streaming output from long-running shell commands
   - `_onOutput` callback injection in engine executor
   - `OnStream` logger callback for incremental output display
   - Mock Blender script for fast integration testing
   - Streaming progress validation tests (line-by-line output ordering)
-- Phase 8.4: API Fetch Bento with HTTP request chaining and file downloads
+- Phase 8.4: API Fetch Bnto with HTTP request chaining and file downloads
 - `saveToFile` parameter for http-request node (download responses to files)
 - `queryParams` parameter for http-request node (URL query string support)
 - Environment variable loading in execution context (templates can access env vars)
 - Mock Figma server with actual PNG image serving
 - Integration tests for API workflows with race detector validation
-- Phase 8.3: Folder Setup Bento integration test with forEach loop
+- Phase 8.3: Folder Setup Bnto integration test with forEach loop
 - Loop node nested node execution support
 - Enhanced template resolution for arrays and maps (not just strings)
 - Type conversion for CSV output arrays ([]map[string]interface{} → []interface{})
 - Integration test for idempotent folder creation
-- Phase 8.2: First integration test with CSV reader bento example
+- Phase 8.2: First integration test with CSV reader bnto example
 - Integration test framework with helper utilities
 - 100% CLI command test coverage (15 tests)
 - Comprehensive DEVELOPMENT.md guide for Go development
-- Version command shorthand (`bento v`)
+- Version command shorthand (`bnto v`)
 - OS-specific installation instructions for glow
 - Test fixtures and mock servers (Figma API, Blender)
 - Node.js to Go translation guide
@@ -100,11 +100,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Phase 7: CLI Implementation
-- Complete bento CLI with playful sushi-themed commands
-- `savor` command - Execute bento workflows
-- `sample` command - Validate bentos without execution
-- `menu` command - List available bentos
-- `box` command - Create new bento templates
+- Complete bnto CLI with playful sushi-themed commands
+- `savor` command - Execute bnto workflows
+- `sample` command - Validate bntos without execution
+- `menu` command - List available bntos
+- `box` command - Create new bnto templates
 - `recipe` command - View documentation with glow
 - `version` command - Display version information
 - Charm CLI integration with beautiful output
@@ -118,7 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Status update system
 
 #### Phase 6: Orchestration Engine
-- Bento orchestration engine
+- Bnto orchestration engine
 - Group execution with dependency resolution
 - Context passing between node
 - Edge-based execution flow
@@ -166,7 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version Numbering
 
-Bento follows [Semantic Versioning](https://semver.org/):
+Bnto follows [Semantic Versioning](https://semver.org/):
 
 - **MAJOR** version (1.0.0): Incompatible API changes
 - **MINOR** version (0.1.0): New functionality in a backward compatible manner

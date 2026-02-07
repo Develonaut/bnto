@@ -12,9 +12,9 @@
   },
   "aliases": {
     "components": "@/components",
-    "utils": "@bento/ui/lib/utils",
-    "ui": "@bento/ui/components/primitives",
-    "lib": "@bento/ui/lib",
-    "hooks": "@bento/ui/hooks"
+    "utils": "@bnto/ui/lib/utils",
+    "ui": "@bnto/ui/components/primitives",
+    "lib": "@bnto/ui/lib",
+    "hooks": "@bnto/ui/hooks"
   }
 }

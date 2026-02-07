@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/logger"
+	"github.com/Develonaut/bnto/pkg/logger"
 )
 
 // TestLogger_Output verifies that the logger outputs messages with key-value pairs.
@@ -119,7 +119,7 @@ func TestLogger_DebugLevel(t *testing.T) {
 	}
 }
 
-// TestLogger_WithContext verifies that context values (trace IDs, bento IDs)
+// TestLogger_WithContext verifies that context values (trace IDs, bnto IDs)
 // propagate correctly through the logger. This is critical for engine.
 func TestLogger_WithContext(t *testing.T) {
 	var buf bytes.Buffer
@@ -132,7 +132,7 @@ func TestLogger_WithContext(t *testing.T) {
 	// Create logger with context (like the engine would do)
 	contextLogger := logger.With(
 		"trace_id", "trace-123",
-		"bento_id", "my-workflow")
+		"bnto_id", "my-workflow")
 
 	contextLogger.Info("Executing node")
 
@@ -143,7 +143,7 @@ func TestLogger_WithContext(t *testing.T) {
 	}
 
 	if !strings.Contains(output, "my-workflow") {
-		t.Errorf("Output should contain bento_id: %s", output)
+		t.Errorf("Output should contain bnto_id: %s", output)
 	}
 }
 
@@ -180,7 +180,7 @@ func TestLogger_StreamingCallback(t *testing.T) {
 }
 
 // TestLogger_ContextHelpers verifies that the context helper functions
-// (WithBentoID, WithNodeID, etc.) work correctly.
+// (WithBntoID, WithNodeID, etc.) work correctly.
 func TestLogger_ContextHelpers(t *testing.T) {
 	var buf bytes.Buffer
 
@@ -190,7 +190,7 @@ func TestLogger_ContextHelpers(t *testing.T) {
 	})
 
 	// Use helper functions to add context
-	log = logger.WithBentoID(log, "workflow-123")
+	log = logger.WithBntoID(log, "workflow-123")
 	log = logger.WithNodeID(log, "node-456")
 	log = logger.WithNodeType(log, "http-request")
 
@@ -199,7 +199,7 @@ func TestLogger_ContextHelpers(t *testing.T) {
 	output := buf.String()
 
 	if !strings.Contains(output, "workflow-123") {
-		t.Errorf("Output should contain bento_id: %s", output)
+		t.Errorf("Output should contain bnto_id: %s", output)
 	}
 
 	if !strings.Contains(output, "node-456") {

@@ -3,7 +3,7 @@ package engine
 import (
 	"context"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // executeNode executes a single node (handles all node types).

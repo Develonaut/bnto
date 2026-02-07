@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "description": "Custom render settings for special models. Place this file as 'render.json' in your product folder alongside model.stl and overlay.png. When using generate-product-renders bento, these values will automatically pre-populate the form.",
+  "description": "Custom render settings for special models. Place this file as 'render.json' in your product folder alongside model.stl and overlay.png. When using generate-product-renders bnto, these values will automatically pre-populate the form.",
   "renderTheme": "stormcaller",
   "zoomMultiplier": 1.5,
   "offsetModifier": -0.3

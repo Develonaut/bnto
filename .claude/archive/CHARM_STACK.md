@@ -1,6 +1,6 @@
-# 🍱 Charm CLI Stack for Bento
+# 🍱 Charm CLI Stack for Bnto
 
-**Purpose:** Define how Charm libraries integrate with Bento's architecture
+**Purpose:** Define how Charm libraries integrate with Bnto's architecture
 **Status:** Active - Phase 7 (CLI) complete, Phase 8+ (TUI) planned
 **Last Updated:** 2025-10-19
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-Bento uses the [Charm CLI toolkit](https://charm.sh/) for beautiful terminal interfaces. This document defines which Charm libraries we use, how they map to our architecture, and the implementation timeline.
+Bnto uses the [Charm CLI toolkit](https://charm.sh/) for beautiful terminal interfaces. This document defines which Charm libraries we use, how they map to our architecture, and the implementation timeline.
 
 **Philosophy:** Start with excellent CLI experience NOW, evolve to full TUI later.
 
@@ -18,7 +18,7 @@ Bento uses the [Charm CLI toolkit](https://charm.sh/) for beautiful terminal int
 
 ### Currently Used (Phase 7)
 
-| Library | Version | Purpose | Bento Package |
+| Library | Version | Purpose | Bnto Package |
 |---------|---------|---------|---------------|
 | [lipgloss](https://github.com/charmbracelet/lipgloss) | latest | Styling, colors, layouts | `pkg/miso/` |
 | [log](https://github.com/charmbracelet/log) | latest | Beautiful structured logging | `pkg/shoyu/` |
@@ -53,7 +53,7 @@ Bento uses the [Charm CLI toolkit](https://charm.sh/) for beautiful terminal int
 **Files:**
 ```
 pkg/miso/
-├── config.go       # Theme persistence (~/.bento/theme)
+├── config.go       # Theme persistence (~/.bnto/theme)
 ├── manager.go      # Theme switching (SetTheme, GetCurrentTheme)
 ├── variants.go     # 7 color palettes (Nasu, Wasabi, Toro, etc.)
 ├── theme.go        # Lipgloss styles + semantic colors
@@ -94,21 +94,21 @@ logger := shoyu.New(shoyu.Config{
 
 ---
 
-### Package: `cmd/bento/` (CLI Commands)
+### Package: `cmd/bnto/` (CLI Commands)
 
 **Purpose:** User-facing CLI commands
 
 **Charm Integration:**
 - All commands use `miso.Progress` for visual feedback
-- `bento pour` uses `charm/log` for formatted log tailing
-- Future: `bento theme` for switching color variants
+- `bnto pour` uses `charm/log` for formatted log tailing
+- Future: `bnto theme` for switching color variants
 
 **Commands Using Progress Display:**
-1. **`bento run`** - Shows node execution steps with status words
-2. **`bento validate`** - Shows validation steps
-3. **`bento new`** - Shows template creation progress
-4. **`bento list`** - Shows directory scanning
-5. **`bento pour`** - Tails logs with charm/log formatting
+1. **`bnto run`** - Shows node execution steps with status words
+2. **`bnto validate`** - Shows validation steps
+3. **`bnto new`** - Shows template creation progress
+4. **`bnto list`** - Shows directory scanning
+5. **`bnto pour`** - Tails logs with charm/log formatting
 
 ---
 
@@ -116,7 +116,7 @@ logger := shoyu.New(shoyu.Config{
 
 ### Sushi-Themed Color Variants
 
-Users can choose from 7 beautiful themes (persisted to `~/.bento/theme`):
+Users can choose from 7 beautiful themes (persisted to `~/.bnto/theme`):
 
 | Variant | Primary Color | Inspiration | Default |
 |---------|---------------|-------------|---------|
@@ -146,17 +146,17 @@ type Palette struct {
 
 ### Theme Persistence
 
-Themes are saved to: `~/.bento/theme`
+Themes are saved to: `~/.bnto/theme`
 
 ```bash
 # Switch theme (future command)
-bento theme set wasabi
+bnto theme set wasabi
 
 # View current theme
-bento theme
+bnto theme
 
 # List all themes
-bento theme list
+bnto theme list
 ```
 
 ---
@@ -172,7 +172,7 @@ Based on Bubbletea's [daemon-combo example](https://github.com/charmbracelet/bub
 │ Foreground      │         │ Background       │
 │ (Bubbletea)     │◄────────│ (Actual Work)    │
 │                 │ Channel │                  │
-│ • Renders UI    │         │ • Loads bento    │
+│ • Renders UI    │         │ • Loads bnto    │
 │ • Shows progress│         │ • Executes neta  │
 │ • Handles input │         │ • Sends updates  │
 └─────────────────┘         └──────────────────┘
@@ -264,20 +264,20 @@ func getStatusLabel(status StepStatus, stepName string) string {
 - [x] Create `pkg/miso/` package
 - [x] Implement progress display (daemon-combo)
 - [x] Update all commands with progress
-- [x] Create `bento pour` for log tailing
+- [x] Create `bnto pour` for log tailing
 - [x] Wrap shoyu with charm/log
 
 **Result:** Beautiful CLI with themed progress display
 
 ---
 
-### Phase 8: Real-World Bentos + Streaming (Next)
+### Phase 8: Real-World Bntos + Streaming (Next)
 
 **Status:** 📋 Planned
 
 Focus: Create practical workflows, test streaming
 
-- [ ] Create example bentos (image processing, data pipelines)
+- [ ] Create example bntos (image processing, data pipelines)
 - [ ] Implement streaming progress for shell-command neta
 - [ ] Test with real automation scenarios
 - [ ] Polish progress display based on real usage
@@ -293,8 +293,8 @@ Focus: Create practical workflows, test streaming
 Interactive TUI for creating and managing workflows:
 
 ```bash
-bento tui               # Launch full TUI
-bento tui workflow.bento.json  # Edit existing workflow
+bnto tui               # Launch full TUI
+bnto tui workflow.bnto.json  # Edit existing workflow
 ```
 
 **New Charm Libraries:**
@@ -329,14 +329,14 @@ bento tui workflow.bento.json  # Edit existing workflow
 ### Example Flow
 
 ```
-User runs: bento run workflow.bento.json
+User runs: bnto run workflow.bnto.json
 
-Terminal (miso):           File ~/.bento/logs/bento.log (shoyu+charm/log):
+Terminal (miso):           File ~/.bnto/logs/bnto.log (shoyu+charm/log):
 ┌─────────────────┐       ┌──────────────────────────────────────┐
 │ Running...      │       │ time=2025-10-19T10:30:00.000         │
 │                 │       │ level=INFO                           │
-│ Executing       │       │ msg="Starting bento execution"       │
-│    Load CSV...  │       │ bento_id=workflow                    │
+│ Executing       │       │ msg="Starting bnto execution"       │
+│    Load CSV...  │       │ bnto_id=workflow                    │
 │                 │       │                                      │
 │ ✓ Devoured      │       │ time=2025-10-19T10:30:01.234         │
 │   Load CSV      │       │ level=INFO                           │
@@ -360,16 +360,16 @@ Each miso component has tests:
 
 ### Integration Tests
 
-- Test progress display with actual bentos
+- Test progress display with actual bntos
 - Verify theme persistence across runs
-- Test log tailing with `bento pour`
+- Test log tailing with `bnto pour`
 
 ### Visual Tests
 
 - Manually test each theme variant
 - Verify status word variety
 - Check emoji assignment
-- Test nested bento indentation
+- Test nested bnto indentation
 
 ---
 

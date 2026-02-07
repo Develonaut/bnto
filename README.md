@@ -1,10 +1,10 @@
-# Bento
+# Bnto
 
 **High-performance workflow automation — CLI, desktop, and cloud.**
 
-Bento lets you define automated workflows as `.bento.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests. Workflows are built from composable nodes connected together to automate complex multi-step processes.
+Bnto lets you define automated workflows as `.bnto.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests. Workflows are built from composable nodes connected together to automate complex multi-step processes.
 
-## Why Bento?
+## Why Bnto?
 
 - **Fast:** 15-30x faster startup than Node.js, 6x less memory
 - **Portable:** Single 20MB binary, cross-platform (macOS, Windows, Linux)
@@ -69,17 +69,17 @@ Bento lets you define automated workflows as `.bento.json` files that orchestrat
 ```
 
 ```bash
-bento run resize-images.bento.json
+bnto run resize-images.bnto.json
 ```
 
 ## CLI Usage
 
 ```bash
-bento run workflow.bento.json       # Execute a workflow
-bento validate workflow.bento.json  # Validate a workflow file
-bento list                          # List available bentos
-bento new my-workflow               # Create a new workflow
-bento secrets set KEY VALUE         # Manage secrets
+bnto run workflow.bnto.json       # Execute a workflow
+bnto validate workflow.bnto.json  # Validate a workflow file
+bnto list                          # List available bntos
+bnto new my-workflow               # Create a new workflow
+bnto secrets set KEY VALUE         # Manage secrets
 ```
 
 ## Repository Structure
@@ -87,16 +87,16 @@ bento secrets set KEY VALUE         # Manage secrets
 This is a monorepo with a Go execution engine and TypeScript frontend packages:
 
 ```
-bento/
+bnto/
 ├── engine/              # Go CLI + execution engine
-│   ├── cmd/bento/       # CLI binary
+│   ├── cmd/bnto/       # CLI binary
 │   ├── pkg/             # Go packages (engine, registry, node types, etc.)
 │   └── tests/           # Integration tests + fixtures
 ├── apps/
 │   ├── web/             # Next.js cloud app (Phase 1)
 │   └── desktop/         # Wails desktop app (Phase 3)
 ├── packages/
-│   └── @bento/
+│   └── @bnto/
 │       ├── core/        # Transport-agnostic API layer
 │       ├── ui/          # Design system (shadcn)
 │       └── editor/      # Workflow editor components
@@ -130,12 +130,12 @@ task ui:dev              # Frontend dev server
 
 ## Architecture
 
-Bento follows the **Bento Box Principle** — every file, function, and package does one thing well.
+Bnto follows the **Bento Box Principle** — every file, function, and package does one thing well.
 
 - **Go Engine** (`engine/`): Workflow execution, validation, all node types
-- **@bento/core**: Transport-agnostic API — same interface for cloud (Convex), desktop (Wails), and REST
-- **@bento/ui**: Shared design system across web and desktop
-- **@bento/editor**: Workflow editor (JSON for now, visual drag-and-drop later)
+- **@bnto/core**: Transport-agnostic API — same interface for cloud (Convex), desktop (Wails), and REST
+- **@bnto/ui**: Shared design system across web and desktop
+- **@bnto/editor**: Workflow editor (JSON for now, visual drag-and-drop later)
 
 See [.claude/PLAN.md](.claude/PLAN.md) for the full roadmap and [.claude/strategy/](.claude/strategy/) for architecture decisions.
 

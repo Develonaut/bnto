@@ -1,4 +1,4 @@
-# Bento - Go CLI for Workflow Automation
+# Bnto - Go CLI for Workflow Automation
 
 **Date:** 2025-10-18
 **Purpose:** Port Atomiton's core architecture from TypeScript to Go for a high-performance CLI tool
@@ -8,7 +8,7 @@
 
 ## Project Overview
 
-Bento is a complete rewrite of Atomiton's core execution engine in Go, designed to be:
+Bnto is a complete rewrite of Atomiton's core execution engine in Go, designed to be:
 
 - ✅ **Fast:** 15-30x faster startup, 6x less memory
 - ✅ **Small:** 20MB binary vs 202MB node_modules
@@ -46,8 +46,8 @@ Bento is a complete rewrite of Atomiton's core execution engine in Go, designed 
 
 Located in `.claude/agents/`:
 
-- **Karen.md** - Agent persona from Bento
-- **Colossus.md** - Agent persona from Bento
+- **Karen.md** - Agent persona from Bnto
+- **Colossus.md** - Agent persona from Bnto
 
 ---
 
@@ -108,7 +108,7 @@ Located in `.claude/agents/`:
 
 **Deliverable:** Can load/save flow files
 ```bash
-bentobox validate workflow.flow.json  # ✅ Parse and validate
+bntobox validate workflow.flow.json  # ✅ Parse and validate
 ```
 
 ---
@@ -126,7 +126,7 @@ bentobox validate workflow.flow.json  # ✅ Parse and validate
 
 **Deliverable:** Can execute simple flows
 ```bash
-bentobox run simple-flow.flow.json  # ✅ Execute
+bntobox run simple-flow.flow.json  # ✅ Execute
 ```
 
 ---
@@ -145,7 +145,7 @@ bentobox run simple-flow.flow.json  # ✅ Execute
 
 **Deliverable:** Production-ready for most workflows
 ```bash
-bentobox run api-workflow.flow.json --progress
+bntobox run api-workflow.flow.json --progress
 ```
 
 ---
@@ -181,10 +181,10 @@ bentobox run api-workflow.flow.json --progress
 **Goal:** Complete CLI tool
 
 ```
-✅ bentobox run
-✅ bentobox validate
-✅ bentobox list
-✅ bentobox create
+✅ bntobox run
+✅ bntobox validate
+✅ bntobox list
+✅ bntobox create
 ✅ Configuration (Viper)
 ```
 
@@ -275,7 +275,7 @@ Memory:           30MB baseline, 150MB peak
 Parallel Nodes:   Event loop (single-threaded)
 ```
 
-### Go Bento CLI (Projected)
+### Go Bnto CLI (Projected)
 
 ```
 Binary Size:      20MB (static binary, all deps included)
@@ -296,9 +296,9 @@ Parallel Nodes:   True parallelism (goroutines, multi-core)
 ## Project Structure (Actual)
 
 ```
-bento/
+bnto/
 ├── cmd/
-│   └── bento/
+│   └── bnto/
 │       ├── main.go
 │       ├── savor.go         # Execute command
 │       ├── sample.go         # Validate command
@@ -435,10 +435,10 @@ bento/
 ## Contact & Collaboration
 
 **Claude Code Agents:**
-- Karen (copied from Bento)
-- Colossus (copied from Bento)
+- Karen (copied from Bnto)
+- Colossus (copied from Bnto)
 
-**Project Location:** `/Users/Ryan/Code/Bento`
+**Project Location:** `/Users/Ryan/Code/Bnto`
 
 ---
 

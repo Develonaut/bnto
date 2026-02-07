@@ -1,6 +1,6 @@
-// Package logs provides utilities for managing bento execution logs.
+// Package logs provides utilities for managing bnto execution logs.
 //
-// Logs are stored in {bento-home}/logs/ with timestamped filenames.
+// Logs are stored in {bnto-home}/logs/ with timestamped filenames.
 package logs
 
 import (
@@ -18,22 +18,22 @@ type LogFile struct {
 }
 
 // GetLogsDirectory returns the path to the logs directory.
-// If bentoHome is empty, defaults to ~/.bento
-func GetLogsDirectory(bentoHome string) (string, error) {
-	if bentoHome == "" {
+// If bntoHome is empty, defaults to ~/.bnto
+func GetLogsDirectory(bntoHome string) (string, error) {
+	if bntoHome == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return "", fmt.Errorf("failed to get home directory: %w", err)
 		}
-		bentoHome = filepath.Join(homeDir, ".bento")
+		bntoHome = filepath.Join(homeDir, ".bnto")
 	}
-	return filepath.Join(bentoHome, "logs"), nil
+	return filepath.Join(bntoHome, "logs"), nil
 }
 
 // EnsureLogsDirectory creates the logs directory if it doesn't exist.
-// Accepts optional bentoHome parameter.
-func EnsureLogsDirectory(bentoHome string) error {
-	logsDir, err := GetLogsDirectory(bentoHome)
+// Accepts optional bntoHome parameter.
+func EnsureLogsDirectory(bntoHome string) error {
+	logsDir, err := GetLogsDirectory(bntoHome)
 	if err != nil {
 		return err
 	}
@@ -109,9 +109,9 @@ func ListLogFiles(logsDir string) ([]LogFile, error) {
 }
 
 // GenerateLogFileName generates the log file name.
-// Always returns "bento.log" (single log file with rotation).
+// Always returns "bnto.log" (single log file with rotation).
 func GenerateLogFileName() string {
-	return "bento.log"
+	return "bnto.log"
 }
 
 // TrimLogFile trims a log file to keep only the most recent lines.

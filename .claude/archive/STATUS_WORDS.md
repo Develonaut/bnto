@@ -1,4 +1,4 @@
-# 🍱 Approved Status Words for Bento
+# 🍱 Approved Status Words for Bnto
 
 ## Usage Guidelines
 
@@ -80,14 +80,14 @@ var failedWords = []string{
 
 ### CLI Output
 ```
-🍱 Tasting bento: data-pipeline
+🍱 Tasting bnto: data-pipeline
 🍙 Savoring neta 'transform-data'... 67% complete
 ✓ 🍱 Devoured successfully in 1.2s
 ```
 
 ### Error Messages
 ```
-✗ Spoiled: Invalid JSON in workflow.bento.json
+✗ Spoiled: Invalid JSON in workflow.bnto.json
 ✗ Burnt: Timeout after 10m
 ✗ Dropped: Connection to API failed
 ```

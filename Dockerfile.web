@@ -6,11 +6,11 @@ FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/web/package.json ./apps/web/
-COPY packages/@bento/core/package.json ./packages/@bento/core/
-COPY packages/@bento/ui/package.json ./packages/@bento/ui/
-COPY packages/@bento/editor/package.json ./packages/@bento/editor/
-COPY packages/@bento/auth/package.json ./packages/@bento/auth/
-COPY packages/@bento/backend/package.json ./packages/@bento/backend/
+COPY packages/@bnto/core/package.json ./packages/@bnto/core/
+COPY packages/@bnto/ui/package.json ./packages/@bnto/ui/
+COPY packages/@bnto/editor/package.json ./packages/@bnto/editor/
+COPY packages/@bnto/auth/package.json ./packages/@bnto/auth/
+COPY packages/@bnto/backend/package.json ./packages/@bnto/backend/
 RUN pnpm install --frozen-lockfile
 
 # --- Build ---
@@ -23,8 +23,8 @@ ENV NEXT_PUBLIC_CONVEX_URL=$NEXT_PUBLIC_CONVEX_URL
 
 COPY --from=deps /app/ ./
 COPY apps/web/ ./apps/web/
-COPY packages/@bento/ ./packages/@bento/
-RUN pnpm turbo run build --filter=@bento/web
+COPY packages/@bnto/ ./packages/@bnto/
+RUN pnpm turbo run build --filter=@bnto/web
 
 # --- Production ---
 FROM base AS runner

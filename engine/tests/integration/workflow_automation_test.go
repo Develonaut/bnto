@@ -12,17 +12,17 @@ import (
 // TestWorkflowAutomation_EndToEnd validates the complete workflow automation.
 // Tests CSV reading → folder creation → copy overlays → external tool execution → WebP optimization
 func TestWorkflowAutomation_EndToEnd(t *testing.T) {
-	t.Skip("Skipping test: examples/workflow-automation.bento.json does not exist yet")
+	t.Skip("Skipping test: examples/workflow-automation.bnto.json does not exist yet")
 
 	projectRoot := "../../"
 	defer CleanupTestDir(t, projectRoot+"output")
 	CleanupTestDir(t, projectRoot+"output")
 
 	envVars := setupTestEnvironment(t, projectRoot)
-	output, err := RunBento(t, "examples/workflow-automation.bento.json", envVars)
+	output, err := RunBnto(t, "examples/workflow-automation.bnto.json", envVars)
 
 	require.NoError(t, err, "Workflow automation should complete successfully\nOutput: %s", output)
-	verifyBentoSuccess(t, output)
+	verifyBntoSuccess(t, output)
 	verifyAllItemsProcessed(t, output, []string{"Test Item A", "Test Item B", "Test Item C"})
 	verifyItemOutputs(t, projectRoot, []string{"Test Item A", "Test Item B", "Test Item C"})
 	verifyStreamingOutput(t, output)
@@ -41,10 +41,10 @@ func setupTestEnvironment(t *testing.T, projectRoot string) map[string]string {
 	}
 }
 
-// verifyBentoSuccess checks that bento execution succeeded
-func verifyBentoSuccess(t *testing.T, output string) {
+// verifyBntoSuccess checks that bnto execution succeeded
+func verifyBntoSuccess(t *testing.T, output string) {
 	t.Helper()
-	assert.Contains(t, output, "Delicious! Bento executed successfully", "Should show success message")
+	assert.Contains(t, output, "Delicious! Bnto executed successfully", "Should show success message")
 }
 
 // verifyAllItemsProcessed checks that all expected items appear in output

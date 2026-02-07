@@ -1,16 +1,16 @@
-// Package wasabi provides secure secrets management for Bento workflows.
+// Package wasabi provides secure secrets management for Bnto workflows.
 //
 // Wasabi handles the "spicy stuff" - API tokens, credentials, and other sensitive
-// data that shouldn't be hardcoded in bento definitions. It uses OS-native keychain
+// data that shouldn't be hardcoded in bnto definitions. It uses OS-native keychain
 // storage (macOS Keychain, Windows Credential Manager, Linux Secret Service) to
 // keep secrets secure.
 //
-// Secrets are accessed in bento templates using the {{SECRETS.X}} namespace,
+// Secrets are accessed in bnto templates using the {{SECRETS.X}} namespace,
 // which is strictly separated from regular {{.X}} environment variables.
 //
 // Example:
 //
-//	// In bento definition:
+//	// In bnto definition:
 //	{
 //	  "type": "http-request",
 //	  "parameters": {
@@ -45,14 +45,14 @@ type Manager struct {
 
 // ManagerConfig configures the secrets manager.
 type ManagerConfig struct {
-	ServiceName string // Keyring service name (e.g., "bento", "bento-test")
+	ServiceName string // Keyring service name (e.g., "bnto", "bnto-test")
 	KeyringDir  string // Directory for file backend (empty = use OS keychain)
 }
 
 // NewManager creates a new secrets manager using OS-native keychain.
 func NewManager() (*Manager, error) {
 	return NewManagerWithConfig(ManagerConfig{
-		ServiceName: "bento",
+		ServiceName: "bnto",
 	})
 }
 

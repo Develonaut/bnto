@@ -17,30 +17,30 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@bento/core':
+      '@bnto/core':
         specifier: workspace:*
-        version: link:../../packages/@bento/core
-      '@bento/editor':
+        version: link:../../packages/@bnto/core
+      '@bnto/editor':
         specifier: workspace:*
-        version: link:../../packages/@bento/editor
-      '@bento/ui':
+        version: link:../../packages/@bnto/editor
+      '@bnto/ui':
         specifier: workspace:*
-        version: link:../../packages/@bento/ui
+        version: link:../../packages/@bnto/ui
 
   apps/web:
     dependencies:
-      '@bento/auth':
+      '@bnto/auth':
         specifier: workspace:*
-        version: link:../../packages/@bento/auth
-      '@bento/core':
+        version: link:../../packages/@bnto/auth
+      '@bnto/core':
         specifier: workspace:*
-        version: link:../../packages/@bento/core
-      '@bento/editor':
+        version: link:../../packages/@bnto/core
+      '@bnto/editor':
         specifier: workspace:*
-        version: link:../../packages/@bento/editor
-      '@bento/ui':
+        version: link:../../packages/@bnto/editor
+      '@bnto/ui':
         specifier: workspace:*
-        version: link:../../packages/@bento/ui
+        version: link:../../packages/@bnto/ui
       '@tanstack/react-query':
         specifier: ^5.62.0
         version: 5.90.20(react@19.2.4)
@@ -79,9 +79,9 @@ importers:
         specifier: ^5.4.0
         version: 5.9.3
 
-  packages/@bento/auth:
+  packages/@bnto/auth:
     dependencies:
-      '@bento/backend':
+      '@bnto/backend':
         specifier: workspace:*
         version: link:../backend
       '@convex-dev/auth':
@@ -107,7 +107,7 @@ importers:
         specifier: ^5.4.0
         version: 5.9.3
 
-  packages/@bento/backend:
+  packages/@bnto/backend:
     dependencies:
       '@convex-dev/auth':
         specifier: ^0.0.80
@@ -116,9 +116,9 @@ importers:
         specifier: ^1.21.0
         version: 1.31.7(react@19.2.4)
 
-  packages/@bento/core:
+  packages/@bnto/core:
     dependencies:
-      '@bento/backend':
+      '@bnto/backend':
         specifier: workspace:*
         version: link:../backend
       '@convex-dev/react-query':
@@ -150,12 +150,12 @@ importers:
         specifier: ^5.4.0
         version: 5.9.3
 
-  packages/@bento/editor:
+  packages/@bnto/editor:
     dependencies:
-      '@bento/core':
+      '@bnto/core':
         specifier: workspace:*
         version: link:../core
-      '@bento/ui':
+      '@bnto/ui':
         specifier: workspace:*
         version: link:../ui
     devDependencies:
@@ -163,7 +163,7 @@ importers:
         specifier: ^5.4.0
         version: 5.9.3
 
-  packages/@bento/ui:
+  packages/@bnto/ui:
     dependencies:
       '@radix-ui/react-label':
         specifier: ^2.1.1

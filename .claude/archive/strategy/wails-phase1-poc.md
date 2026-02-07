@@ -1,5 +1,5 @@
 # Phase 1: Proof of Concept Setup
-**Bento Desktop - Wails Implementation**
+**Bnto Desktop - Wails Implementation**
 
 **Duration:** 1-2 weeks
 **Goal:** Validate Wails architecture with minimal working prototype
@@ -53,13 +53,13 @@ wails version
 
 1. Create desktop app directory
 ```bash
-cd /Users/Ryan/Code/bento/cmd
-wails init -n bento-desktop -t react-ts
+cd /Users/Ryan/Code/bnto/cmd
+wails init -n bnto-desktop -t react-ts
 ```
 
 2. Verify project structure
 ```bash
-cd bento-desktop
+cd bnto-desktop
 tree -L 2
 # Expected:
 # ├── main.go
@@ -87,39 +87,39 @@ wails dev
 - [ ] Hot reload works (edit frontend/src/App.tsx)
 
 **Files Created:**
-- `cmd/bento-desktop/main.go`
-- `cmd/bento-desktop/app.go`
-- `cmd/bento-desktop/frontend/src/App.tsx`
-- `cmd/bento-desktop/wails.json`
+- `cmd/bnto-desktop/main.go`
+- `cmd/bnto-desktop/app.go`
+- `cmd/bnto-desktop/frontend/src/App.tsx`
+- `cmd/bnto-desktop/wails.json`
 
 ---
 
-### Task 2: Integrate Existing Bento Packages
+### Task 2: Integrate Existing Bnto Packages
 
-**Objective:** Import and expose Bento packages to Wails app
+**Objective:** Import and expose Bnto packages to Wails app
 
 **Steps:**
 
-1. Update `go.mod` in bento-desktop
+1. Update `go.mod` in bnto-desktop
 ```bash
-cd cmd/bento-desktop
+cd cmd/bnto-desktop
 
 # If go.mod doesn't exist
-go mod init github.com/yourusername/bento/cmd/bento-desktop
+go mod init github.com/yourusername/bnto/cmd/bnto-desktop
 
-# Add replace directive to use local Bento packages
-go mod edit -replace github.com/yourusername/bento=../..
+# Add replace directive to use local Bnto packages
+go mod edit -replace github.com/yourusername/bnto=../..
 ```
 
-2. Import Bento packages in `app.go`
+2. Import Bnto packages in `app.go`
 ```go
 package main
 
 import (
     "context"
-    "github.com/yourusername/bento/pkg/neta"
-    "github.com/yourusername/bento/pkg/pantry"
-    "github.com/yourusername/bento/pkg/hangiri"
+    "github.com/yourusername/bnto/pkg/neta"
+    "github.com/yourusername/bnto/pkg/pantry"
+    "github.com/yourusername/bnto/pkg/hangiri"
 )
 
 type App struct {
@@ -134,7 +134,7 @@ func (a *App) startup(ctx context.Context) {
     a.ctx = ctx
 }
 
-// Expose Bento methods
+// Expose Bnto methods
 func (a *App) GetNodeTypes() []string {
     return pantry.ListTypes()
 }
@@ -172,7 +172,7 @@ func main() {
     app := NewApp()
 
     err := wails.Run(&options.App{
-        Title:  "Bento Desktop",
+        Title:  "Bnto Desktop",
         Width:  1024,
         Height: 768,
         AssetServer: &assetserver.Options{
@@ -199,20 +199,20 @@ wails dev
 ```
 
 **Acceptance Criteria:**
-- [ ] Bento packages import without errors
+- [ ] Bnto packages import without errors
 - [ ] TypeScript bindings auto-generate
 - [ ] Can call `GetNodeTypes()` from React
 - [ ] Can call `LoadWorkflow()` from React
 - [ ] No circular dependency issues
 
 **Files Modified:**
-- `cmd/bento-desktop/go.mod`
-- `cmd/bento-desktop/app.go`
-- `cmd/bento-desktop/main.go`
+- `cmd/bnto-desktop/go.mod`
+- `cmd/bnto-desktop/app.go`
+- `cmd/bnto-desktop/main.go`
 
 **Files Generated:**
-- `cmd/bento-desktop/frontend/wailsjs/go/main/App.ts`
-- `cmd/bento-desktop/frontend/wailsjs/go/models.ts`
+- `cmd/bnto-desktop/frontend/wailsjs/go/main/App.ts`
+- `cmd/bnto-desktop/frontend/wailsjs/go/models.ts`
 
 ---
 
@@ -237,7 +237,7 @@ export function WorkflowViewer() {
     const loadWorkflow = async () => {
         try {
             // For POC, use a hardcoded path
-            const testPath = '/Users/Ryan/Code/bento/examples/hello-world-http.bento.json'
+            const testPath = '/Users/Ryan/Code/bnto/examples/hello-world-http.bnto.json'
             const def = await LoadWorkflow(testPath)
             setWorkflow(def)
             setError(null)
@@ -253,7 +253,7 @@ export function WorkflowViewer() {
 
     return (
         <div style={{ padding: '20px' }}>
-            <h1>Bento Desktop - POC</h1>
+            <h1>Bnto Desktop - POC</h1>
 
             <div>
                 <button onClick={loadWorkflow}>Load Test Workflow</button>
@@ -317,15 +317,15 @@ wails dev
 **Acceptance Criteria:**
 - [ ] Can load workflow from file path
 - [ ] Workflow JSON displays correctly
-- [ ] Can fetch node types from Bento
+- [ ] Can fetch node types from Bnto
 - [ ] Error handling works (try invalid path)
 - [ ] UI is responsive and functional
 
 **Files Created:**
-- `cmd/bento-desktop/frontend/src/components/WorkflowViewer.tsx`
+- `cmd/bnto-desktop/frontend/src/components/WorkflowViewer.tsx`
 
 **Files Modified:**
-- `cmd/bento-desktop/frontend/src/App.tsx`
+- `cmd/bnto-desktop/frontend/src/App.tsx`
 
 ---
 
@@ -337,18 +337,18 @@ wails dev
 
 1. Add file picker method to App
 ```go
-// cmd/bento-desktop/app.go
+// cmd/bnto-desktop/app.go
 import (
     "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 func (a *App) OpenWorkflowDialog() (string, error) {
     filePath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-        Title: "Select Bento Workflow",
+        Title: "Select Bnto Workflow",
         Filters: []runtime.FileFilter{
             {
-                DisplayName: "Bento Workflows (*.bento.json)",
-                Pattern:     "*.bento.json",
+                DisplayName: "Bnto Workflows (*.bnto.json)",
+                Pattern:     "*.bnto.json",
             },
             {
                 DisplayName: "All Files (*.*)",
@@ -387,19 +387,19 @@ wails dev
 
 # Click "Load Test Workflow"
 # Native file picker should open
-# Select a .bento.json file
+# Select a .bnto.json file
 # Workflow should load and display
 ```
 
 **Acceptance Criteria:**
 - [ ] Native file picker opens
-- [ ] Can filter by .bento.json files
+- [ ] Can filter by .bnto.json files
 - [ ] Selected file loads correctly
 - [ ] Cancel button works (doesn't error)
 
 **Files Modified:**
-- `cmd/bento-desktop/app.go`
-- `cmd/bento-desktop/frontend/src/components/WorkflowViewer.tsx`
+- `cmd/bnto-desktop/app.go`
+- `cmd/bnto-desktop/frontend/src/components/WorkflowViewer.tsx`
 
 ---
 
@@ -411,7 +411,7 @@ wails dev
 
 1. Build production binary
 ```bash
-cd cmd/bento-desktop
+cd cmd/bnto-desktop
 wails build
 
 # Binary location: build/bin/
@@ -420,27 +420,27 @@ wails build
 2. Check binary size
 ```bash
 # macOS
-ls -lh build/bin/bento-desktop.app/Contents/MacOS/bento-desktop
+ls -lh build/bin/bnto-desktop.app/Contents/MacOS/bnto-desktop
 
 # Linux
-ls -lh build/bin/bento-desktop
+ls -lh build/bin/bnto-desktop
 
 # Windows
-dir build\bin\bento-desktop.exe
+dir build\bin\bnto-desktop.exe
 ```
 
 3. Test production binary
 ```bash
 # Run the binary
-./build/bin/bento-desktop.app/Contents/MacOS/bento-desktop  # macOS
-./build/bin/bento-desktop  # Linux
-build\bin\bento-desktop.exe  # Windows
+./build/bin/bnto-desktop.app/Contents/MacOS/bnto-desktop  # macOS
+./build/bin/bnto-desktop  # Linux
+build\bin\bnto-desktop.exe  # Windows
 ```
 
 4. Measure startup time
 ```bash
 # Use time command
-time ./build/bin/bento-desktop.app/Contents/MacOS/bento-desktop
+time ./build/bin/bnto-desktop.app/Contents/MacOS/bnto-desktop
 
 # Expected: < 100ms
 ```
@@ -462,7 +462,7 @@ time ./build/bin/bento-desktop.app/Contents/MacOS/bento-desktop
 
 1. Create architecture document
 ```markdown
-# cmd/bento-desktop/ARCHITECTURE.md
+# cmd/bnto-desktop/ARCHITECTURE.md
 
 ## Project Structure
 [Document the structure]
@@ -487,19 +487,19 @@ time ./build/bin/bento-desktop.app/Contents/MacOS/bento-desktop
 
 2. Update main README
 ```markdown
-# Update /Users/Ryan/Code/bento/README.md
+# Update /Users/Ryan/Code/bnto/README.md
 
 ## Desktop Application
 
-Bento Desktop is a React-based UI for visual workflow authoring.
+Bnto Desktop is a React-based UI for visual workflow authoring.
 
 ### Quick Start
 \`\`\`bash
-cd cmd/bento-desktop
+cd cmd/bnto-desktop
 wails dev
 \`\`\`
 
-See [cmd/bento-desktop/ARCHITECTURE.md](./cmd/bento-desktop/ARCHITECTURE.md) for details.
+See [cmd/bnto-desktop/ARCHITECTURE.md](./cmd/bnto-desktop/ARCHITECTURE.md) for details.
 ```
 
 **Acceptance Criteria:**
@@ -509,7 +509,7 @@ See [cmd/bento-desktop/ARCHITECTURE.md](./cmd/bento-desktop/ARCHITECTURE.md) for
 - [ ] Main README is updated
 
 **Files Created:**
-- `cmd/bento-desktop/ARCHITECTURE.md`
+- `cmd/bnto-desktop/ARCHITECTURE.md`
 
 **Files Modified:**
 - `README.md`
@@ -520,11 +520,11 @@ See [cmd/bento-desktop/ARCHITECTURE.md](./cmd/bento-desktop/ARCHITECTURE.md) for
 
 ### Code Deliverables
 
-- [ ] `cmd/bento-desktop/` - Complete Wails project
-- [ ] `cmd/bento-desktop/app.go` - App struct with Bento integration
-- [ ] `cmd/bento-desktop/main.go` - Wails entry point
-- [ ] `cmd/bento-desktop/frontend/src/components/WorkflowViewer.tsx` - Minimal UI
-- [ ] `cmd/bento-desktop/ARCHITECTURE.md` - Architecture documentation
+- [ ] `cmd/bnto-desktop/` - Complete Wails project
+- [ ] `cmd/bnto-desktop/app.go` - App struct with Bnto integration
+- [ ] `cmd/bnto-desktop/main.go` - Wails entry point
+- [ ] `cmd/bnto-desktop/frontend/src/components/WorkflowViewer.tsx` - Minimal UI
+- [ ] `cmd/bnto-desktop/ARCHITECTURE.md` - Architecture documentation
 
 ### Validation Deliverables
 
@@ -554,7 +554,7 @@ See [cmd/bento-desktop/ARCHITECTURE.md](./cmd/bento-desktop/ARCHITECTURE.md) for
 - [x] Cross-platform (test on 2+ platforms if possible)
 
 ### Bento Box Principle Compliance
-- [x] Desktop code isolated in `cmd/bento-desktop/`
+- [x] Desktop code isolated in `cmd/bnto-desktop/`
 - [x] No modifications to existing `pkg/` packages
 - [x] Clear separation between UI and core logic
 - [x] Single responsibility per file/component
@@ -630,7 +630,7 @@ wails generate module
 wails build -ldflags="-w -s"
 
 # Check what's contributing to size
-go tool nm -size build/bin/bento-desktop | sort -n
+go tool nm -size build/bin/bnto-desktop | sort -n
 ```
 
 ### Issue: "Cannot find package" errors
@@ -641,10 +641,10 @@ go tool nm -size build/bin/bento-desktop | sort -n
 cat go.mod | grep replace
 
 # Should have:
-# replace github.com/yourusername/bento => ../..
+# replace github.com/yourusername/bnto => ../..
 
 # If missing, add it:
-go mod edit -replace github.com/yourusername/bento=../..
+go mod edit -replace github.com/yourusername/bnto=../..
 ```
 
 ---
@@ -673,23 +673,23 @@ After completing Phase 1 POC:
 ## Colossus Review Prompt
 
 ```
-I've completed Phase 1 (POC Setup) for Bento Desktop using Wails.
+I've completed Phase 1 (POC Setup) for Bnto Desktop using Wails.
 
 Before marking this phase complete, please:
 
-1. Review all files in cmd/bento-desktop/ against the Bento Box Principle (.claude/BENTO_BOX_PRINCIPLE.md)
+1. Review all files in cmd/bnto-desktop/ against the Bento Box Principle (.claude/BENTO_BOX_PRINCIPLE.md)
 2. Verify no modifications were made to existing pkg/ packages
 3. Check that Go code follows Go Standards Review (.claude/GO_STANDARDS_REVIEW.md)
 4. Verify TypeScript/React code follows best practices
 5. Confirm all Task Acceptance Criteria are met (listed in wails-phase1-poc.md)
-6. Run the code-review command: /code-review cmd/bento-desktop/
+6. Run the code-review command: /code-review cmd/bnto-desktop/
 
 Key areas to scrutinize:
 - Is desktop code properly isolated from core packages?
 - Are there any utility grab bags (utils/ or helpers/)?
 - Is each file/component < 250 lines?
 - Does app.go maintain clear boundaries?
-- Are Bento packages imported but not modified?
+- Are Bnto packages imported but not modified?
 
 After review, provide:
 - List of issues found (if any)

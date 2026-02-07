@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 func TestSaveAndGetWorkflow(t *testing.T) {

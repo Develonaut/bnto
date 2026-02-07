@@ -1,4 +1,4 @@
-# Bento - Agent & Developer Guide
+# Bnto - Agent & Developer Guide
 
 **Last Updated:** February 6, 2026
 
@@ -21,12 +21,12 @@
 
 ## Quick Context
 
-**Bento** is a workflow automation engine. Users define workflows as `.bento.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests.
+**Bnto** is a workflow automation engine. Users define workflows as `.bnto.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests.
 
 - **Engine**: Go (CLI + execution engine in `engine/`)
 - **Desktop**: Wails v2 (Phase 3 — free local app)
 - **Web**: Next.js + Convex (Phase 1 — paid cloud app)
-- **Shared Packages**: TypeScript monorepo with `@bento/core`, `@bento/ui`, `@bento/editor`
+- **Shared Packages**: TypeScript monorepo with `@bnto/core`, `@bnto/ui`, `@bnto/editor`
 
 ---
 
@@ -35,36 +35,36 @@
 ### 1. Layered Architecture
 
 ```
-Apps (web/desktop) → @bento/editor → @bento/ui → @bento/core → Go Engine
+Apps (web/desktop) → @bnto/editor → @bnto/ui → @bnto/core → Go Engine
 ```
 
 Each layer only depends on layers below it. Never skip layers.
 
-**The key insight:** `@bento/core` is the transport-agnostic API layer. UI components have ZERO knowledge of whether they're talking to Convex (cloud) or Wails bindings (desktop). Core exposes React hooks that internally detect the runtime environment and route requests to the correct backend.
+**The key insight:** `@bnto/core` is the transport-agnostic API layer. UI components have ZERO knowledge of whether they're talking to Convex (cloud) or Wails bindings (desktop). Core exposes React hooks that internally detect the runtime environment and route requests to the correct backend.
 
 **State management:** Zustand handles client-only state (editor content, UI preferences). React Query handles all server state (data fetching, caching, mutations). For the Convex path, `@convex-dev/react-query` preserves real-time subscriptions through React Query's interface.
 
-**Desktop shares the web frontend:** Wails v2 renders the same React app in a system webview. `@bento/core` detects the runtime (browser vs Wails) and swaps the transport adapter internally — no separate frontend for desktop.
+**Desktop shares the web frontend:** Wails v2 renders the same React app in a system webview. `@bnto/core` detects the runtime (browser vs Wails) and swaps the transport adapter internally — no separate frontend for desktop.
 
 ```typescript
-// @bento/core — components use these hooks (any platform)
-import { useWorkflows, useExecution, useRunWorkflow } from "@bento/core";
+// @bnto/core — components use these hooks (any platform)
+import { useWorkflows, useExecution, useRunWorkflow } from "@bnto/core";
 
 const workflows = useWorkflows();
 const execution = useExecution(id);
 const { mutate: run } = useRunWorkflow();
 
-// Under the hood, @bento/core detects the environment:
+// Under the hood, @bnto/core detects the environment:
 // Web:     React Query + @convex-dev/react-query adapter → Convex
 // Desktop: React Query + Wails adapter → Go engine bindings
 ```
 
 ### 2. API Abstraction
 
-**UI code NEVER calls Convex, Wails, or Go directly.** Always go through `@bento/core` hooks.
+**UI code NEVER calls Convex, Wails, or Go directly.** Always go through `@bnto/core` hooks.
 
 ```typescript
-// CORRECT — use @bento/core hooks
+// CORRECT — use @bnto/core hooks
 const workflows = useWorkflows();
 const { mutate: save } = useSaveWorkflow();
 
@@ -91,7 +91,7 @@ Every file, function, and package does ONE thing well. See [BENTO_BOX_PRINCIPLE.
 ```go
 // Each package has one responsibility
 engine/pkg/
-├── api/          # Shared service layer (BentoService, DefaultRegistry)
+├── api/          # Shared service layer (BntoService, DefaultRegistry)
 ├── engine/       # Orchestration ONLY
 ├── registry/     # Node type registration ONLY
 ├── storage/      # Persistent storage ONLY
@@ -105,7 +105,7 @@ engine/pkg/
 ### 5. TypeScript Package Guidelines
 
 ```
-packages/@bento/
+packages/@bnto/
 ├── core/         # API layer ONLY — hooks, types, transport adapters (Convex/Wails)
 │                 #   Zustand: client state. React Query: server state.
 │                 #   Runtime detection swaps transport — components never know.
@@ -115,8 +115,8 @@ packages/@bento/
 └── editor/       # Editor ONLY — JSON editor (Phase 1), visual editor (Phase 4)
 ```
 
-- `@bento/ui` components are thin wrappers around shadcn — customize internals without touching consumers
-- `@bento/editor` consumes `@bento/ui` for primitives and `@bento/core` for data
+- `@bnto/ui` components are thin wrappers around shadcn — customize internals without touching consumers
+- `@bnto/editor` consumes `@bnto/ui` for primitives and `@bnto/core` for data
 - Apps (`web`, `desktop`) are thin composition layers — import components, compose pages, minimal custom styling
 
 ---
@@ -124,7 +124,7 @@ packages/@bento/
 ## Repository Structure
 
 ```
-bento/
+bnto/
 ├── CLAUDE.md                    # You are here
 ├── package.json                 # Turborepo root workspace
 ├── pnpm-workspace.yaml          # pnpm workspace config
@@ -133,20 +133,20 @@ bento/
 ├── go.work                      # Go workspace (engine + apps/api)
 ├── apps/
 │   ├── api/                     # Go HTTP API server (imports engine)
-│   ├── web/                     # @bento/web — Next.js cloud app
-│   └── desktop/                 # @bento/desktop — Wails frontend
+│   ├── web/                     # @bnto/web — Next.js cloud app
+│   └── desktop/                 # @bnto/desktop — Wails frontend
 ├── packages/
-│   └── @bento/                  # Scoped internal packages (n8n pattern)
-│       ├── core/                # @bento/core — Transport-agnostic API
-│       ├── auth/                # @bento/auth — Cloud auth (web only)
-│       ├── ui/                  # @bento/ui — Design system
-│       └── editor/              # @bento/editor — Workflow editor
+│   └── @bnto/                  # Scoped internal packages (n8n pattern)
+│       ├── core/                # @bnto/core — Transport-agnostic API
+│       ├── auth/                # @bnto/auth — Cloud auth (web only)
+│       ├── ui/                  # @bnto/ui — Design system
+│       └── editor/              # @bnto/editor — Workflow editor
 ├── engine/                      # All Go code
-│   ├── go.mod                   # module github.com/Develonaut/bento
-│   ├── cmd/bento/               # CLI binary
+│   ├── go.mod                   # module github.com/Develonaut/bnto
+│   ├── cmd/bnto/               # CLI binary
 │   ├── pkg/                     # Go packages
 │   ├── tests/                   # Integration tests + fixtures
-│   └── examples/                # Example .bento.json files
+│   └── examples/                # Example .bnto.json files
 └── .claude/                     # Strategy docs, decisions, plan
     ├── PLAN.md
     ├── BENTO_BOX_PRINCIPLE.md
@@ -176,9 +176,9 @@ bento/
 
 ## Data Flow Architecture
 
-All execution flows through `@bento/core` hooks → React Query → transport adapter → backend → Go engine.
+All execution flows through `@bnto/core` hooks → React Query → transport adapter → backend → Go engine.
 
-Desktop (Wails v2) renders the **same React frontend** in a system webview. `@bento/core` detects the runtime and swaps adapters — components are identical across web and desktop.
+Desktop (Wails v2) renders the **same React frontend** in a system webview. `@bnto/core` detects the runtime and swaps adapters — components are identical across web and desktop.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -191,7 +191,7 @@ Desktop (Wails v2) renders the **same React frontend** in a system webview. `@be
 │         └────────┬─────────┘                  │               │
 │                  ▼                            │               │
 │  ┌───────────────────────────────────┐        │               │
-│  │         @bento/core               │        │               │
+│  │         @bnto/core               │        │               │
 │  │  ┌─────────────┐ ┌─────────────┐ │        │               │
 │  │  │   Zustand    │ │ React Query │ │        │               │
 │  │  │(client state)│ │(server state)│ │        │               │
@@ -217,7 +217,7 @@ Desktop (Wails v2) renders the **same React frontend** in a system webview. `@be
 | Server state           | React Query (caching, fetching, mutations)|
 | Real-time (web)        | @convex-dev/react-query adapter           |
 | Real-time (desktop)    | React Query + Wails bindings              |
-| Transport detection    | @bento/core runtime check (browser vs Wails webview) |
+| Transport detection    | @bnto/core runtime check (browser vs Wails webview) |
 | Workflow execution     | Go engine (local or Railway)              |
 | Auth                   | Convex Auth (cloud only)                  |
 
@@ -227,7 +227,7 @@ Desktop (Wails v2) renders the **same React frontend** in a system webview. `@be
 
 ```bash
 # Go engine (via Taskfile)
-task build              # Build bento CLI binary
+task build              # Build bnto CLI binary
 task test               # Run engine tests with race detector
 task vet                # Run go vet on all Go packages
 
@@ -286,7 +286,7 @@ Before completing any task, verify:
 - [ ] Follows layered architecture (no layer violations)
 - [ ] Bento Box Principle respected (single responsibility, no grab bags)
 - [ ] Go: files < 250 lines, functions < 20 lines
-- [ ] API calls go through `@bento/core` (never direct Convex/Wails calls)
+- [ ] API calls go through `@bnto/core` (never direct Convex/Wails calls)
 - [ ] No `any` types without justification
 - [ ] Matches existing code patterns
 
@@ -323,10 +323,10 @@ task ui:test            # Frontend tests — must pass
 For EACH file you modified, verify:
 
 - [ ] **Layered Architecture**: Does the code respect layer boundaries?
-  - Apps → @bento/editor → @bento/ui → @bento/core → Go Engine
+  - Apps → @bnto/editor → @bnto/ui → @bnto/core → Go Engine
   - No layer skipping (components calling Convex/Wails directly)
 
-- [ ] **API Abstraction**: Are all data operations going through `@bento/core`?
+- [ ] **API Abstraction**: Are all data operations going through `@bnto/core`?
   - NO direct Convex queries in components or hooks
   - NO direct Wails bindings in components
   - ALL data access via `api.workflows.run()`, `api.executions.get()`, etc.
@@ -379,7 +379,7 @@ For EACH TypeScript file you created or modified:
   - NO business logic in render functions
 
 - [ ] **Import Discipline**: Are imports from the right packages?
-  - Import types from `@bento/core`, not re-exports
+  - Import types from `@bnto/core`, not re-exports
   - Each package only exports what it owns
 
 ### Step 5: Code Quality
@@ -414,7 +414,7 @@ For EACH significant change, evaluate if tests are needed:
 
 - [ ] **What type of tests?**
   - **Go unit tests**: Node types, engine execution, validators, path resolution
-  - **Go integration tests**: End-to-end workflow execution with fixture .bento.json files
+  - **Go integration tests**: End-to-end workflow execution with fixture .bnto.json files
   - **TS unit tests**: API client logic, utility functions
   - **E2E tests**: Critical user flows (upload workflow → run → see results)
 
@@ -446,7 +446,7 @@ When all checks pass:
 
 ## Key Principles
 
-1. **Transport-agnostic API** - All data flows through `@bento/core`, never direct backend calls
+1. **Transport-agnostic API** - All data flows through `@bnto/core`, never direct backend calls
 2. **Bento Box Principle** - One responsibility per file/function/package, no grab bags
 3. **CLI is the stable API** - Every operation maps to a CLI command; the Go engine is the source of truth
 4. **TDD bottom-up** - Solidify engine tests → API tests → E2E tests. Each layer tested before the next

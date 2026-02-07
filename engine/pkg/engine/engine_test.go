@@ -5,23 +5,23 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Develonaut/bento/pkg/engine"
-	"github.com/Develonaut/bento/pkg/node"
-	"github.com/Develonaut/bento/pkg/node/library/editfields"
-	"github.com/Develonaut/bento/pkg/registry"
-	"github.com/Develonaut/bento/pkg/logger"
+	"github.com/Develonaut/bnto/pkg/engine"
+	"github.com/Develonaut/bnto/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node/library/editfields"
+	"github.com/Develonaut/bnto/pkg/registry"
+	"github.com/Develonaut/bnto/pkg/logger"
 )
 
 // TestItamae_LinearExecution tests sequential execution of nodes
 func TestItamae_LinearExecution(t *testing.T) {
 	ctx := context.Background()
 
-	// Create bento: node-1 → node-2 → node-3
-	bento := &node.Definition{
-		ID:      "linear-bento",
+	// Create bnto: node-1 → node-2 → node-3
+	bnto := &node.Definition{
+		ID:      "linear-bnto",
 		Type:    "group",
 		Version: "1.0.0",
-		Name:    "Linear Bento",
+		Name:    "Linear Bnto",
 		Nodes: []node.Definition{
 			{
 				ID:   "node-1",
@@ -60,7 +60,7 @@ func TestItamae_LinearExecution(t *testing.T) {
 	chef := engine.New(p, logger)
 
 	// Execute
-	result, err := chef.Serve(ctx, bento)
+	result, err := chef.Serve(ctx, bnto)
 	if err != nil {
 		t.Fatalf("Serve failed: %v", err)
 	}
@@ -79,9 +79,9 @@ func TestItamae_LinearExecution(t *testing.T) {
 func TestItamae_ContextPassing(t *testing.T) {
 	ctx := context.Background()
 
-	// Bento: set name → use name in template
-	bento := &node.Definition{
-		ID:   "context-bento",
+	// Bnto: set name → use name in template
+	bnto := &node.Definition{
+		ID:   "context-bnto",
 		Type: "group",
 		Nodes: []node.Definition{
 			{
@@ -115,7 +115,7 @@ func TestItamae_ContextPassing(t *testing.T) {
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
 	chef := engine.New(p, logger)
 
-	result, err := chef.Serve(ctx, bento)
+	result, err := chef.Serve(ctx, bnto)
 	if err != nil {
 		t.Fatalf("Serve failed: %v", err)
 	}
@@ -135,9 +135,9 @@ func TestItamae_ContextPassing(t *testing.T) {
 func TestItamae_ErrorHandling(t *testing.T) {
 	ctx := context.Background()
 
-	// Bento with an invalid node type
-	bento := &node.Definition{
-		ID:   "error-bento",
+	// Bnto with an invalid node type
+	bnto := &node.Definition{
+		ID:   "error-bnto",
 		Type: "group",
 		Nodes: []node.Definition{
 			{
@@ -175,7 +175,7 @@ func TestItamae_ErrorHandling(t *testing.T) {
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
 	chef := engine.New(p, logger)
 
-	result, err := chef.Serve(ctx, bento)
+	result, err := chef.Serve(ctx, bnto)
 
 	// Should return error
 	if err == nil {
@@ -197,8 +197,8 @@ func TestItamae_ErrorHandling(t *testing.T) {
 func TestItamae_ProgressTracking(t *testing.T) {
 	ctx := context.Background()
 
-	bento := &node.Definition{
-		ID:   "progress-bento",
+	bnto := &node.Definition{
+		ID:   "progress-bnto",
 		Type: "group",
 		Nodes: []node.Definition{
 			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
@@ -226,7 +226,7 @@ func TestItamae_ProgressTracking(t *testing.T) {
 
 	chef.OnProgress(onProgress)
 
-	_, err := chef.Serve(ctx, bento)
+	_, err := chef.Serve(ctx, bnto)
 	if err != nil {
 		t.Fatalf("Serve failed: %v", err)
 	}
@@ -241,9 +241,9 @@ func TestItamae_ProgressTracking(t *testing.T) {
 func TestItamae_ContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Bento with multiple nodes
-	bento := &node.Definition{
-		ID:   "cancellation-bento",
+	// Bnto with multiple nodes
+	bnto := &node.Definition{
+		ID:   "cancellation-bnto",
 		Type: "group",
 		Nodes: []node.Definition{
 			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
@@ -266,7 +266,7 @@ func TestItamae_ContextCancellation(t *testing.T) {
 	// Cancel immediately
 	cancel()
 
-	_, err := chef.Serve(ctx, bento)
+	_, err := chef.Serve(ctx, bnto)
 
 	// Should return context cancelled error
 	if err == nil {
@@ -282,9 +282,9 @@ func TestItamae_ContextCancellation(t *testing.T) {
 func TestEngine_GroupNode(t *testing.T) {
 	ctx := context.Background()
 
-	// Bento with a nested group
-	bento := &node.Definition{
-		ID:   "group-bento",
+	// Bnto with a nested group
+	bnto := &node.Definition{
+		ID:   "group-bnto",
 		Type: "group",
 		Nodes: []node.Definition{
 			{
@@ -338,7 +338,7 @@ func TestEngine_GroupNode(t *testing.T) {
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
 	chef := engine.New(p, logger)
 
-	result, err := chef.Serve(ctx, bento)
+	result, err := chef.Serve(ctx, bnto)
 	if err != nil {
 		t.Fatalf("Serve failed: %v", err)
 	}
@@ -350,12 +350,12 @@ func TestEngine_GroupNode(t *testing.T) {
 	}
 }
 
-// TestItamae_EmptyBento tests executing an empty bento
-func TestItamae_EmptyBento(t *testing.T) {
+// TestItamae_EmptyBnto tests executing an empty bnto
+func TestItamae_EmptyBnto(t *testing.T) {
 	ctx := context.Background()
 
-	bento := &node.Definition{
-		ID:    "empty-bento",
+	bnto := &node.Definition{
+		ID:    "empty-bnto",
 		Type:  "group",
 		Nodes: []node.Definition{},
 	}
@@ -364,7 +364,7 @@ func TestItamae_EmptyBento(t *testing.T) {
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
 	chef := engine.New(p, logger)
 
-	result, err := chef.Serve(ctx, bento)
+	result, err := chef.Serve(ctx, bnto)
 	if err != nil {
 		t.Fatalf("Serve failed: %v", err)
 	}
@@ -383,8 +383,8 @@ func TestItamae_DisconnectedNodes(t *testing.T) {
 	ctx := context.Background()
 
 	// Nodes without edges should all execute (no ordering constraint)
-	bento := &node.Definition{
-		ID:   "disconnected-bento",
+	bnto := &node.Definition{
+		ID:   "disconnected-bnto",
 		Type: "group",
 		Nodes: []node.Definition{
 			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
@@ -401,7 +401,7 @@ func TestItamae_DisconnectedNodes(t *testing.T) {
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
 	chef := engine.New(p, logger)
 
-	result, err := chef.Serve(ctx, bento)
+	result, err := chef.Serve(ctx, bnto)
 	if err != nil {
 		t.Fatalf("Serve failed: %v", err)
 	}
@@ -416,8 +416,8 @@ func TestItamae_DisconnectedNodes(t *testing.T) {
 func TestItamae_Duration(t *testing.T) {
 	ctx := context.Background()
 
-	bento := &node.Definition{
-		ID:   "duration-bento",
+	bnto := &node.Definition{
+		ID:   "duration-bnto",
 		Type: "group",
 		Nodes: []node.Definition{
 			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
@@ -431,7 +431,7 @@ func TestItamae_Duration(t *testing.T) {
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
 	chef := engine.New(p, logger)
 
-	result, err := chef.Serve(ctx, bento)
+	result, err := chef.Serve(ctx, bnto)
 	if err != nil {
 		t.Fatalf("Serve failed: %v", err)
 	}
@@ -448,8 +448,8 @@ func TestItamae_MultipleStartNodes(t *testing.T) {
 	ctx := context.Background()
 
 	// Two start nodes converging into one end node
-	bento := &node.Definition{
-		ID:   "multi-start-bento",
+	bnto := &node.Definition{
+		ID:   "multi-start-bnto",
 		Type: "group",
 		Nodes: []node.Definition{
 			{ID: "start-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
@@ -469,7 +469,7 @@ func TestItamae_MultipleStartNodes(t *testing.T) {
 	logger := logger.New(logger.Config{Level: logger.LevelInfo})
 	chef := engine.New(p, logger)
 
-	result, err := chef.Serve(ctx, bento)
+	result, err := chef.Serve(ctx, bnto)
 	if err != nil {
 		t.Fatalf("Serve failed: %v", err)
 	}
@@ -484,13 +484,13 @@ func TestItamae_MultipleStartNodes(t *testing.T) {
 func TestItamae_WeightedProgress(t *testing.T) {
 	ctx := context.Background()
 
-	// Create bento with 3 edit-fields nodes (each weight 50)
+	// Create bnto with 3 edit-fields nodes (each weight 50)
 	// Total weight = 150
 	// After node-1: 50/150 = 33%
 	// After node-2: 100/150 = 66%
 	// After node-3: 150/150 = 100%
-	bento := &node.Definition{
-		ID:   "weighted-progress-bento",
+	bnto := &node.Definition{
+		ID:   "weighted-progress-bnto",
 		Type: "group",
 		Nodes: []node.Definition{
 			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
@@ -520,7 +520,7 @@ func TestItamae_WeightedProgress(t *testing.T) {
 
 	chef.OnProgress(onProgress)
 
-	result, err := chef.Serve(ctx, bento)
+	result, err := chef.Serve(ctx, bnto)
 	if err != nil {
 		t.Fatalf("Serve failed: %v", err)
 	}
@@ -543,9 +543,9 @@ func TestItamae_WeightedProgress(t *testing.T) {
 func TestItamae_LoopIterationProgress(t *testing.T) {
 	ctx := context.Background()
 
-	// Create bento with a times loop (3 iterations)
-	bento := &node.Definition{
-		ID:   "loop-progress-bento",
+	// Create bnto with a times loop (3 iterations)
+	bnto := &node.Definition{
+		ID:   "loop-progress-bnto",
 		Type: "group",
 		Nodes: []node.Definition{
 			{
@@ -605,7 +605,7 @@ func TestItamae_LoopIterationProgress(t *testing.T) {
 
 	chef.OnProgress(onProgress)
 
-	result, err := chef.Serve(ctx, bento)
+	result, err := chef.Serve(ctx, bnto)
 	if err != nil {
 		t.Fatalf("Serve failed: %v", err)
 	}

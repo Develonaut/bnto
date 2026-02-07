@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Develonaut/bento/pkg/api"
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/api"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // ListWorkflows returns an http.HandlerFunc for GET /api/workflows.
-func ListWorkflows(svc *api.BentoService) http.HandlerFunc {
+func ListWorkflows(svc *api.BntoService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		summaries, err := svc.ListWorkflows(r.Context())
 		if err != nil {
@@ -21,7 +21,7 @@ func ListWorkflows(svc *api.BentoService) http.HandlerFunc {
 }
 
 // GetWorkflow returns an http.HandlerFunc for GET /api/workflows/{name}.
-func GetWorkflow(svc *api.BentoService) http.HandlerFunc {
+func GetWorkflow(svc *api.BntoService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := r.PathValue("name")
 		def, err := svc.GetWorkflow(r.Context(), name)
@@ -44,7 +44,7 @@ type saveWorkflowRequest struct {
 }
 
 // SaveWorkflow returns an http.HandlerFunc for POST /api/workflows.
-func SaveWorkflow(svc *api.BentoService) http.HandlerFunc {
+func SaveWorkflow(svc *api.BntoService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req saveWorkflowRequest
 		if err := decodeBody(r, &req); err != nil {
@@ -65,7 +65,7 @@ func SaveWorkflow(svc *api.BentoService) http.HandlerFunc {
 }
 
 // DeleteWorkflow returns an http.HandlerFunc for DELETE /api/workflows/{name}.
-func DeleteWorkflow(svc *api.BentoService) http.HandlerFunc {
+func DeleteWorkflow(svc *api.BntoService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		name := r.PathValue("name")
 		if err := svc.DeleteWorkflow(r.Context(), name); err != nil {

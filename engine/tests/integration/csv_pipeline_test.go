@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/engine"
+	"github.com/Develonaut/bnto/pkg/engine"
 )
 
 func TestCSVDataPipeline(t *testing.T) {
@@ -12,7 +12,7 @@ func TestCSVDataPipeline(t *testing.T) {
 	defer restore()
 
 	reg := createRegistry()
-	result := executeFixture(t, "tests/fixtures/workflows/csv-data-pipeline.bento.json", reg, 10*time.Second)
+	result := executeFixture(t, "tests/fixtures/workflows/csv-data-pipeline.bnto.json", reg, 10*time.Second)
 
 	if result.Status != engine.StatusSuccess {
 		t.Fatalf("Expected success, got %s", result.Status)

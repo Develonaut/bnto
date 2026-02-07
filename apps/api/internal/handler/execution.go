@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/Develonaut/bento-api/internal/execution"
+	"github.com/Develonaut/bnto-api/internal/execution"
 )
 
 // GetExecution returns an http.HandlerFunc for GET /api/executions/{id}.

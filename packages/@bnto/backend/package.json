@@ -1,0 +1,16 @@
+{
+  "name": "@bnto/backend",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "build": "echo \"Convex functions are pushed via 'convex dev' or 'convex deploy'\"",
+    "test": "echo \"No tests yet\"",
+    "lint": "echo \"No linter yet\""
+  },
+  "dependencies": {
+    "convex": "^1.21.0",
+    "@convex-dev/auth": "^0.0.80"
+  }
+}

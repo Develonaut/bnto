@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Develonaut/bento/pkg/api"
+	"github.com/Develonaut/bnto/pkg/api"
 )
 
 func TestCreateAndGet(t *testing.T) {

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	httpnode "github.com/Develonaut/bento/pkg/node/library/http"
+	httpnode "github.com/Develonaut/bnto/pkg/node/library/http"
 )
 
 // TestHTTPRequest_GET tests basic GET request functionality.

@@ -3,7 +3,7 @@ package validator
 import (
 	"fmt"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // validateHTTPRequest validates http-request node parameters.

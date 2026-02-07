@@ -1,4 +1,4 @@
-// Package validator provides validation for bento files and node definitions.
+// Package validator provides validation for bnto files and node definitions.
 //
 // The package validates:
 //   - Core structure (ID, Type, Version required fields)
@@ -27,7 +27,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Develonaut/bento/pkg/node"
+	"github.com/Develonaut/bnto/pkg/node"
 )
 
 // Validator validates node definitions and performs pre-flight checks.

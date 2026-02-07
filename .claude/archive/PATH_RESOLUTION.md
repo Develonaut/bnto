@@ -1,10 +1,10 @@
 # Cross-Platform Path Resolution
 
-Bento now supports cross-platform path resolution for variables, making it easy to share configuration files across Mac and Windows.
+Bnto now supports cross-platform path resolution for variables, making it easy to share configuration files across Mac and Windows.
 
 ## Overview
 
-When you store paths in `variables.json`, Bento automatically resolves special markers and environment variables, allowing you to write paths that work across different platforms and user accounts.
+When you store paths in `variables.json`, Bnto automatically resolves special markers and environment variables, allowing you to write paths that work across different platforms and user accounts.
 
 ## Resolution Order
 
@@ -14,12 +14,12 @@ When you store paths in `variables.json`, Bento automatically resolves special m
 
 ## Special Markers
 
-### {{BENTO_HOME}}
-Expands to your configured bento home directory.
+### {{BNTO_HOME}}
+Expands to your configured bnto home directory.
 
 ```json
 {
-  "MY_BENTOS": "{{BENTO_HOME}}/custom-bentos"
+  "MY_BENTOS": "{{BNTO_HOME}}/custom-bntos"
 }
 ```
 
@@ -161,7 +161,7 @@ You can combine multiple resolution types:
 ```json
 {
   "PROJECT_PATH": "{{GDRIVE}}/${PROJECT_NAME}/assets",
-  "OUTPUT_PATH": "{{BENTO_HOME}}/output/$USER"
+  "OUTPUT_PATH": "{{BNTO_HOME}}/output/$USER"
 }
 ```
 
