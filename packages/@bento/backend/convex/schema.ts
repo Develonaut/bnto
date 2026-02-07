@@ -24,6 +24,7 @@ export default defineSchema({
     runsUsed: v.optional(v.number()),
     runLimit: v.optional(v.number()),
     runsResetAt: v.optional(v.number()),
+    isWhitelisted: v.optional(v.boolean()),
   }).index("email", ["email"]),
 
   workflows: defineTable({
