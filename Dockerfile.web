@@ -16,6 +16,11 @@ RUN pnpm install --frozen-lockfile
 # --- Build ---
 FROM base AS builder
 WORKDIR /app
+
+# NEXT_PUBLIC_* vars must be present at build time (inlined into client bundle)
+ARG NEXT_PUBLIC_CONVEX_URL
+ENV NEXT_PUBLIC_CONVEX_URL=$NEXT_PUBLIC_CONVEX_URL
+
 COPY --from=deps /app/ ./
 COPY apps/web/ ./apps/web/
 COPY packages/@bento/ ./packages/@bento/
