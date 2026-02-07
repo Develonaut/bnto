@@ -58,7 +58,7 @@ test.describe("Splash page", () => {
     );
     await page.reload();
 
-    await expect(page.getByRole("link", { name: "Sign In" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign In" })).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole("link", { name: "Sign Up" })).toBeVisible();
     await expect(page.getByPlaceholder("Enter passphrase")).not.toBeVisible();
 

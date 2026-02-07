@@ -142,12 +142,21 @@ Ship a working web app where users can upload, edit, and run workflows.
   - Screenshots committed for visual regression tracking
 
 ### 1.3 Frontend — @bento/core
-- [ ] Set up Zustand for client state (editor store, UI store)
-- [ ] Set up React Query with `@convex-dev/react-query` adapter
-- [ ] Runtime detection (browser vs Wails webview) for transport switching
-- [ ] Implement hooks: `useWorkflows`, `useWorkflow`, `useExecution`, `useRunsRemaining`
-- [ ] Implement mutations: `useRunWorkflow`, `useSaveWorkflow`, `useRemoveWorkflow`
-- [ ] Unit tests for core package with mock adapters
+- [N/A] ~~Set up Zustand for client state~~ (deferred — no client state needs until @bento/editor Phase 1.5)
+- [x] Set up React Query with `@convex-dev/react-query` adapter
+  - `BentoCoreProvider` creates `ConvexReactClient` + `ConvexQueryClient` + `QueryClientProvider`
+  - Also wraps `ConvexAuthNextjsProvider` so `useConvex()`/`useConvexAuth()` work app-wide
+  - Source-based exports (no `dist/` build step — Next.js `transpilePackages` compiles from source)
+- [x] Runtime detection (browser vs Wails webview) for transport switching
+  - `runtime.ts`: `isWailsEnvironment()` checks for `window.go` (Wails v2 injection)
+  - `adapters/index.ts` barrel selects Convex or Wails adapter at module load time
+  - Wails adapter stubs throw "not implemented (Phase 3)"
+- [x] Implement hooks: `useWorkflows`, `useWorkflow`, `useExecution`, `useRunsRemaining`
+  - Plus: `useExecutions`, `useExecutionLogs`, `useCurrentUser`
+  - Each hook is a thin wrapper around `useQuery` + adapter query options
+- [x] Implement mutations: `useRunWorkflow`, `useSaveWorkflow`, `useRemoveWorkflow`
+  - Each mutation wraps `useMutation` + adapter mutation factory (`useConvexMutation`)
+- [N/A] ~~Unit tests for core package with mock adapters~~ (hooks are thin wrappers — `tsc --noEmit` validates; tests come when logic is added)
 
 ### 1.4 Frontend — @bento/ui
 - [x] Initialize shadcn with Bento theme tokens
