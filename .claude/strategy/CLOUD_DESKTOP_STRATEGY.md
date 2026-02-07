@@ -65,13 +65,19 @@ The layered abstraction (shared `@bento/core` → multiple clients → single Go
           │                  │                  │
 ┌─────────▼──────────────────▼──────────────────▼─────────┐
 │  @bento/core — THE abstraction layer                     │
-│  Exposes: run(), validate(), list(), getStatus()         │
+│  Exposes: useWorkflows(), useExecution(), useRunWorkflow()│
 │  Consumer code knows NOTHING about what's below          │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐        │
-│  │ConvexClient│  │WailsClient │  │ RestClient  │        │
-│  │(web→cloud) │  │(desktop→Go)│  │ (future)    │        │
-│  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘        │
-└────────┼───────────────┼───────────────┼────────────────┘
+│  ┌─────────────┐  ┌──────────────┐                      │
+│  │   Zustand    │  │  React Query  │                     │
+│  │(client state)│  │(server state) │                     │
+│  └─────────────┘  └──────┬───────┘                      │
+│      ┌───────────────────┤                               │
+│      ▼                   ▼                               │
+│  ┌────────────┐  ┌────────────┐                         │
+│  │  Convex    │  │   Wails    │  ← runtime detection    │
+│  │  adapter   │  │   adapter  │    swaps transport       │
+│  └─────┬──────┘  └─────┬──────┘                         │
+└────────┼───────────────┼────────────────────────────────┘
          │               │               │
 ┌────────▼───────────────▼───────────────▼────────────────┐
 │  Go Engine (CLI commands = the stable public API)        │
@@ -95,8 +101,9 @@ apps/
 packages/
 └── @bento/               # Scoped internal packages
     ├── core/             # @bento/core — THE API layer. All backend communication.
-    │                     #   Exposes methods like core.workflows.run()
-    │                     #   Internally uses ConvexClient, WailsClient, or RestClient
+    │                     #   Exposes hooks: useWorkflows(), useExecution(), etc.
+    │                     #   Zustand for client state, React Query for server state
+    │                     #   Runtime detection swaps transport (Convex vs Wails)
     │                     #   Consumer code has NO idea how it talks to the backend
     ├── ui/               # @bento/ui — shadcn thin wrappers (Button, Card, Dialog)
     │                     #   Pure presentational. Uses shadcn as primitives.
@@ -200,6 +207,37 @@ packages/
 - Scales independently from the frontend
 - Service endpoints mirror CLI commands: `/api/run`, `/api/validate`, `/api/list`
 - Private networking between Go service and Next.js has **no timeout limit** (Railway feature)
+
+### 3.7 Zustand for Client State
+
+**Decision:** Zustand for all client-only state management.
+
+**Rationale:**
+- Lightweight (< 1KB), no boilerplate, no context providers needed
+- Client state (editor content, selected workflow, UI preferences) is separate from server state
+- Simple API: `create()` a store, use it as a hook
+- No re-render cascades — components only re-render when their slice of state changes
+
+### 3.8 React Query for Server State
+
+**Decision:** React Query (TanStack Query) as the universal data fetching layer.
+
+**Rationale:**
+- Handles caching, background refetching, loading/error states, optimistic updates
+- `@convex-dev/react-query` adapter preserves Convex real-time subscriptions through React Query's interface
+- Desktop (Wails) path uses React Query with Wails adapter — same hook API, different transport
+- Universal layer means `@bento/core` hooks work identically on web and desktop
+- Components never know if data comes from Convex subscriptions or Wails Go bindings
+
+### 3.9 Desktop Shares the Web Frontend
+
+**Decision:** Wails v2 renders the same React frontend in a system webview. No separate desktop frontend.
+
+**Rationale:**
+- `@bento/core` detects the runtime environment (browser vs Wails webview) and swaps the transport adapter internally
+- Components, hooks, and UI are 100% shared between web and desktop
+- Only the transport layer differs: Convex adapter (web) vs Wails adapter (desktop calling Go bindings)
+- Reduces maintenance burden — one frontend codebase, two deployment targets
 
 ---
 
@@ -454,15 +492,16 @@ Push to main →
 
 ### Phase 3: Desktop App (Free Product)
 
-**Goal:** Free desktop app using Wails v2 + shared React components.
+**Goal:** Free desktop app using Wails v2 rendering the same React frontend in a system webview.
 
 **Scope:**
 - Bootstrap Wails v2 desktop app (from MONOREPO_STRUCTURE.md plan)
-- Reuse @bento/ui and @bento/editor packages from web
-- WailsClient implements BentoAPI via @bento/core (direct Go bindings)
+- Same React frontend as web — Wails webview renders the shared React code
+- `@bento/core` runtime detection routes requests to Wails Go bindings instead of Convex
+- React Query + Wails adapter replaces React Query + Convex adapter (same hook API)
 - Full local execution (all 10+ node types including shell-command)
 - Purely local — no account required, no cloud connectivity, no sync
-- Desktop and cloud are separate products with a shared UI
+- Desktop and cloud are separate products sharing one frontend codebase
 - Component tests for Wails-specific integration
 
 ### Phase 4: Monetization + Visual Editor

@@ -40,33 +40,40 @@ Apps (web/desktop) → @bento/editor → @bento/ui → @bento/core → Go Engine
 
 Each layer only depends on layers below it. Never skip layers.
 
-**The key insight:** `@bento/core` is the transport-agnostic API layer. UI components have ZERO knowledge of whether they're talking to Convex (cloud), Wails bindings (desktop), or REST (future). The core package handles all backend communication.
+**The key insight:** `@bento/core` is the transport-agnostic API layer. UI components have ZERO knowledge of whether they're talking to Convex (cloud) or Wails bindings (desktop). Core exposes React hooks that internally detect the runtime environment and route requests to the correct backend.
+
+**State management:** Zustand handles client-only state (editor content, UI preferences). React Query handles all server state (data fetching, caching, mutations). For the Convex path, `@convex-dev/react-query` preserves real-time subscriptions through React Query's interface.
+
+**Desktop shares the web frontend:** Wails v2 renders the same React app in a system webview. `@bento/core` detects the runtime (browser vs Wails) and swaps the transport adapter internally — no separate frontend for desktop.
 
 ```typescript
-// @bento/core — transport-agnostic interface
-export interface BentoAPI {
-  workflows: {
-    run(id: string): Promise<Execution>;
-    validate(def: WorkflowDefinition): Promise<ValidationResult>;
-    list(): Promise<Workflow[]>;
-  };
-}
+// @bento/core — components use these hooks (any platform)
+import { useWorkflows, useExecution, useRunWorkflow } from "@bento/core";
 
-// Apps wire up the right client:
-// Web:     <BentoAPIProvider client={createConvexClient(convex)}>
-// Desktop: <BentoAPIProvider client={createWailsClient()}>
+const workflows = useWorkflows();
+const execution = useExecution(id);
+const { mutate: run } = useRunWorkflow();
+
+// Under the hood, @bento/core detects the environment:
+// Web:     React Query + @convex-dev/react-query adapter → Convex
+// Desktop: React Query + Wails adapter → Go engine bindings
 ```
 
 ### 2. API Abstraction
 
-**UI code NEVER calls Convex, Wails, or Go directly.** Always go through `@bento/core`.
+**UI code NEVER calls Convex, Wails, or Go directly.** Always go through `@bento/core` hooks.
 
 ```typescript
-// CORRECT
-const workflows = await api.workflows.list();
+// CORRECT — use @bento/core hooks
+const workflows = useWorkflows();
+const { mutate: save } = useSaveWorkflow();
 
-// WRONG - violates abstraction
-const workflows = await convex.query(api.workflows.list);
+// WRONG — direct Convex calls in components
+const workflows = useQuery(api.workflows.list);
+const save = useMutation(api.workflows.save);
+
+// WRONG — direct Wails calls in components
+const workflows = window.go.main.App.ListWorkflows();
 ```
 
 ### 3. Bento Box Principle
@@ -99,7 +106,9 @@ engine/pkg/
 
 ```
 packages/@bento/
-├── core/         # API layer ONLY — types, interfaces, client implementations
+├── core/         # API layer ONLY — hooks, types, transport adapters (Convex/Wails)
+│                 #   Zustand: client state. React Query: server state.
+│                 #   Runtime detection swaps transport — components never know.
 ├── ui/           # Presentational ONLY — shadcn wrappers, design system
 └── editor/       # Editor ONLY — JSON editor (Phase 1), visual editor (Phase 4)
 ```
@@ -155,7 +164,8 @@ bento/
 | **Cloud Execution**| Go HTTP service on Railway                    |
 | **Auth**           | Convex Auth                                   |
 | **Shared UI**      | shadcn/ui + Tailwind CSS                      |
-| **State**          | Convex real-time subscriptions (web)           |
+| **Client State**   | Zustand (editor content, UI preferences)       |
+| **Server State**   | React Query (universal data layer) + Convex real-time subscriptions |
 | **Build (Go)**     | Taskfile.dev                                  |
 | **Build (TS)**     | Turborepo + pnpm workspaces                   |
 
@@ -163,43 +173,50 @@ bento/
 
 ## Data Flow Architecture
 
-All execution flows through `@bento/core` → backend (Convex or Wails) → Go engine.
+All execution flows through `@bento/core` hooks → React Query → transport adapter → backend → Go engine.
+
+Desktop (Wails v2) renders the **same React frontend** in a system webview. `@bento/core` detects the runtime and swaps adapters — components are identical across web and desktop.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                         Apps                                  │
+│                    Apps (same React code)                      │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
 │  │  Next.js Web  │  │ Wails Desktop│  │   CLI        │       │
-│  │  (Railway)    │  │ (Local)      │  │   (Terminal) │       │
+│  │  (Railway)    │  │ (webview)    │  │   (Terminal) │       │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘       │
 │         │                  │                  │               │
-│         └────────┬─────────┴──────────────────┘               │
-│                  ▼                                            │
-│       ┌────────────────────┐                                 │
-│       │    @bento/core     │  ← Transport-agnostic API       │
-│       │   (TypeScript)     │                                 │
-│       └─────────┬──────────┘                                 │
-│          ┌──────┼──────┐                                     │
-│          ▼      ▼      ▼                                     │
-│   ┌──────────┐ ┌──────────┐ ┌──────────┐                    │
-│   │ Convex   │ │  Wails   │ │  REST    │                    │
-│   │ Client   │ │  Client  │ │  Client  │                    │
-│   └────┬─────┘ └────┬─────┘ └────┬─────┘                    │
-│        ▼            ▼            ▼                           │
-│   ┌──────────┐ ┌──────────┐ ┌──────────┐                    │
-│   │ Convex   │ │ Go Engine│ │ Go HTTP  │                    │
-│   │ (cloud)  │ │ (local)  │ │ (server) │                    │
-│   └──────────┘ └──────────┘ └──────────┘                    │
+│         └────────┬─────────┘                  │               │
+│                  ▼                            │               │
+│  ┌───────────────────────────────────┐        │               │
+│  │         @bento/core               │        │               │
+│  │  ┌─────────────┐ ┌─────────────┐ │        │               │
+│  │  │   Zustand    │ │ React Query │ │        │               │
+│  │  │(client state)│ │(server state)│ │        │               │
+│  │  └─────────────┘ └──────┬──────┘ │        │               │
+│  │          ┌───────────────┤         │        │               │
+│  │          ▼               ▼         │        │               │
+│  │  ┌────────────┐  ┌────────────┐   │        │               │
+│  │  │  Convex    │  │   Wails    │   │        │               │
+│  │  │  adapter   │  │   adapter  │   │        │               │
+│  │  └─────┬──────┘  └─────┬──────┘   │        │               │
+│  └────────┼───────────────┼──────────┘        │               │
+│           ▼               ▼                   ▼               │
+│    ┌──────────┐    ┌──────────┐        ┌──────────┐          │
+│    │ Convex   │    │ Go Engine│        │ Go Engine│          │
+│    │ (cloud)  │    │ (local)  │        │  (CLI)   │          │
+│    └──────────┘    └──────────┘        └──────────┘          │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-| Operation              | Where it happens                          |
+| Concern                | Technology                                |
 | ---------------------- | ----------------------------------------- |
+| Client state           | Zustand (editor content, UI preferences)  |
+| Server state           | React Query (caching, fetching, mutations)|
+| Real-time (web)        | @convex-dev/react-query adapter           |
+| Real-time (desktop)    | React Query + Wails bindings              |
+| Transport detection    | @bento/core runtime check (browser vs Wails webview) |
 | Workflow execution     | Go engine (local or Railway)              |
-| Workflow storage       | Convex (cloud) or filesystem (desktop)    |
 | Auth                   | Convex Auth (cloud only)                  |
-| Real-time progress     | Convex subscriptions (cloud)              |
-| File processing        | Go engine (image, spreadsheet, filesystem)|
 
 ---
 

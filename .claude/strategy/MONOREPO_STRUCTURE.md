@@ -116,7 +116,7 @@ bento/
 
 | Package | Dependencies | Purpose |
 |---------|-------------|---------|
-| `@bento/core` | none | BentoAPI interface, ConvexClient, WailsClient, RestClient |
+| `@bento/core` | zustand, @tanstack/react-query, @convex-dev/react-query, convex | Hooks, types, Zustand stores, React Query + transport adapters |
 | `@bento/ui` | `@bento/core` | shadcn thin wrappers — design system |
 | `@bento/editor` | `@bento/core`, `@bento/ui` | JSON editor (Phase 1), visual editor (Phase 4) |
 | `@bento/web` | all packages | Next.js cloud app |
@@ -146,34 +146,37 @@ task test:all        # Test engine + frontend
 
 ## API Abstraction Layer
 
-The core architectural pattern — `@bento/core` provides a transport-agnostic interface:
+The core architectural pattern — `@bento/core` provides transport-agnostic React hooks backed by React Query and Zustand:
+
+**State separation:**
+- **Zustand** — client-only state (editor content, selected workflow, UI preferences)
+- **React Query** — server state (data fetching, caching, mutations, real-time)
+
+**Transport adapters:**
+- **Convex adapter** — web: React Query + `@convex-dev/react-query` (preserves real-time subscriptions)
+- **Wails adapter** — desktop: React Query + Wails Go bindings (`window.go.main.App.*`)
+
+`@bento/core` detects the runtime environment and swaps adapters internally. Desktop (Wails v2) renders the same React frontend in a system webview — there is no separate desktop frontend.
 
 ```typescript
-// @bento/core — consumers call these methods
-export interface BentoAPI {
-  workflows: {
-    run(id: string): Promise<Execution>;
-    validate(definition: WorkflowDefinition): Promise<ValidationResult>;
-    list(): Promise<Workflow[]>;
-    get(id: string): Promise<Workflow>;
-    save(workflow: Workflow): Promise<Workflow>;
-  };
-  executions: {
-    get(id: string): Promise<Execution>;
-    list(workflowId?: string): Promise<Execution[]>;
-  };
-}
+// @bento/core — components use these hooks (any platform)
+import { useWorkflows, useExecution, useRunWorkflow } from "@bento/core";
 
-// Each environment provides its own client:
-// - ConvexClient  → web app talks to Convex cloud
-// - WailsClient   → desktop app calls Go directly
-// - RestClient    → future REST API consumer
+const workflows = useWorkflows();           // React Query under the hood
+const execution = useExecution(id);         // real-time via Convex or polling via Wails
+const { mutate: run } = useRunWorkflow();   // mutation via appropriate adapter
+
+// Under the hood, @bento/core detects the environment:
+// Web:     React Query + @convex-dev/react-query adapter → Convex
+// Desktop: React Query + Wails adapter → Go engine bindings
 ```
 
-Apps compose via React context:
 ```typescript
-// Desktop: <BentoAPIProvider client={createWailsClient()}>
-// Web:     <BentoAPIProvider client={createConvexClient(convex)}>
+// Zustand stores for client-only state (not server data)
+import { useEditorStore, useUIStore } from "@bento/core";
+
+const { content, setContent } = useEditorStore();
+const { theme, toggleTheme } = useUIStore();
 ```
 
 ---

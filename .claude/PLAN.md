@@ -120,10 +120,12 @@ Ship a working web app where users can upload, edit, and run workflows.
 - [x] Run counter logic (runsUsed, runLimit, monthly reset cron)
 
 ### 1.3 Frontend — @bento/core
-- [ ] Implement `BentoAPI` TypeScript interface
-- [ ] Implement `ConvexClient` (web → Convex)
-- [ ] React context provider (`BentoAPIProvider`)
-- [ ] Unit tests for core package with mock backends
+- [ ] Set up Zustand for client state (editor store, UI store)
+- [ ] Set up React Query with `@convex-dev/react-query` adapter
+- [ ] Runtime detection (browser vs Wails webview) for transport switching
+- [ ] Implement hooks: `useWorkflows`, `useWorkflow`, `useExecution`, `useRunsRemaining`
+- [ ] Implement mutations: `useRunWorkflow`, `useSaveWorkflow`, `useRemoveWorkflow`
+- [ ] Unit tests for core package with mock adapters
 
 ### 1.4 Frontend — @bento/ui
 - [ ] Initialize shadcn with Bento theme tokens
