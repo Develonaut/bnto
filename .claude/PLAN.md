@@ -132,7 +132,11 @@ Ship a working web app where users can upload, edit, and run workflows.
 - [x] Global nav bar with theme toggle
   - Fixed top bar: "Bento" left, ThemeToggle right (in root layout)
   - Removed per-page theme toggles (dashboard, etc.)
-- [ ] Deploy to Railway — splash screen live at public URL
+- [x] Deploy to Railway — splash screen live at public URL
+  - `Dockerfile.web`: multi-stage pnpm monorepo build, Next.js standalone output
+  - `railway.toml`: Dockerfile path + health check config
+  - Service: `bento-web` on Railway (`bento-web-production.up.railway.app`)
+  - Convex `_generated/` types checked into git (needed for CI/CD builds)
 - [ ] Verify: unauthenticated → splash, authenticated + not whitelisted → waitlist message, whitelisted → app shell
 
 ### 1.3 Frontend — @bento/core
