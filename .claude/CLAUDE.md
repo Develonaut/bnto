@@ -109,6 +109,8 @@ packages/@bento/
 ├── core/         # API layer ONLY — hooks, types, transport adapters (Convex/Wails)
 │                 #   Zustand: client state. React Query: server state.
 │                 #   Runtime detection swaps transport — components never know.
+├── auth/         # Cloud auth ONLY — wraps @convex-dev/auth (web only, desktop skips)
+│                 #   Provider (server), hooks (client), middleware (server)
 ├── ui/           # Presentational ONLY — shadcn wrappers, design system
 └── editor/       # Editor ONLY — JSON editor (Phase 1), visual editor (Phase 4)
 ```
@@ -136,6 +138,7 @@ bento/
 ├── packages/
 │   └── @bento/                  # Scoped internal packages (n8n pattern)
 │       ├── core/                # @bento/core — Transport-agnostic API
+│       ├── auth/                # @bento/auth — Cloud auth (web only)
 │       ├── ui/                  # @bento/ui — Design system
 │       └── editor/              # @bento/editor — Workflow editor
 ├── engine/                      # All Go code

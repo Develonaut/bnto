@@ -45,6 +45,12 @@ bento/
 │       │   ├── tsconfig.json
 │       │   └── src/
 │       │       └── index.ts
+│       ├── auth/                   # @bento/auth — Cloud auth (wraps @convex-dev/auth)
+│       │   ├── package.json
+│       │   ├── tsconfig.json
+│       │   └── src/
+│       │       ├── index.ts        # Provider + hooks (client)
+│       │       └── middleware.ts   # Next.js middleware helpers (server)
 │       └── backend/                # @bento/backend — Convex functions (cloud backend)
 │           ├── package.json
 │           ├── tsconfig.json
@@ -109,18 +115,19 @@ bento/
 ## Package Dependency Graph
 
 ```
-@bento/web ──────┐
+@bento/web ──────┬──→ @bento/auth ──→ @bento/backend (cloud auth only)
                   ├──→ @bento/editor ──→ @bento/ui ──→ @bento/core
-@bento/desktop ──┘
+@bento/desktop ──┘    (desktop skips @bento/auth)
 ```
 
 | Package | Dependencies | Purpose |
 |---------|-------------|---------|
 | `@bento/core` | zustand, @tanstack/react-query, @convex-dev/react-query, convex | Hooks, types, Zustand stores, React Query + transport adapters |
+| `@bento/auth` | `@convex-dev/auth`, `convex`, `@bento/backend` | Cloud auth — provider, hooks, middleware (web only) |
 | `@bento/ui` | `@bento/core` | shadcn thin wrappers — design system |
 | `@bento/editor` | `@bento/core`, `@bento/ui` | JSON editor (Phase 1), visual editor (Phase 4) |
-| `@bento/web` | all packages | Next.js cloud app |
-| `@bento/desktop` | all packages | Wails v2 local desktop app |
+| `@bento/web` | `@bento/auth`, `@bento/core`, `@bento/ui`, `@bento/editor` | Next.js cloud app |
+| `@bento/desktop` | `@bento/core`, `@bento/ui`, `@bento/editor` | Wails v2 local desktop app (no @bento/auth) |
 
 ---
 

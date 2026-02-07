@@ -119,6 +119,15 @@ Ship a working web app where users can upload, edit, and run workflows.
 - [x] Convex Auth (email/password via @convex-dev/auth Password provider)
 - [x] Run counter logic (runsUsed, runLimit, monthly reset cron)
 
+### 1.2b Deploy Guarded Web App Shell
+- [x] Set up `apps/web/` as a real Next.js app with Convex client provider
+- [x] Coming soon splash page (public — shown to unauthenticated visitors)
+- [x] Sign-in page (Convex Auth email/password)
+- [x] Whitelist gate — only approved users see the app behind the splash
+- [x] App shell layout (authenticated + whitelisted users only)
+- [ ] Deploy to Railway — splash screen live at public URL
+- [ ] Verify: unauthenticated → splash, authenticated + not whitelisted → waitlist message, whitelisted → app shell
+
 ### 1.3 Frontend — @bento/core
 - [ ] Set up Zustand for client state (editor store, UI store)
 - [ ] Set up React Query with `@convex-dev/react-query` adapter
