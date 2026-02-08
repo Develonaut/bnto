@@ -165,7 +165,7 @@ Ship a working web app where users can upload, edit, and run workflows.
 - [x] Light/dark mode from day one
   - ThemeProvider (next-themes), ThemeToggle component, global nav integration
 - [x] Core primitives: Button, Card, Input, Label
-- [ ] Additional primitives: Dialog, Select, Tabs, Toast
+- [x] Additional primitives: Dialog, Select, Tabs, Toaster
 - [ ] Bnto-specific: WorkflowCard, RunButton, StatusBadge
 
 ### 1.5 Frontend — @bnto/editor
