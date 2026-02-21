@@ -1,8 +1,8 @@
 {
   "folders": [
-    {
-      "path": "."
-    }
+    { "path": ".", "name": "root" },
+    { "path": "apps", "name": "apps" },
+    { "path": "packages", "name": "packages" }
   ],
   "settings": {
     "go.goroot": "",
@@ -26,6 +26,10 @@
     "[json]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+    "tailwindCSS.experimental.classRegex": [
+      ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+      ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+    ],
     "files.exclude": {
       "**/node_modules": true,
       "**/.next": true,
@@ -45,8 +49,129 @@
     "recommendations": [
       "golang.go",
       "esbenp.prettier-vscode",
-      "bradlc.vscode-tailwindcss",
-      "dbaeumer.vscode-eslint"
+      "dbaeumer.vscode-eslint",
+      "bradlc.vscode-tailwindcss"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Dev: All",
+        "detail": "Start all dev servers (Next.js + Convex)",
+        "dependsOn": ["Dev: Web", "Dev: Convex"],
+        "group": { "kind": "build", "isDefault": true },
+        "problemMatcher": []
+      },
+      {
+        "label": "Dev: Web",
+        "detail": "Next.js dev server only (no Convex)",
+        "type": "shell",
+        "command": "pnpm --filter @bnto/web dev",
+        "isBackground": true,
+        "problemMatcher": {
+          "pattern": { "regexp": ".", "file": 1, "location": 2, "message": 3 },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "Starting",
+            "endsPattern": "Ready in"
+          }
+        },
+        "presentation": { "group": "dev", "reveal": "always" }
+      },
+      {
+        "label": "Dev: Convex",
+        "detail": "Convex dev server with live schema push",
+        "type": "shell",
+        "command": "pnpm --filter @bnto/backend dev",
+        "isBackground": true,
+        "problemMatcher": {
+          "pattern": { "regexp": ".", "file": 1, "location": 2, "message": 3 },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "convex dev",
+            "endsPattern": "Ready"
+          }
+        },
+        "presentation": { "group": "dev", "reveal": "always" }
+      },
+      {
+        "label": "Go: Build",
+        "detail": "Build bnto CLI binary",
+        "type": "shell",
+        "command": "task build",
+        "group": "build",
+        "problemMatcher": ["$go"]
+      },
+      {
+        "label": "Go: Vet",
+        "detail": "Run go vet on all Go packages",
+        "type": "shell",
+        "command": "task vet",
+        "problemMatcher": ["$go"]
+      },
+      {
+        "label": "Go: Test Engine",
+        "detail": "Run Go engine tests with race detector",
+        "type": "shell",
+        "command": "task test",
+        "group": "test",
+        "problemMatcher": ["$go"]
+      },
+      {
+        "label": "Go: Test API",
+        "detail": "Run Go API server tests with race detector",
+        "type": "shell",
+        "command": "task api:test",
+        "group": "test",
+        "problemMatcher": ["$go"]
+      },
+      {
+        "label": "Lint",
+        "detail": "ESLint all TS packages",
+        "type": "shell",
+        "command": "task ui:lint",
+        "problemMatcher": ["$eslint-stylish"]
+      },
+      {
+        "label": "Build: Frontend",
+        "detail": "Build all TS packages (Turborepo)",
+        "type": "shell",
+        "command": "task ui:build",
+        "group": "build",
+        "problemMatcher": ["$tsc"]
+      },
+      {
+        "label": "Test: Frontend",
+        "detail": "Run all frontend tests",
+        "type": "shell",
+        "command": "task ui:test",
+        "group": { "kind": "test", "isDefault": true },
+        "problemMatcher": []
+      },
+      {
+        "label": "Test: E2E",
+        "detail": "Run Playwright e2e tests",
+        "type": "shell",
+        "command": "task e2e",
+        "group": "test",
+        "problemMatcher": []
+      },
+      {
+        "label": "Test: E2E UI",
+        "detail": "Open Playwright UI mode for interactive test debugging",
+        "type": "shell",
+        "command": "pnpm --filter @bnto/web exec playwright test --ui",
+        "group": "test",
+        "problemMatcher": []
+      },
+      {
+        "label": "Check: All",
+        "detail": "Full quality gate (vet + test + build)",
+        "type": "shell",
+        "command": "task check",
+        "problemMatcher": ["$go", "$tsc"]
+      }
     ]
   }
 }
