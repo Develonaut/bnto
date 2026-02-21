@@ -5,7 +5,9 @@
 *.so
 *.dylib
 /bento
+/bnto
 engine/bento
+engine/bnto
 
 # Test binary, built with `go test -c`
 *.test
