@@ -1,5 +1,1 @@
-export {
-  convexAuthNextjsMiddleware as authMiddleware,
-  createRouteMatcher,
-  nextjsMiddlewareRedirect as middlewareRedirect,
-} from "@convex-dev/auth/nextjs/server";
+export { getSessionCookie } from "better-auth/cookies";
