@@ -1,6 +1,6 @@
 # Bnto - Agent & Developer Guide
 
-**Last Updated:** February 6, 2026
+**Last Updated:** February 21, 2026
 
 ---
 
@@ -14,7 +14,8 @@
 | Architecture decisions       | [CLOUD_DESKTOP_STRATEGY.md](.claude/strategy/CLOUD_DESKTOP_STRATEGY.md) |
 | Repo structure               | [MONOREPO_STRUCTURE.md](.claude/strategy/MONOREPO_STRUCTURE.md)    |
 | Build tooling                | [MONOREPO_TOOLING.md](.claude/decisions/MONOREPO_TOOLING.md)       |
-| Implementation task          | [PLAN.md](.claude/PLAN.md)                                        |
+| Implementation task          | [PLAN-PARALLEL.md](.claude/PLAN-PARALLEL.md)                      |
+| Coding standards             | [rules/](.claude/rules/) directory                                 |
 | Understanding the product    | [CLOUD_DESKTOP_STRATEGY.md](.claude/strategy/CLOUD_DESKTOP_STRATEGY.md) |
 
 ---
@@ -24,9 +25,11 @@
 **Bnto** is a workflow automation engine. Users define workflows as `.bnto.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests.
 
 - **Engine**: Go (CLI + execution engine in `engine/`)
-- **Desktop**: Wails v2 (Phase 3 — free local app)
-- **Web**: Next.js + Convex (Phase 1 — paid cloud app)
+- **Web**: Next.js on Vercel + Convex Cloud + Better Auth (Phase 1 — UI + auth)
+- **Desktop**: Wails v2 (Phase 2 — free local execution)
+- **Cloud Processing**: Go HTTP service on Railway (Phase 3 — paid execution)
 - **Shared Packages**: TypeScript monorepo with `@bnto/core`, `@bnto/ui`, `@bnto/editor`
+- **Open Source**: MIT licensed
 
 ---
 
@@ -109,7 +112,7 @@ packages/@bnto/
 ├── core/         # API layer ONLY — hooks, types, transport adapters (Convex/Wails)
 │                 #   Zustand: client state. React Query: server state.
 │                 #   Runtime detection swaps transport — components never know.
-├── auth/         # Cloud auth ONLY — wraps @convex-dev/auth (web only, desktop skips)
+├── auth/         # Cloud auth ONLY — wraps Better Auth + @better-auth/convex (web only, desktop skips)
 │                 #   Provider (server), hooks (client), middleware (server)
 ├── ui/           # Presentational ONLY — shadcn wrappers, design system
 └── editor/       # Editor ONLY — JSON editor (Phase 1), visual editor (Phase 4)
@@ -132,9 +135,9 @@ bnto/
 ├── Taskfile.yml                 # Go + cross-cutting orchestration
 ├── go.work                      # Go workspace (engine + apps/api)
 ├── apps/
-│   ├── api/                     # Go HTTP API server (imports engine)
-│   ├── web/                     # @bnto/web — Next.js cloud app
-│   └── desktop/                 # @bnto/desktop — Wails frontend
+│   ├── api/                     # Go HTTP API server (Phase 3 — cloud execution)
+│   ├── web/                     # @bnto/web — Next.js on Vercel (Phase 1)
+│   └── desktop/                 # @bnto/desktop — Wails frontend (Phase 2)
 ├── packages/
 │   └── @bnto/                  # Scoped internal packages (n8n pattern)
 │       ├── core/                # @bnto/core — Transport-agnostic API
@@ -145,13 +148,17 @@ bnto/
 │   ├── go.mod                   # module github.com/Develonaut/bnto
 │   ├── cmd/bnto/               # CLI binary
 │   ├── pkg/                     # Go packages
+│   │   └── tui/                 # Bubble Tea TUI (paused — preserved for reference)
 │   ├── tests/                   # Integration tests + fixtures
 │   └── examples/                # Example .bnto.json files
 └── .claude/                     # Strategy docs, decisions, plan
-    ├── PLAN.md
+    ├── PLAN-PARALLEL.md         # Master plan (sprints, waves, tasks)
     ├── BENTO_BOX_PRINCIPLE.md
+    ├── rules/                   # Coding standards and conventions
+    ├── skills/                  # Agent skills (pre-commit, pickup, code-review)
     ├── strategy/
-    └── decisions/
+    ├── decisions/
+    └── archive/                 # Completed phases and old docs
 ```
 
 ---
@@ -161,11 +168,11 @@ bnto/
 | Layer              | Technology                                    |
 | ------------------ | --------------------------------------------- |
 | **Engine**         | Go (CLI, execution, all node types)           |
+| **Web Frontend**   | Next.js on Vercel                             |
 | **Desktop**        | Wails v2 (Go + system webview)                |
-| **Web Frontend**   | Next.js (React, server-side rendering)        |
-| **Cloud Backend**  | Convex (self-hosted on Railway via template)   |
-| **Cloud Execution**| Go HTTP service on Railway                    |
-| **Auth**           | Convex Auth                                   |
+| **Database**       | Convex Cloud (managed)                        |
+| **Cloud Execution**| Go HTTP service on Railway (Phase 3)          |
+| **Auth**           | Better Auth + @better-auth/convex             |
 | **Shared UI**      | shadcn/ui + Tailwind CSS                      |
 | **Client State**   | Zustand (editor content, UI preferences)       |
 | **Server State**   | React Query (universal data layer) + Convex real-time subscriptions |
@@ -185,7 +192,7 @@ Desktop (Wails v2) renders the **same React frontend** in a system webview. `@bn
 │                    Apps (same React code)                      │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
 │  │  Next.js Web  │  │ Wails Desktop│  │   CLI        │       │
-│  │  (Railway)    │  │ (webview)    │  │   (Terminal) │       │
+│  │  (Vercel)     │  │ (webview)    │  │   (Terminal) │       │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘       │
 │         │                  │                  │               │
 │         └────────┬─────────┘                  │               │
@@ -219,7 +226,7 @@ Desktop (Wails v2) renders the **same React frontend** in a system webview. `@bn
 | Real-time (desktop)    | React Query + Wails bindings              |
 | Transport detection    | @bnto/core runtime check (browser vs Wails webview) |
 | Workflow execution     | Go engine (local or Railway)              |
-| Auth                   | Convex Auth (cloud only)                  |
+| Auth                   | Better Auth (cloud only)                  |
 
 ---
 
@@ -256,7 +263,8 @@ task check              # Full quality gate (vet + test + build)
 | Document                                                           | Purpose                                        |
 | ------------------------------------------------------------------ | ---------------------------------------------- |
 | **[BENTO_BOX_PRINCIPLE.md](.claude/BENTO_BOX_PRINCIPLE.md)**       | Code organization, file/function size limits    |
-| **[PLAN.md](.claude/PLAN.md)**                                     | Master checklist — what's done, what's next     |
+| **[PLAN-PARALLEL.md](.claude/PLAN-PARALLEL.md)**                   | Master plan — sprints, waves, what's next       |
+| **[rules/](.claude/rules/)**                                       | Coding standards and conventions                |
 
 ### Reference
 
@@ -265,6 +273,7 @@ task check              # Full quality gate (vet + test + build)
 | [CLOUD_DESKTOP_STRATEGY.md](.claude/strategy/CLOUD_DESKTOP_STRATEGY.md)         | Full architecture, tech decisions, phases   |
 | [MONOREPO_STRUCTURE.md](.claude/strategy/MONOREPO_STRUCTURE.md)                 | Repo structure, API abstractions, packages  |
 | [MONOREPO_TOOLING.md](.claude/decisions/MONOREPO_TOOLING.md)                    | Taskfile + Turborepo decision rationale     |
+| [skills/](.claude/skills/)                                                      | Agent skills (pre-commit, pickup, code-review) |
 
 ---
 
@@ -272,12 +281,13 @@ task check              # Full quality gate (vet + test + build)
 
 When starting work:
 
-1. **Read context** - Review this file and relevant docs in `.claude/`
-2. **Check the plan** - See where we are in [PLAN.md](.claude/PLAN.md)
-3. **Plan first** - Break down the task before writing code
-4. **Follow patterns** - Match existing code style and architecture
+1. **Read context** - Review this file, rules/, and relevant docs in `.claude/`
+2. **Check the plan** - See where we are in [PLAN-PARALLEL.md](.claude/PLAN-PARALLEL.md)
+3. **Claim a task** - Mark it CLAIMED in the plan before starting
+4. **Follow patterns** - Match existing code style and architecture (see rules/)
 5. **Test boundaries** - Write tests for engine logic and API contracts
-6. **Document decisions** - Add notes to `.claude/decisions/` for significant choices
+6. **Mark done** - Update the plan when task is complete
+7. **Document decisions** - Add notes to `.claude/decisions/` for significant choices
 
 ### Quality Checklist
 

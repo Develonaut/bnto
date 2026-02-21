@@ -2,7 +2,7 @@
 **Go Backend + React Frontend with Transport-Agnostic API Layer**
 
 **Date:** 2025-12-15
-**Updated:** 2026-02-06
+**Updated:** 2026-02-21
 **Status:** Implemented
 **See also:** [Cloud + Desktop Strategy](CLOUD_DESKTOP_STRATEGY.md), [Monorepo Tooling Decision](../decisions/MONOREPO_TOOLING.md)
 
@@ -22,11 +22,11 @@ bnto/
 ├── go.work                          # Go workspace (engine + apps/api)
 │
 ├── apps/
-│   ├── api/                         # Go HTTP API server (Phase 1)
+│   ├── api/                         # Go HTTP API server (Phase 3 — cloud execution)
 │   │   ├── go.mod                   # module github.com/Develonaut/bnto-api
 │   │   └── cmd/server/              # Server binary (thin consumer of engine)
-│   ├── web/                         # @bnto/web — Next.js cloud app (Phase 1)
-│   └── desktop/                     # @bnto/desktop — Wails frontend (Phase 3)
+│   ├── web/                         # @bnto/web — Next.js on Vercel (Phase 1)
+│   └── desktop/                     # @bnto/desktop — Wails frontend (Phase 2)
 │
 ├── packages/
 │   └── @bnto/                      # Scoped internal packages (n8n pattern)
@@ -123,7 +123,7 @@ bnto/
 | Package | Dependencies | Purpose |
 |---------|-------------|---------|
 | `@bnto/core` | zustand, @tanstack/react-query, @convex-dev/react-query, convex | Hooks, types, Zustand stores, React Query + transport adapters |
-| `@bnto/auth` | `@convex-dev/auth`, `convex`, `@bnto/backend` | Cloud auth — provider, hooks, middleware (web only) |
+| `@bnto/auth` | `better-auth`, `@better-auth/convex`, `@bnto/backend` | Cloud auth — Better Auth provider, hooks, middleware (web only) |
 | `@bnto/ui` | `@bnto/core` | shadcn thin wrappers — design system |
 | `@bnto/editor` | `@bnto/core`, `@bnto/ui` | JSON editor (Phase 1), visual editor (Phase 4) |
 | `@bnto/web` | `@bnto/auth`, `@bnto/core`, `@bnto/ui`, `@bnto/editor` | Next.js cloud app |
