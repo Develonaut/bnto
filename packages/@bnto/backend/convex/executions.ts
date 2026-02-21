@@ -6,7 +6,7 @@ import {
   internalAction,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { getAppUserId } from "./_helpers/auth";
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 450; // 15 min at 2s intervals
@@ -17,7 +17,7 @@ export const start = mutation({
     workflowId: v.id("workflows"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) throw new Error("Not authenticated");
 
     const user = await ctx.db.get(userId);
@@ -59,7 +59,7 @@ export const start = mutation({
 export const get = query({
   args: { id: v.id("executions") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) return null;
     const execution = await ctx.db.get(args.id);
     if (execution === null || execution.userId !== userId) return null;
@@ -71,7 +71,7 @@ export const get = query({
 export const listByWorkflow = query({
   args: { workflowId: v.id("workflows") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) return [];
     return ctx.db
       .query("executions")

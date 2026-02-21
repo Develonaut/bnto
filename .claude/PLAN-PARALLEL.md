@@ -99,7 +99,7 @@ Full details at [`.claude/archive/PLAN-PHASE-0.md`](archive/PLAN-PHASE-0.md) (to
   - `server.ts` — convexBetterAuthNextJs wrapper (handler, getToken, isAuthenticated, preloadAuthQuery, fetchAuth*)
   - `middleware.ts` — re-export getSessionCookie from better-auth/cookies
   - `hooks/` — useSession, useSignIn, useSignUp, useSignOut (each in own file)
-- [ ] `@bnto/backend` — Update Convex for Better Auth
+- [x] `@bnto/backend` — Update Convex for Better Auth
   - `auth.config.ts` — getAuthConfigProvider
   - `auth.ts` — betterAuth with email/password + OAuth (Google, Discord)
   - `http.ts` — register auth routes

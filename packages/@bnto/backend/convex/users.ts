@@ -1,5 +1,6 @@
-import { query, internalMutation } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { query, mutation, internalMutation } from "./_generated/server";
+import { authComponent } from "./auth";
+import { getAppUserId } from "./_helpers/auth";
 
 const FREE_RUN_LIMIT = 5;
 
@@ -7,7 +8,7 @@ const FREE_RUN_LIMIT = 5;
 export const getMe = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) return null;
     return ctx.db.get(userId);
   },
@@ -17,7 +18,7 @@ export const getMe = query({
 export const isWhitelisted = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) return false;
     const user = await ctx.db.get(userId);
     return user?.isWhitelisted === true;
@@ -28,7 +29,7 @@ export const isWhitelisted = query({
 export const getRunsRemaining = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) return null;
     const user = await ctx.db.get(userId);
     if (user === null) return null;
@@ -39,17 +40,21 @@ export const getRunsRemaining = query({
 });
 
 /**
- * Initialize Bnto-specific fields on a user after first sign-in.
- * Idempotent — skips if fields are already set.
+ * Initialize Bnto-specific fields for a new user after first sign-in.
+ * Creates the app user record linked to the Better Auth component user.
+ * Idempotent — returns existing app user if already created.
  */
-export const ensureUser = internalMutation({
+export const ensureUser = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) return;
-    const user = await ctx.db.get(userId);
-    if (user === null) return;
-    if (user.plan !== undefined) return;
+    const authUser = await authComponent.getAuthUser(ctx);
+
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", authUser._id))
+      .unique();
+
+    if (existing) return existing._id;
 
     const now = Date.now();
     const nextMonth = new Date(now);
@@ -57,7 +62,11 @@ export const ensureUser = internalMutation({
     nextMonth.setDate(1);
     nextMonth.setHours(0, 0, 0, 0);
 
-    await ctx.db.patch(userId, {
+    return ctx.db.insert("users", {
+      userId: authUser._id,
+      email: authUser.email,
+      name: authUser.name,
+      image: authUser.image ?? undefined,
       plan: "free",
       runsUsed: 0,
       runLimit: FREE_RUN_LIMIT,

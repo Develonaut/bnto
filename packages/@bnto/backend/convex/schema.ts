@@ -1,22 +1,15 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
-  ...authTables,
-
-  // Extend the auth users table with Bnto-specific fields.
-  // Auth fields (name, email, image, etc.) are optional per authTables.
-  // Our fields are also optional so ensureUser can set them after first sign-in.
+  // App-level user profiles linked to Better Auth component user.
+  // Auth fields (name, email, image) live in the component's user table.
+  // Copies are cached here for convenience queries.
   users: defineTable({
-    // Auth-provided fields
+    userId: v.string(), // Better Auth component user _id
+    email: v.optional(v.string()),
     name: v.optional(v.string()),
     image: v.optional(v.string()),
-    email: v.optional(v.string()),
-    emailVerificationTime: v.optional(v.number()),
-    phone: v.optional(v.string()),
-    phoneVerificationTime: v.optional(v.number()),
-    isAnonymous: v.optional(v.boolean()),
     // Bnto-specific fields (set by ensureUser after first sign-in)
     plan: v.optional(
       v.union(v.literal("free"), v.literal("starter"), v.literal("pro")),
@@ -25,7 +18,9 @@ export default defineSchema({
     runLimit: v.optional(v.number()),
     runsResetAt: v.optional(v.number()),
     isWhitelisted: v.optional(v.boolean()),
-  }).index("email", ["email"]),
+  })
+    .index("by_userId", ["userId"])
+    .index("email", ["email"]),
 
   workflows: defineTable({
     userId: v.id("users"),

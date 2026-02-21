@@ -1,12 +1,12 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { getAppUserId } from "./_helpers/auth";
 
 /** List all workflows for the current user. */
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) return [];
     const workflows = await ctx.db
       .query("workflows")
@@ -27,7 +27,7 @@ export const list = query({
 export const get = query({
   args: { id: v.id("workflows") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) return null;
     const workflow = await ctx.db.get(args.id);
     if (workflow === null || workflow.userId !== userId) return null;
@@ -39,7 +39,7 @@ export const get = query({
 export const getByName = query({
   args: { name: v.string() },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) return null;
     return ctx.db
       .query("workflows")
@@ -58,7 +58,7 @@ export const save = mutation({
     isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) throw new Error("Not authenticated");
 
     const existing = await ctx.db
@@ -96,7 +96,7 @@ export const save = mutation({
 export const remove = mutation({
   args: { id: v.id("workflows") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) throw new Error("Not authenticated");
     const workflow = await ctx.db.get(args.id);
     if (workflow === null || workflow.userId !== userId) {

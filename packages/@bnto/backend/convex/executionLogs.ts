@@ -1,12 +1,12 @@
 import { v } from "convex/values";
 import { query, internalMutation } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { getAppUserId } from "./_helpers/auth";
 
 /** List logs for an execution. Verifies ownership via the execution record. */
 export const list = query({
   args: { executionId: v.id("executions") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getAppUserId(ctx);
     if (userId === null) return [];
 
     const execution = await ctx.db.get(args.executionId);

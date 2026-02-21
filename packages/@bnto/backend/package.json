@@ -10,7 +10,8 @@
     "lint": "echo \"No linter yet\""
   },
   "dependencies": {
-    "convex": "^1.21.0",
-    "@convex-dev/auth": "^0.0.80"
+    "convex": "^1.25.0",
+    "@convex-dev/better-auth": "^0.10.11",
+    "better-auth": "^1.4.18"
   }
 }
