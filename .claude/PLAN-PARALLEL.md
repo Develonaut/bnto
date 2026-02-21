@@ -104,7 +104,7 @@ Full details at [`.claude/archive/PLAN-PHASE-0.md`](archive/PLAN-PHASE-0.md) (to
   - `auth.ts` — betterAuth with email/password + OAuth (Google, Discord)
   - `http.ts` — register auth routes
   - Update schema for Better Auth tables
-- [ ] `apps/web` — Set up Vercel deployment (vercel.json, env vars, preview deployments)
+- [x] `apps/web` — Set up Vercel deployment (vercel.json, env vars, preview deployments)
 
 #### Wave 2 (parallel — integration)
 

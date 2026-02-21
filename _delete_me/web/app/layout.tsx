@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import "@bnto/ui/globals.css";
+import { Providers } from "./providers";
+import { Nav } from "./nav";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Bnto",
-  description: "Workflow automation engine",
+  description: "Workflow automation, simplified.",
 };
 
 export default function RootLayout({
@@ -13,7 +15,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        <Providers>
+          <Nav />
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

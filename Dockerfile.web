@@ -6,9 +6,9 @@ FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/web/package.json ./apps/web/
-COPY packages/@bnto/core/package.json ./packages/@bnto/core/
-COPY packages/@bnto/ui/package.json ./packages/@bnto/ui/
-COPY packages/@bnto/editor/package.json ./packages/@bnto/editor/
+COPY packages/core/package.json ./packages/core/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/editor/package.json ./packages/editor/
 COPY packages/@bnto/auth/package.json ./packages/@bnto/auth/
 COPY packages/@bnto/backend/package.json ./packages/@bnto/backend/
 RUN pnpm install --frozen-lockfile
@@ -23,6 +23,9 @@ ENV NEXT_PUBLIC_CONVEX_URL=$NEXT_PUBLIC_CONVEX_URL
 
 COPY --from=deps /app/ ./
 COPY apps/web/ ./apps/web/
+COPY packages/core/ ./packages/core/
+COPY packages/ui/ ./packages/ui/
+COPY packages/editor/ ./packages/editor/
 COPY packages/@bnto/ ./packages/@bnto/
 RUN pnpm turbo run build --filter=@bnto/web
 

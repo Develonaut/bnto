@@ -51,7 +51,7 @@ const workflows = window.go.main.App.ListWorkflows();
 
 ## Package Responsibilities
 
-### `packages/@bnto/core/` (`@bnto/core`) -- Transport-agnostic API layer
+### `packages/core/` (`@bnto/core`) -- Transport-agnostic API layer
 - React hooks for all data operations (workflows, executions, logs)
 - TypeScript types and interfaces shared across the app
 - Zustand stores for client-only state (editor content, UI preferences)
@@ -59,14 +59,14 @@ const workflows = window.go.main.App.ListWorkflows();
 - Runtime detection to swap adapters transparently
 - NO backend or storage technology imports in public API -- only in internal adapters
 
-### `packages/@bnto/ui/` (`@bnto/ui`) -- Design system
+### `packages/ui/` (`@bnto/ui`) -- Design system
 - **`primitives/`** -- Raw shadcn/ui component drops. Never publicly exported. Internal only.
 - **`components/`** -- Bnto wrapper components. These are the public API.
 - Tailwind v4 with `@theme inline` for design tokens
 - `motion` for React animation primitives
 - Presentational ONLY -- no data fetching, no business logic
 
-### `packages/@bnto/editor/` (`@bnto/editor`) -- Workflow editor
+### `packages/editor/` (`@bnto/editor`) -- Workflow editor
 - JSON editor for `.bnto.json` files (Phase 1)
 - Visual node editor (Phase 4)
 - Consumes `@bnto/ui` for primitives and `@bnto/core` for data

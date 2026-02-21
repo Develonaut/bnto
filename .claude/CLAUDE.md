@@ -107,15 +107,20 @@ engine/pkg/
 
 ### 5. TypeScript Package Guidelines
 
+Public packages (consumed by apps directly) live at `packages/` root.
+Private packages (internal implementation) stay under `packages/@bnto/`.
+
 ```
-packages/@bnto/
+packages/
 ├── core/         # API layer ONLY — hooks, types, transport adapters (Convex/Wails)
 │                 #   Zustand: client state. React Query: server state.
 │                 #   Runtime detection swaps transport — components never know.
-├── auth/         # Cloud auth ONLY — wraps Better Auth + @better-auth/convex (web only, desktop skips)
-│                 #   Provider (server), hooks (client), middleware (server)
 ├── ui/           # Presentational ONLY — shadcn wrappers, design system
-└── editor/       # Editor ONLY — JSON editor (Phase 1), visual editor (Phase 4)
+├── editor/       # Editor ONLY — JSON editor (Phase 1), visual editor (Phase 4)
+└── @bnto/
+    ├── auth/     # Cloud auth ONLY — wraps Better Auth + @better-auth/convex (web only, desktop skips)
+    │             #   Provider (server), hooks (client), middleware (server)
+    └── backend/  # Data layer ONLY — Convex schema, functions, business logic
 ```
 
 - `@bnto/ui` components are thin wrappers around shadcn — customize internals without touching consumers
@@ -139,11 +144,12 @@ bnto/
 │   ├── web/                     # @bnto/web — Next.js on Vercel (Phase 1)
 │   └── desktop/                 # @bnto/desktop — Wails frontend (Phase 2)
 ├── packages/
-│   └── @bnto/                  # Scoped internal packages (n8n pattern)
-│       ├── core/                # @bnto/core — Transport-agnostic API
+│   ├── core/                    # @bnto/core — Transport-agnostic API (public)
+│   ├── ui/                      # @bnto/ui — Design system (public)
+│   ├── editor/                  # @bnto/editor — Workflow editor (public)
+│   └── @bnto/                   # Private internal packages
 │       ├── auth/                # @bnto/auth — Cloud auth (web only)
-│       ├── ui/                  # @bnto/ui — Design system
-│       └── editor/              # @bnto/editor — Workflow editor
+│       └── backend/             # @bnto/backend — Convex schema + functions
 ├── engine/                      # All Go code
 │   ├── go.mod                   # module github.com/Develonaut/bnto
 │   ├── cmd/bnto/               # CLI binary
