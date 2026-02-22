@@ -6,21 +6,26 @@ The bnto theme is fully defined. Use these tokens — never hardcode colors, rad
 
 ## Font
 
-**Quicksand** — loaded via `next/font/google`, variable bound to `--font-sans`.
+**Geist** (sans) + **Geist Mono** (mono) — loaded via `next/font/google`, bound to `--font-sans` and `--font-mono`.
 
 ```tsx
 // apps/web/app/layout.tsx
-import { Quicksand } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 
-const fontSans = Quicksand({
+const fontSans = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
+});
+
+const fontMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${fontSans.variable} antialiased`}>
+      <body className={`${fontSans.variable} ${fontMono.variable} antialiased`}>
         {children}
       </body>
     </html>
@@ -29,9 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 **Rules:**
-- Always use `font-sans` (resolves to Quicksand via `--font-sans`)
-- `font-mono` only where code/technical output appears — logs, `.bnto.json` previews, node type labels
-- Never load Quicksand via `<link>` or `@import` — `next/font` handles it with zero layout shift
+- Always use `font-sans` (resolves to Geist via `--font-sans`)
+- Use `font-mono` (resolves to Geist Mono via `--font-mono`) for code/technical output — logs, `.bnto.json` previews, node type labels
+- Never load Geist via `<link>` or `@import` — `next/font` handles it with zero layout shift
 
 ---
 
@@ -132,7 +137,7 @@ Dark mode shadows use pure black at higher opacity — the system handles this a
 
 ## Typography Scale
 
-Quicksand is a rounded, geometric sans-serif. It reads warm and friendly at all sizes.
+Geist is a clean, modern sans-serif designed by Vercel. It reads sharp and professional at all sizes.
 
 ```tsx
 // Display / Hero
@@ -186,8 +191,8 @@ The `@theme inline` block maps CSS variables to Tailwind's color/shadow/radius s
 
 - **Never hardcode a color value** — always use semantic tokens (`bg-primary`, `text-muted-foreground`, etc.)
 - **Never hardcode a radius** — always use `rounded-{sm|md|lg|xl}`
-- **Never use `font-['Quicksand']`** — use `font-sans` (the variable resolves it)
-- **Never add a `<link>` for Quicksand** — `next/font` is already handling it in `layout.tsx`
+- **Never use `font-['Geist']`** — use `font-sans` (the variable resolves it)
+- **Never add a `<link>` for Geist** — `next/font` is already handling it in `layout.tsx`
 - **Dark mode is automatic** — tokens swap via `.dark` class, no manual dark: overrides needed for semantic tokens
 - **Shadows are warm** — use the shadow scale, don't write custom `box-shadow` values
 - **When in doubt, round more** — the brand is warm and friendly, not sharp
