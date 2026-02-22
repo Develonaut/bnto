@@ -53,7 +53,7 @@ export function SignInForm() {
       <div className="w-full max-w-sm space-y-6">
         <div className="space-y-2 text-center">
           <h1 className="text-2xl font-bold tracking-tight">
-            {isSignUp ? "Create an account" : "Sign in to Bnto"}
+            {isSignUp ? "Create an account" : "Sign in to bnto"}
           </h1>
           <p className="text-sm text-muted-foreground">
             {isSignUp
