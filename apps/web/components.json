@@ -12,9 +12,9 @@
   },
   "aliases": {
     "components": "@/components",
-    "utils": "@bnto/ui/lib/utils",
-    "ui": "@bnto/ui/components/primitives",
-    "lib": "@bnto/ui/lib",
-    "hooks": "@bnto/ui/hooks"
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
   }
 }

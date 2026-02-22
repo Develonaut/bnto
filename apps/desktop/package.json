@@ -9,8 +9,6 @@
     "lint": "echo \"No linter yet\""
   },
   "dependencies": {
-    "@bnto/core": "workspace:*",
-    "@bnto/ui": "workspace:*",
-    "@bnto/editor": "workspace:*"
+    "@bnto/core": "workspace:*"
   }
 }

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useSignIn, useSignUp } from "@bnto/auth";
-import { Button } from "@bnto/ui/button";
-import { Input } from "@bnto/ui/input";
+import { Background } from "@/components/background";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type Mode = "signin" | "signup";
 
@@ -55,112 +57,84 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 text-foreground">
-      <div className="w-full max-w-sm space-y-6">
-        {/* Logo */}
-        <div className="text-center">
-          <span className="font-display text-2xl font-bold">bnto</span>
-        </div>
+    <Background>
+      <section className="py-28 lg:pt-44 lg:pb-32">
+        <div className="container">
+          <div className="mx-auto w-full max-w-sm space-y-6">
+            <div className="flex flex-col items-center space-y-2 text-center">
+              <Link href="/" className="mb-4">
+                <span className="font-display text-2xl font-bold">bnto</span>
+              </Link>
+              <h1 className="text-2xl font-bold">
+                {isSignUp ? "Create an account" : "Welcome back"}
+              </h1>
+              <p className="text-muted-foreground">
+                {isSignUp
+                  ? "Enter your details to get started"
+                  : "Please enter your details."}
+              </p>
+            </div>
 
-        {/* Card */}
-        <div className="rounded-xl bg-card p-6 shadow-lg">
-          <div className="space-y-2 text-center">
-            <h1 className="font-display text-xl font-semibold tracking-tight">
-              {isSignUp ? "Create an account" : "Sign in to bnto"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {isSignUp
-                ? "Enter your details to get started"
-                : "Enter your credentials to continue"}
+            <div className="rounded-xl border bg-card p-6 shadow-sm">
+              <form onSubmit={handleSubmit} className="grid gap-4">
+                {isSignUp && (
+                  <Input
+                    type="text"
+                    placeholder="Your name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                )}
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+                <Input
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
+                />
+
+                {error && (
+                  <p className="text-sm text-destructive" role="alert">
+                    {error}
+                  </p>
+                )}
+
+                <Button type="submit" disabled={loading} className="mt-2 w-full">
+                  {loading
+                    ? isSignUp
+                      ? "Creating account..."
+                      : "Signing in..."
+                    : isSignUp
+                      ? "Create account"
+                      : "Sign in"}
+                </Button>
+              </form>
+            </div>
+
+            <p className="text-muted-foreground text-center text-sm">
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="text-primary font-medium"
+              >
+                {isSignUp ? "Sign in" : "Sign up"}
+              </button>
             </p>
           </div>
-
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            {isSignUp && (
-              <div className="space-y-2">
-                <label
-                  htmlFor="name"
-                  className="text-sm font-medium leading-none"
-                >
-                  Name
-                </label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="text-sm font-medium leading-none"
-              >
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="password"
-                className="text-sm font-medium leading-none"
-              >
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-              />
-            </div>
-
-            {error && (
-              <p className="text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            )}
-
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading
-                ? isSignUp
-                  ? "Creating account..."
-                  : "Signing in..."
-                : isSignUp
-                  ? "Create account"
-                  : "Sign in"}
-            </Button>
-          </form>
         </div>
-
-        <p className="text-center text-sm text-muted-foreground">
-          {isSignUp ? "Already have an account?" : "No account?"}{" "}
-          <button
-            type="button"
-            onClick={toggleMode}
-            className="font-medium text-foreground underline underline-offset-4 hover:text-foreground/80"
-          >
-            {isSignUp ? "Sign in" : "Sign up"}
-          </button>
-        </p>
-      </div>
-    </div>
+      </section>
+    </Background>
   );
 }

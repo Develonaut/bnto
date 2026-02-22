@@ -29,7 +29,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 **Web app (partially built):** Next.js app shell, Convex Auth being replaced with Better Auth, passphrase gate being removed, deployed to Railway migrating to Vercel.
 
-**Packages (partially built):** @bnto/core hooks + Convex adapter, @bnto/ui shadcn primitives, @bnto/editor stub, @bnto/auth (migrating to Better Auth), @bnto/backend Convex schema + functions.
+**Packages (partially built):** @bnto/core hooks + Convex adapter, @bnto/editor stub, @bnto/auth (migrating to Better Auth), @bnto/backend Convex schema + functions. UI components live in `apps/web/components/` (shared `@bnto/ui` package removed — premature for single-app stage).
 
 ---
 
@@ -40,7 +40,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Go API server: HTTP handlers wrapping BntoService (apps/api/)
 - [x] Contract tests: Go JSON responses match @bnto/core TypeScript types
 - [x] @bnto/core: React Query + Convex adapter, hooks (useWorkflows, useExecution, useRunWorkflow, etc.)
-- [x] @bnto/ui: shadcn design system (Button, Card, Input, Label, Dialog, Select, Tabs, Toaster)
+- [x] ~@bnto/ui~ (removed — UI components now local to apps/web; re-extract when desktop app needs shared components)
 - [x] @bnto/backend: Convex schema (users, workflows, executions, executionLogs), auth, crons, run counter
 - [x] Web app shell: splash page, passphrase gate, sign-in/up, whitelist gate, nav + theme toggle
 - [x] Playwright E2E infrastructure: 6 tests (splash gate, auth, navigation)
@@ -120,10 +120,10 @@ Phase 0 archive removed from repo (nuked with archive folder cleanup).
 
 - [ ] `apps/web` — SEO URL routing: `app/[bnto]/page.tsx` with dynamic slug → Bnto mapping
 - [ ] `apps/web` — Per-slug server-side metadata (title, description, og tags) for all 6 Tier 1 Bntos
-- [ ] `@bnto/ui` — WorkflowCard component (name, description, node count, last run status)
-- [ ] `@bnto/ui` — StatusBadge component (pending, running, completed, failed)
-- [ ] `@bnto/ui` — RunButton component (run with loading state)
-- [ ] `@bnto/ui` — EmptyState component (no workflows yet)
+- [ ] `apps/web` — WorkflowCard component (name, description, node count, last run status)
+- [ ] `apps/web` — StatusBadge component (pending, running, completed, failed)
+- [ ] `apps/web` — RunButton component (run with loading state)
+- [ ] `apps/web` — EmptyState component (no workflows yet)
 - [ ] `@bnto/backend` — Execution event logging (every run logged, even anonymous, with timestamp + bnto slug)
 
 #### Wave 3 (parallel — cloud execution)
@@ -299,6 +299,22 @@ The `loop` node currently collects original items, not sub-node outputs. This me
 - [ ] `engine` — New array-level transform node that operates on all rows at once (alternative to loop-based approach)
 
 Pick one approach when this is prioritized. The loop output collection route is more general-purpose; the array transform node is simpler for bulk column operations.
+
+### Tooling: Use package.json `imports` Instead of TSConfig Path Aliases
+
+Replace `@/components`, `@/lib`, etc. TSConfig path aliases with Node.js-native `package.json` `imports` field (`#components/*`, `#lib/*`). This is the standards-track approach — works with all bundlers, runtimes, and tools without requiring TSConfig resolution hacks.
+
+- [ ] `apps/web` — Add `imports` field to `package.json` with `#*` mappings
+- [ ] `apps/web` — Update all `@/` imports to `#` imports
+- [ ] `apps/web` — Remove `paths` from `tsconfig.json`
+
+### Auth: Enable OAuth Social Providers
+
+Google and Discord OAuth social providers are configured in `@bnto/backend` (`convex/auth.ts`) but commented out — they require OAuth credentials (`AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_DISCORD_ID`, `AUTH_DISCORD_SECRET`) set as Convex env vars.
+
+- [ ] `@bnto/backend` — Uncomment `socialProviders` block in `convex/auth.ts`
+- [ ] `@bnto/backend` — Set Google and Discord OAuth credentials in Convex env vars (dev + prod)
+- [ ] `apps/web` — Add Google and Discord sign-in buttons to `SignInForm`
 
 ---
 

@@ -14,16 +14,17 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
     baseURL: process.env.SITE_URL!,
     database: authComponent.adapter(ctx),
     emailAndPassword: { enabled: true },
-    socialProviders: {
-      google: {
-        clientId: process.env.AUTH_GOOGLE_ID!,
-        clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-      },
-      discord: {
-        clientId: process.env.AUTH_DISCORD_ID!,
-        clientSecret: process.env.AUTH_DISCORD_SECRET!,
-      },
-    },
+    // TODO: Re-enable when OAuth credentials are configured
+    // socialProviders: {
+    //   google: {
+    //     clientId: process.env.AUTH_GOOGLE_ID!,
+    //     clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+    //   },
+    //   discord: {
+    //     clientId: process.env.AUTH_DISCORD_ID!,
+    //     clientSecret: process.env.AUTH_DISCORD_SECRET!,
+    //   },
+    // },
     plugins: [
       convex({ authConfig }),
       anonymous({

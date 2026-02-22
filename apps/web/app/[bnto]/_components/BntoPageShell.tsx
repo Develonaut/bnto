@@ -1,7 +1,7 @@
 "use client";
 
 import { useAnonymousSession, useRunsRemaining } from "@bnto/core";
-import { DashedLine } from "@bnto/ui/dashed-line";
+import { DashedLine } from "@/components/dashed-line";
 import type { BntoEntry } from "../../../lib/bnto-registry";
 import { UpgradePrompt } from "./UpgradePrompt";
 
