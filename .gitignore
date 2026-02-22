@@ -43,25 +43,36 @@ vendor/
 # Bento-specific
 *.bento.json.bak
 /test-data/
-/.claude/strategy/archive/
 
 # Test outputs - generated during test runs
 /products/
 /tests/output/
 engine/output/
-*.webp
-render-*.png
+engine/tests/**/*.webp
+engine/tests/**/render-*.png
 
 # Environment
 .env
 .env.local
+.env*.local
+
+# TypeScript build cache
+*.tsbuildinfo
 
 # Node.js / Frontend
 node_modules/
 .turbo/
 dist/
 .next/
+
+# Vercel
+.vercel/
+
+# Go API server binary
 apps/api/server
+
+# Test coverage
+coverage/
 
 # Playwright
 test-results/
