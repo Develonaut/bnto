@@ -14,7 +14,8 @@ func TestResizeImages(t *testing.T) {
 	defer restore()
 
 	tmpDir := t.TempDir()
-	t.Setenv("RESIZE_OUTPUT", tmpDir)
+	t.Setenv("INPUT_DIR", "tests/fixtures/images")
+	t.Setenv("OUTPUT_DIR", tmpDir)
 
 	reg := createRegistry()
 	result := executeFixture(t, "tests/fixtures/workflows/resize-images.bnto.json", reg, 30*time.Second)

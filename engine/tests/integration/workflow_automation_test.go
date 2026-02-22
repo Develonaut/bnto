@@ -12,14 +12,14 @@ import (
 // TestWorkflowAutomation_EndToEnd validates the complete workflow automation.
 // Tests CSV reading → folder creation → copy overlays → external tool execution → WebP optimization
 func TestWorkflowAutomation_EndToEnd(t *testing.T) {
-	t.Skip("Skipping test: examples/workflow-automation.bnto.json does not exist yet")
+	t.Skip("Skipping test: tests/fixtures/workflows/workflow-automation.bnto.json does not exist yet")
 
 	projectRoot := "../../"
 	defer CleanupTestDir(t, projectRoot+"output")
 	CleanupTestDir(t, projectRoot+"output")
 
 	envVars := setupTestEnvironment(t, projectRoot)
-	output, err := RunBnto(t, "examples/workflow-automation.bnto.json", envVars)
+	output, err := RunBnto(t, "tests/fixtures/workflows/workflow-automation.bnto.json", envVars)
 
 	require.NoError(t, err, "Workflow automation should complete successfully\nOutput: %s", output)
 	verifyBntoSuccess(t, output)

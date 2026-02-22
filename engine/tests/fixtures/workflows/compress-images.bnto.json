@@ -1,11 +1,11 @@
 {
-  "id": "resize-images",
+  "id": "compress-images",
   "type": "group",
   "version": "1.0.0",
-  "name": "Resize Images",
+  "name": "Compress Images",
   "position": { "x": 0, "y": 0 },
   "metadata": {
-    "description": "Lists image files and resizes each one via a loop."
+    "description": "Lists image files and compresses each one to WebP format."
   },
   "parameters": {},
   "inputPorts": [],
@@ -26,10 +26,10 @@
       "outputPorts": [{ "id": "out-1", "name": "files" }]
     },
     {
-      "id": "resize-loop",
+      "id": "compress-loop",
       "type": "loop",
       "version": "1.0.0",
-      "name": "Resize Each Image",
+      "name": "Compress Each Image",
       "position": { "x": 300, "y": 100 },
       "metadata": {},
       "parameters": {
@@ -40,17 +40,17 @@
       "outputPorts": [],
       "nodes": [
         {
-          "id": "resize-image",
+          "id": "compress-image",
           "type": "image",
           "version": "1.0.0",
-          "name": "Resize Image",
+          "name": "Compress Image",
           "position": { "x": 100, "y": 100 },
           "metadata": {},
           "parameters": {
-            "operation": "resize",
+            "operation": "optimize",
             "input": "{{.item}}",
             "output": "{{.OUTPUT_DIR}}/{{basename .item}}",
-            "width": 200
+            "quality": 80
           },
           "inputPorts": [],
           "outputPorts": []
@@ -63,7 +63,7 @@
     {
       "id": "e1",
       "source": "list-images",
-      "target": "resize-loop"
+      "target": "compress-loop"
     }
   ]
 }

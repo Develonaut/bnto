@@ -1,11 +1,11 @@
 {
-  "id": "resize-images",
+  "id": "convert-image-format",
   "type": "group",
   "version": "1.0.0",
-  "name": "Resize Images",
+  "name": "Convert Image Format",
   "position": { "x": 0, "y": 0 },
   "metadata": {
-    "description": "Lists image files and resizes each one via a loop."
+    "description": "Lists image files and converts each to a target format."
   },
   "parameters": {},
   "inputPorts": [],
@@ -26,10 +26,10 @@
       "outputPorts": [{ "id": "out-1", "name": "files" }]
     },
     {
-      "id": "resize-loop",
+      "id": "convert-loop",
       "type": "loop",
       "version": "1.0.0",
-      "name": "Resize Each Image",
+      "name": "Convert Each Image",
       "position": { "x": 300, "y": 100 },
       "metadata": {},
       "parameters": {
@@ -40,17 +40,18 @@
       "outputPorts": [],
       "nodes": [
         {
-          "id": "resize-image",
+          "id": "convert-image",
           "type": "image",
           "version": "1.0.0",
-          "name": "Resize Image",
+          "name": "Convert Image",
           "position": { "x": 100, "y": 100 },
           "metadata": {},
           "parameters": {
-            "operation": "resize",
+            "operation": "convert",
             "input": "{{.item}}",
-            "output": "{{.OUTPUT_DIR}}/{{basename .item}}",
-            "width": 200
+            "output": "{{.OUTPUT_DIR}}/{{basename .item}}.webp",
+            "format": "webp",
+            "quality": 80
           },
           "inputPorts": [],
           "outputPorts": []
@@ -63,7 +64,7 @@
     {
       "id": "e1",
       "source": "list-images",
-      "target": "resize-loop"
+      "target": "convert-loop"
     }
   ]
 }

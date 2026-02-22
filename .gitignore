@@ -55,6 +55,9 @@ engine/tests/**/render-*.png
 .env
 .env.local
 .env*.local
+.env.production
+.env.staging
+.env.development
 
 # TypeScript build cache
 *.tsbuildinfo

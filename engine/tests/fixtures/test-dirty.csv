@@ -1,0 +1,5 @@
+name,scale,studio,title,description,tags
+Test Item A,Standard,Test Studio,Test Item A Record,Test record for bento workflow testing,"test, data, item-a"
+,,,,,
+Test Item B,Standard,Test Studio,Test Item B Record,Test record for bento workflow testing,"test, data, item-b"
+  Test Item C  ,Standard,Test Studio,  Test Item C Record  ,Test record for bento workflow testing,"test, data, item-c"

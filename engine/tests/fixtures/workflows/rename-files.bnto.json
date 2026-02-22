@@ -1,56 +1,55 @@
 {
-  "id": "resize-images",
+  "id": "rename-files",
   "type": "group",
   "version": "1.0.0",
-  "name": "Resize Images",
+  "name": "Rename Files",
   "position": { "x": 0, "y": 0 },
   "metadata": {
-    "description": "Lists image files and resizes each one via a loop."
+    "description": "Lists files and renames each by adding a prefix."
   },
   "parameters": {},
   "inputPorts": [],
   "outputPorts": [],
   "nodes": [
     {
-      "id": "list-images",
+      "id": "list-files",
       "type": "file-system",
       "version": "1.0.0",
-      "name": "List Images",
+      "name": "List Files",
       "position": { "x": 100, "y": 100 },
       "metadata": {},
       "parameters": {
         "operation": "list",
-        "path": "{{.INPUT_DIR}}/*.png"
+        "path": "{{.INPUT_DIR}}/*"
       },
       "inputPorts": [],
       "outputPorts": [{ "id": "out-1", "name": "files" }]
     },
     {
-      "id": "resize-loop",
+      "id": "rename-loop",
       "type": "loop",
       "version": "1.0.0",
-      "name": "Resize Each Image",
+      "name": "Rename Each File",
       "position": { "x": 300, "y": 100 },
       "metadata": {},
       "parameters": {
         "mode": "forEach",
-        "items": "{{index . \"list-images\" \"files\"}}"
+        "items": "{{index . \"list-files\" \"files\"}}"
       },
       "inputPorts": [{ "id": "in-1", "name": "items" }],
       "outputPorts": [],
       "nodes": [
         {
-          "id": "resize-image",
-          "type": "image",
+          "id": "rename-file",
+          "type": "file-system",
           "version": "1.0.0",
-          "name": "Resize Image",
+          "name": "Rename File",
           "position": { "x": 100, "y": 100 },
           "metadata": {},
           "parameters": {
-            "operation": "resize",
-            "input": "{{.item}}",
-            "output": "{{.OUTPUT_DIR}}/{{basename .item}}",
-            "width": 200
+            "operation": "move",
+            "source": "{{.item}}",
+            "dest": "{{.OUTPUT_DIR}}/renamed-{{basename .item}}"
           },
           "inputPorts": [],
           "outputPorts": []
@@ -62,8 +61,8 @@
   "edges": [
     {
       "id": "e1",
-      "source": "list-images",
-      "target": "resize-loop"
+      "source": "list-files",
+      "target": "rename-loop"
     }
   ]
 }
