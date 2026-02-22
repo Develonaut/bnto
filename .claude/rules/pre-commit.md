@@ -23,7 +23,7 @@ If any check fails: fix the errors, re-run from the top.
 
 For EACH file you modified, verify against the Bento Box Principle (`code-standards.md`):
 
-- [ ] **Layered Architecture**: Apps -> `@bnto/editor` -> `@bnto/ui` -> `@bnto/core` -> Go Engine. No layer skipping. `@bnto/ui` is presentational only.
+- [ ] **Layered Architecture**: Apps -> `@bnto/core` -> Go Engine. No layer skipping. UI and editor co-located in `apps/web/`.
 - [ ] **API Abstraction**: No direct Convex queries/mutations in components. No direct Wails bindings in components. All data access via `@bnto/core`.
 - [ ] **Component complexity**: Logic inline is fine. Extract a hook only when the component earns it (~20+ lines of logic, reuse needed, or testability). No mandatory hooks for simple components.
 - [ ] **Pure Functions -> Logic Hooks -> Components**: Business rules in pure functions (no React). Logic hooks compose them reactively -- extract when complex or shared, not for every component.
@@ -52,7 +52,7 @@ For EACH Go file you created or modified:
 - [ ] No `Record<string, unknown>` for domain data -- use typed doc interfaces
 - [ ] No `as` type assertions unless crossing a trust boundary (e.g. JSON.parse, external API, `Id<T>` -> `string`)
 - [ ] Types flow down: core defines types, UI and web consume them. UI never defines its own data types
-- [ ] Imports from correct packages (`@bnto/ui` for components, `@bnto/core` for data/actions)
+- [ ] Imports from correct packages (`@bnto/core` for data/actions, local `@/components/` for UI)
 
 ## Step 5: Convex Compliance
 

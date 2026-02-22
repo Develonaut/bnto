@@ -55,9 +55,9 @@ For each sprint in `PLAN.md`, assess:
 Cross-reference the plan against the strategy docs:
 
 1. **Vision alignment** — Are we building toward a workflow automation engine with cloud + desktop execution? Is anything in the plan that doesn't serve this?
-2. **Phase check** — Does the plan respect the phased rollout (Phase 1: Web UI + Auth, Phase 2: Desktop, Phase 3: Cloud Execution, Phase 4: Visual Editor)?
+2. **Phase check** — Does the plan respect the phased rollout (Phase 1: Web App + Cloud Execution, Phase 2: Desktop, Phase 3: Monetization + Visual Editor)?
 3. **MVP scope** — Are we staying within Phase 1 boundaries or creeping toward Phase 2/3? Flag anything that should be deferred
-4. **Architecture compliance** — Does the plan respect the layered architecture (Apps -> @bnto/editor -> @bnto/ui -> @bnto/core -> Go Engine)?
+4. **Architecture compliance** — Does the plan respect the layered architecture (Apps -> @bnto/core -> Go Engine)? UI and editor co-located in `apps/web/` until desktop creates a second consumer.
 5. **Cost check** — Does anything in the plan introduce paid services? Flag it
 6. **SEO readiness** — Does Sprint 2 include SEO URL routing (`/[bnto]/page.tsx` with per-slug metadata)? If predefined Bntos are being added and SEO slugs aren't planned, flag it. Every new Bnto needs a URL.
 7. **Monetization instrumentation** — Does Sprint 3 include `runsUsedThisMonth` tracking in Convex? Is the upgrade prompt scaffolded before Stripe arrives in Sprint 7? Are execution events being logged from the first run in Sprint 2? If any of these are missing from the plan, flag them as gaps.

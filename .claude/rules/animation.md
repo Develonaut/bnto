@@ -2,7 +2,7 @@
 
 ## Token Scale
 
-All animation timings use the shared token scale defined in `@theme inline` (CSS) and `packages/ui/src/motion.ts` (JS). Never use raw numbers.
+All animation timings use the shared token scale defined in `@theme inline` (CSS) and `apps/web/lib/motion.ts` (JS). Never use raw numbers.
 
 | Token | CSS utility | JS constant | Value | Use case |
 |---|---|---|---|---|
@@ -28,8 +28,8 @@ Can CSS handle it?
   |     Prefix with motion-safe: for accessibility
   |
   +-- No (stagger, spring, layout, AnimatePresence, complex orchestration)
-        -> motion library with shared presets from @bnto/ui
-          import { transitions, durations, easings } from "@bnto/ui"
+        -> motion library with shared presets
+          import { transitions, durations, easings } from "@/lib/motion"
 ```
 
 **Push simple animations to CSS.** The motion library adds JS overhead. A `scale(1.02)` on hover is CSS's job, not motion's.
@@ -52,7 +52,7 @@ Can CSS handle it?
 For motion library consumers, use the shared transition presets:
 
 ```typescript
-import { transitions, durations, easings } from "@bnto/ui";
+import { transitions, durations, easings } from "@/lib/motion";
 
 // Presets
 transitions.reveal   // { duration: 0.3, ease: easings.out }    -- default entrance/exit
@@ -95,4 +95,4 @@ const prefersReduced =
 2. **CSS first.** Only reach for the motion library when CSS can't handle the animation.
 3. **Always guard with motion-safe.** Every animation path must have a reduced-motion fallback.
 4. **Don't touch vendor animations.** shadcn primitive transitions (dialog, sheet, accordion) keep their defaults.
-5. **Shared presets for motion library.** Import from `@bnto/ui`, don't inline `{ duration: 0.3, ease: "easeOut" }`.
+5. **Shared presets for motion library.** Import from `@/lib/motion`, don't inline `{ duration: 0.3, ease: "easeOut" }`.

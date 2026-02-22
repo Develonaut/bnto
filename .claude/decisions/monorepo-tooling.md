@@ -17,8 +17,8 @@ Bnto's monorepo will contain both Go and TypeScript code:
 | Wails Desktop | Go + Vite/React | `wails build`, pnpm |
 | Next.js Web App | TypeScript/React | `next build`, pnpm |
 | @bnto/core | TypeScript | `tsc`, pnpm |
-| @bnto/ui | TypeScript | `tsc`, pnpm |
-| @bnto/editor | TypeScript | `tsc`, pnpm |
+| UI components (in apps/web) | TypeScript | `tsc`, pnpm |
+| Editor features (in apps/web) | TypeScript | `tsc`, pnpm |
 
 We need a build orchestrator that handles both ecosystems. The previous strategy chose Taskfile.dev. The user prefers Turborepo from past experience. This document evaluates the options.
 
@@ -120,8 +120,8 @@ bnto/
 ├── packages/
 │   └── @bnto/               # Scoped internal packages (n8n pattern)
 │       ├── core/             # @bnto/core
-│       ├── ui/               # @bnto/ui
-│       └── editor/           # @bnto/editor
+│       ├── auth/              # @bnto/auth
+│       └── backend/           # @bnto/backend
 └── engine/                   # All Go code
     ├── go.mod
     ├── cmd/bnto/

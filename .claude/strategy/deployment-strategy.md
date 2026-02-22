@@ -119,7 +119,7 @@ Preview deploys currently talk to the **Convex dev deployment** (via `NEXT_PUBLI
 |---|---|---|
 | Convex Cloud | Free tier | $0 |
 | Vercel | Hobby | $0 |
-| Railway | Hobby (Phase 3) | $5/mo (when needed) |
+| Railway | Hobby (Phase 1) | $5/mo |
 | Preview deployments | Included in Vercel | $0 |
 
-No CI/CD pipeline costs since backend deploys are triggered locally. Railway costs begin only when the Go API server is deployed for cloud execution in Phase 3.
+No CI/CD pipeline costs since backend deploys are triggered locally. Railway costs begin in Phase 1 when the Go API server is deployed for cloud execution ($5/mo hobby tier).

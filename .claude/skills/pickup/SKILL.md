@@ -79,7 +79,7 @@ Write the code for your task. Follow the rules in `CLAUDE.md` and `.claude/rules
 ### Other Standards
 
 - **TypeScript:** infer types, no `any`, no gratuitous `as` assertions, types flow down from core
-- **Import discipline:** UI from `@bnto/ui`, data from `@bnto/core`, never skip layers. Third-party UI deps wrapped by `@bnto/ui` must be imported from `@bnto/ui`, not directly
+- **Import discipline:** UI from local `@/components/`, data from `@bnto/core`, never skip layers. Third-party UI deps should be wrapped locally
 - **Transport-agnostic API:** Components NEVER call Convex or Wails directly. All data access via `@bnto/core` hooks
 - Match existing patterns — look at sibling files for naming, structure, and style
 
@@ -145,7 +145,7 @@ Your work MUST include tests. Determine which type based on what you built:
 
 Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, page, or layout that a user will see or interact with?** This includes:
 
-- Components in `packages/@bnto/ui/` (even "presentational only" — they render on screen)
+- Components in `apps/web/components/` (even "presentational only" — they render on screen)
 - Wiring in `apps/web/` (routes, dialogs, pages)
 - Changes to props, layout, styling, or behavior of existing UI
 

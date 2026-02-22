@@ -3,10 +3,12 @@
 ## Layered Architecture
 
 ```
-Apps (web/desktop) -> @bnto/editor -> @bnto/ui -> @bnto/core -> Go Engine
+Apps (web/desktop) -> @bnto/core -> Go Engine
 ```
 
 Each layer only depends on layers below it. Never skip layers.
+
+> **Co-location note:** UI components and editor features are currently co-located in `apps/web/`. They will be extracted into `@bnto/ui` and `@bnto/editor` packages when the desktop app creates a real second consumer. Engine, core API, and data layer logic stays in `@bnto/core`.
 
 **The key insight:** `@bnto/core` is the transport-agnostic API layer. UI components have ZERO knowledge of whether they're talking to Convex (cloud) or Wails bindings (desktop). Core exposes React hooks that internally detect the runtime environment and route requests to the correct backend.
 
@@ -17,8 +19,6 @@ Each layer only depends on layers below it. Never skip layers.
 | `@bnto/backend` | Data layer -- schema, functions, business logic | Convex |
 | `@bnto/auth` | Auth client -- sign in, sign up, session | Better Auth |
 | `@bnto/core` | Transport-agnostic API -- hooks, types, adapters | React Query + adapters |
-| `@bnto/ui` | Design system -- shadcn wrappers, primitives | Tailwind + shadcn/ui |
-| `@bnto/editor` | Workflow editor -- JSON editor (Phase 1), visual editor (Phase 4) | Monaco/CodeMirror |
 
 **State management:** Zustand handles client-only state (editor content, UI preferences). React Query handles all server state (data fetching, caching, mutations). For the Convex path, `@convex-dev/react-query` preserves real-time subscriptions through React Query's interface.
 
@@ -59,18 +59,6 @@ const workflows = window.go.main.App.ListWorkflows();
 - Runtime detection to swap adapters transparently
 - NO backend or storage technology imports in public API -- only in internal adapters
 
-### `packages/ui/` (`@bnto/ui`) -- Design system
-- **`primitives/`** -- Raw shadcn/ui component drops. Never publicly exported. Internal only.
-- **`components/`** -- Bnto wrapper components. These are the public API.
-- Tailwind v4 with `@theme inline` for design tokens
-- `motion` for React animation primitives
-- Presentational ONLY -- no data fetching, no business logic
-
-### `packages/editor/` (`@bnto/editor`) -- Workflow editor
-- JSON editor for `.bnto.json` files (Phase 1)
-- Visual node editor (Phase 4)
-- Consumes `@bnto/ui` for primitives and `@bnto/core` for data
-
 ### `packages/@bnto/backend/` (`@bnto/backend`) -- Data layer
 - Schema definition (tables, indexes, validators)
 - Server functions (queries, mutations, actions)
@@ -87,8 +75,8 @@ const workflows = window.go.main.App.ListWorkflows();
 ### `apps/web/` -- Next.js application (Vercel)
 - Landing page (public, static/SSG routes)
 - Authenticated app routes (dashboard, workflows, executions)
-- Page composition -- imports from `@bnto/ui` and `@bnto/core`
-- Minimal custom logic -- this is a thin composition layer
+- UI components and editor features co-located here (future `@bnto/ui` + `@bnto/editor`)
+- Page composition -- imports from `@bnto/core` for data, local components for UI
 
 ### `apps/desktop/` -- Wails v2 application
 - Same React frontend rendered in system webview
@@ -168,7 +156,7 @@ Every execution must:
 |--------|----------------|
 | Sprint 2 | Execution events logged (userId or fingerprint, slug, timestamp, durationMs) |
 | Sprint 3 | `runsUsedThisMonth`, `runResetDate`, `totalRunsAllTime` per user. Dashboard shows usage. |
-| Sprint 6 | Stripe integration. Quota enforced server-side. |
+| Sprint 7 | Stripe integration. Quota enforced server-side. |
 
 File size limits are enforced at the **R2 presigned URL generation step in Convex -- not client-side**. For tier limits, see Notion (`SEO & Monetization Strategy`).
 

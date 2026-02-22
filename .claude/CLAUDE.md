@@ -1,6 +1,6 @@
 # Bnto - Agent & Developer Guide
 
-**Last Updated:** February 21, 2026
+**Last Updated:** February 22, 2026
 
 ---
 
@@ -31,10 +31,9 @@
 Workflows are defined as `.bnto.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests. The Go CLI engine is the stable core. Everything else — web app, desktop, cloud execution — is a UI on top of it.
 
 - **Engine**: Go (CLI + execution engine in `engine/`)
-- **Web**: Next.js on Vercel + Convex Cloud + Better Auth (Phase 1 — UI + auth)
+- **Web + Cloud**: Next.js on Vercel + Convex Cloud + Better Auth + Go API on Railway (Phase 1 — UI + auth + cloud execution)
 - **Desktop**: Wails v2 (Phase 2 — free local execution)
-- **Cloud Processing**: Go HTTP service on Railway (Phase 3 — paid execution)
-- **Shared Packages**: TypeScript monorepo with `@bnto/core`, `@bnto/ui`, `@bnto/editor`
+- **Shared Packages**: `@bnto/core` (transport-agnostic API), `@bnto/auth` (auth), `@bnto/backend` (Convex). UI and editor components co-located in `apps/web` until a second consumer (desktop) exists
 - **Open Source**: MIT licensed
 
 ---
@@ -44,10 +43,12 @@ Workflows are defined as `.bnto.json` files that orchestrate tasks like image pr
 ### 1. Layered Architecture
 
 ```
-Apps (web/desktop) → @bnto/editor → @bnto/ui → @bnto/core → Go Engine
+Apps (web/desktop) → @bnto/core → Go Engine
 ```
 
 Each layer only depends on layers below it. Never skip layers.
+
+> **Co-location note:** UI components (`@bnto/ui`) and editor features (`@bnto/editor`) are currently co-located in `apps/web/`. They will be extracted into separate packages when the desktop app creates a real second consumer. Engine, core API, and data layer logic stays in `@bnto/core`.
 
 **The key insight:** `@bnto/core` is the transport-agnostic API layer. UI components have ZERO knowledge of whether they're talking to Convex (cloud) or Wails bindings (desktop). Core exposes React hooks that internally detect the runtime environment and route requests to the correct backend.
 
@@ -113,25 +114,26 @@ engine/pkg/
 
 ### 5. TypeScript Package Guidelines
 
-Public packages (consumed by apps directly) live at `packages/` root.
-Private packages (internal implementation) stay under `packages/@bnto/`.
+Shared packages live under `packages/`. UI and editor components are co-located in `apps/web/` until a second consumer exists.
 
 ```
 packages/
 ├── core/         # API layer ONLY — hooks, types, transport adapters (Convex/Wails)
 │                 #   Zustand: client state. React Query: server state.
 │                 #   Runtime detection swaps transport — components never know.
-├── ui/           # Presentational ONLY — shadcn wrappers, design system
-├── editor/       # Editor ONLY — JSON editor (Phase 1), visual editor (Phase 4)
 └── @bnto/
     ├── auth/     # Cloud auth ONLY — wraps Better Auth + @better-auth/convex (web only, desktop skips)
     │             #   Provider (server), hooks (client), middleware (server)
     └── backend/  # Data layer ONLY — Convex schema, functions, business logic
+
+apps/web/
+├── components/   # UI components (shadcn wrappers, design system) — future @bnto/ui
+└── app/          # Pages, editor features — future @bnto/editor
 ```
 
-- `@bnto/ui` components are thin wrappers around shadcn — customize internals without touching consumers
-- `@bnto/editor` consumes `@bnto/ui` for primitives and `@bnto/core` for data
-- Apps (`web`, `desktop`) are thin composition layers — import components, compose pages, minimal custom styling
+- UI components and editor features live in `apps/web/` for now — author with extraction in mind
+- When desktop app arrives, extract shared UI into `@bnto/ui` and editor into `@bnto/editor`
+- `@bnto/core` remains the transport-agnostic API layer consumed by all apps
 
 ---
 
@@ -146,13 +148,12 @@ bnto/
 ├── Taskfile.yml                 # Go + cross-cutting orchestration
 ├── go.work                      # Go workspace (engine + apps/api)
 ├── apps/
-│   ├── api/                     # Go HTTP API server (Phase 3 — cloud execution)
+│   ├── api/                     # Go HTTP API server (Phase 1 — cloud execution)
 │   ├── web/                     # @bnto/web — Next.js on Vercel (Phase 1)
+│   │   └── components/          # UI components + editor (co-located, future @bnto/ui + @bnto/editor)
 │   └── desktop/                 # @bnto/desktop — Wails frontend (Phase 2)
 ├── packages/
 │   ├── core/                    # @bnto/core — Transport-agnostic API (public)
-│   ├── ui/                      # @bnto/ui — Design system (public)
-│   ├── editor/                  # @bnto/editor — Workflow editor (public)
 │   └── @bnto/                   # Private internal packages
 │       ├── auth/                # @bnto/auth — Cloud auth (web only)
 │       └── backend/             # @bnto/backend — Convex schema + functions
@@ -182,7 +183,7 @@ bnto/
 | **Web Frontend**   | Next.js on Vercel                             |
 | **Desktop**        | Wails v2 (Go + system webview)                |
 | **Database**       | Convex Cloud (managed)                        |
-| **Cloud Execution**| Go HTTP service on Railway (Phase 3)          |
+| **Cloud Execution**| Go HTTP service on Railway (Phase 1)          |
 | **Auth**           | Better Auth + @better-auth/convex             |
 | **Shared UI**      | shadcn/ui + Tailwind CSS                      |
 | **Client State**   | Zustand (editor content, UI preferences)       |
@@ -345,8 +346,9 @@ task ui:test            # Frontend tests — must pass
 For EACH file you modified, verify:
 
 - [ ] **Layered Architecture**: Does the code respect layer boundaries?
-  - Apps → @bnto/editor → @bnto/ui → @bnto/core → Go Engine
+  - Apps → @bnto/core → Go Engine
   - No layer skipping (components calling Convex/Wails directly)
+  - UI and editor components co-located in `apps/web/` (not in separate packages yet)
 
 - [ ] **API Abstraction**: Are all data operations going through `@bnto/core`?
   - NO direct Convex queries in components or hooks

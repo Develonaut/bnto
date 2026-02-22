@@ -187,17 +187,17 @@ Five chart tokens for data visualization — all harmonious with the warm palett
 
 ## Dark Mode
 
-Dark mode is powered by `next-themes` with the `class` strategy. The `ThemeProvider` from `@bnto/ui/theme-provider` wraps the app in `layout.tsx` and adds/removes the `.dark` class on `<html>`.
+Dark mode is powered by `next-themes` with the `class` strategy. The `ThemeProvider` wraps the app in `layout.tsx` and adds/removes the `.dark` class on `<html>`.
 
-**Components:** Import from `@bnto/ui`, never from `next-themes` directly.
+**Components:** Import theme components from `apps/web/components/`, never from `next-themes` directly.
 
 ```tsx
 // Toggle button — add to any navbar
-import { ThemeToggle } from "@bnto/ui/theme-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 <ThemeToggle />
 
 // Provider — already wired in root layout, don't add again
-import { ThemeProvider } from "@bnto/ui/theme-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
   {children}
 </ThemeProvider>
@@ -225,6 +225,6 @@ The `@theme inline` block maps CSS variables to Tailwind's color/shadow/radius s
 - **Never use `font-['DM_Sans']` or `font-['Inter']`** — use `font-display` and `font-sans` (the variables resolve them)
 - **Never add a `<link>` for fonts** — `next/font` is already handling them in `layout.tsx`
 - **Dark mode is automatic** — tokens swap via `.dark` class, no manual `dark:` overrides needed for semantic tokens
-- **Import ThemeToggle from `@bnto/ui`** — never import `next-themes` directly in app code
+- **Import ThemeToggle from `@/components/`** — never import `next-themes` directly in app code
 - **Shadows are warm** — use the shadow scale, don't write custom `box-shadow` values
 - **When in doubt, round more** — the brand is warm and friendly, not sharp

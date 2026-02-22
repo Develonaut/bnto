@@ -10,9 +10,8 @@
 
 ## Products
 
-- **Bnto Web** (Phase 1): Web app on Vercel — UI layer, auth, workflow management (Convex Cloud for DB, Better Auth)
+- **Bnto Web + Cloud** (Phase 1): Web app on Vercel + Go execution service on Railway — UI, auth, cloud execution for predefined Bntos (Convex Cloud for DB, Better Auth)
 - **Bnto Desktop** (Phase 2, free): Wails v2 app — same React frontend, local Go engine execution, no account needed
-- **Bnto Cloud** (Phase 3, paid): Go execution service on Railway — cloud processing for web app users
 
 ---
 
@@ -39,7 +38,7 @@
 | Claim | Status | Evidence |
 |-------|--------|----------|
 | Vercel hosts Next.js | **Confirmed** | First-class Next.js platform, free tier, edge functions |
-| Railway hosts Go services | **Confirmed** | Go is first-class on Railway, used for cloud execution (Phase 3) |
+| Railway hosts Go services | **Confirmed** | Go is first-class on Railway, used for cloud execution (Phase 1) |
 | Convex Cloud for DB | **Confirmed** | Managed service, free tier, real-time subscriptions |
 | Better Auth with Convex | **Confirmed** | `@better-auth/convex` adapter, email/password + OAuth |
 | Railway 15-min HTTP timeout | **Confirmed** | Increased from 5 min in June 2025. No timeout on private networking (service-to-service) |
@@ -103,32 +102,31 @@ apps/
 ├── web/                  # @bnto/web — Next.js (Vercel, Better Auth)
 └── desktop/              # @bnto/desktop — Vite/React (Wails v2)
 packages/
-└── @bnto/               # Scoped internal packages
-    ├── core/             # @bnto/core — THE API layer. All backend communication.
-    │                     #   Exposes hooks: useWorkflows(), useExecution(), etc.
-    │                     #   Zustand for client state, React Query for server state
-    │                     #   Runtime detection swaps transport (Convex vs Wails)
-    │                     #   Consumer code has NO idea how it talks to the backend
-    ├── ui/               # @bnto/ui — shadcn thin wrappers (Button, Card, Dialog)
-    │                     #   Pure presentational. Uses shadcn as primitives.
-    │                     #   Ready for future customization without changing consumers.
-    └── editor/           # @bnto/editor — Workflow editor (JSON editor for MVP)
-                          #   Consumes @bnto/ui for primitives, @bnto/core for data
+├── core/                 # @bnto/core — THE API layer. All backend communication.
+│                         #   Exposes hooks: useWorkflows(), useExecution(), etc.
+│                         #   Zustand for client state, React Query for server state
+│                         #   Runtime detection swaps transport (Convex vs Wails)
+│                         #   Consumer code has NO idea how it talks to the backend
+└── @bnto/                # Scoped internal packages
+    ├── auth/             # @bnto/auth — Cloud auth (web only)
+    └── backend/          # @bnto/backend — Convex schema, functions, business logic
+
+apps/web/
+├── components/           # UI components (shadcn wrappers, design system) — future @bnto/ui
+└── app/                  # Pages, editor features — future @bnto/editor
 ```
 
-### Why Thin shadcn Wrappers
-
-`@bnto/ui` components are thin wrappers around shadcn today. Tomorrow you can customize internals (animations, theming, behavior) without touching any consumer code. The abstraction pays off when you want a consistent Bnto look-and-feel across web and desktop.
+> **Co-location note (Feb 2026):** UI components and editor features are co-located in `apps/web/` until the desktop app creates a real second consumer. Author with extraction in mind — when desktop arrives, shared UI extracts to `@bnto/ui` and editor to `@bnto/editor`.
 
 ### UI as Design System
 
-`@bnto/ui` IS the design system — not just components, but the single source of truth for appearance:
+The design system is the single source of truth for appearance, currently co-located in `apps/web/components/`:
 
 - shadcn components are the primitives — wrappers are thin today
 - Light and dark mode working out of the box from day one
 - Theming is centralized — changing theme tokens updates everything
-- The Next.js app is a thin composition layer — import components, compose into pages
-- Single responsibility: `@bnto/ui` owns appearance, `@bnto/core` owns data, apps own composition/routing
+- The Next.js app composes components into pages
+- Single responsibility: UI owns appearance, `@bnto/core` owns data, apps own composition/routing
 
 ---
 
@@ -211,9 +209,9 @@ packages/
 - Desktop (Wails) calls the same underlying Go functions that the CLI calls
 - The TUI (Bubble Tea) is internal/beta — not public-facing
 
-### 3.7 Go Backend on Railway for Cloud Execution (Phase 3)
+### 3.7 Go Backend on Railway for Cloud Execution (Phase 1)
 
-**Decision:** Separate Go service on Railway that wraps CLI operations as HTTP endpoints. This is Phase 3 — not needed until cloud execution is implemented.
+**Decision:** Separate Go service on Railway that wraps CLI operations as HTTP endpoints. Part of Phase 1 — cloud execution ships alongside the web app.
 
 **Rationale:**
 - The Go execution engine is the compute-heavy part
@@ -339,12 +337,12 @@ subscriptions  → { userId, plan, stripeId, status, currentPeriodEnd }
 ```
 Phase 0: Solidify Go Engine (CLI + tests) ✓ COMPLETE
     ↓ verified by: unit tests, integration tests, CLI smoke tests
-Phase 1: Build Web App (Next.js + Convex + Better Auth)
-    ↓ verified by: Playwright E2E tests, TypeScript compilation
+Phase 1: Build Web App + Cloud Execution (Next.js + Convex + Better Auth + Railway)
+    ↓ verified by: Playwright E2E tests, TypeScript compilation, API integration tests
 Phase 2: Build Desktop App (Wails v2 + local execution)
     ↓ verified by: Wails integration tests, local execution tests
-Phase 3: Build Cloud Processing (Go HTTP service on Railway)
-    ↓ verified by: API integration tests, contract tests
+Phase 3: Monetization + Visual Editor
+    ↓ verified by: Stripe integration tests, editor E2E tests
 ```
 
 ### Why Bottom-Up
@@ -392,7 +390,7 @@ Phase 3: Build Cloud Processing (Go HTTP service on Railway)
 
 | Test Type | What It Covers | Runner |
 |-----------|---------------|--------|
-| Component tests | `@bnto/ui` components render correctly, handle states | Vitest + React Testing Library |
+| Component tests | UI components render correctly, handle states | Vitest + React Testing Library |
 | Core package tests | `@bnto/core` methods work with mock and real backends | Vitest |
 | E2E tests | User flows: upload workflow → edit → run → see results | Playwright against staging |
 | Visual regression | UI doesn't break across changes | Playwright screenshots |
@@ -426,7 +424,6 @@ go test ./cmd/bnto-server/... -race -count=1
 
 # Layer 3: Frontend
 pnpm --filter @bnto/core test
-pnpm --filter @bnto/ui test
 pnpm --filter @bnto/web exec playwright test
 
 # All layers
@@ -449,41 +446,43 @@ Push to main →
 
 ## 7. MVP Phases
 
+> **Revised phase order (Feb 2026):** Cloud execution moved up to Phase 1. Desktop deferred to Phase 2. Rationale: a casual user who can't run anything isn't a user at all. Lean into the monetization model early.
+>
+> ```
+> Old order: Web UI → Desktop execution → Cloud execution
+> New order: Web UI + Cloud execution (predefined Bntos) → JSON editor → Desktop app
+> ```
+
 ### Phase 0: Engine Solidification (TDD Foundation) — COMPLETE
 
 **Goal:** The Go engine is bulletproof. Every node type, every CLI command, every edge case is tested.
 
 **Status:** Complete. All 10 node types >90% coverage, integration tests passing, CLI smoke tests passing.
 
-### Phase 1: Web App (UI + Auth + Workflow Management)
+### Phase 1: Web App + Cloud Execution (Predefined Bntos)
 
-**Goal:** Ship a web app where users can manage and view workflows. Auth gates access — manual account creation for now, waitlist/signup later.
+**Goal:** Ship a web app where anyone can open a browser, pick a predefined Bnto, drop files, and run it. Execution backed by the Go HTTP API on Railway. Free. No account needed for core experience.
 
 **Scope:**
 - Next.js app on **Vercel** with Better Auth (email/password + OAuth)
 - **Convex Cloud** for database (workflows, executions, users)
-- Auth → app (manual account creation, no public signup yet)
-- JSON code editor as the primary interface:
-  - Upload an existing .bnto.json file (populates the editor)
-  - OR start from a template (the fixture bntos from Phase 0)
-  - Edit the JSON directly in-browser (Monaco editor or CodeMirror)
-- Workflow list showing saved bntos
+- No account required for first use — anonymous runs tracked by browser fingerprint
+- Predefined Bntos with SEO URL routing (Sprint 2)
+- Cloud execution via Railway Go API (Sprint 2)
+- File transit via Cloudflare R2: Browser → R2 → Railway → R2 → Browser (temp, 1-hour TTL)
+- Dashboard with run quota tracking (Sprint 3)
+- JSON code editor for custom workflows (Sprint 4)
 - `@bnto/core` hooks for all data access (transport-agnostic)
-- `@bnto/ui` design system (shadcn wrappers, light/dark mode)
-- `@bnto/editor` JSON editor component
+- UI components co-located in `apps/web` (no separate `@bnto/ui` or `@bnto/editor` packages yet)
 - Playwright E2E tests for core flows
 
-**Infrastructure:** Vercel (Next.js) + Convex Cloud (DB + real-time)
+**Infrastructure:** Vercel (Next.js) + Convex Cloud (DB + real-time) + Railway (Go execution) + Cloudflare R2 (temp file storage)
 
-**What Phase 1 does NOT include:** Execution. The web app is the UI layer — you can create, edit, and manage workflows. Running them happens in Phase 2 (desktop, local) or Phase 3 (cloud).
-
-**Target user:** Solo operators and developers who want to build and manage workflows.
+**Target user:** Anyone who Googles "compress images online free" or "clean csv online" — no download, no setup, just works.
 
 ### Phase 2: Desktop App (Local Execution — Free)
 
-**Goal:** Free desktop app using Wails v2. Same React frontend, but with local Go engine execution. This is the fastest path to a working product.
-
-**Priority: This is the primary execution target.** Desktop runs workflows locally for free — no cloud infrastructure needed.
+**Goal:** Free desktop app using Wails v2. Same React frontend, local Go engine execution. Free forever, unlimited runs. No account needed.
 
 **Scope:**
 - Bootstrap Wails v2 desktop app
@@ -498,43 +497,25 @@ Push to main →
 
 **Infrastructure:** None — runs entirely on user's machine.
 
-**BYOK AI (desktop advantage):** Desktop is the natural home for AI-powered nodes. Users already have API keys for Claude, OpenAI, etc. BYOK (Bring Your Own Key) means zero inference costs for Bnto, zero data privacy concerns (files never leave the machine), and zero rate limit headaches. The existing secrets system (`engine/pkg/secrets/`) handles API keys — `ANTHROPIC_API_KEY` is just another secret. Cloud users would need to supply keys via settings UI or Bnto would need to proxy calls (cost/privacy decision deferred to Phase 3+). See [bntos.md Tier 4](../strategy/bntos.md#tier-4-ai-powered-nodes-backlog--requires-async-execution) for planned AI node types.
+**BYOK AI (desktop advantage):** Desktop is the natural home for AI-powered nodes. Users already have API keys for Claude, OpenAI, etc. BYOK (Bring Your Own Key) means zero inference costs for Bnto, zero data privacy concerns (files never leave the machine), and zero rate limit headaches. The existing secrets system (`engine/pkg/secrets/`) handles API keys — `ANTHROPIC_API_KEY` is just another secret. Cloud users would need to supply keys via settings UI or Bnto would need to proxy calls (cost/privacy decision deferred). See [bntos.md Tier 4](../strategy/bntos.md#tier-4-ai-powered-nodes-backlog--requires-async-execution) for planned AI node types.
 
-**Why Phase 2:** Desktop execution is free, requires no cloud infra, and ships faster than standing up cloud processing. Users get a working product immediately.
+**Why Phase 2 (not Phase 1):** Desktop is the trust signal and top-of-funnel growth driver, but cloud execution reaches users faster — no download required. Ship cloud first, desktop second.
 
-### Phase 3: Cloud Processing (Paid Execution)
+### Phase 3: Monetization + Polish + Visual Editor
 
-**Goal:** Add cloud execution for web app users who want to run workflows without a desktop app.
-
-**Scope:**
-- Go API service on **Railway** wrapping CLI operations as HTTP endpoints
-  - API integration tests for every endpoint
-  - Contract tests matching `@bnto/core` types
-- Web app connects to Railway Go service for execution
-- Real-time progress via Convex subscriptions
-- Run counter: "X runs remaining this month"
-- Cloud file handling (upload → process → download)
-- Support: edit-fields, http-request, transform, image, spreadsheet, group, loop, parallel
-- shell-command: disabled in cloud (desktop only)
-
-**Infrastructure:** Railway (Go execution service), communicating with Convex Cloud
-
-**Target user:** Users who want cloud execution without installing the desktop app.
-
-### Phase 4: Polish + Monetization + Visual Editor
-
-**Goal:** Revenue, polish, and the next-gen editing experience.
+**Goal:** Revenue, polish, and the next-gen editing experience. By this point we have real users, real signal, and a working product worth paying for.
 
 **Scope:**
-- Stripe integration for paid tiers
-- Usage limits per plan tier (runs/month, file storage, timeout limits)
-- Cloud file upload/download (Convex file storage)
-- Execution history with detailed logs
+- Stripe integration for paid tiers (Free: 25 runs/month, Pro: $8/month or $69/year)
+- Usage limits per plan tier (runs/month, file size, timeout limits)
+- Run quota enforcement server-side
+- Execution history with detailed logs (Pro: 30-day retention)
 - Workflow versioning and duplication
-- Visual workflow editor (drag-and-drop nodes, connect edges) — the big Phase 4 investment
+- Visual workflow editor (drag-and-drop nodes, connect edges)
+- Priority processing queue (Pro users skip the line)
+- Team sharing up to 5 members (no per-seat pricing)
 - Pre-approved shell commands in cloud (ffmpeg, imagemagick, etc.)
-- Waitlist/signup flow for public access
-- Note: Team/org features NOT in scope until demand justifies it
+- Note: Team/org features beyond 5-member sharing NOT in scope until demand justifies it
 
 ---
 
@@ -544,7 +525,7 @@ Pricing details, tier structure, run limits, and file size limits live in Notion
 
 **Core model:** Perpetual free tier with monthly run refresh. Building workflows is free, running is metered. No feature gating — all node types available on free tier, limit is execution count only.
 
-**Implementation:** Run counter tracked in Convex, monthly cron reset, Stripe webhook for plan upgrades. See `PLAN.md` Sprint 3 and Sprint 6 for implementation details.
+**Implementation:** Run counter tracked in Convex, monthly cron reset, Stripe webhook for plan upgrades. See `PLAN.md` Sprint 3 (quota tracking) and Sprint 7 (Stripe) for implementation details.
 
 ---
 
@@ -568,11 +549,11 @@ Every node type, every capability — it's all in the open source repo. The clou
 - **Vercel** free tier for web app (sufficient for MVP traffic)
 - **Convex Cloud** free tier for database + real-time
 - **Desktop execution is free** — no infrastructure cost, runs on user's machine
-- **Railway** only needed for Phase 3 cloud execution (paid tier)
+- **Railway** needed from Phase 1 for cloud execution ($5/mo hobby tier)
 - Hard limits on cloud free-tier execution (specific limits in Notion: "SEO & Monetization Strategy")
 - Monitor infrastructure costs closely before setting paid tier prices
 
-**Key insight:** By shipping desktop (Phase 2) before cloud processing (Phase 3), we can have a fully working product at $0/month infrastructure cost. Cloud execution is the monetization layer added later.
+**Key insight:** Cloud execution ships in Phase 1 to lean into the monetization model. Users can run predefined Bntos immediately — no download, no setup. Railway's $5/mo hobby tier covers MVP scale. Desktop (Phase 2) adds free local execution for power users.
 
 ---
 
@@ -582,9 +563,9 @@ Every node type, every capability — it's all in the open source repo. The clou
 |------|--------|------------|------------|
 | Railway 15-min public timeout kills long workflows | High | Medium | Async execution + private networking (no timeout) between services. Phase 3 concern — desktop (Phase 2) has no timeouts. |
 | shell-command unusable in cloud | Medium | Certain | Disable in cloud, full support on desktop. Position desktop for power users. |
-| Sharing React components across Vite and Next.js | Low | Low | pnpm workspaces + @bnto/ui package pattern handles this cleanly |
+| Sharing React components across Vite and Next.js | Low | Low | UI co-located in apps/web for now; pnpm workspaces + @bnto/ui extraction when desktop arrives |
 | Wails v2 lacks features v3 would provide | Low | Low | v2 is stable and sufficient for MVP. v3 features (multi-window, system tray) aren't needed |
-| Solo developer scope creep | High | High | Ruthless MVP scoping. JSON editor + templates, not visual editor. No team features. Desktop before cloud. |
+| Solo developer scope creep | High | High | Ruthless MVP scoping. JSON editor + templates, not visual editor. No team features. Cloud before desktop. |
 | Cloud file handling complexity | Medium | Medium | Start with in-memory processing only (upload → process → download). Phase 3+ concern. |
 | Engine bugs discovered late | High | Medium | **Mitigated by Phase 0.** TDD bottom-up approach means engine is tested before any frontend is built. |
 | AI agents can't verify their own work | High | Medium | **Mitigated by TDD.** Every layer has runnable test commands. Agents verify by running tests, not by claiming completion. |

@@ -80,7 +80,7 @@ Applied once at the page level. Always present.
 
 | Component | Location | What it does |
 |-----------|----------|--------------|
-| `<GridUnderlay />` | `packages/@bnto/ui` | Faint dot-grid or line-grid background via CSS |
+| `<GridUnderlay />` | `apps/web/components` | Faint dot-grid or line-grid background via CSS |
 
 ### Layer 2: Structural Wrappers
 
@@ -88,9 +88,9 @@ Composable components that wrap content to apply structured framing.
 
 | Component | Location | What it does |
 |-----------|----------|--------------|
-| `<BoxFrame />` | `packages/@bnto/ui` | Technical border with optional corner marks and label slot |
-| `<TechLabel />` | `packages/@bnto/ui` | Monospaced uppercase micro-label |
-| `<SectionFrame />` | `packages/@bnto/ui` | Combines BoxFrame + TechLabel for full section treatment |
+| `<BoxFrame />` | `apps/web/components` | Technical border with optional corner marks and label slot |
+| `<TechLabel />` | `apps/web/components` | Monospaced uppercase micro-label |
+| `<SectionFrame />` | `apps/web/components` | Combines BoxFrame + TechLabel for full section treatment |
 
 **Usage pattern:**
 ```tsx
@@ -106,7 +106,7 @@ Applied to specific elements for emphasis. Opt-in, not default.
 
 | Component | Location | What it does |
 |-----------|----------|--------------|
-| `<StatusIndicator />` | `packages/@bnto/ui` | Execution status with appropriate color treatment |
+| `<StatusIndicator />` | `apps/web/components` | Execution status with appropriate color treatment |
 
 **Usage pattern:**
 ```tsx
@@ -121,7 +121,7 @@ Interaction feedback and emphasis effects. Opt-in, used sparingly on featured co
 
 | Component | Location | What it does |
 |-----------|----------|--------------|
-| `<ShineBorder />` | `packages/@bnto/ui` | Rotating radial gradient border shimmer for featured cards |
+| `<ShineBorder />` | `apps/web/components` | Rotating radial gradient border shimmer for featured cards |
 
 ### Utility Classes
 

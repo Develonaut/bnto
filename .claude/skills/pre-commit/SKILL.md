@@ -72,7 +72,7 @@ Tests are **mandatory** for most changes. Determine which type based on what cha
 
 Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, page, or layout that a user will see or interact with?** This includes:
 
-- Components in `packages/@bnto/ui/` (even "presentational only" — they render on screen)
+- Components in `apps/web/components/` (even "presentational only" — they render on screen)
 - Wiring in `apps/web/` (routes, dialogs, pages)
 - Changes to props, layout, styling, or behavior of existing UI
 

@@ -2,7 +2,7 @@
 **Go Backend + React Frontend with Transport-Agnostic API Layer**
 
 **Date:** 2025-12-15
-**Updated:** 2026-02-21
+**Updated:** 2026-02-22
 **Status:** Implemented
 **See also:** [Cloud + Desktop Strategy](cloud-desktop-strategy.md), [Monorepo Tooling Decision](../decisions/monorepo-tooling.md)
 
@@ -22,30 +22,20 @@ bnto/
 ├── go.work                          # Go workspace (engine + apps/api)
 │
 ├── apps/
-│   ├── api/                         # Go HTTP API server (Phase 3 — cloud execution)
+│   ├── api/                         # Go HTTP API server (Phase 1 — cloud execution)
 │   │   ├── go.mod                   # module github.com/Develonaut/bnto-api
 │   │   └── cmd/server/              # Server binary (thin consumer of engine)
 │   ├── web/                         # @bnto/web — Next.js on Vercel (Phase 1)
 │   └── desktop/                     # @bnto/desktop — Wails frontend (Phase 2)
 │
 ├── packages/
-│   └── @bnto/                      # Scoped internal packages (n8n pattern)
-│       ├── core/                    # @bnto/core — Transport-agnostic API layer
-│       │   ├── package.json
-│       │   ├── tsconfig.json
-│       │   └── src/
-│       │       └── index.ts         # BntoAPI interface + types
-│       ├── ui/                      # @bnto/ui — Design system (shadcn wrappers)
-│       │   ├── package.json
-│       │   ├── tsconfig.json
-│       │   └── src/
-│       │       └── index.ts
-│       ├── editor/                  # @bnto/editor — Workflow editor components
-│       │   ├── package.json
-│       │   ├── tsconfig.json
-│       │   └── src/
-│       │       └── index.ts
-│       ├── auth/                   # @bnto/auth — Cloud auth (wraps @convex-dev/auth)
+│   ├── core/                        # @bnto/core — Transport-agnostic API layer
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/
+│   │       └── index.ts             # BntoAPI interface + types
+│   └── @bnto/                       # Scoped internal packages (n8n pattern)
+│       ├── auth/                    # @bnto/auth — Cloud auth (wraps Better Auth)
 │       │   ├── package.json
 │       │   ├── tsconfig.json
 │       │   └── src/
@@ -104,7 +94,8 @@ bnto/
 | Root orchestrator | **Taskfile.dev** | Polyglot, Go-native, Wails-aligned |
 | Frontend orchestrator | **Turborepo** | Caching, dependency graph, standard layout |
 | Package manager | **pnpm workspaces** | Fast, efficient, workspace linking |
-| Package namespace | **`@bnto/`** directory (n8n pattern) | Visual grouping of internal packages |
+| Package namespace | **`@bnto/`** directory (n8n pattern) | Visual grouping of internal packages. `core/` at packages root for public API |
+| UI co-location | **`apps/web/`** | UI + editor co-located until desktop app creates a second consumer |
 | Go module path | **`github.com/Develonaut/bnto`** | Unchanged — Go resolves relative to go.mod |
 | Go workspace | **`go.work` at repo root** | Connects engine/ and apps/api/ modules locally |
 | API server location | **`apps/api/`** | Follows Turborepo convention; engine stays pure ([decision](../decisions/API_SERVER_LOCATION.md)) |
@@ -116,18 +107,19 @@ bnto/
 
 ```
 @bnto/web ──────┬──→ @bnto/auth ──→ @bnto/backend (cloud auth only)
-                  ├──→ @bnto/editor ──→ @bnto/ui ──→ @bnto/core
-@bnto/desktop ──┘    (desktop skips @bnto/auth)
+                  └──→ @bnto/core
+@bnto/desktop ──────→ @bnto/core   (desktop skips @bnto/auth)
 ```
+
+> **Co-location note:** UI components and editor features are currently co-located in `apps/web/`. When the desktop app creates a second consumer, extract `@bnto/ui` (design system) and `@bnto/editor` (workflow editor) as shared packages.
 
 | Package | Dependencies | Purpose |
 |---------|-------------|---------|
 | `@bnto/core` | zustand, @tanstack/react-query, @convex-dev/react-query, convex | Hooks, types, Zustand stores, React Query + transport adapters |
 | `@bnto/auth` | `better-auth`, `@better-auth/convex`, `@bnto/backend` | Cloud auth — Better Auth provider, hooks, middleware (web only) |
-| `@bnto/ui` | `@bnto/core` | shadcn thin wrappers — design system |
-| `@bnto/editor` | `@bnto/core`, `@bnto/ui` | JSON editor (Phase 1), visual editor (Phase 4) |
-| `@bnto/web` | `@bnto/auth`, `@bnto/core`, `@bnto/ui`, `@bnto/editor` | Next.js cloud app |
-| `@bnto/desktop` | `@bnto/core`, `@bnto/ui`, `@bnto/editor` | Wails v2 local desktop app (no @bnto/auth) |
+| `@bnto/backend` | `convex` | Convex schema, functions, business logic |
+| `@bnto/web` | `@bnto/auth`, `@bnto/core` | Next.js cloud app (UI + editor co-located here) |
+| `@bnto/desktop` | `@bnto/core` | Wails v2 local desktop app (Phase 2 — no @bnto/auth) |
 
 ---
 

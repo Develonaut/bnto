@@ -35,10 +35,10 @@ Read every changed file in full. You cannot review code you haven't read.
 
 For EACH changed file, verify:
 
-- [ ] **Layer discipline**: `apps/web` or `apps/desktop` -> `@bnto/editor` -> `@bnto/ui` -> `@bnto/core` -> Go Engine. No layer skipping. `@bnto/ui` is presentational only
-- [ ] **API abstraction**: No direct Convex queries/mutations in components. No direct Wails bindings in components. All data access via `@bnto/core` hooks. No direct imports of third-party UI deps wrapped by `@bnto/ui`
+- [ ] **Layer discipline**: `apps/web` or `apps/desktop` -> `@bnto/core` -> Go Engine. No layer skipping. UI and editor co-located in `apps/web/`
+- [ ] **API abstraction**: No direct Convex queries/mutations in components. No direct Wails bindings in components. All data access via `@bnto/core` hooks
 - [ ] **Package boundaries**: Internal packages (`@bnto/backend`, `@bnto/auth`) consumed only by `@bnto/core` internals. `apps/web` and `apps/desktop` NEVER import from them directly
-- [ ] **Import discipline**: UI from `@bnto/ui`, data/actions from `@bnto/core`. Types flow down from core
+- [ ] **Import discipline**: UI from local `@/components/`, data/actions from `@bnto/core`. Types flow down from core
 - [ ] **Go package boundaries**: Each Go package stays in its lane — `engine/` orchestrates, `registry/` registers, `node/` types execute, `storage/` persists, `validator/` validates. No circular dependencies
 
 ## Step 3: Bento Box Compliance

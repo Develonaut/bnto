@@ -145,12 +145,12 @@ engine/pkg/
 
 ## Import Discipline
 
-- UI components import from `@bnto/ui`
+- UI components are co-located in `apps/web/components/` (future `@bnto/ui`)
 - Data/actions import from `@bnto/core`
 - Backend types/functions stay inside `@bnto/backend` and `@bnto/core` internals
 - Each package only exports what it owns
 - `apps/web` NEVER imports from `@bnto/backend` directly
-- **Third-party UI libraries wrapped by `@bnto/ui` must be imported from `@bnto/ui`, not directly.** This includes `react-hook-form` -- import from `@bnto/ui/form`, not from `react-hook-form` directly
+- **Third-party UI libraries should be wrapped** -- e.g., import form utilities from local wrappers, not from `react-hook-form` directly
 
 ---
 
