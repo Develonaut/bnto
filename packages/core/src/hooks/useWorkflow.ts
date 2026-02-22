@@ -1,10 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { workflowQueryOptions } from "../adapters";
-import type { WorkflowId } from "../types";
+import { core } from "../core";
 
 /** Get a single workflow by ID. */
-export function useWorkflow(id: WorkflowId) {
-  return useQuery(workflowQueryOptions(id));
+export function useWorkflow(id: string) {
+  return useQuery(core.workflows.getQueryOptions(id));
 }

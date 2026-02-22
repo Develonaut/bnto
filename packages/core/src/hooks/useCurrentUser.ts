@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { currentUserQueryOptions } from "../adapters";
+import { core } from "../core";
 
 /** Get the current authenticated user's data. */
 export function useCurrentUser() {
-  return useQuery(currentUserQueryOptions());
+  return useQuery(core.user.meQueryOptions());
 }

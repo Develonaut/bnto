@@ -1,41 +1,10 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConvexQueryClient } from "@convex-dev/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
-import { ConvexReactClient } from "convex/react";
 import { authClient } from "@bnto/auth";
+import { getConvexClient, getQueryClient } from "./client";
 import { SessionProvider } from "./providers/SessionProvider";
-
-// Lazy singletons — created once on first access (browser only).
-// Can't be eagerly created at module scope because Next.js evaluates
-// "use client" modules during SSR/prerendering when env vars may be missing.
-let convexClient: ConvexReactClient;
-let queryClient: QueryClient;
-
-function getClients() {
-  if (!convexClient) {
-    const url = process.env.NEXT_PUBLIC_CONVEX_URL;
-    if (!url) {
-      throw new Error(
-        "NEXT_PUBLIC_CONVEX_URL is not set. " +
-        "Run `npx convex dev` and ensure .env.local is populated.",
-      );
-    }
-    convexClient = new ConvexReactClient(url);
-    const convexQueryClient = new ConvexQueryClient(convexClient);
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          queryKeyHashFn: convexQueryClient.hashFn(),
-          queryFn: convexQueryClient.queryFn(),
-        },
-      },
-    });
-    convexQueryClient.connect(queryClient);
-  }
-  return { convexClient, queryClient };
-}
 
 interface BntoCoreProviderProps {
   children: React.ReactNode;
@@ -60,25 +29,19 @@ interface BntoCoreProviderProps {
  *
  * Provider stack order:
  *   ConvexBetterAuthProvider -> QueryClientProvider -> SessionProvider
- *
- * - ConvexBetterAuthProvider: wires Convex client with Better Auth token fetching
- * - QueryClientProvider: React Query with Convex query bridging
- * - SessionProvider: tracks auth status, detects session loss
  */
 export function BntoCoreProvider({
   children,
   initialToken,
   onSessionLost,
 }: BntoCoreProviderProps) {
-  const clients = getClients();
-
   return (
     <ConvexBetterAuthProvider
-      client={clients.convexClient}
+      client={getConvexClient()}
       authClient={authClient}
       initialToken={initialToken ?? undefined}
     >
-      <QueryClientProvider client={clients.queryClient}>
+      <QueryClientProvider client={getQueryClient()}>
         <SessionProvider onSessionLost={onSessionLost}>
           {children}
         </SessionProvider>

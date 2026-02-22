@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { workflowsQueryOptions } from "../adapters";
+import { core } from "../core";
 
 /** List all workflows for the current user. */
 export function useWorkflows() {
-  return useQuery(workflowsQueryOptions());
+  return useQuery(core.workflows.listQueryOptions());
 }

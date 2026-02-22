@@ -1,9 +1,12 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useSaveWorkflowMutation } from "../adapters";
+import { core } from "../core";
 
 /** Create or update a workflow. */
 export function useSaveWorkflow() {
-  return useMutation({ mutationFn: useSaveWorkflowMutation() });
+  return useMutation({
+    mutationFn: (args: { name: string; definition: unknown; isPublic?: boolean }) =>
+      core.workflows.save(args),
+  });
 }

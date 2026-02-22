@@ -1,9 +1,11 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useRemoveWorkflowMutation } from "../adapters";
+import { core } from "../core";
 
 /** Delete a workflow by ID. */
 export function useRemoveWorkflow() {
-  return useMutation({ mutationFn: useRemoveWorkflowMutation() });
+  return useMutation({
+    mutationFn: (id: string) => core.workflows.remove(id),
+  });
 }

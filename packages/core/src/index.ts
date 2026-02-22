@@ -1,35 +1,16 @@
 "use client";
 
-// Hooks — transport-agnostic data access for UI components
-export {
-  useWorkflows,
-  useWorkflow,
-  useSaveWorkflow,
-  useRemoveWorkflow,
-  useRunWorkflow,
-  useExecution,
-  useExecutions,
-  useExecutionLogs,
-  useRunsRemaining,
-  useCurrentUser,
-} from "./hooks";
+// ── Core singleton (imperative + React hooks merged) ──────────────────────
+export { core } from "./reactCore";
 
-// Session hooks — auth state and provider readiness
-export {
-  useReady,
-  useIsAuthenticated,
-  useSessionStatus,
-} from "./hooks";
+// ── Provider ──────────────────────────────────────────────────────────────
+export { BntoCoreProvider } from "./provider";
 
-// Auth action hooks
-export { useSignOut } from "./hooks";
-
-// Anonymous session
-export { useAnonymousSession } from "./hooks";
-
-// Types — workflow definitions, API responses, Convex document types
+// ── Types (transport-agnostic) ────────────────────────────────────────────
 export type {
-  BntoAPI,
+  Workflow,
+  WorkflowListItem,
+  SaveWorkflowInput,
   WorkflowDefinition,
   Position,
   Metadata,
@@ -40,20 +21,40 @@ export type {
   ValidationResult,
   RunResponse,
   Execution,
+  ExecutionLog,
   NodeProgress,
   RunResult,
-  WorkflowId,
-  ExecutionId,
-  UserId,
-  WorkflowDoc,
-  ExecutionDoc,
-  ExecutionLogDoc,
-  UserDoc,
-  WorkflowListItem,
+  User,
 } from "./types";
 
-// Session types
+// ── Session types ─────────────────────────────────────────────────────────
 export type { AuthStatus } from "./providers/SessionContext";
 
-// Provider — re-export for convenience (also available via @bnto/core/provider)
-export { BntoCoreProvider } from "./provider";
+// ── Auth types ────────────────────────────────────────────────────────────
+export type { AuthUser, AuthState } from "./hooks/useAuth";
+
+// ---------------------------------------------------------------------------
+// Backwards-compatible hook re-exports.
+//
+// These allow existing consumers to continue importing hooks directly:
+//   import { useWorkflows } from "@bnto/core";
+//
+// New code should use the namespaced pattern:
+//   import { core } from "@bnto/core";
+//   core.workflows.useWorkflows();
+// ---------------------------------------------------------------------------
+export { useWorkflows } from "./hooks/useWorkflows";
+export { useWorkflow } from "./hooks/useWorkflow";
+export { useSaveWorkflow } from "./hooks/useSaveWorkflow";
+export { useRemoveWorkflow } from "./hooks/useRemoveWorkflow";
+export { useRunWorkflow } from "./hooks/useRunWorkflow";
+export { useExecution } from "./hooks/useExecution";
+export { useExecutions } from "./hooks/useExecutions";
+export { useExecutionLogs } from "./hooks/useExecutionLogs";
+export { useRunsRemaining } from "./hooks/useRunsRemaining";
+export { useCurrentUser } from "./hooks/useCurrentUser";
+export { useReady } from "./hooks/useReady";
+export { useIsAuthenticated } from "./hooks/useIsAuthenticated";
+export { useSessionStatus } from "./hooks/useSessionStatus";
+export { useSignOut } from "./hooks/useSignOut";
+export { useAnonymousSession } from "./hooks/useAnonymousSession";

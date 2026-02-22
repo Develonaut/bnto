@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { runsRemainingQueryOptions } from "../adapters";
+import { core } from "../core";
 
 /** Get the number of workflow runs remaining for the current user. */
 export function useRunsRemaining() {
-  return useQuery(runsRemainingQueryOptions());
+  return useQuery(core.user.runsRemainingQueryOptions());
 }
