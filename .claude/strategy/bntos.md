@@ -52,6 +52,39 @@ All 6 must have fixtures, verified execution, and live SEO URLs before Sprint 2 
 
 ---
 
+## Tier 4: AI-Powered Nodes (Backlog — Requires Async Execution)
+
+AI nodes bring non-deterministic processing into workflows — classification, summarization, extraction, generation. The key differentiator: BYOK (Bring Your Own Key). Users supply their own API keys via the existing secrets system (`engine/pkg/secrets/`). No inference costs for Bnto, no data privacy concerns for users.
+
+**Prerequisite:** The execution engine must support long-running nodes (2-30s) with progress reporting, per-node timeouts, and cancellation before any AI node ships. See [architecture.md](../rules/architecture.md#execution-model-async-support).
+
+**Model:** Desktop-first. Users set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` as secrets. The `ai` node reads the key at execution time and calls the provider API. Cloud support requires either user-supplied keys via settings UI or Bnto-proxied inference (cost/privacy implications — separate product decision).
+
+| Bnto | Slug | Node Type | Notes |
+|------|------|-----------|-------|
+| AI Classify Files | `/ai-classify` | `ai` | Classify files by content (images, documents) |
+| AI Summarize Text | `/ai-summarize` | `ai` | Summarize text files, CSV columns, logs |
+| AI Extract Data | `/ai-extract` | `ai` | Extract structured data from unstructured text |
+| AI Transform | `/ai-transform` | `ai` | General-purpose LLM transform (rename by content, tag, label) |
+
+**Node config shape (planned):**
+
+```json
+{
+  "type": "ai",
+  "config": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-20250514",
+    "prompt": "Classify this image into one of: landscape, portrait, product, document",
+    "outputFormat": "json"
+  }
+}
+```
+
+**Not in scope yet:** AI-assisted workflow authoring (natural language to `.bnto.json`) and AI-assisted node scaffolding. These are product surface features, not engine nodes. The `.bnto.json` format being human-readable and LLM-friendly is an architectural asset that enables both — but they live in the editor/CLI layer, not the node layer.
+
+---
+
 ## Node Types Needed
 
 | Node Type | Needed For | Priority | Notes |

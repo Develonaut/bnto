@@ -108,6 +108,22 @@ const workflows = window.go.main.App.ListWorkflows();
 - Node registry (`pkg/registry/`)
 - Path resolution and config (`pkg/paths/`)
 
+## Execution Model: Async & Long-Running Node Support
+
+The execution engine must support nodes that take 2-30+ seconds (AI API calls, large HTTP requests, complex transforms). This is a prerequisite for the `ai` node type (see [bntos.md Tier 4](../strategy/bntos.md#tier-4-ai-powered-nodes-backlog--requires-async-execution)) but also benefits `http-request` and any future external API integration.
+
+**Requirements agents must preserve when working on execution infrastructure:**
+
+- **Progress reporting** — nodes must be able to report incremental progress (e.g., "Classifying image... 4.2s"). The `node.Output` type and execution loop must support progress callbacks, not just final results
+- **Per-node timeouts** — configurable per node type. A 30-second AI call is normal; a 30-second image resize is a bug. Default timeout per type, overridable in node config
+- **Cancellation** — the existing `context.Context` propagation pattern is the right foundation. Ensure all node `Execute()` implementations check `ctx.Err()` before expensive operations and respect cancellation mid-operation
+- **Retry/fallback** — AI and HTTP calls fail transiently more often than local operations. The execution model should support per-node retry config (max attempts, backoff) without requiring every node type to implement its own retry logic
+- **Streaming output** — some nodes produce useful intermediate output (AI summarization, large file processing). The execution log model should support appending output incrementally, not just final results
+
+**What this does NOT mean:** Don't build any of this speculatively. These are constraints for agents to keep in mind when designing execution infrastructure. If you're modifying `engine/pkg/engine/` or `node.Output` or the execution loop, check that your changes don't make the above harder to add later.
+
+---
+
 ## Data Flow
 
 ```

@@ -498,6 +498,8 @@ Push to main →
 
 **Infrastructure:** None — runs entirely on user's machine.
 
+**BYOK AI (desktop advantage):** Desktop is the natural home for AI-powered nodes. Users already have API keys for Claude, OpenAI, etc. BYOK (Bring Your Own Key) means zero inference costs for Bnto, zero data privacy concerns (files never leave the machine), and zero rate limit headaches. The existing secrets system (`engine/pkg/secrets/`) handles API keys — `ANTHROPIC_API_KEY` is just another secret. Cloud users would need to supply keys via settings UI or Bnto would need to proxy calls (cost/privacy decision deferred to Phase 3+). See [bntos.md Tier 4](../strategy/bntos.md#tier-4-ai-powered-nodes-backlog--requires-async-execution) for planned AI node types.
+
 **Why Phase 2:** Desktop execution is free, requires no cloud infra, and ships faster than standing up cloud processing. Users get a working product immediately.
 
 ### Phase 3: Cloud Processing (Paid Execution)
