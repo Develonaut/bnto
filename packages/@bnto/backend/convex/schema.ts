@@ -10,6 +10,7 @@ export default defineSchema({
     email: v.optional(v.string()),
     name: v.optional(v.string()),
     image: v.optional(v.string()),
+    isAnonymous: v.optional(v.boolean()),
     // Bnto-specific fields (set by ensureUser after first sign-in)
     plan: v.optional(
       v.union(v.literal("free"), v.literal("starter"), v.literal("pro")),
@@ -19,7 +20,8 @@ export default defineSchema({
     runsResetAt: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
-    .index("email", ["email"]),
+    .index("email", ["email"])
+    .index("by_anonymous", ["isAnonymous"]),
 
   workflows: defineTable({
     userId: v.id("users"),

@@ -40,6 +40,13 @@ function getClients() {
 interface BntoCoreProviderProps {
   children: React.ReactNode;
   /**
+   * Server-side JWT for hydration.
+   *
+   * Fetched via `getToken()` in the root layout (Server Component) and passed
+   * down to eliminate the flash of unauthenticated state on initial load.
+   */
+  initialToken?: string | null;
+  /**
    * Called when an authenticated session is lost (auth -> unauth transition).
    *
    * The app wires this to navigation (e.g., `router.replace("/signin")`).
@@ -58,11 +65,19 @@ interface BntoCoreProviderProps {
  * - QueryClientProvider: React Query with Convex query bridging
  * - SessionProvider: tracks auth status, detects session loss
  */
-export function BntoCoreProvider({ children, onSessionLost }: BntoCoreProviderProps) {
+export function BntoCoreProvider({
+  children,
+  initialToken,
+  onSessionLost,
+}: BntoCoreProviderProps) {
   const clients = getClients();
 
   return (
-    <ConvexBetterAuthProvider client={clients.convexClient} authClient={authClient}>
+    <ConvexBetterAuthProvider
+      client={clients.convexClient}
+      authClient={authClient}
+      initialToken={initialToken ?? undefined}
+    >
       <QueryClientProvider client={clients.queryClient}>
         <SessionProvider onSessionLost={onSessionLost}>
           {children}

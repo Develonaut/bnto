@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import {
   query,
   mutation,
@@ -18,15 +18,31 @@ export const start = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    if (userId === null) throw new ConvexError("Not authenticated");
 
     const user = await ctx.db.get(userId);
-    if (user === null) throw new Error("User not found");
+    if (user === null) throw new ConvexError("User not found");
+
+    // Quota enforcement — anonymous users have a separate limit from env var
+    if (user.isAnonymous) {
+      const anonLimitStr = process.env.ANONYMOUS_RUN_LIMIT;
+      const anonLimit = anonLimitStr ? parseInt(anonLimitStr, 10) : 3;
+      const used = user.runsUsed ?? 0;
+      if (used >= anonLimit) {
+        throw new ConvexError({
+          code: "ANONYMOUS_QUOTA_EXCEEDED",
+          message: "Sign up for a free account to keep running workflows",
+        });
+      }
+    }
 
     const limit = user.runLimit ?? 5;
     const used = user.runsUsed ?? 0;
     if (used >= limit) {
-      throw new Error("Run limit reached");
+      throw new ConvexError({
+        code: "RUN_LIMIT_REACHED",
+        message: "Run limit reached",
+      });
     }
 
     const workflow = await ctx.db.get(args.workflowId);

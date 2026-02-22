@@ -7,16 +7,19 @@ Auth is enforced at two layers: proxy (before render) and layout (UI concern). N
 ```
 app/
 |-- proxy.ts                # Route protection -- runs before page renders
-|-- layout.tsx              # Root -- Providers + AppGate. NO auth logic.
+|-- layout.tsx              # Root -- Providers. NO auth logic.
 |-- (app)/                  # App shell
-|   |-- layout.tsx          # AppShell (UI only, no security). Landing page bypass.
-|   |-- page.tsx            # / -- auth: Dashboard, unauth: LandingPage (no shell)
-|   |-- workflows/          # Private (not in PUBLIC_PATHS -> redirect)
-|   |-- executions/         # Private (not in PUBLIC_PATHS -> redirect)
-|   +-- settings/           # Private (not in PUBLIC_PATHS -> redirect)
+|   |-- layout.tsx          # AppShell (always renders header + main)
+|   |-- page.tsx            # / -- BntoGallery (tool grid for all users)
+|   |-- workflows/          # Private (PROTECTED_PATHS -> redirect)
+|   |-- executions/         # Private (PROTECTED_PATHS -> redirect)
+|   +-- settings/           # Private (PROTECTED_PATHS -> redirect)
+|-- [bnto]/                 # Tool pages -- public, SSR-safe, own layout
+|   |-- layout.tsx          # Simplified header (logo + NavUser island)
+|   +-- page.tsx            # Per-slug static generation + metadata
 |-- (auth)/                 # Auth flows -- no auth gate
 |   |-- layout.tsx          # Suspense wrapper
-|   +-- signin/, waitlist/
+|   +-- signin/, signup/, waitlist/
 ```
 
 ## Two-Layer Auth
@@ -32,30 +35,30 @@ Two rules:
 
 No flash possible -- the redirect happens before any HTML reaches the browser.
 
-### Layer 2: (app) layout (UI concern)
+### Layer 2: App shell (UI concern)
 
-After the proxy passes the request through, `(app)/layout.tsx` handles presentation:
+The `(app)/layout.tsx` always renders the full AppShell (header + main). **No auth branching in the layout.** Every user -- authenticated or anonymous -- sees the same shell.
 
-- Unauth user on `/` -> renders children without shell (landing page)
-- Auth user -> renders with shell
-- Unauth user on public route -> renders with shell
-
-**No security logic in the layout.** The layout only decides whether to wrap children in the AppShell. Route protection is the proxy's job.
+NavUser handles the auth-aware piece: authenticated users see a dropdown with account/sign-out; unauthenticated users see a "Sign in" link.
 
 ## How It Works
 
 ### Home page (/)
 
 ```
-Auth user visits /
-  -> proxy.ts: / is public, pass through
-  -> (app)/layout.tsx renders with shell
-  -> (app)/page.tsx renders Dashboard
+Any user visits /
+  -> proxy.ts: / is not protected, pass through
+  -> (app)/layout.tsx renders AppShell (header + main)
+  -> (app)/page.tsx renders BntoGallery (tool grid)
+```
 
-Unauth user visits /
-  -> proxy.ts: / is public, pass through
-  -> (app)/layout.tsx renders WITHOUT shell (children only)
-  -> (app)/page.tsx renders LandingPage (full-page, own chrome)
+### Bnto tool pages (/compress-images, /clean-csv, etc.)
+
+```
+Any user visits /compress-images
+  -> proxy.ts: not a protected path, pass through
+  -> [bnto]/layout.tsx renders simplified header (SSR-safe)
+  -> [bnto]/page.tsx renders tool page with metadata + JSON-LD
 ```
 
 ### Private routes (workflows, settings)
@@ -104,11 +107,14 @@ User clicks Sign Out
 | File | Responsibility |
 |---|---|
 | `proxy.ts` | Route protection -- runs before render. Cookie-presence check. |
-| `gates/AppGate.tsx` | Gates app behind provider readiness (splash screen) |
-| `app/(app)/layout.tsx` | AppShell presentation (no security logic) |
+| `app/(app)/layout.tsx` | AppShell wrapper (always renders header, no auth logic) |
+| `app/(app)/_components/AppShell.tsx` | Header + main layout shell |
+| `app/(app)/_components/NavUser.tsx` | Auth-aware: dropdown (auth) or "Sign in" link (unauth) |
+| `app/[bnto]/layout.tsx` | SSR-safe tool page layout with simplified header |
 | `app/providers/index.tsx` | Wires `onSessionLost` -> router redirect to /signin |
 | `core/providers/SessionProvider.tsx` | Detects auth -> unauth transition, fires `onSessionLost` |
-| `lib/routes.ts` | `isPublicPath()`, `PUBLIC_PATHS`, route definitions |
+| `lib/routes.ts` | `isAuthPath()`, `isProtectedPath()`, route definitions |
+| `lib/bnto-registry.ts` | `isValidBntoSlug()`, `getBntoBySlug()`, all predefined slugs |
 | `core/lib/signoutSignal.ts` | Sets the `bnto-signout` signal cookie |
 | `core/constants.ts` | `SIGNOUT_COOKIE` constant shared between core and proxy |
 
@@ -138,13 +144,16 @@ export default function WorkflowsPage() {
 
 All auth routing is handled by the proxy. Pages render their content and trust the boundary. Mid-session auth loss is detected by `SessionProvider` inside `@bnto/core`, which fires the `onSessionLost` callback -- the app wires this to `router.replace("/signin")` in `Providers`.
 
-## Public Paths
+## Route Definitions
 
-Single source of truth in `lib/routes.ts`. The proxy imports `isPublicPath` directly -- no duplication.
+Single source of truth in `lib/routes.ts`:
 
 ```typescript
 // lib/routes.ts
-export const PUBLIC_PATHS = ["/", "/signin", "/waitlist"];
+export const AUTH_PATHS = ["/signin", "/signup"];      // redirect away if authenticated
+export const PROTECTED_PATHS = ["/workflows", "/executions", "/settings"]; // require auth
 ```
 
-When adding a new public route inside `(app)/`, add it to `PUBLIC_PATHS`. When adding a new private route, no changes needed -- private-by-default.
+Everything else passes through -- bnto slugs, home page, unknown paths (404 at page level).
+
+When adding a new protected route, add it to `PROTECTED_PATHS`. When adding a new auth-only route, add it to `AUTH_PATHS`. Public routes need no changes -- public-by-default.

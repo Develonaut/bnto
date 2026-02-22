@@ -6,12 +6,16 @@ import { useSignIn, useSignUp } from "@bnto/auth";
 
 type Mode = "signin" | "signup";
 
-export function SignInForm() {
+interface SignInFormProps {
+  defaultMode?: Mode;
+}
+
+export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
   const signIn = useSignIn();
   const signUp = useSignUp();
   const router = useRouter();
 
-  const [mode, setMode] = useState<Mode>("signin");
+  const [mode, setMode] = useState<Mode>(defaultMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

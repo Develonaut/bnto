@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isAuthPath, isPublicPath } from "./lib/routes";
+import { isAuthPath, isProtectedPath } from "./lib/routes";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
 /**
@@ -13,13 +13,6 @@ import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 const SESSION_COOKIE = "better-auth.session_token";
 const SECURE_SESSION_COOKIE = `__Secure-${SESSION_COOKIE}`;
 
-/**
- * Check whether the request has a Better Auth session cookie.
- *
- * This is a presence check only -- the proxy does NOT validate the session.
- * Convex validates at the data layer. The proxy just prevents unauthenticated
- * users from seeing private pages (no flash).
- */
 function hasSessionCookie(request: NextRequest) {
   return (
     request.cookies.has(SESSION_COOKIE) ||
@@ -27,33 +20,35 @@ function hasSessionCookie(request: NextRequest) {
   );
 }
 
-/**
- * Check whether the signout signal cookie is present.
- *
- * During sign-out, the client sets this non-HttpOnly cookie (10s TTL) so the
- * proxy knows to let the user through to /signin even though the HttpOnly
- * session cookie hasn't been cleared by the server yet.
- */
 function hasSignoutSignal(request: NextRequest) {
   return request.cookies.has(SIGNOUT_COOKIE);
 }
 
 /**
- * Proxy middleware -- server-side route protection.
+ * Proxy middleware -- three-tier route protection.
  *
- * Runs before any page renders. Two rules:
+ * Runs before any page renders. Three tiers:
  *
- * 1. Auth user on /signin (without signout signal) -> redirect to /
- * 2. Unauth user on private route -> redirect to /signin
- *
- * Everything else passes through.
+ * 1. Canonical URL normalization (lowercase, no trailing slash)
+ * 2. Auth routes (/signin, /signup): redirect to / if already authenticated
+ * 3. Protected routes (/workflows, etc.): redirect to /signin if not authenticated
+ * 4. Everything else (bnto slugs, public pages, unknown paths): pass through
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Canonical URL normalization — lowercase, underscores to hyphens, no trailing slash
+  const normalized =
+    pathname.toLowerCase().replace(/_/g, "-").replace(/\/$/, "") || "/";
+  if (pathname !== normalized) {
+    const url = request.nextUrl.clone();
+    url.pathname = normalized;
+    return NextResponse.redirect(url, 301);
+  }
+
   const isAuthenticated = hasSessionCookie(request);
 
-  // Rule 1: Auth user on an auth-only page (e.g. /signin)
-  // Redirect to home unless the signout signal is present (user is signing out)
+  // Tier 1: Auth routes — redirect to home if already authenticated
   if (isAuthenticated && isAuthPath(pathname)) {
     if (hasSignoutSignal(request)) {
       return NextResponse.next();
@@ -61,12 +56,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // Rule 2: Unauth user on a private route -> redirect to /signin
-  if (!isAuthenticated && !isPublicPath(pathname)) {
+  // Tier 2: Protected routes — redirect to /signin if not authenticated
+  if (!isAuthenticated && isProtectedPath(pathname)) {
     return NextResponse.redirect(new URL("/signin", request.url));
   }
 
-  // Everything else passes through
+  // Tier 3: Everything else — pass through (bnto slugs, public pages, unknown paths)
   return NextResponse.next();
 }
 

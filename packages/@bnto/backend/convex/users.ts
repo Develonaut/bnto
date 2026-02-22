@@ -56,6 +56,7 @@ export const ensureUser = mutation({
       email: authUser.email,
       name: authUser.name,
       image: authUser.image ?? undefined,
+      isAnonymous: authUser.isAnonymous ?? false,
       plan: "free",
       runsUsed: 0,
       runLimit: FREE_RUN_LIMIT,

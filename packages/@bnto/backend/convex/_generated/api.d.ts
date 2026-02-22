@@ -14,6 +14,7 @@ import type * as crons from "../crons.js";
 import type * as executionLogs from "../executionLogs.js";
 import type * as executions from "../executions.js";
 import type * as http from "../http.js";
+import type * as migrate_anonymous from "../migrate_anonymous.js";
 import type * as users from "../users.js";
 import type * as workflows from "../workflows.js";
 
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   executionLogs: typeof executionLogs;
   executions: typeof executions;
   http: typeof http;
+  migrate_anonymous: typeof migrate_anonymous;
   users: typeof users;
   workflows: typeof workflows;
 }>;

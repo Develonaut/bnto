@@ -1,13 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOutIcon, UserIcon } from "@bnto/ui";
-import { useCurrentUser, useSignOut } from "@bnto/core";
+import { useCurrentUser, useIsAuthenticated, useSignOut } from "@bnto/core";
 import { Avatar } from "@bnto/ui/avatar";
 import { Button } from "@bnto/ui/button";
 import { DropdownMenu } from "@bnto/ui/dropdown-menu";
 
-/** Initials from a full name (e.g. "Jane Doe" → "JD"). */
+/** Initials from a full name (e.g. "Jane Doe" -> "JD"). */
 function initials(name: string) {
   return name
     .split(" ")
@@ -17,12 +18,26 @@ function initials(name: string) {
 }
 
 /**
- * Self-fetching user dropdown.
+ * Self-fetching user dropdown, or "Sign in" link for anonymous users.
  *
- * Displays avatar + name, with account and sign-out actions.
- * Fetches user data via useCurrentUser() — no props needed.
+ * Authenticated: avatar + name dropdown with account and sign-out.
+ * Unauthenticated: simple "Sign in" link button.
  */
 export function NavUser() {
+  const isAuthenticated = useIsAuthenticated();
+
+  if (!isAuthenticated) {
+    return (
+      <Button variant="ghost" asChild>
+        <Link href="/signin">Sign in</Link>
+      </Button>
+    );
+  }
+
+  return <AuthenticatedNavUser />;
+}
+
+function AuthenticatedNavUser() {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const signOut = useSignOut();

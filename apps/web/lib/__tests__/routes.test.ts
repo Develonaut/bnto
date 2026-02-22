@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   AUTH_PATHS,
   isAuthPath,
-  isPublicPath,
-  PUBLIC_PATHS,
+  isProtectedPath,
+  PROTECTED_PATHS,
   ROUTES,
 } from "../routes";
 
@@ -11,6 +11,7 @@ describe("ROUTES", () => {
   it("contains all expected route paths", () => {
     expect(ROUTES.home).toBe("/");
     expect(ROUTES.signin).toBe("/signin");
+    expect(ROUTES.signup).toBe("/signup");
     expect(ROUTES.waitlist).toBe("/waitlist");
     expect(ROUTES.workflows).toBe("/workflows");
     expect(ROUTES.executions).toBe("/executions");
@@ -18,24 +19,10 @@ describe("ROUTES", () => {
   });
 });
 
-describe("PUBLIC_PATHS", () => {
-  it("includes home, signin, and waitlist", () => {
-    expect(PUBLIC_PATHS).toContain("/");
-    expect(PUBLIC_PATHS).toContain("/signin");
-    expect(PUBLIC_PATHS).toContain("/waitlist");
-  });
-
-  it("does not include private routes", () => {
-    const publicSet = new Set<string>(PUBLIC_PATHS);
-    expect(publicSet.has("/workflows")).toBe(false);
-    expect(publicSet.has("/executions")).toBe(false);
-    expect(publicSet.has("/settings")).toBe(false);
-  });
-});
-
 describe("AUTH_PATHS", () => {
-  it("includes signin", () => {
+  it("includes signin and signup", () => {
     expect(AUTH_PATHS).toContain("/signin");
+    expect(AUTH_PATHS).toContain("/signup");
   });
 
   it("does not include home or waitlist", () => {
@@ -45,34 +32,25 @@ describe("AUTH_PATHS", () => {
   });
 });
 
-describe("isPublicPath", () => {
-  it("returns true for public paths", () => {
-    expect(isPublicPath("/")).toBe(true);
-    expect(isPublicPath("/signin")).toBe(true);
-    expect(isPublicPath("/waitlist")).toBe(true);
+describe("PROTECTED_PATHS", () => {
+  it("includes workflows, executions, and settings", () => {
+    expect(PROTECTED_PATHS).toContain("/workflows");
+    expect(PROTECTED_PATHS).toContain("/executions");
+    expect(PROTECTED_PATHS).toContain("/settings");
   });
 
-  it("returns false for private paths", () => {
-    expect(isPublicPath("/workflows")).toBe(false);
-    expect(isPublicPath("/executions")).toBe(false);
-    expect(isPublicPath("/settings")).toBe(false);
-  });
-
-  it("returns false for unknown paths", () => {
-    expect(isPublicPath("/admin")).toBe(false);
-    expect(isPublicPath("/foo/bar")).toBe(false);
-    expect(isPublicPath("")).toBe(false);
-  });
-
-  it("does not match path prefixes", () => {
-    expect(isPublicPath("/signin/callback")).toBe(false);
-    expect(isPublicPath("/waitlist/confirm")).toBe(false);
+  it("does not include public routes", () => {
+    const protectedSet = new Set<string>(PROTECTED_PATHS);
+    expect(protectedSet.has("/")).toBe(false);
+    expect(protectedSet.has("/signin")).toBe(false);
+    expect(protectedSet.has("/waitlist")).toBe(false);
   });
 });
 
 describe("isAuthPath", () => {
   it("returns true for auth-only paths", () => {
     expect(isAuthPath("/signin")).toBe(true);
+    expect(isAuthPath("/signup")).toBe(true);
   });
 
   it("returns false for non-auth paths", () => {
@@ -84,5 +62,30 @@ describe("isAuthPath", () => {
 
   it("does not match path prefixes", () => {
     expect(isAuthPath("/signin/callback")).toBe(false);
+  });
+});
+
+describe("isProtectedPath", () => {
+  it("returns true for protected paths", () => {
+    expect(isProtectedPath("/workflows")).toBe(true);
+    expect(isProtectedPath("/executions")).toBe(true);
+    expect(isProtectedPath("/settings")).toBe(true);
+  });
+
+  it("matches sub-paths of protected routes", () => {
+    expect(isProtectedPath("/workflows/123")).toBe(true);
+    expect(isProtectedPath("/settings/account")).toBe(true);
+  });
+
+  it("returns false for public paths", () => {
+    expect(isProtectedPath("/")).toBe(false);
+    expect(isProtectedPath("/signin")).toBe(false);
+    expect(isProtectedPath("/waitlist")).toBe(false);
+  });
+
+  it("returns false for bnto slugs and unknown paths", () => {
+    expect(isProtectedPath("/compress-images")).toBe(false);
+    expect(isProtectedPath("/clean-csv")).toBe(false);
+    expect(isProtectedPath("/some-random-page")).toBe(false);
   });
 });

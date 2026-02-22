@@ -19,3 +19,6 @@ export { useSessionStatus } from "./useSessionStatus";
 
 // Auth action hooks
 export { useSignOut } from "./useSignOut";
+
+// Anonymous session hook
+export { useAnonymousSession } from "./useAnonymousSession";

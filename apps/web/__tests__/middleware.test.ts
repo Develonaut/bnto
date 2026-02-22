@@ -3,12 +3,13 @@ import { NextRequest } from "next/server";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
 /**
- * Middleware tests verify the two-rule proxy logic:
+ * Middleware tests verify the three-tier proxy logic:
  *
- * 1. Auth user on /signin (no signout signal) -> redirect to /
- * 2. Unauth user on private route -> redirect to /signin
+ * 1. Canonical URL normalization (case, underscores, trailing slash)
+ * 2. Auth user on /signin (no signout signal) -> redirect to /
+ * 3. Unauth user on protected route -> redirect to /signin
  *
- * Everything else passes through.
+ * Everything else passes through (bnto slugs, unknown paths -> 404 at page level).
  */
 
 const BASE_URL = "http://localhost:3000";
@@ -70,8 +71,13 @@ describe("middleware", () => {
       );
     });
 
-    it("redirects to /signin on unknown private route", () => {
+    it("passes through on unknown routes (404 at page level)", () => {
       const response = middleware(createRequest("/admin"));
+      expect(response.status).toBe(200);
+    });
+
+    it("redirects to /signin on protected sub-route", () => {
+      const response = middleware(createRequest("/workflows/123"));
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe(
         "/signin",
