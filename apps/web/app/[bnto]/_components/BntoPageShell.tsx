@@ -1,6 +1,7 @@
 "use client";
 
 import { useAnonymousSession, useRunsRemaining } from "@bnto/core";
+import { DashedLine } from "@bnto/ui/dashed-line";
 import type { BntoEntry } from "../../../lib/bnto-registry";
 import { UpgradePrompt } from "./UpgradePrompt";
 
@@ -24,9 +25,11 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-6">
       <div className="w-full max-w-2xl space-y-6 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
           {entry.h1}
         </h1>
+
+        <DashedLine className="mx-auto max-w-xs" />
 
         {isPending ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
@@ -45,7 +48,7 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
             )}
 
             {/* TODO(Sprint 2): Render workflow execution UI here */}
-            <div className="rounded-lg border border-border bg-card p-8">
+            <div className="rounded-xl border border-border bg-card p-8">
               <p className="text-sm text-muted-foreground">
                 Workflow UI coming soon -- drop files here to get started.
               </p>

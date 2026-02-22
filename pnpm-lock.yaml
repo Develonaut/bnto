@@ -169,7 +169,7 @@ importers:
         specifier: 'catalog:'
         version: 0.10.11(@better-auth/core@1.4.18(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.3.6))(jose@6.1.3)(kysely@0.28.11)(nanostores@1.1.0))(@better-auth/utils@0.3.0)(@standard-schema/spec@1.1.0)(better-auth@1.4.18(next@16.1.6(@playwright/test@1.58.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vitest@4.0.18(@types/node@22.19.9)(jiti@2.6.1)(lightningcss@1.30.2)))(better-call@1.1.8(zod@4.3.6))(convex@1.31.7(react@19.2.4))(nanostores@1.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       better-auth:
-        specifier: ^1.4.18
+        specifier: 1.4.18
         version: 1.4.18(next@16.1.6(@playwright/test@1.58.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vitest@4.0.18(@types/node@22.19.9)(jiti@2.6.1)(lightningcss@1.30.2))
       convex:
         specifier: 'catalog:'
@@ -203,7 +203,7 @@ importers:
         specifier: 'catalog:'
         version: 0.10.11(@better-auth/core@1.4.18(@better-auth/utils@0.3.0)(@better-fetch/fetch@1.1.21)(better-call@1.1.8(zod@4.3.6))(jose@6.1.3)(kysely@0.28.11)(nanostores@1.1.0))(@better-auth/utils@0.3.0)(@standard-schema/spec@1.1.0)(better-auth@1.4.18(next@16.1.6(@playwright/test@1.58.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vitest@4.0.18(@types/node@22.19.9)(jiti@2.6.1)(lightningcss@1.30.2)))(better-call@1.1.8(zod@4.3.6))(convex@1.31.7(react@19.2.4))(nanostores@1.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       better-auth:
-        specifier: ^1.4.18
+        specifier: 1.4.18
         version: 1.4.18(next@16.1.6(@playwright/test@1.58.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vitest@4.0.18(@types/node@22.19.9)(jiti@2.6.1)(lightningcss@1.30.2))
       convex:
         specifier: 'catalog:'
@@ -294,6 +294,9 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 0.563.0(react@19.2.4)
+      next-themes:
+        specifier: ^0.4.4
+        version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react:
         specifier: ^19.0.0
         version: 19.2.4

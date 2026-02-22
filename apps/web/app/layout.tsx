@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Inter } from "next/font/google";
 import { getToken } from "@bnto/auth/server";
+import { ThemeProvider } from "@bnto/ui/theme-provider";
 import { Providers } from "./providers";
 import "@bnto/ui/globals.css";
 
-const fontSans = Geist({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-dm-sans",
 });
 
-const fontMono = Geist_Mono({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -33,11 +34,18 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${fontSans.variable} ${fontMono.variable} antialiased`}
+        className={`${dmSans.variable} ${inter.variable} antialiased`}
       >
-        <Providers initialToken={initialToken}>
-          {children}
-        </Providers>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Providers initialToken={initialToken}>
+            {children}
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -4,15 +4,20 @@ The bnto theme is fully defined. Use these tokens — never hardcode colors, rad
 
 ---
 
-## Font
+## Fonts
 
-**Geist** (sans) + **Geist Mono** (mono) — loaded via `next/font/google`, bound to `--font-sans` and `--font-mono`.
+Three-font system: **DM Sans** (display/headings) + **Inter** (body) + **Geist Mono** (code) — loaded via `next/font/google`, bound to `--font-display`, `--font-sans`, and `--font-mono`.
 
 ```tsx
 // apps/web/app/layout.tsx
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Inter, Geist_Mono } from "next/font/google";
 
-const fontSans = Geist({
+const fontDisplay = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-display",
+});
+
+const fontSans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 });
@@ -25,7 +30,7 @@ const fontMono = Geist_Mono({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${fontSans.variable} ${fontMono.variable} antialiased`}>
+      <body className={`${fontDisplay.variable} ${fontSans.variable} ${fontMono.variable} antialiased`}>
         {children}
       </body>
     </html>
@@ -34,9 +39,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 **Rules:**
-- Always use `font-sans` (resolves to Geist via `--font-sans`)
-- Use `font-mono` (resolves to Geist Mono via `--font-mono`) for code/technical output — logs, `.bnto.json` previews, node type labels
-- Never load Geist via `<link>` or `@import` — `next/font` handles it with zero layout shift
+- Use `font-display` for hero headings, page titles, brand wordmark, and display text — resolves to DM Sans
+- Use `font-sans` (resolves to Inter) for body text, labels, and general UI
+- Use `font-mono` (resolves to Geist Mono) for code/technical output — logs, `.bnto.json` previews, node type labels
+- Never load fonts via `<link>` or `@import` — `next/font` handles them with zero layout shift
 
 ---
 
@@ -114,8 +120,10 @@ Base radius is `1.25rem` (20px) — generously rounded, warm and friendly.
 | `rounded-md` | `calc(1.25rem - 2px)` = `~1.125rem` | Inputs, small buttons |
 | `rounded-lg` | `1.25rem` | Cards, panels, standard containers |
 | `rounded-xl` | `calc(1.25rem + 4px)` = `~1.5rem` | Feature cards, hero elements |
+| `rounded-[2rem]` | `2rem` (32px) | Pill navbar, gradient section corners |
+| `rounded-full` | `9999px` | Pill buttons, badges, avatar circles |
 
-**Rule:** Default to `rounded-lg`. Go rounder (`rounded-xl`) for prominent surfaces, tighter (`rounded-sm`) for small inline elements. Never use `rounded-none` or sharp corners in brand UI.
+**Rule:** Default to `rounded-lg`. Go rounder (`rounded-xl`) for prominent surfaces, tighter (`rounded-sm`) for small inline elements. Use `rounded-[2rem]` for the pill navbar and section containers. Use `rounded-full` for pill-shaped buttons and badges. Never use `rounded-none` or sharp corners in brand UI.
 
 ---
 
@@ -137,25 +145,25 @@ Dark mode shadows use pure black at higher opacity — the system handles this a
 
 ## Typography Scale
 
-Geist is a clean, modern sans-serif designed by Vercel. It reads sharp and professional at all sizes.
+DM Sans is used for display/headings — warm, geometric, pairs well with the terracotta palette. Inter is the body font — clean and highly legible at all sizes.
 
 ```tsx
-// Display / Hero
-className="text-4xl font-bold tracking-tight"
+// Display / Hero (DM Sans)
+className="font-display text-4xl font-bold tracking-tight"
 
-// Page headings
-className="text-2xl font-semibold"
+// Page headings (DM Sans)
+className="font-display text-2xl font-semibold"
 
-// Section headings  
-className="text-lg font-semibold"
+// Section headings (DM Sans)
+className="font-display text-lg font-semibold"
 
-// Body
+// Body (Inter — default, no font-display needed)
 className="text-base"   // tracking-normal (0.02em) applied globally via body styles
 
-// Small / labels
+// Small / labels (Inter)
 className="text-sm text-muted-foreground"
 
-// Technical / metadata (mono)
+// Technical / metadata (Geist Mono)
 className="text-xs font-mono tracking-wider text-muted-foreground uppercase"
 ```
 
@@ -177,6 +185,28 @@ Five chart tokens for data visualization — all harmonious with the warm palett
 
 ---
 
+## Dark Mode
+
+Dark mode is powered by `next-themes` with the `class` strategy. The `ThemeProvider` from `@bnto/ui/theme-provider` wraps the app in `layout.tsx` and adds/removes the `.dark` class on `<html>`.
+
+**Components:** Import from `@bnto/ui`, never from `next-themes` directly.
+
+```tsx
+// Toggle button — add to any navbar
+import { ThemeToggle } from "@bnto/ui/theme-toggle";
+<ThemeToggle />
+
+// Provider — already wired in root layout, don't add again
+import { ThemeProvider } from "@bnto/ui/theme-provider";
+<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+  {children}
+</ThemeProvider>
+```
+
+**SSR safety:** In server component layouts (like `[bnto]/layout.tsx`), use a client island to lazy-load ThemeToggle with `ssr: false`.
+
+---
+
 ## Globals CSS Location
 
 ```
@@ -190,9 +220,11 @@ The `@theme inline` block maps CSS variables to Tailwind's color/shadow/radius s
 ## Rules for Claude Code
 
 - **Never hardcode a color value** — always use semantic tokens (`bg-primary`, `text-muted-foreground`, etc.)
-- **Never hardcode a radius** — always use `rounded-{sm|md|lg|xl}`
-- **Never use `font-['Geist']`** — use `font-sans` (the variable resolves it)
-- **Never add a `<link>` for Geist** — `next/font` is already handling it in `layout.tsx`
-- **Dark mode is automatic** — tokens swap via `.dark` class, no manual dark: overrides needed for semantic tokens
+- **Never hardcode a radius** — always use `rounded-{sm|md|lg|xl}` or `rounded-[2rem]` / `rounded-full`
+- **Use `font-display` for headings** — hero text, page titles, brand wordmark. Use `font-sans` for body
+- **Never use `font-['DM_Sans']` or `font-['Inter']`** — use `font-display` and `font-sans` (the variables resolve them)
+- **Never add a `<link>` for fonts** — `next/font` is already handling them in `layout.tsx`
+- **Dark mode is automatic** — tokens swap via `.dark` class, no manual `dark:` overrides needed for semantic tokens
+- **Import ThemeToggle from `@bnto/ui`** — never import `next-themes` directly in app code
 - **Shadows are warm** — use the shadow scale, don't write custom `box-shadow` values
 - **When in doubt, round more** — the brand is warm and friendly, not sharp

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSignIn, useSignUp } from "@bnto/auth";
+import { Button } from "@bnto/ui/button";
+import { Input } from "@bnto/ui/input";
 
 type Mode = "signin" | "signup";
 
@@ -53,99 +55,100 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background text-foreground">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 text-foreground">
       <div className="w-full max-w-sm space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {isSignUp ? "Create an account" : "Sign in to bnto"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {isSignUp
-              ? "Enter your details to get started"
-              : "Enter your credentials to continue"}
-          </p>
+        {/* Logo */}
+        <div className="text-center">
+          <span className="font-display text-2xl font-bold">bnto</span>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isSignUp && (
+        {/* Card */}
+        <div className="rounded-xl bg-card p-6 shadow-lg">
+          <div className="space-y-2 text-center">
+            <h1 className="font-display text-xl font-semibold tracking-tight">
+              {isSignUp ? "Create an account" : "Sign in to bnto"}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {isSignUp
+                ? "Enter your details to get started"
+                : "Enter your credentials to continue"}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {isSignUp && (
+              <div className="space-y-2">
+                <label
+                  htmlFor="name"
+                  className="text-sm font-medium leading-none"
+                >
+                  Name
+                </label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <label
-                htmlFor="name"
+                htmlFor="email"
                 className="text-sm font-medium leading-none"
               >
-                Name
+                Email
               </label>
-              <input
-                id="name"
-                type="text"
-                placeholder="Your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                autoComplete="email"
               />
             </div>
-          )}
 
-          <div className="space-y-2">
-            <label
-              htmlFor="email"
-              className="text-sm font-medium leading-none"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium leading-none"
+              >
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                autoComplete={isSignUp ? "new-password" : "current-password"}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium leading-none"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete={isSignUp ? "new-password" : "current-password"}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
+            {error && (
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            )}
 
-          {error && (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background motion-safe:transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-          >
-            {loading
-              ? isSignUp
-                ? "Creating account..."
-                : "Signing in..."
-              : isSignUp
-                ? "Create account"
-                : "Sign in"}
-          </button>
-        </form>
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading
+                ? isSignUp
+                  ? "Creating account..."
+                  : "Signing in..."
+                : isSignUp
+                  ? "Create account"
+                  : "Sign in"}
+            </Button>
+          </form>
+        </div>
 
         <p className="text-center text-sm text-muted-foreground">
           {isSignUp ? "Already have an account?" : "No account?"}{" "}

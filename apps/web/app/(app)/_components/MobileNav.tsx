@@ -19,7 +19,7 @@ export function MobileNav() {
   return (
     <Sheet>
       <Sheet.Trigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden">
+        <Button variant="ghost" size="icon" className="rounded-full md:hidden">
           <MenuIcon className="size-5" />
           <span className="sr-only">Open menu</span>
         </Button>
@@ -27,7 +27,7 @@ export function MobileNav() {
       <Sheet.Content side="left" className="w-72">
         <Sheet.Header>
           <Sheet.Title className="flex items-center gap-2">
-            <span className="font-semibold">bnto</span>
+            <span className="font-display font-semibold">bnto</span>
           </Sheet.Title>
         </Sheet.Header>
         <nav className="mt-6 flex flex-col gap-1">

@@ -22,9 +22,9 @@ function BntoCard({ entry }: { entry: BntoEntry }) {
   return (
     <Link
       href={`/${entry.slug}`}
-      className="group rounded-lg border border-border bg-card p-6 motion-safe:transition-shadow hover:shadow-md"
+      className="group rounded-xl border border-border bg-card p-6 shadow-sm motion-safe:transition-all motion-safe:hover:-translate-y-0.5 hover:shadow-lg"
     >
-      <h2 className="text-lg font-semibold text-foreground group-hover:text-primary">
+      <h2 className="font-display text-lg font-semibold text-foreground group-hover:text-primary">
         {entry.h1}
       </h2>
       <p className="mt-2 text-sm text-muted-foreground">{entry.description}</p>
@@ -32,7 +32,7 @@ function BntoCard({ entry }: { entry: BntoEntry }) {
         {entry.features.map((feature) => (
           <span
             key={feature}
-            className="rounded-sm bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+            className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground"
           >
             {feature}
           </span>
