@@ -251,13 +251,13 @@ Use the following prompt to have Claude Code review this document, validate it a
 Read the following files in order before doing anything else:
 
 1. .claude/CLAUDE.md
-2. .claude/BENTO_BOX_PRINCIPLE.md
+2. .claude/rules/code-standards.md
 3. .claude/PLAN.md
-4. .claude/strategy/CLOUD_DESKTOP_STRATEGY.md
-5. .claude/strategy/MONOREPO_STRUCTURE.md
-6. .claude/strategy/ADO_DASHBOARD_USE_CASE.md
+4. .claude/strategy/cloud-desktop-strategy.md
+5. .claude/strategy/monorepo-structure.md
+6. .claude/strategy/ado-dashboard-use-case.md
 
-I've added a new strategy document at .claude/strategy/ADO_DASHBOARD_USE_CASE.md that describes an Azure DevOps dashboard use case for Bnto. This was developed through a research and planning conversation and represents a real-world use case that exercises Bnto's workflow engine.
+I've added a new strategy document at .claude/strategy/ado-dashboard-use-case.md that describes an Azure DevOps dashboard use case for Bnto. This was developed through a research and planning conversation and represents a real-world use case that exercises Bnto's workflow engine.
 
 Please do the following:
 

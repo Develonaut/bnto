@@ -141,6 +141,32 @@ const workflows = window.go.main.App.ListWorkflows();
 +--------------------------------------------------------------+
 ```
 
+## Run Quota Infrastructure
+
+Every execution must:
+- Increment `runsUsedThisMonth` in the user's Convex record
+- Record `slug`, `timestamp`, and `durationMs`
+- Be associated with an authenticated user OR an anonymous browser fingerprint
+
+| Sprint | What gets built |
+|--------|----------------|
+| Sprint 2 | Execution events logged (userId or fingerprint, slug, timestamp, durationMs) |
+| Sprint 3 | `runsUsedThisMonth`, `runResetDate`, `totalRunsAllTime` per user. Dashboard shows usage. |
+| Sprint 6 | Stripe integration. Quota enforced server-side. |
+
+File size limits are enforced at the **R2 presigned URL generation step in Convex -- not client-side**. For tier limits, see Notion (`SEO & Monetization Strategy`).
+
+## R2 Storage: Transit Layer Only
+
+R2 is a transit layer, not a storage product. Files exist for minutes.
+
+- Upload → process → download → delete
+- Objects deleted immediately after download, or 1-hour TTL
+- Storage stays near zero at all times
+- Never repurpose R2 as long-term storage without an explicit product decision
+
+---
+
 ## Content Model: Workflows and Executions
 
 **Workflows are the atomic unit of content.** Users define workflows as `.bnto.json` files that orchestrate tasks.

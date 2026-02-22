@@ -10,19 +10,25 @@
 
 | If you're working on...      | Read this first                                                    |
 | ---------------------------- | ------------------------------------------------------------------ |
-| Any code                     | [BENTO_BOX_PRINCIPLE.md](.claude/BENTO_BOX_PRINCIPLE.md)           |
-| Architecture decisions       | [CLOUD_DESKTOP_STRATEGY.md](.claude/strategy/CLOUD_DESKTOP_STRATEGY.md) |
-| Repo structure               | [MONOREPO_STRUCTURE.md](.claude/strategy/MONOREPO_STRUCTURE.md)    |
-| Build tooling                | [MONOREPO_TOOLING.md](.claude/decisions/MONOREPO_TOOLING.md)       |
-| Implementation task          | [PLAN-PARALLEL.md](.claude/PLAN-PARALLEL.md)                      |
+| Any code                     | [code-standards.md](.claude/rules/code-standards.md)              |
+| Any UI / styling work        | [rules/theming.md](.claude/rules/theming.md)                       |
+| Architecture decisions       | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) |
+| Repo structure               | [monorepo-structure.md](.claude/strategy/monorepo-structure.md)    |
+| Build tooling                | [monorepo-tooling.md](.claude/decisions/monorepo-tooling.md)       |
+| Implementation task          | [PLAN.md](.claude/PLAN.md)                                        |
+| Predefined Bntos & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                    |
+| SEO & URL strategy           | [rules/seo.md](.claude/rules/seo.md)                              |
 | Coding standards             | [rules/](.claude/rules/) directory                                 |
-| Understanding the product    | [CLOUD_DESKTOP_STRATEGY.md](.claude/strategy/CLOUD_DESKTOP_STRATEGY.md) |
+| Understanding the product    | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) |
+| Core principles (always)     | [core-principles.md](.claude/strategy/core-principles.md)          |
 
 ---
 
 ## Quick Context
 
-**Bnto** is a workflow automation engine. Users define workflows as `.bnto.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests.
+**Bnto** is the one place small teams go to get things done — compress images, clean a CSV, rename files, call an API — without the overhead of a platform or the fragility of a script. Simple by default, powerful when you need it.
+
+Workflows are defined as `.bnto.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests. The Go CLI engine is the stable core. Everything else — web app, desktop, cloud execution — is a UI on top of it.
 
 - **Engine**: Go (CLI + execution engine in `engine/`)
 - **Web**: Next.js on Vercel + Convex Cloud + Better Auth (Phase 1 — UI + auth)
@@ -81,7 +87,7 @@ const workflows = window.go.main.App.ListWorkflows();
 
 ### 3. Bento Box Principle
 
-Every file, function, and package does ONE thing well. See [BENTO_BOX_PRINCIPLE.md](.claude/BENTO_BOX_PRINCIPLE.md).
+Every file, function, and package does ONE thing well. See [code-standards.md](.claude/rules/code-standards.md).
 
 - **Files**: < 250 lines (max 500)
 - **Functions**: < 20 lines (max 30)
@@ -158,8 +164,7 @@ bnto/
 │   ├── tests/                   # Integration tests + fixtures
 │   └── examples/                # Example .bnto.json files
 └── .claude/                     # Strategy docs, decisions, plan
-    ├── PLAN-PARALLEL.md         # Master plan (sprints, waves, tasks)
-    ├── BENTO_BOX_PRINCIPLE.md
+    ├── PLAN.md                  # Build plan (sprints, waves, tasks)
     ├── rules/                   # Coding standards and conventions
     ├── skills/                  # Agent skills (pre-commit, pickup, code-review)
     ├── strategy/
@@ -268,17 +273,18 @@ task check              # Full quality gate (vet + test + build)
 
 | Document                                                           | Purpose                                        |
 | ------------------------------------------------------------------ | ---------------------------------------------- |
-| **[BENTO_BOX_PRINCIPLE.md](.claude/BENTO_BOX_PRINCIPLE.md)**       | Code organization, file/function size limits    |
-| **[PLAN-PARALLEL.md](.claude/PLAN-PARALLEL.md)**                   | Master plan — sprints, waves, what's next       |
+| **[core-principles.md](.claude/strategy/core-principles.md)**      | TDD, Grain, Modularity, Abstraction — the DNA  |
+| **[code-standards.md](.claude/rules/code-standards.md)**           | Code organization, file/function size limits    |
+| **[PLAN.md](.claude/PLAN.md)**                                     | Build plan — sprints, waves, what's next        |
 | **[rules/](.claude/rules/)**                                       | Coding standards and conventions                |
 
 ### Reference
 
 | Document                                                                        | Purpose                                    |
 | ------------------------------------------------------------------------------- | ------------------------------------------ |
-| [CLOUD_DESKTOP_STRATEGY.md](.claude/strategy/CLOUD_DESKTOP_STRATEGY.md)         | Full architecture, tech decisions, phases   |
-| [MONOREPO_STRUCTURE.md](.claude/strategy/MONOREPO_STRUCTURE.md)                 | Repo structure, API abstractions, packages  |
-| [MONOREPO_TOOLING.md](.claude/decisions/MONOREPO_TOOLING.md)                    | Taskfile + Turborepo decision rationale     |
+| [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)         | Full architecture, tech decisions, phases   |
+| [monorepo-structure.md](.claude/strategy/monorepo-structure.md)                 | Repo structure, API abstractions, packages  |
+| [monorepo-tooling.md](.claude/decisions/monorepo-tooling.md)                    | Taskfile + Turborepo decision rationale     |
 | [skills/](.claude/skills/)                                                      | Agent skills (pre-commit, pickup, code-review) |
 
 ---
@@ -288,8 +294,8 @@ task check              # Full quality gate (vet + test + build)
 When starting work:
 
 1. **Read context** - Review this file, rules/, and relevant docs in `.claude/`
-2. **Check the plan** - See where we are in [PLAN-PARALLEL.md](.claude/PLAN-PARALLEL.md)
-3. **Claim a task** - Mark it CLAIMED in the plan before starting
+2. **Check the plan** - See where we are in [PLAN.md](.claude/PLAN.md)
+3. **Claim a task** - Mark it CLAIMED in PLAN.md before starting
 4. **Follow patterns** - Match existing code style and architecture (see rules/)
 5. **Test boundaries** - Write tests for engine logic and API contracts
 6. **Mark done** - Update the plan when task is complete
@@ -363,7 +369,7 @@ For EACH file you modified, verify:
 For EACH Go file you created or modified:
 
 - [ ] **Bento Box Principle**: One concept per file, one purpose per function
-  - See [BENTO_BOX_PRINCIPLE.md](.claude/BENTO_BOX_PRINCIPLE.md)
+  - See [code-standards.md](.claude/rules/code-standards.md)
 
 - [ ] **Error Handling**: Are errors properly wrapped with context?
   - `return fmt.Errorf("loading workflow %s: %w", path, err)` not bare `return err`
@@ -462,9 +468,12 @@ When all checks pass:
 
 ## Key Principles
 
-1. **Transport-agnostic API** - All data flows through `@bnto/core`, never direct backend calls
-2. **Bento Box Principle** - One responsibility per file/function/package, no grab bags
-3. **CLI is the stable API** - Every operation maps to a CLI command; the Go engine is the source of truth
-4. **TDD bottom-up** - Solidify engine tests → API tests → E2E tests. Each layer tested before the next
-5. **Test at boundaries** - Focus on API contracts and engine behavior, not implementation details
-6. **Open source core** - Cloud sells convenience (hosting, managed infrastructure), not proprietary features
+1. **TDD is the core of our success** - Predefined Bnto fixtures run against the CLI. Every node ships with tests. If you can't test it, you can't ship it.
+2. **Go with the grain** - Don't fight your environment. Intuitive software comes from working with tools the way they want to be used.
+3. **Modularity is our bread and butter** - Think small, build small, compose big. One node, one job. Layers own their domain.
+4. **Abstraction is the goal** - "Did we make this easier?" If no, go back to the drawing board. Both UX and DX.
+5. **Transport-agnostic API** - All data flows through `@bnto/core`, never direct backend calls
+6. **CLI is the stable API** - Every operation maps to a CLI command; the Go engine is the source of truth
+7. **Open source core** - Cloud sells convenience (hosting, managed infrastructure), not proprietary features
+
+See [core-principles.md](.claude/strategy/core-principles.md) for the full treatment of each.

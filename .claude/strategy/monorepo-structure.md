@@ -4,7 +4,7 @@
 **Date:** 2025-12-15
 **Updated:** 2026-02-21
 **Status:** Implemented
-**See also:** [Cloud + Desktop Strategy](CLOUD_DESKTOP_STRATEGY.md), [Monorepo Tooling Decision](../decisions/MONOREPO_TOOLING.md)
+**See also:** [Cloud + Desktop Strategy](cloud-desktop-strategy.md), [Monorepo Tooling Decision](../decisions/monorepo-tooling.md)
 
 ---
 
@@ -90,7 +90,7 @@ bnto/
 │
 └── .claude/                         # Project strategy and decisions
     ├── PLAN.md
-    ├── BENTO_BOX_PRINCIPLE.md
+    ├── rules/                           # Coding standards (Bento Box Principle, etc.)
     ├── strategy/
     └── decisions/
 ```

@@ -16,11 +16,12 @@ You are the project manager for Bnto. Your job is to review the parallel executi
 Read all of these before making any judgments:
 
 **Execution state:**
-- `.claude/PLAN-PARALLEL.md` — the parallel execution plan (current state, what's built, sprint tasks)
+- `.claude/PLAN.md` — the build plan (current state, what's built, sprint tasks, revenue milestones)
 
 **Vision & strategy:**
-- `.claude/strategy/CLOUD_DESKTOP_STRATEGY.md` — Full architecture, tech decisions, phases
-- `.claude/strategy/MONOREPO_STRUCTURE.md` — Repo structure, API abstractions, packages
+- `.claude/strategy/cloud-desktop-strategy.md` — Full architecture, tech decisions, phases
+- `.claude/strategy/monorepo-structure.md` — Repo structure, API abstractions, packages
+- `.claude/strategy/bntos.md` — Predefined Bnto registry, Tier 1 launch list, SEO slugs, fixture status
 
 **Architecture & standards:**
 - `CLAUDE.md`
@@ -28,6 +29,9 @@ Read all of these before making any judgments:
 - `.claude/rules/architecture.md`
 - `.claude/rules/convex.md`
 - `.claude/rules/gotchas.md`
+- `.claude/rules/pages.md` — SEO URL implementation rules
+- `.claude/rules/architecture.md` — run quota schema, R2 transit rules
+- `.claude/strategy/core-principles.md` — trust commitments
 
 **What's actually built:**
 - Run `git log --oneline -20` to see recent work
@@ -37,7 +41,7 @@ Read all of these before making any judgments:
 
 ## Step 2: Evaluate Progress
 
-For each sprint in `PLAN-PARALLEL.md`, assess:
+For each sprint in `PLAN.md`, assess:
 
 1. **Completion status** — How many tasks are done vs. claimed vs. unclaimed?
 2. **Accuracy** — Do the remaining tasks still make sense given what's been built? Are any tasks already done but not marked? Are any tasks now unnecessary?
@@ -55,6 +59,9 @@ Cross-reference the plan against the strategy docs:
 3. **MVP scope** — Are we staying within Phase 1 boundaries or creeping toward Phase 2/3? Flag anything that should be deferred
 4. **Architecture compliance** — Does the plan respect the layered architecture (Apps -> @bnto/editor -> @bnto/ui -> @bnto/core -> Go Engine)?
 5. **Cost check** — Does anything in the plan introduce paid services? Flag it
+6. **SEO readiness** — Does Sprint 2 include SEO URL routing (`/[bnto]/page.tsx` with per-slug metadata)? If predefined Bntos are being added and SEO slugs aren't planned, flag it. Every new Bnto needs a URL.
+7. **Monetization instrumentation** — Does Sprint 3 include `runsUsedThisMonth` tracking in Convex? Is the upgrade prompt scaffolded before Stripe arrives in Sprint 7? Are execution events being logged from the first run in Sprint 2? If any of these are missing from the plan, flag them as gaps.
+8. **Revenue milestone check** — Cross-reference current sprint against the Revenue Milestones table in `PLAN.md`. Are we on track? Is the quota tracking in place before we need it?
 
 ---
 
@@ -75,7 +82,15 @@ For each issue, explain:
 ### Plan Drift
 Any ways the plan has drifted from the strategy docs. Be specific — quote the strategy doc and show the gap.
 
-### Suggested Changes to PLAN-PARALLEL.md
+### SEO & Monetization Gaps
+Specifically call out:
+- Any new predefined Bnto without a planned SEO URL
+- Missing run quota tracking instrumentation
+- Upgrade prompt UX not scaffolded before Sprint 7
+- Execution events not being logged
+- Any trust commitment being violated (free tier reduction, feature gating on node types, etc.)
+
+### Suggested Changes to PLAN.md
 List every proposed edit as a specific action:
 - "Mark task X as done (already built in commit abc123)"
 - "Split task Y into two: Y1 (backend) and Y2 (core)"
@@ -92,7 +107,7 @@ List every proposed edit as a specific action:
 Present your report, then ask: "Want me to apply these changes to the plan files?"
 
 If approved:
-- Update `PLAN-PARALLEL.md` with the agreed changes
+- Update `PLAN.md` with the agreed changes
 - Update the decision log with today's date and a summary of what changed
 
 ---

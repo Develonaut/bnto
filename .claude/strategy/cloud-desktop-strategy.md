@@ -3,7 +3,7 @@
 **Date:** 2026-02-06
 **Updated:** 2026-02-21
 **Status:** Strategy Document — Active
-**Supersedes:** Extends MONOREPO_STRUCTURE.md, informs WAILS_DESKTOP_STRATEGY.md
+**Supersedes:** Extends monorepo-structure.md
 **Goal:** Evolve Bnto from a Go CLI into three products sharing a frontend
 
 ---
@@ -149,7 +149,7 @@ packages/
 
 ### 3.2 Wails v2 for Desktop (Not Tauri or Electron)
 
-**Decision:** Wails v2 (stable) as documented in MONOREPO_STRUCTURE.md. **Target v2, not v3.**
+**Decision:** Wails v2 (stable) as documented in monorepo-structure.md. **Target v2, not v3.**
 
 **Rationale:**
 - Direct Go bindings — execution engine runs in-process, zero serialization overhead
@@ -538,42 +538,11 @@ Push to main →
 
 ## 8. Monetization & Freemium Model
 
-### The Hook
+Pricing details, tier structure, run limits, and file size limits live in Notion — not in this public repo. Search the bnto workspace for "SEO & Monetization Strategy" for the current pricing model.
 
-The web app is paid, but new users get a **perpetual free tier with monthly run refresh**:
+**Core model:** Perpetual free tier with monthly run refresh. Building workflows is free, running is metered. No feature gating — all node types available on free tier, limit is execution count only.
 
-1. **Sign up free** — create an account, explore the UI, upload workflows
-2. **Build workflows** — full access to upload and configure (building = free, running = metered)
-3. **Monthly runs** — ~5 free executions per month, refreshing monthly
-4. **Invest and convert** — users accumulate workflows they depend on, 5/month limit drives upgrades
-5. **Pay to scale** — when 5 runs/month isn't enough, upgrade
-
-### Why This Works
-
-- Monthly refresh keeps free users coming back (not a one-and-done trial)
-- Users accumulate workflows over time, increasing switching cost
-- 5 runs/month is enough to stay engaged but not enough for production use
-- No feature gating — all node types available on free tier, limit is execution count only
-- Workflows persist forever — constant reminder of value
-
-### Tier Structure (Sketch)
-
-| Tier | Price | Runs/Month | Storage | Timeout/Node |
-|------|-------|------------|---------|--------------|
-| Free | $0 | 5/month (refreshing) | 100MB | 5 min |
-| Starter | $X/mo | 100 | 1GB | 10 min |
-| Pro | $Y/mo | 1,000 | 10GB | 15 min |
-
-Team/org tiers come later, only if demand justifies it.
-
-### Implementation Notes
-
-- Run counter tracked in Convex (`users.runsUsed`, `users.runLimit`, `users.runsResetAt`)
-- Monthly cron job in Convex resets `runsUsed` for free-tier users
-- Execution endpoint checks remaining runs before starting
-- Convex real-time subscription shows "X runs remaining" in the UI
-- Stripe webhook updates plan tier and run limits on payment
-- Workflows are never deleted — only execution is gated
+**Implementation:** Run counter tracked in Convex, monthly cron reset, Stripe webhook for plan upgrades. See `PLAN.md` Sprint 3 and Sprint 6 for implementation details.
 
 ---
 
@@ -598,9 +567,8 @@ Every node type, every capability — it's all in the open source repo. The clou
 - **Convex Cloud** free tier for database + real-time
 - **Desktop execution is free** — no infrastructure cost, runs on user's machine
 - **Railway** only needed for Phase 3 cloud execution (paid tier)
-- Hard limits on cloud free-tier execution — 5 runs/month + timeout caps (5 min/node)
+- Hard limits on cloud free-tier execution (specific limits in Notion: "SEO & Monetization Strategy")
 - Monitor infrastructure costs closely before setting paid tier prices
-- Paid pricing TBD — set after understanding actual per-execution cost on Railway
 
 **Key insight:** By shipping desktop (Phase 2) before cloud processing (Phase 3), we can have a fully working product at $0/month infrastructure cost. Cloud execution is the monetization layer added later.
 
@@ -621,18 +589,6 @@ Every node type, every capability — it's all in the open source repo. The clou
 
 ---
 
-## Files to Create/Modify
-
-| Action | File | Description |
-|--------|------|-------------|
-| **Created** | `.claude/strategy/CLOUD_DESKTOP_STRATEGY.md` | This document (main deliverable) |
-| **Update** | `.claude/strategy/MONOREPO_STRUCTURE.md` | Add `apps/web/`, add ConvexClient, rename `api` to `core` |
-| **Review** | `.claude/strategy/WAILS_DESKTOP_STRATEGY.md` | Annotate: target v2, desktop is Phase 3 |
-| **Review** | `.claude/strategy/DESKTOP_UI_ARCHITECTURE.md` | No conflicts — evaluation still valid |
-| **Review** | `.claude/strategy/BENTOBOX_UI_POC.md` | Annotate: visual editor is Phase 4 |
-
----
-
 ## Verification Checklist
 
 - [x] Strategy document internally consistent
@@ -650,8 +606,5 @@ Every node type, every capability — it's all in the open source repo. The clou
 
 ## Related Documents
 
-- [Monorepo Structure](MONOREPO_STRUCTURE.md) — Go + React monorepo architecture
-- [Wails Desktop Strategy](WAILS_DESKTOP_STRATEGY.md) — Desktop app implementation plan
-- [Desktop UI Architecture](DESKTOP_UI_ARCHITECTURE.md) — UI framework evaluation
-- [Bento Box UI PoC](BENTOBOX_UI_POC.md) — Visual editor concept (Phase 4)
-- [Bento Box Principle](../BENTO_BOX_PRINCIPLE.md) — Core philosophy
+- [Monorepo Structure](monorepo-structure.md) — Go + React monorepo architecture
+- [Code Standards](../rules/code-standards.md) — Bento Box Principle, code philosophy

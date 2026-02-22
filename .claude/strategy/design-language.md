@@ -9,13 +9,37 @@
 
 Bnto's visual identity should emerge from the product's core metaphor: **organized compartments, clean structure, purposeful arrangement.** The bento box is the reference point -- precision, economy, and beauty through structure rather than decoration.
 
-The visual identity is intentionally **underdefined** at this stage. What follows are the architectural patterns and engineering principles that will support any aesthetic direction. The specific palette, textures, and decorative treatments should develop organically as the product matures.
+**Visual reference: Mini Motorways (first level).** Warm cream base, soft muted palette, rounded shapes. Not sterile. Not corporate. Not cold. The aesthetic goal is: warm, inviting, simple, satisfying.
+
+**Brand personality:**
+- Warm, not cold
+- Inviting, not impressive
+- Simple, not simplistic
+- Satisfying, not flashy
+
+**Wordmark:** `bnto` — all lowercase, always. Four small rounded letters. No capitalization, no camel case, not even at the start of a sentence in brand contexts. The roundedness and lowercase together signal warmth and approachability before the user reads a single word of copy. This is the brand.
+
+**Brand voice:** Plain language. "It just works" as north star phrase. No jargon unless the user asked for it. We're talking to a designer who needs to compress 40 images, not an engineer who wants to build a pipeline.
+
+**UI stack:**
+- shadcn/ui for components (production-ready, accessible, composable)
+- Magic UI for animations (purposeful motion, not decorative)
+- Quicksand (Google Fonts via `next/font`) — rounded, warm, friendly at all sizes
+- Theme: **fully defined and implemented** — see `rules/theming.md` for all tokens
+
+**Palette at a glance:**
+- Background: warm cream (`--background`)
+- Primary: terracotta (`--primary`) — CTAs, active states
+- Accent: golden yellow (`--accent`) — highlights
+- Secondary: soft teal (`--secondary`)
+- Radius: `1.25rem` base — generously rounded everywhere
+- Shadows: warm-tinted (never cold gray)
 
 **What we know:**
-- Clean, structured, tool-oriented -- this is a workflow automation platform, not a social feed
-- The interface should feel like a well-organized workspace
-- Visual noise competes with workflow comprehension -- restraint is paramount
-- The design should convey precision and reliability
+- Warm and inviting -- this is a tool for real people, not an enterprise dashboard
+- The interface should feel like a well-organized workspace that's pleasant to spend time in
+- Visual noise competes with task completion -- restraint is paramount
+- The design should convey that it just works, not that it's impressive
 
 ---
 

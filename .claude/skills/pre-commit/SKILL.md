@@ -15,7 +15,7 @@ Before reviewing ANY code, read and internalize the project's coding standards a
 
 ```
 .claude/CLAUDE.md                  # Master reference — architecture, layering, tech stack
-.claude/BENTO_BOX_PRINCIPLE.md     # Single responsibility, file/function size limits
+.claude/rules/code-standards.md    # Single responsibility, file/function size limits (Bento Box Principle)
 .claude/rules/                     # All rule files (if present)
 ```
 

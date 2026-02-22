@@ -91,16 +91,16 @@ Bnto's planned revenue streams (hosted cloud execution, premium workflow feature
 
 ### 1. Git History Scan
 
-- [ ] Scan entire git history for accidentally committed secrets (API keys, tokens, passwords)
-- [ ] Use a tool like `gitleaks`, `trufflehog`, or `git-secrets` to automate the scan
-- [ ] If secrets are found in history: rotate the credentials immediately, then either rewrite history (`git filter-repo`) or start a fresh repo with a squashed initial commit
+- [x] Scan entire git history for accidentally committed secrets (API keys, tokens, passwords) — *Done Feb 2026: gitleaks found 2 false positives (test fixture `figd_secret123` in manager_test.go), no real secrets*
+- [x] Use a tool like `gitleaks`, `trufflehog`, or `git-secrets` to automate the scan — *Done: gitleaks installed and run, 119 commits scanned*
+- [ ] If secrets are found in history: rotate the credentials immediately, then either rewrite history (`git filter-repo`) or start a fresh repo with a squashed initial commit — *N/A: no real secrets found*
 
 ### 2. Environment Variable Audit
 
-- [ ] Verify every secret is in `.env` files (which are `.gitignore`d), not hardcoded
-- [ ] Confirm `.env.example` files contain only placeholder values, never real credentials
-- [ ] Review `next.config.ts`, `convex.config.ts`, `Taskfile.yml`, and any config files for leaked values
-- [ ] Review Go code for hardcoded URLs, keys, or credentials
+- [x] Verify every secret is in `.env` files (which are `.gitignore`d), not hardcoded — *Done Feb 2026: all secrets use env vars, Go secrets via OS keychain*
+- [x] Confirm `.env.example` files contain only placeholder values, never real credentials — *Done: root and apps/web .env.example checked, only placeholders*
+- [x] Review `next.config.ts`, `convex.config.ts`, `Taskfile.yml`, and any config files for leaked values — *Done: all clean*
+- [x] Review Go code for hardcoded URLs, keys, or credentials — *Done: no hardcoded secrets, tests use httptest mock servers*
 
 ### 3. Auth Flow Security Review
 
@@ -125,16 +125,16 @@ Bnto's planned revenue streams (hosted cloud execution, premium workflow feature
 
 ### 6. Dependency Audit
 
-- [ ] Run `pnpm audit` -- no critical or high vulnerabilities
-- [ ] Run `go vet` and review for security concerns
+- [x] Run `pnpm audit` -- no critical or high vulnerabilities — *Done Feb 2026: "No known vulnerabilities found"*
+- [x] Run `go vet` and review for security concerns — *Done: passes clean (TUI package excluded via build tag since it's on hold)*
 - [ ] Review `package.json` and `go.mod` for unnecessary dependencies that expand attack surface
 
 ### 7. Sensitive File Review (BLOCKER)
 
-- [ ] **Review `.claude/strategy/` before going public.** These docs may contain business strategy, competitive positioning, and roadmap details. Decide per-file whether to keep, redact, or move to a private location (Notion, Google Drive). This is a hard blocker, not optional
+- [x] **Review `.claude/strategy/` before going public.** — *Done Feb 2026: pricing/tier details removed from cloud-desktop-strategy.md and PLAN.md, moved to Notion. Architecture and engineering docs kept (showcase value). seo-monetization.md deleted and content distributed to appropriate docs.*
 - [ ] Review any comments in code that reference internal plans, personal notes, or competitive analysis
 - [ ] Ensure no test fixtures contain real user data or API responses with PII
-- [ ] Review `.claude/` broadly -- architecture docs are fine (they showcase engineering standards), but anything business-strategic must be reviewed
+- [x] Review `.claude/` broadly -- architecture docs are fine (they showcase engineering standards), but anything business-strategic must be reviewed — *Done: archive/ nuked, all strategy docs reviewed, SCREAMING_SNAKE filenames standardized to kebab-case, stale cross-references fixed*
 
 ---
 
@@ -148,9 +148,9 @@ Bnto's planned revenue streams (hosted cloud execution, premium workflow feature
 
 ### Phase 2: Prepare for Public
 
-- [ ] **Review `.claude/strategy/` docs** -- migrate business-sensitive content to private location if needed
-- [ ] Add MIT LICENSE file to repo root
-- [ ] Write a showcase README -- architecture diagram, quick start, design philosophy
+- [x] **Review `.claude/strategy/` docs** -- migrate business-sensitive content to private location if needed — *Done Feb 2026: pricing moved to Notion, archive cleaned, stale refs fixed*
+- [x] Add MIT LICENSE file to repo root — *Done: LICENSE exists (MIT, 2024-2026 Develonaut)*
+- [x] Write a showcase README -- architecture diagram, quick start, design philosophy — *Done: README.md exists with architecture, quick start, CLI usage, project structure*
 - [ ] Add CONTRIBUTING.md if accepting community contributions
 
 ### Phase 3: Go Public

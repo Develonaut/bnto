@@ -108,3 +108,9 @@ Header elements, back links, navigation controls -- extract into named leaf comp
   ...
 </PageLayout.Header>
 ```
+
+---
+
+## SEO Pages
+
+See [seo.md](seo.md) for the full SEO and URL strategy -- slug registry, static generation, metadata, sitemap, middleware integration, and the checklist for shipping new bnto tool pages.

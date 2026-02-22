@@ -1,8 +1,10 @@
 # Bnto
 
-**High-performance workflow automation -- CLI, desktop, and cloud.**
+**The one place small teams go to get things done.**
 
-Bnto lets you define automated workflows as `.bnto.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests. Workflows are built from composable nodes connected together to automate complex multi-step processes.
+Compress images, clean a CSV, rename files, call an API -- without the overhead of a platform or the fragility of a script. Simple by default, powerful when you need it.
+
+Bnto lets you define automated workflows as `.bnto.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests. Workflows are built from composable nodes -- the same tool that compresses a folder of images can power a 20-node pipeline calling external APIs.
 
 ## Why Bnto?
 
@@ -29,7 +31,7 @@ Bnto lets you define automated workflows as `.bnto.json` files that orchestrate 
 
 ## Quick Start
 
-**Prerequisites:** Go 1.21+, [Task](https://taskfile.dev)
+**Prerequisites:** Go 1.25+, [Task](https://taskfile.dev)
 
 ```bash
 # Build from source
@@ -125,6 +127,7 @@ bnto/
 │   │   ├── storage/        # Persistent storage
 │   │   ├── paths/          # Path resolution + config
 │   │   ├── logger/         # Logging
+│   │   ├── logs/           # Log file management
 │   │   └── secrets/        # Secrets management
 │   ├── tests/              # Integration tests + fixtures
 │   └── examples/           # Example .bnto.json files
@@ -133,19 +136,21 @@ bnto/
 │   ├── web/                # Next.js cloud app
 │   └── desktop/            # Wails v2 desktop app
 ├── packages/
+│   ├── core/              # Transport-agnostic API layer
+│   ├── ui/                # Design system (shadcn)
+│   ├── editor/            # Workflow editor components
 │   └── @bnto/
-│       ├── core/           # Transport-agnostic API layer
-│       ├── auth/           # Cloud authentication
-│       ├── ui/             # Design system (shadcn)
-│       └── editor/         # Workflow editor components
+│       ├── auth/          # Cloud authentication
+│       └── backend/       # Convex schema + functions
 ├── Taskfile.yml            # Go + cross-cutting orchestration
 ├── turbo.json              # Turborepo config
+├── go.work                 # Go workspace (engine + apps/api)
 └── .claude/                # Architecture docs + plan
 ```
 
 ## Development
 
-**Prerequisites:** Go 1.21+, Node.js 18+, pnpm, [Task](https://taskfile.dev)
+**Prerequisites:** Go 1.25+, Node.js 18+, pnpm, [Task](https://taskfile.dev)
 
 ```bash
 # Install frontend dependencies
@@ -195,12 +200,12 @@ For a deep dive into architecture decisions, see [`.claude/strategy/`](.claude/s
 Contributions are welcome. To get started:
 
 1. Fork and clone the repository
-2. Install prerequisites (Go 1.21+, Node.js 18+, pnpm, Task)
+2. Install prerequisites (Go 1.25+, Node.js 18+, pnpm, Task)
 3. Run `pnpm install` and `task build` to verify your setup
 4. Create a branch for your changes
 5. Run `task check` before submitting a pull request
 
-Please follow the existing code patterns and the [Bento Box Principle](.claude/BENTO_BOX_PRINCIPLE.md) -- small, focused files and functions with clear boundaries.
+Please follow the existing code patterns and the [Bento Box Principle](.claude/rules/code-standards.md) -- small, focused files and functions with clear boundaries.
 
 ## License
 

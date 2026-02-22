@@ -1,323 +1,288 @@
-# Bnto Master Plan
+# Bnto — Build Plan
 
-**The checklist for building Bnto Desktop + Bnto Cloud.**
+**Last Updated:** February 2026
+**This is the single source of truth for what's been built, what's in progress, and what's next.**
 
-Every task below feeds into the next. Work top to bottom. Don't skip ahead.
-
----
-
-## Phase 0: Foundation
-
-Solidify the engine, restructure the repo, establish the development environment.
-
-### 0.1 Monorepo Setup
-- [x] Rename Go packages from sushi names to simple names
-  - itamae → engine, pantry → registry, hangiri → storage
-  - miso → tui, kombu → paths, omakase → validator
-  - shoyu → logger, wasabi → secrets
-- [x] Move Go code to `engine/` directory
-  - Moved `cmd/`, `pkg/`, `tests/`, `examples/`, `go.mod`, `go.sum`, docs
-  - Module path unchanged (github.com/Develonaut/bnto)
-  - No import path changes needed (Go resolves relative to go.mod)
-- [x] Set up monorepo root (standard Turborepo layout)
-  - `Taskfile.yml` at root (Go orchestration via `task build`, `task test`)
-  - `turbo.json`, `package.json`, `pnpm-workspace.yaml` at root
-  - `packages/@bnto/core/` (`@bnto/core` — API layer with BntoAPI interface)
-  - `packages/@bnto/ui/` (`@bnto/ui` — design system)
-  - `packages/@bnto/editor/` (`@bnto/editor` — workflow editor)
-  - `apps/web/` (`@bnto/web` — Next.js stub)
-  - `apps/desktop/` (`@bnto/desktop` — Wails stub)
-  - `@bnto/` namespace directory (n8n pattern) for internal packages
-- [x] Verify everything builds and tests pass from new structure
-  - `task build` — Go engine builds
-  - `task ui:build` — Turborepo builds all 5 packages in dependency order
-  - `task build:all` — Full cross-cutting build verified
-- [x] Update `.claude/` docs to reflect new paths
-- [x] Fix integration tests (missed old sushi names in test code)
-
-### 0.1b Codebase Cleanup
-- [x] Remove interactive TUI package (`pkg/tui/` — 45+ files, ~3,500 lines)
-  - Not in scope for current development phase
-  - Deleted entire `pkg/tui/` directory and `cmd/bnto/tui.go`
-  - Updated all consumers to use `pkg/paths` for config loading
-  - Removed `configThemeCmd`, `configSlowMoCmd` (TUI-specific)
-  - Removed bubbletea, bubbles, huh, teatest dependencies
-  - Simplified CLI output (plain text errors, no lipgloss in CLI)
-- [x] Fix shellcommand StallDetection race condition
-  - Added `sync.Mutex` to test callback closure
-  - Test now passes with `-race` flag
-
-### 0.2 Engine Solidification (TDD)
-- [x] Unit tests for every node type (target >90% coverage)
-  - [x] edit-fields (90.0%)
-  - [x] filesystem (90.2%)
-  - [x] group (100.0%)
-  - [x] http-request (91.5%)
-  - [x] image (90.6%)
-  - [x] loop (98.6%)
-  - [x] parallel (90.7%)
-  - [x] shell-command (93.3%)
-  - [x] spreadsheet (90.5%)
-  - [x] transform (93.9%)
-- [x] Integration tests using fixture .bnto.json files
-  - [x] Create "Resize Images" fixture (loop + image resize)
-  - [x] Create "CSV Data Pipeline" fixture (spreadsheet + loop + transform)
-  - [x] Create "Image Composite" fixture (filesystem list + loop + image composite)
-  - [x] Create "HTTP + Transform" fixture (http-request + transform chain)
-  - [x] Create "Edit Fields Pipeline" fixture (edit-fields + transform)
-- [x] CLI smoke tests
-  - [x] `bnto run` with each fixture (validates end-to-end)
-  - [x] `bnto validate` with valid and invalid bntos
-  - [x] `bnto list` returns expected results
-  - [x] `--dry-run` flag works correctly
-- [x] Document the public API surface
-  - CLI → API mapping table in MONOREPO_STRUCTURE.md
-  - Every CLI command mapped to BntoService method with inputs/outputs
-
-### 0.3 Quality Gates
-- [x] `go test ./engine/pkg/... -race` passes (all packages)
-- [x] `go build ./engine/cmd/bnto` succeeds
-- [x] `go vet ./engine/...` clean
-- [x] All fixture bntos validate and execute correctly
-- [x] Test coverage report generated and reviewed
-  - Node types: 88–100%, api: 80.6%, registry: 100%, engine: 58.2%
+Skills and commands that reference the plan read this file. Update it after every sprint.
 
 ---
 
-## Phase 1: Cloud MVP
+## How This Works
 
-Ship a working web app where users can upload, edit, and run workflows.
+Tasks are organized into **sprints** (features) and **waves** (dependency groups within a sprint). All tasks in a wave can be picked up in parallel by agents. Waves must complete in order before the next wave starts.
 
-### 1.1 Go API Server
-- [x] Set up `apps/api/` as separate Go module with `go.work` workspace
-- [x] Create `engine/pkg/api/` service layer
-  - `BntoService` struct shared by CLI, HTTP server, and Wails
-  - `DefaultRegistry()` consolidates node type registration
-  - CLI refactored to use `api.DefaultRegistry()`
-- [x] Create `apps/api/` HTTP server
-  - HTTP handlers wrapping BntoService (stdlib `net/http` with Go 1.25 routing)
-  - `POST /api/run` — async execution with in-memory tracking, returns 202 + ID
-  - `POST /api/validate` — validate a workflow definition
-  - `GET/POST/DELETE /api/workflows` — list/get/save/delete workflows
-  - `GET /api/executions/{id}` — poll execution status + progress
-  - CORS middleware, graceful shutdown, background cleanup of expired executions
-- [x] API integration tests
-  - 12 handler tests + 8 execution manager tests (20 total, all pass with -race)
-  - `net/http/httptest` for in-process testing
-  - Tests cover: validate, CRUD workflows, async run+poll, CORS, error cases
-- [x] Contract tests
-  - 6 contract tests verify Go JSON responses match `@bnto/core` TypeScript types
-  - TS types updated to match actual Go API shapes (WorkflowDefinition, Execution, etc.)
+```
+- [ ]              → available, grab it
+- [ ] **CLAIMED**  → an agent is working on this, pick something else
+- [x]              → done
+```
 
-### 1.2 Convex Setup
-- [x] Deploy Convex on Railway via template
-- [x] Define Convex schema (users, workflows, executions, executionLogs)
-- [x] Implement Convex functions
-  - Queries: list workflows, get execution status, get logs
-  - Mutations: save workflow, update execution progress, insert logs
-  - Actions: proxy execution requests to Go backend (poll-based)
-- [x] Convex Auth (email/password via @convex-dev/auth Password provider)
-- [x] Run counter logic (runsUsed, runLimit, monthly reset cron)
-
-### 1.2b Deploy Guarded Web App Shell
-- [x] Set up `apps/web/` as a real Next.js app with Convex client provider
-- [x] Coming soon splash page (public — shown to unauthenticated visitors)
-- [x] Sign-in page (Convex Auth email/password)
-- [x] Whitelist gate — only approved users see the app behind the splash
-- [x] App shell layout (authenticated + whitelisted users only)
-- [x] Passphrase gate on splash page
-  - CLI-style input, server-side validation via `BNTO_PASSPHRASE` env var
-  - Cookie remembers access (30 days), reveals Sign In / Sign Up buttons
-  - `POST /api/verify-passphrase` API route
-- [x] Global nav bar with theme toggle
-  - Fixed top bar: "Bnto" left, ThemeToggle right (in root layout)
-  - Removed per-page theme toggles (dashboard, etc.)
-- [x] Deploy to Railway — splash screen live at public URL
-  - `Dockerfile.web`: multi-stage pnpm monorepo build, Next.js standalone output
-  - `railway.toml`: Dockerfile path + health check config
-  - Service: `bnto-web` on Railway (`bnto-web-production.up.railway.app`)
-  - Convex `_generated/` types checked into git (needed for CI/CD builds)
-- [x] Verify: unauthenticated → splash, authenticated + not whitelisted → waitlist message, whitelisted → app shell
-  - Playwright E2E tests cover splash gate, auth redirect, sign-in form
-  - Screenshots committed for visual regression tracking
-
-### 1.3 Frontend — @bnto/core
-- [N/A] ~~Set up Zustand for client state~~ (deferred — no client state needs until @bnto/editor Phase 1.5)
-- [x] Set up React Query with `@convex-dev/react-query` adapter
-  - `BntoCoreProvider` creates `ConvexReactClient` + `ConvexQueryClient` + `QueryClientProvider`
-  - Also wraps `ConvexAuthNextjsProvider` so `useConvex()`/`useConvexAuth()` work app-wide
-  - Source-based exports (no `dist/` build step — Next.js `transpilePackages` compiles from source)
-- [x] Runtime detection (browser vs Wails webview) for transport switching
-  - `runtime.ts`: `isWailsEnvironment()` checks for `window.go` (Wails v2 injection)
-  - `adapters/index.ts` barrel selects Convex or Wails adapter at module load time
-  - Wails adapter stubs throw "not implemented (Phase 3)"
-- [x] Implement hooks: `useWorkflows`, `useWorkflow`, `useExecution`, `useRunsRemaining`
-  - Plus: `useExecutions`, `useExecutionLogs`, `useCurrentUser`
-  - Each hook is a thin wrapper around `useQuery` + adapter query options
-- [x] Implement mutations: `useRunWorkflow`, `useSaveWorkflow`, `useRemoveWorkflow`
-  - Each mutation wraps `useMutation` + adapter mutation factory (`useConvexMutation`)
-- [N/A] ~~Unit tests for core package with mock adapters~~ (hooks are thin wrappers — `tsc --noEmit` validates; tests come when logic is added)
-
-### 1.4 Frontend — @bnto/ui
-- [x] Initialize shadcn with Bnto theme tokens
-  - `components.json`, `globals.css` with CSS variables for light/dark themes
-  - Primitives layer (shadcn raw) + shared layer (thin wrappers)
-- [x] Light/dark mode from day one
-  - ThemeProvider (next-themes), ThemeToggle component, global nav integration
-- [x] Core primitives: Button, Card, Input, Label
-- [x] Additional primitives: Dialog, Select, Tabs, Toaster
-- [ ] Bnto-specific: WorkflowCard, RunButton, StatusBadge
-
-### 1.5 Frontend — @bnto/editor
-- [ ] JSON editor component (Monaco or CodeMirror)
-- [ ] Schema validation for .bnto.json format
-- [ ] Syntax highlighting for bnto-specific fields
-
-### 1.6 Next.js Web App
-- [ ] Create `ui/apps/web/` with Next.js + Convex integration
-- [ ] Pages:
-  - [ ] Landing / sign-up / sign-in (Convex Auth)
-  - [ ] Dashboard — list saved workflows, "X runs remaining"
-  - [ ] Editor — upload .bnto.json or start from template, edit, run
-  - [ ] Execution — real-time progress via Convex subscription
-  - [ ] Results — output download, execution logs
-- [ ] Pre-built templates (the fixture bntos from Phase 0)
-  - "Resize Images", "CSV Data Pipeline", "Image Composite"
-- [x] Playwright E2E test infrastructure
-  - Chromium-only, port 3100, `task e2e` command, screenshots committed
-  - 6 tests: splash gate (4), navigation/auth (2)
-- [ ] Playwright E2E tests for app features
-  - [ ] Sign up flow
-  - [ ] Upload workflow → edit → run → see results
-  - [ ] Template selection → run → download results
-  - [ ] Run counter decrements correctly
-
-### 1.7 Deploy to Railway
-- [ ] Next.js service deployed
-- [ ] Go API server deployed
-- [ ] Convex instance running
-- [ ] Services communicating over private networking
-- [ ] Staging environment functional
-- [ ] Railway integration tests passing in CI
+**Scope rule:** Each task targets ONE package. Don't touch files outside the tagged package unless the task explicitly says so.
 
 ---
 
-## Phase 2: Polish + Files + History
+## Current State
 
-Make the product feel complete for individual users.
+**Status:** Phase 0 complete. Phase 1 Sprint 1 in progress — auth migration + Vercel deployment.
 
-### 2.1 Cloud File Handling
-- [ ] File upload UI (drag & drop)
-- [ ] Convex file storage integration
-- [ ] Cloud filesystem node (operates on uploaded files)
-- [ ] File download after execution
-- [ ] Storage limit enforcement per tier
+**Engine (complete):** Go CLI with 10 node types (all >90% test coverage), integration test fixtures, CLI smoke tests, Go HTTP API server with 20+ integration tests, BntoService shared API layer.
 
-### 2.2 Execution History
-- [ ] Execution history page with filtering
-- [ ] Detailed execution logs per node
-- [ ] Re-run previous executions
-- [ ] Execution duration and performance stats
+**Web app (partially built):** Next.js app shell, Convex Auth being replaced with Better Auth, passphrase gate being removed, deployed to Railway migrating to Vercel.
 
-### 2.3 Workflow Management
-- [ ] Workflow versioning
-- [ ] Duplicate workflow
-- [ ] Delete workflow (soft delete)
-- [ ] Expanded template library
-
-### 2.4 Editor Improvements
-- [ ] Auto-complete for node type names
-- [ ] Inline validation with error highlighting
-- [ ] Parameter documentation on hover
+**Packages (partially built):** @bnto/core hooks + Convex adapter, @bnto/ui shadcn primitives, @bnto/editor stub, @bnto/auth (migrating to Better Auth), @bnto/backend Convex schema + functions.
 
 ---
 
-## Phase 3: Desktop App
+## What's Built (don't redo)
 
-Free local desktop app using Wails v2 + shared React components.
-
-### 3.1 Wails Setup
-- [ ] Create `engine/cmd/bnto-desktop/`
-- [ ] Wails v2 project with Vite + React
-- [ ] Go ↔ React bindings via Wails
-
-### 3.2 Desktop Integration
-- [ ] `WailsClient` implements `BntoAPI` in `@bnto/core`
-- [ ] Reuse `@bnto/ui` and `@bnto/editor` from web
-- [ ] Full local execution (all node types including shell-command)
-- [ ] Local file browser for selecting .bnto.json files
-
-### 3.3 Desktop Distribution
-- [ ] macOS build (.app bundle, code signing)
-- [ ] Windows build (.exe installer)
-- [ ] Linux build (AppImage or .deb)
-- [ ] Auto-update mechanism
+- [x] Monorepo: Turborepo + pnpm + Taskfile.dev + go.work
+- [x] Go engine: 10 node types, orchestration, validation, storage, secrets, path resolution
+- [x] Go API server: HTTP handlers wrapping BntoService (apps/api/)
+- [x] Contract tests: Go JSON responses match @bnto/core TypeScript types
+- [x] @bnto/core: React Query + Convex adapter, hooks (useWorkflows, useExecution, useRunWorkflow, etc.)
+- [x] @bnto/ui: shadcn design system (Button, Card, Input, Label, Dialog, Select, Tabs, Toaster)
+- [x] @bnto/backend: Convex schema (users, workflows, executions, executionLogs), auth, crons, run counter
+- [x] Web app shell: splash page, passphrase gate, sign-in/up, whitelist gate, nav + theme toggle
+- [x] Playwright E2E infrastructure: 6 tests (splash gate, auth, navigation)
 
 ---
 
-## Phase 4: Monetization + Visual Editor
+## Revenue & Monetization Context
 
-Revenue and the next-gen editing experience.
+Pricing, revenue projections, sprint-to-revenue milestone mapping, and "ready to charge" criteria live in Notion — not in this public repo.
 
-### 4.1 Payments
-- [ ] Stripe integration
-- [ ] Tier management (Free, Starter, Pro)
-- [ ] Webhook handling for payment events
-- [ ] Upgrade/downgrade flow in UI
+> **Notion:** Search the bnto workspace for "SEO & Monetization Strategy" using the Notion MCP.
+> Agents: fetch that page when you need pricing details, quota limits, or to understand what monetization gates apply to the sprint you're working on.
 
-### 4.2 Visual Workflow Editor
-- [ ] Drag-and-drop node canvas (React Flow or custom)
-- [ ] Node palette with all node types
-- [ ] Property editor per node
-- [ ] Edge connections between nodes
-- [ ] JSON ↔ visual round-trip (edit in either mode)
 
-### 4.3 Cloud Shell Commands
-- [ ] Pre-approved command allowlist (ffmpeg, imagemagick)
-- [ ] Install approved tools in Railway container
-- [ ] Sandboxing strategy for user safety
 
 ---
 
-## Parallel Track: ADO Dashboard Use Case
+## Phase 0: Foundation — COMPLETE
 
-Real-world dogfooding effort that adds general-purpose node types and showcase templates. Runs parallel to Phase 1-4 — no blocking dependencies. See [ADO_DASHBOARD_USE_CASE.md](.claude/strategy/ADO_DASHBOARD_USE_CASE.md) for full context.
+Phase 0 archive removed from repo (nuked with archive folder cleanup).
+
+**What shipped:** Monorepo restructuring, engine solidification with TDD (>90% coverage on all 10 node types), integration test fixtures, CLI smoke tests, Go API server, Convex setup, web app shell, @bnto/core hooks, @bnto/ui shadcn system.
+
+---
+
+## Phase 1: Web App
+
+**Goal:** Ship a web app on Vercel where users can run predefined Bntos, create workflows, and manage their account. Auth gates access. SEO URL routing live from day one.
+
+---
+
+### Sprint 1: Infrastructure Migration
+**Goal:** Move from Railway/Convex Auth to Vercel/Better Auth. Clean auth foundation before building features on top.
+
+#### Wave 1 (parallel — setup)
+
+- [x] `@bnto/auth` — Replace Convex Auth with Better Auth + @better-auth/convex adapter
+- [x] `@bnto/backend` — Update Convex schema and functions for Better Auth
+- [x] `apps/web` — Set up Vercel deployment (vercel.json, env vars, preview deployments)
+
+#### Wave 2 (parallel — integration)
+
+- [x] `@bnto/core` — BntoProvider + ConvexClientProvider + SessionProvider (hydration-safe)
+- [x] `apps/web` — Proxy middleware (cookie-presence route protection)
+- [x] `apps/web` — AppGate component (splash until auth resolves)
+- [x] `apps/web` — Sign-in / sign-up pages using Better Auth client
+- [x] `apps/web` — Route definitions (lib/routes.ts — public/private/auth paths)
+
+#### Wave 3 (parallel — cleanup)
+
+- [ ] `@bnto/core` — Sign-out flow (signal cookie + background cleanup pattern)
+- [ ] `apps/web` — Remove passphrase gate and whitelist logic (auth is the gate now)
+- [ ] `apps/web` — Remove old Convex Auth integration
+
+#### Wave 4 (sequential — verify)
+
+- [ ] `apps/web` — Verify auth flow end-to-end on Vercel preview deployment
+- [ ] `apps/web` — Playwright E2E: sign-in, sign-out, route protection
+
+---
+
+### Sprint 2: Predefined Bntos + SEO
+**Goal:** Users can land on a Bnto URL, run it immediately, and get output. This is the first moment bnto is useful to a stranger. SEO footprint goes live.
+
+**Reference:** `.claude/strategy/bntos.md` — the full Bnto directory with Tier 1 list, slugs, target queries, and fixture status.
+
+#### Wave 1 (parallel — fixtures)
+
+- [ ] `engine` — Fixture: `compress-images.bnto.json` (verify existing, add to test suite if not already)
+- [ ] `engine` — Fixture: `resize-images.bnto.json` (verify existing, add to test suite)
+- [ ] `engine` — Fixture: `convert-image-format.bnto.json` (png → webp via image node)
+- [ ] `engine` — Fixture: `rename-files.bnto.json` (filesystem + edit-fields nodes)
+- [ ] `engine` — Fixture: `clean-csv.bnto.json` (spreadsheet node — strip empty rows/cols, normalize headers)
+- [ ] `engine` — Fixture: `rename-csv-columns.bnto.json` (spreadsheet + edit-fields nodes)
+
+#### Wave 2 (parallel — SEO routing + UI)
+
+- [ ] `apps/web` — SEO URL routing: `app/[bnto]/page.tsx` with dynamic slug → Bnto mapping
+- [ ] `apps/web` — Per-slug server-side metadata (title, description, og tags) for all 6 Tier 1 Bntos
+- [ ] `@bnto/ui` — WorkflowCard component (name, description, node count, last run status)
+- [ ] `@bnto/ui` — StatusBadge component (pending, running, completed, failed)
+- [ ] `@bnto/ui` — RunButton component (run with loading state)
+- [ ] `@bnto/ui` — EmptyState component (no workflows yet)
+- [ ] `@bnto/backend` — Execution event logging (every run logged, even anonymous, with timestamp + bnto slug)
+
+#### Wave 3 (parallel — cloud execution)
+
+- [ ] `apps/api` — Deploy Go API server to Railway (private networking to Convex)
+- [ ] `@bnto/backend` — Convex actions to proxy execution to Go API and poll for results
+- [ ] `@bnto/core` — Execution hooks wired to Convex adapter (start, poll, get results)
+- [ ] `apps/web` — File upload UI for Bnto inputs (drag & drop, R2 presigned URL)
+- [ ] `apps/web` — Execution progress page (real-time via Convex subscription)
+- [ ] `apps/web` — Results page (output download, execution summary)
+
+#### Wave 4 (sequential — test + verify)
+
+- [ ] `apps/web` — Playwright E2E: land on `/compress-images`, upload file, run, download result
+- [ ] `apps/web` — Playwright E2E: verify SEO metadata renders correctly on each Tier 1 slug
+- [ ] `engine` — Verify all 6 fixtures run clean via `bnto run` integration tests
+
+> **SEO checkpoint:** Before this sprint closes, verify in browser devtools that each `/[bnto]` URL returns correct `<title>` and `<meta description>` in the page source (not client-rendered). If they're missing from the HTML source, the metadata is being rendered client-side and won't be indexed.
+
+> **Monetization checkpoint:** Confirm execution events are being written to Convex with `userId` (or fingerprint), `bntoslug`, `timestamp`, and `durationMs`. Sprint 3 builds the usage dashboard on top of this data — it needs to exist first.
+
+---
+
+### Sprint 3: Dashboard + Run Quota
+**Goal:** Authenticated users see their history, run count, and get a meaningful account experience. The monetization infrastructure is in place before any paywall is needed.
+
+#### Wave 1 (parallel — quota schema)
+
+- [ ] `@bnto/backend` — Add `runsUsedThisMonth`, `runResetDate`, `planTier` to user schema
+- [ ] `@bnto/backend` — Monthly reset cron (reset `runsUsedThisMonth` on the 1st of each month)
+- [ ] `@bnto/backend` — Increment run counter on each execution (check before allowing, reject if over limit)
+- [ ] `@bnto/core` — `useRunsRemaining()` hook (returns `{ used, limit, resetDate }`)
+
+#### Wave 2 (parallel — dashboard UI)
+
+- [ ] `apps/web` — Dashboard page: list of saved workflows, recent executions, run counter widget
+- [ ] `apps/web` — Run counter widget (shows "X of [limit] runs used this month, resets [date]" — limit from Convex user record)
+- [ ] `apps/web` — Upgrade prompt component (shown when at or near limit — see copy in Notion: search bnto workspace for "SEO & Monetization Strategy")
+- [ ] `apps/web` — Execution history page (list of past runs with status and output links)
+
+#### Wave 3 (sequential — test)
+
+- [ ] `apps/web` — Playwright E2E: run counter increments after execution
+- [ ] `apps/web` — Playwright E2E: upgrade prompt appears when limit reached
+- [ ] `@bnto/backend` — Unit tests for run counter logic and monthly reset cron
+
+---
+
+## Phase 2: Desktop App (Local Execution)
+
+**Goal:** Free desktop app using Wails v2. Same React frontend, local Go engine. Free forever, unlimited runs.
+
+---
+
+### Sprint 4: Wails Bootstrap
+
+#### Wave 1 (parallel — setup)
+
+- [ ] `apps/desktop` — Bootstrap Wails v2 project with Vite + React
+- [ ] `@bnto/core` — Implement Wails adapter (replace stubs with real Go bindings)
+- [ ] `engine` — Expose engine functions for Wails bindings (RunWorkflow, ValidateWorkflow, etc.)
+
+#### Wave 2 (parallel — integration)
+
+- [ ] `apps/desktop` — Wire up Go ↔ React bindings (auto-generated TypeScript from Go structs)
+- [ ] `@bnto/core` — Runtime detection routes to Wails adapter in Wails webview
+- [ ] `apps/desktop` — Local file browser for selecting .bnto.json files
+
+#### Wave 3 (sequential — verify)
+
+- [ ] `apps/desktop` — Verify workflow list, edit, and save work via Wails bindings
+- [ ] `apps/desktop` — Verify runtime detection correctly identifies Wails environment
+
+---
+
+### Sprint 5: Local Execution
+
+#### Wave 1 (parallel — execution)
+
+- [ ] `apps/desktop` — Execute workflows via Wails Go bindings (all 10 node types)
+- [ ] `@bnto/core` — Execution progress streaming via Wails adapter
+- [ ] `@bnto/ui` — Execution progress component (node status, duration, logs)
+
+#### Wave 2 (parallel — features)
+
+- [ ] `apps/desktop` — Execution results view (output data, logs, duration)
+- [ ] `apps/desktop` — shell-command node support (full local execution, no restrictions)
+- [ ] `apps/desktop` — Error handling and cancellation support
+
+#### Wave 3 (sequential — build + distribute)
+
+- [ ] `apps/desktop` — Integration tests for local execution
+- [ ] `apps/desktop` — macOS build (.app bundle, code signing)
+- [ ] `apps/desktop` — Windows build (.exe)
+- [ ] `apps/desktop` — Linux build (AppImage)
+
+---
+
+## Phase 3: Polish + Monetization
+
+**Goal:** Wire up payments, enforce quotas, and make the product feel complete.
+
+---
+
+### Sprint 6: Stripe + Quota Enforcement
+
+**"Ready to charge" gate:** Before this sprint starts, confirm: real users are running Bntos, run counter data is accurate in Convex, upgrade prompt is built and tested.
+
+#### Wave 1 (parallel — payments)
+
+- [ ] `apps/web` — Stripe integration (checkout session, webhook handler, subscription sync to Convex)
+- [ ] `@bnto/backend` — `planTier` updated on successful Stripe webhook (free → pro)
+- [ ] `apps/web` — Upgrade page (`/upgrade`) — pricing, Pro benefits, Stripe checkout CTA
+- [ ] `apps/web` — Billing management page (current plan, cancel, manage via Stripe portal)
+
+#### Wave 2 (parallel — enforcement)
+
+- [ ] `apps/api` — Reject execution if `runsUsedThisMonth >= limit` (server-side, not client-side)
+- [ ] `apps/web` — File size enforcement at R2 presigned URL generation (limits in Notion: "SEO & Monetization Strategy")
+- [ ] `@bnto/backend` — Pro feature gates: 30-day history retention, team sharing (up to 5 members)
+
+#### Wave 3 (sequential — test)
+
+- [ ] `apps/web` — Playwright E2E: free user hits limit, sees upgrade prompt, upgrades via Stripe
+- [ ] `apps/web` — Playwright E2E: Pro user runs >25 flows without hitting limit
+
+---
+
+### Sprint 7: Visual Editor + History
+
+- [ ] `@bnto/editor` — Drag-and-drop node canvas (React Flow or custom)
+- [ ] `@bnto/editor` — Node palette with all 10 node types
+- [ ] `@bnto/editor` — Property editor per node
+- [ ] `@bnto/editor` — JSON ↔ visual round-trip (edit in either mode)
+- [ ] `apps/web` — Execution history with full per-node logs and re-run support
+- [ ] `apps/web` — Workflow versioning and duplication
+
+---
+
+## Parallel Track: ADO Dashboard
+
+Real-world dogfooding. Runs alongside any phase. Adds general-purpose node types that benefit all users.
 
 ### Phase A: `ado` Node Type
-- [ ] Implement `ado` node in `engine/pkg/node/library/ado/`
-  - Operations: `wiql` (WIQL query → work item IDs), `getWorkItems` (batch fetch by IDs), `getTestRuns`, `getBuildStatus`
-  - Authentication via Bnto secrets (`{{SECRETS.ADO_PAT}}`, `{{SECRETS.ADO_ORG}}`)
-  - ADO REST API via Go `net/http` (no SDK dependency)
-  - Handle batch pagination (200 items per request max)
-- [ ] Unit tests with mock HTTP server (`httptest`)
-- [ ] Integration test with fixture `.bnto.json`
-- [ ] Register in `DefaultRegistry()` in `engine/pkg/api/service.go`
+- [ ] `engine` — Implement `ado` node (WIQL queries, work items, test runs, build status)
+- [ ] `engine` — Unit tests with mock HTTP server
+- [ ] `engine` — Integration fixture `.bnto.json`
+- [ ] `engine` — Register in DefaultRegistry()
 
 ### Phase B: `aggregate` Node Type
-- [ ] Implement `aggregate` node in `engine/pkg/node/library/aggregate/`
-  - Operations: `groupBy`, `count`, `sum`, `average`, `percentage`, `sortBy`
-  - General-purpose — works on any collection, not ADO-specific
-  - Handle JSON number type (`float64`) correctly
-- [ ] Unit tests with diverse sample data sets
-- [ ] Integration test chaining `aggregate` with other node types
+- [ ] `engine` — Implement `aggregate` node (groupBy, count, sum, average, percentage, sortBy)
+- [ ] `engine` — Unit tests, integration test chaining with other node types
 
 ### Phase C: `report` Node Type
-- [ ] Implement `report` node in `engine/pkg/node/library/report/`
-  - Output formats: `terminal` (ANSI + Unicode charts), `markdown`, `json`
-  - Chart types: bar chart (Unicode blocks), progress bar, table
-  - General-purpose — works with any structured data
-- [ ] Unit tests for each output format and chart type
-- [ ] Verify nested template resolution in `sections` parameter
+- [ ] `engine` — Implement `report` node (terminal, markdown, json output)
+- [ ] `engine` — Unit tests for each format
 
-### Phase D: Dashboard Templates & Documentation
-- [ ] Create 3-5 example `.bnto.json` dashboard workflows
-  - Sprint progress, triage queue, test completion, build status, effort burndown
-- [ ] Add to `engine/examples/` as showcase templates
-- [ ] Documentation for customization and extension
-
-### Prerequisites / Engine Gaps to Address
-- [ ] **Workflow-level parameters** — Currently no mechanism for `bnto run file.bnto.json --param key=value`. Either add an `edit-fields` preamble or enhance the engine. Needed for configurable dashboard workflows.
-- [ ] **YAML config loading** (optional, Phase D) — Dashboard config in YAML is a nice-to-have. Can defer — hardcode values in `.bnto.json` for now.
+### Phase D: Dashboard Templates
+- [ ] `engine` — 3-5 example dashboard `.bnto.json` fixtures in `engine/examples/`
 
 ---
 
@@ -325,8 +290,13 @@ Real-world dogfooding effort that adds general-purpose node types and showcase t
 
 | Document | Purpose |
 |----------|---------|
-| `.claude/strategy/CLOUD_DESKTOP_STRATEGY.md` | Architecture, technology decisions, execution model |
-| `.claude/strategy/MONOREPO_STRUCTURE.md` | Repo structure, API abstractions, package design |
-| `.claude/strategy/ADO_DASHBOARD_USE_CASE.md` | ADO dashboard use case, new node types, phasing |
-| `.claude/decisions/MONOREPO_TOOLING.md` | Taskfile + Turborepo decision |
-| `.claude/BENTO_BOX_PRINCIPLE.md` | Core code philosophy |
+| `.claude/strategy/bntos.md` | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers |
+| `.claude/rules/pages.md` | SEO URL implementation rules |
+| `.claude/rules/architecture.md` | Run quota schema, R2 transit rules |
+| `.claude/strategy/core-principles.md` | Trust commitments |
+| `.claude/strategy/cloud-desktop-strategy.md` | Architecture, technology decisions, execution model |
+| `.claude/strategy/monorepo-structure.md` | Repo structure, API abstractions, package design |
+| `.claude/decisions/monorepo-tooling.md` | Taskfile + Turborepo decision |
+| `.claude/rules/code-standards.md` | Code philosophy, Bento Box Principle |
+| `.claude/rules/` | All coding standards and conventions |
+| `.claude/skills/` | Agent skills (pickup, groom, code-review, pre-commit) |

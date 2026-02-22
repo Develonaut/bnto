@@ -13,7 +13,7 @@ Before reviewing ANY code, read and internalize these files. They are the source
 
 ```
 .claude/CLAUDE.md                  # Master reference — architecture, layering, tech stack
-.claude/BENTO_BOX_PRINCIPLE.md     # Single responsibility, file/function size limits
+.claude/rules/code-standards.md    # Single responsibility, file/function size limits (Bento Box Principle)
 .claude/rules/                     # All rule files (if present)
 ```
 

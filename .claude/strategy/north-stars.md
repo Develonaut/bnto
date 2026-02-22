@@ -12,9 +12,32 @@ We're standing on the shoulders of giants. This is our acknowledgment of that.
 
 ---
 
+## Who We're Actually Competing With (Day One)
+
+Before the aspirational north stars, a grounding note: **Bnto's day-one competition is single-purpose web tools, not workflow platforms.**
+
+| Tool | What they do | Their gap |
+|------|-------------|----------|
+| **TinyPNG** | Image compression | 20 images/mo free, $25/yr paid, one thing only |
+| **Squoosh** | Image compression/conversion | Free but one file at a time, no batch |
+| **CloudConvert** | File format conversion | Pay per conversion, no composability |
+| **Modern CSV / Datablist** | CSV editing | Either complex or paid, nothing simple and free |
+
+Our positioning: **one place instead of five bookmarks.** The casual user — designer, solo operator, small team — has a folder of these tools and uses a different one for every task. Bnto replaces the folder.
+
+This is the right frame for Sprint 2 and the MVP. The workflow platform comparisons below are architectural and aspirational north stars, not competitive threats at launch.
+
+**Important:** Starting with casual users is a growth strategy, not a ceiling. The strength of the product is that making easy tasks stupid simple is the same foundation that makes hard tasks easy. The power user doesn't get a different product — they get more of the same product. The person who started by compressing images eventually builds a multi-step pipeline that calls an API, transforms the response, and saves the output. The mental model never changes. The complexity just scales.
+
+We start where we can win. We grow toward where we want to be.
+
+---
+
 ## n8n
 
 **What they are:** Open source workflow automation platform (self-hostable alternative to Zapier). 50K+ GitHub stars.
+
+**Our relationship to them:** North star engineering target, not current competition. One person building in their off time is not playing the same ballgame as a funded platform with a full team. That's fine. The goal is to build the foundation *correctly* so that when the time comes, the architecture can go there. n8n didn't start with solid test discipline baked in — we do. That's the compounding advantage.
 
 **What we admire:**
 

@@ -13,21 +13,24 @@ Before doing ANY work, read and internalize the project's coding standards and a
 
 ```
 .claude/CLAUDE.md                  # Master reference — architecture, layering, tech stack
-.claude/BENTO_BOX_PRINCIPLE.md     # Single responsibility, file/function size limits
+.claude/rules/code-standards.md    # Single responsibility, file/function size limits (Bento Box Principle)
 .claude/rules/                     # All rule files (if present)
+.claude/rules/pages.md             # SEO URL requirements and predefined Bnto page conventions
+.claude/rules/architecture.md      # Run quota schema, R2 transit rules
+.claude/strategy/core-principles.md # Trust commitments
 ```
 
 **Read ALL of these files now.** Do not skim, do not skip. You will be held to every rule in them. The inlined summaries later in this prompt are reminders — the rule files and CLAUDE.md are the source of truth.
 
 ## Step 2: Read the Plan
 
-Read `.claude/PLAN-PARALLEL.md`. Find the **current sprint** (the first sprint with unclaimed tasks).
+Read `.claude/PLAN.md`. Find the **current sprint** (the first sprint with unclaimed tasks).
 
 ## Step 3: Claim a Task
 
 - Find an unclaimed task (`- [ ]` without **CLAIMED**) in the earliest available wave
 - **Do not pick tasks from a wave if the previous wave has unclaimed or claimed (in-progress) tasks** — waves are sequential
-- Edit `PLAN-PARALLEL.md` to mark your task: change `- [ ]` to `- [ ] **CLAIMED**`
+- Edit `PLAN.md` to mark your task: change `- [ ]` to `- [ ] **CLAIMED**`
 - If all tasks in the current wave are claimed or done, do NOT move to the next wave — another agent is still working. Instead, report back that no tasks are available right now
 
 ## Step 4: Scope Check
@@ -38,6 +41,13 @@ Before writing any code, confirm your boundaries:
 - **Do not modify files outside your tagged package** unless the task explicitly requires it
 - **Check git status first** — if you see uncommitted changes in your package's files, STOP and report to the user. Another agent may have been working here
 - **Read existing code** in the files you plan to modify before making changes. Understand patterns, naming conventions, and structure already in place
+
+**SEO & Monetization scope check** — ask these before writing a single line:
+
+- **Adding a new predefined Bnto?** — It needs a dedicated URL slug and server-side metadata. This is not optional. If the task doesn't mention it, add it. See `.claude/rules/pages.md`.
+- **Adding execution logic?** — Does it increment `runsUsedThisMonth` in Convex? If not, why not? Every execution counts against the user's quota.
+- **Building a user-facing flow?** — If the user could be near their run limit during this flow, does the UI surface that? Does hitting the limit show the honest upgrade prompt?
+- **Sprint 2 or earlier?** — Execution events must be logged from the first real run. Even anonymously. The data must exist before Sprint 3 builds the dashboard on top of it.
 
 ## Step 5: Implement
 
@@ -56,7 +66,7 @@ Write the code for your task. Follow the rules in `CLAUDE.md` and `.claude/rules
 
 - **Pure functions -> hooks -> components** — extract business logic into pure testable functions (< 20 lines), hooks are thin reactive wrappers (< 30 lines), components just render
 - **Hook decomposition** — if a hook does fetching + transformation + subscription + side effects, split it into focused sub-hooks. Signs it's too big: >30 lines, multiple unrelated state, hard to name without "and"
-- **Bento Box Principle** — every file < 250 lines, every function < 20 lines. No utility grab bags, no god objects. See `.claude/BENTO_BOX_PRINCIPLE.md` for the full checklist
+- **Bento Box Principle** — every file < 250 lines, every function < 20 lines. No utility grab bags, no god objects. See `.claude/rules/code-standards.md` for the full checklist
 
 ### Go Code Standards (CRITICAL)
 
@@ -188,7 +198,7 @@ After all checks pass, provide a summary:
 
 ## Step 9: Update the Plan
 
-Edit `.claude/PLAN-PARALLEL.md`:
+Edit `.claude/PLAN.md`:
 - Change your task from `- [ ] **CLAIMED**` to `- [x]` (mark done)
 - If your completion unblocks the next wave (all tasks in current wave are now `[x]`), note this in your summary so the user knows to start new agents on the next wave
 
