@@ -91,9 +91,9 @@ Phase 0 archive removed from repo (nuked with archive folder cleanup).
 
 #### Wave 3 (parallel — cleanup)
 
-- [ ] `@bnto/core` — Sign-out flow (signal cookie + background cleanup pattern)
-- [ ] `apps/web` — Remove passphrase gate and whitelist logic (auth is the gate now)
-- [ ] `apps/web` — Remove old Convex Auth integration
+- [x] `@bnto/core` — Sign-out flow (signal cookie + background cleanup pattern)
+- [x] `apps/web` — Remove passphrase gate and whitelist logic (auth is the gate now)
+- [x] `apps/web` — Remove old Convex Auth integration
 
 #### Wave 4 (sequential — verify)
 
@@ -283,6 +283,22 @@ Real-world dogfooding. Runs alongside any phase. Adds general-purpose node types
 
 ### Phase D: Dashboard Templates
 - [ ] `engine` — 3-5 example dashboard `.bnto.json` fixtures in `engine/examples/`
+
+---
+
+## Backlog
+
+### Engine: Loop Node Output Collection
+
+The `loop` node currently collects original items, not sub-node outputs. This means a workflow like "loop + edit-fields → collect transformed rows → write" doesn't work — the loop passes through the original rows, discarding the edit-fields transformation.
+
+**Impact:** The `rename-csv-columns` fixture is a read → write pass-through. True column remapping requires this fix.
+
+**Options:**
+- [ ] `engine` — Loop node collects sub-node outputs instead of (or in addition to) original items
+- [ ] `engine` — New array-level transform node that operates on all rows at once (alternative to loop-based approach)
+
+Pick one approach when this is prioritized. The loop output collection route is more general-purpose; the array transform node is simpler for bulk column operations.
 
 ---
 

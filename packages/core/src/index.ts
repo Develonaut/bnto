@@ -21,6 +21,9 @@ export {
   useSessionStatus,
 } from "./hooks";
 
+// Auth action hooks
+export { useSignOut } from "./hooks";
+
 // Types — workflow definitions, API responses, Convex document types
 export type {
   BntoAPI,

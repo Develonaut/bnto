@@ -14,17 +14,6 @@ export const getMe = query({
   },
 });
 
-/** Check if the current user is whitelisted for app access. */
-export const isWhitelisted = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAppUserId(ctx);
-    if (userId === null) return false;
-    const user = await ctx.db.get(userId);
-    return user?.isWhitelisted === true;
-  },
-});
-
 /** Get remaining runs for the current user. */
 export const getRunsRemaining = query({
   args: {},

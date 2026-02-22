@@ -16,3 +16,6 @@ export { useCurrentUser } from "./useCurrentUser";
 export { useReady } from "./useReady";
 export { useIsAuthenticated } from "./useIsAuthenticated";
 export { useSessionStatus } from "./useSessionStatus";
+
+// Auth action hooks
+export { useSignOut } from "./useSignOut";
