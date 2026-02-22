@@ -27,11 +27,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `pnpm dev --port ${port}`,
+    command: `npx next dev --port ${port}`,
     url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
-    env: {
-      BNTO_PASSPHRASE: "testpassphrase",
-    },
   },
 });

@@ -1,7 +1,7 @@
 {
   "name": "bnto-ui",
   "private": true,
-  "packageManager": "pnpm@10.18.2",
+  "packageManager": "pnpm@10.19.0",
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
@@ -9,7 +9,10 @@
     "dev": "turbo run dev"
   },
   "devDependencies": {
-    "turbo": "^2.0.0",
-    "typescript": "^5.4.0"
+    "turbo": "^2.4.4",
+    "typescript": "catalog:"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "sharp", "unrs-resolver"]
   }
 }
