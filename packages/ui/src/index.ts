@@ -10,3 +10,4 @@
  */
 
 export { cn } from "./lib/utils";
+export { durations, easings, transitions } from "./motion";

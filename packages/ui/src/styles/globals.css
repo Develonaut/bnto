@@ -7,6 +7,7 @@
 @source "../../../apps/web/**/*.{ts,tsx}";
 
 @theme inline {
+  /* Colors — mapped from runtime variables (light/dark) */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -40,88 +41,164 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Fonts */
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
 
+  /* Border radius — base 1.25rem (20px) */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Animation durations */
+  --duration-instant: 75ms;
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 1200ms;
+
+  /* Easings */
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Shadows — warm-tinted, mapped from runtime variables (light/dark) */
+  --shadow-sm: var(--ui-shadow-sm);
+  --shadow: var(--ui-shadow);
+  --shadow-md: var(--ui-shadow-md);
+  --shadow-lg: var(--ui-shadow-lg);
+  --shadow-xl: var(--ui-shadow-xl);
 }
 
+/* ── Light mode ─────────────────────────────────────────────── */
+
 :root {
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(0 0% 3.9%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(0 0% 3.9%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(0 0% 3.9%);
-  --primary: hsl(0 0% 9%);
-  --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(0 0% 96.1%);
-  --secondary-foreground: hsl(0 0% 9%);
-  --muted: hsl(0 0% 96.1%);
-  --muted-foreground: hsl(0 0% 45.1%);
-  --accent: hsl(0 0% 96.1%);
-  --accent-foreground: hsl(0 0% 9%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(0 0% 89.8%);
-  --input: hsl(0 0% 89.8%);
-  --ring: hsl(0 0% 3.9%);
-  --chart-1: hsl(12 76% 61%);
-  --chart-2: hsl(173 58% 39%);
-  --chart-3: hsl(197 37% 24%);
-  --chart-4: hsl(43 74% 66%);
-  --chart-5: hsl(27 87% 67%);
-  --sidebar: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(0 0% 3.9%);
-  --sidebar-primary: hsl(0 0% 9%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(0 0% 96.1%);
-  --sidebar-accent-foreground: hsl(0 0% 9%);
-  --sidebar-border: hsl(0 0% 89.8%);
-  --sidebar-ring: hsl(0 0% 3.9%);
-  --radius: 0.625rem;
+  /* Surfaces */
+  --background: oklch(0.9899 0.0164 95.22);
+  --foreground: oklch(0.2628 0.0204 31.40);
+  --card: oklch(1.0000 0 0);
+  --card-foreground: oklch(0.2628 0.0204 31.40);
+  --popover: oklch(1.0000 0 0);
+  --popover-foreground: oklch(0.2628 0.0204 31.40);
+
+  /* Primary — terracotta */
+  --primary: oklch(0.6751 0.1788 35.19);
+  --primary-foreground: oklch(1.0000 0 0);
+
+  /* Secondary — soft teal */
+  --secondary: oklch(0.8657 0.0705 189.39);
+  --secondary-foreground: oklch(0.4372 0.0600 187.70);
+
+  /* Muted — warm off-white */
+  --muted: oklch(0.9491 0.0133 95.19);
+  --muted-foreground: oklch(0.5452 0.0251 31.20);
+
+  /* Accent — golden yellow */
+  --accent: oklch(0.8885 0.1338 91.06);
+  --accent-foreground: oklch(0.2628 0.0204 31.40);
+
+  /* Destructive — warm red */
+  --destructive: oklch(0.6356 0.2082 25.38);
+  --destructive-foreground: oklch(1.0000 0 0);
+
+  /* Borders & inputs */
+  --border: oklch(0.8976 0.0168 95.25);
+  --input: oklch(0.9320 0.0111 95.17);
+  --ring: oklch(0.6751 0.1788 35.19);
+
+  /* Chart colors */
+  --chart-1: oklch(0.65 0.17 35);
+  --chart-2: oklch(0.65 0.12 240);
+  --chart-3: oklch(0.80 0.13 91);
+  --chart-4: oklch(0.65 0.10 155);
+  --chart-5: oklch(0.55 0.15 30);
+
+  /* Sidebar */
+  --sidebar: oklch(0.97 0.014 95);
+  --sidebar-foreground: oklch(0.2628 0.0204 31.40);
+  --sidebar-primary: oklch(0.6751 0.1788 35.19);
+  --sidebar-primary-foreground: oklch(1.0000 0 0);
+  --sidebar-accent: oklch(0.9491 0.0133 95.19);
+  --sidebar-accent-foreground: oklch(0.2628 0.0204 31.40);
+  --sidebar-border: oklch(0.8976 0.0168 95.25);
+  --sidebar-ring: oklch(0.6751 0.1788 35.19);
+
+  /* Radius — generously rounded (20px) */
+  --radius: 1.25rem;
+
+  /* Fonts — overridden by next/font CSS variables at runtime */
   --font-sans: system-ui, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: ui-monospace, monospace;
+
+  /* Shadows — warm-tinted hsl(10, 20%, 15%) */
+  --ui-shadow-sm: 0 1px 2px 0 oklch(0.22 0.022 25 / 0.06);
+  --ui-shadow: 0 1px 3px 0 oklch(0.22 0.022 25 / 0.1), 0 1px 2px -1px oklch(0.22 0.022 25 / 0.1);
+  --ui-shadow-md: 0 4px 6px -1px oklch(0.22 0.022 25 / 0.1), 0 2px 4px -2px oklch(0.22 0.022 25 / 0.1);
+  --ui-shadow-lg: 0 10px 15px -3px oklch(0.22 0.022 25 / 0.1), 0 4px 6px -4px oklch(0.22 0.022 25 / 0.1);
+  --ui-shadow-xl: 0 20px 25px -5px oklch(0.22 0.022 25 / 0.1), 0 8px 10px -6px oklch(0.22 0.022 25 / 0.1);
 }
 
+/* ── Dark mode ──────────────────────────────────────────────── */
+
 .dark {
-  --background: hsl(0 0% 3.9%);
-  --foreground: hsl(0 0% 98%);
-  --card: hsl(0 0% 3.9%);
-  --card-foreground: hsl(0 0% 98%);
-  --popover: hsl(0 0% 3.9%);
-  --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(0 0% 98%);
-  --primary-foreground: hsl(0 0% 9%);
-  --secondary: hsl(0 0% 14.9%);
-  --secondary-foreground: hsl(0 0% 98%);
-  --muted: hsl(0 0% 14.9%);
-  --muted-foreground: hsl(0 0% 63.9%);
-  --accent: hsl(0 0% 14.9%);
-  --accent-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(0 0% 14.9%);
-  --input: hsl(0 0% 14.9%);
-  --ring: hsl(0 0% 83.1%);
-  --chart-1: hsl(220 70% 50%);
-  --chart-2: hsl(160 60% 45%);
-  --chart-3: hsl(30 80% 55%);
-  --chart-4: hsl(280 65% 60%);
-  --chart-5: hsl(340 75% 55%);
-  --sidebar: hsl(0 0% 3.9%);
-  --sidebar-foreground: hsl(0 0% 98%);
-  --sidebar-primary: hsl(0 0% 98%);
-  --sidebar-primary-foreground: hsl(0 0% 9%);
-  --sidebar-accent: hsl(0 0% 14.9%);
-  --sidebar-accent-foreground: hsl(0 0% 98%);
-  --sidebar-border: hsl(0 0% 14.9%);
-  --sidebar-ring: hsl(0 0% 83.1%);
+  /* Surfaces — cool dark slate */
+  --background: oklch(0.2612 0.0154 264.26);
+  --foreground: oklch(0.93 0.012 95);
+  --card: oklch(0.3103 0.0197 264.23);
+  --card-foreground: oklch(0.93 0.012 95);
+  --popover: oklch(0.3103 0.0197 264.23);
+  --popover-foreground: oklch(0.93 0.012 95);
+
+  /* Primary — terracotta (unchanged) */
+  --primary: oklch(0.6751 0.1788 35.19);
+  --primary-foreground: oklch(1.0000 0 0);
+
+  /* Secondary — darker teal */
+  --secondary: oklch(0.40 0.05 189);
+  --secondary-foreground: oklch(0.80 0.05 189);
+
+  /* Muted — dark slate surface */
+  --muted: oklch(0.3576 0.0238 264.21);
+  --muted-foreground: oklch(0.65 0.015 264);
+
+  /* Accent — golden, slightly richer */
+  --accent: oklch(0.8197 0.1575 88.39);
+  --accent-foreground: oklch(0.93 0.012 95);
+
+  /* Destructive — warm red (adjusted for dark bg) */
+  --destructive: oklch(0.60 0.19 25);
+  --destructive-foreground: oklch(1.0000 0 0);
+
+  /* Borders & inputs */
+  --border: oklch(0.38 0.020 264);
+  --input: oklch(0.36 0.022 264);
+  --ring: oklch(0.6751 0.1788 35.19);
+
+  /* Chart colors — slightly brighter for dark bg contrast */
+  --chart-1: oklch(0.70 0.16 35);
+  --chart-2: oklch(0.70 0.12 240);
+  --chart-3: oklch(0.82 0.13 91);
+  --chart-4: oklch(0.70 0.10 155);
+  --chart-5: oklch(0.60 0.15 30);
+
+  /* Sidebar */
+  --sidebar: oklch(0.24 0.014 264);
+  --sidebar-foreground: oklch(0.93 0.012 95);
+  --sidebar-primary: oklch(0.6751 0.1788 35.19);
+  --sidebar-primary-foreground: oklch(1.0000 0 0);
+  --sidebar-accent: oklch(0.3576 0.0238 264.21);
+  --sidebar-accent-foreground: oklch(0.93 0.012 95);
+  --sidebar-border: oklch(0.38 0.020 264);
+  --sidebar-ring: oklch(0.6751 0.1788 35.19);
+
+  /* Shadows — pure black at higher opacity */
+  --ui-shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.2);
+  --ui-shadow: 0 1px 3px 0 oklch(0 0 0 / 0.3), 0 1px 2px -1px oklch(0 0 0 / 0.3);
+  --ui-shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.3), 0 2px 4px -2px oklch(0 0 0 / 0.3);
+  --ui-shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.3), 0 4px 6px -4px oklch(0 0 0 / 0.3);
+  --ui-shadow-xl: 0 20px 25px -5px oklch(0 0 0 / 0.3), 0 8px 10px -6px oklch(0 0 0 / 0.3);
 }
 
 @layer base {
@@ -130,5 +207,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    letter-spacing: 0.02em;
   }
 }
