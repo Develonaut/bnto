@@ -1,5 +1,6 @@
 "use client";
 
+// Data hooks — transport-agnostic data access
 export { useWorkflows } from "./useWorkflows";
 export { useWorkflow } from "./useWorkflow";
 export { useSaveWorkflow } from "./useSaveWorkflow";
@@ -10,3 +11,8 @@ export { useExecutions } from "./useExecutions";
 export { useExecutionLogs } from "./useExecutionLogs";
 export { useRunsRemaining } from "./useRunsRemaining";
 export { useCurrentUser } from "./useCurrentUser";
+
+// Session hooks — auth state and provider readiness
+export { useReady } from "./useReady";
+export { useIsAuthenticated } from "./useIsAuthenticated";
+export { useSessionStatus } from "./useSessionStatus";

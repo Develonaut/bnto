@@ -14,6 +14,13 @@ export {
   useCurrentUser,
 } from "./hooks";
 
+// Session hooks — auth state and provider readiness
+export {
+  useReady,
+  useIsAuthenticated,
+  useSessionStatus,
+} from "./hooks";
+
 // Types — workflow definitions, API responses, Convex document types
 export type {
   BntoAPI,
@@ -38,6 +45,9 @@ export type {
   UserDoc,
   WorkflowListItem,
 } from "./types";
+
+// Session types
+export type { AuthStatus } from "./providers/SessionContext";
 
 // Provider — re-export for convenience (also available via @bnto/core/provider)
 export { BntoCoreProvider } from "./provider";

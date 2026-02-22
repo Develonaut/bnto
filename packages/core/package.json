@@ -10,6 +10,10 @@
     "./provider": {
       "types": "./src/provider.tsx",
       "default": "./src/provider.tsx"
+    },
+    "./constants": {
+      "types": "./src/constants.ts",
+      "default": "./src/constants.ts"
     }
   },
   "scripts": {
@@ -18,13 +22,14 @@
     "lint": "echo \"No linter yet\""
   },
   "dependencies": {
+    "@bnto/auth": "workspace:*",
+    "@bnto/backend": "workspace:*",
+    "@convex-dev/better-auth": "^0.10.11",
     "@convex-dev/react-query": "^0.1.0",
     "@tanstack/react-query": "^5.62.0",
-    "@bnto/backend": "workspace:*",
     "convex": "^1.21.0"
   },
   "peerDependencies": {
-    "@convex-dev/auth": ">=0.0.80",
     "react": ">=19",
     "react-dom": ">=19"
   },
@@ -33,7 +38,6 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@convex-dev/auth": "^0.0.80"
+    "react-dom": "^19.0.0"
   }
 }

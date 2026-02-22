@@ -108,11 +108,11 @@ Full details at [`.claude/archive/PLAN-PHASE-0.md`](archive/PLAN-PHASE-0.md) (to
 
 #### Wave 2 (parallel — integration)
 
-- [ ] `@bnto/core` — BntoProvider + ConvexClientProvider + SessionProvider (hydration-safe pattern)
-- [ ] `apps/web` — Proxy middleware (cookie-presence route protection, see AUTH_PATTERN.md)
-- [ ] `apps/web` — AppGate component (splash screen until auth resolves)
-- [ ] `apps/web` — Sign-in/sign-up pages using Better Auth client
-- [ ] `apps/web` — Route definitions (lib/routes.ts — public/private/auth paths)
+- [x] `@bnto/core` — BntoProvider + ConvexClientProvider + SessionProvider (hydration-safe pattern)
+- [x] `apps/web` — Proxy middleware (cookie-presence route protection, see AUTH_PATTERN.md)
+- [x] `apps/web` — AppGate component (splash screen until auth resolves)
+- [x] `apps/web` — Sign-in/sign-up pages using Better Auth client
+- [x] `apps/web` — Route definitions (lib/routes.ts — public/private/auth paths)
 
 #### Wave 3 (parallel — sign-out + cleanup)
 

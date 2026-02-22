@@ -2,24 +2,34 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ConvexQueryClient } from "@convex-dev/react-query";
-import { ConvexAuthNextjsProvider } from "@convex-dev/auth/nextjs";
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexReactClient } from "convex/react";
+import { authClient } from "@bnto/auth";
 import { useMemo } from "react";
+import { SessionProvider } from "./providers/SessionProvider";
+
+interface BntoCoreProviderProps {
+  children: React.ReactNode;
+  /**
+   * Called when an authenticated session is lost (auth -> unauth transition).
+   *
+   * The app wires this to navigation (e.g., `router.replace("/signin")`).
+   * Core fires the callback -- the app decides what to do with it.
+   */
+  onSessionLost?: () => void;
+}
 
 /**
- * Provides the Convex client, React Query, and auth context for the app.
+ * Provides Convex, React Query, Better Auth, and session state for the app.
  *
- * Must be rendered inside BntoAuthProvider (which handles server-side auth
- * state). Creates a ConvexReactClient and wires it through:
- *   ConvexAuthNextjsProvider → ConvexQueryClient → QueryClientProvider
+ * Provider stack order:
+ *   ConvexBetterAuthProvider -> QueryClientProvider -> SessionProvider
  *
- * This makes useConvex(), useConvexAuth(), and all @bnto/core hooks work.
+ * - ConvexBetterAuthProvider: wires Convex client with Better Auth token fetching
+ * - QueryClientProvider: React Query with Convex query bridging
+ * - SessionProvider: tracks auth status, detects session loss
  */
-export function BntoCoreProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function BntoCoreProvider({ children, onSessionLost }: BntoCoreProviderProps) {
   const { convexClient, queryClient } = useMemo(() => {
     const convex = new ConvexReactClient(
       process.env.NEXT_PUBLIC_CONVEX_URL!,
@@ -38,10 +48,12 @@ export function BntoCoreProvider({
   }, []);
 
   return (
-    <ConvexAuthNextjsProvider client={convexClient}>
+    <ConvexBetterAuthProvider client={convexClient} authClient={authClient}>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <SessionProvider onSessionLost={onSessionLost}>
+          {children}
+        </SessionProvider>
       </QueryClientProvider>
-    </ConvexAuthNextjsProvider>
+    </ConvexBetterAuthProvider>
   );
 }
