@@ -5,8 +5,37 @@ import { ConvexQueryClient } from "@convex-dev/react-query";
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexReactClient } from "convex/react";
 import { authClient } from "@bnto/auth";
-import { useMemo } from "react";
 import { SessionProvider } from "./providers/SessionProvider";
+
+// Lazy singletons — created once on first access (browser only).
+// Can't be eagerly created at module scope because Next.js evaluates
+// "use client" modules during SSR/prerendering when env vars may be missing.
+let convexClient: ConvexReactClient;
+let queryClient: QueryClient;
+
+function getClients() {
+  if (!convexClient) {
+    const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+    if (!url) {
+      throw new Error(
+        "NEXT_PUBLIC_CONVEX_URL is not set. " +
+        "Run `npx convex dev` and ensure .env.local is populated.",
+      );
+    }
+    convexClient = new ConvexReactClient(url);
+    const convexQueryClient = new ConvexQueryClient(convexClient);
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          queryKeyHashFn: convexQueryClient.hashFn(),
+          queryFn: convexQueryClient.queryFn(),
+        },
+      },
+    });
+    convexQueryClient.connect(queryClient);
+  }
+  return { convexClient, queryClient };
+}
 
 interface BntoCoreProviderProps {
   children: React.ReactNode;
@@ -30,26 +59,11 @@ interface BntoCoreProviderProps {
  * - SessionProvider: tracks auth status, detects session loss
  */
 export function BntoCoreProvider({ children, onSessionLost }: BntoCoreProviderProps) {
-  const { convexClient, queryClient } = useMemo(() => {
-    const convex = new ConvexReactClient(
-      process.env.NEXT_PUBLIC_CONVEX_URL!,
-    );
-    const convexQueryClient = new ConvexQueryClient(convex);
-    const query = new QueryClient({
-      defaultOptions: {
-        queries: {
-          queryKeyHashFn: convexQueryClient.hashFn(),
-          queryFn: convexQueryClient.queryFn(),
-        },
-      },
-    });
-    convexQueryClient.connect(query);
-    return { convexClient: convex, queryClient: query };
-  }, []);
+  const clients = getClients();
 
   return (
-    <ConvexBetterAuthProvider client={convexClient} authClient={authClient}>
-      <QueryClientProvider client={queryClient}>
+    <ConvexBetterAuthProvider client={clients.convexClient} authClient={authClient}>
+      <QueryClientProvider client={clients.queryClient}>
         <SessionProvider onSessionLost={onSessionLost}>
           {children}
         </SessionProvider>

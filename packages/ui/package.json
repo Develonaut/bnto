@@ -6,7 +6,17 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./globals.css": "./src/styles/globals.css"
+    "./globals.css": "./src/styles/globals.css",
+    "./button": "./src/components/Button.tsx",
+    "./input": "./src/components/Input.tsx",
+    "./avatar": "./src/components/Avatar.tsx",
+    "./separator": "./src/components/Separator.tsx",
+    "./dropdown-menu": "./src/components/DropdownMenu.tsx",
+    "./sheet": "./src/components/Sheet.tsx"
+  },
+  "imports": {
+    "#icons": "./src/icons.ts",
+    "#cn": "./src/lib/utils.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
@@ -14,9 +24,12 @@
     "lint": "echo \"No linter yet\""
   },
   "dependencies": {
+    "@radix-ui/react-avatar": "catalog:",
     "@radix-ui/react-dialog": "catalog:",
+    "@radix-ui/react-dropdown-menu": "catalog:",
     "@radix-ui/react-label": "catalog:",
     "@radix-ui/react-select": "catalog:",
+    "@radix-ui/react-separator": "catalog:",
     "@radix-ui/react-slot": "catalog:",
     "@radix-ui/react-tabs": "catalog:",
     "class-variance-authority": "^0.7.1",

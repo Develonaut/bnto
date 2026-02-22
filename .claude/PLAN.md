@@ -316,3 +316,5 @@ Pick one approach when this is prioritized. The loop output collection route is 
 | `.claude/rules/code-standards.md` | Code philosophy, Bento Box Principle |
 | `.claude/rules/` | All coding standards and conventions |
 | `.claude/skills/` | Agent skills (pickup, groom, code-review, pre-commit) |
+| `.claude/research/anonymous-auth-better-auth-convex.md` | Anonymous session support in Better Auth + Convex — implementation patterns, known bugs, upgrade flow |
+| `.claude/research/nextjs-convex-better-auth-setup.md` | Next.js 15 App Router + Convex + Better Auth — provider hierarchy, middleware, route groups, SSR patterns |
