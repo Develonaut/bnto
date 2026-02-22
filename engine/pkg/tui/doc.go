@@ -1,3 +1,5 @@
+//go:build tui
+
 // Package tui provides an interactive terminal user interface for bnto.
 //
 // Status: PAUSED - This package is preserved for reference and future development.

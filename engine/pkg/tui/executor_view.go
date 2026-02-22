@@ -1,3 +1,5 @@
+//go:build tui
+
 package tui
 
 import "github.com/charmbracelet/lipgloss"

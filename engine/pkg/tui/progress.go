@@ -1,3 +1,5 @@
+//go:build tui
+
 // Package tui provides terminal styling and progress display.
 //
 // Bubbletea progress display using daemon-combo pattern.

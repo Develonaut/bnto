@@ -1,3 +1,5 @@
+//go:build tui
+
 // Package tui provides terminal styling and progress display.
 //
 // Sushi-themed color variants for the bnto CLI.

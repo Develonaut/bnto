@@ -1,3 +1,5 @@
+//go:build tui
+
 // Package tui provides terminal styling and progress display.
 //
 // Tests for theme manager.

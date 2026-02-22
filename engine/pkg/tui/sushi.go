@@ -1,3 +1,5 @@
+//go:build tui
+
 package tui
 
 // Sushi contains all approved sushi-themed emojis for bnto UI.

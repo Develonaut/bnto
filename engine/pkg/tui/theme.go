@@ -1,3 +1,5 @@
+//go:build tui
+
 // Package tui provides terminal styling and progress display.
 //
 // Lipgloss styles for CLI output.
