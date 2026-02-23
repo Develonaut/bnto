@@ -92,7 +92,15 @@ Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, 
 
 If screenshots already exist and the change modifies visual output, run with `--update-snapshots` after confirming the new appearance is correct.
 
-## Step 4: Proof of Work Summary
+## Step 4: Security Review
+
+Run `/security-review` to audit the changed files and overall project for security issues — leaked secrets, auth gaps, input validation, XSS vectors, cloud service misconfigurations, and dependency vulnerabilities.
+
+**This is a full audit, not a quick scan.** The security review covers: secret scanning, Go API security (auth, CORS, input validation, execution sandboxing), Convex function security (auth enforcement, quota bypass, upload validation), web app security (headers, XSS, cookies), infrastructure (GitHub, Vercel, Railway, R2, Convex deployment), dependencies, and open source readiness.
+
+**If the security review surfaces any HIGH or CRITICAL findings, STOP.** Report them to the user before proceeding to the commit step. The user decides whether to fix now or defer.
+
+## Step 5: Proof of Work Summary
 
 Before committing, present a summary to the user:
 
@@ -102,9 +110,10 @@ Before committing, present a summary to the user:
 4. **If no UI touched:** What unit/integration tests were written? List test files and what they cover.
 5. **Go checks result** — confirm `task vet`, `task test`, `task api:test` passed clean
 6. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
-7. **Files changed** — files created/modified, with brief description of each
+7. **Security review result** — confirm `/security-review` passed clean, or list any HIGH/CRITICAL findings and user's decision (fix now or defer)
+8. **Files changed** — files created/modified, with brief description of each
 
-## Step 5: Commit
+## Step 6: Commit
 
 Stage only relevant files, then commit per these rules:
 
