@@ -67,6 +67,7 @@ node_modules/
 .turbo/
 dist/
 .next/
+.next-e2e/
 
 # Vercel
 .vercel/

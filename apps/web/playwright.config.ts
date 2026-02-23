@@ -27,7 +27,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npx next dev --port ${port}`,
+    command: `NEXT_DIST_DIR=.next-e2e npx next dev --port ${port}`,
     url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
   },
