@@ -158,7 +158,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 **Architecture:** Browser → R2 → Railway → R2 → Browser. Files are never stored permanently. Upload → process → download → delete (1-hour TTL).
 
 - [ ] `apps/web` — Cloudflare R2 bucket setup (temp storage, TTL-keyed paths: `/executions/{id}/input/`, `/executions/{id}/output/`)
-- [ ] `@bnto/backend` — Convex action to generate R2 presigned upload URLs (validate file type + enforce 25MB free / 500MB Pro size limits)
+- [x] `@bnto/backend` — Convex action to generate R2 presigned upload URLs (validate file type + enforce 25MB free / 500MB Pro size limits)
 - [ ] `apps/web` — Browser → R2 direct upload (presigned URLs, progress indicator)
 - [ ] `apps/api` — Deploy Go API server to Railway (private networking to Convex)
 - [ ] `apps/api` — Railway endpoint: pull input files from R2, execute `.bnto.json`, push output files to R2

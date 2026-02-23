@@ -9,6 +9,7 @@
  */
 
 import type * as _helpers_auth from "../_helpers/auth.js";
+import type * as _helpers_upload_validation from "../_helpers/upload_validation.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as executionLogs from "../executionLogs.js";
@@ -16,6 +17,7 @@ import type * as execution_events from "../execution_events.js";
 import type * as executions from "../executions.js";
 import type * as http from "../http.js";
 import type * as migrate_anonymous from "../migrate_anonymous.js";
+import type * as uploads from "../uploads.js";
 import type * as users from "../users.js";
 import type * as workflows from "../workflows.js";
 
@@ -27,6 +29,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "_helpers/auth": typeof _helpers_auth;
+  "_helpers/upload_validation": typeof _helpers_upload_validation;
   auth: typeof auth;
   crons: typeof crons;
   executionLogs: typeof executionLogs;
@@ -34,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   executions: typeof executions;
   http: typeof http;
   migrate_anonymous: typeof migrate_anonymous;
+  uploads: typeof uploads;
   users: typeof users;
   workflows: typeof workflows;
 }>;
