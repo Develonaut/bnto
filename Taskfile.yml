@@ -67,8 +67,8 @@ tasks:
     cmds: [pnpm turbo run dev]
 
   dev:all:
-    desc: Start everything for local dev (web + Convex + Go API)
-    deps: [dev, api:dev]
+    desc: Start everything for local dev (web + Convex + Go API + tunnel)
+    deps: [dev, api:dev, api:tunnel]
 
   ui:test:
     desc: Run all frontend tests
