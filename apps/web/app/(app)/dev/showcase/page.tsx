@@ -11,7 +11,6 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Dropzone } from "@/components/ui/dropzone";
-import { PopIn, SlideIn, StaggerCascade } from "@/components/animations";
 import { Upload, ArrowRight } from "lucide-react";
 
 
@@ -259,10 +258,10 @@ function TypographyShowcase() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Animated Card Grid                                                 */
+/*  Tool Grid                                                          */
 /* ------------------------------------------------------------------ */
 
-function AnimatedCardGrid() {
+function ToolGrid() {
   const items = [
     { title: "Compress Images", variant: "default" as const },
     { title: "Clean CSV", variant: "secondary" as const },
@@ -273,18 +272,17 @@ function AnimatedCardGrid() {
   ];
 
   return (
-    <StaggerCascade className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-3 gap-4">
       {items.map((item) => (
-        <PopIn key={item.title}>
-          <Button
-            variant={item.variant}
-            className="h-28 w-full rounded-xl font-display font-semibold"
-          >
-            {item.title}
-          </Button>
-        </PopIn>
+        <Button
+          key={item.title}
+          variant={item.variant}
+          className="h-28 w-full rounded-xl font-display font-semibold"
+        >
+          {item.title}
+        </Button>
       ))}
-    </StaggerCascade>
+    </div>
   );
 }
 
@@ -425,10 +423,10 @@ export default function ThemeDemoPage() {
 
       <Section
         id="demo-tool-grid"
-        title="Animated Tool Grid"
-        description="StaggerCascade + PopIn + pressable Buttons. The signature bnto interaction."
+        title="Tool Grid"
+        description="Pressable Buttons in a grid layout."
       >
-        <AnimatedCardGrid />
+        <ToolGrid />
       </Section>
 
       <Section
