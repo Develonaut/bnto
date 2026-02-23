@@ -244,6 +244,8 @@ Desktop (Wails v2) renders the **same React frontend** in a system webview. `@bn
 | Engine distribution    | In-process (MVP), standalone binary (post-stabilization) |
 | Auth                   | Better Auth (cloud only)                  |
 
+**Concrete infrastructure:** The diagram above shows the abstraction layers. For the actual deployed services (Vercel, Convex Cloud, Railway, Cloudflare R2, Cloudflare Tunnel) and dev/prod topology, see [architecture.md](.claude/rules/architecture.md#cloud-execution-production-topology).
+
 ---
 
 ## Commands
@@ -257,12 +259,17 @@ task vet                # Run go vet on all Go packages
 # API server
 task api:build          # Build API server binary
 task api:test           # Run API server tests with race detector
+task api:dev            # Run Go API server locally (port 8080)
+task api:tunnel         # Start Cloudflare tunnel (exposes local API at api-dev.bnto.io)
 
 # Frontend (via Turborepo)
 task ui:build           # Build all TS packages (with Turbo caching)
 task ui:test            # Run all TS tests
 task ui:dev             # Start web app dev server
 task ui:lint            # Lint all TS packages
+
+# Development (starts everything)
+task dev:all            # Start web + Convex + Go API + Cloudflare tunnel in parallel
 
 # Everything
 task build:all          # Build engine + API + frontend

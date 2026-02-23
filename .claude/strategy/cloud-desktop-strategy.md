@@ -364,6 +364,45 @@ subscriptions  → { userId, plan, stripeId, status, currentPeriodEnd }
   5. Individual node timeout: configurable (default 10 min, max per plan tier)
 - Go service communicates with Convex over private networking (no 15-min limit)
 
+### Deployed Infrastructure
+
+**Production topology:**
+
+```
+Browser
+  |
+  |--- Vercel (Next.js)
+  |       static pages, SSR, auth UI
+  |
+  |--- Convex Cloud (gregarious-donkey-712)
+  |       |--- real-time DB, business logic, execution orchestration
+  |       |--- generates R2 presigned URLs for file upload/download
+  |       +--- calls Railway Go API to trigger execution
+  |
+  |--- Cloudflare R2 (bnto-transit)
+  |       file transit: upload input, download output (1-hour TTL)
+  |
+  +--- Railway (bnto-production.up.railway.app)
+          |--- receives execution request from Convex
+          |--- downloads input from R2, runs Go engine
+          +--- uploads output to R2, reports status to Convex
+```
+
+**Development topology:** `task dev:all` starts Next.js (localhost:4000), Convex dev (zealous-canary-422), the Go API (localhost:8080), and a Cloudflare Named Tunnel (`bnto-dev`) that exposes the local Go API at `https://api-dev.bnto.io`. The tunnel exists because Convex dev is cloud-hosted and can't reach localhost -- the tunnel gives it a stable HTTPS endpoint. Dev uses the `bnto-transit-dev` R2 bucket. Same code paths, different environment variables.
+
+**Cost breakdown:**
+
+| Service | Tier | Monthly Cost | Purpose |
+|---|---|---|---|
+| Vercel | Free | $0 | Next.js hosting, SSR, edge |
+| Convex | Free | $0 | Database, real-time, business logic |
+| Railway | Hobby | $5 | Go API execution |
+| Cloudflare R2 | Free | $0 | File transit (< 10GB/month) |
+| Cloudflare Tunnel | Free | $0 | Dev: expose local API to Convex |
+| **Total** | | **$5/mo** | Until revenue justifies scaling |
+
+**Design principle:** $0 until revenue, except Railway ($5/mo) which is required for cloud execution. Everything is serverless/on-demand except Railway. When traffic justifies it, Railway scales to a Pro plan. Vercel and Convex free tiers are generous enough for MVP-scale traffic.
+
 ### shell-command in Cloud
 
 - **MVP:** Disabled in cloud

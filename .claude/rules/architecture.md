@@ -116,6 +116,10 @@ The execution engine must support nodes that take 2-30+ seconds (AI API calls, l
 
 ## Data Flow
 
+### Abstraction Layer (how code sees it)
+
+Components never know which backend they're talking to. `@bnto/core` detects the runtime and swaps adapters transparently.
+
 ```
 +--------------------------------------------------------------+
 |                    Apps (same React code)                      |
@@ -146,6 +150,63 @@ The execution engine must support nodes that take 2-30+ seconds (AI API calls, l
 |    +----------+    +----------+    +----------+             |
 +--------------------------------------------------------------+
 ```
+
+### Cloud Execution: Production Topology
+
+This is what actually runs in production. The abstract diagram above shows the code layers; this shows the deployed services and how data moves between them.
+
+```
+Browser
+  |
+  |--- Vercel (Next.js) --- static pages, SSR, auth UI
+  |
+  |--- Convex Cloud (gregarious-donkey-712)
+  |         |--- real-time subscriptions, DB, business logic
+  |         |--- generates R2 presigned URLs (upload + download)
+  |         +--- calls Go API to trigger workflow execution
+  |
+  |--- Cloudflare R2 (bnto-transit) --- file transit only
+  |         |--- browser uploads input files via presigned URL
+  |         +--- browser downloads output files via presigned URL
+  |
+  +--- Railway (Go API: bnto-production.up.railway.app)
+            |--- downloads input from R2
+            |--- runs Go engine (workflow execution)
+            +--- uploads output to R2
+```
+
+**Full cloud execution sequence:**
+
+1. Browser uploads input file to R2 via Convex-generated presigned URL
+2. Convex action calls Railway Go API with execution request
+3. Railway downloads input from R2, runs Go engine, uploads output to R2
+4. Convex mutation updates execution status (real-time to browser)
+5. Browser downloads output from R2 via presigned URL
+6. R2 objects deleted (or expire via 1-hour TTL)
+
+### Local Development Topology
+
+`task dev:all` starts everything needed for local development in parallel:
+
+```
+task dev:all
+  |--- task dev          --- Next.js (localhost:4000) + Convex dev (zealous-canary-422)
+  |--- task api:dev      --- Go API server (localhost:8080)
+  +--- task api:tunnel   --- Cloudflare Named Tunnel (bnto-dev)
+                               exposes localhost:8080 at https://api-dev.bnto.io
+```
+
+**Why the Cloudflare tunnel?** Convex dev is cloud-hosted (not local). When a Convex action needs to call the Go API, it can't reach `localhost:8080` because Convex is running on Convex's servers, not your machine. The Cloudflare Named Tunnel (`bnto-dev`) exposes the local Go API at `https://api-dev.bnto.io`, giving Convex dev a stable HTTPS endpoint to call. Dev mirrors prod exactly -- same code paths, different URLs.
+
+### Service Topology Summary
+
+| Service | Production | Development |
+|---|---|---|
+| Web app | Vercel | localhost:4000 |
+| Database + real-time | Convex (gregarious-donkey-712) | Convex (zealous-canary-422) |
+| Go API | Railway (bnto-production.up.railway.app) | localhost:8080 via tunnel (api-dev.bnto.io) |
+| File transit | R2 (bnto-transit) | R2 (bnto-transit-dev) |
+| DNS / tunnel | Cloudflare (bnto.io) | Cloudflare Named Tunnel (bnto-dev) |
 
 ## Run Quota Infrastructure
 

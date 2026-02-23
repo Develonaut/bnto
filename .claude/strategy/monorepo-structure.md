@@ -222,6 +222,41 @@ The HTTP transport layer lives in `apps/api/` (separate Go module, linked via `g
 
 ---
 
+## Infrastructure & Deployment
+
+### What Runs Where
+
+| Component | Code Location | Production | Development |
+|---|---|---|---|
+| Web app (Next.js) | `apps/web/` | Vercel | localhost:4000 |
+| Database + real-time | `packages/@bnto/backend/` | Convex Cloud (gregarious-donkey-712) | Convex Cloud (zealous-canary-422) |
+| Go API server | `apps/api/` | Railway (bnto-production.up.railway.app) | localhost:8080 |
+| Go engine | `engine/` | Consumed by `apps/api/` via `go.work` | Same |
+| File transit | -- | Cloudflare R2 (bnto-transit) | Cloudflare R2 (bnto-transit-dev) |
+| Auth | `packages/@bnto/auth/` | Better Auth via Convex HTTP routes | Same (Convex dev deployment) |
+
+### Local Development: `task dev:all`
+
+One command starts everything needed for local development:
+
+```bash
+task dev:all
+# Starts in parallel:
+#   task dev         -> Next.js (port 4000) + Convex dev watcher
+#   task api:dev     -> Go API server (port 8080)
+#   task api:tunnel  -> Cloudflare Named Tunnel (bnto-dev)
+```
+
+### Why the Cloudflare Tunnel?
+
+Convex dev is cloud-hosted -- even the "dev" deployment runs on Convex's infrastructure, not on your machine. When a Convex action needs to call the Go API (to trigger workflow execution), it can't reach `localhost:8080` because the Convex action is running remotely.
+
+The Cloudflare Named Tunnel (`bnto-dev`) solves this by exposing `localhost:8080` at `https://api-dev.bnto.io`. Convex dev functions use `GO_API_URL=https://api-dev.bnto.io` to reach the local Go API through the tunnel. In production, the same code uses `GO_API_URL=https://bnto-production.up.railway.app` to reach Railway.
+
+This means dev mirrors prod exactly -- same Convex functions, same R2 upload/download flow, same Go API contract. The only difference is environment variables.
+
+---
+
 ## References
 
 - [Turborepo: Structuring a Repository](https://turborepo.dev/docs/crafting-your-repository/structuring-a-repository)
