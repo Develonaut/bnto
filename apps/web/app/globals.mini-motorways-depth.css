@@ -160,19 +160,9 @@
   --shadow-2xl:
     14px 14px 0 0 oklch(0.50 0.02 95 / 0.32);
 
-  /* ── Depth (::before pseudo-element system) ──────────────────── */
-  /*
-   * Same OKLCH colors as the shadow scale, used by .depth-* classes
-   * to render pseudo-element cast shadows instead of box-shadow.
-   */
-  --depth-color-2xs: oklch(0.75 0.02 95 / 0.20);
-  --depth-color-xs:  oklch(0.70 0.02 95 / 0.22);
-  --depth-color-sm:  oklch(0.65 0.02 95 / 0.25);
-  --depth-color:     oklch(0.60 0.02 95 / 0.28);
-  --depth-color-md:  oklch(0.58 0.02 95 / 0.28);
-  --depth-color-lg:  oklch(0.55 0.02 95 / 0.30);
-  --depth-color-xl:  oklch(0.52 0.02 95 / 0.30);
-  --depth-color-2xl: oklch(0.50 0.02 95 / 0.32);
+  /* ── Depth (wall + ground shadow defaults) ────────────────────── */
+  --depth-wall: oklch(0.82 0.02 95);
+  --depth-shadow: oklch(0.60 0.02 95 / 0.20);
 
   /* ── Tracking ──────────────────────────────────────────────── */
   --tracking-normal: -0.01em;
@@ -276,14 +266,8 @@
     14px 14px 0 0 oklch(0.03 0.01 264 / 0.60);
 
   /* ── Depth (dark mode) ───────────────────────────────────────── */
-  --depth-color-2xs: oklch(0.10 0.01 264 / 0.35);
-  --depth-color-xs:  oklch(0.10 0.01 264 / 0.40);
-  --depth-color-sm:  oklch(0.08 0.01 264 / 0.45);
-  --depth-color:     oklch(0.08 0.01 264 / 0.50);
-  --depth-color-md:  oklch(0.06 0.01 264 / 0.50);
-  --depth-color-lg:  oklch(0.05 0.01 264 / 0.55);
-  --depth-color-xl:  oklch(0.04 0.01 264 / 0.55);
-  --depth-color-2xl: oklch(0.03 0.01 264 / 0.60);
+  --depth-wall: oklch(0.20 0.02 264);
+  --depth-shadow: oklch(0.05 0.01 264 / 0.40);
 }
 
 @theme inline {
@@ -357,327 +341,212 @@
   }
 }
 
-/* ── Press Interaction ──────────────────────────────────────────────
+/* ── Layer 1: .depth — Static 3D Raise ────────────────────────────
  *
- * 3D press effect using Katherine Kato's ::before technique
- * (https://codepen.io/kathykato/pen/gOOjgmP) adapted for
- * Mini Motorways isometric shadows.
+ * Three-layer building illusion: face (the element) + walls (::before)
+ * + ground shadow (::after). Like Mini Motorways buildings viewed from
+ * above — the face is the roof, walls are the darker sides, shadow is
+ * cast on the ground.
  *
- * The element IS the front face. ::before sits behind via z-axis
- * (transform-style: preserve-3d + translate3d z=-1em), providing:
- *   1. A solid EDGE (background of ::before)
- *   2. A ground SHADOW (box-shadow of ::before)
+ * CSS variables:
+ *   --depth        — offset in px (set by size modifiers)
+ *   --depth-wall   — wall color (set by color variants or :root default)
+ *   --depth-shadow — ground shadow color (same)
  *
- * No extra DOM — just .press > children. ::before inherits
- * border-radius from .press, so consumers set radius via className.
- *
- * States:
- *   Resting → element at translateY(0), ::before at full depth
- *   Hover   → element sinks 25%, ::before shrinks to 33%
- *   Active  → element nearly flush, ::before at 1px
- *
- * Timing:
- *   Release: 150ms ease-out    — quick snap back
- *   Hover:   150ms ease-out    — responsive sink
- *   Press:   34ms  snap        — ~2 frames at 60fps
+ * Usage:
+ *   <div class="depth depth-sm">                            — static card
+ *   <button class="depth pressable depth-md depth-default"> — interactive
  * ────────────────────────────────────────────────────────────────── */
 
-:root {
-  --press-edge-color: oklch(0.60 0.02 95 / 0.28);     /* semi-transparent — matches depth-default */
-}
-.dark {
-  --press-edge-color: oklch(0.08 0.01 264 / 0.50);    /* semi-transparent — matches depth-default */
+.depth {
+  --depth: 6px;
+  position: relative;
+  transform-style: preserve-3d;
 }
 
-.press {
-  position: relative;
+/* Walls — darker shade offset diagonally behind the face */
+.depth::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--depth-wall);
+  transform: translate3d(var(--depth), var(--depth), -1em);
+}
+
+/* Ground shadow — semi-transparent, cast further than walls */
+.depth::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--depth-shadow);
+  transform: translate3d(
+    calc(var(--depth) + 3px),
+    calc(var(--depth) + 3px),
+    -2em
+  );
+}
+
+/* ── Size modifiers ─────────────────────────────────────────────── */
+
+.depth-sm { --depth: 4px; }
+.depth-md { --depth: 6px; }
+.depth-lg { --depth: 7px; }
+
+/* ── Reset ──────────────────────────────────────────────────────── */
+
+.depth-none { --depth: 0px; }
+.depth-none::before,
+.depth-none::after {
+  content: none;
+}
+
+/* ── Color variants ──────────────────────────────────────────────
+ * Only set --depth-wall and --depth-shadow. Face color comes from
+ * Tailwind bg-* utilities on the element.
+ * ────────────────────────────────────────────────────────────────── */
+
+/* Default (Primary) — terracotta walls */
+.depth-default {
+  --depth-wall: oklch(0.50 0.15 35);
+  --depth-shadow: oklch(0.50 0.10 35 / 0.25);
+}
+
+/* Secondary — teal walls */
+.depth-secondary {
+  --depth-wall: oklch(0.70 0.05 189);
+  --depth-shadow: oklch(0.55 0.04 189 / 0.25);
+}
+
+/* Muted — warm off-white walls */
+.depth-muted {
+  --depth-wall: oklch(0.82 0.02 95);
+  --depth-shadow: oklch(0.60 0.02 95 / 0.20);
+}
+
+/* Destructive — red walls */
+.depth-destructive {
+  --depth-wall: oklch(0.45 0.17 25);
+  --depth-shadow: oklch(0.45 0.12 25 / 0.25);
+}
+
+/* Outline — subtle neutral walls */
+.depth-outline {
+  --depth-wall: oklch(0.82 0.02 95 / 0.30);
+  --depth-shadow: oklch(0.60 0.02 95 / 0.15);
+}
+
+/* ── Layer 2: .pressable — Animation Layer ─────────────────────────
+ *
+ * Adds hover sink + active flush animation to any .depth element.
+ * Uses --depth for transform calculations.
+ *
+ * Hover:  face translates 33% of --depth, walls shrink to 66%
+ * Active: face flush (100%), walls gone, shadow opacity 0
+ *
+ * data-force-state="hover|active" mirrors pseudo-states for
+ * showcase and storybook use.
+ *
+ * Does NOT change background color — that comes from Tailwind
+ * hover:bg-{color}/90 utilities on the element.
+ * ────────────────────────────────────────────────────────────────── */
+
+.pressable {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  border-radius: var(--radius-lg);
-  transform-style: preserve-3d;
   will-change: transform;
-  transition: transform 150ms cubic-bezier(0, 0, 0.58, 1);
+  transition:
+    transform 150ms cubic-bezier(0, 0, 0.58, 1),
+    background-color 150ms cubic-bezier(0, 0, 0.58, 1);
 }
 
-/* Edge (behind front face via z-axis) — background only, no ground shadow */
-.press::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--press-edge-color);
-  will-change: transform;
-  transform: translate3d(
-    var(--press-depth, 6px),
-    var(--press-depth, 6px),
-    -1em
-  );
-  transition: transform 150ms cubic-bezier(0, 0, 0.58, 1);
-}
-
-/* Hover — element sinks diagonally, edge shrinks */
-.press:hover {
-  transform: translate(
-    calc(var(--press-depth, 6px) * 0.25),
-    calc(var(--press-depth, 6px) * 0.25)
-  );
-}
-
-.press:hover::before {
-  transform: translate3d(
-    calc(var(--press-depth, 6px) * 0.33),
-    calc(var(--press-depth, 6px) * 0.33),
-    -1em
-  );
-}
-
-/* Active — element flush with surface, edge minimal */
-.press:active {
-  transform: translate(
-    calc(var(--press-depth, 6px) - 1px),
-    calc(var(--press-depth, 6px) - 1px)
-  );
-  transition: transform 34ms;
-}
-
-.press:active::before {
-  transform: translate3d(1px, 1px, -1em);
-  transition: transform 34ms;
-}
-
-/* Strip child shadows and depth pseudo-elements — Press owns the depth
- * illusion entirely. Cards, buttons, and other elevated elements inside
- * Press should not compete with the 3D edge + ground shadow. */
-.press > * {
-  box-shadow: none !important;
-}
-.press > *::before {
-  content: none !important;
-}
-
-/* Focus — keyboard accessibility */
-.press:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 4px;
-}
-
-/* Reduced motion — static, no interaction */
-@media (prefers-reduced-motion: reduce) {
-  .press,
-  .press::before {
-    transition: none !important;
-    will-change: auto !important;
-  }
-
-  .press:hover,
-  .press:active {
-    transform: none;
-  }
-
-  .press:hover::before,
-  .press:active::before {
-    transform: translate3d(
-      var(--press-depth, 6px),
-      var(--press-depth, 6px),
-      -1em
-    );
-  }
-}
-
-/* ── Depth Classes ────────────────────────────────────────────────
- *
- * ::before pseudo-element cast shadows driven by className.
- * Same visual weight as the shadow-* scale but rendered via a
- * pseudo-element for composability with Press and transform
- * animations.
- *
- * Usage: <div className="depth-sm rounded-xl bg-card">...</div>
- * The pseudo-element inherits border-radius from the parent.
- * ────────────────────────────────────────────────────────────────── */
-
-/* Shared structural base */
-.depth,
-[class*="depth-"] {
-  position: relative;
-  transform-style: preserve-3d;
-}
-.depth::before,
-[class*="depth-"]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--depth-bg);
-  transform: translate3d(var(--depth-x), var(--depth-y), -1em);
-}
-
-/* Per-level classes */
-.depth-2xs { --depth-bg: var(--depth-color-2xs); --depth-x: 1px; --depth-y: 1px; }
-.depth-xs  { --depth-bg: var(--depth-color-xs);  --depth-x: 2px; --depth-y: 2px; }
-.depth-sm  { --depth-bg: var(--depth-color-sm);  --depth-x: 3px; --depth-y: 3px; }
-.depth     { --depth-bg: var(--depth-color);     --depth-x: 4px; --depth-y: 4px; }
-.depth-md  { --depth-bg: var(--depth-color-md);  --depth-x: 5px; --depth-y: 5px; }
-.depth-lg  { --depth-bg: var(--depth-color-lg);  --depth-x: 7px; --depth-y: 7px; }
-.depth-xl  { --depth-bg: var(--depth-color-xl);  --depth-x: 10px; --depth-y: 10px; }
-.depth-2xl { --depth-bg: var(--depth-color-2xl); --depth-x: 14px; --depth-y: 14px; }
-
-/* Explicit reset */
-.depth-none { --depth-bg: transparent; --depth-x: 0px; --depth-y: 0px; }
-.depth-none::before { content: none; }
-
-/* ── Button Depth Animation ──────────────────────────────────────────
- *
- * Buttons get Press-style animation baked in — no wrapper needed.
- * The depth ::before IS the shadow. On hover it shrinks as the button
- * sinks toward the surface. On active the button is flush.
- *
- * data-force-state mirrors pseudo-states for showcase/story use:
- *   <Button data-force-state="hover">  — renders as if :hover
- *   <Button data-force-state="active"> — renders as if :active
- *
- * When inside .press, these are stripped (.press > * rules) so Press
- * controls the animation instead.
- * ────────────────────────────────────────────────────────────────── */
-
-/* Transitions — shadow animates, button face stays put */
-[data-slot="button"].depth::before,
-[data-slot="button"][class*="depth-"]::before {
+.pressable::before,
+.pressable::after {
   transition:
     transform 150ms cubic-bezier(0, 0, 0.58, 1),
     opacity 150ms cubic-bezier(0, 0, 0.58, 1);
 }
 
-/* Hover — shadow shrinks (button face doesn't move) */
-[data-slot="button"].depth:hover::before,
-[data-slot="button"][class*="depth-"]:hover::before,
-[data-slot="button"].depth[data-force-state="hover"]::before,
-[data-slot="button"][class*="depth-"][data-force-state="hover"]::before {
+/* Hover — face sinks 33%, walls at 66%, shadow shrinks */
+.pressable:hover,
+.pressable[data-force-state="hover"] {
+  transform: translate(
+    calc(var(--depth) * 0.33),
+    calc(var(--depth) * 0.33)
+  );
+}
+
+.pressable:hover::before,
+.pressable[data-force-state="hover"]::before {
   transform: translate3d(
-    calc(var(--depth-x) * 0.5),
-    calc(var(--depth-y) * 0.5),
+    calc(var(--depth) * 0.66),
+    calc(var(--depth) * 0.66),
     -1em
   );
 }
 
-/* Active — shadow gone, button flush with surface */
-[data-slot="button"].depth:active::before,
-[data-slot="button"][class*="depth-"]:active::before,
-[data-slot="button"].depth[data-force-state="active"]::before,
-[data-slot="button"][class*="depth-"][data-force-state="active"]::before {
+.pressable:hover::after,
+.pressable[data-force-state="hover"]::after {
+  transform: translate3d(
+    calc(var(--depth) * 0.66 + 2px),
+    calc(var(--depth) * 0.66 + 2px),
+    -2em
+  );
+}
+
+/* Active — face flush, walls gone, shadow invisible */
+.pressable:active,
+.pressable[data-force-state="active"] {
+  transform: translate(var(--depth), var(--depth));
+  transition-duration: 34ms;
+}
+
+.pressable:active::before,
+.pressable[data-force-state="active"]::before {
   transform: translate3d(0px, 0px, -1em);
+  transition-duration: 34ms;
+}
+
+.pressable:active::after,
+.pressable[data-force-state="active"]::after {
+  transform: translate3d(0px, 0px, -2em);
   opacity: 0;
   transition-duration: 34ms;
 }
 
-/* Inside Press — Press owns the animation, strip button depth */
-.press > [data-slot="button"]::before {
-  content: none !important;
-}
-
-/* Reduced motion — no button depth animation */
-@media (prefers-reduced-motion: reduce) {
-  [data-slot="button"].depth::before,
-  [data-slot="button"][class*="depth-"]::before {
-    transition: none !important;
-  }
-}
-
-/* ── Pressable Button (Katherine Kato) ───────────────────────────────
- *
- * 1:1 port of Katherine Kato's 3D button (codepen.io/kathykato/pen/gOOjgmP)
- * with her original pink palette. This is the sandbox for iterating
- * on the press effect before folding it into the depth system.
- *
- * Force states: data-force-state="hover" | "active"
- * ────────────────────────────────────────────────────────────────── */
-
-.pressable {
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-  outline: none;
-  border: 0;
-  vertical-align: middle;
-  text-decoration: none;
-  font-size: inherit;
-  font-family: inherit;
-  font-weight: 600;
-  color: #382b22;
-  text-transform: uppercase;
-  padding: 1.25em 2em;
-  background: #fff0f0;
-  border: 2px solid #b18597;
-  border-radius: 0.75em;
-  transform-style: preserve-3d;
-  transition: transform 150ms cubic-bezier(0, 0, 0.58, 1),
-              background 150ms cubic-bezier(0, 0, 0.58, 1);
-}
-
-.pressable::before {
-  position: absolute;
-  content: "";
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #f9c4d2;
-  border-radius: inherit;
-  box-shadow: 0 0 0 2px #b18597,
-              0 0.625em 0 0 #ffe3e2;
-  transform: translate3d(0, 0.75em, -1em);
-  transition: transform 150ms cubic-bezier(0, 0, 0.58, 1),
-              box-shadow 150ms cubic-bezier(0, 0, 0.58, 1);
-}
-
-/* Hover */
-.pressable:hover,
-.pressable[data-force-state="hover"] {
-  background: #ffe9e9;
-  transform: translate(0, 0.25em);
-}
-.pressable:hover::before,
-.pressable[data-force-state="hover"]::before {
-  box-shadow: 0 0 0 2px #b18597,
-              0 0.5em 0 0 #ffe3e2;
-  transform: translate3d(0, 0.5em, -1em);
-}
-
-/* Active */
-.pressable:active,
-.pressable[data-force-state="active"] {
-  background: #ffe9e9;
-  transform: translate(0, 0.75em);
-}
-.pressable:active::before,
-.pressable[data-force-state="active"]::before {
-  box-shadow: 0 0 0 2px #b18597,
-              0 0 0 0 #ffe3e2;
-  transform: translate3d(0, 0, -1em);
-}
-
-/* Focus */
+/* Focus — native browser outline, inset on the face */
 .pressable:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 4px;
+  outline: auto;
+  outline-offset: -4px;
 }
 
-/* Reduced motion */
+/* Reduced motion — static, no transforms */
 @media (prefers-reduced-motion: reduce) {
   .pressable,
-  .pressable::before {
+  .pressable::before,
+  .pressable::after {
     transition: none !important;
+    will-change: auto !important;
   }
+
   .pressable:hover,
   .pressable:active {
     transform: none;
   }
+
   .pressable:hover::before,
   .pressable:active::before {
-    transform: translate3d(0, 0.75em, -1em);
-    box-shadow: 0 0 0 2px #b18597,
-                0 0.625em 0 0 #ffe3e2;
+    transform: translate3d(var(--depth), var(--depth), -1em);
+  }
+
+  .pressable:hover::after,
+  .pressable:active::after {
+    transform: translate3d(
+      calc(var(--depth) + 3px),
+      calc(var(--depth) + 3px),
+      -2em
+    );
   }
 }

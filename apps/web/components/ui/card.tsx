@@ -10,7 +10,7 @@ const PrimitiveCard = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "bg-card text-card-foreground rounded-xl border depth-sm",
+      "bg-card text-card-foreground rounded-xl border depth depth-sm",
       className,
     )}
     {...props}

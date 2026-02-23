@@ -13,7 +13,7 @@ test.describe("Theme Demo — Depth Shadows", () => {
     await expect(section).toHaveScreenshot("depth-shadow-scale.png");
   });
 
-  test("depth scale renders ::before pseudo-element shadows", async ({ page }) => {
+  test("depth scale renders 3-layer building system", async ({ page }) => {
     await page.goto("/dev/showcase");
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(500);
@@ -33,7 +33,7 @@ test.describe("Theme Demo — Depth Shadows", () => {
     await expect(section).toHaveScreenshot("depth-elevation-cards.png");
   });
 
-  test("press + shadow cards show depth effect", async ({ page }) => {
+  test("pressable cards show depth effect", async ({ page }) => {
     await page.goto("/dev/showcase");
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(500);
@@ -53,17 +53,7 @@ test.describe("Theme Demo — Depth Shadows", () => {
     await expect(section).toHaveScreenshot("depth-color-palette.png");
   });
 
-  test("button depth states — resting, hover, active", async ({ page }) => {
-    await page.goto("/dev/showcase");
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(500);
-
-    const section = page.locator('[data-testid="demo-button-depth"]');
-    await section.scrollIntoViewIfNeeded();
-    await expect(section).toHaveScreenshot("depth-button-states.png");
-  });
-
-  test("pressable button (Katherine Kato)", async ({ page }) => {
+  test("pressable buttons (all variants)", async ({ page }) => {
     await page.goto("/dev/showcase");
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(500);
@@ -113,7 +103,7 @@ test.describe("Theme Demo — Depth Shadows", () => {
     await expect(section).toHaveScreenshot("depth-tool-grid.png");
   });
 
-  test("notification cards with press", async ({ page }) => {
+  test("notification cards with depth", async ({ page }) => {
     await page.goto("/dev/showcase");
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(500);
@@ -134,118 +124,110 @@ test.describe("Theme Demo — Depth Shadows", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Press Interaction — 3D effect verification (Katherine Kato ::before)
+// Pressable Interaction — 3D effect verification
 //
 // Three states:
-//   1. Resting — block floats with ::before edge + ground shadow visible
-//   2. Hover   — block sinks, ::before edge shrinks, ground shadow fades
-//   3. Active  — block flush with surface, edge/shadow gone
+//   1. Resting — button floats with walls + ground shadow visible
+//   2. Hover   — button sinks 33%, walls shrink to 66%, shadow fades
+//   3. Active  — button flush with surface, walls gone, shadow invisible
 // ---------------------------------------------------------------------------
 
-test.describe("Theme Demo — Press 3D Effect", () => {
+test.describe("Theme Demo — Pressable 3D Effect", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/dev/showcase");
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(1000);
   });
 
-  test("all depth levels at rest", async ({ page }) => {
-    const section = page.locator('[data-testid="demo-press"]');
+  test("pressable buttons at rest", async ({ page }) => {
+    const section = page.locator('[data-testid="demo-pressable"]');
     await section.scrollIntoViewIfNeeded();
-    await expect(section).toHaveScreenshot("press-all-depths-resting.png");
+    await expect(section).toHaveScreenshot("pressable-all-resting.png");
   });
 
-  // Focused single-card tests on 2xl (depth=14) — largest, most visible effect
-  test("resting state: ::before edge + ground shadow visible", async ({ page }) => {
-    const press2xl = page.locator('[data-testid="press-2xl"]');
-    await press2xl.scrollIntoViewIfNeeded();
+  // Focused tests on the large default button — most visible effect
+  test("resting state: walls + ground shadow visible", async ({ page }) => {
+    const target = page.locator('[data-testid="pressable-default-lg"]');
+    await target.scrollIntoViewIfNeeded();
 
-    // Screenshot the single card at rest — edge and ground shadow should be clearly visible
-    await expect(press2xl).toHaveScreenshot("press-2xl-resting.png");
+    await expect(target).toHaveScreenshot("pressable-default-lg-resting.png");
 
-    // Verify ::before has the full diagonal transform via z-axis
-    const beforeTransform = await press2xl.evaluate((el) =>
+    // Verify ::before (walls) has the diagonal transform via z-axis
+    const beforeTransform = await target.evaluate((el) =>
       getComputedStyle(el, "::before").transform,
     );
-    // matrix3d with translate3d(14, 14, -Xem) — the z-axis pushes it behind
     expect(beforeTransform).toContain("matrix3d");
   });
 
-  test("hover state: element sinks, ::before edge shrinks", async ({ page }) => {
-    const press2xl = page.locator('[data-testid="press-2xl"]');
-    await press2xl.scrollIntoViewIfNeeded();
+  test("hover state: button sinks, walls shrink", async ({ page }) => {
+    const target = page.locator('[data-testid="pressable-default-lg"]');
+    await target.scrollIntoViewIfNeeded();
 
-    // Capture resting position of the press element itself
-    const restingRect = await press2xl.evaluate((el) => {
+    // Capture resting position
+    const restingRect = await target.evaluate((el) => {
       const r = el.getBoundingClientRect();
       return { top: r.top, left: r.left };
     });
 
     // Hover
-    await press2xl.hover();
+    await target.hover();
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(200);
 
-    // Screenshot — edge should be visibly thinner, card shifted
-    await expect(press2xl).toHaveScreenshot("press-2xl-hover.png");
+    // Screenshot — walls should be visibly thinner, button shifted
+    await expect(target).toHaveScreenshot("pressable-default-lg-hover.png");
 
-    // Element itself sunk diagonally (both X and Y increased)
-    const hoveredRect = await press2xl.evaluate((el) => {
+    // Button sunk diagonally (both X and Y increased)
+    const hoveredRect = await target.evaluate((el) => {
       const r = el.getBoundingClientRect();
       return { top: r.top, left: r.left };
     });
     expect(hoveredRect.top).toBeGreaterThan(restingRect.top);
     expect(hoveredRect.left).toBeGreaterThan(restingRect.left);
-
-    // ::before transform shrunk to ~33% of depth
-    const beforeTransform = await press2xl.evaluate((el) =>
-      getComputedStyle(el, "::before").transform,
-    );
-    expect(beforeTransform).toContain("matrix3d");
   });
 
-  test("active state: block flush, edge minimal, shadow gone", async ({ page }) => {
-    const press2xl = page.locator('[data-testid="press-2xl"]');
-    await press2xl.scrollIntoViewIfNeeded();
+  test("active state: button flush, walls gone", async ({ page }) => {
+    const target = page.locator('[data-testid="pressable-default-lg"]');
+    await target.scrollIntoViewIfNeeded();
 
     // Capture resting position
-    const restingRect = await press2xl.evaluate((el) => {
+    const restingRect = await target.evaluate((el) => {
       const r = el.getBoundingClientRect();
       return { top: r.top, left: r.left };
     });
 
     // Mouse down (active state)
-    await press2xl.hover();
+    await target.hover();
     await page.mouse.down();
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(100);
 
-    // Screenshot — card should be nearly flush, minimal edge
-    await expect(press2xl).toHaveScreenshot("press-2xl-active.png");
+    // Screenshot — button should be flush
+    await expect(target).toHaveScreenshot("pressable-default-lg-active.png");
 
-    // Element nearly flush — sunk by (depth - 1px) = 13px diagonally
-    const activeRect = await press2xl.evaluate((el) => {
+    // Button sunk by full --depth (7px for depth-lg)
+    const activeRect = await target.evaluate((el) => {
       const r = el.getBoundingClientRect();
       return { top: r.top, left: r.left };
     });
-    expect(activeRect.top - restingRect.top).toBeGreaterThan(10); // ~13px down
-    expect(activeRect.left - restingRect.left).toBeGreaterThan(10); // ~13px right
+    expect(activeRect.top - restingRect.top).toBeGreaterThan(4);
+    expect(activeRect.left - restingRect.left).toBeGreaterThan(4);
 
     await page.mouse.up();
   });
 
   test("release: returns to resting position", async ({ page }) => {
-    const press2xl = page.locator('[data-testid="press-2xl"]');
-    await press2xl.scrollIntoViewIfNeeded();
+    const target = page.locator('[data-testid="pressable-default-lg"]');
+    await target.scrollIntoViewIfNeeded();
 
     // Resting position
-    const restingRect = await press2xl.evaluate((el) => {
+    const restingRect = await target.evaluate((el) => {
       const r = el.getBoundingClientRect();
       return { top: r.top, left: r.left };
     });
 
     // Hover then leave
-    await press2xl.hover();
+    await target.hover();
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(200);
     await page.mouse.move(0, 0);
@@ -254,7 +236,7 @@ test.describe("Theme Demo — Press 3D Effect", () => {
     await page.waitForTimeout(300);
 
     // Should be back at resting
-    const returnedRect = await press2xl.evaluate((el) => {
+    const returnedRect = await target.evaluate((el) => {
       const r = el.getBoundingClientRect();
       return { top: r.top, left: r.left };
     });

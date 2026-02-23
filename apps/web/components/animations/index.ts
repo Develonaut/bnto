@@ -7,5 +7,4 @@ export { LayoutShift } from "./LayoutShift";
 export { ExitDissolve } from "./ExitDissolve";
 export { NumberRoll } from "./NumberRoll";
 export { PresenceGate } from "./PresenceGate";
-export { Press } from "./Press";
 export { springs, durations, easings, staggerDelay } from "./config";

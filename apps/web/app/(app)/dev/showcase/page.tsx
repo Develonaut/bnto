@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Dropzone } from "@/components/ui/dropzone";
-import { Press, PopIn, SlideIn, StaggerCascade } from "@/components/animations";
+import { PopIn, SlideIn, StaggerCascade } from "@/components/animations";
 import { Upload } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -50,28 +50,23 @@ function ShadowScale() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Depth Scale (::before pseudo-element system)                       */
+/*  Depth Scale (3-layer building system)                              */
 /* ------------------------------------------------------------------ */
 
 function DepthScale() {
   const levels = [
-    { name: "depth-2xs", cls: "depth-2xs" },
-    { name: "depth-xs", cls: "depth-xs" },
-    { name: "depth-sm", cls: "depth-sm" },
-    { name: "depth", cls: "depth" },
-    { name: "depth-md", cls: "depth-md" },
-    { name: "depth-lg", cls: "depth-lg" },
-    { name: "depth-xl", cls: "depth-xl" },
-    { name: "depth-2xl", cls: "depth-2xl" },
+    { name: "depth-sm (4px)", cls: "depth depth-sm" },
+    { name: "depth (6px)", cls: "depth" },
+    { name: "depth-lg (7px)", cls: "depth depth-lg" },
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-6">
+    <div className="grid grid-cols-3 gap-6">
       {levels.map(({ name, cls }) => (
         <div
           key={name}
           className={cn(
-            "flex h-24 items-center justify-center rounded-xl bg-card",
+            "flex h-24 items-center justify-center rounded-xl border bg-card",
             cls,
           )}
         >
@@ -85,34 +80,28 @@ function DepthScale() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Press + Shadow Interaction                                         */
+/*  Pressable Cards                                                    */
 /* ------------------------------------------------------------------ */
 
-function PressShowcase() {
-  const levels = [
-    { name: "2xs", depth: 1 },
-    { name: "xs", depth: 2 },
-    { name: "sm", depth: 3 },
-    { name: "default", depth: 4 },
-    { name: "md", depth: 5 },
-    { name: "lg", depth: 7 },
-    { name: "xl", depth: 10 },
-    { name: "2xl", depth: 14 },
+function PressableCards() {
+  const sizes = [
+    { label: "depth-sm (4px)", size: "sm" as const },
+    { label: "depth-md (6px)", size: "default" as const },
+    { label: "depth-lg (7px)", size: "lg" as const },
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-6">
-      {levels.map(({ name, depth }) => (
-        <Press key={name} depth={depth} data-testid={`press-${name}`}>
-          <Card className="select-none p-6 text-center">
-            <Card.Title className="font-display text-sm">
-              shadow-{name}
-            </Card.Title>
-            <Card.Description className="mt-1 text-xs">
-              depth={depth}
-            </Card.Description>
-          </Card>
-        </Press>
+    <div className="grid grid-cols-3 gap-6">
+      {sizes.map(({ label, size }) => (
+        <Button
+          key={label}
+          variant="muted"
+          size={size}
+          className="h-24 rounded-xl font-display"
+          data-testid={`pressable-card-${size}`}
+        >
+          {label}
+        </Button>
       ))}
     </div>
   );
@@ -162,7 +151,7 @@ function ElevationCards() {
         </Card.Header>
         <Card.Content>
           <p className="text-sm text-muted-foreground">
-            Used for Press resting state, modals, featured elements.
+            Used for modals, featured elements, hero cards.
           </p>
         </Card.Content>
       </Card>
@@ -203,78 +192,41 @@ function ColorSwatches() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Button Depth States                                                */
+/*  Pressable Buttons (all variants × sizes)                           */
 /* ------------------------------------------------------------------ */
 
-const DEPTH_VARIANTS = [
-  { variant: "default" as const, label: "Primary" },
-  { variant: "secondary" as const, label: "Secondary" },
-  { variant: "outline" as const, label: "Outline" },
-  { variant: "destructive" as const, label: "Destructive" },
-];
-
-const FORCE_STATES = [
-  { state: undefined, label: "Resting" },
-  { state: "hover" as const, label: "Hover" },
-  { state: "active" as const, label: "Active" },
-];
-
-function ButtonDepthStates() {
+function PressableRow({
+  variant,
+  label,
+}: {
+  variant: "default" | "secondary" | "muted" | "destructive";
+  label: string;
+}) {
   return (
-    <div className="space-y-4">
-      {/* Column headers */}
-      <div className="grid grid-cols-[8rem_1fr_1fr_1fr] items-center gap-3">
-        <span />
-        {FORCE_STATES.map(({ label }) => (
-          <span key={label} className="text-center font-mono text-xs text-muted-foreground">
-            {label}
-          </span>
-        ))}
-      </div>
-      {/* Rows — one per variant */}
-      {DEPTH_VARIANTS.map(({ variant, label }) => (
-        <div key={variant} className="grid grid-cols-[8rem_1fr_1fr_1fr] items-center gap-3">
-          <span className="font-mono text-xs text-muted-foreground">{label}</span>
-          {FORCE_STATES.map(({ state, label: stateLabel }) => (
-            <div key={stateLabel} className="flex justify-center">
-              <Button
-                variant={variant}
-                size="lg"
-                data-force-state={state}
-              >
-                {label}
-              </Button>
-            </div>
-          ))}
-        </div>
-      ))}
+    <div className="flex flex-row items-center gap-6">
+      <span className="font-mono text-xs text-muted-foreground w-24 shrink-0">
+        {label}
+      </span>
+      <Button variant={variant} size="sm">
+        Learn More
+      </Button>
+      <Button variant={variant} size="default">
+        Learn More
+      </Button>
+      <Button variant={variant} size="lg" data-testid={`pressable-${label.toLowerCase()}-lg`}>
+        Learn More
+      </Button>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Katherine Kato Pressable Button (reference implementation)         */
-/* ------------------------------------------------------------------ */
-
-function KatherinePressable() {
+function PressableButtons() {
   return (
-    <div className="flex flex-row items-start gap-6">
-      <div className="text-center">
-        <span className="block font-mono text-xs text-muted-foreground mb-2">Interactive</span>
-        <button className="pressable">Learn More</button>
-      </div>
-      <div className="text-center">
-        <span className="block font-mono text-xs text-muted-foreground mb-2">Resting</span>
-        <button className="pressable">Learn More</button>
-      </div>
-      <div className="text-center">
-        <span className="block font-mono text-xs text-muted-foreground mb-2">Hover</span>
-        <button className="pressable" data-force-state="hover">Learn More</button>
-      </div>
-      <div className="text-center">
-        <span className="block font-mono text-xs text-muted-foreground mb-2">Active</span>
-        <button className="pressable" data-force-state="active">Learn More</button>
-      </div>
+    <div className="space-y-8">
+      <PressableRow variant="default" label="Default" />
+      <PressableRow variant="secondary" label="Secondary" />
+      <PressableRow variant="muted" label="Muted" />
+      <PressableRow variant="destructive" label="Destructive" />
     </div>
   );
 }
@@ -289,6 +241,7 @@ function ButtonShowcase() {
       <div className="flex flex-wrap items-center gap-3">
         <Button>Primary</Button>
         <Button variant="secondary">Secondary</Button>
+        <Button variant="muted">Muted</Button>
         <Button variant="outline">Outline</Button>
         <Button variant="ghost">Ghost</Button>
         <Button variant="destructive">Destructive</Button>
@@ -298,18 +251,6 @@ function ButtonShowcase() {
         <Button size="sm">Small</Button>
         <Button size="default">Default</Button>
         <Button size="lg">Large</Button>
-      </div>
-      {/* Buttons with Press */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Press depth={3} className="rounded-md">
-          <Button>Press Primary</Button>
-        </Press>
-        <Press depth={3} className="rounded-md">
-          <Button variant="secondary">Press Secondary</Button>
-        </Press>
-        <Press depth={3} className="rounded-md">
-          <Button variant="outline">Press Outline</Button>
-        </Press>
       </div>
     </div>
   );
@@ -378,19 +319,17 @@ function FormShowcase() {
 
 function DropzoneShowcase() {
   return (
-    <Press depth={4} className="rounded-lg">
-      <Dropzone accept={{ "image/*": [] }}>
-        {({ isDragActive }) => (
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <Upload className="size-8" />
-            <p className="text-sm font-medium">
-              {isDragActive ? "Drop files here" : "Drag images here or click to browse"}
-            </p>
-            <p className="text-xs">PNG, JPEG, WebP up to 10MB</p>
-          </div>
-        )}
-      </Dropzone>
-    </Press>
+    <Dropzone accept={{ "image/*": [] }}>
+      {({ isDragActive }) => (
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          <Upload className="size-8" />
+          <p className="text-sm font-medium">
+            {isDragActive ? "Drop files here" : "Drag images here or click to browse"}
+          </p>
+          <p className="text-xs">PNG, JPEG, WebP up to 10MB</p>
+        </div>
+      )}
+    </Dropzone>
   );
 }
 
@@ -430,28 +369,24 @@ function TypographyShowcase() {
 
 function AnimatedCardGrid() {
   const items = [
-    { title: "Compress Images", color: "bg-primary text-primary-foreground" },
-    { title: "Clean CSV", color: "bg-secondary text-secondary-foreground" },
-    { title: "Rename Files", color: "bg-accent text-accent-foreground" },
-    { title: "Convert Format", color: "bg-primary text-primary-foreground" },
-    { title: "Call API", color: "bg-secondary text-secondary-foreground" },
-    { title: "Resize Images", color: "bg-accent text-accent-foreground" },
+    { title: "Compress Images", variant: "default" as const },
+    { title: "Clean CSV", variant: "secondary" as const },
+    { title: "Rename Files", variant: "muted" as const },
+    { title: "Convert Format", variant: "default" as const },
+    { title: "Call API", variant: "secondary" as const },
+    { title: "Resize Images", variant: "muted" as const },
   ];
 
   return (
     <StaggerCascade className="grid grid-cols-3 gap-4">
       {items.map((item) => (
         <PopIn key={item.title}>
-          <Press depth={5} className="rounded-xl">
-            <div
-              className={cn(
-                "flex h-28 cursor-pointer items-center justify-center rounded-xl font-display font-semibold",
-                item.color,
-              )}
-            >
-              {item.title}
-            </div>
-          </Press>
+          <Button
+            variant={item.variant}
+            className="h-28 w-full rounded-xl font-display font-semibold"
+          >
+            {item.title}
+          </Button>
         </PopIn>
       ))}
     </StaggerCascade>
@@ -465,56 +400,50 @@ function AnimatedCardGrid() {
 function NotificationCards() {
   return (
     <div className="space-y-3">
-      <Press depth={3}>
-        <Card className="flex items-center gap-4 p-4">
-          <div className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-display font-bold">
-            B
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              Workflow completed
-            </p>
-            <p className="text-xs text-muted-foreground">
-              compress-images finished in 2.4s
-            </p>
-          </div>
-          <span className="text-xs text-muted-foreground">2m ago</span>
-        </Card>
-      </Press>
+      <Card className="flex items-center gap-4 p-4">
+        <div className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-display font-bold">
+          B
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground">
+            Workflow completed
+          </p>
+          <p className="text-xs text-muted-foreground">
+            compress-images finished in 2.4s
+          </p>
+        </div>
+        <span className="text-xs text-muted-foreground">2m ago</span>
+      </Card>
 
-      <Press depth={3}>
-        <Card className="flex items-center gap-4 p-4">
-          <div className="flex size-10 items-center justify-center rounded-full bg-accent text-accent-foreground font-display font-bold">
-            3
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              3 files processed
-            </p>
-            <p className="text-xs text-muted-foreground">
-              resize-images batch complete
-            </p>
-          </div>
-          <span className="text-xs text-muted-foreground">5m ago</span>
-        </Card>
-      </Press>
+      <Card className="flex items-center gap-4 p-4">
+        <div className="flex size-10 items-center justify-center rounded-full bg-accent text-accent-foreground font-display font-bold">
+          3
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground">
+            3 files processed
+          </p>
+          <p className="text-xs text-muted-foreground">
+            resize-images batch complete
+          </p>
+        </div>
+        <span className="text-xs text-muted-foreground">5m ago</span>
+      </Card>
 
-      <Press depth={3}>
-        <Card className="flex items-center gap-4 p-4">
-          <div className="flex size-10 items-center justify-center rounded-full bg-destructive text-destructive-foreground font-display font-bold">
-            !
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              Execution failed
-            </p>
-            <p className="text-xs text-muted-foreground">
-              call-api returned 503 &mdash; retry available
-            </p>
-          </div>
-          <span className="text-xs text-muted-foreground">12m ago</span>
-        </Card>
-      </Press>
+      <Card className="flex items-center gap-4 p-4">
+        <div className="flex size-10 items-center justify-center rounded-full bg-destructive text-destructive-foreground font-display font-bold">
+          !
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground">
+            Execution failed
+          </p>
+          <p className="text-xs text-muted-foreground">
+            call-api returned 503 &mdash; retry available
+          </p>
+        </div>
+        <span className="text-xs text-muted-foreground">12m ago</span>
+      </Card>
     </div>
   );
 }
@@ -574,7 +503,7 @@ export default function ThemeDemoPage() {
       <Section
         id="demo-depth-scale"
         title="Depth Scale"
-        description="::before pseudo-element depth system. Same colors as shadow scale, rendered via pseudo-elements for composability with Press."
+        description="3-layer building system: walls (::before) + ground shadow (::after). Three size levels: sm (4px), default (6px), lg (7px)."
       >
         <DepthScale />
       </Section>
@@ -589,10 +518,10 @@ export default function ThemeDemoPage() {
 
       <Section
         id="demo-press"
-        title="Press + Shadow"
-        description="Hover to sink. The directional shadow collapses as the element presses flush with the surface."
+        title="Pressable Cards"
+        description="Hover to sink the building toward the ground. Walls shrink, shadow fades. Active pushes flush."
       >
-        <PressShowcase />
+        <PressableCards />
       </Section>
 
       <Section
@@ -608,22 +537,14 @@ export default function ThemeDemoPage() {
       </Section>
 
       <Section
-        id="demo-button-depth"
-        title="Button Depth States"
-        description="Forced pseudo-states via data-force-state. Resting, hover, and active side by side for depth tuning."
-      >
-        <ButtonDepthStates />
-      </Section>
-
-      <Section
         id="demo-pressable"
-        title="Pressable Button (Katherine Kato)"
-        description="Pure CSS 3D press effect. The button face sinks toward the surface on hover/active while the ::before edge and ground shadow collapse."
+        title="Pressable Buttons"
+        description="Component-driven 3D press: depth + pressable + color variant + size. All via Button CVA props."
       >
-        <KatherinePressable />
+        <PressableButtons />
       </Section>
 
-      <Section id="demo-buttons" title="Buttons" description="All variants, sizes, and with Press animation.">
+      <Section id="demo-buttons" title="Buttons" description="All variants and sizes with built-in depth animation.">
         <ButtonShowcase />
       </Section>
 
@@ -631,14 +552,14 @@ export default function ThemeDemoPage() {
         <FormShowcase />
       </Section>
 
-      <Section id="demo-dropzone" title="Dropzone" description="File upload area with Press depth effect.">
+      <Section id="demo-dropzone" title="Dropzone" description="File upload area with card depth.">
         <DropzoneShowcase />
       </Section>
 
       <Section
         id="demo-tool-grid"
         title="Animated Tool Grid"
-        description="StaggerCascade + PopIn + Press. The signature bnto interaction."
+        description="StaggerCascade + PopIn + pressable Buttons. The signature bnto interaction."
       >
         <AnimatedCardGrid />
       </Section>
@@ -646,7 +567,7 @@ export default function ThemeDemoPage() {
       <Section
         id="demo-notifications"
         title="Notification Cards"
-        description="List items with Press — hover to push them into the surface."
+        description="List items with static card depth — walls + ground shadow."
       >
         <NotificationCards />
       </Section>
