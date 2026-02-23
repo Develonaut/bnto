@@ -48,7 +48,7 @@ export const migrateAnonymousData = internalMutation({
 
     // Transfer run counts from anonymous to new user
     await ctx.db.patch(newAppUser._id, {
-      runsUsed: (newAppUser.runsUsed ?? 0) + (oldAppUser.runsUsed ?? 0),
+      runsUsed: newAppUser.runsUsed + oldAppUser.runsUsed,
     });
 
     // Mark old app user as no longer anonymous (cleaned up by cron later)

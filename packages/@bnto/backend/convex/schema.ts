@@ -10,14 +10,11 @@ export default defineSchema({
     email: v.optional(v.string()),
     name: v.optional(v.string()),
     image: v.optional(v.string()),
-    isAnonymous: v.optional(v.boolean()),
-    // Bnto-specific fields (set by ensureUser after first sign-in)
-    plan: v.optional(
-      v.union(v.literal("free"), v.literal("starter"), v.literal("pro")),
-    ),
-    runsUsed: v.optional(v.number()),
-    runLimit: v.optional(v.number()),
-    runsResetAt: v.optional(v.number()),
+    isAnonymous: v.boolean(),
+    plan: v.union(v.literal("free"), v.literal("starter"), v.literal("pro")),
+    runsUsed: v.number(),
+    runLimit: v.number(),
+    runsResetAt: v.number(),
   })
     .index("by_userId", ["userId"])
     .index("email", ["email"])
@@ -52,6 +49,18 @@ export default defineSchema({
     result: v.optional(v.any()), // eslint-disable-line @typescript-eslint/no-explicit-any
     error: v.optional(v.string()),
     goExecutionId: v.optional(v.string()),
+    // R2 file transit — links execution to uploaded input files and output results
+    sessionId: v.optional(v.string()),
+    outputFiles: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          name: v.string(),
+          sizeBytes: v.number(),
+          contentType: v.string(),
+        }),
+      ),
+    ),
     startedAt: v.number(),
     completedAt: v.optional(v.number()),
   })

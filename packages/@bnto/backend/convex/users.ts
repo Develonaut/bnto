@@ -22,9 +22,7 @@ export const getRunsRemaining = query({
     if (userId === null) return null;
     const user = await ctx.db.get(userId);
     if (user === null) return null;
-    const limit = user.runLimit ?? FREE_RUN_LIMIT;
-    const used = user.runsUsed ?? 0;
-    return Math.max(0, limit - used);
+    return Math.max(0, user.runLimit - user.runsUsed);
   },
 });
 
@@ -78,10 +76,7 @@ export const resetRunCounters = internalMutation({
 
     const users = await ctx.db.query("users").collect();
     for (const user of users) {
-      if (
-        user.runsResetAt !== undefined &&
-        user.runsResetAt <= now
-      ) {
+      if (user.runsResetAt <= now) {
         await ctx.db.patch(user._id, {
           runsUsed: 0,
           runsResetAt: nextReset,

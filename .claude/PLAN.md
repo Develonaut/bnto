@@ -162,7 +162,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 - [ ] `apps/web` — Browser → R2 direct upload (presigned URLs, progress indicator)
 - [ ] `apps/api` — Deploy Go API server to Railway (private networking to Convex)
 - [ ] `apps/api` — Railway endpoint: pull input files from R2, execute `.bnto.json`, push output files to R2
-- [ ] `@bnto/backend` — Convex actions to trigger Railway execution and update status via mutations (pending → running → complete/failed)
+- [x] `@bnto/backend` — Convex actions to trigger Railway execution and update status via mutations (pending → running → complete/failed)
 - [ ] `@bnto/core` — Execution hooks wired to Convex adapter (start execution, subscribe to progress, get results)
 
 #### Wave 4 (parallel — execution UI)

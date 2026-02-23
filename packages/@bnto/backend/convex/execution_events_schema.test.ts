@@ -39,9 +39,11 @@ describe("executionEvents schema integrity", () => {
       return ctx.db.insert("users", {
         userId: "auth-user-123",
         email: "test@example.com",
+        isAnonymous: false,
         plan: "free",
         runsUsed: 0,
         runLimit: 5,
+        runsResetAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
       });
     });
 

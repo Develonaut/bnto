@@ -13,21 +13,21 @@ const MAX_POLL_ATTEMPTS = 450; // 15 min at 2s intervals
 
 /** Throws ConvexError if the user has exceeded their run quota. */
 function enforceQuota(user: {
-  isAnonymous?: boolean;
-  runsUsed?: number;
-  runLimit?: number;
+  isAnonymous: boolean;
+  runsUsed: number;
+  runLimit: number;
 }) {
   if (user.isAnonymous) {
     const anonLimitStr = process.env.ANONYMOUS_RUN_LIMIT;
     const anonLimit = anonLimitStr ? parseInt(anonLimitStr, 10) : 3;
-    if ((user.runsUsed ?? 0) >= anonLimit) {
+    if (user.runsUsed >= anonLimit) {
       throw new ConvexError({
         code: "ANONYMOUS_QUOTA_EXCEEDED",
         message: "Sign up for a free account to keep running workflows",
       });
     }
   }
-  if ((user.runsUsed ?? 0) >= (user.runLimit ?? 5)) {
+  if (user.runsUsed >= user.runLimit) {
     throw new ConvexError({
       code: "RUN_LIMIT_REACHED",
       message: "Run limit reached",
@@ -40,6 +40,7 @@ export const start = mutation({
   args: {
     workflowId: v.id("workflows"),
     slug: v.optional(v.string()),
+    sessionId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
@@ -55,7 +56,7 @@ export const start = mutation({
       throw new Error("Workflow not found");
     }
 
-    await ctx.db.patch(userId, { runsUsed: (user.runsUsed ?? 0) + 1 });
+    await ctx.db.patch(userId, { runsUsed: user.runsUsed + 1 });
 
     const now = Date.now();
     const executionId = await ctx.db.insert("executions", {
@@ -63,6 +64,7 @@ export const start = mutation({
       workflowId: args.workflowId,
       status: "pending",
       progress: [],
+      sessionId: args.sessionId,
       startedAt: now,
     });
 
@@ -77,7 +79,12 @@ export const start = mutation({
     await ctx.scheduler.runAfter(
       0,
       internal.executions.executeWorkflow,
-      { executionId, definition: workflow.definition, eventId },
+      {
+        executionId,
+        definition: workflow.definition,
+        eventId,
+        sessionId: args.sessionId,
+      },
     );
 
     return executionId;
@@ -114,12 +121,17 @@ export const listByWorkflow = query({
 /**
  * Internal action: POST workflow to Go API, then poll for completion.
  * Writes progress updates to Convex via internal mutations.
+ *
+ * When sessionId is provided, the Go API uses it to locate input files
+ * in R2 at `uploads/{sessionId}/` and writes output files back to R2
+ * at `executions/{executionId}/output/`.
  */
 export const executeWorkflow = internalAction({
   args: {
     executionId: v.id("executions"),
     definition: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
     eventId: v.optional(v.id("executionEvents")),
+    sessionId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const startTime = Date.now();
@@ -136,10 +148,11 @@ export const executeWorkflow = internalAction({
 
     let goExecutionId: string;
     try {
+      const body = buildRunRequestBody(args.definition, args.sessionId);
       const response = await fetch(`${goApiUrl}/api/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(args.definition),
+        body: JSON.stringify(body),
       });
       if (!response.ok) {
         const text = await response.text();
@@ -184,6 +197,7 @@ export const executeWorkflow = internalAction({
             await ctx.runMutation(internal.executions.complete, {
               executionId: args.executionId,
               result: execution.result ?? null,
+              outputFiles: execution.outputFiles,
               eventId: args.eventId,
               startTime,
             });
@@ -248,6 +262,16 @@ export const complete = internalMutation({
   args: {
     executionId: v.id("executions"),
     result: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
+    outputFiles: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          name: v.string(),
+          sizeBytes: v.number(),
+          contentType: v.string(),
+        }),
+      ),
+    ),
     eventId: v.optional(v.id("executionEvents")),
     startTime: v.optional(v.number()),
   },
@@ -256,6 +280,7 @@ export const complete = internalMutation({
     await ctx.db.patch(args.executionId, {
       status: "completed" as const,
       result: args.result,
+      outputFiles: args.outputFiles,
       completedAt: now,
     });
 
@@ -297,4 +322,18 @@ export const fail = internalMutation({
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Build the JSON body for POST /api/run.
+ * When a sessionId is present, the Go API pulls input files from R2.
+ */
+function buildRunRequestBody(
+  definition: unknown,
+  sessionId: string | undefined,
+) {
+  if (sessionId) {
+    return { definition, sessionId };
+  }
+  return { definition };
 }
