@@ -26,6 +26,12 @@ import { useExecution } from "./hooks/useExecution";
 import { useExecutions } from "./hooks/useExecutions";
 import { useExecutionLogs } from "./hooks/useExecutionLogs";
 
+// Quota hooks
+import { useRunQuota } from "./hooks/useRunQuota";
+
+// Upload hooks
+import { useUploadFiles } from "./hooks/useUploadFiles";
+
 // User hooks
 import { useCurrentUser } from "./hooks/useCurrentUser";
 import { useRunsRemaining } from "./hooks/useRunsRemaining";
@@ -60,10 +66,16 @@ export const core = {
     useExecutionLogs,
   },
 
+  uploads: {
+    ...baseCore.uploads,
+    useUploadFiles,
+  },
+
   user: {
     ...baseCore.user,
     useCurrentUser,
     useRunsRemaining,
+    useRunQuota,
   },
 
   session: {

@@ -14,6 +14,8 @@ interface FileDropZoneProps {
   slug: string;
   /** Called when files change (added or removed). */
   onFilesChange?: (files: File[]) => void;
+  /** When true, prevents new drops and file selection. */
+  disabled?: boolean;
 }
 
 /**
@@ -22,7 +24,7 @@ interface FileDropZoneProps {
  * Validates dropped/selected files against the bnto's accepted types.
  * Rejected files are silently skipped — the accepted ones still get added.
  */
-export function FileDropZone({ slug, onFilesChange }: FileDropZoneProps) {
+export function FileDropZone({ slug, onFilesChange, disabled }: FileDropZoneProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [rejectedCount, setRejectedCount] = useState(0);
 
@@ -60,7 +62,7 @@ export function FileDropZone({ slug, onFilesChange }: FileDropZoneProps) {
 
   return (
     <div className="space-y-4">
-      <Dropzone accept={accept} multiple onDrop={handleDrop}>
+      <Dropzone accept={accept} multiple onDrop={handleDrop} disabled={disabled}>
         {({ isDragActive }) => (
           <>
             <div

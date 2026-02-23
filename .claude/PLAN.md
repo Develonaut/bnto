@@ -173,7 +173,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 - [ ] `apps/web` — Cloudflare R2 bucket setup (temp storage, TTL-keyed paths: `/executions/{id}/input/`, `/executions/{id}/output/`)
 - [x] `@bnto/backend` — Convex action to generate R2 presigned upload URLs (validate file type + enforce 25MB free / 500MB Pro size limits)
-- [ ] `apps/web` — Browser → R2 direct upload (presigned URLs, progress indicator)
+- [x] `apps/web` — Browser → R2 direct upload (presigned URLs, progress indicator)
 
 **Railway deployment:**
 

@@ -25,6 +25,11 @@ export type {
   NodeProgress,
   RunResult,
   User,
+  UploadFileInput,
+  PresignedUploadUrl,
+  UploadSession,
+  FileUploadProgress,
+  UploadProgress,
 } from "./types";
 
 // ── Session types ─────────────────────────────────────────────────────────
@@ -58,3 +63,5 @@ export { useIsAuthenticated } from "./hooks/useIsAuthenticated";
 export { useSessionStatus } from "./hooks/useSessionStatus";
 export { useSignOut } from "./hooks/useSignOut";
 export { useAnonymousSession } from "./hooks/useAnonymousSession";
+export { useRunQuota } from "./hooks/useRunQuota";
+export { useUploadFiles } from "./hooks/useUploadFiles";

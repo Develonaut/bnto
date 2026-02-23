@@ -18,7 +18,7 @@
   },
   "scripts": {
     "build": "tsc --noEmit",
-    "test": "echo \"No tests yet\"",
+    "test": "vitest run",
     "lint": "echo \"No linter yet\""
   },
   "dependencies": {
@@ -38,6 +38,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "vitest": "catalog:"
   }
 }

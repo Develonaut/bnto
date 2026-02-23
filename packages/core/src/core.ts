@@ -13,20 +13,24 @@
 import { createWorkflowService } from "./services/workflowService";
 import { createExecutionService } from "./services/executionService";
 import { createUserService } from "./services/userService";
+import { createUploadService } from "./services/uploadService";
 import { createWorkflowClient } from "./clients/workflowClient";
 import { createExecutionClient } from "./clients/executionClient";
 import { createUserClient } from "./clients/userClient";
+import { createUploadClient } from "./clients/uploadClient";
 import { createAuthClient } from "./clients/authClient";
 
 // ── Services (single-domain, internal) ────────────────────────────────────
 const workflowService = createWorkflowService();
 const executionService = createExecutionService();
 const userService = createUserService();
+const uploadService = createUploadService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
 const workflowClient = createWorkflowClient(workflowService, executionService);
 const executionClient = createExecutionClient(executionService);
 const userClient = createUserClient(userService);
+const uploadClient = createUploadClient(uploadService);
 const authClient = createAuthClient();
 
 // ── Core Singleton ────────────────────────────────────────────────────────
@@ -34,5 +38,6 @@ export const core = {
   workflows: workflowClient,
   executions: executionClient,
   user: userClient,
+  uploads: uploadClient,
   auth: authClient,
 } as const;

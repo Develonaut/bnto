@@ -21,3 +21,11 @@ export type {
 } from "./execution";
 
 export type { User } from "./user";
+
+export type {
+  UploadFileInput,
+  PresignedUploadUrl,
+  UploadSession,
+  FileUploadProgress,
+  UploadProgress,
+} from "./upload";
