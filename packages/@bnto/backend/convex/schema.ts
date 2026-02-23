@@ -70,4 +70,26 @@ export default defineSchema({
     message: v.string(),
     timestamp: v.number(),
   }).index("by_execution", ["executionId"]),
+
+  // Lightweight analytics/billing event log.
+  // Captures every run including anonymous users on predefined Bnto tool pages.
+  // Separate from `executions` (lifecycle) — this is the billing/usage data layer.
+  executionEvents: defineTable({
+    userId: v.optional(v.id("users")),
+    fingerprint: v.optional(v.string()),
+    slug: v.string(),
+    timestamp: v.number(),
+    durationMs: v.optional(v.number()),
+    status: v.union(
+      v.literal("started"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    executionId: v.optional(v.id("executions")),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_fingerprint", ["fingerprint"])
+    .index("by_fingerprint_timestamp", ["fingerprint", "timestamp"])
+    .index("by_slug", ["slug"])
+    .index("by_userId_timestamp", ["userId", "timestamp"]),
 });

@@ -85,7 +85,7 @@ export const FAQ = ({
               </h2>
             )}
             <p className="text-muted-foreground max-w-md leading-snug lg:mx-auto">
-              If you can't find what you're looking for,{" "}
+              If you can&apos;t find what you&apos;re looking for,{" "}
               <Link href="/contact" className="underline underline-offset-4">
                 get in touch
               </Link>

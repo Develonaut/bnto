@@ -6,12 +6,16 @@
     "dev": "convex dev",
     "deploy": "convex deploy",
     "build": "echo \"Convex functions are pushed via 'convex dev' or 'convex deploy'\"",
-    "test": "echo \"No tests yet\"",
+    "test": "vitest run",
     "lint": "echo \"No linter yet\""
   },
   "dependencies": {
-    "convex": "catalog:",
     "@convex-dev/better-auth": "catalog:",
-    "better-auth": "1.4.18"
+    "better-auth": "1.4.18",
+    "convex": "catalog:"
+  },
+  "devDependencies": {
+    "convex-test": "^0.0.41",
+    "vitest": "catalog:"
   }
 }

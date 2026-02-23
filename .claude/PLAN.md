@@ -151,7 +151,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 - [x] `apps/web` — Bnto gallery on home page (warm, card-based grid of all Tier 1 tools — browsable, no account required)
 - [x] `apps/web` — Per-Bnto configuration UI (context-specific controls: quality slider for images, format selector, column mapping for CSV)
 - [x] `apps/web` — File drop interface (drag & drop zone, batch file selection, shows selected files with size/type)
-- [ ] `@bnto/backend` — Execution event logging (every run logged — userId or browser fingerprint, bnto slug, timestamp, durationMs)
+- [x] `@bnto/backend` — Execution event logging (every run logged — userId or browser fingerprint, bnto slug, timestamp, durationMs)
 
 #### Wave 3 (parallel — R2 file transit layer)
 

@@ -11,10 +11,35 @@ import { getAppUserId } from "./_helpers/auth";
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 450; // 15 min at 2s intervals
 
+/** Throws ConvexError if the user has exceeded their run quota. */
+function enforceQuota(user: {
+  isAnonymous?: boolean;
+  runsUsed?: number;
+  runLimit?: number;
+}) {
+  if (user.isAnonymous) {
+    const anonLimitStr = process.env.ANONYMOUS_RUN_LIMIT;
+    const anonLimit = anonLimitStr ? parseInt(anonLimitStr, 10) : 3;
+    if ((user.runsUsed ?? 0) >= anonLimit) {
+      throw new ConvexError({
+        code: "ANONYMOUS_QUOTA_EXCEEDED",
+        message: "Sign up for a free account to keep running workflows",
+      });
+    }
+  }
+  if ((user.runsUsed ?? 0) >= (user.runLimit ?? 5)) {
+    throw new ConvexError({
+      code: "RUN_LIMIT_REACHED",
+      message: "Run limit reached",
+    });
+  }
+}
+
 /** Start a workflow execution. Checks run limits and schedules the action. */
 export const start = mutation({
   args: {
     workflowId: v.id("workflows"),
+    slug: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
@@ -23,34 +48,14 @@ export const start = mutation({
     const user = await ctx.db.get(userId);
     if (user === null) throw new ConvexError("User not found");
 
-    // Quota enforcement — anonymous users have a separate limit from env var
-    if (user.isAnonymous) {
-      const anonLimitStr = process.env.ANONYMOUS_RUN_LIMIT;
-      const anonLimit = anonLimitStr ? parseInt(anonLimitStr, 10) : 3;
-      const used = user.runsUsed ?? 0;
-      if (used >= anonLimit) {
-        throw new ConvexError({
-          code: "ANONYMOUS_QUOTA_EXCEEDED",
-          message: "Sign up for a free account to keep running workflows",
-        });
-      }
-    }
-
-    const limit = user.runLimit ?? 5;
-    const used = user.runsUsed ?? 0;
-    if (used >= limit) {
-      throw new ConvexError({
-        code: "RUN_LIMIT_REACHED",
-        message: "Run limit reached",
-      });
-    }
+    enforceQuota(user);
 
     const workflow = await ctx.db.get(args.workflowId);
     if (workflow === null || workflow.userId !== userId) {
       throw new Error("Workflow not found");
     }
 
-    await ctx.db.patch(userId, { runsUsed: used + 1 });
+    await ctx.db.patch(userId, { runsUsed: (user.runsUsed ?? 0) + 1 });
 
     const now = Date.now();
     const executionId = await ctx.db.insert("executions", {
@@ -61,10 +66,18 @@ export const start = mutation({
       startedAt: now,
     });
 
+    const eventId = await ctx.db.insert("executionEvents", {
+      userId,
+      slug: args.slug ?? workflow.name,
+      timestamp: now,
+      status: "started",
+      executionId,
+    });
+
     await ctx.scheduler.runAfter(
       0,
       internal.executions.executeWorkflow,
-      { executionId, definition: workflow.definition },
+      { executionId, definition: workflow.definition, eventId },
     );
 
     return executionId;
@@ -106,13 +119,17 @@ export const executeWorkflow = internalAction({
   args: {
     executionId: v.id("executions"),
     definition: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
+    eventId: v.optional(v.id("executionEvents")),
   },
   handler: async (ctx, args) => {
+    const startTime = Date.now();
     const goApiUrl = process.env.GO_API_URL;
     if (!goApiUrl) {
       await ctx.runMutation(internal.executions.fail, {
         executionId: args.executionId,
         error: "GO_API_URL not configured",
+        eventId: args.eventId,
+        startTime,
       });
       return;
     }
@@ -134,6 +151,8 @@ export const executeWorkflow = internalAction({
       await ctx.runMutation(internal.executions.fail, {
         executionId: args.executionId,
         error: `Failed to start execution: ${e instanceof Error ? e.message : String(e)}`,
+        eventId: args.eventId,
+        startTime,
       });
       return;
     }
@@ -165,11 +184,15 @@ export const executeWorkflow = internalAction({
             await ctx.runMutation(internal.executions.complete, {
               executionId: args.executionId,
               result: execution.result ?? null,
+              eventId: args.eventId,
+              startTime,
             });
           } else {
             await ctx.runMutation(internal.executions.fail, {
               executionId: args.executionId,
               error: execution.error ?? "Execution failed",
+              eventId: args.eventId,
+              startTime,
             });
           }
           return;
@@ -185,6 +208,8 @@ export const executeWorkflow = internalAction({
         await ctx.runMutation(internal.executions.fail, {
           executionId: args.executionId,
           error: `Poll error: ${e instanceof Error ? e.message : String(e)}`,
+          eventId: args.eventId,
+          startTime,
         });
         return;
       }
@@ -193,6 +218,8 @@ export const executeWorkflow = internalAction({
     await ctx.runMutation(internal.executions.fail, {
       executionId: args.executionId,
       error: "Execution timed out (polling limit reached)",
+      eventId: args.eventId,
+      startTime,
     });
   },
 });
@@ -216,33 +243,55 @@ export const updateProgress = internalMutation({
   },
 });
 
-/** Mark an execution as completed. */
+/** Mark an execution as completed. Also updates the linked execution event. */
 export const complete = internalMutation({
   args: {
     executionId: v.id("executions"),
     result: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
+    eventId: v.optional(v.id("executionEvents")),
+    startTime: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const now = Date.now();
     await ctx.db.patch(args.executionId, {
       status: "completed" as const,
       result: args.result,
-      completedAt: Date.now(),
+      completedAt: now,
     });
+
+    if (args.eventId) {
+      const durationMs = args.startTime ? now - args.startTime : 0;
+      await ctx.db.patch(args.eventId, {
+        status: "completed" as const,
+        durationMs,
+      });
+    }
   },
 });
 
-/** Mark an execution as failed. */
+/** Mark an execution as failed. Also updates the linked execution event. */
 export const fail = internalMutation({
   args: {
     executionId: v.id("executions"),
     error: v.string(),
+    eventId: v.optional(v.id("executionEvents")),
+    startTime: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const now = Date.now();
     await ctx.db.patch(args.executionId, {
       status: "failed" as const,
       error: args.error,
-      completedAt: Date.now(),
+      completedAt: now,
     });
+
+    if (args.eventId) {
+      const durationMs = args.startTime ? now - args.startTime : 0;
+      await ctx.db.patch(args.eventId, {
+        status: "failed" as const,
+        durationMs,
+      });
+    }
   },
 });
 

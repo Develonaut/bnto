@@ -12,6 +12,7 @@ import type * as _helpers_auth from "../_helpers/auth.js";
 import type * as auth from "../auth.js";
 import type * as crons from "../crons.js";
 import type * as executionLogs from "../executionLogs.js";
+import type * as execution_events from "../execution_events.js";
 import type * as executions from "../executions.js";
 import type * as http from "../http.js";
 import type * as migrate_anonymous from "../migrate_anonymous.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   crons: typeof crons;
   executionLogs: typeof executionLogs;
+  execution_events: typeof execution_events;
   executions: typeof executions;
   http: typeof http;
   migrate_anonymous: typeof migrate_anonymous;
