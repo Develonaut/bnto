@@ -12,149 +12,64 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Dropzone } from "@/components/ui/dropzone";
 import { PopIn, SlideIn, StaggerCascade } from "@/components/animations";
-import { Upload } from "lucide-react";
+import { Upload, ArrowRight } from "lucide-react";
+
 
 /* ------------------------------------------------------------------ */
-/*  Shadow Showcase                                                    */
+/*  Cards — static depth + pressable                                   */
 /* ------------------------------------------------------------------ */
 
-function ShadowScale() {
-  const levels = [
-    { name: "shadow-2xs", cls: "shadow-2xs" },
-    { name: "shadow-xs", cls: "shadow-xs" },
-    { name: "shadow-sm", cls: "shadow-sm" },
-    { name: "shadow", cls: "shadow" },
-    { name: "shadow-md", cls: "shadow-md" },
-    { name: "shadow-lg", cls: "shadow-lg" },
-    { name: "shadow-xl", cls: "shadow-xl" },
-    { name: "shadow-2xl", cls: "shadow-2xl" },
-  ];
-
-  return (
-    <div className="grid grid-cols-4 gap-6">
-      {levels.map(({ name, cls }) => (
-        <div
-          key={name}
-          className={cn(
-            "flex h-24 items-center justify-center rounded-xl bg-card",
-            cls,
-          )}
-        >
-          <span className="font-mono text-xs text-muted-foreground">
-            {name}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Depth Scale (3-layer building system)                              */
-/* ------------------------------------------------------------------ */
-
-function DepthScale() {
-  const levels = [
-    { name: "depth-sm (4px)", cls: "depth depth-sm" },
-    { name: "depth (6px)", cls: "depth" },
-    { name: "depth-lg (7px)", cls: "depth depth-lg" },
-  ];
-
-  return (
-    <div className="grid grid-cols-3 gap-6">
-      {levels.map(({ name, cls }) => (
-        <div
-          key={name}
-          className={cn(
-            "flex h-24 items-center justify-center rounded-xl border bg-card",
-            cls,
-          )}
-        >
-          <span className="font-mono text-xs text-muted-foreground">
-            {name}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Pressable Cards                                                    */
-/* ------------------------------------------------------------------ */
-
-function PressableCards() {
+function CardShowcase() {
   const sizes = [
-    { label: "depth-sm (4px)", size: "sm" as const },
-    { label: "depth-md (6px)", size: "default" as const },
-    { label: "depth-lg (7px)", size: "lg" as const },
+    { label: "depth-none", depthClass: "depth-none" },
+    { label: "depth-sm", depthClass: "depth-sm" },
+    { label: "depth-md", depthClass: "depth-md" },
+    { label: "depth-lg", depthClass: "depth-lg" },
   ];
 
   return (
-    <div className="grid grid-cols-3 gap-6">
-      {sizes.map(({ label, size }) => (
-        <Button
-          key={label}
-          variant="muted"
-          size={size}
-          className="h-24 rounded-xl font-display"
-          data-testid={`pressable-card-${size}`}
-        >
-          {label}
-        </Button>
-      ))}
-    </div>
-  );
-}
+    <div className="space-y-8">
+      {/* Row 1: Static depth cards (no pressable interaction) */}
+      <div>
+        <p className="mb-3 text-sm font-medium text-muted-foreground">
+          Static depth &mdash; walls + ground shadow, no interaction
+        </p>
+        <div className="grid grid-cols-4 gap-6">
+          {sizes.map(({ label, depthClass }) => (
+            <Card
+              key={label}
+              className={cn(
+                "flex h-24 items-center justify-center rounded-xl font-display font-semibold",
+                depthClass,
+              )}
+              data-testid={`static-card-${label}`}
+            >
+              {label}
+            </Card>
+          ))}
+        </div>
+      </div>
 
-/* ------------------------------------------------------------------ */
-/*  Elevation Cards                                                    */
-/* ------------------------------------------------------------------ */
-
-function ElevationCards() {
-  return (
-    <div className="grid grid-cols-3 gap-6">
-      <Card className="shadow-sm">
-        <Card.Header>
-          <Card.Title className="font-display">Flush</Card.Title>
-          <Card.Description>
-            shadow-sm &mdash; sitting on the surface, barely lifted
-          </Card.Description>
-        </Card.Header>
-        <Card.Content>
-          <p className="text-sm text-muted-foreground">
-            Used for inputs, form fields, and subtle containers.
-          </p>
-        </Card.Content>
-      </Card>
-
-      <Card className="shadow-md">
-        <Card.Header>
-          <Card.Title className="font-display">Standard</Card.Title>
-          <Card.Description>
-            shadow-md &mdash; default card elevation
-          </Card.Description>
-        </Card.Header>
-        <Card.Content>
-          <p className="text-sm text-muted-foreground">
-            Used for content cards, panels, and list items.
-          </p>
-        </Card.Content>
-      </Card>
-
-      <Card className="shadow-xl">
-        <Card.Header>
-          <Card.Title className="font-display">Floating</Card.Title>
-          <Card.Description>
-            shadow-xl &mdash; high above the surface
-          </Card.Description>
-        </Card.Header>
-        <Card.Content>
-          <p className="text-sm text-muted-foreground">
-            Used for modals, featured elements, hero cards.
-          </p>
-        </Card.Content>
-      </Card>
+      {/* Row 2: Pressable cards (hover to sink, active to flush) */}
+      <div>
+        <p className="mb-3 text-sm font-medium text-muted-foreground">
+          Pressable &mdash; hover to sink, active pushes flush
+        </p>
+        <div className="grid grid-cols-4 gap-6">
+          {sizes.map(({ label, depthClass }) => (
+            <Card
+              key={label}
+              className={cn(
+                "flex h-24 cursor-pointer items-center justify-center rounded-xl font-display font-semibold pressable",
+                depthClass,
+              )}
+              data-testid={`pressable-card-${label}`}
+            >
+              {label}
+            </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -165,27 +80,28 @@ function ElevationCards() {
 
 function ColorSwatches() {
   const swatches = [
-    { name: "Primary", bg: "bg-primary", fg: "text-primary-foreground" },
-    { name: "Secondary", bg: "bg-secondary", fg: "text-secondary-foreground" },
-    { name: "Accent", bg: "bg-accent", fg: "text-accent-foreground" },
-    { name: "Muted", bg: "bg-muted", fg: "text-muted-foreground" },
-    { name: "Destructive", bg: "bg-destructive", fg: "text-destructive-foreground" },
-    { name: "Card", bg: "bg-card", fg: "text-card-foreground" },
+    { name: "Primary", bg: "bg-primary", fg: "text-primary-foreground", depth: "depth-default" },
+    { name: "Secondary", bg: "bg-secondary", fg: "text-secondary-foreground", depth: "depth-secondary" },
+    { name: "Accent", bg: "bg-accent", fg: "text-accent-foreground", depth: "depth-accent" },
+    { name: "Muted", bg: "bg-muted", fg: "text-muted-foreground", depth: "depth-muted" },
+    { name: "Destructive", bg: "bg-destructive", fg: "text-destructive-foreground", depth: "depth-destructive" },
+    { name: "Card", bg: "bg-card", fg: "text-card-foreground", depth: "depth-outline" },
   ];
 
   return (
     <div className="grid grid-cols-6 gap-4">
-      {swatches.map(({ name, bg, fg }) => (
-        <div
+      {swatches.map(({ name, bg, fg, depth }) => (
+        <Card
           key={name}
           className={cn(
-            "flex h-20 items-center justify-center rounded-xl shadow-md",
+            "flex h-20 items-center justify-center rounded-xl",
             bg,
             fg,
+            depth,
           )}
         >
           <span className="text-sm font-semibold">{name}</span>
-        </div>
+        </Card>
       ))}
     </div>
   );
@@ -195,11 +111,11 @@ function ColorSwatches() {
 /*  Pressable Buttons (all variants × sizes)                           */
 /* ------------------------------------------------------------------ */
 
-function PressableRow({
+function ButtonRow({
   variant,
   label,
 }: {
-  variant: "default" | "secondary" | "muted" | "destructive";
+  variant: "default" | "secondary" | "muted" | "destructive" | "outline";
   label: string;
 }) {
   return (
@@ -207,6 +123,9 @@ function PressableRow({
       <span className="font-mono text-xs text-muted-foreground w-24 shrink-0">
         {label}
       </span>
+      <Button variant={variant} size="icon">
+        <ArrowRight />
+      </Button>
       <Button variant={variant} size="sm">
         Learn More
       </Button>
@@ -220,38 +139,14 @@ function PressableRow({
   );
 }
 
-function PressableButtons() {
-  return (
-    <div className="space-y-8">
-      <PressableRow variant="default" label="Default" />
-      <PressableRow variant="secondary" label="Secondary" />
-      <PressableRow variant="muted" label="Muted" />
-      <PressableRow variant="destructive" label="Destructive" />
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Button Variants                                                    */
-/* ------------------------------------------------------------------ */
-
 function ButtonShowcase() {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <Button>Primary</Button>
-        <Button variant="secondary">Secondary</Button>
-        <Button variant="muted">Muted</Button>
-        <Button variant="outline">Outline</Button>
-        <Button variant="ghost">Ghost</Button>
-        <Button variant="destructive">Destructive</Button>
-        <Button variant="link">Link</Button>
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
-        <Button size="sm">Small</Button>
-        <Button size="default">Default</Button>
-        <Button size="lg">Large</Button>
-      </div>
+    <div className="space-y-8">
+      <ButtonRow variant="default" label="Default" />
+      <ButtonRow variant="secondary" label="Secondary" />
+      <ButtonRow variant="outline" label="Outline" />
+      <ButtonRow variant="muted" label="Muted" />
+      <ButtonRow variant="destructive" label="Destructive" />
     </div>
   );
 }
@@ -493,40 +388,16 @@ export default function ThemeDemoPage() {
       </div>
 
       <Section
-        id="demo-shadow-scale"
-        title="Shadow Scale"
-        description="All 8 shadow levels. With the depth theme, each casts to the bottom-right like buildings in Mini Motorways."
+        id="demo-cards"
+        title="Cards"
+        description="Depth correlates with perspective: small elements are nearly top-down, larger elements are more isometric. Add .pressable for hover/active interaction."
       >
-        <ShadowScale />
-      </Section>
-
-      <Section
-        id="demo-depth-scale"
-        title="Depth Scale"
-        description="3-layer building system: walls (::before) + ground shadow (::after). Three size levels: sm (4px), default (6px), lg (7px)."
-      >
-        <DepthScale />
-      </Section>
-
-      <Section
-        id="demo-elevation"
-        title="Elevation Cards"
-        description="Cards at different heights above the surface. The directional shadow makes the floating effect tangible."
-      >
-        <ElevationCards />
-      </Section>
-
-      <Section
-        id="demo-press"
-        title="Pressable Cards"
-        description="Hover to sink the building toward the ground. Walls shrink, shadow fades. Active pushes flush."
-      >
-        <PressableCards />
+        <CardShowcase />
       </Section>
 
       <Section
         id="demo-colors"
-        title="Color Palette"
+        title="Colors"
         description="Terracotta, teal, golden, cream — the warm Mini Motorways palette."
       >
         <ColorSwatches />
@@ -537,14 +408,10 @@ export default function ThemeDemoPage() {
       </Section>
 
       <Section
-        id="demo-pressable"
-        title="Pressable Buttons"
-        description="Component-driven 3D press: depth + pressable + color variant + size. All via Button CVA props."
+        id="demo-buttons"
+        title="Buttons"
+        description="All variants × sizes with depth + pressable. Icon buttons included."
       >
-        <PressableButtons />
-      </Section>
-
-      <Section id="demo-buttons" title="Buttons" description="All variants and sizes with built-in depth animation.">
         <ButtonShowcase />
       </Section>
 

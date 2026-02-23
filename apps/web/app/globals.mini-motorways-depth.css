@@ -360,43 +360,80 @@
 
 .depth {
   --depth: 6px;
+  --depth-x: var(--depth);
+  --depth-y: var(--depth);
+  --shadow-x: 8px;
+  --shadow-y: 12px;
   position: relative;
   transform-style: preserve-3d;
+  border: 1px solid var(--depth-wall);
 }
 
-/* Walls — darker shade offset diagonally behind the face */
+/* Walls — darker shade offset behind the face.
+ * Direction driven by --depth-x / --depth-y so the perspective
+ * angle varies per size tier (top-down for sm, isometric for lg). */
 .depth::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: var(--depth-wall);
-  transform: translate3d(var(--depth), var(--depth), -1em);
+  transform: translate3d(var(--depth-x), var(--depth-y), -1px);
 }
 
-/* Ground shadow — semi-transparent, cast further than walls */
+/* Ground shadow — long southeast cast, like Mini Motorways.
+ * Decoupled from wall offset: shadows project much further out
+ * and stretch more downward than rightward. */
 .depth::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: var(--depth-shadow);
-  transform: translate3d(
-    calc(var(--depth) + 3px),
-    calc(var(--depth) + 3px),
-    -2em
-  );
+  transform: translate3d(var(--shadow-x), var(--shadow-y), -2px);
 }
 
-/* ── Size modifiers ─────────────────────────────────────────────── */
+/* ── Size modifiers ─────────────────────────────────────────────
+ *
+ * Depth correlates with perspective: smaller = nearly top-down,
+ * larger = more isometric (more wall visible on the right side).
+ *
+ *   depth-sm: house    — mostly downward, thin right wall
+ *   depth-md: building — balanced diagonal (current default)
+ *   depth-lg: tower    — more rightward, prominent side walls
+ * ────────────────────────────────────────────────────────────── */
 
-.depth-sm { --depth: 4px; }
-.depth-md { --depth: 6px; }
-.depth-lg { --depth: 7px; }
+.depth-sm {
+  --depth: 4px;
+  --depth-x: 2px;
+  --depth-y: 4px;
+  --shadow-x: 6px;
+  --shadow-y: 10px;
+}
+.depth-md {
+  --depth: 6px;
+  --depth-x: 5px;
+  --depth-y: 6px;
+  --shadow-x: 10px;
+  --shadow-y: 14px;
+}
+.depth-lg {
+  --depth: 10px;
+  --depth-x: 8px;
+  --depth-y: 8px;
+  --shadow-x: 16px;
+  --shadow-y: 19px;
+}
 
 /* ── Reset ──────────────────────────────────────────────────────── */
 
-.depth-none { --depth: 0px; }
+.depth-none {
+  --depth: 0px;
+  --depth-x: 0px;
+  --depth-y: 0px;
+  --shadow-x: 0px;
+  --shadow-y: 0px;
+}
 .depth-none::before,
 .depth-none::after {
   content: none;
@@ -429,6 +466,12 @@
 .depth-destructive {
   --depth-wall: oklch(0.45 0.17 25);
   --depth-shadow: oklch(0.45 0.12 25 / 0.25);
+}
+
+/* Accent — golden walls */
+.depth-accent {
+  --depth-wall: oklch(0.70 0.12 91);
+  --depth-shadow: oklch(0.60 0.08 91 / 0.25);
 }
 
 /* Outline — subtle neutral walls */
@@ -469,49 +512,52 @@
     opacity 150ms cubic-bezier(0, 0, 0.58, 1);
 }
 
-/* Hover — face sinks 33%, walls at 66%, shadow shrinks */
+/* Hover / focus-within — face sinks 33%, walls at 66%, shadow shrinks */
 .pressable:hover,
+.pressable:focus-within,
 .pressable[data-force-state="hover"] {
   transform: translate(
-    calc(var(--depth) * 0.33),
-    calc(var(--depth) * 0.33)
+    calc(var(--depth-x) * 0.33),
+    calc(var(--depth-y) * 0.33)
   );
 }
 
 .pressable:hover::before,
+.pressable:focus-within::before,
 .pressable[data-force-state="hover"]::before {
   transform: translate3d(
-    calc(var(--depth) * 0.66),
-    calc(var(--depth) * 0.66),
-    -1em
+    calc(var(--depth-x) * 0.66),
+    calc(var(--depth-y) * 0.66),
+    -1px
   );
 }
 
 .pressable:hover::after,
+.pressable:focus-within::after,
 .pressable[data-force-state="hover"]::after {
   transform: translate3d(
-    calc(var(--depth) * 0.66 + 2px),
-    calc(var(--depth) * 0.66 + 2px),
-    -2em
+    calc(var(--shadow-x) * 0.66),
+    calc(var(--shadow-y) * 0.66),
+    -2px
   );
 }
 
 /* Active — face flush, walls gone, shadow invisible */
 .pressable:active,
 .pressable[data-force-state="active"] {
-  transform: translate(var(--depth), var(--depth));
+  transform: translate(var(--depth-x), var(--depth-y));
   transition-duration: 34ms;
 }
 
 .pressable:active::before,
 .pressable[data-force-state="active"]::before {
-  transform: translate3d(0px, 0px, -1em);
+  transform: translate3d(0px, 0px, -1px);
   transition-duration: 34ms;
 }
 
 .pressable:active::after,
 .pressable[data-force-state="active"]::after {
-  transform: translate3d(0px, 0px, -2em);
+  transform: translate3d(0px, 0px, -2px);
   opacity: 0;
   transition-duration: 34ms;
 }
@@ -532,21 +578,20 @@
   }
 
   .pressable:hover,
+  .pressable:focus-within,
   .pressable:active {
     transform: none;
   }
 
   .pressable:hover::before,
+  .pressable:focus-within::before,
   .pressable:active::before {
-    transform: translate3d(var(--depth), var(--depth), -1em);
+    transform: translate3d(var(--depth-x), var(--depth-y), -1px);
   }
 
   .pressable:hover::after,
+  .pressable:focus-within::after,
   .pressable:active::after {
-    transform: translate3d(
-      calc(var(--depth) + 3px),
-      calc(var(--depth) + 3px),
-      -2em
-    );
+    transform: translate3d(var(--shadow-x), var(--shadow-y), -2px);
   }
 }

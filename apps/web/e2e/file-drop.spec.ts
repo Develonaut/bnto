@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test.use({ reducedMotion: "reduce" });
 
@@ -10,10 +10,7 @@ test.describe("File drop interface", () => {
       page.getByRole("heading", { name: "Compress Images Online Free" }),
     ).toBeVisible();
 
-    const dropZone = page.getByRole("button", {
-      name: /drop.*files.*here|click to browse/i,
-    });
-    await expect(dropZone).toBeVisible();
+    await expect(page.getByText("Drag & drop files here")).toBeVisible();
 
     await expect(page.getByText("JPEG, PNG, or WebP images")).toBeVisible();
 
@@ -27,10 +24,7 @@ test.describe("File drop interface", () => {
       page.getByRole("heading", { name: "Clean CSV Online Free" }),
     ).toBeVisible({ timeout: 15000 });
 
-    const dropZone = page.getByRole("button", {
-      name: /drop.*files.*here|click to browse/i,
-    });
-    await expect(dropZone).toBeVisible();
+    await expect(page.getByText("Drag & drop files here")).toBeVisible();
 
     await expect(page.getByText("CSV files")).toBeVisible();
 

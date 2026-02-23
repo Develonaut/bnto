@@ -1,19 +1,26 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import type { FileRejection } from "react-dropzone";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Dropzone } from "@/components/ui/dropzone";
-import { getAcceptedTypes, toDropzoneAccept } from "../_lib/getAcceptedTypes";
-import { FileList } from "./FileList";
+import {
+  FileUpload,
+  FileUploadDropzone,
+  FileUploadList,
+  FileUploadItem,
+  FileUploadItemMetadata,
+  FileUploadItemDelete,
+  FileUploadClear,
+} from "@/components/ui/file-upload";
+import { getAcceptedTypes } from "../_lib/getAcceptedTypes";
 
 interface FileDropZoneProps {
   /** The bnto slug — determines accepted file types. */
   slug: string;
+  /** Currently selected files (controlled). */
+  value: File[];
   /** Called when files change (added or removed). */
-  onFilesChange?: (files: File[]) => void;
+  onValueChange: (files: File[]) => void;
   /** When true, prevents new drops and file selection. */
   disabled?: boolean;
 }
@@ -21,99 +28,92 @@ interface FileDropZoneProps {
 /**
  * Drag-and-drop file zone with batch selection and file list.
  *
- * Validates dropped/selected files against the bnto's accepted types.
- * Rejected files are silently skipped — the accepted ones still get added.
+ * Uses the diceui FileUpload compound component in controlled mode.
+ * File validation (accepted types) is handled by the component's
+ * built-in `accept` prop based on the bnto slug.
  */
-export function FileDropZone({ slug, onFilesChange, disabled }: FileDropZoneProps) {
-  const [files, setFiles] = useState<File[]>([]);
-  const [rejectedCount, setRejectedCount] = useState(0);
-
-  const { label } = getAcceptedTypes(slug);
-  const accept = toDropzoneAccept(slug);
-
-  const handleDrop = useCallback(
-    (accepted: File[], rejected: FileRejection[]) => {
-      setRejectedCount(rejected.length);
-      setFiles((prev) => {
-        const updated = [...prev, ...accepted];
-        onFilesChange?.(updated);
-        return updated;
-      });
-    },
-    [onFilesChange],
-  );
-
-  function handleRemove(index: number) {
-    setFiles((prev) => {
-      const updated = prev.filter((_, i) => i !== index);
-      onFilesChange?.(updated);
-      return updated;
-    });
-    setRejectedCount(0);
-  }
-
-  function handleClear() {
-    setFiles([]);
-    setRejectedCount(0);
-    onFilesChange?.([]);
-  }
-
-  const hasFiles = files.length > 0;
+export function FileDropZone({
+  slug,
+  value,
+  onValueChange,
+  disabled,
+}: FileDropZoneProps) {
+  const { accept, label } = getAcceptedTypes(slug);
 
   return (
-    <div className="space-y-4">
-      <Dropzone accept={accept} multiple onDrop={handleDrop} disabled={disabled}>
-        {({ isDragActive }) => (
-          <>
-            <div
-              className={cn(
-                "rounded-full p-3",
-                "motion-safe:transition-colors motion-safe:duration-fast",
-                isDragActive
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground",
-              )}
-            >
-              <Upload className="size-6" />
-            </div>
-
-            <div className="text-center">
-              <p className="text-sm font-medium text-foreground">
-                {isDragActive ? "Drop files here" : "Drag & drop files here"}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                or click to browse &middot; accepts {label}
-              </p>
-            </div>
-          </>
+    <FileUpload
+      value={value}
+      onValueChange={onValueChange}
+      accept={accept === "*/*" ? undefined : accept}
+      multiple
+      disabled={disabled}
+    >
+      <FileUploadDropzone
+        className={cn(
+          "gap-3 rounded-xl border-border bg-muted/30 px-6 py-10",
+          "motion-safe:transition-all motion-safe:duration-fast",
+          "hover:border-muted-foreground/40 hover:bg-muted/50",
+          "data-[dragging]:border-primary data-[dragging]:bg-primary/5 data-[dragging]:shadow-md",
         )}
-      </Dropzone>
+      >
+        <div
+          className={cn(
+            "rounded-full p-3 bg-muted text-muted-foreground",
+            "motion-safe:transition-colors motion-safe:duration-fast",
+          )}
+        >
+          <Upload className="size-6" />
+        </div>
 
-      {rejectedCount > 0 && (
-        <p className="text-center text-xs text-destructive" role="alert">
-          {rejectedCount} {rejectedCount === 1 ? "file" : "files"} skipped
-          &mdash; only {label} accepted
-        </p>
-      )}
+        <div className="text-center">
+          <p className="text-sm font-medium text-foreground">
+            Drag & drop files here
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            or click to browse &middot; accepts {label}
+          </p>
+        </div>
+      </FileUploadDropzone>
 
-      {hasFiles && (
+      {value.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-foreground">
-              {files.length} {files.length === 1 ? "file" : "files"} selected
+              {value.length} {value.length === 1 ? "file" : "files"} selected
             </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClear}
-              className="text-muted-foreground"
-            >
-              Clear all
-            </Button>
+            <FileUploadClear asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-muted-foreground"
+              >
+                Clear all
+              </Button>
+            </FileUploadClear>
           </div>
-          <FileList files={files} onRemove={handleRemove} />
+
+          <FileUploadList>
+            {value.map((file) => (
+              <FileUploadItem
+                key={`${file.name}-${file.size}-${file.lastModified}`}
+                value={file}
+                className="rounded-lg border-border bg-card px-4 py-3"
+              >
+                <FileUploadItemMetadata />
+                <FileUploadItemDelete asChild>
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground motion-safe:transition-colors motion-safe:duration-fast"
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    <X className="size-4" />
+                  </button>
+                </FileUploadItemDelete>
+              </FileUploadItem>
+            ))}
+          </FileUploadList>
         </div>
       )}
-    </div>
+    </FileUpload>
   );
 }

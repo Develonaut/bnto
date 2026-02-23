@@ -3,44 +3,14 @@ import { test, expect } from "./fixtures";
 test.describe("Theme Demo — Depth Shadows", () => {
   test.use({ reducedMotion: "reduce" });
 
-  test("shadow scale renders directional cast shadows", async ({ page }) => {
+  test("cards section shows static and pressable depth", async ({ page }) => {
     await page.goto("/dev/showcase");
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(500);
 
-    const section = page.locator('[data-testid="demo-shadow-scale"]');
+    const section = page.locator('[data-testid="demo-cards"]');
     await section.scrollIntoViewIfNeeded();
-    await expect(section).toHaveScreenshot("depth-shadow-scale.png");
-  });
-
-  test("depth scale renders 3-layer building system", async ({ page }) => {
-    await page.goto("/dev/showcase");
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(500);
-
-    const section = page.locator('[data-testid="demo-depth-scale"]');
-    await section.scrollIntoViewIfNeeded();
-    await expect(section).toHaveScreenshot("depth-depth-scale.png");
-  });
-
-  test("elevation cards show depth progression", async ({ page }) => {
-    await page.goto("/dev/showcase");
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(500);
-
-    const section = page.locator('[data-testid="demo-elevation"]');
-    await section.scrollIntoViewIfNeeded();
-    await expect(section).toHaveScreenshot("depth-elevation-cards.png");
-  });
-
-  test("pressable cards show depth effect", async ({ page }) => {
-    await page.goto("/dev/showcase");
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(500);
-
-    const section = page.locator('[data-testid="demo-press"]');
-    await section.scrollIntoViewIfNeeded();
-    await expect(section).toHaveScreenshot("depth-press-cards.png");
+    await expect(section).toHaveScreenshot("depth-cards.png");
   });
 
   test("color palette swatches with directional shadows", async ({ page }) => {
@@ -53,17 +23,7 @@ test.describe("Theme Demo — Depth Shadows", () => {
     await expect(section).toHaveScreenshot("depth-color-palette.png");
   });
 
-  test("pressable buttons (all variants)", async ({ page }) => {
-    await page.goto("/dev/showcase");
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await page.waitForTimeout(500);
-
-    const section = page.locator('[data-testid="demo-pressable"]');
-    await section.scrollIntoViewIfNeeded();
-    await expect(section).toHaveScreenshot("pressable-button.png");
-  });
-
-  test("button variants showcase", async ({ page }) => {
+  test("button variants (all sizes + icon)", async ({ page }) => {
     await page.goto("/dev/showcase");
     // eslint-disable-next-line playwright/no-wait-for-timeout
     await page.waitForTimeout(500);
@@ -140,7 +100,7 @@ test.describe("Theme Demo — Pressable 3D Effect", () => {
   });
 
   test("pressable buttons at rest", async ({ page }) => {
-    const section = page.locator('[data-testid="demo-pressable"]');
+    const section = page.locator('[data-testid="demo-buttons"]');
     await section.scrollIntoViewIfNeeded();
     await expect(section).toHaveScreenshot("pressable-all-resting.png");
   });

@@ -4,12 +4,13 @@ import * as React from "react";
 import { useDropzone, type DropzoneOptions } from "react-dropzone";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { Button } from "./button";
 
 const dropzoneVariants = cva(
   [
-    "flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed",
+    "h-auto w-full flex-col rounded-xl",
+    "outline-2 outline-dashed outline-offset-[-8px]",
     "motion-safe:transition-all motion-safe:duration-fast",
-    "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
   ],
   {
     variants: {
@@ -18,8 +19,8 @@ const dropzoneVariants = cva(
         sm: "gap-2 px-4 py-6",
       },
       state: {
-        idle: "border-border bg-muted/30 hover:border-muted-foreground/40 hover:bg-muted/50",
-        active: "border-primary bg-primary/5 shadow-md",
+        idle: "outline-border",
+        active: "outline-primary bg-primary/5",
       },
     },
     defaultVariants: {
@@ -40,22 +41,27 @@ function Dropzone({ className, size, children, ...options }: DropzoneProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone(options);
 
   return (
-    <div
-      {...getRootProps({
-        role: "button",
-        "data-slot": "dropzone",
-        className: cn(
-          dropzoneVariants({
-            size,
-            state: isDragActive ? "active" : "idle",
-          }),
-          className,
-        ),
-      })}
+    <Button
+      asChild
+      variant="outline"
+      size="default"
+      className={cn(
+        dropzoneVariants({
+          size,
+          state: isDragActive ? "active" : "idle",
+        }),
+        className,
+      )}
     >
-      <input data-slot="dropzone-input" {...getInputProps()} />
-      {children({ isDragActive })}
-    </div>
+      <div
+        {...getRootProps({
+          "data-slot": "dropzone",
+        })}
+      >
+        <input data-slot="dropzone-input" {...getInputProps()} />
+        {children({ isDragActive })}
+      </div>
+    </Button>
   );
 }
 
