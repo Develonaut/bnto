@@ -1,4 +1,5 @@
 import { Background } from "@/components/background";
+import { BntoGallery } from "@/components/blocks/bnto-gallery";
 import { FAQ } from "@/components/blocks/faq";
 import { Features } from "@/components/blocks/features";
 import { Hero } from "@/components/blocks/hero";
@@ -13,6 +14,7 @@ export default function Home() {
       <Background className="via-muted to-muted/80">
         <Hero />
         <Logos />
+        <BntoGallery />
         <Features />
         <ResourceAllocation />
       </Background>

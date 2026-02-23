@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import { getToken } from "@bnto/auth/server";
-import { Footer } from "@/components/blocks/footer";
 import { Navbar } from "@/components/blocks/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Providers } from "./providers";
@@ -142,8 +141,7 @@ export default async function RootLayout({
         >
           <Providers initialToken={initialToken}>
             <Navbar />
-            <main>{children}</main>
-            <Footer />
+            {children}
           </Providers>
         </ThemeProvider>
       </body>

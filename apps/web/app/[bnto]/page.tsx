@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Footer } from "@/components/blocks/footer";
 import { BNTO_REGISTRY, getBntoBySlug } from "../../lib/bnto-registry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { BntoPageShell } from "./_components/BntoPageShell";
@@ -33,6 +34,9 @@ export async function generateMetadata({
  *
  * Each slug maps to a predefined workflow via the bnto registry.
  * Unknown slugs return a proper 404.
+ *
+ * Renders its own Footer with the tool shell replacing the default CTA,
+ * so the root layout Footer is hidden via the bnto layout.
  */
 export default async function BntoPage({
   params,
@@ -46,7 +50,10 @@ export default async function BntoPage({
   return (
     <>
       <BntoJsonLd entry={entry} />
-      <BntoPageShell entry={entry} />
+      <main />
+      <Footer>
+        <BntoPageShell entry={entry} />
+      </Footer>
     </>
   );
 }

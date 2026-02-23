@@ -3,5 +3,5 @@ export default function BntoLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return <div className="pt-20 lg:pt-28">{children}</div>;
 }

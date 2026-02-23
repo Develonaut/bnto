@@ -1,8 +1,9 @@
+import type { ComponentProps } from "react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const Card = React.forwardRef<
+const PrimitiveCard = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
@@ -15,7 +16,7 @@ const Card = React.forwardRef<
     {...props}
   />
 ));
-Card.displayName = "Card";
+PrimitiveCard.displayName = "Card";
 
 const CardHeader = React.forwardRef<
   HTMLDivElement,
@@ -73,11 +74,15 @@ const CardFooter = React.forwardRef<
 ));
 CardFooter.displayName = "CardFooter";
 
-export {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardDescription,
-  CardContent,
-};
+function CardRoot(props: ComponentProps<typeof PrimitiveCard>) {
+  return <PrimitiveCard {...props} />;
+}
+
+export const Card = Object.assign(CardRoot, {
+  Root: CardRoot,
+  Header: CardHeader,
+  Title: CardTitle,
+  Description: CardDescription,
+  Content: CardContent,
+  Footer: CardFooter,
+});

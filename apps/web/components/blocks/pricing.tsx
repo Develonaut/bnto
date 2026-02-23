@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +76,7 @@ export const Pricing = ({ className }: { className?: string }) => {
                   : ""
               }`}
             >
-              <CardContent className="flex flex-col gap-7 px-6 py-5">
+              <Card.Content className="flex flex-col gap-7 px-6 py-5">
                 <div className="space-y-2">
                   <h3 className="text-foreground font-semibold">{plan.name}</h3>
                   <div className="space-y-1">
@@ -125,7 +125,7 @@ export const Pricing = ({ className }: { className?: string }) => {
                 >
                   Get started
                 </Button>
-              </CardContent>
+              </Card.Content>
             </Card>
           ))}
         </div>

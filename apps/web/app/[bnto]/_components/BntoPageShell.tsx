@@ -1,7 +1,6 @@
 "use client";
 
 import { useAnonymousSession, useRunsRemaining } from "@bnto/core";
-import { DashedLine } from "@/components/dashed-line";
 import type { BntoEntry } from "../../../lib/bnto-registry";
 import { UpgradePrompt } from "./UpgradePrompt";
 
@@ -17,45 +16,36 @@ interface BntoPageShellProps {
  * session arriving is async and non-blocking.
  */
 export function BntoPageShell({ entry }: BntoPageShellProps) {
-  const { isPending, isAnonymous, isAuthenticated } = useAnonymousSession();
+  const { isPending, isAnonymous } = useAnonymousSession();
   const { data: runsRemaining } = useRunsRemaining();
 
   const quotaExhausted = isAnonymous && runsRemaining === 0;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center p-6">
-      <div className="w-full max-w-2xl space-y-6 text-center">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-          {entry.h1}
-        </h1>
+    <div className="container space-y-3 text-center">
+      <h1 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
+        {entry.h1}
+      </h1>
+      <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
+        {entry.description}
+      </p>
 
-        <DashedLine className="mx-auto max-w-xs" />
+      {isPending ? (
+        <p className="text-sm text-muted-foreground pt-4">Loading...</p>
+      ) : (
+        <div className="mx-auto max-w-2xl space-y-4 pt-4">
+          {quotaExhausted && (
+            <UpgradePrompt slug={entry.slug} reason="quota" />
+          )}
 
-        {isPending ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        ) : (
-          <div className="space-y-4">
+          {/* TODO(Sprint 2): Render workflow execution UI here */}
+          <div className="rounded-xl border border-border bg-card p-8">
             <p className="text-sm text-muted-foreground">
-              {isAuthenticated
-                ? "Ready to run"
-                : isAnonymous
-                  ? "Running as guest"
-                  : "Setting up session..."}
+              Drop files here to get started.
             </p>
-
-            {quotaExhausted && (
-              <UpgradePrompt slug={entry.slug} reason="quota" />
-            )}
-
-            {/* TODO(Sprint 2): Render workflow execution UI here */}
-            <div className="rounded-xl border border-border bg-card p-8">
-              <p className="text-sm text-muted-foreground">
-                Workflow UI coming soon -- drop files here to get started.
-              </p>
-            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

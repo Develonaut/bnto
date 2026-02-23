@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 
 import { DashedLine } from "../dashed-line";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 const items = [
   {
@@ -48,7 +48,7 @@ export const Features = () => {
 
         {/* Features Card */}
         <Card className="mt-8 rounded-3xl md:mt-12 lg:mt-20">
-          <CardContent className="flex p-0 max-md:flex-col">
+          <Card.Content className="flex p-0 max-md:flex-col">
             {items.map((item, i) => (
               <div key={i} className="flex flex-1 max-md:flex-col">
                 <div className="flex-1 p-4 pe-0! md:p-6">
@@ -88,7 +88,7 @@ export const Features = () => {
                 )}
               </div>
             ))}
-          </CardContent>
+          </Card.Content>
         </Card>
       </div>
     </section>

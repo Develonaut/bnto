@@ -29,6 +29,38 @@ test.describe("Home page", () => {
     });
   });
 
+  test("renders bnto gallery with tool cards", async ({ page }) => {
+    await page.goto("/");
+
+    const gallery = page.getByRole("heading", {
+      name: /Pick a tool\. Drop your files\./i,
+    });
+    await gallery.scrollIntoViewIfNeeded();
+    await expect(gallery).toBeVisible();
+
+    // Verify all 6 Tier 1 tool cards link to their pages
+    await expect(
+      page.getByRole("link", { name: /Compress Images/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Resize Images/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Convert Image Format/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Rename Files/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Clean CSV/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /Rename CSV Columns/ }),
+    ).toBeVisible();
+
+    await expect(page).toHaveScreenshot("home-bnto-gallery.png");
+  });
+
   test("renders features section", async ({ page }) => {
     await page.goto("/");
 
