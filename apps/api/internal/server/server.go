@@ -8,13 +8,15 @@ import (
 
 	"github.com/Develonaut/bnto-api/internal/execution"
 	"github.com/Develonaut/bnto-api/internal/handler"
+	"github.com/Develonaut/bnto-api/internal/r2"
 )
 
 // New creates an http.Handler with all routes registered.
-func New(svc *api.BntoService, mgr *execution.Manager) http.Handler {
+// Pass nil for store to disable R2 file transit (local-only mode).
+func New(svc *api.BntoService, mgr *execution.Manager, store r2.ObjectStore) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /api/run", handler.RunWorkflow(svc, mgr))
+	mux.HandleFunc("POST /api/run", handler.RunWorkflow(svc, mgr, store))
 	mux.HandleFunc("GET /api/executions/{id}", handler.GetExecution(mgr))
 	mux.HandleFunc("POST /api/validate", handler.Validate(svc))
 	mux.HandleFunc("GET /api/workflows", handler.ListWorkflows(svc))

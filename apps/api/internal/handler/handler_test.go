@@ -23,7 +23,7 @@ func newTestServer(t *testing.T) http.Handler {
 	store := storage.New(t.TempDir())
 	svc := api.New(reg, store)
 	mgr := execution.NewManager()
-	return server.New(svc, mgr)
+	return server.New(svc, mgr, nil)
 }
 
 func TestValidateWorkflow(t *testing.T) {

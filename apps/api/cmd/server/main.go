@@ -17,6 +17,7 @@ import (
 	"github.com/Develonaut/bnto/pkg/storage"
 
 	"github.com/Develonaut/bnto-api/internal/execution"
+	"github.com/Develonaut/bnto-api/internal/r2"
 	"github.com/Develonaut/bnto-api/internal/server"
 )
 
@@ -31,10 +32,12 @@ func main() {
 	svc := api.New(reg, store)
 	mgr := execution.NewManager()
 
+	objectStore := initR2()
+
 	// Background cleanup of completed executions (1 hour TTL).
 	go cleanupLoop(mgr, time.Hour, 5*time.Minute)
 
-	handler := server.New(svc, mgr)
+	handler := server.New(svc, mgr, objectStore)
 
 	srv := &http.Server{
 		Addr:         ":" + port,
@@ -64,6 +67,17 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("shutdown error: %v", err)
 	}
+}
+
+// initR2 creates an R2 client from env vars, or returns nil if not configured.
+func initR2() r2.ObjectStore {
+	client, err := r2.NewClientFromEnv()
+	if err != nil {
+		fmt.Println("R2 not configured, file transit disabled:", err)
+		return nil
+	}
+	fmt.Println("R2 file transit enabled")
+	return client
 }
 
 // cleanupLoop periodically removes completed executions older than ttl.

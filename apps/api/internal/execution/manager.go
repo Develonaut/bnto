@@ -27,8 +27,17 @@ type Execution struct {
 	Progress    []NodeProgress  `json:"progress"`
 	Result      *api.RunResult  `json:"result,omitempty"`
 	Error       string          `json:"error,omitempty"`
+	OutputFiles []OutputFile    `json:"outputFiles,omitempty"`
 	StartedAt   time.Time       `json:"startedAt"`
 	CompletedAt *time.Time      `json:"completedAt,omitempty"`
+}
+
+// OutputFile describes a file produced by workflow execution.
+type OutputFile struct {
+	Key         string `json:"key"`
+	Name        string `json:"name"`
+	SizeBytes   int64  `json:"sizeBytes"`
+	ContentType string `json:"contentType"`
 }
 
 // NodeProgress tracks the status of an individual node during execution.
@@ -76,6 +85,10 @@ func (m *Manager) Get(id string) *Execution {
 	snapshot := *exec
 	snapshot.Progress = make([]NodeProgress, len(exec.Progress))
 	copy(snapshot.Progress, exec.Progress)
+	if exec.OutputFiles != nil {
+		snapshot.OutputFiles = make([]OutputFile, len(exec.OutputFiles))
+		copy(snapshot.OutputFiles, exec.OutputFiles)
+	}
 	return &snapshot
 }
 
@@ -108,6 +121,19 @@ func (m *Manager) Complete(id string, result *api.RunResult) {
 		now := time.Now()
 		exec.Status = StatusCompleted
 		exec.Result = result
+		exec.CompletedAt = &now
+	}
+}
+
+// CompleteWithFiles marks an execution as completed with a result and output files.
+func (m *Manager) CompleteWithFiles(id string, result *api.RunResult, files []OutputFile) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if exec, ok := m.executions[id]; ok {
+		now := time.Now()
+		exec.Status = StatusCompleted
+		exec.Result = result
+		exec.OutputFiles = files
 		exec.CompletedAt = &now
 	}
 }

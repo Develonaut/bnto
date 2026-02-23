@@ -178,7 +178,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 **Railway deployment:**
 
 - [ ] `apps/api` — Deploy Go API server to Railway (private networking to Convex)
-- [ ] `apps/api` — Railway endpoint: pull input files from R2, execute `.bnto.json`, push output files to R2
+- [x] `apps/api` — Railway endpoint: pull input files from R2, execute `.bnto.json`, push output files to R2
 
 **Wiring:**
 
