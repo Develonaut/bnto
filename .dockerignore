@@ -1,31 +1,23 @@
-# Go engine (not needed for web build)
-engine/
-apps/api/
+# Node.js (not needed for Go API build)
+node_modules
+**/node_modules
+apps/web/
 apps/desktop/
-go.work
-go.work.sum
-Taskfile.yml
+packages/
 
-# Git
+# Build artifacts
+apps/web/.next
+apps/api/server
+
+# Git and docs
 .git
-.gitignore
-
-# Docs
 .claude/
 *.md
 LICENSE
 
-# Node artifacts (reinstalled in Docker)
-node_modules
-**/node_modules
-
-# Next.js build artifacts
-apps/web/.next
-apps/web/out
-
-# Environment files
+# Environment
 .env*
 **/.env*
 
-# OS files
+# OS
 .DS_Store

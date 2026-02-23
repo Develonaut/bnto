@@ -26,6 +26,18 @@ func newTestServer(t *testing.T) http.Handler {
 	return server.New(svc, mgr, nil)
 }
 
+func TestHealthEndpoint(t *testing.T) {
+	handler := newTestServer(t)
+
+	req := httptest.NewRequest("GET", "/health", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
 func TestValidateWorkflow(t *testing.T) {
 	handler := newTestServer(t)
 

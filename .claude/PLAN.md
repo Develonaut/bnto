@@ -25,7 +25,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-**Status:** Sprint 1 complete (Waves 1-3). Sprint 2 partially complete — all 6 Tier 1 fixtures exist, SEO routing is live, landing pages rebuilt with shadcn Mainline template. Environment infrastructure mostly complete: R2 buckets + credentials configured (dev + prod), Convex env vars set for both deployments, Vercel env vars split per environment. Railway deployment and execution UI not started.
+**Status:** Sprint 1 complete (Waves 1-3). Sprint 2 partially complete — all 6 Tier 1 fixtures exist, SEO routing is live, landing pages rebuilt with shadcn Mainline template. Environment infrastructure complete: R2 buckets + credentials configured (dev + prod), Convex env vars set for both deployments, Vercel env vars split per environment. Go API server deployed to Railway (`https://bnto-production.up.railway.app`) with R2 file transit enabled and `GO_API_URL` set in Convex dev. R2 bucket setup (lifecycle rules) and execution UI (Wave 4) not started.
 
 **Engine (complete):** Go CLI with 10 node types (all >90% test coverage), integration test fixtures, CLI smoke tests, Go HTTP API server with 20+ integration tests, BntoService shared API layer.
 
@@ -164,8 +164,8 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 - [x] `infra` — Set R2 env vars in Convex dev deployment (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME=bnto-transit-dev`)
 - [x] `infra` — Set R2 env vars in Convex prod deployment (same keys, prod bucket name)
 - [x] `infra` — Set prod Convex env vars (`BETTER_AUTH_SECRET` — generate new, `SITE_URL=https://bnto.io`)
-- [ ] `infra` — Link Railway project to repo (`railway link`), create API service, link service
-- [ ] `infra` — Set `GO_API_URL` in Convex dev + prod deployments (Railway service URL)
+- [x] `infra` — Link Railway project to repo (`railway link`), create API service, link service
+- [x] `infra` — Set `GO_API_URL` in Convex dev + prod deployments (Railway service URL)
 - [x] `infra` — Set Vercel env vars for production (`NEXT_PUBLIC_CONVEX_URL`, `NEXT_PUBLIC_CONVEX_SITE_URL` pointing to prod Convex)
 - [x] `infra` — Verify env vars doc (`.claude/environment-variables.md`) matches reality after setup
 
@@ -177,7 +177,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 **Railway deployment:**
 
-- [ ] `apps/api` — Deploy Go API server to Railway (private networking to Convex)
+- [x] `apps/api` — Deploy Go API server to Railway (private networking to Convex)
 - [x] `apps/api` — Railway endpoint: pull input files from R2, execute `.bnto.json`, push output files to R2
 
 **Wiring:**
@@ -513,6 +513,20 @@ Schema (single source of truth)
 - [ ] `apps/web` — When building the JSON editor (Sprint 4), don't flatten the node tree for editing. The editor should represent the recursive structure faithfully. Collapsible sections for group/loop child nodes.
 - [ ] `apps/web` — When building the visual editor (Sprint 8), support drill-down into group nodes. Each group is a sub-canvas. Breadcrumb navigation for depth. Study atomiton's `@atomiton/editor` package for the `nodeToReactFlow` / `reactFlowToNode` conversion pattern that handles nested nodes.
 
+
+### Domain Setup: bnto.io Custom Domains
+
+Custom domains for production services. Do Railway first (API) to validate, then Vercel (web app).
+
+**Order:** Railway → Vercel (Railway first to validate DNS + TLS before going live on the main domain)
+
+- [ ] `infra` — Add `api.bnto.io` CNAME in Cloudflare DNS pointing to Railway (`bnto-production.up.railway.app`)
+- [ ] `infra` — Configure custom domain in Railway dashboard for the bnto service
+- [ ] `infra` — Update `GO_API_URL` in Convex prod to `https://api.bnto.io`
+- [ ] `infra` — Verify API health check at `https://api.bnto.io/health`
+- [ ] `infra` — Connect `bnto.io` to Vercel (add domain in Vercel dashboard, update Cloudflare DNS)
+- [ ] `infra` — Update `SITE_URL` in Convex prod to `https://bnto.io` (already set — verify after DNS propagation)
+- [ ] `infra` — Verify auth redirects work on `bnto.io`
 
 ### Tooling: Use package.json `imports` Instead of TSConfig Path Aliases
 

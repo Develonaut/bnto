@@ -40,6 +40,10 @@ tasks:
     dir: ./apps/api
     cmds: [go run ./cmd/server]
 
+  api:tunnel:
+    desc: Start Cloudflare tunnel (exposes local API at api-dev.bnto.io)
+    cmds: [cloudflared tunnel run bnto-dev]
+
   api:test:
     desc: Run API server tests with race detector
     cmds: [go test -race ./apps/api/...]

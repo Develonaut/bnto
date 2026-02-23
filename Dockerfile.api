@@ -1,0 +1,32 @@
+# Build stage — Go + CGO for libwebp (image node dependency)
+FROM golang:1.25-alpine AS builder
+
+RUN apk add --no-cache gcc musl-dev libwebp-dev
+
+WORKDIR /build
+
+# Copy workspace and module files for dependency caching
+COPY go.work go.work.sum ./
+COPY engine/go.mod engine/go.sum ./engine/
+COPY apps/api/go.mod apps/api/go.sum ./apps/api/
+
+# Download dependencies (cached unless go.mod/go.sum change)
+RUN go mod download
+
+# Copy source code
+COPY engine/ ./engine/
+COPY apps/api/ ./apps/api/
+
+# Build the API server binary
+RUN CGO_ENABLED=1 GOOS=linux go build -o /server ./apps/api/cmd/server
+
+# Runtime stage — minimal Alpine
+FROM alpine:3.21
+
+RUN apk add --no-cache libwebp ca-certificates
+
+COPY --from=builder /server /server
+
+EXPOSE 8080
+
+CMD ["/server"]

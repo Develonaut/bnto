@@ -48,7 +48,7 @@ Used by `convex/_helpers/r2_client.ts`, `convex/uploads.ts`, and `convex/downloa
 
 | Variable | Purpose | Status |
 |---|---|---|
-| `GO_API_URL` | Railway Go API server URL (e.g. `https://bnto-api.up.railway.app`) | Not set |
+| `GO_API_URL` | Go API server URL. Dev: Cloudflare tunnel to localhost. Prod: Railway. | **Dev: set** (`https://api-dev.bnto.io`) / **Prod: set** (`https://bnto-production.up.railway.app`) |
 | `ANONYMOUS_RUN_LIMIT` | Max runs/month for anonymous users (defaults to `3` if unset) | Not set (using default) |
 
 ---
@@ -74,13 +74,48 @@ Set in the [Vercel Dashboard](https://vercel.com) under Project > Settings > Env
 
 ## Railway (Go API Server)
 
-Set in the [Railway Dashboard](https://railway.com) under Service > Variables. Currently no project is linked.
+Set in the [Railway Dashboard](https://railway.com) under Service > Variables.
 
-| Variable | Purpose |
-|---|---|
-| `PORT` | Server listening port (defaults to `8080`, Railway sets automatically) |
+**Project:** `bnto` (ID: `12cb77eb-df37-4efb-83ef-6c5d49cde433`)
+**Service:** `bnto` (ID: `ecc01652-5321-4bb3-9ac6-4f17f0874ec1`)
+**URL:** `https://bnto-production.up.railway.app`
 
-Railway auto-injects `PORT`. No other env vars are currently needed by the Go API server.
+| Variable | Purpose | Status |
+|---|---|---|
+| `PORT` | Server listening port (defaults to `8080`, Railway sets automatically) | Auto-injected |
+| `R2_ACCOUNT_ID` | Cloudflare account ID (same as Convex) | **Set** |
+| `R2_ACCESS_KEY_ID` | R2 API token key ID | **Set** |
+| `R2_SECRET_ACCESS_KEY` | R2 API token secret | **Set** |
+| `R2_BUCKET_NAME` | R2 bucket for file transit | **Set** (`bnto-transit`) |
+
+---
+
+## Cloudflare Tunnel (Local Dev → Cloud)
+
+A named Cloudflare tunnel exposes the local Go API server (`localhost:8080`) at `https://api-dev.bnto.io`. This lets Convex dev functions call the Go API the same way Convex prod calls Railway — no code changes between environments.
+
+**Tunnel:** `bnto-dev`
+**URL:** `https://api-dev.bnto.io` → `localhost:8080`
+**Config:** `~/.cloudflared/config.yml` (local only — credentials never committed)
+
+### Usage
+
+```bash
+# Terminal 1: Start Go API locally
+task api:dev
+
+# Terminal 2: Start tunnel
+task api:tunnel
+```
+
+The tunnel requires `cloudflared` (`brew install cloudflared`) and a one-time login (`cloudflared tunnel login`).
+
+### How it fits
+
+| Environment | `GO_API_URL` in Convex | Go API runs on |
+|---|---|---|
+| Dev | `https://api-dev.bnto.io` | `localhost:8080` via Cloudflare tunnel |
+| Prod | `https://bnto-production.up.railway.app` | Railway (Docker) |
 
 ---
 
@@ -139,7 +174,7 @@ Currently set:
 - [x] `R2_ACCESS_KEY_ID`
 - [x] `R2_SECRET_ACCESS_KEY`
 - [x] `R2_BUCKET_NAME` (`bnto-transit-dev`)
-- [ ] `GO_API_URL` (after Railway deployment)
+- [x] `GO_API_URL` (`https://api-dev.bnto.io`) — Cloudflare tunnel to local Go API
 
 ### Convex Prod Deployment
 
@@ -149,7 +184,7 @@ Currently set:
 - [x] `R2_ACCESS_KEY_ID`
 - [x] `R2_SECRET_ACCESS_KEY`
 - [x] `R2_BUCKET_NAME` (`bnto-transit`)
-- [ ] `GO_API_URL` (production Railway URL)
+- [x] `GO_API_URL` (`https://bnto-production.up.railway.app`)
 
 ### Vercel
 
@@ -158,5 +193,7 @@ Currently set:
 
 ### Railway
 
-- [ ] Link project: `railway link` from repo root
-- [ ] `PORT` is auto-injected by Railway — no manual setup needed
+- [x] Project linked: `bnto` (production environment)
+- [x] `PORT` — auto-injected by Railway
+- [x] `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` — set for R2 file transit
+- [x] `R2_BUCKET_NAME` (`bnto-transit`) — prod bucket
