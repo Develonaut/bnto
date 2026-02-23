@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useAnonymousSession, useRunsRemaining } from "@bnto/core";
 import type { BntoEntry } from "../../../lib/bnto-registry";
+import { BntoConfigPanel } from "./BntoConfigPanel";
+import type { BntoConfigMap, BntoSlug } from "./configs/types";
+import { DEFAULT_CONFIGS } from "./configs/types";
 import { FileDropZone } from "./FileDropZone";
 import { UpgradePrompt } from "./UpgradePrompt";
 
@@ -19,6 +23,9 @@ interface BntoPageShellProps {
 export function BntoPageShell({ entry }: BntoPageShellProps) {
   const { isPending, isAnonymous } = useAnonymousSession();
   const { data: runsRemaining } = useRunsRemaining();
+  const [config, setConfig] = useState<BntoConfigMap[BntoSlug]>(
+    DEFAULT_CONFIGS[entry.slug as BntoSlug] ?? {},
+  );
 
   const quotaExhausted = !isPending && isAnonymous && runsRemaining === 0;
 
@@ -36,7 +43,18 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
           <UpgradePrompt slug={entry.slug} reason="quota" />
         )}
 
-        <FileDropZone slug={entry.slug} />
+        {!quotaExhausted && (
+          <>
+            <div className="text-left">
+              <BntoConfigPanel
+                slug={entry.slug}
+                config={config}
+                onChange={setConfig}
+              />
+            </div>
+            <FileDropZone slug={entry.slug} />
+          </>
+        )}
       </div>
     </div>
   );

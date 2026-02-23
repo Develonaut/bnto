@@ -35,8 +35,7 @@ export async function generateMetadata({
  * Each slug maps to a predefined workflow via the bnto registry.
  * Unknown slugs return a proper 404.
  *
- * Renders its own Footer with the tool shell replacing the default CTA,
- * so the root layout Footer is hidden via the bnto layout.
+ * Tool shell renders in <main>, followed by the standard Footer.
  */
 export default async function BntoPage({
   params,
@@ -50,10 +49,10 @@ export default async function BntoPage({
   return (
     <>
       <BntoJsonLd entry={entry} />
-      <main />
-      <Footer>
+      <main className="pt-10 pb-14 lg:pt-16">
         <BntoPageShell entry={entry} />
-      </Footer>
+      </main>
+      <Footer />
     </>
   );
 }
