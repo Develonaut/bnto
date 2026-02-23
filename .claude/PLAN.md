@@ -379,6 +379,25 @@ Anonymous users get 25 runs/month tracked by browser fingerprint. No fingerprint
 - [ ] `@bnto/backend` — Store fingerprint on execution records for anonymous users
 - [ ] `@bnto/backend` — Query runs-by-fingerprint for anonymous quota enforcement
 
+### Engine-Driven Node Config Schema
+
+The frontend currently hardcodes per-node configuration shapes (quality sliders, format selectors, column mappings) in `app/[bnto]/_components/configs/`. This works for MVP but creates two sources of truth — the engine knows what each node expects, and the frontend independently guesses.
+
+**Goal:** The Go engine exposes node config schemas so the frontend can dynamically render the right controls. When we load a bnto or assemble nodes, the engine tells us what config each node accepts — types, defaults, constraints (min/max, allowed values). The frontend renders controls from that schema instead of maintaining a parallel set of hardcoded components.
+
+**Scope:**
+
+- [ ] `engine` — Node config schema endpoint: each node type declares its config shape (field name, type, default, constraints) via a structured format (JSON Schema or a simpler custom spec)
+- [ ] `apps/api` — Expose node config schema via HTTP (e.g., `GET /nodes/{type}/config-schema`)
+- [ ] `@bnto/core` — Hook to fetch node config schemas (`useNodeConfigSchema(nodeType)`)
+- [ ] `apps/web` — Generic config renderer that maps schema fields to UI controls (number → slider/input, enum → select, boolean → switch, string → text input)
+- [ ] `apps/web` — Remove hardcoded per-bnto config components once the generic renderer covers all Tier 1 cases
+
+**Design questions to resolve when prioritized:**
+- JSON Schema vs. a simpler custom spec? JSON Schema is standard but verbose. A lean custom format (`{ field: "quality", type: "number", min: 1, max: 100, default: 80 }`) may be enough.
+- Should the engine also declare UI hints (label text, grouping, display order)? Or should that live in the bnto registry?
+- How does this compose with the fixture `.bnto.json` format? Does the fixture embed default config, or does the engine always provide defaults?
+
 ### Tooling: Use package.json `imports` Instead of TSConfig Path Aliases
 
 Replace `@/components`, `@/lib`, etc. TSConfig path aliases with Node.js-native `package.json` `imports` field (`#components/*`, `#lib/*`). Standards-track approach.
