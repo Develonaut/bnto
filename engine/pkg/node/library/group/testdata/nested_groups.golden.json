@@ -1,0 +1,27 @@
+{
+  "executed": 2,
+  "mode": "sequential",
+  "nodes": [
+    {
+      "id": "step-1",
+      "type": "edit-fields"
+    },
+    {
+      "id": "inner-group",
+      "parameters": {
+        "mode": "parallel",
+        "nodes": [
+          {
+            "id": "inner-1",
+            "type": "http-request"
+          },
+          {
+            "id": "inner-2",
+            "type": "http-request"
+          }
+        ]
+      },
+      "type": "group"
+    }
+  ]
+}

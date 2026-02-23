@@ -1,0 +1,12 @@
+{
+  "body": {
+    "count": 3,
+    "items": [
+      "alpha",
+      "beta",
+      "gamma"
+    ],
+    "status": "success"
+  },
+  "statusCode": 200
+}

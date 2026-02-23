@@ -1,0 +1,23 @@
+{
+  "groupInGraph": false,
+  "nodeCount": 4,
+  "nodes": {
+    "bottom-node": {
+      "type": "edit-fields",
+      "weight": 50
+    },
+    "inner-1": {
+      "type": "shell-command",
+      "weight": 300
+    },
+    "inner-2": {
+      "type": "edit-fields",
+      "weight": 50
+    },
+    "top-node": {
+      "type": "edit-fields",
+      "weight": 50
+    }
+  },
+  "totalWeight": 450
+}

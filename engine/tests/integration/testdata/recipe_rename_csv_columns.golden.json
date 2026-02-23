@@ -1,0 +1,31 @@
+{
+  "nodesExecuted": 2,
+  "rowCount": 3,
+  "rows": [
+    {
+      "description": "Test record for bento workflow testing",
+      "name": "Test Item A",
+      "scale": "Standard",
+      "studio": "Test Studio",
+      "tags": "test, data, item-a",
+      "title": "Test Item A Record"
+    },
+    {
+      "description": "Test record for bento workflow testing",
+      "name": "Test Item B",
+      "scale": "Standard",
+      "studio": "Test Studio",
+      "tags": "test, data, item-b",
+      "title": "Test Item B Record"
+    },
+    {
+      "description": "Test record for bento workflow testing",
+      "name": "Test Item C",
+      "scale": "Standard",
+      "studio": "Test Studio",
+      "tags": "test, data, item-c",
+      "title": "Test Item C Record"
+    }
+  ],
+  "status": "success"
+}

@@ -1,0 +1,10 @@
+{
+  "noBreadcrumb": {
+    "isRunning": true,
+    "text": " Testing NODE:loop process-items"
+  },
+  "withBreadcrumb": {
+    "isRunning": true,
+    "text": "[Root:Batch] Testing NODE:loop process-items"
+  }
+}

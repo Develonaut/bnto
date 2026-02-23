@@ -1,0 +1,10 @@
+{
+  "noBreadcrumb": {
+    "isSuccess": true,
+    "text": " Perfected NODE:image compress-png (8ms, 33%)"
+  },
+  "withBreadcrumb": {
+    "isSuccess": true,
+    "text": "[Root:Batch] Enjoyed NODE:shell-command run-script (1.2s, 100%)"
+  }
+}

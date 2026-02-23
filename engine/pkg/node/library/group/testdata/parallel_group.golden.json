@@ -1,0 +1,14 @@
+{
+  "executed": 2,
+  "mode": "parallel",
+  "nodes": [
+    {
+      "id": "fetch-1",
+      "type": "http-request"
+    },
+    {
+      "id": "fetch-2",
+      "type": "http-request"
+    }
+  ]
+}

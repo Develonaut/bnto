@@ -1,0 +1,15 @@
+{
+  "broken": true,
+  "iterations": 3,
+  "results": [
+    {
+      "value": 1
+    },
+    {
+      "value": 2
+    },
+    {
+      "value": 3
+    }
+  ]
+}

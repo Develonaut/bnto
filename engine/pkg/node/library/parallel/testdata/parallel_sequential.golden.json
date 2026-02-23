@@ -1,0 +1,13 @@
+{
+  "results": [
+    {
+      "step": "first"
+    },
+    {
+      "step": "second"
+    },
+    {
+      "step": "third"
+    }
+  ]
+}

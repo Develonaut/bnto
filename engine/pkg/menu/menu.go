@@ -9,14 +9,14 @@ import (
 	"strings"
 )
 
-//go:embed data/*.json
+//go:embed recipes/*.json
 var dataFS embed.FS
 
 // All returns every recipe sorted by slug.
 func All() ([]Recipe, error) {
-	entries, err := dataFS.ReadDir("data")
+	entries, err := dataFS.ReadDir("recipes")
 	if err != nil {
-		return nil, fmt.Errorf("reading menu data dir: %w", err)
+		return nil, fmt.Errorf("reading recipes dir: %w", err)
 	}
 
 	recipes := make([]Recipe, 0, len(entries))
@@ -24,7 +24,7 @@ func All() ([]Recipe, error) {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
 			continue
 		}
-		r, err := parseFile(filepath.Join("data", entry.Name()))
+		r, err := parseFile(filepath.Join("recipes", entry.Name()))
 		if err != nil {
 			return nil, err
 		}

@@ -1,0 +1,33 @@
+{
+  "steps": [
+    {
+      "progress": 0,
+      "step": "initial"
+    },
+    {
+      "progress": 0,
+      "step": "fast-node executing"
+    },
+    {
+      "progress": 5,
+      "step": "fast-node 50%"
+    },
+    {
+      "progress": 11,
+      "step": "fast-node completed"
+    },
+    {
+      "progress": 33,
+      "step": "medium-node completed"
+    },
+    {
+      "progress": 55,
+      "step": "slow-node 33%"
+    },
+    {
+      "progress": 100,
+      "step": "all completed"
+    }
+  ],
+  "totalWeight": 450
+}

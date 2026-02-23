@@ -1,0 +1,18 @@
+{
+  "level0": {
+    "breadcrumb": "",
+    "depth": 0
+  },
+  "level1": {
+    "breadcrumb": "Workflow",
+    "depth": 1
+  },
+  "level2": {
+    "breadcrumb": "Workflow:BatchGroup",
+    "depth": 2
+  },
+  "level3": {
+    "breadcrumb": "Workflow:BatchGroup:CompressNode",
+    "depth": 3
+  }
+}

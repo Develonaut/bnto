@@ -1,0 +1,24 @@
+{
+  "nodeCount": 3,
+  "nodes": {
+    "edit-1": {
+      "id": "edit-1",
+      "level": 0,
+      "type": "edit-fields",
+      "weight": 50
+    },
+    "http-1": {
+      "id": "http-1",
+      "level": 0,
+      "type": "http-request",
+      "weight": 200
+    },
+    "shell-1": {
+      "id": "shell-1",
+      "level": 0,
+      "type": "shell-command",
+      "weight": 300
+    }
+  },
+  "totalWeight": 550
+}

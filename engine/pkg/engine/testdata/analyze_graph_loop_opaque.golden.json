@@ -1,0 +1,24 @@
+{
+  "nodeCount": 3,
+  "nodes": {
+    "after": {
+      "id": "after",
+      "level": 0,
+      "type": "transform",
+      "weight": 50
+    },
+    "before": {
+      "id": "before",
+      "level": 0,
+      "type": "edit-fields",
+      "weight": 50
+    },
+    "my-loop": {
+      "id": "my-loop",
+      "level": 0,
+      "type": "loop",
+      "weight": 100
+    }
+  },
+  "totalWeight": 200
+}

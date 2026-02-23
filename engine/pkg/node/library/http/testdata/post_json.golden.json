@@ -1,0 +1,8 @@
+{
+  "body": {
+    "created": true,
+    "id": "new-123",
+    "name": "test-item"
+  },
+  "statusCode": 200
+}

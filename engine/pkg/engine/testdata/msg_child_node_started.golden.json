@@ -1,0 +1,10 @@
+{
+  "noBreadcrumb": {
+    "isRunning": true,
+    "text": " Testing NODE:image compress-png"
+  },
+  "withBreadcrumb": {
+    "isRunning": true,
+    "text": "[Root:Batch] Trying NODE:shell-command run-script"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "heavyLoop": {
+    "childrenHidden": true,
+    "loopWeight": 100,
+    "totalWeight": 100
+  },
+  "lightLoop": {
+    "childrenHidden": true,
+    "loopWeight": 100,
+    "totalWeight": 100
+  },
+  "sameWeight": true
+}

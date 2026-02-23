@@ -1,0 +1,17 @@
+{
+  "iterations": 3,
+  "results": [
+    {
+      "id": "item-1",
+      "label": "Alpha"
+    },
+    {
+      "id": "item-2",
+      "label": "Beta"
+    },
+    {
+      "id": "item-3",
+      "label": "Gamma"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "withEmoji": {
+    "hasEmoji": true,
+    "hasText": true,
+    "nonEmpty": true
+  },
+  "withoutEmoji": {
+    "hasText": true,
+    "nonEmpty": true
+  }
+}

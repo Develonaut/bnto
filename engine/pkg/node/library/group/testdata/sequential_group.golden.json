@@ -1,0 +1,18 @@
+{
+  "executed": 3,
+  "mode": "sequential",
+  "nodes": [
+    {
+      "id": "node-1",
+      "type": "edit-fields"
+    },
+    {
+      "id": "node-2",
+      "type": "transform"
+    },
+    {
+      "id": "node-3",
+      "type": "edit-fields"
+    }
+  ]
+}

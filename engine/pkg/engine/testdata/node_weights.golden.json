@@ -1,0 +1,11 @@
+{
+  "edit-fields": 50,
+  "file-system": 50,
+  "http-request": 200,
+  "image": 150,
+  "loop": 100,
+  "shell-command": 300,
+  "spreadsheet": 100,
+  "transform": 50,
+  "unknown-type": 100
+}

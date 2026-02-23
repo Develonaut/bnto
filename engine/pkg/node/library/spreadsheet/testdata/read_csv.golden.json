@@ -1,0 +1,19 @@
+{
+  "rows": [
+    {
+      "description": "Description A",
+      "id": "REC-001",
+      "name": "Alpha"
+    },
+    {
+      "description": "Description B",
+      "id": "REC-002",
+      "name": "Beta"
+    },
+    {
+      "description": "Description C",
+      "id": "REC-003",
+      "name": "Gamma"
+    }
+  ]
+}

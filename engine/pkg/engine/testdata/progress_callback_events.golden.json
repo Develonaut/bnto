@@ -1,0 +1,29 @@
+{
+  "eventCount": 6,
+  "events": [
+    {
+      "nodeID": "root",
+      "status": "starting"
+    },
+    {
+      "nodeID": "node-a",
+      "status": "starting"
+    },
+    {
+      "nodeID": "node-a",
+      "status": "completed"
+    },
+    {
+      "nodeID": "node-b",
+      "status": "starting"
+    },
+    {
+      "nodeID": "node-b",
+      "status": "completed"
+    },
+    {
+      "nodeID": "root",
+      "status": "completed"
+    }
+  ]
+}

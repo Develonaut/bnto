@@ -1,0 +1,10 @@
+{
+  "noBreadcrumb": {
+    "isRunning": true,
+    "text": " Nibbling NODE:group my-group"
+  },
+  "withBreadcrumb": {
+    "isRunning": true,
+    "text": "[Root:Parent] Nibbling NODE:group my-group"
+  }
+}

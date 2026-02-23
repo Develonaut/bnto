@@ -1,0 +1,22 @@
+{
+  "completed": {
+    "clean-csv": "Relished",
+    "compress-images": "Enjoyed",
+    "edit-fields": "Devoured",
+    "http-fetch": "Savored",
+    "loop-items": "Completed",
+    "rename-files": "Consumed",
+    "resize-images": "Completed",
+    "transform-data": "Enjoyed"
+  },
+  "running": {
+    "clean-csv": "Enjoying",
+    "compress-images": "Trying",
+    "edit-fields": "Sampling",
+    "http-fetch": "Tasting",
+    "loop-items": "Savoring",
+    "rename-files": "Nibbling",
+    "resize-images": "Savoring",
+    "transform-data": "Trying"
+  }
+}

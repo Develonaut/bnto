@@ -1,0 +1,21 @@
+{
+  "eventCount": 4,
+  "events": [
+    {
+      "nodeID": "root",
+      "status": "starting"
+    },
+    {
+      "nodeID": "test-loop",
+      "status": "starting"
+    },
+    {
+      "nodeID": "test-loop",
+      "status": "completed"
+    },
+    {
+      "nodeID": "root",
+      "status": "completed"
+    }
+  ]
+}

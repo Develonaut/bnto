@@ -1,0 +1,38 @@
+{
+  "eventCount": 6,
+  "events": [
+    {
+      "event": "nodeStarted",
+      "name": "Test Workflow",
+      "nodeType": "group",
+      "path": "root"
+    },
+    {
+      "event": "nodeStarted",
+      "name": "Set Data",
+      "nodeType": "edit-fields",
+      "path": "step-1"
+    },
+    {
+      "error": "",
+      "event": "nodeCompleted",
+      "path": "step-1"
+    },
+    {
+      "event": "nodeStarted",
+      "name": "Transform",
+      "nodeType": "edit-fields",
+      "path": "step-2"
+    },
+    {
+      "error": "",
+      "event": "nodeCompleted",
+      "path": "step-2"
+    },
+    {
+      "error": "",
+      "event": "nodeCompleted",
+      "path": "root"
+    }
+  ]
+}

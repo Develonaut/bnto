@@ -1,0 +1,30 @@
+{
+  "nodeCount": 4,
+  "nodes": {
+    "inner-1": {
+      "id": "inner-1",
+      "level": 0,
+      "type": "transform",
+      "weight": 50
+    },
+    "inner-2": {
+      "id": "inner-2",
+      "level": 0,
+      "type": "file-system",
+      "weight": 50
+    },
+    "outer-1": {
+      "id": "outer-1",
+      "level": 0,
+      "type": "edit-fields",
+      "weight": 50
+    },
+    "outer-2": {
+      "id": "outer-2",
+      "level": 0,
+      "type": "image",
+      "weight": 150
+    }
+  },
+  "totalWeight": 300
+}

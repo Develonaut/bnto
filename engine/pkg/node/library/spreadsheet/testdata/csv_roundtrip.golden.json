@@ -1,0 +1,14 @@
+{
+  "rows": [
+    {
+      "id": "A",
+      "name": "Alpha",
+      "value": "100"
+    },
+    {
+      "id": "B",
+      "name": "Beta",
+      "value": "200"
+    }
+  ]
+}

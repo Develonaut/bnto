@@ -1,0 +1,10 @@
+{
+  "noBreadcrumb": {
+    "isSuccess": true,
+    "text": " Consumed NODE:group my-group (5ms)"
+  },
+  "withBreadcrumb": {
+    "isSuccess": true,
+    "text": "[Root:Parent] Consumed NODE:group my-group (5ms)"
+  }
+}
