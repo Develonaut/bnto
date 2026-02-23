@@ -55,7 +55,7 @@ Each layer only depends on layers below it. Never skip layers.
 
 **State management:** Zustand handles client-only state (editor content, UI preferences). React Query handles all server state (data fetching, caching, mutations). For the Convex path, `@convex-dev/react-query` preserves real-time subscriptions through React Query's interface.
 
-**Desktop shares the web frontend:** Wails v2 renders the same React app in a system webview. `@bnto/core` detects the runtime (browser vs Wails) and swaps the transport adapter internally — no separate frontend for desktop.
+**Desktop shares the web frontend:** Wails v2 renders the same React app in a system webview. `@bnto/core` detects the runtime (browser vs Wails) and swaps the transport adapter internally — no separate frontend for desktop. Desktop uses local filesystem directly (no R2 file transit). Engine starts in-process via Wails bindings (MVP), designed for later decoupling into a standalone `bnto` CLI binary called via subprocess.
 
 ```typescript
 // @bnto/core — components use these hooks (any platform)
@@ -66,8 +66,8 @@ const execution = useExecution(id);
 const { mutate: run } = useRunWorkflow();
 
 // Under the hood, @bnto/core detects the environment:
-// Web:     React Query + @convex-dev/react-query adapter → Convex
-// Desktop: React Query + Wails adapter → Go engine bindings
+// Web:     React Query + @convex-dev/react-query adapter → Convex → R2 → Railway
+// Desktop: React Query + Wails adapter → Go engine (local) → filesystem (no R2)
 ```
 
 ### 2. API Abstraction
@@ -198,7 +198,7 @@ bnto/
 
 All execution flows through `@bnto/core` hooks → React Query → transport adapter → backend → Go engine.
 
-Desktop (Wails v2) renders the **same React frontend** in a system webview. `@bnto/core` detects the runtime and swaps adapters — components are identical across web and desktop.
+Desktop (Wails v2) renders the **same React frontend** in a system webview. `@bnto/core` detects the runtime and swaps adapters — components are identical across web and desktop. Web uses R2 for file transit (cloud). Desktop accesses the local filesystem directly (no R2). Engine starts in-process via Wails bindings (MVP), designed for later decoupling into a standalone `bnto` binary.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -236,9 +236,12 @@ Desktop (Wails v2) renders the **same React frontend** in a system webview. `@bn
 | Client state           | Zustand (editor content, UI preferences)  |
 | Server state           | React Query (caching, fetching, mutations)|
 | Real-time (web)        | @convex-dev/react-query adapter           |
-| Real-time (desktop)    | React Query + Wails bindings              |
+| Real-time (desktop)    | React Query + Wails adapter               |
 | Transport detection    | @bnto/core runtime check (browser vs Wails webview) |
-| Workflow execution     | Go engine (local or Railway)              |
+| File transit (web)     | R2 presigned URLs (cloud-only)            |
+| File access (desktop)  | Local filesystem (no R2, no network)      |
+| Workflow execution     | Go engine (Railway for cloud, local for desktop/CLI) |
+| Engine distribution    | In-process (MVP), standalone binary (post-stabilization) |
 | Auth                   | Better Auth (cloud only)                  |
 
 ---

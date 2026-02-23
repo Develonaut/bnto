@@ -138,9 +138,10 @@ The design system is the single source of truth for appearance, currently co-loc
 
 **Rationale:**
 - 5-10ms startup, 5MB memory baseline, single 20MB binary
-- Native Wails integration (direct function calls, no IPC)
+- Wails v2 integration (in-process bindings for Phase 2 MVP, subprocess to CLI binary long-term)
 - First-class Railway backend (Go is a first-class citizen on Railway)
 - Cross-compiles trivially for all desktop platforms
+- Engine distributable as a standalone binary — desktop shell and engine can update independently
 - Can compile to WebAssembly if browser execution ever needed
 - The only faster alternative is Rust, at 10x development cost
 - TypeScript would sacrifice the performance advantage that differentiates Bnto
@@ -150,9 +151,10 @@ The design system is the single source of truth for appearance, currently co-loc
 **Decision:** Wails v2 (stable) as documented in monorepo-structure.md. **Target v2, not v3.**
 
 **Rationale:**
-- Direct Go bindings — execution engine runs in-process, zero serialization overhead
+- Go bindings for Phase 2 MVP (in-process, zero serialization overhead)
+- Long-term: Wails adapter calls the `bnto` CLI as a subprocess — engine updates independently from the desktop shell
 - Lighter than Electron (no bundled Chromium, uses system webview like Tauri)
-- Auto-generates TypeScript bindings from Go structs
+- Auto-generates TypeScript bindings from Go structs (Phase 2 MVP)
 - Wails frontend uses Vite/React — we share components via packages, not app shells
 
 **Why v2, not v3:**
@@ -206,7 +208,7 @@ The design system is the single source of truth for appearance, currently co-loc
 - Every operation the web or desktop needs maps to a CLI command
 - Keeps the API surface small, consistent, and well-documented
 - The Go service on Railway wraps CLI operations (same logic, exposed via HTTP)
-- Desktop (Wails) calls the same underlying Go functions that the CLI calls
+- Desktop (Wails) uses the same Go engine — in-process bindings initially, subprocess to CLI binary long-term
 - The TUI (Bubble Tea) is internal/beta — not public-facing
 
 ### 3.7 Go Backend on Railway for Cloud Execution (Phase 1)
@@ -249,8 +251,50 @@ The design system is the single source of truth for appearance, currently co-loc
 **Rationale:**
 - `@bnto/core` detects the runtime environment (browser vs Wails webview) and swaps the transport adapter internally
 - Components, hooks, and UI are 100% shared between web and desktop
-- Only the transport layer differs: Convex adapter (web) vs Wails adapter (desktop calling Go bindings)
+- Only the transport layer differs: Convex adapter (web) vs Wails adapter (desktop)
 - Reduces maintenance burden — one frontend codebase, two deployment targets
+
+### 3.11 Desktop Engine Distribution Strategy
+
+**Decision:** Start with in-process Go bindings (Wails v2 MVP). Architect the adapter boundary so the engine can later be decoupled into a standalone binary called via subprocess.
+
+**Rationale:**
+- Go compiles everything into a single static binary — there is no runtime package registry like npm. You can't `go get` at runtime
+- But the engine CAN be distributed as a separate binary. The desktop app calls `bnto run` as a subprocess instead of calling Go functions directly
+- This is how VS Code works with language servers, Docker Desktop with the Docker daemon, and Git GUIs with the `git` binary — thin stable shell, independently updatable engine
+- The CLI is already the stable API. Every operation maps to a CLI command. JSON in, JSON out. This is a natural IPC boundary
+- Since bnto operations are I/O-bound (file processing, HTTP requests), subprocess overhead is negligible
+
+**Phase 2 (MVP):** In-process Wails bindings. Simpler build, single binary distribution, faster to ship.
+
+**Post-stabilization:** Decouple the engine into a standalone `bnto` binary. The desktop app manages engine versions — checks for updates on launch, downloads new binary, swaps in place. No app store review needed for engine updates. Desktop shell becomes "done" and rarely needs releases.
+
+| | In-process (Phase 2 MVP) | Subprocess (post-stabilization) |
+|---|---|---|
+| Engine updates | Requires desktop app release | Independent — just swap the binary |
+| Desktop updates | Every engine change | Rare — shell is stable |
+| Performance | Direct function calls | Subprocess overhead (negligible for file ops) |
+| Distribution | One binary | Desktop manages engine binary |
+| Complexity | Simpler build | IPC protocol, version compat |
+
+**Key constraint:** Architect the Wails adapter with a clean boundary. All engine calls go through a single interface. Swapping from in-process to subprocess should only change the adapter internals — nothing upstream in `@bnto/core` or the UI changes.
+
+### 3.12 R2 Is Cloud-Only — Desktop Uses Local Filesystem
+
+**Decision:** R2 (Cloudflare object storage) is a cloud execution concern only. Desktop execution uses the local filesystem directly.
+
+**Rationale:**
+- Cloud path needs R2 because there's a network boundary between the browser and the Go engine on Railway. Files must transit through shared storage: Browser → R2 → Railway → R2 → Browser
+- Desktop path has NO network boundary. Wails runs the Go engine on the same machine as the webview. The engine reads/writes the user's filesystem directly: Webview → Wails adapter → Go Engine → local filesystem
+- Adding R2 to the desktop path would mean shipping files to the cloud and back for no reason — slower, costs money, and undermines the privacy advantage of local execution
+- The Wails adapter passes file paths to the engine. No upload, no download, no transit layer
+
+```
+Cloud:   Browser → R2 (upload) → Railway API → Go Engine → R2 (output) → Browser
+Desktop: Webview → Wails adapter → Go Engine → local filesystem (no R2, no network)
+```
+
+This is handled transparently by `@bnto/core`. The Convex adapter deals with R2 presigned URLs, upload/download flows, and polling for results. The Wails adapter passes file paths. Components never know which path they're on.
 
 ---
 
@@ -487,13 +531,16 @@ Push to main →
 **Scope:**
 - Bootstrap Wails v2 desktop app
 - Same React frontend as web — Wails webview renders the shared React code
-- `@bnto/core` runtime detection routes requests to Wails Go bindings instead of Convex
+- `@bnto/core` runtime detection routes requests to Wails adapter instead of Convex
 - React Query + Wails adapter replaces React Query + Convex adapter (same hook API)
+- Engine runs in-process via Wails Go bindings (MVP). Adapter boundary designed for later subprocess decoupling
+- Files accessed directly from local filesystem — no R2, no cloud file transit
 - Full local execution (all 10+ node types including shell-command)
 - Real-time execution progress in the UI
 - Purely local — no account required, no cloud connectivity
 - Desktop and web share one frontend codebase
 - Component tests for Wails-specific integration
+- **Post-stabilization:** Decouple engine into standalone `bnto` binary. Desktop auto-updates engine independently
 
 **Infrastructure:** None — runs entirely on user's machine.
 

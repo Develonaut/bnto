@@ -152,8 +152,8 @@ The core architectural pattern — `@bnto/core` provides transport-agnostic Reac
 - **React Query** — server state (data fetching, caching, mutations, real-time)
 
 **Transport adapters:**
-- **Convex adapter** — web: React Query + `@convex-dev/react-query` (preserves real-time subscriptions)
-- **Wails adapter** — desktop: React Query + Wails Go bindings (`window.go.main.App.*`)
+- **Convex adapter** — web: React Query + `@convex-dev/react-query` (preserves real-time subscriptions). File transit via R2 (cloud-only)
+- **Wails adapter** — desktop: React Query + Go engine (in-process bindings for MVP, subprocess to `bnto` CLI long-term). Files accessed directly from local filesystem — no R2
 
 `@bnto/core` detects the runtime environment and swaps adapters internally. Desktop (Wails v2) renders the same React frontend in a system webview — there is no separate desktop frontend.
 
@@ -166,8 +166,8 @@ const execution = useExecution(id);         // real-time via Convex or polling v
 const { mutate: run } = useRunWorkflow();   // mutation via appropriate adapter
 
 // Under the hood, @bnto/core detects the environment:
-// Web:     React Query + @convex-dev/react-query adapter → Convex
-// Desktop: React Query + Wails adapter → Go engine bindings
+// Web:     React Query + @convex-dev/react-query adapter → Convex → R2 → Railway
+// Desktop: React Query + Wails adapter → Go engine (local) → filesystem (no R2)
 ```
 
 ```typescript

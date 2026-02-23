@@ -22,7 +22,7 @@ Each layer only depends on layers below it. Never skip layers.
 
 **State management:** Zustand handles client-only state (editor content, UI preferences). React Query handles all server state (data fetching, caching, mutations). For the Convex path, `@convex-dev/react-query` preserves real-time subscriptions through React Query's interface.
 
-**Desktop shares the web frontend:** Wails v2 renders the same React app in a system webview. `@bnto/core` detects the runtime (browser vs Wails) and swaps the transport adapter internally -- no separate frontend for desktop.
+**Desktop shares the web frontend:** Wails v2 renders the same React app in a system webview. `@bnto/core` detects the runtime (browser vs Wails) and swaps the transport adapter internally -- no separate frontend for desktop. Desktop uses local filesystem directly (no R2 file transit). Engine starts in-process (Wails bindings), designed for later decoupling into a standalone `bnto` binary called via subprocess.
 
 ## API Abstraction
 
@@ -55,7 +55,7 @@ const workflows = window.go.main.App.ListWorkflows();
 - React hooks for all data operations (workflows, executions, logs)
 - TypeScript types and interfaces shared across the app
 - Zustand stores for client-only state (editor content, UI preferences)
-- React Query configuration + transport adapters (Convex for web, Wails for desktop)
+- React Query configuration + transport adapters (Convex + R2 for web, Wails + local filesystem for desktop)
 - Runtime detection to swap adapters transparently
 - NO backend or storage technology imports in public API -- only in internal adapters
 
@@ -82,6 +82,8 @@ const workflows = window.go.main.App.ListWorkflows();
 - Same React frontend rendered in system webview
 - `@bnto/core` detects Wails runtime and swaps transport adapter
 - No separate frontend code -- shares everything with web
+- Engine in-process via Wails Go bindings (MVP); designed for later decoupling to standalone `bnto` CLI binary via subprocess
+- Files accessed directly from local filesystem -- no R2, no cloud file transit
 
 ### `apps/api/` -- Go HTTP API server (Railway)
 - HTTP API that wraps the Go engine for cloud execution
@@ -160,14 +162,17 @@ Every execution must:
 
 File size limits are enforced at the **R2 presigned URL generation step in Convex -- not client-side**. For tier limits, see Notion (`SEO & Monetization Strategy`).
 
-## R2 Storage: Transit Layer Only
+## R2 Storage: Cloud-Only Transit Layer
 
-R2 is a transit layer, not a storage product. Files exist for minutes.
+R2 is a **cloud-only** transit layer, not a storage product. Files exist for minutes. Desktop execution does NOT use R2 -- files stay on the user's local filesystem.
 
+- **Cloud path:** Browser → R2 (upload) → Railway API → Go Engine → R2 (output) → Browser (download)
+- **Desktop path:** Webview → Wails adapter → Go Engine → local filesystem (no R2, no network)
 - Upload → process → download → delete
 - Objects deleted immediately after download, or 1-hour TTL
 - Storage stays near zero at all times
 - Never repurpose R2 as long-term storage without an explicit product decision
+- The Wails adapter passes file paths directly to the engine. The Convex adapter manages R2 presigned URLs. `@bnto/core` handles this transparently -- components never know which path they're on
 
 ---
 
