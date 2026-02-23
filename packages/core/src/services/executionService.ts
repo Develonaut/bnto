@@ -5,10 +5,11 @@ import {
   getExecutionsQuery,
   getExecutionLogsQuery,
   startExecution,
+  startPredefinedExecution,
 } from "../adapters/convex/executionAdapter";
 import { toExecution, toExecutionLog } from "../transforms/execution";
 import { getQueryClient } from "../client";
-import type { StartExecutionInput } from "../types";
+import type { StartExecutionInput, StartPredefinedInput } from "../types";
 
 export function createExecutionService() {
   function invalidateExecution(id: string) {
@@ -45,6 +46,8 @@ export function createExecutionService() {
 
     // ── Mutations ─────────────────────────────────────────────────
     start: (input: StartExecutionInput) => startExecution(input),
+    startPredefined: (input: StartPredefinedInput) =>
+      startPredefinedExecution(input),
 
     // ── Cache Invalidation ────────────────────────────────────────
     invalidateExecution,

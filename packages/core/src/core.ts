@@ -14,10 +14,12 @@ import { createWorkflowService } from "./services/workflowService";
 import { createExecutionService } from "./services/executionService";
 import { createUserService } from "./services/userService";
 import { createUploadService } from "./services/uploadService";
+import { createDownloadService } from "./services/downloadService";
 import { createWorkflowClient } from "./clients/workflowClient";
 import { createExecutionClient } from "./clients/executionClient";
 import { createUserClient } from "./clients/userClient";
 import { createUploadClient } from "./clients/uploadClient";
+import { createDownloadClient } from "./clients/downloadClient";
 import { createAuthClient } from "./clients/authClient";
 
 // ── Services (single-domain, internal) ────────────────────────────────────
@@ -25,12 +27,14 @@ const workflowService = createWorkflowService();
 const executionService = createExecutionService();
 const userService = createUserService();
 const uploadService = createUploadService();
+const downloadService = createDownloadService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
 const workflowClient = createWorkflowClient(workflowService, executionService);
 const executionClient = createExecutionClient(executionService);
 const userClient = createUserClient(userService);
 const uploadClient = createUploadClient(uploadService);
+const downloadClient = createDownloadClient(downloadService);
 const authClient = createAuthClient();
 
 // ── Core Singleton ────────────────────────────────────────────────────────
@@ -39,5 +43,6 @@ export const core = {
   executions: executionClient,
   user: userClient,
   uploads: uploadClient,
+  downloads: downloadClient,
   auth: authClient,
 } as const;

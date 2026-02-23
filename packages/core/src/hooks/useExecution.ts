@@ -5,5 +5,9 @@ import { core } from "../core";
 
 /** Get a single execution by ID (real-time subscription). */
 export function useExecution(id: string) {
-  return useQuery(core.executions.getQueryOptions(id));
+  const options = core.executions.getQueryOptions(id);
+  return useQuery({
+    ...options,
+    enabled: id.length > 0,
+  });
 }

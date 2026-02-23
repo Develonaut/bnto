@@ -95,6 +95,56 @@ export const start = mutation({
   },
 });
 
+/** Start a predefined bnto execution. No stored workflow required. */
+export const startPredefined = mutation({
+  args: {
+    slug: v.string(),
+    definition: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
+    sessionId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAppUserId(ctx);
+    if (userId === null) throw new ConvexError("Not authenticated");
+
+    const user = await ctx.db.get(userId);
+    if (user === null) throw new ConvexError("User not found");
+
+    enforceQuota(user);
+
+    await ctx.db.patch(userId, { runsUsed: user.runsUsed + 1 });
+
+    const now = Date.now();
+    const executionId = await ctx.db.insert("executions", {
+      userId,
+      status: "pending",
+      progress: [],
+      sessionId: args.sessionId,
+      startedAt: now,
+    });
+
+    const eventId = await ctx.db.insert("executionEvents", {
+      userId,
+      slug: args.slug,
+      timestamp: now,
+      status: "started",
+      executionId,
+    });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.executions.executeWorkflow,
+      {
+        executionId,
+        definition: args.definition,
+        eventId,
+        sessionId: args.sessionId,
+      },
+    );
+
+    return executionId;
+  },
+});
+
 /** Get an execution by ID. Real-time subscription target. */
 export const get = query({
   args: { id: v.id("executions") },

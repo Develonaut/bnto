@@ -8,7 +8,7 @@ export function toExecution(doc: ExecutionDoc): Execution {
   return {
     id: String(doc._id),
     userId: String(doc.userId),
-    workflowId: String(doc.workflowId),
+    workflowId: doc.workflowId ? String(doc.workflowId) : undefined,
     status: doc.status,
     progress: doc.progress,
     result: doc.result ?? undefined,

@@ -26,12 +26,15 @@ export type {
   RunResult,
   OutputFile,
   StartExecutionInput,
+  StartPredefinedInput,
   User,
   UploadFileInput,
   PresignedUploadUrl,
   UploadSession,
   FileUploadProgress,
   UploadProgress,
+  OutputFileUrl,
+  DownloadUrlsResult,
 } from "./types";
 
 // ── Session types ─────────────────────────────────────────────────────────
@@ -67,3 +70,5 @@ export { useSignOut } from "./hooks/useSignOut";
 export { useAnonymousSession } from "./hooks/useAnonymousSession";
 export { useRunQuota } from "./hooks/useRunQuota";
 export { useUploadFiles } from "./hooks/useUploadFiles";
+export { useDownloadFiles } from "./hooks/useDownloadFiles";
+export { useRunPredefined } from "./hooks/useRunPredefined";

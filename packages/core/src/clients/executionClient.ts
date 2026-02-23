@@ -1,6 +1,7 @@
 "use client";
 
 import type { ExecutionService } from "../services/executionService";
+import type { StartPredefinedInput } from "../types";
 
 /**
  * Execution client — public API for execution operations.
@@ -11,6 +12,10 @@ export function createExecutionClient(executions: ExecutionService) {
     getQueryOptions: (id: string) => executions.getQueryOptions(id),
     listQueryOptions: (workflowId: string) => executions.listQueryOptions(workflowId),
     logsQueryOptions: (executionId: string) => executions.logsQueryOptions(executionId),
+
+    // ── Mutations ─────────────────────────────────────────────────
+    startPredefined: (input: StartPredefinedInput) =>
+      executions.startPredefined(input),
 
     // ── Cache Invalidation ────────────────────────────────────────
     invalidateExecution: (id: string) => executions.invalidateExecution(id),

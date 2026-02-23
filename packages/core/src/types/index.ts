@@ -20,6 +20,7 @@ export type {
   RunResult,
   OutputFile,
   StartExecutionInput,
+  StartPredefinedInput,
 } from "./execution";
 
 export type { User } from "./user";
@@ -31,3 +32,5 @@ export type {
   FileUploadProgress,
   UploadProgress,
 } from "./upload";
+
+export type { OutputFileUrl, DownloadUrlsResult } from "./download";

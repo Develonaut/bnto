@@ -25,7 +25,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-**Status:** Sprint 1 complete (Waves 1-3). Sprint 2 partially complete — all 6 Tier 1 fixtures exist, SEO routing is live, landing pages rebuilt with shadcn Mainline template. Environment infrastructure complete: R2 buckets + credentials configured (dev + prod), Convex env vars set for both deployments, Vercel env vars split per environment. Go API server deployed to Railway (`https://bnto-production.up.railway.app`) with R2 file transit enabled and `GO_API_URL` set in Convex dev. R2 bucket setup (lifecycle rules) and execution UI (Wave 4) not started.
+**Status:** Sprint 1 complete (Waves 1-3). Sprint 2 Waves 1-4 complete. All 6 Tier 1 fixtures exist, SEO routing is live, landing pages rebuilt with shadcn Mainline template. Environment infrastructure complete: R2 buckets + credentials configured (dev + prod), Convex env vars set for both deployments, Vercel env vars split per environment. Go API server deployed to Railway (`https://bnto-production.up.railway.app`) with R2 file transit enabled. Execution UI complete: RunButton, ExecutionProgress (real-time), ExecutionResults (download), wired into BntoPageShell with full predefined execution path (slug + definition → Convex → Railway → R2). E2E flow tests with 8 screenshots cover the execution lifecycle. Wave 5 (E2E integration tests) is next.
 
 **Engine (complete):** Go CLI with 10 node types (all >90% test coverage), integration test fixtures, CLI smoke tests, Go HTTP API server with 20+ integration tests, BntoService shared API layer.
 
@@ -50,6 +50,10 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Web app: Middleware (canonical URL normalization, auth routing, bnto slug pass-through)
 - [x] All 6 Tier 1 fixtures in engine/tests/fixtures/workflows/
 - [x] Playwright E2E: user journeys + visual parity tests with screenshots
+- [x] Execution UI: RunButton, ExecutionProgress (real-time Convex subscription), ExecutionResults (R2 download)
+- [x] Predefined execution path: BntoPageShell → useRunPredefined → Convex startPredefined → Railway Go API
+- [x] Download infrastructure: @bnto/core download client/service/adapter/hook chain
+- [x] Playwright E2E: execution flow tests (9 tests, 8 screenshots — compress, resize, csv, rename)
 
 ---
 
@@ -185,11 +189,11 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 - [x] `@bnto/backend` — Convex actions to trigger Railway execution and update status via mutations (pending → running → complete/failed)
 - [x] `@bnto/core` — Execution hooks wired to Convex adapter (start execution, subscribe to progress, get results)
 
-#### Wave 4 (parallel — execution UI)
+#### Wave 4 (parallel — execution UI) — COMPLETE
 
-- [ ] `apps/web` — Execution progress component (real-time via Convex subscription — node-by-node progress, not just a spinner)
-- [ ] `apps/web` — Results/download component (signed R2 URL → zip download → R2 cleanup)
-- [ ] `apps/web` — RunButton component (run with loading state, disabled when no files selected)
+- [x] `apps/web` — Execution progress component (real-time via Convex subscription — node-by-node progress, not just a spinner)
+- [x] `apps/web` — Results/download component (signed R2 URL → zip download → R2 cleanup)
+- [x] `apps/web` — RunButton component (run with loading state, disabled when no files selected)
 
 #### Wave 5 (sequential — test + verify)
 

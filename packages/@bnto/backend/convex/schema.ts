@@ -35,7 +35,7 @@ export default defineSchema({
 
   executions: defineTable({
     userId: v.id("users"),
-    workflowId: v.id("workflows"),
+    workflowId: v.optional(v.id("workflows")),
     status: v.union(
       v.literal("pending"),
       v.literal("running"),

@@ -13,7 +13,7 @@ export interface OutputFile {
 export interface Execution {
   id: string;
   userId: string;
-  workflowId: string;
+  workflowId?: string;
   status: "pending" | "running" | "completed" | "failed";
   progress: NodeProgress[];
   result?: RunResult;
@@ -28,6 +28,13 @@ export interface Execution {
 export interface StartExecutionInput {
   workflowId: string;
   slug?: string;
+  sessionId?: string;
+}
+
+/** Input for starting a predefined bnto execution (no stored workflow). */
+export interface StartPredefinedInput {
+  slug: string;
+  definition: unknown;
   sessionId?: string;
 }
 

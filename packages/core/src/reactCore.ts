@@ -25,12 +25,16 @@ import { useRunWorkflow } from "./hooks/useRunWorkflow";
 import { useExecution } from "./hooks/useExecution";
 import { useExecutions } from "./hooks/useExecutions";
 import { useExecutionLogs } from "./hooks/useExecutionLogs";
+import { useRunPredefined } from "./hooks/useRunPredefined";
 
 // Quota hooks
 import { useRunQuota } from "./hooks/useRunQuota";
 
 // Upload hooks
 import { useUploadFiles } from "./hooks/useUploadFiles";
+
+// Download hooks
+import { useDownloadFiles } from "./hooks/useDownloadFiles";
 
 // User hooks
 import { useCurrentUser } from "./hooks/useCurrentUser";
@@ -64,11 +68,17 @@ export const core = {
     useExecution,
     useExecutions,
     useExecutionLogs,
+    useRunPredefined,
   },
 
   uploads: {
     ...baseCore.uploads,
     useUploadFiles,
+  },
+
+  downloads: {
+    ...baseCore.downloads,
+    useDownloadFiles,
   },
 
   user: {
