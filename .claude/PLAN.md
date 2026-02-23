@@ -199,7 +199,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 - [ ] `apps/web` — Playwright E2E: land on `/compress-images`, upload file, run, download result
 - [ ] `apps/web` — Playwright E2E: verify SEO metadata renders correctly on each Tier 1 slug
-- [ ] `engine` — Verify all 6 fixtures run clean via `bnto run` integration tests
+- [x] `engine` — Verify all 6 fixtures run clean via `bnto run` integration tests
 
 > **SEO checkpoint:** Before this sprint closes, verify in browser devtools that each `/[bnto]` URL returns correct `<title>` and `<meta description>` in the page source (not client-rendered). If they're missing from the HTML source, the metadata is being rendered client-side and won't be indexed.
 
@@ -534,6 +534,10 @@ Schema (single source of truth)
 - [ ] `apps/web` — When building the JSON editor (Sprint 4), don't flatten the node tree for editing. The editor should represent the recursive structure faithfully. Collapsible sections for group/loop child nodes.
 - [ ] `apps/web` — When building the visual editor (Sprint 8), support drill-down into group nodes. Each group is a sub-canvas. Breadcrumb navigation for depth. Study atomiton's `@atomiton/editor` package for the `nodeToReactFlow` / `reactFlowToNode` conversion pattern that handles nested nodes.
 
+
+### ~~Migrate Animation Primitives from motion/react to Custom CSS~~ — DONE
+
+**Resolved:** CSS animation system built in `globals.mini-motorways-depth.css` with Mini Motorways motion language. Spring easing curves extracted from `tailwindcss-motion` source as CSS `linear()` custom properties. Six keyframes (fade-in, scale-in, slide-up, slide-down, pulse-soft, breathe) registered in `@theme inline` as Tailwind animation utilities. Stagger cascade utility with reduced-motion safety. `contact-form.tsx` migrated from `motion/react` to CSS classes. `motion` package retained for future AnimatePresence needs. Animation component wrappers (PopIn, SlideIn, etc.) were already deleted in a prior cleanup — only `contact-form.tsx` needed migration. See `.claude/rules/animation.md` for the full animation standards.
 
 ### Domain Setup: bnto.io Custom Domains
 

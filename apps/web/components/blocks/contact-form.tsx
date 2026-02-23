@@ -1,7 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check } from "lucide-react";
-import { motion } from "motion/react";
 import { useAction } from "next-safe-action/hooks";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -59,32 +58,20 @@ export function ContactForm() {
   if (hasSucceeded) {
     return (
       <div className="w-full gap-2 rounded-md border p-2 sm:p-5 md:p-8">
-        <motion.div
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, stiffness: 300, damping: 25 }}
-          className="h-full px-3 py-6"
-        >
-          <motion.div
-            initial={{ scale: 0.5 }}
-            animate={{ scale: 1 }}
-            transition={{
-              delay: 0.3,
-              type: "spring",
-              stiffness: 500,
-              damping: 15,
-            }}
-            className="mx-auto mb-4 flex w-fit justify-center rounded-full border p-2"
+        <div className="motion-safe:animate-slide-up h-full px-3 py-6">
+          <div
+            className="motion-safe:animate-scale-in mx-auto mb-4 flex w-fit justify-center rounded-full border p-2"
+            style={{ "--scale-from": "0.5", animationDelay: "200ms" } as React.CSSProperties}
           >
             <Check className="size-8" />
-          </motion.div>
+          </div>
           <h2 className="mb-2 text-center text-2xl font-bold text-pretty">
             Thank you
           </h2>
           <p className="text-muted-foreground text-center text-lg text-pretty">
             Form submitted successfully, we will get back to you soon
           </p>
-        </motion.div>
+        </div>
       </div>
     );
   }
