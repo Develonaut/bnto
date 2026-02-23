@@ -379,24 +379,120 @@ Anonymous users get 25 runs/month tracked by browser fingerprint. No fingerprint
 - [ ] `@bnto/backend` — Store fingerprint on execution records for anonymous users
 - [ ] `@bnto/backend` — Query runs-by-fingerprint for anonymous quota enforcement
 
-### Engine-Driven Node Config Schema
+### Schema-Driven Config Panel (Single Source of Truth)
 
-The frontend currently hardcodes per-node configuration shapes (quality sliders, format selectors, column mappings) in `app/[bnto]/_components/configs/`. This works for MVP but creates two sources of truth — the engine knows what each node expects, and the frontend independently guesses.
+**Prior art:** The `atomiton` project (`~/Code/atomiton`) implemented this pattern fully. Key files to study:
+- `packages/@atomiton/nodes/src/core/utils/createFieldsFromSchema.ts` — the utility that auto-derives UI field configs from Zod schemas
+- `packages/@atomiton/nodes/src/core/utils/createFieldsFromSchema.test.ts` — thorough test suite showing all derivation cases
+- `packages/@atomiton/nodes/src/core/types/parameters.ts` — `NodeFieldConfig` and `NodeFieldControlType` type definitions
+- `packages/@atomiton/nodes/src/schemas/image/index.ts` — example Zod schema with `.describe()`, `.min()`, `.max()`, `.default()`, `.enum()`, `.optional()`
+- `packages/@atomiton/nodes/src/definitions/image/fields.ts` — example of `createFieldsFromSchema(imageSchema, overrides)` with ~30% selective overrides
 
-**Goal:** The Go engine exposes node config schemas so the frontend can dynamically render the right controls. When we load a bnto or assemble nodes, the engine tells us what config each node accepts — types, defaults, constraints (min/max, allowed values). The frontend renders controls from that schema instead of maintaining a parallel set of hardcoded components.
+**Problem:** The frontend currently hardcodes per-node configuration shapes (quality sliders, format selectors, column mappings) in `app/[bnto]/_components/configs/`. This creates two sources of truth — the Go engine knows what each node expects, and the frontend independently guesses. Every new node type requires new hardcoded UI code. Constraints can drift (engine says max quality is 100, frontend slider goes to 95).
 
-**Scope:**
+**Solution:** Define node parameter schemas once (in Go), expose them as structured metadata, and auto-derive the config panel UI from the schema. The frontend renders controls dynamically based on schema introspection. Only UI-specific concerns that can't be inferred from the schema (e.g., "this string field should render as a code editor") require explicit overrides.
 
-- [ ] `engine` — Node config schema endpoint: each node type declares its config shape (field name, type, default, constraints) via a structured format (JSON Schema or a simpler custom spec)
-- [ ] `apps/api` — Expose node config schema via HTTP (e.g., `GET /nodes/{type}/config-schema`)
-- [ ] `@bnto/core` — Hook to fetch node config schemas (`useNodeConfigSchema(nodeType)`)
-- [ ] `apps/web` — Generic config renderer that maps schema fields to UI controls (number → slider/input, enum → select, boolean → switch, string → text input)
+**The pattern (proven in atomiton):**
+
+```
+Schema (single source of truth)
+  │
+  ├── Used in Go engine for validation at execution time
+  │
+  └── Exposed as structured metadata to frontend
+        │
+        └── createFieldsFromSchema(schema, overrides)
+              │
+              ├── Auto-derived (~70-80% of fields need zero configuration):
+              │   - controlType: string→text, number→number, enum→select, boolean→checkbox, url→url, email→email
+              │   - label: camelCase→"Title Case" (e.g., maxRetries→"Max Retries")
+              │   - required: derived from optional/required in schema
+              │   - min/max: derived from .min()/.max() constraints
+              │   - options: derived from enum values
+              │   - helpText: derived from .describe() on the schema field
+              │   - placeholder: derived from .default() value (shows "Default: X")
+              │
+              └── Selective overrides (~20-30% of fields):
+                  - controlType override (string→"code", string→"textarea")
+                  - custom option labels (enum value "GET" → label "GET - Retrieve data")
+                  - rows for textarea
+                  - step for number inputs
+                  - placeholder text
+```
+
+**Control type taxonomy** (from atomiton's `NodeFieldControlType`, adapt for bnto):
+
+| Schema type | Auto-derived control | When to override |
+|---|---|---|
+| `string` | `text` | Override to `textarea`, `code`, `markdown`, `password` |
+| `string` with url validation | `url` | Rarely |
+| `string` with email validation | `email` | Rarely |
+| `number` | `number` | Override to `range` (slider) for bounded values |
+| `boolean` | `checkbox` / `switch` | Rarely |
+| `enum` | `select` (dropdown) | Override option labels for clarity |
+| `object` | `json` | Override to `code` for complex objects |
+| `array` | `json` | Override to `textarea` for simple string arrays |
+| `date` | `date` | Rarely |
+
+**Implementation scope:**
+
+#### Layer 1: Go engine schema declarations
+- [ ] `engine` — Define a `ParameterSchema` struct that each node type can declare: field name, Go type (string/number/bool/enum/object/array), default value, constraints (min/max, allowed values), description text, and whether it's required
+- [ ] `engine` — Each node type in `pkg/node/library/` registers its `ParameterSchema` alongside its `Executable` (co-located, same pattern as atomiton's schema + definition + executable per node type)
+- [ ] `engine` — Schema registry: `pkg/registry/` exposes `GetParameterSchema(nodeType string) *ParameterSchema`
+- [ ] `engine` — Unit tests: verify every registered node type has a parameter schema, and schema constraints match execution validation
+
+#### Layer 2: API exposure
+- [ ] `apps/api` — `GET /nodes/{type}/schema` endpoint returns the parameter schema as JSON
+- [ ] `apps/api` — `GET /nodes/schemas` endpoint returns all node type schemas in one request (for frontend caching)
+- [ ] `apps/api` — Integration tests: verify schema responses match expected shapes
+
+#### Layer 3: TypeScript schema consumption
+- [ ] `@bnto/core` — TypeScript types for `ParameterSchema` and `FieldConfig` (mirror the Go structs)
+- [ ] `@bnto/core` — `createFieldsFromSchema(schema, overrides?)` utility — introspects the parameter schema and returns UI field configs. Port the proven logic from atomiton's implementation (see `~/Code/atomiton/packages/@atomiton/nodes/src/core/utils/createFieldsFromSchema.ts`)
+- [ ] `@bnto/core` — Unit tests for `createFieldsFromSchema` — test every auto-derivation case: type inference, label formatting, constraint extraction, default value placeholder, optional detection, enum option generation, and override merging (port test cases from atomiton's test suite)
+- [ ] `@bnto/core` — Hook: `useNodeSchema(nodeType)` fetches and caches the parameter schema via React Query
+
+#### Layer 4: Dynamic config panel
+- [ ] `apps/web` — Generic `ConfigPanel` component that renders a form from `FieldConfig[]` — maps each `controlType` to the appropriate shadcn input component (Input, Select, Slider, Switch, Textarea, etc.)
+- [ ] `apps/web` — Per-bnto override files (only for UI hints that can't be inferred): custom option labels, control type overrides, field grouping/ordering. These are thin — ~20-30% of fields at most
+- [ ] `apps/web` — Integration tests: verify the schema-to-UI pipeline (every schema field produces a UI field, every UI field traces back to a schema field — no orphans in either direction, following atomiton's integration test pattern)
 - [ ] `apps/web` — Remove hardcoded per-bnto config components once the generic renderer covers all Tier 1 cases
 
-**Design questions to resolve when prioritized:**
-- JSON Schema vs. a simpler custom spec? JSON Schema is standard but verbose. A lean custom format (`{ field: "quality", type: "number", min: 1, max: 100, default: 80 }`) may be enough.
-- Should the engine also declare UI hints (label text, grouping, display order)? Or should that live in the bnto registry?
-- How does this compose with the fixture `.bnto.json` format? Does the fixture embed default config, or does the engine always provide defaults?
+#### Layer 5: Pipeline integrity tests
+- [ ] `apps/web` — E2E test: load a bnto tool page, verify the config panel renders the correct controls for that node type's schema (e.g., `/compress-images` shows a quality slider with min=1 max=100)
+- [ ] `engine` + `apps/web` — Contract test: when a new node type is added to the Go engine with a parameter schema, the frontend can render a config panel for it with zero new UI code (the test adds a mock node type and verifies the pipeline end-to-end)
+
+**Design decisions (resolved by studying atomiton):**
+- **Schema format:** Use a lean custom format (like atomiton's approach), not JSON Schema. JSON Schema is verbose and most of its features (allOf, oneOf, $ref) aren't needed. A simple struct with `{ field, type, default, min, max, enum, required, description }` is sufficient. The Go engine can declare schemas with a builder pattern similar to how Zod works.
+- **UI hints in schema vs. registry:** The schema declares constraints and descriptions. The bnto registry (or per-bnto override files) declares purely visual concerns (grouping, display order, custom labels). This keeps the engine UI-agnostic.
+- **Fixtures and defaults:** The `.bnto.json` fixture embeds the *current* parameter values. The schema provides the *defaults* and *constraints*. When the config panel loads, it reads parameter values from the fixture and uses the schema for validation and control rendering.
+
+### Recursive Workflow Composability (Web App)
+
+**Why this matters:** The name "bnto" (bento box) is the product metaphor — compartments that contain compartments. A bento box where each compartment can itself be a bento box. The Go engine already supports this: `Definition.Nodes` is recursive (a group node contains child nodes, which can themselves be group nodes). The web app must preserve this composability from day one, even if the initial UI is simple.
+
+**Prior art:** Atomiton's core insight — "everything is a node." A flow is just a saved `NodeDefinition` with child nodes and edges. There's no separate `Flow` type. This means any workflow can be embedded inside another workflow as a sub-node. Bnto's Go engine already has this pattern (`Definition.Nodes []Definition`).
+
+**The risk:** If the web app's config panel, execution UI, or editor treats workflows as flat (single level of nodes), it becomes architecturally expensive to add nesting later. Design for recursion now, even if the MVP only uses one level.
+
+**Principles to preserve:**
+
+1. **A workflow IS a group node.** The top-level `.bnto.json` is itself a `Definition` with `type: "group"`. Don't introduce a separate `Workflow` type that wraps nodes differently than a group node wraps child nodes. One type, recursive.
+
+2. **Config panels work at any depth.** When a user configures a node inside a loop (which is inside a group), the config panel renders the same way as a top-level node. The `ConfigPanel` component receives a node definition — it doesn't care about nesting depth.
+
+3. **Execution progress is recursive.** The execution UI must show per-node progress at every level. A loop node shows its child nodes' progress. A group node shows its child nodes' progress. The progress component is recursive — it renders itself for child nodes.
+
+4. **The editor (Sprint 8) must be depth-aware.** When the visual node editor ships, it needs to support drilling into group nodes to see and edit their children. Don't design the node canvas as a flat 2D space — design it as a zoomable hierarchy.
+
+**Scope (guard rails, not new tasks — apply these principles when building the items below):**
+
+- [ ] `apps/web` — When building the `ConfigPanel` (schema-driven config), ensure it works with node definitions at any nesting depth. Accept a `Definition` (not a workflow-specific type). Test with a node inside a loop inside a group.
+- [ ] `apps/web` — When building execution progress UI (Sprint 2 Wave 4), make the progress component recursive. A group node's progress view contains its children's progress views. Test with the `compress-images` fixture (group → loop → image node — 3 levels deep).
+- [ ] `apps/web` — When building the JSON editor (Sprint 4), don't flatten the node tree for editing. The editor should represent the recursive structure faithfully. Collapsible sections for group/loop child nodes.
+- [ ] `apps/web` — When building the visual editor (Sprint 8), support drill-down into group nodes. Each group is a sub-canvas. Breadcrumb navigation for depth. Study atomiton's `@atomiton/editor` package for the `nodeToReactFlow` / `reactFlowToNode` conversion pattern that handles nested nodes.
+
 
 ### Tooling: Use package.json `imports` Instead of TSConfig Path Aliases
 
