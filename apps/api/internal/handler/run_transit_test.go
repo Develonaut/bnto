@@ -64,6 +64,11 @@ func (m *mockStore) Upload(_ context.Context, key string, body io.Reader, _ stri
 	return nil
 }
 
+func (m *mockStore) DeleteObject(_ context.Context, key string) error {
+	delete(m.objects, key)
+	return nil
+}
+
 func newTestServerWithStore(t *testing.T, store r2.ObjectStore) http.Handler {
 	t.Helper()
 	reg := api.DefaultRegistry()

@@ -97,3 +97,15 @@ func (c *Client) Upload(ctx context.Context, key string, body io.Reader, content
 	}
 	return nil
 }
+
+// DeleteObject removes a single object by key.
+func (c *Client) DeleteObject(ctx context.Context, key string) error {
+	_, err := c.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(c.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return fmt.Errorf("deleting object %s: %w", key, err)
+	}
+	return nil
+}

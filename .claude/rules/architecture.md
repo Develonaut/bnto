@@ -230,10 +230,28 @@ R2 is a **cloud-only** transit layer, not a storage product. Files exist for min
 - **Cloud path:** Browser → R2 (upload) → Railway API → Go Engine → R2 (output) → Browser (download)
 - **Desktop path:** Webview → Wails adapter → Go Engine → local filesystem (no R2, no network)
 - Upload → process → download → delete
-- Objects deleted immediately after download, or 1-hour TTL
 - Storage stays near zero at all times
 - Never repurpose R2 as long-term storage without an explicit product decision
 - The Wails adapter passes file paths directly to the engine. The Convex adapter manages R2 presigned URLs. `@bnto/core` handles this transparently -- components never know which path they're on
+
+### R2 Object Cleanup (Defense in Depth)
+
+Three layers ensure transit objects don't accumulate:
+
+| Layer | Where | What | When |
+|---|---|---|---|
+| **1. Go API** | `r2.CleanupSessionBestEffort` in `run.go` | Deletes input files after download | Immediately after successful download (best-effort, won't fail execution) |
+| **2. Convex scheduler** | `scheduleR2Cleanup` in `executions.ts` | Schedules `cleanup.deleteByPrefix` | Input: immediately on complete/fail. Output: 2-hour delay for user downloads |
+| **3. R2 lifecycle rules** | Cloudflare dashboard | Auto-deletes objects past TTL | Catches anything layers 1-2 missed |
+
+**R2 lifecycle rules (configured in Cloudflare dashboard):**
+
+| Prefix | Auto-delete after | Rationale |
+|---|---|---|
+| `uploads/` | 1 hour | Input files consumed within minutes. 1h catches stragglers |
+| `executions/` | 24 hours | Output files get 2h scheduled cleanup. 24h is the final safety net |
+
+Apply these rules to both `bnto-transit` (prod) and `bnto-transit-dev` (dev) buckets.
 
 ---
 

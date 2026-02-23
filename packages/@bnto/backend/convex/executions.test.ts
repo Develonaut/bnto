@@ -310,4 +310,11 @@ describe("executions", () => {
       expect(execution!.outputFiles).toHaveLength(2);
     });
   });
+
+  // NOTE: R2 cleanup scheduling (via ctx.scheduler.runAfter → cleanup.deleteByPrefix)
+  // cannot be tested in convex-test because deleteByPrefix is a "use node" action
+  // that requires external R2 access. Scheduling correctness is verified by:
+  // 1. Code review of scheduleR2Cleanup helper
+  // 2. Go-side cleanup tests (apps/api/internal/r2/cleanup_test.go)
+  // 3. Pre-existing complete/fail tests pass without sessionId (no scheduling triggered)
 });

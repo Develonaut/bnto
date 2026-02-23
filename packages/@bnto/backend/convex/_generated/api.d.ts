@@ -12,6 +12,7 @@ import type * as _helpers_auth from "../_helpers/auth.js";
 import type * as _helpers_r2_client from "../_helpers/r2_client.js";
 import type * as _helpers_upload_validation from "../_helpers/upload_validation.js";
 import type * as auth from "../auth.js";
+import type * as cleanup from "../cleanup.js";
 import type * as crons from "../crons.js";
 import type * as downloads from "../downloads.js";
 import type * as executionLogs from "../executionLogs.js";
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/r2_client": typeof _helpers_r2_client;
   "_helpers/upload_validation": typeof _helpers_upload_validation;
   auth: typeof auth;
+  cleanup: typeof cleanup;
   crons: typeof crons;
   downloads: typeof downloads;
   executionLogs: typeof executionLogs;

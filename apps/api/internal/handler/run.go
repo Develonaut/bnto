@@ -124,6 +124,11 @@ func transitExec(svc *api.BntoService, mgr *execution.Manager, store r2.ObjectSt
 	if err := r2.DownloadSession(ctx, store, sessionID, inputDir); err != nil {
 		return nil, fmt.Errorf("downloading input files: %w", err)
 	}
+
+	// Input files are now local — delete from R2 to free transit storage.
+	// Best-effort: log errors but don't fail the execution.
+	r2.CleanupSessionBestEffort(ctx, store, sessionID)
+
 	if err := os.MkdirAll(outputDir, 0o755); err != nil {
 		return nil, fmt.Errorf("creating output dir: %w", err)
 	}

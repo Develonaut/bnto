@@ -20,6 +20,9 @@ type ObjectStore interface {
 
 	// Upload stores content at the given key with the specified content type.
 	Upload(ctx context.Context, key string, body io.Reader, contentType string) error
+
+	// DeleteObject removes a single object by key.
+	DeleteObject(ctx context.Context, key string) error
 }
 
 // Object represents a retrieved file from the store.

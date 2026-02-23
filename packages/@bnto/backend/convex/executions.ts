@@ -5,11 +5,15 @@ import {
   internalMutation,
   internalAction,
 } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAppUserId } from "./_helpers/auth";
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 450; // 15 min at 2s intervals
+
+/** Delay before deleting output files from R2 (2 hours). */
+const R2_OUTPUT_CLEANUP_DELAY_MS = 2 * 60 * 60 * 1000;
 
 /** Throws ConvexError if the user has exceeded their run quota. */
 function enforceQuota(user: {
@@ -257,7 +261,8 @@ export const updateProgress = internalMutation({
   },
 });
 
-/** Mark an execution as completed. Also updates the linked execution event. */
+/** Mark an execution as completed. Also updates the linked execution event.
+ *  Schedules R2 cleanup: input session (immediate), output files (2 hours). */
 export const complete = internalMutation({
   args: {
     executionId: v.id("executions"),
@@ -277,6 +282,8 @@ export const complete = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const execution = await ctx.db.get(args.executionId);
+
     await ctx.db.patch(args.executionId, {
       status: "completed" as const,
       result: args.result,
@@ -291,10 +298,15 @@ export const complete = internalMutation({
         durationMs,
       });
     }
+
+    await scheduleR2Cleanup(ctx, args.executionId, execution?.sessionId, {
+      hasOutputFiles: (args.outputFiles?.length ?? 0) > 0,
+    });
   },
 });
 
-/** Mark an execution as failed. Also updates the linked execution event. */
+/** Mark an execution as failed. Also updates the linked execution event.
+ *  Schedules R2 cleanup for any transit files. */
 export const fail = internalMutation({
   args: {
     executionId: v.id("executions"),
@@ -304,6 +316,8 @@ export const fail = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const execution = await ctx.db.get(args.executionId);
+
     await ctx.db.patch(args.executionId, {
       status: "failed" as const,
       error: args.error,
@@ -317,8 +331,36 @@ export const fail = internalMutation({
         durationMs,
       });
     }
+
+    await scheduleR2Cleanup(ctx, args.executionId, execution?.sessionId);
   },
 });
+
+/**
+ * Schedule R2 cleanup for transit files.
+ * Input session cleanup is a safety net — the Go API deletes input files
+ * immediately after download. Output cleanup runs after 2 hours to give
+ * users time to download.
+ */
+async function scheduleR2Cleanup(
+  ctx: MutationCtx,
+  executionId: string,
+  sessionId: string | undefined,
+  options?: { hasOutputFiles?: boolean },
+) {
+  if (sessionId) {
+    await ctx.scheduler.runAfter(0, internal.cleanup.deleteByPrefix, {
+      prefix: `uploads/${sessionId}/`,
+    });
+  }
+  if (options?.hasOutputFiles) {
+    await ctx.scheduler.runAfter(
+      R2_OUTPUT_CLEANUP_DELAY_MS,
+      internal.cleanup.deleteByPrefix,
+      { prefix: `executions/${executionId}/output/` },
+    );
+  }
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

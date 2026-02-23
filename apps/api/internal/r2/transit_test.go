@@ -60,6 +60,11 @@ func (m *mockStore) Upload(_ context.Context, key string, body io.Reader, _ stri
 	return nil
 }
 
+func (m *mockStore) DeleteObject(_ context.Context, key string) error {
+	delete(m.objects, key)
+	return nil
+}
+
 func TestDownloadSession(t *testing.T) {
 	store := newMockStore()
 	store.Put("uploads/session-123/image1.png", []byte("png-data-1"))

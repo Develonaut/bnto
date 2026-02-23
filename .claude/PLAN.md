@@ -171,7 +171,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 **R2 file transit:**
 
-- [ ] `apps/web` — Cloudflare R2 bucket setup (temp storage, TTL-keyed paths: `/executions/{id}/input/`, `/executions/{id}/output/`)
+- [x] `apps/web` — Cloudflare R2 bucket setup (temp storage, TTL-keyed paths: `/executions/{id}/input/`, `/executions/{id}/output/`)
 - [x] `@bnto/backend` — Convex action to generate R2 presigned upload URLs (validate file type + enforce 25MB free / 500MB Pro size limits)
 - [x] `apps/web` — Browser → R2 direct upload (presigned URLs, progress indicator)
 
@@ -390,6 +390,23 @@ Required for the PDF to Images Bnto (Tier 2, 50K+ monthly searches). High-priori
 - [ ] `engine` — Implement `pdf` node type (wrap `pdfcpu` Go library, or shell-command + ghostscript as interim)
 - [ ] `engine` — Unit tests for PDF → image conversion
 - [ ] `engine` — Integration fixture: `pdf-to-images.bnto.json`
+
+### Infra: Configure R2 Lifecycle Rules
+
+R2 object cleanup has three layers (Go API immediate, Convex scheduled, R2 lifecycle). Layers 1-2 are implemented in code. Layer 3 needs manual configuration in the Cloudflare dashboard.
+
+**Action:** In Cloudflare dashboard > R2 > each bucket > Settings > Object lifecycle rules, add:
+
+| Bucket | Prefix | Auto-delete after |
+|---|---|---|
+| `bnto-transit` (prod) | `uploads/` | 1 hour |
+| `bnto-transit` (prod) | `executions/` | 24 hours |
+| `bnto-transit-dev` (dev) | `uploads/` | 1 hour |
+| `bnto-transit-dev` (dev) | `executions/` | 24 hours |
+
+This is the final safety net — catches any objects that layers 1-2 missed. See [architecture.md](rules/architecture.md#r2-object-cleanup-defense-in-depth) for the full cleanup strategy.
+
+- [ ] `infra` — Configure R2 lifecycle rules in Cloudflare dashboard (prod + dev buckets)
 
 ### Engine: Browser Fingerprint for Anonymous Run Tracking
 
