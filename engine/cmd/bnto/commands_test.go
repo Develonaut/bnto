@@ -369,7 +369,7 @@ func TestRootCommand_HelpText(t *testing.T) {
 	}
 
 	// Should show all new command names
-	expectedCommands := []string{"run", "validate", "list", "new", "docs", "secrets", "version"}
+	expectedCommands := []string{"run", "validate", "list", "new", "docs", "secrets", "version", "menu"}
 	for _, cmd := range expectedCommands {
 		if !strings.Contains(output, cmd) {
 			t.Errorf("Root help should list '%s' command", cmd)
@@ -377,7 +377,7 @@ func TestRootCommand_HelpText(t *testing.T) {
 	}
 
 	// Should NOT show old command names
-	oldCommands := []string{"savor", "sample", "menu", "box", "recipe", "wasabi"}
+	oldCommands := []string{"savor", "sample", "box", "wasabi"}
 	for _, cmd := range oldCommands {
 		if strings.Contains(output, cmd) {
 			t.Errorf("Root help should NOT list old command '%s'", cmd)

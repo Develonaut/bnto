@@ -1,0 +1,75 @@
+{
+  "slug": "resize-images",
+  "name": "Resize Images",
+  "description": "Resize images to exact dimensions or percentages. Free, no signup required.",
+  "category": "image",
+  "accept": {
+    "mimeTypes": ["image/jpeg", "image/png", "image/webp"],
+    "extensions": [".jpg", ".jpeg", ".png", ".webp"],
+    "label": "JPEG, PNG, or WebP images",
+    "mimePrefix": "image/"
+  },
+  "features": ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"],
+  "seo": {
+    "title": "Resize Images Online Free -- bnto",
+    "h1": "Resize Images Online Free"
+  },
+  "definition": {
+    "id": "resize-images",
+    "type": "group",
+    "version": "1.0.0",
+    "name": "Resize Images",
+    "position": { "x": 0, "y": 0 },
+    "metadata": { "description": "Lists image files and resizes each one via a loop." },
+    "parameters": {},
+    "inputPorts": [],
+    "outputPorts": [],
+    "nodes": [
+      {
+        "id": "list-images",
+        "type": "file-system",
+        "version": "1.0.0",
+        "name": "List Images",
+        "position": { "x": 100, "y": 100 },
+        "metadata": {},
+        "parameters": { "operation": "list", "path": "{{.INPUT_DIR}}/*" },
+        "inputPorts": [],
+        "outputPorts": [{ "id": "out-1", "name": "files" }]
+      },
+      {
+        "id": "resize-loop",
+        "type": "loop",
+        "version": "1.0.0",
+        "name": "Resize Each Image",
+        "position": { "x": 300, "y": 100 },
+        "metadata": {},
+        "parameters": {
+          "mode": "forEach",
+          "items": "{{index . \"list-images\" \"files\"}}"
+        },
+        "inputPorts": [{ "id": "in-1", "name": "items" }],
+        "outputPorts": [],
+        "nodes": [
+          {
+            "id": "resize-image",
+            "type": "image",
+            "version": "1.0.0",
+            "name": "Resize Image",
+            "position": { "x": 100, "y": 100 },
+            "metadata": {},
+            "parameters": {
+              "operation": "resize",
+              "input": "{{.item}}",
+              "output": "{{.OUTPUT_DIR}}/{{basename .item}}",
+              "width": 200
+            },
+            "inputPorts": [],
+            "outputPorts": []
+          }
+        ],
+        "edges": []
+      }
+    ],
+    "edges": [{ "id": "e1", "source": "list-images", "target": "resize-loop" }]
+  }
+}

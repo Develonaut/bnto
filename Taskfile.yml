@@ -95,6 +95,12 @@ tasks:
       - cd apps/api && go build ./cmd/server
       - echo "=== all checks passed ==="
 
+  # Menu generation
+  menu:generate:
+    desc: Generate menu JSON from engine for web app
+    cmds:
+      - cd engine && go run ./cmd/bnto menu --json > ../apps/web/lib/generated/menu.json
+
   # E2E tests
   e2e:
     desc: Run Playwright E2E tests (headless)

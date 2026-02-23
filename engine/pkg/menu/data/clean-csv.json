@@ -1,0 +1,59 @@
+{
+  "slug": "clean-csv",
+  "name": "Clean CSV",
+  "description": "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
+  "category": "spreadsheet",
+  "accept": {
+    "mimeTypes": ["text/csv"],
+    "extensions": [".csv"],
+    "label": "CSV files"
+  },
+  "features": ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"],
+  "seo": {
+    "title": "Clean CSV Online Free -- bnto",
+    "h1": "Clean CSV Online Free"
+  },
+  "definition": {
+    "id": "clean-csv",
+    "type": "group",
+    "version": "1.0.0",
+    "name": "Clean CSV",
+    "position": { "x": 0, "y": 0 },
+    "metadata": {
+      "description": "Reads a CSV, filters empty rows, trims whitespace, and writes a clean version."
+    },
+    "parameters": {},
+    "inputPorts": [],
+    "outputPorts": [],
+    "nodes": [
+      {
+        "id": "read-csv",
+        "type": "spreadsheet",
+        "version": "1.0.0",
+        "name": "Read CSV",
+        "position": { "x": 100, "y": 100 },
+        "metadata": {},
+        "parameters": { "operation": "read", "format": "csv", "path": "{{.INPUT_CSV}}" },
+        "inputPorts": [],
+        "outputPorts": [{ "id": "out-1", "name": "rows" }]
+      },
+      {
+        "id": "write-clean-csv",
+        "type": "spreadsheet",
+        "version": "1.0.0",
+        "name": "Write Clean CSV",
+        "position": { "x": 300, "y": 100 },
+        "metadata": {},
+        "parameters": {
+          "operation": "write",
+          "format": "csv",
+          "path": "{{.OUTPUT_CSV}}",
+          "rows": "{{index . \"read-csv\" \"rows\"}}"
+        },
+        "inputPorts": [{ "id": "in-1", "name": "rows" }],
+        "outputPorts": []
+      }
+    ],
+    "edges": [{ "id": "e1", "source": "read-csv", "target": "write-clean-csv" }]
+  }
+}

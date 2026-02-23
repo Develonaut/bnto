@@ -46,6 +46,7 @@ Available Commands:
   • validate - Validate a workflow without executing
   • list     - List available bnto workflows
   • new      - Create a new bnto workflow template
+  • menu     - List predefined bnto recipes
   • docs     - View documentation
   • secrets  - Manage secrets securely
   • logs     - View and tail execution logs
@@ -74,7 +75,7 @@ func main() {
 
 // isKnownSubcommand checks if the arg is a registered subcommand.
 func isKnownSubcommand(arg string) bool {
-	knownCommands := []string{"run", "validate", "list", "new", "docs", "secrets", "logs", "version", "v", "help", "config"}
+	knownCommands := []string{"run", "validate", "list", "new", "docs", "secrets", "logs", "version", "v", "help", "config", "menu"}
 	for _, cmd := range knownCommands {
 		if arg == cmd {
 			return true
@@ -117,4 +118,5 @@ func init() {
 	rootCmd.AddCommand(logsCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)
+	rootCmd.AddCommand(menuCmd)
 }

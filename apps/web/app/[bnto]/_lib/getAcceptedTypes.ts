@@ -1,10 +1,12 @@
 /**
  * Map a bnto slug to the file types it accepts.
  *
+ * Reads from the engine-generated menu — no hardcoded slug map.
  * Used by the file drop zone to filter the file input and
- * validate dropped files. Returns `accept` (for <input accept>)
- * and `label` (human-readable description for the drop zone hint).
+ * validate dropped files.
  */
+
+import { getRecipe } from "../../../lib/menu";
 
 interface AcceptedTypes {
   /** Value for the HTML <input accept="..."> attribute. */
@@ -15,43 +17,29 @@ interface AcceptedTypes {
   mimePrefix?: string;
 }
 
-const SLUG_ACCEPT_MAP: Record<string, AcceptedTypes> = {
-  "compress-images": {
-    accept: "image/jpeg,image/png,image/webp",
-    label: "JPEG, PNG, or WebP images",
-    mimePrefix: "image/",
-  },
-  "resize-images": {
-    accept: "image/jpeg,image/png,image/webp",
-    label: "JPEG, PNG, or WebP images",
-    mimePrefix: "image/",
-  },
-  "convert-image-format": {
-    accept: "image/jpeg,image/png,image/webp,image/gif",
-    label: "JPEG, PNG, WebP, or GIF images",
-    mimePrefix: "image/",
-  },
-  "rename-files": {
-    accept: "*/*",
-    label: "any files",
-  },
-  "clean-csv": {
-    accept: ".csv,text/csv",
-    label: "CSV files",
-  },
-  "rename-csv-columns": {
-    accept: ".csv,text/csv",
-    label: "CSV files",
-  },
-};
-
 const DEFAULT_ACCEPTED: AcceptedTypes = {
   accept: "*/*",
   label: "files",
 };
 
 export function getAcceptedTypes(slug: string): AcceptedTypes {
-  return SLUG_ACCEPT_MAP[slug] ?? DEFAULT_ACCEPTED;
+  const recipe = getRecipe(slug);
+  if (!recipe) return DEFAULT_ACCEPTED;
+
+  const { mimeTypes, extensions, label, mimePrefix } = recipe.accept;
+
+  // Wildcard — accept anything
+  if (mimeTypes.length === 1 && mimeTypes[0] === "*/*") {
+    return { accept: "*/*", label, mimePrefix };
+  }
+
+  // When a mimePrefix is set (e.g. "image/"), MIME types alone are sufficient
+  // for filtering. Extensions are redundant and would bloat the accept string.
+  // Include extensions only when they add value (e.g. ".csv" where MIME
+  // detection by browsers is unreliable).
+  const parts = mimePrefix ? mimeTypes : [...mimeTypes, ...extensions];
+  const accept = parts.join(",");
+  return { accept, label, mimePrefix };
 }
 
 /**
