@@ -1,0 +1,683 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Bnto Theme — Mini Motorways Depth Variant
+ *
+ * EXPERIMENTAL — copy of globals.mini-motorways.css with a directional
+ * cast shadow system inspired by Mini Motorways' visual language.
+ *
+ * What changed vs the base mini-motorways theme:
+ *
+ * SHADOWS — completely rewritten using the "neo-brutalist" technique:
+ * zero-blur box-shadow creating hard-edged isometric cast shadows.
+ * Each shadow is a solid translated copy of the element's shape —
+ * exactly like Mini Motorways buildings casting shadows on a map.
+ *
+ * Design decisions:
+ *
+ * 1. ZERO BLUR — shadows have pixel-sharp edges. No diffusion, no
+ *    softness. This is the single biggest visual difference from
+ *    typical CSS shadows and what creates the Mini Motorways feel.
+ *
+ * 2. 45-DEGREE ANGLE — X and Y offsets are equal (1:1 ratio) creating
+ *    a clean 45-degree diagonal. Studied from Munich, LA Harbor, and
+ *    Dar es Salaam map references.
+ *
+ * 3. WARM-TINTED (light mode) — shadow color is a darkened warm cream
+ *    (oklch with hue ~95), not gray or black. Keeps shadows harmonious
+ *    with the terracotta palette. Dark mode uses near-black with the
+ *    cool slate hue (~264).
+ *
+ * 4. ELEVATION = BUILDING HEIGHT — shadow offset = how tall the building
+ *    is. Larger offset = taller building = longer cast shadow.
+ *    shadow-2xs (1px) = flush | shadow-xl (10px) = skyscraper
+ *
+ * 5. PRESS = SINKING A BUILDING — designed to pair with Press animation:
+ *    Resting: element floats with shadow-xl (tall building, long shadow)
+ *    Hover:   element sinks, shadow shrinks (building getting shorter)
+ *    Pressed: element flush, shadow-2xs (building flat on the ground)
+ *    Both animate via transform only = compositor, zero repaints, 60fps.
+ *
+ * For interactive elements that need the best animation performance,
+ * consider the pseudo-element approach: a ::before with the same
+ * dimensions, border-radius: inherit, translated diagonally, animated
+ * via transform only. See research notes in the codebase.
+ *
+ * Everything else (colors, fonts, radius) is identical to the base theme.
+ */
+
+:root {
+  /* ── Backgrounds & Text ─────────────────────────────────────── */
+  --background: oklch(0.9901 0.0161 95.2193);
+  --foreground: oklch(0.2627 0.0206 28.5372);
+  --card: oklch(1.0000 0 0);
+  --card-foreground: oklch(0.2627 0.0206 28.5372);
+  --popover: oklch(1.0000 0 0);
+  --popover-foreground: oklch(0.2627 0.0206 28.5372);
+
+  /* ── Primary: Terracotta ───────────────────────────────────── */
+  --primary: oklch(0.6755 0.1791 35.2662);
+  --primary-foreground: oklch(1.0000 0 0);
+
+  /* ── Secondary: Soft teal ──────────────────────────────────── */
+  --secondary: oklch(0.9100 0.0500 189.39);
+  --secondary-foreground: oklch(0.3800 0.0550 187.70);
+
+  /* ── Muted ─────────────────────────────────────────────────── */
+  --muted: oklch(0.9487 0.0137 92.9849);
+  --muted-foreground: oklch(0.5447 0.0250 31.8671);
+
+  /* ── Accent: Golden yellow ─────────────────────────────────── */
+  --accent: oklch(0.8885 0.1338 91.06);
+  --accent-foreground: oklch(0.2627 0.0206 28.5372);
+
+  /* ── Destructive ───────────────────────────────────────────── */
+  --destructive: oklch(0.6358 0.2088 25.4126);
+  --destructive-foreground: oklch(1.0000 0 0);
+
+  /* ── Borders & Inputs ──────────────────────────────────────── */
+  --border: oklch(0.8966 0.0165 95.2423);
+  --input: oklch(0.9331 0.0122 96.4290);
+  --ring: oklch(0.6755 0.1791 35.2662);
+
+  /* ── Charts ────────────────────────────────────────────────── */
+  --chart-1: oklch(0.6755 0.1791 35.2662);
+  --chart-2: oklch(0.7868 0.1103 223.0437);
+  --chart-3: oklch(0.8887 0.1337 91.2263);
+  --chart-4: oklch(0.7692 0.1554 157.4196);
+  --chart-5: oklch(0.5401 0.1020 34.6762);
+
+  /* ── Sidebar ───────────────────────────────────────────────── */
+  --sidebar: oklch(0.9901 0.0161 95.2193);
+  --sidebar-foreground: oklch(0.2627 0.0206 28.5372);
+  --sidebar-primary: oklch(0.6755 0.1791 35.2662);
+  --sidebar-primary-foreground: oklch(1.0000 0 0);
+  --sidebar-accent: oklch(0.8885 0.1338 91.06);
+  --sidebar-accent-foreground: oklch(0.2627 0.0206 28.5372);
+  --sidebar-border: oklch(0.8966 0.0165 95.2423);
+  --sidebar-ring: oklch(0.6755 0.1791 35.2662);
+
+  /* ── Typography ────────────────────────────────────────────── */
+  --font-display: "DM Sans", ui-sans-serif, sans-serif, system-ui;
+  --font-sans: "Inter", ui-sans-serif, sans-serif, system-ui;
+  --font-serif: Georgia, serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  /* ── Radius ────────────────────────────────────────────────── */
+  --radius: 1.25rem;
+
+  /* ── Isometric Cast Shadows (light mode) ────────────────────── */
+  /*
+   * Mini Motorways-style hard-edged directional shadows.
+   *
+   * Sun at upper-left. Shadows cast to bottom-right at ~45 degrees.
+   * ZERO BLUR — shadows are solid translated copies of the element,
+   * just like buildings casting shadows on a map.
+   *
+   * Shadow color is a warm darkened version of the cream background
+   * (not gray, not black). This keeps shadows harmonious with the
+   * terracotta palette.
+   *
+   * Scale = building height. Taller buildings cast longer shadows:
+   *   2xs = flush with ground  |  xs = one-story  |  sm = two-story
+   *   (default) = standard     |  md = tall        |  lg = skyscraper
+   *   xl = Press resting state |  2xl = maximum height
+   *
+   * Press interaction: element translates toward its shadow (sinks)
+   * while shadow shrinks (building gets shorter). Both animate via
+   * transform only = compositor thread, zero repaints, 60fps.
+   */
+  --shadow-x: 4px;
+  --shadow-y: 4px;
+  --shadow-blur: 0px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.28;
+  --shadow-color: oklch(0.55 0.02 95);
+
+  --shadow-2xs:
+    1px 1px 0 0 oklch(0.75 0.02 95 / 0.20);
+
+  --shadow-xs:
+    2px 2px 0 0 oklch(0.70 0.02 95 / 0.22);
+
+  --shadow-sm:
+    3px 3px 0 0 oklch(0.65 0.02 95 / 0.25);
+
+  --shadow:
+    4px 4px 0 0 oklch(0.60 0.02 95 / 0.28);
+
+  --shadow-md:
+    5px 5px 0 0 oklch(0.58 0.02 95 / 0.28);
+
+  --shadow-lg:
+    7px 7px 0 0 oklch(0.55 0.02 95 / 0.30);
+
+  --shadow-xl:
+    10px 10px 0 0 oklch(0.52 0.02 95 / 0.30);
+
+  --shadow-2xl:
+    14px 14px 0 0 oklch(0.50 0.02 95 / 0.32);
+
+  /* ── Depth (::before pseudo-element system) ──────────────────── */
+  /*
+   * Same OKLCH colors as the shadow scale, used by .depth-* classes
+   * to render pseudo-element cast shadows instead of box-shadow.
+   */
+  --depth-color-2xs: oklch(0.75 0.02 95 / 0.20);
+  --depth-color-xs:  oklch(0.70 0.02 95 / 0.22);
+  --depth-color-sm:  oklch(0.65 0.02 95 / 0.25);
+  --depth-color:     oklch(0.60 0.02 95 / 0.28);
+  --depth-color-md:  oklch(0.58 0.02 95 / 0.28);
+  --depth-color-lg:  oklch(0.55 0.02 95 / 0.30);
+  --depth-color-xl:  oklch(0.52 0.02 95 / 0.30);
+  --depth-color-2xl: oklch(0.50 0.02 95 / 0.32);
+
+  /* ── Tracking ──────────────────────────────────────────────── */
+  --tracking-normal: -0.01em;
+  --spacing: 0.25rem;
+}
+
+.dark {
+  /* ── Backgrounds & Text ─────────────────────────────────────── */
+  --background: oklch(0.2607 0.0156 269.0735);
+  --foreground: oklch(0.9901 0.0161 95.2193);
+  --card: oklch(0.3090 0.0210 265.8998);
+  --card-foreground: oklch(0.9901 0.0161 95.2193);
+  --popover: oklch(0.3090 0.0210 265.8998);
+  --popover-foreground: oklch(0.9901 0.0161 95.2193);
+
+  /* ── Primary: Terracotta ───────────────────────────────────── */
+  --primary: oklch(0.6755 0.1791 35.2662);
+  --primary-foreground: oklch(1.0000 0 0);
+
+  /* ── Secondary: Dark teal ──────────────────────────────────── */
+  --secondary: oklch(0.3800 0.0500 188.30);
+  --secondary-foreground: oklch(0.8800 0.0450 189.32);
+
+  /* ── Muted ─────────────────────────────────────────────────── */
+  --muted: oklch(0.3584 0.0229 261.2207);
+  --muted-foreground: oklch(0.8283 0.0278 95.3961);
+
+  /* ── Accent: Golden (richer for dark) ──────────────────────── */
+  --accent: oklch(0.8199 0.1574 88.2756);
+  --accent-foreground: oklch(0.2607 0.0156 269.0735);
+
+  /* ── Destructive ───────────────────────────────────────────── */
+  --destructive: oklch(0.5788 0.2215 27.7967);
+  --destructive-foreground: oklch(1.0000 0 0);
+
+  /* ── Borders & Inputs ──────────────────────────────────────── */
+  --border: oklch(0.3584 0.0229 261.2207);
+  --input: oklch(0.3584 0.0229 261.2207);
+  --ring: oklch(0.6755 0.1791 35.2662);
+
+  /* ── Charts ────────────────────────────────────────────────── */
+  --chart-1: oklch(0.6755 0.1791 35.2662);
+  --chart-2: oklch(0.7868 0.1103 223.0437);
+  --chart-3: oklch(0.8887 0.1337 91.2263);
+  --chart-4: oklch(0.7692 0.1554 157.4196);
+  --chart-5: oklch(0.5401 0.1020 34.6762);
+
+  /* ── Sidebar ───────────────────────────────────────────────── */
+  --sidebar: oklch(0.2303 0.0125 264.2926);
+  --sidebar-foreground: oklch(0.9901 0.0161 95.2193);
+  --sidebar-primary: oklch(0.6755 0.1791 35.2662);
+  --sidebar-primary-foreground: oklch(1.0000 0 0);
+  --sidebar-accent: oklch(0.8199 0.1574 88.2756);
+  --sidebar-accent-foreground: oklch(0.2607 0.0156 269.0735);
+  --sidebar-border: oklch(0.3584 0.0229 261.2207);
+  --sidebar-ring: oklch(0.6755 0.1791 35.2662);
+
+  /* ── Typography ────────────────────────────────────────────── */
+  --font-display: "DM Sans", ui-sans-serif, sans-serif, system-ui;
+  --font-sans: "Inter", ui-sans-serif, sans-serif, system-ui;
+  --font-serif: Georgia, serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  /* ── Radius ────────────────────────────────────────────────── */
+  --radius: 1.25rem;
+
+  /* ── Isometric Cast Shadows (dark mode — Tokyo Night) ────────── */
+  /*
+   * Same 45-degree angle, zero blur. Pure black, higher opacity.
+   * Dark surfaces need stronger shadow contrast to read.
+   */
+  --shadow-x: 4px;
+  --shadow-y: 4px;
+  --shadow-blur: 0px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.50;
+  --shadow-color: #000000;
+
+  --shadow-2xs:
+    1px 1px 0 0 oklch(0.10 0.01 264 / 0.35);
+
+  --shadow-xs:
+    2px 2px 0 0 oklch(0.10 0.01 264 / 0.40);
+
+  --shadow-sm:
+    3px 3px 0 0 oklch(0.08 0.01 264 / 0.45);
+
+  --shadow:
+    4px 4px 0 0 oklch(0.08 0.01 264 / 0.50);
+
+  --shadow-md:
+    5px 5px 0 0 oklch(0.06 0.01 264 / 0.50);
+
+  --shadow-lg:
+    7px 7px 0 0 oklch(0.05 0.01 264 / 0.55);
+
+  --shadow-xl:
+    10px 10px 0 0 oklch(0.04 0.01 264 / 0.55);
+
+  --shadow-2xl:
+    14px 14px 0 0 oklch(0.03 0.01 264 / 0.60);
+
+  /* ── Depth (dark mode) ───────────────────────────────────────── */
+  --depth-color-2xs: oklch(0.10 0.01 264 / 0.35);
+  --depth-color-xs:  oklch(0.10 0.01 264 / 0.40);
+  --depth-color-sm:  oklch(0.08 0.01 264 / 0.45);
+  --depth-color:     oklch(0.08 0.01 264 / 0.50);
+  --depth-color-md:  oklch(0.06 0.01 264 / 0.50);
+  --depth-color-lg:  oklch(0.05 0.01 264 / 0.55);
+  --depth-color-xl:  oklch(0.04 0.01 264 / 0.55);
+  --depth-color-2xl: oklch(0.03 0.01 264 / 0.60);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-normal: var(--tracking-normal);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    letter-spacing: var(--tracking-normal);
+  }
+}
+
+/* ── Press Interaction ──────────────────────────────────────────────
+ *
+ * 3D press effect using Katherine Kato's ::before technique
+ * (https://codepen.io/kathykato/pen/gOOjgmP) adapted for
+ * Mini Motorways isometric shadows.
+ *
+ * The element IS the front face. ::before sits behind via z-axis
+ * (transform-style: preserve-3d + translate3d z=-1em), providing:
+ *   1. A solid EDGE (background of ::before)
+ *   2. A ground SHADOW (box-shadow of ::before)
+ *
+ * No extra DOM — just .press > children. ::before inherits
+ * border-radius from .press, so consumers set radius via className.
+ *
+ * States:
+ *   Resting → element at translateY(0), ::before at full depth
+ *   Hover   → element sinks 25%, ::before shrinks to 33%
+ *   Active  → element nearly flush, ::before at 1px
+ *
+ * Timing:
+ *   Release: 150ms ease-out    — quick snap back
+ *   Hover:   150ms ease-out    — responsive sink
+ *   Press:   34ms  snap        — ~2 frames at 60fps
+ * ────────────────────────────────────────────────────────────────── */
+
+:root {
+  --press-edge-color: oklch(0.60 0.02 95 / 0.28);     /* semi-transparent — matches depth-default */
+}
+.dark {
+  --press-edge-color: oklch(0.08 0.01 264 / 0.50);    /* semi-transparent — matches depth-default */
+}
+
+.press {
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  border-radius: var(--radius-lg);
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 150ms cubic-bezier(0, 0, 0.58, 1);
+}
+
+/* Edge (behind front face via z-axis) — background only, no ground shadow */
+.press::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--press-edge-color);
+  will-change: transform;
+  transform: translate3d(
+    var(--press-depth, 6px),
+    var(--press-depth, 6px),
+    -1em
+  );
+  transition: transform 150ms cubic-bezier(0, 0, 0.58, 1);
+}
+
+/* Hover — element sinks diagonally, edge shrinks */
+.press:hover {
+  transform: translate(
+    calc(var(--press-depth, 6px) * 0.25),
+    calc(var(--press-depth, 6px) * 0.25)
+  );
+}
+
+.press:hover::before {
+  transform: translate3d(
+    calc(var(--press-depth, 6px) * 0.33),
+    calc(var(--press-depth, 6px) * 0.33),
+    -1em
+  );
+}
+
+/* Active — element flush with surface, edge minimal */
+.press:active {
+  transform: translate(
+    calc(var(--press-depth, 6px) - 1px),
+    calc(var(--press-depth, 6px) - 1px)
+  );
+  transition: transform 34ms;
+}
+
+.press:active::before {
+  transform: translate3d(1px, 1px, -1em);
+  transition: transform 34ms;
+}
+
+/* Strip child shadows and depth pseudo-elements — Press owns the depth
+ * illusion entirely. Cards, buttons, and other elevated elements inside
+ * Press should not compete with the 3D edge + ground shadow. */
+.press > * {
+  box-shadow: none !important;
+}
+.press > *::before {
+  content: none !important;
+}
+
+/* Focus — keyboard accessibility */
+.press:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+
+/* Reduced motion — static, no interaction */
+@media (prefers-reduced-motion: reduce) {
+  .press,
+  .press::before {
+    transition: none !important;
+    will-change: auto !important;
+  }
+
+  .press:hover,
+  .press:active {
+    transform: none;
+  }
+
+  .press:hover::before,
+  .press:active::before {
+    transform: translate3d(
+      var(--press-depth, 6px),
+      var(--press-depth, 6px),
+      -1em
+    );
+  }
+}
+
+/* ── Depth Classes ────────────────────────────────────────────────
+ *
+ * ::before pseudo-element cast shadows driven by className.
+ * Same visual weight as the shadow-* scale but rendered via a
+ * pseudo-element for composability with Press and transform
+ * animations.
+ *
+ * Usage: <div className="depth-sm rounded-xl bg-card">...</div>
+ * The pseudo-element inherits border-radius from the parent.
+ * ────────────────────────────────────────────────────────────────── */
+
+/* Shared structural base */
+.depth,
+[class*="depth-"] {
+  position: relative;
+  transform-style: preserve-3d;
+}
+.depth::before,
+[class*="depth-"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--depth-bg);
+  transform: translate3d(var(--depth-x), var(--depth-y), -1em);
+}
+
+/* Per-level classes */
+.depth-2xs { --depth-bg: var(--depth-color-2xs); --depth-x: 1px; --depth-y: 1px; }
+.depth-xs  { --depth-bg: var(--depth-color-xs);  --depth-x: 2px; --depth-y: 2px; }
+.depth-sm  { --depth-bg: var(--depth-color-sm);  --depth-x: 3px; --depth-y: 3px; }
+.depth     { --depth-bg: var(--depth-color);     --depth-x: 4px; --depth-y: 4px; }
+.depth-md  { --depth-bg: var(--depth-color-md);  --depth-x: 5px; --depth-y: 5px; }
+.depth-lg  { --depth-bg: var(--depth-color-lg);  --depth-x: 7px; --depth-y: 7px; }
+.depth-xl  { --depth-bg: var(--depth-color-xl);  --depth-x: 10px; --depth-y: 10px; }
+.depth-2xl { --depth-bg: var(--depth-color-2xl); --depth-x: 14px; --depth-y: 14px; }
+
+/* Explicit reset */
+.depth-none { --depth-bg: transparent; --depth-x: 0px; --depth-y: 0px; }
+.depth-none::before { content: none; }
+
+/* ── Button Depth Animation ──────────────────────────────────────────
+ *
+ * Buttons get Press-style animation baked in — no wrapper needed.
+ * The depth ::before IS the shadow. On hover it shrinks as the button
+ * sinks toward the surface. On active the button is flush.
+ *
+ * data-force-state mirrors pseudo-states for showcase/story use:
+ *   <Button data-force-state="hover">  — renders as if :hover
+ *   <Button data-force-state="active"> — renders as if :active
+ *
+ * When inside .press, these are stripped (.press > * rules) so Press
+ * controls the animation instead.
+ * ────────────────────────────────────────────────────────────────── */
+
+/* Transitions — shadow animates, button face stays put */
+[data-slot="button"].depth::before,
+[data-slot="button"][class*="depth-"]::before {
+  transition:
+    transform 150ms cubic-bezier(0, 0, 0.58, 1),
+    opacity 150ms cubic-bezier(0, 0, 0.58, 1);
+}
+
+/* Hover — shadow shrinks (button face doesn't move) */
+[data-slot="button"].depth:hover::before,
+[data-slot="button"][class*="depth-"]:hover::before,
+[data-slot="button"].depth[data-force-state="hover"]::before,
+[data-slot="button"][class*="depth-"][data-force-state="hover"]::before {
+  transform: translate3d(
+    calc(var(--depth-x) * 0.5),
+    calc(var(--depth-y) * 0.5),
+    -1em
+  );
+}
+
+/* Active — shadow gone, button flush with surface */
+[data-slot="button"].depth:active::before,
+[data-slot="button"][class*="depth-"]:active::before,
+[data-slot="button"].depth[data-force-state="active"]::before,
+[data-slot="button"][class*="depth-"][data-force-state="active"]::before {
+  transform: translate3d(0px, 0px, -1em);
+  opacity: 0;
+  transition-duration: 34ms;
+}
+
+/* Inside Press — Press owns the animation, strip button depth */
+.press > [data-slot="button"]::before {
+  content: none !important;
+}
+
+/* Reduced motion — no button depth animation */
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="button"].depth::before,
+  [data-slot="button"][class*="depth-"]::before {
+    transition: none !important;
+  }
+}
+
+/* ── Pressable Button (Katherine Kato) ───────────────────────────────
+ *
+ * 1:1 port of Katherine Kato's 3D button (codepen.io/kathykato/pen/gOOjgmP)
+ * with her original pink palette. This is the sandbox for iterating
+ * on the press effect before folding it into the depth system.
+ *
+ * Force states: data-force-state="hover" | "active"
+ * ────────────────────────────────────────────────────────────────── */
+
+.pressable {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  outline: none;
+  border: 0;
+  vertical-align: middle;
+  text-decoration: none;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: 600;
+  color: #382b22;
+  text-transform: uppercase;
+  padding: 1.25em 2em;
+  background: #fff0f0;
+  border: 2px solid #b18597;
+  border-radius: 0.75em;
+  transform-style: preserve-3d;
+  transition: transform 150ms cubic-bezier(0, 0, 0.58, 1),
+              background 150ms cubic-bezier(0, 0, 0.58, 1);
+}
+
+.pressable::before {
+  position: absolute;
+  content: "";
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f9c4d2;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px #b18597,
+              0 0.625em 0 0 #ffe3e2;
+  transform: translate3d(0, 0.75em, -1em);
+  transition: transform 150ms cubic-bezier(0, 0, 0.58, 1),
+              box-shadow 150ms cubic-bezier(0, 0, 0.58, 1);
+}
+
+/* Hover */
+.pressable:hover,
+.pressable[data-force-state="hover"] {
+  background: #ffe9e9;
+  transform: translate(0, 0.25em);
+}
+.pressable:hover::before,
+.pressable[data-force-state="hover"]::before {
+  box-shadow: 0 0 0 2px #b18597,
+              0 0.5em 0 0 #ffe3e2;
+  transform: translate3d(0, 0.5em, -1em);
+}
+
+/* Active */
+.pressable:active,
+.pressable[data-force-state="active"] {
+  background: #ffe9e9;
+  transform: translate(0, 0.75em);
+}
+.pressable:active::before,
+.pressable[data-force-state="active"]::before {
+  box-shadow: 0 0 0 2px #b18597,
+              0 0 0 0 #ffe3e2;
+  transform: translate3d(0, 0, -1em);
+}
+
+/* Focus */
+.pressable:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .pressable,
+  .pressable::before {
+    transition: none !important;
+  }
+  .pressable:hover,
+  .pressable:active {
+    transform: none;
+  }
+  .pressable:hover::before,
+  .pressable:active::before {
+    transform: translate3d(0, 0.75em, -1em);
+    box-shadow: 0 0 0 2px #b18597,
+                0 0.625em 0 0 #ffe3e2;
+  }
+}
