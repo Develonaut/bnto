@@ -18,6 +18,8 @@ export type {
   ExecutionLog,
   NodeProgress,
   RunResult,
+  OutputFile,
+  StartExecutionInput,
 } from "./execution";
 
 export type { User } from "./user";

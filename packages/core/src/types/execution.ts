@@ -2,6 +2,14 @@
 // Execution types (transport-agnostic — no Convex imports)
 // ---------------------------------------------------------------------------
 
+/** A file produced by execution, stored in R2 for download. */
+export interface OutputFile {
+  key: string;
+  name: string;
+  sizeBytes: number;
+  contentType: string;
+}
+
 export interface Execution {
   id: string;
   userId: string;
@@ -10,8 +18,17 @@ export interface Execution {
   progress: NodeProgress[];
   result?: RunResult;
   error?: string;
+  outputFiles?: OutputFile[];
+  sessionId?: string;
   startedAt: number;
   completedAt?: number;
+}
+
+/** Input for starting a workflow execution. */
+export interface StartExecutionInput {
+  workflowId: string;
+  slug?: string;
+  sessionId?: string;
 }
 
 export interface ExecutionLog {

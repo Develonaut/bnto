@@ -24,6 +24,8 @@ export type {
   ExecutionLog,
   NodeProgress,
   RunResult,
+  OutputFile,
+  StartExecutionInput,
   User,
   UploadFileInput,
   PresignedUploadUrl,

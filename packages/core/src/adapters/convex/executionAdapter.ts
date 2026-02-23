@@ -4,6 +4,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@bnto/backend/convex/_generated/api";
 import type { Id } from "@bnto/backend/convex/_generated/dataModel";
 import { getConvexClient } from "../../client";
+import type { StartExecutionInput } from "../../types";
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -29,8 +30,10 @@ export function getExecutionLogsQuery(executionId: string) {
 // Mutations (imperative — no React hooks)
 // ---------------------------------------------------------------------------
 
-export function startExecution(workflowId: string) {
+export function startExecution(input: StartExecutionInput) {
   return getConvexClient().mutation(api.executions.start, {
-    workflowId: workflowId as Id<"workflows">,
+    workflowId: input.workflowId as Id<"workflows">,
+    slug: input.slug,
+    sessionId: input.sessionId,
   });
 }

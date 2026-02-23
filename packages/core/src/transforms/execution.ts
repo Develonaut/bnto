@@ -13,6 +13,8 @@ export function toExecution(doc: ExecutionDoc): Execution {
     progress: doc.progress,
     result: doc.result ?? undefined,
     error: doc.error ?? undefined,
+    outputFiles: doc.outputFiles ?? undefined,
+    sessionId: doc.sessionId ?? undefined,
     startedAt: doc.startedAt,
     completedAt: doc.completedAt ?? undefined,
   };

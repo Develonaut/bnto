@@ -183,7 +183,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 **Wiring:**
 
 - [x] `@bnto/backend` — Convex actions to trigger Railway execution and update status via mutations (pending → running → complete/failed)
-- [ ] `@bnto/core` — Execution hooks wired to Convex adapter (start execution, subscribe to progress, get results)
+- [x] `@bnto/core` — Execution hooks wired to Convex adapter (start execution, subscribe to progress, get results)
 
 #### Wave 4 (parallel — execution UI)
 

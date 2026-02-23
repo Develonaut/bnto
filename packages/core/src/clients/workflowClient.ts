@@ -2,6 +2,7 @@
 
 import type { WorkflowService } from "../services/workflowService";
 import type { ExecutionService } from "../services/executionService";
+import type { StartExecutionInput } from "../types";
 
 /**
  * Workflow client — public API for workflow operations.
@@ -25,9 +26,9 @@ export function createWorkflowClient(
     remove: (id: string) => workflows.remove(id),
 
     /** Cross-domain: starts execution and invalidates both caches. */
-    run: async (workflowId: string) => {
-      const executionId = await executions.start(workflowId);
-      executions.invalidateExecutions(workflowId);
+    run: async (input: StartExecutionInput) => {
+      const executionId = await executions.start(input);
+      executions.invalidateExecutions(input.workflowId);
       return executionId;
     },
 

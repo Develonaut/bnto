@@ -8,6 +8,7 @@ import {
 } from "../adapters/convex/executionAdapter";
 import { toExecution, toExecutionLog } from "../transforms/execution";
 import { getQueryClient } from "../client";
+import type { StartExecutionInput } from "../types";
 
 export function createExecutionService() {
   function invalidateExecution(id: string) {
@@ -43,7 +44,7 @@ export function createExecutionService() {
     }),
 
     // ── Mutations ─────────────────────────────────────────────────
-    start: (workflowId: string) => startExecution(workflowId),
+    start: (input: StartExecutionInput) => startExecution(input),
 
     // ── Cache Invalidation ────────────────────────────────────────
     invalidateExecution,
