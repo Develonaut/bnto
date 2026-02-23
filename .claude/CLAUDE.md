@@ -21,6 +21,7 @@
 | Coding standards             | [rules/](.claude/rules/) directory                                 |
 | Understanding the product    | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) |
 | Core principles (always)     | [core-principles.md](.claude/strategy/core-principles.md)          |
+| Environment variables        | [environment-variables.md](.claude/environment-variables.md)       |
 
 ---
 

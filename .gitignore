@@ -83,3 +83,4 @@ playwright-report/
 blob-report/
 
 # Convex (keep _generated/ checked in — needed for CI/CD builds)
+.vercel

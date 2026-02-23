@@ -25,7 +25,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-**Status:** Sprint 1 complete (Waves 1-3). Sprint 2 partially complete — all 6 Tier 1 fixtures exist, SEO routing is live, landing pages rebuilt with shadcn Mainline template. Cloud execution infrastructure (R2, Railway deployment, execution UI) not started.
+**Status:** Sprint 1 complete (Waves 1-3). Sprint 2 partially complete — all 6 Tier 1 fixtures exist, SEO routing is live, landing pages rebuilt with shadcn Mainline template. Environment infrastructure mostly complete: R2 buckets + credentials configured (dev + prod), Convex env vars set for both deployments, Vercel env vars split per environment. Railway deployment and execution UI not started.
 
 **Engine (complete):** Go CLI with 10 node types (all >90% test coverage), integration test fixtures, CLI smoke tests, Go HTTP API server with 20+ integration tests, BntoService shared API layer.
 
@@ -153,15 +153,35 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 - [x] `apps/web` — File drop interface (drag & drop zone, batch file selection, shows selected files with size/type)
 - [x] `@bnto/backend` — Execution event logging (every run logged — userId or browser fingerprint, bnto slug, timestamp, durationMs)
 
-#### Wave 3 (parallel — R2 file transit layer)
+#### Wave 3 (parallel — R2 file transit + Railway deployment + env config)
 
 **Architecture:** Browser → R2 → Railway → R2 → Browser. Files are never stored permanently. Upload → process → download → delete (1-hour TTL).
+
+**Environment setup (prerequisite for everything in this wave):**
+
+- [x] `infra` — Create R2 API token in Cloudflare (Object Read & Write, scoped to bnto buckets)
+- [x] `infra` — Create separate R2 buckets per environment (`bnto-transit-dev`, `bnto-transit`)
+- [x] `infra` — Set R2 env vars in Convex dev deployment (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME=bnto-transit-dev`)
+- [x] `infra` — Set R2 env vars in Convex prod deployment (same keys, prod bucket name)
+- [x] `infra` — Set prod Convex env vars (`BETTER_AUTH_SECRET` — generate new, `SITE_URL=https://bnto.io`)
+- [ ] `infra` — Link Railway project to repo (`railway link`), create API service, link service
+- [ ] `infra` — Set `GO_API_URL` in Convex dev + prod deployments (Railway service URL)
+- [x] `infra` — Set Vercel env vars for production (`NEXT_PUBLIC_CONVEX_URL`, `NEXT_PUBLIC_CONVEX_SITE_URL` pointing to prod Convex)
+- [x] `infra` — Verify env vars doc (`.claude/environment-variables.md`) matches reality after setup
+
+**R2 file transit:**
 
 - [ ] `apps/web` — Cloudflare R2 bucket setup (temp storage, TTL-keyed paths: `/executions/{id}/input/`, `/executions/{id}/output/`)
 - [x] `@bnto/backend` — Convex action to generate R2 presigned upload URLs (validate file type + enforce 25MB free / 500MB Pro size limits)
 - [ ] `apps/web` — Browser → R2 direct upload (presigned URLs, progress indicator)
+
+**Railway deployment:**
+
 - [ ] `apps/api` — Deploy Go API server to Railway (private networking to Convex)
 - [ ] `apps/api` — Railway endpoint: pull input files from R2, execute `.bnto.json`, push output files to R2
+
+**Wiring:**
+
 - [x] `@bnto/backend` — Convex actions to trigger Railway execution and update status via mutations (pending → running → complete/failed)
 - [ ] `@bnto/core` — Execution hooks wired to Convex adapter (start execution, subscribe to progress, get results)
 

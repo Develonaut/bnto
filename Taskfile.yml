@@ -35,6 +35,11 @@ tasks:
       - go vet ./apps/api/...
 
   # API server tasks
+  api:dev:
+    desc: Run Go API server locally (port 8080)
+    dir: ./apps/api
+    cmds: [go run ./cmd/server]
+
   api:test:
     desc: Run API server tests with race detector
     cmds: [go test -race ./apps/api/...]
@@ -56,6 +61,10 @@ tasks:
   dev:
     desc: Start all dev servers (Next.js on port 4000 + Convex)
     cmds: [pnpm turbo run dev]
+
+  dev:all:
+    desc: Start everything for local dev (web + Convex + Go API)
+    deps: [dev, api:dev]
 
   ui:test:
     desc: Run all frontend tests
