@@ -98,9 +98,22 @@ Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, 
 **If you genuinely believe no e2e test is needed** (e.g., pure internal refactor with zero visual change), you MUST ask the user for explicit approval before skipping.
 
 **E2e test conventions:**
+- Always import `{ test, expect }` from `./fixtures` (NOT from `@playwright/test`) -- the shared fixture captures console and page errors automatically
 - Always set `test.use({ reducedMotion: "reduce" })` to disable animations
 - Use `data-testid` markers for reliable state detection
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes
+- Add `await page.evaluate(() => window.scrollTo(0, 0))` before `toHaveScreenshot()` in tests where user actions may shift the viewport (e.g., clicking Run triggers errors that scroll to footer)
+
+### E2E Screenshot Verification (MANDATORY)
+
+After running E2E tests, agents MUST verify screenshot health:
+
+1. **Check test output for `[e2e errors]`** -- the shared fixture logs captured console/page errors with this prefix. Review each error. If an error indicates a real bug (not an expected "no backend" failure), investigate and fix before committing.
+2. **Visually inspect each new or updated screenshot** -- use the Read tool to open `.png` files. Check for:
+   - **Next.js error overlay** (red "1 Issue" badge in bottom-left) -- if present, it means an unhandled error occurred. Investigate the root cause via the `[e2e errors]` output.
+   - **Wrong viewport position** -- screenshot shows footer/header instead of the expected tool UI. Add `scrollTo(0, 0)` before the screenshot call.
+   - **Missing or garbled content** -- indicates a rendering issue or missing data.
+3. **Known E2E limitations** -- tests that trigger backend calls (upload, execution) will fail in E2E because there's no Convex/Go backend running. These errors are expected and caught by try/catch in the UI code, transitioning to the "failed" phase. The Next.js dev overlay may still show these as issues -- this is a canary, not a bug to suppress.
 
 ### Stale Artifact Cleanup (MANDATORY)
 

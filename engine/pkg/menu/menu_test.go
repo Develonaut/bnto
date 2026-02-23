@@ -15,7 +15,7 @@ func TestAllReturnsRecipes(t *testing.T) {
 	}
 }
 
-func TestAllSortedBySlag(t *testing.T) {
+func TestAllSortedBySlug(t *testing.T) {
 	recipes, err := All()
 	if err != nil {
 		t.Fatalf("All() error: %v", err)
