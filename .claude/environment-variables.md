@@ -49,7 +49,8 @@ Used by `convex/_helpers/r2_client.ts`, `convex/uploads.ts`, and `convex/downloa
 | Variable | Purpose | Status |
 |---|---|---|
 | `GO_API_URL` | Go API server URL. Dev: Cloudflare tunnel to localhost. Prod: Railway. | **Dev: set** (`https://api-dev.bnto.io`) / **Prod: set** (`https://bnto-production.up.railway.app`) |
-| `ANONYMOUS_RUN_LIMIT` | Max runs/month for anonymous users (defaults to `3` if unset) | Not set (using default) |
+| `ANONYMOUS_RUN_LIMIT` | Max runs for anonymous users before "sign up to continue" (defaults to `3` if unset) | Not set (using default) |
+| `FREE_PLAN_RUN_LIMIT` | Max runs/month for free-tier signed-up users (defaults to `25` if unset) | Not set (using default) |
 
 ---
 

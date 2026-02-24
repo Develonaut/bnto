@@ -11,6 +11,7 @@
 import type * as _helpers_auth from "../_helpers/auth.js";
 import type * as _helpers_quota from "../_helpers/quota.js";
 import type * as _helpers_r2_client from "../_helpers/r2_client.js";
+import type * as _helpers_run_limits from "../_helpers/run_limits.js";
 import type * as _helpers_upload_validation from "../_helpers/upload_validation.js";
 import type * as _test_helpers from "../_test_helpers.js";
 import type * as auth from "../auth.js";
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/auth": typeof _helpers_auth;
   "_helpers/quota": typeof _helpers_quota;
   "_helpers/r2_client": typeof _helpers_r2_client;
+  "_helpers/run_limits": typeof _helpers_run_limits;
   "_helpers/upload_validation": typeof _helpers_upload_validation;
   _test_helpers: typeof _test_helpers;
   auth: typeof auth;

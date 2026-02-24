@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "./schema";
-import { FREE_RUN_LIMIT, nextMonthReset } from "./_test_helpers";
+import { FREE_RUN_LIMIT, FREE_PLAN_RUN_LIMIT, nextMonthReset } from "./_test_helpers";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -87,7 +87,7 @@ describe("user creation (createOrUpdateUser patterns)", () => {
           isAnonymous: false,
           plan: "free",
           runsUsed: 0,
-          runLimit: FREE_RUN_LIMIT,
+          runLimit: FREE_PLAN_RUN_LIMIT,
           runsResetAt: nextMonthReset(),
         });
       });
@@ -100,7 +100,7 @@ describe("user creation (createOrUpdateUser patterns)", () => {
       expect(user!.isAnonymous).toBe(false);
       expect(user!.plan).toBe("free");
       expect(user!.runsUsed).toBe(0);
-      expect(user!.runLimit).toBe(FREE_RUN_LIMIT);
+      expect(user!.runLimit).toBe(FREE_PLAN_RUN_LIMIT);
     });
 
     it("accepts optional image field", async () => {
@@ -114,7 +114,7 @@ describe("user creation (createOrUpdateUser patterns)", () => {
           isAnonymous: false,
           plan: "free",
           runsUsed: 0,
-          runLimit: FREE_RUN_LIMIT,
+          runLimit: FREE_PLAN_RUN_LIMIT,
           runsResetAt: nextMonthReset(),
         });
       });
@@ -353,7 +353,7 @@ describe("user creation (createOrUpdateUser patterns)", () => {
           email: "jane@example.com",
           plan: "free",
           runsUsed: 0,
-          runLimit: 25,
+          runLimit: FREE_PLAN_RUN_LIMIT,
           runsResetAt: nextMonthReset(),
         });
       });

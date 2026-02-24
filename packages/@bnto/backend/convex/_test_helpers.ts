@@ -1,15 +1,20 @@
 /**
  * Shared test constants and helpers for @bnto/backend tests.
  *
- * Centralizes values that must stay in sync with production code
- * (auth.ts, quota.ts) so tests don't silently drift.
+ * Run limits are pulled from `_helpers/run_limits.ts` — the single source
+ * of truth. In tests, env vars are typically unset so the defaults apply.
  */
 
-/** Anonymous user default run limit (matches auth.ts FREE_RUN_LIMIT). */
-export const FREE_RUN_LIMIT = 5;
+import {
+  getAnonymousRunLimit,
+  getFreePlanRunLimit,
+} from "./_helpers/run_limits";
 
-/** Free-tier plan run limit for real (non-anonymous) users. */
-export const FREE_PLAN_RUN_LIMIT = 25;
+/** Anonymous user default run limit (driven by ANONYMOUS_RUN_LIMIT env var). */
+export const FREE_RUN_LIMIT = getAnonymousRunLimit();
+
+/** Free-tier plan run limit for real (non-anonymous) users (driven by FREE_PLAN_RUN_LIMIT env var). */
+export const FREE_PLAN_RUN_LIMIT = getFreePlanRunLimit();
 
 /** Compute next month's reset timestamp (same logic as auth.ts callback). */
 export function nextMonthReset() {

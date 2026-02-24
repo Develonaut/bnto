@@ -104,8 +104,8 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 
 - [x] `@bnto/core` — **Test harness setup:** `ConvexHttpClient` factory with anonymous + password auth, test lifecycle helpers (cleanup), Vitest integration config (separate from unit tests, longer timeouts). File: `packages/core/src/__tests__/integration/setup.ts`
 - [x] `@bnto/core` — **Auth integration tests:** Anonymous sign-in, authenticated client calls, unauthenticated rejection, password sign-up/sign-in, anonymous → password upgrade (userId NOT preserved via ConvexHttpClient — browser E2E needed). Files: `auth-lifecycle.test.ts` (S1-S3, 16 tests), `conversion-flow.test.ts` (C1-C3, 14 tests). Also fixed: `@convex-dev/auth` v0.0.90 response parsing in `setup.ts`, broken `convex.config.ts` component import, `auth.config.ts` provider config, deprecated Vitest `poolOptions`
-- [ ] `@bnto/core` — **Execution integration tests:** `core.executions.startPredefined()` against real Convex dev — creates execution record, increments runsUsed, enforces quota. Verify status transitions (pending → running → completed/failed) via polling
-- [ ] `@bnto/core` — **Upload/download integration tests:** `core.uploads.generateUrls()` returns valid R2 presigned URLs, upload succeeds, after execution `core.downloads.getDownloadUrls()` returns valid download URLs. Full transit: upload → execute → download against R2 dev bucket
+- [x] `@bnto/core` — **Execution integration tests:** `core.executions.startPredefined()` against real Convex dev — creates execution record, increments runsUsed, enforces quota. Verify status transitions (pending → running → completed/failed) via polling. Also fixed: unified run limit system (env-driven via `_helpers/run_limits.ts`, single source of truth for anonymous=3, free=25). File: `execution.test.ts` (17 tests)
+- [ ] `@bnto/core` — **Upload/download integration tests:** `core.uploads.generateUrls()` returns valid R2 presigned URLs, upload succeeds, after execution `core.downloads.getDownloadUrls()` returns valid download URLs. Full transit: upload → execute → download against R2 dev bucket. **Coverage gap:** The full file pipeline (browser → R2 → Go engine → R2 → browser) is untested end-to-end at the integration layer. This is the highest-priority gap in our test coverage.
 
 #### Wave 5 (sequential — verify full pipeline in browser)
 
@@ -113,6 +113,7 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 
 - [ ] `apps/web` — Playwright E2E integration tests: full pipeline (upload → R2 → Go engine → R2 → download) using shared engine test fixtures. Separate `playwright.integration.config.ts` targets `task dev:all` on port 4000
 - [ ] `apps/web` — **CRITICAL: Anonymous → password userId preservation (C1-C2).** ConvexHttpClient integration tests proved userId is NOT preserved (new user created on upgrade). Browser cookies may behave differently. Playwright E2E MUST verify: sign in anonymously → run a bnto → sign up with email → confirm same userId, same executions, same workflows. If this fails in browser too, the conversion funnel is broken. See `journeys/auth.md` Known Limitations.
+- [ ] `apps/web` — **Browser auth behavior verification:** Token expiry handling, sign-out session invalidation (JWT is stateless — browser relies on cookie clearing + proxy redirect). ConvexHttpClient can't test this — Playwright E2E required.
 - [ ] `apps/web` — **Monetization checkpoint:** Confirm execution events log `userId`, `bntoSlug`, `timestamp`, `durationMs` to Convex. Sprint 3 builds the dashboard on this data.
 - [ ] `apps/web` — Verify auth flow end-to-end on Vercel preview deployment
 
@@ -355,6 +356,20 @@ Current E2E tests mix CSS classes, `getByRole`, `getByText`, and `data-testid`. 
 
 - [ ] `apps/web` — Audit E2E specs, add `data-testid` attributes, update selectors
 
+### Testing: Concurrent Quota Race Condition
+
+Two simultaneous `startPredefined` calls from the same user could both pass the `enforceQuota` check before either increments `runsUsed` — allowing a user to exceed their limit. The current flow is: read user → check `runsUsed >= runLimit` → patch `runsUsed + 1`. If two requests interleave between the read and the patch, both pass.
+
+- [ ] `@bnto/core` — Integration test: fire 2+ concurrent `startPredefined` calls for a user at limit-1 runs, verify at most 1 succeeds
+- [ ] `@bnto/backend` — If race confirmed, investigate Convex transaction isolation guarantees or atomic increment patterns
+
+### Testing: Monthly Run Reset Cycle
+
+The `runsResetAt` cron resets `runsUsed` to 0 when the month rolls over. This logic exists but is untested against real Convex scheduler — unit tests seed past timestamps but don't trigger the actual cron.
+
+- [ ] `@bnto/backend` — Unit test: seed user with `runsResetAt` in the past, call the reset mutation, verify `runsUsed` resets to 0 and `runsResetAt` advances to next month
+- [ ] `@bnto/core` — Integration test (if feasible): verify reset behavior against real Convex dev
+
 ### Auth: Enable OAuth Social Providers
 
 Google and Discord OAuth configured in `convex/auth.ts` but commented out — need OAuth credentials.
@@ -362,6 +377,31 @@ Google and Discord OAuth configured in `convex/auth.ts` but commented out — ne
 - [ ] `@bnto/backend` — Uncomment `socialProviders` in `convex/auth.ts`
 - [ ] `@bnto/backend` — Set Google and Discord OAuth credentials in Convex env vars
 - [ ] `apps/web` — Add Google and Discord sign-in buttons to `SignInForm`
+
+### Growth: Referral Link Program
+
+Referral links to boost user acquisition. A user shares a referral link → new user visits and creates an account → both the referrer and the new user receive N bonus free runs.
+
+**Open questions:** How many bonus runs? What's the cap per user? Does it stack? How do we prevent abuse (throwaway accounts)?
+
+- [ ] `@bnto/backend` — Schema: `referrals` table (referrerId, referredUserId, bonusRuns, createdAt), `referralCode` field on users
+- [ ] `@bnto/backend` — Mutation: `applyReferral` — validates code, credits both users with bonus runs
+- [ ] `@bnto/core` — Referral service/hooks: `useReferralCode()`, `useApplyReferral()`
+- [ ] `apps/web` — Referral link generation UI in settings/profile
+- [ ] `apps/web` — Landing page referral code capture (via URL param `?ref=CODE`)
+
+### UX: Upgrade/Upsell Messaging Audit
+
+Quota error messages and upgrade CTAs need to be tier-aware. We may have multiple paid tiers (Pro, Team, etc.) — the messaging in error codes, API responses, and UI prompts should not hardcode a single upgrade destination. Review and make tier-neutral or dynamically driven.
+
+**What to audit:**
+- `quota.ts` error messages (`ANONYMOUS_QUOTA_EXCEEDED` → "Sign up for a free account", `RUN_LIMIT_REACHED` → "Run limit reached") — these are what the UI renders. Wording should guide users toward the right next step without assuming which tier they'd upgrade to
+- UI components that display quota errors — do they link to a specific plan page or a generic upgrade/pricing page?
+- Future: error payloads could include `suggestedAction` (e.g. `"signup"`, `"upgrade"`, `"contact-sales"`) so the UI doesn't need to infer the CTA from the error code alone
+
+- [ ] `@bnto/backend` — Review and update quota error messages/codes to be tier-neutral
+- [ ] `apps/web` — Review upgrade prompts and CTAs — ensure they route to pricing page, not a hardcoded tier
+- [ ] `@bnto/backend` — Consider adding `suggestedAction` and `upgradeUrl` fields to quota error payloads
 
 ### Schema-Driven Config Panel (Single Source of Truth)
 

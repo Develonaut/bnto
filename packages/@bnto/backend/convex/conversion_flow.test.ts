@@ -296,7 +296,7 @@ describe("conversion flow (C1-C3)", () => {
 
       const user = await asConverted.query(api.users.getMe);
       expect(user).not.toBeNull();
-      // Plan limit should be free-tier (25), not anonymous (5)
+      // Plan limit should be free-tier (FREE_PLAN_RUN_LIMIT), not anonymous (ANONYMOUS_RUN_LIMIT)
       expect(user!.runLimit).toBe(FREE_PLAN_RUN_LIMIT);
       // Existing run count preserved (not reset)
       expect(user!.runsUsed).toBe(2);

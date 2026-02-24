@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "./schema";
 import { internal } from "./_generated/api";
-import { FREE_RUN_LIMIT, nextMonthReset, pastReset } from "./_test_helpers";
+import { FREE_RUN_LIMIT, FREE_PLAN_RUN_LIMIT, nextMonthReset, pastReset } from "./_test_helpers";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -164,14 +164,14 @@ describe("getRunsRemaining (logic)", () => {
         email: "jane@example.com",
         plan: "free",
         runsUsed: 3,
-        runLimit: 25,
+        runLimit: FREE_PLAN_RUN_LIMIT,
         runsResetAt: nextMonthReset(),
       });
     });
 
     const user = await t.run(async (ctx) => ctx.db.get(userId));
     const remaining = Math.max(0, user!.runLimit - user!.runsUsed);
-    expect(remaining).toBe(22);
+    expect(remaining).toBe(FREE_PLAN_RUN_LIMIT - 3);
   });
 
   it("floors at zero when over limit", async () => {
@@ -182,8 +182,8 @@ describe("getRunsRemaining (logic)", () => {
         isAnonymous: false,
         email: "jane@example.com",
         plan: "free",
-        runsUsed: 30,
-        runLimit: 25,
+        runsUsed: FREE_PLAN_RUN_LIMIT + 5,
+        runLimit: FREE_PLAN_RUN_LIMIT,
         runsResetAt: nextMonthReset(),
       });
     });
