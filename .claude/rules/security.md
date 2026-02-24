@@ -1,8 +1,9 @@
-# Security Audit — Pre-Public Checklist
+# Security Audit Checklist
 
-**Status:** Deferred — revisit when app is more fleshed out
+**Status:** Active — repo is public, all checks apply now
 **Last Updated:** February 2026
 **Tracks:** Sections 3-5, 7 from [open-source-strategy.md](../strategy/open-source-strategy.md)
+**Full audit skill:** `.claude/skills/security-review/SKILL.md`
 
 ---
 
@@ -119,11 +120,11 @@ Each item maps to a testable assertion — unit tests now, e2e when auth flows a
 
 ---
 
-## When to Revisit
+## When to Run Full Audit
 
-Come back to this checklist when:
+Run the full security-review skill (`/security-review`) when:
 
-1. **Auth is fully wired** — sign-in, sign-out, session management are functional
-2. **API routes exist** — Convex functions and/or Go API endpoints handle real data
-3. **File uploads work** — presigned URL flow is implemented
-4. **Ready to go public** — final pass before flipping repo visibility
+1. **Auth implementation changes** — Sprint 2A completes, auth solution switches
+2. **New API surface exposed** — new Convex functions, Go API endpoints, or web routes
+3. **Dependency updates** — major version bumps, new dependencies added
+4. **Before any release milestone** — Sprint 3 (monetization), Sprint 7 (Stripe)

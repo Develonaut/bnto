@@ -7,6 +7,8 @@ description: Security posture review across codebase, cloud services, and attack
 
 Comprehensive security audit of the bnto project across all surfaces: codebase, Go API, Convex functions, cloud infrastructure (Cloudflare, Railway, Vercel), GitHub repo, and client-side attack vectors.
 
+**The repo is PUBLIC.** Every file, every commit, every `.claude/` document is visible to anyone. All checks below must be evaluated with that in mind — infrastructure identifiers, business strategy details, internal notes, and git history are all exposed.
+
 This is **read-only** — you are auditing, not fixing. Present findings to the user.
 
 ## Step 0: Read the Context
@@ -62,7 +64,7 @@ Any `.env` file (except `.env.example`) in git is a **CRITICAL** finding. Check 
 !git log --all -p --follow -S "SECRET" -- "*.env*" 2>/dev/null | head -50
 ```
 
-If secrets were ever committed and later deleted, they're still in git history. Flag for BFG Repo-Cleaner or `git filter-repo` before going public.
+If secrets were ever committed and later deleted, they're still in git history. The repo is public — this is an active exposure. Flag for BFG Repo-Cleaner or `git filter-repo` immediately.
 
 ### 1d: Sensitive values in documentation
 
@@ -304,7 +306,7 @@ Check:
 
 ## Section 7: Open Source Readiness
 
-If the repo is or will be public, verify:
+The repo IS public. Every check below applies NOW, not as a future consideration:
 
 ### 7a: Sensitive content in code
 
