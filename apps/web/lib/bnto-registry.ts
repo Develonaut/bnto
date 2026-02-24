@@ -4,7 +4,7 @@
  * Drives generateStaticParams, generateMetadata, sitemap, gallery,
  * llms.txt, and middleware slug validation from one place.
  *
- * All data originates in engine/pkg/menu/data/*.json. This module
+ * All data originates in engine/pkg/menu/recipes/*.json. This module
  * maps Recipe → BntoEntry to preserve the existing consumer API.
  *
  * To regenerate: `task menu:generate`

@@ -1,6 +1,7 @@
 {
   "folders": [
     { "path": ".", "name": "root" },
+    { "path": "engine", "name": "engine"},
     { "path": "apps", "name": "apps" },
     { "path": "packages", "name": "packages" }
   ],
