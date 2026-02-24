@@ -1,6 +1,5 @@
 "use client";
 
-import { authClient } from "@bnto/auth";
 import { getQueryClient } from "../client";
 import { setSignoutSignal } from "../lib/setSignoutSignal";
 import { onAuthError } from "../authError";
@@ -8,20 +7,21 @@ import { onAuthError } from "../authError";
 /**
  * Auth client — public API for authentication operations.
  *
- * Unlike other clients, auth doesn't have a service layer. It composes
- * the Better Auth client, query cache, and signout signal directly.
+ * Handles cache clearing and signout signal. Actual Convex auth operations
+ * (signIn, signOut) are handled by @convex-dev/auth hooks at the React layer.
  */
 export function createAuthClient() {
   return {
-    /** Imperative sign-out: signal cookie + cache clear + server cleanup. */
-    signOut: () => {
+    /**
+     * Imperative sign-out side effects: signal cookie + cache clear.
+     *
+     * The actual Convex session termination is performed by the React hook
+     * layer via useAuthActions().signOut(). This handles the non-auth parts.
+     */
+    signOutSideEffects: () => {
       setSignoutSignal();
       getQueryClient().clear();
-      void authClient.signOut();
     },
-
-    /** Imperative anonymous sign-in. */
-    signInAnonymous: () => authClient.signIn.anonymous(),
 
     /** Subscribe to auth errors from queries/mutations. */
     onAuthError,

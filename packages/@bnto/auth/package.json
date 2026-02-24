@@ -22,10 +22,8 @@
     "lint": "echo \"No linter yet\""
   },
   "dependencies": {
-    "@convex-dev/better-auth": "catalog:",
-    "better-auth": "1.4.18",
-    "convex": "catalog:",
-    "convex-helpers": "^0.1.113"
+    "@convex-dev/auth": "catalog:",
+    "convex": "catalog:"
   },
   "peerDependencies": {
     "next": ">=15",

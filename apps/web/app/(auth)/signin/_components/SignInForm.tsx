@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useSignIn, useSignUp } from "@bnto/auth";
+import { core } from "@bnto/core";
 import { Background } from "#components/Background";
 import { Button } from "#components/ui/button";
 import { Container } from "#components/ui/Container";
@@ -19,8 +19,8 @@ interface SignInFormProps {
 }
 
 export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
-  const signIn = useSignIn();
-  const signUp = useSignUp();
+  const { email: signInEmail } = core.auth.useSignIn();
+  const { email: signUpEmail } = core.auth.useSignUp();
   const router = useRouter();
 
   const [mode, setMode] = useState<Mode>(defaultMode);
@@ -44,9 +44,9 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
 
     try {
       if (isSignUp) {
-        await signUp.email({ name, email, password });
+        await signUpEmail({ name, email, password });
       } else {
-        await signIn.email({ email, password });
+        await signInEmail({ email, password });
       }
       router.replace("/");
     } catch {

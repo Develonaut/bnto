@@ -9,7 +9,7 @@
  * Usage:
  *   import { core } from "@bnto/core";
  *   const { isAuthenticated, user } = core.auth.useAuth();
- *   core.auth.signOut();
+ *   core.auth.signOutSideEffects();
  */
 
 import { core as baseCore } from "./core";
@@ -50,7 +50,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useSignOut } from "./hooks/useSignOut";
 import { useAnonymousSession } from "./hooks/useAnonymousSession";
 
-// Auth re-exports from @bnto/auth (sign-in / sign-up methods)
+// Auth hooks from @bnto/auth (sign-in / sign-up)
 import { useSignIn, useSignUp } from "@bnto/auth";
 
 export const core = {

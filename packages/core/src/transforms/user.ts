@@ -6,7 +6,6 @@ type UserDoc = Doc<"users">;
 export function toUser(doc: UserDoc): User {
   return {
     id: String(doc._id),
-    userId: doc.userId,
     email: doc.email ?? undefined,
     name: doc.name ?? undefined,
     image: doc.image ?? undefined,

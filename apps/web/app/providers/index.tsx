@@ -6,17 +6,18 @@ import { BntoCoreProvider } from "@bnto/core";
 
 interface ProvidersProps {
   children: React.ReactNode;
-  initialToken?: string | null;
 }
 
 /**
  * Root provider stack for the web app.
  *
  * Wires BntoCoreProvider with:
- * - initialToken: server-side JWT for hydration (no flash of unauth state)
  * - onSessionLost: navigate to /signin on mid-session auth loss
+ *
+ * Server-side auth token is managed by ConvexAuthNextjsServerProvider
+ * in the root layout (server component).
  */
-export function Providers({ children, initialToken }: ProvidersProps) {
+export function Providers({ children }: ProvidersProps) {
   const router = useRouter();
 
   const handleSessionLost = useCallback(() => {
@@ -24,10 +25,7 @@ export function Providers({ children, initialToken }: ProvidersProps) {
   }, [router]);
 
   return (
-    <BntoCoreProvider
-      initialToken={initialToken}
-      onSessionLost={handleSessionLost}
-    >
+    <BntoCoreProvider onSessionLost={handleSessionLost}>
       {children}
     </BntoCoreProvider>
   );

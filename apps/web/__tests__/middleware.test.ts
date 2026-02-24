@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
@@ -10,10 +10,39 @@ import { SIGNOUT_COOKIE } from "@bnto/core/constants";
  * 3. Unauth user on protected route -> redirect to /signin
  *
  * Everything else passes through (bnto slugs, unknown paths -> 404 at page level).
+ *
+ * We mock `convexAuthNextjsMiddleware` to isolate our route protection logic
+ * from Convex's token refresh internals.
  */
 
 const BASE_URL = "http://localhost:3000";
-const SESSION_COOKIE = "better-auth.session_token";
+
+// Mock convexAuthNextjsMiddleware to extract and call our handler directly
+let capturedHandler: ((
+  request: NextRequest,
+  ctx: { convexAuth: { isAuthenticated: () => Promise<boolean> } },
+) => Promise<Response | void>) | null = null;
+
+vi.mock("@convex-dev/auth/nextjs/server", () => ({
+  convexAuthNextjsMiddleware: (handler: typeof capturedHandler) => {
+    capturedHandler = handler;
+    // Return a function that calls the handler with mock convexAuth
+    return async (request: NextRequest) => {
+      const isAuth = request.cookies.has("__convexAuthJWT");
+      const result = await handler!(request, {
+        convexAuth: { isAuthenticated: async () => isAuth },
+      });
+      return result ?? new Response(null, { status: 200 });
+    };
+  },
+  nextjsMiddlewareRedirect: (request: NextRequest, pathname: string) => {
+    const url = new URL(pathname, request.url);
+    return Response.redirect(url, 307);
+  },
+}));
+
+// Import middleware after mock setup
+const { default: middleware } = await import("../middleware");
 
 function createRequest(
   pathname: string,
@@ -27,57 +56,62 @@ function createRequest(
   return request;
 }
 
-// Import middleware after setup -- it imports route helpers
-const { middleware } = await import("../middleware");
+/** Simulate an authenticated request by setting the mock JWT cookie. */
+const AUTH_COOKIES = { __convexAuthJWT: "mock-token" };
 
 describe("middleware", () => {
+  beforeEach(() => {
+    // Ensure handler was captured
+    expect(capturedHandler).not.toBeNull();
+  });
+
   describe("unauthenticated user", () => {
-    it("passes through on public paths", () => {
-      const response = middleware(createRequest("/"));
+    it("passes through on public paths", async () => {
+      const response = await middleware(createRequest("/"));
       expect(response.status).toBe(200);
     });
 
-    it("passes through on /signin", () => {
-      const response = middleware(createRequest("/signin"));
+    it("passes through on /signin", async () => {
+      const response = await middleware(createRequest("/signin"));
       expect(response.status).toBe(200);
     });
 
-    it("passes through on /waitlist", () => {
-      const response = middleware(createRequest("/waitlist"));
+    it("passes through on /waitlist", async () => {
+      const response = await middleware(createRequest("/waitlist"));
       expect(response.status).toBe(200);
     });
 
-    it("redirects to /signin on private route /workflows", () => {
-      const response = middleware(createRequest("/workflows"));
+    it("redirects to /signin on private route /workflows", async () => {
+      const response = await middleware(createRequest("/workflows"));
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe(
         "/signin",
       );
     });
 
-    it("redirects to /signin on private route /executions", () => {
-      const response = middleware(createRequest("/executions"));
+    it("redirects to /signin on private route /executions", async () => {
+      const response = await middleware(createRequest("/executions"));
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe(
         "/signin",
       );
     });
 
-    it("redirects to /signin on private route /settings", () => {
-      const response = middleware(createRequest("/settings"));
+    it("redirects to /signin on private route /settings", async () => {
+      const response = await middleware(createRequest("/settings"));
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe(
         "/signin",
       );
     });
 
-    it("passes through on unknown routes (404 at page level)", () => {
-      const response = middleware(createRequest("/admin"));
+    it("passes through on unknown routes (404 at page level)", async () => {
+      const response = await middleware(createRequest("/admin"));
       expect(response.status).toBe(200);
     });
 
-    it("redirects to /signin on protected sub-route", () => {
-      const response = middleware(createRequest("/workflows/123"));
+    it("redirects to /signin on protected sub-route", async () => {
+      const response = await middleware(createRequest("/workflows/123"));
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe(
         "/signin",
@@ -86,30 +120,36 @@ describe("middleware", () => {
   });
 
   describe("authenticated user", () => {
-    const authCookies = { [SESSION_COOKIE]: "valid-session-token" };
-
-    it("passes through on public paths", () => {
-      const response = middleware(createRequest("/", authCookies));
+    it("passes through on public paths", async () => {
+      const response = await middleware(createRequest("/", AUTH_COOKIES));
       expect(response.status).toBe(200);
     });
 
-    it("passes through on private paths", () => {
-      const response = middleware(createRequest("/workflows", authCookies));
+    it("passes through on private paths", async () => {
+      const response = await middleware(
+        createRequest("/workflows", AUTH_COOKIES),
+      );
       expect(response.status).toBe(200);
     });
 
-    it("passes through on /executions", () => {
-      const response = middleware(createRequest("/executions", authCookies));
+    it("passes through on /executions", async () => {
+      const response = await middleware(
+        createRequest("/executions", AUTH_COOKIES),
+      );
       expect(response.status).toBe(200);
     });
 
-    it("passes through on /settings", () => {
-      const response = middleware(createRequest("/settings", authCookies));
+    it("passes through on /settings", async () => {
+      const response = await middleware(
+        createRequest("/settings", AUTH_COOKIES),
+      );
       expect(response.status).toBe(200);
     });
 
-    it("redirects from /signin to / (auth user should not see signin)", () => {
-      const response = middleware(createRequest("/signin", authCookies));
+    it("redirects from /signin to / (auth user should not see signin)", async () => {
+      const response = await middleware(
+        createRequest("/signin", AUTH_COOKIES),
+      );
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe("/");
     });
@@ -117,35 +157,26 @@ describe("middleware", () => {
 
   describe("signout signal", () => {
     const signoutCookies = {
-      [SESSION_COOKIE]: "valid-session-token",
+      ...AUTH_COOKIES,
       [SIGNOUT_COOKIE]: "1",
     };
 
-    it("allows auth user through to /signin when signout signal is present", () => {
-      const response = middleware(createRequest("/signin", signoutCookies));
-      expect(response.status).toBe(200);
-    });
-
-    it("does not affect other routes", () => {
-      const response = middleware(createRequest("/workflows", signoutCookies));
-      expect(response.status).toBe(200);
-    });
-  });
-
-  describe("secure cookie variant", () => {
-    const secureCookies = {
-      [`__Secure-${SESSION_COOKIE}`]: "valid-session-token",
-    };
-
-    it("recognizes __Secure- prefixed session cookie", () => {
-      const response = middleware(createRequest("/workflows", secureCookies));
-      expect(response.status).toBe(200);
-    });
-
-    it("redirects from /signin with __Secure- cookie", () => {
-      const response = middleware(createRequest("/signin", secureCookies));
+    it("allows auth user through to /signin when signout signal is present", async () => {
+      const response = await middleware(
+        createRequest("/signin", signoutCookies),
+      );
+      // With signout signal, the redirect goes to /signin (pass-through)
       expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe("/");
+      expect(new URL(response.headers.get("location")!).pathname).toBe(
+        "/signin",
+      );
+    });
+
+    it("does not affect other routes", async () => {
+      const response = await middleware(
+        createRequest("/workflows", signoutCookies),
+      );
+      expect(response.status).toBe(200);
     });
   });
 });

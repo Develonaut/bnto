@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { authClient } from "@bnto/auth";
+import { useConvexAuth } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 
 /**
  * Lazily creates an anonymous session if no session exists.
@@ -15,32 +16,23 @@ import { authClient } from "@bnto/auth";
  * - Authenticated (real account)
  */
 export function useAnonymousSession() {
-  const session = authClient.useSession();
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { signIn } = useAuthActions();
   const attempted = useRef(false);
 
   useEffect(() => {
-    if (session.isPending) return;
-    if (session.data) return;
+    if (isLoading) return;
+    if (isAuthenticated) return;
     if (attempted.current) return;
 
     attempted.current = true;
-    authClient.signIn.anonymous();
-  }, [session.isPending, session.data]);
-
-  const isAnonymous =
-    !session.isPending &&
-    session.data !== null &&
-    session.data !== undefined &&
-    (session.data.user as Record<string, unknown>)?.isAnonymous === true;
+    void signIn("anonymous");
+  }, [isLoading, isAuthenticated, signIn]);
 
   return {
-    isPending: session.isPending,
-    isAnonymous,
-    isAuthenticated:
-      !session.isPending &&
-      session.data !== null &&
-      session.data !== undefined &&
-      !isAnonymous,
-    session: session.data,
+    isPending: isLoading,
+    isAnonymous: !isLoading && isAuthenticated,
+    isAuthenticated: !isLoading && isAuthenticated,
+    session: isAuthenticated ? {} : null,
   };
 }

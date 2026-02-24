@@ -1,40 +1,30 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import {
+  convexAuthNextjsMiddleware,
+  nextjsMiddlewareRedirect,
+} from "@bnto/auth/server";
 import { isAuthPath, isProtectedPath } from "#lib/routes";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
-/**
- * Better Auth session cookie name.
- *
- * Better Auth uses "better-auth.session_token" by default (non-HTTPS) or
- * "__Secure-better-auth.session_token" in production (HTTPS). We check both
- * since we don't know at build time which environment the middleware runs in.
- */
-const SESSION_COOKIE = "better-auth.session_token";
-const SECURE_SESSION_COOKIE = `__Secure-${SESSION_COOKIE}`;
-
-function hasSessionCookie(request: NextRequest) {
-  return (
-    request.cookies.has(SESSION_COOKIE) ||
-    request.cookies.has(SECURE_SESSION_COOKIE)
-  );
-}
-
-function hasSignoutSignal(request: NextRequest) {
+function hasSignoutSignal(request: Request & { cookies: { has(name: string): boolean } }) {
   return request.cookies.has(SIGNOUT_COOKIE);
 }
 
 /**
- * Proxy middleware -- three-tier route protection.
+ * Proxy middleware — three-tier route protection.
  *
- * Runs before any page renders. Three tiers:
+ * Wraps `convexAuthNextjsMiddleware` so @convex-dev/auth handles token
+ * refresh and cookie management automatically. Our custom logic handles
+ * route protection using `convexAuth.isAuthenticated()` for real token
+ * validation (not just cookie-presence checks).
  *
+ * Tiers:
  * 1. Canonical URL normalization (lowercase, no trailing slash)
  * 2. Auth routes (/signin, /signup): redirect to / if already authenticated
  * 3. Protected routes (/workflows, etc.): redirect to /signin if not authenticated
  * 4. Everything else (bnto slugs, public pages, unknown paths): pass through
  */
-export function middleware(request: NextRequest) {
+export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const { pathname } = request.nextUrl;
 
   // Canonical URL normalization — lowercase, underscores to hyphens, no trailing slash
@@ -46,24 +36,23 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
-  const isAuthenticated = hasSessionCookie(request);
+  const isAuthenticated = await convexAuth.isAuthenticated();
 
   // Tier 1: Auth routes — redirect to home if already authenticated
   if (isAuthenticated && isAuthPath(pathname)) {
     if (hasSignoutSignal(request)) {
-      return NextResponse.next();
+      return nextjsMiddlewareRedirect(request, pathname);
     }
-    return NextResponse.redirect(new URL("/", request.url));
+    return nextjsMiddlewareRedirect(request, "/");
   }
 
   // Tier 2: Protected routes — redirect to /signin if not authenticated
   if (!isAuthenticated && isProtectedPath(pathname)) {
-    return NextResponse.redirect(new URL("/signin", request.url));
+    return nextjsMiddlewareRedirect(request, "/signin");
   }
 
   // Tier 3: Everything else — pass through (bnto slugs, public pages, unknown paths)
-  return NextResponse.next();
-}
+});
 
 /**
  * Matcher config -- skip non-page routes.

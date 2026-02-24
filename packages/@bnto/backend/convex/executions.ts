@@ -8,36 +8,13 @@ import {
 import type { MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAppUserId } from "./_helpers/auth";
+import { enforceQuota } from "./_helpers/quota";
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 450; // 15 min at 2s intervals
 
 /** Delay before deleting output files from R2 (2 hours). */
 const R2_OUTPUT_CLEANUP_DELAY_MS = 2 * 60 * 60 * 1000;
-
-/** Throws ConvexError if the user has exceeded their run quota. */
-function enforceQuota(user: {
-  isAnonymous: boolean;
-  runsUsed: number;
-  runLimit: number;
-}) {
-  if (user.isAnonymous) {
-    const anonLimitStr = process.env.ANONYMOUS_RUN_LIMIT;
-    const anonLimit = anonLimitStr ? parseInt(anonLimitStr, 10) : 3;
-    if (user.runsUsed >= anonLimit) {
-      throw new ConvexError({
-        code: "ANONYMOUS_QUOTA_EXCEEDED",
-        message: "Sign up for a free account to keep running workflows",
-      });
-    }
-  }
-  if (user.runsUsed >= user.runLimit) {
-    throw new ConvexError({
-      code: "RUN_LIMIT_REACHED",
-      message: "Run limit reached",
-    });
-  }
-}
 
 /** Start a workflow execution. Checks run limits and schedules the action. */
 export const start = mutation({

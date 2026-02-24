@@ -1,8 +1,9 @@
 "use client";
 
-import { authClient } from "../client";
+import { useAuthActions } from "@convex-dev/auth/react";
 
-/** Sign out the current user. */
+/** Sign out the current user via @convex-dev/auth. */
 export function useSignOut() {
-  return authClient.signOut;
+  const { signOut } = useAuthActions();
+  return signOut;
 }

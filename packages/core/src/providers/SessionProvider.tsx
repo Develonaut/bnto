@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSession } from "@bnto/auth";
+import { useConvexAuth } from "convex/react";
 import { SessionContext, type AuthStatus } from "./SessionContext";
 
 interface SessionProviderProps {
@@ -13,7 +13,7 @@ interface SessionProviderProps {
 /**
  * Tracks authentication state and detects session loss.
  *
- * Wraps Better Auth's `useSession()` and provides a stable `AuthStatus`
+ * Wraps Convex's `useConvexAuth()` and provides a stable `AuthStatus`
  * (`loading` | `authenticated` | `unauthenticated`) via React context.
  *
  * When the status transitions from `authenticated` to `unauthenticated`,
@@ -21,16 +21,16 @@ interface SessionProviderProps {
  * (e.g., `router.replace("/signin")`) without coupling core to a router.
  */
 export function SessionProvider({ children, onSessionLost }: SessionProviderProps) {
-  const { data: session, isPending } = useSession();
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const status: AuthStatus = isPending || !mounted
+  const status: AuthStatus = isLoading || !mounted
     ? "loading"
-    : session
+    : isAuthenticated
       ? "authenticated"
       : "unauthenticated";
 
@@ -46,7 +46,7 @@ export function SessionProvider({ children, onSessionLost }: SessionProviderProp
     }
   }, [status, onSessionLost]);
 
-  const ready = mounted && !isPending;
+  const ready = mounted && !isLoading;
 
   const value = useMemo(
     () => ({ status, ready }),

@@ -24,7 +24,7 @@
   "dependencies": {
     "@bnto/auth": "workspace:*",
     "@bnto/backend": "workspace:*",
-    "@convex-dev/better-auth": "catalog:",
+    "@convex-dev/auth": "catalog:",
     "@convex-dev/react-query": "^0.1.0",
     "@tanstack/react-query": "catalog:",
     "convex": "catalog:"

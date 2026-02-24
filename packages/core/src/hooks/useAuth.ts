@@ -1,6 +1,7 @@
 "use client";
 
-import { useSession } from "@bnto/auth";
+import { useConvexAuth } from "convex/react";
+import { useCurrentUser } from "./useCurrentUser";
 
 export interface AuthUser {
   id: string;
@@ -16,26 +17,27 @@ export interface AuthState {
 }
 
 /**
- * Formatted auth state — maps Better Auth session to a clean interface.
+ * Formatted auth state — maps Convex auth + user data to a clean interface.
  *
- * Components use this instead of raw `useSession()` to avoid coupling
- * to Better Auth's session shape.
+ * Components use this instead of raw `useConvexAuth()` to get user profile
+ * data alongside authentication status.
  */
 export function useAuth(): AuthState {
-  const { data: session, isPending } = useSession();
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
 
-  const user: AuthUser | null = session?.user
+  const user: AuthUser | null = currentUser
     ? {
-        id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
-        image: session.user.image ?? null,
+        id: currentUser.id,
+        name: currentUser.name ?? "",
+        email: currentUser.email ?? "",
+        image: currentUser.image ?? null,
       }
     : null;
 
   return {
-    isAuthenticated: !!user,
-    isLoading: isPending,
+    isAuthenticated,
+    isLoading: authLoading || userLoading,
     user,
   };
 }

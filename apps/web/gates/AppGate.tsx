@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "@bnto/auth";
+import { core } from "@bnto/core";
 
 interface AppGateProps {
   children: React.ReactNode;
@@ -18,9 +18,12 @@ interface AppGateProps {
  * It only waits for the auth state to be known.
  */
 export function AppGate({ children }: AppGateProps) {
-  const { isPending } = useSession();
+  const status = core.session.useSessionStatus();
 
-  if (isPending) {
+  // FIXME: I do not want a splash screen we need to remove this and or figure out in
+  // out achortecture how we can avoide this and load the site right away even if it means being
+  // smrted about the leafs of our application and fetching data in the right locations.
+  if (status === "loading") {
     return <SplashScreen />;
   }
 

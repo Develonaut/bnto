@@ -37,7 +37,6 @@ describe("executionEvents schema integrity", () => {
 
     const userId = await t.run(async (ctx) => {
       return ctx.db.insert("users", {
-        userId: "auth-user-123",
         email: "test@example.com",
         isAnonymous: false,
         plan: "free",

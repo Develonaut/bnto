@@ -9,7 +9,6 @@ const modules = import.meta.glob("./**/*.ts");
 async function seedUserAndWorkflow(t: ReturnType<typeof convexTest>) {
   return t.run(async (ctx) => {
     const userId = await ctx.db.insert("users", {
-      userId: "auth-user-1",
       email: "test@example.com",
       isAnonymous: false,
       plan: "free",

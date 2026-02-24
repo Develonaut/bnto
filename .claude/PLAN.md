@@ -25,17 +25,17 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-**Status:** Sprint 1 complete (Waves 1-3). Sprint 2 Waves 1-4 complete, **Wave 5 BLOCKED by auth infrastructure gaps — unblocked by Sprint 2A**. Sprint 2.5 Waves 1-2 complete (font review deferred). **Sprint 2A (Auth Fix) is the active priority.** All 6 Tier 1 fixtures exist, SEO routing is live, landing pages rebuilt with shadcn Mainline template. Environment infrastructure complete: R2 buckets + credentials configured (dev + prod), Convex env vars set for both deployments, Vercel env vars split per environment. Go API server deployed to Railway (`https://bnto-production.up.railway.app`) with R2 file transit enabled. Execution UI complete: RunButton, ExecutionProgress (real-time), ExecutionResults (download), wired into BntoPageShell with full predefined execution path (slug + definition → Convex → Railway → R2). E2E flow tests with 8 screenshots cover the execution lifecycle.
+**Status:** Sprint 1 complete (Waves 1-3). Sprint 2 Waves 1-4 complete, **Wave 5 BLOCKED by auth infrastructure gaps — unblocked by Sprint 2A**. Sprint 2.5 Waves 1-2 complete (font review deferred). **Sprint 2A Wave 1 (decision) and Wave 2 (implementation) complete — migrated from Better Auth to `@convex-dev/auth`.** Wave 3 (integration tests) is next. All 6 Tier 1 fixtures exist, SEO routing is live, landing pages rebuilt with shadcn Mainline template. Environment infrastructure complete: R2 buckets + credentials configured (dev + prod), Convex env vars set for both deployments, Vercel env vars split per environment. Go API server deployed to Railway (`https://bnto-production.up.railway.app`) with R2 file transit enabled. Execution UI complete: RunButton, ExecutionProgress (real-time), ExecutionResults (download), wired into BntoPageShell with full predefined execution path (slug + definition → Convex → Railway → R2). E2E flow tests with 8 screenshots cover the execution lifecycle.
 
-**BLOCKER:** Anonymous session → Convex mutation fails. Better Auth creates a session (cookie set, user created) but Convex doesn't recognize the user — JWT propagation race condition between `ConvexBetterAuthProvider` and the auth endpoint. Integration tests can't pass until this is resolved. **Sprint 2A is the structured plan to resolve this.** Sprint 1 Wave 4 (auth verification) was never completed — these issues prove why it matters. Investigating Convex native auth (`@convex-dev/auth`) as a potential fix.
+**Auth migration (Feb 2026):** Migrated from Better Auth to `@convex-dev/auth`. The JWT propagation race condition is eliminated — auth sessions are now native Convex mutations on the same WebSocket, so there's no external HTTP hop. Anonymous sessions create real `users` table rows with quota fields. Anonymous → authenticated upgrade preserves the same user `_id`. See `.claude/decisions/auth-evaluation.md` for the full decision doc. **Remaining:** Wave 3 integration tests, Wave 4 pipeline verification. `AUTH_SECRET` env var must be set in Convex deployments.
 
-**Priority order:** Sprint 2A (auth fix) → Sprint 2 Wave 5 (integration tests) → Sprint 2.5 (resume polish) → Sprint 3 (dashboard + quota).
+**Priority order:** Sprint 2A Wave 3 (auth integration tests) → Sprint 2A Wave 4 (pipeline verification) → Sprint 2.5 (resume polish) → Sprint 3 (dashboard + quota).
 
 **Engine (complete):** Go CLI with 10 node types (all >90% test coverage), integration test fixtures, CLI smoke tests, Go HTTP API server with 20+ integration tests, BntoService shared API layer.
 
-**Web app (in progress):** Next.js on Vercel. Better Auth integrated (but anonymous session → Convex flow untested/broken). Proxy middleware for route protection. Landing pages (hero, features, pricing, about, FAQ, contact, privacy). SEO tool pages (`/[bnto]/page.tsx`) with static generation, per-slug metadata, JSON-LD, sitemap, llms.txt. Auth flow (sign-in, sign-up, sign-out with signal cookie). Execution UI built but blocked by auth.
+**Web app (in progress):** Next.js on Vercel. `@convex-dev/auth` integrated (anonymous session → Convex flow implemented, needs integration testing). Proxy middleware for route protection via `convexAuthNextjsMiddleware`. Landing pages (hero, features, pricing, about, FAQ, contact, privacy). SEO tool pages (`/[bnto]/page.tsx`) with static generation, per-slug metadata, JSON-LD, sitemap, llms.txt. Auth flow (sign-in, sign-up, sign-out with signal cookie). Execution UI built, auth unblocked.
 
-**Packages:** `@bnto/core` (layered singleton — clients, services, adapters, hooks), `@bnto/auth` (Better Auth integration — under review), `@bnto/backend` (Convex schema + functions). UI components co-located in `apps/web/components/`.
+**Packages:** `@bnto/core` (layered singleton — clients, services, adapters, hooks), `@bnto/auth` (`@convex-dev/auth` wrappers — signIn/signUp/signOut/useSession), `@bnto/backend` (Convex schema + functions + `@convex-dev/auth` config). UI components co-located in `apps/web/components/`.
 
 ---
 
@@ -46,7 +46,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Go API server: HTTP handlers wrapping BntoService (apps/api/)
 - [x] Contract tests: Go JSON responses match @bnto/core TypeScript types
 - [x] @bnto/core: Layered singleton (clients → services → adapters), React Query + Convex adapter, 38 hooks
-- [x] @bnto/auth: Better Auth + @better-auth/convex (server + client + middleware)
+- [x] @bnto/auth: `@convex-dev/auth` integration (migrated from Better Auth — see decisions/auth-evaluation.md)
 - [x] @bnto/backend: Convex schema (users, workflows, executions, executionLogs), auth, crons, run counter fields
 - [x] Web app: Landing pages (Mainline template — hero, features, pricing, about, FAQ, contact, privacy, footer)
 - [x] Web app: Auth flow (sign-in, sign-up, sign-out with signal cookie, proxy route protection)
@@ -240,22 +240,22 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 The decision here gates everything below. Do not start Wave 2 until the decision doc is written and approved.
 
-- [ ] `@bnto/auth` + `@bnto/backend` — **Research `@convex-dev/auth` vs fixing Better Auth integration.** Key questions:
+- [x] `@bnto/auth` + `@bnto/backend` — **Research `@convex-dev/auth` vs fixing Better Auth integration.** Key questions:
   - Does `@convex-dev/auth` support anonymous sessions natively? Is session → mutation authorization atomic (no race condition)?
   - Compare token propagation: Better Auth (external JWT → provider → Convex) vs Convex Auth (native, no external propagation)
   - Does the chosen approach support anonymous → authenticated migration? (anonymous user signs up → runs, saved work carry over)
   - Can `proxy.ts` cookie-based route protection still work?
   - If Better Auth: what specifically fixes the JWT propagation race?
-- [ ] `.claude/decisions/` — **Write decision doc:** `auth-evaluation.md`. Recommend one approach with migration plan. Present to user for approval before proceeding.
+- [x] `.claude/decisions/` — **Write decision doc:** `auth-evaluation.md`. Recommend one approach with migration plan. Present to user for approval before proceeding.
 
 #### Wave 2 (parallel — implement)
 
 Based on Wave 1 decision. Scope adjusts based on chosen approach.
 
-- [ ] `@bnto/auth` + `@bnto/backend` — Implement the chosen auth solution. The end state: anonymous session → Convex mutation succeeds, every time, with no race condition.
-- [ ] `@bnto/backend` — Ensure anonymous sessions create a real `users` table row (not just an auth-provider user). This row is where `runsUsedThisMonth`, `planTier`, and quota tracking live.
-- [ ] `apps/web` — Verify `proxy.ts` route protection works with the new auth
-- [ ] `apps/web` — Remove or rework `AppGate` splash — auth must be invisible (core principle: Abstraction)
+- [x] `@bnto/auth` + `@bnto/backend` — Implement the chosen auth solution. The end state: anonymous session → Convex mutation succeeds, every time, with no race condition.
+- [x] `@bnto/backend` — Ensure anonymous sessions create a real `users` table row (not just an auth-provider user). This row is where `runsUsedThisMonth`, `planTier`, and quota tracking live.
+- [x] `apps/web` — Verify `proxy.ts` route protection works with the new auth
+- [x] `apps/web` — Remove or rework `AppGate` splash — auth must be invisible (core principle: Abstraction)
 
 #### Wave 3 (sequential — lock it down with tests)
 

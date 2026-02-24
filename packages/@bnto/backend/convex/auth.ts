@@ -1,51 +1,57 @@
-import { createClient, type GenericCtx } from "@convex-dev/better-auth";
-import { convex } from "@convex-dev/better-auth/plugins";
-import { betterAuth } from "better-auth/minimal";
-import { anonymous } from "better-auth/plugins";
-import type { GenericActionCtx } from "convex/server";
-import type { DataModel } from "./_generated/dataModel";
-import { components, internal } from "./_generated/api";
-import authConfig from "./auth.config";
+import { convexAuth } from "@convex-dev/auth/server";
+import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
+import { Password } from "@convex-dev/auth/providers/Password";
 
-export const authComponent = createClient<DataModel>(components.betterAuth);
+const FREE_RUN_LIMIT = 5;
 
-export const createAuth = (ctx: GenericCtx<DataModel>) =>
-  betterAuth({
-    baseURL: process.env.SITE_URL!,
-    database: authComponent.adapter(ctx),
-    emailAndPassword: { enabled: true },
-    // TODO: Re-enable when OAuth credentials are configured
-    // socialProviders: {
-    //   google: {
-    //     clientId: process.env.AUTH_GOOGLE_ID!,
-    //     clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-    //   },
-    //   discord: {
-    //     clientId: process.env.AUTH_DISCORD_ID!,
-    //     clientSecret: process.env.AUTH_DISCORD_SECRET!,
-    //   },
-    // },
-    plugins: [
-      convex({ authConfig }),
-      anonymous({
-        // Prevents race condition where anonymous user is deleted during
-        // the sign-in request itself (Better Auth issue #5824)
-        disableDeleteAnonymousUser: true,
-        onLinkAccount: async ({ anonymousUser, newUser }) => {
-          // Migrate app data from the old anonymous user to the new authenticated user.
-          // ctx is captured from the createAuth closure — it's an ActionCtx when called
-          // from the HTTP handler, which has runMutation().
-          const actionCtx = ctx as GenericActionCtx<DataModel>;
-          await actionCtx.runMutation(
-            internal.migrate_anonymous.migrateAnonymousData,
-            {
-              anonymousAuthUserId: anonymousUser.user.id,
-              newAuthUserId: newUser.user.id,
-            },
-          );
-        },
-      }),
-      // TODO: Add Cloudflare Turnstile CAPTCHA before production to prevent
-      // database-bloat attacks from automated anonymous sign-in requests.
-    ],
-  });
+export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
+  providers: [Anonymous, Password],
+  callbacks: {
+    /**
+     * Controls user creation and upgrade flow.
+     *
+     * - New anonymous user: creates user doc with default free-tier fields.
+     * - New real user (email/password): creates user doc with isAnonymous: false.
+     * - Anonymous → real upgrade: patches existing user, preserves the same _id
+     *   so all workflows, executions, and run counts stay associated.
+     */
+    async createOrUpdateUser(ctx, args) {
+      if (args.existingUserId) {
+        // Upgrading: anonymous → real account, or updating profile.
+        // Patch in-place — same _id, no data migration needed.
+        // Build typed patch — only include fields that have real values.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex patch accepts Record-style objects; profile fields are untyped from @convex-dev/auth
+        const updates: Record<string, any> = {};
+        if (args.profile.email) updates.email = args.profile.email;
+        if (args.profile.name) updates.name = args.profile.name;
+        if (args.profile.image !== undefined) updates.image = args.profile.image;
+        // If signing in with a real provider, mark as non-anonymous.
+        if (args.provider?.id !== "anonymous") {
+          updates.isAnonymous = false;
+        }
+        if (Object.keys(updates).length > 0) {
+          await ctx.db.patch(args.existingUserId, updates);
+        }
+        return args.existingUserId;
+      }
+
+      // New user — initialize with free-tier defaults.
+      const now = Date.now();
+      const nextMonth = new Date(now);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      nextMonth.setDate(1);
+      nextMonth.setHours(0, 0, 0, 0);
+
+      return ctx.db.insert("users", {
+        name: args.profile.name,
+        email: args.profile.email,
+        image: args.profile.image,
+        isAnonymous: args.provider?.id === "anonymous",
+        plan: "free",
+        runsUsed: 0,
+        runLimit: FREE_RUN_LIMIT,
+        runsResetAt: nextMonth.getTime(),
+      });
+    },
+  },
+});

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
-import { getToken } from "@bnto/auth/server";
+import { ConvexAuthNextjsServerProvider } from "@bnto/auth/server";
 import { Navbar } from "#components/blocks/Navbar";
 import { ThemeProvider } from "#components/ThemeProvider";
 import { Providers } from "./providers";
@@ -123,28 +123,28 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const initialToken = await getToken();
-
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${dmSans.variable} ${inter.variable} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Providers initialToken={initialToken}>
-            <Navbar />
-            {children}
-          </Providers>
-        </ThemeProvider>
-      </body>
-    </html>
+    <ConvexAuthNextjsServerProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${dmSans.variable} ${inter.variable} antialiased`}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Providers>
+              <Navbar />
+              {children}
+            </Providers>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ConvexAuthNextjsServerProvider>
   );
 }

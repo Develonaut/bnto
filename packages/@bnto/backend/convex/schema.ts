@@ -1,22 +1,29 @@
 import { defineSchema, defineTable } from "convex/server";
+import { authTables } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 
 export default defineSchema({
-  // App-level user profiles linked to Better Auth component user.
-  // Auth fields (name, email, image) live in the component's user table.
-  // Copies are cached here for convenience queries.
+  ...authTables,
+
+  // Override the auth-managed users table with app-specific fields.
+  // Auth fields (name, email, image, isAnonymous, etc.) are managed by
+  // @convex-dev/auth via the createOrUpdateUser callback. App fields
+  // (plan, runsUsed, etc.) are set in the same callback on user creation.
   users: defineTable({
-    userId: v.string(), // Better Auth component user _id
-    email: v.optional(v.string()),
+    // Auth-managed fields
     name: v.optional(v.string()),
+    email: v.optional(v.string()),
     image: v.optional(v.string()),
-    isAnonymous: v.boolean(),
+    isAnonymous: v.optional(v.boolean()),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    // App fields — set by createOrUpdateUser callback in auth.ts
     plan: v.union(v.literal("free"), v.literal("starter"), v.literal("pro")),
     runsUsed: v.number(),
     runLimit: v.number(),
     runsResetAt: v.number(),
   })
-    .index("by_userId", ["userId"])
     .index("email", ["email"])
     .index("by_anonymous", ["isAnonymous"]),
 
