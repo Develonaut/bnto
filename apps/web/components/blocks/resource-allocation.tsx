@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { DashedLine } from "../dashed-line";
 
+import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/utils";
 
 const topItems = [
@@ -118,29 +119,31 @@ export const ResourceAllocation = () => {
       className="overflow-hidden pb-28 lg:pb-32"
     >
       <div className="">
-        <h2 className="container text-center text-3xl tracking-tight text-balance sm:text-4xl md:text-5xl lg:text-6xl">
-          Mainline your resource allocation and execution
-        </h2>
+        <Container as="header">
+          <h2 className="text-center text-3xl tracking-tight text-balance sm:text-4xl md:text-5xl lg:text-6xl">
+            Mainline your resource allocation and execution
+          </h2>
+        </Container>
 
         <div className="mt-8 md:mt-12 lg:mt-20">
           <DashedLine
             orientation="horizontal"
-            className="container scale-x-105"
+            className="mx-auto w-full px-6 scale-x-105"
           />
 
           {/* Top Features Grid - 2 items */}
-          <div className="relative container flex max-md:flex-col">
+          <Container className="relative flex max-md:flex-col">
             {topItems.map((item, i) => (
               <Item key={i} item={item} isLast={i === topItems.length - 1} />
             ))}
-          </div>
+          </Container>
           <DashedLine
             orientation="horizontal"
-            className="container max-w-7xl scale-x-110"
+            className="mx-auto w-full px-6 max-w-7xl scale-x-110"
           />
 
           {/* Bottom Features Grid - 3 items */}
-          <div className="relative container grid max-w-7xl md:grid-cols-3">
+          <Container size="lg" className="relative grid md:grid-cols-3">
             {bottomItems.map((item, i) => (
               <Item
                 key={i}
@@ -149,11 +152,11 @@ export const ResourceAllocation = () => {
                 className="md:pb-0"
               />
             ))}
-          </div>
+          </Container>
         </div>
         <DashedLine
           orientation="horizontal"
-          className="container max-w-7xl scale-x-110"
+          className="mx-auto w-full px-6 max-w-7xl scale-x-110"
         />
       </div>
     </section>

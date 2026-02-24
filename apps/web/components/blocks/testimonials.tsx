@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { DashedLine } from "../dashed-line";
 
 import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/container";
 import { Card } from "@/components/ui/card";
 import {
   Carousel,
@@ -85,7 +86,7 @@ export const Testimonials = ({
   return (
     <>
       <section className={cn("overflow-hidden py-28 lg:py-32", className)}>
-        <div className="container">
+        <Container>
           <div className="space-y-4">
             <h2 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
               Trusted by product builders
@@ -148,7 +149,7 @@ export const Testimonials = ({
               </div>
             </Carousel>
           </div>
-        </div>
+        </Container>
       </section>
       <DashedLine
         orientation="horizontal"

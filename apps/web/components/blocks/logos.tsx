@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import Marquee from "react-fast-marquee";
 
+import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/utils";
 
 type Company = {
@@ -85,7 +86,7 @@ export const Logos = () => {
 
   return (
     <section className="pb-28 lg:pb-32 overflow-hidden">
-      <div className="container space-y-10 lg:space-y-16">
+      <Container className="space-y-10 lg:space-y-16">
         <div className="text-center">
           <h2 className="mb-4 text-xl text-balance md:text-2xl lg:text-3xl">
             Powering the world&apos;s best product teams.
@@ -107,7 +108,7 @@ export const Logos = () => {
             direction="right"
           />
         </div>
-      </div>
+      </Container>
     </section>
   );
 };

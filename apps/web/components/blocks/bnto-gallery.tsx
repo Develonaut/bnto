@@ -12,6 +12,7 @@ import {
 
 import { DashedLine } from "@/components/dashed-line";
 import { Card } from "@/components/ui/card";
+import { Container } from "@/components/ui/container";
 import { BNTO_REGISTRY, type BntoEntry } from "@/lib/bnto-registry";
 
 const BNTO_ICONS: Record<string, LucideIcon> = {
@@ -58,7 +59,7 @@ function BntoCard({ entry }: { entry: BntoEntry }) {
 export const BntoGallery = () => {
   return (
     <section id="tools" className="pb-28 lg:pb-32">
-      <div className="container">
+      <Container>
         {/* Dashed divider with label */}
         <div className="relative flex items-center justify-center">
           <DashedLine className="text-muted-foreground" />
@@ -84,7 +85,7 @@ export const BntoGallery = () => {
             <BntoCard key={entry.slug} entry={entry} />
           ))}
         </div>
-      </div>
+      </Container>
     </section>
   );
 };

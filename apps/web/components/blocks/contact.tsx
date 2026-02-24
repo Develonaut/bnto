@@ -6,6 +6,7 @@ import { Facebook, Linkedin, Twitter } from "lucide-react";
 
 import { ContactForm } from "@/components/blocks/contact-form";
 import { DashedLine } from "@/components/dashed-line";
+import { Container } from "@/components/ui/container";
 
 const contactInfo = [
   {
@@ -67,7 +68,7 @@ const contactInfo = [
 export default function Contact() {
   return (
     <section className="py-28 lg:py-32 lg:pt-44">
-      <div className="container max-w-2xl">
+      <Container size="sm">
         <h1 className="text-center text-2xl font-semibold tracking-tight md:text-4xl lg:text-5xl">
           Contact us
         </h1>
@@ -91,7 +92,7 @@ export default function Contact() {
           <h2 className="mb-4 text-lg font-semibold">Inquiries</h2>
           <ContactForm />
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

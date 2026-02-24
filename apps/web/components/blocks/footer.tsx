@@ -3,10 +3,11 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/container";
 
 export function FooterCta() {
   return (
-    <div className="container space-y-3 text-center">
+    <Container className="space-y-3 text-center">
       <h2 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
         Start your free trial today
       </h2>
@@ -21,7 +22,7 @@ export function FooterCta() {
           </a>
         </Button>
       </div>
-    </div>
+    </Container>
   );
 }
 
@@ -45,7 +46,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
     <footer className="flex flex-col items-center gap-14 pt-28 lg:pt-32">
       {children ?? <FooterCta />}
 
-      <nav className="container flex flex-col items-center gap-4">
+      <Container as="nav" className="flex flex-col items-center gap-4">
         <ul className="flex flex-wrap items-center justify-center gap-6">
           {navigation.map((item) => (
             <li key={item.name}>
@@ -80,7 +81,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
             </li>
           ))}
         </ul>
-      </nav>
+      </Container>
 
       <div className="text-primary mt-10 w-full md:mt-14 lg:mt-20">
         <svg

@@ -6,6 +6,7 @@ import { ChevronRight } from "lucide-react";
 import { DashedLine } from "../dashed-line";
 
 import { Card } from "@/components/ui/card";
+import { Container } from "@/components/ui/container";
 
 const items = [
   {
@@ -25,7 +26,7 @@ const items = [
 export const Features = () => {
   return (
     <section id="feature-modern-teams" className="pb-28 lg:pb-32">
-      <div className="container">
+      <Container>
         {/* Top dashed line with text */}
         <div className="relative flex items-center justify-center">
           <DashedLine className="text-muted-foreground" />
@@ -90,7 +91,7 @@ export const Features = () => {
             ))}
           </Card.Content>
         </Card>
-      </div>
+      </Container>
     </section>
   );
 };

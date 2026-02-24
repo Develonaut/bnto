@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import { Container } from "@/components/ui/container";
+
 const investors = [
   {
     name: "Dennis Bouvard",
@@ -30,7 +32,7 @@ const investors = [
 
 export function Investors() {
   return (
-    <section className="container max-w-5xl py-12">
+    <Container as="section" size="md" className="py-12">
       <h2 className="text-foreground text-4xl font-medium tracking-wide">
         Our investors
       </h2>
@@ -49,6 +51,6 @@ export function Investors() {
           </div>
         ))}
       </div>
-    </section>
+    </Container>
   );
 }

@@ -2,11 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/utils";
 
 const About = () => {
   return (
-    <section className="container mt-10 flex max-w-5xl flex-col-reverse gap-8 md:mt-14 md:gap-14 lg:mt-20 lg:flex-row lg:items-end">
+    <Container as="section" size="md" className="mt-10 flex flex-col-reverse gap-8 md:mt-14 md:gap-14 lg:mt-20 lg:flex-row lg:items-end">
       {/* Images Left - Text Right */}
       <div className="flex flex-col gap-8 lg:gap-16 xl:gap-20">
         <ImageSection
@@ -47,7 +48,7 @@ const About = () => {
           className="hidden lg:flex xl:translate-x-10"
         />
       </div>
-    </section>
+    </Container>
   );
 };
 

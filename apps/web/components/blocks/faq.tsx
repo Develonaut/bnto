@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Container } from "@/components/ui/container";
 import { cn } from "@/lib/utils";
 
 const categories = [
@@ -72,7 +73,7 @@ export const FAQ = ({
 }) => {
   return (
     <section className={cn("py-28 lg:py-32", className)}>
-      <div className="container max-w-5xl">
+      <Container size="md">
         <div className={cn("mx-auto grid gap-16 lg:grid-cols-2", className2)}>
           <div className="space-y-4">
             {headerTag === "h1" ? (
@@ -113,7 +114,7 @@ export const FAQ = ({
             ))}
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 };

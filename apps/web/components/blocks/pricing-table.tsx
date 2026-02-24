@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/container";
 import {
   Collapsible,
   CollapsibleContent,
@@ -165,13 +166,13 @@ export const PricingTable = () => {
 
   return (
     <section className="pb-28 lg:py-32">
-      <div className="container">
+      <Container>
         <PlanHeaders
           selectedPlan={selectedPlan}
           onPlanChange={setSelectedPlan}
         />
         <FeatureSections selectedPlan={selectedPlan} />
-      </div>
+      </Container>
     </section>
   );
 };

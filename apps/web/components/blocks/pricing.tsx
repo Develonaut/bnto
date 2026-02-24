@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Container } from "@/components/ui/container";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +55,7 @@ export const Pricing = ({ className }: { className?: string }) => {
 
   return (
     <section className={cn("py-28 lg:py-32", className)}>
-      <div className="container max-w-5xl">
+      <Container size="md">
         <div className="space-y-4 text-center">
           <h2 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
             Pricing
@@ -129,7 +130,7 @@ export const Pricing = ({ className }: { className?: string }) => {
             </Card>
           ))}
         </div>
-      </div>
+      </Container>
     </section>
   );
 };
