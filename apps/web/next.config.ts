@@ -11,6 +11,16 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   turbopack: {
     root: resolve(__dirname, "../../"),
+    // Explicit alias for Node.js subpath imports (#components/*, etc.)
+    // Turbopack on Vercel doesn't resolve the `imports` field in package.json
+    // when turbopack.root points to the monorepo root. This makes it explicit.
+    resolveAlias: {
+      "#components/*": "./components/*",
+      "#lib/*": "./lib/*",
+      "#hooks/*": "./hooks/*",
+      "#actions/*": "./actions/*",
+      "#src/*": "./src/*",
+    },
   },
   // Allow e2e tests to use a separate build directory so they don't
   // corrupt the dev server's .next cache (set via NEXT_DIST_DIR env var).
