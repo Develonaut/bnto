@@ -82,6 +82,27 @@ Turbopack on Vercel does NOT support Node.js subpath imports (`#components/*` vi
 
 **Fix:** Use standard `@/` path aliases via `tsconfig.json` `paths` instead of subpath imports. Do NOT set `turbopack.root` in `next.config.ts` — `transpilePackages` handles monorepo resolution.
 
+## Git Case-Sensitivity on macOS (Vercel Deploys)
+
+macOS filesystems are case-insensitive by default. Renaming `container.tsx` to `Container.tsx` on macOS won't be detected by git — it keeps tracking the old lowercase name. On Vercel (Linux, case-sensitive), imports for `@/components/ui/Container` fail because git checked out `container.tsx`.
+
+**Fix:** Use a two-step `git mv` to force git to recognize the case change:
+
+```bash
+git mv components/ui/container.tsx components/ui/container_tmp.tsx
+git mv components/ui/container_tmp.tsx components/ui/Container.tsx
+```
+
+**Detection:** Run this to find case mismatches:
+
+```bash
+git ls-files apps/web/components/ | while read gitpath; do
+  dir=$(dirname "$gitpath"); base=$(basename "$gitpath")
+  actual=$(ls -1 "$dir" 2>/dev/null | grep -ix "$base")
+  [ -n "$actual" ] && [ "$actual" != "$base" ] && echo "MISMATCH: git=$gitpath disk=$dir/$actual"
+done
+```
+
 ## Playwright Screenshot Updates
 
 `--update-snapshots` won't overwrite existing screenshots that already match. If you need to force full regeneration, delete the `__screenshots__/` directory first.
