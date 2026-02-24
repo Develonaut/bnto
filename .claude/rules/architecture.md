@@ -17,7 +17,7 @@ Each layer only depends on layers below it. Never skip layers.
 | Package | Role | Current Implementation |
 |---|---|---|
 | `@bnto/backend` | Data layer -- schema, functions, business logic | Convex |
-| `@bnto/auth` | Auth client -- sign in, sign up, session | Better Auth |
+| `@bnto/auth` | Auth client -- sign in, sign up, session | `@convex-dev/auth` |
 | `@bnto/core` | Transport-agnostic API -- hooks, types, adapters | React Query + adapters |
 
 **State management:** Zustand handles client-only state (editor content, UI preferences). React Query handles all server state (data fetching, caching, mutations). For the Convex path, `@convex-dev/react-query` preserves real-time subscriptions through React Query's interface.
@@ -69,7 +69,7 @@ const workflows = window.go.main.App.ListWorkflows();
 ### `packages/@bnto/auth/` (`@bnto/auth`) -- Auth client
 - Sign in, sign up, sign out, session management
 - OAuth provider configuration
-- **Currently:** Better Auth. Named by role so internals can be swapped.
+- **Currently:** `@convex-dev/auth`. Named by role so internals can be swapped.
 - Consumed by `@bnto/core` internals, NEVER by app code directly
 
 ### `apps/web/` -- Next.js application (Vercel)

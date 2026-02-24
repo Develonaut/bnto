@@ -124,33 +124,3 @@ export const Dialog = Object.assign(DialogRoot, {
 
 **Symptoms:** Component renders with wrong styling (e.g., Dialog slides in from the right like a Sheet). Check `data-slot` attributes in DevTools -- they'll reveal which primitive is actually rendering.
 
-## Go Engine: Context Cancellation
-
-Always check context cancellation in loops and before expensive operations in Go engine code. A long-running workflow execution should be cancellable.
-
-```go
-// BAD -- ignores cancellation
-for _, node := range workflow.Nodes {
-    result := node.Execute(input)
-}
-
-// GOOD -- checks context before each node
-for _, node := range workflow.Nodes {
-    if err := ctx.Err(); err != nil {
-        return fmt.Errorf("execution cancelled: %w", err)
-    }
-    result, err := node.Execute(ctx, input)
-}
-```
-
-## Go Engine: Error Wrapping
-
-Always wrap errors with context. Bare `return err` makes debugging impossible in a multi-layer system.
-
-```go
-// BAD
-return err
-
-// GOOD
-return fmt.Errorf("executing node %s: %w", node.ID, err)
-```

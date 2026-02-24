@@ -21,7 +21,7 @@ Before reviewing anything, read these files to understand the architecture and k
 .claude/rules/auth-routing.md              # Auth routing model (proxy, middleware, cookies)
 .claude/environment-variables.md           # All env vars, where they're configured
 .claude/rules/convex.md                    # Convex function standards
-.claude/rules/go.md                        # Go code standards
+.claude/rules/code-standards.md             # Code standards (includes Go conventions)
 ```
 
 **Read ALL of these files now.** The audit sections below reference these documents. You need the full picture before scanning.

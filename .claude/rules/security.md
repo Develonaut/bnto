@@ -27,7 +27,7 @@ Each item maps to a testable assertion — unit tests now, e2e when auth flows a
 - [ ] Session expiry triggers `onSessionLost` callback (client-side redirect)
 - [ ] Sign-out clears server session and invalidates cookies
 
-**Test approach:** Integration tests against Better Auth config. E2e tests for sign-in → session → sign-out flow.
+**Test approach:** Integration tests against `@convex-dev/auth` config (see `convex-test` tests in `@bnto/backend`). E2e tests for sign-in → session → sign-out flow.
 
 ### Invite / Beta Gating
 

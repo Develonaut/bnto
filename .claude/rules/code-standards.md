@@ -105,10 +105,42 @@ engine/pkg/
 +-- secrets/      # Secrets management ONLY
 ```
 
-- Accept interfaces, return structs
-- Errors wrapped with context: `fmt.Errorf("loading workflow %s: %w", path, err)`
-- Context propagation: all long-running operations accept and respect `context.Context`
+- Accept interfaces, return structs -- keep interfaces small (1-3 methods)
+- `pkg/` not `internal/` -- engine packages importable by `apps/api/` via `go.work`
+- Errors wrapped with context: `fmt.Errorf("loading workflow %s: %w", path, err)` -- never bare `return err`, never swallow errors
+- Context propagation: all long-running operations accept `context.Context`, check cancellation in loops
 - No mega-interfaces with 10+ methods
+
+### Node Type Implementation
+
+Each node type in `engine/pkg/node/library/` follows this pattern:
+
+```go
+// node.go — implements NodeType interface
+type MyNode struct{}
+func (n *MyNode) Execute(ctx context.Context, input *node.Input) (*node.Output, error) { ... }
+
+// factory.go — creates node instances
+func Factory() node.Factory { return func() node.NodeType { return &MyNode{} } }
+```
+
+- Register in `engine/pkg/api/service.go` via `DefaultRegistry()`
+- Unit tests in the same package
+- Integration test with fixture `.bnto.json` in `engine/tests/integration/`
+
+### Go Testing
+
+- **`go test -race`** -- always run with race detector
+- **Table-driven tests** -- use subtests for multiple cases
+- **`httptest`** -- for HTTP handler tests (no real servers)
+- **Test fixtures** -- `.bnto.json` files in `engine/tests/fixtures/`
+
+### Go Naming
+
+- **Packages:** lowercase, single word (`engine`, `registry`, `storage`)
+- **Files:** lowercase with underscores (`edit_fields.go`, `shell_command.go`)
+- **No `utils.go` or `helpers.go`** -- name files by what they contain
+- **Exported types:** PascalCase, unexported: camelCase
 
 ### Testing Strategy
 

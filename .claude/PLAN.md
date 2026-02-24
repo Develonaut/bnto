@@ -102,7 +102,7 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 
 **Test infrastructure:** Requires `task dev:all` (Convex dev + Go API via tunnel + R2 dev bucket).
 
-- [ ] `@bnto/core` — **Test harness setup:** `ConvexHttpClient` factory with anonymous + password auth, test lifecycle helpers (cleanup), Vitest integration config (separate from unit tests, longer timeouts). File: `packages/core/src/__tests__/integration/setup.ts`
+- [x] `@bnto/core` — **Test harness setup:** `ConvexHttpClient` factory with anonymous + password auth, test lifecycle helpers (cleanup), Vitest integration config (separate from unit tests, longer timeouts). File: `packages/core/src/__tests__/integration/setup.ts`
 - [ ] `@bnto/core` — **Auth integration tests:** Anonymous sign-in returns valid token, authenticated client calls protected queries/mutations, unauthenticated client rejected, password sign-up + sign-in works, anonymous → authenticated upgrade preserves userId
 - [ ] `@bnto/core` — **Execution integration tests:** `core.executions.startPredefined()` against real Convex dev — creates execution record, increments runsUsed, enforces quota. Verify status transitions (pending → running → completed/failed) via polling
 - [ ] `@bnto/core` — **Upload/download integration tests:** `core.uploads.generateUrls()` returns valid R2 presigned URLs, upload succeeds, after execution `core.downloads.getDownloadUrls()` returns valid download URLs. Full transit: upload → execute → download against R2 dev bucket
