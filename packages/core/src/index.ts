@@ -43,6 +43,8 @@ export type { AuthStatus } from "./providers/SessionContext";
 // ── Auth types ────────────────────────────────────────────────────────────
 export type { AuthUser, AuthState } from "./hooks/useAuth";
 
+// FIXME: Remove this we dont need to be backwards compatabile. just update call sites
+// to use correct core api.
 // ---------------------------------------------------------------------------
 // Backwards-compatible hook re-exports.
 //

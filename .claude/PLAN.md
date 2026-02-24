@@ -265,12 +265,25 @@ Based on Wave 1 decision. Scope adjusts based on chosen approach.
 
 **Summary of test groups** (see journey doc for full matrix with pass criteria):
 
-- [ ] `Anonymous execution flow (A1-A5)` — The happy path. Anonymous user goes from landing to download. Every auth gate passes.
+- [x] `Anonymous execution flow (A1-A5)` — The happy path. Anonymous user goes from landing to download. Every auth gate passes.
 - [ ] `Anonymous quota + persistence (A6-A7)` — Edge cases. Quota blocks correctly (not auth error), session survives refresh.
 - [ ] `Conversion flow (C1-C3)` — Anonymous → signup. Data carries over, quota upgrades, ownership preserved.
 - [ ] `Auth lifecycle (S1-S3)` — Sign-in, sign-out, API surface. Standard auth works alongside anonymous.
 
-#### Wave 4 (sequential — verify full pipeline)
+#### Wave 4 (sequential — core integration tests against real Convex dev)
+
+**Why this layer exists:** `convex-test` (Wave 3) validates logic in-memory. Playwright E2E (Wave 5) validates user journeys through a browser. This layer sits between them — it calls real Convex dev functions through `@bnto/core`'s imperative API without browser overhead. It catches: wrong env vars, missing indexes on deploy, auth provider misconfiguration, schema migration issues, R2 connectivity — things `convex-test` can't see and Playwright is overkill for.
+
+**Auth approach:** `ConvexHttpClient` can call `@convex-dev/auth`'s public `signIn` action directly — `client.action(api.auth.signIn, { provider: "anonymous" })` returns a JWT token. Set it with `client.setAuth(token)` and all subsequent calls are authenticated against the real deployment. No React, no browser, no backend changes needed. See `.claude/decisions/core-integration-testing.md` for full research.
+
+**Test infrastructure (`task dev:all` required):** These tests run against the dev stack (Convex dev `zealous-canary-422` + Go API via tunnel + R2 dev bucket). The test harness starts `task dev:all` or asserts it's already running, then exercises the `@bnto/core` imperative API.
+
+- [ ] `@bnto/core` — **Test harness setup:** Create integration test infrastructure — `ConvexHttpClient` factory that authenticates via `api.auth.signIn` (anonymous + password), test lifecycle helpers (cleanup test users/sessions), Vitest config for integration tests (separate from unit tests, longer timeouts). File: `packages/core/src/__tests__/integration/setup.ts`
+- [ ] `@bnto/core` — **Auth integration tests:** Anonymous sign-in returns valid token, authenticated client can call protected queries/mutations, unauthenticated client is rejected, password sign-up + sign-in works, anonymous → authenticated upgrade preserves userId
+- [ ] `@bnto/core` — **Execution integration tests:** `core.executions.startPredefined()` against real Convex dev — creates execution record, increments runsUsed, enforces quota. Verify execution status transitions (pending → running → completed/failed) via polling
+- [ ] `@bnto/core` — **Upload/download integration tests:** `core.uploads.generateUrls()` returns valid R2 presigned URLs, upload to R2 succeeds, after execution completes `core.downloads.getDownloadUrls()` returns valid download URLs. Full transit: upload → execute → download against real R2 dev bucket
+
+#### Wave 5 (sequential — verify full pipeline in browser)
 
 - [ ] `apps/web` — Pop Sprint 2 Wave 5 stash, resume Playwright E2E integration tests: full execution pipeline (upload → R2 → Go engine → R2 → download)
 - [ ] `apps/web` — **Monetization checkpoint:** Confirm execution events log `userId`, `bntoSlug`, `timestamp`, `durationMs` to Convex. Sprint 3 builds the dashboard on this data.
