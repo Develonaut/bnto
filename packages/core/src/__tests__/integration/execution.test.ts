@@ -20,6 +20,7 @@ import {
   type AuthenticatedClient,
   api,
 } from "./setup";
+import { pollExecution } from "./transit-helpers";
 
 // Minimal definition that the Go engine can process (group with no nodes).
 // This will start fast and fail/complete quickly — ideal for testing the
@@ -39,30 +40,6 @@ const MINIMAL_DEFINITION = {
 };
 
 const TEST_SLUG = "compress-images";
-
-// ── Helpers ───────────────────────────────────────────────────────────────
-
-/** Poll execution status until it reaches a terminal state or times out. */
-async function pollExecution(
-  client: AuthenticatedClient,
-  executionId: Id<"executions">,
-  { timeoutMs = 90_000, intervalMs = 2_000 } = {},
-): Promise<{ status: string; error?: string }> {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    const execution = await client.client.query(api.executions.get, {
-      id: executionId,
-    });
-    if (!execution) {
-      throw new Error(`Execution ${executionId} not found (ownership check failed?)`);
-    }
-    if (execution.status === "completed" || execution.status === "failed") {
-      return { status: execution.status, error: execution.error };
-    }
-    await new Promise((r) => setTimeout(r, intervalMs));
-  }
-  throw new Error(`Execution ${executionId} did not reach terminal state within ${timeoutMs}ms`);
-}
 
 // ── A3: Anonymous can start execution ─────────────────────────────────────
 

@@ -25,8 +25,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 2A Wave 4 (core integration tests against real Convex dev)
-- **Next:** Sprint 2A Wave 5 (browser pipeline verification) → Sprint 2.5 (resume polish) → Sprint 3 (dashboard + quota)
+- **Active:** Sprint 2A Wave 4 COMPLETE — Wave 5 ready (browser pipeline verification)
+- **Next:** Sprint 2A Wave 5 (browser pipeline verification) → **Convex dev cleanup (Better Auth remnants)** → Sprint 2.5 (resume polish) → Sprint 3 (dashboard + quota)
 - **Auth:** Migrated to `@convex-dev/auth`. Anonymous sessions create real `users` rows. Integration tests (Wave 3) complete. `AUTH_SECRET` env var required in Convex deployments.
 - **Engine:** Complete. Go CLI with 10 node types (>90% coverage), Go HTTP API on Railway, BntoService shared API layer.
 - **Web app:** Next.js on Vercel. Auth, SEO tool pages, execution UI, landing pages — all built. Needs pipeline verification.
@@ -105,7 +105,7 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 - [x] `@bnto/core` — **Test harness setup:** `ConvexHttpClient` factory with anonymous + password auth, test lifecycle helpers (cleanup), Vitest integration config (separate from unit tests, longer timeouts). File: `packages/core/src/__tests__/integration/setup.ts`
 - [x] `@bnto/core` — **Auth integration tests:** Anonymous sign-in, authenticated client calls, unauthenticated rejection, password sign-up/sign-in, anonymous → password upgrade (userId NOT preserved via ConvexHttpClient — browser E2E needed). Files: `auth-lifecycle.test.ts` (S1-S3, 16 tests), `conversion-flow.test.ts` (C1-C3, 14 tests). Also fixed: `@convex-dev/auth` v0.0.90 response parsing in `setup.ts`, broken `convex.config.ts` component import, `auth.config.ts` provider config, deprecated Vitest `poolOptions`
 - [x] `@bnto/core` — **Execution integration tests:** `core.executions.startPredefined()` against real Convex dev — creates execution record, increments runsUsed, enforces quota. Verify status transitions (pending → running → completed/failed) via polling. Also fixed: unified run limit system (env-driven via `_helpers/run_limits.ts`, single source of truth for anonymous=3, free=25). File: `execution.test.ts` (17 tests)
-- [ ] `@bnto/core` — **Upload/download integration tests:** `core.uploads.generateUrls()` returns valid R2 presigned URLs, upload succeeds, after execution `core.downloads.getDownloadUrls()` returns valid download URLs. Full transit: upload → execute → download against R2 dev bucket. **Coverage gap:** The full file pipeline (browser → R2 → Go engine → R2 → browser) is untested end-to-end at the integration layer. This is the highest-priority gap in our test coverage.
+- [x] `@bnto/core` — **Upload/download integration tests:** `core.uploads.generateUrls()` returns valid R2 presigned URLs, upload succeeds, after execution `core.downloads.getDownloadUrls()` returns valid download URLs. Full transit: upload → execute → download against R2 dev bucket. **Coverage gap:** The full file pipeline (browser → R2 → Go engine → R2 → browser) is untested end-to-end at the integration layer. This is the highest-priority gap in our test coverage.
 
 #### Wave 5 (sequential — verify full pipeline in browser)
 
@@ -320,6 +320,24 @@ Required for the PDF to Images Bnto (Tier 2, 50K+ monthly searches).
 - [ ] `engine` — Implement `pdf` node type (wrap `pdfcpu` Go library, or shell-command + ghostscript as interim)
 - [ ] `engine` — Unit tests for PDF → image conversion
 - [ ] `engine` — Integration fixture: `pdf-to-images.bnto.json`
+
+### Infra: Clean Up Convex Dev Environment (Better Auth Remnants)
+
+The Convex dev deployment (`zealous-canary-422`) still contains stale data from the old Better Auth system and accumulated integration test artifacts. The `auth*` tables (`authAccounts`, `authRateLimits`, `authRefreshTokens`, `authSessions`, `authVerificationCodes`, `authVerifiers`) are now managed by `@convex-dev/auth`, but old Better Auth records and orphaned test users are still present.
+
+**What to clean:**
+- Old user records from Better Auth era (pre-migration)
+- Orphaned auth sessions/tokens/verifiers that reference non-existent users
+- Accumulated integration test users (`test-*@test.bnto.dev`)
+- Stale execution records and execution events from test runs
+- Any workflows created by test accounts
+
+**Approach:** Write a one-off Convex mutation that identifies and deletes stale records. Run against dev first, then production if needed. Back up data before deletion.
+
+- [ ] `@bnto/backend` — Audit Convex dev tables: identify Better Auth remnants vs current `@convex-dev/auth` records
+- [ ] `@bnto/backend` — Write cleanup mutation: delete orphaned auth records, test users, and stale test data
+- [ ] `@bnto/backend` — Run cleanup against dev deployment, verify table health
+- [ ] `@bnto/backend` — (If needed) Run cleanup against production deployment
 
 ### Infra: Configure R2 Lifecycle Rules
 
