@@ -30,12 +30,14 @@
 
 **Bnto** is the one place small teams go to get things done — compress images, clean a CSV, rename files, call an API — without the overhead of a platform or the fragility of a script. Simple by default, powerful when you need it.
 
-Workflows are defined as `.bnto.json` files that orchestrate tasks. The Go CLI engine is the stable core. Everything else — web app, desktop, cloud execution — is a UI on top of it.
+Workflows are defined as `.bnto.json` files that orchestrate tasks. **Browser execution is the M1 priority** — Tier 1 bntos run 100% client-side via Rust→WASM (or JS fallback). Files never leave the user's machine. Cloud execution (Go API on Railway) is built and ready for M4 (premium server-side bntos). See [ROADMAP.md](.claude/ROADMAP.md).
 
-- **Engine**: Go (CLI + execution engine in `engine/`)
-- **Web + Cloud**: Next.js on Vercel + Convex Cloud + `@convex-dev/auth` + Go API on Railway
-- **Desktop**: Wails v2 (Phase 2 — free local execution)
-- **Shared Packages**: `@bnto/core` (transport-agnostic API), `@bnto/auth` (auth), `@bnto/backend` (Convex)
+- **Browser Engine (M1)**: Rust→WASM via `wasm-pack` (or JS library adapters as fallback)
+- **Go Engine**: CLI + cloud execution engine in `engine/` (CLI stable, cloud ready for M4)
+- **Web**: Next.js on Vercel + Convex Cloud + `@convex-dev/auth`
+- **Cloud (M4)**: Go API on Railway + Cloudflare R2 file transit (premium server-side bntos)
+- **Desktop (M3)**: Tauri or Wails (depends on M1 Rust outcome) — free local execution
+- **Shared Packages**: `@bnto/core` (transport-agnostic API), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-agnostic node definitions — M1)
 - **Open Source**: MIT licensed
 
 ---
@@ -49,6 +51,22 @@ These are enforced in detail by the [rules/](.claude/rules/) files. This section
 3. **Bento Box Principle:** One thing per file/function/package. Files < 250 lines, functions < 20 lines. No `utils.ts` or `helpers.go` grab bags. See [code-standards.md](.claude/rules/code-standards.md).
 4. **Co-location:** UI components live in `apps/web` until a second consumer (desktop) exists. No premature `@bnto/ui` or `@bnto/editor` packages.
 5. **Transport-agnostic:** `@bnto/core` detects runtime (browser vs Wails) and swaps adapters. Components never know which backend they're talking to.
+
+---
+
+## Rust Code Standards
+
+**All Rust code must be heavily commented for learning purposes.** Ryan is learning Rust — every `.rs` file should be written as if the comments will be read by a five-year-old. This means:
+
+- Explain what every function does in plain English before the function
+- Explain WHY each line exists, not just WHAT it does
+- Explain Rust-specific concepts inline (ownership, borrowing, lifetimes, traits, etc.)
+- Use analogies and simple language in comments
+- Don't assume the reader knows Rust idioms — explain `unwrap()`, `?` operator, `impl`, `match`, etc.
+- Comment density should be high — aim for a comment every 2-3 lines of code minimum
+- Group related logic with section comments (e.g., `// --- Step 1: Read the input file ---`)
+
+This applies to all code in `engine-wasm/` and any other `.rs` files in the repo.
 
 ---
 

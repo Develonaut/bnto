@@ -154,10 +154,10 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 The engine-agnostic package that any execution target (Rust WASM, JS, Go) consumes. Build this first — it's the safety net regardless of engine choice.
 
 - [x] `packages/@bnto/nodes` — Create package: node type definitions (what each node does, input/output types)
-- [ ] `packages/@bnto/nodes` — Migrate recipe definitions from `engine/pkg/menu/recipes/` to TypeScript (6 Tier 1 recipes)
-- [ ] `packages/@bnto/nodes` — Define input/output schemas per node type (drives config panel UI — Atomiton `createFieldsFromSchema` pattern)
-- [ ] `packages/@bnto/nodes` — Workflow validation functions (works in browser, CLI, desktop)
-- [ ] `packages/@bnto/nodes` — Unit tests for schemas and validation
+- [x] `packages/@bnto/nodes` — Migrate recipe definitions from `engine/pkg/menu/recipes/` to TypeScript (6 Tier 1 recipes)
+- [x] `packages/@bnto/nodes` — Define input/output schemas per node type (drives config panel UI — Atomiton `createFieldsFromSchema` pattern)
+- [x] `packages/@bnto/nodes` — Workflow validation functions (works in browser, CLI, desktop)
+- [x] `packages/@bnto/nodes` — Unit tests for schemas and validation
 
 #### Wave 2 (sequential — first Rust WASM node + evaluation checkpoint)
 
@@ -591,6 +591,25 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 - Execution progress must be recursive (group nodes show children's progress)
 - JSON editor must represent recursive structure faithfully
 - Visual editor (Sprint 8) must support drill-down into group nodes
+
+### DX: Agent Persona Skills & Skill Refactor
+
+**Priority: Next.** Define developer persona skills that agents load for domain-specific context. This improves output quality by priming agents with the right mental model for the work they're about to do.
+
+**What to build:**
+- **Persona skills** in `.claude/skills/personas/` — each defines a domain expert role with context, vocabulary, and quality standards:
+  - `rust-expert.md` — Rust/WASM developer. Owns `engine-wasm/`. Knows ownership, lifetimes, wasm-bindgen, wasm-pack. Writes heavily commented code (see "Rust Code Standards" in CLAUDE.md). Explains concepts for a learner.
+  - `go-engineer.md` — Go engine developer. Owns `engine/`, `apps/api/`. Knows the node type system, BntoService, registry pattern, Go testing patterns.
+  - `frontend-engineer.md` — React/Next.js developer. Owns `apps/web/`. Knows the component system, theming, animation, shadcn patterns, Playwright E2E.
+  - `core-architect.md` — Transport-agnostic API. Owns `packages/core/`. Knows the client/service/adapter pattern, React Query, Convex adapter.
+  - `project-manager.md` — Replaces current `/groom`. Owns strategic alignment, plan updates, roadmap reviews, sprint transitions, backlog prioritization.
+- **Rename `/groom` to `/project-manager`** — update the skill file and SKILL.md accordingly
+- **Update existing skills** (pickup, code-review, pre-commit) to reference relevant persona skills. E.g., pickup should load the persona matching the task's `[package]` tag before starting work.
+
+- [ ] `.claude/skills/` — Create persona skill files (rust-expert, go-engineer, frontend-engineer, core-architect, project-manager)
+- [ ] `.claude/skills/` — Rename `/groom` to `/project-manager`, update content to persona-aware
+- [ ] `.claude/skills/` — Update `/pickup`, `/code-review`, `/pre-commit` to load relevant persona before execution
+- [ ] `.claude/skills/` — Test: run `/pickup` on a `[engine-wasm]` task and verify Rust persona context is loaded
 
 ---
 

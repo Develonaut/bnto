@@ -41,3 +41,46 @@ export type { NodeTypeName, NodeCategory, NodeTypeInfo } from "./nodeTypes";
 // Categories
 export { CATEGORIES, getCategoryInfo } from "./categories";
 export type { CategoryInfo } from "./categories";
+
+// Predefined recipes (6 Tier 1 bntos)
+export {
+  RECIPES,
+  getRecipeBySlug,
+  cleanCsv,
+  compressImages,
+  convertImageFormat,
+  renameCsvColumns,
+  renameFiles,
+  resizeImages,
+} from "./recipes";
+
+// Workflow validation
+export {
+  validateWorkflow,
+  validateDefinition,
+  validateEdges,
+} from "./validate";
+export type { ValidationError } from "./validate";
+
+// Parameter schemas — drives config panel UI
+export {
+  NODE_SCHEMAS,
+  getNodeSchema,
+  getRequiredParams,
+  getConditionallyRequired,
+  getVisibleParams,
+  HTTP_METHODS,
+  FILE_OPERATIONS,
+  LOOP_MODES,
+  IMAGE_OPERATIONS,
+  IMAGE_FORMATS,
+  SPREADSHEET_OPERATIONS,
+  SPREADSHEET_FORMATS,
+  GROUP_MODES,
+  ERROR_STRATEGIES,
+} from "./schemas";
+export type {
+  NodeSchema,
+  ParameterSchema,
+  ParameterType,
+} from "./schemas";
