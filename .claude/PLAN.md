@@ -211,7 +211,9 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 - Added `data-session` attribute to `BntoPageShell` for test observability
 - R2 CORS configured in Cloudflare dashboard
 
-**Resume when:** Auth backlog items are complete — anonymous session lifecycle works end-to-end (Better Auth session → Convex recognizes user → mutations succeed).
+**Stashed changes:** All in-progress code is in `git stash` ("WIP: Sprint 2 Wave 5 integration test work (blocked by auth)"). Run `git stash show` to review, `git stash pop` to restore. Includes: integration test spec, integration playwright config, API route handler, useAnonymousSession fix, BntoPageShell data-session attribute, playwright.config testIgnore.
+
+**Resume when:** Auth backlog items are complete — anonymous session lifecycle works end-to-end (Better Auth session → Convex recognizes user → mutations succeed). Pop the stash and continue from where we left off.
 
 - [ ] `apps/web` — Playwright E2E integration tests: full pipeline (upload → R2 → Go engine → R2 → download) using shared engine test fixtures. Separate `playwright.integration.config.ts` targets `task dev:all` on port 4000. Tests: compress-images (single + multi), resize-images, clean-csv, reset-after-completion
 - [x] `apps/web` — Playwright E2E: verify SEO metadata renders correctly on each Tier 1 slug
