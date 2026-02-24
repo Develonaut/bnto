@@ -266,7 +266,7 @@ Based on Wave 1 decision. Scope adjusts based on chosen approach.
 **Summary of test groups** (see journey doc for full matrix with pass criteria):
 
 - [x] `Anonymous execution flow (A1-A5)` — The happy path. Anonymous user goes from landing to download. Every auth gate passes.
-- [ ] `Anonymous quota + persistence (A6-A7)` — Edge cases. Quota blocks correctly (not auth error), session survives refresh.
+- [x] `Anonymous quota + persistence (A6-A7)` — Edge cases. Quota blocks correctly (not auth error), session survives refresh.
 - [x] `Conversion flow (C1-C3)` — Anonymous → signup. Data carries over, quota upgrades, ownership preserved.
 - [x] `Auth lifecycle (S1-S3)` — Sign-in, sign-out, API surface. Standard auth works alongside anonymous.
 
