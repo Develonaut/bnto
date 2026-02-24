@@ -246,10 +246,12 @@ Three layers ensure transit objects don't accumulate:
 
 **R2 lifecycle rules (configured in Cloudflare dashboard):**
 
+R2 lifecycle rules have a **1-day minimum granularity**. This is fine — layers 1-2 handle the fast path (minutes). Lifecycle rules are the final safety net.
+
 | Prefix | Auto-delete after | Rationale |
 |---|---|---|
-| `uploads/` | 1 hour | Input files consumed within minutes. 1h catches stragglers |
-| `executions/` | 24 hours | Output files get 2h scheduled cleanup. 24h is the final safety net |
+| `uploads/` | 1 day | Input files consumed within minutes. 1-day catches stragglers |
+| `executions/` | 1 day | Output files get 2h scheduled cleanup. 1-day is the final safety net |
 
 Apply these rules to both `bnto-transit` (prod) and `bnto-transit-dev` (dev) buckets.
 

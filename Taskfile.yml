@@ -117,6 +117,13 @@ tasks:
     dir: ./apps/web
     cmds: [pnpm exec playwright test --config=playwright.integration.config.ts]
 
+  # R2 dev cleanup
+  r2:cleanup-dev:
+    desc: Purge all objects from the dev R2 transit bucket
+    dir: ./packages/@bnto/backend
+    cmds:
+      - npx convex run cleanup:purgeAll '{}'
+
   # Cross-cutting
   build:all:
     desc: Build everything (engine + API + frontend)
