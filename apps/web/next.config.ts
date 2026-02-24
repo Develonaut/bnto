@@ -9,19 +9,10 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: resolve(__dirname, "../../"),
   transpilePackages: ["@bnto/auth", "@bnto/core"],
   devIndicators: false,
-  turbopack: {
-    root: resolve(__dirname, "../../"),
-    // Explicit alias for Node.js subpath imports (#components/*, etc.)
-    // Turbopack on Vercel doesn't resolve the `imports` field in package.json
-    // when turbopack.root points to the monorepo root. This makes it explicit.
-    resolveAlias: {
-      "#components/*": "./apps/web/components/*",
-      "#lib/*": "./apps/web/lib/*",
-      "#hooks/*": "./apps/web/hooks/*",
-      "#actions/*": "./apps/web/actions/*",
-      "#src/*": "./apps/web/src/*",
-    },
-  },
+  // turbopack.root omitted: setting it to the monorepo root breaks Node.js
+  // subpath imports (#components/*, etc.) on Vercel because Turbopack resolves
+  // package.json `imports` relative to root, not the app directory.
+  // transpilePackages handles monorepo package resolution without it.
   // Allow e2e tests to use a separate build directory so they don't
   // corrupt the dev server's .next cache (set via NEXT_DIST_DIR env var).
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
