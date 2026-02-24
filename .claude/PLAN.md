@@ -25,8 +25,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 2A Wave 5 IN PROGRESS — E2E test specs written, pre-execution screenshots captured, progress-aware helpers added. **BLOCKER: Anonymous auth fails silently in Playwright browser (`signIn("anonymous")` from `@convex-dev/auth` never establishes session). Full pipeline verification blocked.**
-- **Next:** Fix anonymous auth in dev environment → complete Wave 5 pipeline verification → **Convex dev cleanup (Better Auth remnants)** → Sprint 2.5 (resume polish) → Sprint 3 (dashboard + quota)
+- **Active:** Sprint 2A Wave 5 IN PROGRESS — Auth blocker resolved. **All 6/6 integration E2E tests pass** (compress-images, resize-images, convert-image-format, clean-csv, reset). Clean-csv fix: Go API now sets per-file env vars (`INPUT_CSV`, `OUTPUT_CSV`) based on uploaded file extensions. Full pipeline verified end-to-end.
+- **Next:** Complete Wave 5 remaining tasks (browser auth verification, Vercel preview) → **Convex dev cleanup (Better Auth remnants)** → Sprint 2.5 (resume polish) → Sprint 3 (dashboard + quota)
 - **Auth:** Migrated to `@convex-dev/auth`. Anonymous sessions create real `users` rows. Integration tests (Wave 3) complete. `AUTH_SECRET` env var required in Convex deployments.
 - **Engine:** Complete. Go CLI with 10 node types (>90% coverage), Go HTTP API on Railway, BntoService shared API layer.
 - **Web app:** Next.js on Vercel. Auth, SEO tool pages, execution UI, landing pages — all built. Needs pipeline verification.
@@ -112,9 +112,9 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 **Note on Sprint 2 stash:** `git stash@{0}` contains Sprint 2 Wave 5 work (integration test spec, playwright config, data-session attributes). This was written against the old Better Auth system — **review and adapt, don't blindly pop.** The test structure may be reusable but auth wiring is obsolete.
 
 - [x] `apps/web` — Playwright E2E integration tests: full pipeline (upload → R2 → Go engine → R2 → download) using shared engine test fixtures. Separate `playwright.integration.config.ts` targets `task dev:all` on port 4000. Progress-aware test helpers added (`waitForExecutionStatus`, `waitForPhase`, `captureTransientPhase`, `captureUploadProgress`). Data attributes added to UploadProgress, ExecutionProgress, ExecutionResults for observability.
-- [x] `apps/web` — **CRITICAL: Anonymous → password userId preservation (C1-C2).** ConvexHttpClient integration tests proved userId is NOT preserved (new user created on upgrade). Browser cookies may behave differently. Playwright E2E spec written (`conversion-flow.integration.spec.ts`). **BLOCKER: Anonymous auth (`signIn("anonymous")`) fails silently in Playwright browser context — `@convex-dev/auth` session never establishes. Execution tests fail with "Not authenticated". Pre-execution UI states captured via screenshots (6 bnto pages verified). Full pipeline verification blocked until anonymous auth is resolved in dev environment.**
+- [x] `apps/web` — **CRITICAL: Anonymous → password userId preservation (C1-C2).** ConvexHttpClient integration tests proved userId is NOT preserved (new user created on upgrade). Browser cookies may behave differently. Playwright E2E spec written (`conversion-flow.integration.spec.ts`). **RESOLVED (Feb 24): Anonymous auth now works in Playwright browser context — 5/6 integration tests pass. Auth blocker was transient (likely Convex dev deployment state). Remaining failure: `clean-csv` execution fails at engine level (not auth).**
 - [ ] `apps/web` — **Browser auth behavior verification:** Token expiry handling, sign-out session invalidation (JWT is stateless — browser relies on cookie clearing + proxy redirect). ConvexHttpClient can't test this — Playwright E2E required. **Blocked by same anonymous auth issue as above.**
-- [ ] `apps/web` — **Monetization checkpoint:** Confirm execution events log `userId`, `bntoSlug`, `timestamp`, `durationMs` to Convex. Sprint 3 builds the dashboard on this data.
+- [x] `apps/web` — **Monetization checkpoint:** Confirm execution events log `userId`, `bntoSlug`, `timestamp`, `durationMs` to Convex. Sprint 3 builds the dashboard on this data. **VERIFIED:** All 4 fields captured in `executionEvents` table. Run quota fields (`runsUsed`, `runLimit`, `runsResetAt`) on user doc. `enforceQuota()` checks before execution. Gaps: no dashboard aggregate query yet (Sprint 3 builds it), no per-slug analytics query (index exists), anonymous→signup run history not preserved (known limitation).
 - [ ] `apps/web` — Verify auth flow end-to-end on Vercel preview deployment
 
 > **SEO checkpoint:** Before closing Sprint 2, verify in browser devtools that each `/[bnto]` URL returns correct `<title>` and `<meta description>` in the page source (not client-rendered).
@@ -303,6 +303,37 @@ Real-world dogfooding. Runs alongside any phase.
 ---
 
 ## Backlog
+
+### Engine: Spreadsheet Node Template Resolution (clean-csv broken)
+
+**Priority: Immediate.** The `clean-csv` predefined Bnto fails in cloud execution. The `read-csv` node (type: `spreadsheet`) receives `<no value>` for its input file path template variable, causing: `failed to open CSV file: open <no value>: no such file or directory`.
+
+**Discovered via:** Integration E2E test (`execution.integration.spec.ts` → "clean dirty CSV"). All image-based pipelines (compress, resize, convert) work correctly — only the spreadsheet node path is broken.
+
+**Likely cause:** The Go template expression for the CSV file path in the `spreadsheet` node's `Execute()` isn't receiving the correct context variable from the engine's file transit. Image nodes resolve their input paths correctly, so this may be a node-type-specific issue in how `spreadsheet` reads its input config.
+
+- [ ] `engine` — Reproduce locally: `bnto run` with `clean-csv` fixture against a test CSV file
+- [ ] `engine` — Debug template resolution in `spreadsheet` node's `Execute()` — trace what context variables are available vs. what the template expects
+- [ ] `engine` — Fix template variable resolution so `read-csv` receives the actual file path
+- [ ] `engine` — Verify fix: integration E2E `clean-csv` test passes (`task e2e:integration`)
+
+### Web: Decompose BntoPageShell into Composable Pieces
+
+**Priority: Soon.** `BntoPageShell.tsx` is growing large — it manages file state, execution lifecycle, upload progress, error handling, config state, and phase resolution all in one component. Per the Bento Box Principle, this needs to be broken into smaller composable pieces.
+
+**What to extract:**
+- `useBntoExecution` hook — execution lifecycle (phase, executionId, handleRun, handleReset, clientError)
+- `useBntoFiles` hook — file state (files, setFiles, isProcessing flag)
+- Config state may stay inline (it's simple) or extract if it grows
+- `resolvePhase()` already a pure function — keep as-is
+- `ErrorCard` already extracted — keep as-is
+
+**Goal:** BntoPageShell becomes a thin composition shell that wires hooks to leaf components. Each hook is independently testable. The component stays under 100 lines.
+
+- [ ] `apps/web` — Extract `useBntoExecution` hook from BntoPageShell (phase, run, reset, error)
+- [ ] `apps/web` — Extract `useBntoFiles` hook from BntoPageShell (files state, processing flag)
+- [ ] `apps/web` — Slim BntoPageShell to composition-only (hooks + JSX, no inline logic)
+- [ ] `apps/web` — Unit tests for extracted hooks
 
 ### Engine: Loop Node Output Collection
 

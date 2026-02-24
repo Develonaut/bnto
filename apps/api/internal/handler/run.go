@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -146,8 +147,13 @@ func transitExec(svc *api.BntoService, mgr *execution.Manager, store r2.ObjectSt
 	return &transitResult{result: result, outputFiles: toOutputFiles(uploaded)}, nil
 }
 
-// executeWithEnv runs a workflow with INPUT_DIR and OUTPUT_DIR env vars set.
-// Uses a mutex to prevent concurrent env var clobbering.
+// executeWithEnv runs a workflow with INPUT_DIR, OUTPUT_DIR, and per-file
+// env vars set. Uses a mutex to prevent concurrent env var clobbering.
+//
+// Per-file vars map each uploaded file to INPUT_{EXT} and OUTPUT_{EXT}
+// (e.g., INPUT_CSV, OUTPUT_CSV). This is needed for single-file recipes
+// that reference specific files via template variables like {{.INPUT_CSV}}.
+// Directory-based recipes use {{.INPUT_DIR}}/* and are unaffected.
 func executeWithEnv(ctx context.Context, svc *api.BntoService, mgr *execution.Manager, id string, def *node.Definition, timeout time.Duration, inputDir, outputDir string) (*api.RunResult, error) {
 	envMu.Lock()
 	defer envMu.Unlock()
@@ -157,6 +163,9 @@ func executeWithEnv(ctx context.Context, svc *api.BntoService, mgr *execution.Ma
 	defer os.Unsetenv("INPUT_DIR")
 	defer os.Unsetenv("OUTPUT_DIR")
 
+	fileVars := setPerFileEnvVars(inputDir, outputDir)
+	defer unsetEnvVars(fileVars)
+
 	opts := api.RunOptions{
 		Timeout: timeout,
 		OnProgress: func(nodeID, status string) {
@@ -165,6 +174,57 @@ func executeWithEnv(ctx context.Context, svc *api.BntoService, mgr *execution.Ma
 	}
 
 	return svc.RunWorkflow(ctx, def, opts)
+}
+
+// setPerFileEnvVars scans inputDir for files and sets INPUT_{EXT} and
+// OUTPUT_{EXT} env vars for each. Returns the list of var names set
+// so they can be cleaned up with unsetEnvVars.
+//
+// Convention: file extension (without dot) uppercased becomes the suffix.
+// Example: "data.csv" → INPUT_CSV=/path/to/input/data.csv,
+//                        OUTPUT_CSV=/path/to/output/data.csv
+func setPerFileEnvVars(inputDir, outputDir string) []string {
+	entries, err := os.ReadDir(inputDir)
+	if err != nil {
+		return nil
+	}
+
+	var vars []string
+	seen := make(map[string]bool)
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		ext := filepath.Ext(entry.Name())
+		if ext == "" {
+			continue
+		}
+
+		// Uppercase extension without the dot: ".csv" → "CSV"
+		key := strings.ToUpper(ext[1:])
+		if seen[key] {
+			continue // only first file per extension
+		}
+		seen[key] = true
+
+		inputVar := "INPUT_" + key
+		outputVar := "OUTPUT_" + key
+
+		os.Setenv(inputVar, filepath.Join(inputDir, entry.Name()))
+		os.Setenv(outputVar, filepath.Join(outputDir, entry.Name()))
+
+		vars = append(vars, inputVar, outputVar)
+	}
+
+	return vars
+}
+
+// unsetEnvVars removes the given environment variables.
+func unsetEnvVars(vars []string) {
+	for _, v := range vars {
+		os.Unsetenv(v)
+	}
 }
 
 // toOutputFiles converts r2.FileInfo to execution.OutputFile.
