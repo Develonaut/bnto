@@ -1,122 +1,366 @@
 @import "tailwindcss";
 
-@import "tw-animate-css";
-@plugin '@tailwindcss/typography';
-
 @custom-variant dark (&:is(.dark *));
 
-@source "../**/*.{ts,tsx}";
-
-/* ── Light mode ─────────────────────────────────────────────── */
+/*
+ * Bnto Theme — Mini Motorways Depth
+ *
+ * Directional cast shadow system inspired by Mini Motorways' visual language.
+ *
+ *
+ * SHADOWS — completely rewritten using the "neo-brutalist" technique:
+ * zero-blur box-shadow creating hard-edged isometric cast shadows.
+ * Each shadow is a solid translated copy of the element's shape —
+ * exactly like Mini Motorways buildings casting shadows on a map.
+ *
+ * Design decisions:
+ *
+ * 1. ZERO BLUR — shadows have pixel-sharp edges. No diffusion, no
+ *    softness. This is the single biggest visual difference from
+ *    typical CSS shadows and what creates the Mini Motorways feel.
+ *
+ * 2. 45-DEGREE ANGLE — X and Y offsets are equal (1:1 ratio) creating
+ *    a clean 45-degree diagonal. Studied from Munich, LA Harbor, and
+ *    Dar es Salaam map references.
+ *
+ * 3. WARM-TINTED (light mode) — shadow color is a darkened warm cream
+ *    (oklch with hue ~95), not gray or black. Keeps shadows harmonious
+ *    with the terracotta palette. Dark mode uses near-black with the
+ *    cool slate hue (~264).
+ *
+ * 4. ELEVATION = BUILDING HEIGHT — shadow offset = how tall the building
+ *    is. Larger offset = taller building = longer cast shadow.
+ *    shadow-2xs (1px) = flush | shadow-xl (10px) = skyscraper
+ *
+ * 5. PRESS = SINKING A BUILDING — designed to pair with Press animation:
+ *    Resting: element floats with shadow-xl (tall building, long shadow)
+ *    Hover:   element sinks, shadow shrinks (building getting shorter)
+ *    Pressed: element flush, shadow-2xs (building flat on the ground)
+ *    Both animate via transform only = compositor, zero repaints, 60fps.
+ *
+ * For interactive elements that need the best animation performance,
+ * consider the pseudo-element approach: a ::before with the same
+ * dimensions, border-radius: inherit, translated diagonally, animated
+ * via transform only. See research notes in the codebase.
+ *
+ * Everything else (colors, fonts, radius) is identical to the base theme.
+ */
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.92 0.04 86.47);
-  --primary-foreground: oklch(0.31 0.02 86.64);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* ── Backgrounds & Text ─────────────────────────────────────── */
+  --background: oklch(0.9901 0.0161 95.2193);
+  --foreground: oklch(0.2627 0.0206 28.5372);
+  --card: oklch(1.0000 0 0);
+  --card-foreground: oklch(0.2627 0.0206 28.5372);
+  --popover: oklch(1.0000 0 0);
+  --popover-foreground: oklch(0.2627 0.0206 28.5372);
 
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* ── Primary: Terracotta ───────────────────────────────────── */
+  --primary: oklch(0.6755 0.1791 35.2662);
+  --primary-foreground: oklch(1.0000 0 0);
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* ── Secondary: Soft teal ──────────────────────────────────── */
+  --secondary: oklch(0.9100 0.0500 189.39);
+  --secondary-foreground: oklch(0.3800 0.0550 187.70);
 
-  --radius: 8px;
+  /* ── Muted ─────────────────────────────────────────────────── */
+  --muted: oklch(0.9487 0.0137 92.9849);
+  --muted-foreground: oklch(0.5447 0.0250 31.8671);
 
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  /* ── Accent: Golden yellow ─────────────────────────────────── */
+  --accent: oklch(0.8885 0.1338 91.06);
+  --accent-foreground: oklch(0.2627 0.0206 28.5372);
+
+  /* ── Destructive ───────────────────────────────────────────── */
+  --destructive: oklch(0.6358 0.2088 25.4126);
+  --destructive-foreground: oklch(1.0000 0 0);
+
+  /* ── Success: Earthy green ───────────────────────────────── */
+  --success: oklch(0.6200 0.1780 155.00);
+  --success-foreground: oklch(1.0000 0 0);
+
+  /* ── Warning: Warm amber ─────────────────────────────────── */
+  --warning: oklch(0.7800 0.1500 65.00);
+  --warning-foreground: oklch(0.2627 0.0206 28.5372);
+
+  /* ── Borders & Inputs ──────────────────────────────────────── */
+  --border: oklch(0.8966 0.0165 95.2423);
+  --input: oklch(0.9331 0.0122 96.4290);
+  --ring: oklch(0.6755 0.1791 35.2662);
+
+  /* ── Charts ────────────────────────────────────────────────── */
+  --chart-1: oklch(0.6755 0.1791 35.2662);
+  --chart-2: oklch(0.7868 0.1103 223.0437);
+  --chart-3: oklch(0.8887 0.1337 91.2263);
+  --chart-4: oklch(0.7692 0.1554 157.4196);
+  --chart-5: oklch(0.5401 0.1020 34.6762);
+
+  /* ── Sidebar ───────────────────────────────────────────────── */
+  --sidebar: oklch(0.9901 0.0161 95.2193);
+  --sidebar-foreground: oklch(0.2627 0.0206 28.5372);
+  --sidebar-primary: oklch(0.6755 0.1791 35.2662);
+  --sidebar-primary-foreground: oklch(1.0000 0 0);
+  --sidebar-accent: oklch(0.8885 0.1338 91.06);
+  --sidebar-accent-foreground: oklch(0.2627 0.0206 28.5372);
+  --sidebar-border: oklch(0.8966 0.0165 95.2423);
+  --sidebar-ring: oklch(0.6755 0.1791 35.2662);
+
+  /* ── Typography ────────────────────────────────────────────── */
+  --font-display: "DM Sans", ui-sans-serif, sans-serif, system-ui;
+  --font-sans: "Inter", ui-sans-serif, sans-serif, system-ui;
+  --font-serif: Georgia, serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  /* ── Radius ────────────────────────────────────────────────── */
+  --radius: 1.25rem;
+
+  /* ── Isometric Cast Shadows (light mode) ────────────────────── */
+  /*
+   * Mini Motorways-style hard-edged directional shadows.
+   *
+   * Sun at upper-left. Shadows cast to bottom-right at ~45 degrees.
+   * ZERO BLUR — shadows are solid translated copies of the element,
+   * just like buildings casting shadows on a map.
+   *
+   * Shadow color is a warm darkened version of the cream background
+   * (not gray, not black). This keeps shadows harmonious with the
+   * terracotta palette.
+   *
+   * Scale = building height. Taller buildings cast longer shadows:
+   *   2xs = flush with ground  |  xs = one-story  |  sm = two-story
+   *   (default) = standard     |  md = tall        |  lg = skyscraper
+   *   xl = Press resting state |  2xl = maximum height
+   *
+   * Press interaction: element translates toward its shadow (sinks)
+   * while shadow shrinks (building gets shorter). Both animate via
+   * transform only = compositor thread, zero repaints, 60fps.
+   */
+  --shadow-x: 4px;
+  --shadow-y: 4px;
+  --shadow-blur: 0px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.28;
+  --shadow-color: oklch(0.55 0.02 95);
+
+  --shadow-2xs:
+    1px 1px 0 0 oklch(0.75 0.02 95 / 0.20);
+
+  --shadow-xs:
+    2px 2px 0 0 oklch(0.70 0.02 95 / 0.22);
+
   --shadow-sm:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    3px 3px 0 0 oklch(0.65 0.02 95 / 0.25);
+
+  --shadow:
+    4px 4px 0 0 oklch(0.60 0.02 95 / 0.28);
+
   --shadow-md:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    5px 5px 0 0 oklch(0.58 0.02 95 / 0.28);
+
   --shadow-lg:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    7px 7px 0 0 oklch(0.55 0.02 95 / 0.30);
+
   --shadow-xl:
-    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    10px 10px 0 0 oklch(0.52 0.02 95 / 0.30);
 
-  --font-dm-sans: "dmSans", sans-serif;
-  --font-inter: "inter", sans-serif;
-  --font-sans:
-    var(--font-dm-sans), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+  --shadow-2xl:
+    14px 14px 0 0 oklch(0.50 0.02 95 / 0.32);
 
-  --display-family: var(--font-sans);
-  --text-family: var(--font-inter);
-  --display-weight: 600;
-  --text-weight: 400;
+  /* ── Depth (wall + ground shadow defaults) ────────────────────── */
+  --depth-wall: oklch(0.82 0.02 95);
+  --depth-shadow: oklch(0.60 0.02 95 / 0.20);
+
+  /* ── Animation Durations ───────────────────────────────────── */
+  --duration-instant: 75ms;
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 700ms;
+  --duration-slower: 1200ms;
+
+  /* ── Easings: Transitions (smooth deceleration) ──────────── */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ── Easings: Springs (elastic entrances) ────────────────── */
+  --ease-spring: linear(0, 0.001 0.44%, 0.0045 0.94%, 0.0195 2.03%, 0.0446 3.19%, 0.0811 4.5%, 0.1598 6.82%, 0.3685 12.34%, 0.4693 15.17%, 0.5663, 0.6498 21.27%, 0.7215 24.39%, 0.7532 25.98%, 0.7829 27.65%, 0.8105, 0.8349 31.14%, 0.8573 32.95%, 0.8776 34.84%, 0.8964 36.87%, 0.9136 39.05%, 0.929 41.37%, 0.9421 43.77%, 0.9537 46.38%, 0.9636 49.14%, 0.9789 55.31%, 0.9888 62.35%, 0.9949 71.06%, 0.9982 82.52%, 0.9997 99.94%);
+  --ease-spring-bouncy: linear(0, 0.0018, 0.0069, 0.0151 1.74%, 0.0277 2.4%, 0.062 3.7%, 0.1115 5.15%, 0.2211 7.77%, 0.4778 13.21%, 0.5912 15.75%, 0.6987 18.44%, 0.7862 20.98%, 0.861 23.59%, 0.8926, 0.9205, 0.945 27.51%, 0.9671 28.89%, 0.9868, 1.003 31.79%, 1.0224 34.11%, 1.0358 36.58%, 1.0436 39.27%, 1.046 42.31%, 1.0446 44.71%, 1.0406 47.47%, 1.0118 61.84%, 1.0027 69.53%, 0.9981 80.49%, 0.9991 99.94%);
+  --ease-spring-bouncier: linear(0, 0.0023, 0.0088, 0.0194 1.59%, 0.035 2.17%, 0.078 3.33%, 0.1415 4.64%, 0.2054 5.75%, 0.2821 6.95%, 0.5912 11.45%, 0.7205 13.43%, 0.8393 15.45%, 0.936 17.39%, 0.9778, 1.015, 1.0477, 1.0759, 1.0998 22.22%, 1.1203, 1.1364, 1.1484 25.26%, 1.1586 26.61%, 1.1629 28.06%, 1.1613 29.56%, 1.1537 31.2%, 1.1434 32.6%, 1.1288 34.19%, 1.0508 41.29%, 1.0174 44.87%, 1.0025 46.89%, 0.9911 48.87%, 0.9826 50.9%, 0.9769 53.03%, 0.9735 56.02%, 0.9748 59.45%, 0.9964 72.64%, 1.0031 79.69%, 1.0042 86.83%, 1.0008 99.97%);
+
+  /* ── Tracking ──────────────────────────────────────────────── */
+  --tracking-normal: -0.01em;
+  --spacing: 0.25rem;
 }
-
-/* ── Dark mode ──────────────────────────────────────────────── */
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  /* ── Backgrounds & Text ─────────────────────────────────────── */
+  --background: oklch(0.2607 0.0156 269.0735);
+  --foreground: oklch(0.9901 0.0161 95.2193);
+  --card: oklch(0.3090 0.0210 265.8998);
+  --card-foreground: oklch(0.9901 0.0161 95.2193);
+  --popover: oklch(0.3090 0.0210 265.8998);
+  --popover-foreground: oklch(0.9901 0.0161 95.2193);
 
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  /* ── Primary: Terracotta ───────────────────────────────────── */
+  --primary: oklch(0.6755 0.1791 35.2662);
+  --primary-foreground: oklch(1.0000 0 0);
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* ── Secondary: Dark teal ──────────────────────────────────── */
+  --secondary: oklch(0.3800 0.0500 188.30);
+  --secondary-foreground: oklch(0.8800 0.0450 189.32);
+
+  /* ── Muted ─────────────────────────────────────────────────── */
+  --muted: oklch(0.3584 0.0229 261.2207);
+  --muted-foreground: oklch(0.8283 0.0278 95.3961);
+
+  /* ── Accent: Golden (richer for dark) ──────────────────────── */
+  --accent: oklch(0.8199 0.1574 88.2756);
+  --accent-foreground: oklch(0.2607 0.0156 269.0735);
+
+  /* ── Destructive ───────────────────────────────────────────── */
+  --destructive: oklch(0.5788 0.2215 27.7967);
+  --destructive-foreground: oklch(1.0000 0 0);
+
+  /* ── Success: Earthy green (darker for dark bg) ──────────── */
+  --success: oklch(0.5600 0.1680 155.00);
+  --success-foreground: oklch(1.0000 0 0);
+
+  /* ── Warning: Warm amber (slightly deeper for dark bg) ───── */
+  --warning: oklch(0.7200 0.1500 65.00);
+  --warning-foreground: oklch(0.2627 0.0206 28.5372);
+
+  /* ── Borders & Inputs ──────────────────────────────────────── */
+  --border: oklch(0.3584 0.0229 261.2207);
+  --input: oklch(0.3584 0.0229 261.2207);
+  --ring: oklch(0.6755 0.1791 35.2662);
+
+  /* ── Charts ────────────────────────────────────────────────── */
+  --chart-1: oklch(0.6755 0.1791 35.2662);
+  --chart-2: oklch(0.7868 0.1103 223.0437);
+  --chart-3: oklch(0.8887 0.1337 91.2263);
+  --chart-4: oklch(0.7692 0.1554 157.4196);
+  --chart-5: oklch(0.5401 0.1020 34.6762);
+
+  /* ── Sidebar ───────────────────────────────────────────────── */
+  --sidebar: oklch(0.2303 0.0125 264.2926);
+  --sidebar-foreground: oklch(0.9901 0.0161 95.2193);
+  --sidebar-primary: oklch(0.6755 0.1791 35.2662);
+  --sidebar-primary-foreground: oklch(1.0000 0 0);
+  --sidebar-accent: oklch(0.8199 0.1574 88.2756);
+  --sidebar-accent-foreground: oklch(0.2607 0.0156 269.0735);
+  --sidebar-border: oklch(0.3584 0.0229 261.2207);
+  --sidebar-ring: oklch(0.6755 0.1791 35.2662);
+
+  /* ── Typography ────────────────────────────────────────────── */
+  --font-display: "DM Sans", ui-sans-serif, sans-serif, system-ui;
+  --font-sans: "Inter", ui-sans-serif, sans-serif, system-ui;
+  --font-serif: Georgia, serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  /* ── Radius ────────────────────────────────────────────────── */
+  --radius: 1.25rem;
+
+  /* ── Isometric Cast Shadows (dark mode — Tokyo Night) ────────── */
+  /*
+   * Same 45-degree angle, zero blur. Pure black, higher opacity.
+   * Dark surfaces need stronger shadow contrast to read.
+   */
+  --shadow-x: 4px;
+  --shadow-y: 4px;
+  --shadow-blur: 0px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.50;
+  --shadow-color: #000000;
+
+  --shadow-2xs:
+    1px 1px 0 0 oklch(0.10 0.01 264 / 0.35);
+
+  --shadow-xs:
+    2px 2px 0 0 oklch(0.10 0.01 264 / 0.40);
+
+  --shadow-sm:
+    3px 3px 0 0 oklch(0.08 0.01 264 / 0.45);
+
+  --shadow:
+    4px 4px 0 0 oklch(0.08 0.01 264 / 0.50);
+
+  --shadow-md:
+    5px 5px 0 0 oklch(0.06 0.01 264 / 0.50);
+
+  --shadow-lg:
+    7px 7px 0 0 oklch(0.05 0.01 264 / 0.55);
+
+  --shadow-xl:
+    10px 10px 0 0 oklch(0.04 0.01 264 / 0.55);
+
+  --shadow-2xl:
+    14px 14px 0 0 oklch(0.03 0.01 264 / 0.60);
+
+  /* ── Depth (dark mode) ───────────────────────────────────────── */
+  --depth-wall: oklch(0.20 0.02 264);
+  --depth-shadow: oklch(0.05 0.01 264 / 0.40);
 }
 
-/* ── Theme inline ──────────────────────────────────────────── */
+/* ── Entrance Keyframes ──────────────────────────────────────────
+ * "from" only — animation ends at the element's natural state.
+ * animation-fill-mode: both handles the rest.
+ *
+ * Spring easing on these creates the Mini Motorways "pop onto
+ * the map" feel — elastic overshoot that settles naturally.
+ * ────────────────────────────────────────────────────────────── */
+
+/* Pure opacity — overlays, subtle reveals */
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+/* Opacity + scale — cards, panels, buildings materializing */
+@keyframes scale-in {
+  from { opacity: 0; scale: var(--scale-from, 0.9); }
+}
+
+/* Opacity + upward translate — content reveals, list items */
+@keyframes slide-up {
+  from { opacity: 0; translate: 0 var(--slide-distance, 8px); }
+}
+
+/* Opacity + downward translate — dropdowns, menus */
+@keyframes slide-down {
+  from { opacity: 0; translate: 0 calc(-1 * var(--slide-distance, 8px)); }
+}
+
+/* ── Emphasis Keyframes ──────────────────────────────────────── */
+
+/* Gentle opacity pulse — like MM building demand timer */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Ambient breathe — very subtle idle presence */
+@keyframes breathe {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.015; }
+}
+
+/* ── Stagger Cascade ───────────────────────────────────────────
+ * Container class. Children receive staggered animation-delay
+ * via --stagger-index CSS variable set in JSX.
+ *
+ * Usage:
+ *   <div class="stagger-cascade">
+ *     {items.map((item, i) => (
+ *       <div key={item.id} style={{ '--stagger-index': i }}
+ *            class="motion-safe:animate-slide-up">
+ *         ...
+ *       </div>
+ *     ))}
+ *   </div>
+ * ──────────────────────────────────────────────────────────── */
+.stagger-cascade > * {
+  animation-delay: calc(var(--stagger-index, 0) * var(--stagger-interval, 60ms));
+}
 
 @theme inline {
-  /* Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -133,6 +377,10 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -150,17 +398,16 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Radius */
-  --radius-xs: calc(var(--radius) - 4px);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 2 - 4px);
-  --radius-2xl: calc(var(--radius) * 2);
-  --radius-3xl: calc(var(--radius) * 3);
-  --radius-4xl: calc(var(--radius) * 4);
+  --radius-xl: calc(var(--radius) + 4px);
 
-  /* Shadows */
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);
@@ -170,129 +417,315 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
-  /* Breakpoints */
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1400px;
+  /* ── Animation Durations ──────────────────────────────── */
+  --duration-instant: var(--duration-instant);
+  --duration-fast: var(--duration-fast);
+  --duration-normal: var(--duration-normal);
+  --duration-slow: var(--duration-slow);
+  --duration-slower: var(--duration-slower);
 
-  /* Fonts */
-  --font-sans: var(--font-sans);
-  --font-serif: var(--font-serif);
-  --font-mono: var(--font-mono);
-  --font-display: var(--display-family);
-  --font-text: var(--text-family);
-  --font-weight-display: var(--display-weight);
-  --font-weight-text: var(--text-weight);
+  /* ── Easings ──────────────────────────────────────────── */
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
+  --ease-spring: var(--ease-spring);
+  --ease-spring-bouncy: var(--ease-spring-bouncy);
+  --ease-spring-bouncier: var(--ease-spring-bouncier);
 
-  /* Animation durations */
-  --duration-instant: 75ms;
-  --duration-fast: 150ms;
-  --duration-normal: 300ms;
-  --duration-slow: 500ms;
-  --duration-slower: 1200ms;
+  /* ── Entrance Animations (spring — playful pop-in) ──── */
+  --animate-fade-in: fade-in var(--duration-normal) var(--ease-out) both;
+  --animate-scale-in: scale-in var(--duration-slow) var(--ease-spring) both;
+  --animate-slide-up: slide-up var(--duration-slow) var(--ease-spring) both;
+  --animate-slide-down: slide-down var(--duration-slow) var(--ease-spring) both;
 
-  /* Easings */
-  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* ── Emphasis Animations (smooth — calm after entrance) */
+  --animate-pulse-soft: pulse-soft 2s var(--ease-in-out) infinite;
+  --animate-breathe: breathe 3s var(--ease-in-out) infinite;
 
-  /* Accordion animation */
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-
-  @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
-  }
-  @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
-  }
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-normal: var(--tracking-normal);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
 }
-
-/* ── Utilities ─────────────────────────────────────────────── */
-
-@utility container {
-  margin-inline: auto;
-  padding-inline: 1.5rem;
-  @media (width >= 1400px) {
-    max-width: 1220px;
-  }
-}
-
-/* ── Base layer ────────────────────────────────────────────── */
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
-  }
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    letter-spacing: var(--tracking-normal);
   }
 }
 
-@layer utilities {
-  body,
-  .font-text {
-    font-family: var(--font-text);
-    font-weight: var(--text-weight);
-  }
-  h1,
-  h2,
-  .font-display {
-    font-family: var(--font-display);
-    font-weight: var(--display-weight);
-    -webkit-font-feature-settings:
-      "ss02" on,
-      "ss03" on,
-      "ss04" on;
-    -moz-font-feature-settings:
-      "ss02" on,
-      "ss03" on,
-      "ss04" on;
-    -ms-font-feature-settings:
-      "ss02" on,
-      "ss03" on,
-      "ss04" on;
-    font-feature-settings:
-      "ss02" on,
-      "ss03" on,
-      "ss04" on;
-  }
-  .font-mono {
-    font-family: var(--font-mono), monospace;
-  }
-}
+/* ── Layer 1: .depth — Static 3D Raise ────────────────────────────
+ *
+ * Three-layer building illusion: face (the element) + walls (::before)
+ * + ground shadow (::after). Like Mini Motorways buildings viewed from
+ * above — the face is the roof, walls are the darker sides, shadow is
+ * cast on the ground.
+ *
+ * CSS variables:
+ *   --depth        — offset in px (set by size modifiers)
+ *   --depth-wall   — wall color (set by color variants or :root default)
+ *   --depth-shadow — ground shadow color (same)
+ *
+ * Usage:
+ *   <div class="depth depth-sm">                            — static card
+ *   <button class="depth pressable depth-md depth-default"> — interactive
+ * ────────────────────────────────────────────────────────────────── */
 
-@layer components {
-  button {
-    cursor: pointer;
-  }
-  [class*="border"] {
-    @apply border-border;
-  }
-}
-
-html,
-body {
-  scroll-behavior: smooth;
-}
-body {
+.depth {
+  --depth: 6px;
+  --depth-x: var(--depth);
+  --depth-y: var(--depth);
+  --shadow-x: 8px;
+  --shadow-y: 12px;
   position: relative;
+  transform-style: preserve-3d;
+  border: 1px solid var(--depth-wall);
+}
+
+/* Walls — darker shade offset behind the face.
+ * Direction driven by --depth-x / --depth-y so the perspective
+ * angle varies per size tier (top-down for sm, isometric for lg). */
+.depth::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--depth-wall);
+  transform: translate3d(var(--depth-x), var(--depth-y), -1px);
+}
+
+/* Ground shadow — long southeast cast, like Mini Motorways.
+ * Decoupled from wall offset: shadows project much further out
+ * and stretch more downward than rightward. */
+.depth::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--depth-shadow);
+  transform: translate3d(var(--shadow-x), var(--shadow-y), -2px);
+}
+
+/* ── Size modifiers ─────────────────────────────────────────────
+ *
+ * Depth correlates with perspective: smaller = nearly top-down,
+ * larger = more isometric (more wall visible on the right side).
+ *
+ *   depth-sm: house    — mostly downward, thin right wall
+ *   depth-md: building — balanced diagonal (current default)
+ *   depth-lg: tower    — more rightward, prominent side walls
+ * ────────────────────────────────────────────────────────────── */
+
+.depth-sm {
+  --depth: 4px;
+  --depth-x: 2px;
+  --depth-y: 4px;
+  --shadow-x: 6px;
+  --shadow-y: 10px;
+}
+.depth-md {
+  --depth: 6px;
+  --depth-x: 5px;
+  --depth-y: 6px;
+  --shadow-x: 10px;
+  --shadow-y: 14px;
+}
+.depth-lg {
+  --depth: 10px;
+  --depth-x: 8px;
+  --depth-y: 8px;
+  --shadow-x: 16px;
+  --shadow-y: 19px;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────── */
+
+.depth-none {
+  --depth: 0px;
+  --depth-x: 0px;
+  --depth-y: 0px;
+  --shadow-x: 0px;
+  --shadow-y: 0px;
+}
+.depth-none::before,
+.depth-none::after {
+  content: none;
+}
+
+/* ── Color variants ──────────────────────────────────────────────
+ * Only set --depth-wall and --depth-shadow. Face color comes from
+ * Tailwind bg-* utilities on the element.
+ * ────────────────────────────────────────────────────────────────── */
+
+/* Default (Primary) — terracotta walls */
+.depth-default {
+  --depth-wall: oklch(0.50 0.15 35);
+  --depth-shadow: oklch(0.50 0.10 35 / 0.25);
+}
+
+/* Secondary — teal walls */
+.depth-secondary {
+  --depth-wall: oklch(0.70 0.05 189);
+  --depth-shadow: oklch(0.55 0.04 189 / 0.25);
+}
+
+/* Muted — warm off-white walls */
+.depth-muted {
+  --depth-wall: oklch(0.82 0.02 95);
+  --depth-shadow: oklch(0.60 0.02 95 / 0.20);
+}
+
+/* Destructive — red walls */
+.depth-destructive {
+  --depth-wall: oklch(0.45 0.17 25);
+  --depth-shadow: oklch(0.45 0.12 25 / 0.25);
+}
+
+/* Accent — golden walls */
+.depth-accent {
+  --depth-wall: oklch(0.70 0.12 91);
+  --depth-shadow: oklch(0.60 0.08 91 / 0.25);
+}
+
+/* Success — green walls */
+.depth-success {
+  --depth-wall: oklch(0.45 0.14 155);
+  --depth-shadow: oklch(0.45 0.10 155 / 0.25);
+}
+
+/* Warning — amber walls */
+.depth-warning {
+  --depth-wall: oklch(0.58 0.13 65);
+  --depth-shadow: oklch(0.55 0.10 65 / 0.25);
+}
+
+/* Outline — subtle neutral walls */
+.depth-outline {
+  --depth-wall: oklch(0.82 0.02 95 / 0.30);
+  --depth-shadow: oklch(0.60 0.02 95 / 0.15);
+}
+
+/* ── Layer 2: .pressable — Animation Layer ─────────────────────────
+ *
+ * Adds hover sink + active flush animation to any .depth element.
+ * Uses --depth for transform calculations.
+ *
+ * Hover:  face translates 33% of --depth, walls shrink to 66%
+ * Active: face flush (100%), walls gone, shadow opacity 0
+ *
+ * data-force-state="hover|active" mirrors pseudo-states for
+ * showcase and storybook use.
+ *
+ * Does NOT change background color — that comes from Tailwind
+ * hover:bg-{color}/90 utilities on the element.
+ * ────────────────────────────────────────────────────────────────── */
+
+.pressable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  will-change: transform;
+  transition:
+    transform 150ms cubic-bezier(0, 0, 0.58, 1),
+    background-color 150ms cubic-bezier(0, 0, 0.58, 1);
+}
+
+.pressable::before,
+.pressable::after {
+  transition:
+    transform 150ms cubic-bezier(0, 0, 0.58, 1),
+    opacity 150ms cubic-bezier(0, 0, 0.58, 1);
+}
+
+/* Hover / focus-within — face sinks 33%, walls at 66%, shadow shrinks */
+.pressable:hover,
+.pressable:focus-within,
+.pressable[data-force-state="hover"] {
+  transform: translate(
+    calc(var(--depth-x) * 0.33),
+    calc(var(--depth-y) * 0.33)
+  );
+}
+
+.pressable:hover::before,
+.pressable:focus-within::before,
+.pressable[data-force-state="hover"]::before {
+  transform: translate3d(
+    calc(var(--depth-x) * 0.66),
+    calc(var(--depth-y) * 0.66),
+    -1px
+  );
+}
+
+.pressable:hover::after,
+.pressable:focus-within::after,
+.pressable[data-force-state="hover"]::after {
+  transform: translate3d(
+    calc(var(--shadow-x) * 0.66),
+    calc(var(--shadow-y) * 0.66),
+    -2px
+  );
+}
+
+/* Active — face flush, walls gone, shadow invisible */
+.pressable:active,
+.pressable[data-force-state="active"] {
+  transform: translate(var(--depth-x), var(--depth-y));
+  transition-duration: 34ms;
+}
+
+.pressable:active::before,
+.pressable[data-force-state="active"]::before {
+  transform: translate3d(0px, 0px, -1px);
+  transition-duration: 34ms;
+}
+
+.pressable:active::after,
+.pressable[data-force-state="active"]::after {
+  transform: translate3d(0px, 0px, -2px);
+  opacity: 0;
+  transition-duration: 34ms;
+}
+
+/* Focus — native browser outline, inset on the face */
+.pressable:focus-visible {
+  outline: auto;
+  outline-offset: -4px;
+}
+
+/* Reduced motion — static, no transforms, no stagger delays */
+@media (prefers-reduced-motion: reduce) {
+  .stagger-cascade > * {
+    animation-delay: 0s;
+  }
+
+  .pressable,
+  .pressable::before,
+  .pressable::after {
+    transition: none !important;
+    will-change: auto !important;
+  }
+
+  .pressable:hover,
+  .pressable:focus-within,
+  .pressable:active {
+    transform: none;
+  }
+
+  .pressable:hover::before,
+  .pressable:focus-within::before,
+  .pressable:active::before {
+    transform: translate3d(var(--depth-x), var(--depth-y), -1px);
+  }
+
+  .pressable:hover::after,
+  .pressable:focus-within::after,
+  .pressable:active::after {
+    transform: translate3d(var(--shadow-x), var(--shadow-y), -2px);
+  }
 }

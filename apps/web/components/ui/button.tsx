@@ -13,6 +13,10 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground depth-default",
         destructive:
           "bg-destructive text-white focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:brightness-75 depth-destructive",
+        success:
+          "bg-success text-success-foreground focus-visible:ring-success/20 dark:focus-visible:ring-success/40 depth-success",
+        warning:
+          "bg-warning text-warning-foreground focus-visible:ring-warning/20 dark:focus-visible:ring-warning/40 depth-warning",
         outline: "bg-card text-card-foreground depth-outline",
         secondary: "bg-secondary text-secondary-foreground depth-secondary",
         muted: "bg-muted text-muted-foreground depth-muted",

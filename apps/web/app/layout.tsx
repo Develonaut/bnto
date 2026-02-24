@@ -5,7 +5,7 @@ import { getToken } from "@bnto/auth/server";
 import { Navbar } from "@/components/blocks/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Providers } from "./providers";
-import "./globals.mini-motorways-depth.css";
+import "./globals.css";
 
 const dmSans = localFont({
   src: [

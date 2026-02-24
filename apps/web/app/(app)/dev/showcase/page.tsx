@@ -82,11 +82,13 @@ function ColorSwatches() {
     { name: "Accent", bg: "bg-accent", fg: "text-accent-foreground", depth: "depth-accent" },
     { name: "Muted", bg: "bg-muted", fg: "text-muted-foreground", depth: "depth-muted" },
     { name: "Destructive", bg: "bg-destructive", fg: "text-destructive-foreground", depth: "depth-destructive" },
+    { name: "Success", bg: "bg-success", fg: "text-success-foreground", depth: "depth-success" },
+    { name: "Warning", bg: "bg-warning", fg: "text-warning-foreground", depth: "depth-warning" },
     { name: "Card", bg: "bg-card", fg: "text-card-foreground", depth: "depth-outline" },
   ];
 
   return (
-    <div className="grid grid-cols-6 gap-4">
+    <div className="grid grid-cols-4 gap-4">
       {swatches.map(({ name, bg, fg, depth }) => (
         <Card
           key={name}
@@ -112,7 +114,7 @@ function ButtonRow({
   variant,
   label,
 }: {
-  variant: "default" | "secondary" | "muted" | "destructive" | "outline";
+  variant: "default" | "secondary" | "muted" | "destructive" | "success" | "warning" | "outline";
   label: string;
 }) {
   return (
@@ -144,6 +146,8 @@ function ButtonShowcase() {
       <ButtonRow variant="outline" label="Outline" />
       <ButtonRow variant="muted" label="Muted" />
       <ButtonRow variant="destructive" label="Destructive" />
+      <ButtonRow variant="success" label="Success" />
+      <ButtonRow variant="warning" label="Warning" />
     </div>
   );
 }

@@ -16,7 +16,7 @@ Two distinct motion modes inspired by Mini Motorways:
 
 ## Token Scale
 
-All animation timings use CSS custom properties defined in `globals.mini-motorways-depth.css` and registered in `@theme inline`.
+All animation timings use CSS custom properties defined in `globals.css` and registered in `@theme inline`.
 
 ### Durations
 
@@ -89,7 +89,7 @@ All entrance animations use `animation-fill-mode: both` so elements are invisibl
 ```
 Can CSS handle it?
   |-- Yes (entrance, hover, focus, opacity, transform, color, stagger)
-  |     -> CSS animation/transition in globals.mini-motorways-depth.css
+  |     -> CSS animation/transition in globals.css
   |     Prefix with motion-safe: for accessibility
   |
   +-- No (exit on unmount, layout animations, gesture-based interaction)
