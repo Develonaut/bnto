@@ -15,11 +15,11 @@ const nextConfig: NextConfig = {
     // Turbopack on Vercel doesn't resolve the `imports` field in package.json
     // when turbopack.root points to the monorepo root. This makes it explicit.
     resolveAlias: {
-      "#components/*": "./components/*",
-      "#lib/*": "./lib/*",
-      "#hooks/*": "./hooks/*",
-      "#actions/*": "./actions/*",
-      "#src/*": "./src/*",
+      "#components/*": "./apps/web/components/*",
+      "#lib/*": "./apps/web/lib/*",
+      "#hooks/*": "./apps/web/hooks/*",
+      "#actions/*": "./apps/web/actions/*",
+      "#src/*": "./apps/web/src/*",
     },
   },
   // Allow e2e tests to use a separate build directory so they don't
