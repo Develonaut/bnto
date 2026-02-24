@@ -67,20 +67,20 @@
   --muted: oklch(0.9487 0.0137 92.9849);
   --muted-foreground: oklch(0.5447 0.0250 31.8671);
 
-  /* ── Accent: Golden yellow ─────────────────────────────────── */
-  --accent: oklch(0.8885 0.1338 91.06);
+  /* ── Accent: Dusty rose (Mini Motorways Moscow/Beijing pink) ─ */
+  --accent: oklch(0.78 0.10 15);
   --accent-foreground: oklch(0.2627 0.0206 28.5372);
 
   /* ── Destructive ───────────────────────────────────────────── */
   --destructive: oklch(0.6358 0.2088 25.4126);
   --destructive-foreground: oklch(1.0000 0 0);
 
-  /* ── Success: Earthy green ───────────────────────────────── */
-  --success: oklch(0.6200 0.1780 155.00);
+  /* ── Success: Sage green (Mini Motorways terrain) ─────────── */
+  --success: oklch(0.69 0.14 150);
   --success-foreground: oklch(1.0000 0 0);
 
-  /* ── Warning: Warm amber ─────────────────────────────────── */
-  --warning: oklch(0.7800 0.1500 65.00);
+  /* ── Warning: Warm golden-amber (Mini Motorways Munich) ───── */
+  --warning: oklch(0.84 0.1334 77);
   --warning-foreground: oklch(0.2627 0.0206 28.5372);
 
   /* ── Borders & Inputs ──────────────────────────────────────── */
@@ -100,7 +100,7 @@
   --sidebar-foreground: oklch(0.2627 0.0206 28.5372);
   --sidebar-primary: oklch(0.6755 0.1791 35.2662);
   --sidebar-primary-foreground: oklch(1.0000 0 0);
-  --sidebar-accent: oklch(0.8885 0.1338 91.06);
+  --sidebar-accent: oklch(0.78 0.10 15);
   --sidebar-accent-foreground: oklch(0.2627 0.0206 28.5372);
   --sidebar-border: oklch(0.8966 0.0165 95.2423);
   --sidebar-ring: oklch(0.6755 0.1791 35.2662);
@@ -212,20 +212,20 @@
   --muted: oklch(0.3584 0.0229 261.2207);
   --muted-foreground: oklch(0.8283 0.0278 95.3961);
 
-  /* ── Accent: Golden (richer for dark) ──────────────────────── */
-  --accent: oklch(0.8199 0.1574 88.2756);
+  /* ── Accent: Dusty rose (richer for dark) ──────────────────── */
+  --accent: oklch(0.75 0.12 15);
   --accent-foreground: oklch(0.2607 0.0156 269.0735);
 
   /* ── Destructive ───────────────────────────────────────────── */
   --destructive: oklch(0.5788 0.2215 27.7967);
   --destructive-foreground: oklch(1.0000 0 0);
 
-  /* ── Success: Earthy green (darker for dark bg) ──────────── */
-  --success: oklch(0.5600 0.1680 155.00);
+  /* ── Success: Sage green (deeper for dark bg) ────────────── */
+  --success: oklch(0.62 0.13 150);
   --success-foreground: oklch(1.0000 0 0);
 
-  /* ── Warning: Warm amber (slightly deeper for dark bg) ───── */
-  --warning: oklch(0.7200 0.1500 65.00);
+  /* ── Warning: Warm golden-amber (deeper for dark bg) ───────── */
+  --warning: oklch(0.78 0.13 77);
   --warning-foreground: oklch(0.2627 0.0206 28.5372);
 
   /* ── Borders & Inputs ──────────────────────────────────────── */
@@ -245,7 +245,7 @@
   --sidebar-foreground: oklch(0.9901 0.0161 95.2193);
   --sidebar-primary: oklch(0.6755 0.1791 35.2662);
   --sidebar-primary-foreground: oklch(1.0000 0 0);
-  --sidebar-accent: oklch(0.8199 0.1574 88.2756);
+  --sidebar-accent: oklch(0.75 0.12 15);
   --sidebar-accent-foreground: oklch(0.2607 0.0156 269.0735);
   --sidebar-border: oklch(0.3584 0.0229 261.2207);
   --sidebar-ring: oklch(0.6755 0.1791 35.2662);
@@ -586,22 +586,22 @@
   --depth-shadow: oklch(0.45 0.12 25 / 0.25);
 }
 
-/* Accent — golden walls */
+/* Accent — dusty rose walls */
 .depth-accent {
-  --depth-wall: oklch(0.70 0.12 91);
-  --depth-shadow: oklch(0.60 0.08 91 / 0.25);
+  --depth-wall: oklch(0.55 0.12 15);
+  --depth-shadow: oklch(0.52 0.10 15 / 0.25);
 }
 
-/* Success — green walls */
+/* Success — sage green walls */
 .depth-success {
-  --depth-wall: oklch(0.45 0.14 155);
-  --depth-shadow: oklch(0.45 0.10 155 / 0.25);
+  --depth-wall: oklch(0.50 0.11 150);
+  --depth-shadow: oklch(0.50 0.08 150 / 0.25);
 }
 
-/* Warning — amber walls */
+/* Warning — golden-amber walls */
 .depth-warning {
-  --depth-wall: oklch(0.58 0.13 65);
-  --depth-shadow: oklch(0.55 0.10 65 / 0.25);
+  --depth-wall: oklch(0.62 0.11 77);
+  --depth-shadow: oklch(0.58 0.09 77 / 0.25);
 }
 
 /* Outline — subtle neutral walls */
