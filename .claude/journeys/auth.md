@@ -62,8 +62,8 @@ Anonymous → signup. The revenue funnel.
 
 | # | Journey | Steps | Pass Criteria |
 |---|---------|-------|---------------|
-| **C1** | Anonymous → signup conversion | A1 (has runs) → sign up with email/password | Same userId preserved. Existing runs and executions still belong to this user. `isAnonymous` flips to `false`. |
-| **C2** | Converted user retains access | C1 → call `api.executions.get` for pre-conversion execution | Returns the execution. Ownership still valid — userId didn't change. |
+| **C1** | Anonymous → signup conversion | A1 (has runs) → sign up with email/password | Same userId preserved. Existing runs and executions still belong to this user. `isAnonymous` flips to `false`. **CRITICAL: Must be tested in browser E2E** — see known limitation below. |
+| **C2** | Converted user retains access | C1 → call `api.executions.get` for pre-conversion execution | Returns the execution. Ownership still valid — userId didn't change. **Depends on C1 userId preservation — browser E2E only.** |
 | **C3** | Converted user gets full quota | C1 → check `runsUsedThisMonth` and `runLimit` | Quota upgraded from anonymous limit to free-tier limit (25/month). Existing run count preserved (not reset). |
 
 ### Standard Auth Lifecycle
@@ -89,6 +89,20 @@ Email sign-in/sign-out and API surface.
 
 ---
 
+## Known Limitations
+
+### ConvexHttpClient does NOT preserve userId during anonymous → password upgrade (C1-C2)
+
+**Discovered:** Feb 2026 during integration test development.
+
+`ConvexHttpClient` uses stateless JWT auth — it doesn't carry session cookies. When `@convex-dev/auth` v0.0.90 processes a password `signUp` action, it receives the JWT token but has no way to link the new password credential to the existing anonymous session. Result: the `createOrUpdateUser` callback gets no `existingUserId`, so it creates a **new user** instead of patching the anonymous one.
+
+**Impact:** C1 ("Same userId preserved") and C2 ("Ownership still valid") **cannot be verified** via `ConvexHttpClient` integration tests. The Vitest integration tests (`conversion-flow.test.ts`) document the actual behavior and explicitly assert that userIds differ as a known limitation.
+
+**Browser behavior may differ.** The React auth provider (`@convex-dev/auth/react`) tracks sessions via cookies. The browser-based flow may correctly link the anonymous session to the new password credential, preserving userId. **This is a critical E2E test** — if userId preservation fails in the browser too, the conversion funnel is broken (anonymous user's runs, executions, and workflows would be orphaned on upgrade).
+
+**Action required:** Sprint 2A Wave 5 Playwright E2E tests MUST verify C1 userId preservation in a real browser with cookies. If it fails there too, a Convex migration or custom `createOrUpdateUser` logic will be needed.
+
 ## Implementation Notes
 
 - Tests run against real Convex dev backend (`task dev:all`), not mocks
@@ -96,5 +110,5 @@ Email sign-in/sign-out and API surface.
 - Group tests by file matching the matrix sections:
   - `anonymous-execution.test.ts` (A1-A5)
   - `anonymous-edge-cases.test.ts` (A6-A7)
-  - `conversion-flow.test.ts` (C1-C3)
+  - `conversion-flow.test.ts` (C1-C3) — **ConvexHttpClient baseline only; browser E2E needed for C1-C2**
   - `auth-lifecycle.test.ts` (S1-S3)

@@ -103,7 +103,7 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 **Test infrastructure:** Requires `task dev:all` (Convex dev + Go API via tunnel + R2 dev bucket).
 
 - [x] `@bnto/core` — **Test harness setup:** `ConvexHttpClient` factory with anonymous + password auth, test lifecycle helpers (cleanup), Vitest integration config (separate from unit tests, longer timeouts). File: `packages/core/src/__tests__/integration/setup.ts`
-- [ ] `@bnto/core` — **Auth integration tests:** Anonymous sign-in returns valid token, authenticated client calls protected queries/mutations, unauthenticated client rejected, password sign-up + sign-in works, anonymous → authenticated upgrade preserves userId
+- [x] `@bnto/core` — **Auth integration tests:** Anonymous sign-in, authenticated client calls, unauthenticated rejection, password sign-up/sign-in, anonymous → password upgrade (userId NOT preserved via ConvexHttpClient — browser E2E needed). Files: `auth-lifecycle.test.ts` (S1-S3, 16 tests), `conversion-flow.test.ts` (C1-C3, 14 tests). Also fixed: `@convex-dev/auth` v0.0.90 response parsing in `setup.ts`, broken `convex.config.ts` component import, `auth.config.ts` provider config, deprecated Vitest `poolOptions`
 - [ ] `@bnto/core` — **Execution integration tests:** `core.executions.startPredefined()` against real Convex dev — creates execution record, increments runsUsed, enforces quota. Verify status transitions (pending → running → completed/failed) via polling
 - [ ] `@bnto/core` — **Upload/download integration tests:** `core.uploads.generateUrls()` returns valid R2 presigned URLs, upload succeeds, after execution `core.downloads.getDownloadUrls()` returns valid download URLs. Full transit: upload → execute → download against R2 dev bucket
 
@@ -112,6 +112,7 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 **Note on Sprint 2 stash:** `git stash@{0}` contains Sprint 2 Wave 5 work (integration test spec, playwright config, data-session attributes). This was written against the old Better Auth system — **review and adapt, don't blindly pop.** The test structure may be reusable but auth wiring is obsolete.
 
 - [ ] `apps/web` — Playwright E2E integration tests: full pipeline (upload → R2 → Go engine → R2 → download) using shared engine test fixtures. Separate `playwright.integration.config.ts` targets `task dev:all` on port 4000
+- [ ] `apps/web` — **CRITICAL: Anonymous → password userId preservation (C1-C2).** ConvexHttpClient integration tests proved userId is NOT preserved (new user created on upgrade). Browser cookies may behave differently. Playwright E2E MUST verify: sign in anonymously → run a bnto → sign up with email → confirm same userId, same executions, same workflows. If this fails in browser too, the conversion funnel is broken. See `journeys/auth.md` Known Limitations.
 - [ ] `apps/web` — **Monetization checkpoint:** Confirm execution events log `userId`, `bntoSlug`, `timestamp`, `durationMs` to Convex. Sprint 3 builds the dashboard on this data.
 - [ ] `apps/web` — Verify auth flow end-to-end on Vercel preview deployment
 

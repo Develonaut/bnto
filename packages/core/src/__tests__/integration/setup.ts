@@ -34,22 +34,33 @@ export interface AuthenticatedClient {
   refreshToken: string;
 }
 
-/** Shape returned by @convex-dev/auth's signIn action for anonymous/password. */
+/**
+ * Shape returned by @convex-dev/auth v0.0.90 signIn action.
+ * The response is a flat `{ tokens }` object — userId is extracted from
+ * the JWT `sub` claim (format: "userId|sessionId").
+ */
 interface SignInResult {
-  kind: "signedIn";
-  signedIn: {
-    userId: string;
-    sessionId: string;
-    tokens: { token: string; refreshToken: string } | null;
-  } | null;
+  tokens: { token: string; refreshToken: string } | null;
 }
 
-/** Shape returned by @convex-dev/auth's signIn action for token refresh. */
-interface RefreshResult {
-  kind: "refreshTokens";
-  signedIn: {
-    tokens: { token: string; refreshToken: string };
-  };
+/**
+ * Decode a JWT payload without verifying the signature.
+ * Only used in tests to extract userId from the `sub` claim.
+ */
+function decodeJwtPayload(token: string): { sub: string; [key: string]: unknown } {
+  const payload = token.split(".")[1];
+  return JSON.parse(Buffer.from(payload, "base64url").toString());
+}
+
+/**
+ * Extract the Convex userId from a JWT token.
+ * The `sub` claim has format "userId|sessionId".
+ */
+function extractUserId(token: string): string {
+  const { sub } = decodeJwtPayload(token);
+  const userId = sub.split("|")[0];
+  if (!userId) throw new Error(`Could not extract userId from JWT sub: ${sub}`);
+  return userId;
 }
 
 // ── Environment ──────────────────────────────────────────────────────────
@@ -83,18 +94,18 @@ export async function createAnonymousClient(): Promise<AuthenticatedClient> {
     provider: "anonymous",
   })) as SignInResult;
 
-  if (result.kind !== "signedIn" || !result.signedIn?.tokens) {
+  if (!result.tokens) {
     throw new Error(
       `Anonymous sign-in failed: ${JSON.stringify(result)}`,
     );
   }
 
-  const { token, refreshToken } = result.signedIn.tokens;
+  const { token, refreshToken } = result.tokens;
   client.setAuth(token);
 
   return {
     client,
-    userId: result.signedIn.userId,
+    userId: extractUserId(token),
     token,
     refreshToken,
   };
@@ -123,18 +134,18 @@ export async function createPasswordClient(
     params: { email, password, flow: options.flow },
   })) as SignInResult;
 
-  if (result.kind !== "signedIn" || !result.signedIn?.tokens) {
+  if (!result.tokens) {
     throw new Error(
       `Password sign-in failed (${options.flow}): ${JSON.stringify(result)}`,
     );
   }
 
-  const { token, refreshToken } = result.signedIn.tokens;
+  const { token, refreshToken } = result.tokens;
   client.setAuth(token);
 
   return {
     client,
-    userId: result.signedIn.userId,
+    userId: extractUserId(token),
     token,
     refreshToken,
   };
@@ -162,18 +173,18 @@ export async function upgradeAnonymousToPassword(
     params: { email, password, flow: "signUp" },
   })) as SignInResult;
 
-  if (result.kind !== "signedIn" || !result.signedIn?.tokens) {
+  if (!result.tokens) {
     throw new Error(
       `Anonymous upgrade failed: ${JSON.stringify(result)}`,
     );
   }
 
-  const { token, refreshToken } = result.signedIn.tokens;
+  const { token, refreshToken } = result.tokens;
   anonClient.client.setAuth(token);
 
   return {
     client: anonClient.client,
-    userId: result.signedIn.userId,
+    userId: extractUserId(token),
     token,
     refreshToken,
   };
@@ -188,25 +199,20 @@ export async function refreshClientToken(
 ): Promise<AuthenticatedClient> {
   const result = (await authClient.client.action(anyApi.auth.signIn, {
     refreshToken: authClient.refreshToken,
-  })) as SignInResult | RefreshResult;
+  })) as SignInResult;
 
-  const tokens =
-    result.kind === "refreshTokens"
-      ? result.signedIn.tokens
-      : result.signedIn?.tokens;
-
-  if (!tokens) {
+  if (!result.tokens) {
     throw new Error(
       `Token refresh failed: ${JSON.stringify(result)}`,
     );
   }
 
-  authClient.client.setAuth(tokens.token);
+  authClient.client.setAuth(result.tokens.token);
 
   return {
     ...authClient,
-    token: tokens.token,
-    refreshToken: tokens.refreshToken,
+    token: result.tokens.token,
+    refreshToken: result.tokens.refreshToken,
   };
 }
 

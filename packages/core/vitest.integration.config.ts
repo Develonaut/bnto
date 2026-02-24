@@ -15,10 +15,7 @@ export default defineConfig({
     environment: "node",
     testTimeout: 60_000,
     hookTimeout: 30_000,
-    // Pool of 1 — sequential execution avoids rate limiting on auth actions
-    pool: "forks",
-    poolOptions: {
-      forks: { singleFork: true },
-    },
+    // Sequential execution avoids rate limiting on auth actions
+    sequence: { concurrent: false },
   },
 });
