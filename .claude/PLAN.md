@@ -25,11 +25,12 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 2A Wave 5 IN PROGRESS — Auth blocker resolved. **All 6/6 integration E2E tests pass** (compress-images, resize-images, convert-image-format, clean-csv, reset). Clean-csv fix: Go API now sets per-file env vars (`INPUT_CSV`, `OUTPUT_CSV`) based on uploaded file extensions. Full pipeline verified end-to-end.
-- **Next:** Complete Wave 5 remaining tasks (browser auth verification, Vercel preview) → **Convex dev cleanup (Better Auth remnants)** → Sprint 2.5 (resume polish) → Sprint 3 (dashboard + quota)
-- **Auth:** Migrated to `@convex-dev/auth`. Anonymous sessions create real `users` rows. Integration tests (Wave 3) complete. `AUTH_SECRET` env var required in Convex deployments.
-- **Engine:** Complete. Go CLI with 10 node types (>90% coverage), Go HTTP API on Railway, BntoService shared API layer.
-- **Web app:** Next.js on Vercel. Auth, SEO tool pages, execution UI, landing pages — all built. Needs pipeline verification.
+- **Active:** Closing Sprint 2A → Sprint 2B (Browser Execution, M1 MVP)
+- **Strategic direction:** Browser-first. All Tier 1 bntos run client-side via Rust→WASM (or JS fallback). Cloud execution (Railway + R2) is built and working — ready for M4 (premium server-side bntos). See ROADMAP.md.
+- **Cloud pipeline:** Complete. 6/6 integration E2E tests pass. Go API on Railway, R2 file transit, Convex real-time subscriptions — all verified end-to-end. This is M4 infrastructure delivered ahead of schedule.
+- **Auth:** Migrated to `@convex-dev/auth`. Anonymous sessions create real `users` rows. Integration tests complete. `AUTH_SECRET` env var required in Convex deployments.
+- **Engine:** Complete. Go CLI with 10 node types (>90% coverage), Go HTTP API on Railway, BntoService shared API layer. Paused for web — browser adapter is M1 priority.
+- **Web app:** Next.js on Vercel. Auth, SEO tool pages, execution UI, landing pages — all built.
 - **Packages:** `@bnto/core` (layered singleton), `@bnto/auth` (`@convex-dev/auth` wrappers), `@bnto/backend` (Convex schema + functions). UI co-located in `apps/web/components/`.
 
 ---
@@ -62,12 +63,15 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 Pricing, revenue projections, and "ready to charge" criteria live in Notion ("SEO & Monetization Strategy").
 
+**Monetization model (updated Feb 2026):** Browser execution is free unlimited. Pro sells real value — persistence, collaboration, premium compute. See ROADMAP.md for the full model.
+
 | Sprint | What Ships | Revenue Implication |
 |--------|-----------|---------------------|
-| Sprint 3 | Dashboard + run quota tracking | Accounts exist. Run counter visible. Upgrade prompt scaffolded. |
+| Sprint 2B | Browser execution (M1 MVP) | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine. SEO footprint live. |
+| Sprint 3 | Platform features (accounts, history) | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented. |
 | Sprint 4 | JSON editor | Power users self-identify. Custom flows are a Pro signal. |
-| Sprint 5-6 | Desktop app | Top-of-funnel. Word of mouth begins. |
-| Sprint 7 | Stripe + quota enforcement | **First revenue possible.** Free capped at 25/month. Pro at $8/month. |
+| Sprint 5-6 | Desktop app | Top-of-funnel. Word of mouth begins. Free forever — trust signal. |
+| Sprint 7 | Stripe + Pro tier | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing. |
 
 ---
 
@@ -113,8 +117,8 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 
 - [x] `apps/web` — Playwright E2E integration tests: full pipeline (upload → R2 → Go engine → R2 → download) using shared engine test fixtures. Separate `playwright.integration.config.ts` targets `task dev:all` on port 4000. Progress-aware test helpers added (`waitForExecutionStatus`, `waitForPhase`, `captureTransientPhase`, `captureUploadProgress`). Data attributes added to UploadProgress, ExecutionProgress, ExecutionResults for observability.
 - [x] `apps/web` — **CRITICAL: Anonymous → password userId preservation (C1-C2).** ConvexHttpClient integration tests proved userId is NOT preserved (new user created on upgrade). Browser cookies may behave differently. Playwright E2E spec written (`conversion-flow.integration.spec.ts`). **RESOLVED (Feb 24): Anonymous auth now works in Playwright browser context — 5/6 integration tests pass. Auth blocker was transient (likely Convex dev deployment state). Remaining failure: `clean-csv` execution fails at engine level (not auth).**
-- [ ] `apps/web` — **Browser auth behavior verification:** Token expiry handling, sign-out session invalidation (JWT is stateless — browser relies on cookie clearing + proxy redirect). ConvexHttpClient can't test this — Playwright E2E required. **Blocked by same anonymous auth issue as above.**
-- [x] `apps/web` — **Monetization checkpoint:** Confirm execution events log `userId`, `bntoSlug`, `timestamp`, `durationMs` to Convex. Sprint 3 builds the dashboard on this data. **VERIFIED:** All 4 fields captured in `executionEvents` table. Run quota fields (`runsUsed`, `runLimit`, `runsResetAt`) on user doc. `enforceQuota()` checks before execution. Gaps: no dashboard aggregate query yet (Sprint 3 builds it), no per-slug analytics query (index exists), anonymous→signup run history not preserved (known limitation).
+- [ ] `apps/web` — **Browser auth behavior verification:** Token expiry handling, sign-out session invalidation (JWT is stateless — browser relies on cookie clearing + proxy redirect). ConvexHttpClient can't test this — Playwright E2E required. **Moved to Sprint 3 (M2: Platform Features) — not blocking M1 browser execution.**
+- [x] `apps/web` — **Monetization checkpoint:** Confirm execution events log `userId`, `bntoSlug`, `timestamp`, `durationMs` to Convex. **VERIFIED:** All 4 fields captured in `executionEvents` table. Run quota fields on user doc. `enforceQuota()` checks before execution. **Note:** Run quota enforcement applies to server-side bntos (M4). Browser bntos are free unlimited per ROADMAP.md.
 - [ ] `apps/web` — Verify auth flow end-to-end on Vercel preview deployment
 
 > **SEO checkpoint:** Before closing Sprint 2, verify in browser devtools that each `/[bnto]` URL returns correct `<title>` and `<meta description>` in the page source (not client-rendered).
@@ -140,31 +144,97 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 
 ---
 
-### Sprint 3: Dashboard + Run Quota
-**Goal:** Authenticated users see their history, run count, and get a meaningful account experience. Monetization infrastructure in place before any paywall.
+### Sprint 2B: Browser Execution (M1 MVP)
+**Goal:** All 6 Tier 1 bntos run 100% client-side in the browser. Zero backend for core experience. "Your files never leave your computer." This is the M1 milestone deliverable.
 
-#### Wave 1 (parallel — quota schema + dashboard components)
+**Strategic context:** Browser execution costs us $0 and gives users unlimited free runs. Cloud execution (already built in Sprint 2/2A) becomes premium infrastructure for M4 (AI, shell, video). See ROADMAP.md for the full browser-first strategy.
 
-- [ ] `@bnto/backend` — Add `runsUsedThisMonth`, `runResetDate`, `planTier` to user schema (if not already present)
-- [ ] `@bnto/backend` — Monthly reset cron (reset `runsUsedThisMonth` on the 1st of each month)
-- [ ] `@bnto/backend` — Increment run counter on each execution (check before allowing, reject if over limit)
-- [ ] `@bnto/core` — `useRunsRemaining()` hook (returns `{ used, limit, resetDate }`)
+#### Wave 1 (parallel — `@bnto/nodes` foundation)
+
+The engine-agnostic package that any execution target (Rust WASM, JS, Go) consumes. Build this first — it's the safety net regardless of engine choice.
+
+- [x] `packages/@bnto/nodes` — Create package: node type definitions (what each node does, input/output types)
+- [ ] `packages/@bnto/nodes` — Migrate recipe definitions from `engine/pkg/menu/recipes/` to TypeScript (6 Tier 1 recipes)
+- [ ] `packages/@bnto/nodes` — Define input/output schemas per node type (drives config panel UI — Atomiton `createFieldsFromSchema` pattern)
+- [ ] `packages/@bnto/nodes` — Workflow validation functions (works in browser, CLI, desktop)
+- [ ] `packages/@bnto/nodes` — Unit tests for schemas and validation
+
+#### Wave 2 (sequential — first Rust WASM node + evaluation checkpoint)
+
+Build one node in Rust, compile to WASM, run in a Web Worker. This is the M1 evaluation — by the end of this wave, we know if Rust works for us.
+
+- [ ] `engine-wasm/` — Set up Rust workspace with `wasm-pack` + `wasm-bindgen` targeting web
+- [ ] `engine-wasm/` — Build `compress-images` node in Rust (MozJPEG for JPEG, OxiPNG for PNG, WebP via `image` crate)
+- [ ] `apps/web` — Web Worker wrapper with progress reporting via `postMessage`
+- [ ] `packages/core` — Browser adapter: detect browser runtime, route execution to WASM Web Worker
+- [ ] `apps/web` — Wire BntoPageShell to use browser adapter for `/compress-images`
+- [ ] `apps/web` — E2E test: compress-images runs entirely client-side (no backend required)
+
+**EVALUATION CHECKPOINT — answer honestly after this wave:**
+- Is development velocity acceptable? (Building nodes getting faster?)
+- Is the WASM boundary manageable? (Data passes cleanly, File/Blob handling works?)
+- Is bundle size reasonable? (< 500KB gzipped for all nodes?)
+- Is the ecosystem covering our needs? (`image` and `csv` crates work?)
+- Is developer experience tolerable? (Build times, debugging?)
+
+**If Rust passes → continue Wave 3a (Rust). If Rust fails → switch to Wave 3b (JS).**
+
+#### Wave 3a: Remaining Rust WASM nodes (if Rust passed checkpoint)
+
+- [ ] `engine-wasm/` — `resize-images` node (Lanczos3/CatmullRom filters via `image` crate)
+- [ ] `engine-wasm/` — `convert-image-format` node (decode any → encode any via `image` crate)
+- [ ] `engine-wasm/` — `clean-csv` node (`csv` + `serde` crates)
+- [ ] `engine-wasm/` — `rename-csv-columns` node (`csv` + `serde` crates, header rewrite)
+- [ ] `apps/web` — `rename-files` stays pure JS (no Rust needed — pattern matching on File objects)
+- [ ] `apps/web` — Web Worker wrappers for all new WASM nodes
+- [ ] `apps/web` — E2E tests: all 6 bntos run client-side
+
+#### Wave 3b: JS library adapters (if Rust failed checkpoint)
+
+- [ ] `apps/web` — Image processing via jSquash (MozJPEG, OxiPNG, WebP, AVIF — used by Discourse for 50MB+ images)
+- [ ] `apps/web` — CSV processing via PapaParse (1M rows in ~5s)
+- [ ] `apps/web` — `rename-files` stays pure JS
+- [ ] `apps/web` — Web Worker wrappers for all JS adapters
+- [ ] `apps/web` — E2E tests: all 6 bntos run client-side
+
+#### Wave 4 (sequential — integration + polish)
+
+- [ ] `apps/web` — Decompose BntoPageShell: extract `useBntoExecution` and `useBntoFiles` hooks, slim to composition shell
+- [ ] `apps/web` — Update BntoPageShell to route through browser adapter (not cloud pipeline) for Tier 1 bntos
+- [ ] `apps/web` — Zip + individual download for multi-file browser results
+- [ ] `apps/web` — Performance benchmarks: bundle size per node, processing speed vs cloud, memory usage
+- [ ] `apps/web` — Update all E2E screenshots for browser execution flow
+- [ ] `apps/web` — `task ui:build` + `task ui:lint` pass clean
+
+---
+
+### Sprint 3: Platform Features (M2)
+**Goal:** Accounts earn their keep. Users who sign up get persistence, history, and a reason to stay. Conversion hooks are natural — Save, History, Premium Bntos — not artificial run caps.
+
+#### Wave 1 (parallel — account value + analytics schema)
+
+- [ ] `@bnto/backend` — `planTier` field on user schema (free, pro). Usage analytics fields: `totalRuns`, `lastRunAt`
+- [ ] `@bnto/backend` — Execution analytics: aggregate queries for per-user history (by slug, by date range)
+- [ ] `@bnto/core` — `useExecutionHistory()` hook (paginated, per-user)
+- [ ] `@bnto/core` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
 - [ ] `apps/web` — WorkflowCard component (name, description, node count, last run status)
 - [ ] `apps/web` — StatusBadge component (pending, running, completed, failed)
 - [ ] `apps/web` — EmptyState component (no workflows yet)
 
-#### Wave 2 (parallel — dashboard UI)
+#### Wave 2 (parallel — dashboard + conversion hooks)
 
-- [ ] `apps/web` — Dashboard page: list of saved workflows, recent executions, run counter widget
-- [ ] `apps/web` — Run counter widget ("X of 25 runs used this month, resets [date]")
-- [ ] `apps/web` — Upgrade prompt component (copy from Notion: "You've used all 25 free runs this month. Upgrade to Pro for 500 runs/month — or download the desktop app for unlimited local processing. Pro is $8/month. That's it.")
-- [ ] `apps/web` — Execution history page (list of past runs with status and output links)
+- [ ] `apps/web` — Dashboard page: saved workflows, recent executions, usage analytics
+- [ ] `apps/web` — Execution history page (list of past runs with status, re-run capability)
+- [ ] `apps/web` — **Save prompt** (conversion hook): "Want to keep this workflow? Sign up to save it." — appears after successful browser execution for anonymous users
+- [ ] `apps/web` — **History prompt** (conversion hook): "Sign up to access your execution history and re-run past workflows."
+- [ ] `apps/web` — **Browser auth behavior verification:** Token expiry, sign-out invalidation (moved from Sprint 2A Wave 5)
+- [ ] `apps/web` — Pricing page update: Pro sells persistence, collaboration, premium compute — not run limits
 
 #### Wave 3 (sequential — test)
 
-- [ ] `apps/web` — Playwright E2E: run counter increments after execution
-- [ ] `apps/web` — Playwright E2E: upgrade prompt appears when limit reached
-- [ ] `@bnto/backend` — Unit tests for run counter logic and monthly reset cron
+- [ ] `apps/web` — Playwright E2E: save prompt appears after anonymous execution
+- [ ] `apps/web` — Playwright E2E: execution history page shows past runs for authenticated users
+- [ ] `@bnto/backend` — Unit tests for execution analytics queries
 
 ---
 
@@ -194,26 +264,30 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 
 ## Phase 2: Desktop App (Local Execution)
 
-**Goal:** Free desktop app using Wails v2. Same React frontend, local Go engine. Free forever, unlimited runs. No account needed. Trust signal and top-of-funnel growth driver.
+**Goal:** Free desktop app. Same React frontend, local engine execution. Free forever, unlimited runs. No account needed. Trust signal and top-of-funnel growth driver.
 
-### Sprint 5: Wails Bootstrap
+**Desktop tech depends on M1 outcome:**
+- If Rust WASM succeeded → **Tauri** (Rust-native). One codebase for browser + desktop + CLI.
+- If we bailed to JS → **Wails v2** (Go-native). Go engine powers desktop + CLI. JS adapters stay for browser.
+
+### Sprint 5: Desktop Bootstrap
 
 #### Wave 1 (parallel — setup)
 
-- [ ] `apps/desktop` — Bootstrap Wails v2 project with Vite + React
-- [ ] `@bnto/core` — Implement Wails adapter (replace stubs with real Go bindings)
-- [ ] `engine` — Expose engine functions for Wails bindings (RunWorkflow, ValidateWorkflow, etc.)
+- [ ] `apps/desktop` — Bootstrap desktop project (Tauri or Wails, per M1 outcome)
+- [ ] `@bnto/core` — Implement desktop adapter (Tauri IPC bindings or Wails Go bindings)
+- [ ] `engine` — Expose engine functions for desktop bindings (RunWorkflow, ValidateWorkflow, etc.)
 
 #### Wave 2 (parallel — integration)
 
-- [ ] `apps/desktop` — Wire up Go ↔ React bindings (auto-generated TypeScript from Go structs)
-- [ ] `@bnto/core` — Runtime detection routes to Wails adapter in Wails webview
+- [ ] `apps/desktop` — Wire up native ↔ React bindings
+- [ ] `@bnto/core` — Runtime detection routes to desktop adapter in native webview
 - [ ] `apps/desktop` — Local file browser for selecting .bnto.json files
 
 #### Wave 3 (sequential — verify)
 
-- [ ] `apps/desktop` — Verify workflow list, edit, and save work via Wails bindings
-- [ ] `apps/desktop` — Verify runtime detection correctly identifies Wails environment
+- [ ] `apps/desktop` — Verify workflow list, edit, and save work via native bindings
+- [ ] `apps/desktop` — Verify runtime detection correctly identifies desktop environment
 
 ---
 
@@ -244,9 +318,15 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 
 **Goal:** Wire up payments, enforce quotas, make the product feel complete.
 
-**"Ready to charge" gate:** Before Sprint 7, confirm: real users running Bntos, run counter data accurate, upgrade prompt built and tested, people return voluntarily.
+**"Ready to charge" gate:** Before Sprint 7, confirm: real users running browser bntos, conversion hooks built and tested (Save, History, Premium), people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
 
-### Sprint 7: Stripe + Quota Enforcement
+### Sprint 7: Stripe + Pro Tier (M5)
+
+**Goal:** First revenue. Pro sells real value — not artificial limits on browser-native operations.
+
+**What Pro includes:** $8/month or $69/year. Saved workflows, execution history (30-day retention), team sharing (up to 5 members), server-side premium bntos (AI, shell, video — M4), priority processing, API access.
+
+**What stays free forever:** All browser-capable bntos, unlimited runs, desktop app. See ROADMAP.md trust commitments.
 
 #### Wave 1 (parallel — payments)
 
@@ -255,16 +335,16 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 - [ ] `apps/web` — Upgrade page (`/upgrade`) — pricing, Pro benefits, Stripe checkout CTA
 - [ ] `apps/web` — Billing management page (current plan, cancel, manage via Stripe portal)
 
-#### Wave 2 (parallel — enforcement)
+#### Wave 2 (parallel — Pro feature gates)
 
-- [ ] `apps/api` — Reject execution if `runsUsedThisMonth >= limit` (server-side)
-- [ ] `apps/web` — File size enforcement at R2 presigned URL generation (free: 25MB, Pro: 500MB)
-- [ ] `@bnto/backend` — Pro feature gates: 30-day history retention, team sharing (up to 5 members), priority queue
+- [ ] `@bnto/backend` — Pro feature gates: 30-day history retention, team sharing (up to 5 members), priority processing queue
+- [ ] `apps/api` — Server-side execution quota enforcement (applies to premium server-side bntos only — AI, shell, video)
+- [ ] `apps/web` — File size enforcement at R2 presigned URL generation for server-side bntos (free: 25MB, Pro: 500MB)
 
 #### Wave 3 (sequential — test)
 
-- [ ] `apps/web` — Playwright E2E: free user hits limit, sees upgrade prompt, upgrades via Stripe
-- [ ] `apps/web` — Playwright E2E: Pro user runs >25 flows without hitting limit
+- [ ] `apps/web` — Playwright E2E: free user sees Pro conversion hooks (save, history, premium bntos)
+- [ ] `apps/web` — Playwright E2E: Pro user has access to saved workflows and execution history
 
 ---
 
@@ -304,49 +384,51 @@ Real-world dogfooding. Runs alongside any phase.
 
 ## Backlog
 
-### Engine: Spreadsheet Node Template Resolution (clean-csv broken)
+### Infra: Shared Test Fixtures Package (`@bnto/test-fixtures`)
 
-**Priority: Immediate.** The `clean-csv` predefined Bnto fails in cloud execution. The `read-csv` node (type: `spreadsheet`) receives `<no value>` for its input file path template variable, causing: `failed to open CSV file: open <no value>: no such file or directory`.
+**Priority: High (Sprint 2B prerequisite).** Centralized test assets — photos, CSVs, spreadsheets, sample files — shared across packages and apps. Currently test fixtures are scattered (engine fixtures in `engine/tests/fixtures/`, web E2E uses ad-hoc files). A single package means `@bnto/nodes`, `@bnto/core`, `apps/web` E2E, and engine tests all use the same canonical test data.
 
-**Discovered via:** Integration E2E test (`execution.integration.spec.ts` → "clean dirty CSV"). All image-based pipelines (compress, resize, convert) work correctly — only the spreadsheet node path is broken.
+**What it contains:**
+- Sample images (JPEG, PNG, WebP — small, medium, large sizes)
+- Sample CSVs (clean, dirty with empty rows/whitespace, large row count)
+- Sample files for rename operations (various extensions)
+- Helper functions to load fixtures by name
+- TypeScript + Go consumption (TS package for web/core, Go reads from same directory via `go:embed` or path)
 
-**Likely cause:** The Go template expression for the CSV file path in the `spreadsheet` node's `Execute()` isn't receiving the correct context variable from the engine's file transit. Image nodes resolve their input paths correctly, so this may be a node-type-specific issue in how `spreadsheet` reads its input config.
+- [ ] `packages/@bnto/test-fixtures` — Create package with sample images (JPEG, PNG, WebP at various sizes)
+- [ ] `packages/@bnto/test-fixtures` — Add sample CSVs (clean, dirty, large)
+- [ ] `packages/@bnto/test-fixtures` — Add miscellaneous files for rename/file operations
+- [ ] `packages/@bnto/test-fixtures` — TypeScript helpers to load fixtures by name
+- [ ] `packages/@bnto/test-fixtures` — Update `apps/web/e2e/` to import fixtures from shared package
+- [ ] `engine` — Update Go test fixtures to reference shared directory (or symlink)
+
+### Engine: Spreadsheet Node Template Resolution — M3/M4 (Go engine)
+
+**Milestone: M3/M4.** Go engine work — not blocking M1 (browser execution uses Rust/JS, not Go). The `clean-csv` predefined Bnto fails in cloud execution. The `read-csv` node (type: `spreadsheet`) receives `<no value>` for its input file path template variable.
+
+**Discovered via:** Integration E2E test. All image-based pipelines work — only the spreadsheet node path is broken.
 
 - [ ] `engine` — Reproduce locally: `bnto run` with `clean-csv` fixture against a test CSV file
-- [ ] `engine` — Debug template resolution in `spreadsheet` node's `Execute()` — trace what context variables are available vs. what the template expects
+- [ ] `engine` — Debug template resolution in `spreadsheet` node's `Execute()`
 - [ ] `engine` — Fix template variable resolution so `read-csv` receives the actual file path
 - [ ] `engine` — Verify fix: integration E2E `clean-csv` test passes (`task e2e:integration`)
 
-### Web: Decompose BntoPageShell into Composable Pieces
+### Web: BntoPageShell Decomposition — Sprint 2B Wave 4
 
-**Priority: Soon.** `BntoPageShell.tsx` is growing large — it manages file state, execution lifecycle, upload progress, error handling, config state, and phase resolution all in one component. Per the Bento Box Principle, this needs to be broken into smaller composable pieces.
+**Promoted to Sprint 2B Wave 4.** BntoPageShell needs to be rewired for the browser adapter anyway. Decomposition happens as part of that work. See Sprint 2B Wave 4 tasks.
 
-**What to extract:**
-- `useBntoExecution` hook — execution lifecycle (phase, executionId, handleRun, handleReset, clientError)
-- `useBntoFiles` hook — file state (files, setFiles, isProcessing flag)
-- Config state may stay inline (it's simple) or extract if it grows
-- `resolvePhase()` already a pure function — keep as-is
-- `ErrorCard` already extracted — keep as-is
+### Engine: Loop Node Output Collection — M3/M4 (Go engine)
 
-**Goal:** BntoPageShell becomes a thin composition shell that wires hooks to leaf components. Each hook is independently testable. The component stays under 100 lines.
-
-- [ ] `apps/web` — Extract `useBntoExecution` hook from BntoPageShell (phase, run, reset, error)
-- [ ] `apps/web` — Extract `useBntoFiles` hook from BntoPageShell (files state, processing flag)
-- [ ] `apps/web` — Slim BntoPageShell to composition-only (hooks + JSX, no inline logic)
-- [ ] `apps/web` — Unit tests for extracted hooks
-
-### Engine: Loop Node Output Collection
-
-The `loop` node currently collects original items, not sub-node outputs. A workflow like "loop + edit-fields → collect transformed rows → write" doesn't work — the loop passes through the original rows, discarding the edit-fields transformation.
+**Milestone: M3/M4.** Go engine work — not blocking M1. The `loop` node currently collects original items, not sub-node outputs.
 
 **Impact:** The `rename-csv-columns` fixture is a read → write pass-through. True column remapping requires this fix.
 
 - [ ] `engine` — Loop node collects sub-node outputs instead of (or in addition to) original items
 - [ ] `engine` — Alternative: new array-level transform node that operates on all rows at once
 
-### Engine: `pdf` Node Type
+### Engine: `pdf` Node Type — M3/M4 (Go engine)
 
-Required for the PDF to Images Bnto (Tier 2, 50K+ monthly searches).
+**Milestone: M3/M4.** Go engine work. Required for the PDF to Images Bnto (Tier 2, 50K+ monthly searches).
 
 - [ ] `engine` — Implement `pdf` node type (wrap `pdfcpu` Go library, or shell-command + ghostscript as interim)
 - [ ] `engine` — Unit tests for PDF → image conversion
@@ -370,9 +452,9 @@ The Convex dev deployment (`zealous-canary-422`) still contains stale data from 
 - [ ] `@bnto/backend` — Run cleanup against dev deployment, verify table health
 - [ ] `@bnto/backend` — (If needed) Run cleanup against production deployment
 
-### Infra: Configure R2 Lifecycle Rules
+### Infra: Configure R2 Lifecycle Rules — M4 (cloud execution)
 
-R2 object cleanup layers 1-2 are implemented in code. Layer 3 (Cloudflare lifecycle rules) needs manual dashboard configuration.
+**Milestone: M4.** R2 is only used for cloud (server-side) execution. Not needed for M1 browser execution.
 
 | Bucket | Prefix | Auto-delete after |
 |---|---|---|
@@ -405,16 +487,16 @@ Current E2E tests mix CSS classes, `getByRole`, `getByText`, and `data-testid`. 
 
 - [ ] `apps/web` — Audit E2E specs, add `data-testid` attributes, update selectors
 
-### Testing: Concurrent Quota Race Condition
+### Testing: Concurrent Quota Race Condition — M4/M5 (server-side quotas)
 
-Two simultaneous `startPredefined` calls from the same user could both pass the `enforceQuota` check before either increments `runsUsed` — allowing a user to exceed their limit. The current flow is: read user → check `runsUsed >= runLimit` → patch `runsUsed + 1`. If two requests interleave between the read and the patch, both pass.
+**Milestone: M4/M5.** Quota enforcement only applies to server-side bntos. Browser bntos are free unlimited. This race condition matters when server-side execution has limits.
 
 - [ ] `@bnto/core` — Integration test: fire 2+ concurrent `startPredefined` calls for a user at limit-1 runs, verify at most 1 succeeds
 - [ ] `@bnto/backend` — If race confirmed, investigate Convex transaction isolation guarantees or atomic increment patterns
 
-### Testing: Monthly Run Reset Cycle
+### Testing: Monthly Run Reset Cycle — M4/M5 (server-side quotas)
 
-The `runsResetAt` cron resets `runsUsed` to 0 when the month rolls over. This logic exists but is untested against real Convex scheduler — unit tests seed past timestamps but don't trigger the actual cron.
+**Milestone: M4/M5.** Run reset logic applies to server-side quota tracking. Browser bntos have no quotas.
 
 - [ ] `@bnto/backend` — Unit test: seed user with `runsResetAt` in the past, call the reset mutation, verify `runsUsed` resets to 0 and `runsResetAt` advances to next month
 - [ ] `@bnto/core` — Integration test (if feasible): verify reset behavior against real Convex dev
@@ -427,30 +509,32 @@ Google and Discord OAuth configured in `convex/auth.ts` but commented out — ne
 - [ ] `@bnto/backend` — Set Google and Discord OAuth credentials in Convex env vars
 - [ ] `apps/web` — Add Google and Discord sign-in buttons to `SignInForm`
 
-### Growth: Referral Link Program
+### Growth: Referral Program — M5+
 
-Referral links to boost user acquisition. A user shares a referral link → new user visits and creates an account → both the referrer and the new user receive N bonus free runs.
+Referral links to boost user acquisition. With browser-first, the referral reward shifts from "bonus runs" (old model) to Pro trial or extended history.
 
-**Open questions:** How many bonus runs? What's the cap per user? Does it stack? How do we prevent abuse (throwaway accounts)?
+**Open questions:** What's the reward? Options: (a) 7-day Pro trial for both, (b) extended execution history (90 days instead of 30), (c) early access to new bntos. Needs validation after launch.
 
-- [ ] `@bnto/backend` — Schema: `referrals` table (referrerId, referredUserId, bonusRuns, createdAt), `referralCode` field on users
-- [ ] `@bnto/backend` — Mutation: `applyReferral` — validates code, credits both users with bonus runs
+- [ ] `@bnto/backend` — Schema: `referrals` table (referrerId, referredUserId, reward, createdAt), `referralCode` field on users
+- [ ] `@bnto/backend` — Mutation: `applyReferral` — validates code, applies reward to both users
 - [ ] `@bnto/core` — Referral service/hooks: `useReferralCode()`, `useApplyReferral()`
 - [ ] `apps/web` — Referral link generation UI in settings/profile
 - [ ] `apps/web` — Landing page referral code capture (via URL param `?ref=CODE`)
 
-### UX: Upgrade/Upsell Messaging Audit
+### UX: Conversion Hook Messaging Audit — M2/M5
 
-Quota error messages and upgrade CTAs need to be tier-aware. We may have multiple paid tiers (Pro, Team, etc.) — the messaging in error codes, API responses, and UI prompts should not hardcode a single upgrade destination. Review and make tier-neutral or dynamically driven.
+**Milestone: M2 (Sprint 3) for hook UX, M5 (Sprint 7) for Stripe integration.**
+
+Conversion messaging should be value-driven, not limit-driven. Hooks trigger on natural value moments (Save, History, Premium Bntos, Team) — not artificial run caps on browser bntos.
 
 **What to audit:**
-- `quota.ts` error messages (`ANONYMOUS_QUOTA_EXCEEDED` → "Sign up for a free account", `RUN_LIMIT_REACHED` → "Run limit reached") — these are what the UI renders. Wording should guide users toward the right next step without assuming which tier they'd upgrade to
-- UI components that display quota errors — do they link to a specific plan page or a generic upgrade/pricing page?
-- Future: error payloads could include `suggestedAction` (e.g. `"signup"`, `"upgrade"`, `"contact-sales"`) so the UI doesn't need to infer the CTA from the error code alone
+- Existing `quota.ts` error messages — reframe from "limit reached" to value-driven CTAs
+- Quota enforcement only applies to server-side bntos (M4). Browser bntos never show quota errors
+- Conversion hooks: "Save this workflow" (signup), "View your history" (signup), "Run AI/shell bntos" (Pro), "Share with team" (Pro)
 
-- [ ] `@bnto/backend` — Review and update quota error messages/codes to be tier-neutral
-- [ ] `apps/web` — Review upgrade prompts and CTAs — ensure they route to pricing page, not a hardcoded tier
-- [ ] `@bnto/backend` — Consider adding `suggestedAction` and `upgradeUrl` fields to quota error payloads
+- [ ] `@bnto/backend` — Review and update error messages: separate browser (no limits) from server-side (quota) paths
+- [ ] `apps/web` — Design conversion hook components (Save prompt, History prompt, Premium bnto upsell)
+- [ ] `apps/web` — Ensure all CTAs route to pricing page with value messaging, not "you've hit a limit"
 
 ### Schema-Driven Config Panel (Single Source of Truth)
 
@@ -468,16 +552,25 @@ Quota error messages and upgrade CTAs need to be tier-aware. We may have multipl
 
 See detailed task breakdown in `.claude/archive/schema-driven-config-panel.md` (archived from original plan).
 
-### UX: Animated Run Counter
+### UX: Execution Activity Feed — M2 (Sprint 3)
 
-**User feedback:** Users need a persistent, visible indicator of how many runs they have left while working with bntos. When they execute a workflow, the counter animates down. If they upgrade, it animates up. This serves as a feedback hook — users see the consequence of each run and the benefit of upgrading in real time.
+**Updated from "Animated Run Counter."** With browser-first, there's no run limit to count down. Instead, show an activity feed / recent executions indicator that reinforces the value of signing up (persistence, history).
 
-**Open questions:** Where does this live? Options: (a) in the bnto tool page header, (b) in the nav bar, (c) as a floating indicator. Needs design exploration.
+- [ ] `apps/web` — Design activity indicator for bnto tool pages (recent executions, total runs)
+- [ ] `apps/web` — For anonymous users: "You've run 12 bntos this session. Sign up to save your history."
+- [ ] `apps/web` — For authenticated users: animated activity feed with execution count and last-run status
 
-- [ ] `apps/web` — Design and place the run counter component (visible on bnto tool pages)
-- [ ] `apps/web` — Animated number transition: count down on execution, count up on upgrade/reset
-- [ ] `apps/web` — Wire to `useRunsRemaining()` from `@bnto/core` (Sprint 3 prerequisite)
-- [ ] `apps/web` — E2E test: counter decrements after execution, displays correct remaining count
+### Premium: Cloud Drive Export (Post-MVP) — M5+
+
+**Premium conversion hook.** After running a bnto, Pro users can auto-save results directly to their cloud drive — Google Drive, OneDrive, SharePoint, Dropbox. No manual download-and-upload cycle.
+
+**Why it's a strong hook:** The browser-first experience is "drop files → process → download." Adding "→ save to Google Drive" removes the last friction step for users who process files regularly. It's a natural Pro feature because it requires server-side OAuth + API calls.
+
+- [ ] `apps/web` — Design cloud drive export UX (post-execution "Save to..." button with provider icons)
+- [ ] `apps/api` — OAuth integration for Google Drive, OneDrive (server-side token management)
+- [ ] `@bnto/backend` — Store connected cloud drive credentials per user (Pro only)
+- [ ] `apps/api` — Upload execution output to user's connected drive
+- [ ] `apps/web` — E2E test: Pro user saves output to connected Google Drive
 
 ### UX: Two-Column Bnto Tool Page Layout
 
