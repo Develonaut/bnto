@@ -1,13 +1,7 @@
 "use client";
 
 import { Label } from "#components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "#components/ui/select";
+import { Select } from "#components/ui/select";
 import { Slider } from "#components/ui/slider";
 import type { ConvertFormatConfig as Config } from "./types";
 
@@ -36,16 +30,16 @@ export function ConvertFormatConfig({
             onChange({ ...value, format: format as Config["format"] })
           }
         >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
+          <Select.Trigger>
+            <Select.Value />
+          </Select.Trigger>
+          <Select.Content>
             {FORMAT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
+              <Select.Item key={opt.value} value={opt.value}>
                 {opt.label}
-              </SelectItem>
+              </Select.Item>
             ))}
-          </SelectContent>
+          </Select.Content>
         </Select>
       </div>
 

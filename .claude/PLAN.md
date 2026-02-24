@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** February 22, 2026
+**Last Updated:** February 23, 2026
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -25,9 +25,11 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-**Status:** Sprint 1 complete (Waves 1-3). Sprint 2 Waves 1-4 complete, **Wave 5 BLOCKED by auth infrastructure gaps**. All 6 Tier 1 fixtures exist, SEO routing is live, landing pages rebuilt with shadcn Mainline template. Environment infrastructure complete: R2 buckets + credentials configured (dev + prod), Convex env vars set for both deployments, Vercel env vars split per environment. Go API server deployed to Railway (`https://bnto-production.up.railway.app`) with R2 file transit enabled. Execution UI complete: RunButton, ExecutionProgress (real-time), ExecutionResults (download), wired into BntoPageShell with full predefined execution path (slug + definition → Convex → Railway → R2). E2E flow tests with 8 screenshots cover the execution lifecycle.
+**Status:** Sprint 1 complete (Waves 1-3). Sprint 2 Waves 1-4 complete, **Wave 5 BLOCKED by auth infrastructure gaps — unblocked by Sprint 2A**. Sprint 2.5 Wave 1 complete, Wave 2 partially in-flight (1 CLAIMED task). **Sprint 2A (Auth Fix) is the active priority.** All 6 Tier 1 fixtures exist, SEO routing is live, landing pages rebuilt with shadcn Mainline template. Environment infrastructure complete: R2 buckets + credentials configured (dev + prod), Convex env vars set for both deployments, Vercel env vars split per environment. Go API server deployed to Railway (`https://bnto-production.up.railway.app`) with R2 file transit enabled. Execution UI complete: RunButton, ExecutionProgress (real-time), ExecutionResults (download), wired into BntoPageShell with full predefined execution path (slug + definition → Convex → Railway → R2). E2E flow tests with 8 screenshots cover the execution lifecycle.
 
-**BLOCKER:** Anonymous session → Convex mutation fails. Better Auth creates a session (cookie set, user created) but Convex doesn't recognize the user — JWT propagation race condition between `ConvexBetterAuthProvider` and the auth endpoint. Integration tests can't pass until this is resolved. See Backlog → "Auth & Infrastructure: Foundation Gaps Blocking Execution." Sprint 1 Wave 4 (auth verification) was never completed — these issues prove why it matters. Investigating Convex native auth (`@convex-dev/auth`) as a potential fix.
+**BLOCKER:** Anonymous session → Convex mutation fails. Better Auth creates a session (cookie set, user created) but Convex doesn't recognize the user — JWT propagation race condition between `ConvexBetterAuthProvider` and the auth endpoint. Integration tests can't pass until this is resolved. **Sprint 2A is the structured plan to resolve this.** Sprint 1 Wave 4 (auth verification) was never completed — these issues prove why it matters. Investigating Convex native auth (`@convex-dev/auth`) as a potential fix.
+
+**Priority order:** Sprint 2A (auth fix) → Sprint 2 Wave 5 (integration tests) → Sprint 2.5 (resume polish) → Sprint 3 (dashboard + quota).
 
 **Engine (complete):** Go CLI with 10 node types (all >90% test coverage), integration test fixtures, CLI smoke tests, Go HTTP API server with 20+ integration tests, BntoService shared API layer.
 
@@ -201,7 +203,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 #### Wave 5 (sequential — test + verify) — BLOCKED
 
-**Blocked by:** Auth infrastructure gaps discovered during integration testing. See Backlog → "Auth & Infrastructure: Foundation Gaps Blocking Execution" below. The full execution pipeline requires a working anonymous session that Convex recognizes. Currently, Better Auth creates a session but Convex mutations fail with "Not authenticated" due to a JWT propagation race condition.
+**Blocked by:** Auth infrastructure gaps discovered during integration testing. **Unblocked by Sprint 2A (Auth Fix) below.** The full execution pipeline requires a working anonymous session that Convex recognizes. Currently, Better Auth creates a session but Convex mutations fail with "Not authenticated" due to a JWT propagation race condition.
 
 **Work completed before blocking:**
 - Created `execution.integration.spec.ts` with 5 tests (compress single/multi, resize, clean-csv, reset)
@@ -213,7 +215,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 **Stashed changes:** All in-progress code is in `git stash` ("WIP: Sprint 2 Wave 5 integration test work (blocked by auth)"). Run `git stash show` to review, `git stash pop` to restore. Includes: integration test spec, integration playwright config, API route handler, useAnonymousSession fix, BntoPageShell data-session attribute, playwright.config testIgnore.
 
-**Resume when:** Auth backlog items are complete — anonymous session lifecycle works end-to-end (Better Auth session → Convex recognizes user → mutations succeed). Pop the stash and continue from where we left off.
+**Resume when:** Sprint 2A completes — anonymous session lifecycle works end-to-end (auth session → Convex recognizes user → mutations succeed). Pop the stash and continue from where we left off. Sprint 2A Wave 5 includes this task.
 
 - [ ] `apps/web` — Playwright E2E integration tests: full pipeline (upload → R2 → Go engine → R2 → download) using shared engine test fixtures. Separate `playwright.integration.config.ts` targets `task dev:all` on port 4000. Tests: compress-images (single + multi), resize-images, clean-csv, reset-after-completion
 - [x] `apps/web` — Playwright E2E: verify SEO metadata renders correctly on each Tier 1 slug
@@ -236,8 +238,8 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 #### Wave 2 (parallel — component wrappers & audit)
 
-- [ ] **CLAIMED** `apps/web` — Create dot-notation wrappers for remaining primitives (Accordion, Form, Select, Collapsible, Carousel) and migrate all consumers
-- [ ] `apps/web` — Button audit: find every `<button>` and third-party button in the web app that isn't using our `Button` component, migrate to `Button`
+- [x] `apps/web` — Create dot-notation wrappers for remaining primitives (Accordion, Form, Select, Collapsible, Carousel) and migrate all consumers
+- [x] `apps/web` — Button audit: find every `<button>` and third-party button in the web app that isn't using our `Button` component, migrate to `Button`
 - [ ] `apps/web` — **Font family review: evaluate replacing DM Sans with Geist for display/headings.** Current stack: DM Sans (display) + Inter (body) + Geist Mono (code). DM Sans is bubbly/rounded-geometric — doesn't match Mini Motorways' precise-but-warm cartographic feel. Geist (Vercel's sans) has the Swiss-style technical precision that better matches the game's clean geometric typography. Reference: `/Users/ryan/Desktop/Mini Motorways Reference/` — title screen font is clean geometric with slightly rounded terminals, map labels are lightweight spaced uppercase. Proposed stack: **Geist (display/headings) + Inter (body) + Geist Mono (code)**. Do web research on Geist vs DM Sans characteristics, then prototype the swap and compare visually. Also verify `font-display` vs `font-sans` usage is consistent across all components per theming rules
 
 #### Wave 3 (parallel — button polish)

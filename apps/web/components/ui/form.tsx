@@ -17,8 +17,6 @@ import {
 import { Label } from "#components/ui/label";
 import { cn } from "#lib/utils";
 
-const Form = FormProvider;
-
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
@@ -156,6 +154,24 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     </p>
   );
 }
+
+// FormProvider is generic — it infers TFieldValues from the useForm() return value.
+// Arrow wrapper creates a distinct identity so Object.assign doesn't mutate
+// react-hook-form's export. Type assertion preserves the generic call signature.
+const Form = Object.assign(
+  ((props: React.ComponentProps<typeof FormProvider>) => (
+    <FormProvider {...props} />
+  )) as typeof FormProvider,
+  {
+    Root: FormProvider,
+    Field: FormField,
+    Item: FormItem,
+    Label: FormLabel,
+    Control: FormControl,
+    Description: FormDescription,
+    Message: FormMessage,
+  },
+);
 
 export {
   useFormField,

@@ -7,11 +7,7 @@ import { Check, ChevronsUpDown, X } from "lucide-react";
 import { Button } from "#components/ui/button";
 import { Container } from "#components/ui/Container";
 import { Heading } from "#components/ui/Heading";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "#components/ui/collapsible";
+import { Collapsible } from "#components/ui/collapsible";
 
 interface FeatureSection {
   category: string;
@@ -193,14 +189,14 @@ const PlanHeaders = ({
       <div className="md:hidden">
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="">
           <div className="flex items-center justify-between border-b py-4">
-            <CollapsibleTrigger className="flex items-center gap-2">
+            <Collapsible.Trigger className="flex items-center gap-2">
               <Heading level={3} className="text-2xl">
                 {pricingPlans[selectedPlan].name}
               </Heading>
               <ChevronsUpDown
                 className={`size-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
               />
-            </CollapsibleTrigger>
+            </Collapsible.Trigger>
             <Button
               variant={pricingPlans[selectedPlan].button.variant}
               className="w-fit"
@@ -208,7 +204,7 @@ const PlanHeaders = ({
               {pricingPlans[selectedPlan].button.text}
             </Button>
           </div>
-          <CollapsibleContent className="flex flex-col space-y-2 p-2">
+          <Collapsible.Content className="flex flex-col space-y-2 p-2">
             {pricingPlans.map(
               (plan, index) =>
                 index !== selectedPlan && (
@@ -225,7 +221,7 @@ const PlanHeaders = ({
                   </Button>
                 ),
             )}
-          </CollapsibleContent>
+          </Collapsible.Content>
         </Collapsible>
       </div>
 

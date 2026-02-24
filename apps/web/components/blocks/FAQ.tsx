@@ -1,11 +1,8 @@
+"use client";
+
 import Link from "next/link";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "#components/ui/accordion";
+import { Accordion } from "#components/ui/accordion";
 import { Container } from "#components/ui/Container";
 import { Heading } from "#components/ui/Heading";
 import { Text } from "#components/ui/Text";
@@ -99,12 +96,12 @@ export const FAQ = ({
                 </Text>
                 <Accordion type="single" collapsible className="w-full">
                   {category.questions.map((item, i) => (
-                    <AccordionItem key={i} value={`${categoryIndex}-${i}`}>
-                      <AccordionTrigger>{item.question}</AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground">
+                    <Accordion.Item key={i} value={`${categoryIndex}-${i}`}>
+                      <Accordion.Trigger>{item.question}</Accordion.Trigger>
+                      <Accordion.Content className="text-muted-foreground">
                         {item.answer}
-                      </AccordionContent>
-                    </AccordionItem>
+                      </Accordion.Content>
+                    </Accordion.Item>
                   ))}
                 </Accordion>
               </div>

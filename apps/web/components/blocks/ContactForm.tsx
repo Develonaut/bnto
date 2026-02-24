@@ -11,22 +11,9 @@ import { Text } from "#components/ui/Text";
 import { serverAction } from "#actions/server-action";
 import { Button } from "#components/ui/button";
 import { Checkbox } from "#components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "#components/ui/form";
+import { Form } from "#components/ui/form";
 import { Input } from "#components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "#components/ui/select";
+import { Select } from "#components/ui/select";
 import { Textarea } from "#components/ui/textarea";
 import { formSchema } from "#lib/formSchema";
 
@@ -85,14 +72,14 @@ export function ContactForm() {
         onSubmit={handleSubmit}
         className="flex w-full flex-col gap-2 space-y-4 rounded-md"
       >
-        <FormField
+        <Form.Field
           control={form.control}
           name="name"
           rules={{ required: true }}
           render={({ field }) => (
-            <FormItem className="w-full">
-              <FormLabel>Full name * </FormLabel>
-              <FormControl>
+            <Form.Item className="w-full">
+              <Form.Label>Full name * </Form.Label>
+              <Form.Control>
                 <Input
                   type="text"
                   value={field.value}
@@ -102,20 +89,20 @@ export function ContactForm() {
                   }}
                   placeholder="First and last name"
                 />
-              </FormControl>
+              </Form.Control>
 
-              <FormMessage />
-            </FormItem>
+              <Form.Message />
+            </Form.Item>
           )}
         />
-        <FormField
+        <Form.Field
           control={form.control}
           name="email"
           rules={{ required: true }}
           render={({ field }) => (
-            <FormItem className="w-full">
-              <FormLabel>Email address * </FormLabel>
-              <FormControl>
+            <Form.Item className="w-full">
+              <Form.Label>Email address * </Form.Label>
+              <Form.Control>
                 <Input
                   type="text"
                   value={field.value}
@@ -125,20 +112,20 @@ export function ContactForm() {
                   }}
                   placeholder="me@company.com"
                 />
-              </FormControl>
+              </Form.Control>
 
-              <FormMessage />
-            </FormItem>
+              <Form.Message />
+            </Form.Item>
           )}
         />
-        <FormField
+        <Form.Field
           control={form.control}
           name="company"
           rules={{ required: false }}
           render={({ field }) => (
-            <FormItem className="w-full">
-              <FormLabel>Company name </FormLabel>
-              <FormControl>
+            <Form.Item className="w-full">
+              <Form.Label>Company name </Form.Label>
+              <Form.Control>
                 <Input
                   type="text"
                   value={field.value}
@@ -148,14 +135,14 @@ export function ContactForm() {
                   }}
                   placeholder="Company name"
                 />
-              </FormControl>
+              </Form.Control>
 
-              <FormMessage />
-            </FormItem>
+              <Form.Message />
+            </Form.Item>
           )}
         />
 
-        <FormField
+        <Form.Field
           control={form.control}
           rules={{ required: false }}
           name="employees"
@@ -167,67 +154,67 @@ export function ContactForm() {
               { value: "51-500", label: "51-500" },
             ];
             return (
-              <FormItem className="w-full">
-                <FormLabel>Number of employees </FormLabel>
+              <Form.Item className="w-full">
+                <Form.Label>Number of employees </Form.Label>
                 <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="e.g. 11-50" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
+                  <Form.Control>
+                    <Select.Trigger className="w-full">
+                      <Select.Value placeholder="e.g. 11-50" />
+                    </Select.Trigger>
+                  </Form.Control>
+                  <Select.Content>
                     {options.map(({ label, value }) => (
-                      <SelectItem key={value} value={value}>
+                      <Select.Item key={value} value={value}>
                         {label}
-                      </SelectItem>
+                      </Select.Item>
                     ))}
-                  </SelectContent>
+                  </Select.Content>
                 </Select>
 
-                <FormMessage />
-              </FormItem>
+                <Form.Message />
+              </Form.Item>
             );
           }}
         />
 
-        <FormField
+        <Form.Field
           control={form.control}
           name="message"
           rules={{ required: true }}
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Your message * </FormLabel>
-              <FormControl>
+            <Form.Item>
+              <Form.Label>Your message * </Form.Label>
+              <Form.Control>
                 <Textarea
                   {...field}
                   placeholder="Write your message"
                   className="resize-none"
                 />
-              </FormControl>
+              </Form.Control>
 
-              <FormMessage />
-            </FormItem>
+              <Form.Message />
+            </Form.Item>
           )}
         />
-        <FormField
+        <Form.Field
           control={form.control}
           rules={{ required: true }}
           name="agree"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-y-0 space-x-1">
-              <FormControl>
+            <Form.Item className="flex flex-row items-start space-y-0 space-x-1">
+              <Form.Control>
                 <Checkbox
                   checked={field.value}
                   onCheckedChange={field.onChange}
                   required
                 />
-              </FormControl>
+              </Form.Control>
               <div className="space-y-1 leading-none">
-                <FormLabel>I agree to the terms and conditions</FormLabel>
+                <Form.Label>I agree to the terms and conditions</Form.Label>
 
-                <FormMessage />
+                <Form.Message />
               </div>
-            </FormItem>
+            </Form.Item>
           )}
         />
         <div className="flex w-full items-center justify-end pt-3">

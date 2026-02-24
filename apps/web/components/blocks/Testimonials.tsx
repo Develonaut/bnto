@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 
 // FIXME: All icons should come from a src/components/ui/icons so when we move it to ui package it comes with
@@ -11,13 +13,7 @@ import { Card } from "#components/ui/Card";
 import { Heading } from "#components/ui/Heading";
 import { Text } from "#components/ui/Text";
 import { Stack } from "#components/ui/Stack";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "#components/ui/carousel";
+import { Carousel } from "#components/ui/carousel";
 import { cn } from "#lib/utils";
 
 const items = [
@@ -112,9 +108,9 @@ export const Testimonials = ({
               }}
               className="w-full"
             >
-              <CarouselContent className="">
+              <Carousel.Content className="">
                 {items.map((testimonial, index) => (
-                  <CarouselItem
+                  <Carousel.Item
                     key={index}
                     className="xl:basis-1/3.5 grow basis-4/5 sm:basis-3/5 md:basis-2/5 lg:basis-[28%] 2xl:basis-[24%]"
                   >
@@ -143,12 +139,12 @@ export const Testimonials = ({
                         </div>
                       </Card.Content>
                     </Card>
-                  </CarouselItem>
+                  </Carousel.Item>
                 ))}
-              </CarouselContent>
+              </Carousel.Content>
               <div className="mt-8 flex gap-3">
-                <CarouselPrevious className="bg-muted hover:bg-muted/80 static size-14.5 translate-x-0 translate-y-0 transition-colors [&>svg]:size-6 lg:[&>svg]:size-8" />
-                <CarouselNext className="bg-muted hover:bg-muted/80 static size-14.5 translate-x-0 translate-y-0 transition-colors [&>svg]:size-6 lg:[&>svg]:size-8" />
+                <Carousel.Previous className="bg-muted hover:bg-muted/80 size-14.5 transition-colors [&>svg]:size-6 lg:[&>svg]:size-8" />
+                <Carousel.Next className="bg-muted hover:bg-muted/80 size-14.5 transition-colors [&>svg]:size-6 lg:[&>svg]:size-8" />
               </div>
             </Carousel>
           </div>
