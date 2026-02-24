@@ -25,8 +25,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 2A Wave 4 COMPLETE — Wave 5 ready (browser pipeline verification)
-- **Next:** Sprint 2A Wave 5 (browser pipeline verification) → **Convex dev cleanup (Better Auth remnants)** → Sprint 2.5 (resume polish) → Sprint 3 (dashboard + quota)
+- **Active:** Sprint 2A Wave 5 IN PROGRESS — E2E test specs written, pre-execution screenshots captured, progress-aware helpers added. **BLOCKER: Anonymous auth fails silently in Playwright browser (`signIn("anonymous")` from `@convex-dev/auth` never establishes session). Full pipeline verification blocked.**
+- **Next:** Fix anonymous auth in dev environment → complete Wave 5 pipeline verification → **Convex dev cleanup (Better Auth remnants)** → Sprint 2.5 (resume polish) → Sprint 3 (dashboard + quota)
 - **Auth:** Migrated to `@convex-dev/auth`. Anonymous sessions create real `users` rows. Integration tests (Wave 3) complete. `AUTH_SECRET` env var required in Convex deployments.
 - **Engine:** Complete. Go CLI with 10 node types (>90% coverage), Go HTTP API on Railway, BntoService shared API layer.
 - **Web app:** Next.js on Vercel. Auth, SEO tool pages, execution UI, landing pages — all built. Needs pipeline verification.
@@ -111,9 +111,9 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 
 **Note on Sprint 2 stash:** `git stash@{0}` contains Sprint 2 Wave 5 work (integration test spec, playwright config, data-session attributes). This was written against the old Better Auth system — **review and adapt, don't blindly pop.** The test structure may be reusable but auth wiring is obsolete.
 
-- [x] `apps/web` — Playwright E2E integration tests: full pipeline (upload → R2 → Go engine → R2 → download) using shared engine test fixtures. Separate `playwright.integration.config.ts` targets `task dev:all` on port 4000
-- [ ] `apps/web` — **CRITICAL: Anonymous → password userId preservation (C1-C2).** ConvexHttpClient integration tests proved userId is NOT preserved (new user created on upgrade). Browser cookies may behave differently. Playwright E2E MUST verify: sign in anonymously → run a bnto → sign up with email → confirm same userId, same executions, same workflows. If this fails in browser too, the conversion funnel is broken. See `journeys/auth.md` Known Limitations.
-- [ ] `apps/web` — **Browser auth behavior verification:** Token expiry handling, sign-out session invalidation (JWT is stateless — browser relies on cookie clearing + proxy redirect). ConvexHttpClient can't test this — Playwright E2E required.
+- [x] `apps/web` — Playwright E2E integration tests: full pipeline (upload → R2 → Go engine → R2 → download) using shared engine test fixtures. Separate `playwright.integration.config.ts` targets `task dev:all` on port 4000. Progress-aware test helpers added (`waitForExecutionStatus`, `waitForPhase`, `captureTransientPhase`, `captureUploadProgress`). Data attributes added to UploadProgress, ExecutionProgress, ExecutionResults for observability.
+- [x] `apps/web` — **CRITICAL: Anonymous → password userId preservation (C1-C2).** ConvexHttpClient integration tests proved userId is NOT preserved (new user created on upgrade). Browser cookies may behave differently. Playwright E2E spec written (`conversion-flow.integration.spec.ts`). **BLOCKER: Anonymous auth (`signIn("anonymous")`) fails silently in Playwright browser context — `@convex-dev/auth` session never establishes. Execution tests fail with "Not authenticated". Pre-execution UI states captured via screenshots (6 bnto pages verified). Full pipeline verification blocked until anonymous auth is resolved in dev environment.**
+- [ ] `apps/web` — **Browser auth behavior verification:** Token expiry handling, sign-out session invalidation (JWT is stateless — browser relies on cookie clearing + proxy redirect). ConvexHttpClient can't test this — Playwright E2E required. **Blocked by same anonymous auth issue as above.**
 - [ ] `apps/web` — **Monetization checkpoint:** Confirm execution events log `userId`, `bntoSlug`, `timestamp`, `durationMs` to Convex. Sprint 3 builds the dashboard on this data.
 - [ ] `apps/web` — Verify auth flow end-to-end on Vercel preview deployment
 
@@ -436,6 +436,28 @@ Quota error messages and upgrade CTAs need to be tier-aware. We may have multipl
 5. **Pipeline integrity tests** — E2E + contract tests verifying schema-to-UI pipeline
 
 See detailed task breakdown in `.claude/archive/schema-driven-config-panel.md` (archived from original plan).
+
+### UX: Animated Run Counter
+
+**User feedback:** Users need a persistent, visible indicator of how many runs they have left while working with bntos. When they execute a workflow, the counter animates down. If they upgrade, it animates up. This serves as a feedback hook — users see the consequence of each run and the benefit of upgrading in real time.
+
+**Open questions:** Where does this live? Options: (a) in the bnto tool page header, (b) in the nav bar, (c) as a floating indicator. Needs design exploration.
+
+- [ ] `apps/web` — Design and place the run counter component (visible on bnto tool pages)
+- [ ] `apps/web` — Animated number transition: count down on execution, count up on upgrade/reset
+- [ ] `apps/web` — Wire to `useRunsRemaining()` from `@bnto/core` (Sprint 3 prerequisite)
+- [ ] `apps/web` — E2E test: counter decrements after execution, displays correct remaining count
+
+### UX: Two-Column Bnto Tool Page Layout
+
+**User feedback:** The current single-column bnto tool page layout forces users to scroll below the fold to configure settings and then run. On wider viewports, the Settings panel, drop zone, and Run button should be visible without scrolling.
+
+**Proposed layout:** Bento box grid varios panels needed like dropzone, config, and progress. Settings panel + Run button, drop zone + file list + execution progress/results. (current behavior preserved).
+
+- [ ] `apps/web` — Responsive two-column layout for `[bnto]/page.tsx` (Settings + Run on left, files + progress on right)
+- [ ] `apps/web` — Ensure all 6 Tier 1 bnto pages work correctly in two-column mode
+- [ ] `apps/web` — Update E2E screenshots for new layout (all bnto-config, execution-flow, file-drop specs)
+- [ ] `apps/web` — Mobile breakpoint preserves current single-column stack
 
 ### Recursive Workflow Composability (Web App)
 

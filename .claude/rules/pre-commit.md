@@ -100,9 +100,11 @@ Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, 
 **E2e test conventions:**
 - Always import `{ test, expect }` from `./fixtures` (NOT from `@playwright/test`) -- the shared fixture captures console and page errors automatically
 - Always set `test.use({ reducedMotion: "reduce" })` to disable animations
-- Use `data-testid` markers for reliable state detection
+- Use `data-testid` markers for reliable state detection (see `integrationHelpers.ts` for available attributes)
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes
 - Add `await page.evaluate(() => window.scrollTo(0, 0))` before `toHaveScreenshot()` in tests where user actions may shift the viewport (e.g., clicking Run triggers errors that scroll to footer)
+- For integration tests that exercise the execution pipeline, start `task dev:all` in the background first. You CAN and SHOULD do this -- never skip because "the stack isn't running"
+- Use progress-aware helpers from `integrationHelpers.ts` (`waitForPhase`, `waitForExecutionStatus`, `captureTransientPhase`, etc.) to observe and snapshot execution progress
 
 ### E2E Screenshot Verification (MANDATORY)
 

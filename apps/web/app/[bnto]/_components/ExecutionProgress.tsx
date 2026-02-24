@@ -80,7 +80,12 @@ function NodeProgressRow({ node }: { node: NodeProgress }) {
   const isFailed = node.status === "failed";
 
   return (
-    <li className="flex items-center gap-2 text-sm">
+    <li
+      className="flex items-center gap-2 text-sm"
+      data-testid="node-progress"
+      data-node-id={node.nodeId}
+      data-node-status={node.status}
+    >
       <span
         className={cn(
           "size-2 rounded-full",

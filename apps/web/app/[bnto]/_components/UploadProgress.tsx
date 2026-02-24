@@ -22,6 +22,8 @@ export function UploadProgress({ files }: UploadProgressProps) {
         <li
           key={file.fileName}
           className="overflow-hidden rounded-lg border border-border bg-card px-4 py-3"
+          data-testid="upload-file"
+          data-file-status={file.status}
         >
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">

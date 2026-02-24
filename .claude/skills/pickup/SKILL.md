@@ -206,15 +206,25 @@ Edit `.claude/PLAN.md`:
 
 When your task involves UI that touches the execution pipeline (upload → run → download), you MUST verify via integration E2E tests that exercise the full dev stack.
 
+**IMPORTANT: You CAN and SHOULD start the full dev stack yourself.** Do NOT skip integration testing because "the stack isn't running." You have the Bash tool — use it. Start `task dev:all` in the background and wait for port 4000 to respond before running tests.
+
 **Running integration E2E tests:**
 
 ```bash
-# Start the full dev stack (Next.js + Convex + Go API + Cloudflare tunnel)
-# This is a long-running process — run it in the background
+# Step 1: Check if dev stack is already running
+curl -s -o /dev/null -w "%{http_code}" http://localhost:4000 || echo "not running"
+
+# Step 2: If not running, start it in the background
 task dev:all &
 
-# Wait for the dev server to be ready (port 4000)
-# Then run integration tests
+# Step 3: Wait for the dev server to be ready (port 4000)
+# Poll until you get a 200 response:
+for i in $(seq 1 30); do
+  curl -s -o /dev/null -w "%{http_code}" http://localhost:4000 2>/dev/null | grep -q "200" && break
+  sleep 2
+done
+
+# Step 4: Run integration tests
 task e2e:integration
 ```
 
@@ -224,6 +234,25 @@ task e2e:integration
 - `reuseExistingServer: true` — if `task dev:all` is already running, Playwright uses it
 - Test fixtures are shared with the Go engine (`engine/tests/fixtures/`) — same input files that engine golden tests validate against flow through the full cloud pipeline
 - Integration tests have 120s timeout per test, 90s for execution completion
+
+**Progress-aware test helpers** (in `e2e/integrationHelpers.ts`):
+- `waitForSession(page)` — wait for anonymous session to establish
+- `waitForUserId(page)` — wait for `data-user-id` attribute to populate
+- `waitForPhase(page, phase, screenshot?)` — wait for RunButton `data-phase` and optionally snapshot
+- `waitForExecutionStatus(page, status, screenshot?)` — wait for ExecutionProgress `data-status` and optionally snapshot
+- `captureTransientPhase(page, phases, screenshot)` — try to capture a fleeting phase without failing
+- `captureUploadProgress(page, screenshot)` — snapshot upload file items if visible
+- `runPipeline(page, { files, debugLabel })` — upload files, click Run, wait for terminal phase
+- `assertCompletedWithScreenshot(page, phase, screenshot)` — assert completed + capture results
+
+**Data attributes for E2E observability:**
+- `data-testid="run-button"` + `data-phase` — RunButton lifecycle (idle, uploading, running, completed, failed)
+- `data-testid="execution-progress"` + `data-status` — ExecutionProgress status
+- `data-testid="node-progress"` + `data-node-id` + `data-node-status` — per-node progress
+- `data-testid="upload-file"` + `data-file-status` — per-file upload progress
+- `data-testid="execution-results"` — results panel container
+- `data-testid="output-file"` — individual output file items
+- `data-testid="bnto-shell"` + `data-session` + `data-user-id` — session and identity state
 
 **UI-only E2E tests** (`task e2e`) still work without a backend. They use `playwright.config.ts` (port 3100, Next.js only) and match `*.spec.ts` (excluding `*.integration.spec.ts`).
 

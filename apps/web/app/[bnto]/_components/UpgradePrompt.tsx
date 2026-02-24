@@ -41,7 +41,7 @@ export function UpgradePrompt({ slug, reason }: UpgradePromptProps) {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6 text-center">
+    <div className="rounded-lg border border-border bg-card p-6 text-center" data-testid="upgrade-prompt">
       <h2 className="text-lg font-semibold text-foreground">{heading}</h2>
       <p className="mt-2 text-sm text-muted-foreground">{body}</p>
       <Button onClick={handleSignUp} className="mt-4">

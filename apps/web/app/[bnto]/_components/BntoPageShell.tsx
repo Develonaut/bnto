@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import {
   useRunQuota,
+  useCurrentUser,
   useUploadFiles,
   useRunPredefined,
   useExecution,
@@ -36,6 +37,7 @@ interface BntoPageShellProps {
  */
 export function BntoPageShell({ entry }: BntoPageShellProps) {
   const { isPending: sessionPending, quotaExhausted } = useRunQuota();
+  const { data: currentUser } = useCurrentUser();
   const [config, setConfig] = useState<BntoConfigMap[BntoSlug]>(
     DEFAULT_CONFIGS[entry.slug as BntoSlug] ?? {},
   );
@@ -84,6 +86,11 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
       className="container space-y-3 text-center"
       data-testid="bnto-shell"
       data-session={sessionPending ? "pending" : "ready"}
+      data-user-id={
+        process.env.NODE_ENV !== "production"
+          ? (currentUser?.id ?? "")
+          : undefined
+      }
     >
       <h1 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
         {entry.h1}

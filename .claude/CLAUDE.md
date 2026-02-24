@@ -73,10 +73,13 @@ task ui:lint            # Lint all TS packages
 
 # Development (starts everything)
 task dev:all            # Start web + Convex + Go API + Cloudflare tunnel in parallel
+                        # AGENTS: You CAN and SHOULD run this. Start it in the background
+                        # and use it for integration E2E tests. Do NOT skip integration
+                        # testing because "the full stack isn't running" — start it yourself.
 
 # E2E tests
 task e2e                # UI-only E2E tests (no backend required)
-task e2e:integration    # Full-stack integration E2E (requires task dev:all)
+task e2e:integration    # Full-stack integration E2E (requires task dev:all running)
 
 # Everything
 task build:all          # Build engine + API + frontend
@@ -113,8 +116,9 @@ bnto/
 3. **Claim a task** — Mark it CLAIMED before starting
 4. **Follow patterns** — Match existing code style (see rules/)
 5. **Test boundaries** — Write tests for engine logic and API contracts
-6. **Mark done** — Update the plan when complete
-7. **Pre-commit** — Follow [pre-commit.md](.claude/rules/pre-commit.md) before every commit
+6. **Integration test** — If you touched UI that interacts with the execution pipeline, start `task dev:all` in the background and run `task e2e:integration`. You have the means to do this — never skip it because "the stack isn't running"
+7. **Mark done** — Update the plan when complete
+8. **Pre-commit** — Follow [pre-commit.md](.claude/rules/pre-commit.md) before every commit
 
 ---
 
