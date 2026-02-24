@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/ui/Card";
 
 const swatches = [
   { name: "Primary", bg: "bg-primary", fg: "text-primary-foreground", depth: "depth-default" },

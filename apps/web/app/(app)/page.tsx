@@ -1,12 +1,12 @@
-import { Background } from "@/components/background";
-import { BntoGallery } from "@/components/blocks/bnto-gallery";
-import { FAQ } from "@/components/blocks/faq";
-import { Features } from "@/components/blocks/features";
-import { Hero } from "@/components/blocks/hero";
-import { Logos } from "@/components/blocks/logos";
-import { Pricing } from "@/components/blocks/pricing";
-import { ResourceAllocation } from "@/components/blocks/resource-allocation";
-import { Testimonials } from "@/components/blocks/testimonials";
+import { Background } from "@/components/Background";
+import { BntoGallery } from "@/components/blocks/BntoGallery";
+import { FAQ } from "@/components/blocks/FAQ";
+import { Features } from "@/components/blocks/Features";
+import { Hero } from "@/components/blocks/Hero";
+import { Logos } from "@/components/blocks/Logos";
+import { Pricing } from "@/components/blocks/Pricing";
+import { ResourceAllocation } from "@/components/blocks/ResourceAllocation";
+import { Testimonials } from "@/components/blocks/Testimonials";
 
 export default function Home() {
   return (

@@ -8,7 +8,7 @@ import {
   Diamond,
 } from "lucide-react";
 
-import { DashedLine } from "@/components/dashed-line";
+import { DashedLine } from "@/components/DashedLine";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";

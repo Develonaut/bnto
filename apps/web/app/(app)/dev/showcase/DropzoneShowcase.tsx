@@ -1,4 +1,4 @@
-import { Dropzone } from "@/components/ui/dropzone";
+import { Dropzone } from "@/components/ui/Dropzone";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
 import { Upload } from "lucide-react";

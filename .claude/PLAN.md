@@ -197,7 +197,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 #### Wave 5 (sequential — test + verify)
 
-- [ ] **CLAIMED** `apps/web` — Playwright E2E: land on `/compress-images`, upload file, run, download result
+- [ ] `apps/web` — Playwright E2E: land on `/compress-images`, upload file, run, download result (requires full dev stack via `task dev:all` — manual smoke test first, then separate Playwright integration config)
 - [x] `apps/web` — Playwright E2E: verify SEO metadata renders correctly on each Tier 1 slug
 - [x] `engine` — Verify all 6 fixtures run clean via `bnto run` integration tests
 
@@ -214,7 +214,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 - [ ] `apps/web` — Audit and convert monorepo to Node.js `package.json` imports (`#components/*`, `#lib/*`) replacing TSConfig `@/` path aliases. Scope: `apps/web` first, then shared packages if applicable
 - [x] `apps/web` — Rename JS/TS files to camelCase where they aren't already (hooks, utils, lib files)
-- [ ] `apps/web` — Rename component files and component names to PascalCase where they aren't already
+- [x] `apps/web` — Rename component files and component names to PascalCase where they aren't already
 
 #### Wave 2 (parallel — component wrappers & audit)
 
@@ -615,6 +615,19 @@ Google and Discord OAuth social providers are configured in `@bnto/backend` (`co
 - [ ] `@bnto/backend` — Uncomment `socialProviders` block in `convex/auth.ts`
 - [ ] `@bnto/backend` — Set Google and Discord OAuth credentials in Convex env vars (dev + prod)
 - [ ] `apps/web` — Add Google and Discord sign-in buttons to `SignInForm`
+
+### Testing: Convert E2E Tests to Use data-testid Selectors
+
+Current E2E tests mix CSS classes, `getByRole`, `getByText`, and some `data-testid` selectors. Standardize on `data-testid` for reliable element targeting — text and role selectors break when copy changes, CSS classes break when styling changes.
+
+**Scope:** Audit all spec files in `apps/web/e2e/`. For each test, replace fragile selectors (CSS classes, text content that's likely to change) with `data-testid` attributes. Add missing `data-testid` attributes to components as needed.
+
+**Keep `getByRole` and `getByText` where appropriate** — semantic selectors are fine for accessibility-focused assertions (e.g., "heading exists with this name") and for verifying user-visible text. The goal is to use `data-testid` for state detection and element targeting, not to replace every selector.
+
+- [ ] `apps/web` — Audit all E2E spec files and identify selectors that should use `data-testid`
+- [ ] `apps/web` — Add `data-testid` attributes to components that need them
+- [ ] `apps/web` — Update spec files to use `data-testid` selectors
+- [ ] `apps/web` — Verify all E2E tests pass after migration
 
 ### Docs: Update Strategy Docs for Cloud-First Phase Order
 

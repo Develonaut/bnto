@@ -1,8 +1,8 @@
-import { Background } from "@/components/background";
-import About from "@/components/blocks/about";
-import { AboutHero } from "@/components/blocks/about-hero";
-import { Investors } from "@/components/blocks/investors";
-import { DashedLine } from "@/components/dashed-line";
+import { Background } from "@/components/Background";
+import About from "@/components/blocks/About";
+import { AboutHero } from "@/components/blocks/AboutHero";
+import { Investors } from "@/components/blocks/Investors";
+import { DashedLine } from "@/components/DashedLine";
 
 export default function AboutPage() {
   return (

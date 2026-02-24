@@ -3,9 +3,9 @@ import Link from "next/link";
 
 import { ChevronRight } from "lucide-react";
 
-import { DashedLine } from "../dashed-line";
+import { DashedLine } from "../DashedLine";
 
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";

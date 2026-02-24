@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import { getToken } from "@bnto/auth/server";
-import { Navbar } from "@/components/blocks/navbar";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Navbar } from "@/components/blocks/Navbar";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { Providers } from "./providers";
 import "./globals.css";
 

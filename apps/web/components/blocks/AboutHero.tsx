@@ -2,7 +2,7 @@ import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
-import { DashedLine } from "@/components/dashed-line";
+import { DashedLine } from "@/components/DashedLine";
 
 const stats = [
   {

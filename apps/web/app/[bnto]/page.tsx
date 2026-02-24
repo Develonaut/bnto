@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Footer } from "@/components/blocks/footer";
+import { Footer } from "@/components/blocks/Footer";
 import { BNTO_REGISTRY, getBntoBySlug } from "../../lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { BntoPageShell } from "./_components/BntoPageShell";

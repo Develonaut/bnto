@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { DashedLine } from "../dashed-line";
+import { DashedLine } from "../DashedLine";
 
 import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";

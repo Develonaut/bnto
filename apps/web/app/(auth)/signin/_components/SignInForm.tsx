@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSignIn, useSignUp } from "@bnto/auth";
-import { Background } from "@/components/background";
+import { Background } from "@/components/Background";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";
