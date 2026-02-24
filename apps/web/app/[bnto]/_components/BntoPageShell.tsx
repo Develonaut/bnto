@@ -35,7 +35,7 @@ interface BntoPageShellProps {
  *   5. Execution completes → show output files with download buttons
  */
 export function BntoPageShell({ entry }: BntoPageShellProps) {
-  const { quotaExhausted } = useRunQuota();
+  const { isPending: sessionPending, quotaExhausted } = useRunQuota();
   const [config, setConfig] = useState<BntoConfigMap[BntoSlug]>(
     DEFAULT_CONFIGS[entry.slug as BntoSlug] ?? {},
   );
@@ -80,7 +80,11 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
   const isProcessing = resolvedPhase === "uploading" || resolvedPhase === "running";
 
   return (
-    <div className="container space-y-3 text-center">
+    <div
+      className="container space-y-3 text-center"
+      data-testid="bnto-shell"
+      data-session={sessionPending ? "pending" : "ready"}
+    >
       <h1 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
         {entry.h1}
       </h1>

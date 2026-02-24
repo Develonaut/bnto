@@ -5,6 +5,7 @@ const port = 3100;
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "*.integration.spec.ts",
   snapshotPathTemplate: path.join(
     "e2e",
     "__screenshots__",
