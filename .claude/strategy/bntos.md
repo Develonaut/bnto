@@ -8,57 +8,72 @@ The technical registry of predefined Bntos — slugs, fixtures, node requirement
 
 ---
 
-## Tier 1: Launch Bntos (Sprint 2)
+## Bnto Classification (from ROADMAP.md)
 
-All 6 must have fixtures, verified execution, and live SEO URLs before Sprint 2 closes.
+Every bnto falls into one of three execution categories:
 
-| Bnto | Slug | Persona | Fixture |
-|------|------|---------|---------|
-| Compress Images | `/compress-images` | Casual | ✅ exists |
-| Resize Images | `/resize-images` | Casual | ✅ exists |
-| Convert Image Format | `/convert-image-format` | Casual | ✅ exists |
-| Rename Files | `/rename-files` | Both | ✅ exists |
-| Clean CSV | `/clean-csv` | Both | ✅ exists |
-| Rename CSV Columns | `/rename-csv-columns` | Developer | ✅ exists |
+| Category | Execution | Cost to Us | User Tier |
+|----------|-----------|-----------|-----------|
+| **Browser-only** | 100% client-side (Rust WASM or JS) | $0 | Free, unlimited |
+| **Hybrid** | Browser primary, cloud optional | $0 base | Free (limited), Pro (full) |
+| **Server-only** | Railway + R2 | Compute cost | Pro tier, usage-based |
 
 ---
 
-## Tier 2: Near-Term (First 60 Days)
+## Tier 1: Launch Bntos (Sprint 2B — Browser Execution)
 
-| Bnto | Slug | Persona | Blocker |
-|------|------|---------|---------|
-| PDF to Images | `/pdf-to-images` | Casual | needs `pdf` node type |
-| Batch Watermark Images | `/watermark-images` | Casual | image node (composite op) |
-| Convert CSV to JSON | `/csv-to-json` | Developer | spreadsheet + transform |
-| Strip EXIF Data | `/strip-exif` | Both | image node (metadata strip) |
-| Merge CSVs | `/merge-csv` | Both | spreadsheet node |
-| Fetch & Save URL | `/fetch-url` | Developer | http-request + filesystem |
+All 6 run 100% client-side. Fixtures exist, SEO URLs live, cloud pipeline verified (M4 ready).
+
+| Bnto | Slug | Persona | Classification | Browser Engine | Fixture |
+|------|------|---------|---------------|----------------|---------|
+| Compress Images | `/compress-images` | Casual | Browser-only | Rust `image`+`mozjpeg-sys`+`oxipng` | ✅ exists |
+| Resize Images | `/resize-images` | Casual | Browser-only | Rust `image` (resize module) | ✅ exists |
+| Convert Image Format | `/convert-image-format` | Casual | Browser-only | Rust `image` (decode→encode) | ✅ exists |
+| Rename Files | `/rename-files` | Both | Browser-only | Pure JS (no Rust needed) | ✅ exists |
+| Clean CSV | `/clean-csv` | Both | Browser-only | Rust `csv`+`serde` | ✅ exists |
+| Rename CSV Columns | `/rename-csv-columns` | Developer | Browser-only | Rust `csv`+`serde` | ✅ exists |
+
+---
+
+## Tier 2: Near-Term
+
+| Bnto | Slug | Persona | Classification | Blocker |
+|------|------|---------|---------------|---------|
+| PDF to Images | `/pdf-to-images` | Casual | Browser-only | pdf.js + Canvas (JS) |
+| Batch Watermark Images | `/watermark-images` | Casual | Browser-only | Rust `image` composite |
+| Convert CSV to JSON | `/csv-to-json` | Developer | Browser-only | Rust `csv`+`serde_json` |
+| Strip EXIF Data | `/strip-exif` | Both | Browser-only | Rust `image` metadata strip |
+| Merge CSVs | `/merge-csv` | Both | Browser-only | Rust `csv` concat+dedupe |
+| Fetch & Save URL | `/fetch-url` | Developer | Hybrid | CORS limits browser reach |
 
 ---
 
 ## Tier 3: Backlog
 
-| Bnto | Slug | Notes |
-|------|------|-------|
-| Extract video thumbnail | `/extract-thumbnail` | ffmpeg via shell-command, cloud only |
-| Zip files | `/zip-files` | filesystem node (needs zip op) |
-| Unzip archive | `/unzip-files` | filesystem node (needs unzip op) |
-| Generate image grid | `/image-grid` | image node composite |
-| Validate JSON | `/validate-json` | transform node |
-| Format JSON | `/format-json` | transform node |
-| Sort CSV by column | `/sort-csv` | spreadsheet node |
-| Filter CSV rows | `/filter-csv` | spreadsheet node |
-| Fetch API to CSV | `/api-to-csv` | http-request + spreadsheet |
+| Bnto | Slug | Classification | Notes |
+|------|------|---------------|-------|
+| Extract video thumbnail | `/extract-thumbnail` | **Server-only** | ffmpeg — impractical in browser WASM |
+| Zip files | `/zip-files` | Browser-only | JS zip libraries (JSZip) |
+| Unzip archive | `/unzip-files` | Browser-only | JS unzip libraries |
+| Generate image grid | `/image-grid` | Browser-only | Rust `image` composite or Canvas API |
+| Validate JSON | `/validate-json` | Browser-only | Pure JS (JSON.parse) |
+| Format JSON | `/format-json` | Browser-only | Pure JS (JSON.stringify) |
+| Sort CSV by column | `/sort-csv` | Browser-only | Rust `csv` or PapaParse |
+| Filter CSV rows | `/filter-csv` | Browser-only | Rust `csv` or PapaParse |
+| Fetch API to CSV | `/api-to-csv` | Hybrid | CORS limits browser; server proxy for Pro |
 
 ---
 
-## Tier 4: AI-Powered Nodes (Backlog — Requires Async Execution)
+## Tier 4: AI-Powered Nodes (Backlog — M4, Server-Only, Pro Tier)
 
-AI nodes bring non-deterministic processing into workflows — classification, summarization, extraction, generation. The key differentiator: BYOK (Bring Your Own Key). Users supply their own API keys via the existing secrets system (`engine/pkg/secrets/`). No inference costs for Bnto, no data privacy concerns for users.
+**Classification: Server-only.** AI nodes require server-side execution (API keys shouldn't be exposed client-side). These are premium Pro tier features with usage-based pricing — a natural conversion hook because they have real compute cost.
 
-**Prerequisite:** The execution engine must support long-running nodes (2-30s) with progress reporting, per-node timeouts, and cancellation before any AI node ships. See [architecture.md](../rules/architecture.md#execution-model-async-support).
+AI nodes bring non-deterministic processing into workflows — classification, summarization, extraction, generation. BYOK (Bring Your Own Key) on desktop; Bnto-proxied on cloud (Pro).
 
-**Model:** Desktop-first. Users set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` as secrets. The `ai` node reads the key at execution time and calls the provider API. Cloud support requires either user-supplied keys via settings UI or Bnto-proxied inference (cost/privacy implications — separate product decision).
+**Prerequisite:** The execution engine must support long-running nodes (2-30s) with progress reporting, per-node timeouts, and cancellation. See [architecture.md](../rules/architecture.md#execution-model-async-support).
+
+**Desktop model:** Free forever. Users set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` as secrets — they pay their provider directly, not Bnto.
+**Cloud model:** Pro tier. Bnto proxies the request. Usage-based (counts against server-side run quota).
 
 | Bnto | Slug | Node Type | Notes |
 |------|------|-----------|-------|

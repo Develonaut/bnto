@@ -25,9 +25,14 @@ Bnto is the one place small teams go to get things done — compress images, cle
 ## Milestone Map
 
 ```
-M1: Browser Execution (MVP)          ← ACTIVE
+M1: Browser Execution (MVP)          ← ACTIVE (Sprint 2B)
     Ship all Tier 1 bntos running in-browser via Rust→WASM.
     Zero backend for core experience. "Your files never leave your computer."
+
+    Prerequisite: Cloud execution pipeline (Sprints 1-2A) is COMPLETE.
+    Go API on Railway, R2 file transit, Convex real-time — all verified
+    end-to-end with 6/6 integration E2E tests passing. This is M4
+    infrastructure delivered ahead of schedule.
 
     Rust WASM is the M1 execution engine. The 6 MVP nodes are built
     in Rust, compiled to WASM via wasm-pack, and run in Web Workers.
