@@ -207,6 +207,33 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 ---
 
+### Sprint 2.5: Codebase Polish & Consistency
+**Goal:** Clean up naming, imports, component consistency, and animation language before the codebase grows further. Knock out tech debt while the surface area is small.
+
+#### Wave 1 (parallel — naming & imports)
+
+- [ ] `apps/web` — Audit and convert monorepo to Node.js `package.json` imports (`#components/*`, `#lib/*`) replacing TSConfig `@/` path aliases. Scope: `apps/web` first, then shared packages if applicable
+- [ ] `apps/web` — Rename JS/TS files to camelCase where they aren't already (hooks, utils, lib files)
+- [ ] `apps/web` — Rename component files and component names to PascalCase where they aren't already
+
+#### Wave 2 (parallel — component wrappers & audit)
+
+- [ ] `apps/web` — Create dot-notation wrappers for remaining primitives (Accordion, Form, Select, Collapsible, Carousel) and migrate all consumers
+- [ ] `apps/web` — Button audit: find every `<button>` and third-party button in the web app that isn't using our `Button` component, migrate to `Button`
+- [ ] `apps/web` — **Font family review: evaluate replacing DM Sans with Geist for display/headings.** Current stack: DM Sans (display) + Inter (body) + Geist Mono (code). DM Sans is bubbly/rounded-geometric — doesn't match Mini Motorways' precise-but-warm cartographic feel. Geist (Vercel's sans) has the Swiss-style technical precision that better matches the game's clean geometric typography. Reference: `/Users/ryan/Desktop/Mini Motorways Reference/` — title screen font is clean geometric with slightly rounded terminals, map labels are lightweight spaced uppercase. Proposed stack: **Geist (display/headings) + Inter (body) + Geist Mono (code)**. Do web research on Geist vs DM Sans characteristics, then prototype the swap and compare visually. Also verify `font-display` vs `font-sans` usage is consistent across all components per theming rules
+
+#### Wave 3 (parallel — button polish)
+
+- [ ] `apps/web` — Fix Button pseudo-state bug: after active/click, button returns to hover state instead of default resting state. Investigate CSS `:active` → `:hover` transition and the depth/pressable system
+- [ ] `apps/web` — Experiment with Button animations per Mini Motorways motion language (see `animation.md`): entrance spring for button appearance, smooth ease-out for press/release transitions, ensure `motion-safe:` guards are in place
+
+#### Wave 4 (sequential — verify)
+
+- [ ] `apps/web` — `task ui:build` + `task ui:lint` pass clean
+- [ ] `apps/web` — E2E screenshots updated and visually verified
+
+---
+
 ### Sprint 3: Dashboard + Run Quota
 **Goal:** Authenticated users see their history, run count, and get a meaningful account experience. The monetization infrastructure is in place before any paywall is needed.
 
@@ -553,13 +580,33 @@ Custom domains for production services. Do Railway first (API) to validate, then
 - [ ] `infra` — Update `SITE_URL` in Convex prod to `https://bnto.io` (already set — verify after DNS propagation)
 - [ ] `infra` — Verify auth redirects work on `bnto.io`
 
-### Tooling: Use package.json `imports` Instead of TSConfig Path Aliases
+### Testing: Split user-journeys.spec.ts Into Per-Persona E2E Files
 
-Replace `@/components`, `@/lib`, etc. TSConfig path aliases with Node.js-native `package.json` `imports` field (`#components/*`, `#lib/*`). Standards-track approach.
+`user-journeys.spec.ts` is a single 320-line file covering every page and persona (anonymous visitor, authenticated user, dark mode, 404, etc.). It should be split so each file represents one user journey or persona testing the application.
 
-- [ ] `apps/web` — Add `imports` field to `package.json` with `#*` mappings
-- [ ] `apps/web` — Update all `@/` imports to `#` imports
-- [ ] `apps/web` — Remove `paths` from `tsconfig.json`
+**Proposed structure:**
+
+```
+apps/web/e2e/
+├── fixtures.ts                    # Shared test fixtures (unchanged)
+├── anonymous-visitor.spec.ts      # Home page sections, about, pricing, FAQ, contact, privacy, 404
+├── authenticated-user.spec.ts     # Protected pages (workflows, executions, settings)
+├── auth-flow.spec.ts              # Signup form, sign-in, sign-out
+├── navigation.spec.ts             # Navbar links, page transitions
+├── dark-mode.spec.ts              # Theme toggle, dark mode rendering
+├── bnto-tool-page.spec.ts         # Tool pages (/compress-images, etc.)
+├── theme-demo.spec.ts             # Showcase page (already separate)
+├── execution-flow.spec.ts         # Execution lifecycle (already separate)
+├── file-drop.spec.ts              # File drop interactions (already separate)
+├── seo-metadata.spec.ts           # SEO metadata (already separate)
+└── bnto-config.spec.ts            # Bnto config (already separate)
+```
+
+Each file is a self-contained persona: "What does an anonymous visitor see?", "What can an authenticated user do?", "Does dark mode work?" Screenshots stay co-located with their spec file.
+
+- [ ] `apps/web` — Split `user-journeys.spec.ts` into per-persona spec files
+- [ ] `apps/web` — Move screenshots into per-spec `__screenshots__/` directories
+- [ ] `apps/web` — Verify all tests pass after restructure
 
 ### Auth: Enable OAuth Social Providers
 

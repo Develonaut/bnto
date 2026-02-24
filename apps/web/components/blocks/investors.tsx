@@ -1,6 +1,8 @@
 import Image from "next/image";
 
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
 
 const investors = [
   {
@@ -33,9 +35,9 @@ const investors = [
 export function Investors() {
   return (
     <Container as="section" size="md" className="py-12">
-      <h2 className="text-foreground text-4xl font-medium tracking-wide">
+      <Heading level={2} className="text-4xl font-medium tracking-wide">
         Our investors
-      </h2>
+      </Heading>
       <div className="mt-8 grid grid-cols-2 gap-12 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {investors.map((investor) => (
           <div key={investor.name} className="">
@@ -46,8 +48,8 @@ export function Investors() {
               height={120}
               className="object-cover"
             />
-            <h3 className="mt-3 font-semibold">{investor.name}</h3>
-            <p className="text-muted-foreground">{investor.company}</p>
+            <Heading level={3} size="xs" className="mt-3 text-base">{investor.name}</Heading>
+            <Text color="muted">{investor.company}</Text>
           </div>
         ))}
       </div>

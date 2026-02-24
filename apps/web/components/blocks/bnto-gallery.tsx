@@ -12,7 +12,9 @@ import {
 
 import { DashedLine } from "@/components/dashed-line";
 import { Card } from "@/components/ui/card";
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
 import { BNTO_REGISTRY, type BntoEntry } from "@/lib/bnto-registry";
 
 const BNTO_ICONS: Record<string, LucideIcon> = {
@@ -34,12 +36,12 @@ function BntoCard({ entry }: { entry: BntoEntry }) {
           <div className="bg-primary/10 text-primary-foreground flex size-10 items-center justify-center rounded-lg">
             <Icon className="size-5" />
           </div>
-          <h3 className="font-display text-lg font-semibold tracking-tight">
+          <Heading level={3} size="xs">
             {entry.h1.replace(/ Online Free$/, "")}
-          </h3>
-          <p className="text-muted-foreground text-sm leading-relaxed">
+          </Heading>
+          <Text size="sm" color="muted" leading="relaxed">
             {entry.description}
-          </p>
+          </Text>
           <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
             {entry.features.slice(0, 4).map((feature) => (
               <span
@@ -70,13 +72,13 @@ export const BntoGallery = () => {
 
         {/* Heading */}
         <div className="mx-auto mt-10 grid max-w-4xl items-center gap-3 md:gap-0 lg:mt-24 lg:grid-cols-2">
-          <h2 className="text-2xl tracking-tight text-balance md:text-4xl lg:text-5xl">
+          <Heading level={2} className="text-balance">
             Pick a tool. Drop your files.
-          </h2>
-          <p className="text-muted-foreground leading-snug">
+          </Heading>
+          <Text color="muted" leading="snug">
             Compress images, clean CSVs, rename files — all in your browser.
             No upload limits, no account required.
-          </p>
+          </Text>
         </div>
 
         {/* Card grid */}

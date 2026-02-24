@@ -6,7 +6,9 @@ import { ChevronRight } from "lucide-react";
 import { DashedLine } from "../dashed-line";
 
 import { Card } from "@/components/ui/card";
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
 
 const items = [
   {
@@ -37,14 +39,14 @@ export const Features = () => {
 
         {/* Content */}
         <div className="mx-auto mt-10 grid max-w-4xl items-center gap-3 md:gap-0 lg:mt-24 lg:grid-cols-2">
-          <h2 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
+          <Heading level={2}>
             Made for modern product teams
-          </h2>
-          <p className="text-muted-foreground leading-snug">
+          </Heading>
+          <Text color="muted" leading="snug">
             Mainline is built on the habits that make the best product teams
             successful: staying focused, moving quickly, and always aiming for
             high-quality work.
-          </p>
+          </Text>
         </div>
 
         {/* Features Card */}
@@ -69,9 +71,9 @@ export const Features = () => {
                       "group flex items-center justify-between gap-4 pe-4 pt-4 md:pe-6 md:pt-6"
                     }
                   >
-                    <h3 className="font-display max-w-60 text-2xl leading-tight font-bold tracking-tight">
+                    <Heading level={3} className="max-w-60">
                       {item.title}
-                    </h3>
+                    </Heading>
                     <div className="rounded-full border p-2">
                       <ChevronRight className="size-6 transition-transform group-hover:translate-x-1 lg:size-9" />
                     </div>

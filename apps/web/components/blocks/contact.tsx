@@ -6,17 +6,19 @@ import { Facebook, Linkedin, Twitter } from "lucide-react";
 
 import { ContactForm } from "@/components/blocks/contact-form";
 import { DashedLine } from "@/components/dashed-line";
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
 
 const contactInfo = [
   {
     title: "Corporate office",
     content: (
-      <p className="text-muted-foreground mt-3">
+      <Text color="muted" className="mt-3">
         1 Carlsberg Close
         <br />
         1260 Hillview, Australia
-      </p>
+      </Text>
     ),
   },
   {
@@ -24,7 +26,7 @@ const contactInfo = [
     content: (
       <div className="mt-3">
         <div>
-          <p className="">Careers</p>
+          <Text>Careers</Text>
           <Link
             href="mailto:careers@example.com"
             className="text-muted-foreground hover:text-foreground"
@@ -33,7 +35,7 @@ const contactInfo = [
           </Link>
         </div>
         <div className="mt-1">
-          <p className="">Press</p>
+          <Text>Press</Text>
           <Link
             href="mailto:press@example.com"
             className="text-muted-foreground hover:text-foreground"
@@ -69,17 +71,17 @@ export default function Contact() {
   return (
     <section className="py-28 lg:py-32 lg:pt-44">
       <Container size="sm">
-        <h1 className="text-center text-2xl font-semibold tracking-tight md:text-4xl lg:text-5xl">
+        <Heading level={1} className="text-center">
           Contact us
-        </h1>
-        <p className="text-muted-foreground mt-4 text-center leading-snug font-medium lg:mx-auto">
+        </Heading>
+        <Text color="muted" leading="snug" weight="medium" className="mt-4 text-center lg:mx-auto">
           Hopefully this form gets through our spam filters.
-        </p>
+        </Text>
 
         <div className="mt-10 flex justify-between gap-8 max-sm:flex-col md:mt-14 lg:mt-20 lg:gap-12">
           {contactInfo.map((info, index) => (
             <div key={index}>
-              <h2 className="font-medium">{info.title}</h2>
+              <Text as="h2" weight="medium">{info.title}</Text>
               {info.content}
             </div>
           ))}
@@ -89,7 +91,7 @@ export default function Contact() {
 
         {/* Inquiry Form */}
         <div className="mx-auto">
-          <h2 className="mb-4 text-lg font-semibold">Inquiries</h2>
+          <Heading level={2} size="xs" className="mb-4">Inquiries</Heading>
           <ContactForm />
         </div>
       </Container>

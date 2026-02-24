@@ -10,7 +10,10 @@ import {
 
 import { DashedLine } from "@/components/dashed-line";
 import { Button } from "@/components/ui/button";
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+import { Row } from "@/components/ui/Row";
 
 const features = [
   {
@@ -41,16 +44,16 @@ export const Hero = () => {
       <Container className="flex flex-col justify-between gap-8 md:gap-14 lg:flex-row lg:gap-20">
         {/* Left side - Main content */}
         <div className="flex-1">
-          <h1 className="text-foreground max-w-160 text-3xl tracking-tight md:text-4xl lg:text-5xl xl:whitespace-nowrap">
+          <Heading level={1} className="max-w-160 xl:whitespace-nowrap">
             Mainline Next.js template
-          </h1>
+          </Heading>
 
-          <p className="text-muted-foreground text-1xl mt-5 md:text-3xl">
+          <Text color="muted" className="text-1xl mt-5 md:text-3xl">
             Mainline is an open-source website template built with shadcn/ui,
             Tailwind 4 & Next.js
-          </p>
+          </Text>
 
-          <div className="mt-8 flex flex-wrap items-center gap-4 lg:flex-nowrap">
+          <Row wrap className="mt-8 gap-4 lg:flex-nowrap">
             <Button asChild>
               <a href="https://github.com/shadcnblocks/mainline-nextjs-template">
                 Get template
@@ -69,7 +72,7 @@ export const Hero = () => {
                 <ArrowRight className="stroke-3" />
               </a>
             </Button>
-          </div>
+          </Row>
         </div>
 
         {/* Right side - Features */}
@@ -88,12 +91,12 @@ export const Hero = () => {
               <div key={feature.title} className="flex gap-2.5 lg:gap-5">
                 <Icon className="text-foreground mt-1 size-4 shrink-0 lg:size-5" />
                 <div>
-                  <h2 className="font-text text-foreground font-semibold">
+                  <Heading level={2} size="xs">
                     {feature.title}
-                  </h2>
-                  <p className="text-muted-foreground max-w-76 text-sm">
+                  </Heading>
+                  <Text size="sm" color="muted" className="max-w-76">
                     {feature.description}
-                  </p>
+                  </Text>
                 </div>
               </div>
             );

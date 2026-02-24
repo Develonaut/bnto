@@ -6,6 +6,10 @@ import Link from "next/link";
 import { useSignIn, useSignUp } from "@bnto/auth";
 import { Background } from "@/components/background";
 import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+import { Stack } from "@/components/ui/Stack";
 import { Input } from "@/components/ui/input";
 
 type Mode = "signin" | "signup";
@@ -59,21 +63,21 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
   return (
     <Background>
       <section className="py-28 lg:pt-44 lg:pb-32">
-        <div className="container">
-          <div className="mx-auto w-full max-w-sm space-y-6">
-            <div className="flex flex-col items-center space-y-2 text-center">
+        <Container>
+          <Stack gap="md" className="mx-auto w-full max-w-sm">
+            <Stack gap="sm" align="center" className="text-center">
               <Link href="/" className="mb-4">
                 <span className="font-display text-2xl font-bold">bnto</span>
               </Link>
-              <h1 className="text-2xl font-bold">
+              <Heading level={1} size="sm">
                 {isSignUp ? "Create an account" : "Welcome back"}
-              </h1>
-              <p className="text-muted-foreground">
+              </Heading>
+              <Text color="muted">
                 {isSignUp
                   ? "Enter your details to get started"
                   : "Please enter your details."}
-              </p>
-            </div>
+              </Text>
+            </Stack>
 
             <div className="rounded-xl border bg-card p-6 shadow-sm">
               <form onSubmit={handleSubmit} className="grid gap-4">
@@ -122,7 +126,7 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
               </form>
             </div>
 
-            <p className="text-muted-foreground text-center text-sm">
+            <Text size="sm" color="muted" className="text-center">
               {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
               <button
                 type="button"
@@ -131,9 +135,9 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
               >
                 {isSignUp ? "Sign in" : "Sign up"}
               </button>
-            </p>
-          </div>
-        </div>
+            </Text>
+          </Stack>
+        </Container>
       </section>
     </Background>
   );

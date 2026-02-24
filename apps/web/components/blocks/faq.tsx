@@ -6,7 +6,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+import { Stack } from "@/components/ui/Stack";
 import { cn } from "@/lib/utils";
 
 const categories = [
@@ -75,31 +78,25 @@ export const FAQ = ({
     <section className={cn("py-28 lg:py-32", className)}>
       <Container size="md">
         <div className={cn("mx-auto grid gap-16 lg:grid-cols-2", className2)}>
-          <div className="space-y-4">
-            {headerTag === "h1" ? (
-              <h1 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
-                Got Questions?
-              </h1>
-            ) : (
-              <h2 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
-                Got Questions?
-              </h2>
-            )}
-            <p className="text-muted-foreground max-w-md leading-snug lg:mx-auto">
+          <Stack gap="md">
+            <Heading level={headerTag === "h1" ? 1 : 2}>
+              Got Questions?
+            </Heading>
+            <Text color="muted" leading="snug" className="max-w-md lg:mx-auto">
               If you can&apos;t find what you&apos;re looking for,{" "}
               <Link href="/contact" className="underline underline-offset-4">
                 get in touch
               </Link>
               .
-            </p>
-          </div>
+            </Text>
+          </Stack>
 
           <div className="grid gap-6 text-start">
             {categories.map((category, categoryIndex) => (
               <div key={category.title} className="">
-                <h3 className="text-muted-foreground border-b py-4">
+                <Text as="h3" color="muted" className="border-b py-4">
                   {category.title}
-                </h3>
+                </Text>
                 <Accordion type="single" collapsible className="w-full">
                   {category.questions.map((item, i) => (
                     <AccordionItem key={i} value={`${categoryIndex}-${i}`}>

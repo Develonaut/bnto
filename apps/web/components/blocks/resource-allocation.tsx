@@ -2,7 +2,8 @@ import Image from "next/image";
 
 import { DashedLine } from "../dashed-line";
 
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
 import { cn } from "@/lib/utils";
 
 const topItems = [
@@ -120,9 +121,9 @@ export const ResourceAllocation = () => {
     >
       <div className="">
         <Container as="header">
-          <h2 className="text-center text-3xl tracking-tight text-balance sm:text-4xl md:text-5xl lg:text-6xl">
+          <Heading level={2} size="display" className="text-center text-balance">
             Mainline your resource allocation and execution
-          </h2>
+          </Heading>
         </Container>
 
         <div className="mt-8 md:mt-12 lg:mt-20">
@@ -179,7 +180,7 @@ const Item = ({ item, isLast, className }: ItemProps) => {
       )}
     >
       <div className="title-container text-balance">
-        <h3 className="inline font-semibold">{item.title} </h3>
+        <Heading level={3} size="xs" className="inline text-base">{item.title} </Heading>
         <span className="text-muted-foreground"> {item.description}</span>
       </div>
 

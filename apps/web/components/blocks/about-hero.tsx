@@ -1,4 +1,7 @@
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+import { Stack } from "@/components/ui/Stack";
 import { DashedLine } from "@/components/dashed-line";
 
 const stats = [
@@ -25,15 +28,15 @@ export function AboutHero() {
     <section className="">
       <Container size="md" className="flex flex-col justify-between gap-8 md:gap-20 lg:flex-row lg:items-center lg:gap-24 xl:gap-24">
         <div className="flex-[1.5]">
-          <h1 className="text-3xl tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+          <Heading level={1}>
             Democratising quality software
-          </h1>
+          </Heading>
 
-          <p className="text-muted-foreground mt-5 text-2xl md:text-3xl lg:text-4xl">
+          <Text color="muted" className="mt-5 text-2xl md:text-3xl lg:text-4xl">
             Mainline is bringing modern software to life with AI magic.
-          </p>
+          </Text>
 
-          <p className="text-muted-foreground mt-8 hidden max-w-lg space-y-6 text-lg text-balance md:block lg:mt-12">
+          <Text color="muted" size="lg" balance className="mt-8 hidden max-w-lg space-y-6 md:block lg:mt-12">
             At Mainline, we are dedicated to transforming the way teams plan,
             execute, and deliver projects. Our mission is to provide our
             customers with an unbeatable edge over delays, inefficiencies, and
@@ -47,7 +50,7 @@ export function AboutHero() {
             than ever before. We&apos;re all in this together because your
             success is our success. In our history as a company, we&apos;ve
             never lost a customer, because when your projects succeed, so do we.
-          </p>
+          </Text>
         </div>
 
         <div
@@ -62,12 +65,12 @@ export function AboutHero() {
             className="absolute top-0 lg:hidden"
           />
           {stats.map((stat) => (
-            <div key={stat.label} className="flex flex-col gap-1">
+            <Stack key={stat.label} gap="xs">
               <div className="font-display text-4xl tracking-wide md:text-5xl">
                 {stat.value}
               </div>
-              <div className="text-muted-foreground">{stat.label}</div>
-            </div>
+              <Text color="muted" as="span">{stat.label}</Text>
+            </Stack>
           ))}
         </div>
       </Container>

@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
 
-import { Container } from "./container";
+import { Container } from "./Container";
 
 type ContainerSize = "sm" | "md" | "lg" | "xl" | "full";
 type SectionSpacing = "sm" | "md" | "lg" | "xl";

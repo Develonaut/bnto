@@ -6,7 +6,10 @@ import { Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+import { Stack } from "@/components/ui/Stack";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
@@ -56,16 +59,16 @@ export const Pricing = ({ className }: { className?: string }) => {
   return (
     <section className={cn("py-28 lg:py-32", className)}>
       <Container size="md">
-        <div className="space-y-4 text-center">
-          <h2 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
+        <Stack gap="md" className="text-center">
+          <Heading level={2}>
             Pricing
-          </h2>
-          <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
+          </Heading>
+          <Text color="muted" leading="snug" balance className="mx-auto max-w-xl">
             Use Mainline for free with your whole team. Upgrade to enable
             unlimited issues, enhanced security controls, and additional
             features.
-          </p>
-        </div>
+          </Text>
+        </Stack>
 
         <div className="mt-8 grid items-start gap-5 text-start md:mt-12 md:grid-cols-3 lg:mt-20">
           {plans.map((plan) => (
@@ -78,9 +81,9 @@ export const Pricing = ({ className }: { className?: string }) => {
               }`}
             >
               <Card.Content className="flex flex-col gap-7 px-6 py-5">
-                <div className="space-y-2">
-                  <h3 className="text-foreground font-semibold">{plan.name}</h3>
-                  <div className="space-y-1">
+                <Stack gap="sm">
+                  <Heading level={3} size="xs" className="text-lg">{plan.name}</Heading>
+                  <Stack gap="xs">
                     <div className="text-muted-foreground text-lg font-medium">
                       {isAnnual ? plan.yearlyPrice : plan.monthlyPrice}{" "}
                       {plan.name !== "Free" && (
@@ -90,8 +93,8 @@ export const Pricing = ({ className }: { className?: string }) => {
                         </span>
                       )}
                     </div>
-                  </div>
-                </div>
+                  </Stack>
+                </Stack>
 
                 {plan.name !== "Free" ? (
                   <div className="flex items-center gap-2">
@@ -108,7 +111,7 @@ export const Pricing = ({ className }: { className?: string }) => {
                   </span>
                 )}
 
-                <div className="space-y-3">
+                <Stack className="gap-3">
                   {plan.features.map((feature) => (
                     <div
                       key={feature}
@@ -118,7 +121,7 @@ export const Pricing = ({ className }: { className?: string }) => {
                       <span className="text-sm">{feature}</span>
                     </div>
                   ))}
-                </div>
+                </Stack>
 
                 <Button
                   className="w-fit"

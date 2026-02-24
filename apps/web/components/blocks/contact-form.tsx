@@ -5,6 +5,9 @@ import { useAction } from "next-safe-action/hooks";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+
 import { serverAction } from "@/actions/server-action";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -65,12 +68,12 @@ export function ContactForm() {
           >
             <Check className="size-8" />
           </div>
-          <h2 className="mb-2 text-center text-2xl font-bold text-pretty">
+          <Heading level={2} className="mb-2 text-center text-pretty">
             Thank you
-          </h2>
-          <p className="text-muted-foreground text-center text-lg text-pretty">
+          </Heading>
+          <Text color="muted" size="lg" className="text-center text-pretty">
             Form submitted successfully, we will get back to you soon
-          </p>
+          </Text>
         </div>
       </div>
     );

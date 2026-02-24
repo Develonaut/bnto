@@ -5,7 +5,8 @@ import { useState } from "react";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
 import {
   Collapsible,
   CollapsibleContent,
@@ -193,9 +194,9 @@ const PlanHeaders = ({
         <Collapsible open={isOpen} onOpenChange={setIsOpen} className="">
           <div className="flex items-center justify-between border-b py-4">
             <CollapsibleTrigger className="flex items-center gap-2">
-              <h3 className="text-2xl font-semibold">
+              <Heading level={3} className="text-2xl">
                 {pricingPlans[selectedPlan].name}
-              </h3>
+              </Heading>
               <ChevronsUpDown
                 className={`size-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
               />
@@ -234,7 +235,7 @@ const PlanHeaders = ({
 
         {pricingPlans.map((plan, index) => (
           <div key={index} className="">
-            <h3 className="mb-3 text-2xl font-semibold">{plan.name}</h3>
+            <Heading level={3} className="mb-3 text-2xl">{plan.name}</Heading>
             <Button variant={plan.button.variant} className="">
               {plan.button.text}
             </Button>
@@ -250,7 +251,7 @@ const FeatureSections = ({ selectedPlan }: { selectedPlan: number }) => (
     {comparisonFeatures.map((section, sectionIndex) => (
       <div key={sectionIndex} className="">
         <div className="border-primary/40 border-b py-4">
-          <h3 className="text-lg font-semibold">{section.category}</h3>
+          <Heading level={3} size="xs">{section.category}</Heading>
         </div>
         {section.features.map((feature, featureIndex) => (
           <div

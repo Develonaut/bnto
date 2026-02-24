@@ -3,7 +3,8 @@ import Link from "next/link";
 
 import Marquee from "react-fast-marquee";
 
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
 import { cn } from "@/lib/utils";
 
 type Company = {
@@ -88,13 +89,13 @@ export const Logos = () => {
     <section className="pb-28 lg:pb-32 overflow-hidden">
       <Container className="space-y-10 lg:space-y-16">
         <div className="text-center">
-          <h2 className="mb-4 text-xl text-balance md:text-2xl lg:text-3xl">
+          <Heading level={2} size="md" className="mb-4">
             Powering the world&apos;s best product teams.
             <br className="max-md:hidden" />
             <span className="text-muted-foreground">
               From next-gen startups to established enterprises.
             </span>
-          </h2>
+          </Heading>
         </div>
 
         <div className="flex w-full flex-col items-center gap-8">

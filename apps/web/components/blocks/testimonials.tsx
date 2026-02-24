@@ -6,8 +6,11 @@ import { ArrowRight } from "lucide-react";
 import { DashedLine } from "../dashed-line";
 
 import { Button } from "@/components/ui/button";
-import { Container } from "@/components/ui/container";
+import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/card";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+import { Stack } from "@/components/ui/Stack";
 import {
   Carousel,
   CarouselContent,
@@ -87,19 +90,19 @@ export const Testimonials = ({
     <>
       <section className={cn("overflow-hidden py-28 lg:py-32", className)}>
         <Container>
-          <div className="space-y-4">
-            <h2 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
+          <Stack gap="md">
+            <Heading level={2}>
               Trusted by product builders
-            </h2>
-            <p className="text-muted-foreground max-w-md leading-snug">
+            </Heading>
+            <Text color="muted" leading="snug" className="max-w-md">
               Mainline is built on the habits that make the best product teams
               successful: staying focused, moving quickly, and always aiming for
               high-quality work.
-            </p>
+            </Text>
             <Button variant="outline" className="shadow-md">
               Read our Customer Stories <ArrowRight className="size-4" />
             </Button>
-          </div>
+          </Stack>
 
           <div className="relative mt-8 -mr-[max(3rem,calc((100vw-80rem)/2+3rem))] md:mt-12 lg:mt-20">
             <Carousel
