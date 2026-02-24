@@ -134,8 +134,10 @@ export const Navbar = () => {
           </a>
 
           {/* Hamburger Menu Button (Mobile Only) */}
-          <button
-            className="text-muted-foreground relative flex size-8 lg:hidden"
+          <Button
+            variant="muted"
+            size="icon-sm"
+            className="relative lg:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <span className="sr-only">Open main menu</span>
@@ -153,7 +155,7 @@ export const Navbar = () => {
                 className={`absolute block h-0.5 w-full rounded-full bg-current transition duration-500 ease-in-out ${isMenuOpen ? "-rotate-45" : "translate-y-1.5"}`}
               ></span>
             </div>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -170,13 +172,15 @@ export const Navbar = () => {
           {ITEMS.map((link) =>
             link.dropdownItems ? (
               <div key={link.label} className="py-4 first:pt-0 last:pb-0">
-                <button
+                <Button
+                  variant="muted"
                   onClick={() =>
                     setOpenDropdown(
                       openDropdown === link.label ? null : link.label,
                     )
                   }
-                  className="text-primary flex w-full items-center justify-between text-base font-medium"
+                  className="h-auto w-full justify-between p-0 text-base font-medium text-primary"
+                  depth={false}
                 >
                   {link.label}
                   <ChevronRight
@@ -185,7 +189,7 @@ export const Navbar = () => {
                       openDropdown === link.label ? "rotate-90" : "",
                     )}
                   />
-                </button>
+                </Button>
                 <div
                   className={cn(
                     "overflow-hidden transition-all duration-300",
