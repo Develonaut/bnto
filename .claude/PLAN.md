@@ -198,7 +198,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 #### Wave 5 (sequential — test + verify)
 
 - [ ] `apps/web` — Playwright E2E: land on `/compress-images`, upload file, run, download result
-- [ ] `apps/web` — Playwright E2E: verify SEO metadata renders correctly on each Tier 1 slug
+- [x] `apps/web` — Playwright E2E: verify SEO metadata renders correctly on each Tier 1 slug
 - [x] `engine` — Verify all 6 fixtures run clean via `bnto run` integration tests
 
 > **SEO checkpoint:** Before this sprint closes, verify in browser devtools that each `/[bnto]` URL returns correct `<title>` and `<meta description>` in the page source (not client-rendered). If they're missing from the HTML source, the metadata is being rendered client-side and won't be indexed.
