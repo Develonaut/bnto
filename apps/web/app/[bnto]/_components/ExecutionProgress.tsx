@@ -60,16 +60,24 @@ export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
 
       {execution.progress.length > 0 && (
         <ul className="space-y-1.5">
-          {execution.progress.map((node) => (
-            <NodeProgressRow key={node.nodeId} node={node} />
+          {execution.progress.map((node, index) => (
+            <NodeProgressRow key={`${node.nodeId}-${index}`} node={node} />
           ))}
         </ul>
       )}
 
       {execution.status === "failed" && execution.error && (
-        <p className="text-sm text-destructive" data-testid="execution-error">
-          {execution.error}
-        </p>
+        <div
+          className="rounded-md border border-destructive/30 bg-destructive/5 p-3"
+          data-testid="execution-error"
+        >
+          <p className="text-sm text-destructive">{friendlyError(execution.error)}</p>
+          {execution.error !== friendlyError(execution.error) && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {execution.error}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
@@ -155,6 +163,21 @@ function useElapsedTime(execution: Execution | null | undefined) {
   }, [startedAt, completedAt, isActive]);
 
   return elapsed;
+}
+
+/** Translate backend error strings into user-friendly messages. */
+function friendlyError(raw: string): string {
+  if (raw.includes("file transit not configured"))
+    return "The file processing server isn't fully configured. Please try again later.";
+  if (raw.includes("GO_API_URL not configured"))
+    return "The processing server isn't available right now. Please try again later.";
+  if (raw.includes("timed out") || raw.includes("polling limit"))
+    return "The execution took too long and was stopped. Try with fewer or smaller files.";
+  if (raw.includes("Poll error"))
+    return "Lost connection to the processing server. Your execution may still be running.";
+  if (raw.match(/Go API returned [45]\d\d/))
+    return "The processing server returned an error. Please try again.";
+  return raw;
 }
 
 function formatElapsed(seconds: number): string {

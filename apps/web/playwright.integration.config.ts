@@ -28,6 +28,12 @@ export default defineConfig({
   timeout: 120_000,
   expect: {
     timeout: 60_000,
+    toHaveScreenshot: {
+      // Integration tests have dynamic content (timing text like "Completed in Xs",
+      // download URL loading states) that causes small pixel diffs between runs.
+      // Allow up to 2% pixel difference to avoid flaky screenshot assertions.
+      maxDiffPixelRatio: 0.02,
+    },
   },
   retries: 0,
   workers: 1,

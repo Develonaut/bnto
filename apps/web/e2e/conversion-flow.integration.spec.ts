@@ -19,8 +19,9 @@ test.use({ reducedMotion: "reduce" });
  * Tests are serial: C2 and C3 depend on C1 creating the test account.
  * If C1 fails, subsequent tests are skipped automatically.
  *
- * Every critical interaction point has a full-page screenshot assertion so
- * future regressions are caught visually, not just by data assertions.
+ * Screenshots organized in conversion-flow/ subdirectory:
+ *   __screenshots__/conversion-flow.integration.spec.ts/
+ *     conversion-flow/  — all C1-C3 screenshots
  *
  * Run via: task e2e:integration
  * Requires: task dev:all (Next.js + Convex + Go API + tunnel)
@@ -60,7 +61,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
 
     // Snapshot: tool page loaded with anonymous session — baseline state
     await expect(page).toHaveScreenshot(
-      "c1-01-anonymous-session-ready.png",
+      ["conversion-flow", "c1-01-anonymous-session-ready.png"],
       { fullPage: true },
     );
 
@@ -76,7 +77,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
 
     // Snapshot: files selected, Run button enabled — pre-execution state
     await expect(page).toHaveScreenshot(
-      "c1-02-files-selected-ready.png",
+      ["conversion-flow", "c1-02-files-selected-ready.png"],
       { fullPage: true },
     );
 
@@ -87,7 +88,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
     const processingPhase = await runButton.getAttribute("data-phase");
     if (processingPhase === "uploading" || processingPhase === "running") {
       await expect(page).toHaveScreenshot(
-        "c1-03-execution-in-progress.png",
+        ["conversion-flow", "c1-03-execution-in-progress.png"],
         { fullPage: true },
       );
     }
@@ -120,7 +121,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
 
     // Snapshot: execution completed with results — proves anonymous can run
     await expect(page).toHaveScreenshot(
-      "c1-04-anonymous-execution-completed.png",
+      ["conversion-flow", "c1-04-anonymous-execution-completed.png"],
       { fullPage: true },
     );
 
@@ -137,7 +138,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
 
     // Snapshot: sign-up form filled out — the conversion touchpoint
     await expect(page).toHaveScreenshot(
-      "c1-05-signup-form-filled.png",
+      ["conversion-flow", "c1-05-signup-form-filled.png"],
       { fullPage: true },
     );
 
@@ -167,7 +168,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
 
     // Snapshot: post-conversion tool page — same userId, upgraded account
     await expect(page).toHaveScreenshot(
-      "c1-06-post-conversion-tool-page.png",
+      ["conversion-flow", "c1-06-post-conversion-tool-page.png"],
       { fullPage: true },
     );
   });
@@ -192,7 +193,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
 
     // Snapshot: sign-in form filled — proves re-auth UI works
     await expect(page).toHaveScreenshot(
-      "c2-01-signin-form-filled.png",
+      ["conversion-flow", "c2-01-signin-form-filled.png"],
       { fullPage: true },
     );
 
@@ -216,7 +217,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
 
     // Snapshot: tool page as signed-in converted user
     await expect(page).toHaveScreenshot(
-      "c2-02-signed-in-tool-page.png",
+      ["conversion-flow", "c2-02-signed-in-tool-page.png"],
       { fullPage: true },
     );
 
@@ -247,7 +248,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
 
     // Snapshot: execution completed by converted user — proves pipeline works
     await expect(page).toHaveScreenshot(
-      "c2-03-converted-user-execution-completed.png",
+      ["conversion-flow", "c2-03-converted-user-execution-completed.png"],
       { fullPage: true },
     );
   });
@@ -280,7 +281,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
 
     // Snapshot: tool page with no upgrade prompt — free tier quota active
     await expect(page).toHaveScreenshot(
-      "c3-01-no-upgrade-prompt-free-tier.png",
+      ["conversion-flow", "c3-01-no-upgrade-prompt-free-tier.png"],
       { fullPage: true },
     );
 
@@ -295,7 +296,7 @@ test.describe.serial("Integration — Conversion Flow (C1-C3)", () => {
 
     // Snapshot: files selected, Run enabled — quota not exhausted
     await expect(page).toHaveScreenshot(
-      "c3-02-run-enabled-quota-active.png",
+      ["conversion-flow", "c3-02-run-enabled-quota-active.png"],
       { fullPage: true },
     );
 

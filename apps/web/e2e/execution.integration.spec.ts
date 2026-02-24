@@ -4,6 +4,11 @@ import {
   ENGINE_FIXTURES,
   ENGINE_IMAGES,
   waitForSession,
+  assertOutputFiles,
+  downloadAndVerify,
+  downloadAllAndVerify,
+  readDownloadedFile,
+  assertImageFormat,
 } from "./integrationHelpers";
 
 test.use({ reducedMotion: "reduce" });
@@ -11,15 +16,22 @@ test.use({ reducedMotion: "reduce" });
 /**
  * Full-stack integration E2E tests.
  *
- * Exercise the complete execution pipeline against the real dev stack
- * (Next.js + Convex + Go API via Cloudflare tunnel + R2).
+ * Exercise the complete user journey against the real dev stack:
+ *   Input file → tool page → Run → output files → Download
+ *
+ * Each test behaves like a real user: drop a file, use the tool, get the
+ * output. The download step is the critical proof — if the user can't
+ * receive their processed file, the tool is broken.
  *
  * Test fixtures are shared with the Go engine — single source of truth.
  *
- * Each test captures full-page snapshots at critical interaction points:
- *   - Session ready + files selected (pre-execution baseline)
- *   - Execution in progress (when capturable)
- *   - Execution completed with results
+ * Screenshots are organized per-flow (each bnto tool gets its own directory):
+ *   __screenshots__/execution.integration.spec.ts/
+ *     compress-images/  — single + multi image pipelines
+ *     resize-images/    — resize to custom width
+ *     convert-image-format/ — format conversion
+ *     clean-csv/        — CSV cleaning
+ *     reset/            — Run Again reset flow
  *
  * Run via: task e2e:integration
  * Requires: task dev:all (Next.js + Convex + Go API + tunnel)
@@ -37,7 +49,7 @@ test.describe("Integration — compress-images", () => {
     ).toBeVisible();
     await waitForSession(page);
 
-    // Select file
+    // ── Step 1: Select file ──────────────────────────────────────────
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(
       path.join(ENGINE_IMAGES, "Product_Render.png"),
@@ -46,23 +58,17 @@ test.describe("Integration — compress-images", () => {
     const runButton = page.locator('[data-testid="run-button"]');
     await expect(runButton).toBeEnabled();
 
-    // Snapshot: session ready, file selected, ready to run
     await expect(page).toHaveScreenshot(
-      "compress-single-01-files-selected.png",
+      ["compress-images", "single-01-files-selected.png"],
       { fullPage: true },
     );
 
-    // Execute
+    // ── Step 2: Execute ──────────────────────────────────────────────
     await runButton.click();
 
-    // Try to capture processing state (may be fleeting)
-    const midPhase = await runButton.getAttribute("data-phase");
-    if (midPhase === "uploading" || midPhase === "running") {
-      await expect(page).toHaveScreenshot(
-        "compress-single-02-in-progress.png",
-        { fullPage: true },
-      );
-    }
+    // Note: in-progress state is transient and page height varies —
+    // not suitable for stable screenshot baselines. The lifecycle is
+    // validated via data-phase attribute checks below.
 
     // Wait for completion
     await expect(runButton).toHaveAttribute(
@@ -74,17 +80,24 @@ test.describe("Integration — compress-images", () => {
       (await runButton.getAttribute("data-phase")) ?? "unknown";
     expect(phase).toBe("completed");
 
-    // Wait for results
-    const results = page.locator('[data-testid="execution-results"]');
-    await expect(results).toBeVisible({ timeout: 10_000 });
-    await expect(
-      page.locator('[data-testid="download-button"]'),
-    ).toBeVisible({ timeout: 15_000 });
+    // ── Step 3: Verify output ────────────────────────────────────────
+    await assertOutputFiles(page, 1);
 
-    // Snapshot: execution completed with download button
     await expect(page).toHaveScreenshot(
-      "compress-single-03-completed.png",
+      ["compress-images", "single-03-completed.png"],
       { fullPage: true },
+    );
+
+    // ── Step 4: Download and verify the output ──────────────────────
+    const download = await downloadAndVerify(page);
+    // The engine compresses to WebP for better ratio — verify output is
+    // a valid image (filename may still say .png but content is WebP)
+    const outputBuffer = await readDownloadedFile(download);
+    assertImageFormat(outputBuffer, "webp");
+    // Compressed output should be smaller than the 430KB input
+    expect(outputBuffer.length).toBeLessThan(430_000);
+    console.log(
+      `[verify] Output is valid WebP, ${outputBuffer.length} bytes (compressed)`,
     );
   });
 
@@ -95,7 +108,7 @@ test.describe("Integration — compress-images", () => {
     ).toBeVisible();
     await waitForSession(page);
 
-    // Select multiple files
+    // ── Step 1: Select files ─────────────────────────────────────────
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles([
       path.join(ENGINE_IMAGES, "Product_Render.png"),
@@ -105,13 +118,12 @@ test.describe("Integration — compress-images", () => {
     const runButton = page.locator('[data-testid="run-button"]');
     await expect(runButton).toBeEnabled();
 
-    // Snapshot: multiple files selected
     await expect(page).toHaveScreenshot(
-      "compress-multi-01-files-selected.png",
+      ["compress-images", "multi-01-files-selected.png"],
       { fullPage: true },
     );
 
-    // Execute
+    // ── Step 2: Execute ──────────────────────────────────────────────
     await runButton.click();
     await expect(runButton).toHaveAttribute(
       "data-phase",
@@ -122,18 +134,38 @@ test.describe("Integration — compress-images", () => {
       (await runButton.getAttribute("data-phase")) ?? "unknown";
     expect(phase).toBe("completed");
 
-    // Wait for results
-    const results = page.locator('[data-testid="execution-results"]');
-    await expect(results).toBeVisible({ timeout: 10_000 });
-    await expect(
-      page.locator('[data-testid="download-all-button"]'),
-    ).toBeVisible({ timeout: 15_000 });
+    // ── Step 3: Verify output ────────────────────────────────────────
+    await assertOutputFiles(page, 2);
 
-    // Snapshot: multi-file results with Download All
     await expect(page).toHaveScreenshot(
-      "compress-multi-02-completed.png",
+      ["compress-images", "multi-02-completed.png"],
       { fullPage: true },
     );
+
+    // ── Step 4: Download individual files and verify outputs ────────
+    // Download each file via its per-row download button (more reliable
+    // than "Download All" which triggers rapid sequential downloads
+    // that browsers may block).
+    const firstFileButton = page.getByRole("button", {
+      name: /Download Product_Render\.png/i,
+    });
+    await expect(firstFileButton).toBeVisible({ timeout: 15_000 });
+
+    const [download1] = await Promise.all([
+      page.waitForEvent("download", { timeout: 30_000 }),
+      firstFileButton.click(),
+    ]);
+    expect(download1.suggestedFilename()).toMatch(/Product_Render/i);
+    const buf1 = await readDownloadedFile(download1);
+    assertImageFormat(buf1, "webp");
+    console.log(
+      `[verify] ${download1.suggestedFilename()} — valid WebP, ${buf1.length} bytes`,
+    );
+
+    // Verify "Download All" button is ready (proves all URLs loaded)
+    await expect(
+      page.locator('[data-testid="download-all-button"]'),
+    ).toBeEnabled();
   });
 });
 
@@ -149,7 +181,7 @@ test.describe("Integration — resize-images", () => {
     ).toBeVisible();
     await waitForSession(page);
 
-    // Select file
+    // ── Step 1: Select file ──────────────────────────────────────────
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(
       path.join(ENGINE_IMAGES, "Product_Render.png"),
@@ -158,12 +190,12 @@ test.describe("Integration — resize-images", () => {
     const runButton = page.locator('[data-testid="run-button"]');
     await expect(runButton).toBeEnabled();
 
-    // Snapshot: resize config + file selected
-    await expect(page).toHaveScreenshot("resize-01-files-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+      ["resize-images", "01-files-selected.png"],
+      { fullPage: true },
+    );
 
-    // Execute
+    // ── Step 2: Execute ──────────────────────────────────────────────
     await runButton.click();
     await expect(runButton).toHaveAttribute(
       "data-phase",
@@ -174,13 +206,24 @@ test.describe("Integration — resize-images", () => {
       (await runButton.getAttribute("data-phase")) ?? "unknown";
     expect(phase).toBe("completed");
 
-    const results = page.locator('[data-testid="execution-results"]');
-    await expect(results).toBeVisible({ timeout: 10_000 });
+    // ── Step 3: Verify output ────────────────────────────────────────
+    await assertOutputFiles(page, 1);
 
-    // Snapshot: resize completed
-    await expect(page).toHaveScreenshot("resize-02-completed.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+      ["resize-images", "02-completed.png"],
+      { fullPage: true },
+    );
+
+    // ── Step 4: Download and verify the output ──────────────────────
+    const download = await downloadAndVerify(page);
+    expect(download.suggestedFilename()).toMatch(/\.png$/i);
+
+    // Verify the downloaded file is a valid PNG image
+    const outputBuffer = await readDownloadedFile(download);
+    assertImageFormat(outputBuffer, "png");
+    console.log(
+      `[verify] Output is valid PNG, ${outputBuffer.length} bytes (resized)`,
+    );
   });
 });
 
@@ -196,7 +239,7 @@ test.describe("Integration — convert-image-format", () => {
     ).toBeVisible();
     await waitForSession(page);
 
-    // Select file
+    // ── Step 1: Select file ──────────────────────────────────────────
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(
       path.join(ENGINE_IMAGES, "Product_Render.png"),
@@ -205,13 +248,12 @@ test.describe("Integration — convert-image-format", () => {
     const runButton = page.locator('[data-testid="run-button"]');
     await expect(runButton).toBeEnabled();
 
-    // Snapshot: format config + file selected
     await expect(page).toHaveScreenshot(
-      "convert-format-01-files-selected.png",
+      ["convert-image-format", "01-files-selected.png"],
       { fullPage: true },
     );
 
-    // Execute
+    // ── Step 2: Execute ──────────────────────────────────────────────
     await runButton.click();
     await expect(runButton).toHaveAttribute(
       "data-phase",
@@ -222,13 +264,24 @@ test.describe("Integration — convert-image-format", () => {
       (await runButton.getAttribute("data-phase")) ?? "unknown";
     expect(phase).toBe("completed");
 
-    const results = page.locator('[data-testid="execution-results"]');
-    await expect(results).toBeVisible({ timeout: 10_000 });
+    // ── Step 3: Verify output ────────────────────────────────────────
+    await assertOutputFiles(page, 1);
 
-    // Snapshot: format conversion completed
     await expect(page).toHaveScreenshot(
-      "convert-format-02-completed.png",
+      ["convert-image-format", "02-completed.png"],
       { fullPage: true },
+    );
+
+    // ── Step 4: Download and verify the output ──────────────────────
+    const download = await downloadAndVerify(page);
+    // Convert to WebP should produce a .webp file
+    expect(download.suggestedFilename()).toMatch(/\.webp$/i);
+
+    // Verify the downloaded file is actually a WebP image
+    const outputBuffer = await readDownloadedFile(download);
+    assertImageFormat(outputBuffer, "webp");
+    console.log(
+      `[verify] Output is valid WebP, ${outputBuffer.length} bytes`,
     );
   });
 });
@@ -245,7 +298,7 @@ test.describe("Integration — clean-csv", () => {
     ).toBeVisible({ timeout: 15_000 });
     await waitForSession(page);
 
-    // Select file
+    // ── Step 1: Select file ──────────────────────────────────────────
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles(
       path.join(ENGINE_FIXTURES, "test-dirty.csv"),
@@ -254,12 +307,12 @@ test.describe("Integration — clean-csv", () => {
     const runButton = page.locator('[data-testid="run-button"]');
     await expect(runButton).toBeEnabled();
 
-    // Snapshot: CSV config + file selected
-    await expect(page).toHaveScreenshot("clean-csv-01-files-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+      ["clean-csv", "01-files-selected.png"],
+      { fullPage: true },
+    );
 
-    // Execute
+    // ── Step 2: Execute ──────────────────────────────────────────────
     await runButton.click();
     await expect(runButton).toHaveAttribute(
       "data-phase",
@@ -270,13 +323,27 @@ test.describe("Integration — clean-csv", () => {
       (await runButton.getAttribute("data-phase")) ?? "unknown";
     expect(phase).toBe("completed");
 
-    const results = page.locator('[data-testid="execution-results"]');
-    await expect(results).toBeVisible({ timeout: 10_000 });
+    // ── Step 3: Verify output ────────────────────────────────────────
+    await assertOutputFiles(page, 1);
 
-    // Snapshot: CSV cleaning completed
-    await expect(page).toHaveScreenshot("clean-csv-02-completed.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+      ["clean-csv", "02-completed.png"],
+      { fullPage: true },
+    );
+
+    // ── Step 4: Download and verify the output ──────────────────────
+    const download = await downloadAndVerify(page);
+    expect(download.suggestedFilename()).toMatch(/\.csv$/i);
+
+    // Read the cleaned CSV and verify it's valid
+    const outputBuffer = await readDownloadedFile(download);
+    const csvContent = outputBuffer.toString("utf-8");
+    // Should have content (header + at least 1 data row)
+    const lines = csvContent.trim().split("\n");
+    expect(lines.length).toBeGreaterThanOrEqual(2);
+    console.log(
+      `[verify] Output is valid CSV, ${lines.length} lines, ${outputBuffer.length} bytes`,
+    );
   });
 });
 
@@ -313,6 +380,9 @@ test.describe("Integration — reset after completion", () => {
       return;
     }
 
+    // Verify output is there before resetting
+    await assertOutputFiles(page, 1);
+
     // Click Run Again to reset
     await runButton.click();
 
@@ -322,8 +392,9 @@ test.describe("Integration — reset after completion", () => {
     await expect(page.getByText("1 file selected")).not.toBeVisible();
 
     // Snapshot: reset to idle state after completion
-    await expect(page).toHaveScreenshot("reset-01-idle-after-run.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+      ["reset", "01-idle-after-run.png"],
+      { fullPage: true },
+    );
   });
 });

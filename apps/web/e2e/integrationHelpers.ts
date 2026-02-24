@@ -1,5 +1,6 @@
 import path from "path";
-import type { Page } from "@playwright/test";
+import fs from "fs";
+import type { Download, Page } from "@playwright/test";
 import { expect } from "./fixtures";
 
 // Engine test fixtures — shared with Go golden tests
@@ -218,4 +219,197 @@ export async function captureUploadProgress(
   } catch {
     // Upload may already be complete — not a test failure
   }
+}
+
+// ---------------------------------------------------------------------------
+// Download verification — prove the user can actually get their output
+// ---------------------------------------------------------------------------
+
+/**
+ * Verify output files are listed in the results panel and downloads are ready.
+ *
+ * Checks that the expected number of output file rows are visible, each
+ * showing a filename and file size. Waits for presigned download URLs to
+ * load (spinners replaced by download icons) before returning.
+ *
+ * This ensures screenshots capture the "ready to download" state, not the
+ * intermediate "loading presigned URLs" state with spinners.
+ */
+export async function assertOutputFiles(
+  page: Page,
+  expectedCount: number,
+) {
+  const results = page.locator('[data-testid="execution-results"]');
+  await expect(results).toBeVisible({ timeout: 10_000 });
+
+  // Verify the summary text
+  const label = expectedCount === 1 ? "1 file ready" : `${expectedCount} files ready`;
+  await expect(results.getByText(label)).toBeVisible();
+
+  // Verify each output file row has a name and size
+  const outputFiles = page.locator('[data-testid="output-file"]');
+  await expect(outputFiles).toHaveCount(expectedCount, { timeout: 10_000 });
+
+  // Wait for download buttons to be ready (presigned URLs loaded).
+  // Single file: wait for data-testid="download-button" to appear.
+  // Multi file: wait for data-testid="download-all-button" to be enabled.
+  if (expectedCount === 1) {
+    await expect(
+      page.locator('[data-testid="download-button"]'),
+    ).toBeVisible({ timeout: 15_000 });
+  } else {
+    await expect(
+      page.locator('[data-testid="download-all-button"]'),
+    ).toBeEnabled({ timeout: 15_000 });
+  }
+
+  return outputFiles;
+}
+
+/**
+ * Click the download button and verify a file is actually received.
+ *
+ * For single-file results, clicks [data-testid="download-button"].
+ * Waits for Playwright's download event, then verifies the file has
+ * a suggested filename and non-zero size.
+ *
+ * Returns the Download object for further inspection if needed.
+ */
+export async function downloadAndVerify(
+  page: Page,
+): Promise<Download> {
+  const downloadButton = page.locator('[data-testid="download-button"]');
+  await expect(downloadButton).toBeVisible({ timeout: 15_000 });
+
+  // Start waiting for download before clicking
+  const [download] = await Promise.all([
+    page.waitForEvent("download", { timeout: 30_000 }),
+    downloadButton.click(),
+  ]);
+
+  // Verify the download has a filename
+  const suggestedName = download.suggestedFilename();
+  expect(suggestedName).toBeTruthy();
+
+  // Save to temp path and verify non-zero size
+  const filePath = await download.path();
+  expect(filePath).toBeTruthy();
+  const stats = fs.statSync(filePath!);
+  expect(stats.size).toBeGreaterThan(0);
+
+  console.log(
+    `[download] Received: ${suggestedName} (${stats.size} bytes)`,
+  );
+
+  return download;
+}
+
+/**
+ * Read the contents of a downloaded file.
+ *
+ * Playwright saves downloads to a temp directory. This reads the file
+ * so tests can inspect the actual output — verify a compressed image
+ * has valid PNG headers, a cleaned CSV has the right rows, etc.
+ */
+export async function readDownloadedFile(
+  download: Download,
+): Promise<Buffer> {
+  const filePath = await download.path();
+  if (!filePath) throw new Error("Download has no path — was it cancelled?");
+  return fs.readFileSync(filePath);
+}
+
+/**
+ * Verify a downloaded file has the expected image format by checking
+ * magic bytes (file signature).
+ *
+ * Supports: PNG, JPEG, WebP, GIF.
+ */
+export function assertImageFormat(
+  buffer: Buffer,
+  expectedFormat: "png" | "jpeg" | "webp" | "gif",
+) {
+  const signatures: Record<string, number[]> = {
+    png: [0x89, 0x50, 0x4e, 0x47],       // \x89PNG
+    jpeg: [0xff, 0xd8, 0xff],              // JPEG SOI marker
+    webp: [0x52, 0x49, 0x46, 0x46],        // RIFF (WebP container)
+    gif: [0x47, 0x49, 0x46],               // GIF
+  };
+  const expected = signatures[expectedFormat];
+  const actual = [...buffer.subarray(0, expected.length)];
+  const matches = expected.every((byte, i) => actual[i] === byte);
+
+  // For WebP, also check bytes 8-11 for "WEBP"
+  if (expectedFormat === "webp" && matches) {
+    const webpTag = buffer.subarray(8, 12).toString("ascii");
+    expect(webpTag).toBe("WEBP");
+    return;
+  }
+
+  if (!matches) {
+    // Show diagnostic info about what we actually got
+    const hex = [...buffer.subarray(0, 16)]
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join(" ");
+    const preview = buffer.subarray(0, 200).toString("utf-8").replace(/[^\x20-\x7E]/g, ".");
+    throw new Error(
+      `Expected ${expectedFormat} format but got different bytes.\n` +
+        `  First 16 bytes (hex): ${hex}\n` +
+        `  Preview (ASCII): ${preview}\n` +
+        `  File size: ${buffer.length} bytes`,
+    );
+  }
+}
+
+/**
+ * Click "Download All" and verify files are received.
+ *
+ * For multi-file results, clicks [data-testid="download-all-button"].
+ * Waits for at least one download event. Due to browser download
+ * batching behavior, we verify at least the first file arrives.
+ *
+ * Returns the array of Download objects received.
+ */
+export async function downloadAllAndVerify(
+  page: Page,
+  expectedCount: number,
+): Promise<Download[]> {
+  const downloadAllButton = page.locator('[data-testid="download-all-button"]');
+  await expect(downloadAllButton).toBeVisible({ timeout: 15_000 });
+  await expect(downloadAllButton).toBeEnabled();
+
+  // Collect downloads — the app triggers them sequentially
+  const downloads: Download[] = [];
+  const downloadPromise = new Promise<void>((resolve) => {
+    const handler = (download: Download) => {
+      downloads.push(download);
+      if (downloads.length >= expectedCount) {
+        page.removeListener("download", handler);
+        resolve();
+      }
+    };
+    page.on("download", handler);
+    // Safety timeout — resolve with whatever we got after 30s
+    setTimeout(() => {
+      page.removeListener("download", handler);
+      resolve();
+    }, 30_000);
+  });
+
+  await downloadAllButton.click();
+  await downloadPromise;
+
+  // Verify we received at least 1 download (browsers may batch/block multiples)
+  expect(downloads.length).toBeGreaterThanOrEqual(1);
+
+  for (const download of downloads) {
+    const name = download.suggestedFilename();
+    const filePath = await download.path();
+    expect(filePath).toBeTruthy();
+    const stats = fs.statSync(filePath!);
+    expect(stats.size).toBeGreaterThan(0);
+    console.log(`[download] Received: ${name} (${stats.size} bytes)`);
+  }
+
+  return downloads;
 }
