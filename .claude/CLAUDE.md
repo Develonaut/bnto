@@ -15,6 +15,7 @@
 | Architecture decisions       | [rules/architecture.md](.claude/rules/architecture.md)             |
 | Repo structure               | [monorepo-structure.md](.claude/strategy/monorepo-structure.md)    |
 | Build tooling                | [monorepo-tooling.md](.claude/decisions/monorepo-tooling.md)       |
+| Strategic direction          | [ROADMAP.md](.claude/ROADMAP.md)                                  |
 | Implementation task          | [PLAN.md](.claude/PLAN.md)                                        |
 | Writing integration tests    | [journeys/](.claude/journeys/) — user journey test matrices        |
 | Predefined Bntos & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                    |
@@ -157,6 +158,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 
 | Document | Purpose |
 |----------|---------|
+| [ROADMAP.md](.claude/ROADMAP.md) | Strategic roadmap — milestones, direction, big decisions |
 | [PLAN.md](.claude/PLAN.md) | Build plan — sprints, waves, what's next |
 | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) | Full architecture, tech decisions, phases |
 | [monorepo-structure.md](.claude/strategy/monorepo-structure.md) | Repo structure, packages, CLI-to-API mapping |
