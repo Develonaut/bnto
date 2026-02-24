@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BNTO_REGISTRY } from "../../../../../lib/bnto-registry";
+import { BNTO_REGISTRY } from "../../../../../lib/bntoRegistry";
 import { DEFAULT_CONFIGS, type BntoSlug } from "../types";
 
 describe("BntoConfigMap defaults", () => {

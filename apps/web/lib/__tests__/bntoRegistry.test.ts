@@ -4,7 +4,7 @@ import {
   RESERVED_PATHS,
   getBntoBySlug,
   isValidBntoSlug,
-} from "../bnto-registry";
+} from "../bntoRegistry";
 
 describe("BNTO_REGISTRY", () => {
   it("has all Tier 1 bntos", () => {

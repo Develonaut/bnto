@@ -7,7 +7,7 @@ import {
   useRunPredefined,
   useExecution,
 } from "@bnto/core";
-import type { BntoEntry } from "../../../lib/bnto-registry";
+import type { BntoEntry } from "../../../lib/bntoRegistry";
 import { getRecipe } from "../../../lib/menu";
 import { BntoConfigPanel } from "./BntoConfigPanel";
 import type { BntoConfigMap, BntoSlug } from "./configs/types";

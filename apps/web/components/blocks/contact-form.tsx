@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { formSchema } from "@/lib/form-schema";
+import { formSchema } from "@/lib/formSchema";
 
 type Schema = z.infer<typeof formSchema>;
 

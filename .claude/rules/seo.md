@@ -25,7 +25,7 @@ app/
 +-- pricing/page.tsx          # /pricing (static, wins over [bnto])
 ```
 
-**Rule:** If you add a new top-level route, verify it doesn't collide with an existing bnto slug. Check `lib/bnto-registry.ts`.
+**Rule:** If you add a new top-level route, verify it doesn't collide with an existing bnto slug. Check `lib/bntoRegistry.ts`.
 
 ---
 
@@ -33,7 +33,7 @@ app/
 
 The slug registry is the single source of truth for all predefined Bnto URLs. It lives in code (not just docs) so it can drive `generateStaticParams`, `generateMetadata`, middleware, and sitemap generation from one place.
 
-**File:** `apps/web/lib/bnto-registry.ts`
+**File:** `apps/web/lib/bntoRegistry.ts`
 
 ```typescript
 export interface BntoEntry {
@@ -80,7 +80,7 @@ SEO pages must be statically generated at build time. Static HTML loads faster t
 // app/[bnto]/page.tsx
 
 import { notFound } from "next/navigation";
-import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bnto-registry";
+import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 
 // Pre-render all registered slugs at build time
 export function generateStaticParams() {
@@ -130,7 +130,7 @@ The current middleware (`middleware.ts`) is private-by-default: any path not in 
 
 ```typescript
 // middleware.ts -- updated isPublicPath check
-import { isValidBntoSlug } from "./lib/bnto-registry";
+import { isValidBntoSlug } from "./lib/bntoRegistry";
 
 // In the middleware function:
 const isBntoSlug = isValidBntoSlug(pathname.slice(1)); // strip leading /
@@ -211,7 +211,7 @@ Generate a sitemap from the slug registry. This is how Google discovers bnto pag
 **File:** `apps/web/app/sitemap.ts`
 
 ```typescript
-import { BNTO_REGISTRY } from "@/lib/bnto-registry";
+import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 import type { MetadataRoute } from "next";
 
 const BASE_URL = "https://bnto.dev"; // or whatever the production domain is
@@ -471,7 +471,7 @@ Today, only predefined bntos have public URLs. Eventually users may want shareab
 ### Registry & Docs
 3. Add to Notion (`Bnto Directory & Launch Plan`) with search volume and rationale
 4. Add to `strategy/bntos.md` with slug, persona, and fixture status
-5. Add to `lib/bnto-registry.ts` with full metadata (title, description, h1, fixture, features)
+5. Add to `lib/bntoRegistry.ts` with full metadata (title, description, h1, fixture, features)
 6. Verify slug doesn't collide with reserved paths or existing app routes
 
 ### SEO & Metadata

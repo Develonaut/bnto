@@ -1,4 +1,4 @@
-import type { BntoEntry } from "../../../lib/bnto-registry";
+import type { BntoEntry } from "../../../lib/bntoRegistry";
 import { BASE_URL } from "../../../lib/constants";
 
 /**

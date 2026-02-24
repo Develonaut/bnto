@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { BNTO_REGISTRY } from "../lib/bnto-registry";
+import { BNTO_REGISTRY } from "../lib/bntoRegistry";
 import { BASE_URL } from "../lib/constants";
 
 export default function sitemap(): MetadataRoute.Sitemap {

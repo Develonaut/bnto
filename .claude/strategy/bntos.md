@@ -105,7 +105,7 @@ See [rules/seo.md](../rules/seo.md) for the full SEO strategy -- slug registry, 
 - Verb-first: `/compress-images`, `/rename-files`, `/clean-csv`
 - Action-oriented: `/compress-images` not `/image-compressor`
 - No internal bnto names: `/compress-images` not `/run-image-compress`
-- All metadata and slug validation driven by `lib/bnto-registry.ts`
+- All metadata and slug validation driven by `lib/bntoRegistry.ts`
 
 ---
 
@@ -135,7 +135,7 @@ Every fixture must:
 See the full checklist in [rules/seo.md](../rules/seo.md#checklist-shipping-a-new-bnto). Summary:
 
 1. Create or verify the fixture in `engine/examples/`
-2. Add to Notion, this file, and `lib/bnto-registry.ts` (with features array)
+2. Add to Notion, this file, and `lib/bntoRegistry.ts` (with features array)
 3. Verify slug doesn't collide with reserved paths
 4. Page has plain-language description, JSON-LD features, and entry in `llms.txt`
 5. Build passes, h1 matches target query, run counter increments

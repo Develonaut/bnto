@@ -114,7 +114,7 @@ User clicks Sign Out
 | `app/providers/index.tsx` | Wires `onSessionLost` -> router redirect to /signin |
 | `core/providers/SessionProvider.tsx` | Detects auth -> unauth transition, fires `onSessionLost` |
 | `lib/routes.ts` | `isAuthPath()`, `isProtectedPath()`, route definitions |
-| `lib/bnto-registry.ts` | `isValidBntoSlug()`, `getBntoBySlug()`, all predefined slugs |
+| `lib/bntoRegistry.ts` | `isValidBntoSlug()`, `getBntoBySlug()`, all predefined slugs |
 | `core/lib/signoutSignal.ts` | Sets the `bnto-signout` signal cookie |
 | `core/constants.ts` | `SIGNOUT_COOKIE` constant shared between core and proxy |
 

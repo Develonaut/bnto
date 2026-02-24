@@ -197,7 +197,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 #### Wave 5 (sequential — test + verify)
 
-- [ ] `apps/web` — Playwright E2E: land on `/compress-images`, upload file, run, download result
+- [ ] **CLAIMED** `apps/web` — Playwright E2E: land on `/compress-images`, upload file, run, download result
 - [x] `apps/web` — Playwright E2E: verify SEO metadata renders correctly on each Tier 1 slug
 - [x] `engine` — Verify all 6 fixtures run clean via `bnto run` integration tests
 
@@ -213,7 +213,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 #### Wave 1 (parallel — naming & imports)
 
 - [ ] `apps/web` — Audit and convert monorepo to Node.js `package.json` imports (`#components/*`, `#lib/*`) replacing TSConfig `@/` path aliases. Scope: `apps/web` first, then shared packages if applicable
-- [ ] `apps/web` — Rename JS/TS files to camelCase where they aren't already (hooks, utils, lib files)
+- [x] `apps/web` — Rename JS/TS files to camelCase where they aren't already (hooks, utils, lib files)
 - [ ] `apps/web` — Rename component files and component names to PascalCase where they aren't already
 
 #### Wave 2 (parallel — component wrappers & audit)

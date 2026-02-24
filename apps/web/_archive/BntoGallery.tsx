@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowRightIcon } from "@bnto/ui";
 import { SectionLabel } from "@bnto/ui/section-label";
 import { Card } from "@bnto/ui/card";
-import { BNTO_REGISTRY } from "../../../lib/bnto-registry";
-import type { BntoEntry } from "../../../lib/bnto-registry";
+import { BNTO_REGISTRY } from "../../../lib/bntoRegistry";
+import type { BntoEntry } from "../../../lib/bntoRegistry";
 
 /**
  * Tools showcase grid with section heading.
