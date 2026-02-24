@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-import { Stack } from "#components/ui/Stack";
-import { cn } from "#lib/utils";
+import { Stack } from "@/components/ui/Stack";
+import { cn } from "@/lib/utils";
 
 interface ImageSectionProps {
   images: { src: string; alt: string }[];

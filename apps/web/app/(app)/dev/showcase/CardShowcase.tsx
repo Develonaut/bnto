@@ -1,6 +1,6 @@
-import { Card } from "#components/ui/Card";
-import { Text } from "#components/ui/Text";
-import { Stack } from "#components/ui/Stack";
+import { Card } from "@/components/ui/Card";
+import { Text } from "@/components/ui/Text";
+import { Stack } from "@/components/ui/Stack";
 
 const sizes: { label: string; depth: "none" | "sm" | "md" | "lg" }[] = [
   { label: "depth-none", depth: "none" },

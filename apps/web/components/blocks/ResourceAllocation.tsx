@@ -1,10 +1,10 @@
 import Image from "next/image";
 
-import { DashedLine } from "#components/DashedLine";
+import { DashedLine } from "@/components/DashedLine";
 
-import { Container } from "#components/ui/Container";
-import { Heading } from "#components/ui/Heading";
-import { cn } from "#lib/utils";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { cn } from "@/lib/utils";
 
 const topItems = [
   {

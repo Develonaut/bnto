@@ -1,5 +1,5 @@
-import type { BntoEntry } from "#lib/bntoRegistry";
-import { BASE_URL } from "#lib/constants";
+import type { BntoEntry } from "@/lib/bntoRegistry";
+import { BASE_URL } from "@/lib/constants";
 
 /**
  * JSON-LD structured data for bnto tool pages.

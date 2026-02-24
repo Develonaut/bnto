@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import { ConvexAuthNextjsServerProvider } from "@bnto/auth/server";
-import { Navbar } from "#components/blocks/Navbar";
-import { ThemeProvider } from "#components/ThemeProvider";
+import { Navbar } from "@/components/blocks/Navbar";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { Providers } from "./providers";
 import "./globals.css";
 

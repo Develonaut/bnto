@@ -4,13 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { core } from "@bnto/core";
-import { Background } from "#components/Background";
-import { Button } from "#components/ui/button";
-import { Container } from "#components/ui/Container";
-import { Heading } from "#components/ui/Heading";
-import { Text } from "#components/ui/Text";
-import { Stack } from "#components/ui/Stack";
-import { Input } from "#components/ui/input";
+import { Background } from "@/components/Background";
+import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+import { Stack } from "@/components/ui/Stack";
+import { Input } from "@/components/ui/input";
 
 type Mode = "signin" | "signup";
 

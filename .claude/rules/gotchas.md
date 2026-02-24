@@ -76,17 +76,11 @@ pnpm 10 requires explicit opt-in for native dependency builds.
 }
 ```
 
-## Next.js 16 Turbopack Monorepo Warning
+## Turbopack + Node.js Subpath Imports on Vercel
 
-Turbopack warns about the project root in monorepos.
+Turbopack on Vercel does NOT support Node.js subpath imports (`#components/*` via `package.json` `imports` field). Builds fail with `Module not found: Can't resolve '#components/...'`. Setting `turbopack.root` to the monorepo root makes it worse — breaks the `imports` field resolution entirely. `resolveAlias` workarounds also fail.
 
-**Fix:** Set `turbopack.root` in `next.config.ts`:
-
-```ts
-turbopack: {
-  root: "..",
-}
-```
+**Fix:** Use standard `@/` path aliases via `tsconfig.json` `paths` instead of subpath imports. Do NOT set `turbopack.root` in `next.config.ts` — `transpilePackages` handles monorepo resolution.
 
 ## Playwright Screenshot Updates
 

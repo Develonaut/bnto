@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
-import { BNTO_REGISTRY } from "#lib/bntoRegistry";
-import { BASE_URL } from "#lib/constants";
+import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
+import { BASE_URL } from "@/lib/constants";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const bntoPages = BNTO_REGISTRY.map((entry) => ({

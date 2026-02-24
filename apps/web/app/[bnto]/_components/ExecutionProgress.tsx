@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, Loader2, XCircle, Clock } from "lucide-react";
 import { useExecution } from "@bnto/core";
 import type { Execution, NodeProgress } from "@bnto/core";
-import { cn } from "#lib/utils";
+import { cn } from "@/lib/utils";
 
 interface ExecutionProgressProps {
   executionId: string;

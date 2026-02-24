@@ -8,12 +8,12 @@ import {
   Diamond,
 } from "lucide-react";
 
-import { DashedLine } from "#components/DashedLine";
-import { Button } from "#components/ui/button";
-import { Container } from "#components/ui/Container";
-import { Heading } from "#components/ui/Heading";
-import { Text } from "#components/ui/Text";
-import { Row } from "#components/ui/Row";
+import { DashedLine } from "@/components/DashedLine";
+import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+import { Row } from "@/components/ui/Row";
 
 const features = [
   {

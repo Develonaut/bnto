@@ -3,9 +3,9 @@ import Link from "next/link";
 
 import Marquee from "react-fast-marquee";
 
-import { Container } from "#components/ui/Container";
-import { Heading } from "#components/ui/Heading";
-import { cn } from "#lib/utils";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { cn } from "@/lib/utils";
 
 type Company = {
   name: string;

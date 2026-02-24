@@ -2,8 +2,8 @@ import Link from "next/link";
 
 import { ArrowLeft } from "lucide-react";
 
-import { Background } from "#components/Background";
-import { Button } from "#components/ui/button";
+import { Background } from "@/components/Background";
+import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (

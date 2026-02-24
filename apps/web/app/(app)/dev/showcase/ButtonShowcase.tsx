@@ -1,7 +1,7 @@
-import { Button } from "#components/ui/button";
-import { Text } from "#components/ui/Text";
-import { Stack } from "#components/ui/Stack";
-import { Row } from "#components/ui/Row";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/Text";
+import { Stack } from "@/components/ui/Stack";
+import { Row } from "@/components/ui/Row";
 import { ArrowRight } from "lucide-react";
 
 function ButtonRow({

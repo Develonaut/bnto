@@ -1,8 +1,8 @@
 import Image from "next/image";
 
-import { Container } from "#components/ui/Container";
-import { Heading } from "#components/ui/Heading";
-import { Text } from "#components/ui/Text";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
 
 const investors = [
   {

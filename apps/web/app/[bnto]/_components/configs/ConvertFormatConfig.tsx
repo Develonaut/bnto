@@ -1,8 +1,8 @@
 "use client";
 
-import { Label } from "#components/ui/label";
-import { Select } from "#components/ui/select";
-import { Slider } from "#components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import type { ConvertFormatConfig as Config } from "./types";
 
 const FORMAT_OPTIONS = [

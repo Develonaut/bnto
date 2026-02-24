@@ -3,7 +3,7 @@ import {
   convexAuthNextjsMiddleware,
   nextjsMiddlewareRedirect,
 } from "@bnto/auth/server";
-import { isAuthPath, isProtectedPath } from "#lib/routes";
+import { isAuthPath, isProtectedPath } from "@/lib/routes";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
 function hasSignoutSignal(request: Request & { cookies: { has(name: string): boolean } }) {

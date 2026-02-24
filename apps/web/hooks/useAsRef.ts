@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { useIsomorphicLayoutEffect } from "#hooks/useIsomorphicLayoutEffect";
+import { useIsomorphicLayoutEffect } from "@/hooks/useIsomorphicLayoutEffect";
 
 function useAsRef<T>(props: T) {
   const ref = React.useRef<T>(props);

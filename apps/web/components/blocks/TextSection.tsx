@@ -1,9 +1,9 @@
 import Link from "next/link";
 
-import { Button } from "#components/ui/button";
-import { Heading } from "#components/ui/Heading";
-import { Text } from "#components/ui/Text";
-import { Stack } from "#components/ui/Stack";
+import { Button } from "@/components/ui/button";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+import { Stack } from "@/components/ui/Stack";
 
 interface TextSectionProps {
   title?: string;

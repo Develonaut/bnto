@@ -1,4 +1,4 @@
-import { Container } from "#components/ui/Container";
+import { Container } from "@/components/ui/Container";
 
 import { ImageSection } from "./ImageSection";
 import { TextSection } from "./TextSection";

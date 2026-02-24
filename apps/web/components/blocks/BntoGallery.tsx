@@ -10,12 +10,12 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { DashedLine } from "#components/DashedLine";
-import { Card } from "#components/ui/Card";
-import { Container } from "#components/ui/Container";
-import { Heading } from "#components/ui/Heading";
-import { Text } from "#components/ui/Text";
-import { BNTO_REGISTRY, type BntoEntry } from "#lib/bntoRegistry";
+import { DashedLine } from "@/components/DashedLine";
+import { Card } from "@/components/ui/Card";
+import { Container } from "@/components/ui/Container";
+import { Heading } from "@/components/ui/Heading";
+import { Text } from "@/components/ui/Text";
+import { BNTO_REGISTRY, type BntoEntry } from "@/lib/bntoRegistry";
 
 const BNTO_ICONS: Record<string, LucideIcon> = {
   "compress-images": Minimize2,
