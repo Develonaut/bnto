@@ -13,17 +13,19 @@ import { Slider } from "@/components/ui/slider";
 import { Dropzone } from "@/components/ui/dropzone";
 import { Upload, ArrowRight } from "lucide-react";
 
+import { AnimationShowcase } from "./AnimationShowcase";
+
 
 /* ------------------------------------------------------------------ */
 /*  Cards — static depth + pressable                                   */
 /* ------------------------------------------------------------------ */
 
 function CardShowcase() {
-  const sizes = [
-    { label: "depth-none", depthClass: "depth-none" },
-    { label: "depth-sm", depthClass: "depth-sm" },
-    { label: "depth-md", depthClass: "depth-md" },
-    { label: "depth-lg", depthClass: "depth-lg" },
+  const sizes: { label: string; depth: "none" | "sm" | "md" | "lg" }[] = [
+    { label: "depth-none", depth: "none" },
+    { label: "depth-sm", depth: "sm" },
+    { label: "depth-md (default)", depth: "md" },
+    { label: "depth-lg", depth: "lg" },
   ];
 
   return (
@@ -34,13 +36,11 @@ function CardShowcase() {
           Static depth &mdash; walls + ground shadow, no interaction
         </p>
         <div className="grid grid-cols-4 gap-6">
-          {sizes.map(({ label, depthClass }) => (
+          {sizes.map(({ label, depth }) => (
             <Card
               key={label}
-              className={cn(
-                "flex h-24 items-center justify-center rounded-xl font-display font-semibold",
-                depthClass,
-              )}
+              depth={depth}
+              className="flex h-24 items-center justify-center rounded-xl font-display font-semibold"
               data-testid={`static-card-${label}`}
             >
               {label}
@@ -55,13 +55,11 @@ function CardShowcase() {
           Pressable &mdash; hover to sink, active pushes flush
         </p>
         <div className="grid grid-cols-4 gap-6">
-          {sizes.map(({ label, depthClass }) => (
+          {sizes.map(({ label, depth }) => (
             <Card
               key={label}
-              className={cn(
-                "flex h-24 cursor-pointer items-center justify-center rounded-xl font-display font-semibold pressable",
-                depthClass,
-              )}
+              depth={depth}
+              className="flex h-24 cursor-pointer items-center justify-center rounded-xl font-display font-semibold pressable"
               data-testid={`pressable-card-${label}`}
             >
               {label}
@@ -391,6 +389,14 @@ export default function ThemeDemoPage() {
         description="Depth correlates with perspective: small elements are nearly top-down, larger elements are more isometric. Add .pressable for hover/active interaction."
       >
         <CardShowcase />
+      </Section>
+
+      <Section
+        id="demo-animations"
+        title="Animations"
+        description="Mini Motorways motion language. Entrances are springy (spring easing via CSS linear()). Transitions are smooth (ease-out cubic-bezier). Hit Replay to re-trigger."
+      >
+        <AnimationShowcase />
       </Section>
 
       <Section

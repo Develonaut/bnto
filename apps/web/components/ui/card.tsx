@@ -3,14 +3,17 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+type CardDepth = "none" | "sm" | "md" | "lg";
+
 const PrimitiveCard = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement> & { depth?: CardDepth }
+>(({ className, depth = "md", ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      "bg-card text-card-foreground rounded-xl depth depth-sm",
+      "bg-card text-card-foreground rounded-xl depth",
+      `depth-${depth}`,
       className,
     )}
     {...props}

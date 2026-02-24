@@ -168,7 +168,7 @@
   --duration-instant: 75ms;
   --duration-fast: 150ms;
   --duration-normal: 300ms;
-  --duration-slow: 500ms;
+  --duration-slow: 700ms;
   --duration-slower: 1200ms;
 
   /* ── Easings: Transitions (smooth deceleration) ──────────── */
