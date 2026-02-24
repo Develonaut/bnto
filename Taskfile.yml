@@ -78,6 +78,11 @@ tasks:
     desc: Lint all frontend packages
     cmds: [pnpm turbo run lint]
 
+  # Core integration tests (requires task dev:all running)
+  core:integration:
+    desc: Run @bnto/core integration tests against real Convex dev
+    cmds: [pnpm --filter @bnto/core test:integration]
+
   # Quality gate
   check:
     desc: Run all quality checks (vet, test with coverage, build)

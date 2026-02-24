@@ -19,6 +19,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "lint": "echo \"No linter yet\""
   },
   "dependencies": {
