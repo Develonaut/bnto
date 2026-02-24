@@ -204,6 +204,9 @@
   --ease-spring-bouncy: linear(0, 0.0018, 0.0069, 0.0151 1.74%, 0.0277 2.4%, 0.062 3.7%, 0.1115 5.15%, 0.2211 7.77%, 0.4778 13.21%, 0.5912 15.75%, 0.6987 18.44%, 0.7862 20.98%, 0.861 23.59%, 0.8926, 0.9205, 0.945 27.51%, 0.9671 28.89%, 0.9868, 1.003 31.79%, 1.0224 34.11%, 1.0358 36.58%, 1.0436 39.27%, 1.046 42.31%, 1.0446 44.71%, 1.0406 47.47%, 1.0118 61.84%, 1.0027 69.53%, 0.9981 80.49%, 0.9991 99.94%);
   --ease-spring-bouncier: linear(0, 0.0023, 0.0088, 0.0194 1.59%, 0.035 2.17%, 0.078 3.33%, 0.1415 4.64%, 0.2054 5.75%, 0.2821 6.95%, 0.5912 11.45%, 0.7205 13.43%, 0.8393 15.45%, 0.936 17.39%, 0.9778, 1.015, 1.0477, 1.0759, 1.0998 22.22%, 1.1203, 1.1364, 1.1484 25.26%, 1.1586 26.61%, 1.1629 28.06%, 1.1613 29.56%, 1.1537 31.2%, 1.1434 32.6%, 1.1288 34.19%, 1.0508 41.29%, 1.0174 44.87%, 1.0025 46.89%, 0.9911 48.87%, 0.9826 50.9%, 0.9769 53.03%, 0.9735 56.02%, 0.9748 59.45%, 0.9964 72.64%, 1.0031 79.69%, 1.0042 86.83%, 1.0008 99.97%);
 
+  /* ── Light Direction (CSS gradient convention: 135° = SE) ──── */
+  --light-angle: 135deg;
+
   /* ── Tracking ──────────────────────────────────────────────── */
   --tracking-normal: -0.01em;
   --spacing: 0.25rem;
@@ -530,18 +533,20 @@
 
 .depth {
   --depth: 6px;
-  --depth-x: var(--depth);
-  --depth-y: var(--depth);
-  --shadow-x: 8px;
-  --shadow-y: 12px;
+  --depth-wall-mag: 8.49;
+  --depth-shadow-mag: 14.42;
+  --depth-x: calc(var(--depth-wall-mag) * sin(var(--light-angle)) * 1px);
+  --depth-y: calc(var(--depth-wall-mag) * cos(var(--light-angle)) * -1px);
+  --shadow-x: calc(var(--depth-shadow-mag) * sin(var(--light-angle)) * 1px);
+  --shadow-y: calc(var(--depth-shadow-mag) * cos(var(--light-angle)) * -1px);
   position: relative;
   transform-style: preserve-3d;
   border: 1px solid var(--depth-wall);
 }
 
 /* Walls — darker shade offset behind the face.
- * Direction driven by --depth-x / --depth-y so the perspective
- * angle varies per size tier (top-down for sm, isometric for lg). */
+ * Direction driven by --depth-x / --depth-y, computed from
+ * --depth-wall-mag × sin/cos(--light-angle). */
 .depth::before {
   content: "";
   position: absolute;
@@ -551,9 +556,9 @@
   transform: translate3d(var(--depth-x), var(--depth-y), -1px);
 }
 
-/* Ground shadow — long southeast cast, like Mini Motorways.
+/* Ground shadow — cast in the --light-angle direction.
  * Decoupled from wall offset: shadows project much further out
- * and stretch more downward than rightward. */
+ * (larger magnitude) but follow the same angle. */
 .depth::after {
   content: "";
   position: absolute;
@@ -565,44 +570,36 @@
 
 /* ── Size modifiers ─────────────────────────────────────────────
  *
- * Depth correlates with perspective: smaller = nearly top-down,
- * larger = more isometric (more wall visible on the right side).
+ * All tiers share the same light direction (--light-angle).
+ * Only magnitude differs — taller buildings cast longer shadows.
  *
- *   depth-sm: house    — mostly downward, thin right wall
- *   depth-md: building — balanced diagonal (current default)
- *   depth-lg: tower    — more rightward, prominent side walls
+ *   depth-sm: house    — small offset, short shadow
+ *   depth-md: building — medium offset (current default)
+ *   depth-lg: tower    — large offset, long shadow
  * ────────────────────────────────────────────────────────────── */
 
 .depth-sm {
   --depth: 4px;
-  --depth-x: 2px;
-  --depth-y: 4px;
-  --shadow-x: 6px;
-  --shadow-y: 10px;
+  --depth-wall-mag: 4.47;
+  --depth-shadow-mag: 11.66;
 }
 .depth-md {
   --depth: 6px;
-  --depth-x: 5px;
-  --depth-y: 6px;
-  --shadow-x: 10px;
-  --shadow-y: 14px;
+  --depth-wall-mag: 7.81;
+  --depth-shadow-mag: 17.20;
 }
 .depth-lg {
   --depth: 10px;
-  --depth-x: 8px;
-  --depth-y: 8px;
-  --shadow-x: 16px;
-  --shadow-y: 19px;
+  --depth-wall-mag: 11.31;
+  --depth-shadow-mag: 24.84;
 }
 
 /* ── Reset ──────────────────────────────────────────────────────── */
 
 .depth-none {
   --depth: 0px;
-  --depth-x: 0px;
-  --depth-y: 0px;
-  --shadow-x: 0px;
-  --shadow-y: 0px;
+  --depth-wall-mag: 0;
+  --depth-shadow-mag: 0;
 }
 .depth-none::before,
 .depth-none::after {
