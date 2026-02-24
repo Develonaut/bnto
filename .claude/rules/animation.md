@@ -164,11 +164,81 @@ const prefersReduced =
 
 ---
 
+## Component API (`Animate.*`)
+
+**Props over classNames.** Consumers outside `components/ui/` should never touch `motion-safe:animate-*` classes or `--scale-from` / `--stagger-index` CSS variables directly. Use the `Animate` composition components instead.
+
+```tsx
+import { Animate } from "@/components/ui/animate";
+
+// Stagger cascade with springy cards
+<Animate.Stagger className="grid grid-cols-3 gap-4">
+  {items.map((item, i) => (
+    <Animate.ScaleIn key={item.id} index={i} from={0.85}>
+      <Card>...</Card>
+    </Animate.ScaleIn>
+  ))}
+</Animate.Stagger>
+
+// Hero pop-in with bouncy spring
+<Animate.ScaleIn from={0.5} easing="spring-bouncier">
+  <Card>Hero Card</Card>
+</Animate.ScaleIn>
+```
+
+### Components
+
+| Component | Extra Props | Underlying CSS |
+|---|---|---|
+| `Animate.Stagger` | `interval?: number \| string` | `stagger-cascade`, `--stagger-interval` |
+| `Animate.ScaleIn` | `from?: number` | `motion-safe:animate-scale-in`, `--scale-from` |
+| `Animate.FadeIn` | -- | `motion-safe:animate-fade-in` |
+| `Animate.SlideUp` | `distance?: number \| string` | `motion-safe:animate-slide-up`, `--slide-distance` |
+| `Animate.SlideDown` | `distance?: number \| string` | `motion-safe:animate-slide-down`, `--slide-distance` |
+| `Animate.PulseSoft` | -- | `motion-safe:animate-pulse-soft` |
+| `Animate.Breathe` | -- | `motion-safe:animate-breathe` |
+
+### Shared Props (entrance components)
+
+| Prop | Type | Description |
+|---|---|---|
+| `index` | `number` | Position in stagger cascade. Sets `--stagger-index` |
+| `easing` | `"spring" \| "spring-bouncy" \| "spring-bouncier" \| "out" \| "in-out"` | Override animation easing |
+| `asChild` | `boolean` | Merge onto child element instead of wrapping in a `<div>` |
+| `className` | `string` | Additional classes |
+| `style` | `CSSProperties` | Additional inline styles |
+
+### Depth caveat
+
+By default, `Animate.*` components render a wrapper `<div>`. This is intentional -- opacity animation flattens `transform-style: preserve-3d`, which breaks the `.depth` 3D effect on Cards. The wrapper isolates the animation from the depth element.
+
+Use `asChild` only when the child does NOT use `.depth`:
+
+```tsx
+// GOOD -- wrapper div isolates animation from depth
+<Animate.ScaleIn from={0.85} index={i}>
+  <Card>...</Card>
+</Animate.ScaleIn>
+
+// GOOD -- asChild on non-depth element
+<Animate.FadeIn asChild>
+  <span>No depth here</span>
+</Animate.FadeIn>
+
+// BAD -- asChild merges opacity animation onto depth element
+<Animate.ScaleIn asChild>
+  <Card>Depth will break!</Card>
+</Animate.ScaleIn>
+```
+
+---
+
 ## Rules
 
 1. **Use tokens, not raw values.** `duration-normal` not `duration-300`. `var(--ease-spring)` not inline `linear(...)`.
-2. **CSS first.** Only reach for `motion/react` when CSS can't handle the animation (exit, layout, gesture).
-3. **Always guard with motion-safe.** Every animation path must have a reduced-motion fallback.
-4. **Don't touch vendor animations.** shadcn primitive transitions (dialog, sheet, accordion) keep their defaults.
-5. **Entrances are springy, transitions are smooth.** Use `--ease-spring` for things appearing. Use `--ease-out` for state changes.
-6. **Compositor-only properties.** Animate `opacity`, `scale`, `translate`, `rotate` only. Never animate `width`, `height`, `top`, `left`, `margin`, `padding`.
+2. **Use `Animate.*` components, not raw classes.** Consumers outside `components/ui/` should use `<Animate.ScaleIn>` not `className="motion-safe:animate-scale-in"`.
+3. **CSS first.** Only reach for `motion/react` when CSS can't handle the animation (exit, layout, gesture).
+4. **Always guard with motion-safe.** Every animation path must have a reduced-motion fallback. `Animate.*` components handle this automatically.
+5. **Don't touch vendor animations.** shadcn primitive transitions (dialog, sheet, accordion) keep their defaults.
+6. **Entrances are springy, transitions are smooth.** Use `--ease-spring` for things appearing. Use `--ease-out` for state changes.
+7. **Compositor-only properties.** Animate `opacity`, `scale`, `translate`, `rotate` only. Never animate `width`, `height`, `top`, `left`, `margin`, `padding`.

@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 
+import { Animate } from "@/components/ui/animate";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -66,17 +67,11 @@ function StaggerCascade() {
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
         Stagger cascade &mdash; cards materialize like buildings on the map
       </SectionLabel>
-      <div key={key} className="stagger-cascade grid grid-cols-3 gap-4">
+      <Animate.Stagger key={key} className="grid grid-cols-3 gap-4">
         {DEMO_RECIPES.map((recipe, i) => {
           const Icon = recipe.icon;
           return (
-            <div
-              key={recipe.title}
-              className="motion-safe:animate-scale-in"
-              style={
-                { "--stagger-index": i, "--scale-from": "0.85" } as React.CSSProperties
-              }
-            >
+            <Animate.ScaleIn key={recipe.title} index={i} from={0.85}>
               <Card className="h-full">
                 <Card.Content className="flex flex-col gap-3 p-5">
                   <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -90,10 +85,10 @@ function StaggerCascade() {
                   </p>
                 </Card.Content>
               </Card>
-            </div>
+            </Animate.ScaleIn>
           );
         })}
-      </div>
+      </Animate.Stagger>
     </div>
   );
 }
@@ -109,26 +104,26 @@ function EntranceAnimations() {
         Entrance animations &mdash; springy pop for appearing elements
       </SectionLabel>
       <div key={key} className="grid grid-cols-4 gap-4">
-        <div className="motion-safe:animate-fade-in">
+        <Animate.FadeIn>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             fade-in
           </Card>
-        </div>
-        <div className="motion-safe:animate-scale-in">
+        </Animate.FadeIn>
+        <Animate.ScaleIn>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             scale-in
           </Card>
-        </div>
-        <div className="motion-safe:animate-slide-up">
+        </Animate.ScaleIn>
+        <Animate.SlideUp>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             slide-up
           </Card>
-        </div>
-        <div className="motion-safe:animate-slide-down">
+        </Animate.SlideUp>
+        <Animate.SlideDown>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             slide-down
           </Card>
-        </div>
+        </Animate.SlideDown>
       </div>
     </div>
   );
@@ -142,44 +137,25 @@ function HeroPopIn() {
   return (
     <div>
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
-        Hero pop-in &mdash; <code className="font-mono text-xs">--scale-from: 0.5</code> for
+        Hero pop-in &mdash; <code className="font-mono text-xs">from=0.5</code> for
         dramatic entrance
       </SectionLabel>
       <div key={key} className="flex gap-4">
-        <div
-          className="motion-safe:animate-scale-in flex-1"
-          style={{ "--scale-from": "0.5" } as React.CSSProperties}
-        >
+        <Animate.ScaleIn from={0.5} className="flex-1">
           <Card className="flex h-32 items-center justify-center rounded-xl font-display text-lg font-bold">
             Hero Card
           </Card>
-        </div>
-        <div
-          className="motion-safe:animate-scale-in flex-1"
-          style={
-            {
-              "--scale-from": "0.5",
-              animationTimingFunction: "var(--ease-spring-bouncy)",
-            } as React.CSSProperties
-          }
-        >
+        </Animate.ScaleIn>
+        <Animate.ScaleIn from={0.5} easing="spring-bouncy" className="flex-1">
           <Card className="flex h-32 items-center justify-center rounded-xl font-display text-lg font-bold">
             Bouncy Spring
           </Card>
-        </div>
-        <div
-          className="motion-safe:animate-scale-in flex-1"
-          style={
-            {
-              "--scale-from": "0.5",
-              animationTimingFunction: "var(--ease-spring-bouncier)",
-            } as React.CSSProperties
-          }
-        >
+        </Animate.ScaleIn>
+        <Animate.ScaleIn from={0.5} easing="spring-bouncier" className="flex-1">
           <Card className="flex h-32 items-center justify-center rounded-xl font-display text-lg font-bold">
             Bouncier Spring
           </Card>
-        </div>
+        </Animate.ScaleIn>
       </div>
     </div>
   );
@@ -195,20 +171,15 @@ function BouncyStagger() {
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
         Bouncy stagger &mdash; pressable cards bounce onto the map
       </SectionLabel>
-      <div key={key} className="stagger-cascade grid grid-cols-3 gap-4">
+      <Animate.Stagger key={key} className="grid grid-cols-3 gap-4">
         {DEMO_RECIPES.map((recipe, i) => {
           const Icon = recipe.icon;
           return (
-            <div
+            <Animate.ScaleIn
               key={recipe.title}
-              className="motion-safe:animate-scale-in"
-              style={
-                {
-                  "--stagger-index": i,
-                  "--scale-from": "0.6",
-                  animationTimingFunction: "var(--ease-spring-bouncier)",
-                } as React.CSSProperties
-              }
+              index={i}
+              from={0.6}
+              easing="spring-bouncier"
             >
               <Button
                 variant="outline"
@@ -224,10 +195,10 @@ function BouncyStagger() {
                   Browser-based, no signup
                 </p>
               </Button>
-            </div>
+            </Animate.ScaleIn>
           );
         })}
-      </div>
+      </Animate.Stagger>
     </div>
   );
 }
@@ -241,16 +212,16 @@ function EmphasisAnimations() {
         Emphasis &mdash; calm looping animations for ambient presence
       </SectionLabel>
       <div className="grid grid-cols-2 gap-4">
-        <div className="motion-safe:animate-pulse-soft">
+        <Animate.PulseSoft>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             pulse-soft
           </Card>
-        </div>
-        <div className="motion-safe:animate-breathe">
+        </Animate.PulseSoft>
+        <Animate.Breathe>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             breathe
           </Card>
-        </div>
+        </Animate.Breathe>
       </div>
     </div>
   );
