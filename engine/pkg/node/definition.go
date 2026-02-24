@@ -77,10 +77,11 @@ type Position struct {
 // the core Definition structure. Useful for tracking creation time,
 // user tags, or integration-specific data.
 type Metadata struct {
-	CreatedAt  string            `json:"createdAt,omitempty"`  // ISO 8601 timestamp
-	UpdatedAt  string            `json:"updatedAt,omitempty"`  // ISO 8601 timestamp
-	Tags       []string          `json:"tags,omitempty"`       // User-defined tags
-	CustomData map[string]string `json:"customData,omitempty"` // Custom key-value pairs
+	Description string            `json:"description,omitempty"` // Human-readable description
+	CreatedAt   string            `json:"createdAt,omitempty"`   // ISO 8601 timestamp
+	UpdatedAt   string            `json:"updatedAt,omitempty"`   // ISO 8601 timestamp
+	Tags        []string          `json:"tags,omitempty"`        // User-defined tags
+	CustomData  map[string]string `json:"customData,omitempty"`  // Custom key-value pairs
 }
 
 // Port represents an input or output connection point on a node.

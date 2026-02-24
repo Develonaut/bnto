@@ -32,7 +32,11 @@ export function useAnonymousSession() {
 
     attempted.current = true;
     setSigningIn(true);
-    signIn("anonymous").finally(() => setSigningIn(false));
+    signIn("anonymous")
+      .catch((error: unknown) => {
+        console.error("[useAnonymousSession] signIn failed:", error);
+      })
+      .finally(() => setSigningIn(false));
   }, [isLoading, isAuthenticated, signIn]);
 
   const pending = isLoading || signingIn;

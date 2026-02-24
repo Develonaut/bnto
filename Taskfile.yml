@@ -38,6 +38,7 @@ tasks:
   api:dev:
     desc: Run Go API server locally (port 8080)
     dir: ./apps/api
+    dotenv: ['../../.env.development']
     cmds: [go run ./cmd/server]
 
   api:tunnel:
