@@ -1,6 +1,6 @@
-import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
-import { Stack } from "@/components/ui/Stack";
+import { Heading } from "#components/ui/Heading";
+import { Text } from "#components/ui/Text";
+import { Stack } from "#components/ui/Stack";
 
 export function ShowcaseSection({
   id,

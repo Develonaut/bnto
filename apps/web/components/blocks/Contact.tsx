@@ -4,11 +4,11 @@ import Link from "next/link";
 
 import { Facebook, Linkedin, Twitter } from "lucide-react";
 
-import { ContactForm } from "@/components/blocks/ContactForm";
-import { DashedLine } from "@/components/DashedLine";
-import { Container } from "@/components/ui/Container";
-import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
+import { ContactForm } from "#components/blocks/ContactForm";
+import { DashedLine } from "#components/DashedLine";
+import { Container } from "#components/ui/Container";
+import { Heading } from "#components/ui/Heading";
+import { Text } from "#components/ui/Text";
 
 const contactInfo = [
   {

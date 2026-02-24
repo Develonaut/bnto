@@ -2,8 +2,8 @@
 
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import type { FileUploadProgress } from "@bnto/core";
-import { cn } from "@/lib/utils";
-import { formatFileSize } from "@/src/utils/formatFileSize";
+import { cn } from "#lib/utils";
+import { formatFileSize } from "#src/utils/formatFileSize";
 
 interface UploadProgressProps {
   files: FileUploadProgress[];

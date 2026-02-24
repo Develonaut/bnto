@@ -1,14 +1,14 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
+import { Label } from "#components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
+} from "#components/ui/select";
+import { Slider } from "#components/ui/slider";
 import type { ConvertFormatConfig as Config } from "./types";
 
 const FORMAT_OPTIONS = [

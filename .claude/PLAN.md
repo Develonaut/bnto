@@ -197,7 +197,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 #### Wave 5 (sequential — test + verify)
 
-- [ ] `apps/web` — Playwright E2E: land on `/compress-images`, upload file, run, download result (requires full dev stack via `task dev:all` — manual smoke test first, then separate Playwright integration config)
+- [ ] **CLAIMED** `apps/web` — Playwright E2E integration tests: full pipeline (upload → R2 → Go engine → R2 → download) using shared engine test fixtures. Separate `playwright.integration.config.ts` targets `task dev:all` on port 4000. Tests: compress-images (single + multi), resize-images, clean-csv, reset-after-completion
 - [x] `apps/web` — Playwright E2E: verify SEO metadata renders correctly on each Tier 1 slug
 - [x] `engine` — Verify all 6 fixtures run clean via `bnto run` integration tests
 
@@ -212,7 +212,7 @@ SEO infrastructure is done. Tool page UI (the actual interactive experience) is 
 
 #### Wave 1 (parallel — naming & imports)
 
-- [ ] `apps/web` — Audit and convert monorepo to Node.js `package.json` imports (`#components/*`, `#lib/*`) replacing TSConfig `@/` path aliases. Scope: `apps/web` first, then shared packages if applicable
+- [x] `apps/web` — Audit and convert monorepo to Node.js `package.json` imports (`#components/*`, `#lib/*`) replacing TSConfig `@/` path aliases. Scope: `apps/web` first, then shared packages if applicable
 - [x] `apps/web` — Rename JS/TS files to camelCase where they aren't already (hooks, utils, lib files)
 - [x] `apps/web` — Rename component files and component names to PascalCase where they aren't already
 

@@ -1,6 +1,6 @@
 import { tv } from "tailwind-variants";
 
-import { cn } from "@/lib/utils";
+import { cn } from "#lib/utils";
 
 /**
  * Wraps `tv()` from tailwind-variants so we can swap the underlying library

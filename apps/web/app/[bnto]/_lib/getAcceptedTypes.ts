@@ -6,7 +6,7 @@
  * validate dropped files.
  */
 
-import { getRecipe } from "../../../lib/menu";
+import { getRecipe } from "#lib/menu";
 
 interface AcceptedTypes {
   /** Value for the HTML <input accept="..."> attribute. */

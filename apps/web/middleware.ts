@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isAuthPath, isProtectedPath } from "./lib/routes";
+import { isAuthPath, isProtectedPath } from "#lib/routes";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
 /**

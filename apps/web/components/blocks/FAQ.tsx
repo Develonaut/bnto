@@ -5,12 +5,12 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Container } from "@/components/ui/Container";
-import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
-import { Stack } from "@/components/ui/Stack";
-import { cn } from "@/lib/utils";
+} from "#components/ui/accordion";
+import { Container } from "#components/ui/Container";
+import { Heading } from "#components/ui/Heading";
+import { Text } from "#components/ui/Text";
+import { Stack } from "#components/ui/Stack";
+import { cn } from "#lib/utils";
 
 const categories = [
   {

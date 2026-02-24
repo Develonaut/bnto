@@ -3,22 +3,22 @@ import Image from "next/image";
 // FIXME: All icons should come from a src/components/ui/icons so when we move it to ui package it comes with
 import { ArrowRight } from "lucide-react";
 
-import { DashedLine } from "../DashedLine";
+import { DashedLine } from "#components/DashedLine";
 
-import { Button } from "@/components/ui/button";
-import { Container } from "@/components/ui/Container";
-import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
-import { Stack } from "@/components/ui/Stack";
+import { Button } from "#components/ui/button";
+import { Container } from "#components/ui/Container";
+import { Card } from "#components/ui/Card";
+import { Heading } from "#components/ui/Heading";
+import { Text } from "#components/ui/Text";
+import { Stack } from "#components/ui/Stack";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel";
-import { cn } from "@/lib/utils";
+} from "#components/ui/carousel";
+import { cn } from "#lib/utils";
 
 const items = [
   {

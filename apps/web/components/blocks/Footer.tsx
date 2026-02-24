@@ -2,8 +2,8 @@ import Link from "next/link";
 
 import { ArrowUpRight } from "lucide-react";
 
-import { Container } from "@/components/ui/Container";
-import { Stack } from "@/components/ui/Stack";
+import { Container } from "#components/ui/Container";
+import { Stack } from "#components/ui/Stack";
 
 import { FooterCta } from "./FooterCta";
 

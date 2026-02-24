@@ -4,14 +4,14 @@ import { useState } from "react";
 
 import { Check } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/Card";
-import { Container } from "@/components/ui/Container";
-import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
-import { Stack } from "@/components/ui/Stack";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { Button } from "#components/ui/button";
+import { Card } from "#components/ui/Card";
+import { Container } from "#components/ui/Container";
+import { Heading } from "#components/ui/Heading";
+import { Text } from "#components/ui/Text";
+import { Stack } from "#components/ui/Stack";
+import { Switch } from "#components/ui/switch";
+import { cn } from "#lib/utils";
 
 const plans = [
   {

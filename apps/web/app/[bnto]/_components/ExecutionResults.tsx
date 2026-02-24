@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import { Download, FileDown, Loader2, CheckCircle2 } from "lucide-react";
 import { useExecution, useDownloadFiles } from "@bnto/core";
-import { Button } from "@/components/ui/button";
-import { formatFileSize } from "@/src/utils/formatFileSize";
+import { Button } from "#components/ui/button";
+import { formatFileSize } from "#src/utils/formatFileSize";
 
 interface ExecutionResultsProps {
   executionId: string;

@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Container } from "@/components/ui/Container";
-import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
-import { Stack } from "@/components/ui/Stack";
+import { Button } from "#components/ui/button";
+import { Container } from "#components/ui/Container";
+import { Heading } from "#components/ui/Heading";
+import { Text } from "#components/ui/Text";
+import { Stack } from "#components/ui/Stack";
 
 export function FooterCta() {
   return (

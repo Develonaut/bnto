@@ -12,11 +12,11 @@
   },
   "iconLibrary": "radix",
   "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
+    "components": "#components",
+    "utils": "#lib/utils",
+    "ui": "#components/ui",
+    "lib": "#lib",
+    "hooks": "#hooks"
   },
   "registries": {
     "@diceui": "https://diceui.com/r/{name}.json"

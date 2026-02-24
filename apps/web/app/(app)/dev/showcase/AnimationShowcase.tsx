@@ -11,9 +11,9 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/Card";
+import { Animate } from "#components/ui/Animate";
+import { Button } from "#components/ui/button";
+import { Card } from "#components/ui/Card";
 
 /* ── Helpers ─────────────────────────────────────────────── */
 

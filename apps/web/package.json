@@ -2,6 +2,13 @@
   "name": "@bnto/web",
   "version": "0.0.1",
   "private": true,
+  "imports": {
+    "#components/*": "./components/*",
+    "#lib/*": "./lib/*",
+    "#hooks/*": "./hooks/*",
+    "#actions/*": "./actions/*",
+    "#src/*": "./src/*"
+  },
   "scripts": {
     "build": "next build",
     "dev": "next dev --port 4000",

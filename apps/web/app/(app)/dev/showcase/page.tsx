@@ -1,9 +1,9 @@
 "use client";
 
-import { Container } from "@/components/ui/Container";
-import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
-import { Stack } from "@/components/ui/Stack";
+import { Container } from "#components/ui/Container";
+import { Heading } from "#components/ui/Heading";
+import { Text } from "#components/ui/Text";
+import { Stack } from "#components/ui/Stack";
 
 import { AnimationShowcase } from "./AnimationShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";

@@ -1,8 +1,8 @@
 "use client";
 
 import { Upload, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { cn } from "#lib/utils";
+import { Button } from "#components/ui/button";
 import {
   FileUpload,
   FileUploadDropzone,
@@ -11,7 +11,7 @@ import {
   FileUploadItemMetadata,
   FileUploadItemDelete,
   FileUploadClear,
-} from "@/components/ui/file-upload";
+} from "#components/ui/file-upload";
 import { getAcceptedTypes } from "../_lib/getAcceptedTypes";
 
 interface FileDropZoneProps {
