@@ -202,6 +202,31 @@ Edit `.claude/PLAN.md`:
 - Change your task from `- [ ] **CLAIMED**` to `- [x]` (mark done)
 - If your completion unblocks the next wave (all tasks in current wave are now `[x]`), note this in your summary so the user knows to start new agents on the next wave
 
+## E2E Integration Testing
+
+When your task involves UI that touches the execution pipeline (upload → run → download), you MUST verify via integration E2E tests that exercise the full dev stack.
+
+**Running integration E2E tests:**
+
+```bash
+# Start the full dev stack (Next.js + Convex + Go API + Cloudflare tunnel)
+# This is a long-running process — run it in the background
+task dev:all &
+
+# Wait for the dev server to be ready (port 4000)
+# Then run integration tests
+task e2e:integration
+```
+
+**Key details:**
+- Integration tests use `playwright.integration.config.ts` (targets port 4000)
+- They match `*.integration.spec.ts` files only
+- `reuseExistingServer: true` — if `task dev:all` is already running, Playwright uses it
+- Test fixtures are shared with the Go engine (`engine/tests/fixtures/`) — same input files that engine golden tests validate against flow through the full cloud pipeline
+- Integration tests have 120s timeout per test, 90s for execution completion
+
+**UI-only E2E tests** (`task e2e`) still work without a backend. They use `playwright.config.ts` (port 3100, Next.js only) and match `*.spec.ts` (excluding `*.integration.spec.ts`).
+
 ## DO NOT
 
 - **Do not commit or push.** Leave changes staged or unstaged. The user will review and commit
@@ -209,11 +234,11 @@ Edit `.claude/PLAN.md`:
 - **Do not modify `CLAUDE.md`, `.claude/rules/`, or config files** unless your task explicitly requires it
 - **Do not install new dependencies** without noting it in your summary. If a dependency is needed, prefer one already in the monorepo
 - **Do not delete or rename existing exports** — other agents or existing code may depend on them
-- **Do not run `pnpm dev` or long-running processes** — you're sharing the machine with other agents
+- **Do not run `pnpm dev` or standalone dev servers** — use `task dev:all` only when running integration E2E tests, and run it in the background
 
 ## Multi-Agent Awareness
 
 - **File conflicts:** If you need to modify a file and see it has been recently changed (check `git diff`), read the current state carefully before editing. Work with what's there, not what you expected
 - **Schema changes:** If your task adds to any schema, append — don't reorganize existing structures. Other agents may depend on the current structure
 - **Shared indexes/exports:** If you add to a barrel export (`index.ts`), add your entries at the end to minimize merge conflicts
-- **Port conflicts:** Don't start dev servers. Use the checks (`task vet`, `task test`, `task ui:build`, `task ui:test`, `task ui:lint`) for verification instead
+- **Port conflicts:** Only start `task dev:all` when running integration E2E tests (and check if it's already running first). For non-E2E verification, use the checks (`task vet`, `task test`, `task ui:build`, `task ui:test`, `task ui:lint`)

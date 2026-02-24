@@ -16,6 +16,7 @@
 | Repo structure               | [monorepo-structure.md](.claude/strategy/monorepo-structure.md)    |
 | Build tooling                | [monorepo-tooling.md](.claude/decisions/monorepo-tooling.md)       |
 | Implementation task          | [PLAN.md](.claude/PLAN.md)                                        |
+| Writing integration tests    | [journeys/](.claude/journeys/) — user journey test matrices        |
 | Predefined Bntos & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                    |
 | SEO & URL strategy           | [rules/seo.md](.claude/rules/seo.md)                              |
 | Coding standards             | [rules/](.claude/rules/) directory                                 |
@@ -167,6 +168,7 @@ bnto/
 │   └── examples/                # Example .bnto.json files
 └── .claude/                     # Strategy docs, decisions, plan
     ├── PLAN.md                  # Build plan (sprints, waves, tasks)
+    ├── journeys/                # User journey test matrices (auth, engine, API, web)
     ├── rules/                   # Coding standards and conventions
     ├── skills/                  # Agent skills (pre-commit, pickup, code-review)
     ├── strategy/
@@ -270,6 +272,10 @@ task ui:lint            # Lint all TS packages
 
 # Development (starts everything)
 task dev:all            # Start web + Convex + Go API + Cloudflare tunnel in parallel
+
+# E2E tests
+task e2e                # UI-only E2E tests (no backend required)
+task e2e:integration    # Full-stack integration E2E (requires task dev:all)
 
 # Everything
 task build:all          # Build engine + API + frontend

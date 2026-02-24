@@ -103,9 +103,14 @@ tasks:
 
   # E2E tests
   e2e:
-    desc: Run Playwright E2E tests (headless)
+    desc: Run Playwright E2E tests (headless, UI-only — no backend required)
     dir: ./apps/web
     cmds: [pnpm exec playwright test]
+
+  e2e:integration:
+    desc: Run full-stack integration E2E tests (requires task dev:all running)
+    dir: ./apps/web
+    cmds: [pnpm exec playwright test --config=playwright.integration.config.ts]
 
   # Cross-cutting
   build:all:

@@ -16,10 +16,10 @@ All 6 must have fixtures, verified execution, and live SEO URLs before Sprint 2 
 |------|------|---------|---------|
 | Compress Images | `/compress-images` | Casual | ✅ exists |
 | Resize Images | `/resize-images` | Casual | ✅ exists |
-| Convert Image Format | `/convert-image-format` | Casual | ⬜ needs fixture |
-| Rename Files | `/rename-files` | Both | ⬜ needs fixture |
-| Clean CSV | `/clean-csv` | Both | ⬜ needs fixture |
-| Rename CSV Columns | `/rename-csv-columns` | Developer | ⬜ needs fixture |
+| Convert Image Format | `/convert-image-format` | Casual | ✅ exists |
+| Rename Files | `/rename-files` | Both | ✅ exists |
+| Clean CSV | `/clean-csv` | Both | ✅ exists |
+| Rename CSV Columns | `/rename-csv-columns` | Developer | ✅ exists |
 
 ---
 
