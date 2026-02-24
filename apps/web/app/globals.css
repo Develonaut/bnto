@@ -67,8 +67,8 @@
   --muted: oklch(0.9487 0.0137 92.9849);
   --muted-foreground: oklch(0.5447 0.0250 31.8671);
 
-  /* ── Accent: Dusty rose (Mini Motorways Moscow/Beijing pink) ─ */
-  --accent: oklch(0.78 0.10 15);
+  /* ── Accent: Salmon pink (Mini Motorways Moscow/Beijing) ───── */
+  --accent: oklch(0.75 0.15 20);
   --accent-foreground: oklch(0.2627 0.0206 28.5372);
 
   /* ── Destructive ───────────────────────────────────────────── */
@@ -100,7 +100,7 @@
   --sidebar-foreground: oklch(0.2627 0.0206 28.5372);
   --sidebar-primary: oklch(0.6755 0.1791 35.2662);
   --sidebar-primary-foreground: oklch(1.0000 0 0);
-  --sidebar-accent: oklch(0.78 0.10 15);
+  --sidebar-accent: oklch(0.75 0.15 20);
   --sidebar-accent-foreground: oklch(0.2627 0.0206 28.5372);
   --sidebar-border: oklch(0.8966 0.0165 95.2423);
   --sidebar-ring: oklch(0.6755 0.1791 35.2662);
@@ -212,8 +212,8 @@
   --muted: oklch(0.3584 0.0229 261.2207);
   --muted-foreground: oklch(0.8283 0.0278 95.3961);
 
-  /* ── Accent: Dusty rose (richer for dark) ──────────────────── */
-  --accent: oklch(0.75 0.12 15);
+  /* ── Accent: Salmon pink (richer for dark) ─────────────────── */
+  --accent: oklch(0.72 0.16 20);
   --accent-foreground: oklch(0.2607 0.0156 269.0735);
 
   /* ── Destructive ───────────────────────────────────────────── */
@@ -245,7 +245,7 @@
   --sidebar-foreground: oklch(0.9901 0.0161 95.2193);
   --sidebar-primary: oklch(0.6755 0.1791 35.2662);
   --sidebar-primary-foreground: oklch(1.0000 0 0);
-  --sidebar-accent: oklch(0.75 0.12 15);
+  --sidebar-accent: oklch(0.72 0.16 20);
   --sidebar-accent-foreground: oklch(0.2607 0.0156 269.0735);
   --sidebar-border: oklch(0.3584 0.0229 261.2207);
   --sidebar-ring: oklch(0.6755 0.1791 35.2662);
@@ -586,10 +586,10 @@
   --depth-shadow: oklch(0.45 0.12 25 / 0.25);
 }
 
-/* Accent — dusty rose walls */
+/* Accent — salmon pink walls */
 .depth-accent {
-  --depth-wall: oklch(0.55 0.12 15);
-  --depth-shadow: oklch(0.52 0.10 15 / 0.25);
+  --depth-wall: oklch(0.52 0.14 20);
+  --depth-shadow: oklch(0.50 0.12 20 / 0.25);
 }
 
 /* Success — sage green walls */
