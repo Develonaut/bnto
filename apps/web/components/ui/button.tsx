@@ -12,7 +12,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground depth-default",
         destructive:
-          "bg-destructive text-white focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:brightness-75 depth-destructive",
+          "bg-destructive text-white focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 depth-destructive",
         success:
           "bg-success text-success-foreground focus-visible:ring-success/20 dark:focus-visible:ring-success/40 depth-success",
         warning:

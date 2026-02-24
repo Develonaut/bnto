@@ -170,6 +170,24 @@
   --depth-wall: oklch(0.82 0.02 95);
   --depth-shadow: oklch(0.60 0.02 95 / 0.20);
 
+  /* ── Depth color variant tokens ──────────────────────────────── */
+  --depth-default-wall: oklch(0.50 0.15 35);
+  --depth-default-shadow: oklch(0.50 0.10 35 / 0.25);
+  --depth-secondary-wall: oklch(0.70 0.05 189);
+  --depth-secondary-shadow: oklch(0.55 0.04 189 / 0.25);
+  --depth-muted-wall: oklch(0.82 0.02 95);
+  --depth-muted-shadow: oklch(0.60 0.02 95 / 0.20);
+  --depth-destructive-wall: oklch(0.45 0.17 25);
+  --depth-destructive-shadow: oklch(0.45 0.12 25 / 0.25);
+  --depth-accent-wall: oklch(0.52 0.14 20);
+  --depth-accent-shadow: oklch(0.50 0.12 20 / 0.25);
+  --depth-success-wall: oklch(0.50 0.11 150);
+  --depth-success-shadow: oklch(0.50 0.08 150 / 0.25);
+  --depth-warning-wall: oklch(0.62 0.11 77);
+  --depth-warning-shadow: oklch(0.58 0.09 77 / 0.25);
+  --depth-outline-wall: oklch(0.82 0.02 95 / 0.30);
+  --depth-outline-shadow: oklch(0.60 0.02 95 / 0.15);
+
   /* ── Animation Durations ───────────────────────────────────── */
   --duration-instant: 75ms;
   --duration-fast: 150ms;
@@ -192,12 +210,23 @@
 }
 
 .dark {
-  /* ── Backgrounds & Text ─────────────────────────────────────── */
-  --background: oklch(0.2607 0.0156 269.0735);
+  /* ── Backgrounds & Text (Tokyo Night gray ramp) ───────────────
+   *
+   * Derived from Mini Motorways Tokyo Night map colors:
+   *   #1d2331 (0.22) → background
+   *   #2b313f (0.30) → card / elevated surface
+   *   #484f59 (0.42) → reference for borders
+   *   #858b97 (0.64) → reference for muted text
+   *
+   * Key fix: depth walls now sit BETWEEN card and background
+   * (0.25) instead of below background (was 0.20). This makes
+   * the 3D building sides visible against the dark ground.
+   * ────────────────────────────────────────────────────────────── */
+  --background: oklch(0.22 0.025 262);
   --foreground: oklch(0.9901 0.0161 95.2193);
-  --card: oklch(0.3090 0.0210 265.8998);
+  --card: oklch(0.30 0.025 262);
   --card-foreground: oklch(0.9901 0.0161 95.2193);
-  --popover: oklch(0.3090 0.0210 265.8998);
+  --popover: oklch(0.30 0.025 262);
   --popover-foreground: oklch(0.9901 0.0161 95.2193);
 
   /* ── Primary: Terracotta ───────────────────────────────────── */
@@ -209,12 +238,12 @@
   --secondary-foreground: oklch(0.8800 0.0450 189.32);
 
   /* ── Muted ─────────────────────────────────────────────────── */
-  --muted: oklch(0.3584 0.0229 261.2207);
-  --muted-foreground: oklch(0.8283 0.0278 95.3961);
+  --muted: oklch(0.34 0.022 262);
+  --muted-foreground: oklch(0.72 0.01 95);
 
   /* ── Accent: Salmon pink (richer for dark) ─────────────────── */
   --accent: oklch(0.72 0.16 20);
-  --accent-foreground: oklch(0.2607 0.0156 269.0735);
+  --accent-foreground: oklch(0.22 0.025 262);
 
   /* ── Destructive ───────────────────────────────────────────── */
   --destructive: oklch(0.5788 0.2215 27.7967);
@@ -229,8 +258,8 @@
   --warning-foreground: oklch(0.2627 0.0206 28.5372);
 
   /* ── Borders & Inputs ──────────────────────────────────────── */
-  --border: oklch(0.3584 0.0229 261.2207);
-  --input: oklch(0.3584 0.0229 261.2207);
+  --border: oklch(0.38 0.018 262);
+  --input: oklch(0.38 0.018 262);
   --ring: oklch(0.6755 0.1791 35.2662);
 
   /* ── Charts ────────────────────────────────────────────────── */
@@ -241,13 +270,13 @@
   --chart-5: oklch(0.5401 0.1020 34.6762);
 
   /* ── Sidebar ───────────────────────────────────────────────── */
-  --sidebar: oklch(0.2303 0.0125 264.2926);
+  --sidebar: oklch(0.20 0.025 262);
   --sidebar-foreground: oklch(0.9901 0.0161 95.2193);
   --sidebar-primary: oklch(0.6755 0.1791 35.2662);
   --sidebar-primary-foreground: oklch(1.0000 0 0);
   --sidebar-accent: oklch(0.72 0.16 20);
-  --sidebar-accent-foreground: oklch(0.2607 0.0156 269.0735);
-  --sidebar-border: oklch(0.3584 0.0229 261.2207);
+  --sidebar-accent-foreground: oklch(0.22 0.025 262);
+  --sidebar-border: oklch(0.30 0.022 262);
   --sidebar-ring: oklch(0.6755 0.1791 35.2662);
 
   /* ── Typography ────────────────────────────────────────────── */
@@ -261,43 +290,66 @@
 
   /* ── Isometric Cast Shadows (dark mode — Tokyo Night) ────────── */
   /*
-   * Same 45-degree angle, zero blur. Pure black, higher opacity.
-   * Dark surfaces need stronger shadow contrast to read.
+   * Same 45-degree angle, zero blur. Near-black, higher opacity
+   * to read against the deeper background.
    */
   --shadow-x: 4px;
   --shadow-y: 4px;
   --shadow-blur: 0px;
   --shadow-spread: 0px;
-  --shadow-opacity: 0.50;
+  --shadow-opacity: 0.55;
   --shadow-color: #000000;
 
   --shadow-2xs:
-    1px 1px 0 0 oklch(0.10 0.01 264 / 0.35);
+    1px 1px 0 0 oklch(0.08 0.01 262 / 0.40);
 
   --shadow-xs:
-    2px 2px 0 0 oklch(0.10 0.01 264 / 0.40);
+    2px 2px 0 0 oklch(0.08 0.01 262 / 0.45);
 
   --shadow-sm:
-    3px 3px 0 0 oklch(0.08 0.01 264 / 0.45);
+    3px 3px 0 0 oklch(0.06 0.01 262 / 0.50);
 
   --shadow:
-    4px 4px 0 0 oklch(0.08 0.01 264 / 0.50);
+    4px 4px 0 0 oklch(0.06 0.01 262 / 0.55);
 
   --shadow-md:
-    5px 5px 0 0 oklch(0.06 0.01 264 / 0.50);
+    5px 5px 0 0 oklch(0.05 0.01 262 / 0.55);
 
   --shadow-lg:
-    7px 7px 0 0 oklch(0.05 0.01 264 / 0.55);
+    7px 7px 0 0 oklch(0.04 0.01 262 / 0.60);
 
   --shadow-xl:
-    10px 10px 0 0 oklch(0.04 0.01 264 / 0.55);
+    10px 10px 0 0 oklch(0.03 0.01 262 / 0.60);
 
   --shadow-2xl:
-    14px 14px 0 0 oklch(0.03 0.01 264 / 0.60);
+    14px 14px 0 0 oklch(0.02 0.01 262 / 0.65);
 
   /* ── Depth (dark mode) ───────────────────────────────────────── */
-  --depth-wall: oklch(0.20 0.02 264);
-  --depth-shadow: oklch(0.05 0.01 264 / 0.40);
+  /*
+   * Wall at 0.25 sits BETWEEN card (0.30) and background (0.22),
+   * creating the visible 3D building side that was missing before.
+   * Hierarchy: card face (0.30) > wall (0.25) > bg (0.22) > shadow
+   */
+  --depth-wall: oklch(0.25 0.022 262);
+  --depth-shadow: oklch(0.06 0.01 262 / 0.50);
+
+  /* ── Depth color variant tokens (dark) ───────────────────────── */
+  --depth-default-wall: oklch(0.45 0.14 35);
+  --depth-default-shadow: oklch(0.20 0.08 35 / 0.40);
+  --depth-secondary-wall: oklch(0.25 0.04 188);
+  --depth-secondary-shadow: oklch(0.12 0.02 188 / 0.40);
+  --depth-muted-wall: oklch(0.30 0.02 262);
+  --depth-muted-shadow: oklch(0.06 0.01 262 / 0.55);
+  --depth-destructive-wall: oklch(0.38 0.17 28);
+  --depth-destructive-shadow: oklch(0.18 0.10 28 / 0.40);
+  --depth-accent-wall: oklch(0.48 0.13 20);
+  --depth-accent-shadow: oklch(0.25 0.08 20 / 0.40);
+  --depth-success-wall: oklch(0.40 0.10 150);
+  --depth-success-shadow: oklch(0.20 0.06 150 / 0.40);
+  --depth-warning-wall: oklch(0.55 0.10 77);
+  --depth-warning-shadow: oklch(0.30 0.06 77 / 0.40);
+  --depth-outline-wall: oklch(0.28 0.015 262 / 0.50);
+  --depth-outline-shadow: oklch(0.10 0.01 262 / 0.30);
 }
 
 /* ── Entrance Keyframes ──────────────────────────────────────────
@@ -564,50 +616,50 @@
 
 /* Default (Primary) — terracotta walls */
 .depth-default {
-  --depth-wall: oklch(0.50 0.15 35);
-  --depth-shadow: oklch(0.50 0.10 35 / 0.25);
+  --depth-wall: var(--depth-default-wall);
+  --depth-shadow: var(--depth-default-shadow);
 }
 
 /* Secondary — teal walls */
 .depth-secondary {
-  --depth-wall: oklch(0.70 0.05 189);
-  --depth-shadow: oklch(0.55 0.04 189 / 0.25);
+  --depth-wall: var(--depth-secondary-wall);
+  --depth-shadow: var(--depth-secondary-shadow);
 }
 
 /* Muted — warm off-white walls */
 .depth-muted {
-  --depth-wall: oklch(0.82 0.02 95);
-  --depth-shadow: oklch(0.60 0.02 95 / 0.20);
+  --depth-wall: var(--depth-muted-wall);
+  --depth-shadow: var(--depth-muted-shadow);
 }
 
 /* Destructive — red walls */
 .depth-destructive {
-  --depth-wall: oklch(0.45 0.17 25);
-  --depth-shadow: oklch(0.45 0.12 25 / 0.25);
+  --depth-wall: var(--depth-destructive-wall);
+  --depth-shadow: var(--depth-destructive-shadow);
 }
 
 /* Accent — salmon pink walls */
 .depth-accent {
-  --depth-wall: oklch(0.52 0.14 20);
-  --depth-shadow: oklch(0.50 0.12 20 / 0.25);
+  --depth-wall: var(--depth-accent-wall);
+  --depth-shadow: var(--depth-accent-shadow);
 }
 
 /* Success — sage green walls */
 .depth-success {
-  --depth-wall: oklch(0.50 0.11 150);
-  --depth-shadow: oklch(0.50 0.08 150 / 0.25);
+  --depth-wall: var(--depth-success-wall);
+  --depth-shadow: var(--depth-success-shadow);
 }
 
 /* Warning — golden-amber walls */
 .depth-warning {
-  --depth-wall: oklch(0.62 0.11 77);
-  --depth-shadow: oklch(0.58 0.09 77 / 0.25);
+  --depth-wall: var(--depth-warning-wall);
+  --depth-shadow: var(--depth-warning-shadow);
 }
 
 /* Outline — subtle neutral walls */
 .depth-outline {
-  --depth-wall: oklch(0.82 0.02 95 / 0.30);
-  --depth-shadow: oklch(0.60 0.02 95 / 0.15);
+  --depth-wall: var(--depth-outline-wall);
+  --depth-shadow: var(--depth-outline-shadow);
 }
 
 /* ── Layer 2: .pressable — Animation Layer ─────────────────────────
