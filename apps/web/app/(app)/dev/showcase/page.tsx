@@ -8,6 +8,7 @@ import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
 
 import { AnimationShowcase } from "./AnimationShowcase";
+import { BentoGridShowcase } from "./BentoGridShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
@@ -80,6 +81,14 @@ export default function ThemeDemoPage() {
 
           <ShowcaseSection id="demo-dropzone" title="Dropzone" description="File upload area with card depth.">
             <DropzoneShowcase />
+          </ShowcaseSection>
+
+          <ShowcaseSection
+            id="demo-bento-grid"
+            title="Bento Grid"
+            description="Dynamic bento box layout driven by recipe count. Featured cells span multiple rows/columns. Layout adapts as the menu grows — patterns defined for 2-6 items with overflow fallback."
+          >
+            <BentoGridShowcase />
           </ShowcaseSection>
 
           <ShowcaseSection
