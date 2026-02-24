@@ -267,8 +267,8 @@ Based on Wave 1 decision. Scope adjusts based on chosen approach.
 
 - [x] `Anonymous execution flow (A1-A5)` — The happy path. Anonymous user goes from landing to download. Every auth gate passes.
 - [ ] `Anonymous quota + persistence (A6-A7)` — Edge cases. Quota blocks correctly (not auth error), session survives refresh.
-- [ ] `Conversion flow (C1-C3)` — Anonymous → signup. Data carries over, quota upgrades, ownership preserved.
-- [ ] `Auth lifecycle (S1-S3)` — Sign-in, sign-out, API surface. Standard auth works alongside anonymous.
+- [x] `Conversion flow (C1-C3)` — Anonymous → signup. Data carries over, quota upgrades, ownership preserved.
+- [x] `Auth lifecycle (S1-S3)` — Sign-in, sign-out, API surface. Standard auth works alongside anonymous.
 
 #### Wave 4 (sequential — core integration tests against real Convex dev)
 

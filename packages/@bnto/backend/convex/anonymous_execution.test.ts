@@ -2,10 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "./schema";
 import { api } from "./_generated/api";
+import { FREE_RUN_LIMIT, nextMonthReset } from "./_test_helpers";
 
 const modules = import.meta.glob("./**/*.ts");
-
-const FREE_RUN_LIMIT = 5;
 
 // Use fake timers to prevent scheduled functions (executeWorkflow) from
 // firing during tests. startPredefined schedules an internal action with
@@ -18,16 +17,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
-
-/** Compute next month's reset timestamp (same logic as auth.ts callback). */
-function nextMonthReset() {
-  const now = Date.now();
-  const nextMonth = new Date(now);
-  nextMonth.setMonth(nextMonth.getMonth() + 1);
-  nextMonth.setDate(1);
-  nextMonth.setHours(0, 0, 0, 0);
-  return nextMonth.getTime();
-}
 
 /**
  * Create an anonymous user in the database and return an authenticated

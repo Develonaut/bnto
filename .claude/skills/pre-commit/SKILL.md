@@ -55,18 +55,13 @@ task ui:lint           # Lint all TS packages — must pass
 
 If any fail: fix the errors, re-run from the top.
 
-## Step 3: Test Coverage Verification
+## Step 3: Test Coverage & Quality Verification
 
-Tests are **mandatory** for most changes. Determine which type based on what changed:
+Run `/test-review` to evaluate test quality against the project's value matrix. This reviews both coverage (are the right things tested?) and quality (are tests testing behavior or implementation details?).
 
-- **Go engine logic** (node execution, validation, path resolution) — **Unit tests** in `engine/pkg/*/` next to the source. Cover happy path, error cases, and edge cases.
-- **Go API endpoints** (`apps/api/`) — **Integration tests** using `httptest`. Cover request/response contracts.
-- **Core hooks/adapters** (`@bnto/core`) — **Unit tests** using Vitest in `packages/@bnto/core/`.
-- **Backend functions** (`@bnto/backend`) — **Unit/integration tests** in `packages/@bnto/backend/__tests__/`.
-- **Pure utils/functions** (any `utils/` directory) — **Unit tests** co-located next to the source file.
-- **Configuration or type-only changes** — Tests not required.
+The test review covers: Go engine fixtures, Convex auth enforcement, Core transforms, E2E user journeys, and flags wasteful tests (testing framework behavior, over-mocking, testing implementation details).
 
-**No exceptions.** If a function was added and there's no test, write one.
+**Fix any findings before proceeding.** Delete wasteful tests, add missing high-value tests, rewrite anti-pattern tests.
 
 ### Did you touch UI? (MANDATORY check)
 

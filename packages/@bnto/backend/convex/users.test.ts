@@ -2,24 +2,9 @@ import { describe, expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "./schema";
 import { internal } from "./_generated/api";
+import { FREE_RUN_LIMIT, nextMonthReset, pastReset } from "./_test_helpers";
 
 const modules = import.meta.glob("./**/*.ts");
-
-const FREE_RUN_LIMIT = 5;
-
-/** Helper to compute a reset timestamp in the past. */
-function pastReset() {
-  return Date.now() - 1000;
-}
-
-/** Helper to compute next month's reset timestamp. */
-function futureReset() {
-  const d = new Date();
-  d.setMonth(d.getMonth() + 1);
-  d.setDate(1);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
 
 describe("resetRunCounters", () => {
   it("resets runsUsed to 0 for users past their reset date", async () => {
@@ -55,7 +40,7 @@ describe("resetRunCounters", () => {
         plan: "free",
         runsUsed: 3,
         runLimit: FREE_RUN_LIMIT,
-        runsResetAt: futureReset(),
+        runsResetAt: nextMonthReset(),
       });
     });
 
@@ -90,7 +75,7 @@ describe("resetRunCounters", () => {
         plan: "free",
         runsUsed: 2,
         runLimit: FREE_RUN_LIMIT,
-        runsResetAt: futureReset(), // Not due yet
+        runsResetAt: nextMonthReset(), // Not due yet
       });
       return [a, b, c] as const;
     });
@@ -148,7 +133,7 @@ describe("getMe (schema shape)", () => {
         plan: "free",
         runsUsed: 3,
         runLimit: FREE_RUN_LIMIT,
-        runsResetAt: futureReset(),
+        runsResetAt: nextMonthReset(),
       });
     });
 
@@ -180,7 +165,7 @@ describe("getRunsRemaining (logic)", () => {
         plan: "free",
         runsUsed: 3,
         runLimit: 25,
-        runsResetAt: futureReset(),
+        runsResetAt: nextMonthReset(),
       });
     });
 
@@ -199,7 +184,7 @@ describe("getRunsRemaining (logic)", () => {
         plan: "free",
         runsUsed: 30,
         runLimit: 25,
-        runsResetAt: futureReset(),
+        runsResetAt: nextMonthReset(),
       });
     });
 

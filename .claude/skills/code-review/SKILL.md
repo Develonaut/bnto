@@ -115,14 +115,16 @@ Scan changed files for these specific pitfalls:
 
 ## Step 10: Test Coverage Check
 
-Verify tests exist for the changes:
+Verify tests exist for the changes. For detailed test quality evaluation (are tests testing behavior or implementation? are they at the right level?), use `/test-review`.
+
+Quick coverage check — flag if missing:
 
 - **Go engine logic** (node execution, validation, path resolution) -> Unit tests in `engine/pkg/*/`
 - **Go API endpoints** (`apps/api/`) -> Integration tests with `httptest`
 - **Core hooks/adapters** (`@bnto/core`) -> Unit tests in `packages/@bnto/core/`
-- **Backend functions** (`@bnto/backend`) -> Tests in `packages/@bnto/backend/__tests__/`
+- **Backend functions** (`@bnto/backend`) -> Tests in `packages/@bnto/backend/convex/`
 - **Pure utils/functions** -> Co-located `.test.ts` or `_test.go` files next to the source
-- **Headless props hooks** with non-trivial logic -> Co-located tests
+- **Headless hooks** with non-trivial logic -> Co-located tests
 
 Flag any missing test coverage.
 
