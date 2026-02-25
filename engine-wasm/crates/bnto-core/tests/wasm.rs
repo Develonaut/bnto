@@ -34,7 +34,10 @@ fn test_core_version_in_wasm_context() {
 fn test_error_formatting_in_wasm_context() {
     let error = bnto_core::BntoError::InvalidInput("test error".to_string());
     let msg = error.to_string();
-    assert!(msg.contains("test error"), "Error message should contain the detail");
+    assert!(
+        msg.contains("test error"),
+        "Error message should contain the detail"
+    );
 }
 
 /// Verify that the noop ProgressReporter works in WASM context.

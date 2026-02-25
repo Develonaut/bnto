@@ -127,7 +127,11 @@ fn test_compress_image_returns_json() {
     );
 
     // Verify it succeeded (not an error).
-    assert!(result.is_ok(), "compress_image should succeed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "compress_image should succeed: {:?}",
+        result.err()
+    );
 
     // Verify the result is valid JSON.
     let json_str = result.unwrap();
@@ -137,7 +141,10 @@ fn test_compress_image_returns_json() {
     // Verify the JSON has expected fields.
     let value = parsed.unwrap();
     assert!(value.get("file").is_some(), "JSON should have 'file' field");
-    assert!(value.get("metadata").is_some(), "JSON should have 'metadata' field");
+    assert!(
+        value.get("metadata").is_some(),
+        "JSON should have 'metadata' field"
+    );
 }
 
 /// Test that compress_image_bytes() returns raw compressed bytes.
@@ -155,7 +162,11 @@ fn test_compress_image_bytes_returns_data() {
         noop_cb,
     );
 
-    assert!(result.is_ok(), "compress_image_bytes should succeed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "compress_image_bytes should succeed: {:?}",
+        result.err()
+    );
 
     let bytes = result.unwrap();
     // Compressed output should be non-empty.
@@ -172,14 +183,14 @@ fn test_compress_image_bytes_returns_data() {
 fn test_compress_with_default_params() {
     let noop_cb = js_sys::Function::new_no_args("return undefined");
 
-    let result = bnto_image::wasm_bridge::compress_image_bytes(
-        TEST_JPEG,
-        "small.jpg",
-        "{}",
-        noop_cb,
-    );
+    let result =
+        bnto_image::wasm_bridge::compress_image_bytes(TEST_JPEG, "small.jpg", "{}", noop_cb);
 
-    assert!(result.is_ok(), "Default params should work: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "Default params should work: {:?}",
+        result.err()
+    );
 }
 
 /// Test that compressing an invalid file returns an error (not a panic).

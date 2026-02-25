@@ -120,12 +120,7 @@ fn test_compress_png_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image_bytes(
-        TEST_PNG,
-        "screenshot.png",
-        "{}",
-        callback,
-    );
+    let result = compress_image_bytes(TEST_PNG, "screenshot.png", "{}", callback);
 
     assert!(
         result.is_ok(),

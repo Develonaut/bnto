@@ -112,11 +112,7 @@ pub fn version() -> String {
 /// ```
 #[wasm_bindgen]
 pub fn greet(name: &str) -> String {
-    format!(
-        "Hello from Bnto WASM engine, {}! v{}",
-        name,
-        version()
-    )
+    format!("Hello from Bnto WASM engine, {}! v{}", name, version())
 }
 
 // =============================================================================

@@ -940,4 +940,435 @@ mod tests {
 
         assert!(result.is_err(), "Should return an error for empty data");
     }
+
+    // =========================================================================
+    // Edge Case Tests — Truncated, Corrupt, and Zero-Byte Inputs
+    // =========================================================================
+    //
+    // These tests verify that the compression pipeline handles degenerate
+    // inputs gracefully. In the browser, users can drop ANY file — partially
+    // downloaded images, renamed text files, zero-byte placeholders, etc.
+    // We need clean error messages, not panics or hangs.
+    //
+    // The pipeline has two failure points:
+    //   1. Format detection (ImageFormat::detect) — returns None for
+    //      unrecognizable data, which becomes UnsupportedFormat error.
+    //   2. Image decoding (ImageReader + .decode()) — fails for data
+    //      that has valid magic bytes but invalid/truncated image content,
+    //      which becomes ProcessingFailed error.
+
+    // --- Zero-Byte File ---
+
+    #[test]
+    fn test_zero_byte_file_with_no_extension_returns_unsupported_format() {
+        // Zero bytes AND no extension — both detection strategies fail.
+        // This is the most degenerate input possible.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let input = make_input(b"", "noextension");
+        let result = processor.process(input, &progress);
+
+        assert!(result.is_err(), "Zero-byte file should return an error");
+
+        // RUST CONCEPT: `if let Err(e) = result`
+        // This pattern destructures the Result — if it's an Err, we
+        // get the inner error value as `e` and can inspect its message.
+        // It's like: "if result is an error, bind it to `e` and run this block."
+        if let Err(e) = result {
+            assert!(
+                e.to_string().contains("Could not determine image format"),
+                "Should fail at format detection, got: '{}'",
+                e
+            );
+        }
+    }
+
+    #[test]
+    fn test_zero_byte_file_with_jpg_extension_returns_processing_error() {
+        // Zero bytes with a .jpg extension — format detection succeeds
+        // (via extension fallback), but decoding fails because there's
+        // no actual image data to decode.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let input = make_input(b"", "empty.jpg");
+        let result = processor.process(input, &progress);
+
+        assert!(result.is_err(), "Zero-byte JPEG should fail at decoding");
+
+        // The error could be from format detection (empty bytes) OR
+        // from the decoder. Either way, it should be a clean error.
+        if let Err(e) = result {
+            let msg = e.to_string();
+            assert!(
+                msg.contains("Could not determine")
+                    || msg.contains("Failed to read")
+                    || msg.contains("Failed to decode"),
+                "Should fail with a clear error message, got: '{}'",
+                msg
+            );
+        }
+    }
+
+    // --- Single-Byte File ---
+
+    #[test]
+    fn test_single_byte_file_returns_error() {
+        // One byte of random data. Not enough for any format signature,
+        // and the .dat extension isn't recognized either.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let input = make_input(&[0x42], "one_byte.dat");
+        let result = processor.process(input, &progress);
+
+        assert!(result.is_err(), "Single-byte file should return an error");
+    }
+
+    #[test]
+    fn test_single_byte_file_with_jpg_extension_returns_error() {
+        // One byte of data with a .jpg extension. Format detection
+        // succeeds via extension fallback, but the decoder will fail
+        // because one byte isn't a valid JPEG.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let input = make_input(&[0x42], "tiny.jpg");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "Single-byte file with .jpg extension should fail at decode"
+        );
+    }
+
+    // --- Truncated JPEG (valid header, missing image data) ---
+
+    #[test]
+    fn test_truncated_jpeg_4_bytes_header_only() {
+        // Exactly the JPEG magic bytes (FF D8 FF E0) and nothing else.
+        // Format detection succeeds (it's a valid JPEG header), but
+        // the image decoder will fail because there's no actual image
+        // data after the SOI marker.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let data = vec![0xFF, 0xD8, 0xFF, 0xE0];
+        let input = make_input(&data, "truncated.jpg");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "JPEG with only 4-byte header should fail at decode"
+        );
+
+        if let Err(e) = result {
+            let msg = e.to_string();
+            assert!(
+                msg.contains("Failed to decode") || msg.contains("Failed to read"),
+                "Should get a decode error, got: '{}'",
+                msg
+            );
+        }
+    }
+
+    #[test]
+    fn test_truncated_jpeg_10_bytes_returns_error() {
+        // JPEG header (4 bytes) + 6 bytes of garbage. Still not a valid
+        // JPEG — the decoder needs at minimum a Start of Frame (SOF)
+        // marker followed by actual image data.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let mut data = vec![0xFF, 0xD8, 0xFF, 0xE0];
+        data.extend_from_slice(&[0x00, 0x10, 0x4A, 0x46, 0x49, 0x46]); // partial APP0 header
+        let input = make_input(&data, "truncated10.jpg");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "10-byte truncated JPEG should fail at decode"
+        );
+    }
+
+    // --- Truncated PNG (valid header, missing chunks) ---
+
+    #[test]
+    fn test_truncated_png_8_bytes_header_only() {
+        // Exactly the PNG 8-byte signature and nothing else. Format
+        // detection succeeds (valid PNG magic), but the decoder will
+        // fail because PNG requires at least an IHDR chunk after the
+        // signature.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let data = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        let input = make_input(&data, "truncated.png");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "PNG with only 8-byte header should fail at decode"
+        );
+
+        if let Err(e) = result {
+            let msg = e.to_string();
+            assert!(
+                msg.contains("Failed to decode") || msg.contains("Failed to read"),
+                "Should get a decode error, got: '{}'",
+                msg
+            );
+        }
+    }
+
+    #[test]
+    fn test_truncated_png_20_bytes_returns_error() {
+        // PNG signature (8 bytes) + partial IHDR chunk header (12 bytes).
+        // The IHDR chunk needs at least 25 bytes (4 length + 4 type + 13 data + 4 CRC),
+        // so 20 total bytes leaves the chunk incomplete.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let mut data = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]; // PNG sig
+        data.extend_from_slice(&[0x00, 0x00, 0x00, 0x0D]); // IHDR length (13)
+        data.extend_from_slice(b"IHDR"); // chunk type
+        data.extend_from_slice(&[0x00, 0x00, 0x00, 0x01]); // partial: width = 1
+
+        let input = make_input(&data, "truncated20.png");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "20-byte truncated PNG should fail at decode"
+        );
+    }
+
+    // --- Truncated WebP (valid RIFF container, missing image data) ---
+
+    #[test]
+    fn test_truncated_webp_12_bytes_header_only() {
+        // Exactly the WebP RIFF container header (12 bytes) and nothing else.
+        // Format detection sees "RIFF....WEBP" and reports WebP, but the
+        // decoder will fail because there's no VP8/VP8L bitstream after.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let data = vec![
+            b'R', b'I', b'F', b'F', // RIFF marker
+            0x04, 0x00, 0x00, 0x00, // file size (4 = just "WEBP" after this)
+            b'W', b'E', b'B', b'P', // WEBP marker
+        ];
+        let input = make_input(&data, "truncated.webp");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "WebP with only 12-byte RIFF header should fail at decode"
+        );
+
+        if let Err(e) = result {
+            let msg = e.to_string();
+            assert!(
+                msg.contains("Failed to decode") || msg.contains("Failed to read"),
+                "Should get a decode error, got: '{}'",
+                msg
+            );
+        }
+    }
+
+    #[test]
+    fn test_corrupt_webp_returns_error() {
+        // Valid WebP RIFF header (12 bytes) + garbage data that isn't
+        // a valid VP8 or VP8L bitstream.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let mut data = vec![
+            b'R', b'I', b'F', b'F', 0x20, 0x00, 0x00, 0x00, // file size (32 bytes after this)
+            b'W', b'E', b'B', b'P',
+        ];
+        data.extend_from_slice(b"this is not a VP8 bitstream!!!!");
+
+        let input = make_input(&data, "corrupt.webp");
+        let result = processor.process(input, &progress);
+
+        assert!(result.is_err(), "Corrupt WebP should return an error");
+    }
+
+    // --- Corrupt Magic Bytes (look like one format but aren't) ---
+
+    #[test]
+    fn test_corrupt_jpeg_valid_header_garbage_body() {
+        // JPEG magic (FF D8 FF E0) followed by random bytes that
+        // don't form valid JPEG segments. The format detector reports
+        // JPEG, but the decoder should fail gracefully.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let mut data = vec![0xFF, 0xD8, 0xFF, 0xE0];
+        // Add 100 bytes of structured-looking but invalid JPEG data
+        for i in 0..100u8 {
+            data.push(i);
+        }
+
+        let input = make_input(&data, "corrupt_body.jpg");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "JPEG with valid header but garbage body should fail at decode"
+        );
+    }
+
+    #[test]
+    fn test_corrupt_png_valid_header_garbage_chunks() {
+        // PNG signature (8 bytes) followed by bytes that don't form
+        // valid PNG chunks. The format detector reports PNG, but the
+        // chunk parser in the decoder should fail.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let mut data = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        // Invalid chunk: wrong length, wrong type, wrong CRC
+        data.extend_from_slice(&[0xFF, 0xFF, 0xFF, 0xFF]); // absurd chunk length
+        data.extend_from_slice(b"FAKE"); // fake chunk type
+        data.extend_from_slice(&[0x00; 20]); // some zero bytes
+
+        let input = make_input(&data, "corrupt_chunks.png");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "PNG with valid header but garbage chunks should fail at decode"
+        );
+    }
+
+    // --- Extension-Only Detection with Undecodable Data ---
+
+    #[test]
+    fn test_random_bytes_with_jpg_extension_returns_error() {
+        // Random bytes (no valid magic) with a .jpg extension. Format
+        // detection falls back to the extension and reports JPEG, but
+        // the decoder should fail because the data isn't a JPEG.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let data = b"This is just a plain text file, not a JPEG image at all";
+        let input = make_input(data, "not_really.jpg");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "Random data with .jpg extension should fail at decode"
+        );
+
+        if let Err(e) = result {
+            let msg = e.to_string();
+            assert!(
+                msg.contains("Failed to decode") || msg.contains("Failed to read"),
+                "Should fail at image decoding, got: '{}'",
+                msg
+            );
+        }
+    }
+
+    #[test]
+    fn test_random_bytes_with_png_extension_returns_error() {
+        // Same as above but with .png extension.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let data = b"Not a PNG, just text pretending to be one.";
+        let input = make_input(data, "fake.png");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "Random data with .png extension should fail at decode"
+        );
+    }
+
+    #[test]
+    fn test_random_bytes_with_webp_extension_returns_error() {
+        // Same as above but with .webp extension.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let data = b"Not a WebP file, just a pretender.";
+        let input = make_input(data, "fake.webp");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "Random data with .webp extension should fail at decode"
+        );
+    }
+
+    // --- Mixed Corruption Scenarios ---
+
+    #[test]
+    fn test_5_byte_file_no_known_extension_returns_error() {
+        // Five bytes of random data with an unknown extension.
+        // Too short for any magic bytes (except JPEG at 4), but the
+        // data doesn't start with FF D8 FF. Both detection methods fail.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let input = make_input(&[0x01, 0x02, 0x03, 0x04, 0x05], "mystery.dat");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "5-byte unknown file should return UnsupportedFormat error"
+        );
+
+        if let Err(e) = result {
+            assert!(
+                e.to_string().contains("Could not determine image format"),
+                "Should fail at format detection, got: '{}'",
+                e
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_zeros_file_returns_error() {
+        // 50 bytes of all zeros. This has enough length for any magic byte
+        // check, but none of the signatures match (JPEG=FF D8 FF, PNG=89 50...).
+        // Extension ".bin" is also unknown.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let input = make_input(&[0x00; 50], "zeros.bin");
+        let result = processor.process(input, &progress);
+
+        assert!(result.is_err(), "All-zeros file should return an error");
+
+        if let Err(e) = result {
+            assert!(
+                e.to_string().contains("Could not determine image format"),
+                "Should fail at format detection, got: '{}'",
+                e
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_ff_bytes_with_jpg_extension_returns_error() {
+        // 20 bytes of 0xFF. The first 3 bytes are FF FF FF which is NOT
+        // a valid JPEG signature (JPEG needs FF D8 FF, not FF FF FF).
+        // But the .jpg extension triggers extension-based detection.
+        // The decoder should then fail because the data isn't valid JPEG.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let input = make_input(&[0xFF; 20], "allones.jpg");
+        let result = processor.process(input, &progress);
+
+        assert!(
+            result.is_err(),
+            "All-0xFF bytes with .jpg extension should fail at decode"
+        );
+    }
 }

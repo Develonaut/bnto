@@ -184,7 +184,7 @@ Build one node in Rust, compile to WASM, run in a Web Worker. This is the M1 eva
 Harden the browser execution stack with layered test coverage. Goal: "it just works" confidence from Rust unit tests through full E2E user journeys. See `journeys/browser-execution.md` for the full testing strategy.
 
 **Rust edge cases** (truncated, corrupt, zero-byte inputs):
-- [ ] `engine-wasm/` — Rust unit tests: truncated file (< 10 bytes), corrupt magic bytes, zero-byte file
+- [x] `engine-wasm/` — Rust unit tests: truncated file (< 10 bytes), corrupt magic bytes, zero-byte file
 - [ ] `engine-wasm/` — Rust unit tests: quality param bounds (0, 1, 100, 101), 1x1 pixel image
 
 **WASM boundary coverage:**
