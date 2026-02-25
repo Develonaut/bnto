@@ -244,11 +244,11 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 
 #### Wave 2 (parallel — home page overhaul)
 
-- [ ] `apps/web` — **Delete Mainline block components:** Remove `Hero.tsx`, `Logos.tsx`, `Features.tsx`, `ResourceAllocation.tsx`, `Testimonials.tsx`, `Investors.tsx`, `About.tsx`, `AboutHero.tsx`, `Contact.tsx`. These are all template garbage referencing project management tools, fake companies, Lorem ipsum, and fake testimonials. Keep: `BntoGallery.tsx` (real content), `Navbar.tsx` (being rewritten in Wave 1), `Footer.tsx` (being rewritten in Wave 1).
+- [x] `apps/web` — **Delete Mainline block components:** Remove `Hero.tsx`, `Logos.tsx`, `Features.tsx`, `ResourceAllocation.tsx`, `Testimonials.tsx`, `Investors.tsx`, `About.tsx`, `AboutHero.tsx`, `Contact.tsx`. These are all template garbage referencing project management tools, fake companies, Lorem ipsum, and fake testimonials. Keep: `BntoGallery.tsx` (real content), `Navbar.tsx` (being rewritten in Wave 1), `Footer.tsx` (being rewritten in Wave 1).
 - [ ] `apps/web` — **New home page hero:** BntoGallery as the centerpiece. Concise value prop above: "Drop files. Pick a tool. Done." + privacy tagline ("Your files never leave your browser"). No marketing fluff, no fake screenshots. The tool grid IS the hero. Browse `shadcn-blocks/blocks/hero/` for layout inspiration — keep it simple and tool-first.
 - [ ] `apps/web` — **Features/trust section:** Replace Mainline features with 3-4 real bnto differentiators: "100% browser-based" (files never uploaded), "Free forever" (no signup, no limits), "Open source" (MIT licensed, inspect the code), "Batch processing" (drop multiple files). Browse `shadcn-blocks/blocks/feature/` and `trust-strip/` for patterns.
 - [ ] `apps/web` — **Pricing section rewrite:** Per `pricing-model.md` — Free (browser, unlimited, $0 forever), Pro ($8/mo for persistence, collaboration, premium compute). Two honest tiers, no dark patterns. Desktop free forever. Browse `shadcn-blocks/blocks/pricing/` for layout patterns.
-- [ ] `apps/web` — **FAQ section rewrite:** Real questions — "What file types are supported?", "Is it really free?", "Where are my files processed?", "Is bnto open source?", "What's Pro?". Browse `shadcn-blocks/blocks/faq/` for accordion/grid patterns.
+- [x] `apps/web` — **FAQ section rewrite:** Real questions — "What file types are supported?", "Is it really free?", "Where are my files processed?", "Is bnto open source?", "What's Pro?". Browse `shadcn-blocks/blocks/faq/` for accordion/grid patterns.
 
 #### Wave 3 (parallel — page cleanup + assets)
 
