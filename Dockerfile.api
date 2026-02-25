@@ -7,18 +7,18 @@ WORKDIR /build
 
 # Copy workspace and module files for dependency caching
 COPY go.work go.work.sum ./
-COPY engine/go.mod engine/go.sum ./engine/
-COPY apps/api/go.mod apps/api/go.sum ./apps/api/
+COPY archive/engine-go/go.mod archive/engine-go/go.sum ./archive/engine-go/
+COPY archive/api-go/go.mod archive/api-go/go.sum ./archive/api-go/
 
 # Download dependencies (cached unless go.mod/go.sum change)
 RUN go mod download
 
 # Copy source code
-COPY engine/ ./engine/
-COPY apps/api/ ./apps/api/
+COPY archive/engine-go/ ./archive/engine-go/
+COPY archive/api-go/ ./archive/api-go/
 
 # Build the API server binary
-RUN CGO_ENABLED=1 GOOS=linux go build -o /server ./apps/api/cmd/server
+RUN CGO_ENABLED=1 GOOS=linux go build -o /server ./archive/api-go/cmd/server
 
 # Runtime stage — minimal Alpine
 FROM alpine:3.21

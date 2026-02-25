@@ -1,6 +1,6 @@
 # Bnto - Agent & Developer Guide
 
-**Last Updated:** February 24, 2026
+**Last Updated:** February 25, 2026
 
 ---
 
@@ -30,14 +30,15 @@
 
 **Bnto** is the one place small teams go to get things done — compress images, clean a CSV, rename files, call an API — without the overhead of a platform or the fragility of a script. Simple by default, powerful when you need it.
 
-Workflows are defined as `.bnto.json` files that orchestrate tasks. **Browser execution is the M1 priority** — Tier 1 bntos run 100% client-side via Rust→WASM (or JS fallback). Files never leave the user's machine. Cloud execution (Go API on Railway) is built and ready for M4 (premium server-side bntos). See [ROADMAP.md](.claude/ROADMAP.md).
+Workflows are defined as `.bnto.json` files that orchestrate tasks. **M1 (Browser Execution) is delivered** — all 6 Tier 1 bntos run 100% client-side via Rust→WASM. Files never leave the user's machine. Cloud execution (Go API on Railway) is built and ready for M4 (premium server-side bntos). See [ROADMAP.md](.claude/ROADMAP.md).
 
-- **Browser Engine (M1)**: Rust→WASM via `wasm-pack` (or JS library adapters as fallback)
-- **Go Engine**: CLI + cloud execution engine in `engine/` (CLI stable, cloud ready for M4)
+- **Rust WASM Engine (M1, delivered)**: `engine/` — Rust→WASM via `wasm-pack`, all browser execution
+- **Go Engine (archived)**: `archive/engine-go/` — CLI + cloud execution engine (paused, ready for M4)
+- **Go API (archived)**: `archive/api-go/` — HTTP API for cloud execution on Railway (paused, ready for M4)
 - **Web**: Next.js on Vercel + Convex Cloud + `@convex-dev/auth`
 - **Cloud (M4)**: Go API on Railway + Cloudflare R2 file transit (premium server-side bntos)
-- **Desktop (M3)**: Tauri or Wails (depends on M1 Rust outcome) — free local execution
-- **Shared Packages**: `@bnto/core` (transport-agnostic API), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-agnostic node definitions — M1)
+- **Desktop (M3)**: Tauri (Rust-native) — free local execution
+- **Shared Packages**: `@bnto/core` (transport-agnostic API), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-agnostic node definitions)
 - **Open Source**: MIT licensed
 
 ---
@@ -66,7 +67,7 @@ These are enforced in detail by the [rules/](.claude/rules/) files. This section
 - Comment density should be high — aim for a comment every 2-3 lines of code minimum
 - Group related logic with section comments (e.g., `// --- Step 1: Read the input file ---`)
 
-This applies to all code in `engine-wasm/` and any other `.rs` files in the repo.
+This applies to all code in `engine/` (Rust WASM) and any other `.rs` files in the repo.
 
 **Rust/WASM is TDD-first.** Since we can't visually inspect WASM output the way we can with UI components, tests are our primary verification tool. Every Rust function, trait implementation, and WASM export must have corresponding tests BEFORE being used in production code. The testing layers are:
 
@@ -92,13 +93,13 @@ task wasm:fmt:check     # Check Rust formatting (CI)
 task wasm:clean         # Clean Rust build artifacts
 
 ```bash
-# Go engine (via Taskfile)
-task build              # Build bnto CLI binary
+# Go engine (archived — via Taskfile)
+task build              # Build bnto CLI binary (archive/engine-go)
 task test               # Run engine tests with race detector
 task vet                # Run go vet on all Go packages
 
-# API server
-task api:build          # Build API server binary
+# API server (archived)
+task api:build          # Build API server binary (archive/api-go)
 task api:test           # Run API server tests with race detector
 task api:dev            # Run Go API server locally (port 8080)
 task api:tunnel         # Start Cloudflare tunnel (exposes local API at api-dev.bnto.io)
@@ -129,19 +130,24 @@ task check              # Full quality gate (vet + test + build)
 ```
 bnto/
 ├── apps/
-│   ├── api/                     # Go HTTP API server (Railway)
 │   ├── web/                     # Next.js on Vercel
 │   │   └── components/          # UI components (co-located, future @bnto/ui)
-│   └── desktop/                 # Wails frontend (Phase 2)
+│   └── desktop/                 # Tauri frontend (M3)
 ├── packages/
 │   ├── core/                    # @bnto/core — Transport-agnostic API
 │   └── @bnto/
 │       ├── auth/                # @bnto/auth — Cloud auth (web only)
 │       └── backend/             # @bnto/backend — Convex schema + functions
-├── engine/                      # All Go code (CLI, engine, node types)
-├── engine-wasm/                 # Rust WASM engine (browser execution)
+├── engine/                      # Rust WASM engine (browser execution — primary)
 │   └── crates/
-│       └── bnto-core/           # Core WASM library (types, traits, progress)
+│       ├── bnto-core/           # Core WASM library (types, traits, progress)
+│       ├── bnto-image/          # Image compression/resize/convert
+│       ├── bnto-csv/            # CSV clean/rename columns
+│       ├── bnto-file/           # File rename
+│       └── bnto-wasm/           # cdylib entry point (single WASM binary)
+├── archive/                     # Preserved reference code (not actively developed)
+│   ├── engine-go/               # Go CLI + engine (~33K LOC)
+│   └── api-go/                  # Go HTTP API server (~2.5K LOC)
 └── .claude/                     # Strategy docs, decisions, plan, rules
 ```
 

@@ -7,7 +7,7 @@ packages/
 
 # Build artifacts
 apps/web/.next
-apps/api/server
+archive/api-go/server
 
 # Git and docs
 .git

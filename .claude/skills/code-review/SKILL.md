@@ -119,8 +119,8 @@ Verify tests exist for the changes. For detailed test quality evaluation (are te
 
 Quick coverage check — flag if missing:
 
-- **Go engine logic** (node execution, validation, path resolution) -> Unit tests in `engine/pkg/*/`
-- **Go API endpoints** (`apps/api/`) -> Integration tests with `httptest`
+- **Go engine logic** (node execution, validation, path resolution) -> Unit tests in `archive/engine-go/pkg/*/`
+- **Go API endpoints** (`archive/api-go/`) -> Integration tests with `httptest`
 - **Core hooks/adapters** (`@bnto/core`) -> Unit tests in `packages/@bnto/core/`
 - **Backend functions** (`@bnto/backend`) -> Tests in `packages/@bnto/backend/convex/`
 - **Pure utils/functions** -> Co-located `.test.ts` or `_test.go` files next to the source

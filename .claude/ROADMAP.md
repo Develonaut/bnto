@@ -1,6 +1,6 @@
 # Bnto — Strategic Roadmap
 
-**Last Updated:** February 24, 2026
+**Last Updated:** February 25, 2026
 **Purpose:** High-level strategy, milestones, and big decisions. PLAN.md tracks sprint tasks. This tracks the "why" and "where we're going."
 
 ---
@@ -25,32 +25,16 @@ Bnto is the one place small teams go to get things done — compress images, cle
 ## Milestone Map
 
 ```
-M1: Browser Execution (MVP)          ← ACTIVE (Sprint 2B)
-    Ship all Tier 1 bntos running in-browser via Rust→WASM.
+M1: Browser Execution (MVP)          ← DELIVERED (Feb 2026)
+    All 6 Tier 1 bntos running in-browser via Rust→WASM.
     Zero backend for core experience. "Your files never leave your computer."
 
-    Prerequisite: Cloud execution pipeline (Sprints 1-2A) is COMPLETE.
-    Go API on Railway, R2 file transit, Convex real-time — all verified
-    end-to-end with 6/6 integration E2E tests passing. This is M4
+    Rust evaluation: PASSED. All 6 nodes built in Rust. Development
+    velocity good, WASM boundary clean, ecosystem sufficient.
+    Bundle: 1.6MB raw / 606KB gzipped (single cdylib, all 6 nodes).
+
+    Cloud execution pipeline (Sprints 1-2A) also COMPLETE — M4
     infrastructure delivered ahead of schedule.
-
-    Rust WASM is the M1 execution engine. The 6 MVP nodes are built
-    in Rust, compiled to WASM via wasm-pack, and run in Web Workers.
-
-    ┌──────────────────────────────────────────────────────┐
-    │  ESCAPE HATCH: If Rust sucks, bail to JS             │
-    │                                                      │
-    │  After 1-2 Rust nodes, evaluate honestly:            │
-    │  - Is development velocity acceptable?               │
-    │  - Is the WASM boundary manageable?                  │
-    │  - Is bundle size reasonable?                        │
-    │                                                      │
-    │  If no → switch to JS library adapters (jSquash,     │
-    │          PapaParse, etc.) for the remaining nodes.   │
-    │          No harm, no foul — it's only 6 nodes.      │
-    │                                                      │
-    │  @bnto/nodes stays either way.                       │
-    └──────────────────────────────────────────────────────┘
 
 M2: Platform Features
     Save workflows, execution history, user accounts.
@@ -60,18 +44,14 @@ M3: Desktop App
     Desktop app with local execution. Free forever, unlimited.
     Full node support including shell-command and BYOK AI.
 
-    If Rust WASM succeeded in M1:
-      → Desktop = Tauri (Rust-native). One codebase for all targets.
-      → Go engine becomes legacy (CLI keeps working, no new development).
-
-    If we bailed to JS in M1:
-      → Desktop = Wails v2 (Go-native). Go engine powers desktop + CLI.
-      → JS adapters stay for browser.
+    Rust succeeded in M1 → Desktop = Tauri (Rust-native).
+    One codebase for browser + desktop + CLI.
+    Go engine becomes legacy (CLI keeps working, no new development).
 
 M4: Premium Server-Side Bntos
-    Server-side engine (Go or Rust, per M1/M3 outcome) for
-    things browsers can't do: AI inference, shell commands,
-    video processing, large file operations.
+    Server-side engine (Rust or Go, per M3 outcome) for things
+    browsers can't do: AI inference, shell commands, video
+    processing, large file operations.
 
 M5: Monetization
     Stripe. Pro tier. Revenue.
@@ -79,7 +59,7 @@ M5: Monetization
     not artificial run limits on browser-native operations.
 ```
 
-**Key:** Milestones are sequential but overlap. M2 work starts before M1 closes. M1 itself is the Rust evaluation — by the time we ship MVP, we'll know if Rust works for us. The M3 desktop decision falls out naturally from M1's outcome.
+**Key:** Milestones are sequential but overlap. M2 work starts as M1 closes. M1 is delivered — Rust proved out. The M3 desktop decision is made: Tauri (Rust-native).
 
 ---
 
@@ -94,24 +74,22 @@ All Tier 1 bntos run 100% client-side via Rust→WASM. No server round-trip, no 
 | Convert Image Format | `/convert-image-format` | `image` (decode any → encode any) | wasm-pack + wasm-bindgen | JPEG, PNG, WebP, AVIF, GIF, BMP, TIFF |
 | Clean CSV | `/clean-csv` | `csv` + `serde` | wasm-pack + wasm-bindgen | Rust `csv` crate is battle-tested |
 | Rename CSV Columns | `/rename-csv-columns` | `csv` + `serde` | wasm-pack + wasm-bindgen | Header rewrite, same engine as clean-csv |
-| Rename Files | `/rename-files` | Pure JS (no Rust needed) | JS | Pattern matching + rename on File objects — no binary processing |
+| Rename Files | `/rename-files` | `bnto-file` (Rust `regex`) | wasm-pack + wasm-bindgen | Pattern matching + regex rename — built in Rust for uniform engine |
 
-**Why Rust WASM:** We're betting that building the engine in Rust now — even for just 6 MVP nodes — gives us a head start on the unified engine vision. If Rust works well here, the same code powers desktop (Tauri), CLI, and cloud. One language, one codebase.
+**Why Rust WASM:** The bet paid off. All 6 nodes built in Rust, including `rename-files` (originally planned as JS — built in Rust for uniform engine). The same code will power desktop (Tauri), CLI, and cloud. One language, one codebase.
 
-**CSV in Rust WASM:** The JS/WASM string boundary is a known concern. Rust's `csv` crate is fast enough that the boundary overhead may be acceptable for our use case (structured operations, not free-form parsing). We'll benchmark against PapaParse after the first CSV node ships. If Rust CSV is measurably slower, CSV nodes can bail to JS while image nodes stay in Rust.
-
-**Rename Files stays JS.** No binary processing — it's purely File object manipulation. Rust adds nothing here.
+**CSV in Rust WASM:** Rust's `csv` crate handles structured operations well. The JS/WASM string boundary overhead is acceptable for our use case.
 
 **Web Workers are mandatory.** All WASM processing runs off the main thread. Progress callbacks report back to the UI via `postMessage`.
 
-### JS Fallback Libraries (escape hatch)
+### JS Libraries (reference, not needed for M1)
 
-If Rust doesn't work out after 1-2 nodes, these are the proven JS alternatives:
+Rust succeeded — these are not needed for Tier 1. Kept as reference for Tier 2+ candidates where JS may be simpler:
 
 | Bnto | JS Library | Notes |
 |------|-----------|-------|
 | Image processing | jSquash (MozJPEG, OxiPNG, WebP, AVIF) | Discourse uses for 50MB+ images |
-| CSV processing | PapaParse | 1M rows in ~5s. JS beats WASM for strings |
+| CSV processing | PapaParse | 1M rows in ~5s. Potential for very large CSV bntos |
 | SVG optimization | Vexy SVGO (Rust→WASM, ironically) | 12x faster than Node SVGO |
 
 ### Tier 2+ Browser Candidates
@@ -222,9 +200,9 @@ Users convert when they want something the browser can't provide alone. These ar
 
 | Decision | Status | Rationale |
 |----------|--------|-----------|
-| **Rust WASM for MVP browser nodes** | Active (M1) | Build 6 MVP nodes in Rust, compile to WASM. Learn Rust, prove the unified engine vision. Escape hatch: bail to JS after 1-2 nodes if it sucks. |
-| **JS adapters as fallback** | Standby | jSquash + PapaParse are production-proven. If Rust doesn't work, switch to JS for remaining nodes. No harm, no foul. |
-| **Go engine paused for web** | Paused | 28k lines of proven code. Ready for M3 (desktop) and M4 (premium). Not deleted. |
+| **Rust WASM for browser nodes** | Delivered (M1 complete) | All 6 Tier 1 nodes built in Rust, compiled to WASM. Unified engine vision proven. 606KB gzipped bundle. |
+| **JS adapters as fallback** | Not needed | Rust succeeded. JS libraries available for Tier 2+ if specific nodes warrant it. |
+| **Go engine paused for web** | Paused | 28k lines of proven code. Ready for M4 (premium server-side). Desktop will use Tauri (Rust-native). |
 | **`@bnto/nodes` is engine-agnostic** | Approved | Schemas, recipes, validation in TS. Survives any engine choice. The safety net. |
 | **Railway deprioritized** | Backlog (M4) | Only needed for premium server-side bntos. |
 | **R2 deprioritized** | Backlog (M4) | Not needed for browser execution. File transit only for cloud path. |
@@ -233,37 +211,29 @@ Users convert when they want something the browser can't provide alone. These ar
 | **Web Workers mandatory** | Approved | All WASM processing off main thread. Progress via postMessage. |
 | **Zip + individual downloads** | Approved | Both options for multi-file result retrieval. |
 
-### Engine Decision: M1 Is the Evaluation
+### Engine Decision: Rust Won (Feb 2026)
 
-**The approach:** We're building the 6 MVP browser nodes in Rust, compiled to WASM. M1 itself is the Rust evaluation — by the time we ship, we'll know if Rust works for us.
+**The evaluation is complete.** All 6 MVP browser nodes were built in Rust, compiled to WASM. M1 was the Rust evaluation — and Rust passed.
 
-**The escape hatch is clean.** After 1-2 Rust WASM nodes, we evaluate honestly. If development velocity is bad, the WASM boundary is painful, or bundle size is unreasonable — we bail to JS library adapters for the remaining nodes. It's only 6 nodes. No harm, no foul.
+**Evaluation results:**
 
-**Evaluation checkpoints (after each node):**
+| Question | Result |
+|----------|--------|
+| Development velocity | **PASS** — Each node built faster as patterns emerged |
+| WASM boundary | **PASS** — ArrayBuffer transfers clean, Web Worker wrapper solid |
+| Bundle size | **ACCEPTABLE** — 606KB gzipped for all 6 nodes (above 500KB target by ~20%, but reasonable) |
+| Ecosystem coverage | **PASS** — `image`, `csv`, `serde`, `regex` crates cover all Tier 1 needs |
+| Developer experience | **PASS** — wasm-pack builds fast, errors debuggable, tooling solid |
 
-| Question | Good sign | Bad sign |
-|----------|-----------|----------|
-| Development velocity | Building nodes gets faster as patterns emerge | Each node is a slog with new problems |
-| WASM boundary | Data passes cleanly, File/Blob handling works | Constant serialization headaches, memory leaks |
-| Bundle size | < 500KB gzipped for all nodes | Multi-MB WASM blobs per node |
-| Ecosystem coverage | `image` and `csv` crates cover our needs | Fighting the crate ecosystem, writing custom codecs |
-| Developer experience | wasm-pack builds are fast, debugging is manageable | Build times are painful, errors are cryptic |
-
-**If Rust succeeds (likely outcome by end of M1):**
-- Rust becomes the engine for all targets (browser WASM, desktop native, CLI, cloud)
+**What this means going forward:**
+- Rust is the engine for all targets (browser WASM, desktop native, CLI, cloud)
 - Desktop (M3) uses Tauri (Rust-native) — one codebase, one language
 - Go engine becomes legacy (CLI keeps working, no new development)
 - The unified engine vision is real: one Rust codebase powering every execution target
 
-**If we bail to JS:**
-- JS library adapters (jSquash, PapaParse, etc.) power browser execution
-- Go stays as the engine for desktop (Wails v2), CLI, and cloud (Railway)
-- Two execution implementations maintained, but they share `@bnto/nodes` schemas
-- Rust nodes already built still work — they just don't become the unified engine
+**The safety net remains: `@bnto/nodes` is engine-agnostic.** Node definitions, schemas, recipes, and validation rules live in TypeScript. They survive any future engine decisions.
 
-**The safety net: `@bnto/nodes` is engine-agnostic.** Node definitions, schemas, recipes, and validation rules live in TypeScript. They don't care whether the executor is Rust WASM, JS, or Go. No matter what happens, `@bnto/nodes` stays.
-
-**There is no timeline. This is for fun.** We're learning Rust, building something cool, and proving out the unified engine vision. If it works, we've leapfrogged the "two implementations" problem. If not, we have a working product on JS adapters.
+**There is no timeline. This is for fun.** We're learning Rust, building something cool, and it's working.
 
 ---
 

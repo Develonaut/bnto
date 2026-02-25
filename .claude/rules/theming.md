@@ -6,15 +6,16 @@ The bnto theme is fully defined. Use these tokens — never hardcode colors, rad
 
 ## Fonts
 
-Three-font system: **DM Sans** (display/headings) + **Inter** (body) + **Geist Mono** (code) — loaded via `next/font/google`, bound to `--font-display`, `--font-sans`, and `--font-mono`.
+Three-font system: **Geist** (display/headings) + **Inter** (body) + **Geist Mono** (code) — loaded via `next/font/google`, bound to `--font-display`, `--font-sans`, and `--font-mono`.
 
 ```tsx
 // apps/web/app/layout.tsx
-import { DM_Sans, Inter, Geist_Mono } from "next/font/google";
+import { Geist, Inter, Geist_Mono } from "next/font/google";
 
-const fontDisplay = DM_Sans({
+const fontDisplay = Geist({
   subsets: ["latin"],
   variable: "--font-display",
+  display: "swap",
 });
 
 const fontSans = Inter({
@@ -39,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 **Rules:**
-- Use `font-display` for hero headings, page titles, brand wordmark, and display text — resolves to DM Sans
+- Use `font-display` for hero headings, page titles, brand wordmark, and display text — resolves to Geist
 - Use `font-sans` (resolves to Inter) for body text, labels, and general UI
 - Use `font-mono` (resolves to Geist Mono) for code/technical output — logs, `.bnto.json` previews, node type labels
 - Never load fonts via `<link>` or `@import` — `next/font` handles them with zero layout shift
@@ -145,16 +146,16 @@ Dark mode shadows use pure black at higher opacity — the system handles this a
 
 ## Typography Scale
 
-DM Sans is used for display/headings — warm, geometric, pairs well with the terracotta palette. Inter is the body font — clean and highly legible at all sizes.
+Geist is used for display/headings — clean, modern geometric sans-serif that pairs well with the warm palette. Inter is the body font — clean and highly legible at all sizes.
 
 ```tsx
-// Display / Hero (DM Sans)
+// Display / Hero (Geist)
 className="font-display text-4xl font-bold tracking-tight"
 
-// Page headings (DM Sans)
+// Page headings (Geist)
 className="font-display text-2xl font-semibold"
 
-// Section headings (DM Sans)
+// Section headings (Geist)
 className="font-display text-lg font-semibold"
 
 // Body (Inter — default, no font-display needed)
@@ -222,7 +223,7 @@ The `@theme inline` block maps CSS variables to Tailwind's color/shadow/radius s
 - **Never hardcode a color value** — always use semantic tokens (`bg-primary`, `text-muted-foreground`, etc.)
 - **Never hardcode a radius** — always use `rounded-{sm|md|lg|xl}` or `rounded-[2rem]` / `rounded-full`
 - **Use `font-display` for headings** — hero text, page titles, brand wordmark. Use `font-sans` for body
-- **Never use `font-['DM_Sans']` or `font-['Inter']`** — use `font-display` and `font-sans` (the variables resolve them)
+- **Never use `font-['Geist']` or `font-['Inter']`** — use `font-display` and `font-sans` (the variables resolve them)
 - **Never add a `<link>` for fonts** — `next/font` is already handling them in `layout.tsx`
 - **Dark mode is automatic** — tokens swap via `.dark` class, no manual `dark:` overrides needed for semantic tokens
 - **Import ThemeToggle from `@/components/`** — never import `next-themes` directly in app code

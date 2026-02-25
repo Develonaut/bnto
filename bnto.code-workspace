@@ -1,8 +1,9 @@
 {
   "folders": [
     { "path": ".", "name": "root" },
-    { "path": "engine", "name": "engine"},
-    { "path": "engine-wasm", "name": "engine-wasm"},
+    { "path": "engine", "name": "engine (Rust WASM)"},
+    { "path": "archive/engine-go", "name": "archive: engine-go"},
+    { "path": "archive/api-go", "name": "archive: api-go"},
     { "path": "apps", "name": "apps" },
     { "path": "packages", "name": "packages" }
   ],
@@ -31,7 +32,7 @@
     "[rust]": {
       "editor.defaultFormatter": "rust-lang.rust-analyzer"
     },
-    "rust-analyzer.linkedProjects": ["engine-wasm/Cargo.toml"],
+    "rust-analyzer.linkedProjects": ["engine/Cargo.toml"],
     "tailwindCSS.experimental.classRegex": [
       ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
       ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]

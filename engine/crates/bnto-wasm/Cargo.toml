@@ -19,7 +19,7 @@
 #   4. Avoids linker ARG_MAX issues from js-sys export descriptors
 #
 # HOW TO BUILD:
-#   cd engine-wasm
+#   cd engine
 #   wasm-pack build --target web --release crates/bnto-wasm
 
 [package]

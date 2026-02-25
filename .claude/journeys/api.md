@@ -79,7 +79,7 @@ API request lifecycle and validation checkpoints.
 
 ## Implementation Notes
 
-- Go integration tests via `httptest` in `apps/api/`
+- Go integration tests via `httptest` in `archive/api-go/`
 - Existing suite: 20+ tests covering happy path and error cases
 - R2 transit tests need real R2 buckets (dev bucket: `bnto-transit-dev`)
 - P2 (Convex → API reachability) requires `task dev:all` running

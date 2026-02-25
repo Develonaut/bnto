@@ -6,8 +6,8 @@
 *.dylib
 /bento
 /bnto
-engine/bento
-engine/bnto
+archive/engine-go/bento
+archive/engine-go/bnto
 
 # Test binary, built with `go test -c`
 *.test
@@ -47,9 +47,9 @@ vendor/
 # Test outputs - generated during test runs
 /products/
 /tests/output/
-engine/output/
-engine/tests/**/*.webp
-engine/tests/**/render-*.png
+archive/engine-go/output/
+archive/engine-go/tests/**/*.webp
+archive/engine-go/tests/**/render-*.png
 
 # Environment
 .env
@@ -73,7 +73,7 @@ dist/
 .vercel/
 
 # Go API server binary
-apps/api/server
+archive/api-go/server
 
 # Test coverage
 coverage/
@@ -87,5 +87,5 @@ blob-report/
 .vercel
 
 # Rust / WASM
-engine-wasm/target/
-engine-wasm/crates/*/pkg/
+engine/target/
+engine/crates/*/pkg/

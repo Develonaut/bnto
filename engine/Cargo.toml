@@ -14,11 +14,11 @@
 # Think of it like a monorepo — but for Rust.
 #
 # HOW TO BUILD:
-#   cd engine-wasm/crates/bnto-core
+#   cd engine/crates/bnto-core
 #   wasm-pack build --target web
 #
 # HOW TO TEST:
-#   cd engine-wasm
+#   cd engine
 #   cargo test --workspace
 #
 # =============================================================================

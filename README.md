@@ -144,7 +144,7 @@ bnto/
 │       └── backend/       # Convex schema + functions
 ├── Taskfile.yml            # Go + cross-cutting orchestration
 ├── turbo.json              # Turborepo config
-├── go.work                 # Go workspace (engine + apps/api)
+├── go.work                 # Go workspace (archive/engine-go + archive/api-go)
 └── .claude/                # Architecture docs + plan
 ```
 

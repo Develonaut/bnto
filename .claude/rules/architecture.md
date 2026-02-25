@@ -85,12 +85,13 @@ const workflows = window.go.main.App.ListWorkflows();
 - Engine in-process via Wails Go bindings (MVP); designed for later decoupling to standalone `bnto` CLI binary via subprocess
 - Files accessed directly from local filesystem -- no R2, no cloud file transit
 
-### `apps/api/` -- Go HTTP API server (Railway)
+### `archive/api-go/` -- Go HTTP API server (Railway, archived)
 - HTTP API that wraps the Go engine for cloud execution
 - Receives workflow execution requests from Convex actions
 - Returns execution results
+- Archived — ready for M4 (premium server-side bntos)
 
-### `engine/` -- Go engine (CLI + execution)
+### `archive/engine-go/` -- Go engine (CLI + execution, archived)
 - CLI binary (`cmd/bnto/`)
 - Workflow execution engine (`pkg/engine/`)
 - Node type implementations (`pkg/node/`)

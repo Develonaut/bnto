@@ -133,8 +133,8 @@ task ui:lint           # Lint all TS packages — must pass
 
 Your work MUST include tests. Determine which type based on what you built:
 
-- **Go engine logic** (node execution, validation, path resolution) -> **Unit tests** in `engine/pkg/*/` next to the source. Cover happy path, error cases, and edge cases.
-- **Go API endpoints** (`apps/api/`) -> **Integration tests** using `httptest`. Cover request/response contracts.
+- **Go engine logic** (node execution, validation, path resolution) -> **Unit tests** in `archive/engine-go/pkg/*/` next to the source. Cover happy path, error cases, and edge cases.
+- **Go API endpoints** (`archive/api-go/`) -> **Integration tests** using `httptest`. Cover request/response contracts.
 - **Core hooks/adapters** (`@bnto/core`) -> **Unit tests** using Vitest in `packages/@bnto/core/`.
 - **Backend functions** (`@bnto/backend`) -> **Unit/integration tests** in `packages/@bnto/backend/__tests__/`.
 - **Configuration or type-only changes** -> Tests not required.

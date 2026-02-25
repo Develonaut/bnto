@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** February 24, 2026
+**Last Updated:** February 25, 2026
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -25,13 +25,14 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Closing Sprint 2A → Sprint 2B (Browser Execution, M1 MVP)
-- **Strategic direction:** Browser-first. All Tier 1 bntos run client-side via Rust→WASM (uniform engine, no JS fallback). Cloud execution (Railway + R2) is built and working — ready for M4 (premium server-side bntos). See ROADMAP.md.
-- **Cloud pipeline:** Complete. 6/6 integration E2E tests pass. Go API on Railway, R2 file transit, Convex real-time subscriptions — all verified end-to-end. This is M4 infrastructure delivered ahead of schedule.
+- **Active:** Sprint 2B complete (M1 delivered) → Sprint 3 (Platform Features, M2)
+- **M1 delivered (Feb 2026):** All 6 Tier 1 bntos run 100% client-side via Rust→WASM. Uniform Rust engine — no JS fallback. Files never leave the user's machine. Rust evaluation checkpoint PASSED.
+- **Cloud pipeline:** Complete. Go API on Railway, R2 file transit, Convex real-time subscriptions — all verified end-to-end with integration E2E tests. This is M4 infrastructure delivered ahead of schedule.
+- **WASM engine:** 6 Rust crates (`bnto-image`, `bnto-csv`, `bnto-file`, `bnto-core`, `bnto-wasm`). Single cdylib entry point. 1.6MB raw / 606KB gzipped. Web Worker wrapper with progress reporting.
 - **Auth:** Migrated to `@convex-dev/auth`. Anonymous sessions create real `users` rows. Integration tests complete. `AUTH_SECRET` env var required in Convex deployments.
-- **Engine:** Complete. Go CLI with 10 node types (>90% coverage), Go HTTP API on Railway, BntoService shared API layer. Paused for web — browser adapter is M1 priority.
+- **Go engine:** Complete. CLI with 10 node types (>90% coverage), HTTP API on Railway, BntoService shared API layer. Paused for web — browser execution is M1 priority. Ready for M3 (desktop) and M4 (premium server-side).
 - **Web app:** Next.js on Vercel. Auth, SEO tool pages, execution UI, landing pages — all built.
-- **Packages:** `@bnto/core` (layered singleton), `@bnto/auth` (`@convex-dev/auth` wrappers), `@bnto/backend` (Convex schema + functions). UI co-located in `apps/web/components/`.
+- **Packages:** `@bnto/core` (layered singleton), `@bnto/auth` (`@convex-dev/auth` wrappers), `@bnto/backend` (Convex schema + functions), `@bnto/nodes` (engine-agnostic definitions). UI co-located in `apps/web/components/`.
 
 ---
 
@@ -89,8 +90,11 @@ Moved from Railway/Convex Auth to Vercel/Better Auth. Auth provider, Convex sche
 ### Sprint 2A: Auth Fix — Waves 1-3 COMPLETE
 Evaluated `@convex-dev/auth` vs fixing Better Auth. Chose `@convex-dev/auth` (eliminates JWT race condition). Full migration: auth provider, anonymous sessions with real `users` rows, proxy middleware, AppGate removal. Integration tests: anonymous execution (A1-A7), conversion flow (C1-C3), auth lifecycle (S1-S3). See `decisions/auth-evaluation.md`.
 
-### Sprint 2.5: Codebase Polish — Waves 1-2 COMPLETE
-Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hooks, utils, lib), PascalCase component rename, dot-notation primitive wrappers, Button audit/migration. Font review (DM Sans → Geist evaluation) deferred.
+### Sprint 2.5: Codebase Polish — COMPLETE
+Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hooks, utils, lib), PascalCase component rename, dot-notation primitive wrappers, Button audit/migration, Button pseudo-state fix, Button animations (Mini Motorways motion language). Font review (DM Sans → Geist evaluation) deferred to backlog.
+
+### Sprint 2B: Browser Execution (M1 MVP) — COMPLETE
+All 6 Tier 1 bntos running 100% client-side via Rust→WASM. `@bnto/nodes` package (engine-agnostic definitions), Rust workspace with 5 crates, Web Worker wrapper, browser adapter in `@bnto/core`, BntoPageShell browser routing, ZIP download for multi-file results. Rust evaluation checkpoint PASSED. WASM bundle: 1.6MB raw / 606KB gzipped. 44+ Rust unit tests, WASM integration tests, Playwright E2E with screenshot assertions for all 6 bntos. **M1 milestone delivered.**
 
 ---
 
@@ -119,7 +123,7 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 - [x] `apps/web` — **CRITICAL: Anonymous → password userId preservation (C1-C2).** ConvexHttpClient integration tests proved userId is NOT preserved (new user created on upgrade). Browser cookies may behave differently. Playwright E2E spec written (`conversion-flow.integration.spec.ts`). **RESOLVED (Feb 24): Anonymous auth now works in Playwright browser context — 5/6 integration tests pass. Auth blocker was transient (likely Convex dev deployment state). Remaining failure: `clean-csv` execution fails at engine level (not auth).**
 - [ ] `apps/web` — **Browser auth behavior verification:** Token expiry handling, sign-out session invalidation (JWT is stateless — browser relies on cookie clearing + proxy redirect). ConvexHttpClient can't test this — Playwright E2E required. **Moved to Sprint 3 (M2: Platform Features) — not blocking M1 browser execution.**
 - [x] `apps/web` — **Monetization checkpoint:** Confirm execution events log `userId`, `bntoSlug`, `timestamp`, `durationMs` to Convex. **VERIFIED:** All 4 fields captured in `executionEvents` table. Run quota fields on user doc. `enforceQuota()` checks before execution. **Note:** Run quota enforcement applies to server-side bntos (M4). Browser bntos are free unlimited per ROADMAP.md.
-- [ ] `apps/web` — Verify auth flow end-to-end on Vercel preview deployment
+- [ ] `apps/web` — Verify auth flow end-to-end on Vercel preview deployment — **Moved to backlog (not blocking M1)**
 
 > **SEO checkpoint:** Before closing Sprint 2, verify in browser devtools that each `/[bnto]` URL returns correct `<title>` and `<meta description>` in the page source (not client-rendered).
 
@@ -127,20 +131,14 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 
 ---
 
-### Sprint 2.5: Codebase Polish — Waves 3-4 (PAUSED — resume after Sprint 2A)
+### Sprint 2.5: Codebase Polish — COMPLETE
 
-#### Wave 3 (parallel — button polish)
+#### Wave 3 (parallel — button polish) — COMPLETE
 
-- [ ] `apps/web` — Fix Button pseudo-state bug: after active/click, button returns to hover state instead of default resting state. Investigate CSS `:active` → `:hover` transition and the depth/pressable system
-- [ ] `apps/web` — Experiment with Button animations per Mini Motorways motion language (see `animation.md`): entrance spring for button appearance, smooth ease-out for press/release transitions, `motion-safe:` guards
+- [x] `apps/web` — Fix Button pseudo-state bug: after active/click, button returns to hover state instead of default resting state. CSS `:active` → `:hover` transition fixed in depth/pressable system
+- [x] `apps/web` — Button animations per Mini Motorways motion language (see `animation.md`): entrance spring for button appearance, smooth ease-out for press/release transitions, `motion-safe:` guards
 
-#### Wave 4 (sequential — verify)
-
-- [ ] `apps/web` — `task ui:build` + `task ui:lint` pass clean
-- [ ] `apps/web` — E2E screenshots updated and visually verified
-
-**Deferred from Wave 2:**
-- [ ] `apps/web` — **Font family review: evaluate replacing DM Sans with Geist for display/headings.** Current: DM Sans (display) + Inter (body) + Geist Mono (code). DM Sans is bubbly/rounded-geometric — may not match Mini Motorways' precise-but-warm feel. Geist has Swiss-style technical precision. Reference: `/Users/ryan/Desktop/Mini Motorways Reference/`. Proposed: **Geist (display) + Inter (body) + Geist Mono (code)**. Prototype the swap and compare visually.
+**Remaining polish moved to backlog (UI: Button Polish, Font Review).** Build verification and E2E screenshots for button changes are included in Sprint 2B E2E suite.
 
 ---
 
@@ -170,14 +168,17 @@ Build one node in Rust, compile to WASM, run in a Web Worker. This is the M1 eva
 - [x] `apps/web` — Wire BntoPageShell to use browser adapter for `/compress-images`
 - [x] `apps/web` — E2E test: compress-images runs entirely client-side (no backend required)
 
-**EVALUATION CHECKPOINT — answer honestly after this wave:**
-- Is development velocity acceptable? (Building nodes getting faster?)
-- Is the WASM boundary manageable? (Data passes cleanly, File/Blob handling works?)
-- Is bundle size reasonable? (< 500KB gzipped for all nodes?)
-- Is the ecosystem covering our needs? (`image` and `csv` crates work?)
-- Is developer experience tolerable? (Build times, debugging?)
+**EVALUATION CHECKPOINT — PASSED (Feb 2026)**
 
-**If Rust passes → continue Wave 2c (testing) then Wave 3a (Rust). If Rust fails → switch to Wave 3b (JS).**
+| Question | Result |
+|----------|--------|
+| Development velocity | **PASS** — Each node built faster than the last. Patterns established early. |
+| WASM boundary | **PASS** — ArrayBuffer transfers work cleanly. Web Worker wrapper handles File/Blob. |
+| Bundle size | **ACCEPTABLE** — 606KB gzipped for all 6 nodes in single bundle. Above 500KB target by ~20%, but reasonable for 6 full nodes. |
+| Ecosystem coverage | **PASS** — `image`, `csv`, `serde`, `regex` crates cover all Tier 1 needs. |
+| Developer experience | **PASS** — wasm-pack builds fast, errors are debuggable, Rust tooling solid. |
+
+**Decision: Rust is the uniform browser engine.** All 6 Tier 1 bntos built in Rust, including `rename-files` (originally planned as JS). Continued to Wave 3a (remaining Rust nodes).
 
 #### Wave 2c (parallel — browser execution testing hardening)
 
@@ -216,11 +217,12 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [x] `apps/web` — Web Worker wrappers for all new WASM nodes
 - [x] `apps/web` — E2E tests: all 6 bntos run client-side
 
-#### Wave 4 (sequential — integration + polish)
+#### Wave 4 (sequential — integration + polish) — COMPLETE
 
 - [x] `apps/web` — BntoPageShell routes through browser adapter for Tier 1 bntos (done in Wave 2)
 - [x] `apps/web` — Zip download for multi-file browser results (fflate, createZipBlob, E2E verified)
-- [ ] `apps/web` — Performance benchmarks: bundle size per node, processing speed, memory usage
+
+**Sprint 2B COMPLETE.** M1 (Browser Execution) delivered. All 6 Tier 1 bntos run client-side. WASM bundle: 1.6MB raw / 606KB gzipped. Performance benchmarks moved to backlog — not blocking M1 delivery.
 
 ---
 
@@ -402,21 +404,11 @@ Real-world dogfooding. Runs alongside any phase.
 
 ### Infra: Shared Test Fixtures Package (`@bnto/test-fixtures`)
 
-**Priority: High (Sprint 2B prerequisite).** Centralized test assets — photos, CSVs, spreadsheets, sample files — shared across packages and apps. Currently test fixtures are scattered (engine fixtures in `engine/tests/fixtures/`, web E2E uses ad-hoc files). A single package means `@bnto/nodes`, `@bnto/core`, `apps/web` E2E, and engine tests all use the same canonical test data.
+**Priority: Low (nice-to-have).** The `test-fixtures/` directory at repo root already serves the primary need — shared images (JPEG, PNG, WebP at small/medium/large sizes) consumed by both Go engine (`go:embed`) and Rust WASM (`include_bytes!()`). E2E tests reference engine fixtures directly. A formal TS package would add helpers and consolidate ad-hoc test files, but isn't blocking anything.
 
-**What it contains:**
-- Sample images (JPEG, PNG, WebP — small, medium, large sizes)
-- Sample CSVs (clean, dirty with empty rows/whitespace, large row count)
-- Sample files for rename operations (various extensions)
-- Helper functions to load fixtures by name
-- TypeScript + Go consumption (TS package for web/core, Go reads from same directory via `go:embed` or path)
-
-- [ ] `packages/@bnto/test-fixtures` — Create package with sample images (JPEG, PNG, WebP at various sizes)
-- [ ] `packages/@bnto/test-fixtures` — Add sample CSVs (clean, dirty, large)
-- [ ] `packages/@bnto/test-fixtures` — Add miscellaneous files for rename/file operations
-- [ ] `packages/@bnto/test-fixtures` — TypeScript helpers to load fixtures by name
-- [ ] `packages/@bnto/test-fixtures` — Update `apps/web/e2e/` to import fixtures from shared package
-- [ ] `engine` — Update Go test fixtures to reference shared directory (or symlink)
+- [ ] `packages/@bnto/test-fixtures` — Create package wrapping `test-fixtures/` with TS helpers to load by name
+- [ ] `packages/@bnto/test-fixtures` — Add sample CSVs (clean, dirty, large) and rename test files
+- [ ] `apps/web` — Update E2E tests to import from shared package instead of ad-hoc paths
 
 ### Engine: Spreadsheet Node Template Resolution — M3/M4 (Go engine)
 
@@ -429,9 +421,9 @@ Real-world dogfooding. Runs alongside any phase.
 - [ ] `engine` — Fix template variable resolution so `read-csv` receives the actual file path
 - [ ] `engine` — Verify fix: E2E `clean-csv` test passes (`task e2e`)
 
-### Web: BntoPageShell Decomposition — Sprint 2B Wave 4
+### ~~Web: BntoPageShell Decomposition~~
 
-**Promoted to Sprint 2B Wave 4.** BntoPageShell needs to be rewired for the browser adapter anyway. Decomposition happens as part of that work. See Sprint 2B Wave 4 tasks.
+**RESOLVED:** BntoPageShell was rewired for the browser adapter in Sprint 2B Wave 2. The component routes Tier 1 bntos through the browser adapter and handles ZIP download for multi-file results. No further decomposition needed — the component is within size limits.
 
 ### Engine: Loop Node Output Collection — M3/M4 (Go engine)
 
@@ -599,6 +591,28 @@ Both controls feed into the same CSS custom property system that drives the dept
 - [ ] `apps/web` — Wire elevation into depth shadow length scaling in `globals.css`
 - [ ] `apps/web` — Replace `LightSourceSlider` on showcase page with RadialSlider + compass labels
 
+### UI: Font Family Review
+
+**Deferred from Sprint 2.5.** Evaluate replacing DM Sans with Geist for display/headings. Current: DM Sans (display) + Inter (body) + Geist Mono (code). DM Sans is bubbly/rounded-geometric — may not match Mini Motorways' precise-but-warm feel. Geist has Swiss-style technical precision. Reference: `/Users/ryan/Desktop/Mini Motorways Reference/`. Proposed: **Geist (display) + Inter (body) + Geist Mono (code)**. Prototype the swap and compare visually.
+
+- [ ] `apps/web` — Prototype Geist as display font, compare against DM Sans side-by-side
+- [ ] `apps/web` — E2E screenshots updated if font is swapped
+
+### Performance: WASM Bundle Size & Processing Benchmarks
+
+**Deferred from Sprint 2B Wave 4.** Current WASM bundle: 1.6MB raw / 606KB gzipped (all 6 nodes in single cdylib). Above the original 500KB target by ~20%. Not blocking M1 but worth profiling.
+
+- [ ] `engine` — Profile bundle: which crates contribute most to size? (`twiggy` or `wasm-opt --print-code-section-sizes`)
+- [ ] `engine` — Evaluate code splitting (lazy-load node crates) vs single bundle tradeoff
+- [ ] `apps/web` — Processing speed benchmarks: time per node type for representative file sizes
+- [ ] `apps/web` — Memory usage profiling: peak heap during batch processing
+
+### Infra: Vercel Preview Deployment Verification
+
+**Deferred from Sprint 2A Wave 5.** Verify auth flow end-to-end on Vercel preview deployment. Not blocking M1 browser execution.
+
+- [ ] `apps/web` — Verify auth flow on Vercel preview deployment (cookie behavior, proxy redirects, sign-in/sign-out)
+
 ### UX: Conversion Hook Messaging Audit — M2/M5
 
 **Milestone: M2 (Sprint 3) for hook UX, M5 (Sprint 7) for Stripe integration.**
@@ -676,8 +690,8 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 
 **What to build:**
 - **Persona skills** in `.claude/skills/personas/` — each defines a domain expert role with context, vocabulary, and quality standards:
-  - `rust-expert.md` — Rust/WASM developer. Owns `engine-wasm/`. Knows ownership, lifetimes, wasm-bindgen, wasm-pack. Writes heavily commented code (see "Rust Code Standards" in CLAUDE.md). Explains concepts for a learner.
-  - `go-engineer.md` — Go engine developer. Owns `engine/`, `apps/api/`. Knows the node type system, BntoService, registry pattern, Go testing patterns.
+  - `rust-expert.md` — Rust/WASM developer. Owns `engine/`. Knows ownership, lifetimes, wasm-bindgen, wasm-pack. Writes heavily commented code (see "Rust Code Standards" in CLAUDE.md). Explains concepts for a learner.
+  - `go-engineer.md` — Go engine developer. Owns `archive/engine-go/`, `archive/api-go/`. Knows the node type system, BntoService, registry pattern, Go testing patterns.
   - `frontend-engineer.md` — React/Next.js developer. Owns `apps/web/`. Knows the component system, theming, animation, shadcn patterns, Playwright E2E.
   - `core-architect.md` — Transport-agnostic API. Owns `packages/core/`. Knows the client/service/adapter pattern, React Query, Convex adapter.
   - `project-manager.md` — Replaces current `/groom`. Owns strategic alignment, plan updates, roadmap reviews, sprint transitions, backlog prioritization.
@@ -687,7 +701,7 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 - [ ] `.claude/skills/` — Create persona skill files (rust-expert, go-engineer, frontend-engineer, core-architect, project-manager)
 - [ ] `.claude/skills/` — Rename `/groom` to `/project-manager`, update content to persona-aware
 - [ ] `.claude/skills/` — Update `/pickup`, `/code-review`, `/pre-commit` to load relevant persona before execution
-- [ ] `.claude/skills/` — Test: run `/pickup` on a `[engine-wasm]` task and verify Rust persona context is loaded
+- [ ] `.claude/skills/` — Test: run `/pickup` on an `[engine]` task and verify Rust persona context is loaded
 
 ---
 

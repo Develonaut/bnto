@@ -106,7 +106,7 @@ engine/pkg/
 ```
 
 - Accept interfaces, return structs -- keep interfaces small (1-3 methods)
-- `pkg/` not `internal/` -- engine packages importable by `apps/api/` via `go.work`
+- `pkg/` not `internal/` -- engine packages importable by `archive/api-go/` via `go.work`
 - Errors wrapped with context: `fmt.Errorf("loading workflow %s: %w", path, err)` -- never bare `return err`, never swallow errors
 - Context propagation: all long-running operations accept `context.Context`, check cancellation in loops
 - No mega-interfaces with 10+ methods

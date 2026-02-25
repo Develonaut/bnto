@@ -106,7 +106,7 @@
   --sidebar-ring: oklch(0.6755 0.1791 35.2662);
 
   /* ── Typography ────────────────────────────────────────────── */
-  --font-display: "DM Sans", ui-sans-serif, sans-serif, system-ui;
+  --font-display: "Geist", ui-sans-serif, sans-serif, system-ui;
   --font-sans: "Inter", ui-sans-serif, sans-serif, system-ui;
   --font-serif: Georgia, serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
@@ -296,7 +296,7 @@
   --sidebar-ring: oklch(0.6755 0.1791 35.2662);
 
   /* ── Typography ────────────────────────────────────────────── */
-  --font-display: "DM Sans", ui-sans-serif, sans-serif, system-ui;
+  --font-display: "Geist", ui-sans-serif, sans-serif, system-ui;
   --font-sans: "Inter", ui-sans-serif, sans-serif, system-ui;
   --font-serif: Georgia, serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;

@@ -50,7 +50,7 @@ Survey all test files across every layer:
 
 ```bash
 # Go tests
-find engine/ apps/api/ -name "*_test.go" | head -100
+find archive/engine-go/ archive/api-go/ -name "*_test.go" | head -100
 
 # TypeScript tests
 find packages/ apps/web/ -name "*.test.ts" -o -name "*.test.tsx" | head -100
@@ -95,7 +95,7 @@ Not all tests are created equal. This matrix defines what's worth testing at eac
 - [ ] Golden tests exist for output formats that external consumers depend on (progress messages, execution results)
 - [ ] Error paths tested — malformed input, missing files, invalid config, cancelled context
 
-### Layer 2: Go API (`apps/api/`)
+### Layer 2: Go API (`archive/api-go/`)
 
 **Source:** Go community (httptest patterns), Speedscale, Martin Fowler
 

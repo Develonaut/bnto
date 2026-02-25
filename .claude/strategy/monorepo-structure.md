@@ -19,14 +19,11 @@ bnto/
 ├── turbo.json                       # Turborepo task config
 ├── pnpm-lock.yaml
 ├── Taskfile.yml                     # Go + cross-cutting orchestration
-├── go.work                          # Go workspace (engine + apps/api)
+├── go.work                          # Go workspace (archive/engine-go + archive/api-go)
 │
 ├── apps/
-│   ├── api/                         # Go HTTP API server (Phase 1 — cloud execution)
-│   │   ├── go.mod                   # module github.com/Develonaut/bnto-api
-│   │   └── cmd/server/              # Server binary (thin consumer of engine)
-│   ├── web/                         # @bnto/web — Next.js on Vercel (Phase 1)
-│   └── desktop/                     # @bnto/desktop — Wails frontend (Phase 2)
+│   ├── web/                         # @bnto/web — Next.js on Vercel
+│   └── desktop/                     # @bnto/desktop — Tauri frontend (M3)
 │
 ├── packages/
 │   ├── core/                        # @bnto/core — Transport-agnostic API layer
@@ -56,27 +53,24 @@ bnto/
 │               ├── executionLogs.ts # Log queries + mutations
 │               └── crons.ts         # Monthly run counter reset
 │
-├── engine/                          # Pure Go engine (core logic only)
-│   ├── go.mod                       # module github.com/Develonaut/bnto
-│   ├── go.sum
-│   ├── cmd/
-│   │   └── bnto/                   # CLI binary
-│   ├── pkg/
-│   │   ├── api/                     # Shared service layer (BntoService)
-│   │   ├── engine/                  # Orchestration (executor)
-│   │   ├── registry/                # Node type registry
-│   │   ├── storage/                 # Persistent storage
-│   │   ├── paths/                   # Path resolution
-│   │   ├── validator/               # Workflow validation
-│   │   ├── logger/                  # Logging
-│   │   ├── secrets/                 # Secrets management
-│   │   ├── logs/                    # Log management
-│   │   └── node/                    # Node types (10+ node types)
-│   ├── tests/
-│   │   ├── integration/             # End-to-end workflow tests
-│   │   ├── fixtures/                # Test fixture files
-│   │   └── mocks/                   # Mock implementations
-│   └── examples/                    # Example .bnto.json files
+├── engine/                          # Rust WASM engine (primary — browser execution)
+│   ├── Cargo.toml                   # Cargo workspace
+│   └── crates/
+│       ├── bnto-core/               # Core types, traits, progress
+│       ├── bnto-image/              # Image compress/resize/convert
+│       ├── bnto-csv/                # CSV clean/rename columns
+│       ├── bnto-file/               # File rename
+│       └── bnto-wasm/               # cdylib entry point (single WASM binary)
+│
+├── archive/                         # Preserved reference code (not actively developed)
+│   ├── engine-go/                   # Go CLI + engine (~33K LOC)
+│   │   ├── go.mod                   # module github.com/Develonaut/bnto
+│   │   ├── cmd/bnto/               # CLI binary
+│   │   ├── pkg/                     # Engine packages (api, engine, node, validator, etc.)
+│   │   └── tests/                   # Integration tests + fixtures
+│   └── api-go/                      # Go HTTP API server (~2.5K LOC)
+│       ├── go.mod                   # module github.com/Develonaut/bnto-api
+│       └── cmd/server/              # Server binary
 │
 └── .claude/                         # Project strategy and decisions
     ├── PLAN.md
@@ -97,8 +91,8 @@ bnto/
 | Package namespace | **`@bnto/`** directory (n8n pattern) | Visual grouping of internal packages. `core/` at packages root for public API |
 | UI co-location | **`apps/web/`** | UI + editor co-located until desktop app creates a second consumer |
 | Go module path | **`github.com/Develonaut/bnto`** | Unchanged — Go resolves relative to go.mod |
-| Go workspace | **`go.work` at repo root** | Connects engine/ and apps/api/ modules locally |
-| API server location | **`apps/api/`** | Follows Turborepo convention; engine stays pure ([decision](../decisions/API_SERVER_LOCATION.md)) |
+| Go workspace | **`go.work` at repo root** | Connects archive/engine-go/ and archive/api-go/ modules locally |
+| API server location | **`archive/api-go/`** | Archived — ready for M4 premium server-side bntos |
 | API abstraction | **`@bnto/core` with provider pattern** | Same UI code, different backends |
 
 ---
@@ -182,8 +176,8 @@ const { theme, toggleTheme } = useUIStore();
 
 ## Go API Service Layer
 
-`engine/pkg/api/` provides a shared service layer consumed by CLI, HTTP server, and Wails.
-Uses `pkg/` (not `internal/`) so `apps/api/` (a separate Go module via `go.work`) can import it.
+`archive/engine-go/pkg/api/` provides a shared service layer consumed by CLI, HTTP server, and Wails.
+Uses `pkg/` (not `internal/`) so `archive/api-go/` (a separate Go module via `go.work`) can import it.
 
 ### CLI → API Mapping
 
@@ -213,10 +207,10 @@ result, err := svc.RunWorkflow(ctx, def, api.RunOptions{
 })
 ```
 
-The HTTP transport layer lives in `apps/api/` (separate Go module, linked via `go.work`):
+The HTTP transport layer lives in `archive/api-go/` (separate Go module, linked via `go.work`):
 
 ```go
-// apps/api/ — HTTP handlers wrapping BntoService
+// archive/api-go/ — HTTP handlers wrapping BntoService
 // Thin layer: routing, request parsing, response serialization
 ```
 
@@ -230,8 +224,8 @@ The HTTP transport layer lives in `apps/api/` (separate Go module, linked via `g
 |---|---|---|---|
 | Web app (Next.js) | `apps/web/` | Vercel | localhost:4000 |
 | Database + real-time | `packages/@bnto/backend/` | Convex Cloud (gregarious-donkey-712) | Convex Cloud (zealous-canary-422) |
-| Go API server | `apps/api/` | Railway (bnto-production.up.railway.app) | localhost:8080 |
-| Go engine | `engine/` | Consumed by `apps/api/` via `go.work` | Same |
+| Go API server | `archive/api-go/` | Railway (bnto-production.up.railway.app) | localhost:8080 |
+| Go engine | `archive/engine-go/` | Consumed by `archive/api-go/` via `go.work` | Same |
 | File transit | -- | Cloudflare R2 (bnto-transit) | Cloudflare R2 (bnto-transit-dev) |
 | Auth | `packages/@bnto/auth/` | Better Auth via Convex HTTP routes | Same (Convex dev deployment) |
 

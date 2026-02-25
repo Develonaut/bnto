@@ -78,11 +78,11 @@ Check `.claude/environment-variables.md` and other docs for actual secret values
 
 ## Section 2: Go API Security
 
-The Go API (`apps/api/`) is the cloud execution endpoint on Railway. It receives workflow definitions and executes them.
+The Go API (`archive/api-go/`) is the cloud execution endpoint on Railway. It receives workflow definitions and executes them.
 
 ### 2a: Authentication & authorization
 
-Read `apps/api/internal/server/server.go` and all handler files in `apps/api/internal/handler/`.
+Read `archive/api-go/internal/server/server.go` and all handler files in `archive/api-go/internal/handler/`.
 
 Check:
 - [ ] **Do endpoints require authentication?** Currently, the Go API has no auth layer — Convex actions call it server-to-server. Is this acceptable? Document the trust model
@@ -288,13 +288,13 @@ Check:
 ```
 !cd apps/web && pnpm audit --audit-level=high 2>/dev/null | head -30
 !cd /Users/ryan/Code/bnto && govulncheck ./engine/... 2>/dev/null || echo "govulncheck not installed — run: go install golang.org/x/vuln/cmd/govulncheck@latest"
-!cd /Users/ryan/Code/bnto && govulncheck ./apps/api/... 2>/dev/null || echo "govulncheck not installed"
+!cd /Users/ryan/Code/bnto && govulncheck ./archive/api-go/... 2>/dev/null || echo "govulncheck not installed"
 ```
 
 ### 6b: Dependency review
 
 - [ ] **No unnecessary dependencies** — compare `package.json` deps against actual imports
-- [ ] **Go dependencies minimal** — check `engine/go.mod` and `apps/api/go.mod`
+- [ ] **Go dependencies minimal** — check `archive/engine-go/go.mod` and `archive/api-go/go.mod`
 - [ ] **Lock files committed** — `pnpm-lock.yaml` and `go.sum` should be in git
 
 ### 6c: Supply chain

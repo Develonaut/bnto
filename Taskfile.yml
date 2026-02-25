@@ -1,43 +1,43 @@
 version: '3'
 
 tasks:
-  # Go tasks (engine/)
+  # Go tasks (archive/engine-go/)
   build:
     desc: Build the bnto CLI binary
-    dir: ./engine
+    dir: ./archive/engine-go
     cmds: [go build ./cmd/bnto]
 
   test:
     desc: Run all Go tests with race detector
-    dir: ./engine
+    dir: ./archive/engine-go
     cmds: [go test -race ./...]
 
   test:engine:
     desc: Run engine tests only (excludes TUI and integration)
-    dir: ./engine
+    dir: ./archive/engine-go
     cmds:
       - go test -race ./cmd/... ./pkg/engine/... ./pkg/logger/... ./pkg/logs/... ./pkg/node/... ./pkg/paths/... ./pkg/registry/... ./pkg/secrets/... ./pkg/storage/... ./pkg/validator/... ./tests/mocks/...
 
   test:integration:
     desc: Run integration tests (auto-builds bnto binary)
-    dir: ./engine
+    dir: ./archive/engine-go
     cmds: [go test -race -v ./tests/integration/...]
 
   install:
     desc: Install bnto binary to $GOPATH/bin
-    dir: ./engine
+    dir: ./archive/engine-go
     cmds: [go install ./cmd/bnto]
 
   vet:
     desc: Run go vet on all Go packages
     cmds:
-      - go vet ./engine/...
-      - go vet ./apps/api/...
+      - go vet ./archive/engine-go/...
+      - go vet ./archive/api-go/...
 
   # API server tasks
   api:dev:
     desc: Run Go API server locally (port 8080)
-    dir: ./apps/api
+    dir: ./archive/api-go
     dotenv: ['../../.env.development']
     cmds: [go run ./cmd/server]
 
@@ -47,11 +47,11 @@ tasks:
 
   api:test:
     desc: Run API server tests with race detector
-    cmds: [go test -race ./apps/api/...]
+    cmds: [go test -race ./archive/api-go/...]
 
   api:build:
     desc: Build the API server binary
-    dir: ./apps/api
+    dir: ./archive/api-go
     cmds: [go build ./cmd/server]
 
   # Frontend tasks
@@ -91,21 +91,21 @@ tasks:
       - echo "=== go vet ==="
       - task: vet
       - echo "=== engine tests ==="
-      - cd engine && go test -race -coverprofile=coverage.out ./...
-      - go tool cover -func=engine/coverage.out | tail -1
-      - rm engine/coverage.out
+      - cd archive/engine-go && go test -race -coverprofile=coverage.out ./...
+      - go tool cover -func=archive/engine-go/coverage.out | tail -1
+      - rm archive/engine-go/coverage.out
       - echo "=== api tests ==="
-      - go test -race ./apps/api/...
+      - go test -race ./archive/api-go/...
       - echo "=== go build ==="
-      - cd engine && go build ./cmd/bnto
-      - cd apps/api && go build ./cmd/server
+      - cd archive/engine-go && go build ./cmd/bnto
+      - cd archive/api-go && go build ./cmd/server
       - echo "=== all checks passed ==="
 
   # Menu generation
   menu:generate:
     desc: Generate menu JSON from engine for web app
     cmds:
-      - cd engine && go run ./cmd/bnto menu --json > ../apps/web/lib/generated/menu.json
+      - cd archive/engine-go && go run ./cmd/bnto menu --json > ../../apps/web/lib/generated/menu.json
 
   # E2E tests
   e2e:
@@ -120,10 +120,10 @@ tasks:
     cmds:
       - npx convex run cleanup:purgeAll '{}'
 
-  # WASM tasks (engine-wasm/)
+  # WASM tasks (engine/)
   wasm:build:
     desc: Build WASM entry point via wasm-pack (release, web target)
-    dir: ./engine-wasm
+    dir: ./engine
     cmds:
       # Only the cdylib entry point crate (bnto-wasm) gets wasm-pack built.
       # Node crates (bnto-image, etc.) are rlib — they compile into the
@@ -132,13 +132,13 @@ tasks:
 
   wasm:build:dev:
     desc: Build WASM entry point in dev mode (faster, larger binary, better errors)
-    dir: ./engine-wasm
+    dir: ./engine
     cmds:
       - /Users/ryan/.cargo/bin/wasm-pack build --target web --dev crates/bnto-wasm
 
   wasm:test:
     desc: Run Rust unit tests (native) + WASM integration tests (Node.js)
-    dir: ./engine-wasm
+    dir: ./engine
     cmds:
       - cargo test --workspace
       - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-wasm
@@ -148,33 +148,33 @@ tasks:
 
   wasm:test:unit:
     desc: Run Rust unit tests only (native, fast)
-    dir: ./engine-wasm
+    dir: ./engine
     cmds:
       - cargo test --workspace
 
   wasm:lint:
     desc: Run clippy (Rust linter) on all WASM crates
-    dir: ./engine-wasm
+    dir: ./engine
     cmds:
       - cargo clippy --workspace --all-targets -- -D warnings
 
   wasm:fmt:
     desc: Format all Rust code
-    dir: ./engine-wasm
+    dir: ./engine
     cmds:
       - cargo fmt --all
 
   wasm:fmt:check:
     desc: Check Rust formatting without changes (CI)
-    dir: ./engine-wasm
+    dir: ./engine
     cmds:
       - cargo fmt --all -- --check
 
   wasm:copy:
     desc: Copy WASM build output to web app public directory
     cmds:
-      - cp engine-wasm/crates/bnto-wasm/pkg/bnto_wasm_bg.wasm apps/web/public/wasm/bnto_wasm_bg.wasm
-      - cp engine-wasm/crates/bnto-wasm/pkg/bnto_wasm.js apps/web/public/wasm/bnto_wasm.js
+      - cp engine/crates/bnto-wasm/pkg/bnto_wasm_bg.wasm apps/web/public/wasm/bnto_wasm_bg.wasm
+      - cp engine/crates/bnto-wasm/pkg/bnto_wasm.js apps/web/public/wasm/bnto_wasm.js
 
   wasm:deploy:
     desc: Build WASM and copy to web app (full pipeline)
@@ -184,7 +184,7 @@ tasks:
 
   wasm:clean:
     desc: Clean all Rust build artifacts
-    dir: ./engine-wasm
+    dir: ./engine
     cmds:
       - cargo clean
 

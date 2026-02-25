@@ -22,12 +22,12 @@ A reference guide for understanding Go through the lens of Node/npm/React.
 ## Your Two Go Modules
 
 ```
-go.work                          <- like pnpm-workspace.yaml
-├── engine/go.mod                <- "github.com/Develonaut/bnto"
-└── apps/api/go.mod              <- "github.com/Develonaut/bnto-api"
+go.work                              <- like pnpm-workspace.yaml
+├── archive/engine-go/go.mod         <- "github.com/Develonaut/bnto"
+└── archive/api-go/go.mod            <- "github.com/Develonaut/bnto-api"
 ```
 
-The API server imports from the engine just like `apps/web` imports from `@bnto/core`. The `go.work` file makes it resolve locally during development (like pnpm workspace links).
+The API server imports from the engine just like `apps/web` imports from `@bnto/core`. The `go.work` file makes it resolve locally during development (like pnpm workspace links). Note: Go code is now archived — Rust WASM is the primary engine.
 
 ---
 
@@ -341,10 +341,10 @@ engine/
     └── integration/   <- end-to-end tests using fixtures
 ```
 
-### API Server (HTTP wrapper)
+### API Server (HTTP wrapper, archived)
 
 ```
-apps/api/
+archive/api-go/
 ├── cmd/server/        <- server entry point
 └── internal/          <- "internal" means ONLY this module can import it
     ├── handler/       <- HTTP route handlers (like Next.js API routes)

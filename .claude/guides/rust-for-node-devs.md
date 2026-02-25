@@ -23,10 +23,10 @@ A reference guide for understanding Rust through the lens of Node/npm/React. Wri
 
 ---
 
-## Our Rust Setup (engine-wasm/)
+## Our Rust Setup (engine/)
 
 ```
-engine-wasm/                     <- like a packages/ sub-package
+engine/                          <- Rust WASM engine (primary)
 ├── Cargo.toml                   <- like package.json
 ├── src/
 │   ├── lib.rs                   <- entry point (like index.ts)
@@ -624,7 +624,7 @@ pub fn compress_image(data: &[u8], quality: u8) -> Result<Vec<u8>, JsValue> {
 
 JS side:
 ```typescript
-import init, { compress_image } from "../engine-wasm/pkg";
+import init, { compress_image } from "../engine/pkg";
 
 await init();  // load the .wasm file (one-time)
 
@@ -881,7 +881,7 @@ fn compress_all(images: &[Vec<u8>], quality: u8) -> Vec<Vec<u8>> {
 
 ```toml
 [package]
-name = "bnto-engine-wasm"
+name = "bnto-engine"
 version = "0.1.0"
 edition = "2021"               # Rust edition (like TS target version)
 
