@@ -100,8 +100,8 @@ const RECIPES: RecipeCategory[] = [
 
 function navButtonProps(pathname: string, href: string) {
   return {
-    depth: "sm" as const,
-    hovered: pathname === href,
+    depth: "md" as const,
+    pressed: pathname === href,
   };
 }
 
@@ -144,7 +144,7 @@ export const Navbar = () => {
               {/* Desktop Navigation */}
               <div className="hidden items-center gap-2 lg:flex">
                 <Menu>
-                  <Menu.Trigger variant="outline" depth="sm">
+                  <Menu.Trigger variant="outline" depth="md">
                     <BookOpenIcon />
                     Recipes
                   </Menu.Trigger>
@@ -194,7 +194,7 @@ export const Navbar = () => {
                   <Button
                     variant="secondary"
                     size="icon"
-                    depth="sm"
+                    depth="md"
                     onClick={() => setOpen(!open)}
                   >
                     <MenuIcon />
@@ -204,7 +204,7 @@ export const Navbar = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  depth="sm"
+                  depth="md"
                   href={GITHUB_URL}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -217,7 +217,7 @@ export const Navbar = () => {
                 <Button
                   variant="primary"
                   href="/signin"
-                  depth="sm"
+                  depth="md"
                   className="hidden lg:inline-flex"
                 >
                   Sign in
@@ -265,7 +265,7 @@ function NavThemeMenu() {
 
   return (
     <Menu>
-      <Menu.Trigger variant="outline" size="icon" depth="sm">
+      <Menu.Trigger variant="outline" size="icon" depth="md">
         <SunIcon />
         <span className="sr-only">Theme settings</span>
       </Menu.Trigger>
@@ -273,7 +273,7 @@ function NavThemeMenu() {
         <div className="flex flex-col items-center gap-3">
           {/* Theme toggle + city name */}
           <div className="flex w-full items-center gap-3">
-            <ThemeToggle depth="sm" />
+            <ThemeToggle depth="md" />
             <Text size="sm" className="w-full font-medium">
               <ThemeName />
             </Text>
