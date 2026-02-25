@@ -35,6 +35,10 @@ export type {
   UploadProgress,
   OutputFileUrl,
   DownloadUrlsResult,
+  BrowserEngine,
+  BrowserFileResult,
+  BrowserExecution,
+  BrowserFileProgress,
 } from "./types";
 
 // ── Session types ─────────────────────────────────────────────────────────

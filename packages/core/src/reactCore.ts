@@ -50,6 +50,9 @@ import { useAuth } from "./hooks/useAuth";
 import { useSignOut } from "./hooks/useSignOut";
 import { useAnonymousSession } from "./hooks/useAnonymousSession";
 
+// Browser execution hooks
+import { useBrowserExecution } from "./hooks/useBrowserExecution";
+
 // Auth hooks from @bnto/auth (sign-in / sign-up)
 import { useSignIn, useSignUp } from "@bnto/auth";
 
@@ -101,5 +104,10 @@ export const core = {
     useSignUp,
     useSignOut,
     useAnonymousSession,
+  },
+
+  browser: {
+    ...baseCore.browser,
+    useBrowserExecution,
   },
 } as const;

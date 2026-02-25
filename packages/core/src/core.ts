@@ -15,6 +15,7 @@ import { createExecutionService } from "./services/executionService";
 import { createUserService } from "./services/userService";
 import { createUploadService } from "./services/uploadService";
 import { createDownloadService } from "./services/downloadService";
+import { createBrowserExecutionService } from "./services/browserExecutionService";
 import { createWorkflowClient } from "./clients/workflowClient";
 import { createExecutionClient } from "./clients/executionClient";
 import { createUserClient } from "./clients/userClient";
@@ -28,6 +29,7 @@ const executionService = createExecutionService();
 const userService = createUserService();
 const uploadService = createUploadService();
 const downloadService = createDownloadService();
+const browserExecutionService = createBrowserExecutionService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
 const workflowClient = createWorkflowClient(workflowService, executionService);
@@ -45,4 +47,5 @@ export const core = {
   uploads: uploadClient,
   downloads: downloadClient,
   auth: authClient,
+  browser: browserExecutionService,
 } as const;
