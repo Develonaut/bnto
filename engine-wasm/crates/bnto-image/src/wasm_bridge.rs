@@ -51,6 +51,7 @@ use bnto_core::processor::{NodeInput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
 use crate::compress::CompressImages;
+use crate::resize::ResizeImages;
 
 // =============================================================================
 // Compress Image — The Main Entry Point for JavaScript
@@ -217,6 +218,137 @@ pub fn compress_image_bytes(
 
     // Return just the first file's bytes.
     // Compress-images always produces exactly one output file.
+    if let Some(file) = output.files.into_iter().next() {
+        Ok(file.data)
+    } else {
+        Err(JsValue::from_str("No output file produced"))
+    }
+}
+
+// =============================================================================
+// Resize Image — Change Image Dimensions
+// =============================================================================
+//
+// Same two-function pattern as compress: one returns metadata JSON,
+// the other returns raw bytes. The Web Worker uses both — metadata for
+// the UI results panel, bytes for the download Blob.
+
+/// Resize a single image and return a JSON string with metadata.
+///
+/// ARGUMENTS (from JavaScript):
+///   - `data` (Uint8Array): The raw image file bytes
+///   - `filename` (string): The original filename (e.g., "photo.jpg")
+///   - `params_json` (string): JSON string with resize config:
+///     ```json
+///     {
+///       "width": 800,                // Target width in pixels
+///       "height": 600,               // Target height (optional if maintainAspect)
+///       "maintainAspect": true,      // Preserve aspect ratio (default: true)
+///       "quality": 80                // JPEG quality 1-100 (default: 80)
+///     }
+///     ```
+///   - `progress_callback` (Function): Called with (percent, message)
+///
+/// RETURNS:
+///   A JSON string describing the result:
+///   ```json
+///   {
+///     "file": {
+///       "filename": "photo-resized.jpg",
+///       "mimeType": "image/jpeg",
+///       "size": 25600
+///     },
+///     "metadata": {
+///       "originalWidth": 1200,
+///       "originalHeight": 800,
+///       "newWidth": 800,
+///       "newHeight": 533,
+///       "originalSize": 102400,
+///       "newSize": 25600,
+///       "format": "Jpeg"
+///     }
+///   }
+///   ```
+#[wasm_bindgen]
+pub fn resize_image(
+    data: &[u8],
+    filename: &str,
+    params_json: &str,
+    progress_callback: js_sys::Function,
+) -> Result<String, JsValue> {
+    // --- Step 1: Parse the config parameters from JSON ---
+    let params: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(params_json).unwrap_or_default();
+
+    // --- Step 2: Build the NodeInput ---
+    let input = NodeInput {
+        data: data.to_vec(),
+        filename: filename.to_string(),
+        mime_type: None,
+        params,
+    };
+
+    // --- Step 3: Create the processor and progress reporter ---
+    let processor = ResizeImages::new();
+    let progress = ProgressReporter::new(progress_callback);
+
+    // --- Step 4: Run the resize ---
+    let output = processor
+        .process(input, &progress)
+        .map_err(|e| -> JsValue { e.into() })?;
+
+    // --- Step 5: Build a JSON result string ---
+    let file_info = if let Some(file) = output.files.first() {
+        serde_json::json!({
+            "filename": file.filename,
+            "mimeType": file.mime_type,
+            "size": file.data.len(),
+        })
+    } else {
+        serde_json::json!({})
+    };
+
+    let result = serde_json::json!({
+        "file": file_info,
+        "metadata": output.metadata,
+    });
+
+    serde_json::to_string(&result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize result: {e}")))
+}
+
+/// Resize a single image and return JUST the resized bytes.
+///
+/// Efficient path for the Web Worker — raw bytes returned as Uint8Array
+/// via wasm-bindgen's zero-copy memory sharing.
+///
+/// ARGUMENTS: Same as `resize_image`.
+/// RETURNS: The raw resized image bytes as a Uint8Array.
+#[wasm_bindgen]
+pub fn resize_image_bytes(
+    data: &[u8],
+    filename: &str,
+    params_json: &str,
+    progress_callback: js_sys::Function,
+) -> Result<Vec<u8>, JsValue> {
+    let params: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(params_json).unwrap_or_default();
+
+    let input = NodeInput {
+        data: data.to_vec(),
+        filename: filename.to_string(),
+        mime_type: None,
+        params,
+    };
+
+    let processor = ResizeImages::new();
+    let progress = ProgressReporter::new(progress_callback);
+
+    let output = processor
+        .process(input, &progress)
+        .map_err(|e| -> JsValue { e.into() })?;
+
+    // Resize-images always produces exactly one output file.
     if let Some(file) = output.files.into_iter().next() {
         Ok(file.data)
     } else {

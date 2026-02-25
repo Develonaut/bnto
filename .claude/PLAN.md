@@ -208,7 +208,7 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 
 #### Wave 3a: Remaining Rust WASM nodes (if Rust passed checkpoint)
 
-- [ ] `engine-wasm/` — `resize-images` node (Lanczos3/CatmullRom filters via `image` crate)
+- [x] `engine-wasm/` — `resize-images` node (Lanczos3/CatmullRom filters via `image` crate)
 - [ ] `engine-wasm/` — `convert-image-format` node (decode any → encode any via `image` crate)
 - [ ] `engine-wasm/` — `clean-csv` node (`csv` + `serde` crates)
 - [ ] `engine-wasm/` — `rename-csv-columns` node (`csv` + `serde` crates, header rewrite)

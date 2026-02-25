@@ -35,6 +35,10 @@ pub mod format;
 /// with optimized settings (JPEG quality, PNG compression level).
 pub mod compress;
 
+/// The resize-images node — changes image dimensions using high-quality
+/// resampling filters (Lanczos3 for downscale, CatmullRom for upscale).
+pub mod resize;
+
 /// WASM bridge — the JavaScript-callable functions that the Web Worker
 /// uses to invoke image processing. This is the "door" between JS and Rust.
 pub mod wasm_bridge;
@@ -44,3 +48,4 @@ pub mod wasm_bridge;
 
 pub use compress::CompressImages;
 pub use format::ImageFormat;
+pub use resize::ResizeImages;
