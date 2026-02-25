@@ -355,6 +355,90 @@
   --depth-outline-shadow: oklch(0.14 0.01 264 / 0.30);
 }
 
+/* ── Sunset Theme (Mini Motorways Munich) ────────────────────────
+ *
+ * Golden-hour palette inspired by the Munich map:
+ * rich amber background, deep navy foreground (road color),
+ * coral accents, teal water, warm amber shadows.
+ *
+ * Positioned between light and dark as the "sunset" stop
+ * in the day→sunset→night timeline.
+ * ────────────────────────────────────────────────────────────── */
+.sunset {
+  /* ── Backgrounds & Text ─────────────────────────────────────── */
+  --background: oklch(0.82 0.15 78);
+  --foreground: oklch(0.25 0.04 260);
+  --card: oklch(0.88 0.10 80);
+  --card-foreground: oklch(0.25 0.04 260);
+  --popover: oklch(0.88 0.10 80);
+  --popover-foreground: oklch(0.25 0.04 260);
+
+  /* ── Secondary: Deep navy blue (Munich road color) ──────────── */
+  --secondary: oklch(0.40 0.06 258);
+  --secondary-foreground: oklch(0.90 0.04 80);
+
+  /* ── Muted ─────────────────────────────────────────────────── */
+  --muted: oklch(0.76 0.10 77);
+  --muted-foreground: oklch(0.40 0.05 50);
+
+  /* ── Accent: Warm coral ────────────────────────────────────── */
+  --accent: oklch(0.72 0.17 22);
+  --accent-foreground: oklch(0.25 0.04 260);
+
+  /* ── Destructive ───────────────────────────────────────────── */
+  --destructive: oklch(0.60 0.21 25);
+
+  /* ── Success: Teal-green (Munich water) ─────────────────────── */
+  --success: oklch(0.65 0.13 165);
+
+  /* ── Warning: Deep amber (contrast on golden bg) ───────────── */
+  --warning: oklch(0.72 0.15 55);
+
+  /* ── Borders & Inputs ──────────────────────────────────────── */
+  --border: oklch(0.73 0.10 77);
+  --input: oklch(0.79 0.10 78);
+
+  /* ── Sidebar ───────────────────────────────────────────────── */
+  --sidebar: oklch(0.78 0.14 77);
+  --sidebar-foreground: oklch(0.25 0.04 260);
+  --sidebar-accent: oklch(0.72 0.17 22);
+  --sidebar-accent-foreground: oklch(0.25 0.04 260);
+  --sidebar-border: oklch(0.70 0.10 77);
+
+  /* ── Isometric Cast Shadows (sunset — warm amber) ──────────── */
+  --shadow-color: oklch(0.35 0.08 55);
+  --shadow-opacity: 0.40;
+
+  --shadow-2xs: 1px 1px 0 0 oklch(0.55 0.06 60 / 0.25);
+  --shadow-xs:  2px 2px 0 0 oklch(0.52 0.06 60 / 0.28);
+  --shadow-sm:  3px 3px 0 0 oklch(0.48 0.06 60 / 0.30);
+  --shadow:     4px 4px 0 0 oklch(0.45 0.06 60 / 0.32);
+  --shadow-md:  5px 5px 0 0 oklch(0.43 0.06 60 / 0.32);
+  --shadow-lg:  7px 7px 0 0 oklch(0.40 0.06 60 / 0.35);
+  --shadow-xl:  10px 10px 0 0 oklch(0.37 0.06 60 / 0.35);
+  --shadow-2xl: 14px 14px 0 0 oklch(0.34 0.06 60 / 0.38);
+
+  /* ── Depth (sunset) ────────────────────────────────────────── */
+  --depth-wall: oklch(0.65 0.10 72);
+  --depth-shadow: oklch(0.40 0.06 55 / 0.30);
+  --depth-default-wall: oklch(0.48 0.15 35);
+  --depth-default-shadow: oklch(0.35 0.09 35 / 0.30);
+  --depth-secondary-wall: oklch(0.32 0.05 258);
+  --depth-secondary-shadow: oklch(0.22 0.03 258 / 0.35);
+  --depth-muted-wall: oklch(0.65 0.08 72);
+  --depth-muted-shadow: oklch(0.40 0.05 55 / 0.30);
+  --depth-destructive-wall: oklch(0.43 0.17 26);
+  --depth-destructive-shadow: oklch(0.32 0.11 26 / 0.30);
+  --depth-accent-wall: oklch(0.52 0.14 22);
+  --depth-accent-shadow: oklch(0.38 0.10 22 / 0.30);
+  --depth-success-wall: oklch(0.47 0.10 165);
+  --depth-success-shadow: oklch(0.35 0.07 165 / 0.30);
+  --depth-warning-wall: oklch(0.55 0.12 55);
+  --depth-warning-shadow: oklch(0.42 0.08 55 / 0.30);
+  --depth-outline-wall: oklch(0.68 0.08 72 / 0.40);
+  --depth-outline-shadow: oklch(0.45 0.05 55 / 0.20);
+}
+
 /* ── Entrance Keyframes ──────────────────────────────────────────
  * "from" only — animation ends at the element's natural state.
  * animation-fill-mode: both handles the rest.
@@ -777,4 +861,18 @@
   .pressable:active::after {
     transform: translate3d(var(--shadow-x), var(--shadow-y), -2px);
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * View Transitions — circular theme reveal
+ *
+ * The default cross-fade is disabled so we can drive the animation entirely
+ * from JS via document.documentElement.animate() on ::view-transition-new(root).
+ * The old snapshot sits underneath; the new snapshot expands over it as a
+ * circle from the toggle button center.
+ * ------------------------------------------------------------------------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }

@@ -7,6 +7,7 @@ import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
 
+import { AnimatedThemeToggle } from "@/components/ui/AnimatedThemeToggle";
 import { AnimationShowcase } from "./AnimationShowcase";
 import { BentoGridShowcase } from "./BentoGridShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
@@ -34,8 +35,13 @@ export default function ThemeDemoPage() {
               this page is driven by CSS tokens &mdash; drag the slider to rotate
               the light source.
             </Text>
-            <div className="mt-4">
-              <LightSourceSlider value={lightAngle} onChange={setLightAngle} />
+            <div className="mt-4 space-y-3">
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <LightSourceSlider value={lightAngle} onChange={setLightAngle} />
+                </div>
+                <AnimatedThemeToggle />
+              </div>
             </div>
           </div>
 
