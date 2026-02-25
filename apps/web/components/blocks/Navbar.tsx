@@ -145,7 +145,7 @@ export const Navbar = () => {
                     <BookOpenIcon />
                     Recipes
                   </Menu.Trigger>
-                  <Menu.Content className="w-[28rem] p-3">
+                  <Menu.Content className="w-[28rem] p-3" offset="lg">
                     <ul className="grid grid-cols-2 gap-1">
                       {RECIPES.map((category) => (
                         <li key={category.title} className="col-span-2">

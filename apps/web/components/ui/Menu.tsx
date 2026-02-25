@@ -80,7 +80,7 @@ const MenuContent = React.forwardRef<
   }
 >(
   (
-    { className, children, offset = "lg", depth = "lg", boundary, boundaryPadding = 16, ...props },
+    { className, children, offset = "md", depth = "lg", boundary, boundaryPadding = 16, ...props },
     ref,
   ) => (
     <PopoverPortal>
