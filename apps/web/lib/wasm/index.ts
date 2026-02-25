@@ -1,5 +1,6 @@
 export { BntoWorker } from "./BntoWorker";
 export { toBrowserEngine } from "./toBrowserEngine";
+export { useBrowserEngine } from "./useBrowserEngine";
 export type { ProgressCallback, ProcessResult } from "./BntoWorker";
 export type {
   WorkerRequest,

@@ -25,7 +25,7 @@ import { ExecutionResults } from "./ExecutionResults";
 import { BrowserExecutionProgress } from "./BrowserExecutionProgress";
 import { BrowserExecutionResults } from "./BrowserExecutionResults";
 import { ErrorCard } from "./ErrorCard";
-import { useBrowserEngine } from "./useBrowserEngine";
+import { useBrowserEngine } from "@/lib/wasm/useBrowserEngine";
 import { toBrowserPhase, toCloudPhase } from "./phaseMapping";
 
 interface BntoPageShellProps {
