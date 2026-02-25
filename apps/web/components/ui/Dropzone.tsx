@@ -5,6 +5,7 @@ import { useDropzone, type DropzoneOptions } from "react-dropzone";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
+import { Card } from "./Card";
 
 const dropzoneVariants = cva(
   [
@@ -41,26 +42,23 @@ function Dropzone({ className, size, children, ...options }: DropzoneProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone(options);
 
   return (
-    <Button
-      asChild
-      variant="outline"
-      size="md"
-      className={cn(
-        dropzoneVariants({
-          size,
-          state: isDragActive ? "active" : "idle",
-        }),
-        className,
-      )}
-    >
-      <div
+    <Button asChild variant="outline" size="md">
+      <Card
+        depth="md"
+        className={cn(
+          dropzoneVariants({
+            size,
+            state: isDragActive ? "active" : "idle",
+          }),
+          className,
+        )}
         {...getRootProps({
           "data-slot": "dropzone",
         })}
       >
         <input data-slot="dropzone-input" {...getInputProps()} />
         {children({ isDragActive })}
-      </div>
+      </Card>
     </Button>
   );
 }

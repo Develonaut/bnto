@@ -14,11 +14,12 @@ import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
 import { DropzoneShowcase } from "./DropzoneShowcase";
+import { FileListShowcase } from "./FileListShowcase";
 import { FormShowcase } from "./FormShowcase";
 import { LightSourceSlider } from "./LightSourceSlider";
 import { NotificationCards } from "./NotificationCards";
 import { ShowcaseSection } from "./ShowcaseSection";
-import { ToolGrid } from "./ToolGrid";
+
 import { TypographyShowcase } from "./TypographyShowcase";
 
 export default function ThemeDemoPage() {
@@ -89,6 +90,10 @@ export default function ThemeDemoPage() {
             <DropzoneShowcase />
           </ShowcaseSection>
 
+          <ShowcaseSection id="demo-file-list" title="File List" description="Dropzone → file list with bouncy stagger animation. Pass initialFiles to skip the dropzone.">
+            <FileListShowcase />
+          </ShowcaseSection>
+
           <ShowcaseSection
             id="demo-bento-grid"
             title="Bento Grid"
@@ -97,13 +102,6 @@ export default function ThemeDemoPage() {
             <BentoGridShowcase />
           </ShowcaseSection>
 
-          <ShowcaseSection
-            id="demo-tool-grid"
-            title="Tool Grid"
-            description="Pressable Buttons in a grid layout."
-          >
-            <ToolGrid />
-          </ShowcaseSection>
 
           <ShowcaseSection
             id="demo-notifications"
