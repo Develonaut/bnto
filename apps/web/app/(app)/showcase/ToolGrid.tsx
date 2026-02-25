@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 
 const items = [
-  { title: "Compress Images", variant: "default" as const },
+  { title: "Compress Images", variant: "primary" as const },
   { title: "Clean CSV", variant: "secondary" as const },
   { title: "Rename Files", variant: "muted" as const },
-  { title: "Convert Format", variant: "default" as const },
+  { title: "Convert Format", variant: "primary" as const },
   { title: "Call API", variant: "secondary" as const },
   { title: "Resize Images", variant: "muted" as const },
 ];

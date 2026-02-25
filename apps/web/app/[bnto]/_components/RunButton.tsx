@@ -28,7 +28,7 @@ export function RunButton({ phase, hasFiles, onRun, onReset }: RunButtonProps) {
     return (
       <Button
         size="lg"
-        variant={phase === "failed" ? "outline" : "default"}
+        variant={phase === "failed" ? "outline" : "primary"}
         onClick={onReset}
         className="w-full"
         data-testid="run-button"

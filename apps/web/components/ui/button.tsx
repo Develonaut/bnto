@@ -42,7 +42,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground depth-default",
+        primary: "bg-primary text-primary-foreground depth-primary",
         destructive:
           "bg-destructive text-white focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 depth-destructive",
         success:
@@ -63,7 +63,7 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "primary",
       size: "md",
     },
   },

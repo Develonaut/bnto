@@ -125,7 +125,7 @@ export const Pricing = ({ className }: { className?: string }) => {
 
                 <Button
                   className="w-fit"
-                  variant={plan.name === "Startup" ? "default" : "outline"}
+                  variant={plan.name === "Startup" ? "primary" : "outline"}
                 >
                   Get started
                 </Button>

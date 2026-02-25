@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 
 const swatches = [
-  { name: "Primary", bg: "bg-primary", fg: "text-primary-foreground", depth: "depth-default" },
+  { name: "Primary", bg: "bg-primary", fg: "text-primary-foreground", depth: "depth-primary" },
   { name: "Secondary", bg: "bg-secondary", fg: "text-secondary-foreground", depth: "depth-secondary" },
   { name: "Accent", bg: "bg-accent", fg: "text-accent-foreground", depth: "depth-accent" },
   { name: "Muted", bg: "bg-muted", fg: "text-muted-foreground", depth: "depth-muted" },

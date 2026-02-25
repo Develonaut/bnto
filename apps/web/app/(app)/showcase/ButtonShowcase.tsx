@@ -12,11 +12,11 @@ import { Tabs } from "@/components/ui/tabs";
 
 /* ── Option types ────────────────────────────────────────── */
 
-type Variant = "default" | "secondary" | "outline" | "muted" | "destructive" | "success" | "warning";
+type Variant = "primary" | "secondary" | "outline" | "muted" | "destructive" | "success" | "warning";
 type Size = "sm" | "md" | "lg";
 
 const VARIANTS: { value: Variant; label: string }[] = [
-  { value: "default", label: "Default" },
+  { value: "primary", label: "Primary" },
   { value: "secondary", label: "Secondary" },
   { value: "outline", label: "Outline" },
   { value: "muted", label: "Muted" },
@@ -59,7 +59,7 @@ function ToggleGroup<T extends string>({
         {options.map((opt) => (
           <Button
             key={opt.value}
-            variant={opt.value === value ? "default" : "outline"}
+            variant={opt.value === value ? "primary" : "outline"}
             size="sm"
             spring="sm"
             depth={opt.value === value}
@@ -76,7 +76,7 @@ function ToggleGroup<T extends string>({
 /* ── Playground tab ──────────────────────────────────────── */
 
 function Playground() {
-  const [variant, setVariant] = useState<Variant>("default");
+  const [variant, setVariant] = useState<Variant>("primary");
   const [size, setSize] = useState<Size>("md");
   const [spring, setSpring] = useState<SpringMode>("lg");
 
