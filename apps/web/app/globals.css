@@ -381,9 +381,9 @@
   /* ── Backgrounds & Text ─────────────────────────────────────── */
   --background: oklch(0.82 0.15 78);
   --foreground: oklch(0.25 0.04 260);
-  --card: oklch(0.88 0.10 80);
+  --card: oklch(0.97 0.03 80);
   --card-foreground: oklch(0.25 0.04 260);
-  --popover: oklch(0.88 0.10 80);
+  --popover: oklch(0.97 0.03 80);
   --popover-foreground: oklch(0.25 0.04 260);
 
   /* ── Secondary: Deep navy blue (Munich road color) ──────────── */
@@ -912,6 +912,26 @@
 .pressable:focus-visible {
   outline: auto;
   outline-offset: -4px;
+}
+
+/* Disabled — stuck flush with the ground, greyed out.
+ * Like a button that's been pressed and can't come back up. */
+.pressable:disabled,
+.pressable[aria-disabled="true"] {
+  pointer-events: none;
+  filter: grayscale(1) contrast(0.75);
+  transform: translate(0, 0);
+}
+
+.pressable:disabled::before,
+.pressable[aria-disabled="true"]::before {
+  transform: translate3d(0px, 0px, -1px);
+}
+
+.pressable:disabled::after,
+.pressable[aria-disabled="true"]::after {
+  transform: translate3d(0px, 0px, -2px);
+  opacity: 0;
 }
 
 /* Reduced motion — static, no transforms, no stagger delays */

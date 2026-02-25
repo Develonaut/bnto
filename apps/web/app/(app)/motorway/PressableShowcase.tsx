@@ -75,6 +75,18 @@ export function PressableShowcase() {
           <Button variant="destructive" pseudo="hover">Destructive</Button>
         </Row>
       </div>
+
+      {/* Disabled — stuck flush, greyed out */}
+      <div>
+        <Text size="sm" color="muted" className="mb-3">Disabled — stuck flush with the ground, greyed out</Text>
+        <Row className="flex-wrap items-end gap-3">
+          <Button variant="primary" disabled>Primary</Button>
+          <Button variant="secondary" disabled>Secondary</Button>
+          <Button variant="outline" disabled>Outline</Button>
+          <Button variant="destructive" disabled>Destructive</Button>
+          <Button variant="outline" size="icon" disabled><SettingsIcon /></Button>
+        </Row>
+      </div>
     </Stack>
   );
 }

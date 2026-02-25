@@ -35,7 +35,7 @@ const SPRING_STYLES: Record<SpringMode, React.CSSProperties> = {
  * ──────────────────────────────────────────────────────────── */
 
 const PRESSABLE_BASE =
-  "pressable outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:grayscale disabled:contrast-75";
+  "pressable outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
 
 const buttonVariants = cva(
   "depth bg-[var(--face-bg)] text-[var(--face-fg)] inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium shrink-0 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",

@@ -16,6 +16,7 @@ import {
   XIcon,
 } from "@/components/ui/icons";
 
+import { Animate } from "@/components/ui/Animate";
 import { ThemeToggle } from "@/components/ui/AnimatedThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/Card";
@@ -301,18 +302,22 @@ function NavThemeMenu() {
               {angleToCardinal(lightAngle)}
             </span>
           </RadialSlider>
-          {/* Reset to defaults */}
-          {!isDefault && (
-            <Button
-              variant="muted"
-              size="sm"
-              onClick={handleReset}
-              className="w-full"
-            >
-              <RotateCcwIcon />
-              Reset
-            </Button>
-          )}
+          {/* Reset — wrapper reserves h-8 space, button bounces in */}
+          <div className="h-8 w-full">
+            {!isDefault && (
+              <Animate.ScaleIn from={0.6} easing="spring-bouncy">
+                <Button
+                  variant="muted"
+                  size="sm"
+                  onClick={handleReset}
+                  className="w-full"
+                >
+                  <RotateCcwIcon />
+                  Reset
+                </Button>
+              </Animate.ScaleIn>
+            )}
+          </div>
         </div>
       </Menu.Content>
     </Menu>

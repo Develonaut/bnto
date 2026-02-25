@@ -5,8 +5,6 @@ import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
 
-import { ThemeToggle } from "@/components/ui/AnimatedThemeToggle";
-import { useThemeStore } from "@/lib/stores/theme-store";
 import { AnimationShowcase } from "./AnimationShowcase";
 import { BentoGridShowcase } from "./BentoGridShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
@@ -15,118 +13,140 @@ import { ColorSwatches } from "./ColorSwatches";
 import { DropzoneShowcase } from "./DropzoneShowcase";
 import { FileListShowcase } from "./FileListShowcase";
 import { FormShowcase } from "./FormShowcase";
-import { LightSourceSlider } from "./LightSourceSlider";
-import { NotificationCards } from "./NotificationCards";
-import { ShowcaseSection } from "./ShowcaseSection";
-
+import { InputShowcase } from "./InputShowcase";
 import { MenuShowcase } from "./MenuShowcase";
+import { NotificationCards } from "./NotificationCards";
 import { PressableShowcase } from "./PressableShowcase";
+import { ShowcaseSection } from "./ShowcaseSection";
 import { TypographyShowcase } from "./TypographyShowcase";
 
-export default function ThemeDemoPage() {
-  const lightAngle = useThemeStore((s) => s.lightAngle);
-  const setLightAngle = useThemeStore((s) => s.setLightAngle);
-
+export default function MotorwayPage() {
   return (
     <div>
       <Container size="lg" className="pb-8 pt-24 lg:pt-32">
         <Stack className="gap-16">
+          {/* Header */}
           <div>
-            <Heading level={1} size="md">Theme Demo</Heading>
-            <Text color="muted" className="mt-2">
-              Visual showcase for the Mini Motorways depth theme. Every shadow on
-              this page is driven by CSS tokens &mdash; drag the slider to rotate
-              the light source.
+            <Heading level={1} size="md">Motorway</Heading>
+            <Text color="muted" className="mt-2 max-w-xl">
+              The bnto design system. Warm, organized, satisfying &mdash; like a
+              well-packed bento box on a Mini Motorways map. 3D depth, springy
+              motion, three themed palettes.
             </Text>
-            <div className="mt-4 space-y-3">
-              <div className="flex items-end gap-4">
-                <div className="flex-1">
-                  <LightSourceSlider value={lightAngle} onChange={setLightAngle} />
-                </div>
-                <ThemeToggle />
-              </div>
-            </div>
           </div>
 
+          {/* ── Foundations ────────────────────────────────────── */}
+
           <ShowcaseSection
-            id="demo-cards"
-            title="Cards"
-            description="All tiers share the same light direction. Only magnitude differs — taller buildings cast longer shadows. Add .pressable for hover/active interaction."
+            id="colors"
+            title="Colors"
+            description="Semantic color tokens across all variants. Each swatch renders with its matching depth tint."
+          >
+            <ColorSwatches />
+          </ShowcaseSection>
+
+          <ShowcaseSection
+            id="typography"
+            title="Typography"
+            description="Geist for display headings, Inter for body, Geist Mono for technical output."
+          >
+            <TypographyShowcase />
+          </ShowcaseSection>
+
+          {/* ── Depth ─────────────────────────────────────────── */}
+
+          <ShowcaseSection
+            id="depth"
+            title="Depth"
+            description="3D elevation with light-responsive walls and ground shadows. Tiers represent building height — taller buildings cast longer shadows."
           >
             <CardShowcase />
           </ShowcaseSection>
 
+          {/* ── Controls ──────────────────────────────────────── */}
+
           <ShowcaseSection
-            id="demo-pressable"
+            id="buttons"
+            title="Buttons"
+            description="Variant, size, and spring playground. Spring controls the release settle — sm is firm, md bounces, lg is elastic."
+          >
+            <ButtonShowcase />
+          </ShowcaseSection>
+
+          <ShowcaseSection
+            id="pressable"
             title="Pressable"
-            description="Ground-plane model: wall stays pinned to ground in all states. Face floats above and sinks on hover/active. Bottom edges should always align regardless of pressed state."
+            description="Ground-plane interaction model. The wall stays pinned to the ground, the face floats above and sinks on press. Bottom edges always align."
           >
             <PressableShowcase />
           </ShowcaseSection>
 
           <ShowcaseSection
-            id="demo-animations"
-            title="Animations"
-            description="Mini Motorways motion language. Entrances are springy (spring easing via CSS linear()). Transitions are smooth (ease-out cubic-bezier). Hit Replay to re-trigger."
-          >
-            <AnimationShowcase />
-          </ShowcaseSection>
-
-          <ShowcaseSection
-            id="demo-colors"
-            title="Colors"
-            description="Terracotta, teal, golden, cream — the warm Mini Motorways palette."
-          >
-            <ColorSwatches />
-          </ShowcaseSection>
-
-          <ShowcaseSection id="demo-typography" title="Typography" description="DM Sans display + Inter body + Geist Mono code.">
-            <TypographyShowcase />
-          </ShowcaseSection>
-
-          <ShowcaseSection
-            id="demo-menus"
+            id="menus"
             title="Menus"
-            description="Button trigger + Card dropdown, powered by Radix Popover. The trigger sinks into its pressed state when the menu is open."
+            description="Popover-based dropdowns. The trigger sinks into its pressed state when open."
           >
             <MenuShowcase />
           </ShowcaseSection>
 
           <ShowcaseSection
-            id="demo-buttons"
-            title="Buttons"
-            description="Configure variant, size, and spring to see every combination. Spring controls the release settle — sm is firm, md bounces, lg (default) is elastic."
+            id="inputs"
+            title="Inputs"
+            description="Text fields, toggles, checkboxes, linear and radial sliders."
           >
-            <ButtonShowcase />
+            <InputShowcase />
           </ShowcaseSection>
 
-          <ShowcaseSection id="demo-form" title="Form Elements" description="Inputs, switches, checkboxes, slider inside an elevated card.">
+          <ShowcaseSection
+            id="forms"
+            title="Form Composition"
+            description="Controls composed into a realistic form inside an elevated card."
+          >
             <FormShowcase />
           </ShowcaseSection>
 
-          <ShowcaseSection id="demo-dropzone" title="Dropzone" description="File upload area with card depth.">
+          {/* ── Motion ────────────────────────────────────────── */}
+
+          <ShowcaseSection
+            id="motion"
+            title="Motion"
+            description="Entrances are springy — elements pop onto the page like buildings materializing on the map. Transitions are smooth and restrained."
+          >
+            <AnimationShowcase />
+          </ShowcaseSection>
+
+          {/* ── Patterns ──────────────────────────────────────── */}
+
+          <ShowcaseSection
+            id="dropzone"
+            title="Dropzone"
+            description="File upload area with depth integration."
+          >
             <DropzoneShowcase />
           </ShowcaseSection>
 
-          <ShowcaseSection id="demo-file-list" title="File List" description="Dropzone → file list with bouncy stagger animation. Pass initialFiles to skip the dropzone.">
+          <ShowcaseSection
+            id="file-list"
+            title="File List"
+            description="Dropzone to file list transition with staggered entrance animation."
+          >
             <FileListShowcase />
           </ShowcaseSection>
 
           <ShowcaseSection
-            id="demo-bento-grid"
-            title="Bento Grid"
-            description="Dynamic bento box layout driven by recipe count. Featured cells span multiple rows/columns. Layout adapts as the menu grows — patterns defined for 2-6 items with overflow fallback."
-          >
-            <BentoGridShowcase />
-          </ShowcaseSection>
-
-
-          <ShowcaseSection
-            id="demo-notifications"
-            title="Notification Cards"
-            description="List items with static card depth — walls + ground shadow."
+            id="notifications"
+            title="Notifications"
+            description="List items with static card depth."
           >
             <NotificationCards />
+          </ShowcaseSection>
+
+          <ShowcaseSection
+            id="bento-grid"
+            title="Bento Grid"
+            description="Dynamic layout driven by item count. Featured cells span multiple rows and columns, adapting as the grid grows."
+          >
+            <BentoGridShowcase />
           </ShowcaseSection>
         </Stack>
       </Container>

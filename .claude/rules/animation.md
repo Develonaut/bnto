@@ -166,7 +166,7 @@ const prefersReduced =
 
 ## Component API (`Animate.*`)
 
-**Props over classNames.** Consumers outside `components/ui/` should never touch `motion-safe:animate-*` classes or `--scale-from` / `--stagger-index` CSS variables directly. Use the `Animate` composition components instead.
+**Compose, don't className.** All animation in consumer code (anything outside `components/ui/Animate.tsx` itself) MUST use these components. Never apply `motion-safe:animate-*` classes, transition utility classes for entrance effects, or CSS variable overrides directly. The components are the API.
 
 ```tsx
 import { Animate } from "@/components/ui/animate";
@@ -235,10 +235,11 @@ Use `asChild` only when the child does NOT use `.depth`:
 
 ## Rules
 
-1. **Use tokens, not raw values.** `duration-normal` not `duration-300`. `var(--ease-spring)` not inline `linear(...)`.
-2. **Use `Animate.*` components, not raw classes.** Consumers outside `components/ui/` should use `<Animate.ScaleIn>` not `className="motion-safe:animate-scale-in"`.
-3. **CSS first.** Only reach for `motion/react` when CSS can't handle the animation (exit, layout, gesture).
-4. **Always guard with motion-safe.** Every animation path must have a reduced-motion fallback. `Animate.*` components handle this automatically.
+1. **Compose with `Animate.*` components — NEVER use animation classNames directly.** This is the #1 rule. When you need an entrance animation, reach for `<Animate.ScaleIn>`, `<Animate.SlideUp>`, `<Animate.FadeIn>`, etc. Never apply `motion-safe:animate-*` classes, `--scale-from` variables, or `--stagger-index` CSS variables in consumer code. The `Animate.*` components handle reduced-motion, stagger timing, easing, and depth isolation automatically. Raw animation classes are implementation details — they exist so `Animate.*` can use them internally, not for direct consumption. If you catch yourself writing `className="motion-safe:animate-scale-in"` or `className="transition-all duration-fast ... scale-90 opacity-0"`, stop and use the component instead.
+2. **Use tokens, not raw values.** `duration-normal` not `duration-300`. `var(--ease-spring)` not inline `linear(...)`.
+3. **CSS-powered, component-composed.** The animation system is CSS under the hood (keyframes, transitions, `linear()` springs). But consumers interact with it through `Animate.*` composition components, not CSS classes. This gives us the performance of CSS with the ergonomics and safety of React composition.
+4. **Always guard with motion-safe.** Every animation path must have a reduced-motion fallback. `Animate.*` components handle this automatically — another reason to use them instead of raw classes.
 5. **Don't touch vendor animations.** shadcn primitive transitions (dialog, sheet, accordion) keep their defaults.
 6. **Entrances are springy, transitions are smooth.** Use `--ease-spring` for things appearing. Use `--ease-out` for state changes.
 7. **Compositor-only properties.** Animate `opacity`, `scale`, `translate`, `rotate` only. Never animate `width`, `height`, `top`, `left`, `margin`, `padding`.
+8. **Only reach for `motion/react` when CSS can't handle it.** Exit animations (unmount), layout animations (reflow), gesture-based interactions (drag/swipe). Everything else is CSS via `Animate.*`.

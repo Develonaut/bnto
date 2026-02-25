@@ -59,9 +59,9 @@ For exact token values: see [theming.md](../rules/theming.md).
 
 ## Typography
 
-**DM Sans** (display) + **Inter** (body) + **Geist Mono** (code). Loaded via `next/font/google`.
+**Geist** (display) + **Inter** (body) + **Geist Mono** (code). Loaded via `next/font/google`.
 
-DM Sans: geometric with soft rounding — warm character pairs with terracotta. Inter: universal UI font, clean at all sizes. Geist Mono: for logs, `.bnto.json` previews, node type labels.
+Geist: clean geometric sans-serif — modern character pairs with the warm palette. Inter: universal UI font, clean at all sizes. Geist Mono: for logs, `.bnto.json` previews, node type labels.
 
 For font class usage: see [theming.md](../rules/theming.md).
 
