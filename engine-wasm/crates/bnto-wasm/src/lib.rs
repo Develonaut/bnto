@@ -53,10 +53,12 @@ use wasm_bindgen::prelude::*;
 // so consumers can access everything through one crate.
 pub use bnto_core;
 
-// Re-export bnto-image to ensure its #[wasm_bindgen] functions are linked
-// into our .wasm binary. Without this line, compress_image and
-// compress_image_bytes would be stripped by the linker since nothing in
-// THIS crate calls them directly — only the Web Worker does (from JS).
+// Re-export all node crates to ensure their #[wasm_bindgen] functions are
+// linked into our .wasm binary. Without these lines, the bridge functions
+// would be stripped by the linker since nothing in THIS crate calls them
+// directly — only the Web Worker does (from JS).
+pub use bnto_csv;
+pub use bnto_file;
 pub use bnto_image;
 
 // =============================================================================

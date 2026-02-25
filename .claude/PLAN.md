@@ -19,7 +19,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 **Scope rule:** Each task targets ONE package. Don't touch files outside the tagged package unless the task explicitly says so.
 
-**Co-location decision (Feb 2026):** UI components and editor features live in `apps/web` for now. No separate `@bnto/ui` or `@bnto/editor` packages until there's a real second consumer (desktop app). Engine, core API, and data layer logic stays in `@bnto/core`.
+**Co-location decision (Feb 2026):** UI components and editor features live in `apps/web` for now. No separate `@bnto/ui` or `@bnto/editor` packages until there's a real second consumer (desktop app). Engine, core API, and data layer logic stays in `@bnto/core`. When the UI package is extracted, it will be published as `@bnto/ui` (npm) under the name **Motorway** — the Mini Motorways-inspired design system (depth, pressable, spring animations, warm palette).
 
 ---
 
@@ -209,10 +209,10 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 #### Wave 3a: Remaining Rust WASM nodes (uniform Rust engine — checkpoint passed)
 
 - [x] `engine-wasm/` — `resize-images` node (Lanczos3/CatmullRom filters via `image` crate)
-- [ ] `engine-wasm/` — `convert-image-format` node (decode any → encode any via `image` crate)
-- [ ] `engine-wasm/` — `clean-csv` node (`csv` + `serde` crates, new `bnto-csv` crate)
-- [ ] `engine-wasm/` — `rename-csv-columns` node (`csv` + `serde` crates, header rewrite)
-- [ ] `engine-wasm/` — `rename-files` node (pattern matching + regex via Rust)
+- [ ] **CLAIMED** `engine-wasm/` — `convert-image-format` node (decode any → encode any via `image` crate)
+- [ ] **CLAIMED** `engine-wasm/` — `clean-csv` node (`csv` + `serde` crates, new `bnto-csv` crate)
+- [ ] **CLAIMED** `engine-wasm/` — `rename-csv-columns` node (`csv` + `serde` crates, header rewrite)
+- [ ] **CLAIMED** `engine-wasm/` — `rename-files` node (pattern matching + regex via Rust)
 - [ ] `apps/web` — Web Worker wrappers for all new WASM nodes
 - [ ] `apps/web` — E2E tests: all 6 bntos run client-side
 
@@ -556,6 +556,55 @@ Referral links to boost user acquisition. With browser-first, the referral rewar
 - [ ] `@bnto/core` — Referral service/hooks: `useReferralCode()`, `useApplyReferral()`
 - [ ] `apps/web` — Referral link generation UI in settings/profile
 - [ ] `apps/web` — Landing page referral code capture (via URL param `?ref=CODE`)
+
+### UI: Extract Motorway Design System (`@bnto/ui`)
+
+**Trigger: Desktop app (M3).** When the desktop app creates a real second consumer for UI components, extract `apps/web/components/ui/` into `packages/ui/` as `@bnto/ui`. The official name is **Motorway** — the Mini Motorways-inspired design system.
+
+**What moves:**
+- `apps/web/components/ui/` → `packages/ui/src/` (all primitives and component wrappers)
+- `apps/web/components/ui/create-cn.ts`, `cn.ts` → `packages/ui/src/` (utility layer)
+- CSS tokens and the `.depth` / `.pressable` / spring animation system from `globals.css` → `packages/ui/styles/`
+- Theme provider, animated toggle, and dark mode utilities
+
+**What stays in `apps/web`:**
+- Domain/business components (BntoPageShell, WorkflowCard, etc.)
+- Page compositions and route-level components
+- App-specific providers and wiring
+
+**Package scope:**
+- Published as `@bnto/ui` on npm, branded as Motorway
+- Zero domain knowledge — purely generic, reusable design system
+- Depth system (3D card elevation), pressable interactions, spring animations, warm palette tokens
+- Could be used independently by anyone who wants the Mini Motorways aesthetic
+
+**Prerequisites:**
+- Desktop app bootstrap (Sprint 5) creates the second consumer
+- Stable component API — no major churn expected
+
+- [ ] `packages/ui` — Bootstrap `@bnto/ui` package (tsconfig, package.json with "motorway" description, exports)
+- [ ] `packages/ui` — Move primitives from `apps/web/components/ui/primitives/`
+- [ ] `packages/ui` — Move component wrappers (Button, Card, Dialog, Tabs, etc.)
+- [ ] `packages/ui` — Move utility layer (`cn`, `createCn`)
+- [ ] `packages/ui` — Extract CSS tokens and animation system into distributable stylesheet
+- [ ] `apps/web` — Update all imports from `@/components/ui/` to `@bnto/ui`
+- [ ] `apps/desktop` — Wire `@bnto/ui` as dependency
+- [ ] `apps/web` — Add `@source` directive for Tailwind to scan `@bnto/ui` (see gotchas.md)
+
+### Showcase: Radial Light Source Controls
+
+**Priority: Low (fun polish).** Replace the linear slider on `/showcase` with more expressive light source controls that better illustrate the depth system's relationship to light direction.
+
+**Two controls:**
+1. **Radial slider** — generic UI primitive (`components/ui/RadialSlider`). Circular drag input where a thumb orbits a ring. `atan2()` maps pointer position to value (0–360 or any range). Configurable labels prop — the showcase uses compass cardinal directions (N/NE/E/SE/S/SW/W/NW) but the component itself is generic and reusable.
+2. **Elevation slider** — top-to-bottom arc or vertical slider controlling light source height/elevation. Could drive shadow length (higher sun = shorter shadows, lower sun = longer shadows). Would need a new `--light-elevation` CSS variable and corresponding depth shadow scaling.
+
+Both controls feed into the same CSS custom property system that drives the depth shadows on the page.
+
+- [ ] `apps/web` — `RadialSlider` generic UI component (value, onChange, labels, size, thumb icon)
+- [ ] `apps/web` — Light elevation control (vertical/arc → `--light-elevation`)
+- [ ] `apps/web` — Wire elevation into depth shadow length scaling in `globals.css`
+- [ ] `apps/web` — Replace `LightSourceSlider` on showcase page with RadialSlider + compass labels
 
 ### UX: Conversion Hook Messaging Audit — M2/M5
 

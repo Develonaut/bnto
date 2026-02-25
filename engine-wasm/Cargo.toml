@@ -31,6 +31,8 @@
 # we add them here.
 members = [
     "crates/bnto-core",
+    "crates/bnto-csv",
+    "crates/bnto-file",
     "crates/bnto-image",
     "crates/bnto-wasm",
 ]
@@ -115,6 +117,16 @@ serde_json = "1.0"
 # Rust structs directly to JS objects (and back) without the
 # intermediate JSON string. Much faster for large data.
 serde-wasm-bindgen = "0.6"
+
+# --- Node-Specific Dependencies ---
+
+# csv: Pure Rust CSV parser/writer for bnto-csv crate.
+# Streaming parser, handles variable-length rows, custom delimiters.
+csv = "1.3"
+
+# regex: Rust standard regex library for bnto-file crate.
+# Used for find/replace patterns in filenames (e.g., "IMG_(\d+)" → "photo_$1").
+regex = "1"
 
 # =============================================================================
 # Build Profiles

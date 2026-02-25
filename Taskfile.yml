@@ -147,6 +147,8 @@ tasks:
     cmds:
       - cargo test --workspace
       - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-wasm
+      - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-csv
+      - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-file
       - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-image
 
   wasm:test:unit:

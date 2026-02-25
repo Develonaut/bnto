@@ -1,0 +1,87 @@
+# =============================================================================
+# bnto-file — File Operation WASM Crate
+# =============================================================================
+#
+# WHAT IS THIS CRATE?
+# This crate handles file operations for Bnto's browser execution engine.
+# It provides the `rename-files` node (and later `organize-files` and other
+# file manipulation nodes). It compiles to WebAssembly and runs entirely in
+# the user's browser — files never leave their machine.
+#
+# HOW DOES IT WORK?
+# The web app loads this WASM module in a Web Worker (a background thread).
+# When the user drops files and clicks "Run", the worker calls our
+# `rename_file()` function. We read the filename, apply naming rules
+# (patterns, prefix, suffix, find/replace, case transforms), and return
+# the file with a new name. The file DATA passes through unchanged —
+# only the filename is transformed.
+#
+# WHY A SEPARATE CRATE FROM bnto-core?
+# Bento Box Principle! bnto-core is the framework (traits, error types,
+# progress reporting). bnto-file is a specific node implementation.
+# If someone only needs image processing, they don't download file code.
+
+[package]
+name = "bnto-file"
+version = "0.1.0"
+edition = "2024"
+description = "File operation nodes for Bnto WASM engine — rename files"
+license = "MIT"
+
+# wasm-opt flags — must match ALL features Rust enables by default.
+# Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown.
+# See bnto-wasm/Cargo.toml for full explanation.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "--enable-sign-ext", "--enable-mutable-globals", "--enable-reference-types", "--enable-multivalue"]
+
+[lib]
+# "rlib" = Rust library. Other crates (including the unified WASM entry
+# point) can depend on this and `use` its types and functions.
+#
+# WHY NOT "cdylib" HERE?
+# Each cdylib crate produces a SEPARATE .wasm file with its own JavaScript
+# heap. Objects from one cdylib can't be passed to another — they live in
+# different WASM memory spaces (see wasm-bindgen issue #1815).
+#
+# The correct WASM workspace architecture is:
+#   - ONE cdylib "entry point" crate (bnto-wasm) that depends on
+#     all node crates and re-exports their bridge functions
+#   - ALL node crates (bnto-image, bnto-file, etc.) are rlib only
+crate-type = ["rlib"]
+
+# =============================================================================
+# Dependencies
+# =============================================================================
+
+[dependencies]
+# Our foundation crate — provides NodeProcessor trait, BntoError, ProgressReporter
+bnto-core = { path = "../bnto-core" }
+
+# The Rust <-> JS bridge (see workspace root Cargo.toml for details)
+wasm-bindgen = { workspace = true }
+js-sys = { workspace = true }
+web-sys = { workspace = true, features = ["console"] }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Serialization (for config params and metadata)
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Regex support for find/replace patterns in filenames.
+# The `regex` crate is Rust's standard regex library. It compiles regex
+# patterns at runtime and supports most Perl-compatible syntax.
+# We use it so users can do things like find "IMG_(\d+)" and replace
+# with "photo_$1" in their filenames.
+regex = { workspace = true }
+
+# NOTE: console_error_panic_hook was NOT added here — panic hook setup is the
+# responsibility of the bnto-wasm entry point crate, not individual node crates.
+
+# =============================================================================
+# Dev Dependencies (testing only — not in the final WASM binary)
+# =============================================================================
+
+[dev-dependencies]
+wasm-bindgen-test = { workspace = true }

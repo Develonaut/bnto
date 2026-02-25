@@ -49,7 +49,7 @@ These are enforced in detail by the [rules/](.claude/rules/) files. This section
 1. **Layered Architecture:** `Apps → @bnto/core → Go Engine`. Never skip layers. See [architecture.md](.claude/rules/architecture.md).
 2. **API Abstraction:** UI code NEVER calls Convex, Wails, or Go directly. Always through `@bnto/core` hooks.
 3. **Bento Box Principle:** One thing per file/function/package. Files < 250 lines, functions < 20 lines. No `utils.ts` or `helpers.go` grab bags. See [code-standards.md](.claude/rules/code-standards.md).
-4. **Co-location:** UI components live in `apps/web` until a second consumer (desktop) exists. No premature `@bnto/ui` or `@bnto/editor` packages.
+4. **Co-location:** UI components live in `apps/web` until a second consumer (desktop) exists. When extracted, UI becomes `@bnto/ui` (officially named **Motorway** — the Mini Motorways design system).
 5. **Transport-agnostic:** `@bnto/core` detects runtime (browser vs Wails) and swaps adapters. Components never know which backend they're talking to.
 
 ---

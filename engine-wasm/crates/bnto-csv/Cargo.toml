@@ -1,0 +1,96 @@
+# =============================================================================
+# bnto-csv — CSV Processing WASM Crate
+# =============================================================================
+#
+# WHAT IS THIS CRATE?
+# This crate handles all CSV processing for Bnto's browser execution engine.
+# It provides the `clean-csv` node (and later `rename-columns`, `filter-rows`,
+# etc.). It compiles to WebAssembly and runs entirely in the user's browser —
+# files never leave their machine.
+#
+# HOW DOES IT WORK?
+# The web app loads this WASM module in a Web Worker (a background thread).
+# When the user drops a CSV and clicks "Run", the worker calls our
+# `clean_csv()` function. We read the raw bytes, parse the CSV, clean it
+# (remove empty rows, trim whitespace, deduplicate), and return the
+# cleaned CSV bytes.
+#
+# WHY A SEPARATE CRATE FROM bnto-core?
+# Bento Box Principle! bnto-core is the framework (traits, error types,
+# progress reporting). bnto-csv is a specific node implementation.
+# If someone only needs image processing, they don't download CSV code.
+
+[package]
+name = "bnto-csv"
+version = "0.1.0"
+edition = "2024"
+description = "CSV processing nodes for Bnto WASM engine — clean, rename columns"
+license = "MIT"
+
+# wasm-opt flags — must match ALL features Rust enables by default.
+# Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown.
+# See bnto-wasm/Cargo.toml for full explanation.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "--enable-sign-ext", "--enable-mutable-globals", "--enable-reference-types", "--enable-multivalue"]
+
+[lib]
+# "rlib" = Rust library. Other crates (including the unified WASM entry
+# point) can depend on this and `use` its types and functions.
+#
+# WHY NOT "cdylib" HERE?
+# Each cdylib crate produces a SEPARATE .wasm file with its own JavaScript
+# heap. Objects from one cdylib can't be passed to another — they live in
+# different WASM memory spaces (see wasm-bindgen issue #1815).
+#
+# The correct WASM workspace architecture is:
+#   - ONE cdylib "entry point" crate (bnto-wasm) that depends on
+#     all node crates and re-exports their bridge functions
+#   - ALL node crates (bnto-image, bnto-csv, etc.) are rlib only
+#
+# This gives us:
+#   1. Single .wasm file = one download, one instantiation, shared heap
+#   2. Tree shaking across the full dependency graph
+#   3. One set of JS glue code (not per-crate duplicates)
+#   4. Avoids linker ARG_MAX issues from js-sys export descriptors
+crate-type = ["rlib"]
+
+# =============================================================================
+# Dependencies
+# =============================================================================
+
+[dependencies]
+# Our foundation crate — provides NodeProcessor trait, BntoError, ProgressReporter
+bnto-core = { path = "../bnto-core" }
+
+# The Rust ↔ JS bridge (see workspace root Cargo.toml for details)
+wasm-bindgen = { workspace = true }
+js-sys = { workspace = true }
+web-sys = { workspace = true, features = ["console"] }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Serialization (for config params and metadata)
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# =============================================================================
+# The `csv` crate — our CSV processing engine
+# =============================================================================
+#
+# This is the workhorse for CSV parsing and writing. It handles:
+#   - Reading CSV records from raw bytes
+#   - Writing CSV records back to bytes
+#   - Flexible parsing (variable-length rows, custom delimiters)
+#   - High performance (streaming parser, low memory usage)
+#
+# The csv crate is pure Rust — no C dependencies, compiles cleanly
+# to wasm32-unknown-unknown.
+csv = { workspace = true }
+
+# =============================================================================
+# Dev Dependencies (testing only — not in the final WASM binary)
+# =============================================================================
+
+[dev-dependencies]
+wasm-bindgen-test = { workspace = true }

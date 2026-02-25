@@ -1,0 +1,6 @@
+first_name,last_name,email,phone,city,state,zip,department
+Jane,Doe,jane@example.com,555-0100,Portland,OR,97201,Engineering
+John,Smith,john@example.com,555-0200,Seattle,WA,98101,Marketing
+Alice,Johnson,alice.j@example.com,555-0300,Denver,CO,80201,Sales
+Bob,Williams,bob.w@example.com,555-0400,Austin,TX,73301,Engineering
+Carol,Brown,carol.b@example.com,555-0500,Miami,FL,33101,Design

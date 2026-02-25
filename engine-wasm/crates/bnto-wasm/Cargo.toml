@@ -52,6 +52,8 @@ crate-type = ["cdylib", "rlib"]
 bnto-core = { path = "../bnto-core" }
 
 # Node crates — each implements specific processing logic
+bnto-csv = { path = "../bnto-csv" }
+bnto-file = { path = "../bnto-file" }
 bnto-image = { path = "../bnto-image" }
 
 # The Rust ↔ JS bridge
