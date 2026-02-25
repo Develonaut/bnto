@@ -102,7 +102,7 @@ test.describe("compress-images — browser execution", () => {
     expect(downloadedFile[2]).toBe(0xff);
   });
 
-  test("batch: multiple images with Download All", async ({ page }) => {
+  test("batch: multiple images with Download All as ZIP", async ({ page }) => {
     await page.goto("/compress-images");
 
     await expect(
@@ -133,14 +133,32 @@ test.describe("compress-images — browser execution", () => {
     });
 
     await expect(page.getByText("2 files ready")).toBeVisible();
-    await expect(
-      page.locator('[data-testid="download-all-button"]'),
-    ).toBeVisible();
+    const downloadAllBtn = page.locator('[data-testid="download-all-button"]');
+    await expect(downloadAllBtn).toBeVisible();
+    await expect(downloadAllBtn).toContainText("Download All as ZIP");
 
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("00-batch-2-files-compressed.png", {
       fullPage: true,
     });
+
+    // --- VERIFY: Download All produces a valid ZIP file ---
+    const downloadPromise = page.waitForEvent("download");
+    await downloadAllBtn.click();
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toBe("compress-images-results.zip");
+
+    const downloadPath = await download.path();
+    expect(downloadPath).toBeTruthy();
+
+    const downloadedFile = fs.readFileSync(downloadPath!);
+    // ZIP magic bytes: PK (0x50 0x4B 0x03 0x04)
+    expect(downloadedFile[0]).toBe(0x50);
+    expect(downloadedFile[1]).toBe(0x4b);
+    expect(downloadedFile[2]).toBe(0x03);
+    expect(downloadedFile[3]).toBe(0x04);
+    expect(downloadedFile.length).toBeGreaterThan(100);
   });
 
   test("Run Again resets to idle state", async ({ page }) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, FileDown, CheckCircle2 } from "lucide-react";
+import { Download, FileArchive, CheckCircle2 } from "lucide-react";
 import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
 import { Button } from "@/components/ui/button";
 import { formatFileSize } from "@/src/utils/formatFileSize";
@@ -61,8 +61,8 @@ export function BrowserExecutionResults({
           onClick={onDownloadAll}
           data-testid="download-all-button"
         >
-          <FileDown className="size-4" />
-          Download All ({results.length} files)
+          <FileArchive className="size-4" />
+          Download All as ZIP ({results.length} files)
         </Button>
       )}
 

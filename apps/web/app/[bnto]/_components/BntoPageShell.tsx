@@ -186,7 +186,7 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
               <BrowserExecutionResults
                 execution={browserExec}
                 onDownload={downloadResult}
-                onDownloadAll={downloadAll}
+                onDownloadAll={() => downloadAll(entry.slug)}
               />
             )}
             {isBrowserPath &&

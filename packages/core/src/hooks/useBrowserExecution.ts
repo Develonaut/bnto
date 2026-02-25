@@ -79,8 +79,11 @@ export function useBrowserExecution() {
     core.browser.downloadResult(result);
   }, []);
 
-  const downloadAll = useCallback(() => {
-    core.browser.downloadAllResults(browserExecutionStore.getState().results);
+  const downloadAll = useCallback((slug?: string) => {
+    core.browser.downloadAllResults(
+      browserExecutionStore.getState().results,
+      slug,
+    );
   }, []);
 
   const reset = useCallback(() => {

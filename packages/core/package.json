@@ -29,6 +29,7 @@
     "@convex-dev/react-query": "^0.1.0",
     "@tanstack/react-query": "catalog:",
     "convex": "catalog:",
+    "fflate": "^0.8.2",
     "zustand": "^5.0.11"
   },
   "peerDependencies": {

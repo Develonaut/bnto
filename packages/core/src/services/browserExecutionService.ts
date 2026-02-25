@@ -24,6 +24,7 @@ import {
   getBrowserCapableSlugs,
 } from "../adapters/browser/slugCapability";
 import { downloadBlob } from "../adapters/browser/downloadBlob";
+import { createZipBlob } from "../adapters/browser/createZipBlob";
 import type {
   BrowserEngine,
   BrowserFileResult,
@@ -110,11 +111,19 @@ export function createBrowserExecutionService() {
       downloadBlob(result.blob, result.filename);
     },
 
-    /** Download all browser execution results. */
-    downloadAllResults: (results: BrowserFileResult[]) => {
-      for (const result of results) {
-        downloadBlob(result.blob, result.filename);
-      }
+    /**
+     * Download all browser execution results as a single ZIP archive.
+     *
+     * @param results - Processed files to bundle.
+     * @param slug - The bnto slug, used for the archive filename.
+     */
+    downloadAllResults: async (
+      results: BrowserFileResult[],
+      slug?: string,
+    ) => {
+      const zipBlob = await createZipBlob(results);
+      const name = slug ? `${slug}-results.zip` : "bnto-results.zip";
+      downloadBlob(zipBlob, name);
     },
   } as const;
 }

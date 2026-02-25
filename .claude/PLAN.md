@@ -219,7 +219,7 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 #### Wave 4 (sequential — integration + polish)
 
 - [x] `apps/web` — BntoPageShell routes through browser adapter for Tier 1 bntos (done in Wave 2)
-- [ ] `apps/web` — Zip download for multi-file browser results (currently individual downloads only)
+- [x] `apps/web` — Zip download for multi-file browser results (fflate, createZipBlob, E2E verified)
 - [ ] `apps/web` — Performance benchmarks: bundle size per node, processing speed, memory usage
 
 ---
@@ -427,7 +427,7 @@ Real-world dogfooding. Runs alongside any phase.
 - [ ] `engine` — Reproduce locally: `bnto run` with `clean-csv` fixture against a test CSV file
 - [ ] `engine` — Debug template resolution in `spreadsheet` node's `Execute()`
 - [ ] `engine` — Fix template variable resolution so `read-csv` receives the actual file path
-- [ ] `engine` — Verify fix: integration E2E `clean-csv` test passes (`task e2e:integration`)
+- [ ] `engine` — Verify fix: E2E `clean-csv` test passes (`task e2e`)
 
 ### Web: BntoPageShell Decomposition — Sprint 2B Wave 4
 
@@ -506,16 +506,9 @@ Railway first (API) to validate DNS + TLS, then Vercel (web app).
 - [ ] `apps/web` — Add Lighthouse CI with `seo: 90` threshold on `/compress-images`
 - [ ] `apps/web` — Migrate remaining SEO assertions from `seo-metadata.spec.ts` to unit tests, slim E2E to redirects + 404 + noindex only
 
-### Testing: Suppress or Handle `[useAnonymousSession] signIn failed` in E2E
+### ~~Testing: Suppress or Handle `[useAnonymousSession] signIn failed` in E2E~~
 
-**Priority: Low.** During UI-only E2E tests (no Convex backend), `useAnonymousSession` fires a `signIn` call that fails with `TypeError: network error`. This is expected — there's no backend — but it shows up in the Next.js dev overlay as an unhandled error and pollutes E2E console output. Investigate whether to:
-
-1. **Catch and silence in dev/test** — detect missing backend and skip anonymous session setup
-2. **Add retry with backoff** — make `useAnonymousSession` resilient to transient network failures (benefits production too)
-3. **Configure E2E fixture** — add the error to an allowlist in `fixtures.ts` so it's not flagged
-
-- [ ] `@bnto/core` — Investigate `useAnonymousSession` error handling when Convex backend is unreachable
-- [ ] `apps/web` — Decide approach (catch/retry/allowlist) and implement
+**RESOLVED:** E2E tests now always run against the full dev stack (Next.js + Convex on port 4000). The "no backend" mode was removed — `useAnonymousSession` always has a backend to connect to.
 
 ### Testing: Standardize E2E Selectors on data-testid
 
