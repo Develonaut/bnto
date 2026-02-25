@@ -16,7 +16,6 @@ import { FormShowcase } from "./FormShowcase";
 import { InputShowcase } from "./InputShowcase";
 import { MenuShowcase } from "./MenuShowcase";
 import { NotificationCards } from "./NotificationCards";
-import { PressableShowcase } from "./PressableShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
 import { TypographyShowcase } from "./TypographyShowcase";
 
@@ -53,12 +52,12 @@ export default function MotorwayPage() {
             <TypographyShowcase />
           </ShowcaseSection>
 
-          {/* ── Depth ─────────────────────────────────────────── */}
+          {/* ── Depth ───────────────────────────────────────────── */}
 
           <ShowcaseSection
             id="depth"
             title="Depth"
-            description="3D elevation with light-responsive walls and ground shadows. Tiers represent building height — taller buildings cast longer shadows."
+            description="Cards cast directional shadows that follow the light source. Four elevation tiers from flush to floating."
           >
             <CardShowcase />
           </ShowcaseSection>
@@ -68,17 +67,9 @@ export default function MotorwayPage() {
           <ShowcaseSection
             id="buttons"
             title="Buttons"
-            description="Variant, size, and spring playground. Spring controls the release settle — sm is firm, md bounces, lg is elastic."
+            description="Every variant, size, icon layout, and press state. Buttons sit on the ground plane and sink when pressed."
           >
             <ButtonShowcase />
-          </ShowcaseSection>
-
-          <ShowcaseSection
-            id="pressable"
-            title="Pressable"
-            description="Ground-plane interaction model. The wall stays pinned to the ground, the face floats above and sinks on press. Bottom edges always align."
-          >
-            <PressableShowcase />
           </ShowcaseSection>
 
           <ShowcaseSection
