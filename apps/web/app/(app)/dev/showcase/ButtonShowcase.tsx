@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
 import { Row } from "@/components/ui/Row";
+import { Tabs } from "@/components/ui/tabs";
 
 /* ── Option types ────────────────────────────────────────── */
 
@@ -72,23 +73,21 @@ function ToggleGroup<T extends string>({
   );
 }
 
-/* ── Root ────────────────────────────────────────────────── */
+/* ── Playground tab ──────────────────────────────────────── */
 
-export function ButtonShowcase() {
+function Playground() {
   const [variant, setVariant] = useState<Variant>("default");
   const [size, setSize] = useState<Size>("default");
   const [spring, setSpring] = useState<SpringMode>("lg");
 
   return (
     <Stack gap="lg">
-      {/* Controls */}
       <Stack gap="sm">
         <ToggleGroup label="variant" options={VARIANTS} value={variant} onChange={setVariant} />
         <ToggleGroup label="size" options={SIZES} value={size} onChange={setSize} />
         <ToggleGroup label="spring" options={SPRINGS} value={spring} onChange={setSpring} />
       </Stack>
 
-      {/* Specimens */}
       <Row className="justify-center gap-6 items-end pt-4">
         <Stack gap="xs" className="items-center">
           <Button
@@ -128,5 +127,54 @@ export function ButtonShowcase() {
         </Stack>
       </Row>
     </Stack>
+  );
+}
+
+/* ── All variants tab ────────────────────────────────────── */
+
+function AllVariants() {
+  return (
+    <Stack gap="lg">
+      {VARIANTS.map(({ value, label }) => (
+        <Row key={value} className="gap-4 items-center">
+          <Text size="xs" color="muted" mono as="span" className="w-24 shrink-0">
+            {label}
+          </Text>
+          <Button variant={value} size="icon">
+            <ArrowRight />
+          </Button>
+          <Button variant={value} size="sm">
+            Learn More
+          </Button>
+          <Button variant={value} size="default">
+            Learn More
+          </Button>
+          <Button variant={value} size="lg" data-testid={`pressable-${label.toLowerCase()}-lg`}>
+            Learn More
+          </Button>
+        </Row>
+      ))}
+    </Stack>
+  );
+}
+
+/* ── Root ────────────────────────────────────────────────── */
+
+export function ButtonShowcase() {
+  return (
+    <Tabs defaultValue="playground">
+      <Tabs.List>
+        <Tabs.Trigger value="playground">Playground</Tabs.Trigger>
+        <Tabs.Trigger value="all">All Variants</Tabs.Trigger>
+      </Tabs.List>
+
+      <Tabs.Content value="playground" className="pt-4">
+        <Playground />
+      </Tabs.Content>
+
+      <Tabs.Content value="all" className="pt-4">
+        <AllVariants />
+      </Tabs.Content>
+    </Tabs>
   );
 }
