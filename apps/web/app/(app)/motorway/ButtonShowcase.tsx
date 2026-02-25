@@ -48,20 +48,6 @@ const STATES: { value: ButtonState; label: string }[] = [
   { value: "disabled", label: "Disabled" },
 ];
 
-function ToggleDemo({ variant }: { variant: Variant }) {
-  const [pressed, setPressed] = useState(false);
-  return (
-    <Button
-      variant={variant}
-      size="sm"
-      pressed={pressed}
-      onClick={() => setPressed(!pressed)}
-    >
-      Toggle
-    </Button>
-  );
-}
-
 export function ButtonShowcase() {
   const [state, setState] = useState<ButtonState>("resting");
 
@@ -104,7 +90,6 @@ export function ButtonShowcase() {
                   {iconEntry.trailing ? <>{iconLabel} {iconEntry.icon}</> : <>{iconEntry.icon} {iconLabel}</>}
                 </Button>
               )}
-              <ToggleDemo variant={value} />
             </Row>
           );
         })}

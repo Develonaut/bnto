@@ -1043,9 +1043,6 @@
 .pressable[data-force-state="active"] {
   transform: translate(0, 0);
   transition-duration: var(--pressable-press-dur, 34ms);
-  --inset-x: calc(sin(var(--light-angle)) * 2px);
-  --inset-y: calc(cos(var(--light-angle)) * -2px);
-  box-shadow: inset var(--inset-x) var(--inset-y) 0 var(--depth-wall);
 }
 
 .pressable:active::before,
@@ -1059,27 +1056,6 @@
   transform: translate3d(0px, 0px, -2px);
   opacity: 0;
   transition-duration: var(--pressable-press-dur, 34ms);
-}
-
-/* Pressed (toggle) — same as active but persistent.
- * Sits flush on the surface with the simple inset shadow.
- * Double class bumps specificity so it beats :hover. */
-.pressable.pressable[aria-pressed="true"] {
-  transform: translate(0, 0);
-  transition: transform var(--pressable-dur, 150ms)
-    var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
-  --inset-x: calc(sin(var(--light-angle)) * 2px);
-  --inset-y: calc(cos(var(--light-angle)) * -2px);
-  box-shadow: inset var(--inset-x) var(--inset-y) 0 var(--depth-wall);
-}
-
-.pressable.pressable[aria-pressed="true"]::before {
-  transform: translate3d(0px, 0px, -1px);
-}
-
-.pressable.pressable[aria-pressed="true"]::after {
-  transform: translate3d(0px, 0px, -2px);
-  opacity: 0;
 }
 
 /* Focus — outline hugs the face border using the wall color */
