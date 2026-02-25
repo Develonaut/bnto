@@ -16,6 +16,11 @@ import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { BNTO_REGISTRY, type BntoEntry } from "@/lib/bntoRegistry";
+import {
+  GALLERY_HEADING,
+  GALLERY_LABEL,
+  GALLERY_SUBHEADING,
+} from "@/lib/copy";
 
 const BNTO_ICONS: Record<string, LucideIcon> = {
   "compress-images": Minimize2Icon,
@@ -66,18 +71,17 @@ export const BntoGallery = () => {
         <div className="relative flex items-center justify-center">
           <DashedLine className="text-muted-foreground" />
           <span className="bg-muted text-muted-foreground absolute px-3 font-mono text-sm font-medium tracking-wide max-md:hidden">
-            FREE. NO SIGNUP.
+            {GALLERY_LABEL}
           </span>
         </div>
 
         {/* Heading */}
         <div className="mx-auto mt-10 grid max-w-4xl items-center gap-3 md:gap-0 lg:mt-24 lg:grid-cols-2">
           <Heading level={2} className="text-balance">
-            Pick a tool. Drop your files.
+            {GALLERY_HEADING}
           </Heading>
           <Text color="muted" leading="snug">
-            Compress images, clean CSVs, rename files — all in your browser.
-            No upload limits, no account required.
+            {GALLERY_SUBHEADING}
           </Text>
         </div>
 

@@ -1,6 +1,6 @@
 # bnto
 
-> bnto is a free online tool for common file tasks -- compress images, clean CSVs, rename files, convert formats. All processing happens in the browser. No signup, no upload limits, no server processing.
+> Compress images, clean CSVs, rename files, and convert formats. Free, instant, 100% in your browser. No signup, no upload. Open source.
 
 ## Tools
 

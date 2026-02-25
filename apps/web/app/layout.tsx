@@ -3,6 +3,12 @@ import { Geist, Inter } from "next/font/google";
 import { ConvexAuthNextjsServerProvider } from "@bnto/auth/server";
 import { Navbar } from "@/components/blocks/Navbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import {
+  DEFAULT_TITLE,
+  SITE_DESCRIPTION,
+  SITE_TITLE,
+  TITLE_TEMPLATE,
+} from "@/lib/copy";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -19,11 +25,10 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "bnto — Compress, Clean & Convert Files Free",
-    template: "%s — bnto",
+    default: DEFAULT_TITLE,
+    template: TITLE_TEMPLATE,
   },
-  description:
-    "Compress images, clean CSVs, rename files, and convert formats — free, instant, 100% in your browser. No signup, no upload. Open source.",
+  description: SITE_DESCRIPTION,
   keywords: [
     "compress images free",
     "clean csv online",
@@ -36,9 +41,9 @@ export const metadata: Metadata = {
     "no upload file tools",
     "batch file processing",
   ],
-  authors: [{ name: "bnto" }],
-  creator: "bnto",
-  publisher: "bnto",
+  authors: [{ name: SITE_TITLE }],
+  creator: SITE_TITLE,
+  publisher: SITE_TITLE,
   robots: {
     index: true,
     follow: true,
@@ -53,16 +58,14 @@ export const metadata: Metadata = {
     shortcut: [{ url: "/favicon/favicon.ico" }],
   },
   openGraph: {
-    title: "bnto — Compress, Clean & Convert Files Free",
-    description:
-      "Compress images, clean CSVs, rename files, and convert formats — free, instant, 100% in your browser. No signup, no upload. Open source.",
-    siteName: "bnto",
+    title: DEFAULT_TITLE,
+    description: SITE_DESCRIPTION,
+    siteName: SITE_TITLE,
   },
   twitter: {
     card: "summary_large_image",
-    title: "bnto — Compress, Clean & Convert Files Free",
-    description:
-      "Compress images, clean CSVs, rename files, and convert formats — free, instant, 100% in your browser. No signup, no upload. Open source.",
+    title: DEFAULT_TITLE,
+    description: SITE_DESCRIPTION,
   },
 };
 

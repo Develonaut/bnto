@@ -239,7 +239,7 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 
 - [x] `apps/web` — **Root metadata overhaul:** Replace all "Mainline" metadata in `layout.tsx` — title ("bnto — Compress, Clean & Convert Files Free"), description, keywords (compress images, clean csv, rename files, convert format, free online tools), OG tags, Twitter card. Authors = "bnto". Remove shadcnblocks.com references.
 - [ ] **CLAIMED** `apps/web` — **Navbar simplification:** Strip Mainline nav items (Features dropdown, About, Pricing, FAQ, Contact). Keep: Logo, tool page links or "Tools" anchor, GitHub button (pointed at real bnto repo — we're MIT open source), theme toggle, Sign In. Fix dead `/login` link → `/signin`. Reference `shadcn-blocks/blocks/navbar/navbar8.tsx` for structure — clean, fixed top, responsive mobile sheet.
-- [ ] `apps/web` — **Footer rewrite:** Replace template footer. Real links: Tools (all 6 bnto slugs), GitHub repo, MIT license note. Remove fake social links (`@ausrobdev`). Simple and honest — no fake company sections. Browse `shadcn-blocks/blocks/footer/` for patterns.
+- [x] `apps/web` — **Footer rewrite:** Replace template footer. Real links: Tools (all 6 bnto slugs), GitHub repo, MIT license note. Remove fake social links (`@ausrobdev`). Simple and honest — no fake company sections. Browse `shadcn-blocks/blocks/footer/` for patterns.
 - [ ] `infra` — **Connect bnto.io to Vercel:** Add CNAME/A records in Cloudflare DNS. Configure custom domain in Vercel dashboard. Verify HTTPS + deployment. Update `robots.txt` sitemap URL if domain changes from `bnto.dev`.
 
 #### Wave 2 (parallel — home page overhaul)

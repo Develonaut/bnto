@@ -33,8 +33,7 @@ import {
   THEME_STORE_DEFAULT_ANGLE,
   useThemeStore,
 } from "@/lib/stores/theme-store";
-
-const GITHUB_URL = "https://github.com/Develonaut/bnto";
+import { GITHUB_URL } from "@/lib/copy";
 
 const MOBILE_BREAKPOINT = 1024;
 
