@@ -1,14 +1,14 @@
 import Link from "next/link";
 
-import type { LucideIcon } from "lucide-react";
 import {
-  ArrowRightLeft,
-  Columns3,
-  Minimize2,
-  PenLine,
-  Scaling,
-  Sparkles,
-} from "lucide-react";
+  ArrowRightLeftIcon,
+  Columns3Icon,
+  type LucideIcon,
+  Minimize2Icon,
+  PenLineIcon,
+  ScalingIcon,
+  SparklesIcon,
+} from "@/components/ui/icons";
 
 import { DashedLine } from "@/components/DashedLine";
 import { Card } from "@/components/ui/Card";
@@ -18,16 +18,16 @@ import { Text } from "@/components/ui/Text";
 import { BNTO_REGISTRY, type BntoEntry } from "@/lib/bntoRegistry";
 
 const BNTO_ICONS: Record<string, LucideIcon> = {
-  "compress-images": Minimize2,
-  "resize-images": Scaling,
-  "convert-image-format": ArrowRightLeft,
-  "rename-files": PenLine,
-  "clean-csv": Sparkles,
-  "rename-csv-columns": Columns3,
+  "compress-images": Minimize2Icon,
+  "resize-images": ScalingIcon,
+  "convert-image-format": ArrowRightLeftIcon,
+  "rename-files": PenLineIcon,
+  "clean-csv": SparklesIcon,
+  "rename-csv-columns": Columns3Icon,
 };
 
 function BntoCard({ entry }: { entry: BntoEntry }) {
-  const Icon = BNTO_ICONS[entry.slug] ?? Sparkles;
+  const Icon = BNTO_ICONS[entry.slug] ?? SparklesIcon;
 
   return (
     <Link href={`/${entry.slug}`} className="group">

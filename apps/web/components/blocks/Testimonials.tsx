@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 
-// FIXME: All icons should come from a src/components/ui/icons so when we move it to ui package it comes with
-import { ArrowRight } from "lucide-react";
+import { ArrowRightIcon } from "@/components/ui/icons";
 
 import { DashedLine } from "@/components/DashedLine";
 
@@ -96,7 +95,7 @@ export const Testimonials = ({
               high-quality work.
             </Text>
             <Button variant="outline" className="shadow-md">
-              Read our Customer Stories <ArrowRight className="size-4" />
+              Read our Customer Stories <ArrowRightIcon className="size-4" />
             </Button>
           </Stack>
 

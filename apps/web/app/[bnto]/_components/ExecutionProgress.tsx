@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, Loader2, XCircle, Clock } from "lucide-react";
+import { CheckCircle2Icon, LoaderIcon, XCircleIcon, ClockIcon } from "@/components/ui/icons";
 import { useExecution } from "@bnto/core";
 import type { Execution, NodeProgress } from "@bnto/core";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
         data-status="loading"
       >
         <div className="flex items-center gap-3">
-          <Loader2 className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
+          <LoaderIcon className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
           <p className="text-sm text-muted-foreground">
             Starting execution&hellip;
           </p>
@@ -53,7 +53,7 @@ export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Clock className="size-3.5" />
+          <ClockIcon className="size-3.5" />
           <span>{formatElapsed(elapsed)}</span>
         </div>
       </div>
@@ -115,14 +115,14 @@ function StatusIcon({ status }: { status: Execution["status"] }) {
     case "pending":
     case "running":
       return (
-        <Loader2 className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
+        <LoaderIcon className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
       );
     case "completed":
       return (
-        <CheckCircle2 className="size-5 shrink-0 text-green-600 dark:text-green-400" />
+        <CheckCircle2Icon className="size-5 shrink-0 text-green-600 dark:text-green-400" />
       );
     case "failed":
-      return <XCircle className="size-5 shrink-0 text-destructive" />;
+      return <XCircleIcon className="size-5 shrink-0 text-destructive" />;
   }
 }
 

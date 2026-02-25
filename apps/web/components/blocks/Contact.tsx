@@ -2,7 +2,7 @@ import React from "react";
 
 import Link from "next/link";
 
-import { Facebook, Linkedin, Twitter } from "lucide-react";
+import { FacebookIcon, LinkedinIcon, TwitterIcon } from "@/components/ui/icons";
 
 import { ContactForm } from "@/components/blocks/ContactForm";
 import { DashedLine } from "@/components/DashedLine";
@@ -51,16 +51,16 @@ const contactInfo = [
     content: (
       <div className="mt-3 flex gap-6 lg:gap-10">
         <Link href="#" className="text-muted-foreground hover:text-foreground">
-          <Facebook className="size-5" />
+          <FacebookIcon className="size-5" />
         </Link>
         <Link
           href="https://x.com/ausrobdev"
           className="text-muted-foreground hover:text-foreground"
         >
-          <Twitter className="size-5" />
+          <TwitterIcon className="size-5" />
         </Link>
         <Link href="#" className="text-muted-foreground hover:text-foreground">
-          <Linkedin className="size-5" />
+          <LinkedinIcon className="size-5" />
         </Link>
       </div>
     ),

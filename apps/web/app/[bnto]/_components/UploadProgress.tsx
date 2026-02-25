@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2Icon, LoaderIcon, XCircleIcon } from "@/components/ui/icons";
 import type { FileUploadProgress } from "@bnto/core";
 import { cn } from "@/lib/utils";
 import { formatFileSize } from "@/src/utils/formatFileSize";
@@ -63,11 +63,11 @@ function FileStatusIcon({
   switch (status) {
     case "pending":
       return (
-        <Loader2 className="size-4 shrink-0 text-muted-foreground" />
+        <LoaderIcon className="size-4 shrink-0 text-muted-foreground" />
       );
     case "uploading":
       return (
-        <Loader2
+        <LoaderIcon
           className={cn(
             "size-4 shrink-0 text-primary",
             "motion-safe:animate-spin",
@@ -76,11 +76,11 @@ function FileStatusIcon({
       );
     case "completed":
       return (
-        <CheckCircle2 className="size-4 shrink-0 text-green-600 dark:text-green-400" />
+        <CheckCircle2Icon className="size-4 shrink-0 text-green-600 dark:text-green-400" />
       );
     case "failed":
       return (
-        <XCircle className="size-4 shrink-0 text-destructive" />
+        <XCircleIcon className="size-4 shrink-0 text-destructive" />
       );
   }
 }

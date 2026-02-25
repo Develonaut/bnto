@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useRef, useSyncExternalStore } from "react";
-import { Moon, Sun, Sunset } from "lucide-react";
+import { MoonIcon, SunIcon, SunsetIcon } from "@/components/ui/icons";
 import { useTheme } from "next-themes";
 
-import { Button } from "@/components/ui/button";
+import { Button, type SpringMode } from "@/components/ui/button";
+
+type DepthOverride = boolean | "none" | "sm" | "md" | "lg";
 
 type ThemeName = "light" | "sunset" | "dark";
 
@@ -17,15 +19,21 @@ function nextTheme(current: ThemeName): ThemeName {
 
 const noop = () => () => {};
 
-export function AnimatedThemeToggle() {
+export function ThemeToggle({ depth, spring }: { depth?: DepthOverride; spring?: SpringMode } = {}) {
   const { resolvedTheme, setTheme } = useTheme();
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const mounted = useSyncExternalStore(noop, () => true, () => false);
+  const mounted = useSyncExternalStore(
+    noop,
+    () => true,
+    () => false,
+  );
 
   // Before mount, resolvedTheme is undefined (SSR). Don't render a theme
   // attribute until mounted to avoid hydration mismatch. All icons start at
   // scale-0, so nothing shows until data-theme is set.
-  const current = mounted ? ((resolvedTheme ?? "light") as ThemeName) : undefined;
+  const current = mounted
+    ? ((resolvedTheme ?? "light") as ThemeName)
+    : undefined;
 
   const toggleTheme = useCallback(async () => {
     if (!current) return;
@@ -38,10 +46,7 @@ export function AnimatedThemeToggle() {
     }
 
     // Fallback for browsers without View Transitions API
-    if (
-      !document.startViewTransition ||
-      !buttonRef.current
-    ) {
+    if (!document.startViewTransition || !buttonRef.current) {
       setTheme(target);
       return;
     }
@@ -87,14 +92,16 @@ export function AnimatedThemeToggle() {
       ref={buttonRef}
       variant="outline"
       size="icon"
-      className="group size-9"
+      depth={depth}
+      spring={spring}
+      className="group"
       data-theme={current}
       onClick={toggleTheme}
     >
       {/* All three icons rendered — CSS transitions the active one in */}
-      <Sun className="absolute size-4 scale-0 rotate-90 transition-all group-data-[theme=light]:scale-100 group-data-[theme=light]:rotate-0" />
-      <Sunset className="absolute size-4 scale-0 rotate-90 transition-all group-data-[theme=sunset]:scale-100 group-data-[theme=sunset]:rotate-0" />
-      <Moon className="absolute size-4 scale-0 -rotate-90 transition-all group-data-[theme=dark]:scale-100 group-data-[theme=dark]:rotate-0" />
+      <SunIcon className="absolute size-4 scale-0 rotate-90 transition-all group-data-[theme=light]:scale-100 group-data-[theme=light]:rotate-0" />
+      <SunsetIcon className="absolute size-4 scale-0 rotate-90 transition-all group-data-[theme=sunset]:scale-100 group-data-[theme=sunset]:rotate-0" />
+      <MoonIcon className="absolute size-4 scale-0 -rotate-90 transition-all group-data-[theme=dark]:scale-100 group-data-[theme=dark]:rotate-0" />
       <span className="sr-only">Toggle theme</span>
     </Button>
   );

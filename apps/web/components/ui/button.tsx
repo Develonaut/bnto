@@ -57,8 +57,8 @@ const buttonVariants = cva(
         md: "h-9 px-4 py-2 has-[>svg]:px-3 depth-md",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5 depth-sm",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4 depth-lg",
-        icon: "size-9 depth-sm",
-        "icon-sm": "size-8 depth-sm",
+        icon: "size-9 depth-md",
+        "icon-sm": "size-8 depth-md",
         "icon-lg": "size-10 depth-md",
       },
     },
@@ -69,6 +69,22 @@ const buttonVariants = cva(
   },
 );
 
+type PseudoState = "hover" | "active";
+
+type DepthOverride = boolean | "none" | "sm" | "md" | "lg";
+
+/** Strip the size-variant's built-in depth-{sm|md|lg} and replace it. */
+function resolveDepthClass(depth: DepthOverride): string | undefined {
+  if (depth === true) return undefined; // use size variant's built-in depth
+  if (depth === false || depth === "none") return "depth-none";
+  return `depth-${depth}`;
+}
+
+/** Remove depth-sm / depth-md / depth-lg tokens from a class string. */
+function stripSizeDepth(classes: string): string {
+  return classes.replace(/\bdepth-(?:sm|md|lg)\b/g, "").trim();
+}
+
 function Button({
   className,
   variant,
@@ -76,26 +92,42 @@ function Button({
   depth = true,
   spring = "lg",
   muted = false,
+  pseudo,
   asChild = false,
+  href,
   style,
+  ref,
   ...props
-}: React.ComponentProps<"button"> &
+}: Omit<React.ComponentProps<"button">, "ref"> &
+  Omit<React.ComponentProps<"a">, "ref"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
-    depth?: boolean;
+    depth?: DepthOverride;
     spring?: SpringMode;
     muted?: boolean;
+    pseudo?: PseudoState;
+    href?: string;
+    ref?: React.Ref<HTMLElement>;
   }) {
-  const Comp = asChild ? Slot : "button";
+  const isLink = !!href;
+  const Comp: React.ElementType = asChild ? Slot : isLink ? "a" : "button";
+  const depthClass = resolveDepthClass(depth);
+  // When depth is overridden (not true), strip the size variant's built-in
+  // depth-{sm|md|lg} so it doesn't compete via CSS source order.
+  const sizeClasses = !asChild ? buttonVariants({ variant, size }) : "";
+  const resolvedSizeClasses = depthClass ? stripSizeDepth(sizeClasses) : sizeClasses;
 
   return (
     <Comp
+      ref={ref}
       data-slot="button"
       data-muted={muted || undefined}
+      data-force-state={pseudo || undefined}
+      {...(isLink ? { href } : {})}
       className={cn(
         PRESSABLE_BASE,
-        !asChild && buttonVariants({ variant, size }),
-        !asChild && !depth && "depth-none",
+        resolvedSizeClasses,
+        depthClass,
         className,
       )}
       style={{ ...SPRING_STYLES[spring], ...style }}

@@ -1,4 +1,4 @@
-import { XCircle } from "lucide-react";
+import { XCircleIcon } from "@/components/ui/icons";
 
 interface ErrorCardProps {
   error: string;
@@ -12,7 +12,7 @@ export function ErrorCard({ error }: ErrorCardProps) {
       data-testid="client-error"
     >
       <div className="flex items-start gap-3">
-        <XCircle className="mt-0.5 size-5 shrink-0 text-destructive" />
+        <XCircleIcon className="mt-0.5 size-5 shrink-0 text-destructive" />
         <div className="space-y-1">
           <p className="text-sm font-medium text-destructive">
             Something went wrong

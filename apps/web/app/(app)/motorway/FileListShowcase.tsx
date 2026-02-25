@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { FileIcon, Trash2, Upload } from "lucide-react";
+import { FileIcon, TrashIcon, UploadIcon } from "@/components/ui/icons";
 
 import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export function FileListShowcase({ initialFiles }: FileListShowcaseProps) {
         <Dropzone accept={{ "image/*": [] }} onDrop={onDrop} multiple>
           {({ isDragActive }) => (
             <Stack gap="sm" align="center" className="text-muted-foreground">
-              <Upload className="size-8" />
+              <UploadIcon className="size-8" />
               <Text size="sm" weight="medium" color="inherit" as="span">
                 {isDragActive ? "Drop files here" : "Drag images here or click to browse"}
               </Text>
@@ -63,7 +63,7 @@ export function FileListShowcase({ initialFiles }: FileListShowcaseProps) {
         <Stack className="gap-3">
           <div className="flex justify-end">
             <Button variant="outline" size="sm" onClick={handleClear}>
-              <Trash2 />
+              <TrashIcon />
               Clear
             </Button>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Download, FileDown, Loader2, CheckCircle2 } from "lucide-react";
+import { DownloadIcon, FileDownIcon, LoaderIcon, CheckCircle2Icon } from "@/components/ui/icons";
 import { useExecution, useDownloadFiles } from "@bnto/core";
 import { Button } from "@/components/ui/button";
 import { formatFileSize } from "@/src/utils/formatFileSize";
@@ -43,7 +43,7 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="size-5 shrink-0 text-green-600 dark:text-green-400" />
+          <CheckCircle2Icon className="size-5 shrink-0 text-green-600 dark:text-green-400" />
           <p className="text-sm font-medium text-foreground">
             {outputFiles.length}{" "}
             {outputFiles.length === 1 ? "file" : "files"} ready
@@ -81,10 +81,10 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
                   onClick={() => downloadFile(downloadUrl)}
                   aria-label={`Download ${file.name}`}
                 >
-                  <Download className="size-4" />
+                  <DownloadIcon className="size-4" />
                 </Button>
               ) : (
-                <Loader2 className="size-4 shrink-0 text-muted-foreground motion-safe:animate-spin" />
+                <LoaderIcon className="size-4 shrink-0 text-muted-foreground motion-safe:animate-spin" />
               )}
             </li>
           );
@@ -100,9 +100,9 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
           data-testid="download-all-button"
         >
           {isLoading ? (
-            <Loader2 className="size-4 motion-safe:animate-spin" />
+            <LoaderIcon className="size-4 motion-safe:animate-spin" />
           ) : (
-            <FileDown className="size-4" />
+            <FileDownIcon className="size-4" />
           )}
           Download All ({outputFiles.length} files)
         </Button>
@@ -114,7 +114,7 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
           onClick={() => downloadFile(urls[0])}
           data-testid="download-button"
         >
-          <Download className="size-4" />
+          <DownloadIcon className="size-4" />
           Download
         </Button>
       )}

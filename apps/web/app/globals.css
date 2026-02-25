@@ -619,10 +619,16 @@
  * above — the face is the roof, walls are the darker sides, shadow is
  * cast on the ground.
  *
+ * Walls are fixed — they represent the physical sides of the building
+ * and always offset down-right (the two visible edges when viewed from
+ * above). Only the ground shadow follows --light-angle.
+ *
  * CSS variables:
- *   --depth        — offset in px (set by size modifiers)
- *   --depth-wall   — wall color (set by color variants or :root default)
- *   --depth-shadow — ground shadow color (same)
+ *   --depth          — base offset in px (set by size modifiers)
+ *   --depth-wall     — wall color (set by color variants or :root default)
+ *   --depth-shadow   — ground shadow color (same)
+ *   --depth-wall-mag — wall offset magnitude (set by size modifiers)
+ *   --depth-shadow-mag — shadow offset magnitude (set by size modifiers)
  *
  * Usage:
  *   <div class="depth depth-sm">                            — static card
@@ -632,9 +638,13 @@
 .depth {
   --depth: 6px;
   --depth-wall-mag: 8.49;
-  --depth-shadow-mag: 14.42;
-  --depth-x: calc(var(--depth-wall-mag) * sin(var(--light-angle)) * 1px);
-  --depth-y: calc(var(--depth-wall-mag) * cos(var(--light-angle)) * -1px);
+  --depth-shadow-mag: 10;
+
+  /* Walls — fixed offset (always down-right, the two visible building edges) */
+  --depth-x: calc(var(--depth-wall-mag) * 0.5px);
+  --depth-y: calc(var(--depth-wall-mag) * 0.5px);
+
+  /* Ground shadow — follows the light source angle */
   --shadow-x: calc(var(--depth-shadow-mag) * sin(var(--light-angle)) * 1px);
   --shadow-y: calc(var(--depth-shadow-mag) * cos(var(--light-angle)) * -1px);
 
@@ -649,9 +659,9 @@
   border: 1px solid var(--depth-wall);
 }
 
-/* Walls — darker shade offset behind the face.
- * Direction driven by --depth-x / --depth-y, computed from
- * --depth-wall-mag × sin/cos(--light-angle). */
+/* Walls — fixed darker shade offset behind the face.
+ * Always offset down-right to show the two visible building edges
+ * (bottom + right sides) regardless of light direction. */
 .depth::before {
   content: "";
   position: absolute;
@@ -662,8 +672,8 @@
 }
 
 /* Ground shadow — cast in the --light-angle direction.
- * Decoupled from wall offset: shadows project much further out
- * (larger magnitude) but follow the same angle. */
+ * Anchored close to the element so the inherited border-radius
+ * doesn't break the cast-shadow illusion. */
 .depth::after {
   content: "";
   position: absolute;
@@ -686,17 +696,17 @@
 .depth-sm {
   --depth: 4px;
   --depth-wall-mag: 4.47;
-  --depth-shadow-mag: 11.66;
+  --depth-shadow-mag: 7;
 }
 .depth-md {
   --depth: 6px;
   --depth-wall-mag: 7.81;
-  --depth-shadow-mag: 17.20;
+  --depth-shadow-mag: 10;
 }
 .depth-lg {
   --depth: 10px;
   --depth-wall-mag: 11.31;
-  --depth-shadow-mag: 24.84;
+  --depth-shadow-mag: 14;
 }
 
 /* ── Reset ──────────────────────────────────────────────────────── */
@@ -800,10 +810,15 @@
 /* ── Layer 2: .pressable — Animation Layer ─────────────────────────
  *
  * Adds hover sink + active flush animation to any .depth element.
- * Uses --depth for transform calculations.
  *
- * Hover:  face translates 33% of --depth, walls shrink to 66%
- * Active: face flush (100%), walls gone, shadow opacity 0
+ * Ground-plane model: the wall (::before) stays pinned to ground
+ * level in ALL states. The face starts raised above ground and
+ * sinks toward it on hover/active. This keeps the bottom edge of
+ * all buttons aligned regardless of pressed state.
+ *
+ * Default: face raised by full depth (floats above wall)
+ * Hover:   face sinks 33% toward ground, walls still at ground
+ * Active:  face flush with ground, walls gone, shadow invisible
  *
  * data-force-state="hover|active" mirrors pseudo-states for
  * showcase and storybook use.
@@ -817,6 +832,11 @@
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   will-change: transform;
+  /* Default: face raised above ground by full depth */
+  transform: translate(
+    calc(var(--depth-x) * -1),
+    calc(var(--depth-y) * -1)
+  );
   transition:
     transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
 }
@@ -828,7 +848,7 @@
     opacity var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
 }
 
-/* Hover / focus-visible — face sinks 33%, walls at 66%, shadow shrinks.
+/* Hover / focus-visible — face sinks 33% toward ground.
  *
  * Uses :focus-visible (not :focus-within) so the hover-sink only fires
  * for keyboard focus (Tab). Mouse clicks give the element focus too, but
@@ -837,16 +857,18 @@
  * state when the mouse moves away. */
 .pressable:hover,
 .pressable:focus-visible,
-.pressable[data-force-state="hover"] {
+.pressable[data-force-state="hover"],
+.pressable[data-state="open"] {
   transform: translate(
-    calc(var(--depth-x) * 0.33),
-    calc(var(--depth-y) * 0.33)
+    calc(var(--depth-x) * -0.66),
+    calc(var(--depth-y) * -0.66)
   );
 }
 
 .pressable:hover::before,
 .pressable:focus-visible::before,
-.pressable[data-force-state="hover"]::before {
+.pressable[data-force-state="hover"]::before,
+.pressable[data-state="open"]::before {
   transform: translate3d(
     calc(var(--depth-x) * 0.66),
     calc(var(--depth-y) * 0.66),
@@ -856,7 +878,8 @@
 
 .pressable:hover::after,
 .pressable:focus-visible::after,
-.pressable[data-force-state="hover"]::after {
+.pressable[data-force-state="hover"]::after,
+.pressable[data-state="open"]::after {
   transform: translate3d(
     calc(var(--shadow-x) * 0.66),
     calc(var(--shadow-y) * 0.66),
@@ -864,11 +887,11 @@
   );
 }
 
-/* Active — face flush, walls gone, shadow invisible.
+/* Active — face flush with ground, walls gone, shadow invisible.
  * Press-down is always snappy (--pressable-press-dur, default 34ms). */
 .pressable:active,
 .pressable[data-force-state="active"] {
-  transform: translate(var(--depth-x), var(--depth-y));
+  transform: translate(0, 0);
   transition-duration: var(--pressable-press-dur, 34ms);
 }
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Check } from "lucide-react";
+import { CheckIcon } from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/Card";
@@ -117,7 +117,7 @@ export const Pricing = ({ className }: { className?: string }) => {
                       key={feature}
                       className="text-muted-foreground flex items-center gap-1.5"
                     >
-                      <Check className="size-5 shrink-0" />
+                      <CheckIcon className="size-5 shrink-0" />
                       <span className="text-sm">{feature}</span>
                     </div>
                   ))}

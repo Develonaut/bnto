@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import {
-  ArrowRightLeft,
-  Columns3,
+  ArrowRightLeftIcon,
+  Columns3Icon,
   type LucideIcon,
-  Minimize2,
-  PenLine,
-  Scaling,
-  Sparkles,
-} from "lucide-react";
+  Minimize2Icon,
+  PenLineIcon,
+  ScalingIcon,
+  SparklesIcon,
+} from "@/components/ui/icons";
 
 import { Animate } from "@/components/ui/Animate";
 import { BentoGrid, useBentoItem, assignCellLayouts } from "@/components/ui/BentoGrid";
@@ -24,19 +24,19 @@ import { BNTO_REGISTRY, type BntoEntry } from "@/lib/bntoRegistry";
 /* ── Icon map ────────────────────────────────────────────────── */
 
 const BNTO_ICONS: Record<string, LucideIcon> = {
-  "compress-images": Minimize2,
-  "resize-images": Scaling,
-  "convert-image-format": ArrowRightLeft,
-  "rename-files": PenLine,
-  "clean-csv": Sparkles,
-  "rename-csv-columns": Columns3,
+  "compress-images": Minimize2Icon,
+  "resize-images": ScalingIcon,
+  "convert-image-format": ArrowRightLeftIcon,
+  "rename-files": PenLineIcon,
+  "clean-csv": SparklesIcon,
+  "rename-csv-columns": Columns3Icon,
 };
 
 /* ── Bento cell ──────────────────────────────────────────────── */
 
 function BentoCell({ entry }: { entry: BntoEntry }) {
   const { featured } = useBentoItem();
-  const Icon = BNTO_ICONS[entry.slug] ?? Sparkles;
+  const Icon = BNTO_ICONS[entry.slug] ?? SparklesIcon;
 
   return (
     <Button

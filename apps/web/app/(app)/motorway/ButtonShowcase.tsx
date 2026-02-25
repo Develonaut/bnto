@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Download, Zap } from "lucide-react";
+import { ArrowRightIcon, DownloadIcon, ZapIcon } from "@/components/ui/icons";
 
 import type { SpringMode } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,7 @@ function Playground() {
             spring={spring}
             data-testid="showcase-btn-icon"
           >
-            <Zap />
+            <ZapIcon />
           </Button>
           <Text size="xs" color="muted" mono>icon</Text>
         </Stack>
@@ -108,7 +108,7 @@ function Playground() {
             spring={spring}
             data-testid="showcase-btn-icon-text"
           >
-            <Download />
+            <DownloadIcon />
             Download
           </Button>
           <Text size="xs" color="muted" mono>icon + text</Text>
@@ -141,7 +141,7 @@ function AllVariants() {
             {label}
           </Text>
           <Button variant={value} size="icon">
-            <ArrowRight />
+            <ArrowRightIcon />
           </Button>
           <Button variant={value} size="sm">
             Learn More

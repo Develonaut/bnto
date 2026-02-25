@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Play, RotateCcw } from "lucide-react";
+import { LoaderIcon, PlayIcon, RotateCcwIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 
 export type RunPhase =
@@ -34,7 +34,7 @@ export function RunButton({ phase, hasFiles, onRun, onReset }: RunButtonProps) {
         data-testid="run-button"
         data-phase={phase}
       >
-        <RotateCcw className="size-4" />
+        <RotateCcwIcon className="size-4" />
         {phase === "failed" ? "Try Again" : "Run Again"}
       </Button>
     );
@@ -52,9 +52,9 @@ export function RunButton({ phase, hasFiles, onRun, onReset }: RunButtonProps) {
       data-phase={phase}
     >
       {isProcessing ? (
-        <Loader2 className="size-4 motion-safe:animate-spin" />
+        <LoaderIcon className="size-4 motion-safe:animate-spin" />
       ) : (
-        <Play className="size-4" />
+        <PlayIcon className="size-4" />
       )}
       {getLabel(phase, hasFiles)}
     </Button>

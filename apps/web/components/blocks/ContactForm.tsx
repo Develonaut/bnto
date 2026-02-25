@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check } from "lucide-react";
+import { CheckIcon } from "@/components/ui/icons";
 import { useAction } from "next-safe-action/hooks";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -53,7 +53,7 @@ export function ContactForm() {
             className="motion-safe:animate-scale-in mx-auto mb-4 flex w-fit justify-center rounded-full border p-2"
             style={{ "--scale-from": "0.5", animationDelay: "200ms" } as React.CSSProperties}
           >
-            <Check className="size-8" />
+            <CheckIcon className="size-8" />
           </div>
           <Heading level={2} className="mb-2 text-center text-pretty">
             Thank you

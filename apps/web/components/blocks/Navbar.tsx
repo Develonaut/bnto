@@ -1,244 +1,419 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 
-import { ChevronRight, Github } from "lucide-react";
-
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button } from "@/components/ui/button";
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
-import { cn } from "@/lib/utils";
+  BookOpenIcon,
+  GithubIcon,
+  MenuIcon,
+  RotateCcwIcon,
+  SunIcon,
+  TrafficConeIcon,
+  XIcon,
+} from "@/components/ui/icons";
 
-const ITEMS = [
+import { ThemeToggle } from "@/components/ui/AnimatedThemeToggle";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/Card";
+import { Container } from "@/components/ui/Container";
+import { Menu } from "@/components/ui/Menu";
+import { RadialSlider } from "@/components/ui/RadialSlider";
+import { Text } from "@/components/ui/Text";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { THEME_STORE_DEFAULT_ANGLE, useThemeStore } from "@/lib/stores/theme-store";
+
+const GITHUB_URL = "https://github.com/Develonaut/bnto";
+
+const MOBILE_BREAKPOINT = 1024;
+
+interface RecipeLink {
+  label: string;
+  description: string;
+  url: string;
+}
+
+interface RecipeCategory {
+  title: string;
+  links: RecipeLink[];
+}
+
+const RECIPES: RecipeCategory[] = [
   {
-    label: "Features",
-    href: "#features",
-    dropdownItems: [
+    title: "Image",
+    links: [
       {
-        title: "Modern product teams",
-        href: "/#feature-modern-teams",
-        description:
-          "Mainline is built on the habits that make the best product teams successful",
+        label: "Compress Images",
+        description: "Shrink PNG, JPEG, and WebP without losing quality",
+        url: "/compress-images",
       },
       {
-        title: "Resource Allocation",
-        href: "/#resource-allocation",
-        description: "Mainline your resource allocation and execution",
+        label: "Resize Images",
+        description: "Scale images to exact dimensions or percentages",
+        url: "/resize-images",
+      },
+      {
+        label: "Convert Format",
+        description: "Switch between PNG, JPEG, WebP, and GIF",
+        url: "/convert-image-format",
       },
     ],
   },
-  { label: "About Us", href: "/about" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "FAQ", href: "/faq" },
-  { label: "Contact", href: "/contact" },
+  {
+    title: "Data",
+    links: [
+      {
+        label: "Clean CSV",
+        description: "Remove empty rows, trim whitespace, deduplicate",
+        url: "/clean-csv",
+      },
+      {
+        label: "Rename Columns",
+        description: "Rename column headers in bulk",
+        url: "/rename-csv-columns",
+      },
+    ],
+  },
+  {
+    title: "File",
+    links: [
+      {
+        label: "Rename Files",
+        description: "Batch rename files with patterns",
+        url: "/rename-files",
+      },
+    ],
+  },
 ];
 
+function navButtonProps(pathname: string, href: string) {
+  return {
+    depth: "sm" as const,
+    pseudo: pathname === href ? ("active" as const) : undefined,
+  };
+}
+
 export const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > MOBILE_BREAKPOINT) {
+        setOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "auto";
+  }, [open]);
 
   return (
-    <section
-      className={cn(
-        "bg-background/70 absolute left-1/2 z-50 w-[min(90%,700px)] -translate-x-1/2 rounded-4xl border backdrop-blur-md transition-all duration-300",
-        "top-5 lg:top-12",
-      )}
-    >
-      <div className="flex items-center justify-between px-6 py-3">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          <Image
-            src="/logo.svg"
-            alt="logo"
-            width={94}
-            height={18}
-            className="dark:invert"
-          />
-        </Link>
+    <section>
+      <div className="fixed top-0 z-50 flex w-full justify-center pt-4">
+        <Container size="lg">
+          <Card className="rounded-full" depth="sm">
+            <div className="flex items-center justify-between gap-3.5 px-6 py-3">
+              {/* Logo */}
+              <Link
+                href="/"
+                className="flex max-h-8 items-center gap-2 text-xl font-display font-black tracking-tighter"
+              >
+                bnto
+              </Link>
 
-        {/* Desktop Navigation */}
-        <NavigationMenu className="max-lg:hidden">
-          <NavigationMenuList>
-            {ITEMS.map((link) =>
-              link.dropdownItems ? (
-                <NavigationMenuItem key={link.label} className="">
-                  <NavigationMenuTrigger className="data-[state=open]:bg-accent/50 bg-transparent! px-1.5">
-                    {link.label}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="w-[400px] space-y-2 p-4">
-                      {link.dropdownItems.map((item) => (
-                        <li key={item.title}>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              href={item.href}
-                              className="group hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex items-center gap-4 rounded-md p-3 leading-none no-underline outline-hidden transition-colors select-none"
-                            >
-                              <div className="space-y-1.5 transition-transform duration-300 group-hover:translate-x-1">
-                                <div className="text-sm leading-none font-medium">
-                                  {item.title}
-                                </div>
-                                <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
-                                  {item.description}
-                                </p>
-                              </div>
-                            </Link>
-                          </NavigationMenuLink>
+              {/* Desktop Navigation */}
+              <div className="hidden items-center gap-2 lg:flex">
+                <Menu>
+                  <Menu.Trigger variant="outline" depth="sm">
+                    <BookOpenIcon />
+                    Recipes
+                  </Menu.Trigger>
+                  <Menu.Content className="w-[28rem] p-3">
+                    <ul className="grid grid-cols-2 gap-1">
+                      {RECIPES.map((category) => (
+                        <li key={category.title} className="col-span-2">
+                          <div className="px-3 pt-3 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            {category.title}
+                          </div>
+                          <ul className="grid grid-cols-2 gap-1">
+                            {category.links.map((link) => (
+                              <li key={link.url}>
+                                <Link
+                                  href={link.url}
+                                  className="flex flex-col gap-1 rounded-lg px-3 py-2.5 no-underline outline-hidden transition-colors select-none hover:bg-muted focus:bg-muted"
+                                >
+                                  <span className="text-sm leading-normal font-medium">
+                                    {link.label}
+                                  </span>
+                                  <span className="text-muted-foreground text-xs leading-normal">
+                                    {link.description}
+                                  </span>
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
                         </li>
                       ))}
                     </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              ) : (
-                <NavigationMenuItem key={link.label} className="">
-                  <Link
-                    href={link.href}
-                    className={cn(
-                      "relative bg-transparent px-1.5 text-sm font-medium transition-opacity hover:opacity-75",
-                      pathname === link.href && "text-muted-foreground",
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                </NavigationMenuItem>
-              ),
-            )}
-          </NavigationMenuList>
-        </NavigationMenu>
-
-        {/* Auth Buttons */}
-        <div className="flex items-center gap-2.5">
-          <ThemeToggle />
-          <Link href="/login" className="max-lg:hidden">
-            <Button variant="outline">
-              <span className="relative z-10">Login</span>
-            </Button>
-          </Link>
-          <a
-            href="https://github.com/shadcnblocks/mainline-nextjs-template"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Github className="size-4" />
-            <span className="sr-only">GitHub</span>
-          </a>
-
-          {/* Hamburger Menu Button (Mobile Only) */}
-          <Button
-            variant="muted"
-            size="icon-sm"
-            className="relative lg:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <span className="sr-only">Open main menu</span>
-            <div className="absolute top-1/2 left-1/2 block w-[18px] -translate-x-1/2 -translate-y-1/2">
-              <span
-                aria-hidden="true"
-                className={`absolute block h-0.5 w-full rounded-full bg-current transition duration-500 ease-in-out ${isMenuOpen ? "rotate-45" : "-translate-y-1.5"}`}
-              ></span>
-              <span
-                aria-hidden="true"
-                className={`absolute block h-0.5 w-full rounded-full bg-current transition duration-500 ease-in-out ${isMenuOpen ? "opacity-0" : ""}`}
-              ></span>
-              <span
-                aria-hidden="true"
-                className={`absolute block h-0.5 w-full rounded-full bg-current transition duration-500 ease-in-out ${isMenuOpen ? "-rotate-45" : "translate-y-1.5"}`}
-              ></span>
-            </div>
-          </Button>
-        </div>
-      </div>
-
-      {/*  Mobile Menu Navigation */}
-      <div
-        className={cn(
-          "bg-background fixed inset-x-0 top-[calc(100%+1rem)] flex flex-col rounded-2xl border p-6 transition-all duration-300 ease-in-out lg:hidden",
-          isMenuOpen
-            ? "visible translate-y-0 opacity-100"
-            : "invisible -translate-y-4 opacity-0",
-        )}
-      >
-        <nav className="divide-border flex flex-1 flex-col divide-y">
-          {ITEMS.map((link) =>
-            link.dropdownItems ? (
-              <div key={link.label} className="py-4 first:pt-0 last:pb-0">
+                  </Menu.Content>
+                </Menu>
                 <Button
-                  variant="muted"
-                  onClick={() =>
-                    setOpenDropdown(
-                      openDropdown === link.label ? null : link.label,
-                    )
-                  }
-                  className="h-auto w-full justify-between p-0 text-base font-medium text-primary"
-                  depth={false}
+                  variant="outline"
+                  className="hidden lg:inline-flex"
+                  href="/motorway"
+                  {...navButtonProps(pathname, "/motorway")}
                 >
-                  {link.label}
-                  <ChevronRight
-                    className={cn(
-                      "size-4 transition-transform duration-200",
-                      openDropdown === link.label ? "rotate-90" : "",
-                    )}
-                  />
+                  <TrafficConeIcon />
+                  Motorway
                 </Button>
-                <div
-                  className={cn(
-                    "overflow-hidden transition-all duration-300",
-                    openDropdown === link.label
-                      ? "mt-4 max-h-[1000px] opacity-100"
-                      : "max-h-0 opacity-0",
-                  )}
-                >
-                  <div className="bg-muted/50 space-y-3 rounded-lg p-4">
-                    {link.dropdownItems.map((item) => (
-                      <Link
-                        key={item.title}
-                        href={item.href}
-                        className="group hover:bg-accent block rounded-md p-2 transition-colors"
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          setOpenDropdown(null);
-                        }}
-                      >
-                        <div className="transition-transform duration-200 group-hover:translate-x-1">
-                          <div className="text-primary font-medium">
-                            {item.title}
-                          </div>
-
-                          <p className="text-muted-foreground mt-1 text-sm">
-                            {item.description}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
               </div>
-            ) : (
-              <Link
-                key={link.label}
-                href={link.href}
-                className={cn(
-                  "text-primary hover:text-primary/80 py-4 text-base font-medium transition-colors first:pt-0 last:pb-0",
-                  pathname === link.href && "text-muted-foreground",
-                )}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ),
-          )}
-        </nav>
+
+              {/* Right side */}
+              <div className="flex items-center gap-2">
+                <div className="lg:hidden">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    depth="sm"
+                    onClick={() => setOpen(!open)}
+                  >
+                    <MenuIcon />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  depth="sm"
+                  href={GITHUB_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden lg:inline-flex"
+                >
+                  <GithubIcon />
+                  <span className="sr-only">GitHub</span>
+                </Button>
+                <NavThemeMenu />
+                <Button
+                  variant="primary"
+                  href="/signin"
+                  depth="sm"
+                  className="hidden lg:inline-flex"
+                >
+                  Sign in
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </Container>
       </div>
+
+      {/* Mobile Navigation Sheet */}
+      <MobileNavigationMenu open={open} setOpen={setOpen} />
     </section>
   );
 };
+
+const THEME_NAMES: Record<string, string> = {
+  light: "Los Angeles",
+  sunset: "Monaco",
+  dark: "Tokyo",
+};
+
+function angleToCardinal(deg: number): string {
+  if (deg <= 141) return "NW";
+  if (deg <= 158) return "NNW";
+  if (deg <= 170) return "N";
+  if (deg <= 190) return "N";
+  if (deg <= 202) return "NNE";
+  if (deg <= 219) return "NE";
+  return "NE";
+}
+
+function NavThemeMenu() {
+  const lightAngle = useThemeStore((s) => s.lightAngle);
+  const setLightAngle = useThemeStore((s) => s.setLightAngle);
+  const { setTheme, resolvedTheme } = useTheme();
+
+  const isDefault =
+    lightAngle === THEME_STORE_DEFAULT_ANGLE && resolvedTheme === "light";
+
+  const handleReset = () => {
+    setLightAngle(THEME_STORE_DEFAULT_ANGLE);
+    setTheme("light");
+  };
+
+  return (
+    <Menu>
+      <Menu.Trigger variant="outline" size="icon" depth="sm">
+        <SunIcon />
+        <span className="sr-only">Theme settings</span>
+      </Menu.Trigger>
+      <Menu.Content className="w-auto p-4" offset="lg">
+        <div className="flex flex-col items-center gap-3">
+          {/* Theme toggle + city name */}
+          <div className="flex w-full items-center gap-3">
+            <ThemeToggle depth="sm" />
+            <Text size="sm" className="w-full font-medium">
+              <ThemeName />
+            </Text>
+          </div>
+          {/* Light direction dial */}
+          <RadialSlider
+            min={135}
+            max={225}
+            value={lightAngle}
+            onChange={setLightAngle}
+            startAngle={270}
+            endAngle={90}
+            size={128}
+            strokeWidth={5}
+            aria-label="Light direction"
+            renderThumb={({ isDragging }) => (
+              <Button
+                variant="warning"
+                size="icon-sm"
+                depth="sm"
+                pseudo={isDragging ? "active" : undefined}
+                className="pointer-events-none size-7"
+              >
+                <SunIcon className="size-3.5" />
+              </Button>
+            )}
+          >
+            <span className="text-xs font-mono font-medium text-muted-foreground">
+              {angleToCardinal(lightAngle)}
+            </span>
+          </RadialSlider>
+          {/* Reset to defaults */}
+          {!isDefault && (
+            <Button
+              variant="muted"
+              size="sm"
+              onClick={handleReset}
+              className="w-full"
+            >
+              <RotateCcwIcon />
+              Reset
+            </Button>
+          )}
+        </div>
+      </Menu.Content>
+    </Menu>
+  );
+}
+
+function ThemeName() {
+  const { resolvedTheme } = useTheme();
+  return <>{THEME_NAMES[resolvedTheme ?? "light"] ?? "Los Angeles"}</>;
+}
+
+function MobileNavigationMenu({
+  open,
+  setOpen,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent
+        aria-describedby={undefined}
+        side="top"
+        className="inset-0 z-[100] h-dvh w-full bg-primary text-primary-foreground [&>button]:hidden"
+      >
+        <div className="flex-1 overflow-y-auto">
+          <Container className="pb-12">
+            {/* Visually hidden title for accessibility */}
+            <div className="absolute -m-px h-px w-px overflow-hidden border-0 p-0">
+              <SheetTitle className="text-primary">Navigation</SheetTitle>
+            </div>
+
+            {/* Close button */}
+            <div className="flex justify-end pt-5">
+              <SheetClose asChild>
+                <Button variant="secondary" size="icon">
+                  <XIcon />
+                  <span className="sr-only">Close menu</span>
+                </Button>
+              </SheetClose>
+            </div>
+
+            <div className="flex h-full flex-col justify-between gap-20 pt-16">
+              {/* Recipes */}
+              <div className="flex flex-col gap-10">
+                <div className="text-2xl font-display font-bold text-primary-foreground">
+                  Recipes
+                </div>
+                <div className="grid w-full grid-cols-2 gap-x-4 gap-y-10">
+                  {RECIPES.map((category) => (
+                    <div
+                      key={category.title}
+                      className="flex flex-col gap-4 text-primary-foreground"
+                    >
+                      <div className="text-xs uppercase tracking-wider text-white/60">
+                        {category.title}
+                      </div>
+                      <ul className="flex flex-col gap-3">
+                        {category.links.map((link) => (
+                          <li key={link.url}>
+                            <Link
+                              href={link.url}
+                              onClick={() => setOpen(false)}
+                              className="text-lg leading-normal font-medium text-primary-foreground"
+                            >
+                              {link.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom section */}
+              <div className="flex flex-col gap-6">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="outline"
+                    href="/signin"
+                    onClick={() => setOpen(false)}
+                  >
+                    Sign in
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    href={GITHUB_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <GithubIcon />
+                    <span className="sr-only">GitHub</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Container>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}

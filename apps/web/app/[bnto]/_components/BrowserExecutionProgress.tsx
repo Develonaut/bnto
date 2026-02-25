@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Clock } from "lucide-react";
+import { LoaderIcon, ClockIcon } from "@/components/ui/icons";
 import type { BrowserExecution } from "@bnto/core";
 
 interface BrowserExecutionProgressProps {
@@ -31,7 +31,7 @@ export function BrowserExecutionProgress({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Loader2 className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
+          <LoaderIcon className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
           <p className="text-sm font-medium text-foreground">
             {fileProgress
               ? `Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}\u2026`
@@ -39,7 +39,7 @@ export function BrowserExecutionProgress({
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Clock className="size-3.5" />
+          <ClockIcon className="size-3.5" />
           <span>{formatElapsed(elapsed)}</span>
         </div>
       </div>

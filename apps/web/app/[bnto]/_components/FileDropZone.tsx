@@ -1,6 +1,6 @@
 "use client";
 
-import { Upload, X } from "lucide-react";
+import { UploadIcon, XIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +62,7 @@ export function FileDropZone({
             "motion-safe:transition-colors motion-safe:duration-fast",
           )}
         >
-          <Upload className="size-6" />
+          <UploadIcon className="size-6" />
         </div>
 
         <div className="text-center">
@@ -106,7 +106,7 @@ export function FileDropZone({
                     className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground motion-safe:transition-colors motion-safe:duration-fast"
                     aria-label={`Remove ${file.name}`}
                   >
-                    <X className="size-4" />
+                    <XIcon className="size-4" />
                   </button>
                 </FileUploadItemDelete>
               </FileUploadItem>

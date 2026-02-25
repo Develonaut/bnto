@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRightIcon } from "@/components/ui/icons";
 
 import { Container } from "@/components/ui/Container";
 import { Stack } from "@/components/ui/Stack";
@@ -45,7 +45,7 @@ export function Footer({ children }: { children?: React.ReactNode }) {
                 href={item.href}
                 className="flex items-center gap-0.5 font-medium transition-opacity hover:opacity-75"
               >
-                {item.name} <ArrowUpRight className="size-4" />
+                {item.name} <ArrowUpRightIcon className="size-4" />
               </Link>
             </li>
           ))}

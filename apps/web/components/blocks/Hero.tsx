@@ -1,12 +1,12 @@
 import Image from "next/image";
 
 import {
-  ArrowRight,
-  Blend,
-  ChartNoAxesColumn,
-  CircleDot,
-  Diamond,
-} from "lucide-react";
+  ArrowRightIcon,
+  BlendIcon,
+  ChartNoAxesColumnIcon,
+  CircleDotIcon,
+  DiamondIcon,
+} from "@/components/ui/icons";
 
 import { DashedLine } from "@/components/DashedLine";
 import { Button } from "@/components/ui/button";
@@ -19,22 +19,22 @@ const features = [
   {
     title: "Tailored workflows",
     description: "Track progress across custom issue flows for your team.",
-    icon: CircleDot,
+    icon: CircleDotIcon,
   },
   {
     title: "Cross-team projects",
     description: "Collaborate across teams and departments.",
-    icon: Blend,
+    icon: BlendIcon,
   },
   {
     title: "Milestones",
     description: "Break projects down into concrete phases.",
-    icon: Diamond,
+    icon: DiamondIcon,
   },
   {
     title: "Progress insights",
     description: "Track scope, velocity, and progress over time.",
-    icon: ChartNoAxesColumn,
+    icon: ChartNoAxesColumnIcon,
   },
 ];
 
@@ -69,7 +69,7 @@ export const Hero = () => {
                 className="max-w-56 truncate text-start md:max-w-none"
               >
                 Built by shadcnblocks.com
-                <ArrowRight className="stroke-3" />
+                <ArrowRightIcon className="stroke-3" />
               </a>
             </Button>
           </Row>

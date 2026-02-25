@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRightIcon } from "@/components/ui/icons";
 
 import { DashedLine } from "@/components/DashedLine";
 
@@ -75,7 +75,7 @@ export const Features = () => {
                       {item.title}
                     </Heading>
                     <div className="rounded-full border p-2">
-                      <ChevronRight className="size-6 transition-transform group-hover:translate-x-1 lg:size-9" />
+                      <ChevronRightIcon className="size-6 transition-transform group-hover:translate-x-1 lg:size-9" />
                     </div>
                   </Link>
                 </div>

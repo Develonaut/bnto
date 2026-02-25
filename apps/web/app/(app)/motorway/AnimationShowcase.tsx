@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import {
-  Minimize2,
-  Scaling,
-  ArrowRightLeft,
-  PenLine,
-  Sparkles,
-  Columns3,
-  RotateCcw,
-} from "lucide-react";
+  Minimize2Icon,
+  ScalingIcon,
+  ArrowRightLeftIcon,
+  PenLineIcon,
+  SparklesIcon,
+  Columns3Icon,
+  RotateCcwIcon,
+} from "@/components/ui/icons";
 
 import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/button";
@@ -18,18 +18,18 @@ import { Card } from "@/components/ui/Card";
 /* ── Helpers ─────────────────────────────────────────────── */
 
 const DEMO_RECIPES = [
-  { title: "Compress Images", icon: Minimize2 },
-  { title: "Resize Images", icon: Scaling },
-  { title: "Convert Format", icon: ArrowRightLeft },
-  { title: "Rename Files", icon: PenLine },
-  { title: "Clean CSV", icon: Sparkles },
-  { title: "Rename Columns", icon: Columns3 },
+  { title: "Compress Images", icon: Minimize2Icon },
+  { title: "Resize Images", icon: ScalingIcon },
+  { title: "Convert Format", icon: ArrowRightLeftIcon },
+  { title: "Rename Files", icon: PenLineIcon },
+  { title: "Clean CSV", icon: SparklesIcon },
+  { title: "Rename Columns", icon: Columns3Icon },
 ];
 
 function ReplayButton({ onClick }: { onClick: () => void }) {
   return (
     <Button variant="outline" size="sm" onClick={onClick} depth={false}>
-      <RotateCcw className="size-3.5" />
+      <RotateCcwIcon className="size-3.5" />
       Replay
     </Button>
   );
@@ -137,8 +137,8 @@ function HeroPopIn() {
   return (
     <div>
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
-        Hero pop-in &mdash; <code className="font-mono text-xs">from=0.5</code> for
-        dramatic entrance
+        Hero pop-in &mdash; <code className="font-mono text-xs">from=0.5</code>{" "}
+        for dramatic entrance
       </SectionLabel>
       <div key={key} className="flex gap-4">
         <Animate.ScaleIn from={0.5} className="flex-1">
@@ -179,7 +179,7 @@ function BouncyStagger() {
               key={recipe.title}
               index={i}
               from={0.6}
-              easing="spring-bouncier"
+              easing="spring-bouncy"
             >
               <Button
                 variant="outline"

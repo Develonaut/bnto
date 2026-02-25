@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, FileArchive, CheckCircle2 } from "lucide-react";
+import { DownloadIcon, FileArchiveIcon, CheckCircle2Icon } from "@/components/ui/icons";
 import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
 import { Button } from "@/components/ui/button";
 import { formatFileSize } from "@/src/utils/formatFileSize";
@@ -32,7 +32,7 @@ export function BrowserExecutionResults({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="size-5 shrink-0 text-green-600 dark:text-green-400" />
+          <CheckCircle2Icon className="size-5 shrink-0 text-green-600 dark:text-green-400" />
           <p className="text-sm font-medium text-foreground">
             {results.length} {results.length === 1 ? "file" : "files"} ready
           </p>
@@ -61,7 +61,7 @@ export function BrowserExecutionResults({
           onClick={onDownloadAll}
           data-testid="download-all-button"
         >
-          <FileArchive className="size-4" />
+          <FileArchiveIcon className="size-4" />
           Download All as ZIP ({results.length} files)
         </Button>
       )}
@@ -72,7 +72,7 @@ export function BrowserExecutionResults({
           onClick={() => onDownload(results[0])}
           data-testid="download-button"
         >
-          <Download className="size-4" />
+          <DownloadIcon className="size-4" />
           Download
         </Button>
       )}
@@ -116,7 +116,7 @@ function BrowserFileRow({
         onClick={() => onDownload(result)}
         aria-label={`Download ${result.filename}`}
       >
-        <Download className="size-4" />
+        <DownloadIcon className="size-4" />
       </Button>
     </li>
   );

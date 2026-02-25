@@ -8,7 +8,7 @@ import {
   FileIcon,
   FileTextIcon,
   FileVideoIcon,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import {
   Direction as DirectionPrimitive,
   Slot as SlotPrimitive,

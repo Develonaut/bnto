@@ -1,6 +1,6 @@
 "use client";
 
-import { Sun } from "lucide-react";
+import { SunIcon } from "@/components/ui/icons";
 
 import { Slider } from "@/components/ui/slider";
 import { Text } from "@/components/ui/Text";
@@ -13,7 +13,7 @@ interface LightSourceSliderProps {
 export function LightSourceSlider({ value, onChange }: LightSourceSliderProps) {
   return (
     <div className="flex items-center gap-4">
-      <Sun className="size-5 shrink-0 text-warning" />
+      <SunIcon className="size-5 shrink-0 text-warning" />
       <Slider
         min={135}
         max={225}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { CheckIcon, ChevronsUpDownIcon, XIcon } from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/Container";
@@ -141,10 +141,10 @@ const comparisonFeatures: FeatureSection[] = [
 
 const renderFeatureValue = (value: true | false | null | string) => {
   if (value === true) {
-    return <Check className="size-5" />;
+    return <CheckIcon className="size-5" />;
   }
   if (value === false) {
-    return <X className="size-5" />;
+    return <XIcon className="size-5" />;
   }
   if (value === null) {
     return null;
@@ -152,7 +152,7 @@ const renderFeatureValue = (value: true | false | null | string) => {
   // String value
   return (
     <div className="flex items-center gap-2">
-      <Check className="size-4" />
+      <CheckIcon className="size-4" />
       <span className="text-muted-foreground">{value}</span>
     </div>
   );
@@ -193,7 +193,7 @@ const PlanHeaders = ({
               <Heading level={3} className="text-2xl">
                 {pricingPlans[selectedPlan].name}
               </Heading>
-              <ChevronsUpDown
+              <ChevronsUpDownIcon
                 className={`size-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
               />
             </Collapsible.Trigger>

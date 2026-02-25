@@ -1,0 +1,63 @@
+/**
+ * Icon re-exports — single swap point for icon providers.
+ *
+ * All app code imports icons from here, never from "lucide-react" directly.
+ * To switch providers, update the exports in this file only.
+ */
+
+export {
+  ArrowLeft as ArrowLeftIcon,
+  ArrowRight as ArrowRightIcon,
+  ArrowRightLeft as ArrowRightLeftIcon,
+  ArrowUpRight as ArrowUpRightIcon,
+  Blend as BlendIcon,
+  BookOpen as BookOpenIcon,
+  ChartNoAxesColumn as ChartNoAxesColumnIcon,
+  Check as CheckIcon,
+  CheckCircle2 as CheckCircle2Icon,
+  ChevronDown as ChevronDownIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  ChevronUp as ChevronUpIcon,
+  ChevronsUpDown as ChevronsUpDownIcon,
+  CircleDot as CircleDotIcon,
+  Clock as ClockIcon,
+  Columns3 as Columns3Icon,
+  Diamond as DiamondIcon,
+  Download as DownloadIcon,
+  Facebook as FacebookIcon,
+  FileArchive as FileArchiveIcon,
+  FileAudio as FileAudioIcon,
+  FileCode as FileCodeIcon,
+  FileCog as FileCogIcon,
+  FileDown as FileDownIcon,
+  File as FileIcon,
+  FileText as FileTextIcon,
+  FileVideo as FileVideoIcon,
+  Github as GithubIcon,
+  Heart as HeartIcon,
+  Linkedin as LinkedinIcon,
+  Loader2 as LoaderIcon,
+  Menu as MenuIcon,
+  Minimize2 as Minimize2Icon,
+  Moon as MoonIcon,
+  PenLine as PenLineIcon,
+  Play as PlayIcon,
+  RotateCcw as RotateCcwIcon,
+  Scaling as ScalingIcon,
+  Settings as SettingsIcon,
+  Sparkles as SparklesIcon,
+  Star as StarIcon,
+  Sun as SunIcon,
+  Sunset as SunsetIcon,
+  SwatchBook as SwatchBookIcon,
+  TrafficCone as TrafficConeIcon,
+  Trash2 as TrashIcon,
+  Twitter as TwitterIcon,
+  Upload as UploadIcon,
+  X as XIcon,
+  XCircle as XCircleIcon,
+  Zap as ZapIcon,
+} from "lucide-react";
+
+export type { LucideIcon } from "lucide-react";

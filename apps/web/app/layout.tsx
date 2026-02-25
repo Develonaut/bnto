@@ -89,6 +89,7 @@ export default function RootLayout({
   return (
     <ConvexAuthNextjsServerProvider>
       <html lang="en" suppressHydrationWarning>
+        <head />
         <body className={`${geist.variable} ${inter.variable} antialiased`}>
           <ThemeProvider
             attribute="class"

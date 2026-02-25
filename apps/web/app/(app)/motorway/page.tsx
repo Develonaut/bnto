@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
-
 import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
 
-import { AnimatedThemeToggle } from "@/components/ui/AnimatedThemeToggle";
+import { ThemeToggle } from "@/components/ui/AnimatedThemeToggle";
+import { useThemeStore } from "@/lib/stores/theme-store";
 import { AnimationShowcase } from "./AnimationShowcase";
 import { BentoGridShowcase } from "./BentoGridShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
@@ -20,13 +19,16 @@ import { LightSourceSlider } from "./LightSourceSlider";
 import { NotificationCards } from "./NotificationCards";
 import { ShowcaseSection } from "./ShowcaseSection";
 
+import { MenuShowcase } from "./MenuShowcase";
+import { PressableShowcase } from "./PressableShowcase";
 import { TypographyShowcase } from "./TypographyShowcase";
 
 export default function ThemeDemoPage() {
-  const [lightAngle, setLightAngle] = useState(135);
+  const lightAngle = useThemeStore((s) => s.lightAngle);
+  const setLightAngle = useThemeStore((s) => s.setLightAngle);
 
   return (
-    <div style={{ "--light-angle": `${lightAngle}deg` } as React.CSSProperties}>
+    <div>
       <Container size="lg" className="pb-8 pt-24 lg:pt-32">
         <Stack className="gap-16">
           <div>
@@ -41,7 +43,7 @@ export default function ThemeDemoPage() {
                 <div className="flex-1">
                   <LightSourceSlider value={lightAngle} onChange={setLightAngle} />
                 </div>
-                <AnimatedThemeToggle />
+                <ThemeToggle />
               </div>
             </div>
           </div>
@@ -52,6 +54,14 @@ export default function ThemeDemoPage() {
             description="All tiers share the same light direction. Only magnitude differs — taller buildings cast longer shadows. Add .pressable for hover/active interaction."
           >
             <CardShowcase />
+          </ShowcaseSection>
+
+          <ShowcaseSection
+            id="demo-pressable"
+            title="Pressable"
+            description="Ground-plane model: wall stays pinned to ground in all states. Face floats above and sinks on hover/active. Bottom edges should always align regardless of pressed state."
+          >
+            <PressableShowcase />
           </ShowcaseSection>
 
           <ShowcaseSection
@@ -72,6 +82,14 @@ export default function ThemeDemoPage() {
 
           <ShowcaseSection id="demo-typography" title="Typography" description="DM Sans display + Inter body + Geist Mono code.">
             <TypographyShowcase />
+          </ShowcaseSection>
+
+          <ShowcaseSection
+            id="demo-menus"
+            title="Menus"
+            description="Button trigger + Card dropdown, powered by Radix Popover. The trigger sinks into its pressed state when the menu is open."
+          >
+            <MenuShowcase />
           </ShowcaseSection>
 
           <ShowcaseSection
