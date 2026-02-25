@@ -147,6 +147,7 @@ tasks:
     cmds:
       - cargo test --workspace
       - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-wasm
+      - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-image
 
   wasm:test:unit:
     desc: Run Rust unit tests only (native, fast)

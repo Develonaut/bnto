@@ -188,9 +188,9 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [x] `engine-wasm/` — Rust unit tests: quality param bounds (0, 1, 100, 101), 1x1 pixel image
 
 **WASM boundary coverage:**
-- [ ] `engine-wasm/` — WASM integration tests: all codec combinations (JPEG→JPEG, PNG→PNG, WebP→WebP)
-- [ ] `engine-wasm/` — WASM integration tests: progress callback fires with increasing percentages
-- [ ] `engine-wasm/` — WASM integration tests: large file (1MB+) doesn't OOM, output always <= input
+- [x] `engine-wasm/` — WASM integration tests: all codec combinations (JPEG→JPEG, PNG→PNG, WebP→WebP)
+- [x] `engine-wasm/` — WASM integration tests: progress callback fires with increasing percentages
+- [x] `engine-wasm/` — WASM integration tests: large file (1MB+) doesn't OOM, output always <= input
 
 **E2E 4-phase tests** (BEFORE → PROGRESS → FINISH → VERIFY for each bnto):
 - [ ] `apps/web` — E2E: compress JPEG with 4-phase screenshots + download verification

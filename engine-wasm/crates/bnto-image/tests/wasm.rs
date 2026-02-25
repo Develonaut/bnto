@@ -1,5 +1,5 @@
 // =============================================================================
-// WASM Integration Tests — Image Processing Across the JS ↔ Rust Boundary
+// WASM Integration Tests — Core Image Compression & Error Handling
 // =============================================================================
 //
 // WHAT ARE THESE TESTS?
@@ -10,56 +10,24 @@
 //   - WASM memory allocation issues (large images might exceed WASM memory)
 //   - JS callback interop (progress reporting across the boundary)
 //
-// NOTE: setup() and version() used to be exported from this crate. They now
-// live in the bnto-wasm entry point crate. Panic hook setup is done inline
-// here for test reliability.
-//
 // HOW TO RUN:
 //   These tests are included in `cargo test --workspace` (native) and
 //   run as WASM integration tests via the bnto-wasm entry point crate.
+//
+// RELATED TEST FILES:
+//   - wasm_codec.rs   — comprehensive codec coverage (metadata, filenames, quality)
+//   - wasm_progress.rs — progress callback verification
+//   - wasm_stress.rs  — large file OOM and size tests
 
-use wasm_bindgen::prelude::*;
+mod common;
+
 use wasm_bindgen_test::*;
 
-// Import the crate's WASM-exported functions.
 use bnto_image::wasm_bridge::*;
+use common::{TEST_JPEG, TEST_PNG, TEST_WEBP, init_panic_hook, noop_callback};
 
 // Configure tests to run in Node.js.
 wasm_bindgen_test_configure!(run_in_node_experimental);
-
-// =============================================================================
-// Test Fixtures — Small images embedded at compile time
-// =============================================================================
-
-/// A small JPEG image (100x100 pixels, ~2.7 KB)
-const TEST_JPEG: &[u8] = include_bytes!("../../../../test-fixtures/images/small.jpg");
-
-/// A small PNG image (100x100 pixels, ~11 KB)
-const TEST_PNG: &[u8] = include_bytes!("../../../../test-fixtures/images/small.png");
-
-/// A small WebP image (100x100 pixels, ~966 bytes)
-const TEST_WEBP: &[u8] = include_bytes!("../../../../test-fixtures/images/small.webp");
-
-// =============================================================================
-// Helper: Create a no-op progress callback
-// =============================================================================
-
-/// Create a JavaScript function that does nothing (for progress callbacks).
-fn noop_callback() -> js_sys::Function {
-    js_sys::eval("(function() {})")
-        .expect("Failed to create noop callback")
-        .dyn_into::<js_sys::Function>()
-        .expect("eval result should be a Function")
-}
-
-/// Initialize panic hook for test reliability. In production, the bnto-wasm
-/// entry point handles this. In these integration tests, the bnto-wasm entry
-/// point isn't loaded, so we skip the panic hook — errors will still show
-/// in the test output, just without the pretty console.error formatting.
-fn init_panic_hook() {
-    // NOTE: console_error_panic_hook was moved to bnto-wasm.
-    // These tests still work fine without it — Rust test runner captures panics.
-}
 
 // =============================================================================
 // JPEG Compression Tests (via WASM boundary)
