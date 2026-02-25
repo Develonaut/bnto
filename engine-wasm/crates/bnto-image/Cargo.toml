@@ -26,12 +26,11 @@ edition = "2024"
 description = "Image processing node for Bnto WASM engine — compress, resize, convert"
 license = "MIT"
 
-# WASM-PACK BUILD SETTINGS
-# See bnto-core/Cargo.toml for detailed explanation of these flags.
-# The --enable-bulk-memory flag is needed because Rust 1.82+ emits
-# bulk memory operations that wasm-opt's validator rejects by default.
+# wasm-opt flags — must match ALL features Rust enables by default.
+# Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown.
+# See bnto-wasm/Cargo.toml for full explanation.
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = ["-O", "--enable-bulk-memory"]
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "--enable-sign-ext", "--enable-mutable-globals", "--enable-reference-types", "--enable-multivalue"]
 
 [lib]
 # "rlib" = Rust library. Other crates (including the unified WASM entry
@@ -79,8 +78,8 @@ thiserror = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-# Panic hook — shows real error messages in the browser console
-console_error_panic_hook = "0.1"
+# NOTE: console_error_panic_hook was removed — panic hook setup is the
+# responsibility of the bnto-wasm entry point crate, not individual node crates.
 
 # =============================================================================
 # The `image` crate — our image processing engine

@@ -42,35 +42,23 @@ license = "MIT"
 # wasm-pack reads settings from [package.metadata.wasm-pack.*].
 # These control the post-compilation optimization step.
 [package.metadata.wasm-pack.profile.release]
-# Configure wasm-opt optimization flags for the release build.
-#
-# WHY THE EXTRA FLAGS?
-# Rust 1.82+ emits "bulk memory operations" (memory.copy, memory.fill)
-# in the WASM output. These are part of the WebAssembly bulk-memory
-# proposal, supported by ALL modern browsers (Chrome 75+, Firefox 79+,
-# Safari 15+). However, wasm-opt's validator rejects them by default
-# unless we explicitly enable them with --enable-bulk-memory.
-#
-# "-O" = optimize for size and speed
-# "--enable-bulk-memory" = tell wasm-opt to accept bulk memory ops
-wasm-opt = ["-O", "--enable-bulk-memory"]
+# wasm-opt flags — must match ALL features Rust enables by default.
+# Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown.
+# See bnto-wasm/Cargo.toml for full explanation.
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "--enable-sign-ext", "--enable-mutable-globals", "--enable-reference-types", "--enable-multivalue"]
 
 # =============================================================================
 # Library Configuration
 # =============================================================================
 
 [lib]
-# crate-type tells Cargo what kind of output to produce.
+# "rlib" = Rust Library. Other crates in the workspace (bnto-image, bnto-wasm)
+# depend on this crate and `use` its types, traits, and error definitions.
 #
-# "cdylib" = C Dynamic Library. For WASM, this means "produce a .wasm file
-# that can be loaded by a host environment (the browser)". This is what
-# wasm-pack needs to create the JS bindings.
-#
-# "rlib" = Rust Library. This lets other Rust crates in our workspace
-# (like bnto-image) depend on this crate and `use` its types/functions.
-#
-# We need BOTH: cdylib for the browser, rlib for other crates.
-crate-type = ["cdylib", "rlib"]
+# Previously this was ["cdylib", "rlib"] — the cdylib responsibility has moved
+# to the bnto-wasm entry point crate. Only ONE crate in the workspace should
+# be cdylib (produces the .wasm file). All others are rlib.
+crate-type = ["rlib"]
 
 # =============================================================================
 # Dependencies
@@ -111,11 +99,8 @@ thiserror = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-# When Rust code crashes (panics) in WASM, the browser only shows
-# "RuntimeError: unreachable" — useless for debugging. This crate
-# hooks into the panic handler and redirects the real error message
-# to console.error(). Invaluable during development.
-console_error_panic_hook = "0.1"
+# NOTE: console_error_panic_hook was removed — panic hook setup is the
+# responsibility of the bnto-wasm entry point crate, not foundation crates.
 
 # =============================================================================
 # Dev Dependencies (only used during testing, not in the final WASM binary)

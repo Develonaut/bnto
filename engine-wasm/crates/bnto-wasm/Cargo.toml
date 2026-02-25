@@ -1,0 +1,72 @@
+# =============================================================================
+# bnto-wasm — The Unified WASM Entry Point
+# =============================================================================
+#
+# WHAT IS THIS CRATE?
+# This is the SINGLE crate that produces the .wasm file loaded by the browser.
+# It re-exports functions from all node crates (bnto-image, future bnto-csv, etc.)
+# through one unified JavaScript interface.
+#
+# WHY A SINGLE ENTRY POINT?
+# Each cdylib crate produces a SEPARATE .wasm file with its own JavaScript
+# heap. Objects from one cdylib can't be passed to another — they live in
+# different WASM memory spaces (see wasm-bindgen issue #1815).
+#
+# By having ONE cdylib that depends on all node crates (as rlib), we get:
+#   1. Single .wasm file = one download, one instantiation, shared heap
+#   2. Tree shaking across the full dependency graph
+#   3. One set of JS glue code (not per-crate duplicates)
+#   4. Avoids linker ARG_MAX issues from js-sys export descriptors
+#
+# HOW TO BUILD:
+#   cd engine-wasm
+#   wasm-pack build --target web --release crates/bnto-wasm
+
+[package]
+name = "bnto-wasm"
+version = "0.1.0"
+edition = "2024"
+description = "Unified WASM entry point for Bnto — loads all node processors into one module"
+license = "MIT"
+
+# wasm-opt flags — must match ALL features Rust enables by default.
+# Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown:
+#   bulk-memory, nontrapping-fptoint, sign-ext, mutable-globals,
+#   reference-types, multivalue.
+# If wasm-opt doesn't know about a feature, its validator rejects the binary.
+# See: rust-lang/rust#137315, rustwasm/wasm-pack#1501
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "--enable-sign-ext", "--enable-mutable-globals", "--enable-reference-types", "--enable-multivalue"]
+
+[lib]
+# "cdylib" = the ONLY crate that produces a .wasm file for the browser.
+# All other crates in the workspace are "rlib" (Rust library) only.
+crate-type = ["cdylib", "rlib"]
+
+# =============================================================================
+# Dependencies
+# =============================================================================
+
+[dependencies]
+# Foundation crate — provides setup(), version(), and shared types
+bnto-core = { path = "../bnto-core" }
+
+# Node crates — each implements specific processing logic
+bnto-image = { path = "../bnto-image" }
+
+# The Rust ↔ JS bridge
+wasm-bindgen = { workspace = true }
+js-sys = { workspace = true }
+
+# Serialization (for params and metadata)
+serde_json = { workspace = true }
+
+# Panic hook — shows real error messages in browser console
+console_error_panic_hook = "0.1"
+
+# =============================================================================
+# Dev Dependencies (testing only)
+# =============================================================================
+
+[dev-dependencies]
+wasm-bindgen-test = { workspace = true }

@@ -130,29 +130,23 @@ tasks:
     desc: Build WASM entry point via wasm-pack (release, web target)
     dir: ./engine-wasm
     cmds:
-      # Only the cdylib entry point crate gets wasm-pack built.
+      # Only the cdylib entry point crate (bnto-wasm) gets wasm-pack built.
       # Node crates (bnto-image, etc.) are rlib — they compile into the
       # entry point's .wasm binary, not as separate modules.
-      # When the unified bnto-wasm entry point is created, this will
-      # change to: wasm-pack build --target web --release crates/bnto-wasm
-      - /Users/ryan/.cargo/bin/wasm-pack build --target web --release crates/bnto-core
+      - /Users/ryan/.cargo/bin/wasm-pack build --target web --release crates/bnto-wasm
 
   wasm:build:dev:
     desc: Build WASM entry point in dev mode (faster, larger binary, better errors)
     dir: ./engine-wasm
     cmds:
-      - /Users/ryan/.cargo/bin/wasm-pack build --target web --dev crates/bnto-core
+      - /Users/ryan/.cargo/bin/wasm-pack build --target web --dev crates/bnto-wasm
 
   wasm:test:
     desc: Run Rust unit tests (native) + WASM integration tests (Node.js)
     dir: ./engine-wasm
     cmds:
       - cargo test --workspace
-      - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-core
-      # NOTE: bnto-image is rlib only (no cdylib), so wasm-pack test
-      # can't run WASM integration tests for it directly. The 44+ native
-      # unit tests cover all compression logic. WASM bridge will be tested
-      # via the unified entry point crate + Playwright E2E.
+      - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-wasm
 
   wasm:test:unit:
     desc: Run Rust unit tests only (native, fast)
@@ -177,6 +171,18 @@ tasks:
     dir: ./engine-wasm
     cmds:
       - cargo fmt --all -- --check
+
+  wasm:copy:
+    desc: Copy WASM build output to web app public directory
+    cmds:
+      - cp engine-wasm/crates/bnto-wasm/pkg/bnto_wasm_bg.wasm apps/web/public/wasm/bnto_wasm_bg.wasm
+      - cp engine-wasm/crates/bnto-wasm/pkg/bnto_wasm.js apps/web/public/wasm/bnto_wasm.js
+
+  wasm:deploy:
+    desc: Build WASM and copy to web app (full pipeline)
+    cmds:
+      - task: wasm:build
+      - task: wasm:copy
 
   wasm:clean:
     desc: Clean all Rust build artifacts

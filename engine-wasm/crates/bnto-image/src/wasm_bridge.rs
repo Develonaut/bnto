@@ -53,31 +53,12 @@ use bnto_core::progress::ProgressReporter;
 use crate::compress::CompressImages;
 
 // =============================================================================
-// Setup — Initialize the WASM Module
-// =============================================================================
-
-/// Initialize the bnto-image WASM module. Call this once when the
-/// Web Worker starts, before calling any processing functions.
-///
-/// Sets up the panic hook so Rust errors show real messages in the
-/// browser console (instead of cryptic "unreachable" errors).
-///
-/// SAFE TO CALL MULTIPLE TIMES — the panic hook uses `set_once()`.
-#[wasm_bindgen]
-pub fn setup() {
-    console_error_panic_hook::set_once();
-}
-
-/// Returns the version of the bnto-image WASM module.
-/// Useful for verifying the correct version is loaded in the browser.
-#[wasm_bindgen]
-pub fn version() -> String {
-    env!("CARGO_PKG_VERSION").to_string()
-}
-
-// =============================================================================
 // Compress Image — The Main Entry Point for JavaScript
 // =============================================================================
+//
+// NOTE: setup() and version() are provided by the bnto-wasm entry point crate.
+// Each node crate only exports its specific processing functions here.
+// The entry point handles one-time initialization (panic hook, versioning).
 
 /// Compress a single image file and return a JSON string with metadata.
 ///

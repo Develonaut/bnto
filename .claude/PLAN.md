@@ -165,7 +165,7 @@ Build one node in Rust, compile to WASM, run in a Web Worker. This is the M1 eva
 
 - [x] `engine-wasm/` — Set up Rust workspace with `wasm-pack` + `wasm-bindgen` targeting web
 - [x] `engine-wasm/` — Build `compress-images` node in Rust (`image` crate with JPEG/PNG/WebP codecs, 44 unit tests, WASM bridge ready for unified entry point)
-- [ ] `apps/web` — Web Worker wrapper with progress reporting via `postMessage`
+- [x] `apps/web` — Web Worker wrapper with progress reporting via `postMessage`
 - [ ] `packages/core` — Browser adapter: detect browser runtime, route execution to WASM Web Worker
 - [ ] `apps/web` — Wire BntoPageShell to use browser adapter for `/compress-images`
 - [ ] `apps/web` — E2E test: compress-images runs entirely client-side (no backend required)

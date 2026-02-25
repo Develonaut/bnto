@@ -32,6 +32,7 @@
 members = [
     "crates/bnto-core",
     "crates/bnto-image",
+    "crates/bnto-wasm",
 ]
 
 # `resolver = "2"` tells Cargo to use the modern dependency resolver.

@@ -35,7 +35,6 @@ checksum = "843867be96c8daad0d758b57df9392b6d8d271134fce549de6ce169ff98a92af"
 name = "bnto-core"
 version = "0.1.0"
 dependencies = [
- "console_error_panic_hook",
  "js-sys",
  "serde",
  "serde_json",
@@ -51,7 +50,6 @@ name = "bnto-image"
 version = "0.1.0"
 dependencies = [
  "bnto-core",
- "console_error_panic_hook",
  "image",
  "js-sys",
  "serde",
@@ -61,6 +59,19 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
  "web-sys",
+]
+
+[[package]]
+name = "bnto-wasm"
+version = "0.1.0"
+dependencies = [
+ "bnto-core",
+ "bnto-image",
+ "console_error_panic_hook",
+ "js-sys",
+ "serde_json",
+ "wasm-bindgen",
+ "wasm-bindgen-test",
 ]
 
 [[package]]
