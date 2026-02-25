@@ -13,7 +13,7 @@ import { Tabs } from "@/components/ui/tabs";
 /* ── Option types ────────────────────────────────────────── */
 
 type Variant = "default" | "secondary" | "outline" | "muted" | "destructive" | "success" | "warning";
-type Size = "sm" | "default" | "lg";
+type Size = "sm" | "md" | "lg";
 
 const VARIANTS: { value: Variant; label: string }[] = [
   { value: "default", label: "Default" },
@@ -27,7 +27,7 @@ const VARIANTS: { value: Variant; label: string }[] = [
 
 const SIZES: { value: Size; label: string }[] = [
   { value: "sm", label: "sm" },
-  { value: "default", label: "default" },
+  { value: "md", label: "md" },
   { value: "lg", label: "lg" },
 ];
 
@@ -77,7 +77,7 @@ function ToggleGroup<T extends string>({
 
 function Playground() {
   const [variant, setVariant] = useState<Variant>("default");
-  const [size, setSize] = useState<Size>("default");
+  const [size, setSize] = useState<Size>("md");
   const [spring, setSpring] = useState<SpringMode>("lg");
 
   return (
@@ -146,7 +146,7 @@ function AllVariants() {
           <Button variant={value} size="sm">
             Learn More
           </Button>
-          <Button variant={value} size="default">
+          <Button variant={value} size="md">
             Learn More
           </Button>
           <Button variant={value} size="lg" data-testid={`pressable-${label.toLowerCase()}-lg`}>

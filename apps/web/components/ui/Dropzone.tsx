@@ -44,7 +44,7 @@ function Dropzone({ className, size, children, ...options }: DropzoneProps) {
     <Button
       asChild
       variant="outline"
-      size="default"
+      size="md"
       className={cn(
         dropzoneVariants({
           size,

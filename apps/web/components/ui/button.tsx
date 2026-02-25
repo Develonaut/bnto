@@ -54,7 +54,7 @@ const buttonVariants = cva(
         muted: "bg-muted text-muted-foreground depth-muted",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3 depth-md",
+        md: "h-9 px-4 py-2 has-[>svg]:px-3 depth-md",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5 depth-sm",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4 depth-lg",
         icon: "size-9 depth-sm",
@@ -64,7 +64,7 @@ const buttonVariants = cva(
     },
     defaultVariants: {
       variant: "default",
-      size: "default",
+      size: "md",
     },
   },
 );

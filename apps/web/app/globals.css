@@ -778,8 +778,7 @@
   user-select: none;
   will-change: transform;
   transition:
-    transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
-    background-color var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+    transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
 }
 
 .pressable::before,
