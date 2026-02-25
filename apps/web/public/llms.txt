@@ -4,9 +4,9 @@
 
 ## Tools
 
-- [Compress Images](https://bnto.dev/compress-images): Compress PNG, JPEG, and WebP images in your browser. Free, no signup.
-- [Resize Images](https://bnto.dev/resize-images): Resize images to exact dimensions or percentages. Free, no signup.
-- [Convert Image Format](https://bnto.dev/convert-image-format): Convert between PNG, JPEG, WebP, and GIF formats. Free, no signup.
-- [Rename Files](https://bnto.dev/rename-files): Batch rename files with patterns. Free, no signup.
-- [Clean CSV](https://bnto.dev/clean-csv): Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.
-- [Rename CSV Columns](https://bnto.dev/rename-csv-columns): Rename CSV column headers in bulk. Free, no signup.
+- [Compress Images](https://bnto.io/compress-images): Compress PNG, JPEG, and WebP images in your browser. Free, no signup.
+- [Resize Images](https://bnto.io/resize-images): Resize images to exact dimensions or percentages. Free, no signup.
+- [Convert Image Format](https://bnto.io/convert-image-format): Convert between PNG, JPEG, WebP, and GIF formats. Free, no signup.
+- [Rename Files](https://bnto.io/rename-files): Batch rename files with patterns. Free, no signup.
+- [Clean CSV](https://bnto.io/clean-csv): Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.
+- [Rename CSV Columns](https://bnto.io/rename-csv-columns): Rename CSV column headers in bulk. Free, no signup.

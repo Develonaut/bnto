@@ -12,7 +12,6 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@/components/ui/Popover";
-import { cn } from "@/lib/utils";
 
 /* ── Menu ────────────────────────────────────────────────────────
  * A composed menu component: Button trigger + Card dropdown.

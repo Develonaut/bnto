@@ -20,4 +20,4 @@ Allow: /
 User-agent: ClaudeBot
 Allow: /
 
-Sitemap: https://bnto.dev/sitemap.xml
+Sitemap: https://bnto.io/sitemap.xml

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -15,15 +15,15 @@ const DEMO_LINKS = [
 ];
 
 export function MenuShowcase() {
-  const boundaryRef = useRef<HTMLDivElement>(null);
+  const [boundaryEl, setBoundaryEl] = useState<HTMLDivElement | null>(null);
 
   return (
-    <div ref={boundaryRef} className="space-y-8">
+    <div ref={setBoundaryEl} className="space-y-8">
       <Row className="flex-wrap gap-6">
         {/* Basic menu */}
         <Menu>
           <Menu.Trigger variant="outline">Recipes</Menu.Trigger>
-          <Menu.Content className="w-[28rem] p-3" boundary={boundaryRef.current}>
+          <Menu.Content className="w-[28rem] p-3" boundary={boundaryEl}>
             <ul className="grid grid-cols-2 gap-1">
               {DEMO_LINKS.map((link) => (
                 <li key={link.label}>
@@ -47,7 +47,7 @@ export function MenuShowcase() {
         {/* Primary variant trigger */}
         <Menu>
           <Menu.Trigger variant="primary">Actions</Menu.Trigger>
-          <Menu.Content className="w-56 p-2" boundary={boundaryRef.current}>
+          <Menu.Content className="w-56 p-2" boundary={boundaryEl}>
             <ul className="space-y-1">
               <li>
                 <Button variant="secondary" className="w-full justify-start" depth={false}>
@@ -71,7 +71,7 @@ export function MenuShowcase() {
         {/* Secondary variant trigger */}
         <Menu>
           <Menu.Trigger variant="secondary">Options</Menu.Trigger>
-          <Menu.Content className="w-48 p-2" depth="sm" boundary={boundaryRef.current}>
+          <Menu.Content className="w-48 p-2" depth="sm" boundary={boundaryEl}>
             <ul className="space-y-1 text-sm">
               <li className="px-3 py-2 rounded-lg hover:bg-muted cursor-pointer">Edit</li>
               <li className="px-3 py-2 rounded-lg hover:bg-muted cursor-pointer">Duplicate</li>
