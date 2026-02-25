@@ -206,22 +206,14 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [x] `packages/core` — browserExecutionReducer: batch progress fileIndex increments correctly
 - [x] `apps/web` — BntoWorker: process after terminate → clear error
 
-#### Wave 3a: Remaining Rust WASM nodes (if Rust passed checkpoint)
+#### Wave 3a: Remaining Rust WASM nodes (uniform Rust engine — checkpoint passed)
 
 - [x] `engine-wasm/` — `resize-images` node (Lanczos3/CatmullRom filters via `image` crate)
 - [ ] `engine-wasm/` — `convert-image-format` node (decode any → encode any via `image` crate)
-- [ ] `engine-wasm/` — `clean-csv` node (`csv` + `serde` crates)
+- [ ] `engine-wasm/` — `clean-csv` node (`csv` + `serde` crates, new `bnto-csv` crate)
 - [ ] `engine-wasm/` — `rename-csv-columns` node (`csv` + `serde` crates, header rewrite)
-- [ ] `apps/web` — `rename-files` stays pure JS (no Rust needed — pattern matching on File objects)
+- [ ] `engine-wasm/` — `rename-files` node (pattern matching + regex via Rust)
 - [ ] `apps/web` — Web Worker wrappers for all new WASM nodes
-- [ ] `apps/web` — E2E tests: all 6 bntos run client-side
-
-#### Wave 3b: JS library adapters (if Rust failed checkpoint)
-
-- [ ] `apps/web` — Image processing via jSquash (MozJPEG, OxiPNG, WebP, AVIF — used by Discourse for 50MB+ images)
-- [ ] `apps/web` — CSV processing via PapaParse (1M rows in ~5s)
-- [ ] `apps/web` — `rename-files` stays pure JS
-- [ ] `apps/web` — Web Worker wrappers for all JS adapters
 - [ ] `apps/web` — E2E tests: all 6 bntos run client-side
 
 #### Wave 4 (sequential — integration + polish)
