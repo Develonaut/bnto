@@ -193,13 +193,13 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [x] `engine-wasm/` — WASM integration tests: large file (1MB+) doesn't OOM, output always <= input
 
 **E2E 4-phase tests** (BEFORE → PROGRESS → FINISH → VERIFY for each bnto):
-- [ ] `apps/web` — E2E: compress JPEG with 4-phase screenshots + download verification
-- [ ] `apps/web` — E2E: compress PNG with 4-phase screenshots + download verification (PNG magic bytes)
-- [ ] `apps/web` — E2E: compress WebP with 4-phase screenshots + download verification (RIFF/WEBP header)
-- [ ] `apps/web` — E2E: unsupported file (.txt) shows user-friendly error, no crash
-- [ ] `apps/web` — E2E: corrupt image shows error card, Run Again available
-- [ ] `apps/web` — E2E: quality slider comparison (q=50 vs q=90, verify q=50 < q=90)
-- [ ] `apps/web` — E2E: batch 5+ files with progress, all outputs valid
+- [x] `apps/web` — E2E: compress JPEG with 4-phase screenshots + download verification
+- [x] `apps/web` — E2E: compress PNG with 4-phase screenshots + download verification (PNG magic bytes)
+- [x] `apps/web` — E2E: compress WebP with 4-phase screenshots + download verification (RIFF/WEBP header)
+- [x] `apps/web` — E2E: unsupported file (.txt) shows user-friendly error, no crash
+- [x] `apps/web` — E2E: corrupt image shows error card, Run Again available
+- [x] `apps/web` — E2E: quality slider comparison (q=50 vs q=90, verify q=50 < q=90)
+- [x] `apps/web` — E2E: batch 5+ files with progress, all outputs valid
 
 **TS service/worker coverage:**
 - [x] `packages/core` — browserExecutionService: engine init failure → clean error state
@@ -513,6 +513,17 @@ Railway first (API) to validate DNS + TLS, then Vercel (web app).
 - [ ] `apps/web` — Add E2E test: `/sitemap.xml` is valid and contains all Tier 1 slugs
 - [ ] `apps/web` — Add Lighthouse CI with `seo: 90` threshold on `/compress-images`
 - [ ] `apps/web` — Migrate remaining SEO assertions from `seo-metadata.spec.ts` to unit tests, slim E2E to redirects + 404 + noindex only
+
+### Testing: Suppress or Handle `[useAnonymousSession] signIn failed` in E2E
+
+**Priority: Low.** During UI-only E2E tests (no Convex backend), `useAnonymousSession` fires a `signIn` call that fails with `TypeError: network error`. This is expected — there's no backend — but it shows up in the Next.js dev overlay as an unhandled error and pollutes E2E console output. Investigate whether to:
+
+1. **Catch and silence in dev/test** — detect missing backend and skip anonymous session setup
+2. **Add retry with backoff** — make `useAnonymousSession` resilient to transient network failures (benefits production too)
+3. **Configure E2E fixture** — add the error to an allowlist in `fixtures.ts` so it's not flagged
+
+- [ ] `@bnto/core` — Investigate `useAnonymousSession` error handling when Convex backend is unreachable
+- [ ] `apps/web` — Decide approach (catch/retry/allowlist) and implement
 
 ### Testing: Standardize E2E Selectors on data-testid
 

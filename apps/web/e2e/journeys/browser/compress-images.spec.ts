@@ -52,7 +52,7 @@ test.describe("compress-images — browser execution", () => {
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("compress-jpg-before.png", {
+    await expect(page).toHaveScreenshot("00-single-jpg-file-selected.png", {
       fullPage: true,
     });
 
@@ -74,7 +74,7 @@ test.describe("compress-images — browser execution", () => {
     ).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("compress-jpg-finish.png", {
+    await expect(page).toHaveScreenshot("00-single-jpg-compressed-result.png", {
       fullPage: true,
     });
 
@@ -119,7 +119,7 @@ test.describe("compress-images — browser execution", () => {
     await expect(page.getByText("2 files selected")).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("compress-batch-before.png", {
+    await expect(page).toHaveScreenshot("00-batch-2-files-selected.png", {
       fullPage: true,
     });
 
@@ -138,7 +138,7 @@ test.describe("compress-images — browser execution", () => {
     ).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("compress-batch-finish.png", {
+    await expect(page).toHaveScreenshot("00-batch-2-files-compressed.png", {
       fullPage: true,
     });
   });
