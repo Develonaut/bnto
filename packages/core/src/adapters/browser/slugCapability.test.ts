@@ -5,16 +5,19 @@ import {
   getBrowserCapableSlugs,
 } from "./slugCapability";
 
+const ALL_TIER_1_SLUGS = [
+  "compress-images",
+  "resize-images",
+  "convert-image-format",
+  "clean-csv",
+  "rename-csv-columns",
+  "rename-files",
+];
+
 describe("slugCapability", () => {
   describe("isBrowserCapable", () => {
-    it("returns true for compress-images", () => {
-      expect(isBrowserCapable("compress-images")).toBe(true);
-    });
-
-    it("returns false for slugs without browser implementations", () => {
-      expect(isBrowserCapable("resize-images")).toBe(false);
-      expect(isBrowserCapable("rename-files")).toBe(false);
-      expect(isBrowserCapable("clean-csv")).toBe(false);
+    it.each(ALL_TIER_1_SLUGS)("returns true for %s", (slug) => {
+      expect(isBrowserCapable(slug)).toBe(true);
     });
 
     it("returns false for unknown slugs", () => {
@@ -24,21 +27,22 @@ describe("slugCapability", () => {
   });
 
   describe("getBrowserNodeType", () => {
-    it("returns the node type for compress-images", () => {
-      expect(getBrowserNodeType("compress-images")).toBe("compress-images");
+    it.each(ALL_TIER_1_SLUGS)("returns the node type for %s", (slug) => {
+      expect(getBrowserNodeType(slug)).toBe(slug);
     });
 
-    it("returns undefined for slugs without browser implementations", () => {
-      expect(getBrowserNodeType("resize-images")).toBeUndefined();
+    it("returns undefined for unknown slugs", () => {
       expect(getBrowserNodeType("unknown")).toBeUndefined();
     });
   });
 
   describe("getBrowserCapableSlugs", () => {
-    it("returns an array of capable slugs", () => {
+    it("returns all 6 Tier 1 slugs", () => {
       const slugs = getBrowserCapableSlugs();
-      expect(slugs).toContain("compress-images");
-      expect(slugs.length).toBeGreaterThan(0);
+      expect(slugs).toHaveLength(6);
+      for (const slug of ALL_TIER_1_SLUGS) {
+        expect(slugs).toContain(slug);
+      }
     });
   });
 });

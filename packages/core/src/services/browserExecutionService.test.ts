@@ -76,9 +76,15 @@ describe("browserExecutionService", () => {
       expect(service.isCapable("compress-images")).toBe(true);
     });
 
-    it("returns false for slugs without browser implementations", () => {
+    it("returns true for all Tier 1 slugs with engine registered", () => {
       registerBrowserEngine(createMockEngine());
-      expect(service.isCapable("resize-images")).toBe(false);
+      expect(service.isCapable("resize-images")).toBe(true);
+      expect(service.isCapable("clean-csv")).toBe(true);
+      expect(service.isCapable("rename-files")).toBe(true);
+    });
+
+    it("returns false for unknown slugs", () => {
+      registerBrowserEngine(createMockEngine());
       expect(service.isCapable("unknown")).toBe(false);
     });
   });

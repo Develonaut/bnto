@@ -20,37 +20,32 @@ import type {
   WorkerErrorResponse,
 } from "./types";
 
-// Web Worker postMessage with Transferable[] support.
-// The main tsconfig uses "lib": ["dom"] which types self.postMessage
-// as the Window overload (no transfer list). This helper provides the
-// correct Worker overload for zero-copy ArrayBuffer transfers.
-function postMessageWithTransfer(message: unknown, transfer: Transferable[]): void {
-  (self as unknown as { postMessage(msg: unknown, transfer: Transferable[]): void })
-    .postMessage(message, transfer);
+/** Signature shared by all WASM node functions (metadata or bytes variant). */
+type WasmFn<T> = (
+  data: Uint8Array,
+  filename: string,
+  paramsJson: string,
+  progressCallback: (percent: number, message: string) => void,
+) => T;
+
+/** A pair of WASM functions for one node type: metadata JSON + raw bytes. */
+interface WasmNodeFns {
+  metadata: WasmFn<string>;
+  bytes: WasmFn<Uint8Array>;
+}
+
+// Worker postMessage with Transferable[] for zero-copy ArrayBuffer transfers.
+function postMessageWithTransfer(msg: unknown, transfer: Transferable[]): void {
+  (self as unknown as { postMessage(m: unknown, t: Transferable[]): void })
+    .postMessage(msg, transfer);
 }
 
 // =============================================================================
-// WASM Module Reference
+// State
 // =============================================================================
 
-// These are populated after init() loads the WASM binary.
-// We use `any` here because the WASM module is dynamically imported
-// and its types aren't available in the worker bundle.
-let wasmSetup: (() => void) | null = null;
 let wasmVersion: (() => string) | null = null;
-let wasmCompressImage: ((
-  data: Uint8Array,
-  filename: string,
-  paramsJson: string,
-  progressCallback: (percent: number, message: string) => void,
-) => string) | null = null;
-let wasmCompressImageBytes: ((
-  data: Uint8Array,
-  filename: string,
-  paramsJson: string,
-  progressCallback: (percent: number, message: string) => void,
-) => Uint8Array) | null = null;
-
+const nodeRegistry = new Map<string, WasmNodeFns>();
 let initialized = false;
 
 // =============================================================================
@@ -59,7 +54,6 @@ let initialized = false;
 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
-
   try {
     switch (request.type) {
       case "init":
@@ -77,59 +71,54 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
 };
 
 // =============================================================================
-// Init — Load the WASM binary
+// Init — Load the WASM binary and register all node types
 // =============================================================================
+
+/** Fetch WASM glue JS, instantiate the module, return the exports object. */
+async function loadWasmModule(baseUrl: string) {
+  const wasmUrl = `${baseUrl}/wasm/bnto_wasm_bg.wasm`;
+  const jsUrl = `${baseUrl}/wasm/bnto_wasm.js`;
+
+  // Fetch the wasm-pack glue code and load it as a module via blob URL.
+  // Absolute URLs are required because bundled workers can't resolve
+  // root-relative paths. baseUrl comes from the main thread's origin.
+  const response = await fetch(jsUrl);
+  const blob = new Blob([await response.text()], { type: "application/javascript" });
+  const blobUrl = URL.createObjectURL(blob);
+  const wasmModule = await import(/* webpackIgnore: true */ blobUrl);
+  URL.revokeObjectURL(blobUrl);
+
+  await wasmModule.default(wasmUrl);
+  return wasmModule;
+}
+
+/** Map each node type to its WASM metadata + bytes function pair. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic WASM module
+function registerNodeTypes(m: Record<string, any>): void {
+  nodeRegistry.set("compress-images", { metadata: m.compress_image, bytes: m.compress_image_bytes });
+  nodeRegistry.set("resize-images", { metadata: m.resize_image, bytes: m.resize_image_bytes });
+  nodeRegistry.set("convert-image-format", { metadata: m.convert_image_format, bytes: m.convert_image_format_bytes });
+  nodeRegistry.set("clean-csv", { metadata: m.clean_csv, bytes: m.clean_csv_bytes });
+  nodeRegistry.set("rename-csv-columns", { metadata: m.rename_csv_columns, bytes: m.rename_csv_columns_bytes });
+  nodeRegistry.set("rename-files", { metadata: m.rename_file, bytes: m.rename_file_bytes });
+}
 
 async function handleInit(baseUrl: string): Promise<void> {
   if (initialized) {
-    // Already initialized — just re-send ready.
     send({ type: "ready", version: wasmVersion?.() ?? "unknown" });
     return;
   }
 
   try {
-    // Dynamically import the WASM glue code from the public directory.
-    // The JS glue file handles fetching and instantiating the .wasm binary.
-    //
-    // We use absolute URLs because Web Workers created from bundled
-    // module URLs (Turbopack, webpack) can't resolve root-relative
-    // paths like "/wasm/...". The baseUrl comes from the main thread's
-    // window.location.origin (e.g., "http://localhost:3100").
-    const wasmUrl = `${baseUrl}/wasm/bnto_wasm_bg.wasm`;
-    const jsUrl = `${baseUrl}/wasm/bnto_wasm.js`;
+    const wasmModule = await loadWasmModule(baseUrl);
 
-    // Fetch and evaluate the JS glue code.
-    const response = await fetch(jsUrl);
-    const jsCode = await response.text();
-
-    // The wasm-pack --target web output uses ES module syntax.
-    // In a worker context, we need to handle this carefully.
-    // We create a blob URL to import it as a module.
-    const blob = new Blob([jsCode], { type: "application/javascript" });
-    const blobUrl = URL.createObjectURL(blob);
-
-    // Use dynamic import to load the module.
-    const wasmModule = await import(/* webpackIgnore: true */ blobUrl);
-    URL.revokeObjectURL(blobUrl);
-
-    // Initialize the WASM binary by passing the URL to the .wasm file.
-    await wasmModule.default(wasmUrl);
-
-    // Store references to the exported functions.
-    wasmSetup = wasmModule.setup;
-    wasmVersion = wasmModule.version;
-    wasmCompressImage = wasmModule.compress_image;
-    wasmCompressImageBytes = wasmModule.compress_image_bytes;
-
-    // Initialize panic hooks.
-    wasmSetup!();
+    const version: () => string = wasmModule.version;
+    wasmVersion = version;
+    registerNodeTypes(wasmModule);
+    wasmModule.setup(); // Initialize panic hooks.
 
     initialized = true;
-
-    send({
-      type: "ready",
-      version: wasmVersion!(),
-    });
+    send({ type: "ready", version: version() });
   } catch (err) {
     sendWorkerError(
       `Failed to initialize WASM: ${err instanceof Error ? err.message : String(err)}`,
@@ -138,7 +127,7 @@ async function handleInit(baseUrl: string): Promise<void> {
 }
 
 // =============================================================================
-// Process — Run a node on a single file
+// Process — Run a WASM node on a single file
 // =============================================================================
 
 function handleProcess(request: {
@@ -155,58 +144,51 @@ function handleProcess(request: {
   }
 
   const { id, data, filename, nodeType, params } = request;
+  const fns = nodeRegistry.get(nodeType);
+  if (!fns) {
+    sendError(id, `Unsupported node type: ${nodeType}`);
+    return;
+  }
 
   try {
-    // Convert ArrayBuffer to Uint8Array for WASM.
-    const bytes = new Uint8Array(data);
-    const paramsJson = JSON.stringify(params);
-
-    // Create a progress callback that forwards to the main thread.
-    const progressCallback = (percent: number, message: string) => {
-      sendProgress(id, percent, message);
-    };
-
-    // Route to the correct WASM function based on node type.
-    switch (nodeType) {
-      case "compress-images": {
-        // Get metadata (for the result response).
-        const metadataJson = wasmCompressImage!(
-          bytes,
-          filename,
-          paramsJson,
-          progressCallback,
-        );
-        const metadata = JSON.parse(metadataJson) as {
-          file?: { filename?: string; mimeType?: string };
-          metadata?: Record<string, unknown>;
-        };
-
-        // Get the actual compressed bytes.
-        const compressedBytes = wasmCompressImageBytes!(
-          bytes,
-          filename,
-          paramsJson,
-          progressCallback,
-        );
-
-        const outputFilename = metadata.file?.filename ?? filename;
-        const outputMimeType = metadata.file?.mimeType ?? "application/octet-stream";
-        // Extract the compressed bytes into a new ArrayBuffer.
-        // We use the ArrayBuffer constructor to guarantee the type
-        // (Uint8Array.buffer is ArrayBufferLike which includes SharedArrayBuffer).
-        const outputBuffer = new ArrayBuffer(compressedBytes.byteLength);
-        new Uint8Array(outputBuffer).set(compressedBytes);
-
-        sendResult(id, outputBuffer, outputFilename, outputMimeType, metadata.metadata ?? {});
-        break;
-      }
-
-      default:
-        sendError(id, `Unsupported node type: ${nodeType}`);
-    }
+    const result = callWasmNode(fns, data, filename, params, (pct, msg) => {
+      sendProgress(id, pct, msg);
+    });
+    sendResult(id, result.data, result.filename, result.mimeType, result.metadata);
   } catch (err) {
     sendError(id, err instanceof Error ? err.message : String(err));
   }
+}
+
+/** Call a WASM node's metadata + bytes functions and package the output. */
+function callWasmNode(
+  fns: WasmNodeFns,
+  data: ArrayBuffer,
+  filename: string,
+  params: Record<string, unknown>,
+  onProgress: (percent: number, message: string) => void,
+) {
+  const bytes = new Uint8Array(data);
+  const paramsJson = JSON.stringify(params);
+
+  const metadataJson = fns.metadata(bytes, filename, paramsJson, onProgress);
+  const meta = JSON.parse(metadataJson) as {
+    file?: { filename?: string; mimeType?: string };
+    metadata?: Record<string, unknown>;
+  };
+
+  const processedBytes = fns.bytes(bytes, filename, paramsJson, onProgress);
+
+  // Copy into a guaranteed ArrayBuffer (not ArrayBufferLike).
+  const outputBuffer = new ArrayBuffer(processedBytes.byteLength);
+  new Uint8Array(outputBuffer).set(processedBytes);
+
+  return {
+    data: outputBuffer,
+    filename: meta.file?.filename ?? filename,
+    mimeType: meta.file?.mimeType ?? "application/octet-stream",
+    metadata: meta.metadata ?? {},
+  };
 }
 
 // =============================================================================
@@ -218,35 +200,21 @@ function send(response: WorkerResponse): void {
 }
 
 function sendProgress(id: string, percent: number, message: string): void {
-  const response: ProgressResponse = { type: "progress", id, percent, message };
-  self.postMessage(response);
+  self.postMessage({ type: "progress", id, percent, message } satisfies ProgressResponse);
 }
 
 function sendResult(
-  id: string,
-  data: ArrayBuffer,
-  filename: string,
-  mimeType: string,
-  metadata: Record<string, unknown>,
+  id: string, data: ArrayBuffer, filename: string,
+  mimeType: string, metadata: Record<string, unknown>,
 ): void {
-  const response: ResultResponse = {
-    type: "result",
-    id,
-    data,
-    filename,
-    mimeType,
-    metadata,
-  };
-  // Transfer the ArrayBuffer to avoid copying (zero-copy).
+  const response: ResultResponse = { type: "result", id, data, filename, mimeType, metadata };
   postMessageWithTransfer(response, [data]);
 }
 
 function sendError(id: string, message: string): void {
-  const response: ErrorResponse = { type: "error", id, message };
-  self.postMessage(response);
+  self.postMessage({ type: "error", id, message } satisfies ErrorResponse);
 }
 
 function sendWorkerError(message: string): void {
-  const response: WorkerErrorResponse = { type: "worker-error", message };
-  self.postMessage(response);
+  self.postMessage({ type: "worker-error", message } satisfies WorkerErrorResponse);
 }

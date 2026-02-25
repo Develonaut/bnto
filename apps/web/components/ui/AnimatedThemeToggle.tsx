@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useSyncExternalStore } from "react";
 import { Moon, Sun, Sunset } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -15,12 +15,12 @@ function nextTheme(current: ThemeName): ThemeName {
   return THEME_CYCLE[(idx + 1) % THEME_CYCLE.length];
 }
 
+const noop = () => () => {};
+
 export function AnimatedThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(noop, () => true, () => false);
 
   // Before mount, resolvedTheme is undefined (SSR). Don't render a theme
   // attribute until mounted to avoid hydration mismatch. All icons start at

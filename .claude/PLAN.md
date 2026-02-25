@@ -26,7 +26,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 ## Current State
 
 - **Active:** Closing Sprint 2A → Sprint 2B (Browser Execution, M1 MVP)
-- **Strategic direction:** Browser-first. All Tier 1 bntos run client-side via Rust→WASM (or JS fallback). Cloud execution (Railway + R2) is built and working — ready for M4 (premium server-side bntos). See ROADMAP.md.
+- **Strategic direction:** Browser-first. All Tier 1 bntos run client-side via Rust→WASM (uniform engine, no JS fallback). Cloud execution (Railway + R2) is built and working — ready for M4 (premium server-side bntos). See ROADMAP.md.
 - **Cloud pipeline:** Complete. 6/6 integration E2E tests pass. Go API on Railway, R2 file transit, Convex real-time subscriptions — all verified end-to-end. This is M4 infrastructure delivered ahead of schedule.
 - **Auth:** Migrated to `@convex-dev/auth`. Anonymous sessions create real `users` rows. Integration tests complete. `AUTH_SECRET` env var required in Convex deployments.
 - **Engine:** Complete. Go CLI with 10 node types (>90% coverage), Go HTTP API on Railway, BntoService shared API layer. Paused for web — browser adapter is M1 priority.
@@ -209,11 +209,11 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 #### Wave 3a: Remaining Rust WASM nodes (uniform Rust engine — checkpoint passed)
 
 - [x] `engine-wasm/` — `resize-images` node (Lanczos3/CatmullRom filters via `image` crate)
-- [ ] **CLAIMED** `engine-wasm/` — `convert-image-format` node (decode any → encode any via `image` crate)
-- [ ] **CLAIMED** `engine-wasm/` — `clean-csv` node (`csv` + `serde` crates, new `bnto-csv` crate)
-- [ ] **CLAIMED** `engine-wasm/` — `rename-csv-columns` node (`csv` + `serde` crates, header rewrite)
-- [ ] **CLAIMED** `engine-wasm/` — `rename-files` node (pattern matching + regex via Rust)
-- [ ] `apps/web` — Web Worker wrappers for all new WASM nodes
+- [x] `engine-wasm/` — `convert-image-format` node (decode any → encode any via `image` crate)
+- [x] `engine-wasm/` — `clean-csv` node (`csv` + `serde` crates, new `bnto-csv` crate)
+- [x] `engine-wasm/` — `rename-csv-columns` node (`csv` + `serde` crates, header rewrite)
+- [x] `engine-wasm/` — `rename-files` node (pattern matching + regex via Rust)
+- [x] `apps/web` — Web Worker wrappers for all new WASM nodes
 - [ ] `apps/web` — E2E tests: all 6 bntos run client-side
 
 #### Wave 4 (sequential — integration + polish)
