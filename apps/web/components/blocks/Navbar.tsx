@@ -96,16 +96,30 @@ const RECIPES: RecipeCategory[] = [
   },
 ];
 
-function navButtonProps(pathname: string, href: string) {
+function navButtonProps(
+  pathname: string,
+  href: string,
+  setPendingHref: (href: string) => void,
+  pendingHref: string | null,
+) {
   return {
     depth: "sm" as const,
-    pressed: pathname === href,
+    pressed: pathname === href || pendingHref === href,
+    onClick: () => setPendingHref(href),
   };
 }
 
 export const Navbar = () => {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  // Clear pending state once the pathname catches up
+  useEffect(() => {
+    if (pendingHref && pathname === pendingHref) {
+      setPendingHref(null);
+    }
+  }, [pathname, pendingHref]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -179,7 +193,7 @@ export const Navbar = () => {
                   variant="outline"
                   className="hidden lg:inline-flex"
                   href="/motorway"
-                  {...navButtonProps(pathname, "/motorway")}
+                  {...navButtonProps(pathname, "/motorway", setPendingHref, pendingHref)}
                 >
                   <TrafficConeIcon />
                   Motorway
