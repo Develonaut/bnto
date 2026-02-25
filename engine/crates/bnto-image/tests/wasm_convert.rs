@@ -29,7 +29,7 @@ mod common;
 use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
-use common::{init_panic_hook, noop_callback, recording_callback, TEST_JPEG, TEST_PNG, TEST_WEBP};
+use common::{TEST_JPEG, TEST_PNG, TEST_WEBP, init_panic_hook, noop_callback, recording_callback};
 
 // Configure tests to run in Node.js.
 wasm_bindgen_test_configure!(run_in_node_experimental);
@@ -44,12 +44,7 @@ fn test_convert_jpeg_to_png_metadata_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = convert_image_format(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"format": "png"}"#,
-        callback,
-    );
+    let result = convert_image_format(TEST_JPEG, "photo.jpg", r#"{"format": "png"}"#, callback);
 
     assert!(result.is_ok(), "JPEG -> PNG conversion should succeed");
 
@@ -85,17 +80,10 @@ fn test_convert_jpeg_to_png_bytes_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = convert_image_format_bytes(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"format": "png"}"#,
-        callback,
-    );
+    let result =
+        convert_image_format_bytes(TEST_JPEG, "photo.jpg", r#"{"format": "png"}"#, callback);
 
-    assert!(
-        result.is_ok(),
-        "JPEG -> PNG byte conversion should succeed"
-    );
+    assert!(result.is_ok(), "JPEG -> PNG byte conversion should succeed");
 
     let bytes = result.unwrap();
     assert!(!bytes.is_empty(), "Converted PNG bytes should not be empty");
@@ -123,10 +111,7 @@ fn test_convert_png_to_webp_bytes_via_wasm() {
         callback,
     );
 
-    assert!(
-        result.is_ok(),
-        "PNG -> WebP byte conversion should succeed"
-    );
+    assert!(result.is_ok(), "PNG -> WebP byte conversion should succeed");
 
     let bytes = result.unwrap();
     assert!(
@@ -154,12 +139,8 @@ fn test_convert_webp_to_jpeg_bytes_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = convert_image_format_bytes(
-        TEST_WEBP,
-        "image.webp",
-        r#"{"format": "jpeg"}"#,
-        callback,
-    );
+    let result =
+        convert_image_format_bytes(TEST_WEBP, "image.webp", r#"{"format": "jpeg"}"#, callback);
 
     assert!(
         result.is_ok(),
@@ -188,12 +169,7 @@ fn test_convert_reports_progress() {
     init_panic_hook();
     let (callback, calls) = recording_callback();
 
-    let result = convert_image_format(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"format": "png"}"#,
-        callback,
-    );
+    let result = convert_image_format(TEST_JPEG, "photo.jpg", r#"{"format": "png"}"#, callback);
 
     assert!(result.is_ok(), "Conversion should succeed");
 
@@ -215,12 +191,8 @@ fn test_convert_invalid_format_returns_error() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = convert_image_format_bytes(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"format": "bmp"}"#,
-        callback,
-    );
+    let result =
+        convert_image_format_bytes(TEST_JPEG, "photo.jpg", r#"{"format": "bmp"}"#, callback);
 
     assert!(
         result.is_err(),
@@ -234,12 +206,7 @@ fn test_convert_missing_format_returns_error() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = convert_image_format_bytes(
-        TEST_JPEG,
-        "photo.jpg",
-        "{}",
-        callback,
-    );
+    let result = convert_image_format_bytes(TEST_JPEG, "photo.jpg", "{}", callback);
 
     assert!(
         result.is_err(),

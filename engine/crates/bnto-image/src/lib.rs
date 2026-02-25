@@ -31,6 +31,12 @@
 /// (JPEG, PNG, WebP) by examining the file extension and magic bytes.
 pub mod format;
 
+/// EXIF orientation — extracts orientation tags from image metadata and
+/// applies the correct rotation/flip so output images display correctly.
+/// This is critical for smartphone photos, which store pixels sideways
+/// and rely on EXIF orientation to display correctly.
+pub mod orientation;
+
 /// The compress-images node — reduces image file size by re-encoding
 /// with optimized settings (JPEG quality, PNG compression level).
 pub mod compress;
@@ -46,6 +52,12 @@ pub mod convert;
 /// WASM bridge — the JavaScript-callable functions that the Web Worker
 /// uses to invoke image processing. This is the "door" between JS and Rust.
 pub mod wasm_bridge;
+
+/// Shared test utilities — helpers for creating test fixtures with specific
+/// properties (EXIF orientation, known dimensions, gradient patterns).
+/// Only compiled during `cargo test`, invisible to production code.
+#[cfg(test)]
+mod test_utils;
 
 // --- Re-exports ---
 // So consumers can write `use bnto_image::CompressImages` directly.

@@ -44,9 +44,10 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-use image::ImageReader;
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
+
+use crate::orientation::decode_with_orientation;
 
 use crate::format::ImageFormat;
 
@@ -141,12 +142,10 @@ impl CompressImages {
         //   an exception in JS, but explicit.
         progress.report(10, "Decoding JPEG...");
 
-        let cursor = Cursor::new(data);
-        let img = ImageReader::new(cursor)
-            .with_guessed_format()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read image: {e}")))?
-            .decode()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to decode JPEG: {e}")))?;
+        // Decode with EXIF orientation applied. This ensures smartphone
+        // photos (which store pixels sideways + an EXIF tag) come out
+        // correctly oriented after compression.
+        let img = decode_with_orientation(data)?;
 
         // --- Step 2: Re-encode with the requested quality ---
         //
@@ -179,12 +178,10 @@ impl CompressImages {
         // --- Step 1: Decode the PNG into raw pixel data ---
         progress.report(10, "Decoding PNG...");
 
-        let cursor = Cursor::new(data);
-        let img = ImageReader::new(cursor)
-            .with_guessed_format()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read image: {e}")))?
-            .decode()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to decode PNG: {e}")))?;
+        // Decode with EXIF orientation applied. PNG doesn't have EXIF,
+        // so this is effectively a plain decode — but using the shared
+        // function ensures consistency across all image nodes.
+        let img = decode_with_orientation(data)?;
 
         // --- Step 2: Re-encode with optimized compression settings ---
         //
@@ -224,12 +221,8 @@ impl CompressImages {
         // --- Step 1: Decode the WebP into raw pixel data ---
         progress.report(10, "Decoding WebP...");
 
-        let cursor = Cursor::new(data);
-        let img = ImageReader::new(cursor)
-            .with_guessed_format()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read image: {e}")))?
-            .decode()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to decode WebP: {e}")))?;
+        // Decode with EXIF orientation applied.
+        let img = decode_with_orientation(data)?;
 
         // --- Step 2: Re-encode as lossless WebP ---
         //
@@ -1891,5 +1884,82 @@ mod tests {
             Some(ImageFormat::Jpeg),
             "Output should be a valid JPEG even at 1x1 / quality 100"
         );
+    }
+
+    // =========================================================================
+    // EXIF Orientation Tests — Full Pipeline
+    // =========================================================================
+    //
+    // These tests verify that the compress pipeline correctly applies EXIF
+    // orientation. A smartphone portrait photo (60×40 stored pixels with
+    // EXIF orientation=6) should produce a 40×60 compressed output.
+
+    use crate::test_utils::{create_test_jpeg, inject_exif_orientation};
+
+    #[test]
+    fn test_compress_jpeg_applies_exif_orientation_rotate90() {
+        // Create a 60×40 JPEG with EXIF orientation=6 (rotate 90° CW).
+        // After compression, the output should be 40×60 (dimensions swapped).
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 6);
+
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input(&exif_jpeg, "portrait.jpg");
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_data = &result.files[0].data;
+
+        // Decode the output (plain decode — no EXIF in the output since
+        // the image crate strips metadata during encoding).
+        let output_img = decode_with_orientation(output_data).unwrap();
+
+        assert_eq!(
+            output_img.width(),
+            40,
+            "Compressed portrait should be 40 wide"
+        );
+        assert_eq!(
+            output_img.height(),
+            60,
+            "Compressed portrait should be 60 tall"
+        );
+    }
+
+    #[test]
+    fn test_compress_jpeg_applies_exif_orientation_rotate180() {
+        // Create a 60×40 JPEG with EXIF orientation=3 (rotate 180°).
+        // After compression, dimensions stay 60×40 (180° doesn't swap).
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 3);
+
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input(&exif_jpeg, "flipped.jpg");
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_data = &result.files[0].data;
+
+        let output_img = decode_with_orientation(output_data).unwrap();
+        assert_eq!(output_img.width(), 60);
+        assert_eq!(output_img.height(), 40);
+    }
+
+    #[test]
+    fn test_compress_jpeg_no_exif_preserves_dimensions() {
+        // A normal JPEG (no EXIF orientation) should pass through
+        // with dimensions unchanged — backward compatibility check.
+        let jpeg = create_test_jpeg(60, 40);
+
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input(&jpeg, "landscape.jpg");
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_data = &result.files[0].data;
+
+        let output_img = decode_with_orientation(output_data).unwrap();
+        assert_eq!(output_img.width(), 60);
+        assert_eq!(output_img.height(), 40);
     }
 }

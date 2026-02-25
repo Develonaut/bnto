@@ -28,7 +28,9 @@ mod common;
 use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
-use common::{TEST_JPEG, TEST_PNG, TEST_WEBP, LARGE_JPEG, init_panic_hook, noop_callback, recording_callback};
+use common::{
+    LARGE_JPEG, TEST_JPEG, TEST_PNG, TEST_WEBP, init_panic_hook, noop_callback, recording_callback,
+};
 
 // Configure tests to run in Node.js.
 wasm_bindgen_test_configure!(run_in_node_experimental);
@@ -44,12 +46,7 @@ fn test_resize_jpeg_metadata_via_wasm() {
     let callback = noop_callback();
 
     // Resize the 100×100 test JPEG to 50 pixels wide.
-    let result = resize_image(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"width": 50}"#,
-        callback,
-    );
+    let result = resize_image(TEST_JPEG, "photo.jpg", r#"{"width": 50}"#, callback);
 
     assert!(result.is_ok(), "resize_image should succeed for JPEG");
 
@@ -85,23 +82,12 @@ fn test_resize_jpeg_bytes_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = resize_image_bytes(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"width": 50}"#,
-        callback,
-    );
+    let result = resize_image_bytes(TEST_JPEG, "photo.jpg", r#"{"width": 50}"#, callback);
 
-    assert!(
-        result.is_ok(),
-        "resize_image_bytes should succeed for JPEG"
-    );
+    assert!(result.is_ok(), "resize_image_bytes should succeed for JPEG");
 
     let bytes = result.unwrap();
-    assert!(
-        !bytes.is_empty(),
-        "Resized JPEG bytes should not be empty"
-    );
+    assert!(!bytes.is_empty(), "Resized JPEG bytes should not be empty");
 
     // Verify valid JPEG magic bytes (FF D8 FF).
     assert_eq!(bytes[0], 0xFF, "First byte of JPEG should be 0xFF");
@@ -139,17 +125,9 @@ fn test_resize_png_bytes_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = resize_image_bytes(
-        TEST_PNG,
-        "screenshot.png",
-        r#"{"width": 50}"#,
-        callback,
-    );
+    let result = resize_image_bytes(TEST_PNG, "screenshot.png", r#"{"width": 50}"#, callback);
 
-    assert!(
-        result.is_ok(),
-        "resize_image_bytes should succeed for PNG"
-    );
+    assert!(result.is_ok(), "resize_image_bytes should succeed for PNG");
 
     let bytes = result.unwrap();
     assert!(!bytes.is_empty(), "Resized PNG bytes should not be empty");
@@ -170,23 +148,12 @@ fn test_resize_webp_bytes_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = resize_image_bytes(
-        TEST_WEBP,
-        "image.webp",
-        r#"{"width": 50}"#,
-        callback,
-    );
+    let result = resize_image_bytes(TEST_WEBP, "image.webp", r#"{"width": 50}"#, callback);
 
-    assert!(
-        result.is_ok(),
-        "resize_image_bytes should succeed for WebP"
-    );
+    assert!(result.is_ok(), "resize_image_bytes should succeed for WebP");
 
     let bytes = result.unwrap();
-    assert!(
-        !bytes.is_empty(),
-        "Resized WebP bytes should not be empty"
-    );
+    assert!(!bytes.is_empty(), "Resized WebP bytes should not be empty");
 
     // Verify valid WebP (RIFF container with WEBP marker).
     assert_eq!(bytes[0], b'R', "WebP should start with RIFF");
@@ -209,12 +176,7 @@ fn test_resize_height_only_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = resize_image_bytes(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"height": 50}"#,
-        callback,
-    );
+    let result = resize_image_bytes(TEST_JPEG, "photo.jpg", r#"{"height": 50}"#, callback);
 
     assert!(result.is_ok(), "resize with height-only should succeed");
     let bytes = result.unwrap();
@@ -253,7 +215,10 @@ fn test_resize_maintain_aspect_false_via_wasm() {
         callback,
     );
 
-    assert!(result.is_ok(), "resize with maintainAspect=false should succeed");
+    assert!(
+        result.is_ok(),
+        "resize with maintainAspect=false should succeed"
+    );
     let bytes = result.unwrap();
     assert!(!bytes.is_empty());
 }
@@ -268,12 +233,7 @@ fn test_resize_upscale_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = resize_image_bytes(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"width": 200}"#,
-        callback,
-    );
+    let result = resize_image_bytes(TEST_JPEG, "photo.jpg", r#"{"width": 200}"#, callback);
 
     assert!(result.is_ok(), "upscale resize should succeed");
     let bytes = result.unwrap();
@@ -299,12 +259,7 @@ fn test_resize_large_jpeg_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = resize_image_bytes(
-        LARGE_JPEG,
-        "large.jpg",
-        r#"{"width": 300}"#,
-        callback,
-    );
+    let result = resize_image_bytes(LARGE_JPEG, "large.jpg", r#"{"width": 300}"#, callback);
 
     assert!(result.is_ok(), "resize of large JPEG should succeed");
     let bytes = result.unwrap();
@@ -328,12 +283,7 @@ fn test_resize_no_dimensions_returns_error() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = resize_image_bytes(
-        TEST_JPEG,
-        "photo.jpg",
-        "{}",
-        callback,
-    );
+    let result = resize_image_bytes(TEST_JPEG, "photo.jpg", "{}", callback);
 
     assert!(
         result.is_err(),
@@ -391,12 +341,7 @@ fn test_resize_reports_progress() {
     init_panic_hook();
     let (callback, calls) = recording_callback();
 
-    let result = resize_image(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"width": 50}"#,
-        callback,
-    );
+    let result = resize_image(TEST_JPEG, "photo.jpg", r#"{"width": 50}"#, callback);
 
     assert!(result.is_ok(), "resize should succeed");
 

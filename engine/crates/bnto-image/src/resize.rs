@@ -57,12 +57,12 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-use image::imageops::FilterType;
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::{CompressionType, FilterType as PngFilterType, PngEncoder};
-use image::ImageReader;
+use image::imageops::FilterType;
 
 use crate::format::ImageFormat;
+use crate::orientation::decode_with_orientation;
 
 // =============================================================================
 // Configuration Constants
@@ -366,17 +366,14 @@ impl NodeProcessor for ResizeImages {
 
         // --- Step 3: Decode the image into pixels ---
         //
-        // `Cursor::new(data)` wraps our byte slice so the `image` crate
-        // can read from it like a file. Then we decode to get a
-        // `DynamicImage` — a pixel grid we can resize.
+        // `decode_with_orientation` reads EXIF orientation tags and applies
+        // them to the pixel grid. This is crucial for resize: if a smartphone
+        // photo is 4000×3000 stored pixels with orientation=6 (rotate 90°),
+        // the oriented dimensions are 3000×4000. The user sees a 3000×4000
+        // portrait, so resize should work against THOSE dimensions.
         progress.report(10, "Decoding image...");
 
-        let cursor = Cursor::new(&input.data);
-        let img = ImageReader::new(cursor)
-            .with_guessed_format()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read image: {e}")))?
-            .decode()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to decode image: {e}")))?;
+        let img = decode_with_orientation(&input.data)?;
 
         // --- Step 4: Calculate the target dimensions ---
         //
@@ -486,36 +483,26 @@ impl NodeProcessor for ResizeImages {
 
         // At least one dimension required
         if width.is_none() && height.is_none() {
-            errors.push(
-                "At least one dimension (width or height) must be specified".to_string(),
-            );
+            errors.push("At least one dimension (width or height) must be specified".to_string());
         }
 
         // Validate width range
         if let Some(w) = width {
             if w < MIN_DIMENSION {
-                errors.push(format!(
-                    "Width must be at least {MIN_DIMENSION}, got {w}"
-                ));
+                errors.push(format!("Width must be at least {MIN_DIMENSION}, got {w}"));
             }
             if w > MAX_DIMENSION {
-                errors.push(format!(
-                    "Width must be at most {MAX_DIMENSION}, got {w}"
-                ));
+                errors.push(format!("Width must be at most {MAX_DIMENSION}, got {w}"));
             }
         }
 
         // Validate height range
         if let Some(h) = height {
             if h < MIN_DIMENSION {
-                errors.push(format!(
-                    "Height must be at least {MIN_DIMENSION}, got {h}"
-                ));
+                errors.push(format!("Height must be at least {MIN_DIMENSION}, got {h}"));
             }
             if h > MAX_DIMENSION {
-                errors.push(format!(
-                    "Height must be at most {MAX_DIMENSION}, got {h}"
-                ));
+                errors.push(format!("Height must be at most {MAX_DIMENSION}, got {h}"));
             }
         }
 
@@ -529,9 +516,7 @@ impl NodeProcessor for ResizeImages {
                     errors.push(format!("Quality must be between 1 and 100, got {q}"));
                 }
                 None => {
-                    errors.push(format!(
-                        "Quality must be a number, got: {quality_val}"
-                    ));
+                    errors.push(format!("Quality must be a number, got: {quality_val}"));
                 }
             }
         }
@@ -564,8 +549,7 @@ mod tests {
     const TEST_WEBP: &[u8] = include_bytes!("../../../../test-fixtures/images/small.webp");
 
     /// A medium JPEG image (400x400, ~23 KB) — for testing visible dimension changes
-    const TEST_MEDIUM_JPEG: &[u8] =
-        include_bytes!("../../../../test-fixtures/images/medium.jpg");
+    const TEST_MEDIUM_JPEG: &[u8] = include_bytes!("../../../../test-fixtures/images/medium.jpg");
 
     /// Helper: create a NodeInput with given data, filename, and params.
     fn make_input(
@@ -604,13 +588,10 @@ mod tests {
     }
 
     /// Helper: decode an image from bytes and return its dimensions.
+    /// Uses decode_with_orientation so test assertions match what the
+    /// processor would see (orientation-corrected dimensions).
     fn get_image_dimensions(data: &[u8]) -> (u32, u32) {
-        let cursor = Cursor::new(data);
-        let img = ImageReader::new(cursor)
-            .with_guessed_format()
-            .unwrap()
-            .decode()
-            .unwrap();
+        let img = decode_with_orientation(data).unwrap();
         (img.width(), img.height())
     }
 
@@ -638,48 +619,42 @@ mod tests {
     #[test]
     fn test_calculate_dimensions_both_specified() {
         // When both width and height are given, use them directly.
-        let result =
-            ResizeImages::calculate_dimensions(Some(300), Some(200), 1200, 800, true);
+        let result = ResizeImages::calculate_dimensions(Some(300), Some(200), 1200, 800, true);
         assert_eq!(result.unwrap(), (300, 200));
     }
 
     #[test]
     fn test_calculate_dimensions_width_only_with_aspect() {
         // Width=600, original=1200×800 → height = 600 × (800/1200) = 400
-        let result =
-            ResizeImages::calculate_dimensions(Some(600), None, 1200, 800, true);
+        let result = ResizeImages::calculate_dimensions(Some(600), None, 1200, 800, true);
         assert_eq!(result.unwrap(), (600, 400));
     }
 
     #[test]
     fn test_calculate_dimensions_height_only_with_aspect() {
         // Height=400, original=1200×800 → width = 400 × (1200/800) = 600
-        let result =
-            ResizeImages::calculate_dimensions(None, Some(400), 1200, 800, true);
+        let result = ResizeImages::calculate_dimensions(None, Some(400), 1200, 800, true);
         assert_eq!(result.unwrap(), (600, 400));
     }
 
     #[test]
     fn test_calculate_dimensions_width_only_no_aspect() {
         // Width=600, maintainAspect=false → height stays at original (800)
-        let result =
-            ResizeImages::calculate_dimensions(Some(600), None, 1200, 800, false);
+        let result = ResizeImages::calculate_dimensions(Some(600), None, 1200, 800, false);
         assert_eq!(result.unwrap(), (600, 800));
     }
 
     #[test]
     fn test_calculate_dimensions_height_only_no_aspect() {
         // Height=400, maintainAspect=false → width stays at original (1200)
-        let result =
-            ResizeImages::calculate_dimensions(None, Some(400), 1200, 800, false);
+        let result = ResizeImages::calculate_dimensions(None, Some(400), 1200, 800, false);
         assert_eq!(result.unwrap(), (1200, 400));
     }
 
     #[test]
     fn test_calculate_dimensions_neither_specified_is_error() {
         // No width or height — that's an error.
-        let result =
-            ResizeImages::calculate_dimensions(None, None, 1200, 800, true);
+        let result = ResizeImages::calculate_dimensions(None, None, 1200, 800, true);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("At least one dimension"));
@@ -688,8 +663,7 @@ mod tests {
     #[test]
     fn test_calculate_dimensions_zero_original_is_error() {
         // Original image has zero dimensions — can't compute aspect ratio.
-        let result =
-            ResizeImages::calculate_dimensions(Some(100), None, 0, 800, true);
+        let result = ResizeImages::calculate_dimensions(Some(100), None, 0, 800, true);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("zero dimensions"));
@@ -698,8 +672,7 @@ mod tests {
     #[test]
     fn test_calculate_dimensions_exceeds_max_is_error() {
         // Target exceeds MAX_DIMENSION (16384).
-        let result =
-            ResizeImages::calculate_dimensions(Some(20000), Some(20000), 100, 100, false);
+        let result = ResizeImages::calculate_dimensions(Some(20000), Some(20000), 100, 100, false);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("exceed maximum"));
@@ -709,8 +682,7 @@ mod tests {
     fn test_calculate_dimensions_aspect_ratio_rounds_correctly() {
         // 1920×1080 resized to width=1280
         // height = 1280 × (1080/1920) = 1280 × 0.5625 = 720.0 (exact)
-        let result =
-            ResizeImages::calculate_dimensions(Some(1280), None, 1920, 1080, true);
+        let result = ResizeImages::calculate_dimensions(Some(1280), None, 1920, 1080, true);
         assert_eq!(result.unwrap(), (1280, 720));
     }
 
@@ -718,8 +690,7 @@ mod tests {
     fn test_calculate_dimensions_aspect_ratio_rounds_up() {
         // 1000×333 resized to width=500
         // height = 500 × (333/1000) = 500 × 0.333 = 166.5 → rounds to 167
-        let result =
-            ResizeImages::calculate_dimensions(Some(500), None, 1000, 333, true);
+        let result = ResizeImages::calculate_dimensions(Some(500), None, 1000, 333, true);
         let (_, h) = result.unwrap();
         assert_eq!(h, 167); // rounded from 166.5
     }
@@ -728,8 +699,7 @@ mod tests {
     fn test_calculate_dimensions_tiny_aspect_minimum_1px() {
         // 1000×1 resized to width=2
         // height = 2 × (1/1000) = 0.002 → rounds to 0 → clamped to 1
-        let result =
-            ResizeImages::calculate_dimensions(Some(2), None, 1000, 1, true);
+        let result = ResizeImages::calculate_dimensions(Some(2), None, 1000, 1, true);
         let (w, h) = result.unwrap();
         assert_eq!(w, 2);
         assert_eq!(h, 1); // minimum 1px
@@ -801,10 +771,7 @@ mod tests {
     #[test]
     fn test_get_maintain_aspect_explicit_false() {
         let mut params = serde_json::Map::new();
-        params.insert(
-            "maintainAspect".to_string(),
-            serde_json::Value::Bool(false),
-        );
+        params.insert("maintainAspect".to_string(), serde_json::Value::Bool(false));
         assert!(!ResizeImages::get_maintain_aspect(&params));
     }
 
@@ -1096,11 +1063,7 @@ mod tests {
         // Random bytes that aren't a valid image
         let processor = ResizeImages::new();
         let progress = ProgressReporter::new_noop();
-        let input = make_input(
-            b"not an image",
-            "test.txt",
-            width_params(50),
-        );
+        let input = make_input(b"not an image", "test.txt", width_params(50));
 
         let result = processor.process(input, &progress);
         assert!(result.is_err());
@@ -1165,5 +1128,106 @@ mod tests {
         let (w, h) = get_image_dimensions(&output.files[0].data);
         assert_eq!(w, 1);
         assert_eq!(h, 1);
+    }
+
+    // =========================================================================
+    // EXIF Orientation Tests — Full Pipeline
+    // =========================================================================
+    //
+    // These tests verify that resize uses ORIENTED dimensions, not raw
+    // stored pixel dimensions. A 60×40 stored image with orientation=6
+    // (rotate 90° CW) is a 40×60 portrait. Resizing "width=20" with
+    // aspect ratio should calculate height from the oriented 40×60 ratio.
+
+    use crate::test_utils::{create_test_jpeg, inject_exif_orientation};
+
+    #[test]
+    fn test_resize_exif_rotated_image_uses_oriented_dimensions() {
+        // Create a 60×40 JPEG with EXIF orientation=6 (rotate 90° CW).
+        // After orientation, the image is 40×60 (portrait).
+        // Resize to width=20, maintain aspect ratio.
+        // Expected: 20×30 (aspect ratio 40:60 = 2:3).
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 6);
+
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "portrait.jpg", width_params(20));
+
+        let result = processor.process(input, &progress).unwrap();
+        let (w, h) = get_image_dimensions(&result.files[0].data);
+
+        assert_eq!(w, 20, "Resized width should be 20");
+        assert_eq!(
+            h, 30,
+            "Resized height should preserve 2:3 portrait aspect ratio"
+        );
+    }
+
+    #[test]
+    fn test_resize_exif_rotated_image_height_only() {
+        // Same 60×40 image with orientation=6 → oriented 40×60.
+        // Resize to height=30, maintain aspect ratio.
+        // Expected: 20×30 (aspect ratio 40:60 = 2:3).
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 6);
+
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "portrait.jpg", height_params(30));
+
+        let result = processor.process(input, &progress).unwrap();
+        let (w, h) = get_image_dimensions(&result.files[0].data);
+
+        assert_eq!(w, 20, "Width should maintain 2:3 aspect ratio");
+        assert_eq!(h, 30, "Height should be 30 as requested");
+    }
+
+    #[test]
+    fn test_resize_no_exif_preserves_normal_behavior() {
+        // A normal JPEG without EXIF orientation — backward compatibility.
+        // 60×40 image, resize to width=30, maintain aspect.
+        // Expected: 30×20 (aspect ratio 60:40 = 3:2).
+        let jpeg = create_test_jpeg(60, 40);
+
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&jpeg, "landscape.jpg", width_params(30));
+
+        let result = processor.process(input, &progress).unwrap();
+        let (w, h) = get_image_dimensions(&result.files[0].data);
+
+        assert_eq!(w, 30);
+        assert_eq!(h, 20, "Height should preserve 3:2 landscape aspect ratio");
+    }
+
+    #[test]
+    fn test_resize_metadata_reports_oriented_dimensions() {
+        // Verify that the metadata (originalWidth, originalHeight) in the
+        // output reflects the ORIENTED dimensions, not the raw stored ones.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 6);
+
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "portrait.jpg", width_params(20));
+
+        let result = processor.process(input, &progress).unwrap();
+
+        // After orientation=6, the image is 40×60 (portrait).
+        // The metadata should report these oriented dimensions.
+        let orig_w = result
+            .metadata
+            .get("originalWidth")
+            .and_then(|v| v.as_u64())
+            .unwrap();
+        let orig_h = result
+            .metadata
+            .get("originalHeight")
+            .and_then(|v| v.as_u64())
+            .unwrap();
+
+        assert_eq!(orig_w, 40, "Metadata should report oriented width");
+        assert_eq!(orig_h, 60, "Metadata should report oriented height");
     }
 }

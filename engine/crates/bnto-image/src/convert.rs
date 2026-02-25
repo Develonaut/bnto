@@ -45,11 +45,11 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-use image::ImageReader;
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 
 use crate::format::ImageFormat;
+use crate::orientation::decode_with_orientation;
 
 // =============================================================================
 // Configuration Constants
@@ -111,10 +111,15 @@ impl ConvertImageFormat {
     // Internal Methods — The Actual Conversion Logic
     // =========================================================================
 
-    /// Decode any supported image format into pixel data.
+    /// Decode any supported image format into pixel data, applying EXIF orientation.
     ///
     /// This is the first step of conversion: take raw file bytes and turn
     /// them into a grid of pixels that we can then re-encode in any format.
+    ///
+    /// EXIF orientation is applied automatically — smartphone photos that
+    /// store pixels sideways (with an EXIF tag saying "rotate to view")
+    /// will be decoded with the correct pixel orientation. This means the
+    /// converted output displays correctly without needing an EXIF tag.
     ///
     /// RUST CONCEPT: `image::DynamicImage`
     /// A `DynamicImage` is an in-memory representation of an image as pixels.
@@ -128,32 +133,9 @@ impl ConvertImageFormat {
         // Report that we're starting the decode step.
         progress.report(10, "Decoding image...");
 
-        // --- Create a cursor over the input bytes ---
-        // `Cursor::new(data)` wraps a byte slice in a "cursor" — a fake file
-        // handle that reads from memory. The `image` crate needs something that
-        // implements the `Read` trait (can read bytes sequentially), and Cursor
-        // provides exactly that.
-        let cursor = Cursor::new(data);
-
-        // --- Use ImageReader to decode the bytes into pixels ---
-        // `ImageReader::new(cursor)` creates a reader from our in-memory data.
-        // `.with_guessed_format()` inspects the first few bytes (magic bytes)
-        //   to determine the format automatically.
-        // `.decode()` does the actual work: reads the compressed bytes and
-        //   produces a DynamicImage (pixels in memory).
-        //
-        // RUST CONCEPT: `?` operator
-        // The `?` at the end is the "try operator". If any step returns an Err,
-        // the entire function immediately returns that error. It's shorthand for:
-        //   match result {
-        //     Ok(value) => value,
-        //     Err(e) => return Err(e.into()),
-        //   }
-        ImageReader::new(cursor)
-            .with_guessed_format()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read image: {e}")))?
-            .decode()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to decode image: {e}")))
+        // Decode with EXIF orientation applied. See orientation.rs for
+        // the full explanation of why this matters and how it works.
+        decode_with_orientation(data)
     }
 
     /// Encode pixel data as JPEG with the given quality.
@@ -380,10 +362,7 @@ impl NodeProcessor for ConvertImageFormat {
         let original_size = input.data.len();
         progress.report(
             5,
-            &format!(
-                "Converting {:?} → {:?}...",
-                input_format, target_format
-            ),
+            &format!("Converting {:?} → {:?}...", input_format, target_format),
         );
         let img = Self::decode_image(&input.data, progress)?;
 
@@ -721,7 +700,10 @@ mod tests {
         let params = serde_json::Map::new();
         let errors = processor.validate(&params);
         assert!(!errors.is_empty(), "Missing format should produce an error");
-        assert!(errors[0].contains("format"), "Error should mention 'format'");
+        assert!(
+            errors[0].contains("format"),
+            "Error should mention 'format'"
+        );
     }
 
     #[test]
@@ -729,10 +711,7 @@ mod tests {
         let processor = ConvertImageFormat::new();
         let params = format_params("bmp");
         let errors = processor.validate(&params);
-        assert!(
-            !errors.is_empty(),
-            "Invalid format should produce an error"
-        );
+        assert!(!errors.is_empty(), "Invalid format should produce an error");
         assert!(
             errors[0].contains("bmp"),
             "Error should mention the bad format"
@@ -768,10 +747,7 @@ mod tests {
         let processor = ConvertImageFormat::new();
         let params = format_quality_params("jpeg", 200);
         let errors = processor.validate(&params);
-        assert!(
-            !errors.is_empty(),
-            "Quality > 100 should produce an error"
-        );
+        assert!(!errors.is_empty(), "Quality > 100 should produce an error");
     }
 
     #[test]
@@ -779,10 +755,7 @@ mod tests {
         let processor = ConvertImageFormat::new();
         let params = format_quality_params("jpeg", 80);
         let errors = processor.validate(&params);
-        assert!(
-            errors.is_empty(),
-            "Valid quality should produce no errors"
-        );
+        assert!(errors.is_empty(), "Valid quality should produce no errors");
     }
 
     // =========================================================================
@@ -828,7 +801,10 @@ mod tests {
 
         // Check metadata reports the conversion.
         assert_eq!(
-            output.metadata.get("originalFormat").and_then(|v| v.as_str()),
+            output
+                .metadata
+                .get("originalFormat")
+                .and_then(|v| v.as_str()),
             Some("Jpeg")
         );
         assert_eq!(
@@ -1005,10 +981,7 @@ mod tests {
         let input = make_input(b"this is not an image", "corrupt.jpg", format_params("png"));
 
         let result = processor.process(input, &progress);
-        assert!(
-            result.is_err(),
-            "Corrupt image data should return an error"
-        );
+        assert!(result.is_err(), "Corrupt image data should return an error");
     }
 
     // =========================================================================
@@ -1028,5 +1001,70 @@ mod tests {
         // just using the struct name directly instead of calling ::default().
         let processor = ConvertImageFormat;
         assert_eq!(processor.name(), "convert-image-format");
+    }
+
+    // =========================================================================
+    // EXIF Orientation Tests — Full Pipeline
+    // =========================================================================
+    //
+    // These tests verify that format conversion correctly applies EXIF
+    // orientation. A JPEG with orientation=6 converted to PNG should
+    // produce a PNG with correctly rotated pixels.
+
+    use crate::test_utils::{create_test_jpeg, inject_exif_orientation};
+
+    #[test]
+    fn test_convert_exif_rotated_jpeg_to_png() {
+        // Create a 60×40 JPEG with EXIF orientation=6 (rotate 90° CW).
+        // Convert to PNG. The output PNG should be 40×60 (rotated).
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 6);
+
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "portrait.jpg", format_params("png"));
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_data = &result.files[0].data;
+
+        // Decode the PNG output and check dimensions.
+        let output_img = decode_with_orientation(output_data).unwrap();
+        assert_eq!(output_img.width(), 40, "Converted PNG should be 40 wide");
+        assert_eq!(output_img.height(), 60, "Converted PNG should be 60 tall");
+    }
+
+    #[test]
+    fn test_convert_exif_rotated_jpeg_to_webp() {
+        // JPEG with orientation=6 → WebP. Output should be 40×60.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 6);
+
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "portrait.jpg", format_params("webp"));
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_data = &result.files[0].data;
+
+        let output_img = decode_with_orientation(output_data).unwrap();
+        assert_eq!(output_img.width(), 40);
+        assert_eq!(output_img.height(), 60);
+    }
+
+    #[test]
+    fn test_convert_no_exif_jpeg_to_png_preserves_dimensions() {
+        // A normal JPEG (no EXIF) converted to PNG should keep dimensions.
+        let jpeg = create_test_jpeg(60, 40);
+
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&jpeg, "landscape.jpg", format_params("png"));
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_data = &result.files[0].data;
+
+        let output_img = decode_with_orientation(output_data).unwrap();
+        assert_eq!(output_img.width(), 60);
+        assert_eq!(output_img.height(), 40);
     }
 }
