@@ -110,14 +110,11 @@ task ui:dev             # Start web app dev server
 task ui:lint            # Lint all TS packages
 
 # Development (starts everything)
+task dev                # Start web + Convex dev servers (Next.js on port 4000 + Convex)
 task dev:all            # Start web + Convex + Go API + Cloudflare tunnel in parallel
-                        # AGENTS: You CAN and SHOULD run this. Start it in the background
-                        # and use it for integration E2E tests. Do NOT skip integration
-                        # testing because "the full stack isn't running" — start it yourself.
 
-# E2E tests
-task e2e                # UI-only E2E tests (no backend required)
-task e2e:integration    # Full-stack integration E2E (requires task dev:all running)
+# E2E tests (requires task dev running)
+task e2e                # Run all Playwright E2E tests (expects dev stack on port 4000)
 
 # Everything
 task build:all          # Build engine + API + frontend
@@ -157,7 +154,7 @@ bnto/
 3. **Claim a task** — Mark it CLAIMED before starting
 4. **Follow patterns** — Match existing code style (see rules/)
 5. **Test boundaries** — Write tests for engine logic and API contracts
-6. **Integration test** — If you touched UI that interacts with the execution pipeline, start `task dev:all` in the background and run `task e2e:integration`. You have the means to do this — never skip it because "the stack isn't running"
+6. **E2E test** — If you touched UI, run `task e2e` (requires `task dev` running — Next.js + Convex on port 4000). Start it yourself if needed — never skip because "the stack isn't running"
 7. **Mark done** — Update the plan when complete
 8. **Pre-commit** — Follow [pre-commit.md](.claude/rules/pre-commit.md) before every commit
 

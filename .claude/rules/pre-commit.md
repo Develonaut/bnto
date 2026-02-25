@@ -103,7 +103,7 @@ Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, 
 - Use `data-testid` markers for reliable state detection (see `integrationHelpers.ts` for available attributes)
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes
 - Add `await page.evaluate(() => window.scrollTo(0, 0))` before `toHaveScreenshot()` in tests where user actions may shift the viewport (e.g., clicking Run triggers errors that scroll to footer)
-- For integration tests that exercise the execution pipeline, start `task dev:all` in the background first. You CAN and SHOULD do this -- never skip because "the stack isn't running"
+- All E2E tests require the dev stack running (`task dev` — Next.js + Convex on port 4000). Start it yourself if needed -- never skip because "the stack isn't running"
 - Use progress-aware helpers from `integrationHelpers.ts` (`waitForPhase`, `waitForExecutionStatus`, `captureTransientPhase`, etc.) to observe and snapshot execution progress
 
 ### E2E Screenshot Verification (MANDATORY)
@@ -115,7 +115,7 @@ After running E2E tests, agents MUST verify screenshot health:
    - **Next.js error overlay** (red "1 Issue" badge in bottom-left) -- if present, it means an unhandled error occurred. Investigate the root cause via the `[e2e errors]` output.
    - **Wrong viewport position** -- screenshot shows footer/header instead of the expected tool UI. Add `scrollTo(0, 0)` before the screenshot call.
    - **Missing or garbled content** -- indicates a rendering issue or missing data.
-3. **Known E2E limitations** -- tests that trigger backend calls (upload, execution) will fail in E2E because there's no Convex/Go backend running. These errors are expected and caught by try/catch in the UI code, transitioning to the "failed" phase. The Next.js dev overlay may still show these as issues -- this is a canary, not a bug to suppress.
+3. **E2E environment** -- all E2E tests run against the full dev stack (Next.js + Convex on port 4000). The dev stack must be running before tests execute. Start with `task dev` if not already running.
 
 ### Stale Artifact Cleanup (MANDATORY)
 

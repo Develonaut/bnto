@@ -202,20 +202,20 @@ Edit `.claude/PLAN.md`:
 - Change your task from `- [ ] **CLAIMED**` to `- [x]` (mark done)
 - If your completion unblocks the next wave (all tasks in current wave are now `[x]`), note this in your summary so the user knows to start new agents on the next wave
 
-## E2E Integration Testing
+## E2E Testing
 
-When your task involves UI that touches the execution pipeline (upload → run → download), you MUST verify via integration E2E tests that exercise the full dev stack.
+All E2E tests run against the full dev stack (Next.js + Convex) on port 4000. There is no "UI-only" mode — the backend must always be running.
 
-**IMPORTANT: You CAN and SHOULD start the full dev stack yourself.** Do NOT skip integration testing because "the stack isn't running." You have the Bash tool — use it. Start `task dev:all` in the background and wait for port 4000 to respond before running tests.
+**IMPORTANT: You CAN and SHOULD start the dev stack yourself.** Do NOT skip E2E testing because "the stack isn't running." You have the Bash tool — use it. Start `task dev` in the background and wait for port 4000 to respond before running tests.
 
-**Running integration E2E tests:**
+**Running E2E tests:**
 
 ```bash
 # Step 1: Check if dev stack is already running
 curl -s -o /dev/null -w "%{http_code}" http://localhost:4000 || echo "not running"
 
 # Step 2: If not running, start it in the background
-task dev:all &
+task dev &
 
 # Step 3: Wait for the dev server to be ready (port 4000)
 # Poll until you get a 200 response:
@@ -224,16 +224,14 @@ for i in $(seq 1 30); do
   sleep 2
 done
 
-# Step 4: Run integration tests
-task e2e:integration
+# Step 4: Run E2E tests
+task e2e
 ```
 
 **Key details:**
-- Integration tests use `playwright.integration.config.ts` (targets port 4000)
-- They match `*.integration.spec.ts` files only
-- `reuseExistingServer: true` — if `task dev:all` is already running, Playwright uses it
-- Test fixtures are shared with the Go engine (`engine/tests/fixtures/`) — same input files that engine golden tests validate against flow through the full cloud pipeline
-- Integration tests have 120s timeout per test, 90s for execution completion
+- All E2E tests use `playwright.config.ts` (targets port 4000, Next.js + Convex)
+- `reuseExistingServer: true` — if `task dev` is already running, Playwright uses it
+- Test fixtures are shared with the Go engine (`engine/tests/fixtures/`)
 
 **Progress-aware test helpers** (in `e2e/integrationHelpers.ts`):
 - `waitForSession(page)` — wait for anonymous session to establish
@@ -254,8 +252,6 @@ task e2e:integration
 - `data-testid="output-file"` — individual output file items
 - `data-testid="bnto-shell"` + `data-session` + `data-user-id` — session and identity state
 
-**UI-only E2E tests** (`task e2e`) still work without a backend. They use `playwright.config.ts` (port 3100, Next.js only) and match `*.spec.ts` (excluding `*.integration.spec.ts`).
-
 ## DO NOT
 
 - **Do not commit or push.** Leave changes staged or unstaged. The user will review and commit
@@ -263,11 +259,11 @@ task e2e:integration
 - **Do not modify `CLAUDE.md`, `.claude/rules/`, or config files** unless your task explicitly requires it
 - **Do not install new dependencies** without noting it in your summary. If a dependency is needed, prefer one already in the monorepo
 - **Do not delete or rename existing exports** — other agents or existing code may depend on them
-- **Do not run `pnpm dev` or standalone dev servers** — use `task dev:all` only when running integration E2E tests, and run it in the background
+- **Do not run `pnpm dev` or standalone dev servers** — use `task dev` for E2E tests, and run it in the background
 
 ## Multi-Agent Awareness
 
 - **File conflicts:** If you need to modify a file and see it has been recently changed (check `git diff`), read the current state carefully before editing. Work with what's there, not what you expected
 - **Schema changes:** If your task adds to any schema, append — don't reorganize existing structures. Other agents may depend on the current structure
 - **Shared indexes/exports:** If you add to a barrel export (`index.ts`), add your entries at the end to minimize merge conflicts
-- **Port conflicts:** Only start `task dev:all` when running integration E2E tests (and check if it's already running first). For non-E2E verification, use the checks (`task vet`, `task test`, `task ui:build`, `task ui:test`, `task ui:lint`)
+- **Port conflicts:** Only start `task dev` when running E2E tests (and check if it's already running first). For non-E2E verification, use the checks (`task vet`, `task test`, `task ui:build`, `task ui:test`, `task ui:lint`)

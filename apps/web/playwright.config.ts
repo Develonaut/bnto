@@ -1,10 +1,19 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const port = 3100;
+/**
+ * Playwright E2E test configuration.
+ *
+ * All tests run against the full dev stack (Next.js + Convex) on port 4000.
+ * Start with `task dev` before running tests, or let the webServer command
+ * start it automatically.
+ *
+ * Run via: task e2e
+ */
+
+const port = 4000;
 
 export default defineConfig({
   testDir: "./e2e",
-  testIgnore: "*.integration.spec.ts",
   snapshotPathTemplate:
     "{testDir}/{testFileDir}/__screenshots__/{arg}{ext}",
   fullyParallel: true,
@@ -26,8 +35,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `NEXT_DIST_DIR=.next-e2e npx next dev --port ${port}`,
+    command: `pnpm turbo run dev`,
     url: `http://localhost:${port}`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
+    timeout: 120_000,
   },
 });
