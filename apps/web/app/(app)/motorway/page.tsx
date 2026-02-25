@@ -28,7 +28,7 @@ export default function MotorwayPage() {
           <div>
             <Heading level={1} size="md">Motorway</Heading>
             <Text color="muted" className="mt-2 max-w-xl">
-              The bnto design system. Warm, organized, satisfying &mdash; like a
+              The bnto design system. Warm, organized, satisfying, like a
               well-packed bento box on a Mini Motorways map. 3D depth, springy
               motion, three themed palettes.
             </Text>
@@ -101,7 +101,7 @@ export default function MotorwayPage() {
           <ShowcaseSection
             id="motion"
             title="Motion"
-            description="Entrances are springy — elements pop onto the page like buildings materializing on the map. Transitions are smooth and restrained."
+            description="Entrances are springy. Elements pop onto the page like buildings materializing on the map. Transitions are smooth and restrained."
           >
             <AnimationShowcase />
           </ShowcaseSection>

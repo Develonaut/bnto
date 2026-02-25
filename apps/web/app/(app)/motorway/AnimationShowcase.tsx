@@ -65,7 +65,7 @@ function StaggerCascade() {
   return (
     <div>
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
-        Stagger cascade &mdash; cards materialize like buildings on the map
+        Stagger cascade. Cards materialize like buildings on the map
       </SectionLabel>
       <Animate.Stagger key={key} className="grid grid-cols-3 gap-4">
         {DEMO_RECIPES.map((recipe, i) => {
@@ -101,7 +101,7 @@ function EntranceAnimations() {
   return (
     <div>
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
-        Entrance animations &mdash; springy pop for appearing elements
+        Entrance animations. Springy pop for appearing elements
       </SectionLabel>
       <div key={key} className="grid grid-cols-4 gap-4">
         <Animate.FadeIn>
@@ -137,7 +137,7 @@ function HeroPopIn() {
   return (
     <div>
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
-        Hero pop-in &mdash; <code className="font-mono text-xs">from=0.5</code>{" "}
+        Hero pop-in. <code className="font-mono text-xs">from=0.5</code>{" "}
         for dramatic entrance
       </SectionLabel>
       <div key={key} className="flex gap-4">
@@ -169,7 +169,7 @@ function BouncyStagger() {
   return (
     <div>
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
-        Bouncy stagger &mdash; pressable cards bounce onto the map
+        Bouncy stagger. Pressable cards bounce onto the map
       </SectionLabel>
       <Animate.Stagger key={key} className="grid grid-cols-3 gap-4">
         {DEMO_RECIPES.map((recipe, i) => {
@@ -209,7 +209,7 @@ function EmphasisAnimations() {
   return (
     <div>
       <SectionLabel>
-        Emphasis &mdash; calm looping animations for ambient presence
+        Emphasis. Calm looping animations for ambient presence
       </SectionLabel>
       <div className="grid grid-cols-2 gap-4">
         <Animate.PulseSoft>

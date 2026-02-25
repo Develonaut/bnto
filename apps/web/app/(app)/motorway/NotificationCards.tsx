@@ -44,7 +44,7 @@ export function NotificationCards() {
             Execution failed
           </Text>
           <Text size="xs" color="muted">
-            call-api returned 503 &mdash; retry available
+            call-api returned 503, retry available
           </Text>
         </div>
         <Text size="xs" color="muted" as="span">12m ago</Text>
