@@ -24,15 +24,15 @@ const levelToSize: Record<HeadingLevel, HeadingSize> = {
 };
 
 const headingCn = createCn({
-  base: "font-display tracking-tight",
+  base: "font-display font-black tracking-tight",
   variants: {
     size: {
-      xs: "text-lg font-semibold",
-      sm: "text-xl font-semibold",
-      md: "text-xl font-semibold md:text-2xl lg:text-3xl",
+      xs: "text-lg",
+      sm: "text-xl",
+      md: "text-xl md:text-2xl lg:text-3xl",
       lg: "text-2xl tracking-tight md:text-4xl lg:text-5xl",
       xl: "text-3xl md:text-4xl lg:text-5xl",
-      display: "text-3xl font-bold sm:text-4xl md:text-5xl lg:text-6xl",
+      display: "text-3xl sm:text-4xl md:text-5xl lg:text-6xl",
     },
   },
   defaultVariants: {
