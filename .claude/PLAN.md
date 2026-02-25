@@ -185,7 +185,7 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 
 **Rust edge cases** (truncated, corrupt, zero-byte inputs):
 - [x] `engine-wasm/` — Rust unit tests: truncated file (< 10 bytes), corrupt magic bytes, zero-byte file
-- [ ] `engine-wasm/` — Rust unit tests: quality param bounds (0, 1, 100, 101), 1x1 pixel image
+- [x] `engine-wasm/` — Rust unit tests: quality param bounds (0, 1, 100, 101), 1x1 pixel image
 
 **WASM boundary coverage:**
 - [ ] `engine-wasm/` — WASM integration tests: all codec combinations (JPEG→JPEG, PNG→PNG, WebP→WebP)

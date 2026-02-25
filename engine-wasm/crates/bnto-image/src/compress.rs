@@ -1371,4 +1371,525 @@ mod tests {
             "All-0xFF bytes with .jpg extension should fail at decode"
         );
     }
+
+    // =========================================================================
+    // Quality Parameter Boundary Tests
+    // =========================================================================
+    //
+    // The quality parameter controls JPEG compression aggressiveness (1-100).
+    // These tests hit every boundary:
+    //   - 0: below minimum → clamped to 1 by get_quality(), rejected by validate()
+    //   - 1: exact minimum → valid, should produce the most compressed output
+    //   - 100: exact maximum → valid, should produce the least compressed output
+    //   - 101: above maximum → clamped to 100 by get_quality(), rejected by validate()
+    //
+    // Two paths test quality handling:
+    //   1. `get_quality()` — silent clamping (used during processing)
+    //   2. `validate()` — explicit error messages (used before processing)
+    //
+    // We test both paths because they serve different purposes:
+    //   - get_quality() is defensive: "make it work no matter what"
+    //   - validate() is informative: "tell the user what's wrong"
+
+    // --- get_quality() boundary tests ---
+
+    #[test]
+    fn test_get_quality_at_exact_min_boundary() {
+        // Quality = 1 (MIN_JPEG_QUALITY) should pass through unchanged.
+        // This is the exact boundary — no clamping needed.
+        let mut params = serde_json::Map::new();
+        params.insert(
+            "quality".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(1u64)),
+        );
+        assert_eq!(
+            CompressImages::get_quality(&params),
+            1,
+            "Quality 1 should pass through as-is (exact minimum boundary)"
+        );
+    }
+
+    #[test]
+    fn test_get_quality_at_exact_max_boundary() {
+        // Quality = 100 (MAX_JPEG_QUALITY) should pass through unchanged.
+        let mut params = serde_json::Map::new();
+        params.insert(
+            "quality".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(100u64)),
+        );
+        assert_eq!(
+            CompressImages::get_quality(&params),
+            100,
+            "Quality 100 should pass through as-is (exact maximum boundary)"
+        );
+    }
+
+    #[test]
+    fn test_get_quality_101_clamped_to_max() {
+        // Quality = 101 is just above the max. Should clamp to 100.
+        //
+        // RUST CONCEPT: `.clamp(min, max)`
+        // Returns max if the value exceeds max. So 101.clamp(1, 100) = 100.
+        let mut params = serde_json::Map::new();
+        params.insert(
+            "quality".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(101u64)),
+        );
+        assert_eq!(
+            CompressImages::get_quality(&params),
+            MAX_JPEG_QUALITY,
+            "Quality 101 should be clamped to 100 (just above max)"
+        );
+    }
+
+    // --- validate() boundary tests ---
+
+    #[test]
+    fn test_validate_quality_0_fails() {
+        // Quality = 0 is below our minimum (1). The validate() method
+        // should report this as an out-of-range error so the UI can show
+        // the user a helpful message before processing starts.
+        let processor = CompressImages::new();
+        let mut params = serde_json::Map::new();
+        params.insert(
+            "quality".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(0u64)),
+        );
+        let errors = processor.validate(&params);
+        assert_eq!(
+            errors.len(),
+            1,
+            "Quality 0 should produce exactly one validation error"
+        );
+        assert!(
+            errors[0].contains("between"),
+            "Error should mention the valid range: got '{}'",
+            errors[0]
+        );
+    }
+
+    #[test]
+    fn test_validate_quality_1_passes() {
+        // Quality = 1 is the exact minimum boundary. Should pass validation.
+        let processor = CompressImages::new();
+        let mut params = serde_json::Map::new();
+        params.insert(
+            "quality".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(1u64)),
+        );
+        let errors = processor.validate(&params);
+        assert!(
+            errors.is_empty(),
+            "Quality 1 should pass validation (exact minimum): got {:?}",
+            errors
+        );
+    }
+
+    #[test]
+    fn test_validate_quality_100_passes() {
+        // Quality = 100 is the exact maximum boundary. Should pass validation.
+        let processor = CompressImages::new();
+        let mut params = serde_json::Map::new();
+        params.insert(
+            "quality".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(100u64)),
+        );
+        let errors = processor.validate(&params);
+        assert!(
+            errors.is_empty(),
+            "Quality 100 should pass validation (exact maximum): got {:?}",
+            errors
+        );
+    }
+
+    #[test]
+    fn test_validate_quality_101_fails() {
+        // Quality = 101 is just above the max. Should fail validation.
+        let processor = CompressImages::new();
+        let mut params = serde_json::Map::new();
+        params.insert(
+            "quality".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(101u64)),
+        );
+        let errors = processor.validate(&params);
+        assert_eq!(
+            errors.len(),
+            1,
+            "Quality 101 should produce exactly one validation error"
+        );
+        assert!(
+            errors[0].contains("between"),
+            "Error should mention the valid range: got '{}'",
+            errors[0]
+        );
+    }
+
+    // --- Actual compression at quality boundaries ---
+
+    #[test]
+    fn test_compress_jpeg_at_quality_1_produces_valid_output() {
+        // Quality 1 = maximum compression, worst visual quality.
+        // Should still produce a valid, decodable JPEG — just very small.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 1);
+
+        let output = processor
+            .process(input, &progress)
+            .expect("Quality 1 should produce valid output, not an error");
+
+        // Output should be a valid JPEG (check magic bytes)
+        assert_eq!(output.files.len(), 1);
+        assert_eq!(
+            ImageFormat::from_magic_bytes(&output.files[0].data),
+            Some(ImageFormat::Jpeg),
+            "Quality 1 output should still be a valid JPEG"
+        );
+
+        // Quality 1 should be noticeably smaller than the original
+        assert!(
+            output.files[0].data.len() < TEST_MEDIUM_JPEG.len(),
+            "Quality 1 ({} bytes) should be smaller than original ({} bytes)",
+            output.files[0].data.len(),
+            TEST_MEDIUM_JPEG.len()
+        );
+    }
+
+    #[test]
+    fn test_compress_jpeg_at_quality_100_produces_valid_output() {
+        // Quality 100 = minimal compression, best visual quality.
+        // Should produce a valid JPEG, possibly larger than the original
+        // (re-encoding at max quality can inflate files).
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
+
+        let output = processor
+            .process(input, &progress)
+            .expect("Quality 100 should produce valid output, not an error");
+
+        // Output should be a valid JPEG
+        assert_eq!(output.files.len(), 1);
+        assert_eq!(
+            ImageFormat::from_magic_bytes(&output.files[0].data),
+            Some(ImageFormat::Jpeg),
+            "Quality 100 output should be a valid JPEG"
+        );
+
+        // Output should not be empty
+        assert!(
+            !output.files[0].data.is_empty(),
+            "Quality 100 output should not be empty"
+        );
+    }
+
+    #[test]
+    fn test_quality_1_smaller_than_quality_100() {
+        // The core contract of lossy compression: lower quality = smaller file.
+        // Quality 1 (most aggressive) should always produce a smaller file
+        // than quality 100 (least aggressive) for the same input image.
+        //
+        // This is a stronger test than just "it doesn't crash" — it verifies
+        // the quality parameter actually controls the output size.
+        let processor = CompressImages::new();
+
+        let input_q1 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 1);
+        let input_q100 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
+
+        let output_q1 = processor.process(input_q1, &noop_progress()).unwrap();
+        let output_q100 = processor.process(input_q100, &noop_progress()).unwrap();
+
+        let size_q1 = output_q1.files[0].data.len();
+        let size_q100 = output_q100.files[0].data.len();
+
+        assert!(
+            size_q1 < size_q100,
+            "Quality 1 ({} bytes) should be smaller than quality 100 ({} bytes)",
+            size_q1,
+            size_q100
+        );
+    }
+
+    #[test]
+    fn test_quality_monotonically_affects_file_size() {
+        // Verify the full ordering: q1 <= q50 <= q100.
+        // JPEG quality should be monotonically non-decreasing with file size.
+        //
+        // WHY THIS MATTERS: If quality 50 produces a LARGER file than
+        // quality 100, something is deeply wrong with our quality pipeline
+        // (e.g., the param isn't being passed through, or it's being
+        // silently replaced with a default).
+        let processor = CompressImages::new();
+
+        let input_q1 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 1);
+        let input_q50 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 50);
+        let input_q100 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
+
+        let size_q1 = processor.process(input_q1, &noop_progress()).unwrap().files[0]
+            .data
+            .len();
+        let size_q50 = processor
+            .process(input_q50, &noop_progress())
+            .unwrap()
+            .files[0]
+            .data
+            .len();
+        let size_q100 = processor
+            .process(input_q100, &noop_progress())
+            .unwrap()
+            .files[0]
+            .data
+            .len();
+
+        assert!(
+            size_q1 <= size_q50,
+            "q1 ({} bytes) should be <= q50 ({} bytes)",
+            size_q1,
+            size_q50
+        );
+        assert!(
+            size_q50 <= size_q100,
+            "q50 ({} bytes) should be <= q100 ({} bytes)",
+            size_q50,
+            size_q100
+        );
+
+        // Log sizes for manual inspection during development
+        eprintln!(
+            "Quality ordering: q1={} bytes, q50={} bytes, q100={} bytes",
+            size_q1, size_q50, size_q100
+        );
+    }
+
+    // =========================================================================
+    // 1x1 Pixel Image Tests — Minimum Viable Image
+    // =========================================================================
+    //
+    // A 1x1 pixel image is the smallest possible image. It exercises the
+    // compression pipeline with minimal data, testing that:
+    //   1. The decoder handles tiny images without crashing
+    //   2. The encoder produces valid output (not empty, has correct magic bytes)
+    //   3. Metadata is correct (original/compressed sizes, format)
+    //
+    // WHY THIS MATTERS: Image codecs sometimes have edge cases with very small
+    // images — JPEG's 8x8 block DCT needs padding for images smaller than 8x8,
+    // PNG row filters need at least one pixel, etc. If our pipeline handles 1x1,
+    // it handles anything larger.
+    //
+    // We create these tiny images programmatically using the `image` crate
+    // rather than loading fixtures, because 1x1 encoded images are so small
+    // that generating them in-test is cleaner than maintaining fixture files.
+
+    /// Helper: create a 1x1 pixel JPEG image (a single red pixel).
+    ///
+    /// RUST CONCEPT: `image::RgbImage`
+    /// This is a 2D array of RGB pixels. `new(width, height)` creates a
+    /// black image. `.put_pixel(x, y, pixel)` sets one pixel's color.
+    /// We then encode it to JPEG bytes in memory.
+    fn create_1x1_jpeg() -> Vec<u8> {
+        use image::{DynamicImage, Rgb, RgbImage};
+
+        // Create a 1x1 image with a red pixel (R=255, G=0, B=0)
+        let mut img = RgbImage::new(1, 1);
+        img.put_pixel(0, 0, Rgb([255, 0, 0]));
+
+        // Encode to JPEG bytes in memory
+        let dynamic = DynamicImage::ImageRgb8(img);
+        let mut buf = Vec::new();
+        let encoder = JpegEncoder::new_with_quality(&mut buf, 80);
+        dynamic
+            .write_with_encoder(encoder)
+            .expect("Failed to encode 1x1 JPEG");
+        buf
+    }
+
+    /// Helper: create a 1x1 pixel PNG image (a single green pixel).
+    fn create_1x1_png() -> Vec<u8> {
+        use image::{DynamicImage, Rgb, RgbImage};
+
+        let mut img = RgbImage::new(1, 1);
+        img.put_pixel(0, 0, Rgb([0, 255, 0]));
+
+        let dynamic = DynamicImage::ImageRgb8(img);
+        let mut buf = Vec::new();
+        let encoder =
+            PngEncoder::new_with_quality(&mut buf, CompressionType::Default, FilterType::NoFilter);
+        dynamic
+            .write_with_encoder(encoder)
+            .expect("Failed to encode 1x1 PNG");
+        buf
+    }
+
+    /// Helper: create a 1x1 pixel WebP image (a single blue pixel).
+    fn create_1x1_webp() -> Vec<u8> {
+        use image::{DynamicImage, Rgb, RgbImage};
+
+        let mut img = RgbImage::new(1, 1);
+        img.put_pixel(0, 0, Rgb([0, 0, 255]));
+
+        // Encode to WebP bytes using the `image` crate's built-in encoder
+        let dynamic = DynamicImage::ImageRgb8(img);
+        let mut buf = Vec::new();
+        let mut cursor = Cursor::new(&mut buf);
+        dynamic
+            .write_to(&mut cursor, image::ImageFormat::WebP)
+            .expect("Failed to encode 1x1 WebP");
+        buf
+    }
+
+    #[test]
+    fn test_1x1_jpeg_compresses_successfully() {
+        // A 1x1 pixel JPEG is the smallest valid JPEG image.
+        // The JPEG codec internally works on 8x8 blocks — a 1x1 image
+        // gets padded to fill one block. This tests that the padding
+        // doesn't cause any issues in our decode → re-encode pipeline.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let jpeg_bytes = create_1x1_jpeg();
+        assert!(
+            !jpeg_bytes.is_empty(),
+            "Helper should produce non-empty JPEG bytes"
+        );
+
+        let input = make_input(&jpeg_bytes, "tiny.jpg");
+        let output = processor
+            .process(input, &progress)
+            .expect("1x1 JPEG should compress without error");
+
+        // Verify we got a valid JPEG back
+        assert_eq!(output.files.len(), 1);
+        assert_eq!(
+            ImageFormat::from_magic_bytes(&output.files[0].data),
+            Some(ImageFormat::Jpeg),
+            "Compressed 1x1 should still be a valid JPEG"
+        );
+        assert_eq!(output.files[0].mime_type, "image/jpeg");
+        assert!(
+            output.files[0].filename.contains("-compressed"),
+            "Output filename should contain '-compressed'"
+        );
+
+        // Metadata should have valid sizes
+        let original_size = output.metadata["originalSize"].as_u64().unwrap();
+        let compressed_size = output.metadata["compressedSize"].as_u64().unwrap();
+        assert!(original_size > 0, "Original size should be > 0");
+        assert!(compressed_size > 0, "Compressed size should be > 0");
+    }
+
+    #[test]
+    fn test_1x1_png_compresses_successfully() {
+        // A 1x1 pixel PNG is the smallest valid PNG image.
+        // PNG row filters operate per-row — with just one pixel per row,
+        // the filter has minimal data to work with. This tests that our
+        // Adaptive filter strategy handles the edge case.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let png_bytes = create_1x1_png();
+        assert!(
+            !png_bytes.is_empty(),
+            "Helper should produce non-empty PNG bytes"
+        );
+
+        let input = make_input(&png_bytes, "tiny.png");
+        let output = processor
+            .process(input, &progress)
+            .expect("1x1 PNG should compress without error");
+
+        assert_eq!(output.files.len(), 1);
+        assert_eq!(
+            ImageFormat::from_magic_bytes(&output.files[0].data),
+            Some(ImageFormat::Png),
+            "Compressed 1x1 should still be a valid PNG"
+        );
+        assert_eq!(output.files[0].mime_type, "image/png");
+
+        // Metadata should have valid sizes
+        let original_size = output.metadata["originalSize"].as_u64().unwrap();
+        let compressed_size = output.metadata["compressedSize"].as_u64().unwrap();
+        assert!(original_size > 0, "Original size should be > 0");
+        assert!(compressed_size > 0, "Compressed size should be > 0");
+    }
+
+    #[test]
+    fn test_1x1_webp_compresses_successfully() {
+        // A 1x1 pixel WebP is the smallest valid WebP image.
+        // The WebP lossless encoder uses predictive coding (predicting
+        // each pixel from its neighbors). With just one pixel, there
+        // are no neighbors to predict from — this is the degenerate case.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let webp_bytes = create_1x1_webp();
+        assert!(
+            !webp_bytes.is_empty(),
+            "Helper should produce non-empty WebP bytes"
+        );
+
+        let input = make_input(&webp_bytes, "tiny.webp");
+        let output = processor
+            .process(input, &progress)
+            .expect("1x1 WebP should compress without error");
+
+        assert_eq!(output.files.len(), 1);
+        assert_eq!(
+            ImageFormat::from_magic_bytes(&output.files[0].data),
+            Some(ImageFormat::WebP),
+            "Compressed 1x1 should still be a valid WebP"
+        );
+        assert_eq!(output.files[0].mime_type, "image/webp");
+
+        // Metadata should have valid sizes
+        let original_size = output.metadata["originalSize"].as_u64().unwrap();
+        let compressed_size = output.metadata["compressedSize"].as_u64().unwrap();
+        assert!(original_size > 0, "Original size should be > 0");
+        assert!(compressed_size > 0, "Compressed size should be > 0");
+    }
+
+    #[test]
+    fn test_1x1_jpeg_with_quality_1_produces_valid_output() {
+        // The extreme combo: smallest possible image + lowest quality.
+        // If this doesn't crash, our pipeline handles the most degenerate
+        // valid JPEG case.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let jpeg_bytes = create_1x1_jpeg();
+        let input = make_input_with_quality(&jpeg_bytes, "tiny_q1.jpg", 1);
+
+        let output = processor
+            .process(input, &progress)
+            .expect("1x1 JPEG at quality 1 should produce valid output");
+
+        assert_eq!(output.files.len(), 1);
+        assert_eq!(
+            ImageFormat::from_magic_bytes(&output.files[0].data),
+            Some(ImageFormat::Jpeg),
+            "Output should be a valid JPEG even at 1x1 / quality 1"
+        );
+    }
+
+    #[test]
+    fn test_1x1_jpeg_with_quality_100_produces_valid_output() {
+        // Smallest possible image + highest quality.
+        // For a 1x1 image, quality 100 vs quality 1 may not differ much
+        // in file size (very little data to compress), but both should work.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+
+        let jpeg_bytes = create_1x1_jpeg();
+        let input = make_input_with_quality(&jpeg_bytes, "tiny_q100.jpg", 100);
+
+        let output = processor
+            .process(input, &progress)
+            .expect("1x1 JPEG at quality 100 should produce valid output");
+
+        assert_eq!(output.files.len(), 1);
+        assert_eq!(
+            ImageFormat::from_magic_bytes(&output.files[0].data),
+            Some(ImageFormat::Jpeg),
+            "Output should be a valid JPEG even at 1x1 / quality 100"
+        );
+    }
 }
