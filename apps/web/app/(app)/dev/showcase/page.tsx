@@ -10,6 +10,7 @@ import { Stack } from "@/components/ui/Stack";
 import { AnimatedThemeToggle } from "@/components/ui/AnimatedThemeToggle";
 import { AnimationShowcase } from "./AnimationShowcase";
 import { BentoGridShowcase } from "./BentoGridShowcase";
+import { ButtonAnimationShowcase } from "./ButtonAnimationShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
@@ -79,6 +80,14 @@ export default function ThemeDemoPage() {
             description="All variants × sizes with depth + pressable. Icon buttons included."
           >
             <ButtonShowcase />
+          </ShowcaseSection>
+
+          <ShowcaseSection
+            id="demo-button-animations"
+            title="Button Transition Experiments"
+            description="Same button, different release easing. Press-down is always snappy (34ms). The experiment is how the button settles back — hover and release feel. Click each and compare."
+          >
+            <ButtonAnimationShowcase />
           </ShowcaseSection>
 
           <ShowcaseSection id="demo-form" title="Form Elements" description="Inputs, switches, checkboxes, slider inside an elevated card.">

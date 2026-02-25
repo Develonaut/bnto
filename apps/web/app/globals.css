@@ -202,6 +202,19 @@
   /* ── Easings: Springs (elastic entrances) ────────────────── */
   --ease-spring: linear(0, 0.001 0.44%, 0.0045 0.94%, 0.0195 2.03%, 0.0446 3.19%, 0.0811 4.5%, 0.1598 6.82%, 0.3685 12.34%, 0.4693 15.17%, 0.5663, 0.6498 21.27%, 0.7215 24.39%, 0.7532 25.98%, 0.7829 27.65%, 0.8105, 0.8349 31.14%, 0.8573 32.95%, 0.8776 34.84%, 0.8964 36.87%, 0.9136 39.05%, 0.929 41.37%, 0.9421 43.77%, 0.9537 46.38%, 0.9636 49.14%, 0.9789 55.31%, 0.9888 62.35%, 0.9949 71.06%, 0.9982 82.52%, 0.9997 99.94%);
   --ease-spring-bouncy: linear(0, 0.0018, 0.0069, 0.0151 1.74%, 0.0277 2.4%, 0.062 3.7%, 0.1115 5.15%, 0.2211 7.77%, 0.4778 13.21%, 0.5912 15.75%, 0.6987 18.44%, 0.7862 20.98%, 0.861 23.59%, 0.8926, 0.9205, 0.945 27.51%, 0.9671 28.89%, 0.9868, 1.003 31.79%, 1.0224 34.11%, 1.0358 36.58%, 1.0436 39.27%, 1.046 42.31%, 1.0446 44.71%, 1.0406 47.47%, 1.0118 61.84%, 1.0027 69.53%, 0.9981 80.49%, 0.9991 99.94%);
+
+  /* ── Easing: Pressable Spring (elastic release) ─────────────
+   * Tuned for button hover/active/release transitions.
+   * Three visible oscillations — like a rubber building snapping
+   * back into place on the Mini Motorways map.
+   *
+   * Profile at 450ms:
+   *   Peak 1 (~117ms):  +18.5% overshoot — satisfying snap-up
+   *   Trough 1 (~216ms): −9.5% undershoot — visible wobble
+   *   Peak 2 (~324ms):  +4.5% overshoot — subtle second bounce
+   *   Settled (~432ms):  rest
+   * ────────────────────────────────────────────────────────── */
+  --ease-spring-pressable: linear(0, 0.05 2%, 0.18 4%, 0.38 6%, 0.58 8%, 0.75 10%, 0.88 12%, 0.97 14%, 1.04 16%, 1.09 18%, 1.13 20%, 1.16 22%, 1.18 24%, 1.185 26%, 1.175 28%, 1.15 30%, 1.10 33%, 1.04 36%, 0.98 39%, 0.94 42%, 0.915 45%, 0.905 48%, 0.91 51%, 0.93 54%, 0.955 57%, 0.98 60%, 1.005 63%, 1.025 66%, 1.04 69%, 1.045 72%, 1.04 75%, 1.025 78%, 1.01 81%, 1.0 84%, 0.995 87%, 0.995 90%, 0.998 93%, 1.0 96%, 1.0);
   --ease-spring-bouncier: linear(0, 0.0023, 0.0088, 0.0194 1.59%, 0.035 2.17%, 0.078 3.33%, 0.1415 4.64%, 0.2054 5.75%, 0.2821 6.95%, 0.5912 11.45%, 0.7205 13.43%, 0.8393 15.45%, 0.936 17.39%, 0.9778, 1.015, 1.0477, 1.0759, 1.0998 22.22%, 1.1203, 1.1364, 1.1484 25.26%, 1.1586 26.61%, 1.1629 28.06%, 1.1613 29.56%, 1.1537 31.2%, 1.1434 32.6%, 1.1288 34.19%, 1.0508 41.29%, 1.0174 44.87%, 1.0025 46.89%, 0.9911 48.87%, 0.9826 50.9%, 0.9769 53.03%, 0.9735 56.02%, 0.9748 59.45%, 0.9964 72.64%, 1.0031 79.69%, 1.0042 86.83%, 1.0008 99.97%);
 
   /* ── Light Direction (CSS gradient convention: 135° = SE) ──── */
@@ -569,6 +582,7 @@
   --ease-spring: var(--ease-spring);
   --ease-spring-bouncy: var(--ease-spring-bouncy);
   --ease-spring-bouncier: var(--ease-spring-bouncier);
+  --ease-spring-pressable: var(--ease-spring-pressable);
 
   /* ── Entrance Animations (spring — playful pop-in) ──── */
   --animate-fade-in: fade-in var(--duration-normal) var(--ease-out) both;
@@ -764,20 +778,26 @@
   user-select: none;
   will-change: transform;
   transition:
-    transform 150ms cubic-bezier(0, 0, 0.58, 1),
-    background-color 150ms cubic-bezier(0, 0, 0.58, 1);
+    transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
+    background-color var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
 }
 
 .pressable::before,
 .pressable::after {
   transition:
-    transform 150ms cubic-bezier(0, 0, 0.58, 1),
-    opacity 150ms cubic-bezier(0, 0, 0.58, 1);
+    transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
+    opacity var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
 }
 
-/* Hover / focus-within — face sinks 33%, walls at 66%, shadow shrinks */
+/* Hover / focus-visible — face sinks 33%, walls at 66%, shadow shrinks.
+ *
+ * Uses :focus-visible (not :focus-within) so the hover-sink only fires
+ * for keyboard focus (Tab). Mouse clicks give the element focus too, but
+ * :focus-within would keep the button stuck at 33% sink after the cursor
+ * leaves. :focus-visible ignores click-focus → button returns to resting
+ * state when the mouse moves away. */
 .pressable:hover,
-.pressable:focus-within,
+.pressable:focus-visible,
 .pressable[data-force-state="hover"] {
   transform: translate(
     calc(var(--depth-x) * 0.33),
@@ -786,7 +806,7 @@
 }
 
 .pressable:hover::before,
-.pressable:focus-within::before,
+.pressable:focus-visible::before,
 .pressable[data-force-state="hover"]::before {
   transform: translate3d(
     calc(var(--depth-x) * 0.66),
@@ -796,7 +816,7 @@
 }
 
 .pressable:hover::after,
-.pressable:focus-within::after,
+.pressable:focus-visible::after,
 .pressable[data-force-state="hover"]::after {
   transform: translate3d(
     calc(var(--shadow-x) * 0.66),
@@ -805,24 +825,25 @@
   );
 }
 
-/* Active — face flush, walls gone, shadow invisible */
+/* Active — face flush, walls gone, shadow invisible.
+ * Press-down is always snappy (--pressable-press-dur, default 34ms). */
 .pressable:active,
 .pressable[data-force-state="active"] {
   transform: translate(var(--depth-x), var(--depth-y));
-  transition-duration: 34ms;
+  transition-duration: var(--pressable-press-dur, 34ms);
 }
 
 .pressable:active::before,
 .pressable[data-force-state="active"]::before {
   transform: translate3d(0px, 0px, -1px);
-  transition-duration: 34ms;
+  transition-duration: var(--pressable-press-dur, 34ms);
 }
 
 .pressable:active::after,
 .pressable[data-force-state="active"]::after {
   transform: translate3d(0px, 0px, -2px);
   opacity: 0;
-  transition-duration: 34ms;
+  transition-duration: var(--pressable-press-dur, 34ms);
 }
 
 /* Focus — native browser outline, inset on the face */
@@ -845,19 +866,19 @@
   }
 
   .pressable:hover,
-  .pressable:focus-within,
+  .pressable:focus-visible,
   .pressable:active {
     transform: none;
   }
 
   .pressable:hover::before,
-  .pressable:focus-within::before,
+  .pressable:focus-visible::before,
   .pressable:active::before {
     transform: translate3d(var(--depth-x), var(--depth-y), -1px);
   }
 
   .pressable:hover::after,
-  .pressable:focus-within::after,
+  .pressable:focus-visible::after,
   .pressable:active::after {
     transform: translate3d(var(--shadow-x), var(--shadow-y), -2px);
   }

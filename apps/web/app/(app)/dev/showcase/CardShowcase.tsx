@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
@@ -31,21 +32,23 @@ export function CardShowcase() {
         </div>
       </div>
 
-      {/* Row 2: Pressable cards (hover to sink, active to flush) */}
+      {/* Row 2: Pressable cards via Button asChild composition.
+        * Card owns depth (size + color). Button contributes pressable + spring. */}
       <div>
         <Text size="sm" weight="medium" color="muted" className="mb-3">
-          Pressable &mdash; hover to sink, active pushes flush
+          Pressable &mdash; <code className="font-mono text-xs">&lt;Button asChild&gt;</code> wrapping Card
         </Text>
         <div className="grid grid-cols-4 gap-6">
           {sizes.map(({ label, depth }) => (
-            <Card
-              key={label}
-              depth={depth}
-              className="flex h-24 cursor-pointer items-center justify-center rounded-xl font-display font-semibold pressable"
-              data-testid={`pressable-card-${label}`}
-            >
-              {label}
-            </Card>
+            <Button key={label} asChild>
+              <Card
+                depth={depth}
+                className="flex h-24 items-center justify-center font-display font-semibold"
+                data-testid={`pressable-card-${label}`}
+              >
+                {label}
+              </Card>
+            </Button>
           ))}
         </div>
       </div>

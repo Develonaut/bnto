@@ -5,8 +5,40 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/* ── Spring modes ────────────────────────────────────────────
+ * Controls the hover/active/release transition spring.
+ * Matches the sm/md/lg pattern used by depth and size.
+ *   sm: 150ms ease-out (firm, no overshoot)
+ *   md: 400ms spring-bouncier (gentle single bounce)
+ *   lg: 550ms spring-pressable (rubber band, 3 oscillations)
+ * ──────────────────────────────────────────────────────────── */
+
+type SpringMode = "sm" | "md" | "lg";
+
+const SPRING_STYLES: Record<SpringMode, React.CSSProperties> = {
+  sm: {},
+  md: {
+    "--pressable-ease": "var(--ease-spring-bouncier)",
+    "--pressable-dur": "400ms",
+  } as React.CSSProperties,
+  lg: {
+    "--pressable-ease": "var(--ease-spring-pressable)",
+    "--pressable-dur": "550ms",
+  } as React.CSSProperties,
+};
+
+/* ── Class split ──────────────────────────────────────────────
+ * Behavior: always applied (even with asChild). Pressable
+ * interaction, focus ring, disabled state.
+ * Appearance: only for standalone buttons. Layout, typography,
+ * depth, colors. With asChild, the child owns its appearance.
+ * ──────────────────────────────────────────────────────────── */
+
+const PRESSABLE_BASE =
+  "pressable outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:grayscale disabled:contrast-75";
+
 const buttonVariants = cva(
-  "depth pressable inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium disabled:pointer-events-none disabled:grayscale disabled:contrast-75 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "depth inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium shrink-0 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
@@ -42,12 +74,15 @@ function Button({
   variant,
   size,
   depth = true,
+  spring = "lg",
   asChild = false,
+  style,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
     depth?: boolean;
+    spring?: SpringMode;
   }) {
   const Comp = asChild ? Slot : "button";
 
@@ -55,12 +90,16 @@ function Button({
     <Comp
       data-slot="button"
       className={cn(
-        buttonVariants({ variant, size, className }),
-        !depth && "depth-none",
+        PRESSABLE_BASE,
+        !asChild && buttonVariants({ variant, size }),
+        !asChild && !depth && "depth-none",
+        className,
       )}
+      style={{ ...SPRING_STYLES[spring], ...style }}
       {...props}
     />
   );
 }
 
 export { Button, buttonVariants };
+export type { SpringMode };
