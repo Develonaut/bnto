@@ -83,9 +83,9 @@ export default function ThemeDemoPage() {
           </ShowcaseSection>
 
           <ShowcaseSection
-            id="demo-button-animations"
-            title="Button Transition Experiments"
-            description="Same button, different release easing. Press-down is always snappy (34ms). The experiment is how the button settles back — hover and release feel. Click each and compare."
+            id="demo-button-spring"
+            title="Button Spring"
+            description="The spring prop controls how buttons settle after hover and press. sm is firm, md has a gentle bounce, lg (default) is an elastic rubber-band with three visible oscillations."
           >
             <ButtonAnimationShowcase />
           </ShowcaseSection>
