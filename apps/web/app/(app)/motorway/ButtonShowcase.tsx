@@ -19,7 +19,7 @@ import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 
 type Variant = "primary" | "secondary" | "outline" | "muted" | "destructive" | "success" | "warning";
-type ButtonState = "resting" | "hover" | "active" | "disabled";
+type ButtonState = "resting" | "hover" | "pressed" | "disabled";
 
 const VARIANTS: { value: Variant; label: string; iconLabel?: string }[] = [
   { value: "primary", label: "Primary", iconLabel: "Download" },
@@ -44,14 +44,15 @@ const ICON_LABELS: Record<string, { icon: React.ReactNode; trailing?: boolean }>
 const STATES: { value: ButtonState; label: string }[] = [
   { value: "resting", label: "Resting" },
   { value: "hover", label: "Hover" },
-  { value: "active", label: "Active" },
+  { value: "pressed", label: "Pressed" },
   { value: "disabled", label: "Disabled" },
 ];
 
 export function ButtonShowcase() {
   const [state, setState] = useState<ButtonState>("resting");
 
-  const pseudo = state === "hover" || state === "active" ? state : undefined;
+  const hovered = state === "hover";
+  const pressed = state === "pressed";
   const disabled = state === "disabled";
 
   return (
@@ -79,14 +80,14 @@ export function ButtonShowcase() {
               <Text size="xs" color="muted" mono as="span" className="w-24 shrink-0">
                 {label}
               </Text>
-              <Button variant={value} size="sm" pseudo={pseudo} disabled={disabled}>Label</Button>
-              <Button variant={value} size="md" pseudo={pseudo} disabled={disabled}>Label</Button>
-              <Button variant={value} size="lg" pseudo={pseudo} disabled={disabled}>Label</Button>
-              <Button variant={value} size="icon-sm" pseudo={pseudo} disabled={disabled}><ZapIcon /></Button>
-              <Button variant={value} size="icon" pseudo={pseudo} disabled={disabled}><ZapIcon /></Button>
-              <Button variant={value} size="icon-lg" pseudo={pseudo} disabled={disabled}><ZapIcon /></Button>
+              <Button variant={value} size="sm" hovered={hovered} pressed={pressed} disabled={disabled}>Label</Button>
+              <Button variant={value} size="md" hovered={hovered} pressed={pressed} disabled={disabled}>Label</Button>
+              <Button variant={value} size="lg" hovered={hovered} pressed={pressed} disabled={disabled}>Label</Button>
+              <Button variant={value} size="icon-sm" hovered={hovered} pressed={pressed} disabled={disabled}><ZapIcon /></Button>
+              <Button variant={value} size="icon" hovered={hovered} pressed={pressed} disabled={disabled}><ZapIcon /></Button>
+              <Button variant={value} size="icon-lg" hovered={hovered} pressed={pressed} disabled={disabled}><ZapIcon /></Button>
               {iconEntry && (
-                <Button variant={value} size="md" pseudo={pseudo} disabled={disabled}>
+                <Button variant={value} size="md" hovered={hovered} pressed={pressed} disabled={disabled}>
                   {iconEntry.trailing ? <>{iconLabel} {iconEntry.icon}</> : <>{iconEntry.icon} {iconLabel}</>}
                 </Button>
               )}

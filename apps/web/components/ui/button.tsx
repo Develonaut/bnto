@@ -66,8 +66,6 @@ const buttonVariants = cva(
   },
 );
 
-type PseudoState = "hover" | "active";
-
 type DepthOverride = boolean | "none" | "sm" | "md" | "lg";
 
 /** Strip the size-variant's built-in depth-{sm|md|lg} and replace it. */
@@ -89,7 +87,8 @@ function Button({
   depth = true,
   spring = "lg",
   muted = false,
-  pseudo,
+  hovered = false,
+  pressed = false,
   asChild = false,
   href,
   style,
@@ -102,12 +101,14 @@ function Button({
     depth?: DepthOverride;
     spring?: SpringMode;
     muted?: boolean;
-    pseudo?: PseudoState;
+    hovered?: boolean;
+    pressed?: boolean;
     href?: string;
     ref?: React.Ref<HTMLElement>;
   }) {
   const isLink = !!href;
   const Comp: React.ElementType = asChild ? Slot : isLink ? "a" : "button";
+  const forceState = pressed ? "active" : hovered ? "hover" : undefined;
   const depthClass = resolveDepthClass(depth);
   // When depth is overridden (not true), strip the size variant's built-in
   // depth-{sm|md|lg} so it doesn't compete via CSS source order.
@@ -121,7 +122,7 @@ function Button({
       ref={ref}
       data-slot="button"
       data-muted={muted || undefined}
-      data-force-state={pseudo || undefined}
+      data-force-state={forceState}
       {...(isLink ? { href } : {})}
       className={cn(PRESSABLE_BASE, resolvedSizeClasses, depthClass, className)}
       style={{ ...SPRING_STYLES[spring], ...style }}

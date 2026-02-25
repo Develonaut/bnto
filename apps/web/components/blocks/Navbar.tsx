@@ -30,7 +30,10 @@ import {
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { THEME_STORE_DEFAULT_ANGLE, useThemeStore } from "@/lib/stores/theme-store";
+import {
+  THEME_STORE_DEFAULT_ANGLE,
+  useThemeStore,
+} from "@/lib/stores/theme-store";
 
 const GITHUB_URL = "https://github.com/Develonaut/bnto";
 
@@ -98,7 +101,7 @@ const RECIPES: RecipeCategory[] = [
 function navButtonProps(pathname: string, href: string) {
   return {
     depth: "sm" as const,
-    pseudo: pathname === href ? ("active" as const) : undefined,
+    hovered: pathname === href,
   };
 }
 
@@ -290,8 +293,8 @@ function NavThemeMenu() {
               <Button
                 variant="warning"
                 size="icon-sm"
-                depth="sm"
-                pseudo={isDragging ? "active" : undefined}
+                depth="md"
+                pressed={isDragging}
                 className="pointer-events-none size-7"
               >
                 <SunIcon className="size-3.5" />
@@ -308,7 +311,7 @@ function NavThemeMenu() {
               <Animate.ScaleIn from={0.6} easing="spring-bouncy">
                 <Button
                   variant="muted"
-                  size="sm"
+                  size="md"
                   onClick={handleReset}
                   className="w-full"
                 >

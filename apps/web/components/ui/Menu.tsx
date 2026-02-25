@@ -29,13 +29,13 @@ import { cn } from "@/lib/utils";
 
 /* ── Context ──────────────────────────────────────────────────────
  * Shares the open state from MenuRoot so the trigger can force
- * itself into the active (fully pressed) pseudo state. */
+ * itself into the hover (engaged) force state. */
 
 const MenuContext = React.createContext(false);
 
 /* ── Trigger ─────────────────────────────────────────────────────
  * Renders as our Button component. When the menu is open, the
- * trigger shows pseudo="active" (fully pressed into the ground). */
+ * trigger shows hovered={true} (engaged, sunk toward ground). */
 
 const MenuTrigger = React.forwardRef<
   HTMLButtonElement,
@@ -46,7 +46,7 @@ const MenuTrigger = React.forwardRef<
     <PopoverAnchor asChild>
       <div className="inline-flex">
         <PopoverTrigger asChild>
-          <Button ref={ref} pseudo={open ? "hover" : undefined} {...props}>
+          <Button ref={ref} hovered={open} {...props}>
             {children}
           </Button>
         </PopoverTrigger>
