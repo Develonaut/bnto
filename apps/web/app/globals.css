@@ -342,11 +342,11 @@
 
   /* ── Depth (dark mode) ───────────────────────────────────────── */
   /*
-   * Wall at 0.34 sits BETWEEN card (0.37) and background (0.31),
-   * creating the visible 3D building side.
-   * Hierarchy: card face (0.37) > wall (0.34) > bg (0.31) > shadow
+   * Walls darker than background (0.31) so the 1px border reads
+   * clearly against card faces (0.37+). The 3D side pseudo-element
+   * also benefits — darker walls = more visible building sides.
    */
-  --depth-wall: oklch(0.34 0.023 265);
+  --depth-wall: oklch(0.28 0.023 265);
   --depth-shadow: oklch(0.18 0.01 265 / 0.35);
 
   /* ── Depth color variant tokens (dark) ───────────────────────── */
@@ -354,7 +354,7 @@
   --depth-primary-shadow: oklch(0.22 0.08 35 / 0.40);
   --depth-secondary-wall: oklch(0.30 0.04 188);
   --depth-secondary-shadow: oklch(0.16 0.02 188 / 0.40);
-  --depth-muted-wall: oklch(0.36 0.020 264);
+  --depth-muted-wall: oklch(0.30 0.020 264);
   --depth-muted-shadow: oklch(0.20 0.01 265 / 0.40);
   --depth-destructive-wall: oklch(0.42 0.17 28);
   --depth-destructive-shadow: oklch(0.22 0.10 28 / 0.40);
@@ -364,7 +364,7 @@
   --depth-success-shadow: oklch(0.24 0.06 150 / 0.40);
   --depth-warning-wall: oklch(0.58 0.10 77);
   --depth-warning-shadow: oklch(0.34 0.06 77 / 0.40);
-  --depth-outline-wall: oklch(0.35 0.015 264 / 0.50);
+  --depth-outline-wall: oklch(0.28 0.015 264 / 0.60);
   --depth-outline-shadow: oklch(0.18 0.01 264 / 0.30);
 }
 
@@ -637,6 +637,13 @@
   --depth-y: calc(var(--depth-wall-mag) * cos(var(--light-angle)) * -1px);
   --shadow-x: calc(var(--depth-shadow-mag) * sin(var(--light-angle)) * 1px);
   --shadow-y: calc(var(--depth-shadow-mag) * cos(var(--light-angle)) * -1px);
+
+  /* Face color computation — driven by color variant's --variant-bg/--variant-fg.
+   * Default falls back to card surface colors for elements without a color variant.
+   * [data-muted] overrides --face-bg/--face-fg with color-mix() blends. */
+  --face-bg: var(--variant-bg, var(--card));
+  --face-fg: var(--variant-fg, var(--card-foreground));
+
   position: relative;
   transform-style: preserve-3d;
   border: 1px solid var(--depth-wall);
@@ -705,56 +712,89 @@
 }
 
 /* ── Color variants ──────────────────────────────────────────────
- * Only set --depth-wall and --depth-shadow. Face color comes from
- * Tailwind bg-* utilities on the element.
+ * Each variant sets:
+ *   --depth-wall / --depth-shadow — wall and ground shadow colors
+ *   --variant-bg / --variant-fg   — source face colors (consumed
+ *     by --face-bg/--face-fg on .depth, and blended by [data-muted])
  * ────────────────────────────────────────────────────────────────── */
 
-/* Default (Primary) — terracotta walls */
+/* Primary — terracotta walls */
 .depth-primary {
   --depth-wall: var(--depth-primary-wall);
   --depth-shadow: var(--depth-primary-shadow);
+  --variant-bg: var(--primary);
+  --variant-fg: var(--primary-foreground);
 }
 
 /* Secondary — teal walls */
 .depth-secondary {
   --depth-wall: var(--depth-secondary-wall);
   --depth-shadow: var(--depth-secondary-shadow);
+  --variant-bg: var(--secondary);
+  --variant-fg: var(--secondary-foreground);
 }
 
 /* Muted — warm off-white walls */
 .depth-muted {
   --depth-wall: var(--depth-muted-wall);
   --depth-shadow: var(--depth-muted-shadow);
+  --variant-bg: var(--muted);
+  --variant-fg: var(--muted-foreground);
 }
 
 /* Destructive — red walls */
 .depth-destructive {
   --depth-wall: var(--depth-destructive-wall);
   --depth-shadow: var(--depth-destructive-shadow);
+  --variant-bg: var(--destructive);
+  --variant-fg: var(--destructive-foreground);
 }
 
 /* Accent — salmon pink walls */
 .depth-accent {
   --depth-wall: var(--depth-accent-wall);
   --depth-shadow: var(--depth-accent-shadow);
+  --variant-bg: var(--accent);
+  --variant-fg: var(--accent-foreground);
 }
 
 /* Success — sage green walls */
 .depth-success {
   --depth-wall: var(--depth-success-wall);
   --depth-shadow: var(--depth-success-shadow);
+  --variant-bg: var(--success);
+  --variant-fg: var(--success-foreground);
 }
 
 /* Warning — golden-amber walls */
 .depth-warning {
   --depth-wall: var(--depth-warning-wall);
   --depth-shadow: var(--depth-warning-shadow);
+  --variant-bg: var(--warning);
+  --variant-fg: var(--warning-foreground);
 }
 
 /* Outline — subtle neutral walls */
 .depth-outline {
   --depth-wall: var(--depth-outline-wall);
   --depth-shadow: var(--depth-outline-shadow);
+  --variant-bg: var(--card);
+  --variant-fg: var(--card-foreground);
+}
+
+/* ── Muted modifier ──────────────────────────────────────────────
+ * [data-muted] blends face colors toward the muted palette without
+ * using opacity (which would reveal depth pseudo-elements through
+ * the transparent face). Uses color-mix() in OKLCH for perceptually
+ * uniform blending.
+ *
+ * 60% original variant color + 40% muted = gentle desaturation
+ * that matches the visual weight of opacity-60 without transparency.
+ * ────────────────────────────────────────────────────────────────── */
+
+.depth[data-muted] {
+  --face-bg: color-mix(in oklch, var(--variant-bg, var(--card)) 60%, var(--muted));
+  --face-fg: var(--muted-foreground);
 }
 
 /* ── Layer 2: .pressable — Animation Layer ─────────────────────────
