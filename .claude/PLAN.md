@@ -25,13 +25,14 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 2B complete (M1 delivered) → Sprint 3 (Platform Features, M2)
+- **Active:** Sprint 2C (Launch Readiness) — make bnto.io presentable for real users and crawlers
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos run 100% client-side via Rust→WASM. Uniform Rust engine — no JS fallback. Files never leave the user's machine. Rust evaluation checkpoint PASSED.
 - **Cloud pipeline:** Complete. Go API on Railway, R2 file transit, Convex real-time subscriptions — all verified end-to-end with integration E2E tests. This is M4 infrastructure delivered ahead of schedule.
 - **WASM engine:** 6 Rust crates (`bnto-image`, `bnto-csv`, `bnto-file`, `bnto-core`, `bnto-wasm`). Single cdylib entry point. 1.6MB raw / 606KB gzipped. Web Worker wrapper with progress reporting.
 - **Auth:** Migrated to `@convex-dev/auth`. Anonymous sessions create real `users` rows. Integration tests complete. `AUTH_SECRET` env var required in Convex deployments.
 - **Go engine:** Complete. CLI with 10 node types (>90% coverage), HTTP API on Railway, BntoService shared API layer. Paused for web — browser execution is M1 priority. Ready for M3 (desktop) and M4 (premium server-side).
-- **Web app:** Next.js on Vercel. Auth, SEO tool pages, execution UI, landing pages — all built.
+- **Web app:** Next.js on Vercel. Auth, SEO tool pages, execution UI built. Landing pages still use Mainline template placeholder content — Sprint 2C replaces all of it.
+- **Launch blocker:** bnto.io domain not yet connected to Vercel. ~25 files of Mainline template content (hero, features, testimonials, pricing, about, contact) reference a project management tool, not bnto. Must be replaced before real users or crawlers see the site.
 - **Packages:** `@bnto/core` (layered singleton), `@bnto/auth` (`@convex-dev/auth` wrappers), `@bnto/backend` (Convex schema + functions), `@bnto/nodes` (engine-agnostic definitions). UI co-located in `apps/web/components/`.
 
 ---
@@ -45,7 +46,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] @bnto/core: Layered singleton (clients → services → adapters), React Query + Convex adapter, 38 hooks
 - [x] @bnto/auth: `@convex-dev/auth` integration (migrated from Better Auth — see decisions/auth-evaluation.md)
 - [x] @bnto/backend: Convex schema (users, workflows, executions, executionLogs), auth, crons, run counter fields
-- [x] Web app: Landing pages (Mainline template — hero, features, pricing, about, FAQ, contact, privacy, footer)
+- [x] Web app: Landing pages (Mainline template — **being replaced in Sprint 2C** with real bnto content)
 - [x] Web app: Auth flow (sign-in, sign-up, sign-out with signal cookie, proxy route protection)
 - [x] Web app: SEO infrastructure (bnto-registry.ts, [bnto]/page.tsx, generateStaticParams, generateMetadata, BntoJsonLd, sitemap.ts, llms.txt, robots.txt)
 - [x] Web app: Middleware (canonical URL normalization, auth routing, bnto slug pass-through)
@@ -68,7 +69,8 @@ Pricing, revenue projections, and "ready to charge" criteria live in Notion ("SE
 
 | Sprint | What Ships | Revenue Implication |
 |--------|-----------|---------------------|
-| Sprint 2B | Browser execution (M1 MVP) | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine. SEO footprint live. |
+| Sprint 2B | Browser execution (M1 MVP) | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine. |
+| Sprint 2C | Launch readiness (content + domain) | **bnto.io live and indexable.** Real content on every page. SEO crawling begins. First real users possible. |
 | Sprint 3 | Platform features (accounts, history) | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented. |
 | Sprint 4 | JSON editor | Power users self-identify. Custom flows are a Pro signal. |
 | Sprint 5-6 | Desktop app | Top-of-funnel. Word of mouth begins. Free forever — trust signal. |
@@ -223,6 +225,46 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [x] `apps/web` — Zip download for multi-file browser results (fflate, createZipBlob, E2E verified)
 
 **Sprint 2B COMPLETE.** M1 (Browser Execution) delivered. All 6 Tier 1 bntos run client-side. WASM bundle: 1.6MB raw / 606KB gzipped. Performance benchmarks moved to backlog — not blocking M1 delivery.
+
+---
+
+### Sprint 2C: Launch Readiness
+**Goal:** bnto.io is live, real, and indexable. Every page a crawler or user sees has genuine bnto content. All Mainline template placeholder content is gone. The site is presentable for SEO indexing and first real users.
+
+**Context:** M1 (browser execution) is delivered — all 6 Tier 1 bntos work. But the web app still shows ~25 files of Mainline template content (hero about "modern product teams", fake testimonials from "Mercury Finance", pricing for "500 issues", investor photos, etc.). This must be replaced before bnto.io goes live. The tool pages (`/compress-images`, `/clean-csv`, etc.) are already real — the marketing wrapper around them is not.
+
+**Design reference:** `/Users/ryan/Code/shadcn-blocks/blocks/` — extensive library of production-quality block components. Browse relevant categories (hero, feature, pricing, faq, footer, navbar, logos, stats, cta, trust-strip) for patterns and inspiration. Adapt layout and composition patterns to fit our design system — don't copy styling blindly.
+
+#### Wave 1 (parallel — metadata + navigation + domain)
+
+- [ ] `apps/web` — **Root metadata overhaul:** Replace all "Mainline" metadata in `layout.tsx` — title ("bnto — Free Online File Tools"), description, keywords (compress images, clean csv, rename files, convert format, free online tools), OG tags, Twitter card. Authors = "bnto". Remove shadcnblocks.com references.
+- [ ] `apps/web` — **Navbar simplification:** Strip Mainline nav items (Features dropdown, About, Pricing, FAQ, Contact). Keep: Logo, tool page links or "Tools" anchor, GitHub button (pointed at real bnto repo — we're MIT open source), theme toggle, Sign In. Fix dead `/login` link → `/signin`. Reference `shadcn-blocks/blocks/navbar/navbar8.tsx` for structure — clean, fixed top, responsive mobile sheet.
+- [ ] `apps/web` — **Footer rewrite:** Replace template footer. Real links: Tools (all 6 bnto slugs), GitHub repo, MIT license note. Remove fake social links (`@ausrobdev`). Simple and honest — no fake company sections. Browse `shadcn-blocks/blocks/footer/` for patterns.
+- [ ] `infra` — **Connect bnto.io to Vercel:** Add CNAME/A records in Cloudflare DNS. Configure custom domain in Vercel dashboard. Verify HTTPS + deployment. Update `robots.txt` sitemap URL if domain changes from `bnto.dev`.
+
+#### Wave 2 (parallel — home page overhaul)
+
+- [ ] `apps/web` — **Delete Mainline block components:** Remove `Hero.tsx`, `Logos.tsx`, `Features.tsx`, `ResourceAllocation.tsx`, `Testimonials.tsx`, `Investors.tsx`, `About.tsx`, `AboutHero.tsx`, `Contact.tsx`. These are all template garbage referencing project management tools, fake companies, Lorem ipsum, and fake testimonials. Keep: `BntoGallery.tsx` (real content), `Navbar.tsx` (being rewritten in Wave 1), `Footer.tsx` (being rewritten in Wave 1).
+- [ ] `apps/web` — **New home page hero:** BntoGallery as the centerpiece. Concise value prop above: "Drop files. Pick a tool. Done." + privacy tagline ("Your files never leave your browser"). No marketing fluff, no fake screenshots. The tool grid IS the hero. Browse `shadcn-blocks/blocks/hero/` for layout inspiration — keep it simple and tool-first.
+- [ ] `apps/web` — **Features/trust section:** Replace Mainline features with 3-4 real bnto differentiators: "100% browser-based" (files never uploaded), "Free forever" (no signup, no limits), "Open source" (MIT licensed, inspect the code), "Batch processing" (drop multiple files). Browse `shadcn-blocks/blocks/feature/` and `trust-strip/` for patterns.
+- [ ] `apps/web` — **Pricing section rewrite:** Per `pricing-model.md` — Free (browser, unlimited, $0 forever), Pro ($8/mo for persistence, collaboration, premium compute). Two honest tiers, no dark patterns. Desktop free forever. Browse `shadcn-blocks/blocks/pricing/` for layout patterns.
+- [ ] `apps/web` — **FAQ section rewrite:** Real questions — "What file types are supported?", "Is it really free?", "Where are my files processed?", "Is bnto open source?", "What's Pro?". Browse `shadcn-blocks/blocks/faq/` for accordion/grid patterns.
+
+#### Wave 3 (parallel — page cleanup + assets)
+
+- [ ] `apps/web` — **Remove or redirect `/about`:** No real team/investor content yet. Either redirect to `/` or replace with minimal "bnto is open source" page with GitHub link. Delete fake investor photos and team bios.
+- [ ] `apps/web` — **Remove or redirect `/contact`:** Fake Australian address must go. Either redirect to `/` or replace with a simple "Found a bug? Open an issue on GitHub" page.
+- [ ] `apps/web` — **Clean up `/privacy`:** Verify MDX content is relevant to bnto (not Mainline template). Update if needed.
+- [ ] `apps/web` — **Delete unused public assets:** `hero.webp`, `og-image.jpg` (template), `about/*.webp` (workspace photos), `investors/*.webp` (fake headshots), `testimonials/*.webp` (fake photos), `logos/*.svg` (Mercury, Retool, etc.), `features/*.svg` (project management UI mockups), `resource-allocation/*.webp` (project management screenshots). Keep: `logo.svg`, `favicon/`, `wasm/`, `llms.txt`, `robots.txt`.
+- [ ] `apps/web` — **Create bnto OG image:** Simple text-based OG image for social sharing ("bnto — Free Online File Tools"). Can be generated or a simple SVG.
+
+#### Wave 4 (sequential — verify + E2E)
+
+- [ ] `apps/web` — **E2E: no Mainline text anywhere.** Grep the built site for "Mainline", "shadcnblocks", "Mercury", "ausrobdev", "project management" — zero matches.
+- [ ] `apps/web` — **E2E: home page renders real content.** Screenshot assertions for hero, tool grid, features, pricing, FAQ sections.
+- [ ] `apps/web` — **E2E: all 6 tool pages still work.** Verify nav changes didn't break routing or layout.
+- [ ] `apps/web` — **SEO verification:** Confirm `<title>`, `<meta description>`, JSON-LD correct on home page and all tool pages. Verify `generateStaticParams` still works.
+- [ ] `apps/web` — **Update all E2E screenshots** for new layout (home page, navigation, footer).
 
 ---
 
@@ -473,13 +515,13 @@ The Convex dev deployment (`zealous-canary-422`) still contains stale data from 
 
 ### Infra: Domain Setup (bnto.io Custom Domains)
 
-Railway first (API) to validate DNS + TLS, then Vercel (web app).
+**Web app domain promoted to Sprint 2C Wave 1.** API domain (`api.bnto.io`) deferred to M4 (premium server-side bntos need the Go API). Web app domain is the launch blocker.
 
-- [ ] `infra` — Add `api.bnto.io` CNAME in Cloudflare DNS → Railway
-- [ ] `infra` — Configure custom domain in Railway dashboard
-- [ ] `infra` — Update `GO_API_URL` in Convex prod to `https://api.bnto.io`
-- [ ] `infra` — Verify API health check at `https://api.bnto.io/health`
-- [ ] `infra` — Connect `bnto.io` to Vercel, update Cloudflare DNS
+- [ ] `infra` — Connect `bnto.io` to Vercel, update Cloudflare DNS — **promoted to Sprint 2C Wave 1**
+- [ ] `infra` — Add `api.bnto.io` CNAME in Cloudflare DNS → Railway — **M4 (not needed for browser-only launch)**
+- [ ] `infra` — Configure custom domain in Railway dashboard — **M4**
+- [ ] `infra` — Update `GO_API_URL` in Convex prod to `https://api.bnto.io` — **M4**
+- [ ] `infra` — Verify API health check at `https://api.bnto.io/health` — **M4**
 - [ ] `infra` — Verify auth redirects work on `bnto.io`
 
 ### Infra: Graduate SEO Validation from E2E to Unit Tests + Lighthouse CI
@@ -591,12 +633,12 @@ Both controls feed into the same CSS custom property system that drives the dept
 - [ ] `apps/web` — Wire elevation into depth shadow length scaling in `globals.css`
 - [ ] `apps/web` — Replace `LightSourceSlider` on showcase page with RadialSlider + compass labels
 
-### UI: Font Family Review
+### ~~UI: Font Family Review~~ — DONE
 
-**Deferred from Sprint 2.5.** Evaluate replacing DM Sans with Geist for display/headings. Current: DM Sans (display) + Inter (body) + Geist Mono (code). DM Sans is bubbly/rounded-geometric — may not match Mini Motorways' precise-but-warm feel. Geist has Swiss-style technical precision. Reference: `/Users/ryan/Desktop/Mini Motorways Reference/`. Proposed: **Geist (display) + Inter (body) + Geist Mono (code)**. Prototype the swap and compare visually.
+**Completed Feb 2026.** DM Sans replaced with Geist for display/headings. Final font stack: **Geist (display, font-black weight 900) + Inter (body) + Geist Mono (code)**. Mini Motorways-inspired: Swiss-style precision meets warm palette. Committed in `86cad62`.
 
-- [ ] `apps/web` — Prototype Geist as display font, compare against DM Sans side-by-side
-- [ ] `apps/web` — E2E screenshots updated if font is swapped
+- [x] `apps/web` — Swapped display font to Geist, updated Heading component to font-black (900)
+- [x] `apps/web` — Typography showcase updated with actual font labels
 
 ### Performance: WASM Bundle Size & Processing Benchmarks
 
