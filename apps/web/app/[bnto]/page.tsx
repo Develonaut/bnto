@@ -20,7 +20,7 @@ export async function generateMetadata({
   const entry = getBntoBySlug(bnto);
   if (!entry) return {};
   return {
-    title: entry.title,
+    title: { absolute: entry.title },
     description: entry.description,
     openGraph: {
       title: entry.title,

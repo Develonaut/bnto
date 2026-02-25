@@ -81,9 +81,9 @@ test.describe("SEO metadata — all Tier 1 slugs", () => {
     }) => {
       await page.goto(`/${entry.slug}`);
 
-      // Title tag includes the page-specific title from the registry.
-      // Root layout applies a "%s | Mainline" template to all page titles.
-      await expect(page).toHaveTitle(`${entry.title} | Mainline`);
+      // Title tag uses the absolute title from the registry (bypasses template).
+      // Tool page titles already include the "-- bnto" brand suffix.
+      await expect(page).toHaveTitle(entry.title);
 
       // Meta description present and correct
       const metaDesc = page.locator('meta[name="description"]');
