@@ -12,6 +12,9 @@ catalogs:
     '@playwright/test':
       specifier: ^1.58.0
       version: 1.58.2
+    '@radix-ui/react-tabs':
+      specifier: ^1.1.13
+      version: 1.1.13
     '@tanstack/react-query':
       specifier: ^5.90.0
       version: 5.90.20
@@ -120,6 +123,9 @@ importers:
       '@radix-ui/react-switch':
         specifier: ^1.2.5
         version: 1.2.6(@types/react@19.2.13)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@radix-ui/react-tabs':
+        specifier: 'catalog:'
+        version: 1.1.13(@types/react@19.2.13)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.90.20(react@19.2.4)

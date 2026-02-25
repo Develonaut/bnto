@@ -11,11 +11,13 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/Card";
 import { Grid } from "@/components/ui/Grid";
 import { Heading } from "@/components/ui/Heading";
 import { Stack } from "@/components/ui/Stack";
+import { Tabs } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/Text";
 import { BNTO_REGISTRY, type BntoEntry } from "@/lib/bntoRegistry";
 
@@ -38,69 +40,79 @@ interface CellLayout {
   featured: boolean;
 }
 
-const COLS = 3;
-
-function assignCellLayouts(itemCount: number): { layouts: CellLayout[]; rows: number } {
+/**
+ * Sidebar-aware layout algorithm. The grid has two zones:
+ *
+ *  1. **Top zone** — featured card (2×2) + sidebar column(s) to its right
+ *  2. **Bottom zone** — full-width rows below the featured card
+ *
+ * Items in the sidebar must be 1-col wide (they only have 1 column).
+ * Items in the bottom zone are widened evenly to fill complete rows.
+ */
+function assignCellLayouts(
+  itemCount: number,
+  cols: number,
+): { layouts: CellLayout[]; rows: number } {
   if (itemCount === 0) return { layouts: [], rows: 0 };
 
-  // For small counts, use hand-tuned patterns
-  if (itemCount <= 6) return buildFromTable(itemCount);
+  // Single item → full-width hero
+  if (itemCount === 1) {
+    const c = Math.min(cols, 3) as 1 | 2 | 3;
+    return { layouts: [{ colSpan: c, rowSpan: 2, featured: true }], rows: 2 };
+  }
 
-  // Fallback for larger counts: featured 2×2, rest 1×1, pad with 2×1 cards
-  const featured = 4; // 2×2 costs 4 cells
+  // For 1-col grid, everything stacks
+  if (cols === 1) {
+    return {
+      rows: itemCount,
+      layouts: Array.from({ length: itemCount }, (_, i) => ({
+        colSpan: 1 as const,
+        rowSpan: 1 as const,
+        featured: i === 0,
+      })),
+    };
+  }
+
+  // Featured card: span min(2, cols) columns × 2 rows
+  const featColSpan = Math.min(2, cols) as 1 | 2 | 3;
+  const featRowSpan = 2;
+
+  // Sidebar: columns to the right of featured (0 for 2-col, 1 for 3-col)
+  const sidebarWidth = cols - featColSpan;
+  const sidebarSlots = sidebarWidth * featRowSpan;
   const rest = itemCount - 1;
-  const minCells = featured + rest;
-  const rows = Math.ceil(minCells / COLS);
-  const totalCells = COLS * rows;
-  let extra = totalCells - minCells;
+  const sidebarCount = Math.min(rest, sidebarSlots);
+  const bottomCount = rest - sidebarCount;
 
-  const layouts: CellLayout[] = [{ colSpan: 2, rowSpan: 2, featured: true }];
-  for (let i = 1; i < itemCount; i++) {
-    if (extra > 0) {
-      layouts.push({ colSpan: 2, rowSpan: 1, featured: false });
-      extra -= 1;
-    } else {
+  const layouts: CellLayout[] = [
+    { colSpan: featColSpan, rowSpan: featRowSpan, featured: true },
+  ];
+
+  // Sidebar items: 1-col wide. If only 1 item with 2 vertical
+  // slots, stretch it tall (1×2) so the sidebar isn't half-empty.
+  if (sidebarCount === 1 && sidebarSlots >= 2) {
+    layouts.push({ colSpan: 1, rowSpan: 2, featured: false });
+  } else {
+    for (let i = 0; i < sidebarCount; i++) {
       layouts.push({ colSpan: 1, rowSpan: 1, featured: false });
     }
   }
+
+  // Bottom items: fill complete rows with even span distribution
+  if (bottomCount > 0) {
+    const bottomRows = Math.ceil(bottomCount / cols);
+    const totalCells = bottomRows * cols;
+    const baseSpan = Math.floor(totalCells / bottomCount);
+    const wider = totalCells % bottomCount;
+
+    for (let i = 0; i < bottomCount; i++) {
+      const span = Math.min(i < wider ? baseSpan + 1 : baseSpan, 3) as 1 | 2 | 3;
+      layouts.push({ colSpan: span, rowSpan: 1, featured: false });
+    }
+  }
+
+  const rows = featRowSpan + (bottomCount > 0 ? Math.ceil(bottomCount / cols) : 0);
   return { layouts, rows };
-}
-
-function buildFromTable(n: number): { layouts: CellLayout[]; rows: number } {
-  // Hand-tuned layouts that actually pack correctly in a 3-col grid.
-  // Each pattern verified: sum(colSpan × rowSpan) === COLS × rows.
-  const patterns: Record<number, { rows: number; cells: [1|2|3, 1|2, boolean][] }> = {
-    //  1 item  → 3×2 hero
-    1: { rows: 2, cells: [[3,2,true]] },
-    //  2 items → 2×2 featured + 1×2 tall
-    //  [FF][B]    cells: 4+2 = 6 = 3×2 ✓
-    //  [FF][B]
-    2: { rows: 2, cells: [[2,2,true],[1,2,false]] },
-    //  3 items → 2×2 featured + 2 × 1×1
-    //  [FF][B]    cells: 4+1+1 = 6 = 3×2 ✓
-    //  [FF][C]
-    3: { rows: 2, cells: [[2,2,true],[1,1,false],[1,1,false]] },
-    //  4 items → 2×1 featured + 1×1 + 2 × 1×1
-    //  [FF][B]    cells: 2+1+1+2 = 6 = 3×2 ✓
-    //  [C][D D]
-    4: { rows: 2, cells: [[2,1,true],[1,1,false],[1,1,false],[2,1,false]] },
-    //  5 items → 2×2 featured + 1×1 + 1×1 + 2×1 wide
-    //  [FF][B]    cells: 4+1+1+2+1 = 9 = 3×3 ✓
-    //  [FF][C]
-    //  [DD][E]
-    5: { rows: 3, cells: [[2,2,true],[1,1,false],[1,1,false],[2,1,false],[1,1,false]] },
-    //  6 items → 2×2 featured + 5 × 1×1
-    //  [FF][B]    cells: 4+1+1+1+1+1 = 9 = 3×3 ✓
-    //  [FF][C]
-    //  [D][E][F]
-    6: { rows: 3, cells: [[2,2,true],[1,1,false],[1,1,false],[1,1,false],[1,1,false],[1,1,false]] },
-  };
-
-  const p = patterns[n];
-  return {
-    rows: p.rows,
-    layouts: p.cells.map(([colSpan, rowSpan, featured]) => ({ colSpan, rowSpan, featured })),
-  };
 }
 
 /* ── Bento cell ──────────────────────────────────────────────── */
@@ -164,29 +176,22 @@ function BentoCell({
 /* ── Main showcase ───────────────────────────────────────────── */
 
 const ALL_ITEMS = [...BNTO_REGISTRY];
+const COUNTS = Array.from({ length: ALL_ITEMS.length }, (_, i) => i + 1);
 
-export function BentoGridShowcase() {
-  const [count, setCount] = useState(ALL_ITEMS.length);
+function BentoGrid({ count, cols }: { count: number; cols: 1 | 2 | 3 }) {
   const items = ALL_ITEMS.slice(0, count);
-  const { layouts, rows } = assignCellLayouts(items.length);
+  const { layouts, rows } = assignCellLayouts(items.length, cols);
+
+  const colsResponsive =
+    cols === 1 ? 1 as const
+    : cols === 2 ? { mobile: 1 as const, tablet: 2 as const }
+    : { mobile: 1 as const, tablet: 2 as const, desktop: 3 as const };
 
   return (
-    <Stack gap="md">
-      <div className="flex flex-wrap gap-2">
-        {Array.from({ length: ALL_ITEMS.length }, (_, i) => i + 1).map((n) => (
-          <Button
-            key={n}
-            variant={n === count ? "default" : "muted"}
-            size="sm"
-            onClick={() => setCount(n)}
-          >
-            {n}
-          </Button>
-        ))}
-      </div>
-
+    <>
       <Grid
-        cols={{ mobile: 1, tablet: 2, desktop: 3 }}
+        key={`${count}-${cols}-${rows}`}
+        cols={colsResponsive}
         gap="md"
         flow="dense"
         rows={`repeat(${rows}, minmax(10rem, auto))`}
@@ -198,15 +203,63 @@ export function BentoGridShowcase() {
             rowSpan={layouts[i].rowSpan}
             className="min-h-0"
           >
-            <BentoCell entry={entry} layout={layouts[i]} />
+            <Animate.ScaleIn
+              index={i}
+              from={0.6}
+              easing="spring-bouncier"
+              className="h-full"
+              style={{ animationDelay: `${i * 80}ms` }}
+            >
+              <BentoCell entry={entry} layout={layouts[i]} />
+            </Animate.ScaleIn>
           </Grid.Item>
         ))}
       </Grid>
 
-      <Text size="xs" color="muted" mono className="text-center uppercase tracking-wider">
-        {items.length} recipes &middot; {COLS}&times;{rows} grid &middot; zero gaps &middot; dense
+      <Text size="xs" color="muted" mono className="mt-8 text-center uppercase tracking-wider">
+        {items.length} recipes &middot; {cols}&times;{rows} grid &middot; zero gaps &middot; dense
         auto-flow
       </Text>
+    </>
+  );
+}
+
+export function BentoGridShowcase() {
+  const [count, setCount] = useState(String(ALL_ITEMS.length));
+  const [cols, setCols] = useState("3");
+
+  return (
+    <Stack gap="md">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Text size="xs" mono color="muted" className="uppercase tracking-wider">Items</Text>
+          <Tabs value={count} onValueChange={setCount}>
+            <Tabs.List>
+              {COUNTS.map((n) => (
+                <Tabs.Trigger key={n} value={String(n)}>
+                  {n}
+                </Tabs.Trigger>
+              ))}
+            </Tabs.List>
+          </Tabs>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Text size="xs" mono color="muted" className="uppercase tracking-wider">Cols</Text>
+          <Tabs value={cols} onValueChange={setCols}>
+            <Tabs.List>
+              {[1, 2, 3].map((n) => (
+                <Tabs.Trigger key={n} value={String(n)}>
+                  {n}
+                </Tabs.Trigger>
+              ))}
+            </Tabs.List>
+          </Tabs>
+        </div>
+
+      </div>
+
+      <BentoGrid count={Number(count)} cols={Number(cols) as 1 | 2 | 3} />
     </Stack>
   );
 }
