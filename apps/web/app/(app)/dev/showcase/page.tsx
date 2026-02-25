@@ -10,7 +10,6 @@ import { Stack } from "@/components/ui/Stack";
 import { AnimatedThemeToggle } from "@/components/ui/AnimatedThemeToggle";
 import { AnimationShowcase } from "./AnimationShowcase";
 import { BentoGridShowcase } from "./BentoGridShowcase";
-import { ButtonAnimationShowcase } from "./ButtonAnimationShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
@@ -77,17 +76,9 @@ export default function ThemeDemoPage() {
           <ShowcaseSection
             id="demo-buttons"
             title="Buttons"
-            description="All variants × sizes with depth + pressable. Icon buttons included."
+            description="Configure variant, size, and spring to see every combination. Spring controls the release settle — sm is firm, md bounces, lg (default) is elastic."
           >
             <ButtonShowcase />
-          </ShowcaseSection>
-
-          <ShowcaseSection
-            id="demo-button-spring"
-            title="Button Spring"
-            description="The spring prop controls how buttons settle after hover and press. sm is firm, md has a gentle bounce, lg (default) is an elastic rubber-band with three visible oscillations."
-          >
-            <ButtonAnimationShowcase />
           </ShowcaseSection>
 
           <ShowcaseSection id="demo-form" title="Form Elements" description="Inputs, switches, checkboxes, slider inside an elevated card.">
