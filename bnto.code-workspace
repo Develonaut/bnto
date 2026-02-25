@@ -2,6 +2,7 @@
   "folders": [
     { "path": ".", "name": "root" },
     { "path": "engine", "name": "engine"},
+    { "path": "engine-wasm", "name": "engine-wasm"},
     { "path": "apps", "name": "apps" },
     { "path": "packages", "name": "packages" }
   ],
@@ -27,6 +28,10 @@
     "[json]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+    "[rust]": {
+      "editor.defaultFormatter": "rust-lang.rust-analyzer"
+    },
+    "rust-analyzer.linkedProjects": ["engine-wasm/Cargo.toml"],
     "tailwindCSS.experimental.classRegex": [
       ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
       ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
@@ -43,7 +48,8 @@
       "**/dist": true,
       "**/.turbo": true,
       "**/pnpm-lock.yaml": true,
-      "**/go.sum": true
+      "**/go.sum": true,
+      "**/target": true
     }
   },
   "extensions": {
@@ -51,6 +57,7 @@
       "golang.go",
       "esbenp.prettier-vscode",
       "dbaeumer.vscode-eslint",
+      "rust-lang.rust-analyzer",
       "bradlc.vscode-tailwindcss"
     ]
   },

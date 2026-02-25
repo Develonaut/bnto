@@ -185,8 +185,10 @@ export class BntoWorker {
         }
       };
 
-      // Send the init request.
-      this.send({ type: "init" });
+      // Send the init request with the page origin so the worker
+      // can construct absolute URLs for WASM assets. Workers created
+      // from bundled module URLs may not resolve relative paths correctly.
+      this.send({ type: "init", baseUrl: globalThis.location?.origin ?? "" });
     });
   }
 

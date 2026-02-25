@@ -63,7 +63,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   try {
     switch (request.type) {
       case "init":
-        await handleInit();
+        await handleInit(request.baseUrl);
         break;
       case "process":
         handleProcess(request);
@@ -80,7 +80,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
 // Init — Load the WASM binary
 // =============================================================================
 
-async function handleInit(): Promise<void> {
+async function handleInit(baseUrl: string): Promise<void> {
   if (initialized) {
     // Already initialized — just re-send ready.
     send({ type: "ready", version: wasmVersion?.() ?? "unknown" });
@@ -91,11 +91,12 @@ async function handleInit(): Promise<void> {
     // Dynamically import the WASM glue code from the public directory.
     // The JS glue file handles fetching and instantiating the .wasm binary.
     //
-    // We use importScripts-style loading because Web Workers can't use
-    // ES module imports in all browsers. The WASM JS glue from wasm-pack
-    // (--target web) exports an `init` function and named exports.
-    const wasmUrl = "/wasm/bnto_wasm_bg.wasm";
-    const jsUrl = "/wasm/bnto_wasm.js";
+    // We use absolute URLs because Web Workers created from bundled
+    // module URLs (Turbopack, webpack) can't resolve root-relative
+    // paths like "/wasm/...". The baseUrl comes from the main thread's
+    // window.location.origin (e.g., "http://localhost:3100").
+    const wasmUrl = `${baseUrl}/wasm/bnto_wasm_bg.wasm`;
+    const jsUrl = `${baseUrl}/wasm/bnto_wasm.js`;
 
     // Fetch and evaluate the JS glue code.
     const response = await fetch(jsUrl);

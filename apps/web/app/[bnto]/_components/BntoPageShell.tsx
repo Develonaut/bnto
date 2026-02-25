@@ -2,11 +2,13 @@
 
 import { useCallback, useState } from "react";
 import {
+  core,
   useRunQuota,
   useCurrentUser,
   useUploadFiles,
   useRunPredefined,
   useExecution,
+  useBrowserExecution,
 } from "@bnto/core";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { getRecipe } from "@/lib/menu";
@@ -20,6 +22,11 @@ import { RunButton } from "./RunButton";
 import type { RunPhase } from "./RunButton";
 import { ExecutionProgress } from "./ExecutionProgress";
 import { ExecutionResults } from "./ExecutionResults";
+import { BrowserExecutionProgress } from "./BrowserExecutionProgress";
+import { BrowserExecutionResults } from "./BrowserExecutionResults";
+import { ErrorCard } from "./ErrorCard";
+import { useBrowserEngine } from "./useBrowserEngine";
+import { toBrowserPhase, toCloudPhase } from "./phaseMapping";
 
 interface BntoPageShellProps {
   entry: BntoEntry;
@@ -28,12 +35,18 @@ interface BntoPageShellProps {
 /**
  * Client shell for bnto tool pages.
  *
- * Manages the full execution lifecycle:
- *   1. User drops files → FileDropZone (controlled)
- *   2. User clicks Run → upload files to R2 via presigned URLs
- *   3. Upload completes → start predefined execution with sessionId
- *   4. Execution progress streams via Convex real-time subscription
- *   5. Execution completes → show output files with download buttons
+ * Manages the full execution lifecycle with two paths:
+ *
+ * Browser path (Tier 1 bntos like compress-images):
+ *   1. User drops files -> FileDropZone
+ *   2. User clicks Run -> WASM processes files in a Web Worker
+ *   3. Results appear as in-memory blobs -> download directly
+ *
+ * Cloud path (server-side bntos):
+ *   1. User drops files -> FileDropZone
+ *   2. User clicks Run -> upload files to R2
+ *   3. Execution runs on Railway Go API
+ *   4. Results downloaded from R2
  */
 export function BntoPageShell({ entry }: BntoPageShellProps) {
   const { isPending: sessionPending, quotaExhausted } = useRunQuota();
@@ -42,44 +55,89 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
     DEFAULT_CONFIGS[entry.slug as BntoSlug] ?? {},
   );
   const [files, setFiles] = useState<File[]>([]);
+
+  // -- Execution path: browser (WASM) vs cloud (R2 + Go API) --
+  const isBrowserPath = core.browser.hasImplementation(entry.slug);
+  useBrowserEngine(isBrowserPath);
+
+  // -- Browser execution --
+  const {
+    execution: browserExec,
+    execute: browserExecute,
+    downloadResult,
+    downloadAll,
+    reset: resetBrowser,
+  } = useBrowserExecution();
+
+  // -- Cloud execution --
   const [executionId, setExecutionId] = useState<string | null>(null);
-  const [phase, setPhase] = useState<RunPhase>("idle");
-
+  const [cloudPhase, setCloudPhase] = useState<RunPhase>("idle");
+  const [clientError, setClientError] = useState<string | null>(null);
   const { progress, upload, reset: resetUpload } = useUploadFiles();
-  const { mutateAsync: startExecution } = useRunPredefined();
-  const { data: execution } = useExecution(executionId ?? "");
+  const { mutateAsync: startCloudExec } = useRunPredefined();
+  const { data: cloudExecution } = useExecution(executionId ?? "");
 
-  // Sync phase from execution status
-  const resolvedPhase = resolvePhase(phase, execution?.status);
+  // -- Resolved phase (unified across both paths) --
+  const resolvedPhase: RunPhase = isBrowserPath
+    ? toBrowserPhase(browserExec.status)
+    : toCloudPhase(cloudPhase, cloudExecution?.status);
 
   const handleRun = useCallback(async () => {
-    const definition = getRecipe(entry.slug)?.definition;
-    if (!definition || files.length === 0) return;
+    if (files.length === 0) return;
 
+    if (isBrowserPath) {
+      await browserExecute(
+        entry.slug,
+        files,
+        config as Record<string, unknown>,
+      );
+      return;
+    }
+
+    // Cloud path
+    const definition = getRecipe(entry.slug)?.definition;
+    if (!definition) return;
+
+    setClientError(null);
     try {
-      setPhase("uploading");
+      setCloudPhase("uploading");
       const session = await upload(files);
 
-      setPhase("running");
-      const id = await startExecution({
+      setCloudPhase("running");
+      const id = await startCloudExec({
         slug: entry.slug,
         definition,
         sessionId: session.sessionId,
       });
       setExecutionId(String(id));
-    } catch {
-      setPhase("failed");
+    } catch (e) {
+      setCloudPhase("failed");
+      setClientError(e instanceof Error ? e.message : "Something went wrong");
     }
-  }, [entry.slug, files, upload, startExecution]);
+  }, [
+    entry.slug,
+    files,
+    config,
+    isBrowserPath,
+    browserExecute,
+    upload,
+    startCloudExec,
+  ]);
 
   const handleReset = useCallback(() => {
     setFiles([]);
-    setExecutionId(null);
-    setPhase("idle");
-    resetUpload();
-  }, [resetUpload]);
+    if (isBrowserPath) {
+      resetBrowser();
+    } else {
+      setExecutionId(null);
+      setCloudPhase("idle");
+      setClientError(null);
+      resetUpload();
+    }
+  }, [isBrowserPath, resetBrowser, resetUpload]);
 
-  const isProcessing = resolvedPhase === "uploading" || resolvedPhase === "running";
+  const isProcessing =
+    resolvedPhase === "uploading" || resolvedPhase === "running";
 
   return (
     <div
@@ -91,6 +149,7 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
           ? (currentUser?.id ?? "")
           : undefined
       }
+      data-execution-mode={isBrowserPath ? "browser" : "cloud"}
     >
       <h1 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
         {entry.h1}
@@ -119,21 +178,44 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
               disabled={isProcessing}
             />
 
-            {progress.files.length > 0 && resolvedPhase === "uploading" && (
-              <UploadProgress files={progress.files} />
+            {/* Browser execution feedback */}
+            {isBrowserPath && browserExec.status === "processing" && (
+              <BrowserExecutionProgress execution={browserExec} />
             )}
+            {isBrowserPath && browserExec.status === "completed" && (
+              <BrowserExecutionResults
+                execution={browserExec}
+                onDownload={downloadResult}
+                onDownloadAll={downloadAll}
+              />
+            )}
+            {isBrowserPath &&
+              browserExec.status === "failed" &&
+              browserExec.error && (
+                <ErrorCard error={browserExec.error} />
+              )}
 
-            {executionId && resolvedPhase === "running" && (
+            {/* Cloud execution feedback */}
+            {!isBrowserPath &&
+              progress.files.length > 0 &&
+              resolvedPhase === "uploading" && (
+                <UploadProgress files={progress.files} />
+              )}
+            {!isBrowserPath && executionId && resolvedPhase === "running" && (
               <ExecutionProgress executionId={executionId} />
             )}
-
-            {executionId && resolvedPhase === "completed" && (
-              <ExecutionResults executionId={executionId} />
-            )}
-
-            {executionId && resolvedPhase === "failed" && (
+            {!isBrowserPath &&
+              executionId &&
+              resolvedPhase === "completed" && (
+                <ExecutionResults executionId={executionId} />
+              )}
+            {!isBrowserPath && executionId && resolvedPhase === "failed" && (
               <ExecutionProgress executionId={executionId} />
             )}
+            {!isBrowserPath &&
+              !executionId &&
+              resolvedPhase === "failed" &&
+              clientError && <ErrorCard error={clientError} />}
 
             <RunButton
               phase={resolvedPhase}
@@ -146,25 +228,4 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
       </div>
     </div>
   );
-}
-
-/** Derive display phase from local phase + backend execution status. */
-function resolvePhase(
-  localPhase: RunPhase,
-  executionStatus: string | undefined,
-): RunPhase {
-  if (localPhase === "uploading") return "uploading";
-  if (!executionStatus || localPhase === "idle") return localPhase;
-
-  switch (executionStatus) {
-    case "pending":
-    case "running":
-      return "running";
-    case "completed":
-      return "completed";
-    case "failed":
-      return "failed";
-    default:
-      return localPhase;
-  }
 }

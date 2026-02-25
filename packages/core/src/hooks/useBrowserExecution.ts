@@ -20,8 +20,6 @@ import type {
  *   3. Progress updates flow via state (fileProgress)
  *   4. Results are available as in-memory blobs
  *   5. User can download results via downloadResult/downloadAll
- *
- * No backend involved — files never leave the browser.
  */
 export function useBrowserExecution() {
   const [execution, dispatch] = useReducer(

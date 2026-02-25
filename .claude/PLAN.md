@@ -167,8 +167,8 @@ Build one node in Rust, compile to WASM, run in a Web Worker. This is the M1 eva
 - [x] `engine-wasm/` — Build `compress-images` node in Rust (`image` crate with JPEG/PNG/WebP codecs, 44 unit tests, WASM bridge ready for unified entry point)
 - [x] `apps/web` — Web Worker wrapper with progress reporting via `postMessage`
 - [x] `packages/core` — Browser adapter: detect browser runtime, route execution to WASM Web Worker
-- [ ] `apps/web` — Wire BntoPageShell to use browser adapter for `/compress-images`
-- [ ] `apps/web` — E2E test: compress-images runs entirely client-side (no backend required)
+- [x] `apps/web` — Wire BntoPageShell to use browser adapter for `/compress-images`
+- [x] `apps/web` — E2E test: compress-images runs entirely client-side (no backend required)
 
 **EVALUATION CHECKPOINT — answer honestly after this wave:**
 - Is development velocity acceptable? (Building nodes getting faster?)
@@ -177,7 +177,34 @@ Build one node in Rust, compile to WASM, run in a Web Worker. This is the M1 eva
 - Is the ecosystem covering our needs? (`image` and `csv` crates work?)
 - Is developer experience tolerable? (Build times, debugging?)
 
-**If Rust passes → continue Wave 3a (Rust). If Rust fails → switch to Wave 3b (JS).**
+**If Rust passes → continue Wave 2c (testing) then Wave 3a (Rust). If Rust fails → switch to Wave 3b (JS).**
+
+#### Wave 2c (parallel — browser execution testing hardening)
+
+Harden the browser execution stack with layered test coverage. Goal: "it just works" confidence from Rust unit tests through full E2E user journeys. See `journeys/browser-execution.md` for the full testing strategy.
+
+**Rust edge cases** (truncated, corrupt, zero-byte inputs):
+- [ ] `engine-wasm/` — Rust unit tests: truncated file (< 10 bytes), corrupt magic bytes, zero-byte file
+- [ ] `engine-wasm/` — Rust unit tests: quality param bounds (0, 1, 100, 101), 1x1 pixel image
+
+**WASM boundary coverage:**
+- [ ] `engine-wasm/` — WASM integration tests: all codec combinations (JPEG→JPEG, PNG→PNG, WebP→WebP)
+- [ ] `engine-wasm/` — WASM integration tests: progress callback fires with increasing percentages
+- [ ] `engine-wasm/` — WASM integration tests: large file (1MB+) doesn't OOM, output always <= input
+
+**E2E 4-phase tests** (BEFORE → PROGRESS → FINISH → VERIFY for each bnto):
+- [ ] `apps/web` — E2E: compress JPEG with 4-phase screenshots + download verification
+- [ ] `apps/web` — E2E: compress PNG with 4-phase screenshots + download verification (PNG magic bytes)
+- [ ] `apps/web` — E2E: compress WebP with 4-phase screenshots + download verification (RIFF/WEBP header)
+- [ ] `apps/web` — E2E: unsupported file (.txt) shows user-friendly error, no crash
+- [ ] `apps/web` — E2E: corrupt image shows error card, Run Again available
+- [ ] `apps/web` — E2E: quality slider comparison (q=50 vs q=90, verify q=50 < q=90)
+- [ ] `apps/web` — E2E: batch 5+ files with progress, all outputs valid
+
+**TS service/worker coverage:**
+- [ ] `packages/core` — browserExecutionService: engine init failure → clean error state
+- [ ] `packages/core` — browserExecutionReducer: batch progress fileIndex increments correctly
+- [ ] `apps/web` — BntoWorker: process after terminate → clear error
 
 #### Wave 3a: Remaining Rust WASM nodes (if Rust passed checkpoint)
 
@@ -199,12 +226,9 @@ Build one node in Rust, compile to WASM, run in a Web Worker. This is the M1 eva
 
 #### Wave 4 (sequential — integration + polish)
 
-- [ ] `apps/web` — Decompose BntoPageShell: extract `useBntoExecution` and `useBntoFiles` hooks, slim to composition shell
-- [ ] `apps/web` — Update BntoPageShell to route through browser adapter (not cloud pipeline) for Tier 1 bntos
-- [ ] `apps/web` — Zip + individual download for multi-file browser results
-- [ ] `apps/web` — Performance benchmarks: bundle size per node, processing speed vs cloud, memory usage
-- [ ] `apps/web` — Update all E2E screenshots for browser execution flow
-- [ ] `apps/web` — `task ui:build` + `task ui:lint` pass clean
+- [x] `apps/web` — BntoPageShell routes through browser adapter for Tier 1 bntos (done in Wave 2)
+- [ ] `apps/web` — Zip download for multi-file browser results (currently individual downloads only)
+- [ ] `apps/web` — Performance benchmarks: bundle size per node, processing speed, memory usage
 
 ---
 
@@ -474,12 +498,21 @@ Railway first (API) to validate DNS + TLS, then Vercel (web app).
 - [ ] `infra` — Connect `bnto.io` to Vercel, update Cloudflare DNS
 - [ ] `infra` — Verify auth redirects work on `bnto.io`
 
-### Testing: Split user-journeys.spec.ts
+### Infra: Graduate SEO Validation from E2E to Unit Tests + Lighthouse CI
 
-`user-journeys.spec.ts` is currently `.disabled`. Several per-persona spec files already exist (execution-flow, file-drop, seo-metadata, bnto-config). Remaining: split the disabled file's coverage into `anonymous-visitor.spec.ts`, `authenticated-user.spec.ts`, `auth-flow.spec.ts`, `navigation.spec.ts`, `dark-mode.spec.ts`.
+**Priority: Medium.** Current SEO validation lives entirely in Playwright E2E tests (`e2e/pages/seo-metadata.spec.ts`). This works but is slow and misses performance/mobile concerns. Graduate to a layered approach:
 
-- [ ] `apps/web` — Split remaining coverage from disabled `user-journeys.spec.ts` into per-persona spec files
-- [ ] `apps/web` — Delete the `.disabled` file after all coverage is migrated
+1. **Move metadata validation to unit tests** (Vitest, fast) — title/description length (50-60 / 120-160 chars), registry↔sitemap sync, slug format. Most already exists in `bntoRegistry.test.ts`.
+2. **Keep thin E2E layer** — just noindex check, 404 behavior, canonical redirects (need a running server).
+3. **Add Lighthouse CI** on merge to main — `seo: 90` threshold catches mobile-friendliness, viewport, tap targets, CWV. Use `playwright-lighthouse` or `lighthouse-ci`.
+4. **Google Search Console** — manual, weekly initially then monthly. Only real source of truth for actual indexing.
+
+- [ ] `apps/web` — Add unit tests: title length (50-60 chars), description length (120-160 chars) to `bntoRegistry.test.ts`
+- [ ] `apps/web` — Add unit test: sitemap entries match registry (import both, compare sets)
+- [ ] `apps/web` — Add E2E test: no accidental `noindex` on Tier 1 pages
+- [ ] `apps/web` — Add E2E test: `/sitemap.xml` is valid and contains all Tier 1 slugs
+- [ ] `apps/web` — Add Lighthouse CI with `seo: 90` threshold on `/compress-images`
+- [ ] `apps/web` — Migrate remaining SEO assertions from `seo-metadata.spec.ts` to unit tests, slim E2E to redirects + 404 + noindex only
 
 ### Testing: Standardize E2E Selectors on data-testid
 

@@ -78,3 +78,4 @@ export { useRunQuota } from "./hooks/useRunQuota";
 export { useUploadFiles } from "./hooks/useUploadFiles";
 export { useDownloadFiles } from "./hooks/useDownloadFiles";
 export { useRunPredefined } from "./hooks/useRunPredefined";
+export { useBrowserExecution } from "./hooks/useBrowserExecution";

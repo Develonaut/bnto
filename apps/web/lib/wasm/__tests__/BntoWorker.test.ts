@@ -85,6 +85,7 @@ describe("BntoWorker", () => {
 
       expect(mockWorkerInstance.postMessage).toHaveBeenCalledWith({
         type: "init",
+        baseUrl: "",
       });
 
       mockWorkerInstance.simulateMessage({

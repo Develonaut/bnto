@@ -15,7 +15,6 @@ import path from "path";
 const devPort = 4000;
 
 export default defineConfig({
-  globalTeardown: "./e2e/global-teardown.ts",
   testDir: "./e2e",
   testMatch: "*.integration.spec.ts",
   snapshotPathTemplate: path.join(

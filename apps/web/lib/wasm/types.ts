@@ -15,6 +15,8 @@
 /** Initialize the WASM module. Must be sent once before any process requests. */
 export interface InitRequest {
   type: "init";
+  /** Base URL for resolving WASM assets (e.g., "http://localhost:3100"). */
+  baseUrl: string;
 }
 
 /** Process a single file through a WASM node. */
