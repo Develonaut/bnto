@@ -232,6 +232,55 @@ describe("browserExecutionService", () => {
     });
   });
 
+  describe("execute — engine init failure", () => {
+    it("propagates init() error without masking it", async () => {
+      const engine = createMockEngine({
+        init: vi.fn().mockRejectedValue(new Error("WASM module failed to load")),
+      });
+      registerBrowserEngine(engine);
+
+      await expect(
+        service.execute("compress-images", [new File(["data"], "test.jpg")]),
+      ).rejects.toThrow("WASM module failed to load");
+
+      // processFiles should never be called when init fails.
+      expect(engine.processFiles).not.toHaveBeenCalled();
+    });
+
+    it("propagates non-Error init failures", async () => {
+      const engine = createMockEngine({
+        init: vi.fn().mockRejectedValue("string error from WASM"),
+      });
+      registerBrowserEngine(engine);
+
+      await expect(
+        service.execute("compress-images", [new File(["data"], "test.jpg")]),
+      ).rejects.toBe("string error from WASM");
+    });
+
+    it("still calls init even if engine was previously used", async () => {
+      const initFn = vi
+        .fn()
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error("WASM out of memory"));
+      const engine = createMockEngine({ init: initFn });
+      registerBrowserEngine(engine);
+
+      // First call succeeds.
+      await service.execute("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+      expect(initFn).toHaveBeenCalledTimes(1);
+
+      // Second call fails at init.
+      await expect(
+        service.execute("compress-images", [new File(["data"], "test.jpg")]),
+      ).rejects.toThrow("WASM out of memory");
+      expect(initFn).toHaveBeenCalledTimes(2);
+      expect(engine.processFiles).toHaveBeenCalledTimes(1); // only first call
+    });
+  });
+
   describe("getCapableSlugs", () => {
     it("returns array including compress-images", () => {
       expect(service.getCapableSlugs()).toContain("compress-images");

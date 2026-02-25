@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useReducer, useRef } from "react";
+import { useCallback, useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { core } from "../core";
 import {
-  browserExecutionReducer,
-  IDLE_EXECUTION,
-} from "./browserExecutionReducer";
+  browserExecutionStore,
+  useBrowserExecutionStore,
+} from "../stores/browserExecutionStore";
 import type {
   BrowserFileProgress,
   BrowserFileResult,
@@ -22,9 +23,16 @@ import type {
  *   5. User can download results via downloadResult/downloadAll
  */
 export function useBrowserExecution() {
-  const [execution, dispatch] = useReducer(
-    browserExecutionReducer,
-    IDLE_EXECUTION,
+  const execution = useBrowserExecutionStore(
+    useShallow((s) => ({
+      id: s.id,
+      status: s.status,
+      fileProgress: s.fileProgress,
+      results: s.results,
+      error: s.error,
+      startedAt: s.startedAt,
+      completedAt: s.completedAt,
+    })),
   );
   const abortRef = useRef(false);
 
@@ -35,17 +43,14 @@ export function useBrowserExecution() {
       params: Record<string, unknown> = {},
     ) => {
       abortRef.current = false;
+      const store = browserExecutionStore.getState();
 
-      dispatch({
-        type: "start",
-        id: crypto.randomUUID(),
-        startedAt: Date.now(),
-      });
+      store.start(crypto.randomUUID(), Date.now());
 
       try {
         const onProgress = (progress: BrowserFileProgress) => {
           if (abortRef.current) return;
-          dispatch({ type: "progress", progress });
+          browserExecutionStore.getState().progress(progress);
         };
 
         const results = await core.browser.execute(
@@ -57,19 +62,14 @@ export function useBrowserExecution() {
 
         if (abortRef.current) return;
 
-        dispatch({
-          type: "complete",
-          results,
-          completedAt: Date.now(),
-        });
+        browserExecutionStore.getState().complete(results, Date.now());
       } catch (e) {
         if (abortRef.current) return;
 
-        dispatch({
-          type: "fail",
-          message: e instanceof Error ? e.message : "Processing failed",
-          completedAt: Date.now(),
-        });
+        browserExecutionStore.getState().fail(
+          e instanceof Error ? e.message : "Processing failed",
+          Date.now(),
+        );
       }
     },
     [],
@@ -80,12 +80,12 @@ export function useBrowserExecution() {
   }, []);
 
   const downloadAll = useCallback(() => {
-    core.browser.downloadAllResults(execution.results);
-  }, [execution.results]);
+    core.browser.downloadAllResults(browserExecutionStore.getState().results);
+  }, []);
 
   const reset = useCallback(() => {
     abortRef.current = true;
-    dispatch({ type: "reset" });
+    browserExecutionStore.getState().reset();
   }, []);
 
   return {

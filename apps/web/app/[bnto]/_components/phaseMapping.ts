@@ -31,7 +31,7 @@ import type { RunPhase } from "./RunButton";
  * Convert a browser execution status to a RunButton display phase.
  *
  * The browser path is straightforward — the status comes from our local
- * state machine (browserExecutionReducer.ts), so it maps almost 1:1.
+ * state machine (browserExecutionStore.ts), so it maps almost 1:1.
  * The only rename is "processing" → "running" because the RunButton
  * calls it "running" (it doesn't know or care about browser vs cloud).
  *
@@ -40,7 +40,7 @@ import type { RunPhase } from "./RunButton";
  */
 export function toBrowserPhase(status: string): RunPhase {
   switch (status) {
-    // "processing" is what our reducer calls it; "running" is what the UI shows
+    // "processing" is what our store calls it; "running" is what the UI shows
     case "processing":
       return "running";
     case "completed":

@@ -202,9 +202,9 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [ ] `apps/web` — E2E: batch 5+ files with progress, all outputs valid
 
 **TS service/worker coverage:**
-- [ ] `packages/core` — browserExecutionService: engine init failure → clean error state
-- [ ] `packages/core` — browserExecutionReducer: batch progress fileIndex increments correctly
-- [ ] `apps/web` — BntoWorker: process after terminate → clear error
+- [x] `packages/core` — browserExecutionService: engine init failure → clean error state
+- [x] `packages/core` — browserExecutionReducer: batch progress fileIndex increments correctly
+- [x] `apps/web` — BntoWorker: process after terminate → clear error
 
 #### Wave 3a: Remaining Rust WASM nodes (if Rust passed checkpoint)
 

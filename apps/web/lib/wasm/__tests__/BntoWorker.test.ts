@@ -290,5 +290,44 @@ describe("BntoWorker", () => {
       bnto.terminate(); // Should not throw.
       expect(bnto.isReady).toBe(false);
     });
+
+    it("processFile after terminate throws a clear error", async () => {
+      const bnto = await initWorker();
+      bnto.terminate();
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+
+      await expect(
+        bnto.processFile(file, "compress-images"),
+      ).rejects.toThrow("BntoWorker not initialized");
+    });
+
+    it("processFiles after terminate throws a clear error", async () => {
+      const bnto = await initWorker();
+      bnto.terminate();
+
+      const files = [
+        new File(["a"], "a.jpg", { type: "image/jpeg" }),
+        new File(["b"], "b.jpg", { type: "image/jpeg" }),
+      ];
+
+      await expect(
+        bnto.processFiles(files, "compress-images"),
+      ).rejects.toThrow("BntoWorker not initialized");
+    });
+
+    it("can be re-initialized after terminate", async () => {
+      const bnto = await initWorker();
+      bnto.terminate();
+      expect(bnto.isReady).toBe(false);
+
+      // Re-init creates a new worker.
+      const reinitPromise = bnto.init();
+      mockWorkerInstance.simulateMessage({ type: "ready", version: "0.2.0" });
+      const version = await reinitPromise;
+
+      expect(version).toBe("0.2.0");
+      expect(bnto.isReady).toBe(true);
+    });
   });
 });
