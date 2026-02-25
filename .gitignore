@@ -85,3 +85,7 @@ blob-report/
 
 # Convex (keep _generated/ checked in — needed for CI/CD builds)
 .vercel
+
+# Rust / WASM
+engine-wasm/target/
+engine-wasm/crates/*/pkg/

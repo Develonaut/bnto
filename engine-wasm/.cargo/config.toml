@@ -1,0 +1,38 @@
+# =============================================================================
+# Cargo Configuration (local to this project)
+# =============================================================================
+#
+# WHAT IS THIS FILE?
+# This is Cargo's local config file. It customizes how `cargo` behaves
+# when building code in this directory. Think of it like a `.npmrc` but
+# for Rust's build tool.
+#
+# WHY DO WE NEED THIS?
+# Building for WASM requires special settings that are different from
+# building normal Rust programs. We set those defaults here so every
+# developer gets the right configuration automatically.
+
+[build]
+# When we run `cargo build` or `cargo test` without specifying a target,
+# Cargo builds for your computer's architecture by default (like ARM on
+# Mac, or x86 on Windows). We DON'T set a default target here because:
+#
+# 1. `cargo test` needs to run on your native architecture (not WASM)
+#    since WASM tests need a browser/Node.js runtime
+# 2. `wasm-pack build` already handles setting the WASM target for us
+#
+# So we leave the default target unset. wasm-pack will use
+# wasm32-unknown-unknown automatically when building WASM.
+
+# Uncomment this if you want `cargo build` to default to WASM:
+# target = "wasm32-unknown-unknown"
+
+# ---- Aliases ----
+# These are shortcuts for common commands, like npm scripts in package.json.
+# Usage: `cargo fmt-check` instead of typing the full command.
+
+[alias]
+# Check formatting without changing files (useful for CI)
+fmt-check = "fmt -- --check"
+# Run clippy (the Rust linter) with strict settings
+lint = "clippy --workspace --all-targets -- -D warnings"

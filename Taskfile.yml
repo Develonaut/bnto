@@ -125,6 +125,65 @@ tasks:
     cmds:
       - npx convex run cleanup:purgeAll '{}'
 
+  # WASM tasks (engine-wasm/)
+  wasm:build:
+    desc: Build WASM entry point via wasm-pack (release, web target)
+    dir: ./engine-wasm
+    cmds:
+      # Only the cdylib entry point crate gets wasm-pack built.
+      # Node crates (bnto-image, etc.) are rlib — they compile into the
+      # entry point's .wasm binary, not as separate modules.
+      # When the unified bnto-wasm entry point is created, this will
+      # change to: wasm-pack build --target web --release crates/bnto-wasm
+      - /Users/ryan/.cargo/bin/wasm-pack build --target web --release crates/bnto-core
+
+  wasm:build:dev:
+    desc: Build WASM entry point in dev mode (faster, larger binary, better errors)
+    dir: ./engine-wasm
+    cmds:
+      - /Users/ryan/.cargo/bin/wasm-pack build --target web --dev crates/bnto-core
+
+  wasm:test:
+    desc: Run Rust unit tests (native) + WASM integration tests (Node.js)
+    dir: ./engine-wasm
+    cmds:
+      - cargo test --workspace
+      - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-core
+      # NOTE: bnto-image is rlib only (no cdylib), so wasm-pack test
+      # can't run WASM integration tests for it directly. The 44+ native
+      # unit tests cover all compression logic. WASM bridge will be tested
+      # via the unified entry point crate + Playwright E2E.
+
+  wasm:test:unit:
+    desc: Run Rust unit tests only (native, fast)
+    dir: ./engine-wasm
+    cmds:
+      - cargo test --workspace
+
+  wasm:lint:
+    desc: Run clippy (Rust linter) on all WASM crates
+    dir: ./engine-wasm
+    cmds:
+      - cargo clippy --workspace --all-targets -- -D warnings
+
+  wasm:fmt:
+    desc: Format all Rust code
+    dir: ./engine-wasm
+    cmds:
+      - cargo fmt --all
+
+  wasm:fmt:check:
+    desc: Check Rust formatting without changes (CI)
+    dir: ./engine-wasm
+    cmds:
+      - cargo fmt --all -- --check
+
+  wasm:clean:
+    desc: Clean all Rust build artifacts
+    dir: ./engine-wasm
+    cmds:
+      - cargo clean
+
   # Cross-cutting
   build:all:
     desc: Build everything (engine + API + frontend)

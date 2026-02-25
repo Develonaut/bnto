@@ -1,0 +1,113 @@
+# =============================================================================
+# bnto-image — Image Processing WASM Crate
+# =============================================================================
+#
+# WHAT IS THIS CRATE?
+# This crate handles all image processing for Bnto's browser execution engine.
+# It provides the `compress-images` node (and later `resize-images` and
+# `convert-image-format`). It compiles to WebAssembly and runs entirely in
+# the user's browser — files never leave their machine.
+#
+# HOW DOES IT WORK?
+# The web app loads this WASM module in a Web Worker (a background thread).
+# When the user drops images and clicks "Run", the worker calls our
+# `compress_images()` function. We read the raw bytes, decode the image,
+# re-encode with compression settings, and return the smaller bytes.
+#
+# WHY A SEPARATE CRATE FROM bnto-core?
+# Bento Box Principle! bnto-core is the framework (traits, error types,
+# progress reporting). bnto-image is a specific node implementation.
+# If someone only needs CSV processing, they don't download image code.
+
+[package]
+name = "bnto-image"
+version = "0.1.0"
+edition = "2024"
+description = "Image processing node for Bnto WASM engine — compress, resize, convert"
+license = "MIT"
+
+# WASM-PACK BUILD SETTINGS
+# See bnto-core/Cargo.toml for detailed explanation of these flags.
+# The --enable-bulk-memory flag is needed because Rust 1.82+ emits
+# bulk memory operations that wasm-opt's validator rejects by default.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O", "--enable-bulk-memory"]
+
+[lib]
+# "rlib" = Rust library. Other crates (including the unified WASM entry
+# point) can depend on this and `use` its types and functions.
+#
+# WHY NOT "cdylib" HERE?
+# Each cdylib crate produces a SEPARATE .wasm file with its own JavaScript
+# heap. Objects from one cdylib can't be passed to another — they live in
+# different WASM memory spaces (see wasm-bindgen issue #1815).
+#
+# The correct WASM workspace architecture is:
+#   - ONE cdylib "entry point" crate (future `bnto-wasm`) that depends on
+#     all node crates and re-exports their bridge functions
+#   - ALL node crates (bnto-image, bnto-csv, etc.) are rlib only
+#
+# This gives us:
+#   1. Single .wasm file = one download, one instantiation, shared heap
+#   2. Tree shaking across the full dependency graph
+#   3. One set of JS glue code (not per-crate duplicates)
+#   4. Avoids linker ARG_MAX issues from js-sys export descriptors
+#
+# Currently bnto-core is the cdylib (exports setup/version/greet). When
+# the bnto-wasm entry point crate is created, bnto-core will become rlib
+# too — all cdylib responsibility moves to the entry point.
+crate-type = ["rlib"]
+
+# =============================================================================
+# Dependencies
+# =============================================================================
+
+[dependencies]
+# Our foundation crate — provides NodeProcessor trait, BntoError, ProgressReporter
+bnto-core = { path = "../bnto-core" }
+
+# The Rust ↔ JS bridge (see workspace root Cargo.toml for details)
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+js-sys = { workspace = true }
+web-sys = { workspace = true, features = ["console"] }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Serialization (for config params and metadata)
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Panic hook — shows real error messages in the browser console
+console_error_panic_hook = "0.1"
+
+# =============================================================================
+# The `image` crate — our image processing engine
+# =============================================================================
+#
+# This is the workhorse. It handles decoding images from bytes (JPEG, PNG,
+# WebP) and re-encoding them with compression settings.
+#
+# CRITICAL: We MUST disable default features!
+# The default features include `rayon` (multi-threading), which does NOT
+# work in single-threaded WASM environments. Leaving it on would cause
+# compilation errors or runtime panics.
+#
+# We only enable the specific format codecs we need:
+#   - "jpeg" — JPEG decode/encode (via pure-Rust `zune-jpeg` + `jpeg-encoder`)
+#   - "png"  — PNG decode/encode (via pure-Rust `png` crate)
+#   - "webp" — WebP decode/encode (via pure-Rust `image-webp`)
+#              NOTE: WebP encoding is currently LOSSLESS ONLY in the `image`
+#              crate. Lossy WebP will need a JS fallback (jSquash) later.
+#
+# All codecs are pure Rust — no C dependencies, no Emscripten needed.
+# They compile cleanly to wasm32-unknown-unknown.
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+
+# =============================================================================
+# Dev Dependencies (testing only — not in the final WASM binary)
+# =============================================================================
+
+[dev-dependencies]
+wasm-bindgen-test = { workspace = true }

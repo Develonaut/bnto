@@ -1,0 +1,151 @@
+# =============================================================================
+# Bnto WASM Engine — Cargo Workspace Root
+# =============================================================================
+#
+# WHAT IS THIS FILE?
+# This is the "boss" file for all our Rust code. It tells Cargo (Rust's build
+# tool, like npm for JavaScript) where to find all the individual projects
+# (called "crates" in Rust) that make up our WASM engine.
+#
+# WHY A WORKSPACE?
+# We have multiple crates (bnto-core, and later bnto-image, bnto-csv, etc.)
+# that share dependencies. A workspace lets them share a single `target/`
+# directory for compiled code, so we don't waste disk space or rebuild time.
+# Think of it like a monorepo — but for Rust.
+#
+# HOW TO BUILD:
+#   cd engine-wasm/crates/bnto-core
+#   wasm-pack build --target web
+#
+# HOW TO TEST:
+#   cd engine-wasm
+#   cargo test --workspace
+#
+# =============================================================================
+
+[workspace]
+
+# `members` lists every crate (sub-project) in our workspace.
+# Each path points to a directory that has its own Cargo.toml.
+# When we add new crates (like bnto-image for image processing),
+# we add them here.
+members = [
+    "crates/bnto-core",
+    "crates/bnto-image",
+]
+
+# `resolver = "2"` tells Cargo to use the modern dependency resolver.
+# Version 2 is smarter about picking compatible dependency versions
+# and handles "features" (optional functionality) better than v1.
+# It's been the default since Rust 2021, but we're explicit about it.
+resolver = "2"
+
+# =============================================================================
+# Shared Dependencies
+# =============================================================================
+#
+# [workspace.dependencies] lets us define dependency versions ONCE here,
+# and all crates in the workspace can reference them with just:
+#
+#   [dependencies]
+#   wasm-bindgen = { workspace = true }
+#
+# This prevents version mismatches between crates and keeps everything
+# in sync — same idea as pnpm's `catalog:` feature.
+
+[workspace.dependencies]
+
+# --- Core WASM Dependencies ---
+
+# wasm-bindgen: The magic glue between Rust and JavaScript.
+# When we write `#[wasm_bindgen]` on a Rust function, this crate
+# generates the JavaScript "wrapper" code that lets JS call our Rust
+# functions and vice versa. It handles converting types back and forth
+# (strings, numbers, arrays, etc.) across the Rust ↔ JS boundary.
+wasm-bindgen = "0.2"
+
+# wasm-bindgen-futures: Lets us use Rust's async/await with JavaScript
+# Promises. When our Rust code needs to do something asynchronous
+# (like processing a large file in chunks), this converts between
+# Rust Futures and JS Promises seamlessly.
+wasm-bindgen-futures = "0.4"
+
+# js-sys: Provides Rust bindings to JavaScript's built-in objects.
+# Things like `Array`, `Uint8Array`, `Date`, `JSON`, `Promise`, etc.
+# We use this when we need to work with JS data structures from Rust.
+js-sys = "0.3"
+
+# web-sys: Provides Rust bindings to Web APIs — the browser's built-in
+# functionality. Things like `console.log`, `File`, `Blob`, `URL`,
+# `performance.now()`, `postMessage()`, etc.
+# Each API is behind a "feature flag" so we only include what we need
+# (keeps the WASM binary small).
+web-sys = "0.3"
+
+# --- Testing ---
+
+# wasm-bindgen-test: A test harness that runs Rust tests inside a
+# real browser or Node.js environment. This is important because
+# normal `cargo test` can't test WASM code — it needs a JS runtime.
+wasm-bindgen-test = "0.3"
+
+# --- Error Handling ---
+
+# thiserror: A helper for defining custom error types in Rust.
+# Rust doesn't have exceptions like JavaScript — it uses Result<T, E>
+# (like a value that's either "success" or "error"). thiserror makes
+# it easy to define the "error" part with nice error messages.
+thiserror = "2.0"
+
+# --- Serialization ---
+
+# serde: The standard Rust library for converting data structures
+# to and from formats like JSON. "Serialize" = Rust struct → JSON,
+# "Deserialize" = JSON → Rust struct. We use this to pass structured
+# data across the Rust ↔ JS boundary.
+serde = { version = "1.0", features = ["derive"] }
+
+# serde_json: Adds JSON support to serde. Lets us parse JSON strings
+# into Rust structs and convert Rust structs back to JSON strings.
+serde_json = "1.0"
+
+# serde-wasm-bindgen: A bridge between serde and wasm-bindgen.
+# Instead of going Rust → JSON string → JS parse, this converts
+# Rust structs directly to JS objects (and back) without the
+# intermediate JSON string. Much faster for large data.
+serde-wasm-bindgen = "0.6"
+
+# =============================================================================
+# Build Profiles
+# =============================================================================
+#
+# Profiles control how Rust compiles our code. Different profiles
+# optimize for different things (speed, size, debug info, etc.).
+
+# The `release` profile is used when we build for production
+# (wasm-pack uses release by default).
+[profile.release]
+
+# opt-level = "s" tells the compiler to optimize for SMALL binary size.
+# Options: "0" (no optimization), "1", "2", "3" (max speed), "s" (small),
+# "z" (smallest possible). We use "s" because WASM files are downloaded
+# by the browser — smaller = faster page load.
+opt-level = "s"
+
+# lto = true enables "Link-Time Optimization". The compiler looks at ALL
+# the code together (not just one file at a time) and removes unused
+# functions, inlines small functions, etc. Makes the final WASM binary
+# significantly smaller. The tradeoff: slower compilation.
+lto = true
+
+# codegen-units = 1 tells the compiler to compile everything as one chunk
+# instead of splitting into parallel pieces. This gives the optimizer
+# more context to make better decisions (smaller, faster code) at the
+# cost of slower compilation. Worth it for release builds.
+codegen-units = 1
+
+# strip = true removes debug symbols from the final binary.
+# Debug symbols are useful for debugging (they map compiled code back
+# to source lines) but they make the file much larger. Since we're
+# shipping this to browsers, we strip them out.
+strip = true

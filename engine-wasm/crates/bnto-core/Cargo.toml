@@ -1,0 +1,126 @@
+# =============================================================================
+# bnto-core — The Foundation WASM Crate
+# =============================================================================
+#
+# WHAT IS THIS CRATE?
+# This is the "foundation" crate for the Bnto WASM engine. It provides:
+#   1. Shared types and error definitions used by all node crates
+#   2. The node execution interface (trait) that every node type implements
+#   3. A simple orchestrator that runs nodes and reports progress
+#   4. Utilities for working with files and data across the Rust ↔ JS boundary
+#
+# Think of this as the "engine framework" that node crates plug into.
+# The image crate, CSV crate, etc. will all depend on this crate.
+#
+# WHY IS IT SEPARATE FROM THE NODE CRATES?
+# Separation of concerns (Bento Box Principle!). This crate defines
+# the contracts (interfaces). Node crates implement them. The web app
+# only needs to import the crates it uses — if someone only needs
+# image processing, they don't have to download CSV code too.
+
+[package]
+# The crate's name — used in `use bnto_core::...` imports and as the
+# package identifier on crates.io (if we ever publish).
+name = "bnto-core"
+
+# Version follows Semantic Versioning (semver): MAJOR.MINOR.PATCH
+# 0.1.0 means "first development release, expect breaking changes"
+version = "0.1.0"
+
+# The Rust "edition" is like a language version. Each edition enables
+# new syntax and features while keeping old code compatible.
+# 2024 is the latest edition, released with Rust 1.85.
+edition = "2024"
+
+# A short description shown on crates.io and in cargo search results.
+description = "Core WASM engine library for Bnto — shared types, traits, and orchestration"
+
+# The license. Same as the rest of the bnto repo.
+license = "MIT"
+
+# WASM-PACK METADATA
+# wasm-pack reads settings from [package.metadata.wasm-pack.*].
+# These control the post-compilation optimization step.
+[package.metadata.wasm-pack.profile.release]
+# Configure wasm-opt optimization flags for the release build.
+#
+# WHY THE EXTRA FLAGS?
+# Rust 1.82+ emits "bulk memory operations" (memory.copy, memory.fill)
+# in the WASM output. These are part of the WebAssembly bulk-memory
+# proposal, supported by ALL modern browsers (Chrome 75+, Firefox 79+,
+# Safari 15+). However, wasm-opt's validator rejects them by default
+# unless we explicitly enable them with --enable-bulk-memory.
+#
+# "-O" = optimize for size and speed
+# "--enable-bulk-memory" = tell wasm-opt to accept bulk memory ops
+wasm-opt = ["-O", "--enable-bulk-memory"]
+
+# =============================================================================
+# Library Configuration
+# =============================================================================
+
+[lib]
+# crate-type tells Cargo what kind of output to produce.
+#
+# "cdylib" = C Dynamic Library. For WASM, this means "produce a .wasm file
+# that can be loaded by a host environment (the browser)". This is what
+# wasm-pack needs to create the JS bindings.
+#
+# "rlib" = Rust Library. This lets other Rust crates in our workspace
+# (like bnto-image) depend on this crate and `use` its types/functions.
+#
+# We need BOTH: cdylib for the browser, rlib for other crates.
+crate-type = ["cdylib", "rlib"]
+
+# =============================================================================
+# Dependencies
+# =============================================================================
+#
+# `{ workspace = true }` means "use the version defined in the root
+# Cargo.toml's [workspace.dependencies]". This keeps all our crates
+# on the same version. Same idea as pnpm's catalog feature.
+
+[dependencies]
+# The Rust ↔ JS bridge. See workspace Cargo.toml for details.
+wasm-bindgen = { workspace = true }
+
+# For working with JS Promises from Rust (async processing).
+wasm-bindgen-futures = { workspace = true }
+
+# Bindings to JavaScript built-in objects (Array, Uint8Array, etc.).
+js-sys = { workspace = true }
+
+# Bindings to browser Web APIs. We enable specific features below.
+# Each feature = one Web API. Only include what we use (smaller binary).
+web-sys = { workspace = true, features = [
+    # console.log() — for debug logging from Rust
+    "console",
+    # Performance.now() — for timing how long operations take
+    "Performance",
+    # File and Blob — for reading user-uploaded files
+    "File",
+    "Blob",
+    # Worker — we run inside Web Workers, need access to self
+    "DedicatedWorkerGlobalScope",
+] }
+
+# Error handling — see workspace Cargo.toml for details.
+thiserror = { workspace = true }
+
+# Serialization — converting Rust structs to/from JSON.
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# When Rust code crashes (panics) in WASM, the browser only shows
+# "RuntimeError: unreachable" — useless for debugging. This crate
+# hooks into the panic handler and redirects the real error message
+# to console.error(). Invaluable during development.
+console_error_panic_hook = "0.1"
+
+# =============================================================================
+# Dev Dependencies (only used during testing, not in the final WASM binary)
+# =============================================================================
+
+[dev-dependencies]
+# Test harness for running Rust tests in a browser or Node.js.
+wasm-bindgen-test = { workspace = true }

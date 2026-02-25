@@ -1,0 +1,34 @@
+# =============================================================================
+# Rust Toolchain Configuration
+# =============================================================================
+#
+# WHAT IS THIS FILE?
+# This tells Rust which version of the compiler to use for this project.
+# When anyone (or CI) runs `cargo build` in this directory, Rust will
+# automatically download and use this exact version. It's like having
+# a `.nvmrc` file for Node.js, but for Rust.
+#
+# WHY PIN THE VERSION?
+# So everyone building this project uses the same compiler. Different
+# Rust versions can compile WASM differently, and we don't want
+# "works on my machine" problems.
+
+[toolchain]
+
+# "stable" means the latest stable Rust release. Rust releases a new
+# stable version every 6 weeks. We use stable (not "nightly") because
+# all the WASM features we need are already stabilized.
+channel = "stable"
+
+# These are the components (tools) we want installed alongside the compiler:
+# - "rustfmt" formats Rust code (like Prettier for JS)
+# - "clippy" is a linter that catches common mistakes (like ESLint for JS)
+components = ["rustfmt", "clippy"]
+
+# These are extra compilation targets beyond the default (your CPU's architecture).
+# "wasm32-unknown-unknown" means:
+#   - wasm32: compile to 32-bit WebAssembly
+#   - unknown: no specific operating system (it runs in any WASM runtime)
+#   - unknown: no specific vendor/platform
+# This is THE target for browser WASM.
+targets = ["wasm32-unknown-unknown"]

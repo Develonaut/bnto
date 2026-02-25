@@ -68,9 +68,28 @@ These are enforced in detail by the [rules/](.claude/rules/) files. This section
 
 This applies to all code in `engine-wasm/` and any other `.rs` files in the repo.
 
+**Rust/WASM is TDD-first.** Since we can't visually inspect WASM output the way we can with UI components, tests are our primary verification tool. Every Rust function, trait implementation, and WASM export must have corresponding tests BEFORE being used in production code. The testing layers are:
+
+1. **Unit tests** (in `#[cfg(test)]` blocks) — test pure Rust logic natively. Fast, no JS runtime needed.
+2. **WASM integration tests** (in `tests/` directory via `wasm-bindgen-test`) — test the Rust ↔ JS boundary. Run in Node.js or a real browser.
+3. **E2E tests** (Playwright) — test the full pipeline: Web Worker loads WASM, processes a file, returns results to the UI.
+
+Write tests at every layer. If a function can be tested as pure Rust (no WASM boundary), write a unit test. If it crosses the JS boundary, add a WASM integration test. If it's visible in the UI, add a Playwright E2E test.
+
 ---
 
 ## Commands
+
+```bash
+# Rust WASM engine (via Taskfile)
+task wasm:build         # Build WASM crates (release, web target)
+task wasm:build:dev     # Build WASM in dev mode (faster, better errors)
+task wasm:test          # Run Rust unit tests + WASM integration tests
+task wasm:test:unit     # Run Rust unit tests only (fast, native)
+task wasm:lint          # Run clippy (Rust linter)
+task wasm:fmt           # Auto-format Rust code
+task wasm:fmt:check     # Check Rust formatting (CI)
+task wasm:clean         # Clean Rust build artifacts
 
 ```bash
 # Go engine (via Taskfile)
@@ -123,6 +142,9 @@ bnto/
 │       ├── auth/                # @bnto/auth — Cloud auth (web only)
 │       └── backend/             # @bnto/backend — Convex schema + functions
 ├── engine/                      # All Go code (CLI, engine, node types)
+├── engine-wasm/                 # Rust WASM engine (browser execution)
+│   └── crates/
+│       └── bnto-core/           # Core WASM library (types, traits, progress)
 └── .claude/                     # Strategy docs, decisions, plan, rules
 ```
 
