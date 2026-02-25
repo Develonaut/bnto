@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Moon, Sun, Sunset } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -18,10 +18,17 @@ function nextTheme(current: ThemeName): ThemeName {
 export function AnimatedThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = useState(false);
 
-  const current = (resolvedTheme ?? "light") as ThemeName;
+  useEffect(() => setMounted(true), []);
+
+  // Before mount, resolvedTheme is undefined (SSR). Don't render a theme
+  // attribute until mounted to avoid hydration mismatch. All icons start at
+  // scale-0, so nothing shows until data-theme is set.
+  const current = mounted ? ((resolvedTheme ?? "light") as ThemeName) : undefined;
 
   const toggleTheme = useCallback(async () => {
+    if (!current) return;
     const target = nextTheme(current);
 
     // Reduced motion — instant switch, no animation
