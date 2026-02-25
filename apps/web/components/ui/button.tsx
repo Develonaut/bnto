@@ -35,7 +35,7 @@ const SPRING_STYLES: Record<SpringMode, React.CSSProperties> = {
  * ──────────────────────────────────────────────────────────── */
 
 const PRESSABLE_BASE =
-  "pressable outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
+  "pressable outline-none";
 
 const buttonVariants = cva(
   "depth bg-[var(--face-bg)] text-[var(--face-fg)] inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium shrink-0 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
@@ -43,12 +43,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: "depth-primary",
-        destructive:
-          "focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 depth-destructive",
-        success:
-          "focus-visible:ring-success/20 dark:focus-visible:ring-success/40 depth-success",
-        warning:
-          "focus-visible:ring-warning/20 dark:focus-visible:ring-warning/40 depth-warning",
+        destructive: "depth-destructive",
+        success: "depth-success",
+        warning: "depth-warning",
         outline: "depth-outline",
         secondary: "depth-secondary",
         muted: "depth-muted",
@@ -115,7 +112,9 @@ function Button({
   // When depth is overridden (not true), strip the size variant's built-in
   // depth-{sm|md|lg} so it doesn't compete via CSS source order.
   const sizeClasses = !asChild ? buttonVariants({ variant, size }) : "";
-  const resolvedSizeClasses = depthClass ? stripSizeDepth(sizeClasses) : sizeClasses;
+  const resolvedSizeClasses = depthClass
+    ? stripSizeDepth(sizeClasses)
+    : sizeClasses;
 
   return (
     <Comp
@@ -124,12 +123,7 @@ function Button({
       data-muted={muted || undefined}
       data-force-state={pseudo || undefined}
       {...(isLink ? { href } : {})}
-      className={cn(
-        PRESSABLE_BASE,
-        resolvedSizeClasses,
-        depthClass,
-        className,
-      )}
+      className={cn(PRESSABLE_BASE, resolvedSizeClasses, depthClass, className)}
       style={{ ...SPRING_STYLES[spring], ...style }}
       {...props}
     />

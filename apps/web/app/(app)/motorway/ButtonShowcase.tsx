@@ -1,9 +1,14 @@
+"use client";
+
+import { useState } from "react";
+
 import {
   ArrowRightIcon,
+  CheckIcon,
   DownloadIcon,
-  GithubIcon,
+  FileTextIcon,
   HeartIcon,
-  SettingsIcon,
+  RotateCcwIcon,
   StarIcon,
   ZapIcon,
 } from "@/components/ui/icons";
@@ -14,77 +19,81 @@ import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 
 type Variant = "primary" | "secondary" | "outline" | "muted" | "destructive" | "success" | "warning";
+type ButtonState = "resting" | "hover" | "active" | "disabled";
 
-const VARIANTS: { value: Variant; label: string }[] = [
-  { value: "primary", label: "Primary" },
-  { value: "secondary", label: "Secondary" },
-  { value: "outline", label: "Outline" },
-  { value: "muted", label: "Muted" },
-  { value: "destructive", label: "Destructive" },
-  { value: "success", label: "Success" },
-  { value: "warning", label: "Warning" },
+const VARIANTS: { value: Variant; label: string; iconLabel?: string }[] = [
+  { value: "primary", label: "Primary", iconLabel: "Download" },
+  { value: "secondary", label: "Secondary", iconLabel: "Favorite" },
+  { value: "outline", label: "Outline", iconLabel: "Next" },
+  { value: "muted", label: "Muted", iconLabel: "Draft" },
+  { value: "destructive", label: "Destructive", iconLabel: "Remove" },
+  { value: "success", label: "Success", iconLabel: "Done" },
+  { value: "warning", label: "Warning", iconLabel: "Retry" },
+];
+
+const ICON_LABELS: Record<string, { icon: React.ReactNode; trailing?: boolean }> = {
+  Download: { icon: <DownloadIcon /> },
+  Favorite: { icon: <StarIcon /> },
+  Next: { icon: <ArrowRightIcon />, trailing: true },
+  Draft: { icon: <FileTextIcon /> },
+  Remove: { icon: <HeartIcon /> },
+  Done: { icon: <CheckIcon /> },
+  Retry: { icon: <RotateCcwIcon /> },
+};
+
+const STATES: { value: ButtonState; label: string }[] = [
+  { value: "resting", label: "Resting" },
+  { value: "hover", label: "Hover" },
+  { value: "active", label: "Active" },
+  { value: "disabled", label: "Disabled" },
 ];
 
 export function ButtonShowcase() {
+  const [state, setState] = useState<ButtonState>("resting");
+
+  const pseudo = state === "hover" || state === "active" ? state : undefined;
+  const disabled = state === "disabled";
+
   return (
     <Stack className="gap-10">
+      {/* State toggle */}
+      <Row className="gap-2">
+        {STATES.map(({ value, label }) => (
+          <Button
+            key={value}
+            variant={state === value ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setState(value)}
+          >
+            {label}
+          </Button>
+        ))}
+      </Row>
+
       {/* All variants × sizes */}
-      <div>
-        <Text size="sm" color="muted" className="mb-3">Variants &times; sizes</Text>
-        <Stack gap="md">
-          {VARIANTS.map(({ value, label }) => (
+      <Stack gap="md">
+        {VARIANTS.map(({ value, label, iconLabel }) => {
+          const iconEntry = iconLabel ? ICON_LABELS[iconLabel] : null;
+          return (
             <Row key={value} className="items-center gap-3">
               <Text size="xs" color="muted" mono as="span" className="w-24 shrink-0">
                 {label}
               </Text>
-              <Button variant={value} size="sm">Label</Button>
-              <Button variant={value} size="md">Label</Button>
-              <Button variant={value} size="lg">Label</Button>
-              <Button variant={value} size="icon-sm"><ZapIcon /></Button>
-              <Button variant={value} size="icon"><ZapIcon /></Button>
-              <Button variant={value} size="icon-lg"><ZapIcon /></Button>
+              <Button variant={value} size="sm" pseudo={pseudo} disabled={disabled}>Label</Button>
+              <Button variant={value} size="md" pseudo={pseudo} disabled={disabled}>Label</Button>
+              <Button variant={value} size="lg" pseudo={pseudo} disabled={disabled}>Label</Button>
+              <Button variant={value} size="icon-sm" pseudo={pseudo} disabled={disabled}><ZapIcon /></Button>
+              <Button variant={value} size="icon" pseudo={pseudo} disabled={disabled}><ZapIcon /></Button>
+              <Button variant={value} size="icon-lg" pseudo={pseudo} disabled={disabled}><ZapIcon /></Button>
+              {iconEntry && (
+                <Button variant={value} size="md" pseudo={pseudo} disabled={disabled}>
+                  {iconEntry.trailing ? <>{iconLabel} {iconEntry.icon}</> : <>{iconEntry.icon} {iconLabel}</>}
+                </Button>
+              )}
             </Row>
-          ))}
-        </Stack>
-      </div>
-
-      {/* Icon + text combinations */}
-      <div>
-        <Text size="sm" color="muted" className="mb-3">Icon + text</Text>
-        <Row className="flex-wrap gap-3">
-          <Button variant="primary"><DownloadIcon /> Download</Button>
-          <Button variant="outline"><SettingsIcon /> Settings</Button>
-          <Button variant="secondary"><StarIcon /> Favorite</Button>
-          <Button variant="destructive"><HeartIcon /> Remove</Button>
-          <Button variant="outline">Next <ArrowRightIcon /></Button>
-        </Row>
-      </div>
-
-      {/* Press states */}
-      <div>
-        <Text size="sm" color="muted" className="mb-3">Press states &mdash; resting, hover, active</Text>
-        <Row className="items-end gap-3">
-          <Button variant="outline">Resting</Button>
-          <Button variant="outline" pseudo="hover">Hover</Button>
-          <Button variant="outline" pseudo="active">Active</Button>
-          <Button variant="outline" size="icon"><StarIcon /></Button>
-          <Button variant="outline" size="icon" pseudo="hover"><HeartIcon /></Button>
-          <Button variant="outline" size="icon" pseudo="active"><ZapIcon /></Button>
-        </Row>
-      </div>
-
-      {/* Disabled */}
-      <div>
-        <Text size="sm" color="muted" className="mb-3">Disabled</Text>
-        <Row className="flex-wrap items-end gap-3">
-          <Button variant="primary" disabled>Primary</Button>
-          <Button variant="secondary" disabled>Secondary</Button>
-          <Button variant="outline" disabled>Outline</Button>
-          <Button variant="destructive" disabled>Destructive</Button>
-          <Button variant="outline" size="icon" disabled><SettingsIcon /></Button>
-          <Button variant="primary" size="icon" disabled><GithubIcon /></Button>
-        </Row>
-      </div>
+          );
+        })}
+      </Stack>
     </Stack>
   );
 }
