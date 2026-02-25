@@ -17,8 +17,9 @@
 | Build tooling                | [monorepo-tooling.md](.claude/decisions/monorepo-tooling.md)       |
 | Strategic direction          | [ROADMAP.md](.claude/ROADMAP.md)                                  |
 | Implementation task          | [PLAN.md](.claude/PLAN.md)                                        |
+| Free vs premium decisions    | [pricing-model.md](.claude/strategy/pricing-model.md)              |
 | Writing integration tests    | [journeys/](.claude/journeys/) — user journey test matrices        |
-| Predefined Bntos & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                    |
+| Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                  |
 | SEO & URL strategy           | [rules/seo.md](.claude/rules/seo.md)                              |
 | Understanding the product    | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) |
 | Core principles (always)     | [core-principles.md](.claude/strategy/core-principles.md)          |
@@ -30,7 +31,7 @@
 
 **Bnto** is the one place small teams go to get things done — compress images, clean a CSV, rename files, call an API — without the overhead of a platform or the fragility of a script. Simple by default, powerful when you need it.
 
-Workflows are defined as `.bnto.json` files that orchestrate tasks. **M1 (Browser Execution) is delivered** — all 6 Tier 1 bntos run 100% client-side via Rust→WASM. Files never leave the user's machine. Cloud execution (Go API on Railway) is built and ready for M4 (premium server-side bntos). See [ROADMAP.md](.claude/ROADMAP.md).
+Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M1 (Browser Execution) is delivered** — all 6 Tier 1 recipes run 100% client-side via Rust→WASM. Files never leave the user's machine. Cloud execution (Go API on Railway) is built and ready for M4 (premium server-side recipes). The dividing line: **browser nodes are free, server nodes are Pro.** See [ROADMAP.md](.claude/ROADMAP.md) and [pricing-model.md](.claude/strategy/pricing-model.md).
 
 - **Rust WASM Engine (M1, delivered)**: `engine/` — Rust→WASM via `wasm-pack`, all browser execution
 - **Go Engine (archived)**: `archive/engine-go/` — CLI + cloud execution engine (paused, ready for M4)
@@ -203,6 +204,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 |----------|---------|
 | [ROADMAP.md](.claude/ROADMAP.md) | Strategic roadmap — milestones, direction, big decisions |
 | [PLAN.md](.claude/PLAN.md) | Build plan — sprints, waves, what's next |
+| [pricing-model.md](.claude/strategy/pricing-model.md) | Free vs premium — nodes, recipes, features, terminology |
 | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) | Full architecture, tech decisions, phases |
 | [monorepo-structure.md](.claude/strategy/monorepo-structure.md) | Repo structure, packages, CLI-to-API mapping |
 | [core-principles.md](.claude/strategy/core-principles.md) | TDD, Grain, Modularity, Abstraction |

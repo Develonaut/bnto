@@ -53,7 +53,7 @@ Quota enforcement and session durability.
 
 | # | Journey | Steps | Pass Criteria |
 |---|---------|-------|---------------|
-| **A6** | Anonymous quota enforcement | A1 → exhaust anonymous run limit → attempt another execution | `startPredefined` throws quota error (not auth error). Error is `"ANONYMOUS_QUOTA_EXCEEDED"`, not `"Not authenticated"`. |
+| **A6** | Anonymous server-node quota enforcement | A1 → exhaust anonymous server-node run limit → attempt another server-node execution | `startPredefined` throws quota error (not auth error). Error is `"ANONYMOUS_QUOTA_EXCEEDED"`, not `"Not authenticated"`. **Only applies to server-node executions.** Browser-node executions are unlimited — see [pricing-model.md](../strategy/pricing-model.md). |
 | **A7** | Anonymous session persists across refresh | A1 → page refresh → call any Convex mutation | Same userId. No re-authentication. Session cookie survives refresh. |
 
 ### Conversion Flow
@@ -64,7 +64,7 @@ Anonymous → signup. The revenue funnel.
 |---|---------|-------|---------------|
 | **C1** | Anonymous → signup conversion | A1 (has runs) → sign up with email/password | Same userId preserved. Existing runs and executions still belong to this user. `isAnonymous` flips to `false`. **CRITICAL: Must be tested in browser E2E** — see known limitation below. |
 | **C2** | Converted user retains access | C1 → call `api.executions.get` for pre-conversion execution | Returns the execution. Ownership still valid — userId didn't change. **Depends on C1 userId preservation — browser E2E only.** |
-| **C3** | Converted user gets full quota | C1 → check `runsUsedThisMonth` and `runLimit` | Quota upgraded from anonymous limit to free-tier limit (25/month). Existing run count preserved (not reset). |
+| **C3** | Converted user gets full free tier | C1 → check `planTier` and server-node execution access | User upgraded from anonymous to free tier. Gains access to platform features (save recipes, history) when Pro. Browser-node executions remain unlimited. Server-node quota upgraded from anonymous limit to free-tier limit. Existing execution count preserved (not reset). |
 
 ### Standard Auth Lifecycle
 

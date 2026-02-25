@@ -227,7 +227,7 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 ---
 
 ### Sprint 3: Platform Features (M2)
-**Goal:** Accounts earn their keep. Users who sign up get persistence, history, and a reason to stay. Conversion hooks are natural — Save, History, Premium Bntos — not artificial run caps.
+**Goal:** Accounts earn their keep. Users who sign up get persistence, history, and a reason to stay. Conversion hooks are natural — Save, History, Server Nodes — not artificial run caps. See [pricing-model.md](strategy/pricing-model.md) for the full free vs premium framework.
 
 #### Wave 1 (parallel — account value + analytics schema)
 
@@ -357,7 +357,7 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 
 - [ ] `@bnto/backend` — Pro feature gates: 30-day history retention, team sharing (up to 5 members), priority processing queue
 - [ ] `apps/api` — Server-side execution quota enforcement (applies to premium server-side bntos only — AI, shell, video)
-- [ ] `apps/web` — File size enforcement at R2 presigned URL generation for server-side bntos (free: 25MB, Pro: 500MB)
+- [ ] `apps/web` — File size enforcement at R2 presigned URL generation for server-side recipes (Pro-only, size limits TBD based on usage data)
 
 #### Wave 3 (sequential — test)
 

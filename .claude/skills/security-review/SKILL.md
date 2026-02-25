@@ -144,13 +144,16 @@ For EACH exported query/mutation:
 - [ ] **No `v.any()` on external-facing functions** — `v.any()` is acceptable on internal mutations, but public mutations should validate structure
 - [ ] **String inputs are bounded** — very long strings could be used for storage abuse. Check if Convex has built-in limits or if explicit length checks are needed
 
-### 3c: Quota enforcement
+### 3c: Quota enforcement (server-node executions only)
+
+**Context:** Browser-node executions are free and unlimited — no quota enforcement needed. Quota only applies to server-node executions (AI, shell-command, video). See [pricing-model.md](../../strategy/pricing-model.md).
 
 Read `executions.ts`:
-- [ ] **`enforceQuota()` runs before execution starts** — not after
+- [ ] **`enforceQuota()` runs before server-node execution starts** — not after
 - [ ] **Quota increment is atomic with execution start** — no TOCTOU race between checking quota and incrementing
-- [ ] **Anonymous user limits work** — `ANONYMOUS_RUN_LIMIT` env var is read and enforced
-- [ ] **Can quota be bypassed?** Can a client call `executeWorkflow` directly (it's `internalAction`, so no)? Can they start multiple executions concurrently to race past the quota check?
+- [ ] **Anonymous server-node limits work** — `ANONYMOUS_RUN_LIMIT` env var is read and enforced for server-side only
+- [ ] **Browser executions bypass quota** — no quota check path for client-side (browser node) executions
+- [ ] **Can quota be bypassed?** Can a client call `executeWorkflow` directly (it's `internalAction`, so no)? Can they start multiple server-node executions concurrently to race past the quota check?
 
 ### 3d: Upload security
 

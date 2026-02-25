@@ -42,12 +42,12 @@ Before writing any code, confirm your boundaries:
 - **Check git status first** — if you see uncommitted changes in your package's files, STOP and report to the user. Another agent may have been working here
 - **Read existing code** in the files you plan to modify before making changes. Understand patterns, naming conventions, and structure already in place
 
-**SEO & Monetization scope check** — ask these before writing a single line:
+**Pricing model scope check** — ask these before writing a single line (see [pricing-model.md](../../strategy/pricing-model.md)):
 
-- **Adding a new predefined Bnto?** — It needs a dedicated URL slug and server-side metadata. This is not optional. If the task doesn't mention it, add it. See `.claude/rules/pages.md`.
-- **Adding execution logic?** — Does it increment `runsUsedThisMonth` in Convex? If not, why not? Every execution counts against the user's quota.
-- **Building a user-facing flow?** — If the user could be near their run limit during this flow, does the UI surface that? Does hitting the limit show the honest upgrade prompt?
-- **Sprint 2 or earlier?** — Execution events must be logged from the first real run. Even anonymously. The data must exist before Sprint 3 builds the dashboard on top of it.
+- **Adding a new predefined recipe?** — It needs a dedicated URL slug, server-side metadata, and node classification (browser vs server). See `.claude/rules/pages.md` and `.claude/strategy/bntos.md`.
+- **Adding execution logic?** — Browser-node executions are free, unlimited, no tracking needed. Server-node executions must be tracked (they count against Pro usage quota).
+- **Building a user-facing flow?** — Conversion hooks should trigger on value moments (save, history, server nodes, team) — never on browser execution limits.
+- **Touching the recipe editor?** — The editor is free. Create, run, export = free. Save, share, server nodes = Pro. Don't gate editor access.
 
 ## Step 5: Implement
 

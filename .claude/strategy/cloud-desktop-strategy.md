@@ -592,9 +592,9 @@ Push to main →
 **Goal:** Revenue, polish, and the next-gen editing experience. By this point we have real users, real signal, and a working product worth paying for.
 
 **Scope:**
-- Stripe integration for paid tiers (Free: 25 runs/month, Pro: $8/month or $69/year)
-- Usage limits per plan tier (runs/month, file size, timeout limits)
-- Run quota enforcement server-side
+- Stripe integration for Pro tier ($8/month or $69/year). See [pricing-model.md](pricing-model.md).
+- Server-node execution tracking (usage-based for AI, shell-command, video)
+- Persistence enforcement (save recipes, execution history = Pro)
 - Execution history with detailed logs (Pro: 30-day retention)
 - Workflow versioning and duplication
 - Visual workflow editor (drag-and-drop nodes, connect edges)
@@ -605,13 +605,15 @@ Push to main →
 
 ---
 
-## 8. Monetization & Freemium Model
+## 8. Monetization Model
 
-Pricing details, tier structure, run limits, and file size limits live in Notion — not in this public repo. Search the bnto workspace for "SEO & Monetization Strategy" for the current pricing model.
+> **Single source of truth:** [pricing-model.md](pricing-model.md) defines the complete free vs premium framework — three layers (nodes, recipes, platform features), terminology, and the full feature matrix.
 
-**Core model:** Perpetual free tier with monthly run refresh. Building workflows is free, running is metered. No feature gating — all node types available on free tier, limit is execution count only.
+**Core model (updated Feb 2026):** Browser execution is free, unlimited, no caps. The dividing line is execution environment: nodes that run in the browser cost us $0 and are free to users. Nodes that need server-side execution (AI, shell-command, video) are Pro tier, usage-based. Pro also sells persistence (save recipes, execution history), collaboration (team sharing), and convenience (API access, priority processing).
 
-**Implementation:** Run counter tracked in Convex, monthly cron reset, Stripe webhook for plan upgrades. See `PLAN.md` Sprint 3 (quota tracking) and Sprint 7 (Stripe) for implementation details.
+**The recipe editor is free.** Anyone can create, run, and export `.bnto.json` recipes using browser nodes. Pro gates kick in for persistence (save) and server node execution.
+
+**Implementation:** Server-node execution tracked per-user in Convex. Stripe webhook for Pro upgrades. See `PLAN.md` Sprint 3 (platform features) and Sprint 7 (Stripe) for implementation details.
 
 ---
 

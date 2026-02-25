@@ -89,14 +89,16 @@ If a bnto is misclassified or the plan builds cloud infrastructure for a browser
 
 ### 3d. Monetization Model Check
 
-The monetization model has changed from run-capped to value-driven:
-- **Old:** Free 25 runs/month → upgrade prompt → Pro $8/mo for 500 runs
-- **New:** Browser = free unlimited → Pro = persistence, collaboration, premium compute
+> **Single source of truth:** [pricing-model.md](../../strategy/pricing-model.md) — three layers (nodes, recipes, platform features).
 
-Check that the plan doesn't build infrastructure for the old model:
-- No artificial run caps on browser-capable bntos
-- Upgrade prompts trigger on value hooks (save, history, AI, team) — not run limits
-- Run quota tracking is for analytics, not enforcement (on browser bntos)
+The dividing line: **nodes that run in the browser are free. Nodes that need a server cost money.** Node definitions are always available. The gate is server *execution*, not capability.
+
+Check that the plan doesn't violate the pricing model:
+- No artificial run caps on browser node execution
+- Recipe editor is free (create, run, export). Save/share/server-nodes = Pro
+- Upgrade prompts trigger on value hooks (save, history, server nodes, team) — not run limits
+- Run quota tracking only applies to server-node executions, not browser executions
+- Any monetization model drift? Check against pricing-model.md
 
 ### 3e. Trust Commitment Check
 
@@ -156,7 +158,7 @@ Report your findings in this structure:
 - Is the current sprint aligned with the active ROADMAP milestone? If not, what's misaligned?
 - Any tasks building for the wrong milestone?
 - Any browser-first violations (cloud infra being built for browser-capable bntos)?
-- Any monetization model drift (old run-cap model vs new value-driven model)?
+- Any pricing model drift? Check against [pricing-model.md](strategy/pricing-model.md) three-layer framework
 
 ### Issues Found
 For each issue, explain:

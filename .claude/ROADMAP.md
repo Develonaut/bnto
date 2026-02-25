@@ -158,25 +158,34 @@ packages/@bnto/nodes/
 
 ## Monetization Model
 
-### Old Model (cloud-first, run-capped)
-```
-Free: 25 runs/month → hit wall day 3 → upgrade or leave
-Pro: $8/month for 500 runs
-```
-**Problem:** Punishes users for using the product. Compressing images shouldn't cost money when the user's browser is doing the work.
+> **Single source of truth:** [pricing-model.md](strategy/pricing-model.md) defines the complete free vs premium framework — three layers (nodes, recipes, platform features), terminology, and the full feature matrix. This section is the strategic summary.
 
-### New Model (browser-first, value-driven)
+### The Dividing Line
+
+> **Nodes that can run in your browser are free. Nodes that need a server cost money.**
+>
+> The node *definitions* are always available to everyone (they're in `@bnto/nodes`, MIT licensed). The *execution* of server nodes is what costs money.
+
+This is the only principle you need. Everything else follows from it.
+
+### Three Layers
+
+1. **Nodes** — Browser nodes (image, csv, file, transform) are free, unlimited. Server nodes (ai, shell-command, video) are Pro, usage-based. Desktop: everything free (BYOK).
+2. **Recipes** — Predefined recipes (our curated SEO pages) are always free. Custom recipes: free to create, run, and export with browser nodes. Pro to save, share, or use server nodes.
+3. **Platform features** — Persistence, history, team sharing, API access = Pro. Recipe editor = free (fosters community, costs us $0).
+
+### Pricing
 
 | Tier | Price | What You Get |
 |------|-------|-------------|
-| **Free (Browser)** | $0 forever | All browser-capable bntos, unlimited runs, files never leave your machine |
-| **Free (Desktop)** | $0 forever | Everything local — shell commands, BYOK AI, full filesystem |
-| **Pro (Web)** | $8/mo or $69/yr | Saved workflows, execution history, team sharing, server-side AI, priority processing, API access |
+| **Free (Browser)** | $0 forever | All browser-capable recipes, unlimited runs, recipe editor, export. Files never leave your machine. |
+| **Free (Desktop)** | $0 forever | Everything — all nodes including AI (BYOK) and shell-command. Unlimited. |
+| **Pro (Web)** | $8/mo or $69/yr | Save recipes, execution history, team sharing, server-side compute, API access, priority processing. |
 
-**Why this is better:**
-- Users don't resent paying for AI inference or collaboration. They resent "you've compressed too many images this month."
+**Why this works:**
 - Browser execution costs us $0. Capping it is artificial and hostile.
 - Pro tier sells real value: persistence, collaboration, premium compute.
+- The recipe editor is free — fosters community, enables a future recipe marketplace.
 - Desktop remains free forever (trust commitment in `core-principles.md`).
 
 ---
@@ -187,12 +196,12 @@ Users convert when they want something the browser can't provide alone. These ar
 
 | Hook | Trigger | What They're Buying |
 |------|---------|-------------------|
-| **Save** | "I want to keep this workflow" | Persistence (Convex-backed workflow storage) |
+| **Save** | "I want to keep this recipe" | Persistence (Convex-backed storage) |
 | **History** | "I need my execution history for audit" | Execution log retention (30-day Pro) |
-| **Premium Bntos** | "I need AI to classify these images" | Server-side compute (Railway) |
-| **Team** | "My team needs shared workflows" | Collaboration (up to 5 members, no per-seat) |
+| **Server nodes** | "I need AI to classify these images" | Server-side compute (Railway, usage-based) |
+| **Team** | "My team needs shared recipes" | Collaboration (up to 5 members, no per-seat) |
 
-**Lazy anonymous sessions:** Users run browser bntos instantly — no signup, no account, no friction. Convex logs executions with a browser fingerprint. When they sign up, history is available retroactively. Zero backend until they choose to engage.
+**Lazy anonymous sessions:** Users run browser recipes instantly — no signup, no account, no friction. Convex logs executions with a browser fingerprint. When they sign up, history is available retroactively. Zero backend until they choose to engage.
 
 ---
 
@@ -243,11 +252,12 @@ Users convert when they want something the browser can't provide alone. These ar
 |----------|-------|
 | **ROADMAP.md** (this file) | Milestones, strategic direction, big decisions, "why" |
 | **PLAN.md** | Sprint tasks, waves, what's claimed/done/next |
+| **pricing-model.md** | Single source of truth: free vs premium, three layers, terminology, feature matrix |
 | **cloud-desktop-strategy.md** | Detailed architecture, tech decisions, data model, deployment topology |
 | **architecture.md** | Rules: layered architecture, data flow, execution model |
-| **bntos.md** | Bnto registry: slugs, tiers, fixtures, node requirements |
+| **bntos.md** | Recipe registry: slugs, tiers, fixtures, node requirements |
 | **core-principles.md** | Trust commitments, design philosophy |
-| **Notion** | Pricing details, revenue projections, search volume data, competitive analysis |
+| **Notion** | Revenue projections, search volume data, competitive analysis |
 
 ---
 
