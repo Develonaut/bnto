@@ -16,7 +16,6 @@ import {
   XIcon,
 } from "@/components/ui/icons";
 
-import { Animate } from "@/components/ui/Animate";
 import { ThemeToggle } from "@/components/ui/AnimatedThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/Card";
@@ -100,7 +99,7 @@ const RECIPES: RecipeCategory[] = [
 
 function navButtonProps(pathname: string, href: string) {
   return {
-    depth: "md" as const,
+    depth: "sm" as const,
     pressed: pathname === href,
   };
 }
@@ -144,7 +143,7 @@ export const Navbar = () => {
               {/* Desktop Navigation */}
               <div className="hidden items-center gap-2 lg:flex">
                 <Menu>
-                  <Menu.Trigger variant="outline" depth="md">
+                  <Menu.Trigger variant="outline" depth="sm">
                     <BookOpenIcon />
                     Recipes
                   </Menu.Trigger>
@@ -194,7 +193,7 @@ export const Navbar = () => {
                   <Button
                     variant="secondary"
                     size="icon"
-                    depth="md"
+                    depth="sm"
                     onClick={() => setOpen(!open)}
                   >
                     <MenuIcon />
@@ -204,7 +203,7 @@ export const Navbar = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  depth="md"
+                  depth="sm"
                   href={GITHUB_URL}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -217,7 +216,7 @@ export const Navbar = () => {
                 <Button
                   variant="primary"
                   href="/signin"
-                  depth="md"
+                  depth="sm"
                   className="hidden lg:inline-flex"
                 >
                   Sign in
@@ -265,7 +264,7 @@ function NavThemeMenu() {
 
   return (
     <Menu>
-      <Menu.Trigger variant="outline" size="icon" depth="md">
+      <Menu.Trigger variant="outline" size="icon" depth="sm">
         <SunIcon />
         <span className="sr-only">Theme settings</span>
       </Menu.Trigger>
@@ -273,7 +272,7 @@ function NavThemeMenu() {
         <div className="flex flex-col items-center gap-3">
           {/* Theme toggle + city name */}
           <div className="flex w-full items-center gap-3">
-            <ThemeToggle depth="md" />
+            <ThemeToggle depth="sm" />
             <Text size="sm" className="w-full font-medium">
               <ThemeName />
             </Text>
@@ -293,7 +292,7 @@ function NavThemeMenu() {
               <Button
                 variant="warning"
                 size="icon-sm"
-                depth="md"
+                depth="sm"
                 pressed={isDragging}
                 className="pointer-events-none size-7"
               >
@@ -305,22 +304,17 @@ function NavThemeMenu() {
               {angleToCardinal(lightAngle)}
             </span>
           </RadialSlider>
-          {/* Reset — wrapper reserves h-8 space, button bounces in */}
-          <div className="h-8 w-full">
-            {!isDefault && (
-              <Animate.ScaleIn from={0.6} easing="spring-bouncy">
-                <Button
-                  variant="muted"
-                  size="md"
-                  onClick={handleReset}
-                  className="w-full"
-                >
-                  <RotateCcwIcon />
-                  Reset
-                </Button>
-              </Animate.ScaleIn>
-            )}
-          </div>
+          {/* Reset — always visible, disabled when at default */}
+          <Button
+            variant="muted"
+            size="md"
+            onClick={handleReset}
+            disabled={isDefault}
+            className="w-full"
+          >
+            <RotateCcwIcon />
+            Reset
+          </Button>
         </div>
       </Menu.Content>
     </Menu>

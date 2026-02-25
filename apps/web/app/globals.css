@@ -1074,6 +1074,7 @@
     var(--variant-bg, var(--card)) 45%,
     var(--muted)
   );
+  --face-fg: var(--muted-foreground);
   border-color: color-mix(in oklch, var(--depth-wall) 40%, var(--muted));
   transform: translate(0, 0);
 }
