@@ -89,6 +89,7 @@ function Button({
   depth = true,
   spring = "lg",
   muted = false,
+  pressed,
   pseudo,
   asChild = false,
   href,
@@ -102,6 +103,7 @@ function Button({
     depth?: DepthOverride;
     spring?: SpringMode;
     muted?: boolean;
+    pressed?: boolean;
     pseudo?: PseudoState;
     href?: string;
     ref?: React.Ref<HTMLElement>;
@@ -122,6 +124,7 @@ function Button({
       data-slot="button"
       data-muted={muted || undefined}
       data-force-state={pseudo || undefined}
+      aria-pressed={pressed != null ? pressed : undefined}
       {...(isLink ? { href } : {})}
       className={cn(PRESSABLE_BASE, resolvedSizeClasses, depthClass, className)}
       style={{ ...SPRING_STYLES[spring], ...style }}
