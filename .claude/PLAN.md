@@ -214,7 +214,7 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [x] `engine-wasm/` — `rename-csv-columns` node (`csv` + `serde` crates, header rewrite)
 - [x] `engine-wasm/` — `rename-files` node (pattern matching + regex via Rust)
 - [x] `apps/web` — Web Worker wrappers for all new WASM nodes
-- [ ] `apps/web` — E2E tests: all 6 bntos run client-side
+- [x] `apps/web` — E2E tests: all 6 bntos run client-side
 
 #### Wave 4 (sequential — integration + polish)
 

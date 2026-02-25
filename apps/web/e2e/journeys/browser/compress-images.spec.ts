@@ -176,17 +176,26 @@ test.describe("compress-images — browser execution", () => {
     await expect(page.getByText("1 file selected")).not.toBeVisible();
   });
 
-  test("non-browser slugs still use cloud execution mode", async ({
+  test("all Tier 1 bntos detect browser execution mode", async ({
     page,
   }) => {
-    // resize-images is not yet browser-capable
-    await page.goto("/resize-images");
+    // All 6 Tier 1 slugs are browser-capable via Rust→WASM
+    const tier1Slugs = [
+      { slug: "resize-images", h1: "Resize Images Online Free" },
+      { slug: "convert-image-format", h1: "Convert Image Format Online Free" },
+      { slug: "rename-files", h1: "Rename Files Online Free" },
+      { slug: "clean-csv", h1: "Clean CSV Online Free" },
+      { slug: "rename-csv-columns", h1: "Rename CSV Columns Online Free" },
+    ];
 
-    await expect(
-      page.getByRole("heading", { name: "Resize Images Online Free" }),
-    ).toBeVisible();
+    for (const { slug, h1 } of tier1Slugs) {
+      await page.goto(`/${slug}`);
+      await expect(
+        page.getByRole("heading", { name: h1 }),
+      ).toBeVisible();
 
-    const shell = page.locator('[data-testid="bnto-shell"]');
-    await expect(shell).toHaveAttribute("data-execution-mode", "cloud");
+      const shell = page.locator('[data-testid="bnto-shell"]');
+      await expect(shell).toHaveAttribute("data-execution-mode", "browser");
+    }
   });
 });
