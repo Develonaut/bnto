@@ -19,6 +19,22 @@ Before reviewing ANY code, read and internalize these files. They are the source
 
 **Read ALL of these files now.** The checklist items below are reminders — the rule files and CLAUDE.md are the complete reference.
 
+## Step 0b: Load Domain Personas
+
+Identify which packages the changed files belong to and load the relevant persona(s):
+
+| Changed files in... | Persona file |
+|---|---|
+| `engine/` | `.claude/skills/personas/rust-expert/SKILL.md` |
+| `archive/engine-go/`, `archive/api-go/` | `.claude/skills/personas/go-engineer/SKILL.md` |
+| `apps/web/` | `.claude/skills/personas/frontend-engineer/SKILL.md` |
+| `packages/core/` | `.claude/skills/personas/core-architect/SKILL.md` |
+| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `.claude/skills/personas/backend-engineer/SKILL.md` |
+
+**If changes touch auth, security headers, input validation, file uploads, or Convex mutations**, also load `.claude/skills/personas/security-engineer/SKILL.md` — the security persona owns trust boundaries across all packages.
+
+**Read the matching persona file(s) now.** They contain domain-specific quality standards, gotchas, and performance patterns that inform a deeper review. If changes span multiple packages, load all relevant personas.
+
 ## Step 1: Identify Changed Files
 
 Determine what needs review:

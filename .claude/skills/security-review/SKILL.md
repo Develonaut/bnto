@@ -26,6 +26,24 @@ Before reviewing anything, read these files to understand the architecture and k
 
 **Read ALL of these files now.** The audit sections below reference these documents. You need the full picture before scanning.
 
+## Step 0b: Load Your Persona
+
+**Always load the security engineer persona first:**
+
+`.claude/skills/personas/security-engineer/SKILL.md` — your primary persona. Owns the entire attack surface, trust boundaries, and defense-in-depth strategy.
+
+**Then load domain personas** for the specific packages you're auditing:
+
+| Auditing files in... | Domain persona |
+|---|---|
+| `engine/` | `.claude/skills/personas/rust-expert/SKILL.md` |
+| `archive/engine-go/`, `archive/api-go/` | `.claude/skills/personas/go-engineer/SKILL.md` |
+| `apps/web/` | `.claude/skills/personas/frontend-engineer/SKILL.md` |
+| `packages/core/` | `.claude/skills/personas/core-architect/SKILL.md` |
+| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `.claude/skills/personas/backend-engineer/SKILL.md` |
+
+**Read the security persona and all matching domain personas now.** The security persona gives you the adversarial mindset and cross-cutting awareness. The domain personas give you package-specific patterns, gotchas, and quality standards — e.g., Rust `unsafe` blocks, Go context propagation and error wrapping, React XSS vectors, Convex auth enforcement patterns. A full security audit requires both perspectives.
+
 ---
 
 ## Section 1: Secret & Credential Scanning
@@ -214,15 +232,15 @@ Also check:
 
 Read `middleware.ts` and `apps/web/app/providers/`:
 
-- [ ] **Session cookies are `httpOnly`** — JavaScript can't read them (Better Auth default)
-- [ ] **Session cookies are `secure`** — only sent over HTTPS (Better Auth uses `__Secure-` prefix in prod)
-- [ ] **Session cookies have `sameSite`** — prevents CSRF. Check Better Auth config
+- [ ] **Session cookies are `httpOnly`** — JavaScript can't read them (`@convex-dev/auth` default)
+- [ ] **Session cookies are `secure`** — only sent over HTTPS
+- [ ] **Session cookies have `sameSite`** — prevents CSRF. Check `@convex-dev/auth` config
 - [ ] **Sign-out clears server session** — not just client-side cookie deletion
 - [ ] **The signout signal cookie** (`bnto-signout`) — is it `httpOnly: false` intentionally? (Yes — JS needs to set it. But verify the TTL is short, ~10s)
 
 ### 4d: CSRF protection
 
-- [ ] **Convex mutations use session tokens** — the Better Auth session token acts as a CSRF token since it's `httpOnly` and verified server-side
+- [ ] **Convex mutations use session tokens** — the `@convex-dev/auth` session token acts as a CSRF token since it's `httpOnly` and verified server-side
 - [ ] **No custom API routes that accept form submissions without CSRF tokens** — check `apps/web/app/api/` routes
 
 ### 4e: Client-side data exposure

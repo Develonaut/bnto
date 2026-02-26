@@ -34,6 +34,20 @@ Before reviewing ANY tests, read and internalize:
 .claude/rules/pre-commit.md        # Test coverage requirements
 ```
 
+## Step 0b: Load Domain Personas
+
+Identify which packages the tests under review belong to and load the relevant persona(s):
+
+| Test files in... | Persona file |
+|---|---|
+| `engine/` | `.claude/skills/personas/rust-expert/SKILL.md` |
+| `archive/engine-go/`, `archive/api-go/` | `.claude/skills/personas/go-engineer/SKILL.md` |
+| `apps/web/` (including `e2e/`) | `.claude/skills/personas/frontend-engineer/SKILL.md` |
+| `packages/core/` | `.claude/skills/personas/core-architect/SKILL.md` |
+| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `.claude/skills/personas/backend-engineer/SKILL.md` |
+
+**Read the matching persona file(s) now.** Each persona defines domain-specific testing patterns, anti-patterns, and quality bars — e.g., Rust TDD layers (unit → WASM integration → E2E), Go table-driven tests with race detector, React testing trophy (thin unit + thick integration + targeted E2E). Evaluating test quality requires knowing how that domain's community tests. Load all relevant personas for the scope under review.
+
 ## Step 1: Identify Scope
 
 ### Change mode (if invoked from /pre-commit or with pending changes)

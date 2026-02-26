@@ -21,6 +21,22 @@ Before reviewing ANY code, read and internalize the project's coding standards a
 
 **Read ALL of these files now.** You will be reviewing code against every rule in them. The checklist items below are reminders — the rule files and CLAUDE.md are the source of truth.
 
+## Step 0b: Load Domain Personas
+
+Identify which packages the changed files belong to and load the relevant persona(s):
+
+| Changed files in... | Persona file |
+|---|---|
+| `engine/` | `.claude/skills/personas/rust-expert/SKILL.md` |
+| `archive/engine-go/`, `archive/api-go/` | `.claude/skills/personas/go-engineer/SKILL.md` |
+| `apps/web/` | `.claude/skills/personas/frontend-engineer/SKILL.md` |
+| `packages/core/` | `.claude/skills/personas/core-architect/SKILL.md` |
+| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `.claude/skills/personas/backend-engineer/SKILL.md` |
+
+**If changes touch auth, security headers, input validation, file uploads, or Convex mutations**, also load `.claude/skills/personas/security-engineer/SKILL.md` — the security persona owns trust boundaries across all packages.
+
+**Read the matching persona file(s).** They contain domain-specific quality standards, gotchas, and performance patterns that inform a deeper review. If changes span multiple packages, load all relevant personas — a commit touching `engine/` and `apps/web/` needs both rust-expert and frontend-engineer loaded.
+
 ## Context
 
 ### Files changed
