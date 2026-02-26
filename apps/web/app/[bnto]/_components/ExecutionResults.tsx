@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { DownloadIcon, FileDownIcon, LoaderIcon, CheckCircle2Icon } from "@/components/ui/icons";
 import { useExecution, useDownloadFiles } from "@bnto/core";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface ExecutionResultsProps {

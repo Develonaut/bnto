@@ -4,11 +4,11 @@ import { useState, useCallback } from "react";
 import { FileIcon, TrashIcon, UploadIcon } from "@/components/ui/icons";
 
 import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { Stack } from "@/components/ui/Stack";
-import { Tabs } from "@/components/ui/tabs";
+import { Tabs } from "@/components/ui/Tabs";
 import { Text } from "@/components/ui/Text";
 
 function formatFileSize(bytes: number): string {

@@ -6,7 +6,7 @@ import {
   ZapIcon,
 } from "@/components/ui/icons";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";

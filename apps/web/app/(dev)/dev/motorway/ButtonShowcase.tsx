@@ -13,7 +13,7 @@ import {
   ZapIcon,
 } from "@/components/ui/icons";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Row } from "@/components/ui/Row";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";

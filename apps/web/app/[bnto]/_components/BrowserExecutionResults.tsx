@@ -2,7 +2,7 @@
 
 import { DownloadIcon, FileArchiveIcon, CheckCircle2Icon } from "@/components/ui/icons";
 import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface BrowserExecutionResultsProps {

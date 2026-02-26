@@ -11,7 +11,7 @@ import {
   MenuIcon,
 } from "@/components/ui/icons";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
 import { Menu } from "@/components/ui/Menu";

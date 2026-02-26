@@ -13,11 +13,11 @@ import {
 
 import { Animate } from "@/components/ui/Animate";
 import { BentoGrid, useBentoItem, assignCellLayouts } from "@/components/ui/BentoGrid";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Heading } from "@/components/ui/Heading";
 import { Stack } from "@/components/ui/Stack";
-import { Tabs } from "@/components/ui/tabs";
+import { Tabs } from "@/components/ui/Tabs";
 import { Text } from "@/components/ui/Text";
 import { BNTO_REGISTRY, type BntoEntry } from "@/lib/bntoRegistry";
 

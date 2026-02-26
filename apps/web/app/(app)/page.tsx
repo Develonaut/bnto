@@ -4,7 +4,7 @@ import { RecipeGrid } from "@/components/blocks/RecipeGrid";
 import { GithubIcon } from "@/components/ui/icons";
 
 import { AppShell } from "@/components/ui/AppShell";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Divider } from "@/components/ui/Divider";
 import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";

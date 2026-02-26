@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 import { RadialSlider } from "@/components/ui/RadialSlider";
 import { Row } from "@/components/ui/Row";
-import { Slider } from "@/components/ui/slider";
+import { Slider } from "@/components/ui/Slider";
 import { Stack } from "@/components/ui/Stack";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@/components/ui/Switch";
 import { Text } from "@/components/ui/Text";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/Textarea";
 
 export function InputShowcase() {
   const [switchA, setSwitchA] = useState(true);

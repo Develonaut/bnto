@@ -4,7 +4,7 @@ import { useCallback, useRef, useSyncExternalStore } from "react";
 import { MoonIcon, SunIcon, SunsetIcon } from "@/components/ui/icons";
 import { useTheme } from "next-themes";
 
-import { Button, type SpringMode } from "@/components/ui/button";
+import { Button, type SpringMode } from "@/components/ui/Button";
 
 type DepthOverride = boolean | "none" | "sm" | "md" | "lg";
 

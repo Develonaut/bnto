@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import { RotateCcwIcon, SunIcon } from "@/components/ui/icons";
 
 import { AnimatedThemeToggle } from "@/components/ui/AnimatedThemeToggle";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Menu } from "@/components/ui/Menu";
 import { RadialSlider } from "@/components/ui/RadialSlider";
 import { Text } from "@/components/ui/Text";

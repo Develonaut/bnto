@@ -14,7 +14,7 @@ import {
 
 import { Animate } from "@/components/ui/Animate";
 import { BentoGrid, useBentoItem } from "@/components/ui/BentoGrid";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";

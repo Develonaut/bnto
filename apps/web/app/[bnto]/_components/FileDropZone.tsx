@@ -2,7 +2,7 @@
 
 import { UploadIcon, XIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
   FileUpload,
   FileUploadDropzone,
@@ -11,7 +11,7 @@ import {
   FileUploadItemMetadata,
   FileUploadItemDelete,
   FileUploadClear,
-} from "@/components/ui/file-upload";
+} from "@/components/ui/FileUpload";
 import { getAcceptedTypes } from "../_lib/getAcceptedTypes";
 
 interface FileDropZoneProps {

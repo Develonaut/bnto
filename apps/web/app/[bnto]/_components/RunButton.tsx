@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderIcon, PlayIcon, RotateCcwIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 export type RunPhase =
   | "idle"

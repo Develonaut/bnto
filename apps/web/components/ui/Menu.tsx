@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import {
   Popover,

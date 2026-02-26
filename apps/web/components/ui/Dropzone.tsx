@@ -4,7 +4,7 @@ import * as React from "react";
 import { useDropzone, type DropzoneOptions } from "react-dropzone";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/cn";
-import { Button } from "./button";
+import { Button } from "./Button";
 import { Card } from "./Card";
 
 const dropzoneVariants = cva(

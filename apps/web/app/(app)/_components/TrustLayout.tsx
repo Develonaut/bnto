@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/icons";
 
 import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { GITHUB_URL } from "@/lib/copy";

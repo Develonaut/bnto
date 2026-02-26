@@ -4,9 +4,9 @@ import Link from "next/link";
 
 import { GithubIcon, XIcon } from "@/components/ui/icons";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
-import { Sheet } from "@/components/ui/sheet";
+import { Sheet } from "@/components/ui/Sheet";
 import { GITHUB_URL } from "@/lib/copy";
 
 /* ── Types ────────────────────────────────────────────────────── */

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Menu } from "@/components/ui/Menu";
 import { Row } from "@/components/ui/Row";
 

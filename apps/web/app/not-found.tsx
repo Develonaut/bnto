@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeftIcon } from "@/components/ui/icons";
 
 import { AppShell } from "@/components/ui/AppShell";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { GITHUB_URL } from "@/lib/copy";
 
 export default function NotFound() {

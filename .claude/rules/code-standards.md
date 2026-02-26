@@ -163,8 +163,7 @@ func Factory() node.Factory { return func() node.NodeType { return &MyNode{} } }
 
 | Type | Convention | Example |
 |---|---|---|
-| Business components | PascalCase `.tsx` | `WorkflowCard.tsx` |
-| Primitives (shadcn) | kebab-case `.tsx` | `button.tsx` |
+| Components | PascalCase `.tsx` | `WorkflowCard.tsx`, `Button.tsx` |
 | Hooks | camelCase with `use` prefix | `useRunWorkflow.ts` |
 | Utils/functions (TS) | camelCase `.ts` | `formatDuration.ts` |
 | Go files | snake_case `.go` | `workflow_runner.go` |
