@@ -22,9 +22,9 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   const router = useRouter();
   const pathname = usePathname();
+  // Ref tracks latest pathname so handleSessionLost can read it without
+  // being recreated on every navigation (keeps BntoCoreProvider stable).
   const pathnameRef = useRef(pathname);
-  // FIXME: This is a code smell please do research on the recommended
-  // way to properly handle this case with next.js and better auth.
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);

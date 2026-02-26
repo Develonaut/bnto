@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle2Icon, LoaderIcon, XCircleIcon, ClockIcon } from "@/components/ui/icons";
-import { useExecution } from "@bnto/core";
+import { core } from "@bnto/core";
 import type { Execution, NodeProgress } from "@bnto/core";
 import { cn } from "@/lib/cn";
 
@@ -19,7 +19,7 @@ interface ExecutionProgressProps {
  * - Error message on failure
  */
 export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
-  const { data: execution, isLoading } = useExecution(executionId);
+  const { data: execution, isLoading } = core.executions.useExecution(executionId);
   const elapsed = useElapsedTime(execution);
 
   if (isLoading || !execution) {

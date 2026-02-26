@@ -47,35 +47,3 @@ export type { AuthStatus } from "./providers/SessionContext";
 // ── Auth types ────────────────────────────────────────────────────────────
 export type { AuthUser, AuthState } from "./hooks/useAuth";
 
-// FIXME: Remove this we dont need to be backwards compatabile. just update call sites
-// to use correct core api.
-// ---------------------------------------------------------------------------
-// Backwards-compatible hook re-exports.
-//
-// These allow existing consumers to continue importing hooks directly:
-//   import { useWorkflows } from "@bnto/core";
-//
-// New code should use the namespaced pattern:
-//   import { core } from "@bnto/core";
-//   core.workflows.useWorkflows();
-// ---------------------------------------------------------------------------
-export { useWorkflows } from "./hooks/useWorkflows";
-export { useWorkflow } from "./hooks/useWorkflow";
-export { useSaveWorkflow } from "./hooks/useSaveWorkflow";
-export { useRemoveWorkflow } from "./hooks/useRemoveWorkflow";
-export { useRunWorkflow } from "./hooks/useRunWorkflow";
-export { useExecution } from "./hooks/useExecution";
-export { useExecutions } from "./hooks/useExecutions";
-export { useExecutionLogs } from "./hooks/useExecutionLogs";
-export { useRunsRemaining } from "./hooks/useRunsRemaining";
-export { useCurrentUser } from "./hooks/useCurrentUser";
-export { useReady } from "./hooks/useReady";
-export { useIsAuthenticated } from "./hooks/useIsAuthenticated";
-export { useSessionStatus } from "./hooks/useSessionStatus";
-export { useSignOut } from "./hooks/useSignOut";
-export { useAnonymousSession } from "./hooks/useAnonymousSession";
-export { useRunQuota } from "./hooks/useRunQuota";
-export { useUploadFiles } from "./hooks/useUploadFiles";
-export { useDownloadFiles } from "./hooks/useDownloadFiles";
-export { useRunPredefined } from "./hooks/useRunPredefined";
-export { useBrowserExecution } from "./hooks/useBrowserExecution";

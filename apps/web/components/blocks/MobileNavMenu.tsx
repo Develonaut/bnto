@@ -11,32 +11,14 @@ import { Container } from "@/components/ui/Container";
 import { Sheet } from "@/components/ui/Sheet";
 import { Text } from "@/components/ui/Text";
 import { GITHUB_URL } from "@/lib/copy";
-
-/* ── Types ────────────────────────────────────────────────────── */
-
-interface RecipeLink {
-  label: string;
-  description: string;
-  url: string;
-}
-
-interface RecipeCategory {
-  title: string;
-  links: RecipeLink[];
-}
-
-/* ── MobileNavMenu ────────────────────────────────────────────── */
-
-// FIXME: Feels like there's potentially a lot of duplication between our Desktop and Mobile NavBar. Let's ensure we use compositional and reusable parts between the two so the nav bars only need to focus on the parts they care about
+import { RECIPES, PAGE_LINKS } from "./navData";
 
 export function MobileNavMenu({
   open,
   onOpenChange,
-  recipes,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  recipes: RecipeCategory[];
 }) {
   const { isAuthenticated, user } = core.auth.useAuth();
   const signOut = core.auth.useSignOut();
@@ -79,7 +61,7 @@ export function MobileNavMenu({
                   Recipes
                 </div>
                 <div className="grid w-full grid-cols-2 gap-x-4 gap-y-10">
-                  {recipes.map((category) => (
+                  {RECIPES.map((category) => (
                     <div
                       key={category.title}
                       className="flex flex-col gap-4 text-primary-foreground"
@@ -108,20 +90,16 @@ export function MobileNavMenu({
               {/* Bottom section */}
               <div className="flex flex-col gap-6">
                 <div className="flex items-center gap-4">
-                  <Button
-                    variant="outline"
-                    href="/pricing"
-                    onClick={() => onOpenChange(false)}
-                  >
-                    Pricing
-                  </Button>
-                  <Button
-                    variant="outline"
-                    href="/faq"
-                    onClick={() => onOpenChange(false)}
-                  >
-                    FAQ
-                  </Button>
+                  {PAGE_LINKS.map((link) => (
+                    <Button
+                      key={link.href}
+                      variant="outline"
+                      href={link.href}
+                      onClick={() => onOpenChange(false)}
+                    >
+                      {link.label}
+                    </Button>
+                  ))}
                   <Button
                     variant="secondary"
                     size="icon"
@@ -134,12 +112,11 @@ export function MobileNavMenu({
                   </Button>
                 </div>
 
-                {/* Auth */}
-                {/* FIXME: Should have a Shareable component between mobile and desktop */}
+                {/* Auth section */}
                 <div className="h-px bg-white/20" />
-                {isAuthenticated ? (
+                {isAuthenticated && user?.email ? (
                   <div className="flex flex-col gap-3">
-                    {(user?.name || user?.email) && (
+                    {(user.name || user.email) && (
                       <div>
                         {user.name && (
                           <Text

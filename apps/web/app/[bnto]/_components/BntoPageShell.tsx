@@ -1,15 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import {
-  core,
-  useRunQuota,
-  useCurrentUser,
-  useUploadFiles,
-  useRunPredefined,
-  useExecution,
-  useBrowserExecution,
-} from "@bnto/core";
+import { core } from "@bnto/core";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { getRecipe } from "@/lib/menu";
 import dynamic from "next/dynamic";
@@ -54,8 +46,8 @@ interface BntoPageShellProps {
  *   4. Results downloaded from R2
  */
 export function BntoPageShell({ entry }: BntoPageShellProps) {
-  const { isPending: sessionPending, quotaExhausted } = useRunQuota();
-  const { data: currentUser } = useCurrentUser();
+  const { isPending: sessionPending, quotaExhausted } = core.user.useRunQuota();
+  const { data: currentUser } = core.user.useCurrentUser();
   const [config, setConfig] = useState<BntoConfigMap[BntoSlug]>(
     DEFAULT_CONFIGS[entry.slug as BntoSlug] ?? {},
   );
@@ -72,15 +64,15 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
     downloadResult,
     downloadAll,
     reset: resetBrowser,
-  } = useBrowserExecution();
+  } = core.browser.useBrowserExecution();
 
   // -- Cloud execution --
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [cloudPhase, setCloudPhase] = useState<RunPhase>("idle");
   const [clientError, setClientError] = useState<string | null>(null);
-  const { progress, upload, reset: resetUpload } = useUploadFiles();
-  const { mutateAsync: startCloudExec } = useRunPredefined();
-  const { data: cloudExecution } = useExecution(executionId ?? "");
+  const { progress, upload, reset: resetUpload } = core.uploads.useUploadFiles();
+  const { mutateAsync: startCloudExec } = core.executions.useRunPredefined();
+  const { data: cloudExecution } = core.executions.useExecution(executionId ?? "");
 
   // -- Resolved phase (unified across both paths) --
   const resolvedPhase: RunPhase = isBrowserPath

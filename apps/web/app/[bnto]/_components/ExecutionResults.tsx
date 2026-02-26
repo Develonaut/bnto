@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { DownloadIcon, FileDownIcon, LoaderIcon, CheckCircle2Icon } from "@/components/ui/icons";
-import { useExecution, useDownloadFiles } from "@bnto/core";
+import { core } from "@bnto/core";
 import { Button } from "@/components/ui/Button";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
@@ -17,9 +17,9 @@ interface ExecutionResultsProps {
  * Shows individual file downloads and a "Download All" button.
  */
 export function ExecutionResults({ executionId }: ExecutionResultsProps) {
-  const { data: execution } = useExecution(executionId);
+  const { data: execution } = core.executions.useExecution(executionId);
   const { urls, fetchUrls, downloadFile, downloadAll, isLoading, isReady } =
-    useDownloadFiles();
+    core.downloads.useDownloadFiles();
 
   const outputFiles = execution?.outputFiles ?? [];
   const hasOutputFiles = outputFiles.length > 0;

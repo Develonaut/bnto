@@ -6,8 +6,6 @@ import {
 import { isAuthPath, isProtectedPath } from "@/lib/routes";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
-// FIXME: Next.js has deprecated the naming of MiddlewareNotFoundError.ts. I believe it's proxy.ts now. Please research best practives for this
-
 function hasSignoutSignal(
   request: Request & { cookies: { has(name: string): boolean } },
 ) {

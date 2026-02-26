@@ -22,7 +22,6 @@ import { Text } from "@/components/ui/Text";
  * so the proxy lets them through to /signin (since the proxy sees their
  * anonymous session as "authenticated").
  */
-// FIXME: This is a UserMenu component it has a trigger the button and the menu. This should be a composable component with parts
 export function NavUser() {
   const { isAuthenticated, isLoading, user } = core.auth.useAuth();
   const signOut = core.auth.useSignOut();

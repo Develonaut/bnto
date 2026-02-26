@@ -41,8 +41,8 @@ vi.mock("@convex-dev/auth/nextjs/server", () => ({
   },
 }));
 
-// Import middleware after mock setup
-const { default: middleware } = await import("../middleware");
+// Import proxy after mock setup
+const { default: proxy } = await import("../proxy");
 
 function createRequest(
   pathname: string,
@@ -59,7 +59,7 @@ function createRequest(
 /** Simulate an authenticated request by setting the mock JWT cookie. */
 const AUTH_COOKIES = { __convexAuthJWT: "mock-token" };
 
-describe("middleware", () => {
+describe("proxy", () => {
   beforeEach(() => {
     // Ensure handler was captured
     expect(capturedHandler).not.toBeNull();
@@ -67,22 +67,22 @@ describe("middleware", () => {
 
   describe("unauthenticated user", () => {
     it("passes through on public paths", async () => {
-      const response = await middleware(createRequest("/"));
+      const response = await proxy(createRequest("/"));
       expect(response.status).toBe(200);
     });
 
     it("passes through on /signin", async () => {
-      const response = await middleware(createRequest("/signin"));
+      const response = await proxy(createRequest("/signin"));
       expect(response.status).toBe(200);
     });
 
     it("passes through on /waitlist", async () => {
-      const response = await middleware(createRequest("/waitlist"));
+      const response = await proxy(createRequest("/waitlist"));
       expect(response.status).toBe(200);
     });
 
     it("redirects to /signin on private route /workflows", async () => {
-      const response = await middleware(createRequest("/workflows"));
+      const response = await proxy(createRequest("/workflows"));
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe(
         "/signin",
@@ -90,7 +90,7 @@ describe("middleware", () => {
     });
 
     it("redirects to /signin on private route /executions", async () => {
-      const response = await middleware(createRequest("/executions"));
+      const response = await proxy(createRequest("/executions"));
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe(
         "/signin",
@@ -98,7 +98,7 @@ describe("middleware", () => {
     });
 
     it("redirects to /signin on private route /settings", async () => {
-      const response = await middleware(createRequest("/settings"));
+      const response = await proxy(createRequest("/settings"));
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe(
         "/signin",
@@ -106,12 +106,12 @@ describe("middleware", () => {
     });
 
     it("passes through on unknown routes (404 at page level)", async () => {
-      const response = await middleware(createRequest("/admin"));
+      const response = await proxy(createRequest("/admin"));
       expect(response.status).toBe(200);
     });
 
     it("redirects to /signin on protected sub-route", async () => {
-      const response = await middleware(createRequest("/workflows/123"));
+      const response = await proxy(createRequest("/workflows/123"));
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe(
         "/signin",
@@ -121,33 +121,33 @@ describe("middleware", () => {
 
   describe("authenticated user", () => {
     it("passes through on public paths", async () => {
-      const response = await middleware(createRequest("/", AUTH_COOKIES));
+      const response = await proxy(createRequest("/", AUTH_COOKIES));
       expect(response.status).toBe(200);
     });
 
     it("passes through on private paths", async () => {
-      const response = await middleware(
+      const response = await proxy(
         createRequest("/workflows", AUTH_COOKIES),
       );
       expect(response.status).toBe(200);
     });
 
     it("passes through on /executions", async () => {
-      const response = await middleware(
+      const response = await proxy(
         createRequest("/executions", AUTH_COOKIES),
       );
       expect(response.status).toBe(200);
     });
 
     it("passes through on /settings", async () => {
-      const response = await middleware(
+      const response = await proxy(
         createRequest("/settings", AUTH_COOKIES),
       );
       expect(response.status).toBe(200);
     });
 
     it("redirects from /signin to / (auth user should not see signin)", async () => {
-      const response = await middleware(
+      const response = await proxy(
         createRequest("/signin", AUTH_COOKIES),
       );
       expect(response.status).toBe(307);
@@ -162,18 +162,16 @@ describe("middleware", () => {
     };
 
     it("allows auth user through to /signin when signout signal is present", async () => {
-      const response = await middleware(
+      const response = await proxy(
         createRequest("/signin", signoutCookies),
       );
-      // With signout signal, the redirect goes to /signin (pass-through)
-      expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe(
-        "/signin",
-      );
+      // With signout signal, the proxy skips the "auth on /signin" redirect
+      // and passes through — user reaches /signin despite being authenticated
+      expect(response.status).toBe(200);
     });
 
     it("does not affect other routes", async () => {
-      const response = await middleware(
+      const response = await proxy(
         createRequest("/workflows", signoutCookies),
       );
       expect(response.status).toBe(200);
