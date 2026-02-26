@@ -7,10 +7,6 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./provider": {
-      "types": "./src/provider.tsx",
-      "default": "./src/provider.tsx"
-    },
     "./constants": {
       "types": "./src/constants.ts",
       "default": "./src/constants.ts"

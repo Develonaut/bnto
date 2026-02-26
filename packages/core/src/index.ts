@@ -4,7 +4,7 @@
 export { core } from "./reactCore";
 
 // ── Provider ──────────────────────────────────────────────────────────────
-export { BntoCoreProvider } from "./provider";
+export { BntoCoreProvider } from "./BntoCoreProvider";
 
 // ── Types (transport-agnostic) ────────────────────────────────────────────
 export type {

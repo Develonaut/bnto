@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2Icon, LoaderIcon, XCircleIcon, ClockIcon } from "@/components/ui/icons";
 import { useExecution } from "@bnto/core";
 import type { Execution, NodeProgress } from "@bnto/core";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 interface ExecutionProgressProps {
   executionId: string;

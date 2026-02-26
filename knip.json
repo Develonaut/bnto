@@ -1,0 +1,46 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    ".": {
+      "ignoreDependencies": [
+        "@auth/core",
+        "@convex-dev/auth"
+      ]
+    },
+    "apps/web": {
+      "entry": [
+        "app/**/page.tsx",
+        "app/**/layout.tsx",
+        "app/**/not-found.tsx",
+        "app/providers/**/*.{ts,tsx}",
+        "e2e/**/*.ts",
+        "lib/wasm/bnto.worker.ts"
+      ],
+      "project": ["**/*.{ts,tsx}"],
+      "ignoreDependencies": [
+        "@tailwindcss/typography",
+        "tw-animate-css",
+        "@types/mdx"
+      ]
+    },
+    "packages/core": {
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignore": ["src/__tests__/**"]
+    },
+    "packages/@bnto/auth": {
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["next", "react-dom"]
+    },
+    "packages/@bnto/backend": {
+      "entry": ["convex/**/*.ts"],
+      "project": ["convex/**/*.ts"]
+    },
+    "packages/@bnto/nodes": {
+      "project": ["src/**/*.ts"]
+    }
+  },
+  "ignore": [
+    "test-fixtures/**",
+    "apps/desktop/**"
+  ]
+}

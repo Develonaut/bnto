@@ -4,7 +4,7 @@ import { useTheme } from "next-themes";
 
 import { RotateCcwIcon, SunIcon } from "@/components/ui/icons";
 
-import { ThemeToggle } from "@/components/ui/AnimatedThemeToggle";
+import { AnimatedThemeToggle } from "@/components/ui/AnimatedThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Menu } from "@/components/ui/Menu";
 import { RadialSlider } from "@/components/ui/RadialSlider";
@@ -12,7 +12,7 @@ import { Text } from "@/components/ui/Text";
 import {
   THEME_STORE_DEFAULT_ANGLE,
   useThemeStore,
-} from "@/lib/stores/theme-store";
+} from "@/lib/stores/themeStore";
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -62,7 +62,7 @@ export function NavThemeMenu() {
         <div className="flex flex-col items-center gap-3">
           {/* Theme toggle + city name */}
           <div className="flex w-full items-center gap-3">
-            <ThemeToggle depth="sm" />
+            <AnimatedThemeToggle depth="sm" />
             <Text size="sm" className="w-full font-medium">
               <ThemeName />
             </Text>

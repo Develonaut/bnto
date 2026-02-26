@@ -2,7 +2,7 @@
 
 import { CheckCircle2Icon, LoaderIcon, XCircleIcon } from "@/components/ui/icons";
 import type { FileUploadProgress } from "@bnto/core";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface UploadProgressProps {

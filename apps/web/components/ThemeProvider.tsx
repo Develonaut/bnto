@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
-import { THEME_STORE_KEY, useThemeStore } from "@/lib/stores/theme-store";
+import { THEME_STORE_KEY, useThemeStore } from "@/lib/stores/themeStore";
 
 /**
  * Blocking script that reads the persisted light angle from localStorage

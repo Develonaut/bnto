@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useDropzone, type DropzoneOptions } from "react-dropzone";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { Button } from "./button";
 import { Card } from "./Card";
 
@@ -63,4 +63,4 @@ function Dropzone({ className, size, children, ...options }: DropzoneProps) {
   );
 }
 
-export { Dropzone, dropzoneVariants };
+export { Dropzone };

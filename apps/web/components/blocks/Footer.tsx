@@ -105,12 +105,20 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col items-center justify-between gap-3 border-t border-border py-6 text-xs text-muted-foreground sm:flex-row">
           <p>{LICENSE_LINE}</p>
-          <Link
-            href="/privacy"
-            className="transition-colors hover:text-foreground"
-          >
-            Privacy Policy
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dev/motorway"
+              className="transition-colors hover:text-foreground"
+            >
+              Motorway
+            </Link>
+            <Link
+              href="/privacy"
+              className="transition-colors hover:text-foreground"
+            >
+              Privacy Policy
+            </Link>
+          </div>
         </div>
       </Container>
     </footer>

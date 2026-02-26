@@ -13,7 +13,7 @@ import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { ComparisonBar } from "@/components/ui/ComparisonBar";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /* ── Data ────────────────────────────────────────────────────── */
 

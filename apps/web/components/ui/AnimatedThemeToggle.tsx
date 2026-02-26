@@ -19,7 +19,7 @@ function nextTheme(current: ThemeName): ThemeName {
 
 const noop = () => () => {};
 
-export function ThemeToggle({ depth, spring }: { depth?: DepthOverride; spring?: SpringMode } = {}) {
+export function AnimatedThemeToggle({ depth, spring }: { depth?: DepthOverride; spring?: SpringMode } = {}) {
   const { resolvedTheme, setTheme } = useTheme();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const mounted = useSyncExternalStore(

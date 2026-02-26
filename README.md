@@ -1,208 +1,131 @@
 # Bnto
 
-**The one place small teams go to get things done.**
+**Compress images, clean CSVs, rename files, and convert formats.**
 
-Compress images, clean a CSV, rename files, call an API -- without the overhead of a platform or the fragility of a script. Simple by default, powerful when you need it.
+Free, instant, private. Processed in your browser.
 
-Bnto lets you define automated workflows as `.bnto.json` files that orchestrate tasks like image processing, file operations, data transformation, and HTTP requests. Workflows are built from composable nodes -- the same tool that compresses a folder of images can power a 20-node pipeline calling external APIs.
+Everything runs client-side via Rust compiled to WebAssembly. Your files never leave your machine. No uploads, no accounts, no limits.
+
+## Available Tools
+
+| Tool | What it does |
+|------|-------------|
+| [Compress Images](https://bnto.io/compress-images) | Shrink JPEG, PNG, and WebP images |
+| [Resize Images](https://bnto.io/resize-images) | Resize to exact dimensions or percentages |
+| [Convert Image Format](https://bnto.io/convert-image-format) | Convert between PNG, JPEG, WebP, and GIF |
+| [Clean CSV](https://bnto.io/clean-csv) | Remove empty rows, trim whitespace, deduplicate |
+| [Rename CSV Columns](https://bnto.io/rename-csv-columns) | Rename column headers in bulk |
+| [Rename Files](https://bnto.io/rename-files) | Batch rename files with patterns |
 
 ## Why Bnto?
 
-- **Fast:** 15-30x faster startup than Node.js, 6x less memory
-- **Portable:** Single binary, cross-platform (macOS, Windows, Linux)
-- **Powerful:** True parallelism with goroutines, 10 built-in node types
-- **Simple:** JSON-based workflow definitions, no code required
-- **Open Source:** MIT licensed -- everything runs locally for free, cloud is optional convenience
-
-## Workflow Nodes
-
-| Node Type | Purpose |
-|-----------|---------|
-| `edit-fields` | Field editing with Go templates |
-| `http-request` | HTTP client with retry support |
-| `file-system` | File operations (copy, move, mkdir, list) |
-| `shell-command` | Shell execution with stall detection |
-| `group` | Sequential/parallel node execution |
-| `loop` | Iteration (forEach, times, while) |
-| `parallel` | Advanced parallel execution |
-| `spreadsheet` | Excel/CSV reading and processing |
-| `image` | Image resize, export, composite |
-| `transform` | Data transformation via expressions |
+- **Private:** Files never leave your browser. Processing happens 100% client-side via Rust compiled to WebAssembly
+- **Free:** All browser-based tools are free with no limits. No signup required
+- **Fast:** Near-native performance from compiled Rust, not interpreted JavaScript
+- **Open Source:** MIT licensed. The entire engine and web app are right here
 
 ## Quick Start
 
-**Prerequisites:** Go 1.25+, [Task](https://taskfile.dev)
+Visit **[bnto.io](https://bnto.io)**, pick a tool, drop your files.
+
+That's it.
+
+## For Developers
+
+### Prerequisites
+
+- Node.js 18+
+- [pnpm](https://pnpm.io)
+- [Task](https://taskfile.dev)
+- Rust toolchain (for engine work only -- install via [rustup](https://rustup.rs))
+
+### Setup
 
 ```bash
-# Build from source
 git clone https://github.com/Develonaut/bnto.git
 cd bnto
-task build
-
-# Run a workflow
-bnto run engine/examples/csv-to-folders.bnto.json
-```
-
-## Example Workflow
-
-Create a file called `resize-images.bnto.json`:
-
-```json
-{
-  "id": "resize-images",
-  "type": "group",
-  "name": "Batch Resize Images",
-  "nodes": [
-    {
-      "id": "find-images",
-      "type": "file-system",
-      "parameters": {
-        "operation": "list",
-        "source": "./photos",
-        "pattern": "*.{jpg,png}"
-      }
-    },
-    {
-      "id": "resize-each",
-      "type": "loop",
-      "parameters": {
-        "mode": "forEach",
-        "items": "{{index . \"find-images\" \"files\"}}"
-      },
-      "nodes": [
-        {
-          "id": "resize",
-          "type": "image",
-          "parameters": {
-            "operation": "resize",
-            "source": "{{.item}}",
-            "width": 800,
-            "dest": "./output/{{basenameNoExt .item}}.webp"
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
-```bash
-bnto run resize-images.bnto.json
-```
-
-## CLI Usage
-
-```bash
-bnto workflow.bnto.json                # Execute a workflow (shorthand)
-bnto run workflow.bnto.json            # Execute a workflow (explicit)
-bnto run workflow.bnto.json --dry-run  # Preview without running
-bnto validate workflow.bnto.json       # Validate a workflow file
-bnto list                              # List available bntos
-bnto new my-workflow                   # Create a new workflow from template
-bnto secrets set KEY VALUE             # Manage secrets
-bnto logs                              # View execution logs
-bnto docs                              # View documentation
-```
-
-File paths support multiple formats:
-
-```bash
-bnto examples/workflow.bnto.json   # Full path with extension
-bnto examples/workflow             # Full path without extension
-bnto workflow                      # Name from ~/.bnto/bntos/
-```
-
-## Project Structure
-
-```
-bnto/
-├── engine/                 # Go CLI + execution engine
-│   ├── cmd/bnto/           # CLI binary
-│   ├── pkg/                # Go packages
-│   │   ├── api/            # Shared service layer
-│   │   ├── engine/         # Workflow orchestration
-│   │   ├── registry/       # Node type registration
-│   │   ├── node/           # Node type implementations
-│   │   ├── validator/      # Workflow validation
-│   │   ├── storage/        # Persistent storage
-│   │   ├── paths/          # Path resolution + config
-│   │   ├── logger/         # Logging
-│   │   ├── logs/           # Log file management
-│   │   └── secrets/        # Secrets management
-│   ├── tests/              # Integration tests + fixtures
-│   └── examples/           # Example .bnto.json files
-├── apps/
-│   ├── api/                # Go HTTP API server
-│   ├── web/                # Next.js cloud app
-│   └── desktop/            # Wails v2 desktop app
-├── packages/
-│   ├── core/              # Transport-agnostic API layer
-│   ├── ui/                # Design system (shadcn)
-│   ├── editor/            # Workflow editor components
-│   └── @bnto/
-│       ├── auth/          # Cloud authentication
-│       └── backend/       # Convex schema + functions
-├── Taskfile.yml            # Go + cross-cutting orchestration
-├── turbo.json              # Turborepo config
-├── go.work                 # Go workspace (archive/engine-go + archive/api-go)
-└── .claude/                # Architecture docs + plan
-```
-
-## Development
-
-**Prerequisites:** Go 1.25+, Node.js 18+, pnpm, [Task](https://taskfile.dev)
-
-```bash
-# Install frontend dependencies
 pnpm install
+```
 
-# Build
-task build               # Go engine CLI
-task ui:build            # Frontend packages (Turborepo)
-task build:all           # Everything
+### Commands
 
-# Test
-task test                # Go engine tests (with race detector)
-task api:test            # API server tests
-task ui:test             # Frontend tests
-task test:all            # Everything
+```bash
+# Development
+task dev                # Start web + Convex dev servers (Next.js on port 4000)
 
-# Lint & vet
-task vet                 # Go vet
-task ui:lint             # Frontend linting
+# Rust WASM engine
+task wasm:build         # Build WASM crates (release, web target)
+task wasm:test          # Run Rust unit + WASM integration tests
+task wasm:lint          # Run clippy
+task wasm:fmt           # Format Rust code
 
-# Dev
-task ui:dev              # Frontend dev server
+# Frontend
+task ui:build           # Build all TS packages
+task ui:test            # Run TS tests
+task ui:lint            # Lint all TS packages
+
+# E2E tests (requires task dev running)
+task e2e                # Run Playwright E2E tests
 
 # Quality gate
-task check               # Full check (vet + test + build)
+task check              # Full check (vet + test + build)
 ```
 
 ## Architecture
 
 Bnto follows the **Bento Box Principle** -- every file, function, and package does one thing well.
 
+The browser is the execution engine. Rust compiles to a single WASM binary that runs inside a Web Worker. The web app loads the WASM module, sends files in, and gets results back. No server round-trips for processing.
+
 ```
-Apps (web/desktop) -> @bnto/editor -> @bnto/ui -> @bnto/core -> Go Engine
+Browser (WASM execution)
+  |
+  +-- Web Worker loads bnto_wasm.wasm
+  |     |-- bnto-image (compress, resize, convert)
+  |     |-- bnto-csv (clean, rename columns)
+  |     +-- bnto-file (rename)
+  |
+  +-- Next.js app (Vercel)
+  +-- Convex Cloud (auth, data persistence)
 ```
 
-- **Go Engine** (`engine/`): Workflow execution, validation, all node types. The source of truth.
-- **`@bnto/core`**: Transport-agnostic API layer. Same React hooks work for cloud (Convex), desktop (Wails), and REST. Components never know which backend they are talking to.
-- **`@bnto/ui`**: Shared design system built on shadcn/ui + Tailwind CSS.
-- **`@bnto/editor`**: Workflow editor -- JSON editor now, visual drag-and-drop later.
+`@bnto/core` is the transport-agnostic API layer. UI components never call backend services directly -- they use core hooks that route requests to the right backend depending on runtime.
 
-The desktop app (Wails v2) renders the same React frontend in a system webview. `@bnto/core` detects the runtime and swaps transport adapters internally, so there is no separate frontend for desktop.
+### Repository Structure
 
-For a deep dive into architecture decisions, see [`.claude/strategy/`](.claude/strategy/) and the full roadmap in [`.claude/PLAN.md`](.claude/PLAN.md).
+```
+bnto/
+├── apps/
+│   ├── web/                     # Next.js on Vercel (bnto.io)
+│   │   └── components/          # UI components (co-located)
+│   └── desktop/                 # Tauri frontend (planned)
+├── packages/
+│   ├── core/                    # @bnto/core -- Transport-agnostic API
+│   └── @bnto/
+│       ├── auth/                # @bnto/auth -- Cloud auth
+│       ├── backend/             # @bnto/backend -- Convex schema + functions
+│       └── nodes/               # @bnto/nodes -- Engine-agnostic node definitions
+├── engine/                      # Rust WASM engine (browser execution)
+│   └── crates/
+│       ├── bnto-core/           # Core types, traits, progress reporting
+│       ├── bnto-image/          # Image compression/resize/convert
+│       ├── bnto-csv/            # CSV clean/rename columns
+│       ├── bnto-file/           # File rename
+│       └── bnto-wasm/           # cdylib entry point (single WASM binary)
+├── archive/                     # Preserved reference code (not active)
+│   ├── engine-go/               # Go CLI + engine (~33K LOC)
+│   └── api-go/                  # Go HTTP API server (~2.5K LOC)
+└── .claude/                     # Strategy docs, decisions, plan, rules
+```
 
 ## Contributing
 
 Contributions are welcome. To get started:
 
 1. Fork and clone the repository
-2. Install prerequisites (Go 1.25+, Node.js 18+, pnpm, Task)
-3. Run `pnpm install` and `task build` to verify your setup
-4. Create a branch for your changes
+2. Install prerequisites (Node.js 18+, pnpm, Task, Rust)
+3. Run `pnpm install` to set up dependencies
+4. Run `task dev` to start the development servers
 5. Run `task check` before submitting a pull request
 
 Please follow the existing code patterns and the [Bento Box Principle](.claude/rules/code-standards.md) -- small, focused files and functions with clear boundaries.

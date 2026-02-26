@@ -6,7 +6,7 @@ import { useState, useContext, createContext, useCallback } from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 
 import { buttonVariants } from "./button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /* ── Context (surfaces active value to Triggers) ───────────── */
 
