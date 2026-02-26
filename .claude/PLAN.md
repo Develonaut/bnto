@@ -285,10 +285,11 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 
 #### Wave 1 (parallel — account value + analytics schema)
 
-- [ ] `apps/web` — **Privacy policy rewrite:** Replace template `privacy.mdx` with real bnto privacy policy. Update company name (bnto), contact email, URL (bnto.io), jurisdiction, last updated date. Emphasize browser-only processing — files never leave the user's machine. Remove Flash Cookies section (obsolete). Remove Third-party Social Media Service section if not applicable.
+- [x] `apps/web` — **Privacy policy rewrite:** Replace template `privacy.mdx` with real bnto privacy policy. Update company name (bnto), contact email, URL (bnto.io), jurisdiction, last updated date. Emphasize browser-only processing — files never leave the user's machine. Remove Flash Cookies section (obsolete). Remove Third-party Social Media Service section if not applicable.
 - [ ] `apps/web` — **README review before launch:** Review `README.md` for accuracy — verify it reflects current state (browser execution, Rust WASM, 6 Tier 1 bntos, MIT license). Remove stale references to old architecture, placeholder content, or unshipped features.
 - [ ] `monorepo` — **Knip dead code audit:** Run `knip` across the monorepo to find and delete unused exports, files, dependencies, and type-only imports. Clean up anything flagged before launch — dead code in a public repo is noise.
 - [ ] `monorepo` — **File & component naming audit:** Verify all files follow naming conventions from `code-standards.md` — components PascalCase `.tsx`, hooks `useXxx.ts`, utils camelCase `.ts`, primitives kebab-case `.tsx`, Go files snake_case `.go`. Fix any violations. Check that component names match their filenames (no `export function Foo` in `bar.tsx`).
+- [ ] `monorepo` — **Full codebase coding standards review (multi-agent):** Run parallel agents across all packages to audit every file against `code-standards.md`, `architecture.md`, `components.md`, and `theming.md`. Each agent covers one package/directory. Collect all findings, combine, and correct violations in a single pass. Covers: Bento Box Principle (file/function size limits), dot-notation compliance, import discipline, CSS-first states, `select` rule for React Query, layered architecture, one-export-per-file, no utility grab bags.
 - [ ] `@bnto/backend` — `planTier` field on user schema (free, pro). Usage analytics fields: `totalRuns`, `lastRunAt`
 - [ ] `@bnto/backend` — Execution analytics: aggregate queries for per-user history (by slug, by date range)
 - [ ] `@bnto/core` — `useExecutionHistory()` hook (paginated, per-user)
@@ -296,6 +297,9 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [ ] `apps/web` — WorkflowCard component (name, description, node count, last run status)
 - [ ] `apps/web` — StatusBadge component (pending, running, completed, failed)
 - [ ] `apps/web` — EmptyState component (no workflows yet)
+- [ ] `apps/web` — **Site navigation journey tests (E2E):** Playwright user journey that navigates every public route on the site (home, all 6 tool slugs, pricing, FAQ, privacy, signin) with screenshot assertions at each stop. Verifies nav links work, no broken routes, and captures visual state as a regression baseline. Include mobile viewport variant.
+- [ ] `infra` — **Analytics layer decision:** Evaluate and select analytics tooling for user behavior and usage tracking. Candidates: Plausible (privacy-first, no cookies), PostHog (product analytics, self-hostable), Vercel Analytics (built-in), or custom Convex events. Decision criteria: privacy alignment (browser-first, no third-party tracking claims in privacy policy), cost, self-hostable option, event tracking depth (tool usage, conversion funnels, retention). Document decision in `.claude/decisions/`.
+- [ ] `infra` — **SEO validation tooling:** Set up Lighthouse CI in GitHub Actions for automated performance/SEO scoring on every PR. Configure Google Search Console for bnto.io (verify ownership, submit sitemap, monitor indexing). Add `task seo:audit` command that runs Lighthouse locally against all public routes and reports Core Web Vitals scores. Target: all pages green on Performance, Accessibility, Best Practices, SEO.
 
 #### Wave 2 (parallel — dashboard + conversion hooks)
 
