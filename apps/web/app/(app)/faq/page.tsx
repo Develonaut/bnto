@@ -1,16 +1,10 @@
-import { Background } from "@/components/Background";
 import { FAQ } from "@/components/blocks/FAQ";
+import { AppShell } from "@/components/ui/AppShell";
 
-const Page = () => {
+export default function FaqPage() {
   return (
-    <Background>
-      <FAQ
-        className="py-28 text-center lg:pt-44 lg:pb-32"
-        className2="max-w-xl lg:grid-cols-1"
-        headerTag="h1"
-      />
-    </Background>
+    <AppShell.Content>
+      <FAQ headerTag="h1" />
+    </AppShell.Content>
   );
-};
-
-export default Page;
+}

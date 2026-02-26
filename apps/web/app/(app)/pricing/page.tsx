@@ -1,16 +1,17 @@
-import React from "react";
+import type { Metadata } from "next";
 
-import { Background } from "@/components/Background";
 import { Pricing } from "@/components/blocks/Pricing";
-import { PricingTable } from "@/components/blocks/PricingTable";
+import { AppShell } from "@/components/ui/AppShell";
 
-const Page = () => {
-  return (
-    <Background>
-      <Pricing className="py-28 text-center lg:pt-44 lg:pb-32" />
-      <PricingTable />
-    </Background>
-  );
+export const metadata: Metadata = {
+  title: "Pricing",
+  description: "All browser tools free, unlimited, forever. No signup required.",
 };
 
-export default Page;
+export default function PricingPage() {
+  return (
+    <AppShell.Content>
+      <Pricing />
+    </AppShell.Content>
+  );
+}

@@ -28,6 +28,14 @@ const TOOL_SECTIONS = [
       { name: "Rename Files", href: "/rename-files" },
     ],
   },
+  {
+    title: "Company",
+    links: [
+      { name: "Pricing", href: "/pricing" },
+      { name: "Privacy", href: "/privacy" },
+      { name: "GitHub", href: GITHUB_URL, external: true },
+    ],
+  },
 ];
 
 export function Footer() {
@@ -80,6 +88,9 @@ export function Footer() {
                       <Link
                         href={link.href}
                         className="text-sm font-medium transition-colors hover:text-primary"
+                        {...("external" in link && link.external
+                          ? { target: "_blank", rel: "noopener noreferrer" }
+                          : {})}
                       >
                         {link.name}
                       </Link>

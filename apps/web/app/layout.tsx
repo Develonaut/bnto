@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Inter } from "next/font/google";
 import { ConvexAuthNextjsServerProvider } from "@bnto/auth/server";
+import { AppShell } from "@/components/ui/AppShell";
 import { Navbar } from "@/components/blocks/Navbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import {
@@ -87,8 +88,12 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Providers>
-              <Navbar />
-              {children}
+              <AppShell>
+                <AppShell.Header>
+                  <Navbar />
+                </AppShell.Header>
+                {children}
+              </AppShell>
             </Providers>
           </ThemeProvider>
         </body>

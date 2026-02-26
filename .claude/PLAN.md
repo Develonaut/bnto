@@ -242,29 +242,41 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [x] `apps/web` — **Footer rewrite:** Replace template footer. Real links: Tools (all 6 bnto slugs), GitHub repo, MIT license note. Remove fake social links (`@ausrobdev`). Simple and honest — no fake company sections. Browse `shadcn-blocks/blocks/footer/` for patterns.
 - [x] `infra` — **Connect bnto.io to Vercel:** Add CNAME/A records in Cloudflare DNS. Configure custom domain in Vercel dashboard. Verify HTTPS + deployment. Update `robots.txt` sitemap URL if domain changes from `bnto.dev`.
 
-#### Wave 2 (parallel — home page overhaul)
+#### Wave 2 (parallel — clean false claims + delete template garbage)
 
-- [x] `apps/web` — **Delete Mainline block components:** Remove `Hero.tsx`, `Logos.tsx`, `Features.tsx`, `ResourceAllocation.tsx`, `Testimonials.tsx`, `Investors.tsx`, `About.tsx`, `AboutHero.tsx`, `Contact.tsx`. These are all template garbage referencing project management tools, fake companies, Lorem ipsum, and fake testimonials. Keep: `BntoGallery.tsx` (real content), `Navbar.tsx` (being rewritten in Wave 1), `Footer.tsx` (being rewritten in Wave 1).
-- [ ] `apps/web` — **New home page hero:** BntoGallery as the centerpiece. Concise value prop above: "Drop files. Pick a tool. Done." + privacy tagline ("Your files never leave your browser"). No marketing fluff, no fake screenshots. The tool grid IS the hero. Browse `shadcn-blocks/blocks/hero/` for layout inspiration — keep it simple and tool-first.
-- [ ] `apps/web` — **Features/trust section:** Replace Mainline features with 3-4 real bnto differentiators: "100% browser-based" (files never uploaded), "Free forever" (no signup, no limits), "Open source" (MIT licensed, inspect the code), "Batch processing" (drop multiple files). Browse `shadcn-blocks/blocks/feature/` and `trust-strip/` for patterns.
-- [ ] `apps/web` — **Pricing section rewrite:** Per `pricing-model.md` — Free (browser, unlimited, $0 forever), Pro ($8/mo for persistence, collaboration, premium compute). Two honest tiers, no dark patterns. Desktop free forever. Browse `shadcn-blocks/blocks/pricing/` for layout patterns.
-- [x] `apps/web` — **FAQ section rewrite:** Real questions — "What file types are supported?", "Is it really free?", "Where are my files processed?", "Is bnto open source?", "What's Pro?". Browse `shadcn-blocks/blocks/faq/` for accordion/grid patterns.
+**Messaging rule for this entire sprint:** "Browser tools" are free. Not "everything." Every claim about "free" must be scoped to browser tools. Never say "free forever" as a blanket. Never say "no upsells." Never promise unshipped features (desktop, CLI, AI tools, Pro tier pricing). See `.claude/plans/partitioned-tumbling-wigderson.md` Part 2 for the full messaging framework.
 
-#### Wave 3 (parallel — page cleanup + assets)
+- [x] `apps/web` — **HomeTimeline.tsx — Remove 3 unshipped sections:** Delete "Recipes" section (CLI terminal animation + "visual editor coming soon"), "Coming soon" section (6 fake tools with names/icons), and "Desktop" section (4 feature cards for nonexistent app). Keep only "How it works" and "Open source" sections. Remove `CodeLayout`, dead `INNER_RING`/`OUTER_RING` data for unshipped platforms (Desktop/CLI/Cloud) and tools (AI/Zip/JSON). Delete unused imports (`Terminal`, `AnimatedSpan`, `TypingAnimation` if orphaned).
+- [x] `apps/web` — **HomeTimeline.tsx — Fix BragCard claim:** Change `"Free forever — no upsells"` label to `"Free browser tools — no limits"`. The old copy directly contradicts the planned Pro tier.
+- [x] `apps/web` — **BntoGallery.tsx — Fix pitch point:** Change `"Desktop app coming soon — same tools, offline"` to `"Batch processing — drop multiple files at once"`. Desktop is not shipped.
+- [x] `apps/web` — **FAQ.tsx — Fix 3 answers:** (1) Remove "More formats are on the way." from file types answer. (2) Rewrite "What is Pro?" → "Will bnto always be free?" / "All browser tools are free, unlimited, forever. We plan to add a paid tier in the future for features that need server-side processing — like AI-powered tools. Browser tools will never have limits or require payment." (3) Rewrite "Do I need an account?" → "No. Drop your files and use any tool immediately. No account, no signup, no email required."
+- [x] `apps/web` — **copy.ts — Fix 2 constants:** `LICENSE_LINE` → "MIT Licensed. Browser tools free forever." `TRUST_LINE` → "Free, instant, private. Processed in your browser."
+- [x] `apps/web` — **Navbar.tsx — Remove Motorway button** from desktop and mobile nav.
+- [x] `apps/web` — **Move /motorway to /dev/motorway:** Create `app/(dev)/dev/motorway/page.tsx`, move content from `app/(app)/motorway/page.tsx`, delete old file. The `(dev)` route group keeps it accessible for internal use at `/dev/motorway` without cluttering the `(app)` shell.
+- [x] `apps/web` — **not-found.tsx — Verify GitHub URL** matches `GITHUB_URL` from `copy.ts` (`github.com/Develonaut/bnto`).
+- [x] `apps/web` — **Delete orphaned component files:** `Terminal.tsx` and `OrbitingCircles.tsx` (only used by deleted layouts).
 
-- [ ] `apps/web` — **Remove or redirect `/about`:** No real team/investor content yet. Either redirect to `/` or replace with minimal "bnto is open source" page with GitHub link. Delete fake investor photos and team bios.
-- [ ] `apps/web` — **Remove or redirect `/contact`:** Fake Australian address must go. Either redirect to `/` or replace with a simple "Found a bug? Open an issue on GitHub" page.
-- [ ] `apps/web` — **Clean up `/privacy`:** Verify MDX content is relevant to bnto (not Mainline template). Update if needed.
-- [ ] `apps/web` — **Delete unused public assets:** `hero.webp`, `og-image.jpg` (template), `about/*.webp` (workspace photos), `investors/*.webp` (fake headshots), `testimonials/*.webp` (fake photos), `logos/*.svg` (Mercury, Retool, etc.), `features/*.svg` (project management UI mockups), `resource-allocation/*.webp` (project management screenshots). Keep: `logo.svg`, `favicon/`, `wasm/`, `llms.txt`, `robots.txt`.
-- [ ] `apps/web` — **Create bnto OG image:** Simple text-based OG image for social sharing ("bnto — Free Online File Tools"). Can be generated or a simple SVG.
+#### Wave 3 (parallel — write real content for home page + pricing)
 
-#### Wave 4 (sequential — verify + E2E)
+- [x] `apps/web` — **HomeTimeline.tsx — Rewrite Section A** ("How it works"): subtitle "How it works", title "Your browser does the work.\nNot a server.", body about browser-side processing vs server upload. Layout: keep BragLayout (stat cards + comparison bars). Competitive differentiator vs TinyPNG/CloudConvert.
+- [x] `apps/web` — **HomeTimeline.tsx — Rewrite Section B** ("No catch"): subtitle "No catch", title "Free tools that stay free.\nOpen source you can verify.", body about no signup/watermarks/caps. CTA: "View on GitHub" → GITHUB_URL. Layout: new TrustLayout — Card with crossed-out anti-patterns + "MIT Licensed · Open Source" badge.
+- [x] `apps/web` — **HomeTimeline.tsx — Replace orbit visualization** with TrustLayout card (crossed-out anti-patterns + GitHub CTA).
+- [x] `apps/web` — **Pricing.tsx — Complete rewrite:** Single "Free" tier card. Heading: "Simple pricing." Subheading: "Every browser tool is free. No limits, no signup, no catch." 8 feature bullets. CTA: "Start using bnto" → `/`. Below card: future premium note. Delete all "Mainline" template content. Server component.
+- [x] `apps/web` — **PricingTable.tsx — Deleted:** Removed template comparison table file entirely.
+- [x] `apps/web` — **pricing/page.tsx — Add metadata:** title "Pricing", description "All browser tools free, unlimited, forever. No signup required."
+- [x] `apps/web` — **Navbar.tsx — Add "Pricing" link** to desktop nav and mobile sheet.
 
-- [ ] `apps/web` — **E2E: no Mainline text anywhere.** Grep the built site for "Mainline", "shadcnblocks", "Mercury", "ausrobdev", "project management" — zero matches.
-- [ ] `apps/web` — **E2E: home page renders real content.** Screenshot assertions for hero, tool grid, features, pricing, FAQ sections.
-- [ ] `apps/web` — **E2E: all 6 tool pages still work.** Verify nav changes didn't break routing or layout.
-- [ ] `apps/web` — **SEO verification:** Confirm `<title>`, `<meta description>`, JSON-LD correct on home page and all tool pages. Verify `generateStaticParams` still works.
-- [ ] `apps/web` — **Update all E2E screenshots** for new layout (home page, navigation, footer).
+#### Wave 4 (sequential — polish, navigation, verify)
+
+- [x] `apps/web` — **Footer.tsx — Add Company column:** Pricing → `/pricing`, Privacy → `/privacy`, GitHub → `GITHUB_URL`.
+- [x] `apps/web` — **sitemap.ts — Add missing pages:** `/pricing` (priority 0.6), `/faq` (priority 0.5), `/privacy` (priority 0.3).
+- [x] `apps/web` — **Messaging audit (grep):** Verified: "free forever" only appears as "Browser tools free forever", "coming soon" zero results, "desktop" in marketing copy zero, "$8" or "Pro ($" zero, "Mainline" zero, "no upsells" zero.
+- [ ] `apps/web` — **E2E: home page renders correctly.** Update screenshots for new 2-section layout. Verify hero, Section A (stats), Section B (trust), FAQ all render.
+- [ ] `apps/web` — **E2E: pricing page.** New test: `/pricing` renders single free tier card, no template content.
+- [ ] `apps/web` — **E2E: no template content anywhere.** Grep built output for "Mainline", "shadcnblocks", "Mercury", "free daily catered lunch" — zero matches.
+- [ ] `apps/web` — **SEO verification:** `task ui:build` passes. All static pages generate. `<title>` and `<meta description>` correct on `/`, `/pricing`, all tool pages.
+- [ ] `apps/web` — **Privacy policy audit** (P2, can defer): Flag that privacy policy still says "Example Site" — create follow-up task if not addressed in this sprint.
+- [ ] `apps/web` — **Convert JS animations to CSS/Tailwind:** `AnimatedBar`, `AnimatedCounter`, `AnimatedRing`, and `ComparisonBar` all use JS state (`useState` + `setTimeout`/`requestAnimationFrame`) for animations that CSS transitions can handle. Refactor to use `data-active` attribute + CSS `transition` on width/stroke-dashoffset/opacity. Counter can use CSS `@property` animated number or keep minimal JS. Goal: eliminate JS render cycles for what are purely visual transitions. See `animation.md` — "CSS handles 95% of animations."
 
 ---
 
@@ -648,6 +660,26 @@ Both controls feed into the same CSS custom property system that drives the dept
 - [ ] `engine` — Evaluate code splitting (lazy-load node crates) vs single bundle tradeoff
 - [ ] `apps/web` — Processing speed benchmarks: time per node type for representative file sizes
 - [ ] `apps/web` — Memory usage profiling: peak heap during batch processing
+
+### Performance: Next.js Server Component Audit (Pre-Launch)
+
+**Priority: Pre-launch (near end of MVP).** Before shipping, audit the entire `apps/web` tree to ensure we're not overusing `"use client"` and are getting the full benefit of Next.js Server Components. The rules in `performance.md` are clear — push client boundaries down to the smallest leaf that needs interactivity — but during fast iteration it's easy to mark whole pages or layouts as client components when only a child needs `useState` or an event handler.
+
+**What to audit:**
+- Every `"use client"` directive — is it on the smallest possible leaf, or can the boundary be pushed down?
+- Pages and layouts that are client components but could be Server Components with a client island pattern
+- Client-side data fetching that could be server-side (SSR/SSG)
+- Barrel imports in client components that pull in unnecessary bundle weight
+- Components marked client just because they import a client dependency transitively
+- Heavy components that should be lazy loaded (`next/dynamic`)
+
+**Success criteria:** Every `"use client"` directive has a clear justification (needs hooks, event handlers, or browser APIs). No page-level or layout-level `"use client"` without a strong reason. Bundle size measurably smaller or unchanged (no regression).
+
+- [ ] `apps/web` — Inventory all `"use client"` files, categorize as justified vs candidate for Server Component conversion
+- [ ] `apps/web` — Refactor candidates: push `"use client"` down to leaf components, convert parents to Server Components
+- [ ] `apps/web` — Verify no barrel imports in client components (import specific files directly)
+- [ ] `apps/web` — Lazy load below-fold and modal components with `next/dynamic`
+- [ ] `apps/web` — Run Lighthouse / Next.js bundle analyzer before and after, confirm no regression
 
 ### Infra: Vercel Preview Deployment Verification
 

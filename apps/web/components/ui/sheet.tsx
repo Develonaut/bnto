@@ -127,8 +127,27 @@ const SheetDescription = React.forwardRef<
 ));
 SheetDescription.displayName = SheetPrimitive.Description.displayName;
 
+/* ── Namespace ───────────────────────────────────────────────── */
+
+function SheetRoot(props: React.ComponentProps<typeof SheetPrimitive.Root>) {
+  return <SheetPrimitive.Root {...props} />;
+}
+
+const SheetNamespace = Object.assign(SheetRoot, {
+  Root: SheetRoot,
+  Trigger: SheetTrigger,
+  Close: SheetClose,
+  Portal: SheetPortal,
+  Overlay: SheetOverlay,
+  Content: SheetContent,
+  Header: SheetHeader,
+  Footer: SheetFooter,
+  Title: SheetTitle,
+  Description: SheetDescription,
+});
+
 export {
-  Sheet,
+  SheetNamespace as Sheet,
   SheetClose,
   SheetContent,
   SheetDescription,

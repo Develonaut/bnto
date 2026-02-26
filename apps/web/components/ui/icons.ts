@@ -57,7 +57,13 @@ export {
   Upload as UploadIcon,
   X as XIcon,
   XCircle as XCircleIcon,
+  CircleMinus as CircleMinusIcon,
+  Cloud as CloudIcon,
+  TerminalSquare as TerminalIcon,
   Zap as ZapIcon,
+  Globe as GlobeIcon,
+  Laptop as LaptopIcon,
+  ShieldCheck as ShieldCheckIcon,
 } from "lucide-react";
 
 export type { LucideIcon } from "lucide-react";

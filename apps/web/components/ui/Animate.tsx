@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 
 import { Slot } from "@radix-ui/react-slot";
@@ -205,6 +207,10 @@ const Breathe = React.forwardRef<HTMLDivElement, Omit<AnimateBaseProps, "index" 
 );
 Breathe.displayName = "Animate.Breathe";
 
+/* ── InView (extracted) ─────────────────────────────────────── */
+
+import { InView } from "./InView";
+
 /* ── Namespace ──────────────────────────────────────────────── */
 
 function AnimateRoot({ children }: { children: React.ReactNode }) {
@@ -220,4 +226,11 @@ export const Animate = Object.assign(AnimateRoot, {
   SlideDown,
   PulseSoft,
   Breathe,
+  InView,
 });
+
+/* Re-export InView for direct import from server components.
+ * Server components can't access Object.assign namespace properties
+ * on client references — use `import { InView }` instead of
+ * `Animate.InView` when rendering from a server component. */
+export { InView };

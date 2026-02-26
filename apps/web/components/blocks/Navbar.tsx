@@ -4,36 +4,21 @@ import { useEffect, useState } from "react";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTheme } from "next-themes";
 
 import {
   BookOpenIcon,
   GithubIcon,
   MenuIcon,
-  RotateCcwIcon,
-  SunIcon,
-  TrafficConeIcon,
-  XIcon,
 } from "@/components/ui/icons";
 
-import { ThemeToggle } from "@/components/ui/AnimatedThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
 import { Menu } from "@/components/ui/Menu";
-import { RadialSlider } from "@/components/ui/RadialSlider";
-import { Text } from "@/components/ui/Text";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
-  THEME_STORE_DEFAULT_ANGLE,
-  useThemeStore,
-} from "@/lib/stores/theme-store";
 import { GITHUB_URL } from "@/lib/copy";
+
+import { MobileNavMenu } from "./MobileNavMenu";
+import { NavThemeMenu } from "./NavThemeMenu";
 
 const MOBILE_BREAKPOINT = 1024;
 
@@ -114,12 +99,11 @@ export const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
-  // Clear pending state once the pathname catches up
-  useEffect(() => {
-    if (pendingHref && pathname === pendingHref) {
-      setPendingHref(null);
-    }
-  }, [pathname, pendingHref]);
+  // Clear pending state once the pathname catches up.
+  // Derived during render — no effect needed.
+  if (pendingHref && pathname === pendingHref) {
+    setPendingHref(null);
+  }
 
   useEffect(() => {
     const handleResize = () => {
@@ -191,12 +175,17 @@ export const Navbar = () => {
                 </Menu>
                 <Button
                   variant="outline"
-                  className="hidden lg:inline-flex"
-                  href="/motorway"
-                  {...navButtonProps(pathname, "/motorway", setPendingHref, pendingHref)}
+                  href="/pricing"
+                  {...navButtonProps(pathname, "/pricing", setPendingHref, pendingHref)}
                 >
-                  <TrafficConeIcon />
-                  Motorway
+                  Pricing
+                </Button>
+                <Button
+                  variant="outline"
+                  href="/faq"
+                  {...navButtonProps(pathname, "/faq", setPendingHref, pendingHref)}
+                >
+                  FAQ
                 </Button>
               </div>
 
@@ -226,14 +215,6 @@ export const Navbar = () => {
                   <span className="sr-only">GitHub</span>
                 </Button>
                 <NavThemeMenu />
-                <Button
-                  variant="primary"
-                  href="/signin"
-                  depth="sm"
-                  className="hidden lg:inline-flex"
-                >
-                  Sign in
-                </Button>
               </div>
             </div>
           </Card>
@@ -241,194 +222,7 @@ export const Navbar = () => {
       </div>
 
       {/* Mobile Navigation Sheet */}
-      <MobileNavigationMenu open={open} setOpen={setOpen} />
+      <MobileNavMenu open={open} setOpen={setOpen} recipes={RECIPES} />
     </section>
   );
 };
-
-const THEME_NAMES: Record<string, string> = {
-  light: "Los Angeles",
-  sunset: "Monaco",
-  dark: "Tokyo",
-};
-
-function angleToCardinal(deg: number): string {
-  if (deg <= 141) return "NW";
-  if (deg <= 158) return "NNW";
-  if (deg <= 170) return "N";
-  if (deg <= 190) return "N";
-  if (deg <= 202) return "NNE";
-  if (deg <= 219) return "NE";
-  return "NE";
-}
-
-function NavThemeMenu() {
-  const lightAngle = useThemeStore((s) => s.lightAngle);
-  const setLightAngle = useThemeStore((s) => s.setLightAngle);
-  const { setTheme, resolvedTheme } = useTheme();
-
-  const isDefault =
-    lightAngle === THEME_STORE_DEFAULT_ANGLE && resolvedTheme === "light";
-
-  const handleReset = () => {
-    setLightAngle(THEME_STORE_DEFAULT_ANGLE);
-    setTheme("light");
-  };
-
-  return (
-    <Menu>
-      <Menu.Trigger variant="outline" size="icon" depth="sm">
-        <SunIcon />
-        <span className="sr-only">Theme settings</span>
-      </Menu.Trigger>
-      <Menu.Content className="w-auto p-4" offset="lg">
-        <div className="flex flex-col items-center gap-3">
-          {/* Theme toggle + city name */}
-          <div className="flex w-full items-center gap-3">
-            <ThemeToggle depth="sm" />
-            <Text size="sm" className="w-full font-medium">
-              <ThemeName />
-            </Text>
-          </div>
-          {/* Light direction dial */}
-          <RadialSlider
-            min={135}
-            max={225}
-            value={lightAngle}
-            onChange={setLightAngle}
-            startAngle={270}
-            endAngle={90}
-            size={128}
-            strokeWidth={5}
-            aria-label="Light direction"
-            renderThumb={({ isDragging }) => (
-              <Button
-                variant="warning"
-                size="icon-sm"
-                depth="sm"
-                pressed={isDragging}
-                className="pointer-events-none size-7"
-              >
-                <SunIcon className="size-3.5" />
-              </Button>
-            )}
-          >
-            <span className="text-xs font-mono font-medium text-muted-foreground">
-              {angleToCardinal(lightAngle)}
-            </span>
-          </RadialSlider>
-          {/* Reset — always visible, disabled when at default */}
-          <Button
-            variant="muted"
-            size="md"
-            onClick={handleReset}
-            disabled={isDefault}
-            className="w-full"
-          >
-            <RotateCcwIcon />
-            Reset
-          </Button>
-        </div>
-      </Menu.Content>
-    </Menu>
-  );
-}
-
-function ThemeName() {
-  const { resolvedTheme } = useTheme();
-  return <>{THEME_NAMES[resolvedTheme ?? "light"] ?? "Los Angeles"}</>;
-}
-
-function MobileNavigationMenu({
-  open,
-  setOpen,
-}: {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-}) {
-  return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent
-        aria-describedby={undefined}
-        side="top"
-        className="inset-0 z-[100] h-dvh w-full bg-primary text-primary-foreground [&>button]:hidden"
-      >
-        <div className="flex-1 overflow-y-auto">
-          <Container className="pb-12">
-            {/* Visually hidden title for accessibility */}
-            <div className="absolute -m-px h-px w-px overflow-hidden border-0 p-0">
-              <SheetTitle className="text-primary">Navigation</SheetTitle>
-            </div>
-
-            {/* Close button */}
-            <div className="flex justify-end pt-5">
-              <SheetClose asChild>
-                <Button variant="secondary" size="icon">
-                  <XIcon />
-                  <span className="sr-only">Close menu</span>
-                </Button>
-              </SheetClose>
-            </div>
-
-            <div className="flex h-full flex-col justify-between gap-20 pt-16">
-              {/* Recipes */}
-              <div className="flex flex-col gap-10">
-                <div className="text-2xl font-display font-bold text-primary-foreground">
-                  Recipes
-                </div>
-                <div className="grid w-full grid-cols-2 gap-x-4 gap-y-10">
-                  {RECIPES.map((category) => (
-                    <div
-                      key={category.title}
-                      className="flex flex-col gap-4 text-primary-foreground"
-                    >
-                      <div className="text-xs uppercase tracking-wider text-white/60">
-                        {category.title}
-                      </div>
-                      <ul className="flex flex-col gap-3">
-                        {category.links.map((link) => (
-                          <li key={link.url}>
-                            <Link
-                              href={link.url}
-                              onClick={() => setOpen(false)}
-                              className="text-lg leading-normal font-medium text-primary-foreground"
-                            >
-                              {link.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bottom section */}
-              <div className="flex flex-col gap-6">
-                <div className="flex items-center gap-4">
-                  <Button
-                    variant="outline"
-                    href="/signin"
-                    onClick={() => setOpen(false)}
-                  >
-                    Sign in
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    href={GITHUB_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <GithubIcon />
-                    <span className="sr-only">GitHub</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Container>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}

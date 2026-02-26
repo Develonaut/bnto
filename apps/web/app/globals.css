@@ -659,6 +659,20 @@
   );
 }
 
+/* ── InView gate: pause entrance animations until visible ────
+ * Elements inside [data-in-view="false"] stay at their `from`
+ * keyframe state (invisible) until IntersectionObserver fires.
+ * ──────────────────────────────────────────────────────────── */
+[data-in-view="false"]
+  :is(
+    .motion-safe\:animate-scale-in,
+    .motion-safe\:animate-fade-in,
+    .motion-safe\:animate-slide-up,
+    .motion-safe\:animate-slide-down
+  ) {
+  animation-play-state: paused;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

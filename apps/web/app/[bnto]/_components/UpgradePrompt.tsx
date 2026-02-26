@@ -29,7 +29,7 @@ const COPY: Record<UpgradePromptProps["reason"], { heading: string; body: string
  * Inline prompt shown to anonymous users when they hit a conversion
  * touchpoint -- quota exhausted, attempting to save, or viewing history.
  *
- * Navigates to /signup with a return parameter so the user can
+ * Navigates to /signin with a return parameter so the user can
  * continue where they left off after creating an account.
  */
 export function UpgradePrompt({ slug, reason }: UpgradePromptProps) {
@@ -37,7 +37,7 @@ export function UpgradePrompt({ slug, reason }: UpgradePromptProps) {
   const { heading, body } = COPY[reason];
 
   function handleSignUp() {
-    router.push(`/signup?return=/${encodeURIComponent(slug)}`);
+    router.push(`/signin?return=/${encodeURIComponent(slug)}`);
   }
 
   return (

@@ -1,139 +1,58 @@
-"use client";
-
-import { useState } from "react";
-
 import { CheckIcon } from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/Card";
-import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { Text } from "@/components/ui/Text";
 
-const plans = [
-  {
-    name: "Free",
-    monthlyPrice: "$0",
-    yearlyPrice: "$0",
-    description: "Free for everyone",
-    features: [
-      "Unlimited members",
-      "2 teams",
-      "500 issues",
-      "Slack and Github integrations",
-    ],
-  },
-  {
-    name: "Startup",
-    monthlyPrice: "$8",
-    yearlyPrice: "$6",
-    features: [
-      "All free plan features and...",
-      "Mainline AI",
-      "Unlimited teams",
-      "Unlimited issues and file uploads",
-      "Mainline Insights",
-      "Admin roles",
-    ],
-  },
-  {
-    name: "Enterprise",
-    monthlyPrice: "$8",
-    yearlyPrice: "$6",
-    features: [
-      "All free plan features and...",
-      "Mainline AI",
-      "Supermainline AGI",
-      "Free daily catered lunch",
-      "random HIPPA audits",
-    ],
-  },
+const FREE_FEATURES = [
+  "Unlimited image compression, resizing, and conversion",
+  "Unlimited CSV cleaning and column renaming",
+  "Unlimited batch file renaming",
+  "Process multiple files at once",
+  "No account required",
+  "No watermarks or quality reduction",
+  "Files never leave your browser",
+  "Open source engine (MIT)",
 ];
 
-export const Pricing = ({ className }: { className?: string }) => {
-  const [isAnnual, setIsAnnual] = useState(true);
-
+export function Pricing() {
   return (
-    <section className={cn("py-28 lg:py-32", className)}>
-      <Container size="md">
-        <Stack gap="md" className="text-center">
-          <Heading level={2}>
-            Pricing
-          </Heading>
-          <Text color="muted" leading="snug" balance className="mx-auto max-w-xl">
-            Use Mainline for free with your whole team. Upgrade to enable
-            unlimited issues, enhanced security controls, and additional
-            features.
-          </Text>
-        </Stack>
+    <div className="text-center">
+      <Stack gap="md">
+        <Heading level={2}>Simple pricing.</Heading>
+        <Text color="muted" leading="snug" balance className="mx-auto max-w-xl">
+          Every browser tool is free. No limits, no signup, no catch.
+        </Text>
+      </Stack>
 
-        <div className="mt-8 grid items-start gap-5 text-start md:mt-12 md:grid-cols-3 lg:mt-20">
-          {plans.map((plan) => (
-            <Card
-              key={plan.name}
-              className={`${
-                plan.name === "Startup"
-                  ? "outline-primary origin-top outline-4"
-                  : ""
-              }`}
-            >
-              <Card.Content className="flex flex-col gap-7 px-6 py-5">
-                <Stack gap="sm">
-                  <Heading level={3} size="xs" className="text-lg">{plan.name}</Heading>
-                  <Stack gap="xs">
-                    <div className="text-muted-foreground text-lg font-medium">
-                      {isAnnual ? plan.yearlyPrice : plan.monthlyPrice}{" "}
-                      {plan.name !== "Free" && (
-                        <span className="text-muted-foreground">
-                          per user/
-                          {isAnnual ? "year" : "month"}
-                        </span>
-                      )}
-                    </div>
-                  </Stack>
-                </Stack>
+      <Card depth="md" className="mx-auto mt-12 max-w-md">
+        <Card.Content className="flex flex-col gap-6 px-6 py-6">
+          <Stack gap="xs">
+            <Heading level={3} size="sm">Free</Heading>
+            <Text size="sm" color="muted">Everything. No strings attached.</Text>
+          </Stack>
 
-                {plan.name !== "Free" ? (
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={isAnnual}
-                      onCheckedChange={() => setIsAnnual(!isAnnual)}
-                      aria-label="Toggle annual billing"
-                    />
-                    <span className="text-sm font-medium">Billed annually</span>
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground text-sm">
-                    {plan.description}
-                  </span>
-                )}
+          <Stack className="gap-3">
+            {FREE_FEATURES.map((feature) => (
+              <div key={feature} className="flex items-start gap-2.5">
+                <CheckIcon className="text-primary mt-0.5 size-4 shrink-0" />
+                <span className="text-sm">{feature}</span>
+              </div>
+            ))}
+          </Stack>
 
-                <Stack className="gap-3">
-                  {plan.features.map((feature) => (
-                    <div
-                      key={feature}
-                      className="text-muted-foreground flex items-center gap-1.5"
-                    >
-                      <CheckIcon className="size-5 shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </Stack>
+          <Button variant="primary" href="/" depth="sm" className="w-full">
+            Start using bnto
+          </Button>
+        </Card.Content>
+      </Card>
 
-                <Button
-                  className="w-fit"
-                  variant={plan.name === "Startup" ? "primary" : "outline"}
-                >
-                  Get started
-                </Button>
-              </Card.Content>
-            </Card>
-          ))}
-        </div>
-      </Container>
-    </section>
+      <Text size="sm" color="muted" className="mx-auto mt-8 max-w-md">
+        We&apos;re building premium features that require server-side
+        processing. Browser tools will always be free and unlimited.
+      </Text>
+    </div>
   );
-};
+}

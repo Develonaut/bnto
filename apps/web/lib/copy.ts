@@ -26,10 +26,10 @@ export const SITE_DESCRIPTION =
 export const TAGLINE = "Compress images, clean CSVs, rename files, and convert formats.";
 
 /** Privacy and trust message. */
-export const TRUST_LINE = "Free, instant, 100% in your browser. No signup, no upload.";
+export const TRUST_LINE = "Free, instant, private. Processed in your browser.";
 
 /** License footer line. */
-export const LICENSE_LINE = "MIT Licensed. Free forever.";
+export const LICENSE_LINE = "MIT Licensed. Browser tools free forever.";
 
 /** Gallery heading. */
 export const GALLERY_HEADING = "Pick a tool. Drop your files.";
@@ -37,9 +37,6 @@ export const GALLERY_HEADING = "Pick a tool. Drop your files.";
 /** Gallery subheading. */
 export const GALLERY_SUBHEADING =
   "Compress images, clean CSVs, rename files, and convert formats. All in your browser. No upload limits, no account required.";
-
-/** Gallery dashed label. */
-export const GALLERY_LABEL = "FREE. NO SIGNUP.";
 
 /** GitHub repo URL. */
 export const GITHUB_URL = "https://github.com/Develonaut/bnto";

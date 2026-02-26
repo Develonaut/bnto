@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Footer } from "@/components/blocks/Footer";
+import { AppShell } from "@/components/ui/AppShell";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { BntoPageShell } from "./_components/BntoPageShell";
@@ -29,14 +29,6 @@ export async function generateMetadata({
   };
 }
 
-/**
- * Bnto tool page -- public, SEO-indexed, anonymous-first.
- *
- * Each slug maps to a predefined workflow via the bnto registry.
- * Unknown slugs return a proper 404.
- *
- * Tool shell renders in <main>, followed by the standard Footer.
- */
 export default async function BntoPage({
   params,
 }: {
@@ -47,12 +39,9 @@ export default async function BntoPage({
   if (!entry) notFound();
 
   return (
-    <>
+    <AppShell.Content>
       <BntoJsonLd entry={entry} />
-      <main className="pt-10 pb-14 lg:pt-16">
-        <BntoPageShell entry={entry} />
-      </main>
-      <Footer />
-    </>
+      <BntoPageShell entry={entry} />
+    </AppShell.Content>
   );
 }

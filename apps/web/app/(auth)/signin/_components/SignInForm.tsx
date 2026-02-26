@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { core } from "@bnto/core";
-import { Background } from "@/components/Background";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";
@@ -61,9 +60,8 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
   }
 
   return (
-    <Background>
-      <section className="py-28 lg:pt-44 lg:pb-32">
-        <Container>
+    <section className="py-20 lg:py-28">
+      <Container>
           <Stack gap="md" className="mx-auto w-full max-w-sm">
             <Stack gap="sm" align="center" className="text-center">
               <Link href="/" className="mb-4">
@@ -137,8 +135,7 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
               </button>
             </Text>
           </Stack>
-        </Container>
-      </section>
-    </Background>
+      </Container>
+    </section>
   );
 }

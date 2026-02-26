@@ -1,6 +1,6 @@
 "use client";
 
-import { Container } from "@/components/ui/Container";
+import { AppShell } from "@/components/ui/AppShell";
 import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
@@ -21,9 +21,8 @@ import { TypographyShowcase } from "./TypographyShowcase";
 
 export default function MotorwayPage() {
   return (
-    <div>
-      <Container size="lg" className="pb-8 pt-24 lg:pt-32">
-        <Stack className="gap-16">
+    <AppShell.Content>
+      <Stack className="gap-16">
           {/* Header */}
           <div>
             <Heading level={1} size="md">Motorway</Heading>
@@ -139,8 +138,7 @@ export default function MotorwayPage() {
           >
             <BentoGridShowcase />
           </ShowcaseSection>
-        </Stack>
-      </Container>
-    </div>
+      </Stack>
+    </AppShell.Content>
   );
 }

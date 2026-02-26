@@ -1,13 +1,15 @@
 import { Suspense } from "react";
 
+import { AppShell } from "@/components/ui/AppShell";
+
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <main>
+    <AppShell.Main>
       <Suspense>{children}</Suspense>
-    </main>
+    </AppShell.Main>
   );
 }

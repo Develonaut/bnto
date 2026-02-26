@@ -1,15 +1,15 @@
 "use client";
 
+import { AppShell } from "@/components/ui/AppShell";
+
 import Privacy from "./privacy.mdx";
 
-const Page = () => {
+export default function PrivacyPage() {
   return (
-    <section className="mx-auto max-w-2xl px-4 py-28 lg:pt-44 lg:pb-32">
-      <article className="prose prose-lg dark:prose-invert">
+    <AppShell.Content>
+      <article className="prose prose-lg dark:prose-invert mx-auto max-w-2xl">
         <Privacy />
       </article>
-    </section>
+    </AppShell.Content>
   );
-};
-
-export default Page;
+}
