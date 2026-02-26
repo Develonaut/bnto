@@ -218,6 +218,7 @@ Persona skills are domain experts that can be activated to adopt specialized kno
 | Persona | Domain | Invoke |
 |---------|--------|--------|
 | Frontend Engineer | `apps/web/` — React, Next.js, components, theming, animation, E2E | `/frontend-engineer` |
+| ReactFlow Expert | Visual editor canvas — `@xyflow/react`, graph state, custom nodes/edges, headless-first | `/reactflow-expert` |
 | Rust Expert | `engine/` — WASM, node crates, execution engine | `/rust-expert` |
 | Core Architect | `packages/core/` — transport-agnostic API, clients, services, adapters | `/core-architect` |
 | Backend Engineer | `packages/@bnto/backend/`, `packages/@bnto/auth/` — Convex, schema, auth | `/backend-engineer` |

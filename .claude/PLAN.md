@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** February 25, 2026
+**Last Updated:** February 26, 2026
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -72,7 +72,7 @@ Pricing, revenue projections, and "ready to charge" criteria live in Notion ("SE
 | Sprint 2B | Browser execution (M1 MVP) | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine. |
 | Sprint 2C | Launch readiness (content + domain) | **bnto.io live and indexable.** Real content on every page. SEO crawling begins. First real users possible. |
 | Sprint 3 | Platform features (accounts, history) | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented. |
-| Sprint 4 | JSON editor | Power users self-identify. Custom flows are a Pro signal. |
+| Sprint 4 | Recipe editor (headless + visual) | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
 | Sprint 5-6 | Desktop app | Top-of-funnel. Word of mouth begins. Free forever — trust signal. |
 | Sprint 7 | Stripe + Pro tier | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing. |
 
@@ -292,7 +292,7 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [x] `apps/web` — **README review before launch:** Rewrote README.md to reflect current state: Rust WASM browser engine, 6 Tier 1 tools, bnto.io as primary entry point, accurate repo structure, correct dev commands. Removed all stale Go CLI/Wails/deleted-package references.
 - [x] `monorepo` — **Knip dead code audit:** 14 dead files deleted (~766 lines), 11 unused deps removed, 9 catalog entries removed, 15 unused icon re-exports removed. Created knip.json config. Build + tests pass (447 tests).
 - [x] `monorepo` — **File & component naming audit:** 4 violations fixed: AnimatedThemeToggle export mismatch, provider.tsx→BntoCoreProvider.tsx, theme-store.ts→themeStore.ts, utils.ts→cn.ts (30 import sites updated). Build passes clean.
-- [ ] `monorepo` — **Full codebase coding standards review (multi-agent):** Run parallel agents across all packages to audit every file against `code-standards.md`, `architecture.md`, `components.md`, and `theming.md`. Each agent covers one package/directory. Collect all findings, combine, and correct violations in a single pass. Covers: Bento Box Principle (file/function size limits), dot-notation compliance, import discipline, CSS-first states, `select` rule for React Query, layered architecture, one-export-per-file, no utility grab bags.
+- [x] `monorepo` — **Full codebase coding standards review (multi-agent):** 5 parallel agents audited all packages against code-standards.md, architecture.md, components.md, and theming.md. 149 violations found (33 HIGH, 59 MEDIUM, 57 LOW) across Core, Frontend, Backend, Rust Engine, and Auth+Nodes domains. Key fixes: dot-notation migration for Popover/primitives, Raw*Doc types in @bnto/core (decouples transforms from backend), target-agnostic ProgressReporter in Rust engine (removes js-sys from bnto-core), ParameterSchema union types in @bnto/nodes, Convex function cleanup (explicit return types, error wrapping). All TS builds pass (6/6), all Rust tests pass (297 unit tests), all TS tests pass (447+ tests). Pre-existing lint issues in FileUpload.tsx (react-hooks/immutability) noted but not introduced by this task.
 - [x] `@bnto/backend` — `planTier` field on user schema (free, pro). Usage analytics fields: `totalRuns`, `lastRunAt`
 - [x] `@bnto/backend` — Execution analytics: aggregate queries for per-user history (by slug, by date range)
 - [ ] `@bnto/core` — `useExecutionHistory()` hook (paginated, per-user)
@@ -325,27 +325,84 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 
 ---
 
-### Sprint 4: JSON Editor
-**Goal:** Users who want to go deeper can write or customize `.bnto.json` files in-browser. Power users self-identify — tag them for targeted upgrade messaging.
+### Sprint 4: Recipe Editor (Headless-First)
+**Goal:** Users can create recipes from a blank canvas or customize existing ones — add/remove/configure nodes, connect them, run, and export as `.bnto.json`. The editor is free (pricing-model.md: "recipe editor is free"). Power users who create custom recipes are the highest-intent Pro upgrade candidates.
 
-#### Wave 1 (parallel — editor core)
+**Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The conveyor belt visual (sushi, depth cards, belts) is a themed skin applied on top. This means the editor can be reskinned, embedded, or offered as a headless library in the future.
 
-- [ ] `apps/web` — Monaco/CodeMirror editor component with `.bnto.json` schema validation and syntax highlighting
-- [ ] `apps/web` — Template selector (start from a predefined Bnto, customize from there)
-- [ ] `apps/web` — Zustand editor state store (editor content, dirty flag, validation errors)
-- [ ] `@bnto/backend` — Tag users who open the editor (`hasUsedEditor: true` — highest-intent upgrade candidates)
+```
+@bnto/nodes (types, schemas, validation)      ← already built
+         ↓
+Pure functions (definition CRUD, adapters)     ← Wave 1
+         ↓
+Editor store (Zustand — headless operations)   ← Wave 2
+         ↓
+React hooks (reactive bindings)                ← Wave 2
+         ↓
+Visual skin (ConveyorCanvas / JSON panel)      ← Wave 3+
+```
 
-#### Wave 2 (parallel — integration)
+**Two entry points, same state:** `createBlankRecipe()` (empty canvas with one input + one output node) or `loadRecipe(slug)` (pre-assembled recipe from `@bnto/nodes`). Both produce the same `EditorState` shape — same operations, same output, same visual.
 
-- [ ] `apps/web` — New workflow page (blank editor or start from template)
-- [ ] `apps/web` — Edit workflow page (load existing workflow into editor)
-- [ ] `apps/web` — Save workflow flow (editor content → Convex via @bnto/core)
-- [ ] `apps/web` — Run from editor (execute the JSON currently in the editor)
+**Prior art:** Atomiton's `createFieldsFromSchema` pattern. Define node parameter schemas once (`@bnto/nodes/schemas/`), auto-derive config panel UI. ~70-80% of fields need zero UI code. Already built in `@bnto/nodes` — schemas exist for all 10 node types with `visibleWhen`, `requiredWhen`, enum values, min/max, and defaults.
 
-#### Wave 3 (sequential — test)
+**What this is NOT:** Save to Convex (Sprint 3 prerequisite), execution history, workflow versioning, container node nesting (group/loop as visual sub-canvases), or the JSON/code editor (separate feature — shares headless primitives but is a distinct coding-oriented experience). Those layer on naturally once the headless foundation exists.
 
-- [ ] `apps/web` — Playwright E2E: open editor, select template, modify, save, run
-- [ ] `apps/web` — Playwright E2E: edit existing workflow, re-run
+**Persona ownership:**
+| Wave | Lead Persona | Supporting | Rationale |
+|------|-------------|------------|-----------|
+| Wave 1 | — (pure functions, no persona needed) | — | `@bnto/nodes` pure functions — framework-agnostic, no React or ReactFlow dependency |
+| Wave 2 | `/reactflow-expert` | — | Zustand store wraps ReactFlow's change/apply pattern. Definition ↔ Flow adapters are the core seam. ReactFlow Expert owns all graph state management and adapter design |
+| Wave 3 | `/reactflow-expert` + `/frontend-engineer` | — | ReactFlow Expert owns canvas interaction, connection validation, drag-and-drop. Frontend Engineer owns component composition (RecipeEditor, EditorToolbar, NodeConfigPanel, NodePalette), theming (Motorway tokens), and animation (Animate.* API) |
+| Wave 4 | `/reactflow-expert` + `/frontend-engineer` | — | ReactFlow Expert maps execution state to node visual state on canvas. Frontend Engineer handles progress UI patterns and E2E test composition |
+
+**Rule:** For ANY work touching ReactFlow APIs, graph state, canvas interaction, or the Definition ↔ Flow adapter layer — invoke `/reactflow-expert`. This persona is THE authority on `@xyflow/react` in this codebase. When visual skin work begins (Wave 3+), invoke BOTH `/reactflow-expert` AND `/frontend-engineer` together.
+
+#### Wave 1 (parallel — headless definition operations)
+
+Pure functions that manipulate `Definition` trees. No React, no store, no UI. Fully testable in isolation. These are the atomic operations the editor performs.
+
+- [ ] `@bnto/nodes` — **`createBlankDefinition()`**: Returns a minimal valid `Definition` — root group node with one input port and one output port, no children. The "blank canvas" entry point.
+- [ ] `@bnto/nodes` — **`addNode(definition, nodeType, position?)`**: Inserts a new child node into the root group with default parameters from the schema. Auto-generates unique ID, creates default ports from `NODE_TYPE_INFO`. Returns new `Definition` (immutable — never mutate).
+- [ ] `@bnto/nodes` — **`removeNode(definition, nodeId)`**: Removes a node and all edges connected to it. Returns new `Definition`.
+- [ ] `@bnto/nodes` — **`updateNodeParams(definition, nodeId, params)`**: Merges new parameter values into a node's `parameters` object. Validates against `NodeSchema` (type checks, required fields, enum values, min/max). Returns new `Definition` or validation errors.
+- [ ] `@bnto/nodes` — **`addEdge(definition, source, target, sourceHandle?, targetHandle?)`**: Creates a connection between two nodes. Validates: no self-loops, no duplicate edges, source/target exist. Returns new `Definition` or validation error.
+- [ ] `@bnto/nodes` — **`removeEdge(definition, edgeId)`**: Removes an edge. Returns new `Definition`.
+- [ ] `@bnto/nodes` — **`moveNode(definition, nodeId, position)`**: Updates a node's `position`. Returns new `Definition`.
+- [ ] `@bnto/nodes` — **`definitionToRecipe(definition, metadata?)`**: Wraps a `Definition` into a `Recipe` with slug, name, description, accept spec. For export.
+- [ ] `@bnto/nodes` — **Unit tests for all CRUD operations**: Every function tested with all 10 node types. Edge cases: remove node with connections (edges cascade-deleted), add edge to non-existent node (error), update params with invalid values (validation errors), blank definition is valid, nested container operations.
+
+#### Wave 2 (parallel — editor store + React hooks)
+
+Zustand store that wraps the pure functions into a reactive state machine. Hooks provide the React binding layer. Still headless — no visual components. **`/reactflow-expert` leads** — owns the Definition ↔ Flow adapter design and Zustand store architecture following ReactFlow's change/apply pattern.
+
+- [ ] `apps/web` — **`useEditorStore` (Zustand)**: Editor state: `definition` (current `Definition`), `selectedNodeId`, `isDirty`, `validationErrors[]`, `executionState` (per-node status map). Actions: `loadRecipe(slug)`, `createBlank()`, `addNode(type)`, `removeNode(id)`, `selectNode(id)`, `updateParams(nodeId, params)`, `addEdge(...)`, `removeEdge(...)`, `moveNode(...)`, `resetDirty()`. All actions delegate to Wave 1 pure functions. Undo/redo via history stack (store snapshots).
+- [ ] `apps/web` — **`useEditorNode(nodeId)` hook**: Returns node data + schema + visible params (conditional visibility resolved). Subscribes to store slice — re-renders only when this node changes.
+- [ ] `apps/web` — **`useEditorEdges()` hook**: Returns all edges with resolved variant colors (from source node type). Subscribes to edge slice only.
+- [ ] `apps/web` — **`useNodePalette()` hook**: Returns available node types from `NODE_TYPE_INFO`, grouped by category, with `browserCapable` flags. Filters server-only nodes based on context (browser editor = browser-capable only).
+- [ ] `apps/web` — **`useEditorExport()` hook**: Returns `{ exportAsRecipe, download }` — wraps current definition as a `Recipe` or triggers browser `.bnto.json` file download. Validates definition before export. Pure serialization — no visual dependency.
+- [ ] `apps/web` — **Definition ↔ ReactFlow adapters**: `definitionToFlow(definition)` → `{ nodes: StationNodeType[], edges: ConveyorEdgeType[] }`. `flowToDefinition(nodes, edges)` → `Definition`. Pure functions that bridge the headless model to the visual layer. Map node types to station variants, positions, and port handles. Unit tested — round-trip: `definition → flow → definition` produces equivalent output.
+- [ ] `apps/web` — **Unit tests for store + hooks**: Store operations tested via Vitest (no rendering). Hook tests via `renderHook`. Adapter round-trip tests. Undo/redo verification.
+
+#### Wave 3 (parallel — visual canvas integration)
+
+Wire the headless store to the existing ConveyorCanvas. The conveyor belt becomes a live, interactive editor. **`/reactflow-expert` + `/frontend-engineer` co-lead.** ReactFlow Expert owns canvas interaction, connection validation, drag-and-drop. Frontend Engineer owns component composition, theming, and animation.
+
+- [ ] `apps/web` — **`RecipeEditor` component**: Composes `EditorToolbar` + `ConveyorCanvas` + `NodeConfigPanel`. Reads from `useEditorStore`. Two entry modes: `<RecipeEditor slug="compress-images" />` (loads predefined) or `<RecipeEditor />` (blank canvas).
+- [ ] `apps/web` — **`EditorToolbar` component**: Action bar above canvas — recipe selector dropdown (all Tier 1 recipes + "Blank"), Add Node button (opens palette), Remove Selected button, Run button, Reset/Replay button, Export `.bnto.json` button, Undo/Redo buttons. Reads/dispatches to `useEditorStore`.
+- [ ] `apps/web` — **`NodePalette` component**: Slide-out panel listing available node types from `useNodePalette()`. Click-to-add (adds node at auto-positioned location). Grouped by category. Browser-capable badge. Server-only nodes shown grayed with "Pro" badge (visible but not addable in browser context — definitions always available per pricing model).
+- [ ] `apps/web` — **`NodeConfigPanel` component**: Side panel that renders when a node is selected. Uses `useEditorNode(selectedNodeId)` to get schema + current params. Auto-generates form fields from `ParameterSchema` (Atomiton pattern): string → text input, number → number input with min/max, boolean → toggle, enum → select dropdown. `visibleWhen` and `requiredWhen` handled reactively. Parameter changes dispatch `updateParams` to store.
+- [ ] `apps/web` — **Enable canvas interaction**: Upgrade `ConveyorCanvas` to accept an `interactive` prop. When `true`: `nodesDraggable={true}`, `nodesConnectable={true}`, `elementsSelectable={true}`. Node drag updates position via `moveNode`. New edge connections dispatch `addEdge`. Selection dispatches `selectNode`. When `false`: current read-only showcase behavior (backward compatible).
+- [ ] `apps/web` — **Motorway debug section**: Replace the hardcoded `ConveyorShowcase` in `/dev/motorway` with `<RecipeEditor />`. The Motorway page becomes the editor playground — load recipes, add/remove nodes, connect them, configure parameters, run, export.
+
+#### Wave 4 (parallel — execution + polish)
+
+The editor runs recipes and shows execution state on the canvas. The conveyor belt visual becomes meaningful — it's not just pretty, it's showing real processing. **`/reactflow-expert` + `/frontend-engineer` co-lead.**
+
+- [ ] `apps/web` — **Execution integration**: Wire Run button to browser WASM execution path. When running: station nodes show execution state (idle → running → completed/failed) via variant shifts and belt animation speed changes. Progress callbacks from `browserExecutionService` update `executionState` in editor store. Conveyor pieces flow faster during processing, pause on completion.
+- [ ] `apps/web` — **Export `.bnto.json`**: Download button in toolbar that serializes current editor state to a valid `.bnto.json` file via `useEditorExport().download()`. Validates before export. Users can take their recipe anywhere — CLI, desktop, share with others.
+- [ ] `@bnto/backend` — **Tag editor users**: When a user opens the editor, set `hasUsedEditor: true` on their user record. Highest-intent Pro upgrade candidates. Query: `ctx.db.query("users").withIndex("by_hasUsedEditor")`.
+- [ ] `apps/web` — **E2E tests**: Load recipe → canvas renders matching stations. Add node → appears. Connect nodes → belt renders. Remove node → removed with edges. Configure params → node updates. Export → valid `.bnto.json` file. Run → execution progress shown on canvas. Blank canvas → add nodes → build a recipe from scratch.
 
 ---
 
@@ -435,14 +492,16 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 
 ---
 
-### Sprint 8: Visual Editor + History
+### ~~Sprint 8: Visual Editor + History~~
 
-- [ ] `apps/web` — Drag-and-drop node canvas (React Flow or custom)
-- [ ] `apps/web` — Node palette with all 10 node types
-- [ ] `apps/web` — Property editor per node
-- [ ] `apps/web` — JSON ↔ visual round-trip (edit in either mode)
-- [ ] `apps/web` — Execution history with full per-node logs and re-run support
-- [ ] `apps/web` — Workflow versioning and duplication
+**ABSORBED into Sprint 4 (Recipe Editor).** Sprint 4 now covers the full visual editor: headless definition CRUD, Zustand store, ReactFlow canvas, node palette, property editor, and execution state visualization. The headless-first architecture means all visual editor work builds on the same pure-function foundation.
+
+**Remaining items not yet in Sprint 4:**
+- [ ] `apps/web` — Execution history with full per-node logs and re-run support (depends on Sprint 3 accounts/history)
+- [ ] `apps/web` — Workflow versioning and duplication (depends on Sprint 3 save infrastructure)
+- [ ] `apps/web` — Container node visual nesting (group/loop as collapsible sub-canvases — future enhancement)
+- [ ] `apps/web` — Drag-and-drop from node palette to canvas position (Sprint 4 Wave 3 uses click-to-add; drag-and-drop is a polish pass)
+- [ ] `apps/web` — JSON/Code editor (separate feature — coding-oriented experience for power users, shares headless primitives from Sprint 4 Wave 1-2 but is its own sprint with its own UX)
 
 ---
 
@@ -771,7 +830,7 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 - Config panels must work at any nesting depth
 - Execution progress must be recursive (group nodes show children's progress)
 - JSON editor must represent recursive structure faithfully
-- Visual editor (Sprint 8) must support drill-down into group nodes
+- Visual editor (Sprint 4) must support drill-down into group nodes
 
 ### DX: Agent Persona Skills & Skill Refactor
 
