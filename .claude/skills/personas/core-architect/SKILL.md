@@ -1,7 +1,7 @@
 ---
 name: core-architect
 description: Core API architect persona for the transport-agnostic @bnto/core package — clients, services, adapters, transforms, and hooks
-user-invocable: false
+user-invocable: true
 ---
 
 # Persona: Core Architect

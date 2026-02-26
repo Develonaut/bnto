@@ -210,3 +210,20 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [core-principles.md](.claude/strategy/core-principles.md) | TDD, Grain, Modularity, Abstraction |
 | [design-language.md](.claude/strategy/design-language.md) | Visual identity, brand personality |
 | [skills/](.claude/skills/) | Agent skills (pre-commit, pickup, code-review) |
+
+### Domain Expert Personas (invoke with `/persona-name`)
+
+Persona skills are domain experts that can be activated to adopt specialized knowledge for a specific area of the codebase. Invoke them directly when working in their domain, or let workflow skills (`/pickup`, `/pre-commit`, `/code-review`) activate them automatically.
+
+| Persona | Domain | Invoke |
+|---------|--------|--------|
+| Frontend Engineer | `apps/web/` — React, Next.js, components, theming, animation, E2E | `/frontend-engineer` |
+| Rust Expert | `engine/` — WASM, node crates, execution engine | `/rust-expert` |
+| Core Architect | `packages/core/` — transport-agnostic API, clients, services, adapters | `/core-architect` |
+| Backend Engineer | `packages/@bnto/backend/`, `packages/@bnto/auth/` — Convex, schema, auth | `/backend-engineer` |
+| Go Engineer | `archive/engine-go/`, `archive/api-go/` — Go engine, API server | `/go-engineer` |
+| Security Engineer | Cross-cutting — trust boundaries, attack surfaces, defense-in-depth | `/security-engineer` |
+
+| Project Manager | `.claude/PLAN.md`, `.claude/ROADMAP.md` — roadmap alignment, sprint planning | `/project-manager` |
+
+The `/groom` workflow skill invokes `/project-manager` automatically to run a full plan review.

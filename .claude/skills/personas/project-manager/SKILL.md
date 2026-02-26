@@ -1,7 +1,7 @@
 ---
 name: project-manager
 description: Strategic project manager persona for roadmap alignment, sprint planning, and build plan refinement
-user-invocable: false
+user-invocable: true
 ---
 
 # Persona: Project Manager

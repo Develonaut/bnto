@@ -83,6 +83,7 @@ export default function RootLayout({
             attribute="class"
             defaultTheme="light"
             themes={["light", "sunset", "dark"]}
+            value={{ light: "light", sunset: "munich", dark: "tokyo" }}
             enableSystem
             disableTransitionOnChange
           >

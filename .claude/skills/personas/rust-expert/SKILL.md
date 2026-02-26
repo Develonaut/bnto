@@ -1,7 +1,7 @@
 ---
 name: rust-expert
 description: Senior Rust engine expert persona for WASM, node crates, and execution engine in engine/crates/
-user-invocable: false
+user-invocable: true
 ---
 
 # Persona: Rust Engine Expert

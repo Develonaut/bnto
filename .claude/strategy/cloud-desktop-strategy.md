@@ -1,10 +1,16 @@
 # Bnto Cloud + Desktop Strategy
 
 **Date:** 2026-02-06
-**Updated:** 2026-02-21
-**Status:** Strategy Document — Active
+**Updated:** 2026-02-26
+**Status:** Strategy Document — Partially Stale (see note below)
 **Supersedes:** Extends monorepo-structure.md
 **Goal:** Evolve Bnto from a Go CLI into three products sharing a frontend
+
+> **February 2026 Staleness Note:** Several sections of this document are outdated. The Rust engine won the M1 evaluation — the unified engine vision is now confirmed. Key changes not yet reflected throughout this doc:
+> - **Desktop:** Tauri (Rust-native), NOT Wails v2. Sections 3.2, 3.10, 3.11 reference Wails — these are stale.
+> - **Auth:** `@convex-dev/auth` (stateless JWT), NOT Better Auth. Section 3.5 is stale.
+> - **Engine:** Rust is the primary engine for ALL targets (browser WASM, desktop Tauri, CLI, cloud). Go engine is legacy/archived. Section 3.1 ("Go Stays") is stale.
+> - **For current strategic direction, read `ROADMAP.md` — it is the source of truth.** This document remains useful for infrastructure topology (Section 5), Convex data model (Section 4), cost analysis (Section 10), and risk assessment (Section 11).
 
 ---
 

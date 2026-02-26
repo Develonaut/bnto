@@ -1,7 +1,7 @@
 ---
 name: go-engineer
 description: Senior Go engineer persona for the archived Go engine and API server in archive/engine-go/ and archive/api-go/
-user-invocable: false
+user-invocable: true
 ---
 
 # Persona: Go Engineer

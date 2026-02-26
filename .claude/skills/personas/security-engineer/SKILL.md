@@ -1,7 +1,7 @@
 ---
 name: security-engineer
 description: Senior security engineer persona that owns all trust boundaries, attack surfaces, and defense-in-depth across the entire stack
-user-invocable: false
+user-invocable: true
 ---
 
 # Persona: Security Engineer

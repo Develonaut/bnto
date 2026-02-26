@@ -33,24 +33,24 @@ Read `.claude/PLAN.md`. Find the **current sprint** (the first sprint with uncla
 - Edit `PLAN.md` to mark your task: change `- [ ]` to `- [ ] **CLAIMED**`
 - If all tasks in the current wave are claimed or done, do NOT move to the next wave — another agent is still working. Instead, report back that no tasks are available right now
 
-## Step 3b: Load Your Persona
+## Step 3b: Activate Your Persona
 
-Now that you know your task's `[package]` tag, load the domain expert persona:
+Now that you know your task's `[package]` tag, activate the domain expert persona by invoking it as a skill:
 
-| Package tag | Persona file |
+| Package tag | Persona skill |
 |---|---|
-| `[engine]` | `.claude/skills/personas/rust-expert/SKILL.md` |
-| `[engine-go]`, `[api-go]` | `.claude/skills/personas/go-engineer/SKILL.md` |
-| `[web]`, `[ui]` | `.claude/skills/personas/frontend-engineer/SKILL.md` |
-| `[core]` | `.claude/skills/personas/core-architect/SKILL.md` |
-| `[backend]`, `[auth]` | `.claude/skills/personas/backend-engineer/SKILL.md` |
+| `[engine]` | `/rust-expert` |
+| `[engine-go]`, `[api-go]` | `/go-engineer` |
+| `[web]`, `[ui]` | `/frontend-engineer` |
+| `[core]` | `/core-architect` |
+| `[backend]`, `[auth]` | `/backend-engineer` |
 | `[monorepo]`, `[infra]` | No persona — use general standards |
 
-**Read the persona file now.** It contains domain-specific expertise, vocabulary, gotchas, and quality standards that go beyond the general rules. Adopt the persona's mindset for the duration of this task.
+**Invoke the persona skill now.** Each persona is a domain expert with specialized knowledge, vocabulary, gotchas, and quality standards that go beyond the general rules. The persona will shape your approach for the duration of this task.
 
-**Cross-package work:** If your task requires touching files outside your primary package (e.g., an `[engine]` task that also updates the WASM worker in `apps/web/`), load all relevant personas. Multiple personas sharpen your awareness of each domain's standards.
+**Cross-package work:** If your task requires touching files outside your primary package (e.g., an `[engine]` task that also updates the WASM worker in `apps/web/`), invoke all relevant persona skills. Multiple personas sharpen your awareness of each domain's standards.
 
-**Security-sensitive work:** If your task touches auth, middleware, input validation, file uploads, Convex mutations, or API endpoints, also load `.claude/skills/personas/security-engineer/SKILL.md`. The security persona owns trust boundaries across all packages and will help you think adversarially about the code you're writing.
+**Security-sensitive work:** If your task touches auth, middleware, input validation, file uploads, Convex mutations, or API endpoints, also invoke `/security-engineer`. The security persona owns trust boundaries across all packages and will help you think adversarially about the code you're writing.
 
 ## Step 4: Scope Check
 

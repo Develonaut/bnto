@@ -1,7 +1,7 @@
 ---
 name: backend-engineer
 description: Senior Convex backend engineer persona for schema design, auth implementation, server functions, quota enforcement, and analytics in packages/@bnto/backend/
-user-invocable: false
+user-invocable: true
 ---
 
 # Persona: Backend Engineer

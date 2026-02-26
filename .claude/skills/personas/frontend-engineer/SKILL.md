@@ -1,7 +1,7 @@
 ---
 name: frontend-engineer
 description: Senior React/Next.js engineer persona for UI, pages, components, theming, animation, and E2E testing in apps/web/
-user-invocable: false
+user-invocable: true
 ---
 
 # Persona: Frontend Engineer
