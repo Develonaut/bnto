@@ -1,27 +1,22 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
+import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { core } from "../core";
-import { browserExecutionStore } from "../stores/browserExecutionStore";
-import { useBrowserExecutionStore } from "./useBrowserExecutionStore";
-import type {
-  BrowserFileProgress,
-  BrowserFileResult,
-} from "../types/browser";
+import type { BrowserFileResult } from "../types/browser";
 
 /**
  * React hook for browser-side execution lifecycle.
  *
- * Manages the full browser execution flow:
- *   1. User calls execute(slug, files, params)
- *   2. Engine initializes and processes each file via WASM
- *   3. Progress updates flow via state (fileProgress)
- *   4. Results are available as in-memory blobs
- *   5. User can download results via downloadResult/downloadAll
+ * Thin binding over the service-owned store. The service's `run()` method
+ * manages all state transitions (start → progress → complete/fail).
+ * This hook reads state via Zustand selectors and provides callbacks
+ * that delegate to the service.
  */
 export function useBrowserExecution() {
-  const execution = useBrowserExecutionStore(
+  const execution = useStore(
+    core.browser.store,
     useShallow((s) => ({
       id: s.id,
       status: s.status,
@@ -32,43 +27,14 @@ export function useBrowserExecution() {
       completedAt: s.completedAt,
     })),
   );
-  const abortRef = useRef(false);
 
-  const execute = useCallback(
+  const run = useCallback(
     async (
       slug: string,
       files: File[],
       params: Record<string, unknown> = {},
     ) => {
-      abortRef.current = false;
-      const store = browserExecutionStore.getState();
-
-      store.start(crypto.randomUUID(), Date.now());
-
-      try {
-        const onProgress = (progress: BrowserFileProgress) => {
-          if (abortRef.current) return;
-          browserExecutionStore.getState().progress(progress);
-        };
-
-        const results = await core.browser.execute(
-          slug,
-          files,
-          params,
-          onProgress,
-        );
-
-        if (abortRef.current) return;
-
-        browserExecutionStore.getState().complete(results, Date.now());
-      } catch (e) {
-        if (abortRef.current) return;
-
-        browserExecutionStore.getState().fail(
-          e instanceof Error ? e.message : "Processing failed",
-          Date.now(),
-        );
-      }
+      await core.browser.run(slug, files, params);
     },
     [],
   );
@@ -79,19 +45,18 @@ export function useBrowserExecution() {
 
   const downloadAll = useCallback((slug?: string) => {
     core.browser.downloadAllResults(
-      browserExecutionStore.getState().results,
+      core.browser.store.getState().results,
       slug,
     );
   }, []);
 
   const reset = useCallback(() => {
-    abortRef.current = true;
-    browserExecutionStore.getState().reset();
+    core.browser.reset();
   }, []);
 
   return {
     execution,
-    execute,
+    execute: run,
     downloadResult,
     downloadAll,
     reset,

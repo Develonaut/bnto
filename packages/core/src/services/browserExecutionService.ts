@@ -9,8 +9,9 @@
  * - No Go API call (WASM processes in the browser)
  * - Progress comes from the Web Worker, not polling
  *
- * The service delegates to a registered BrowserEngine (typically
- * the BntoWorker wrapping WASM) and provides a clean imperative API.
+ * The service owns the execution store and the full lifecycle:
+ *   run() → start → progress → complete/fail
+ * React hooks are thin bindings over the store.
  */
 
 import {
@@ -25,6 +26,7 @@ import {
 } from "../adapters/browser/slugCapability";
 import { downloadBlob } from "../adapters/browser/downloadBlob";
 import { createZipBlob } from "../adapters/browser/createZipBlob";
+import { createBrowserExecutionStore } from "../stores/browserExecutionStore";
 import type {
   BrowserEngine,
   BrowserFileResult,
@@ -32,7 +34,68 @@ import type {
 } from "../types/browser";
 
 export function createBrowserExecutionService() {
+  // The service owns its store instance. React hooks read from it;
+  // only the service writes to it (via run/reset).
+  const store = createBrowserExecutionStore();
+
+  // Abort flag — checked in the progress callback to stop
+  // updating the store after reset() is called mid-execution.
+  // Not a real WASM cancellation (Web Worker keeps running).
+  let aborted = false;
+
+  /**
+   * Execute a bnto in the browser (low-level).
+   *
+   * Initializes the engine if needed, processes all files through
+   * the WASM worker, and returns results as in-memory blobs.
+   * Does NOT manage store state — use `run()` for the full lifecycle.
+   */
+  const execute = async (
+    slug: string,
+    files: File[],
+    params: Record<string, unknown> = {},
+    onProgress?: (progress: BrowserFileProgress) => void,
+  ): Promise<BrowserFileResult[]> => {
+    const engine = getBrowserEngine();
+    if (!engine) {
+      throw new Error(
+        "No browser engine registered. " +
+          "Call core.browser.registerEngine() at app startup.",
+      );
+    }
+
+    const nodeType = getBrowserNodeType(slug);
+    if (!nodeType) {
+      throw new Error(
+        `No browser implementation for slug "${slug}". ` +
+          `Available: ${getBrowserCapableSlugs().join(", ")}`,
+      );
+    }
+
+    // Initialize the engine (no-op if already initialized).
+    await engine.init();
+
+    // Process all files, forwarding progress updates.
+    return engine.processFiles(
+      files,
+      nodeType,
+      params,
+      onProgress
+        ? (fileIndex, percent, message) =>
+            onProgress({
+              fileIndex,
+              totalFiles: files.length,
+              percent,
+              message,
+            })
+        : undefined,
+    );
+  };
+
   return {
+    /** The Zustand store backing execution state. */
+    store,
+
     // ── Capability Detection ───────────────────────────────────────
     /** Check if a slug has a working browser execution path. */
     isCapable: (slug: string) => isBrowserCapable(slug) && hasBrowserEngine(),
@@ -50,60 +113,60 @@ export function createBrowserExecutionService() {
     /** Whether a browser engine has been registered. */
     hasEngine: () => hasBrowserEngine(),
 
-    // ── Execution ──────────────────────────────────────────────────
+    // ── Lifecycle (service owns the full orchestration) ─────────────
+
     /**
-     * Execute a bnto in the browser.
+     * Run a browser execution with full lifecycle management.
      *
-     * Initializes the engine if needed, processes all files through
-     * the WASM worker, and returns results as in-memory blobs.
+     * Manages the store transitions: idle → processing → completed/failed.
+     * Progress updates flow through the store automatically.
      *
      * @param slug - The bnto slug (e.g., "compress-images").
-     * @param files - Files to process (from FileDropZone).
+     * @param files - Files to process.
      * @param params - Node-specific config (e.g., { quality: 80 }).
-     * @param onProgress - Callback for per-file progress updates.
-     * @returns Array of processed file results.
      */
-    execute: async (
+    run: async (
       slug: string,
       files: File[],
       params: Record<string, unknown> = {},
-      onProgress?: (progress: BrowserFileProgress) => void,
-    ): Promise<BrowserFileResult[]> => {
-      const engine = getBrowserEngine();
-      if (!engine) {
-        throw new Error(
-          "No browser engine registered. " +
-            "Call core.browser.registerEngine() at app startup.",
+    ): Promise<void> => {
+      aborted = false;
+
+      const id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `exec-${Date.now()}`;
+
+      store.getState().start(id, Date.now());
+
+      try {
+        const onProgress = (progress: BrowserFileProgress) => {
+          if (aborted) return;
+          store.getState().progress(progress);
+        };
+
+        const results = await execute(slug, files, params, onProgress);
+
+        if (aborted) return;
+        store.getState().complete(results, Date.now());
+      } catch (e) {
+        if (aborted) return;
+        store.getState().fail(
+          e instanceof Error ? e.message : "Processing failed",
+          Date.now(),
         );
       }
-
-      const nodeType = getBrowserNodeType(slug);
-      if (!nodeType) {
-        throw new Error(
-          `No browser implementation for slug "${slug}". ` +
-            `Available: ${getBrowserCapableSlugs().join(", ")}`,
-        );
-      }
-
-      // Initialize the engine (no-op if already initialized).
-      await engine.init();
-
-      // Process all files, forwarding progress updates.
-      return engine.processFiles(
-        files,
-        nodeType,
-        params,
-        onProgress
-          ? (fileIndex, percent, message) =>
-              onProgress({
-                fileIndex,
-                totalFiles: files.length,
-                percent,
-                message,
-              })
-          : undefined,
-      );
     },
+
+    /** Reset execution state to idle. Aborts any in-progress run. */
+    reset: () => {
+      aborted = true;
+      store.getState().reset();
+    },
+
+    // ── Low-level execution (no store management) ───────────────────
+    /** Execute without lifecycle management. For callers managing their own state. */
+    execute,
 
     // ── Download ───────────────────────────────────────────────────
     /** Download a browser execution result as a file. */

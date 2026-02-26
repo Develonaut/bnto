@@ -80,10 +80,4 @@ export function createBrowserExecutionStore() {
   }));
 }
 
-// ---------------------------------------------------------------------------
-// Singleton store instance
-// ---------------------------------------------------------------------------
-
-export const browserExecutionStore = createBrowserExecutionStore();
-
 export type { BrowserExecutionState };

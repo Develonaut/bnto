@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createBrowserExecutionService } from "./browserExecutionService";
-import {
-  registerBrowserEngine,
-  getBrowserEngine,
-} from "../adapters/browser/engineRegistry";
+import { registerBrowserEngine } from "../adapters/browser/engineRegistry";
 import type {
   BrowserEngine,
   BrowserFileResult,
@@ -290,6 +287,255 @@ describe("browserExecutionService", () => {
   describe("getCapableSlugs", () => {
     it("returns array including compress-images", () => {
       expect(service.getCapableSlugs()).toContain("compress-images");
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // Orchestration lifecycle: run() and reset()
+  // ─────────────────────────────────────────────────────────────────
+
+  describe("store ownership", () => {
+    it("exposes a Zustand store", () => {
+      expect(service.store).toBeDefined();
+      expect(service.store.getState).toBeDefined();
+      expect(service.store.getState().status).toBe("idle");
+    });
+
+    it("each service gets its own store instance", () => {
+      const service2 = createBrowserExecutionService();
+      expect(service.store).not.toBe(service2.store);
+    });
+  });
+
+  describe("run — success lifecycle", () => {
+    it("transitions store through idle → processing → completed", async () => {
+      const expectedResult: BrowserFileResult = {
+        blob: new Blob(["out"], { type: "image/jpeg" }),
+        filename: "output.jpg",
+        mimeType: "image/jpeg",
+        metadata: { ratio: 0.5 },
+      };
+
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockResolvedValue([expectedResult]),
+      });
+      registerBrowserEngine(engine);
+
+      // Before run
+      expect(service.store.getState().status).toBe("idle");
+
+      await service.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      // After run
+      const state = service.store.getState();
+      expect(state.status).toBe("completed");
+      expect(state.results).toEqual([expectedResult]);
+      expect(state.id).toBeTruthy();
+      expect(state.startedAt).toBeTypeOf("number");
+      expect(state.completedAt).toBeTypeOf("number");
+      expect(state.fileProgress).toBeNull();
+    });
+
+    it("generates a unique execution ID", async () => {
+      registerBrowserEngine(createMockEngine());
+
+      await service.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      expect(service.store.getState().id).toBeTruthy();
+      expect(service.store.getState().id.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("run — progress updates", () => {
+    it("updates store with progress during execution", async () => {
+      const progressSnapshots: Array<{
+        fileIndex: number;
+        percent: number;
+      }> = [];
+
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockImplementation(
+          async (
+            _files: File[],
+            _nodeType: string,
+            _params: Record<string, unknown>,
+            onProgress?: (
+              fileIndex: number,
+              percent: number,
+              message: string,
+            ) => void,
+          ) => {
+            onProgress?.(0, 50, "Compressing...");
+            // Capture store state after progress update
+            const s = service.store.getState();
+            progressSnapshots.push({
+              fileIndex: s.fileProgress?.fileIndex ?? -1,
+              percent: s.fileProgress?.percent ?? -1,
+            });
+            onProgress?.(0, 100, "Done");
+            return [];
+          },
+        ),
+      });
+      registerBrowserEngine(engine);
+
+      await service.run("compress-images", [new File(["a"], "a.jpg")]);
+
+      expect(progressSnapshots).toHaveLength(1);
+      expect(progressSnapshots[0]).toEqual({ fileIndex: 0, percent: 50 });
+
+      // Progress is cleared after completion
+      expect(service.store.getState().fileProgress).toBeNull();
+    });
+  });
+
+  describe("run — failure lifecycle", () => {
+    it("transitions store through idle → processing → failed on error", async () => {
+      const engine = createMockEngine({
+        processFiles: vi
+          .fn()
+          .mockRejectedValue(new Error("Corrupt JPEG")),
+      });
+      registerBrowserEngine(engine);
+
+      await service.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      const state = service.store.getState();
+      expect(state.status).toBe("failed");
+      expect(state.error).toBe("Corrupt JPEG");
+      expect(state.completedAt).toBeTypeOf("number");
+      expect(state.fileProgress).toBeNull();
+    });
+
+    it("handles non-Error thrown values", async () => {
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockRejectedValue("string error"),
+      });
+      registerBrowserEngine(engine);
+
+      await service.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      expect(service.store.getState().status).toBe("failed");
+      expect(service.store.getState().error).toBe("Processing failed");
+    });
+
+    it("fails on missing engine", async () => {
+      // No engine registered
+      await service.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      const state = service.store.getState();
+      expect(state.status).toBe("failed");
+      expect(state.error).toContain("No browser engine registered");
+    });
+
+    it("fails on unknown slug", async () => {
+      registerBrowserEngine(createMockEngine());
+
+      await service.run("unknown-slug", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      const state = service.store.getState();
+      expect(state.status).toBe("failed");
+      expect(state.error).toContain("No browser implementation");
+    });
+  });
+
+  describe("reset", () => {
+    it("returns store to idle", async () => {
+      registerBrowserEngine(createMockEngine());
+
+      await service.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+      expect(service.store.getState().status).toBe("completed");
+
+      service.reset();
+      const state = service.store.getState();
+      expect(state.status).toBe("idle");
+      expect(state.id).toBe("");
+      expect(state.results).toEqual([]);
+      expect(state.error).toBeUndefined();
+    });
+
+    it("aborts progress updates during in-flight execution", async () => {
+      let resolveExecution: (value: BrowserFileResult[]) => void;
+      const executionPromise = new Promise<BrowserFileResult[]>(
+        (resolve) => {
+          resolveExecution = resolve;
+        },
+      );
+
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockImplementation(
+          async (
+            _files: File[],
+            _nodeType: string,
+            _params: Record<string, unknown>,
+            onProgress?: (
+              fileIndex: number,
+              percent: number,
+              message: string,
+            ) => void,
+          ) => {
+            // Emit one progress before abort
+            onProgress?.(0, 50, "Processing...");
+
+            // Reset is called externally while we wait
+            return executionPromise;
+          },
+        ),
+      });
+      registerBrowserEngine(engine);
+
+      // Start run (don't await — it's still in-flight)
+      const runPromise = service.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      // Wait a tick for the progress callback to fire
+      await new Promise((r) => setTimeout(r, 0));
+
+      // Reset mid-execution
+      service.reset();
+      expect(service.store.getState().status).toBe("idle");
+
+      // Resolve the engine — should NOT update store (aborted)
+      resolveExecution!([]);
+      await runPromise;
+
+      // Store should still be idle (not completed)
+      expect(service.store.getState().status).toBe("idle");
+    });
+  });
+
+  describe("run — consecutive executions", () => {
+    it("clears prior state when starting a new run", async () => {
+      const engine = createMockEngine();
+      registerBrowserEngine(engine);
+
+      // First run succeeds
+      await service.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+      expect(service.store.getState().status).toBe("completed");
+      expect(service.store.getState().results).toHaveLength(1);
+
+      // Second run starts fresh
+      await service.run("compress-images", [
+        new File(["data2"], "test2.jpg"),
+      ]);
+      expect(service.store.getState().status).toBe("completed");
     });
   });
 });

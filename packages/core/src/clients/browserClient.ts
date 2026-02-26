@@ -10,6 +10,9 @@ import type { BrowserExecutionService } from "../services/browserExecutionServic
  */
 export function createBrowserClient(browser: BrowserExecutionService) {
   return {
+    /** The Zustand store backing execution state. */
+    store: browser.store,
+
     // ── Capability Detection ───────────────────────────────────────
     isCapable: (slug: string) => browser.isCapable(slug),
     hasImplementation: (slug: string) => browser.hasImplementation(slug),
@@ -19,7 +22,14 @@ export function createBrowserClient(browser: BrowserExecutionService) {
     registerEngine: browser.registerEngine,
     hasEngine: () => browser.hasEngine(),
 
-    // ── Execution ──────────────────────────────────────────────────
+    // ── Lifecycle ──────────────────────────────────────────────────
+    /** Run a browser execution with full lifecycle management. */
+    run: browser.run,
+    /** Reset execution state to idle. Aborts any in-progress run. */
+    reset: browser.reset,
+
+    // ── Low-level execution ────────────────────────────────────────
+    /** Execute without lifecycle management. For callers managing their own state. */
     execute: browser.execute,
 
     // ── Download ───────────────────────────────────────────────────
