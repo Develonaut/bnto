@@ -291,7 +291,7 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [x] `monorepo` — **File & component naming audit:** 4 violations fixed: AnimatedThemeToggle export mismatch, provider.tsx→BntoCoreProvider.tsx, theme-store.ts→themeStore.ts, utils.ts→cn.ts (30 import sites updated). Build passes clean.
 - [ ] `monorepo` — **Full codebase coding standards review (multi-agent):** Run parallel agents across all packages to audit every file against `code-standards.md`, `architecture.md`, `components.md`, and `theming.md`. Each agent covers one package/directory. Collect all findings, combine, and correct violations in a single pass. Covers: Bento Box Principle (file/function size limits), dot-notation compliance, import discipline, CSS-first states, `select` rule for React Query, layered architecture, one-export-per-file, no utility grab bags.
 - [x] `@bnto/backend` — `planTier` field on user schema (free, pro). Usage analytics fields: `totalRuns`, `lastRunAt`
-- [ ] `@bnto/backend` — Execution analytics: aggregate queries for per-user history (by slug, by date range)
+- [x] `@bnto/backend` — Execution analytics: aggregate queries for per-user history (by slug, by date range)
 - [ ] `@bnto/core` — `useExecutionHistory()` hook (paginated, per-user)
 - [ ] `@bnto/core` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
 - [ ] `apps/web` — WorkflowCard component (name, description, node count, last run status)

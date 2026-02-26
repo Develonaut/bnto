@@ -20,6 +20,7 @@ import type * as cleanup_stale from "../cleanup_stale.js";
 import type * as crons from "../crons.js";
 import type * as downloads from "../downloads.js";
 import type * as executionLogs from "../executionLogs.js";
+import type * as execution_analytics from "../execution_analytics.js";
 import type * as execution_events from "../execution_events.js";
 import type * as executions from "../executions.js";
 import type * as http from "../http.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   downloads: typeof downloads;
   executionLogs: typeof executionLogs;
+  execution_analytics: typeof execution_analytics;
   execution_events: typeof execution_events;
   executions: typeof executions;
   http: typeof http;
