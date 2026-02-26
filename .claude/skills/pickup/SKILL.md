@@ -46,6 +46,10 @@ Now that you know your task's `[package]` tag, activate the domain expert person
 | `[backend]`, `[auth]` | `/backend-engineer` |
 | `[monorepo]`, `[infra]` | No persona — use general standards |
 
+**Sprint-specific persona overrides:**
+- **Sprint 4B (Code Editor):** ALL tasks invoke `/code-editor-expert` regardless of package tag. Wave 2+ tasks also invoke `/frontend-engineer`. Read [code-editor.md](.claude/strategy/code-editor.md) and the persona SKILL.md before starting.
+- **Sprint 4 Wave 2+ (Visual Editor):** ALL tasks invoke `/reactflow-expert`. Wave 3+ also invoke `/frontend-engineer`.
+
 **Invoke the persona skill now.** Each persona is a domain expert with specialized knowledge, vocabulary, gotchas, and quality standards that go beyond the general rules. The persona will shape your approach for the duration of this task.
 
 **Cross-package work:** If your task requires touching files outside your primary package (e.g., an `[engine]` task that also updates the WASM worker in `apps/web/`), invoke all relevant persona skills. Multiple personas sharpen your awareness of each domain's standards.
