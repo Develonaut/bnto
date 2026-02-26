@@ -10,6 +10,7 @@ import { BentoGridShowcase } from "./BentoGridShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
+import { ConveyorShowcase } from "./ConveyorShowcase";
 import { DropzoneShowcase } from "./DropzoneShowcase";
 import { FileListShowcase } from "./FileListShowcase";
 import { FormShowcase } from "./FormShowcase";
@@ -137,6 +138,16 @@ export default function MotorwayPage() {
             description="Dynamic layout driven by item count. Featured cells span multiple rows and columns, adapting as the grid grows."
           >
             <BentoGridShowcase />
+          </ShowcaseSection>
+
+          {/* ── Connections ─────────────────────────────────────── */}
+
+          <ShowcaseSection
+            id="conveyor"
+            title="Conveyor Belts"
+            description="Animated connections between stations. Data flows like sushi on a kaiten belt — items ride the surface between processing nodes."
+          >
+            <ConveyorShowcase />
           </ShowcaseSection>
       </Stack>
     </AppShell.Content>

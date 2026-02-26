@@ -1,0 +1,179 @@
+/* ── Conveyor Belt ────────────────────────────────────────────
+ * Animated connection path between stations (recipe nodes).
+ * Scrolling linear-gradient creates the belt surface texture.
+ *
+ * Adapted from: https://youtu.be/Nr-aUv2D8YI
+ *
+ * Belt sits BETWEEN depth cards — stations render on top (z-10)
+ * so their walls/shadows naturally overlap the belt endpoints,
+ * hiding junction seams (same trick as Mini Motorways buildings
+ * sitting on top of roads).
+ *
+ * Speed variants:
+ *   (default)        — 1.2s cycle, steady flow
+ *   .conveyor-fast   — 0.5s cycle, batch processing
+ *   .conveyor-paused — animation paused, idle state
+ *
+ * Uses warm theme tokens for colors. Hard-edge shadow matches
+ * the .depth shadow language (zero blur, directional).
+ * ──────────────────────────────────────────────────────────── */
+.conveyor-belt {
+  --belt-segment: 20px;
+  --belt-track: var(--muted);
+  --belt-ridge: var(--border);
+  --belt-rail: var(--depth-muted-wall);
+  --belt-shadow: var(--depth-muted-shadow);
+  --belt-speed: 1.2s;
+
+  background-image: linear-gradient(
+    90deg,
+    var(--belt-ridge) 0 15%,
+    var(--belt-track) 15% 100%
+  );
+  background-size: var(--belt-segment) 100%;
+  border-top: 2px solid var(--belt-rail);
+  border-bottom: 2px solid var(--belt-rail);
+  border-radius: 2px;
+
+  /* Hard-edge shadow matching .depth language (no blur) */
+  box-shadow:
+    calc(sin(var(--light-angle)) * 4px)
+    calc(cos(var(--light-angle)) * -4px)
+    0 var(--belt-shadow);
+}
+
+/* Animate only when user hasn't requested reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .conveyor-belt {
+    animation: convey var(--belt-speed) infinite linear;
+  }
+
+  .conveyor-fast {
+    --belt-speed: 0.5s;
+  }
+
+  .conveyor-paused {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes convey {
+  to {
+    background-position: var(--belt-segment) 0;
+  }
+}
+
+/* ── SVG Belt Surface (React Flow edges) ──────────────────────
+ * Animated stroke-dashoffset for SVG path elements inside
+ * React Flow's edge layer. The dash pattern (3px dash, 17px gap)
+ * scrolls forward along the path, creating the conveyor texture.
+ *
+ * stroke-dashoffset is compositor-friendly in most browsers.
+ *
+ * Speed variants:
+ *   .belt-surface          — 1.2s cycle (default, steady flow)
+ *   .belt-surface-fast     — 0.5s cycle (batch processing)
+ *   .belt-surface-paused   — animation paused (idle state)
+ * ──────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .belt-surface {
+    animation: convey-svg var(--belt-svg-speed, 1.2s) infinite linear;
+  }
+
+  .belt-surface-fast {
+    --belt-svg-speed: 0.5s;
+  }
+
+  .belt-surface-paused {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes convey-svg {
+  to {
+    stroke-dashoffset: -20px;
+  }
+}
+
+/* ── Belt Pieces (sushi traveling on belts) ────────────────────
+ * Small sushi icons animated along belt paths via SVG
+ * <animateMotion>. Inspired by a CSS bento box reference.
+ *
+ * Pieces have food-specific colors (nori, rice, salmon, etc.)
+ * rather than inheriting from belt variants — sushi looks like
+ * sushi regardless of which colored belt it rides on.
+ *
+ * Hidden entirely in reduced-motion mode since there's no
+ * meaningful static position for them.
+ * ──────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .belt-pieces {
+    display: none;
+  }
+}
+
+/* ── Belt Entrance (React Flow edges) ─────────────────────────
+ * Belts fade in AFTER stations have popped in. Each belt gets a
+ * staggered delay via --belt-enter-delay (set inline from React).
+ *
+ * Sequence:  stations bounce in (0–400ms) → belts fade in (400ms+)
+ *
+ * animation-fill-mode: both keeps belts invisible (opacity: 0)
+ * until their delay fires.
+ * ──────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .belt-enter {
+    animation: belt-enter 400ms ease-out both;
+    animation-delay: var(--belt-enter-delay, 400ms);
+  }
+}
+
+@keyframes belt-enter {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ── Belt Variant Colors ─────────────────────────────────────
+ * Each conveyor belt can be tinted to match its source station's
+ * variant color — just like Mini Motorways roads match their
+ * building color type.
+ *
+ * Three tokens per variant:
+ *   --belt-track  — belt body (soft tint of variant)
+ *   --belt-ridge  — dash ridge (slightly stronger)
+ *   --belt-rail   — outline edges (wall color)
+ *
+ * Uses color-mix() to blend variant colors with the neutral
+ * base so belts are visually linked to stations but don't
+ * compete with the depth card faces.
+ * ──────────────────────────────────────────────────────────── */
+.belt-primary {
+  --belt-track: color-mix(in oklch, var(--primary) 30%, var(--muted));
+  --belt-ridge: color-mix(in oklch, var(--primary) 50%, var(--border));
+  --belt-rail: var(--depth-primary-wall);
+}
+
+.belt-secondary {
+  --belt-track: color-mix(in oklch, var(--secondary) 40%, var(--muted));
+  --belt-ridge: color-mix(in oklch, var(--secondary) 55%, var(--border));
+  --belt-rail: var(--depth-secondary-wall);
+}
+
+.belt-accent {
+  --belt-track: color-mix(in oklch, var(--accent) 30%, var(--muted));
+  --belt-ridge: color-mix(in oklch, var(--accent) 50%, var(--border));
+  --belt-rail: var(--depth-accent-wall);
+}
+
+.belt-success {
+  --belt-track: color-mix(in oklch, var(--success) 30%, var(--muted));
+  --belt-ridge: color-mix(in oklch, var(--success) 50%, var(--border));
+  --belt-rail: var(--depth-success-wall);
+}
+
+.belt-muted {
+  --belt-track: var(--muted);
+  --belt-ridge: var(--border);
+  --belt-rail: var(--depth-muted-wall);
+}
