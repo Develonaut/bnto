@@ -25,8 +25,9 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 2C (Launch Readiness) — make bnto.io presentable for real users and crawlers
-- **Next:** Sprint 2D (Recipe Page UX Overhaul) — transform tool pages from flat config-first stacks into progressive phase-driven flow
+- **Active:** Sprint 2D (Recipe Page UX Overhaul) — transform tool pages into progressive phase-driven flow
+- **Next:** Sprint 3 (Platform Features, M2) — accounts, persistence, history, conversion hooks
+- **Background:** Sprint 4 + 4B (Recipe Editors) — visual + code editors, isolated to /dev/motorway page. Run in parallel alongside Sprint 3
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos run 100% client-side via Rust→WASM. Uniform Rust engine — no JS fallback. Files never leave the user's machine. Rust evaluation checkpoint PASSED.
 - **Cloud pipeline:** Complete. Go API on Railway, R2 file transit, Convex real-time subscriptions — all verified end-to-end with integration E2E tests. This is M4 infrastructure delivered ahead of schedule.
 - **WASM engine:** 6 Rust crates (`bnto-image`, `bnto-csv`, `bnto-file`, `bnto-core`, `bnto-wasm`). Single cdylib entry point. 1.6MB raw / 606KB gzipped. Web Worker wrapper with progress reporting.
@@ -73,6 +74,7 @@ Pricing, revenue projections, and "ready to charge" criteria live in Notion ("SE
 | Sprint 2B | Browser execution (M1 MVP) | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine. |
 | Sprint 2C | Launch readiness (content + domain) | **bnto.io live and indexable.** Real content on every page. SEO crawling begins. First real users possible. |
 | Sprint 2D | Recipe page UX overhaul | **Core product experience matches marketing quality.** Progressive phase-driven flow. Motorway design language on every tool page. |
+| Sprint H | Housekeeping | Tech debt cleanup. FileUpload rewrite, Rust test audit, EXIF coverage, URL fix. No new features. |
 | Sprint 3 | Platform features (accounts, history) | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented. |
 | Sprint 4 | Recipe editor (headless + visual) | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
 | Sprint 5-6 | Desktop app | Top-of-funnel. Word of mouth begins. Free forever — trust signal. |
@@ -91,8 +93,8 @@ Moved from Railway/Convex Auth to Vercel/Better Auth. Auth provider, Convex sche
 ### Sprint 2: Predefined Bntos + Cloud Execution — Waves 1-4 COMPLETE
 6 Tier 1 fixtures, SEO URL routing, bnto registry, tool page UI (file drop, per-bnto config), R2 file transit, Railway deployment, env config (R2/Convex/Vercel/Railway), execution UI (RunButton, ExecutionProgress, ExecutionResults), predefined execution path. Wave 5 (pipeline verification) blocked by auth — deferred to Sprint 2A Wave 5.
 
-### Sprint 2A: Auth Fix — Waves 1-3 COMPLETE
-Evaluated `@convex-dev/auth` vs fixing Better Auth. Chose `@convex-dev/auth` (eliminates JWT race condition). Full migration: auth provider, anonymous sessions with real `users` rows, proxy middleware, AppGate removal. Integration tests: anonymous execution (A1-A7), conversion flow (C1-C3), auth lifecycle (S1-S3). See `decisions/auth-evaluation.md`.
+### Sprint 2A: Auth Fix — COMPLETE
+Migrated to `@convex-dev/auth` (eliminates JWT race condition). Anonymous sessions, proxy middleware, integration tests (A1-A7, C1-C3, S1-S3). Core integration test harness (ConvexHttpClient factory). Execution + upload/download integration tests. Playwright E2E pipeline verification. See `decisions/auth-evaluation.md`.
 
 ### Sprint 2.5: Codebase Polish — COMPLETE
 Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hooks, utils, lib), PascalCase component rename, dot-notation primitive wrappers, Button audit/migration, Button pseudo-state fix, Button animations (Mini Motorways motion language). Font review (DM Sans → Geist evaluation) deferred to backlog.
@@ -100,185 +102,14 @@ Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hook
 ### Sprint 2B: Browser Execution (M1 MVP) — COMPLETE
 All 6 Tier 1 bntos running 100% client-side via Rust→WASM. `@bnto/nodes` package (engine-agnostic definitions), Rust workspace with 5 crates, Web Worker wrapper, browser adapter in `@bnto/core`, BntoPageShell browser routing, ZIP download for multi-file results. Rust evaluation checkpoint PASSED. WASM bundle: 1.6MB raw / 606KB gzipped. 44+ Rust unit tests, WASM integration tests, Playwright E2E with screenshot assertions for all 6 bntos. **M1 milestone delivered.**
 
+### Sprint 2C: Launch Readiness — COMPLETE
+bnto.io live and indexable. All Mainline template content replaced with real bnto content (home, pricing, FAQ, privacy, footer, navbar). Messaging audit (no false claims). CSS animation refactor (JS → CSS-driven). Site navigation E2E tests. 15/15 static pages generate cleanly.
+
 ---
 
 ## Phase 1: Web App + Cloud Execution (continued)
 
-### Sprint 2A: Auth Fix — Waves 4-5 (ACTIVE)
-
-#### Wave 4 (sequential — core integration tests against real Convex dev)
-
-**Why this layer exists:** `convex-test` (Wave 3) validates logic in-memory. Playwright E2E (Wave 5) validates user journeys through a browser. This layer sits between — it calls real Convex dev functions through `@bnto/core`'s imperative API without browser overhead. It catches: wrong env vars, missing indexes, auth provider misconfiguration, schema migration issues, R2 connectivity.
-
-**Auth approach:** `ConvexHttpClient` calls `@convex-dev/auth`'s `signIn` action directly — returns a JWT token. Set it with `client.setAuth(token)` and all subsequent calls are authenticated. No React, no browser. See `decisions/core-integration-testing.md`.
-
-**Test infrastructure:** Requires `task dev:all` (Convex dev + Go API via tunnel + R2 dev bucket).
-
-- [x] `@bnto/core` — **Test harness setup:** `ConvexHttpClient` factory with anonymous + password auth, test lifecycle helpers (cleanup), Vitest integration config (separate from unit tests, longer timeouts). File: `packages/core/src/__tests__/integration/setup.ts`
-- [x] `@bnto/core` — **Auth integration tests:** Anonymous sign-in, authenticated client calls, unauthenticated rejection, password sign-up/sign-in, anonymous → password upgrade (userId NOT preserved via ConvexHttpClient — browser E2E needed). Files: `auth-lifecycle.test.ts` (S1-S3, 16 tests), `conversion-flow.test.ts` (C1-C3, 14 tests). Also fixed: `@convex-dev/auth` v0.0.90 response parsing in `setup.ts`, broken `convex.config.ts` component import, `auth.config.ts` provider config, deprecated Vitest `poolOptions`
-- [x] `@bnto/core` — **Execution integration tests:** `core.executions.startPredefined()` against real Convex dev — creates execution record, increments runsUsed, enforces quota. Verify status transitions (pending → running → completed/failed) via polling. Also fixed: unified run limit system (env-driven via `_helpers/run_limits.ts`, single source of truth for anonymous=3, free=25). File: `execution.test.ts` (17 tests)
-- [x] `@bnto/core` — **Upload/download integration tests:** `core.uploads.generateUrls()` returns valid R2 presigned URLs, upload succeeds, after execution `core.downloads.getDownloadUrls()` returns valid download URLs. Full transit: upload → execute → download against R2 dev bucket. **Coverage gap:** The full file pipeline (browser → R2 → Go engine → R2 → browser) is untested end-to-end at the integration layer. This is the highest-priority gap in our test coverage.
-
-#### Wave 5 (sequential — verify full pipeline in browser)
-
-**Note on Sprint 2 stash:** `git stash@{0}` contains Sprint 2 Wave 5 work (integration test spec, playwright config, data-session attributes). This was written against the old Better Auth system — **review and adapt, don't blindly pop.** The test structure may be reusable but auth wiring is obsolete.
-
-- [x] `apps/web` — Playwright E2E integration tests: full pipeline (upload → R2 → Go engine → R2 → download) using shared engine test fixtures. Separate `playwright.integration.config.ts` targets `task dev:all` on port 4000. Progress-aware test helpers added (`waitForExecutionStatus`, `waitForPhase`, `captureTransientPhase`, `captureUploadProgress`). Data attributes added to UploadProgress, ExecutionProgress, ExecutionResults for observability.
-- [x] `apps/web` — **CRITICAL: Anonymous → password userId preservation (C1-C2).** ConvexHttpClient integration tests proved userId is NOT preserved (new user created on upgrade). Browser E2E tests confirmed the same. **RESOLVED in Sprint 3 Wave 1** via `PasswordWithAnonymousUpgrade` wrapper in `auth.ts` — wraps Password's authorize to extract anonymous userId from JWT in action context, passes through profile to `createOrUpdateUser`. All 3 E2E tests pass (C1-C3).
-- [ ] `apps/web` — **Browser auth behavior verification:** Token expiry handling, sign-out session invalidation (JWT is stateless — browser relies on cookie clearing + proxy redirect). ConvexHttpClient can't test this — Playwright E2E required. **Moved to Sprint 3 (M2: Platform Features) — not blocking M1 browser execution.**
-- [x] `apps/web` — **Monetization checkpoint:** Confirm execution events log `userId`, `bntoSlug`, `timestamp`, `durationMs` to Convex. **VERIFIED:** All 4 fields captured in `executionEvents` table. Run quota fields on user doc. `enforceQuota()` checks before execution. **Note:** Run quota enforcement applies to server-side bntos (M4). Browser bntos are free unlimited per ROADMAP.md.
-- [ ] `apps/web` — Verify auth flow end-to-end on Vercel preview deployment — **Moved to backlog (not blocking M1)**
-
-> **SEO checkpoint:** Before closing Sprint 2, verify in browser devtools that each `/[bnto]` URL returns correct `<title>` and `<meta description>` in the page source (not client-rendered).
-
-> **Monetization checkpoint:** Confirm execution events are being written to Convex with `userId`, `bntoSlug`, `timestamp`, and `durationMs`. Sprint 3 builds the usage dashboard on top of this data.
-
----
-
-### Sprint 2.5: Codebase Polish — COMPLETE
-
-#### Wave 3 (parallel — button polish) — COMPLETE
-
-- [x] `apps/web` — Fix Button pseudo-state bug: after active/click, button returns to hover state instead of default resting state. CSS `:active` → `:hover` transition fixed in depth/pressable system
-- [x] `apps/web` — Button animations per Mini Motorways motion language (see `animation.md`): entrance spring for button appearance, smooth ease-out for press/release transitions, `motion-safe:` guards
-
-**Remaining polish moved to backlog (UI: Button Polish, Font Review).** Build verification and E2E screenshots for button changes are included in Sprint 2B E2E suite.
-
----
-
-### Sprint 2B: Browser Execution (M1 MVP)
-**Goal:** All 6 Tier 1 bntos run 100% client-side in the browser. Zero backend for core experience. "Your files never leave your computer." This is the M1 milestone deliverable.
-
-**Strategic context:** Browser execution costs us $0 and gives users unlimited free runs. Cloud execution (already built in Sprint 2/2A) becomes premium infrastructure for M4 (AI, shell, video). See ROADMAP.md for the full browser-first strategy.
-
-#### Wave 1 (parallel — `@bnto/nodes` foundation)
-
-The engine-agnostic package that any execution target (Rust WASM, JS, Go) consumes. Build this first — it's the safety net regardless of engine choice.
-
-- [x] `packages/@bnto/nodes` — Create package: node type definitions (what each node does, input/output types)
-- [x] `packages/@bnto/nodes` — Migrate recipe definitions from `engine/pkg/menu/recipes/` to TypeScript (6 Tier 1 recipes)
-- [x] `packages/@bnto/nodes` — Define input/output schemas per node type (drives config panel UI — Atomiton `createFieldsFromSchema` pattern)
-- [x] `packages/@bnto/nodes` — Workflow validation functions (works in browser, CLI, desktop)
-- [x] `packages/@bnto/nodes` — Unit tests for schemas and validation
-
-#### Wave 2 (sequential — first Rust WASM node + evaluation checkpoint)
-
-Build one node in Rust, compile to WASM, run in a Web Worker. This is the M1 evaluation — by the end of this wave, we know if Rust works for us.
-
-- [x] `engine-wasm/` — Set up Rust workspace with `wasm-pack` + `wasm-bindgen` targeting web
-- [x] `engine-wasm/` — Build `compress-images` node in Rust (`image` crate with JPEG/PNG/WebP codecs, 44 unit tests, WASM bridge ready for unified entry point)
-- [x] `apps/web` — Web Worker wrapper with progress reporting via `postMessage`
-- [x] `packages/core` — Browser adapter: detect browser runtime, route execution to WASM Web Worker
-- [x] `apps/web` — Wire BntoPageShell to use browser adapter for `/compress-images`
-- [x] `apps/web` — E2E test: compress-images runs entirely client-side (no backend required)
-
-**EVALUATION CHECKPOINT — PASSED (Feb 2026)**
-
-| Question | Result |
-|----------|--------|
-| Development velocity | **PASS** — Each node built faster than the last. Patterns established early. |
-| WASM boundary | **PASS** — ArrayBuffer transfers work cleanly. Web Worker wrapper handles File/Blob. |
-| Bundle size | **ACCEPTABLE** — 606KB gzipped for all 6 nodes in single bundle. Above 500KB target by ~20%, but reasonable for 6 full nodes. |
-| Ecosystem coverage | **PASS** — `image`, `csv`, `serde`, `regex` crates cover all Tier 1 needs. |
-| Developer experience | **PASS** — wasm-pack builds fast, errors are debuggable, Rust tooling solid. |
-
-**Decision: Rust is the uniform browser engine.** All 6 Tier 1 bntos built in Rust, including `rename-files` (originally planned as JS). Continued to Wave 3a (remaining Rust nodes).
-
-#### Wave 2c (parallel — browser execution testing hardening)
-
-Harden the browser execution stack with layered test coverage. Goal: "it just works" confidence from Rust unit tests through full E2E user journeys. See `journeys/browser-execution.md` for the full testing strategy.
-
-**Rust edge cases** (truncated, corrupt, zero-byte inputs):
-- [x] `engine-wasm/` — Rust unit tests: truncated file (< 10 bytes), corrupt magic bytes, zero-byte file
-- [x] `engine-wasm/` — Rust unit tests: quality param bounds (0, 1, 100, 101), 1x1 pixel image
-
-**WASM boundary coverage:**
-- [x] `engine-wasm/` — WASM integration tests: all codec combinations (JPEG→JPEG, PNG→PNG, WebP→WebP)
-- [x] `engine-wasm/` — WASM integration tests: progress callback fires with increasing percentages
-- [x] `engine-wasm/` — WASM integration tests: large file (1MB+) doesn't OOM, output always <= input
-
-**E2E 4-phase tests** (BEFORE → PROGRESS → FINISH → VERIFY for each bnto):
-- [x] `apps/web` — E2E: compress JPEG with 4-phase screenshots + download verification
-- [x] `apps/web` — E2E: compress PNG with 4-phase screenshots + download verification (PNG magic bytes)
-- [x] `apps/web` — E2E: compress WebP with 4-phase screenshots + download verification (RIFF/WEBP header)
-- [x] `apps/web` — E2E: unsupported file (.txt) shows user-friendly error, no crash
-- [x] `apps/web` — E2E: corrupt image shows error card, Run Again available
-- [x] `apps/web` — E2E: quality slider comparison (q=50 vs q=90, verify q=50 < q=90)
-- [x] `apps/web` — E2E: batch 5+ files with progress, all outputs valid
-
-**TS service/worker coverage:**
-- [x] `packages/core` — browserExecutionService: engine init failure → clean error state
-- [x] `packages/core` — browserExecutionReducer: batch progress fileIndex increments correctly
-- [x] `apps/web` — BntoWorker: process after terminate → clear error
-
-#### Wave 3a: Remaining Rust WASM nodes (uniform Rust engine — checkpoint passed)
-
-- [x] `engine-wasm/` — `resize-images` node (Lanczos3/CatmullRom filters via `image` crate)
-- [x] `engine-wasm/` — `convert-image-format` node (decode any → encode any via `image` crate)
-- [x] `engine-wasm/` — `clean-csv` node (`csv` + `serde` crates, new `bnto-csv` crate)
-- [x] `engine-wasm/` — `rename-csv-columns` node (`csv` + `serde` crates, header rewrite)
-- [x] `engine-wasm/` — `rename-files` node (pattern matching + regex via Rust)
-- [x] `apps/web` — Web Worker wrappers for all new WASM nodes
-- [x] `apps/web` — E2E tests: all 6 bntos run client-side
-
-#### Wave 4 (sequential — integration + polish) — COMPLETE
-
-- [x] `apps/web` — BntoPageShell routes through browser adapter for Tier 1 bntos (done in Wave 2)
-- [x] `apps/web` — Zip download for multi-file browser results (fflate, createZipBlob, E2E verified)
-
-**Sprint 2B COMPLETE.** M1 (Browser Execution) delivered. All 6 Tier 1 bntos run client-side. WASM bundle: 1.6MB raw / 606KB gzipped. Performance benchmarks moved to backlog — not blocking M1 delivery.
-
----
-
-### Sprint 2C: Launch Readiness
-**Goal:** bnto.io is live, real, and indexable. Every page a crawler or user sees has genuine bnto content. All Mainline template placeholder content is gone. The site is presentable for SEO indexing and first real users.
-
-**Context:** M1 (browser execution) is delivered — all 6 Tier 1 bntos work. But the web app still shows ~25 files of Mainline template content (hero about "modern product teams", fake testimonials from "Mercury Finance", pricing for "500 issues", investor photos, etc.). This must be replaced before bnto.io goes live. The tool pages (`/compress-images`, `/clean-csv`, etc.) are already real — the marketing wrapper around them is not.
-
-**Design reference:** `/Users/ryan/Code/shadcn-blocks/blocks/` — extensive library of production-quality block components. Browse relevant categories (hero, feature, pricing, faq, footer, navbar, logos, stats, cta, trust-strip) for patterns and inspiration. Adapt layout and composition patterns to fit our design system — don't copy styling blindly.
-
-#### Wave 1 (parallel — metadata + navigation + domain)
-
-- [x] `apps/web` — **Root metadata overhaul:** Replace all "Mainline" metadata in `layout.tsx` — title ("bnto — Compress, Clean & Convert Files Free"), description, keywords (compress images, clean csv, rename files, convert format, free online tools), OG tags, Twitter card. Authors = "bnto". Remove shadcnblocks.com references.
-- [x] `apps/web` — **Navbar simplification:** Strip Mainline nav items (Features dropdown, About, Pricing, FAQ, Contact). Keep: Logo, tool page links or "Tools" anchor, GitHub button (pointed at real bnto repo — we're MIT open source), theme toggle, Sign In. Fix dead `/login` link → `/signin`. Reference `shadcn-blocks/blocks/navbar/navbar8.tsx` for structure — clean, fixed top, responsive mobile sheet.
-- [x] `apps/web` — **Footer rewrite:** Replace template footer. Real links: Tools (all 6 bnto slugs), GitHub repo, MIT license note. Remove fake social links (`@ausrobdev`). Simple and honest — no fake company sections. Browse `shadcn-blocks/blocks/footer/` for patterns.
-- [x] `infra` — **Connect bnto.io to Vercel:** Add CNAME/A records in Cloudflare DNS. Configure custom domain in Vercel dashboard. Verify HTTPS + deployment. Update `robots.txt` sitemap URL if domain changes from `bnto.dev`.
-
-#### Wave 2 (parallel — clean false claims + delete template garbage)
-
-**Messaging rule for this entire sprint:** "Browser tools" are free. Not "everything." Every claim about "free" must be scoped to browser tools. Never say "free forever" as a blanket. Never say "no upsells." Never promise unshipped features (desktop, CLI, AI tools, Pro tier pricing). See `.claude/plans/partitioned-tumbling-wigderson.md` Part 2 for the full messaging framework.
-
-- [x] `apps/web` — **HomeTimeline.tsx — Remove 3 unshipped sections:** Delete "Recipes" section (CLI terminal animation + "visual editor coming soon"), "Coming soon" section (6 fake tools with names/icons), and "Desktop" section (4 feature cards for nonexistent app). Keep only "How it works" and "Open source" sections. Remove `CodeLayout`, dead `INNER_RING`/`OUTER_RING` data for unshipped platforms (Desktop/CLI/Cloud) and tools (AI/Zip/JSON). Delete unused imports (`Terminal`, `AnimatedSpan`, `TypingAnimation` if orphaned).
-- [x] `apps/web` — **HomeTimeline.tsx — Fix BragCard claim:** Change `"Free forever — no upsells"` label to `"Free browser tools — no limits"`. The old copy directly contradicts the planned Pro tier.
-- [x] `apps/web` — **BntoGallery.tsx — Fix pitch point:** Change `"Desktop app coming soon — same tools, offline"` to `"Batch processing — drop multiple files at once"`. Desktop is not shipped.
-- [x] `apps/web` — **FAQ.tsx — Fix 3 answers:** (1) Remove "More formats are on the way." from file types answer. (2) Rewrite "What is Pro?" → "Will bnto always be free?" / "All browser tools are free, unlimited, forever. We plan to add a paid tier in the future for features that need server-side processing — like AI-powered tools. Browser tools will never have limits or require payment." (3) Rewrite "Do I need an account?" → "No. Drop your files and use any tool immediately. No account, no signup, no email required."
-- [x] `apps/web` — **copy.ts — Fix 2 constants:** `LICENSE_LINE` → "MIT Licensed. Browser tools free forever." `TRUST_LINE` → "Free, instant, private. Processed in your browser."
-- [x] `apps/web` — **Navbar.tsx — Remove Motorway button** from desktop and mobile nav.
-- [x] `apps/web` — **Move /motorway to /dev/motorway:** Create `app/(dev)/dev/motorway/page.tsx`, move content from `app/(app)/motorway/page.tsx`, delete old file. The `(dev)` route group keeps it accessible for internal use at `/dev/motorway` without cluttering the `(app)` shell.
-- [x] `apps/web` — **not-found.tsx — Verify GitHub URL** matches `GITHUB_URL` from `copy.ts` (`github.com/Develonaut/bnto`).
-- [x] `apps/web` — **Delete orphaned component files:** `Terminal.tsx` and `OrbitingCircles.tsx` (only used by deleted layouts).
-
-#### Wave 3 (parallel — write real content for home page + pricing)
-
-- [x] `apps/web` — **HomeTimeline.tsx — Rewrite Section A** ("How it works"): subtitle "How it works", title "Your browser does the work.\nNot a server.", body about browser-side processing vs server upload. Layout: keep BragLayout (stat cards + comparison bars). Competitive differentiator vs TinyPNG/CloudConvert.
-- [x] `apps/web` — **HomeTimeline.tsx — Rewrite Section B** ("No catch"): subtitle "No catch", title "Free tools that stay free.\nOpen source you can verify.", body about no signup/watermarks/caps. CTA: "View on GitHub" → GITHUB_URL. Layout: new TrustLayout — Card with crossed-out anti-patterns + "MIT Licensed · Open Source" badge.
-- [x] `apps/web` — **HomeTimeline.tsx — Replace orbit visualization** with TrustLayout card (crossed-out anti-patterns + GitHub CTA).
-- [x] `apps/web` — **Pricing.tsx — Complete rewrite:** Single "Free" tier card. Heading: "Simple pricing." Subheading: "Every browser tool is free. No limits, no signup, no catch." 8 feature bullets. CTA: "Start using bnto" → `/`. Below card: future premium note. Delete all "Mainline" template content. Server component.
-- [x] `apps/web` — **PricingTable.tsx — Deleted:** Removed template comparison table file entirely.
-- [x] `apps/web` — **pricing/page.tsx — Add metadata:** title "Pricing", description "All browser tools free, unlimited, forever. No signup required."
-- [x] `apps/web` — **Navbar.tsx — Add "Pricing" link** to desktop nav and mobile sheet.
-
-#### Wave 4 (sequential — polish, navigation, verify)
-
-- [x] `apps/web` — **Footer.tsx — Add Company column:** Pricing → `/pricing`, Privacy → `/privacy`, GitHub → `GITHUB_URL`.
-- [x] `apps/web` — **sitemap.ts — Add missing pages:** `/pricing` (priority 0.6), `/faq` (priority 0.5), `/privacy` (priority 0.3).
-- [x] `apps/web` — **Messaging audit (grep):** Verified: "free forever" only appears as "Browser tools free forever", "coming soon" zero results, "desktop" in marketing copy zero, "$8" or "Pro ($" zero, "Mainline" zero, "no upsells" zero.
-- [x] `apps/web` — **E2E: home page renders correctly.** Dropped — E2E is strictly for user journeys (auth, recipe execution). Home/pricing page rendering is verified via `task ui:build` + SEO metadata E2E tests.
-- [x] `apps/web` — **E2E: pricing page.** Dropped — same rationale. Pricing page verified via build + manual QA.
-- [x] `apps/web` — **E2E: no template content anywhere.** Grep built output for "Mainline", "shadcnblocks", "Mercury", "free daily catered lunch" — zero matches. Only "Example Site" remains in privacy.mdx (flagged below).
-- [x] `apps/web` — **SEO verification:** `task ui:build` passes clean (15/15 static pages). All pages generate: `/`, `/pricing`, `/faq`, `/privacy`, `/signin`, all 6 tool slugs, `/dev/motorway`, `sitemap.xml`. SEO metadata tests (`seo-metadata.spec.ts`) cover all Tier 1 slugs.
-- [x] `apps/web` — **Privacy policy audit:** Privacy policy (`privacy.mdx`) still says "Example Site" (3 occurrences), "www.example.com", "example@example.com", "California, United States", last updated "April 07, 2021". **Follow-up task added to Sprint 3 Wave 1.**
-- [x] `apps/web` — **Convert JS animations to CSS/Tailwind:** `ComparisonBar` refactored to pure CSS — removed `"use client"`, `useState`, `useEffect`, `setTimeout`. Now uses `data-active` attribute + CSS `transition` + `--bar-width` variable. `AnimatedCounter` refactored to use direct DOM writes (`ref.textContent`) instead of `useState` — eliminates ~72 React re-renders per animation. RAF kept (CSS can't display animated integers). `AnimatedBar` and `AnimatedRing` don't exist in the codebase (already removed).
+*Sprints 2A (Waves 4-5), 2.5 (Wave 3), 2B, and 2C are complete — see Completed Sprints above.*
 
 ---
 
@@ -287,11 +118,21 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 
 **Context:** M1 (browser execution) is delivered and Sprint 2C made the marketing pages presentable. But the actual tool pages — the core product experience — still feel like dev prototypes. All 6 recipes share the same pattern (file upload -> configure -> run -> download), so a unified UX pattern benefits all of them.
 
+**Persona:** `/frontend-engineer` for all waves. This is 100% `apps/web/` component and UX work — React, Next.js, theming, animation, E2E.
+
+#### Pre-task (sequential — core store infrastructure)
+
+Prerequisite for Wave 1. Establishes centralized Zustand store management in `@bnto/core` so recipe flow and future stores (Sprint 4 editor) follow the client/service architecture.
+
+- [ ] `@bnto/core` — `/core-architect` — **Add store management to `browserExecutionService`.** The `browserExecutionStore` currently lives as an ad-hoc singleton outside the client/service layer. Refactor so the service owns its store instance: (1) `browserExecutionService` creates the store internally via `createBrowserExecutionStore()` and exposes it as a `store` property. (2) Move execution orchestration (start/progress/complete/fail state transitions) from the `useBrowserExecution` hook into a `service.run()` method — the service owns the full lifecycle. (3) `useBrowserExecution` becomes a thin React binding: `useStore(core.browser.store, selector)` + callbacks that delegate to `core.browser.run()`. (4) Remove the module-level singleton export from `browserExecutionStore.ts` — keep only the `createBrowserExecutionStore()` factory for the service and tests. (5) Expose `store`, `run()`, `reset()` through `browserClient`. (6) Add orchestration lifecycle tests to `browserExecutionService.test.ts`. (7) Existing `browserExecutionStore.test.ts` stays unchanged (uses factory). Verify `task ui:build` + `task ui:test` pass.
+
+- [ ] `@bnto/core` — `/core-architect` — **Create `recipeFlowStore` factory and types.** New store for recipe page state: `files: File[]`, `config: BntoConfigMap[BntoSlug]`, `executionId: string | null`, `cloudPhase: RunPhase`, `clientError: string | null`. Actions: `setFiles`, `setConfig`, `startUpload()`, `startExecution(id)`, `failCloud(error)`, `reset(slug)`. Vanilla Zustand store (`createStore` from `zustand/vanilla`). Factory function `createRecipeFlowStore(slug)` initializes with default config for the slug. Store is page-scoped (created per `[bnto]` page mount, not a global singleton). Include unit tests for all state transitions. Place in `packages/core/src/stores/recipeFlowStore.ts`. Expose via `core.recipe.store` (new `recipeClient`/`recipeService` or extend `browserClient` — architect decides).
+
 #### Wave 1 (parallel — foundation: hook extraction + new UI components)
 
-Three independent pieces the new shell will compose. No cross-dependencies.
+Three independent pieces the new shell will compose. No cross-dependencies. **Depends on pre-task completion.**
 
-- [ ] `apps/web` — **Extract `useRecipeFlow` hook from BntoPageShell.** Move all state management (files, config, browser/cloud execution, phase derivation, handleRun, handleReset) into `app/[bnto]/_hooks/useRecipeFlow.ts`. The hook accepts `{ entry: BntoEntry }` and returns the full state + actions currently scattered across BntoPageShell. After extraction, `BntoPageShell` imports the hook and renders identically (drop-in, no visual change). Verify `task ui:build` passes. This task is pure extraction — no rendering changes.
+- [ ] `apps/web` — **Extract `useRecipeFlow` hook from BntoPageShell.** Move all state management (files, config, browser/cloud execution, phase derivation, handleRun, handleReset) into `app/[bnto]/_hooks/useRecipeFlow.ts`. The hook accepts `{ entry: BntoEntry }` and returns the full state + actions currently scattered across BntoPageShell. After extraction, `BntoPageShell` imports the hook and renders identically (drop-in, no visual change). Verify `task ui:build` passes. This task is pure extraction — no rendering changes. **Uses the recipe flow store from the pre-task below.**
 
 - [ ] `apps/web` — **Create `PhaseIndicator` component.** New file: `app/[bnto]/_components/PhaseIndicator.tsx`. Three phases: "Files" (1), "Configure" (2), "Results" (3). Props: `activePhase: 1 | 2 | 3`, `hasConfig?: boolean` (skip phase 2 label when false). Visual: horizontal row of circles connected by lines — active = `bg-primary`, completed = checkmark, upcoming = `bg-muted` outline. Responsive: circles + labels on desktop, circles only on mobile. Under 100 lines.
 
@@ -329,8 +170,28 @@ Visual refinement pass. Ensure the new layout meets the Motorway quality bar.
 
 ---
 
+### Sprint H: Housekeeping
+**Goal:** Address accumulated tech debt and quality-of-life improvements. No new features — just clean up what exists so future sprints build on a solid foundation.
+
+#### Wave 1 (parallel — all independent)
+
+- [ ] `apps/web` — `/frontend-engineer` — **Move `/dev/motorway` back to `/motorway`.** The `/dev/` prefix was a temporary measure. Now that the page is the editor playground (Sprint 4 Wave 3 target), give it a proper URL. Update any internal links, E2E tests, and nav references.
+- [ ] `engine` — `/rust-expert` — **Rust engine test location consistency audit.** Verify all crate tests follow the convention: unit tests in `#[cfg(test)]` blocks within source files, WASM integration tests in `tests/` directory. Relocate any misplaced tests.
+- [ ] `engine` — `/rust-expert` — **EXIF orientation test coverage verification.** Confirm `bnto-image` handles EXIF orientation metadata correctly for JPEG inputs. Add test cases for rotated/flipped images if missing.
+- [ ] `apps/web` — `/frontend-engineer` — **Replace `FileUpload` with `react-dropzone`.** The current `FileUpload` component has known react-hooks/immutability lint issues. Replace with a `react-dropzone`-based implementation that's composable and lint-clean. Preserve existing `data-testid` attributes for E2E tests.
+
+---
+
 ### Sprint 3: Platform Features (M2)
 **Goal:** Accounts earn their keep. Users who sign up get persistence, history, and a reason to stay. Conversion hooks are natural — Save, History, Server Nodes — not artificial run caps. See [pricing-model.md](strategy/pricing-model.md) for the full free vs premium framework.
+
+**Persona ownership:**
+| Package | Persona |
+|---------|---------|
+| `@bnto/backend` | `/backend-engineer` |
+| `@bnto/core` | `/core-architect` |
+| `apps/web` | `/frontend-engineer` |
+| `infra` | No specific persona — general |
 
 #### Wave 1 (parallel — account value + analytics schema)
 
@@ -344,33 +205,29 @@ Visual refinement pass. Ensure the new layout meets the Motorway quality bar.
 - [x] `monorepo` — **Full codebase coding standards review (multi-agent):** 5 parallel agents audited all packages against code-standards.md, architecture.md, components.md, and theming.md. 149 violations found (33 HIGH, 59 MEDIUM, 57 LOW) across Core, Frontend, Backend, Rust Engine, and Auth+Nodes domains. Key fixes: dot-notation migration for Popover/primitives, Raw*Doc types in @bnto/core (decouples transforms from backend), target-agnostic ProgressReporter in Rust engine (removes js-sys from bnto-core), ParameterSchema union types in @bnto/nodes, Convex function cleanup (explicit return types, error wrapping). All TS builds pass (6/6), all Rust tests pass (297 unit tests), all TS tests pass (447+ tests). Pre-existing lint issues in FileUpload.tsx (react-hooks/immutability) noted but not introduced by this task.
 - [x] `@bnto/backend` — `planTier` field on user schema (free, pro). Usage analytics fields: `totalRuns`, `lastRunAt`
 - [x] `@bnto/backend` — Execution analytics: aggregate queries for per-user history (by slug, by date range)
-- [ ] `@bnto/core` — `useExecutionHistory()` hook (paginated, per-user)
-- [ ] `@bnto/core` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
-- [ ] `apps/web` — WorkflowCard component (name, description, node count, last run status)
-- [ ] `apps/web` — StatusBadge component (pending, running, completed, failed)
-- [ ] `apps/web` — EmptyState component (no workflows yet)
+- [ ] `@bnto/core` — `/core-architect` — `useExecutionHistory()` hook (paginated, per-user)
+- [ ] `@bnto/core` — `/core-architect` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
+- [ ] `apps/web` — `/frontend-engineer` — WorkflowCard component (name, description, node count, last run status)
+- [ ] `apps/web` — `/frontend-engineer` — StatusBadge component (pending, running, completed, failed)
+- [ ] `apps/web` — `/frontend-engineer` — EmptyState component (no workflows yet)
 - [x] `apps/web` — **Site navigation journey tests (E2E):** Playwright user journey that navigates every public route on the site (home, all 6 tool slugs, pricing, FAQ, privacy, signin) with screenshot assertions at each stop. Verifies nav links work, no broken routes, and captures visual state as a regression baseline. Include mobile viewport variant.
 - [ ] `infra` — **Analytics layer decision:** Evaluate and select analytics tooling for user behavior and usage tracking. Candidates: Plausible (privacy-first, no cookies), PostHog (product analytics, self-hostable), Vercel Analytics (built-in), or custom Convex events. Decision criteria: privacy alignment (browser-first, no third-party tracking claims in privacy policy), cost, self-hostable option, event tracking depth (tool usage, conversion funnels, retention). Document decision in `.claude/decisions/`.
 - [ ] `infra` — **SEO validation tooling:** Set up Lighthouse CI in GitHub Actions for automated performance/SEO scoring on every PR. Configure Google Search Console for bnto.io (verify ownership, submit sitemap, monitor indexing). Add `task seo:audit` command that runs Lighthouse locally against all public routes and reports Core Web Vitals scores. Target: all pages green on Performance, Accessibility, Best Practices, SEO.
-- [ ] `apps/web` — **Move /dev/motorway back to /motorway:** Reverse the Sprint 2C move. The design system demo page should live at `/motorway`, not `/dev/motorway`. Move `app/(dev)/dev/motorway/page.tsx` to `app/(app)/motorway/page.tsx`, delete `(dev)` route group, update Footer link.
-- [ ] `engine` — **Rust engine test location consistency audit (multi-agent):** Audit all Rust crates under `engine/crates/` for inconsistent test placement. Some tests live next to code (`#[cfg(test)]` blocks in source files), others are in a separate `tests/` folder. Pick one convention and enforce it across all crates. This is a professionalism concern — the engine code should look intentional and consistent. Recommend: unit tests inline (`#[cfg(test)]`), integration/WASM tests in `tests/` directory.
-- [ ] `engine` — **EXIF orientation test coverage verification:** Verify that Rust engine-level tests exist for the photo flipping/rotation bug (EXIF orientation handling). Check `bnto-image` crate for tests that cover orientation-corrected dimensions for JPEG images with EXIF rotation metadata (orientation tags 1-8). If missing, add unit tests at the engine level — not just E2E tests via Playwright.
-- [ ] `apps/web` — **Replace home-rolled FileUpload with react-dropzone:** `components/ui/FileUpload.tsx` is 1400 lines of custom store, reducer, drag/drop, paste, file validation, and progress tracking — reimplementing what `react-dropzone` (v15, already installed) provides. Also causes 3 `react-hooks/immutability` lint errors from the custom store pattern. Only consumer: `FileDropZone.tsx`. Rewrite as a thin wrapper around `react-dropzone`, keep compound component API, target ~200-300 lines. Must pass all 6 bnto tool page E2E tests after.
 
 #### Wave 2 (parallel — dashboard + conversion hooks)
 
-- [ ] `apps/web` — Dashboard page: saved workflows, recent executions, usage analytics
-- [ ] `apps/web` — Execution history page (list of past runs with status, re-run capability)
-- [ ] `apps/web` — **Save prompt** (conversion hook): "Want to keep this workflow? Sign up to save it." — appears after successful browser execution for anonymous users
-- [ ] `apps/web` — **History prompt** (conversion hook): "Sign up to access your execution history and re-run past workflows."
-- [ ] `apps/web` — **Browser auth behavior verification:** Token expiry, sign-out invalidation (moved from Sprint 2A Wave 5)
-- [ ] `apps/web` — Pricing page update: Pro sells persistence, collaboration, premium compute — not run limits
+- [ ] `apps/web` — `/frontend-engineer` — Dashboard page: saved workflows, recent executions, usage analytics
+- [ ] `apps/web` — `/frontend-engineer` — Execution history page (list of past runs with status, re-run capability)
+- [ ] `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): "Want to keep this workflow? Sign up to save it." — appears after successful browser execution for anonymous users
+- [ ] `apps/web` — `/frontend-engineer` — **History prompt** (conversion hook): "Sign up to access your execution history and re-run past workflows."
+- [ ] `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation (moved from Sprint 2A Wave 5)
+- [ ] `apps/web` — `/frontend-engineer` — Pricing page update: Pro sells persistence, collaboration, premium compute — not run limits
 
 #### Wave 3 (sequential — test)
 
-- [ ] `apps/web` — Playwright E2E: save prompt appears after anonymous execution
-- [ ] `apps/web` — Playwright E2E: execution history page shows past runs for authenticated users
-- [ ] `@bnto/backend` — Unit tests for execution analytics queries
+- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: save prompt appears after anonymous execution
+- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: execution history page shows past runs for authenticated users
+- [ ] `@bnto/backend` — `/backend-engineer` — Unit tests for execution analytics queries
 
 ---
 
@@ -536,51 +393,58 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 **Goal:** Free desktop app. Same React frontend, local engine execution. Free forever, unlimited runs. No account needed. Trust signal and top-of-funnel growth driver.
 
-**Desktop tech depends on M1 outcome:**
-- If Rust WASM succeeded → **Tauri** (Rust-native). One codebase for browser + desktop + CLI.
-- If we bailed to JS → **Wails v2** (Go-native). Go engine powers desktop + CLI. JS adapters stay for browser.
+**Desktop tech: Tauri (Rust-native).** M1 Rust evaluation passed — one codebase for browser WASM + desktop native + CLI.
 
 ### Sprint 5: Desktop Bootstrap
 
+**Persona ownership:**
+| Package | Persona |
+|---------|---------|
+| `apps/desktop` | `/frontend-engineer` |
+| `@bnto/core` | `/core-architect` |
+| `engine` | `/rust-expert` |
+
 #### Wave 1 (parallel — setup)
 
-- [ ] `apps/desktop` — Bootstrap desktop project (Tauri or Wails, per M1 outcome)
-- [ ] `@bnto/core` — Implement desktop adapter (Tauri IPC bindings or Wails Go bindings)
-- [ ] `engine` — Expose engine functions for desktop bindings (RunWorkflow, ValidateWorkflow, etc.)
+- [ ] `apps/desktop` — `/frontend-engineer` — Bootstrap Tauri desktop project
+- [ ] `@bnto/core` — `/core-architect` — Implement desktop adapter (Tauri IPC bindings)
+- [ ] `engine` — `/rust-expert` — Expose engine functions for desktop bindings (RunWorkflow, ValidateWorkflow, etc.)
 
 #### Wave 2 (parallel — integration)
 
-- [ ] `apps/desktop` — Wire up native ↔ React bindings
-- [ ] `@bnto/core` — Runtime detection routes to desktop adapter in native webview
-- [ ] `apps/desktop` — Local file browser for selecting .bnto.json files
+- [ ] `apps/desktop` — `/frontend-engineer` — Wire up native ↔ React bindings
+- [ ] `@bnto/core` — `/core-architect` — Runtime detection routes to desktop adapter in native webview
+- [ ] `apps/desktop` — `/frontend-engineer` — Local file browser for selecting .bnto.json files
 
 #### Wave 3 (sequential — verify)
 
-- [ ] `apps/desktop` — Verify workflow list, edit, and save work via native bindings
-- [ ] `apps/desktop` — Verify runtime detection correctly identifies desktop environment
+- [ ] `apps/desktop` — `/frontend-engineer` — Verify workflow list, edit, and save work via native bindings
+- [ ] `apps/desktop` — `/frontend-engineer` — Verify runtime detection correctly identifies desktop environment
 
 ---
 
 ### Sprint 6: Local Execution
 
+**Persona ownership:** Same as Sprint 5 — `/frontend-engineer` (desktop UI), `/core-architect` (adapter), `/rust-expert` (engine).
+
 #### Wave 1 (parallel — execution)
 
-- [ ] `apps/desktop` — Execute workflows via Wails Go bindings (all 10 node types)
-- [ ] `@bnto/core` — Execution progress streaming via Wails adapter
-- [ ] `apps/web` — Execution progress component (reusable — node status, duration, logs)
+- [ ] `apps/desktop` — `/frontend-engineer` — Execute workflows via Tauri bindings (all node types)
+- [ ] `@bnto/core` — `/core-architect` — Execution progress streaming via Tauri adapter
+- [ ] `apps/web` — `/frontend-engineer` — Execution progress component (reusable — node status, duration, logs)
 
 #### Wave 2 (parallel — features)
 
-- [ ] `apps/desktop` — Execution results view (output data, logs, duration)
-- [ ] `apps/desktop` — shell-command node support (full local execution, no restrictions)
-- [ ] `apps/desktop` — Error handling and cancellation support
+- [ ] `apps/desktop` — `/frontend-engineer` — Execution results view (output data, logs, duration)
+- [ ] `apps/desktop` — `/rust-expert` — shell-command node support (full local execution, no restrictions)
+- [ ] `apps/desktop` — `/frontend-engineer` — Error handling and cancellation support
 
 #### Wave 3 (sequential — build + distribute)
 
-- [ ] `apps/desktop` — Integration tests for local execution
-- [ ] `apps/desktop` — macOS build (.app bundle, code signing)
-- [ ] `apps/desktop` — Windows build (.exe)
-- [ ] `apps/desktop` — Linux build (AppImage)
+- [ ] `apps/desktop` — `/frontend-engineer` — Integration tests for local execution
+- [ ] `apps/desktop` — `/frontend-engineer` — macOS build (.app bundle, code signing)
+- [ ] `apps/desktop` — `/frontend-engineer` — Windows build (.exe)
+- [ ] `apps/desktop` — `/frontend-engineer` — Linux build (AppImage)
 
 ---
 
@@ -598,23 +462,30 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 **What stays free forever:** All browser-capable bntos, unlimited runs, desktop app. See ROADMAP.md trust commitments.
 
+**Persona ownership:**
+| Package | Persona |
+|---------|---------|
+| `apps/web` | `/frontend-engineer` |
+| `@bnto/backend` | `/backend-engineer` |
+| `archive/api-go` | `/go-engineer` |
+
 #### Wave 1 (parallel — payments)
 
-- [ ] `apps/web` — Stripe integration (checkout session, webhook handler, subscription sync to Convex)
-- [ ] `@bnto/backend` — `planTier` updated on successful Stripe webhook (free → pro)
-- [ ] `apps/web` — Upgrade page (`/upgrade`) — pricing, Pro benefits, Stripe checkout CTA
-- [ ] `apps/web` — Billing management page (current plan, cancel, manage via Stripe portal)
+- [ ] `apps/web` — `/frontend-engineer` — Stripe integration (checkout session, webhook handler, subscription sync to Convex)
+- [ ] `@bnto/backend` — `/backend-engineer` — `planTier` updated on successful Stripe webhook (free → pro)
+- [ ] `apps/web` — `/frontend-engineer` — Upgrade page (`/upgrade`) — pricing, Pro benefits, Stripe checkout CTA
+- [ ] `apps/web` — `/frontend-engineer` — Billing management page (current plan, cancel, manage via Stripe portal)
 
 #### Wave 2 (parallel — Pro feature gates)
 
-- [ ] `@bnto/backend` — Pro feature gates: 30-day history retention, team sharing (up to 5 members), priority processing queue
-- [ ] `apps/api` — Server-side execution quota enforcement (applies to premium server-side bntos only — AI, shell, video)
-- [ ] `apps/web` — File size enforcement at R2 presigned URL generation for server-side recipes (Pro-only, size limits TBD based on usage data)
+- [ ] `@bnto/backend` — `/backend-engineer` — Pro feature gates: 30-day history retention, team sharing (up to 5 members), priority processing queue
+- [ ] `archive/api-go` — `/go-engineer` — Server-side execution quota enforcement (applies to premium server-side bntos only — AI, shell, video)
+- [ ] `apps/web` — `/frontend-engineer` — File size enforcement at R2 presigned URL generation for server-side recipes (Pro-only, size limits TBD based on usage data)
 
 #### Wave 3 (sequential — test)
 
-- [ ] `apps/web` — Playwright E2E: free user sees Pro conversion hooks (save, history, premium bntos)
-- [ ] `apps/web` — Playwright E2E: Pro user has access to saved workflows and execution history
+- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: free user sees Pro conversion hooks (save, history, premium bntos)
+- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: Pro user has access to saved workflows and execution history
 
 ---
 
@@ -628,29 +499,6 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 - [ ] `apps/web` — Container node visual nesting (group/loop as collapsible sub-canvases — future enhancement)
 - [ ] `apps/web` — Drag-and-drop from node palette to canvas position (Sprint 4 Wave 3 uses click-to-add; drag-and-drop is a polish pass)
 - [x] `apps/web` — JSON/Code editor → **Promoted to Sprint 4B** (CodeMirror 6, 5 waves, own persona `/code-editor-expert`). See Sprint 4B above.
-
----
-
-## Parallel Track: ADO Dashboard
-
-Real-world dogfooding. Runs alongside any phase.
-
-### Phase A: `ado` Node Type
-- [ ] `engine` — Implement `ado` node (WIQL queries, work items, test runs, build status)
-- [ ] `engine` — Unit tests with mock HTTP server
-- [ ] `engine` — Integration fixture `.bnto.json`
-- [ ] `engine` — Register in DefaultRegistry()
-
-### Phase B: `aggregate` Node Type
-- [ ] `engine` — Implement `aggregate` node (groupBy, count, sum, average, percentage, sortBy)
-- [ ] `engine` — Unit tests, integration test chaining with other node types
-
-### Phase C: `report` Node Type
-- [ ] `engine` — Implement `report` node (terminal, markdown, json output)
-- [ ] `engine` — Unit tests for each format
-
-### Phase D: Dashboard Templates
-- [ ] `engine` — 3-5 example dashboard `.bnto.json` fixtures in `engine/examples/`
 
 ---
 
@@ -674,10 +522,6 @@ Real-world dogfooding. Runs alongside any phase.
 - [ ] `engine` — Debug template resolution in `spreadsheet` node's `Execute()`
 - [ ] `engine` — Fix template variable resolution so `read-csv` receives the actual file path
 - [ ] `engine` — Verify fix: E2E `clean-csv` test passes (`task e2e`)
-
-### ~~Web: BntoPageShell Decomposition~~
-
-**RESOLVED:** BntoPageShell was rewired for the browser adapter in Sprint 2B Wave 2. The component routes Tier 1 bntos through the browser adapter and handles ZIP download for multi-file results. No further decomposition needed — the component is within size limits.
 
 ### Engine: Loop Node Output Collection — M3/M4 (Go engine)
 
@@ -751,10 +595,6 @@ The Convex dev deployment (`zealous-canary-422`) still contains stale data from 
 - [ ] `apps/web` — Add E2E test: `/sitemap.xml` is valid and contains all Tier 1 slugs
 - [ ] `apps/web` — Add Lighthouse CI with `seo: 90` threshold on `/compress-images`
 - [ ] `apps/web` — Migrate remaining SEO assertions from `seo-metadata.spec.ts` to unit tests, slim E2E to redirects + 404 + noindex only
-
-### ~~Testing: Suppress or Handle `[useAnonymousSession] signIn failed` in E2E~~
-
-**RESOLVED:** E2E tests now always run against the full dev stack (Next.js + Convex on port 4000). The "no backend" mode was removed — `useAnonymousSession` always has a backend to connect to.
 
 ### Testing: Standardize E2E Selectors on data-testid
 
@@ -845,13 +685,6 @@ Both controls feed into the same CSS custom property system that drives the dept
 - [ ] `apps/web` — Wire elevation into depth shadow length scaling in `globals.css`
 - [ ] `apps/web` — Replace `LightSourceSlider` on showcase page with RadialSlider + compass labels
 
-### ~~UI: Font Family Review~~ — DONE
-
-**Completed Feb 2026.** DM Sans replaced with Geist for display/headings. Final font stack: **Geist (display, font-black weight 900) + Inter (body) + Geist Mono (code)**. Mini Motorways-inspired: Swiss-style precision meets warm palette. Committed in `86cad62`.
-
-- [x] `apps/web` — Swapped display font to Geist, updated Heading component to font-black (900)
-- [x] `apps/web` — Typography showcase updated with actual font labels
-
 ### Performance: WASM Bundle Size & Processing Benchmarks
 
 **Deferred from Sprint 2B Wave 4.** Current WASM bundle: 1.6MB raw / 606KB gzipped (all 6 nodes in single cdylib). Above the original 500KB target by ~20%. Not blocking M1 but worth profiling.
@@ -902,21 +735,9 @@ Conversion messaging should be value-driven, not limit-driven. Hooks trigger on 
 - [ ] `apps/web` — Design conversion hook components (Save prompt, History prompt, Premium bnto upsell)
 - [ ] `apps/web` — Ensure all CTAs route to pricing page with value messaging, not "you've hit a limit"
 
-### Schema-Driven Config Panel (Single Source of Truth)
+### ~~Schema-Driven Config Panel~~ — SUPERSEDED
 
-**Prior art:** Atomiton project (`~/Code/atomiton`) — `createFieldsFromSchema` auto-derives UI field configs from schemas. ~70-80% of fields need zero UI code. See `packages/@atomiton/nodes/src/core/utils/createFieldsFromSchema.ts`.
-
-**Problem:** Frontend hardcodes per-node config shapes. Two sources of truth (Go engine + frontend).
-
-**Solution:** Define node parameter schemas in Go, expose as structured metadata, auto-derive config panel UI. Five implementation layers:
-
-1. **Go engine schema declarations** — `ParameterSchema` struct per node type, schema registry
-2. **API exposure** — `GET /nodes/{type}/schema` and `GET /nodes/schemas` endpoints
-3. **TypeScript consumption** — `createFieldsFromSchema()` utility, `useNodeSchema()` hook
-4. **Dynamic config panel** — Generic `ConfigPanel` rendering from `FieldConfig[]`, per-bnto overrides (~20-30%)
-5. **Pipeline integrity tests** — E2E + contract tests verifying schema-to-UI pipeline
-
-See detailed task breakdown in `.claude/archive/schema-driven-config-panel.md` (archived from original plan).
+**Superseded by `@bnto/nodes` + Sprint 4 Wave 3.** The original plan assumed Go engine schemas exposed via API. With Rust WASM as the primary engine, `@bnto/nodes` already defines all 10 node type schemas in TypeScript with `ParameterSchema` objects. Sprint 4 Wave 3's `NodeConfigPanel` auto-generates form fields from these schemas (the Atomiton `createFieldsFromSchema` pattern). No separate "schema-driven config panel" task needed.
 
 ### UX: Execution Activity Feed — M2 (Sprint 3)
 
@@ -958,26 +779,6 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 - JSON editor must represent recursive structure faithfully
 - Visual editor (Sprint 4) must support drill-down into group nodes
 
-### DX: Agent Persona Skills & Skill Refactor
-
-**Priority: Next.** Define developer persona skills that agents load for domain-specific context. This improves output quality by priming agents with the right mental model for the work they're about to do.
-
-**What to build:**
-- **Persona skills** in `.claude/skills/personas/<name>/SKILL.md` — each defines a domain expert role with context, vocabulary, and quality standards. All set `user-invocable: false` (Claude-only reference, not user-invoked):
-  - `rust-expert` — Rust/WASM developer. Owns `engine/`. Knows ownership, lifetimes, wasm-bindgen, wasm-pack. Educational comments.
-  - `go-engineer` — Go engine developer. Owns `archive/engine-go/`, `archive/api-go/`. Node type system, BntoService, registry.
-  - `frontend-engineer` — React/Next.js developer. Owns `apps/web/`. Component system, theming, animation, user journey E2E.
-  - `core-architect` — Transport-agnostic API. Owns `packages/core/`. Client/service/adapter pattern, React Query, integration testing.
-  - `backend-engineer` — Convex backend. Owns `packages/@bnto/backend/`, `packages/@bnto/auth/`. Schema, auth, quota, scheduled functions, `convex-test`.
-  - `security-engineer` — Cross-cutting security. Owns trust boundaries across all packages. Auth model, input validation, defense in depth.
-  - `project-manager` — Strategic alignment. Owns roadmap, plan, milestones, sprint transitions, backlog prioritization.
-- **All skills updated** to reference personas via `personas/<name>/SKILL.md` paths and load domain-appropriate persona(s) including security when relevant.
-
-- [x] `.claude/skills/` — Create persona skill files (rust-expert, go-engineer, frontend-engineer, core-architect, project-manager)
-- [x] `.claude/skills/` — Rename `/groom` to `/project-manager`, update content to persona-aware
-- [x] `.claude/skills/` — Update `/pickup`, `/code-review`, `/pre-commit` to load relevant persona before execution
-- [x] `.claude/skills/` — Test: run `/pickup` on an `[engine]` task and verify Rust persona context is loaded
-- [x] `.claude/skills/` — Add security-engineer and backend-engineer personas, restructure all personas to folder/SKILL.md format with frontmatter
 
 ---
 

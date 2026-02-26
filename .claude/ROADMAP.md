@@ -15,7 +15,7 @@ Bnto is the one place small teams go to get things done — compress images, cle
 |--------|------|-----------|--------------|
 | **Browser** (Rust→WASM) | M1 (now) | $0 | Free forever |
 | **Cloud** (Go or Rust, per M1 outcome) | M4 (premium) | ~$5/mo base | Pro tier |
-| **Desktop** (Tauri or Wails, per M1 outcome) | M3 | $0 | Free forever |
+| **Desktop** (Tauri, Rust-native) | M3 | $0 | Free forever |
 | **CLI** (Go binary) | Already built | $0 | Free forever (OSS) |
 
 **The insight:** Browser execution for Tier 1 bntos costs us nothing and gives users unlimited free runs. Cloud execution becomes a premium feature for things the browser can't do (AI, shell commands, video). This inverts the old model where cloud execution was the default and free runs were artificially capped.
