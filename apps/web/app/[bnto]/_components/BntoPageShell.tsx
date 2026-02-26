@@ -1,30 +1,18 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { core } from "@bnto/core";
 import type { BntoEntry } from "@/lib/bntoRegistry";
-import { getRecipe } from "@/lib/menu";
-import dynamic from "next/dynamic";
 import { Heading } from "@/components/ui/Heading";
-
-const BntoConfigPanel = dynamic(() =>
-  import("./BntoConfigPanel").then((m) => ({ default: m.BntoConfigPanel })),
-  { ssr: false },
-);
-import type { BntoConfigMap, BntoSlug } from "./configs/types";
-import { DEFAULT_CONFIGS } from "./configs/types";
+import { useRecipeFlow } from "../_hooks/useRecipeFlow";
+import { BntoConfigPanel } from "./BntoConfigPanel";
 import { FileDropZone } from "./FileDropZone";
 import { UpgradePrompt } from "./UpgradePrompt";
 import { UploadProgress } from "./UploadProgress";
 import { RunButton } from "./RunButton";
-import type { RunPhase } from "./RunButton";
 import { ExecutionProgress } from "./ExecutionProgress";
 import { ExecutionResults } from "./ExecutionResults";
 import { BrowserExecutionProgress } from "./BrowserExecutionProgress";
 import { BrowserExecutionResults } from "./BrowserExecutionResults";
 import { ErrorCard } from "./ErrorCard";
-import { useBrowserEngine } from "@/lib/wasm/useBrowserEngine";
-import { toBrowserPhase, toCloudPhase } from "./phaseMapping";
 
 interface BntoPageShellProps {
   entry: BntoEntry;
@@ -47,95 +35,26 @@ interface BntoPageShellProps {
  *   4. Results downloaded from R2
  */
 export function BntoPageShell({ entry }: BntoPageShellProps) {
-  const { isPending: sessionPending, quotaExhausted } = core.user.useRunQuota();
-  const { data: currentUser } = core.user.useCurrentUser();
-  const [config, setConfig] = useState<BntoConfigMap[BntoSlug]>(
-    DEFAULT_CONFIGS[entry.slug as BntoSlug] ?? {},
-  );
-  const [files, setFiles] = useState<File[]>([]);
-
-  // -- Execution path: browser (WASM) vs cloud (R2 + Go API) --
-  const isBrowserPath = core.browser.hasImplementation(entry.slug);
-  useBrowserEngine(isBrowserPath);
-
-  // -- Browser execution --
   const {
-    execution: browserExec,
-    execute: browserExecute,
-    downloadResult,
-    downloadAll,
-    reset: resetBrowser,
-  } = core.browser.useBrowserExecution();
-
-  // -- Cloud execution --
-  const [executionId, setExecutionId] = useState<string | null>(null);
-  const [cloudPhase, setCloudPhase] = useState<RunPhase>("idle");
-  const [clientError, setClientError] = useState<string | null>(null);
-  const { progress, upload, reset: resetUpload } = core.uploads.useUploadFiles();
-  const { mutateAsync: startCloudExec } = core.executions.useRunPredefined();
-  const { data: cloudExecution } = core.executions.useExecution(executionId ?? "");
-
-  // -- Resolved phase (unified across both paths) --
-  const resolvedPhase: RunPhase = isBrowserPath
-    ? toBrowserPhase(browserExec.status)
-    : toCloudPhase(cloudPhase, cloudExecution?.status);
-
-  const handleRun = useCallback(async () => {
-    if (files.length === 0) return;
-
-    if (isBrowserPath) {
-      await browserExecute(
-        entry.slug,
-        files,
-        config as Record<string, unknown>,
-      );
-      return;
-    }
-
-    // Cloud path
-    const definition = getRecipe(entry.slug)?.definition;
-    if (!definition) return;
-
-    setClientError(null);
-    try {
-      setCloudPhase("uploading");
-      const session = await upload(files);
-
-      setCloudPhase("running");
-      const id = await startCloudExec({
-        slug: entry.slug,
-        definition,
-        sessionId: session.sessionId,
-      });
-      setExecutionId(String(id));
-    } catch (e) {
-      setCloudPhase("failed");
-      setClientError(e instanceof Error ? e.message : "Something went wrong");
-    }
-  }, [
-    entry.slug,
+    sessionPending,
+    quotaExhausted,
+    currentUser,
+    isBrowserPath,
     files,
     config,
-    isBrowserPath,
-    browserExecute,
-    upload,
-    startCloudExec,
-  ]);
-
-  const handleReset = useCallback(() => {
-    setFiles([]);
-    if (isBrowserPath) {
-      resetBrowser();
-    } else {
-      setExecutionId(null);
-      setCloudPhase("idle");
-      setClientError(null);
-      resetUpload();
-    }
-  }, [isBrowserPath, resetBrowser, resetUpload]);
-
-  const isProcessing =
-    resolvedPhase === "uploading" || resolvedPhase === "running";
+    setFiles,
+    setConfig,
+    browserExec,
+    downloadResult,
+    downloadAll,
+    executionId,
+    uploadProgress,
+    resolvedPhase,
+    isProcessing,
+    clientError,
+    handleRun,
+    handleReset,
+  } = useRecipeFlow({ entry });
 
   return (
     <div
@@ -184,7 +103,7 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
               <BrowserExecutionResults
                 execution={browserExec}
                 onDownload={downloadResult}
-                onDownloadAll={() => downloadAll(entry.slug)}
+                onDownloadAll={downloadAll}
               />
             )}
             {isBrowserPath &&
@@ -195,9 +114,9 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
 
             {/* Cloud execution feedback */}
             {!isBrowserPath &&
-              progress.files.length > 0 &&
+              uploadProgress.files.length > 0 &&
               resolvedPhase === "uploading" && (
-                <UploadProgress files={progress.files} />
+                <UploadProgress files={uploadProgress.files} />
               )}
             {!isBrowserPath && executionId && resolvedPhase === "running" && (
               <ExecutionProgress executionId={executionId} />
