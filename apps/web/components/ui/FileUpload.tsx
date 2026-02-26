@@ -664,6 +664,7 @@ function FileUpload(props: FileUploadProps) {
             multiple={multiple}
             required={required}
             onChange={onInputChange}
+            suppressHydrationWarning
           />
           <div id={labelId} className="sr-only">
             {label ?? "File upload"}

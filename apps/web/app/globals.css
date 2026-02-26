@@ -830,6 +830,7 @@
   border-radius: inherit;
   background: var(--depth-wall);
   transform: translate3d(var(--depth-x), var(--depth-y), -1px);
+  pointer-events: none;
 }
 
 /* Ground shadow — cast in the --light-angle direction.
@@ -842,6 +843,7 @@
   border-radius: inherit;
   background: var(--depth-shadow);
   transform: translate3d(var(--shadow-x), var(--shadow-y), -2px);
+  pointer-events: none;
 }
 
 /* ── Size modifiers ─────────────────────────────────────────────

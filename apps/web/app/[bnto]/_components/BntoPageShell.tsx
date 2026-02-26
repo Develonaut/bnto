@@ -12,7 +12,12 @@ import {
 } from "@bnto/core";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { getRecipe } from "@/lib/menu";
-import { BntoConfigPanel } from "./BntoConfigPanel";
+import dynamic from "next/dynamic";
+
+const BntoConfigPanel = dynamic(() =>
+  import("./BntoConfigPanel").then((m) => ({ default: m.BntoConfigPanel })),
+  { ssr: false },
+);
 import type { BntoConfigMap, BntoSlug } from "./configs/types";
 import { DEFAULT_CONFIGS } from "./configs/types";
 import { FileDropZone } from "./FileDropZone";

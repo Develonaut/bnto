@@ -5,6 +5,10 @@ import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { BntoPageShell } from "./_components/BntoPageShell";
 
+/** Only slugs from generateStaticParams are valid — everything else is 404
+ * at the routing level (no component code runs for unknown slugs). */
+export const dynamicParams = false;
+
 /** Pre-render all registered slugs at build time. */
 export function generateStaticParams() {
   return BNTO_REGISTRY.map((bnto) => ({ bnto: bnto.slug }));
