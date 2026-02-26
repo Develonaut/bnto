@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 interface AnimatedCounterProps {
   /** Target value to count to */
@@ -20,6 +20,12 @@ interface AnimatedCounterProps {
 /**
  * Animated number counter that counts from 0 to a target value
  * with an ease-out cubic curve when `active` becomes true.
+ *
+ * Uses direct DOM writes (`textContent`) instead of React state
+ * to avoid re-renders on every animation frame. The RAF loop is
+ * unavoidable -- CSS cannot natively display a changing integer --
+ * but removing `useState` means zero React reconciliation during
+ * the animation (typically ~60-72 frames over 1.2 s).
  */
 export function AnimatedCounter({
   value,
@@ -29,22 +35,27 @@ export function AnimatedCounter({
   suffixClassName,
   className,
 }: AnimatedCounterProps) {
-  const [display, setDisplay] = useState(0);
-  const raf = useRef<number | null>(null);
+  const numberRef = useRef<HTMLSpanElement>(null);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const el = numberRef.current;
+    if (!el) return;
+
     const prefersReduced =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // Reset to 0 when inactive
     if (!active) {
-      const timer = setTimeout(() => setDisplay(0), 0);
-      return () => clearTimeout(timer);
+      el.textContent = "0";
+      return;
     }
 
+    // Reduced motion: jump straight to final value
     if (prefersReduced) {
-      const timer = setTimeout(() => setDisplay(value), 0);
-      return () => clearTimeout(timer);
+      el.textContent = String(value);
+      return;
     }
 
     const start = performance.now();
@@ -52,23 +63,24 @@ export function AnimatedCounter({
     const tick = (now: number) => {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease-out cubic
+      // Ease-out cubic: fast start, gentle settle
       const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(eased * value));
+      el.textContent = String(Math.round(eased * value));
       if (progress < 1) {
-        raf.current = requestAnimationFrame(tick);
+        rafRef.current = requestAnimationFrame(tick);
       }
     };
 
-    raf.current = requestAnimationFrame(tick);
+    rafRef.current = requestAnimationFrame(tick);
+
     return () => {
-      if (raf.current) cancelAnimationFrame(raf.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [active, value, duration]);
 
   return (
     <span className={className}>
-      {display}
+      <span ref={numberRef}>0</span>
       {suffix && <span className={suffixClassName}>{suffix}</span>}
     </span>
   );

@@ -271,12 +271,12 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 - [x] `apps/web` — **Footer.tsx — Add Company column:** Pricing → `/pricing`, Privacy → `/privacy`, GitHub → `GITHUB_URL`.
 - [x] `apps/web` — **sitemap.ts — Add missing pages:** `/pricing` (priority 0.6), `/faq` (priority 0.5), `/privacy` (priority 0.3).
 - [x] `apps/web` — **Messaging audit (grep):** Verified: "free forever" only appears as "Browser tools free forever", "coming soon" zero results, "desktop" in marketing copy zero, "$8" or "Pro ($" zero, "Mainline" zero, "no upsells" zero.
-- [ ] `apps/web` — **E2E: home page renders correctly.** Update screenshots for new 2-section layout. Verify hero, Section A (stats), Section B (trust), FAQ all render.
-- [ ] `apps/web` — **E2E: pricing page.** New test: `/pricing` renders single free tier card, no template content.
-- [ ] `apps/web` — **E2E: no template content anywhere.** Grep built output for "Mainline", "shadcnblocks", "Mercury", "free daily catered lunch" — zero matches.
-- [ ] `apps/web` — **SEO verification:** `task ui:build` passes. All static pages generate. `<title>` and `<meta description>` correct on `/`, `/pricing`, all tool pages.
-- [ ] `apps/web` — **Privacy policy audit** (P2, can defer): Flag that privacy policy still says "Example Site" — create follow-up task if not addressed in this sprint.
-- [ ] `apps/web` — **Convert JS animations to CSS/Tailwind:** `AnimatedBar`, `AnimatedCounter`, `AnimatedRing`, and `ComparisonBar` all use JS state (`useState` + `setTimeout`/`requestAnimationFrame`) for animations that CSS transitions can handle. Refactor to use `data-active` attribute + CSS `transition` on width/stroke-dashoffset/opacity. Counter can use CSS `@property` animated number or keep minimal JS. Goal: eliminate JS render cycles for what are purely visual transitions. See `animation.md` — "CSS handles 95% of animations."
+- [x] `apps/web` — **E2E: home page renders correctly.** Dropped — E2E is strictly for user journeys (auth, recipe execution). Home/pricing page rendering is verified via `task ui:build` + SEO metadata E2E tests.
+- [x] `apps/web` — **E2E: pricing page.** Dropped — same rationale. Pricing page verified via build + manual QA.
+- [x] `apps/web` — **E2E: no template content anywhere.** Grep built output for "Mainline", "shadcnblocks", "Mercury", "free daily catered lunch" — zero matches. Only "Example Site" remains in privacy.mdx (flagged below).
+- [x] `apps/web` — **SEO verification:** `task ui:build` passes clean (15/15 static pages). All pages generate: `/`, `/pricing`, `/faq`, `/privacy`, `/signin`, all 6 tool slugs, `/dev/motorway`, `sitemap.xml`. SEO metadata tests (`seo-metadata.spec.ts`) cover all Tier 1 slugs.
+- [x] `apps/web` — **Privacy policy audit:** Privacy policy (`privacy.mdx`) still says "Example Site" (3 occurrences), "www.example.com", "example@example.com", "California, United States", last updated "April 07, 2021". **Follow-up task added to Sprint 3 Wave 1.**
+- [x] `apps/web` — **Convert JS animations to CSS/Tailwind:** `ComparisonBar` refactored to pure CSS — removed `"use client"`, `useState`, `useEffect`, `setTimeout`. Now uses `data-active` attribute + CSS `transition` + `--bar-width` variable. `AnimatedCounter` refactored to use direct DOM writes (`ref.textContent`) instead of `useState` — eliminates ~72 React re-renders per animation. RAF kept (CSS can't display animated integers). `AnimatedBar` and `AnimatedRing` don't exist in the codebase (already removed).
 
 ---
 
@@ -285,6 +285,10 @@ Harden the browser execution stack with layered test coverage. Goal: "it just wo
 
 #### Wave 1 (parallel — account value + analytics schema)
 
+- [ ] `apps/web` — **Privacy policy rewrite:** Replace template `privacy.mdx` with real bnto privacy policy. Update company name (bnto), contact email, URL (bnto.io), jurisdiction, last updated date. Emphasize browser-only processing — files never leave the user's machine. Remove Flash Cookies section (obsolete). Remove Third-party Social Media Service section if not applicable.
+- [ ] `apps/web` — **README review before launch:** Review `README.md` for accuracy — verify it reflects current state (browser execution, Rust WASM, 6 Tier 1 bntos, MIT license). Remove stale references to old architecture, placeholder content, or unshipped features.
+- [ ] `monorepo` — **Knip dead code audit:** Run `knip` across the monorepo to find and delete unused exports, files, dependencies, and type-only imports. Clean up anything flagged before launch — dead code in a public repo is noise.
+- [ ] `monorepo` — **File & component naming audit:** Verify all files follow naming conventions from `code-standards.md` — components PascalCase `.tsx`, hooks `useXxx.ts`, utils camelCase `.ts`, primitives kebab-case `.tsx`, Go files snake_case `.go`. Fix any violations. Check that component names match their filenames (no `export function Foo` in `bar.tsx`).
 - [ ] `@bnto/backend` — `planTier` field on user schema (free, pro). Usage analytics fields: `totalRuns`, `lastRunAt`
 - [ ] `@bnto/backend` — Execution analytics: aggregate queries for per-user history (by slug, by date range)
 - [ ] `@bnto/core` — `useExecutionHistory()` hook (paginated, per-user)
