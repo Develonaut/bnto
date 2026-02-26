@@ -82,6 +82,34 @@ Tests are **mandatory** for most changes. Determine which type:
 - **Pure utils/functions** (any `utils/` directory) -> **Unit tests** co-located next to the source file. No exceptions for utils.
 - **Configuration or type-only changes** -> Tests not required.
 
+### E2E Screenshot Regression Gate (MANDATORY)
+
+**Every commit that touches visual output MUST include up-to-date screenshots.** Stale screenshots are broken tests -- they cause false failures for every subsequent agent and developer. There is no excuse for skipping this; the scripts exist.
+
+**When to regenerate:**
+
+Ask yourself: **did you modify ANY file that affects what renders on screen?** This includes components, layouts, pages, CSS/theme tokens, fonts, primitives, animation classes, or anything in `apps/web/` that changes visual output. If yes, you MUST regenerate screenshots.
+
+**How to regenerate:**
+
+```bash
+# 1. Ensure dev stack is running
+curl -s -o /dev/null -w "%{http_code}" http://localhost:4000 || task dev &
+
+# 2. Run e2e with --update-snapshots to regenerate baselines
+cd apps/web && pnpm exec playwright test --update-snapshots
+
+# 3. Run again WITHOUT --update-snapshots to verify they pass
+pnpm exec playwright test
+
+# 4. Stage the updated screenshots with the rest of your changes
+git add e2e/**/__screenshots__/*.png
+```
+
+**Both runs are required.** The first regenerates baselines. The second proves they're stable. If the second run has screenshot mismatches, the baselines are flaky -- investigate and fix before proceeding.
+
+**Intermittent "01 Issue" hydration failures** are known (PopoverTrigger `asChild` SSR mismatch). These are NOT screenshot failures. If the only failures in the second run are "01 Issue" overlay detections with zero screenshot mismatches, that's acceptable. Report them to the user but do not block the commit.
+
 ### Did you touch UI?
 
 Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, page, or layout that a user will see or interact with?**
@@ -121,7 +149,7 @@ After running E2E tests, agents MUST verify screenshot health:
 
 **After making changes, you MUST clean up anything that your changes have invalidated.** This includes:
 
-- **Screenshots** -- If you changed visual output, delete stale `.png` files. They regenerate on the next e2e run with `--update-snapshots`.
+- **Screenshots** -- If you changed visual output, regenerate with `--update-snapshots` (see Screenshot Regression Gate above). Never delete screenshots without regenerating -- stale baselines break every subsequent test run.
 - **Test assertions** -- If you changed behavior, update any unit tests that assert on the old behavior.
 - **Code references** -- If you renamed, removed, or changed exports, find and update all consumers.
 - **Documentation** -- If you changed behavior that's documented, update the docs to match.
