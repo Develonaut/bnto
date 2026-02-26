@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { core } from "@bnto/core";
 
-import { GithubIcon, XIcon } from "@/components/ui/icons";
+import { GithubIcon, LogOutIcon, XIcon } from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Sheet } from "@/components/ui/Sheet";
+import { Text } from "@/components/ui/Text";
 import { GITHUB_URL } from "@/lib/copy";
 
 /* ── Types ────────────────────────────────────────────────────── */
@@ -24,17 +27,29 @@ interface RecipeCategory {
 
 /* ── MobileNavMenu ────────────────────────────────────────────── */
 
+// FIXME: Feels like there's potentially a lot of duplication between our Desktop and Mobile NavBar. Let's ensure we use compositional and reusable parts between the two so the nav bars only need to focus on the parts they care about
+
 export function MobileNavMenu({
   open,
-  setOpen,
+  onOpenChange,
   recipes,
 }: {
   open: boolean;
-  setOpen: (open: boolean) => void;
+  onOpenChange: (open: boolean) => void;
   recipes: RecipeCategory[];
 }) {
+  const { isAuthenticated, user } = core.auth.useAuth();
+  const signOut = core.auth.useSignOut();
+  const router = useRouter();
+
+  function handleSignOut() {
+    signOut();
+    onOpenChange(false);
+    router.replace("/signin");
+  }
+
   return (
-    <Sheet.Root open={open} onOpenChange={setOpen}>
+    <Sheet.Root open={open} onOpenChange={onOpenChange}>
       <Sheet.Content
         aria-describedby={undefined}
         side="top"
@@ -77,7 +92,7 @@ export function MobileNavMenu({
                           <li key={link.url}>
                             <Link
                               href={link.url}
-                              onClick={() => setOpen(false)}
+                              onClick={() => onOpenChange(false)}
                               className="text-lg leading-normal font-medium text-primary-foreground"
                             >
                               {link.label}
@@ -96,14 +111,14 @@ export function MobileNavMenu({
                   <Button
                     variant="outline"
                     href="/pricing"
-                    onClick={() => setOpen(false)}
+                    onClick={() => onOpenChange(false)}
                   >
                     Pricing
                   </Button>
                   <Button
                     variant="outline"
                     href="/faq"
-                    onClick={() => setOpen(false)}
+                    onClick={() => onOpenChange(false)}
                   >
                     FAQ
                   </Button>
@@ -118,6 +133,48 @@ export function MobileNavMenu({
                     <span className="sr-only">GitHub</span>
                   </Button>
                 </div>
+
+                {/* Auth */}
+                {/* FIXME: Should have a Shareable component between mobile and desktop */}
+                <div className="h-px bg-white/20" />
+                {isAuthenticated ? (
+                  <div className="flex flex-col gap-3">
+                    {(user?.name || user?.email) && (
+                      <div>
+                        {user.name && (
+                          <Text
+                            size="sm"
+                            className="font-medium text-primary-foreground"
+                          >
+                            {user.name}
+                          </Text>
+                        )}
+                        {user.email && (
+                          <Text size="xs" className="text-white/60">
+                            {user.email}
+                          </Text>
+                        )}
+                      </div>
+                    )}
+                    <Button
+                      variant="outline"
+                      onClick={handleSignOut}
+                      data-testid="mobile-sign-out"
+                    >
+                      <LogOutIcon />
+                      Sign out
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    href="/signin"
+                    onClick={() => onOpenChange(false)}
+                    data-testid="mobile-sign-in"
+                  >
+                    Sign In
+                  </Button>
+                )}
               </div>
             </div>
           </Container>

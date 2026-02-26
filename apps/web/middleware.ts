@@ -6,7 +6,11 @@ import {
 import { isAuthPath, isProtectedPath } from "@/lib/routes";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
-function hasSignoutSignal(request: Request & { cookies: { has(name: string): boolean } }) {
+// FIXME: Next.js has deprecated the naming of MiddlewareNotFoundError.ts. I believe it's proxy.ts now. Please research best practives for this
+
+function hasSignoutSignal(
+  request: Request & { cookies: { has(name: string): boolean } },
+) {
   return request.cookies.has(SIGNOUT_COOKIE);
 }
 
@@ -38,11 +42,11 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
 
   const isAuthenticated = await convexAuth.isAuthenticated();
 
-  // Tier 1: Auth routes — redirect to home if already authenticated
-  if (isAuthenticated && isAuthPath(pathname)) {
-    if (hasSignoutSignal(request)) {
-      return nextjsMiddlewareRedirect(request, pathname);
-    }
+  // Tier 1: Auth routes — redirect to home if already authenticated.
+  // Skip redirect when signout signal cookie is set — the user is either
+  // signing out (needs to reach /signin despite stale session cookie) or
+  // is an anonymous user navigating to sign up.
+  if (isAuthenticated && isAuthPath(pathname) && !hasSignoutSignal(request)) {
     return nextjsMiddlewareRedirect(request, "/");
   }
 

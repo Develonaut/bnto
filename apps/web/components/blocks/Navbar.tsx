@@ -5,21 +5,23 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import {
-  BookOpenIcon,
-  GithubIcon,
-  MenuIcon,
-} from "@/components/ui/icons";
+import { BookOpenIcon, GithubIcon, MenuIcon } from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
 import { Menu } from "@/components/ui/Menu";
 import { GITHUB_URL } from "@/lib/copy";
+import { isAuthPath } from "@/lib/routes";
 
 import { MobileNavMenu } from "./MobileNavMenu";
 import { NavThemeMenu } from "./NavThemeMenu";
+import { NavUser } from "./NavUser";
 
+// FIXME: Make contstan.ts file to house magic numbers and values.
+// Also this type of stuff should be doabel via css. PLease research examples in the shadcn-blocks
+// repo to see how switching from mobile and desktop nav is handled.
+// /Users/ryan/Code/shadcn-blocks
 const MOBILE_BREAKPOINT = 1024;
 
 interface RecipeLink {
@@ -97,6 +99,7 @@ function navButtonProps(
 export const Navbar = () => {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  // FIXME: This is a code smell.
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   // Clear pending state once the pathname catches up.
@@ -104,6 +107,8 @@ export const Navbar = () => {
   if (pendingHref && pathname === pendingHref) {
     setPendingHref(null);
   }
+
+  const hidden = isAuthPath(pathname);
 
   useEffect(() => {
     const handleResize = () => {
@@ -122,6 +127,10 @@ export const Navbar = () => {
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "auto";
   }, [open]);
+
+  // Hide navbar on auth screens (signin, signup)
+  // FIXME: Our routes/layout should be compsable enough for this to be done via composition instead.
+  if (hidden) return null;
 
   return (
     <section>
@@ -173,17 +182,28 @@ export const Navbar = () => {
                     </ul>
                   </Menu.Content>
                 </Menu>
+                {/* FIXME: Make reusable NavButton for buttons in the Nav */}
                 <Button
                   variant="outline"
                   href="/pricing"
-                  {...navButtonProps(pathname, "/pricing", setPendingHref, pendingHref)}
+                  {...navButtonProps(
+                    pathname,
+                    "/pricing",
+                    setPendingHref,
+                    pendingHref,
+                  )}
                 >
                   Pricing
                 </Button>
                 <Button
                   variant="outline"
                   href="/faq"
-                  {...navButtonProps(pathname, "/faq", setPendingHref, pendingHref)}
+                  {...navButtonProps(
+                    pathname,
+                    "/faq",
+                    setPendingHref,
+                    pendingHref,
+                  )}
                 >
                   FAQ
                 </Button>
@@ -215,6 +235,7 @@ export const Navbar = () => {
                   <span className="sr-only">GitHub</span>
                 </Button>
                 <NavThemeMenu />
+                <NavUser />
               </div>
             </div>
           </Card>
@@ -222,7 +243,7 @@ export const Navbar = () => {
       </div>
 
       {/* Mobile Navigation Sheet */}
-      <MobileNavMenu open={open} setOpen={setOpen} recipes={RECIPES} />
+      <MobileNavMenu open={open} onOpenChange={setOpen} recipes={RECIPES} />
     </section>
   );
 };

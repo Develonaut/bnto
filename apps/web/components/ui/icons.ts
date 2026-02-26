@@ -46,6 +46,8 @@ export {
   Sunset as SunsetIcon,
   Trash2 as TrashIcon,
   Upload as UploadIcon,
+  CircleUser as CircleUserIcon,
+  LogOut as LogOutIcon,
   X as XIcon,
   XCircle as XCircleIcon,
   Zap as ZapIcon,

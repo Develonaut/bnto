@@ -8,8 +8,6 @@ import { XIcon } from "@/components/ui/icons";
 
 import { cn } from "@/lib/cn";
 
-const Sheet = SheetPrimitive.Root;
-
 const SheetTrigger = SheetPrimitive.Trigger;
 
 const SheetClose = SheetPrimitive.Close;

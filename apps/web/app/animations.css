@@ -1,0 +1,90 @@
+/* ── Entrance Keyframes ──────────────────────────────────────────
+ * "from" only — animation ends at the element's natural state.
+ * animation-fill-mode: both handles the rest.
+ *
+ * Spring easing on these creates the Mini Motorways "pop onto
+ * the map" feel — elastic overshoot that settles naturally.
+ * ────────────────────────────────────────────────────────────── */
+
+/* Pure opacity — overlays, subtle reveals */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Opacity + scale — cards, panels, buildings materializing */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    scale: var(--scale-from, 0.9);
+  }
+}
+
+/* Opacity + upward translate — content reveals, list items */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    translate: 0 var(--slide-distance, 8px);
+  }
+}
+
+/* Opacity + downward translate — dropdowns, menus */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    translate: 0 calc(-1 * var(--slide-distance, 8px));
+  }
+}
+
+/* ── Emphasis Keyframes ──────────────────────────────────────── */
+
+/* Gentle opacity pulse — like MM building demand timer */
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Ambient breathe — very subtle idle presence */
+@keyframes breathe {
+  0%,
+  100% {
+    scale: 1;
+  }
+  50% {
+    scale: 1.015;
+  }
+}
+
+/* ── Stagger Cascade ───────────────────────────────────────────
+ * Container class. Children receive staggered animation-delay
+ * via --stagger-index CSS variable set in JSX.
+ *
+ * Usage:
+ *   .stagger-cascade container with children that each set
+ *   style="--stagger-index: N" and class="motion-safe:animate-slide-up"
+ * ──────────────────────────────────────────────────────────── */
+.stagger-cascade > * {
+  animation-delay: calc(
+    var(--stagger-index, 0) * var(--stagger-interval, 60ms)
+  );
+}
+
+/* ── InView gate: pause entrance animations until visible ────
+ * Elements inside [data-in-view="false"] stay at their `from`
+ * keyframe state (invisible) until IntersectionObserver fires.
+ * ──────────────────────────────────────────────────────────── */
+[data-in-view="false"]
+  :is(
+    .motion-safe\:animate-scale-in,
+    .motion-safe\:animate-fade-in,
+    .motion-safe\:animate-slide-up,
+    .motion-safe\:animate-slide-down
+  ) {
+  animation-play-state: paused;
+}

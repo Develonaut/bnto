@@ -8,7 +8,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AppShell.Main>
+    <AppShell.Main clearance="none">
       <Suspense>{children}</Suspense>
     </AppShell.Main>
   );
