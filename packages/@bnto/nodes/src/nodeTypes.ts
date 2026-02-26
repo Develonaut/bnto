@@ -168,28 +168,9 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   },
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;
 
-/** Returns true if the given string is a registered node type name. */
-export function isNodeType(value: string): value is NodeTypeName {
-  return NODE_TYPE_NAMES.includes(value as NodeTypeName);
-}
-
-/** Returns the info for a node type, or undefined if not registered. */
-export function getNodeTypeInfo(
-  typeName: string,
-): NodeTypeInfo | undefined {
-  return NODE_TYPE_INFO[typeName as NodeTypeName];
-}
-
-/** Returns all node types that can run in the browser. */
-export function getBrowserCapableTypes(): readonly NodeTypeInfo[] {
-  return NODE_TYPE_NAMES.filter((n) => NODE_TYPE_INFO[n].browserCapable).map(
-    (n) => NODE_TYPE_INFO[n],
-  );
-}
-
-/** Returns all container node types (group, loop, parallel). */
-export function getContainerTypes(): readonly NodeTypeInfo[] {
-  return NODE_TYPE_NAMES.filter((n) => NODE_TYPE_INFO[n].isContainer).map(
-    (n) => NODE_TYPE_INFO[n],
-  );
-}
+// Functions extracted to individual files per one-export-per-file rule.
+// Re-exported here for backward compatibility.
+export { isNodeType } from "./isNodeType";
+export { getNodeTypeInfo } from "./getNodeTypeInfo";
+export { getBrowserCapableTypes } from "./getBrowserCapableTypes";
+export { getContainerTypes } from "./getContainerTypes";

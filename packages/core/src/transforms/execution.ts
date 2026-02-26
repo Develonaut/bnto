@@ -1,10 +1,7 @@
-import type { Doc } from "@bnto/backend/convex/_generated/dataModel";
+import type { RawExecutionDoc, RawExecutionLogDoc } from "../types/raw";
 import type { Execution, ExecutionLog } from "../types";
 
-type ExecutionDoc = Doc<"executions">;
-type ExecutionLogDoc = Doc<"executionLogs">;
-
-export function toExecution(doc: ExecutionDoc): Execution {
+export function toExecution(doc: RawExecutionDoc): Execution {
   return {
     id: String(doc._id),
     userId: String(doc.userId),
@@ -20,7 +17,7 @@ export function toExecution(doc: ExecutionDoc): Execution {
   };
 }
 
-export function toExecutionLog(doc: ExecutionLogDoc): ExecutionLog {
+export function toExecutionLog(doc: RawExecutionLogDoc): ExecutionLog {
   return {
     id: String(doc._id),
     executionId: String(doc.executionId),

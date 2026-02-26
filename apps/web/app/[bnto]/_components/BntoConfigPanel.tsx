@@ -1,5 +1,6 @@
 "use client";
 
+import { Heading } from "@/components/ui/Heading";
 import { CleanCsvConfig } from "./configs/CleanCsvConfig";
 import { CompressImagesConfig } from "./configs/CompressImagesConfig";
 import { ConvertFormatConfig } from "./configs/ConvertFormatConfig";
@@ -27,7 +28,7 @@ export function BntoConfigPanel({
 }: BntoConfigPanelProps) {
   return (
     <div className="rounded-xl border border-border bg-card p-5">
-      <h2 className="text-foreground mb-4 text-sm font-semibold">Settings</h2>
+      <Heading level={2} size="xs" className="text-foreground mb-4 text-sm font-semibold">Settings</Heading>
       {renderConfig(slug, config, onChange)}
     </div>
   );

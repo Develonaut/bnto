@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAppUserId } from "./_helpers/auth";
 
@@ -59,7 +59,7 @@ export const save = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    if (userId === null) throw new ConvexError("Not authenticated");
 
     const existing = await ctx.db
       .query("workflows")
@@ -97,10 +97,10 @@ export const remove = mutation({
   args: { id: v.id("workflows") },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
-    if (userId === null) throw new Error("Not authenticated");
+    if (userId === null) throw new ConvexError("Not authenticated");
     const workflow = await ctx.db.get(args.id);
     if (workflow === null || workflow.userId !== userId) {
-      throw new Error("Workflow not found");
+      throw new ConvexError("Workflow not found");
     }
     await ctx.db.delete(args.id);
   },

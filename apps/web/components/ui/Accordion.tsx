@@ -66,4 +66,4 @@ const Accordion = Object.assign(AccordionRoot, {
   Content: AccordionContent,
 });
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
+export { Accordion };

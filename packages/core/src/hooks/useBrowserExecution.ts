@@ -3,10 +3,8 @@
 import { useCallback, useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { core } from "../core";
-import {
-  browserExecutionStore,
-  useBrowserExecutionStore,
-} from "../stores/browserExecutionStore";
+import { browserExecutionStore } from "../stores/browserExecutionStore";
+import { useBrowserExecutionStore } from "./useBrowserExecutionStore";
 import type {
   BrowserFileProgress,
   BrowserFileResult,

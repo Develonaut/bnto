@@ -42,7 +42,9 @@ export const getUsageStats = query({
   },
 });
 
-/** Reset run counters for all users whose reset time has passed. */
+/** Reset run counters for users whose reset time has passed.
+ *  Uses the `by_runsResetAt` index to only fetch users due for reset,
+ *  with a batch limit to stay within Convex mutation budgets. */
 export const resetRunCounters = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -53,14 +55,16 @@ export const resetRunCounters = internalMutation({
     nextMonth.setHours(0, 0, 0, 0);
     const nextReset = nextMonth.getTime();
 
-    const users = await ctx.db.query("users").collect();
-    for (const user of users) {
-      if (user.runsResetAt <= now) {
-        await ctx.db.patch(user._id, {
-          runsUsed: 0,
-          runsResetAt: nextReset,
-        });
-      }
+    const dueUsers = await ctx.db
+      .query("users")
+      .withIndex("by_runsResetAt", (q) => q.lte("runsResetAt", now))
+      .take(100);
+
+    for (const user of dueUsers) {
+      await ctx.db.patch(user._id, {
+        runsUsed: 0,
+        runsResetAt: nextReset,
+      });
     }
   },
 });

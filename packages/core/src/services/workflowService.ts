@@ -8,6 +8,10 @@ import {
 } from "../adapters/convex/workflowAdapter";
 import { toWorkflow, toWorkflowListItem } from "../transforms/workflow";
 import { getQueryClient } from "../client";
+import type {
+  RawWorkflowDoc,
+  RawWorkflowListProjection,
+} from "../types/raw";
 
 export function createWorkflowService() {
   function invalidateList() {
@@ -24,16 +28,19 @@ export function createWorkflowService() {
 
   return {
     // ── Query Options ─────────────────────────────────────────────
+    // Note: convexQuery returns opaque types, so select receives `unknown`.
+    // The cast to Raw* types is a trust boundary — Convex docs match our
+    // raw type definitions by construction (derived from the same schema).
     listQueryOptions: () => ({
       ...getWorkflowsQuery(),
-      select: (data: unknown[]) =>
-        (data as Parameters<typeof toWorkflowListItem>[0][]).map(toWorkflowListItem),
+      select: (data: unknown) =>
+        (data as RawWorkflowListProjection[]).map(toWorkflowListItem),
     }),
 
     getQueryOptions: (id: string) => ({
       ...getWorkflowQuery(id),
       select: (data: unknown) =>
-        data ? toWorkflow(data as Parameters<typeof toWorkflow>[0]) : null,
+        data ? toWorkflow(data as RawWorkflowDoc) : null,
     }),
 
     // ── Mutations ─────────────────────────────────────────────────

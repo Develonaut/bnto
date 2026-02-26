@@ -3,36 +3,27 @@
  *
  * Each function validates the `parameters` of a specific node type.
  * Returns an array of ValidationError (never throws).
+ *
+ * NOTE: 6 validators are co-located here because each is short (4-18 lines),
+ * they share private helpers (err, getStringParam), and they form a single
+ * cohesive dispatch table. Extracting each to its own file would add overhead
+ * without meaningful clarity gain. Revisit if any validator exceeds 30 lines.
  */
 
 import type { Definition } from "./definition";
+import { HTTP_METHODS } from "./schemas/httpRequest";
+import { LOOP_MODES } from "./schemas/loop";
+import { FILE_OPERATIONS } from "./schemas/fileSystem";
 import type { ValidationError } from "./validate";
 
-/** Valid HTTP methods matching Go's isValidHTTPMethod. */
-const VALID_HTTP_METHODS = new Set([
-  "GET",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "HEAD",
-  "OPTIONS",
-]);
+/** Valid HTTP methods — derived from the schema's canonical array. */
+const VALID_HTTP_METHODS = new Set<string>(HTTP_METHODS);
 
-/** Valid loop modes matching Go's isValidLoopMode. */
-const VALID_LOOP_MODES = new Set(["forEach", "times", "while"]);
+/** Valid loop modes — derived from the schema's canonical array. */
+const VALID_LOOP_MODES = new Set<string>(LOOP_MODES);
 
-/** Valid file-system operations matching Go's isValidFileOperation. */
-const VALID_FILE_OPERATIONS = new Set([
-  "read",
-  "write",
-  "copy",
-  "move",
-  "delete",
-  "mkdir",
-  "exists",
-  "list",
-]);
+/** Valid file-system operations — derived from the schema's canonical array. */
+const VALID_FILE_OPERATIONS = new Set<string>(FILE_OPERATIONS);
 
 function err(nodeId: string, field: string, message: string): ValidationError {
   return { nodeId, field, message };

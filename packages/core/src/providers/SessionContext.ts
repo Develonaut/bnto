@@ -1,9 +1,7 @@
 "use client";
 
 import { createContext } from "react";
-
-/** Authentication status as tracked by the SessionProvider. */
-export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
+import type { AuthStatus } from "../types/auth";
 
 export interface SessionContextValue {
   /** Current authentication status. */

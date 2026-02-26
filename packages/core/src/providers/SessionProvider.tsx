@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+// Pragmatic exception: SessionProvider is Convex-specific bootstrap
+// infrastructure. It wraps useConvexAuth to provide the SessionContext that
+// the rest of core consumes via hooks (useReady, useIsAuthenticated, etc.).
+// This is the adapter boundary for auth state — not a leak.
 import { useConvexAuth } from "convex/react";
-import { SessionContext, type AuthStatus } from "./SessionContext";
+import { SessionContext } from "./SessionContext";
+import type { AuthStatus } from "../types/auth";
 
 interface SessionProviderProps {
   children: React.ReactNode;

@@ -29,7 +29,8 @@ export default defineSchema({
     lastRunAt: v.optional(v.number()), // timestamp of most recent run
   })
     .index("email", ["email"])
-    .index("by_anonymous", ["isAnonymous"]),
+    .index("by_anonymous", ["isAnonymous"])
+    .index("by_runsResetAt", ["runsResetAt"]),
 
   workflows: defineTable({
     userId: v.id("users"),
@@ -76,7 +77,8 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
-    .index("by_workflow", ["workflowId"]),
+    .index("by_workflow", ["workflowId"])
+    .index("by_status_startedAt", ["status", "startedAt"]),
 
   executionLogs: defineTable({
     executionId: v.id("executions"),

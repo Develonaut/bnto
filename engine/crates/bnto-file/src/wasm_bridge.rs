@@ -48,10 +48,18 @@
 
 use wasm_bindgen::prelude::*;
 
+use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
 use crate::rename::RenameFiles;
+
+// Helper: convert BntoError to JsValue at the WASM boundary.
+// This conversion used to live in bnto-core, but was removed to keep
+// bnto-core target-agnostic (no wasm-bindgen dependency).
+fn bnto_err_to_js(error: BntoError) -> JsValue {
+    JsError::new(&error.to_string()).into()
+}
 
 // =============================================================================
 // Rename File — Metadata Variant
@@ -138,7 +146,15 @@ pub fn rename_file(
 
     // --- Step 3: Create the processor and progress reporter ---
     let processor = RenameFiles::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap the JS callback in a Rust closure so ProgressReporter stays
+    // target-agnostic (no js_sys dependency in bnto-core).
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     // --- Step 4: Run the rename ---
     //
@@ -150,7 +166,7 @@ pub fn rename_file(
     // (defined in bnto-core/errors.rs) to create a JS Error object.
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Build a JSON result string ---
     //
@@ -219,11 +235,19 @@ pub fn rename_file_bytes(
     };
 
     let processor = RenameFiles::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap the JS callback in a Rust closure so ProgressReporter stays
+    // target-agnostic (no js_sys dependency in bnto-core).
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // Return just the first file's bytes.
     // Rename-files always produces exactly one output file.

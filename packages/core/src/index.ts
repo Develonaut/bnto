@@ -41,9 +41,5 @@ export type {
   BrowserFileProgress,
 } from "./types";
 
-// ── Session types ─────────────────────────────────────────────────────────
-export type { AuthStatus } from "./providers/SessionContext";
-
 // ── Auth types ────────────────────────────────────────────────────────────
-export type { AuthUser, AuthState } from "./hooks/useAuth";
-
+export type { AuthUser, AuthState, AuthStatus } from "./types/auth";

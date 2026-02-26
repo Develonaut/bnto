@@ -1,6 +1,10 @@
 "use client";
 
 import { QueryClient, QueryCache, MutationCache } from "@tanstack/react-query";
+// Pragmatic exception: client.ts is Convex-specific bootstrap infrastructure.
+// It creates the singleton Convex + React Query clients that the entire adapter
+// layer depends on. This is the root of the Convex adapter tree — when desktop
+// ships, it will be replaced with a Wails-specific client module.
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { ConvexReactClient } from "convex/react";
 import { emitAuthError, isAuthError } from "./authError";

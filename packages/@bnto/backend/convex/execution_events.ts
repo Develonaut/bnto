@@ -6,6 +6,11 @@ import { getAppUserId } from "./_helpers/auth";
  * Log the start of a Bnto execution.
  * Accepts either an authenticated userId (derived from session) or a
  * browser fingerprint for anonymous users. At least one must be provided.
+ *
+ * NOTE: Both `start` and `startPredefined` in executions.ts also insert
+ * events directly for server-side executions. This mutation is the client-
+ * facing path used by browser-only (WASM) executions that have no server-
+ * side execution record.
  */
 export const logStart = mutation({
   args: {
@@ -85,7 +90,10 @@ export const listByUser = query({
   },
 });
 
-/** List execution events for a browser fingerprint, most recent first. */
+/** List execution events for a browser fingerprint, most recent first.
+ *  PUBLIC: Used by anonymous quota display on the client. The fingerprint
+ *  is opaque (hash), not PII. Rate limiting should be added at the
+ *  transport layer if enumeration becomes a concern. */
 export const listByFingerprint = query({
   args: {
     fingerprint: v.string(),
@@ -103,7 +111,9 @@ export const listByFingerprint = query({
   },
 });
 
-/** Count runs for a fingerprint in the current month. For anonymous quota checks. */
+/** Count runs for a fingerprint in the current month. For anonymous quota checks.
+ *  PUBLIC: Used by the client to display remaining anonymous runs.
+ *  See listByFingerprint note on enumeration risk. */
 export const countByFingerprint = query({
   args: {
     fingerprint: v.string(),
@@ -116,12 +126,14 @@ export const countByFingerprint = query({
       1,
     ).getTime();
 
+    // Only the count is needed -- use .take() with a safety cap rather than
+    // .collect() to prevent unbounded reads for heavy anonymous users.
     const events = await ctx.db
       .query("executionEvents")
       .withIndex("by_fingerprint_timestamp", (q) =>
         q.eq("fingerprint", args.fingerprint).gte("timestamp", monthStart),
       )
-      .collect();
+      .take(1000);
 
     return events.length;
   },

@@ -33,9 +33,12 @@ export const generateUploadUrls = action({
     ),
   },
   handler: async (ctx, args) => {
-    // Determine user plan (authenticated users get their plan, anon = free)
+    // Require authentication — only signed-in users can get upload URLs.
     const user = await ctx.runQuery(api.users.getMe);
-    const plan = user?.plan ?? "free";
+    if (!user) {
+      throw new ConvexError("Authentication required to upload files");
+    }
+    const plan = user.plan;
 
     // Validate all files before generating any URLs
     const error = validateUploadBatch(args.files, plan);

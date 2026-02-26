@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/useTheme";
 
 import { RotateCcwIcon, SunIcon } from "@/components/ui/icons";
 

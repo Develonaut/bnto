@@ -5,6 +5,7 @@ import { core } from "@bnto/core";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { getRecipe } from "@/lib/menu";
 import dynamic from "next/dynamic";
+import { Heading } from "@/components/ui/Heading";
 
 const BntoConfigPanel = dynamic(() =>
   import("./BntoConfigPanel").then((m) => ({ default: m.BntoConfigPanel })),
@@ -148,9 +149,9 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
       }
       data-execution-mode={isBrowserPath ? "browser" : "cloud"}
     >
-      <h1 className="text-2xl tracking-tight md:text-4xl lg:text-5xl">
+      <Heading level={1}>
         {entry.h1}
-      </h1>
+      </Heading>
       <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
         {entry.description}
       </p>

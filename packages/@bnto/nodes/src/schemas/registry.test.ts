@@ -190,8 +190,8 @@ describe("enum constants", () => {
     expect(LOOP_MODES).toHaveLength(3);
   });
 
-  it("IMAGE_OPERATIONS has 5 operations", () => {
-    expect(IMAGE_OPERATIONS).toHaveLength(5);
+  it("IMAGE_OPERATIONS has 4 operations", () => {
+    expect(IMAGE_OPERATIONS).toHaveLength(4);
   });
 
   it("IMAGE_FORMATS has 3 formats", () => {

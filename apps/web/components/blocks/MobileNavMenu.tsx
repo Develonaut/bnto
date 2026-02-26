@@ -66,7 +66,7 @@ export function MobileNavMenu({
                       key={category.title}
                       className="flex flex-col gap-4 text-primary-foreground"
                     >
-                      <div className="text-xs uppercase tracking-wider text-white/60">
+                      <div className="text-xs uppercase tracking-wider text-primary-foreground/60">
                         {category.title}
                       </div>
                       <ul className="flex flex-col gap-3">
@@ -113,7 +113,7 @@ export function MobileNavMenu({
                 </div>
 
                 {/* Auth section */}
-                <div className="h-px bg-white/20" />
+                <div className="h-px bg-primary-foreground/20" />
                 {isAuthenticated && user?.email ? (
                   <div className="flex flex-col gap-3">
                     {(user.name || user.email) && (
@@ -127,7 +127,7 @@ export function MobileNavMenu({
                           </Text>
                         )}
                         {user.email && (
-                          <Text size="xs" className="text-white/60">
+                          <Text size="xs" className="text-primary-foreground/60">
                             {user.email}
                           </Text>
                         )}

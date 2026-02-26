@@ -76,7 +76,7 @@ function FileStatusIcon({
       );
     case "completed":
       return (
-        <CheckCircle2Icon className="size-4 shrink-0 text-green-600 dark:text-green-400" />
+        <CheckCircle2Icon className="size-4 shrink-0 text-success" />
       );
     case "failed":
       return (

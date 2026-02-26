@@ -155,8 +155,11 @@ export function validateDefinition(def: Definition): ValidationError[] {
 /**
  * Validates an entire workflow definition tree.
  *
- * Top-level entry point — validates the root definition
- * and all nested children recursively.
+ * This is a convenience alias for `validateDefinition` -- both functions
+ * are identical. Prefer `validateDefinition` for new code. This alias
+ * is kept for backward compatibility.
+ *
+ * @deprecated Use `validateDefinition` directly.
  */
 export function validateWorkflow(def: Definition): ValidationError[] {
   return validateDefinition(def);

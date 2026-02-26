@@ -5,13 +5,7 @@ import * as React from "react";
 import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContentUnstyled,
-  PopoverPortal,
-  PopoverTrigger,
-} from "@/components/ui/Popover";
+import { Popover } from "@/components/ui/Popover";
 
 /* ── Menu ────────────────────────────────────────────────────────
  * A composed menu component: Button trigger + Card dropdown.
@@ -42,15 +36,15 @@ const MenuTrigger = React.forwardRef<
 >(({ children, ...props }, ref) => {
   const open = React.useContext(MenuContext);
   return (
-    <PopoverAnchor asChild>
+    <Popover.Anchor asChild>
       <div className="inline-flex">
-        <PopoverTrigger asChild>
+        <Popover.Trigger asChild>
           <Button ref={ref} hovered={open} {...props}>
             {children}
           </Button>
-        </PopoverTrigger>
+        </Popover.Trigger>
       </div>
-    </PopoverAnchor>
+    </Popover.Anchor>
   );
 });
 MenuTrigger.displayName = "MenuTrigger";
@@ -70,8 +64,8 @@ const OFFSET_PX: Record<MenuOffset, number> = {
 };
 
 const MenuContent = React.forwardRef<
-  React.ElementRef<typeof PopoverContentUnstyled>,
-  Omit<React.ComponentPropsWithoutRef<typeof PopoverContentUnstyled>, "sideOffset"> & {
+  React.ElementRef<typeof Popover.ContentUnstyled>,
+  Omit<React.ComponentPropsWithoutRef<typeof Popover.ContentUnstyled>, "sideOffset"> & {
     depth?: "none" | "sm" | "md" | "lg";
     offset?: MenuOffset;
     boundary?: Element | null;
@@ -82,8 +76,8 @@ const MenuContent = React.forwardRef<
     { className, children, offset = "md", depth = "lg", boundary, boundaryPadding = 16, ...props },
     ref,
   ) => (
-    <PopoverPortal>
-      <PopoverContentUnstyled
+    <Popover.Portal>
+      <Popover.ContentUnstyled
         ref={ref}
         sideOffset={OFFSET_PX[offset]}
         collisionBoundary={boundary ?? undefined}
@@ -96,8 +90,8 @@ const MenuContent = React.forwardRef<
             {children}
           </Card>
         </Animate.ScaleIn>
-      </PopoverContentUnstyled>
-    </PopoverPortal>
+      </Popover.ContentUnstyled>
+    </Popover.Portal>
   ),
 );
 MenuContent.displayName = "MenuContent";

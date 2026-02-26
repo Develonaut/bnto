@@ -2,7 +2,7 @@
  * File System node schema — parameters for file operations.
  *
  * Go source: engine/pkg/node/library/filesystem/filesystem.go
- * Validator: engine/pkg/validator/validators.go → validateFileSystem
+ * Validator: engine/pkg/validator/validators.go -> validateFileSystem
  */
 
 import type { NodeSchema } from "./types";
@@ -54,8 +54,14 @@ export const fileSystemSchema: NodeSchema = {
       required: false,
       label: "Source",
       description: "Source file path for copy or move operations.",
-      visibleWhen: { param: "operation", equals: "copy" },
-      requiredWhen: { param: "operation", equals: "copy" },
+      visibleWhen: [
+        { param: "operation", equals: "copy" },
+        { param: "operation", equals: "move" },
+      ],
+      requiredWhen: [
+        { param: "operation", equals: "copy" },
+        { param: "operation", equals: "move" },
+      ],
     },
     {
       name: "dest",
@@ -63,8 +69,14 @@ export const fileSystemSchema: NodeSchema = {
       required: false,
       label: "Destination",
       description: "Destination file path for copy or move operations.",
-      visibleWhen: { param: "operation", equals: "copy" },
-      requiredWhen: { param: "operation", equals: "copy" },
+      visibleWhen: [
+        { param: "operation", equals: "copy" },
+        { param: "operation", equals: "move" },
+      ],
+      requiredWhen: [
+        { param: "operation", equals: "copy" },
+        { param: "operation", equals: "move" },
+      ],
     },
   ],
 } as const;

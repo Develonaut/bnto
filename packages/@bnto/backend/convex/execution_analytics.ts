@@ -17,10 +17,12 @@ export const aggregateBySlug = query({
     const userId = await getAppUserId(ctx);
     if (userId === null) return [];
 
+    // Safety limit: load at most 10,000 events for aggregation.
+    // Users with higher volume will need a pre-computed aggregation strategy.
     const events = await ctx.db
       .query("executionEvents")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .collect();
+      .take(10_000);
 
     // Group events by slug and compute per-slug aggregates
     const bySlug = new Map<
@@ -123,12 +125,13 @@ export const summaryByDateRange = query({
     const userId = await getAppUserId(ctx);
     if (userId === null) return null;
 
+    // Safety limit: cap at 10,000 events per summary query.
     const events = await ctx.db
       .query("executionEvents")
       .withIndex("by_userId_timestamp", (q) =>
         q.eq("userId", userId).gte("timestamp", args.from).lte("timestamp", args.to),
       )
-      .collect();
+      .take(10_000);
 
     let completedRuns = 0;
     let failedRuns = 0;

@@ -22,18 +22,24 @@ export const markStaleAsFailed = internalMutation({
     const cutoff = Date.now() - STALE_THRESHOLD_MS;
     const now = Date.now();
 
-    const stale = await ctx.db
+    // Query pending and running executions separately using the compound
+    // index, then merge. Two indexed queries are far cheaper than a full
+    // table scan with .filter().
+    const pendingStale = await ctx.db
       .query("executions")
-      .filter((q) =>
-        q.and(
-          q.or(
-            q.eq(q.field("status"), "pending"),
-            q.eq(q.field("status"), "running"),
-          ),
-          q.lt(q.field("startedAt"), cutoff),
-        ),
+      .withIndex("by_status_startedAt", (q) =>
+        q.eq("status", "pending").lt("startedAt", cutoff),
       )
       .take(MAX_PER_RUN);
+
+    const runningStale = await ctx.db
+      .query("executions")
+      .withIndex("by_status_startedAt", (q) =>
+        q.eq("status", "running").lt("startedAt", cutoff),
+      )
+      .take(MAX_PER_RUN);
+
+    const stale = [...pendingStale, ...runningStale].slice(0, MAX_PER_RUN);
 
     const cleaned: Array<{ id: string; sessionId?: string }> = [];
 
@@ -70,7 +76,7 @@ export const cleanupStaleExecutions = internalAction({
   handler: async (ctx): Promise<{ cleaned: number }> => {
     const { cleaned } = await ctx.runMutation(
       internal.cleanup_stale.markStaleAsFailed,
-    );
+    ) as { cleaned: Array<{ id: string; sessionId?: string }> };
 
     for (const exec of cleaned) {
       if (exec.sessionId) {

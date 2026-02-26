@@ -3,13 +3,13 @@ import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
 import { Password } from "@convex-dev/auth/providers/Password";
 import { Value } from "convex/values";
 import {
-  getAnonymousRunLimit,
-  getFreePlanRunLimit,
-} from "./_helpers/run_limits";
-import { Id } from "./_generated/dataModel";
+  resolveAnonymousUpgrade,
+  handleExistingUser,
+  handleNewUser,
+} from "./_helpers/user_lifecycle";
 
 /**
- * Custom Password provider that detects anonymous → password upgrades.
+ * Custom Password provider that detects anonymous -> password upgrades.
  *
  * PROBLEM: @convex-dev/auth v0.0.90 creates a new user when an anonymous
  * user signs up with a password. The library resolves `existingUserId`
@@ -18,7 +18,7 @@ import { Id } from "./_generated/dataModel";
  * sees no existing user and creates a new one.
  *
  * COMPLICATION: The `createOrUpdateUser` callback runs inside the `store`
- * internal mutation, which has NO auth context — `ctx.auth.getUserIdentity()`
+ * internal mutation, which has NO auth context -- `ctx.auth.getUserIdentity()`
  * returns null. So we can't detect the anonymous session there.
  *
  * FIX: The Password provider's `authorize` function runs in the `signIn`
@@ -63,7 +63,7 @@ function PasswordWithAnonymousUpgrade() {
     delete params._anonymousUserId;
 
     // During signUp, detect if the caller has an active anonymous session.
-    // The action context HAS auth — the store mutation does not.
+    // The action context HAS auth -- the store mutation does not.
     if (params.flow === "signUp") {
       try {
         const identity = await ctx.auth.getUserIdentity();
@@ -75,7 +75,7 @@ function PasswordWithAnonymousUpgrade() {
           }
         }
       } catch {
-        // No identity — fresh signup, not an upgrade
+        // No identity -- fresh signup, not an upgrade
       }
     }
 
@@ -93,7 +93,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
      *
      * - New anonymous user: creates user doc with ANONYMOUS_RUN_LIMIT.
      * - New real user (email/password): creates user doc with FREE_PLAN_RUN_LIMIT.
-     * - Anonymous → real upgrade: patches existing user, bumps runLimit to
+     * - Anonymous -> real upgrade: patches existing user, bumps runLimit to
      *   FREE_PLAN_RUN_LIMIT, preserves the same _id so all workflows,
      *   executions, and run counts stay associated.
      *
@@ -103,62 +103,24 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
     async createOrUpdateUser(ctx, args) {
       let { existingUserId } = args;
 
-      // WORKAROUND: Detect anonymous → password upgrade via profile.
-      // The PasswordWithAnonymousUpgrade wrapper injects _anonymousUserId
-      // from the action's JWT into the profile object. We read it here
-      // and verify the user is actually anonymous before upgrading.
-      if (!existingUserId && args.profile?._anonymousUserId) {
-        const candidateId = args.profile._anonymousUserId as Id<"users">;
-        const candidate = await ctx.db.get(candidateId);
-        if (candidate?.isAnonymous) {
-          existingUserId = candidate._id;
-        }
-      }
+      // Detect anonymous -> password upgrade via profile._anonymousUserId.
+      const upgradedId = await resolveAnonymousUpgrade(
+        ctx,
+        existingUserId,
+        args.profile,
+      );
+      if (upgradedId) existingUserId = upgradedId;
 
       if (existingUserId) {
-        // Upgrading: anonymous → real account, or updating profile.
-        // Patch in-place — same _id, no data migration needed.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex patch accepts Record-style objects; profile fields are untyped from @convex-dev/auth
-        const updates: Record<string, any> = {};
-        if (args.profile.email) updates.email = args.profile.email;
-        if (args.profile.name) updates.name = args.profile.name;
-        if (args.profile.image !== undefined) updates.image = args.profile.image;
-        // If signing in with a real provider, mark as non-anonymous
-        // and upgrade runLimit to the full free-tier allowance.
-        if (args.provider?.id !== "anonymous") {
-          updates.isAnonymous = false;
-          updates.runLimit = getFreePlanRunLimit();
-        }
-        if (Object.keys(updates).length > 0) {
-          await ctx.db.patch(existingUserId, updates);
-        }
-        return existingUserId;
+        return handleExistingUser(
+          ctx,
+          existingUserId,
+          args.profile,
+          args.provider,
+        );
       }
 
-      // New user — initialize with plan-appropriate run limit.
-      const isAnonymous = args.provider?.id === "anonymous";
-      const runLimit = isAnonymous
-        ? getAnonymousRunLimit()
-        : getFreePlanRunLimit();
-
-      const now = Date.now();
-      const nextMonth = new Date(now);
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
-      nextMonth.setDate(1);
-      nextMonth.setHours(0, 0, 0, 0);
-
-      return ctx.db.insert("users", {
-        name: args.profile.name,
-        email: args.profile.email,
-        image: args.profile.image,
-        isAnonymous,
-        plan: "free",
-        runsUsed: 0,
-        runLimit,
-        runsResetAt: nextMonth.getTime(),
-        totalRuns: 0,
-      });
+      return handleNewUser(ctx, args.profile, args.provider);
     },
   },
 });
-

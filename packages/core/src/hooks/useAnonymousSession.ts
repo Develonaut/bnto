@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+// Pragmatic exception: useConvexAuth and useAuthActions are auth-infrastructure
+// hooks that must bind directly to the Convex provider. They cannot be abstracted
+// through the core adapter layer because they manage the auth session lifecycle
+// itself — the very thing the adapter layer depends on being initialized.
 import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 

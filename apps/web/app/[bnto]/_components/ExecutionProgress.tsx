@@ -97,7 +97,7 @@ function NodeProgressRow({ node }: { node: NodeProgress }) {
       <span
         className={cn(
           "size-2 rounded-full",
-          isComplete && "bg-green-500",
+          isComplete && "bg-success",
           isFailed && "bg-destructive",
           !isComplete && !isFailed && "bg-primary motion-safe:animate-pulse",
         )}
@@ -119,7 +119,7 @@ function StatusIcon({ status }: { status: Execution["status"] }) {
       );
     case "completed":
       return (
-        <CheckCircle2Icon className="size-5 shrink-0 text-green-600 dark:text-green-400" />
+        <CheckCircle2Icon className="size-5 shrink-0 text-success" />
       );
     case "failed":
       return <XCircleIcon className="size-5 shrink-0 text-destructive" />;

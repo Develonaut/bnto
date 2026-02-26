@@ -43,7 +43,7 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CheckCircle2Icon className="size-5 shrink-0 text-green-600 dark:text-green-400" />
+          <CheckCircle2Icon className="size-5 shrink-0 text-success" />
           <p className="text-sm font-medium text-foreground">
             {outputFiles.length}{" "}
             {outputFiles.length === 1 ? "file" : "files"} ready

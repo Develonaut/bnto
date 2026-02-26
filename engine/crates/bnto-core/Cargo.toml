@@ -69,43 +69,33 @@ crate-type = ["rlib"]
 # on the same version. Same idea as pnpm's catalog feature.
 
 [dependencies]
-# The Rust ↔ JS bridge. See workspace Cargo.toml for details.
-wasm-bindgen = { workspace = true }
-
-# For working with JS Promises from Rust (async processing).
-wasm-bindgen-futures = { workspace = true }
-
-# Bindings to JavaScript built-in objects (Array, Uint8Array, etc.).
-js-sys = { workspace = true }
-
-# Bindings to browser Web APIs. We enable specific features below.
-# Each feature = one Web API. Only include what we use (smaller binary).
-web-sys = { workspace = true, features = [
-    # console.log() — for debug logging from Rust
-    "console",
-    # Performance.now() — for timing how long operations take
-    "Performance",
-    # File and Blob — for reading user-uploaded files
-    "File",
-    "Blob",
-    # Worker — we run inside Web Workers, need access to self
-    "DedicatedWorkerGlobalScope",
-] }
-
 # Error handling — see workspace Cargo.toml for details.
+# `thiserror` generates `Display` and `std::error::Error` implementations
+# from the `#[error("...")]` attributes on our BntoError enum variants.
 thiserror = { workspace = true }
 
 # Serialization — converting Rust structs to/from JSON.
+# `serde` provides the Serialize/Deserialize traits.
+# `serde_json` provides JSON parsing and serialization (Map, Value, etc.).
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-# NOTE: console_error_panic_hook was removed — panic hook setup is the
-# responsibility of the bnto-wasm entry point crate, not foundation crates.
+# NOTE: WASM-specific dependencies (wasm-bindgen, js-sys, web-sys) were
+# intentionally REMOVED from bnto-core. They now live only in the crates
+# that actually touch the JS boundary:
+#   - bnto-wasm (the cdylib entry point)
+#   - Each node crate's wasm_bridge.rs (which imports them directly)
+#
+# This keeps bnto-core target-agnostic — it works in WASM, native CLI,
+# desktop (Tauri), or anywhere else. The ProgressReporter uses a plain
+# Rust closure instead of js_sys::Function, and the BntoError → JsValue
+# conversion lives in bnto-wasm where it belongs.
 
 # =============================================================================
 # Dev Dependencies (only used during testing, not in the final WASM binary)
 # =============================================================================
 
 [dev-dependencies]
-# Test harness for running Rust tests in a browser or Node.js.
+# WASM integration test harness — runs Rust tests inside a WASM runtime.
+# Only used by `cargo test --target wasm32-unknown-unknown`.
 wasm-bindgen-test = { workspace = true }

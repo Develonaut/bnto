@@ -5,7 +5,7 @@ import { useState, useContext, createContext, useCallback } from "react";
 
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 
-import { buttonVariants } from "./Button";
+import { buttonCn } from "./Button";
 import { cn } from "@/lib/cn";
 
 /* ── Context (surfaces active value to Triggers) ───────────── */
@@ -50,10 +50,7 @@ const TabsList = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
-    className={cn(
-      "inline-flex items-center gap-1",
-      className,
-    )}
+    className={cn("inline-flex items-center gap-1", className)}
     {...props}
   />
 ));
@@ -75,7 +72,7 @@ const TabsTrigger = React.forwardRef<
       data-muted={!isActive || undefined}
       className={cn(
         "pressable",
-        buttonVariants({ variant: "outline", size: "sm" }),
+        buttonCn({ variant: "outline", size: "sm" }),
         className,
       )}
       {...props}
@@ -109,5 +106,3 @@ export const Tabs = Object.assign(TabsRoot, {
   Trigger: TabsTrigger,
   Content: TabsContent,
 });
-
-export { TabsList, TabsTrigger, TabsContent };

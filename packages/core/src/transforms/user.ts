@@ -1,9 +1,7 @@
-import type { Doc } from "@bnto/backend/convex/_generated/dataModel";
+import type { RawUserDoc } from "../types/raw";
 import type { User } from "../types";
 
-type UserDoc = Doc<"users">;
-
-export function toUser(doc: UserDoc): User {
+export function toUser(doc: RawUserDoc): User {
   return {
     id: String(doc._id),
     email: doc.email ?? undefined,

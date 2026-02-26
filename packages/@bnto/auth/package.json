@@ -10,16 +10,12 @@
     "./server": {
       "types": "./src/server.ts",
       "default": "./src/server.ts"
-    },
-    "./middleware": {
-      "types": "./src/middleware.ts",
-      "default": "./src/middleware.ts"
     }
   },
   "scripts": {
     "build": "tsc --noEmit",
     "test": "echo \"No tests yet\"",
-    "lint": "echo \"No linter yet\""
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@convex-dev/auth": "catalog:",
@@ -36,6 +32,7 @@
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

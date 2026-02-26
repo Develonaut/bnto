@@ -37,6 +37,16 @@
 use wasm_bindgen::prelude::*;
 
 // =============================================================================
+// BntoError → JsValue Conversion
+// =============================================================================
+//
+// NOTE: The `impl From<BntoError> for JsValue` was removed from bnto-core to
+// keep it target-agnostic. However, it CANNOT live here either — Rust's orphan
+// rule prevents implementing foreign traits for foreign types even when one is
+// from a workspace crate. Instead, each node crate's wasm_bridge.rs has a
+// `bnto_err_to_js()` helper function that does the conversion locally.
+
+// =============================================================================
 // Re-export Node Crates
 // =============================================================================
 //

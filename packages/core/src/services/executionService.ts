@@ -10,6 +10,10 @@ import {
 import { toExecution, toExecutionLog } from "../transforms/execution";
 import { getQueryClient } from "../client";
 import type { StartExecutionInput, StartPredefinedInput } from "../types";
+import type {
+  RawExecutionDoc,
+  RawExecutionLogDoc,
+} from "../types/raw";
 
 export function createExecutionService() {
   function invalidateExecution(id: string) {
@@ -26,22 +30,25 @@ export function createExecutionService() {
 
   return {
     // ── Query Options ─────────────────────────────────────────────
+    // Note: convexQuery returns opaque types, so select receives `unknown`.
+    // The cast to Raw* types is a trust boundary — Convex docs match our
+    // raw type definitions by construction (derived from the same schema).
     getQueryOptions: (id: string) => ({
       ...getExecutionQuery(id),
       select: (data: unknown) =>
-        data ? toExecution(data as Parameters<typeof toExecution>[0]) : null,
+        data ? toExecution(data as RawExecutionDoc) : null,
     }),
 
     listQueryOptions: (workflowId: string) => ({
       ...getExecutionsQuery(workflowId),
-      select: (data: unknown[]) =>
-        (data as Parameters<typeof toExecution>[0][]).map(toExecution),
+      select: (data: unknown) =>
+        (data as RawExecutionDoc[]).map(toExecution),
     }),
 
     logsQueryOptions: (executionId: string) => ({
       ...getExecutionLogsQuery(executionId),
-      select: (data: unknown[]) =>
-        (data as Parameters<typeof toExecutionLog>[0][]).map(toExecutionLog),
+      select: (data: unknown) =>
+        (data as RawExecutionLogDoc[]).map(toExecutionLog),
     }),
 
     // ── Mutations ─────────────────────────────────────────────────

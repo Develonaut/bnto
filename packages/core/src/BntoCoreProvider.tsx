@@ -1,6 +1,11 @@
 "use client";
 
 import { QueryClientProvider } from "@tanstack/react-query";
+// Pragmatic exception: BntoCoreProvider is Convex-specific bootstrap
+// infrastructure — it wires the Convex provider, React Query, and session
+// state together. When desktop ships (Wails adapter), this provider will be
+// swapped for a Wails-specific variant. This is the adapter boundary for
+// the provider stack, not a leak of Convex into business logic.
 import { ConvexAuthNextjsProvider } from "@convex-dev/auth/nextjs";
 import { getConvexClient, getQueryClient } from "./client";
 import { SessionProvider } from "./providers/SessionProvider";

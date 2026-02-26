@@ -1,5 +1,4 @@
 import { createStore } from "zustand/vanilla";
-import { useStore } from "zustand";
 import type {
   BrowserExecution,
   BrowserFileProgress,
@@ -86,15 +85,5 @@ export function createBrowserExecutionStore() {
 // ---------------------------------------------------------------------------
 
 export const browserExecutionStore = createBrowserExecutionStore();
-
-// ---------------------------------------------------------------------------
-// React hook — select specific slices, not the whole store
-// ---------------------------------------------------------------------------
-
-export function useBrowserExecutionStore<T>(
-  selector: (state: BrowserExecutionState) => T,
-): T {
-  return useStore(browserExecutionStore, selector);
-}
 
 export type { BrowserExecutionState };

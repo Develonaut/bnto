@@ -7,13 +7,17 @@
 
 import type { NodeSchema } from "./types";
 
-/** Valid image processing operations. */
+/**
+ * Valid image processing operations.
+ *
+ * NOTE: "batch" is not yet implemented in any engine (Rust WASM or Go).
+ * It will be added here when batch image processing is built. See ROADMAP.md.
+ */
 export const IMAGE_OPERATIONS = [
   "resize",
   "convert",
   "optimize",
   "composite",
-  "batch",
 ] as const;
 
 /** Supported output image formats. */

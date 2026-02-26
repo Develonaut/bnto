@@ -32,7 +32,7 @@ export function BrowserExecutionResults({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CheckCircle2Icon className="size-5 shrink-0 text-green-600 dark:text-green-400" />
+          <CheckCircle2Icon className="size-5 shrink-0 text-success" />
           <p className="text-sm font-medium text-foreground">
             {results.length} {results.length === 1 ? "file" : "files"} ready
           </p>

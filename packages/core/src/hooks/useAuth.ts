@@ -1,30 +1,27 @@
 "use client";
 
-import { useConvexAuth } from "convex/react";
+import { useSessionStatus } from "./useSessionStatus";
 import { useCurrentUser } from "./useCurrentUser";
-
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  image?: string | null;
-}
-
-export interface AuthState {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  user: AuthUser | null;
-}
+import type { AuthUser, AuthState } from "../types/auth";
+import type { User } from "../types";
 
 /**
- * Formatted auth state — maps Convex auth + user data to a clean interface.
+ * Formatted auth state — maps session status + user data to a clean interface.
  *
- * Components use this instead of raw `useConvexAuth()` to get user profile
- * data alongside authentication status.
+ * Uses the existing SessionContext (via useSessionStatus) instead of creating
+ * a duplicate Convex auth subscription. Components use this instead of raw
+ * session hooks to get user profile data alongside authentication status.
  */
 export function useAuth(): AuthState {
-  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
-  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const status = useSessionStatus();
+  const { data, isLoading: userLoading } = useCurrentUser();
+
+  // convexQuery select returns User | null, but the unknown→select bridge
+  // loses the output type. Trust the transform at the boundary.
+  const currentUser = data as User | null;
+
+  const isAuthenticated = status === "authenticated";
+  const isLoading = status === "loading" || userLoading;
 
   const user: AuthUser | null = currentUser
     ? {
@@ -37,7 +34,7 @@ export function useAuth(): AuthState {
 
   return {
     isAuthenticated,
-    isLoading: authLoading || userLoading,
+    isLoading,
     user,
   };
 }

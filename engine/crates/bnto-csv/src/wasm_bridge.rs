@@ -47,11 +47,17 @@
 
 use wasm_bindgen::prelude::*;
 
+use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
 use crate::clean::CleanCsv;
 use crate::rename_columns::RenameCsvColumns;
+
+// Helper: convert BntoError to JsValue at the WASM boundary.
+fn bnto_err_to_js(error: BntoError) -> JsValue {
+    JsError::new(&error.to_string()).into()
+}
 
 // =============================================================================
 // Clean CSV — The Main Entry Point for JavaScript
@@ -139,7 +145,15 @@ pub fn clean_csv(
 
     // --- Step 3: Create the processor and progress reporter ---
     let processor = CleanCsv::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap the JS callback in a Rust closure so ProgressReporter stays
+    // target-agnostic (no js_sys dependency in bnto-core).
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     // --- Step 4: Run the CSV cleaning ---
     //
@@ -151,7 +165,7 @@ pub fn clean_csv(
     // (defined in bnto-core/errors.rs) to create a JS Error object.
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Build a JSON result string ---
     //
@@ -212,11 +226,19 @@ pub fn clean_csv_bytes(
     };
 
     let processor = CleanCsv::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap the JS callback in a Rust closure so ProgressReporter stays
+    // target-agnostic (no js_sys dependency in bnto-core).
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // Return just the first file's bytes.
     // Clean-csv always produces exactly one output file.
@@ -283,12 +305,20 @@ pub fn rename_csv_columns(
 
     // --- Step 3: Create the processor and progress reporter ---
     let processor = RenameCsvColumns::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap the JS callback in a Rust closure so ProgressReporter stays
+    // target-agnostic (no js_sys dependency in bnto-core).
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     // --- Step 4: Run the rename operation ---
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Build a JSON result string ---
     let file_info = if let Some(file) = output.files.first() {
@@ -336,11 +366,19 @@ pub fn rename_csv_columns_bytes(
     };
 
     let processor = RenameCsvColumns::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap the JS callback in a Rust closure so ProgressReporter stays
+    // target-agnostic (no js_sys dependency in bnto-core).
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // Return just the first file's bytes.
     // Rename-csv-columns always produces exactly one output file.

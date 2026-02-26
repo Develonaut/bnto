@@ -1,7 +1,8 @@
 "use client";
 
 import { useContext } from "react";
-import { SessionContext, type AuthStatus } from "../providers/SessionContext";
+import { SessionContext } from "../providers/SessionContext";
+import type { AuthStatus } from "../types/auth";
 
 /**
  * Returns the current authentication status.

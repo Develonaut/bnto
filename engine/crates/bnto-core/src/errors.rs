@@ -32,7 +32,6 @@
 // handle every possible variant when matching.
 
 use thiserror::Error;
-use wasm_bindgen::prelude::*;
 
 // RUST CONCEPT: `#[derive(...)]`
 // `derive` is an attribute that tells the compiler to automatically
@@ -93,38 +92,16 @@ pub enum BntoError {
 }
 
 // =============================================================================
-// Converting BntoError to JavaScript
+// Converting BntoError to JavaScript (MOVED TO bnto-wasm)
 // =============================================================================
 //
-// RUST CONCEPT: `impl` and `From` trait
-// `impl From<BntoError> for JsValue` means "implement the conversion
-// from BntoError to JsValue". `JsValue` is wasm-bindgen's universal
-// type for JavaScript values — it can represent any JS value (string,
-// number, object, etc.).
+// NOTE: The `impl From<BntoError> for JsValue` conversion used to live here,
+// but it coupled bnto-core to WASM dependencies (wasm-bindgen, js-sys).
+// That forced every node crate to carry WASM deps even for pure Rust logic.
 //
-// This conversion is needed because `#[wasm_bindgen]` functions can only
-// return types that JavaScript understands. When we return `Result<T, BntoError>`,
-// the error needs to become a JavaScript Error object.
-//
-// RUST CONCEPT: `impl` blocks
-// An `impl` block adds methods or trait implementations to a type.
-// It's like adding methods to a class in JavaScript, except in Rust
-// you can add them from outside the type's definition.
-
-impl From<BntoError> for JsValue {
-    /// Convert a BntoError into a JavaScript Error object.
-    ///
-    /// RUST CONCEPT: `self` parameter
-    /// `self` (lowercase) is the instance being converted — like `this` in JS.
-    /// `fn from(error: BntoError)` takes ownership of the error (moves it).
-    /// After this function, the original `error` is gone (Rust's ownership model).
-    fn from(error: BntoError) -> Self {
-        // `.to_string()` uses the `#[error("...")]` message we defined above.
-        // `JsError::new()` creates a JavaScript `Error` object with that message.
-        // `.into()` converts the `JsError` into a `JsValue` (the universal JS type).
-        JsError::new(&error.to_string()).into()
-    }
-}
+// The conversion now lives in `bnto-wasm/src/lib.rs` — the only crate that
+// should know about JavaScript types. This keeps bnto-core target-agnostic:
+// it works in WASM, native CLI, desktop (Tauri), or anywhere else.
 
 // =============================================================================
 // Tests

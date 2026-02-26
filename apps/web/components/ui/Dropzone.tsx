@@ -2,39 +2,31 @@
 
 import * as React from "react";
 import { useDropzone, type DropzoneOptions } from "react-dropzone";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/cn";
+import { createCn } from "./createCn";
 import { Button } from "./Button";
 import { Card } from "./Card";
 
-const dropzoneVariants = cva(
-  [
-    "h-auto w-full flex-col rounded-xl",
-    "outline-2 outline-dashed outline-offset-[-8px]",
-    "motion-safe:transition-all motion-safe:duration-fast",
-  ],
-  {
-    variants: {
-      size: {
-        default: "gap-3 px-6 py-10",
-        sm: "gap-2 px-4 py-6",
-      },
-      state: {
-        idle: "outline-border",
-        active: "outline-primary bg-primary/5",
-      },
+const dropzoneCn = createCn({
+  base: "h-auto w-full flex-col rounded-xl outline-2 outline-dashed outline-offset-[-8px] motion-safe:transition-all motion-safe:duration-fast",
+  variants: {
+    size: {
+      default: "gap-3 px-6 py-10",
+      sm: "gap-2 px-4 py-6",
     },
-    defaultVariants: {
-      size: "default",
-      state: "idle",
+    state: {
+      idle: "outline-border",
+      active: "outline-primary bg-primary/5",
     },
   },
-);
+  defaultVariants: {
+    size: "default",
+    state: "idle",
+  },
+});
 
-interface DropzoneProps
-  extends DropzoneOptions,
-    Omit<VariantProps<typeof dropzoneVariants>, "state"> {
+interface DropzoneProps extends DropzoneOptions {
   className?: string;
+  size?: "default" | "sm";
   children: (props: { isDragActive: boolean }) => React.ReactNode;
 }
 
@@ -45,11 +37,11 @@ function Dropzone({ className, size, children, ...options }: DropzoneProps) {
     <Button asChild variant="outline" size="md">
       <Card
         depth="md"
-        className={cn(
-          dropzoneVariants({
+        className={dropzoneCn(
+          {
             size,
             state: isDragActive ? "active" : "idle",
-          }),
+          },
           className,
         )}
         {...getRootProps({

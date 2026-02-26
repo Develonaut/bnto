@@ -1,17 +1,9 @@
 import { ConvexError, v } from "convex/values";
-import {
-  query,
-  mutation,
-  internalMutation,
-  internalAction,
-} from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAppUserId } from "./_helpers/auth";
-import { enforceQuota } from "./_helpers/quota";
-
-const POLL_INTERVAL_MS = 2000;
-const MAX_POLL_ATTEMPTS = 450; // 15 min at 2s intervals
+import { startExecution } from "./_helpers/start_execution";
 
 /** Delay before deleting output files from R2 (2 hours). */
 const R2_OUTPUT_CLEANUP_DELAY_MS = 2 * 60 * 60 * 1000;
@@ -27,52 +19,17 @@ export const start = mutation({
     const userId = await getAppUserId(ctx);
     if (userId === null) throw new ConvexError("Not authenticated");
 
-    const user = await ctx.db.get(userId);
-    if (user === null) throw new ConvexError("User not found");
-
-    enforceQuota(user);
-
     const workflow = await ctx.db.get(args.workflowId);
     if (workflow === null || workflow.userId !== userId) {
-      throw new Error("Workflow not found");
+      throw new ConvexError("Workflow not found");
     }
 
-    const now = Date.now();
-    await ctx.db.patch(userId, {
-      runsUsed: user.runsUsed + 1,
-      totalRuns: (user.totalRuns ?? 0) + 1,
-      lastRunAt: now,
-    });
-
-    const executionId = await ctx.db.insert("executions", {
-      userId,
-      workflowId: args.workflowId,
-      status: "pending",
-      progress: [],
-      sessionId: args.sessionId,
-      startedAt: now,
-    });
-
-    const eventId = await ctx.db.insert("executionEvents", {
-      userId,
+    return startExecution(ctx, {
       slug: args.slug ?? workflow.name,
-      timestamp: now,
-      status: "started",
-      executionId,
+      definition: workflow.definition,
+      workflowId: args.workflowId,
+      sessionId: args.sessionId,
     });
-
-    await ctx.scheduler.runAfter(
-      0,
-      internal.executions.executeWorkflow,
-      {
-        executionId,
-        definition: workflow.definition,
-        eventId,
-        sessionId: args.sessionId,
-      },
-    );
-
-    return executionId;
   },
 });
 
@@ -84,49 +41,11 @@ export const startPredefined = mutation({
     sessionId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAppUserId(ctx);
-    if (userId === null) throw new ConvexError("Not authenticated");
-
-    const user = await ctx.db.get(userId);
-    if (user === null) throw new ConvexError("User not found");
-
-    enforceQuota(user);
-
-    const now = Date.now();
-    await ctx.db.patch(userId, {
-      runsUsed: user.runsUsed + 1,
-      totalRuns: (user.totalRuns ?? 0) + 1,
-      lastRunAt: now,
-    });
-
-    const executionId = await ctx.db.insert("executions", {
-      userId,
-      status: "pending",
-      progress: [],
-      sessionId: args.sessionId,
-      startedAt: now,
-    });
-
-    const eventId = await ctx.db.insert("executionEvents", {
-      userId,
+    return startExecution(ctx, {
       slug: args.slug,
-      timestamp: now,
-      status: "started",
-      executionId,
+      definition: args.definition,
+      sessionId: args.sessionId,
     });
-
-    await ctx.scheduler.runAfter(
-      0,
-      internal.executions.executeWorkflow,
-      {
-        executionId,
-        definition: args.definition,
-        eventId,
-        sessionId: args.sessionId,
-      },
-    );
-
-    return executionId;
   },
 });
 
@@ -154,126 +73,6 @@ export const listByWorkflow = query({
       .filter((q) => q.eq(q.field("userId"), userId))
       .order("desc")
       .take(50);
-  },
-});
-
-/**
- * Internal action: POST workflow to Go API, then poll for completion.
- * Writes progress updates to Convex via internal mutations.
- *
- * When sessionId is provided, the Go API uses it to locate input files
- * in R2 at `uploads/{sessionId}/` and writes output files back to R2
- * at `executions/{executionId}/output/`.
- */
-export const executeWorkflow = internalAction({
-  args: {
-    executionId: v.id("executions"),
-    definition: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
-    eventId: v.optional(v.id("executionEvents")),
-    sessionId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const startTime = Date.now();
-    const goApiUrl = process.env.GO_API_URL;
-    if (!goApiUrl) {
-      await ctx.runMutation(internal.executions.fail, {
-        executionId: args.executionId,
-        error: "GO_API_URL not configured",
-        eventId: args.eventId,
-        startTime,
-      });
-      return;
-    }
-
-    let goExecutionId: string;
-    try {
-      const body = buildRunRequestBody(args.definition, args.sessionId);
-      const response = await fetch(`${goApiUrl}/api/run`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`Go API returned ${response.status}: ${text}`);
-      }
-      const data = await response.json();
-      goExecutionId = data.id;
-    } catch (e) {
-      await ctx.runMutation(internal.executions.fail, {
-        executionId: args.executionId,
-        error: `Failed to start execution: ${e instanceof Error ? e.message : String(e)}`,
-        eventId: args.eventId,
-        startTime,
-      });
-      return;
-    }
-
-    await ctx.runMutation(internal.executions.updateProgress, {
-      executionId: args.executionId,
-      status: "running",
-      progress: [],
-      goExecutionId,
-    });
-
-    for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
-      await sleep(POLL_INTERVAL_MS);
-
-      try {
-        const response = await fetch(
-          `${goApiUrl}/api/executions/${goExecutionId}`,
-        );
-        if (!response.ok) {
-          throw new Error(`Poll returned ${response.status}`);
-        }
-        const execution = await response.json();
-
-        if (
-          execution.status === "completed" ||
-          execution.status === "failed"
-        ) {
-          if (execution.status === "completed") {
-            await ctx.runMutation(internal.executions.complete, {
-              executionId: args.executionId,
-              result: execution.result ?? null,
-              outputFiles: execution.outputFiles,
-              eventId: args.eventId,
-              startTime,
-            });
-          } else {
-            await ctx.runMutation(internal.executions.fail, {
-              executionId: args.executionId,
-              error: execution.error ?? "Execution failed",
-              eventId: args.eventId,
-              startTime,
-            });
-          }
-          return;
-        }
-
-        await ctx.runMutation(internal.executions.updateProgress, {
-          executionId: args.executionId,
-          status: "running",
-          progress: execution.progress ?? [],
-          goExecutionId,
-        });
-      } catch (e) {
-        await ctx.runMutation(internal.executions.fail, {
-          executionId: args.executionId,
-          error: `Poll error: ${e instanceof Error ? e.message : String(e)}`,
-          eventId: args.eventId,
-          startTime,
-        });
-        return;
-      }
-    }
-
-    await ctx.runMutation(internal.executions.fail, {
-      executionId: args.executionId,
-      error: "Execution timed out (polling limit reached)",
-      eventId: args.eventId,
-      startTime,
-    });
   },
 });
 
@@ -395,22 +194,4 @@ async function scheduleR2Cleanup(
       { prefix: `executions/${executionId}/output/` },
     );
   }
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Build the JSON body for POST /api/run.
- * When a sessionId is present, the Go API pulls input files from R2.
- */
-function buildRunRequestBody(
-  definition: unknown,
-  sessionId: string | undefined,
-) {
-  if (sessionId) {
-    return { definition, sessionId };
-  }
-  return { definition };
 }

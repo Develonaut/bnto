@@ -1,17 +1,10 @@
-import type { Doc, Id } from "@bnto/backend/convex/_generated/dataModel";
+import type {
+  RawWorkflowDoc,
+  RawWorkflowListProjection,
+} from "../types/raw";
 import type { Workflow, WorkflowListItem } from "../types";
 
-type WorkflowDoc = Doc<"workflows">;
-
-/** Convex list query returns projected fields, not a full doc. */
-interface WorkflowListProjection {
-  _id: Id<"workflows">;
-  name: string;
-  nodeCount: number;
-  updatedAt: number;
-}
-
-export function toWorkflow(doc: WorkflowDoc): Workflow {
+export function toWorkflow(doc: RawWorkflowDoc): Workflow {
   return {
     id: String(doc._id),
     userId: String(doc.userId),
@@ -24,7 +17,7 @@ export function toWorkflow(doc: WorkflowDoc): Workflow {
   };
 }
 
-export function toWorkflowListItem(doc: WorkflowListProjection): WorkflowListItem {
+export function toWorkflowListItem(doc: RawWorkflowListProjection): WorkflowListItem {
   return {
     id: String(doc._id),
     name: doc.name,

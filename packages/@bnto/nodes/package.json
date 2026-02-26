@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "echo \"No linter yet\""
+    "lint": "tsc --noEmit"
   },
   "devDependencies": {
     "typescript": "catalog:",

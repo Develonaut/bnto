@@ -7,7 +7,7 @@
  * enhances with React hooks for the final public `core` export.
  *
  * Dependency flow:
- *   core.ts → clients → services → adapters → @bnto/backend
+ *   core.ts -> clients -> services -> adapters -> @bnto/backend
  */
 
 import { createWorkflowService } from "./services/workflowService";
@@ -22,6 +22,7 @@ import { createUserClient } from "./clients/userClient";
 import { createUploadClient } from "./clients/uploadClient";
 import { createDownloadClient } from "./clients/downloadClient";
 import { createAuthClient } from "./clients/authClient";
+import { createBrowserClient } from "./clients/browserClient";
 
 // ── Services (single-domain, internal) ────────────────────────────────────
 const workflowService = createWorkflowService();
@@ -38,6 +39,7 @@ const userClient = createUserClient(userService);
 const uploadClient = createUploadClient(uploadService);
 const downloadClient = createDownloadClient(downloadService);
 const authClient = createAuthClient();
+const browserClient = createBrowserClient(browserExecutionService);
 
 // ── Core Singleton ────────────────────────────────────────────────────────
 export const core = {
@@ -47,5 +49,5 @@ export const core = {
   uploads: uploadClient,
   downloads: downloadClient,
   auth: authClient,
-  browser: browserExecutionService,
+  browser: browserClient,
 } as const;

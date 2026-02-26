@@ -47,12 +47,18 @@
 
 use wasm_bindgen::prelude::*;
 
+use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
 use crate::compress::CompressImages;
 use crate::convert::ConvertImageFormat;
 use crate::resize::ResizeImages;
+
+// Helper: convert BntoError to JsValue at the WASM boundary.
+fn bnto_err_to_js(error: BntoError) -> JsValue {
+    JsError::new(&error.to_string()).into()
+}
 
 // =============================================================================
 // Compress Image — The Main Entry Point for JavaScript
@@ -138,7 +144,23 @@ pub fn compress_image(
 
     // --- Step 3: Create the processor and progress reporter ---
     let processor = CompressImages::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap the JavaScript callback in a Rust closure.
+    //
+    // WHY NOT PASS IT DIRECTLY?
+    // ProgressReporter is target-agnostic — it accepts any `Fn(u32, &str)`
+    // closure, not a js_sys::Function. The WASM bridge is where we adapt
+    // between JS types and Rust types. The closure captures the JS function
+    // and calls it with JS-compatible values (JsValue).
+    //
+    // `move` transfers ownership of `progress_callback` into the closure.
+    // `let _` ignores the Result from call2() — progress is best-effort.
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     // --- Step 4: Run the compression ---
     //
@@ -147,10 +169,10 @@ pub fn compress_image(
     //
     // `.map_err(|e| ...)` transforms the error type if it's Err.
     // `BntoError::into()` uses our `From<BntoError> for JsValue` impl
-    // (defined in bnto-core/errors.rs) to create a JS Error object.
+    // (defined in bnto-wasm/src/lib.rs) to create a JS Error object.
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Build a JSON result string ---
     //
@@ -211,11 +233,18 @@ pub fn compress_image_bytes(
     };
 
     let processor = CompressImages::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap JS callback in a closure — see compress_image() for full explanation.
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // Return just the first file's bytes.
     // Compress-images always produces exactly one output file.
@@ -291,12 +320,20 @@ pub fn resize_image(
 
     // --- Step 3: Create the processor and progress reporter ---
     let processor = ResizeImages::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap JS callback in a Rust closure. ProgressReporter is target-agnostic —
+    // see compress_image() for the full explanation of why we wrap here.
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     // --- Step 4: Run the resize ---
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Build a JSON result string ---
     let file_info = if let Some(file) = output.files.first() {
@@ -343,11 +380,18 @@ pub fn resize_image_bytes(
     };
 
     let processor = ResizeImages::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap JS callback in a closure — see resize_image() for full explanation.
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // Resize-images always produces exactly one output file.
     if let Some(file) = output.files.into_iter().next() {
@@ -417,12 +461,20 @@ pub fn convert_image_format(
 
     // --- Step 3: Create the processor and progress reporter ---
     let processor = ConvertImageFormat::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap JS callback in a Rust closure. ProgressReporter is target-agnostic —
+    // see compress_image() for the full explanation of why we wrap here.
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     // --- Step 4: Run the conversion ---
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Build a JSON result string ---
     let file_info = if let Some(file) = output.files.first() {
@@ -469,11 +521,18 @@ pub fn convert_image_format_bytes(
     };
 
     let processor = ConvertImageFormat::new();
-    let progress = ProgressReporter::new(progress_callback);
+    // Wrap JS callback in a closure — see convert_image_format() for full explanation.
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
 
     let output = processor
         .process(input, &progress)
-        .map_err(|e| -> JsValue { e.into() })?;
+        .map_err(bnto_err_to_js)?;
 
     // Convert-image-format always produces exactly one output file.
     if let Some(file) = output.files.into_iter().next() {

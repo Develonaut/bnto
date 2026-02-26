@@ -54,26 +54,22 @@ export interface ParameterSchema {
    *
    * Example: `items` is required only when `mode` is `"forEach"`.
    */
-  requiredWhen?: {
-    /** The parameter name to check. */
-    param: string;
-    /** The value that triggers the requirement. */
-    equals: string;
-  };
+  requiredWhen?:
+    | { /** The parameter name to check. */ param: string; /** The value that triggers the requirement. */ equals: string }
+    | Array<{ param: string; equals: string }>;
 
   /**
    * Conditional visibility — parameter is shown only when
    * another parameter matches a specific value.
    *
+   * Single condition or array of conditions (OR logic — any match triggers visibility).
+   *
    * Example: `base` and `overlay` are shown only when
    * `operation` is `"composite"`.
    */
-  visibleWhen?: {
-    /** The parameter name to check. */
-    param: string;
-    /** The value that triggers visibility. */
-    equals: string;
-  };
+  visibleWhen?:
+    | { /** The parameter name to check. */ param: string; /** The value that triggers visibility. */ equals: string }
+    | Array<{ param: string; equals: string }>;
 
   /** Placeholder text for string inputs. */
   placeholder?: string;
