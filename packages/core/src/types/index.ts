@@ -41,3 +41,5 @@ export type {
   BrowserExecution,
   BrowserFileProgress,
 } from "./browser";
+
+export type { RunPhase, RecipeFlow } from "./recipeFlow";

@@ -23,6 +23,7 @@ import { createUploadClient } from "./clients/uploadClient";
 import { createDownloadClient } from "./clients/downloadClient";
 import { createAuthClient } from "./clients/authClient";
 import { createBrowserClient } from "./clients/browserClient";
+import { createRecipeClient } from "./clients/recipeClient";
 
 // ── Services (single-domain, internal) ────────────────────────────────────
 const workflowService = createWorkflowService();
@@ -40,6 +41,7 @@ const uploadClient = createUploadClient(uploadService);
 const downloadClient = createDownloadClient(downloadService);
 const authClient = createAuthClient();
 const browserClient = createBrowserClient(browserExecutionService);
+const recipeClient = createRecipeClient();
 
 // ── Core Singleton ────────────────────────────────────────────────────────
 export const core = {
@@ -50,4 +52,5 @@ export const core = {
   downloads: downloadClient,
   auth: authClient,
   browser: browserClient,
+  recipe: recipeClient,
 } as const;

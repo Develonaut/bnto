@@ -110,4 +110,8 @@ export const core = {
     ...baseCore.browser,
     useBrowserExecution,
   },
+
+  recipe: {
+    ...baseCore.recipe,
+  },
 } as const;

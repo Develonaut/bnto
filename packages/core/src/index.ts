@@ -39,7 +39,12 @@ export type {
   BrowserFileResult,
   BrowserExecution,
   BrowserFileProgress,
+  RunPhase,
+  RecipeFlow,
 } from "./types";
 
 // ── Auth types ────────────────────────────────────────────────────────────
 export type { AuthUser, AuthState, AuthStatus } from "./types/auth";
+
+// ── Store types (for consumer selectors) ──────────────────────────────────
+export type { RecipeFlowState } from "./stores/recipeFlowStore";
