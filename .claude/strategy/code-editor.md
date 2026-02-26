@@ -442,5 +442,5 @@ See [PLAN.md](../PLAN.md) → **Sprint 4B: Code Editor (CodeMirror 6)** for the 
 | [Replit: Betting on CM6](https://blog.replit.com/codemirror) | Mobile support, extensibility |
 | [cmdk](https://cmdk.paco.me/) | Command palette component (React) |
 | [Xi-Editor Retrospective](https://raphlinus.github.io/xi/2020/06/27/xi-retrospective.html) | Why headless core should be a library, not a protocol |
-| `.claude/skills/personas/code-editor-expert/SKILL.md` | The code editor persona — CM6 APIs, patterns, gotchas |
-| `.claude/skills/personas/reactflow-expert/SKILL.md` | The visual canvas persona — ReactFlow patterns |
+| `.claude/skills/code-editor-expert/SKILL.md` | The code editor persona — CM6 APIs, patterns, gotchas |
+| `.claude/skills/reactflow-expert/SKILL.md` | The visual canvas persona — ReactFlow patterns |

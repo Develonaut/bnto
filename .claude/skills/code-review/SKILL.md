@@ -27,11 +27,13 @@ Identify which packages the changed files belong to and invoke the relevant pers
 |---|---|
 | `engine/` | `/rust-expert` |
 | `archive/engine-go/`, `archive/api-go/` | `/go-engineer` |
-| `apps/web/` | `/frontend-engineer` |
+| `apps/web/` | `/frontend-engineer` + `/nextjs-expert` |
 | `packages/core/` | `/core-architect` |
 | `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer` |
 
 **If changes touch auth, security headers, input validation, file uploads, or Convex mutations**, also invoke `/security-engineer` — the security persona owns trust boundaries across all packages.
+
+**If changes touch `apps/web/`**, always invoke `/nextjs-expert` alongside `/frontend-engineer` — the Next.js expert catches framework-level performance issues, server/client boundary violations, and rendering strategy mistakes that the frontend engineer's component-level review won't cover.
 
 **Invoke the matching persona skill(s) now.** Each persona is a domain expert with specialized quality standards, gotchas, and performance patterns that inform a deeper review. If changes span multiple packages, invoke all relevant personas.
 

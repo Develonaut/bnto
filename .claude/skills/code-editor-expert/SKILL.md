@@ -486,6 +486,6 @@ The `externalUpdate` annotation prevents sync loops. Always check for it before 
 | [CodeMirror 6 Examples](https://codemirror.net/examples/) | Autocompletion, decorations, panels, tooltips |
 | [codemirror-json-schema](https://github.com/jsonnext/codemirror-json-schema) | JSON Schema validation, autocomplete, hover |
 | `.claude/strategy/code-editor.md` | Strategic design document (tech choice, architecture, features) |
-| `.claude/skills/personas/reactflow-expert/SKILL.md` | Visual editor persona (shared store, adapters) |
+| `.claude/skills/reactflow-expert/SKILL.md` | Visual editor persona (shared store, adapters) |
 | `packages/@bnto/nodes/src/definition.ts` | Definition type (what the code editor edits) |
 | `packages/@bnto/nodes/src/schemas/` | Node parameter schemas (drives autocompletion) |

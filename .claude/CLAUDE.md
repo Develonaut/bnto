@@ -220,6 +220,7 @@ Persona skills are domain experts that can be activated to adopt specialized kno
 | Persona | Domain | Invoke |
 |---------|--------|--------|
 | Frontend Engineer | `apps/web/` — React, Next.js, components, theming, animation, E2E | `/frontend-engineer` |
+| Next.js Expert | `apps/web/` — App Router optimization, server/client boundaries, caching, streaming, bundle size, Core Web Vitals | `/nextjs-expert` |
 | ReactFlow Expert | Visual editor canvas — `@xyflow/react`, graph state, custom nodes/edges, headless-first | `/reactflow-expert` |
 | Code Editor Expert | JSON code editor — CodeMirror 6, slash commands, schema-aware editing, headless-first | `/code-editor-expert` |
 | Rust Expert | `engine/` — WASM, node crates, execution engine | `/rust-expert` |
