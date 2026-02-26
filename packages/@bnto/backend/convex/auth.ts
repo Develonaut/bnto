@@ -60,6 +60,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         runsUsed: 0,
         runLimit,
         runsResetAt: nextMonth.getTime(),
+        totalRuns: 0,
       });
     },
   },

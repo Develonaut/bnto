@@ -37,9 +37,13 @@ export const start = mutation({
       throw new Error("Workflow not found");
     }
 
-    await ctx.db.patch(userId, { runsUsed: user.runsUsed + 1 });
-
     const now = Date.now();
+    await ctx.db.patch(userId, {
+      runsUsed: user.runsUsed + 1,
+      totalRuns: (user.totalRuns ?? 0) + 1,
+      lastRunAt: now,
+    });
+
     const executionId = await ctx.db.insert("executions", {
       userId,
       workflowId: args.workflowId,
@@ -88,9 +92,13 @@ export const startPredefined = mutation({
 
     enforceQuota(user);
 
-    await ctx.db.patch(userId, { runsUsed: user.runsUsed + 1 });
-
     const now = Date.now();
+    await ctx.db.patch(userId, {
+      runsUsed: user.runsUsed + 1,
+      totalRuns: (user.totalRuns ?? 0) + 1,
+      lastRunAt: now,
+    });
+
     const executionId = await ctx.db.insert("executions", {
       userId,
       status: "pending",

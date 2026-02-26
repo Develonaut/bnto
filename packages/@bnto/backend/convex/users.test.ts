@@ -151,6 +151,9 @@ describe("getMe (schema shape)", () => {
     });
     expect(user!._id).toBe(userId);
     expect(user!._creationTime).toBeDefined();
+    // Usage analytics fields — optional, may be undefined for legacy users
+    expect(user!.totalRuns).toBeUndefined(); // not set in this seed
+    expect(user!.lastRunAt).toBeUndefined();
   });
 });
 

@@ -23,6 +23,10 @@ export default defineSchema({
     runsUsed: v.number(),
     runLimit: v.number(),
     runsResetAt: v.number(),
+    // Usage analytics — Sprint 3 (M2: Platform Features)
+    // Optional for backward compatibility with existing user documents.
+    totalRuns: v.optional(v.number()), // all-time total, never resets
+    lastRunAt: v.optional(v.number()), // timestamp of most recent run
   })
     .index("email", ["email"])
     .index("by_anonymous", ["isAnonymous"]),

@@ -23,6 +23,25 @@ export const getRunsRemaining = query({
   },
 });
 
+/** Get usage analytics for the current user. */
+export const getUsageStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAppUserId(ctx);
+    if (userId === null) return null;
+    const user = await ctx.db.get(userId);
+    if (user === null) return null;
+    return {
+      plan: user.plan,
+      totalRuns: user.totalRuns ?? 0,
+      lastRunAt: user.lastRunAt ?? null,
+      runsUsedThisMonth: user.runsUsed,
+      runLimit: user.runLimit,
+      runsRemaining: Math.max(0, user.runLimit - user.runsUsed),
+    };
+  },
+});
+
 /** Reset run counters for all users whose reset time has passed. */
 export const resetRunCounters = internalMutation({
   args: {},
