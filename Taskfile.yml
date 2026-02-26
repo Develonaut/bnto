@@ -113,6 +113,13 @@ tasks:
     dir: ./apps/web
     cmds: [pnpm exec playwright test]
 
+  e2e:isolated:
+    desc: Run E2E tests on an isolated port (won't collide with task dev on 4000)
+    dir: ./apps/web
+    env:
+      E2E_PORT: '{{.E2E_PORT | default "4001"}}'
+    cmds: [pnpm exec playwright test]
+
   # R2 dev cleanup
   r2:cleanup-dev:
     desc: Purge all objects from the dev R2 transit bucket

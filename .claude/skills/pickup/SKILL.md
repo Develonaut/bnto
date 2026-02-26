@@ -227,33 +227,32 @@ Edit `.claude/PLAN.md`:
 
 ## E2E Testing
 
-All E2E tests run against the full dev stack (Next.js + Convex) on port 4000. There is no "UI-only" mode — the backend must always be running.
+All E2E tests run against the full dev stack (Next.js + Convex). There is no "UI-only" mode — the backend must always be running.
 
-**IMPORTANT: You CAN and SHOULD start the dev stack yourself.** Do NOT skip E2E testing because "the stack isn't running." You have the Bash tool — use it. Start `task dev` in the background and wait for port 4000 to respond before running tests.
+**IMPORTANT: Always use `task e2e:isolated` to avoid colliding with the user's dev server.** The isolated task spins up its own Next.js instance on port 4001 with a separate `.next-e2e` cache. The user's `task dev` on port 4000 is left untouched.
 
-**Running E2E tests:**
+**Running E2E tests (agents):**
 
 ```bash
-# Step 1: Check if dev stack is already running
-curl -s -o /dev/null -w "%{http_code}" http://localhost:4000 || echo "not running"
+# Preferred: isolated E2E (own port, own .next cache — no collision with user)
+task e2e:isolated
 
-# Step 2: If not running, start it in the background
-task dev &
+# Custom port if 4001 is also taken:
+E2E_PORT=4002 task e2e:isolated
+```
 
-# Step 3: Wait for the dev server to be ready (port 4000)
-# Poll until you get a 200 response:
-for i in $(seq 1 30); do
-  curl -s -o /dev/null -w "%{http_code}" http://localhost:4000 2>/dev/null | grep -q "200" && break
-  sleep 2
-done
+**Updating screenshots (agents):**
 
-# Step 4: Run E2E tests
-task e2e
+```bash
+E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
+E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test  # verify stable
 ```
 
 **Key details:**
-- All E2E tests use `playwright.config.ts` (targets port 4000, Next.js + Convex)
-- `reuseExistingServer: true` — if `task dev` is already running, Playwright uses it
+- `task e2e:isolated` uses port 4001 + `NEXT_DIST_DIR=.next-e2e` (separate build cache)
+- `task e2e` (no `:isolated`) uses port 4000 and reuses a running `task dev` — for the user's workflow only
+- Both share the same Convex dev deployment (cloud-hosted, no conflict)
+- `reuseExistingServer: true` — if a server is already on the target port, Playwright reuses it
 - Test fixtures are shared with the Go engine (`engine/tests/fixtures/`)
 
 **Progress-aware test helpers** (in `e2e/integrationHelpers.ts`):

@@ -93,16 +93,15 @@ Ask yourself: **did you modify ANY file that affects what renders on screen?** T
 **How to regenerate:**
 
 ```bash
-# 1. Ensure dev stack is running
-curl -s -o /dev/null -w "%{http_code}" http://localhost:4000 || task dev &
+# For agents: use isolated port to avoid colliding with user's dev server
+E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
+E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test  # verify stable
 
-# 2. Run e2e with --update-snapshots to regenerate baselines
+# For the user (with task dev already running on port 4000):
 cd apps/web && pnpm exec playwright test --update-snapshots
-
-# 3. Run again WITHOUT --update-snapshots to verify they pass
 pnpm exec playwright test
 
-# 4. Stage the updated screenshots with the rest of your changes
+# Stage the updated screenshots with the rest of your changes
 git add e2e/**/__screenshots__/*.png
 ```
 
@@ -131,7 +130,7 @@ Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, 
 - Use `data-testid` markers for reliable state detection (see `integrationHelpers.ts` for available attributes)
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes
 - Add `await page.evaluate(() => window.scrollTo(0, 0))` before `toHaveScreenshot()` in tests where user actions may shift the viewport (e.g., clicking Run triggers errors that scroll to footer)
-- All E2E tests require the dev stack running (`task dev` — Next.js + Convex on port 4000). Start it yourself if needed -- never skip because "the stack isn't running"
+- Agents: use `task e2e:isolated` (port 4001, separate `.next-e2e` cache) to avoid colliding with the user's dev server. Never kill or restart `task dev` on port 4000.
 - Use progress-aware helpers from `integrationHelpers.ts` (`waitForPhase`, `waitForExecutionStatus`, `captureTransientPhase`, etc.) to observe and snapshot execution progress
 
 ### E2E Screenshot Verification (MANDATORY)
@@ -143,7 +142,7 @@ After running E2E tests, agents MUST verify screenshot health:
    - **Next.js error overlay** (red "1 Issue" badge in bottom-left) -- if present, it means an unhandled error occurred. Investigate the root cause via the `[e2e errors]` output.
    - **Wrong viewport position** -- screenshot shows footer/header instead of the expected tool UI. Add `scrollTo(0, 0)` before the screenshot call.
    - **Missing or garbled content** -- indicates a rendering issue or missing data.
-3. **E2E environment** -- all E2E tests run against the full dev stack (Next.js + Convex on port 4000). The dev stack must be running before tests execute. Start with `task dev` if not already running.
+3. **E2E environment** -- agents must use `task e2e:isolated` (port 4001) to avoid colliding with the user's running dev server on port 4000. The isolated task starts its own Next.js instance automatically.
 
 ### Stale Artifact Cleanup (MANDATORY)
 
