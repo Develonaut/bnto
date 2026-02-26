@@ -6,15 +6,9 @@ test.use({ reducedMotion: "reduce" });
  * Anonymous → password conversion E2E journeys (C1-C3 from journeys/auth.md)
  *
  * Tests the anonymous session lifecycle and the conversion to a real account.
- *
- * KNOWN LIMITATION: @convex-dev/auth v0.0.90 does NOT preserve the anonymous
- * userId during password sign-up. The library creates a new user instead of
- * patching the anonymous one. This means userId changes on conversion —
- * the C1-C2 userId preservation test is marked fixme until this is fixed
- * (either via a custom auth callback or an upstream @convex-dev/auth fix).
- *
- * Impact: anonymous user's work (run history, saved state) is lost on sign-up.
- * This blocks the monetization funnel and must be fixed before Stripe (M5).
+ * The PasswordWithAnonymousUpgrade wrapper in auth.ts preserves the same
+ * userId when an anonymous user signs up with a password, so all existing
+ * data (executions, run counts, events) stays associated with their account.
  */
 
 function testEmail() {
@@ -41,6 +35,12 @@ test.describe("Anonymous → password conversion", () => {
       timeout: 15000,
     });
 
+    // Wait for user query to load — data-user-id populates after the
+    // session is ready because it depends on a separate React Query fetch
+    await expect(shell).not.toHaveAttribute("data-user-id", "", {
+      timeout: 10000,
+    });
+
     // Capture the anonymous userId
     const userId = await shell.getAttribute("data-user-id");
     expect(userId).toBeTruthy();
@@ -49,13 +49,7 @@ test.describe("Anonymous → password conversion", () => {
     await expect(page).toHaveScreenshot("00-anonymous-session-active.png");
   });
 
-  // FIXME: @convex-dev/auth v0.0.90 creates a new user on password sign-up
-  // instead of upgrading the anonymous one. The userId changes, breaking the
-  // conversion funnel. This needs either:
-  // - A custom createOrUpdateUser that links by email/device fingerprint
-  // - An upstream fix in @convex-dev/auth for anonymous→password upgrade
-  // - A post-signup migration that merges anonymous user data to the new user
-  test.fixme(
+  test(
     "C1-C2: userId preserved when anonymous user signs up",
     async ({ page }) => {
       const email = testEmail();
@@ -66,6 +60,11 @@ test.describe("Anonymous → password conversion", () => {
       const shell = page.locator('[data-testid="bnto-shell"]');
       await expect(shell).toHaveAttribute("data-session", "ready", {
         timeout: 15000,
+      });
+
+      // Wait for user query to load
+      await expect(shell).not.toHaveAttribute("data-user-id", "", {
+        timeout: 10000,
       });
 
       // Capture anonymous userId
@@ -111,6 +110,11 @@ test.describe("Anonymous → password conversion", () => {
         timeout: 15000,
       });
 
+      // Wait for user query to load
+      await expect(shell).not.toHaveAttribute("data-user-id", "", {
+        timeout: 10000,
+      });
+
       // Capture the upgraded userId
       const upgradedUserId = await shell.getAttribute("data-user-id");
       expect(upgradedUserId).toBeTruthy();
@@ -124,12 +128,7 @@ test.describe("Anonymous → password conversion", () => {
     },
   );
 
-  // FIXME: Same root cause as C1-C2. After anonymous→password sign-up, the
-  // Convex client session doesn't transition cleanly to the new password user.
-  // NavUser shows "Sign In" because the auth token still references the
-  // anonymous session. A clean "sign up as fresh user" flow works fine
-  // (covered by auth-lifecycle.spec.ts S1 tests).
-  test.fixme(
+  test(
     "C3: signed-up user has correct profile after anonymous conversion",
     async ({ page }) => {
       const email = testEmail();
