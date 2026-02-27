@@ -43,6 +43,8 @@
   position: relative;
   transform-style: preserve-3d;
   border: 1px solid var(--surface-wall);
+  background-color: var(--face-bg);
+  color: var(--face-fg);
 }
 
 /* Walls — fixed darker shade offset behind the face.
