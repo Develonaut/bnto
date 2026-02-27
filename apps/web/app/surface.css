@@ -308,25 +308,26 @@
  * changes where the button springs back to on release.
  *
  *   OFF: normal state machine (resting → hover → flush → resting)
- *   ON:  resting = 66% toward ground, hover = 85%, press = flush
+ *   ON:  resting = hover depth (33% sunk), hover = 66% sunk, press = flush
  *
  * No :active override needed — the base .pressable:active (flush)
  * applies regardless of toggle state. A press is a press.
  * ────────────────────────────────────────────────────────────────── */
 
-/* Toggle ON resting — sunk 66% toward ground (clearly depressed) */
+/* Toggle ON resting — same depth as normal hover (33% sunk toward ground).
+ * Clearly visible as "pressed in" without needing to hover to see it. */
 .pressable[data-toggle][data-active] {
   transform: translate(
-    calc(var(--elevation-x) * -0.33),
-    calc(var(--elevation-y) * -0.33)
+    calc(var(--elevation-x) * -0.66),
+    calc(var(--elevation-y) * -0.66)
   );
   transition-duration: var(--pressable-dur, 150ms);
 }
 
 .pressable[data-toggle][data-active]::before {
   transform: translate3d(
-    calc(var(--elevation-x) * 0.33),
-    calc(var(--elevation-y) * 0.33),
+    calc(var(--elevation-x) * 0.66),
+    calc(var(--elevation-y) * 0.66),
     -1px
   );
   transition-duration: var(--pressable-dur, 150ms);
@@ -334,30 +335,29 @@
 
 .pressable[data-toggle][data-active]::after {
   transform: translate3d(
-    calc(var(--shadow-x) * 0.33),
-    calc(var(--shadow-y) * 0.33),
+    calc(var(--shadow-x) * 0.66),
+    calc(var(--shadow-y) * 0.66),
     -2px
   );
-  opacity: 0.33;
+  opacity: 0.66;
   transition-duration: var(--pressable-dur, 150ms);
 }
 
-/* Toggle ON hover — sinks a bit deeper (85% toward ground).
- * Resting is already low, so hover only needs a small extra dip
- * to give visual feedback before flush on press. */
+/* Toggle ON hover — sinks further (66% toward ground).
+ * A clear extra dip to give feedback before flush on press. */
 .pressable[data-toggle][data-active]:hover,
 .pressable[data-toggle][data-active]:focus-visible {
   transform: translate(
-    calc(var(--elevation-x) * -0.15),
-    calc(var(--elevation-y) * -0.15)
+    calc(var(--elevation-x) * -0.33),
+    calc(var(--elevation-y) * -0.33)
   );
 }
 
 .pressable[data-toggle][data-active]:hover::before,
 .pressable[data-toggle][data-active]:focus-visible::before {
   transform: translate3d(
-    calc(var(--elevation-x) * 0.15),
-    calc(var(--elevation-y) * 0.15),
+    calc(var(--elevation-x) * 0.33),
+    calc(var(--elevation-y) * 0.33),
     -1px
   );
 }
@@ -365,11 +365,11 @@
 .pressable[data-toggle][data-active]:hover::after,
 .pressable[data-toggle][data-active]:focus-visible::after {
   transform: translate3d(
-    calc(var(--shadow-x) * 0.15),
-    calc(var(--shadow-y) * 0.15),
+    calc(var(--shadow-x) * 0.33),
+    calc(var(--shadow-y) * 0.33),
     -2px
   );
-  opacity: 0.15;
+  opacity: 0.33;
 }
 
 /* Toggle ON press — flush, same as any button. Needs explicit rule
@@ -403,30 +403,29 @@
   outline-offset: -8px;
 }
 
-/* Disabled — stuck flush with the ground, greyed out.
- * Like a button that's been pressed and can't come back up. */
+/* Disabled — stuck flush with the ground, monochromatic.
+ * Like a button that's been pressed and can't come back up.
+ * Can't use filter:grayscale() because it flattens preserve-3d
+ * and the pseudo-elements render over the text. Instead we
+ * desaturate by overriding color variables to the muted palette. */
 .pressable:disabled,
 .pressable[aria-disabled="true"] {
   pointer-events: none;
-  --face-bg: color-mix(
-    in oklch,
-    var(--variant-bg, var(--card)) 45%,
-    var(--muted)
-  );
+  --face-bg: var(--border);
   --face-fg: var(--muted-foreground);
-  border-color: color-mix(in oklch, var(--surface-wall) 40%, var(--muted));
+  --surface-wall: var(--surface-muted-wall);
+  --surface-shadow: var(--surface-muted-shadow);
+  border-color: var(--surface-muted-wall);
   transform: translate(0, 0);
 }
 
 .pressable:disabled::before,
 .pressable[aria-disabled="true"]::before {
-  filter: saturate(0.4) brightness(1.3);
   transform: translate3d(0, 0, -1px);
 }
 
 .pressable:disabled::after,
 .pressable[aria-disabled="true"]::after {
-  filter: saturate(0.4) brightness(1.3);
   transform: translate3d(0, 0, -2px);
 }
 
