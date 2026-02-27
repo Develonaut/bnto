@@ -2,11 +2,13 @@
 
 import * as React from "react";
 
+import { cn } from "@/lib/cn";
+
 import { assignCellLayouts } from "./assignCellLayouts";
 import { BentoItemContext } from "./bentoGridContext";
 import type { CellLayout } from "./bentoGridContext";
 import { Grid } from "./Grid";
-import type { ResponsiveGap } from "./layoutTypes";
+import type { GapSize } from "./layoutTypes";
 
 /* ── Re-exports ──────────────────────────────────────────────── */
 
@@ -87,7 +89,7 @@ type BentoGridProps = {
   /** Number of columns (auto-mapped to responsive breakpoints). Default `3`. */
   cols?: 1 | 2 | 3;
   /** Gap between cells. Default `"md"`. */
-  gap?: ResponsiveGap;
+  gap?: GapSize;
   /** Minimum row height. Default `"10rem"`. */
   minRowHeight?: string;
   /** Skip featured layout — all cells are equal 1×1. Default `false`. */
@@ -159,18 +161,17 @@ function BentoGridRoot({
     }));
   }
 
-  const colsResponsive =
-    cols === 1 ? (1 as const)
-    : cols === 2 ? { mobile: 1 as const, tablet: 2 as const }
-    : { mobile: 1 as const, tablet: 2 as const, desktop: 3 as const };
-
   return (
     <Grid
-      cols={colsResponsive}
+      cols={1}
       gap={gap}
       flow="dense"
-      rows={`repeat(${rows}, minmax(${minRowHeight}, auto))`}
-      className={className}
+      className={cn(
+        cols >= 2 && "md:grid-cols-2",
+        cols >= 3 && "lg:grid-cols-3",
+        className,
+      )}
+      style={{ gridTemplateRows: `repeat(${rows}, minmax(${minRowHeight}, auto))` }}
     >
       {allEntries.map((entry) => (
         <BentoItemContext.Provider key={entry.key} value={entry.layout}>

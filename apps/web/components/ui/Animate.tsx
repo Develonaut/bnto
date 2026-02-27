@@ -207,6 +207,77 @@ const Breathe = React.forwardRef<HTMLDivElement, Omit<AnimateBaseProps, "index" 
 );
 Breathe.displayName = "Animate.Breathe";
 
+/* ── BouncyStagger ─────────────────────────────────────────────
+ * Composed Stagger + ScaleIn that auto-wraps each child.
+ * Drop it in with a className and children bounce onto the map.
+ *
+ *   <Animate.BouncyStagger className="grid grid-cols-3 gap-4">
+ *     <Card>A</Card>
+ *     <Card>B</Card>
+ *     <Card>C</Card>
+ *   </Animate.BouncyStagger>
+ *
+ * With `asChild`, merges stagger onto the single child element
+ * and ScaleIn onto each of its children. Useful for Grid layouts
+ * where items need to stay as direct grid children:
+ *
+ *   <Animate.BouncyStagger asChild>
+ *     <Grid cols={6} rows={4} gap="md">
+ *       <Grid.Item colSpan={4} rowSpan={3}>...</Grid.Item>
+ *       <Grid.Item colSpan={2} rowSpan={2}>...</Grid.Item>
+ *     </Grid>
+ *   </Animate.BouncyStagger>
+ */
+
+interface BouncyStaggerProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Merge stagger + scale-in onto child and its children. */
+  asChild?: boolean;
+  /** Starting scale (0-1). Default 0.6. */
+  from?: number;
+  /** Spring easing. Default "spring-bouncy". */
+  easing?: Easing;
+  /** Gap between each child's animation start. Default 60ms. */
+  interval?: number | string;
+}
+
+const BouncyStagger = React.forwardRef<HTMLDivElement, BouncyStaggerProps>(
+  ({ from = 0.6, easing = "spring-bouncy", interval, asChild, className, children, ...props }, ref) => {
+    if (asChild) {
+      /* asChild mode: merge stagger onto the single child, and
+       * ScaleIn asChild onto each of that child's children.
+       * This keeps items as direct grid children (no wrapper divs). */
+      const child = React.Children.only(children);
+      if (!React.isValidElement(child)) return null;
+      const grandchildren = (child.props as { children?: React.ReactNode }).children;
+      const animated = React.Children.map(grandchildren, (gc, i) =>
+        gc != null ? (
+          <ScaleIn key={i} index={i} from={from} easing={easing} asChild>
+            {gc}
+          </ScaleIn>
+        ) : null,
+      );
+      return (
+        <Stagger ref={ref} interval={interval} className={className} asChild {...props}>
+          {React.cloneElement(child, undefined, animated)}
+        </Stagger>
+      );
+    }
+
+    return (
+      <Stagger ref={ref} interval={interval} className={className} {...props}>
+        {React.Children.map(children, (child, i) =>
+          child != null ? (
+            <ScaleIn key={i} index={i} from={from} easing={easing}>
+              {child}
+            </ScaleIn>
+          ) : null,
+        )}
+      </Stagger>
+    );
+  },
+);
+BouncyStagger.displayName = "Animate.BouncyStagger";
+
 /* ── InView (extracted) ─────────────────────────────────────── */
 
 import { InView } from "./InView";
@@ -221,6 +292,7 @@ export const Animate = Object.assign(AnimateRoot, {
   Root: AnimateRoot,
   Stagger,
   ScaleIn,
+  BouncyStagger,
   FadeIn,
   SlideUp,
   SlideDown,
@@ -229,8 +301,8 @@ export const Animate = Object.assign(AnimateRoot, {
   InView,
 });
 
-/* Re-export InView for direct import from server components.
+/* Re-export for direct import from server components.
  * Server components can't access Object.assign namespace properties
- * on client references — use `import { InView }` instead of
- * `Animate.InView` when rendering from a server component. */
-export { InView };
+ * on client references — use named imports instead of
+ * `Animate.X` when rendering from a server component. */
+export { InView, BouncyStagger };

@@ -17,14 +17,17 @@ function hasSignoutSignal(
  *
  * Wraps `convexAuthNextjsMiddleware` so @convex-dev/auth handles token
  * refresh and cookie management automatically. Our custom logic handles
- * route protection using `convexAuth.isAuthenticated()` for real token
- * validation (not just cookie-presence checks).
+ * route protection on the small set of routes that need it.
+ *
+ * PERFORMANCE: `convexAuth.isAuthenticated()` makes a network round-trip
+ * to Convex Cloud. We only call it for auth paths and protected paths —
+ * public routes (recipes, home, pricing, faq) skip the check entirely.
  *
  * Tiers:
  * 1. Canonical URL normalization (lowercase, no trailing slash)
- * 2. Auth routes (/signin, /signup): redirect to / if already authenticated
- * 3. Protected routes (/workflows, etc.): redirect to /signin if not authenticated
- * 4. Everything else (bnto slugs, public pages, unknown paths): pass through
+ * 2. Public routes: pass through immediately (no auth check)
+ * 3. Auth routes (/signin, /signup): redirect to / if already authenticated
+ * 4. Protected routes (/workflows, etc.): redirect to /signin if not authenticated
  */
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const { pathname } = request.nextUrl;
@@ -38,9 +41,14 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
     return NextResponse.redirect(url, 301);
   }
 
+  // Public routes — skip the expensive Convex auth check entirely.
+  // Recipe pages, home, pricing, faq, etc. don't need auth state.
+  const needsAuthCheck = isAuthPath(pathname) || isProtectedPath(pathname);
+  if (!needsAuthCheck) return;
+
   const isAuthenticated = await convexAuth.isAuthenticated();
 
-  // Tier 1: Auth routes — redirect to home if already authenticated.
+  // Auth routes — redirect to home if already authenticated.
   // Skip redirect when signout signal cookie is set — the user is either
   // signing out (needs to reach /signin despite stale session cookie) or
   // is an anonymous user navigating to sign up.
@@ -48,12 +56,10 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
     return nextjsMiddlewareRedirect(request, "/");
   }
 
-  // Tier 2: Protected routes — redirect to /signin if not authenticated
+  // Protected routes — redirect to /signin if not authenticated
   if (!isAuthenticated && isProtectedPath(pathname)) {
     return nextjsMiddlewareRedirect(request, "/signin");
   }
-
-  // Tier 3: Everything else — pass through (bnto slugs, public pages, unknown paths)
 });
 
 /**

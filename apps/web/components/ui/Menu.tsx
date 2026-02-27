@@ -2,6 +2,9 @@
 
 import * as React from "react";
 
+import { Slot } from "@radix-ui/react-slot";
+
+import { cn } from "@/lib/cn";
 import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -36,15 +39,11 @@ const MenuTrigger = React.forwardRef<
 >(({ children, ...props }, ref) => {
   const open = React.useContext(MenuContext);
   return (
-    <Popover.Anchor asChild>
-      <div className="inline-flex">
-        <Popover.Trigger asChild>
-          <Button ref={ref} toggle pressed={open} {...props}>
-            {children}
-          </Button>
-        </Popover.Trigger>
-      </div>
-    </Popover.Anchor>
+    <Popover.Trigger asChild>
+      <Button ref={ref} toggle pressed={open} {...props}>
+        {children}
+      </Button>
+    </Popover.Trigger>
   );
 });
 MenuTrigger.displayName = "MenuTrigger";
@@ -125,8 +124,103 @@ function MenuRootWrapper({
   );
 }
 
+/** Closes the menu when its child is clicked. Renders no wrapper element. */
+const MenuClose = Popover.Close;
+
+/* ── Item ───────────────────────────────────────────────────────
+ * A styled interactive container for a single menu row.
+ * Compose children freely — icons, labels, descriptions.
+ *
+ * Wraps itself in Menu.Close so clicking any item closes the
+ * menu automatically.
+ *
+ * Renders a <button> by default. Use `asChild` to merge onto a
+ * child element (e.g. Next.js Link).
+ *
+ * Usage:
+ *   // Action item — compose icon + label
+ *   <Menu.Item onClick={handleSignOut}>
+ *     <LogOutIcon />
+ *     Sign out
+ *   </Menu.Item>
+ *
+ *   // Rich item — compose as a link with any inner layout
+ *   <Menu.Item asChild>
+ *     <Link href="/compress-images">
+ *       <span className="font-medium">Compress Images</span>
+ *       <span className="text-xs text-muted-foreground">Shrink files</span>
+ *     </Link>
+ *   </Menu.Item>
+ * ──────────────────────────────────────────────────────────────── */
+
+const ITEM_BASE =
+  "flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-sm transition-colors select-none outline-hidden [&_svg:not([class*='size-'])]:size-4 hover:bg-muted focus-visible:bg-muted disabled:pointer-events-none disabled:opacity-50";
+
+function MenuItem({
+  asChild,
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<"button"> & { asChild?: boolean }) {
+  const Comp: React.ElementType = asChild ? Slot : "button";
+  return (
+    <MenuClose asChild>
+      <Comp
+        ref={ref}
+        type={asChild ? undefined : "button"}
+        className={cn(ITEM_BASE, className)}
+        {...props}
+      />
+    </MenuClose>
+  );
+}
+
+/* ── Label ──────────────────────────────────────────────────────
+ * Non-interactive category header inside a menu. Uppercase, muted,
+ * small text. Used to group items into sections.
+ *
+ * Usage:
+ *   <Menu.Label>Image</Menu.Label>
+ * ──────────────────────────────────────────────────────────────── */
+
+function MenuLabel({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "px-3 pt-3 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+/* ── Separator ──────────────────────────────────────────────────
+ * A thin horizontal line to separate groups of items.
+ * ──────────────────────────────────────────────────────────────── */
+
+function MenuSeparator({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      role="separator"
+      className={cn("my-1 h-px bg-border", className)}
+      {...props}
+    />
+  );
+}
+
 export const Menu = Object.assign(MenuRootWrapper, {
   Root: MenuRootWrapper,
   Trigger: MenuTrigger,
   Content: MenuContent,
+  Close: MenuClose,
+  Item: MenuItem,
+  Label: MenuLabel,
+  Separator: MenuSeparator,
 });

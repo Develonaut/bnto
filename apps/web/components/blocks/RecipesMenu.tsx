@@ -22,23 +22,20 @@ export function RecipesMenu() {
         <ul className="grid grid-cols-2 gap-1">
           {RECIPES.map((category) => (
             <li key={category.title} className="col-span-2">
-              <div className="px-3 pt-3 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {category.title}
-              </div>
+              <Menu.Label>{category.title}</Menu.Label>
               <ul className="grid grid-cols-2 gap-1">
                 {category.links.map((link) => (
                   <li key={link.url}>
-                    <Link
-                      href={link.url}
-                      className="flex flex-col gap-1 rounded-lg px-3 py-2.5 no-underline outline-hidden transition-colors select-none hover:bg-muted focus:bg-muted"
-                    >
-                      <span className="text-sm leading-normal font-medium">
-                        {link.label}
-                      </span>
-                      <span className="text-muted-foreground text-xs leading-normal">
-                        {link.description}
-                      </span>
-                    </Link>
+                    <Menu.Item asChild className="flex-col items-start gap-1 py-2.5">
+                      <Link href={link.url} className="no-underline">
+                        <span className="text-sm leading-normal font-medium">
+                          {link.label}
+                        </span>
+                        <span className="text-xs leading-normal text-muted-foreground">
+                          {link.description}
+                        </span>
+                      </Link>
+                    </Menu.Item>
                   </li>
                 ))}
               </ul>

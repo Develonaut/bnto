@@ -18,6 +18,8 @@ const PopoverAnchor = PopoverPrimitive.Anchor;
 
 const PopoverPortal = PopoverPrimitive.Portal;
 
+const PopoverClose = PopoverPrimitive.Close;
+
 const PopoverContentUnstyled = PopoverPrimitive.Content;
 
 const PopoverContent = React.forwardRef<
@@ -48,6 +50,7 @@ export const Popover = Object.assign(PopoverRoot, {
   Root: PopoverRoot,
   Trigger: PopoverTrigger,
   Anchor: PopoverAnchor,
+  Close: PopoverClose,
   Portal: PopoverPortal,
   Content: PopoverContent,
   ContentUnstyled: PopoverContentUnstyled,
