@@ -15,19 +15,19 @@ function Checkbox({
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "surface surface-outline elevation-md peer size-6 shrink-0 rounded-lg",
-        "data-[state=checked]:[--variant-bg:var(--primary)] data-[state=checked]:[--variant-fg:var(--primary-foreground)] data-[state=checked]:[--surface-wall:var(--surface-primary-wall)] data-[state=checked]:[--surface-shadow:var(--surface-primary-shadow)]",
+        "surface elevation-sm pressable peer size-7 shrink-0 rounded-[6px] outline-none translate-y-px",
         "focus-visible:outline-2 focus-visible:outline-ring/50 focus-visible:outline-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
+      style={{ "--pressable-ease": "var(--ease-spring-bouncier)", "--pressable-dur": "400ms" } as React.CSSProperties}
       {...props}
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
         className="grid place-content-center text-current transition-none"
       >
-        <CheckIcon className="size-4" />
+        <CheckIcon strokeWidth={3} className="size-4" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );
