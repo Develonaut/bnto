@@ -53,19 +53,21 @@ export const Navbar = () => {
       <div className="fixed top-0 z-50 flex w-full justify-center pt-4">
         <Container size="lg">
           <Card className="rounded-full" elevation="sm">
-            <div className="flex items-center justify-between gap-3.5 px-6 py-3">
-              {/* Logo */}
-              <Link
-                href="/"
-                className="flex max-h-8 items-center gap-2 text-xl font-display font-black tracking-tighter"
-              >
-                bnto
-              </Link>
+            <div className="flex items-center gap-3.5 px-6 py-3">
+              {/* Logo — flex-1 so left/right columns balance for true centering */}
+              <div className="flex min-w-0 flex-1 items-center">
+                <Link
+                  href="/"
+                  className="flex max-h-8 items-center gap-2 text-xl font-display font-black tracking-tighter"
+                >
+                  bnto
+                </Link>
+              </div>
 
               <DesktopNav pathname={pathname} />
 
-              {/* Right side */}
-              <div className="flex items-center gap-2">
+              {/* Right side — flex-1 mirrors the logo column */}
+              <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
                 <div className="lg:hidden">
                   <Button
                     variant="secondary"
