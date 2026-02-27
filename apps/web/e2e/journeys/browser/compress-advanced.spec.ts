@@ -49,10 +49,12 @@ async function compressAtQuality(page: Page, quality: number): Promise<number> {
     page.getByRole("heading", { name: "Compress Images Online Free" }),
   ).toBeVisible();
 
-  await adjustSlider(page, quality, 80);
-
+  // Upload file first — config controls only appear in Phase 2 (after file selection)
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles([path.join(FIXTURES_DIR, "medium.jpg")]);
+  await expect(page.getByText("1 file selected")).toBeVisible();
+
+  await adjustSlider(page, quality, 80);
 
   const runButton = page.locator('[data-testid="run-button"]');
   await runButton.click();

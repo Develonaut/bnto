@@ -20,8 +20,8 @@ import { useBrowserEngine } from "@/lib/wasm/useBrowserEngine";
  *   2. Browser execution (WASM via @bnto/core)
  *   3. Cloud execution (R2 upload + Railway via @bnto/core)
  *
- * BntoPageShell (and future RecipeShell) consumes this hook and renders
- * the return values — no state management in the component.
+ * RecipeShell consumes this hook and renders the return values —
+ * no state management in the component.
  */
 export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   // -- Page-scoped store (created once per mount via lazy init) --

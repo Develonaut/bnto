@@ -164,20 +164,20 @@ test.describe("EXIF orientation — all image bntos", () => {
       }),
     ).toBeVisible();
 
-    // Change target format to PNG
-    const formatSelect = page.locator('[data-testid="format-select"]').or(
-      page.getByRole("combobox"),
-    );
-    await formatSelect.click();
-    await page.getByRole("option", { name: /png/i }).click();
-
-    // Upload the EXIF-oriented fixture
+    // Upload file first — config controls only appear in Phase 2 (after file selection)
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles([
       path.join(FIXTURES_DIR, "portrait-rotated.jpg"),
     ]);
 
     await expect(page.getByText("1 file selected")).toBeVisible();
+
+    // Change target format to PNG
+    const formatSelect = page.locator('[data-testid="format-select"]').or(
+      page.getByRole("combobox"),
+    );
+    await formatSelect.click();
+    await page.getByRole("option", { name: /png/i }).click();
 
     const runButton = page.locator('[data-testid="run-button"]');
     await expect(runButton).toBeEnabled();

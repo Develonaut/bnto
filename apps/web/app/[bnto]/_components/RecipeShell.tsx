@@ -2,14 +2,14 @@
 
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { Animate } from "@/components/ui/Animate";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
 import { FileUpload } from "@/components/ui/FileUpload";
-import { Grid } from "@/components/ui/Grid";
 import { Heading } from "@/components/ui/Heading";
-import { UploadIcon } from "@/components/ui/icons";
+import { UploadIcon, XIcon } from "@/components/ui/icons";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
 import { getAcceptedTypes, toDropzoneAccept } from "../_lib/getAcceptedTypes";
-import { FileCard } from "./FileCard";
 import { PhaseIndicator } from "./PhaseIndicator";
 import { RecipeConfigSection } from "./RecipeConfigSection";
 import { RecipeResultsSection } from "./RecipeResultsSection";
@@ -117,30 +117,49 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
             </Animate.SlideUp>
           )}
 
-          {/* Phase 2: File grid + config */}
+          {/* Phase 2: File list + config */}
           {activePhase === 2 && (
-            <div className="space-y-4">
-              <Animate.Stagger>
-                <Grid cols={{ mobile: 2, desktop: 3 }} gap="sm">
-                  {files.map((file, i) => (
-                    <FileCard
-                      key={`${file.name}-${file.size}-${file.lastModified}`}
-                      file={file}
-                      onRemove={() => setFiles(files.filter((_, j) => j !== i))}
-                      disabled={isProcessing}
-                      index={i}
-                    />
-                  ))}
-                </Grid>
-              </Animate.Stagger>
-
-              <div className="text-left">
-                <RecipeConfigSection
-                  slug={entry.slug}
-                  config={config}
-                  onChange={setConfig}
-                />
+            <div className="space-y-4 text-left">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-foreground">
+                  {files.length} {files.length === 1 ? "file" : "files"} selected
+                </p>
+                <FileUpload.Clear asChild>
+                  <Button variant="outline" elevation="md">
+                    Clear all
+                  </Button>
+                </FileUpload.Clear>
               </div>
+
+              <FileUpload.List>
+                {files.map((file, i) => (
+                  <FileUpload.Item
+                    key={`${file.name}-${file.size}-${file.lastModified}`}
+                    value={file}
+                    index={i}
+                  >
+                    <Card
+                      className="flex items-center gap-3 rounded-lg px-4 py-3"
+                      elevation="sm"
+                    >
+                      <FileUpload.ItemMetadata />
+                      <FileUpload.ItemActions>
+                        <FileUpload.ItemDelete asChild>
+                          <Button variant="outline" size="icon" elevation="sm">
+                            <XIcon className="size-4" />
+                          </Button>
+                        </FileUpload.ItemDelete>
+                      </FileUpload.ItemActions>
+                    </Card>
+                  </FileUpload.Item>
+                ))}
+              </FileUpload.List>
+
+              <RecipeConfigSection
+                slug={entry.slug}
+                config={config}
+                onChange={setConfig}
+              />
             </div>
           )}
 

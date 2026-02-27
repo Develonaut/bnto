@@ -45,7 +45,7 @@ import { toBrowserEngine } from "./toBrowserEngine";
 /**
  * Register BntoWorker as the browser engine for WASM execution.
  *
- * Call this once at the page level (e.g., in BntoPageShell) when the
+ * Call this once at the page level (e.g., in useRecipeFlow) when the
  * current bnto supports browser execution. The worker will be created
  * on mount and terminated on unmount.
  *

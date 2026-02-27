@@ -11,7 +11,7 @@
 ```
 User drops files
   → FileDropZone (React component)
-    → BntoPageShell (orchestrator)
+    → RecipeShell (orchestrator)
       → useBrowserExecution (React hook)
         → browserExecutionService (pure TS service)
           → BntoWorker (main-thread wrapper)

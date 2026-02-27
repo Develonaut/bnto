@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/ui/AppShell";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
-import { BntoPageShell } from "./_components/BntoPageShell";
+import { RecipeShell } from "./_components/RecipeShell";
 
 /** Only slugs from generateStaticParams are valid — everything else is 404
  * at the routing level (no component code runs for unknown slugs). */
@@ -45,7 +45,7 @@ export default async function BntoPage({
   return (
     <AppShell.Content>
       <BntoJsonLd entry={entry} />
-      <BntoPageShell entry={entry} />
+      <RecipeShell entry={entry} />
     </AppShell.Content>
   );
 }

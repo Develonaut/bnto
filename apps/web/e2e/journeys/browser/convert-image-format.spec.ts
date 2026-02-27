@@ -111,19 +111,20 @@ test.describe("convert-image-format — browser execution", () => {
       }),
     ).toBeVisible();
 
-    // Change target format to JPEG via the select dropdown
-    const formatSelect = page.locator('[data-testid="format-select"]').or(
-      page.getByRole("combobox"),
-    );
-    await formatSelect.click();
-    await page.getByRole("option", { name: /jpeg/i }).click();
-
+    // Upload file first — config controls only appear in Phase 2 (after file selection)
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles([
       path.join(FIXTURES_DIR, "small.png"),
     ]);
 
     await expect(page.getByText("1 file selected")).toBeVisible();
+
+    // Change target format to JPEG via the select dropdown
+    const formatSelect = page.locator('[data-testid="format-select"]').or(
+      page.getByRole("combobox"),
+    );
+    await formatSelect.click();
+    await page.getByRole("option", { name: /jpeg/i }).click();
 
     const runButton = page.locator('[data-testid="run-button"]');
     await runButton.click();
