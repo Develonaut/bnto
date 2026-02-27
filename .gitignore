@@ -68,6 +68,7 @@ node_modules/
 dist/
 .next/
 .next-e2e/
+next-env.d.ts
 
 # Vercel
 .vercel/
