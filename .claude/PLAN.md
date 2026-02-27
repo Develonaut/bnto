@@ -144,9 +144,9 @@ Build the new `RecipeShell` and supporting wrappers. Depends on Wave 1 deliverab
 
 - [ ] `apps/web` — **Create `RecipeShell` composition component.** New file: `app/[bnto]/_components/RecipeShell.tsx`. Replaces BntoPageShell as the page orchestrator. Uses `useRecipeFlow` hook (Wave 1). Composition: `Container` > `Heading` + `Text` + `PhaseIndicator` + dropzone in `Card elevation="md"` + file card `Grid` with `Animate.Stagger` + config section + `RunButton` + results section. All data-testid attributes preserved for E2E. Under 150 lines (pure composition, no logic). NOT wired into page.tsx yet.
 
-- [ ] **CLAIMED** `apps/web` — **Create `RecipeConfigSection` wrapper.** New file: `app/[bnto]/_components/RecipeConfigSection.tsx`. Replaces `BntoConfigPanel` with Motorway styling. Wraps per-recipe config components in `Card` with `elevation="sm"` + collapsible `Accordion` (default open). The slug-to-component routing (switch statement) moves here from BntoConfigPanel. Returns null for slugs with no config. Uses `Animate.FadeIn` entrance. Under 80 lines.
+- [x] `apps/web` — **Create `RecipeConfigSection` wrapper.** New file: `app/[bnto]/_components/RecipeConfigSection.tsx`. Replaces `BntoConfigPanel` with Motorway styling. Wraps per-recipe config components in `Card` with `elevation="sm"` + collapsible `Accordion` (default open). The slug-to-component routing (switch statement) moves here from BntoConfigPanel. Returns null for slugs with no config. Uses `Animate.FadeIn` entrance. Under 80 lines.
 
-- [ ] **CLAIMED** `apps/web` — **Create `RecipeResultsSection` wrapper.** New file: `app/[bnto]/_components/RecipeResultsSection.tsx`. Consolidates the 4 conditional result blocks (browser progress, browser results, cloud progress, cloud results, error card) from BntoPageShell into one composition component. Wraps each in `Animate.SlideUp`. Under 100 lines. No changes to result component internals.
+- [x] `apps/web` — **Create `RecipeResultsSection` wrapper.** New file: `app/[bnto]/_components/RecipeResultsSection.tsx`. Consolidates the 4 conditional result blocks (browser progress, browser results, cloud progress, cloud results, error card) from BntoPageShell into one composition component. Wraps each in `Animate.SlideUp`. Under 100 lines. No changes to result component internals.
 
 #### Wave 3 (sequential — wire up, migrate, E2E overhaul)
 
