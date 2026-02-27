@@ -31,6 +31,7 @@ export {
   Globe as GlobeIcon,
   GripVertical as GripVerticalIcon,
   Heart as HeartIcon,
+  Image as ImageIcon,
   Laptop as LaptopIcon,
   Loader2 as LoaderIcon,
   Menu as MenuIcon,

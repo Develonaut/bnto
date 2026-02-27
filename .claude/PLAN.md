@@ -136,7 +136,7 @@ Three independent pieces the new shell will compose. No cross-dependencies. **De
 
 - [x] `apps/web` — **Create `PhaseIndicator` component.** New file: `app/[bnto]/_components/PhaseIndicator.tsx`. Three phases: "Files" (1), "Configure" (2), "Results" (3). Props: `activePhase: 1 | 2 | 3`, `hasConfig?: boolean` (skip phase 2 label when false). Visual: horizontal row of circles connected by lines — active = `bg-primary`, completed = checkmark, upcoming = `bg-muted` outline. Responsive: circles + labels on desktop, circles only on mobile. Under 100 lines.
 
-- [ ] `apps/web` — **Create `FileCard` component.** New file: `app/[bnto]/_components/FileCard.tsx`. Rich file preview: image thumbnail (via `URL.createObjectURL` with cleanup), file type icon (for non-images), file name (truncated), file size (formatted), type badge ("JPEG", "CSV"), delete button. Wraps in `Card` with `elevation="sm"`. Props: `file: File`, `onRemove: () => void`, `disabled?: boolean`. Uses `Animate.ScaleIn` entrance. Under 120 lines.
+- [x] `apps/web` — **Create `FileCard` component.** New file: `app/[bnto]/_components/FileCard.tsx`. Rich file preview: image thumbnail (via `URL.createObjectURL` with cleanup), file type icon (for non-images), file name (truncated), file size (formatted), type badge ("JPEG", "CSV"), delete button. Wraps in `Card` with `elevation="sm"`. Props: `file: File`, `onRemove: () => void`, `disabled?: boolean`. Uses `Animate.ScaleIn` entrance. Under 120 lines.
 
 #### Wave 2 (parallel — new shell composition + config/results wrappers)
 
