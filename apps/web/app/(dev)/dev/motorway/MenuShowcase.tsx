@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { Button } from "@/components/ui/Button";
 import { Menu } from "@/components/ui/Menu";
 import { Row } from "@/components/ui/Row";
 
@@ -20,17 +19,14 @@ export function MenuShowcase() {
   return (
     <div ref={setBoundaryEl} className="space-y-8">
       <Row className="flex-wrap gap-6">
-        {/* Basic menu */}
+        {/* Basic menu — rich items with description */}
         <Menu>
           <Menu.Trigger variant="outline">Recipes</Menu.Trigger>
           <Menu.Content className="w-[28rem] p-3" boundary={boundaryEl}>
-            <ul className="grid grid-cols-2 gap-1">
+            <div className="grid grid-cols-2 gap-1">
               {DEMO_LINKS.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.url}
-                    className="flex flex-col gap-1 rounded-lg px-3 py-2.5 no-underline outline-hidden transition-colors select-none hover:bg-muted focus:bg-muted"
-                  >
+                <Menu.Item key={link.label} asChild>
+                  <Link href={link.url} className="flex-col items-start no-underline">
                     <span className="text-sm leading-normal font-medium">
                       {link.label}
                     </span>
@@ -38,45 +34,31 @@ export function MenuShowcase() {
                       {link.description}
                     </span>
                   </Link>
-                </li>
+                </Menu.Item>
               ))}
-            </ul>
+            </div>
           </Menu.Content>
         </Menu>
 
-        {/* Primary variant trigger */}
+        {/* Primary variant trigger — action items */}
         <Menu>
           <Menu.Trigger variant="primary">Actions</Menu.Trigger>
           <Menu.Content className="w-56 p-2" boundary={boundaryEl}>
-            <ul className="space-y-1">
-              <li>
-                <Button variant="secondary" className="w-full justify-start" elevation={false}>
-                  New Recipe
-                </Button>
-              </li>
-              <li>
-                <Button variant="secondary" className="w-full justify-start" elevation={false}>
-                  Import
-                </Button>
-              </li>
-              <li>
-                <Button variant="secondary" className="w-full justify-start" elevation={false}>
-                  Export
-                </Button>
-              </li>
-            </ul>
+            <Menu.Item>New Recipe</Menu.Item>
+            <Menu.Item>Import</Menu.Item>
+            <Menu.Item>Export</Menu.Item>
           </Menu.Content>
         </Menu>
 
-        {/* Secondary variant trigger */}
+        {/* Secondary variant trigger — with labels and separator */}
         <Menu>
           <Menu.Trigger variant="secondary">Options</Menu.Trigger>
           <Menu.Content className="w-48 p-2" elevation="sm" boundary={boundaryEl}>
-            <ul className="space-y-1 text-sm">
-              <li className="px-3 py-2 rounded-lg hover:bg-muted cursor-pointer">Edit</li>
-              <li className="px-3 py-2 rounded-lg hover:bg-muted cursor-pointer">Duplicate</li>
-              <li className="px-3 py-2 rounded-lg hover:bg-muted cursor-pointer text-destructive">Delete</li>
-            </ul>
+            <Menu.Label>Actions</Menu.Label>
+            <Menu.Item>Edit</Menu.Item>
+            <Menu.Item>Duplicate</Menu.Item>
+            <Menu.Separator />
+            <Menu.Item className="text-destructive">Delete</Menu.Item>
           </Menu.Content>
         </Menu>
       </Row>
