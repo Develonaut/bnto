@@ -182,6 +182,7 @@ func Factory() node.Factory { return func() node.NodeType { return &MyNode{} } }
 - Each package only exports what it owns
 - `apps/web` NEVER imports from `@bnto/backend` directly
 - **Third-party UI libraries should be wrapped** -- e.g., import form utilities from local wrappers, not from `react-hook-form` directly
+- **Named imports for React** -- use `import { useState, useRef } from "react"`, not `import * as React`. For types: `import type { ComponentProps, CSSProperties } from "react"`. Never use `React.useState`, `React.ComponentProps`, etc.
 
 ---
 

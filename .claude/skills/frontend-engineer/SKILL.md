@@ -135,6 +135,7 @@ Each domain owns its natural test boundary. Engine tests node logic. Core tests 
 6. **Self-fetching components** — pass IDs, never pass data objects as props
 7. **Semantic selectors in tests** — `getByRole`, `getByText`, `data-testid`. Never CSS classes
 8. **`reducedMotion: "reduce"`** — all E2E tests disable animations for deterministic screenshots
+9. **Named React imports** — `import { useState, useRef } from "react"`, not `import * as React`. For types: `import type { ComponentProps } from "react"`. If you touch a file using `React.*` namespace style, migrate to named imports in the same change
 
 ---
 

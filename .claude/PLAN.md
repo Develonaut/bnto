@@ -178,9 +178,11 @@ Visual refinement pass. Ensure the new layout meets the Motorway quality bar.
 - [ ] `apps/web` — `/frontend-engineer` — **Move `/dev/motorway` back to `/motorway`.** The `/dev/` prefix was a temporary measure. Now that the page is the editor playground (Sprint 4 Wave 3 target), give it a proper URL. Update any internal links, E2E tests, and nav references.
 - [ ] `engine` — `/rust-expert` — **Rust engine test location consistency audit.** Verify all crate tests follow the convention: unit tests in `#[cfg(test)]` blocks within source files, WASM integration tests in `tests/` directory. Relocate any misplaced tests.
 - [ ] `engine` — `/rust-expert` — **EXIF orientation test coverage verification.** Confirm `bnto-image` handles EXIF orientation metadata correctly for JPEG inputs. Add test cases for rotated/flipped images if missing.
-- [ ] `apps/web` — `/frontend-engineer` — **Replace `FileUpload` with `react-dropzone`.** The current `FileUpload` component has known react-hooks/immutability lint issues. Replace with a `react-dropzone`-based implementation that's composable and lint-clean. Preserve existing `data-testid` attributes for E2E tests.
+- [x] `apps/web` — `/frontend-engineer` — **Replace `FileUpload` with `react-dropzone`.** The current `FileUpload` component has known react-hooks/immutability lint issues. Replace with a `react-dropzone`-based implementation that's composable and lint-clean. Preserve existing `data-testid` attributes for E2E tests.
 - [ ] `@bnto/core` + `apps/web` — **Rename `core.browser` to `core.wasm`.** The `browser` namespace implies all browser functionality routes through it, but it's specifically the WASM execution engine. Rename: `browserClient` → `wasmClient`, `browserExecutionService` → `wasmExecutionService`, `useBrowserExecution` → `useWasmExecution`, `browserExecutionStore` → `wasmExecutionStore`, and all related types/files. Update consumers in `apps/web/`.
 - [ ] `monorepo` — **Create shared ESLint config and add linting to `@bnto/core`.** Currently `@bnto/core` has no linter (`pnpm --filter @bnto/core lint` echoes "No linter yet"). Create a shared ESLint config package (or root config) that all TS packages consume, then wire `@bnto/core`'s `lint` script to use it. Ensure `task ui:lint` covers core alongside web.
+- [ ] `apps/web` — `/frontend-engineer` — **Create `<Pressable>` component and migrate `Button asChild` patterns.** Low-level pressable surface that renders a real `<button>` by default (native keyboard activation, CSS `:active`) with depth + pressable behavior and zero layout opinions. Supports `asChild` to merge onto a child element when needed. Refactor `<Button>` to use `<Pressable>` internally. Migrate all `<Button asChild><Card>` patterns (FileUploadDropzone, RecipeGrid, BentoGridShowcase) to `<Pressable>`. See backlog section for full design notes, API sketch, and codebase sweep results.
+- [ ] `apps/web` — `/frontend-engineer` — **Sweep `import * as React` → named imports.** Replace all `import * as React from "react"` with named imports (`import { useState, useRef } from "react"`, `import type { ComponentProps } from "react"`). Rule added to `code-standards.md` and frontend-engineer quality standards.
 
 ---
 
@@ -662,6 +664,55 @@ Referral links to boost user acquisition. With browser-first, the referral rewar
 **Prerequisites:**
 - Desktop app bootstrap (Sprint 5) creates the second consumer
 - Stable component API — no major churn expected
+
+### UI: `<Pressable>` Component — Design Notes (reference for Sprint H task)
+
+**Promoted to Sprint H.** Implementation task is in Sprint H Wave 1. This section preserves the design rationale and codebase sweep results.
+
+**Problem:** `Button asChild` merges onto a child element via Radix `Slot`, but when the child is a `<div>` or `<Card>`, native keyboard activation (Space/Enter → click → CSS `:active`) is lost. The browser only fires `:active` on real button elements.
+
+**Inspired by:** React Aria's [`usePress`](https://react-aria.adobe.com/usePress) for the problem definition, MUI's `ButtonBase` for the component shape, React Native's `<Pressable>` for the name. Our advantage: the `.pressable` CSS system already handles all visual states (`:hover`, `:active`, `:focus-visible`, `:disabled`, `data-force-state`), so we just need the right element.
+
+**Architecture:**
+```
+Pressable (real <button> by default, supports asChild, depth, pressable CSS, zero layout)
+  └── Button (adds layout, sizing, typography, variant colors — uses Pressable internally)
+  └── Direct usage (wrap Cards, dropzones, drag targets, any pressable surface)
+```
+
+**API sketch:**
+```tsx
+// Default — renders a real <button>, wraps children
+<Pressable variant="outline" depth="md" spring="lg">
+  <Card className="flex flex-col items-center gap-3 p-6">
+    <UploadIcon />
+    <p>Drop files here</p>
+  </Card>
+</Pressable>
+
+// asChild — merges pressable behavior onto child element (same Slot pattern as Button)
+<Pressable asChild variant="outline" depth="md">
+  <a href="/somewhere">Pressable link</a>
+</Pressable>
+
+// Button uses Pressable under the hood (refactor)
+<Button variant="primary" size="md">Save</Button>
+```
+
+**Props:** `variant`, `depth`, `spring`, `muted`, `hovered`, `pressed`, `disabled`, `asChild`, `className`, `style`, `ref` — same interaction props as Button, minus layout (no `size`).
+
+**Codebase sweep — current `Button asChild` usage (8 instances):**
+
+| File | Pattern | Migrate to Pressable? |
+|---|---|---|
+| `FileUploadDropzone.tsx` | `<Button asChild><Card>` | Yes — Card loses keyboard `:active` |
+| `RecipeGrid.tsx` | `<Link><Button asChild><Card>` | Yes — Card inside Link |
+| `BentoGridShowcase.tsx` | `<Button asChild><Card>` | Yes — same pattern |
+| `not-found.tsx` (×2) | `<Button asChild><Link>` | No — Link is semantic, works fine |
+| `FileDropZone.tsx` | `<FileUpload.Clear asChild><Button>` | No — Button is the child, not the wrapper |
+| `FileListShowcase.tsx` | `<FileUpload.Clear asChild><Button>` | No — same |
+| `MobileNavMenu.tsx` | `<Sheet.Close asChild><Button>` | No — same |
+| `Tabs.tsx` | `pressable` class on TabsTrigger | Maybe — could use Pressable as base |
 
 - [ ] `packages/ui` — Bootstrap `@bnto/ui` package (tsconfig, package.json with "motorway" description, exports)
 - [ ] `packages/ui` — Move primitives from `apps/web/components/ui/primitives/`
