@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import Link from "next/link";
 import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "@/lib/cn";
@@ -113,7 +114,14 @@ function Button({
     ref?: React.Ref<HTMLElement>;
   }) {
   const isLink = !!href;
-  const Comp: React.ElementType = asChild ? Slot : isLink ? "a" : "button";
+  const isInternal = isLink && href.startsWith("/") && !props.target;
+  const Comp: React.ElementType = asChild
+    ? Slot
+    : isInternal
+      ? Link
+      : isLink
+        ? "a"
+        : "button";
   const dataHover = hovered && !pressed ? "" : undefined;
   const dataActive = pressed ? "" : undefined;
   const dataToggle = toggle ? "" : undefined;
