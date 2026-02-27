@@ -11,7 +11,6 @@ import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
 import { ConveyorShowcase } from "./ConveyorShowcase";
-import { DropzoneShowcase } from "./DropzoneShowcase";
 import { FileListShowcase } from "./FileListShowcase";
 import { FormShowcase } from "./FormShowcase";
 import { InputShowcase } from "./InputShowcase";
@@ -109,17 +108,9 @@ export default function MotorwayPage() {
           {/* ── Patterns ──────────────────────────────────────── */}
 
           <ShowcaseSection
-            id="dropzone"
-            title="Dropzone"
-            description="File upload area with depth integration."
-          >
-            <DropzoneShowcase />
-          </ShowcaseSection>
-
-          <ShowcaseSection
-            id="file-list"
-            title="File List"
-            description="Dropzone to file list transition with staggered entrance animation."
+            id="file-upload"
+            title="File Upload"
+            description="Drop zone with depth, replaced by a staggered file list on selection. Clear to return to the drop zone."
           >
             <FileListShowcase />
           </ShowcaseSection>

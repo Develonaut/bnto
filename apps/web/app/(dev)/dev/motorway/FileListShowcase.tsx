@@ -1,97 +1,71 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { FileIcon, TrashIcon, UploadIcon } from "@/components/ui/icons";
+import { useState } from "react";
 
-import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Dropzone } from "@/components/ui/Dropzone";
-import { Stack } from "@/components/ui/Stack";
-import { Tabs } from "@/components/ui/Tabs";
-import { Text } from "@/components/ui/Text";
+import { FileUpload } from "@/components/ui/FileUpload";
+import { UploadIcon, XIcon } from "@/components/ui/icons";
 
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-interface FileListShowcaseProps {
-  /** Pre-populate with files — skips the dropzone and shows the list directly. */
-  initialFiles?: File[];
-}
-
-export function FileListShowcase({ initialFiles }: FileListShowcaseProps) {
-  const hasInitial = initialFiles && initialFiles.length > 0;
-  const [files, setFiles] = useState<File[]>(hasInitial ? initialFiles : []);
-  const [tab, setTab] = useState(hasInitial ? "list" : "dropzone");
-
-  const onDrop = useCallback((accepted: File[]) => {
-    setFiles(accepted);
-    if (accepted.length > 0) setTab("list");
-  }, []);
-
-  const handleClear = useCallback(() => {
-    setFiles([]);
-    setTab("dropzone");
-  }, []);
+export function FileListShowcase() {
+  const [files, setFiles] = useState<File[]>([]);
 
   return (
-    <Tabs value={tab} onValueChange={setTab}>
-      {/* Tabs.List is hidden — state drives the view, not user tab clicks */}
-      <Tabs.List className="sr-only">
-        <Tabs.Trigger value="dropzone">Drop</Tabs.Trigger>
-        <Tabs.Trigger value="list">List</Tabs.Trigger>
-      </Tabs.List>
+    <FileUpload value={files} onValueChange={setFiles} accept={{ "image/*": [] }}>
+      {files.length === 0 && (
+        <FileUpload.Dropzone className="gap-3 px-6 py-10">
+          <div className="rounded-full bg-muted p-3 text-muted-foreground">
+            <UploadIcon className="size-6" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-foreground">
+              Drag & drop files here
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              or click to browse &middot; accepts images
+            </p>
+          </div>
+        </FileUpload.Dropzone>
+      )}
 
-      <Tabs.Content value="dropzone">
-        <Dropzone accept={{ "image/*": [] }} onDrop={onDrop} multiple>
-          {({ isDragActive }) => (
-            <Stack gap="sm" align="center" className="text-muted-foreground">
-              <UploadIcon className="size-8" />
-              <Text size="sm" weight="medium" color="inherit" as="span">
-                {isDragActive ? "Drop files here" : "Drag images here or click to browse"}
-              </Text>
-              <Text size="xs" color="inherit" as="span">PNG, JPEG, WebP up to 10MB</Text>
-            </Stack>
-          )}
-        </Dropzone>
-      </Tabs.Content>
-
-      <Tabs.Content value="list">
-        <Stack className="gap-3">
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" onClick={handleClear}>
-              <TrashIcon />
-              Clear
-            </Button>
+      {files.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-foreground">
+              {files.length} {files.length === 1 ? "file" : "files"} selected
+            </p>
+            <FileUpload.Clear asChild>
+              <Button variant="outline" size="sm" depth="md">
+                Clear all
+              </Button>
+            </FileUpload.Clear>
           </div>
 
-          <Animate.Stagger interval={60} className="flex flex-col gap-3">
+          <FileUpload.List>
             {files.map((file, i) => (
-              <Animate.SlideUp key={file.name} index={i} easing="spring-bouncier">
-                <Card className="flex items-center gap-4 p-4">
-                  <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full">
-                    <FileIcon className="size-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Text size="sm" weight="semibold" as="span" className="truncate">
-                      {file.name}
-                    </Text>
-                    <Text size="xs" color="muted">
-                      {file.type || "unknown"} &middot; {formatFileSize(file.size)}
-                    </Text>
-                  </div>
-                  <Text size="xs" color="muted" mono as="span">
-                    {formatFileSize(file.size)}
-                  </Text>
+              <FileUpload.Item
+                key={`${file.name}-${file.size}-${file.lastModified}`}
+                value={file}
+                index={i}
+              >
+                <Card
+                  className="flex items-center gap-3 rounded-lg px-4 py-3"
+                  depth="sm"
+                >
+                  <FileUpload.ItemMetadata />
+                  <FileUpload.ItemActions>
+                    <FileUpload.ItemDelete asChild>
+                      <Button variant="outline" size="icon-sm" depth="sm">
+                        <XIcon className="size-4" />
+                      </Button>
+                    </FileUpload.ItemDelete>
+                  </FileUpload.ItemActions>
                 </Card>
-              </Animate.SlideUp>
+              </FileUpload.Item>
             ))}
-          </Animate.Stagger>
-        </Stack>
-      </Tabs.Content>
-    </Tabs>
+          </FileUpload.List>
+        </div>
+      )}
+    </FileUpload>
   );
 }

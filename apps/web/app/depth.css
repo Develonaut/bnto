@@ -305,6 +305,13 @@
   outline-offset: -5px;
 }
 
+/* Dropzone — focus fills in the dashed outline at the same position */
+/* // FIXME: Remove this once we implment the Pressable component. */
+.pressable[data-slot="file-upload-dropzone"]:focus-visible {
+  outline: 3px solid var(--border);
+  outline-offset: -8px;
+}
+
 /* Disabled — stuck flush with the ground, greyed out.
  * Like a button that's been pressed and can't come back up. */
 .pressable:disabled,
