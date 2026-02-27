@@ -5,7 +5,7 @@ import { useState, useContext, createContext, useCallback } from "react";
 
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 
-import { buttonCn } from "./Button";
+import { Button, buttonCn } from "./Button";
 import { cn } from "@/lib/cn";
 
 /* ── Context (surfaces active value to Triggers) ───────────── */
@@ -66,17 +66,17 @@ const TabsTrigger = React.forwardRef<
   const isActive = activeValue === value;
 
   return (
-    <TabsPrimitive.Trigger
-      ref={ref}
-      value={value}
-      data-muted={!isActive || undefined}
-      className={cn(
-        "pressable",
-        buttonCn({ variant: "outline", size: "sm" }),
-        className,
-      )}
-      {...props}
-    />
+    <Button asChild toggle pressed={isActive} variant="outline" size="md">
+      <TabsPrimitive.Trigger
+        ref={ref}
+        value={value}
+        className={cn(
+          buttonCn({ variant: "outline", size: "md" }),
+          className,
+        )}
+        {...props}
+      />
+    </Button>
   );
 });
 TabsTrigger.displayName = "Tabs.Trigger";

@@ -1,8 +1,6 @@
 "use client";
 
-import { Accordion } from "@/components/ui/Accordion";
 import { Animate } from "@/components/ui/Animate";
-import { Card } from "@/components/ui/Card";
 import { CleanCsvConfig } from "./configs/CleanCsvConfig";
 import { CompressImagesConfig } from "./configs/CompressImagesConfig";
 import { ConvertFormatConfig } from "./configs/ConvertFormatConfig";
@@ -18,9 +16,8 @@ interface RecipeConfigSectionProps {
 }
 
 /**
- * Recipe-specific configuration wrapped in Motorway styling.
- * Routes slug to the correct config component. Wraps in a Card with
- * a collapsible Accordion (default open). Returns null for unknown slugs.
+ * Recipe-specific configuration rendered inline.
+ * Routes slug to the correct config component. Returns null for unknown slugs.
  */
 export function RecipeConfigSection({ slug, config, onChange }: RecipeConfigSectionProps) {
   const content = renderConfig(slug, config, onChange);
@@ -28,16 +25,7 @@ export function RecipeConfigSection({ slug, config, onChange }: RecipeConfigSect
 
   return (
     <Animate.FadeIn>
-      <Card elevation="sm">
-        <Accordion type="single" collapsible defaultValue="config">
-          <Accordion.Item value="config" className="border-none">
-            <Accordion.Trigger className="px-5">Settings</Accordion.Trigger>
-            <Accordion.Content className="px-5">
-              {content}
-            </Accordion.Content>
-          </Accordion.Item>
-        </Accordion>
-      </Card>
+      <div>{content}</div>
     </Animate.FadeIn>
   );
 }

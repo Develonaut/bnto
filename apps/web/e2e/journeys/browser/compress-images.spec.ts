@@ -185,13 +185,12 @@ test.describe("compress-images — browser execution", () => {
     // Click "Run Again" to reset
     await runButton.click();
 
-    // Should reset to idle
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
-    await expect(runButton).toBeDisabled();
-    await expect(runButton).toContainText("Select files to run");
-
-    // Files should be cleared
+    // Should reset to Phase 1 (dropzone) — files cleared, no RunButton
+    await expect(page.getByText("Drag & drop files here")).toBeVisible();
     await expect(page.getByText("1 file selected")).not.toBeVisible();
+    await expect(
+      page.locator('[data-testid="run-button"]'),
+    ).not.toBeVisible();
   });
 
   test("all Tier 1 bntos detect browser execution mode", async ({

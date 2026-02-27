@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { Heading } from "@/components/ui/Heading";
-import { UploadIcon, XIcon } from "@/components/ui/icons";
+import { TrashIcon, UploadIcon, XIcon } from "@/components/ui/icons";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
 import { getAcceptedTypes, toDropzoneAccept } from "../_lib/getAcceptedTypes";
 import { PhaseIndicator } from "./PhaseIndicator";
@@ -117,20 +117,39 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
             </Animate.SlideUp>
           )}
 
-          {/* Phase 2: File list + config */}
+          {/* Phase 2: Config + actions above file list */}
           {activePhase === 2 && (
             <div className="space-y-4 text-left">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-foreground">
-                  {files.length} {files.length === 1 ? "file" : "files"} selected
-                </p>
-                <FileUpload.Clear asChild>
-                  <Button variant="outline" elevation="md">
-                    Clear all
-                  </Button>
-                </FileUpload.Clear>
+              <p className="text-sm font-medium text-foreground">
+                {files.length} {files.length === 1 ? "file" : "files"} selected
+              </p>
+
+              {/* Config + Actions row */}
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <RecipeConfigSection
+                    slug={entry.slug}
+                    config={config}
+                    onChange={setConfig}
+                  />
+                </div>
+
+                <div className="flex shrink-0 items-center gap-2">
+                  <FileUpload.Clear asChild>
+                    <Button variant="outline" size="icon" elevation="md">
+                      <TrashIcon className="size-4" />
+                    </Button>
+                  </FileUpload.Clear>
+                  <RunButton
+                    phase={resolvedPhase}
+                    hasFiles={files.length > 0}
+                    onRun={handleRun}
+                    onReset={handleReset}
+                  />
+                </div>
               </div>
 
+              {/* File list */}
               <FileUpload.List>
                 {files.map((file, i) => (
                   <FileUpload.Item
@@ -154,35 +173,31 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
                   </FileUpload.Item>
                 ))}
               </FileUpload.List>
-
-              <RecipeConfigSection
-                slug={entry.slug}
-                config={config}
-                onChange={setConfig}
-              />
             </div>
           )}
 
-          {/* Phase 3: Results */}
+          {/* Phase 3: Results + Run Again */}
           {activePhase === 3 && (
-            <RecipeResultsSection
-              isBrowserPath={isBrowserPath}
-              resolvedPhase={resolvedPhase}
-              browserExec={browserExec}
-              onDownload={downloadResult}
-              onDownloadAll={downloadAll}
-              executionId={executionId}
-              uploadProgress={uploadProgress}
-              clientError={clientError}
-            />
+            <>
+              <RecipeResultsSection
+                isBrowserPath={isBrowserPath}
+                resolvedPhase={resolvedPhase}
+                browserExec={browserExec}
+                onDownload={downloadResult}
+                onDownloadAll={downloadAll}
+                executionId={executionId}
+                uploadProgress={uploadProgress}
+                clientError={clientError}
+              />
+              <RunButton
+                phase={resolvedPhase}
+                hasFiles={files.length > 0}
+                onRun={handleRun}
+                onReset={handleReset}
+                className="w-full"
+              />
+            </>
           )}
-
-          <RunButton
-            phase={resolvedPhase}
-            hasFiles={files.length > 0}
-            onRun={handleRun}
-            onReset={handleReset}
-          />
         </FileUpload>
       )}
     </Container>

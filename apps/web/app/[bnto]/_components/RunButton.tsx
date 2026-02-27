@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/cn";
 import { LoaderIcon, PlayIcon, RotateCcwIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/Button";
 
@@ -15,6 +16,7 @@ interface RunButtonProps {
   hasFiles: boolean;
   onRun: () => void;
   onReset: () => void;
+  className?: string;
 }
 
 /**
@@ -23,13 +25,13 @@ interface RunButtonProps {
  * Displays contextual label and icon based on the current execution phase.
  * Disabled when no files are selected or an operation is in progress.
  */
-export function RunButton({ phase, hasFiles, onRun, onReset }: RunButtonProps) {
+export function RunButton({ phase, hasFiles, onRun, onReset, className }: RunButtonProps) {
   if (phase === "completed" || phase === "failed") {
     return (
       <Button
         variant={phase === "failed" ? "outline" : "primary"}
         onClick={onReset}
-        className="w-full"
+        className={cn(className)}
         data-testid="run-button"
         data-phase={phase}
       >
@@ -45,7 +47,7 @@ export function RunButton({ phase, hasFiles, onRun, onReset }: RunButtonProps) {
     <Button
       onClick={onRun}
       disabled={!hasFiles || isProcessing}
-      className="w-full"
+      className={cn(className)}
       data-testid="run-button"
       data-phase={phase}
     >

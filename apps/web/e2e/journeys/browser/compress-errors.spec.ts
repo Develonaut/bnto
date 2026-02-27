@@ -45,10 +45,13 @@ test.describe("compress-images — error handling", () => {
       fullPage: true,
     });
 
-    // Page should still be functional — "Try Again" resets
+    // Page should still be functional — "Try Again" resets to Phase 1
     await expect(runButton).toContainText("Try Again");
     await runButton.click();
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
+    await expect(page.getByText("Drag & drop files here")).toBeVisible();
+    await expect(
+      page.locator('[data-testid="run-button"]'),
+    ).not.toBeVisible();
   });
 
   test("corrupt image: error card with Try Again", async ({ page }) => {
@@ -89,12 +92,13 @@ test.describe("compress-images — error handling", () => {
       fullPage: true,
     });
 
-    // "Try Again" resets to idle, ready for new files
+    // "Try Again" resets to Phase 1 (dropzone), ready for new files
     await expect(runButton).toContainText("Try Again");
     await runButton.click();
 
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
-    await expect(runButton).toBeDisabled();
-    await expect(runButton).toContainText("Select files to run");
+    await expect(page.getByText("Drag & drop files here")).toBeVisible();
+    await expect(
+      page.locator('[data-testid="run-button"]'),
+    ).not.toBeVisible();
   });
 });
