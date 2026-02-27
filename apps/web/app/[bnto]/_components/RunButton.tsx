@@ -27,7 +27,6 @@ export function RunButton({ phase, hasFiles, onRun, onReset }: RunButtonProps) {
   if (phase === "completed" || phase === "failed") {
     return (
       <Button
-        size="lg"
         variant={phase === "failed" ? "outline" : "primary"}
         onClick={onReset}
         className="w-full"
@@ -44,7 +43,6 @@ export function RunButton({ phase, hasFiles, onRun, onReset }: RunButtonProps) {
 
   return (
     <Button
-      size="lg"
       onClick={onRun}
       disabled={!hasFiles || isProcessing}
       className="w-full"

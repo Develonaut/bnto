@@ -134,7 +134,7 @@ export function ConveyorShowcase() {
       <Row className="mb-3 justify-end">
         <Button
           variant="outline"
-          size="sm"
+          size="md"
           onClick={handleReload}
           aria-label="Replay entrance animations"
         >

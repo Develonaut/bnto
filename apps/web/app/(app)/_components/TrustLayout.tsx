@@ -52,7 +52,7 @@ export function TrustLayout() {
                 </Text>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="md"
                   href={GITHUB_URL}
                   target="_blank"
                   rel="noopener noreferrer"

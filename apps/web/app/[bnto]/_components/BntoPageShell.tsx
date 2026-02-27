@@ -151,7 +151,7 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
                       {files.length} {files.length === 1 ? "file" : "files"} selected
                     </p>
                     <FileUpload.Clear asChild>
-                      <Button variant="outline" size="sm" elevation="md">
+                      <Button variant="outline" elevation="md">
                         Clear all
                       </Button>
                     </FileUpload.Clear>

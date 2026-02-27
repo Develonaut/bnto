@@ -28,7 +28,7 @@ const DEMO_RECIPES = [
 
 function ReplayButton({ onClick }: { onClick: () => void }) {
   return (
-    <Button variant="outline" size="sm" onClick={onClick} elevation={false}>
+    <Button variant="outline" onClick={onClick} elevation={false}>
       <RotateCcwIcon className="size-3.5" />
       Replay
     </Button>

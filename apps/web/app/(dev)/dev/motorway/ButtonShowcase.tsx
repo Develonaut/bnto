@@ -63,7 +63,7 @@ export function ButtonShowcase() {
           <Button
             key={value}
             variant={state === value ? "secondary" : "outline"}
-            size="sm"
+            size="md"
             onClick={() => setState(value)}
           >
             {label}
@@ -80,9 +80,7 @@ export function ButtonShowcase() {
               <Text size="xs" color="muted" mono as="span" className="w-24 shrink-0">
                 {label}
               </Text>
-              <Button variant={value} size="sm" hovered={hovered} pressed={pressed} disabled={disabled}>Label</Button>
               <Button variant={value} size="md" hovered={hovered} pressed={pressed} disabled={disabled}>Label</Button>
-              <Button variant={value} size="lg" hovered={hovered} pressed={pressed} disabled={disabled}>Label</Button>
               <Button variant={value} size="icon-sm" hovered={hovered} pressed={pressed} disabled={disabled}><ZapIcon /></Button>
               <Button variant={value} size="icon" hovered={hovered} pressed={pressed} disabled={disabled}><ZapIcon /></Button>
               <Button variant={value} size="icon-lg" hovered={hovered} pressed={pressed} disabled={disabled}><ZapIcon /></Button>
