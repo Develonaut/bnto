@@ -120,20 +120,18 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
           {/* Phase 2: Config + actions above file list */}
           {activePhase === 2 && (
             <div className="space-y-4 text-left">
-              <p className="text-sm font-medium text-foreground">
-                {files.length} {files.length === 1 ? "file" : "files"} selected
-              </p>
+              {/* Config controls */}
+              <RecipeConfigSection
+                slug={entry.slug}
+                config={config}
+                onChange={setConfig}
+              />
 
-              {/* Config + Actions row */}
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0 flex-1">
-                  <RecipeConfigSection
-                    slug={entry.slug}
-                    config={config}
-                    onChange={setConfig}
-                  />
-                </div>
-
+              {/* Action bar: status left, actions right */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-foreground">
+                  {files.length} {files.length === 1 ? "file" : "files"} selected
+                </p>
                 <div className="flex shrink-0 items-center gap-2">
                   <FileUpload.Clear asChild>
                     <Button variant="outline" size="icon" elevation="md">
