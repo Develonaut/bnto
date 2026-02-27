@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import Link from "next/link";
 
 import { ArrowUpRightIcon, GithubIcon } from "@/components/ui/icons";
@@ -5,6 +7,8 @@ import { ArrowUpRightIcon, GithubIcon } from "@/components/ui/icons";
 import { Container } from "@/components/ui/Container";
 import { Text } from "@/components/ui/Text";
 import { GITHUB_URL, LICENSE_LINE, TAGLINE, TRUST_LINE } from "@/lib/copy";
+
+import { NavButton } from "./NavButton";
 
 const TOOL_SECTIONS = [
   {
@@ -45,12 +49,13 @@ export function Footer() {
         <div className="flex flex-col gap-10 py-12 lg:flex-row lg:gap-20 lg:py-16">
           {/* Left column: brand + description */}
           <div className="flex flex-col gap-4 lg:max-w-xs">
-            <Link
+            <NavButton
               href="/"
-              className="text-xl font-display font-black tracking-tighter"
+              style={{ "--face-bg": "var(--background)", "--face-fg": "var(--foreground)" } as CSSProperties}
+              className="w-fit text-xl font-display font-black tracking-tighter"
             >
               bnto
-            </Link>
+            </NavButton>
             <Text size="sm" color="muted" leading="relaxed">
               {TAGLINE} {TRUST_LINE}
             </Text>

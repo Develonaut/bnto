@@ -68,7 +68,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
 
   return (
     <Container
-      size="sm"
+      size="md"
       className="space-y-6 text-center"
       data-testid="bnto-shell"
       data-session={sessionPending ? "pending" : "ready"}
@@ -98,34 +98,38 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
           multiple
           disabled={isProcessing}
         >
-          {/* Phase 1: Dropzone */}
+          {/* Phase 1: Dropzone — constrained width, centered */}
           {activePhase === 1 && (
             <Animate.SlideUp>
-              <FileUpload.Dropzone className="gap-3 px-6 py-10">
-                <div className="rounded-full bg-muted p-3 text-muted-foreground">
-                  <UploadIcon className="size-6" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium text-foreground">
-                    Drag & drop files here
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    or click to browse &middot; accepts {label}
-                  </p>
-                </div>
-              </FileUpload.Dropzone>
+              <div className="mx-auto max-w-xl">
+                <FileUpload.Dropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
+                  <div className="rounded-full bg-muted p-3 text-muted-foreground">
+                    <UploadIcon className="size-6" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-foreground">
+                      Drag & drop files here
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      or click to browse &middot; accepts {label}
+                    </p>
+                  </div>
+                </FileUpload.Dropzone>
+              </div>
             </Animate.SlideUp>
           )}
 
           {/* Phase 2: Config + actions above file list */}
           {activePhase === 2 && (
             <div className="space-y-4 text-left">
-              {/* Config controls */}
-              <RecipeConfigSection
-                slug={entry.slug}
-                config={config}
-                onChange={setConfig}
-              />
+              {/* Config controls — constrained width for comfortable controls */}
+              <div className="max-w-xl">
+                <RecipeConfigSection
+                  slug={entry.slug}
+                  config={config}
+                  onChange={setConfig}
+                />
+              </div>
 
               {/* Action bar: status left, actions right */}
               <div className="flex items-center justify-between">
@@ -147,8 +151,8 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
                 </div>
               </div>
 
-              {/* File list */}
-              <FileUpload.List>
+              {/* File list — responsive grid */}
+              <FileUpload.List className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {files.map((file, i) => (
                   <FileUpload.Item
                     key={`${file.name}-${file.size}-${file.lastModified}`}
@@ -174,9 +178,9 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
             </div>
           )}
 
-          {/* Phase 3: Results + Run Again */}
+          {/* Phase 3: Results + Run Again — constrained width, centered */}
           {activePhase === 3 && (
-            <>
+            <div className="mx-auto max-w-xl space-y-4">
               <RecipeResultsSection
                 isBrowserPath={isBrowserPath}
                 resolvedPhase={resolvedPhase}
@@ -194,7 +198,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
                 onReset={handleReset}
                 className="w-full"
               />
-            </>
+            </div>
           )}
         </FileUpload>
       )}

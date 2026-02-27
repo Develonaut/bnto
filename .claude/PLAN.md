@@ -162,7 +162,7 @@ Connect new shell to page, delete old shell, regenerate all screenshots.
 
 Visual refinement pass. Ensure the new layout meets the Motorway quality bar.
 
-- [ ] `apps/web` — **Responsive polish.** Verify mobile (375px), tablet (768px), desktop (1280px) layouts. Mobile: single column, 2-column file grid, config below. Desktop: 3-4 column file grid. Adjust `Grid` cols, Container size, gap props. No horizontal overflow on mobile.
+- [x] `apps/web` — **Responsive polish.** Verify mobile (375px), tablet (768px), desktop (1280px) layouts. Mobile: single column, 2-column file grid, config below. Desktop: 3-4 column file grid. Adjust `Grid` cols, Container size, gap props. No horizontal overflow on mobile.
 
 - [ ] `apps/web` — **Keyboard accessibility audit.** Tab order follows visual flow (drop zone -> file cards -> config -> run). File card delete buttons have `aria-label`. PhaseIndicator has appropriate ARIA. Accordion keyboard nav works (Radix). Fix any gaps.
 

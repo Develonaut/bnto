@@ -182,6 +182,22 @@
   --variant-fg: var(--card-foreground);
 }
 
+/* Ghost — same as outline when raised, invisible when pressed.
+ * Border disappears on active so the face blends flush into its
+ * surrounding surface. Small delay lets the button sink flush
+ * before the border vanishes. Used for nav/logo buttons. */
+.surface-ghost {
+  --surface-wall: var(--surface-outline-wall);
+  --surface-shadow: var(--surface-outline-shadow);
+  --variant-bg: var(--card);
+  --variant-fg: var(--card-foreground);
+}
+.pressable.surface-ghost:active,
+.pressable.surface-ghost[data-active] {
+  border-color: transparent;
+  transition: border-color var(--pressable-press-dur, 34ms) ease-out var(--pressable-press-dur, 34ms), transform var(--pressable-press-dur, 34ms);
+}
+
 /* ── Muted modifier ──────────────────────────────────────────────
  * [data-muted] blends face colors toward the muted palette without
  * using opacity (which would reveal surface pseudo-elements through

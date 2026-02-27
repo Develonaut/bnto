@@ -5,37 +5,18 @@
  * Extracted from Navbar for single-responsibility.
  */
 
-"use client";
-
-import { useEffect, useState } from "react";
-
-import { Button } from "@/components/ui/Button";
-
+import { NavButton } from "./NavButton";
 import { RecipesMenu } from "./RecipesMenu";
 import { PAGE_LINKS } from "./navData";
 
-export function DesktopNav({ pathname }: { pathname: string }) {
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
-
-  // Clear pending state once navigation completes
-  useEffect(() => {
-    setPendingHref(null);
-  }, [pathname]);
-
+export function DesktopNav() {
   return (
     <div className="hidden items-center gap-2 lg:flex">
       <RecipesMenu />
       {PAGE_LINKS.map((link) => (
-        <Button
-          key={link.href}
-          variant="outline"
-          elevation="sm"
-          href={link.href}
-          pressed={pathname === link.href || pendingHref === link.href}
-          onClick={() => setPendingHref(link.href)}
-        >
+        <NavButton key={link.href} href={link.href}>
           {link.label}
-        </Button>
+        </NavButton>
       ))}
     </div>
   );

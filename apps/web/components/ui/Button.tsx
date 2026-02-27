@@ -43,6 +43,7 @@ type ButtonVariant =
   | "success"
   | "warning"
   | "outline"
+  | "ghost"
   | "secondary"
   | "muted";
 type ButtonSize = "md" | "icon";
@@ -56,6 +57,7 @@ const buttonCn = createCn({
       success: "surface-success",
       warning: "surface-warning",
       outline: "surface-outline",
+      ghost: "surface-ghost",
       secondary: "surface-secondary",
       muted: "surface-muted",
     },

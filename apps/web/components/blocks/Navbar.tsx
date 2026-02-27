@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-
 import { GithubIcon, MenuIcon } from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/Button";
@@ -14,6 +11,7 @@ import { GITHUB_URL } from "@/lib/copy";
 
 import { DesktopNav } from "./DesktopNav";
 import { MobileNavMenu } from "./MobileNavMenu";
+import { NavButton } from "./NavButton";
 import { NavThemeMenu } from "./NavThemeMenu";
 import { NavUser } from "./NavUser";
 
@@ -27,7 +25,6 @@ import { NavUser } from "./NavUser";
 const LG_BREAKPOINT = 1024;
 
 export const Navbar = () => {
-  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -56,15 +53,16 @@ export const Navbar = () => {
             <div className="flex items-center gap-3.5 px-6 py-3">
               {/* Logo — flex-1 so left/right columns balance for true centering */}
               <div className="flex min-w-0 flex-1 items-center">
-                <Link
+                <NavButton
                   href="/"
-                  className="flex max-h-8 items-center gap-2 text-xl font-display font-black tracking-tighter"
+                  elevation="sm"
+                  className="text-xl font-display font-black tracking-tighter"
                 >
                   bnto
-                </Link>
+                </NavButton>
               </div>
 
-              <DesktopNav pathname={pathname} />
+              <DesktopNav />
 
               {/* Right side — flex-1 mirrors the logo column */}
               <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
