@@ -303,30 +303,30 @@
 
 /* ── Toggle mode ────────────────────────────────────────────────────
  *
- * Push-button metaphor: toggled ON = depressed at hover depth.
+ * Push-button metaphor: toggled ON = depressed near ground.
  * Pressing always goes flush (same as any button) — toggle only
  * changes where the button springs back to on release.
  *
  *   OFF: normal state machine (resting → hover → flush → resting)
- *   ON:  resting = hover depth, hover = deeper, press = flush
+ *   ON:  resting = 66% toward ground, hover = 85%, press = flush
  *
  * No :active override needed — the base .pressable:active (flush)
  * applies regardless of toggle state. A press is a press.
  * ────────────────────────────────────────────────────────────────── */
 
-/* Toggle ON resting — sunk to hover depth (33% toward ground) */
+/* Toggle ON resting — sunk 66% toward ground (clearly depressed) */
 .pressable[data-toggle][data-active] {
   transform: translate(
-    calc(var(--elevation-x) * -0.66),
-    calc(var(--elevation-y) * -0.66)
+    calc(var(--elevation-x) * -0.33),
+    calc(var(--elevation-y) * -0.33)
   );
   transition-duration: var(--pressable-dur, 150ms);
 }
 
 .pressable[data-toggle][data-active]::before {
   transform: translate3d(
-    calc(var(--elevation-x) * 0.66),
-    calc(var(--elevation-y) * 0.66),
+    calc(var(--elevation-x) * 0.33),
+    calc(var(--elevation-y) * 0.33),
     -1px
   );
   transition-duration: var(--pressable-dur, 150ms);
@@ -334,30 +334,30 @@
 
 .pressable[data-toggle][data-active]::after {
   transform: translate3d(
-    calc(var(--shadow-x) * 0.66),
-    calc(var(--shadow-y) * 0.66),
+    calc(var(--shadow-x) * 0.33),
+    calc(var(--shadow-y) * 0.33),
     -2px
   );
-  opacity: 0.66;
+  opacity: 0.33;
   transition-duration: var(--pressable-dur, 150ms);
 }
 
-/* Toggle ON hover — sinks a bit deeper than resting (0.66 → 0.33).
- * Resting is already at hover depth, so hover needs to go further
- * to give visual feedback that the cursor is over the button. */
+/* Toggle ON hover — sinks a bit deeper (85% toward ground).
+ * Resting is already low, so hover only needs a small extra dip
+ * to give visual feedback before flush on press. */
 .pressable[data-toggle][data-active]:hover,
 .pressable[data-toggle][data-active]:focus-visible {
   transform: translate(
-    calc(var(--elevation-x) * -0.33),
-    calc(var(--elevation-y) * -0.33)
+    calc(var(--elevation-x) * -0.15),
+    calc(var(--elevation-y) * -0.15)
   );
 }
 
 .pressable[data-toggle][data-active]:hover::before,
 .pressable[data-toggle][data-active]:focus-visible::before {
   transform: translate3d(
-    calc(var(--elevation-x) * 0.33),
-    calc(var(--elevation-y) * 0.33),
+    calc(var(--elevation-x) * 0.15),
+    calc(var(--elevation-y) * 0.15),
     -1px
   );
 }
@@ -365,11 +365,11 @@
 .pressable[data-toggle][data-active]:hover::after,
 .pressable[data-toggle][data-active]:focus-visible::after {
   transform: translate3d(
-    calc(var(--shadow-x) * 0.33),
-    calc(var(--shadow-y) * 0.33),
+    calc(var(--shadow-x) * 0.15),
+    calc(var(--shadow-y) * 0.15),
     -2px
   );
-  opacity: 0.33;
+  opacity: 0.15;
 }
 
 /* Toggle ON press — flush, same as any button. Needs explicit rule
