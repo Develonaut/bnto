@@ -4,6 +4,7 @@ import * as React from "react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 
 import { cn } from "@/lib/cn";
+import { GripVerticalIcon } from "@/components/ui/icons";
 
 function Slider({
   className,
@@ -31,14 +32,16 @@ function Slider({
       )}
       {...props}
     >
-      <SliderPrimitive.Track className="bg-muted relative h-1.5 w-full grow overflow-hidden rounded-full">
+      <SliderPrimitive.Track className="bg-input border border-border relative h-4 w-full grow overflow-hidden rounded-full">
         <SliderPrimitive.Range className="bg-primary absolute h-full" />
       </SliderPrimitive.Track>
       {Array.from({ length: _value.length }, (_, index) => (
         <SliderPrimitive.Thumb
           key={index}
-          className="border-primary bg-background focus-visible:ring-ring/50 block size-4 rounded-full border shadow-sm transition-colors focus-visible:ring-[3px] focus-visible:outline-none disabled:pointer-events-none"
-        />
+          className="surface surface-primary elevation-sm pressable flex items-center justify-center size-8 rounded-full outline-none! ring-0 disabled:pointer-events-none"
+        >
+          <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />
+        </SliderPrimitive.Thumb>
       ))}
     </SliderPrimitive.Root>
   );

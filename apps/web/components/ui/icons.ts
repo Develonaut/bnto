@@ -29,6 +29,7 @@ export {
   FileVideo as FileVideoIcon,
   Github as GithubIcon,
   Globe as GlobeIcon,
+  GripVertical as GripVerticalIcon,
   Heart as HeartIcon,
   Laptop as LaptopIcon,
   Loader2 as LoaderIcon,

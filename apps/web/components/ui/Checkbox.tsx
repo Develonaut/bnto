@@ -15,7 +15,7 @@ function Checkbox({
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "surface elevation-sm pressable peer size-7 shrink-0 rounded-[6px] outline-none translate-y-px",
+        "surface elevation-sm pressable peer size-6 shrink-0 rounded-[5px] outline-none translate-y-px",
         "focus-visible:outline-2 focus-visible:outline-ring/50 focus-visible:outline-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-50",
         className,
