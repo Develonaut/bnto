@@ -8,7 +8,6 @@ import { Text } from "@/components/ui/Text";
 import { AnimationShowcase } from "./AnimationShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
-import { CastShadowShowcase } from "./CastShadowShowcase";
 import { ColorSwatches } from "./ColorSwatches";
 import { ConveyorShowcase } from "./ConveyorShowcase";
 import { GridShowcase } from "./GridShowcase";
@@ -42,7 +41,6 @@ export default function MotorwayPage() {
           <Tabs.Trigger value="motion">Motion</Tabs.Trigger>
           <Tabs.Trigger value="forms">Forms</Tabs.Trigger>
           <Tabs.Trigger value="grids">Grids</Tabs.Trigger>
-          <Tabs.Trigger value="lab">Lab</Tabs.Trigger>
         </Tabs.List>
 
         {/* ── Surfaces ────────────────────────────────────────── */}
@@ -170,17 +168,6 @@ export default function MotorwayPage() {
               <ConveyorShowcase />
             </ShowcaseSection>
           </Stack>
-        </Tabs.Content>
-
-        {/* ── Lab ─────────────────────────────────────────────── */}
-        <Tabs.Content value="lab">
-          <ShowcaseSection
-            id="cast-shadow"
-            title="Geometric Cast Shadow"
-            description="clip-path polygon shadows with straight extrusion lines instead of rounded-rect copies. Same perf profile — polygon is GPU-composited, interactions are transform + opacity only."
-          >
-            <CastShadowShowcase />
-          </ShowcaseSection>
         </Tabs.Content>
       </Tabs>
     </div>

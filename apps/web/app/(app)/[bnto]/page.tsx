@@ -43,9 +43,11 @@ export default async function BntoPage({
   if (!entry) notFound();
 
   return (
-    <AppShell.Content>
+    <>
       <BntoJsonLd entry={entry} />
-      <RecipeShell entry={entry} />
-    </AppShell.Content>
+      <AppShell.Content>
+        <RecipeShell entry={entry} />
+      </AppShell.Content>
+    </>
   );
 }

@@ -97,18 +97,13 @@ export function NavUser() {
             )}
           </div>
 
-          <div className="h-px bg-border" />
+          <Menu.Separator />
 
           {/* Sign Out */}
-          <button
-            type="button"
-            onClick={handleSignOut}
-            data-testid="nav-sign-out"
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors select-none hover:bg-muted focus:bg-muted"
-          >
-            <LogOutIcon className="size-4" />
+          <Menu.Item onClick={handleSignOut} data-testid="nav-sign-out">
+            <LogOutIcon />
             Sign out
-          </button>
+          </Menu.Item>
         </div>
       </Menu.Content>
     </Menu>

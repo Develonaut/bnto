@@ -84,6 +84,11 @@
   --animate-slide-up: slide-up var(--duration-slow) var(--ease-spring) both;
   --animate-slide-down: slide-down var(--duration-slow) var(--ease-spring) both;
 
+  /* ── Accordion Animations (spring bounce on open, smooth close) */
+  --animate-accordion-down: accordion-down var(--duration-slow)
+    var(--ease-spring-bouncy) both;
+  --animate-accordion-up: accordion-up var(--duration-fast) var(--ease-out) both;
+
   /* ── Emphasis Animations (smooth — calm after entrance) */
   --animate-pulse-soft: pulse-soft 2s var(--ease-in-out) infinite;
   --animate-breathe: breathe 3s var(--ease-in-out) infinite;

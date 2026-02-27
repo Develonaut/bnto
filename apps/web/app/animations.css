@@ -37,6 +37,35 @@
   }
 }
 
+/* ── Accordion Keyframes ────────────────────────────────────────
+ * Height reveal/hide driven by Radix's data-state attribute.
+ * Uses --radix-accordion-content-height for the natural height.
+ * Open uses spring-bouncy easing for a playful bounce.
+ * Close uses ease-out for a clean, smooth collapse.
+ * ────────────────────────────────────────────────────────────── */
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
 /* ── Emphasis Keyframes ──────────────────────────────────────── */
 
 /* Gentle opacity pulse — like MM building demand timer */
