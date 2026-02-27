@@ -39,7 +39,7 @@ const MenuTrigger = React.forwardRef<
     <Popover.Anchor asChild>
       <div className="inline-flex">
         <Popover.Trigger asChild>
-          <Button ref={ref} hovered={open} {...props}>
+          <Button ref={ref} pressed={open} {...props}>
             {children}
           </Button>
         </Popover.Trigger>
@@ -52,7 +52,7 @@ MenuTrigger.displayName = "MenuTrigger";
 /* ── Content ─────────────────────────────────────────────────────
  * Renders as our Card component inside a Radix Popover.Content.
  * Handles positioning, collision detection, and enter/exit
- * animations via Radix. Card provides bg-card surface + depth. */
+ * animations via Radix. Card provides bg-card surface + elevation. */
 
 type MenuOffset = "sm" | "md" | "lg" | "xl";
 
@@ -65,15 +65,26 @@ const OFFSET_PX: Record<MenuOffset, number> = {
 
 const MenuContent = React.forwardRef<
   React.ElementRef<typeof Popover.ContentUnstyled>,
-  Omit<React.ComponentPropsWithoutRef<typeof Popover.ContentUnstyled>, "sideOffset"> & {
-    depth?: "none" | "sm" | "md" | "lg";
+  Omit<
+    React.ComponentPropsWithoutRef<typeof Popover.ContentUnstyled>,
+    "sideOffset"
+  > & {
+    elevation?: "none" | "sm" | "md" | "lg";
     offset?: MenuOffset;
     boundary?: Element | null;
     boundaryPadding?: number;
   }
 >(
   (
-    { className, children, offset = "md", depth = "lg", boundary, boundaryPadding = 16, ...props },
+    {
+      className,
+      children,
+      offset = "md",
+      elevation = "lg",
+      boundary,
+      boundaryPadding = 16,
+      ...props
+    },
     ref,
   ) => (
     <Popover.Portal>
@@ -86,7 +97,7 @@ const MenuContent = React.forwardRef<
         {...props}
       >
         <Animate.ScaleIn from={0.6} origin="top" easing="spring-bouncier">
-          <Card className={className} depth={depth}>
+          <Card className={className} elevation={elevation}>
             {children}
           </Card>
         </Animate.ScaleIn>

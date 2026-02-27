@@ -11,7 +11,7 @@ import { VARIANT_PIECE_MAP, PieceShape, type PieceType } from "./BeltPiece";
 
 /**
  * Conveyor Belt showcase — a Mini Motorways-style "level" showing
- * a recipe pipeline with depth-card stations and belt connections.
+ * a recipe pipeline with surface-card stations and belt connections.
  *
  * The scene is declared right here as a blueprint. Reading this file
  * tells you exactly what the level contains — which stations, where

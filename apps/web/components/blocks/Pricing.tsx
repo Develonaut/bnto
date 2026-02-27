@@ -27,7 +27,7 @@ export function Pricing() {
         </Text>
       </Stack>
 
-      <Card depth="md" className="mx-auto mt-12 max-w-md">
+      <Card elevation="md" className="mx-auto mt-12 max-w-md">
         <Card.Content className="flex flex-col gap-6 px-6 py-6">
           <Stack gap="xs">
             <Heading level={3} size="sm">Free</Heading>
@@ -43,7 +43,7 @@ export function Pricing() {
             ))}
           </Stack>
 
-          <Button variant="primary" href="/" depth="sm" className="w-full">
+          <Button variant="primary" href="/" elevation="sm" className="w-full">
             Start using bnto
           </Button>
         </Card.Content>

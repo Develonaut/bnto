@@ -19,7 +19,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 **Scope rule:** Each task targets ONE package. Don't touch files outside the tagged package unless the task explicitly says so.
 
-**Co-location decision (Feb 2026):** UI components and editor features live in `apps/web` for now. No separate `@bnto/ui` or `@bnto/editor` packages until there's a real second consumer (desktop app). Engine, core API, and data layer logic stays in `@bnto/core`. When the UI package is extracted, it will be published as `@bnto/ui` (npm) under the name **Motorway** — the Mini Motorways-inspired design system (depth, pressable, spring animations, warm palette).
+**Co-location decision (Feb 2026):** UI components and editor features live in `apps/web` for now. No separate `@bnto/ui` or `@bnto/editor` packages until there's a real second consumer (desktop app). Engine, core API, and data layer logic stays in `@bnto/core`. When the UI package is extracted, it will be published as `@bnto/ui` (npm) under the name **Motorway** — the Mini Motorways-inspired design system (surface, elevation, pressable, spring animations, warm palette).
 
 ---
 
@@ -136,15 +136,15 @@ Three independent pieces the new shell will compose. No cross-dependencies. **De
 
 - [ ] `apps/web` — **Create `PhaseIndicator` component.** New file: `app/[bnto]/_components/PhaseIndicator.tsx`. Three phases: "Files" (1), "Configure" (2), "Results" (3). Props: `activePhase: 1 | 2 | 3`, `hasConfig?: boolean` (skip phase 2 label when false). Visual: horizontal row of circles connected by lines — active = `bg-primary`, completed = checkmark, upcoming = `bg-muted` outline. Responsive: circles + labels on desktop, circles only on mobile. Under 100 lines.
 
-- [ ] `apps/web` — **Create `FileCard` component.** New file: `app/[bnto]/_components/FileCard.tsx`. Rich file preview: image thumbnail (via `URL.createObjectURL` with cleanup), file type icon (for non-images), file name (truncated), file size (formatted), type badge ("JPEG", "CSV"), delete button. Wraps in `Card` with `depth="sm"`. Props: `file: File`, `onRemove: () => void`, `disabled?: boolean`. Uses `Animate.ScaleIn` entrance. Under 120 lines.
+- [ ] `apps/web` — **Create `FileCard` component.** New file: `app/[bnto]/_components/FileCard.tsx`. Rich file preview: image thumbnail (via `URL.createObjectURL` with cleanup), file type icon (for non-images), file name (truncated), file size (formatted), type badge ("JPEG", "CSV"), delete button. Wraps in `Card` with `elevation="sm"`. Props: `file: File`, `onRemove: () => void`, `disabled?: boolean`. Uses `Animate.ScaleIn` entrance. Under 120 lines.
 
 #### Wave 2 (parallel — new shell composition + config/results wrappers)
 
 Build the new `RecipeShell` and supporting wrappers. Depends on Wave 1 deliverables.
 
-- [ ] `apps/web` — **Create `RecipeShell` composition component.** New file: `app/[bnto]/_components/RecipeShell.tsx`. Replaces BntoPageShell as the page orchestrator. Uses `useRecipeFlow` hook (Wave 1). Composition: `Container` > `Heading` + `Text` + `PhaseIndicator` + dropzone in `Card depth="md"` + file card `Grid` with `Animate.Stagger` + config section + `RunButton` + results section. All data-testid attributes preserved for E2E. Under 150 lines (pure composition, no logic). NOT wired into page.tsx yet.
+- [ ] `apps/web` — **Create `RecipeShell` composition component.** New file: `app/[bnto]/_components/RecipeShell.tsx`. Replaces BntoPageShell as the page orchestrator. Uses `useRecipeFlow` hook (Wave 1). Composition: `Container` > `Heading` + `Text` + `PhaseIndicator` + dropzone in `Card elevation="md"` + file card `Grid` with `Animate.Stagger` + config section + `RunButton` + results section. All data-testid attributes preserved for E2E. Under 150 lines (pure composition, no logic). NOT wired into page.tsx yet.
 
-- [ ] `apps/web` — **Create `RecipeConfigSection` wrapper.** New file: `app/[bnto]/_components/RecipeConfigSection.tsx`. Replaces `BntoConfigPanel` with Motorway styling. Wraps per-recipe config components in `Card` with `depth="sm"` + collapsible `Accordion` (default open). The slug-to-component routing (switch statement) moves here from BntoConfigPanel. Returns null for slugs with no config. Uses `Animate.FadeIn` entrance. Under 80 lines.
+- [ ] `apps/web` — **Create `RecipeConfigSection` wrapper.** New file: `app/[bnto]/_components/RecipeConfigSection.tsx`. Replaces `BntoConfigPanel` with Motorway styling. Wraps per-recipe config components in `Card` with `elevation="sm"` + collapsible `Accordion` (default open). The slug-to-component routing (switch statement) moves here from BntoConfigPanel. Returns null for slugs with no config. Uses `Animate.FadeIn` entrance. Under 80 lines.
 
 - [ ] `apps/web` — **Create `RecipeResultsSection` wrapper.** New file: `app/[bnto]/_components/RecipeResultsSection.tsx`. Consolidates the 4 conditional result blocks (browser progress, browser results, cloud progress, cloud results, error card) from BntoPageShell into one composition component. Wraps each in `Animate.SlideUp`. Under 100 lines. No changes to result component internals.
 
@@ -238,7 +238,7 @@ Visual refinement pass. Ensure the new layout meets the Motorway quality bar.
 ### Sprint 4: Recipe Editor (Headless-First)
 **Goal:** Users can create recipes from a blank canvas or customize existing ones — add/remove/configure nodes, connect them, run, and export as `.bnto.json`. The editor is free (pricing-model.md: "recipe editor is free"). Power users who create custom recipes are the highest-intent Pro upgrade candidates.
 
-**Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The conveyor belt visual (sushi, depth cards, belts) is a themed skin applied on top. This means the editor can be reskinned, embedded, or offered as a headless library in the future.
+**Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The conveyor belt visual (sushi, surface cards, belts) is a themed skin applied on top. This means the editor can be reskinned, embedded, or offered as a headless library in the future.
 
 ```
 @bnto/nodes (types, schemas, validation)      ← already built
@@ -647,7 +647,7 @@ Referral links to boost user acquisition. With browser-first, the referral rewar
 **What moves:**
 - `apps/web/components/ui/` → `packages/ui/src/` (all primitives and component wrappers)
 - `apps/web/components/ui/create-cn.ts`, `cn.ts` → `packages/ui/src/` (utility layer)
-- CSS tokens and the `.depth` / `.pressable` / spring animation system from `globals.css` → `packages/ui/styles/`
+- CSS tokens and the `.surface` / `.elevation-*` / `.pressable` / spring animation system from `globals.css` → `packages/ui/styles/`
 - Theme provider, animated toggle, and dark mode utilities
 
 **What stays in `apps/web`:**
@@ -675,7 +675,7 @@ Referral links to boost user acquisition. With browser-first, the referral rewar
 
 **Architecture:**
 ```
-Pressable (real <button> by default, supports asChild, depth, pressable CSS, zero layout)
+Pressable (real <button> by default, supports asChild, elevation, pressable CSS, zero layout)
   └── Button (adds layout, sizing, typography, variant colors — uses Pressable internally)
   └── Direct usage (wrap Cards, dropzones, drag targets, any pressable surface)
 ```
@@ -683,7 +683,7 @@ Pressable (real <button> by default, supports asChild, depth, pressable CSS, zer
 **API sketch:**
 ```tsx
 // Default — renders a real <button>, wraps children
-<Pressable variant="outline" depth="md" spring="lg">
+<Pressable variant="outline" elevation="md" spring="lg">
   <Card className="flex flex-col items-center gap-3 p-6">
     <UploadIcon />
     <p>Drop files here</p>
@@ -691,7 +691,7 @@ Pressable (real <button> by default, supports asChild, depth, pressable CSS, zer
 </Pressable>
 
 // asChild — merges pressable behavior onto child element (same Slot pattern as Button)
-<Pressable asChild variant="outline" depth="md">
+<Pressable asChild variant="outline" elevation="md">
   <a href="/somewhere">Pressable link</a>
 </Pressable>
 
@@ -699,7 +699,7 @@ Pressable (real <button> by default, supports asChild, depth, pressable CSS, zer
 <Button variant="primary" size="md">Save</Button>
 ```
 
-**Props:** `variant`, `depth`, `spring`, `muted`, `hovered`, `pressed`, `disabled`, `asChild`, `className`, `style`, `ref` — same interaction props as Button, minus layout (no `size`).
+**Props:** `variant`, `elevation`, `spring`, `muted`, `hovered`, `pressed`, `disabled`, `asChild`, `className`, `style`, `ref` — same interaction props as Button, minus layout (no `size`).
 
 **Codebase sweep — current `Button asChild` usage (8 instances):**
 
@@ -725,17 +725,17 @@ Pressable (real <button> by default, supports asChild, depth, pressable CSS, zer
 
 ### Showcase: Radial Light Source Controls
 
-**Priority: Low (fun polish).** Replace the linear slider on `/showcase` with more expressive light source controls that better illustrate the depth system's relationship to light direction.
+**Priority: Low (fun polish).** Replace the linear slider on `/showcase` with more expressive light source controls that better illustrate the surface/elevation system's relationship to light direction.
 
 **Two controls:**
 1. **Radial slider** — generic UI primitive (`components/ui/RadialSlider`). Circular drag input where a thumb orbits a ring. `atan2()` maps pointer position to value (0–360 or any range). Configurable labels prop — the showcase uses compass cardinal directions (N/NE/E/SE/S/SW/W/NW) but the component itself is generic and reusable.
-2. **Elevation slider** — top-to-bottom arc or vertical slider controlling light source height/elevation. Could drive shadow length (higher sun = shorter shadows, lower sun = longer shadows). Would need a new `--light-elevation` CSS variable and corresponding depth shadow scaling.
+2. **Elevation slider** — top-to-bottom arc or vertical slider controlling light source height/elevation. Could drive shadow length (higher sun = shorter shadows, lower sun = longer shadows). Would need a new `--light-elevation` CSS variable and corresponding surface shadow scaling.
 
-Both controls feed into the same CSS custom property system that drives the depth shadows on the page.
+Both controls feed into the same CSS custom property system that drives the surface shadows on the page.
 
 - [ ] `apps/web` — `RadialSlider` generic UI component (value, onChange, labels, size, thumb icon)
 - [ ] `apps/web` — Light elevation control (vertical/arc → `--light-elevation`)
-- [ ] `apps/web` — Wire elevation into depth shadow length scaling in `globals.css`
+- [ ] `apps/web` — Wire elevation into surface shadow length scaling in `globals.css`
 - [ ] `apps/web` — Replace `LightSourceSlider` on showcase page with RadialSlider + compass labels
 
 ### Performance: WASM Bundle Size & Processing Benchmarks

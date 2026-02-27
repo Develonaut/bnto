@@ -45,7 +45,7 @@ export function NavUser() {
       <Button
         variant="outline"
         size="icon"
-        depth="sm"
+        elevation="sm"
         disabled
         aria-label="Loading account"
         data-testid="nav-user-loading"
@@ -60,7 +60,7 @@ export function NavUser() {
     return (
       <Button
         variant="primary"
-        depth="sm"
+        elevation="sm"
         href="/signin"
         onClick={handleSignInClick}
         data-testid="nav-sign-in"
@@ -75,7 +75,7 @@ export function NavUser() {
       <Menu.Trigger
         variant="outline"
         size="icon"
-        depth="sm"
+        elevation="sm"
         aria-label="Account menu"
         data-testid="nav-user-menu"
       >

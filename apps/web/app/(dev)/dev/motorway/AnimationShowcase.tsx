@@ -28,7 +28,7 @@ const DEMO_RECIPES = [
 
 function ReplayButton({ onClick }: { onClick: () => void }) {
   return (
-    <Button variant="outline" size="sm" onClick={onClick} depth={false}>
+    <Button variant="outline" size="sm" onClick={onClick} elevation={false}>
       <RotateCcwIcon className="size-3.5" />
       Replay
     </Button>
@@ -54,7 +54,7 @@ function SectionLabel({
 
 /*
  * Animations go on a wrapper <div>, NOT on the <Card>.
- * Why: .depth uses transform-style: preserve-3d + translate3d
+ * Why: .surface uses transform-style: preserve-3d + translate3d
  * to push walls/shadow behind the face. Opacity animation
  * flattens preserve-3d, causing walls to render over content.
  */

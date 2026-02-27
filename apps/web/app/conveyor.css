@@ -4,7 +4,7 @@
  *
  * Adapted from: https://youtu.be/Nr-aUv2D8YI
  *
- * Belt sits BETWEEN depth cards — stations render on top (z-10)
+ * Belt sits BETWEEN surface cards — stations render on top (z-10)
  * so their walls/shadows naturally overlap the belt endpoints,
  * hiding junction seams (same trick as Mini Motorways buildings
  * sitting on top of roads).
@@ -15,14 +15,14 @@
  *   .conveyor-paused — animation paused, idle state
  *
  * Uses warm theme tokens for colors. Hard-edge shadow matches
- * the .depth shadow language (zero blur, directional).
+ * the .surface shadow language (zero blur, directional).
  * ──────────────────────────────────────────────────────────── */
 .conveyor-belt {
   --belt-segment: 20px;
   --belt-track: var(--muted);
   --belt-ridge: var(--border);
-  --belt-rail: var(--depth-muted-wall);
-  --belt-shadow: var(--depth-muted-shadow);
+  --belt-rail: var(--surface-muted-wall);
+  --belt-shadow: var(--surface-muted-shadow);
   --belt-speed: 1.2s;
 
   background-image: linear-gradient(
@@ -35,7 +35,7 @@
   border-bottom: 2px solid var(--belt-rail);
   border-radius: 2px;
 
-  /* Hard-edge shadow matching .depth language (no blur) */
+  /* Hard-edge shadow matching .surface language (no blur) */
   box-shadow:
     calc(sin(var(--light-angle)) * 4px)
     calc(cos(var(--light-angle)) * -4px)
@@ -146,34 +146,34 @@
  *
  * Uses color-mix() to blend variant colors with the neutral
  * base so belts are visually linked to stations but don't
- * compete with the depth card faces.
+ * compete with the surface card faces.
  * ──────────────────────────────────────────────────────────── */
 .belt-primary {
   --belt-track: color-mix(in oklch, var(--primary) 30%, var(--muted));
   --belt-ridge: color-mix(in oklch, var(--primary) 50%, var(--border));
-  --belt-rail: var(--depth-primary-wall);
+  --belt-rail: var(--surface-primary-wall);
 }
 
 .belt-secondary {
   --belt-track: color-mix(in oklch, var(--secondary) 40%, var(--muted));
   --belt-ridge: color-mix(in oklch, var(--secondary) 55%, var(--border));
-  --belt-rail: var(--depth-secondary-wall);
+  --belt-rail: var(--surface-secondary-wall);
 }
 
 .belt-accent {
   --belt-track: color-mix(in oklch, var(--accent) 30%, var(--muted));
   --belt-ridge: color-mix(in oklch, var(--accent) 50%, var(--border));
-  --belt-rail: var(--depth-accent-wall);
+  --belt-rail: var(--surface-accent-wall);
 }
 
 .belt-success {
   --belt-track: color-mix(in oklch, var(--success) 30%, var(--muted));
   --belt-ridge: color-mix(in oklch, var(--success) 50%, var(--border));
-  --belt-rail: var(--depth-success-wall);
+  --belt-rail: var(--surface-success-wall);
 }
 
 .belt-muted {
   --belt-track: var(--muted);
   --belt-ridge: var(--border);
-  --belt-rail: var(--depth-muted-wall);
+  --belt-rail: var(--surface-muted-wall);
 }

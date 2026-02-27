@@ -25,7 +25,7 @@ export function FileUploadDropzone({
     <Animate.ScaleIn>
       <Button asChild variant="outline" size="md" hovered={isDragActive}>
         <Card
-          depth="md"
+          elevation="md"
           {...getRootProps()}
           role="button"
           tabIndex={disabled ? undefined : 0}

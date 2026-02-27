@@ -83,7 +83,7 @@ export default function Home() {
                 href={GITHUB_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                depth="sm"
+                elevation="sm"
               >
                 <GithubIcon className="size-4" />
                 View on GitHub

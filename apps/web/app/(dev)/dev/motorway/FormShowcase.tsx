@@ -16,7 +16,7 @@ export function FormShowcase() {
   const [sliderVal, setSliderVal] = useState([50]);
 
   return (
-    <Card depth="lg">
+    <Card elevation="lg">
       <Card.Header>
         <Card.Title className="font-display">Form Elements</Card.Title>
         <Card.Description>

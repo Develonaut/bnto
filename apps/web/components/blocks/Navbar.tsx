@@ -52,7 +52,7 @@ export const Navbar = () => {
     <section>
       <div className="fixed top-0 z-50 flex w-full justify-center pt-4">
         <Container size="lg">
-          <Card className="rounded-full" depth="sm">
+          <Card className="rounded-full" elevation="sm">
             <div className="flex items-center justify-between gap-3.5 px-6 py-3">
               {/* Logo */}
               <Link
@@ -70,7 +70,7 @@ export const Navbar = () => {
                   <Button
                     variant="secondary"
                     size="icon"
-                    depth="sm"
+                    elevation="sm"
                     onClick={() => setMobileOpen(!mobileOpen)}
                   >
                     <MenuIcon />
@@ -80,7 +80,7 @@ export const Navbar = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  depth="sm"
+                  elevation="sm"
                   href={GITHUB_URL}
                   target="_blank"
                   rel="noopener noreferrer"

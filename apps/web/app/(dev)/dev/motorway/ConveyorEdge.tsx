@@ -9,7 +9,7 @@ import { BeltPiece, VARIANT_PIECE_MAP, type PieceType } from "./BeltPiece";
 /**
  * Custom React Flow edge — a thick conveyor belt connection between stations.
  *
- * Two-layer SVG approach — belts are FLAT (no shadow, no depth):
+ * Two-layer SVG approach — belts are FLAT (no shadow, no surface elevation):
  *
  *   1. Belt body — solid thick stroke in the variant color
  *   2. Belt surface — animated dashes (scrolling ridges = conveyor texture)
@@ -172,7 +172,7 @@ export function ConveyorEdge({
       {bordered && (
         <path
           d={path}
-          stroke="var(--belt-rail, var(--depth-muted-wall))"
+          stroke="var(--belt-rail, var(--surface-muted-wall))"
           strokeWidth={BELT_WIDTH + 4}
           strokeLinecap="round"
           strokeLinejoin="round"

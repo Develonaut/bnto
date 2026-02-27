@@ -35,7 +35,7 @@ export function FileListShowcase() {
               {files.length} {files.length === 1 ? "file" : "files"} selected
             </p>
             <FileUpload.Clear asChild>
-              <Button variant="outline" size="sm" depth="md">
+              <Button variant="outline" size="sm" elevation="md">
                 Clear all
               </Button>
             </FileUpload.Clear>
@@ -50,12 +50,12 @@ export function FileListShowcase() {
               >
                 <Card
                   className="flex items-center gap-3 rounded-lg px-4 py-3"
-                  depth="sm"
+                  elevation="sm"
                 >
                   <FileUpload.ItemMetadata />
                   <FileUpload.ItemActions>
                     <FileUpload.ItemDelete asChild>
-                      <Button variant="outline" size="icon-sm" depth="sm">
+                      <Button variant="outline" size="icon-sm" elevation="sm">
                         <XIcon className="size-4" />
                       </Button>
                     </FileUpload.ItemDelete>

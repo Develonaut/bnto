@@ -14,7 +14,7 @@ import { RECIPES } from "./navData";
 export function RecipesMenu() {
   return (
     <Menu>
-      <Menu.Trigger variant="outline" depth="sm">
+      <Menu.Trigger variant="outline" elevation="sm">
         <BookOpenIcon />
         Recipes
       </Menu.Trigger>

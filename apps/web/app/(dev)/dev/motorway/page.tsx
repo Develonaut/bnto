@@ -28,7 +28,7 @@ export default function MotorwayPage() {
             <Heading level={1} size="md">Motorway</Heading>
             <Text color="muted" className="mt-2 max-w-xl">
               The bnto design system. Warm, organized, satisfying, like a
-              well-packed bento box on a Mini Motorways map. 3D depth, springy
+              well-packed bento box on a Mini Motorways map. 3D surfaces, springy
               motion, three themed palettes.
             </Text>
           </div>
@@ -38,7 +38,7 @@ export default function MotorwayPage() {
           <ShowcaseSection
             id="colors"
             title="Colors"
-            description="Semantic color tokens across all variants. Each swatch renders with its matching depth tint."
+            description="Semantic color tokens across all variants. Each swatch renders with its matching surface tint."
           >
             <ColorSwatches />
           </ShowcaseSection>
@@ -51,11 +51,11 @@ export default function MotorwayPage() {
             <TypographyShowcase />
           </ShowcaseSection>
 
-          {/* ── Depth ───────────────────────────────────────────── */}
+          {/* ── Surface & Elevation ──────────────────────────────── */}
 
           <ShowcaseSection
-            id="depth"
-            title="Depth"
+            id="elevation"
+            title="Surface & Elevation"
             description="Cards cast directional shadows that follow the light source. Four elevation tiers from flush to floating."
           >
             <CardShowcase />
@@ -110,7 +110,7 @@ export default function MotorwayPage() {
           <ShowcaseSection
             id="file-upload"
             title="File Upload"
-            description="Drop zone with depth, replaced by a staggered file list on selection. Clear to return to the drop zone."
+            description="Drop zone with surface elevation, replaced by a staggered file list on selection. Clear to return to the drop zone."
           >
             <FileListShowcase />
           </ShowcaseSection>
@@ -118,7 +118,7 @@ export default function MotorwayPage() {
           <ShowcaseSection
             id="notifications"
             title="Notifications"
-            description="List items with static card depth."
+            description="List items with static card surface."
           >
             <NotificationCards />
           </ShowcaseSection>

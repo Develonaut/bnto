@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
  * Keyboard accessible (arrow keys, Home/End). Touch + pointer drag.
  *
  * The track + progress arc are SVG. The thumb is a real HTML element
- * positioned via CSS `translate`, so it can use our full depth/pressable
+ * positioned via CSS `translate`, so it can use our full surface/pressable
  * system (which relies on ::before/::after pseudo elements that SVG
  * doesn't support).
  *
@@ -53,7 +53,7 @@ export interface RadialSliderProps {
   /**
    * Custom thumb element. Receives `isDragging` for pressed states.
    * The element is centered on the track at the current value's angle.
-   * Can be a depth/pressable Button — it's real HTML, not SVG.
+   * Can be a surface/pressable Button — it's real HTML, not SVG.
    *
    * Default: a 12px circle matching `activeClassName`.
    */

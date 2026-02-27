@@ -117,7 +117,7 @@ export function ConveyorCanvas({
              * multiple pieces of the same type render simultaneously. */}
             <svg className="absolute inset-0 pointer-events-none" style={{ width: 0, height: 0 }}>
               <defs>
-                {/* Warm drop shadow matching .depth sm language */}
+                {/* Warm drop shadow matching .surface elevation-sm language */}
                 <filter id="piece-shadow" x="-50%" y="-50%" width="200%" height="200%">
                   <feDropShadow
                     dx={1}

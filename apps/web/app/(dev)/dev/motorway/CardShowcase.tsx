@@ -1,21 +1,21 @@
 import { Card } from "@/components/ui/Card";
 
-const TIERS: { label: string; depth: "none" | "sm" | "md" | "lg" }[] = [
-  { label: "none", depth: "none" },
-  { label: "sm", depth: "sm" },
-  { label: "md (default)", depth: "md" },
-  { label: "lg", depth: "lg" },
+const TIERS: { label: string; elevation: "none" | "sm" | "md" | "lg" }[] = [
+  { label: "none", elevation: "none" },
+  { label: "sm", elevation: "sm" },
+  { label: "md (default)", elevation: "md" },
+  { label: "lg", elevation: "lg" },
 ];
 
 export function CardShowcase() {
   return (
     <div className="grid grid-cols-4 gap-6">
-      {TIERS.map(({ label, depth }) => (
+      {TIERS.map(({ label, elevation }) => (
         <Card
           key={label}
-          depth={depth}
+          elevation={elevation}
           className="flex h-24 items-center justify-center rounded-xl font-display font-semibold"
-          data-testid={`depth-card-${depth}`}
+          data-testid={`elevation-card-${elevation}`}
         >
           {label}
         </Card>

@@ -5,7 +5,7 @@ description: Iterate on conveyor belt connection system — build, test, and adv
 
 # Conveyor Belt Connection System — Iteration Skill
 
-You are working on the **conveyor belt connection system** for the Motorway design system. This is a Mini Motorways-style "level" built with React Flow — depth nodes as buildings, animated conveyor belts as roads, sushi pieces as traveling data items. It lives on the Motorway showcase page (`/dev/motorway`).
+You are working on the **conveyor belt connection system** for the Motorway design system. This is a Mini Motorways-style "level" built with React Flow — surface nodes as buildings, animated conveyor belts as roads, sushi pieces as traveling data items. It lives on the Motorway showcase page (`/dev/motorway`).
 
 ## Before Every Iteration
 
@@ -13,11 +13,11 @@ You are working on the **conveyor belt connection system** for the Motorway desi
 2. **Read the Motorway page:** `apps/web/app/(dev)/dev/motorway/page.tsx` — understand the section structure.
 3. **Read existing conveyor components:** Check `apps/web/app/(dev)/dev/motorway/Conveyor*.tsx`, `StationNode.tsx`, `ConveyorEdge.tsx` for what's already been built.
 4. **Read globals.css conveyor section:** Search for "Conveyor Belt" in `apps/web/app/globals.css` for the belt CSS classes and keyframes.
-5. **Read the depth system:** Search for `.depth` in `globals.css` to understand shadow tokens, light angle, and elevation tiers.
+5. **Read the surface system:** Search for `.surface` in `surface.css` to understand shadow tokens, light angle, and elevation tiers.
 
 ## The Concept
 
-A **Mini Motorways level** on the Motorway page. React Flow provides the invisible grid. Nodes are `.depth` Cards (the "buildings"). Connections are thick animated conveyor belts (the "roads"). Data items (sushi) ride the belts between processing stations.
+A **Mini Motorways level** on the Motorway page. React Flow provides the invisible grid. Nodes are `.surface` Cards (the "buildings"). Connections are thick animated conveyor belts (the "roads"). Data items (sushi) ride the belts between processing stations.
 
 The grid is invisible — users see a clean canvas with buildings and roads, like a bird's-eye view of a sushi factory floor. Under the hood, React Flow handles positioning, interaction, and SVG edge rendering.
 
@@ -26,7 +26,7 @@ The grid is invisible — users see a clean canvas with buildings and roads, lik
 ```
 ConveyorShowcase (showcase wrapper)
   └─ ConveyorCanvas (React Flow <ReactFlow> instance)
-       ├─ nodeTypes: { station: StationNode }     ← .depth Card
+       ├─ nodeTypes: { station: StationNode }     ← .surface Card
        ├─ edgeTypes: { conveyor: ConveyorEdge }   ← thick animated SVG path
        ├─ SVG <defs> for belt shadow filter
        └─ hardcoded nodes[] + edges[] data (Phase 1)
@@ -35,7 +35,7 @@ ConveyorShowcase (showcase wrapper)
 **Key files:**
 - `ConveyorShowcase.tsx` — section wrapper, lazy-loads the canvas
 - `ConveyorCanvas.tsx` — React Flow instance with custom types
-- `StationNode.tsx` — custom node: `.depth` Card with Handles
+- `StationNode.tsx` — custom node: `.surface` Card with Handles
 - `ConveyorEdge.tsx` — custom edge: thick SVG path with animated dash pattern
 - `globals.css` — belt keyframes, shadow filter, CSS fallback classes
 
@@ -58,8 +58,8 @@ ConveyorShowcase (showcase wrapper)
 
 - **Match the Mini Motorways aesthetic.** Clean, minimal, colorful buildings on a quiet grid. The showcase should look like a level from the game.
 - **Use bnto theme tokens** — `var(--muted)`, `var(--border)`, `var(--primary)`, depth variant tokens. Never hardcode colors.
-- **Depth nodes must use the real `.depth` system** — not approximations. Apply `depth="sm"` and `depth-{variant}` classes.
-- **Belt shadow matches `.depth` language** — hard-edge, warm-tinted, directional (follows `--light-angle: 135deg`).
+- **Surface nodes must use the real `.surface` system** — not approximations. Apply `elevation="sm"` and `surface-{variant}` classes.
+- **Belt shadow matches `.surface` language** — hard-edge, warm-tinted, directional (follows `--light-angle: 135deg`).
 - **Respect `motion-safe:`** — all belt animations guarded. Static fallback for reduced motion.
 - **Invisible grid** — React Flow's `<Background>` is either hidden or shows a very subtle dot pattern. Never a visible line grid.
 
@@ -123,7 +123,7 @@ ELK.js (`elkjs`) is deferred to Phase 4+ when auto-layout is needed.
 | `apps/web/app/(dev)/dev/motorway/ShowcaseSection.tsx` | Section wrapper pattern |
 | `apps/web/app/(dev)/dev/motorway/CardShowcase.tsx` | Example: simple showcase |
 | `apps/web/app/(dev)/dev/motorway/AnimationShowcase.tsx` | Example: complex showcase with state |
-| `apps/web/app/globals.css` | Depth system, animation tokens, belt CSS |
+| `apps/web/app/surface.css` | Surface system, elevation tiers, shadow tokens |
 | `.claude/rules/animation.md` | Motion language rules |
 | `.claude/rules/theming.md` | Color tokens, radius, shadows |
 | `.claude/rules/components.md` | Component patterns |

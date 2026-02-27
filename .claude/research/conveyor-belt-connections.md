@@ -16,7 +16,7 @@ This is the future recipe pipeline visualizer — how users will see their `.bnt
 
 | Game Element | Bnto Equivalent | Implementation |
 |---|---|---|
-| Buildings (colored blocks) | Recipe nodes (stations) | `.depth` Cards as React Flow nodes |
+| Buildings (colored blocks) | Recipe nodes (stations) | `.surface` Cards as React Flow nodes |
 | Roads (thick colored paths) | Conveyor belts (data connections) | Custom React Flow edge with thick SVG stroke + animated dash |
 | Cars moving on roads | Sushi pieces on belts | SVG element animated via `getPointAtLength()` |
 | Invisible grid | Layout engine | React Flow + ELK.js orthogonal routing |
@@ -26,11 +26,11 @@ This is the future recipe pipeline visualizer — how users will see their `.bnt
 ### Key Visual Properties
 
 1. **Invisible grid** — React Flow's grid is hidden. Nodes snap to it but the user sees a clean canvas.
-2. **Depth nodes** — each node is a `.depth` Card with wall + shadow. Colors match node type.
+2. **Surface nodes** — each node is a `.surface` Card with wall + shadow. Colors match node type.
 3. **Belt connections** — thick SVG paths (20-28px stroke) with animated dash pattern for surface texture.
-4. **Belt shadow** — SVG `drop-shadow` filter matching the warm `.depth` shadow language.
+4. **Belt shadow** — SVG `drop-shadow` filter matching the warm `.surface` shadow language.
 5. **Orthogonal routing** — belts turn at right angles with rounded corners (like game roads).
-6. **Stations on top** — depth nodes render above belt layer (natural z-ordering hides junction seams).
+6. **Stations on top** — surface nodes render above belt layer (natural z-ordering hides junction seams).
 
 ---
 
@@ -43,9 +43,9 @@ Key observations:
 - **Tokyo Night:** Dark mode. Roads lighter against dark ground. Strong depth/shadow on buildings.
 - **LA Harbor:** Clean two-station setup — simple road connecting two colored buildings. The simplest case.
 - **Color palette:** Each road type = one solid color. No gradients on surface.
-- **Layering:** Ground → roads → buildings. Our equivalent: canvas bg → belt edges → depth nodes.
+- **Layering:** Ground → roads → buildings. Our equivalent: canvas bg → belt edges → surface nodes.
 
-**Adaptation:** Roads → conveyor belts. Cars → sushi. Buildings → stations. The `.depth` system already matches the game's building aesthetic.
+**Adaptation:** Roads → conveyor belts. Cars → sushi. Buildings → stations. The `.surface` system already matches the game's building aesthetic.
 
 ---
 
@@ -60,7 +60,7 @@ React Flow (`@xyflow/react`) is the layout and interaction engine. It provides:
 - Connection creation (drag from node to node)
 - Selection and keyboard navigation
 
-**Nodes** are custom React Flow node components that render `.depth` Cards.
+**Nodes** are custom React Flow node components that render `.surface` Cards.
 **Edges** are custom React Flow edge components that render thick animated SVG paths.
 
 The grid is invisible by default — React Flow's `<Background>` component is either hidden or shows a very subtle dot pattern (like graph paper viewed from far away).
@@ -130,12 +130,12 @@ The dash animation (`stroke-dashoffset`) creates the scrolling belt texture. Thi
 
 ### Phase 1: React Flow Canvas + Static Scene ✓ COMPLETE
 
-**Goal:** A React Flow canvas on the Motorway page showing a pre-built "level" — 5 depth nodes connected by thick belt edges.
+**Goal:** A React Flow canvas on the Motorway page showing a pre-built "level" — 5 surface nodes connected by thick belt edges.
 
 **Delivered:**
 - `ConveyorShowcase.tsx` — blueprint declaring stations + belts
 - `ConveyorCanvas.tsx` — pure React Flow renderer (props-in, scene-out)
-- `StationNode.tsx` — custom node: `.depth` Card with invisible handles
+- `StationNode.tsx` — custom node: `.surface` Card with invisible handles
 - `ConveyorEdge.tsx` — custom edge: flat thick SVG path with animated dashes
 - `conveyor.css` — belt keyframes, variant color tokens, speed variants
 - 5-station image processing pipeline with fork/merge
@@ -195,12 +195,12 @@ The dash animation (`stroke-dashoffset`) creates the scrolling belt texture. Thi
 
 ### React Flow Custom Nodes
 
-React Flow nodes are React components. They receive `data` props and render whatever you want. Our `StationNode` renders a `.depth` Card:
+React Flow nodes are React components. They receive `data` props and render whatever you want. Our `StationNode` renders a `.surface` Card:
 
 ```tsx
 function StationNode({ data }: NodeProps<StationData>) {
   return (
-    <Card depth="sm" className={`depth-${data.variant}`}>
+    <Card elevation="sm" className={`surface-${data.variant}`}>
       <Handle type="target" position={Position.Left} />
       <Text>{data.label}</Text>
       <Handle type="source" position={Position.Right} />
@@ -237,7 +237,7 @@ Edge props include `sourceX`, `sourceY`, `targetX`, `targetY`, `sourcePosition`,
 ### Junction Blending
 
 Two natural solutions (both apply):
-1. **Node overlay** — station cards sit on top of belts (React Flow renders HTML nodes above SVG edges). The card body + depth shadow covers where belts meet the station.
+1. **Node overlay** — station cards sit on top of belts (React Flow renders HTML nodes above SVG edges). The card body + surface shadow covers where belts meet the station.
 2. **Junction circles** — filled SVG circles at Handle positions, radius = belt width / 2, same color as belt. Covers any remaining seam.
 
 ### Bundle Size
@@ -278,8 +278,8 @@ The CSS belt classes (`.conveyor-belt`, `@keyframes convey`) are defined in `glo
 |---|---|
 | `var(--muted)` | Belt body (base track color) |
 | `var(--border)` | Belt ridges (dash pattern color) |
-| `var(--depth-muted-wall)` | Belt rail edges |
-| `var(--depth-muted-shadow)` | Belt cast shadow |
+| `var(--surface-muted-wall)` | Belt rail edges |
+| `var(--surface-muted-shadow)` | Belt cast shadow |
 
 ---
 
@@ -301,7 +301,7 @@ The CSS belt classes (`.conveyor-belt`, `@keyframes convey`) are defined in `glo
 |---|---|---|
 | 2026-02-26 | Research | Initial research complete. Compared React Flow, Rete.js, SVG techniques, Canvas approaches. |
 | 2026-02-26 | Research | Pivoted from CSS-only Phase 1 to React Flow foundation. Updated all phases. |
-| 2026-02-26 | Phase 1 | React Flow canvas + depth nodes + thick belt edges on Motorway page. Composability refactor: scene data in Showcase, canvas is pure renderer |
+| 2026-02-26 | Phase 1 | React Flow canvas + surface nodes + thick belt edges on Motorway page. Composability refactor: scene data in Showcase, canvas is pure renderer |
 | 2026-02-26 | Phase 2 | Flat belts (no shadow), variant color tokens via color-mix(), invisible handles for seamless junctions, speed variants, stronger dash visibility. Simplified from 5-layer to 2-layer SVG. Wider station spacing, larger cards. |
 | 2026-02-26 | Phase 2 | Added optional bordered prop for dark themes, Replay button for entrance animations, staggered entrance sequence (stations bounce in → belts fade in after). |
 | 2026-02-26 | Phase 3 | Sushi pieces: BeltPiece.tsx with 3 types (maki, nigiri, onigiri), SVG animateMotion along belt paths, variant color inheritance, reduced-motion guard. Preview row in showcase. |

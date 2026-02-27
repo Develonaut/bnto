@@ -54,7 +54,7 @@ export function NavThemeMenu() {
 
   return (
     <Menu>
-      <Menu.Trigger variant="outline" size="icon" depth="sm">
+      <Menu.Trigger variant="outline" size="icon" elevation="sm">
         <SunIcon />
         <span className="sr-only">Theme settings</span>
       </Menu.Trigger>
@@ -62,7 +62,7 @@ export function NavThemeMenu() {
         <div className="flex flex-col items-center gap-3">
           {/* Theme toggle + city name */}
           <div className="flex w-full items-center gap-3">
-            <AnimatedThemeToggle depth="sm" />
+            <AnimatedThemeToggle elevation="sm" />
             <Text size="sm" className="w-full font-medium">
               <ThemeName />
             </Text>
@@ -82,7 +82,7 @@ export function NavThemeMenu() {
               <Button
                 variant="warning"
                 size="icon-sm"
-                depth="sm"
+                elevation="sm"
                 pressed={isDragging}
                 className="pointer-events-none size-7"
               >

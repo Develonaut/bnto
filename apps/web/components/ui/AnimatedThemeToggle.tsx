@@ -6,7 +6,7 @@ import { useTheme } from "@/components/useTheme";
 
 import { Button, type SpringMode } from "@/components/ui/Button";
 
-type DepthOverride = boolean | "none" | "sm" | "md" | "lg";
+type ElevationOverride = boolean | "none" | "sm" | "md" | "lg";
 
 type ThemeName = "light" | "sunset" | "dark";
 
@@ -19,7 +19,7 @@ function nextTheme(current: ThemeName): ThemeName {
 
 const noop = () => () => {};
 
-export function AnimatedThemeToggle({ depth, spring }: { depth?: DepthOverride; spring?: SpringMode } = {}) {
+export function AnimatedThemeToggle({ elevation, spring }: { elevation?: ElevationOverride; spring?: SpringMode } = {}) {
   const { resolvedTheme, setTheme } = useTheme();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const mounted = useSyncExternalStore(
@@ -92,7 +92,7 @@ export function AnimatedThemeToggle({ depth, spring }: { depth?: DepthOverride; 
       ref={buttonRef}
       variant="outline"
       size="icon"
-      depth={depth}
+      elevation={elevation}
       spring={spring}
       className="group"
       data-theme={current}

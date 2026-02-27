@@ -19,7 +19,7 @@ export function DesktopNav({ pathname }: { pathname: string }) {
           key={link.href}
           variant="outline"
           href={link.href}
-          depth="sm"
+          elevation="sm"
           pressed={pathname === link.href}
         >
           {link.label}

@@ -50,17 +50,17 @@ export function MenuShowcase() {
           <Menu.Content className="w-56 p-2" boundary={boundaryEl}>
             <ul className="space-y-1">
               <li>
-                <Button variant="secondary" className="w-full justify-start" depth={false}>
+                <Button variant="secondary" className="w-full justify-start" elevation={false}>
                   New Recipe
                 </Button>
               </li>
               <li>
-                <Button variant="secondary" className="w-full justify-start" depth={false}>
+                <Button variant="secondary" className="w-full justify-start" elevation={false}>
                   Import
                 </Button>
               </li>
               <li>
-                <Button variant="secondary" className="w-full justify-start" depth={false}>
+                <Button variant="secondary" className="w-full justify-start" elevation={false}>
                   Export
                 </Button>
               </li>
@@ -71,7 +71,7 @@ export function MenuShowcase() {
         {/* Secondary variant trigger */}
         <Menu>
           <Menu.Trigger variant="secondary">Options</Menu.Trigger>
-          <Menu.Content className="w-48 p-2" depth="sm" boundary={boundaryEl}>
+          <Menu.Content className="w-48 p-2" elevation="sm" boundary={boundaryEl}>
             <ul className="space-y-1 text-sm">
               <li className="px-3 py-2 rounded-lg hover:bg-muted cursor-pointer">Edit</li>
               <li className="px-3 py-2 rounded-lg hover:bg-muted cursor-pointer">Duplicate</li>

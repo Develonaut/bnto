@@ -28,7 +28,7 @@ export function TrustLayout() {
   return (
     <Animate.ScaleIn from={0.9} easing="spring-bouncy">
       <div className="flex w-full items-center justify-center">
-        <Card depth="md" className="w-full max-w-sm p-6">
+        <Card elevation="md" className="w-full max-w-sm p-6">
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-3">
               {ANTI_PATTERNS.map((item, i) => (
@@ -56,7 +56,7 @@ export function TrustLayout() {
                   href={GITHUB_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  depth="sm"
+                  elevation="sm"
                 >
                   <GithubIcon className="size-3.5" />
                   GitHub

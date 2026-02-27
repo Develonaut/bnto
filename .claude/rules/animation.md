@@ -104,7 +104,7 @@ Can CSS handle it?
 - Staggered list reveals (stagger cascade utility)
 - Emphasis loops (pulse, breathe)
 - Any animation driven by a pseudo-class
-- The `.depth` + `.pressable` system (already CSS)
+- The `.surface` + `.pressable` system (already CSS)
 
 ### When motion/react is right
 - `AnimatePresence` for exit animations (unmount transitions -- CSS has no concept of "animate out before removing from DOM")
@@ -208,26 +208,26 @@ import { Animate } from "@/components/ui/animate";
 | `className` | `string` | Additional classes |
 | `style` | `CSSProperties` | Additional inline styles |
 
-### Depth caveat
+### Surface caveat
 
-By default, `Animate.*` components render a wrapper `<div>`. This is intentional -- opacity animation flattens `transform-style: preserve-3d`, which breaks the `.depth` 3D effect on Cards. The wrapper isolates the animation from the depth element.
+By default, `Animate.*` components render a wrapper `<div>`. This is intentional -- opacity animation flattens `transform-style: preserve-3d`, which breaks the `.surface` 3D effect on Cards. The wrapper isolates the animation from the surface element.
 
-Use `asChild` only when the child does NOT use `.depth`:
+Use `asChild` only when the child does NOT use `.surface`:
 
 ```tsx
-// GOOD -- wrapper div isolates animation from depth
+// GOOD -- wrapper div isolates animation from surface
 <Animate.ScaleIn from={0.85} index={i}>
   <Card>...</Card>
 </Animate.ScaleIn>
 
-// GOOD -- asChild on non-depth element
+// GOOD -- asChild on non-surface element
 <Animate.FadeIn asChild>
-  <span>No depth here</span>
+  <span>No surface here</span>
 </Animate.FadeIn>
 
-// BAD -- asChild merges opacity animation onto depth element
+// BAD -- asChild merges opacity animation onto surface element
 <Animate.ScaleIn asChild>
-  <Card>Depth will break!</Card>
+  <Card>Surface will break!</Card>
 </Animate.ScaleIn>
 ```
 
@@ -235,7 +235,7 @@ Use `asChild` only when the child does NOT use `.depth`:
 
 ## Rules
 
-1. **Compose with `Animate.*` components — NEVER use animation classNames directly.** This is the #1 rule. When you need an entrance animation, reach for `<Animate.ScaleIn>`, `<Animate.SlideUp>`, `<Animate.FadeIn>`, etc. Never apply `motion-safe:animate-*` classes, `--scale-from` variables, or `--stagger-index` CSS variables in consumer code. The `Animate.*` components handle reduced-motion, stagger timing, easing, and depth isolation automatically. Raw animation classes are implementation details — they exist so `Animate.*` can use them internally, not for direct consumption. If you catch yourself writing `className="motion-safe:animate-scale-in"` or `className="transition-all duration-fast ... scale-90 opacity-0"`, stop and use the component instead.
+1. **Compose with `Animate.*` components — NEVER use animation classNames directly.** This is the #1 rule. When you need an entrance animation, reach for `<Animate.ScaleIn>`, `<Animate.SlideUp>`, `<Animate.FadeIn>`, etc. Never apply `motion-safe:animate-*` classes, `--scale-from` variables, or `--stagger-index` CSS variables in consumer code. The `Animate.*` components handle reduced-motion, stagger timing, easing, and surface isolation automatically. Raw animation classes are implementation details — they exist so `Animate.*` can use them internally, not for direct consumption. If you catch yourself writing `className="motion-safe:animate-scale-in"` or `className="transition-all duration-fast ... scale-90 opacity-0"`, stop and use the component instead.
 2. **Use tokens, not raw values.** `duration-normal` not `duration-300`. `var(--ease-spring)` not inline `linear(...)`.
 3. **CSS-powered, component-composed.** The animation system is CSS under the hood (keyframes, transitions, `linear()` springs). But consumers interact with it through `Animate.*` composition components, not CSS classes. This gives us the performance of CSS with the ergonomics and safety of React composition.
 4. **Always guard with motion-safe.** Every animation path must have a reduced-motion fallback. `Animate.*` components handle this automatically — another reason to use them instead of raw classes.

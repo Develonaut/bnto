@@ -44,7 +44,7 @@ export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
       {/* CTA */}
       {showCta && (
         <div className="flex items-center gap-3 pt-2">
-          <Button variant="primary" href="#faq" depth="sm">
+          <Button variant="primary" href="#faq" elevation="sm">
             Learn more
           </Button>
           <Button
@@ -52,7 +52,7 @@ export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
             href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
-            depth="sm"
+            elevation="sm"
           >
             <GithubIcon />
             GitHub

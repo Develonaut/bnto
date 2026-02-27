@@ -1,4 +1,4 @@
-/* ── Layer 1: .depth — Static 3D Raise ────────────────────────────
+/* ── Layer 1: .surface — Static 3D Raise ────────────────────────────
  *
  * Three-layer building illusion: face (the element) + walls (::before)
  * + ground shadow (::after). Like Mini Motorways buildings viewed from
@@ -10,29 +10,29 @@
  * above. Only the ground shadow follows --light-angle.
  *
  * CSS variables:
- *   --depth          — base offset in px (set by size modifiers)
- *   --depth-wall     — wall color (set by color variants or :root default)
- *   --depth-shadow   — ground shadow color (same)
- *   --depth-wall-mag — wall offset magnitude (set by size modifiers)
- *   --depth-shadow-mag — shadow offset magnitude (set by size modifiers)
+ *   --elevation          — base offset in px (set by elevation modifiers)
+ *   --surface-wall       — wall color (set by color variants or :root default)
+ *   --surface-shadow     — ground shadow color (same)
+ *   --elevation-wall-mag — wall offset magnitude (set by elevation modifiers)
+ *   --elevation-shadow-mag — shadow offset magnitude (set by elevation modifiers)
  *
  * Usage:
- *   div.depth.depth-sm                                       — static card
- *   button.depth.pressable.depth-md.depth-primary             — interactive
+ *   div.surface.elevation-sm                                    — static card
+ *   button.surface.pressable.elevation-md.surface-primary        — interactive
  * ────────────────────────────────────────────────────────────────── */
 
-.depth {
-  --depth: 6px;
-  --depth-wall-mag: 8.49;
-  --depth-shadow-mag: 10;
+.surface {
+  --elevation: 6px;
+  --elevation-wall-mag: 8.49;
+  --elevation-shadow-mag: 10;
 
   /* Walls — fixed offset (always down-right, the two visible building edges) */
-  --depth-x: calc(var(--depth-wall-mag) * 0.5px);
-  --depth-y: calc(var(--depth-wall-mag) * 0.5px);
+  --elevation-x: calc(var(--elevation-wall-mag) * 0.5px);
+  --elevation-y: calc(var(--elevation-wall-mag) * 0.5px);
 
   /* Ground shadow — follows the light source angle */
-  --shadow-x: calc(var(--depth-shadow-mag) * sin(var(--light-angle)) * 1px);
-  --shadow-y: calc(var(--depth-shadow-mag) * cos(var(--light-angle)) * -1px);
+  --shadow-x: calc(var(--elevation-shadow-mag) * sin(var(--light-angle)) * 1px);
+  --shadow-y: calc(var(--elevation-shadow-mag) * cos(var(--light-angle)) * -1px);
 
   /* Face color computation — driven by color variant's --variant-bg/--variant-fg.
    * Default falls back to card surface colors for elements without a color variant.
@@ -42,147 +42,147 @@
 
   position: relative;
   transform-style: preserve-3d;
-  border: 1px solid var(--depth-wall);
+  border: 1px solid var(--surface-wall);
 }
 
 /* Walls — fixed darker shade offset behind the face.
  * Always offset down-right to show the two visible building edges
  * (bottom + right sides) regardless of light direction. */
-.depth::before {
+.surface::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--depth-wall);
-  transform: translate3d(var(--depth-x), var(--depth-y), -1px);
+  background: var(--surface-wall);
+  transform: translate3d(var(--elevation-x), var(--elevation-y), -1px);
   pointer-events: none;
 }
 
 /* Ground shadow — cast in the --light-angle direction.
  * Anchored close to the element so the inherited border-radius
  * doesn't break the cast-shadow illusion. */
-.depth::after {
+.surface::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--depth-shadow);
+  background: var(--surface-shadow);
   transform: translate3d(var(--shadow-x), var(--shadow-y), -2px);
   pointer-events: none;
 }
 
-/* ── Size modifiers ─────────────────────────────────────────────
+/* ── Elevation modifiers ─────────────────────────────────────────────
  *
  * All tiers share the same light direction (--light-angle).
  * Only magnitude differs — taller buildings cast longer shadows.
  *
- *   depth-sm: house    — small offset, short shadow
- *   depth-md: building — medium offset (current default)
- *   depth-lg: tower    — large offset, long shadow
+ *   elevation-sm: house    — small offset, short shadow
+ *   elevation-md: building — medium offset (current default)
+ *   elevation-lg: tower    — large offset, long shadow
  * ────────────────────────────────────────────────────────────── */
 
-.depth-sm {
-  --depth: 4px;
-  --depth-wall-mag: 4.47;
-  --depth-shadow-mag: 7;
+.elevation-sm {
+  --elevation: 4px;
+  --elevation-wall-mag: 4.47;
+  --elevation-shadow-mag: 7;
 }
-.depth-md {
-  --depth: 6px;
-  --depth-wall-mag: 7.81;
-  --depth-shadow-mag: 10;
+.elevation-md {
+  --elevation: 6px;
+  --elevation-wall-mag: 7.81;
+  --elevation-shadow-mag: 10;
 }
-.depth-lg {
-  --depth: 10px;
-  --depth-wall-mag: 11.31;
-  --depth-shadow-mag: 14;
+.elevation-lg {
+  --elevation: 10px;
+  --elevation-wall-mag: 11.31;
+  --elevation-shadow-mag: 14;
 }
 
 /* ── Reset ──────────────────────────────────────────────────────── */
 
-.depth-none {
-  --depth: 0px;
-  --depth-wall-mag: 0;
-  --depth-shadow-mag: 0;
+.elevation-none {
+  --elevation: 0px;
+  --elevation-wall-mag: 0;
+  --elevation-shadow-mag: 0;
 }
-.depth-none::before,
-.depth-none::after {
+.elevation-none::before,
+.elevation-none::after {
   content: none;
 }
 
 /* ── Color variants ──────────────────────────────────────────────
  * Each variant sets:
- *   --depth-wall / --depth-shadow — wall and ground shadow colors
- *   --variant-bg / --variant-fg   — source face colors (consumed
- *     by --face-bg/--face-fg on .depth, and blended by [data-muted])
+ *   --surface-wall / --surface-shadow — wall and ground shadow colors
+ *   --variant-bg / --variant-fg       — source face colors (consumed
+ *     by --face-bg/--face-fg on .surface, and blended by [data-muted])
  * ────────────────────────────────────────────────────────────────── */
 
 /* Primary — terracotta walls */
-.depth-primary {
-  --depth-wall: var(--depth-primary-wall);
-  --depth-shadow: var(--depth-primary-shadow);
+.surface-primary {
+  --surface-wall: var(--surface-primary-wall);
+  --surface-shadow: var(--surface-primary-shadow);
   --variant-bg: var(--primary);
   --variant-fg: var(--primary-foreground);
 }
 
 /* Secondary — teal walls */
-.depth-secondary {
-  --depth-wall: var(--depth-secondary-wall);
-  --depth-shadow: var(--depth-secondary-shadow);
+.surface-secondary {
+  --surface-wall: var(--surface-secondary-wall);
+  --surface-shadow: var(--surface-secondary-shadow);
   --variant-bg: var(--secondary);
   --variant-fg: var(--secondary-foreground);
 }
 
 /* Muted — warm off-white walls */
-.depth-muted {
-  --depth-wall: var(--depth-muted-wall);
-  --depth-shadow: var(--depth-muted-shadow);
+.surface-muted {
+  --surface-wall: var(--surface-muted-wall);
+  --surface-shadow: var(--surface-muted-shadow);
   --variant-bg: var(--muted);
   --variant-fg: var(--muted-foreground);
 }
 
 /* Destructive — red walls */
-.depth-destructive {
-  --depth-wall: var(--depth-destructive-wall);
-  --depth-shadow: var(--depth-destructive-shadow);
+.surface-destructive {
+  --surface-wall: var(--surface-destructive-wall);
+  --surface-shadow: var(--surface-destructive-shadow);
   --variant-bg: var(--destructive);
   --variant-fg: var(--destructive-foreground);
 }
 
 /* Accent — salmon pink walls */
-.depth-accent {
-  --depth-wall: var(--depth-accent-wall);
-  --depth-shadow: var(--depth-accent-shadow);
+.surface-accent {
+  --surface-wall: var(--surface-accent-wall);
+  --surface-shadow: var(--surface-accent-shadow);
   --variant-bg: var(--accent);
   --variant-fg: var(--accent-foreground);
 }
 
 /* Success — sage green walls */
-.depth-success {
-  --depth-wall: var(--depth-success-wall);
-  --depth-shadow: var(--depth-success-shadow);
+.surface-success {
+  --surface-wall: var(--surface-success-wall);
+  --surface-shadow: var(--surface-success-shadow);
   --variant-bg: var(--success);
   --variant-fg: var(--success-foreground);
 }
 
 /* Warning — golden-amber walls */
-.depth-warning {
-  --depth-wall: var(--depth-warning-wall);
-  --depth-shadow: var(--depth-warning-shadow);
+.surface-warning {
+  --surface-wall: var(--surface-warning-wall);
+  --surface-shadow: var(--surface-warning-shadow);
   --variant-bg: var(--warning);
   --variant-fg: var(--warning-foreground);
 }
 
 /* Outline — subtle neutral walls */
-.depth-outline {
-  --depth-wall: var(--depth-outline-wall);
-  --depth-shadow: var(--depth-outline-shadow);
+.surface-outline {
+  --surface-wall: var(--surface-outline-wall);
+  --surface-shadow: var(--surface-outline-shadow);
   --variant-bg: var(--card);
   --variant-fg: var(--card-foreground);
 }
 
 /* ── Muted modifier ──────────────────────────────────────────────
  * [data-muted] blends face colors toward the muted palette without
- * using opacity (which would reveal depth pseudo-elements through
+ * using opacity (which would reveal surface pseudo-elements through
  * the transparent face). Uses color-mix() in OKLCH for perceptually
  * uniform blending.
  *
@@ -190,7 +190,7 @@
  * that matches the visual weight of opacity-60 without transparency.
  * ────────────────────────────────────────────────────────────────── */
 
-.depth[data-muted] {
+.surface[data-muted] {
   --face-bg: color-mix(
     in oklch,
     var(--variant-bg, var(--card)) 60%,
@@ -201,14 +201,14 @@
 
 /* ── Layer 2: .pressable — Animation Layer ─────────────────────────
  *
- * Adds hover sink + active flush animation to any .depth element.
+ * Adds hover sink + active flush animation to any .surface element.
  *
  * Ground-plane model: the wall (::before) stays pinned to ground
  * level in ALL states. The face starts raised above ground and
  * sinks toward it on hover/active. This keeps the bottom edge of
  * all buttons aligned regardless of pressed state.
  *
- * Default: face raised by full depth (floats above wall)
+ * Default: face raised by full elevation (floats above wall)
  * Hover:   face sinks 33% toward ground, walls still at ground
  * Active:  face flush with ground, walls gone, shadow invisible
  *
@@ -224,8 +224,8 @@
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   will-change: transform;
-  /* Default: face raised above ground by full depth */
-  transform: translate(calc(var(--depth-x) * -1), calc(var(--depth-y) * -1));
+  /* Default: face raised above ground by full elevation */
+  transform: translate(calc(var(--elevation-x) * -1), calc(var(--elevation-y) * -1));
   transition: transform var(--pressable-dur, 150ms)
     var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
 }
@@ -251,8 +251,8 @@
 .pressable[data-force-state="hover"],
 .pressable[data-state="open"] {
   transform: translate(
-    calc(var(--depth-x) * -0.66),
-    calc(var(--depth-y) * -0.66)
+    calc(var(--elevation-x) * -0.66),
+    calc(var(--elevation-y) * -0.66)
   );
 }
 
@@ -261,8 +261,8 @@
 .pressable[data-force-state="hover"]::before,
 .pressable[data-state="open"]::before {
   transform: translate3d(
-    calc(var(--depth-x) * 0.66),
-    calc(var(--depth-y) * 0.66),
+    calc(var(--elevation-x) * 0.66),
+    calc(var(--elevation-y) * 0.66),
     -1px
   );
 }
@@ -301,7 +301,7 @@
 
 /* Focus — outline hugs the face border using the wall color */
 .pressable:focus-visible {
-  outline: 2px solid var(--depth-wall);
+  outline: 2px solid var(--surface-wall);
   outline-offset: -5px;
 }
 
@@ -323,7 +323,7 @@
     var(--muted)
   );
   --face-fg: var(--muted-foreground);
-  border-color: color-mix(in oklch, var(--depth-wall) 40%, var(--muted));
+  border-color: color-mix(in oklch, var(--surface-wall) 40%, var(--muted));
   transform: translate(0, 0);
 }
 
@@ -361,7 +361,7 @@
   .pressable:hover::before,
   .pressable:focus-visible::before,
   .pressable:active::before {
-    transform: translate3d(var(--depth-x), var(--depth-y), -1px);
+    transform: translate3d(var(--elevation-x), var(--elevation-y), -1px);
   }
 
   .pressable:hover::after,
