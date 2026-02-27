@@ -23,8 +23,8 @@ const Switch = React.forwardRef<
       className="group surface surface-primary elevation-sm pressable outline-none flex items-center justify-center size-8 rounded-full data-[state=checked]:translate-x-[39px] data-[state=unchecked]:translate-x-[7px] translate-y-px data-[state=unchecked]:[--variant-bg:var(--card)] data-[state=unchecked]:[--variant-fg:var(--card-foreground)] [&_svg]:size-4 [&_svg]:shrink-0"
       style={{ transition: "transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)), translate 500ms var(--ease-spring-bouncier)" }}
     >
-      <CheckIcon strokeWidth={3} className="hidden group-data-[state=checked]:block" />
-      <XIcon strokeWidth={3} className="block group-data-[state=checked]:hidden" />
+      <CheckIcon strokeWidth={4} className="hidden group-data-[state=checked]:block" />
+      <XIcon strokeWidth={4} className="block group-data-[state=checked]:hidden" />
     </SwitchPrimitives.Thumb>
   </SwitchPrimitives.Root>
 ));

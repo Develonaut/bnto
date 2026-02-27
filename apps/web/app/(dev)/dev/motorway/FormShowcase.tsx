@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { Textarea } from "@/components/ui/Textarea";
-import { Switch } from "@/components/ui/Switch";
-import { Checkbox } from "@/components/ui/Checkbox";
+import { Row } from "@/components/ui/Row";
 import { Slider } from "@/components/ui/Slider";
 import { Stack } from "@/components/ui/Stack";
+import { Switch } from "@/components/ui/Switch";
+import { Textarea } from "@/components/ui/Textarea";
 
 export function FormShowcase() {
   const [switchOn, setSwitchOn] = useState(false);
@@ -40,16 +41,16 @@ export function FormShowcase() {
           <Textarea id="bio" placeholder="Tell us about yourself..." />
         </Stack>
 
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2">
+        <Row className="gap-8">
+          <Row className="items-center gap-2">
             <Switch checked={switchOn} onCheckedChange={setSwitchOn} />
             <Label>Notifications {switchOn ? "on" : "off"}</Label>
-          </div>
-          <div className="flex items-center gap-2">
+          </Row>
+          <Row className="items-center gap-2">
             <Checkbox id="terms" />
             <Label htmlFor="terms">Accept terms</Label>
-          </div>
-        </div>
+          </Row>
+        </Row>
 
         <Stack gap="sm">
           <Label>Quality: {sliderVal[0]}%</Label>

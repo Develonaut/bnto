@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { RadialSlider } from "@/components/ui/RadialSlider";
+import { RadioGroup } from "@/components/ui/RadioGroup";
 import { Row } from "@/components/ui/Row";
 import { Slider } from "@/components/ui/Slider";
 import { Stack } from "@/components/ui/Stack";
@@ -18,6 +19,7 @@ export function InputShowcase() {
   const [switchB, setSwitchB] = useState(false);
   const [slider, setSlider] = useState([65]);
   const [dial, setDial] = useState(75);
+  const [radioVal, setRadioVal] = useState("jpeg");
 
   return (
     <Stack className="gap-10">
@@ -84,6 +86,47 @@ export function InputShowcase() {
             <Label className="text-muted-foreground">Disabled</Label>
           </Row>
         </Row>
+      </div>
+
+      {/* Radio groups */}
+      <div>
+        <Text size="sm" color="muted" className="mb-3">Radio groups</Text>
+        <div className="grid grid-cols-2 gap-8">
+          <Stack gap="sm">
+            <Label>Output format</Label>
+            <RadioGroup value={radioVal} onValueChange={setRadioVal}>
+              <Row className="items-center gap-2">
+                <RadioGroup.Item value="jpeg" id="radio-jpeg" />
+                <Label htmlFor="radio-jpeg">JPEG</Label>
+              </Row>
+              <Row className="items-center gap-2">
+                <RadioGroup.Item value="png" id="radio-png" />
+                <Label htmlFor="radio-png">PNG</Label>
+              </Row>
+              <Row className="items-center gap-2">
+                <RadioGroup.Item value="webp" id="radio-webp" />
+                <Label htmlFor="radio-webp">WebP</Label>
+              </Row>
+            </RadioGroup>
+          </Stack>
+          <Stack gap="sm">
+            <Label>Disabled</Label>
+            <RadioGroup defaultValue="medium" disabled>
+              <Row className="items-center gap-2">
+                <RadioGroup.Item value="small" id="radio-small" />
+                <Label htmlFor="radio-small" className="text-muted-foreground">Small</Label>
+              </Row>
+              <Row className="items-center gap-2">
+                <RadioGroup.Item value="medium" id="radio-medium" />
+                <Label htmlFor="radio-medium" className="text-muted-foreground">Medium</Label>
+              </Row>
+              <Row className="items-center gap-2">
+                <RadioGroup.Item value="large" id="radio-large" />
+                <Label htmlFor="radio-large" className="text-muted-foreground">Large</Label>
+              </Row>
+            </RadioGroup>
+          </Stack>
+        </div>
       </div>
 
       {/* Sliders */}
