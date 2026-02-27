@@ -13,17 +13,17 @@ const Switch = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(
-      "peer inline-flex h-9 w-16 shrink-0 cursor-pointer items-center rounded-full transition-colors data-[state=unchecked]:bg-input data-[state=checked]:bg-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
+      "peer inline-flex h-10 w-19 shrink-0 cursor-pointer items-center rounded-full bg-input focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
       className,
     )}
     {...props}
     ref={ref}
   >
     <SwitchPrimitives.Thumb
-      className="group surface surface-outline elevation-md flex items-center justify-center size-7 rounded-full transition-[translate] duration-[500ms] ease-spring-bouncier data-[state=checked]:translate-x-8 data-[state=unchecked]:translate-x-1 [&_svg]:size-4 [&_svg]:shrink-0"
+      className="group surface surface-primary elevation-sm flex items-center justify-center size-8 rounded-full transition-[translate] duration-[500ms] ease-spring-bouncier data-[state=checked]:translate-x-9 data-[state=unchecked]:translate-x-1 data-[state=unchecked]:[--variant-bg:var(--card)] data-[state=unchecked]:[--variant-fg:var(--card-foreground)] [&_svg]:size-4 [&_svg]:shrink-0"
     >
-      <CheckIcon className="hidden group-data-[state=checked]:block" />
-      <XIcon className="block group-data-[state=checked]:hidden" />
+      <CheckIcon strokeWidth={3} className="hidden group-data-[state=checked]:block" />
+      <XIcon strokeWidth={3} className="block group-data-[state=checked]:hidden" />
     </SwitchPrimitives.Thumb>
   </SwitchPrimitives.Root>
 ));
