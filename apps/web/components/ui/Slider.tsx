@@ -32,7 +32,7 @@ function Slider({
       )}
       {...props}
     >
-      <SliderPrimitive.Track className="bg-input border border-border relative h-4 w-full grow overflow-hidden rounded-full">
+      <SliderPrimitive.Track className="bg-input border border-border relative h-2.5 w-full grow overflow-hidden rounded-full">
         <SliderPrimitive.Range className="bg-primary absolute h-full" />
       </SliderPrimitive.Track>
       {Array.from({ length: _value.length }, (_, index) => (

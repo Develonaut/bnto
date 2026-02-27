@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/cn";
+import { GripVerticalIcon } from "@/components/ui/icons";
 
 /* ── RadialSlider ─────────────────────────────────────────────────────
  * A circular / arc slider with an HTML-based thumb.
@@ -170,9 +171,9 @@ export function RadialSlider({
   startAngle = 0,
   endAngle = 360,
   size = 48,
-  strokeWidth = 4,
-  trackClassName = "text-muted",
-  activeClassName = "text-warning",
+  strokeWidth = 10,
+  trackClassName = "text-input",
+  activeClassName = "text-primary",
   hideProgress = false,
   renderThumb,
   children,
@@ -180,7 +181,9 @@ export function RadialSlider({
   className,
 }: RadialSliderProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const thumbRef = React.useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [isHovering, setIsHovering] = React.useState(false);
   const draggingRef = React.useRef(false);
 
   // Track radius — inset from the edge to leave room for the thumb
@@ -257,9 +260,16 @@ export function RadialSlider({
         updateFromPointer(e.clientX, e.clientY);
       } else if (containerRef.current) {
         // Show pointer cursor only over the active arc area
-        containerRef.current.style.cursor = isInArc(e.clientX, e.clientY)
-          ? "pointer"
-          : "default";
+        const inArc = isInArc(e.clientX, e.clientY);
+        containerRef.current.style.cursor = inArc ? "pointer" : "default";
+
+        // Detect hover over thumb for pressable data-hover
+        if (thumbRef.current) {
+          const rect = thumbRef.current.getBoundingClientRect();
+          const dx = e.clientX - (rect.left + rect.width / 2);
+          const dy = e.clientY - (rect.top + rect.height / 2);
+          setIsHovering(dx * dx + dy * dy <= (rect.width / 2 + 4) ** 2);
+        }
       }
     },
     [isInArc, updateFromPointer],
@@ -302,13 +312,9 @@ export function RadialSlider({
   // ── Default thumb ──────────────────────────────────────────────────
 
   const defaultThumb = (
-    <div
-      className={cn(
-        "rounded-full border-2 border-background",
-        activeClassName,
-      )}
-      style={{ width: 12, height: 12, backgroundColor: "currentColor" }}
-    />
+    <div ref={thumbRef} className="surface surface-primary elevation-sm pressable flex items-center justify-center size-8 rounded-full outline-none! ring-0" data-active={isDragging || undefined} data-hover={isHovering || undefined}>
+      <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />
+    </div>
   );
 
   return (
@@ -328,6 +334,7 @@ export function RadialSlider({
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
+      onPointerLeave={() => setIsHovering(false)}
       onKeyDown={onKeyDown}
     >
       {/* SVG layer: track + progress arc */}
@@ -339,26 +346,17 @@ export function RadialSlider({
       >
         {/* Full ring guide — faint circle showing the complete dial */}
         {ringPath && (
-          <path
-            d={ringPath}
-            fill="none"
-            stroke="currentColor"
-            className={trackClassName}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            opacity={0.3}
-          />
+          <>
+            <path d={ringPath} fill="none" stroke="currentColor" className="text-border" strokeWidth={strokeWidth + 2} strokeLinecap="round" opacity={0.3} />
+            <path d={ringPath} fill="none" stroke="currentColor" className={trackClassName} strokeWidth={strokeWidth} strokeLinecap="round" opacity={0.3} />
+          </>
         )}
-        {/* Arc-range track — the usable range */}
+        {/* Arc-range track — border layer + fill layer */}
         {trackPath && (
-          <path
-            d={trackPath}
-            fill="none"
-            stroke="currentColor"
-            className={trackClassName}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-          />
+          <>
+            <path d={trackPath} fill="none" stroke="currentColor" className="text-border" strokeWidth={strokeWidth + 2} strokeLinecap="round" />
+            <path d={trackPath} fill="none" stroke="currentColor" className={trackClassName} strokeWidth={strokeWidth} strokeLinecap="round" />
+          </>
         )}
         {activePath && (
           <path

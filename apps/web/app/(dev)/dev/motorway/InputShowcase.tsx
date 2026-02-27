@@ -17,7 +17,7 @@ export function InputShowcase() {
   const [switchA, setSwitchA] = useState(true);
   const [switchB, setSwitchB] = useState(false);
   const [slider, setSlider] = useState([65]);
-  const [dial, setDial] = useState(180);
+  const [dial, setDial] = useState(75);
 
   return (
     <Stack className="gap-10">
@@ -98,19 +98,18 @@ export function InputShowcase() {
             <Slider value={slider} onValueChange={setSlider} max={100} />
           </Stack>
           <Stack gap="sm" className="items-center">
-            <Label>Direction</Label>
+            <Label>Quality</Label>
             <RadialSlider
               min={0}
-              max={360}
+              max={100}
               value={dial}
               onChange={setDial}
-              startAngle={0}
-              endAngle={360}
-              size={96}
-              strokeWidth={4}
-              aria-label="Direction"
+              startAngle={240}
+              endAngle={120}
+              size={180}
+              aria-label="Quality"
             >
-              <Text size="xs" mono color="muted">{dial}&deg;</Text>
+              <Text size="lg" mono className="font-semibold">{dial}%</Text>
             </RadialSlider>
           </Stack>
         </div>
