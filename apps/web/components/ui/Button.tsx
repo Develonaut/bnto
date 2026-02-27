@@ -44,7 +44,7 @@ type ButtonVariant =
   | "outline"
   | "secondary"
   | "muted";
-type ButtonSize = "md" | "icon" | "icon-sm" | "icon-lg";
+type ButtonSize = "md" | "icon";
 
 const buttonCn = createCn({
   base: "surface bg-[var(--face-bg)] text-[var(--face-fg)] inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium shrink-0 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
@@ -61,8 +61,6 @@ const buttonCn = createCn({
     size: {
       md: "h-9 px-4 py-2 has-[>svg]:px-3 elevation-md",
       icon: "size-9 elevation-md",
-      "icon-sm": "size-8 elevation-md",
-      "icon-lg": "size-10 elevation-md",
     },
   },
   defaultVariants: {
@@ -94,6 +92,7 @@ function Button({
   muted = false,
   hovered = false,
   pressed = false,
+  toggle = false,
   asChild = false,
   href,
   style,
@@ -109,6 +108,7 @@ function Button({
     muted?: boolean;
     hovered?: boolean;
     pressed?: boolean;
+    toggle?: boolean;
     href?: string;
     ref?: React.Ref<HTMLElement>;
   }) {
@@ -116,6 +116,7 @@ function Button({
   const Comp: React.ElementType = asChild ? Slot : isLink ? "a" : "button";
   const dataHover = hovered && !pressed ? "" : undefined;
   const dataActive = pressed ? "" : undefined;
+  const dataToggle = toggle ? "" : undefined;
   const elevationClass = resolveElevationClass(elevation);
   // When elevation is overridden (not true), strip the size variant's built-in
   // elevation-{sm|md|lg} so it doesn't compete via CSS source order.
@@ -131,6 +132,7 @@ function Button({
       data-muted={muted || undefined}
       data-hover={dataHover}
       data-active={dataActive}
+      data-toggle={dataToggle}
       {...(isLink ? { href } : {})}
       className={cn(PRESSABLE_BASE, resolvedSizeClasses, elevationClass, className)}
       style={{ ...SPRING_STYLES[spring], ...style }}

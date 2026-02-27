@@ -171,7 +171,7 @@ export function BntoPageShell({ entry }: BntoPageShellProps) {
                           <FileUpload.ItemMetadata />
                           <FileUpload.ItemActions>
                             <FileUpload.ItemDelete asChild>
-                              <Button variant="outline" size="icon-sm" elevation="sm">
+                              <Button variant="outline" size="icon" elevation="sm">
                                 <XIcon className="size-4" />
                               </Button>
                             </FileUpload.ItemDelete>

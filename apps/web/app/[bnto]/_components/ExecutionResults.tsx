@@ -77,7 +77,7 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
               {downloadUrl ? (
                 <Button
                   variant="outline"
-                  size="icon-sm"
+                  size="icon"
                   onClick={() => downloadFile(downloadUrl)}
                   aria-label={`Download ${file.name}`}
                 >

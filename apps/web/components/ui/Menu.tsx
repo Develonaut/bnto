@@ -27,8 +27,8 @@ import { Popover } from "@/components/ui/Popover";
 const MenuContext = React.createContext(false);
 
 /* ── Trigger ─────────────────────────────────────────────────────
- * Renders as our Button component. When the menu is open, the
- * trigger shows hovered={true} (engaged, sunk toward ground). */
+ * Renders as our Button component with toggle behavior. When the
+ * menu is open, the trigger stays depressed at hover depth. */
 
 const MenuTrigger = React.forwardRef<
   HTMLButtonElement,
@@ -39,7 +39,7 @@ const MenuTrigger = React.forwardRef<
     <Popover.Anchor asChild>
       <div className="inline-flex">
         <Popover.Trigger asChild>
-          <Button ref={ref} pressed={open} {...props}>
+          <Button ref={ref} toggle pressed={open} {...props}>
             {children}
           </Button>
         </Popover.Trigger>

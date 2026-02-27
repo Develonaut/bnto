@@ -112,7 +112,7 @@ function BrowserFileRow({
 
       <Button
         variant="outline"
-        size="icon-sm"
+        size="icon"
         onClick={() => onDownload(result)}
         aria-label={`Download ${result.filename}`}
       >

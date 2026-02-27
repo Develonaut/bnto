@@ -81,7 +81,7 @@ export function NavThemeMenu() {
             renderThumb={({ isDragging }) => (
               <Button
                 variant="warning"
-                size="icon-sm"
+                size="icon"
                 elevation="sm"
                 pressed={isDragging}
                 className="pointer-events-none size-7"
