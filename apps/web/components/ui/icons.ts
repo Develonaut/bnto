@@ -49,6 +49,7 @@ export {
   Trash2 as TrashIcon,
   Upload as UploadIcon,
   CircleUser as CircleUserIcon,
+  LogIn as LogInIcon,
   LogOut as LogOutIcon,
   Bold as BoldIcon,
   Italic as ItalicIcon,

@@ -31,7 +31,12 @@ const MenuContext = React.createContext(false);
 
 /* ── Trigger ─────────────────────────────────────────────────────
  * Renders as our Button component with toggle behavior. When the
- * menu is open, the trigger stays depressed at hover depth. */
+ * menu is open, the trigger stays depressed at hover depth.
+ *
+ * A stable wrapper <span> acts as the Popover reference element.
+ * The Button animates freely inside it (pressable sink/raise)
+ * without shifting the dropdown — Floating UI measures the
+ * wrapper's bounding rect, which never moves. */
 
 const MenuTrigger = React.forwardRef<
   HTMLButtonElement,
@@ -40,9 +45,11 @@ const MenuTrigger = React.forwardRef<
   const open = React.useContext(MenuContext);
   return (
     <Popover.Trigger asChild>
-      <Button ref={ref} toggle pressed={open} {...props}>
-        {children}
-      </Button>
+      <span className="inline-flex">
+        <Button ref={ref} toggle pressed={open} {...props}>
+          {children}
+        </Button>
+      </span>
     </Popover.Trigger>
   );
 });

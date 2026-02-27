@@ -4,106 +4,90 @@ import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
-import { CircleUserIcon, LogOutIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/Button";
+import {
+  CircleUserIcon,
+  LogInIcon,
+  LogOutIcon,
+} from "@/components/ui/icons";
 import { Menu } from "@/components/ui/Menu";
 import { Text } from "@/components/ui/Text";
 
 /**
  * Auth-aware navbar component.
  *
- * - Unauthenticated or anonymous: "Sign In" button linking to /signin
- * - Loading: disabled skeleton button
- * - Authenticated (with email): user icon menu with email + sign out
+ * Always renders the same icon button trigger to prevent layout shift.
+ * The dropdown adapts based on auth state:
+ * - Loading: trigger is disabled
+ * - Unauthenticated or anonymous: menu has a "Sign in" link
+ * - Authenticated (with email): menu shows user info + sign out
  *
  * Anonymous users have a Convex session (isAuthenticated: true) but no email.
- * We treat them as unauthenticated for UI purposes — show "Sign In", not
- * the user menu. When they click Sign In, we set the signout signal cookie
- * so the proxy lets them through to /signin (since the proxy sees their
- * anonymous session as "authenticated").
+ * We treat them as unauthenticated for UI purposes. When they click Sign In,
+ * we set the signout signal cookie so the proxy lets them through to /signin
+ * (since the proxy sees their anonymous session as "authenticated").
  */
 export function NavUser() {
   const { isAuthenticated, isLoading, user } = core.auth.useAuth();
   const signOut = core.auth.useSignOut();
   const router = useRouter();
 
+  const isSignedIn = !!user?.email;
+
   function handleSignOut() {
     signOut();
     router.replace("/signin");
   }
 
-  // Anonymous users have a session but no email — they need the signout
-  // signal cookie to bypass the proxy's "auth on /signin" redirect.
-  function handleSignInClick() {
+  function handleSignIn() {
+    // Anonymous users have a session but no email — they need the signout
+    // signal cookie to bypass the proxy's "auth on /signin" redirect.
     if (isAuthenticated) {
       document.cookie = `${SIGNOUT_COOKIE}=1; path=/; max-age=10; samesite=lax`;
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Button
-        variant="outline"
-        size="icon"
-        elevation="sm"
-        disabled
-        aria-label="Loading account"
-        data-testid="nav-user-loading"
-      >
-        <CircleUserIcon />
-      </Button>
-    );
-  }
-
-  // Show "Sign In" for unauthenticated users AND anonymous users (no email)
-  if (!user?.email) {
-    return (
-      <Button
-        variant="primary"
-        elevation="sm"
-        href="/signin"
-        onClick={handleSignInClick}
-        data-testid="nav-sign-in"
-      >
-        Sign In
-      </Button>
-    );
+    router.push("/signin");
   }
 
   return (
     <Menu>
       <Menu.Trigger
-        variant="outline"
+        variant="primary"
         size="icon"
         elevation="sm"
-        aria-label="Account menu"
-        data-testid="nav-user-menu"
+        disabled={isLoading}
+        aria-label={isLoading ? "Loading account" : "Account menu"}
+        data-testid={isLoading ? "nav-user-loading" : "nav-user-menu"}
       >
         <CircleUserIcon />
       </Menu.Trigger>
       <Menu.Content className="w-56 p-2" offset="lg">
         <div className="flex flex-col gap-1">
-          {/* User info */}
-          <div className="px-3 py-2">
-            {user.name && (
-              <Text size="sm" className="font-medium">
-                {user.name}
-              </Text>
-            )}
-            {user.email && (
-              <Text size="xs" color="muted">
-                {user.email}
-              </Text>
-            )}
-          </div>
+          {isSignedIn ? (
+            <>
+              {/* User info */}
+              <div className="px-3 py-2">
+                {user.name && (
+                  <Text size="sm" className="font-medium">
+                    {user.name}
+                  </Text>
+                )}
+                <Text size="xs" color="muted">
+                  {user.email}
+                </Text>
+              </div>
 
-          <Menu.Separator />
+              <Menu.Separator />
 
-          {/* Sign Out */}
-          <Menu.Item onClick={handleSignOut} data-testid="nav-sign-out">
-            <LogOutIcon />
-            Sign out
-          </Menu.Item>
+              <Menu.Item onClick={handleSignOut} data-testid="nav-sign-out">
+                <LogOutIcon />
+                Sign out
+              </Menu.Item>
+            </>
+          ) : (
+            <Menu.Item onClick={handleSignIn} data-testid="nav-sign-in">
+              <LogInIcon />
+              Sign in
+            </Menu.Item>
+          )}
         </div>
       </Menu.Content>
     </Menu>
