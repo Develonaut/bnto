@@ -671,7 +671,7 @@ Referral links to boost user acquisition. With browser-first, the referral rewar
 
 **Problem:** `Button asChild` merges onto a child element via Radix `Slot`, but when the child is a `<div>` or `<Card>`, native keyboard activation (Space/Enter → click → CSS `:active`) is lost. The browser only fires `:active` on real button elements.
 
-**Inspired by:** React Aria's [`usePress`](https://react-aria.adobe.com/usePress) for the problem definition, MUI's `ButtonBase` for the component shape, React Native's `<Pressable>` for the name. Our advantage: the `.pressable` CSS system already handles all visual states (`:hover`, `:active`, `:focus-visible`, `:disabled`, `data-force-state`), so we just need the right element.
+**Inspired by:** React Aria's [`usePress`](https://react-aria.adobe.com/usePress) for the problem definition, MUI's `ButtonBase` for the component shape, React Native's `<Pressable>` for the name. Our advantage: the `.pressable` CSS system already handles all visual states (`:hover`, `:active`, `:focus-visible`, `:disabled`, `data-hover`, `data-active`), so we just need the right element.
 
 **Architecture:**
 ```

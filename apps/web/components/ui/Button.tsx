@@ -116,7 +116,8 @@ function Button({
   }) {
   const isLink = !!href;
   const Comp: React.ElementType = asChild ? Slot : isLink ? "a" : "button";
-  const forceState = pressed ? "active" : hovered ? "hover" : undefined;
+  const dataHover = hovered && !pressed ? "" : undefined;
+  const dataActive = pressed ? "" : undefined;
   const elevationClass = resolveElevationClass(elevation);
   // When elevation is overridden (not true), strip the size variant's built-in
   // elevation-{sm|md|lg} so it doesn't compete via CSS source order.
@@ -130,7 +131,8 @@ function Button({
       ref={ref}
       data-slot="button"
       data-muted={muted || undefined}
-      data-force-state={forceState}
+      data-hover={dataHover}
+      data-active={dataActive}
       {...(isLink ? { href } : {})}
       className={cn(PRESSABLE_BASE, resolvedSizeClasses, elevationClass, className)}
       style={{ ...SPRING_STYLES[spring], ...style }}

@@ -212,8 +212,8 @@
  * Hover:   face sinks 33% toward ground, walls still at ground
  * Active:  face flush with ground, walls gone, shadow invisible
  *
- * data-force-state="hover|active" mirrors pseudo-states for
- * showcase and storybook use.
+ * data-hover / data-active mirror pseudo-states for showcase
+ * and programmatic control. 1:1 with :hover / :active.
  *
  * Does NOT change background color — that comes from Tailwind
  * hover:bg-{color}/90 utilities on the element.
@@ -248,7 +248,7 @@
  * state when the mouse moves away. */
 .pressable:hover,
 .pressable:focus-visible,
-.pressable[data-force-state="hover"],
+.pressable[data-hover],
 .pressable[data-state="open"] {
   transform: translate(
     calc(var(--elevation-x) * -0.66),
@@ -258,7 +258,7 @@
 
 .pressable:hover::before,
 .pressable:focus-visible::before,
-.pressable[data-force-state="hover"]::before,
+.pressable[data-hover]::before,
 .pressable[data-state="open"]::before {
   transform: translate3d(
     calc(var(--elevation-x) * 0.66),
@@ -269,7 +269,7 @@
 
 .pressable:hover::after,
 .pressable:focus-visible::after,
-.pressable[data-force-state="hover"]::after,
+.pressable[data-hover]::after,
 .pressable[data-state="open"]::after {
   transform: translate3d(
     calc(var(--shadow-x) * 0.66),
@@ -281,19 +281,19 @@
 /* Active — face flush with ground, walls gone, shadow invisible.
  * Press-down is always snappy (--pressable-press-dur, default 34ms). */
 .pressable:active,
-.pressable[data-force-state="active"] {
+.pressable[data-active] {
   transform: translate(0, 0);
   transition-duration: var(--pressable-press-dur, 34ms);
 }
 
 .pressable:active::before,
-.pressable[data-force-state="active"]::before {
+.pressable[data-active]::before {
   transform: translate3d(0px, 0px, -1px);
   transition-duration: var(--pressable-press-dur, 34ms);
 }
 
 .pressable:active::after,
-.pressable[data-force-state="active"]::after {
+.pressable[data-active]::after {
   transform: translate3d(0px, 0px, -2px);
   opacity: 0;
   transition-duration: var(--pressable-press-dur, 34ms);
@@ -306,7 +306,6 @@
 }
 
 /* Dropzone — focus fills in the dashed outline at the same position */
-/* // FIXME: Remove this once we implment the Pressable component. */
 .pressable[data-slot="file-upload-dropzone"]:focus-visible {
   outline: 3px solid var(--border);
   outline-offset: -8px;
