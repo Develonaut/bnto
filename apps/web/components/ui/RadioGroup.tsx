@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type { ComponentProps, CSSProperties } from "react";
 
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 
@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 function RadioGroupRoot({
   className,
   ...props
-}: React.ComponentProps<typeof RadioGroupPrimitive.Root>) {
+}: ComponentProps<typeof RadioGroupPrimitive.Root>) {
   return (
     <RadioGroupPrimitive.Root
       data-slot="radio-group"
@@ -22,7 +22,7 @@ function RadioGroupRoot({
 function RadioGroupItem({
   className,
   ...props
-}: React.ComponentProps<typeof RadioGroupPrimitive.Item>) {
+}: ComponentProps<typeof RadioGroupPrimitive.Item>) {
   return (
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
@@ -32,7 +32,7 @@ function RadioGroupItem({
         "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
-      style={{ "--pressable-ease": "var(--ease-spring-bouncier)", "--pressable-dur": "400ms" } as React.CSSProperties}
+      style={{ "--pressable-ease": "var(--ease-spring-bouncier)", "--pressable-dur": "400ms" } as CSSProperties}
       {...props}
     >
       <RadioGroupPrimitive.Indicator

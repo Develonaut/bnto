@@ -1,6 +1,7 @@
 "use client";
 
-import * as React from "react";
+import { forwardRef, Children, isValidElement, cloneElement } from "react";
+import type { HTMLAttributes, CSSProperties, ReactNode } from "react";
 
 import { Slot } from "@radix-ui/react-slot";
 
@@ -10,7 +11,7 @@ import { cn } from "@/lib/cn";
 
 type Easing = "spring" | "spring-bouncy" | "spring-bouncier" | "out" | "in-out";
 
-interface AnimateBaseProps extends React.HTMLAttributes<HTMLDivElement> {
+interface AnimateBaseProps extends HTMLAttributes<HTMLDivElement> {
   asChild?: boolean;
   /** Position in a `<Animate.Stagger>` cascade. Sets `--stagger-index`. */
   index?: number;
@@ -21,27 +22,27 @@ interface AnimateBaseProps extends React.HTMLAttributes<HTMLDivElement> {
 /* ── Helpers ────────────────────────────────────────────────── */
 
 function buildStyle(
-  base: React.CSSProperties | undefined,
+  base: CSSProperties | undefined,
   vars: Record<string, string | number | undefined>,
   easing?: Easing,
-): React.CSSProperties {
+): CSSProperties {
   const custom: Record<string, string | number> = {};
   for (const [k, v] of Object.entries(vars)) {
     if (v != null) custom[k] = typeof v === "number" ? v : v;
   }
   if (easing) custom.animationTimingFunction = `var(--ease-${easing})`;
-  return { ...base, ...custom } as React.CSSProperties;
+  return { ...base, ...custom } as CSSProperties;
 }
 
 /* ── Stagger ────────────────────────────────────────────────── */
 
-interface StaggerProps extends React.HTMLAttributes<HTMLDivElement> {
+interface StaggerProps extends HTMLAttributes<HTMLDivElement> {
   asChild?: boolean;
   /** Gap between each child's animation start. Sets `--stagger-interval`. */
   interval?: number | string;
 }
 
-const Stagger = React.forwardRef<HTMLDivElement, StaggerProps>(
+const Stagger = forwardRef<HTMLDivElement, StaggerProps>(
   ({ interval, asChild, className, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "div";
     return (
@@ -90,7 +91,7 @@ interface ScaleInProps extends AnimateBaseProps {
   origin?: Origin;
 }
 
-const ScaleIn = React.forwardRef<HTMLDivElement, ScaleInProps>(
+const ScaleIn = forwardRef<HTMLDivElement, ScaleInProps>(
   ({ from, origin, index, easing, asChild, className, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "div";
     return (
@@ -111,7 +112,7 @@ ScaleIn.displayName = "Animate.ScaleIn";
 
 /* ── FadeIn ─────────────────────────────────────────────────── */
 
-const FadeIn = React.forwardRef<HTMLDivElement, AnimateBaseProps>(
+const FadeIn = forwardRef<HTMLDivElement, AnimateBaseProps>(
   ({ index, easing, asChild, className, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "div";
     return (
@@ -135,7 +136,7 @@ interface SlideProps extends AnimateBaseProps {
   distance?: number | string;
 }
 
-const SlideUp = React.forwardRef<HTMLDivElement, SlideProps>(
+const SlideUp = forwardRef<HTMLDivElement, SlideProps>(
   ({ distance, index, easing, asChild, className, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "div";
     return (
@@ -155,7 +156,7 @@ SlideUp.displayName = "Animate.SlideUp";
 
 /* ── SlideDown ──────────────────────────────────────────────── */
 
-const SlideDown = React.forwardRef<HTMLDivElement, SlideProps>(
+const SlideDown = forwardRef<HTMLDivElement, SlideProps>(
   ({ distance, index, easing, asChild, className, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "div";
     return (
@@ -175,7 +176,7 @@ SlideDown.displayName = "Animate.SlideDown";
 
 /* ── PulseSoft ──────────────────────────────────────────────── */
 
-const PulseSoft = React.forwardRef<HTMLDivElement, Omit<AnimateBaseProps, "index" | "easing">>(
+const PulseSoft = forwardRef<HTMLDivElement, Omit<AnimateBaseProps, "index" | "easing">>(
   ({ asChild, className, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "div";
     return (
@@ -192,7 +193,7 @@ PulseSoft.displayName = "Animate.PulseSoft";
 
 /* ── Breathe ────────────────────────────────────────────────── */
 
-const Breathe = React.forwardRef<HTMLDivElement, Omit<AnimateBaseProps, "index" | "easing">>(
+const Breathe = forwardRef<HTMLDivElement, Omit<AnimateBaseProps, "index" | "easing">>(
   ({ asChild, className, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "div";
     return (
@@ -229,7 +230,7 @@ Breathe.displayName = "Animate.Breathe";
  *   </Animate.BouncyStagger>
  */
 
-interface BouncyStaggerProps extends React.HTMLAttributes<HTMLDivElement> {
+interface BouncyStaggerProps extends HTMLAttributes<HTMLDivElement> {
   /** Merge stagger + scale-in onto child and its children. */
   asChild?: boolean;
   /** Starting scale (0-1). Default 0.6. */
@@ -240,16 +241,16 @@ interface BouncyStaggerProps extends React.HTMLAttributes<HTMLDivElement> {
   interval?: number | string;
 }
 
-const BouncyStagger = React.forwardRef<HTMLDivElement, BouncyStaggerProps>(
+const BouncyStagger = forwardRef<HTMLDivElement, BouncyStaggerProps>(
   ({ from = 0.6, easing = "spring-bouncy", interval, asChild, className, children, ...props }, ref) => {
     if (asChild) {
       /* asChild mode: merge stagger onto the single child, and
        * ScaleIn asChild onto each of that child's children.
        * This keeps items as direct grid children (no wrapper divs). */
-      const child = React.Children.only(children);
-      if (!React.isValidElement(child)) return null;
-      const grandchildren = (child.props as { children?: React.ReactNode }).children;
-      const animated = React.Children.map(grandchildren, (gc, i) =>
+      const child = Children.only(children);
+      if (!isValidElement(child)) return null;
+      const grandchildren = (child.props as { children?: ReactNode }).children;
+      const animated = Children.map(grandchildren, (gc, i) =>
         gc != null ? (
           <ScaleIn key={i} index={i} from={from} easing={easing} asChild>
             {gc}
@@ -258,14 +259,14 @@ const BouncyStagger = React.forwardRef<HTMLDivElement, BouncyStaggerProps>(
       );
       return (
         <Stagger ref={ref} interval={interval} className={className} asChild {...props}>
-          {React.cloneElement(child, undefined, animated)}
+          {cloneElement(child, undefined, animated)}
         </Stagger>
       );
     }
 
     return (
       <Stagger ref={ref} interval={interval} className={className} {...props}>
-        {React.Children.map(children, (child, i) =>
+        {Children.map(children, (child, i) =>
           child != null ? (
             <ScaleIn key={i} index={i} from={from} easing={easing}>
               {child}
@@ -284,7 +285,7 @@ import { InView } from "./InView";
 
 /* ── Namespace ──────────────────────────────────────────────── */
 
-function AnimateRoot({ children }: { children: React.ReactNode }) {
+function AnimateRoot({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 

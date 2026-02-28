@@ -1,6 +1,7 @@
 "use client";
 
-import * as React from "react";
+import { useEffect } from "react";
+import type { ComponentProps } from "react";
 
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
@@ -20,7 +21,7 @@ const FOUC_SCRIPT = `try{var t=JSON.parse(localStorage.getItem("${THEME_STORE_KE
 function ThemeStoreSync() {
   const lightAngle = useThemeStore((s) => s.lightAngle);
 
-  React.useEffect(() => {
+  useEffect(() => {
     document.documentElement.style.setProperty(
       "--light-angle",
       `${lightAngle}deg`,
@@ -33,7 +34,7 @@ function ThemeStoreSync() {
 export function ThemeProvider({
   children,
   ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
+}: ComponentProps<typeof NextThemesProvider>) {
   return (
     <NextThemesProvider {...props}>
       <script dangerouslySetInnerHTML={{ __html: FOUC_SCRIPT }} />
