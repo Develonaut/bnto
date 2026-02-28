@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** February 26, 2026
+**Last Updated:** February 28, 2026
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -25,7 +25,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 2D (Recipe Page UX Overhaul) — transform tool pages into progressive phase-driven flow
+- **Active:** Sprint 2D (Recipe Page UX Overhaul) — Wave 3 screenshots + Wave 4 polish remaining
+- **Parallel cleanup:** Sprint H (Housekeeping) — tech debt tasks, can be picked up between 2D/3 waves or when blocked
 - **Next:** Sprint 3 (Platform Features, M2) — accounts, persistence, history, conversion hooks
 - **Background:** Sprint 4 + 4B (Recipe Editors) — visual + code editors, isolated to /dev/motorway page. Run in parallel alongside Sprint 3
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos run 100% client-side via Rust→WASM. Uniform Rust engine — no JS fallback. Files never leave the user's machine. Rust evaluation checkpoint PASSED.
@@ -60,6 +61,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] R2 infrastructure: buckets (dev + prod), presigned URLs, CORS, env vars across Convex/Vercel/Railway
 - [x] Auth integration tests: anonymous execution (A1-A7), conversion flow (C1-C3), auth lifecycle (S1-S3) — see journeys/auth.md
 - [x] Codebase polish: Node.js subpath imports, PascalCase components, camelCase hooks, dot-notation primitives, layout/typography primitives, CSS animation system
+- [x] Motorway design system: Grid (animated stagger), LinearProgress, ToolbarProgress, RadioGroup, NavButton (optimistic pressed), ghost Button variant, half-circle RadialSlider, surface system on Switch/Checkbox/Slider, toggle depth + disabled grayscale states
+- [x] Recipe page overhaul (Sprint 2D): RecipeShell (phase-driven flow), PhaseIndicator (3-phase stepper), FileCard (thumbnail + lifecycle states), RecipeConfigSection, RecipeResultsSection, useRecipeFlow hook
 
 ---
 
@@ -148,30 +151,46 @@ Build the new `RecipeShell` and supporting wrappers. Depends on Wave 1 deliverab
 
 - [x] `apps/web` — **Create `RecipeResultsSection` wrapper.** New file: `app/[bnto]/_components/RecipeResultsSection.tsx`. Consolidates the 4 conditional result blocks (browser progress, browser results, cloud progress, cloud results, error card) from BntoPageShell into one composition component. Wraps each in `Animate.SlideUp`. Under 100 lines. No changes to result component internals.
 
+#### Wave 2.5 (completed — Motorway design system primitives)
+
+Design system work completed alongside Waves 1-2 to support the recipe page overhaul and advance the Motorway component library.
+
+- [x] `apps/web` — **`Grid` component with animated stagger.** CSS Grid wrapper with `Animate.Stagger` integration. Migrated `BentoGrid` to use `Grid`. Added `Accordion` animations.
+- [x] `apps/web` — **`RadioGroup` component.** Primary color for check/radio indicators, fattened icon strokes.
+- [x] `apps/web` — **`NavButton` with optimistic pressed state.** Ghost `Button` variant. Nav buttons use client-side navigation.
+- [x] `apps/web` — **`LinearProgress` component.** Read-only progress bar matching Slider surface style. Used by `ToolbarProgress`.
+- [x] `apps/web` — **`ToolbarProgress` component.** Execution progress indicator for recipe Phase 3 toolbar.
+- [x] `apps/web` — **Surface system refinements.** Applied surface system to Switch (spring-bouncy toggle), Checkbox (reduced size), Slider (unified with RadialSlider). Toggle button ON state deepened. Disabled state uses grayscale filter.
+- [x] `apps/web` — **Half-circle `RadialSlider` variant.** Added to Motorway showcase.
+- [x] `apps/web` — **Recipe layout mosaic prototype.** Bento grid control panel layout demo in Motorway showcase (`PhaseFlowShowcase.tsx`).
+- [x] `apps/web` — **Navbar refinements.** Center nav buttons truly centered, `NavUser` layout shift and menu jitter fixed, `MenuShowcase` cleaned up to use `Menu.Item`.
+
 #### Wave 3 (sequential — wire up, migrate, E2E overhaul)
 
 Connect new shell to page, delete old shell, regenerate all screenshots.
 
 - [x] `apps/web` — **Wire `RecipeShell` into page.tsx, delete old shell.** Replace `<BntoPageShell>` with `<RecipeShell>` in `app/[bnto]/page.tsx` (same dynamic import pattern with `ssr: false`). Delete `BntoPageShell.tsx` and `BntoConfigPanel.tsx`. Update imports. Verify `task ui:build` passes.
 
-- [x] `apps/web` — **Regenerate all browser execution E2E screenshots.** The 10 spec files in `e2e/journeys/browser/` have screenshot baselines from the old layout. Delete all `__screenshots__/` dirs under `e2e/journeys/browser/`. Run `task e2e` with `--update-snapshots`. Fix any broken selectors from the layout change. Visually verify every new screenshot with the Read tool. Do NOT change test logic — only fix selectors and regenerate screenshots.
+- [ ] `apps/web` — **Regenerate all browser execution E2E screenshots.** The 10 spec files in `e2e/journeys/browser/` have screenshot baselines from the old layout. Delete all `__screenshots__/` dirs under `e2e/journeys/browser/`. Run `task e2e` with `--update-snapshots`. Fix any broken selectors from the layout change. Visually verify every new screenshot with the Read tool. Do NOT change test logic — only fix selectors and regenerate screenshots.
 
-- [x] `apps/web` — **Regenerate site-navigation E2E screenshots for tool pages.** Delete stale tool page screenshots from `e2e/pages/`. Run tests with `--update-snapshots`. Visually verify. Covers both desktop and mobile viewport variants.
+- [ ] `apps/web` — **Regenerate site-navigation E2E screenshots for tool pages.** Delete stale tool page screenshots from `e2e/pages/`. Run tests with `--update-snapshots`. Visually verify. Covers both desktop and mobile viewport variants.
 
-#### Wave 4 (parallel — polish: responsive, accessibility, animation)
+#### Wave 4 (parallel — polish + per-instance execution fix)
 
-Visual refinement pass. Ensure the new layout meets the Motorway quality bar.
+Visual refinement pass and critical state management fix. Ensure the new layout meets the Motorway quality bar.
 
-- [x] `apps/web` — **Responsive polish.** Verify mobile (375px), tablet (768px), desktop (1280px) layouts. Mobile: single column, 2-column file grid, config below. Desktop: 3-4 column file grid. Adjust `Grid` cols, Container size, gap props. No horizontal overflow on mobile.
+- [ ] `apps/web` — **Responsive polish.** Verify mobile (375px), tablet (768px), desktop (1280px) layouts. Mobile: single column, 2-column file grid, config below. Desktop: 3-4 column file grid. Adjust `Grid` cols, Container size, gap props. No horizontal overflow on mobile.
 
 - [ ] `apps/web` — **Keyboard accessibility audit.** Tab order follows visual flow (drop zone -> file cards -> config -> run). File card delete buttons have `aria-label`. PhaseIndicator has appropriate ARIA. Accordion keyboard nav works (Radix). Fix any gaps.
 
-- [ ] `apps/web` — **Animation polish.** Verify Motorway motion language: (1) Page load: heading `FadeIn`, dropzone `SlideUp`. (2) Files added: card grid `Stagger` + `ScaleIn from={0.85}`. (3) Config: `SlideUp` with delay. (4) Results: `SlideUp`. All guarded with `motion-safe:`. Test passes with `reducedMotion: "reduce"`.
+- [ ] `@bnto/core` + `apps/web` — **Per-instance browser execution stores.** The singleton `browserExecutionStore` leaks state between recipe pages (completed status triggers auto-downloads on new page). Refactor to factory pattern: `createExecution()` returns `{ store, run, reset }` per instance. Global concerns (engine registration, capability checks) stay on singleton. `useRecipeFlow` creates per-mount instance via `useState(() => core.browser.createExecution())`. Remove the `useEffect(() => core.browser.reset(), [])` workaround. Keep backward-compatible singleton API until all consumers migrate. See backlog for full scope.
 
 ---
 
-### Sprint H: Housekeeping
+### Sprint H: Housekeeping (parallel — pick up between waves or when blocked)
 **Goal:** Address accumulated tech debt and quality-of-life improvements. No new features — just clean up what exists so future sprints build on a solid foundation.
+
+**Ordering:** Sprint H runs in parallel with Sprint 2D/3. Agents can pick up these tasks between waves, when blocked on other work, or as gap-fillers. All tasks are independent — no wave ordering needed.
 
 #### Wave 1 (parallel — all independent)
 
@@ -197,24 +216,29 @@ Visual refinement pass. Ensure the new layout meets the Motorway quality bar.
 | `apps/web` | `/frontend-engineer` |
 | `infra` | No specific persona — general |
 
-#### Wave 1 (parallel — account value + analytics schema)
+#### Pre-work (COMPLETE — cleanup and schema)
 
-- [x] `@bnto/backend` — **BLOCKER: Fix anonymous → password userId preservation.** Fixed via `PasswordWithAnonymousUpgrade` wrapper in `auth.ts`. The wrapper intercepts Password's `authorize` function (runs in the signIn action, which HAS auth context), extracts the current userId from the JWT, injects it into the profile object as `_anonymousUserId`, and the `createOrUpdateUser` callback reads it to upgrade the anonymous user in-place. This bypasses the library's limitation where internal mutations don't have auth context. All 3 E2E tests pass (C1-C3). userId is preserved through conversion.
-- [x] `apps/web` — **Unfixme anonymous conversion E2E tests.** Tests un-fixme'd, all 3 pass: C1 (anonymous session created), C1-C2 (userId preserved through sign-up), C3 (profile shows correct email/name after conversion). Screenshots generated and verified. JSDoc updated to reflect the working fix.
-- [x] `apps/web` — **Address all FIXME comments across the codebase.** 9 FIXMEs (excluding the 2 in `anonymous-conversion.spec.ts` covered above). Grouped by theme: **(1) Nav architecture refactor** — `Navbar.tsx` (3 FIXMEs: extract magic numbers to constants, replace `pendingHref` useState smell, make navbar hiding composable via layout instead of JS `if (hidden) return null`), `MobileNavMenu.tsx` (2 FIXMEs: extract shared compositional parts between desktop/mobile nav, create shared auth section component), `NavUser.tsx` (1 FIXME: refactor into composable compound component with dot-notation parts — trigger, menu, items). **(2) Middleware** — `middleware.ts` (1 FIXME: research Next.js best practice for middleware naming — `MiddlewareNotFoundError.ts` deprecated, may be `proxy.ts` now). **(3) Providers** — `providers/index.tsx` (1 FIXME: `pathnameRef` pattern is a code smell — research recommended Next.js + `@convex-dev/auth` approach for pathname tracking in providers). Research shadcn-blocks repo for nav patterns. After fixing, grep for remaining FIXME/HACK/XXX and confirm zero results.
-- [x] `apps/web` — **Privacy policy rewrite:** Replace template `privacy.mdx` with real bnto privacy policy. Update company name (bnto), contact email, URL (bnto.io), jurisdiction, last updated date. Emphasize browser-only processing — files never leave the user's machine. Remove Flash Cookies section (obsolete). Remove Third-party Social Media Service section if not applicable.
-- [x] `apps/web` — **README review before launch:** Rewrote README.md to reflect current state: Rust WASM browser engine, 6 Tier 1 tools, bnto.io as primary entry point, accurate repo structure, correct dev commands. Removed all stale Go CLI/Wails/deleted-package references.
-- [x] `monorepo` — **Knip dead code audit:** 14 dead files deleted (~766 lines), 11 unused deps removed, 9 catalog entries removed, 15 unused icon re-exports removed. Created knip.json config. Build + tests pass (447 tests).
-- [x] `monorepo` — **File & component naming audit:** 4 violations fixed: AnimatedThemeToggle export mismatch, provider.tsx→BntoCoreProvider.tsx, theme-store.ts→themeStore.ts, utils.ts→cn.ts (30 import sites updated). Build passes clean.
-- [x] `monorepo` — **Full codebase coding standards review (multi-agent):** 5 parallel agents audited all packages against code-standards.md, architecture.md, components.md, and theming.md. 149 violations found (33 HIGH, 59 MEDIUM, 57 LOW) across Core, Frontend, Backend, Rust Engine, and Auth+Nodes domains. Key fixes: dot-notation migration for Popover/primitives, Raw*Doc types in @bnto/core (decouples transforms from backend), target-agnostic ProgressReporter in Rust engine (removes js-sys from bnto-core), ParameterSchema union types in @bnto/nodes, Convex function cleanup (explicit return types, error wrapping). All TS builds pass (6/6), all Rust tests pass (297 unit tests), all TS tests pass (447+ tests). Pre-existing lint issues in FileUpload.tsx (react-hooks/immutability) noted but not introduced by this task.
-- [x] `@bnto/backend` — `planTier` field on user schema (free, pro). Usage analytics fields: `totalRuns`, `lastRunAt`
-- [x] `@bnto/backend` — Execution analytics: aggregate queries for per-user history (by slug, by date range)
+Cleanup tasks completed ahead of Wave 1 proper. Collapsed here for reference.
+
+- [x] `@bnto/backend` — **BLOCKER: Fix anonymous → password userId preservation.** Fixed via `PasswordWithAnonymousUpgrade` wrapper. All 3 E2E tests pass (C1-C3).
+- [x] `apps/web` — **Unfixme anonymous conversion E2E tests.** All 3 pass, screenshots verified.
+- [x] `apps/web` — **Address all FIXME comments across the codebase.** 9 FIXMEs resolved (nav refactor, middleware, providers).
+- [x] `apps/web` — **Privacy policy rewrite.** Real bnto privacy policy emphasizing browser-only processing.
+- [x] `apps/web` — **README review before launch.** Accurate repo structure, correct commands, stale references removed.
+- [x] `monorepo` — **Knip dead code audit.** 14 dead files deleted (~766 lines), 11 unused deps removed.
+- [x] `monorepo` — **File & component naming audit.** 4 violations fixed, 30 import sites updated.
+- [x] `monorepo` — **Full codebase coding standards review (multi-agent).** 149 violations found and fixed across all packages.
+- [x] `@bnto/backend` — `planTier` field on user schema (free, pro). Usage analytics fields: `totalRuns`, `lastRunAt`.
+- [x] `@bnto/backend` — Execution analytics: aggregate queries for per-user history (by slug, by date range).
+- [x] `apps/web` — **Site navigation journey tests (E2E).** All public routes with screenshot assertions, desktop + mobile.
+
+#### Wave 1 (parallel — core hooks + UI components + infra decisions)
+
 - [ ] `@bnto/core` — `/core-architect` — `useExecutionHistory()` hook (paginated, per-user)
 - [ ] `@bnto/core` — `/core-architect` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
 - [ ] `apps/web` — `/frontend-engineer` — WorkflowCard component (name, description, node count, last run status)
 - [ ] `apps/web` — `/frontend-engineer` — StatusBadge component (pending, running, completed, failed)
 - [ ] `apps/web` — `/frontend-engineer` — EmptyState component (no workflows yet)
-- [x] `apps/web` — **Site navigation journey tests (E2E):** Playwright user journey that navigates every public route on the site (home, all 6 tool slugs, pricing, FAQ, privacy, signin) with screenshot assertions at each stop. Verifies nav links work, no broken routes, and captures visual state as a regression baseline. Include mobile viewport variant.
 - [ ] `infra` — **Analytics layer decision:** Evaluate and select analytics tooling for user behavior and usage tracking. Candidates: Plausible (privacy-first, no cookies), PostHog (product analytics, self-hostable), Vercel Analytics (built-in), or custom Convex events. Decision criteria: privacy alignment (browser-first, no third-party tracking claims in privacy policy), cost, self-hostable option, event tracking depth (tool usage, conversion funnels, retention). Document decision in `.claude/decisions/`.
 - [ ] `infra` — **SEO validation tooling:** Set up Lighthouse CI in GitHub Actions for automated performance/SEO scoring on every PR. Configure Google Search Console for bnto.io (verify ownership, submit sitemap, monitor indexing). Add `task seo:audit` command that runs Lighthouse locally against all public routes and reports Core Web Vitals scores. Target: all pages green on Performance, Accessibility, Best Practices, SEO.
 
@@ -508,6 +532,33 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 ## Backlog
 
+### Core: Per-Instance Browser Execution Stores (replace singleton)
+
+**Promoted to Sprint 2D Wave 4.** The browser execution service (`browserExecutionService.ts`) uses a singleton Zustand store shared across all recipe pages. Navigating between recipes in later phases leaks state — completed status triggers auto-downloads on the new page, and old results bleed through. The current `useEffect(() => core.browser.reset(), [])` workaround in `useRecipeFlow` is insufficient.
+
+**Fix:** Refactor to a factory pattern (like the existing `recipeFlowStore` pattern). Global concerns (engine registration, capability checks, download helpers) stay on the singleton. Per-execution state (store, run, reset, aborted flag) moves to instances created on mount and GC'd on unmount.
+
+**Scope:**
+- [ ] `@bnto/core` — Add `createExecution()` factory to `browserExecutionService` that returns `{ store, run, reset }` per instance
+- [ ] `@bnto/core` — Update `browserClient` to expose the factory alongside global engine/capability methods
+- [ ] `@bnto/core` — Add `useBrowserExecution(instance)` overload or new hook that reads from an instance store
+- [ ] `apps/web` — Update `useRecipeFlow` to create a per-mount execution instance via `useState(() => core.browser.createExecution())`
+- [ ] `apps/web` — Remove the `useEffect(() => core.browser.reset(), [])` workaround
+- [ ] `@bnto/core` — Keep backward-compatible singleton API (existing `core.browser.store/run/reset`) until all consumers migrate
+
+### UX: Compositional BouncyStagger Audit
+
+**Priority: High (after per-instance stores).** `BouncyStagger` was removed from `AppShell.Content` because wrapping the entire page content at the shell level caused a ~20px layout jump on load — `animation-fill-mode: both` starts children at opacity 0 + scaled down, collapsing the container before the page layout has settled.
+
+**Fix:** Apply `BouncyStagger` compositionally at the content level — individual page sections opt in where it makes sense (card grids, feature lists, file card lists) rather than wrapping everything from the shell. The page structure stays stable immediately; only inner content gets the bouncy entrance.
+
+**Scope:**
+- [ ] `apps/web` — Audit all pages using `AppShell.Content` — identify sections that benefit from staggered entrance
+- [ ] `apps/web` — Add `BouncyStagger` to card grids (home page BntoGallery, recipe card lists)
+- [ ] `apps/web` — Add `BouncyStagger` to file card lists in RecipeShell (already done in phase flow)
+- [ ] `apps/web` — Verify no layout shift on any page after compositional application
+- [ ] `apps/web` — Update Motorway showcase (`PhaseFlowShowcase`) to demonstrate the compositional pattern
+
 ### Infra: Shared Test Fixtures Package (`@bnto/test-fixtures`)
 
 **Priority: Low (nice-to-have).** The `test-fixtures/` directory at repo root already serves the primary need — shared images (JPEG, PNG, WebP at small/medium/large sizes) consumed by both Go engine (`go:embed`) and Rust WASM (`include_bytes!()`). E2E tests reference engine fixtures directly. A formal TS package would add helpers and consolidate ad-hoc test files, but isn't blocking anything.
@@ -612,6 +663,19 @@ Current E2E tests mix CSS classes, `getByRole`, `getByText`, and `data-testid`. 
 
 - [ ] `@bnto/core` — Integration test: fire 2+ concurrent `startPredefined` calls for a user at limit-1 runs, verify at most 1 succeeds
 - [ ] `@bnto/backend` — If race confirmed, investigate Convex transaction isolation guarantees or atomic increment patterns
+
+### UX: Per-File Format Override for Convert Image Format
+
+**Priority: Medium.** The convert-image-format recipe has a global format selector (WebP/JPEG/PNG) that applies to all files. Users should be able to override the output format on individual FileCards — e.g., convert most files to WebP but keep one as PNG. A per-card reset button returns that file to the global setting.
+
+**Why it's deferred:** Touches multiple layers — UI (Select dropdown + reset button on FileCard), state management (per-file config overrides in Zustand store, merge logic with global config), and execution engine (currently takes a single config for all files, would need per-file config passthrough). Not a quick wire-up.
+
+**Scope:**
+- [ ] `apps/web` — Add per-file format override state (`Map<number, Partial<ConvertFormatConfig>>`) to recipe store
+- [ ] `apps/web` — Add inline Select + reset button to FileCard (only for `convert-image-format` slug)
+- [ ] `apps/web` — Merge per-file overrides with global config at execution time
+- [ ] `@bnto/core` — Update `browserExecute` to accept per-file config overrides (process files individually when configs differ)
+- [ ] `engine` — Verify Rust WASM `convert_image` supports being called per-file with different format params
 
 ### Testing: Monthly Run Reset Cycle — M4/M5 (server-side quotas)
 
@@ -812,16 +876,9 @@ Conversion messaging should be value-driven, not limit-driven. Hooks trigger on 
 - [ ] `apps/api` — Upload execution output to user's connected drive
 - [ ] `apps/web` — E2E test: Pro user saves output to connected Google Drive
 
-### UX: Two-Column Bnto Tool Page Layout
+### ~~UX: Two-Column Bnto Tool Page Layout~~ — SUPERSEDED
 
-**User feedback:** The current single-column bnto tool page layout forces users to scroll below the fold to configure settings and then run. On wider viewports, the Settings panel, drop zone, and Run button should be visible without scrolling.
-
-**Proposed layout:** Bento box grid varios panels needed like dropzone, config, and progress. Settings panel + Run button, drop zone + file list + execution progress/results. (current behavior preserved).
-
-- [ ] `apps/web` — Responsive two-column layout for `[bnto]/page.tsx` (Settings + Run on left, files + progress on right)
-- [ ] `apps/web` — Ensure all 6 Tier 1 bnto pages work correctly in two-column mode
-- [ ] `apps/web` — Update E2E screenshots for new layout (all bnto-config, execution-flow, file-drop specs)
-- [ ] `apps/web` — Mobile breakpoint preserves current single-column stack
+**Superseded by Sprint 2D (Recipe Page UX Overhaul).** Sprint 2D delivered a progressive phase-driven flow (Files → Configure → Results) with the Motorway design language, which is a better approach than the originally proposed two-column layout. The new `RecipeShell` composition component, `PhaseIndicator`, `FileCard`, `ToolbarProgress`, and `RecipeConfigSection` address the original concern (too much scrolling, settings below the fold) through a progressive disclosure pattern rather than a fixed two-column split.
 
 ### Recursive Workflow Composability (Web App)
 

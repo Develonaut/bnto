@@ -73,7 +73,7 @@ test.describe("EXIF orientation — all image bntos", () => {
 
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await expect(runButton).toBeEnabled();
 
     // Compress
@@ -83,11 +83,12 @@ test.describe("EXIF orientation — all image bntos", () => {
       timeout: 30000,
     });
 
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    const outputFileCard = page.locator('[data-testid="output-file"]');
+    await expect(outputFileCard).toHaveCount(1);
 
     // Download and verify dimensions
     const downloadPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFileCard.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -123,7 +124,7 @@ test.describe("EXIF orientation — all image bntos", () => {
 
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await expect(runButton).toBeEnabled();
 
     // Resize (default settings)
@@ -133,11 +134,12 @@ test.describe("EXIF orientation — all image bntos", () => {
       timeout: 30000,
     });
 
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    const outputFileCard2 = page.locator('[data-testid="output-file"]');
+    await expect(outputFileCard2).toHaveCount(1);
 
     // Download and verify it's a valid JPEG with portrait aspect ratio
     const downloadPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFileCard2.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -179,7 +181,7 @@ test.describe("EXIF orientation — all image bntos", () => {
     await formatSelect.click();
     await page.getByRole("option", { name: /png/i }).click();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await expect(runButton).toBeEnabled();
 
     // Convert
@@ -189,11 +191,12 @@ test.describe("EXIF orientation — all image bntos", () => {
       timeout: 30000,
     });
 
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    const outputFileCard3 = page.locator('[data-testid="output-file"]');
+    await expect(outputFileCard3).toHaveCount(1);
 
     // Download and verify PNG with orientation-corrected dimensions
     const downloadPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFileCard3.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();

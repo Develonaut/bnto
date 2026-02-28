@@ -52,7 +52,7 @@ test.describe("convert-image-format — browser execution", () => {
 
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -67,11 +67,8 @@ test.describe("convert-image-format — browser execution", () => {
       timeout: 30000,
     });
 
-    const results = page.locator(
-      '[data-testid="browser-execution-results"]',
-    );
-    await expect(results).toBeVisible();
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    const outputFile = page.locator('[data-testid="output-file"]');
+    await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("convert-02-webp-result.png", {
@@ -80,7 +77,7 @@ test.describe("convert-image-format — browser execution", () => {
 
     // Download and verify WebP magic bytes
     const downloadPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFile.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toMatch(/\.webp$/i);
@@ -126,18 +123,19 @@ test.describe("convert-image-format — browser execution", () => {
     await formatSelect.click();
     await page.getByRole("option", { name: /jpeg/i }).click();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await runButton.click();
 
     await expect(runButton).toHaveAttribute("data-phase", "completed", {
       timeout: 30000,
     });
 
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    const outputFile2 = page.locator('[data-testid="output-file"]');
+    await expect(outputFile2).toHaveCount(1);
 
     // Download and verify JPEG magic bytes
     const downloadPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFile2.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toMatch(/\.jpe?g$/i);

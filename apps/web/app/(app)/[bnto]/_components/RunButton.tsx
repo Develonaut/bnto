@@ -15,28 +15,28 @@ interface RunButtonProps {
   phase: RunPhase;
   hasFiles: boolean;
   onRun: () => void;
-  onReset: () => void;
   className?: string;
 }
 
 /**
  * Primary CTA that triggers the upload → execution flow.
  *
- * Displays contextual label and icon based on the current execution phase.
+ * Icon-only button — contextual icon based on the current execution phase.
  * Disabled when no files are selected or an operation is in progress.
  */
-export function RunButton({ phase, hasFiles, onRun, onReset, className }: RunButtonProps) {
+export function RunButton({ phase, hasFiles, onRun, className }: RunButtonProps) {
   if (phase === "completed" || phase === "failed") {
     return (
       <Button
         variant={phase === "failed" ? "outline" : "primary"}
-        onClick={onReset}
+        size="icon"
+        onClick={onRun}
         className={cn(className)}
         data-testid="run-button"
         data-phase={phase}
+        aria-label={phase === "failed" ? "Try again" : "Rerun"}
       >
         <RotateCcwIcon className="size-4" />
-        {phase === "failed" ? "Try Again" : "Run Again"}
       </Button>
     );
   }
@@ -45,18 +45,19 @@ export function RunButton({ phase, hasFiles, onRun, onReset, className }: RunBut
 
   return (
     <Button
+      size="icon"
       onClick={onRun}
       disabled={!hasFiles || isProcessing}
       className={cn(className)}
       data-testid="run-button"
       data-phase={phase}
+      aria-label={getLabel(phase, hasFiles)}
     >
       {isProcessing ? (
         <LoaderIcon className="size-4 motion-safe:animate-spin" />
       ) : (
         <PlayIcon className="size-4" />
       )}
-      {getLabel(phase, hasFiles)}
     </Button>
   );
 }
@@ -64,9 +65,9 @@ export function RunButton({ phase, hasFiles, onRun, onReset, className }: RunBut
 function getLabel(phase: RunPhase, hasFiles: boolean): string {
   switch (phase) {
     case "uploading":
-      return "Uploading\u2026";
+      return "Uploading";
     case "running":
-      return "Processing\u2026";
+      return "Processing";
     default:
       return hasFiles ? "Run" : "Select files to run";
   }

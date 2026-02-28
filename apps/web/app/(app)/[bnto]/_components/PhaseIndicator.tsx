@@ -56,15 +56,15 @@ export function PhaseIndicator({
               />
             )}
 
-            {/* Step circle + label */}
-            <div className="flex flex-col items-center gap-1">
+            {/* Step circle + label — fixed width so all steps are equal */}
+            <div className="flex w-16 flex-col items-center gap-1 sm:w-20">
               <div
                 aria-current={isActive ? "step" : undefined}
                 className={cn(
-                  "flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors duration-fast",
-                  isCompleted && "bg-primary text-primary-foreground",
-                  isActive && "bg-primary text-primary-foreground",
-                  !isCompleted && !isActive && "border border-border text-muted-foreground",
+                  "surface pressable pointer-events-none flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors duration-fast",
+                  isCompleted && "surface-primary elevation-sm bg-primary text-primary-foreground",
+                  isActive && "surface-primary elevation-sm bg-primary text-primary-foreground",
+                  !isCompleted && !isActive && "surface-card elevation-none border border-border text-muted-foreground",
                 )}
               >
                 {isCompleted ? (

@@ -56,14 +56,14 @@ async function compressAtQuality(page: Page, quality: number): Promise<number> {
 
   await adjustSlider(page, quality, 80);
 
-  const runButton = page.locator('[data-testid="run-button"]');
+  const runButton = page.locator('[data-testid="run-button"]:visible');
   await runButton.click();
   await expect(runButton).toHaveAttribute("data-phase", "completed", {
     timeout: 30000,
   });
 
   const dlPromise = page.waitForEvent("download");
-  await page.locator('[data-testid="download-button"]').click();
+  await page.locator('[data-testid="output-file"]').getByRole("button", { name: /download/i }).click();
   const dl = await dlPromise;
 
   const dlPath = await dl.path();
@@ -110,7 +110,7 @@ test.describe("compress-images — batch processing", () => {
     });
 
     // Run
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await runButton.click();
 
     // Wait for all 5 to complete
@@ -119,13 +119,12 @@ test.describe("compress-images — batch processing", () => {
     });
 
     // Verify all 5 outputs
-    await expect(page.getByText("5 files ready")).toBeVisible();
     const outputFiles = page.locator('[data-testid="output-file"]');
     await expect(outputFiles).toHaveCount(5);
 
     // Download All button should be visible for multi-file results
     await expect(
-      page.locator('[data-testid="download-all-button"]'),
+      page.getByRole("button", { name: /download all/i }).last(),
     ).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));

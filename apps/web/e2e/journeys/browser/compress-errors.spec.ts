@@ -27,7 +27,7 @@ test.describe("compress-images — error handling", () => {
 
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await runButton.click();
 
     // Should transition to failed phase
@@ -45,13 +45,12 @@ test.describe("compress-images — error handling", () => {
       fullPage: true,
     });
 
-    // Page should still be functional — "Try Again" resets to Phase 1
-    await expect(runButton).toContainText("Try Again");
-    await runButton.click();
-    await expect(page.getByText("Drag & drop files here")).toBeVisible();
-    await expect(
-      page.locator('[data-testid="run-button"]'),
-    ).not.toBeVisible();
+    // Page should still be functional — back button resets to configure phase
+    await expect(runButton).toHaveAttribute("aria-label", "Try again");
+    const backButton = page.locator('[data-testid="bnto-shell"] button').first();
+    await backButton.click();
+    await expect(page.getByText("1 file selected")).toBeVisible();
+    await expect(runButton).toHaveAttribute("data-phase", "idle");
   });
 
   test("corrupt image: error card with Try Again", async ({ page }) => {
@@ -75,7 +74,7 @@ test.describe("compress-images — error handling", () => {
 
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await runButton.click();
 
     // Should show error state
@@ -92,13 +91,11 @@ test.describe("compress-images — error handling", () => {
       fullPage: true,
     });
 
-    // "Try Again" resets to Phase 1 (dropzone), ready for new files
-    await expect(runButton).toContainText("Try Again");
-    await runButton.click();
-
-    await expect(page.getByText("Drag & drop files here")).toBeVisible();
-    await expect(
-      page.locator('[data-testid="run-button"]'),
-    ).not.toBeVisible();
+    // Back button resets to configure phase, ready to try different files
+    await expect(runButton).toHaveAttribute("aria-label", "Try again");
+    const backButton = page.locator('[data-testid="bnto-shell"] button').first();
+    await backButton.click();
+    await expect(page.getByText("1 file selected")).toBeVisible();
+    await expect(runButton).toHaveAttribute("data-phase", "idle");
   });
 });

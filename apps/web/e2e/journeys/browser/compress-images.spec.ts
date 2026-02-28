@@ -48,7 +48,7 @@ test.describe("compress-images — browser execution", () => {
 
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -64,13 +64,11 @@ test.describe("compress-images — browser execution", () => {
       timeout: 30000,
     });
 
-    const results = page.locator(
-      '[data-testid="browser-execution-results"]',
-    );
-    await expect(results).toBeVisible();
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    // FileCard transitions to output state with download button
+    const outputFile = page.locator('[data-testid="output-file"]');
+    await expect(outputFile).toHaveCount(1);
     await expect(
-      page.locator('[data-testid="download-button"]'),
+      outputFile.getByRole("button", { name: /download/i }),
     ).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -83,7 +81,7 @@ test.describe("compress-images — browser execution", () => {
     const inputSize = fs.statSync(inputPath).size;
 
     const downloadPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFile.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toContain("compressed");
@@ -124,7 +122,7 @@ test.describe("compress-images — browser execution", () => {
     });
 
     // --- Click Run ---
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await runButton.click();
 
     // --- FINISH: all results listed ---
@@ -132,10 +130,9 @@ test.describe("compress-images — browser execution", () => {
       timeout: 30000,
     });
 
-    await expect(page.getByText("2 files ready")).toBeVisible();
-    const downloadAllBtn = page.locator('[data-testid="download-all-button"]');
+    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(2);
+    const downloadAllBtn = page.getByRole("button", { name: /download all/i }).last();
     await expect(downloadAllBtn).toBeVisible();
-    await expect(downloadAllBtn).toContainText("Download All as ZIP");
 
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("00-batch-2-files-compressed.png", {
@@ -161,7 +158,7 @@ test.describe("compress-images — browser execution", () => {
     expect(downloadedFile.length).toBeGreaterThan(100);
   });
 
-  test("Run Again resets to idle state", async ({ page }) => {
+  test("back button resets from completed to configure phase", async ({ page }) => {
     await page.goto("/compress-images");
 
     await expect(
@@ -174,23 +171,20 @@ test.describe("compress-images — browser execution", () => {
       path.join(FIXTURES_DIR, "small.jpg"),
     ]);
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await runButton.click();
 
     await expect(runButton).toHaveAttribute("data-phase", "completed", {
       timeout: 30000,
     });
-    await expect(runButton).toContainText("Run Again");
 
-    // Click "Run Again" to reset
-    await runButton.click();
+    // Back button resets execution — returns to Phase 2 (configure) with files retained
+    const backButton = page.locator('[data-testid="bnto-shell"] button').first();
+    await backButton.click();
 
-    // Should reset to Phase 1 (dropzone) — files cleared, no RunButton
-    await expect(page.getByText("Drag & drop files here")).toBeVisible();
-    await expect(page.getByText("1 file selected")).not.toBeVisible();
-    await expect(
-      page.locator('[data-testid="run-button"]'),
-    ).not.toBeVisible();
+    // Should be back in Phase 2 — files still selected, run button idle
+    await expect(page.getByText("1 file selected")).toBeVisible();
+    await expect(runButton).toHaveAttribute("data-phase", "idle");
   });
 
   test("all Tier 1 bntos detect browser execution mode", async ({

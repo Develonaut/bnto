@@ -37,6 +37,8 @@ Identify which packages the changed files belong to and invoke the relevant pers
 
 **If changes touch `apps/web/`**, always invoke `/nextjs-expert` alongside `/frontend-engineer` — the Next.js expert catches framework-level performance issues, server/client boundary violations, and rendering strategy mistakes that the frontend engineer's component-level review won't cover.
 
+**If changes touch E2E tests, test fixtures, test helpers, or screenshot baselines**, also invoke `/quality-engineer` — the quality persona owns testing strategy, E2E infrastructure, journey-based test design, screenshot regression workflows, and knows how to run tests correctly (port isolation, two-run screenshot verification, selector patterns).
+
 **Invoke the matching persona skill(s) now.** Each persona is a domain expert with specialized quality standards, gotchas, and performance patterns that inform a deeper review. If changes span multiple packages, invoke all relevant personas — a commit touching `engine/` and `apps/web/` needs both `/rust-expert` and `/frontend-engineer` activated.
 
 ## Context
@@ -80,6 +82,8 @@ Run `/test-review` to evaluate test quality against the project's value matrix. 
 The test review covers: Go engine fixtures, Convex auth enforcement, Core transforms, E2E user journeys, and flags wasteful tests (testing framework behavior, over-mocking, testing implementation details).
 
 **Fix any findings before proceeding.** Delete wasteful tests, add missing high-value tests, rewrite anti-pattern tests.
+
+**If you're writing or updating E2E tests**, invoke `/quality-engineer` for guidance on selectors, screenshot workflows, port isolation, and journey-based test design. The quality engineer owns the E2E infrastructure and testing patterns.
 
 ### Did you touch UI? (MANDATORY check)
 

@@ -46,6 +46,8 @@ Identify which packages the tests under review belong to and invoke the relevant
 | `packages/core/` | `/core-architect` |
 | `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer` |
 
+**If reviewing E2E tests** (`apps/web/e2e/`), also invoke `/quality-engineer` — the quality persona owns E2E infrastructure, journey-based test design, screenshot regression workflows, selector patterns, and port isolation. It complements `/frontend-engineer` (which owns component structure) with testing-specific expertise.
+
 **Invoke the matching persona skill(s) now.** Each persona is a domain expert that defines domain-specific testing patterns, anti-patterns, and quality bars — e.g., Rust TDD layers (unit → WASM integration → E2E), Go table-driven tests with race detector, React testing trophy (thin unit + thick integration + targeted E2E). Evaluating test quality requires knowing how that domain's community tests. Activate all relevant personas for the scope under review.
 
 ## Step 1: Identify Scope

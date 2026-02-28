@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { core } from "@bnto/core";
@@ -58,6 +58,12 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     downloadAll,
     reset: resetBrowser,
   } = core.browser.useBrowserExecution();
+
+  // Reset singleton browser execution store on mount so stale state
+  // from a previous recipe doesn't trigger auto-download or show old results.
+  useEffect(() => {
+    core.browser.reset();
+  }, []);
 
   // -- Cloud execution --
   const { progress: uploadProgress, upload, reset: resetUpload } =
@@ -130,8 +136,7 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     store,
   ]);
 
-  const handleReset = useCallback(() => {
-    setFiles([]);
+  const handleResetExecution = useCallback(() => {
     if (isBrowserPath) {
       resetBrowser();
     } else {
@@ -142,7 +147,12 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
       });
       resetUpload();
     }
-  }, [isBrowserPath, setFiles, resetBrowser, resetUpload, store]);
+  }, [isBrowserPath, resetBrowser, resetUpload, store]);
+
+  const handleReset = useCallback(() => {
+    setFiles([]);
+    handleResetExecution();
+  }, [setFiles, handleResetExecution]);
 
   return {
     // Session
@@ -171,5 +181,6 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     isProcessing: resolvedPhase === "uploading" || resolvedPhase === "running",
     handleRun,
     handleReset,
+    handleResetExecution,
   };
 }

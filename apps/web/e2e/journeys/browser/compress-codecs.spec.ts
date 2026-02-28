@@ -30,7 +30,7 @@ test.describe("compress-images — codec coverage", () => {
     await fileInput.setInputFiles([path.join(FIXTURES_DIR, "large.jpg")]);
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -45,11 +45,8 @@ test.describe("compress-images — codec coverage", () => {
       timeout: 30000,
     });
 
-    const results = page.locator(
-      '[data-testid="browser-execution-results"]',
-    );
-    await expect(results).toBeVisible();
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    const outputFile = page.locator('[data-testid="output-file"]');
+    await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("02-jpeg-compressed-result.png", {
@@ -62,7 +59,7 @@ test.describe("compress-images — codec coverage", () => {
     ).size;
 
     const dlPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFile.getByRole("button", { name: /download/i }).click();
     const dl = await dlPromise;
 
     expect(dl.suggestedFilename()).toMatch(/\.jpe?g$/i);
@@ -91,7 +88,7 @@ test.describe("compress-images — codec coverage", () => {
     await fileInput.setInputFiles([path.join(FIXTURES_DIR, "large.png")]);
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -103,9 +100,7 @@ test.describe("compress-images — codec coverage", () => {
     await runButton.click();
 
     // 1MB PNG should take long enough to observe progress
-    const progressEl = page.locator(
-      '[data-testid="browser-execution-progress"]',
-    );
+    const progressEl = page.getByRole("progressbar");
     await expect(progressEl).toBeVisible({ timeout: 10000 });
 
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -118,11 +113,8 @@ test.describe("compress-images — codec coverage", () => {
       timeout: 60000,
     });
 
-    const results = page.locator(
-      '[data-testid="browser-execution-results"]',
-    );
-    await expect(results).toBeVisible();
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    const outputFile = page.locator('[data-testid="output-file"]');
+    await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("05-png-compressed-result.png", {
@@ -135,7 +127,7 @@ test.describe("compress-images — codec coverage", () => {
     ).size;
 
     const dlPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFile.getByRole("button", { name: /download/i }).click();
     const dl = await dlPromise;
 
     expect(dl.suggestedFilename()).toMatch(/\.png$/i);
@@ -165,7 +157,7 @@ test.describe("compress-images — codec coverage", () => {
     await fileInput.setInputFiles([path.join(FIXTURES_DIR, "large.webp")]);
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -180,11 +172,8 @@ test.describe("compress-images — codec coverage", () => {
       timeout: 30000,
     });
 
-    const results = page.locator(
-      '[data-testid="browser-execution-results"]',
-    );
-    await expect(results).toBeVisible();
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    const outputFile = page.locator('[data-testid="output-file"]');
+    await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("07-webp-compressed-result.png", {
@@ -196,7 +185,7 @@ test.describe("compress-images — codec coverage", () => {
     // Re-encoding a lossy WebP as lossless can produce a LARGER file.
     // We only verify the output is valid WebP, not that it's smaller.
     const dlPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFile.getByRole("button", { name: /download/i }).click();
     const dl = await dlPromise;
 
     expect(dl.suggestedFilename()).toMatch(/\.webp$/i);

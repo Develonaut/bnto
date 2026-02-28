@@ -21,16 +21,16 @@ export function ConvertFormatConfig({
   onChange,
 }: ConvertFormatConfigProps) {
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Output format</Label>
+    <div className="flex w-full items-end gap-4">
+      <div className="flex shrink-0 flex-col gap-1">
+        <Label className="text-muted-foreground text-xs">Format</Label>
         <Select
           value={value.format}
           onValueChange={(format) =>
             onChange({ ...value, format: format as Config["format"] })
           }
         >
-          <Select.Trigger>
+          <Select.Trigger className="w-24">
             <Select.Value />
           </Select.Trigger>
           <Select.Content>
@@ -41,27 +41,27 @@ export function ConvertFormatConfig({
             ))}
           </Select.Content>
         </Select>
+        <p className="text-muted-foreground text-xs">Output type</p>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label>Quality</Label>
-          <span className="text-muted-foreground font-mono text-sm">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <Label className="text-muted-foreground text-xs">Quality</Label>
+        <div className="flex items-center gap-3">
+          <Slider
+            className="w-full"
+            value={[value.quality]}
+            onValueChange={([quality]: number[]) =>
+              onChange({ ...value, quality: quality ?? value.quality })
+            }
+            min={1}
+            max={100}
+            step={1}
+          />
+          <span className="text-muted-foreground shrink-0 font-mono text-sm tabular-nums">
             {value.quality}%
           </span>
         </div>
-        <Slider
-          value={[value.quality]}
-          onValueChange={([quality]: number[]) =>
-            onChange({ ...value, quality: quality ?? value.quality })
-          }
-          min={1}
-          max={100}
-          step={1}
-        />
-        <p className="text-muted-foreground text-xs">
-          Lower quality = smaller file size. 70-90 is recommended.
-        </p>
+        <p className="text-muted-foreground text-xs">Lower values reduce file size</p>
       </div>
     </div>
   );

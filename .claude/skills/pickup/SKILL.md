@@ -56,6 +56,8 @@ Now that you know your task's `[package]` tag, activate the domain expert person
 
 **Security-sensitive work:** If your task touches auth, middleware, input validation, file uploads, Convex mutations, or API endpoints, also invoke `/security-engineer`. The security persona owns trust boundaries across all packages and will help you think adversarially about the code you're writing.
 
+**Testing work:** If your task involves writing E2E tests, updating screenshot baselines, or modifying test infrastructure, also invoke `/quality-engineer`. The quality persona owns E2E strategy, journey-based test design, screenshot regression workflows, and the correct way to run tests (port isolation, two-run verification, selector patterns).
+
 ## Step 4: Scope Check
 
 Before writing any code, confirm your boundaries:
@@ -153,6 +155,8 @@ task ui:lint           # Lint all TS packages — must pass
 **Critical rule:** You are NOT allowed to ignore failures as "pre-existing." If a check fails, report ALL failures to the user and let them decide. Only the user can determine if an issue predates your work.
 
 ## Step 7: Verify — Test Coverage
+
+**If your task involves E2E tests, screenshot updates, or test infrastructure changes**, invoke `/quality-engineer` now. The quality persona owns the correct way to run tests, write selectors, capture screenshots, and handle known issues like "01 Issue" hydration mismatches.
 
 Your work MUST include tests. Determine which type based on what you built:
 

@@ -15,15 +15,16 @@ export function ResizeImagesConfig({
   onChange,
 }: ResizeImagesConfigProps) {
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="resize-width">Width (px)</Label>
+    <div className="flex w-full items-end gap-4">
+      <div className="flex shrink-0 flex-col gap-1">
+        <Label htmlFor="resize-width" className="text-muted-foreground text-xs">Width (px)</Label>
         <Input
           id="resize-width"
           type="number"
           min={1}
           max={10000}
           value={value.width}
+          wrapperClassName="w-24"
           onChange={(e) => {
             const width = parseInt(e.target.value, 10);
             if (!isNaN(width) && width > 0) {
@@ -31,10 +32,10 @@ export function ResizeImagesConfig({
             }
           }}
         />
+        <p className="text-muted-foreground text-xs">Target width in pixels</p>
       </div>
-
-      <div className="flex items-center justify-between">
-        <Label htmlFor="resize-aspect-ratio">Maintain aspect ratio</Label>
+      <div className="flex shrink-0 flex-col gap-1">
+        <Label htmlFor="resize-aspect-ratio" className="text-muted-foreground text-xs">Aspect ratio</Label>
         <Switch
           id="resize-aspect-ratio"
           checked={value.maintainAspectRatio}
@@ -42,6 +43,7 @@ export function ResizeImagesConfig({
             onChange({ ...value, maintainAspectRatio: !!maintainAspectRatio })
           }
         />
+        <p className="text-muted-foreground text-xs">Keep proportions</p>
       </div>
     </div>
   );

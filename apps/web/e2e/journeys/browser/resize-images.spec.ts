@@ -46,7 +46,7 @@ test.describe("resize-images — browser execution", () => {
 
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -62,11 +62,8 @@ test.describe("resize-images — browser execution", () => {
       timeout: 30000,
     });
 
-    const results = page.locator(
-      '[data-testid="browser-execution-results"]',
-    );
-    await expect(results).toBeVisible();
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    const outputFile = page.locator('[data-testid="output-file"]');
+    await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("resize-02-result.png", {
@@ -75,7 +72,7 @@ test.describe("resize-images — browser execution", () => {
 
     // --- VERIFY: download produces valid JPEG ---
     const downloadPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFile.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toMatch(/\.jpe?g$/i);
@@ -108,16 +105,16 @@ test.describe("resize-images — browser execution", () => {
 
     await expect(page.getByText("2 files selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await runButton.click();
 
     await expect(runButton).toHaveAttribute("data-phase", "completed", {
       timeout: 30000,
     });
 
-    await expect(page.getByText("2 files ready")).toBeVisible();
+    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(2);
     await expect(
-      page.locator('[data-testid="download-all-button"]'),
+      page.getByRole("button", { name: /download all/i }).last(),
     ).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));

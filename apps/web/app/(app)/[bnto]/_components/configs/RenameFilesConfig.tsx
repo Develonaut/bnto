@@ -14,36 +14,30 @@ export function RenameFilesConfig({
   onChange,
 }: RenameFilesConfigProps) {
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="rename-pattern">Rename pattern</Label>
+    <div className="flex w-full flex-col gap-1">
+      <Label htmlFor="rename-pattern" className="text-muted-foreground text-xs">Pattern</Label>
+      <div className="flex items-center gap-3">
         <Input
           id="rename-pattern"
           type="text"
+          wrapperClassName="w-full"
           value={value.pattern}
           onChange={(e) => onChange({ ...value, pattern: e.target.value })}
           placeholder="renamed-{{name}}"
         />
-        <p className="text-muted-foreground text-xs">
-          Use <code className="bg-muted rounded px-1 font-mono">{"{{name}}"}</code>{" "}
-          for the original filename and{" "}
-          <code className="bg-muted rounded px-1 font-mono">{"{{ext}}"}</code>{" "}
-          for the extension.
-        </p>
-      </div>
-
-      {value.pattern && (
-        <div className="rounded-md border border-border bg-muted/50 px-3 py-2">
-          <p className="text-muted-foreground text-xs">
-            <span className="font-medium">Preview:</span>{" "}
+        {value.pattern && (
+          <span className="text-muted-foreground shrink-0 text-xs">
             <span className="font-mono">
               {value.pattern
                 .replace("{{name}}", "photo")
                 .replace("{{ext}}", ".png")}
             </span>
-          </p>
-        </div>
-      )}
+          </span>
+        )}
+      </div>
+      <p className="text-muted-foreground text-xs">
+        Use <span className="font-mono">{"{{name}}"}</span> and <span className="font-mono">{"{{ext}}"}</span> as placeholders
+      </p>
     </div>
   );
 }

@@ -13,7 +13,6 @@ interface RecipeResultsSectionProps {
   resolvedPhase: RunPhase;
   browserExec: BrowserExecution;
   onDownload: (result: BrowserFileResult) => void;
-  onDownloadAll: () => void;
   executionId: string | null;
   uploadProgress: { files: FileUploadProgress[] };
   clientError: string | null;
@@ -31,7 +30,6 @@ export function RecipeResultsSection({
   resolvedPhase,
   browserExec,
   onDownload,
-  onDownloadAll,
   executionId,
   uploadProgress,
   clientError,
@@ -51,7 +49,6 @@ export function RecipeResultsSection({
           <BrowserExecutionResults
             execution={browserExec}
             onDownload={onDownload}
-            onDownloadAll={onDownloadAll}
           />
         </Animate.SlideUp>
       );

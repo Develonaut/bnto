@@ -142,19 +142,27 @@ test.describe("Auth lifecycle — sign up, sign in, sign out", () => {
 
     await expect(page).toHaveScreenshot("04-signed-out.png");
 
-    // Navigate to home — Sign In button should be back
+    // Navigate to home — Sign In option should be in user menu
     await page.goto("/");
-    const signInButton = page.locator('[data-testid="nav-sign-in"]');
-    await expect(signInButton).toBeVisible({ timeout: 10000 });
+    const userMenu2 = page.locator('[data-testid="nav-user-menu"]');
+    await expect(userMenu2).toBeVisible({ timeout: 10000 });
+    await userMenu2.click();
+    await expect(
+      page.locator('[data-testid="nav-sign-in"]'),
+    ).toBeVisible();
   });
 
   test("S3: navbar Sign In button navigates to /signin", async ({ page }) => {
     await page.goto("/");
 
-    // Wait for page to stabilize — NavUser starts in loading state
-    // then settles to "Sign In" for unauthenticated users
+    // Wait for NavUser to settle from loading state, then open menu
+    const userMenu = page.locator('[data-testid="nav-user-menu"]');
+    await expect(userMenu).toBeVisible({ timeout: 10000 });
+    await userMenu.click();
+
+    // Sign In is inside the user menu dropdown
     const signInButton = page.locator('[data-testid="nav-sign-in"]');
-    await expect(signInButton).toBeVisible({ timeout: 10000 });
+    await expect(signInButton).toBeVisible();
 
     await signInButton.click();
     await page.waitForURL("/signin", { timeout: 10000 });

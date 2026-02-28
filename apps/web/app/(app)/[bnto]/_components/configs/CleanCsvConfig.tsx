@@ -29,13 +29,10 @@ const OPTIONS = [
 
 export function CleanCsvConfig({ value, onChange }: CleanCsvConfigProps) {
   return (
-    <div className="space-y-4">
+    <div className="flex w-full items-end gap-6">
       {OPTIONS.map((opt) => (
-        <div key={opt.id} className="flex items-start justify-between gap-4">
-          <div className="space-y-0.5">
-            <Label htmlFor={`clean-${opt.id}`}>{opt.label}</Label>
-            <p className="text-muted-foreground text-xs">{opt.description}</p>
-          </div>
+        <div key={opt.id} className="flex shrink-0 flex-col gap-1">
+          <Label htmlFor={`clean-${opt.id}`} className="text-muted-foreground text-xs">{opt.label}</Label>
           <Switch
             id={`clean-${opt.id}`}
             checked={value[opt.id]}
@@ -43,6 +40,7 @@ export function CleanCsvConfig({ value, onChange }: CleanCsvConfigProps) {
               onChange({ ...value, [opt.id]: !!checked })
             }
           />
+          <p className="text-muted-foreground max-w-24 text-xs leading-tight">{opt.description}</p>
         </div>
       ))}
     </div>

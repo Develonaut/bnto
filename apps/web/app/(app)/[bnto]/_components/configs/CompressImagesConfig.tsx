@@ -14,27 +14,24 @@ export function CompressImagesConfig({
   onChange,
 }: CompressImagesConfigProps) {
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label>Quality</Label>
-          <span className="text-muted-foreground font-mono text-sm">
-            {value.quality}%
-          </span>
-        </div>
-        <Slider
-          value={[value.quality]}
-          onValueChange={([quality]: number[]) =>
-            onChange({ ...value, quality: quality ?? value.quality })
-          }
-          min={1}
-          max={100}
-          step={1}
-        />
-        <p className="text-muted-foreground text-xs">
-          Lower quality = smaller file size. 70-90 is recommended.
-        </p>
+    <div className="flex w-full flex-col gap-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <Label className="text-muted-foreground text-sm">Quality</Label>
+        <span className="text-muted-foreground shrink-0 font-mono text-sm tabular-nums">
+          {value.quality}%
+        </span>
       </div>
+      <Slider
+        className="w-full"
+        value={[value.quality]}
+        onValueChange={([quality]: number[]) =>
+          onChange({ ...value, quality: quality ?? value.quality })
+        }
+        min={1}
+        max={100}
+        step={1}
+      />
+      <p className="min-h-4 text-xs text-muted-foreground">Lower values reduce file size more but also lower quality</p>
     </div>
   );
 }

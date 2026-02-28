@@ -14,7 +14,7 @@ export function ShowcaseSection({
   children: React.ReactNode;
 }) {
   return (
-    <Stack as="section" gap="md" data-testid={id}>
+    <Stack as="section" gap="md" data-testid={id} className="min-h-[800px]">
       <div>
         <Heading level={2} size="sm">{title}</Heading>
         {description && (

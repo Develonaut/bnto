@@ -16,6 +16,7 @@ import { FormShowcase } from "./FormShowcase";
 import { InputShowcase } from "./InputShowcase";
 import { MenuShowcase } from "./MenuShowcase";
 import { NotificationCards } from "./NotificationCards";
+import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
 import { RecipeLayoutShowcase } from "./RecipeLayoutShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
 import { TypographyShowcase } from "./TypographyShowcase";
@@ -42,6 +43,7 @@ export default function MotorwayPage() {
           <Tabs.Trigger value="motion">Motion</Tabs.Trigger>
           <Tabs.Trigger value="forms">Forms</Tabs.Trigger>
           <Tabs.Trigger value="grids">Grids</Tabs.Trigger>
+          <Tabs.Trigger value="phase-flow">Phase Flow</Tabs.Trigger>
           <Tabs.Trigger value="recipe-layouts">Recipe Layouts</Tabs.Trigger>
         </Tabs.List>
 
@@ -170,6 +172,17 @@ export default function MotorwayPage() {
               <ConveyorShowcase />
             </ShowcaseSection>
           </Stack>
+        </Tabs.Content>
+
+        {/* ── Phase Flow ─────────────────────────────────────────── */}
+        <Tabs.Content value="phase-flow">
+          <ShowcaseSection
+            id="phase-flow"
+            title="Recipe Phase Flow"
+            description="Step through the recipe page phases: Dropzone → Configure → Processing → Completed. The file grid persists across phases — no DOM jumping."
+          >
+            <PhaseFlowShowcase />
+          </ShowcaseSection>
         </Tabs.Content>
 
         {/* ── Recipe Layouts ─────────────────────────────────────── */}

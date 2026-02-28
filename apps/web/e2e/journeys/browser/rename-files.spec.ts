@@ -45,7 +45,7 @@ test.describe("rename-files — browser execution", () => {
 
     await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -60,11 +60,8 @@ test.describe("rename-files — browser execution", () => {
       timeout: 30000,
     });
 
-    const results = page.locator(
-      '[data-testid="browser-execution-results"]',
-    );
-    await expect(results).toBeVisible();
-    await expect(page.getByText("1 file ready")).toBeVisible();
+    const outputFile = page.locator('[data-testid="output-file"]');
+    await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("rename-02-result.png", {
@@ -73,7 +70,7 @@ test.describe("rename-files — browser execution", () => {
 
     // Verify download filename includes "renamed-"
     const downloadPromise = page.waitForEvent("download");
-    await page.locator('[data-testid="download-button"]').click();
+    await outputFile.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toContain("renamed");
@@ -97,16 +94,16 @@ test.describe("rename-files — browser execution", () => {
 
     await expect(page.getByText("3 files selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.locator('[data-testid="run-button"]:visible');
     await runButton.click();
 
     await expect(runButton).toHaveAttribute("data-phase", "completed", {
       timeout: 30000,
     });
 
-    await expect(page.getByText("3 files ready")).toBeVisible();
+    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(3);
     await expect(
-      page.locator('[data-testid="download-all-button"]'),
+      page.getByRole("button", { name: /download all/i }).last(),
     ).toBeVisible();
 
     // All output files should be listed

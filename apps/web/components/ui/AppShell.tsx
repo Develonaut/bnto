@@ -2,7 +2,6 @@ import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/cn";
 
-import { BouncyStagger } from "./Animate";
 import { Container } from "./Container";
 import { createCn } from "./createCn";
 
@@ -65,10 +64,7 @@ function AppShellMain({ clearance, className, ...props }: AppShellMainProps) {
   return <main className={mainCn({ clearance }, className)} {...props} />;
 }
 
-/* ── Content ──────────────────────────────────────────────────
- * Wraps page sections in Animate.Stagger > Animate.ScaleIn
- * for a bouncy staggered entrance. Each direct child gets
- * its own ScaleIn wrapper automatically via composition. */
+/* ── Content ──────────────────────────────────────────────── */
 
 function AppShellContent({
   className,
@@ -76,11 +72,9 @@ function AppShellContent({
   ...props
 }: ComponentProps<"div">) {
   return (
-    <div className={cn("py-20", className)} {...props}>
+    <div className={cn("flex-1 py-12", className)} {...props}>
       <Container>
-        <BouncyStagger className="flex flex-col gap-20">
-          {children}
-        </BouncyStagger>
+        <div className="flex flex-col gap-20">{children}</div>
       </Container>
     </div>
   );

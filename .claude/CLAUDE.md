@@ -228,6 +228,7 @@ Persona skills are domain experts that can be activated to adopt specialized kno
 | Backend Engineer | `packages/@bnto/backend/`, `packages/@bnto/auth/` — Convex, schema, auth | `/backend-engineer` |
 | Go Engineer | `archive/engine-go/`, `archive/api-go/` — Go engine, API server | `/go-engineer` |
 | Security Engineer | Cross-cutting — trust boundaries, attack surfaces, defense-in-depth | `/security-engineer` |
+| Quality Engineer | `apps/web/e2e/`, `.claude/journeys/` — E2E testing, journey design, screenshot regression, test infrastructure | `/quality-engineer` |
 
 | Project Manager | `.claude/PLAN.md`, `.claude/ROADMAP.md` — roadmap alignment, sprint planning | `/project-manager` |
 
