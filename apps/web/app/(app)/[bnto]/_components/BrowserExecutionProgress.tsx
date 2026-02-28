@@ -48,12 +48,13 @@ export function BrowserExecutionProgress({
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{fileProgress.message}</span>
-            <span>{fileProgress.percent}%</span>
+            <span>{fileProgress.overallPercent}%</span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
+              data-testid="progress-bar"
               className="h-full rounded-full bg-primary motion-safe:transition-[width] motion-safe:duration-fast"
-              style={{ width: `${fileProgress.percent}%` }}
+              style={{ width: `${fileProgress.overallPercent}%` }}
             />
           </div>
         </div>

@@ -25,6 +25,10 @@
 //     → JavaScript callback receives (percent: number, message: string)
 //     → In production, the Web Worker forwards this via postMessage()
 //     → Main thread updates the UI progress bar
+//
+// NOTE: These tests use compress_image_combined, which returns a
+// Result<JsValue, JsValue>. The progress callbacks fire during execution
+// regardless of which return format is used.
 
 mod common;
 
@@ -55,7 +59,9 @@ fn test_progress_callback_fires_for_jpeg() {
 
     let (callback, calls) = recording_callback();
 
-    let result = compress_image_bytes(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
+    // --- Use the combined function (progress callbacks fire the same way) ---
+    let result =
+        compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
     assert!(result.is_ok(), "Compression should succeed");
 
     // --- Verify the callback was called multiple times ---
@@ -103,12 +109,13 @@ fn test_progress_callback_fires_for_png() {
     // --- Test: PNG compression also fires progress updates ---
     //
     // PNG uses a different code path (lossless, no quality param).
-    // Verify the progress callback still works for this format.
+    // Verify the progress callback still works for this format
+    // through the combined function.
     init_panic_hook();
 
     let (callback, calls) = recording_callback();
 
-    let result = compress_image_bytes(TEST_PNG, "screenshot.png", "{}", callback);
+    let result = compress_image_combined(TEST_PNG, "screenshot.png", "{}", callback);
     assert!(result.is_ok(), "PNG compression should succeed");
 
     let call_count = calls.length();
@@ -141,11 +148,12 @@ fn test_progress_callback_fires_for_png() {
 #[wasm_bindgen_test]
 fn test_progress_callback_fires_for_webp() {
     // --- Test: WebP compression fires progress updates ---
+    // Uses the combined function — progress callbacks fire identically.
     init_panic_hook();
 
     let (callback, calls) = recording_callback();
 
-    let result = compress_image_bytes(TEST_WEBP, "banner.webp", "{}", callback);
+    let result = compress_image_combined(TEST_WEBP, "banner.webp", "{}", callback);
     assert!(result.is_ok(), "WebP compression should succeed");
 
     let call_count = calls.length();
@@ -187,11 +195,14 @@ fn test_progress_messages_are_nonempty_strings() {
     // If they arrived as `undefined` or empty string, the UI would
     // show a blank status bar. This catches broken string conversion
     // across the WASM boundary.
+    //
+    // Uses the combined function — progress callbacks work identically.
     init_panic_hook();
 
     let (callback, calls) = recording_callback();
 
-    let result = compress_image_bytes(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
+    let result =
+        compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
     assert!(result.is_ok(), "Compression should succeed");
 
     for i in 0..calls.length() {

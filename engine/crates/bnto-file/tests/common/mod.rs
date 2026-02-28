@@ -101,3 +101,56 @@ pub fn init_panic_hook() {
     // NOTE: console_error_panic_hook was moved to bnto-wasm.
     // These tests still work fine without it — Rust test runner captures panics.
 }
+
+// =============================================================================
+// Combined Result Extraction Helpers
+// =============================================================================
+//
+// The `rename_file_combined` WASM function returns a single JS object with
+// all result data bundled together:
+//   { metadata: "JSON string", data: Uint8Array, filename: "string", mimeType: "string" }
+//
+// These helpers extract each property from the combined result. They use
+// `js_sys::Reflect::get()` to read JS object properties from Rust — this
+// is the WASM equivalent of `result.metadata` in JavaScript.
+
+/// Extract metadata JSON string from a combined function result.
+///
+/// RUST CONCEPT: `js_sys::Reflect::get`
+/// In JavaScript you'd write `result.metadata`. In Rust/WASM, we can't
+/// use dot-notation on a JsValue (Rust doesn't know the object's shape).
+/// `Reflect::get` is the Rust equivalent of `Reflect.get(obj, key)` in JS.
+pub fn extract_metadata(result: &wasm_bindgen::JsValue) -> String {
+    js_sys::Reflect::get(result, &"metadata".into())
+        .expect("result should have metadata property")
+        .as_string()
+        .expect("metadata should be a string")
+}
+
+/// Extract raw bytes from a combined function result.
+///
+/// RUST CONCEPT: `dyn_into::<T>()`
+/// The `data` property is a JS `Uint8Array`, but Rust sees it as a generic
+/// `JsValue`. `dyn_into()` attempts a runtime downcast — like `as` in
+/// TypeScript but checked at runtime. If the value isn't actually a
+/// Uint8Array, it returns Err instead of panicking.
+pub fn extract_bytes(result: &wasm_bindgen::JsValue) -> Vec<u8> {
+    use wasm_bindgen::JsCast;
+    let data = js_sys::Reflect::get(result, &"data".into())
+        .expect("result should have data property");
+    let array: js_sys::Uint8Array = data
+        .dyn_into()
+        .expect("data should be a Uint8Array");
+    array.to_vec()
+}
+
+/// Extract output filename from a combined function result.
+///
+/// This is the new filename AFTER all rename transforms have been applied.
+/// Useful for verifying the rename worked without parsing the full metadata JSON.
+pub fn extract_filename(result: &wasm_bindgen::JsValue) -> String {
+    js_sys::Reflect::get(result, &"filename".into())
+        .expect("result should have filename property")
+        .as_string()
+        .expect("filename should be a string")
+}

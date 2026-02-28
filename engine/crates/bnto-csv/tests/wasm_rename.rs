@@ -1,5 +1,5 @@
 // =============================================================================
-// WASM Integration Tests — Rename CSV Columns via WASM Boundary
+// WASM Integration Tests — Rename CSV Columns via Combined WASM Function
 // =============================================================================
 //
 // WHAT ARE THESE TESTS?
@@ -18,6 +18,12 @@
 //   The thorough unit tests are in `src/rename_columns.rs`. This file
 //   focuses on verifying the WASM boundary works correctly — that data
 //   crosses from JS to Rust and back without corruption.
+//
+// COMBINED FUNCTION PATTERN:
+// All tests use `rename_csv_columns_combined()` which returns a single JS
+// object containing both metadata (JSON string) and data (Uint8Array). This
+// replaces the old dual-function pattern (rename_csv_columns + rename_csv_columns_bytes).
+// Use the extract_* helpers from `common` to pull out individual fields.
 
 mod common;
 
@@ -26,7 +32,8 @@ use wasm_bindgen_test::*;
 
 use bnto_csv::wasm_bridge::*;
 use common::{
-    MANY_COLUMNS_CSV, MINIMAL_CSV, SIMPLE_CSV, init_panic_hook, noop_callback, recording_callback,
+    MANY_COLUMNS_CSV, MINIMAL_CSV, SIMPLE_CSV, extract_bytes, extract_metadata, init_panic_hook,
+    noop_callback, recording_callback,
 };
 
 // Configure tests to run in Node.js (not a browser).
@@ -38,14 +45,14 @@ wasm_bindgen_test_configure!(run_in_node_experimental);
 // =============================================================================
 
 #[wasm_bindgen_test]
-fn test_rename_columns_via_wasm_metadata() {
-    // Test the metadata-returning variant of the WASM function.
-    // We rename one column and verify the JSON result contains the expected metadata.
+fn test_rename_columns_combined_metadata_via_wasm() {
+    // Test the metadata from the combined WASM function.
+    // We rename one column and verify the JSON metadata contains the expected fields.
     init_panic_hook();
     let callback = noop_callback();
 
     // Rename "name" to "full_name" in our minimal CSV.
-    let result = rename_csv_columns(
+    let result = rename_csv_columns_combined(
         MINIMAL_CSV,
         "test.csv",
         r#"{"columns": {"name": "full_name"}}"#,
@@ -55,11 +62,13 @@ fn test_rename_columns_via_wasm_metadata() {
     // The function should succeed.
     assert!(
         result.is_ok(),
-        "rename_csv_columns should succeed: {:?}",
+        "rename_csv_columns_combined should succeed: {:?}",
         result.err()
     );
 
-    let json_str = result.unwrap();
+    // Extract the metadata JSON string from the combined result object.
+    let result_obj = result.unwrap();
+    let json_str = extract_metadata(&result_obj);
     assert!(!json_str.is_empty(), "Result JSON should not be empty");
 
     // The result should contain the renamed filename.
@@ -82,12 +91,13 @@ fn test_rename_columns_via_wasm_metadata() {
 }
 
 #[wasm_bindgen_test]
-fn test_rename_columns_via_wasm_bytes() {
-    // Test the bytes-returning variant — the efficient path for downloads.
+fn test_rename_columns_combined_bytes_via_wasm() {
+    // Test the bytes from the combined function — the efficient path for downloads.
+    // We extract the raw bytes and verify the CSV content has renamed headers.
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_bytes(
+    let result = rename_csv_columns_combined(
         MINIMAL_CSV,
         "test.csv",
         r#"{"columns": {"name": "full_name"}}"#,
@@ -96,11 +106,13 @@ fn test_rename_columns_via_wasm_bytes() {
 
     assert!(
         result.is_ok(),
-        "rename_csv_columns_bytes should succeed: {:?}",
+        "rename_csv_columns_combined should succeed: {:?}",
         result.err()
     );
 
-    let bytes = result.unwrap();
+    // Extract the raw bytes from the combined result object.
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
     assert!(!bytes.is_empty(), "Output bytes should not be empty");
 
     // Parse the output as a string to verify content.
@@ -129,13 +141,13 @@ fn test_rename_columns_via_wasm_bytes() {
 // =============================================================================
 
 #[wasm_bindgen_test]
-fn test_data_preserved_after_rename_via_wasm() {
+fn test_data_preserved_after_rename_combined_via_wasm() {
     // Verify that data rows survive the WASM boundary intact.
     // Use the larger SIMPLE_CSV fixture to test with real file data.
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_bytes(
+    let result = rename_csv_columns_combined(
         SIMPLE_CSV,
         "simple.csv",
         r#"{"columns": {"name": "full_name", "email": "email_address"}}"#,
@@ -144,7 +156,10 @@ fn test_data_preserved_after_rename_via_wasm() {
 
     assert!(result.is_ok(), "Should succeed with SIMPLE_CSV fixture");
 
-    let output_str = String::from_utf8(result.unwrap()).expect("Should be valid UTF-8");
+    // Extract the raw bytes from the combined result.
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
+    let output_str = String::from_utf8(bytes).expect("Should be valid UTF-8");
 
     // Header should be renamed.
     assert!(
@@ -165,12 +180,12 @@ fn test_data_preserved_after_rename_via_wasm() {
 }
 
 #[wasm_bindgen_test]
-fn test_many_columns_rename_via_wasm() {
+fn test_many_columns_rename_combined_via_wasm() {
     // Test with the many-columns fixture (8 columns).
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_bytes(
+    let result = rename_csv_columns_combined(
         MANY_COLUMNS_CSV,
         "many-columns.csv",
         r#"{"columns": {"first_name": "given_name", "last_name": "surname", "department": "team"}}"#,
@@ -182,7 +197,10 @@ fn test_many_columns_rename_via_wasm() {
         "Should succeed with MANY_COLUMNS_CSV fixture"
     );
 
-    let output_str = String::from_utf8(result.unwrap()).expect("Should be valid UTF-8");
+    // Extract the raw bytes from the combined result.
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
+    let output_str = String::from_utf8(bytes).expect("Should be valid UTF-8");
 
     // Renamed columns should appear.
     assert!(
@@ -215,13 +233,13 @@ fn test_many_columns_rename_via_wasm() {
 // =============================================================================
 
 #[wasm_bindgen_test]
-fn test_missing_columns_ignored_via_wasm() {
+fn test_missing_columns_ignored_combined_via_wasm() {
     // Mapping references a column that doesn't exist in the CSV.
     // Should succeed without error — the nonexistent column is just ignored.
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_bytes(
+    let result = rename_csv_columns_combined(
         MINIMAL_CSV,
         "test.csv",
         r#"{"columns": {"nonexistent_column": "something_else"}}"#,
@@ -233,7 +251,10 @@ fn test_missing_columns_ignored_via_wasm() {
         "Should succeed even when mapped column doesn't exist"
     );
 
-    let output_str = String::from_utf8(result.unwrap()).expect("Should be valid UTF-8");
+    // Extract the raw bytes from the combined result.
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
+    let output_str = String::from_utf8(bytes).expect("Should be valid UTF-8");
 
     // Headers should be unchanged since "nonexistent_column" isn't in the CSV.
     assert!(
@@ -243,13 +264,13 @@ fn test_missing_columns_ignored_via_wasm() {
 }
 
 #[wasm_bindgen_test]
-fn test_invalid_params_json_passthrough_via_wasm() {
+fn test_invalid_params_json_passthrough_combined_via_wasm() {
     // If the params JSON is invalid, the function should still succeed
     // (no renames applied — passthrough mode).
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_bytes(
+    let result = rename_csv_columns_combined(
         MINIMAL_CSV,
         "test.csv",
         "this is not valid json at all!!!",
@@ -261,7 +282,10 @@ fn test_invalid_params_json_passthrough_via_wasm() {
         "Should succeed with invalid params JSON (passthrough)"
     );
 
-    let output_str = String::from_utf8(result.unwrap()).expect("Should be valid UTF-8");
+    // Extract the raw bytes from the combined result.
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
+    let output_str = String::from_utf8(bytes).expect("Should be valid UTF-8");
 
     // Headers unchanged — invalid JSON means no renames.
     assert!(
@@ -271,7 +295,7 @@ fn test_invalid_params_json_passthrough_via_wasm() {
 }
 
 #[wasm_bindgen_test]
-fn test_non_utf8_returns_js_error_via_wasm() {
+fn test_non_utf8_returns_js_error_combined_via_wasm() {
     // Non-UTF8 input should return a JavaScript error, not a panic.
     init_panic_hook();
     let callback = noop_callback();
@@ -279,7 +303,7 @@ fn test_non_utf8_returns_js_error_via_wasm() {
     // Create invalid UTF-8 bytes.
     let bad_bytes: &[u8] = &[0xFF, 0xFE, 0x00, 0x61];
 
-    let result = rename_csv_columns_bytes(bad_bytes, "bad.csv", "{}", callback);
+    let result = rename_csv_columns_combined(bad_bytes, "bad.csv", "{}", callback);
 
     assert!(result.is_err(), "Should return an error for non-UTF8 input");
 }
@@ -289,12 +313,12 @@ fn test_non_utf8_returns_js_error_via_wasm() {
 // =============================================================================
 
 #[wasm_bindgen_test]
-fn test_progress_callback_fires_via_wasm() {
+fn test_progress_callback_fires_combined_via_wasm() {
     // Verify that the progress callback is actually called during processing.
     init_panic_hook();
     let (callback, calls) = recording_callback();
 
-    let result = rename_csv_columns_bytes(
+    let result = rename_csv_columns_combined(
         MINIMAL_CSV,
         "test.csv",
         r#"{"columns": {"name": "full_name"}}"#,

@@ -42,7 +42,7 @@ import {
 import type {
   BrowserEngine,
   BrowserFileResult,
-  BrowserFileProgress,
+  BrowserFileProgressInput,
 } from "../types/wasm";
 import type { StoreApi } from "zustand/vanilla";
 
@@ -67,6 +67,34 @@ export interface WasmExecutionInstance {
   reset: () => void;
 }
 
+// ---------------------------------------------------------------------------
+// Progress throttle — limits store updates to ~60fps while always allowing
+// critical transitions (first update, 100% completion, new file) through.
+// ---------------------------------------------------------------------------
+
+const THROTTLE_MS = 16; // ~60fps
+
+function createThrottledProgress(
+  store: ReturnType<typeof createWasmExecutionStore>,
+) {
+  let lastUpdate = 0;
+
+  return (progress: BrowserFileProgressInput) => {
+    const now =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+
+    const current = store.getState().fileProgress;
+    const isFirst = current === null;
+    const isComplete = progress.percent >= 100;
+    const isNewFile = current !== null && current.fileIndex !== progress.fileIndex;
+
+    if (isFirst || isComplete || isNewFile || now - lastUpdate >= THROTTLE_MS) {
+      store.getState().progress(progress);
+      lastUpdate = now;
+    }
+  };
+}
+
 /**
  * Create an isolated execution instance with its own store.
  *
@@ -78,7 +106,7 @@ function createExecutionInstance(
     slug: string,
     files: File[],
     params: Record<string, unknown>,
-    onProgress?: (progress: BrowserFileProgress) => void,
+    onProgress?: (progress: BrowserFileProgressInput) => void,
   ) => Promise<BrowserFileResult[]>,
 ): WasmExecutionInstance {
   const store = createWasmExecutionStore();
@@ -102,9 +130,10 @@ function createExecutionInstance(
       store.getState().start(id, Date.now());
 
       try {
-        const onProgress = (progress: BrowserFileProgress) => {
+        const throttled = createThrottledProgress(store);
+        const onProgress = (progress: BrowserFileProgressInput) => {
           if (aborted) return;
-          store.getState().progress(progress);
+          throttled(progress);
         };
 
         const results = await execute(slug, files, params, onProgress);
@@ -143,7 +172,7 @@ export function createWasmExecutionService() {
     slug: string,
     files: File[],
     params: Record<string, unknown> = {},
-    onProgress?: (progress: BrowserFileProgress) => void,
+    onProgress?: (progress: BrowserFileProgressInput) => void,
   ): Promise<BrowserFileResult[]> => {
     const engine = getBrowserEngine();
     if (!engine) {

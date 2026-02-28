@@ -6,12 +6,12 @@
 // WASM has a linear memory model — all heap allocations come from a single
 // contiguous buffer that grows on demand. Large images need:
 //   1. Input bytes loaded into WASM memory
-//   2. Decoded pixel data (width × height × 4 bytes for RGBA)
+//   2. Decoded pixel data (width x height x 4 bytes for RGBA)
 //   3. Encoded output bytes
 //
-// A 1200×800 image needs ~3.8 MB for pixels alone, plus input + output.
+// A 1200x800 image needs ~3.8 MB for pixels alone, plus input + output.
 // These tests verify the WASM runtime can handle 1MB+ inputs without
-// running out of memory or crashing.
+// running out of memory or crashing using the combined function API.
 //
 // WHY "OUTPUT <= INPUT" FOR JPEG?
 // For JPEG with quality < 100, re-encoding at a lower quality should
@@ -21,7 +21,7 @@
 //
 // MEMORY BUDGET:
 //   Input:  ~1 MB (large.png)
-//   Pixels: ~3.8 MB (1200 × 800 × 4 bytes RGBA)
+//   Pixels: ~3.8 MB (1200 x 800 x 4 bytes RGBA)
 //   Output: ~variable
 //   Total:  ~6+ MB peak WASM memory usage
 //   Limit:  ~256 MB (default WASM memory maximum)
@@ -31,7 +31,7 @@ mod common;
 use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
-use common::{LARGE_JPEG, LARGE_PNG, LARGE_WEBP, init_panic_hook, noop_callback};
+use common::{LARGE_JPEG, LARGE_PNG, LARGE_WEBP, extract_bytes, init_panic_hook, noop_callback};
 
 wasm_bindgen_test_configure!(run_in_node_experimental);
 
@@ -43,16 +43,17 @@ wasm_bindgen_test_configure!(run_in_node_experimental);
 fn test_large_jpeg_no_oom() {
     // --- Test: Process a 173 KB JPEG without WASM memory issues ---
     //
-    // The decoded pixel data for a 1200×800 image is ~3.8 MB (RGBA).
+    // The decoded pixel data for a 1200x800 image is ~3.8 MB (RGBA).
     // Plus the input buffer (~173 KB) and output buffer (variable).
     // Total WASM memory needed: ~4-5 MB. The default WASM memory
     // allows growth to ~256 MB, so this should be fine — but it's
     // worth verifying that the memory management works correctly
-    // across the WASM boundary.
+    // across the WASM boundary with the combined function.
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image_bytes(LARGE_JPEG, "big-photo.jpg", r#"{"quality": 80}"#, callback);
+    let result =
+        compress_image_combined(LARGE_JPEG, "big-photo.jpg", r#"{"quality": 80}"#, callback);
 
     assert!(
         result.is_ok(),
@@ -60,7 +61,9 @@ fn test_large_jpeg_no_oom() {
         result.err()
     );
 
-    let bytes = result.unwrap();
+    // --- Extract and verify valid JPEG bytes from combined result ---
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
     assert!(!bytes.is_empty(), "Large JPEG output should not be empty");
 
     // --- Verify output is valid JPEG ---
@@ -96,7 +99,7 @@ fn test_large_png_no_oom() {
         LARGE_PNG.len()
     );
 
-    let result = compress_image_bytes(LARGE_PNG, "big-screenshot.png", "{}", callback);
+    let result = compress_image_combined(LARGE_PNG, "big-screenshot.png", "{}", callback);
 
     assert!(
         result.is_ok(),
@@ -104,7 +107,9 @@ fn test_large_png_no_oom() {
         result.err()
     );
 
-    let bytes = result.unwrap();
+    // --- Extract and verify valid PNG bytes from combined result ---
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
     assert!(!bytes.is_empty(), "Large PNG output should not be empty");
 
     // --- Verify output is valid PNG ---
@@ -119,11 +124,12 @@ fn test_large_webp_no_oom() {
     // --- Test: Process a large WebP without crashing ---
     //
     // WebP lossless re-encoding also needs decoded pixel data in memory.
-    // This verifies the WebP codec path handles large images correctly.
+    // This verifies the WebP codec path handles large images correctly
+    // with the combined function.
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image_bytes(LARGE_WEBP, "big-banner.webp", "{}", callback);
+    let result = compress_image_combined(LARGE_WEBP, "big-banner.webp", "{}", callback);
 
     assert!(
         result.is_ok(),
@@ -131,7 +137,9 @@ fn test_large_webp_no_oom() {
         result.err()
     );
 
-    let bytes = result.unwrap();
+    // --- Extract and verify valid WebP bytes from combined result ---
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
     assert!(!bytes.is_empty(), "Large WebP output should not be empty");
 
     // --- Verify output is valid WebP (RIFF container) ---
@@ -159,15 +167,19 @@ fn test_large_jpeg_output_smaller_than_input() {
     //
     // We test this with the large JPEG because larger images show more
     // dramatic compression gains — there's more redundant data to remove.
+    // Bytes are extracted from the combined result's `data` property.
     init_panic_hook();
     let callback = noop_callback();
 
     let input_size = LARGE_JPEG.len();
 
-    let result = compress_image_bytes(LARGE_JPEG, "big-photo.jpg", r#"{"quality": 80}"#, callback);
+    let result =
+        compress_image_combined(LARGE_JPEG, "big-photo.jpg", r#"{"quality": 80}"#, callback);
     assert!(result.is_ok(), "Compression should succeed");
 
-    let bytes = result.unwrap();
+    // --- Extract bytes and compare sizes ---
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
     let output_size = bytes.len();
 
     assert!(

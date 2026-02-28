@@ -23,6 +23,7 @@
 #![allow(dead_code)]
 
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 // =============================================================================
 // Test Fixtures — Images embedded at compile time
@@ -121,4 +122,77 @@ pub fn recording_callback() -> (js_sys::Function, js_sys::Array) {
 pub fn init_panic_hook() {
     // NOTE: console_error_panic_hook was moved to bnto-wasm.
     // These tests still work fine without it — Rust test runner captures panics.
+}
+
+// =============================================================================
+// Combined Result Extraction Helpers
+// =============================================================================
+//
+// The combined WASM functions (compress_image_combined, resize_image_combined,
+// convert_image_format_combined) return a JS object with four properties:
+//   - metadata:  JSON string with operation metadata
+//   - data:      Uint8Array of the output image bytes
+//   - filename:  Output filename string (e.g., "photo-compressed.jpg")
+//   - mimeType:  MIME type string (e.g., "image/jpeg")
+//
+// These helpers extract each property from the returned JsValue so tests
+// don't need to repeat the Reflect::get + type conversion boilerplate.
+//
+// RUST CONCEPT: `js_sys::Reflect::get()`
+// This is Rust's equivalent of JavaScript's property access (obj.key or
+// obj["key"]). It returns a JsValue that we then convert to the expected
+// Rust type using `.as_string()` (for strings) or `.dyn_into()` (for
+// typed JS objects like Uint8Array).
+
+/// Extract metadata JSON string from a combined function result.
+///
+/// The metadata is a serialized JSON string containing fields like
+/// originalSize, compressedSize, compressionRatio, format, etc.
+/// Each operation type (compress, resize, convert) has its own
+/// metadata shape.
+pub fn extract_metadata(result: &JsValue) -> String {
+    js_sys::Reflect::get(result, &"metadata".into())
+        .expect("result should have metadata property")
+        .as_string()
+        .expect("metadata should be a string")
+}
+
+/// Extract raw bytes from a combined function result.
+///
+/// The data property is a Uint8Array containing the output image bytes.
+/// We convert it to a Vec<u8> (Rust's owned byte vector) so tests can
+/// inspect individual bytes (e.g., checking magic number headers).
+///
+/// RUST CONCEPT: `dyn_into::<js_sys::Uint8Array>()`
+/// `dyn_into` attempts a runtime type cast from a generic JsValue to
+/// a specific JavaScript type. It returns Result<T, JsValue> — Ok if
+/// the JS value is actually a Uint8Array, Err if it's something else.
+pub fn extract_bytes(result: &JsValue) -> Vec<u8> {
+    let data = js_sys::Reflect::get(result, &"data".into())
+        .expect("result should have data property");
+    let array: js_sys::Uint8Array = data.dyn_into()
+        .expect("data should be a Uint8Array");
+    array.to_vec()
+}
+
+/// Extract output filename from a combined function result.
+///
+/// The filename includes the operation suffix (e.g., "-compressed",
+/// "-resized") and preserves the appropriate file extension.
+pub fn extract_filename(result: &JsValue) -> String {
+    js_sys::Reflect::get(result, &"filename".into())
+        .expect("result should have filename property")
+        .as_string()
+        .expect("filename should be a string")
+}
+
+/// Extract MIME type from a combined function result.
+///
+/// Returns the MIME type string for the output image, e.g.,
+/// "image/jpeg", "image/png", or "image/webp".
+pub fn extract_mime_type(result: &JsValue) -> String {
+    js_sys::Reflect::get(result, &"mimeType".into())
+        .expect("result should have mimeType property")
+        .as_string()
+        .expect("mimeType should be a string")
 }
