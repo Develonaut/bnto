@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
-import { useState, useContext, createContext, useCallback } from "react";
+import { useState, useContext, createContext, useCallback, forwardRef } from "react";
+import type { ElementRef, ComponentPropsWithoutRef, ComponentProps } from "react";
 
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 
@@ -19,7 +19,7 @@ function TabsRoot({
   defaultValue,
   onValueChange,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Root>) {
+}: ComponentProps<typeof TabsPrimitive.Root>) {
   const [internalValue, setInternalValue] = useState(defaultValue);
   const activeValue = controlledValue ?? internalValue;
 
@@ -44,9 +44,9 @@ function TabsRoot({
 
 /* ── List ───────────────────────────────────────────────────── */
 
-const TabsList = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.List>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+const TabsList = forwardRef<
+  ElementRef<typeof TabsPrimitive.List>,
+  ComponentPropsWithoutRef<typeof TabsPrimitive.List>
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
@@ -58,9 +58,9 @@ TabsList.displayName = "Tabs.List";
 
 /* ── Trigger ────────────────────────────────────────────────── */
 
-const TabsTrigger = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+const TabsTrigger = forwardRef<
+  ElementRef<typeof TabsPrimitive.Trigger>,
+  ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
 >(({ className, value, ...props }, ref) => {
   const activeValue = useContext(TabsValueContext);
   const isActive = activeValue === value;
@@ -83,9 +83,9 @@ TabsTrigger.displayName = "Tabs.Trigger";
 
 /* ── Content ────────────────────────────────────────────────── */
 
-const TabsContent = React.forwardRef<
-  React.ElementRef<typeof TabsPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
+const TabsContent = forwardRef<
+  ElementRef<typeof TabsPrimitive.Content>,
+  ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.Content
     ref={ref}

@@ -1,6 +1,7 @@
 "use client";
 
-import * as React from "react";
+import { useRef, useState, useCallback } from "react";
+import type { ReactNode, PointerEvent, KeyboardEvent } from "react";
 
 import { cn } from "@/lib/cn";
 import { GripVerticalIcon } from "@/components/ui/icons";
@@ -54,7 +55,7 @@ export interface RadialSliderProps {
   /** Hide the faint full-circle ring guide on partial arcs. */
   hideRing?: boolean;
   /** Extra SVG <defs> to inject (e.g. gradient definitions). */
-  svgDefs?: React.ReactNode;
+  svgDefs?: ReactNode;
   /** Override stroke for the track arc (e.g. "url(#myGradient)"). Ignores trackClassName when set. */
   trackStroke?: string;
   /** Override stroke for the active/progress arc. Ignores activeClassName when set. */
@@ -66,9 +67,9 @@ export interface RadialSliderProps {
    *
    * Default: a 12px circle matching `activeClassName`.
    */
-  renderThumb?: (props: { isDragging: boolean }) => React.ReactNode;
+  renderThumb?: (props: { isDragging: boolean }) => ReactNode;
   /** Content rendered in the center of the dial. */
-  children?: React.ReactNode;
+  children?: ReactNode;
   /** Accessible label for screen readers. */
   "aria-label"?: string;
   className?: string;
@@ -192,11 +193,11 @@ export function RadialSlider({
   "aria-label": ariaLabel,
   className,
 }: RadialSliderProps) {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const thumbRef = React.useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = React.useState(false);
-  const [isHovering, setIsHovering] = React.useState(false);
-  const draggingRef = React.useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const draggingRef = useRef(false);
 
   // Track radius — inset from the edge to leave room for the thumb
   const trackInset = strokeWidth * 2 + 4;
@@ -225,7 +226,7 @@ export function RadialSlider({
 
   // ── Pointer handling ───────────────────────────────────────────────
 
-  const updateFromPointer = React.useCallback(
+  const updateFromPointer = useCallback(
     (clientX: number, clientY: number) => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
@@ -236,7 +237,7 @@ export function RadialSlider({
   );
 
   /** Check if a pointer angle falls within the arc (with a small margin). */
-  const isInArc = React.useCallback(
+  const isInArc = useCallback(
     (clientX: number, clientY: number) => {
       if (!containerRef.current) return false;
       // Full-circle arcs have no dead zone
@@ -254,8 +255,8 @@ export function RadialSlider({
     [startAngle, endAngle],
   );
 
-  const onPointerDown = React.useCallback(
-    (e: React.PointerEvent) => {
+  const onPointerDown = useCallback(
+    (e: PointerEvent) => {
       // Ignore clicks in the dead zone (outside the arc)
       if (!isInArc(e.clientX, e.clientY)) return;
       draggingRef.current = true;
@@ -266,8 +267,8 @@ export function RadialSlider({
     [isInArc, updateFromPointer],
   );
 
-  const onPointerMove = React.useCallback(
-    (e: React.PointerEvent) => {
+  const onPointerMove = useCallback(
+    (e: PointerEvent) => {
       if (draggingRef.current) {
         updateFromPointer(e.clientX, e.clientY);
       } else if (containerRef.current) {
@@ -287,15 +288,15 @@ export function RadialSlider({
     [isInArc, updateFromPointer],
   );
 
-  const onPointerUp = React.useCallback(() => {
+  const onPointerUp = useCallback(() => {
     draggingRef.current = false;
     setIsDragging(false);
   }, []);
 
   // ── Keyboard handling ──────────────────────────────────────────────
 
-  const onKeyDown = React.useCallback(
-    (e: React.KeyboardEvent) => {
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
       let next: number | null = null;
       switch (e.key) {
         case "ArrowRight":

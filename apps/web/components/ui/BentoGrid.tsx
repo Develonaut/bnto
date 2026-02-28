@@ -1,6 +1,7 @@
 "use client";
 
-import * as React from "react";
+import { Children, isValidElement } from "react";
+import type { ReactNode, ReactElement, Key } from "react";
 
 import { cn } from "@/lib/cn";
 
@@ -25,7 +26,7 @@ interface PinnedProps {
   rowSpan: 1 | 2;
   /** Treat as the featured cell (exposed via `useBentoItem`). Default `true`. */
   featured?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function BentoPinned({ children }: PinnedProps) {
@@ -33,8 +34,8 @@ function BentoPinned({ children }: PinnedProps) {
 }
 BentoPinned.displayName = "BentoGrid.Pinned";
 
-function isPinned(child: React.ReactNode): child is React.ReactElement<PinnedProps> {
-  return React.isValidElement(child) && (child.type as { displayName?: string }).displayName === "BentoGrid.Pinned";
+function isPinned(child: ReactNode): child is ReactElement<PinnedProps> {
+  return isValidElement(child) && (child.type as { displayName?: string }).displayName === "BentoGrid.Pinned";
 }
 
 /* ── Pinned layout helper ────────────────────────────────────── */
@@ -96,7 +97,7 @@ type BentoGridProps = {
   uniform?: boolean;
   /** Additional className for the grid container. */
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 function BentoGridRoot({
@@ -107,13 +108,13 @@ function BentoGridRoot({
   className,
   children,
 }: BentoGridProps) {
-  const childArray = React.Children.toArray(children);
+  const childArray = Children.toArray(children);
 
-  const pinned: { layout: CellLayout; element: React.ReactNode; key: React.Key }[] = [];
-  const flow: { element: React.ReactNode; key: React.Key }[] = [];
+  const pinned: { layout: CellLayout; element: ReactNode; key: Key }[] = [];
+  const flow: { element: ReactNode; key: Key }[] = [];
 
   childArray.forEach((child, i) => {
-    const key = React.isValidElement(child) ? child.key ?? i : i;
+    const key = isValidElement(child) ? child.key ?? i : i;
     if (isPinned(child)) {
       pinned.push({
         layout: {
@@ -129,7 +130,7 @@ function BentoGridRoot({
     }
   });
 
-  let allEntries: { layout: CellLayout; element: React.ReactNode; key: React.Key }[];
+  let allEntries: { layout: CellLayout; element: ReactNode; key: Key }[];
   let rows: number;
 
   if (pinned.length > 0) {
@@ -149,7 +150,7 @@ function BentoGridRoot({
     allEntries = childArray.map((child, i) => ({
       layout: uniformLayout,
       element: child,
-      key: React.isValidElement(child) ? child.key ?? i : i,
+      key: isValidElement(child) ? child.key ?? i : i,
     }));
   } else {
     const result = assignCellLayouts(childArray.length, cols);
@@ -157,7 +158,7 @@ function BentoGridRoot({
     allEntries = childArray.map((child, i) => ({
       layout: result.layouts[i],
       element: child,
-      key: React.isValidElement(child) ? child.key ?? i : i,
+      key: isValidElement(child) ? child.key ?? i : i,
     }));
   }
 

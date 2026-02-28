@@ -1,6 +1,7 @@
 "use client";
 
-import * as React from "react";
+import { createContext, forwardRef, useContext, useState } from "react";
+import type { ComponentProps, ComponentPropsWithoutRef, ElementRef, ElementType } from "react";
 
 import { Slot } from "@radix-ui/react-slot";
 
@@ -27,7 +28,7 @@ import { Popover } from "@/components/ui/Popover";
  * Shares the open state from MenuRoot so the trigger can force
  * itself into the hover (engaged) force state. */
 
-const MenuContext = React.createContext(false);
+const MenuContext = createContext(false);
 
 /* ── Trigger ─────────────────────────────────────────────────────
  * Renders as our Button component with toggle behavior. When the
@@ -38,11 +39,11 @@ const MenuContext = React.createContext(false);
  * without shifting the dropdown — Floating UI measures the
  * wrapper's bounding rect, which never moves. */
 
-const MenuTrigger = React.forwardRef<
+const MenuTrigger = forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<typeof Button>
+  ComponentProps<typeof Button>
 >(({ children, ...props }, ref) => {
-  const open = React.useContext(MenuContext);
+  const open = useContext(MenuContext);
   return (
     <Popover.Trigger asChild>
       <span className="inline-flex">
@@ -69,10 +70,10 @@ const OFFSET_PX: Record<MenuOffset, number> = {
   xl: 32,
 };
 
-const MenuContent = React.forwardRef<
-  React.ElementRef<typeof Popover.ContentUnstyled>,
+const MenuContent = forwardRef<
+  ElementRef<typeof Popover.ContentUnstyled>,
   Omit<
-    React.ComponentPropsWithoutRef<typeof Popover.ContentUnstyled>,
+    ComponentPropsWithoutRef<typeof Popover.ContentUnstyled>,
     "sideOffset"
   > & {
     elevation?: "none" | "sm" | "md" | "lg";
@@ -117,8 +118,8 @@ function MenuRootWrapper({
   open: controlledOpen,
   onOpenChange,
   ...props
-}: React.ComponentProps<typeof Popover>) {
-  const [internalOpen, setInternalOpen] = React.useState(false);
+}: ComponentProps<typeof Popover>) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const handleOpenChange = (next: boolean) => {
     setInternalOpen(next);
@@ -168,8 +169,8 @@ function MenuItem({
   className,
   ref,
   ...props
-}: React.ComponentProps<"button"> & { asChild?: boolean }) {
-  const Comp: React.ElementType = asChild ? Slot : "button";
+}: ComponentProps<"button"> & { asChild?: boolean }) {
+  const Comp: ElementType = asChild ? Slot : "button";
   return (
     <MenuClose asChild>
       <Comp
@@ -193,7 +194,7 @@ function MenuItem({
 function MenuLabel({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: ComponentProps<"div">) {
   return (
     <div
       className={cn(
@@ -212,7 +213,7 @@ function MenuLabel({
 function MenuSeparator({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: ComponentProps<"div">) {
   return (
     <div
       role="separator"
