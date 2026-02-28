@@ -236,20 +236,18 @@ function ScenarioCard({ config }: { config: ScenarioConfig }) {
 
       <Text size="xs" color="muted">{config.description}</Text>
 
-      {phase !== "idle" && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div>
-            <Text size="xs" color="muted" className="mb-2">Card view</Text>
-            <BrowserExecutionProgress execution={execution} />
-          </div>
-          <div>
-            <Text size="xs" color="muted" className="mb-2">Toolbar view</Text>
-            <div className="rounded-lg border border-border bg-card p-4">
-              <ToolbarProgress execution={execution} />
-            </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div>
+          <Text size="xs" color="muted" className="mb-2">Card view</Text>
+          <BrowserExecutionProgress execution={execution} />
+        </div>
+        <div>
+          <Text size="xs" color="muted" className="mb-2">Toolbar view</Text>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <ToolbarProgress execution={execution} />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
