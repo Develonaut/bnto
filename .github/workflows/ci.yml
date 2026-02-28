@@ -12,41 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  go:
-    name: Go (vet + build + test)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libwebp-dev
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.25"
-          cache-dependency-path: |
-            archive/engine-go/go.sum
-            archive/api-go/go.sum
-
-      - name: go vet
-        run: |
-          go vet ./archive/engine-go/...
-          go vet ./archive/api-go/...
-
-      - name: Build engine CLI
-        run: cd archive/engine-go && go build -o /dev/null ./cmd/bnto/
-
-      - name: Build API server
-        run: cd archive/api-go && go build -o /dev/null ./cmd/api/
-
-      - name: Engine tests
-        run: cd archive/engine-go && go test -race ./...
-
-      - name: API tests
-        run: go test -race ./archive/api-go/...
-
   rust:
-    name: Rust (fmt + lint + unit + WASM integration)
+    name: Rust Engine (fmt + lint + unit + WASM)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -75,12 +42,17 @@ jobs:
       - name: Unit tests (native)
         run: cargo test --workspace
 
-      - name: WASM integration tests (Node.js)
-        run: |
-          wasm-pack test --node crates/bnto-wasm
-          wasm-pack test --node crates/bnto-csv
-          wasm-pack test --node crates/bnto-file
-          wasm-pack test --node crates/bnto-image
+      - name: WASM integration tests (bnto-wasm)
+        run: wasm-pack test --node crates/bnto-wasm
+
+      - name: WASM integration tests (bnto-csv)
+        run: wasm-pack test --node crates/bnto-csv
+
+      - name: WASM integration tests (bnto-file)
+        run: wasm-pack test --node crates/bnto-file
+
+      - name: WASM integration tests (bnto-image)
+        run: wasm-pack test --node crates/bnto-image
 
   typescript:
     name: TypeScript (build + lint + test)
@@ -98,31 +70,56 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm turbo run build
+      # --- Build (type-check all packages) ---
 
-      - name: Lint
-        run: pnpm turbo run lint
+      - name: "Build: @bnto/nodes"
+        run: pnpm --filter @bnto/nodes run build
 
-      - name: Test
-        run: pnpm turbo run test
+      - name: "Build: @bnto/auth"
+        run: pnpm --filter @bnto/auth run build
 
-  # Gate job — single status check for branch protection and Vercel
+      - name: "Build: @bnto/backend"
+        run: pnpm --filter @bnto/backend run build
+
+      - name: "Build: @bnto/core"
+        run: pnpm --filter @bnto/core run build
+
+      - name: "Build: @bnto/web"
+        run: pnpm --filter @bnto/web run build
+
+      # --- Lint ---
+
+      - name: "Lint: @bnto/web"
+        run: pnpm --filter @bnto/web run lint
+
+      # --- Test ---
+
+      - name: "Test: @bnto/nodes"
+        run: pnpm --filter @bnto/nodes run test
+
+      - name: "Test: @bnto/backend"
+        run: pnpm --filter @bnto/backend run test
+
+      - name: "Test: @bnto/core"
+        run: pnpm --filter @bnto/core run test
+
+      - name: "Test: @bnto/web"
+        run: pnpm --filter @bnto/web run test
+
+  # Gate job — single status check for branch protection
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    needs: [go, rust, typescript]
+    needs: [rust, typescript]
     if: always()
     steps:
       - name: Check job results
         run: |
-          if [ "${{ needs.go.result }}" != "success" ] || \
-             [ "${{ needs.rust.result }}" != "success" ] || \
+          if [ "${{ needs.rust.result }}" != "success" ] || \
              [ "${{ needs.typescript.result }}" != "success" ]; then
             echo "One or more CI jobs failed:"
-            echo "  Go:         ${{ needs.go.result }}"
-            echo "  Rust:       ${{ needs.rust.result }}"
-            echo "  TypeScript: ${{ needs.typescript.result }}"
+            echo "  Rust Engine: ${{ needs.rust.result }}"
+            echo "  TypeScript:  ${{ needs.typescript.result }}"
             exit 1
           fi
           echo "All CI jobs passed."
