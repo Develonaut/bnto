@@ -295,6 +295,25 @@ After all checks pass, provide a summary:
 7. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
 8. **Files changed** — files created/modified, with brief description of each
 
+### Step 8b: Create the PR
+
+When creating the PR with `gh pr create`, use this format for the body:
+
+```
+## Summary
+<1-3 bullet points describing what changed and why>
+
+## Verification
+<What you actually did to verify the change works. Be specific:>
+- What checks you ran and their results (e.g., "task ui:build — passed clean")
+- What tests you wrote or ran (e.g., "Added 3 unit tests in wasmExecutionService.test.ts — all pass")
+- What you manually verified (e.g., "Read the generated output file and confirmed correct CSV headers")
+- For UI changes: what screenshots you captured and visually inspected
+- For docs/config-only changes: what you reviewed to confirm correctness
+```
+
+**The Verification section documents what YOU did, not what someone else should do.** It's proof of work — past tense, specific, with results. Not a forward-looking checklist of TODOs.
+
 ### Step 9: Update the Plan
 
 Edit `.claude/PLAN.md`:
