@@ -28,7 +28,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **Active:** Sprint 2D (Recipe Page UX Overhaul) — Wave 3 screenshots + Wave 4 polish remaining
 - **Parallel cleanup:** Sprint H (Housekeeping) — tech debt tasks, can be picked up between 2D/3 waves or when blocked
 - **Next:** Sprint 3 (Platform Features, M2) — accounts, persistence, history, conversion hooks
-- **Background:** Sprint 4 + 4B (Recipe Editors) — visual + code editors, isolated to /dev/motorway page. Run in parallel alongside Sprint 3
+- **Background:** Sprint 4 + 4B (Recipe Editors) — visual + code editors, isolated to /motorway page. Run in parallel alongside Sprint 3
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos run 100% client-side via Rust→WASM. Uniform Rust engine — no JS fallback. Files never leave the user's machine. Rust evaluation checkpoint PASSED.
 - **Cloud pipeline:** Complete. Go API on Railway, R2 file transit, Convex real-time subscriptions — all verified end-to-end with integration E2E tests. This is M4 infrastructure delivered ahead of schedule.
 - **WASM engine:** 6 Rust crates (`bnto-image`, `bnto-csv`, `bnto-file`, `bnto-core`, `bnto-wasm`). Single cdylib entry point. 1.6MB raw / 606KB gzipped. Web Worker wrapper with progress reporting.
@@ -194,7 +194,7 @@ Visual refinement pass and critical state management fix. Ensure the new layout 
 
 #### Wave 1 (parallel — all independent)
 
-- [x] `apps/web` — `/frontend-engineer` — **Move `/dev/motorway` back to `/motorway`.** The `/dev/` prefix was a temporary measure. Now that the page is the editor playground (Sprint 4 Wave 3 target), give it a proper URL. Update any internal links, E2E tests, and nav references.
+- [x] `apps/web` — `/frontend-engineer` — **Move `/motorway` back to `/motorway`.** The `/dev/` prefix was a temporary measure. Now that the page is the editor playground (Sprint 4 Wave 3 target), give it a proper URL. Update any internal links, E2E tests, and nav references.
 - [x] `engine` — `/rust-expert` — **Rust engine test location consistency audit.** Verify all crate tests follow the convention: unit tests in `#[cfg(test)]` blocks within source files, WASM integration tests in `tests/` directory. Relocate any misplaced tests. *(Audit passed clean — 298 unit tests inline, ~3K lines WASM integration tests in `tests/`, zero misplacements.)*
 - [x] `engine` — `/rust-expert` — **EXIF orientation test coverage verification.** Confirmed EXIF handling works for all 8 orientations. Added 17 pipeline tests (5 compress, 6 convert, 6 resize) for orientations 2-8. Also wired Rust tests into `task check`, `task test:all`, pre-commit checklist, and created GitHub Actions CI workflow.
 - [x] `apps/web` — `/frontend-engineer` — **Replace `FileUpload` with `react-dropzone`.** The current `FileUpload` component has known react-hooks/immutability lint issues. Replace with a `react-dropzone`-based implementation that's composable and lint-clean. Preserve existing `data-testid` attributes for E2E tests.
@@ -328,7 +328,7 @@ Wire the headless store to the existing ConveyorCanvas. The conveyor belt become
 - [ ] `apps/web` — **`NodePalette` component**: Slide-out panel listing available node types from `useNodePalette()`. Click-to-add (adds node at auto-positioned location). Grouped by category. Browser-capable badge. Server-only nodes shown grayed with "Pro" badge (visible but not addable in browser context — definitions always available per pricing model).
 - [ ] `apps/web` — **`NodeConfigPanel` component**: Side panel that renders when a node is selected. Uses `useEditorNode(selectedNodeId)` to get schema + current params. Auto-generates form fields from `ParameterSchema` (Atomiton pattern): string → text input, number → number input with min/max, boolean → toggle, enum → select dropdown. `visibleWhen` and `requiredWhen` handled reactively. Parameter changes dispatch `updateParams` to store.
 - [ ] `apps/web` — **Enable canvas interaction**: Upgrade `ConveyorCanvas` to accept an `interactive` prop. When `true`: `nodesDraggable={true}`, `nodesConnectable={true}`, `elementsSelectable={true}`. Node drag updates position via `moveNode`. New edge connections dispatch `addEdge`. Selection dispatches `selectNode`. When `false`: current read-only showcase behavior (backward compatible).
-- [ ] `apps/web` — **Motorway debug section**: Replace the hardcoded `ConveyorShowcase` in `/dev/motorway` with `<RecipeEditor />`. The Motorway page becomes the editor playground — load recipes, add/remove nodes, connect them, configure parameters, run, export.
+- [ ] `apps/web` — **Motorway debug section**: Replace the hardcoded `ConveyorShowcase` in `/motorway` with `<RecipeEditor />`. The Motorway page becomes the editor playground — load recipes, add/remove nodes, connect them, configure parameters, run, export.
 
 #### Wave 4 (parallel — execution + polish)
 
