@@ -1,15 +1,16 @@
 "use client";
 
-import * as React from "react";
+import { forwardRef } from "react";
+import type { ElementRef, ComponentPropsWithoutRef } from "react";
 
 import * as SwitchPrimitives from "@radix-ui/react-switch";
 
 import { cn } from "@/lib/cn";
 import { CheckIcon, XIcon } from "@/components/ui/icons";
 
-const Switch = React.forwardRef<
-  React.ElementRef<typeof SwitchPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
+const Switch = forwardRef<
+  ElementRef<typeof SwitchPrimitives.Root>,
+  ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(

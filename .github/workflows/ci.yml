@@ -89,6 +89,12 @@ jobs:
 
       # --- Lint ---
 
+      - name: "Lint: @bnto/core"
+        run: pnpm --filter @bnto/core run lint
+
+      - name: "Lint: @bnto/backend"
+        run: pnpm --filter @bnto/backend run lint
+
       - name: "Lint: @bnto/web"
         run: pnpm --filter @bnto/web run lint
 

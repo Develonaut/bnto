@@ -7,7 +7,7 @@
     "deploy": "convex deploy",
     "build": "echo \"Convex functions are pushed via 'convex dev' or 'convex deploy'\"",
     "test": "vitest run",
-    "lint": "echo \"No linter yet\""
+    "lint": "eslint ."
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.995.0",
@@ -17,6 +17,8 @@
   },
   "devDependencies": {
     "convex-test": "^0.0.41",
+    "eslint": "catalog:",
+    "typescript-eslint": "catalog:",
     "vitest": "catalog:"
   }
 }

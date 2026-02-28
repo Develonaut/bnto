@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type { ComponentProps, CSSProperties } from "react";
 
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { CheckIcon } from "@/components/ui/icons";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/cn";
 function Checkbox({
   className,
   ...props
-}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+}: ComponentProps<typeof CheckboxPrimitive.Root>) {
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
@@ -20,7 +20,7 @@ function Checkbox({
         "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
-      style={{ "--pressable-ease": "var(--ease-spring-bouncier)", "--pressable-dur": "400ms" } as React.CSSProperties}
+      style={{ "--pressable-ease": "var(--ease-spring-bouncier)", "--pressable-dur": "400ms" } as CSSProperties}
       {...props}
     >
       <CheckboxPrimitive.Indicator
