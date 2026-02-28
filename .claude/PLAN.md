@@ -173,7 +173,7 @@ Connect new shell to page, delete old shell, regenerate all screenshots.
 
 - [x] `apps/web` — **Regenerate all browser execution E2E screenshots.** All 27 screenshots regenerated for the new RecipeShell layout. Two-run verification complete (30/30 passed on regeneration, 28/30 on verify — 2 are known "01 Issue" hydration mismatch, zero screenshot mismatches). All 27 screenshots visually verified via Read tool. No selector changes needed — all data-testid attributes preserved in the new layout.
 
-- [ ] **CLAIMED** `apps/web` — **Regenerate site-navigation E2E screenshots for tool pages.** Delete stale tool page screenshots from `e2e/pages/`. Run tests with `--update-snapshots`. Visually verify. Covers both desktop and mobile viewport variants.
+- [x] `apps/web` — **Regenerate site-navigation E2E screenshots for tool pages.** All 21 screenshots regenerated (13 desktop + 8 mobile). Two-run verification complete — zero screenshot mismatches across runs. Only failures are known "01 Issue" hydration mismatches (React 19 + Radix). All 21 screenshots visually verified via Read tool.
 
 #### Wave 4 (parallel — polish + per-instance execution fix)
 
