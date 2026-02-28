@@ -356,7 +356,7 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 ## DO NOT
 
-- **Do not commit or push.** Leave changes staged or unstaged. The user will review and commit
+- **Do not commit or push.** Leave changes staged or unstaged. The user will review and commit. If the user asks you to commit, you may only commit YOUR OWN work from this task — never bundle or commit other agents' changes. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
 - **Do not modify files outside your package scope** — other agents may be working there
 - **Do not modify `CLAUDE.md`, `.claude/rules/`, or config files** unless your task explicitly requires it
 - **Do not install new dependencies** without noting it in your summary. If a dependency is needed, prefer one already in the monorepo

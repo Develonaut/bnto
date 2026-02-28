@@ -180,3 +180,7 @@ When all checks pass:
    - `Generated with Claude Code` or `Co-Authored-By` lines
    - "Test Plan" sections
    - Unrelated changes bundled together
+
+**CRITICAL -- Scope and push rules:**
+- **Only commit YOUR OWN work.** If `git status` shows changes from other agents or unrelated work, DO NOT stage or commit those files. Only stage files you personally created or modified as part of your current task.
+- **NEVER push without explicit user confirmation.** After committing, ask the user if they want you to push. A request to "commit" does not imply "push." A request to "commit and push" authorizes both. When in doubt, ask.

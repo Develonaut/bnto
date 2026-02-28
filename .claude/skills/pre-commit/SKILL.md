@@ -141,3 +141,7 @@ Stage only relevant files, then commit per these rules:
 - Do NOT bundle unrelated changes
 
 Present the proposed commit message to the user for approval before committing.
+
+**CRITICAL: Scope and push rules:**
+- Only commit YOUR OWN work. If `git status` shows changes from other agents or unrelated work, DO NOT stage or commit those files. Only stage files you personally created or modified as part of this task.
+- NEVER push to remote without explicit user confirmation. After committing, ask the user if they want you to push. Do not assume a commit request includes a push.
