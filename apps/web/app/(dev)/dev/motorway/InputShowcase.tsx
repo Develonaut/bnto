@@ -19,6 +19,7 @@ export function InputShowcase() {
   const [switchB, setSwitchB] = useState(false);
   const [slider, setSlider] = useState([65]);
   const [dial, setDial] = useState(75);
+  const [halfDial, setHalfDial] = useState(60);
   const [radioVal, setRadioVal] = useState("jpeg");
 
   return (
@@ -132,7 +133,7 @@ export function InputShowcase() {
       {/* Sliders */}
       <div>
         <Text size="sm" color="muted" className="mb-3">Sliders</Text>
-        <div className="grid grid-cols-2 gap-8">
+        <div className="grid grid-cols-3 gap-8">
           <Stack gap="sm">
             <Row className="justify-between">
               <Label>Quality</Label>
@@ -141,7 +142,7 @@ export function InputShowcase() {
             <Slider value={slider} onValueChange={setSlider} max={100} />
           </Stack>
           <Stack gap="sm" className="items-center">
-            <Label>Quality</Label>
+            <Label>Radial</Label>
             <RadialSlider
               min={0}
               max={100}
@@ -153,6 +154,22 @@ export function InputShowcase() {
               aria-label="Quality"
             >
               <Text size="lg" mono className="font-semibold">{dial}%</Text>
+            </RadialSlider>
+          </Stack>
+          <Stack gap="sm" className="items-center">
+            <Label>Half-circle</Label>
+            <RadialSlider
+              min={0}
+              max={100}
+              value={halfDial}
+              onChange={setHalfDial}
+              startAngle={270}
+              endAngle={90}
+              size={180}
+              hideRing
+              aria-label="Half-circle gauge"
+            >
+              <Text size="lg" mono className="font-semibold">{halfDial}%</Text>
             </RadialSlider>
           </Stack>
         </div>

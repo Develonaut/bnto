@@ -51,6 +51,14 @@ export interface RadialSliderProps {
   activeClassName?: string;
   /** Hide the filled progress arc (show only track + thumb). */
   hideProgress?: boolean;
+  /** Hide the faint full-circle ring guide on partial arcs. */
+  hideRing?: boolean;
+  /** Extra SVG <defs> to inject (e.g. gradient definitions). */
+  svgDefs?: React.ReactNode;
+  /** Override stroke for the track arc (e.g. "url(#myGradient)"). Ignores trackClassName when set. */
+  trackStroke?: string;
+  /** Override stroke for the active/progress arc. Ignores activeClassName when set. */
+  activeStroke?: string;
   /**
    * Custom thumb element. Receives `isDragging` for pressed states.
    * The element is centered on the track at the current value's angle.
@@ -175,6 +183,10 @@ export function RadialSlider({
   trackClassName = "text-input",
   activeClassName = "text-primary",
   hideProgress = false,
+  hideRing = false,
+  svgDefs,
+  trackStroke,
+  activeStroke,
   renderThumb,
   children,
   "aria-label": ariaLabel,
@@ -344,8 +356,9 @@ export function RadialSlider({
         viewBox={`0 0 ${size} ${size}`}
         className="pointer-events-none absolute inset-0"
       >
+        {svgDefs && <defs>{svgDefs}</defs>}
         {/* Full ring guide — faint circle showing the complete dial */}
-        {ringPath && (
+        {ringPath && !trackStroke && !hideRing && (
           <>
             <path d={ringPath} fill="none" stroke="currentColor" className="text-border" strokeWidth={strokeWidth + 2} strokeLinecap="round" opacity={0.3} />
             <path d={ringPath} fill="none" stroke="currentColor" className={trackClassName} strokeWidth={strokeWidth} strokeLinecap="round" opacity={0.3} />
@@ -354,16 +367,18 @@ export function RadialSlider({
         {/* Arc-range track — border layer + fill layer */}
         {trackPath && (
           <>
-            <path d={trackPath} fill="none" stroke="currentColor" className="text-border" strokeWidth={strokeWidth + 2} strokeLinecap="round" />
-            <path d={trackPath} fill="none" stroke="currentColor" className={trackClassName} strokeWidth={strokeWidth} strokeLinecap="round" />
+            {!trackStroke && (
+              <path d={trackPath} fill="none" stroke="currentColor" className="text-border" strokeWidth={strokeWidth + 2} strokeLinecap="round" />
+            )}
+            <path d={trackPath} fill="none" stroke={trackStroke ?? "currentColor"} className={trackStroke ? undefined : trackClassName} strokeWidth={strokeWidth} strokeLinecap="round" />
           </>
         )}
         {activePath && (
           <path
             d={activePath}
             fill="none"
-            stroke="currentColor"
-            className={activeClassName}
+            stroke={activeStroke ?? "currentColor"}
+            className={activeStroke ? undefined : activeClassName}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
           />
