@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Browser execution service — orchestrates file processing via WASM.
+ * WASM execution service — orchestrates file processing via WASM.
  *
- * The browser execution path is fundamentally different from cloud:
+ * The WASM execution path is fundamentally different from cloud:
  * - No R2 upload/download (files stay in memory)
  * - No Convex execution record (state is local)
  * - No Go API call (WASM processes in the browser)
@@ -27,23 +27,23 @@ import {
   getBrowserEngine,
   registerBrowserEngine,
   hasBrowserEngine,
-} from "../adapters/browser/engineRegistry";
+} from "../adapters/wasm/engineRegistry";
 import {
   isBrowserCapable,
   getBrowserNodeType,
   getBrowserCapableSlugs,
-} from "../adapters/browser/slugCapability";
-import { downloadBlob } from "../adapters/browser/downloadBlob";
-import { createZipBlob } from "../adapters/browser/createZipBlob";
+} from "../adapters/wasm/slugCapability";
+import { downloadBlob } from "../adapters/wasm/downloadBlob";
+import { createZipBlob } from "../adapters/wasm/createZipBlob";
 import {
-  createBrowserExecutionStore,
-  type BrowserExecutionState,
-} from "../stores/browserExecutionStore";
+  createWasmExecutionStore,
+  type WasmExecutionState,
+} from "../stores/wasmExecutionStore";
 import type {
   BrowserEngine,
   BrowserFileResult,
   BrowserFileProgress,
-} from "../types/browser";
+} from "../types/wasm";
 import type { StoreApi } from "zustand/vanilla";
 
 // ---------------------------------------------------------------------------
@@ -51,11 +51,11 @@ import type { StoreApi } from "zustand/vanilla";
 // ---------------------------------------------------------------------------
 
 /** An isolated execution instance with its own store and lifecycle. */
-export interface BrowserExecutionInstance {
+export interface WasmExecutionInstance {
   /** The Zustand store backing this execution's state. */
-  store: StoreApi<BrowserExecutionState>;
+  store: StoreApi<WasmExecutionState>;
   /**
-   * Run a browser execution with full lifecycle management.
+   * Run a WASM execution with full lifecycle management.
    * Manages store transitions: idle → processing → completed/failed.
    */
   run: (
@@ -80,8 +80,8 @@ function createExecutionInstance(
     params: Record<string, unknown>,
     onProgress?: (progress: BrowserFileProgress) => void,
   ) => Promise<BrowserFileResult[]>,
-): BrowserExecutionInstance {
-  const store = createBrowserExecutionStore();
+): WasmExecutionInstance {
+  const store = createWasmExecutionStore();
   let aborted = false;
 
   return {
@@ -131,9 +131,9 @@ function createExecutionInstance(
 // Service factory
 // ---------------------------------------------------------------------------
 
-export function createBrowserExecutionService() {
+export function createWasmExecutionService() {
   /**
-   * Execute a bnto in the browser (low-level, stateless).
+   * Execute a bnto via WASM (low-level, stateless).
    *
    * Initializes the engine if needed, processes all files through
    * the WASM worker, and returns results as in-memory blobs.
@@ -148,15 +148,15 @@ export function createBrowserExecutionService() {
     const engine = getBrowserEngine();
     if (!engine) {
       throw new Error(
-        "No browser engine registered. " +
-          "Call core.browser.registerEngine() at app startup.",
+        "No WASM engine registered. " +
+          "Call core.wasm.registerEngine() at app startup.",
       );
     }
 
     const nodeType = getBrowserNodeType(slug);
     if (!nodeType) {
       throw new Error(
-        `No browser implementation for slug "${slug}". ` +
+        `No WASM implementation for slug "${slug}". ` +
           `Available: ${getBrowserCapableSlugs().join(", ")}`,
       );
     }
@@ -190,20 +190,20 @@ export function createBrowserExecutionService() {
     store: singleton.store,
 
     // ── Capability Detection ───────────────────────────────────────
-    /** Check if a slug has a working browser execution path. */
+    /** Check if a slug has a working WASM execution path. */
     isCapable: (slug: string) => isBrowserCapable(slug) && hasBrowserEngine(),
 
-    /** Check if a slug has a browser implementation (ignores engine registration). */
+    /** Check if a slug has a WASM implementation (ignores engine registration). */
     hasImplementation: (slug: string) => isBrowserCapable(slug),
 
-    /** Get all slugs with browser implementations. */
+    /** Get all slugs with WASM implementations. */
     getCapableSlugs: () => getBrowserCapableSlugs(),
 
     // ── Engine Registration ────────────────────────────────────────
-    /** Register the browser engine (called once at app startup). */
+    /** Register the WASM engine (called once at app startup). */
     registerEngine: (engine: BrowserEngine) => registerBrowserEngine(engine),
 
-    /** Whether a browser engine has been registered. */
+    /** Whether a WASM engine has been registered. */
     hasEngine: () => hasBrowserEngine(),
 
     // ── Per-Instance Factory ────────────────────────────────────────
@@ -218,9 +218,9 @@ export function createBrowserExecutionService() {
      * Global concerns (engine, capability checks, downloads) are shared.
      *
      * Usage in React:
-     *   const [instance] = useState(() => core.browser.createExecution());
+     *   const [instance] = useState(() => core.wasm.createExecution());
      */
-    createExecution: (): BrowserExecutionInstance =>
+    createExecution: (): WasmExecutionInstance =>
       createExecutionInstance(execute),
 
     // ── Singleton Lifecycle (backward-compatible) ───────────────────
@@ -239,13 +239,13 @@ export function createBrowserExecutionService() {
     execute,
 
     // ── Download ───────────────────────────────────────────────────
-    /** Download a browser execution result as a file. */
+    /** Download a WASM execution result as a file. */
     downloadResult: (result: BrowserFileResult) => {
       downloadBlob(result.blob, result.filename);
     },
 
     /**
-     * Download all browser execution results as a single ZIP archive.
+     * Download all WASM execution results as a single ZIP archive.
      *
      * @param results - Processed files to bundle.
      * @param slug - The bnto slug, used for the archive filename.
@@ -261,6 +261,6 @@ export function createBrowserExecutionService() {
   } as const;
 }
 
-export type BrowserExecutionService = ReturnType<
-  typeof createBrowserExecutionService
+export type WasmExecutionService = ReturnType<
+  typeof createWasmExecutionService
 >;

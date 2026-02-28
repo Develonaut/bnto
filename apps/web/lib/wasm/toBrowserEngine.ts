@@ -39,7 +39,7 @@ import type { BntoWorker } from "./BntoWorker";
  * Wrap a BntoWorker instance as a BrowserEngine.
  *
  * The returned object satisfies the BrowserEngine interface from @bnto/core,
- * making the worker usable with core.browser.registerEngine().
+ * making the worker usable with core.wasm.registerEngine().
  *
  * @param worker - The BntoWorker instance to adapt
  * @returns A BrowserEngine-compatible object that delegates to the worker

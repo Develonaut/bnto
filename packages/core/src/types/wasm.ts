@@ -1,15 +1,15 @@
 // ---------------------------------------------------------------------------
-// Browser execution types (transport-agnostic — no WASM imports)
+// WASM execution types (transport-agnostic — no WASM imports)
 //
-// These types define the contract between @bnto/core and whatever browser
+// These types define the contract between @bnto/core and whatever WASM
 // engine implementation is registered (e.g., BntoWorker in apps/web).
 // ---------------------------------------------------------------------------
 
 /**
- * Abstract engine interface for browser-side execution.
+ * Abstract engine interface for WASM-based execution.
  *
  * Implemented by the WASM Web Worker wrapper (BntoWorker) in apps/web.
- * Registered at app startup via `core.browser.registerEngine(engine)`.
+ * Registered at app startup via `core.wasm.registerEngine(engine)`.
  *
  * The engine processes files entirely in the browser — no backend,
  * no R2, no network. Files never leave the user's machine.

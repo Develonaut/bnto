@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createBrowserExecutionStore } from "./browserExecutionStore";
+import { createWasmExecutionStore } from "./wasmExecutionStore";
 import type {
   BrowserFileProgress,
   BrowserFileResult,
-} from "../types/browser";
+} from "../types/wasm";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -27,11 +27,11 @@ const mockResult: BrowserFileResult = {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("browserExecutionStore", () => {
-  let store: ReturnType<typeof createBrowserExecutionStore>;
+describe("wasmExecutionStore", () => {
+  let store: ReturnType<typeof createWasmExecutionStore>;
 
   beforeEach(() => {
-    store = createBrowserExecutionStore();
+    store = createWasmExecutionStore();
   });
 
   describe("initial state", () => {

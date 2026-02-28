@@ -40,6 +40,6 @@ export type {
   BrowserFileResult,
   BrowserExecution,
   BrowserFileProgress,
-} from "./browser";
+} from "./wasm";
 
 export type { RunPhase, RecipeFlow } from "./recipeFlow";
