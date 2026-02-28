@@ -805,7 +805,7 @@ mod tests {
     fn test_default_creates_same_as_new() {
         // Verify that Default and new() produce equivalent processors.
         let p1 = RenameCsvColumns::new();
-        let p2 = RenameCsvColumns::default();
+        let p2 = RenameCsvColumns;
         assert_eq!(p1.name(), p2.name());
     }
 

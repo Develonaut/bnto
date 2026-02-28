@@ -608,7 +608,7 @@ mod tests {
     #[test]
     fn test_resize_processor_default() {
         // Default trait works the same as new()
-        let processor = ResizeImages::default();
+        let processor = ResizeImages;
         assert_eq!(processor.name(), "resize-images");
     }
 
@@ -1229,5 +1229,115 @@ mod tests {
 
         assert_eq!(orig_w, 40, "Metadata should report oriented width");
         assert_eq!(orig_h, 60, "Metadata should report oriented height");
+    }
+
+    // =========================================================================
+    // EXIF Orientation — Extended Coverage
+    // =========================================================================
+    //
+    // Orientations 2, 4, 5, 7, 8 were only tested in orientation.rs (unit).
+    // These tests verify they also work through the full resize pipeline,
+    // particularly that aspect ratio calculations use oriented dimensions.
+
+    #[test]
+    fn test_resize_exif_flip_horizontal() {
+        // Orientation=2: flip horizontal. Oriented dimensions are 60×40
+        // (same as stored — flips don't swap). Resize width=30 → 30×20.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 2);
+
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "flipped-h.jpg", width_params(30));
+
+        let result = processor.process(input, &progress).unwrap();
+        let (w, h) = get_image_dimensions(&result.files[0].data);
+        assert_eq!(w, 30, "Flip H: width=30");
+        assert_eq!(h, 20, "Flip H: aspect 3:2 preserved → height=20");
+    }
+
+    #[test]
+    fn test_resize_exif_flip_vertical() {
+        // Orientation=4: flip vertical. Oriented dimensions are 60×40.
+        // Resize width=30 → 30×20.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 4);
+
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "flipped-v.jpg", width_params(30));
+
+        let result = processor.process(input, &progress).unwrap();
+        let (w, h) = get_image_dimensions(&result.files[0].data);
+        assert_eq!(w, 30, "Flip V: width=30");
+        assert_eq!(h, 20, "Flip V: aspect 3:2 preserved → height=20");
+    }
+
+    #[test]
+    fn test_resize_exif_rotate270_flip_h() {
+        // Orientation=5: rotate 270° CW + flip horizontal.
+        // Oriented dimensions are 40×60 (portrait). Resize width=20 → 20×30.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 5);
+
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "rot270-flip-h.jpg", width_params(20));
+
+        let result = processor.process(input, &progress).unwrap();
+        let (w, h) = get_image_dimensions(&result.files[0].data);
+        assert_eq!(w, 20, "Rot270+FlipH: width=20");
+        assert_eq!(h, 30, "Rot270+FlipH: aspect 2:3 → height=30");
+    }
+
+    #[test]
+    fn test_resize_exif_rotate90_flip_h() {
+        // Orientation=7: rotate 90° CW + flip horizontal.
+        // Oriented dimensions are 40×60 (portrait). Resize width=20 → 20×30.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 7);
+
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "rot90-flip-h.jpg", width_params(20));
+
+        let result = processor.process(input, &progress).unwrap();
+        let (w, h) = get_image_dimensions(&result.files[0].data);
+        assert_eq!(w, 20, "Rot90+FlipH: width=20");
+        assert_eq!(h, 30, "Rot90+FlipH: aspect 2:3 → height=30");
+    }
+
+    #[test]
+    fn test_resize_exif_rotate270() {
+        // Orientation=8: rotate 270° CW.
+        // Oriented dimensions are 40×60 (portrait). Resize width=20 → 20×30.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 8);
+
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "rot270.jpg", width_params(20));
+
+        let result = processor.process(input, &progress).unwrap();
+        let (w, h) = get_image_dimensions(&result.files[0].data);
+        assert_eq!(w, 20, "Rot270: width=20");
+        assert_eq!(h, 30, "Rot270: aspect 2:3 → height=30");
+    }
+
+    #[test]
+    fn test_resize_exif_rotate180() {
+        // Orientation=3: rotate 180°. Oriented dimensions are 60×40
+        // (same as stored — 180° doesn't swap). Resize width=30 → 30×20.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 3);
+
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "rot180.jpg", width_params(30));
+
+        let result = processor.process(input, &progress).unwrap();
+        let (w, h) = get_image_dimensions(&result.files[0].data);
+        assert_eq!(w, 30, "Rot180: width=30");
+        assert_eq!(h, 20, "Rot180: aspect 3:2 preserved → height=20");
     }
 }

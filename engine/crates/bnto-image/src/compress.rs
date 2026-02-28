@@ -1962,4 +1962,101 @@ mod tests {
         assert_eq!(output_img.width(), 60);
         assert_eq!(output_img.height(), 40);
     }
+
+    // =========================================================================
+    // EXIF Orientation — Extended Coverage
+    // =========================================================================
+    //
+    // Orientations 2, 4, 5, 7, 8 were only tested in orientation.rs (unit).
+    // These tests verify they also work through the full compress pipeline.
+    //
+    // Dimension expectations:
+    //   Orientations 2, 4 (flips only) → 60×40 (no dimension swap)
+    //   Orientations 5, 7 (90/270° + flip) → 40×60 (dimensions swap)
+    //   Orientation 8 (rotate 270° CW) → 40×60 (dimensions swap)
+
+    #[test]
+    fn test_compress_jpeg_exif_flip_horizontal() {
+        // Orientation=2: flip horizontal (mirror left-to-right).
+        // Dimensions stay 60×40 — flips don't swap width/height.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 2);
+
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input(&exif_jpeg, "flipped-h.jpg");
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 60, "Flip H preserves width");
+        assert_eq!(output_img.height(), 40, "Flip H preserves height");
+    }
+
+    #[test]
+    fn test_compress_jpeg_exif_flip_vertical() {
+        // Orientation=4: flip vertical (mirror top-to-bottom).
+        // Dimensions stay 60×40 — flips don't swap width/height.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 4);
+
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input(&exif_jpeg, "flipped-v.jpg");
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 60, "Flip V preserves width");
+        assert_eq!(output_img.height(), 40, "Flip V preserves height");
+    }
+
+    #[test]
+    fn test_compress_jpeg_exif_rotate270_flip_h() {
+        // Orientation=5: rotate 270° CW then flip horizontal.
+        // This involves a 90°-family rotation, so dimensions swap: 60×40 → 40×60.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 5);
+
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input(&exif_jpeg, "rot270-flip-h.jpg");
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 40, "Rot270+FlipH swaps to 40 wide");
+        assert_eq!(output_img.height(), 60, "Rot270+FlipH swaps to 60 tall");
+    }
+
+    #[test]
+    fn test_compress_jpeg_exif_rotate90_flip_h() {
+        // Orientation=7: rotate 90° CW then flip horizontal.
+        // Another 90°-family rotation, so dimensions swap: 60×40 → 40×60.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 7);
+
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input(&exif_jpeg, "rot90-flip-h.jpg");
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 40, "Rot90+FlipH swaps to 40 wide");
+        assert_eq!(output_img.height(), 60, "Rot90+FlipH swaps to 60 tall");
+    }
+
+    #[test]
+    fn test_compress_jpeg_exif_rotate270() {
+        // Orientation=8: rotate 270° CW (phone held rotated left).
+        // Dimensions swap: 60×40 → 40×60.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 8);
+
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input(&exif_jpeg, "rot270.jpg");
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 40, "Rot270 swaps to 40 wide");
+        assert_eq!(output_img.height(), 60, "Rot270 swaps to 60 tall");
+    }
 }

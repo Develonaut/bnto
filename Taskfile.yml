@@ -86,19 +86,29 @@ tasks:
 
   # Quality gate
   check:
-    desc: Run all quality checks (vet, test with coverage, build)
+    desc: Run all quality checks (vet, test, lint, build — Go + Rust + TypeScript)
     cmds:
       - echo "=== go vet ==="
       - task: vet
-      - echo "=== engine tests ==="
+      - echo "=== go engine tests ==="
       - cd archive/engine-go && go test -race -coverprofile=coverage.out ./...
       - go tool cover -func=archive/engine-go/coverage.out | tail -1
       - rm archive/engine-go/coverage.out
-      - echo "=== api tests ==="
+      - echo "=== go api tests ==="
       - go test -race ./archive/api-go/...
       - echo "=== go build ==="
       - cd archive/engine-go && go build ./cmd/bnto
       - cd archive/api-go && go build ./cmd/server
+      - echo "=== rust lint ==="
+      - task: wasm:lint
+      - echo "=== rust unit tests ==="
+      - task: wasm:test:unit
+      - echo "=== typescript build ==="
+      - task: ui:build
+      - echo "=== typescript tests ==="
+      - task: ui:test
+      - echo "=== typescript lint ==="
+      - task: ui:lint
       - echo "=== all checks passed ==="
 
   # Menu generation
@@ -204,8 +214,9 @@ tasks:
       - task: ui:build
 
   test:all:
-    desc: Test everything (engine + API + frontend)
+    desc: Test everything (Go + Rust + TypeScript)
     cmds:
       - task: test
       - task: api:test
+      - task: wasm:test:unit
       - task: ui:test

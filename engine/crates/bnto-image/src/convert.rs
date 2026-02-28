@@ -1067,4 +1067,109 @@ mod tests {
         assert_eq!(output_img.width(), 60);
         assert_eq!(output_img.height(), 40);
     }
+
+    // =========================================================================
+    // EXIF Orientation — Extended Coverage
+    // =========================================================================
+    //
+    // Orientations 2, 4, 5, 7, 8 were only tested in orientation.rs (unit).
+    // These tests verify they also work through the full convert pipeline.
+
+    #[test]
+    fn test_convert_exif_flip_horizontal_jpeg_to_png() {
+        // Orientation=2: flip horizontal. Dimensions stay 60×40.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 2);
+
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "flipped-h.jpg", format_params("png"));
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 60, "Flip H preserves width");
+        assert_eq!(output_img.height(), 40, "Flip H preserves height");
+    }
+
+    #[test]
+    fn test_convert_exif_flip_vertical_jpeg_to_png() {
+        // Orientation=4: flip vertical. Dimensions stay 60×40.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 4);
+
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "flipped-v.jpg", format_params("png"));
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 60, "Flip V preserves width");
+        assert_eq!(output_img.height(), 40, "Flip V preserves height");
+    }
+
+    #[test]
+    fn test_convert_exif_rotate270_flip_h_jpeg_to_png() {
+        // Orientation=5: rotate 270° CW + flip horizontal.
+        // 90°-family rotation swaps dimensions: 60×40 → 40×60.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 5);
+
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "rot270-flip-h.jpg", format_params("png"));
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 40, "Rot270+FlipH swaps to 40 wide");
+        assert_eq!(output_img.height(), 60, "Rot270+FlipH swaps to 60 tall");
+    }
+
+    #[test]
+    fn test_convert_exif_rotate90_flip_h_jpeg_to_png() {
+        // Orientation=7: rotate 90° CW + flip horizontal.
+        // 90°-family rotation swaps dimensions: 60×40 → 40×60.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 7);
+
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "rot90-flip-h.jpg", format_params("png"));
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 40, "Rot90+FlipH swaps to 40 wide");
+        assert_eq!(output_img.height(), 60, "Rot90+FlipH swaps to 60 tall");
+    }
+
+    #[test]
+    fn test_convert_exif_rotate270_jpeg_to_png() {
+        // Orientation=8: rotate 270° CW. Dimensions swap: 60×40 → 40×60.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 8);
+
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "rot270.jpg", format_params("png"));
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 40, "Rot270 swaps to 40 wide");
+        assert_eq!(output_img.height(), 60, "Rot270 swaps to 60 tall");
+    }
+
+    #[test]
+    fn test_convert_exif_rotate180_jpeg_to_png() {
+        // Orientation=3: rotate 180°. Dimensions stay 60×40.
+        let jpeg = create_test_jpeg(60, 40);
+        let exif_jpeg = inject_exif_orientation(&jpeg, 3);
+
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(&exif_jpeg, "rot180.jpg", format_params("png"));
+
+        let result = processor.process(input, &progress).unwrap();
+        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        assert_eq!(output_img.width(), 60, "Rot180 preserves width");
+        assert_eq!(output_img.height(), 40, "Rot180 preserves height");
+    }
 }

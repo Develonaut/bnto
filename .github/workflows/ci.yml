@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    name: Go (vet + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache-dependency-path: |
+            archive/engine-go/go.sum
+            archive/api-go/go.sum
+
+      - name: go vet
+        run: |
+          go vet ./archive/engine-go/...
+          go vet ./archive/api-go/...
+
+      - name: Engine tests
+        run: cd archive/engine-go && go test -race ./...
+
+      - name: API tests
+        run: go test -race ./archive/api-go/...
+
+  rust:
+    name: Rust (fmt + lint + unit + WASM integration)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Unit tests (native)
+        run: cargo test --workspace
+
+      - name: WASM integration tests (Node.js)
+        run: |
+          wasm-pack test --node crates/bnto-wasm
+          wasm-pack test --node crates/bnto-csv
+          wasm-pack test --node crates/bnto-file
+          wasm-pack test --node crates/bnto-image
+
+  typescript:
+    name: TypeScript (build + lint + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm turbo run build
+
+      - name: Lint
+        run: pnpm turbo run lint
+
+      - name: Test
+        run: pnpm turbo run test

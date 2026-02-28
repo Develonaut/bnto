@@ -64,6 +64,7 @@ pub struct ProgressReporter {
     /// The callback function. When we call it, it sends a progress update
     /// to wherever the caller wants (UI thread, console, etc.).
     /// `None` = no-op mode (for tests or when progress isn't needed).
+    #[allow(clippy::type_complexity)]
     callback: Option<Box<dyn Fn(u32, &str)>>,
 }
 
