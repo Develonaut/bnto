@@ -179,9 +179,9 @@ Connect new shell to page, delete old shell, regenerate all screenshots.
 
 Visual refinement pass and critical state management fix. Ensure the new layout meets the Motorway quality bar.
 
-- [ ] `apps/web` — **Responsive polish.** Verify mobile (375px), tablet (768px), desktop (1280px) layouts. Mobile: single column, 2-column file grid, config below. Desktop: 3-4 column file grid. Adjust `Grid` cols, Container size, gap props. No horizontal overflow on mobile.
+- [x] `apps/web` — **Responsive polish.** Verify mobile (375px), tablet (768px), desktop (1280px) layouts. Mobile: single column, 2-column file grid, config below. Desktop: 3-4 column file grid. Adjust `Grid` cols, Container size, gap props. No horizontal overflow on mobile.
 
-- [ ] `apps/web` — **Keyboard accessibility audit.** Tab order follows visual flow (drop zone -> file cards -> config -> run). File card delete buttons have `aria-label`. PhaseIndicator has appropriate ARIA. Accordion keyboard nav works (Radix). Fix any gaps.
+- [x] `apps/web` — **Keyboard accessibility audit.** Tab order follows visual flow (drop zone -> file cards -> config -> run). File card delete buttons have `aria-label`. PhaseIndicator has appropriate ARIA. Accordion keyboard nav works (Radix). Fix any gaps.
 
 - [ ] `@bnto/core` + `apps/web` — **Per-instance browser execution stores.** The singleton `browserExecutionStore` leaks state between recipe pages (completed status triggers auto-downloads on new page). Refactor to factory pattern: `createExecution()` returns `{ store, run, reset }` per instance. Global concerns (engine registration, capability checks) stay on singleton. `useRecipeFlow` creates per-mount instance via `useState(() => core.browser.createExecution())`. Remove the `useEffect(() => core.browser.reset(), [])` workaround. Keep backward-compatible singleton API until all consumers migrate. See backlog for full scope.
 
@@ -566,6 +566,18 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 - [ ] `packages/@bnto/test-fixtures` — Create package wrapping `test-fixtures/` with TS helpers to load by name
 - [ ] `packages/@bnto/test-fixtures` — Add sample CSVs (clean, dirty, large) and rename test files
 - [ ] `apps/web` — Update E2E tests to import from shared package instead of ad-hoc paths
+
+### Security/Performance: File Count Limits & Abuse Guardrails Audit
+
+**Priority: Medium.** We need a documented understanding of safe file count limits per recipe — both for performance (browser memory, WASM heap, ZIP generation) and abuse prevention (someone uploading 10,000 tiny files). The goal is NOT to impose artificially low limits but to stress-test real boundaries and document what's reasonable.
+
+**Scope:**
+- [ ] `apps/web` + `engine` — **Stress test file counts per recipe type.** Compress 50, 100, 200+ images. Clean 50+ CSVs. Rename 500+ files. Measure: browser memory, WASM heap, processing time, ZIP download size, UI responsiveness (file grid render performance)
+- [ ] `apps/web` — **Document recommended limits per recipe.** E.g., image compression: 100 files (because X MB memory at Y average size). File rename: 500 files (lightweight). CSV clean: 50 files (heavier per-file processing). These are guardrails, not hard gates
+- [ ] `apps/web` — **Decide enforcement strategy.** Options: (a) soft warning at threshold ("Processing 200 images may take a while"), (b) hard cap with clear messaging, (c) progressive — process in batches. Document the decision
+- [ ] `apps/web` — **UI performance audit at scale.** Does the file grid lag at 100+ FileCards? Does `Animate.BouncyStagger` choke on 50+ items? Does the responsive grid (3-col) still look good at 20+ files?
+- [ ] `@bnto/core` — **ZIP generation limits.** `createZipBlob` builds the entire ZIP in memory. At what file count / total size does this become a problem? Should large batches stream to disk or use a different strategy?
+- [ ] `.claude/strategy/` — **Write `file-limits.md`** documenting per-recipe limits, rationale, enforcement strategy, and stress test results. This becomes the reference for any future limit-related decisions
 
 ### Engine: Spreadsheet Node Template Resolution — M3/M4 (Go engine)
 

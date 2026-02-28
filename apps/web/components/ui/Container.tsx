@@ -3,7 +3,7 @@ import type { ComponentProps, ElementType } from "react";
 import { createCn } from "./createCn";
 
 const containerCn = createCn({
-  base: "mx-auto w-full px-6",
+  base: "mx-auto w-full px-4 sm:px-6",
   variants: {
     size: {
       sm: "max-w-2xl",

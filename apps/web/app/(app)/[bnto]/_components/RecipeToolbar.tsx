@@ -39,7 +39,7 @@ export function RecipeToolbar({
   centerContent,
 }: RecipeToolbarProps) {
   return (
-    <div className="flex min-h-10 flex-col gap-3 md:flex-row md:items-center md:gap-4">
+    <div role="toolbar" aria-label="Recipe actions" className="flex min-h-10 flex-col gap-3 md:flex-row md:items-center md:gap-4">
       {/* Left: back button + file count + mobile actions */}
       <div className="flex items-center gap-2">
         <Button
@@ -48,6 +48,7 @@ export function RecipeToolbar({
           elevation="sm"
           disabled={isProcessing}
           onClick={onBack}
+          aria-label={activePhase === 3 ? "Back to configure" : "Back to file selection"}
         >
           <ArrowLeftIcon className="size-4" />
         </Button>
@@ -69,7 +70,7 @@ export function RecipeToolbar({
           )}
           {activePhase === 2 && (
             <FileUpload.Clear asChild>
-              <Button variant="outline" size="icon" elevation="md">
+              <Button variant="outline" size="icon" elevation="md" aria-label="Clear all files">
                 <TrashIcon className="size-4" />
               </Button>
             </FileUpload.Clear>
@@ -105,7 +106,7 @@ export function RecipeToolbar({
         )}
         {activePhase === 2 && (
           <FileUpload.Clear asChild>
-            <Button variant="outline" size="icon" elevation="md">
+            <Button variant="outline" size="icon" elevation="md" aria-label="Clear all files">
               <TrashIcon className="size-4" />
             </Button>
           </FileUpload.Clear>

@@ -21,6 +21,7 @@ export function RenameFilesConfig({
           id="rename-pattern"
           type="text"
           wrapperClassName="w-full"
+          aria-describedby="rename-pattern-help"
           value={value.pattern}
           onChange={(e) => onChange({ ...value, pattern: e.target.value })}
           placeholder="renamed-{{name}}"
@@ -35,7 +36,7 @@ export function RenameFilesConfig({
           </span>
         )}
       </div>
-      <p className="text-muted-foreground text-xs">
+      <p id="rename-pattern-help" className="text-muted-foreground text-xs">
         Use <span className="font-mono">{"{{name}}"}</span> and <span className="font-mono">{"{{ext}}"}</span> as placeholders
       </p>
     </div>

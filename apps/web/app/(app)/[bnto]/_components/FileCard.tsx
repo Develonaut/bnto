@@ -66,10 +66,12 @@ export function FileCard({
     <Card
       className="flex items-center gap-3 rounded-lg px-4 py-4"
       elevation="sm"
+      role="listitem"
+      aria-busy={isProcessing}
       data-testid={result ? "output-file" : "input-file"}
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
           {icon}
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -79,6 +81,12 @@ export function FileCard({
           <span className="truncate text-xs text-muted-foreground">
             {subtitle}
           </span>
+          {isProcessing && (
+            <span className="sr-only" role="status">Processing</span>
+          )}
+          {result && (
+            <span className="sr-only">Completed</span>
+          )}
         </div>
       </div>
 

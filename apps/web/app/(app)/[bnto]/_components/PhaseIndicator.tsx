@@ -46,9 +46,10 @@ export function PhaseIndicator({
 
         return (
           <div key={step.phase} className="flex items-center">
-            {/* Connecting line before (not for the first step) */}
+            {/* Connecting line before (not for the first step) — decorative */}
             {i > 0 && (
               <div
+                aria-hidden="true"
                 className={cn(
                   "h-0.5 w-6 sm:w-10",
                   isCompleted || isActive ? "bg-primary" : "bg-border",
@@ -60,6 +61,7 @@ export function PhaseIndicator({
             <div className="flex w-16 flex-col items-center gap-1 sm:w-20">
               <div
                 aria-current={isActive ? "step" : undefined}
+                aria-label={`Step ${displayNumber}: ${step.label}${isCompleted ? " (completed)" : ""}`}
                 className={cn(
                   "surface pressable pointer-events-none flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors duration-fast",
                   isCompleted && "surface-primary elevation-sm bg-primary text-primary-foreground",
@@ -68,12 +70,13 @@ export function PhaseIndicator({
                 )}
               >
                 {isCompleted ? (
-                  <CheckIcon className="size-3.5" />
+                  <CheckIcon aria-hidden="true" className="size-3.5" />
                 ) : (
-                  displayNumber
+                  <span aria-hidden="true">{displayNumber}</span>
                 )}
               </div>
               <span
+                aria-hidden="true"
                 className={cn(
                   "hidden text-xs sm:block",
                   isActive ? "font-medium text-foreground" : "text-muted-foreground",

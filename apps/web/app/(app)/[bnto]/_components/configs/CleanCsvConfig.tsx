@@ -35,12 +35,13 @@ export function CleanCsvConfig({ value, onChange }: CleanCsvConfigProps) {
           <Label htmlFor={`clean-${opt.id}`} className="text-muted-foreground text-xs">{opt.label}</Label>
           <Switch
             id={`clean-${opt.id}`}
+            aria-describedby={`clean-${opt.id}-help`}
             checked={value[opt.id]}
             onCheckedChange={(checked) =>
               onChange({ ...value, [opt.id]: !!checked })
             }
           />
-          <p className="text-muted-foreground max-w-24 text-xs leading-tight">{opt.description}</p>
+          <p id={`clean-${opt.id}-help`} className="text-muted-foreground max-w-24 text-xs leading-tight">{opt.description}</p>
         </div>
       ))}
     </div>

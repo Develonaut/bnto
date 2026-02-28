@@ -5,6 +5,7 @@ import type { BntoEntry } from "@/lib/bntoRegistry";
 import { Animate } from "@/components/ui/Animate";
 import { Container } from "@/components/ui/Container";
 import { FileUpload } from "@/components/ui/FileUpload";
+import { Grid } from "@/components/ui/Grid";
 import { Heading } from "@/components/ui/Heading";
 import { UploadIcon } from "@/components/ui/icons";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
@@ -191,31 +192,49 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
                 />
               )}
 
-              {/* Persistent file grid — always visible in Phases 2 and 3 */}
-              <Animate.BouncyStagger className="flex flex-col gap-2">
-                {files.map((file, i) => {
-                  const result =
-                    activePhase === 3 && isBrowserPath
-                      ? browserExec.results[i]
-                      : undefined;
-                  const isFileProcessing =
-                    activePhase === 3 &&
-                    isBrowserPath &&
-                    browserExec.status === "processing" &&
-                    browserExec.fileProgress?.fileIndex === i;
+              {/* Persistent file grid — always visible in Phases 2 and 3.
+                 * Columns adapt to file count: 1 file = full width,
+                 * 2 files = 2 cols on md+, 3+ files = 2 cols on md / 3 cols on lg. */}
+              <Animate.BouncyStagger asChild>
+                <Grid
+                  cols={1}
+                  gap="sm"
+                  role="list"
+                  aria-label="Selected files"
+                  className={
+                    files.length >= 3
+                      ? "md:grid-cols-2 lg:grid-cols-3"
+                      : files.length === 2
+                        ? "md:grid-cols-2"
+                        : undefined
+                  }
+                >
+                  {files.map((file, i) => {
+                    const result =
+                      activePhase === 3 && isBrowserPath
+                        ? browserExec.results[i]
+                        : undefined;
+                    const isFileProcessing =
+                      activePhase === 3 &&
+                      isBrowserPath &&
+                      browserExec.status === "processing" &&
+                      browserExec.fileProgress?.fileIndex === i;
 
-                  return (
-                    <FileCard
-                      key={`${file.name}-${file.size}-${file.lastModified}`}
-                      file={file}
-                      result={result}
-                      isProcessing={isFileProcessing}
-                      isExecuting={activePhase === 3}
-                      onDelete={() => setFiles(files.filter((_, j) => j !== i))}
-                      onDownload={downloadResult}
-                    />
-                  );
-                })}
+                    return (
+                      <FileCard
+                        key={`${file.name}-${file.size}-${file.lastModified}`}
+                        file={file}
+                        result={result}
+                        isProcessing={isFileProcessing}
+                        isExecuting={activePhase === 3}
+                        onDelete={() =>
+                          setFiles(files.filter((_, j) => j !== i))
+                        }
+                        onDownload={downloadResult}
+                      />
+                    );
+                  })}
+                </Grid>
               </Animate.BouncyStagger>
             </div>
           )}

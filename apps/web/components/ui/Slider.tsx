@@ -13,6 +13,8 @@ function Slider({
   value,
   min = 0,
   max = 100,
+  "aria-describedby": ariaDescribedBy,
+  "aria-valuetext": ariaValueText,
   ...props
 }: ComponentProps<typeof SliderPrimitive.Root>) {
   const _value = useMemo(
@@ -39,6 +41,8 @@ function Slider({
       {Array.from({ length: _value.length }, (_, index) => (
         <SliderPrimitive.Thumb
           key={index}
+          aria-describedby={ariaDescribedBy}
+          aria-valuetext={ariaValueText}
           className="surface surface-primary elevation-sm pressable flex items-center justify-center size-8 rounded-full outline-none! ring-0 disabled:pointer-events-none"
         >
           <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />

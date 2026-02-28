@@ -23,14 +23,14 @@ export function ConvertFormatConfig({
   return (
     <div className="flex w-full items-end gap-4">
       <div className="flex shrink-0 flex-col gap-1">
-        <Label className="text-muted-foreground text-xs">Format</Label>
+        <Label id="convert-format-label" className="text-muted-foreground text-xs">Format</Label>
         <Select
           value={value.format}
           onValueChange={(format) =>
             onChange({ ...value, format: format as Config["format"] })
           }
         >
-          <Select.Trigger className="w-24">
+          <Select.Trigger className="w-24" aria-labelledby="convert-format-label" aria-describedby="convert-format-help">
             <Select.Value />
           </Select.Trigger>
           <Select.Content>
@@ -41,14 +41,17 @@ export function ConvertFormatConfig({
             ))}
           </Select.Content>
         </Select>
-        <p className="text-muted-foreground text-xs">Output type</p>
+        <p id="convert-format-help" className="text-muted-foreground text-xs">Output type</p>
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <Label className="text-muted-foreground text-xs">Quality</Label>
+        <Label id="convert-quality-label" className="text-muted-foreground text-xs">Quality</Label>
         <div className="flex items-center gap-3">
           <Slider
             className="w-full"
+            aria-labelledby="convert-quality-label"
+            aria-describedby="convert-quality-help"
+            aria-valuetext={`${value.quality} percent`}
             value={[value.quality]}
             onValueChange={([quality]: number[]) =>
               onChange({ ...value, quality: quality ?? value.quality })
@@ -61,7 +64,7 @@ export function ConvertFormatConfig({
             {value.quality}%
           </span>
         </div>
-        <p className="text-muted-foreground text-xs">Lower values reduce file size</p>
+        <p id="convert-quality-help" className="text-muted-foreground text-xs">Lower values reduce file size</p>
       </div>
     </div>
   );

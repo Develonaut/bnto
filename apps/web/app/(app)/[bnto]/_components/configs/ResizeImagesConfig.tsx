@@ -23,6 +23,7 @@ export function ResizeImagesConfig({
           type="number"
           min={1}
           max={10000}
+          aria-describedby="resize-width-help"
           value={value.width}
           wrapperClassName="w-24"
           onChange={(e) => {
@@ -32,18 +33,19 @@ export function ResizeImagesConfig({
             }
           }}
         />
-        <p className="text-muted-foreground text-xs">Target width in pixels</p>
+        <p id="resize-width-help" className="text-muted-foreground text-xs">Target width in pixels</p>
       </div>
       <div className="flex shrink-0 flex-col gap-1">
         <Label htmlFor="resize-aspect-ratio" className="text-muted-foreground text-xs">Aspect ratio</Label>
         <Switch
           id="resize-aspect-ratio"
+          aria-describedby="resize-aspect-ratio-help"
           checked={value.maintainAspectRatio}
           onCheckedChange={(maintainAspectRatio) =>
             onChange({ ...value, maintainAspectRatio: !!maintainAspectRatio })
           }
         />
-        <p className="text-muted-foreground text-xs">Keep proportions</p>
+        <p id="resize-aspect-ratio-help" className="text-muted-foreground text-xs">Keep proportions</p>
       </div>
     </div>
   );
