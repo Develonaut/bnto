@@ -9,9 +9,18 @@
  * - No Go API call (WASM processes in the browser)
  * - Progress comes from the Web Worker, not polling
  *
- * The service owns the execution store and the full lifecycle:
- *   run() → start → progress → complete/fail
- * React hooks are thin bindings over the store.
+ * Two execution modes:
+ *
+ * 1. **Singleton** (backward-compatible): `service.run()` / `service.store`
+ *    Uses a single store created at module load. Simple, but leaks state
+ *    between recipe pages.
+ *
+ * 2. **Per-instance** (preferred): `service.createExecution()`
+ *    Factory returns `{ store, run, reset }` per caller. Each recipe page
+ *    mount gets its own isolated execution lifecycle. No cross-page leaks.
+ *
+ * Global concerns (engine registration, capability checks, downloads) are
+ * shared across all instances — they don't carry execution state.
  */
 
 import {
@@ -26,25 +35,105 @@ import {
 } from "../adapters/browser/slugCapability";
 import { downloadBlob } from "../adapters/browser/downloadBlob";
 import { createZipBlob } from "../adapters/browser/createZipBlob";
-import { createBrowserExecutionStore } from "../stores/browserExecutionStore";
+import {
+  createBrowserExecutionStore,
+  type BrowserExecutionState,
+} from "../stores/browserExecutionStore";
 import type {
   BrowserEngine,
   BrowserFileResult,
   BrowserFileProgress,
 } from "../types/browser";
+import type { StoreApi } from "zustand/vanilla";
 
-export function createBrowserExecutionService() {
-  // The service owns its store instance. React hooks read from it;
-  // only the service writes to it (via run/reset).
+// ---------------------------------------------------------------------------
+// Execution instance — isolated store + run/reset per caller
+// ---------------------------------------------------------------------------
+
+/** An isolated execution instance with its own store and lifecycle. */
+export interface BrowserExecutionInstance {
+  /** The Zustand store backing this execution's state. */
+  store: StoreApi<BrowserExecutionState>;
+  /**
+   * Run a browser execution with full lifecycle management.
+   * Manages store transitions: idle → processing → completed/failed.
+   */
+  run: (
+    slug: string,
+    files: File[],
+    params?: Record<string, unknown>,
+  ) => Promise<void>;
+  /** Reset execution state to idle. Aborts any in-progress run. */
+  reset: () => void;
+}
+
+/**
+ * Create an isolated execution instance with its own store.
+ *
+ * The `execute` function is shared (stateless, uses global engine registry).
+ * Each instance gets its own abort flag and store — no cross-instance leaks.
+ */
+function createExecutionInstance(
+  execute: (
+    slug: string,
+    files: File[],
+    params: Record<string, unknown>,
+    onProgress?: (progress: BrowserFileProgress) => void,
+  ) => Promise<BrowserFileResult[]>,
+): BrowserExecutionInstance {
   const store = createBrowserExecutionStore();
-
-  // Abort flag — checked in the progress callback to stop
-  // updating the store after reset() is called mid-execution.
-  // Not a real WASM cancellation (Web Worker keeps running).
   let aborted = false;
 
+  return {
+    store,
+
+    run: async (
+      slug: string,
+      files: File[],
+      params: Record<string, unknown> = {},
+    ): Promise<void> => {
+      aborted = false;
+
+      const id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `exec-${Date.now()}`;
+
+      store.getState().start(id, Date.now());
+
+      try {
+        const onProgress = (progress: BrowserFileProgress) => {
+          if (aborted) return;
+          store.getState().progress(progress);
+        };
+
+        const results = await execute(slug, files, params, onProgress);
+
+        if (aborted) return;
+        store.getState().complete(results, Date.now());
+      } catch (e) {
+        if (aborted) return;
+        store.getState().fail(
+          e instanceof Error ? e.message : "Processing failed",
+          Date.now(),
+        );
+      }
+    },
+
+    reset: () => {
+      aborted = true;
+      store.getState().reset();
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Service factory
+// ---------------------------------------------------------------------------
+
+export function createBrowserExecutionService() {
   /**
-   * Execute a bnto in the browser (low-level).
+   * Execute a bnto in the browser (low-level, stateless).
    *
    * Initializes the engine if needed, processes all files through
    * the WASM worker, and returns results as in-memory blobs.
@@ -92,9 +181,13 @@ export function createBrowserExecutionService() {
     );
   };
 
+  // Singleton instance for backward compatibility.
+  // New consumers should use createExecution() instead.
+  const singleton = createExecutionInstance(execute);
+
   return {
-    /** The Zustand store backing execution state. */
-    store,
+    /** The singleton Zustand store (backward-compatible). Prefer createExecution(). */
+    store: singleton.store,
 
     // ── Capability Detection ───────────────────────────────────────
     /** Check if a slug has a working browser execution path. */
@@ -113,56 +206,33 @@ export function createBrowserExecutionService() {
     /** Whether a browser engine has been registered. */
     hasEngine: () => hasBrowserEngine(),
 
-    // ── Lifecycle (service owns the full orchestration) ─────────────
+    // ── Per-Instance Factory ────────────────────────────────────────
 
     /**
-     * Run a browser execution with full lifecycle management.
+     * Create an isolated execution instance with its own store.
      *
-     * Manages the store transitions: idle → processing → completed/failed.
-     * Progress updates flow through the store automatically.
+     * Each instance has independent state (idle/processing/completed/failed),
+     * its own abort flag, and its own results. Navigating between recipe pages
+     * won't leak state because each page mount creates its own instance.
      *
-     * @param slug - The bnto slug (e.g., "compress-images").
-     * @param files - Files to process.
-     * @param params - Node-specific config (e.g., { quality: 80 }).
+     * Global concerns (engine, capability checks, downloads) are shared.
+     *
+     * Usage in React:
+     *   const [instance] = useState(() => core.browser.createExecution());
      */
-    run: async (
-      slug: string,
-      files: File[],
-      params: Record<string, unknown> = {},
-    ): Promise<void> => {
-      aborted = false;
+    createExecution: (): BrowserExecutionInstance =>
+      createExecutionInstance(execute),
 
-      const id =
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `exec-${Date.now()}`;
+    // ── Singleton Lifecycle (backward-compatible) ───────────────────
 
-      store.getState().start(id, Date.now());
+    /**
+     * Run via the singleton store (backward-compatible).
+     * Prefer createExecution() for per-page isolation.
+     */
+    run: singleton.run,
 
-      try {
-        const onProgress = (progress: BrowserFileProgress) => {
-          if (aborted) return;
-          store.getState().progress(progress);
-        };
-
-        const results = await execute(slug, files, params, onProgress);
-
-        if (aborted) return;
-        store.getState().complete(results, Date.now());
-      } catch (e) {
-        if (aborted) return;
-        store.getState().fail(
-          e instanceof Error ? e.message : "Processing failed",
-          Date.now(),
-        );
-      }
-    },
-
-    /** Reset execution state to idle. Aborts any in-progress run. */
-    reset: () => {
-      aborted = true;
-      store.getState().reset();
-    },
+    /** Reset the singleton store (backward-compatible). */
+    reset: singleton.reset,
 
     // ── Low-level execution (no store management) ───────────────────
     /** Execute without lifecycle management. For callers managing their own state. */

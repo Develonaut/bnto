@@ -48,3 +48,7 @@ export type { AuthUser, AuthState, AuthStatus } from "./types/auth";
 
 // ── Store types (for consumer selectors) ──────────────────────────────────
 export type { RecipeFlowState } from "./stores/recipeFlowStore";
+export type { BrowserExecutionState } from "./stores/browserExecutionStore";
+
+// ── Service types (for instance consumers) ────────────────────────────────
+export type { BrowserExecutionInstance } from "./services/browserExecutionService";

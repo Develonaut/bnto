@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { core } from "@bnto/core";
+import type { BrowserFileResult } from "@bnto/core";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { getRecipe } from "@/lib/menu";
 import type { BntoConfigMap, BntoSlug } from "../_components/configs/types";
@@ -17,7 +18,7 @@ import { useBrowserEngine } from "@/lib/wasm/useBrowserEngine";
  *
  * Composes three layers:
  *   1. Page-scoped recipeFlowStore (files, config, cloud state)
- *   2. Browser execution (WASM via @bnto/core)
+ *   2. Per-instance browser execution (WASM via @bnto/core)
  *   3. Cloud execution (R2 upload + Railway via @bnto/core)
  *
  * RecipeShell consumes this hook and renders the return values —
@@ -50,20 +51,21 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   const isBrowserPath = core.browser.hasImplementation(entry.slug);
   useBrowserEngine(isBrowserPath);
 
-  // -- Browser execution --
-  const {
-    execution: browserExec,
-    execute: browserExecute,
-    downloadResult,
-    downloadAll,
-    reset: resetBrowser,
-  } = core.browser.useBrowserExecution();
+  // -- Per-instance browser execution (isolated store per page mount) --
+  const [browserInstance] = useState(() => core.browser.createExecution());
 
-  // Reset singleton browser execution store on mount so stale state
-  // from a previous recipe doesn't trigger auto-download or show old results.
-  useEffect(() => {
-    core.browser.reset();
-  }, []);
+  const browserExec = useStore(
+    browserInstance.store,
+    useShallow((s) => ({
+      id: s.id,
+      status: s.status,
+      fileProgress: s.fileProgress,
+      results: s.results,
+      error: s.error,
+      startedAt: s.startedAt,
+      completedAt: s.completedAt,
+    })),
+  );
 
   // -- Cloud execution --
   const { progress: uploadProgress, upload, reset: resetUpload } =
@@ -90,16 +92,20 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     [store],
   );
 
-  const handleDownloadAll = useCallback(
-    () => downloadAll(entry.slug),
-    [downloadAll, entry.slug],
-  );
+  const downloadResult = useCallback((result: BrowserFileResult) => {
+    core.browser.downloadResult(result);
+  }, []);
+
+  const handleDownloadAll = useCallback(() => {
+    const results = browserInstance.store.getState().results;
+    core.browser.downloadAllResults(results, entry.slug);
+  }, [browserInstance, entry.slug]);
 
   const handleRun = useCallback(async () => {
     if (files.length === 0) return;
 
     if (isBrowserPath) {
-      await browserExecute(
+      await browserInstance.run(
         entry.slug,
         files,
         config as Record<string, unknown>,
@@ -130,7 +136,7 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     files,
     config,
     isBrowserPath,
-    browserExecute,
+    browserInstance,
     upload,
     startCloudExec,
     store,
@@ -138,7 +144,7 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
 
   const handleResetExecution = useCallback(() => {
     if (isBrowserPath) {
-      resetBrowser();
+      browserInstance.reset();
     } else {
       store.setState({
         executionId: null,
@@ -147,7 +153,7 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
       });
       resetUpload();
     }
-  }, [isBrowserPath, resetBrowser, resetUpload, store]);
+  }, [isBrowserPath, browserInstance, resetUpload, store]);
 
   const handleReset = useCallback(() => {
     setFiles([]);

@@ -538,4 +538,188 @@ describe("browserExecutionService", () => {
       expect(service.store.getState().status).toBe("completed");
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────
+  // Per-instance factory: createExecution()
+  // ─────────────────────────────────────────────────────────────────
+
+  describe("createExecution — instance isolation", () => {
+    it("returns an instance with its own store", () => {
+      const instance = service.createExecution();
+      expect(instance.store).toBeDefined();
+      expect(instance.store.getState).toBeDefined();
+      expect(instance.store.getState().status).toBe("idle");
+    });
+
+    it("each instance gets a separate store", () => {
+      const a = service.createExecution();
+      const b = service.createExecution();
+      expect(a.store).not.toBe(b.store);
+    });
+
+    it("instance store is separate from the singleton store", () => {
+      const instance = service.createExecution();
+      expect(instance.store).not.toBe(service.store);
+    });
+
+    it("instance run does not affect the singleton store", async () => {
+      registerBrowserEngine(createMockEngine());
+
+      const instance = service.createExecution();
+      await instance.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      // Instance is completed
+      expect(instance.store.getState().status).toBe("completed");
+      expect(instance.store.getState().results).toHaveLength(1);
+
+      // Singleton is still idle
+      expect(service.store.getState().status).toBe("idle");
+      expect(service.store.getState().results).toEqual([]);
+    });
+
+    it("singleton run does not affect instance stores", async () => {
+      registerBrowserEngine(createMockEngine());
+
+      const instance = service.createExecution();
+      await service.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      // Singleton is completed
+      expect(service.store.getState().status).toBe("completed");
+
+      // Instance is still idle
+      expect(instance.store.getState().status).toBe("idle");
+    });
+
+    it("two instances don't interfere with each other", async () => {
+      registerBrowserEngine(createMockEngine());
+
+      const a = service.createExecution();
+      const b = service.createExecution();
+
+      await a.run("compress-images", [new File(["a"], "a.jpg")]);
+
+      // Instance A is completed
+      expect(a.store.getState().status).toBe("completed");
+      // Instance B is still idle
+      expect(b.store.getState().status).toBe("idle");
+
+      await b.run("compress-images", [new File(["b"], "b.jpg")]);
+
+      // Both completed independently
+      expect(a.store.getState().status).toBe("completed");
+      expect(b.store.getState().status).toBe("completed");
+    });
+
+    it("instance reset only resets its own store", async () => {
+      registerBrowserEngine(createMockEngine());
+
+      const a = service.createExecution();
+      const b = service.createExecution();
+
+      await a.run("compress-images", [new File(["a"], "a.jpg")]);
+      await b.run("compress-images", [new File(["b"], "b.jpg")]);
+
+      a.reset();
+
+      // A is reset, B is untouched
+      expect(a.store.getState().status).toBe("idle");
+      expect(b.store.getState().status).toBe("completed");
+    });
+  });
+
+  describe("createExecution — full lifecycle", () => {
+    it("transitions through idle → processing → completed", async () => {
+      const expectedResult: BrowserFileResult = {
+        blob: new Blob(["out"], { type: "image/jpeg" }),
+        filename: "output.jpg",
+        mimeType: "image/jpeg",
+        metadata: { ratio: 0.5 },
+      };
+
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockResolvedValue([expectedResult]),
+      });
+      registerBrowserEngine(engine);
+
+      const instance = service.createExecution();
+      expect(instance.store.getState().status).toBe("idle");
+
+      await instance.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      const state = instance.store.getState();
+      expect(state.status).toBe("completed");
+      expect(state.results).toEqual([expectedResult]);
+      expect(state.id).toBeTruthy();
+      expect(state.startedAt).toBeTypeOf("number");
+      expect(state.completedAt).toBeTypeOf("number");
+    });
+
+    it("transitions through idle → processing → failed on error", async () => {
+      const engine = createMockEngine({
+        processFiles: vi
+          .fn()
+          .mockRejectedValue(new Error("Corrupt JPEG")),
+      });
+      registerBrowserEngine(engine);
+
+      const instance = service.createExecution();
+      await instance.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      const state = instance.store.getState();
+      expect(state.status).toBe("failed");
+      expect(state.error).toBe("Corrupt JPEG");
+    });
+
+    it("abort stops progress updates after reset", async () => {
+      let resolveExecution: (value: BrowserFileResult[]) => void;
+      const executionPromise = new Promise<BrowserFileResult[]>(
+        (resolve) => {
+          resolveExecution = resolve;
+        },
+      );
+
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockImplementation(
+          async (
+            _files: File[],
+            _nodeType: string,
+            _params: Record<string, unknown>,
+            onProgress?: (
+              fileIndex: number,
+              percent: number,
+              message: string,
+            ) => void,
+          ) => {
+            onProgress?.(0, 50, "Processing...");
+            return executionPromise;
+          },
+        ),
+      });
+      registerBrowserEngine(engine);
+
+      const instance = service.createExecution();
+      const runPromise = instance.run("compress-images", [
+        new File(["data"], "test.jpg"),
+      ]);
+
+      await new Promise((r) => setTimeout(r, 0));
+
+      instance.reset();
+      expect(instance.store.getState().status).toBe("idle");
+
+      resolveExecution!([]);
+      await runPromise;
+
+      // Store should still be idle (not completed)
+      expect(instance.store.getState().status).toBe("idle");
+    });
+  });
 });

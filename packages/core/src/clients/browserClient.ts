@@ -10,7 +10,7 @@ import type { BrowserExecutionService } from "../services/browserExecutionServic
  */
 export function createBrowserClient(browser: BrowserExecutionService) {
   return {
-    /** The Zustand store backing execution state. */
+    /** The singleton Zustand store (backward-compatible). Prefer createExecution(). */
     store: browser.store,
 
     // ── Capability Detection ───────────────────────────────────────
@@ -22,10 +22,19 @@ export function createBrowserClient(browser: BrowserExecutionService) {
     registerEngine: browser.registerEngine,
     hasEngine: () => browser.hasEngine(),
 
-    // ── Lifecycle ──────────────────────────────────────────────────
-    /** Run a browser execution with full lifecycle management. */
+    // ── Per-Instance Factory ────────────────────────────────────────
+    /**
+     * Create an isolated execution instance with its own store.
+     *
+     * Each instance has independent state — no cross-page leaks.
+     * Usage: `const [instance] = useState(() => core.browser.createExecution())`
+     */
+    createExecution: browser.createExecution,
+
+    // ── Singleton Lifecycle (backward-compatible) ───────────────────
+    /** Run via the singleton store (backward-compatible). Prefer createExecution(). */
     run: browser.run,
-    /** Reset execution state to idle. Aborts any in-progress run. */
+    /** Reset the singleton store (backward-compatible). */
     reset: browser.reset,
 
     // ── Low-level execution ────────────────────────────────────────
