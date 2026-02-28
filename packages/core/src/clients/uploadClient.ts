@@ -4,7 +4,7 @@ import type {
   UploadService,
   OnUploadProgress,
 } from "../services/uploadService";
-import type { UploadFileInput, UploadSession } from "../types/upload";
+import type { UploadFileInput } from "../types/upload";
 
 /**
  * Upload client — public API for file upload operations.

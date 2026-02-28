@@ -36,7 +36,7 @@ export default defineSchema({
     userId: v.id("users"),
     name: v.string(),
     // WorkflowDefinition JSON — validated by Go engine, stored opaquely here
-    definition: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
+    definition: v.any(),
     version: v.number(),
     isPublic: v.boolean(),
     createdAt: v.number(),
@@ -58,7 +58,7 @@ export default defineSchema({
       v.object({ nodeId: v.string(), status: v.string() }),
     ),
     // Result JSON from Go engine — shape varies
-    result: v.optional(v.any()), // eslint-disable-line @typescript-eslint/no-explicit-any
+    result: v.optional(v.any()),
     error: v.optional(v.string()),
     goExecutionId: v.optional(v.string()),
     // R2 file transit — links execution to uploaded input files and output results
