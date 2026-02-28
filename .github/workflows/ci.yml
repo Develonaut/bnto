@@ -13,10 +13,13 @@ concurrency:
 
 jobs:
   go:
-    name: Go (vet + test)
+    name: Go (vet + build + test)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libwebp-dev
 
       - uses: actions/setup-go@v5
         with:
@@ -29,6 +32,12 @@ jobs:
         run: |
           go vet ./archive/engine-go/...
           go vet ./archive/api-go/...
+
+      - name: Build engine CLI
+        run: cd archive/engine-go && go build -o /dev/null ./cmd/bnto/
+
+      - name: Build API server
+        run: cd archive/api-go && go build -o /dev/null ./cmd/api/
 
       - name: Engine tests
         run: cd archive/engine-go && go test -race ./...
@@ -55,7 +64,7 @@ jobs:
           workspaces: engine
 
       - name: Install wasm-pack
-        run: cargo install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Format check
         run: cargo fmt --all -- --check
@@ -97,3 +106,23 @@ jobs:
 
       - name: Test
         run: pnpm turbo run test
+
+  # Gate job — single status check for branch protection and Vercel
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    needs: [go, rust, typescript]
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          if [ "${{ needs.go.result }}" != "success" ] || \
+             [ "${{ needs.rust.result }}" != "success" ] || \
+             [ "${{ needs.typescript.result }}" != "success" ]; then
+            echo "One or more CI jobs failed:"
+            echo "  Go:         ${{ needs.go.result }}"
+            echo "  Rust:       ${{ needs.rust.result }}"
+            echo "  TypeScript: ${{ needs.typescript.result }}"
+            exit 1
+          fi
+          echo "All CI jobs passed."
