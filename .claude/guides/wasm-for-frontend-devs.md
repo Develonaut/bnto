@@ -143,6 +143,169 @@ apps/web/
 
 ---
 
+## Where Does Each Piece Live? (The Thread Map)
+
+This is the question that trips people up. There are **two threads** running in the browser, and different code lives on each one. Here's the definitive map:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        MAIN THREAD                                  │
+│                  (where React lives)                                │
+│                                                                     │
+│   ┌──────────────────────┐    ┌───────────────────────────────┐    │
+│   │   React Components   │    │   @bnto/core                  │    │
+│   │                      │    │                               │    │
+│   │   RecipePage.tsx     │───>│   useWasmExecution() hook     │    │
+│   │   FileDropZone.tsx   │    │   wasmExecutionService.ts     │    │
+│   │   ResultsPanel.tsx   │    │   wasmExecutionStore (Zustand)│    │
+│   │                      │    │                               │    │
+│   └──────────────────────┘    └───────────┬───────────────────┘    │
+│                                           │                        │
+│                                           v                        │
+│                               ┌───────────────────────┐           │
+│                               │   BntoWorker.ts       │           │
+│                               │   (TypeScript class)   │           │
+│                               │                       │           │
+│                               │   - Creates Worker    │           │
+│                               │   - Sends messages    │           │
+│                               │   - Correlates IDs    │           │
+│                               │   - Returns Promises  │           │
+│                               └───────────┬───────────┘           │
+│                                           │                        │
+│ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─│─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─│
+│                                    postMessage()                    │
+│                               (ArrayBuffer transfer)               │
+│ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─│─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─│
+│                                           │                        │
+│                        WORKER THREAD      │                        │
+│                  (where WASM lives)       v                        │
+│                                                                     │
+│                               ┌───────────────────────┐           │
+│                               │   bnto.worker.ts      │           │
+│                               │   (Worker script, JS)  │           │
+│                               │                       │           │
+│                               │   - Receives messages │           │
+│                               │   - Loads WASM module │           │
+│                               │   - Calls Rust fns    │           │
+│                               │   - Sends results back│           │
+│                               └───────────┬───────────┘           │
+│                                           │                        │
+│                                           v                        │
+│                               ┌───────────────────────┐           │
+│                               │   bnto_wasm.js        │           │
+│                               │   (auto-generated     │           │
+│                               │    JS glue code)      │           │
+│                               │                       │           │
+│                               │   - Type conversion   │           │
+│                               │   - Memory management │           │
+│                               └───────────┬───────────┘           │
+│                                           │                        │
+│                                           v                        │
+│                               ┌───────────────────────┐           │
+│                               │   bnto_wasm_bg.wasm   │           │
+│                               │   (compiled Rust)      │           │
+│                               │                       │           │
+│                               │   compress_image()    │           │
+│                               │   clean_csv()         │           │
+│                               │   rename_file()       │           │
+│                               └───────────────────────┘           │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### The Two Boundaries
+
+There are actually **two boundaries** in this system, and they're different:
+
+```
+Main Thread          │  Worker Thread          │  WASM Sandbox
+(JavaScript)         │  (JavaScript + WASM)    │  (Rust bytecode)
+                     │                         │
+React components     │  bnto.worker.ts         │  bnto_wasm_bg.wasm
+BntoWorker.ts        │  bnto_wasm.js (glue)    │
+Zustand stores       │                         │
+                     │                         │
+    ─── Boundary 1 ──┤─── ── ── Boundary 2 ───┤
+    postMessage()    │  JS function calls      │
+    (async, copies)  │  (sync, fast)           │
+```
+
+**Boundary 1: Main Thread ↔ Worker Thread.** This is the `postMessage()` boundary. Data crosses as serialized messages. `ArrayBuffer`s can be *transferred* (zero-copy ownership handoff) but everything else gets copied. This is **asynchronous** — you send a message and get a response later.
+
+**Boundary 2: Worker JS ↔ WASM.** This is a function call boundary *within the same thread*. The worker's JavaScript calls exported Rust functions through the auto-generated glue code. This is **synchronous** — when JS calls `compress_image_bytes()`, it blocks until Rust returns. (That's fine because we're already on a background thread — blocking here doesn't freeze the UI.)
+
+### The Key Mental Model
+
+**The main thread never touches WASM.** Not the binary, not the glue code, not the Rust functions. The main thread has zero WASM involvement. It only talks to `BntoWorker.ts`, which is a plain TypeScript class that wraps `postMessage()` calls.
+
+**The worker thread has both JS and WASM.** The worker script (`bnto.worker.ts`) is JavaScript. It loads the WASM module, calls Rust functions, and marshals data. From the worker's perspective, calling a Rust function feels like calling any other JavaScript function — the glue code hides the boundary.
+
+```
+Main Thread:    JS ──postMessage──> JS ──function call──> WASM
+                ^                   ^                     ^
+                |                   |                     |
+           React/Core         Worker script          Rust binary
+           (your world)       (the bridge)           (the engine)
+```
+
+Think of it like ordering food through a delivery app:
+- **You (main thread)** tap "Order" in the app. You don't walk to the restaurant.
+- **The delivery driver (worker script)** picks up the order and brings it to the kitchen.
+- **The chef (WASM/Rust)** cooks the food. The chef never talks to you directly.
+- **The driver brings the food back** to your door. You eat it (render the result).
+
+### The Full Message Flow
+
+Here's exactly what happens when a user processes a file, with the thread boundary marked:
+
+```
+MAIN THREAD                          ║  WORKER THREAD
+                                     ║
+1. User drops a file                 ║
+      │                              ║
+2. React reads File → ArrayBuffer    ║
+      │                              ║
+3. BntoWorker.process()             ║
+   creates ProcessRequest            ║
+   {id: "abc", data: [bytes],        ║
+    nodeType: "compress-images",     ║
+    params: {quality: 75}}           ║
+      │                              ║
+4. postMessage(request, [data])  ════╬════════════════════>
+   (ArrayBuffer transferred —        ║  5. onmessage receives request
+    main thread loses access)        ║        │
+      │                              ║  6. Worker looks up node type
+      │  UI stays responsive         ║     in its local registry
+      │  (React keeps rendering,     ║        │
+      │   user can scroll, click)    ║  7. Worker calls WASM:
+      │                              ║     compress_image_bytes(
+      │                              ║       data, filename,
+      │                              ║       params, progressCb)
+      │                              ║        │
+      │                              ║  8. Rust compresses image...
+      │                              ║     (100-500ms of CPU work)
+      │                              ║        │
+      │                              ║  9. Rust calls progressCb(50, "Encoding...")
+      │                              ║        │
+   <══╬═══════════════════════════════╬══ 10. Worker sends ProgressResponse
+      │                              ║        │
+11. BntoWorker fires onProgress     ║  12. Rust finishes, returns bytes
+    → Zustand store updates          ║        │
+    → React re-renders progress bar  ║  13. Worker sends ResultResponse
+      │                              ║     postMessage(result, [data])
+   <══╬═══════════════════════════════╬══     (ArrayBuffer transferred back)
+      │                              ║
+14. BntoWorker resolves Promise     ║
+    → Store: processing → completed  ║
+    → React renders download link    ║
+      │                              ║
+15. User clicks download             ║
+```
+
+Notice: steps 4 through 13 happen **concurrently**. The main thread is free to do other things (step 11 — update the UI with progress) while the worker crunches data. This is the whole point of the Worker architecture.
+
+---
+
 ## The JS-WASM Boundary (The Border Crossing)
 
 Think of the WASM boundary like a border crossing between two countries. Both countries are inside the browser, but they speak different languages and have different rules. Every time data crosses the border, it has to go through customs.
@@ -291,6 +454,31 @@ Think of it like a restaurant:
 - **Messages** = the order tickets that go between front and back
 
 The waiter (main thread) takes the order (file), passes the ticket to the kitchen (Worker), the chef (WASM) cooks it, and the waiter brings the finished plate (result) back to the customer (UI). The customer never waits at an empty table while the chef is cooking — the waiter keeps refilling their water.
+
+### Why Not Load WASM on the Main Thread?
+
+You *could* load the `.wasm` file directly on the main thread. It would work. But it would be a terrible user experience:
+
+```
+Main thread WITHOUT a Worker:          Main thread WITH a Worker:
+
+User drops file                        User drops file
+  │                                      │
+  ▼                                      ▼
+Load WASM (200ms)                      Send to Worker
+  │  ← UI frozen                         │  ← UI free
+  ▼                                      │
+Compress image (300ms)                   │  User scrolls, clicks,
+  │  ← UI frozen                         │  sees progress bar update
+  ▼                                      │
+Show result                              ▼
+                                       Show result
+Total: 500ms of frozen UI             Total: 0ms of frozen UI
+```
+
+The total processing time is the same. The difference is **who feels it**. With a Worker, the user's main thread stays free — progress bars animate, buttons respond, the app feels alive. Without a Worker, the page turns into a frozen screenshot for half a second.
+
+**This is why bnto's architecture has a hard rule:** WASM is always loaded in, and called from, the Worker thread. The main thread only has TypeScript/JavaScript — `BntoWorker.ts`, React components, Zustand stores. No `.wasm` imports, no glue code, no Rust function calls. If you see WASM touching the main thread, it's a bug.
 
 ---
 
