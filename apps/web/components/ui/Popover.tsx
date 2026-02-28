@@ -1,13 +1,14 @@
 "use client";
 
-import * as React from "react";
+import { forwardRef } from "react";
+import type { ComponentProps, ElementRef, ComponentPropsWithoutRef } from "react";
 
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 
 import { cn } from "@/lib/cn";
 
 function PopoverRoot(
-  props: React.ComponentProps<typeof PopoverPrimitive.Root>,
+  props: ComponentProps<typeof PopoverPrimitive.Root>,
 ) {
   return <PopoverPrimitive.Root {...props} />;
 }
@@ -22,9 +23,9 @@ const PopoverClose = PopoverPrimitive.Close;
 
 const PopoverContentUnstyled = PopoverPrimitive.Content;
 
-const PopoverContent = React.forwardRef<
-  React.ElementRef<typeof PopoverPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+const PopoverContent = forwardRef<
+  ElementRef<typeof PopoverPrimitive.Content>,
+  ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
 >(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
   <PopoverPrimitive.Portal>
     <PopoverPrimitive.Content

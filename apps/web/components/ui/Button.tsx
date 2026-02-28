@@ -1,4 +1,4 @@
-import * as React from "react";
+import type { CSSProperties, ComponentProps, Ref, ElementType } from "react";
 
 import Link from "next/link";
 import { Slot } from "@radix-ui/react-slot";
@@ -16,16 +16,16 @@ import { createCn } from "./createCn";
 
 type SpringMode = "sm" | "md" | "lg";
 
-const SPRING_STYLES: Record<SpringMode, React.CSSProperties> = {
+const SPRING_STYLES: Record<SpringMode, CSSProperties> = {
   sm: {},
   md: {
     "--pressable-ease": "var(--ease-spring-bouncier)",
     "--pressable-dur": "400ms",
-  } as React.CSSProperties,
+  } as CSSProperties,
   lg: {
     "--pressable-ease": "var(--ease-spring-pressable)",
     "--pressable-dur": "550ms",
-  } as React.CSSProperties,
+  } as CSSProperties,
 };
 
 /* ── Class split ──────────────────────────────────────────────
@@ -101,8 +101,8 @@ function Button({
   style,
   ref,
   ...props
-}: Omit<React.ComponentProps<"button">, "ref"> &
-  Omit<React.ComponentProps<"a">, "ref"> & {
+}: Omit<ComponentProps<"button">, "ref"> &
+  Omit<ComponentProps<"a">, "ref"> & {
     variant?: ButtonVariant;
     size?: ButtonSize;
     asChild?: boolean;
@@ -113,11 +113,11 @@ function Button({
     pressed?: boolean;
     toggle?: boolean;
     href?: string;
-    ref?: React.Ref<HTMLElement>;
+    ref?: Ref<HTMLElement>;
   }) {
   const isLink = !!href;
   const isInternal = isLink && href.startsWith("/") && !props.target;
-  const Comp: React.ElementType = asChild
+  const Comp: ElementType = asChild
     ? Slot
     : isInternal
       ? Link
