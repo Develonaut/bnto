@@ -28,6 +28,9 @@ export function BrowserExecutionProgress({
       className="space-y-3 rounded-lg border border-border bg-card p-4"
       data-testid="browser-execution-progress"
       data-status={execution.status}
+      data-file-index={fileProgress?.fileIndex}
+      data-total-files={fileProgress?.totalFiles}
+      data-overall-percent={fileProgress?.overallPercent}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

@@ -26,12 +26,19 @@ export function ToolbarProgress({ execution }: ToolbarProgressProps) {
     const saved = totalSaved > 0 ? formatFileSize(totalSaved) + " saved" : undefined;
 
     return (
-      <LinearProgress
-        value={100}
-        icon={<CheckCircle2Icon className="size-4 shrink-0 text-primary" />}
-        label={label}
-        valueLabel={saved ?? "100%"}
-      />
+      <div
+        data-testid="toolbar-progress"
+        data-status="completed"
+        data-total-saved={totalSaved}
+        data-files-count={execution.results.length}
+      >
+        <LinearProgress
+          value={100}
+          icon={<CheckCircle2Icon className="size-4 shrink-0 text-primary" />}
+          label={label}
+          valueLabel={saved ?? "100%"}
+        />
+      </div>
     );
   }
 
@@ -39,20 +46,30 @@ export function ToolbarProgress({ execution }: ToolbarProgressProps) {
 
   if (!fileProgress) {
     return (
-      <LinearProgress
-        value={0}
-        icon={<LoaderIcon className="size-4 shrink-0 text-primary motion-safe:animate-spin" />}
-        label="Initializing\u2026"
-        valueLabel=""
-      />
+      <div data-testid="toolbar-progress" data-status="processing">
+        <LinearProgress
+          value={0}
+          icon={<LoaderIcon className="size-4 shrink-0 text-primary motion-safe:animate-spin" />}
+          label="Initializing\u2026"
+          valueLabel=""
+        />
+      </div>
     );
   }
 
   return (
-    <LinearProgress
-      value={fileProgress.overallPercent}
-      icon={<LoaderIcon className="size-4 shrink-0 text-primary motion-safe:animate-spin" />}
-      label={`Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}\u2026`}
-    />
+    <div
+      data-testid="toolbar-progress"
+      data-status="processing"
+      data-file-index={fileProgress.fileIndex}
+      data-total-files={fileProgress.totalFiles}
+      data-overall-percent={fileProgress.overallPercent}
+    >
+      <LinearProgress
+        value={fileProgress.overallPercent}
+        icon={<LoaderIcon className="size-4 shrink-0 text-primary motion-safe:animate-spin" />}
+        label={`Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}\u2026`}
+      />
+    </div>
   );
 }

@@ -17,6 +17,8 @@ import { InputShowcase } from "./InputShowcase";
 import { MenuShowcase } from "./MenuShowcase";
 import { NotificationCards } from "./NotificationCards";
 import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
+import { ExecutionProgressShowcase } from "./ExecutionProgressShowcase";
+import { ProgressShowcase } from "./ProgressShowcase";
 import { RecipeLayoutShowcase } from "./RecipeLayoutShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
 import { TypographyShowcase } from "./TypographyShowcase";
@@ -43,6 +45,7 @@ export default function MotorwayPage() {
           <Tabs.Trigger value="motion">Motion</Tabs.Trigger>
           <Tabs.Trigger value="forms">Forms</Tabs.Trigger>
           <Tabs.Trigger value="grids">Grids</Tabs.Trigger>
+          <Tabs.Trigger value="progress">Progress</Tabs.Trigger>
           <Tabs.Trigger value="phase-flow">Phase Flow</Tabs.Trigger>
           <Tabs.Trigger value="recipe-layouts">Recipe Layouts</Tabs.Trigger>
         </Tabs.List>
@@ -170,6 +173,27 @@ export default function MotorwayPage() {
               description="Animated connections between stations. Data flows like sushi on a kaiten belt — items ride the surface between processing nodes."
             >
               <ConveyorShowcase />
+            </ShowcaseSection>
+          </Stack>
+        </Tabs.Content>
+
+        {/* ── Progress ──────────────────────────────────────────── */}
+        <Tabs.Content value="progress">
+          <Stack gap="xl" className="gap-16">
+            <ShowcaseSection
+              id="progress-indicators"
+              title="Progress Indicators"
+              description="LinearProgress primitive at different values, with icons, labels, and helper text."
+            >
+              <ProgressShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="execution-progress"
+              title="Execution Progress"
+              description="Realistic WASM execution scenarios showing both card and compact toolbar views. Each scenario has data attributes for programmatic E2E assertions."
+            >
+              <ExecutionProgressShowcase />
             </ShowcaseSection>
           </Stack>
         </Tabs.Content>
