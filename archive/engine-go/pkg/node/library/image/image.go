@@ -6,12 +6,13 @@
 //   - Optimization (quality settings)
 //   - Batch processing
 //
-// Pure Go implementation using:
-// - disintegration/imaging: Image resizing and format conversion
-// - gen2brain/webp: WebP encoding (no CGO required)
+// Implementation using:
+// - disintegration/imaging: Image resizing and format conversion (pure Go)
+// - kolesa-team/go-webp: WebP encoding (CGO — requires libwebp-dev on Linux)
 //
-// This provides true cross-platform portability with no C dependencies,
-// making `go install` work seamlessly on Windows, macOS, and Linux.
+// Note: WebP support requires CGO due to the libwebp C library dependency.
+// On Ubuntu/Debian: apt-get install libwebp-dev
+// On macOS: brew install webp
 //
 // Performance is acceptable for CLI use (~200-250ms per 1920x1080 PNG → WebP)
 // while maintaining the portability promise in README.
