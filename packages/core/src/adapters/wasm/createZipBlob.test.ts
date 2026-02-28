@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createZipBlob } from "./createZipBlob";
 import { unzipSync } from "fflate";
-import type { BrowserFileResult } from "../../types/browser";
+import type { BrowserFileResult } from "../../types/wasm";
 
 function makeResult(
   filename: string,

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createBrowserExecutionService } from "./browserExecutionService";
-import { registerBrowserEngine } from "../adapters/browser/engineRegistry";
+import { createWasmExecutionService } from "./wasmExecutionService";
+import { registerBrowserEngine } from "../adapters/wasm/engineRegistry";
 import type {
   BrowserEngine,
   BrowserFileResult,
   BrowserFileProgress,
-} from "../types/browser";
+} from "../types/wasm";
 
 // ---------------------------------------------------------------------------
 // Mock engine
@@ -51,11 +51,11 @@ function clearEngine() {
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("browserExecutionService", () => {
-  let service: ReturnType<typeof createBrowserExecutionService>;
+describe("wasmExecutionService", () => {
+  let service: ReturnType<typeof createWasmExecutionService>;
 
   beforeEach(() => {
-    service = createBrowserExecutionService();
+    service = createWasmExecutionService();
     clearEngine();
   });
 
@@ -111,14 +111,14 @@ describe("browserExecutionService", () => {
     it("throws if no engine is registered", async () => {
       await expect(
         service.execute("compress-images", [new File([""], "test.jpg")]),
-      ).rejects.toThrow("No browser engine registered");
+      ).rejects.toThrow("No WASM engine registered");
     });
 
     it("throws for unknown slug", async () => {
       registerBrowserEngine(createMockEngine());
       await expect(
         service.execute("unknown-slug", [new File([""], "test.jpg")]),
-      ).rejects.toThrow('No browser implementation for slug "unknown-slug"');
+      ).rejects.toThrow('No WASM implementation for slug "unknown-slug"');
     });
 
     it("initializes the engine before processing", async () => {
@@ -302,7 +302,7 @@ describe("browserExecutionService", () => {
     });
 
     it("each service gets its own store instance", () => {
-      const service2 = createBrowserExecutionService();
+      const service2 = createWasmExecutionService();
       expect(service.store).not.toBe(service2.store);
     });
   });
@@ -435,7 +435,7 @@ describe("browserExecutionService", () => {
 
       const state = service.store.getState();
       expect(state.status).toBe("failed");
-      expect(state.error).toContain("No browser engine registered");
+      expect(state.error).toContain("No WASM engine registered");
     });
 
     it("fails on unknown slug", async () => {
@@ -447,7 +447,7 @@ describe("browserExecutionService", () => {
 
       const state = service.store.getState();
       expect(state.status).toBe("failed");
-      expect(state.error).toContain("No browser implementation");
+      expect(state.error).toContain("No WASM implementation");
     });
   });
 

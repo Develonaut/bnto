@@ -15,14 +15,14 @@ import { createExecutionService } from "./services/executionService";
 import { createUserService } from "./services/userService";
 import { createUploadService } from "./services/uploadService";
 import { createDownloadService } from "./services/downloadService";
-import { createBrowserExecutionService } from "./services/browserExecutionService";
+import { createWasmExecutionService } from "./services/wasmExecutionService";
 import { createWorkflowClient } from "./clients/workflowClient";
 import { createExecutionClient } from "./clients/executionClient";
 import { createUserClient } from "./clients/userClient";
 import { createUploadClient } from "./clients/uploadClient";
 import { createDownloadClient } from "./clients/downloadClient";
 import { createAuthClient } from "./clients/authClient";
-import { createBrowserClient } from "./clients/browserClient";
+import { createWasmClient } from "./clients/wasmClient";
 import { createRecipeClient } from "./clients/recipeClient";
 
 // ── Services (single-domain, internal) ────────────────────────────────────
@@ -31,7 +31,7 @@ const executionService = createExecutionService();
 const userService = createUserService();
 const uploadService = createUploadService();
 const downloadService = createDownloadService();
-const browserExecutionService = createBrowserExecutionService();
+const wasmExecutionService = createWasmExecutionService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
 const workflowClient = createWorkflowClient(workflowService, executionService);
@@ -40,7 +40,7 @@ const userClient = createUserClient(userService);
 const uploadClient = createUploadClient(uploadService);
 const downloadClient = createDownloadClient(downloadService);
 const authClient = createAuthClient();
-const browserClient = createBrowserClient(browserExecutionService);
+const wasmClient = createWasmClient(wasmExecutionService);
 const recipeClient = createRecipeClient();
 
 // ── Core Singleton ────────────────────────────────────────────────────────
@@ -51,6 +51,6 @@ export const core = {
   uploads: uploadClient,
   downloads: downloadClient,
   auth: authClient,
-  browser: browserClient,
+  wasm: wasmClient,
   recipe: recipeClient,
 } as const;
