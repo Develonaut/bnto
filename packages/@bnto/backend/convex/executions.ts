@@ -37,7 +37,7 @@ export const start = mutation({
 export const startPredefined = mutation({
   args: {
     slug: v.string(),
-    definition: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
+    definition: v.any(),
     sessionId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -100,7 +100,7 @@ export const updateProgress = internalMutation({
 export const complete = internalMutation({
   args: {
     executionId: v.id("executions"),
-    result: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
+    result: v.any(),
     outputFiles: v.optional(
       v.array(
         v.object({

@@ -16,7 +16,7 @@
     "build": "tsc --noEmit",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "lint": "echo \"No linter yet\""
+    "lint": "eslint ."
   },
   "dependencies": {
     "@bnto/auth": "workspace:*",
@@ -37,7 +37,9 @@
     "@types/react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "eslint": "catalog:",
     "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
     "vitest": "catalog:"
   }
 }

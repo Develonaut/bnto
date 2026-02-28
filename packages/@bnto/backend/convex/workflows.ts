@@ -54,7 +54,7 @@ export const getByName = query({
 export const save = mutation({
   args: {
     name: v.string(),
-    definition: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
+    definition: v.any(),
     isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {

@@ -16,7 +16,7 @@ const MAX_POLL_ATTEMPTS = 450; // 15 min at 2s intervals
 export const executeWorkflow = internalAction({
   args: {
     executionId: v.id("executions"),
-    definition: v.any(), // eslint-disable-line @typescript-eslint/no-explicit-any
+    definition: v.any(),
     eventId: v.optional(v.id("executionEvents")),
     sessionId: v.optional(v.string()),
   },
