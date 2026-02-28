@@ -50,8 +50,8 @@ import { useAuth } from "./hooks/useAuth";
 import { useSignOut } from "./hooks/useSignOut";
 import { useAnonymousSession } from "./hooks/useAnonymousSession";
 
-// Browser execution hooks
-import { useBrowserExecution } from "./hooks/useBrowserExecution";
+// WASM execution hooks
+import { useWasmExecution } from "./hooks/useWasmExecution";
 
 // Auth hooks from @bnto/auth (sign-in / sign-up)
 import { useSignIn, useSignUp } from "@bnto/auth";
@@ -106,9 +106,9 @@ export const core = {
     useAnonymousSession,
   },
 
-  browser: {
-    ...baseCore.browser,
-    useBrowserExecution,
+  wasm: {
+    ...baseCore.wasm,
+    useWasmExecution,
   },
 
   recipe: {

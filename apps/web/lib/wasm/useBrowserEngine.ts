@@ -10,10 +10,10 @@
  * This hook is the bridge. It creates a BntoWorker (the concrete WASM
  * implementation), wraps it in the BrowserEngine interface shape, and
  * registers it with core. After this runs, any call to
- * `core.browser.execute()` will route through our WASM worker.
+ * `core.wasm.execute()` will route through our WASM worker.
  *
  * ANALOGY:
- * Think of core.browser as an electrical outlet. It defines the shape
+ * Think of core.wasm as an electrical outlet. It defines the shape
  * of the plug (BrowserEngine interface). This hook is the power cord —
  * it plugs the WASM worker (the appliance) into the outlet so
  * electricity (file processing) can flow.
@@ -22,7 +22,7 @@
  *   1. Component mounts with enabled=true
  *   2. Effect creates a new BntoWorker (spawns a Web Worker thread)
  *   3. toBrowserEngine() wraps it to match the BrowserEngine interface
- *   4. core.browser.registerEngine() makes it available globally
+ *   4. core.wasm.registerEngine() makes it available globally
  *   5. When the component unmounts → cleanup terminates the worker
  *
  * WHY `enabled`?
@@ -70,10 +70,10 @@ export function useBrowserEngine(enabled: boolean): void {
 
     // --- Step 2: Register with @bnto/core ---
     // toBrowserEngine() wraps BntoWorker in the BrowserEngine interface.
-    // registerEngine() makes it the global engine that core.browser.execute()
+    // registerEngine() makes it the global engine that core.wasm.execute()
     // will use. From this point on, any component calling useBrowserExecution()
     // will route through this worker.
-    core.browser.registerEngine(toBrowserEngine(worker));
+    core.wasm.registerEngine(toBrowserEngine(worker));
 
     // --- Step 3: Cleanup on unmount ---
     // When the user navigates away from the bnto page, terminate the worker

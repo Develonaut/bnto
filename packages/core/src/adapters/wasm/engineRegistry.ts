@@ -8,7 +8,7 @@
  * apps/web provides the implementation (BntoWorker wrapping WASM).
  */
 
-import type { BrowserEngine } from "../../types/browser";
+import type { BrowserEngine } from "../../types/wasm";
 
 /** Singleton engine reference. Set by registerBrowserEngine(). */
 let engine: BrowserEngine | null = null;

@@ -48,11 +48,11 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   const { data: currentUser } = core.user.useCurrentUser();
 
   // -- Execution path: browser (WASM) vs cloud (R2 + Go API) --
-  const isBrowserPath = core.browser.hasImplementation(entry.slug);
+  const isBrowserPath = core.wasm.hasImplementation(entry.slug);
   useBrowserEngine(isBrowserPath);
 
   // -- Per-instance browser execution (isolated store per page mount) --
-  const [browserInstance] = useState(() => core.browser.createExecution());
+  const [browserInstance] = useState(() => core.wasm.createExecution());
 
   const browserExec = useStore(
     browserInstance.store,
@@ -93,12 +93,12 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   );
 
   const downloadResult = useCallback((result: BrowserFileResult) => {
-    core.browser.downloadResult(result);
+    core.wasm.downloadResult(result);
   }, []);
 
   const handleDownloadAll = useCallback(() => {
     const results = browserInstance.store.getState().results;
-    core.browser.downloadAllResults(results, entry.slug);
+    core.wasm.downloadAllResults(results, entry.slug);
   }, [browserInstance, entry.slug]);
 
   const handleRun = useCallback(async () => {

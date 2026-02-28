@@ -1,50 +1,50 @@
 "use client";
 
-import type { BrowserExecutionService } from "../services/browserExecutionService";
+import type { WasmExecutionService } from "../services/wasmExecutionService";
 
 /**
- * Browser execution client — public API for browser-side WASM execution.
+ * WASM execution client — public API for browser-side WASM execution.
  *
- * Wraps the browser execution service for architectural symmetry with
+ * Wraps the WASM execution service for architectural symmetry with
  * other domain clients (workflows, executions, user, etc.).
  */
-export function createBrowserClient(browser: BrowserExecutionService) {
+export function createWasmClient(wasm: WasmExecutionService) {
   return {
     /** The singleton Zustand store (backward-compatible). Prefer createExecution(). */
-    store: browser.store,
+    store: wasm.store,
 
     // ── Capability Detection ───────────────────────────────────────
-    isCapable: (slug: string) => browser.isCapable(slug),
-    hasImplementation: (slug: string) => browser.hasImplementation(slug),
-    getCapableSlugs: () => browser.getCapableSlugs(),
+    isCapable: (slug: string) => wasm.isCapable(slug),
+    hasImplementation: (slug: string) => wasm.hasImplementation(slug),
+    getCapableSlugs: () => wasm.getCapableSlugs(),
 
     // ── Engine Registration ────────────────────────────────────────
-    registerEngine: browser.registerEngine,
-    hasEngine: () => browser.hasEngine(),
+    registerEngine: wasm.registerEngine,
+    hasEngine: () => wasm.hasEngine(),
 
     // ── Per-Instance Factory ────────────────────────────────────────
     /**
      * Create an isolated execution instance with its own store.
      *
      * Each instance has independent state — no cross-page leaks.
-     * Usage: `const [instance] = useState(() => core.browser.createExecution())`
+     * Usage: `const [instance] = useState(() => core.wasm.createExecution())`
      */
-    createExecution: browser.createExecution,
+    createExecution: wasm.createExecution,
 
     // ── Singleton Lifecycle (backward-compatible) ───────────────────
     /** Run via the singleton store (backward-compatible). Prefer createExecution(). */
-    run: browser.run,
+    run: wasm.run,
     /** Reset the singleton store (backward-compatible). */
-    reset: browser.reset,
+    reset: wasm.reset,
 
     // ── Low-level execution ────────────────────────────────────────
     /** Execute without lifecycle management. For callers managing their own state. */
-    execute: browser.execute,
+    execute: wasm.execute,
 
     // ── Download ───────────────────────────────────────────────────
-    downloadResult: browser.downloadResult,
-    downloadAllResults: browser.downloadAllResults,
+    downloadResult: wasm.downloadResult,
+    downloadAllResults: wasm.downloadAllResults,
   } as const;
 }
 
-export type BrowserClient = ReturnType<typeof createBrowserClient>;
+export type WasmClient = ReturnType<typeof createWasmClient>;

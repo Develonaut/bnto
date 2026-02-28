@@ -4,19 +4,19 @@ import { useCallback } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { core } from "../core";
-import type { BrowserFileResult } from "../types/browser";
+import type { BrowserFileResult } from "../types/wasm";
 
 /**
- * React hook for browser-side execution lifecycle.
+ * React hook for WASM execution lifecycle.
  *
  * Thin binding over the service-owned store. The service's `run()` method
  * manages all state transitions (start → progress → complete/fail).
  * This hook reads state via Zustand selectors and provides callbacks
  * that delegate to the service.
  */
-export function useBrowserExecution() {
+export function useWasmExecution() {
   const execution = useStore(
-    core.browser.store,
+    core.wasm.store,
     useShallow((s) => ({
       id: s.id,
       status: s.status,
@@ -34,24 +34,24 @@ export function useBrowserExecution() {
       files: File[],
       params: Record<string, unknown> = {},
     ) => {
-      await core.browser.run(slug, files, params);
+      await core.wasm.run(slug, files, params);
     },
     [],
   );
 
   const downloadResult = useCallback((result: BrowserFileResult) => {
-    core.browser.downloadResult(result);
+    core.wasm.downloadResult(result);
   }, []);
 
   const downloadAll = useCallback((slug?: string) => {
-    core.browser.downloadAllResults(
-      core.browser.store.getState().results,
+    core.wasm.downloadAllResults(
+      core.wasm.store.getState().results,
       slug,
     );
   }, []);
 
   const reset = useCallback(() => {
-    core.browser.reset();
+    core.wasm.reset();
   }, []);
 
   return {
