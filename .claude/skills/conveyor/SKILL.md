@@ -5,13 +5,13 @@ description: Iterate on conveyor belt connection system — build, test, and adv
 
 # Conveyor Belt Connection System — Iteration Skill
 
-You are working on the **conveyor belt connection system** for the Motorway design system. This is a Mini Motorways-style "level" built with React Flow — surface nodes as buildings, animated conveyor belts as roads, sushi pieces as traveling data items. It lives on the Motorway showcase page (`/dev/motorway`).
+You are working on the **conveyor belt connection system** for the Motorway design system. This is a Mini Motorways-style "level" built with React Flow — surface nodes as buildings, animated conveyor belts as roads, sushi pieces as traveling data items. It lives on the Motorway showcase page (`/motorway`).
 
 ## Before Every Iteration
 
 1. **Read the research document:** `.claude/research/conveyor-belt-connections.md` — single source of truth for current phase, design decisions, open questions, and progress log.
-2. **Read the Motorway page:** `apps/web/app/(dev)/dev/motorway/page.tsx` — understand the section structure.
-3. **Read existing conveyor components:** Check `apps/web/app/(dev)/dev/motorway/Conveyor*.tsx`, `StationNode.tsx`, `ConveyorEdge.tsx` for what's already been built.
+2. **Read the Motorway page:** `apps/web/app/(dev)/motorway/page.tsx` — understand the section structure.
+3. **Read existing conveyor components:** Check `apps/web/app/(dev)/motorway/Conveyor*.tsx`, `StationNode.tsx`, `ConveyorEdge.tsx` for what's already been built.
 4. **Read globals.css conveyor section:** Search for "Conveyor Belt" in `apps/web/app/globals.css` for the belt CSS classes and keyframes.
 5. **Read the surface system:** Search for `.surface` in `surface.css` to understand shadow tokens, light angle, and elevation tiers.
 
@@ -65,7 +65,7 @@ ConveyorShowcase (showcase wrapper)
 
 ### Code Quality
 
-- **Co-locate in the Motorway page folder:** `apps/web/app/(dev)/dev/motorway/`
+- **Co-locate in the Motorway page folder:** `apps/web/app/(dev)/motorway/`
 - **One component per file:** `ConveyorCanvas.tsx`, `StationNode.tsx`, `ConveyorEdge.tsx`, etc.
 - **Lazy load React Flow:** Use `next/dynamic` with `ssr: false` for the canvas component.
 - **CSS in globals.css** for keyframes and belt base classes. Component-specific styles via Tailwind utilities.
@@ -119,10 +119,10 @@ ELK.js (`elkjs`) is deferred to Phase 4+ when auto-layout is needed.
 | File | What |
 |---|---|
 | `.claude/research/conveyor-belt-connections.md` | Research doc — phases, decisions, progress |
-| `apps/web/app/(dev)/dev/motorway/page.tsx` | Motorway showcase page |
-| `apps/web/app/(dev)/dev/motorway/ShowcaseSection.tsx` | Section wrapper pattern |
-| `apps/web/app/(dev)/dev/motorway/CardShowcase.tsx` | Example: simple showcase |
-| `apps/web/app/(dev)/dev/motorway/AnimationShowcase.tsx` | Example: complex showcase with state |
+| `apps/web/app/(dev)/motorway/page.tsx` | Motorway showcase page |
+| `apps/web/app/(dev)/motorway/ShowcaseSection.tsx` | Section wrapper pattern |
+| `apps/web/app/(dev)/motorway/CardShowcase.tsx` | Example: simple showcase |
+| `apps/web/app/(dev)/motorway/AnimationShowcase.tsx` | Example: complex showcase with state |
 | `apps/web/app/surface.css` | Surface system, elevation tiers, shadow tokens |
 | `.claude/rules/animation.md` | Motion language rules |
 | `.claude/rules/theming.md` | Color tokens, radius, shadows |

@@ -2,7 +2,7 @@
 
 **Status:** Phase 3 — Sushi pieces traveling on belt paths
 **Last Updated:** 2026-02-26
-**Location:** Motorway page (`/dev/motorway`) → "Conveyor Belts" section (bottom)
+**Location:** Motorway page (`/motorway`) → "Conveyor Belts" section (bottom)
 
 ---
 

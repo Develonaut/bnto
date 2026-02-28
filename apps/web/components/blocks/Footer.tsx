@@ -112,7 +112,7 @@ export function Footer() {
           <p>{LICENSE_LINE}</p>
           <div className="flex items-center gap-4">
             <Link
-              href="/dev/motorway"
+              href="/motorway"
               className="transition-colors hover:text-foreground"
             >
               Motorway

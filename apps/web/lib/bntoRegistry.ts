@@ -70,4 +70,5 @@ export const RESERVED_PATHS = [
   "api",
   "admin",
   "dashboard",
+  "motorway",
 ] as const;

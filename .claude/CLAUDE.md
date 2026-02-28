@@ -226,7 +226,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [core-principles.md](.claude/strategy/core-principles.md) | TDD, Grain, Modularity, Abstraction |
 | [design-language.md](.claude/strategy/design-language.md) | Visual identity, brand personality |
 | [code-editor.md](.claude/strategy/code-editor.md) | Code editor design — CM6, slash commands, JSON Schema, architecture |
-| [skills/](.claude/skills/) | Agent skills (pre-commit, pickup, code-review) |
+| [skills/](.claude/skills/) | Agent skills (pre-commit, pickup, code-review, merge-pr) |
 
 ### Domain Expert Personas (invoke with `/persona-name`)
 
