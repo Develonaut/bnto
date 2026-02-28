@@ -1,11 +1,20 @@
 ---
 name: pickup
 description: Pickup Work — Two-Phase Task Execution
+args: "[--w | --worktree]"
 ---
 
 # Pickup Work — Two-Phase Task Execution
 
 This skill uses a **propose-then-execute** workflow. Phase 1 researches the next available task and presents a proposal. Phase 2 executes only after user approval.
+
+## Arguments
+
+| Flag | Description |
+|------|-------------|
+| `--w`, `--worktree` | Execute Phase 2 in an isolated git worktree. The main working tree stays clean while you work. Phase 1 (research) always runs on the main tree. |
+
+**Usage:** `/pickup --w` or `/pickup --worktree`
 
 ---
 
@@ -80,6 +89,19 @@ Before doing ANY work, read and internalize the project's coding standards and a
 ### Step 2: Claim the Task
 
 Edit `PLAN.md` to mark your task: change `- [ ]` to `- [ ] **CLAIMED**`
+
+### Step 2b: Enter Worktree (if `--w` / `--worktree` flag was passed)
+
+If the user invoked `/pickup --w` or `/pickup --worktree`, create an isolated git worktree **now**, before writing any code:
+
+1. Use the `EnterWorktree` tool with a name based on the branch you'd create (e.g., `feat/execution-history`)
+2. The worktree creates an isolated copy of the repo at `.claude/worktrees/<name>` with a new branch based on HEAD
+3. Your session's working directory switches to the worktree — all subsequent file reads, edits, and commands operate there
+4. The main working tree stays completely untouched
+
+**Why worktrees?** They let the user (or other agents) keep working on the main tree while you work in isolation. No stashing, no branch switching conflicts, no accidental interference with in-progress work.
+
+**If the flag was NOT passed**, skip this step — work directly on the main tree as usual (create a branch in Step 5).
 
 ### Step 3: Activate Your Persona
 
@@ -358,7 +380,7 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 ## DO NOT
 
-- **Branch-based workflow is mandatory.** Create a feature branch (`git checkout -b <type>/<short-description>`) before committing. Never commit directly to `main` — branch protection requires PRs to pass the CI Gate. If the user asks you to commit, create a branch first, commit YOUR OWN work from this task (never bundle other agents' changes), then ask if they want you to push and create a PR. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
+- **Branch-based workflow is mandatory.** If you're in a worktree (from `--w` flag), the worktree already created a branch — use it. Otherwise, create a feature branch (`git checkout -b <type>/<short-description>`) before committing. Never commit directly to `main` — branch protection requires PRs to pass the CI Gate. If the user asks you to commit, create a branch first (or use the worktree branch), commit YOUR OWN work from this task (never bundle other agents' changes), then ask if they want you to push and create a PR. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
 - **Do not modify files outside your package scope** — other agents may be working there
 - **Do not modify `CLAUDE.md`, `.claude/rules/`, or config files** unless your task explicitly requires it
 - **Do not install new dependencies** without noting it in your summary. If a dependency is needed, prefer one already in the monorepo
@@ -367,7 +389,8 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 ## Multi-Agent Awareness
 
-- **File conflicts:** If you need to modify a file and see it has been recently changed (check `git diff`), read the current state carefully before editing. Work with what's there, not what you expected
+- **Worktrees eliminate conflicts.** If you're running in a worktree (`--w` flag), you have a fully isolated copy of the repo. No file conflicts with the main tree or other agents. This is the recommended mode for parallel agent work
+- **File conflicts (non-worktree):** If you need to modify a file and see it has been recently changed (check `git diff`), read the current state carefully before editing. Work with what's there, not what you expected
 - **Schema changes:** If your task adds to any schema, append — don't reorganize existing structures. Other agents may depend on the current structure
 - **Shared indexes/exports:** If you add to a barrel export (`index.ts`), add your entries at the end to minimize merge conflicts
 - **Port conflicts:** Only start `task dev` when running E2E tests (and check if it's already running first). For non-E2E verification, use the checks (`task vet`, `task test`, `task ui:build`, `task ui:test`, `task ui:lint`)
