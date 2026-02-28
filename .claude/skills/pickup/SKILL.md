@@ -264,12 +264,14 @@ If screenshots already exist and the change modifies visual output, run with `--
 
 After all checks pass, provide a summary:
 
-1. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
-2. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
-3. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
-4. **Go checks result** — confirm `task vet`, `task test`, `task api:test` passed clean
-5. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
-6. **Files changed** — files created/modified, with brief description of each
+1. **Branch** — name of the branch this work is on (e.g., `feat/execution-history`)
+2. **PR** — confirm you are creating a PR and state which branch it targets (e.g., "Creating PR targeting `main`")
+3. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
+4. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
+5. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
+6. **Go checks result** — confirm `task vet`, `task test`, `task api:test` passed clean
+7. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
+8. **Files changed** — files created/modified, with brief description of each
 
 ### Step 9: Update the Plan
 
