@@ -1,13 +1,68 @@
 ---
 name: pickup
-description: Pickup Work — Parallel Agent Prompt
+description: Pickup Work — Two-Phase Task Execution
 ---
 
-# Pickup Work — Parallel Agent Prompt
+# Pickup Work — Two-Phase Task Execution
 
-You are one of several agents working in parallel on this codebase. Your job is to pick up one task from the parallel execution plan, implement it cleanly, and verify your work — without committing or pushing.
+This skill uses a **propose-then-execute** workflow. Phase 1 researches the next available task and presents a proposal. Phase 2 executes only after user approval.
 
-## Step 1: Read the Standards
+---
+
+## Phase 1: Research & Propose
+
+**Do NOT write any code yet.** Your only job in Phase 1 is to understand the next task and present a clear proposal for the user to approve or reject.
+
+### Step 1: Read the Plan
+
+Read `.claude/PLAN.md`. Find the **current sprint** (the first sprint with unclaimed tasks).
+
+### Step 2: Identify the Next Task
+
+- Find unclaimed tasks (`- [ ]` without **CLAIMED**) in the earliest available wave
+- **Do not pick tasks from a wave if the previous wave has unclaimed or claimed (in-progress) tasks** — waves are sequential
+- If all tasks in the current wave are claimed or done, report that no tasks are available right now and stop
+- If multiple unclaimed tasks exist in the same wave, list all of them so the user can choose
+
+### Step 3: Research the Task
+
+For the candidate task(s), do quick research to understand what's involved:
+
+- Read the files that would need to change (use Glob/Grep/Read — do NOT modify anything)
+- Identify the package scope (`[web]`, `[engine]`, `[core]`, `[backend]`, etc.)
+- Identify which persona(s) would be activated
+- Note any dependencies, blockers, or risks you see
+- Estimate the rough scope (small/medium/large)
+
+### Step 4: Present the Proposal
+
+Present a clear summary to the user with:
+
+1. **Task:** The task description from PLAN.md (verbatim)
+2. **Sprint / Wave:** Which sprint and wave it belongs to
+3. **Package scope:** Which packages/directories will be touched
+4. **Persona(s):** Which domain expert persona(s) will be activated
+5. **Approach:** 3-5 bullet points describing what you plan to do
+6. **Files to modify:** List of files you expect to create or change
+7. **Tests:** What tests you'll write (unit, integration, E2E, screenshots)
+8. **Risks / Open questions:** Anything unclear or potentially tricky
+9. **Scope estimate:** Small (< 1 hour), Medium (1-3 hours), Large (3+ hours)
+
+If there are multiple available tasks in the wave, present all of them so the user can pick.
+
+**Then STOP and wait for the user's response.** Do not proceed to Phase 2 until the user explicitly approves.
+
+---
+
+## Phase 2: Execute (after user approval)
+
+Only proceed here after the user says to go ahead. The user may:
+- Approve as-is → proceed with the plan
+- Approve with changes → adjust your approach, then proceed
+- Reject → stop, or propose a different task
+- Pick a different task from the ones presented → research that one instead
+
+### Step 1: Read the Standards
 
 Before doing ANY work, read and internalize the project's coding standards and architecture rules. These documents define how code must be written in this codebase:
 
@@ -22,18 +77,11 @@ Before doing ANY work, read and internalize the project's coding standards and a
 
 **Read ALL of these files now.** Do not skim, do not skip. You will be held to every rule in them. The inlined summaries later in this prompt are reminders — the rule files and CLAUDE.md are the source of truth.
 
-## Step 2: Read the Plan
+### Step 2: Claim the Task
 
-Read `.claude/PLAN.md`. Find the **current sprint** (the first sprint with unclaimed tasks).
+Edit `PLAN.md` to mark your task: change `- [ ]` to `- [ ] **CLAIMED**`
 
-## Step 3: Claim a Task
-
-- Find an unclaimed task (`- [ ]` without **CLAIMED**) in the earliest available wave
-- **Do not pick tasks from a wave if the previous wave has unclaimed or claimed (in-progress) tasks** — waves are sequential
-- Edit `PLAN.md` to mark your task: change `- [ ]` to `- [ ] **CLAIMED**`
-- If all tasks in the current wave are claimed or done, do NOT move to the next wave — another agent is still working. Instead, report back that no tasks are available right now
-
-## Step 3b: Activate Your Persona
+### Step 3: Activate Your Persona
 
 Now that you know your task's `[package]` tag, activate the domain expert persona by invoking it as a skill:
 
@@ -58,7 +106,7 @@ Now that you know your task's `[package]` tag, activate the domain expert person
 
 **Testing work:** If your task involves writing E2E tests, updating screenshot baselines, or modifying test infrastructure, also invoke `/quality-engineer`. The quality persona owns E2E strategy, journey-based test design, screenshot regression workflows, and the correct way to run tests (port isolation, two-run verification, selector patterns).
 
-## Step 4: Scope Check
+### Step 4: Scope Check
 
 Before writing any code, confirm your boundaries:
 
@@ -74,11 +122,11 @@ Before writing any code, confirm your boundaries:
 - **Building a user-facing flow?** — Conversion hooks should trigger on value moments (save, history, server nodes, team) — never on browser execution limits.
 - **Touching the recipe editor?** — The editor is free. Create, run, export = free. Save, share, server nodes = Pro. Don't gate editor access.
 
-## Step 5: Implement
+### Step 5: Implement
 
 Write the code for your task. Follow the rules in `CLAUDE.md` and `.claude/rules/`:
 
-### Component Philosophy (CRITICAL)
+#### Component Philosophy (CRITICAL)
 
 - **Components are dumb** — they receive data and render UI. That's it. No API calls, no business logic, no domain state in render. All data flows through `@bnto/core` hooks
 - **One component/hook per file** — every exported component or hook gets its own file. No multi-component files. Use folder + barrel export (`index.ts`). Only exception: shadcn primitives (thin `forwardRef` wrappers with no logic)
@@ -87,13 +135,13 @@ Write the code for your task. Follow the rules in `CLAUDE.md` and `.claude/rules
 - **Compound composition** — compose complex UI from small parts (Radix pattern), not by adding props. `<Card><CardHeader>...</Card>` not `<Card header={...} />`
 - **Primitives vs business components** — generic reusable components (Button, Card, Badge) go in `primitives/`. Domain-specific components (WorkflowCard, ExecutionTimeline, NodeEditor) go in `components/`
 
-### Layered Code Organization
+#### Layered Code Organization
 
 - **Pure functions -> hooks -> components** — extract business logic into pure testable functions (< 20 lines), hooks are thin reactive wrappers (< 30 lines), components just render
 - **Hook decomposition** — if a hook does fetching + transformation + subscription + side effects, split it into focused sub-hooks. Signs it's too big: >30 lines, multiple unrelated state, hard to name without "and"
 - **Bento Box Principle** — every file < 250 lines, every function < 20 lines. No utility grab bags, no god objects. See `.claude/rules/code-standards.md` for the full checklist
 
-### Go Code Standards (CRITICAL)
+#### Go Code Standards (CRITICAL)
 
 - **One concept per file, one purpose per function** — same Bento Box Principle applies to Go
 - **Error handling**: Always wrap errors with context — `return fmt.Errorf("loading workflow %s: %w", path, err)` not bare `return err`. Never swallow errors
@@ -101,14 +149,14 @@ Write the code for your task. Follow the rules in `CLAUDE.md` and `.claude/rules
 - **Interface design**: Small, consumer-defined. Accept interfaces, return structs. No mega-interfaces
 - **Package boundaries**: `engine/` orchestrates (doesn't do I/O), `registry/` registers (doesn't execute), `node/` types execute (don't know about other types), `storage/` persists, `validator/` validates. No circular deps
 
-### Other Standards
+#### Other Standards
 
 - **TypeScript:** infer types, no `any`, no gratuitous `as` assertions, types flow down from core
 - **Import discipline:** UI from local `@/components/`, data from `@bnto/core`, never skip layers. Third-party UI deps should be wrapped locally
 - **Transport-agnostic API:** Components NEVER call Convex or Wails directly. All data access via `@bnto/core` hooks
 - Match existing patterns — look at sibling files for naming, structure, and style
 
-### UI Reference: shadcn-blocks
+#### UI Reference: shadcn-blocks
 
 **Before building any UI**, check shadcn-blocks for patterns and inspiration:
 
@@ -123,24 +171,24 @@ Write the code for your task. Follow the rules in `CLAUDE.md` and `.claude/rules
 
 **Don't copy blindly** — adapt the layout, structure, and interaction patterns to fit our design system. The value is in the *composition patterns*, not the exact styling.
 
-## Step 6: Verify — Code Review + Automated Checks
+### Step 6: Verify — Code Review + Automated Checks
 
-### 6a: Code Review
+#### 6a: Code Review
 
 Run `/code-review` to audit all your changes against the project's coding standards, architecture rules, and known gotchas. Fix any violations before proceeding. This is a critical quality gate — do not skip it.
 
-### 6b: Automated Checks
+#### 6b: Automated Checks
 
 Run ALL checks. Do not skip any even if you think your changes are safe:
 
-### Go checks
+#### Go checks
 ```bash
 task vet               # go vet — must pass clean
 task test              # engine tests with race detector — must pass
 task api:test          # API server tests with race detector — must pass
 ```
 
-### TypeScript checks
+#### TypeScript checks
 ```bash
 task ui:build          # TypeScript compilation — must pass
 task ui:test           # Frontend tests — must pass
@@ -154,7 +202,7 @@ task ui:lint           # Lint all TS packages — must pass
 
 **Critical rule:** You are NOT allowed to ignore failures as "pre-existing." If a check fails, report ALL failures to the user and let them decide. Only the user can determine if an issue predates your work.
 
-## Step 7: Verify — Test Coverage
+### Step 7: Verify — Test Coverage
 
 **If your task involves E2E tests, screenshot updates, or test infrastructure changes**, invoke `/quality-engineer` now. The quality persona owns the correct way to run tests, write selectors, capture screenshots, and handle known issues like "01 Issue" hydration mismatches.
 
@@ -168,7 +216,7 @@ Your work MUST include tests. Determine which type based on what you built:
 
 **No exceptions.** If your task adds a function and you didn't write a test, you're not done. Go back and write the tests before proceeding.
 
-### Did you touch UI?
+#### Did you touch UI?
 
 Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, page, or layout that a user will see or interact with?** This includes:
 
@@ -199,7 +247,7 @@ If screenshots already exist and the change modifies visual output, run with `--
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes
 - Reference existing spec files for patterns
 
-### Stale Artifact Cleanup (MANDATORY)
+#### Stale Artifact Cleanup (MANDATORY)
 
 **After making changes, you MUST clean up anything that your changes have invalidated.** This includes but is not limited to:
 
@@ -212,7 +260,7 @@ If screenshots already exist and the change modifies visual output, run with `--
 
 **Do not skip this.** Leaving stale artifacts behind breaks CI, confuses other developers, and wastes everyone's time debugging phantom failures.
 
-## Step 8: Verify — Proof of Work
+### Step 8: Verify — Proof of Work
 
 After all checks pass, provide a summary:
 
@@ -223,11 +271,13 @@ After all checks pass, provide a summary:
 5. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
 6. **Files changed** — files created/modified, with brief description of each
 
-## Step 9: Update the Plan
+### Step 9: Update the Plan
 
 Edit `.claude/PLAN.md`:
 - Change your task from `- [ ] **CLAIMED**` to `- [x]` (mark done)
 - If your completion unblocks the next wave (all tasks in current wave are now `[x]`), note this in your summary so the user knows to start new agents on the next wave
+
+---
 
 ## E2E Testing
 
@@ -301,6 +351,8 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 - `data-testid="execution-results"` — results panel container
 - `data-testid="output-file"` — individual output file items
 - `data-testid="bnto-shell"` + `data-session` + `data-user-id` — session and identity state
+
+---
 
 ## DO NOT
 
