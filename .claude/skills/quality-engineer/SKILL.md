@@ -86,23 +86,54 @@ import { test, expect } from "../../fixtures";
 import { test, expect } from "@playwright/test";
 ```
 
-### 4. Port Isolation and Dev Server Management
+### 4. Running E2E Tests — Decision Tree
 
-| Command | Port | Use case |
-|---|---|---|
-| `task e2e` | 4000 | Reuses user's running `task dev` — for interactive use |
-| `task e2e:isolated` | 4001 | Starts own Next.js instance — for agents and CI |
-| `E2E_PORT=4002 task e2e:isolated` | Custom | When 4001 is also taken |
+**Follow this decision tree every time. Do not guess or improvise.**
 
-**Agents must NEVER kill or restart the user's `task dev` on port 4000.** Use `task e2e:isolated` or set `E2E_PORT` to a different port.
+```
+Step 1: Is a dev server already running on port 4000?
+  Check: lsof -ti:4000
+  |
+  |-- YES (output shows a PID) → use port 4000 directly
+  |     Run tests:  cd apps/web && pnpm exec playwright test
+  |     Update screenshots: cd apps/web && pnpm exec playwright test --update-snapshots
+  |     NEVER kill this server — it's the user's dev server
+  |
+  +-- NO (no output) → you need a server. Two options:
+        |
+        |-- Option A (preferred, fast): Start task dev yourself
+        |     Run: task dev &   (background it)
+        |     Wait ~10 seconds for Next.js + Convex to start
+        |     Verify: lsof -ti:4000 (should show a PID now)
+        |     Then run tests: cd apps/web && pnpm exec playwright test
+        |
+        +-- Option B (fallback): Use isolated port
+              Run: task e2e:isolated   (starts its own Next.js on port 4001)
+              This is SLOWER because it builds a separate .next-e2e cache
+              Only use this if port 4000 is taken by something other than task dev
+```
 
-Both modes share the same Convex dev deployment (cloud-hosted, no port conflict).
+**Key rules:**
+- NEVER kill or restart a process on port 4000 — it's the user's dev server
+- ALWAYS run from the `apps/web/` directory (or use `--filter @bnto/web`)
+- The `reuseExistingServer: true` in playwright.config.ts means Playwright will reuse whatever server is already running on the target port
+- Both modes share the same Convex dev deployment (cloud-hosted, no port conflict)
+- Tests take ~15-30 seconds. If they take longer, something is wrong (usually the dev server isn't ready)
+
+**Common mistakes agents make:**
+1. Running `E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test` without `task e2e:isolated` — this fails because no server starts on port 4001
+2. Running tests from the repo root instead of `apps/web/` — Playwright can't find its config
+3. Not checking if port 4000 is already in use before starting a new server
+4. Using `task e2e:isolated` when `task dev` is already running — wasteful, uses isolated port for no reason
 
 **Screenshot update workflow (two runs required):**
 
 ```bash
+# Always run from apps/web/
+cd apps/web
+
 # Run 1: Regenerate baselines
-cd apps/web && pnpm exec playwright test --update-snapshots
+pnpm exec playwright test --update-snapshots
 
 # Run 2: Verify stability (proves baselines are deterministic)
 pnpm exec playwright test
@@ -110,7 +141,7 @@ pnpm exec playwright test
 # If Run 2 has screenshot mismatches, baselines are flaky — investigate before committing
 ```
 
-For agents using isolated port:
+If using isolated port (only when port 4000 is unavailable):
 ```bash
 E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
 E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
@@ -212,15 +243,22 @@ task api:test             # API server tests with -race detector
 task vet                  # go vet static analysis
 
 # === E2E (Playwright) ===
-task e2e                  # Port 4000 — reuses running task dev
+# FIRST: check if dev server is running: lsof -ti:4000
+# If YES (port 4000 active) — reuse it (fastest):
+cd apps/web && pnpm exec playwright test
+# If NO — either start task dev, or use isolated mode:
 task e2e:isolated         # Port 4001 — starts own Next.js instance
 
 # Run specific spec file
 cd apps/web && pnpm exec playwright test e2e/journeys/browser/compress-images.spec.ts
 
 # Update screenshots (always run TWICE — regenerate then verify)
+# If port 4000 active:
 cd apps/web && pnpm exec playwright test --update-snapshots
 cd apps/web && pnpm exec playwright test
+# If port 4000 NOT active (isolated):
+E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
+E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 # === Full stack ===
 task test:all             # Engine + API + frontend
@@ -253,9 +291,9 @@ task check                # vet + test + build (full quality gate)
 | Screenshot taken at wrong scroll position | User actions (clicking Run, errors) may scroll the page — add `window.scrollTo(0, 0)` before `toHaveScreenshot()` |
 | Running `--update-snapshots` only once | Must run twice: first to regenerate, second to verify stability. Single run doesn't prove baselines are deterministic |
 | "01 Issue" hydration error blocking commits | Known React 19 + Radix `useId()` SSR mismatch. Acceptable when zero screenshot mismatches — report to user but don't block |
-| Using `task e2e` as an agent | Collides with user's `task dev` on port 4000. Agents must use `task e2e:isolated` (port 4001) |
+| Not checking `lsof -ti:4000` before running tests | Always check first. If port 4000 is active, reuse it (fastest). If not, start `task dev` or use `task e2e:isolated` |
 | Testing framework behavior instead of app behavior | Don't test that React Query refetches, that Convex stores data, or that Radix primitives render. Test YOUR code's behavior |
-| Killing user's dev server | Never kill port 4000. Use `task e2e:isolated` or a custom `E2E_PORT` |
+| Killing user's dev server | Never kill port 4000. If it's running, reuse it. If it's not yours, use `task e2e:isolated` or a custom `E2E_PORT` |
 | Missing `fullPage: true` on screenshots | Recipe pages have content below the fold — use `fullPage: true` to capture complete state |
 | Hardcoded timeouts too short | WASM processing can take up to 30s for large files. Use `{ timeout: 30000 }` for phase completion assertions |
 
@@ -268,7 +306,7 @@ task check                # vet + test + build (full quality gate)
 5. **Visual verification is mandatory.** After generating screenshots, use the Read tool to open each `.png` and confirm the visual output matches expectations. Check for: error overlays, wrong scroll position, missing content, broken layouts.
 6. **Semantic selectors over CSS classes.** `getByRole`, `getByText`, `getByPlaceholder` first. `data-testid` for state machine assertions. `:visible` for duplicate responsive elements. Never CSS classes.
 7. **Shared fixture is non-negotiable.** Import from `./fixtures`. The error capture and overlay detection catch real bugs that would otherwise be invisible.
-8. **Port isolation for agents.** `task e2e:isolated` (port 4001) or custom `E2E_PORT`. Never touch the user's port 4000.
+8. **Check port 4000 first.** Run `lsof -ti:4000`. If active, reuse it (fastest). If not, start `task dev` or use `task e2e:isolated`. Never kill the user's dev server.
 9. **No wasteful tests.** Don't test compiler behavior, framework behavior, or standard library behavior. Don't unit-test simple presentational components — E2E screenshots prove they render correctly.
 10. **Clean up stale artifacts.** If your changes invalidate existing screenshots, regenerate them. Stale baselines break every subsequent test run.
 

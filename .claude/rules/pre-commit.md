@@ -93,13 +93,16 @@ Ask yourself: **did you modify ANY file that affects what renders on screen?** T
 **How to regenerate:**
 
 ```bash
-# For agents: use isolated port to avoid colliding with user's dev server
-E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
-E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test  # verify stable
+# Step 1: Check if dev server is already running
+lsof -ti:4000
 
-# For the user (with task dev already running on port 4000):
-cd apps/web && pnpm exec playwright test --update-snapshots
-pnpm exec playwright test
+# If port 4000 is active (preferred — fast, reuses running server):
+cd apps/web && pnpm exec playwright test --update-snapshots   # regenerate
+cd apps/web && pnpm exec playwright test                      # verify stable
+
+# If port 4000 is NOT active (use isolated port — starts its own server):
+E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
+E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 # Stage the updated screenshots with the rest of your changes
 git add e2e/**/__screenshots__/*.png
@@ -130,7 +133,7 @@ Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, 
 - Use `data-testid` markers for reliable state detection (see `integrationHelpers.ts` for available attributes)
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes
 - Add `await page.evaluate(() => window.scrollTo(0, 0))` before `toHaveScreenshot()` in tests where user actions may shift the viewport (e.g., clicking Run triggers errors that scroll to footer)
-- Agents: use `task e2e:isolated` (port 4001, separate `.next-e2e` cache) to avoid colliding with the user's dev server. Never kill or restart `task dev` on port 4000.
+- Agents: check `lsof -ti:4000` first. If a dev server is running, reuse it (`cd apps/web && pnpm exec playwright test`). If not, use `task e2e:isolated` (port 4001) or start `task dev` yourself. Never kill the user's dev server on port 4000.
 - Use progress-aware helpers from `integrationHelpers.ts` (`waitForPhase`, `waitForExecutionStatus`, `captureTransientPhase`, etc.) to observe and snapshot execution progress
 
 ### E2E Screenshot Verification (MANDATORY)
@@ -142,7 +145,7 @@ After running E2E tests, agents MUST verify screenshot health:
    - **Next.js error overlay** (red "1 Issue" badge in bottom-left) -- if present, it means an unhandled error occurred. Investigate the root cause via the `[e2e errors]` output.
    - **Wrong viewport position** -- screenshot shows footer/header instead of the expected tool UI. Add `scrollTo(0, 0)` before the screenshot call.
    - **Missing or garbled content** -- indicates a rendering issue or missing data.
-3. **E2E environment** -- agents must use `task e2e:isolated` (port 4001) to avoid colliding with the user's running dev server on port 4000. The isolated task starts its own Next.js instance automatically.
+3. **E2E environment** -- agents should check `lsof -ti:4000` first. If a dev server is running on port 4000, reuse it (fastest path). If not, use `task e2e:isolated` (port 4001, starts its own Next.js) or start `task dev` yourself. Never kill the user's dev server.
 
 ### Stale Artifact Cleanup (MANDATORY)
 

@@ -116,8 +116,19 @@ task ui:lint            # Lint all TS packages
 task dev                # Start web + Convex dev servers (Next.js on port 4000 + Convex)
 task dev:all            # Start web + Convex + Go API + Cloudflare tunnel in parallel
 
-# E2E tests (requires task dev running)
-task e2e                # Run all Playwright E2E tests (expects dev stack on port 4000)
+# E2E tests
+# IMPORTANT: E2E tests need a running dev server. Check if one is running first:
+#   lsof -ti:4000  (if output, dev server is running — use task e2e directly)
+#   If nothing running, start one: task dev (background it, wait ~10s for startup)
+task e2e                # Run Playwright E2E tests against port 4000 (reuses running dev server)
+task e2e:isolated       # Starts own Next.js on port 4001 (slower — only if port 4000 is unavailable)
+
+# Updating screenshots (run from apps/web/):
+#   cd apps/web && pnpm exec playwright test --update-snapshots   # regenerate
+#   cd apps/web && pnpm exec playwright test                      # verify stable
+# Both runs required. If using isolated port:
+#   E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
+#   E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 # Everything
 task build:all          # Build engine + API + frontend

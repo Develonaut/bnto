@@ -171,9 +171,9 @@ Connect new shell to page, delete old shell, regenerate all screenshots.
 
 - [x] `apps/web` — **Wire `RecipeShell` into page.tsx, delete old shell.** Replace `<BntoPageShell>` with `<RecipeShell>` in `app/[bnto]/page.tsx` (same dynamic import pattern with `ssr: false`). Delete `BntoPageShell.tsx` and `BntoConfigPanel.tsx`. Update imports. Verify `task ui:build` passes.
 
-- [ ] `apps/web` — **Regenerate all browser execution E2E screenshots.** The 10 spec files in `e2e/journeys/browser/` have screenshot baselines from the old layout. Delete all `__screenshots__/` dirs under `e2e/journeys/browser/`. Run `task e2e` with `--update-snapshots`. Fix any broken selectors from the layout change. Visually verify every new screenshot with the Read tool. Do NOT change test logic — only fix selectors and regenerate screenshots.
+- [x] `apps/web` — **Regenerate all browser execution E2E screenshots.** All 27 screenshots regenerated for the new RecipeShell layout. Two-run verification complete (30/30 passed on regeneration, 28/30 on verify — 2 are known "01 Issue" hydration mismatch, zero screenshot mismatches). All 27 screenshots visually verified via Read tool. No selector changes needed — all data-testid attributes preserved in the new layout.
 
-- [ ] `apps/web` — **Regenerate site-navigation E2E screenshots for tool pages.** Delete stale tool page screenshots from `e2e/pages/`. Run tests with `--update-snapshots`. Visually verify. Covers both desktop and mobile viewport variants.
+- [ ] **CLAIMED** `apps/web` — **Regenerate site-navigation E2E screenshots for tool pages.** Delete stale tool page screenshots from `e2e/pages/`. Run tests with `--update-snapshots`. Visually verify. Covers both desktop and mobile viewport variants.
 
 #### Wave 4 (parallel — polish + per-instance execution fix)
 

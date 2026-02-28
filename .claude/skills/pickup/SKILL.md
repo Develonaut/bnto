@@ -233,30 +233,54 @@ Edit `.claude/PLAN.md`:
 
 All E2E tests run against the full dev stack (Next.js + Convex). There is no "UI-only" mode — the backend must always be running.
 
-**IMPORTANT: Always use `task e2e:isolated` to avoid colliding with the user's dev server.** The isolated task spins up its own Next.js instance on port 4001 with a separate `.next-e2e` cache. The user's `task dev` on port 4000 is left untouched.
+**How to run E2E tests — decision tree:**
 
-**Running E2E tests (agents):**
+```
+Step 1: Is a dev server already running on port 4000?
+  $ lsof -ti:4000
 
-```bash
-# Preferred: isolated E2E (own port, own .next cache — no collision with user)
-task e2e:isolated
+  YES (output shows a PID) → The user has `task dev` running. Reuse it:
+    $ cd apps/web && pnpm exec playwright test
+    This is the fastest path (~30-60s). Playwright's reuseExistingServer: true
+    connects to the already-running server. No startup delay.
 
-# Custom port if 4001 is also taken:
-E2E_PORT=4002 task e2e:isolated
+  NO (no output) → You need a server. Two options:
+
+    Option A (recommended): Start the dev server yourself, then run tests:
+      $ cd /Users/ryan/Code/bnto && task dev &
+      $ sleep 15  # wait for Next.js + Convex to start
+      $ cd apps/web && pnpm exec playwright test
+
+    Option B (fallback): Use the isolated task (starts its own Next.js):
+      $ task e2e:isolated
+      This is slower (builds a fresh .next-e2e cache) but self-contained.
 ```
 
-**Updating screenshots (agents):**
+**CRITICAL: Never kill the user's dev server on port 4000.** If it's running, reuse it. If it's not running, start one or use isolated mode.
+
+**Updating screenshots (two runs required):**
 
 ```bash
+# If port 4000 is active (preferred — fast):
+cd apps/web && pnpm exec playwright test --update-snapshots   # Run 1: regenerate
+cd apps/web && pnpm exec playwright test                      # Run 2: verify stable
+
+# If port 4000 is NOT active (use isolated port):
 E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
-E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test  # verify stable
+E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 ```
+
+**Common mistakes agents make:**
+1. Running `E2E_PORT=4001 pnpm ... playwright test` WITHOUT `task e2e:isolated` first — this fails because no server is listening on port 4001. Either use `task e2e:isolated` (which starts a server) or run against port 4000.
+2. Running from the repo root instead of `apps/web/` — Playwright config is in `apps/web/`, so you must `cd apps/web` first (or use `pnpm --filter @bnto/web exec playwright test`).
+3. Skipping the `lsof -ti:4000` check — always check first. If port 4000 is active, just use it.
+4. Using `task e2e:isolated` when `task dev` is already running — unnecessarily slow. Just run `cd apps/web && pnpm exec playwright test`.
 
 **Key details:**
 - `task e2e:isolated` uses port 4001 + `NEXT_DIST_DIR=.next-e2e` (separate build cache)
-- `task e2e` (no `:isolated`) uses port 4000 and reuses a running `task dev` — for the user's workflow only
+- `task e2e` uses port 4000 and reuses a running `task dev`
 - Both share the same Convex dev deployment (cloud-hosted, no conflict)
-- `reuseExistingServer: true` — if a server is already on the target port, Playwright reuses it
+- `reuseExistingServer: true` in playwright.config.ts — Playwright reuses whatever server is already on the target port
 - Test fixtures are shared with the Go engine (`engine/tests/fixtures/`)
 
 **Progress-aware test helpers** (in `e2e/integrationHelpers.ts`):
