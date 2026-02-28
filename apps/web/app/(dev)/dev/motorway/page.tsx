@@ -16,6 +16,7 @@ import { FormShowcase } from "./FormShowcase";
 import { InputShowcase } from "./InputShowcase";
 import { MenuShowcase } from "./MenuShowcase";
 import { NotificationCards } from "./NotificationCards";
+import { RecipeLayoutShowcase } from "./RecipeLayoutShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
 import { TypographyShowcase } from "./TypographyShowcase";
 
@@ -41,6 +42,7 @@ export default function MotorwayPage() {
           <Tabs.Trigger value="motion">Motion</Tabs.Trigger>
           <Tabs.Trigger value="forms">Forms</Tabs.Trigger>
           <Tabs.Trigger value="grids">Grids</Tabs.Trigger>
+          <Tabs.Trigger value="recipe-layouts">Recipe Layouts</Tabs.Trigger>
         </Tabs.List>
 
         {/* ── Surfaces ────────────────────────────────────────── */}
@@ -168,6 +170,11 @@ export default function MotorwayPage() {
               <ConveyorShowcase />
             </ShowcaseSection>
           </Stack>
+        </Tabs.Content>
+
+        {/* ── Recipe Layouts ─────────────────────────────────────── */}
+        <Tabs.Content value="recipe-layouts">
+          <RecipeLayoutShowcase />
         </Tabs.Content>
       </Tabs>
     </div>
