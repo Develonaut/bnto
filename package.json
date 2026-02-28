@@ -9,9 +9,12 @@
     "dev": "turbo run dev"
   },
   "devDependencies": {
+    "@eslint/js": "catalog:",
+    "eslint": "catalog:",
     "knip": "^5.85.0",
     "turbo": "^2.4.4",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
