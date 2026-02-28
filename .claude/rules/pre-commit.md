@@ -7,11 +7,6 @@
 ## Step 1: Automated Checks
 
 ```bash
-# Go checks
-task vet                # go vet -- must pass clean
-task test               # engine go test -race -- must pass
-task api:test           # API server go test -race -- must pass
-
 # Rust checks
 task wasm:lint          # clippy (Rust linter) -- must pass clean
 task wasm:test:unit     # Rust unit tests (native) -- must pass
@@ -22,6 +17,8 @@ task ui:test            # Frontend tests -- must pass
 ```
 
 Or run `task check` to execute all of the above in one command.
+
+Note: Go checks (`task vet`, `task test`, `task api:test`) are no longer in CI. The Go engine is archived and not actively developed.
 
 If any check fails: fix the errors, re-run from the top.
 
@@ -171,13 +168,20 @@ Present a summary to the user before committing:
 3. **If no UI touched:** What unit/integration tests were written?
 4. **Dot-notation compliance** -- PASS or FAIL. If FAIL, list files with flat multi-part imports.
 5. **TS checks result** -- confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
-6. **Go checks result** -- confirm `task vet`, `task test`, `task api:test` passed clean (skip if no Go files touched)
-7. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test:unit` passed clean (skip if no Rust files touched)
+6. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test:unit` passed clean (skip if no Rust files touched)
 8. **Files changed** -- brief description of each
 
-## Step 9: Commit
+## Step 9: Commit & Branch Workflow
 
-When all checks pass:
+**Branch-based development is mandatory.** `main` is protected — all changes go through PRs with CI gate.
+
+### Branching
+
+1. **Create a feature branch** before committing: `git checkout -b <type>/<short-description>` (e.g., `feat/execution-history`, `fix/skeleton-layout-shift`, `chore/eslint-config`)
+2. **Branch naming:** `feat/`, `fix/`, `chore/`, `refactor/`, `test/` prefixes. Lowercase, hyphen-separated.
+3. **Never commit directly to `main`.** Branch protection requires PRs to pass the CI Gate check.
+
+### Committing
 
 1. Stage only relevant files (no accidental additions)
 2. Write a clear commit message:
@@ -189,6 +193,10 @@ When all checks pass:
    - "Test Plan" sections
    - Unrelated changes bundled together
 
-**CRITICAL -- Scope and push rules:**
+### Pushing & PRs
+
 - **Only commit YOUR OWN work.** If `git status` shows changes from other agents or unrelated work, DO NOT stage or commit those files. Only stage files you personally created or modified as part of your current task.
-- **NEVER push without explicit user confirmation.** After committing, ask the user if they want you to push. A request to "commit" does not imply "push." A request to "commit and push" authorizes both. When in doubt, ask.
+- **Push to your feature branch**, then create a PR targeting `main`.
+- **CI must pass** before merging. The `CI Gate` check (Rust + TypeScript) is required.
+- **NEVER force-push to `main`** or merge without CI passing.
+- **Ask the user before pushing** if you're unsure. A request to "commit" does not imply "push." A request to "commit and push" authorizes both.

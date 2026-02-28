@@ -125,12 +125,21 @@ Before committing, present a summary to the user:
 2. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
 3. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. If no e2e tests, explain why and confirm user approved the skip.
 4. **If no UI touched:** What unit/integration tests were written? List test files and what they cover.
-5. **Go checks result** — confirm `task vet`, `task test`, `task api:test` passed clean
-6. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
+5. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
 7. **Security review result** — confirm `/security-review` passed clean, or list any HIGH/CRITICAL findings and user's decision (fix now or defer)
 8. **Files changed** — files created/modified, with brief description of each
 
-## Step 6: Commit
+## Step 6: Commit & Branch Workflow
+
+**Branch-based development is mandatory.** `main` is protected — all changes go through PRs with CI gate.
+
+### Branching
+
+1. **Create a feature branch** before committing: `git checkout -b <type>/<short-description>` (e.g., `feat/execution-history`, `fix/skeleton-layout-shift`, `chore/eslint-config`)
+2. **Branch naming:** `feat/`, `fix/`, `chore/`, `refactor/`, `test/` prefixes. Lowercase, hyphen-separated.
+3. **Never commit directly to `main`.** Branch protection requires PRs to pass the CI Gate check.
+
+### Committing
 
 Stage only relevant files, then commit per these rules:
 
@@ -142,6 +151,10 @@ Stage only relevant files, then commit per these rules:
 
 Present the proposed commit message to the user for approval before committing.
 
-**CRITICAL: Scope and push rules:**
+### Pushing & PRs
+
 - Only commit YOUR OWN work. If `git status` shows changes from other agents or unrelated work, DO NOT stage or commit those files. Only stage files you personally created or modified as part of this task.
-- NEVER push to remote without explicit user confirmation. After committing, ask the user if they want you to push. Do not assume a commit request includes a push.
+- **Push to your feature branch**, then create a PR targeting `main`.
+- **CI must pass** before merging. The `CI Gate` check (Rust + TypeScript) is required.
+- **NEVER force-push to `main`** or merge without CI passing.
+- Ask the user before pushing if you're unsure. A request to "commit" does not imply "push."
