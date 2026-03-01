@@ -70,6 +70,31 @@ If an index exists for the field you're filtering on, use `.withIndex()`. The `.
 
 `.collect()` loads every matching document into memory. For tables that grow unboundedly (executions, executionLogs), prefer `.take(n)` or paginated queries. Acceptable for bounded result sets (e.g., a workflow's node definitions).
 
+## `convexQuery` Skip Guard (CRITICAL)
+
+**Every `convexQuery()` call that accepts an ID parameter MUST use `"skip"` when the ID is falsy.** React Query's `enabled: false` does NOT prevent `@convex-dev/react-query` from creating a real Convex WebSocket subscription. Only the literal `"skip"` arg prevents the subscription.
+
+```typescript
+// BAD -- empty string creates a real Convex subscription that fails validation
+export function getExecutionQuery(id: string) {
+  return convexQuery(api.executions.get, { id: id as Id<"executions"> });
+}
+
+// BAD -- enabled: false only prevents React Query from returning data,
+// the Convex subscription STILL fires and hits the server
+const options = getExecutionQuery("");
+useQuery({ ...options, enabled: id.length > 0 }); // subscription still active!
+
+// GOOD -- "skip" prevents the Convex subscription entirely
+export function getExecutionQuery(id: string) {
+  return convexQuery(api.executions.get, id ? { id: id as Id<"executions"> } : "skip");
+}
+```
+
+**Why this matters:** When a component passes `""` or `null ?? ""` as an ID, the adapter creates a Convex subscription with invalid args. The Convex validator rejects it with `ArgumentValidationError`, which shows as 100% failure rate spikes on the dashboard and causes SSR 500 errors under load. This is not a Convex capacity issue — it's a client bug.
+
+**The rule:** Guard at the adapter layer (where `convexQuery` is called), not at the hook or component layer. The adapter is the single chokepoint. Every adapter function in `packages/core/src/adapters/convex/` that takes an ID must use this pattern.
+
 ## Package Boundary
 
 `@bnto/backend` is consumed by `@bnto/core` internals only. App code NEVER imports from it directly.

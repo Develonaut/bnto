@@ -5,7 +5,7 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores([".next/**", ".next-e2e/**", "out/**", "build/**", "e2e/**", "next-env.d.ts", "public/wasm/**"]),
+  globalIgnores([".next/**", ".next-e2e/**", "out/**", "build/**", "e2e/**", "next-env.d.ts", "public/wasm/**", "playwright-report/**", "test-results/**"]),
   {
     files: ["components/ui/file-upload.tsx"],
     rules: {
