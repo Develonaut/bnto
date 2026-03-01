@@ -1,6 +1,7 @@
 import { type NodeProps, type Node } from "@xyflow/react";
 import { Animate } from "@/components/ui/Animate";
 import { Card } from "@/components/ui/Card";
+import { Pressable } from "@/components/ui/Pressable";
 import { Text } from "@/components/ui/Text";
 
 /**
@@ -12,6 +13,8 @@ import { Text } from "@/components/ui/Text";
  * create the varied-compartment look of a real bento box — some are
  * small squares, others are wide rectangles, others tall.
  */
+
+export type CompartmentStatus = "idle" | "pending" | "active" | "completed";
 
 export type CompartmentData = {
   label: string;
@@ -27,6 +30,8 @@ export type CompartmentData = {
   width?: number;
   /** Height in px. Default: 120 */
   height?: number;
+  /** Simulation status — drives elevation and opacity. Default: "idle" */
+  status?: CompartmentStatus;
 };
 
 export type CompartmentNodeType = Node<CompartmentData, "compartment">;
@@ -40,26 +45,37 @@ const SURFACE_CLASS: Record<NonNullable<CompartmentData["variant"]>, string> = {
   warning: "surface-warning",
 };
 
+const ELEVATION_BY_STATUS: Record<CompartmentStatus, "none" | "sm" | "md" | "lg"> = {
+  idle: "lg",
+  pending: "none",
+  active: "lg",
+  completed: "sm",
+};
+
 export function CompartmentNode({ data }: NodeProps<CompartmentNodeType>) {
   const w = data.width ?? 120;
   const h = data.height ?? 120;
+  const status = data.status ?? "idle";
+  const elevation = ELEVATION_BY_STATUS[status];
 
   return (
     <Animate.ScaleIn from={0.7} easing="spring-bouncy">
-      <Card
-        elevation="lg"
-        className={`${SURFACE_CLASS[data.variant ?? "primary"]} flex flex-col items-center justify-center rounded-xl`}
-        style={{ width: w, height: h }}
-      >
-        <Text size="sm" className="font-display font-semibold leading-tight">
-          {data.label}
-        </Text>
-        {data.sublabel && (
-          <Text size="xs" color="muted" className="mt-0.5">
-            {data.sublabel}
+      <Pressable asChild spring="lg" muted={status === "pending"}>
+        <Card
+          elevation={elevation}
+          className={`${SURFACE_CLASS[data.variant ?? "primary"]} flex flex-col items-center justify-center rounded-xl`}
+          style={{ width: w, height: h }}
+        >
+          <Text size="sm" className="font-display font-semibold leading-tight">
+            {data.label}
           </Text>
-        )}
-      </Card>
+          {data.sublabel && (
+            <Text size="xs" color="muted" className="mt-0.5">
+              {data.sublabel}
+            </Text>
+          )}
+        </Card>
+      </Pressable>
     </Animate.ScaleIn>
   );
 }

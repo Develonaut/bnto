@@ -2,11 +2,23 @@
 
 import { useState, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { Plus, Minus, RotateCcw } from "lucide-react";
+import {
+  Plus,
+  Minus,
+  RotateCcw,
+  Play,
+  ChevronLeft,
+  ChevronRight,
+  Square,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Row } from "@/components/ui/Row";
 import { Text } from "@/components/ui/Text";
-import type { CompartmentNodeType, CompartmentData } from "./CompartmentNode";
+import type {
+  CompartmentNodeType,
+  CompartmentData,
+  CompartmentStatus,
+} from "./CompartmentNode";
 
 /**
  * Interactive "Bento Box" showcase — add/remove surface compartments
@@ -92,7 +104,20 @@ const SLOTS: { x: number; y: number; w: number; h: number }[] = [
 
 /* ── Node builder ────────────────────────────────────────────── */
 
-function buildNodes(count: number): CompartmentNodeType[] {
+function statusForIndex(
+  i: number,
+  activeIndex: number | null,
+): CompartmentStatus {
+  if (activeIndex === null) return "idle";
+  if (i < activeIndex) return "completed";
+  if (i === activeIndex) return "active";
+  return "pending";
+}
+
+function buildNodes(
+  count: number,
+  activeIndex: number | null,
+): CompartmentNodeType[] {
   return Array.from({ length: count }, (_, i) => {
     const slot = SLOTS[i]!;
     const data = PALETTE[i % PALETTE.length]!;
@@ -100,7 +125,12 @@ function buildNodes(count: number): CompartmentNodeType[] {
       id: `compartment-${i}`,
       type: "compartment" as const,
       position: { x: slot.x, y: slot.y },
-      data: { ...data, width: slot.w, height: slot.h },
+      data: {
+        ...data,
+        width: slot.w,
+        height: slot.h,
+        status: statusForIndex(i, activeIndex),
+      },
     };
   });
 }
@@ -109,7 +139,14 @@ function buildNodes(count: number): CompartmentNodeType[] {
 
 export function BentoBoxShowcase() {
   const [count, setCount] = useState(1);
-  const nodes = useMemo(() => buildNodes(count), [count]);
+  /* activeIndex: null = idle (no simulation), 0..count-1 = running */
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const running = activeIndex !== null;
+
+  const nodes = useMemo(
+    () => buildNodes(count, activeIndex),
+    [count, activeIndex],
+  );
 
   const add = useCallback(() => {
     setCount((c) => Math.min(c + 1, SLOTS.length));
@@ -119,26 +156,40 @@ export function BentoBoxShowcase() {
     setCount((c) => Math.max(c - 1, 0));
   }, []);
 
-  const reset = useCallback(() => setCount(1), []);
+  const reset = useCallback(() => {
+    setCount(1);
+    setActiveIndex(null);
+  }, []);
+
+  const run = useCallback(() => setActiveIndex(0), []);
+  const stop = useCallback(() => setActiveIndex(null), []);
+
+  const next = useCallback(() => {
+    setActiveIndex((i) => (i !== null && i < count - 1 ? i + 1 : i));
+  }, [count]);
+
+  const prev = useCallback(() => {
+    setActiveIndex((i) => (i !== null && i > 0 ? i - 1 : i));
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Controls */}
+      {/* Build controls */}
       <Row className="items-center gap-3">
         <Button
           size="md"
           variant="secondary"
           onClick={add}
-          disabled={count >= SLOTS.length}
+          disabled={count >= SLOTS.length || running}
         >
           <Plus className="size-3.5" />
-          Add Compartment
+          Add
         </Button>
         <Button
           size="md"
           variant="ghost"
           onClick={remove}
-          disabled={count <= 0}
+          disabled={count <= 0 || running}
         >
           <Minus className="size-3.5" />
           Remove
@@ -147,7 +198,7 @@ export function BentoBoxShowcase() {
           size="md"
           variant="ghost"
           onClick={reset}
-          disabled={count <= 1}
+          disabled={count <= 1 && !running}
         >
           <RotateCcw className="size-3.5" />
           Reset
@@ -155,6 +206,49 @@ export function BentoBoxShowcase() {
         <Text size="sm" color="muted" className="ml-auto font-mono">
           {count} / {SLOTS.length}
         </Text>
+      </Row>
+
+      {/* Simulation controls */}
+      <Row className="items-center gap-3">
+        {!running ? (
+          <Button
+            size="md"
+            variant="primary"
+            onClick={run}
+            disabled={count === 0}
+          >
+            <Play className="size-3.5" />
+            Run
+          </Button>
+        ) : (
+          <>
+            <Button size="md" variant="ghost" onClick={stop}>
+              <Square className="size-3.5" />
+              Stop
+            </Button>
+            <Button
+              size="md"
+              variant="ghost"
+              onClick={prev}
+              disabled={activeIndex === 0}
+            >
+              <ChevronLeft className="size-3.5" />
+              Prev
+            </Button>
+            <Button
+              size="md"
+              variant="ghost"
+              onClick={next}
+              disabled={activeIndex === count - 1}
+            >
+              <ChevronRight className="size-3.5" />
+              Next
+            </Button>
+            <Text size="sm" color="muted" className="ml-auto font-mono">
+              Step {activeIndex! + 1} / {count}
+            </Text>
+          </>
+        )}
       </Row>
 
       {/* Canvas — the bento box */}
