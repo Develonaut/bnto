@@ -27,6 +27,18 @@ export function getExecutionLogsQuery(executionId: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Paginated Queries (for usePaginatedQuery — returns func ref + args)
+// ---------------------------------------------------------------------------
+
+/** Returns the Convex function ref and empty args for paginated user history. */
+export function getExecutionHistoryRef() {
+  return {
+    funcRef: api.executions.listByUser,
+    args: {},
+  } as const;
+}
+
+// ---------------------------------------------------------------------------
 // Mutations (imperative — no React hooks)
 // ---------------------------------------------------------------------------
 

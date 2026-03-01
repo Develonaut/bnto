@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock the adapter and client before imports
+const mockFuncRef = { __type: "funcRef" };
 vi.mock("../adapters/convex/executionAdapter", () => ({
   getExecutionQuery: vi.fn((id: string) => ({
     queryKey: ["executions", "get", id],
@@ -13,6 +14,10 @@ vi.mock("../adapters/convex/executionAdapter", () => ({
   getExecutionLogsQuery: vi.fn((executionId: string) => ({
     queryKey: ["executionLogs", "list", executionId],
     queryFn: vi.fn(),
+  })),
+  getExecutionHistoryRef: vi.fn(() => ({
+    funcRef: mockFuncRef,
+    args: {},
   })),
   startExecution: vi.fn(),
 }));
@@ -69,6 +74,66 @@ describe("createExecutionService", () => {
       const result = await service.start({ workflowId: "wf_789" });
 
       expect(result).toBe("exec_789");
+    });
+  });
+
+  describe("historyRefMethod", () => {
+    it("returns funcRef, args, and transform", () => {
+      const result = service.historyRefMethod();
+
+      expect(result.funcRef).toBe(mockFuncRef);
+      expect(result.args).toEqual({});
+      expect(typeof result.transform).toBe("function");
+    });
+
+    it("transform converts raw execution doc to Execution type", () => {
+      const { transform } = service.historyRefMethod();
+
+      const rawDoc = {
+        _id: "exec_123",
+        userId: "user_456",
+        workflowId: "wf_789",
+        status: "completed" as const,
+        progress: [{ nodeId: "n1", status: "completed" }],
+        startedAt: 1000,
+        completedAt: 2000,
+      };
+
+      const result = transform(rawDoc);
+
+      expect(result.id).toBe("exec_123");
+      expect(result.userId).toBe("user_456");
+      expect(result.workflowId).toBe("wf_789");
+      expect(result.status).toBe("completed");
+      expect(result.startedAt).toBe(1000);
+      expect(result.completedAt).toBe(2000);
+    });
+
+    it("transform handles nullable fields", () => {
+      const { transform } = service.historyRefMethod();
+
+      const rawDoc = {
+        _id: "exec_456",
+        userId: "user_789",
+        status: "pending" as const,
+        progress: [],
+        startedAt: 3000,
+        workflowId: null,
+        error: null,
+        result: null,
+        outputFiles: null,
+        sessionId: null,
+        completedAt: null,
+      };
+
+      const result = transform(rawDoc);
+
+      expect(result.workflowId).toBeUndefined();
+      expect(result.error).toBeUndefined();
+      expect(result.result).toBeUndefined();
+      expect(result.outputFiles).toBeUndefined();
+      expect(result.sessionId).toBeUndefined();
+      expect(result.completedAt).toBeUndefined();
     });
   });
 });
