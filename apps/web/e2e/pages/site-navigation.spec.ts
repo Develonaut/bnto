@@ -33,9 +33,7 @@ test.describe("Site navigation — desktop", () => {
       const response = await page.goto(route.path);
       expect(response?.status()).toBeLessThan(400);
       await page.evaluate(() => window.scrollTo(0, 0));
-      await expect(page).toHaveScreenshot(`desktop-${route.name}.png`, {
-        fullPage: true,
-      });
+      await expect(page).toHaveScreenshot(`desktop-${route.name}.png`);
     });
   }
 
@@ -138,9 +136,7 @@ test.describe("Site navigation — mobile", () => {
       const response = await page.goto(route.path);
       expect(response?.status()).toBeLessThan(400);
       await page.evaluate(() => window.scrollTo(0, 0));
-      await expect(page).toHaveScreenshot(`mobile-${route.name}.png`, {
-        fullPage: true,
-      });
+      await expect(page).toHaveScreenshot(`mobile-${route.name}.png`);
     });
   }
 

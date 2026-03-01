@@ -51,9 +51,7 @@ test.describe("clean-csv — browser execution", () => {
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("clean-csv-01-file-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("clean-csv-01-file-selected.png");
 
     // Run with default config (trim whitespace + remove empty rows)
     await runButton.click();
@@ -66,9 +64,7 @@ test.describe("clean-csv — browser execution", () => {
     await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("clean-csv-02-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("clean-csv-02-result.png");
 
     // Download and verify output is valid CSV text
     const downloadPromise = page.waitForEvent("download");

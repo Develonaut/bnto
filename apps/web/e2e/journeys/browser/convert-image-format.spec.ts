@@ -56,9 +56,7 @@ test.describe("convert-image-format — browser execution", () => {
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("convert-01-jpeg-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("convert-01-jpeg-selected.png");
 
     // Convert
     await runButton.click();
@@ -71,9 +69,7 @@ test.describe("convert-image-format — browser execution", () => {
     await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("convert-02-webp-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("convert-02-webp-result.png");
 
     // Download and verify WebP magic bytes
     const downloadPromise = page.waitForEvent("download");

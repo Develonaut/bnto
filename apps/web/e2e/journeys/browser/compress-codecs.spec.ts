@@ -34,9 +34,7 @@ test.describe("compress-images — codec coverage", () => {
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("01-jpeg-file-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("01-jpeg-file-selected.png");
 
     // Compress
     await runButton.click();
@@ -49,9 +47,7 @@ test.describe("compress-images — codec coverage", () => {
     await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("02-jpeg-compressed-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("02-jpeg-compressed-result.png");
 
     // Download and verify
     const inputSize = fs.statSync(
@@ -92,9 +88,7 @@ test.describe("compress-images — codec coverage", () => {
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("03-png-file-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("03-png-file-selected.png");
 
     // Compress
     await runButton.click();
@@ -104,9 +98,7 @@ test.describe("compress-images — codec coverage", () => {
     await expect(progressEl).toBeVisible({ timeout: 10000 });
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("04-png-compressing.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("04-png-compressing.png");
 
     // Wait for completion
     await expect(runButton).toHaveAttribute("data-phase", "completed", {
@@ -117,9 +109,7 @@ test.describe("compress-images — codec coverage", () => {
     await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("05-png-compressed-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("05-png-compressed-result.png");
 
     // Download and verify
     const inputSize = fs.statSync(
@@ -161,9 +151,7 @@ test.describe("compress-images — codec coverage", () => {
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("06-webp-file-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("06-webp-file-selected.png");
 
     // Compress
     await runButton.click();
@@ -176,9 +164,7 @@ test.describe("compress-images — codec coverage", () => {
     await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("07-webp-compressed-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("07-webp-compressed-result.png");
 
     // Download and verify
     // Note: WebP encoding is lossless-only in the Rust image crate.

@@ -49,9 +49,7 @@ test.describe("rename-files — browser execution", () => {
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("rename-01-file-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("rename-01-file-selected.png");
 
     // Run
     await runButton.click();
@@ -64,9 +62,7 @@ test.describe("rename-files — browser execution", () => {
     await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("rename-02-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("rename-02-result.png");
 
     // Verify download filename includes "renamed-"
     const downloadPromise = page.waitForEvent("download");
@@ -111,8 +107,6 @@ test.describe("rename-files — browser execution", () => {
     await expect(outputFiles).toHaveCount(3);
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("rename-03-batch-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("rename-03-batch-result.png");
   });
 });

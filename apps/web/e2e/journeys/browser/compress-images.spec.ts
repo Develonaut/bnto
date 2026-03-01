@@ -52,9 +52,7 @@ test.describe("compress-images — browser execution", () => {
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("00-single-jpg-file-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("00-single-jpg-file-selected.png");
 
     // --- Click Run ---
     await runButton.click();
@@ -72,9 +70,7 @@ test.describe("compress-images — browser execution", () => {
     ).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("00-single-jpg-compressed-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("00-single-jpg-compressed-result.png");
 
     // --- VERIFY: download produces valid compressed JPEG ---
     const inputPath = path.join(FIXTURES_DIR, "small.jpg");
@@ -117,9 +113,7 @@ test.describe("compress-images — browser execution", () => {
     await expect(page.getByText("2 files selected")).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("00-batch-2-files-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("00-batch-2-files-selected.png");
 
     // --- Click Run ---
     const runButton = page.locator('[data-testid="run-button"]:visible');
@@ -135,9 +129,7 @@ test.describe("compress-images — browser execution", () => {
     await expect(downloadAllBtn).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("00-batch-2-files-compressed.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("00-batch-2-files-compressed.png");
 
     // --- VERIFY: Download All produces a valid ZIP file ---
     const downloadPromise = page.waitForEvent("download");

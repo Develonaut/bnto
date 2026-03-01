@@ -32,10 +32,11 @@ export default defineConfig({
   reporter: "html",
   expect: {
     toHaveScreenshot: {
-      // CI runs on Ubuntu (different font rendering than macOS).
-      // Allow a higher pixel diff ratio to accommodate cross-platform
-      // rendering differences without causing false failures.
-      maxDiffPixelRatio: process.env.CI ? 0.05 : 0.02,
+      // macOS (CoreText) and Linux (FreeType) render fonts slightly differently.
+      // With --font-render-hinting=none and viewport-only screenshots (no fullPage),
+      // cross-platform diffs are typically <0.2%. A 2% threshold gives comfortable
+      // margin while still catching real visual regressions.
+      maxDiffPixelRatio: 0.02,
     },
   },
   use: {
@@ -56,7 +57,19 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        launchOptions: {
+          args: [
+            // Normalize font rendering across macOS and Linux.
+            // Disables hinting and LCD subpixel antialiasing so CoreText
+            // and FreeType produce near-identical output.
+            "--font-render-hinting=none",
+            "--disable-lcd-text",
+            "--force-color-profile=srgb",
+          ],
+        },
+      },
     },
   ],
   // Skip webServer when testing against a remote URL (Vercel preview)

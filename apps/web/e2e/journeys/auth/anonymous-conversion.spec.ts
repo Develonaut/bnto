@@ -74,12 +74,15 @@ test.describe("Anonymous → password conversion", () => {
       // Step 2: Navigate to sign-in and create a password account.
       // Anonymous users are "authenticated" in Convex, so the proxy redirects
       // them away from /signin. Set the signout signal cookie to bypass this.
+      // Derive domain from the current page URL so this works on both
+      // localhost and Vercel preview deployments.
+      const { hostname } = new URL(page.url());
       await page.context().addCookies([
         {
           name: "bnto-signout",
           value: "1",
           path: "/",
-          domain: "localhost",
+          domain: hostname,
         },
       ]);
       await page.goto("/signin");
@@ -140,13 +143,15 @@ test.describe("Anonymous → password conversion", () => {
         timeout: 15000,
       });
 
-      // Sign up — set signout signal to bypass proxy redirect for anonymous users
+      // Sign up — set signout signal to bypass proxy redirect for anonymous users.
+      // Derive domain from the current page URL (localhost vs Vercel preview).
+      const { hostname } = new URL(page.url());
       await page.context().addCookies([
         {
           name: "bnto-signout",
           value: "1",
           path: "/",
-          domain: "localhost",
+          domain: hostname,
         },
       ]);
       await page.goto("/signin");

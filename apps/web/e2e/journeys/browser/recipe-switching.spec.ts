@@ -78,7 +78,6 @@ test.describe("recipe switching — state isolation", () => {
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot(
       "00-clean-csv-fresh-after-compress.png",
-      { fullPage: true },
     );
   });
 
@@ -170,7 +169,6 @@ test.describe("recipe switching — state isolation", () => {
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot(
       "00-clean-csv-independent-result.png",
-      { fullPage: true },
     );
   });
 

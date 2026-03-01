@@ -136,10 +136,8 @@ test.describe("SEO — 404 for unknown slugs", () => {
   test("unknown slug returns 404 page", async ({ page }) => {
     const response = await page.goto("/not-a-real-bnto-tool");
 
-    // Should get a 404 status
     expect(response?.status()).toBe(404);
 
-    // 404 page content renders
     await expect(
       page.getByRole("heading", { name: /Page Not Found/i }),
     ).toBeVisible();

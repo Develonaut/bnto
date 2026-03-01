@@ -56,7 +56,6 @@ test.describe("rename-csv-columns — browser execution", () => {
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot(
       "rename-csv-01-file-selected.png",
-      { fullPage: true },
     );
 
     // Run
@@ -70,9 +69,7 @@ test.describe("rename-csv-columns — browser execution", () => {
     await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("rename-csv-02-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("rename-csv-02-result.png");
 
     // Download and verify output is valid CSV with columns preserved
     const downloadPromise = page.waitForEvent("download");

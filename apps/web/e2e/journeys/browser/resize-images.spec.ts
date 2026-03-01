@@ -50,9 +50,7 @@ test.describe("resize-images — browser execution", () => {
     await expect(runButton).toBeEnabled();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("resize-01-file-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("resize-01-file-selected.png");
 
     // --- Click Run ---
     await runButton.click();
@@ -66,9 +64,7 @@ test.describe("resize-images — browser execution", () => {
     await expect(outputFile).toHaveCount(1);
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("resize-02-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("resize-02-result.png");
 
     // --- VERIFY: download produces valid JPEG ---
     const downloadPromise = page.waitForEvent("download");
@@ -118,8 +114,6 @@ test.describe("resize-images — browser execution", () => {
     ).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("resize-03-batch-result.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("resize-03-batch-result.png");
   });
 });

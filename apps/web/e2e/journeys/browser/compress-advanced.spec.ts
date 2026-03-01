@@ -105,9 +105,7 @@ test.describe("compress-images — batch processing", () => {
     await expect(page.getByText("5 files selected")).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("10-batch-5-files-selected.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("10-batch-5-files-selected.png");
 
     // Run
     const runButton = page.locator('[data-testid="run-button"]:visible');
@@ -128,9 +126,7 @@ test.describe("compress-images — batch processing", () => {
     ).toBeVisible();
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("11-batch-5-files-compressed.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("11-batch-5-files-compressed.png");
   });
 
   test("multi-file progress is monotonic (never decreases)", async ({ page }) => {

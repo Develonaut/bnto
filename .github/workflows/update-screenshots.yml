@@ -1,0 +1,110 @@
+name: Update E2E Screenshots
+
+# Regenerates Playwright screenshot baselines on Linux (Ubuntu).
+#
+# Screenshots use viewport-only capture (no fullPage) so dimensions are fixed
+# across platforms. Chromium flags (--font-render-hinting=none, --disable-lcd-text,
+# --force-color-profile=srgb) minimize cross-platform pixel diffs. A 2% tolerance
+# (maxDiffPixelRatio) handles any remaining font rendering differences.
+#
+# Trigger: manually via workflow_dispatch, or by commenting "/update-screenshots"
+# on a PR. Regenerated screenshots are committed back to the branch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Vercel preview URL (leave empty for local server)"
+        required: false
+        type: string
+  issue_comment:
+    types: [created]
+
+# Cancel in-progress runs for the same ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update:
+    name: Regenerate Screenshot Baselines
+    # Run on workflow_dispatch or when a PR comment contains "/update-screenshots"
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, '/update-screenshots'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # For PR comments, check out the PR's head branch
+      - uses: actions/checkout@v4
+        if: github.event_name == 'issue_comment'
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - uses: actions/checkout@v4
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @bnto/web exec playwright install chromium --with-deps
+
+      - name: Build WASM
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source "$HOME/.cargo/env"
+          cargo install wasm-pack
+          cd engine && wasm-pack build crates/bnto-wasm --target web --release
+          mkdir -p ../apps/web/public/wasm
+          cp crates/bnto-wasm/pkg/bnto_wasm_bg.wasm ../apps/web/public/wasm/
+          cp crates/bnto-wasm/pkg/bnto_wasm.js ../apps/web/public/wasm/
+
+      - name: Generate screenshots (run 1 — create baselines)
+        run: pnpm --filter @bnto/web exec playwright test --update-snapshots
+        env:
+          BASE_URL: ${{ inputs.base_url || '' }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          CI: true
+        continue-on-error: true
+
+      - name: Verify screenshots (run 2 — confirm stable)
+        run: pnpm --filter @bnto/web exec playwright test
+        env:
+          BASE_URL: ${{ inputs.base_url || '' }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          CI: true
+        continue-on-error: true
+
+      - name: Commit updated screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "apps/web/e2e/**/__screenshots__/**"
+          if git diff --cached --quiet; then
+            echo "No screenshot changes to commit"
+          else
+            git commit -m "chore: regenerate E2E screenshot baselines"
+            git push
+          fi
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

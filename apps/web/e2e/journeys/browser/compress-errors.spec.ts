@@ -41,9 +41,7 @@ test.describe("compress-images — error handling", () => {
     await expect(errorCard).toContainText("Something went wrong");
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("08-error-unsupported-file.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("08-error-unsupported-file.png");
 
     // Page should still be functional — back button resets to configure phase
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
@@ -87,9 +85,7 @@ test.describe("compress-images — error handling", () => {
     await expect(errorCard).toContainText("Something went wrong");
 
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("09-error-corrupt-image.png", {
-      fullPage: true,
-    });
+    await expect(page).toHaveScreenshot("09-error-corrupt-image.png");
 
     // Back button resets to configure phase, ready to try different files
     await expect(runButton).toHaveAttribute("aria-label", "Try again");

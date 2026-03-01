@@ -1,6 +1,15 @@
 import { test as base, expect } from "@playwright/test";
 
 /**
+ * Whether tests are running against a remote URL (Vercel preview).
+ *
+ * Used by test helpers that need to adapt to the deployment environment
+ * (e.g., deriving the correct cookie domain from the page URL instead
+ * of hardcoding "localhost").
+ */
+export const isRemote = !!process.env.BASE_URL;
+
+/**
  * Shared E2E test fixture with automatic error capture.
  *
  * Three automatic behaviors:
