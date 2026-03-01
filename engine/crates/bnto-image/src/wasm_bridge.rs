@@ -198,7 +198,7 @@ fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
 ///   A JavaScript object with four properties:
 ///   ```js
 ///   {
-///     metadata: '{"file":{...},"metadata":{...}}',  // JSON string
+///     metadata: '{"originalSize":102400,"compressedSize":51200,...}',  // JSON string
 ///     data: Uint8Array([...]),                       // raw compressed bytes
 ///     filename: "photo-compressed.jpg",              // output filename
 ///     mimeType: "image/jpeg"                         // MIME type
@@ -307,7 +307,7 @@ pub fn compress_image_combined(
 ///   A JavaScript object with four properties:
 ///   ```js
 ///   {
-///     metadata: '{"file":{...},"metadata":{...}}',  // JSON string
+///     metadata: '{"originalSize":102400,"compressedSize":51200,...}',  // JSON string
 ///     data: Uint8Array([...]),                       // raw resized bytes
 ///     filename: "photo-resized.jpg",                 // output filename
 ///     mimeType: "image/jpeg"                         // MIME type
@@ -379,7 +379,7 @@ pub fn resize_image_combined(
 ///   A JavaScript object with four properties:
 ///   ```js
 ///   {
-///     metadata: '{"file":{...},"metadata":{...}}',  // JSON string
+///     metadata: '{"originalSize":102400,"compressedSize":51200,...}',  // JSON string
 ///     data: Uint8Array([...]),                       // raw converted bytes
 ///     filename: "photo.png",                         // output filename
 ///     mimeType: "image/png"                          // MIME type

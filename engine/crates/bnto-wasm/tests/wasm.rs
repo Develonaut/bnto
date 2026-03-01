@@ -167,12 +167,19 @@ fn test_compress_image_combined_returns_metadata() {
         metadata_str
     );
 
-    // Verify the JSON has expected fields.
+    // Verify the JSON has expected fields from CompressImages metadata.
+    // The metadata is a flat map with keys like originalSize, compressedSize, etc.
+    // (NOT a nested {"file":{...}, "metadata":{...}} structure.)
     let value = parsed.unwrap();
-    assert!(value.get("file").is_some(), "JSON should have 'file' field");
     assert!(
-        value.get("metadata").is_some(),
-        "JSON should have 'metadata' field"
+        value.get("originalSize").is_some(),
+        "JSON should have 'originalSize' field, got: {}",
+        metadata_str
+    );
+    assert!(
+        value.get("compressedSize").is_some(),
+        "JSON should have 'compressedSize' field, got: {}",
+        metadata_str
     );
 }
 
