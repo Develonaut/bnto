@@ -180,6 +180,17 @@ pub fn extract_filename(result: &JsValue) -> String {
         .expect("filename should be a string")
 }
 
+/// Extract MIME type from a combined function result.
+///
+/// Returns the MIME type string for the output file, e.g.,
+/// "text/csv" for CSV operations.
+pub fn extract_mime_type(result: &JsValue) -> String {
+    js_sys::Reflect::get(result, &"mimeType".into())
+        .expect("result should have mimeType property")
+        .as_string()
+        .expect("mimeType should be a string")
+}
+
 /// Initialize panic hook for test reliability.
 ///
 /// In production, the bnto-wasm entry point handles this. In these

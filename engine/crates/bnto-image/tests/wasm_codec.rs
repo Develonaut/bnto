@@ -31,7 +31,8 @@ use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
 use common::{
-    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_metadata, init_panic_hook, noop_callback,
+    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_filename, extract_metadata,
+    extract_mime_type, init_panic_hook, noop_callback,
 };
 
 wasm_bindgen_test_configure!(run_in_node_experimental);
@@ -61,26 +62,10 @@ fn test_compress_png_metadata_via_wasm() {
     let result_obj = result.unwrap();
     let json_str = extract_metadata(&result_obj);
 
-    // --- Verify the metadata JSON contains all expected fields ---
+    // --- Verify the metadata JSON contains compression stats ---
     //
     // These fields are built in compress.rs and serialized in wasm_bridge.rs.
     // If any field name gets mangled during WASM serialization, this catches it.
-    assert!(
-        json_str.contains("filename"),
-        "PNG metadata should contain 'filename': got '{json_str}'"
-    );
-    assert!(
-        json_str.contains("compressed"),
-        "PNG output filename should contain 'compressed': got '{json_str}'"
-    );
-    assert!(
-        json_str.contains("mimeType"),
-        "PNG metadata should contain 'mimeType': got '{json_str}'"
-    );
-    assert!(
-        json_str.contains("image/png"),
-        "PNG MIME type should be 'image/png': got '{json_str}'"
-    );
     assert!(
         json_str.contains("originalSize"),
         "Metadata should contain 'originalSize': got '{json_str}'"
@@ -89,6 +74,15 @@ fn test_compress_png_metadata_via_wasm() {
         json_str.contains("compressedSize"),
         "Metadata should contain 'compressedSize': got '{json_str}'"
     );
+
+    // Filename and MIME type are separate properties on the result object.
+    let filename = extract_filename(&result_obj);
+    assert!(
+        filename.contains("compressed"),
+        "PNG filename should contain 'compressed': got '{filename}'"
+    );
+    let mime = extract_mime_type(&result_obj);
+    assert_eq!(mime, "image/png", "PNG MIME type should be 'image/png'");
 }
 
 // =============================================================================
@@ -115,22 +109,27 @@ fn test_compress_webp_metadata_via_wasm() {
     let result_obj = result.unwrap();
     let json_str = extract_metadata(&result_obj);
 
+    // --- Verify the metadata JSON contains compression stats ---
+    //
+    // These fields are built in compress.rs and serialized in wasm_bridge.rs.
+    // If any field name gets mangled during WASM serialization, this catches it.
     assert!(
-        json_str.contains("filename"),
-        "WebP metadata should contain 'filename': got '{json_str}'"
+        json_str.contains("originalSize"),
+        "WebP metadata should contain 'originalSize': got '{json_str}'"
     );
     assert!(
-        json_str.contains("compressed"),
-        "WebP output filename should contain 'compressed': got '{json_str}'"
+        json_str.contains("compressedSize"),
+        "WebP metadata should contain 'compressedSize': got '{json_str}'"
     );
+
+    // Filename and MIME type are separate properties on the result object.
+    let filename = extract_filename(&result_obj);
     assert!(
-        json_str.contains("mimeType"),
-        "WebP metadata should contain 'mimeType': got '{json_str}'"
+        filename.contains("compressed"),
+        "WebP filename should contain 'compressed': got '{filename}'"
     );
-    assert!(
-        json_str.contains("image/webp"),
-        "WebP MIME type should be 'image/webp': got '{json_str}'"
-    );
+    let mime = extract_mime_type(&result_obj);
+    assert_eq!(mime, "image/webp", "WebP MIME type should be 'image/webp'");
 }
 
 // =============================================================================
@@ -180,21 +179,20 @@ fn test_jpeg_output_filename_has_compressed_suffix() {
     // --- Test: Output filename gets "-compressed" suffix ---
     //
     // "my-photo.jpg" → "my-photo-compressed.jpg"
-    // The filename is now available both in the metadata JSON string AND
-    // as a top-level property on the combined result object. We check the
-    // metadata JSON string for backward-compatible assertions.
+    // The filename is a top-level property on the combined result object,
+    // extracted via extract_filename(). It is NOT in the metadata JSON.
     init_panic_hook();
     let callback = noop_callback();
 
     let result = compress_image_combined(TEST_JPEG, "my-photo.jpg", r#"{"quality": 80}"#, callback);
     assert!(result.is_ok(), "compress_image_combined should succeed");
 
-    // --- Extract metadata JSON and check filename ---
+    // --- Extract filename from the combined result object ---
     let result_obj = result.unwrap();
-    let json_str = extract_metadata(&result_obj);
-    assert!(
-        json_str.contains("my-photo-compressed.jpg"),
-        "Output filename should be 'my-photo-compressed.jpg': got '{json_str}'"
+    let filename = extract_filename(&result_obj);
+    assert_eq!(
+        filename, "my-photo-compressed.jpg",
+        "Output filename should be 'my-photo-compressed.jpg': got '{filename}'"
     );
 }
 
@@ -208,10 +206,10 @@ fn test_png_output_filename_has_compressed_suffix() {
     assert!(result.is_ok(), "compress_image_combined should succeed");
 
     let result_obj = result.unwrap();
-    let json_str = extract_metadata(&result_obj);
-    assert!(
-        json_str.contains("chart-compressed.png"),
-        "Output filename should be 'chart-compressed.png': got '{json_str}'"
+    let filename = extract_filename(&result_obj);
+    assert_eq!(
+        filename, "chart-compressed.png",
+        "Output filename should be 'chart-compressed.png': got '{filename}'"
     );
 }
 
@@ -225,10 +223,10 @@ fn test_webp_output_filename_has_compressed_suffix() {
     assert!(result.is_ok(), "compress_image_combined should succeed");
 
     let result_obj = result.unwrap();
-    let json_str = extract_metadata(&result_obj);
-    assert!(
-        json_str.contains("hero-image-compressed.webp"),
-        "Output filename should be 'hero-image-compressed.webp': got '{json_str}'"
+    let filename = extract_filename(&result_obj);
+    assert_eq!(
+        filename, "hero-image-compressed.webp",
+        "Output filename should be 'hero-image-compressed.webp': got '{filename}'"
     );
 }
 

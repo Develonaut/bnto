@@ -29,8 +29,8 @@ use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
 use common::{
-    LARGE_JPEG, TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_metadata, init_panic_hook,
-    noop_callback, recording_callback,
+    LARGE_JPEG, TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_filename, extract_metadata,
+    init_panic_hook, noop_callback, recording_callback,
 };
 
 // Configure tests to run in Node.js.
@@ -63,17 +63,8 @@ fn test_resize_jpeg_metadata_via_wasm() {
         "Result metadata JSON should not be empty"
     );
 
-    // Verify the JSON contains expected fields.
-    assert!(
-        json_str.contains("\"filename\""),
-        "Result should contain 'filename': got '{}'",
-        json_str
-    );
-    assert!(
-        json_str.contains("resized"),
-        "Filename should contain 'resized': got '{}'",
-        json_str
-    );
+    // Verify the metadata JSON contains resize-specific stats.
+    // Filename is a separate property on the result object, not in metadata.
     assert!(
         json_str.contains("\"originalWidth\""),
         "Metadata should contain 'originalWidth': got '{}'",
@@ -83,6 +74,14 @@ fn test_resize_jpeg_metadata_via_wasm() {
         json_str.contains("\"newWidth\""),
         "Metadata should contain 'newWidth': got '{}'",
         json_str
+    );
+
+    // Filename with "-resized" suffix is a top-level property on the result.
+    let filename = extract_filename(&result_obj);
+    assert!(
+        filename.contains("resized"),
+        "Output filename should contain 'resized': got '{}'",
+        filename
     );
 }
 

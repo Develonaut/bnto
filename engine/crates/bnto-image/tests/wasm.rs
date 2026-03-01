@@ -26,7 +26,8 @@ use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
 use common::{
-    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_metadata, init_panic_hook, noop_callback,
+    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_filename, extract_metadata,
+    init_panic_hook, noop_callback,
 };
 
 // Configure tests to run in Node.js.
@@ -52,22 +53,29 @@ fn test_compress_jpeg_combined_via_wasm() {
         "compress_image_combined should succeed for JPEG"
     );
 
-    // --- Extract and verify metadata from the combined result ---
+    // --- Extract and verify from the combined result ---
     let result_obj = result.unwrap();
+
+    // Metadata JSON has compression stats (originalSize, compressedSize, etc.)
     let json_str = extract_metadata(&result_obj);
+    assert!(!json_str.is_empty(), "Metadata JSON should not be empty");
     assert!(
-        !json_str.is_empty(),
-        "Result metadata JSON should not be empty"
-    );
-    assert!(
-        json_str.contains("filename"),
-        "Result JSON should contain 'filename': got '{}'",
+        json_str.contains("originalSize"),
+        "Metadata should contain 'originalSize': got '{}'",
         json_str
     );
     assert!(
-        json_str.contains("compressed"),
-        "Filename in result should contain 'compressed': got '{}'",
+        json_str.contains("compressedSize"),
+        "Metadata should contain 'compressedSize': got '{}'",
         json_str
+    );
+
+    // Filename is a separate property on the result object.
+    let filename = extract_filename(&result_obj);
+    assert!(
+        filename.contains("compressed"),
+        "Output filename should contain 'compressed': got '{}'",
+        filename
     );
 }
 

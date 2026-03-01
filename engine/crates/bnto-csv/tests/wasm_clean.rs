@@ -33,7 +33,8 @@ use wasm_bindgen_test::*;
 use bnto_csv::wasm_bridge::*;
 use common::{
     CSV_WITH_DUPLICATES, CSV_WITH_EMPTY_ROWS, HEADERS_ONLY_CSV, MESSY_CSV, SIMPLE_CSV,
-    extract_bytes, extract_metadata, init_panic_hook, noop_callback, recording_callback,
+    extract_bytes, extract_filename, extract_metadata, extract_mime_type, init_panic_hook,
+    noop_callback, recording_callback,
 };
 
 // Configure tests to run in Node.js.
@@ -61,26 +62,35 @@ fn test_clean_simple_csv_combined_metadata_via_wasm() {
         "clean_csv_combined should succeed for simple CSV"
     );
 
-    // Extract the metadata JSON string from the combined result object.
+    // Extract and verify the combined result object.
     let result_obj = result.unwrap();
-    let json_str = extract_metadata(&result_obj);
 
-    // The result should be valid JSON containing file and metadata info.
-    assert!(!json_str.is_empty(), "Result JSON should not be empty");
+    // Metadata JSON has cleaning stats (originalRows, cleanedRows, etc.)
+    let json_str = extract_metadata(&result_obj);
+    assert!(!json_str.is_empty(), "Metadata JSON should not be empty");
     assert!(
-        json_str.contains("filename"),
-        "Result should contain 'filename': got '{}'",
+        json_str.contains("originalRows"),
+        "Metadata should contain 'originalRows': got '{}'",
         json_str
     );
     assert!(
-        json_str.contains("cleaned"),
-        "Filename should contain 'cleaned': got '{}'",
+        json_str.contains("cleanedRows"),
+        "Metadata should contain 'cleanedRows': got '{}'",
         json_str
     );
+
+    // Filename and MIME type are separate properties on the result object.
+    let filename = extract_filename(&result_obj);
     assert!(
-        json_str.contains("text/csv"),
+        filename.contains("cleaned"),
+        "Output filename should contain 'cleaned': got '{}'",
+        filename
+    );
+    let mime = extract_mime_type(&result_obj);
+    assert!(
+        mime.contains("text/csv"),
         "MIME type should be text/csv: got '{}'",
-        json_str
+        mime
     );
 }
 

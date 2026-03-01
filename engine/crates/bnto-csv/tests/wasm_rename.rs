@@ -32,8 +32,8 @@ use wasm_bindgen_test::*;
 
 use bnto_csv::wasm_bridge::*;
 use common::{
-    MANY_COLUMNS_CSV, MINIMAL_CSV, SIMPLE_CSV, extract_bytes, extract_metadata, init_panic_hook,
-    noop_callback, recording_callback,
+    MANY_COLUMNS_CSV, MINIMAL_CSV, SIMPLE_CSV, extract_bytes, extract_filename, extract_metadata,
+    extract_mime_type, init_panic_hook, noop_callback, recording_callback,
 };
 
 // Configure tests to run in Node.js (not a browser).
@@ -71,16 +71,16 @@ fn test_rename_columns_combined_metadata_via_wasm() {
     let json_str = extract_metadata(&result_obj);
     assert!(!json_str.is_empty(), "Result JSON should not be empty");
 
-    // The result should contain the renamed filename.
+    // Filename and MIME type are separate properties on the result object.
+    let filename = extract_filename(&result_obj);
     assert!(
-        json_str.contains("test-renamed.csv"),
-        "Result should contain renamed filename: got '{json_str}'"
+        filename.contains("test-renamed.csv"),
+        "Output filename should be 'test-renamed.csv': got '{filename}'"
     );
-
-    // The result should contain MIME type.
+    let mime = extract_mime_type(&result_obj);
     assert!(
-        json_str.contains("text/csv"),
-        "Result should contain text/csv MIME type: got '{json_str}'"
+        mime.contains("text/csv"),
+        "MIME type should be text/csv: got '{mime}'"
     );
 
     // The result should report 1 column renamed.
