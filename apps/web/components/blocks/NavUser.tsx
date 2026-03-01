@@ -10,17 +10,21 @@ import {
   LogOutIcon,
 } from "@/components/ui/icons";
 import { Menu } from "@/components/ui/Menu";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 
 /**
  * Auth-aware navbar component.
  *
- * Always renders the same icon button trigger to prevent layout shift.
- * The dropdown adapts based on auth state:
- * - Loading: trigger is disabled
- * - Unauthenticated or anonymous: menu has a "Sign in" link
- * - Authenticated (with email): menu shows user info + sign out
+ * Always renders the same icon button trigger — never disabled, never changes.
+ * Auth state is resolved inside the dropdown menu:
+ * - Loading: skeleton placeholder
+ * - Unauthenticated or anonymous: "Sign in" menu item
+ * - Authenticated (with email): user info + "Sign out"
+ *
+ * This prevents the button from flashing or changing state while auth loads.
+ * The menu gates the check — the trigger is always stable.
  *
  * Anonymous users have a Convex session (isAuthenticated: true) but no email.
  * We treat them as unauthenticated for UI purposes. When they click Sign In,
@@ -54,17 +58,20 @@ export function NavUser() {
         variant="primary"
         size="icon"
         elevation="sm"
-        disabled={isLoading}
-        aria-label={isLoading ? "Loading account" : "Account menu"}
-        data-testid={isLoading ? "nav-user-loading" : "nav-user-menu"}
+        aria-label="Account menu"
+        data-testid="nav-user-menu"
       >
         <CircleUserIcon />
       </Menu.Trigger>
       <Menu.Content className="w-56 p-2" offset="lg">
         <Stack className="gap-1">
-          {isSignedIn ? (
+          {isLoading ? (
+            <div className="px-3 py-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="mt-1.5 h-3 w-36" />
+            </div>
+          ) : isSignedIn ? (
             <>
-              {/* User info */}
               <div className="px-3 py-2">
                 {user.name && (
                   <Text size="sm" className="font-medium">
