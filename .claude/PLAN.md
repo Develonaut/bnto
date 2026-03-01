@@ -562,7 +562,7 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 ### UX: Standardize Forms with React Hook Form + Zod
 
-**Priority: Medium.** Forms across the app (sign-in, sign-up, future settings/profile) use ad-hoc `useState` for each field with no validation. Standardize on React Hook Form + Zod. Each form gets a `useXxxForm` hook in `apps/web/components/forms/` — the page component becomes a pure render shell.
+**Priority: Medium.** Forms across the app (sign-in, sign-up, future settings/profile) use ad-hoc `useState` for each field with no validation. Standardize on React Hook Form + Zod via a dedicated `@bnto/form` package. Each form gets a `useXxxForm` hook — the page component becomes a pure render shell. Apps import from `@bnto/form`, never from `react-hook-form` directly.
 
 **Decision doc:** [`.claude/decisions/form-library.md`](decisions/form-library.md) — full library comparison (RHF, TanStack Form, Formik, Conform, custom Zustand+Zod), product roadmap analysis, recommendation rationale, and implementation pattern.
 
@@ -570,13 +570,12 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 **Scope:**
 - [x] **Evaluate form library.** Decision: React Hook Form + Zod. See [decision doc](decisions/form-library.md)
-- [ ] `apps/web` — `/frontend-engineer` — **Install dependencies.** `pnpm --filter @bnto/web add react-hook-form @hookform/resolvers zod`
-- [ ] `apps/web` — `/frontend-engineer` — **Create `components/forms/` directory.** Form hooks and Zod schemas live here alongside other reusable UI components — not in page-level `_components/` folders
-- [ ] `apps/web` — `/frontend-engineer` — **Create `components/forms/schemas/auth.ts`.** Shared Zod schemas for auth forms (email format, password min length, name required). Reusable across sign-in and sign-up
-- [ ] `apps/web` — `/frontend-engineer` — **Create `components/forms/useSignUpForm.ts`.** Hook encapsulating name/email/password state via RHF + Zod validation + loading/error state + submit handler
-- [ ] `apps/web` — `/frontend-engineer` — **Create `components/forms/useSignInForm.ts`.** Same pattern for sign-in (email/password + validation)
-- [ ] `apps/web` — `/frontend-engineer` — **Refactor `SignInForm.tsx` to use form hooks.** Replace all `useState` field state with `useSignInForm`/`useSignUpForm` hooks. Component becomes a render shell. Field-level error messages replace single error string
-- [ ] `apps/web` — `/frontend-engineer` — **Migrate future forms** (settings/profile, team invite) to the same `components/forms/useXxxForm` pattern as they're built
+- [ ] `packages/@bnto/form` — **Create `@bnto/form` package.** New package at `packages/@bnto/form/` that owns all form infrastructure. Depends on `react-hook-form`, `@hookform/resolvers`, `zod`. Re-exports wrapped hooks and utilities so consumers never import RHF directly. Even if it starts as thin wrappers, the package boundary means we can swap the underlying library without touching any consumer code
+- [ ] `packages/@bnto/form` — **Create `schemas/auth.ts`.** Shared Zod schemas for auth forms (email format, password min length, name required). Reusable across sign-in and sign-up
+- [ ] `packages/@bnto/form` — **Create `useSignUpForm.ts`.** Hook encapsulating name/email/password state via RHF + Zod validation + loading/error state + submit handler
+- [ ] `packages/@bnto/form` — **Create `useSignInForm.ts`.** Same pattern for sign-in (email/password + validation)
+- [ ] `apps/web` — `/frontend-engineer` — **Add `@bnto/form` dependency** and refactor `SignInForm.tsx` to use the form hooks. Replace all `useState` field state with `useSignInForm`/`useSignUpForm` from `@bnto/form`. Component becomes a render shell. Field-level error messages replace single error string
+- [ ] `apps/web` — `/frontend-engineer` — **Migrate future forms** (settings/profile, team invite) to the same `@bnto/form` `useXxxForm` pattern as they're built
 
 **Does NOT apply to:**
 - Recipe config components (Zustand store + controlled components — already clean)

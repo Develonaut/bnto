@@ -162,28 +162,41 @@ Building a custom form system for 4-5 simple forms is over-engineering. You'd en
 
 ## Implementation Pattern
 
-### Dependencies to add
+### Package: `@bnto/form`
+
+Form infrastructure lives in a dedicated package at `packages/@bnto/form/`. This follows the same naming-by-role convention as `@bnto/auth` and `@bnto/backend` — the package name describes what it does, not what library it uses internally. If RHF is ever swapped for TanStack Form or something custom, consumers don't change.
+
+```
+packages/@bnto/form/
+├── package.json          # depends on react-hook-form, @hookform/resolvers, zod
+├── src/
+│   ├── index.ts          # public API — re-exports hooks, schemas, utilities
+│   ├── schemas/
+│   │   └── auth.ts       # Zod schemas for auth forms
+│   ├── useSignInForm.ts  # sign-in form hook
+│   └── useSignUpForm.ts  # sign-up form hook
+└── tsconfig.json
+```
+
+**Apps import from `@bnto/form`, never from `react-hook-form` directly.** Even if the package starts as thin wrappers, the boundary means we can swap the underlying library without touching any consumer code.
 
 ```bash
-pnpm --filter @bnto/web add react-hook-form @hookform/resolvers zod
+# Package owns the dependencies
+cd packages/@bnto/form && pnpm add react-hook-form @hookform/resolvers zod
+
+# Apps depend on the package
+pnpm --filter @bnto/web add @bnto/form
 ```
 
 ### Hook pattern (one per form)
 
-Each form gets a `useXxxForm` hook in `apps/web/components/forms/`. The component becomes a pure render shell.
+Each form gets a `useXxxForm` hook exported from `@bnto/form`. The component becomes a pure render shell.
 
 ```tsx
-// components/forms/useSignInForm.ts
+// packages/@bnto/form/src/useSignInForm.ts
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-
-const signInSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-
-type SignInFormData = z.infer<typeof signInSchema>;
+import { signInSchema, type SignInFormData } from "./schemas/auth";
 
 export function useSignInForm() {
   return useForm<SignInFormData>({
@@ -196,7 +209,9 @@ export function useSignInForm() {
 ### Component pattern (pure render shell)
 
 ```tsx
-// SignInForm.tsx
+// apps/web — SignInForm.tsx
+import { useSignInForm } from "@bnto/form";
+
 export function SignInForm() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useSignInForm();
 
@@ -215,7 +230,7 @@ export function SignInForm() {
 - Do NOT apply RHF to recipe config components — those stay as controlled components with Zustand
 - Do NOT apply RHF to the NodeConfigPanel — that's schema-driven via `@bnto/nodes`
 - Do NOT create a shared `<Form>` wrapper component — keep it simple, each form is self-contained
-- Do NOT add Zod to `@bnto/core` — Zod schemas live next to their form hooks in `apps/web/components/forms/`
+- Do NOT import `react-hook-form` or `zod` directly in `apps/web` — always go through `@bnto/form`
 
 ---
 
@@ -223,21 +238,21 @@ export function SignInForm() {
 
 ### Phase 1: Foundation (backlog task)
 
-1. Install `react-hook-form`, `@hookform/resolvers`, `zod`
-2. Create `components/forms/schemas/auth.ts` — shared Zod schemas for auth
-3. Create `components/forms/useSignInForm.ts` hook
-4. Create `components/forms/useSignUpForm.ts` hook (shared fields + name)
-5. Refactor `SignInForm.tsx` to use the hooks — component becomes a render shell
+1. Create `packages/@bnto/form` package with `react-hook-form`, `@hookform/resolvers`, `zod`
+2. Create `schemas/auth.ts` — shared Zod schemas for auth
+3. Create `useSignInForm.ts` hook
+4. Create `useSignUpForm.ts` hook (shared fields + name)
+5. Add `@bnto/form` as dependency in `apps/web`, refactor `SignInForm.tsx` to use the hooks
 6. Field-level error display (per-field error messages, not a single error string)
 
 ### Phase 2: New forms use the pattern (Sprint 3+)
 
-7. Settings/Profile form uses `useProfileForm` hook in `components/forms/`
-8. Any new form follows the `useXxxForm` + Zod schema pattern
+7. Settings/Profile form uses `useProfileForm` hook in `@bnto/form`
+8. Any new form follows the `useXxxForm` + Zod schema pattern in `@bnto/form`
 
 ### Phase 3: Future forms (Sprint 7)
 
-9. Team invite form uses `useTeamInviteForm` hook
+9. Team invite form uses `useTeamInviteForm` hook in `@bnto/form`
 10. Any billing-adjacent forms (if Stripe doesn't handle it all)
 
 ---
