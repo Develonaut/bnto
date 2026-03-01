@@ -560,6 +560,16 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 - [ ] `apps/web` — Verify no layout shift on any page after compositional application
 - [ ] `apps/web` — Update Motorway showcase (`PhaseFlowShowcase`) to demonstrate the compositional pattern
 
+### UX: Standardize Forms with Zod + Form Library
+
+**Priority: Medium.** Forms across the app (sign-in, sign-up, future settings/profile) use ad-hoc `useState` for each field. Standardize on a form library (react-hook-form or similar) with Zod validation schemas. Each form gets a `useXxxForm` hook that owns state, validation, and submission — the component is a dumb render shell.
+
+**Scope:**
+- [ ] `apps/web` — **Evaluate form library.** Compare `react-hook-form` + `@hookform/resolvers/zod` vs `conform` vs Zustand-driven form state. Pick one and document the decision
+- [ ] `apps/web` — **Create `useSignUpForm` hook.** Encapsulates name/email/password state, Zod validation schema (email format, password min length), loading/error state, and submit handler. `SignInForm` becomes a pure render shell
+- [ ] `apps/web` — **Create `useSignInForm` hook.** Same pattern for sign-in (email/password + validation)
+- [ ] `apps/web` — **Migrate future forms** (settings/profile, workflow create) to the same pattern as they're built
+
 ### Infra: Shared Test Fixtures Package (`@bnto/test-fixtures`)
 
 **Priority: Low (nice-to-have).** The `test-fixtures/` directory at repo root already serves the primary need — shared images (JPEG, PNG, WebP at small/medium/large sizes) consumed by both Go engine (`go:embed`) and Rust WASM (`include_bytes!()`). E2E tests reference engine fixtures directly. A formal TS package would add helpers and consolidate ad-hoc test files, but isn't blocking anything.

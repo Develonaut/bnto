@@ -6,9 +6,9 @@ test.use({ reducedMotion: "reduce" });
  * Anonymous → password conversion E2E journeys (C1-C3 from journeys/auth.md)
  *
  * Tests the anonymous session lifecycle and the conversion to a real account.
- * The PasswordWithAnonymousUpgrade wrapper in auth.ts preserves the same
- * userId when an anonymous user signs up with a password, so all existing
- * data (executions, run counts, events) stays associated with their account.
+ * The createOrUpdateUser callback in auth.ts preserves the same userId when
+ * an anonymous user signs up with a password, so all existing data
+ * (executions, run counts, events) stays associated with their account.
  */
 
 function testEmail() {
@@ -96,6 +96,17 @@ test.describe("Anonymous → password conversion", () => {
         page.getByRole("heading", { name: "Create an account" }),
       ).toBeVisible();
 
+      // Wait for anonymous session to reconnect on /signin.
+      // After full page navigation, ConvexProvider re-establishes the session
+      // from cookies. The form's data-anon-uid attribute reflects when useAuth()
+      // has the anonymous user data. Without this wait, Playwright fills and
+      // submits faster than the session reconnects, so anonymousUserId is never
+      // sent to the backend.
+      const form = page.locator("form");
+      await expect(form).not.toHaveAttribute("data-anon-uid", "", {
+        timeout: 10000,
+      });
+
       // Fill sign-up form
       await page.getByPlaceholder("Your name").fill(TEST_NAME);
       await page.getByPlaceholder("Enter your email").fill(email);
@@ -156,6 +167,13 @@ test.describe("Anonymous → password conversion", () => {
       ]);
       await page.goto("/signin");
       await page.getByRole("button", { name: "Sign up" }).click();
+
+      // Wait for anonymous session to reconnect before filling form
+      const form = page.locator("form");
+      await expect(form).not.toHaveAttribute("data-anon-uid", "", {
+        timeout: 10000,
+      });
+
       await page.getByPlaceholder("Your name").fill(TEST_NAME);
       await page.getByPlaceholder("Enter your email").fill(email);
       await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
