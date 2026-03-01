@@ -4,8 +4,8 @@ import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/cn";
 import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Pressable } from "@/components/ui/Pressable";
 
 import { useFileUploadContext } from "./context";
 
@@ -23,7 +23,7 @@ export function FileUploadDropzone({
 
   return (
     <Animate.ScaleIn>
-      <Button asChild variant="outline" size="md" hovered={isDragActive}>
+      <Pressable asChild hovered={isDragActive}>
         <Card
           elevation="md"
           {...getRootProps()}
@@ -44,7 +44,7 @@ export function FileUploadDropzone({
           <input {...getInputProps()} />
           {children}
         </Card>
-      </Button>
+      </Pressable>
     </Animate.ScaleIn>
   );
 }

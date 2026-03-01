@@ -8,6 +8,9 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { Heading } from "@/components/ui/Heading";
+import { IconBadge } from "@/components/ui/IconBadge";
+import { Row } from "@/components/ui/Row";
+import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 import {
@@ -30,7 +33,7 @@ const PITCH_POINTS = [
 
 export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
   return (
-    <div className="flex flex-col gap-6">
+    <Stack className="gap-6">
       <Text size="xs" color="muted" mono className="uppercase tracking-wider">
         {TRUST_LINE}
       </Text>
@@ -43,7 +46,7 @@ export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
 
       {/* CTA */}
       {showCta && (
-        <div className="flex items-center gap-3 pt-2">
+        <Row className="gap-3 pt-2">
           <Button variant="primary" href="#faq" elevation="sm">
             Learn more
           </Button>
@@ -57,20 +60,20 @@ export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
             <GithubIcon />
             GitHub
           </Button>
-        </div>
+        </Row>
       )}
 
       {/* Pitch points */}
-      <div className="flex flex-col gap-3 pt-4">
+      <Stack className="gap-3 pt-4">
         {PITCH_POINTS.map((point) => (
-          <div key={point.label} className="flex items-center gap-3">
-            <div className="text-primary flex size-8 items-center justify-center rounded-lg bg-primary/10">
+          <Row key={point.label} className="gap-3">
+            <IconBadge variant="primary" size="md" shape="square">
               <point.icon className="size-4" />
-            </div>
+            </IconBadge>
             <Text size="sm" color="muted">{point.label}</Text>
-          </div>
+          </Row>
         ))}
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 }

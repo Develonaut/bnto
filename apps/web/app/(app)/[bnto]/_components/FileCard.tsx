@@ -10,6 +10,9 @@ import {
   LoaderIcon,
   XIcon,
 } from "@/components/ui/icons";
+import { IconBadge } from "@/components/ui/IconBadge";
+import { Row } from "@/components/ui/Row";
+import { Stack } from "@/components/ui/Stack";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface FileCardProps {
@@ -64,53 +67,54 @@ export function FileCard({
 
   return (
     <Card
-      className="flex items-center gap-3 rounded-lg px-4 py-4"
       elevation="sm"
       role="listitem"
       aria-busy={isProcessing}
       data-testid={result ? "output-file" : "input-file"}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
-          {icon}
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-sm font-semibold">
-            {result ? result.filename : file.name}
-          </span>
-          <span className="truncate text-xs text-muted-foreground">
-            {subtitle}
-          </span>
-          {isProcessing && (
-            <span className="sr-only" role="status">Processing</span>
-          )}
-          {result && (
-            <span className="sr-only">Completed</span>
-          )}
-        </div>
-      </div>
+      <Row className="gap-3 rounded-lg px-4 py-4">
+        <Row className="min-w-0 flex-1 gap-3">
+          <IconBadge variant="primary" size="lg" aria-hidden="true">
+            {icon}
+          </IconBadge>
+          <Stack className="min-w-0 flex-1 gap-0">
+            <span className="truncate text-sm font-semibold">
+              {result ? result.filename : file.name}
+            </span>
+            <span className="truncate text-xs text-muted-foreground">
+              {subtitle}
+            </span>
+            {isProcessing && (
+              <span className="sr-only" role="status">Processing</span>
+            )}
+            {result && (
+              <span className="sr-only">Completed</span>
+            )}
+          </Stack>
+        </Row>
 
-      {result ? (
-        <Button
-          variant="outline"
-          size="icon"
-          elevation="sm"
-          onClick={() => onDownload(result)}
-          aria-label={`Download ${result.filename}`}
-        >
-          <DownloadIcon className="size-4" />
-        </Button>
-      ) : !isExecuting ? (
-        <Button
-          variant="outline"
-          size="icon"
-          elevation="sm"
-          onClick={onDelete}
-          aria-label={`Remove ${file.name}`}
-        >
-          <XIcon className="size-4" />
-        </Button>
-      ) : null}
+        {result ? (
+          <Button
+            variant="outline"
+            size="icon"
+            elevation="sm"
+            onClick={() => onDownload(result)}
+            aria-label={`Download ${result.filename}`}
+          >
+            <DownloadIcon className="size-4" />
+          </Button>
+        ) : !isExecuting ? (
+          <Button
+            variant="outline"
+            size="icon"
+            elevation="sm"
+            onClick={onDelete}
+            aria-label={`Remove ${file.name}`}
+          >
+            <XIcon className="size-4" />
+          </Button>
+        ) : null}
+      </Row>
     </Card>
   );
 }
