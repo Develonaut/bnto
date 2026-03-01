@@ -43,6 +43,7 @@ import type {
   BrowserEngine,
   BrowserFileResult,
   BrowserFileProgressInput,
+  WasmRunResult,
 } from "../types/wasm";
 import type { StoreApi } from "zustand/vanilla";
 
@@ -57,12 +58,13 @@ export interface WasmExecutionInstance {
   /**
    * Run a WASM execution with full lifecycle management.
    * Manages store transitions: idle → processing → completed/failed.
+   * Returns a result payload with status, files, duration, and error info.
    */
   run: (
     slug: string,
     files: File[],
     params?: Record<string, unknown>,
-  ) => Promise<void>;
+  ) => Promise<WasmRunResult>;
   /** Reset execution state to idle. Aborts any in-progress run. */
   reset: () => void;
 }
@@ -119,7 +121,7 @@ function createExecutionInstance(
       slug: string,
       files: File[],
       params: Record<string, unknown> = {},
-    ): Promise<void> => {
+    ): Promise<WasmRunResult> => {
       aborted = false;
 
       const id =
@@ -127,7 +129,8 @@ function createExecutionInstance(
           ? crypto.randomUUID()
           : `exec-${Date.now()}`;
 
-      store.getState().start(id, Date.now());
+      const startedAt = Date.now();
+      store.getState().start(id, startedAt);
 
       try {
         const throttled = createThrottledProgress(store);
@@ -137,15 +140,25 @@ function createExecutionInstance(
         };
 
         const results = await execute(slug, files, params, onProgress);
+        const durationMs = Date.now() - startedAt;
 
-        if (aborted) return;
+        if (aborted) {
+          return { status: "aborted", results: [], durationMs };
+        }
+
         store.getState().complete(results, Date.now());
+        return { status: "completed", results, durationMs };
       } catch (e) {
-        if (aborted) return;
-        store.getState().fail(
-          e instanceof Error ? e.message : "Processing failed",
-          Date.now(),
-        );
+        const durationMs = Date.now() - startedAt;
+        const error =
+          e instanceof Error ? e.message : "Processing failed";
+
+        if (aborted) {
+          return { status: "aborted", results: [], durationMs };
+        }
+
+        store.getState().fail(error, Date.now());
+        return { status: "failed", results: [], durationMs, error };
       }
     },
 

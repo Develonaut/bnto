@@ -105,11 +105,19 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     if (files.length === 0) return;
 
     if (isBrowserPath) {
-      await browserInstance.run(
+      const result = await browserInstance.run(
         entry.slug,
         files,
         config as Record<string, unknown>,
       );
+
+      // Auto-download on successful completion — direct causal chain.
+      // Download is a consequence of the Run action, not a side effect
+      // of state transitions. This prevents spurious downloads when
+      // navigating between recipe pages.
+      if (result.status === "completed" && result.results.length > 0) {
+        await core.wasm.downloadAllResults(result.results, entry.slug);
+      }
       return;
     }
 

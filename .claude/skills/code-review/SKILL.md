@@ -26,7 +26,6 @@ Identify which packages the changed files belong to and invoke the relevant pers
 | Changed files in... | Persona skill |
 |---|---|
 | `engine/` | `/rust-expert` |
-| `archive/engine-go/`, `archive/api-go/` | `/go-engineer` |
 | `apps/web/` | `/frontend-engineer` + `/nextjs-expert` |
 | `packages/core/` | `/core-architect` |
 | `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer` |
@@ -53,17 +52,16 @@ Read every changed file in full. You cannot review code you haven't read.
 
 For EACH changed file, verify:
 
-- [ ] **Layer discipline**: `apps/web` or `apps/desktop` -> `@bnto/core` -> Go Engine. No layer skipping. UI and editor co-located in `apps/web/`
+- [ ] **Layer discipline**: `apps/web` or `apps/desktop` -> `@bnto/core` -> Rust WASM Engine. No layer skipping. UI and editor co-located in `apps/web/`
 - [ ] **API abstraction**: No direct Convex queries/mutations in components. No direct Wails bindings in components. All data access via `@bnto/core` hooks
 - [ ] **Package boundaries**: Internal packages (`@bnto/backend`, `@bnto/auth`) consumed only by `@bnto/core` internals. `apps/web` and `apps/desktop` NEVER import from them directly
 - [ ] **Import discipline**: UI from local `@/components/`, data/actions from `@bnto/core`. Types flow down from core
-- [ ] **Go package boundaries**: Each Go package stays in its lane — `engine/` orchestrates, `registry/` registers, `node/` types execute, `storage/` persists, `validator/` validates. No circular dependencies
 
 ## Step 3: Bento Box Compliance
 
 For EACH changed file, verify:
 
-- [ ] **Single responsibility**: Go files < 250 lines, Go functions < 20 lines. TS files < 250 lines, TS functions < 20 lines, hooks < 30 lines
+- [ ] **Single responsibility**: Rust files < 250 lines, Rust functions < 20 lines. TS files < 250 lines, TS functions < 20 lines, hooks < 30 lines
 - [ ] **One export per file**: Every exported component, hook, or function gets its own file. No `hooks.ts` grab bags, no `utils.ts` grab bags, no multi-component files. Only exception: shadcn primitives (thin `forwardRef` wrappers)
 - [ ] **Folder organization**: Components (PascalCase `.tsx`) at folder root, hooks in `hooks/` subdirectory (`use-kebab-case.ts`), pure functions in `utils/` subdirectory (`kebab-case.ts`). Test files co-located next to implementation
 - [ ] **Components are render shells**: No `useState`, `useEffect`, handlers, or business logic in the component body. All logic lives in a `use<Component>Props` hook or pure functions. Components call one props hook and spread onto JSX
@@ -72,16 +70,15 @@ For EACH changed file, verify:
 - [ ] **Hook decomposition**: Hooks doing multiple things split into focused sub-hooks. Signs it's too big: >30 lines, multiple unrelated state, hard to name without "and"
 - [ ] **Primitives vs business components**: Generic in `primitives/` (no domain knowledge), domain-specific in `components/`
 
-## Step 4: Go Code Compliance
+## Step 4: Rust Code Compliance
 
-Skip if no Go files changed. Otherwise:
+Skip if no Rust files changed. Otherwise:
 
-- [ ] **Bento Box Principle**: One concept per file, one purpose per function
-- [ ] **Error handling**: Errors properly wrapped with context — `return fmt.Errorf("loading workflow %s: %w", path, err)` not bare `return err`. No swallowed errors
-- [ ] **Context propagation**: `context.Context` passed through the chain. All long-running operations accept and respect context. Cancellation checked in loops and before expensive operations
-- [ ] **Interface design**: Small, consumer-defined interfaces. Accept interfaces, return structs. No mega-interfaces with 10+ methods
-- [ ] **Package boundaries**: `engine/` orchestrates (doesn't do I/O), `registry/` registers (doesn't execute), `node/` types execute (don't know about other types), `storage/` persists, `validator/` validates
-- [ ] **No circular dependencies** between Go packages
+- [ ] **Bento Box Principle**: One concept per file/module, one purpose per function
+- [ ] **Error handling**: `Result<T, E>` used consistently. No bare `.unwrap()` in library code — use `?` operator or descriptive `.expect("reason")`
+- [ ] **Comments**: Heavily commented for learning purposes. Explain what every function does, WHY each line exists, and Rust-specific concepts inline (ownership, borrowing, lifetimes, traits)
+- [ ] **Crate boundaries**: `bnto-core` (types/traits/progress), node crates (`bnto-image`, `bnto-csv`, `bnto-file`) implement traits, `bnto-wasm` is the single cdylib entry point
+- [ ] **Tests**: Unit tests in `#[cfg(test)]` blocks, WASM integration tests in `tests/` directory. TDD-first — every function has tests
 
 ## Step 5: TypeScript Compliance
 
@@ -137,8 +134,7 @@ Verify tests exist for the changes. For detailed test quality evaluation (are te
 
 Quick coverage check — flag if missing:
 
-- **Go engine logic** (node execution, validation, path resolution) -> Unit tests in `archive/engine-go/pkg/*/`
-- **Go API endpoints** (`archive/api-go/`) -> Integration tests with `httptest`
+- **Rust engine logic** (node crates, WASM bridge) -> Unit tests in `#[cfg(test)]` blocks + WASM integration tests in `tests/`
 - **Core hooks/adapters** (`@bnto/core`) -> Unit tests in `packages/@bnto/core/`
 - **Backend functions** (`@bnto/backend`) -> Tests in `packages/@bnto/backend/convex/`
 - **Pure utils/functions** -> Co-located `.test.ts` or `_test.go` files next to the source
@@ -176,16 +172,18 @@ Observations, questions, or suggestions that aren't violations.
 
 ### Checklist Summary
 ```
-Architecture & Layers:  PASS / FAIL (count)
-Bento Box:              PASS / FAIL (count)
-Go Code:                PASS / FAIL (count) / SKIPPED
-TypeScript:             PASS / FAIL (count) / SKIPPED
-React Query / State:    PASS / FAIL (count) / SKIPPED
-Performance:            PASS / FAIL (count) / SKIPPED
-Gotchas:                PASS / FAIL (count)
-Code Quality:           PASS / FAIL (count)
-Test Coverage:          PASS / FAIL (count)
-Stale Artifacts:        PASS / FAIL (count)
+Architecture & Layers:    PASS / FAIL (count)
+Bento Box:                PASS / FAIL (count)
+Rust Code:                PASS / FAIL (count) / SKIPPED (no Rust changes)
+TypeScript:               PASS / FAIL (count)
+React Query / State:      PASS / FAIL (count) / SKIPPED
+Performance:              PASS / FAIL (count) / SKIPPED
+Gotchas:                  PASS / FAIL (count)
+Code Quality:             PASS / FAIL (count)
+Test Coverage:            PASS / FAIL (count)
+Stale Artifacts:          PASS / FAIL (count)
+Unit/Integration Tests:   PASS / FAIL — NEVER skip without explicit user permission
+E2E Tests:                PASS / FAIL — NEVER skip without explicit user permission
 ```
 
 **Overall verdict:** PASS / NEEDS FIXES (with count of violations)

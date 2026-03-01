@@ -41,6 +41,7 @@ export type {
   BrowserExecution,
   BrowserFileProgress,
   BrowserFileProgressInput,
+  WasmRunResult,
 } from "./wasm";
 
 export type { RunPhase, RecipeFlow } from "./recipeFlow";

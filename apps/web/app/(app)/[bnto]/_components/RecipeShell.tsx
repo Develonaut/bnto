@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { Animate } from "@/components/ui/Animate";
 import { Container } from "@/components/ui/Container";
@@ -72,22 +71,6 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
   const { label } = getAcceptedTypes(entry.slug);
   const accept = toDropzoneAccept(entry.slug);
   const activePhase = deriveActivePhase(resolvedPhase, files.length);
-
-  const didAutoDownload = useRef(false);
-
-  // FIXME: Code smell.
-  // Reset the auto-download guard when execution resets
-  useEffect(() => {
-    if (resolvedPhase === "idle") didAutoDownload.current = false;
-  }, [resolvedPhase]);
-
-  // Auto-download when execution completes
-  useEffect(() => {
-    if (resolvedPhase === "completed" && !didAutoDownload.current) {
-      didAutoDownload.current = true;
-      downloadAll();
-    }
-  }, [resolvedPhase, downloadAll]);
 
   return (
     <Container

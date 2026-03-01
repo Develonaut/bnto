@@ -540,12 +540,12 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 **Fix:** Refactor to a factory pattern (like the existing `recipeFlowStore` pattern). Global concerns (engine registration, capability checks, download helpers) stay on the singleton. Per-execution state (store, run, reset, aborted flag) moves to instances created on mount and GC'd on unmount.
 
 **Scope:**
-- [ ] `@bnto/core` — Add `createExecution()` factory to `browserExecutionService` that returns `{ store, run, reset }` per instance
-- [ ] `@bnto/core` — Update `browserClient` to expose the factory alongside global engine/capability methods
-- [ ] `@bnto/core` — Add `useBrowserExecution(instance)` overload or new hook that reads from an instance store
-- [ ] `apps/web` — Update `useRecipeFlow` to create a per-mount execution instance via `useState(() => core.browser.createExecution())`
-- [ ] `apps/web` — Remove the `useEffect(() => core.browser.reset(), [])` workaround
-- [ ] `@bnto/core` — Keep backward-compatible singleton API (existing `core.browser.store/run/reset`) until all consumers migrate
+- [x] `@bnto/core` — Add `createExecution()` factory to `browserExecutionService` that returns `{ store, run, reset }` per instance
+- [x] `@bnto/core` — Update `browserClient` to expose the factory alongside global engine/capability methods
+- [x] `@bnto/core` — Add `useBrowserExecution(instance)` overload or new hook that reads from an instance store
+- [x] `apps/web` — Update `useRecipeFlow` to create a per-mount execution instance via `useState(() => core.browser.createExecution())`
+- [x] `apps/web` — Remove the `useEffect` auto-download workaround — moved to imperative chain in `handleRun` + added `key={slug}` for proper remount
+- [x] `@bnto/core` — Keep backward-compatible singleton API (existing `core.browser.store/run/reset`) until all consumers migrate
 
 ### UX: Compositional BouncyStagger Audit
 
