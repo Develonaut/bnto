@@ -4,6 +4,7 @@ import {
   getExecutionQuery,
   getExecutionsQuery,
   getExecutionLogsQuery,
+  getExecutionHistoryRef,
   startExecution,
   startPredefinedExecution,
 } from "../adapters/convex/executionAdapter";
@@ -50,6 +51,13 @@ export function createExecutionService() {
       select: (data: unknown) =>
         (data as RawExecutionLogDoc[]).map(toExecutionLog),
     }),
+
+    // ── Paginated Query Refs ────────────────────────────────────────
+    // For usePaginatedQuery: returns func ref, args, and transform.
+    historyRefMethod: () => {
+      const { funcRef, args } = getExecutionHistoryRef();
+      return { funcRef, args, transform: toExecution };
+    },
 
     // ── Mutations ─────────────────────────────────────────────────
     start: (input: StartExecutionInput) => startExecution(input),

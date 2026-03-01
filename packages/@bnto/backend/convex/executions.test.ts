@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "./schema";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { FREE_PLAN_RUN_LIMIT } from "./_test_helpers";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -317,4 +317,121 @@ describe("executions", () => {
   // 1. Code review of scheduleR2Cleanup helper
   // 2. Go-side cleanup tests (archive/api-go/internal/r2/cleanup_test.go)
   // 3. Pre-existing complete/fail tests pass without sessionId (no scheduling triggered)
+
+  describe("listByUser", () => {
+    it("returns empty result for unauthenticated user", async () => {
+      const t = convexTest(schema, modules);
+
+      const result = await t.query(api.executions.listByUser, {
+        paginationOpts: { numItems: 10, cursor: null },
+      });
+
+      expect(result.page).toEqual([]);
+      expect(result.isDone).toBe(true);
+    });
+
+    it("returns executions for the authenticated user in desc order", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, workflowId } = await seedUserAndWorkflow(t);
+
+      // Insert 3 executions in chronological order.
+      // Convex orders by _creationTime (insertion order), so desc = newest first.
+      await t.run(async (ctx) => {
+        await ctx.db.insert("executions", {
+          userId, workflowId, status: "completed", progress: [], startedAt: 1000, completedAt: 1500,
+        });
+        await ctx.db.insert("executions", {
+          userId, workflowId, status: "failed", progress: [], startedAt: 2000, completedAt: 2200,
+        });
+        await ctx.db.insert("executions", {
+          userId, workflowId, status: "completed", progress: [], startedAt: 3000, completedAt: 3800,
+        });
+      });
+
+      const result = await t.withIdentity({ subject: userId }).query(
+        api.executions.listByUser,
+        { paginationOpts: { numItems: 10, cursor: null } },
+      );
+
+      expect(result.page).toHaveLength(3);
+      // Desc order by _creationTime: most recently inserted first
+      expect(result.page[0].startedAt).toBe(3000);
+      expect(result.page[1].startedAt).toBe(2000);
+      expect(result.page[2].startedAt).toBe(1000);
+    });
+
+    it("excludes executions from other users", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, workflowId } = await seedUserAndWorkflow(t);
+
+      const otherUserId = await t.run(async (ctx) => {
+        return ctx.db.insert("users", {
+          email: "other@example.com",
+          isAnonymous: false,
+          plan: "free",
+          runsUsed: 0,
+          runLimit: FREE_PLAN_RUN_LIMIT,
+          runsResetAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+        });
+      });
+
+      await t.run(async (ctx) => {
+        await ctx.db.insert("executions", {
+          userId, workflowId, status: "completed", progress: [], startedAt: 1000,
+        });
+        await ctx.db.insert("executions", {
+          userId: otherUserId, workflowId, status: "completed", progress: [], startedAt: 2000,
+        });
+      });
+
+      const result = await t.withIdentity({ subject: userId }).query(
+        api.executions.listByUser,
+        { paginationOpts: { numItems: 10, cursor: null } },
+      );
+
+      expect(result.page).toHaveLength(1);
+      expect(result.page[0].userId).toEqual(userId);
+    });
+
+    it("paginates results correctly", async () => {
+      const t = convexTest(schema, modules);
+      const { userId, workflowId } = await seedUserAndWorkflow(t);
+
+      // Insert 5 executions
+      await t.run(async (ctx) => {
+        for (let i = 1; i <= 5; i++) {
+          await ctx.db.insert("executions", {
+            userId, workflowId, status: "completed", progress: [], startedAt: i * 1000,
+          });
+        }
+      });
+
+      // First page: 2 items
+      const page1 = await t.withIdentity({ subject: userId }).query(
+        api.executions.listByUser,
+        { paginationOpts: { numItems: 2, cursor: null } },
+      );
+
+      expect(page1.page).toHaveLength(2);
+      expect(page1.isDone).toBe(false);
+
+      // Second page: next 2 items
+      const page2 = await t.withIdentity({ subject: userId }).query(
+        api.executions.listByUser,
+        { paginationOpts: { numItems: 2, cursor: page1.continueCursor } },
+      );
+
+      expect(page2.page).toHaveLength(2);
+      expect(page2.isDone).toBe(false);
+
+      // Third page: last 1 item
+      const page3 = await t.withIdentity({ subject: userId }).query(
+        api.executions.listByUser,
+        { paginationOpts: { numItems: 2, cursor: page2.continueCursor } },
+      );
+
+      expect(page3.page).toHaveLength(1);
+      expect(page3.isDone).toBe(true);
+    });
+  });
 });

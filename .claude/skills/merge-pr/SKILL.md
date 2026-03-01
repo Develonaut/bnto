@@ -67,46 +67,50 @@ Parse `statusCheckRollup` from Step 2. For each check:
 
 **If CI is not passing, present the failures and stop.** Do not offer to merge with failing CI.
 
-## Step 3b: E2E Tests Against Vercel Preview (MANDATORY)
+## Step 3b: Local E2E Tests (MANDATORY)
 
-**This step is MANDATORY unless the user passed `--skip-e2e`.** You MUST run E2E tests against the Vercel preview deployment before merging. You do NOT get to decide whether to skip this step — regardless of what files were changed. Only the user can explicitly grant a skip via the `--skip-e2e` flag or by telling you directly.
+**This step is MANDATORY unless the user passed `--skip-e2e`.** You MUST run E2E tests locally against the PR branch before merging. You do NOT get to decide whether to skip this step — regardless of what files were changed. Only the user can explicitly grant a skip via the `--skip-e2e` flag or by telling you directly.
 
 If `--skip-e2e` was passed, note "E2E Tests: SKIPPED (user opted out)" in the merge readiness summary and proceed to Step 4.
 
 ### Why
 
-There is no E2E CI workflow. E2E tests run locally on the developer's machine against the deployed Vercel preview. This eliminates cross-platform screenshot differences (macOS font rendering vs Linux) and gives immediate, accurate feedback.
+E2E tests run locally on the developer's machine against the local dev stack. This catches real regressions with deterministic screenshot comparisons (consistent macOS font rendering), avoids Vercel deployment protection issues, and is significantly faster than waiting for preview deployments.
 
 ### How to Run
 
-1. **Find the Vercel preview URL** for this PR:
+1. **Check out the PR branch locally:**
 
 ```bash
-# Get the preview URL from the PR's deployment status
-gh pr view <number> --json statusCheckRollup --jq '.statusCheckRollup[] | select(.context | contains("vercel")) | .targetUrl'
+gh pr checkout <number>
 ```
 
-If no Vercel preview URL is found or the deployment is still in progress:
-- **Notify the user** that the preview deployment is not ready yet
-- **Ask the user** whether they want you to wait and retry, or provide the URL manually
-- **Do NOT proceed without a working preview URL.** You cannot skip E2E tests because the deployment isn't ready — you must wait or get the URL from the user
-- If the user says to wait, poll every 30 seconds (up to 5 minutes) for the deployment to complete, then retry
-
-2. **Run E2E tests against the preview:**
+2. **Check if a dev server is already running:**
 
 ```bash
-cd apps/web && BASE_URL=<vercel-preview-url> pnpm exec playwright test
+lsof -ti:4000
 ```
 
-If the Vercel deployment has protection enabled and a bypass secret is available:
+3. **Run E2E tests:**
 
 ```bash
-cd apps/web && BASE_URL=<vercel-preview-url> VERCEL_AUTOMATION_BYPASS_SECRET=<secret> pnpm exec playwright test
+# If port 4000 is active (preferred — fast, reuses running dev server):
+cd apps/web && pnpm exec playwright test
+
+# If port 4000 is NOT active, start the dev server first:
+# Option A: Start dev server in background, then run tests
+cd <repo-root> && task dev &
+sleep 15  # wait for Next.js + Convex to start
+cd apps/web && pnpm exec playwright test
+
+# Option B: Use isolated mode (starts its own Next.js on port 4001):
+cd <repo-root> && task e2e:isolated
 ```
 
-3. **Report full results.** Present:
+**CRITICAL: Never kill the user's dev server on port 4000.** If it's running, reuse it. If it's not running, start one or use isolated mode.
+
+4. **Report full results.** Present:
    - Total tests run, passed, failed, skipped
-   - List every failure with test name and error message
    - If screenshots were captured, note any mismatches
 
 ### Pass / Fail Criteria
@@ -125,7 +129,7 @@ cd apps/web && BASE_URL=<vercel-preview-url> VERCEL_AUTOMATION_BYPASS_SECRET=<se
 ### Proof of Work
 
 Include the E2E results in the merge readiness summary (Step 6). Specifically:
-- The Vercel preview URL tested against
+- Whether tests ran against port 4000 (reused dev server) or port 4001 (isolated)
 - The full test result summary (e.g., "96 passed, 0 failed, 0 skipped")
 - Any notable warnings or known issues encountered
 
@@ -164,8 +168,7 @@ Present a clear summary to the user:
 
 ### Checks
 - CI Gate: PASS / FAIL / PENDING
-- E2E Tests: PASS (N passed, 0 failed) / FAIL (list failures) / NOT RUN (blocked)
-  - Preview URL: <vercel-preview-url>
+- E2E Tests: PASS (N passed, 0 failed) / FAIL (list failures) / SKIPPED (user opted out)
 - Merge conflicts: None / CONFLICTING
 - Description: Accurate / Needs update (details)
 

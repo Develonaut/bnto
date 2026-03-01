@@ -76,6 +76,22 @@ export const listByWorkflow = query({
   },
 });
 
+/** Paginated execution history for the current user (most recent first). */
+export const listByUser = query({
+  args: { paginationOpts: v.any() },
+  handler: async (ctx, args) => {
+    const userId = await getAppUserId(ctx);
+    if (userId === null) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+    return ctx.db
+      .query("executions")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .paginate(args.paginationOpts);
+  },
+});
+
 /** Update execution progress from the polling action. */
 export const updateProgress = internalMutation({
   args: {

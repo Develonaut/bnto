@@ -13,6 +13,9 @@ export function createExecutionClient(executions: ExecutionService) {
     listQueryOptions: (workflowId: string) => executions.listQueryOptions(workflowId),
     logsQueryOptions: (executionId: string) => executions.logsQueryOptions(executionId),
 
+    // ── Paginated Query Refs ────────────────────────────────────────
+    historyRefMethod: () => executions.historyRefMethod(),
+
     // ── Mutations ─────────────────────────────────────────────────
     startPredefined: (input: StartPredefinedInput) =>
       executions.startPredefined(input),

@@ -235,7 +235,7 @@ Cleanup tasks completed ahead of Wave 1 proper. Collapsed here for reference.
 
 #### Wave 1 (parallel — core hooks + UI components + infra decisions)
 
-- [ ] `@bnto/core` — `/core-architect` — `useExecutionHistory()` hook (paginated, per-user)
+- [x] `@bnto/core` — `/core-architect` — `useExecutionHistory()` hook (paginated, per-user)
 - [ ] `@bnto/core` — `/core-architect` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
 - [ ] `apps/web` — `/frontend-engineer` — WorkflowCard component (name, description, node count, last run status)
 - [ ] `apps/web` — `/frontend-engineer` — StatusBadge component (pending, running, completed, failed)
