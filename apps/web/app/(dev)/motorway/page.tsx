@@ -6,6 +6,7 @@ import { Tabs } from "@/components/ui/Tabs";
 import { Text } from "@/components/ui/Text";
 
 import { AnimationShowcase } from "./AnimationShowcase";
+import { BentoBoxShowcase } from "./BentoBoxShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
@@ -164,6 +165,14 @@ export default function MotorwayPage() {
               description="Explicit grid placement via composition. Items define their own position — the Grid provides the context."
             >
               <GridShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="bento-box"
+              title="Bento Box"
+              description="Add compartments to the grid and watch the box grow. Surface cards of different sizes tile like a real bento box. The viewport smoothly zooms out as the recipe expands — like Mini Motorways pulling back as the city grows."
+            >
+              <BentoBoxShowcase />
             </ShowcaseSection>
 
             <ShowcaseSection
