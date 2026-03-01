@@ -128,7 +128,7 @@ Anonymous→password userId fix, FIXME cleanup, privacy policy rewrite, README r
 #### Wave 1 (parallel — core hooks + UI components + infra decisions)
 
 - [x] `@bnto/core` — `/core-architect` — `useExecutionHistory()` hook (paginated, per-user)
-- [ ] **CLAIMED** `@bnto/core` — `/core-architect` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
+- [x] `@bnto/core` — `/core-architect` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
 - [ ] `apps/web` — `/frontend-engineer` — WorkflowCard component (name, description, node count, last run status)
 - [ ] `apps/web` — `/frontend-engineer` — StatusBadge component (pending, running, completed, failed)
 - [ ] `apps/web` — `/frontend-engineer` — EmptyState component (no workflows yet)
