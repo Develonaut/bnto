@@ -13,12 +13,14 @@
 import { createWorkflowService } from "./services/workflowService";
 import { createExecutionService } from "./services/executionService";
 import { createUserService } from "./services/userService";
+import { createAnalyticsService } from "./services/analyticsService";
 import { createUploadService } from "./services/uploadService";
 import { createDownloadService } from "./services/downloadService";
 import { createWasmExecutionService } from "./services/wasmExecutionService";
 import { createWorkflowClient } from "./clients/workflowClient";
 import { createExecutionClient } from "./clients/executionClient";
 import { createUserClient } from "./clients/userClient";
+import { createAnalyticsClient } from "./clients/analyticsClient";
 import { createUploadClient } from "./clients/uploadClient";
 import { createDownloadClient } from "./clients/downloadClient";
 import { createAuthClient } from "./clients/authClient";
@@ -29,6 +31,7 @@ import { createRecipeClient } from "./clients/recipeClient";
 const workflowService = createWorkflowService();
 const executionService = createExecutionService();
 const userService = createUserService();
+const analyticsService = createAnalyticsService();
 const uploadService = createUploadService();
 const downloadService = createDownloadService();
 const wasmExecutionService = createWasmExecutionService();
@@ -37,6 +40,7 @@ const wasmExecutionService = createWasmExecutionService();
 const workflowClient = createWorkflowClient(workflowService, executionService);
 const executionClient = createExecutionClient(executionService);
 const userClient = createUserClient(userService);
+const analyticsClient = createAnalyticsClient(analyticsService);
 const uploadClient = createUploadClient(uploadService);
 const downloadClient = createDownloadClient(downloadService);
 const authClient = createAuthClient();
@@ -48,6 +52,7 @@ export const core = {
   workflows: workflowClient,
   executions: executionClient,
   user: userClient,
+  analytics: analyticsClient,
   uploads: uploadClient,
   downloads: downloadClient,
   auth: authClient,

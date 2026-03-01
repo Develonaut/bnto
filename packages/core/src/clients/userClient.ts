@@ -9,11 +9,9 @@ export function createUserClient(user: UserService) {
   return {
     // ── Query Options ─────────────────────────────────────────────
     meQueryOptions: () => user.meQueryOptions(),
-    runsRemainingQueryOptions: () => user.runsRemainingQueryOptions(),
 
     // ── Cache Invalidation ────────────────────────────────────────
     invalidateCurrentUser: () => user.invalidateCurrentUser(),
-    invalidateRunsRemaining: () => user.invalidateRunsRemaining(),
   } as const;
 }
 

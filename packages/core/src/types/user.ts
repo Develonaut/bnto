@@ -8,8 +8,8 @@ export interface User {
   name?: string;
   image?: string;
   isAnonymous?: boolean;
-  plan?: "free" | "starter" | "pro";
-  runsUsed?: number;
-  runLimit?: number;
-  runsResetAt?: number;
+  plan?: "free" | "pro";
+  // Usage analytics (Sprint 3)
+  totalRuns?: number;
+  lastRunAt?: number;
 }
