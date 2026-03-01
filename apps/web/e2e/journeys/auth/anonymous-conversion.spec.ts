@@ -97,16 +97,19 @@ test.describe("Anonymous → password conversion", () => {
         page.getByRole("heading", { name: "Create an account" }),
       ).toBeVisible();
 
-      // Fill sign-up form
+      // Fill sign-up form — can fill immediately, no need to wait.
       await page.getByPlaceholder("Your name").fill(TEST_NAME);
       await page.getByPlaceholder("Enter your email").fill(email);
       await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
 
-      // Submit
+      // Submit — if the anonymous session hasn't re-established yet, the form
+      // queues the sign-up and shows "Creating account..." until the session
+      // resolves. Then it fires the actual API call with the anonymous userId.
       await page.getByRole("button", { name: "Create account" }).click();
 
-      // Wait for redirect to home
-      await page.waitForURL("/", { timeout: 15000 });
+      // Wait for redirect to home — extra time since the form may wait
+      // for the anonymous session to resolve before calling the API.
+      await page.waitForURL("/", { timeout: 30000 });
 
       // Step 3: Navigate back to a tool page to check the userId
       await page.goto("/compress-images");
@@ -162,18 +165,27 @@ test.describe("Anonymous → password conversion", () => {
       await page.getByPlaceholder("Enter your email").fill(email);
       await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
       await page.getByRole("button", { name: "Create account" }).click();
-      await page.waitForURL("/", { timeout: 15000 });
 
-      // After anonymous→password upgrade, the Convex client should transition
-      // to the new session. Reload forces the server to re-read auth cookies.
-      await page.reload();
+      // The form submission waits for the anonymous session to re-establish
+      // before calling the signUp API (shows "Creating account..." spinner).
+      // Give it extra time since the session may take a few seconds.
+      await page.waitForURL("/", { timeout: 30000 });
 
-      // Open user menu — should show email from the new account
+      // After anonymous→password upgrade, the Convex client transitions to the
+      // new session reactively — no reload needed. The signIn() call returns new
+      // tokens which are stored client-side, and Convex subscriptions update the
+      // user data. A page.reload() here would race the middleware's server-side
+      // token refresh against the client-side auth state, causing intermittent
+      // "Invalid refresh token" errors.
+
+      // Open user menu — should show email from the new account.
+      // Use a generous timeout because the Convex subscription needs to
+      // re-establish and getMe needs to return the upgraded user.
       const userMenu = page.locator('[data-testid="nav-user-menu"]');
-      await expect(userMenu).toBeVisible({ timeout: 10000 });
+      await expect(userMenu).toBeVisible({ timeout: 15000 });
       await userMenu.click();
 
-      await expect(page.getByText(email)).toBeVisible();
+      await expect(page.getByText(email)).toBeVisible({ timeout: 10000 });
 
       // Sign-out button should be available
       await expect(

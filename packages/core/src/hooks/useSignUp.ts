@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useSignUp as useAuthSignUp } from "@bnto/auth";
 import { useAuth } from "./useAuth";
 
@@ -15,17 +15,18 @@ import { useAuth } from "./useAuth";
  * 3. signUpEmail() automatically includes the anonymous userId
  * 4. The backend's createOrUpdateUser callback patches the user in-place
  *
- * The ref protects against a race condition: after full page navigation to
- * /signin, ConvexProvider takes ~3s to re-establish the session from cookies.
- * If the user submits before then (e.g., browser auto-fill), user?.id would
- * be undefined. The ref captures the first non-null value so it's never lost.
+ * If signUpEmail() is called before the session resolves (e.g., user navigated
+ * to /signin and submitted quickly), it awaits a Promise that resolves once
+ * isReady becomes true. The latest anonymousUserId is read from a ref at call
+ * time, so it always has the most current value.
  *
- * @returns email - sign-up function (name, email, password — no anonymousUserId needed)
+ * @returns email - sign-up function that waits for session if needed
  * @returns anonymousUserId - captured value for E2E observability (data-anon-uid)
+ * @returns isReady - true once auth state resolves (anonymous userId captured or no session)
  */
 export function useSignUp() {
   const { email: rawSignUp } = useAuthSignUp();
-  const { user } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
 
   const capturedAnonId = useRef<string | undefined>(undefined);
   if (user?.id && !capturedAnonId.current) {
@@ -34,8 +35,34 @@ export function useSignUp() {
 
   const anonymousUserId = capturedAnonId.current ?? user?.id;
 
+  // "Ready" means we can safely call signUpEmail with the correct anonymousUserId.
+  // There's a one-render gap where isAuthenticated is true (Convex session recognized)
+  // but user is still null (subscription hasn't delivered the updated user doc yet).
+  // In that gap, isLoading is false but anonymousUserId is undefined — firing now
+  // would create a fresh user instead of upgrading the anonymous one.
+  //
+  // Fix: require anonymousUserId when authenticated (ensures subscription caught up).
+  // For unauthenticated users (no anonymous session), proceed immediately.
+  const isReady =
+    !isLoading && (!!anonymousUserId || !isAuthenticated);
+
+  // Refs for async access inside signUpEmail — always up to date
+  const anonymousUserIdRef = useRef(anonymousUserId);
+  anonymousUserIdRef.current = anonymousUserId;
+  const readyRef = useRef(isReady);
+  readyRef.current = isReady;
+
+  // Resolver for any in-flight signUpEmail call that's waiting for ready
+  const waitResolverRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (isReady && waitResolverRef.current) {
+      waitResolverRef.current();
+      waitResolverRef.current = null;
+    }
+  }, [isReady]);
+
   return {
-    email: ({
+    email: async ({
       name,
       email,
       password,
@@ -43,13 +70,22 @@ export function useSignUp() {
       name: string;
       email: string;
       password: string;
-    }) =>
-      rawSignUp({
+    }) => {
+      // If session hasn't resolved yet, wait for the effect to signal ready
+      if (!readyRef.current) {
+        await new Promise<void>((resolve) => {
+          waitResolverRef.current = resolve;
+        });
+      }
+      // Read the latest anonymousUserId from the ref — not the stale closure
+      return rawSignUp({
         name,
         email,
         password,
-        anonymousUserId,
-      }),
+        anonymousUserId: anonymousUserIdRef.current,
+      });
+    },
     anonymousUserId,
+    isReady,
   };
 }
