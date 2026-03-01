@@ -53,8 +53,9 @@ import { useAnonymousSession } from "./hooks/useAnonymousSession";
 // WASM execution hooks
 import { useWasmExecution } from "./hooks/useWasmExecution";
 
-// Auth hooks from @bnto/auth (sign-in / sign-up)
-import { useSignIn, useSignUp } from "@bnto/auth";
+// Auth hooks
+import { useSignIn } from "@bnto/auth";
+import { useSignUp } from "./hooks/useSignUp";
 
 export const core = {
   workflows: {
