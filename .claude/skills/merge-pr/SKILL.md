@@ -76,7 +76,11 @@ There is no E2E CI workflow. E2E tests run locally on the developer's machine ag
 gh pr view <number> --json statusCheckRollup --jq '.statusCheckRollup[] | select(.context | contains("vercel")) | .targetUrl'
 ```
 
-If no Vercel deployment is found, check if the deployment is still in progress. Wait for it, or ask the user for the preview URL.
+If no Vercel preview URL is found or the deployment is still in progress:
+- **Notify the user** that the preview deployment is not ready yet
+- **Ask the user** whether they want you to wait and retry, or provide the URL manually
+- **Do NOT proceed without a working preview URL.** You cannot skip E2E tests because the deployment isn't ready — you must wait or get the URL from the user
+- If the user says to wait, poll every 30 seconds (up to 5 minutes) for the deployment to complete, then retry
 
 2. **Run E2E tests against the preview:**
 
@@ -166,7 +170,7 @@ Ready to merge / Blocked (reasons)
 
 **If blocked:** explain what needs to happen before merging. Stop here.
 
-**If ready:** ask the user for confirmation before proceeding. Present merge strategy options:
+**If ready:** present the full summary including E2E proof of work, then **ask the user for explicit final approval before merging.** You MUST wait for the user to confirm — never auto-merge, even if every check passes. Present merge strategy options:
 
 - **Squash merge** (default) — single commit on main, clean history
 - **Merge commit** — preserves branch history
@@ -174,7 +178,7 @@ Ready to merge / Blocked (reasons)
 
 ## Step 7: Merge
 
-**Only proceed after explicit user confirmation.** Never auto-merge.
+**Only proceed after explicit user confirmation.** Never auto-merge. The user must see the full merge readiness summary (including E2E results) and explicitly approve before you execute the merge command.
 
 ```bash
 # Squash merge (default)
