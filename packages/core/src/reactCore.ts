@@ -24,6 +24,7 @@ import { useRunWorkflow } from "./hooks/useRunWorkflow";
 // Execution hooks
 import { useExecution } from "./hooks/useExecution";
 import { useExecutions } from "./hooks/useExecutions";
+import { useExecutionHistory } from "./hooks/useExecutionHistory";
 import { useExecutionLogs } from "./hooks/useExecutionLogs";
 import { useRunPredefined } from "./hooks/useRunPredefined";
 
@@ -71,6 +72,7 @@ export const core = {
     ...baseCore.executions,
     useExecution,
     useExecutions,
+    useExecutionHistory,
     useExecutionLogs,
     useRunPredefined,
   },
