@@ -10,6 +10,7 @@ import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
 import { Input } from "@/components/ui/Input";
+import { LoaderIcon } from "@/components/ui/icons";
 
 type Mode = "signin" | "signup";
 
@@ -43,6 +44,9 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
 
     try {
       if (isSignUp) {
+        // signUpEmail waits for the anonymous session to resolve if needed,
+        // then fires the API call with the captured anonymousUserId.
+        // The spinner shows while we wait.
         await signUpEmail({ name, email, password });
       } else {
         await signInEmail({ email, password });
@@ -113,6 +117,9 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
                 )}
 
                 <Button type="submit" disabled={loading} className="mt-2 w-full">
+                  {loading && (
+                    <LoaderIcon className="size-4 motion-safe:animate-spin" />
+                  )}
                   {loading
                     ? isSignUp
                       ? "Creating account..."
