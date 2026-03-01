@@ -19,7 +19,7 @@ Backend and frontend deploy independently but must be coordinated. Convex schema
 | Web Frontend | Vercel | Auto: merge to `main` |
 | Go API Server | Railway | Manual: deploy on release (Phase 3) |
 | Previews | Vercel | Auto: push to feature branch |
-| Desktop | Wails v2 build | Manual: release binary (Phase 3) |
+| Desktop | Tauri build | Manual: release binary (M3) |
 
 ---
 
@@ -64,20 +64,18 @@ npx convex deploy --prod
 
 No merge needed if frontend doesn't change.
 
-### Go Engine Release (Phase 3+)
+### Cloud/Desktop Engine Release (M3/M4)
 
 ```bash
 # 1. Build and test engine
 task check
 
-# 2. Deploy API server to Railway
-# (Railway deployment process TBD -- likely git push to Railway remote or Docker deploy)
+# 2. Deploy API server to Railway (cloud execution — M4)
+# (Railway deployment process TBD)
 
-# 3. Desktop: build Wails binary
+# 3. Desktop: build Tauri binary (M3)
 task desktop:build
 ```
-
-The Go engine powers both the Railway-hosted API server (for cloud execution) and the Wails desktop app (for local execution). Both consume the same engine package.
 
 ---
 
@@ -109,7 +107,7 @@ Preview deploys currently talk to the **Convex dev deployment** (via `NEXT_PUBLI
 | Local dev | `next dev` | Convex dev | `task build && ./bnto` | Development |
 | Preview | Vercel preview URL | Convex dev | N/A | PR review |
 | Production | Vercel (main) | Convex prod | Railway (Phase 3) | Live users |
-| Desktop | Wails webview | N/A (local engine) | Bundled binary | Local execution |
+| Desktop | Tauri webview | N/A (local engine) | Bundled binary | Local execution |
 
 ---
 

@@ -38,17 +38,7 @@ For EACH file you modified, verify against the Bento Box Principle (`code-standa
 - [ ] **React Query `select` Rule**: Every `useQuery` that transforms data (`.map()`, `toFoo()`, spread) MUST do it inside `select`. Returning `data ? toFoo(data) : null` or `{ ...data, isLoading }` from the hook body creates new references every render -> infinite loops.
 - [ ] **Cost Check**: No new paid services without explicit discussion.
 
-## Step 3: Go Code Compliance
-
-For EACH Go file you created or modified:
-
-- [ ] **Bento Box Principle**: One concept per file, one purpose per function
-- [ ] **Error Handling**: Errors wrapped with context (`fmt.Errorf("loading workflow %s: %w", path, err)`), no bare `return err`, no swallowed errors
-- [ ] **Context Propagation**: `context.Context` passed through the chain, cancellation checked in loops and before expensive operations
-- [ ] **Interface Design**: Accept interfaces, return structs. No mega-interfaces with 10+ methods
-- [ ] **Package Boundaries**: Each Go package stays in its lane (engine orchestrates, registry registers, node executes, validator validates)
-
-## Step 4: TypeScript Compliance
+## Step 3: TypeScript Compliance
 
 - [ ] Types inferred where possible (no redundant annotations)
 - [ ] No `any` without eslint-disable + justification comment
@@ -57,7 +47,7 @@ For EACH Go file you created or modified:
 - [ ] Types flow down: core defines types, UI and web consume them. UI never defines its own data types
 - [ ] Imports from correct packages (`@bnto/core` for data/actions, local `@/components/` for UI)
 
-## Step 5: Convex Compliance
+## Step 4: Convex Compliance
 
 - [ ] All inputs validated with Convex validators (`v.string()`, `v.id()`, etc.)
 - [ ] Auth checks on mutations that modify user data
@@ -67,19 +57,17 @@ For EACH Go file you created or modified:
 - [ ] **`.withIndex()` over `.filter()`** -- if an index exists for the field, use it. Check `schema.ts`
 - [ ] **`.collect()` awareness** -- avoid `.collect()` on unbounded tables without `.take(n)` or pagination
 
-## Step 6: Code Quality
+## Step 5: Code Quality
 
 - [ ] No secrets, API keys, or passwords in code
 - [ ] No magic numbers/strings -- use constants and theme tokens
 - [ ] No dead code or unused imports
 - [ ] Consistent style with existing patterns
 
-## Step 7: Test Coverage Verification
+## Step 6: Test Coverage Verification
 
 Tests are **mandatory** for most changes. Determine which type:
 
-- **Go engine logic** (node execution, validation, path resolution) -> **Unit tests** with `go test -race`
-- **Go API endpoints** -> **Integration tests** with `httptest`
 - **Backend functions** (`@bnto/backend`) -> **Unit/integration tests** using Vitest + convex-test
 - **Core hooks/adapters** (`@bnto/core`) -> **Unit tests** using Vitest
 - **Pure utils/functions** (any `utils/` directory) -> **Unit tests** co-located next to the source file. No exceptions for utils.
@@ -159,7 +147,7 @@ After running E2E tests, agents MUST verify screenshot health:
 - **Code references** -- If you renamed, removed, or changed exports, find and update all consumers.
 - **Documentation** -- If you changed behavior that's documented, update the docs to match.
 
-## Step 8: Proof of Work Summary
+## Step 7: Proof of Work Summary
 
 Present a summary to the user before committing:
 
@@ -173,7 +161,7 @@ Present a summary to the user before committing:
 8. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test:unit` passed clean (skip if no Rust files touched)
 9. **Files changed** -- brief description of each
 
-## Step 9: Commit & Branch Workflow
+## Step 8: Commit & Branch Workflow
 
 **Branch-based development is mandatory.** `main` is protected — all changes go through PRs with CI gate.
 
