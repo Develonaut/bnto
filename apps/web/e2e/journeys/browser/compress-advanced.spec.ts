@@ -132,4 +132,79 @@ test.describe("compress-images — batch processing", () => {
       fullPage: true,
     });
   });
+
+  test("multi-file progress is monotonic (never decreases)", async ({ page }) => {
+    test.setTimeout(60_000);
+
+    await page.goto("/compress-images");
+    await expect(
+      page.getByRole("heading", { name: "Compress Images Online Free" }),
+    ).toBeVisible();
+
+    // Use large files across codecs — slower to compress = more progress samples
+    const batchFiles = [
+      "large.jpg",
+      "large.png",
+      "large.webp",
+      "medium.jpg",
+      "medium.png",
+    ];
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles(
+      batchFiles.map((f) => path.join(FIXTURES_DIR, f)),
+    );
+
+    await expect(page.getByText("5 files selected")).toBeVisible();
+
+    // Collect progress samples via page.evaluate polling inside the browser.
+    // This is faster and more reliable than polling from Node.js over CDP.
+    const runButton = page.locator('[data-testid="run-button"]:visible');
+
+    // Start a browser-side observer BEFORE clicking Run
+    await page.evaluate(() => {
+      (window as any).__progressSamples = [] as number[];
+      const observer = new MutationObserver(() => {
+        const el = document.querySelector(
+          '[data-testid="toolbar-progress"][data-overall-percent]',
+        );
+        if (el) {
+          const val = Number(el.getAttribute("data-overall-percent"));
+          if (!isNaN(val)) (window as any).__progressSamples.push(val);
+        }
+      });
+      observer.observe(document.body, {
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["data-overall-percent", "data-status", "data-phase"],
+      });
+      (window as any).__progressObserver = observer;
+    });
+
+    await runButton.click();
+
+    // Wait for completion
+    await expect(runButton).toHaveAttribute("data-phase", "completed", {
+      timeout: 60_000,
+    });
+
+    // Collect and disconnect
+    const samples = await page.evaluate(() => {
+      (window as any).__progressObserver?.disconnect();
+      return (window as any).__progressSamples as number[];
+    });
+
+    // We should have captured progress samples during processing
+    expect(
+      samples.length,
+      `Expected progress samples during 5-file batch but got ${samples.length}`,
+    ).toBeGreaterThanOrEqual(2);
+
+    // Assert monotonic: each sample >= previous
+    for (let i = 1; i < samples.length; i++) {
+      expect(
+        samples[i],
+        `Progress decreased: ${samples[i - 1]}% → ${samples[i]}% (sample ${i}/${samples.length}, all: [${samples.join(", ")}])`,
+      ).toBeGreaterThanOrEqual(samples[i - 1]!);
+    }
+  });
 });

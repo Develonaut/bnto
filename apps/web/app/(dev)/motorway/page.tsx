@@ -17,7 +17,6 @@ import { InputShowcase } from "./InputShowcase";
 import { MenuShowcase } from "./MenuShowcase";
 import { NotificationCards } from "./NotificationCards";
 import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
-import { ExecutionProgressShowcase } from "./ExecutionProgressShowcase";
 import { ProgressShowcase } from "./ProgressShowcase";
 import { RecipeLayoutShowcase } from "./RecipeLayoutShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
@@ -179,23 +178,13 @@ export default function MotorwayPage() {
 
         {/* ── Progress ──────────────────────────────────────────── */}
         <Tabs.Content value="progress">
-          <Stack gap="xl" className="gap-16">
-            <ShowcaseSection
-              id="progress-indicators"
-              title="Progress Indicators"
-              description="LinearProgress primitive at different values, with icons, labels, and helper text."
-            >
-              <ProgressShowcase />
-            </ShowcaseSection>
-
-            <ShowcaseSection
-              id="execution-progress"
-              title="Execution Progress"
-              description="Realistic WASM execution scenarios showing both card and compact toolbar views. Each scenario has data attributes for programmatic E2E assertions."
-            >
-              <ExecutionProgressShowcase />
-            </ShowcaseSection>
-          </Stack>
+          <ShowcaseSection
+            id="progress-indicators"
+            title="Progress Indicators"
+            description="LinearProgress primitive at different values, with icons, labels, and helper text."
+          >
+            <ProgressShowcase />
+          </ShowcaseSection>
         </Tabs.Content>
 
         {/* ── Phase Flow ─────────────────────────────────────────── */}
