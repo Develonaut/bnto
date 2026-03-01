@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ArrowUpRightIcon, GithubIcon } from "@/components/ui/icons";
 
 import { Container } from "@/components/ui/Container";
+import { Row } from "@/components/ui/Row";
+import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { GITHUB_URL, LICENSE_LINE, TAGLINE, TRUST_LINE } from "@/lib/copy";
 
@@ -48,7 +50,7 @@ export function Footer() {
       <Container>
         <div className="flex flex-col gap-10 py-12 lg:flex-row lg:gap-20 lg:py-16">
           {/* Left column: brand + description */}
-          <div className="flex flex-col gap-4 lg:max-w-xs">
+          <Stack gap="md" className="lg:max-w-xs">
             <NavButton
               href="/"
               style={{ "--face-bg": "var(--background)", "--face-fg": "var(--foreground)" } as CSSProperties}
@@ -59,7 +61,7 @@ export function Footer() {
             <Text size="sm" color="muted" leading="relaxed">
               {TAGLINE} {TRUST_LINE}
             </Text>
-            <div className="flex items-center gap-4">
+            <Row className="gap-4">
               <a
                 href={GITHUB_URL}
                 target="_blank"
@@ -71,8 +73,8 @@ export function Footer() {
                 Open source
                 <ArrowUpRightIcon className="size-3" />
               </a>
-            </div>
-          </div>
+            </Row>
+          </Stack>
 
           {/* Right columns: tool links by category */}
           <div className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-3">
@@ -87,7 +89,7 @@ export function Footer() {
                 >
                   {section.title}
                 </Text>
-                <ul className="flex flex-col gap-2.5">
+                <Stack as="ul" className="gap-2.5">
                   {section.links.map((link) => (
                     <li key={link.href}>
                       <Link
@@ -101,7 +103,7 @@ export function Footer() {
                       </Link>
                     </li>
                   ))}
-                </ul>
+                </Stack>
               </div>
             ))}
           </div>
@@ -110,7 +112,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col items-center justify-between gap-3 border-t border-border py-6 text-xs text-muted-foreground sm:flex-row">
           <p>{LICENSE_LINE}</p>
-          <div className="flex items-center gap-4">
+          <Row className="gap-4">
             <Link
               href="/motorway"
               className="transition-colors hover:text-foreground"
@@ -123,7 +125,7 @@ export function Footer() {
             >
               Privacy Policy
             </Link>
-          </div>
+          </Row>
         </div>
       </Container>
     </footer>

@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { FileUpload } from "@/components/ui/FileUpload";
+import { Row } from "@/components/ui/Row";
 import {
   ArrowLeftIcon,
   DownloadIcon,
@@ -41,7 +42,7 @@ export function RecipeToolbar({
   return (
     <div role="toolbar" aria-label="Recipe actions" className="flex min-h-10 flex-col gap-3 md:flex-row md:items-center md:gap-4">
       {/* Left: back button + file count + mobile actions */}
-      <div className="flex items-center gap-2">
+      <Row gap="xs">
         <Button
           variant="ghost"
           size="icon"
@@ -55,7 +56,7 @@ export function RecipeToolbar({
         <p className="shrink-0 text-sm font-medium text-foreground">
           {fileCount} {fileCount === 1 ? "file" : "files"} selected
         </p>
-        <div className="ml-auto flex shrink-0 items-center gap-2 md:hidden">
+        <Row gap="xs" className="ml-auto shrink-0 md:hidden">
           {activePhase === 3 && (
             <Button
               variant="outline"
@@ -80,8 +81,8 @@ export function RecipeToolbar({
             hasFiles={fileCount > 0}
             onRun={onRun}
           />
-        </div>
-      </div>
+        </Row>
+      </Row>
 
       {/* Center: config (Phase 2) or progress (Phase 3) */}
       {centerContent && (
@@ -91,7 +92,7 @@ export function RecipeToolbar({
       )}
 
       {/* Right: desktop actions (hidden on mobile) */}
-      <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
+      <Row gap="xs" className="ml-auto hidden shrink-0 md:flex">
         {activePhase === 3 && (
           <Button
             variant="outline"
@@ -116,7 +117,7 @@ export function RecipeToolbar({
           hasFiles={fileCount > 0}
           onRun={onRun}
         />
-      </div>
+      </Row>
     </div>
   );
 }

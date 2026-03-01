@@ -4,6 +4,9 @@ import { CheckCircle2Icon, DownloadIcon } from "@/components/ui/icons";
 import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { IconBadge } from "@/components/ui/IconBadge";
+import { Row } from "@/components/ui/Row";
+import { Stack } from "@/components/ui/Stack";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface BrowserExecutionResultsProps {
@@ -57,11 +60,11 @@ function BrowserFileRow({
       elevation="sm"
       data-testid="output-file"
     >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+      <Row className="min-w-0 flex-1 gap-3">
+        <IconBadge variant="primary" size="lg">
           <CheckCircle2Icon className="size-5" />
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col">
+        </IconBadge>
+        <Stack className="min-w-0 flex-1 gap-0">
           <span className="truncate text-sm font-semibold">{result.filename}</span>
           <span className="truncate text-xs text-muted-foreground">
             {formatFileSize(result.blob.size)}
@@ -72,8 +75,8 @@ function BrowserFileRow({
               </span>
             )}
           </span>
-        </div>
-      </div>
+        </Stack>
+      </Row>
 
       <Button
         variant="outline"

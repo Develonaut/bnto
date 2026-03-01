@@ -8,7 +8,9 @@ import { GithubIcon, LogOutIcon, XIcon } from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
+import { Row } from "@/components/ui/Row";
 import { Sheet } from "@/components/ui/Sheet";
+import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { GITHUB_URL } from "@/lib/copy";
 import { RECIPES, PAGE_LINKS } from "./navData";
@@ -54,22 +56,22 @@ export function MobileNavMenu({
               </Sheet.Close>
             </div>
 
-            <div className="flex h-full flex-col justify-between gap-20 pt-16">
+            <Stack className="h-full justify-between gap-20 pt-16">
               {/* Recipes */}
-              <div className="flex flex-col gap-10">
+              <Stack className="gap-10">
                 <div className="text-2xl font-display font-bold text-primary-foreground">
                   Recipes
                 </div>
                 <div className="grid w-full grid-cols-2 gap-x-4 gap-y-10">
                   {RECIPES.map((category) => (
-                    <div
+                    <Stack
                       key={category.title}
-                      className="flex flex-col gap-4 text-primary-foreground"
+                      className="gap-4 text-primary-foreground"
                     >
                       <div className="text-xs uppercase tracking-wider text-primary-foreground/60">
                         {category.title}
                       </div>
-                      <ul className="flex flex-col gap-3">
+                      <Stack as="ul" className="gap-3">
                         {category.links.map((link) => (
                           <li key={link.url}>
                             <Link
@@ -81,15 +83,15 @@ export function MobileNavMenu({
                             </Link>
                           </li>
                         ))}
-                      </ul>
-                    </div>
+                      </Stack>
+                    </Stack>
                   ))}
                 </div>
-              </div>
+              </Stack>
 
               {/* Bottom section */}
-              <div className="flex flex-col gap-6">
-                <div className="flex items-center gap-4">
+              <Stack className="gap-6">
+                <Row className="gap-4">
                   {PAGE_LINKS.map((link) => (
                     <Button
                       key={link.href}
@@ -110,12 +112,12 @@ export function MobileNavMenu({
                     <GithubIcon />
                     <span className="sr-only">GitHub</span>
                   </Button>
-                </div>
+                </Row>
 
                 {/* Auth section */}
                 <div className="h-px bg-primary-foreground/20" />
                 {isAuthenticated && user?.email ? (
-                  <div className="flex flex-col gap-3">
+                  <Stack className="gap-3">
                     {(user.name || user.email) && (
                       <div>
                         {user.name && (
@@ -141,7 +143,7 @@ export function MobileNavMenu({
                       <LogOutIcon />
                       Sign out
                     </Button>
-                  </div>
+                  </Stack>
                 ) : (
                   <Button
                     variant="secondary"
@@ -152,8 +154,8 @@ export function MobileNavMenu({
                     Sign In
                   </Button>
                 )}
-              </div>
-            </div>
+              </Stack>
+            </Stack>
           </Container>
         </div>
       </Sheet.Content>

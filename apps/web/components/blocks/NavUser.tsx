@@ -10,6 +10,7 @@ import {
   LogOutIcon,
 } from "@/components/ui/icons";
 import { Menu } from "@/components/ui/Menu";
+import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 
 /**
@@ -60,7 +61,7 @@ export function NavUser() {
         <CircleUserIcon />
       </Menu.Trigger>
       <Menu.Content className="w-56 p-2" offset="lg">
-        <div className="flex flex-col gap-1">
+        <Stack className="gap-1">
           {isSignedIn ? (
             <>
               {/* User info */}
@@ -88,7 +89,7 @@ export function NavUser() {
               Sign in
             </Menu.Item>
           )}
-        </div>
+        </Stack>
       </Menu.Content>
     </Menu>
   );

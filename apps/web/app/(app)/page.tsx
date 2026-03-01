@@ -7,6 +7,7 @@ import { AppShell } from "@/components/ui/AppShell";
 import { Button } from "@/components/ui/Button";
 import { Divider } from "@/components/ui/Divider";
 import { Heading } from "@/components/ui/Heading";
+import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { GITHUB_URL } from "@/lib/copy";
 
@@ -29,7 +30,7 @@ export default function Home() {
       {/* How it works — copy + brag cards */}
       <InView>
         <div className="grid items-center gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20">
-          <div className="flex flex-col gap-4">
+          <Stack gap="md">
             <Text
               size="sm"
               mono
@@ -48,7 +49,7 @@ export default function Home() {
               Processing happens on your machine in milliseconds. Nothing is
               uploaded. Nothing leaves.
             </Text>
-          </div>
+          </Stack>
           <BragLayout />
         </div>
       </InView>
@@ -58,7 +59,7 @@ export default function Home() {
       {/* No catch — copy + trust card */}
       <InView>
         <div className="grid items-center gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20">
-          <div className="flex flex-col gap-4">
+          <Stack gap="md">
             <Text
               size="sm"
               mono
@@ -89,7 +90,7 @@ export default function Home() {
                 View on GitHub
               </Button>
             </div>
-          </div>
+          </Stack>
           <TrustLayout />
         </div>
       </InView>

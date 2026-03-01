@@ -8,6 +8,7 @@ import { FileUpload } from "@/components/ui/FileUpload";
 import { Grid } from "@/components/ui/Grid";
 import { Heading } from "@/components/ui/Heading";
 import { UploadIcon } from "@/components/ui/icons";
+import { Stack } from "@/components/ui/Stack";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
 import { getAcceptedTypes, toDropzoneAccept } from "../_lib/getAcceptedTypes";
 import { ErrorCard } from "./ErrorCard";
@@ -137,7 +138,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
 
           {/* Phases 2–3: Toolbar persists, content below changes */}
           {(activePhase === 2 || activePhase === 3) && (
-            <div className="space-y-4 text-left">
+            <Stack className="gap-4 text-left">
               <RecipeToolbar
                 activePhase={activePhase as 2 | 3}
                 resolvedPhase={resolvedPhase}
@@ -232,7 +233,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
                   })}
                 </Grid>
               </Animate.BouncyStagger>
-            </div>
+            </Stack>
           )}
         </FileUpload>
       )}

@@ -12,6 +12,9 @@ import { Animate } from "@/components/ui/Animate";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { ComparisonBar } from "@/components/ui/ComparisonBar";
 import { Card } from "@/components/ui/Card";
+import { IconBadge } from "@/components/ui/IconBadge";
+import { Row } from "@/components/ui/Row";
+import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 
@@ -52,20 +55,21 @@ function ComparisonCell({ value, win }: { value: string; win?: boolean }) {
 
 export function BragLayout() {
   const speedCard = (
-    <Card elevation="md" className="flex flex-col gap-3 p-5">
-      <div className="flex items-center gap-3">
-        <div className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-lg">
+    <Card elevation="md" className="p-5">
+      <Stack className="gap-3">
+      <Row className="gap-3">
+        <IconBadge variant="primary" size="md" shape="square">
           <ZapIcon className="size-4" />
-        </div>
-        <div className="flex items-baseline gap-1.5">
+        </IconBadge>
+        <Row className="gap-1.5" align="baseline">
           <AnimatedCounter
             value={50}
             active
             className="font-display text-2xl font-bold tracking-tight"
           />
           <span className="text-muted-foreground text-sm font-medium">ms</span>
-        </div>
-      </div>
+        </Row>
+      </Row>
       <ComparisonBar
         active
         height="h-2.5"
@@ -76,6 +80,7 @@ export function BragLayout() {
         ]}
       />
       <Text size="xs" color="muted">Avg processing time</Text>
+      </Stack>
     </Card>
   );
 
@@ -120,13 +125,15 @@ export function BragLayout() {
   );
 
   return (
-    <Animate.Stagger className="flex flex-col gap-3">
+    <Animate.Stagger asChild>
+    <Stack className="gap-3">
       <Animate.ScaleIn index={0} from={0.9} easing="spring-bouncy">
         {speedCard}
       </Animate.ScaleIn>
       <Animate.ScaleIn index={1} from={0.9} easing="spring-bouncy">
         {comparisonCard}
       </Animate.ScaleIn>
+    </Stack>
     </Animate.Stagger>
   );
 }

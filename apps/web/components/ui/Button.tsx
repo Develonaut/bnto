@@ -1,32 +1,12 @@
-import type { CSSProperties, ComponentProps, Ref, ElementType } from "react";
+import type { ComponentProps, Ref, ElementType } from "react";
 
 import Link from "next/link";
 import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "@/lib/cn";
 import { createCn } from "./createCn";
-
-/* ── Spring modes ────────────────────────────────────────────
- * Controls the hover/active/release transition spring.
- * Matches the sm/md/lg pattern used by elevation and size.
- *   sm: 150ms ease-out (firm, no overshoot)
- *   md: 400ms spring-bouncier (gentle single bounce)
- *   lg: 550ms spring-pressable (rubber band, 3 oscillations)
- * ──────────────────────────────────────────────────────────── */
-
-type SpringMode = "sm" | "md" | "lg";
-
-const SPRING_STYLES: Record<SpringMode, CSSProperties> = {
-  sm: {},
-  md: {
-    "--pressable-ease": "var(--ease-spring-bouncier)",
-    "--pressable-dur": "400ms",
-  } as CSSProperties,
-  lg: {
-    "--pressable-ease": "var(--ease-spring-pressable)",
-    "--pressable-dur": "550ms",
-  } as CSSProperties,
-};
+import { SPRING_STYLES } from "./Pressable";
+import type { SpringMode } from "./Pressable";
 
 /* ── Class split ──────────────────────────────────────────────
  * Behavior: always applied (even with asChild). Pressable

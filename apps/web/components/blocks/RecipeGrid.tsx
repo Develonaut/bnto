@@ -13,10 +13,14 @@ import {
 } from "@/components/ui/icons";
 
 import { Animate } from "@/components/ui/Animate";
+import { Badge } from "@/components/ui/Badge";
 import { BentoGrid, useBentoItem } from "@/components/ui/BentoGrid";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Heading } from "@/components/ui/Heading";
+import { IconBadge } from "@/components/ui/IconBadge";
+import { Pressable } from "@/components/ui/Pressable";
+import { Row } from "@/components/ui/Row";
+import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { BNTO_REGISTRY, type BntoEntry } from "@/lib/bntoRegistry";
 
@@ -39,16 +43,15 @@ function RecipeCell({ entry }: { entry: BntoEntry }) {
 
   return (
     <Link href={`/${entry.slug}`} className="group h-full">
-      <Button
-        variant="outline"
+      <Pressable
         asChild
         className="flex h-full items-stretch justify-start whitespace-normal text-left"
       >
-        <Card className="flex flex-col justify-between p-5">
-          <div className="flex items-start justify-between">
-            <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+        <Card className="flex flex-col justify-between p-5" elevation="md">
+          <Row align="start" justify="between">
+            <IconBadge variant="primary" size="lg" shape="square">
               <Icon className="size-5" />
-            </div>
+            </IconBadge>
             <Text
               as="span"
               size="xs"
@@ -58,9 +61,9 @@ function RecipeCell({ entry }: { entry: BntoEntry }) {
             >
               {entry.features[0]}
             </Text>
-          </div>
+          </Row>
 
-          <div className="mt-auto flex flex-col gap-1.5 pt-4">
+          <Stack className="mt-auto gap-1.5 pt-4">
             <Heading level={3} size="xs" className="text-left">
               {entry.h1.replace(/ Online Free$/, "")}
             </Heading>
@@ -74,19 +77,14 @@ function RecipeCell({ entry }: { entry: BntoEntry }) {
                 {entry.description}
               </Text>
             )}
-            <div className="flex flex-wrap gap-1.5 pt-1">
+            <Row wrap className="gap-1.5 pt-1">
               {entry.features.slice(0, featured ? 5 : 3).map((f) => (
-                <span
-                  key={f}
-                  className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium"
-                >
-                  {f}
-                </span>
+                <Badge key={f} size="sm">{f}</Badge>
               ))}
-            </div>
-          </div>
+            </Row>
+          </Stack>
         </Card>
-      </Button>
+      </Pressable>
     </Link>
   );
 }
@@ -95,7 +93,8 @@ function RecipeCell({ entry }: { entry: BntoEntry }) {
 
 export function RecipeGrid() {
   return (
-    <Animate.Stagger className="flex flex-col gap-3">
+    <Animate.Stagger asChild>
+    <Stack className="gap-3">
       <BentoGrid cols={2} uniform>
         {BNTO_REGISTRY.map((entry, i) => (
           <Animate.ScaleIn
@@ -112,6 +111,7 @@ export function RecipeGrid() {
       <Text size="xs" color="muted" className="text-center">
         Pick a tool to get started. No signup needed.
       </Text>
+    </Stack>
     </Animate.Stagger>
   );
 }

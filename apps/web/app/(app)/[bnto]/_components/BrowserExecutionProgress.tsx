@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { LoaderIcon, ClockIcon } from "@/components/ui/icons";
+import { Row } from "@/components/ui/Row";
+import { Stack } from "@/components/ui/Stack";
 import type { BrowserExecution } from "@bnto/core";
 
 interface BrowserExecutionProgressProps {
@@ -24,35 +26,35 @@ export function BrowserExecutionProgress({
   const { fileProgress } = execution;
 
   return (
-    <div
-      className="space-y-3 rounded-lg border border-border bg-card p-4"
+    <Stack
+      className="gap-3 rounded-lg border border-border bg-card p-4"
       data-testid="browser-execution-progress"
       data-status={execution.status}
       data-file-index={fileProgress?.fileIndex}
       data-total-files={fileProgress?.totalFiles}
       data-overall-percent={fileProgress?.overallPercent}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <Row justify="between">
+        <Row gap="xs">
           <LoaderIcon className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
           <p className="text-sm font-medium text-foreground">
             {fileProgress
               ? `Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}\u2026`
               : "Initializing engine\u2026"}
           </p>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        </Row>
+        <Row className="gap-1.5 text-xs text-muted-foreground">
           <ClockIcon className="size-3.5" />
           <span>{formatElapsed(elapsed)}</span>
-        </div>
-      </div>
+        </Row>
+      </Row>
 
       {fileProgress && (
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-muted-foreground">
+        <Stack className="gap-1.5">
+          <Row justify="between" className="text-xs text-muted-foreground">
             <span>{fileProgress.message}</span>
             <span>{fileProgress.overallPercent}%</span>
-          </div>
+          </Row>
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               data-testid="progress-bar"
@@ -60,9 +62,9 @@ export function BrowserExecutionProgress({
               style={{ width: `${fileProgress.overallPercent}%` }}
             />
           </div>
-        </div>
+        </Stack>
       )}
-    </div>
+    </Stack>
   );
 }
 

@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { DownloadIcon, FileDownIcon, LoaderIcon, CheckCircle2Icon } from "@/components/ui/icons";
 import { core } from "@bnto/core";
 import { Button } from "@/components/ui/Button";
+import { Row } from "@/components/ui/Row";
+import { Stack } from "@/components/ui/Stack";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface ExecutionResultsProps {
@@ -37,26 +39,26 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
   if (!isCompleted || !hasOutputFiles) return null;
 
   return (
-    <div
-      className="space-y-3 rounded-lg border border-border bg-card p-4"
+    <Stack
+      className="gap-3 rounded-lg border border-border bg-card p-4"
       data-testid="execution-results"
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <Row justify="between">
+        <Row className="gap-2">
           <CheckCircle2Icon className="size-5 shrink-0 text-success" />
           <p className="text-sm font-medium text-foreground">
             {outputFiles.length}{" "}
             {outputFiles.length === 1 ? "file" : "files"} ready
           </p>
-        </div>
+        </Row>
         {duration !== null && (
           <p className="text-xs text-muted-foreground">
             Completed in {duration}s
           </p>
         )}
-      </div>
+      </Row>
 
-      <ul className="space-y-2">
+      <Stack as="ul" className="gap-2">
         {outputFiles.map((file) => {
           const downloadUrl = urls.find((u) => u.key === file.key);
           return (
@@ -89,7 +91,7 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
             </li>
           );
         })}
-      </ul>
+      </Stack>
 
       {outputFiles.length > 1 && (
         <Button
@@ -118,6 +120,6 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
           Download
         </Button>
       )}
-    </div>
+    </Stack>
   );
 }

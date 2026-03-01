@@ -32,10 +32,11 @@ export default defineConfig({
   reporter: "html",
   expect: {
     toHaveScreenshot: {
-      // CI runs on Ubuntu (different font rendering than macOS).
-      // Allow a higher pixel diff ratio to accommodate cross-platform
-      // rendering differences without causing false failures.
-      maxDiffPixelRatio: process.env.CI ? 0.05 : 0.02,
+      // Remote runs (Vercel preview) have font rendering differences vs local
+      // dev — next/font optimizes differently in production builds, causing
+      // sub-pixel text shifts. Allow a higher pixel diff ratio to absorb these
+      // without hiding real regressions. Local-vs-local stays strict at 2%.
+      maxDiffPixelRatio: isRemote ? 0.07 : 0.02,
     },
   },
   use: {
