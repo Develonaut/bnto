@@ -2,6 +2,22 @@
 
 Known pitfalls and their fixes. Check here before debugging something that feels familiar.
 
+## `convexQuery` + Empty IDs = Silent Subscription Failures
+
+`@convex-dev/react-query`'s `convexQuery()` creates a real Convex WebSocket subscription unless args is the literal string `"skip"`. Passing `{ id: "" }` creates an active subscription that hits the Convex validator and fails with `ArgumentValidationError`. React Query's `enabled: false` does NOT prevent this — it only prevents React Query from surfacing the data, but the subscription still fires server-side.
+
+**Symptoms:** 100% failure rate spikes on `executions:get` (or any query) in the Convex dashboard. Intermittent 500 errors from Next.js dev server under parallel E2E load. Cache hit rate drops to 0%.
+
+**Fix:** Always use `"skip"` in adapter functions when the ID is falsy:
+
+```typescript
+export function getExecutionQuery(id: string) {
+  return convexQuery(api.executions.get, id ? { id: id as Id<"executions"> } : "skip");
+}
+```
+
+See [convex.md](convex.md#convexquery-skip-guard-critical) for the full rule.
+
 ## SSG + Convex Hooks
 
 Pages using Convex hooks (`useMutation`, `useQuery`) crash during static generation because there's no `ConvexProvider` at build time.

@@ -14,7 +14,7 @@ export function getWorkflowsQuery() {
 }
 
 export function getWorkflowQuery(id: string) {
-  return convexQuery(api.workflows.get, { id: id as Id<"workflows"> });
+  return convexQuery(api.workflows.get, id ? { id: id as Id<"workflows"> } : "skip");
 }
 
 // ---------------------------------------------------------------------------
