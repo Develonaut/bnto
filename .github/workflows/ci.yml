@@ -57,6 +57,9 @@ jobs:
   typescript:
     name: TypeScript (build + lint + test)
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_CONVEX_URL: https://zealous-canary-422.convex.cloud
+      NEXT_PUBLIC_CONVEX_SITE_URL: https://zealous-canary-422.convex.site
     steps:
       - uses: actions/checkout@v4
 
