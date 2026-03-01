@@ -9,6 +9,14 @@ Verify a pull request is ready to merge and merge it after user approval. This s
 
 **This is NOT a code review.** Run `/code-review` separately before `/merge-pr`. This skill checks merge readiness — CI, conflicts, description accuracy — not code quality.
 
+## Arguments
+
+| Flag | Description |
+|------|-------------|
+| `--skip-e2e` | Skip the mandatory E2E test step (Step 3b). Only the user can pass this flag — agents must never add it on their own. |
+
+**Usage:** `/merge-pr --skip-e2e` or `/merge-pr 42 --skip-e2e`
+
 ## Step 1: Identify the PR
 
 Determine which PR to merge:
@@ -61,7 +69,9 @@ Parse `statusCheckRollup` from Step 2. For each check:
 
 ## Step 3b: E2E Tests Against Vercel Preview (MANDATORY)
 
-**This step is MANDATORY. You MUST run E2E tests against the Vercel preview deployment before merging. You do NOT get to decide whether to skip this step — regardless of what files were changed. Only the user can explicitly grant a skip.**
+**This step is MANDATORY unless the user passed `--skip-e2e`.** You MUST run E2E tests against the Vercel preview deployment before merging. You do NOT get to decide whether to skip this step — regardless of what files were changed. Only the user can explicitly grant a skip via the `--skip-e2e` flag or by telling you directly.
+
+If `--skip-e2e` was passed, note "E2E Tests: SKIPPED (user opted out)" in the merge readiness summary and proceed to Step 4.
 
 ### Why
 
