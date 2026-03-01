@@ -22,7 +22,7 @@
 //
 //   JavaScript (Web Worker):
 //   ```js
-//   import init, { setup, version, compress_image_bytes } from './bnto_wasm.js';
+//   import init, { setup, version, compress_image_combined } from './bnto_wasm.js';
 //
 //   // Step 1: Load the WASM binary (one-time)
 //   await init('/wasm/bnto_wasm_bg.wasm');
@@ -30,8 +30,8 @@
 //   // Step 2: Initialize panic hooks (one-time)
 //   setup();
 //
-//   // Step 3: Process files!
-//   const result = compress_image_bytes(bytes, 'photo.jpg', '{"quality": 80}', progressCb);
+//   // Step 3: Process files! Returns { metadata, data, filename, mimeType }
+//   const result = compress_image_combined(bytes, 'photo.jpg', '{"quality": 80}', progressCb);
 //   ```
 
 use wasm_bindgen::prelude::*;

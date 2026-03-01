@@ -71,7 +71,7 @@ export interface BrowserExecution {
   completedAt?: number;
 }
 
-/** Progress update for the current file being processed. */
+/** Progress update for the current file being processed (store output). */
 export interface BrowserFileProgress {
   /** Index of the file currently being processed (0-based). */
   fileIndex: number;
@@ -79,6 +79,11 @@ export interface BrowserFileProgress {
   totalFiles: number;
   /** Percentage complete for the current file (0-100). */
   percent: number;
+  /** Overall batch progress across all files (0-100). Computed by the store. */
+  overallPercent: number;
   /** Human-readable status message from the engine. */
   message: string;
 }
+
+/** Progress input from the engine (before the store computes overallPercent). */
+export type BrowserFileProgressInput = Omit<BrowserFileProgress, "overallPercent">;

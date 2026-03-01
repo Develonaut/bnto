@@ -5,7 +5,8 @@
 // WHAT ARE THESE TESTS?
 // The core wasm.rs tests verify that each format produces valid output bytes.
 // These tests go deeper: they verify metadata JSON fields, output filenames,
-// quality parameter handling, and size relationships across the WASM boundary.
+// quality parameter handling, and size relationships across the WASM boundary
+// using the combined function API.
 //
 // WHY THROUGH WASM?
 // The pure Rust unit tests (in compress.rs) already verify compression logic.
@@ -13,6 +14,7 @@
 //   - JSON serialization across the boundary (metadata fields survive the trip)
 //   - String encoding for filenames (UTF-8 ↔ JS string conversion)
 //   - Number precision for compression ratios (f64 ↔ JS number)
+//   - Combined result object structure (metadata + data + filename + mimeType)
 //
 // COVERAGE MATRIX:
 //   | Format | Bytes | Metadata | Filename | Quality | Size |
@@ -28,7 +30,10 @@ mod common;
 use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
-use common::{TEST_JPEG, TEST_PNG, TEST_WEBP, init_panic_hook, noop_callback};
+use common::{
+    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_filename, extract_metadata,
+    extract_mime_type, init_panic_hook, noop_callback,
+};
 
 wasm_bindgen_test_configure!(run_in_node_experimental);
 
@@ -40,37 +45,27 @@ wasm_bindgen_test_configure!(run_in_node_experimental);
 fn test_compress_png_metadata_via_wasm() {
     // --- Test: PNG compression returns valid metadata JSON ---
     //
-    // The `compress_image` function returns a JSON string with metadata.
-    // Core wasm.rs only checks bytes for PNG. This verifies PNG metadata
-    // includes all expected fields after crossing the WASM boundary.
+    // The combined function returns a JS object. We extract the `metadata`
+    // property which is a JSON string. Core wasm.rs only checks bytes for
+    // PNG. This verifies PNG metadata includes all expected fields after
+    // crossing the WASM boundary.
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image(TEST_PNG, "screenshot.png", "{}", callback);
-    assert!(result.is_ok(), "compress_image should succeed for PNG");
+    let result = compress_image_combined(TEST_PNG, "screenshot.png", "{}", callback);
+    assert!(
+        result.is_ok(),
+        "compress_image_combined should succeed for PNG"
+    );
 
-    let json_str = result.unwrap();
+    // --- Extract metadata JSON from the combined result ---
+    let result_obj = result.unwrap();
+    let json_str = extract_metadata(&result_obj);
 
-    // --- Verify the metadata JSON contains all expected fields ---
+    // --- Verify the metadata JSON contains compression stats ---
     //
     // These fields are built in compress.rs and serialized in wasm_bridge.rs.
     // If any field name gets mangled during WASM serialization, this catches it.
-    assert!(
-        json_str.contains("filename"),
-        "PNG metadata should contain 'filename': got '{json_str}'"
-    );
-    assert!(
-        json_str.contains("compressed"),
-        "PNG output filename should contain 'compressed': got '{json_str}'"
-    );
-    assert!(
-        json_str.contains("mimeType"),
-        "PNG metadata should contain 'mimeType': got '{json_str}'"
-    );
-    assert!(
-        json_str.contains("image/png"),
-        "PNG MIME type should be 'image/png': got '{json_str}'"
-    );
     assert!(
         json_str.contains("originalSize"),
         "Metadata should contain 'originalSize': got '{json_str}'"
@@ -79,6 +74,15 @@ fn test_compress_png_metadata_via_wasm() {
         json_str.contains("compressedSize"),
         "Metadata should contain 'compressedSize': got '{json_str}'"
     );
+
+    // Filename and MIME type are separate properties on the result object.
+    let filename = extract_filename(&result_obj);
+    assert!(
+        filename.contains("compressed"),
+        "PNG filename should contain 'compressed': got '{filename}'"
+    );
+    let mime = extract_mime_type(&result_obj);
+    assert_eq!(mime, "image/png", "PNG MIME type should be 'image/png'");
 }
 
 // =============================================================================
@@ -90,31 +94,42 @@ fn test_compress_webp_metadata_via_wasm() {
     // --- Test: WebP compression returns valid metadata JSON ---
     //
     // Verifies that WebP-specific metadata (RIFF container format,
-    // lossless encoding) serializes correctly across the WASM boundary.
+    // lossless encoding) serializes correctly across the WASM boundary
+    // via the combined function's metadata property.
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image(TEST_WEBP, "banner.webp", "{}", callback);
-    assert!(result.is_ok(), "compress_image should succeed for WebP");
+    let result = compress_image_combined(TEST_WEBP, "banner.webp", "{}", callback);
+    assert!(
+        result.is_ok(),
+        "compress_image_combined should succeed for WebP"
+    );
 
-    let json_str = result.unwrap();
+    // --- Extract metadata JSON from the combined result ---
+    let result_obj = result.unwrap();
+    let json_str = extract_metadata(&result_obj);
 
+    // --- Verify the metadata JSON contains compression stats ---
+    //
+    // These fields are built in compress.rs and serialized in wasm_bridge.rs.
+    // If any field name gets mangled during WASM serialization, this catches it.
     assert!(
-        json_str.contains("filename"),
-        "WebP metadata should contain 'filename': got '{json_str}'"
+        json_str.contains("originalSize"),
+        "WebP metadata should contain 'originalSize': got '{json_str}'"
     );
     assert!(
-        json_str.contains("compressed"),
-        "WebP output filename should contain 'compressed': got '{json_str}'"
+        json_str.contains("compressedSize"),
+        "WebP metadata should contain 'compressedSize': got '{json_str}'"
     );
+
+    // Filename and MIME type are separate properties on the result object.
+    let filename = extract_filename(&result_obj);
     assert!(
-        json_str.contains("mimeType"),
-        "WebP metadata should contain 'mimeType': got '{json_str}'"
+        filename.contains("compressed"),
+        "WebP filename should contain 'compressed': got '{filename}'"
     );
-    assert!(
-        json_str.contains("image/webp"),
-        "WebP MIME type should be 'image/webp': got '{json_str}'"
-    );
+    let mime = extract_mime_type(&result_obj);
+    assert_eq!(mime, "image/webp", "WebP MIME type should be 'image/webp'");
 }
 
 // =============================================================================
@@ -128,15 +143,18 @@ fn test_jpeg_metadata_has_compression_ratio() {
     // The compression ratio is calculated as:
     //   (1.0 - compressedSize / originalSize) * 100.0
     //
-    // This is a floating-point number that crosses the WASM boundary as a
-    // JSON number. We verify it survives serialization (f64 → JSON → String).
+    // This is a floating-point number that crosses the WASM boundary inside
+    // the metadata JSON string. We verify it survives serialization
+    // (f64 → JSON → String → extract via Reflect::get).
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image(TEST_JPEG, "photo.jpg", r#"{"quality": 60}"#, callback);
-    assert!(result.is_ok(), "compress_image should succeed");
+    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 60}"#, callback);
+    assert!(result.is_ok(), "compress_image_combined should succeed");
 
-    let json_str = result.unwrap();
+    // --- Extract metadata JSON from the combined result ---
+    let result_obj = result.unwrap();
+    let json_str = extract_metadata(&result_obj);
 
     assert!(
         json_str.contains("compressionRatio"),
@@ -161,18 +179,20 @@ fn test_jpeg_output_filename_has_compressed_suffix() {
     // --- Test: Output filename gets "-compressed" suffix ---
     //
     // "my-photo.jpg" → "my-photo-compressed.jpg"
-    // The filename is built in Rust and returned as a JSON string.
-    // This verifies the string survives WASM → JS → JSON round-trip.
+    // The filename is a top-level property on the combined result object,
+    // extracted via extract_filename(). It is NOT in the metadata JSON.
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image(TEST_JPEG, "my-photo.jpg", r#"{"quality": 80}"#, callback);
-    assert!(result.is_ok(), "compress_image should succeed");
+    let result = compress_image_combined(TEST_JPEG, "my-photo.jpg", r#"{"quality": 80}"#, callback);
+    assert!(result.is_ok(), "compress_image_combined should succeed");
 
-    let json_str = result.unwrap();
-    assert!(
-        json_str.contains("my-photo-compressed.jpg"),
-        "Output filename should be 'my-photo-compressed.jpg': got '{json_str}'"
+    // --- Extract filename from the combined result object ---
+    let result_obj = result.unwrap();
+    let filename = extract_filename(&result_obj);
+    assert_eq!(
+        filename, "my-photo-compressed.jpg",
+        "Output filename should be 'my-photo-compressed.jpg': got '{filename}'"
     );
 }
 
@@ -182,13 +202,14 @@ fn test_png_output_filename_has_compressed_suffix() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image(TEST_PNG, "chart.png", "{}", callback);
-    assert!(result.is_ok(), "compress_image should succeed");
+    let result = compress_image_combined(TEST_PNG, "chart.png", "{}", callback);
+    assert!(result.is_ok(), "compress_image_combined should succeed");
 
-    let json_str = result.unwrap();
-    assert!(
-        json_str.contains("chart-compressed.png"),
-        "Output filename should be 'chart-compressed.png': got '{json_str}'"
+    let result_obj = result.unwrap();
+    let filename = extract_filename(&result_obj);
+    assert_eq!(
+        filename, "chart-compressed.png",
+        "Output filename should be 'chart-compressed.png': got '{filename}'"
     );
 }
 
@@ -198,13 +219,14 @@ fn test_webp_output_filename_has_compressed_suffix() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image(TEST_WEBP, "hero-image.webp", "{}", callback);
-    assert!(result.is_ok(), "compress_image should succeed");
+    let result = compress_image_combined(TEST_WEBP, "hero-image.webp", "{}", callback);
+    assert!(result.is_ok(), "compress_image_combined should succeed");
 
-    let json_str = result.unwrap();
-    assert!(
-        json_str.contains("hero-image-compressed.webp"),
-        "Output filename should be 'hero-image-compressed.webp': got '{json_str}'"
+    let result_obj = result.unwrap();
+    let filename = extract_filename(&result_obj);
+    assert_eq!(
+        filename, "hero-image-compressed.webp",
+        "Output filename should be 'hero-image-compressed.webp': got '{filename}'"
     );
 }
 
@@ -222,27 +244,29 @@ fn test_jpeg_lower_quality_produces_smaller_output() {
     //
     // If the params_json parsing was broken, both would use the default
     // quality and produce identical sizes — this test would catch that.
+    //
+    // We extract bytes from the combined result's `data` property.
     init_panic_hook();
 
     // --- Compress at quality 50 (aggressive) ---
-    let result_q50 = compress_image_bytes(
+    let result_q50 = compress_image_combined(
         TEST_JPEG,
         "photo.jpg",
         r#"{"quality": 50}"#,
         noop_callback(),
     );
     assert!(result_q50.is_ok(), "Quality 50 should succeed");
-    let bytes_q50 = result_q50.unwrap();
+    let bytes_q50 = extract_bytes(&result_q50.unwrap());
 
     // --- Compress at quality 95 (minimal compression) ---
-    let result_q95 = compress_image_bytes(
+    let result_q95 = compress_image_combined(
         TEST_JPEG,
         "photo.jpg",
         r#"{"quality": 95}"#,
         noop_callback(),
     );
     assert!(result_q95.is_ok(), "Quality 95 should succeed");
-    let bytes_q95 = result_q95.unwrap();
+    let bytes_q95 = extract_bytes(&result_q95.unwrap());
 
     // Quality 50 output should be smaller than quality 95 output.
     // Both are valid JPEGs (checked by magic bytes tests in wasm.rs).

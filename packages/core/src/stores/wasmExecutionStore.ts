@@ -1,7 +1,7 @@
 import { createStore } from "zustand/vanilla";
 import type {
   BrowserExecution,
-  BrowserFileProgress,
+  BrowserFileProgressInput,
   BrowserFileResult,
 } from "../types/wasm";
 
@@ -12,8 +12,8 @@ import type {
 interface WasmExecutionState extends BrowserExecution {
   /** Transition to processing. Clears prior error/results. */
   start: (id: string, startedAt: number) => void;
-  /** Update per-file progress. */
-  progress: (progress: BrowserFileProgress) => void;
+  /** Update per-file progress. Computes overallPercent and enforces monotonic guard. */
+  progress: (progress: BrowserFileProgressInput) => void;
   /** Transition to completed with results. Clears progress. */
   complete: (results: BrowserFileResult[], completedAt: number) => void;
   /** Transition to failed with error. Clears progress. */
@@ -52,7 +52,32 @@ export function createWasmExecutionStore() {
         completedAt: undefined,
       }),
 
-    progress: (fileProgress) => set({ fileProgress }),
+    progress: (fileProgress) =>
+      set((state) => {
+        const prev = state.fileProgress;
+
+        // Monotonic guard: reject backwards progress for the same file.
+        // This prevents progress bar regression (e.g., 50→30) caused by
+        // duplicate WASM calls or out-of-order callbacks.
+        if (
+          prev &&
+          fileProgress.fileIndex === prev.fileIndex &&
+          fileProgress.percent < prev.percent
+        ) {
+          return state;
+        }
+
+        // Compute overall batch progress: how far through ALL files.
+        // Formula: ((completedFiles * 100) + currentFilePercent) / totalFiles
+        const total = fileProgress.totalFiles || 1;
+        const overallPercent = Math.round(
+          ((fileProgress.fileIndex * 100) + fileProgress.percent) / total,
+        );
+
+        return {
+          fileProgress: { ...fileProgress, overallPercent },
+        };
+      }),
 
     complete: (results, completedAt) =>
       set({

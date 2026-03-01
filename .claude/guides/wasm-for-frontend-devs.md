@@ -232,7 +232,7 @@ Zustand stores       │                         │
 
 **Boundary 1: Main Thread ↔ Worker Thread.** This is the `postMessage()` boundary. Data crosses as serialized messages. `ArrayBuffer`s can be *transferred* (zero-copy ownership handoff) but everything else gets copied. This is **asynchronous** — you send a message and get a response later.
 
-**Boundary 2: Worker JS ↔ WASM.** This is a function call boundary *within the same thread*. The worker's JavaScript calls exported Rust functions through the auto-generated glue code. This is **synchronous** — when JS calls `compress_image_bytes()`, it blocks until Rust returns. (That's fine because we're already on a background thread — blocking here doesn't freeze the UI.)
+**Boundary 2: Worker JS ↔ WASM.** This is a function call boundary *within the same thread*. The worker's JavaScript calls exported Rust functions through the auto-generated glue code. This is **synchronous** — when JS calls `compress_image_combined()`, it blocks until Rust returns. (That's fine because we're already on a background thread — blocking here doesn't freeze the UI.)
 
 ### The Key Mental Model
 
@@ -278,7 +278,7 @@ MAIN THREAD                          ║  WORKER THREAD
       │  UI stays responsive         ║     in its local registry
       │  (React keeps rendering,     ║        │
       │   user can scroll, click)    ║  7. Worker calls WASM:
-      │                              ║     compress_image_bytes(
+      │                              ║     compress_image_combined(
       │                              ║       data, filename,
       │                              ║       params, progressCb)
       │                              ║        │

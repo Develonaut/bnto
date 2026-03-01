@@ -28,6 +28,9 @@ export function BrowserExecutionProgress({
       className="space-y-3 rounded-lg border border-border bg-card p-4"
       data-testid="browser-execution-progress"
       data-status={execution.status}
+      data-file-index={fileProgress?.fileIndex}
+      data-total-files={fileProgress?.totalFiles}
+      data-overall-percent={fileProgress?.overallPercent}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -48,12 +51,13 @@ export function BrowserExecutionProgress({
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{fileProgress.message}</span>
-            <span>{fileProgress.percent}%</span>
+            <span>{fileProgress.overallPercent}%</span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
+              data-testid="progress-bar"
               className="h-full rounded-full bg-primary motion-safe:transition-[width] motion-safe:duration-fast"
-              style={{ width: `${fileProgress.percent}%` }}
+              style={{ width: `${fileProgress.overallPercent}%` }}
             />
           </div>
         </div>

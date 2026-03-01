@@ -17,6 +17,7 @@ import { InputShowcase } from "./InputShowcase";
 import { MenuShowcase } from "./MenuShowcase";
 import { NotificationCards } from "./NotificationCards";
 import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
+import { ProgressShowcase } from "./ProgressShowcase";
 import { RecipeLayoutShowcase } from "./RecipeLayoutShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
 import { TypographyShowcase } from "./TypographyShowcase";
@@ -43,6 +44,7 @@ export default function MotorwayPage() {
           <Tabs.Trigger value="motion">Motion</Tabs.Trigger>
           <Tabs.Trigger value="forms">Forms</Tabs.Trigger>
           <Tabs.Trigger value="grids">Grids</Tabs.Trigger>
+          <Tabs.Trigger value="progress">Progress</Tabs.Trigger>
           <Tabs.Trigger value="phase-flow">Phase Flow</Tabs.Trigger>
           <Tabs.Trigger value="recipe-layouts">Recipe Layouts</Tabs.Trigger>
         </Tabs.List>
@@ -172,6 +174,17 @@ export default function MotorwayPage() {
               <ConveyorShowcase />
             </ShowcaseSection>
           </Stack>
+        </Tabs.Content>
+
+        {/* ── Progress ──────────────────────────────────────────── */}
+        <Tabs.Content value="progress">
+          <ShowcaseSection
+            id="progress-indicators"
+            title="Progress Indicators"
+            description="LinearProgress primitive at different values, with icons, labels, and helper text."
+          >
+            <ProgressShowcase />
+          </ShowcaseSection>
         </Tabs.Content>
 
         {/* ── Phase Flow ─────────────────────────────────────────── */}

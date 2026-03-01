@@ -22,6 +22,7 @@
 // different test files.
 #![allow(dead_code)]
 
+use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
 
 // =============================================================================
@@ -120,6 +121,74 @@ pub fn recording_callback() -> (js_sys::Function, js_sys::Array) {
         .expect("'calls' should be an Array");
 
     (cb, calls)
+}
+
+// =============================================================================
+// Combined Result Extraction Helpers
+// =============================================================================
+//
+// The combined WASM functions (clean_csv_combined, rename_csv_columns_combined)
+// return a single JsValue that is a JS object with four properties:
+//   - metadata: JSON string with processing stats (rows removed, columns renamed, etc.)
+//   - data: Uint8Array containing the raw output CSV bytes
+//   - filename: string with the suggested output filename
+//   - mimeType: string with the MIME type (always "text/csv" for CSV)
+//
+// These helpers extract each property from the combined result so individual
+// tests can inspect whichever part they care about.
+
+/// Extract metadata JSON string from a combined function result.
+///
+/// The metadata is a JSON string containing processing statistics like
+/// rowsRemoved, duplicatesRemoved, columnsRenamed, etc. Tests can parse
+/// this string to verify that the right operations were applied.
+pub fn extract_metadata(result: &JsValue) -> String {
+    js_sys::Reflect::get(result, &"metadata".into())
+        .expect("result should have metadata property")
+        .as_string()
+        .expect("metadata should be a string")
+}
+
+/// Extract raw bytes from a combined function result.
+///
+/// The data property is a Uint8Array in JS land. We convert it to a
+/// Vec<u8> so Rust tests can work with it as normal bytes — parsing
+/// as UTF-8, checking content, etc.
+///
+/// RUST CONCEPT: `dyn_into()`
+/// This is wasm-bindgen's way of doing a runtime type check + cast
+/// on a JsValue. It's like a safe downcast — if the JS value isn't
+/// actually a Uint8Array, this returns Err instead of panicking.
+/// We use `.expect()` here because in tests we WANT it to panic
+/// with a clear message if the type is wrong.
+pub fn extract_bytes(result: &JsValue) -> Vec<u8> {
+    let data =
+        js_sys::Reflect::get(result, &"data".into()).expect("result should have data property");
+    let array: js_sys::Uint8Array = data.dyn_into().expect("data should be a Uint8Array");
+    array.to_vec()
+}
+
+/// Extract output filename from a combined function result.
+///
+/// The filename is a suggested name for the output file, e.g.
+/// "data-cleaned.csv" or "test-renamed.csv". Tests verify that
+/// the naming convention is applied correctly.
+pub fn extract_filename(result: &JsValue) -> String {
+    js_sys::Reflect::get(result, &"filename".into())
+        .expect("result should have filename property")
+        .as_string()
+        .expect("filename should be a string")
+}
+
+/// Extract MIME type from a combined function result.
+///
+/// Returns the MIME type string for the output file, e.g.,
+/// "text/csv" for CSV operations.
+pub fn extract_mime_type(result: &JsValue) -> String {
+    js_sys::Reflect::get(result, &"mimeType".into())
+        .expect("result should have mimeType property")
+        .as_string()
+        .expect("mimeType should be a string")
 }
 
 /// Initialize panic hook for test reliability.

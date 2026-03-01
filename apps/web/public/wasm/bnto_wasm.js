@@ -1,10 +1,10 @@
 /* @ts-self-types="./bnto_wasm.d.ts" */
 
 /**
- * Clean a CSV file and return a JSON string with metadata.
+ * Clean a CSV file and return BOTH metadata and bytes in one call.
  *
- * This is the metadata-returning variant. Use `clean_csv_bytes()`
- * to get the actual cleaned file data as a Uint8Array.
+ * The CSV is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
  *
  * ARGUMENTS (from JavaScript):
  *   - `data` (Uint8Array): The raw CSV file bytes
@@ -15,31 +15,17 @@
  *     to report progress. The Web Worker forwards this to the main thread.
  *
  * RETURNS:
- *   A JSON string describing the result:
- *   ```json
+ *   A JavaScript object with four properties:
+ *   ```js
  *   {
- *     "file": {
- *       "filename": "data-cleaned.csv",
- *       "mimeType": "text/csv",
- *       "size": 1024
- *     },
- *     "metadata": {
- *       "originalRows": 100,
- *       "cleanedRows": 85,
- *       "rowsRemoved": 15,
- *       "duplicatesRemoved": 5
- *     }
+ *     metadata: '{"originalRows":100,"cleanedRows":85,...}',  // JSON string
+ *     data: Uint8Array([...]),                                // raw cleaned CSV bytes
+ *     filename: "data-cleaned.csv",                           // output filename
+ *     mimeType: "text/csv"                                    // MIME type
  *   }
  *   ```
  *
- * WHY RETURN A JSON STRING?
- * We serialize to a JSON string instead of building a JS object with
- * `js_sys::Object` or `serde-wasm-bindgen`. The reason: `serde-wasm-bindgen`
- * pulls in the ENTIRE `js_sys` binding surface (thousands of symbols),
- * which bloats the WASM binary and causes linker issues in test builds.
- * A JSON string is simple, debuggable, and tiny in code size.
- *
- * RUST CONCEPT: `Result<String, JsValue>`
+ * RUST CONCEPT: `Result<JsValue, JsValue>`
  * wasm-bindgen functions that can fail return `Result<T, JsValue>`.
  * `Ok(value)` becomes a normal return in JS. `Err(value)` throws a
  * JavaScript Error.
@@ -47,11 +33,9 @@
  * @param {string} filename
  * @param {string} params_json
  * @param {Function} progress_callback
- * @returns {string}
+ * @returns {any}
  */
-export function clean_csv(data, filename, params_json, progress_callback) {
-    let deferred5_0;
-    let deferred5_1;
+export function clean_csv_combined(data, filename, params_json, progress_callback) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
@@ -60,79 +44,24 @@ export function clean_csv(data, filename, params_json, progress_callback) {
         const len1 = WASM_VECTOR_LEN;
         const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
         const len2 = WASM_VECTOR_LEN;
-        wasm.clean_csv(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
+        wasm.clean_csv_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        var ptr4 = r0;
-        var len4 = r1;
-        if (r3) {
-            ptr4 = 0; len4 = 0;
-            throw takeObject(r2);
+        if (r2) {
+            throw takeObject(r1);
         }
-        deferred5_0 = ptr4;
-        deferred5_1 = len4;
-        return getStringFromWasm0(ptr4, len4);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-        wasm.__wbindgen_export2(deferred5_0, deferred5_1, 1);
-    }
-}
-
-/**
- * Clean a CSV file and return JUST the cleaned bytes.
- *
- * This is the efficient path for the Web Worker: instead of encoding
- * file bytes as JSON (which would double the memory usage), this
- * returns the raw bytes as a `Vec<u8>` which wasm-bindgen converts
- * to a `Uint8Array` on the JS side. Zero-copy via shared memory.
- *
- * ARGUMENTS: Same as `clean_csv`, minus the return format.
- *
- * RETURNS: The raw cleaned CSV bytes as a Uint8Array.
- *
- * The Web Worker uses this to create a Blob for download:
- * ```js
- * const cleaned = clean_csv_bytes(data, filename, paramsJson, progressCb);
- * const blob = new Blob([cleaned], { type: 'text/csv' });
- * ```
- * @param {Uint8Array} data
- * @param {string} filename
- * @param {string} params_json
- * @param {Function} progress_callback
- * @returns {Uint8Array}
- */
-export function clean_csv_bytes(data, filename, params_json, progress_callback) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len2 = WASM_VECTOR_LEN;
-        wasm.clean_csv_bytes(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        if (r3) {
-            throw takeObject(r2);
-        }
-        var v4 = getArrayU8FromWasm0(r0, r1).slice();
-        wasm.__wbindgen_export2(r0, r1 * 1, 1);
-        return v4;
+        return takeObject(r0);
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
 }
 
 /**
- * Compress a single image file and return a JSON string with metadata.
+ * Compress a single image and return BOTH metadata and bytes in one call.
  *
- * This is the metadata-returning variant. Use `compress_image_bytes()`
- * to get the actual compressed file data as a Uint8Array.
+ * The image is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
  *
  * ARGUMENTS (from JavaScript):
  *   - `data` (Uint8Array): The raw image file bytes
@@ -143,29 +72,17 @@ export function clean_csv_bytes(data, filename, params_json, progress_callback) 
  *     to report progress. The Web Worker forwards this to the main thread.
  *
  * RETURNS:
- *   A JSON string describing the result:
- *   ```json
+ *   A JavaScript object with four properties:
+ *   ```js
  *   {
- *     "filename": "photo-compressed.jpg",
- *     "mimeType": "image/jpeg",
- *     "size": 51200,
- *     "metadata": {
- *       "originalSize": 102400,
- *       "compressedSize": 51200,
- *       "compressionRatio": 50.0,
- *       "format": "Jpeg"
- *     }
+ *     metadata: '{"file":{...},"metadata":{...}}',  // JSON string
+ *     data: Uint8Array([...]),                       // raw compressed bytes
+ *     filename: "photo-compressed.jpg",              // output filename
+ *     mimeType: "image/jpeg"                         // MIME type
  *   }
  *   ```
  *
- * WHY RETURN A JSON STRING?
- * We serialize to a JSON string instead of building a JS object with
- * `js_sys::Object` or `serde-wasm-bindgen`. The reason: `serde-wasm-bindgen`
- * pulls in the ENTIRE `js_sys` binding surface (thousands of symbols),
- * which bloats the WASM binary and causes linker issues in test builds.
- * A JSON string is simple, debuggable, and tiny in code size.
- *
- * RUST CONCEPT: `Result<String, JsValue>`
+ * RUST CONCEPT: `Result<JsValue, JsValue>`
  * wasm-bindgen functions that can fail return `Result<T, JsValue>`.
  * `Ok(value)` becomes a normal return in JS. `Err(value)` throws a
  * JavaScript Error.
@@ -173,11 +90,9 @@ export function clean_csv_bytes(data, filename, params_json, progress_callback) 
  * @param {string} filename
  * @param {string} params_json
  * @param {Function} progress_callback
- * @returns {string}
+ * @returns {any}
  */
-export function compress_image(data, filename, params_json, progress_callback) {
-    let deferred5_0;
-    let deferred5_1;
+export function compress_image_combined(data, filename, params_json, progress_callback) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
@@ -186,76 +101,25 @@ export function compress_image(data, filename, params_json, progress_callback) {
         const len1 = WASM_VECTOR_LEN;
         const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
         const len2 = WASM_VECTOR_LEN;
-        wasm.compress_image(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
+        wasm.compress_image_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        var ptr4 = r0;
-        var len4 = r1;
-        if (r3) {
-            ptr4 = 0; len4 = 0;
-            throw takeObject(r2);
+        if (r2) {
+            throw takeObject(r1);
         }
-        deferred5_0 = ptr4;
-        deferred5_1 = len4;
-        return getStringFromWasm0(ptr4, len4);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-        wasm.__wbindgen_export2(deferred5_0, deferred5_1, 1);
-    }
-}
-
-/**
- * Compress a single image and return JUST the compressed bytes.
- *
- * This is the efficient path for the Web Worker: instead of encoding
- * file bytes as JSON (which would double the memory usage), this
- * returns the raw bytes as a `Vec<u8>` which wasm-bindgen converts
- * to a `Uint8Array` on the JS side. Zero-copy via shared memory.
- *
- * ARGUMENTS: Same as `compress_image`, minus the return format.
- *
- * RETURNS: The raw compressed image bytes as a Uint8Array.
- *
- * The Web Worker uses this to create a Blob for download:
- * ```js
- * const compressed = compress_image_bytes(data, filename, paramsJson, progressCb);
- * const blob = new Blob([compressed], { type: 'image/jpeg' });
- * ```
- * @param {Uint8Array} data
- * @param {string} filename
- * @param {string} params_json
- * @param {Function} progress_callback
- * @returns {Uint8Array}
- */
-export function compress_image_bytes(data, filename, params_json, progress_callback) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len2 = WASM_VECTOR_LEN;
-        wasm.compress_image_bytes(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        if (r3) {
-            throw takeObject(r2);
-        }
-        var v4 = getArrayU8FromWasm0(r0, r1).slice();
-        wasm.__wbindgen_export2(r0, r1 * 1, 1);
-        return v4;
+        return takeObject(r0);
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
 }
 
 /**
- * Convert a single image to a different format and return a JSON string with metadata.
+ * Convert a single image to a different format and return BOTH metadata and
+ * bytes in one call.
+ *
+ * The image is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
  *
  * ARGUMENTS (from JavaScript):
  *   - `data` (Uint8Array): The raw image file bytes
@@ -270,31 +134,22 @@ export function compress_image_bytes(data, filename, params_json, progress_callb
  *   - `progress_callback` (Function): Called with (percent, message)
  *
  * RETURNS:
- *   A JSON string describing the result:
- *   ```json
+ *   A JavaScript object with four properties:
+ *   ```js
  *   {
- *     "file": {
- *       "filename": "photo.png",
- *       "mimeType": "image/png",
- *       "size": 51200
- *     },
- *     "metadata": {
- *       "originalFormat": "Jpeg",
- *       "targetFormat": "Png",
- *       "originalSize": 102400,
- *       "newSize": 51200
- *     }
+ *     metadata: '{"file":{...},"metadata":{...}}',  // JSON string
+ *     data: Uint8Array([...]),                       // raw converted bytes
+ *     filename: "photo.png",                         // output filename
+ *     mimeType: "image/png"                          // MIME type
  *   }
  *   ```
  * @param {Uint8Array} data
  * @param {string} filename
  * @param {string} params_json
  * @param {Function} progress_callback
- * @returns {string}
+ * @returns {any}
  */
-export function convert_image_format(data, filename, params_json, progress_callback) {
-    let deferred5_0;
-    let deferred5_1;
+export function convert_image_format_combined(data, filename, params_json, progress_callback) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
@@ -303,60 +158,14 @@ export function convert_image_format(data, filename, params_json, progress_callb
         const len1 = WASM_VECTOR_LEN;
         const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
         const len2 = WASM_VECTOR_LEN;
-        wasm.convert_image_format(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
+        wasm.convert_image_format_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        var ptr4 = r0;
-        var len4 = r1;
-        if (r3) {
-            ptr4 = 0; len4 = 0;
-            throw takeObject(r2);
+        if (r2) {
+            throw takeObject(r1);
         }
-        deferred5_0 = ptr4;
-        deferred5_1 = len4;
-        return getStringFromWasm0(ptr4, len4);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-        wasm.__wbindgen_export2(deferred5_0, deferred5_1, 1);
-    }
-}
-
-/**
- * Convert a single image to a different format and return JUST the converted bytes.
- *
- * Efficient path for the Web Worker — raw bytes returned as Uint8Array
- * via wasm-bindgen's zero-copy memory sharing.
- *
- * ARGUMENTS: Same as `convert_image_format`.
- * RETURNS: The raw converted image bytes as a Uint8Array.
- * @param {Uint8Array} data
- * @param {string} filename
- * @param {string} params_json
- * @param {Function} progress_callback
- * @returns {Uint8Array}
- */
-export function convert_image_format_bytes(data, filename, params_json, progress_callback) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len2 = WASM_VECTOR_LEN;
-        wasm.convert_image_format_bytes(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        if (r3) {
-            throw takeObject(r2);
-        }
-        var v4 = getArrayU8FromWasm0(r0, r1).slice();
-        wasm.__wbindgen_export2(r0, r1 * 1, 1);
-        return v4;
+        return takeObject(r0);
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
@@ -398,10 +207,10 @@ export function greet(name) {
 }
 
 /**
- * Rename columns in a CSV file and return a JSON string with metadata.
+ * Rename columns in a CSV file and return BOTH metadata and bytes in one call.
  *
- * This is the metadata-returning variant. Use `rename_csv_columns_bytes()`
- * to get the actual modified file data as a Uint8Array.
+ * The CSV is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
  *
  * ARGUMENTS (from JavaScript):
  *   - `data` (Uint8Array): The raw CSV file bytes
@@ -413,31 +222,22 @@ export function greet(name) {
  *     to report progress. The Web Worker forwards this to the main thread.
  *
  * RETURNS:
- *   A JSON string describing the result:
- *   ```json
+ *   A JavaScript object with four properties:
+ *   ```js
  *   {
- *     "file": {
- *       "filename": "data-renamed.csv",
- *       "mimeType": "text/csv",
- *       "size": 1024
- *     },
- *     "metadata": {
- *       "columnsRenamed": 2,
- *       "totalColumns": 5,
- *       "dataRows": 100,
- *       "mapping": {"First Name": "first_name", "Last Name": "last_name"}
- *     }
+ *     metadata: '{"columnsRenamed":2,"totalColumns":5,...}',  // JSON string
+ *     data: Uint8Array([...]),                                // raw modified CSV bytes
+ *     filename: "data-renamed.csv",                           // output filename
+ *     mimeType: "text/csv"                                    // MIME type
  *   }
  *   ```
  * @param {Uint8Array} data
  * @param {string} filename
  * @param {string} params_json
  * @param {Function} progress_callback
- * @returns {string}
+ * @returns {any}
  */
-export function rename_csv_columns(data, filename, params_json, progress_callback) {
-    let deferred5_0;
-    let deferred5_1;
+export function rename_csv_columns_combined(data, filename, params_json, progress_callback) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
@@ -446,71 +246,24 @@ export function rename_csv_columns(data, filename, params_json, progress_callbac
         const len1 = WASM_VECTOR_LEN;
         const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
         const len2 = WASM_VECTOR_LEN;
-        wasm.rename_csv_columns(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
+        wasm.rename_csv_columns_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        var ptr4 = r0;
-        var len4 = r1;
-        if (r3) {
-            ptr4 = 0; len4 = 0;
-            throw takeObject(r2);
+        if (r2) {
+            throw takeObject(r1);
         }
-        deferred5_0 = ptr4;
-        deferred5_1 = len4;
-        return getStringFromWasm0(ptr4, len4);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-        wasm.__wbindgen_export2(deferred5_0, deferred5_1, 1);
-    }
-}
-
-/**
- * Rename columns in a CSV file and return JUST the modified bytes.
- *
- * This is the efficient path for the Web Worker: returns raw bytes as
- * `Vec<u8>` which wasm-bindgen converts to a `Uint8Array` on the JS side.
- *
- * ARGUMENTS: Same as `rename_csv_columns`.
- *
- * RETURNS: The raw modified CSV bytes as a Uint8Array.
- * @param {Uint8Array} data
- * @param {string} filename
- * @param {string} params_json
- * @param {Function} progress_callback
- * @returns {Uint8Array}
- */
-export function rename_csv_columns_bytes(data, filename, params_json, progress_callback) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len2 = WASM_VECTOR_LEN;
-        wasm.rename_csv_columns_bytes(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        if (r3) {
-            throw takeObject(r2);
-        }
-        var v4 = getArrayU8FromWasm0(r0, r1).slice();
-        wasm.__wbindgen_export2(r0, r1 * 1, 1);
-        return v4;
+        return takeObject(r0);
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
 }
 
 /**
- * Rename a single file and return a JSON string with metadata.
+ * Rename a single file and return BOTH metadata and bytes in one call.
  *
- * This is the metadata-returning variant. Use `rename_file_bytes()`
- * to get the actual file data (with the new filename in the metadata).
+ * The file is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
  *
  * ARGUMENTS (from JavaScript):
  *   - `data` (Uint8Array): The raw file bytes — passed through UNCHANGED
@@ -521,30 +274,17 @@ export function rename_csv_columns_bytes(data, filename, params_json, progress_c
  *     to report progress. The Web Worker forwards this to the main thread.
  *
  * RETURNS:
- *   A JSON string describing the result:
- *   ```json
+ *   A JavaScript object with four properties:
+ *   ```js
  *   {
- *     "file": {
- *       "filename": "new-img_1234.jpg",
- *       "mimeType": "application/octet-stream",
- *       "size": 51200
- *     },
- *     "metadata": {
- *       "originalFilename": "IMG_1234.jpg",
- *       "newFilename": "new-img_1234.jpg",
- *       "transformsApplied": ["case", "prefix"]
- *     }
+ *     metadata: '{"originalFilename":"IMG_1234.jpg",...}',  // JSON string
+ *     data: Uint8Array([...]),                              // raw file bytes (unchanged)
+ *     filename: "vacation-1234.jpg",                        // new filename
+ *     mimeType: "application/octet-stream"                  // MIME type
  *   }
  *   ```
  *
- * WHY RETURN A JSON STRING?
- * We serialize to a JSON string instead of building a JS object with
- * `js_sys::Object` or `serde-wasm-bindgen`. The reason: `serde-wasm-bindgen`
- * pulls in the ENTIRE `js_sys` binding surface (thousands of symbols),
- * which bloats the WASM binary and causes linker issues in test builds.
- * A JSON string is simple, debuggable, and tiny in code size.
- *
- * RUST CONCEPT: `Result<String, JsValue>`
+ * RUST CONCEPT: `Result<JsValue, JsValue>`
  * wasm-bindgen functions that can fail return `Result<T, JsValue>`.
  * `Ok(value)` becomes a normal return in JS. `Err(value)` throws a
  * JavaScript Error.
@@ -552,11 +292,9 @@ export function rename_csv_columns_bytes(data, filename, params_json, progress_c
  * @param {string} filename
  * @param {string} params_json
  * @param {Function} progress_callback
- * @returns {string}
+ * @returns {any}
  */
-export function rename_file(data, filename, params_json, progress_callback) {
-    let deferred5_0;
-    let deferred5_1;
+export function rename_file_combined(data, filename, params_json, progress_callback) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
@@ -565,80 +303,24 @@ export function rename_file(data, filename, params_json, progress_callback) {
         const len1 = WASM_VECTOR_LEN;
         const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
         const len2 = WASM_VECTOR_LEN;
-        wasm.rename_file(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
+        wasm.rename_file_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        var ptr4 = r0;
-        var len4 = r1;
-        if (r3) {
-            ptr4 = 0; len4 = 0;
-            throw takeObject(r2);
+        if (r2) {
+            throw takeObject(r1);
         }
-        deferred5_0 = ptr4;
-        deferred5_1 = len4;
-        return getStringFromWasm0(ptr4, len4);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-        wasm.__wbindgen_export2(deferred5_0, deferred5_1, 1);
-    }
-}
-
-/**
- * Rename a single file and return JUST the file bytes.
- *
- * This is the efficient path for the Web Worker: instead of encoding
- * file bytes as JSON (which would double the memory usage), this
- * returns the raw bytes as a `Vec<u8>` which wasm-bindgen converts
- * to a `Uint8Array` on the JS side. Zero-copy via shared memory.
- *
- * For rename-files, the bytes are IDENTICAL to the input (data passes
- * through unchanged). The value of this function is that the Web Worker
- * can pair the bytes with the new filename from `rename_file()`.
- *
- * ARGUMENTS: Same as `rename_file`.
- *
- * RETURNS: The raw file bytes as a Uint8Array (identical to input).
- *
- * The Web Worker uses this to create a Blob for download:
- * ```js
- * const renamed = rename_file_bytes(data, filename, paramsJson, progressCb);
- * const blob = new Blob([renamed], { type: 'application/octet-stream' });
- * ```
- * @param {Uint8Array} data
- * @param {string} filename
- * @param {string} params_json
- * @param {Function} progress_callback
- * @returns {Uint8Array}
- */
-export function rename_file_bytes(data, filename, params_json, progress_callback) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len2 = WASM_VECTOR_LEN;
-        wasm.rename_file_bytes(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        if (r3) {
-            throw takeObject(r2);
-        }
-        var v4 = getArrayU8FromWasm0(r0, r1).slice();
-        wasm.__wbindgen_export2(r0, r1 * 1, 1);
-        return v4;
+        return takeObject(r0);
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
 }
 
 /**
- * Resize a single image and return a JSON string with metadata.
+ * Resize a single image and return BOTH metadata and bytes in one call.
+ *
+ * The image is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
  *
  * ARGUMENTS (from JavaScript):
  *   - `data` (Uint8Array): The raw image file bytes
@@ -655,34 +337,22 @@ export function rename_file_bytes(data, filename, params_json, progress_callback
  *   - `progress_callback` (Function): Called with (percent, message)
  *
  * RETURNS:
- *   A JSON string describing the result:
- *   ```json
+ *   A JavaScript object with four properties:
+ *   ```js
  *   {
- *     "file": {
- *       "filename": "photo-resized.jpg",
- *       "mimeType": "image/jpeg",
- *       "size": 25600
- *     },
- *     "metadata": {
- *       "originalWidth": 1200,
- *       "originalHeight": 800,
- *       "newWidth": 800,
- *       "newHeight": 533,
- *       "originalSize": 102400,
- *       "newSize": 25600,
- *       "format": "Jpeg"
- *     }
+ *     metadata: '{"file":{...},"metadata":{...}}',  // JSON string
+ *     data: Uint8Array([...]),                       // raw resized bytes
+ *     filename: "photo-resized.jpg",                 // output filename
+ *     mimeType: "image/jpeg"                         // MIME type
  *   }
  *   ```
  * @param {Uint8Array} data
  * @param {string} filename
  * @param {string} params_json
  * @param {Function} progress_callback
- * @returns {string}
+ * @returns {any}
  */
-export function resize_image(data, filename, params_json, progress_callback) {
-    let deferred5_0;
-    let deferred5_1;
+export function resize_image_combined(data, filename, params_json, progress_callback) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
@@ -691,60 +361,14 @@ export function resize_image(data, filename, params_json, progress_callback) {
         const len1 = WASM_VECTOR_LEN;
         const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
         const len2 = WASM_VECTOR_LEN;
-        wasm.resize_image(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
+        wasm.resize_image_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        var ptr4 = r0;
-        var len4 = r1;
-        if (r3) {
-            ptr4 = 0; len4 = 0;
-            throw takeObject(r2);
+        if (r2) {
+            throw takeObject(r1);
         }
-        deferred5_0 = ptr4;
-        deferred5_1 = len4;
-        return getStringFromWasm0(ptr4, len4);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-        wasm.__wbindgen_export2(deferred5_0, deferred5_1, 1);
-    }
-}
-
-/**
- * Resize a single image and return JUST the resized bytes.
- *
- * Efficient path for the Web Worker — raw bytes returned as Uint8Array
- * via wasm-bindgen's zero-copy memory sharing.
- *
- * ARGUMENTS: Same as `resize_image`.
- * RETURNS: The raw resized image bytes as a Uint8Array.
- * @param {Uint8Array} data
- * @param {string} filename
- * @param {string} params_json
- * @param {Function} progress_callback
- * @returns {Uint8Array}
- */
-export function resize_image_bytes(data, filename, params_json, progress_callback) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export3);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
-        const len2 = WASM_VECTOR_LEN;
-        wasm.resize_image_bytes(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        var r3 = getDataViewMemory0().getInt32(retptr + 4 * 3, true);
-        if (r3) {
-            throw takeObject(r2);
-        }
-        var v4 = getArrayU8FromWasm0(r0, r1).slice();
-        wasm.__wbindgen_export2(r0, r1 * 1, 1);
-        return v4;
+        return takeObject(r0);
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
@@ -846,6 +470,18 @@ function __wbg_get_imports() {
             const ret = new Error();
             return addHeapObject(ret);
         },
+        __wbg_new_ed69e637b553a997: function() {
+            const ret = new Object();
+            return addHeapObject(ret);
+        },
+        __wbg_new_from_slice_d7e202fdbee3c396: function(arg0, arg1) {
+            const ret = new Uint8Array(getArrayU8FromWasm0(arg0, arg1));
+            return addHeapObject(ret);
+        },
+        __wbg_set_bad5c505cc70b5f8: function() { return handleError(function (arg0, arg1, arg2) {
+            const ret = Reflect.set(getObject(arg0), getObject(arg1), getObject(arg2));
+            return ret;
+        }, arguments); },
         __wbg_stack_3b0d974bbf31e44f: function(arg0, arg1) {
             const ret = getObject(arg1).stack;
             const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_export3, wasm.__wbindgen_export4);
