@@ -71,4 +71,31 @@ export interface RawUserDoc {
   runsUsed?: number | null;
   runLimit?: number | null;
   runsResetAt?: number | null;
+  // Usage analytics (Sprint 3)
+  totalRuns?: number | null;
+  lastRunAt?: number | null;
+}
+
+/** Raw analytics response from `analytics.getAnalytics`. */
+export interface RawAnalyticsDoc {
+  plan: "free" | "starter" | "pro";
+  totalRuns: number;
+  lastRunAt: number | null;
+}
+
+/** Raw per-slug aggregate from `execution_analytics.aggregateBySlug`. */
+export interface RawSlugAggregateDoc {
+  slug: string;
+  totalRuns: number;
+  completedRuns: number;
+  failedRuns: number;
+  avgDurationMs: number | null;
+  lastRunAt: number;
+}
+
+/** Raw server quota response from `users.getServerQuota`. */
+export interface RawServerQuotaDoc {
+  serverRunsUsed: number;
+  serverRunLimit: number;
+  serverRunsRemaining: number;
 }

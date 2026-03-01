@@ -11,6 +11,10 @@ export function getCurrentUserQuery() {
   return convexQuery(api.users.getMe, {});
 }
 
+/**
+ * @deprecated Use `getServerQuotaQuery` from analyticsAdapter instead.
+ * Kept during migration — will be removed once all consumers switch.
+ */
 export function getRunsRemainingQuery() {
   return convexQuery(api.users.getRunsRemaining, {});
 }

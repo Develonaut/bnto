@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  getCurrentUserQuery,
-  getRunsRemainingQuery,
-} from "../adapters/convex/userAdapter";
+import { getCurrentUserQuery } from "../adapters/convex/userAdapter";
 import { toUser } from "../transforms/user";
 import { getQueryClient } from "../client";
 import type { RawUserDoc } from "../types/raw";
@@ -12,12 +9,6 @@ export function createUserService() {
   function invalidateCurrentUser() {
     getQueryClient().invalidateQueries({
       queryKey: getCurrentUserQuery().queryKey,
-    });
-  }
-
-  function invalidateRunsRemaining() {
-    getQueryClient().invalidateQueries({
-      queryKey: getRunsRemainingQuery().queryKey,
     });
   }
 
@@ -32,11 +23,8 @@ export function createUserService() {
         data ? toUser(data as RawUserDoc) : null,
     }),
 
-    runsRemainingQueryOptions: () => getRunsRemainingQuery(),
-
     // ── Cache Invalidation ────────────────────────────────────────
     invalidateCurrentUser,
-    invalidateRunsRemaining,
   } as const;
 }
 
