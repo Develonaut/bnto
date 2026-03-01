@@ -4,17 +4,17 @@
 //
 // WHAT ARE THESE TESTS?
 // These tests run inside a Node.js process (not native Rust). They prove
-// that the convert_image_format and convert_image_format_bytes WASM-exported
-// functions work correctly when called from JavaScript across the WASM boundary.
+// that the convert_image_format_combined WASM-exported function works
+// correctly when called from JavaScript across the WASM boundary.
 //
 // These catch problems that native Rust tests can't find:
 //   - wasm-bindgen type conversions (Uint8Array <-> Vec<u8>)
 //   - WASM memory handling during format conversion
 //   - JS callback interop (progress reporting across the boundary)
-//   - JSON serialization of conversion metadata
+//   - Combined result object structure (metadata + data + filename + mimeType)
 //
 // HOW TO RUN:
-//   cd engine-wasm
+//   cd engine
 //   wasm-pack test --headless --node crates/bnto-image
 //
 // RELATED TEST FILES:
@@ -29,7 +29,10 @@ mod common;
 use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
-use common::{TEST_JPEG, TEST_PNG, TEST_WEBP, init_panic_hook, noop_callback, recording_callback};
+use common::{
+    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_filename, extract_metadata,
+    init_panic_hook, noop_callback, recording_callback,
+};
 
 // Configure tests to run in Node.js.
 wasm_bindgen_test_configure!(run_in_node_experimental);
@@ -40,28 +43,26 @@ wasm_bindgen_test_configure!(run_in_node_experimental);
 
 #[wasm_bindgen_test]
 fn test_convert_jpeg_to_png_metadata_via_wasm() {
-    // Test that convert_image_format() returns correct JSON metadata.
+    // Test that convert_image_format_combined() returns a JS object with
+    // correct metadata JSON for a JPEG → PNG conversion.
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = convert_image_format(TEST_JPEG, "photo.jpg", r#"{"format": "png"}"#, callback);
+    let result =
+        convert_image_format_combined(TEST_JPEG, "photo.jpg", r#"{"format": "png"}"#, callback);
 
     assert!(result.is_ok(), "JPEG -> PNG conversion should succeed");
 
-    let json_str = result.unwrap();
-    assert!(!json_str.is_empty(), "Result JSON should not be empty");
+    // --- Extract metadata from the combined result object ---
+    let result_obj = result.unwrap();
+    let json_str = extract_metadata(&result_obj);
+    assert!(
+        !json_str.is_empty(),
+        "Result metadata JSON should not be empty"
+    );
 
-    // Verify the JSON contains expected fields.
-    assert!(
-        json_str.contains("\"filename\""),
-        "Result should contain 'filename': got '{}'",
-        json_str
-    );
-    assert!(
-        json_str.contains(".png"),
-        "Filename should have .png extension: got '{}'",
-        json_str
-    );
+    // Verify the metadata JSON contains conversion stats.
+    // Filename is a separate property on the result object, not in metadata.
     assert!(
         json_str.contains("\"originalFormat\""),
         "Metadata should contain 'originalFormat': got '{}'",
@@ -72,20 +73,31 @@ fn test_convert_jpeg_to_png_metadata_via_wasm() {
         "Metadata should contain 'targetFormat': got '{}'",
         json_str
     );
+
+    // Filename with correct extension is a top-level property on the result.
+    let filename = extract_filename(&result_obj);
+    assert!(
+        filename.contains(".png"),
+        "Output filename should have .png extension: got '{}'",
+        filename
+    );
 }
 
 #[wasm_bindgen_test]
 fn test_convert_jpeg_to_png_bytes_via_wasm() {
-    // Test that convert_image_format_bytes() returns valid PNG bytes.
+    // Test that convert_image_format_combined() returns valid PNG bytes
+    // in the `data` property of the combined result.
     init_panic_hook();
     let callback = noop_callback();
 
     let result =
-        convert_image_format_bytes(TEST_JPEG, "photo.jpg", r#"{"format": "png"}"#, callback);
+        convert_image_format_combined(TEST_JPEG, "photo.jpg", r#"{"format": "png"}"#, callback);
 
-    assert!(result.is_ok(), "JPEG -> PNG byte conversion should succeed");
+    assert!(result.is_ok(), "JPEG -> PNG conversion should succeed");
 
-    let bytes = result.unwrap();
+    // --- Extract raw bytes from the combined result's data property ---
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
     assert!(!bytes.is_empty(), "Converted PNG bytes should not be empty");
 
     // Verify valid PNG magic bytes: 89 50 4E 47
@@ -104,16 +116,18 @@ fn test_convert_png_to_webp_bytes_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = convert_image_format_bytes(
+    let result = convert_image_format_combined(
         TEST_PNG,
         "screenshot.png",
         r#"{"format": "webp"}"#,
         callback,
     );
 
-    assert!(result.is_ok(), "PNG -> WebP byte conversion should succeed");
+    assert!(result.is_ok(), "PNG -> WebP conversion should succeed");
 
-    let bytes = result.unwrap();
+    // --- Extract raw bytes from the combined result ---
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
     assert!(
         !bytes.is_empty(),
         "Converted WebP bytes should not be empty"
@@ -140,14 +154,13 @@ fn test_convert_webp_to_jpeg_bytes_via_wasm() {
     let callback = noop_callback();
 
     let result =
-        convert_image_format_bytes(TEST_WEBP, "image.webp", r#"{"format": "jpeg"}"#, callback);
+        convert_image_format_combined(TEST_WEBP, "image.webp", r#"{"format": "jpeg"}"#, callback);
 
-    assert!(
-        result.is_ok(),
-        "WebP -> JPEG byte conversion should succeed"
-    );
+    assert!(result.is_ok(), "WebP -> JPEG conversion should succeed");
 
-    let bytes = result.unwrap();
+    // --- Extract raw bytes from the combined result ---
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
     assert!(
         !bytes.is_empty(),
         "Converted JPEG bytes should not be empty"
@@ -165,11 +178,12 @@ fn test_convert_webp_to_jpeg_bytes_via_wasm() {
 
 #[wasm_bindgen_test]
 fn test_convert_reports_progress() {
-    // Verify that convert_image_format reports progress through the callback.
+    // Verify that convert_image_format_combined reports progress through the callback.
     init_panic_hook();
     let (callback, calls) = recording_callback();
 
-    let result = convert_image_format(TEST_JPEG, "photo.jpg", r#"{"format": "png"}"#, callback);
+    let result =
+        convert_image_format_combined(TEST_JPEG, "photo.jpg", r#"{"format": "png"}"#, callback);
 
     assert!(result.is_ok(), "Conversion should succeed");
 
@@ -188,11 +202,13 @@ fn test_convert_reports_progress() {
 #[wasm_bindgen_test]
 fn test_convert_invalid_format_returns_error() {
     // An unsupported target format should return a JS error.
+    // The combined function returns Result<JsValue, JsValue>, so .is_err()
+    // still works the same way for error checking.
     init_panic_hook();
     let callback = noop_callback();
 
     let result =
-        convert_image_format_bytes(TEST_JPEG, "photo.jpg", r#"{"format": "bmp"}"#, callback);
+        convert_image_format_combined(TEST_JPEG, "photo.jpg", r#"{"format": "bmp"}"#, callback);
 
     assert!(
         result.is_err(),
@@ -206,7 +222,7 @@ fn test_convert_missing_format_returns_error() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = convert_image_format_bytes(TEST_JPEG, "photo.jpg", "{}", callback);
+    let result = convert_image_format_combined(TEST_JPEG, "photo.jpg", "{}", callback);
 
     assert!(
         result.is_err(),
@@ -220,7 +236,7 @@ fn test_convert_corrupt_data_returns_error() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = convert_image_format_bytes(
+    let result = convert_image_format_combined(
         b"this is not an image at all",
         "corrupt.jpg",
         r#"{"format": "png"}"#,
@@ -239,7 +255,7 @@ fn test_convert_with_quality_param_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = convert_image_format_bytes(
+    let result = convert_image_format_combined(
         TEST_PNG,
         "screenshot.png",
         r#"{"format": "jpeg", "quality": 50}"#,
@@ -251,7 +267,9 @@ fn test_convert_with_quality_param_via_wasm() {
         "PNG -> JPEG with quality param should succeed"
     );
 
-    let bytes = result.unwrap();
+    // --- Extract and verify JPEG bytes from the combined result ---
+    let result_obj = result.unwrap();
+    let bytes = extract_bytes(&result_obj);
     assert!(!bytes.is_empty());
     // Verify valid JPEG.
     assert_eq!(bytes[0], 0xFF);

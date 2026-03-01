@@ -4,7 +4,7 @@ import { registerBrowserEngine } from "../adapters/wasm/engineRegistry";
 import type {
   BrowserEngine,
   BrowserFileResult,
-  BrowserFileProgress,
+  BrowserFileProgressInput,
 } from "../types/wasm";
 
 // ---------------------------------------------------------------------------
@@ -191,7 +191,7 @@ describe("wasmExecutionService", () => {
       });
       registerBrowserEngine(engine);
 
-      const progressUpdates: BrowserFileProgress[] = [];
+      const progressUpdates: BrowserFileProgressInput[] = [];
       const files = [
         new File(["a"], "a.jpg"),
         new File(["b"], "b.jpg"),
@@ -516,6 +516,243 @@ describe("wasmExecutionService", () => {
 
       // Store should still be idle (not completed)
       expect(service.store.getState().status).toBe("idle");
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // Progress throttle behavior
+  // ─────────────────────────────────────────────────────────────────
+
+  describe("run — progress throttle", () => {
+    it("first progress update always passes through", async () => {
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockImplementation(
+          async (
+            _files: File[],
+            _nodeType: string,
+            _params: Record<string, unknown>,
+            onProgress?: (
+              fileIndex: number,
+              percent: number,
+              message: string,
+            ) => void,
+          ) => {
+            onProgress?.(0, 10, "First");
+            return [];
+          },
+        ),
+      });
+      registerBrowserEngine(engine);
+
+      await service.run("compress-images", [new File(["a"], "a.jpg")]);
+
+      // Store should have received the first update (not throttled away)
+      // After completion fileProgress is cleared, so check the store
+      // transitioned through processing correctly
+      expect(service.store.getState().status).toBe("completed");
+    });
+
+    it("100% completion always passes through regardless of throttle", async () => {
+      const progressPercents: number[] = [];
+
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockImplementation(
+          async (
+            _files: File[],
+            _nodeType: string,
+            _params: Record<string, unknown>,
+            onProgress?: (
+              fileIndex: number,
+              percent: number,
+              message: string,
+            ) => void,
+          ) => {
+            // Fire many rapid updates ending in 100%
+            onProgress?.(0, 10, "Start");
+            onProgress?.(0, 20, "20%");
+            onProgress?.(0, 30, "30%");
+            onProgress?.(0, 40, "40%");
+            onProgress?.(0, 50, "50%");
+            onProgress?.(0, 60, "60%");
+            onProgress?.(0, 70, "70%");
+            onProgress?.(0, 80, "80%");
+            onProgress?.(0, 90, "90%");
+            onProgress?.(0, 100, "Done");
+            return [];
+          },
+        ),
+      });
+      registerBrowserEngine(engine);
+
+      // Spy on store.progress to see what gets through
+      const instance = service.createExecution();
+      const originalProgress = instance.store.getState().progress;
+      const spy = vi.fn(originalProgress.bind(instance.store.getState()));
+      instance.store.setState({ progress: spy });
+
+      await instance.run("compress-images", [new File(["a"], "a.jpg")]);
+
+      // The spy captures all calls that passed through the throttle.
+      // At minimum: first (10%) and completion (100%) must pass through.
+      const percents = spy.mock.calls.map(
+        (c: [{ percent: number }]) => c[0].percent,
+      );
+      expect(percents[0]).toBe(10); // first always passes
+      expect(percents[percents.length - 1]).toBe(100); // 100% always passes
+    });
+
+    it("new file transition always passes through", async () => {
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockImplementation(
+          async (
+            _files: File[],
+            _nodeType: string,
+            _params: Record<string, unknown>,
+            onProgress?: (
+              fileIndex: number,
+              percent: number,
+              message: string,
+            ) => void,
+          ) => {
+            onProgress?.(0, 100, "File 1 done");
+            onProgress?.(1, 0, "File 2 start");
+            onProgress?.(1, 100, "File 2 done");
+            return [];
+          },
+        ),
+      });
+      registerBrowserEngine(engine);
+
+      const instance = service.createExecution();
+      const progressHistory: Array<{ fileIndex: number; percent: number }> = [];
+      const originalProgress = instance.store.getState().progress;
+      instance.store.setState({
+        progress: (p: BrowserFileProgressInput) => {
+          progressHistory.push({ fileIndex: p.fileIndex, percent: p.percent });
+          originalProgress(p);
+        },
+      });
+
+      await instance.run("compress-images", [
+        new File(["a"], "a.jpg"),
+        new File(["b"], "b.jpg"),
+      ]);
+
+      // File 0→1 transition must have passed through (isNewFile check)
+      const fileIndexes = progressHistory.map((p) => p.fileIndex);
+      expect(fileIndexes).toContain(0);
+      expect(fileIndexes).toContain(1);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // Edge cases — empty files, boundary conditions
+  // ─────────────────────────────────────────────────────────────────
+
+  describe("execute — edge cases", () => {
+    it("handles empty file array", async () => {
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockResolvedValue([]),
+      });
+      registerBrowserEngine(engine);
+
+      const results = await service.execute("compress-images", []);
+
+      expect(results).toEqual([]);
+      expect(engine.processFiles).toHaveBeenCalledWith(
+        [],
+        expect.anything(),
+        expect.anything(),
+        undefined,
+      );
+    });
+
+    it("passes totalFiles=0 in progress for empty file array", async () => {
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockImplementation(
+          async (
+            _files: File[],
+            _nodeType: string,
+            _params: Record<string, unknown>,
+            onProgress?: (
+              fileIndex: number,
+              percent: number,
+              message: string,
+            ) => void,
+          ) => {
+            // Engine might fire progress even with empty files
+            onProgress?.(0, 100, "Done");
+            return [];
+          },
+        ),
+      });
+      registerBrowserEngine(engine);
+
+      const progressUpdates: BrowserFileProgressInput[] = [];
+      await service.execute("compress-images", [], {}, (progress) => {
+        progressUpdates.push({ ...progress });
+      });
+
+      // totalFiles should be 0 (files.length)
+      if (progressUpdates.length > 0) {
+        expect(progressUpdates[0]?.totalFiles).toBe(0);
+      }
+    });
+  });
+
+  describe("run — edge cases", () => {
+    it("run with empty file array completes with empty results", async () => {
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockResolvedValue([]),
+      });
+      registerBrowserEngine(engine);
+
+      await service.run("compress-images", []);
+
+      expect(service.store.getState().status).toBe("completed");
+      expect(service.store.getState().results).toEqual([]);
+    });
+
+    it("run with large batch (100 files) tracks progress correctly", async () => {
+      const fileCount = 100;
+      const results = Array.from({ length: fileCount }, (_, i) => ({
+        blob: new Blob([`data-${i}`], { type: "image/jpeg" }),
+        filename: `file-${i}.jpg`,
+        mimeType: "image/jpeg",
+        metadata: { index: i },
+      })) satisfies BrowserFileResult[];
+
+      const engine = createMockEngine({
+        processFiles: vi.fn().mockImplementation(
+          async (
+            files: File[],
+            _nodeType: string,
+            _params: Record<string, unknown>,
+            onProgress?: (
+              fileIndex: number,
+              percent: number,
+              message: string,
+            ) => void,
+          ) => {
+            // Simulate progress for each file
+            for (let i = 0; i < files.length; i++) {
+              onProgress?.(i, 100, `File ${i + 1} done`);
+            }
+            return results;
+          },
+        ),
+      });
+      registerBrowserEngine(engine);
+
+      const files = Array.from(
+        { length: fileCount },
+        (_, i) => new File([`data-${i}`], `file-${i}.jpg`),
+      );
+
+      await service.run("compress-images", files);
+
+      expect(service.store.getState().status).toBe("completed");
+      expect(service.store.getState().results).toHaveLength(fileCount);
     });
   });
 

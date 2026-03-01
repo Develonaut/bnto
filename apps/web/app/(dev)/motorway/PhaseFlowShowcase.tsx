@@ -62,6 +62,7 @@ function createMockExecution(
         fileIndex: 1,
         totalFiles: files.length,
         percent: 64,
+        overallPercent: Math.round(((1 * 100) + 64) / files.length),
         message: "Compressing profile-pic.png\u2026",
       },
       results: [mockResult(files[0]!)],

@@ -20,19 +20,22 @@ import type {
   WorkerErrorResponse,
 } from "./types";
 
-/** Signature shared by all WASM node functions (metadata or bytes variant). */
-type WasmFn<T> = (
+/**
+ * Signature for a combined WASM node function.
+ *
+ * Combined functions process a file ONCE and return both metadata + bytes
+ * in a single JS object. This replaces the old dual-function pattern
+ * (metadata + bytes) that processed each file TWICE.
+ *
+ * The returned object has shape:
+ *   { metadata: string, data: Uint8Array, filename: string, mimeType: string }
+ */
+type WasmCombinedFn = (
   data: Uint8Array,
   filename: string,
   paramsJson: string,
   progressCallback: (percent: number, message: string) => void,
-) => T;
-
-/** A pair of WASM functions for one node type: metadata JSON + raw bytes. */
-interface WasmNodeFns {
-  metadata: WasmFn<string>;
-  bytes: WasmFn<Uint8Array>;
-}
+) => { metadata: string; data: Uint8Array; filename: string; mimeType: string };
 
 // Worker postMessage with Transferable[] for zero-copy ArrayBuffer transfers.
 function postMessageWithTransfer(msg: unknown, transfer: Transferable[]): void {
@@ -45,7 +48,7 @@ function postMessageWithTransfer(msg: unknown, transfer: Transferable[]): void {
 // =============================================================================
 
 let wasmVersion: (() => string) | null = null;
-const nodeRegistry = new Map<string, WasmNodeFns>();
+const nodeRegistry = new Map<string, WasmCombinedFn>();
 let initialized = false;
 
 // =============================================================================
@@ -92,15 +95,21 @@ async function loadWasmModule(baseUrl: string) {
   return wasmModule;
 }
 
-/** Map each node type to its WASM metadata + bytes function pair. */
+/**
+ * Map each node type to its combined WASM function.
+ *
+ * Combined functions process a file ONCE and return both metadata + bytes.
+ * This replaces the old dual-function pattern that processed each file TWICE,
+ * causing progress bars to jump 0→100→0→100 and doubling CPU time.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic WASM module
 function registerNodeTypes(m: Record<string, any>): void {
-  nodeRegistry.set("compress-images", { metadata: m.compress_image, bytes: m.compress_image_bytes });
-  nodeRegistry.set("resize-images", { metadata: m.resize_image, bytes: m.resize_image_bytes });
-  nodeRegistry.set("convert-image-format", { metadata: m.convert_image_format, bytes: m.convert_image_format_bytes });
-  nodeRegistry.set("clean-csv", { metadata: m.clean_csv, bytes: m.clean_csv_bytes });
-  nodeRegistry.set("rename-csv-columns", { metadata: m.rename_csv_columns, bytes: m.rename_csv_columns_bytes });
-  nodeRegistry.set("rename-files", { metadata: m.rename_file, bytes: m.rename_file_bytes });
+  nodeRegistry.set("compress-images", m.compress_image_combined);
+  nodeRegistry.set("resize-images", m.resize_image_combined);
+  nodeRegistry.set("convert-image-format", m.convert_image_format_combined);
+  nodeRegistry.set("clean-csv", m.clean_csv_combined);
+  nodeRegistry.set("rename-csv-columns", m.rename_csv_columns_combined);
+  nodeRegistry.set("rename-files", m.rename_file_combined);
 }
 
 async function handleInit(baseUrl: string): Promise<void> {
@@ -144,14 +153,14 @@ function handleProcess(request: {
   }
 
   const { id, data, filename, nodeType, params } = request;
-  const fns = nodeRegistry.get(nodeType);
-  if (!fns) {
+  const fn = nodeRegistry.get(nodeType);
+  if (!fn) {
     sendError(id, `Unsupported node type: ${nodeType}`);
     return;
   }
 
   try {
-    const result = callWasmNode(fns, data, filename, params, (pct, msg) => {
+    const result = callWasmNode(fn, data, filename, params, (pct, msg) => {
       sendProgress(id, pct, msg);
     });
     sendResult(id, result.data, result.filename, result.mimeType, result.metadata);
@@ -160,9 +169,16 @@ function handleProcess(request: {
   }
 }
 
-/** Call a WASM node's metadata + bytes functions and package the output. */
+/**
+ * Call a combined WASM function and package the output.
+ *
+ * Combined functions process the file ONCE and return a JS object with both
+ * metadata (JSON string) and processed bytes (Uint8Array). This eliminates
+ * the old dual-call pattern that doubled CPU time and caused progress
+ * regression (0→100→0→100).
+ */
 function callWasmNode(
-  fns: WasmNodeFns,
+  fn: WasmCombinedFn,
   data: ArrayBuffer,
   filename: string,
   params: Record<string, unknown>,
@@ -171,23 +187,23 @@ function callWasmNode(
   const bytes = new Uint8Array(data);
   const paramsJson = JSON.stringify(params);
 
-  const metadataJson = fns.metadata(bytes, filename, paramsJson, onProgress);
-  const meta = JSON.parse(metadataJson) as {
-    file?: { filename?: string; mimeType?: string };
-    metadata?: Record<string, unknown>;
-  };
+  // Single WASM call — processes the file once, returns everything.
+  const result = fn(bytes, filename, paramsJson, onProgress);
 
-  const processedBytes = fns.bytes(bytes, filename, paramsJson, onProgress);
+  // Parse the metadata JSON string from the Rust side.
+  const meta = JSON.parse(result.metadata) as Record<string, unknown>;
 
   // Copy into a guaranteed ArrayBuffer (not ArrayBufferLike).
-  const outputBuffer = new ArrayBuffer(processedBytes.byteLength);
-  new Uint8Array(outputBuffer).set(processedBytes);
+  // The Uint8Array from WASM may be backed by the WASM linear memory,
+  // which can be invalidated by subsequent WASM calls.
+  const outputBuffer = new ArrayBuffer(result.data.byteLength);
+  new Uint8Array(outputBuffer).set(result.data);
 
   return {
     data: outputBuffer,
-    filename: meta.file?.filename ?? filename,
-    mimeType: meta.file?.mimeType ?? "application/octet-stream",
-    metadata: meta.metadata ?? {},
+    filename: result.filename,
+    mimeType: result.mimeType,
+    metadata: meta,
   };
 }
 

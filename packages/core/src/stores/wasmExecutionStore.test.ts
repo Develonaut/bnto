@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createWasmExecutionStore } from "./wasmExecutionStore";
 import type {
-  BrowserFileProgress,
+  BrowserFileProgressInput,
   BrowserFileResult,
 } from "../types/wasm";
 
@@ -9,7 +9,7 @@ import type {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const mockProgress: BrowserFileProgress = {
+const mockProgress: BrowserFileProgressInput = {
   fileIndex: 0,
   totalFiles: 2,
   percent: 50,
@@ -78,7 +78,8 @@ describe("wasmExecutionStore", () => {
       store.getState().progress(mockProgress);
       const state = store.getState();
 
-      expect(state.fileProgress).toEqual(mockProgress);
+      // Store computes overallPercent: ((0 * 100) + 50) / 2 = 25
+      expect(state.fileProgress).toEqual({ ...mockProgress, overallPercent: 25 });
       expect(state.status).toBe("processing");
     });
 
@@ -187,6 +188,359 @@ describe("wasmExecutionStore", () => {
       expect(store.getState().status).toBe("failed");
       expect(store.getState().fileProgress).toBeNull();
       expect(store.getState().error).toBe("Corrupt image at file 2");
+    });
+  });
+
+  describe("monotonic guard", () => {
+    it("rejects backwards progress for same file", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({ fileIndex: 0, totalFiles: 1, percent: 50, message: "Half done" });
+      store.getState().progress({ fileIndex: 0, totalFiles: 1, percent: 30, message: "Regressed" });
+
+      expect(store.getState().fileProgress?.percent).toBe(50);
+      expect(store.getState().fileProgress?.message).toBe("Half done");
+    });
+
+    it("allows progress reset on new file", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({ fileIndex: 0, totalFiles: 3, percent: 100, message: "Done" });
+      store.getState().progress({ fileIndex: 1, totalFiles: 3, percent: 10, message: "Starting next" });
+
+      expect(store.getState().fileProgress?.fileIndex).toBe(1);
+      expect(store.getState().fileProgress?.percent).toBe(10);
+    });
+
+    it("allows equal percent updates (different message)", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({ fileIndex: 0, totalFiles: 1, percent: 50, message: "Step A" });
+      store.getState().progress({ fileIndex: 0, totalFiles: 1, percent: 50, message: "Step B" });
+
+      expect(store.getState().fileProgress?.percent).toBe(50);
+      expect(store.getState().fileProgress?.message).toBe("Step B");
+    });
+
+    it("allows 0% on first progress", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({ fileIndex: 0, totalFiles: 1, percent: 0, message: "Starting..." });
+
+      expect(store.getState().fileProgress?.percent).toBe(0);
+    });
+
+    it("rapid forward progress updates all applied", () => {
+      store.getState().start("test-id", 1000);
+
+      for (const pct of [10, 20, 30, 40, 50]) {
+        store.getState().progress({ fileIndex: 0, totalFiles: 1, percent: pct, message: `${pct}%` });
+      }
+
+      expect(store.getState().fileProgress?.percent).toBe(50);
+      expect(store.getState().fileProgress?.message).toBe("50%");
+    });
+
+    it("rejects extreme regression", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({ fileIndex: 0, totalFiles: 1, percent: 95, message: "Almost done" });
+      store.getState().progress({ fileIndex: 0, totalFiles: 1, percent: 5, message: "Restart?!" });
+
+      expect(store.getState().fileProgress?.percent).toBe(95);
+    });
+  });
+
+  describe("overallPercent computation", () => {
+    it("equals percent for single file", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({ fileIndex: 0, totalFiles: 1, percent: 60, message: "Processing" });
+
+      expect(store.getState().fileProgress?.overallPercent).toBe(60);
+    });
+
+    it("computes correctly for multi-file batch", () => {
+      store.getState().start("test-id", 1000);
+
+      // File 0 at 50%: ((0 * 100) + 50) / 3 ≈ 17
+      store.getState().progress({ fileIndex: 0, totalFiles: 3, percent: 50, message: "File 1" });
+      expect(store.getState().fileProgress?.overallPercent).toBe(17);
+
+      // File 0 at 100%: ((0 * 100) + 100) / 3 ≈ 33
+      store.getState().progress({ fileIndex: 0, totalFiles: 3, percent: 100, message: "File 1 done" });
+      expect(store.getState().fileProgress?.overallPercent).toBe(33);
+
+      // File 1 at 50%: ((1 * 100) + 50) / 3 = 50
+      store.getState().progress({ fileIndex: 1, totalFiles: 3, percent: 50, message: "File 2" });
+      expect(store.getState().fileProgress?.overallPercent).toBe(50);
+
+      // File 2 at 100%: ((2 * 100) + 100) / 3 = 100
+      store.getState().progress({ fileIndex: 2, totalFiles: 3, percent: 100, message: "File 3 done" });
+      expect(store.getState().fileProgress?.overallPercent).toBe(100);
+    });
+
+    it("is monotonic across file boundaries", () => {
+      store.getState().start("test-id", 1000);
+      const percentages: number[] = [];
+
+      const updates = [
+        { fileIndex: 0, totalFiles: 3, percent: 0 },
+        { fileIndex: 0, totalFiles: 3, percent: 50 },
+        { fileIndex: 0, totalFiles: 3, percent: 100 },
+        { fileIndex: 1, totalFiles: 3, percent: 0 },
+        { fileIndex: 1, totalFiles: 3, percent: 50 },
+        { fileIndex: 1, totalFiles: 3, percent: 100 },
+        { fileIndex: 2, totalFiles: 3, percent: 0 },
+        { fileIndex: 2, totalFiles: 3, percent: 50 },
+        { fileIndex: 2, totalFiles: 3, percent: 100 },
+      ];
+
+      for (const u of updates) {
+        store.getState().progress({ ...u, message: "Processing" });
+        percentages.push(store.getState().fileProgress?.overallPercent ?? 0);
+      }
+
+      for (let i = 1; i < percentages.length; i++) {
+        expect(percentages[i]).toBeGreaterThanOrEqual(percentages[i - 1]);
+      }
+
+      expect(percentages[percentages.length - 1]).toBe(100);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // Edge Cases — Defensive Boundaries
+  // ─────────────────────────────────────────────────────────────────
+
+  describe("edge cases — totalFiles boundary", () => {
+    it("handles totalFiles=0 without division by zero", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 0,
+        percent: 50,
+        message: "Processing",
+      });
+
+      const fp = store.getState().fileProgress;
+      expect(fp).not.toBeNull();
+      // totalFiles=0 falls back to 1 via `|| 1` guard
+      expect(fp?.overallPercent).toBe(50);
+      expect(Number.isFinite(fp?.overallPercent)).toBe(true);
+    });
+
+    it("handles totalFiles=1 (single file) correctly at 0%", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 1,
+        percent: 0,
+        message: "Starting",
+      });
+
+      expect(store.getState().fileProgress?.overallPercent).toBe(0);
+    });
+
+    it("handles totalFiles=1 (single file) correctly at 100%", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 1,
+        percent: 100,
+        message: "Done",
+      });
+
+      expect(store.getState().fileProgress?.overallPercent).toBe(100);
+    });
+  });
+
+  describe("edge cases — overallPercent boundaries", () => {
+    it("computes overallPercent > 100 when fileIndex exceeds totalFiles", () => {
+      // Document the behavior: if fileIndex is out of bounds, overallPercent
+      // can exceed 100. The service layer prevents this from happening in
+      // practice, but the store doesn't clamp.
+      store.getState().start("test-id", 1000);
+      store.getState().progress({
+        fileIndex: 3,
+        totalFiles: 3,
+        percent: 50,
+        message: "Out of bounds",
+      });
+
+      // ((3 * 100) + 50) / 3 = 116.67 → 117
+      const fp = store.getState().fileProgress;
+      expect(fp?.overallPercent).toBeGreaterThan(100);
+    });
+
+    it("computes overallPercent=0 at the very start of a batch", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 10,
+        percent: 0,
+        message: "Starting",
+      });
+
+      expect(store.getState().fileProgress?.overallPercent).toBe(0);
+    });
+
+    it("reaches exactly 100 at the end of a large batch", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({
+        fileIndex: 9,
+        totalFiles: 10,
+        percent: 100,
+        message: "Done",
+      });
+
+      // ((9 * 100) + 100) / 10 = 100
+      expect(store.getState().fileProgress?.overallPercent).toBe(100);
+    });
+  });
+
+  describe("edge cases — invalid percent values", () => {
+    it("accepts negative percent on first call (no guard)", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 1,
+        percent: -10,
+        message: "Negative",
+      });
+
+      // Store doesn't clamp — documents current behavior
+      expect(store.getState().fileProgress?.percent).toBe(-10);
+    });
+
+    it("accepts percent > 100 (no upper clamp)", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 1,
+        percent: 150,
+        message: "Overshoot",
+      });
+
+      // Store doesn't clamp — documents current behavior
+      expect(store.getState().fileProgress?.percent).toBe(150);
+      expect(store.getState().fileProgress?.overallPercent).toBe(150);
+    });
+
+    it("monotonic guard still works with unusual values", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 1,
+        percent: 150,
+        message: "Overshoot",
+      });
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 1,
+        percent: 100,
+        message: "Correct",
+      });
+
+      // 100 < 150, so monotonic guard rejects it
+      expect(store.getState().fileProgress?.percent).toBe(150);
+    });
+  });
+
+  describe("edge cases — progress in non-processing states", () => {
+    it("updates fileProgress even when status is idle", () => {
+      // Store doesn't guard against status — service layer manages this.
+      // Document the behavior: store is a dumb state container.
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 1,
+        percent: 50,
+        message: "Stale update",
+      });
+
+      expect(store.getState().fileProgress).not.toBeNull();
+      expect(store.getState().status).toBe("idle");
+    });
+
+    it("updates fileProgress when status is completed", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().complete([mockResult], 2000);
+
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 1,
+        percent: 50,
+        message: "Late arrival",
+      });
+
+      // Store accepts it — service abort flag prevents this in practice
+      expect(store.getState().fileProgress).not.toBeNull();
+      expect(store.getState().status).toBe("completed");
+    });
+
+    it("updates fileProgress when status is failed", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().fail("Error", 2000);
+
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 1,
+        percent: 50,
+        message: "Late arrival",
+      });
+
+      // Store accepts it — service abort flag prevents this in practice
+      expect(store.getState().fileProgress).not.toBeNull();
+      expect(store.getState().status).toBe("failed");
+    });
+  });
+
+  describe("edge cases — state transitions from unexpected states", () => {
+    it("complete from idle sets completed status", () => {
+      // No start() call — go directly to complete
+      store.getState().complete([mockResult], 2000);
+
+      expect(store.getState().status).toBe("completed");
+      expect(store.getState().results).toEqual([mockResult]);
+    });
+
+    it("fail from idle sets failed status", () => {
+      // No start() call — go directly to fail
+      store.getState().fail("Unexpected", 2000);
+
+      expect(store.getState().status).toBe("failed");
+      expect(store.getState().error).toBe("Unexpected");
+    });
+
+    it("double start resets to clean processing state", () => {
+      store.getState().start("first", 1000);
+      store.getState().progress({
+        fileIndex: 0,
+        totalFiles: 1,
+        percent: 50,
+        message: "In progress",
+      });
+
+      store.getState().start("second", 2000);
+
+      expect(store.getState().id).toBe("second");
+      expect(store.getState().fileProgress).toBeNull();
+      expect(store.getState().results).toEqual([]);
+    });
+
+    it("double complete overwrites results", () => {
+      store.getState().start("test-id", 1000);
+      store.getState().complete([mockResult], 2000);
+
+      const secondResult: BrowserFileResult = {
+        ...mockResult,
+        filename: "second.jpg",
+      };
+      store.getState().complete([secondResult], 3000);
+
+      expect(store.getState().results).toEqual([secondResult]);
+      expect(store.getState().completedAt).toBe(3000);
+    });
+
+    it("reset from idle is a safe no-op", () => {
+      store.getState().reset();
+
+      expect(store.getState().status).toBe("idle");
+      expect(store.getState().id).toBe("");
     });
   });
 
