@@ -47,9 +47,9 @@ const SURFACE_CLASS: Record<NonNullable<CompartmentData["variant"]>, string> = {
 
 const ELEVATION_BY_STATUS: Record<CompartmentStatus, "none" | "sm" | "md" | "lg"> = {
   idle: "lg",
-  pending: "none",
+  pending: "sm",
   active: "lg",
-  completed: "sm",
+  completed: "md",
 };
 
 export function CompartmentNode({ data }: NodeProps<CompartmentNodeType>) {
