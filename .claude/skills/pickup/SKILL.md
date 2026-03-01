@@ -94,10 +94,11 @@ Edit `PLAN.md` to mark your task: change `- [ ]` to `- [ ] **CLAIMED**`
 
 If the user invoked `/pickup --w` or `/pickup --worktree`, create an isolated git worktree **now**, before writing any code:
 
-1. Use the `EnterWorktree` tool with a name based on the branch you'd create (e.g., `feat/execution-history`)
-2. The worktree creates an isolated copy of the repo at `.claude/worktrees/<name>` with a new branch based on HEAD
-3. Your session's working directory switches to the worktree — all subsequent file reads, edits, and commands operate there
-4. The main working tree stays completely untouched
+1. **CRITICAL: Ensure you start from `main`.** Before creating the worktree, check the current branch. If you're NOT on `main`, switch to it first: `git checkout main && git pull`. Worktrees branch from HEAD — if HEAD is a feature branch, the worktree inherits that branch's divergence. Unless the user explicitly says otherwise, worktrees ALWAYS start from `main`.
+2. Use the `EnterWorktree` tool with a name based on the branch you'd create (e.g., `feat/execution-history`)
+3. The worktree creates an isolated copy of the repo at `.claude/worktrees/<name>` with a new branch based on HEAD (which is now `main`)
+4. Your session's working directory switches to the worktree — all subsequent file reads, edits, and commands operate there
+5. The main working tree stays completely untouched
 
 **Why worktrees?** They let the user (or other agents) keep working on the main tree while you work in isolation. No stashing, no branch switching conflicts, no accidental interference with in-progress work.
 
@@ -400,6 +401,7 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 ## DO NOT
 
 - **Branch-based workflow is mandatory.** If you're in a worktree (from `--w` flag), the worktree already created a branch — use it. Otherwise, create a feature branch (`git checkout -b <type>/<short-description>`) before committing. Never commit directly to `main` — branch protection requires PRs to pass the CI Gate. If the user asks you to commit, create a branch first (or use the worktree branch), commit YOUR OWN work from this task (never bundle other agents' changes), then ask if they want you to push and create a PR. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
+- **Worktrees start from `main`.** When using `--w` / `--worktree`, ALWAYS check out `main` and pull before creating the worktree. If the session starts on a feature branch, switch to `main` first. The worktree branches from HEAD — if HEAD is a stale feature branch, the worktree inherits that divergence. Unless the user explicitly says to branch from a different base, `main` is always the default
 - **Do not modify files outside your package scope** — other agents may be working there
 - **Do not modify `CLAUDE.md`, `.claude/rules/`, or config files** unless your task explicitly requires it
 - **Do not install new dependencies** without noting it in your summary. If a dependency is needed, prefer one already in the monorepo
