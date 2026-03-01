@@ -9,7 +9,6 @@ type AuthProfile = {
   email?: string;
   name?: string;
   image?: string;
-  _anonymousUserId?: string;
 };
 
 type AuthProvider = {
@@ -83,26 +82,4 @@ export async function handleNewUser(
     runsResetAt: nextMonth.getTime(),
     totalRuns: 0,
   });
-}
-
-/**
- * Detect anonymous -> password upgrade via profile._anonymousUserId.
- * Returns the existing anonymous user's ID if valid, or null.
- */
-export async function resolveAnonymousUpgrade(
-  ctx: MutationCtx,
-  existingUserId: Id<"users"> | string | null | undefined,
-  profile: AuthProfile,
-): Promise<Id<"users"> | null> {
-  if (existingUserId) return null; // already has a known user
-
-  const candidateId = profile._anonymousUserId;
-  if (!candidateId) return null;
-
-  const candidate = await ctx.db.get(candidateId as Id<"users">);
-  if (candidate?.isAnonymous) {
-    return candidate._id;
-  }
-
-  return null;
 }

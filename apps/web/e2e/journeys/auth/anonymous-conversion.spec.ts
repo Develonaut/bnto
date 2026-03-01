@@ -74,12 +74,16 @@ test.describe("Anonymous → password conversion", () => {
       // Step 2: Navigate to sign-in and create a password account.
       // Anonymous users are "authenticated" in Convex, so the proxy redirects
       // them away from /signin. Set the signout signal cookie to bypass this.
+      // Set signout signal cookie — domain must match the actual test target
+      const baseUrl = new URL(
+        process.env.BASE_URL || `http://localhost:${process.env.E2E_PORT ?? 4000}`,
+      );
       await page.context().addCookies([
         {
           name: "bnto-signout",
           value: "1",
           path: "/",
-          domain: "localhost",
+          domain: baseUrl.hostname,
         },
       ]);
       await page.goto("/signin");
@@ -141,12 +145,15 @@ test.describe("Anonymous → password conversion", () => {
       });
 
       // Sign up — set signout signal to bypass proxy redirect for anonymous users
+      const baseUrl = new URL(
+        process.env.BASE_URL || `http://localhost:${process.env.E2E_PORT ?? 4000}`,
+      );
       await page.context().addCookies([
         {
           name: "bnto-signout",
           value: "1",
           path: "/",
-          domain: "localhost",
+          domain: baseUrl.hostname,
         },
       ]);
       await page.goto("/signin");

@@ -67,25 +67,22 @@ The schema is the contract. Every table, field, and index is intentional:
 
 ### Auth Implementation (`@convex-dev/auth`)
 
-The auth system uses `@convex-dev/auth` v0.0.90 with two providers: Anonymous and Password (with a custom upgrade wrapper).
+The auth system uses `@convex-dev/auth` v0.0.90 with two providers: Anonymous and Password.
 
-**The anonymous -> password upgrade is the most complex piece in the backend:**
+**The anonymous -> password upgrade uses `createOrUpdateUser` with client-passed `anonymousUserId`:**
 
 ```
 Anonymous user signs up with password:
-  1. PasswordWithAnonymousUpgrade.authorize() runs in the signIn ACTION (has auth context)
-  2. Extracts userId from JWT subject ("userId|sessionId" format)
-  3. Injects it as params._anonymousUserId (server-side only — client injection is stripped)
-  4. profile() callback forwards _anonymousUserId into the profile object
-  5. createOrUpdateUser() reads args.profile._anonymousUserId
-  6. Verifies the candidate user isAnonymous before upgrading
-  7. Patches the existing user in-place (preserves _id, all data stays associated)
-  8. Sets isAnonymous=false, bumps runLimit to FREE_PLAN_RUN_LIMIT
+  1. Client reads anonymous userId from useAuth() before submitting sign-up form
+  2. Passes anonymousUserId through signIn("password", { ..., anonymousUserId })
+  3. Password provider's profile() callback forwards it into the profile object
+  4. createOrUpdateUser() reads args.profile.anonymousUserId (Path 2)
+  5. Looks up the candidate user, verifies isAnonymous before upgrading
+  6. Patches the existing user in-place (preserves _id, all data stays associated)
+  7. Sets isAnonymous=false, bumps runLimit to FREE_PLAN_RUN_LIMIT
 ```
 
-**Why this complexity?** `@convex-dev/auth` v0.0.90 resolves `existingUserId` from `authAccounts` (same provider only), not from the active session. An anonymous user has no password account, so the library sees no existing user and creates a new one. The wrapper bridges this gap by passing the anonymous userId through the profile.
-
-**Security invariant:** `params._anonymousUserId` is always deleted before processing, then re-populated from the server-side JWT. Never trust client-injected values.
+**Why this approach?** `@convex-dev/auth` resolves `existingUserId` from `authAccounts` (same provider only). An anonymous user has no password account, so the library sees no existing user. The client explicitly passes the anonymous userId through the sign-up params, and `createOrUpdateUser` uses it to find and upgrade the anonymous user in-place. A fallback path uses `getAuthUserId(ctx)` for cases where the client didn't pass the ID (e.g., direct navigation to /signin).
 
 ### Function Visibility
 

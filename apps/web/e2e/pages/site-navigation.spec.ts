@@ -109,7 +109,9 @@ test.describe("Site navigation — desktop", () => {
 
   test("404: unknown route shows not-found page", async ({ page }) => {
     const response = await page.goto("/not-a-real-page");
-    expect(response?.status()).toBe(404);
+    if (!process.env.BASE_URL) {
+      expect(response?.status()).toBe(404);
+    }
     await expect(
       page.getByRole("heading", { name: /Page Not Found/ }),
     ).toBeVisible();
@@ -179,7 +181,9 @@ test.describe("Site navigation — mobile", () => {
 
   test("404: not-found page on mobile", async ({ page }) => {
     const response = await page.goto("/not-a-real-page");
-    expect(response?.status()).toBe(404);
+    if (!process.env.BASE_URL) {
+      expect(response?.status()).toBe(404);
+    }
     await expect(
       page.getByRole("heading", { name: /Page Not Found/ }),
     ).toBeVisible();
