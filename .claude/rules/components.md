@@ -308,16 +308,3 @@ className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
 className="opacity-0 group-hover:opacity-100"
 ```
 
----
-
-## Component Rules Summary
-
-| Rule | Do | Don't |
-|---|---|---|
-| **Start inline** | Write logic in the component, extract when it earns it | Preemptively create a hook for every component |
-| **Single file first** | One file with everything until it outgrows ~250 lines | Preemptive folder with 6 files for a simple component |
-| **Self-fetching** | Pass IDs, each component fetches its own data | Parent fetches, passes data props down |
-| **No direct API calls** | Use `@bnto/core` hooks | `useQuery(api.workflows.list)` in component |
-| **Compose, don't configure** | `<Card><Card.Header>...</Card>` | `<Card header={...} footer={...} />` |
-| **Dot-notation** | `Dialog.Title`, `Card.Header` | `DialogTitle`, `CardHeader` |
-| **Extract when earned** | Hook at ~80-100 lines of logic, folder at ~250 lines | Splitting a 40-line component into 3 files |

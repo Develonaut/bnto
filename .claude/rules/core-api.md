@@ -8,7 +8,7 @@ clients (public API)  ->  services (single-domain logic)  ->  adapters (backend-
 
 - **Clients** -- Domain-namespaced public API. `core.workflows`, `core.executions`, `core.auth`. Compose one or more services. Handle cross-domain side effects. Receive services via constructor injection
 - **Services** -- Single-domain business logic. Query options with transforms, mutations, cache invalidation for their own domain. **Services do NOT call other services.** Cross-domain orchestration lives in clients only
-- **Adapters** -- Backend-specific bridge. Currently Convex (web) and Wails (desktop). The only layer that imports from `@bnto/backend`. **Every adapter function that accepts an ID must use `"skip"` when the ID is falsy** -- see [convex.md](convex.md#convexquery-skip-guard-critical)
+- **Adapters** -- Backend-specific bridge. Currently Convex (web), Tauri adapter planned (desktop). The only layer that imports from `@bnto/backend`. **Every adapter function that accepts an ID must use `"skip"` when the ID is falsy** -- see [convex.md](convex.md#convexquery-skip-guard-critical)
 
 ### Dependency Rules
 
@@ -42,7 +42,7 @@ packages/core/src/
 |-- services/                  # Internal single-domain logic
 |-- adapters/
 |   |-- convex/                # Convex-specific bridge (web)
-|   +-- wails/                 # Wails-specific bridge (desktop)
+|   +-- tauri/                 # Tauri-specific bridge (desktop, planned)
 |-- transforms/                # Doc -> API type mappers
 |-- hooks/                     # React binding layer
 +-- types/                     # Shared TypeScript types

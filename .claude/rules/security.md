@@ -2,7 +2,7 @@
 
 **Status:** Active — repo is public, all checks apply now
 **Last Updated:** February 2026
-**Tracks:** Sections 3-5, 7 from [open-source-strategy.md](../strategy/open-source-strategy.md)
+**Tracks:** Security audit requirements (previously in open-source-strategy.md, now consolidated here)
 **Full audit skill:** `.claude/skills/security-review/SKILL.md`
 
 ---

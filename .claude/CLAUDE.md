@@ -14,7 +14,7 @@
 | Any UI / styling work        | [rules/theming.md](.claude/rules/theming.md)                       |
 | Architecture decisions       | [rules/architecture.md](.claude/rules/architecture.md)             |
 | Repo structure               | [monorepo-structure.md](.claude/strategy/monorepo-structure.md)    |
-| Build tooling                | [monorepo-tooling.md](.claude/decisions/monorepo-tooling.md)       |
+| Visual editor (Sprint 4)     | [visual-editor.md](.claude/strategy/visual-editor.md)              |
 | Strategic direction          | [ROADMAP.md](.claude/ROADMAP.md)                                  |
 | Implementation task          | [PLAN.md](.claude/PLAN.md)                                        |
 | Free vs premium decisions    | [pricing-model.md](.claude/strategy/pricing-model.md)              |
@@ -50,10 +50,10 @@ Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M
 These are enforced in detail by the [rules/](.claude/rules/) files. This section is the quick reference.
 
 1. **Layered Architecture:** `Apps → @bnto/core → Go Engine`. Never skip layers. See [architecture.md](.claude/rules/architecture.md).
-2. **API Abstraction:** UI code NEVER calls Convex, Wails, or Go directly. Always through `@bnto/core` hooks.
+2. **API Abstraction:** UI code NEVER calls Convex, Tauri, or Go directly. Always through `@bnto/core` hooks.
 3. **Bento Box Principle:** One thing per file/function/package. Files < 250 lines, functions < 20 lines. No `utils.ts` or `helpers.go` grab bags. See [code-standards.md](.claude/rules/code-standards.md).
 4. **Co-location:** UI components live in `apps/web` until a second consumer (desktop) exists. When extracted, UI becomes `@bnto/ui` (officially named **Motorway** — the Mini Motorways design system).
-5. **Transport-agnostic:** `@bnto/core` detects runtime (browser vs Wails) and swaps adapters. Components never know which backend they're talking to.
+5. **Transport-agnostic:** `@bnto/core` detects runtime (browser vs Tauri) and swaps adapters. Components never know which backend they're talking to.
 
 ---
 
@@ -189,7 +189,7 @@ bnto/
 2. **Go with the grain** — Work with tools the way they want to be used
 3. **Modularity is our bread and butter** — Think small, build small, compose big
 4. **Abstraction is the goal** — "Did we make this easier?" If no, go back
-5. **CLI is the stable API** — Go engine is the source of truth
+5. **Engine is the stable API** — Rust WASM for browser, Tauri native for desktop
 6. **Open source core** — Cloud sells convenience, not proprietary features
 
 See [core-principles.md](.claude/strategy/core-principles.md) for the full treatment.
