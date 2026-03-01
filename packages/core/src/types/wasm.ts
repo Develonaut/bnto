@@ -87,3 +87,15 @@ export interface BrowserFileProgress {
 
 /** Progress input from the engine (before the store computes overallPercent). */
 export type BrowserFileProgressInput = Omit<BrowserFileProgress, "overallPercent">;
+
+/** Result payload returned by `WasmExecutionInstance.run()`. */
+export interface WasmRunResult {
+  /** Terminal status of the execution. */
+  status: "completed" | "aborted" | "failed";
+  /** Processed files (empty on abort/failure). */
+  results: BrowserFileResult[];
+  /** Wall-clock duration in milliseconds. */
+  durationMs: number;
+  /** Error message (only present when status is "failed"). */
+  error?: string;
+}

@@ -46,7 +46,7 @@ export default async function BntoPage({
     <>
       <BntoJsonLd entry={entry} />
       <AppShell.Content>
-        <RecipeShell entry={entry} />
+        <RecipeShell key={slug} entry={entry} />
       </AppShell.Content>
     </>
   );

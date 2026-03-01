@@ -34,10 +34,9 @@ const MenuContext = createContext(false);
  * Renders as our Button component with toggle behavior. When the
  * menu is open, the trigger stays depressed at hover depth.
  *
- * A stable wrapper <span> acts as the Popover reference element.
- * The Button animates freely inside it (pressable sink/raise)
- * without shifting the dropdown — Floating UI measures the
- * wrapper's bounding rect, which never moves. */
+ * Popover.Trigger merges directly onto Button via asChild —
+ * no intermediate wrapper. This avoids SSR hydration mismatches
+ * caused by Radix injecting aria-controls/id onto an extra element. */
 
 const MenuTrigger = forwardRef<
   HTMLButtonElement,
@@ -46,11 +45,9 @@ const MenuTrigger = forwardRef<
   const open = useContext(MenuContext);
   return (
     <Popover.Trigger asChild>
-      <span className="inline-flex">
-        <Button ref={ref} toggle pressed={open} {...props}>
-          {children}
-        </Button>
-      </span>
+      <Button ref={ref} toggle pressed={open} {...props}>
+        {children}
+      </Button>
     </Popover.Trigger>
   );
 });

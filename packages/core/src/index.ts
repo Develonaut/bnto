@@ -39,6 +39,7 @@ export type {
   BrowserFileResult,
   BrowserExecution,
   BrowserFileProgress,
+  WasmRunResult,
   RunPhase,
   RecipeFlow,
 } from "./types";
