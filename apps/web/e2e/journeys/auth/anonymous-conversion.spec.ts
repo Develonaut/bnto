@@ -102,9 +102,17 @@ test.describe("Anonymous → password conversion", () => {
       await page.getByPlaceholder("Enter your email").fill(email);
       await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
 
-      // Submit — if the anonymous session hasn't re-established yet, the form
-      // queues the sign-up and shows "Creating account..." until the session
-      // resolves. Then it fires the actual API call with the anonymous userId.
+      // Wait for useSignUp to capture the anonymous userId before submitting.
+      // The form renders data-anon-uid="" until the Convex session re-establishes
+      // and the user query delivers the doc. Without this guard, the form can
+      // submit before anonymousUserId is populated, sending undefined to the
+      // backend which creates a fresh user instead of upgrading the anonymous one.
+      const signUpForm = page.locator("form[data-anon-uid]");
+      await expect(signUpForm).not.toHaveAttribute("data-anon-uid", "", {
+        timeout: 15000,
+      });
+
+      // Submit — the anonymous userId is now captured and will be sent to the backend.
       await page.getByRole("button", { name: "Create account" }).click();
 
       // Wait for redirect to home — extra time since the form may wait
@@ -164,6 +172,13 @@ test.describe("Anonymous → password conversion", () => {
       await page.getByPlaceholder("Your name").fill(TEST_NAME);
       await page.getByPlaceholder("Enter your email").fill(email);
       await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
+
+      // Wait for useSignUp to capture the anonymous userId before submitting
+      const signUpForm = page.locator("form[data-anon-uid]");
+      await expect(signUpForm).not.toHaveAttribute("data-anon-uid", "", {
+        timeout: 15000,
+      });
+
       await page.getByRole("button", { name: "Create account" }).click();
 
       // The form submission waits for the anonymous session to re-establish
