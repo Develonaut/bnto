@@ -560,6 +560,30 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 - [ ] `apps/web` — Verify no layout shift on any page after compositional application
 - [ ] `apps/web` — Update Motorway showcase (`PhaseFlowShowcase`) to demonstrate the compositional pattern
 
+### UX: Standardize Forms with React Hook Form + Zod
+
+**Priority: Medium.** Forms across the app (sign-in, sign-up, future settings/profile) use ad-hoc `useState` for each field with no validation. Standardize on React Hook Form + Zod. Each form gets a `useXxxForm` hook in `apps/web/components/forms/` — the page component becomes a pure render shell.
+
+**Decision doc:** [`.claude/decisions/form-library.md`](decisions/form-library.md) — full library comparison (RHF, TanStack Form, Formik, Conform, custom Zustand+Zod), product roadmap analysis, recommendation rationale, and implementation pattern.
+
+**Recommendation:** React Hook Form (~10KB gz) + Zod (~13KB gz) via `@hookform/resolvers/zod`. Uncontrolled inputs = minimal re-renders. shadcn/ui has first-class integration. Applies to traditional submit-once forms ONLY — recipe config components and the NodeConfigPanel (Sprint 4) continue using Zustand + `@bnto/nodes` schema validation.
+
+**Scope:**
+- [x] **Evaluate form library.** Decision: React Hook Form + Zod. See [decision doc](decisions/form-library.md)
+- [ ] `apps/web` — `/frontend-engineer` — **Install dependencies.** `pnpm --filter @bnto/web add react-hook-form @hookform/resolvers zod`
+- [ ] `apps/web` — `/frontend-engineer` — **Create `components/forms/` directory.** Form hooks and Zod schemas live here alongside other reusable UI components — not in page-level `_components/` folders
+- [ ] `apps/web` — `/frontend-engineer` — **Create `components/forms/schemas/auth.ts`.** Shared Zod schemas for auth forms (email format, password min length, name required). Reusable across sign-in and sign-up
+- [ ] `apps/web` — `/frontend-engineer` — **Create `components/forms/useSignUpForm.ts`.** Hook encapsulating name/email/password state via RHF + Zod validation + loading/error state + submit handler
+- [ ] `apps/web` — `/frontend-engineer` — **Create `components/forms/useSignInForm.ts`.** Same pattern for sign-in (email/password + validation)
+- [ ] `apps/web` — `/frontend-engineer` — **Refactor `SignInForm.tsx` to use form hooks.** Replace all `useState` field state with `useSignInForm`/`useSignUpForm` hooks. Component becomes a render shell. Field-level error messages replace single error string
+- [ ] `apps/web` — `/frontend-engineer` — **Migrate future forms** (settings/profile, team invite) to the same `components/forms/useXxxForm` pattern as they're built
+
+**Does NOT apply to:**
+- Recipe config components (Zustand store + controlled components — already clean)
+- NodeConfigPanel (Sprint 4 — schema-driven via `@bnto/nodes`)
+- Editor store state (Zustand)
+- Code editor (CodeMirror 6 owns its state)
+
 ### Infra: Shared Test Fixtures Package (`@bnto/test-fixtures`)
 
 **Priority: Low (nice-to-have).** The `test-fixtures/` directory at repo root already serves the primary need — shared images (JPEG, PNG, WebP at small/medium/large sizes) consumed by both Go engine (`go:embed`) and Rust WASM (`include_bytes!()`). E2E tests reference engine fixtures directly. A formal TS package would add helpers and consolidate ad-hoc test files, but isn't blocking anything.
