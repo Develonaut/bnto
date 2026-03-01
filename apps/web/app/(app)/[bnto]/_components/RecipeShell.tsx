@@ -95,11 +95,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
       className="space-y-6 text-center"
       data-testid="bnto-shell"
       data-session={sessionPending ? "pending" : "ready"}
-      data-user-id={
-        process.env.NODE_ENV !== "production"
-          ? (currentUser?.id ?? "")
-          : undefined
-      }
+      data-user-id={currentUser?.id ?? ""}
       data-execution-mode={isBrowserPath ? "browser" : "cloud"}
     >
       <PhaseIndicator activePhase={activePhase} />
