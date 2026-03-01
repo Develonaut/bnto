@@ -100,7 +100,7 @@ We follow the Testing Trophy model. Most value comes from integration tests that
 | W3 | Large file (1MB+) doesn't OOM in WASM heap | Memory is limited in WASM | HIGH |
 | W4 | Concurrent calls don't interfere | Worker processes sequentially but worth verifying | MEDIUM |
 | W5 | Output is always smaller or equal (lossless edge case) | Core promise to users | MEDIUM |
-| W6 | `compress_image_bytes` output has correct magic bytes for all formats | Download integrity | MEDIUM |
+| W6 | `compress_image_combined` output has correct magic bytes for all formats | Download integrity | MEDIUM |
 
 ---
 

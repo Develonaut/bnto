@@ -14,8 +14,8 @@
  * Map of bnto slugs to their browser engine node type.
  *
  * The node type string is what the Web Worker uses to route the
- * request to the correct WASM function pair (e.g., "compress-images"
- * routes to `compress_image()` + `compress_image_bytes()` in bnto-image).
+ * request to the correct combined WASM function (e.g., "compress-images"
+ * routes to `compress_image_combined()` in bnto-image).
  *
  * All 6 Tier 1 nodes are Rust→WASM. No JS fallbacks.
  */
