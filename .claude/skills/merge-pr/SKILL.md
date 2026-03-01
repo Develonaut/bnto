@@ -59,6 +59,62 @@ Parse `statusCheckRollup` from Step 2. For each check:
 
 **If CI is not passing, present the failures and stop.** Do not offer to merge with failing CI.
 
+## Step 3b: E2E Tests Against Vercel Preview (MANDATORY)
+
+**This step is MANDATORY. You MUST run E2E tests against the Vercel preview deployment before merging. You do NOT get to decide whether to skip this step — regardless of what files were changed. Only the user can explicitly grant a skip.**
+
+### Why
+
+There is no E2E CI workflow. E2E tests run locally on the developer's machine against the deployed Vercel preview. This eliminates cross-platform screenshot differences (macOS font rendering vs Linux) and gives immediate, accurate feedback.
+
+### How to Run
+
+1. **Find the Vercel preview URL** for this PR:
+
+```bash
+# Get the preview URL from the PR's deployment status
+gh pr view <number> --json statusCheckRollup --jq '.statusCheckRollup[] | select(.context | contains("vercel")) | .targetUrl'
+```
+
+If no Vercel deployment is found, check if the deployment is still in progress. Wait for it, or ask the user for the preview URL.
+
+2. **Run E2E tests against the preview:**
+
+```bash
+cd apps/web && BASE_URL=<vercel-preview-url> pnpm exec playwright test
+```
+
+If the Vercel deployment has protection enabled and a bypass secret is available:
+
+```bash
+cd apps/web && BASE_URL=<vercel-preview-url> VERCEL_AUTOMATION_BYPASS_SECRET=<secret> pnpm exec playwright test
+```
+
+3. **Report full results.** Present:
+   - Total tests run, passed, failed, skipped
+   - List every failure with test name and error message
+   - If screenshots were captured, note any mismatches
+
+### Pass / Fail Criteria
+
+- **ALL tests must pass.** Zero failures.
+- **Screenshot mismatches count as failures.** If visual regression tests fail, the screenshots differ from baselines — this blocks merge.
+- **Known "01 Issue" hydration failures** (React 19 + Radix `useId()` SSR mismatch) are acceptable ONLY when there are zero screenshot mismatches. Report them to the user but they do not block merge.
+- **Flaky tests that pass on retry** should be noted but do not block merge (Playwright retries are configured).
+
+### If Tests Fail
+
+**Do NOT offer to merge.** Report the failures and stop. The user must decide how to proceed:
+- Fix the failures and re-run
+- Explicitly grant a skip (their decision, not yours)
+
+### Proof of Work
+
+Include the E2E results in the merge readiness summary (Step 6). Specifically:
+- The Vercel preview URL tested against
+- The full test result summary (e.g., "96 passed, 0 failed, 0 skipped")
+- Any notable warnings or known issues encountered
+
 ## Step 4: Conflict Check
 
 Check the `mergeable` field from Step 2:
@@ -94,6 +150,8 @@ Present a clear summary to the user:
 
 ### Checks
 - CI Gate: PASS / FAIL / PENDING
+- E2E Tests: PASS (N passed, 0 failed) / FAIL (list failures) / NOT RUN (blocked)
+  - Preview URL: <vercel-preview-url>
 - Merge conflicts: None / CONFLICTING
 - Description: Accurate / Needs update (details)
 
