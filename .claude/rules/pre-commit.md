@@ -182,6 +182,7 @@ Present a summary to the user before committing:
 1. **Create a feature branch** before committing: `git checkout -b <type>/<short-description>` (e.g., `feat/execution-history`, `fix/skeleton-layout-shift`, `chore/eslint-config`)
 2. **Branch naming:** `feat/`, `fix/`, `chore/`, `refactor/`, `test/` prefixes. Lowercase, hyphen-separated.
 3. **Never commit directly to `main`.** Branch protection requires PRs to pass the CI Gate check.
+4. **Feature branches start from `main`.** Always verify your branch was created from an up-to-date `main`. If you're in a worktree, it should have been created after `git checkout main && git pull`. If you're on a stale feature branch, switch to `main` first.
 
 ### Committing
 
