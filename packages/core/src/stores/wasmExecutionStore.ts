@@ -1,7 +1,6 @@
 import { createStore } from "zustand/vanilla";
 import type {
   BrowserExecution,
-  BrowserFileProgress,
   BrowserFileProgressInput,
   BrowserFileResult,
 } from "../types/wasm";
