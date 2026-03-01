@@ -58,7 +58,10 @@ fn test_resize_jpeg_metadata_via_wasm() {
     // --- Extract metadata from the combined result object ---
     let result_obj = result.unwrap();
     let json_str = extract_metadata(&result_obj);
-    assert!(!json_str.is_empty(), "Result metadata JSON should not be empty");
+    assert!(
+        !json_str.is_empty(),
+        "Result metadata JSON should not be empty"
+    );
 
     // Verify the JSON contains expected fields.
     assert!(

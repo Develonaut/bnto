@@ -22,8 +22,8 @@
 // different test files.
 #![allow(dead_code)]
 
-use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
 
 // =============================================================================
 // Test Fixtures — Images embedded at compile time
@@ -168,10 +168,9 @@ pub fn extract_metadata(result: &JsValue) -> String {
 /// a specific JavaScript type. It returns Result<T, JsValue> — Ok if
 /// the JS value is actually a Uint8Array, Err if it's something else.
 pub fn extract_bytes(result: &JsValue) -> Vec<u8> {
-    let data = js_sys::Reflect::get(result, &"data".into())
-        .expect("result should have data property");
-    let array: js_sys::Uint8Array = data.dyn_into()
-        .expect("data should be a Uint8Array");
+    let data =
+        js_sys::Reflect::get(result, &"data".into()).expect("result should have data property");
+    let array: js_sys::Uint8Array = data.dyn_into().expect("data should be a Uint8Array");
     array.to_vec()
 }
 

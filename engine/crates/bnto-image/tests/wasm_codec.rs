@@ -31,8 +31,7 @@ use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
 use common::{
-    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_metadata, init_panic_hook,
-    noop_callback,
+    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_metadata, init_panic_hook, noop_callback,
 };
 
 wasm_bindgen_test_configure!(run_in_node_experimental);
@@ -151,8 +150,7 @@ fn test_jpeg_metadata_has_compression_ratio() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result =
-        compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 60}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 60}"#, callback);
     assert!(result.is_ok(), "compress_image_combined should succeed");
 
     // --- Extract metadata JSON from the combined result ---
@@ -188,8 +186,7 @@ fn test_jpeg_output_filename_has_compressed_suffix() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result =
-        compress_image_combined(TEST_JPEG, "my-photo.jpg", r#"{"quality": 80}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "my-photo.jpg", r#"{"quality": 80}"#, callback);
     assert!(result.is_ok(), "compress_image_combined should succeed");
 
     // --- Extract metadata JSON and check filename ---

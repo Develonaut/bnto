@@ -60,8 +60,7 @@ fn test_progress_callback_fires_for_jpeg() {
     let (callback, calls) = recording_callback();
 
     // --- Use the combined function (progress callbacks fire the same way) ---
-    let result =
-        compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
     assert!(result.is_ok(), "Compression should succeed");
 
     // --- Verify the callback was called multiple times ---
@@ -201,8 +200,7 @@ fn test_progress_messages_are_nonempty_strings() {
 
     let (callback, calls) = recording_callback();
 
-    let result =
-        compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
     assert!(result.is_ok(), "Compression should succeed");
 
     for i in 0..calls.length() {

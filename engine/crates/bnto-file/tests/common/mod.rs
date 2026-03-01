@@ -136,11 +136,9 @@ pub fn extract_metadata(result: &wasm_bindgen::JsValue) -> String {
 /// Uint8Array, it returns Err instead of panicking.
 pub fn extract_bytes(result: &wasm_bindgen::JsValue) -> Vec<u8> {
     use wasm_bindgen::JsCast;
-    let data = js_sys::Reflect::get(result, &"data".into())
-        .expect("result should have data property");
-    let array: js_sys::Uint8Array = data
-        .dyn_into()
-        .expect("data should be a Uint8Array");
+    let data =
+        js_sys::Reflect::get(result, &"data".into()).expect("result should have data property");
+    let array: js_sys::Uint8Array = data.dyn_into().expect("data should be a Uint8Array");
     array.to_vec()
 }
 

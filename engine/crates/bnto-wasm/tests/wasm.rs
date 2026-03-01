@@ -230,12 +230,8 @@ fn test_compress_image_combined_returns_data() {
 fn test_compress_combined_with_default_params() {
     let noop_cb = js_sys::Function::new_no_args("return undefined");
 
-    let result = bnto_image::wasm_bridge::compress_image_combined(
-        TEST_JPEG,
-        "small.jpg",
-        "{}",
-        noop_cb,
-    );
+    let result =
+        bnto_image::wasm_bridge::compress_image_combined(TEST_JPEG, "small.jpg", "{}", noop_cb);
 
     assert!(
         result.is_ok(),

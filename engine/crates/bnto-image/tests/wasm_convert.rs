@@ -56,7 +56,10 @@ fn test_convert_jpeg_to_png_metadata_via_wasm() {
     // --- Extract metadata from the combined result object ---
     let result_obj = result.unwrap();
     let json_str = extract_metadata(&result_obj);
-    assert!(!json_str.is_empty(), "Result metadata JSON should not be empty");
+    assert!(
+        !json_str.is_empty(),
+        "Result metadata JSON should not be empty"
+    );
 
     // Verify the JSON contains expected fields.
     assert!(
@@ -154,10 +157,7 @@ fn test_convert_webp_to_jpeg_bytes_via_wasm() {
     let result =
         convert_image_format_combined(TEST_WEBP, "image.webp", r#"{"format": "jpeg"}"#, callback);
 
-    assert!(
-        result.is_ok(),
-        "WebP -> JPEG conversion should succeed"
-    );
+    assert!(result.is_ok(), "WebP -> JPEG conversion should succeed");
 
     // --- Extract raw bytes from the combined result ---
     let result_obj = result.unwrap();

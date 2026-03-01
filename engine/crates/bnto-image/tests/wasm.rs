@@ -26,8 +26,7 @@ use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
 use common::{
-    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_metadata, init_panic_hook,
-    noop_callback,
+    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_metadata, init_panic_hook, noop_callback,
 };
 
 // Configure tests to run in Node.js.
@@ -46,8 +45,7 @@ fn test_compress_jpeg_combined_via_wasm() {
     //
     // The combined function returns a JsValue containing:
     //   { metadata: String, data: Uint8Array, filename: String, mimeType: String }
-    let result =
-        compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
 
     assert!(
         result.is_ok(),
@@ -57,7 +55,10 @@ fn test_compress_jpeg_combined_via_wasm() {
     // --- Extract and verify metadata from the combined result ---
     let result_obj = result.unwrap();
     let json_str = extract_metadata(&result_obj);
-    assert!(!json_str.is_empty(), "Result metadata JSON should not be empty");
+    assert!(
+        !json_str.is_empty(),
+        "Result metadata JSON should not be empty"
+    );
     assert!(
         json_str.contains("filename"),
         "Result JSON should contain 'filename': got '{}'",
@@ -75,8 +76,7 @@ fn test_compress_jpeg_combined_bytes_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result =
-        compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
 
     assert!(
         result.is_ok(),
