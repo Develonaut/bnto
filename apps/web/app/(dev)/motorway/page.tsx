@@ -19,6 +19,7 @@ import { MenuShowcase } from "./MenuShowcase";
 import { NotificationCards } from "./NotificationCards";
 import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
 import { ProgressShowcase } from "./ProgressShowcase";
+import { RecipeCardShowcase } from "./RecipeCardShowcase";
 import { RecipeLayoutShowcase } from "./RecipeLayoutShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
 import { TypographyShowcase } from "./TypographyShowcase";
@@ -67,6 +68,14 @@ export default function MotorwayPage() {
               description="Cards cast directional shadows that follow the light source. Four elevation tiers from flush to floating."
             >
               <CardShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="recipe-card"
+              title="Recipe Card"
+              description="Saved recipe cards for the dashboard grid. Shows name, node count, last run status, and relative timestamp. Includes skeleton loading state."
+            >
+              <RecipeCardShowcase />
             </ShowcaseSection>
           </Stack>
         </Tabs.Content>

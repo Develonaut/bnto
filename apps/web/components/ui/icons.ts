@@ -11,6 +11,7 @@ export {
   ArrowRight as ArrowRightIcon,
   ArrowRightLeft as ArrowRightLeftIcon,
   ArrowUpRight as ArrowUpRightIcon,
+  Blocks as BlocksIcon,
   BookOpen as BookOpenIcon,
   Check as CheckIcon,
   CheckCircle2 as CheckCircle2Icon,

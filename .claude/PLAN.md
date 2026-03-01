@@ -129,7 +129,7 @@ Anonymous→password userId fix, FIXME cleanup, privacy policy rewrite, README r
 
 - [x] `@bnto/core` — `/core-architect` — `useExecutionHistory()` hook (paginated, per-user)
 - [x] `@bnto/core` — `/core-architect` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
-- [ ] `apps/web` — `/frontend-engineer` — WorkflowCard component (name, description, node count, last run status)
+- [x] `apps/web` — `/frontend-engineer` — RecipeCard component (name, node count, last run status, last updated)
 - [ ] `apps/web` — `/frontend-engineer` — StatusBadge component (pending, running, completed, failed)
 - [ ] `apps/web` — `/frontend-engineer` — EmptyState component (no workflows yet)
 - [ ] `infra` — **Analytics layer decision:** Evaluate and select analytics tooling for user behavior and usage tracking. Candidates: Plausible (privacy-first, no cookies), PostHog (product analytics, self-hostable), Vercel Analytics (built-in), or custom Convex events. Decision criteria: privacy alignment (browser-first, no third-party tracking claims in privacy policy), cost, self-hostable option, event tracking depth (tool usage, conversion funnels, retention). Document decision in `.claude/decisions/`.
