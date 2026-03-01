@@ -33,16 +33,33 @@ export const test = base.extend<{ errors: string[] }>({
         errors.push(`[pageerror] ${err.message}`);
       });
 
-      // Hide the Next.js dev tools badge from screenshots.
-      // It lives in a shadow DOM inside <nextjs-portal> and accumulates
-      // HMR warnings across the dev session. We inject a script that runs
-      // on every page load to hide it before screenshots are taken.
+      // Hide dev/preview toolbars from screenshots.
+      //
+      // 1. Next.js dev tools badge — lives in a shadow DOM inside
+      //    <nextjs-portal>, accumulates HMR warnings across the session.
+      //
+      // 2. Vercel deployment toolbar — injected on preview deployments,
+      //    shows a floating feedback/branch widget that pollutes screenshots.
       await page.addInitScript(() => {
         const hide = () => {
-          const el = document.querySelector("nextjs-portal");
-          if (el instanceof HTMLElement) el.style.display = "none";
+          // Next.js dev overlay
+          const nextPortal = document.querySelector("nextjs-portal");
+          if (nextPortal instanceof HTMLElement) nextPortal.style.display = "none";
+
+          // Vercel toolbar — multiple possible selectors across versions
+          const vercelSelectors = [
+            "#vercel-live-feedback",
+            "#__vercel-toolbar",
+            "[data-vercel-toolbar]",
+            'script[src*="vercel-live"]',
+          ];
+          for (const sel of vercelSelectors) {
+            const el = document.querySelector(sel);
+            if (el instanceof HTMLElement) el.style.display = "none";
+          }
         };
         if (document.body) {
+          hide();
           new MutationObserver(hide).observe(document.body, {
             childList: true,
             subtree: true,
