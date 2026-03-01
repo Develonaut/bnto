@@ -28,7 +28,10 @@ import { useExecutionHistory } from "./hooks/useExecutionHistory";
 import { useExecutionLogs } from "./hooks/useExecutionLogs";
 import { useRunPredefined } from "./hooks/useRunPredefined";
 
-// Quota hooks
+// Analytics + quota hooks
+import { useUsageAnalytics } from "./hooks/useUsageAnalytics";
+import { useSlugAggregates } from "./hooks/useSlugAggregates";
+import { useServerQuota } from "./hooks/useServerQuota";
 import { useRunQuota } from "./hooks/useRunQuota";
 
 // Upload hooks
@@ -39,7 +42,6 @@ import { useDownloadFiles } from "./hooks/useDownloadFiles";
 
 // User hooks
 import { useCurrentUser } from "./hooks/useCurrentUser";
-import { useRunsRemaining } from "./hooks/useRunsRemaining";
 
 // Session hooks (context-based, no service/adapter)
 import { useReady } from "./hooks/useReady";
@@ -90,8 +92,14 @@ export const core = {
   user: {
     ...baseCore.user,
     useCurrentUser,
-    useRunsRemaining,
     useRunQuota,
+  },
+
+  analytics: {
+    ...baseCore.analytics,
+    useUsageAnalytics,
+    useSlugAggregates,
+    useServerQuota,
   },
 
   session: {

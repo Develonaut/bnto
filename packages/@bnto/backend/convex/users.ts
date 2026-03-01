@@ -11,19 +11,33 @@ export const getMe = query({
   },
 });
 
-/** Get remaining runs for the current user. */
-export const getRunsRemaining = query({
+/**
+ * Server-node execution quota for the current user.
+ *
+ * Returns monthly server-node usage, limit, and remaining allowance.
+ * Browser executions are unlimited and not tracked here.
+ *
+ * Replaces the old `getRunsRemaining` (which implied all runs were capped).
+ */
+export const getServerQuota = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAppUserId(ctx);
     if (userId === null) return null;
     const user = await ctx.db.get(userId);
     if (user === null) return null;
-    return Math.max(0, user.runLimit - user.runsUsed);
+    return {
+      serverRunsUsed: user.runsUsed,
+      serverRunLimit: user.runLimit,
+      serverRunsRemaining: Math.max(0, user.runLimit - user.runsUsed),
+    };
   },
 });
 
-/** Get usage analytics for the current user. */
+/**
+ * @deprecated Use `analytics.getAnalytics` for usage stats and
+ * `users.getServerQuota` for quota. This function mixes concerns.
+ */
 export const getUsageStats = query({
   args: {},
   handler: async (ctx) => {
@@ -42,7 +56,22 @@ export const getUsageStats = query({
   },
 });
 
-/** Reset run counters for users whose reset time has passed.
+/**
+ * @deprecated Use `users.getServerQuota` instead.
+ * Kept for backward compatibility during migration.
+ */
+export const getRunsRemaining = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAppUserId(ctx);
+    if (userId === null) return null;
+    const user = await ctx.db.get(userId);
+    if (user === null) return null;
+    return Math.max(0, user.runLimit - user.runsUsed);
+  },
+});
+
+/** Reset server-node run counters for users whose reset time has passed.
  *  Uses the `by_runsResetAt` index to only fetch users due for reset,
  *  with a batch limit to stay within Convex mutation budgets. */
 export const resetRunCounters = internalMutation({

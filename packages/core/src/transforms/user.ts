@@ -1,6 +1,15 @@
 import type { RawUserDoc } from "../types/raw";
 import type { User } from "../types";
 
+/** Map legacy "starter" plan to "free" — one paid tier now. */
+function normalizePlan(
+  plan: "free" | "starter" | "pro" | null | undefined,
+): "free" | "pro" | undefined {
+  if (plan === "starter") return "free";
+  if (plan === null || plan === undefined) return undefined;
+  return plan;
+}
+
 export function toUser(doc: RawUserDoc): User {
   return {
     id: String(doc._id),
@@ -8,9 +17,8 @@ export function toUser(doc: RawUserDoc): User {
     name: doc.name ?? undefined,
     image: doc.image ?? undefined,
     isAnonymous: doc.isAnonymous ?? undefined,
-    plan: doc.plan ?? undefined,
-    runsUsed: doc.runsUsed ?? undefined,
-    runLimit: doc.runLimit ?? undefined,
-    runsResetAt: doc.runsResetAt ?? undefined,
+    plan: normalizePlan(doc.plan),
+    totalRuns: doc.totalRuns ?? undefined,
+    lastRunAt: doc.lastRunAt ?? undefined,
   };
 }

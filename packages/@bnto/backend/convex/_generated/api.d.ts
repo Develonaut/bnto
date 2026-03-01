@@ -16,6 +16,7 @@ import type * as _helpers_start_execution from "../_helpers/start_execution.js";
 import type * as _helpers_upload_validation from "../_helpers/upload_validation.js";
 import type * as _helpers_user_lifecycle from "../_helpers/user_lifecycle.js";
 import type * as _test_helpers from "../_test_helpers.js";
+import type * as analytics from "../analytics.js";
 import type * as auth from "../auth.js";
 import type * as cleanup from "../cleanup.js";
 import type * as cleanup_stale from "../cleanup_stale.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   "_helpers/upload_validation": typeof _helpers_upload_validation;
   "_helpers/user_lifecycle": typeof _helpers_user_lifecycle;
   _test_helpers: typeof _test_helpers;
+  analytics: typeof analytics;
   auth: typeof auth;
   cleanup: typeof cleanup;
   cleanup_stale: typeof cleanup_stale;
