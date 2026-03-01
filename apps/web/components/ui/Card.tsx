@@ -3,19 +3,18 @@ import type { ComponentProps, HTMLAttributes } from "react";
 
 import { cn } from "@/lib/cn";
 
-type CardElevation = "none" | "sm" | "md" | "lg";
+import { Surface } from "./Surface";
+import type { SurfaceElevation } from "./Surface";
 
 const PrimitiveCard = forwardRef<
   HTMLDivElement,
-  HTMLAttributes<HTMLDivElement> & { elevation?: CardElevation }
+  HTMLAttributes<HTMLDivElement> & { elevation?: SurfaceElevation }
 >(({ className, elevation = "md", ...props }, ref) => (
-  <div
+  <Surface
     ref={ref}
-    className={cn(
-      "bg-card text-card-foreground rounded-xl surface",
-      `elevation-${elevation}`,
-      className,
-    )}
+    elevation={elevation}
+    rounded="xl"
+    className={cn("bg-card text-card-foreground", className)}
     {...props}
   />
 ));

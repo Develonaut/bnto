@@ -8,6 +8,10 @@ import {
 import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Center } from "@/components/ui/Center";
+import { IconBadge } from "@/components/ui/IconBadge";
+import { Row } from "@/components/ui/Row";
+import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { GITHUB_URL } from "@/lib/copy";
 
@@ -27,26 +31,26 @@ const ANTI_PATTERNS = [
 export function TrustLayout() {
   return (
     <Animate.ScaleIn from={0.9} easing="spring-bouncy">
-      <div className="flex w-full items-center justify-center">
+      <Center className="w-full">
         <Card elevation="md" className="w-full max-w-sm p-6">
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-col gap-3">
+          <Stack className="gap-5">
+            <Stack className="gap-3">
               {ANTI_PATTERNS.map((item, i) => (
                 <Animate.SlideUp key={item} index={i} distance={8} easing="spring-bouncy">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-destructive/10">
-                      <CheckIcon className="size-3.5 text-destructive" />
-                    </div>
+                  <Row className="gap-3">
+                    <IconBadge variant="destructive" size="sm">
+                      <CheckIcon className="size-3.5" />
+                    </IconBadge>
                     <span className="text-sm text-muted-foreground line-through decoration-muted-foreground/40">
                       {item}
                     </span>
-                  </div>
+                  </Row>
                 </Animate.SlideUp>
               ))}
-            </div>
+            </Stack>
 
             <div className="border-t border-border pt-4">
-              <div className="flex items-center justify-between">
+              <Row justify="between">
                 <Text size="xs" mono color="muted" className="uppercase tracking-wider">
                   MIT Licensed &middot; Open Source
                 </Text>
@@ -61,11 +65,11 @@ export function TrustLayout() {
                   <GithubIcon className="size-3.5" />
                   GitHub
                 </Button>
-              </div>
+              </Row>
             </div>
-          </div>
+          </Stack>
         </Card>
-      </div>
+      </Center>
     </Animate.ScaleIn>
   );
 }
