@@ -11,19 +11,21 @@ import type { StartExecutionInput, StartPredefinedInput } from "../../types";
 // ---------------------------------------------------------------------------
 
 export function getExecutionQuery(id: string) {
-  return convexQuery(api.executions.get, { id: id as Id<"executions"> });
+  return convexQuery(api.executions.get, id ? { id: id as Id<"executions"> } : "skip");
 }
 
 export function getExecutionsQuery(workflowId: string) {
-  return convexQuery(api.executions.listByWorkflow, {
-    workflowId: workflowId as Id<"workflows">,
-  });
+  return convexQuery(
+    api.executions.listByWorkflow,
+    workflowId ? { workflowId: workflowId as Id<"workflows"> } : "skip",
+  );
 }
 
 export function getExecutionLogsQuery(executionId: string) {
-  return convexQuery(api.executionLogs.list, {
-    executionId: executionId as Id<"executions">,
-  });
+  return convexQuery(
+    api.executionLogs.list,
+    executionId ? { executionId: executionId as Id<"executions"> } : "skip",
+  );
 }
 
 // ---------------------------------------------------------------------------

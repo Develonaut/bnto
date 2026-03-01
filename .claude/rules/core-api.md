@@ -8,7 +8,7 @@ clients (public API)  ->  services (single-domain logic)  ->  adapters (backend-
 
 - **Clients** -- Domain-namespaced public API. `core.workflows`, `core.executions`, `core.auth`. Compose one or more services. Handle cross-domain side effects. Receive services via constructor injection
 - **Services** -- Single-domain business logic. Query options with transforms, mutations, cache invalidation for their own domain. **Services do NOT call other services.** Cross-domain orchestration lives in clients only
-- **Adapters** -- Backend-specific bridge. Currently Convex (web) and Wails (desktop). The only layer that imports from `@bnto/backend`
+- **Adapters** -- Backend-specific bridge. Currently Convex (web) and Wails (desktop). The only layer that imports from `@bnto/backend`. **Every adapter function that accepts an ID must use `"skip"` when the ID is falsy** -- see [convex.md](convex.md#convexquery-skip-guard-critical)
 
 ### Dependency Rules
 
