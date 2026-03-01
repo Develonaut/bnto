@@ -7,6 +7,8 @@ import * as SwitchPrimitives from "@radix-ui/react-switch";
 
 import { cn } from "@/lib/cn";
 import { CheckIcon, XIcon } from "@/components/ui/icons";
+import { Pressable } from "./Pressable";
+import { Surface } from "./Surface";
 
 const Switch = forwardRef<
   ElementRef<typeof SwitchPrimitives.Root>,
@@ -20,13 +22,17 @@ const Switch = forwardRef<
     {...props}
     ref={ref}
   >
-    <SwitchPrimitives.Thumb
-      className="group surface surface-primary elevation-sm pressable outline-none flex items-center justify-center size-8 rounded-full data-[state=checked]:translate-x-[39px] data-[state=unchecked]:translate-x-[7px] translate-y-px data-[state=unchecked]:[--variant-bg:var(--card)] data-[state=unchecked]:[--variant-fg:var(--card-foreground)] [&_svg]:size-4 [&_svg]:shrink-0"
-      style={{ transition: "transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)), translate 500ms var(--ease-spring-bouncier)" }}
-    >
-      <CheckIcon strokeWidth={4} className="hidden group-data-[state=checked]:block" />
-      <XIcon strokeWidth={4} className="block group-data-[state=checked]:hidden" />
-    </SwitchPrimitives.Thumb>
+    <Pressable asChild spring="sm">
+      <Surface asChild variant="primary" elevation="sm" rounded="full">
+        <SwitchPrimitives.Thumb
+          className="group flex items-center justify-center size-8 data-[state=checked]:translate-x-[39px] data-[state=unchecked]:translate-x-[7px] translate-y-px data-[state=unchecked]:[--variant-bg:var(--card)] data-[state=unchecked]:[--variant-fg:var(--card-foreground)] [&_svg]:size-4 [&_svg]:shrink-0"
+          style={{ transition: "transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)), translate 500ms var(--ease-spring-bouncier)" }}
+        >
+          <CheckIcon strokeWidth={4} className="hidden group-data-[state=checked]:block" />
+          <XIcon strokeWidth={4} className="block group-data-[state=checked]:hidden" />
+        </SwitchPrimitives.Thumb>
+      </Surface>
+    </Pressable>
   </SwitchPrimitives.Root>
 ));
 Switch.displayName = SwitchPrimitives.Root.displayName;

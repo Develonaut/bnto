@@ -5,6 +5,8 @@ import type { ReactNode, PointerEvent, KeyboardEvent } from "react";
 
 import { cn } from "@/lib/cn";
 import { GripVerticalIcon } from "@/components/ui/icons";
+import { Pressable } from "./Pressable";
+import { Surface } from "./Surface";
 
 /* ── RadialSlider ─────────────────────────────────────────────────────
  * A circular / arc slider with an HTML-based thumb.
@@ -325,9 +327,13 @@ export function RadialSlider({
   // ── Default thumb ──────────────────────────────────────────────────
 
   const defaultThumb = (
-    <div ref={thumbRef} className="surface surface-primary elevation-sm pressable flex items-center justify-center size-8 rounded-full outline-none! ring-0" data-active={isDragging || undefined} data-hover={isHovering || undefined}>
-      <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />
-    </div>
+    <Pressable asChild spring="sm" pressed={isDragging} hovered={isHovering}>
+      <Surface asChild variant="primary" elevation="sm" rounded="full">
+        <div ref={thumbRef} className="flex items-center justify-center size-8 ring-0">
+          <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />
+        </div>
+      </Surface>
+    </Pressable>
   );
 
   return (

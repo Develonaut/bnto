@@ -6,6 +6,8 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 
 import { cn } from "@/lib/cn";
 import { GripVerticalIcon } from "@/components/ui/icons";
+import { Pressable } from "./Pressable";
+import { Surface } from "./Surface";
 
 function Slider({
   className,
@@ -39,14 +41,17 @@ function Slider({
         <SliderPrimitive.Range className="bg-primary absolute h-full" />
       </SliderPrimitive.Track>
       {Array.from({ length: _value.length }, (_, index) => (
-        <SliderPrimitive.Thumb
-          key={index}
-          aria-describedby={ariaDescribedBy}
-          aria-valuetext={ariaValueText}
-          className="surface surface-primary elevation-sm pressable flex items-center justify-center size-8 rounded-full outline-none! ring-0 disabled:pointer-events-none"
-        >
-          <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />
-        </SliderPrimitive.Thumb>
+        <Pressable key={index} asChild spring="sm">
+          <Surface asChild variant="primary" elevation="sm" rounded="full">
+            <SliderPrimitive.Thumb
+              aria-describedby={ariaDescribedBy}
+              aria-valuetext={ariaValueText}
+              className="flex items-center justify-center size-8 ring-0 disabled:pointer-events-none"
+            >
+              <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />
+            </SliderPrimitive.Thumb>
+          </Surface>
+        </Pressable>
       ))}
     </SliderPrimitive.Root>
   );
