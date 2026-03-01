@@ -19,7 +19,7 @@ interface SignInFormProps {
 
 export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
   const { email: signInEmail } = core.auth.useSignIn();
-  const { email: signUpEmail } = core.auth.useSignUp();
+  const { email: signUpEmail, anonymousUserId } = core.auth.useSignUp();
   const router = useRouter();
 
   const [mode, setMode] = useState<Mode>(defaultMode);
@@ -78,7 +78,7 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
             </Stack>
 
             <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <form onSubmit={handleSubmit} className="grid gap-4">
+              <form onSubmit={handleSubmit} className="grid gap-4" data-anon-uid={anonymousUserId ?? ""}>
                 {isSignUp && (
                   <Input
                     type="text"
