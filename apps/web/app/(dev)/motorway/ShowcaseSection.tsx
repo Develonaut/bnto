@@ -14,11 +14,15 @@ export function ShowcaseSection({
   children: React.ReactNode;
 }) {
   return (
-    <Stack as="section" gap="md" data-testid={id} className="min-h-[800px]">
+    <Stack as="section" gap="md" data-testid={id}>
       <div>
-        <Heading level={2} size="sm">{title}</Heading>
+        <Heading level={2} size="sm">
+          {title}
+        </Heading>
         {description && (
-          <Text size="sm" color="muted" className="mt-1">{description}</Text>
+          <Text size="sm" color="muted" className="mt-1">
+            {description}
+          </Text>
         )}
       </div>
       {children}
