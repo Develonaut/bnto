@@ -49,8 +49,8 @@ DialogOverlay.displayName = "Dialog.Overlay";
 
 const DialogContent = forwardRef<
   ElementRef<typeof DialogPrimitive.Content>,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { hideClose?: boolean }
+>(({ className, children, hideClose, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -67,14 +67,16 @@ const DialogContent = forwardRef<
             className={cn("pointer-events-auto relative w-full max-w-lg p-6", className)}
           >
             {children}
-            <div className="absolute top-3 right-3 z-10">
-              <DialogPrimitive.Close asChild>
-                <Button variant="ghost" size="icon" elevation="md" className="size-8">
-                  <XIcon className="size-4" />
-                  <span className="sr-only">Close</span>
-                </Button>
-              </DialogPrimitive.Close>
-            </div>
+            {!hideClose && (
+              <div className="absolute top-3 right-3 z-10">
+                <DialogPrimitive.Close asChild>
+                  <Button variant="ghost" size="icon" elevation="md" className="size-8">
+                    <XIcon className="size-4" />
+                    <span className="sr-only">Close</span>
+                  </Button>
+                </DialogPrimitive.Close>
+              </div>
+            )}
           </Card>
         </Animate.ScaleIn>
       </div>

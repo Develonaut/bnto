@@ -106,6 +106,40 @@ function FormDialogDemo() {
   );
 }
 
+/* ── Forced Choice Dialog ──────────────────────────────────── */
+
+function ForcedChoiceDialogDemo() {
+  return (
+    <Dialog>
+      <Dialog.Trigger asChild>
+        <Button variant="outline">Terms & Conditions</Button>
+      </Dialog.Trigger>
+      <Dialog.Content
+        className="max-w-sm"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        hideClose
+      >
+        <Dialog.Header>
+          <Dialog.Title>Accept terms to continue</Dialog.Title>
+          <Dialog.Description>
+            By continuing you agree to our Terms of Service and Privacy Policy.
+            You must accept to use bnto.
+          </Dialog.Description>
+        </Dialog.Header>
+        <Dialog.Footer>
+          <Dialog.Close asChild>
+            <Button variant="outline">Decline</Button>
+          </Dialog.Close>
+          <Dialog.Close asChild>
+            <Button variant="primary">Accept</Button>
+          </Dialog.Close>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog>
+  );
+}
+
 /* ── Auth Gate Demo ─────────────────────────────────────────── */
 
 function AccountGateDemo() {
@@ -190,6 +224,7 @@ export function DialogShowcase() {
           <BasicDialogDemo />
           <DestructiveDialogDemo />
           <FormDialogDemo />
+          <ForcedChoiceDialogDemo />
         </Row>
       </Stack>
 
