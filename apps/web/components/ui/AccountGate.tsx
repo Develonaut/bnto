@@ -60,7 +60,7 @@ export function AccountGate({
       {/* Floating sign-up prompt */}
       <div className="absolute inset-0 z-10 flex items-start justify-center pt-16">
         <Animate.ScaleIn from={0.6} easing="spring-bouncier">
-          <Card elevation="lg" className="w-full max-w-md p-8 shadow-xl">
+          <Card elevation="lg" className="w-full max-w-md p-8">
             <Stack className="items-center gap-4 text-center">
               <Heading level={2} size="md">
                 {title}

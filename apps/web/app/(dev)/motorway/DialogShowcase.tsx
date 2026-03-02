@@ -192,7 +192,7 @@ function AccountGateDemo() {
 
         {/* Floating sign-up card */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <Card elevation="lg" className="w-full max-w-sm p-8 shadow-xl">
+          <Card elevation="lg" className="w-full max-w-sm p-8">
             <Stack className="items-center gap-4 text-center">
               <Heading level={3} size="sm">
                 Sign in to get started
