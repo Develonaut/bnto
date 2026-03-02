@@ -12,6 +12,7 @@ import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
 import { ConveyorShowcase } from "./ConveyorShowcase";
+import { DialogShowcase } from "./DialogShowcase";
 import { GridShowcase } from "./GridShowcase";
 import { FileListShowcase } from "./FileListShowcase";
 import { FormShowcase } from "./FormShowcase";
@@ -44,6 +45,7 @@ export default function MotorwayPage() {
           <Tabs.Trigger value="controls">Controls</Tabs.Trigger>
           <Tabs.Trigger value="layout">Layout</Tabs.Trigger>
           <Tabs.Trigger value="motion">Motion</Tabs.Trigger>
+          <Tabs.Trigger value="overlays">Overlays</Tabs.Trigger>
           <Tabs.Trigger value="forms">Forms</Tabs.Trigger>
           <Tabs.Trigger value="grids">Grids</Tabs.Trigger>
           <Tabs.Trigger value="progress">Progress</Tabs.Trigger>
@@ -148,6 +150,17 @@ export default function MotorwayPage() {
             description="Entrances are springy. Elements pop onto the page like buildings materializing on the map. Transitions are smooth and restrained."
           >
             <AnimationShowcase />
+          </ShowcaseSection>
+        </Tabs.Content>
+
+        {/* ── Overlays ──────────────────────────────────────────── */}
+        <Tabs.Content value="overlays">
+          <ShowcaseSection
+            id="overlays"
+            title="Dialogs & Overlays"
+            description="Modal dialogs, confirmation prompts, form dialogs, and the AccountGate conversion overlay. Focus-trapped, keyboard accessible, backdrop blur."
+          >
+            <DialogShowcase />
           </ShowcaseSection>
         </Tabs.Content>
 
