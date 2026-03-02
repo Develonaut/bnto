@@ -6,7 +6,6 @@ import type { ElementRef, ComponentPropsWithoutRef, ComponentProps } from "react
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { XIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 
@@ -22,33 +21,7 @@ const DialogTrigger = DialogPrimitive.Trigger;
 
 /* ── Close ──────────────────────────────────────────────────── */
 
-/**
- * Composable close button. When used with `asChild`, wraps the child
- * in Radix's close primitive. When used standalone (no `asChild`),
- * renders the default X icon button.
- */
-const DialogClose = forwardRef<
-  ElementRef<typeof DialogPrimitive.Close>,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Close>
->(({ children, asChild, className, ...props }, ref) => {
-  if (asChild || children) {
-    return (
-      <DialogPrimitive.Close ref={ref} asChild={asChild} className={className} {...props}>
-        {children}
-      </DialogPrimitive.Close>
-    );
-  }
-
-  return (
-    <DialogPrimitive.Close ref={ref} asChild {...props}>
-      <Button variant="ghost" size="icon" elevation="md" className={cn("size-8", className)}>
-        <XIcon className="size-4" />
-        <span className="sr-only">Close</span>
-      </Button>
-    </DialogPrimitive.Close>
-  );
-});
-DialogClose.displayName = "Dialog.Close";
+const DialogClose = DialogPrimitive.Close;
 
 /* ── Portal ─────────────────────────────────────────────────── */
 
@@ -79,24 +52,27 @@ const DialogContent = forwardRef<
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      asChild
-      {...props}
-    >
-      {/* Centering wrapper — fixed fullscreen, z-50 above overlay,
-          pointer-events-none so clicks outside dismiss via overlay. */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-        <Animate.ScaleIn from={0.6} easing="spring-bouncier">
-          <Card
-            elevation="lg"
-            className={cn("pointer-events-auto relative w-full max-w-lg p-8", className)}
-          >
-            {children}
-          </Card>
-        </Animate.ScaleIn>
-      </div>
-    </DialogPrimitive.Content>
+    <Animate.ScaleIn from={0.92} easing="spring-bouncy">
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed top-[50%] left-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%]",
+          "rounded-xl border border-border bg-card p-6 shadow-xl",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        <div className="absolute top-3 right-3 z-10">
+          <DialogPrimitive.Close asChild>
+            <Button variant="ghost" size="icon" elevation="md" className="size-8">
+              <XIcon className="size-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </DialogPrimitive.Close>
+        </div>
+      </DialogPrimitive.Content>
+    </Animate.ScaleIn>
   </DialogPortal>
 ));
 DialogContent.displayName = "Dialog.Content";
@@ -109,25 +85,11 @@ const DialogHeader = forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center justify-between gap-4", className)}
+    className={cn("flex flex-col gap-1.5 pr-10 text-center sm:text-left", className)}
     {...props}
   />
 ));
 DialogHeader.displayName = "Dialog.Header";
-
-/* ── Body ──────────────────────────────────────────────────── */
-
-const DialogBody = forwardRef<
-  HTMLDivElement,
-  ComponentPropsWithoutRef<"div">
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("py-4", className)}
-    {...props}
-  />
-));
-DialogBody.displayName = "Dialog.Body";
 
 /* ── Footer ─────────────────────────────────────────────────── */
 
@@ -151,7 +113,7 @@ const DialogTitle = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("font-display text-xl font-black tracking-tight", className)}
+    className={cn("font-display text-lg font-semibold leading-none tracking-tight", className)}
     {...props}
   />
 ));
@@ -165,7 +127,7 @@ const DialogDescription = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-muted-foreground leading-snug", className)}
+    className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
 ));
@@ -181,7 +143,6 @@ export const Dialog = Object.assign(DialogRoot, {
   Overlay: DialogOverlay,
   Content: DialogContent,
   Header: DialogHeader,
-  Body: DialogBody,
   Footer: DialogFooter,
   Title: DialogTitle,
   Description: DialogDescription,

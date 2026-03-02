@@ -34,9 +34,14 @@ export function AuthGate({
   title = "Sign in to get started",
   description = "Create a free account to save your recipes, track execution history, and pick up where you left off.",
 }: AuthGateProps) {
-  const { isAuthenticated, isLoading } = core.auth.useAuth();
+  const { isAuthenticated, isLoading, user } = core.auth.useAuth();
 
-  if (isLoading || isAuthenticated) {
+  // Gate on a real account (has email), not just an anonymous session.
+  // Convex auto-creates anonymous sessions, so isAuthenticated is true
+  // even for users who haven't signed up.
+  const hasAccount = isAuthenticated && !!user?.email;
+
+  if (isLoading || hasAccount) {
     return <>{children}</>;
   }
 
