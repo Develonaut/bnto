@@ -8,11 +8,15 @@ import type { SurfaceElevation } from "./Surface";
 
 const PrimitiveCard = forwardRef<
   HTMLDivElement,
-  HTMLAttributes<HTMLDivElement> & { elevation?: SurfaceElevation }
->(({ className, elevation = "md", ...props }, ref) => (
+  HTMLAttributes<HTMLDivElement> & {
+    elevation?: SurfaceElevation;
+    loading?: boolean;
+  }
+>(({ className, elevation = "md", loading, ...props }, ref) => (
   <Surface
     ref={ref}
     elevation={elevation}
+    loading={loading}
     rounded="xl"
     className={cn("bg-card text-card-foreground", className)}
     {...props}

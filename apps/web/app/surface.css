@@ -49,7 +49,15 @@
 
 /* Walls — fixed darker shade offset behind the face.
  * Always offset down-right to show the two visible building edges
- * (bottom + right sides) regardless of light direction. */
+ * (bottom + right sides) regardless of light direction.
+ *
+ * Shared elevation transitions — both walls and shadow animate
+ * via --surface-dur and --surface-ease. These variables are the
+ * single animation API for ALL elevation changes:
+ *   - Loading → loaded: default 500ms spring-bouncy
+ *   - Pressable hover/release: overridden by --pressable-dur/ease
+ * Pressable maps its variables → --surface-dur/ease so the
+ * transition declaration here serves both use cases. */
 .surface::before {
   content: "";
   position: absolute;
@@ -58,11 +66,14 @@
   background: var(--surface-wall);
   transform: translate3d(var(--elevation-x), var(--elevation-y), -1px);
   pointer-events: none;
+  transition:
+    transform var(--surface-dur, 500ms) var(--surface-ease, var(--ease-spring-bouncy)),
+    opacity var(--surface-dur, 500ms) var(--surface-ease, var(--ease-spring-bouncy));
 }
 
 /* Ground shadow — cast in the --light-angle direction.
  * Anchored close to the element so the inherited border-radius
- * doesn't break the cast-shadow illusion. */
+ * doesn't break the cast-shadow illusion. Same shared transition. */
 .surface::after {
   content: "";
   position: absolute;
@@ -71,6 +82,9 @@
   background: var(--surface-shadow);
   transform: translate3d(var(--shadow-x), var(--shadow-y), -2px);
   pointer-events: none;
+  transition:
+    transform var(--surface-dur, 500ms) var(--surface-ease, var(--ease-spring-bouncy)),
+    opacity var(--surface-dur, 500ms) var(--surface-ease, var(--ease-spring-bouncy));
 }
 
 /* ── Elevation modifiers ─────────────────────────────────────────────
@@ -109,6 +123,44 @@
 .elevation-none::before,
 .elevation-none::after {
   content: none;
+}
+
+/* ── Loading state ───────────────────────────────────────────────
+ *
+ * Surface sits flat on the ground with a muted appearance.
+ * Unlike elevation-none (which removes pseudo-elements via
+ * `content: none`), loading keeps them in the DOM but invisible
+ * — this is critical because `content: none → content: ""`
+ * cannot be animated, but `opacity: 0 → 1` can.
+ *
+ * When data-loading is removed, the base .surface transition
+ * fires and walls + shadow spring into place. The snap TO
+ * loading is instant (transition-duration: 0s) so there's
+ * no awkward reverse animation when content starts loading.
+ *
+ * Customizable timing via --surface-dur and --surface-ease
+ * on individual elements.
+ * ────────────────────────────────────────────────────────────── */
+
+.surface[data-loading] {
+  /* Instant snap to flat — no reverse spring when entering loading.
+   * Sets --surface-dur to 0s so pseudo-element transitions are instant.
+   * When data-loading is removed, --surface-dur reverts to either
+   * the pressable override or the default 500ms fallback. */
+  --surface-dur: 0s;
+  --face-bg: var(--muted);
+  --face-fg: var(--muted-foreground);
+  border-color: var(--muted);
+}
+
+.surface[data-loading]::before {
+  transform: translate3d(0, 0, -1px);
+  opacity: 0;
+}
+
+.surface[data-loading]::after {
+  transform: translate3d(0, 0, -2px);
+  opacity: 0;
 }
 
 /* ── Color variants ──────────────────────────────────────────────
@@ -242,19 +294,16 @@
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   will-change: transform;
+
+  /* Map pressable spring modes → shared surface transition variables.
+   * Pseudo-element transitions are inherited from .surface::before/::after
+   * — no duplicate transition declaration needed here. */
+  --surface-dur: var(--pressable-dur, 150ms);
+  --surface-ease: var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+
   /* Default: face raised above ground by full elevation */
   transform: translate(calc(var(--elevation-x) * -1), calc(var(--elevation-y) * -1));
-  transition: transform var(--pressable-dur, 150ms)
-    var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
-}
-
-.pressable::before,
-.pressable::after {
-  transition:
-    transform var(--pressable-dur, 150ms)
-      var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
-    opacity var(--pressable-dur, 150ms)
-      var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+  transition: transform var(--surface-dur) var(--surface-ease);
 }
 
 /* Hover / focus-visible — face sinks 33% toward ground.
@@ -449,6 +498,11 @@
 @media (prefers-reduced-motion: reduce) {
   .stagger-cascade > * {
     animation-delay: 0s;
+  }
+
+  .surface::before,
+  .surface::after {
+    transition: none !important;
   }
 
   .pressable,

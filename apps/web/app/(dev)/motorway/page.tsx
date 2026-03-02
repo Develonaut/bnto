@@ -22,6 +22,7 @@ import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
 import { ProgressShowcase } from "./ProgressShowcase";
 import { RecipeCardShowcase } from "./RecipeCardShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
+import { SurfaceLoadingShowcase } from "./SurfaceLoadingShowcase";
 import { TypographyShowcase } from "./TypographyShowcase";
 
 export default function MotorwayPage() {
@@ -67,6 +68,14 @@ export default function MotorwayPage() {
               description="Cards cast directional shadows that follow the light source. Four elevation tiers from flush to floating."
             >
               <CardShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="surface-loading"
+              title="Surface Loading"
+              description="Surfaces spring up from the ground when content arrives. The loading state sits flat (elevation-none) with muted appearance — walls and shadow spring into place using the shared elevation transition system that Pressable also uses."
+            >
+              <SurfaceLoadingShowcase />
             </ShowcaseSection>
 
             <ShowcaseSection

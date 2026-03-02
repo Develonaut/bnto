@@ -35,6 +35,11 @@ type SurfaceProps = ComponentProps<"div"> & {
   elevation?: SurfaceElevation;
   /** Border radius. Default `"lg"`. */
   rounded?: SurfaceRounded;
+  /**
+   * Loading state — surface sits flat on the ground with muted appearance.
+   * When loading ends, walls and shadow spring up to the target elevation.
+   */
+  loading?: boolean;
   /** Merge onto child element instead of wrapping in a `<div>`. */
   asChild?: boolean;
 };
@@ -43,6 +48,7 @@ export function Surface({
   variant = "default",
   elevation = "md",
   rounded = "lg",
+  loading,
   asChild,
   className,
   ...props
@@ -50,6 +56,7 @@ export function Surface({
   const Comp = asChild ? Slot : "div";
   return (
     <Comp
+      data-loading={loading || undefined}
       className={cn(
         "surface",
         `elevation-${elevation}`,
