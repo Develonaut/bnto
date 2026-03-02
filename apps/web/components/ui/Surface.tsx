@@ -54,9 +54,16 @@ export function Surface({
   ...props
 }: SurfaceProps) {
   const Comp = asChild ? Slot : "div";
+
+  // data-was-loading is set whenever the loading prop has been used on this
+  // surface (loading !== undefined). The CSS selector
+  // [data-was-loading]:not([data-loading]) ensures the spring-up animation
+  // only fires when loading ends — surfaces that never use the loading prop
+  // never get this attribute, so they don't animate on mount.
   return (
     <Comp
       data-loading={loading || undefined}
+      data-was-loading={loading !== undefined || undefined}
       className={cn(
         "surface",
         `elevation-${elevation}`,

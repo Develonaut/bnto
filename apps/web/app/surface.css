@@ -45,6 +45,13 @@
   border: 1px solid var(--surface-wall);
   background-color: var(--face-bg);
   color: var(--face-fg);
+
+  /* Face color transition — syncs muted → real color with the wall spring.
+   * Uses the same --surface-dur/ease so pressable overrides apply here too. */
+  transition:
+    background-color var(--surface-dur, 500ms) var(--surface-ease, var(--ease-spring-bouncy)),
+    color var(--surface-dur, 500ms) var(--surface-ease, var(--ease-spring-bouncy)),
+    border-color var(--surface-dur, 500ms) var(--surface-ease, var(--ease-spring-bouncy));
 }
 
 /* Walls — fixed darker shade offset behind the face.
@@ -133,20 +140,64 @@
  * — this is critical because `content: none → content: ""`
  * cannot be animated, but `opacity: 0 → 1` can.
  *
- * When data-loading is removed, the base .surface transition
- * fires and walls + shadow spring into place. The snap TO
- * loading is instant (transition-duration: 0s) so there's
- * no awkward reverse animation when content starts loading.
+ * When data-loading is removed, a spring-up keyframe animation
+ * plays: walls and shadow overshoot past their resting elevation
+ * (1.8× multiplier) then settle back via spring-bouncy easing.
+ * This overshoot is what makes the popup feel bouncy — the
+ * spring curve alone can't produce visible bounce because the
+ * travel distance (a few px) is too small for the 4.6% overshoot
+ * in the linear() curve to be perceptible.
  *
- * Customizable timing via --surface-dur and --surface-ease
- * on individual elements.
+ * The snap TO loading is instant (animation: none on [data-loading])
+ * so there's no awkward reverse animation when content starts loading.
  * ────────────────────────────────────────────────────────────── */
 
+/* Spring-up keyframe for walls (::before).
+ * Goes from flat (0,0) → overshoot (1.8× resting) → resting.
+ * Uses calc() against the element's own --elevation-x/y vars
+ * so it works for any elevation tier automatically. */
+@keyframes surface-wall-spring {
+  0% {
+    transform: translate3d(0, 0, -1px);
+    opacity: 0;
+  }
+  50% {
+    transform: translate3d(
+      calc(var(--elevation-x) * 1.8),
+      calc(var(--elevation-y) * 1.8),
+      -1px
+    );
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--elevation-x), var(--elevation-y), -1px);
+    opacity: 1;
+  }
+}
+
+/* Spring-up keyframe for shadow (::after).
+ * Same overshoot pattern, targeting shadow offsets. */
+@keyframes surface-shadow-spring {
+  0% {
+    transform: translate3d(0, 0, -2px);
+    opacity: 0;
+  }
+  50% {
+    transform: translate3d(
+      calc(var(--shadow-x) * 1.8),
+      calc(var(--shadow-y) * 1.8),
+      -2px
+    );
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--shadow-x), var(--shadow-y), -2px);
+    opacity: 1;
+  }
+}
+
 .surface[data-loading] {
-  /* Instant snap to flat — no reverse spring when entering loading.
-   * Sets --surface-dur to 0s so pseudo-element transitions are instant.
-   * When data-loading is removed, --surface-dur reverts to either
-   * the pressable override or the default 500ms fallback. */
+  /* Instant snap to muted — no reverse transition when entering loading */
   --surface-dur: 0s;
   --face-bg: var(--muted);
   --face-fg: var(--muted-foreground);
@@ -156,11 +207,33 @@
 .surface[data-loading]::before {
   transform: translate3d(0, 0, -1px);
   opacity: 0;
+  /* Kill any running spring-up animation instantly */
+  animation: none;
 }
 
 .surface[data-loading]::after {
   transform: translate3d(0, 0, -2px);
   opacity: 0;
+  animation: none;
+}
+
+/* When loading is removed, fire the spring-up animation.
+ * The [data-was-loading] attribute is set by Surface.tsx when
+ * transitioning out of loading — it distinguishes "just loaded"
+ * from "never was loading" so surfaces that mount without loading
+ * don't play the animation on every render. */
+/* animation-fill-mode: backwards applies the 0% keyframe before
+ * the animation starts (so the surface starts flat, no flash).
+ * After the animation ends, normal styles take over — this is
+ * important so pressable hover transitions still work. */
+.surface[data-was-loading]:not([data-loading])::before {
+  animation: surface-wall-spring var(--surface-dur, 500ms)
+    var(--surface-ease, var(--ease-spring-bouncy)) backwards;
+}
+
+.surface[data-was-loading]:not([data-loading])::after {
+  animation: surface-shadow-spring var(--surface-dur, 500ms)
+    var(--surface-ease, var(--ease-spring-bouncy)) backwards;
 }
 
 /* ── Color variants ──────────────────────────────────────────────
@@ -500,9 +573,13 @@
     animation-delay: 0s;
   }
 
+  .surface {
+    transition: none !important;
+  }
   .surface::before,
   .surface::after {
     transition: none !important;
+    animation: none !important;
   }
 
   .pressable,
