@@ -1,0 +1,55 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Lighthouse Audit
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_CONVEX_URL: https://zealous-canary-422.convex.cloud
+      NEXT_PUBLIC_CONVEX_SITE_URL: https://zealous-canary-422.convex.site
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Build all packages in dependency order (same as CI)
+      - name: "Build: @bnto/nodes"
+        run: pnpm --filter @bnto/nodes run build
+
+      - name: "Build: @bnto/auth"
+        run: pnpm --filter @bnto/auth run build
+
+      - name: "Build: @bnto/backend"
+        run: pnpm --filter @bnto/backend run build
+
+      - name: "Build: @bnto/core"
+        run: pnpm --filter @bnto/core run build
+
+      - name: "Build: @bnto/web"
+        run: pnpm --filter @bnto/web run build
+
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: ./lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
