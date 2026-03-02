@@ -91,13 +91,17 @@ Skip if no TypeScript files changed. Otherwise:
 - [ ] `as const` + `satisfies` used where appropriate (literal preservation, shape validation without widening)
 - [ ] Return types inferred on internal functions, only annotated at public API boundaries
 
-## Step 6: React Query & State Management
+## Step 6: Data Fetching & State Management
 
-Skip if no state management files changed. Otherwise:
+Skip if no data fetching or state management files changed. Otherwise:
 
+- [ ] **Co-located queries (self-fetching components)**: Components fetch their own data by ID. Query, skeleton, and render co-located in the same file. No parent fetching + passing data props to children. See [data-fetching-strategy.md](../../strategy/data-fetching-strategy.md)
+- [ ] **No prop drilling for server data**: If a parent fetches data and passes it as props, flag it. Children should self-fetch by ID -- React Query deduplicates
+- [ ] **Co-located skeletons**: Skeleton lives in the same file as the loaded render, not in a separate `*Skeleton.tsx` (unless complex and shared). Skeleton dimensions match the loaded layout
 - [ ] **`select` for transforms**: Every `useQuery` that transforms data (`.map()`, `toFoo()`, spread) does it inside `select`, NOT in the hook body
 - [ ] **No transforms outside `select`**: No `.map()` / `.filter()` on query data outside `select`
 - [ ] **No spread of query data**: `{ ...data, isLoading }` creates a new object. Destructure explicitly
+- [ ] **Pagination uses Convex native**: Paginated lists use `usePaginatedQuery` with `useReady()` guard, not React Query `useInfiniteQuery`
 - [ ] **Zustand selectors**: `useStore(s => s.field)`, not `useStore()` (selecting entire store)
 - [ ] **Right tool for the job**: Server state -> React Query, client app state -> Zustand, local UI state -> `useState`, URL state -> router params
 

@@ -144,6 +144,7 @@ Anonymous→password userId fix, FIXME cleanup, privacy policy rewrite, README r
 - [ ] `apps/web` — `/frontend-engineer` — **History prompt** (conversion hook): "Sign up to access your execution history and re-run past workflows."
 - [ ] `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation (moved from Sprint 2A Wave 5)
 - [ ] `apps/web` — `/frontend-engineer` — Pricing page update: Pro sells persistence, collaboration, premium compute — not run limits
+- [ ] `apps/web` — `/frontend-engineer` — **Data fetching & skeleton audit:** Scan all existing components in `apps/web/` for violations of the co-located query pattern, prop drilling, mismatched skeletons, missing skeletons, separate `*Skeleton.tsx` files (for simple cases), transforms outside `select`, and loading wrapper anti-patterns. Fix violations in-place. Reference: [data-fetching-strategy.md](strategy/data-fetching-strategy.md), [skeletons.md](rules/skeletons.md)
 
 #### Wave 3 (sequential — test)
 
@@ -438,10 +439,10 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 **Priority: High.** Recipe telemetry events (`files_added`, `recipe_run_started`, `recipe_run_completed`, etc.) are wired and verified in E2E tests via `window.__bnto_telemetry__`, but events may not be reaching the PostHog dashboard when using bnto.io in production.
 
-- [ ] `apps/web` — Verify `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` are set correctly on Vercel production
-- [ ] `apps/web` — Check if PostHog `init()` is actually called in production (DNT check, env var presence)
-- [ ] `apps/web` — Inspect network tab on bnto.io for PostHog requests (`/i/v0/e/` or `/decide/`)
-- [ ] `apps/web` — Verify events appear in PostHog Live Events view after a real compress-images run
+- [x] `apps/web` — Verify `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` are set correctly on Vercel production
+- [x] `apps/web` — Check if PostHog `init()` is actually called in production (DNT check, env var presence)
+- [x] `apps/web` — Inspect network tab on bnto.io for PostHog requests (`/i/v0/e/` or `/decide/`)
+- [x] `apps/web` — Verify events appear in PostHog Live Events view after a real compress-images run
 
 ---
 

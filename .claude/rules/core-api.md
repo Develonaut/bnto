@@ -91,7 +91,7 @@ const { data, isLoading } = useQuery({
 
 ### Convex Native Pagination: `usePaginatedQuery`
 
-Paginated lists use Convex's native `usePaginatedQuery` for real-time per-page subscriptions.
+Paginated lists use Convex's native `usePaginatedQuery` for real-time per-page subscriptions. See [data-fetching-strategy.md](../strategy/data-fetching-strategy.md) for the full decision record.
 
 **All paginated hooks MUST guard on `useReady()`** -- the `ConvexProvider` mounts after hydration. Without the guard, `usePaginatedQuery` crashes on the first render.
 
