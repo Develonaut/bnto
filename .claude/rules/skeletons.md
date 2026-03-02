@@ -27,7 +27,7 @@ User navigates to page
 
 **Design for the median case.** If a description is typically 2-3 lines, show 2-3 skeleton lines. Don't try to match exact content length -- skeletons communicate structure, not content.
 
-**Err toward more skeleton than less.** A slight collapse (skeleton larger than content) is less jarring than a push-down (skeleton smaller than content).
+**Err toward more skeleton than less.** A slight collapse (skeleton larger than content) is less jarring than a push-down (skeleton smaller than content). Users notice downward shifts more than upward collapses.
 
 ## Layout Shift Prevention
 
@@ -124,6 +124,7 @@ Skeletons are for **loading**. Empty states are for **no data**. These are diffe
 
 - Transition from skeleton -> empty state should use the **same container dimensions** to prevent shift
 - If you know at navigation time that content is empty (e.g., server-rendered), skip the skeleton and render the empty state directly
+- A skeleton that resolves to an empty state is acceptable -- but the skeleton should not be dramatically larger than the empty state
 
 ## Testing: Paired Screenshot Strategy
 
@@ -136,4 +137,17 @@ Every skeleton should have a paired visual regression test comparing the skeleto
 4. Screenshot the loaded state
 5. Compare the pair visually -- skeleton shapes should correspond to loaded content positions
 
-**Test data must show real content, not empty states.** The loaded screenshot should have actual content so the skeleton shapes can be compared against real layout.
+**Test data must show real content, not empty states.** The loaded screenshot should have actual content so the skeleton shapes can be compared against real layout. An empty state comparison doesn't validate whether the skeleton matches content structure.
+
+## Sources
+
+Key references that informed these standards:
+
+- Nielsen Norman Group -- Skeleton Screens 101
+- IBM Carbon -- Loading Pattern
+- Microsoft Fluent 2 -- Skeleton component
+- Shopify Polaris -- Skeleton Page
+- GitHub Primer -- Loading Pattern & Skeleton Loaders
+- GitLab Pajamas -- Skeleton Loader
+- web.dev -- Optimize Cumulative Layout Shift
+- Tim Kadlec -- Effective Skeleton Screens

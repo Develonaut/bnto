@@ -20,7 +20,10 @@ Each layer only depends on layers below it. Never skip layers.
 | `@bnto/auth` | Auth client -- sign in, sign up, session | `@convex-dev/auth` |
 | `@bnto/core` | Transport-agnostic API -- hooks, types, adapters | React Query + adapters |
 
-**State management:** Zustand handles client-only state (editor content, UI preferences). React Query handles all server state (data fetching, caching, mutations). For the Convex path, `@convex-dev/react-query` preserves real-time subscriptions through React Query's interface.
+**State management:** Zustand handles client-only state (editor content, UI preferences). Server state uses a hybrid strategy -- see [data-fetching-strategy.md](../strategy/data-fetching-strategy.md) for the full decision record:
+- **Paginated lists** -> Convex native `usePaginatedQuery` (real-time per-page subscriptions)
+- **Single-entity queries** -> React Query via `@convex-dev/react-query` bridge (caching, deduplication for self-fetching components)
+- **External APIs** (future community recipes, marketplace) -> React Query for HTTP caching
 
 **Desktop shares the web frontend:** Tauri renders the same React app in a system webview. `@bnto/core` detects the runtime and swaps the transport adapter internally. Desktop uses local filesystem directly (no R2). Engine runs as native Rust (same codebase as WASM, compiled for desktop).
 

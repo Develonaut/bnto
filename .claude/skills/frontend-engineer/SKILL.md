@@ -70,6 +70,17 @@ You respect the grain of each tool: Next.js App Router wants Server Components b
 - **Hover/focus parity** — every `group-hover:` MUST have `group-focus-within:` for keyboard users
 - **JS state only when CSS can't** — coordinating siblings, triggering side effects, multi-step gestures
 
+### Data Fetching Strategy (Co-located Queries)
+
+See [data-fetching-strategy.md](../../strategy/data-fetching-strategy.md) for the full decision record.
+
+- **Self-fetching components with co-located queries** — each leaf component fetches its own data by ID. The query, skeleton, and render are all in the same file. Parent components pass IDs, never data objects
+- **React Query for single entities** — `useQuery` with `convexQuery()` bridge. Caching and deduplication make self-fetching components zero-cost. Five components calling `useWorkflowById("abc123")` = one subscription
+- **Convex native for paginated lists** — `usePaginatedQuery` for real-time per-page subscriptions. Always guard with `useReady()` + `"skip"`
+- **`select` for all transforms** — never `.map()` or `toFoo()` outside of `select`. Creates new references every render
+- **No prop drilling** — if you see a parent fetching data and passing it as props to children, refactor to self-fetching leaves
+- **No "loading wrapper" components** — no `<LoadingGuard query={q}>{(data) => ...}</LoadingGuard>` pattern. Each component handles its own loading state inline
+
 ### Performance
 - **Server Components first** — `"use client"` only on the smallest leaf that needs interactivity
 - **No barrel imports in client components** — import specific files, not `index.ts`
@@ -80,8 +91,10 @@ You respect the grain of each tool: Next.js App Router wants Server Components b
 ### Skeletons
 - **Match the loaded layout** — same dimensions, same position. Content "paints in", doesn't jump
 - **Same container for both states** — replace in-place, never swap containers
+- **Co-locate skeleton with render** — skeleton and loaded render live in the same file. When the render changes, the skeleton is staring you in the face. No separate `*Skeleton.tsx` files for simple cases
 - **Don't skeleton static text** — page titles, section headers render immediately
 - **Don't skeleton action components** — show disabled or hidden, never skeleton shapes
+- **Skeleton -> empty state** — acceptable, but the skeleton should not be dramatically larger than the empty state
 - **Paired screenshots** — E2E tests compare skeleton state vs loaded state
 
 ### Testing Strategy: User Journeys Are Your Bread and Butter
@@ -147,6 +160,7 @@ Each domain owns its natural test boundary. Engine tests node logic. Core tests 
 | `.claude/rules/theming.md` | Color tokens, fonts, radius, shadows |
 | `.claude/rules/animation.md` | Motion language, `Animate.*` API, CSS vs motion/react |
 | `.claude/rules/skeletons.md` | Skeleton standards, layout shift prevention |
+| `.claude/strategy/data-fetching-strategy.md` | Hybrid fetching strategy, co-located queries, self-fetching pattern |
 | `.claude/rules/pages.md` | Page composition, SEO pages |
 | `.claude/rules/performance.md` | Server Components, bundle size, Core Web Vitals |
 | `.claude/rules/seo.md` | URL strategy, slug registry, metadata, JSON-LD |
