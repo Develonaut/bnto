@@ -12,17 +12,14 @@ import { useEffect, useState } from "react";
  * @returns `true` only when isLoading AND the delay has elapsed.
  */
 export function useDelayedLoading(isLoading: boolean, delay = 300): boolean {
-  const [showSkeleton, setShowSkeleton] = useState(false);
+  const [delayElapsed, setDelayElapsed] = useState(false);
 
   useEffect(() => {
-    if (!isLoading) {
-      setShowSkeleton(false);
-      return;
-    }
+    if (!isLoading) return;
 
-    const timer = setTimeout(() => setShowSkeleton(true), delay);
+    const timer = setTimeout(() => setDelayElapsed(true), delay);
     return () => clearTimeout(timer);
   }, [isLoading, delay]);
 
-  return isLoading && showSkeleton;
+  return isLoading && delayElapsed;
 }
