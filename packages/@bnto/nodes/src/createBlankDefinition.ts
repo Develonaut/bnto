@@ -20,8 +20,8 @@ export function createBlankDefinition(): Definition {
       createdAt: new Date().toISOString(),
     },
     parameters: {},
-    inputPorts: [{ id: "in-1", name: "input" }],
-    outputPorts: [{ id: "out-1", name: "output" }],
+    inputPorts: [{ id: crypto.randomUUID(), name: "input" }],
+    outputPorts: [{ id: crypto.randomUUID(), name: "output" }],
     nodes: [],
     edges: [],
   };

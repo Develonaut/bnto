@@ -108,13 +108,14 @@ describe("addNode", () => {
         expect(node.edges).toEqual([]);
       });
 
-      it(`${typeName} has an input port`, () => {
+      it(`${typeName} has an input port with unique ID`, () => {
         const blank = createBlankDefinition();
         const result = addNode(blank, typeName);
         const node = result.definition.nodes![0]!;
 
         expect(node.inputPorts).toHaveLength(1);
         expect(node.inputPorts[0]!.name).toBe("input");
+        expect(node.inputPorts[0]!.id).toBeTruthy();
       });
     }
   });
@@ -125,13 +126,14 @@ describe("addNode", () => {
     );
 
     for (const typeName of nonContainerTypes) {
-      it(`${typeName} has an output port`, () => {
+      it(`${typeName} has an output port with unique ID`, () => {
         const blank = createBlankDefinition();
         const result = addNode(blank, typeName);
         const node = result.definition.nodes![0]!;
 
         expect(node.outputPorts).toHaveLength(1);
         expect(node.outputPorts[0]!.name).toBe("output");
+        expect(node.outputPorts[0]!.id).toBeTruthy();
       });
     }
   });

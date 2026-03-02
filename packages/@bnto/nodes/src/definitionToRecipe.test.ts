@@ -33,6 +33,13 @@ describe("definitionToRecipe", () => {
     expect(recipe.slug).toBe("my-custom-recipe-v2");
   });
 
+  it("falls back to 'untitled' slug for empty name", () => {
+    const def = { ...createBlankDefinition(), name: "" };
+    const recipe = definitionToRecipe(def);
+
+    expect(recipe.slug).toBe("untitled");
+  });
+
   it("uses metadata overrides when provided", () => {
     const def = createBlankDefinition();
     const recipe = definitionToRecipe(def, {

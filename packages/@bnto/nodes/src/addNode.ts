@@ -38,7 +38,7 @@ function buildDefaultPorts(nodeType: NodeTypeName) {
   // Container nodes get an input port for receiving items
   if (info.isContainer) {
     return {
-      inputPorts: [{ id: "in-1", name: "input" }] as Definition["inputPorts"],
+      inputPorts: [{ id: crypto.randomUUID(), name: "input" }] as Definition["inputPorts"],
       outputPorts: [] as Definition["outputPorts"],
     };
   }
@@ -46,7 +46,7 @@ function buildDefaultPorts(nodeType: NodeTypeName) {
   // Non-container nodes get one output port by default
   return {
     inputPorts: [] as Definition["inputPorts"],
-    outputPorts: [{ id: "out-1", name: "output" }] as Definition["outputPorts"],
+    outputPorts: [{ id: crypto.randomUUID(), name: "output" }] as Definition["outputPorts"],
   };
 }
 

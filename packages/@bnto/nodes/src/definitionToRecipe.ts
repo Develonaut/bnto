@@ -22,10 +22,11 @@ export interface RecipeMetadata {
 
 /** Converts a name to a URL-safe slug (lowercase, hyphenated). */
 function toSlug(name: string): string {
-  return name
+  const slug = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+  return slug || "untitled";
 }
 
 /**

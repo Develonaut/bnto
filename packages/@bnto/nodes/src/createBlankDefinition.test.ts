@@ -28,12 +28,16 @@ describe("createBlankDefinition", () => {
     expect(def.version).toBe("1.0.0");
   });
 
-  it("has one input port and one output port", () => {
+  it("has one input port and one output port with unique IDs", () => {
     const def = createBlankDefinition();
     expect(def.inputPorts).toHaveLength(1);
     expect(def.outputPorts).toHaveLength(1);
     expect(def.inputPorts[0]!.name).toBe("input");
     expect(def.outputPorts[0]!.name).toBe("output");
+    // Port IDs are UUIDs, not hardcoded
+    expect(def.inputPorts[0]!.id).toBeTruthy();
+    expect(def.outputPorts[0]!.id).toBeTruthy();
+    expect(def.inputPorts[0]!.id).not.toBe(def.outputPorts[0]!.id);
   });
 
   it("starts with empty nodes and edges", () => {
