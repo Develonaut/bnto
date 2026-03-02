@@ -51,3 +51,9 @@ export type {
 } from "./wasm";
 
 export type { RunPhase, RecipeFlow } from "./recipeFlow";
+
+export type {
+  TelemetryConfig,
+  TelemetryProperties,
+  TelemetryUserTraits,
+} from "./telemetry";

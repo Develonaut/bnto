@@ -3,8 +3,9 @@
 // ── Core singleton (imperative + React hooks merged) ──────────────────────
 export { core } from "./reactCore";
 
-// ── Provider ──────────────────────────────────────────────────────────────
+// ── Providers ─────────────────────────────────────────────────────────────
 export { BntoCoreProvider } from "./BntoCoreProvider";
+export { TelemetryProvider } from "./providers/TelemetryProvider";
 
 // ── Types (transport-agnostic) ────────────────────────────────────────────
 export type {
@@ -45,6 +46,9 @@ export type {
   WasmRunResult,
   RunPhase,
   RecipeFlow,
+  TelemetryConfig,
+  TelemetryProperties,
+  TelemetryUserTraits,
 } from "./types";
 
 // ── Auth types ────────────────────────────────────────────────────────────

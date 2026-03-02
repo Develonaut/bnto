@@ -26,6 +26,7 @@ import { createDownloadClient } from "./clients/downloadClient";
 import { createAuthClient } from "./clients/authClient";
 import { createWasmClient } from "./clients/wasmClient";
 import { createRecipeClient } from "./clients/recipeClient";
+import { createTelemetryClient } from "./clients/telemetryClient";
 
 // ── Services (single-domain, internal) ────────────────────────────────────
 const workflowService = createWorkflowService();
@@ -46,6 +47,7 @@ const downloadClient = createDownloadClient(downloadService);
 const authClient = createAuthClient();
 const wasmClient = createWasmClient(wasmExecutionService);
 const recipeClient = createRecipeClient();
+const telemetryClient = createTelemetryClient();
 
 // ── Core Singleton ────────────────────────────────────────────────────────
 export const core = {
@@ -58,4 +60,5 @@ export const core = {
   auth: authClient,
   wasm: wasmClient,
   recipe: recipeClient,
+  telemetry: telemetryClient,
 } as const;

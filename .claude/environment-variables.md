@@ -65,12 +65,18 @@ Set in the [Vercel Dashboard](https://vercel.com) under Project > Settings > Env
 |---|---|
 | `NEXT_PUBLIC_CONVEX_URL` | Convex deployment URL (e.g. `https://zealous-canary-422.convex.cloud`) |
 | `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex site URL for auth callbacks (e.g. `https://zealous-canary-422.convex.site`) |
+| `NEXT_PUBLIC_POSTHOG_KEY` | PostHog project API key (e.g. `phc_...`). **Production only** — not set in `.env.local` to avoid polluting PostHog with localhost events. |
+| `NEXT_PUBLIC_POSTHOG_HOST` | PostHog ingest host (e.g. `https://us.i.posthog.com`). **Production only** — not set in `.env.local`. |
 
-**Dev values** (current):
+**Dev values** (in `apps/web/.env.local`):
 - `NEXT_PUBLIC_CONVEX_URL=https://zealous-canary-422.convex.cloud`
 - `NEXT_PUBLIC_CONVEX_SITE_URL=https://zealous-canary-422.convex.site`
+- PostHog vars intentionally omitted — telemetry is a silent no-op in dev
 
-**Prod values:** Will use the production Convex deployment URLs (different from dev).
+**Prod values** (in Vercel):
+- `NEXT_PUBLIC_CONVEX_URL` / `NEXT_PUBLIC_CONVEX_SITE_URL` — production Convex deployment URLs
+- `NEXT_PUBLIC_POSTHOG_KEY=phc_MM2CZwPL8RWy5nJVH6RyrG5sWnHbtKTxu0aofvDWDKF`
+- `NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com`
 
 ---
 

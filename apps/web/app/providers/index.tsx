@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
-import { BntoCoreProvider } from "@bnto/core";
+import { BntoCoreProvider, TelemetryProvider } from "@bnto/core";
 import { isAuthPath } from "@/lib/routes";
 
 interface ProvidersProps {
@@ -13,8 +13,8 @@ interface ProvidersProps {
 /**
  * Root provider stack for the web app.
  *
- * Wires BntoCoreProvider with:
- * - onSessionLost: navigate to /signin on mid-session auth loss
+ * Provider order:
+ *   TelemetryProvider (PostHog init + page views) -> BntoCoreProvider (Convex + RQ + session)
  *
  * Server-side auth token is managed by ConvexAuthNextjsServerProvider
  * in the root layout (server component).
@@ -38,8 +38,14 @@ export function Providers({ children }: ProvidersProps) {
   }, [router]);
 
   return (
-    <BntoCoreProvider onSessionLost={handleSessionLost}>
-      {children}
-    </BntoCoreProvider>
+    <TelemetryProvider
+      apiKey={process.env.NEXT_PUBLIC_POSTHOG_KEY}
+      host={process.env.NEXT_PUBLIC_POSTHOG_HOST}
+      pathname={pathname}
+    >
+      <BntoCoreProvider onSessionLost={handleSessionLost}>
+        {children}
+      </BntoCoreProvider>
+    </TelemetryProvider>
   );
 }
