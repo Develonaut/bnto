@@ -10,7 +10,7 @@ import { Heading } from "@/components/ui/Heading";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 
-interface AuthGateProps {
+interface AccountGateProps {
   /** Content rendered underneath — always visible, blurred when gated. */
   children: ReactNode;
   /** Heading shown in the floating prompt. */
@@ -20,20 +20,21 @@ interface AuthGateProps {
 }
 
 /**
- * Conversion gate for unauthenticated users.
+ * Conversion gate for users without an account.
  *
- * Renders children normally for authenticated users. For anonymous
- * visitors, the content renders blurred and non-interactive with a
- * floating sign-up card centered on top — "peek behind the curtain."
+ * Renders children normally for users with a real account. For anonymous
+ * visitors (including Convex anonymous sessions), the content renders
+ * blurred and non-interactive with a floating sign-up card centered on
+ * top — "peek behind the curtain."
  *
  * Use on any page where you want to show the structure but gate
- * interaction behind authentication.
+ * interaction behind having an account.
  */
-export function AuthGate({
+export function AccountGate({
   children,
   title = "Sign in to get started",
   description = "Create a free account to save your recipes, track execution history, and pick up where you left off.",
-}: AuthGateProps) {
+}: AccountGateProps) {
   const { isAuthenticated, isLoading, user } = core.auth.useAuth();
 
   // Gate on a real account (has email), not just an anonymous session.

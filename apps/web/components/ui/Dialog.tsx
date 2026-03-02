@@ -52,27 +52,32 @@ const DialogContent = forwardRef<
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
-    <Animate.ScaleIn from={0.92} easing="spring-bouncy">
-      <DialogPrimitive.Content
-        ref={ref}
-        className={cn(
-          "fixed top-[50%] left-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%]",
-          "rounded-xl border border-border bg-card p-6 shadow-xl",
-          className,
-        )}
-        {...props}
-      >
-        {children}
-        <div className="absolute top-3 right-3 z-10">
-          <DialogPrimitive.Close asChild>
-            <Button variant="ghost" size="icon" elevation="md" className="size-8">
-              <XIcon className="size-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </DialogPrimitive.Close>
-        </div>
-      </DialogPrimitive.Content>
-    </Animate.ScaleIn>
+    {/* Positioning wrapper — establishes z-50 stacking context so the
+        Animate.ScaleIn wrapper (which creates its own stacking context
+        from the CSS animation) doesn't fall behind the overlay. */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+      <Animate.ScaleIn from={0.92} easing="spring-bouncy">
+        <DialogPrimitive.Content
+          ref={ref}
+          className={cn(
+            "pointer-events-auto w-full max-w-lg",
+            "rounded-xl border border-border bg-card p-6 shadow-xl",
+            className,
+          )}
+          {...props}
+        >
+          {children}
+          <div className="absolute top-3 right-3 z-10">
+            <DialogPrimitive.Close asChild>
+              <Button variant="ghost" size="icon" elevation="md" className="size-8">
+                <XIcon className="size-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </DialogPrimitive.Close>
+          </div>
+        </DialogPrimitive.Content>
+      </Animate.ScaleIn>
+    </div>
   </DialogPortal>
 ));
 DialogContent.displayName = "Dialog.Content";

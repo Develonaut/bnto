@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 
 import { AppShell } from "@/components/ui/AppShell";
-import { AuthGate } from "@/components/ui/AuthGate";
+import { AccountGate } from "@/components/ui/AccountGate";
 import { Heading } from "@/components/ui/Heading";
 import { Stack } from "@/components/ui/Stack";
 import { Tabs } from "@/components/ui/Tabs";
@@ -57,58 +57,56 @@ function TabPanelFallback() {
 export default function MyRecipesPage() {
   return (
     <AppShell.Content>
-      <Stack className="gap-8">
-        <Stack className="gap-1">
-          <Heading level={1} size="lg">
-            My Recipes
-          </Heading>
-          <Text color="muted">
-            Your saved recipes and recent activity.
-          </Text>
-        </Stack>
-
-        <AuthGate
-          title="Save your recipes"
-          description="Sign in to save your recipes, access execution history, and pick up where you left off from any device."
-        >
-          <Stack className="gap-8">
-            <UsageStats />
-
-            <Tabs defaultValue="history">
-              <Tabs.List>
-                <Tabs.Trigger value="history">History</Tabs.Trigger>
-                <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
-              </Tabs.List>
-
-              {/*
-               * forceMount keeps both panels in the DOM so switching
-               * tabs doesn't remount components or refetch data.
-               *
-               * The inactive panel uses invisible + absolute so it's
-               * removed from layout flow but stays mounted. The active
-               * panel stays in normal flow and determines container height.
-               */}
-              <div className="relative">
-                <Tabs.Content
-                  value="history"
-                  forceMount
-                  className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
-                >
-                  <ExecutionHistory />
-                </Tabs.Content>
-
-                <Tabs.Content
-                  value="saved"
-                  forceMount
-                  className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
-                >
-                  <WorkflowGrid />
-                </Tabs.Content>
-              </div>
-            </Tabs>
+      <AccountGate
+        title="Save your recipes"
+        description="Sign in to save your recipes, access execution history, and pick up where you left off from any device."
+      >
+        <Stack className="gap-8">
+          <Stack className="gap-1">
+            <Heading level={1} size="lg">
+              My Recipes
+            </Heading>
+            <Text color="muted">
+              Your saved recipes and recent activity.
+            </Text>
           </Stack>
-        </AuthGate>
-      </Stack>
+
+          <UsageStats />
+
+          <Tabs defaultValue="history">
+            <Tabs.List>
+              <Tabs.Trigger value="history">History</Tabs.Trigger>
+              <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
+            </Tabs.List>
+
+            {/*
+             * forceMount keeps both panels in the DOM so switching
+             * tabs doesn't remount components or refetch data.
+             *
+             * The inactive panel uses invisible + absolute so it's
+             * removed from layout flow but stays mounted. The active
+             * panel stays in normal flow and determines container height.
+             */}
+            <div className="relative">
+              <Tabs.Content
+                value="history"
+                forceMount
+                className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
+              >
+                <ExecutionHistory />
+              </Tabs.Content>
+
+              <Tabs.Content
+                value="saved"
+                forceMount
+                className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
+              >
+                <WorkflowGrid />
+              </Tabs.Content>
+            </div>
+          </Tabs>
+        </Stack>
+      </AccountGate>
     </AppShell.Content>
   );
 }
