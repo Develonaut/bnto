@@ -14,16 +14,29 @@ import { LoaderIcon } from "@/components/ui/icons";
 
 type Mode = "signin" | "signup";
 
+const HAS_ACCOUNT_COOKIE = "bnto-has-account";
+
+function hasCookie(name: string) {
+  return typeof document !== "undefined" && document.cookie.includes(name);
+}
+
+function setHasAccountCookie() {
+  document.cookie = `${HAS_ACCOUNT_COOKIE}=1; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+}
+
 interface SignInFormProps {
   defaultMode?: Mode;
 }
 
-export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
+export function SignInForm({ defaultMode }: SignInFormProps) {
   const { email: signInEmail } = core.auth.useSignIn();
-  const { email: signUpEmail, anonymousUserId } = core.auth.useSignUp();
+  const { email: signUpEmail } = core.auth.useSignUp();
   const router = useRouter();
 
-  const [mode, setMode] = useState<Mode>(defaultMode);
+  // Default to signup for new visitors, signin for returning users.
+  // The bnto-has-account cookie is set on successful auth and persists for 1 year.
+  const resolvedDefault = defaultMode ?? (hasCookie(HAS_ACCOUNT_COOKIE) ? "signin" : "signup");
+  const [mode, setMode] = useState<Mode>(resolvedDefault);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,13 +57,11 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
 
     try {
       if (isSignUp) {
-        // signUpEmail waits for the anonymous session to resolve if needed,
-        // then fires the API call with the captured anonymousUserId.
-        // The spinner shows while we wait.
         await signUpEmail({ name, email, password });
       } else {
         await signInEmail({ email, password });
       }
+      setHasAccountCookie();
       router.replace("/");
     } catch {
       setError(
@@ -82,7 +93,7 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
             </Stack>
 
             <div className="rounded-xl border bg-card p-6 shadow-sm">
-              <form onSubmit={handleSubmit} className="grid gap-4" data-anon-uid={anonymousUserId ?? ""}>
+              <form onSubmit={handleSubmit} className="grid gap-4">
                 {isSignUp && (
                   <Input
                     type="text"

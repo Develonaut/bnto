@@ -3,13 +3,6 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
-// Reset run counters on the 1st of every month at 00:00 UTC.
-crons.monthly(
-  "reset run counters",
-  { day: 1, hourUTC: 0, minuteUTC: 0 },
-  internal.users.resetRunCounters,
-);
-
 // Catch executions stuck in pending/running for >2 hours.
 // Likely caused by Go API crash, network drop, or polling timeout edge case.
 crons.interval(

@@ -1,12 +1,10 @@
 import type {
   RawAnalyticsDoc,
   RawSlugAggregateDoc,
-  RawServerQuotaDoc,
 } from "../types/raw";
 import type {
   UsageAnalytics,
   SlugAggregate,
-  ServerQuota,
 } from "../types/analytics";
 
 /** Map legacy "starter" plan to "free" — one paid tier now. */
@@ -30,13 +28,5 @@ export function toSlugAggregate(doc: RawSlugAggregateDoc): SlugAggregate {
     failedRuns: doc.failedRuns,
     avgDurationMs: doc.avgDurationMs,
     lastRunAt: doc.lastRunAt,
-  };
-}
-
-export function toServerQuota(doc: RawServerQuotaDoc): ServerQuota {
-  return {
-    serverRunsUsed: doc.serverRunsUsed,
-    serverRunLimit: doc.serverRunLimit,
-    serverRunsRemaining: doc.serverRunsRemaining,
   };
 }

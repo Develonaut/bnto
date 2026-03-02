@@ -9,7 +9,8 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import {
-  createAnonymousClient,
+  createPasswordClient,
+  generateTestEmail,
   createUnauthenticatedClient,
   type AuthenticatedClient,
   api,
@@ -19,14 +20,16 @@ import { readTestImage, uploadToPresignedUrl } from "./transit-helpers";
 // ── Presigned URL Generation ─────────────────────────────────────────────
 
 describe("upload: presigned URL generation", () => {
-  let anon: AuthenticatedClient;
+  let user: AuthenticatedClient;
 
   beforeAll(async () => {
-    anon = await createAnonymousClient();
+    user = await createPasswordClient(generateTestEmail(), "test-upload-123", {
+      flow: "signUp",
+    });
   });
 
   it("returns valid presigned URLs for a single file", async () => {
-    const result = await anon.client.action(api.uploads.generateUploadUrls, {
+    const result = await user.client.action(api.uploads.generateUploadUrls, {
       files: [
         { name: "test.png", contentType: "image/png", sizeBytes: 1024 },
       ],
@@ -42,7 +45,7 @@ describe("upload: presigned URL generation", () => {
   });
 
   it("returns multiple presigned URLs for a batch", async () => {
-    const result = await anon.client.action(api.uploads.generateUploadUrls, {
+    const result = await user.client.action(api.uploads.generateUploadUrls, {
       files: [
         { name: "a.png", contentType: "image/png", sizeBytes: 1024 },
         { name: "b.csv", contentType: "text/csv", sizeBytes: 512 },
@@ -59,12 +62,12 @@ describe("upload: presigned URL generation", () => {
   });
 
   it("each call generates a unique sessionId", async () => {
-    const r1 = await anon.client.action(api.uploads.generateUploadUrls, {
+    const r1 = await user.client.action(api.uploads.generateUploadUrls, {
       files: [
         { name: "x.png", contentType: "image/png", sizeBytes: 1024 },
       ],
     });
-    const r2 = await anon.client.action(api.uploads.generateUploadUrls, {
+    const r2 = await user.client.action(api.uploads.generateUploadUrls, {
       files: [
         { name: "y.png", contentType: "image/png", sizeBytes: 1024 },
       ],
@@ -74,18 +77,20 @@ describe("upload: presigned URL generation", () => {
   });
 });
 
-// ── Validation Enforcement ───────────────────────────────────────────────
+// ── Validation Enforcement ──────────────────────────────────────────────
 
 describe("upload: validation enforcement", () => {
-  let anon: AuthenticatedClient;
+  let user: AuthenticatedClient;
 
   beforeAll(async () => {
-    anon = await createAnonymousClient();
+    user = await createPasswordClient(generateTestEmail(), "test-val-123", {
+      flow: "signUp",
+    });
   });
 
   it("rejects unsupported MIME type", async () => {
     await expect(
-      anon.client.action(api.uploads.generateUploadUrls, {
+      user.client.action(api.uploads.generateUploadUrls, {
         files: [
           {
             name: "script.exe",
@@ -99,7 +104,7 @@ describe("upload: validation enforcement", () => {
 
   it("rejects empty batch", async () => {
     await expect(
-      anon.client.action(api.uploads.generateUploadUrls, {
+      user.client.action(api.uploads.generateUploadUrls, {
         files: [],
       }),
     ).rejects.toThrow();
@@ -108,7 +113,7 @@ describe("upload: validation enforcement", () => {
   it("rejects file exceeding free plan size limit (25MB)", async () => {
     const overLimit = 26 * 1024 * 1024;
     await expect(
-      anon.client.action(api.uploads.generateUploadUrls, {
+      user.client.action(api.uploads.generateUploadUrls, {
         files: [
           {
             name: "huge.png",
@@ -132,19 +137,21 @@ describe("upload: validation enforcement", () => {
   });
 });
 
-// ── Actual File Upload to R2 ─────────────────────────────────────────────
+// ── Actual File Upload to R2 ────────────────────────────────────────────
 
 describe("upload: actual file upload to R2", () => {
-  let anon: AuthenticatedClient;
+  let user: AuthenticatedClient;
 
   beforeAll(async () => {
-    anon = await createAnonymousClient();
+    user = await createPasswordClient(generateTestEmail(), "test-r2-123", {
+      flow: "signUp",
+    });
   });
 
   it("uploads a real PNG file via presigned URL", async () => {
     const fileBuffer = readTestImage();
 
-    const result = await anon.client.action(api.uploads.generateUploadUrls, {
+    const result = await user.client.action(api.uploads.generateUploadUrls, {
       files: [
         {
           name: "Product_Render.png",

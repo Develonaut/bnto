@@ -193,7 +193,7 @@ All browser journey specs use shared helpers from `apps/web/e2e/helpers.ts`:
 
 Specs are tagged for selective runs:
 - `@browser` — no Convex backend needed (execution flows, pages, telemetry)
-- `@auth` — needs Convex running (auth lifecycle, anonymous conversion)
+- `@auth` — needs Convex running (auth lifecycle, sign-in/sign-up/sign-out)
 
 ---
 

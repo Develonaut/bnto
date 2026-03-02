@@ -26,7 +26,7 @@ export const ROUTES = {
 export const AUTH_PATHS = [ROUTES.signin, ROUTES.signup] as const;
 
 /**
- * Paths that require a real authenticated account (not anonymous).
+ * Paths that require authentication.
  * Unauthenticated users are redirected to /signin.
  */
 export const PROTECTED_PATHS = [

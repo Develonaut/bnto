@@ -43,8 +43,6 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     })),
   );
 
-  // -- Session / quota --
-  const { isPending: sessionPending, quotaExhausted } = core.user.useRunQuota();
   const { data: currentUser } = core.user.useCurrentUser();
 
   // -- Execution path: browser (WASM) vs cloud (R2 + Go API) --
@@ -210,9 +208,6 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   }, [setFiles, handleResetExecution]);
 
   return {
-    // Session
-    sessionPending,
-    quotaExhausted,
     currentUser: currentUser ?? null,
     // Execution path
     isBrowserPath,

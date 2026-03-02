@@ -28,7 +28,6 @@ export type { User } from "./user";
 export type {
   UsageAnalytics,
   SlugAggregate,
-  ServerQuota,
 } from "./analytics";
 
 export type {

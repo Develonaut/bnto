@@ -1,33 +1,33 @@
 # Auth — User Journey Test Matrix
 
 **Domain:** Authentication, sessions, identity, and authorization gates
-**Status:** Sprint 2A — active priority
-**Last Updated:** February 23, 2026
+**Status:** Sprint 3A — anonymous system removed
+**Last Updated:** March 2, 2026
 
 ---
 
 ## Why This Matters
 
-The monetization strategy depends on: (1) anonymous users running bntos freely to build habit, (2) converting anonymous → signed-up when they hit the free limit or want to save work, (3) signed-up → Pro when they need more runs. Every step requires auth sessions that Convex recognizes. These tests prove auth has UNBLOCKED users from using the environment — not that every feature is polished, but that auth doesn't stand in the way.
+The auth system gates access to Convex functions and protected routes. Users either sign up with email/password or use bnto without an account (browser execution is free, unlimited, no session needed). Auth exists for: (1) saving workflows, (2) execution history, (3) server-node quota enforcement (Pro).
 
 ---
 
 ## Auth Gate Map
 
-Every point in the execution flow where auth is checked. This is the system-level view — what functions get called, what they check, and what happens for each user type.
+Every point in the execution flow where auth is checked.
 
-| Step | What Happens | Auth Gate | Function | Anonymous Behavior |
-|------|-------------|-----------|----------|-------------------|
+| Step | What Happens | Auth Gate | Function | Unauthenticated Behavior |
+|------|-------------|-----------|----------|--------------------------|
 | Page load | `/compress-images` renders | None (public route) | N/A | Renders tool page |
-| Session init | `useAnonymousSession()` fires on mount | `authClient.signIn.anonymous()` | `useAnonymousSession.ts` | Creates anonymous session + `users` row |
-| Upload URLs | Generate R2 presigned upload URLs | `api.users.getMe` → plan check | `convex/uploads.ts:generateUploadUrls` | Defaults to `"free"` plan limits |
-| Upload to R2 | PUT file to presigned URL | None (URL is the credential) | R2 presigned URL | Works |
-| Start execution | Create execution record | `getAppUserId()` + `enforceQuota()` | `convex/executions.ts:startPredefined` | **THE GATE THAT'S BROKEN** — needs valid userId |
-| Progress stream | Subscribe to execution status | `getAppUserId()` + ownership check | `convex/executions.ts:get` | Returns own execution only |
-| Download URLs | Generate R2 presigned download URLs | `getAppUserId()` + ownership check | `convex/downloads.ts:generateDownloadUrls` | Can download own results only |
-| Download from R2 | GET file from presigned URL | None (URL is the credential) | R2 presigned URL | Works |
+| Browser execution | WASM processes files locally | None (client-side) | `BntoWorker` | Works — no server interaction |
+| Upload URLs | Generate R2 presigned upload URLs | `getAppUserId()` + plan check | `convex/uploads.ts:generateUploadUrls` | Rejected — requires auth |
+| Upload to R2 | PUT file to presigned URL | None (URL is the credential) | R2 presigned URL | Works (if URL obtained) |
+| Start execution | Create execution record | `getAppUserId()` + plan check | `convex/executions.ts:startPredefined` | Rejected — requires auth |
+| Progress stream | Subscribe to execution status | `getAppUserId()` + ownership check | `convex/executions.ts:get` | Returns null |
+| Download URLs | Generate R2 presigned download URLs | `getAppUserId()` + ownership check | `convex/downloads.ts:generateDownloadUrls` | Rejected — requires auth |
+| Download from R2 | GET file from presigned URL | None (URL is the credential) | R2 presigned URL | Works (if URL obtained) |
 
-**Key insight:** R2 operations (upload, download) don't check auth — the presigned URL IS the credential. Auth gates are all in Convex functions that generate those URLs or create/read execution records.
+**Key insight:** Browser execution bypasses all auth gates — it's 100% client-side. Auth gates only apply to cloud execution (R2 upload/download, Convex execution records).
 
 ---
 
@@ -35,46 +35,29 @@ Every point in the execution flow where auth is checked. This is the system-leve
 
 Each row is one test. "Pass" means auth didn't block the user from completing the action.
 
-### Anonymous Execution Flow
-
-The happy path. Anonymous user goes from landing to download.
-
-| # | Journey | Steps | Pass Criteria |
-|---|---------|-------|---------------|
-| **A1** | Anonymous session bootstrap | Land on `/compress-images` → `useAnonymousSession` fires | Session created. `users` table row exists with `isAnonymous: true`. `getAppUserId()` returns non-null for this session. |
-| **A2** | Anonymous can generate upload URLs | A1 → call `api.uploads.generateUploadUrls` | Returns presigned URLs. Plan defaults to `"free"`. File size limits enforced (not rejected outright). |
-| **A3** | Anonymous can start execution | A1 → call `api.executions.startPredefined` with valid args | Execution record created in Convex with status `"pending"`, linked to anonymous userId. No "Not authenticated" error. |
-| **A4** | Anonymous can subscribe to progress | A3 → subscribe to `api.executions.get(executionId)` | Returns the execution record (not null). Ownership check passes — anonymous user sees their own execution. |
-| **A5** | Anonymous can generate download URLs | A3 (completed execution) → call `api.downloads.generateDownloadUrls` | Returns presigned download URLs. Ownership check passes. |
-
-### Anonymous Edge Cases
-
-Quota enforcement and session durability.
-
-| # | Journey | Steps | Pass Criteria |
-|---|---------|-------|---------------|
-| **A6** | Anonymous server-node quota enforcement | A1 → exhaust anonymous server-node run limit → attempt another server-node execution | `startPredefined` throws quota error (not auth error). Error is `"ANONYMOUS_QUOTA_EXCEEDED"`, not `"Not authenticated"`. **Only applies to server-node executions.** Browser-node executions are unlimited — see [pricing-model.md](../strategy/pricing-model.md). |
-| **A7** | Anonymous session persists across refresh | A1 → page refresh → call any Convex mutation | Same userId. No re-authentication. Session cookie survives refresh. |
-
-### Conversion Flow
-
-Anonymous → signup. The revenue funnel.
-
-| # | Journey | Steps | Pass Criteria |
-|---|---------|-------|---------------|
-| **C1** | Anonymous → signup conversion | A1 (has runs) → sign up with email/password | Same userId preserved. Existing runs and executions still belong to this user. `isAnonymous` flips to `false`. **CRITICAL: Must be tested in browser E2E** — see known limitation below. |
-| **C2** | Converted user retains access | C1 → call `api.executions.get` for pre-conversion execution | Returns the execution. Ownership still valid — userId didn't change. **Depends on C1 userId preservation — browser E2E only.** |
-| **C3** | Converted user gets full free tier | C1 → check `planTier` and server-node execution access | User upgraded from anonymous to free tier. Gains access to platform features (save recipes, history) when Pro. Browser-node executions remain unlimited. Server-node quota upgraded from anonymous limit to free-tier limit. Existing execution count preserved (not reset). |
-
 ### Standard Auth Lifecycle
 
-Email sign-in/sign-out and API surface.
+Email sign-up, sign-in, sign-out.
 
 | # | Journey | Steps | Pass Criteria |
 |---|---------|-------|---------------|
-| **S1** | Email sign-in works | Sign in with email/password | Session created. `getAppUserId()` returns valid userId. Convex mutations succeed. |
-| **S2** | Sign-out clears session | S1 → sign out | Session invalidated. `getAppUserId()` returns null. Convex mutations correctly reject. |
-| **S3** | Auth API surface | All auth endpoints respond correctly | sign-in (anonymous + email), sign-up, sign-out, get-session return correct shapes. Invalid credentials return errors, not crashes. |
+| **S1** | Email sign-up works | Sign up with name/email/password | Session created. `users` table row exists. `getAppUserId()` returns valid userId. |
+| **S2** | Email sign-in works | Sign in with existing email/password | Session created. Same userId as sign-up. Convex mutations succeed. |
+| **S3** | Sign-out clears session | S1 → sign out | Session invalidated. `getAppUserId()` returns null. Protected queries return null. |
+| **S4** | Auth API surface | All auth endpoints respond correctly | sign-in, sign-up, sign-out, token refresh return correct shapes. Invalid credentials return errors, not crashes. |
+
+### Quota Enforcement
+
+### Access Control
+
+Execution visibility and ownership.
+
+| # | Journey | Steps | Pass Criteria |
+|---|---------|-------|---------------|
+| **V1** | Execution visible to owner | S1 → start execution → query | Owner can see their execution. |
+| **V2** | Execution NOT visible to others | S1 → start execution → different user queries | Returns null. |
+| **V3** | Unauthenticated cannot start execution | No auth → `startPredefined` | Throws "Not authenticated". |
+| **V4** | Unauthenticated cannot download | No auth → `generateDownloadUrls` | Throws error. |
 
 ---
 
@@ -82,33 +65,17 @@ Email sign-in/sign-out and API surface.
 
 | Journey | Also Touches | Notes |
 |---------|-------------|-------|
-| A2, A5 | API (R2 presigned URLs) | Auth validates ownership, API generates URLs |
-| A3 | API (Railway execution) | Auth creates execution record, API runs the workflow |
-| A4 | Web (real-time UI) | Auth gates the Convex subscription, web renders progress |
-| C1-C3 | Web (signup form) | Conversion triggered through web app UI |
+| Q1 | API (server execution) | Auth creates execution record, API runs the workflow |
+| V1-V2 | Web (real-time UI) | Auth gates the Convex subscription, web renders progress |
 
 ---
-
-## Known Limitations
-
-### ConvexHttpClient does NOT preserve userId during anonymous → password upgrade (C1-C2)
-
-**Discovered:** Feb 2026 during integration test development.
-
-`ConvexHttpClient` uses stateless JWT auth — it doesn't carry session cookies. When `@convex-dev/auth` v0.0.90 processes a password `signUp` action, it receives the JWT token but has no way to link the new password credential to the existing anonymous session. Result: the `createOrUpdateUser` callback gets no `existingUserId`, so it creates a **new user** instead of patching the anonymous one.
-
-**Impact:** C1 ("Same userId preserved") and C2 ("Ownership still valid") **cannot be verified** via `ConvexHttpClient` integration tests. The Vitest integration tests (`conversion-flow.test.ts`) document the actual behavior and explicitly assert that userIds differ as a known limitation.
-
-**Browser behavior may differ.** The React auth provider (`@convex-dev/auth/react`) tracks sessions via cookies. The browser-based flow may correctly link the anonymous session to the new password credential, preserving userId. **This is a critical E2E test** — if userId preservation fails in the browser too, the conversion funnel is broken (anonymous user's runs, executions, and workflows would be orphaned on upgrade).
-
-**Action required:** Sprint 2A Wave 5 Playwright E2E tests MUST verify C1 userId preservation in a real browser with cookies. If it fails there too, a Convex migration or custom `createOrUpdateUser` logic will be needed.
 
 ## Implementation Notes
 
 - Tests run against real Convex dev backend (`task dev:all`), not mocks
-- Integration tests (Vitest or Playwright), not unit tests — these test the full auth pipeline
-- Group tests by file matching the matrix sections:
-  - `anonymous-execution.test.ts` (A1-A5)
-  - `anonymous-edge-cases.test.ts` (A6-A7)
-  - `conversion-flow.test.ts` (C1-C3) — **ConvexHttpClient baseline only; browser E2E needed for C1-C2**
-  - `auth-lifecycle.test.ts` (S1-S3)
+- Integration tests (Vitest) + E2E tests (Playwright) — test the full auth pipeline
+- Group tests by file:
+  - `auth-lifecycle.test.ts` (S1-S4) — ConvexHttpClient integration tests
+  - `execution.test.ts` (Q1-Q2, V1-V3) — execution lifecycle + access control
+  - `upload.test.ts` (V4 variant) — upload access control
+  - `auth-lifecycle.spec.ts` — Playwright E2E for browser auth flows

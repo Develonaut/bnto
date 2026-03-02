@@ -49,9 +49,8 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const isAuthenticated = await convexAuth.isAuthenticated();
 
   // Auth routes — redirect to home if already authenticated.
-  // Skip redirect when signout signal cookie is set — the user is either
-  // signing out (needs to reach /signin despite stale session cookie) or
-  // is an anonymous user navigating to sign up.
+  // Skip redirect when signout signal cookie is set — the user is signing
+  // out and needs to reach /signin despite the stale session cookie.
   if (isAuthenticated && isAuthPath(pathname) && !hasSignoutSignal(request)) {
     return nextjsMiddlewareRedirect(request, "/");
   }
