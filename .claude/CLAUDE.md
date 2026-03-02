@@ -12,6 +12,7 @@
 | ---------------------------- | ------------------------------------------------------------------ |
 | Any code                     | [code-standards.md](.claude/rules/code-standards.md)              |
 | Any UI / styling work        | [rules/theming.md](.claude/rules/theming.md)                       |
+| Data fetching / hooks        | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md) |
 | Architecture decisions       | [rules/architecture.md](.claude/rules/architecture.md)             |
 | Repo structure               | [monorepo-structure.md](.claude/strategy/monorepo-structure.md)    |
 | Visual editor (Sprint 4)     | [visual-editor.md](.claude/strategy/visual-editor.md)              |
@@ -221,6 +222,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [ROADMAP.md](.claude/ROADMAP.md) | Strategic roadmap — milestones, direction, big decisions |
 | [PLAN.md](.claude/PLAN.md) | Build plan — sprints, waves, what's next |
 | [pricing-model.md](.claude/strategy/pricing-model.md) | Free vs premium — nodes, recipes, features, terminology |
+| [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md) | Hybrid Convex native + React Query, co-located queries, self-fetching components |
 | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) | Full architecture, tech decisions, phases |
 | [monorepo-structure.md](.claude/strategy/monorepo-structure.md) | Repo structure, packages, CLI-to-API mapping |
 | [core-principles.md](.claude/strategy/core-principles.md) | TDD, Grain, Modularity, Abstraction |
