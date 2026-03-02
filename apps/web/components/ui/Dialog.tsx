@@ -90,7 +90,7 @@ const DialogContent = forwardRef<
         <Animate.ScaleIn from={0.6} easing="spring-bouncier">
           <Card
             elevation="lg"
-            className={cn("pointer-events-auto relative w-full max-w-lg p-6", className)}
+            className={cn("pointer-events-auto relative w-full max-w-lg p-8", className)}
           >
             {children}
           </Card>
@@ -109,7 +109,7 @@ const DialogHeader = forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-start justify-between gap-4", className)}
+    className={cn("flex items-center justify-between gap-4", className)}
     {...props}
   />
 ));
@@ -151,7 +151,7 @@ const DialogTitle = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("font-display text-lg font-semibold leading-none tracking-tight", className)}
+    className={cn("font-display text-xl font-black tracking-tight", className)}
     {...props}
   />
 ));
@@ -165,7 +165,7 @@ const DialogDescription = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-muted-foreground leading-snug", className)}
     {...props}
   />
 ));
