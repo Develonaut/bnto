@@ -26,7 +26,7 @@ export const SITE_DESCRIPTION =
 export const TAGLINE = "Compress images, clean CSVs, rename files, and convert formats.";
 
 /** Privacy and trust message. */
-export const TRUST_LINE = "Free, instant, private. Processed in your browser.";
+export const TRUST_LINE = "Free, instant, runs in your browser.";
 
 /** License footer line. */
 export const LICENSE_LINE = "MIT Licensed. Browser tools free forever.";

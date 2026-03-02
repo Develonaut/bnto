@@ -24,7 +24,7 @@ import {
 
 const PITCH_POINTS = [
   { icon: ZapIcon, label: `${BNTO_REGISTRY.length} free tools, no limits, no signup` },
-  { icon: ShieldCheckIcon, label: "100% in your browser. Files never leave your device" },
+  { icon: ShieldCheckIcon, label: "Runs in your browser. Files stay on your device" },
   { icon: LaptopIcon, label: "Batch processing. Drop multiple files at once" },
   { icon: GlobeIcon, label: "Open source (MIT). Inspect every line" },
 ];
