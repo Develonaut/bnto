@@ -47,7 +47,7 @@ export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
       {/* CTA */}
       {showCta && (
         <Row className="gap-3 pt-2">
-          <Button variant="primary" href="#faq" elevation="sm">
+          <Button href="#faq" elevation="sm">
             Learn more
           </Button>
           <Button
