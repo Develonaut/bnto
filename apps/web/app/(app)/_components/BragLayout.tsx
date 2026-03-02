@@ -55,7 +55,7 @@ function ComparisonCell({ value, win }: { value: string; win?: boolean }) {
 
 export function BragLayout() {
   const speedCard = (
-    <Card elevation="md" className="p-5">
+    <Card className="p-5">
       <Stack className="gap-3">
       <Row className="gap-3">
         <IconBadge variant="primary" size="md" shape="square">
@@ -85,7 +85,7 @@ export function BragLayout() {
   );
 
   const comparisonCard = (
-    <Card elevation="md">
+    <Card>
     <div className="grid grid-cols-4 overflow-hidden rounded-[inherit]">
       {/* Header row */}
       <div className="border-b border-border p-3" />

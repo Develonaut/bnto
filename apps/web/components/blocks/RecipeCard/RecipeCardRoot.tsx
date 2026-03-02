@@ -29,7 +29,7 @@ type RecipeCardRootProps = PropsWithChildren<{
 
 export function RecipeCardRoot({ onClick, href, className, loading, children }: RecipeCardRootProps) {
   const card = (
-    <Card elevation="md" loading={loading} className={cn("flex h-full flex-col justify-between p-5", className)}>
+    <Card loading={loading} className={cn("flex h-full flex-col justify-between p-5", className)}>
       {children}
     </Card>
   );
@@ -136,7 +136,7 @@ function RecipeCardMeta({ nodeCount, updatedAt }: { nodeCount: number; updatedAt
 
 function RecipeCardSkeleton({ loading = true }: { loading?: boolean }) {
   return (
-    <Card elevation="md" loading={loading} className="flex h-full flex-col justify-between p-5">
+    <Card loading={loading} className="flex h-full flex-col justify-between p-5">
       <Row align="start" justify="between">
         <Skeleton className="size-10 rounded-lg" />
         <Skeleton className="h-5 w-16 rounded-full" />
