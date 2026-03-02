@@ -32,7 +32,7 @@ export function TrustLayout() {
   return (
     <Animate.ScaleIn from={0.9} easing="spring-bouncy">
       <Center className="w-full">
-        <Card elevation="md" className="w-full max-w-sm p-6">
+        <Card className="w-full max-w-sm p-6">
           <Stack className="gap-5">
             <Stack className="gap-3">
               {ANTI_PATTERNS.map((item, i) => (
@@ -56,7 +56,6 @@ export function TrustLayout() {
                 </Text>
                 <Button
                   variant="outline"
-                  size="md"
                   href={GITHUB_URL}
                   target="_blank"
                   rel="noopener noreferrer"

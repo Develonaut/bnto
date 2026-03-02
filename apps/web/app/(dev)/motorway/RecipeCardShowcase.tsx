@@ -1,8 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import type { WorkflowListItem } from "@bnto/core";
 
 import { Animate } from "@/components/ui/Animate";
+import { Button } from "@/components/ui/Button";
 import { Grid } from "@/components/ui/Grid";
 import { Heading } from "@/components/ui/Heading";
+import { Row } from "@/components/ui/Row";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { RecipeCard } from "@/components/blocks/RecipeCard";
@@ -40,10 +46,25 @@ const MOCK_WORKFLOWS: Array<{
 /* ── Showcase ────────────────────────────────────────────────── */
 
 export function RecipeCardShowcase() {
+  const [loading, setLoading] = useState(false);
   const registrySlice = BNTO_REGISTRY.slice(0, 3);
 
   return (
     <Stack gap="lg">
+      <Row gap="sm" className="items-center">
+        <Button
+          variant={loading ? "secondary" : "outline"}
+          onClick={() => setLoading((l) => !l)}
+        >
+          {loading ? "Load Content" : "Show Loading"}
+        </Button>
+        <Text size="sm" color="muted">
+          {loading
+            ? "Skeletons are grounded — cards spring up when content arrives."
+            : "Cards are loaded with real content."}
+        </Text>
+      </Row>
+
       {/* WorkflowCard — domain wrapper pattern */}
       <Stack gap="sm">
         <div>
@@ -57,7 +78,11 @@ export function RecipeCardShowcase() {
             {MOCK_WORKFLOWS.map((item, i) => (
               <Grid.Item key={item.workflow.id}>
                 <Animate.ScaleIn index={i} from={0.85} easing="spring-bouncy" className="h-full">
-                  <WorkflowCard workflow={item.workflow} lastStatus={item.lastStatus} />
+                  <WorkflowCard
+                    workflow={item.workflow}
+                    lastStatus={item.lastStatus}
+                    loading={loading}
+                  />
                 </Animate.ScaleIn>
               </Grid.Item>
             ))}
@@ -78,22 +103,34 @@ export function RecipeCardShowcase() {
             {registrySlice.map((entry, i) => (
               <Grid.Item key={entry.slug}>
                 <Animate.ScaleIn index={i} from={0.85} easing="spring-bouncy" className="h-full">
-                  <RecipeCard href={`/${entry.slug}`}>
-                    <RecipeCard.Header>
-                      <RecipeCard.Icon icon={getBntoIcon(entry.slug)} />
-                      <RecipeCard.Category>{entry.features[0]}</RecipeCard.Category>
-                    </RecipeCard.Header>
-                    <RecipeCard.Content>
-                      <RecipeCard.Title>{entry.h1.replace(/ Online Free$/, "")}</RecipeCard.Title>
-                      <RecipeCard.Tags tags={entry.features} limit={3} />
-                    </RecipeCard.Content>
+                  <RecipeCard href={loading ? undefined : `/${entry.slug}`} loading={loading}>
+                    {loading ? (
+                      <>
+                        <RecipeCard.Header>
+                          <Skeleton className="size-10 rounded-lg" />
+                          <Skeleton className="h-5 w-16 rounded-full" />
+                        </RecipeCard.Header>
+                        <RecipeCard.Content>
+                          <Skeleton className="h-5 w-3/4" />
+                          <Skeleton className="h-4 w-1/2" />
+                        </RecipeCard.Content>
+                      </>
+                    ) : (
+                      <>
+                        <RecipeCard.Header>
+                          <RecipeCard.Icon icon={getBntoIcon(entry.slug)} />
+                          <RecipeCard.Category>{entry.features[0]}</RecipeCard.Category>
+                        </RecipeCard.Header>
+                        <RecipeCard.Content>
+                          <RecipeCard.Title>{entry.h1.replace(/ Online Free$/, "")}</RecipeCard.Title>
+                          <RecipeCard.Tags tags={entry.features} limit={3} />
+                        </RecipeCard.Content>
+                      </>
+                    )}
                   </RecipeCard>
                 </Animate.ScaleIn>
               </Grid.Item>
             ))}
-            <Grid.Item>
-              <RecipeCard.Skeleton />
-            </Grid.Item>
           </Grid>
         </Animate.Stagger>
       </Stack>

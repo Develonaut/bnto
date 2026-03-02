@@ -22,7 +22,7 @@ const Switch = forwardRef<
     {...props}
     ref={ref}
   >
-    <Pressable asChild spring="sm">
+    <Pressable asChild spring="bouncy">
       <Surface asChild variant="primary" elevation="sm" rounded="full">
         <SwitchPrimitives.Thumb
           className="group flex items-center justify-center size-8 data-[state=checked]:translate-x-[39px] data-[state=unchecked]:translate-x-[7px] translate-y-px data-[state=unchecked]:[--variant-bg:var(--card)] data-[state=unchecked]:[--variant-fg:var(--card-foreground)] [&_svg]:size-4 [&_svg]:shrink-0"

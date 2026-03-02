@@ -60,7 +60,7 @@ export function CompartmentNode({ data }: NodeProps<CompartmentNodeType>) {
 
   return (
     <Animate.ScaleIn from={0.7} easing="spring-bouncy">
-      <Pressable asChild spring="lg" muted={status === "pending"}>
+      <Pressable asChild spring="bounciest" muted={status === "pending"}>
         <Card
           elevation={elevation}
           className={`${SURFACE_CLASS[data.variant ?? "primary"]} flex flex-col items-center justify-center rounded-xl`}

@@ -6,28 +6,29 @@ import { cn } from "@/lib/cn";
 
 /* ── Spring modes ────────────────────────────────────────────
  * Controls the hover/active/release transition spring.
- * Shared with Button — import from here to deduplicate.
- *   sm: 150ms ease-out (firm, no overshoot)
- *   md: 400ms spring-bouncier (gentle single bounce)
- *   lg: 550ms spring-pressable (rubber band, 3 oscillations)
+ * Shared with Button and Surface — import from here to deduplicate.
+ *
+ *   bouncy:    150ms ease-out (snappy, minimal overshoot — controls)
+ *   bouncier:  400ms spring-bouncier (pronounced single bounce)
+ *   bounciest: 550ms spring-pressable (rubber band, 3 oscillations)
  * ──────────────────────────────────────────────────────────── */
 
-type SpringMode = "sm" | "md" | "lg";
+type SpringMode = "bouncy" | "bouncier" | "bounciest";
 
 const SPRING_STYLES: Record<SpringMode, CSSProperties> = {
-  sm: {},
-  md: {
+  bouncy: {},
+  bouncier: {
     "--pressable-ease": "var(--ease-spring-bouncier)",
     "--pressable-dur": "400ms",
   } as CSSProperties,
-  lg: {
+  bounciest: {
     "--pressable-ease": "var(--ease-spring-pressable)",
     "--pressable-dur": "550ms",
   } as CSSProperties,
 };
 
 type PressableProps = ComponentProps<"button"> & {
-  /** Transition spring mode. Default `"lg"`. */
+  /** Transition spring mode. Default `"bounciest"`. */
   spring?: SpringMode;
   /** Toggle mode — element stays depressed when active. */
   toggle?: boolean;
@@ -44,7 +45,7 @@ type PressableProps = ComponentProps<"button"> & {
 };
 
 export function Pressable({
-  spring = "lg",
+  spring = "bounciest",
   toggle,
   active,
   hovered,

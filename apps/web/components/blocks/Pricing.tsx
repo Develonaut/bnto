@@ -55,7 +55,7 @@ export function Pricing() {
 
       <div className="mx-auto mt-12 grid max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
         {/* Free tier */}
-        <Card elevation="md">
+        <Card>
           <Card.Content className="flex flex-col gap-6 px-6 py-6">
             <Stack gap="xs">
               <Heading level={3} size="sm">Free</Heading>
@@ -72,7 +72,7 @@ export function Pricing() {
         </Card>
 
         {/* Pro tier */}
-        <Card elevation="md" className="ring-2 ring-primary">
+        <Card className="ring-2 ring-primary">
           <Card.Content className="flex flex-col gap-6 px-6 py-6">
             <Stack gap="xs">
               <div className="flex items-center justify-center gap-2">
@@ -87,7 +87,7 @@ export function Pricing() {
 
             <FeatureList features={PRO_FEATURES} />
 
-            <Button variant="primary" elevation="sm" disabled className="w-full">
+            <Button elevation="sm" disabled className="w-full">
               Coming soon
             </Button>
           </Card.Content>

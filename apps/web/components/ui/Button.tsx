@@ -71,7 +71,7 @@ function Button({
   variant,
   size,
   elevation = true,
-  spring = "lg",
+  spring = "bounciest",
   muted = false,
   hovered = false,
   pressed = false,

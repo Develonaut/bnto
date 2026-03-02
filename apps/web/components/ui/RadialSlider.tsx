@@ -327,7 +327,7 @@ export function RadialSlider({
   // ── Default thumb ──────────────────────────────────────────────────
 
   const defaultThumb = (
-    <Pressable asChild spring="sm" pressed={isDragging} hovered={isHovering}>
+    <Pressable asChild spring="bouncy" pressed={isDragging} hovered={isHovering}>
       <Surface asChild variant="primary" elevation="sm" rounded="full">
         <div ref={thumbRef} className="flex items-center justify-center size-8 ring-0">
           <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />

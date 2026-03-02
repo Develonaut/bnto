@@ -4,6 +4,9 @@ import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "@/lib/cn";
 
+import { SPRING_STYLES } from "./Pressable";
+import type { SpringMode } from "./Pressable";
+
 type SurfaceVariant =
   | "default"
   | "primary"
@@ -35,6 +38,10 @@ type SurfaceProps = ComponentProps<"div"> & {
   elevation?: SurfaceElevation;
   /** Border radius. Default `"lg"`. */
   rounded?: SurfaceRounded;
+  /** Spring animation mode. Adds `.springable` and configures the transition. */
+  spring?: SpringMode;
+  /** Flush with the ground plane, muted appearance. Requires `spring`. */
+  grounded?: boolean;
   /** Merge onto child element instead of wrapping in a `<div>`. */
   asChild?: boolean;
 };
@@ -43,20 +50,26 @@ export function Surface({
   variant = "default",
   elevation = "md",
   rounded = "lg",
+  spring,
+  grounded,
   asChild,
   className,
+  style,
   ...props
 }: SurfaceProps) {
   const Comp = asChild ? Slot : "div";
   return (
     <Comp
+      data-grounded={spring && grounded ? "" : undefined}
       className={cn(
         "surface",
         `elevation-${elevation}`,
         variant !== "default" && `surface-${variant}`,
+        spring && "springable",
         roundedMap[rounded],
         className,
       )}
+      style={spring ? { ...SPRING_STYLES[spring], ...style } : style}
       {...props}
     />
   );
