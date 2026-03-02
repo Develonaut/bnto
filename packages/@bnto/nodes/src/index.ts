@@ -84,3 +84,16 @@ export type {
   ParameterSchema,
   ParameterType,
 } from "./schemas";
+
+// Definition CRUD operations (Sprint 4 Wave 1 — editor foundation)
+export { createBlankDefinition } from "./createBlankDefinition";
+export { addNode } from "./addNode";
+export { removeNode } from "./removeNode";
+export { updateNodeParams } from "./updateNodeParams";
+export { moveNode } from "./moveNode";
+export { definitionToRecipe } from "./definitionToRecipe";
+export type { RecipeMetadata } from "./definitionToRecipe";
+
+// Definition result type (mutation return shape)
+export { isValid } from "./definitionResult";
+export type { DefinitionResult } from "./definitionResult";
