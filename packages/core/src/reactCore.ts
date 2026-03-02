@@ -125,4 +125,8 @@ export const core = {
   recipe: {
     ...baseCore.recipe,
   },
+
+  telemetry: {
+    ...baseCore.telemetry,
+  },
 } as const;
