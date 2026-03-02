@@ -175,21 +175,19 @@ function BouncyStagger() {
         {DEMO_RECIPES.map((recipe) => {
           const Icon = recipe.icon;
           return (
-            <Button
-              key={recipe.title}
-              variant="outline"
-              className="h-auto w-full flex-col items-start gap-3 rounded-xl p-5"
-            >
-              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Icon className="size-5" />
-              </div>
-              <h3 className="font-display text-base font-semibold tracking-tight">
-                {recipe.title}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Browser-based, no signup
-              </p>
-            </Button>
+            <Card key={recipe.title} className="h-full">
+              <Card.Content className="flex flex-col gap-3 p-5">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Icon className="size-5" />
+                </div>
+                <h3 className="font-display text-base font-semibold tracking-tight">
+                  {recipe.title}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Browser-based, no signup
+                </p>
+              </Card.Content>
+            </Card>
           );
         })}
       </Animate.BouncyStagger>
