@@ -81,8 +81,8 @@ describe("proxy", () => {
       expect(response.status).toBe(200);
     });
 
-    it("passes through on /workflows (public with conversion prompt)", async () => {
-      const response = await proxy(createRequest("/workflows"));
+    it("passes through on /my-recipes (public with conversion prompt)", async () => {
+      const response = await proxy(createRequest("/my-recipes"));
       expect(response.status).toBe(200);
     });
 
@@ -124,7 +124,7 @@ describe("proxy", () => {
 
     it("passes through on private paths", async () => {
       const response = await proxy(
-        createRequest("/workflows", AUTH_COOKIES),
+        createRequest("/my-recipes", AUTH_COOKIES),
       );
       expect(response.status).toBe(200);
     });
@@ -169,7 +169,7 @@ describe("proxy", () => {
 
     it("does not affect other routes", async () => {
       const response = await proxy(
-        createRequest("/workflows", signoutCookies),
+        createRequest("/my-recipes", signoutCookies),
       );
       expect(response.status).toBe(200);
     });

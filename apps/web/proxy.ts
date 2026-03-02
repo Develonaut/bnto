@@ -27,7 +27,7 @@ function hasSignoutSignal(
  * 1. Canonical URL normalization (lowercase, no trailing slash)
  * 2. Public routes: pass through immediately (no auth check)
  * 3. Auth routes (/signin, /signup): redirect to / if already authenticated
- * 4. Protected routes (/workflows, etc.): redirect to /signin if not authenticated
+ * 4. Protected routes (/executions, /settings): redirect to /signin if not authenticated
  */
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const { pathname } = request.nextUrl;

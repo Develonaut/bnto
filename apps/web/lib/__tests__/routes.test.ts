@@ -13,7 +13,7 @@ describe("ROUTES", () => {
     expect(ROUTES.signin).toBe("/signin");
     expect(ROUTES.signup).toBe("/signup");
     expect(ROUTES.waitlist).toBe("/waitlist");
-    expect(ROUTES.workflows).toBe("/workflows");
+    expect(ROUTES.myRecipes).toBe("/my-recipes");
     expect(ROUTES.executions).toBe("/executions");
     expect(ROUTES.settings).toBe("/settings");
   });
@@ -43,7 +43,7 @@ describe("PROTECTED_PATHS", () => {
     expect(protectedSet.has("/")).toBe(false);
     expect(protectedSet.has("/signin")).toBe(false);
     expect(protectedSet.has("/waitlist")).toBe(false);
-    expect(protectedSet.has("/workflows")).toBe(false);
+    expect(protectedSet.has("/my-recipes")).toBe(false);
   });
 });
 
@@ -56,7 +56,7 @@ describe("isAuthPath", () => {
   it("returns false for non-auth paths", () => {
     expect(isAuthPath("/")).toBe(false);
     expect(isAuthPath("/waitlist")).toBe(false);
-    expect(isAuthPath("/workflows")).toBe(false);
+    expect(isAuthPath("/my-recipes")).toBe(false);
     expect(isAuthPath("/settings")).toBe(false);
   });
 
@@ -80,8 +80,8 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/")).toBe(false);
     expect(isProtectedPath("/signin")).toBe(false);
     expect(isProtectedPath("/waitlist")).toBe(false);
-    expect(isProtectedPath("/workflows")).toBe(false);
-    expect(isProtectedPath("/workflows/123")).toBe(false);
+    expect(isProtectedPath("/my-recipes")).toBe(false);
+    expect(isProtectedPath("/my-recipes/123")).toBe(false);
   });
 
   it("returns false for bnto slugs and unknown paths", () => {

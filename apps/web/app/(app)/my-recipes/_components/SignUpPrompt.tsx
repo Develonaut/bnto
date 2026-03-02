@@ -7,8 +7,8 @@ import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 
 /**
- * Conversion hook for anonymous users visiting /workflows.
- * Encourages sign-up to unlock saved workflows, execution history, etc.
+ * Conversion hook for anonymous users visiting /my-recipes.
+ * Encourages sign-up to unlock saved recipes, execution history, etc.
  */
 export function SignUpPrompt() {
   return (

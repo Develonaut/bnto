@@ -14,7 +14,7 @@ export const ROUTES = {
   signin: "/signin",
   signup: "/signup",
   waitlist: "/waitlist",
-  workflows: "/workflows",
+  myRecipes: "/my-recipes",
   executions: "/executions",
   settings: "/settings",
 } as const satisfies Record<string, string>;
@@ -47,7 +47,7 @@ export function isAuthPath(pathname: string): pathname is AuthPath {
 
 /**
  * Returns true if the pathname requires authentication.
- * Matches exact paths and sub-paths (e.g. /workflows/123).
+ * Matches exact paths and sub-paths (e.g. /settings/account).
  */
 export function isProtectedPath(pathname: string): pathname is ProtectedPath {
   return (PROTECTED_PATHS as readonly string[]).some(
