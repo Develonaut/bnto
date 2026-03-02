@@ -191,3 +191,11 @@ Present a summary to the user before committing:
 - **CI must pass** before merging. The `CI Gate` check (Rust + TypeScript) is required.
 - **NEVER force-push to `main`** or merge without CI passing.
 - **Ask the user before pushing** if you're unsure. A request to "commit" does not imply "push." A request to "commit and push" authorizes both.
+
+### Convex Production Deploy (automated)
+
+**Merging to `main` triggers an automatic Convex production deploy.** The `convex-deploy` job in `.github/workflows/ci.yml` runs `npx convex deploy --yes` against the production deployment (`gregarious-donkey-712`) after CI Gate passes.
+
+- **No manual deploy needed.** Every merge to `main` deploys Convex functions to production automatically.
+- **Schema changes are safe.** `convex deploy` validates schema changes against existing production data before applying. If validation fails, the deploy job fails and the PR author is notified via GitHub Actions.
+- **If you changed Convex schema or functions** (`packages/@bnto/backend/convex/`), your changes will go live on production as soon as the PR merges. Make sure schema migrations follow the pattern in [gotchas.md](gotchas.md#convex-schema-migration-production) if you're renaming or changing field types.

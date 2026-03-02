@@ -430,9 +430,9 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 **Priority: High.** Convex production (`gregarious-donkey-712`) was never deployed — discovered when anonymous auth started failing on bnto.io with 400 errors. `npx convex deploy --yes` and `npx @convex-dev/auth` had to be run manually. There is no automatic mechanism to deploy Convex functions to production when code merges to `main`.
 
-- [ ] `infra` — Investigate options: GitHub Actions step on merge to main, Vercel build hook (`--cmd`), or manual deploy gate
-- [ ] `infra` — Implement chosen mechanism so Convex prod stays in sync with main
-- [ ] `.claude/rules/pre-commit.md` — Add Convex deploy reminder to the push/PR workflow if manual
+- [x] `infra` — Investigate options: GitHub Actions step on merge to main, Vercel build hook (`--cmd`), or manual deploy gate
+- [x] `infra` — Implement chosen mechanism so Convex prod stays in sync with main
+- [x] `.claude/rules/pre-commit.md` — Add Convex deploy reminder to the push/PR workflow if manual
 
 ### Infra: PostHog Events Not Appearing in Dashboard
 
