@@ -201,7 +201,7 @@ Users convert when they want something the browser can't provide alone. These ar
 | **Server nodes** | "I need AI to classify these images" | Server-side compute (Railway, usage-based) |
 | **Team** | "My team needs shared recipes" | Collaboration (up to 5 members, no per-seat) |
 
-**Lazy anonymous sessions:** Users run browser recipes instantly — no signup, no account, no friction. Convex logs executions with a browser fingerprint. When they sign up, history is available retroactively. Zero backend until they choose to engage.
+**No account required for browser execution:** Users run browser recipes instantly — no signup, no account, no friction. Zero backend until they choose to engage. When they sign up, persistence and history become available.
 
 ---
 
@@ -215,7 +215,7 @@ Users convert when they want something the browser can't provide alone. These ar
 | **`@bnto/nodes` is engine-agnostic** | Approved | Schemas, recipes, validation in TS. Survives any engine choice. The safety net. |
 | **Railway deprioritized** | Backlog (M4) | Only needed for premium server-side bntos. |
 | **R2 deprioritized** | Backlog (M4) | Not needed for browser execution. File transit only for cloud path. |
-| **Lazy anonymous sessions** | Approved | Zero backend friction. Convex logs when accounts exist. |
+| **No-account browser execution** | Approved | Zero backend friction. Convex logs when accounts exist. |
 | **Convex execution logging** | Approved | Records who ran what. Ties to history when user signs up. |
 | **Web Workers mandatory** | Approved | All WASM processing off main thread. Progress via postMessage. |
 | **Zip + individual downloads** | Approved | Both options for multi-file result retrieval. |

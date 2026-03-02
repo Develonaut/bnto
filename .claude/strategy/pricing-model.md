@@ -100,21 +100,13 @@ Upgrade prompts trigger at natural value moments — never on artificial browser
 
 ---
 
-## Anonymous Users
+## Unauthenticated Users
 
 - All browser recipes, unlimited
 - Recipe editor, create and run
 - Export `.bnto.json` files
 - No persistence — closing the browser loses unsaved work
-
----
-
-## Environment Variables (Server-Side Only)
-
-| Variable | Purpose |
-|---|---|
-| `ANONYMOUS_RUN_LIMIT` | Cap anonymous **server-node** executions. Browser executions are unlimited. |
-| `FREE_PLAN_RUN_LIMIT` | Cap free-tier **server-node** executions per month. Browser executions are unlimited. |
+- No server-side session — browser execution is 100% client-side
 
 ---
 

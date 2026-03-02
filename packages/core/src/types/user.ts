@@ -7,7 +7,6 @@ export interface User {
   email?: string;
   name?: string;
   image?: string;
-  isAnonymous?: boolean;
   plan?: "free" | "pro";
   // Usage analytics (Sprint 3)
   totalRuns?: number;

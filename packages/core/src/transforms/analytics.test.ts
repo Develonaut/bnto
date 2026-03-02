@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toUsageAnalytics, toSlugAggregate, toServerQuota } from "./analytics";
+import { toUsageAnalytics, toSlugAggregate } from "./analytics";
 
 describe("toUsageAnalytics", () => {
   it("maps raw analytics doc to UsageAnalytics", () => {
@@ -80,31 +80,5 @@ describe("toSlugAggregate", () => {
     });
 
     expect(result.avgDurationMs).toBeNull();
-  });
-});
-
-describe("toServerQuota", () => {
-  it("maps raw server quota doc", () => {
-    const result = toServerQuota({
-      serverRunsUsed: 7,
-      serverRunLimit: 25,
-      serverRunsRemaining: 18,
-    });
-
-    expect(result).toEqual({
-      serverRunsUsed: 7,
-      serverRunLimit: 25,
-      serverRunsRemaining: 18,
-    });
-  });
-
-  it("handles zero remaining", () => {
-    const result = toServerQuota({
-      serverRunsUsed: 25,
-      serverRunLimit: 25,
-      serverRunsRemaining: 0,
-    });
-
-    expect(result.serverRunsRemaining).toBe(0);
   });
 });

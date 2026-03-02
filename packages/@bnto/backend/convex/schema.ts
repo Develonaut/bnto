@@ -6,31 +6,23 @@ export default defineSchema({
   ...authTables,
 
   // Override the auth-managed users table with app-specific fields.
-  // Auth fields (name, email, image, isAnonymous, etc.) are managed by
-  // @convex-dev/auth via the createOrUpdateUser callback. App fields
-  // (plan, runsUsed, etc.) are set in the same callback on user creation.
+  // Auth fields (name, email, image) are managed by @convex-dev/auth via
+  // the createOrUpdateUser callback. App fields (plan, totalRuns, etc.)
+  // are set in the same callback on user creation.
   users: defineTable({
     // Auth-managed fields
     name: v.optional(v.string()),
     email: v.optional(v.string()),
     image: v.optional(v.string()),
-    isAnonymous: v.optional(v.boolean()),
     emailVerificationTime: v.optional(v.number()),
     phone: v.optional(v.string()),
     phoneVerificationTime: v.optional(v.number()),
     // App fields — set by createOrUpdateUser callback in auth.ts
-    plan: v.union(v.literal("free"), v.literal("starter"), v.literal("pro")),
-    runsUsed: v.number(),
-    runLimit: v.number(),
-    runsResetAt: v.number(),
-    // Usage analytics — Sprint 3 (M2: Platform Features)
-    // Optional for backward compatibility with existing user documents.
+    plan: v.union(v.literal("free"), v.literal("pro")),
+    // Usage analytics
     totalRuns: v.optional(v.number()), // all-time total, never resets
     lastRunAt: v.optional(v.number()), // timestamp of most recent run
-  })
-    .index("email", ["email"])
-    .index("by_anonymous", ["isAnonymous"])
-    .index("by_runsResetAt", ["runsResetAt"]),
+  }).index("email", ["email"]),
 
   workflows: defineTable({
     userId: v.id("users"),
@@ -94,11 +86,10 @@ export default defineSchema({
   }).index("by_execution", ["executionId"]),
 
   // Lightweight analytics/billing event log.
-  // Captures every run including anonymous users on predefined Bnto tool pages.
+  // Captures every run on predefined Bnto tool pages.
   // Separate from `executions` (lifecycle) — this is the billing/usage data layer.
   executionEvents: defineTable({
     userId: v.optional(v.id("users")),
-    fingerprint: v.optional(v.string()),
     slug: v.string(),
     timestamp: v.number(),
     durationMs: v.optional(v.number()),
@@ -110,8 +101,6 @@ export default defineSchema({
     executionId: v.optional(v.id("executions")),
   })
     .index("by_userId", ["userId"])
-    .index("by_fingerprint", ["fingerprint"])
-    .index("by_fingerprint_timestamp", ["fingerprint", "timestamp"])
     .index("by_slug", ["slug"])
     .index("by_userId_timestamp", ["userId", "timestamp"]),
 });

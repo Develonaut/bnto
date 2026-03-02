@@ -2,15 +2,14 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
 /**
- * Middleware tests verify the two-tier proxy logic:
+ * Middleware tests verify the three-tier proxy logic:
  *
  * 1. Canonical URL normalization (case, underscores, trailing slash)
- * 2. Protected routes (/executions, /settings) -> redirect to /signin if not authenticated
+ * 2. Auth routes (/signin, /signup) -> redirect to / if already authenticated
+ * 3. Protected routes (/executions, /settings) -> redirect to /signin if not authenticated
  *
- * Auth pages (/signin, /signup) are public — the proxy does NOT redirect
- * authenticated users away from them. Convex anonymous sessions make
- * isAuthenticated() unreliable for distinguishing real accounts from
- * anonymous visitors, so auth pages handle "already signed in" client-side.
+ * The signout signal cookie (bnto-signout) bypasses the auth-route redirect
+ * so users can reach /signin during sign-out despite the stale session cookie.
  *
  * Everything else passes through (bnto slugs, unknown paths -> 404 at page level).
  */
@@ -143,13 +142,13 @@ describe("proxy", () => {
       expect(response.status).toBe(200);
     });
 
-    it("passes through on /signin (auth pages are public)", async () => {
+    it("redirects from /signin to / (already authenticated)", async () => {
       const response = await proxy(
         createRequest("/signin", AUTH_COOKIES),
       );
-      // Proxy does NOT redirect auth users from /signin — anonymous Convex
-      // sessions make isAuthenticated unreliable. SignInForm handles it client-side.
-      expect(response.status).toBe(200);
+      // Proxy redirects authenticated users away from /signin to /
+      expect(response.status).toBe(307);
+      expect(response.headers.get("location")).toContain("/");
     });
   });
 });

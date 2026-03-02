@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "./schema";
 import { api, internal } from "./_generated/api";
-import { FREE_PLAN_RUN_LIMIT } from "./_test_helpers";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -11,11 +10,8 @@ async function seedUserAndWorkflow(t: ReturnType<typeof convexTest>) {
   return t.run(async (ctx) => {
     const userId = await ctx.db.insert("users", {
       email: "test@example.com",
-      isAnonymous: false,
       plan: "free",
-      runsUsed: 0,
-      runLimit: FREE_PLAN_RUN_LIMIT,
-      runsResetAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+      totalRuns: 0,
     });
     const workflowId = await ctx.db.insert("workflows", {
       userId,
@@ -367,11 +363,8 @@ describe("executions", () => {
       const otherUserId = await t.run(async (ctx) => {
         return ctx.db.insert("users", {
           email: "other@example.com",
-          isAnonymous: false,
           plan: "free",
-          runsUsed: 0,
-          runLimit: FREE_PLAN_RUN_LIMIT,
-          runsResetAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+          totalRuns: 0,
         });
       });
 

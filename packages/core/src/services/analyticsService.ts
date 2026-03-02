@@ -3,15 +3,13 @@
 import {
   getAnalyticsQuery,
   getSlugAggregatesQuery,
-  getServerQuotaQuery,
 } from "../adapters/convex/analyticsAdapter";
 import {
   toUsageAnalytics,
   toSlugAggregate,
-  toServerQuota,
 } from "../transforms/analytics";
 import { getQueryClient } from "../client";
-import type { RawAnalyticsDoc, RawSlugAggregateDoc, RawServerQuotaDoc } from "../types/raw";
+import type { RawAnalyticsDoc, RawSlugAggregateDoc } from "../types/raw";
 
 export function createAnalyticsService() {
   return {
@@ -34,12 +32,6 @@ export function createAnalyticsService() {
           : [],
     }),
 
-    serverQuotaQueryOptions: () => ({
-      ...getServerQuotaQuery(),
-      select: (data: unknown) =>
-        data ? toServerQuota(data as RawServerQuotaDoc) : null,
-    }),
-
     // ── Cache Invalidation ────────────────────────────────────────
     invalidateAnalytics: () =>
       getQueryClient().invalidateQueries({
@@ -49,11 +41,6 @@ export function createAnalyticsService() {
     invalidateSlugAggregates: () =>
       getQueryClient().invalidateQueries({
         queryKey: getSlugAggregatesQuery().queryKey,
-      }),
-
-    invalidateServerQuota: () =>
-      getQueryClient().invalidateQueries({
-        queryKey: getServerQuotaQuery().queryKey,
       }),
   } as const;
 }

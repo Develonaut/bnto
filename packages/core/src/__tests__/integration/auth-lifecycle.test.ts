@@ -1,8 +1,8 @@
 /**
  * Auth lifecycle integration tests (S1-S3).
  *
- * Tests anonymous sign-in, password sign-up/sign-in, unauthenticated
- * rejection, and the auth API surface against real Convex dev functions.
+ * Tests password sign-up/sign-in, unauthenticated rejection, and the
+ * auth API surface against real Convex dev functions.
  *
  * These complement the convex-test unit tests (which test logic in-memory)
  * by catching: wrong env vars, missing indexes, auth provider misconfiguration,
@@ -14,7 +14,6 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import {
-  createAnonymousClient,
   createPasswordClient,
   createUnauthenticatedClient,
   generateTestEmail,
@@ -47,12 +46,8 @@ describe("S1: email sign-in works", () => {
     const user = await getCurrentUser(signedUp.client);
     expect(user).not.toBeNull();
     expect(user!._id).toBe(signedUp.userId);
-    expect(user!.isAnonymous).toBe(false);
     expect(user!.email).toBe(email);
     expect(user!.plan).toBe("free");
-    expect(user!.runsUsed).toBeTypeOf("number");
-    expect(user!.runLimit).toBeTypeOf("number");
-    expect(user!.runsResetAt).toBeTypeOf("number");
   });
 
   it("sign-in returns the same userId as sign-up", () => {
@@ -103,49 +98,28 @@ describe("S2: sign-out behavior", () => {
 // ── S3: Auth API surface ────────────────────────────────────────────────
 
 describe("S3: auth API surface", () => {
-  let anon: AuthenticatedClient;
+  let passwordUser: AuthenticatedClient;
+  const email = generateTestEmail();
+  const password = "test-surface-123";
 
   beforeAll(async () => {
-    anon = await createAnonymousClient();
+    passwordUser = await createPasswordClient(email, password, { flow: "signUp" });
   });
 
-  it("anonymous sign-in returns valid token, userId, and refreshToken", () => {
-    expect(anon.userId).toBeTruthy();
-    expect(anon.token).toBeTruthy();
-    expect(anon.refreshToken).toBeTruthy();
-    // userId should look like a Convex ID (not empty, not a JWT)
-    expect(anon.userId.length).toBeGreaterThan(0);
-    expect(anon.userId.length).toBeLessThan(100);
-  });
-
-  it("anonymous user has correct default fields", async () => {
-    const user = await getCurrentUser(anon.client);
-    expect(user).not.toBeNull();
-    expect(user!._id).toBe(anon.userId);
-    expect(user!.isAnonymous).toBe(true);
-    expect(user!.plan).toBe("free");
-    expect(user!.runsUsed).toBe(0);
-    expect(user!.runLimit).toBeTypeOf("number");
-    expect(user!.runLimit).toBeGreaterThan(0);
-    expect(user!.runsResetAt).toBeTypeOf("number");
-    expect(user!.runsResetAt).toBeGreaterThan(Date.now());
-  });
-
-  it("anonymous user can call protected queries (workflows.list)", async () => {
-    const workflows = await anon.client.query(api.workflows.list);
+  it("password user can call protected queries (workflows.list)", async () => {
+    const workflows = await passwordUser.client.query(api.workflows.list);
     expect(Array.isArray(workflows)).toBe(true);
   });
 
-  it("anonymous user can call protected mutations (workflows.save)", async () => {
-    const workflowName = `test-auth-anon-${Date.now()}`;
-    const workflowId = await anon.client.mutation(api.workflows.save, {
+  it("password user can call protected mutations (workflows.save)", async () => {
+    const workflowName = `test-auth-${Date.now()}`;
+    const workflowId = await passwordUser.client.mutation(api.workflows.save, {
       name: workflowName,
       definition: { nodes: [] },
     });
     expect(workflowId).toBeTruthy();
 
-    // Verify the workflow is visible in the user's list
-    const workflows = await anon.client.query(api.workflows.list);
+    const workflows = await passwordUser.client.query(api.workflows.list);
     const found = workflows.find(
       (w: { name: string }) => w.name === workflowName,
     );
@@ -171,29 +145,23 @@ describe("S3: auth API surface", () => {
   });
 
   it("token refresh returns new valid tokens", async () => {
-    const refreshed = await refreshClientToken(anon);
+    const refreshed = await refreshClientToken(passwordUser);
     expect(refreshed.token).toBeTruthy();
     expect(refreshed.refreshToken).toBeTruthy();
 
-    // Refreshed client still works
     const user = await getCurrentUser(refreshed.client);
     expect(user).not.toBeNull();
-    expect(user!._id).toBe(anon.userId);
+    expect(user!._id).toBe(passwordUser.userId);
   });
 
-  it("runs remaining query works for anonymous user", async () => {
-    const remaining = await anon.client.query(api.users.getRunsRemaining);
-    expect(remaining).not.toBeNull();
-    expect(remaining).toBeTypeOf("number");
-    expect(remaining).toBeGreaterThanOrEqual(0);
-  });
+  it("two separate password accounts get distinct userIds", async () => {
+    const user2 = await createPasswordClient(generateTestEmail(), "other-pass-123", {
+      flow: "signUp",
+    });
+    expect(user2.userId).not.toBe(passwordUser.userId);
 
-  it("two separate anonymous sessions get distinct userIds", async () => {
-    const anon2 = await createAnonymousClient();
-    expect(anon2.userId).not.toBe(anon.userId);
-
-    const user1 = await getCurrentUser(anon.client);
-    const user2 = await getCurrentUser(anon2.client);
-    expect(user1!._id).not.toBe(user2!._id);
+    const me1 = await getCurrentUser(passwordUser.client);
+    const me2 = await getCurrentUser(user2.client);
+    expect(me1!._id).not.toBe(me2!._id);
   });
 });

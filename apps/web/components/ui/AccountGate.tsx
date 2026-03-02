@@ -23,10 +23,9 @@ interface AccountGateProps {
 /**
  * Conversion gate for users without an account.
  *
- * Renders children normally for users with a real account. For anonymous
- * visitors (including Convex anonymous sessions), the content renders
- * blurred and non-interactive with a floating sign-up card centered on
- * top — "peek behind the curtain."
+ * Renders children normally for authenticated users. For unauthenticated
+ * visitors, the content renders blurred and non-interactive with a
+ * floating sign-up card centered on top — "peek behind the curtain."
  *
  * Use on any page where you want to show the structure but gate
  * interaction behind having an account.
@@ -38,10 +37,7 @@ export function AccountGate({
 }: AccountGateProps) {
   const { isAuthenticated, isLoading, user } = core.auth.useAuth();
 
-  // Gate on a real account, not just an anonymous session.
-  // Convex auto-creates anonymous sessions, so isAuthenticated is true
-  // even for users who haven't signed up. user.isAnonymous distinguishes them.
-  const hasAccount = isAuthenticated && !user?.isAnonymous;
+  const hasAccount = isAuthenticated && !!user?.email;
 
   if (isLoading || hasAccount) {
     return <>{children}</>;

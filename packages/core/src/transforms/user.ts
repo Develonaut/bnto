@@ -16,7 +16,6 @@ export function toUser(doc: RawUserDoc): User {
     email: doc.email ?? undefined,
     name: doc.name ?? undefined,
     image: doc.image ?? undefined,
-    isAnonymous: doc.isAnonymous ?? undefined,
     plan: normalizePlan(doc.plan),
     totalRuns: doc.totalRuns ?? undefined,
     lastRunAt: doc.lastRunAt ?? undefined,

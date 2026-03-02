@@ -30,7 +30,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
 - **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
-- **Auth:** `@convex-dev/auth`. Anonymous sessions, integration tests complete
+- **Auth:** `@convex-dev/auth`. Password auth, integration tests complete
 - **Packages:** `@bnto/core`, `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`
 
 ---
@@ -40,7 +40,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Monorepo: Turborepo + pnpm + Taskfile.dev + go.work
 - [x] Go engine + API: 10 node types, CLI, HTTP API on Railway — archived, ready for M4
 - [x] @bnto/core: Layered singleton (clients → services → adapters), React Query + Convex adapter, 38+ hooks
-- [x] @bnto/auth: `@convex-dev/auth` integration, anonymous sessions, conversion flow
+- [x] @bnto/auth: `@convex-dev/auth` integration, password auth
 - [x] @bnto/backend: Convex schema (users, workflows, executions, executionLogs), auth, crons, analytics fields
 - [x] @bnto/nodes: Engine-agnostic node definitions, schemas, recipes, validation (10 node types)
 - [x] Web app: Auth flow, SEO infrastructure, middleware, landing pages (real content), privacy policy
@@ -111,8 +111,81 @@ Tech debt cleanup: FileUpload→react-dropzone, core.browser→core.wasm rename,
 
 ---
 
+### Sprint 3A: Remove Anonymous User System
+
+**Goal:** Eliminate the anonymous Convex session system. The model becomes binary: you're signed in or you're not. No invisible Convex users, no anonymous→real upgrade flow. Browser execution is free unlimited without any server-side session.
+
+**Why now:** The anonymous system added complexity to every layer (schema, auth, core hooks, UI, tests) without serving any current product goal. Removing it before Sprint 3 Wave 2 (dashboard, conversion hooks) prevents building new features on top of dead infrastructure.
+
+**What stays:** `@convex-dev/auth` password provider, session cookies, proxy route protection, sign-in/sign-up/sign-out flows. The auth system itself is fine — we're only removing the anonymous session layer on top of it.
+
+**Persona ownership:**
+| Package | Persona |
+|---------|---------|
+| `@bnto/backend` | `/backend-engineer` |
+| `@bnto/core` | `/core-architect` |
+| `@bnto/auth` | `/backend-engineer` |
+| `apps/web` | `/frontend-engineer` |
+| `.claude/` docs | No specific persona |
+
+#### Wave 1 (backend — schema + auth simplification)
+
+Strip anonymous plumbing from the data layer. This is the foundation — everything else depends on schema being clean.
+
+- [x] `@bnto/backend` — Remove anonymous auth provider from `convex/auth.ts`. Keep only password provider. Simplify `convex/_helpers/user_lifecycle.ts`
+- [x] `@bnto/backend` — Schema cleanup: remove `isAnonymous`, quota fields, `by_anonymous` index from users table
+- [x] `@bnto/backend` — Simplify `convex/execution_events.ts` to require userId on all execution events
+- [x] `@bnto/backend` — Delete anonymous test files. Update remaining tests to remove anonymous scenarios
+- [x] `@bnto/backend` — **Validation:** `task ui:test` passes for `@bnto/backend`. All remaining tests green
+
+#### Wave 2 (core — hooks + types + adapters)
+
+Remove anonymous hooks and types from `@bnto/core`. This is the transport-agnostic API layer — clean it so the web app has a simple auth surface.
+
+- [x] `@bnto/core` — Delete anonymous/quota hooks. Remove exports from `reactCore.ts`
+- [x] `@bnto/core` — Simplify `useSignUp.ts` and `useAuth.ts`. Auth state is binary
+- [x] `@bnto/core` — Clean types and transforms: remove `isAnonymous` and quota fields
+- [x] `@bnto/core` — Delete anonymous integration tests. Update remaining tests
+- [x] `@bnto/core` — **Validation:** `task ui:test` passes for `@bnto/core`. All remaining tests green
+
+#### Wave 3 (web — components + auth flow)
+
+Remove anonymous UI patterns from the web app. Simplify auth page, remove gate components, clean up providers.
+
+- [x] `apps/web` — Delete `AccountGate.tsx` and `UpgradePrompt.tsx`. Remove all imports/usages
+- [x] `apps/web` — Simplify providers, NavUser, SignInForm: remove anonymous session handling
+- [x] `apps/web` — Simplify recipe flow: browser execution is always allowed, no gates
+- [x] `apps/web` — **Validation:** `task ui:build` passes. No TypeScript errors from removed types/hooks
+
+#### Wave 4 (auth E2E — verify the simplified system)
+
+Comprehensive E2E tests proving the simplified auth model works end-to-end. Every user-facing flow tested.
+
+- [x] `apps/web` — Delete `anonymous-conversion.spec.ts` E2E test file
+- [ ] `apps/web` — **E2E: New user journey** — fresh visitor → /signin defaults to signup mode → fill form → create account → lands on home → user menu shows email → sign out → stays on /signin (no bounce)
+- [ ] `apps/web` — **E2E: Returning user journey** — /signin shows "Welcome back" → sign in → lands on home → user menu shows email → can access protected routes
+- [ ] `apps/web` — **E2E: Sign-out round-trip** — sign up → home → sign out → /signin → sign back in → home → user menu shows same email
+- [ ] `apps/web` — **E2E: Route protection** — unauthenticated user hits /settings → redirected to /signin. Authenticated user hits /signin → redirected to /. Sign out → protected routes blocked again
+- [ ] `apps/web` — **E2E: Browser execution without account** — visit recipe page (e.g. /compress-images) with no account → drop files → run → execution completes → download works. No sign-up prompt blocking the flow
+- [ ] `apps/web` — **E2E: Form toggle** — signup ↔ signin toggle works. Invalid credentials show error. Duplicate email on signup shows error
+- [ ] `apps/web` — **Validation:** All E2E tests pass. Screenshots regenerated for any layout changes
+
+#### Wave 5 (docs + cleanup)
+
+Update all documentation and strategy files to reflect the simplified auth model. Remove references to anonymous users, quotas, and conversion funnels that no longer exist.
+
+- [x] `.claude/` — Update `PLAN.md`, `pricing-model.md`, `auth-routing.md`, `environment-variables.md` to remove anonymous references
+- [x] `.claude/` — Update journey docs: `journeys/auth.md` (remove anonymous conversion rows)
+- [x] `.claude/` — Update persona skills that reference anonymous patterns: `backend-engineer`, `security-engineer`, `security-review`
+- [ ] `@bnto/backend` — Production schema cleanup: mutation to delete orphaned anonymous user records, then deploy strict schema removing the optional fields
+- [ ] **Validation:** `task check` passes (full quality gate). Grep verification confirms no dead references
+
+---
+
 ### Sprint 3: Platform Features (M2)
 **Goal:** Accounts earn their keep. Users who sign up get persistence, history, and a reason to stay. Conversion hooks are natural — Save, History, Server Nodes — not artificial run caps. See [pricing-model.md](strategy/pricing-model.md) for the full free vs premium framework.
+
+**Prerequisite:** Sprint 3A (anonymous user removal) must be complete. The anonymous system is gone — auth is binary (signed in or not). Conversion prompts are value-driven.
 
 **Persona ownership:**
 | Package | Persona |
@@ -123,7 +196,7 @@ Tech debt cleanup: FileUpload→react-dropzone, core.browser→core.wasm rename,
 | `infra` | No specific persona — general |
 
 #### Pre-work — COMPLETE
-Anonymous→password userId fix, FIXME cleanup, privacy policy rewrite, README review, Knip dead code audit (14 files, 11 deps), naming audit, codebase standards review (149 violations), schema analytics fields, site navigation E2E tests.
+~~Anonymous→password userId fix~~, FIXME cleanup, privacy policy rewrite, README review, Knip dead code audit (14 files, 11 deps), naming audit, codebase standards review (149 violations), schema analytics fields, site navigation E2E tests.
 
 #### Wave 1 (parallel — core hooks + UI components + infra decisions)
 
@@ -136,19 +209,19 @@ Anonymous→password userId fix, FIXME cleanup, privacy policy rewrite, README r
 - [x] `@bnto/core` — `/core-architect` — **PostHog telemetry integration:** `core.telemetry` namespace (client → adapter), `TelemetryProvider` with config injection, E2E test hook via `window.__bnto_telemetry__`. Production-only env vars (Vercel). 2 E2E tests.
 - [x] `infra` — **SEO validation tooling:** Lighthouse CI in GitHub Actions (advisory, all 10 public routes). `task seo:audit` for local audits. Google Search Console verified via Cloudflare DNS. `@lhci/cli` installed as dev dep.
 
-#### Wave 2 (parallel — dashboard + conversion hooks)
+#### Wave 2 (parallel — dashboard + auth behavior)
 
 - [ ] `apps/web` — `/frontend-engineer` — Dashboard page: saved workflows, recent executions, usage analytics
 - [ ] `apps/web` — `/frontend-engineer` — Execution history page (list of past runs with status, re-run capability)
-- [ ] `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): "Want to keep this workflow? Sign up to save it." — appears after successful browser execution for anonymous users
-- [ ] `apps/web` — `/frontend-engineer` — **History prompt** (conversion hook): "Sign up to access your execution history and re-run past workflows."
-- [ ] `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation (moved from Sprint 2A Wave 5)
+- [ ] `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): "Want to save this recipe? Sign up — it's free." — appears after successful browser execution for unauthenticated users
+- [ ] `apps/web` — `/frontend-engineer` — **History prompt** (conversion hook): "Sign up to access your execution history and re-run past recipes."
+- [ ] `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation, cookie-based default mode (moved from Sprint 2A Wave 5)
 - [ ] `apps/web` — `/frontend-engineer` — Pricing page update: Pro sells persistence, collaboration, premium compute — not run limits
 - [ ] `apps/web` — `/frontend-engineer` — **Data fetching & skeleton audit:** Scan all existing components in `apps/web/` for violations of the co-located query pattern, prop drilling, mismatched skeletons, missing skeletons, separate `*Skeleton.tsx` files (for simple cases), transforms outside `select`, and loading wrapper anti-patterns. Fix violations in-place. Reference: [data-fetching-strategy.md](strategy/data-fetching-strategy.md), [skeletons.md](rules/skeletons.md)
 
 #### Wave 3 (sequential — test)
 
-- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: save prompt appears after anonymous execution
+- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: save prompt appears after unauthenticated execution
 - [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: execution history page shows past runs for authenticated users
 - [ ] `@bnto/backend` — `/backend-engineer` — Unit tests for execution analytics queries
 
@@ -572,13 +645,6 @@ Current E2E tests mix CSS classes, `getByRole`, `getByText`, and `data-testid`. 
 - [ ] `apps/web` — Per-file format override state + inline Select on FileCard
 - [ ] `@bnto/core` — Update `browserExecute` for per-file config overrides
 - [ ] `engine` — Verify Rust WASM supports per-file format params
-
-### Testing: Monthly Run Reset Cycle — M4/M5 (server-side quotas)
-
-**Milestone: M4/M5.** Run reset logic applies to server-side quota tracking. Browser bntos have no quotas.
-
-- [ ] `@bnto/backend` — Unit test: seed user with `runsResetAt` in the past, call the reset mutation, verify `runsUsed` resets to 0 and `runsResetAt` advances to next month
-- [ ] `@bnto/core` — Integration test (if feasible): verify reset behavior against real Convex dev
 
 ### Auth: Enable OAuth Social Providers
 

@@ -96,15 +96,6 @@ R2 is a transit layer, not storage. Files exist for minutes. Security concerns:
 - **Cross-user isolation** — execution outputs are keyed by session. User A cannot download User B's output by guessing the R2 key
 - **Cleanup** — three layers (Go API best-effort delete, Convex scheduled cleanup, R2 lifecycle rules). If all three fail, objects accumulate — monitor bucket size
 
-### Quota as Security Boundary
-
-Server-node execution costs real money (Railway compute). Quota enforcement is a security concern, not just a business concern:
-
-- **Check before execute** — `enforceQuota()` must run before execution starts, not after
-- **Atomic increment** — no TOCTOU race between checking remaining quota and incrementing usage
-- **Anonymous limits** — server-node executions by anonymous users have a separate, lower limit
-- **Browser executions bypass quota** — they're free (run in user's browser), so no quota check needed. But verify the execution path can't be tricked into routing a browser-capable node through the server path
-
 ### Supply Chain
 
 - **Lock files committed** — `pnpm-lock.yaml`, `go.sum`, `Cargo.lock` must be in git. Without them, builds are non-reproducible and vulnerable to dependency confusion
@@ -127,7 +118,7 @@ Security testing follows the same "each domain owns its boundary" principle, but
 | **Go API input** | Oversized bodies, malformed JSON, unknown fields | `httptest` | Go engineer + you |
 | **XSS** | `<script>` in user input renders as text | E2E | Frontend + you |
 | **File upload** | Disallowed type rejected, oversized file rejected | Integration test | Backend engineer + you |
-| **Quota enforcement** | Limit boundary (N ok, N+1 rejected), race condition | `convex-test` | Backend engineer + you |
+| **Resource limits** | Server-node execution time caps, file size limits | `convex-test` | Backend engineer + you |
 
 **Your role is not to write all of these.** Your role is to ensure they exist, review them for completeness, and flag gaps. Each domain expert writes the tests — you verify coverage and think adversarially about what's missing.
 
@@ -177,4 +168,4 @@ Security testing follows the same "each domain owns its boundary" principle, but
 | `.claude/rules/convex.md` | Convex function standards, validators, auth checks |
 | `.claude/rules/architecture.md` | Data flow, R2 transit, execution model, service topology |
 | `.claude/environment-variables.md` | All env vars, where they're configured, which are public |
-| `.claude/strategy/pricing-model.md` | Quota model — browser free, server Pro. Security implications of quota enforcement |
+| `.claude/strategy/pricing-model.md` | Browser free, server Pro. Pricing model |

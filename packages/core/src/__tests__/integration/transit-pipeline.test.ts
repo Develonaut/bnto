@@ -16,7 +16,8 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "fs";
 import type { Id } from "@bnto/backend/convex/_generated/dataModel";
 import {
-  createAnonymousClient,
+  createPasswordClient,
+  generateTestEmail,
   createUnauthenticatedClient,
   type AuthenticatedClient,
   api,
@@ -30,22 +31,24 @@ import {
   uploadAndStartExecution,
 } from "./transit-helpers";
 
-// ── Full Transit Pipeline ────────────────────────────────────────────────
+// ── Full Transit Pipeline ──────────────────────────────────────────────
 
 describe("full transit pipeline: upload → execute → download", () => {
-  let anon: AuthenticatedClient;
+  let user: AuthenticatedClient;
   let sessionId: string;
   let executionId: Id<"executions">;
 
   beforeAll(async () => {
-    anon = await createAnonymousClient();
-    const result = await uploadAndStartExecution(anon);
+    user = await createPasswordClient(generateTestEmail(), "test-transit-123", {
+      flow: "signUp",
+    });
+    const result = await uploadAndStartExecution(user);
     executionId = result.executionId;
     sessionId = result.sessionId;
   }, 30_000);
 
   it("execution is created with sessionId", async () => {
-    const execution = await anon.client.query(api.executions.get, {
+    const execution = await user.client.query(api.executions.get, {
       id: executionId,
     });
     expect(execution).not.toBeNull();
@@ -53,15 +56,15 @@ describe("full transit pipeline: upload → execute → download", () => {
   });
 
   it("execution completes via Go API transit flow", async () => {
-    const result = await pollExecution(anon, executionId);
+    const result = await pollExecution(user, executionId);
     expect(result.status).toBe("completed");
     expect(result.error).toBeUndefined();
   });
 
   it("completed execution has output files", async () => {
-    await pollExecution(anon, executionId);
+    await pollExecution(user, executionId);
 
-    const execution = await anon.client.query(api.executions.get, {
+    const execution = await user.client.query(api.executions.get, {
       id: executionId,
     });
     expect(execution!.outputFiles).toBeDefined();
@@ -76,9 +79,9 @@ describe("full transit pipeline: upload → execute → download", () => {
   });
 
   it("download URLs are valid for completed execution", async () => {
-    await pollExecution(anon, executionId);
+    await pollExecution(user, executionId);
 
-    const downloadResult = await anon.client.action(
+    const downloadResult = await user.client.action(
       api.downloads.generateDownloadUrls,
       { executionId },
     );
@@ -95,9 +98,9 @@ describe("full transit pipeline: upload → execute → download", () => {
   });
 
   it("downloaded file is a valid image", async () => {
-    await pollExecution(anon, executionId);
+    await pollExecution(user, executionId);
 
-    const downloadResult = await anon.client.action(
+    const downloadResult = await user.client.action(
       api.downloads.generateDownloadUrls,
       { executionId },
     );
@@ -114,21 +117,25 @@ describe("full transit pipeline: upload → execute → download", () => {
   });
 });
 
-// ── Download Access Control ──────────────────────────────────────────────
+// ── Download Access Control ────────────────────────────────────────────
 
 describe("download: access control", () => {
   let owner: AuthenticatedClient;
   let executionId: Id<"executions">;
 
   beforeAll(async () => {
-    owner = await createAnonymousClient();
+    owner = await createPasswordClient(generateTestEmail(), "test-dl-own-123", {
+      flow: "signUp",
+    });
     const result = await uploadAndStartExecution(owner);
     executionId = result.executionId;
     await pollExecution(owner, executionId);
   }, 150_000);
 
   it("other users cannot download another user's outputs", async () => {
-    const other = await createAnonymousClient();
+    const other = await createPasswordClient(generateTestEmail(), "other-dl-123", {
+      flow: "signUp",
+    });
     await expect(
       other.client.action(api.downloads.generateDownloadUrls, {
         executionId,
@@ -146,17 +153,19 @@ describe("download: access control", () => {
   });
 });
 
-// ── Download Error Cases ─────────────────────────────────────────────────
+// ── Download Error Cases ───────────────────────────────────────────────
 
 describe("download: error cases", () => {
-  let anon: AuthenticatedClient;
+  let user: AuthenticatedClient;
 
   beforeAll(async () => {
-    anon = await createAnonymousClient();
+    user = await createPasswordClient(generateTestEmail(), "test-dl-err-123", {
+      flow: "signUp",
+    });
   });
 
   it("rejects download for pending/running execution", async () => {
-    const executionId = await anon.client.mutation(
+    const executionId = await user.client.mutation(
       api.executions.startPredefined,
       {
         slug: TEST_SLUG,
@@ -165,14 +174,14 @@ describe("download: error cases", () => {
     );
 
     await expect(
-      anon.client.action(api.downloads.generateDownloadUrls, {
+      user.client.action(api.downloads.generateDownloadUrls, {
         executionId,
       }),
     ).rejects.toThrow("Execution is not completed");
   });
 
   it("returns empty URLs for execution with no output files", async () => {
-    const executionId = await anon.client.mutation(
+    const executionId = await user.client.mutation(
       api.executions.startPredefined,
       {
         slug: "test-no-output",
@@ -180,11 +189,11 @@ describe("download: error cases", () => {
       },
     );
 
-    await pollExecution(anon, executionId, {
+    await pollExecution(user, executionId, {
       timeoutMs: 90_000,
     });
 
-    const result = await anon.client.action(
+    const result = await user.client.action(
       api.downloads.generateDownloadUrls,
       { executionId },
     );

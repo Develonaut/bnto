@@ -1,7 +1,6 @@
 import type { MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
-import { enforceQuota } from "./quota";
 import { getAppUserId } from "./auth";
 import { ConvexError } from "convex/values";
 
@@ -9,8 +8,8 @@ import { ConvexError } from "convex/values";
  * Shared logic for starting an execution — used by both `start` (stored
  * workflow) and `startPredefined` (inline definition) mutations.
  *
- * Steps: auth check -> user lookup -> quota enforcement -> run counter
- * increment -> execution insert -> event insert -> schedule action.
+ * Steps: auth check -> user lookup -> run counter increment -> execution
+ * insert -> event insert -> schedule action.
  */
 export async function startExecution(
   ctx: MutationCtx,
@@ -27,11 +26,8 @@ export async function startExecution(
   const user = await ctx.db.get(userId);
   if (user === null) throw new ConvexError("User not found");
 
-  enforceQuota(user);
-
   const now = Date.now();
   await ctx.db.patch(userId, {
-    runsUsed: user.runsUsed + 1,
     totalRuns: (user.totalRuns ?? 0) + 1,
     lastRunAt: now,
   });

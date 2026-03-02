@@ -50,9 +50,6 @@ Used by `convex/_helpers/r2_client.ts`, `convex/uploads.ts`, and `convex/downloa
 | Variable | Purpose | Status |
 |---|---|---|
 | `GO_API_URL` | Go API server URL. Dev: Cloudflare tunnel to localhost. Prod: Railway. | **Dev: set** (`https://api-dev.bnto.io`) / **Prod: set** (`https://bnto-production.up.railway.app`) |
-| `ANONYMOUS_RUN_LIMIT` | **Server-side only.** Max server-node executions for anonymous users (defaults to `3` if unset). Browser executions are unlimited — see [pricing-model.md](strategy/pricing-model.md). | Not set (using default) |
-| `FREE_PLAN_RUN_LIMIT` | **Server-side only.** Max server-node executions/month for free-tier users (defaults to `25` if unset). Browser executions are unlimited. | Not set (using default) |
-
 ---
 
 ## Vercel (Frontend)

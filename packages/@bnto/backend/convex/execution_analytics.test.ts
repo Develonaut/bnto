@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { convexTest } from "convex-test";
 import schema from "./schema";
 import { api } from "./_generated/api";
-import { FREE_PLAN_RUN_LIMIT, nextMonthReset } from "./_test_helpers";
 import type { Id } from "./_generated/dataModel";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -12,11 +11,7 @@ async function seedUser(t: ReturnType<typeof convexTest>) {
   return t.run(async (ctx) => {
     return ctx.db.insert("users", {
       email: "jane@example.com",
-      isAnonymous: false,
       plan: "free",
-      runsUsed: 0,
-      runLimit: FREE_PLAN_RUN_LIMIT,
-      runsResetAt: nextMonthReset(),
       totalRuns: 0,
     });
   });
@@ -31,7 +26,6 @@ async function seedEvent(
     timestamp?: number;
     status?: "started" | "completed" | "failed";
     durationMs?: number;
-    fingerprint?: string;
   },
 ) {
   return t.run(async (ctx) => {
@@ -41,7 +35,6 @@ async function seedEvent(
       timestamp: overrides.timestamp ?? Date.now(),
       status: overrides.status ?? "completed",
       durationMs: overrides.durationMs,
-      fingerprint: overrides.fingerprint,
     });
   });
 }
@@ -155,11 +148,7 @@ describe("execution_analytics", () => {
       const otherUserId = await t.run(async (ctx) => {
         return ctx.db.insert("users", {
           email: "other@example.com",
-          isAnonymous: false,
           plan: "free",
-          runsUsed: 0,
-          runLimit: FREE_PLAN_RUN_LIMIT,
-          runsResetAt: nextMonthReset(),
           totalRuns: 0,
         });
       });
@@ -280,11 +269,7 @@ describe("execution_analytics", () => {
       const otherUserId = await t.run(async (ctx) => {
         return ctx.db.insert("users", {
           email: "other@example.com",
-          isAnonymous: false,
           plan: "free",
-          runsUsed: 0,
-          runLimit: FREE_PLAN_RUN_LIMIT,
-          runsResetAt: nextMonthReset(),
           totalRuns: 0,
         });
       });
@@ -378,11 +363,7 @@ describe("execution_analytics", () => {
       const otherUserId = await t.run(async (ctx) => {
         return ctx.db.insert("users", {
           email: "other@example.com",
-          isAnonymous: false,
           plan: "free",
-          runsUsed: 0,
-          runLimit: FREE_PLAN_RUN_LIMIT,
-          runsResetAt: nextMonthReset(),
           totalRuns: 0,
         });
       });

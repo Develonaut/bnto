@@ -8,7 +8,6 @@ describe("toUser", () => {
       email: "jane@example.com",
       name: "Jane",
       image: "https://example.com/avatar.png",
-      isAnonymous: false,
       plan: "free",
     });
 
@@ -17,7 +16,6 @@ describe("toUser", () => {
       email: "jane@example.com",
       name: "Jane",
       image: "https://example.com/avatar.png",
-      isAnonymous: false,
       plan: "free",
       totalRuns: undefined,
       lastRunAt: undefined,
@@ -65,7 +63,6 @@ describe("toUser", () => {
       email: null,
       name: null,
       image: null,
-      isAnonymous: null,
       totalRuns: null,
       lastRunAt: null,
     });
@@ -73,23 +70,8 @@ describe("toUser", () => {
     expect(result.email).toBeUndefined();
     expect(result.name).toBeUndefined();
     expect(result.image).toBeUndefined();
-    expect(result.isAnonymous).toBeUndefined();
     expect(result.totalRuns).toBeUndefined();
     expect(result.lastRunAt).toBeUndefined();
   });
 
-  it("no longer includes runsUsed/runLimit/runsResetAt on User type", () => {
-    const result = toUser({
-      _id: "user_123",
-      plan: "free",
-      runsUsed: 7,
-      runLimit: 25,
-      runsResetAt: 1700000000000,
-    });
-
-    // These quota fields are now in ServerQuota, not on User
-    expect(result).not.toHaveProperty("runsUsed");
-    expect(result).not.toHaveProperty("runLimit");
-    expect(result).not.toHaveProperty("runsResetAt");
-  });
 });

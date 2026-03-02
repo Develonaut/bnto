@@ -100,8 +100,8 @@ export const test = base.extend<{ errors: string[] }>({
       //    no production visibility (dev overlay only).
       //
       // 2. Convex "Failed to fetch" — when E2E runs without the Convex dev
-      //    backend, anonymous session signIn fails with a network error.
-      //    Expected in isolated E2E runs (E2E_PORT=4001).
+      //    backend, auth calls fail with a network error. Expected in
+      //    isolated E2E runs (E2E_PORT=4001).
       //
       // Both are harmless. Screenshots are unaffected (badge is hidden above).
       // If the ONLY failures in a run are "01 Issue" with zero screenshot

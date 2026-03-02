@@ -1,7 +1,7 @@
 /**
  * Smoke test — validates the integration test harness works.
  *
- * Creates an anonymous client, queries the user, and verifies
+ * Creates a password client, queries the user, and verifies
  * the response shape. If this passes, the harness is wired correctly
  * and subsequent test files (auth, execution, upload/download) can
  * rely on the setup utilities.
@@ -11,39 +11,39 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import {
-  createAnonymousClient,
+  createPasswordClient,
   getCurrentUser,
   createUnauthenticatedClient,
+  generateTestEmail,
   type AuthenticatedClient,
   api,
 } from "./setup";
 
 describe("integration test harness", () => {
-  let anon: AuthenticatedClient;
+  let user: AuthenticatedClient;
 
   beforeAll(async () => {
-    anon = await createAnonymousClient();
+    user = await createPasswordClient(generateTestEmail(), "smoke-test-123", {
+      flow: "signUp",
+    });
   });
 
-  it("creates an anonymous client with valid userId", () => {
-    expect(anon.userId).toBeTruthy();
-    expect(anon.token).toBeTruthy();
-    expect(anon.refreshToken).toBeTruthy();
+  it("creates a password client with valid userId", () => {
+    expect(user.userId).toBeTruthy();
+    expect(user.token).toBeTruthy();
+    expect(user.refreshToken).toBeTruthy();
   });
 
-  it("anonymous client can query users.getMe", async () => {
-    const user = await getCurrentUser(anon.client);
-    expect(user).not.toBeNull();
-    expect(user!._id).toBe(anon.userId);
-    expect(user!.isAnonymous).toBe(true);
-    expect(user!.plan).toBe("free");
-    expect(user!.runsUsed).toBeTypeOf("number");
-    expect(user!.runLimit).toBeTypeOf("number");
+  it("password client can query users.getMe", async () => {
+    const me = await getCurrentUser(user.client);
+    expect(me).not.toBeNull();
+    expect(me!._id).toBe(user.userId);
+    expect(me!.plan).toBe("free");
   });
 
   it("unauthenticated client gets null from users.getMe", async () => {
     const unauthClient = createUnauthenticatedClient();
-    const user = await unauthClient.query(api.users.getMe);
-    expect(user).toBeNull();
+    const me = await unauthClient.query(api.users.getMe);
+    expect(me).toBeNull();
   });
 });

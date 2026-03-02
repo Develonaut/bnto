@@ -66,12 +66,7 @@ export interface RawUserDoc {
   email?: string | null;
   name?: string | null;
   image?: string | null;
-  isAnonymous?: boolean | null;
   plan?: "free" | "starter" | "pro" | null;
-  runsUsed?: number | null;
-  runLimit?: number | null;
-  runsResetAt?: number | null;
-  // Usage analytics (Sprint 3)
   totalRuns?: number | null;
   lastRunAt?: number | null;
 }
@@ -93,9 +88,3 @@ export interface RawSlugAggregateDoc {
   lastRunAt: number;
 }
 
-/** Raw server quota response from `users.getServerQuota`. */
-export interface RawServerQuotaDoc {
-  serverRunsUsed: number;
-  serverRunLimit: number;
-  serverRunsRemaining: number;
-}

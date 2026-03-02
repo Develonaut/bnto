@@ -16,12 +16,3 @@ export function getAnalyticsQuery() {
 export function getSlugAggregatesQuery() {
   return convexQuery(api.execution_analytics.aggregateBySlug, {});
 }
-
-// ---------------------------------------------------------------------------
-// Server Quota Query
-// ---------------------------------------------------------------------------
-
-/** Server-node execution quota (monthly usage/limit/remaining). */
-export function getServerQuotaQuery() {
-  return convexQuery(api.users.getServerQuota, {});
-}

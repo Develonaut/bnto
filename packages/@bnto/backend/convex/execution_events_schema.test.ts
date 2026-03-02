@@ -11,7 +11,6 @@ describe("executionEvents schema integrity", () => {
     const eventId = await t.run(async (ctx) => {
       return ctx.db.insert("executionEvents", {
         userId: undefined,
-        fingerprint: "fp-full",
         slug: "compress-images",
         timestamp: 1000,
         durationMs: 500,
@@ -29,20 +28,16 @@ describe("executionEvents schema integrity", () => {
     expect(event!.timestamp).toBe(1000);
     expect(event!.durationMs).toBe(500);
     expect(event!.status).toBe("completed");
-    expect(event!.fingerprint).toBe("fp-full");
   });
 
-  it("allows events with only userId (no fingerprint)", async () => {
+  it("allows events with userId", async () => {
     const t = convexTest(schema, modules);
 
     const userId = await t.run(async (ctx) => {
       return ctx.db.insert("users", {
         email: "test@example.com",
-        isAnonymous: false,
         plan: "free",
-        runsUsed: 0,
-        runLimit: 5,
-        runsResetAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+        totalRuns: 0,
       });
     });
 
@@ -61,15 +56,13 @@ describe("executionEvents schema integrity", () => {
 
     expect(event).not.toBeNull();
     expect(event!.userId).toBe(userId);
-    expect(event!.fingerprint).toBeUndefined();
   });
 
-  it("allows events with only fingerprint (no userId)", async () => {
+  it("allows events without userId (unauthenticated)", async () => {
     const t = convexTest(schema, modules);
 
     const eventId = await t.run(async (ctx) => {
       return ctx.db.insert("executionEvents", {
-        fingerprint: "anon-fp",
         slug: "clean-csv",
         timestamp: Date.now(),
         status: "started",
@@ -82,6 +75,5 @@ describe("executionEvents schema integrity", () => {
 
     expect(event).not.toBeNull();
     expect(event!.userId).toBeUndefined();
-    expect(event!.fingerprint).toBe("anon-fp");
   });
 });

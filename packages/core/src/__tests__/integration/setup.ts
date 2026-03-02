@@ -9,7 +9,7 @@
  *   - CONVEX_URL env var set (defaults to dev deployment)
  *
  * Usage:
- *   const { client, userId, token } = await createAnonymousClient();
+ *   const { client, userId, token } = await createPasswordClient(email, password);
  *   const user = await client.query(api.users.getMe);
  *
  * Rate limiting: @convex-dev/auth rate-limits sign-in attempts.
@@ -78,49 +78,11 @@ export function getConvexUrl(): string {
 // ── Client Factories ─────────────────────────────────────────────────────
 
 /**
- * Creates a ConvexHttpClient with a fresh anonymous session.
- *
- * Anonymous auth creates a real `users` row with `isAnonymous: true`.
- * The returned client can call any Convex function as this anonymous user.
- *
- * Rate limiting note: call once per describe block, reuse across tests.
- */
-export async function createAnonymousClient(): Promise<AuthenticatedClient> {
-  const client = new ConvexHttpClient(getConvexUrl());
-
-  // anyApi bypasses generated type constraints — @convex-dev/auth's
-  // signIn action types don't fully surface in the generated api.
-  const result = (await client.action(anyApi.auth.signIn, {
-    provider: "anonymous",
-  })) as SignInResult;
-
-  if (!result.tokens) {
-    throw new Error(
-      `Anonymous sign-in failed: ${JSON.stringify(result)}`,
-    );
-  }
-
-  const { token, refreshToken } = result.tokens;
-  client.setAuth(token);
-
-  return {
-    client,
-    userId: extractUserId(token),
-    token,
-    refreshToken,
-  };
-}
-
-/**
  * Creates a ConvexHttpClient authenticated with email/password.
  *
  * @param email - Test email (use generateTestEmail() for unique values)
  * @param password - Password (min 6 chars for @convex-dev/auth)
  * @param options.flow - "signUp" to create a new account, "signIn" to log in
- *
- * For conversion tests (anonymous -> real account), sign up with the same
- * client that was previously authenticated anonymously — @convex-dev/auth
- * will upgrade the existing user rather than creating a new one.
  */
 export async function createPasswordClient(
   email: string,
@@ -145,45 +107,6 @@ export async function createPasswordClient(
 
   return {
     client,
-    userId: extractUserId(token),
-    token,
-    refreshToken,
-  };
-}
-
-/**
- * Upgrades an existing anonymous client to a password account.
- *
- * Uses the SAME ConvexHttpClient so @convex-dev/auth recognizes the existing
- * session and patches the user rather than creating a new one.
- * The userId should be preserved across the upgrade.
- *
- * @param anonClient - The authenticated anonymous client to upgrade
- * @param email - Email for the new account
- * @param password - Password (min 6 chars)
- * @returns Updated AuthenticatedClient with new tokens but same userId
- */
-export async function upgradeAnonymousToPassword(
-  anonClient: AuthenticatedClient,
-  email: string,
-  password: string,
-): Promise<AuthenticatedClient> {
-  const result = (await anonClient.client.action(anyApi.auth.signIn, {
-    provider: "password",
-    params: { email, password, flow: "signUp" },
-  })) as SignInResult;
-
-  if (!result.tokens) {
-    throw new Error(
-      `Anonymous upgrade failed: ${JSON.stringify(result)}`,
-    );
-  }
-
-  const { token, refreshToken } = result.tokens;
-  anonClient.client.setAuth(token);
-
-  return {
-    client: anonClient.client,
     userId: extractUserId(token),
     token,
     refreshToken,

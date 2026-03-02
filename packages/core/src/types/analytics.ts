@@ -19,9 +19,3 @@ export interface SlugAggregate {
   lastRunAt: number;
 }
 
-/** Server-node execution quota (monthly, resets). */
-export interface ServerQuota {
-  serverRunsUsed: number;
-  serverRunLimit: number;
-  serverRunsRemaining: number;
-}

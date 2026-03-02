@@ -29,7 +29,7 @@ Web app rendering and interaction checkpoints.
 
 ## Journey Matrix
 
-### Anonymous Visitor (Public Pages)
+### Unauthenticated Visitor (Public Pages)
 
 The user who arrives from Google. No account, no auth. This is the majority of traffic.
 
@@ -96,7 +96,7 @@ What happens when things go wrong.
 
 | Journey | Also Touches | Notes |
 |---------|-------------|-------|
-| W2, W20-W26 | Auth (anonymous session) | Tool pages trigger `useAnonymousSession()` on mount |
+| W2, W20-W26 | Auth | Tool pages are public — no auth required for browser execution |
 | W24-W25 | Engine (node schemas) | Config controls map to engine node parameters |
 | W30-W33 | Auth (proxy, session) | Route protection handled by `proxy.ts` + auth providers |
 | W40 | API (execution errors) | Error messages originate from API/engine, displayed by web |

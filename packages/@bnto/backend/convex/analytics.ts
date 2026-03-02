@@ -1,12 +1,7 @@
 import { query } from "./_generated/server";
 import { getAppUserId } from "./_helpers/auth";
 
-/**
- * Clean usage analytics for the current user.
- *
- * Returns lifetime analytics fields only — no quota/billing fields.
- * Quota (server-node run limits) lives in `users.getServerQuota`.
- */
+/** Lifetime usage analytics for the current user. */
 export const getAnalytics = query({
   args: {},
   handler: async (ctx) => {

@@ -18,8 +18,6 @@ import { RecipeResultsSection } from "./RecipeResultsSection";
 import { RecipeToolbar } from "./RecipeToolbar";
 import type { RunPhase } from "./RunButton";
 import { ToolbarProgress } from "./ToolbarProgress";
-import { UpgradePrompt } from "./UpgradePrompt";
-
 /** Map the unified RunPhase + file count to the 3-step PhaseIndicator. */
 function deriveActivePhase(
   resolvedPhase: RunPhase,
@@ -48,8 +46,6 @@ function deriveActivePhase(
  */
 export function RecipeShell({ entry }: { entry: BntoEntry }) {
   const {
-    sessionPending,
-    quotaExhausted,
     currentUser,
     isBrowserPath,
     files,
@@ -77,7 +73,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
       size="md"
       className="space-y-6 text-center"
       data-testid="bnto-shell"
-      data-session={sessionPending ? "pending" : "ready"}
+      data-session="ready"
       data-user-id={currentUser?.id ?? ""}
       data-execution-mode={isBrowserPath ? "browser" : "cloud"}
     >
@@ -90,16 +86,13 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
         {entry.description}
       </p>
 
-      {quotaExhausted && <UpgradePrompt slug={entry.slug} reason="quota" />}
-
-      {!quotaExhausted && (
-        <FileUpload
-          value={files}
-          onValueChange={setFiles}
-          accept={accept}
-          multiple
-          disabled={isProcessing}
-        >
+      <FileUpload
+        value={files}
+        onValueChange={setFiles}
+        accept={accept}
+        multiple
+        disabled={isProcessing}
+      >
           {/* Phase 1: Dropzone — full width to match Phases 2–3 */}
           {activePhase === 1 && (
             <Animate.SlideUp>
@@ -208,8 +201,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
               </Animate.BouncyStagger>
             </Stack>
           )}
-        </FileUpload>
-      )}
+      </FileUpload>
     </Container>
   );
 }
