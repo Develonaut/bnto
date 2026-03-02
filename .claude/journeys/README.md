@@ -8,7 +8,7 @@ Living verification contracts for each major domain. Each matrix defines the use
 
 | Domain | File | What It Covers |
 |--------|------|---------------|
-| **Auth** | [auth.md](auth.md) | Sign-up, sign-in, sign-out, session lifecycle, quota enforcement, access control |
+| **Auth** | [auth.md](auth.md) | Sign-up, sign-in, sign-out, session lifecycle, access control |
 | **Engine** | [engine.md](engine.md) | CLI execution, node types, fixtures, validation, error handling |
 | **API** | [api.md](api.md) | Go HTTP API on Railway — endpoints, request/response contracts, R2 file transit |
 | **Web App** | [web.md](web.md) | Next.js app — page loads, SEO, tool pages, navigation, responsive behavior |

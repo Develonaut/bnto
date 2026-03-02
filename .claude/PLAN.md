@@ -30,7 +30,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
 - **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
-- **Auth:** `@convex-dev/auth`. Anonymous sessions, integration tests complete
+- **Auth:** `@convex-dev/auth`. Password auth, integration tests complete
 - **Packages:** `@bnto/core`, `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`
 
 ---
@@ -40,7 +40,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Monorepo: Turborepo + pnpm + Taskfile.dev + go.work
 - [x] Go engine + API: 10 node types, CLI, HTTP API on Railway — archived, ready for M4
 - [x] @bnto/core: Layered singleton (clients → services → adapters), React Query + Convex adapter, 38+ hooks
-- [x] @bnto/auth: `@convex-dev/auth` integration, anonymous sessions, conversion flow
+- [x] @bnto/auth: `@convex-dev/auth` integration, password auth
 - [x] @bnto/backend: Convex schema (users, workflows, executions, executionLogs), auth, crons, analytics fields
 - [x] @bnto/nodes: Engine-agnostic node definitions, schemas, recipes, validation (10 node types)
 - [x] Web app: Auth flow, SEO infrastructure, middleware, landing pages (real content), privacy policy

@@ -4,7 +4,9 @@ import { getAppUserId } from "./_helpers/auth";
 
 /**
  * Log the start of a Bnto execution.
- * Requires an authenticated session — userId is derived from the session.
+ * userId is derived from the session when available. Browser-only (WASM)
+ * executions from unauthenticated users log events without a userId for
+ * aggregate analytics.
  *
  * NOTE: Both `start` and `startPredefined` in executions.ts also insert
  * events directly for server-side executions. This mutation is the client-

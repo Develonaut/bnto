@@ -15,7 +15,7 @@
 | Data fetching / hooks        | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md) |
 | Architecture decisions       | [rules/architecture.md](.claude/rules/architecture.md)             |
 | Repo structure               | [monorepo-structure.md](.claude/strategy/monorepo-structure.md)    |
-| Visual editor (Sprint 4)     | [visual-editor.md](.claude/strategy/visual-editor.md)              |
+| Conveyor belt system         | [visual-editor.md](.claude/strategy/visual-editor.md)              |
 | Strategic direction          | [ROADMAP.md](.claude/ROADMAP.md)                                  |
 | Implementation task          | [PLAN.md](.claude/PLAN.md)                                        |
 | Free vs premium decisions    | [pricing-model.md](.claude/strategy/pricing-model.md)              |

@@ -8,7 +8,7 @@
 
 ## Why This Matters
 
-The auth system gates access to Convex functions and protected routes. Users either sign up with email/password or use bnto without an account (browser execution is free, unlimited, no session needed). Auth exists for: (1) saving workflows, (2) execution history, (3) server-node quota enforcement (Pro).
+The auth system gates access to Convex functions and protected routes. Users either sign up with email/password or use bnto without an account (browser execution is free, unlimited, no session needed). Auth exists for: (1) saving workflows, (2) execution history, (3) server-node access control (Pro).
 
 ---
 
@@ -46,8 +46,6 @@ Email sign-up, sign-in, sign-out.
 | **S3** | Sign-out clears session | S1 → sign out | Session invalidated. `getAppUserId()` returns null. Protected queries return null. |
 | **S4** | Auth API surface | All auth endpoints respond correctly | sign-in, sign-up, sign-out, token refresh return correct shapes. Invalid credentials return errors, not crashes. |
 
-### Quota Enforcement
-
 ### Access Control
 
 Execution visibility and ownership.
@@ -65,7 +63,6 @@ Execution visibility and ownership.
 
 | Journey | Also Touches | Notes |
 |---------|-------------|-------|
-| Q1 | API (server execution) | Auth creates execution record, API runs the workflow |
 | V1-V2 | Web (real-time UI) | Auth gates the Convex subscription, web renders progress |
 
 ---
@@ -76,6 +73,6 @@ Execution visibility and ownership.
 - Integration tests (Vitest) + E2E tests (Playwright) — test the full auth pipeline
 - Group tests by file:
   - `auth-lifecycle.test.ts` (S1-S4) — ConvexHttpClient integration tests
-  - `execution.test.ts` (Q1-Q2, V1-V3) — execution lifecycle + access control
+  - `execution.test.ts` (V1-V3) — execution lifecycle + access control
   - `upload.test.ts` (V4 variant) — upload access control
   - `auth-lifecycle.spec.ts` — Playwright E2E for browser auth flows

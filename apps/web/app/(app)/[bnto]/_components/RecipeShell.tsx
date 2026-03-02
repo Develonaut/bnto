@@ -87,12 +87,12 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
       </p>
 
       <FileUpload
-          value={files}
-          onValueChange={setFiles}
-          accept={accept}
-          multiple
-          disabled={isProcessing}
-        >
+        value={files}
+        onValueChange={setFiles}
+        accept={accept}
+        multiple
+        disabled={isProcessing}
+      >
           {/* Phase 1: Dropzone — full width to match Phases 2–3 */}
           {activePhase === 1 && (
             <Animate.SlideUp>
@@ -211,7 +211,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
               </Animate.BouncyStagger>
             </Stack>
           )}
-        </FileUpload>
+      </FileUpload>
     </Container>
   );
 }
