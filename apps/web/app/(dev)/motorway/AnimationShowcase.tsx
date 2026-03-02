@@ -169,22 +169,14 @@ function BouncyStagger() {
   return (
     <div>
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
-        Bouncy stagger. Pressable cards bounce onto the map
+        Bouncy stagger. Composed API — children bounce onto the map
       </SectionLabel>
-      <Animate.Stagger key={key} className="grid grid-cols-3 gap-4">
-        {DEMO_RECIPES.map((recipe, i) => {
+      <Animate.BouncyStagger key={key} className="grid grid-cols-3 gap-4">
+        {DEMO_RECIPES.map((recipe) => {
           const Icon = recipe.icon;
           return (
-            <Animate.ScaleIn
-              key={recipe.title}
-              index={i}
-              from={0.6}
-              easing="spring-bouncy"
-            >
-              <Button
-                variant="outline"
-                className="h-auto w-full flex-col items-start gap-3 rounded-xl p-5"
-              >
+            <Card key={recipe.title} className="h-full">
+              <Card.Content className="flex flex-col gap-3 p-5">
                 <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Icon className="size-5" />
                 </div>
@@ -194,11 +186,11 @@ function BouncyStagger() {
                 <p className="text-xs text-muted-foreground">
                   Browser-based, no signup
                 </p>
-              </Button>
-            </Animate.ScaleIn>
+              </Card.Content>
+            </Card>
           );
         })}
-      </Animate.Stagger>
+      </Animate.BouncyStagger>
     </div>
   );
 }

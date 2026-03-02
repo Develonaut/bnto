@@ -50,27 +50,25 @@ export function WorkflowGrid() {
   }
 
   return (
-    <Animate.Stagger>
+    <Animate.BouncyStagger asChild from={0.85}>
       <Grid cols={{ mobile: 1, tablet: 2, desktop: 3 }} gap="md">
-        {workflows.map((workflow, i) => (
-          <Animate.ScaleIn key={workflow.id} index={i} from={0.95}>
-            <Grid.Item>
-              <RecipeCard>
-                <RecipeCard.Header>
-                  <RecipeCard.Icon />
-                </RecipeCard.Header>
-                <RecipeCard.Content>
-                  <RecipeCard.Title>{workflow.name}</RecipeCard.Title>
-                  <RecipeCard.Meta
-                    nodeCount={workflow.nodeCount}
-                    updatedAt={workflow.updatedAt}
-                  />
-                </RecipeCard.Content>
-              </RecipeCard>
-            </Grid.Item>
-          </Animate.ScaleIn>
+        {workflows.map((workflow) => (
+          <Grid.Item key={workflow.id}>
+            <RecipeCard>
+              <RecipeCard.Header>
+                <RecipeCard.Icon />
+              </RecipeCard.Header>
+              <RecipeCard.Content>
+                <RecipeCard.Title>{workflow.name}</RecipeCard.Title>
+                <RecipeCard.Meta
+                  nodeCount={workflow.nodeCount}
+                  updatedAt={workflow.updatedAt}
+                />
+              </RecipeCard.Content>
+            </RecipeCard>
+          </Grid.Item>
         ))}
       </Grid>
-    </Animate.Stagger>
+    </Animate.BouncyStagger>
   );
 }

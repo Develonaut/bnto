@@ -458,11 +458,11 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 ### UX: Compositional BouncyStagger Audit
 
 **Priority: High.** Apply `BouncyStagger` compositionally (per-section opt-in) instead of wrapping entire `AppShell.Content` — the shell-level wrap caused a ~20px layout jump.
-- [ ] `apps/web` — Audit all pages using `AppShell.Content` — identify sections that benefit from staggered entrance
-- [ ] `apps/web` — Add `BouncyStagger` to card grids (home page BntoGallery, recipe card lists)
-- [ ] `apps/web` — Add `BouncyStagger` to file card lists in RecipeShell (already done in phase flow)
-- [ ] `apps/web` — Verify no layout shift on any page after compositional application
-- [ ] `apps/web` — Update Motorway showcase (`PhaseFlowShowcase`) to demonstrate the compositional pattern
+- [x] `apps/web` — Audit all pages using `AppShell.Content` — identify sections that benefit from staggered entrance
+- [x] `apps/web` — Add `BouncyStagger` to card grids (home page BntoGallery, recipe card lists)
+- [x] `apps/web` — Add `BouncyStagger` to file card lists in RecipeShell (already done in phase flow)
+- [x] `apps/web` — Verify no layout shift on any page after compositional application
+- [x] `apps/web` — Update Motorway showcase (`PhaseFlowShowcase`) to demonstrate the compositional pattern
 
 ### UX: Standardize Forms with React Hook Form + Zod
 
