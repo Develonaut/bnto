@@ -23,7 +23,7 @@ import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
 import { ProgressShowcase } from "./ProgressShowcase";
 import { RecipeCardShowcase } from "./RecipeCardShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
-import { SpringableShowcase } from "./SpringableShowcase";
+import { LoadingCardShowcase, SpringableShowcase } from "./SpringableShowcase";
 import { TypographyShowcase } from "./TypographyShowcase";
 
 export default function MotorwayPage() {
@@ -75,9 +75,17 @@ export default function MotorwayPage() {
             <ShowcaseSection
               id="springable"
               title="Springable Surfaces"
-              description="Cards spring up from the ground plane when content loads. The spring foundation shared by all animated surfaces — pressable buttons and loading cards alike."
+              description="Configure spring mode and elevation independently. The spring foundation shared by all animated surfaces — pressable buttons and loading cards alike."
             >
               <SpringableShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="loading-card"
+              title="Loading Cards"
+              description="Pass loading to Card for the common case. Springs up with bounciest when content arrives. Skeleton placeholders swap to real content in place."
+            >
+              <LoadingCardShowcase />
             </ShowcaseSection>
 
             <ShowcaseSection
