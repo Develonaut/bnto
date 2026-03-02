@@ -613,7 +613,15 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 
 **Priority: Pre-launch.** Audit `"use client"` directives — push boundaries down to smallest leaf, convert parents to Server Components, lazy load modals/below-fold with `next/dynamic`.
 
+**Known issues from dashboard page work (Sprint 3):**
+- `app/(app)/my-recipes/page.tsx` uses `dynamic()` with `ssr: false` for all data-dependent components (UsageStats, WorkflowGrid, RecentExecutions). This is an anti-pattern — it means null render during SSR → loading fallback after hydration → skeleton → data (triple-jump). The page should be restructured: page.tsx as a Server Component composing small client leaves that each handle their own loading states. Only the Convex-dependent leaf components need `"use client"`.
+- Skeleton dimensions were manually aligned to prevent layout shift but the root cause is the SSR gap from `ssr: false`. With proper Server Component structure, static parts (heading, tab list) render immediately in HTML, and only data-fetching leaves show skeletons.
+- `AppShell.Content` needed `min-h-[80svh]` as a band-aid to prevent footer visibility during the SSR→hydration gap. This should become unnecessary once pages use proper Server Component composition.
+- Same pattern likely exists on other `(app)` routes — audit all `dynamic({ ssr: false })` usage.
+
 - [ ] `apps/web` — Inventory `"use client"` files, refactor candidates to Server Components
+- [ ] `apps/web` — Restructure `my-recipes/page.tsx` — Server Component page with client leaf islands (eliminate `ssr: false` anti-pattern)
+- [ ] `apps/web` — Audit all `dynamic({ ssr: false })` usage, replace with proper server/client composition
 - [ ] `apps/web` — Eliminate barrel imports in client components, lazy load heavy components
 - [ ] `apps/web` — Run Lighthouse / bundle analyzer before and after, confirm no regression
 
