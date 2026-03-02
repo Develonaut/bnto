@@ -264,13 +264,13 @@ Dumb components (BentoCanvas / CodeEditor)     ← Wave 3+
 
 Pure functions that manipulate `Definition` trees. No React, no store, no UI. Fully testable in isolation. These are the atomic operations the editor performs.
 
-- [ ] `@bnto/nodes` — **`createBlankDefinition()`**: Returns a minimal valid `Definition` — root group node with one input port and one output port, no children. The "blank canvas" entry point.
-- [ ] `@bnto/nodes` — **`addNode(definition, nodeType, position?)`**: Inserts a new child node into the root group with default parameters from the schema. Auto-generates unique ID, creates default ports from `NODE_TYPE_INFO`. Returns new `Definition` (immutable — never mutate).
-- [ ] `@bnto/nodes` — **`removeNode(definition, nodeId)`**: Removes a node and all edges connected to it. Returns new `Definition`.
-- [ ] `@bnto/nodes` — **`updateNodeParams(definition, nodeId, params)`**: Merges new parameter values into a node's `parameters` object. Validates against `NodeSchema` (type checks, required fields, enum values, min/max). Returns new `Definition` or validation errors.
-- [ ] `@bnto/nodes` — **`moveNode(definition, nodeId, position)`**: Updates a node's `position`. Returns new `Definition`.
-- [ ] `@bnto/nodes` — **`definitionToRecipe(definition, metadata?)`**: Wraps a `Definition` into a `Recipe` with slug, name, description, accept spec. For export.
-- [ ] `@bnto/nodes` — **Unit tests for all CRUD operations**: Every function tested with all 10 node types. Edge cases: remove node (clean removal), update params with invalid values (validation errors), blank definition is valid, move node to new position, nested container operations.
+- [x] `@bnto/nodes` — **`createBlankDefinition()`**: Returns a minimal valid `Definition` — root group node with one input port and one output port, no children. The "blank canvas" entry point.
+- [x] `@bnto/nodes` — **`addNode(definition, nodeType, position?)`**: Inserts a new child node into the root group with default parameters from the schema. Auto-generates unique ID, creates default ports from `NODE_TYPE_INFO`. Returns new `Definition` (immutable — never mutate).
+- [x] `@bnto/nodes` — **`removeNode(definition, nodeId)`**: Removes a node and all edges connected to it. Returns new `Definition`.
+- [x] `@bnto/nodes` — **`updateNodeParams(definition, nodeId, params)`**: Merges new parameter values into a node's `parameters` object. Validates against `NodeSchema` (type checks, required fields, enum values, min/max). Returns new `Definition` or validation errors.
+- [x] `@bnto/nodes` — **`moveNode(definition, nodeId, position)`**: Updates a node's `position`. Returns new `Definition`.
+- [x] `@bnto/nodes` — **`definitionToRecipe(definition, metadata?)`**: Wraps a `Definition` into a `Recipe` with slug, name, description, accept spec. For export.
+- [x] `@bnto/nodes` — **Unit tests for all CRUD operations**: Every function tested with all 10 node types. Edge cases: remove node (clean removal), update params with invalid values (validation errors), blank definition is valid, move node to new position, nested container operations.
 
 #### Wave 2 (parallel — editor store + React hooks)
 
