@@ -80,29 +80,6 @@ export default function MotorwayPage() {
               <SpringableShowcase />
             </ShowcaseSection>
 
-            <ShowcaseSection
-              id="loading-card"
-              title="Loading Cards"
-              description="Pass loading to Card for the common case. Springs up with bounciest when content arrives. Skeleton placeholders swap to real content in place."
-            >
-              <LoadingCardShowcase />
-            </ShowcaseSection>
-
-            <ShowcaseSection
-              id="recipe-card"
-              title="Recipe Card"
-              description="Saved recipe cards for the dashboard grid. Shows name, node count, last run status, and relative timestamp. Includes skeleton loading state."
-            >
-              <RecipeCardShowcase />
-            </ShowcaseSection>
-
-            <ShowcaseSection
-              id="empty-state"
-              title="Empty State"
-              description="Composable empty state for lists, dashboards, and search results. Bare icon, title, description, and optional action. Three size variants."
-            >
-              <EmptyStateShowcase />
-            </ShowcaseSection>
           </Stack>
         </Tabs.Content>
 
@@ -155,6 +132,30 @@ export default function MotorwayPage() {
               description="List items with static card surface."
             >
               <NotificationCards />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="loading-card"
+              title="Loading Cards"
+              description="Pass loading to Card for the common case. Springs up with bounciest when content arrives. Skeleton placeholders swap to real content in place."
+            >
+              <LoadingCardShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="recipe-card"
+              title="Recipe Card"
+              description="Saved recipe cards for the dashboard grid. Shows name, node count, last run status, and relative timestamp. Includes skeleton loading state."
+            >
+              <RecipeCardShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="empty-state"
+              title="Empty State"
+              description="Composable empty state for lists, dashboards, and search results. Bare icon, title, description, and optional action. Three size variants."
+            >
+              <EmptyStateShowcase />
             </ShowcaseSection>
           </Stack>
         </Tabs.Content>
