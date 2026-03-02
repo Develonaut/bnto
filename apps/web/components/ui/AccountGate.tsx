@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { core } from "@bnto/core";
 
+import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Heading } from "@/components/ui/Heading";
@@ -58,24 +59,26 @@ export function AccountGate({
 
       {/* Floating sign-up prompt */}
       <div className="absolute inset-0 z-10 flex items-start justify-center pt-16">
-        <Card elevation="lg" className="w-full max-w-md p-8 shadow-xl">
-          <Stack className="items-center gap-4 text-center">
-            <Heading level={2} size="md">
-              {title}
-            </Heading>
-            <Text color="muted" leading="snug" className="max-w-sm">
-              {description}
-            </Text>
-            <div className="flex gap-3 pt-2">
-              <Button href="/signin" variant="primary" elevation="sm">
-                Sign in
-              </Button>
-              <Button href="/signin" variant="outline">
-                Create account
-              </Button>
-            </div>
-          </Stack>
-        </Card>
+        <Animate.ScaleIn from={0.6} easing="spring-bouncier">
+          <Card elevation="lg" className="w-full max-w-md p-8 shadow-xl">
+            <Stack className="items-center gap-4 text-center">
+              <Heading level={2} size="md">
+                {title}
+              </Heading>
+              <Text color="muted" leading="snug" className="max-w-sm">
+                {description}
+              </Text>
+              <div className="flex gap-3 pt-2">
+                <Button href="/signin" variant="primary" elevation="sm">
+                  Sign in
+                </Button>
+                <Button href="/signin" variant="outline">
+                  Create account
+                </Button>
+              </div>
+            </Stack>
+          </Card>
+        </Animate.ScaleIn>
       </div>
     </div>
   );

@@ -21,11 +21,14 @@ function BasicDialogDemo() {
       <Dialog.Content>
         <Dialog.Header>
           <Dialog.Title>Basic Dialog</Dialog.Title>
+          <Dialog.Close />
+        </Dialog.Header>
+        <Dialog.Body>
           <Dialog.Description>
             A simple dialog with a title, description, and action buttons.
             Click outside or press Escape to close.
           </Dialog.Description>
-        </Dialog.Header>
+        </Dialog.Body>
         <Dialog.Footer>
           <Dialog.Close asChild>
             <Button variant="outline">Cancel</Button>
@@ -50,11 +53,14 @@ function DestructiveDialogDemo() {
       <Dialog.Content className="max-w-sm">
         <Dialog.Header>
           <Dialog.Title>Delete recipe?</Dialog.Title>
+          <Dialog.Close />
+        </Dialog.Header>
+        <Dialog.Body>
           <Dialog.Description>
             This will permanently delete &ldquo;Compress Images&rdquo; and all
             its execution history. This action cannot be undone.
           </Dialog.Description>
-        </Dialog.Header>
+        </Dialog.Body>
         <Dialog.Footer>
           <Dialog.Close asChild>
             <Button variant="outline">Keep recipe</Button>
@@ -79,12 +85,13 @@ function FormDialogDemo() {
       <Dialog.Content>
         <Dialog.Header>
           <Dialog.Title>Rename recipe</Dialog.Title>
+          <Dialog.Close />
+        </Dialog.Header>
+        <Dialog.Body>
           <Dialog.Description>
             Give your recipe a new name. This won&apos;t affect its URL.
           </Dialog.Description>
-        </Dialog.Header>
-        <div className="py-4">
-          <label className="flex flex-col gap-2">
+          <label className="mt-4 flex flex-col gap-2">
             <Text size="sm" weight="medium">Name</Text>
             <input
               type="text"
@@ -92,7 +99,7 @@ function FormDialogDemo() {
               className="flex h-9 w-full rounded-md border border-border bg-input px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
           </label>
-        </div>
+        </Dialog.Body>
         <Dialog.Footer>
           <Dialog.Close asChild>
             <Button variant="outline">Cancel</Button>
@@ -118,15 +125,16 @@ function ForcedChoiceDialogDemo() {
         className="max-w-sm"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
-        hideClose
       >
         <Dialog.Header>
           <Dialog.Title>Accept terms to continue</Dialog.Title>
+        </Dialog.Header>
+        <Dialog.Body>
           <Dialog.Description>
             By continuing you agree to our Terms of Service and Privacy Policy.
             You must accept to use bnto.
           </Dialog.Description>
-        </Dialog.Header>
+        </Dialog.Body>
         <Dialog.Footer>
           <Dialog.Close asChild>
             <Button variant="outline">Decline</Button>

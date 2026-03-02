@@ -22,7 +22,33 @@ const DialogTrigger = DialogPrimitive.Trigger;
 
 /* ── Close ──────────────────────────────────────────────────── */
 
-const DialogClose = DialogPrimitive.Close;
+/**
+ * Composable close button. When used with `asChild`, wraps the child
+ * in Radix's close primitive. When used standalone (no `asChild`),
+ * renders the default X icon button.
+ */
+const DialogClose = forwardRef<
+  ElementRef<typeof DialogPrimitive.Close>,
+  ComponentPropsWithoutRef<typeof DialogPrimitive.Close>
+>(({ children, asChild, className, ...props }, ref) => {
+  if (asChild || children) {
+    return (
+      <DialogPrimitive.Close ref={ref} asChild={asChild} className={className} {...props}>
+        {children}
+      </DialogPrimitive.Close>
+    );
+  }
+
+  return (
+    <DialogPrimitive.Close ref={ref} asChild {...props}>
+      <Button variant="ghost" size="icon" elevation="md" className={cn("size-8", className)}>
+        <XIcon className="size-4" />
+        <span className="sr-only">Close</span>
+      </Button>
+    </DialogPrimitive.Close>
+  );
+});
+DialogClose.displayName = "Dialog.Close";
 
 /* ── Portal ─────────────────────────────────────────────────── */
 
@@ -49,8 +75,8 @@ DialogOverlay.displayName = "Dialog.Overlay";
 
 const DialogContent = forwardRef<
   ElementRef<typeof DialogPrimitive.Content>,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { hideClose?: boolean }
->(({ className, children, hideClose, ...props }, ref) => (
+  ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -67,16 +93,6 @@ const DialogContent = forwardRef<
             className={cn("pointer-events-auto relative w-full max-w-lg p-6", className)}
           >
             {children}
-            {!hideClose && (
-              <div className="absolute top-3 right-3 z-10">
-                <DialogPrimitive.Close asChild>
-                  <Button variant="ghost" size="icon" elevation="md" className="size-8">
-                    <XIcon className="size-4" />
-                    <span className="sr-only">Close</span>
-                  </Button>
-                </DialogPrimitive.Close>
-              </div>
-            )}
           </Card>
         </Animate.ScaleIn>
       </div>
@@ -93,11 +109,25 @@ const DialogHeader = forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col gap-1.5 pr-10 text-center sm:text-left", className)}
+    className={cn("flex items-start justify-between gap-4", className)}
     {...props}
   />
 ));
 DialogHeader.displayName = "Dialog.Header";
+
+/* ── Body ──────────────────────────────────────────────────── */
+
+const DialogBody = forwardRef<
+  HTMLDivElement,
+  ComponentPropsWithoutRef<"div">
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("py-4", className)}
+    {...props}
+  />
+));
+DialogBody.displayName = "Dialog.Body";
 
 /* ── Footer ─────────────────────────────────────────────────── */
 
@@ -151,6 +181,7 @@ export const Dialog = Object.assign(DialogRoot, {
   Overlay: DialogOverlay,
   Content: DialogContent,
   Header: DialogHeader,
+  Body: DialogBody,
   Footer: DialogFooter,
   Title: DialogTitle,
   Description: DialogDescription,
