@@ -379,15 +379,17 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 - `reuseExistingServer: true` in playwright.config.ts — Playwright reuses whatever server is already on the target port
 - Test fixtures are shared with the Go engine (`engine/tests/fixtures/`)
 
-**Progress-aware test helpers** (in `e2e/integrationHelpers.ts`):
-- `waitForSession(page)` — wait for anonymous session to establish
-- `waitForUserId(page)` — wait for `data-user-id` attribute to populate
-- `waitForPhase(page, phase, screenshot?)` — wait for RunButton `data-phase` and optionally snapshot
-- `waitForExecutionStatus(page, status, screenshot?)` — wait for ExecutionProgress `data-status` and optionally snapshot
-- `captureTransientPhase(page, phases, screenshot)` — try to capture a fleeting phase without failing
-- `captureUploadProgress(page, screenshot)` — snapshot upload file items if visible
-- `runPipeline(page, { files, debugLabel })` — upload files, click Run, wait for terminal phase
-- `assertCompletedWithScreenshot(page, phase, screenshot)` — assert completed + capture results
+**Shared test helpers** (in `e2e/helpers.ts`):
+- `navigateToRecipe(page, slug, h1)` — navigate to recipe page, wait for heading visible
+- `assertBrowserExecution(page)` — verify `data-execution-mode="browser"` on shell
+- `uploadFiles(page, filePaths[])` — set file input, wait for count text, return run button
+- `runAndComplete(page, options?)` — click Run, wait for terminal phase, return run button
+- `downloadAndVerify(page, options?)` — download output, verify magic bytes/size, return buffer
+- `downloadAllAsZip(page)` — click Download All, verify ZIP magic bytes, return buffer
+- `assertWebPBytes(buffer)` — verify WebP RIFF + WEBP magic bytes
+- Constants: `IMAGE_FIXTURES_DIR`, `CSV_FIXTURES_DIR`, `MAGIC` (JPEG, PNG, WEBP_RIFF, WEBP_TAG, ZIP)
+
+**Screenshot strategy:** Page-level screenshots only (site navigation, auth forms). Execution flows verified programmatically (magic bytes, data attributes, file sizes).
 
 **Data attributes for E2E observability:**
 - `data-testid="run-button"` + `data-phase` — RunButton lifecycle (idle, uploading, running, completed, failed)

@@ -2,6 +2,12 @@ import path from "path";
 import fs from "fs";
 import type { Page } from "@playwright/test";
 import { test, expect } from "../../fixtures";
+import {
+  IMAGE_FIXTURES_DIR,
+  navigateToRecipe,
+  uploadFiles,
+  runAndComplete,
+} from "../../helpers";
 
 test.use({ reducedMotion: "reduce" });
 
@@ -12,11 +18,6 @@ test.use({ reducedMotion: "reduce" });
  * the quality parameter (not just a pass-through). Batch test verifies
  * 5+ files across all three codecs process successfully.
  */
-
-const FIXTURES_DIR = path.resolve(
-  __dirname,
-  "../../../../../test-fixtures/images",
-);
 
 /**
  * Adjust a Radix Slider from its default value to a target value.
@@ -44,23 +45,13 @@ async function adjustSlider(page: Page, target: number, defaultValue: number) {
  * Navigates to a fresh page each time (clean slider state).
  */
 async function compressAtQuality(page: Page, quality: number): Promise<number> {
-  await page.goto("/compress-images");
-  await expect(
-    page.getByRole("heading", { name: "Compress Images Online Free" }),
-  ).toBeVisible();
+  await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-  // Upload file first — config controls only appear in Phase 2 (after file selection)
-  const fileInput = page.locator('input[type="file"]');
-  await fileInput.setInputFiles([path.join(FIXTURES_DIR, "medium.jpg")]);
-  await expect(page.getByText("1 file selected")).toBeVisible();
+  await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "medium.jpg")]);
 
   await adjustSlider(page, quality, 80);
 
-  const runButton = page.locator('[data-testid="run-button"]:visible');
-  await runButton.click();
-  await expect(runButton).toHaveAttribute("data-phase", "completed", {
-    timeout: 30000,
-  });
+  await runAndComplete(page);
 
   const dlPromise = page.waitForEvent("download");
   await page.locator('[data-testid="output-file"]').getByRole("button", { name: /download/i }).click();
@@ -70,7 +61,7 @@ async function compressAtQuality(page: Page, quality: number): Promise<number> {
   return fs.readFileSync(dlPath!).length;
 }
 
-test.describe("compress-images — configuration", () => {
+test.describe("compress-images — configuration @browser", () => {
   test("quality slider: q=50 produces smaller output than q=90", async ({
     page,
   }) => {
@@ -82,14 +73,10 @@ test.describe("compress-images — configuration", () => {
   });
 });
 
-test.describe("compress-images — batch processing", () => {
+test.describe("compress-images — batch processing @browser", () => {
   test("5 mixed-codec files: all compress and show Download All", async ({ page }) => {
-    await page.goto("/compress-images");
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    // Select 5 files across all three codecs
     const batchFiles = [
       "small.jpg",
       "small.png",
@@ -97,49 +84,26 @@ test.describe("compress-images — batch processing", () => {
       "medium.jpg",
       "medium.png",
     ];
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles(
-      batchFiles.map((f) => path.join(FIXTURES_DIR, f)),
+
+    await uploadFiles(
+      page,
+      batchFiles.map((f) => path.join(IMAGE_FIXTURES_DIR, f)),
     );
 
-    await expect(page.getByText("5 files selected")).toBeVisible();
+    await runAndComplete(page, { timeout: 60000 });
 
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("10-batch-5-files-selected.png", {
-      fullPage: true,
-    });
-
-    // Run
-    const runButton = page.locator('[data-testid="run-button"]:visible');
-    await runButton.click();
-
-    // Wait for all 5 to complete
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 60000,
-    });
-
-    // Verify all 5 outputs
     const outputFiles = page.locator('[data-testid="output-file"]');
     await expect(outputFiles).toHaveCount(5);
 
-    // Download All button should be visible for multi-file results
     await expect(
       page.getByRole("button", { name: /download all/i }).last(),
     ).toBeVisible();
-
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("11-batch-5-files-compressed.png", {
-      fullPage: true,
-    });
   });
 
   test("multi-file progress is monotonic (never decreases)", async ({ page }) => {
     test.setTimeout(60_000);
 
-    await page.goto("/compress-images");
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
     // Use large files across codecs — slower to compress = more progress samples
     const batchFiles = [
@@ -149,16 +113,11 @@ test.describe("compress-images — batch processing", () => {
       "medium.jpg",
       "medium.png",
     ];
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles(
-      batchFiles.map((f) => path.join(FIXTURES_DIR, f)),
+
+    await uploadFiles(
+      page,
+      batchFiles.map((f) => path.join(IMAGE_FIXTURES_DIR, f)),
     );
-
-    await expect(page.getByText("5 files selected")).toBeVisible();
-
-    // Collect progress samples via page.evaluate polling inside the browser.
-    // This is faster and more reliable than polling from Node.js over CDP.
-    const runButton = page.locator('[data-testid="run-button"]:visible');
 
     // Start a browser-side observer BEFORE clicking Run
     await page.evaluate(() => {
@@ -180,12 +139,7 @@ test.describe("compress-images — batch processing", () => {
       (window as any).__progressObserver = observer;
     });
 
-    await runButton.click();
-
-    // Wait for completion
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 60_000,
-    });
+    await runAndComplete(page, { timeout: 60_000 });
 
     // Collect and disconnect
     const samples = await page.evaluate(() => {
@@ -193,7 +147,6 @@ test.describe("compress-images — batch processing", () => {
       return (window as any).__progressSamples as number[];
     });
 
-    // We should have captured progress samples during processing
     expect(
       samples.length,
       `Expected progress samples during 5-file batch but got ${samples.length}`,

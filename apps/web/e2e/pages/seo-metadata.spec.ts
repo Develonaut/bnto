@@ -74,7 +74,7 @@ const TIER_1_SLUGS = [
   },
 ] as const;
 
-test.describe("SEO metadata — all Tier 1 slugs", () => {
+test.describe("SEO metadata — all Tier 1 slugs @browser", () => {
   for (const entry of TIER_1_SLUGS) {
     test(`/${entry.slug}: correct title and meta description`, async ({
       page,
@@ -132,7 +132,7 @@ test.describe("SEO metadata — all Tier 1 slugs", () => {
   }
 });
 
-test.describe("SEO — 404 for unknown slugs", () => {
+test.describe("SEO — 404 for unknown slugs @browser", () => {
   test("unknown slug returns 404 page", async ({ page }) => {
     const response = await page.goto("/not-a-real-bnto-tool");
 
@@ -149,7 +149,7 @@ test.describe("SEO — 404 for unknown slugs", () => {
   });
 });
 
-test.describe("SEO — canonical slug enforcement", () => {
+test.describe("SEO — canonical slug enforcement @browser", () => {
   test("uppercase slug redirects to lowercase", async ({ page }) => {
     await page.goto("/Compress-Images");
 

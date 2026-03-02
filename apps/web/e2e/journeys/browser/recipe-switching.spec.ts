@@ -1,5 +1,13 @@
 import path from "path";
 import { test, expect } from "../../fixtures";
+import {
+  IMAGE_FIXTURES_DIR,
+  CSV_FIXTURES_DIR,
+  navigateToRecipe,
+  assertBrowserExecution,
+  uploadFiles,
+  runAndComplete,
+} from "../../helpers";
 
 test.use({ reducedMotion: "reduce" });
 
@@ -7,66 +15,37 @@ test.use({ reducedMotion: "reduce" });
  * User journey — switching between recipes
  *
  * Validates that navigating between recipe pages doesn't leak execution state.
- * The core scenario: complete a recipe, navigate to a different one, and confirm
- * the new page starts fresh (idle phase, no stale results, no spurious downloads).
- *
- * This guards against the singleton store bug where completed status from recipe A
+ * Guards against the singleton store bug where completed status from recipe A
  * would trigger auto-download when mounting recipe B.
  */
 
-const IMAGE_FIXTURES_DIR = path.resolve(
-  __dirname,
-  "../../../../../test-fixtures/images",
-);
-const CSV_FIXTURES_DIR = path.resolve(
-  __dirname,
-  "../../../../../test-fixtures/csv",
-);
-
-test.describe("recipe switching — state isolation", () => {
+test.describe("recipe switching — state isolation @browser", () => {
   test("navigating after completion starts fresh (no stale phase)", async ({
     page,
   }) => {
     // --- Recipe A: compress-images → run to completion ---
-    await page.goto("/compress-images");
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles([
+    await uploadFiles(page, [
       path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
     ]);
-    await expect(page.getByText("1 file selected")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]:visible');
-    await runButton.click();
-
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
+    await runAndComplete(page);
 
     // Confirm recipe A completed with results
-    const outputFile = page.locator('[data-testid="output-file"]');
-    await expect(outputFile).toHaveCount(1);
+    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
 
     // --- Navigate to Recipe B: clean-csv ---
-    await page.goto("/clean-csv");
-    await expect(
-      page.getByRole("heading", { name: "Clean CSV Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
     // Recipe B must start at Phase 1 (idle) — no stale completed state
-    const shell = page.locator('[data-testid="bnto-shell"]');
-    await expect(shell).toHaveAttribute("data-execution-mode", "browser");
+    await assertBrowserExecution(page);
 
     // No output files from recipe A should be visible
     await expect(page.locator('[data-testid="output-file"]')).toHaveCount(0);
 
-    // No run button should show completed phase
+    // Run button must not show completed phase if visible
     const runButtonB = page.locator('[data-testid="run-button"]');
-    // Run button may not be visible yet (Phase 1 = dropzone, no run button)
-    // but if visible, it must be idle
     const runButtonCount = await runButtonB.count();
     if (runButtonCount > 0) {
       await expect(runButtonB.first()).not.toHaveAttribute(
@@ -74,50 +53,30 @@ test.describe("recipe switching — state isolation", () => {
         "completed",
       );
     }
-
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot(
-      "00-clean-csv-fresh-after-compress.png",
-      { fullPage: true },
-    );
   });
 
   test("no spurious download when navigating to a new recipe after completion", async ({
     page,
   }) => {
     // --- Recipe A: compress-images → run to completion ---
-    await page.goto("/compress-images");
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles([
+    await uploadFiles(page, [
       path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
     ]);
 
-    const runButton = page.locator('[data-testid="run-button"]:visible');
-    await runButton.click();
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
+    await runAndComplete(page);
 
     // --- Navigate to Recipe B and watch for downloads ---
-    // Set up download listener BEFORE navigation so we catch anything
-    // triggered during page mount
     let downloadTriggered = false;
     page.on("download", () => {
       downloadTriggered = true;
     });
 
-    await page.goto("/clean-csv");
-    await expect(
-      page.getByRole("heading", { name: "Clean CSV Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
-    // Wait a beat for any useEffect auto-download to fire (it would be
-    // near-instant if the completed state leaked)
-    await page.waitForTimeout(1000);
+    // Wait for network to settle — any useEffect auto-download would fire
+    await page.waitForLoadState("networkidle");
 
     expect(downloadTriggered).toBe(false);
   });
@@ -126,58 +85,34 @@ test.describe("recipe switching — state isolation", () => {
     page,
   }) => {
     // --- Recipe A: compress-images → run to completion ---
-    await page.goto("/compress-images");
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    const fileInputA = page.locator('input[type="file"]');
-    await fileInputA.setInputFiles([
+    await uploadFiles(page, [
       path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
     ]);
 
-    const runButtonA = page.locator('[data-testid="run-button"]:visible');
-    await runButtonA.click();
-    await expect(runButtonA).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
+    await runAndComplete(page);
 
     // --- Navigate to Recipe B: clean-csv ---
-    await page.goto("/clean-csv");
-    await expect(
-      page.getByRole("heading", { name: "Clean CSV Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
     // --- Run Recipe B with its own files ---
-    const fileInputB = page.locator('input[type="file"]');
-    await fileInputB.setInputFiles([
+    await uploadFiles(page, [
       path.join(CSV_FIXTURES_DIR, "messy.csv"),
     ]);
-    await expect(page.getByText("1 file selected")).toBeVisible();
 
     const runButtonB = page.locator('[data-testid="run-button"]:visible');
     await expect(runButtonB).toHaveAttribute("data-phase", "idle");
-    await runButtonB.click();
 
-    await expect(runButtonB).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
+    await runAndComplete(page);
 
     // Recipe B has its own results — not recipe A's image results
-    const outputFile = page.locator('[data-testid="output-file"]');
-    await expect(outputFile).toHaveCount(1);
-
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot(
-      "00-clean-csv-independent-result.png",
-      { fullPage: true },
-    );
+    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
   });
 
   test("rapid navigation between recipes doesn't leak state", async ({
     page,
   }) => {
-    // Navigate through 3 recipes quickly — none should show stale state
     const recipes = [
       { slug: "compress-images", h1: "Compress Images Online Free" },
       { slug: "clean-csv", h1: "Clean CSV Online Free" },
@@ -185,34 +120,18 @@ test.describe("recipe switching — state isolation", () => {
     ];
 
     // Run one recipe to completion first
-    await page.goto("/compress-images");
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles([
+    await uploadFiles(page, [
       path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
     ]);
 
-    const runButton = page.locator('[data-testid="run-button"]:visible');
-    await runButton.click();
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
+    await runAndComplete(page);
 
     // Now navigate rapidly through all 3 recipes
     for (const recipe of recipes) {
-      await page.goto(`/${recipe.slug}`);
-      await expect(
-        page.getByRole("heading", { name: recipe.h1 }),
-      ).toBeVisible();
-
-      // Each recipe must be in Phase 1 (idle dropzone)
-      const shell = page.locator('[data-testid="bnto-shell"]');
-      await expect(shell).toHaveAttribute("data-execution-mode", "browser");
-
-      // No stale output files
+      await navigateToRecipe(page, recipe.slug, recipe.h1);
+      await assertBrowserExecution(page);
       await expect(page.locator('[data-testid="output-file"]')).toHaveCount(0);
     }
   });
