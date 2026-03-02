@@ -25,7 +25,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 in progress
+- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 ready
 - **Next:** Sprint 4 + 4B (Recipe Editors) — visual + code editors, parallel alongside Sprint 3
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
 - **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
@@ -134,7 +134,7 @@ Anonymous→password userId fix, FIXME cleanup, privacy policy rewrite, README r
 - [x] `apps/web` — `/frontend-engineer` — EmptyState component (no workflows yet)
 - [x] `infra` — **Analytics layer decision:** PostHog selected. Decision doc at `.claude/decisions/analytics.md`. Privacy policy updated to remove premature "no tracking" promises. Copy across FAQ, pricing, hero updated to be honest, not aspirational.
 - [x] `@bnto/core` — `/core-architect` — **PostHog telemetry integration:** `core.telemetry` namespace (client → adapter), `TelemetryProvider` with config injection, E2E test hook via `window.__bnto_telemetry__`. Production-only env vars (Vercel). 2 E2E tests.
-- [ ] `infra` — **SEO validation tooling:** Set up Lighthouse CI in GitHub Actions for automated performance/SEO scoring on every PR. Configure Google Search Console for bnto.io (verify ownership, submit sitemap, monitor indexing). Add `task seo:audit` command that runs Lighthouse locally against all public routes and reports Core Web Vitals scores. Target: all pages green on Performance, Accessibility, Best Practices, SEO.
+- [x] `infra` — **SEO validation tooling:** Lighthouse CI in GitHub Actions (advisory, all 10 public routes). `task seo:audit` for local audits. Google Search Console verified via Cloudflare DNS. `@lhci/cli` installed as dev dep.
 
 #### Wave 2 (parallel — dashboard + conversion hooks)
 
