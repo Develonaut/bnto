@@ -6,6 +6,7 @@ import type { LucideIcon } from "@/components/ui/icons";
 import { BlocksIcon } from "@/components/ui/icons";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Heading } from "@/components/ui/Heading";
 import { IconBadge } from "@/components/ui/IconBadge";
 import { Pressable } from "@/components/ui/Pressable";
@@ -15,24 +16,6 @@ import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
-
-/* ── Status helpers ──────────────────────────────────────────── */
-
-type ExecutionStatus = Execution["status"];
-
-const STATUS_VARIANT: Record<ExecutionStatus, "default" | "primary" | "secondary" | "destructive"> = {
-  pending: "default",
-  running: "secondary",
-  completed: "primary",
-  failed: "destructive",
-};
-
-const STATUS_LABEL: Record<ExecutionStatus, string> = {
-  pending: "Pending",
-  running: "Running",
-  completed: "Completed",
-  failed: "Failed",
-};
 
 /* ── Root ────────────────────────────────────────────────────── */
 
@@ -106,12 +89,8 @@ function RecipeCardCategory({ children }: PropsWithChildren) {
   );
 }
 
-function RecipeCardStatus({ status }: { status: ExecutionStatus }) {
-  return (
-    <Badge variant={STATUS_VARIANT[status]} size="sm">
-      {STATUS_LABEL[status]}
-    </Badge>
-  );
+function RecipeCardStatus({ status }: { status: Execution["status"] }) {
+  return <StatusBadge status={status} />;
 }
 
 function RecipeCardTitle({ children }: PropsWithChildren) {
