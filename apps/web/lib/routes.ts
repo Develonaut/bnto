@@ -30,7 +30,6 @@ export const AUTH_PATHS = [ROUTES.signin, ROUTES.signup] as const;
  * Unauthenticated users are redirected to /signin.
  */
 export const PROTECTED_PATHS = [
-  ROUTES.workflows,
   ROUTES.executions,
   ROUTES.settings,
 ] as const;

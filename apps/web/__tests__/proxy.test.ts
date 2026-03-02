@@ -81,12 +81,9 @@ describe("proxy", () => {
       expect(response.status).toBe(200);
     });
 
-    it("redirects to /signin on private route /workflows", async () => {
+    it("passes through on /workflows (public with conversion prompt)", async () => {
       const response = await proxy(createRequest("/workflows"));
-      expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe(
-        "/signin",
-      );
+      expect(response.status).toBe(200);
     });
 
     it("redirects to /signin on private route /executions", async () => {
@@ -111,7 +108,7 @@ describe("proxy", () => {
     });
 
     it("redirects to /signin on protected sub-route", async () => {
-      const response = await proxy(createRequest("/workflows/123"));
+      const response = await proxy(createRequest("/settings/account"));
       expect(response.status).toBe(307);
       expect(new URL(response.headers.get("location")!).pathname).toBe(
         "/signin",

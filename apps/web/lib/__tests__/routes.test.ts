@@ -33,8 +33,7 @@ describe("AUTH_PATHS", () => {
 });
 
 describe("PROTECTED_PATHS", () => {
-  it("includes workflows, executions, and settings", () => {
-    expect(PROTECTED_PATHS).toContain("/workflows");
+  it("includes executions and settings", () => {
     expect(PROTECTED_PATHS).toContain("/executions");
     expect(PROTECTED_PATHS).toContain("/settings");
   });
@@ -44,6 +43,7 @@ describe("PROTECTED_PATHS", () => {
     expect(protectedSet.has("/")).toBe(false);
     expect(protectedSet.has("/signin")).toBe(false);
     expect(protectedSet.has("/waitlist")).toBe(false);
+    expect(protectedSet.has("/workflows")).toBe(false);
   });
 });
 
@@ -67,20 +67,21 @@ describe("isAuthPath", () => {
 
 describe("isProtectedPath", () => {
   it("returns true for protected paths", () => {
-    expect(isProtectedPath("/workflows")).toBe(true);
     expect(isProtectedPath("/executions")).toBe(true);
     expect(isProtectedPath("/settings")).toBe(true);
   });
 
   it("matches sub-paths of protected routes", () => {
-    expect(isProtectedPath("/workflows/123")).toBe(true);
     expect(isProtectedPath("/settings/account")).toBe(true);
+    expect(isProtectedPath("/executions/123")).toBe(true);
   });
 
   it("returns false for public paths", () => {
     expect(isProtectedPath("/")).toBe(false);
     expect(isProtectedPath("/signin")).toBe(false);
     expect(isProtectedPath("/waitlist")).toBe(false);
+    expect(isProtectedPath("/workflows")).toBe(false);
+    expect(isProtectedPath("/workflows/123")).toBe(false);
   });
 
   it("returns false for bnto slugs and unknown paths", () => {
