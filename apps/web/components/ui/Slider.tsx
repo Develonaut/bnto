@@ -41,7 +41,7 @@ function Slider({
         <SliderPrimitive.Range className="bg-primary absolute h-full" />
       </SliderPrimitive.Track>
       {Array.from({ length: _value.length }, (_, index) => (
-        <Pressable key={index} asChild spring="sm">
+        <Pressable key={index} asChild spring="bouncy">
           <Surface asChild variant="primary" elevation="sm" rounded="full">
             <SliderPrimitive.Thumb
               aria-describedby={ariaDescribedBy}
