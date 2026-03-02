@@ -84,6 +84,9 @@ test-results/
 playwright-report/
 blob-report/
 
+# Lighthouse CI
+.lighthouseci/
+
 # Convex (keep _generated/ checked in — needed for CI/CD builds)
 .vercel
 
