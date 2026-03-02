@@ -155,9 +155,9 @@ Anonymous→password userId fix, FIXME cleanup, privacy policy rewrite, README r
 ---
 
 ### Sprint 4: Recipe Editor (Headless-First)
-**Goal:** Users can create recipes from a blank canvas or customize existing ones — add/remove/configure nodes, connect them, run, and export as `.bnto.json`. The editor is free (pricing-model.md: "recipe editor is free"). Power users who create custom recipes are the highest-intent Pro upgrade candidates.
+**Goal:** Users can create recipes from a blank canvas or customize existing ones — add/remove/configure nodes, run, and export as `.bnto.json`. The editor is free (pricing-model.md: "recipe editor is free"). Power users who create custom recipes are the highest-intent Pro upgrade candidates.
 
-**Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The conveyor belt visual (sushi, surface cards, belts) is a themed skin applied on top. This means the editor can be reskinned, embedded, or offered as a headless library in the future. See [visual-editor.md](.claude/strategy/visual-editor.md) for connection system research and conveyor belt design patterns.
+**Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The bento box visual (compartment cards on a grid) is one skin; the code editor (CodeMirror 6) is another. Both are views of the same `Definition` in the shared store. Users can switch between them on the fly. See [editor-architecture.md](.claude/strategy/editor-architecture.md) for the shared layer design and [visual-editor.md](.claude/strategy/visual-editor.md) for the bento box visual editor.
 
 ```
 @bnto/nodes (types, schemas, validation)      ← already built
@@ -168,14 +168,14 @@ Editor store (Zustand — headless operations)   ← Wave 2
          ↓
 React hooks (reactive bindings)                ← Wave 2
          ↓
-Visual skin (ConveyorCanvas / JSON panel)      ← Wave 3+
+Dumb components (BentoCanvas / CodeEditor)     ← Wave 3+
 ```
 
-**Two entry points, same state:** `createBlankRecipe()` (empty canvas with one input + one output node) or `loadRecipe(slug)` (pre-assembled recipe from `@bnto/nodes`). Both produce the same `EditorState` shape — same operations, same output, same visual.
+**Two entry points, same state:** `createBlankDefinition()` (empty bento box) or `loadRecipe(slug)` (pre-assembled recipe from `@bnto/nodes`). Both produce the same `EditorState` shape — same operations, same output, same visual.
 
 **Prior art:** Atomiton's `createFieldsFromSchema` pattern. Define node parameter schemas once (`@bnto/nodes/schemas/`), auto-derive config panel UI. ~70-80% of fields need zero UI code. Already built in `@bnto/nodes` — schemas exist for all 10 node types with `visibleWhen`, `requiredWhen`, enum values, min/max, and defaults.
 
-**What this is NOT:** Save to Convex (Sprint 3 prerequisite), execution history, workflow versioning, container node nesting (group/loop as visual sub-canvases), or the JSON/code editor (Sprint 4B — CodeMirror 6, shares headless primitives but is a distinct coding-oriented experience with its own persona). Those layer on naturally once the headless foundation exists.
+**What this is NOT:** Save to Convex (Sprint 3 prerequisite), execution history, workflow versioning, container node nesting (group/loop as visual sub-canvases), or the JSON/code editor (Sprint 4B — CodeMirror 6, shares the headless store but is a distinct coding-oriented experience with its own persona). Those layer on naturally once the headless foundation exists.
 
 **Persona ownership:**
 | Wave | Lead Persona | Supporting | Rationale |
@@ -195,43 +195,40 @@ Pure functions that manipulate `Definition` trees. No React, no store, no UI. Fu
 - [ ] `@bnto/nodes` — **`addNode(definition, nodeType, position?)`**: Inserts a new child node into the root group with default parameters from the schema. Auto-generates unique ID, creates default ports from `NODE_TYPE_INFO`. Returns new `Definition` (immutable — never mutate).
 - [ ] `@bnto/nodes` — **`removeNode(definition, nodeId)`**: Removes a node and all edges connected to it. Returns new `Definition`.
 - [ ] `@bnto/nodes` — **`updateNodeParams(definition, nodeId, params)`**: Merges new parameter values into a node's `parameters` object. Validates against `NodeSchema` (type checks, required fields, enum values, min/max). Returns new `Definition` or validation errors.
-- [ ] `@bnto/nodes` — **`addEdge(definition, source, target, sourceHandle?, targetHandle?)`**: Creates a connection between two nodes. Validates: no self-loops, no duplicate edges, source/target exist. Returns new `Definition` or validation error.
-- [ ] `@bnto/nodes` — **`removeEdge(definition, edgeId)`**: Removes an edge. Returns new `Definition`.
 - [ ] `@bnto/nodes` — **`moveNode(definition, nodeId, position)`**: Updates a node's `position`. Returns new `Definition`.
 - [ ] `@bnto/nodes` — **`definitionToRecipe(definition, metadata?)`**: Wraps a `Definition` into a `Recipe` with slug, name, description, accept spec. For export.
-- [ ] `@bnto/nodes` — **Unit tests for all CRUD operations**: Every function tested with all 10 node types. Edge cases: remove node with connections (edges cascade-deleted), add edge to non-existent node (error), update params with invalid values (validation errors), blank definition is valid, nested container operations.
+- [ ] `@bnto/nodes` — **Unit tests for all CRUD operations**: Every function tested with all 10 node types. Edge cases: remove node (clean removal), update params with invalid values (validation errors), blank definition is valid, move node to new position, nested container operations.
 
 #### Wave 2 (parallel — editor store + React hooks)
 
-Zustand store that wraps the pure functions into a reactive state machine. Hooks provide the React binding layer. Still headless — no visual components. **`/reactflow-expert` leads** — owns the Definition ↔ Flow adapter design and Zustand store architecture following ReactFlow's change/apply pattern.
+Zustand store that wraps the pure functions into a reactive state machine. Hooks provide the React binding layer. Still headless — no visual components. **`/reactflow-expert` leads** — owns the Definition ↔ Bento adapter design and Zustand store architecture.
 
-- [ ] `apps/web` — **`useEditorStore` (Zustand)**: Editor state: `definition` (current `Definition`), `selectedNodeId`, `isDirty`, `validationErrors[]`, `executionState` (per-node status map). Actions: `loadRecipe(slug)`, `createBlank()`, `addNode(type)`, `removeNode(id)`, `selectNode(id)`, `updateParams(nodeId, params)`, `addEdge(...)`, `removeEdge(...)`, `moveNode(...)`, `resetDirty()`. All actions delegate to Wave 1 pure functions. Undo/redo via history stack (store snapshots).
+- [ ] `apps/web` — **`useEditorStore` (Zustand)**: Editor state: `definition` (current `Definition`), `selectedNodeId`, `isDirty`, `validationErrors[]`, `executionState` (per-node status map). Actions: `loadRecipe(slug)`, `createBlank()`, `addNode(type)`, `removeNode(id)`, `selectNode(id)`, `updateParams(nodeId, params)`, `moveNode(...)`, `resetDirty()`. All actions delegate to Wave 1 pure functions. Undo/redo via history stack (store snapshots).
 - [ ] `apps/web` — **`useEditorNode(nodeId)` hook**: Returns node data + schema + visible params (conditional visibility resolved). Subscribes to store slice — re-renders only when this node changes.
-- [ ] `apps/web` — **`useEditorEdges()` hook**: Returns all edges with resolved variant colors (from source node type). Subscribes to edge slice only.
 - [ ] `apps/web` — **`useNodePalette()` hook**: Returns available node types from `NODE_TYPE_INFO`, grouped by category, with `browserCapable` flags. Filters server-only nodes based on context (browser editor = browser-capable only).
 - [ ] `apps/web` — **`useEditorExport()` hook**: Returns `{ exportAsRecipe, download }` — wraps current definition as a `Recipe` or triggers browser `.bnto.json` file download. Validates definition before export. Pure serialization — no visual dependency.
-- [ ] `apps/web` — **Definition ↔ ReactFlow adapters**: `definitionToFlow(definition)` → `{ nodes: StationNodeType[], edges: ConveyorEdgeType[] }`. `flowToDefinition(nodes, edges)` → `Definition`. Pure functions that bridge the headless model to the visual layer. Map node types to station variants, positions, and port handles. Unit tested — round-trip: `definition → flow → definition` produces equivalent output.
+- [ ] `apps/web` — **Definition ↔ Bento adapters**: `definitionToBento(definition)` → `{ nodes: CompartmentNodeType[] }`. `bentoToDefinition(nodes)` → `Definition`. Pure functions that bridge the headless model to the visual layer. Map node types to compartment variants, positions, and sizes. No edges — execution order derived from compartment position. Unit tested — round-trip: `definition → bento → definition` produces equivalent output.
 - [ ] `apps/web` — **Unit tests for store + hooks**: Store operations tested via Vitest (no rendering). Hook tests via `renderHook`. Adapter round-trip tests. Undo/redo verification.
 
 #### Wave 3 (parallel — visual canvas integration)
 
-Wire the headless store to the existing ConveyorCanvas. The conveyor belt becomes a live, interactive editor. **`/reactflow-expert` + `/frontend-engineer` co-lead.** ReactFlow Expert owns canvas interaction, connection validation, drag-and-drop. Frontend Engineer owns component composition, theming, and animation.
+Wire the headless store to the bento box canvas. The compartment grid becomes a live, interactive editor. **`/reactflow-expert` + `/frontend-engineer` co-lead.** ReactFlow Expert owns canvas interaction and node positioning. Frontend Engineer owns component composition, theming, and animation.
 
-- [ ] `apps/web` — **`RecipeEditor` component**: Composes `EditorToolbar` + `ConveyorCanvas` + `NodeConfigPanel`. Reads from `useEditorStore`. Two entry modes: `<RecipeEditor slug="compress-images" />` (loads predefined) or `<RecipeEditor />` (blank canvas).
+- [ ] `apps/web` — **`RecipeEditor` component**: Composes `EditorToolbar` + `BentoCanvas` + `NodeConfigPanel`. Reads from `useEditorStore`. Two entry modes: `<RecipeEditor slug="compress-images" />` (loads predefined) or `<RecipeEditor />` (blank canvas). Includes `EditorModeToggle` to switch between visual (bento) and code (CM6) editors.
 - [ ] `apps/web` — **`EditorToolbar` component**: Action bar above canvas — recipe selector dropdown (all Tier 1 recipes + "Blank"), Add Node button (opens palette), Remove Selected button, Run button, Reset/Replay button, Export `.bnto.json` button, Undo/Redo buttons. Reads/dispatches to `useEditorStore`.
-- [ ] `apps/web` — **`NodePalette` component**: Slide-out panel listing available node types from `useNodePalette()`. Click-to-add (adds node at auto-positioned location). Grouped by category. Browser-capable badge. Server-only nodes shown grayed with "Pro" badge (visible but not addable in browser context — definitions always available per pricing model).
-- [ ] `apps/web` — **`NodeConfigPanel` component**: Side panel that renders when a node is selected. Uses `useEditorNode(selectedNodeId)` to get schema + current params. Auto-generates form fields from `ParameterSchema` (Atomiton pattern): string → text input, number → number input with min/max, boolean → toggle, enum → select dropdown. `visibleWhen` and `requiredWhen` handled reactively. Parameter changes dispatch `updateParams` to store.
-- [ ] `apps/web` — **Enable canvas interaction**: Upgrade `ConveyorCanvas` to accept an `interactive` prop. When `true`: `nodesDraggable={true}`, `nodesConnectable={true}`, `elementsSelectable={true}`. Node drag updates position via `moveNode`. New edge connections dispatch `addEdge`. Selection dispatches `selectNode`. When `false`: current read-only showcase behavior (backward compatible).
-- [ ] `apps/web` — **Motorway debug section**: Replace the hardcoded `ConveyorShowcase` in `/motorway` with `<RecipeEditor />`. The Motorway page becomes the editor playground — load recipes, add/remove nodes, connect them, configure parameters, run, export.
+- [ ] `apps/web` — **`NodePalette` component**: Slide-out panel listing available node types from `useNodePalette()`. Click-to-add (adds compartment at next available slot). Grouped by category. Browser-capable badge. Server-only nodes shown grayed with "Pro" badge (visible but not addable in browser context — definitions always available per pricing model).
+- [ ] `apps/web` — **`NodeConfigPanel` component**: Side panel that renders when a compartment is selected. Uses `useEditorNode(selectedNodeId)` to get schema + current params. Auto-generates form fields from `ParameterSchema` (Atomiton pattern): string → text input, number → number input with min/max, boolean → toggle, enum → select dropdown. `visibleWhen` and `requiredWhen` handled reactively. Parameter changes dispatch `updateParams` to store.
+- [ ] `apps/web` — **Enable canvas interaction**: Upgrade `BentoCanvas` to accept an `interactive` prop. When `true`: `nodesDraggable={true}`, `elementsSelectable={true}`. Node drag updates position via `moveNode`. Selection dispatches `selectNode`. No edge connections — execution order is positional. When `false`: current read-only showcase behavior (backward compatible).
+- [ ] `apps/web` — **Motorway debug section**: Replace the hardcoded `BentoBoxShowcase` in `/motorway` with `<RecipeEditor />`. The Motorway page becomes the editor playground — load recipes, add/remove compartments, configure parameters, run, export.
 
 #### Wave 4 (parallel — execution + polish)
 
-The editor runs recipes and shows execution state on the canvas. The conveyor belt visual becomes meaningful — it's not just pretty, it's showing real processing. **`/reactflow-expert` + `/frontend-engineer` co-lead.**
+The editor runs recipes and shows execution state on the canvas. Compartments visually reflect processing progress — each lights up as it processes, then settles as the next activates. **`/reactflow-expert` + `/frontend-engineer` co-lead.**
 
-- [ ] `apps/web` — **Execution integration**: Wire Run button to browser WASM execution path. When running: station nodes show execution state (idle → running → completed/failed) via variant shifts and belt animation speed changes. Progress callbacks from `browserExecutionService` update `executionState` in editor store. Conveyor pieces flow faster during processing, pause on completion.
+- [ ] `apps/web` — **Execution integration**: Wire Run button to browser WASM execution path. When running: compartments show execution state (idle → pending → active → completed) via status-driven elevation changes and variant color shifts. Progress callbacks from `browserExecutionService` update `executionState` in editor store.
 - [ ] `apps/web` — **Export `.bnto.json`**: Download button in toolbar that serializes current editor state to a valid `.bnto.json` file via `useEditorExport().download()`. Validates before export. Users can take their recipe anywhere — CLI, desktop, share with others.
 - [ ] `@bnto/backend` — **Tag editor users**: When a user opens the editor, set `hasUsedEditor: true` on their user record. Highest-intent Pro upgrade candidates. Query: `ctx.db.query("users").withIndex("by_hasUsedEditor")`.
-- [ ] `apps/web` — **E2E tests**: Load recipe → canvas renders matching stations. Add node → appears. Connect nodes → belt renders. Remove node → removed with edges. Configure params → node updates. Export → valid `.bnto.json` file. Run → execution progress shown on canvas. Blank canvas → add nodes → build a recipe from scratch.
+- [ ] `apps/web` — **E2E tests**: Load recipe → canvas renders matching compartments. Add node → compartment appears in next slot. Remove node → compartment removed, remaining reflow. Configure params → node updates. Export → valid `.bnto.json` file. Run → execution progress shown on compartments. Blank canvas → add nodes → build a recipe from scratch.
 
 ---
 
@@ -298,7 +295,7 @@ Bidirectional sync between code editor and visual canvas. Cmd-K palette for app-
 
 - [ ] `apps/web` — **Store sync extension**: CM6 `updateListener` + `Annotation` pattern. Code editor changes → parse JSON → validate → update `useEditorStore.definition`. Store changes → serialize to JSON → dispatch CM6 transaction with `externalUpdate` annotation (prevents sync loop). Debounced parsing (200ms) for performance.
 - [ ] `apps/web` — **Command palette (Cmd-K)**: Uses `cmdk` (shadcn/ui `Command` component). Opens on Cmd-K anywhere in the editor. Lists all commands from the command registry. Keyboard navigable, filterable. Not CM6-specific — works across the entire app.
-- [ ] `apps/web` — **Split view**: Side-by-side `ConveyorCanvas` + `CodeEditor`, both reading from `useEditorStore`. Changes in either sync through the store. Resizable split pane. Toggle between code-only, visual-only, and split modes.
+- [ ] `apps/web` — **Split view**: Side-by-side `BentoCanvas` + `CodeEditor`, both reading from `useEditorStore`. Changes in either sync through the store. Resizable split pane. Toggle between code-only, visual-only, and split modes via `EditorModeToggle`.
 - [ ] `apps/web` — **Unit tests for sync**: Code edit → store updates. Store change → CM6 document updates. External annotation prevents sync loops. Invalid JSON doesn't crash store.
 
 #### Wave 5 (sequential — breadcrumbs, polish, E2E)
@@ -667,8 +664,10 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 |----------|---------|
 | `.claude/journeys/` | User journey test matrices — auth, engine, API, web app |
 | `.claude/strategy/bntos.md` | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers |
-| `.claude/strategy/visual-editor.md` | Visual editor connection system research, conveyor belt patterns |
+| `.claude/strategy/editor-architecture.md` | Shared editor layer — store, hooks, package strategy, switchable editors |
+| `.claude/strategy/visual-editor.md` | Bento box visual editor — compartment design, grid layout, execution state |
 | `.claude/strategy/code-editor.md` | Code editor design — CM6, slash commands, JSON Schema |
+| `.claude/strategy/conveyor-belt.md` | Conveyor belt showcase — Motorway page R&D (not the editor) |
 | `.claude/strategy/cloud-desktop-strategy.md` | Architecture, cost analysis, cloud execution topology |
 | `.claude/strategy/core-principles.md` | Trust commitments, "For Claude Code" guidance |
 | `.claude/rules/` | Auto-loaded rules (architecture, code-standards, components, etc.) |
