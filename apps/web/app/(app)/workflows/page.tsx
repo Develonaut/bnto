@@ -85,16 +85,27 @@ export default function WorkflowsPage() {
               </Tabs.List>
 
               {/*
-               * forceMount + CSS visibility keeps both panels in the DOM.
-               * This prevents remount/refetch on tab switch and preserves
-               * scroll position. React Query caches keep data warm.
+               * forceMount keeps both panels in the DOM so switching
+               * tabs doesn't remount components or refetch data.
+               *
+               * The inactive panel uses invisible + absolute so it's
+               * removed from layout flow but stays mounted. The active
+               * panel stays in normal flow and determines container height.
                */}
-              <div className="relative min-h-[280px]">
-                <Tabs.Content value="recent" forceMount className="pt-4 data-[state=inactive]:hidden">
+              <div className="relative">
+                <Tabs.Content
+                  value="recent"
+                  forceMount
+                  className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
+                >
                   <RecentExecutions />
                 </Tabs.Content>
 
-                <Tabs.Content value="saved" forceMount className="pt-4 data-[state=inactive]:hidden">
+                <Tabs.Content
+                  value="saved"
+                  forceMount
+                  className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
+                >
                   <WorkflowGrid />
                 </Tabs.Content>
               </div>
