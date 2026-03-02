@@ -18,14 +18,14 @@ export function SignUpPrompt() {
           Save your workflows
         </Heading>
         <Text color="muted" leading="snug" className="max-w-md">
-          Sign up to save your recipes, access execution history, and pick up
-          where you left off from any device. Free tools stay free — always.
+          Sign in to save your recipes, access execution history, and pick up
+          where you left off from any device.
         </Text>
         <div className="flex gap-3 pt-2">
           <Button href="/signin" variant="primary" elevation="sm">
             Sign in
           </Button>
-          <Button href="/signup" variant="outline">
+          <Button href="/signin" variant="outline">
             Create account
           </Button>
         </div>
