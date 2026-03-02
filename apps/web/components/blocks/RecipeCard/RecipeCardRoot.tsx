@@ -23,11 +23,13 @@ type RecipeCardRootProps = PropsWithChildren<{
   onClick?: () => void;
   href?: string;
   className?: string;
+  /** Grounded loading state — card springs up when loading clears. */
+  loading?: boolean;
 }>;
 
-export function RecipeCardRoot({ onClick, href, className, children }: RecipeCardRootProps) {
+export function RecipeCardRoot({ onClick, href, className, loading, children }: RecipeCardRootProps) {
   const card = (
-    <Card elevation="md" className={cn("flex h-full flex-col justify-between p-5", className)}>
+    <Card elevation="md" loading={loading} className={cn("flex h-full flex-col justify-between p-5", className)}>
       {children}
     </Card>
   );
