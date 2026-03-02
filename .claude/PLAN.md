@@ -424,6 +424,27 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 ---
 
+## Immediate Backlog
+
+### Infra: Convex Production Deployment Pipeline
+
+**Priority: High.** Convex production (`gregarious-donkey-712`) was never deployed — discovered when anonymous auth started failing on bnto.io with 400 errors. `npx convex deploy --yes` and `npx @convex-dev/auth` had to be run manually. There is no automatic mechanism to deploy Convex functions to production when code merges to `main`.
+
+- [ ] `infra` — Investigate options: GitHub Actions step on merge to main, Vercel build hook (`--cmd`), or manual deploy gate
+- [ ] `infra` — Implement chosen mechanism so Convex prod stays in sync with main
+- [ ] `.claude/rules/pre-commit.md` — Add Convex deploy reminder to the push/PR workflow if manual
+
+### Infra: PostHog Events Not Appearing in Dashboard
+
+**Priority: High.** Recipe telemetry events (`files_added`, `recipe_run_started`, `recipe_run_completed`, etc.) are wired and verified in E2E tests via `window.__bnto_telemetry__`, but events may not be reaching the PostHog dashboard when using bnto.io in production.
+
+- [ ] `apps/web` — Verify `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` are set correctly on Vercel production
+- [ ] `apps/web` — Check if PostHog `init()` is actually called in production (DNT check, env var presence)
+- [ ] `apps/web` — Inspect network tab on bnto.io for PostHog requests (`/i/v0/e/` or `/decide/`)
+- [ ] `apps/web` — Verify events appear in PostHog Live Events view after a real compress-images run
+
+---
+
 ## Backlog
 
 ### UX: Compositional BouncyStagger Audit
