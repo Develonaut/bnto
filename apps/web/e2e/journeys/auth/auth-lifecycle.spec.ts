@@ -177,7 +177,7 @@ test.describe("Auth — proxy route protection @auth", () => {
     page,
   }) => {
     // Try to visit a protected route without auth
-    await page.goto("/workflows");
+    await page.goto("/executions");
 
     // Should be redirected to /signin
     await page.waitForURL("/signin", { timeout: 10000 });
