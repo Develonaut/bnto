@@ -81,7 +81,7 @@ export function Footer() {
             {TOOL_SECTIONS.map((section) => (
               <div key={section.title}>
                 <Text
-                  as="h3"
+                  as="p"
                   size="xs"
                   weight="medium"
                   color="muted"

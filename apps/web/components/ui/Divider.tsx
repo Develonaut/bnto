@@ -32,7 +32,7 @@ export function Divider({ label, className, ...props }: DividerProps) {
     >
       <div className={cn(lineCn)} />
       {label && (
-        <span className="text-muted-foreground/60 bg-muted/60 shrink-0 rounded-sm px-3 py-1 font-mono text-xs uppercase tracking-widest">
+        <span className="text-muted-foreground bg-muted shrink-0 rounded-sm px-3 py-1 font-mono text-xs uppercase tracking-widest">
           {label}
         </span>
       )}

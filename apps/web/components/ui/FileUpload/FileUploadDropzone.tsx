@@ -41,7 +41,7 @@ export function FileUploadDropzone({
           )}
           onClick={handleClick}
         >
-          <input {...getInputProps()} />
+          <input {...getInputProps()} aria-label="File upload" />
           {children}
         </Card>
       </Pressable>
