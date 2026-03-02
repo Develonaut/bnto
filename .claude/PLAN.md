@@ -446,6 +446,15 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 ## Backlog
 
+### UX: Unified Popup/FloatingSurface Primitive
+
+**Priority: Medium.** Dialog.Content, Menu.Content, and AccountGate all repeat the same floating surface pattern: `Card elevation="lg"` + `Animate.ScaleIn from={0.6} easing="spring-bouncier"` + pointer-events/z-index management. Extract a shared composition primitive so consumers compose it instead of duplicating the Card/animation/z-index logic.
+
+- [ ] `apps/web` — Frontend engineer investigation: audit Dialog, Menu, AccountGate for shared patterns (animation, elevation, overlay, dismiss)
+- [ ] `apps/web` — Design the primitive API — how does it compose with Radix primitives that need `asChild`? Should it handle overlays or just the floating card?
+- [ ] `apps/web` — Implement `Popup` (or `FloatingSurface`) primitive in `components/ui/`
+- [ ] `apps/web` — Migrate Dialog.Content, Menu.Content, and AccountGate to use the shared primitive
+
 ### UX: Compositional BouncyStagger Audit
 
 **Priority: High.** Apply `BouncyStagger` compositionally (per-section opt-in) instead of wrapping entire `AppShell.Content` — the shell-level wrap caused a ~20px layout jump.
