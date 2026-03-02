@@ -73,76 +73,56 @@ Tests are **mandatory** for most changes. Determine which type:
 - **Pure utils/functions** (any `utils/` directory) -> **Unit tests** co-located next to the source file. No exceptions for utils.
 - **Configuration or type-only changes** -> Tests not required.
 
-### E2E Screenshot Regression Gate (MANDATORY)
+### E2E Testing: Two Verification Strategies
 
-**Every commit that touches visual output MUST include up-to-date screenshots.** Stale screenshots are broken tests -- they cause false failures for every subsequent agent and developer. There is no excuse for skipping this; the scripts exist.
+**Screenshots are for page-level layout** (site navigation, auth forms). **Execution flows are verified programmatically** (magic bytes, data attributes, file sizes, download events).
 
-**When to regenerate:**
+| What changed | Verification | Screenshot regeneration needed? |
+|---|---|---|
+| Page layout, routing, chrome, auth forms | Screenshots (`toHaveScreenshot()`) in `pages/` and `auth/` specs | Yes — two-pass regeneration |
+| Execution flows, WASM output, file processing | Programmatic assertions (magic bytes, data attributes) in `journeys/browser/` specs | No |
+| Components used in both | Run all E2E tests, regenerate page-level screenshots only | Only if page layout shifted |
 
-Ask yourself: **did you modify ANY file that affects what renders on screen?** This includes components, layouts, pages, CSS/theme tokens, fonts, primitives, animation classes, or anything in `apps/web/` that changes visual output. If yes, you MUST regenerate screenshots.
+**When to regenerate page-level screenshots:**
 
-**How to regenerate:**
+If you modified routing, page layout, navbar, footer, or auth forms — regenerate:
 
 ```bash
-# Step 1: Check if dev server is already running
-lsof -ti:4000
+lsof -ti:4000  # check if dev server is running
 
-# If port 4000 is active (preferred — fast, reuses running server):
-cd apps/web && pnpm exec playwright test --update-snapshots   # regenerate
-cd apps/web && pnpm exec playwright test                      # verify stable
+# If port 4000 is active:
+cd apps/web && pnpm exec playwright test --update-snapshots && pnpm exec playwright test
 
-# If port 4000 is NOT active (use isolated port — starts its own server):
+# If port 4000 is NOT active:
 E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
 E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
-
-# Stage the updated screenshots with the rest of your changes
-git add e2e/**/__screenshots__/*.png
 ```
 
-**Both runs are required.** The first regenerates baselines. The second proves they're stable. If the second run has screenshot mismatches, the baselines are flaky -- investigate and fix before proceeding.
-
-**Intermittent "01 Issue" hydration failures** are known (PopoverTrigger `asChild` SSR mismatch). These are NOT screenshot failures. If the only failures in the second run are "01 Issue" overlay detections with zero screenshot mismatches, that's acceptable. Report them to the user but do not block the commit.
+**Intermittent "01 Issue" hydration failures** are known (PopoverTrigger `asChild` SSR mismatch). If the only failures are "01 Issue" overlay detections with zero screenshot mismatches, that's acceptable.
 
 ### Did you touch UI?
 
-Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, page, or layout that a user will see or interact with?**
-
-**If yes -- you MUST write or update e2e tests with screenshot assertions.** This is non-negotiable. Unit tests alone are not proof that UI works.
-
-**Required e2e coverage:**
-- Add to or create spec files in `apps/web/e2e/`
-- Test the actual user flow, not just that a page renders
-- Include `await expect(page).toHaveScreenshot()` assertions
-- Run the e2e tests and confirm screenshots are generated
-- **VISUALLY VERIFY screenshots** -- use the Read tool to open each new or updated `.png` file and confirm the visual output matches expectations
-
-**If you genuinely believe no e2e test is needed** (e.g., pure internal refactor with zero visual change), you MUST ask the user for explicit approval before skipping.
+**If yes -- you MUST write or update e2e tests.** Use programmatic assertions for execution flows (magic bytes, file sizes, data attributes). Use screenshots only for page-level layout verification.
 
 **E2e test conventions:**
-- Always import `{ test, expect }` from `./fixtures` (NOT from `@playwright/test`) -- the shared fixture captures console and page errors automatically
+- Always import `{ test, expect }` from `./fixtures` (NOT from `@playwright/test`)
 - Always set `test.use({ reducedMotion: "reduce" })` to disable animations
-- Use `data-testid` markers for reliable state detection (see `integrationHelpers.ts` for available attributes)
+- Use shared helpers from `helpers.ts` (`uploadFiles`, `runAndComplete`, `downloadAndVerify`, `navigateToRecipe`, `assertBrowserExecution`)
+- Use `data-testid` markers for reliable state detection
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes
-- Add `await page.evaluate(() => window.scrollTo(0, 0))` before `toHaveScreenshot()` in tests where user actions may shift the viewport (e.g., clicking Run triggers errors that scroll to footer)
-- Agents: check `lsof -ti:4000` first. If a dev server is running, reuse it (`cd apps/web && pnpm exec playwright test`). If not, use `task e2e:isolated` (port 4001) or start `task dev` yourself. Never kill the user's dev server on port 4000.
-- Use progress-aware helpers from `integrationHelpers.ts` (`waitForPhase`, `waitForExecutionStatus`, `captureTransientPhase`, etc.) to observe and snapshot execution progress
+- Tag describe blocks with `@browser` (no Convex needed) or `@auth` (needs Convex) for selective test runs
+- Agents: check `lsof -ti:4000` first. If a dev server is running, reuse it. If not, use `task e2e:isolated` (port 4001) or start `task dev` yourself
 
-### E2E Screenshot Verification (MANDATORY)
+### E2E Verification After Tests
 
-After running E2E tests, agents MUST verify screenshot health:
-
-1. **Check test output for `[e2e errors]`** -- the shared fixture logs captured console/page errors with this prefix. Review each error. If an error indicates a real bug (not an expected "no backend" failure), investigate and fix before committing.
-2. **Visually inspect each new or updated screenshot** -- use the Read tool to open `.png` files. Check for:
-   - **Next.js error overlay** (red "1 Issue" badge in bottom-left) -- if present, it means an unhandled error occurred. Investigate the root cause via the `[e2e errors]` output.
-   - **Wrong viewport position** -- screenshot shows footer/header instead of the expected tool UI. Add `scrollTo(0, 0)` before the screenshot call.
-   - **Missing or garbled content** -- indicates a rendering issue or missing data.
-3. **E2E environment** -- agents should check `lsof -ti:4000` first. If a dev server is running on port 4000, reuse it (fastest path). If not, use `task e2e:isolated` (port 4001, starts its own Next.js) or start `task dev` yourself. Never kill the user's dev server.
+1. **Check test output for `[e2e errors]`** -- the shared fixture logs captured console/page errors. Review each error.
+2. **E2E environment** -- agents should check `lsof -ti:4000` first. Reuse running dev server when possible.
 
 ### Stale Artifact Cleanup (MANDATORY)
 
 **After making changes, you MUST clean up anything that your changes have invalidated.** This includes:
 
-- **Screenshots** -- If you changed visual output, regenerate with `--update-snapshots` (see Screenshot Regression Gate above). Never delete screenshots without regenerating -- stale baselines break every subsequent test run.
+- **Screenshots** -- If you changed page-level layout, regenerate with `--update-snapshots`. Execution flow specs have no screenshots to manage.
 - **Test assertions** -- If you changed behavior, update any unit tests that assert on the old behavior.
 - **Code references** -- If you renamed, removed, or changed exports, find and update all consumers.
 - **Documentation** -- If you changed behavior that's documented, update the docs to match.

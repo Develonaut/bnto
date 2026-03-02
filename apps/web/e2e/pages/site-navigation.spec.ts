@@ -27,7 +27,7 @@ const PUBLIC_ROUTES = [
 
 /* ── Desktop ─────────────────────────────────────────────────── */
 
-test.describe("Site navigation — desktop", () => {
+test.describe("Site navigation — desktop @browser", () => {
   for (const route of PUBLIC_ROUTES) {
     test(`${route.name} renders without errors`, async ({ page }) => {
       const response = await page.goto(route.path);
@@ -122,7 +122,7 @@ test.describe("Site navigation — desktop", () => {
 
 /* ── Mobile ──────────────────────────────────────────────────── */
 
-test.describe("Site navigation — mobile", () => {
+test.describe("Site navigation — mobile @browser", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
   // Representative subset — home, one tool, plus static pages

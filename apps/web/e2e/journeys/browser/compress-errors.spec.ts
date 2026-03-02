@@ -1,4 +1,5 @@
 import { test, expect } from "../../fixtures";
+import { navigateToRecipe } from "../../helpers";
 
 test.use({ reducedMotion: "reduce" });
 
@@ -9,12 +10,9 @@ test.use({ reducedMotion: "reduce" });
  * messages without crashing, and that the "Try Again" reset works.
  */
 
-test.describe("compress-images — error handling", () => {
+test.describe("compress-images — error handling @browser", () => {
   test("unsupported file: shows error, no crash", async ({ page }) => {
-    await page.goto("/compress-images");
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
     // Set a file with image/jpeg MIME (bypasses accept filter) but
     // non-image content. WASM will fail to decode this.
@@ -40,11 +38,6 @@ test.describe("compress-images — error handling", () => {
     await expect(errorCard).toBeVisible();
     await expect(errorCard).toContainText("Something went wrong");
 
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("08-error-unsupported-file.png", {
-      fullPage: true,
-    });
-
     // Page should still be functional — back button resets to configure phase
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
     const backButton = page.locator('[data-testid="bnto-shell"] button').first();
@@ -54,14 +47,9 @@ test.describe("compress-images — error handling", () => {
   });
 
   test("corrupt image: error card with Try Again", async ({ page }) => {
-    await page.goto("/compress-images");
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
+    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
     // File with JPEG extension but garbage bytes.
-    // ImageFormat::detect() succeeds (extension fallback) but
-    // ImageReader::decode() fails → ProcessingFailed error.
     const fileInput = page.locator('input[type="file"]');
     await fileInput.setInputFiles({
       name: "corrupted-photo.jpg",
@@ -77,7 +65,6 @@ test.describe("compress-images — error handling", () => {
     const runButton = page.locator('[data-testid="run-button"]:visible');
     await runButton.click();
 
-    // Should show error state
     await expect(runButton).toHaveAttribute("data-phase", "failed", {
       timeout: 30000,
     });
@@ -85,11 +72,6 @@ test.describe("compress-images — error handling", () => {
     const errorCard = page.locator('[data-testid="client-error"]');
     await expect(errorCard).toBeVisible();
     await expect(errorCard).toContainText("Something went wrong");
-
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("09-error-corrupt-image.png", {
-      fullPage: true,
-    });
 
     // Back button resets to configure phase, ready to try different files
     await expect(runButton).toHaveAttribute("aria-label", "Try again");

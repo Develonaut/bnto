@@ -17,7 +17,7 @@ test.use({ reducedMotion: "reduce" });
  * to window.__bnto_telemetry__ (set up by enableTelemetryCapture).
  */
 
-test.describe("PostHog telemetry", () => {
+test.describe("PostHog telemetry @browser", () => {
   test("initializes and captures initial pageview on load", async ({
     page,
   }) => {

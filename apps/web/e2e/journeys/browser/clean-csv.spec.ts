@@ -1,6 +1,13 @@
 import path from "path";
 import fs from "fs";
 import { test, expect } from "../../fixtures";
+import {
+  CSV_FIXTURES_DIR,
+  navigateToRecipe,
+  assertBrowserExecution,
+  uploadFiles,
+  runAndComplete,
+} from "../../helpers";
 
 test.use({ reducedMotion: "reduce" });
 
@@ -9,66 +16,27 @@ test.use({ reducedMotion: "reduce" });
  *
  * Tests CSV cleaning running 100% client-side via Rust→WASM.
  * Default config: trim whitespace + remove empty rows (duplicates off).
- * The messy.csv fixture has leading/trailing spaces, empty rows,
- * and duplicate entries — perfect for validating the cleaning pipeline.
  */
 
-const CSV_FIXTURES_DIR = path.resolve(
-  __dirname,
-  "../../../../../test-fixtures/csv",
-);
-
-test.describe("clean-csv — browser execution", () => {
+test.describe("clean-csv — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
-    await page.goto("/clean-csv");
-
-    await expect(
-      page.getByRole("heading", { name: "Clean CSV Online Free" }),
-    ).toBeVisible();
-
-    const shell = page.locator('[data-testid="bnto-shell"]');
-    await expect(shell).toHaveAttribute("data-execution-mode", "browser");
+    await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
+    await assertBrowserExecution(page);
   });
 
   test("messy CSV: clean, download, verify output is valid CSV", async ({
     page,
   }) => {
-    await page.goto("/clean-csv");
+    await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
-    await expect(
-      page.getByRole("heading", { name: "Clean CSV Online Free" }),
-    ).toBeVisible();
-
-    // Select the messy CSV fixture
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles([
+    await uploadFiles(page, [
       path.join(CSV_FIXTURES_DIR, "messy.csv"),
     ]);
 
-    await expect(page.getByText("1 file selected")).toBeVisible();
-
-    const runButton = page.locator('[data-testid="run-button"]:visible');
-    await expect(runButton).toBeEnabled();
-
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("clean-csv-01-file-selected.png", {
-      fullPage: true,
-    });
-
-    // Run with default config (trim whitespace + remove empty rows)
-    await runButton.click();
-
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
+    await runAndComplete(page);
 
     const outputFile = page.locator('[data-testid="output-file"]');
     await expect(outputFile).toHaveCount(1);
-
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("clean-csv-02-result.png", {
-      fullPage: true,
-    });
 
     // Download and verify output is valid CSV text
     const downloadPromise = page.waitForEvent("download");
@@ -87,52 +55,37 @@ test.describe("clean-csv — browser execution", () => {
 
     // Should not contain empty lines (empty rows removed)
     const lines = downloadedFile.split("\n").filter((l) => l.trim() !== "");
-    expect(lines.length).toBeGreaterThan(1); // header + at least one data row
+    expect(lines.length).toBeGreaterThan(1);
 
     // Whitespace should be trimmed — no leading/trailing spaces in cells
     for (const line of lines) {
       const cells = line.split(",");
       for (const cell of cells) {
-        // Each cell should not start or end with spaces
         expect(cell).toBe(cell.trim());
       }
     }
   });
 
   test("simple CSV: passes through cleanly", async ({ page }) => {
-    await page.goto("/clean-csv");
+    await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
-    await expect(
-      page.getByRole("heading", { name: "Clean CSV Online Free" }),
-    ).toBeVisible();
-
-    // simple.csv is already clean — should pass through without changes
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles([
+    await uploadFiles(page, [
       path.join(CSV_FIXTURES_DIR, "simple.csv"),
     ]);
 
-    await expect(page.getByText("1 file selected")).toBeVisible();
+    await runAndComplete(page);
 
-    const runButton = page.locator('[data-testid="run-button"]:visible');
-    await runButton.click();
-
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
-
-    const outputFile2 = page.locator('[data-testid="output-file"]');
-    await expect(outputFile2).toHaveCount(1);
+    const outputFile = page.locator('[data-testid="output-file"]');
+    await expect(outputFile).toHaveCount(1);
 
     // Download and verify all original data rows are preserved
     const downloadPromise = page.waitForEvent("download");
-    await outputFile2.getByRole("button", { name: /download/i }).click();
+    await outputFile.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
     const output = fs.readFileSync(downloadPath!, "utf-8");
 
-    // All 5 data rows + header should survive cleaning
     expect(output).toContain("Alice");
     expect(output).toContain("Bob");
     expect(output).toContain("Charlie");

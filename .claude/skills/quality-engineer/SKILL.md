@@ -16,7 +16,7 @@ You are a senior quality engineer who owns the testing strategy, E2E infrastruct
 | `.claude/journeys/` | Journey test matrices — living verification contracts |
 | `apps/web/playwright.config.ts` | Playwright configuration, port isolation, screenshot tolerance |
 | `apps/web/e2e/fixtures.ts` | Shared test fixture (error capture, dev overlay hiding) |
-| `apps/web/e2e/helpers/` | Integration helpers (phase waiters, pipeline runners) |
+| `apps/web/e2e/helpers.ts` | Shared test helpers (navigation, upload, execution, download verification) |
 | `engine/crates/*/src/**/tests` | Rust unit test strategy and coverage |
 | Cross-cutting | Test quality standards, anti-patterns, coverage gaps |
 
@@ -57,18 +57,18 @@ Tests map to user journeys defined in `.claude/journeys/`. Each journey has a do
 
 Every E2E spec implements one or more journeys from these matrices. When you write a new test, find the journey it belongs to — or propose a new journey ID if it's a genuinely new flow.
 
-### 2. The 4-Phase Screenshot Convention
+### 2. The 4-Phase Verification Convention
 
-Every browser execution E2E test captures screenshots at four phases:
+Every browser execution E2E test verifies four phases programmatically:
 
 ```
-Phase 1: BEFORE    → Page loaded, files selected, ready to run
-Phase 2: PROGRESS  → Execution in progress (transient, best-effort capture)
-Phase 3: FINISH    → Execution complete, results displayed
-Phase 4: VERIFY    → Output downloaded and validated (file size, type, magic bytes)
+Phase 1: BEFORE    → Page loaded, files selected, ready to run (data attributes)
+Phase 2: PROGRESS  → Execution in progress (progressbar visibility, data-phase assertions)
+Phase 3: FINISH    → Execution complete, results displayed (output-file count, data-phase="completed")
+Phase 4: VERIFY    → Output downloaded and validated (file size, magic bytes, content assertions)
 ```
 
-Not every test needs all four. But BEFORE and FINISH are mandatory for any execution flow.
+Phase 4 (VERIFY) is the primary verification. Phases 1-3 are verified via data attribute assertions, not screenshots. Screenshots are reserved for page-level layout verification (site navigation, auth forms).
 
 ### 3. Shared Fixture — Always Import from `./fixtures`
 
@@ -211,19 +211,21 @@ await expect(runButton).toHaveAttribute("data-phase", "completed", {
 });
 ```
 
-### 7. Integration Helpers
+### 7. Shared Helpers
 
-`apps/web/e2e/helpers/integrationHelpers.ts` provides progress-aware helpers:
+`apps/web/e2e/helpers.ts` provides shared helpers used across all browser journey specs:
 
 | Helper | Purpose |
 |---|---|
-| `waitForSession(page)` | Wait for anonymous session to establish |
-| `waitForUserId(page)` | Wait for `data-user-id` to populate |
-| `waitForPhase(page, phase, screenshot?)` | Wait for RunButton `data-phase` + optional snapshot |
-| `waitForExecutionStatus(page, status, screenshot?)` | Wait for execution status + optional snapshot |
-| `captureTransientPhase(page, phases, screenshot)` | Best-effort capture of fleeting phases |
-| `runPipeline(page, { files, debugLabel })` | Upload files, click Run, wait for terminal phase |
-| `assertCompletedWithScreenshot(page, phase, screenshot)` | Assert completed + capture results |
+| `navigateToRecipe(page, slug, h1)` | Navigate to recipe page, wait for heading visible |
+| `assertBrowserExecution(page)` | Verify `data-execution-mode="browser"` on shell |
+| `uploadFiles(page, filePaths[])` | Set file input, wait for count text, return run button |
+| `runAndComplete(page, options?)` | Click Run, wait for terminal phase, return run button |
+| `downloadAndVerify(page, options?)` | Download output, verify magic bytes/size, return buffer |
+| `downloadAllAsZip(page)` | Click Download All, verify ZIP magic bytes, return buffer |
+| `assertWebPBytes(buffer)` | Verify WebP RIFF + WEBP magic bytes |
+
+Constants: `IMAGE_FIXTURES_DIR`, `CSV_FIXTURES_DIR`, `MAGIC` (JPEG, PNG, WEBP_RIFF, WEBP_TAG, ZIP).
 
 ### 8. Test Commands Cheat Sheet
 
@@ -288,22 +290,22 @@ task check                # vet + test + build (full quality gate)
 | Asserting menu items without opening the menu | Dropdown/popover items only exist in DOM when open — click the trigger first |
 | Using CSS class selectors | Classes change on styling updates; use semantic selectors (`getByRole`, `getByText`) or `data-testid` |
 | Duplicate elements across responsive breakpoints | Mobile and desktop toolbars may both render — use `:visible` pseudo-class |
-| Screenshot taken at wrong scroll position | User actions (clicking Run, errors) may scroll the page — add `window.scrollTo(0, 0)` before `toHaveScreenshot()` |
-| Running `--update-snapshots` only once | Must run twice: first to regenerate, second to verify stability. Single run doesn't prove baselines are deterministic |
+| Screenshot taken at wrong scroll position | For page-level screenshots, add `window.scrollTo(0, 0)` before `toHaveScreenshot()` |
+| Running `--update-snapshots` only once | For page-level screenshots, must run twice: first to regenerate, second to verify stability |
 | "01 Issue" hydration error blocking commits | Known React 19 + Radix `useId()` SSR mismatch. Acceptable when zero screenshot mismatches — report to user but don't block |
 | Not checking `lsof -ti:4000` before running tests | Always check first. If port 4000 is active, reuse it (fastest). If not, start `task dev` or use `task e2e:isolated` |
 | Testing framework behavior instead of app behavior | Don't test that React Query refetches, that Convex stores data, or that Radix primitives render. Test YOUR code's behavior |
 | Killing user's dev server | Never kill port 4000. If it's running, reuse it. If it's not yours, use `task e2e:isolated` or a custom `E2E_PORT` |
-| Missing `fullPage: true` on screenshots | Recipe pages have content below the fold — use `fullPage: true` to capture complete state |
+| Missing `fullPage: true` on page-level screenshots | Page layout screenshots need `fullPage: true` to capture complete state |
 | Hardcoded timeouts too short | WASM processing can take up to 30s for large files. Use `{ timeout: 30000 }` for phase completion assertions |
 
 ## Quality Standards
 
 1. **Every E2E test maps to a journey.** If you can't point to a journey ID in `.claude/journeys/`, either add the journey to the matrix or question whether the test is needed.
 2. **Test behavior, not implementation.** Assert on what the user sees ("1 file selected", download button visible, file has JPEG magic bytes), not on internal state or method calls.
-3. **4-phase capture for execution tests.** BEFORE and FINISH screenshots are mandatory. PROGRESS is best-effort. VERIFY validates the actual output file.
-4. **Two-run screenshot verification.** Always regenerate then verify. A single run with `--update-snapshots` doesn't prove stability.
-5. **Visual verification is mandatory.** After generating screenshots, use the Read tool to open each `.png` and confirm the visual output matches expectations. Check for: error overlays, wrong scroll position, missing content, broken layouts.
+3. **4-phase verification for execution tests.** All four phases verified via programmatic assertions (data attributes, magic bytes, file sizes). Screenshots reserved for page-level layout only.
+4. **Two-run screenshot verification for page-level screenshots.** When page layout changes, regenerate then verify. Execution flow specs have no screenshots to manage.
+5. **Programmatic verification is primary.** Magic bytes, file sizes, data attributes, and download events prove correct behavior. Screenshots verify page layout (site navigation, auth forms).
 6. **Semantic selectors over CSS classes.** `getByRole`, `getByText`, `getByPlaceholder` first. `data-testid` for state machine assertions. `:visible` for duplicate responsive elements. Never CSS classes.
 7. **Shared fixture is non-negotiable.** Import from `./fixtures`. The error capture and overlay detection catch real bugs that would otherwise be invisible.
 8. **Check port 4000 first.** Run `lsof -ti:4000`. If active, reuse it (fastest). If not, start `task dev` or use `task e2e:isolated`. Never kill the user's dev server.
@@ -314,81 +316,40 @@ task check                # vet + test + build (full quality gate)
 
 ```typescript
 import path from "path";
-import fs from "fs";
 import { test, expect } from "../../fixtures";
+import {
+  IMAGE_FIXTURES_DIR,
+  MAGIC,
+  navigateToRecipe,
+  assertBrowserExecution,
+  uploadFiles,
+  runAndComplete,
+  downloadAndVerify,
+} from "../../helpers";
 
 test.use({ reducedMotion: "reduce" });
 
-const FIXTURES_DIR = path.resolve(
-  __dirname,
-  "../../../../../test-fixtures/images",
-);
-
-test.describe("recipe-name — browser execution", () => {
+test.describe("recipe-name — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
-    await page.goto("/recipe-slug");
-
-    await expect(
-      page.getByRole("heading", { name: "Recipe Title" }),
-    ).toBeVisible();
-
-    const shell = page.locator('[data-testid="bnto-shell"]');
-    await expect(shell).toHaveAttribute("data-execution-mode", "browser");
+    await navigateToRecipe(page, "recipe-slug", "Recipe Title");
+    await assertBrowserExecution(page);
   });
 
   test("full lifecycle: select file, process, download", async ({ page }) => {
-    await page.goto("/recipe-slug");
+    await navigateToRecipe(page, "recipe-slug", "Recipe Title");
 
-    // --- BEFORE: file selected, ready to run ---
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles([
-      path.join(FIXTURES_DIR, "small.jpg"),
+    await uploadFiles(page, [
+      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
     ]);
 
-    await expect(page.getByText("1 file selected")).toBeVisible();
+    await runAndComplete(page);
 
-    const runButton = page.locator('[data-testid="run-button"]:visible');
-    await expect(runButton).toBeEnabled();
+    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
 
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("00-file-selected.png", {
-      fullPage: true,
+    await downloadAndVerify(page, {
+      filenamePattern: /\.jpe?g$/i,
+      magicBytes: MAGIC.JPEG,
     });
-
-    // --- Click Run ---
-    await runButton.click();
-
-    // --- FINISH: execution complete, results displayed ---
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
-
-    const outputFile = page.locator('[data-testid="output-file"]');
-    await expect(outputFile).toHaveCount(1);
-    await expect(
-      outputFile.getByRole("button", { name: /download/i }),
-    ).toBeVisible();
-
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("01-result.png", {
-      fullPage: true,
-    });
-
-    // --- VERIFY: download produces valid file ---
-    const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
-    const download = await downloadPromise;
-
-    const downloadPath = await download.path();
-    expect(downloadPath).toBeTruthy();
-
-    const downloaded = fs.readFileSync(downloadPath!);
-    expect(downloaded.length).toBeGreaterThan(0);
-
-    // Verify file magic bytes (JPEG: FF D8 FF)
-    expect(downloaded[0]).toBe(0xff);
-    expect(downloaded[1]).toBe(0xd8);
-    expect(downloaded[2]).toBe(0xff);
   });
 });
 ```

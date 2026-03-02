@@ -130,11 +130,11 @@ Each domain owns its natural test boundary. Engine tests node logic. Core tests 
 1. **Dot-notation everywhere** — if you touch a file with flat primitive imports (`DialogTitle`), migrate to dot-notation (`Dialog.Title`) in the same change
 2. **Design tokens only** — no raw color values, no hardcoded radius, no custom shadows, no inline font names
 3. **`Animate.*` components** — never apply animation classes directly. The components are the API
-4. **User journey E2E tests** — UI changes are captured in journey specs (not one-off component tests) with `toHaveScreenshot()`. Visually verify every screenshot
+4. **User journey E2E tests** — execution flows verified programmatically (magic bytes, data attributes, file sizes). Screenshots for page-level layout only (site navigation, auth forms)
 5. **Minimal `"use client"`** — push client boundaries to the smallest leaf
 6. **Self-fetching components** — pass IDs, never pass data objects as props
 7. **Semantic selectors in tests** — `getByRole`, `getByText`, `data-testid`. Never CSS classes
-8. **`reducedMotion: "reduce"`** — all E2E tests disable animations for deterministic screenshots
+8. **`reducedMotion: "reduce"`** — all E2E tests disable animations for deterministic rendering
 9. **Named React imports** — `import { useState, useRef } from "react"`, not `import * as React`. For types: `import type { ComponentProps } from "react"`. If you touch a file using `React.*` namespace style, migrate to named imports in the same change
 
 ---

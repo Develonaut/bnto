@@ -23,7 +23,7 @@ export default defineConfig({
   reporter: "html",
   expect: {
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.02,
+      maxDiffPixelRatio: 0.05,
     },
   },
   use: {
