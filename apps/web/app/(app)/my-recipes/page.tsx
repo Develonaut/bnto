@@ -22,8 +22,8 @@ const WorkflowGrid = dynamic(
   { ssr: false, loading: () => <TabPanelFallback /> },
 );
 
-const RecentExecutions = dynamic(
-  () => import("./_components/RecentExecutions").then((m) => ({ default: m.RecentExecutions })),
+const ExecutionHistory = dynamic(
+  () => import("./_components/ExecutionHistory").then((m) => ({ default: m.ExecutionHistory })),
   { ssr: false, loading: () => <TabPanelFallback /> },
 );
 
@@ -78,9 +78,9 @@ export default function MyRecipesPage() {
           <>
             <UsageStats />
 
-            <Tabs defaultValue="recent">
+            <Tabs defaultValue="history">
               <Tabs.List>
-                <Tabs.Trigger value="recent">Recent</Tabs.Trigger>
+                <Tabs.Trigger value="history">History</Tabs.Trigger>
                 <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
               </Tabs.List>
 
@@ -94,11 +94,11 @@ export default function MyRecipesPage() {
                */}
               <div className="relative">
                 <Tabs.Content
-                  value="recent"
+                  value="history"
                   forceMount
                   className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
                 >
-                  <RecentExecutions />
+                  <ExecutionHistory />
                 </Tabs.Content>
 
                 <Tabs.Content

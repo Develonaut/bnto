@@ -70,7 +70,6 @@ export interface PageLink {
 
 export const PAGE_LINKS: PageLink[] = [
   { label: "My Recipes", href: "/my-recipes" },
-  { label: "History", href: "/executions" },
   { label: "Pricing", href: "/pricing" },
   { label: "FAQ", href: "/faq" },
 ];
