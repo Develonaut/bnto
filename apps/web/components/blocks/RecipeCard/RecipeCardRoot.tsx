@@ -132,9 +132,9 @@ function RecipeCardMeta({ nodeCount, updatedAt }: { nodeCount: number; updatedAt
 
 /* ── Skeleton ────────────────────────────────────────────────── */
 
-function RecipeCardSkeleton() {
+function RecipeCardSkeleton({ loading = true }: { loading?: boolean }) {
   return (
-    <Card elevation="md" className="flex h-full flex-col justify-between p-5">
+    <Card elevation="md" loading={loading} className="flex h-full flex-col justify-between p-5">
       <Row align="start" justify="between">
         <Skeleton className="size-10 rounded-lg" />
         <Skeleton className="h-5 w-16 rounded-full" />
