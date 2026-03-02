@@ -13,7 +13,7 @@ const FREE_FEATURES = [
   "Process multiple files at once",
   "No account required",
   "No watermarks or quality reduction",
-  "Files never leave your browser",
+  "Browser tools run on your device",
   "Open source engine (MIT)",
 ];
 
@@ -50,8 +50,7 @@ export function Pricing() {
       </Card>
 
       <Text size="sm" color="muted" className="mx-auto mt-8 max-w-md">
-        We&apos;re building premium features that require server-side
-        processing. Browser tools will always be free and unlimited.
+        Premium features with server-side processing are coming soon.
       </Text>
     </div>
   );
