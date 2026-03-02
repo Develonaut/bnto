@@ -21,6 +21,8 @@ export {
   Clock as ClockIcon,
   Columns3 as Columns3Icon,
   Download as DownloadIcon,
+  Eye as EyeIcon,
+  EyeOff as EyeOffIcon,
   FileArchive as FileArchiveIcon,
   FileAudio as FileAudioIcon,
   FileCode as FileCodeIcon,

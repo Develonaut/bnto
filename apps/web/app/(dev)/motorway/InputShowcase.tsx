@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { RadialSlider } from "@/components/ui/RadialSlider";
 import { RadioGroup } from "@/components/ui/RadioGroup";
 import { Row } from "@/components/ui/Row";
@@ -39,6 +40,25 @@ export function InputShowcase() {
           <Stack gap="xs">
             <Label htmlFor="input-disabled">Disabled</Label>
             <Input id="input-disabled" defaultValue="Read only" disabled />
+          </Stack>
+        </div>
+      </div>
+
+      {/* Password inputs */}
+      <div>
+        <Text size="sm" color="muted" className="mb-3">Password inputs</Text>
+        <div className="grid grid-cols-3 gap-4">
+          <Stack gap="xs">
+            <Label htmlFor="password-default">Default</Label>
+            <PasswordInput id="password-default" placeholder="Enter password" />
+          </Stack>
+          <Stack gap="xs">
+            <Label htmlFor="password-filled">Filled</Label>
+            <PasswordInput id="password-filled" defaultValue="supersecret" />
+          </Stack>
+          <Stack gap="xs">
+            <Label htmlFor="password-disabled">Disabled</Label>
+            <PasswordInput id="password-disabled" defaultValue="locked" disabled />
           </Stack>
         </div>
       </div>
