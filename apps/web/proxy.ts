@@ -3,14 +3,7 @@ import {
   convexAuthNextjsMiddleware,
   nextjsMiddlewareRedirect,
 } from "@bnto/auth/server";
-import { isAuthPath, isProtectedPath } from "@/lib/routes";
-import { SIGNOUT_COOKIE } from "@bnto/core/constants";
-
-function hasSignoutSignal(
-  request: Request & { cookies: { has(name: string): boolean } },
-) {
-  return request.cookies.has(SIGNOUT_COOKIE);
-}
+import { isProtectedPath } from "@/lib/routes";
 
 /**
  * Proxy middleware — three-tier route protection.
@@ -25,9 +18,8 @@ function hasSignoutSignal(
  *
  * Tiers:
  * 1. Canonical URL normalization (lowercase, no trailing slash)
- * 2. Public routes: pass through immediately (no auth check)
- * 3. Auth routes (/signin, /signup): redirect to / if already authenticated
- * 4. Protected routes (/executions, /settings): redirect to /signin if not authenticated
+ * 2. Public routes (including /signin, /signup): pass through immediately (no auth check)
+ * 3. Protected routes (/executions, /settings): redirect to /signin if not authenticated
  */
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const { pathname } = request.nextUrl;
@@ -42,21 +34,19 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   }
 
   // Public routes — skip the expensive Convex auth check entirely.
-  // Recipe pages, home, pricing, faq, etc. don't need auth state.
-  const needsAuthCheck = isAuthPath(pathname) || isProtectedPath(pathname);
-  if (!needsAuthCheck) return;
+  // Recipe pages, home, pricing, faq, auth pages, etc. don't need auth state.
+  if (!isProtectedPath(pathname)) return;
 
   const isAuthenticated = await convexAuth.isAuthenticated();
 
-  // Auth routes — redirect to home if already authenticated.
-  // Skip redirect when signout signal cookie is set — the user is either
-  // signing out (needs to reach /signin despite stale session cookie) or
-  // is an anonymous user navigating to sign up.
-  if (isAuthenticated && isAuthPath(pathname) && !hasSignoutSignal(request)) {
-    return nextjsMiddlewareRedirect(request, "/");
-  }
-
-  // Protected routes — redirect to /signin if not authenticated
+  // Protected routes — redirect to /signin if not authenticated.
+  //
+  // NOTE: We intentionally do NOT redirect authenticated users away from
+  // /signin or /signup. Convex auto-creates anonymous sessions, so
+  // isAuthenticated() returns true even for users without a real account.
+  // The proxy can't distinguish anonymous sessions from real accounts
+  // without an extra API call. Auth pages handle the "already signed in"
+  // case client-side instead.
   if (!isAuthenticated && isProtectedPath(pathname)) {
     return nextjsMiddlewareRedirect(request, "/signin");
   }
