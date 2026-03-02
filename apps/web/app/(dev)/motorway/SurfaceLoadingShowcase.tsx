@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Heading } from "@/components/ui/Heading";
@@ -134,26 +133,15 @@ export function SurfaceLoadingShowcase() {
           Same loading state, different target elevations. Taller buildings spring up more dramatically.
         </Text>
         <div className="grid grid-cols-3 gap-4">
-          {ELEVATIONS.map((elev, i) =>
-            loading ? (
-              <DemoCard
-                key={`${elev}-loading`}
-                loading={true}
-                elevation={elev}
-                label={`elevation-${elev}`}
-                icon={elev === "sm" ? ImageIcon : elev === "md" ? FileTextIcon : ZapIcon}
-              />
-            ) : (
-              <Animate.ScaleIn key={`${elev}-loaded`} index={i} from={0.9} easing="spring-bouncy">
-                <DemoCard
-                  loading={false}
-                  elevation={elev}
-                  label={`elevation-${elev}`}
-                  icon={elev === "sm" ? ImageIcon : elev === "md" ? FileTextIcon : ZapIcon}
-                />
-              </Animate.ScaleIn>
-            ),
-          )}
+          {ELEVATIONS.map((elev) => (
+            <DemoCard
+              key={elev}
+              loading={loading}
+              elevation={elev}
+              label={`elevation-${elev}`}
+              icon={elev === "sm" ? ImageIcon : elev === "md" ? FileTextIcon : ZapIcon}
+            />
+          ))}
         </div>
       </div>
 
@@ -178,32 +166,24 @@ export function SurfaceLoadingShowcase() {
         </Text>
         <div className="grid grid-cols-4 gap-4">
           {(["default", "primary", "secondary", "accent"] as const).map(
-            (variant, i) =>
-              loading ? (
-                <Surface
-                  key={`${variant}-loading`}
-                  variant={variant}
-                  elevation="md"
-                  loading={true}
-                  rounded="xl"
-                  className="flex h-24 items-center justify-center"
-                >
+            (variant) => (
+              <Surface
+                key={variant}
+                variant={variant}
+                elevation="md"
+                loading={loading}
+                rounded="xl"
+                className="flex h-24 items-center justify-center"
+              >
+                {loading ? (
                   <Skeleton className="h-4 w-20" />
-                </Surface>
-              ) : (
-                <Animate.ScaleIn key={`${variant}-loaded`} index={i} from={0.9} easing="spring-bouncy">
-                  <Surface
-                    variant={variant}
-                    elevation="md"
-                    rounded="xl"
-                    className="flex h-24 items-center justify-center"
-                  >
-                    <Text size="sm" weight="medium">
-                      {variant}
-                    </Text>
-                  </Surface>
-                </Animate.ScaleIn>
-              ),
+                ) : (
+                  <Text size="sm" weight="medium">
+                    {variant}
+                  </Text>
+                )}
+              </Surface>
+            ),
           )}
         </div>
       </div>
@@ -278,26 +258,15 @@ function StaggeredDashboard() {
         </Button>
       </Row>
       <div className="grid grid-cols-3 gap-4">
-        {STAGGER_ITEMS.map((item, i) =>
-          loaded[i] ? (
-            <Animate.ScaleIn key={`${item.label}-loaded`} index={i} from={0.85} easing="spring-bouncy">
-              <DemoCard
-                loading={false}
-                elevation="md"
-                label={item.label}
-                icon={item.icon}
-              />
-            </Animate.ScaleIn>
-          ) : (
-            <DemoCard
-              key={`${item.label}-loading`}
-              loading={true}
-              elevation="md"
-              label={item.label}
-              icon={item.icon}
-            />
-          ),
-        )}
+        {STAGGER_ITEMS.map((item, i) => (
+          <DemoCard
+            key={item.label}
+            loading={!loaded[i]}
+            elevation="md"
+            label={item.label}
+            icon={item.icon}
+          />
+        ))}
       </div>
     </Stack>
   );
