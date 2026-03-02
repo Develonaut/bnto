@@ -82,8 +82,17 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
 
   // -- Actions --
   const setFiles = useCallback(
-    (newFiles: File[]) => store.getState().setFiles(newFiles),
-    [store],
+    (newFiles: File[]) => {
+      store.getState().setFiles(newFiles);
+      if (newFiles.length > 0) {
+        core.telemetry.capture("files_added", {
+          slug: entry.slug,
+          fileCount: newFiles.length,
+          totalBytes: newFiles.reduce((sum, f) => sum + f.size, 0),
+        });
+      }
+    },
+    [store, entry.slug],
   );
 
   const setConfig = useCallback(
@@ -99,10 +108,25 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   const handleDownloadAll = useCallback(() => {
     const results = browserInstance.store.getState().results;
     core.wasm.downloadAllResults(results, entry.slug);
+    core.telemetry.capture("result_downloaded", {
+      slug: entry.slug,
+      fileCount: results.length,
+    });
   }, [browserInstance, entry.slug]);
 
   const handleRun = useCallback(async () => {
     if (files.length === 0) return;
+
+    const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
+    const runProps = {
+      slug: entry.slug,
+      fileCount: files.length,
+      totalBytes,
+      executionPath: isBrowserPath ? "browser" : "cloud",
+    };
+
+    core.telemetry.capture("recipe_run_started", runProps);
+    const startTime = Date.now();
 
     if (isBrowserPath) {
       const result = await browserInstance.run(
@@ -111,12 +135,23 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
         config as Record<string, unknown>,
       );
 
-      // Auto-download on successful completion — direct causal chain.
-      // Download is a consequence of the Run action, not a side effect
-      // of state transitions. This prevents spurious downloads when
-      // navigating between recipe pages.
+      const durationMs = Date.now() - startTime;
+
       if (result.status === "completed" && result.results.length > 0) {
+        const outputBytes = result.results.reduce((sum, r) => sum + r.blob.size, 0);
+        core.telemetry.capture("recipe_run_completed", {
+          ...runProps,
+          durationMs,
+          outputFileCount: result.results.length,
+          outputBytes,
+        });
         await core.wasm.downloadAllResults(result.results, entry.slug);
+      } else if (result.status === "failed") {
+        core.telemetry.capture("recipe_run_failed", {
+          ...runProps,
+          durationMs,
+          error: result.error ?? "unknown",
+        });
       }
       return;
     }
@@ -135,6 +170,12 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
       });
       store.getState().startExecution(String(id));
     } catch (e) {
+      const durationMs = Date.now() - startTime;
+      core.telemetry.capture("recipe_run_failed", {
+        ...runProps,
+        durationMs,
+        error: e instanceof Error ? e.message : "unknown",
+      });
       store.getState().failCloud(
         e instanceof Error ? e.message : "Something went wrong",
       );
