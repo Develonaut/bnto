@@ -65,7 +65,7 @@ export default function WorkflowsPage() {
       <Stack className="gap-8">
         <Stack className="gap-1">
           <Heading level={1} size="lg">
-            Dashboard
+            My Recipes
           </Heading>
           <Text color="muted">
             Your saved recipes and recent activity.

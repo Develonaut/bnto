@@ -1,5 +1,5 @@
 /**
- * Recipes dropdown menu — categorized recipe links from the engine menu.
+ * Explorer dropdown menu — categorized recipe links from the engine menu.
  *
  * Used in both DesktopNav and MobileNavMenu.
  */
@@ -16,7 +16,7 @@ export function RecipesMenu() {
     <Menu>
       <Menu.Trigger variant="outline" elevation="sm">
         <BookOpenIcon />
-        Recipes
+        Explore
       </Menu.Trigger>
       <Menu.Content className="w-[28rem] p-3" offset="lg">
         <ul className="grid grid-cols-2 gap-1">
