@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Row } from "@/components/ui/Row";
 import type { StationNodeType } from "./StationNode";
 import type { ConveyorEdgeType } from "./ConveyorEdge";
-import { VARIANT_PIECE_MAP, PieceShape, type PieceType } from "./BeltPiece";
+import { PieceShape, type PieceType } from "./BeltPiece";
 
 /**
  * Conveyor Belt showcase — a Mini Motorways-style "level" showing
