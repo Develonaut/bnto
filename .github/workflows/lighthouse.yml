@@ -18,6 +18,8 @@ jobs:
       NEXT_PUBLIC_CONVEX_SITE_URL: https://zealous-canary-422.convex.site
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: pnpm/action-setup@v4
 
