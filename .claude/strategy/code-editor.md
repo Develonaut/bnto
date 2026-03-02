@@ -1,15 +1,16 @@
 # Code Editor Strategy
 
-**Last Updated:** February 2026
-**Status:** Research Complete — Informing Sprint 4+ Planning
+**Last Updated:** March 2026
+**Status:** Research Complete — Informing Sprint 4B Planning
+**Architecture:** See [editor-architecture.md](editor-architecture.md) for the shared editor layer design
 
 ---
 
 ## What This Is
 
-A `.bnto.json` code editor — a coding-oriented experience for power users who want to create and edit recipes as structured JSON. This is a **separate feature** from the visual canvas editor (Sprint 4). Both share the same headless primitives (Sprint 4 Wave 1-2), but the code editor is its own UX with its own persona.
+A `.bnto.json` code editor — a coding-oriented experience for power users who want to create and edit recipes as structured JSON. This is one of two editor modes alongside the [visual bento box editor](visual-editor.md). Both are views of the same `Definition` in the shared editor store — users can switch between them on the fly.
 
-Think: Notion's slash command UX meets a schema-aware JSON editor. Users who prefer code get the same power as the visual canvas, with the speed and precision of text editing.
+Think: Notion's slash command UX meets a schema-aware JSON editor. Users who prefer code get the same power as the visual editor, with the speed and precision of text editing.
 
 ---
 
@@ -60,47 +61,41 @@ Monaco's built-in JSON Schema support is more mature. But `codemirror-json-schem
 
 ---
 
-## Architecture: Headless-First
+## Architecture: Shared Store + CM6 Layer
 
-The code editor follows the same headless-first principle as the visual canvas editor. Logic lives in pure functions and an immutable state model. The visual rendering is a thin shell.
+The code editor is a **dumb component** that renders the shared editor store's `Definition` as JSON text. All business logic lives in the store and pure functions — the code editor adds CodeMirror 6 extensions for JSON-specific intelligence on top.
+
+See [editor-architecture.md](editor-architecture.md) for the full shared layer design (store, hooks, pure functions, switchable editors).
 
 ```
-@bnto/nodes (types, schemas, validation)      ← already built
+@bnto/nodes (types, schemas, validation, CRUD)    ← shared foundation
          ↓
-Sprint 4 Wave 1 pure functions (CRUD)          ← shared with visual editor
+Editor store (Zustand — headless state machine)    ← shared with visual editor
          ↓
-Sprint 4 Wave 2 editor store (Zustand)         ← shared with visual editor
+React hooks (thin reactive bindings)               ← shared with visual editor
          ↓
-CodeMirror 6 extensions (code-editor-specific) ← this feature
+CodeMirror 6 extensions (code-editor-specific)     ← this feature
          ↓
-React wrapper + UI chrome                      ← this feature
+CodeEditor component (dumb — renders JSON text)    ← this feature
 ```
 
-### The Shared Layer (Sprint 4 Waves 1-2)
+### Sync with Editor Store
 
-Both the visual canvas and code editor consume:
-- **Pure functions** (`addNode`, `removeNode`, `updateParams`, `addEdge`, etc.) from `@bnto/nodes`
-- **Editor store** (`useEditorStore`) with `definition`, `selectedNodeId`, `isDirty`, `validationErrors`
-- **Definition ↔ JSON serialization** (already native — Definition IS JSON)
+The code editor and visual editor share the same store. When the code editor's JSON changes:
 
-The code editor adds its own layer on top: CodeMirror extensions that provide JSON-specific intelligence.
+1. CM6 `updateListener` fires on transaction
+2. Debounced JSON parse (200ms) — only when typing pauses
+3. If valid, update `useEditorStore.definition`
+4. Store notifies the visual editor (if mounted in split view)
 
-### State Flow
+When the store changes externally (from visual editor):
 
-```
-User types in CodeMirror → CM6 transaction
-  → JSON text changes → JSON.parse → validate → update Definition
-  → Definition changes → update editor store
-  → Editor store notifies both editors (if split view)
-```
+1. Store's `definition` changes
+2. Code editor serializes new Definition to formatted JSON
+3. Dispatches CM6 transaction with `externalUpdate` annotation (prevents sync loop)
+4. CM6 renders the new text
 
-```
-Visual editor changes a node → editor store updates Definition
-  → Definition serialized to JSON → update CodeMirror document
-  → CM6 renders new text (no user-visible transaction)
-```
-
-Both editors are views of the same `Definition`. The editor store is the single source of truth.
+**Key rule:** Store is the single source of truth. The code editor never caches its own copy of the Definition.
 
 ---
 
@@ -334,23 +329,25 @@ When the visual canvas changes:
 
 ### Split View
 
-The code editor and visual canvas can coexist in a split view:
+The code editor and bento box visual editor can coexist in a split view:
 
 ```
 ┌──────────────────────────────────┐
 │ EditorToolbar (shared)           │
 ├────────────────┬─────────────────┤
-│ ConveyorCanvas │ CodeEditor      │
-│ (visual)       │ (JSON)          │
+│ BentoCanvas    │ CodeEditor      │
+│ (visual grid)  │ (JSON)          │
 │                │                 │
-│ ┌──┐  ┌──┐    │ {               │
-│ │IN│──│CS│    │   "type":"group" │
-│ └──┘  └──┘    │   "nodes": [    │
-│                │     ...         │
+│ ┌──┐  ┌────┐  │ {               │
+│ │  │  │    │  │   "type":"group" │
+│ └──┘  └────┘  │   "nodes": [    │
+│ ┌─────┐ ┌──┐  │     ...         │
+│ │     │ │  │  │                  │
+│ └─────┘ └──┘  │                  │
 └────────────────┴─────────────────┘
 ```
 
-Both are views of the same Definition. Changes in either sync through the editor store.
+Both are views of the same Definition. Changes in either sync through the editor store. See [editor-architecture.md](editor-architecture.md) for sync rules and the switchable editor design.
 
 ---
 
