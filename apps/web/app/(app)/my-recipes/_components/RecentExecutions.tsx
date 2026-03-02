@@ -2,6 +2,7 @@
 
 import { core } from "@bnto/core";
 
+import { useDelayedLoading } from "../_hooks/useDelayedLoading";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -25,8 +26,10 @@ export function RecentExecutions() {
   const { items, isLoading } = core.executions.useExecutionHistory({
     pageSize: 5,
   });
+  const showSkeleton = useDelayedLoading(isLoading);
 
-  if (isLoading) return <RecentExecutionsSkeleton />;
+  if (showSkeleton) return <RecentExecutionsSkeleton />;
+  if (isLoading) return null;
 
   if (items.length === 0) {
     return (

@@ -2,6 +2,7 @@
 
 import { core } from "@bnto/core";
 
+import { useDelayedLoading } from "../_hooks/useDelayedLoading";
 import { Animate } from "@/components/ui/Animate";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Grid } from "@/components/ui/Grid";
@@ -17,8 +18,9 @@ import { FolderOpenIcon } from "@/components/ui/icons";
  */
 export function WorkflowGrid() {
   const { data: workflows, isLoading } = core.workflows.useWorkflows();
+  const showSkeleton = useDelayedLoading(isLoading);
 
-  if (isLoading) {
+  if (showSkeleton) {
     return (
       <Grid cols={{ mobile: 1, tablet: 2, desktop: 3 }} gap="md">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -29,6 +31,7 @@ export function WorkflowGrid() {
       </Grid>
     );
   }
+  if (isLoading) return null;
 
   if (!workflows || workflows.length === 0) {
     return (

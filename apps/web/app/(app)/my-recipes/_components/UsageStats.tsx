@@ -2,6 +2,7 @@
 
 import { core } from "@bnto/core";
 
+import { useDelayedLoading } from "../_hooks/useDelayedLoading";
 import { Card } from "@/components/ui/Card";
 import { Row } from "@/components/ui/Row";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -18,8 +19,10 @@ import { formatTimeAgo } from "@/lib/formatTimeAgo";
  */
 export function UsageStats() {
   const { data, isLoading } = core.analytics.useUsageAnalytics();
+  const showSkeleton = useDelayedLoading(isLoading || !data);
 
-  if (isLoading || !data) return <UsageStatsSkeleton />;
+  if (showSkeleton) return <UsageStatsSkeleton />;
+  if (isLoading || !data) return null;
 
   const stats = [
     { label: "Total runs", value: String(data.totalRuns) },
