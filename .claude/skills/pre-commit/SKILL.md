@@ -73,6 +73,22 @@ task ui:lint           # Lint all TS packages — must pass
 
 If any fail: fix the errors, re-run from the top.
 
+### Lighthouse CI audit (if `apps/web/` files changed)
+
+If any files in `apps/web/` were modified, run the Lighthouse CI audit locally:
+
+```bash
+task seo:audit         # Build + run Lighthouse against all public routes — must pass
+```
+
+This runs Lighthouse against 10 public URLs (homepage, 6 recipe pages, pricing, FAQ, privacy) and asserts:
+- **Performance:** ≥ 90 (warn level — report but don't block)
+- **Accessibility, Best Practices, SEO:** ≥ 90 (error level — must pass)
+
+If any **error-level** assertion fails, run `/lighthouse-audit --local` to triage and fix the failing audits before proceeding.
+
+**Note:** Lighthouse CI also runs as a separate GitHub Actions workflow on every PR. Failures there will block merge. Running locally first catches issues before pushing.
+
 ## Step 3: Test Coverage & Quality Verification
 
 Run `/test-review` to evaluate test quality against the project's value matrix. This reviews both coverage (are the right things tested?) and quality (are tests testing behavior or implementation details?).
@@ -125,7 +141,8 @@ Before committing, present a summary to the user including the checklist below.
 4. **Unit/Integration tests** — Confirm `task ui:test` passed. If new logic was added, list new test files.
 5. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
 6. **Rust checks result** — confirm `task wasm:lint`, `task wasm:test:unit` passed clean, or SKIPPED (no Rust changes)
-7. **Files changed** — files created/modified, with brief description of each
+7. **Lighthouse audit result** — confirm `task seo:audit` passed clean, or SKIPPED (no `apps/web/` changes)
+8. **Files changed** — files created/modified, with brief description of each
 
 ### Checklist Summary
 
@@ -142,6 +159,7 @@ Test Coverage:            PASS / FAIL (count)
 Stale Artifacts:          PASS / FAIL (count)
 Unit/Integration Tests:   PASS / FAIL — NEVER skip without explicit user permission
 E2E Tests:                PASS / FAIL — NEVER skip without explicit user permission
+Lighthouse CI:            PASS / FAIL / SKIPPED (no web changes)
 ```
 
 ## Step 6: Commit & Branch Workflow

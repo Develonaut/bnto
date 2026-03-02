@@ -25,7 +25,6 @@ export function FileUploadDropzone({
     <Animate.ScaleIn>
       <Pressable asChild hovered={isDragActive}>
         <Card
-          elevation="md"
           {...getRootProps()}
           role="button"
           tabIndex={disabled ? undefined : 0}
@@ -41,7 +40,7 @@ export function FileUploadDropzone({
           )}
           onClick={handleClick}
         >
-          <input {...getInputProps()} />
+          <input {...getInputProps()} aria-label="File upload" />
           {children}
         </Card>
       </Pressable>

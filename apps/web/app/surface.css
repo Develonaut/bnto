@@ -217,7 +217,61 @@
   --face-fg: var(--muted-foreground);
 }
 
-/* ── Layer 2: .pressable — Animation Layer ─────────────────────────
+/* ── Layer 2: .springable — Spring Animation Foundation ────────────
+ *
+ * Raises a .surface element above the ground plane and transitions
+ * it with a configurable spring easing. The base layer for all
+ * animated surfaces — both interactive (.pressable) and passive.
+ *
+ * .pressable inherits this foundation via :is() and adds interactive
+ * states (hover, active, toggle, disabled) on top.
+ *
+ * [data-grounded]: flush with ground, muted appearance. Like
+ * .pressable:disabled but without pointer-events: none. Use for
+ * cards in a loading state that spring to life when content arrives.
+ *
+ * CSS variables (shared with .pressable):
+ *   --pressable-dur   — transition duration (default 150ms)
+ *   --pressable-ease  — transition easing (default ease-out)
+ * ────────────────────────────────────────────────────────────────── */
+
+/* Shared foundation — raise + spring transition */
+:is(.springable, .pressable) {
+  will-change: transform;
+  transform: translate(calc(var(--elevation-x) * -1), calc(var(--elevation-y) * -1));
+  transition: transform var(--pressable-dur, 150ms)
+    var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+}
+
+:is(.springable, .pressable)::before,
+:is(.springable, .pressable)::after {
+  transition:
+    transform var(--pressable-dur, 150ms)
+      var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
+    opacity var(--pressable-dur, 150ms)
+      var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+}
+
+/* Grounded — flush with ground, muted appearance.
+ * Non-interactive analog of .pressable:disabled. */
+.springable[data-grounded] {
+  --face-bg: var(--border);
+  --face-fg: var(--muted-foreground);
+  --surface-wall: var(--surface-muted-wall);
+  --surface-shadow: var(--surface-muted-shadow);
+  border-color: var(--surface-muted-wall);
+  transform: translate(0, 0);
+}
+
+.springable[data-grounded]::before {
+  transform: translate3d(0, 0, -1px);
+}
+
+.springable[data-grounded]::after {
+  transform: translate3d(0, 0, -2px);
+}
+
+/* ── .pressable — Interactive Animation Layer ──────────────────────
  *
  * Adds hover sink + active flush animation to any .surface element.
  *
@@ -241,20 +295,6 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  will-change: transform;
-  /* Default: face raised above ground by full elevation */
-  transform: translate(calc(var(--elevation-x) * -1), calc(var(--elevation-y) * -1));
-  transition: transform var(--pressable-dur, 150ms)
-    var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
-}
-
-.pressable::before,
-.pressable::after {
-  transition:
-    transform var(--pressable-dur, 150ms)
-      var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
-    opacity var(--pressable-dur, 150ms)
-      var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
 }
 
 /* Hover / focus-visible — face sinks 33% toward ground.
@@ -451,9 +491,9 @@
     animation-delay: 0s;
   }
 
-  .pressable,
-  .pressable::before,
-  .pressable::after {
+  :is(.springable, .pressable),
+  :is(.springable, .pressable)::before,
+  :is(.springable, .pressable)::after {
     transition: none !important;
     will-change: auto !important;
   }

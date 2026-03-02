@@ -3,16 +3,27 @@ import type { ComponentProps, HTMLAttributes } from "react";
 
 import { cn } from "@/lib/cn";
 
+import type { SpringMode } from "./Pressable";
 import { Surface } from "./Surface";
 import type { SurfaceElevation } from "./Surface";
 
 const PrimitiveCard = forwardRef<
   HTMLDivElement,
-  HTMLAttributes<HTMLDivElement> & { elevation?: SurfaceElevation }
->(({ className, elevation = "md", ...props }, ref) => (
+  HTMLAttributes<HTMLDivElement> & {
+    elevation?: SurfaceElevation;
+    /** Spring animation mode. Explicit value overrides `loading` default. */
+    spring?: SpringMode;
+    /** Flush with ground plane. Explicit value overrides `loading` default. */
+    grounded?: boolean;
+    /** Sugar for spring="bounciest" + grounded={loading}. */
+    loading?: boolean;
+  }
+>(({ className, elevation = "md", spring, grounded, loading, ...props }, ref) => (
   <Surface
     ref={ref}
     elevation={elevation}
+    spring={spring ?? (loading !== undefined ? "bounciest" : undefined)}
+    grounded={grounded ?? loading}
     rounded="xl"
     className={cn("bg-card text-card-foreground", className)}
     {...props}

@@ -97,7 +97,6 @@ export function NavThemeMenu() {
           {/* Reset — always visible, disabled when at default */}
           <Button
             variant="muted"
-            size="md"
             onClick={handleReset}
             disabled={isDefault}
             className="w-full"

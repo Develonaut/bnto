@@ -23,11 +23,13 @@ type RecipeCardRootProps = PropsWithChildren<{
   onClick?: () => void;
   href?: string;
   className?: string;
+  /** Grounded loading state — card springs up when loading clears. */
+  loading?: boolean;
 }>;
 
-export function RecipeCardRoot({ onClick, href, className, children }: RecipeCardRootProps) {
+export function RecipeCardRoot({ onClick, href, className, loading, children }: RecipeCardRootProps) {
   const card = (
-    <Card elevation="md" className={cn("flex h-full flex-col justify-between p-5", className)}>
+    <Card loading={loading} className={cn("flex h-full flex-col justify-between p-5", className)}>
       {children}
     </Card>
   );
@@ -95,7 +97,7 @@ function RecipeCardStatus({ status }: { status: Execution["status"] }) {
 
 function RecipeCardTitle({ children }: PropsWithChildren) {
   return (
-    <Heading level={3} size="xs" className="text-left">
+    <Heading level={3} as="p" size="xs" className="text-left">
       {children}
     </Heading>
   );
@@ -132,9 +134,9 @@ function RecipeCardMeta({ nodeCount, updatedAt }: { nodeCount: number; updatedAt
 
 /* ── Skeleton ────────────────────────────────────────────────── */
 
-function RecipeCardSkeleton() {
+function RecipeCardSkeleton({ loading = true }: { loading?: boolean }) {
   return (
-    <Card elevation="md" className="flex h-full flex-col justify-between p-5">
+    <Card loading={loading} className="flex h-full flex-col justify-between p-5">
       <Row align="start" justify="between">
         <Skeleton className="size-10 rounded-lg" />
         <Skeleton className="h-5 w-16 rounded-full" />

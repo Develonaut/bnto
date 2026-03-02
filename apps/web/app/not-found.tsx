@@ -44,7 +44,6 @@ export default function NotFound() {
               <Button
                 asChild
                 variant="outline"
-                size="md"
                 className="min-w-[200px]"
               >
                 <Link href={`${GITHUB_URL}/issues`}>Report Issue</Link>

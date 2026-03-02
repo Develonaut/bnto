@@ -5,21 +5,17 @@ import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
 import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
 import { FileUpload } from "@/components/ui/FileUpload";
-import { Label } from "@/components/ui/Label";
-import { Slider } from "@/components/ui/Slider";
 import { Heading } from "@/components/ui/Heading";
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  DownloadIcon,
-  TrashIcon,
-  UploadIcon,
-} from "@/components/ui/icons";
+import { ArrowLeftIcon, ArrowRightIcon } from "@/components/ui/icons";
+import { DropzoneContent } from "@/app/(app)/[bnto]/_components/DropzoneContent";
 import { FileCard } from "@/app/(app)/[bnto]/_components/FileCard";
-import { RunButton } from "@/app/(app)/[bnto]/_components/RunButton";
-import { ToolbarProgress } from "@/app/(app)/[bnto]/_components/ToolbarProgress";
 import { PhaseIndicator } from "@/app/(app)/[bnto]/_components/PhaseIndicator";
+import { RecipeConfigSection } from "@/app/(app)/[bnto]/_components/RecipeConfigSection";
+import { RecipeToolbar } from "@/app/(app)/[bnto]/_components/RecipeToolbar";
+import { ToolbarProgress } from "@/app/(app)/[bnto]/_components/ToolbarProgress";
 import type { RunPhase } from "@/app/(app)/[bnto]/_components/RunButton";
+import { DEFAULT_CONFIGS } from "@/app/(app)/[bnto]/_components/configs/types";
+import type { BntoConfigMap } from "@/app/(app)/[bnto]/_components/configs/types";
 
 type SimPhase = "idle" | "files-selected" | "processing" | "completed";
 
@@ -103,6 +99,9 @@ function mockResult(file: File): BrowserFileResult {
  */
 export function PhaseFlowShowcase() {
   const [simPhase, setSimPhase] = useState<SimPhase>("idle");
+  const [config, setConfig] = useState<BntoConfigMap["compress-images"]>(
+    DEFAULT_CONFIGS["compress-images"],
+  );
   const phaseIndex = PHASE_ORDER.indexOf(simPhase);
 
   const mockFiles = useMemo(() => createMockFiles(), []);
@@ -165,17 +164,7 @@ export function PhaseFlowShowcase() {
             {activePhase === 1 && (
               <Animate.SlideUp>
                 <FileUpload.Dropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
-                  <div className="rounded-full bg-muted p-3 text-muted-foreground">
-                    <UploadIcon className="size-6" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-medium text-foreground">
-                      Drag & drop files here
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      or click to browse &middot; accepts JPEG, PNG, WebP
-                    </p>
-                  </div>
+                  <DropzoneContent label="JPEG, PNG, WebP" />
                 </FileUpload.Dropzone>
               </Animate.SlideUp>
             )}
@@ -183,87 +172,26 @@ export function PhaseFlowShowcase() {
             {/* Phases 2-3: Toolbar + persistent file grid */}
             {(activePhase === 2 || activePhase === 3) && (
               <div className="space-y-4 text-left">
-                {/* Toolbar */}
-                <div className="flex min-h-10 flex-col gap-3 md:flex-row md:items-center md:gap-4">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      elevation="sm"
-                      disabled={simPhase === "processing"}
-                      onClick={prev}
-                    >
-                      <ArrowLeftIcon className="size-4" />
-                    </Button>
-                    <p className="shrink-0 text-sm font-medium text-foreground">
-                      {files.length} files selected
-                    </p>
-                    {/* Mobile actions */}
-                    <div className="ml-auto flex shrink-0 items-center gap-2 md:hidden">
-                      {activePhase === 3 && (
-                        <Button variant="outline" size="icon" elevation="sm" disabled={resolvedPhase !== "completed"} aria-label="Download all">
-                          <DownloadIcon className="size-4" />
-                        </Button>
-                      )}
-                      {activePhase === 2 && (
-                        <Button variant="outline" size="icon" elevation="md">
-                          <TrashIcon className="size-4" />
-                        </Button>
-                      )}
-                      <RunButton
-                        phase={resolvedPhase}
-                        hasFiles={files.length > 0}
-                        onRun={next}
+                <RecipeToolbar
+                  activePhase={activePhase as 2 | 3}
+                  resolvedPhase={resolvedPhase}
+                  isProcessing={simPhase === "processing"}
+                  fileCount={files.length}
+                  onBack={prev}
+                  onRun={next}
+                  onDownloadAll={() => {}}
+                  centerContent={
+                    activePhase === 2 ? (
+                      <RecipeConfigSection
+                        slug="compress-images"
+                        config={config}
+                        onChange={(c) => setConfig(c as BntoConfigMap["compress-images"])}
                       />
-                    </div>
-                  </div>
-
-                  {/* Center: config (Phase 2) or progress (Phase 3) */}
-                  {activePhase === 2 && (
-                    <div className="min-w-0 flex-1 border-border md:mx-4 md:border-l md:border-r md:px-4">
-                      <div className="flex w-full flex-col gap-3">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <Label className="text-muted-foreground text-sm">Quality</Label>
-                          <span className="text-muted-foreground shrink-0 font-mono text-sm tabular-nums">
-                            80%
-                          </span>
-                        </div>
-                        <Slider
-                          className="w-full"
-                          defaultValue={[80]}
-                          min={1}
-                          max={100}
-                          step={1}
-                        />
-                        <p className="min-h-4 text-xs text-muted-foreground">Lower values reduce file size more but also lower quality</p>
-                      </div>
-                    </div>
-                  )}
-                  {activePhase === 3 && (
-                    <div className="min-w-0 flex-1 border-border md:mx-4 md:border-l md:border-r md:px-4">
+                    ) : (
                       <ToolbarProgress execution={mockExec} />
-                    </div>
-                  )}
-
-                  {/* Desktop actions */}
-                  <div className="ml-auto hidden shrink-0 items-center gap-2 md:flex">
-                    {activePhase === 3 && (
-                      <Button variant="outline" size="icon" elevation="sm" disabled={resolvedPhase !== "completed"} aria-label="Download all">
-                        <DownloadIcon className="size-4" />
-                      </Button>
-                    )}
-                    {activePhase === 2 && (
-                      <Button variant="outline" size="icon" elevation="md">
-                        <TrashIcon className="size-4" />
-                      </Button>
-                    )}
-                    <RunButton
-                      phase={resolvedPhase}
-                      hasFiles={files.length > 0}
-                      onRun={next}
-                    />
-                  </div>
-                </div>
+                    )
+                  }
+                />
 
                 {/* Persistent file grid */}
                 <Animate.BouncyStagger className="flex flex-col gap-2">

@@ -12,6 +12,7 @@ import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
 import { ConveyorShowcase } from "./ConveyorShowcase";
+import { DialogShowcase } from "./DialogShowcase";
 import { GridShowcase } from "./GridShowcase";
 import { FileListShowcase } from "./FileListShowcase";
 import { FormShowcase } from "./FormShowcase";
@@ -21,8 +22,8 @@ import { NotificationCards } from "./NotificationCards";
 import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
 import { ProgressShowcase } from "./ProgressShowcase";
 import { RecipeCardShowcase } from "./RecipeCardShowcase";
-import { RecipeLayoutShowcase } from "./RecipeLayoutShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
+import { LoadingCardShowcase, SpringableShowcase } from "./SpringableShowcase";
 import { TypographyShowcase } from "./TypographyShowcase";
 
 export default function MotorwayPage() {
@@ -45,11 +46,11 @@ export default function MotorwayPage() {
           <Tabs.Trigger value="controls">Controls</Tabs.Trigger>
           <Tabs.Trigger value="layout">Layout</Tabs.Trigger>
           <Tabs.Trigger value="motion">Motion</Tabs.Trigger>
+          <Tabs.Trigger value="overlays">Overlays</Tabs.Trigger>
           <Tabs.Trigger value="forms">Forms</Tabs.Trigger>
           <Tabs.Trigger value="grids">Grids</Tabs.Trigger>
           <Tabs.Trigger value="progress">Progress</Tabs.Trigger>
-          <Tabs.Trigger value="phase-flow">Phase Flow</Tabs.Trigger>
-          <Tabs.Trigger value="recipe-layouts">Recipe Layouts</Tabs.Trigger>
+          <Tabs.Trigger value="features">Features</Tabs.Trigger>
         </Tabs.List>
 
         {/* ── Surfaces ────────────────────────────────────────── */}
@@ -72,20 +73,13 @@ export default function MotorwayPage() {
             </ShowcaseSection>
 
             <ShowcaseSection
-              id="recipe-card"
-              title="Recipe Card"
-              description="Saved recipe cards for the dashboard grid. Shows name, node count, last run status, and relative timestamp. Includes skeleton loading state."
+              id="springable"
+              title="Springable Surfaces"
+              description="Configure spring mode and elevation independently. The spring foundation shared by all animated surfaces — pressable buttons and loading cards alike."
             >
-              <RecipeCardShowcase />
+              <SpringableShowcase />
             </ShowcaseSection>
 
-            <ShowcaseSection
-              id="empty-state"
-              title="Empty State"
-              description="Composable empty state for lists, dashboards, and search results. Bare icon, title, description, and optional action. Three size variants."
-            >
-              <EmptyStateShowcase />
-            </ShowcaseSection>
           </Stack>
         </Tabs.Content>
 
@@ -139,6 +133,30 @@ export default function MotorwayPage() {
             >
               <NotificationCards />
             </ShowcaseSection>
+
+            <ShowcaseSection
+              id="loading-card"
+              title="Loading Cards"
+              description="Pass loading to Card for the common case. Springs up with bounciest when content arrives. Skeleton placeholders swap to real content in place."
+            >
+              <LoadingCardShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="recipe-card"
+              title="Recipe Card"
+              description="Saved recipe cards for the dashboard grid. Shows name, node count, last run status, and relative timestamp. Includes skeleton loading state."
+            >
+              <RecipeCardShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="empty-state"
+              title="Empty State"
+              description="Composable empty state for lists, dashboards, and search results. Bare icon, title, description, and optional action. Three size variants."
+            >
+              <EmptyStateShowcase />
+            </ShowcaseSection>
           </Stack>
         </Tabs.Content>
 
@@ -150,6 +168,17 @@ export default function MotorwayPage() {
             description="Entrances are springy. Elements pop onto the page like buildings materializing on the map. Transitions are smooth and restrained."
           >
             <AnimationShowcase />
+          </ShowcaseSection>
+        </Tabs.Content>
+
+        {/* ── Overlays ──────────────────────────────────────────── */}
+        <Tabs.Content value="overlays">
+          <ShowcaseSection
+            id="overlays"
+            title="Dialogs & Overlays"
+            description="Modal dialogs, confirmation prompts, form dialogs, and the AccountGate conversion overlay. Focus-trapped, keyboard accessible, backdrop blur."
+          >
+            <DialogShowcase />
           </ShowcaseSection>
         </Tabs.Content>
 
@@ -176,13 +205,35 @@ export default function MotorwayPage() {
 
         {/* ── Grids ───────────────────────────────────────────── */}
         <Tabs.Content value="grids">
+          <ShowcaseSection
+            id="grid"
+            title="Grid"
+            description="Explicit grid placement via composition. Items define their own position — the Grid provides the context."
+          >
+            <GridShowcase />
+          </ShowcaseSection>
+        </Tabs.Content>
+
+        {/* ── Progress ──────────────────────────────────────────── */}
+        <Tabs.Content value="progress">
+          <ShowcaseSection
+            id="progress-indicators"
+            title="Progress Indicators"
+            description="LinearProgress primitive at different values, with icons, labels, and helper text."
+          >
+            <ProgressShowcase />
+          </ShowcaseSection>
+        </Tabs.Content>
+
+        {/* ── Features ─────────────────────────────────────────── */}
+        <Tabs.Content value="features">
           <Stack gap="xl" className="gap-16">
             <ShowcaseSection
-              id="grid"
-              title="Grid"
-              description="Explicit grid placement via composition. Items define their own position — the Grid provides the context."
+              id="phase-flow"
+              title="Recipe Phase Flow"
+              description="Step through the recipe page phases: Dropzone → Configure → Processing → Completed. The file grid persists across phases — no DOM jumping."
             >
-              <GridShowcase />
+              <PhaseFlowShowcase />
             </ShowcaseSection>
 
             <ShowcaseSection
@@ -201,33 +252,6 @@ export default function MotorwayPage() {
               <ConveyorShowcase />
             </ShowcaseSection>
           </Stack>
-        </Tabs.Content>
-
-        {/* ── Progress ──────────────────────────────────────────── */}
-        <Tabs.Content value="progress">
-          <ShowcaseSection
-            id="progress-indicators"
-            title="Progress Indicators"
-            description="LinearProgress primitive at different values, with icons, labels, and helper text."
-          >
-            <ProgressShowcase />
-          </ShowcaseSection>
-        </Tabs.Content>
-
-        {/* ── Phase Flow ─────────────────────────────────────────── */}
-        <Tabs.Content value="phase-flow">
-          <ShowcaseSection
-            id="phase-flow"
-            title="Recipe Phase Flow"
-            description="Step through the recipe page phases: Dropzone → Configure → Processing → Completed. The file grid persists across phases — no DOM jumping."
-          >
-            <PhaseFlowShowcase />
-          </ShowcaseSection>
-        </Tabs.Content>
-
-        {/* ── Recipe Layouts ─────────────────────────────────────── */}
-        <Tabs.Content value="recipe-layouts">
-          <RecipeLayoutShowcase />
         </Tabs.Content>
       </Tabs>
     </div>

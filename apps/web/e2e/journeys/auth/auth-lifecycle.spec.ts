@@ -294,7 +294,7 @@ test.describe("Proxy route protection @auth", () => {
     ).toBeVisible();
   });
 
-  test("authenticated user redirected from /signin to /", async ({
+  test("authenticated user redirected from /signin to / (client-side)", async ({
     page,
   }) => {
     const email = testEmail();

@@ -6,10 +6,10 @@ import { Container } from "@/components/ui/Container";
 import { FileUpload } from "@/components/ui/FileUpload";
 import { Grid } from "@/components/ui/Grid";
 import { Heading } from "@/components/ui/Heading";
-import { UploadIcon } from "@/components/ui/icons";
 import { Stack } from "@/components/ui/Stack";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
 import { getAcceptedTypes, toDropzoneAccept } from "../_lib/getAcceptedTypes";
+import { DropzoneContent } from "./DropzoneContent";
 import { ErrorCard } from "./ErrorCard";
 import { FileCard } from "./FileCard";
 import { PhaseIndicator } from "./PhaseIndicator";
@@ -97,17 +97,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
           {activePhase === 1 && (
             <Animate.SlideUp>
               <FileUpload.Dropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
-                <div className="rounded-full bg-muted p-3 text-muted-foreground">
-                  <UploadIcon className="size-6" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium text-foreground">
-                    Drag & drop files here
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    or click to browse &middot; accepts {label}
-                  </p>
-                </div>
+                <DropzoneContent label={label} />
               </FileUpload.Dropzone>
             </Animate.SlideUp>
           )}
