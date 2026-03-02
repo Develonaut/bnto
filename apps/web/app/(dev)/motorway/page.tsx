@@ -21,7 +21,6 @@ import { NotificationCards } from "./NotificationCards";
 import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
 import { ProgressShowcase } from "./ProgressShowcase";
 import { RecipeCardShowcase } from "./RecipeCardShowcase";
-import { RecipeLayoutShowcase } from "./RecipeLayoutShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
 import { TypographyShowcase } from "./TypographyShowcase";
 
@@ -48,8 +47,7 @@ export default function MotorwayPage() {
           <Tabs.Trigger value="forms">Forms</Tabs.Trigger>
           <Tabs.Trigger value="grids">Grids</Tabs.Trigger>
           <Tabs.Trigger value="progress">Progress</Tabs.Trigger>
-          <Tabs.Trigger value="phase-flow">Phase Flow</Tabs.Trigger>
-          <Tabs.Trigger value="recipe-layouts">Recipe Layouts</Tabs.Trigger>
+          <Tabs.Trigger value="features">Features</Tabs.Trigger>
         </Tabs.List>
 
         {/* ── Surfaces ────────────────────────────────────────── */}
@@ -176,13 +174,35 @@ export default function MotorwayPage() {
 
         {/* ── Grids ───────────────────────────────────────────── */}
         <Tabs.Content value="grids">
+          <ShowcaseSection
+            id="grid"
+            title="Grid"
+            description="Explicit grid placement via composition. Items define their own position — the Grid provides the context."
+          >
+            <GridShowcase />
+          </ShowcaseSection>
+        </Tabs.Content>
+
+        {/* ── Progress ──────────────────────────────────────────── */}
+        <Tabs.Content value="progress">
+          <ShowcaseSection
+            id="progress-indicators"
+            title="Progress Indicators"
+            description="LinearProgress primitive at different values, with icons, labels, and helper text."
+          >
+            <ProgressShowcase />
+          </ShowcaseSection>
+        </Tabs.Content>
+
+        {/* ── Features ─────────────────────────────────────────── */}
+        <Tabs.Content value="features">
           <Stack gap="xl" className="gap-16">
             <ShowcaseSection
-              id="grid"
-              title="Grid"
-              description="Explicit grid placement via composition. Items define their own position — the Grid provides the context."
+              id="phase-flow"
+              title="Recipe Phase Flow"
+              description="Step through the recipe page phases: Dropzone → Configure → Processing → Completed. The file grid persists across phases — no DOM jumping."
             >
-              <GridShowcase />
+              <PhaseFlowShowcase />
             </ShowcaseSection>
 
             <ShowcaseSection
@@ -201,33 +221,6 @@ export default function MotorwayPage() {
               <ConveyorShowcase />
             </ShowcaseSection>
           </Stack>
-        </Tabs.Content>
-
-        {/* ── Progress ──────────────────────────────────────────── */}
-        <Tabs.Content value="progress">
-          <ShowcaseSection
-            id="progress-indicators"
-            title="Progress Indicators"
-            description="LinearProgress primitive at different values, with icons, labels, and helper text."
-          >
-            <ProgressShowcase />
-          </ShowcaseSection>
-        </Tabs.Content>
-
-        {/* ── Phase Flow ─────────────────────────────────────────── */}
-        <Tabs.Content value="phase-flow">
-          <ShowcaseSection
-            id="phase-flow"
-            title="Recipe Phase Flow"
-            description="Step through the recipe page phases: Dropzone → Configure → Processing → Completed. The file grid persists across phases — no DOM jumping."
-          >
-            <PhaseFlowShowcase />
-          </ShowcaseSection>
-        </Tabs.Content>
-
-        {/* ── Recipe Layouts ─────────────────────────────────────── */}
-        <Tabs.Content value="recipe-layouts">
-          <RecipeLayoutShowcase />
         </Tabs.Content>
       </Tabs>
     </div>
