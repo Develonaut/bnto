@@ -57,7 +57,7 @@ function TabPanelFallback() {
 
 /* ── Dashboard Page ──────────────────────────────────────────── */
 
-export default function WorkflowsPage() {
+export default function MyRecipesPage() {
   const { isAuthenticated, isLoading } = core.auth.useAuth();
 
   return (
