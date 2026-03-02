@@ -11,6 +11,9 @@ import { FolderOpenIcon } from "@/components/ui/icons";
 /**
  * Saved workflows grid — self-fetching.
  * Shows RecipeCards for saved workflows, or an EmptyState when empty.
+ *
+ * The skeleton shows 3 cards matching the grid layout so the tab panel
+ * height stays stable through loading → loaded transitions.
  */
 export function WorkflowGrid() {
   const { data: workflows, isLoading } = core.workflows.useWorkflows();
@@ -29,16 +32,17 @@ export function WorkflowGrid() {
 
   if (!workflows || workflows.length === 0) {
     return (
-      <EmptyState size="md">
-        <EmptyState.Icon>
-          <FolderOpenIcon />
-        </EmptyState.Icon>
-        <EmptyState.Title>No saved workflows yet</EmptyState.Title>
-        <EmptyState.Description>
-          Run a recipe and save it to see it here. Your workflows are stored in
-          the cloud so you can access them from any device.
-        </EmptyState.Description>
-      </EmptyState>
+      <div className="min-h-[240px]">
+        <EmptyState size="md">
+          <EmptyState.Icon>
+            <FolderOpenIcon />
+          </EmptyState.Icon>
+          <EmptyState.Title>No saved workflows yet</EmptyState.Title>
+          <EmptyState.Description>
+            Run a recipe and save it to see it here.
+          </EmptyState.Description>
+        </EmptyState>
+      </div>
     );
   }
 

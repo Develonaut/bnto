@@ -14,18 +14,46 @@ import { SignUpPrompt } from "./_components/SignUpPrompt";
 
 const UsageStats = dynamic(
   () => import("./_components/UsageStats").then((m) => ({ default: m.UsageStats })),
-  { ssr: false },
+  { ssr: false, loading: () => <UsageStatsFallback /> },
 );
 
 const WorkflowGrid = dynamic(
   () => import("./_components/WorkflowGrid").then((m) => ({ default: m.WorkflowGrid })),
-  { ssr: false },
+  { ssr: false, loading: () => <TabPanelFallback /> },
 );
 
 const RecentExecutions = dynamic(
   () => import("./_components/RecentExecutions").then((m) => ({ default: m.RecentExecutions })),
-  { ssr: false },
+  { ssr: false, loading: () => <TabPanelFallback /> },
 );
+
+/**
+ * Inline fallback for UsageStats — 3 stat cards matching the loaded layout.
+ * Keeps height stable while the dynamic import resolves.
+ */
+function UsageStatsFallback() {
+  return (
+    <div className="flex flex-wrap gap-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="flex-1 rounded-lg border border-border bg-card px-4 py-3 shadow-sm">
+          <div className="flex flex-col gap-1.5">
+            <div className="h-3 w-16 rounded-md bg-muted motion-safe:animate-pulse" />
+            <div className="h-6 w-12 rounded-md bg-muted motion-safe:animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Inline fallback for tab panels during dynamic import.
+ * Reserves the same min-height as the loaded tab content
+ * so the page doesn't collapse then expand.
+ */
+function TabPanelFallback() {
+  return <div className="min-h-[280px]" />;
+}
 
 /* ── Dashboard Page ──────────────────────────────────────────── */
 
@@ -56,17 +84,20 @@ export default function WorkflowsPage() {
                 <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
               </Tabs.List>
 
-              <Tabs.Content value="recent">
-                <Stack className="gap-3 pt-4">
+              {/*
+               * forceMount + CSS visibility keeps both panels in the DOM.
+               * This prevents remount/refetch on tab switch and preserves
+               * scroll position. React Query caches keep data warm.
+               */}
+              <div className="relative min-h-[280px]">
+                <Tabs.Content value="recent" forceMount className="pt-4 data-[state=inactive]:hidden">
                   <RecentExecutions />
-                </Stack>
-              </Tabs.Content>
+                </Tabs.Content>
 
-              <Tabs.Content value="saved">
-                <Stack className="gap-3 pt-4">
+                <Tabs.Content value="saved" forceMount className="pt-4 data-[state=inactive]:hidden">
                   <WorkflowGrid />
-                </Stack>
-              </Tabs.Content>
+                </Tabs.Content>
+              </div>
             </Tabs>
           </>
         )}

@@ -16,6 +16,10 @@ import { formatTimeAgo } from "@/lib/formatTimeAgo";
 /**
  * Recent executions list — self-fetching via useExecutionHistory().
  * Shows up to 5 most recent runs with status, timing, and recipe info.
+ *
+ * The outer min-h-[280px] wrapper keeps the tab panel stable across
+ * skeleton → loaded → empty transitions. All three states render
+ * inside the same container so nothing jumps.
  */
 export function RecentExecutions() {
   const { items, isLoading } = core.executions.useExecutionHistory({
@@ -26,15 +30,17 @@ export function RecentExecutions() {
 
   if (items.length === 0) {
     return (
-      <EmptyState size="sm">
-        <EmptyState.Icon size="sm">
-          <HistoryIcon />
-        </EmptyState.Icon>
-        <EmptyState.Title>No runs yet</EmptyState.Title>
-        <EmptyState.Description>
-          Your recent recipe runs will appear here.
-        </EmptyState.Description>
-      </EmptyState>
+      <div className="min-h-[240px]">
+        <EmptyState size="sm">
+          <EmptyState.Icon size="sm">
+            <HistoryIcon />
+          </EmptyState.Icon>
+          <EmptyState.Title>No runs yet</EmptyState.Title>
+          <EmptyState.Description>
+            Your recent recipe runs will appear here.
+          </EmptyState.Description>
+        </EmptyState>
+      </div>
     );
   }
 
@@ -65,15 +71,20 @@ export function RecentExecutions() {
   );
 }
 
+/**
+ * Skeleton — 5 rows matching the loaded card layout exactly.
+ * Same Card, same padding, same Row layout, same inner stack gap.
+ * The 5-row count matches pageSize so the skeleton ≈ loaded height.
+ */
 function RecentExecutionsSkeleton() {
   return (
     <Stack className="gap-2">
-      {Array.from({ length: 3 }).map((_, i) => (
+      {Array.from({ length: 5 }).map((_, i) => (
         <Card key={i} elevation="sm" className="px-4 py-3">
-          <Row justify="between" align="center">
-            <Stack className="gap-1.5">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-20" />
+          <Row justify="between" align="center" className="gap-3">
+            <Stack className="min-w-0 flex-1 gap-0.5">
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-3.5 w-20" />
             </Stack>
             <Skeleton className="h-5 w-16 rounded-full" />
           </Row>
