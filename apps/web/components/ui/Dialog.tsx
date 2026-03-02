@@ -6,6 +6,7 @@ import type { ElementRef, ComponentPropsWithoutRef, ComponentProps } from "react
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { XIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 
@@ -52,32 +53,32 @@ const DialogContent = forwardRef<
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
-    {/* Positioning wrapper — establishes z-50 stacking context so the
-        Animate.ScaleIn wrapper (which creates its own stacking context
-        from the CSS animation) doesn't fall behind the overlay. */}
-    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-      <Animate.ScaleIn from={0.92} easing="spring-bouncy">
-        <DialogPrimitive.Content
-          ref={ref}
-          className={cn(
-            "pointer-events-auto w-full max-w-lg",
-            "rounded-xl border border-border bg-card p-6 shadow-xl",
-            className,
-          )}
-          {...props}
-        >
-          {children}
-          <div className="absolute top-3 right-3 z-10">
-            <DialogPrimitive.Close asChild>
-              <Button variant="ghost" size="icon" elevation="md" className="size-8">
-                <XIcon className="size-4" />
-                <span className="sr-only">Close</span>
-              </Button>
-            </DialogPrimitive.Close>
-          </div>
-        </DialogPrimitive.Content>
-      </Animate.ScaleIn>
-    </div>
+    <DialogPrimitive.Content
+      ref={ref}
+      asChild
+      {...props}
+    >
+      {/* Centering wrapper — fixed fullscreen, z-50 above overlay,
+          pointer-events-none so clicks outside dismiss via overlay. */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <Animate.ScaleIn from={0.6} easing="spring-bouncier">
+          <Card
+            elevation="lg"
+            className={cn("pointer-events-auto relative w-full max-w-lg p-6", className)}
+          >
+            {children}
+            <div className="absolute top-3 right-3 z-10">
+              <DialogPrimitive.Close asChild>
+                <Button variant="ghost" size="icon" elevation="md" className="size-8">
+                  <XIcon className="size-4" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </DialogPrimitive.Close>
+            </div>
+          </Card>
+        </Animate.ScaleIn>
+      </div>
+    </DialogPrimitive.Content>
   </DialogPortal>
 ));
 DialogContent.displayName = "Dialog.Content";
