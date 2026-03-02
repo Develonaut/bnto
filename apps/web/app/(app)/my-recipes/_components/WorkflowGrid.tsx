@@ -6,6 +6,7 @@ import { useDelayedLoading } from "../_hooks/useDelayedLoading";
 import { Animate } from "@/components/ui/Animate";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Grid } from "@/components/ui/Grid";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { RecipeCard } from "@/components/blocks/RecipeCard";
 import { FolderOpenIcon } from "@/components/ui/icons";
 
@@ -13,8 +14,9 @@ import { FolderOpenIcon } from "@/components/ui/icons";
  * Saved workflows grid — self-fetching.
  * Shows RecipeCards for saved workflows, or an EmptyState when empty.
  *
- * The skeleton shows 3 cards matching the grid layout so the tab panel
- * height stays stable through loading → loaded transitions.
+ * Loading state uses Card loading={true} with skeleton content inside,
+ * so the card surface springs up when data arrives. Skeleton content
+ * mirrors the loaded layout: icon + title + meta.
  */
 export function WorkflowGrid() {
   const { data: workflows, isLoading } = core.workflows.useWorkflows();
@@ -25,7 +27,15 @@ export function WorkflowGrid() {
       <Grid cols={{ mobile: 1, tablet: 2, desktop: 3 }} gap="md">
         {Array.from({ length: 3 }).map((_, i) => (
           <Grid.Item key={i}>
-            <RecipeCard.Skeleton />
+            <RecipeCard loading>
+              <RecipeCard.Header>
+                <Skeleton className="size-10 rounded-lg" />
+              </RecipeCard.Header>
+              <RecipeCard.Content>
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </RecipeCard.Content>
+            </RecipeCard>
           </Grid.Item>
         ))}
       </Grid>
