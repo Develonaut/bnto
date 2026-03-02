@@ -65,6 +65,8 @@ If there are multiple available tasks in the wave, present all of them so the us
 
 ## Phase 2: Execute (after user approval)
 
+**CRITICAL: Do NOT enter a worktree unless the user explicitly passed `--w` or `--worktree`.** If the user invoked `/pickup` without the flag, you work on the current tree. Never use `EnterWorktree` on your own initiative. If you are already inside a worktree from a previous session, that does NOT authorize worktree usage for new tasks — ask the user.
+
 Only proceed here after the user says to go ahead. The user may:
 - Approve as-is → proceed with the plan
 - Approve with changes → adjust your approach, then proceed
@@ -90,7 +92,9 @@ Before doing ANY work, read and internalize the project's coding standards and a
 
 Edit `PLAN.md` to mark your task: change `- [ ]` to `- [ ] **CLAIMED**`
 
-### Step 2b: Enter Worktree (if `--w` / `--worktree` flag was passed)
+### Step 2b: Enter Worktree (ONLY if `--w` / `--worktree` flag was explicitly passed)
+
+**NEVER enter a worktree unless the user explicitly passed `--w` or `--worktree` in their `/pickup` invocation.** This is strictly opt-in. If the flag was not passed, skip this entire step — no exceptions, no judgment calls, no "it would be better in a worktree." Work directly on the main tree (create a branch in Step 5).
 
 If the user invoked `/pickup --w` or `/pickup --worktree`, create an isolated git worktree **now**, before writing any code:
 
@@ -101,8 +105,6 @@ If the user invoked `/pickup --w` or `/pickup --worktree`, create an isolated gi
 5. The main working tree stays completely untouched
 
 **Why worktrees?** They let the user (or other agents) keep working on the main tree while you work in isolation. No stashing, no branch switching conflicts, no accidental interference with in-progress work.
-
-**If the flag was NOT passed**, skip this step — work directly on the main tree as usual (create a branch in Step 5).
 
 ### Step 3: Activate Your Persona
 
@@ -401,6 +403,7 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 ## DO NOT
 
 - **Branch-based workflow is mandatory.** If you're in a worktree (from `--w` flag), the worktree already created a branch — use it. Otherwise, create a feature branch (`git checkout -b <type>/<short-description>`) before committing. Never commit directly to `main` — branch protection requires PRs to pass the CI Gate. If the user asks you to commit, create a branch first (or use the worktree branch), commit YOUR OWN work from this task (never bundle other agents' changes), then ask if they want you to push and create a PR. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
+- **Worktrees are strictly opt-in.** NEVER use `EnterWorktree` or create a worktree unless the user explicitly passed `--w` or `--worktree` in their `/pickup` invocation. Being inside an existing worktree from a previous session does NOT authorize creating or using worktrees for new tasks. If unsure, work on the main tree
 - **Worktrees start from `main`.** When using `--w` / `--worktree`, ALWAYS check out `main` and pull before creating the worktree. If the session starts on a feature branch, switch to `main` first. The worktree branches from HEAD — if HEAD is a stale feature branch, the worktree inherits that divergence. Unless the user explicitly says to branch from a different base, `main` is always the default
 - **Do not modify files outside your package scope** — other agents may be working there
 - **Do not modify `CLAUDE.md`, `.claude/rules/`, or config files** unless your task explicitly requires it
