@@ -11,6 +11,7 @@ import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "@/components/ui/Stack";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { LoaderIcon } from "@/components/ui/icons";
 
 type Mode = "signin" | "signup";
@@ -113,8 +114,7 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
                   required
                   autoComplete="email"
                 />
-                <Input
-                  type="password"
+                <PasswordInput
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
