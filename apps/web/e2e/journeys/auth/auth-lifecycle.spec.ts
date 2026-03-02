@@ -6,7 +6,8 @@ test.use({ reducedMotion: "reduce" });
  * Auth lifecycle E2E journeys (S1-S3 from journeys/auth.md)
  *
  * Tests the full sign-up, sign-in, sign-out flows in a real browser.
- * Verifies the NavUser component, proxy redirects, and session persistence.
+ * Verifies the NavUser component, proxy route protection, client-side
+ * auth redirects (SignInForm), and session persistence.
  *
  * Each test uses a unique email to avoid conflicts with other test runs.
  * Emails use @test.bnto.dev domain for easy identification.
@@ -186,7 +187,7 @@ test.describe("Auth — proxy route protection @auth", () => {
     ).toBeVisible();
   });
 
-  test("authenticated user redirected from /signin to /", async ({
+  test("authenticated user redirected from /signin to / (client-side)", async ({
     page,
   }) => {
     const email = testEmail();
@@ -200,7 +201,11 @@ test.describe("Auth — proxy route protection @auth", () => {
     await page.getByRole("button", { name: "Create account" }).click();
     await page.waitForURL("/", { timeout: 15000 });
 
-    // Now try to visit /signin — should be redirected to /
+    // Now try to visit /signin — should be redirected to / by SignInForm's
+    // useEffect (client-side). The proxy does NOT redirect auth users from
+    // /signin because Convex anonymous sessions make isAuthenticated unreliable.
+    // SignInForm checks for a real account (hasAccount = isAuthenticated && !user?.isAnonymous)
+    // and calls router.replace("/") when detected.
     await page.goto("/signin");
     await page.waitForURL("/", { timeout: 10000 });
   });

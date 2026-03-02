@@ -39,13 +39,13 @@ test.describe("Site navigation — desktop @browser", () => {
     });
   }
 
-  test("navbar: Recipes dropdown opens and navigates to tool page", async ({
+  test("navbar: Explore dropdown opens and navigates to tool page", async ({
     page,
   }) => {
     await page.goto("/");
 
-    // Open Recipes dropdown
-    await page.getByRole("button", { name: /Recipes/ }).click();
+    // Open Explore dropdown (categorized recipe links)
+    await page.getByRole("button", { name: /Explore/ }).click();
 
     // Wait for dropdown content — a recipe link becomes visible
     const compressLink = page.getByRole("link", {
@@ -55,7 +55,7 @@ test.describe("Site navigation — desktop @browser", () => {
 
     // Screenshot the open dropdown
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("desktop-recipes-dropdown.png");
+    await expect(page).toHaveScreenshot("desktop-explore-dropdown.png");
 
     // Navigate to tool page via dropdown
     await compressLink.first().click();
