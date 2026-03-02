@@ -19,22 +19,18 @@ import { Text } from "@/components/ui/Text";
  * Always renders the same icon button trigger — never disabled, never changes.
  * Auth state is resolved inside the dropdown menu:
  * - Loading: skeleton placeholder
- * - Unauthenticated or anonymous: "Sign in" menu item
- * - Authenticated (real account): user info + "Sign out"
+ * - Unauthenticated: "Sign in" menu item
+ * - Authenticated: user info + "Sign out"
  *
  * This prevents the button from flashing or changing state while auth loads.
  * The menu gates the check — the trigger is always stable.
- *
- * Anonymous users have a Convex session (isAuthenticated: true) but
- * user.isAnonymous=true. We treat them as unauthenticated for UI purposes.
- * Auth pages are public — no cookie bypass needed for navigation to /signin.
  */
 export function NavUser() {
   const { isLoading, user } = core.auth.useAuth();
   const signOut = core.auth.useSignOut();
   const router = useRouter();
 
-  const isSignedIn = !user?.isAnonymous && !!user?.email;
+  const isSignedIn = !!user?.email;
 
   function handleSignOut() {
     signOut();

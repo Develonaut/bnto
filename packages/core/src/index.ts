@@ -31,7 +31,6 @@ export type {
   User,
   UsageAnalytics,
   SlugAggregate,
-  ServerQuota,
   UploadFileInput,
   PresignedUploadUrl,
   UploadSession,

@@ -28,11 +28,9 @@ import { useExecutionHistory } from "./hooks/useExecutionHistory";
 import { useExecutionLogs } from "./hooks/useExecutionLogs";
 import { useRunPredefined } from "./hooks/useRunPredefined";
 
-// Analytics + quota hooks
+// Analytics hooks
 import { useUsageAnalytics } from "./hooks/useUsageAnalytics";
 import { useSlugAggregates } from "./hooks/useSlugAggregates";
-import { useServerQuota } from "./hooks/useServerQuota";
-import { useRunQuota } from "./hooks/useRunQuota";
 
 // Upload hooks
 import { useUploadFiles } from "./hooks/useUploadFiles";
@@ -51,7 +49,6 @@ import { useSessionStatus } from "./hooks/useSessionStatus";
 // Auth hooks
 import { useAuth } from "./hooks/useAuth";
 import { useSignOut } from "./hooks/useSignOut";
-import { useAnonymousSession } from "./hooks/useAnonymousSession";
 
 // WASM execution hooks
 import { useWasmExecution } from "./hooks/useWasmExecution";
@@ -92,14 +89,12 @@ export const core = {
   user: {
     ...baseCore.user,
     useCurrentUser,
-    useRunQuota,
   },
 
   analytics: {
     ...baseCore.analytics,
     useUsageAnalytics,
     useSlugAggregates,
-    useServerQuota,
   },
 
   session: {
@@ -114,7 +109,6 @@ export const core = {
     useSignIn,
     useSignUp,
     useSignOut,
-    useAnonymousSession,
   },
 
   wasm: {

@@ -8,7 +8,7 @@ Living verification contracts for each major domain. Each matrix defines the use
 
 | Domain | File | What It Covers |
 |--------|------|---------------|
-| **Auth** | [auth.md](auth.md) | Anonymous sessions, signup conversion, session lifecycle, auth gates in execution flow |
+| **Auth** | [auth.md](auth.md) | Sign-up, sign-in, sign-out, session lifecycle, access control |
 | **Engine** | [engine.md](engine.md) | CLI execution, node types, fixtures, validation, error handling |
 | **API** | [api.md](api.md) | Go HTTP API on Railway — endpoints, request/response contracts, R2 file transit |
 | **Web App** | [web.md](web.md) | Next.js app — page loads, SEO, tool pages, navigation, responsive behavior |
@@ -18,7 +18,7 @@ Living verification contracts for each major domain. Each matrix defines the use
 - **Before writing tests:** Read the matrix for the domain you're testing. Every test case maps to a row.
 - **Before shipping a feature:** Check if the feature touches any journey. If it does, verify the affected tests still pass.
 - **When adding a journey:** Add it to the matrix first, then write the test. The matrix is the spec.
-- **Cross-domain journeys:** Some journeys span domains (e.g., "anonymous user runs a bnto" touches Auth + API + Web). The primary domain owns the journey; other domains are referenced.
+- **Cross-domain journeys:** Some journeys span domains (e.g., "authenticated user runs a cloud bnto" touches Auth + API + Web). The primary domain owns the journey; other domains are referenced.
 
 ## Conventions
 

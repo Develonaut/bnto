@@ -31,8 +31,8 @@ export function Providers({ children }: ProvidersProps) {
 
   const handleSessionLost = useCallback(() => {
     // During sign-up/sign-in, the auth session briefly drops as the token
-    // transitions (e.g., anonymous → password upgrade). Don't redirect to
-    // /signin if already on an auth page — the session drop is expected.
+    // transitions. Don't redirect to /signin if already on an auth page —
+    // the session drop is expected.
     if (isAuthPath(pathnameRef.current)) return;
     router.replace("/signin");
   }, [router]);

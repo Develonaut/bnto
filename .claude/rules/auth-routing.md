@@ -37,7 +37,7 @@ No flash possible -- the redirect happens before any HTML reaches the browser.
 
 ### Layer 2: App shell (UI concern)
 
-The `(app)/layout.tsx` always renders the full AppShell (header + main). **No auth branching in the layout.** Every user -- authenticated or anonymous -- sees the same shell.
+The `(app)/layout.tsx` always renders the full AppShell (header + main). **No auth branching in the layout.** Every user -- authenticated or not -- sees the same shell.
 
 NavUser handles the auth-aware piece: authenticated users see a dropdown with account/sign-out; unauthenticated users see a "Sign in" link.
 

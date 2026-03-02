@@ -29,7 +29,6 @@ export function useAuth(): AuthState {
         name: currentUser.name ?? "",
         email: currentUser.email ?? "",
         image: currentUser.image ?? null,
-        isAnonymous: currentUser.isAnonymous ?? !currentUser.email,
       }
     : null;
 
