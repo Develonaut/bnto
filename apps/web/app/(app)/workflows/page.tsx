@@ -7,6 +7,7 @@ import { core } from "@bnto/core";
 import { AppShell } from "@/components/ui/AppShell";
 import { Heading } from "@/components/ui/Heading";
 import { Stack } from "@/components/ui/Stack";
+import { Tabs } from "@/components/ui/Tabs";
 import { Text } from "@/components/ui/Text";
 
 import { SignUpPrompt } from "./_components/SignUpPrompt";
@@ -26,7 +27,7 @@ const RecentExecutions = dynamic(
   { ssr: false },
 );
 
-/* ── Workflows (Dashboard) Page ──────────────────────────────── */
+/* ── Dashboard Page ──────────────────────────────────────────── */
 
 export default function WorkflowsPage() {
   const { isAuthenticated, isLoading } = core.auth.useAuth();
@@ -36,7 +37,7 @@ export default function WorkflowsPage() {
       <Stack className="gap-8">
         <Stack className="gap-1">
           <Heading level={1} size="lg">
-            Workflows
+            Dashboard
           </Heading>
           <Text color="muted">
             Your saved recipes and recent activity.
@@ -49,19 +50,24 @@ export default function WorkflowsPage() {
           <>
             <UsageStats />
 
-            <Stack className="gap-3">
-              <Heading level={2} size="sm">
-                Saved workflows
-              </Heading>
-              <WorkflowGrid />
-            </Stack>
+            <Tabs defaultValue="recent">
+              <Tabs.List>
+                <Tabs.Trigger value="recent">Recent</Tabs.Trigger>
+                <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
+              </Tabs.List>
 
-            <Stack className="gap-3">
-              <Heading level={2} size="sm">
-                Recent runs
-              </Heading>
-              <RecentExecutions />
-            </Stack>
+              <Tabs.Content value="recent">
+                <Stack className="gap-3 pt-4">
+                  <RecentExecutions />
+                </Stack>
+              </Tabs.Content>
+
+              <Tabs.Content value="saved">
+                <Stack className="gap-3 pt-4">
+                  <WorkflowGrid />
+                </Stack>
+              </Tabs.Content>
+            </Tabs>
           </>
         )}
       </Stack>

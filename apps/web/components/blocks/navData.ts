@@ -69,7 +69,7 @@ export interface PageLink {
 }
 
 export const PAGE_LINKS: PageLink[] = [
-  { label: "Workflows", href: "/workflows" },
+  { label: "Dashboard", href: "/workflows" },
   { label: "Pricing", href: "/pricing" },
   { label: "FAQ", href: "/faq" },
 ];
