@@ -1,6 +1,13 @@
 import path from "path";
 import fs from "fs";
 import { test, expect } from "../../fixtures";
+import {
+  IMAGE_FIXTURES_DIR,
+  MAGIC,
+  navigateToRecipe,
+  uploadFiles,
+  runAndComplete,
+} from "../../helpers";
 
 test.use({ reducedMotion: "reduce" });
 
@@ -16,15 +23,7 @@ test.use({ reducedMotion: "reduce" });
  *   - Raw pixel dimensions: 1200x800 (landscape — how the sensor captured it)
  *   - EXIF orientation: 6 (rotate 90° CW)
  *   - After correction: 800x1200 (portrait — how the user saw it)
- *
- * After processing, the output should have dimensions 800x1200 (orientation
- * physically applied to pixels) with no EXIF orientation tag needed.
  */
-
-const FIXTURES_DIR = path.resolve(
-  __dirname,
-  "../../../../../test-fixtures/images",
-);
 
 /**
  * Extract image dimensions from a JPEG file by parsing SOF markers.
@@ -55,33 +54,17 @@ function getJpegDimensions(data: Buffer): { width: number; height: number } {
   throw new Error("No SOF marker found in JPEG data");
 }
 
-test.describe("EXIF orientation — all image bntos", () => {
+test.describe("EXIF orientation — all image bntos @browser", () => {
   test("compress: portrait JPEG preserves orientation-corrected dimensions", async ({
     page,
   }) => {
-    await page.goto("/compress-images");
+    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
-
-    // Upload the EXIF-oriented fixture (1200x800 raw, orientation=6)
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles([
-      path.join(FIXTURES_DIR, "portrait-rotated.jpg"),
+    await uploadFiles(page, [
+      path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg"),
     ]);
 
-    await expect(page.getByText("1 file selected")).toBeVisible();
-
-    const runButton = page.locator('[data-testid="run-button"]:visible');
-    await expect(runButton).toBeEnabled();
-
-    // Compress
-    await runButton.click();
-
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
+    await runAndComplete(page);
 
     const outputFileCard = page.locator('[data-testid="output-file"]');
     await expect(outputFileCard).toHaveCount(1);
@@ -101,7 +84,6 @@ test.describe("EXIF orientation — all image bntos", () => {
     expect(outputFile[1]).toBe(0xd8);
 
     // Dimensions should be orientation-corrected: 800x1200 (portrait)
-    // NOT the raw 1200x800 (landscape)
     const dims = getJpegDimensions(outputFile);
     expect(dims.width).toBe(800);
     expect(dims.height).toBe(1200);
@@ -110,36 +92,19 @@ test.describe("EXIF orientation — all image bntos", () => {
   test("resize: portrait JPEG uses orientation-corrected dimensions", async ({
     page,
   }) => {
-    await page.goto("/resize-images");
+    await navigateToRecipe(page, "resize-images", "Resize Images Online Free");
 
-    await expect(
-      page.getByRole("heading", { name: "Resize Images Online Free" }),
-    ).toBeVisible();
-
-    // Upload the EXIF-oriented fixture
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles([
-      path.join(FIXTURES_DIR, "portrait-rotated.jpg"),
+    await uploadFiles(page, [
+      path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg"),
     ]);
 
-    await expect(page.getByText("1 file selected")).toBeVisible();
+    await runAndComplete(page);
 
-    const runButton = page.locator('[data-testid="run-button"]:visible');
-    await expect(runButton).toBeEnabled();
+    const outputFileCard = page.locator('[data-testid="output-file"]');
+    await expect(outputFileCard).toHaveCount(1);
 
-    // Resize (default settings)
-    await runButton.click();
-
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
-
-    const outputFileCard2 = page.locator('[data-testid="output-file"]');
-    await expect(outputFileCard2).toHaveCount(1);
-
-    // Download and verify it's a valid JPEG with portrait aspect ratio
     const downloadPromise = page.waitForEvent("download");
-    await outputFileCard2.getByRole("button", { name: /download/i }).click();
+    await outputFileCard.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -158,21 +123,11 @@ test.describe("EXIF orientation — all image bntos", () => {
   test("convert: portrait JPEG → PNG preserves orientation", async ({
     page,
   }) => {
-    await page.goto("/convert-image-format");
+    await navigateToRecipe(page, "convert-image-format", "Convert Image Format Online Free");
 
-    await expect(
-      page.getByRole("heading", {
-        name: "Convert Image Format Online Free",
-      }),
-    ).toBeVisible();
-
-    // Upload file first — config controls only appear in Phase 2 (after file selection)
-    const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles([
-      path.join(FIXTURES_DIR, "portrait-rotated.jpg"),
+    await uploadFiles(page, [
+      path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg"),
     ]);
-
-    await expect(page.getByText("1 file selected")).toBeVisible();
 
     // Change target format to PNG
     const formatSelect = page.locator('[data-testid="format-select"]').or(
@@ -181,22 +136,13 @@ test.describe("EXIF orientation — all image bntos", () => {
     await formatSelect.click();
     await page.getByRole("option", { name: /png/i }).click();
 
-    const runButton = page.locator('[data-testid="run-button"]:visible');
-    await expect(runButton).toBeEnabled();
+    await runAndComplete(page);
 
-    // Convert
-    await runButton.click();
+    const outputFileCard = page.locator('[data-testid="output-file"]');
+    await expect(outputFileCard).toHaveCount(1);
 
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
-      timeout: 30000,
-    });
-
-    const outputFileCard3 = page.locator('[data-testid="output-file"]');
-    await expect(outputFileCard3).toHaveCount(1);
-
-    // Download and verify PNG with orientation-corrected dimensions
     const downloadPromise = page.waitForEvent("download");
-    await outputFileCard3.getByRole("button", { name: /download/i }).click();
+    await outputFileCard.getByRole("button", { name: /download/i }).click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -204,22 +150,15 @@ test.describe("EXIF orientation — all image bntos", () => {
 
     const outputFile = fs.readFileSync(downloadPath!);
 
-    // PNG magic bytes: 89 50 4E 47 (‰PNG)
-    expect(outputFile[0]).toBe(0x89);
-    expect(outputFile[1]).toBe(0x50);
-    expect(outputFile[2]).toBe(0x4e);
-    expect(outputFile[3]).toBe(0x47);
+    // PNG magic bytes
+    for (let i = 0; i < MAGIC.PNG.length; i++) {
+      expect(outputFile[i]).toBe(MAGIC.PNG[i]);
+    }
 
-    // PNG stores dimensions in IHDR chunk at fixed offset:
-    //   bytes 0-7: signature
-    //   bytes 8-11: chunk length
-    //   bytes 12-15: "IHDR"
-    //   bytes 16-19: width (big-endian uint32)
-    //   bytes 20-23: height (big-endian uint32)
+    // PNG dimensions from IHDR chunk
     const pngWidth = outputFile.readUInt32BE(16);
     const pngHeight = outputFile.readUInt32BE(20);
 
-    // Should be portrait: 800x1200 (orientation applied)
     expect(pngWidth).toBe(800);
     expect(pngHeight).toBe(1200);
   });

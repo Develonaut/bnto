@@ -19,7 +19,7 @@ function testEmail() {
 const TEST_PASSWORD = "ConvertMe123!";
 const TEST_NAME = "Conversion Test User";
 
-test.describe("Anonymous → password conversion", () => {
+test.describe("Anonymous → password conversion @auth", () => {
   test("C1: anonymous session is created on tool page visit", async ({
     page,
   }) => {

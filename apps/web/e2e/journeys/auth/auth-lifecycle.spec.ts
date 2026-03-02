@@ -20,7 +20,7 @@ function testEmail() {
 const TEST_PASSWORD = "TestPassword123!";
 const TEST_NAME = "E2E Test User";
 
-test.describe("Auth lifecycle — sign up, sign in, sign out", () => {
+test.describe("Auth lifecycle — sign up, sign in, sign out @auth", () => {
   test("S1: sign up creates account and redirects to home", async ({
     page,
   }) => {
@@ -172,7 +172,7 @@ test.describe("Auth lifecycle — sign up, sign in, sign out", () => {
   });
 });
 
-test.describe("Auth — proxy route protection", () => {
+test.describe("Auth — proxy route protection @auth", () => {
   test("unauthenticated user redirected from protected route", async ({
     page,
   }) => {

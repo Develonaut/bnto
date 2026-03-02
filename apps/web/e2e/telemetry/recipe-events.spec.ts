@@ -21,7 +21,7 @@ const FIXTURES_DIR = path.resolve(
  * Events are captured via window.__bnto_telemetry__ (no PostHog needed).
  */
 
-test.describe("recipe telemetry events", () => {
+test.describe("recipe telemetry events @browser", () => {
   test("full lifecycle fires files_added, run_started, run_completed, result_downloaded", async ({
     page,
   }) => {
