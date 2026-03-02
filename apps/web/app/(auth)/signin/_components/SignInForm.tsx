@@ -1,9 +1,10 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { core } from "@bnto/core";
+import { NavButton } from "@/components/blocks/NavButton";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 import { Heading } from "@/components/ui/Heading";
@@ -68,9 +69,13 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
       <Container>
           <Stack gap="md" className="mx-auto w-full max-w-sm">
             <Stack gap="sm" align="center" className="text-center">
-              <Link href="/" className="mb-4">
-                <span className="font-display text-2xl font-bold">bnto</span>
-              </Link>
+              <NavButton
+                href="/"
+                style={{ "--face-bg": "var(--background)", "--face-fg": "var(--foreground)" } as CSSProperties}
+                className="mb-4 text-xl font-display font-black tracking-tighter"
+              >
+                bnto
+              </NavButton>
               <Heading level={1} size="sm">
                 {isSignUp ? "Create an account" : "Welcome back"}
               </Heading>
