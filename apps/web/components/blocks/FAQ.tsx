@@ -10,7 +10,7 @@ const faqs = [
   {
     question: "Where are my files processed?",
     answer:
-      "Entirely in your browser. bnto uses Rust compiled to WebAssembly. Your files are processed on your device and never uploaded to a server. Nothing leaves your machine.",
+      "Most tools run entirely in your browser using Rust compiled to WebAssembly — your files are processed on your device. Some future tools may use server-side processing for more advanced features.",
   },
   {
     question: "Is it really free?",
@@ -25,12 +25,12 @@ const faqs = [
   {
     question: "Is bnto open source?",
     answer:
-      "Yes. The entire codebase is MIT licensed. You can inspect the source code, verify what happens to your files, or contribute. Nothing is hidden.",
+      "Yes. The engine is MIT licensed. You can inspect the source code, verify how tools work, or contribute.",
   },
   {
     question: "Will bnto always be free?",
     answer:
-      "All browser tools are free, unlimited, forever. We plan to add a paid tier in the future for features that need server-side processing, like AI-powered tools. Browser tools will never have limits or require payment.",
+      "All current browser tools are free and unlimited — no signup, no caps. We plan to add a paid tier for advanced features that require server-side processing.",
   },
   {
     question: "Do I need an account?",
