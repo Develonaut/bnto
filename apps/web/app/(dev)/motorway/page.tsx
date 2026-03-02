@@ -7,6 +7,7 @@ import { Text } from "@/components/ui/Text";
 
 import { AnimationShowcase } from "./AnimationShowcase";
 import { BentoBoxShowcase } from "./BentoBoxShowcase";
+import { EmptyStateShowcase } from "./EmptyStateShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
@@ -76,6 +77,14 @@ export default function MotorwayPage() {
               description="Saved recipe cards for the dashboard grid. Shows name, node count, last run status, and relative timestamp. Includes skeleton loading state."
             >
               <RecipeCardShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="empty-state"
+              title="Empty State"
+              description="Composable empty state for lists, dashboards, and search results. Bare icon, title, description, and optional action. Three size variants."
+            >
+              <EmptyStateShowcase />
             </ShowcaseSection>
           </Stack>
         </Tabs.Content>
