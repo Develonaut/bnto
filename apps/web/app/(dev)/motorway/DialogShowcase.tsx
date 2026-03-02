@@ -6,7 +6,6 @@ import { Heading } from "@/components/ui/Heading";
 import { Row } from "@/components/ui/Row";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
-import { AccountGate } from "@/components/ui/AccountGate";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 

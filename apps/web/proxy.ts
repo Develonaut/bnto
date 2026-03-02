@@ -6,20 +6,22 @@ import {
 import { isProtectedPath } from "@/lib/routes";
 
 /**
- * Proxy middleware — three-tier route protection.
+ * Proxy middleware — two-tier route protection.
  *
  * Wraps `convexAuthNextjsMiddleware` so @convex-dev/auth handles token
  * refresh and cookie management automatically. Our custom logic handles
  * route protection on the small set of routes that need it.
  *
  * PERFORMANCE: `convexAuth.isAuthenticated()` makes a network round-trip
- * to Convex Cloud. We only call it for auth paths and protected paths —
- * public routes (recipes, home, pricing, faq) skip the check entirely.
+ * to Convex Cloud. We only call it for protected paths — public routes
+ * (recipes, home, pricing, faq, auth pages) skip the check entirely.
  *
  * Tiers:
  * 1. Canonical URL normalization (lowercase, no trailing slash)
- * 2. Public routes (including /signin, /signup): pass through immediately (no auth check)
- * 3. Protected routes (/executions, /settings): redirect to /signin if not authenticated
+ * 2. Protected routes (/executions, /settings): redirect to /signin if not authenticated
+ *
+ * Auth pages (/signin, /signup) are public — no redirect for authenticated users.
+ * SignInForm handles the "already signed in" case client-side.
  */
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const { pathname } = request.nextUrl;

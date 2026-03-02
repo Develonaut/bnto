@@ -25,9 +25,9 @@ export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
   const { isAuthenticated, user } = core.auth.useAuth();
   const router = useRouter();
 
-  // Redirect users with a real account (has email) away from auth pages.
-  // Anonymous Convex sessions have isAuthenticated=true but no email.
-  const hasAccount = isAuthenticated && !!user?.email;
+  // Redirect users with a real account away from auth pages.
+  // Anonymous Convex sessions have isAuthenticated=true but user.isAnonymous=true.
+  const hasAccount = isAuthenticated && !user?.isAnonymous;
   useEffect(() => {
     if (hasAccount) router.replace("/");
   }, [hasAccount, router]);

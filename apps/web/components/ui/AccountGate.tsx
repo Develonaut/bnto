@@ -38,10 +38,10 @@ export function AccountGate({
 }: AccountGateProps) {
   const { isAuthenticated, isLoading, user } = core.auth.useAuth();
 
-  // Gate on a real account (has email), not just an anonymous session.
+  // Gate on a real account, not just an anonymous session.
   // Convex auto-creates anonymous sessions, so isAuthenticated is true
-  // even for users who haven't signed up.
-  const hasAccount = isAuthenticated && !!user?.email;
+  // even for users who haven't signed up. user.isAnonymous distinguishes them.
+  const hasAccount = isAuthenticated && !user?.isAnonymous;
 
   if (isLoading || hasAccount) {
     return <>{children}</>;

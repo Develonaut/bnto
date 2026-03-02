@@ -1,18 +1,18 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
-import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
 /**
- * Middleware tests verify the three-tier proxy logic:
+ * Middleware tests verify the two-tier proxy logic:
  *
  * 1. Canonical URL normalization (case, underscores, trailing slash)
- * 2. Auth user on /signin (no signout signal) -> redirect to /
- * 3. Unauth user on protected route -> redirect to /signin
+ * 2. Protected routes (/executions, /settings) -> redirect to /signin if not authenticated
+ *
+ * Auth pages (/signin, /signup) are public — the proxy does NOT redirect
+ * authenticated users away from them. Convex anonymous sessions make
+ * isAuthenticated() unreliable for distinguishing real accounts from
+ * anonymous visitors, so auth pages handle "already signed in" client-side.
  *
  * Everything else passes through (bnto slugs, unknown paths -> 404 at page level).
- *
- * We mock `convexAuthNextjsMiddleware` to isolate our route protection logic
- * from Convex's token refresh internals.
  */
 
 const BASE_URL = "http://localhost:3000";
@@ -143,34 +143,12 @@ describe("proxy", () => {
       expect(response.status).toBe(200);
     });
 
-    it("redirects from /signin to / (auth user should not see signin)", async () => {
+    it("passes through on /signin (auth pages are public)", async () => {
       const response = await proxy(
         createRequest("/signin", AUTH_COOKIES),
       );
-      expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe("/");
-    });
-  });
-
-  describe("signout signal", () => {
-    const signoutCookies = {
-      ...AUTH_COOKIES,
-      [SIGNOUT_COOKIE]: "1",
-    };
-
-    it("allows auth user through to /signin when signout signal is present", async () => {
-      const response = await proxy(
-        createRequest("/signin", signoutCookies),
-      );
-      // With signout signal, the proxy skips the "auth on /signin" redirect
-      // and passes through — user reaches /signin despite being authenticated
-      expect(response.status).toBe(200);
-    });
-
-    it("does not affect other routes", async () => {
-      const response = await proxy(
-        createRequest("/my-recipes", signoutCookies),
-      );
+      // Proxy does NOT redirect auth users from /signin — anonymous Convex
+      // sessions make isAuthenticated unreliable. SignInForm handles it client-side.
       expect(response.status).toBe(200);
     });
   });
