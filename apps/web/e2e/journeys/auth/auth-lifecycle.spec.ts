@@ -177,7 +177,7 @@ test.describe("Auth — proxy route protection @auth", () => {
     page,
   }) => {
     // Try to visit a protected route without auth
-    await page.goto("/workflows");
+    await page.goto("/executions");
 
     // Should be redirected to /signin
     await page.waitForURL("/signin", { timeout: 10000 });
@@ -203,5 +203,71 @@ test.describe("Auth — proxy route protection @auth", () => {
     // Now try to visit /signin — should be redirected to /
     await page.goto("/signin");
     await page.waitForURL("/", { timeout: 10000 });
+  });
+
+  test("sign-out invalidates access to protected routes", async ({
+    page,
+  }) => {
+    const email = testEmail();
+
+    // Create account and sign in
+    await page.goto("/signin");
+    await page.getByRole("button", { name: "Sign up" }).click();
+    await page.getByPlaceholder("Your name").fill(TEST_NAME);
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
+    await page.getByRole("button", { name: "Create account" }).click();
+    await page.waitForURL("/", { timeout: 15000 });
+
+    // Confirm authenticated — can access protected route
+    await page.goto("/settings");
+    await page.waitForURL("/settings", { timeout: 10000 });
+
+    // Sign out via user menu
+    const userMenu = page.locator('[data-testid="nav-user-menu"]');
+    await expect(userMenu).toBeVisible({ timeout: 10000 });
+    await userMenu.click();
+    await page.locator('[data-testid="nav-sign-out"]').click();
+    await page.waitForURL("/signin", { timeout: 10000 });
+
+    // Wait for session cookie to be cleared by the server
+    await page.waitForTimeout(2000);
+
+    // Now try to access a protected route — should be denied
+    await page.goto("/settings");
+    await page.waitForURL("/signin", { timeout: 10000 });
+    await expect(
+      page.getByRole("heading", { name: "Welcome back" }),
+    ).toBeVisible();
+  });
+
+  test("sign-out then sign-in restores access", async ({ page }) => {
+    const email = testEmail();
+
+    // Create account
+    await page.goto("/signin");
+    await page.getByRole("button", { name: "Sign up" }).click();
+    await page.getByPlaceholder("Your name").fill(TEST_NAME);
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
+    await page.getByRole("button", { name: "Create account" }).click();
+    await page.waitForURL("/", { timeout: 15000 });
+
+    // Sign out
+    const userMenu = page.locator('[data-testid="nav-user-menu"]');
+    await expect(userMenu).toBeVisible({ timeout: 10000 });
+    await userMenu.click();
+    await page.locator('[data-testid="nav-sign-out"]').click();
+    await page.waitForURL("/signin", { timeout: 10000 });
+
+    // Sign back in
+    await page.getByPlaceholder("Enter your email").fill(email);
+    await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.waitForURL("/", { timeout: 15000 });
+
+    // Should be able to access protected routes again
+    const userMenu2 = page.locator('[data-testid="nav-user-menu"]');
+    await expect(userMenu2).toBeVisible({ timeout: 10000 });
   });
 });
