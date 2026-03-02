@@ -6,12 +6,29 @@
  * Wraps the PostHog SDK with SSR-safe guards and DNT respect.
  * When running on the server (typeof window === "undefined") or
  * when the user has Do Not Track enabled, all methods are no-ops.
+ *
+ * IMPORTANT: Initialization state is stored on `window` (not a module-level
+ * variable) because Turbopack/webpack may duplicate this module across
+ * Next.js route chunks. The layout chunk (where TelemetryProvider lives)
+ * and the page chunk (where useRecipeFlow lives) each get their own copy
+ * of this file. A module-level `let initialized = false` would be `true`
+ * in the layout chunk but `false` in the page chunk, silently dropping
+ * custom events. By storing both the flag and the PostHog instance on
+ * `window`, all chunks share the same state.
  */
 
 import posthog from "posthog-js";
+import type { PostHog } from "posthog-js";
 import type { TelemetryConfig, TelemetryProperties, TelemetryUserTraits } from "../../types/telemetry";
 
-let initialized = false;
+/** Window-level key for the initialized PostHog instance. */
+const PH_KEY = "__bnto_ph__" as const;
+
+/** Type-safe accessor for the shared PostHog instance on window. */
+function getSharedInstance(): PostHog | undefined {
+  if (typeof window === "undefined") return undefined;
+  return (window as unknown as Record<string, unknown>)[PH_KEY] as PostHog | undefined;
+}
 
 /**
  * Check if the user has Do Not Track enabled.
@@ -28,7 +45,7 @@ function isDntEnabled() {
  */
 export function initPostHog(config: TelemetryConfig) {
   if (typeof window === "undefined") return;
-  if (initialized) return;
+  if (getSharedInstance()) return;
   if (isDntEnabled()) return;
 
   posthog.init(config.apiKey, {
@@ -45,7 +62,8 @@ export function initPostHog(config: TelemetryConfig) {
     mask_all_text: false,
   });
 
-  initialized = true;
+  // Store the initialized instance on window so all route chunks can access it
+  (window as unknown as Record<string, unknown>)[PH_KEY] = posthog;
 }
 
 /**
@@ -65,29 +83,32 @@ export function captureEvent(event: string, properties?: TelemetryProperties) {
     (w.__bnto_telemetry__ as Array<{ event: string; properties?: TelemetryProperties }>).push({ event, properties });
   }
 
-  if (!initialized) return;
-  posthog.capture(event, properties);
+  const ph = getSharedInstance();
+  if (!ph) return;
+  ph.capture(event, properties);
 }
 
 /**
  * Identify an authenticated user, linking anonymous → known sessions.
  */
 export function identifyUser(distinctId: string, traits?: TelemetryUserTraits) {
-  if (typeof window === "undefined" || !initialized) return;
-  posthog.identify(distinctId, traits);
+  const ph = getSharedInstance();
+  if (!ph) return;
+  ph.identify(distinctId, traits);
 }
 
 /**
  * Reset identity on sign-out (unlinks the session from the user).
  */
 export function resetUser() {
-  if (typeof window === "undefined" || !initialized) return;
-  posthog.reset();
+  const ph = getSharedInstance();
+  if (!ph) return;
+  ph.reset();
 }
 
 /**
  * Whether the adapter has been initialized.
  */
 export function isInitialized() {
-  return initialized;
+  return !!getSharedInstance();
 }
