@@ -216,6 +216,13 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
                   })}
                 </Grid>
               </Animate.BouncyStagger>
+
+              {/* History prompt for anonymous users after successful execution */}
+              {resolvedPhase === "completed" && !currentUser && (
+                <Animate.SlideUp>
+                  <UpgradePrompt slug={entry.slug} reason="history" />
+                </Animate.SlideUp>
+              )}
             </Stack>
           )}
         </FileUpload>
