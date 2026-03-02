@@ -1,7 +1,12 @@
 "use client";
 
-import { createContext, forwardRef, useContext, useState } from "react";
-import type { ComponentProps, ComponentPropsWithoutRef, ElementRef, ElementType } from "react";
+import { forwardRef, useState } from "react";
+import type {
+  ComponentProps,
+  ComponentPropsWithoutRef,
+  ElementRef,
+  ElementType,
+} from "react";
 
 import { Slot } from "@radix-ui/react-slot";
 
@@ -24,31 +29,33 @@ import { Popover } from "@/components/ui/Popover";
  *   </Menu>
  * ──────────────────────────────────────────────────────────────── */
 
-/* ── Context ──────────────────────────────────────────────────────
- * Shares the open state from MenuRoot so the trigger can force
- * itself into the hover (engaged) force state. */
-
-const MenuContext = createContext(false);
-
 /* ── Trigger ─────────────────────────────────────────────────────
- * Renders as our Button component with toggle behavior. When the
- * menu is open, the trigger stays depressed at hover depth.
+ * Renders as our Button component inside a Popover.Anchor wrapper.
  *
- * Popover.Trigger merges directly onto Button via asChild —
- * no intermediate wrapper. This avoids SSR hydration mismatches
- * caused by Radix injecting aria-controls/id onto an extra element. */
+ * The Button uses .pressable which animates via CSS transform.
+ * Without the Anchor, Radix uses the Trigger itself as the
+ * Floating UI reference — so getBoundingClientRect() shifts as
+ * the Button's spring animation plays, dragging the dropdown
+ * with it.
+ *
+ * Popover.Anchor renders a static <div> that wraps the Trigger.
+ * Radix detects the custom anchor and tells Floating UI to read
+ * position from the Anchor instead of the Trigger. Since the
+ * Anchor has no transform, its bounding rect never changes —
+ * the dropdown stays pinned while the Button animates freely. */
 
 const MenuTrigger = forwardRef<
   HTMLButtonElement,
   ComponentProps<typeof Button>
 >(({ children, ...props }, ref) => {
-  const open = useContext(MenuContext);
   return (
-    <Popover.Trigger asChild>
-      <Button ref={ref} toggle pressed={open} {...props}>
-        {children}
-      </Button>
-    </Popover.Trigger>
+    <Popover.Anchor className="inline-flex">
+      <Popover.Trigger asChild>
+        <Button ref={ref} {...props}>
+          {children}
+        </Button>
+      </Popover.Trigger>
+    </Popover.Anchor>
   );
 });
 MenuTrigger.displayName = "MenuTrigger";
@@ -122,11 +129,7 @@ function MenuRootWrapper({
     setInternalOpen(next);
     onOpenChange?.(next);
   };
-  return (
-    <MenuContext.Provider value={open}>
-      <Popover open={open} onOpenChange={handleOpenChange} {...props} />
-    </MenuContext.Provider>
-  );
+  return <Popover open={open} onOpenChange={handleOpenChange} {...props} />;
 }
 
 /** Closes the menu when its child is clicked. Renders no wrapper element. */
@@ -188,10 +191,7 @@ function MenuItem({
  *   <Menu.Label>Image</Menu.Label>
  * ──────────────────────────────────────────────────────────────── */
 
-function MenuLabel({
-  className,
-  ...props
-}: ComponentProps<"div">) {
+function MenuLabel({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       className={cn(
@@ -207,10 +207,7 @@ function MenuLabel({
  * A thin horizontal line to separate groups of items.
  * ──────────────────────────────────────────────────────────────── */
 
-function MenuSeparator({
-  className,
-  ...props
-}: ComponentProps<"div">) {
+function MenuSeparator({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       role="separator"
