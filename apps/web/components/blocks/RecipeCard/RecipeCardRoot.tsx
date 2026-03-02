@@ -95,7 +95,7 @@ function RecipeCardStatus({ status }: { status: Execution["status"] }) {
 
 function RecipeCardTitle({ children }: PropsWithChildren) {
   return (
-    <Heading level={3} size="xs" className="text-left">
+    <Heading level={3} as="p" size="xs" className="text-left">
       {children}
     </Heading>
   );

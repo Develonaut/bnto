@@ -60,6 +60,7 @@ export function PhaseIndicator({
             {/* Step circle + label — fixed width so all steps are equal */}
             <div className="flex w-16 flex-col items-center gap-1 sm:w-20">
               <div
+                role="img"
                 aria-current={isActive ? "step" : undefined}
                 aria-label={`Step ${displayNumber}: ${step.label}${isCompleted ? " (completed)" : ""}`}
                 className={cn(
