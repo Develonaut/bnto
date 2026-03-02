@@ -131,9 +131,9 @@ Anonymous→password userId fix, FIXME cleanup, privacy policy rewrite, README r
 - [x] `@bnto/core` — `/core-architect` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
 - [x] `apps/web` — `/frontend-engineer` — RecipeCard component (name, node count, last run status, last updated)
 - [x] `apps/web` — `/frontend-engineer` — StatusBadge component (pending, running, completed, failed)
-- [ ] `apps/web` — `/frontend-engineer` — EmptyState component (no workflows yet)
+- [x] `apps/web` — `/frontend-engineer` — EmptyState component (no workflows yet)
 - [x] `infra` — **Analytics layer decision:** PostHog selected. Decision doc at `.claude/decisions/analytics.md`. Privacy policy updated to remove premature "no tracking" promises. Copy across FAQ, pricing, hero updated to be honest, not aspirational.
-- [ ] `apps/web` — `/frontend-engineer` — **PostHog integration:** Install `posthog-js`, create PostHogProvider (client-only), auto-capture page views, add custom events for key moments (tool execution start/complete, file upload, download). Identify users on sign-in. Cookieless mode. Respect DNT. See `.claude/decisions/analytics.md` for approach.
+- [x] `@bnto/core` — `/core-architect` — **PostHog telemetry integration:** `core.telemetry` namespace (client → adapter), `TelemetryProvider` with config injection, E2E test hook via `window.__bnto_telemetry__`. Production-only env vars (Vercel). 2 E2E tests.
 - [ ] `infra` — **SEO validation tooling:** Set up Lighthouse CI in GitHub Actions for automated performance/SEO scoring on every PR. Configure Google Search Console for bnto.io (verify ownership, submit sitemap, monitor indexing). Add `task seo:audit` command that runs Lighthouse locally against all public routes and reports Core Web Vitals scores. Target: all pages green on Performance, Accessibility, Best Practices, SEO.
 
 #### Wave 2 (parallel — dashboard + conversion hooks)
