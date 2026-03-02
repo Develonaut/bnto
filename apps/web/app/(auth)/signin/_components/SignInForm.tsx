@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 import { NavButton } from "@/components/blocks/NavButton";
@@ -22,7 +22,15 @@ interface SignInFormProps {
 export function SignInForm({ defaultMode = "signin" }: SignInFormProps) {
   const { email: signInEmail } = core.auth.useSignIn();
   const { email: signUpEmail, anonymousUserId } = core.auth.useSignUp();
+  const { isAuthenticated, user } = core.auth.useAuth();
   const router = useRouter();
+
+  // Redirect users with a real account away from auth pages.
+  // Anonymous Convex sessions have isAuthenticated=true but user.isAnonymous=true.
+  const hasAccount = isAuthenticated && !user?.isAnonymous;
+  useEffect(() => {
+    if (hasAccount) router.replace("/");
+  }, [hasAccount, router]);
 
   const [mode, setMode] = useState<Mode>(defaultMode);
   const [name, setName] = useState("");

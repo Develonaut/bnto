@@ -2,15 +2,12 @@
 
 import dynamic from "next/dynamic";
 
-import { core } from "@bnto/core";
-
 import { AppShell } from "@/components/ui/AppShell";
+import { AccountGate } from "@/components/ui/AccountGate";
 import { Heading } from "@/components/ui/Heading";
 import { Stack } from "@/components/ui/Stack";
 import { Tabs } from "@/components/ui/Tabs";
 import { Text } from "@/components/ui/Text";
-
-import { SignUpPrompt } from "./_components/SignUpPrompt";
 
 const UsageStats = dynamic(
   () => import("./_components/UsageStats").then((m) => ({ default: m.UsageStats })),
@@ -22,8 +19,8 @@ const WorkflowGrid = dynamic(
   { ssr: false, loading: () => <TabPanelFallback /> },
 );
 
-const RecentExecutions = dynamic(
-  () => import("./_components/RecentExecutions").then((m) => ({ default: m.RecentExecutions })),
+const ExecutionHistory = dynamic(
+  () => import("./_components/ExecutionHistory").then((m) => ({ default: m.ExecutionHistory })),
   { ssr: false, loading: () => <TabPanelFallback /> },
 );
 
@@ -58,8 +55,6 @@ function TabPanelFallback() {
 /* ── Dashboard Page ──────────────────────────────────────────── */
 
 export default function MyRecipesPage() {
-  const { isAuthenticated, isLoading } = core.auth.useAuth();
-
   return (
     <AppShell.Content>
       <Stack className="gap-8">
@@ -72,15 +67,16 @@ export default function MyRecipesPage() {
           </Text>
         </Stack>
 
-        {isLoading ? null : !isAuthenticated ? (
-          <SignUpPrompt />
-        ) : (
-          <>
+        <AccountGate
+          title="Save your recipes"
+          description="Sign in to save your recipes, access execution history, and pick up where you left off from any device."
+        >
+          <Stack className="gap-8">
             <UsageStats />
 
-            <Tabs defaultValue="recent">
+            <Tabs defaultValue="history">
               <Tabs.List>
-                <Tabs.Trigger value="recent">Recent</Tabs.Trigger>
+                <Tabs.Trigger value="history">History</Tabs.Trigger>
                 <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
               </Tabs.List>
 
@@ -94,11 +90,11 @@ export default function MyRecipesPage() {
                */}
               <div className="relative">
                 <Tabs.Content
-                  value="recent"
+                  value="history"
                   forceMount
                   className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
                 >
-                  <RecentExecutions />
+                  <ExecutionHistory />
                 </Tabs.Content>
 
                 <Tabs.Content
@@ -110,8 +106,8 @@ export default function MyRecipesPage() {
                 </Tabs.Content>
               </div>
             </Tabs>
-          </>
-        )}
+          </Stack>
+        </AccountGate>
       </Stack>
     </AppShell.Content>
   );

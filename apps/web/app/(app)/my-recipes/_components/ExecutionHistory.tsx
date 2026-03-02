@@ -15,20 +15,15 @@ import { HistoryIcon } from "@/components/ui/icons";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
 /**
- * Recent executions list — self-fetching via useExecutionHistory().
- * Shows up to 5 most recent runs with status, timing, and recipe info.
- *
- * The outer min-h-[280px] wrapper keeps the tab panel stable across
- * skeleton → loaded → empty transitions. All three states render
- * inside the same container so nothing jumps.
+ * Paginated execution history — self-fetching via useExecutionHistory().
+ * Shows all runs with status, timing, and a "Load more" button.
  */
-export function RecentExecutions() {
-  const { items, isLoading } = core.executions.useExecutionHistory({
-    pageSize: 5,
-  });
+export function ExecutionHistory() {
+  const { items, isLoading, status, loadMore } =
+    core.executions.useExecutionHistory({ pageSize: 20 });
   const showSkeleton = useDelayedLoading(isLoading);
 
-  if (showSkeleton) return <RecentExecutionsSkeleton />;
+  if (showSkeleton) return <ExecutionHistorySkeleton />;
   if (isLoading) return null;
 
   if (items.length === 0) {
@@ -40,7 +35,7 @@ export function RecentExecutions() {
           </EmptyState.Icon>
           <EmptyState.Title>No runs yet</EmptyState.Title>
           <EmptyState.Description>
-            Your recent recipe runs will appear here.
+            Run a recipe to see your execution history here.
           </EmptyState.Description>
         </EmptyState>
       </div>
@@ -67,22 +62,27 @@ export function RecentExecutions() {
         </Card>
       ))}
 
-      <Button variant="ghost" href="/executions" className="self-start">
-        View all runs
-      </Button>
+      {status !== "Exhausted" && (
+        <Button
+          variant="ghost"
+          className="self-start"
+          onClick={() => loadMore(20)}
+        >
+          Load more
+        </Button>
+      )}
     </Stack>
   );
 }
 
 /**
- * Skeleton — 5 rows matching the loaded card layout exactly.
+ * Skeleton — 6 rows matching the loaded card layout.
  * Same Card, same padding, same Row layout, same inner stack gap.
- * The 5-row count matches pageSize so the skeleton ≈ loaded height.
  */
-function RecentExecutionsSkeleton() {
+function ExecutionHistorySkeleton() {
   return (
     <Stack className="gap-2">
-      {Array.from({ length: 5 }).map((_, i) => (
+      {Array.from({ length: 6 }).map((_, i) => (
         <Card key={i} elevation="sm" className="px-4 py-3">
           <Row justify="between" align="center" className="gap-3">
             <Stack className="min-w-0 flex-1 gap-0.5">

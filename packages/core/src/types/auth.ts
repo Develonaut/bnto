@@ -8,6 +8,8 @@ export interface AuthUser {
   name: string;
   email: string;
   image?: string | null;
+  /** True when the user has a Convex anonymous session (no email/password). */
+  isAnonymous: boolean;
 }
 
 /** Combined authentication + user state. */
