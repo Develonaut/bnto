@@ -12,12 +12,12 @@ import { PAGE_LINKS } from "./navData";
 export function DesktopNav() {
   return (
     <div className="hidden items-center gap-2 lg:flex">
-      <RecipesMenu />
       {PAGE_LINKS.map((link) => (
         <NavButton key={link.href} href={link.href}>
           {link.label}
         </NavButton>
       ))}
+      <RecipesMenu />
     </div>
   );
 }
