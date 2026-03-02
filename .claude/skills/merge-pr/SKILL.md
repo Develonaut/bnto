@@ -60,10 +60,19 @@ Check that all required status checks are passing.
 Parse `statusCheckRollup` from Step 2. For each check:
 - Name, status (pass/fail/pending), conclusion
 
-**Determine CI Gate status:**
+**Required checks to verify:**
+
+| Check | Workflow | Blocking? |
+|---|---|---|
+| **CI Gate** | `ci.yml` — Rust lint/test + TypeScript build/test/lint | Yes — must pass |
+| **Lighthouse CI** | `lighthouse.yml` — Performance, Accessibility, Best Practices, SEO audits | Yes — error-level assertions (a11y, best practices, SEO ≥ 90) must pass. Performance warnings are advisory. |
+
+**Determine status for EACH required check:**
 - All checks passing = CI PASS
-- Any check failing = CI FAIL — list the failing checks with their names
+- Any check failing = CI FAIL — list the failing checks with their names and conclusions
 - Any check pending = CI PENDING — list pending checks, ask user if they want to wait
+
+**If Lighthouse CI is failing:** Note which categories failed and their scores. If only **performance** warnings (warn level, not error), the check still passes — performance is advisory. If **accessibility, best practices, or SEO** assertions fail (error level), that blocks merge. Suggest running `/lighthouse-audit --ci` to download reports and triage.
 
 **If CI is not passing, present the failures and stop.** Do not offer to merge with failing CI.
 
@@ -168,6 +177,7 @@ Present a clear summary to the user:
 
 ### Checks
 - CI Gate: PASS / FAIL / PENDING
+- Lighthouse CI: PASS / FAIL (list failing categories + scores) / PENDING
 - E2E Tests: PASS (N passed, 0 failed) / FAIL (list failures) / SKIPPED (user opted out)
 - Merge conflicts: None / CONFLICTING
 - Description: Accurate / Needs update (details)
