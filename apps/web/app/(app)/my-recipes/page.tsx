@@ -59,6 +59,7 @@ function TabPanelFallback() {
 
 export default function MyRecipesPage() {
   const { isAuthenticated, isLoading } = core.auth.useAuth();
+  const showSignUp = !isLoading && !isAuthenticated;
 
   return (
     <AppShell.Content>
@@ -72,46 +73,42 @@ export default function MyRecipesPage() {
           </Text>
         </Stack>
 
-        {isLoading ? null : !isAuthenticated ? (
-          <SignUpPrompt />
-        ) : (
-          <>
-            <UsageStats />
+        {showSignUp && <SignUpPrompt />}
 
-            <Tabs defaultValue="history">
-              <Tabs.List>
-                <Tabs.Trigger value="history">History</Tabs.Trigger>
-                <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
-              </Tabs.List>
+        <UsageStats />
 
-              {/*
-               * forceMount keeps both panels in the DOM so switching
-               * tabs doesn't remount components or refetch data.
-               *
-               * The inactive panel uses invisible + absolute so it's
-               * removed from layout flow but stays mounted. The active
-               * panel stays in normal flow and determines container height.
-               */}
-              <div className="relative">
-                <Tabs.Content
-                  value="history"
-                  forceMount
-                  className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
-                >
-                  <ExecutionHistory />
-                </Tabs.Content>
+        <Tabs defaultValue="history">
+          <Tabs.List>
+            <Tabs.Trigger value="history">History</Tabs.Trigger>
+            <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
+          </Tabs.List>
 
-                <Tabs.Content
-                  value="saved"
-                  forceMount
-                  className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
-                >
-                  <WorkflowGrid />
-                </Tabs.Content>
-              </div>
-            </Tabs>
-          </>
-        )}
+          {/*
+           * forceMount keeps both panels in the DOM so switching
+           * tabs doesn't remount components or refetch data.
+           *
+           * The inactive panel uses invisible + absolute so it's
+           * removed from layout flow but stays mounted. The active
+           * panel stays in normal flow and determines container height.
+           */}
+          <div className="relative">
+            <Tabs.Content
+              value="history"
+              forceMount
+              className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
+            >
+              <ExecutionHistory />
+            </Tabs.Content>
+
+            <Tabs.Content
+              value="saved"
+              forceMount
+              className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
+            >
+              <WorkflowGrid />
+            </Tabs.Content>
+          </div>
+        </Tabs>
       </Stack>
     </AppShell.Content>
   );
