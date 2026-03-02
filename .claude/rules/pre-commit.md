@@ -22,6 +22,14 @@ Note: Go checks (`task vet`, `task test`, `task api:test`) are no longer in CI. 
 
 If any check fails: fix the errors, re-run from the top.
 
+### Lighthouse CI audit (if `apps/web/` files changed)
+
+```bash
+task seo:audit         # Build + run Lighthouse against all public routes -- must pass
+```
+
+Lighthouse CI also runs as a GitHub Actions workflow (`lighthouse.yml`) on every PR. Error-level assertions (accessibility, best practices, SEO >= 90) block merge. Performance warnings are advisory. If audits fail, run `/lighthouse-audit --local` to triage and fix.
+
 ## Step 2: Architecture & Bento Box Compliance
 
 For EACH file you modified, verify against the Bento Box Principle (`code-standards.md`):
@@ -139,7 +147,8 @@ Present a summary to the user before committing:
 6. **Dot-notation compliance** -- PASS or FAIL. If FAIL, list files with flat multi-part imports.
 7. **TS checks result** -- confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
 8. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test:unit` passed clean (skip if no Rust files touched)
-9. **Files changed** -- brief description of each
+9. **Lighthouse audit result** -- confirm `task seo:audit` passed clean, or SKIPPED (no `apps/web/` changes)
+10. **Files changed** -- brief description of each
 
 ## Step 8: Commit & Branch Workflow
 

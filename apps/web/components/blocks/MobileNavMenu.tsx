@@ -57,10 +57,10 @@ export function MobileNavMenu({
             </div>
 
             <Stack className="h-full justify-between gap-20 pt-16">
-              {/* Recipes */}
+              {/* Explore */}
               <Stack className="gap-10">
                 <div className="text-2xl font-display font-bold text-primary-foreground">
-                  Recipes
+                  Explore
                 </div>
                 <div className="grid w-full grid-cols-2 gap-x-4 gap-y-10">
                   {RECIPES.map((category) => (

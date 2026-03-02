@@ -72,7 +72,7 @@ function AppShellContent({
   ...props
 }: ComponentProps<"div">) {
   return (
-    <div className={cn("flex-1 py-12", className)} {...props}>
+    <div className={cn("min-h-[80svh] flex-1 py-12", className)} {...props}>
       <Container>
         <div className="flex flex-col gap-20">{children}</div>
       </Container>

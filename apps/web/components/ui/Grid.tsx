@@ -12,6 +12,7 @@ import {
   alignMap,
   justifyMap,
 } from "./layoutTypes";
+import { type ResponsiveProp, resolveResponsive } from "./responsive";
 
 /* ── Types ───────────────────────────────────────────────────── */
 
@@ -50,8 +51,12 @@ const rowStartMap: Record<Start, string> = { 1:"row-start-1",2:"row-start-2",3:"
 /* ── Grid Root ───────────────────────────────────────────────── */
 
 type GridRootProps = HTMLAttributes<HTMLElement> & {
-  /** Number of columns (1-12). Maps to `grid-cols-{n}`. Default `1`. */
-  cols?: Cols;
+  /**
+   * Number of columns (1-12). Accepts a static value or responsive breakpoints.
+   * @example cols={3}
+   * @example cols={{ mobile: 1, tablet: 2, desktop: 3 }}
+   */
+  cols?: ResponsiveProp<Cols>;
   /** Number of rows (1-12). Maps to `grid-rows-{n}`. */
   rows?: Rows;
   /** Gap between cells. T-shirt size. Default `"md"`. */
@@ -85,7 +90,7 @@ function GridRoot({
     <Tag
       className={cn(
         "grid",
-        colsMap[cols],
+        ...resolveResponsive(cols, colsMap),
         rows && rowsMap[rows],
         gap && gapMap[gap],
         flow && flowMap[flow],
