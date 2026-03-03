@@ -7,6 +7,7 @@ import {
   Background,
   BackgroundVariant,
   useReactFlow,
+  type OnNodesChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -23,17 +24,31 @@ import { CompartmentNode, type CompartmentNodeType } from "./CompartmentNode";
  * Automatically adjusts the viewport with a smooth zoom animation
  * when nodes are added or removed — the "city growing" effect from
  * Mini Motorways where the camera pulls back as neighborhoods expand.
+ *
+ * Two modes via the `interactive` prop:
+ *   false (default) — read-only showcase. No drag, no zoom, no select.
+ *   true — editor mode. Nodes draggable, selectable, canvas pannable.
+ *     Consumer provides `onNodesChange` for controlled position state.
+ *     No edge connections — execution order is positional in bento grid.
  */
 
 type BentoCanvasProps = {
   nodes: CompartmentNodeType[];
   /** Canvas height in px. Default: 480 */
   height?: number;
+  /** Enable drag, select, pan, zoom. Default: false (read-only). */
+  interactive?: boolean;
+  /** Controlled mode callback — required when interactive. */
+  onNodesChange?: OnNodesChange<CompartmentNodeType>;
 };
 
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
 
-function BentoCanvasInner({ nodes }: { nodes: CompartmentNodeType[] }) {
+function BentoCanvasInner({
+  nodes,
+  interactive = false,
+  onNodesChange,
+}: Pick<BentoCanvasProps, "nodes" | "interactive" | "onNodesChange">) {
   const { fitView } = useReactFlow();
   const nodeTypes = useMemo(() => ({ compartment: CompartmentNode }), []);
 
@@ -61,15 +76,15 @@ function BentoCanvasInner({ nodes }: { nodes: CompartmentNodeType[] }) {
       nodes={nodes}
       edges={[]}
       nodeTypes={nodeTypes}
-      /* Read-only for showcase — no drag, no connect */
-      nodesDraggable={false}
+      onNodesChange={interactive ? onNodesChange : undefined}
+      nodesDraggable={interactive}
       nodesConnectable={false}
-      elementsSelectable={false}
-      panOnDrag={false}
-      zoomOnScroll={false}
-      zoomOnPinch={false}
+      elementsSelectable={interactive}
+      panOnDrag={interactive}
+      zoomOnScroll={interactive}
+      zoomOnPinch={interactive}
       zoomOnDoubleClick={false}
-      preventScrolling={false}
+      preventScrolling={!interactive}
       proOptions={{ hideAttribution: true }}
     >
       {/* Grid lines matching Mini Motorways editing view —
@@ -86,14 +101,23 @@ function BentoCanvasInner({ nodes }: { nodes: CompartmentNodeType[] }) {
 
 /* ── Public canvas wrapper ──────────────────────────────────── */
 
-export function BentoCanvas({ nodes, height = 480 }: BentoCanvasProps) {
+export function BentoCanvas({
+  nodes,
+  height = 480,
+  interactive = false,
+  onNodesChange,
+}: BentoCanvasProps) {
   return (
     <div
       className="w-full overflow-hidden rounded-xl border border-border bg-background"
       style={{ height }}
     >
       <ReactFlowProvider>
-        <BentoCanvasInner nodes={nodes} />
+        <BentoCanvasInner
+          nodes={nodes}
+          interactive={interactive}
+          onNodesChange={onNodesChange}
+        />
       </ReactFlowProvider>
     </div>
   );
