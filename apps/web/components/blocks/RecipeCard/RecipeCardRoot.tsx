@@ -11,7 +11,6 @@ import { Heading } from "@/components/ui/Heading";
 import { IconBadge } from "@/components/ui/IconBadge";
 import { Pressable } from "@/components/ui/Pressable";
 import { Row } from "@/components/ui/Row";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/cn";
@@ -132,23 +131,6 @@ function RecipeCardMeta({ nodeCount, updatedAt }: { nodeCount: number; updatedAt
   );
 }
 
-/* ── Skeleton ────────────────────────────────────────────────── */
-
-function RecipeCardSkeleton({ loading = true }: { loading?: boolean }) {
-  return (
-    <Card loading={loading} className="flex h-full flex-col justify-between p-5">
-      <Row align="start" justify="between">
-        <Skeleton className="size-10 rounded-lg" />
-        <Skeleton className="h-5 w-16 rounded-full" />
-      </Row>
-      <Stack className="mt-auto gap-1.5 pt-4">
-        <Skeleton className="h-5 w-3/4" />
-        <Skeleton className="h-4 w-1/2" />
-      </Stack>
-    </Card>
-  );
-}
-
 /* ── Exports (used by index.ts Object.assign) ────────────────── */
 
 export {
@@ -162,5 +144,4 @@ export {
   RecipeCardDescription,
   RecipeCardTags,
   RecipeCardMeta,
-  RecipeCardSkeleton,
 };

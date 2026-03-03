@@ -103,16 +103,20 @@ export function RecipeCardShowcase() {
             {registrySlice.map((entry, i) => (
               <Grid.Item key={entry.slug}>
                 <Animate.ScaleIn index={i} from={0.85} easing="spring-bouncy" className="h-full">
-                  <RecipeCard href={loading ? undefined : `/${entry.slug}`} loading={loading}>
+                  <RecipeCard href={`/${entry.slug}`} loading={loading}>
                     {loading ? (
                       <>
                         <RecipeCard.Header>
                           <Skeleton className="size-10 rounded-lg" />
-                          <Skeleton className="h-5 w-16 rounded-full" />
+                          <Skeleton className="h-3 w-8" />
                         </RecipeCard.Header>
                         <RecipeCard.Content>
                           <Skeleton className="h-5 w-3/4" />
-                          <Skeleton className="h-4 w-1/2" />
+                          <Row wrap className="gap-1.5 pt-1">
+                            <Skeleton className="h-5 w-12 rounded-full" />
+                            <Skeleton className="h-5 w-28 rounded-full" />
+                            <Skeleton className="h-5 w-20 rounded-full" />
+                          </Row>
                         </RecipeCard.Content>
                       </>
                     ) : (
