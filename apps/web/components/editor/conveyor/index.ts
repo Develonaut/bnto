@@ -17,8 +17,8 @@ export {
 } from "./ConveyorEdge";
 export {
   BeltPiece,
-  PieceShape,
   VARIANT_PIECE_MAP,
   SALMON_CLIP,
   type PieceType,
 } from "./BeltPiece";
+export { PieceShape } from "./PieceShape";

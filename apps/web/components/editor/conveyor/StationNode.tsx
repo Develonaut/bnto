@@ -38,6 +38,15 @@ export type StationData = {
 
 export type StationNodeType = Node<StationData, "station">;
 
+const SURFACE_CLASS: Record<NonNullable<StationData["variant"]>, string> = {
+  primary: "surface-primary",
+  secondary: "surface-secondary",
+  accent: "surface-accent",
+  muted: "surface-muted",
+  success: "surface-success",
+  warning: "surface-warning",
+};
+
 export function StationNode({ data }: NodeProps<StationNodeType>) {
   const variant = data.variant ?? "primary";
 
@@ -72,10 +81,7 @@ export function StationNode({ data }: NodeProps<StationNodeType>) {
          * the station, hiding junction seams (like MM buildings on roads). */}
         <Card
           elevation="lg"
-          className={`
-            surface-${variant} flex h-[88px] w-[124px] flex-col
-            items-center justify-center rounded-xl
-          `}
+          className={`${SURFACE_CLASS[variant]} flex h-[88px] w-[124px] flex-col items-center justify-center rounded-xl`}
         >
           <Text size="sm" className="font-display font-semibold leading-tight">
             {data.label}

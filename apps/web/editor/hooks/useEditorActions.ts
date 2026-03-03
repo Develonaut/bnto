@@ -7,23 +7,26 @@
 
 "use client";
 
+import { useShallow } from "zustand/react/shallow";
 import { useEditorStore } from "./useEditorStore";
 
 function useEditorActions() {
-  return useEditorStore((s) => ({
-    loadRecipe: s.loadRecipe,
-    createBlank: s.createBlank,
-    addNode: s.addNode,
-    removeNode: s.removeNode,
-    updateParams: s.updateParams,
-    undo: s.undo,
-    redo: s.redo,
-    resetDirty: s.resetDirty,
-    setExecutionState: s.setExecutionState,
-    resetExecution: s.resetExecution,
-    setDefinition: s.setDefinition,
-    setPositionGetter: s.setPositionGetter,
-  }));
+  return useEditorStore(
+    useShallow((s) => ({
+      loadRecipe: s.loadRecipe,
+      createBlank: s.createBlank,
+      addNode: s.addNode,
+      removeNode: s.removeNode,
+      updateParams: s.updateParams,
+      undo: s.undo,
+      redo: s.redo,
+      resetDirty: s.resetDirty,
+      setExecutionState: s.setExecutionState,
+      resetExecution: s.resetExecution,
+      setDefinition: s.setDefinition,
+      setPositionGetter: s.setPositionGetter,
+    })),
+  );
 }
 
 export { useEditorActions };
