@@ -92,15 +92,23 @@ Before doing ANY work, read and internalize the project's coding standards and a
 
 Edit `PLAN.md` to mark your task: change `- [ ]` to `- [ ] **CLAIMED**`
 
-### Step 2b: Enter Worktree (ONLY if `--w` / `--worktree` flag was explicitly passed)
+### Step 2b: Determine the Sprint Branch
+
+**Sprint branches are the default merge target.** Each active sprint has a long-lived branch (`sprint/<id>-<short-name>`, e.g. `sprint/3-platform-features`). Task branches are created from and PR'd into the sprint branch — not `main`. This prevents Vercel deployment rate-limiting.
+
+1. **Identify the sprint branch** for your task's sprint. Check if it exists: `git ls-remote --heads origin sprint/<id>-*`
+2. **If the sprint branch doesn't exist**, ask the user to create it or confirm you should create one (e.g., `git checkout -b sprint/3-platform-features origin/main && git push -u origin sprint/3-platform-features`).
+3. **If the user explicitly says to target `main`**, skip the sprint branch and use `main` as the base instead.
+
+### Step 2c: Enter Worktree (ONLY if `--w` / `--worktree` flag was explicitly passed)
 
 **NEVER enter a worktree unless the user explicitly passed `--w` or `--worktree` in their `/pickup` invocation.** This is strictly opt-in. If the flag was not passed, skip this entire step — no exceptions, no judgment calls, no "it would be better in a worktree." Work directly on the main tree (create a branch in Step 5).
 
 If the user invoked `/pickup --w` or `/pickup --worktree`, create an isolated git worktree **now**, before writing any code:
 
-1. **CRITICAL: Ensure you start from `main`.** Before creating the worktree, check the current branch. If you're NOT on `main`, switch to it first: `git checkout main && git pull`. Worktrees branch from HEAD — if HEAD is a feature branch, the worktree inherits that branch's divergence. Unless the user explicitly says otherwise, worktrees ALWAYS start from `main`.
+1. **CRITICAL: Ensure you start from the sprint branch.** Before creating the worktree, check out the sprint branch and pull: `git checkout sprint/<id>-<name> && git pull`. Worktrees branch from HEAD — if HEAD is wrong, the worktree inherits that divergence. If no sprint branch exists (or the user told you to target `main`), use `main` instead.
 2. Use the `EnterWorktree` tool with a name based on the branch you'd create (e.g., `feat/execution-history`)
-3. The worktree creates an isolated copy of the repo at `.claude/worktrees/<name>` with a new branch based on HEAD (which is now `main`)
+3. The worktree creates an isolated copy of the repo at `.claude/worktrees/<name>` with a new branch based on HEAD (which is now the sprint branch)
 4. Your session's working directory switches to the worktree — all subsequent file reads, edits, and commands operate there
 5. The main working tree stays completely untouched
 
@@ -290,7 +298,7 @@ If screenshots already exist and the change modifies visual output, run with `--
 After all checks pass, provide a summary:
 
 1. **Branch** — name of the branch this work is on (e.g., `feat/execution-history`)
-2. **PR** — confirm you are creating a PR and state which branch it targets (e.g., "Creating PR targeting `main`")
+2. **PR** — confirm you are creating a PR and state which branch it targets (e.g., "Creating PR targeting `sprint/3-platform-features`"). PRs target the sprint branch by default, not `main`.
 3. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
 4. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
 5. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
@@ -299,6 +307,8 @@ After all checks pass, provide a summary:
 8. **Files changed** — files created/modified, with brief description of each
 
 ### Step 8b: Create the PR
+
+**PRs target the sprint branch by default**, not `main`. Use `--base sprint/<id>-<name>` when creating the PR. If the user explicitly told you to target `main`, use `--base main` instead.
 
 When creating the PR with `gh pr create`, use this format for the body:
 
@@ -404,9 +414,10 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 ## DO NOT
 
-- **Branch-based workflow is mandatory.** If you're in a worktree (from `--w` flag), the worktree already created a branch — use it. Otherwise, create a feature branch (`git checkout -b <type>/<short-description>`) before committing. Never commit directly to `main` — branch protection requires PRs to pass the CI Gate. If the user asks you to commit, create a branch first (or use the worktree branch), commit YOUR OWN work from this task (never bundle other agents' changes), then ask if they want you to push and create a PR. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
+- **Branch-based workflow is mandatory.** If you're in a worktree (from `--w` flag), the worktree already created a branch — use it. Otherwise, create a feature branch (`git checkout -b <type>/<short-description>`) before committing. Never commit directly to `main` or to the sprint branch — PRs are required. If the user asks you to commit, create a branch first (or use the worktree branch), commit YOUR OWN work from this task (never bundle other agents' changes), then ask if they want you to push and create a PR. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
+- **PRs target the sprint branch by default.** Task feature branches are created from and PR'd into the sprint branch (e.g., `sprint/3-platform-features`), not `main`. Only target `main` if the user explicitly says so. When the sprint completes, the user merges the sprint branch into `main` (single deploy)
 - **Worktrees are strictly opt-in.** NEVER use `EnterWorktree` or create a worktree unless the user explicitly passed `--w` or `--worktree` in their `/pickup` invocation. Being inside an existing worktree from a previous session does NOT authorize creating or using worktrees for new tasks. If unsure, work on the main tree
-- **Worktrees start from `main`.** When using `--w` / `--worktree`, ALWAYS check out `main` and pull before creating the worktree. If the session starts on a feature branch, switch to `main` first. The worktree branches from HEAD — if HEAD is a stale feature branch, the worktree inherits that divergence. Unless the user explicitly says to branch from a different base, `main` is always the default
+- **Worktrees start from the sprint branch.** When using `--w` / `--worktree`, ALWAYS check out the sprint branch and pull before creating the worktree. If no sprint branch exists (or the user told you to target `main`), use `main`. The worktree branches from HEAD — if HEAD is wrong, the worktree inherits that divergence
 - **Do not modify files outside your package scope** — other agents may be working there
 - **Do not modify `CLAUDE.md`, `.claude/rules/`, or config files** unless your task explicitly requires it
 - **Do not install new dependencies** without noting it in your summary. If a dependency is needed, prefer one already in the monorepo

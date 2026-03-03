@@ -19,6 +19,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 **Scope rule:** Each task targets ONE package. Don't touch files outside the tagged package unless the task explicitly says so.
 
+**Sprint branches:** Each active sprint gets a long-lived branch (`sprint/<id>-<short-name>`, e.g. `sprint/3-platform-features`). Task branches are created from and PR'd back to the sprint branch — not `main`. When a sprint completes, one PR merges the sprint branch into `main` (single deploy). This prevents Vercel deployment rate-limiting from per-task merges. The user creates sprint branches manually — if one doesn't exist yet for the current sprint, ask the user to create it or confirm you should.
+
 **Co-location decision (Feb 2026):** UI components and editor features live in `apps/web` for now. No separate `@bnto/ui` or `@bnto/editor` packages until there's a real second consumer (desktop app). Engine, core API, and data layer logic stays in `@bnto/core`. When the UI package is extracted, it will be published as `@bnto/ui` (npm) under the name **Motorway** — the Mini Motorways-inspired design system (surface, elevation, pressable, spring animations, warm palette).
 
 ---
@@ -26,7 +28,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 ## Current State
 
 - **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 in progress (5 tasks claimed). Sprint 3A (anonymous removal) — Waves 1-4 complete, Wave 5 has remaining production cleanup
-- **Active:** Sprint 4 (Recipe Editor) — Wave 1 complete (headless CRUD in `@bnto/nodes`). Wave 2+ awaiting pickup
+- **Active:** Sprint 4 (Recipe Editor) — Waves 1-2 complete (headless CRUD + editor store + hooks + adapters). Wave 3+ awaiting pickup
 - **Next:** Sprint 4B (Code Editor) — Wave 1+ awaiting Sprint 4 Wave 2 completion
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
 - **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
@@ -278,12 +280,12 @@ Pure functions that manipulate `Definition` trees. No React, no store, no UI. Fu
 
 Zustand store that wraps the pure functions into a reactive state machine. Hooks provide the React binding layer. Still headless — no visual components. **`/reactflow-expert` leads** — owns the Definition ↔ Bento adapter design and Zustand store architecture.
 
-- [ ] `apps/web` — **`useEditorStore` (Zustand)**: Editor state: `definition` (current `Definition`), `selectedNodeId`, `isDirty`, `validationErrors[]`, `executionState` (per-node status map). Actions: `loadRecipe(slug)`, `createBlank()`, `addNode(type)`, `removeNode(id)`, `selectNode(id)`, `updateParams(nodeId, params)`, `moveNode(...)`, `resetDirty()`. All actions delegate to Wave 1 pure functions. Undo/redo via history stack (store snapshots).
-- [ ] `apps/web` — **`useEditorNode(nodeId)` hook**: Returns node data + schema + visible params (conditional visibility resolved). Subscribes to store slice — re-renders only when this node changes.
-- [ ] `apps/web` — **`useNodePalette()` hook**: Returns available node types from `NODE_TYPE_INFO`, grouped by category, with `browserCapable` flags. Filters server-only nodes based on context (browser editor = browser-capable only).
-- [ ] `apps/web` — **`useEditorExport()` hook**: Returns `{ exportAsRecipe, download }` — wraps current definition as a `Recipe` or triggers browser `.bnto.json` file download. Validates definition before export. Pure serialization — no visual dependency.
-- [ ] `apps/web` — **Definition ↔ Bento adapters**: `definitionToBento(definition)` → `{ nodes: CompartmentNodeType[] }`. `bentoToDefinition(nodes)` → `Definition`. Pure functions that bridge the headless model to the visual layer. Map node types to compartment variants, positions, and sizes. No edges — execution order derived from compartment position. Unit tested — round-trip: `definition → bento → definition` produces equivalent output.
-- [ ] `apps/web` — **Unit tests for store + hooks**: Store operations tested via Vitest (no rendering). Hook tests via `renderHook`. Adapter round-trip tests. Undo/redo verification.
+- [x] `apps/web` — **`useEditorStore` (Zustand)**: Editor state: `definition` (current `Definition`), `selectedNodeId`, `isDirty`, `validationErrors[]`, `executionState` (per-node status map). Actions: `loadRecipe(slug)`, `createBlank()`, `addNode(type)`, `removeNode(id)`, `selectNode(id)`, `updateParams(nodeId, params)`, `moveNode(...)`, `resetDirty()`. All actions delegate to Wave 1 pure functions. Undo/redo via history stack (store snapshots).
+- [x] `apps/web` — **`useEditorNode(nodeId)` hook**: Returns node data + schema + visible params (conditional visibility resolved). Subscribes to store slice — re-renders only when this node changes.
+- [x] `apps/web` — **`useNodePalette()` hook**: Returns available node types from `NODE_TYPE_INFO`, grouped by category, with `browserCapable` flags. Filters server-only nodes based on context (browser editor = browser-capable only).
+- [x] `apps/web` — **`useEditorExport()` hook**: Returns `{ exportAsRecipe, download }` — wraps current definition as a `Recipe` or triggers browser `.bnto.json` file download. Validates definition before export. Pure serialization — no visual dependency.
+- [x] `apps/web` — **Definition ↔ Bento adapters**: `definitionToBento(definition)` → `{ nodes: CompartmentNodeType[] }`. `bentoToDefinition(nodes)` → `Definition`. Pure functions that bridge the headless model to the visual layer. Map node types to compartment variants, positions, and sizes. No edges — execution order derived from compartment position. Unit tested — round-trip: `definition → bento → definition` produces equivalent output.
+- [x] `apps/web` — **Unit tests for store + hooks**: Store operations tested via Vitest (no rendering). Hook tests via `renderHook`. Adapter round-trip tests. Undo/redo verification.
 
 #### Wave 3 (parallel — visual canvas integration)
 

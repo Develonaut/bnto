@@ -140,7 +140,7 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 Present a summary to the user before committing:
 
 1. **Branch** -- name of the branch this work is on (e.g., `feat/execution-history`)
-2. **PR** -- confirm you are creating a PR and state which branch it targets (e.g., "Creating PR targeting `main`")
+2. **PR** -- confirm you are creating a PR and state which branch it targets (e.g., "Creating PR targeting `sprint/3-platform-features`"). PRs target the sprint branch by default, not `main`.
 3. **Did you touch UI?** -- Yes or No.
 4. **If yes:** What e2e tests did you write or update? List spec files and screenshot assertions.
 5. **If no UI touched:** What unit/integration tests were written?
@@ -158,8 +158,8 @@ Present a summary to the user before committing:
 
 1. **Create a feature branch** before committing: `git checkout -b <type>/<short-description>` (e.g., `feat/execution-history`, `fix/skeleton-layout-shift`, `chore/eslint-config`)
 2. **Branch naming:** `feat/`, `fix/`, `chore/`, `refactor/`, `test/` prefixes. Lowercase, hyphen-separated.
-3. **Never commit directly to `main`.** Branch protection requires PRs to pass the CI Gate check.
-4. **Feature branches start from `main`.** Always verify your branch was created from an up-to-date `main`. If you're in a worktree, it should have been created after `git checkout main && git pull`. If you're on a stale feature branch, switch to `main` first.
+3. **Never commit directly to `main` or the sprint branch.** All changes go through PRs.
+4. **Feature branches start from the sprint branch.** Each active sprint has a long-lived branch (`sprint/<id>-<short-name>`). Create task branches from the sprint branch, not `main`. If no sprint branch exists, ask the user. If the user says to target `main`, use `main` as the base instead.
 
 ### Committing
 
@@ -176,9 +176,9 @@ Present a summary to the user before committing:
 ### Pushing & PRs
 
 - **Only commit YOUR OWN work.** If `git status` shows changes from other agents or unrelated work, DO NOT stage or commit those files. Only stage files you personally created or modified as part of your current task.
-- **Push to your feature branch**, then create a PR targeting `main`.
+- **Push to your feature branch**, then create a PR targeting the sprint branch (or `main` if instructed).
 - **CI must pass** before merging. The `CI Gate` check (Rust + TypeScript) is required.
-- **NEVER force-push to `main`** or merge without CI passing.
+- **NEVER force-push to `main`** or the sprint branch, or merge without CI passing.
 - **Ask the user before pushing** if you're unsure. A request to "commit" does not imply "push." A request to "commit and push" authorizes both.
 
 ### Convex Production Deploy (automated)
