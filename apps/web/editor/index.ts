@@ -13,7 +13,7 @@ export type {
   EditorActions,
   NodeExecutionStatus,
   ExecutionState,
-} from "./store/createEditorStore";
+} from "./store/types";
 
 // Context + Provider
 export { EditorContext } from "./context";
@@ -30,11 +30,15 @@ export { useEditorExport } from "./hooks/useEditorExport";
 export type { ExportResult, EditorExportResult } from "./hooks/useEditorExport";
 
 // Adapters
-export { definitionToBento, SLOTS, CELL, GAP } from "./adapters/definitionToBento";
+export { definitionToBento } from "./adapters/definitionToBento";
+export { bentoToDefinition } from "./adapters/bentoToDefinition";
+export { SLOTS, CELL, GAP, STRIDE } from "./adapters/bentoSlots";
 export type {
   BentoNode,
   BentoLayout,
-  CompartmentData,
+  CompartmentNodeData,
   CompartmentVariant,
-} from "./adapters/definitionToBento";
-export { bentoToDefinition } from "./adapters/bentoToDefinition";
+} from "./adapters/types";
+
+// Utils
+export { findNodeById } from "./utils/findNodeById";

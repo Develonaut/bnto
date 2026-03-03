@@ -9,23 +9,10 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Definition } from "@bnto/nodes";
 import type { NodeTypeName, NodeSchema, ParameterSchema } from "@bnto/nodes";
 import { NODE_TYPE_INFO, getNodeSchema } from "@bnto/nodes";
 import { useEditorStore } from "./useEditorStore";
-
-// ---------------------------------------------------------------------------
-// Node finder — recursive tree search
-// ---------------------------------------------------------------------------
-
-function findNodeById(definition: Definition, nodeId: string): Definition | null {
-  for (const child of definition.nodes ?? []) {
-    if (child.id === nodeId) return child;
-    const found = findNodeById(child, nodeId);
-    if (found) return found;
-  }
-  return null;
-}
+import { findNodeById } from "../utils/findNodeById";
 
 // ---------------------------------------------------------------------------
 // Visible params resolver
@@ -55,7 +42,7 @@ function resolveVisibleParams(
 
 interface EditorNodeResult {
   /** The node definition, or null if not found. */
-  node: Definition | null;
+  node: import("@bnto/nodes").Definition | null;
   /** Node type info (label, category, capabilities). */
   typeInfo: typeof NODE_TYPE_INFO[NodeTypeName] | null;
   /** Full schema for the node type. */
@@ -92,5 +79,5 @@ function useEditorNode(nodeId: string | null): EditorNodeResult {
   }, [definition, nodeId]);
 }
 
-export { useEditorNode, findNodeById };
+export { useEditorNode };
 export type { EditorNodeResult };

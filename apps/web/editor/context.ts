@@ -7,7 +7,7 @@
 
 import { createContext } from "react";
 import type { StoreApi } from "zustand";
-import type { EditorStore } from "./store/createEditorStore";
+import type { EditorStore } from "./store/types";
 
 /** Context holding the editor store instance. Null = no provider. */
 const EditorContext = createContext<StoreApi<EditorStore> | null>(null);
