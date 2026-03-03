@@ -1,13 +1,14 @@
 "use client";
 
+import { AuthGate } from "@/components/blocks/AuthGate";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Dialog } from "@/components/ui/Dialog";
 import { Heading } from "@/components/ui/Heading";
 import { Row } from "@/components/ui/Row";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
-import { Card } from "@/components/ui/Card";
-import { Skeleton } from "@/components/ui/Skeleton";
 
 /* ── Basic Dialog ───────────────────────────────────────────── */
 
@@ -235,9 +236,37 @@ export function DialogShowcase() {
         </Row>
       </Stack>
 
-      {/* Account Gate */}
+      {/* Auth Gate — Action (per-button dialog) */}
       <Stack className="gap-3">
-        <Heading level={4}>Account Gate</Heading>
+        <Heading level={4}>AuthGate.Action</Heading>
+        <Text size="sm" color="muted">
+          Wraps interactive elements. Unauthenticated users see a dismissible
+          conversion dialog. Click each button to test.
+        </Text>
+        <Row className="flex-wrap gap-3">
+          <AuthGate.Action
+            title="Sign up to re-run"
+            description="Create a free account to re-run recipes."
+          >
+            <Button variant="ghost" className="h-7 px-2 text-xs">
+              Re-run
+            </Button>
+          </AuthGate.Action>
+          <AuthGate.Action>
+            <Button variant="primary">Save recipe</Button>
+          </AuthGate.Action>
+          <AuthGate.Action
+            title="Sign up to export"
+            description="Export your recipe as a .bnto.json file."
+          >
+            <Button variant="outline">Export</Button>
+          </AuthGate.Action>
+        </Row>
+      </Stack>
+
+      {/* Auth Gate — Section (blur + static overlay) */}
+      <Stack className="gap-3">
+        <Heading level={4}>AuthGate.Section</Heading>
         <AccountGateDemo />
       </Stack>
     </Stack>

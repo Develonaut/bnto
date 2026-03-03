@@ -3,7 +3,7 @@
 import { core } from "@bnto/core";
 
 import { useDelayedLoading } from "../_hooks/useDelayedLoading";
-import { AuthGatedAction } from "@/components/blocks/AuthGatedAction";
+import { AuthGate } from "@/components/blocks/AuthGate";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -85,7 +85,7 @@ export function ExecutionHistory() {
               <Row align="center" className="shrink-0 gap-2">
                 <StatusBadge status={execution.status} />
                 {rerunHref && (
-                  <AuthGatedAction
+                  <AuthGate.Action
                     title="Sign up to re-run recipes"
                     description="Create a free account to re-run recipes and keep your full execution history."
                   >
@@ -96,7 +96,7 @@ export function ExecutionHistory() {
                     >
                       Re-run
                     </Button>
-                  </AuthGatedAction>
+                  </AuthGate.Action>
                 )}
               </Row>
             </Row>
