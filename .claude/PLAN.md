@@ -25,8 +25,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 ready
-- **Next:** Sprint 4 + 4B (Recipe Editors) — visual + code editors, parallel alongside Sprint 3
+- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 in progress. Sprint 3A (anonymous removal) — Wave 4 complete, Wave 5 has remaining cleanup
+- **Next:** Sprint 4 + 4B (Recipe Editors) — visual + code editors, parallel alongside Sprint 3. Sprint 4 Wave 1 complete
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
 - **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
@@ -162,13 +162,13 @@ Remove anonymous UI patterns from the web app. Simplify auth page, remove gate c
 Comprehensive E2E tests proving the simplified auth model works end-to-end. Every user-facing flow tested.
 
 - [x] `apps/web` — Delete `anonymous-conversion.spec.ts` E2E test file
-- [ ] `apps/web` — **E2E: New user journey** — fresh visitor → /signin defaults to signup mode → fill form → create account → lands on home → user menu shows email → sign out → stays on /signin (no bounce)
-- [ ] `apps/web` — **E2E: Returning user journey** — /signin shows "Welcome back" → sign in → lands on home → user menu shows email → can access protected routes
-- [ ] `apps/web` — **E2E: Sign-out round-trip** — sign up → home → sign out → /signin → sign back in → home → user menu shows same email
-- [ ] `apps/web` — **E2E: Route protection** — unauthenticated user hits /settings → redirected to /signin. Authenticated user hits /signin → redirected to /. Sign out → protected routes blocked again
-- [ ] `apps/web` — **E2E: Browser execution without account** — visit recipe page (e.g. /compress-images) with no account → drop files → run → execution completes → download works. No sign-up prompt blocking the flow
-- [ ] `apps/web` — **E2E: Form toggle** — signup ↔ signin toggle works. Invalid credentials show error. Duplicate email on signup shows error
-- [ ] `apps/web` — **Validation:** All E2E tests pass. Screenshots regenerated for any layout changes
+- [x] `apps/web` — **E2E: New user journey** — fresh visitor → /signin defaults to signup mode → fill form → create account → lands on home → user menu shows email → sign out → stays on /signin (no bounce)
+- [x] `apps/web` — **E2E: Returning user journey** — /signin shows "Welcome back" → sign in → lands on home → user menu shows email → can access protected routes
+- [x] `apps/web` — **E2E: Sign-out round-trip** — sign up → home → sign out → /signin → sign back in → home → user menu shows same email
+- [x] `apps/web` — **E2E: Route protection** — unauthenticated user hits /executions → redirected to /signin. Authenticated user hits /signin → redirected to /. Sign out → protected routes blocked again
+- [x] `apps/web` — **E2E: Browser execution without account** — visit recipe page (e.g. /compress-images) with no account → drop files → run → execution completes → download works. No sign-up prompt blocking the flow
+- [x] `apps/web` — **E2E: Form toggle** — signup ↔ signin toggle works. Invalid credentials show error. Duplicate email on signup signs in existing user
+- [x] `apps/web` — **Validation:** All E2E tests pass (13/13 auth, screenshots regenerated). Test account cleanup via global teardown
 
 #### Wave 5 (docs + cleanup)
 
@@ -211,12 +211,12 @@ Update all documentation and strategy files to reflect the simplified auth model
 
 #### Wave 2 (parallel — dashboard + auth behavior)
 
-- [ ] `apps/web` — `/frontend-engineer` — Dashboard page: saved workflows, recent executions, usage analytics
+- [x] `apps/web` — `/frontend-engineer` — Dashboard page (`/my-recipes`): saved workflows, recent executions, usage stats, Recent/Saved tabs, sign-up conversion prompt for unauthenticated users
 - [ ] `apps/web` — `/frontend-engineer` — Execution history page (list of past runs with status, re-run capability)
 - [ ] `apps/web` — `/frontend-engineer` — **Browser-local execution history:** Track execution runs in browser storage (IndexedDB/localStorage) for unauthenticated users. Unauth users see their recent runs within the browser session. `AccountGate` wraps history views — "Sign up to keep your history across devices and never lose it." Auth users persist to Convex (existing path)
 - [ ] `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): After successful browser execution for unauthenticated users, surface AccountGate with save-focused copy — "Want to save this recipe? Sign up — it's free." Natural value moment, not a blocking gate
 - [ ] `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation, cookie-based default mode (moved from Sprint 2A Wave 5)
-- [ ] `apps/web` — `/frontend-engineer` — Pricing page update: Pro sells persistence, collaboration, premium compute — not run limits
+- [x] `apps/web` — `/frontend-engineer` — Pricing page update: Free vs Pro side-by-side comparison (persistence, collaboration, premium compute)
 - [ ] `apps/web` — `/frontend-engineer` — **Data fetching & skeleton audit:** Scan all existing components in `apps/web/` for violations of the co-located query pattern, prop drilling, mismatched skeletons, missing skeletons, separate `*Skeleton.tsx` files (for simple cases), transforms outside `select`, and loading wrapper anti-patterns. Fix violations in-place. Reference: [data-fetching-strategy.md](strategy/data-fetching-strategy.md), [skeletons.md](rules/skeletons.md)
 
 #### Wave 3 (sequential — test)
