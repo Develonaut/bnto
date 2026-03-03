@@ -56,6 +56,10 @@ export function initPostHog(config: TelemetryConfig) {
     // which doesn't fire popstate. Page views are captured manually via
     // a usePathname() hook in the app layer.
     capture_pageview: false,
+    // Enable pageleave tracking — fires on beforeunload/visibilitychange.
+    // Must be explicit because capture_pageview: false disables it by default.
+    // Without this, PostHog can't calculate bounce rate or session duration.
+    capture_pageleave: true,
     // Capture clicks, inputs, etc. automatically
     autocapture: true,
     // Don't capture text content of elements (privacy)
