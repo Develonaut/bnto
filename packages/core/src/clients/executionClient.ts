@@ -26,6 +26,9 @@ function buildHistoryEntry(
   };
 }
 
+/** Auth status getter injected from the React layer. */
+type AuthStatusGetter = () => boolean;
+
 /**
  * Execution client — unified public API for execution operations.
  *
@@ -37,7 +40,12 @@ export function createExecutionClient(
   browser: BrowserExecutionService,
   history: HistoryService,
 ) {
-  /** Wrap an instance's run() to auto-record to local history (fire-and-forget). */
+  let getIsAuthenticated: AuthStatusGetter = () => false;
+
+  /**
+   * Wrap an instance's run() to auto-record to history.
+   * Always writes to IndexedDB. Also writes to Convex for authenticated users.
+   */
   function wrapInstance(instance: ExecutionInstance): ExecutionInstance {
     const originalRun = instance.run;
 
@@ -48,10 +56,30 @@ export function createExecutionClient(
         files: File[],
         params?: Record<string, unknown>,
       ): Promise<BrowserRunResult> => {
+        const isAuth = getIsAuthenticated();
+
+        // For authenticated users, log start to Convex before running
+        let serverEventId: string | null = null;
+        if (isAuth) {
+          serverEventId = await history.recordServerStart(slug).catch(() => null);
+        }
+
         const result = await originalRun(slug, files, params);
 
         if (result.status !== "aborted") {
+          // Always write to IndexedDB (fire-and-forget)
           history.record(buildHistoryEntry(slug, files, result)).catch(() => {});
+
+          // Complete Convex event if we started one
+          if (serverEventId) {
+            history
+              .recordServerComplete(
+                serverEventId,
+                result.durationMs,
+                result.status as "completed" | "failed",
+              )
+              .catch(() => {});
+          }
         }
 
         return result;
@@ -69,6 +97,13 @@ export function createExecutionClient(
     historyRefMethod: () => history.serverRef(),
     historyQueryOptions: () => history.localQueryOptions(),
     clearHistory: () => history.clear(),
+    migrateHistory: () => history.migrateToServer(),
+
+    // ── Auth Status ──────────────────────────────────────────────
+    /** Inject auth status getter from the React layer. */
+    setAuthStatusGetter: (getter: AuthStatusGetter) => {
+      getIsAuthenticated = getter;
+    },
 
     // ── Mutations ─────────────────────────────────────────────────
     startPredefined: (input: StartPredefinedInput) =>
@@ -84,7 +119,7 @@ export function createExecutionClient(
 
     /**
      * Create an isolated execution instance with its own store.
-     * Results are automatically recorded to local history.
+     * Results are automatically recorded to history (local + server when authed).
      *
      * Each instance has independent state — no cross-page leaks.
      * Usage: `const [instance] = useState(() => core.executions.createExecution())`
