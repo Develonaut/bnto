@@ -1,12 +1,15 @@
 name: Vercel Preview
 
 on:
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR number to deploy"
+        required: true
+        type: number
 
-# Cancel in-progress preview deploys for the same PR
 concurrency:
-  group: vercel-preview-${{ github.event.pull_request.number }}
+  group: vercel-preview-${{ inputs.pr }}
   cancel-in-progress: true
 
 jobs:
@@ -20,7 +23,17 @@ jobs:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
+      - name: Get PR ref
+        id: pr
+        run: |
+          ref=$(gh pr view ${{ inputs.pr }} --json headRefName -q .headRefName)
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.ref }}
 
       - uses: pnpm/action-setup@v4
 
@@ -54,11 +67,10 @@ jobs:
             const url = '${{ steps.deploy.outputs.url }}';
             const body = `**Vercel Preview:** ${url}`;
 
-            // Find existing bot comment to update (avoid spam)
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: ${{ inputs.pr }},
             });
             const existing = comments.find(c =>
               c.user.type === 'Bot' && c.body.startsWith('**Vercel Preview:**')
@@ -75,7 +87,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: ${{ inputs.pr }},
                 body,
               });
             }
