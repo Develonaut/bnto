@@ -139,17 +139,16 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 Present a summary to the user before committing:
 
-1. **Sprint branch** -- name of the sprint branch this work targets (e.g., `sprint/3-platform-features`). Found in PLAN.md under the sprint header. If no sprint branch is listed, ask the user.
-2. **Branch** -- name of the feature branch this work is on (e.g., `feat/execution-history`)
-3. **PR** -- confirm you are creating a PR and state which branch it targets (e.g., "Creating PR targeting `sprint/3-platform-features`"). PRs target the sprint branch by default, not `main`.
-4. **Did you touch UI?** -- Yes or No.
-5. **If yes:** What e2e tests did you write or update? List spec files and screenshot assertions.
-6. **If no UI touched:** What unit/integration tests were written?
-7. **Dot-notation compliance** -- PASS or FAIL. If FAIL, list files with flat multi-part imports.
-8. **TS checks result** -- confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
-9. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test:unit` passed clean (skip if no Rust files touched)
-10. **Lighthouse audit result** -- confirm `task seo:audit` passed clean, or SKIPPED (no `apps/web/` changes)
-11. **Files changed** -- brief description of each
+1. **Branch** -- name of the feature branch this work is on (e.g., `feat/execution-history`)
+2. **PR target** -- `main` (always). Confirm you are creating a PR targeting `main`.
+3. **Did you touch UI?** -- Yes or No.
+4. **If yes:** What e2e tests did you write or update? List spec files and screenshot assertions.
+5. **If no UI touched:** What unit/integration tests were written?
+6. **Dot-notation compliance** -- PASS or FAIL. If FAIL, list files with flat multi-part imports.
+7. **TS checks result** -- confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
+8. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test:unit` passed clean (skip if no Rust files touched)
+9. **Lighthouse audit result** -- confirm `task seo:audit` passed clean, or SKIPPED (no `apps/web/` changes)
+10. **Files changed** -- brief description of each
 
 ## Step 8: Commit & Branch Workflow
 
@@ -159,8 +158,8 @@ Present a summary to the user before committing:
 
 1. **Create a feature branch** before committing: `git checkout -b <type>/<short-description>` (e.g., `feat/execution-history`, `fix/skeleton-layout-shift`, `chore/eslint-config`)
 2. **Branch naming:** `feat/`, `fix/`, `chore/`, `refactor/`, `test/` prefixes. Lowercase, hyphen-separated.
-3. **Never commit directly to `main` or the sprint branch.** All changes go through PRs.
-4. **Feature branches start from the sprint branch.** Each active sprint has a long-lived branch (`sprint/<id>-<short-name>`). Create task branches from the sprint branch, not `main`. If no sprint branch exists, ask the user. If the user says to target `main`, use `main` as the base instead.
+3. **Never commit directly to `main`.** All changes go through PRs.
+4. **Feature branches start from `main`.** Create task branches from `main`: `git checkout -b <type>/<short-description> main`.
 
 ### Committing
 
@@ -177,9 +176,10 @@ Present a summary to the user before committing:
 ### Pushing & PRs
 
 - **Only commit YOUR OWN work.** If `git status` shows changes from other agents or unrelated work, DO NOT stage or commit those files. Only stage files you personally created or modified as part of your current task.
-- **Push to your feature branch**, then create a PR targeting the sprint branch (or `main` if instructed).
+- **Push to your feature branch**, then create a PR targeting `main`.
 - **CI must pass** before merging. The `CI Gate` check (Rust + TypeScript) is required.
-- **NEVER force-push to `main`** or the sprint branch, or merge without CI passing.
+- **NEVER force-push to `main`** or merge without CI passing.
+- **Always squash merge PRs.** No merge commits, no rebase merges.
 - **Ask the user before pushing** if you're unsure. A request to "commit" does not imply "push." A request to "commit and push" authorizes both.
 
 ### Convex Production Deploy (automated)
