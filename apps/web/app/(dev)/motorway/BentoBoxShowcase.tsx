@@ -18,7 +18,7 @@ import type {
   CompartmentNodeType,
   CompartmentData,
   CompartmentStatus,
-} from "./CompartmentNode";
+} from "@/components/editor/canvas/CompartmentNode";
 import { SLOTS } from "@/editor/adapters/bentoSlots";
 
 /**
@@ -41,7 +41,7 @@ import { SLOTS } from "@/editor/adapters/bentoSlots";
  */
 
 const BentoCanvas = dynamic(
-  () => import("./BentoCanvas").then((m) => m.BentoCanvas),
+  () => import("@/components/editor/canvas/BentoCanvas").then((m) => m.BentoCanvas),
   { ssr: false },
 );
 
