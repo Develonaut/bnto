@@ -17,6 +17,7 @@ import { RecipeConfigSection } from "./RecipeConfigSection";
 import { RecipeResultsSection } from "./RecipeResultsSection";
 import { RecipeToolbar } from "./RecipeToolbar";
 import type { RunPhase } from "./RunButton";
+import { SavePrompt } from "@/components/blocks/SavePrompt";
 import { ToolbarProgress } from "./ToolbarProgress";
 /** Map the unified RunPhase + file count to the 3-step PhaseIndicator. */
 function deriveActivePhase(
@@ -199,6 +200,16 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
                   })}
                 </Grid>
               </Animate.BouncyStagger>
+
+              {/* Save prompt — surfaces after successful browser execution
+                * for unauthenticated users. Non-blocking inline nudge. */}
+              <SavePrompt
+                show={
+                  activePhase === 3 &&
+                  isBrowserPath &&
+                  browserExec.status === "completed"
+                }
+              />
             </Stack>
           )}
       </FileUpload>

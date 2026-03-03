@@ -118,6 +118,46 @@ The hardest problem: content could be 1 line or 10 lines.
 </div>
 ```
 
+## Card `loading` Prop
+
+When skeleton content lives inside a Card, always use `<Card loading>`. This triggers `spring="bounciest"` + `grounded={true}` — the card starts flush with the ground plane and springs up with a bouncy entrance when it mounts. Skeleton shapes go inside the Card composition (matching the loaded layout).
+
+```tsx
+// GOOD -- Card springs in on mount, skeleton content inside
+<Card loading elevation="sm" className="px-4 py-3">
+  <Stack className="gap-0.5">
+    <Skeleton className="h-3.5 w-16" />
+    <Skeleton className="h-7 w-12" />
+  </Stack>
+</Card>
+
+// BAD -- no spring entrance, card just appears
+<Card elevation="sm" className="px-4 py-3">
+  <Skeleton className="h-3.5 w-16" />
+</Card>
+```
+
+**The rule:** Every `<Card>` that renders skeleton content MUST use the `loading` prop. This applies to both dedicated skeleton components and inline loading states. The RecipeCard compound component follows the same pattern: `<RecipeCard loading>`.
+
+### Gotcha: Separate Render Branches, Not Prop Toggle
+
+The `loading` prop triggers a spring entrance animation **on mount**. It does NOT animate when toggled on an already-mounted Card. If the same Card instance stays mounted and only the `loading` prop changes, the spring class swaps happen without retriggering the CSS animation — the card just snaps to its new state.
+
+**Always use separate render branches** for skeleton and loaded states so the loaded Card mounts fresh:
+
+```tsx
+// GOOD -- separate branches, loaded Card mounts fresh with spring entrance
+if (isLoading) return <Card loading elevation="sm"><Skeleton /></Card>;
+return <Card elevation="sm"><RealContent /></Card>;
+
+// BAD -- same Card instance, loading prop toggle doesn't retrigger animation
+<Card loading={isLoading} elevation="sm">
+  {isLoading ? <Skeleton /> : <RealContent />}
+</Card>
+```
+
+**Props must match between skeleton and loaded Cards** (same `elevation`, `className`, padding) so the transition feels like content "painting in" — not the container itself changing shape.
+
 ## Empty States vs Skeletons
 
 Skeletons are for **loading**. Empty states are for **no data**. These are different states with different visual treatments.

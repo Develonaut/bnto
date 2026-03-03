@@ -176,7 +176,7 @@ export default function MotorwayPage() {
           <ShowcaseSection
             id="overlays"
             title="Dialogs & Overlays"
-            description="Modal dialogs, confirmation prompts, form dialogs, and the AccountGate conversion overlay. Focus-trapped, keyboard accessible, backdrop blur."
+            description="Modal dialogs, confirmation prompts, form dialogs, and the AuthGate conversion patterns (Action + Section). Focus-trapped, keyboard accessible, backdrop blur."
           >
             <DialogShowcase />
           </ShowcaseSection>
