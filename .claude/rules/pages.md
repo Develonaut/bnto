@@ -109,6 +109,37 @@ Header elements, back links, navigation controls -- extract into named leaf comp
 </PageLayout.Header>
 ```
 
+### 7. Server components by default — push `"use client"` to leaves
+
+Pages should be server components. Static content (headings, descriptions, labels) renders on the server for faster first paint. Only the interactive leaves (tabs, data-fetching components) need `"use client"`.
+
+```tsx
+// GOOD -- server component page, client boundary at the smallest leaf
+// page.tsx (server component)
+import { WorkflowTabs } from "./_components/WorkflowTabs";
+import { Heading } from "@/components/ui/Heading";
+
+export default function Page() {
+  return (
+    <>
+      <Heading level={1}>Workflows</Heading>   {/* server-rendered */}
+      <WorkflowTabs />                          {/* client leaf */}
+    </>
+  );
+}
+
+// BAD -- page is "use client" because it imports client children
+"use client";
+export default function Page() { ... }
+
+// BAD -- page uses dynamic + ssr: false at the trunk level
+"use client";
+const MyList = dynamic(() => import("./MyList"), { ssr: false });
+export default function Page() { return <MyList />; }
+```
+
+**`ssr: false` belongs at the leaf, not the trunk.** Only use `dynamic` + `ssr: false` for components that require browser-only APIs (ReactFlow, Canvas, WebGL) — and keep it as close to the browser-only code as possible. Convex hooks, React Query, and Zustand do NOT need `ssr: false` — they handle their own loading states.
+
 ---
 
 ## SEO Pages

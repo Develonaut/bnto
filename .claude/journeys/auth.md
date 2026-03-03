@@ -46,6 +46,17 @@ Email sign-up, sign-in, sign-out.
 | **S3** | Sign-out clears session | S1 → sign out | Session invalidated. `getAppUserId()` returns null. Protected queries return null. |
 | **S4** | Auth API surface | All auth endpoints respond correctly | sign-in, sign-up, sign-out, token refresh return correct shapes. Invalid credentials return errors, not crashes. |
 
+### Conversion (Anonymous → Authenticated)
+
+Data migration when a user signs up after using bnto without an account.
+
+| # | Journey | Steps | Pass Criteria |
+|---|---------|-------|---------------|
+| **C1** | Local history migrates on signup | Run recipe as unauth → verify local history → sign up | Execution history from IndexedDB appears in Convex-backed `/my-recipes` history. Same slug, timestamp, status preserved. |
+| **C2** | Local history cleared after migration | C1 complete → check IndexedDB | IndexedDB execution history is empty after successful migration to Convex. |
+| **C3** | Migration is idempotent | C1 → sign out → sign in again | No duplicate executions in Convex history. Migration only runs once (on first auth transition, not every sign-in). |
+| **C4** | Migration handles empty local history | Sign up with no prior runs | No errors. Convex history starts empty. Migration is a no-op. |
+
 ### Access Control
 
 Execution visibility and ownership.
@@ -63,6 +74,7 @@ Execution visibility and ownership.
 
 | Journey | Also Touches | Notes |
 |---------|-------------|-------|
+| C1-C4 | Core (IndexedDB adapter), Backend (Convex executions), Web (history UI) | Migration spans three layers — browser storage, transport, server storage |
 | V1-V2 | Web (real-time UI) | Auth gates the Convex subscription, web renders progress |
 
 ---
