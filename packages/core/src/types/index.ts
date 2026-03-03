@@ -51,6 +51,8 @@ export type {
 
 export type { RunPhase, RecipeFlow } from "./recipeFlow";
 
+export type { LocalHistoryEntry } from "./localHistory";
+
 export type {
   TelemetryConfig,
   TelemetryProperties,

@@ -294,20 +294,7 @@ describe("wasmExecutionService", () => {
   // Orchestration lifecycle: run() and reset()
   // ─────────────────────────────────────────────────────────────────
 
-  describe("store ownership", () => {
-    it("exposes a Zustand store", () => {
-      expect(service.store).toBeDefined();
-      expect(service.store.getState).toBeDefined();
-      expect(service.store.getState().status).toBe("idle");
-    });
-
-    it("each service gets its own store instance", () => {
-      const service2 = createWasmExecutionService();
-      expect(service.store).not.toBe(service2.store);
-    });
-  });
-
-  describe("run — success lifecycle", () => {
+  describe("createExecution — success lifecycle", () => {
     it("transitions store through idle → processing → completed", async () => {
       const expectedResult: BrowserFileResult = {
         blob: new Blob(["out"], { type: "image/jpeg" }),
@@ -321,15 +308,14 @@ describe("wasmExecutionService", () => {
       });
       registerBrowserEngine(engine);
 
-      // Before run
-      expect(service.store.getState().status).toBe("idle");
+      const instance = service.createExecution();
+      expect(instance.store.getState().status).toBe("idle");
 
-      await service.run("compress-images", [
+      await instance.run("compress-images", [
         new File(["data"], "test.jpg"),
       ]);
 
-      // After run
-      const state = service.store.getState();
+      const state = instance.store.getState();
       expect(state.status).toBe("completed");
       expect(state.results).toEqual([expectedResult]);
       expect(state.id).toBeTruthy();
@@ -341,17 +327,19 @@ describe("wasmExecutionService", () => {
     it("generates a unique execution ID", async () => {
       registerBrowserEngine(createMockEngine());
 
-      await service.run("compress-images", [
+      const instance = service.createExecution();
+      await instance.run("compress-images", [
         new File(["data"], "test.jpg"),
       ]);
 
-      expect(service.store.getState().id).toBeTruthy();
-      expect(service.store.getState().id.length).toBeGreaterThan(0);
+      expect(instance.store.getState().id).toBeTruthy();
+      expect(instance.store.getState().id.length).toBeGreaterThan(0);
     });
   });
 
-  describe("run — progress updates", () => {
+  describe("createExecution — progress updates", () => {
     it("updates store with progress during execution", async () => {
+      const instance = service.createExecution();
       const progressSnapshots: Array<{
         fileIndex: number;
         percent: number;
@@ -370,8 +358,7 @@ describe("wasmExecutionService", () => {
             ) => void,
           ) => {
             onProgress?.(0, 50, "Compressing...");
-            // Capture store state after progress update
-            const s = service.store.getState();
+            const s = instance.store.getState();
             progressSnapshots.push({
               fileIndex: s.fileProgress?.fileIndex ?? -1,
               percent: s.fileProgress?.percent ?? -1,
@@ -383,17 +370,16 @@ describe("wasmExecutionService", () => {
       });
       registerBrowserEngine(engine);
 
-      await service.run("compress-images", [new File(["a"], "a.jpg")]);
+      await instance.run("compress-images", [new File(["a"], "a.jpg")]);
 
       expect(progressSnapshots).toHaveLength(1);
       expect(progressSnapshots[0]).toEqual({ fileIndex: 0, percent: 50 });
 
-      // Progress is cleared after completion
-      expect(service.store.getState().fileProgress).toBeNull();
+      expect(instance.store.getState().fileProgress).toBeNull();
     });
   });
 
-  describe("run — failure lifecycle", () => {
+  describe("createExecution — failure lifecycle", () => {
     it("transitions store through idle → processing → failed on error", async () => {
       const engine = createMockEngine({
         processFiles: vi
@@ -402,11 +388,12 @@ describe("wasmExecutionService", () => {
       });
       registerBrowserEngine(engine);
 
-      await service.run("compress-images", [
+      const instance = service.createExecution();
+      await instance.run("compress-images", [
         new File(["data"], "test.jpg"),
       ]);
 
-      const state = service.store.getState();
+      const state = instance.store.getState();
       expect(state.status).toBe("failed");
       expect(state.error).toBe("Corrupt JPEG");
       expect(state.completedAt).toBeTypeOf("number");
@@ -419,21 +406,22 @@ describe("wasmExecutionService", () => {
       });
       registerBrowserEngine(engine);
 
-      await service.run("compress-images", [
+      const instance = service.createExecution();
+      await instance.run("compress-images", [
         new File(["data"], "test.jpg"),
       ]);
 
-      expect(service.store.getState().status).toBe("failed");
-      expect(service.store.getState().error).toBe("Processing failed");
+      expect(instance.store.getState().status).toBe("failed");
+      expect(instance.store.getState().error).toBe("Processing failed");
     });
 
     it("fails on missing engine", async () => {
-      // No engine registered
-      await service.run("compress-images", [
+      const instance = service.createExecution();
+      await instance.run("compress-images", [
         new File(["data"], "test.jpg"),
       ]);
 
-      const state = service.store.getState();
+      const state = instance.store.getState();
       expect(state.status).toBe("failed");
       expect(state.error).toContain("No WASM engine registered");
     });
@@ -441,27 +429,29 @@ describe("wasmExecutionService", () => {
     it("fails on unknown slug", async () => {
       registerBrowserEngine(createMockEngine());
 
-      await service.run("unknown-slug", [
+      const instance = service.createExecution();
+      await instance.run("unknown-slug", [
         new File(["data"], "test.jpg"),
       ]);
 
-      const state = service.store.getState();
+      const state = instance.store.getState();
       expect(state.status).toBe("failed");
       expect(state.error).toContain("No WASM implementation");
     });
   });
 
-  describe("reset", () => {
+  describe("createExecution — reset", () => {
     it("returns store to idle", async () => {
       registerBrowserEngine(createMockEngine());
 
-      await service.run("compress-images", [
+      const instance = service.createExecution();
+      await instance.run("compress-images", [
         new File(["data"], "test.jpg"),
       ]);
-      expect(service.store.getState().status).toBe("completed");
+      expect(instance.store.getState().status).toBe("completed");
 
-      service.reset();
-      const state = service.store.getState();
+      instance.reset();
+      const state = instance.store.getState();
       expect(state.status).toBe("idle");
       expect(state.id).toBe("");
       expect(state.results).toEqual([]);
@@ -488,34 +478,27 @@ describe("wasmExecutionService", () => {
               message: string,
             ) => void,
           ) => {
-            // Emit one progress before abort
             onProgress?.(0, 50, "Processing...");
-
-            // Reset is called externally while we wait
             return executionPromise;
           },
         ),
       });
       registerBrowserEngine(engine);
 
-      // Start run (don't await — it's still in-flight)
-      const runPromise = service.run("compress-images", [
+      const instance = service.createExecution();
+      const runPromise = instance.run("compress-images", [
         new File(["data"], "test.jpg"),
       ]);
 
-      // Wait a tick for the progress callback to fire
       await new Promise((r) => setTimeout(r, 0));
 
-      // Reset mid-execution
-      service.reset();
-      expect(service.store.getState().status).toBe("idle");
+      instance.reset();
+      expect(instance.store.getState().status).toBe("idle");
 
-      // Resolve the engine — should NOT update store (aborted)
       resolveExecution!([]);
       await runPromise;
 
-      // Store should still be idle (not completed)
-      expect(service.store.getState().status).toBe("idle");
+      expect(instance.store.getState().status).toBe("idle");
     });
   });
 
@@ -523,7 +506,7 @@ describe("wasmExecutionService", () => {
   // Progress throttle behavior
   // ─────────────────────────────────────────────────────────────────
 
-  describe("run — progress throttle", () => {
+  describe("createExecution — progress throttle", () => {
     it("first progress update always passes through", async () => {
       const engine = createMockEngine({
         processFiles: vi.fn().mockImplementation(
@@ -544,12 +527,10 @@ describe("wasmExecutionService", () => {
       });
       registerBrowserEngine(engine);
 
-      await service.run("compress-images", [new File(["a"], "a.jpg")]);
+      const instance = service.createExecution();
+      await instance.run("compress-images", [new File(["a"], "a.jpg")]);
 
-      // Store should have received the first update (not throttled away)
-      // After completion fileProgress is cleared, so check the store
-      // transitioned through processing correctly
-      expect(service.store.getState().status).toBe("completed");
+      expect(instance.store.getState().status).toBe("completed");
     });
 
     it("100% completion always passes through regardless of throttle", async () => {
@@ -700,17 +681,18 @@ describe("wasmExecutionService", () => {
     });
   });
 
-  describe("run — edge cases", () => {
+  describe("createExecution — edge cases", () => {
     it("run with empty file array completes with empty results", async () => {
       const engine = createMockEngine({
         processFiles: vi.fn().mockResolvedValue([]),
       });
       registerBrowserEngine(engine);
 
-      await service.run("compress-images", []);
+      const instance = service.createExecution();
+      await instance.run("compress-images", []);
 
-      expect(service.store.getState().status).toBe("completed");
-      expect(service.store.getState().results).toEqual([]);
+      expect(instance.store.getState().status).toBe("completed");
+      expect(instance.store.getState().results).toEqual([]);
     });
 
     it("run with large batch (100 files) tracks progress correctly", async () => {
@@ -734,7 +716,6 @@ describe("wasmExecutionService", () => {
               message: string,
             ) => void,
           ) => {
-            // Simulate progress for each file
             for (let i = 0; i < files.length; i++) {
               onProgress?.(i, 100, `File ${i + 1} done`);
             }
@@ -749,30 +730,31 @@ describe("wasmExecutionService", () => {
         (_, i) => new File([`data-${i}`], `file-${i}.jpg`),
       );
 
-      await service.run("compress-images", files);
+      const instance = service.createExecution();
+      await instance.run("compress-images", files);
 
-      expect(service.store.getState().status).toBe("completed");
-      expect(service.store.getState().results).toHaveLength(fileCount);
+      expect(instance.store.getState().status).toBe("completed");
+      expect(instance.store.getState().results).toHaveLength(fileCount);
     });
   });
 
-  describe("run — consecutive executions", () => {
+  describe("createExecution — consecutive executions", () => {
     it("clears prior state when starting a new run", async () => {
       const engine = createMockEngine();
       registerBrowserEngine(engine);
 
-      // First run succeeds
-      await service.run("compress-images", [
+      const instance = service.createExecution();
+
+      await instance.run("compress-images", [
         new File(["data"], "test.jpg"),
       ]);
-      expect(service.store.getState().status).toBe("completed");
-      expect(service.store.getState().results).toHaveLength(1);
+      expect(instance.store.getState().status).toBe("completed");
+      expect(instance.store.getState().results).toHaveLength(1);
 
-      // Second run starts fresh
-      await service.run("compress-images", [
+      await instance.run("compress-images", [
         new File(["data2"], "test2.jpg"),
       ]);
-      expect(service.store.getState().status).toBe("completed");
+      expect(instance.store.getState().status).toBe("completed");
     });
   });
 
@@ -794,43 +776,6 @@ describe("wasmExecutionService", () => {
       expect(a.store).not.toBe(b.store);
     });
 
-    it("instance store is separate from the singleton store", () => {
-      const instance = service.createExecution();
-      expect(instance.store).not.toBe(service.store);
-    });
-
-    it("instance run does not affect the singleton store", async () => {
-      registerBrowserEngine(createMockEngine());
-
-      const instance = service.createExecution();
-      await instance.run("compress-images", [
-        new File(["data"], "test.jpg"),
-      ]);
-
-      // Instance is completed
-      expect(instance.store.getState().status).toBe("completed");
-      expect(instance.store.getState().results).toHaveLength(1);
-
-      // Singleton is still idle
-      expect(service.store.getState().status).toBe("idle");
-      expect(service.store.getState().results).toEqual([]);
-    });
-
-    it("singleton run does not affect instance stores", async () => {
-      registerBrowserEngine(createMockEngine());
-
-      const instance = service.createExecution();
-      await service.run("compress-images", [
-        new File(["data"], "test.jpg"),
-      ]);
-
-      // Singleton is completed
-      expect(service.store.getState().status).toBe("completed");
-
-      // Instance is still idle
-      expect(instance.store.getState().status).toBe("idle");
-    });
-
     it("two instances don't interfere with each other", async () => {
       registerBrowserEngine(createMockEngine());
 
@@ -839,14 +784,11 @@ describe("wasmExecutionService", () => {
 
       await a.run("compress-images", [new File(["a"], "a.jpg")]);
 
-      // Instance A is completed
       expect(a.store.getState().status).toBe("completed");
-      // Instance B is still idle
       expect(b.store.getState().status).toBe("idle");
 
       await b.run("compress-images", [new File(["b"], "b.jpg")]);
 
-      // Both completed independently
       expect(a.store.getState().status).toBe("completed");
       expect(b.store.getState().status).toBe("completed");
     });
@@ -862,7 +804,6 @@ describe("wasmExecutionService", () => {
 
       a.reset();
 
-      // A is reset, B is untouched
       expect(a.store.getState().status).toBe("idle");
       expect(b.store.getState().status).toBe("completed");
     });

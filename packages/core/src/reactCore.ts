@@ -50,9 +50,6 @@ import { useSessionStatus } from "./hooks/useSessionStatus";
 import { useAuth } from "./hooks/useAuth";
 import { useSignOut } from "./hooks/useSignOut";
 
-// WASM execution hooks
-import { useWasmExecution } from "./hooks/useWasmExecution";
-
 // Auth hooks
 import { useSignIn } from "@bnto/auth";
 import { useSignUp } from "./hooks/useSignUp";
@@ -113,7 +110,6 @@ export const core = {
 
   wasm: {
     ...baseCore.wasm,
-    useWasmExecution,
   },
 
   recipe: {

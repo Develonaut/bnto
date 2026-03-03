@@ -17,6 +17,7 @@ import { createAnalyticsService } from "./services/analyticsService";
 import { createUploadService } from "./services/uploadService";
 import { createDownloadService } from "./services/downloadService";
 import { createWasmExecutionService } from "./services/wasmExecutionService";
+import { createHistoryService } from "./services/historyService";
 import { createWorkflowClient } from "./clients/workflowClient";
 import { createExecutionClient } from "./clients/executionClient";
 import { createUserClient } from "./clients/userClient";
@@ -36,16 +37,17 @@ const analyticsService = createAnalyticsService();
 const uploadService = createUploadService();
 const downloadService = createDownloadService();
 const wasmExecutionService = createWasmExecutionService();
+const historyService = createHistoryService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
 const workflowClient = createWorkflowClient(workflowService, executionService);
-const executionClient = createExecutionClient(executionService);
+const executionClient = createExecutionClient(executionService, historyService);
 const userClient = createUserClient(userService);
 const analyticsClient = createAnalyticsClient(analyticsService);
 const uploadClient = createUploadClient(uploadService);
 const downloadClient = createDownloadClient(downloadService);
 const authClient = createAuthClient();
-const wasmClient = createWasmClient(wasmExecutionService);
+const wasmClient = createWasmClient(wasmExecutionService, historyService);
 const recipeClient = createRecipeClient();
 const telemetryClient = createTelemetryClient();
 

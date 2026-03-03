@@ -1,47 +1,64 @@
 "use client";
 
-import type { WasmExecutionService } from "../services/wasmExecutionService";
+import type { WasmExecutionService, WasmExecutionInstance } from "../services/wasmExecutionService";
+import type { HistoryService } from "../services/historyService";
+import type { WasmRunResult } from "../types/wasm";
 
 /**
- * WASM execution client — public API for browser-side WASM execution.
- *
- * Wraps the WASM execution service for architectural symmetry with
- * other domain clients (workflows, executions, user, etc.).
+ * WASM execution client — composes WASM execution with history recording.
+ * After every run() completes, the result is auto-recorded to local history.
  */
-export function createWasmClient(wasm: WasmExecutionService) {
-  return {
-    /** The singleton Zustand store (backward-compatible). Prefer createExecution(). */
-    store: wasm.store,
+export function createWasmClient(
+  wasm: WasmExecutionService,
+  history: HistoryService,
+) {
+  /** Wrap an instance's run() to auto-record to local history (fire-and-forget). */
+  function wrapInstance(instance: WasmExecutionInstance): WasmExecutionInstance {
+    const originalRun = instance.run;
 
-    // ── Capability Detection ───────────────────────────────────────
+    return {
+      ...instance,
+      run: async (
+        slug: string,
+        files: File[],
+        params?: Record<string, unknown>,
+      ): Promise<WasmRunResult> => {
+        const result = await originalRun(slug, files, params);
+
+        if (result.status !== "aborted") {
+          history.record({
+            id: crypto.randomUUID(),
+            slug,
+            status: result.status,
+            timestamp: Date.now() - result.durationMs,
+            durationMs: result.durationMs,
+            inputFileCount: files.length,
+            outputFileCount: result.results.length,
+            error: result.error,
+          }).catch(() => {});
+        }
+
+        return result;
+      },
+    };
+  }
+
+  return {
     isCapable: (slug: string) => wasm.isCapable(slug),
     hasImplementation: (slug: string) => wasm.hasImplementation(slug),
     getCapableSlugs: () => wasm.getCapableSlugs(),
-
-    // ── Engine Registration ────────────────────────────────────────
     registerEngine: wasm.registerEngine,
     hasEngine: () => wasm.hasEngine(),
 
-    // ── Per-Instance Factory ────────────────────────────────────────
     /**
      * Create an isolated execution instance with its own store.
-     *
-     * Each instance has independent state — no cross-page leaks.
+     * Results are automatically recorded to local history.
      * Usage: `const [instance] = useState(() => core.wasm.createExecution())`
      */
-    createExecution: wasm.createExecution,
+    createExecution: (): WasmExecutionInstance =>
+      wrapInstance(wasm.createExecution()),
 
-    // ── Singleton Lifecycle (backward-compatible) ───────────────────
-    /** Run via the singleton store (backward-compatible). Prefer createExecution(). */
-    run: wasm.run,
-    /** Reset the singleton store (backward-compatible). */
-    reset: wasm.reset,
-
-    // ── Low-level execution ────────────────────────────────────────
-    /** Execute without lifecycle management. For callers managing their own state. */
     execute: wasm.execute,
-
-    // ── Download ───────────────────────────────────────────────────
     downloadResult: wasm.downloadResult,
     downloadAllResults: wasm.downloadAllResults,
   } as const;
