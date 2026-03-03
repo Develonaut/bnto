@@ -531,6 +531,18 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 ## Backlog
 
+### Infra: Tag-Based Release Pipeline (GitHub Actions + Vercel)
+
+**Priority: Medium.** Automated release workflow: tag a commit on `main` → GitHub Action builds a Vercel preview → full test suite (unit + E2E) runs against the live preview URL → green = ready to promote to production. Currently deploys are fully manual (`vercel --prod` or MCP tool).
+
+- [ ] `infra` — Create GitHub Actions workflow triggered by git tags (`v*` or `release-*`)
+- [ ] `infra` — Workflow step: build Vercel preview deployment via CLI, capture preview URL
+- [ ] `infra` — Workflow step: run Playwright E2E tests against the preview URL (`baseURL` override)
+- [ ] `infra` — Workflow step: run unit/integration tests (`task ui:test`, `task wasm:test:unit`)
+- [ ] `infra` — On all-green: notify (GitHub comment/Slack) with preview URL + "ready to promote" status
+- [ ] `infra` — Optional: auto-promote to production if all checks pass, or require manual promotion via Vercel dashboard
+- [ ] `infra` — Add `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` to GitHub repo secrets
+
 ### UX: Unified Popup/FloatingSurface Primitive
 
 **Priority: Medium.** Dialog.Content, Menu.Content, and AccountGate all repeat the same floating surface pattern: `Card elevation="lg"` + `Animate.ScaleIn from={0.6} easing="spring-bouncier"` + pointer-events/z-index management. Extract a shared composition primitive so consumers compose it instead of duplicating the Card/animation/z-index logic.
