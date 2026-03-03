@@ -3,14 +3,11 @@
 import { core } from "@bnto/core";
 
 import { useDelayedLoading } from "../_hooks/useDelayedLoading";
-import { AuthGate } from "@/components/blocks/AuthGate";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Row } from "@/components/ui/Row";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Stack } from "@/components/ui/Stack";
-import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Text } from "@/components/ui/Text";
 import { HistoryIcon } from "@/components/ui/icons";
 import { getBntoBySlug } from "@/lib/bntoRegistry";
@@ -36,8 +33,7 @@ function slugToTitle(slug: string): string {
  * Routes transparently: authenticated users see Convex-backed history,
  * unauthenticated users see browser-local (IndexedDB) history.
  *
- * Re-run button is always visible. For unauthenticated users, it's
- * wrapped in AuthGatedAction — clicking opens a conversion dialog.
+ * Read-only view — recipe name + timestamp. Observable, not actionable.
  */
 export function ExecutionHistory() {
   const { items, isLoading, status, loadMore } =
@@ -67,39 +63,19 @@ export function ExecutionHistory() {
     <Stack className="gap-2">
       {items.map((execution) => {
         const recipeName = getRecipeName(execution.slug);
-        const rerunHref = execution.slug ? `/${execution.slug}` : undefined;
 
         return (
           <Card key={execution.id} elevation="sm" className="px-4 py-3">
-            <Row justify="between" align="center" className="gap-3">
-              <Stack className="min-w-0 flex-1 gap-0.5">
-                <Text size="sm" weight="medium" className="truncate">
-                  {recipeName}
-                </Text>
-                <Text size="xs" color="muted">
-                  {formatTimeAgo(execution.startedAt)}
-                  {execution.completedAt &&
-                    ` \u00B7 ${formatDuration(execution.startedAt, execution.completedAt)}`}
-                </Text>
-              </Stack>
-              <Row align="center" className="shrink-0 gap-2">
-                <StatusBadge status={execution.status} />
-                {rerunHref && (
-                  <AuthGate.Action
-                    title="Sign up to re-run recipes"
-                    description="Create a free account to re-run recipes and keep your full execution history."
-                  >
-                    <Button
-                      href={rerunHref}
-                      variant="ghost"
-                      className="h-7 px-2 text-xs"
-                    >
-                      Re-run
-                    </Button>
-                  </AuthGate.Action>
-                )}
-              </Row>
-            </Row>
+            <Stack className="min-w-0 gap-0.5">
+              <Text size="sm" weight="medium" className="truncate">
+                {recipeName}
+              </Text>
+              <Text size="xs" color="muted">
+                {formatTimeAgo(execution.startedAt)}
+                {execution.completedAt &&
+                  ` \u00B7 ${formatDuration(execution.startedAt, execution.completedAt)}`}
+              </Text>
+            </Stack>
           </Card>
         );
       })}
@@ -126,13 +102,10 @@ function ExecutionHistorySkeleton() {
     <Stack className="gap-2">
       {Array.from({ length: 6 }).map((_, i) => (
         <Card key={i} loading elevation="sm" className="px-4 py-3">
-          <Row justify="between" align="center" className="gap-3">
-            <Stack className="min-w-0 flex-1 gap-0.5">
-              <Skeleton className="h-5 w-28" />
-              <Skeleton className="h-3.5 w-20" />
-            </Stack>
-            <Skeleton className="h-5 w-16 rounded-full" />
-          </Row>
+          <Stack className="min-w-0 gap-0.5">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-3.5 w-20" />
+          </Stack>
         </Card>
       ))}
     </Stack>
