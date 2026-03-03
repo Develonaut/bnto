@@ -187,6 +187,8 @@ Update all documentation and strategy files to reflect the simplified auth model
 ### Sprint 3: Platform Features (M2)
 **Goal:** Accounts earn their keep. Users who sign up get persistence, history, and a reason to stay. Conversion hooks are natural — Save, History, Server Nodes — not artificial run caps. See [pricing-model.md](strategy/pricing-model.md) for the full free vs premium framework.
 
+**Sprint branch:** `sprint/3-platform-features`
+
 **Prerequisite:** Sprint 3A (anonymous user removal) must be complete. The anonymous system is gone — auth is binary (signed in or not). Conversion prompts are value-driven.
 
 **Persona ownership:**
@@ -231,6 +233,8 @@ Update all documentation and strategy files to reflect the simplified auth model
 
 ### Sprint 4: Recipe Editor (Headless-First)
 **Goal:** Users can create recipes from a blank canvas or customize existing ones — add/remove/configure nodes, run, and export as `.bnto.json`. The editor is free (pricing-model.md: "recipe editor is free"). Power users who create custom recipes are the highest-intent Pro upgrade candidates.
+
+**Sprint branch:** `sprint/4-recipe-editor`
 
 **Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The bento box visual (compartment cards on a grid) is one skin; the code editor (CodeMirror 6) is another. Both are views of the same `Definition` in the shared store. Users can switch between them on the fly. See [editor-architecture.md](.claude/strategy/editor-architecture.md) for the shared layer design and [visual-editor.md](.claude/strategy/visual-editor.md) for the bento box visual editor.
 
@@ -285,17 +289,19 @@ Zustand store that wraps the pure functions into a reactive state machine. Hooks
 - [x] `apps/web` — **Definition ↔ Bento adapters**: `definitionToBento(definition)` → `{ nodes: CompartmentNodeType[] }`. `bentoToDefinition(nodes)` → `Definition`. Pure functions that bridge the headless model to the visual layer. Map node types to compartment variants, positions, and sizes. No edges — execution order derived from compartment position. Unit tested — round-trip: `definition → bento → definition` produces equivalent output.
 - [x] `apps/web` — **Unit tests for store + hooks**: Store operations tested via Vitest (no rendering). Hook tests via `renderHook`. Adapter round-trip tests. Undo/redo verification.
 
-#### Wave 3 (parallel — visual canvas integration)
+#### Wave 3 (visual canvas integration — recommended order below)
 
 Wire the headless store to the bento box canvas. The compartment grid becomes a live, interactive editor. **`/reactflow-expert` + `/frontend-engineer` co-lead.** ReactFlow Expert owns canvas interaction and node positioning. Frontend Engineer owns component composition, theming, and animation.
 
-- [ ] `apps/web` — **`RecipeEditor` component**: Composes `EditorToolbar` + `BentoCanvas` + `NodeConfigPanel`. Reads from `useEditorStore`. Two entry modes: `<RecipeEditor slug="compress-images" />` (loads predefined) or `<RecipeEditor />` (blank canvas). Includes `EditorModeToggle` to switch between visual (bento) and code (CM6) editors.
+**Recommended execution order:** Tasks are logically parallel but have natural dependencies. Work in this order: (1) Extract shared components → (2) Enable interactive canvas → (3) Toolbar, Palette, ConfigPanel in parallel → (4) RecipeEditor composition → (5) Motorway debug wiring.
+
+- [x] `apps/web` — **Motorway showcase component sharing**: When the visual editor ships, ensure `StationNode`, `ConveyorEdge`, and `ConveyorCanvas` become shared components imported by BOTH the Motorway showcase (`app/(dev)/motorway/`) and the production visual editor from the same location. Currently these live only in the showcase directory — they must be extracted to a shared location (e.g., `components/editor/` or alongside the editor canvas) so the showcase demonstrates real components, not stale copies. Same applies to `CompartmentNode` and `BentoCanvas`. **Rule: the Motorway page must never render fake/mock versions of components that exist in production — it imports the real thing or it doesn't show it.**
+- [ ] `apps/web` — **Enable canvas interaction**: Upgrade `BentoCanvas` to accept an `interactive` prop. When `true`: `nodesDraggable={true}`, `elementsSelectable={true}`. Node drag updates position via `moveNode`. Selection dispatches `selectNode`. No edge connections — execution order is positional. When `false`: current read-only showcase behavior (backward compatible).
 - [ ] `apps/web` — **`EditorToolbar` component**: Action bar above canvas — recipe selector dropdown (all Tier 1 recipes + "Blank"), Add Node button (opens palette), Remove Selected button, Run button, Reset/Replay button, Export `.bnto.json` button, Undo/Redo buttons. Reads/dispatches to `useEditorStore`.
 - [ ] `apps/web` — **`NodePalette` component**: Slide-out panel listing available node types from `useNodePalette()`. Click-to-add (adds compartment at next available slot). Grouped by category. Browser-capable badge. Server-only nodes shown grayed with "Pro" badge (visible but not addable in browser context — definitions always available per pricing model).
 - [ ] `apps/web` — **`NodeConfigPanel` component**: Side panel that renders when a compartment is selected. Uses `useEditorNode(selectedNodeId)` to get schema + current params. Auto-generates form fields from `ParameterSchema` (Atomiton pattern): string → text input, number → number input with min/max, boolean → toggle, enum → select dropdown. `visibleWhen` and `requiredWhen` handled reactively. Parameter changes dispatch `updateParams` to store.
-- [ ] `apps/web` — **Enable canvas interaction**: Upgrade `BentoCanvas` to accept an `interactive` prop. When `true`: `nodesDraggable={true}`, `elementsSelectable={true}`. Node drag updates position via `moveNode`. Selection dispatches `selectNode`. No edge connections — execution order is positional. When `false`: current read-only showcase behavior (backward compatible).
+- [ ] `apps/web` — **`RecipeEditor` component**: Composes `EditorToolbar` + `BentoCanvas` + `NodeConfigPanel`. Reads from `useEditorStore`. Two entry modes: `<RecipeEditor slug="compress-images" />` (loads predefined) or `<RecipeEditor />` (blank canvas). Includes `EditorModeToggle` to switch between visual (bento) and code (CM6) editors.
 - [ ] `apps/web` — **Motorway debug section**: Replace the hardcoded `BentoBoxShowcase` in `/motorway` with `<RecipeEditor />`. The Motorway page becomes the editor playground — load recipes, add/remove compartments, configure parameters, run, export.
-- [ ] `apps/web` — **Motorway showcase component sharing**: When the visual editor ships, ensure `StationNode`, `ConveyorEdge`, and `ConveyorCanvas` become shared components imported by BOTH the Motorway showcase (`app/(dev)/motorway/`) and the production visual editor from the same location. Currently these live only in the showcase directory — they must be extracted to a shared location (e.g., `components/editor/` or alongside the editor canvas) so the showcase demonstrates real components, not stale copies. Same applies to `CompartmentNode` and `BentoCanvas`. **Rule: the Motorway page must never render fake/mock versions of components that exist in production — it imports the real thing or it doesn't show it.**
 
 #### Wave 4 (parallel — execution + polish)
 
@@ -311,6 +317,8 @@ The editor runs recipes and shows execution state on the canvas. Compartments vi
 ### Sprint 4B: Code Editor (CodeMirror 6)
 
 **Goal:** A schema-aware `.bnto.json` code editor for power users — the coding-oriented counterpart to the visual canvas. Users who prefer code get the same power as the visual canvas, with the speed and precision of text editing. Slash commands bring Notion-like ergonomics. The code editor is free (same as the visual editor).
+
+**Sprint branch:** TBD — will be created when Sprint 4B begins.
 
 **Required reading:** Before picking up ANY task in Sprint 4B, read [code-editor.md](.claude/strategy/code-editor.md) — the design document covering tech choice rationale (CM6 over Monaco), architecture (headless-first + store sync), feature tiers, slash command implementation, JSON Schema strategy, CLI/TUI parallels, React integration pattern, theming, and performance considerations. Also read the persona at `.claude/skills/code-editor-expert/SKILL.md` for CM6-specific APIs, extension patterns, and gotchas.
 
