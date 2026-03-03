@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { createEditorStore } from "../store/createEditorStore";
-import type { EditorStore } from "../store/createEditorStore";
+import type { EditorStore } from "../store/types";
 import type { StoreApi } from "zustand";
 import { createBlankDefinition } from "@bnto/nodes";
 import { NODE_TYPE_NAMES } from "@bnto/nodes";

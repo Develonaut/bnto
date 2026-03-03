@@ -8,43 +8,10 @@
  * implied by compartment position (top-left → bottom-right).
  */
 
-import type { Definition } from "@bnto/nodes";
-import type { NodeTypeName } from "@bnto/nodes";
+import type { Definition, NodeTypeName } from "@bnto/nodes";
 import { NODE_TYPE_INFO } from "@bnto/nodes";
-
-// ---------------------------------------------------------------------------
-// Compartment types (matches CompartmentNode.tsx data shape)
-// ---------------------------------------------------------------------------
-
-type CompartmentVariant =
-  | "primary"
-  | "secondary"
-  | "accent"
-  | "muted"
-  | "success"
-  | "warning";
-
-interface CompartmentData {
-  label: string;
-  sublabel?: string;
-  variant: CompartmentVariant;
-  width: number;
-  height: number;
-  status: "idle" | "pending" | "active" | "completed";
-  /** Original node ID — links compartment back to the Definition node. */
-  nodeId: string;
-}
-
-interface BentoNode {
-  id: string;
-  type: "compartment";
-  position: { x: number; y: number };
-  data: CompartmentData;
-}
-
-interface BentoLayout {
-  nodes: BentoNode[];
-}
+import type { CompartmentVariant, BentoNode, BentoLayout } from "./types";
+import { SLOTS } from "./bentoSlots";
 
 // ---------------------------------------------------------------------------
 // Node type → visual mapping
@@ -59,30 +26,6 @@ const CATEGORY_VARIANT: Record<string, CompartmentVariant> = {
   control: "success",
   system: "warning",
 };
-
-// ---------------------------------------------------------------------------
-// Bento slot layout (same as BentoBoxShowcase)
-// ---------------------------------------------------------------------------
-
-const CELL = 120;
-const GAP = 20;
-const S = CELL + GAP;
-
-const SLOTS: { x: number; y: number; w: number; h: number }[] = [
-  // Row 0 — alternating small + wide
-  { x: 0, y: 0, w: 120, h: CELL },
-  { x: 140, y: 0, w: 200, h: CELL },
-  { x: 360, y: 0, w: 120, h: CELL },
-  { x: 500, y: 0, w: 160, h: CELL },
-  // Row 1 — two wide panels
-  { x: 0, y: S, w: 340, h: CELL },
-  { x: 360, y: S, w: 300, h: CELL },
-  // Row 2 — four cells
-  { x: 0, y: S * 2, w: 160, h: CELL },
-  { x: 180, y: S * 2, w: 160, h: CELL },
-  { x: 360, y: S * 2, w: 140, h: CELL },
-  { x: 520, y: S * 2, w: 140, h: CELL },
-];
 
 // ---------------------------------------------------------------------------
 // Adapter function
@@ -130,5 +73,4 @@ function definitionToBento(definition: Definition): BentoLayout {
   return { nodes };
 }
 
-export { definitionToBento, SLOTS, CELL, GAP };
-export type { BentoNode, BentoLayout, CompartmentData, CompartmentVariant };
+export { definitionToBento };

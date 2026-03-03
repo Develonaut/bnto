@@ -7,7 +7,6 @@
 
 "use client";
 
-import { useMemo } from "react";
 import type { NodeCategory, NodeTypeInfo, CategoryInfo } from "@bnto/nodes";
 import { NODE_TYPE_INFO, NODE_TYPE_NAMES, CATEGORIES } from "@bnto/nodes";
 
@@ -32,6 +31,33 @@ interface NodePaletteResult {
 }
 
 // ---------------------------------------------------------------------------
+// Pure computation (operates on module-level constants)
+// ---------------------------------------------------------------------------
+
+function computePalette(browserOnly: boolean): NodePaletteResult {
+  const allTypes = NODE_TYPE_NAMES.map((name) => NODE_TYPE_INFO[name]);
+  const browserTypes = allTypes.filter((t) => t.browserCapable);
+  const displayTypes = browserOnly ? browserTypes : allTypes;
+
+  // Group by category in CATEGORIES display order
+  const categoryMap = new Map<NodeCategory, NodeTypeInfo[]>();
+  for (const nodeType of displayTypes) {
+    const existing = categoryMap.get(nodeType.category) ?? [];
+    existing.push(nodeType);
+    categoryMap.set(nodeType.category, existing);
+  }
+
+  const groups: PaletteGroup[] = CATEGORIES
+    .filter((cat) => categoryMap.has(cat.name))
+    .map((cat) => ({
+      category: cat,
+      items: categoryMap.get(cat.name)!,
+    }));
+
+  return { groups, allTypes, browserTypes };
+}
+
+// ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
@@ -42,28 +68,7 @@ interface NodePaletteResult {
  *                      Default: false (show all, flag server-only).
  */
 function useNodePalette(browserOnly = false): NodePaletteResult {
-  return useMemo(() => {
-    const allTypes = NODE_TYPE_NAMES.map((name) => NODE_TYPE_INFO[name]);
-    const browserTypes = allTypes.filter((t) => t.browserCapable);
-    const displayTypes = browserOnly ? browserTypes : allTypes;
-
-    // Group by category in CATEGORIES display order
-    const categoryMap = new Map<NodeCategory, NodeTypeInfo[]>();
-    for (const nodeType of displayTypes) {
-      const existing = categoryMap.get(nodeType.category) ?? [];
-      existing.push(nodeType);
-      categoryMap.set(nodeType.category, existing);
-    }
-
-    const groups: PaletteGroup[] = CATEGORIES
-      .filter((cat) => categoryMap.has(cat.name))
-      .map((cat) => ({
-        category: cat,
-        items: categoryMap.get(cat.name)!,
-      }));
-
-    return { groups, allTypes, browserTypes };
-  }, [browserOnly]);
+  return computePalette(browserOnly);
 }
 
 export { useNodePalette };

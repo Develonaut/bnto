@@ -5,7 +5,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { definitionToBento, SLOTS } from "../adapters/definitionToBento";
+import { definitionToBento } from "../adapters/definitionToBento";
+import { SLOTS } from "../adapters/bentoSlots";
 import { bentoToDefinition } from "../adapters/bentoToDefinition";
 import { createBlankDefinition, addNode } from "@bnto/nodes";
 import { NODE_TYPE_INFO, NODE_TYPE_NAMES } from "@bnto/nodes";

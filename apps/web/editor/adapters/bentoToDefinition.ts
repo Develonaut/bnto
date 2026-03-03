@@ -10,7 +10,7 @@
  */
 
 import type { Definition } from "@bnto/nodes";
-import type { BentoNode } from "./definitionToBento";
+import type { BentoNode } from "./types";
 
 /**
  * Update node positions in a Definition based on bento compartment positions.

@@ -11,7 +11,7 @@
 import { useContext } from "react";
 import { useStore } from "zustand";
 import { EditorContext } from "../context";
-import type { EditorStore } from "../store/createEditorStore";
+import type { EditorStore } from "../store/types";
 
 /**
  * Select a slice from the editor store.
