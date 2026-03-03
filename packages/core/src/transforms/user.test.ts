@@ -9,6 +9,7 @@ describe("toUser", () => {
       name: "Jane",
       image: "https://example.com/avatar.png",
       plan: "free",
+      totalRuns: 0,
     });
 
     expect(result).toEqual({
@@ -17,7 +18,7 @@ describe("toUser", () => {
       name: "Jane",
       image: "https://example.com/avatar.png",
       plan: "free",
-      totalRuns: undefined,
+      totalRuns: 0,
       lastRunAt: undefined,
     });
   });
@@ -38,6 +39,7 @@ describe("toUser", () => {
     const result = toUser({
       _id: "user_123",
       plan: "starter",
+      totalRuns: 0,
     });
 
     expect(result.plan).toBe("free");
@@ -47,14 +49,15 @@ describe("toUser", () => {
     const result = toUser({
       _id: "user_123",
       plan: "pro",
+      totalRuns: 0,
     });
 
     expect(result.plan).toBe("pro");
   });
 
   it("handles null/undefined plan", () => {
-    expect(toUser({ _id: "user_123", plan: null }).plan).toBeUndefined();
-    expect(toUser({ _id: "user_123" }).plan).toBeUndefined();
+    expect(toUser({ _id: "user_123", plan: null, totalRuns: 0 }).plan).toBeUndefined();
+    expect(toUser({ _id: "user_123", totalRuns: 0 }).plan).toBeUndefined();
   });
 
   it("converts null fields to undefined", () => {
@@ -63,14 +66,14 @@ describe("toUser", () => {
       email: null,
       name: null,
       image: null,
-      totalRuns: null,
+      totalRuns: 0,
       lastRunAt: null,
     });
 
     expect(result.email).toBeUndefined();
     expect(result.name).toBeUndefined();
     expect(result.image).toBeUndefined();
-    expect(result.totalRuns).toBeUndefined();
+    expect(result.totalRuns).toBe(0);
     expect(result.lastRunAt).toBeUndefined();
   });
 

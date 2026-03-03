@@ -9,6 +9,6 @@ export interface User {
   image?: string;
   plan?: "free" | "pro";
   // Usage analytics (Sprint 3)
-  totalRuns?: number;
+  totalRuns: number;
   lastRunAt?: number;
 }
