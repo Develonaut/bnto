@@ -236,7 +236,7 @@ Update all documentation and strategy files to reflect the simplified auth model
 ### Sprint 4: Recipe Editor (Headless-First)
 **Goal:** Users can create recipes from a blank canvas or customize existing ones — add/remove/configure nodes, run, and export as `.bnto.json`. The editor is free (pricing-model.md: "recipe editor is free"). Power users who create custom recipes are the highest-intent Pro upgrade candidates.
 
-**Sprint branch:** TBD — will be created when Sprint 4 Wave 3+ begins.
+**Sprint branch:** `sprint/4-recipe-editor`
 
 **Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The bento box visual (compartment cards on a grid) is one skin; the code editor (CodeMirror 6) is another. Both are views of the same `Definition` in the shared store. Users can switch between them on the fly. See [editor-architecture.md](.claude/strategy/editor-architecture.md) for the shared layer design and [visual-editor.md](.claude/strategy/visual-editor.md) for the bento box visual editor.
 
