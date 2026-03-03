@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 
 import { AppShell } from "@/components/ui/AppShell";
-import { AccountGate } from "@/components/ui/AccountGate";
 import { Heading } from "@/components/ui/Heading";
 import { Stack } from "@/components/ui/Stack";
 import { Tabs } from "@/components/ui/Tabs";
@@ -67,47 +66,42 @@ export default function MyRecipesPage() {
           </Text>
         </Stack>
 
-        <AccountGate
-          title="Save your recipes"
-          description="Sign in to save your recipes, access execution history, and pick up where you left off from any device."
-        >
-          <Stack className="gap-8">
-            <UsageStats />
+        <Stack className="gap-8">
+          <UsageStats />
 
-            <Tabs defaultValue="history">
-              <Tabs.List>
-                <Tabs.Trigger value="history">History</Tabs.Trigger>
-                <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
-              </Tabs.List>
+          <Tabs defaultValue="history">
+            <Tabs.List>
+              <Tabs.Trigger value="history">History</Tabs.Trigger>
+              <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
+            </Tabs.List>
 
-              {/*
-               * forceMount keeps both panels in the DOM so switching
-               * tabs doesn't remount components or refetch data.
-               *
-               * The inactive panel uses invisible + absolute so it's
-               * removed from layout flow but stays mounted. The active
-               * panel stays in normal flow and determines container height.
-               */}
-              <div className="relative">
-                <Tabs.Content
-                  value="history"
-                  forceMount
-                  className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
-                >
-                  <ExecutionHistory />
-                </Tabs.Content>
+            {/*
+             * forceMount keeps both panels in the DOM so switching
+             * tabs doesn't remount components or refetch data.
+             *
+             * The inactive panel uses invisible + absolute so it's
+             * removed from layout flow but stays mounted. The active
+             * panel stays in normal flow and determines container height.
+             */}
+            <div className="relative">
+              <Tabs.Content
+                value="history"
+                forceMount
+                className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
+              >
+                <ExecutionHistory />
+              </Tabs.Content>
 
-                <Tabs.Content
-                  value="saved"
-                  forceMount
-                  className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
-                >
-                  <RecipeGrid />
-                </Tabs.Content>
-              </div>
-            </Tabs>
-          </Stack>
-        </AccountGate>
+              <Tabs.Content
+                value="saved"
+                forceMount
+                className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
+              >
+                <RecipeGrid />
+              </Tabs.Content>
+            </div>
+          </Tabs>
+        </Stack>
       </Stack>
     </AppShell.Content>
   );

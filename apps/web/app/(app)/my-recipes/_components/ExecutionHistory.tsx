@@ -12,13 +12,34 @@ import { Stack } from "@/components/ui/Stack";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Text } from "@/components/ui/Text";
 import { HistoryIcon } from "@/components/ui/icons";
+import { getBntoBySlug } from "@/lib/bntoRegistry";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
+
+/** Resolve a slug to a human-readable recipe name. */
+function getRecipeName(slug?: string): string {
+  if (!slug) return "Quick run";
+  return getBntoBySlug(slug)?.h1 ?? slugToTitle(slug);
+}
+
+/** Fallback: convert a hyphenated slug to title case. */
+function slugToTitle(slug: string): string {
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
 
 /**
  * Paginated execution history — self-fetching via useExecutionHistory().
- * Shows all runs with status, timing, and a "Load more" button.
+ *
+ * Routes transparently: authenticated users see Convex-backed history,
+ * unauthenticated users see browser-local (IndexedDB) history.
+ *
+ * Authenticated users get a re-run link on each row that navigates
+ * to the recipe page. Unauthenticated users see read-only history.
  */
 export function ExecutionHistory() {
+  const { isAuthenticated } = core.auth.useAuth();
   const { items, isLoading, status, loadMore } =
     core.executions.useExecutionHistory({ pageSize: 20 });
   const showSkeleton = useDelayedLoading(isLoading);
@@ -44,23 +65,39 @@ export function ExecutionHistory() {
 
   return (
     <Stack className="gap-2">
-      {items.map((execution) => (
-        <Card key={execution.id} elevation="sm" className="px-4 py-3">
-          <Row justify="between" align="center" className="gap-3">
-            <Stack className="min-w-0 flex-1 gap-0.5">
-              <Text size="sm" weight="medium" className="truncate">
-                {execution.recipeId ? "Saved recipe" : "Quick run"}
-              </Text>
-              <Text size="xs" color="muted">
-                {formatTimeAgo(execution.startedAt)}
-                {execution.completedAt &&
-                  ` \u00B7 ${formatDuration(execution.startedAt, execution.completedAt)}`}
-              </Text>
-            </Stack>
-            <StatusBadge status={execution.status} />
-          </Row>
-        </Card>
-      ))}
+      {items.map((execution) => {
+        const recipeName = getRecipeName(execution.slug);
+        const rerunHref = execution.slug ? `/${execution.slug}` : undefined;
+
+        return (
+          <Card key={execution.id} elevation="sm" className="px-4 py-3">
+            <Row justify="between" align="center" className="gap-3">
+              <Stack className="min-w-0 flex-1 gap-0.5">
+                <Text size="sm" weight="medium" className="truncate">
+                  {recipeName}
+                </Text>
+                <Text size="xs" color="muted">
+                  {formatTimeAgo(execution.startedAt)}
+                  {execution.completedAt &&
+                    ` \u00B7 ${formatDuration(execution.startedAt, execution.completedAt)}`}
+                </Text>
+              </Stack>
+              <Row align="center" className="shrink-0 gap-2">
+                <StatusBadge status={execution.status} />
+                {isAuthenticated && rerunHref && (
+                  <Button
+                    href={rerunHref}
+                    variant="ghost"
+                    className="h-7 px-2 text-xs"
+                  >
+                    Re-run
+                  </Button>
+                )}
+              </Row>
+            </Row>
+          </Card>
+        );
+      })}
 
       {status !== "Exhausted" && (
         <Button
