@@ -2,7 +2,6 @@
 
 import type { ExecutionService } from "../services/executionService";
 import type { BrowserExecutionService } from "../services/browserExecutionService";
-import type { ExecutionInstance } from "../services/executionInstance";
 import type { StartPredefinedInput } from "../types";
 
 /**
