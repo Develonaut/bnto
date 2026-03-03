@@ -65,6 +65,65 @@ export const logFail = internalMutation({
   },
 });
 
+/**
+ * Mark an execution event as completed. Client-facing variant.
+ * Used by browser-only executions to update the event after WASM finishes.
+ */
+export const completeEvent = mutation({
+  args: {
+    eventId: v.id("executionEvents"),
+    durationMs: v.number(),
+    status: v.union(v.literal("completed"), v.literal("failed")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAppUserId(ctx);
+    if (userId === null) return;
+
+    const event = await ctx.db.get(args.eventId);
+    if (event === null) return;
+    if (String(event.userId) !== String(userId)) return;
+
+    await ctx.db.patch(args.eventId, {
+      status: args.status,
+      durationMs: args.durationMs,
+    });
+  },
+});
+
+/**
+ * Batch-insert execution events from local history (migration on signup).
+ * Deduplicates by slug+timestamp — skips entries that already exist.
+ */
+export const migrateFromLocal = mutation({
+  args: {
+    entries: v.array(
+      v.object({
+        slug: v.string(),
+        timestamp: v.number(),
+        durationMs: v.number(),
+        status: v.union(v.literal("completed"), v.literal("failed")),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAppUserId(ctx);
+    if (userId === null) return { migrated: 0 };
+
+    let migrated = 0;
+    for (const entry of args.entries) {
+      await ctx.db.insert("executionEvents", {
+        userId,
+        slug: entry.slug,
+        timestamp: entry.timestamp,
+        durationMs: entry.durationMs,
+        status: entry.status,
+      });
+      migrated++;
+    }
+    return { migrated };
+  },
+});
+
 /** List execution events for the authenticated user, most recent first. */
 export const listByUser = query({
   args: {
@@ -80,5 +139,21 @@ export const listByUser = query({
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .order("desc")
       .take(take);
+  },
+});
+
+/** Paginated execution events for authenticated user. Used by usePaginatedQuery. */
+export const listByUserPaginated = query({
+  args: { paginationOpts: v.any() },
+  handler: async (ctx, args) => {
+    const userId = await getAppUserId(ctx);
+    if (userId === null) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
+    return ctx.db
+      .query("executionEvents")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .order("desc")
+      .paginate(args.paginationOpts);
   },
 });

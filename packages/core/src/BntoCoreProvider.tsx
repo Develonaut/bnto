@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ConvexAuthNextjsProvider } from "@bnto/auth";
 import { getConvexClient, getQueryClient } from "./client";
 import { SessionProvider } from "./providers/SessionProvider";
+import { useHistorySync } from "./hooks/useHistorySync";
 
 interface BntoCoreProviderProps {
   children: React.ReactNode;
@@ -16,11 +17,17 @@ interface BntoCoreProviderProps {
   onSessionLost?: () => void;
 }
 
+/** Syncs execution history between local (IndexedDB) and server (Convex). */
+function HistoryProvider({ children }: { children: React.ReactNode }) {
+  useHistorySync();
+  return <>{children}</>;
+}
+
 /**
  * Provides Convex, React Query, auth, and session state for the app.
  *
  * Provider stack order:
- *   ConvexAuthNextjsProvider -> QueryClientProvider -> SessionProvider
+ *   ConvexAuthNextjsProvider -> QueryClientProvider -> SessionProvider -> HistoryProvider
  *
  * Must be wrapped by ConvexAuthNextjsServerProvider in the root layout
  * (server component) for server-side auth token management.
@@ -33,7 +40,7 @@ export function BntoCoreProvider({
     <ConvexAuthNextjsProvider client={getConvexClient()}>
       <QueryClientProvider client={getQueryClient()}>
         <SessionProvider onSessionLost={onSessionLost}>
-          {children}
+          <HistoryProvider>{children}</HistoryProvider>
         </SessionProvider>
       </QueryClientProvider>
     </ConvexAuthNextjsProvider>

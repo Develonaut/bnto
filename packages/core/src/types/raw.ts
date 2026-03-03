@@ -58,6 +58,19 @@ export interface RawExecutionLogDoc {
   timestamp: number;
 }
 
+// ── Execution Event ─────────────────────────────────────────────────────────
+
+/** Raw execution event document as returned by the Convex adapter. */
+export interface RawExecutionEventDoc {
+  _id: string;
+  userId: string;
+  slug: string;
+  timestamp: number;
+  durationMs?: number | null;
+  status: "started" | "completed" | "failed";
+  executionId?: string | null;
+}
+
 // ── User ────────────────────────────────────────────────────────────────────
 
 /** Raw user document as returned by the Convex adapter. */

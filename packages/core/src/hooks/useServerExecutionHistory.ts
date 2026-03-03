@@ -5,10 +5,11 @@ import { usePaginatedQuery } from "convex/react";
 import { core } from "../core";
 import { useReady } from "./useReady";
 import type { Execution } from "../types";
-import type { RawExecutionDoc } from "../types/raw";
+import type { RawExecutionEventDoc } from "../types/raw";
 
 /**
  * Convex-backed execution history (authenticated users).
+ * Reads from executionEvents table (has slug for re-run button).
  * Guards on `useReady()` to avoid crashes before ConvexProvider mounts.
  */
 export function useServerExecutionHistory(options?: {
@@ -28,7 +29,7 @@ export function useServerExecutionHistory(options?: {
   const items: Execution[] = useMemo(
     () =>
       enabled
-        ? results.map((doc) => transform(doc as unknown as RawExecutionDoc))
+        ? results.map((doc) => transform(doc as unknown as RawExecutionEventDoc))
         : [],
     [results, transform, enabled],
   );
