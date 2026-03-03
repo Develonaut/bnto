@@ -1,11 +1,13 @@
-import Link from "next/link";
-
 import { ArrowLeftIcon } from "@/components/ui/icons";
 
 import { Navbar } from "@/components/blocks/Navbar";
 import { Footer } from "@/components/blocks/Footer";
 import { AppShell } from "@/components/ui/AppShell";
 import { Button } from "@/components/ui/Button";
+import { Heading } from "@/components/ui/Heading";
+import { Row } from "@/components/ui/Row";
+import { Stack } from "@/components/ui/Stack";
+import { Text } from "@/components/ui/Text";
 import { GITHUB_URL } from "@/lib/copy";
 
 /**
@@ -24,32 +26,42 @@ export default function NotFound() {
       </AppShell.Header>
       <AppShell.Main>
         <AppShell.Content>
-          <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-            <h1 className="from-foreground to-foreground/70 relative mb-6 bg-linear-to-br bg-clip-text py-2 text-5xl font-bold text-transparent sm:text-6xl lg:text-7xl">
-              Page Not Found
-            </h1>
+          <Stack
+            align="center"
+            justify="center"
+            className="min-h-[60vh] text-center"
+          >
+            <Stack gap="md" align="center" className="max-w-lg">
+              <Text
+                size="sm"
+                mono
+                color="muted"
+                className="uppercase tracking-wider"
+              >
+                404
+              </Text>
+              <Heading level={1}>Page Not Found</Heading>
+              <Text color="muted" size="lg" balance>
+                Sorry, we couldn&apos;t find the page you&apos;re looking for.
+                The page might have been removed or the URL might be incorrect.
+              </Text>
+            </Stack>
 
-            <p className="text-muted-foreground mb-10 text-xl">
-              Sorry, we couldn&apos;t find the page you&apos;re looking for. The
-              page might have been removed or the URL might be incorrect.
-            </p>
-
-            <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Button asChild className="group min-w-[200px] gap-2">
-                <Link href="/">
-                  <ArrowLeftIcon className="size-5 transition-transform group-hover:-translate-x-1" />
-                  Back to Home
-                </Link>
+            <Row gap="sm" className="pt-4">
+              <Button href="/" className="group gap-2">
+                <ArrowLeftIcon className="size-4 transition-transform group-hover:-translate-x-1" />
+                Back to Home
               </Button>
               <Button
-                asChild
                 variant="outline"
-                className="min-w-[200px]"
+                href={`${GITHUB_URL}/issues`}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <Link href={`${GITHUB_URL}/issues`}>Report Issue</Link>
+                Report Issue
               </Button>
-            </div>
-          </div>
+            </Row>
+          </Stack>
         </AppShell.Content>
       </AppShell.Main>
       <Footer />
