@@ -19,10 +19,10 @@ export function MyRecipesTabs() {
     <Stack className="gap-8">
       <UsageStats />
 
-      <Tabs defaultValue="history">
+      <Tabs defaultValue="saved">
         <Tabs.List>
-          <Tabs.Trigger value="history">History</Tabs.Trigger>
           <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
+          <Tabs.Trigger value="history">History</Tabs.Trigger>
         </Tabs.List>
 
         {/*
@@ -35,19 +35,19 @@ export function MyRecipesTabs() {
          */}
         <div className="relative">
           <Tabs.Content
-            value="history"
-            forceMount
-            className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
-          >
-            <ExecutionHistory />
-          </Tabs.Content>
-
-          <Tabs.Content
             value="saved"
             forceMount
             className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
           >
             <RecipeGrid />
+          </Tabs.Content>
+
+          <Tabs.Content
+            value="history"
+            forceMount
+            className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
+          >
+            <ExecutionHistory />
           </Tabs.Content>
         </div>
       </Tabs>
