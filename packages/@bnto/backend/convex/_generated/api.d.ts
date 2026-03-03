@@ -8,14 +8,12 @@
  * @module
  */
 
+import type * as _dev_cleanup from "../_dev_cleanup.js";
 import type * as _helpers_auth from "../_helpers/auth.js";
-import type * as _helpers_quota from "../_helpers/quota.js";
 import type * as _helpers_r2_client from "../_helpers/r2_client.js";
-import type * as _helpers_run_limits from "../_helpers/run_limits.js";
 import type * as _helpers_start_execution from "../_helpers/start_execution.js";
 import type * as _helpers_upload_validation from "../_helpers/upload_validation.js";
 import type * as _helpers_user_lifecycle from "../_helpers/user_lifecycle.js";
-import type * as _test_helpers from "../_test_helpers.js";
 import type * as analytics from "../analytics.js";
 import type * as auth from "../auth.js";
 import type * as cleanup from "../cleanup.js";
@@ -39,14 +37,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  _dev_cleanup: typeof _dev_cleanup;
   "_helpers/auth": typeof _helpers_auth;
-  "_helpers/quota": typeof _helpers_quota;
   "_helpers/r2_client": typeof _helpers_r2_client;
-  "_helpers/run_limits": typeof _helpers_run_limits;
   "_helpers/start_execution": typeof _helpers_start_execution;
   "_helpers/upload_validation": typeof _helpers_upload_validation;
   "_helpers/user_lifecycle": typeof _helpers_user_lifecycle;
-  _test_helpers: typeof _test_helpers;
   analytics: typeof analytics;
   auth: typeof auth;
   cleanup: typeof cleanup;
