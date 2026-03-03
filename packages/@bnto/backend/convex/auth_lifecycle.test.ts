@@ -230,14 +230,14 @@ describe("auth lifecycle (S1-S3)", () => {
       expect(user).toBeNull();
     });
 
-    it("listByWorkflow returns empty for unauthenticated user", async () => {
+    it("listByRecipe returns empty for unauthenticated user", async () => {
       const t = convexTest(schema, modules);
       const { userId } = await seedRealUser(t);
 
-      const workflowId = await t.run(async (ctx) => {
-        return ctx.db.insert("workflows", {
+      const recipeId = await t.run(async (ctx) => {
+        return ctx.db.insert("recipes", {
           userId,
-          name: "Test Workflow",
+          name: "Test Recipe",
           definition: { type: "group", nodes: [] },
           version: 1,
           isPublic: false,
@@ -247,21 +247,21 @@ describe("auth lifecycle (S1-S3)", () => {
       });
 
       // No identity — simulates unauthenticated state
-      const executions = await t.query(api.executions.listByWorkflow, {
-        workflowId,
+      const executions = await t.query(api.executions.listByRecipe, {
+        recipeId,
       });
 
       expect(executions).toEqual([]);
     });
 
-    it("listByWorkflow returns executions for the owning user", async () => {
+    it("listByRecipe returns executions for the owning user", async () => {
       const t = convexTest(schema, modules);
       const { userId, asUser } = await seedRealUser(t);
 
-      const workflowId = await t.run(async (ctx) => {
-        return ctx.db.insert("workflows", {
+      const recipeId = await t.run(async (ctx) => {
+        return ctx.db.insert("recipes", {
           userId,
-          name: "Test Workflow",
+          name: "Test Recipe",
           definition: { type: "group", nodes: [] },
           version: 1,
           isPublic: false,
@@ -273,7 +273,7 @@ describe("auth lifecycle (S1-S3)", () => {
       await t.run(async (ctx) => {
         await ctx.db.insert("executions", {
           userId,
-          workflowId,
+          recipeId,
           status: "completed",
           progress: [],
           startedAt: Date.now(),
@@ -281,12 +281,12 @@ describe("auth lifecycle (S1-S3)", () => {
         });
       });
 
-      const executions = await asUser.query(api.executions.listByWorkflow, {
-        workflowId,
+      const executions = await asUser.query(api.executions.listByRecipe, {
+        recipeId,
       });
 
       expect(executions).toHaveLength(1);
-      expect(executions[0].workflowId).toBe(workflowId);
+      expect(executions[0].recipeId).toBe(recipeId);
       expect(executions[0].userId).toBe(userId);
     });
   });

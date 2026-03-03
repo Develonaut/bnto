@@ -5,15 +5,15 @@ import { api, internal } from "./_generated/api";
 
 const modules = import.meta.glob("./**/*.ts");
 
-/** Create a minimal user + workflow for execution tests. */
-async function seedUserAndWorkflow(t: ReturnType<typeof convexTest>) {
+/** Create a minimal user + recipe for execution tests. */
+async function seedUserAndRecipe(t: ReturnType<typeof convexTest>) {
   return t.run(async (ctx) => {
     const userId = await ctx.db.insert("users", {
       email: "test@example.com",
       plan: "free",
       totalRuns: 0,
     });
-    const workflowId = await ctx.db.insert("workflows", {
+    const recipeId = await ctx.db.insert("recipes", {
       userId,
       name: "compress-images",
       definition: { type: "group", nodes: [] },
@@ -22,7 +22,7 @@ async function seedUserAndWorkflow(t: ReturnType<typeof convexTest>) {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
-    return { userId, workflowId };
+    return { userId, recipeId };
   });
 }
 
@@ -30,12 +30,12 @@ describe("executions", () => {
   describe("complete", () => {
     it("stores outputFiles when provided", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       const executionId = await t.run(async (ctx) => {
         return ctx.db.insert("executions", {
           userId,
-          workflowId,
+          recipeId,
           status: "running",
           progress: [],
           startedAt: Date.now(),
@@ -70,12 +70,12 @@ describe("executions", () => {
 
     it("completes without outputFiles", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       const executionId = await t.run(async (ctx) => {
         return ctx.db.insert("executions", {
           userId,
-          workflowId,
+          recipeId,
           status: "running",
           progress: [],
           startedAt: Date.now(),
@@ -97,12 +97,12 @@ describe("executions", () => {
 
     it("updates linked execution event with duration", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       const executionId = await t.run(async (ctx) => {
         return ctx.db.insert("executions", {
           userId,
-          workflowId,
+          recipeId,
           status: "running",
           progress: [],
           startedAt: Date.now(),
@@ -139,12 +139,12 @@ describe("executions", () => {
   describe("fail", () => {
     it("stores error message and updates event", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       const executionId = await t.run(async (ctx) => {
         return ctx.db.insert("executions", {
           userId,
-          workflowId,
+          recipeId,
           status: "running",
           progress: [],
           startedAt: Date.now(),
@@ -188,12 +188,12 @@ describe("executions", () => {
   describe("updateProgress", () => {
     it("updates status and progress array", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       const executionId = await t.run(async (ctx) => {
         return ctx.db.insert("executions", {
           userId,
-          workflowId,
+          recipeId,
           status: "pending",
           progress: [],
           startedAt: Date.now(),
@@ -225,13 +225,13 @@ describe("executions", () => {
   describe("sessionId support", () => {
     it("stores sessionId on execution when provided via complete flow", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       // Simulate what start mutation does with sessionId
       const executionId = await t.run(async (ctx) => {
         return ctx.db.insert("executions", {
           userId,
-          workflowId,
+          recipeId,
           status: "pending",
           progress: [],
           sessionId: "session-abc-123",
@@ -248,12 +248,12 @@ describe("executions", () => {
 
     it("allows execution without sessionId", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       const executionId = await t.run(async (ctx) => {
         return ctx.db.insert("executions", {
           userId,
-          workflowId,
+          recipeId,
           status: "pending",
           progress: [],
           startedAt: Date.now(),
@@ -269,7 +269,7 @@ describe("executions", () => {
 
     it("outputFiles schema accepts valid file metadata", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       const outputFiles = [
         {
@@ -289,7 +289,7 @@ describe("executions", () => {
       const executionId = await t.run(async (ctx) => {
         return ctx.db.insert("executions", {
           userId,
-          workflowId,
+          recipeId,
           status: "completed",
           progress: [],
           outputFiles,
@@ -328,19 +328,19 @@ describe("executions", () => {
 
     it("returns executions for the authenticated user in desc order", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       // Insert 3 executions in chronological order.
       // Convex orders by _creationTime (insertion order), so desc = newest first.
       await t.run(async (ctx) => {
         await ctx.db.insert("executions", {
-          userId, workflowId, status: "completed", progress: [], startedAt: 1000, completedAt: 1500,
+          userId, recipeId, status: "completed", progress: [], startedAt: 1000, completedAt: 1500,
         });
         await ctx.db.insert("executions", {
-          userId, workflowId, status: "failed", progress: [], startedAt: 2000, completedAt: 2200,
+          userId, recipeId, status: "failed", progress: [], startedAt: 2000, completedAt: 2200,
         });
         await ctx.db.insert("executions", {
-          userId, workflowId, status: "completed", progress: [], startedAt: 3000, completedAt: 3800,
+          userId, recipeId, status: "completed", progress: [], startedAt: 3000, completedAt: 3800,
         });
       });
 
@@ -358,7 +358,7 @@ describe("executions", () => {
 
     it("excludes executions from other users", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       const otherUserId = await t.run(async (ctx) => {
         return ctx.db.insert("users", {
@@ -370,10 +370,10 @@ describe("executions", () => {
 
       await t.run(async (ctx) => {
         await ctx.db.insert("executions", {
-          userId, workflowId, status: "completed", progress: [], startedAt: 1000,
+          userId, recipeId, status: "completed", progress: [], startedAt: 1000,
         });
         await ctx.db.insert("executions", {
-          userId: otherUserId, workflowId, status: "completed", progress: [], startedAt: 2000,
+          userId: otherUserId, recipeId, status: "completed", progress: [], startedAt: 2000,
         });
       });
 
@@ -388,13 +388,13 @@ describe("executions", () => {
 
     it("paginates results correctly", async () => {
       const t = convexTest(schema, modules);
-      const { userId, workflowId } = await seedUserAndWorkflow(t);
+      const { userId, recipeId } = await seedUserAndRecipe(t);
 
       // Insert 5 executions
       await t.run(async (ctx) => {
         for (let i = 1; i <= 5; i++) {
           await ctx.db.insert("executions", {
-            userId, workflowId, status: "completed", progress: [], startedAt: i * 1000,
+            userId, recipeId, status: "completed", progress: [], startedAt: i * 1000,
           });
         }
       });

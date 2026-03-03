@@ -28,7 +28,7 @@ import type * as executions from "../executions.js";
 import type * as http from "../http.js";
 import type * as uploads from "../uploads.js";
 import type * as users from "../users.js";
-import type * as workflows from "../workflows.js";
+import type * as recipes from "../recipes.js";
 
 import type {
   ApiFromModules,
@@ -57,7 +57,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   uploads: typeof uploads;
   users: typeof users;
-  workflows: typeof workflows;
+  recipes: typeof recipes;
 }>;
 
 /**

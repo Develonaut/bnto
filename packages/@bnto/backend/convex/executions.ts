@@ -8,10 +8,10 @@ import { startExecution } from "./_helpers/start_execution";
 /** Delay before deleting output files from R2 (2 hours). */
 const R2_OUTPUT_CLEANUP_DELAY_MS = 2 * 60 * 60 * 1000;
 
-/** Start a workflow execution. Checks run limits and schedules the action. */
+/** Start a recipe execution. Checks run limits and schedules the action. */
 export const start = mutation({
   args: {
-    workflowId: v.id("workflows"),
+    recipeId: v.id("recipes"),
     slug: v.optional(v.string()),
     sessionId: v.optional(v.string()),
   },
@@ -19,21 +19,21 @@ export const start = mutation({
     const userId = await getAppUserId(ctx);
     if (userId === null) throw new ConvexError("Not authenticated");
 
-    const workflow = await ctx.db.get(args.workflowId);
-    if (workflow === null || workflow.userId !== userId) {
-      throw new ConvexError("Workflow not found");
+    const recipe = await ctx.db.get(args.recipeId);
+    if (recipe === null || recipe.userId !== userId) {
+      throw new ConvexError("Recipe not found");
     }
 
     return startExecution(ctx, {
-      slug: args.slug ?? workflow.name,
-      definition: workflow.definition,
-      workflowId: args.workflowId,
+      slug: args.slug ?? recipe.name,
+      definition: recipe.definition,
+      recipeId: args.recipeId,
       sessionId: args.sessionId,
     });
   },
 });
 
-/** Start a predefined bnto execution. No stored workflow required. */
+/** Start a predefined bnto execution. No stored recipe required. */
 export const startPredefined = mutation({
   args: {
     slug: v.string(),
@@ -61,15 +61,15 @@ export const get = query({
   },
 });
 
-/** List executions for a workflow. */
-export const listByWorkflow = query({
-  args: { workflowId: v.id("workflows") },
+/** List executions for a recipe. */
+export const listByRecipe = query({
+  args: { recipeId: v.id("recipes") },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
     if (userId === null) return [];
     return ctx.db
       .query("executions")
-      .withIndex("by_workflow", (q) => q.eq("workflowId", args.workflowId))
+      .withIndex("by_recipe", (q) => q.eq("recipeId", args.recipeId))
       .filter((q) => q.eq(q.field("userId"), userId))
       .order("desc")
       .take(50);
