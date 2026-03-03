@@ -19,7 +19,7 @@ import type {
   ProgressResponse,
   ResultResponse,
   ErrorResponse,
-} from "./types";
+} from "./workerProtocol";
 
 /** Callback for progress updates during file processing. */
 export type ProgressCallback = (percent: number, message: string) => void;

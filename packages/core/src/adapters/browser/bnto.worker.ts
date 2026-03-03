@@ -18,7 +18,7 @@ import type {
   ResultResponse,
   ErrorResponse,
   WorkerErrorResponse,
-} from "./types";
+} from "./workerProtocol";
 
 /**
  * Signature for a combined WASM node function.

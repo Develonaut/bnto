@@ -5,5 +5,5 @@ import { core } from "../core";
 
 /** Lifetime usage analytics: plan, total runs, last activity. */
 export function useUsageAnalytics() {
-  return useQuery(core.analytics.analyticsQueryOptions());
+  return useQuery(core.user.usageQueryOptions());
 }

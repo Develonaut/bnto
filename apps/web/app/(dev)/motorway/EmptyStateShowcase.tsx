@@ -1,4 +1,4 @@
-import { FolderOpen, Inbox, Plus, Search, Workflow } from "lucide-react";
+import { BookOpen, FolderOpen, Inbox, Plus, Search } from "lucide-react";
 
 import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
@@ -64,16 +64,16 @@ export function EmptyStateShowcase() {
                   <Card.Content>
                     <EmptyState>
                       <EmptyState.Icon>
-                        <Workflow />
+                        <BookOpen />
                       </EmptyState.Icon>
-                      <EmptyState.Title>No workflows yet</EmptyState.Title>
+                      <EmptyState.Title>No recipes yet</EmptyState.Title>
                       <EmptyState.Description>
-                        Create your first workflow to automate repetitive tasks.
+                        Create your first recipe to automate repetitive tasks.
                       </EmptyState.Description>
                       <EmptyState.Action>
                         <Button>
                           <Plus className="size-4" />
-                          New Workflow
+                          New Recipe
                         </Button>
                       </EmptyState.Action>
                     </EmptyState>

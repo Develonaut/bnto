@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { core } from "../core";
 import type { StartPredefinedInput } from "../types";
 
-/** Start a predefined bnto execution (no stored workflow needed). */
+/** Start a predefined bnto execution (no stored recipe needed). */
 export function useRunPredefined() {
   return useMutation({
     mutationFn: (input: StartPredefinedInput) =>

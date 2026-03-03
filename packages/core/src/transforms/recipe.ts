@@ -1,10 +1,10 @@
 import type {
-  RawWorkflowDoc,
-  RawWorkflowListProjection,
+  RawRecipeDoc,
+  RawRecipeListProjection,
 } from "../types/raw";
-import type { Workflow, WorkflowListItem } from "../types";
+import type { Recipe, RecipeListItem } from "../types";
 
-export function toWorkflow(doc: RawWorkflowDoc): Workflow {
+export function toRecipe(doc: RawRecipeDoc): Recipe {
   return {
     id: String(doc._id),
     userId: String(doc.userId),
@@ -17,7 +17,7 @@ export function toWorkflow(doc: RawWorkflowDoc): Workflow {
   };
 }
 
-export function toWorkflowListItem(doc: RawWorkflowListProjection): WorkflowListItem {
+export function toRecipeListItem(doc: RawRecipeListProjection): RecipeListItem {
   return {
     id: String(doc._id),
     name: doc.name,

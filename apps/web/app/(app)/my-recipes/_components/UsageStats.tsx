@@ -18,7 +18,7 @@ import { formatTimeAgo } from "@/lib/formatTimeAgo";
  * the same padding, flex-1, elevation) so content paints in without shift.
  */
 export function UsageStats() {
-  const { data, isLoading } = core.analytics.useUsageAnalytics();
+  const { data, isLoading } = core.user.useUsageAnalytics();
   const showSkeleton = useDelayedLoading(isLoading || !data);
 
   if (showSkeleton) return <UsageStatsSkeleton />;

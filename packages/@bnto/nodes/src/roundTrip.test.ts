@@ -10,7 +10,7 @@ import { isValid } from "./definitionResult";
 import { validateDefinition } from "./validate";
 import { compressImages } from "./recipes";
 
-describe("round-trip: full editor workflow", () => {
+describe("round-trip: full editor lifecycle", () => {
   it("create → add → configure → move → export", () => {
     // 1. Start with a blank canvas
     const blank = createBlankDefinition();

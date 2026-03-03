@@ -23,9 +23,9 @@ export function createExecutionService() {
     });
   }
 
-  function invalidateExecutions(workflowId: string) {
+  function invalidateExecutions(recipeId: string) {
     getQueryClient().invalidateQueries({
-      queryKey: getExecutionsQuery(workflowId).queryKey,
+      queryKey: getExecutionsQuery(recipeId).queryKey,
     });
   }
 
@@ -40,8 +40,8 @@ export function createExecutionService() {
         data ? toExecution(data as RawExecutionDoc) : null,
     }),
 
-    listQueryOptions: (workflowId: string) => ({
-      ...getExecutionsQuery(workflowId),
+    listQueryOptions: (recipeId: string) => ({
+      ...getExecutionsQuery(recipeId),
       select: (data: unknown) =>
         (data as RawExecutionDoc[]).map(toExecution),
     }),

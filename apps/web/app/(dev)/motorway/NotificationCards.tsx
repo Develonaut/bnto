@@ -11,7 +11,7 @@ export function NotificationCards() {
         </div>
         <div className="flex-1">
           <Text size="sm" weight="semibold" as="span">
-            Workflow completed
+            Recipe completed
           </Text>
           <Text size="xs" color="muted">
             compress-images finished in 2.4s

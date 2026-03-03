@@ -1,10 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-// Pragmatic exception: useAuthActions must bind directly to the Convex auth
-// provider to call signOut(). This is auth-infrastructure that manages the
-// session lifecycle — it cannot be abstracted through adapters.
-import { useAuthActions } from "@convex-dev/auth/react";
+import { useSignOut as useAuthSignOut } from "@bnto/auth";
 import { core } from "../core";
 
 /**
@@ -16,10 +13,10 @@ import { core } from "../core";
  * The caller is responsible for navigation (e.g., `router.replace("/signin")`).
  */
 export function useSignOut() {
-  const { signOut } = useAuthActions();
+  const authSignOut = useAuthSignOut();
 
   return useCallback(() => {
     core.auth.signOutSideEffects();
-    void signOut();
-  }, [signOut]);
+    void authSignOut();
+  }, [authSignOut]);
 }

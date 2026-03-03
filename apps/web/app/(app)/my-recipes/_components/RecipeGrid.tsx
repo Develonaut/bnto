@@ -11,15 +11,15 @@ import { RecipeCard } from "@/components/blocks/RecipeCard";
 import { FolderOpenIcon } from "@/components/ui/icons";
 
 /**
- * Saved workflows grid — self-fetching.
- * Shows RecipeCards for saved workflows, or an EmptyState when empty.
+ * Saved recipes grid — self-fetching.
+ * Shows RecipeCards for saved recipes, or an EmptyState when empty.
  *
  * Loading state uses Card loading={true} with skeleton content inside,
  * so the card surface springs up when data arrives. Skeleton content
  * mirrors the loaded layout: icon + title + meta.
  */
-export function WorkflowGrid() {
-  const { data: workflows, isLoading } = core.workflows.useWorkflows();
+export function RecipeGrid() {
+  const { data: recipes, isLoading } = core.recipes.useRecipes();
   const showSkeleton = useDelayedLoading(isLoading);
 
   if (showSkeleton) {
@@ -43,14 +43,14 @@ export function WorkflowGrid() {
   }
   if (isLoading) return null;
 
-  if (!workflows || workflows.length === 0) {
+  if (!recipes || recipes.length === 0) {
     return (
       <div className="min-h-[240px]">
         <EmptyState size="md">
           <EmptyState.Icon>
             <FolderOpenIcon />
           </EmptyState.Icon>
-          <EmptyState.Title>No saved workflows yet</EmptyState.Title>
+          <EmptyState.Title>No saved recipes yet</EmptyState.Title>
           <EmptyState.Description>
             Run a recipe and save it to see it here.
           </EmptyState.Description>
@@ -62,17 +62,17 @@ export function WorkflowGrid() {
   return (
     <Animate.BouncyStagger asChild from={0.85}>
       <Grid cols={{ mobile: 1, tablet: 2, desktop: 3 }} gap="md">
-        {workflows.map((workflow) => (
-          <Grid.Item key={workflow.id}>
+        {recipes.map((recipe) => (
+          <Grid.Item key={recipe.id}>
             <RecipeCard>
               <RecipeCard.Header>
                 <RecipeCard.Icon />
               </RecipeCard.Header>
               <RecipeCard.Content>
-                <RecipeCard.Title>{workflow.name}</RecipeCard.Title>
+                <RecipeCard.Title>{recipe.name}</RecipeCard.Title>
                 <RecipeCard.Meta
-                  nodeCount={workflow.nodeCount}
-                  updatedAt={workflow.updatedAt}
+                  nodeCount={recipe.nodeCount}
+                  updatedAt={recipe.updatedAt}
                 />
               </RecipeCard.Content>
             </RecipeCard>

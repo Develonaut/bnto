@@ -3,13 +3,13 @@ import type {
   BrowserExecution,
   BrowserFileProgressInput,
   BrowserFileResult,
-} from "../types/wasm";
+} from "../types/browser";
 
 // ---------------------------------------------------------------------------
 // State shape
 // ---------------------------------------------------------------------------
 
-interface WasmExecutionState extends BrowserExecution {
+interface ExecutionInstanceState extends BrowserExecution {
   /** Transition to processing. Clears prior error/results. */
   start: (id: string, startedAt: number) => void;
   /** Update per-file progress. Computes overallPercent and enforces monotonic guard. */
@@ -37,8 +37,8 @@ const INITIAL_STATE: BrowserExecution = {
 // Store factory
 // ---------------------------------------------------------------------------
 
-export function createWasmExecutionStore() {
-  return createStore<WasmExecutionState>()((set) => ({
+export function createExecutionInstanceStore() {
+  return createStore<ExecutionInstanceState>()((set) => ({
     ...INITIAL_STATE,
 
     start: (id, startedAt) =>
@@ -105,4 +105,4 @@ export function createWasmExecutionStore() {
   }));
 }
 
-export type { WasmExecutionState };
+export type { ExecutionInstanceState };

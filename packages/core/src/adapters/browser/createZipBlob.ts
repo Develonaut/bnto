@@ -8,7 +8,7 @@
  */
 
 import { zipSync } from "fflate";
-import type { BrowserFileResult } from "../../types/wasm";
+import type { BrowserFileResult } from "../../types/browser";
 
 /**
  * Bundle multiple file results into a single ZIP blob.

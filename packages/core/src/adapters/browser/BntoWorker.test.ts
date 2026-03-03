@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BntoWorker } from "../BntoWorker";
-import type { WorkerResponse } from "../types";
+import { BntoWorker } from "./BntoWorker";
+import type { WorkerResponse } from "./workerProtocol";
 
 // ---------------------------------------------------------------------------
 // Mock Worker
@@ -35,15 +35,12 @@ let mockWorkerInstance: MockWorker;
 
 beforeEach(() => {
   // Use a class so `new Worker(...)` works correctly.
-  vi.stubGlobal(
-    "Worker",
-    class {
-      constructor() {
-        mockWorkerInstance = new MockWorker();
-        return mockWorkerInstance as unknown;
-      }
-    },
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mock Worker constructor
+  vi.stubGlobal("Worker", function (this: any) {
+    mockWorkerInstance = new MockWorker();
+    Object.assign(this, mockWorkerInstance);
+    return mockWorkerInstance;
+  } as any);
 });
 
 afterEach(() => {

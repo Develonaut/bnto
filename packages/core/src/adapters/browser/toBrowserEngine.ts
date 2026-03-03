@@ -32,14 +32,14 @@
  *      boundary is in the right place
  */
 
-import type { BrowserEngine } from "@bnto/core";
+import type { BrowserEngine } from "../../types/browser";
 import type { BntoWorker } from "./BntoWorker";
 
 /**
  * Wrap a BntoWorker instance as a BrowserEngine.
  *
  * The returned object satisfies the BrowserEngine interface from @bnto/core,
- * making the worker usable with core.wasm.registerEngine().
+ * making the worker usable as the browser execution engine.
  *
  * @param worker - The BntoWorker instance to adapt
  * @returns A BrowserEngine-compatible object that delegates to the worker

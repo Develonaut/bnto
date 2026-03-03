@@ -6,20 +6,21 @@
  * Merges imperative clients from core.ts with React hooks for the final
  * public API. Consumers import `core` from this module (via index.ts).
  *
+ * 5 domains: recipes, executions, user, auth, telemetry.
+ *
  * Usage:
  *   import { core } from "@bnto/core";
  *   const { isAuthenticated, user } = core.auth.useAuth();
- *   core.auth.signOutSideEffects();
  */
 
 import { core as baseCore } from "./core";
 
-// Workflow hooks
-import { useWorkflows } from "./hooks/useWorkflows";
-import { useWorkflow } from "./hooks/useWorkflow";
-import { useSaveWorkflow } from "./hooks/useSaveWorkflow";
-import { useRemoveWorkflow } from "./hooks/useRemoveWorkflow";
-import { useRunWorkflow } from "./hooks/useRunWorkflow";
+// Recipe hooks
+import { useRecipes } from "./hooks/useRecipes";
+import { useRecipe } from "./hooks/useRecipe";
+import { useSaveRecipe } from "./hooks/useSaveRecipe";
+import { useRemoveRecipe } from "./hooks/useRemoveRecipe";
+import { useRunRecipe } from "./hooks/useRunRecipe";
 
 // Execution hooks
 import { useExecution } from "./hooks/useExecution";
@@ -27,44 +28,36 @@ import { useExecutions } from "./hooks/useExecutions";
 import { useExecutionHistory } from "./hooks/useExecutionHistory";
 import { useExecutionLogs } from "./hooks/useExecutionLogs";
 import { useRunPredefined } from "./hooks/useRunPredefined";
-
-// Analytics hooks
-import { useUsageAnalytics } from "./hooks/useUsageAnalytics";
-import { useSlugAggregates } from "./hooks/useSlugAggregates";
-
-// Upload hooks
-import { useUploadFiles } from "./hooks/useUploadFiles";
-
-// Download hooks
-import { useDownloadFiles } from "./hooks/useDownloadFiles";
+import { useExecutionState } from "./hooks/useExecutionState";
 
 // User hooks
 import { useCurrentUser } from "./hooks/useCurrentUser";
 
-// Session hooks (context-based, no service/adapter)
+// User hooks (analytics)
+import { useUsageAnalytics } from "./hooks/useUsageAnalytics";
+import { useSlugAggregates } from "./hooks/useSlugAggregates";
+
+// Auth hooks
 import { useReady } from "./hooks/useReady";
 import { useIsAuthenticated } from "./hooks/useIsAuthenticated";
 import { useSessionStatus } from "./hooks/useSessionStatus";
-
-// Auth hooks
 import { useAuth } from "./hooks/useAuth";
 import { useSignOut } from "./hooks/useSignOut";
-
-// WASM execution hooks
-import { useWasmExecution } from "./hooks/useWasmExecution";
-
-// Auth hooks
 import { useSignIn } from "@bnto/auth";
 import { useSignUp } from "./hooks/useSignUp";
 
+// Upload/Download hooks
+import { useUploadFiles } from "./hooks/useUploadFiles";
+import { useDownloadFiles } from "./hooks/useDownloadFiles";
+
 export const core = {
-  workflows: {
-    ...baseCore.workflows,
-    useWorkflows,
-    useWorkflow,
-    useSaveWorkflow,
-    useRemoveWorkflow,
-    useRunWorkflow,
+  recipes: {
+    ...baseCore.recipes,
+    useRecipes,
+    useRecipe,
+    useSaveRecipe,
+    useRemoveRecipe,
+    useRunRecipe,
   },
 
   executions: {
@@ -74,53 +67,41 @@ export const core = {
     useExecutionHistory,
     useExecutionLogs,
     useRunPredefined,
-  },
-
-  uploads: {
-    ...baseCore.uploads,
-    useUploadFiles,
-  },
-
-  downloads: {
-    ...baseCore.downloads,
-    useDownloadFiles,
+    useExecutionState,
   },
 
   user: {
     ...baseCore.user,
     useCurrentUser,
-  },
-
-  analytics: {
-    ...baseCore.analytics,
     useUsageAnalytics,
     useSlugAggregates,
   },
 
-  session: {
+  auth: {
     useReady,
     useIsAuthenticated,
     useSessionStatus,
-  },
-
-  auth: {
-    ...baseCore.auth,
     useAuth,
     useSignIn,
     useSignUp,
     useSignOut,
   },
 
-  wasm: {
-    ...baseCore.wasm,
-    useWasmExecution,
-  },
-
-  recipe: {
-    ...baseCore.recipe,
-  },
-
   telemetry: {
     ...baseCore.telemetry,
+  },
+
+  // ── Internal (not public API, kept for consumer migration) ─────────
+  /** @internal Cloud uploads — will be absorbed into executions for M4. */
+  uploads: {
+    useUploadFiles,
+    generateUrls: baseCore.uploads.generateUrls,
+    uploadFiles: baseCore.uploads.uploadFiles,
+  },
+  /** @internal Cloud downloads — will be absorbed into executions for M4. */
+  downloads: {
+    useDownloadFiles,
+    getDownloadUrls: baseCore.downloads.getDownloadUrls,
+    downloadFile: baseCore.downloads.downloadFile,
   },
 } as const;

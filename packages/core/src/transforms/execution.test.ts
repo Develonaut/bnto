@@ -6,7 +6,7 @@ describe("toExecution", () => {
     _id: "exec_123" as never,
     _creationTime: 1000,
     userId: "user_456" as never,
-    workflowId: "wf_789" as never,
+    recipeId: "wf_789" as never,
     status: "running" as const,
     progress: [{ nodeId: "node-1", status: "completed" }],
     startedAt: 1000,
@@ -18,7 +18,7 @@ describe("toExecution", () => {
     expect(result).toEqual({
       id: "exec_123",
       userId: "user_456",
-      workflowId: "wf_789",
+      recipeId: "wf_789",
       status: "running",
       progress: [{ nodeId: "node-1", status: "completed" }],
       result: undefined,

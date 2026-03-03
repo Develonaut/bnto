@@ -10,7 +10,7 @@
  * Zero runtime dependencies. Pure TypeScript types and constants.
  */
 
-// Workflow definition types (mirrors Go engine/pkg/node/)
+// Recipe definition types (mirrors Go engine/pkg/node/)
 export type {
   Definition,
   Position,
@@ -54,9 +54,8 @@ export {
   resizeImages,
 } from "./recipes";
 
-// Workflow validation
+// Definition validation
 export {
-  validateWorkflow,
   validateDefinition,
   validateEdges,
 } from "./validate";

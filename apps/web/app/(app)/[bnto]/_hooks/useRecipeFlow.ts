@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { core } from "@bnto/core";
+import { core, createRecipeFlowStore } from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { getRecipe } from "@/lib/menu";
@@ -11,7 +11,6 @@ import type { BntoConfigMap, BntoSlug } from "../_components/configs/types";
 import { DEFAULT_CONFIGS } from "../_components/configs/types";
 import type { RunPhase } from "../_components/RunButton";
 import { toBrowserPhase, toCloudPhase } from "../_components/phaseMapping";
-import { useBrowserEngine } from "@/lib/wasm/useBrowserEngine";
 
 /**
  * Manages the full recipe page lifecycle — files, config, execution, results.
@@ -27,7 +26,7 @@ import { useBrowserEngine } from "@/lib/wasm/useBrowserEngine";
 export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   // -- Page-scoped store (created once per mount via lazy init) --
   const [store] = useState(() =>
-    core.recipe.createStore(
+    createRecipeFlowStore(
       (DEFAULT_CONFIGS[entry.slug as BntoSlug] ?? {}) as Record<string, unknown>,
     ),
   );
@@ -46,24 +45,11 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   const { data: currentUser } = core.user.useCurrentUser();
 
   // -- Execution path: browser (WASM) vs cloud (R2 + Go API) --
-  const isBrowserPath = core.wasm.hasImplementation(entry.slug);
-  useBrowserEngine(isBrowserPath);
+  const isBrowserPath = core.executions.hasImplementation(entry.slug);
 
   // -- Per-instance browser execution (isolated store per page mount) --
-  const [browserInstance] = useState(() => core.wasm.createExecution());
-
-  const browserExec = useStore(
-    browserInstance.store,
-    useShallow((s) => ({
-      id: s.id,
-      status: s.status,
-      fileProgress: s.fileProgress,
-      results: s.results,
-      error: s.error,
-      startedAt: s.startedAt,
-      completedAt: s.completedAt,
-    })),
-  );
+  const [browserInstance] = useState(() => core.executions.createExecution());
+  const browserExec = core.executions.useExecutionState(browserInstance);
 
   // -- Cloud execution --
   const { progress: uploadProgress, upload, reset: resetUpload } =
@@ -100,17 +86,16 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   );
 
   const downloadResult = useCallback((result: BrowserFileResult) => {
-    core.wasm.downloadResult(result);
+    core.executions.downloadResult(result);
   }, []);
 
   const handleDownloadAll = useCallback(() => {
-    const results = browserInstance.store.getState().results;
-    core.wasm.downloadAllResults(results, entry.slug);
+    core.executions.downloadAllResults(browserExec.results, entry.slug);
     core.telemetry.capture("result_downloaded", {
       slug: entry.slug,
-      fileCount: results.length,
+      fileCount: browserExec.results.length,
     });
-  }, [browserInstance, entry.slug]);
+  }, [browserExec.results, entry.slug]);
 
   const handleRun = useCallback(async () => {
     if (files.length === 0) return;
@@ -143,7 +128,7 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
           outputFileCount: result.results.length,
           outputBytes,
         });
-        await core.wasm.downloadAllResults(result.results, entry.slug);
+        await core.executions.downloadAllResults(result.results, entry.slug);
       } else if (result.status === "failed") {
         core.telemetry.capture("recipe_run_failed", {
           ...runProps,

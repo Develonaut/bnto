@@ -5,7 +5,7 @@
  *
  * Column mapping requires array-level transform support in the engine,
  * which isn't available yet (see PLAN.md backlog). For now, this renders
- * an informational message explaining the workflow's current behavior.
+ * an informational message explaining the recipe's current behavior.
  */
 export function RenameCsvColumnsConfig() {
   return (

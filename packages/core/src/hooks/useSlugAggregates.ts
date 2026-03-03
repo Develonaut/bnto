@@ -5,5 +5,5 @@ import { core } from "../core";
 
 /** Per-slug aggregate stats: most-used bntos, completion rates, duration. */
 export function useSlugAggregates() {
-  return useQuery(core.analytics.slugAggregatesQueryOptions());
+  return useQuery(core.user.slugAggregatesQueryOptions());
 }

@@ -24,10 +24,10 @@ export default defineSchema({
     lastRunAt: v.optional(v.number()), // timestamp of most recent run
   }).index("email", ["email"]),
 
-  workflows: defineTable({
+  recipes: defineTable({
     userId: v.id("users"),
     name: v.string(),
-    // WorkflowDefinition JSON — validated by Go engine, stored opaquely here
+    // RecipeDefinition JSON — validated by engine, stored opaquely here
     definition: v.any(),
     version: v.number(),
     isPublic: v.boolean(),
@@ -39,7 +39,7 @@ export default defineSchema({
 
   executions: defineTable({
     userId: v.id("users"),
-    workflowId: v.optional(v.id("workflows")),
+    recipeId: v.optional(v.id("recipes")),
     status: v.union(
       v.literal("pending"),
       v.literal("running"),
@@ -69,7 +69,7 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
-    .index("by_workflow", ["workflowId"])
+    .index("by_recipe", ["recipeId"])
     .index("by_status_startedAt", ["status", "startedAt"]),
 
   executionLogs: defineTable({

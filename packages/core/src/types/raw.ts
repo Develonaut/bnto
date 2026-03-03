@@ -6,25 +6,25 @@
 // Only adapters know about Convex — transforms just accept plain objects.
 // ---------------------------------------------------------------------------
 
-import type { WorkflowDefinition } from "./workflow";
+import type { RecipeDefinition } from "./recipe";
 import type { NodeProgress, OutputFile, RunResult } from "./execution";
 
-// ── Workflow ────────────────────────────────────────────────────────────────
+// ── Recipe ─────────────────────────────────────────────────────────────────
 
-/** Raw workflow document as returned by the Convex adapter. */
-export interface RawWorkflowDoc {
+/** Raw recipe document as returned by the Convex adapter. */
+export interface RawRecipeDoc {
   _id: string;
   userId: string;
   name: string;
-  definition: WorkflowDefinition;
+  definition: RecipeDefinition;
   version: number;
   isPublic: boolean;
   createdAt: number;
   updatedAt: number;
 }
 
-/** Projected workflow fields returned by list queries. */
-export interface RawWorkflowListProjection {
+/** Projected recipe fields returned by list queries. */
+export interface RawRecipeListProjection {
   _id: string;
   name: string;
   nodeCount: number;
@@ -37,7 +37,7 @@ export interface RawWorkflowListProjection {
 export interface RawExecutionDoc {
   _id: string;
   userId: string;
-  workflowId?: string | null;
+  recipeId?: string | null;
   status: "pending" | "running" | "completed" | "failed";
   progress: NodeProgress[];
   result?: RunResult | null;
@@ -87,4 +87,3 @@ export interface RawSlugAggregateDoc {
   avgDurationMs: number | null;
   lastRunAt: number;
 }
-

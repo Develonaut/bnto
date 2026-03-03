@@ -9,28 +9,28 @@ import { getConvexClient } from "../../client";
 // Queries
 // ---------------------------------------------------------------------------
 
-export function getWorkflowsQuery() {
-  return convexQuery(api.workflows.list, {});
+export function getRecipesQuery() {
+  return convexQuery(api.recipes.list, {});
 }
 
-export function getWorkflowQuery(id: string) {
-  return convexQuery(api.workflows.get, id ? { id: id as Id<"workflows"> } : "skip");
+export function getRecipeQuery(id: string) {
+  return convexQuery(api.recipes.get, id ? { id: id as Id<"recipes"> } : "skip");
 }
 
 // ---------------------------------------------------------------------------
 // Mutations (imperative — no React hooks)
 // ---------------------------------------------------------------------------
 
-export function saveWorkflow(args: {
+export function saveRecipe(args: {
   name: string;
   definition: unknown;
   isPublic?: boolean;
 }) {
-  return getConvexClient().mutation(api.workflows.save, args);
+  return getConvexClient().mutation(api.recipes.save, args);
 }
 
-export function removeWorkflow(id: string) {
-  return getConvexClient().mutation(api.workflows.remove, {
-    id: id as Id<"workflows">,
+export function removeRecipe(id: string) {
+  return getConvexClient().mutation(api.recipes.remove, {
+    id: id as Id<"recipes">,
   });
 }

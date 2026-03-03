@@ -6,7 +6,7 @@ import { ConvexError } from "convex/values";
 
 /**
  * Shared logic for starting an execution — used by both `start` (stored
- * workflow) and `startPredefined` (inline definition) mutations.
+ * recipe) and `startPredefined` (inline definition) mutations.
  *
  * Steps: auth check -> user lookup -> run counter increment -> execution
  * insert -> event insert -> schedule action.
@@ -16,7 +16,7 @@ export async function startExecution(
   args: {
     slug: string;
     definition: unknown;
-    workflowId?: Id<"workflows">;
+    recipeId?: Id<"recipes">;
     sessionId?: string;
   },
 ) {
@@ -34,7 +34,7 @@ export async function startExecution(
 
   const executionId = await ctx.db.insert("executions", {
     userId,
-    workflowId: args.workflowId,
+    recipeId: args.recipeId,
     status: "pending",
     progress: [],
     sessionId: args.sessionId,

@@ -1,5 +1,5 @@
 /**
- * Workflow validation — ported from Go engine/pkg/validator/omakase.go.
+ * Definition validation — ported from Go engine/pkg/validator/omakase.go.
  *
  * Pure functions that validate `.bnto.json` definitions structurally.
  * Returns arrays of errors (never throws) so the UI can display all issues.
@@ -152,15 +152,3 @@ export function validateDefinition(def: Definition): ValidationError[] {
   return errors;
 }
 
-/**
- * Validates an entire workflow definition tree.
- *
- * This is a convenience alias for `validateDefinition` -- both functions
- * are identical. Prefer `validateDefinition` for new code. This alias
- * is kept for backward compatibility.
- *
- * @deprecated Use `validateDefinition` directly.
- */
-export function validateWorkflow(def: Definition): ValidationError[] {
-  return validateDefinition(def);
-}

@@ -9,16 +9,16 @@ export { TelemetryProvider } from "./providers/TelemetryProvider";
 
 // ── Types (transport-agnostic) ────────────────────────────────────────────
 export type {
-  Workflow,
-  WorkflowListItem,
-  SaveWorkflowInput,
-  WorkflowDefinition,
+  Recipe,
+  RecipeListItem,
+  SaveRecipeInput,
+  RecipeDefinition,
   Position,
   Metadata,
   Port,
   Edge,
   FieldsConfig,
-  WorkflowSummary,
+  RecipeSummary,
   ValidationResult,
   RunResponse,
   Execution,
@@ -42,7 +42,7 @@ export type {
   BrowserFileResult,
   BrowserExecution,
   BrowserFileProgress,
-  WasmRunResult,
+  BrowserRunResult,
   RunPhase,
   RecipeFlow,
   TelemetryConfig,
@@ -55,7 +55,11 @@ export type { AuthUser, AuthState, AuthStatus } from "./types/auth";
 
 // ── Store types (for consumer selectors) ──────────────────────────────────
 export type { RecipeFlowState } from "./stores/recipeFlowStore";
-export type { WasmExecutionState } from "./stores/wasmExecutionStore";
+export type { ExecutionInstanceState } from "./stores/executionInstanceStore";
 
 // ── Service types (for instance consumers) ────────────────────────────────
-export type { WasmExecutionInstance } from "./services/wasmExecutionService";
+export type { ExecutionInstance } from "./services/executionInstance";
+export type { ExecutionState } from "./hooks/useExecutionState";
+
+// ── Store factories (for app-layer orchestration) ─────────────────────────
+export { createRecipeFlowStore } from "./stores/recipeFlowStore";

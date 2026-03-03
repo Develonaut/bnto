@@ -1,39 +1,39 @@
 // ---------------------------------------------------------------------------
-// Workflow types (transport-agnostic — no Convex imports)
+// Recipe types (transport-agnostic — no Convex imports)
 // ---------------------------------------------------------------------------
 
-/** Full workflow as returned by detail queries. */
-export interface Workflow {
+/** Full recipe as returned by detail queries. */
+export interface Recipe {
   id: string;
   userId: string;
   name: string;
-  definition: WorkflowDefinition;
+  definition: RecipeDefinition;
   version: number;
   isPublic: boolean;
   createdAt: number;
   updatedAt: number;
 }
 
-/** Projected workflow for list views. */
-export interface WorkflowListItem {
+/** Projected recipe for list views. */
+export interface RecipeListItem {
   id: string;
   name: string;
   nodeCount: number;
   updatedAt: number;
 }
 
-/** Input for creating or updating a workflow. */
-export interface SaveWorkflowInput {
+/** Input for creating or updating a recipe. */
+export interface SaveRecipeInput {
   name: string;
-  definition: WorkflowDefinition;
+  definition: RecipeDefinition;
   isPublic?: boolean;
 }
 
 // ---------------------------------------------------------------------------
-// Workflow definition types (matches Go node.Definition JSON)
+// Recipe definition types (matches Go node.Definition JSON)
 // ---------------------------------------------------------------------------
 
-export interface WorkflowDefinition {
+export interface RecipeDefinition {
   id: string;
   type: string;
   version: string;
@@ -45,7 +45,7 @@ export interface WorkflowDefinition {
   fields?: FieldsConfig;
   inputPorts: Port[];
   outputPorts: Port[];
-  nodes?: WorkflowDefinition[];
+  nodes?: RecipeDefinition[];
   edges?: Edge[];
 }
 
@@ -84,7 +84,7 @@ export interface FieldsConfig {
 // API response types (matches Go JSON responses)
 // ---------------------------------------------------------------------------
 
-export interface WorkflowSummary {
+export interface RecipeSummary {
   name: string;
   nodeCount: number;
 }
