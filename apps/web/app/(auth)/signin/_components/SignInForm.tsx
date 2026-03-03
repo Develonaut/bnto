@@ -45,6 +45,12 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Pre-fill email from localStorage for returning users
+  useEffect(() => {
+    const remembered = localStorage.getItem("bnto-email");
+    if (remembered) setEmail(remembered);
+  }, []);
+
   const isSignUp = mode === "signup";
 
   function toggleMode() {
@@ -64,6 +70,7 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
         await signInEmail({ email, password });
       }
       setHasAccountCookie();
+      localStorage.setItem("bnto-email", email);
       router.replace("/");
     } catch {
       setError(
@@ -102,14 +109,19 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
               <form onSubmit={handleSubmit} className="grid gap-4">
                 {isSignUp && (
                   <Input
+                    id="name"
+                    name="name"
                     type="text"
                     placeholder="Your name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
+                    autoComplete="name"
                   />
                 )}
                 <Input
+                  id="email"
+                  name="email"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
@@ -118,6 +130,8 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
                   autoComplete="email"
                 />
                 <PasswordInput
+                  id="password"
+                  name="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
