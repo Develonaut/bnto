@@ -2,6 +2,8 @@
  * Adapter types — shared between Definition ↔ Bento adapters.
  */
 
+import type { Node } from "@xyflow/react";
+
 // ---------------------------------------------------------------------------
 // Visual variant colors (maps to CompartmentNode CSS classes)
 // ---------------------------------------------------------------------------
@@ -22,10 +24,10 @@ type CompartmentVariant =
  * Full compartment data produced by the definitionToBento adapter.
  *
  * All fields are required because the adapter always computes them.
- * This is distinct from CompartmentData in CompartmentNode.tsx, which
- * uses optional fields with defaults for direct UI consumption.
+ * Uses `type` (not `interface`) so it satisfies RF's
+ * `Record<string, unknown>` constraint on Node data.
  */
-interface CompartmentNodeData {
+type CompartmentNodeData = {
   label: string;
   sublabel?: string;
   variant: CompartmentVariant;
@@ -34,22 +36,17 @@ interface CompartmentNodeData {
   status: "idle" | "pending" | "active" | "completed";
   /** Original node ID — links compartment back to the Definition node. */
   nodeId: string;
-}
+};
 
 // ---------------------------------------------------------------------------
-// ReactFlow-compatible node shape
+// ReactFlow-compatible node — extends RF's Node with typed data
 // ---------------------------------------------------------------------------
 
-interface BentoNode {
-  id: string;
-  type: "compartment";
-  position: { x: number; y: number };
-  data: CompartmentNodeData;
-}
+type BentoNode = Node<CompartmentNodeData, "compartment">;
 
-interface BentoLayout {
+type BentoLayout = {
   nodes: BentoNode[];
-}
+};
 
 export type {
   CompartmentVariant,

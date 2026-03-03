@@ -1,16 +1,16 @@
 /**
  * Hook for exporting the current editor state as a Recipe or .bnto.json file.
  *
- * Validates the definition before export. Invalid definitions cannot
- * be exported — the hook returns validation errors to show the user.
+ * Before export, patches current ReactFlow positions into the definition
+ * so the exported recipe reflects the visual layout.
  */
 
 "use client";
 
 import { useCallback } from "react";
+import { useReactFlow } from "@xyflow/react";
 import { definitionToRecipe, validateDefinition } from "@bnto/nodes";
-import type { RecipeMetadata } from "@bnto/nodes";
-import type { Recipe } from "@bnto/nodes";
+import type { RecipeMetadata, Recipe, Definition } from "@bnto/nodes";
 import { useEditorStore } from "./useEditorStore";
 
 // ---------------------------------------------------------------------------
@@ -18,19 +18,32 @@ import { useEditorStore } from "./useEditorStore";
 // ---------------------------------------------------------------------------
 
 interface ExportResult {
-  /** The exported recipe, or null if validation failed. */
   recipe: Recipe | null;
-  /** Validation errors that prevent export. Empty = valid. */
   errors: ReturnType<typeof validateDefinition>;
 }
 
 interface EditorExportResult {
-  /** Export current definition as a Recipe object. */
   exportAsRecipe: (metadata?: RecipeMetadata) => ExportResult;
-  /** Download current definition as a .bnto.json file. */
   download: (metadata?: RecipeMetadata) => void;
-  /** Whether the current definition is valid for export. */
   canExport: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Patch RF node positions into a Definition for export. */
+function patchPositions(
+  definition: Definition,
+  positionMap: Map<string, { x: number; y: number }>,
+): Definition {
+  return {
+    ...definition,
+    nodes: (definition.nodes ?? []).map((child) => {
+      const pos = positionMap.get(child.id);
+      return pos ? { ...child, position: pos } : child;
+    }),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -40,19 +53,32 @@ interface EditorExportResult {
 function useEditorExport(): EditorExportResult {
   const definition = useEditorStore((s) => s.definition);
   const validationErrors = useEditorStore((s) => s.validationErrors);
+  const { getNodes } = useReactFlow();
 
   const canExport = validationErrors.length === 0;
 
   const exportAsRecipe = useCallback(
     (metadata?: RecipeMetadata): ExportResult => {
-      const errors = validateDefinition(definition);
+      // Build position map from RF nodes — each node's data.nodeId links
+      // back to the Definition node ID
+      const rfNodes = getNodes();
+      const positionMap = new Map<string, { x: number; y: number }>();
+      for (const n of rfNodes) {
+        const nodeId = (n.data as Record<string, unknown>)?.nodeId;
+        if (typeof nodeId === "string") {
+          positionMap.set(nodeId, n.position);
+        }
+      }
+      const patched = patchPositions(definition, positionMap);
+
+      const errors = validateDefinition(patched);
       if (errors.length > 0) {
         return { recipe: null, errors };
       }
-      const recipe = definitionToRecipe(definition, metadata);
+      const recipe = definitionToRecipe(patched, metadata);
       return { recipe, errors: [] };
     },
-    [definition],
+    [definition, getNodes],
   );
 
   const download = useCallback(

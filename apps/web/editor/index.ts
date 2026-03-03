@@ -13,6 +13,8 @@ export type {
   EditorActions,
   NodeExecutionStatus,
   ExecutionState,
+  UndoSnapshot,
+  PositionGetter,
 } from "./store/types";
 
 // Context + Provider
@@ -28,10 +30,14 @@ export { useNodePalette } from "./hooks/useNodePalette";
 export type { PaletteGroup, NodePaletteResult } from "./hooks/useNodePalette";
 export { useEditorExport } from "./hooks/useEditorExport";
 export type { ExportResult, EditorExportResult } from "./hooks/useEditorExport";
+export { useEditorSelection } from "./hooks/useEditorSelection";
+export { useDefinitionSync } from "./hooks/useDefinitionSync";
+export { useEditorUndoRedo } from "./hooks/useEditorUndoRedo";
 
 // Adapters
 export { definitionToBento } from "./adapters/definitionToBento";
-export { bentoToDefinition } from "./adapters/bentoToDefinition";
+export { syncPositionsToDefinition } from "./adapters/syncPositionsToDefinition";
+export { definitionNodeToRfNode } from "./adapters/definitionNodeToRfNode";
 export { SLOTS, CELL, GAP, STRIDE } from "./adapters/bentoSlots";
 export type {
   BentoNode,

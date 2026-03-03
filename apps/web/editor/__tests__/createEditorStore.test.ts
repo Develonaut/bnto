@@ -38,7 +38,6 @@ describe("createEditorStore", () => {
       const s = state(store);
       expect(s.definition.type).toBe("group");
       expect(s.definition.nodes).toEqual([]);
-      expect(s.selectedNodeId).toBeNull();
       expect(s.isDirty).toBe(false);
       expect(s.undoStack).toEqual([]);
       expect(s.redoStack).toEqual([]);
@@ -53,7 +52,6 @@ describe("createEditorStore", () => {
 
     it("validates the initial definition", () => {
       const s = state(store);
-      // A blank definition should be valid
       expect(s.validationErrors).toEqual([]);
     });
   });
@@ -67,11 +65,9 @@ describe("createEditorStore", () => {
       expect(s.definition.name).toBe("Compress Images");
       expect(s.definition.nodes!.length).toBeGreaterThan(0);
       expect(s.isDirty).toBe(false);
-      expect(s.selectedNodeId).toBeNull();
     });
 
     it("resets history when loading a recipe", () => {
-      // Make a change first to populate undo stack
       state(store).addNode("image");
       expect(state(store).undoStack.length).toBe(1);
 
@@ -154,50 +150,13 @@ describe("createEditorStore", () => {
       expect(state(store).definition.nodes).toEqual([]);
     });
 
-    it("clears selection if removed node was selected", () => {
-      state(store).addNode("image");
-      const nodeId = state(store).definition.nodes![0]!.id;
-      state(store).selectNode(nodeId);
-      expect(state(store).selectedNodeId).toBe(nodeId);
-
-      state(store).removeNode(nodeId);
-      expect(state(store).selectedNodeId).toBeNull();
-    });
-
-    it("preserves selection if a different node was removed", () => {
-      state(store).addNode("image");
-      state(store).addNode("spreadsheet");
-      const [first, second] = state(store).definition.nodes!;
-      state(store).selectNode(first!.id);
-
-      state(store).removeNode(second!.id);
-      expect(state(store).selectedNodeId).toBe(first!.id);
-    });
-  });
-
-  // --- selectNode ---
-
-  describe("selectNode", () => {
-    it("selects a node by ID", () => {
-      state(store).addNode("image");
-      const nodeId = state(store).definition.nodes![0]!.id;
-      state(store).selectNode(nodeId);
-      expect(state(store).selectedNodeId).toBe(nodeId);
-    });
-
-    it("deselects with null", () => {
-      state(store).addNode("image");
-      const nodeId = state(store).definition.nodes![0]!.id;
-      state(store).selectNode(nodeId);
-      state(store).selectNode(null);
-      expect(state(store).selectedNodeId).toBeNull();
-    });
-
-    it("does not push to undo stack", () => {
+    it("pushes to undo stack", () => {
       state(store).addNode("image");
       const undoCount = state(store).undoStack.length;
-      state(store).selectNode(state(store).definition.nodes![0]!.id);
-      expect(state(store).undoStack.length).toBe(undoCount);
+      const nodeId = state(store).definition.nodes![0]!.id;
+
+      state(store).removeNode(nodeId);
+      expect(state(store).undoStack.length).toBe(undoCount + 1);
     });
   });
 
@@ -234,21 +193,6 @@ describe("createEditorStore", () => {
     });
   });
 
-  // --- moveNode ---
-
-  describe("moveNode", () => {
-    it("updates a node position", () => {
-      state(store).addNode("image");
-      const nodeId = state(store).definition.nodes![0]!.id;
-
-      state(store).moveNode(nodeId, { x: 300, y: 150 });
-      expect(state(store).definition.nodes![0]!.position).toEqual({
-        x: 300,
-        y: 150,
-      });
-    });
-  });
-
   // --- Undo / Redo ---
 
   describe("undo/redo", () => {
@@ -269,16 +213,40 @@ describe("createEditorStore", () => {
       expect(state(store).definition.nodes!.length).toBe(1);
     });
 
-    it("undo is a no-op with empty stack", () => {
-      const before = state(store).definition;
-      state(store).undo();
-      expect(state(store).definition).toBe(before);
+    it("returns null with empty undo stack", () => {
+      const result = state(store).undo();
+      expect(result).toBeNull();
     });
 
-    it("redo is a no-op with empty stack", () => {
-      const before = state(store).definition;
-      state(store).redo();
-      expect(state(store).definition).toBe(before);
+    it("returns null with empty redo stack", () => {
+      const result = state(store).redo();
+      expect(result).toBeNull();
+    });
+
+    it("returns the restored snapshot on undo", () => {
+      state(store).addNode("image");
+      const result = state(store).undo();
+      expect(result).not.toBeNull();
+      expect(result!.definition).toBeDefined();
+      expect(result!.positions).toBeDefined();
+    });
+
+    it("returns the restored snapshot on redo", () => {
+      state(store).addNode("image");
+      state(store).undo();
+      const result = state(store).redo();
+      expect(result).not.toBeNull();
+      expect(result!.definition).toBeDefined();
+      expect(result!.positions).toBeDefined();
+    });
+
+    it("captures positions from positionGetter in undo snapshot", () => {
+      const mockPositions = { "node-1": { x: 100, y: 200 } };
+      state(store).setPositionGetter(() => mockPositions);
+
+      state(store).addNode("image");
+      const snapshot = state(store).undoStack[0]!;
+      expect(snapshot.positions).toEqual(mockPositions);
     });
 
     it("supports multiple undo levels", () => {
@@ -318,6 +286,23 @@ describe("createEditorStore", () => {
     });
   });
 
+  // --- setPositionGetter ---
+
+  describe("setPositionGetter", () => {
+    it("captures positions from the registered getter", () => {
+      const positions = { "a": { x: 10, y: 20 }, "b": { x: 30, y: 40 } };
+      state(store).setPositionGetter(() => positions);
+
+      state(store).addNode("image");
+      expect(state(store).undoStack[0]!.positions).toEqual(positions);
+    });
+
+    it("uses empty positions when no getter registered", () => {
+      state(store).addNode("image");
+      expect(state(store).undoStack[0]!.positions).toEqual({});
+    });
+  });
+
   // --- resetDirty ---
 
   describe("resetDirty", () => {
@@ -354,7 +339,7 @@ describe("createEditorStore", () => {
     });
   });
 
-  // --- setDefinition (code editor sync) ---
+  // --- setDefinition ---
 
   describe("setDefinition", () => {
     it("replaces the definition directly", () => {
@@ -375,7 +360,6 @@ describe("createEditorStore", () => {
     it("validates the new definition", () => {
       const newDef = createBlankDefinition();
       state(store).setDefinition(newDef);
-      // Blank definition should be valid
       expect(state(store).validationErrors).toEqual([]);
     });
   });

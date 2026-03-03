@@ -1,5 +1,5 @@
 /**
- * Adapter tests — verify Definition ↔ Bento round-trip conversion.
+ * Adapter tests — verify Definition ↔ Bento conversion and helpers.
  *
  * The adapters are pure functions. No React, no DOM — just data transforms.
  */
@@ -7,8 +7,10 @@
 import { describe, it, expect } from "vitest";
 import { definitionToBento } from "../adapters/definitionToBento";
 import { SLOTS } from "../adapters/bentoSlots";
-import { bentoToDefinition } from "../adapters/bentoToDefinition";
+import { syncPositionsToDefinition } from "../adapters/syncPositionsToDefinition";
+import { definitionNodeToRfNode } from "../adapters/definitionNodeToRfNode";
 import { createBlankDefinition, addNode } from "@bnto/nodes";
+import type { Definition } from "@bnto/nodes";
 import { NODE_TYPE_INFO, NODE_TYPE_NAMES } from "@bnto/nodes";
 
 // ---------------------------------------------------------------------------
@@ -36,7 +38,6 @@ describe("definitionToBento", () => {
     def = addNode(def, "image", { x: 999, y: 888 }).definition;
 
     const result = definitionToBento(def);
-    // Should use slot[0] position, not the definition position
     expect(result.nodes[0]!.position).toEqual({ x: SLOTS[0]!.x, y: SLOTS[0]!.y });
   });
 
@@ -59,7 +60,6 @@ describe("definitionToBento", () => {
 
   it("maps node category to compartment variant color", () => {
     let def = createBlankDefinition();
-    // Image category → primary
     def = addNode(def, "image").definition;
 
     const result = definitionToBento(def);
@@ -69,7 +69,6 @@ describe("definitionToBento", () => {
   it("uses node name as compartment label", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
-    // addNode sets name from NODE_TYPE_INFO.label
     const expected = NODE_TYPE_INFO["image"].label;
 
     const result = definitionToBento(def);
@@ -88,7 +87,6 @@ describe("definitionToBento", () => {
 
   it("caps at SLOTS.length compartments", () => {
     let def = createBlankDefinition();
-    // Add more nodes than available slots
     for (let i = 0; i < SLOTS.length + 3; i++) {
       def = addNode(def, "transform").definition;
     }
@@ -122,18 +120,16 @@ describe("definitionToBento", () => {
 });
 
 // ---------------------------------------------------------------------------
-// bentoToDefinition
+// syncPositionsToDefinition
 // ---------------------------------------------------------------------------
 
-describe("bentoToDefinition", () => {
-  it("updates node positions from bento compartment positions", () => {
+describe("syncPositionsToDefinition", () => {
+  it("patches node positions from bento compartments", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
     def = addNode(def, "spreadsheet").definition;
 
     const bento = definitionToBento(def);
-
-    // Simulate a drag — move the first compartment
     const modified = {
       ...bento,
       nodes: bento.nodes.map((n, i) =>
@@ -141,9 +137,8 @@ describe("bentoToDefinition", () => {
       ),
     };
 
-    const result = bentoToDefinition(def, modified.nodes);
+    const result = syncPositionsToDefinition(def, modified.nodes);
     expect(result.nodes![0]!.position).toEqual({ x: 500, y: 300 });
-    // Second node gets the bento slot position (not the original definition position)
     expect(result.nodes![1]!.position).toEqual(bento.nodes[1]!.position);
   });
 
@@ -152,9 +147,8 @@ describe("bentoToDefinition", () => {
     def = addNode(def, "image").definition;
 
     const bento = definitionToBento(def);
-    const result = bentoToDefinition(def, bento.nodes);
+    const result = syncPositionsToDefinition(def, bento.nodes);
 
-    // All non-position data preserved
     expect(result.nodes![0]!.type).toBe("image");
     expect(result.nodes![0]!.parameters).toEqual(def.nodes![0]!.parameters);
     expect(result.nodes![0]!.name).toBe(def.nodes![0]!.name);
@@ -165,7 +159,7 @@ describe("bentoToDefinition", () => {
     def = addNode(def, "image").definition;
 
     const bento = definitionToBento(def);
-    const result = bentoToDefinition(def, bento.nodes);
+    const result = syncPositionsToDefinition(def, bento.nodes);
 
     expect(result.id).toBe(def.id);
     expect(result.name).toBe(def.name);
@@ -175,51 +169,87 @@ describe("bentoToDefinition", () => {
 
   it("handles empty bento nodes gracefully", () => {
     const def = createBlankDefinition();
-    const result = bentoToDefinition(def, []);
+    const result = syncPositionsToDefinition(def, []);
     expect(result.nodes).toEqual([]);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Round-trip: definition → bento → definition
+// definitionNodeToRfNode
 // ---------------------------------------------------------------------------
 
-describe("round-trip", () => {
-  it("preserves node count and types through conversion", () => {
+describe("definitionNodeToRfNode", () => {
+  it("converts a definition child node to a BentoNode", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
-    def = addNode(def, "spreadsheet").definition;
-    def = addNode(def, "transform").definition;
+    const node = def.nodes![0]!;
 
-    const bento = definitionToBento(def);
-    const result = bentoToDefinition(def, bento.nodes);
-
-    expect(result.nodes!.length).toBe(3);
-    expect(result.nodes![0]!.type).toBe("image");
-    expect(result.nodes![1]!.type).toBe("spreadsheet");
-    expect(result.nodes![2]!.type).toBe("transform");
+    const result = definitionNodeToRfNode(node, 0);
+    expect(result).not.toBeNull();
+    expect(result!.id).toBe(node.id);
+    expect(result!.type).toBe("compartment");
   });
 
-  it("preserves node IDs through conversion", () => {
+  it("uses node position when available, falls back to slot position", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    def = addNode(def, "spreadsheet").definition;
+    def = addNode(def, "image", { x: 42, y: 99 }).definition;
+    const node = def.nodes![0]!;
 
-    const originalIds = def.nodes!.map((n) => n.id);
-    const bento = definitionToBento(def);
-    const result = bentoToDefinition(def, bento.nodes);
-    const resultIds = result.nodes!.map((n) => n.id);
-
-    expect(resultIds).toEqual(originalIds);
+    const result = definitionNodeToRfNode(node, 0);
+    expect(result!.position).toEqual({ x: 42, y: 99 });
   });
 
-  it("preserves parameters through conversion", () => {
+  it("falls back to slot position when node has no position", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
+    // Simulate a node without position by omitting it
+    const { position: _, ...nodeWithoutPosition } = def.nodes![0]!;
+    const node = nodeWithoutPosition as Definition;
 
-    const bento = definitionToBento(def);
-    const result = bentoToDefinition(def, bento.nodes);
+    const result = definitionNodeToRfNode(node, 0);
+    expect(result!.position).toEqual({ x: SLOTS[0]!.x, y: SLOTS[0]!.y });
+  });
 
-    expect(result.nodes![0]!.parameters).toEqual(def.nodes![0]!.parameters);
+  it("returns null when slot index exceeds available slots", () => {
+    let def = createBlankDefinition();
+    def = addNode(def, "image").definition;
+    const node = def.nodes![0]!;
+
+    const result = definitionNodeToRfNode(node, SLOTS.length + 5);
+    expect(result).toBeNull();
+  });
+
+  it("maps category to variant color", () => {
+    let def = createBlankDefinition();
+    def = addNode(def, "image").definition;
+    const node = def.nodes![0]!;
+
+    const result = definitionNodeToRfNode(node, 0);
+    expect(result!.data.variant).toBe("primary");
+  });
+
+  it("sets compartment dimensions from slot", () => {
+    let def = createBlankDefinition();
+    def = addNode(def, "image").definition;
+    const node = def.nodes![0]!;
+
+    const result = definitionNodeToRfNode(node, 0);
+    expect(result!.data.width).toBe(SLOTS[0]!.w);
+    expect(result!.data.height).toBe(SLOTS[0]!.h);
+  });
+
+  it("produces same output as definitionToBento for matching index", () => {
+    let def = createBlankDefinition();
+    def = addNode(def, "image").definition;
+    const node = def.nodes![0]!;
+
+    const fromBatch = definitionToBento(def).nodes[0]!;
+    const fromSingle = definitionNodeToRfNode(node, 0)!;
+
+    expect(fromSingle.id).toBe(fromBatch.id);
+    expect(fromSingle.type).toBe(fromBatch.type);
+    expect(fromSingle.data.label).toBe(fromBatch.data.label);
+    expect(fromSingle.data.variant).toBe(fromBatch.data.variant);
+    expect(fromSingle.data.nodeId).toBe(fromBatch.data.nodeId);
   });
 });

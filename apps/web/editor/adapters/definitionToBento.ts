@@ -10,38 +10,9 @@
 
 import type { Definition, NodeTypeName } from "@bnto/nodes";
 import { NODE_TYPE_INFO } from "@bnto/nodes";
-import type { CompartmentVariant, BentoNode, BentoLayout } from "./types";
+import type { BentoNode, BentoLayout } from "./types";
 import { SLOTS } from "./bentoSlots";
-
-// ---------------------------------------------------------------------------
-// Node type → visual mapping
-// ---------------------------------------------------------------------------
-
-const CATEGORY_VARIANT: Record<string, CompartmentVariant> = {
-  image: "primary",
-  spreadsheet: "secondary",
-  file: "accent",
-  data: "muted",
-  network: "warning",
-  control: "success",
-  system: "warning",
-};
-
-// ---------------------------------------------------------------------------
-// Adapter function
-// ---------------------------------------------------------------------------
-
-/**
- * Convert a Definition's child nodes into BentoCanvas compartment nodes.
- *
- * Maps each child node to a visual compartment with:
- * - Variant color based on node category
- * - Label from node name (or NODE_TYPE_INFO label)
- * - Position from the bento slot layout
- * - Dimensions from the slot
- *
- * Nodes beyond the available slots (10) are skipped.
- */
+import { CATEGORY_VARIANT } from "./categoryVariant";
 function definitionToBento(definition: Definition): BentoLayout {
   const children = definition.nodes ?? [];
 

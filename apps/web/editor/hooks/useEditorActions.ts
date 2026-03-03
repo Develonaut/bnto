@@ -15,15 +15,14 @@ function useEditorActions() {
     createBlank: s.createBlank,
     addNode: s.addNode,
     removeNode: s.removeNode,
-    selectNode: s.selectNode,
     updateParams: s.updateParams,
-    moveNode: s.moveNode,
     undo: s.undo,
     redo: s.redo,
     resetDirty: s.resetDirty,
     setExecutionState: s.setExecutionState,
     resetExecution: s.resetExecution,
     setDefinition: s.setDefinition,
+    setPositionGetter: s.setPositionGetter,
   }));
 }
 

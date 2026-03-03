@@ -5,7 +5,8 @@
  * undo/redo history. This is the single source of truth for both the
  * visual (BentoCanvas) and code (CodeMirror) editors.
  *
- * Same factory pattern as recipeFlowStore — create per editor mount.
+ * ReactFlow owns visual state (positions, selection, viewport).
+ * This store owns domain structure (node types, params, validation).
  */
 
 import { createStore } from "zustand/vanilla";
@@ -15,11 +16,10 @@ import {
   addNode,
   removeNode,
   updateNodeParams,
-  moveNode,
   validateDefinition,
   getRecipeBySlug,
 } from "@bnto/nodes";
-import type { EditorStore, EditorState } from "./types";
+import type { EditorStore, EditorState, UndoSnapshot, PositionGetter } from "./types";
 
 // ---------------------------------------------------------------------------
 // History helpers
@@ -27,9 +27,24 @@ import type { EditorStore, EditorState } from "./types";
 
 const MAX_UNDO_HISTORY = 50;
 
-/** Push the current definition onto the undo stack, clear redo. */
-function pushHistory(state: EditorState): Pick<EditorState, "undoStack" | "redoStack"> {
-  const stack = [...state.undoStack, state.definition];
+/** Capture current definition + RF positions into an undo snapshot. */
+function captureSnapshot(
+  definition: Definition,
+  positionGetter: PositionGetter | null,
+): UndoSnapshot {
+  return {
+    definition,
+    positions: positionGetter ? positionGetter() : {},
+  };
+}
+
+/** Push a snapshot onto the undo stack, clear redo. */
+function pushHistory(
+  state: EditorState,
+  positionGetter: PositionGetter | null,
+): Pick<EditorState, "undoStack" | "redoStack"> {
+  const snapshot = captureSnapshot(state.definition, positionGetter);
+  const stack = [...state.undoStack, snapshot];
   return {
     undoStack: stack.length > MAX_UNDO_HISTORY ? stack.slice(-MAX_UNDO_HISTORY) : stack,
     redoStack: [],
@@ -40,18 +55,15 @@ function pushHistory(state: EditorState): Pick<EditorState, "undoStack" | "redoS
 // Store factory
 // ---------------------------------------------------------------------------
 
-/**
- * Creates an editor store instance.
- *
- * @param initialDefinition - Starting definition. Defaults to a blank canvas.
- */
 function createEditorStore(initialDefinition?: Definition) {
   const definition = initialDefinition ?? createBlankDefinition();
+
+  // Closure — not in Zustand state, avoids serialization issues.
+  let positionGetter: PositionGetter | null = null;
 
   return createStore<EditorStore>()((set, get) => ({
     // Initial state
     definition,
-    selectedNodeId: null,
     isDirty: false,
     validationErrors: validateDefinition(definition),
     executionState: {},
@@ -66,7 +78,6 @@ function createEditorStore(initialDefinition?: Definition) {
       const def = recipe.definition;
       set({
         definition: def,
-        selectedNodeId: null,
         isDirty: false,
         validationErrors: validateDefinition(def),
         executionState: {},
@@ -79,7 +90,6 @@ function createEditorStore(initialDefinition?: Definition) {
       const def = createBlankDefinition();
       set({
         definition: def,
-        selectedNodeId: null,
         isDirty: false,
         validationErrors: validateDefinition(def),
         executionState: {},
@@ -88,11 +98,11 @@ function createEditorStore(initialDefinition?: Definition) {
       });
     },
 
-    // --- Node operations (delegate to @bnto/nodes pure functions) ---
+    // --- Node operations ---
 
     addNode: (type, position) => {
       const state = get();
-      const history = pushHistory(state);
+      const history = pushHistory(state, positionGetter);
       const result = addNode(state.definition, type, position);
       set({
         definition: result.definition,
@@ -104,24 +114,19 @@ function createEditorStore(initialDefinition?: Definition) {
 
     removeNode: (id) => {
       const state = get();
-      const history = pushHistory(state);
+      const history = pushHistory(state, positionGetter);
       const result = removeNode(state.definition, id);
       set({
         definition: result.definition,
         validationErrors: result.errors,
         isDirty: true,
-        selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId,
         ...history,
       });
     },
 
-    selectNode: (id) => {
-      set({ selectedNodeId: id });
-    },
-
     updateParams: (nodeId, params) => {
       const state = get();
-      const history = pushHistory(state);
+      const history = pushHistory(state, positionGetter);
       const result = updateNodeParams(state.definition, nodeId, params);
       set({
         definition: result.definition,
@@ -131,44 +136,38 @@ function createEditorStore(initialDefinition?: Definition) {
       });
     },
 
-    moveNode: (nodeId, position) => {
-      const state = get();
-      const history = pushHistory(state);
-      const result = moveNode(state.definition, nodeId, position);
-      set({
-        definition: result.definition,
-        validationErrors: result.errors,
-        isDirty: true,
-        ...history,
-      });
-    },
-
     // --- History ---
+    // undo/redo return the restored snapshot so the caller can apply
+    // position data back to ReactFlow.
 
     undo: () => {
       const state = get();
-      if (state.undoStack.length === 0) return;
-      const previous = state.undoStack[state.undoStack.length - 1]!;
+      if (state.undoStack.length === 0) return null;
+      const snapshot = state.undoStack[state.undoStack.length - 1]!;
+      const currentSnapshot = captureSnapshot(state.definition, positionGetter);
       set({
-        definition: previous,
-        validationErrors: validateDefinition(previous),
+        definition: snapshot.definition,
+        validationErrors: validateDefinition(snapshot.definition),
         isDirty: true,
         undoStack: state.undoStack.slice(0, -1),
-        redoStack: [...state.redoStack, state.definition],
+        redoStack: [...state.redoStack, currentSnapshot],
       });
+      return snapshot;
     },
 
     redo: () => {
       const state = get();
-      if (state.redoStack.length === 0) return;
-      const next = state.redoStack[state.redoStack.length - 1]!;
+      if (state.redoStack.length === 0) return null;
+      const snapshot = state.redoStack[state.redoStack.length - 1]!;
+      const currentSnapshot = captureSnapshot(state.definition, positionGetter);
       set({
-        definition: next,
-        validationErrors: validateDefinition(next),
+        definition: snapshot.definition,
+        validationErrors: validateDefinition(snapshot.definition),
         isDirty: true,
-        undoStack: [...state.undoStack, state.definition],
+        undoStack: [...state.undoStack, currentSnapshot],
         redoStack: state.redoStack.slice(0, -1),
       });
+      return snapshot;
     },
 
     // --- Utility ---
@@ -187,13 +186,17 @@ function createEditorStore(initialDefinition?: Definition) {
 
     setDefinition: (newDefinition) => {
       const state = get();
-      const history = pushHistory(state);
+      const history = pushHistory(state, positionGetter);
       set({
         definition: newDefinition,
         validationErrors: validateDefinition(newDefinition),
         isDirty: true,
         ...history,
       });
+    },
+
+    setPositionGetter: (getter) => {
+      positionGetter = getter;
     },
   }));
 }
