@@ -17,7 +17,7 @@ export function toUser(doc: RawUserDoc): User {
     name: doc.name ?? undefined,
     image: doc.image ?? undefined,
     plan: normalizePlan(doc.plan),
-    totalRuns: doc.totalRuns ?? undefined,
+    totalRuns: doc.totalRuns,
     lastRunAt: doc.lastRunAt ?? undefined,
   };
 }
