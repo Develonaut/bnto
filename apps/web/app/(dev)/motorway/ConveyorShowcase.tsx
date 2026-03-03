@@ -5,9 +5,11 @@ import dynamic from "next/dynamic";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Row } from "@/components/ui/Row";
+import { Text } from "@/components/ui/Text";
 import type { StationNodeType } from "@/components/editor/conveyor/StationNode";
 import type { ConveyorEdgeType } from "@/components/editor/conveyor/ConveyorEdge";
-import { PieceShape, type PieceType } from "@/components/editor/conveyor/BeltPiece";
+import { PieceShape } from "@/components/editor/conveyor/PieceShape";
+import type { PieceType } from "@/components/editor/conveyor/BeltPiece";
 
 /**
  * Conveyor Belt showcase — a Mini Motorways-style "level" showing
@@ -164,7 +166,7 @@ export function ConveyorShowcase() {
                 <PieceShape type={type} />
               </g>
             </svg>
-            <span className="text-xs text-muted-foreground font-mono">{type}</span>
+            <Text size="xs" color="muted" className="font-mono">{type}</Text>
           </Row>
         ))}
       </Row>

@@ -7,6 +7,7 @@
 
 "use client";
 
+import { useMemo } from "react";
 import type { NodeCategory, NodeTypeInfo, CategoryInfo } from "@bnto/nodes";
 import { NODE_TYPE_INFO, NODE_TYPE_NAMES, CATEGORIES } from "@bnto/nodes";
 
@@ -68,7 +69,7 @@ function computePalette(browserOnly: boolean): NodePaletteResult {
  *                      Default: false (show all, flag server-only).
  */
 function useNodePalette(browserOnly = false): NodePaletteResult {
-  return computePalette(browserOnly);
+  return useMemo(() => computePalette(browserOnly), [browserOnly]);
 }
 
 export { useNodePalette };
