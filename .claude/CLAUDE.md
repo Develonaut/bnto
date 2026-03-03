@@ -173,13 +173,15 @@ bnto/
 1. **Read context** — Review this file, rules/, and relevant docs
 2. **Check the plan** — See [PLAN.md](.claude/PLAN.md) for current sprint
 3. **Claim a task** — Mark it CLAIMED before starting
-4. **Create a branch** — `git checkout -b <type>/<short-description>`. Never commit directly to `main`
+4. **Create a branch** — `git checkout -b <type>/<short-description>` from the sprint branch. Never commit directly to `main` or the sprint branch
 5. **Follow patterns** — Match existing code style (see rules/)
 6. **Test boundaries** — Write tests for engine logic and API contracts
 7. **E2E test** — If you touched UI, run `task e2e` (requires `task dev` running — Next.js + Convex on port 4000). Start it yourself if needed — never skip because "the stack isn't running"
 8. **Mark done** — Update the plan when complete
 9. **Pre-commit** — Follow [pre-commit.md](.claude/rules/pre-commit.md) before every commit
-10. **Push & PR** — Push your branch, create a PR targeting `main`. CI Gate must pass before merge
+10. **Push & PR** — Push your branch, create a PR targeting the sprint branch (e.g., `sprint/3-platform-features`). CI Gate must pass before merge
+
+**Sprint branches:** Each sprint gets a long-lived branch (`sprint/<id>-<short-name>`). Task PRs target the sprint branch. When the sprint completes, one PR merges the sprint branch into `main` — single deploy. See [PLAN.md](.claude/PLAN.md) for details.
 
 **Branch protection:** `main` requires the CI Gate check (Rust + TypeScript) to pass via PR. Direct pushes to `main` are blocked.
 
