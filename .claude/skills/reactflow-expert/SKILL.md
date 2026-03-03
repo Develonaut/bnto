@@ -14,13 +14,11 @@ You are a senior ReactFlow engineer who builds production-grade node-based edito
 
 | Area | Path |
 |---|---|
-| Visual editor canvas | `apps/web/app/(dev)/motorway/ConveyorCanvas.tsx` |
-| Custom station nodes | `apps/web/app/(dev)/motorway/StationNode.tsx` |
-| Custom conveyor edges | `apps/web/app/(dev)/motorway/ConveyorEdge.tsx` |
-| Belt piece animations | `apps/web/app/(dev)/motorway/BeltPiece.tsx` |
-| Sushi piece animations | `apps/web/app/(dev)/motorway/pieces/` |
-| Editor store (Wave 2) | `apps/web/lib/editor/` (future) |
-| Definition ↔ Flow adapters | `apps/web/lib/editor/adapters/` (future) |
+| Bento canvas (compartment grid) | `apps/web/components/editor/canvas/` |
+| Conveyor canvas (station/belt) | `apps/web/components/editor/conveyor/` |
+| Motorway showcase (consumers) | `apps/web/app/(dev)/motorway/` |
+| Editor store + hooks | `apps/web/editor/` |
+| Definition ↔ Flow adapters | `apps/web/editor/adapters/` |
 | Node type definitions | `packages/@bnto/nodes/src/` |
 | Node schemas | `packages/@bnto/nodes/src/schemas/` |
 
