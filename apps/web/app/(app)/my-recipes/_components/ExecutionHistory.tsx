@@ -49,7 +49,7 @@ export function ExecutionHistory() {
           <Row justify="between" align="center" className="gap-3">
             <Stack className="min-w-0 flex-1 gap-0.5">
               <Text size="sm" weight="medium" className="truncate">
-                {execution.workflowId ? "Saved workflow" : "Quick run"}
+                {execution.recipeId ? "Saved recipe" : "Quick run"}
               </Text>
               <Text size="xs" color="muted">
                 {formatTimeAgo(execution.startedAt)}

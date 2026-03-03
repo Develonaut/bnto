@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { WorkflowListItem } from "@bnto/core";
+import type { RecipeListItem } from "@bnto/core";
 
 import { Animate } from "@/components/ui/Animate";
 import { Button } from "@/components/ui/Button";
@@ -12,34 +12,34 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { RecipeCard } from "@/components/blocks/RecipeCard";
-import { WorkflowCard } from "@/components/blocks/WorkflowCard";
+import { SavedRecipeCard } from "@/components/blocks/SavedRecipeCard";
 import { getBntoIcon } from "@/lib/bntoIcons";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 
-/* ── Mock workflow data ──────────────────────────────────────── */
+/* ── Mock recipe data ──────────────────────────────────────── */
 
 const NOW = Date.now();
 const HOUR = 3_600_000;
 const DAY = 86_400_000;
 
-const MOCK_WORKFLOWS: Array<{
-  workflow: WorkflowListItem;
+const MOCK_RECIPES: Array<{
+  recipe: RecipeListItem;
   lastStatus?: "pending" | "running" | "completed" | "failed";
 }> = [
   {
-    workflow: { id: "1", name: "Compress & Resize", nodeCount: 3, updatedAt: NOW - 2 * HOUR },
+    recipe: { id: "1", name: "Compress & Resize", nodeCount: 3, updatedAt: NOW - 2 * HOUR },
     lastStatus: "completed",
   },
   {
-    workflow: { id: "2", name: "Clean CSV Pipeline", nodeCount: 5, updatedAt: NOW - 3 * DAY },
+    recipe: { id: "2", name: "Clean CSV Pipeline", nodeCount: 5, updatedAt: NOW - 3 * DAY },
     lastStatus: "failed",
   },
   {
-    workflow: { id: "3", name: "Batch Rename", nodeCount: 2, updatedAt: NOW - 15 * DAY },
+    recipe: { id: "3", name: "Batch Rename", nodeCount: 2, updatedAt: NOW - 15 * DAY },
     lastStatus: "running",
   },
   {
-    workflow: { id: "4", name: "Image Format Converter", nodeCount: 4, updatedAt: NOW - 45 * DAY },
+    recipe: { id: "4", name: "Image Format Converter", nodeCount: 4, updatedAt: NOW - 45 * DAY },
   },
 ];
 
@@ -65,21 +65,21 @@ export function RecipeCardShowcase() {
         </Text>
       </Row>
 
-      {/* WorkflowCard — domain wrapper pattern */}
+      {/* SavedRecipeCard — domain wrapper pattern */}
       <Stack gap="sm">
         <div>
-          <Heading level={3} size="xs">WorkflowCard</Heading>
+          <Heading level={3} size="xs">SavedRecipeCard</Heading>
           <Text size="sm" color="muted">
-            Domain wrapper that composes RecipeCard sub-components with workflow data.
+            Domain wrapper that composes RecipeCard sub-components with saved recipe data.
           </Text>
         </div>
         <Animate.Stagger asChild>
           <Grid cols={4} gap="md" animated>
-            {MOCK_WORKFLOWS.map((item, i) => (
-              <Grid.Item key={item.workflow.id}>
+            {MOCK_RECIPES.map((item, i) => (
+              <Grid.Item key={item.recipe.id}>
                 <Animate.ScaleIn index={i} from={0.85} easing="spring-bouncy" className="h-full">
-                  <WorkflowCard
-                    workflow={item.workflow}
+                  <SavedRecipeCard
+                    recipe={item.recipe}
                     lastStatus={item.lastStatus}
                     loading={loading}
                   />

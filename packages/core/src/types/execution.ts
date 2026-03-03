@@ -13,7 +13,7 @@ export interface OutputFile {
 export interface Execution {
   id: string;
   userId: string;
-  workflowId?: string;
+  recipeId?: string;
   status: "pending" | "running" | "completed" | "failed";
   progress: NodeProgress[];
   result?: RunResult;
@@ -24,14 +24,14 @@ export interface Execution {
   completedAt?: number;
 }
 
-/** Input for starting a workflow execution. */
+/** Input for starting a recipe execution. */
 export interface StartExecutionInput {
-  workflowId: string;
+  recipeId: string;
   slug?: string;
   sessionId?: string;
 }
 
-/** Input for starting a predefined bnto execution (no stored workflow). */
+/** Input for starting a predefined bnto execution (no stored recipe). */
 export interface StartPredefinedInput {
   slug: string;
   definition: unknown;

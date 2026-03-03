@@ -5,7 +5,7 @@ export function toExecution(doc: RawExecutionDoc): Execution {
   return {
     id: String(doc._id),
     userId: String(doc.userId),
-    workflowId: doc.workflowId ? String(doc.workflowId) : undefined,
+    recipeId: doc.recipeId ? String(doc.recipeId) : undefined,
     status: doc.status,
     progress: doc.progress,
     result: doc.result ?? undefined,

@@ -29,17 +29,26 @@ Each layer only depends on layers below it. Never skip layers.
 
 ## API Abstraction
 
-**UI code NEVER calls backend or storage APIs directly.** Always go through `@bnto/core` hooks.
+**UI code NEVER calls backend, storage, or state management APIs directly.** Always go through `@bnto/core` hooks and methods.
+
+This abstraction covers three boundaries:
+1. **Data layer** -- no direct Convex queries/mutations in components
+2. **State stores** -- no raw Zustand `.store.getState()` in consumer code. Use `core.<domain>.use*State()` hooks
+3. **Infrastructure** -- no manual WASM engine registration or Web Worker setup. Core initializes lazily
 
 ```typescript
 // CORRECT -- use @bnto/core hooks
-import { useWorkflows, useExecution, useRunWorkflow } from "@bnto/core";
-const workflows = useWorkflows();
-const { mutate: run } = useRunWorkflow();
+const recipes = core.recipes.useRecipes();
+const execState = core.executions.useExecutionState(instance);
 
-// WRONG -- direct Convex calls in components
-const workflows = useQuery(api.workflows.list);
+// WRONG -- direct Convex calls
+const recipes = useQuery(api.recipes.list);
+
+// WRONG -- raw store access
+const state = useStore(instance.store, useShallow(s => ({ ... })));
 ```
+
+See [core-api.md](core-api.md) for the full API design rules and [core-unification.md](../strategy/core-unification.md) for the rationale.
 
 ## Cost-First Architecture
 
@@ -52,12 +61,15 @@ const workflows = useQuery(api.workflows.list);
 ## Package Responsibilities
 
 ### `packages/core/` (`@bnto/core`) -- Transport-agnostic API layer
-- React hooks for all data operations (workflows, executions, logs)
+- React hooks for all data operations (recipes, executions, user, auth)
 - TypeScript types and interfaces shared across the app
-- Zustand stores for client-only state (editor content, UI preferences)
-- React Query configuration + transport adapters (Convex + R2 for web, Tauri + local filesystem for desktop)
+- Zustand stores for domain state (opaque to consumers -- accessed via `use*State()` hooks)
+- Query layer (`queries/`) for read-path option construction with select transforms
+- Service layer (`services/`) for mutations, cache invalidation, infrastructure lifecycle
+- Transport adapters: Convex (web data), browser (WASM engine + Web Worker), Tauri (desktop, planned)
+- Browser execution infrastructure (Web Worker, WASM engine) with lazy initialization
 - Runtime detection to swap adapters transparently
-- NO backend or storage technology imports in public API -- only in internal adapters
+- NO backend, storage, or state management technology imports in public API -- only in internal adapters/services
 
 ### `packages/@bnto/backend/` (`@bnto/backend`) -- Data layer
 - Schema definition (tables, indexes, validators)
@@ -156,18 +168,18 @@ See `ROADMAP.md` for R2 cleanup architecture (M4).
 
 ---
 
-## Content Model: Workflows and Executions
+## Content Model: Recipes and Executions
 
-**Workflows are the atomic unit of content.** Users define workflows as `.bnto.json` files that orchestrate tasks.
+**Recipes are the atomic unit of content.** Users define recipes as `.bnto.json` files that orchestrate tasks.
 
 ```
-Workflow (atomic unit)
+Recipe (atomic unit)
   |-- name, description, version
   |-- nodes[] (task definitions)
   |     +-- Node
   |           |-- type, id, config
   |           +-- connections (inputs/outputs)
-  +-- executions (queried via by_workflowId index)
+  +-- executions (queried via by_recipeId index)
         +-- Execution
               |-- status, startedAt, completedAt
               +-- ExecutionLog[] (per-node results)
@@ -175,6 +187,6 @@ Workflow (atomic unit)
 
 ### Key Principles
 
-- **Workflow-first:** A workflow defines what to do. Executions track runs of that workflow.
+- **Recipe-first:** A recipe defines what to do. Executions track runs of that recipe.
 - **Nodes are typed:** Each node has a type (image, file, http, transform, etc.) registered in the engine.
 - **Execution logs are per-node:** Each node in an execution produces its own log entry with status, output, and timing.

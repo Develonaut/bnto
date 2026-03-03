@@ -26,9 +26,9 @@ import type * as execution_engine from "../execution_engine.js";
 import type * as execution_events from "../execution_events.js";
 import type * as executions from "../executions.js";
 import type * as http from "../http.js";
+import type * as recipes from "../recipes.js";
 import type * as uploads from "../uploads.js";
 import type * as users from "../users.js";
-import type * as recipes from "../recipes.js";
 
 import type {
   ApiFromModules,
@@ -55,9 +55,9 @@ declare const fullApi: ApiFromModules<{
   execution_events: typeof execution_events;
   executions: typeof executions;
   http: typeof http;
+  recipes: typeof recipes;
   uploads: typeof uploads;
   users: typeof users;
-  recipes: typeof recipes;
 }>;
 
 /**

@@ -1,5 +1,5 @@
 /**
- * Core workflow definition types — 1:1 mapping with Go engine's `node` package.
+ * Core recipe definition types — 1:1 mapping with Go engine's `node` package.
  *
  * These types represent the JSON-serializable structure of `.bnto.json` files.
  * Every execution target (Rust WASM, JS, Go, desktop) reads and validates
@@ -9,7 +9,7 @@
  */
 
 /**
- * A single node in a bnto workflow.
+ * A single node in a bnto recipe definition.
  *
  * Each node has a unique ID, a type (e.g., "http-request", "image"),
  * type-specific parameters, and input/output ports for connecting to
@@ -19,7 +19,7 @@
  * and `edges`, forming a recursive tree structure.
  */
 export interface Definition {
-  /** Unique identifier within the workflow. */
+  /** Unique identifier within the definition. */
   id: string;
 
   /** Node type (e.g., "http-request", "image", "loop"). */

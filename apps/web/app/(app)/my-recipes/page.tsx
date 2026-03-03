@@ -14,8 +14,8 @@ const UsageStats = dynamic(
   { ssr: false, loading: () => <UsageStatsFallback /> },
 );
 
-const WorkflowGrid = dynamic(
-  () => import("./_components/WorkflowGrid").then((m) => ({ default: m.WorkflowGrid })),
+const RecipeGrid = dynamic(
+  () => import("./_components/RecipeGrid").then((m) => ({ default: m.RecipeGrid })),
   { ssr: false, loading: () => <TabPanelFallback /> },
 );
 
@@ -102,7 +102,7 @@ export default function MyRecipesPage() {
                   forceMount
                   className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
                 >
-                  <WorkflowGrid />
+                  <RecipeGrid />
                 </Tabs.Content>
               </div>
             </Tabs>

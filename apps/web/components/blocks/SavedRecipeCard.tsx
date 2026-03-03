@@ -1,17 +1,17 @@
-import type { Execution, WorkflowListItem } from "@bnto/core";
+import type { Execution, RecipeListItem } from "@bnto/core";
 
 import { RecipeCard } from "@/components/blocks/RecipeCard";
 import { Skeleton } from "@/components/ui/Skeleton";
 
-interface WorkflowCardProps {
-  workflow: WorkflowListItem;
+interface SavedRecipeCardProps {
+  recipe: RecipeListItem;
   lastStatus?: Execution["status"];
   onClick?: () => void;
   /** Grounded loading state — card springs up when loading clears. */
   loading?: boolean;
 }
 
-export function WorkflowCard({ workflow, lastStatus, onClick, loading }: WorkflowCardProps) {
+export function SavedRecipeCard({ recipe, lastStatus, onClick, loading }: SavedRecipeCardProps) {
   return (
     <RecipeCard onClick={onClick} loading={loading}>
       {loading ? (
@@ -32,8 +32,8 @@ export function WorkflowCard({ workflow, lastStatus, onClick, loading }: Workflo
             {lastStatus && <RecipeCard.Status status={lastStatus} />}
           </RecipeCard.Header>
           <RecipeCard.Content>
-            <RecipeCard.Title>{workflow.name}</RecipeCard.Title>
-            <RecipeCard.Meta nodeCount={workflow.nodeCount} updatedAt={workflow.updatedAt} />
+            <RecipeCard.Title>{recipe.name}</RecipeCard.Title>
+            <RecipeCard.Meta nodeCount={recipe.nodeCount} updatedAt={recipe.updatedAt} />
           </RecipeCard.Content>
         </>
       )}
