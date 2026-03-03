@@ -13,6 +13,7 @@ const port = Number(process.env.E2E_PORT ?? 4000);
 const isolated = port !== 4000;
 
 export default defineConfig({
+  globalTeardown: "./e2e/global-teardown.ts",
   testDir: "./e2e",
   snapshotPathTemplate:
     "{testDir}/{testFileDir}/__screenshots__/{arg}{ext}",
