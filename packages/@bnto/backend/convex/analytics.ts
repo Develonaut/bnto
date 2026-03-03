@@ -11,7 +11,7 @@ export const getAnalytics = query({
     if (user === null) return null;
     return {
       plan: user.plan,
-      totalRuns: user.totalRuns ?? 0,
+      totalRuns: user.totalRuns,
       lastRunAt: user.lastRunAt ?? null,
     };
   },

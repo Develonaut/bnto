@@ -13,6 +13,7 @@ describe("getMe (schema shape)", () => {
         name: "Jane Doe",
         email: "jane@example.com",
         plan: "free",
+        totalRuns: 0,
       });
     });
 

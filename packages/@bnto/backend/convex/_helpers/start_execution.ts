@@ -28,7 +28,7 @@ export async function startExecution(
 
   const now = Date.now();
   await ctx.db.patch(userId, {
-    totalRuns: (user.totalRuns ?? 0) + 1,
+    totalRuns: user.totalRuns + 1,
     lastRunAt: now,
   });
 

@@ -27,7 +27,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 in progress (3/7 done, 4 unclaimed). Sprint 3A — Waves 1-4 complete, Wave 5 has 2 remaining cleanup tasks
+- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 in progress (3/7 done, 4 unclaimed). Sprint 3A — COMPLETE (all 5 waves done)
 - **Active:** Sprint 4 (Recipe Editor) — Waves 1-2 complete, Wave 3 ready for pickup (5 unclaimed). Editor work lives in Motorway `/editor` section until ready for production
 - **Ready:** Sprint 4B (Code Editor) — Wave 1 unblocked (Sprint 4 Waves 1-2 done), 3 unclaimed tasks in `@bnto/nodes`
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
@@ -181,8 +181,8 @@ Update all documentation and strategy files to reflect the simplified auth model
 - [x] `.claude/` — Update `PLAN.md`, `pricing-model.md`, `auth-routing.md`, `environment-variables.md` to remove anonymous references
 - [x] `.claude/` — Update journey docs: `journeys/auth.md` (remove anonymous conversion rows)
 - [x] `.claude/` — Update persona skills that reference anonymous patterns: `backend-engineer`, `security-engineer`, `security-review`
-- [ ] `@bnto/backend` — Production schema cleanup: mutation to delete orphaned anonymous user records, then deploy strict schema removing the optional fields
-- [ ] **Validation:** `task check` passes (full quality gate). Grep verification confirms no dead references
+- [x] `@bnto/backend` — Production schema cleanup: mutation to delete orphaned anonymous user records, then deploy strict schema removing the optional fields
+- [x] **Validation:** `task check` passes (full quality gate). Grep verification confirms no dead references
 
 ---
 

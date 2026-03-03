@@ -67,7 +67,7 @@ export interface RawUserDoc {
   name?: string | null;
   image?: string | null;
   plan?: "free" | "starter" | "pro" | null;
-  totalRuns?: number | null;
+  totalRuns: number;
   lastRunAt?: number | null;
 }
 

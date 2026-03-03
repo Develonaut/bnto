@@ -4,9 +4,8 @@ import { getAppUserId } from "./_helpers/auth";
 
 /**
  * Log the start of a Bnto execution.
- * userId is derived from the session when available. Browser-only (WASM)
- * executions from unauthenticated users log events without a userId for
- * aggregate analytics.
+ * Requires authentication — unauthenticated browser-only (WASM) executions
+ * are not tracked server-side (they run free, unlimited, no session needed).
  *
  * NOTE: Both `start` and `startPredefined` in executions.ts also insert
  * events directly for server-side executions. This mutation is the client-
@@ -20,9 +19,10 @@ export const logStart = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
+    if (userId === null) return null;
 
     return ctx.db.insert("executionEvents", {
-      userId: userId ?? undefined,
+      userId,
       slug: args.slug,
       timestamp: Date.now(),
       status: "started",

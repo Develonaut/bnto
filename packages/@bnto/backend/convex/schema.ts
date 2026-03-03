@@ -20,7 +20,7 @@ export default defineSchema({
     // App fields — set by createOrUpdateUser callback in auth.ts
     plan: v.union(v.literal("free"), v.literal("pro")),
     // Usage analytics
-    totalRuns: v.optional(v.number()), // all-time total, never resets
+    totalRuns: v.number(), // all-time total, never resets
     lastRunAt: v.optional(v.number()), // timestamp of most recent run
   }).index("email", ["email"]),
 
@@ -89,7 +89,7 @@ export default defineSchema({
   // Captures every run on predefined Bnto tool pages.
   // Separate from `executions` (lifecycle) — this is the billing/usage data layer.
   executionEvents: defineTable({
-    userId: v.optional(v.id("users")),
+    userId: v.id("users"),
     slug: v.string(),
     timestamp: v.number(),
     durationMs: v.optional(v.number()),
