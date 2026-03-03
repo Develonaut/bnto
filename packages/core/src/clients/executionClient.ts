@@ -2,26 +2,73 @@
 
 import type { ExecutionService } from "../services/executionService";
 import type { BrowserExecutionService } from "../services/browserExecutionService";
+import type { HistoryService } from "../services/historyService";
+import type { ExecutionInstance } from "../services/executionInstance";
 import type { StartPredefinedInput } from "../types";
+import type { LocalHistoryEntry } from "../types/localHistory";
+import type { BrowserRunResult } from "../types/browser";
+
+/** Build a history entry from a completed/failed execution result. */
+function buildHistoryEntry(
+  slug: string,
+  files: File[],
+  result: BrowserRunResult,
+): LocalHistoryEntry {
+  return {
+    id: crypto.randomUUID(),
+    slug,
+    status: result.status as "completed" | "failed",
+    timestamp: Date.now() - result.durationMs,
+    durationMs: result.durationMs,
+    inputFileCount: files.length,
+    outputFileCount: result.results.length,
+    error: result.error,
+  };
+}
 
 /**
  * Execution client — unified public API for execution operations.
  *
  * Consumers use `core.executions` for everything — capability detection,
- * instance creation, downloads, and history.
+ * instance creation, downloads, history, and auto-recording.
  */
 export function createExecutionClient(
   executions: ExecutionService,
   browser: BrowserExecutionService,
+  history: HistoryService,
 ) {
+  /** Wrap an instance's run() to auto-record to local history (fire-and-forget). */
+  function wrapInstance(instance: ExecutionInstance): ExecutionInstance {
+    const originalRun = instance.run;
+
+    return {
+      ...instance,
+      run: async (
+        slug: string,
+        files: File[],
+        params?: Record<string, unknown>,
+      ): Promise<BrowserRunResult> => {
+        const result = await originalRun(slug, files, params);
+
+        if (result.status !== "aborted") {
+          history.record(buildHistoryEntry(slug, files, result)).catch(() => {});
+        }
+
+        return result;
+      },
+    };
+  }
+
   return {
     // ── Query Options ─────────────────────────────────────────────
     getQueryOptions: (id: string) => executions.getQueryOptions(id),
     listQueryOptions: (recipeId: string) => executions.listQueryOptions(recipeId),
     logsQueryOptions: (executionId: string) => executions.logsQueryOptions(executionId),
 
-    // ── Paginated Query Refs ────────────────────────────────────────
-    historyRefMethod: () => executions.historyRefMethod(),
+    // ── History ───────────────────────────────────────────────────
+    historyRefMethod: () => history.serverRef(),
+    historyQueryOptions: () => history.localQueryOptions(),
+    clearHistory: () => history.clear(),
 
     // ── Mutations ─────────────────────────────────────────────────
     startPredefined: (input: StartPredefinedInput) =>
@@ -37,11 +84,13 @@ export function createExecutionClient(
 
     /**
      * Create an isolated execution instance with its own store.
+     * Results are automatically recorded to local history.
      *
      * Each instance has independent state — no cross-page leaks.
      * Usage: `const [instance] = useState(() => core.executions.createExecution())`
      */
-    createExecution: browser.createExecution,
+    createExecution: (): ExecutionInstance =>
+      wrapInstance(browser.createExecution()),
 
     /** Execute without lifecycle management. For callers managing their own state. */
     execute: browser.execute,

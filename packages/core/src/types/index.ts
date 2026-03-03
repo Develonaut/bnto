@@ -23,6 +23,8 @@ export type {
   StartPredefinedInput,
 } from "./execution";
 
+export type { LocalHistoryEntry } from "./localHistory";
+
 export type { User } from "./user";
 
 export type {

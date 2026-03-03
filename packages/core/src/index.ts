@@ -43,6 +43,7 @@ export type {
   BrowserExecution,
   BrowserFileProgress,
   BrowserRunResult,
+  LocalHistoryEntry,
   RunPhase,
   RecipeFlow,
   TelemetryConfig,

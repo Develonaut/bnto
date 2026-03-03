@@ -36,9 +36,10 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "fake-indexeddb": "^6.2.5",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "eslint": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
     "vitest": "catalog:"
