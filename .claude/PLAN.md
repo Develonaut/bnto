@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** February 28, 2026
+**Last Updated:** March 2, 2026
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -25,12 +25,14 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 in progress. Sprint 3A (anonymous removal) — Wave 4 complete, Wave 5 has remaining cleanup
-- **Next:** Sprint 4 + 4B (Recipe Editors) — visual + code editors, parallel alongside Sprint 3. Sprint 4 Wave 1 complete
+- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 in progress (5 tasks claimed). Sprint 3A (anonymous removal) — Waves 1-4 complete, Wave 5 has remaining production cleanup
+- **Active:** Sprint 4 (Recipe Editor) — Wave 1 complete (headless CRUD in `@bnto/nodes`). Wave 2+ awaiting pickup
+- **Next:** Sprint 4B (Code Editor) — Wave 1+ awaiting Sprint 4 Wave 2 completion
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
 - **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
-- **Auth:** `@convex-dev/auth`. Password auth, integration tests complete
+- **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
+- **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), automatic Convex production deploy on merge to main, Lighthouse CI on PRs, PostHog telemetry wired
 - **Packages:** `@bnto/core`, `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`
 
 ---
@@ -212,12 +214,12 @@ Update all documentation and strategy files to reflect the simplified auth model
 #### Wave 2 (parallel — dashboard + auth behavior)
 
 - [x] `apps/web` — `/frontend-engineer` — Dashboard page (`/my-recipes`): saved workflows, recent executions, usage stats, Recent/Saved tabs, sign-up conversion prompt for unauthenticated users
-- [ ] `apps/web` — `/frontend-engineer` — Execution history page (list of past runs with status, re-run capability)
-- [ ] `apps/web` — `/frontend-engineer` — **Browser-local execution history:** Track execution runs in browser storage (IndexedDB/localStorage) for unauthenticated users. Unauth users see their recent runs within the browser session. `AccountGate` wraps history views — "Sign up to keep your history across devices and never lose it." Auth users persist to Convex (existing path)
-- [ ] `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): After successful browser execution for unauthenticated users, surface AccountGate with save-focused copy — "Want to save this recipe? Sign up — it's free." Natural value moment, not a blocking gate
-- [ ] `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation, cookie-based default mode (moved from Sprint 2A Wave 5)
+- [ ] **CLAIMED** `@bnto/core` + `apps/web` — `/core-architect` + `/frontend-engineer` — **Browser-local execution history:** IndexedDB adapter in `@bnto/core` for unauthenticated users. Core routes internally — `core.executions.useHistory()` returns data regardless of auth state, web app never knows if it came from Convex or IndexedDB. 10-entry cap, oldest rotated out. Stores: slug, timestamp, status, duration. Foundation for AccountGate conversion. **This is the dependency for execution history tab and save prompt.**
+- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — **Execution history tab in `/my-recipes`** (no standalone `/executions` route). List of past runs with status. Re-run for authenticated users only. Three-tier access per Feature Funnel (Notion): unauth=read-only browser-local, free=7-day server-synced with re-run, pro=30-day. Consumes `core.executions.useHistory()` — doesn't know about storage backend. **Depends on browser-local history task above.**
+- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): After successful browser execution for unauthenticated users, surface AccountGate with save-focused copy — "Want to save this recipe? Sign up — it's free." Natural value moment, not a blocking gate. **Depends on browser-local history task.**
+- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation, cookie-based default mode (moved from Sprint 2A Wave 5)
 - [x] `apps/web` — `/frontend-engineer` — Pricing page update: Free vs Pro side-by-side comparison (persistence, collaboration, premium compute)
-- [ ] `apps/web` — `/frontend-engineer` — **Data fetching & skeleton audit:** Scan all existing components in `apps/web/` for violations of the co-located query pattern, prop drilling, mismatched skeletons, missing skeletons, separate `*Skeleton.tsx` files (for simple cases), transforms outside `select`, and loading wrapper anti-patterns. Fix violations in-place. Reference: [data-fetching-strategy.md](strategy/data-fetching-strategy.md), [skeletons.md](rules/skeletons.md)
+- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — **Data fetching & skeleton audit:** Scan all existing components in `apps/web/` for violations of the co-located query pattern, prop drilling, mismatched skeletons, missing skeletons, separate `*Skeleton.tsx` files (for simple cases), transforms outside `select`, and loading wrapper anti-patterns. Fix violations in-place. Reference: [data-fetching-strategy.md](strategy/data-fetching-strategy.md), [skeletons.md](rules/skeletons.md)
 
 #### Wave 3 (sequential — test)
 
@@ -612,17 +614,17 @@ Convex dev (`zealous-canary-422`) has stale Better Auth records and test artifac
 
 ### Infra: Domain Setup (bnto.io Custom Domains)
 
-Web app domain (`bnto.io`) promoted to Sprint 2C Wave 1. API domain (`api.bnto.io`) deferred to M4.
+Web app domain (`bnto.io`) delivered in Sprint 2C. API domain (`api.bnto.io`) deferred to M4.
 
-- [ ] `infra` — Connect `bnto.io` to Vercel + Cloudflare DNS, verify auth redirects
+- [x] `infra` — Connect `bnto.io` to Vercel + Cloudflare DNS, verify auth redirects — Delivered in Sprint 2C
 - [ ] `infra` — (M4) Add `api.bnto.io` CNAME → Railway, configure custom domain, update `GO_API_URL`
 
-### Infra: Graduate SEO Validation from E2E to Unit Tests + Lighthouse CI
+### Infra: Graduate SEO Validation from E2E to Unit Tests
 
-**Priority: Medium.** Graduate SEO validation from slow E2E to unit tests (metadata, registry↔sitemap sync) + Lighthouse CI (`seo: 90`). Keep thin E2E for noindex/redirect/404.
+**Priority: Medium.** Graduate SEO validation from slow E2E to unit tests (metadata, registry↔sitemap sync). Keep thin E2E for noindex/redirect/404. Lighthouse CI already delivered (Sprint 3 Wave 1 — GitHub Actions workflow + `task seo:audit`).
 
 - [ ] `apps/web` — Move metadata validation to unit tests (`bntoRegistry.test.ts`)
-- [ ] `apps/web` — Add Lighthouse CI with `seo: 90` threshold
+- [x] `apps/web` — ~~Add Lighthouse CI with `seo: 90` threshold~~ — Delivered in Sprint 3 Wave 1: `.github/workflows/lighthouse.yml` + `lighthouserc.json` + `task seo:audit`
 - [ ] `apps/web` — Slim E2E to redirects + 404 + noindex only
 
 ### Testing: Standardize E2E Selectors on data-testid
