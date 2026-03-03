@@ -48,8 +48,8 @@ export default function NotFound() {
             </Stack>
 
             <Row gap="sm" className="pt-4">
-              <Button href="/" className="group gap-2">
-                <ArrowLeftIcon className="size-4 transition-transform group-hover:-translate-x-1" />
+              <Button href="/" className="gap-2">
+                <ArrowLeftIcon className="size-4" />
                 Back to Home
               </Button>
               <Button
