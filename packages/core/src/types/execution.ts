@@ -14,6 +14,8 @@ export interface Execution {
   id: string;
   userId: string;
   recipeId?: string;
+  /** Recipe slug (e.g., "compress-images"). Present on local history entries. */
+  slug?: string;
   status: "pending" | "running" | "completed" | "failed";
   progress: NodeProgress[];
   result?: RunResult;
@@ -22,6 +24,8 @@ export interface Execution {
   sessionId?: string;
   startedAt: number;
   completedAt?: number;
+  /** Source of the execution data. Defaults to "server" for Convex entries. */
+  source?: "local" | "server";
 }
 
 /** Input for starting a recipe execution. */

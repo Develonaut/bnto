@@ -14,6 +14,7 @@
 
 import { createRecipeService } from "./services/recipeService";
 import { createExecutionService } from "./services/executionService";
+import { createHistoryService } from "./services/historyService";
 import { createUserService } from "./services/userService";
 import { createAnalyticsService } from "./services/analyticsService";
 import { createBrowserExecutionService } from "./services/browserExecutionService";
@@ -32,6 +33,7 @@ import { createDownloadService } from "./services/downloadService";
 // ── Services (single-domain, internal) ────────────────────────────────────
 const recipeService = createRecipeService();
 const executionService = createExecutionService();
+const historyService = createHistoryService();
 const userService = createUserService();
 const analyticsService = createAnalyticsService();
 const browserExecutionService = createBrowserExecutionService();
@@ -43,7 +45,7 @@ const downloadService = createDownloadService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
 const recipeClient = createRecipeClient(recipeService, executionService);
-const executionClient = createExecutionClient(executionService, browserExecutionService);
+const executionClient = createExecutionClient(executionService, browserExecutionService, historyService);
 const userClient = createUserClient(userService, analyticsService);
 const authClient = createAuthClient();
 const telemetryClient = createTelemetryClient();
