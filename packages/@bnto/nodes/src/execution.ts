@@ -1,11 +1,11 @@
 /**
- * Execution context types — data passed between nodes during workflow runs.
+ * Execution context types — data passed between nodes during recipe runs.
  *
  * Go source: engine/pkg/node/executable.go
  */
 
 /**
- * Data passed between nodes during workflow execution.
+ * Data passed between nodes during recipe execution.
  *
  * The engine manages this context — each node's result is merged into
  * `data`, making it available to downstream nodes.

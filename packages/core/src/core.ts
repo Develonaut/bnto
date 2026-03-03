@@ -6,59 +6,59 @@
  * Wires services into clients. This is the base layer that reactCore.ts
  * enhances with React hooks for the final public `core` export.
  *
+ * 5 domains: recipes, executions, user, auth, telemetry.
+ *
  * Dependency flow:
  *   core.ts -> clients -> services -> adapters -> @bnto/backend
  */
 
-import { createWorkflowService } from "./services/workflowService";
+import { createRecipeService } from "./services/recipeService";
 import { createExecutionService } from "./services/executionService";
 import { createUserService } from "./services/userService";
 import { createAnalyticsService } from "./services/analyticsService";
-import { createUploadService } from "./services/uploadService";
-import { createDownloadService } from "./services/downloadService";
-import { createWasmExecutionService } from "./services/wasmExecutionService";
-import { createWorkflowClient } from "./clients/workflowClient";
+import { createBrowserExecutionService } from "./services/browserExecutionService";
+import { createRecipeClient } from "./clients/recipeClient";
 import { createExecutionClient } from "./clients/executionClient";
 import { createUserClient } from "./clients/userClient";
-import { createAnalyticsClient } from "./clients/analyticsClient";
-import { createUploadClient } from "./clients/uploadClient";
-import { createDownloadClient } from "./clients/downloadClient";
 import { createAuthClient } from "./clients/authClient";
-import { createWasmClient } from "./clients/wasmClient";
-import { createRecipeClient } from "./clients/recipeClient";
 import { createTelemetryClient } from "./clients/telemetryClient";
 
+// Services still created internally — uploads, downloads, analytics stay
+// as services for when M4 cloud execution activates. They're just not
+// exposed as top-level domains on the singleton.
+import { createUploadService } from "./services/uploadService";
+import { createDownloadService } from "./services/downloadService";
+
 // ── Services (single-domain, internal) ────────────────────────────────────
-const workflowService = createWorkflowService();
+const recipeService = createRecipeService();
 const executionService = createExecutionService();
 const userService = createUserService();
 const analyticsService = createAnalyticsService();
+const browserExecutionService = createBrowserExecutionService();
+
+// Cloud execution infrastructure — used internally by hooks, not exposed
+// as top-level domains on the public API (reactCore.ts).
 const uploadService = createUploadService();
 const downloadService = createDownloadService();
-const wasmExecutionService = createWasmExecutionService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
-const workflowClient = createWorkflowClient(workflowService, executionService);
-const executionClient = createExecutionClient(executionService);
-const userClient = createUserClient(userService);
-const analyticsClient = createAnalyticsClient(analyticsService);
-const uploadClient = createUploadClient(uploadService);
-const downloadClient = createDownloadClient(downloadService);
+const recipeClient = createRecipeClient(recipeService, executionService);
+const executionClient = createExecutionClient(executionService, browserExecutionService);
+const userClient = createUserClient(userService, analyticsService);
 const authClient = createAuthClient();
-const wasmClient = createWasmClient(wasmExecutionService);
-const recipeClient = createRecipeClient();
 const telemetryClient = createTelemetryClient();
 
 // ── Core Singleton ────────────────────────────────────────────────────────
 export const core = {
-  workflows: workflowClient,
+  recipes: recipeClient,
   executions: executionClient,
   user: userClient,
-  analytics: analyticsClient,
-  uploads: uploadClient,
-  downloads: downloadClient,
   auth: authClient,
-  wasm: wasmClient,
-  recipe: recipeClient,
   telemetry: telemetryClient,
+
+  // ── Internal (used by hooks, not top-level public domains) ──────────
+  /** @internal Cloud upload service — will be absorbed into executions for M4. */
+  uploads: uploadService,
+  /** @internal Cloud download service — will be absorbed into executions for M4. */
+  downloads: downloadService,
 } as const;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Definition } from "./definition";
-import { validateWorkflow, validateDefinition, validateEdges } from "./validate";
+import { validateDefinition, validateEdges } from "./validate";
 
 /** Creates a minimal valid definition for testing. */
 function validDef(overrides: Partial<Definition> = {}): Definition {
@@ -19,14 +19,14 @@ function validDef(overrides: Partial<Definition> = {}): Definition {
   };
 }
 
-describe("validateWorkflow", () => {
+describe("validateDefinition — full tree", () => {
   it("returns no errors for a valid definition", () => {
-    const errors = validateWorkflow(validDef());
+    const errors = validateDefinition(validDef());
     expect(errors).toHaveLength(0);
   });
 
   it("validates the entire tree recursively", () => {
-    const workflow = validDef({
+    const def = validDef({
       type: "group",
       nodes: [
         validDef({ id: "child-1" }),
@@ -34,7 +34,7 @@ describe("validateWorkflow", () => {
       ],
       edges: [],
     });
-    const errors = validateWorkflow(workflow);
+    const errors = validateDefinition(def);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors.some((e) => e.field === "id")).toBe(true);
   });

@@ -3,9 +3,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { core } from "../core";
 
-/** Delete a workflow by ID. */
-export function useRemoveWorkflow() {
+/** Delete a recipe by ID. */
+export function useRemoveRecipe() {
   return useMutation({
-    mutationFn: (id: string) => core.workflows.remove(id),
+    mutationFn: (id: string) => core.recipes.remove(id),
   });
 }

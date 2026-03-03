@@ -1,26 +1,40 @@
 "use client";
 
-import { createRecipeFlowStore } from "../stores/recipeFlowStore";
+import type { RecipeService } from "../services/recipeService";
+import type { ExecutionService } from "../services/executionService";
+import type { StartExecutionInput } from "../types";
 
 /**
- * Recipe flow client — public API for recipe page state management.
+ * Recipe client — public API for recipe operations.
  *
- * Unlike the browser execution client (global singleton), recipe flow
- * stores are page-scoped: each [bnto] page mount creates its own
- * store via `createStore()`. The client exposes the factory — the
- * React hook layer manages store lifecycle (create on mount, dispose
- * on unmount).
+ * Composes recipe and execution services for cross-domain orchestration.
+ * Running a recipe creates an execution (cross-domain side effect).
  */
-export function createRecipeClient() {
+export function createRecipeClient(
+  recipes: RecipeService,
+  executions: ExecutionService,
+) {
   return {
-    /**
-     * Create a page-scoped recipe flow store.
-     *
-     * @param defaultConfig - Default config for the recipe slug.
-     * @returns A vanilla Zustand store instance.
-     */
-    createStore: (defaultConfig: Record<string, unknown> = {}) =>
-      createRecipeFlowStore(defaultConfig),
+    // ── Query Options ─────────────────────────────────────────────
+    listQueryOptions: () => recipes.listQueryOptions(),
+    getQueryOptions: (id: string) => recipes.getQueryOptions(id),
+
+    // ── Mutations ─────────────────────────────────────────────────
+    save: (args: { name: string; definition: unknown; isPublic?: boolean }) =>
+      recipes.save(args),
+
+    remove: (id: string) => recipes.remove(id),
+
+    /** Cross-domain: starts execution and invalidates both caches. */
+    run: async (input: StartExecutionInput) => {
+      const executionId = await executions.start(input);
+      executions.invalidateExecutions(input.recipeId);
+      return executionId;
+    },
+
+    // ── Cache Invalidation ────────────────────────────────────────
+    invalidateList: () => recipes.invalidateList(),
+    invalidateRecipe: (id: string) => recipes.invalidateRecipe(id),
   } as const;
 }
 

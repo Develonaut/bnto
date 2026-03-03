@@ -3,17 +3,18 @@
 The `@bnto/core` package follows a layered singleton pattern:
 
 ```
-clients (public API)  ->  services (single-domain logic)  ->  adapters (backend-specific)
+clients (public API)  ->  queries (read-path)  +  services (write-path)  ->  adapters (backend-specific)
 ```
 
-- **Clients** -- Domain-namespaced public API. `core.workflows`, `core.executions`, `core.auth`. Compose one or more services. Handle cross-domain side effects. Receive services via constructor injection
-- **Services** -- Single-domain business logic. Query options with transforms, mutations, cache invalidation for their own domain. **Services do NOT call other services.** Cross-domain orchestration lives in clients only
-- **Adapters** -- Backend-specific bridge. Currently Convex (web), Tauri adapter planned (desktop). The only layer that imports from `@bnto/backend`. **Every adapter function that accepts an ID must use `"skip"` when the ID is falsy** -- see [convex.md](convex.md#convexquery-skip-guard-critical)
+- **Clients** -- Domain-namespaced public API. `core.recipes`, `core.executions`, `core.auth`. Compose queries, services, and each other. Handle cross-domain side effects. Receive services via constructor injection
+- **Queries** -- Pure read-path functions. Query option construction with `select` transforms. One file per domain (e.g., `queries/executionQueries.ts`). No side effects, no state mutation
+- **Services** -- Single-domain write-path logic. Mutations, cache invalidation, infrastructure lifecycle (e.g., lazy engine init). **Services do NOT call other services.** Cross-domain orchestration lives in clients only
+- **Adapters** -- Backend-specific bridge. Currently Convex (web) + browser (WASM engine, Web Worker), Tauri adapter planned (desktop). The only layer that imports from `@bnto/backend`. **Every adapter function that accepts an ID must use `"skip"` when the ID is falsy** -- see [convex.md](convex.md#convexquery-skip-guard-critical)
 
 ### Dependency Rules
 
 ```
-Clients -> Services -> Adapters -> @bnto/backend
+Clients -> Queries + Services -> Adapters -> @bnto/backend
    |
  (compose multiple services, never service->service)
 ```
@@ -27,10 +28,10 @@ Clients -> Services -> Adapters -> @bnto/backend
 
 ```typescript
 // Imperative (framework-agnostic) -- clients
-await core.workflows.save(input);
+await core.recipes.save(input);
 
 // React binding (thin reactive layer) -- hooks
-const { data: workflows, isLoading } = useQuery(core.workflows.listQueryOptions());
+const { data: recipes, isLoading } = useQuery(core.recipes.listQueryOptions());
 ```
 
 ### File Structure
@@ -39,14 +40,115 @@ const { data: workflows, isLoading } = useQuery(core.workflows.listQueryOptions(
 packages/core/src/
 |-- core.ts                    # Singleton -- wires services into clients
 |-- clients/                   # Public API layer (cross-domain orchestration)
-|-- services/                  # Internal single-domain logic
+|-- queries/                   # Read-path: query option construction + select transforms
+|-- services/                  # Write-path: mutations, invalidation, infrastructure lifecycle
 |-- adapters/
 |   |-- convex/                # Convex-specific bridge (web)
+|   |-- browser/               # Browser execution: WASM engine, Web Worker, downloads
 |   +-- tauri/                 # Tauri-specific bridge (desktop, planned)
+|-- stores/                    # Zustand stores (internal -- opaque to consumers)
 |-- transforms/                # Doc -> API type mappers
-|-- hooks/                     # React binding layer
+|-- hooks/                     # React binding layer (useExecutionState, useAuth, etc.)
 +-- types/                     # Shared TypeScript types
 ```
+
+---
+
+## API Design Rules
+
+These rules govern how `@bnto/core` exposes functionality to consumers. See [core-unification.md](../strategy/core-unification.md) for the full rationale.
+
+### No Implementation Detail Leakage
+
+**No technology names in the public API.** Consumers see domain concepts (`execution`, `history`, `flow`), never infrastructure (`wasm`, `convex`, `indexeddb`, `zustand`). Method names describe WHAT they do, not HOW they do it.
+
+```typescript
+// GOOD -- domain concept
+core.executions.createExecution()
+core.executions.clearHistory()
+
+// BAD -- technology leaked
+core.wasm.createExecution()
+core.executions.clearLocalHistory()
+```
+
+**Test:** Read every method name on the `core` singleton. If you can identify the underlying technology from the name alone, it's a leak.
+
+### Opaque Stores
+
+Zustand stores created by core are **opaque to consumers**. Consumers access state via `core.<domain>.use*State()` hooks, never raw `.store.getState()` or `useStore(instance.store, ...)`.
+
+```typescript
+// GOOD -- opaque, core controls the API
+const state = core.executions.useExecutionState(instance);
+
+// BAD -- consumer reaches into internals
+const state = useStore(instance.store, useShallow(s => ({ ... })));
+```
+
+Page-level orchestration stores (recipe flow, editor state) belong in the **app layer** (`apps/web`), not core. Core provides execution primitives; the app orchestrates the user journey.
+
+### Lazy Infrastructure
+
+Heavy infrastructure (Web Workers, WASM engines) initializes **lazily on first use**. No explicit setup hooks (`registerEngine`, `useBrowserEngine`) for consumers. Core owns its lifecycle.
+
+```typescript
+// GOOD -- just works, engine initializes on first call
+const instance = core.executions.createExecution();
+await instance.run("compress-images", files);
+
+// BAD -- consumer must set up infrastructure
+useBrowserEngine(); // manually registers engine
+core.wasm.registerEngine(engine); // manual DI in consumer code
+```
+
+Services accept optional `engineOverride` for testing -- but the default path requires zero setup.
+
+### Auth Boundary
+
+Core hooks import from `@bnto/auth`, **never from `@convex-dev/auth/*` directly**. `@bnto/auth` is the abstraction boundary for authentication.
+
+```typescript
+// GOOD -- respects auth boundary
+import { useSignOut as useAuthSignOut } from "@bnto/auth";
+
+// BAD -- bypasses abstraction
+import { useAuthActions } from "@convex-dev/auth/react";
+```
+
+### Separate Concerns
+
+- **Recipes** -- what definition to run (registry/lookup). App or dedicated namespace concern
+- **Executions** -- run a definition, track progress, get results. Core concern
+- **Flow orchestration** -- coordinate user actions on a page (file drop → configure → run → results). App concern
+
+The execution API accepts a **self-describing definition**. It doesn't know or care where the definition came from (predefined, custom, marketplace). The definition contains its own metadata (slug, name, nodes).
+
+```typescript
+// GOOD -- execution is definition-agnostic
+core.executions.start({ definition, sessionId });
+
+// BAD -- execution knows about recipe registry
+core.executions.startPredefined({ slug: "compress-images", definition, sessionId });
+```
+
+---
+
+## 5-Domain Public API
+
+The `core` singleton exposes exactly 5 top-level domains:
+
+| Domain | Responsibility | Key methods |
+|---|---|---|
+| `core.recipes` | Recipe definitions (predefined or user-created) | `listQueryOptions()`, `save()`, `remove()`, `run()` |
+| `core.executions` | Unified execution -- browser + future server | `createExecution()`, `useExecutionState()`, `isCapable()`, `downloadResult()` |
+| `core.user` | Profile + usage stats (absorbed analytics) | `meQueryOptions()`, `usageQueryOptions()`, `useCurrentUser()` |
+| `core.auth` | Session state + auth actions (absorbed session) | `useReady()`, `useIsAuthenticated()`, `useAuth()`, `useSignOut()` |
+| `core.telemetry` | Product event tracking (PostHog) | `capture()`, `identify()`, `reset()` |
+
+**Removed from public API:** `core.wasm` (→ executions), `core.recipe` (→ app layer), `core.analytics` (→ user), `core.session` (→ auth)
+
+**Hidden (internal only):** `core.uploads`, `core.downloads` -- cloud execution infrastructure for M4
 
 ---
 
@@ -54,11 +156,11 @@ packages/core/src/
 
 | Type | Tool | Example |
 |---|---|---|
-| **Server state (single entity)** | React Query (via `convexQuery` bridge) | Workflow detail, execution detail |
-| **Server state (paginated)** | Convex native `usePaginatedQuery` | Workflow lists, execution history |
+| **Server state (single entity)** | React Query (via `convexQuery` bridge) | Recipe detail, execution detail |
+| **Server state (paginated)** | Convex native `usePaginatedQuery` | Recipe lists, execution history |
 | **Client app state** | Zustand (via core store layer) | Editor content, UI preferences |
 | **Local UI state** | `useState` | Modal open, active tab, form inputs |
-| **URL state** | Router params / search params | Active tab, filters, selected workflow |
+| **URL state** | Router params / search params | Active tab, filters, selected recipe |
 
 **Rules:**
 - Select specific state slices, not entire stores (`useStore(s => s.field)`, not `useStore()`)
@@ -71,15 +173,15 @@ packages/core/src/
 
 ```typescript
 // BAD -- new array every render
-return { workflows: data ? data.map(toWorkflow) : [], isLoading };
+return { recipes: data ? data.map(toRecipe) : [], isLoading };
 
 // BAD -- useMemo is a band-aid
-const workflows = useMemo(() => data?.map(toWorkflow) ?? [], [data]);
+const recipes = useMemo(() => data?.map(toRecipe) ?? [], [data]);
 
 // GOOD -- select is memoized by React Query
 const { data, isLoading } = useQuery({
   ...queryOptions,
-  select: (raw) => raw.map(toWorkflow),
+  select: (raw) => raw.map(toRecipe),
 });
 ```
 
@@ -97,7 +199,7 @@ Paginated lists use Convex's native `usePaginatedQuery` for real-time per-page s
 
 ```typescript
 export function usePaginatedHook(id: string, options?: { pageSize?: number }) {
-  const ready = core.session.useReady();
+  const ready = core.auth.useReady();
   const { pageSize = 24 } = options ?? {};
   const { funcRef, args, transform } = core.domain.refMethod(id);
   const { results, status, loadMore } = usePaginatedQuery(

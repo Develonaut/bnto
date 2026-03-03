@@ -14,10 +14,10 @@ export function getExecutionQuery(id: string) {
   return convexQuery(api.executions.get, id ? { id: id as Id<"executions"> } : "skip");
 }
 
-export function getExecutionsQuery(workflowId: string) {
+export function getExecutionsQuery(recipeId: string) {
   return convexQuery(
-    api.executions.listByWorkflow,
-    workflowId ? { workflowId: workflowId as Id<"workflows"> } : "skip",
+    api.executions.listByRecipe,
+    recipeId ? { recipeId: recipeId as Id<"recipes"> } : "skip",
   );
 }
 
@@ -46,7 +46,7 @@ export function getExecutionHistoryRef() {
 
 export function startExecution(input: StartExecutionInput) {
   return getConvexClient().mutation(api.executions.start, {
-    workflowId: input.workflowId as Id<"workflows">,
+    recipeId: input.recipeId as Id<"recipes">,
     slug: input.slug,
     sessionId: input.sessionId,
   });

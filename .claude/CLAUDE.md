@@ -1,6 +1,6 @@
 # Bnto - Agent & Developer Guide
 
-**Last Updated:** February 25, 2026
+**Last Updated:** March 3, 2026
 
 ---
 
@@ -26,6 +26,7 @@
 | Code editor (Sprint 4B)      | [code-editor.md](.claude/strategy/code-editor.md)                      |
 | Understanding the product    | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) |
 | Core principles (always)     | [core-principles.md](.claude/strategy/core-principles.md)          |
+| `@bnto/core` internals       | [core-api.md](.claude/rules/core-api.md) + [core-unification.md](.claude/strategy/core-unification.md) |
 | Environment variables        | [environment-variables.md](.claude/environment-variables.md)       |
 
 ---
@@ -231,6 +232,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [editor-architecture.md](.claude/strategy/editor-architecture.md) | Shared editor layer — store, hooks, package strategy, switchable editors |
 | [visual-editor.md](.claude/strategy/visual-editor.md) | Bento box visual editor — compartment design, grid layout, execution state |
 | [code-editor.md](.claude/strategy/code-editor.md) | Code editor design — CM6, slash commands, JSON Schema |
+| [core-unification.md](.claude/strategy/core-unification.md) | Core API unification — patterns, rationale, copyable prompt |
 | [skills/](.claude/skills/) | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit) |
 
 ### Domain Expert Personas (invoke with `/persona-name`)

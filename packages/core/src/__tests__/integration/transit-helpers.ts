@@ -13,15 +13,15 @@ import { type AuthenticatedClient, api } from "./setup";
 /** Small PNG from engine test fixtures (~440KB — well under 25MB free limit). */
 export const TEST_IMAGE_PATH = resolve(
   __dirname,
-  "../../../../../engine/tests/fixtures/images/Product_Render.png",
+  "../../../../../archive/engine-go/tests/fixtures/images/Product_Render.png",
 );
 
-/** compress-images workflow definition — reads from INPUT_DIR, outputs to OUTPUT_DIR. */
+/** compress-images recipe definition — reads from INPUT_DIR, outputs to OUTPUT_DIR. */
 export const COMPRESS_IMAGES_DEFINITION = JSON.parse(
   readFileSync(
     resolve(
       __dirname,
-      "../../../../../engine/tests/fixtures/workflows/compress-images.bnto.json",
+      "../../../../../archive/engine-go/tests/fixtures/workflows/compress-images.bnto.json",
     ),
     "utf-8",
   ),

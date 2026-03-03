@@ -6,7 +6,7 @@ const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 450; // 15 min at 2s intervals
 
 /**
- * Internal action: POST workflow to Go API, then poll for completion.
+ * Internal action: POST recipe definition to Go API, then poll for completion.
  * Writes progress updates to Convex via internal mutations.
  *
  * When sessionId is provided, the Go API uses it to locate input files
@@ -47,7 +47,7 @@ export const executeWorkflow = internalAction({
   },
 });
 
-/** POST the workflow definition to the Go API. Returns the Go execution ID or null on failure. */
+/** POST the recipe definition to the Go API. Returns the Go execution ID or null on failure. */
 async function callGoApi(
   ctx: { runMutation: (...a: any[]) => Promise<any> }, // eslint-disable-line @typescript-eslint/no-explicit-any
   args: { executionId: any; definition: any; eventId?: any; sessionId?: string }, // eslint-disable-line @typescript-eslint/no-explicit-any

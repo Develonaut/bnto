@@ -1,28 +1,28 @@
 "use client";
 
 import {
-  getWorkflowsQuery,
-  getWorkflowQuery,
-  saveWorkflow,
-  removeWorkflow,
-} from "../adapters/convex/workflowAdapter";
-import { toWorkflow, toWorkflowListItem } from "../transforms/workflow";
+  getRecipesQuery,
+  getRecipeQuery,
+  saveRecipe,
+  removeRecipe,
+} from "../adapters/convex/recipeAdapter";
+import { toRecipe, toRecipeListItem } from "../transforms/recipe";
 import { getQueryClient } from "../client";
 import type {
-  RawWorkflowDoc,
-  RawWorkflowListProjection,
+  RawRecipeDoc,
+  RawRecipeListProjection,
 } from "../types/raw";
 
-export function createWorkflowService() {
+export function createRecipeService() {
   function invalidateList() {
     getQueryClient().invalidateQueries({
-      queryKey: getWorkflowsQuery().queryKey,
+      queryKey: getRecipesQuery().queryKey,
     });
   }
 
-  function invalidateWorkflow(id: string) {
+  function invalidateRecipe(id: string) {
     getQueryClient().invalidateQueries({
-      queryKey: getWorkflowQuery(id).queryKey,
+      queryKey: getRecipeQuery(id).queryKey,
     });
   }
 
@@ -32,34 +32,34 @@ export function createWorkflowService() {
     // The cast to Raw* types is a trust boundary — Convex docs match our
     // raw type definitions by construction (derived from the same schema).
     listQueryOptions: () => ({
-      ...getWorkflowsQuery(),
+      ...getRecipesQuery(),
       select: (data: unknown) =>
-        (data as RawWorkflowListProjection[]).map(toWorkflowListItem),
+        (data as RawRecipeListProjection[]).map(toRecipeListItem),
     }),
 
     getQueryOptions: (id: string) => ({
-      ...getWorkflowQuery(id),
+      ...getRecipeQuery(id),
       select: (data: unknown) =>
-        data ? toWorkflow(data as RawWorkflowDoc) : null,
+        data ? toRecipe(data as RawRecipeDoc) : null,
     }),
 
     // ── Mutations ─────────────────────────────────────────────────
     save: async (args: { name: string; definition: unknown; isPublic?: boolean }) => {
-      const result = await saveWorkflow(args);
+      const result = await saveRecipe(args);
       invalidateList();
       return result;
     },
 
     remove: async (id: string) => {
-      await removeWorkflow(id);
+      await removeRecipe(id);
       invalidateList();
-      invalidateWorkflow(id);
+      invalidateRecipe(id);
     },
 
     // ── Cache Invalidation ────────────────────────────────────────
     invalidateList,
-    invalidateWorkflow,
+    invalidateRecipe,
   } as const;
 }
 
-export type WorkflowService = ReturnType<typeof createWorkflowService>;
+export type RecipeService = ReturnType<typeof createRecipeService>;

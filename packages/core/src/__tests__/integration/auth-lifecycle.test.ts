@@ -80,14 +80,14 @@ describe("S2: sign-out behavior", () => {
 
   it("client without auth token gets empty from list queries", async () => {
     const unauthClient = createUnauthenticatedClient();
-    const workflows = await unauthClient.query(api.workflows.list);
-    expect(workflows).toEqual([]);
+    const recipes = await unauthClient.query(api.recipes.list);
+    expect(recipes).toEqual([]);
   });
 
   it("client without auth token is rejected from mutations", async () => {
     const unauthClient = createUnauthenticatedClient();
     await expect(
-      unauthClient.mutation(api.workflows.save, {
+      unauthClient.mutation(api.recipes.save, {
         name: "should-fail",
         definition: { nodes: [] },
       }),
@@ -106,22 +106,22 @@ describe("S3: auth API surface", () => {
     passwordUser = await createPasswordClient(email, password, { flow: "signUp" });
   });
 
-  it("password user can call protected queries (workflows.list)", async () => {
-    const workflows = await passwordUser.client.query(api.workflows.list);
-    expect(Array.isArray(workflows)).toBe(true);
+  it("password user can call protected queries (recipes.list)", async () => {
+    const recipes = await passwordUser.client.query(api.recipes.list);
+    expect(Array.isArray(recipes)).toBe(true);
   });
 
-  it("password user can call protected mutations (workflows.save)", async () => {
-    const workflowName = `test-auth-${Date.now()}`;
-    const workflowId = await passwordUser.client.mutation(api.workflows.save, {
-      name: workflowName,
+  it("password user can call protected mutations (recipes.save)", async () => {
+    const recipeName = `test-auth-${Date.now()}`;
+    const recipeId = await passwordUser.client.mutation(api.recipes.save, {
+      name: recipeName,
       definition: { nodes: [] },
     });
-    expect(workflowId).toBeTruthy();
+    expect(recipeId).toBeTruthy();
 
-    const workflows = await passwordUser.client.query(api.workflows.list);
-    const found = workflows.find(
-      (w: { name: string }) => w.name === workflowName,
+    const recipes = await passwordUser.client.query(api.recipes.list);
+    const found = recipes.find(
+      (r: { name: string }) => r.name === recipeName,
     );
     expect(found).toBeDefined();
   });

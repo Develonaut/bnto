@@ -2,47 +2,47 @@ import { ConvexError, v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAppUserId } from "./_helpers/auth";
 
-/** List all workflows for the current user. */
+/** List all recipes for the current user. */
 export const list = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAppUserId(ctx);
     if (userId === null) return [];
-    const workflows = await ctx.db
-      .query("workflows")
+    const recipes = await ctx.db
+      .query("recipes")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
-    return workflows.map((w) => ({
-      _id: w._id,
-      name: w.name,
-      nodeCount: Array.isArray(w.definition?.nodes)
-        ? w.definition.nodes.length
+    return recipes.map((r) => ({
+      _id: r._id,
+      name: r.name,
+      nodeCount: Array.isArray(r.definition?.nodes)
+        ? r.definition.nodes.length
         : 0,
-      updatedAt: w.updatedAt,
+      updatedAt: r.updatedAt,
     }));
   },
 });
 
-/** Get a single workflow by ID. Verifies ownership. */
+/** Get a single recipe by ID. Verifies ownership. */
 export const get = query({
-  args: { id: v.id("workflows") },
+  args: { id: v.id("recipes") },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
     if (userId === null) return null;
-    const workflow = await ctx.db.get(args.id);
-    if (workflow === null || workflow.userId !== userId) return null;
-    return workflow;
+    const recipe = await ctx.db.get(args.id);
+    if (recipe === null || recipe.userId !== userId) return null;
+    return recipe;
   },
 });
 
-/** Get a workflow by name for the current user. */
+/** Get a recipe by name for the current user. */
 export const getByName = query({
   args: { name: v.string() },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
     if (userId === null) return null;
     return ctx.db
-      .query("workflows")
+      .query("recipes")
       .withIndex("by_user_name", (q) =>
         q.eq("userId", userId).eq("name", args.name),
       )
@@ -50,7 +50,7 @@ export const getByName = query({
   },
 });
 
-/** Create or update a workflow. */
+/** Create or update a recipe. */
 export const save = mutation({
   args: {
     name: v.string(),
@@ -62,7 +62,7 @@ export const save = mutation({
     if (userId === null) throw new ConvexError("Not authenticated");
 
     const existing = await ctx.db
-      .query("workflows")
+      .query("recipes")
       .withIndex("by_user_name", (q) =>
         q.eq("userId", userId).eq("name", args.name),
       )
@@ -80,7 +80,7 @@ export const save = mutation({
       return existing._id;
     }
 
-    return ctx.db.insert("workflows", {
+    return ctx.db.insert("recipes", {
       userId,
       name: args.name,
       definition: args.definition,
@@ -92,15 +92,15 @@ export const save = mutation({
   },
 });
 
-/** Delete a workflow. Verifies ownership. */
+/** Delete a recipe. Verifies ownership. */
 export const remove = mutation({
-  args: { id: v.id("workflows") },
+  args: { id: v.id("recipes") },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
     if (userId === null) throw new ConvexError("Not authenticated");
-    const workflow = await ctx.db.get(args.id);
-    if (workflow === null || workflow.userId !== userId) {
-      throw new ConvexError("Workflow not found");
+    const recipe = await ctx.db.get(args.id);
+    if (recipe === null || recipe.userId !== userId) {
+      throw new ConvexError("Recipe not found");
     }
     await ctx.db.delete(args.id);
   },

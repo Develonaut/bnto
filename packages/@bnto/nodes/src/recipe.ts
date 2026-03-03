@@ -1,8 +1,8 @@
 /**
- * Recipe types — predefined bnto workflow definitions with metadata.
+ * Recipe types — predefined bnto definitions with metadata.
  *
  * A recipe bundles SEO metadata, file acceptance rules, and a full
- * workflow definition into a single JSON blob. The engine owns these
+ * definition into a single JSON blob. The engine owns these
  * definitions; consumers (web, desktop, CLI) read them.
  *
  * Go source: engine/pkg/menu/types.go
@@ -11,7 +11,7 @@
 import type { Definition } from "./definition";
 
 /**
- * A predefined bnto recipe — metadata + acceptance rules + workflow definition.
+ * A predefined bnto recipe — metadata + acceptance rules + definition.
  *
  * Recipes are the "pre-assembled bento boxes" in the catalog. Each one
  * maps to a public URL at `/{slug}` and drives static generation,
@@ -39,7 +39,7 @@ export interface Recipe {
   /** Search engine optimization metadata. */
   seo: SEOSpec;
 
-  /** The full workflow definition ready for execution. */
+  /** The full definition ready for execution. */
   definition: Definition;
 }
 

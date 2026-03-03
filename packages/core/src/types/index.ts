@@ -1,17 +1,17 @@
 export type {
-  Workflow,
-  WorkflowListItem,
-  SaveWorkflowInput,
-  WorkflowDefinition,
+  Recipe,
+  RecipeListItem,
+  SaveRecipeInput,
+  RecipeDefinition,
   Position,
   Metadata,
   Port,
   Edge,
   FieldsConfig,
-  WorkflowSummary,
+  RecipeSummary,
   ValidationResult,
   RunResponse,
-} from "./workflow";
+} from "./recipe";
 
 export type {
   Execution,
@@ -46,8 +46,8 @@ export type {
   BrowserExecution,
   BrowserFileProgress,
   BrowserFileProgressInput,
-  WasmRunResult,
-} from "./wasm";
+  BrowserRunResult,
+} from "./browser";
 
 export type { RunPhase, RecipeFlow } from "./recipeFlow";
 

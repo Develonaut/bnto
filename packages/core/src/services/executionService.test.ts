@@ -7,8 +7,8 @@ vi.mock("../adapters/convex/executionAdapter", () => ({
     queryKey: ["executions", "get", id],
     queryFn: vi.fn(),
   })),
-  getExecutionsQuery: vi.fn((workflowId: string) => ({
-    queryKey: ["executions", "listByWorkflow", workflowId],
+  getExecutionsQuery: vi.fn((recipeId: string) => ({
+    queryKey: ["executions", "listByRecipe", recipeId],
     queryFn: vi.fn(),
   })),
   getExecutionLogsQuery: vi.fn((executionId: string) => ({
@@ -42,13 +42,13 @@ describe("createExecutionService", () => {
   });
 
   describe("start", () => {
-    it("passes workflowId to adapter", async () => {
+    it("passes recipeId to the adapter", async () => {
       mockStartExecution.mockResolvedValueOnce("exec_new" as never);
 
-      await service.start({ workflowId: "wf_123" });
+      await service.start({ recipeId: "wf_123" });
 
       expect(mockStartExecution).toHaveBeenCalledWith({
-        workflowId: "wf_123",
+        recipeId: "wf_123",
       });
     });
 
@@ -56,13 +56,13 @@ describe("createExecutionService", () => {
       mockStartExecution.mockResolvedValueOnce("exec_new" as never);
 
       await service.start({
-        workflowId: "wf_456",
+        recipeId: "wf_456",
         slug: "compress-images",
         sessionId: "session-abc",
       });
 
       expect(mockStartExecution).toHaveBeenCalledWith({
-        workflowId: "wf_456",
+        recipeId: "wf_456",
         slug: "compress-images",
         sessionId: "session-abc",
       });
@@ -71,7 +71,7 @@ describe("createExecutionService", () => {
     it("returns the execution ID from the adapter", async () => {
       mockStartExecution.mockResolvedValueOnce("exec_789" as never);
 
-      const result = await service.start({ workflowId: "wf_789" });
+      const result = await service.start({ recipeId: "wf_789" });
 
       expect(result).toBe("exec_789");
     });
@@ -92,7 +92,7 @@ describe("createExecutionService", () => {
       const rawDoc = {
         _id: "exec_123",
         userId: "user_456",
-        workflowId: "wf_789",
+        recipeId: "wf_789",
         status: "completed" as const,
         progress: [{ nodeId: "n1", status: "completed" }],
         startedAt: 1000,
@@ -103,7 +103,7 @@ describe("createExecutionService", () => {
 
       expect(result.id).toBe("exec_123");
       expect(result.userId).toBe("user_456");
-      expect(result.workflowId).toBe("wf_789");
+      expect(result.recipeId).toBe("wf_789");
       expect(result.status).toBe("completed");
       expect(result.startedAt).toBe(1000);
       expect(result.completedAt).toBe(2000);
@@ -118,7 +118,7 @@ describe("createExecutionService", () => {
         status: "pending" as const,
         progress: [],
         startedAt: 3000,
-        workflowId: null,
+        recipeId: null,
         error: null,
         result: null,
         outputFiles: null,
@@ -128,7 +128,7 @@ describe("createExecutionService", () => {
 
       const result = transform(rawDoc);
 
-      expect(result.workflowId).toBeUndefined();
+      expect(result.recipeId).toBeUndefined();
       expect(result.error).toBeUndefined();
       expect(result.result).toBeUndefined();
       expect(result.outputFiles).toBeUndefined();

@@ -23,7 +23,7 @@ const PREDEFINED_EMAILS = new Set([
  * 3. Per session: delete authRefreshTokens, authVerifiers
  * 4. Per account: delete authVerificationCodes
  * 5. Delete authSessions, authAccounts
- * 6. Delete app tables: workflows, executions → executionLogs, executionEvents
+ * 6. Delete app tables: recipes, executions → executionLogs, executionEvents
  * 7. Delete authRateLimits for ephemeral test emails
  * 8. Delete users
  */
@@ -98,13 +98,13 @@ export const cleanTestAccounts = internalMutation({
         deletedTotal++;
       }
 
-      // --- App tables: workflows ---
-      const workflows = await ctx.db
-        .query("workflows")
+      // --- App tables: recipes ---
+      const recipes = await ctx.db
+        .query("recipes")
         .withIndex("by_user", (q) => q.eq("userId", user._id))
         .collect();
-      for (const wf of workflows) {
-        await ctx.db.delete(wf._id);
+      for (const recipe of recipes) {
+        await ctx.db.delete(recipe._id);
         deletedTotal++;
       }
 

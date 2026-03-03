@@ -1,15 +1,15 @@
 // ---------------------------------------------------------------------------
-// WASM execution types (transport-agnostic — no WASM imports)
+// Browser execution types (transport-agnostic — no WASM imports)
 //
-// These types define the contract between @bnto/core and whatever WASM
-// engine implementation is registered (e.g., BntoWorker in apps/web).
+// These types define the contract between @bnto/core and whatever browser
+// engine implementation is used (e.g., Rust→WASM via Web Worker).
 // ---------------------------------------------------------------------------
 
 /**
- * Abstract engine interface for WASM-based execution.
+ * Abstract engine interface for browser-based execution.
  *
- * Implemented by the WASM Web Worker wrapper (BntoWorker) in apps/web.
- * Registered at app startup via `core.wasm.registerEngine(engine)`.
+ * Implemented by the WASM Web Worker wrapper (BntoWorker).
+ * Engine initializes lazily on first use — no manual registration needed.
  *
  * The engine processes files entirely in the browser — no backend,
  * no R2, no network. Files never leave the user's machine.
@@ -88,8 +88,8 @@ export interface BrowserFileProgress {
 /** Progress input from the engine (before the store computes overallPercent). */
 export type BrowserFileProgressInput = Omit<BrowserFileProgress, "overallPercent">;
 
-/** Result payload returned by `WasmExecutionInstance.run()`. */
-export interface WasmRunResult {
+/** Result payload returned by `ExecutionInstance.run()`. */
+export interface BrowserRunResult {
   /** Terminal status of the execution. */
   status: "completed" | "aborted" | "failed";
   /** Processed files (empty on abort/failure). */
