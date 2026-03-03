@@ -46,6 +46,7 @@ export {
   PenLine as PenLineIcon,
   Play as PlayIcon,
   RotateCcw as RotateCcwIcon,
+  Save as SaveIcon,
   Scaling as ScalingIcon,
   ShieldCheck as ShieldCheckIcon,
   Sparkles as SparklesIcon,
