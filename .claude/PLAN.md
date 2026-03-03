@@ -152,7 +152,7 @@ Remove anonymous hooks and types from `@bnto/core`. This is the transport-agnost
 
 Remove anonymous UI patterns from the web app. Simplify auth page, remove gate components, clean up providers.
 
-- [x] `apps/web` — Delete `AccountGate.tsx` and `UpgradePrompt.tsx`. Remove all imports/usages
+- [x] `apps/web` — Delete `UpgradePrompt.tsx`. **AccountGate retained** — it's the primary conversion component for enticing unauthenticated users to create accounts. Used on `/my-recipes` and available for any gated surface
 - [x] `apps/web` — Simplify providers, NavUser, SignInForm: remove anonymous session handling
 - [x] `apps/web` — Simplify recipe flow: browser execution is always allowed, no gates
 - [x] `apps/web` — **Validation:** `task ui:build` passes. No TypeScript errors from removed types/hooks
@@ -213,16 +213,16 @@ Update all documentation and strategy files to reflect the simplified auth model
 
 - [ ] `apps/web` — `/frontend-engineer` — Dashboard page: saved workflows, recent executions, usage analytics
 - [ ] `apps/web` — `/frontend-engineer` — Execution history page (list of past runs with status, re-run capability)
-- [ ] `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): "Want to save this recipe? Sign up — it's free." — appears after successful browser execution for unauthenticated users
-- [ ] `apps/web` — `/frontend-engineer` — **History prompt** (conversion hook): "Sign up to access your execution history and re-run past recipes."
+- [ ] `apps/web` — `/frontend-engineer` — **Browser-local execution history:** Track execution runs in browser storage (IndexedDB/localStorage) for unauthenticated users. Unauth users see their recent runs within the browser session. `AccountGate` wraps history views — "Sign up to keep your history across devices and never lose it." Auth users persist to Convex (existing path)
+- [ ] `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): After successful browser execution for unauthenticated users, surface AccountGate with save-focused copy — "Want to save this recipe? Sign up — it's free." Natural value moment, not a blocking gate
 - [ ] `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation, cookie-based default mode (moved from Sprint 2A Wave 5)
 - [ ] `apps/web` — `/frontend-engineer` — Pricing page update: Pro sells persistence, collaboration, premium compute — not run limits
 - [ ] `apps/web` — `/frontend-engineer` — **Data fetching & skeleton audit:** Scan all existing components in `apps/web/` for violations of the co-located query pattern, prop drilling, mismatched skeletons, missing skeletons, separate `*Skeleton.tsx` files (for simple cases), transforms outside `select`, and loading wrapper anti-patterns. Fix violations in-place. Reference: [data-fetching-strategy.md](strategy/data-fetching-strategy.md), [skeletons.md](rules/skeletons.md)
 
 #### Wave 3 (sequential — test)
 
-- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: save prompt appears after unauthenticated execution
-- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: execution history page shows past runs for authenticated users
+- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: AccountGate conversion flow — unauthenticated user sees gated content with sign-up prompt on dashboard/history surfaces
+- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: browser-local execution history shows recent runs for unauthenticated users; authenticated users see Convex-backed history
 - [ ] `@bnto/backend` — `/backend-engineer` — Unit tests for execution analytics queries
 
 ---

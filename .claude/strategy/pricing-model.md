@@ -1,8 +1,9 @@
 # Pricing Model — Operational Rules
 
-**Last Updated:** February 25, 2026
+**Last Updated:** March 3, 2026
 **Status:** Active — operational rules for agents writing code
 **Full strategy:** Notion → "Pricing Model & Monetization Strategy" (business rationale, conversion psychology, revenue projections)
+**Feature tiers & conversion funnel:** Notion → "Feature Funnel & Tier Matrix" (surface-by-surface breakdown, concrete limits, AccountGate placement)
 
 ---
 
@@ -48,28 +49,31 @@ Use these terms consistently across all code, docs, and UI copy.
 
 | Type | Access |
 |---|---|
-| **Predefined recipes** (browser nodes) | Always free. No account needed. |
-| **Custom recipes** (browser nodes) | Free to create, run, export. Pro to save or share. |
+| **Predefined recipes** (browser nodes) | Always free. No account needed. Run on tool pages. |
+| **Custom recipes** (browser nodes) | Requires free account to create (editor is AccountGated for unauth). Free to create, run, export. Save up to 3. Pro for unlimited saves or sharing. |
 | **Any recipe with server nodes** | Pro required for execution. |
 
 ---
 
-## Free vs Pro Gate
+## Three-Tier Gate (Unauth → Free → Pro)
 
-| Action | Free | Pro |
-|---|---|---|
-| Run predefined recipes (browser) | Unlimited | Unlimited |
-| Run custom recipes (browser nodes) | Unlimited | Unlimited |
-| Recipe editor (create + run + export) | Yes | Yes |
-| All node definitions visible | Yes | Yes |
-| Save recipes to account | No | Yes |
-| Execution history | No | Yes (30-day retention) |
-| Server-node execution | No | Usage-based |
-| Team sharing | No | Yes (up to 5 members) |
-| Priority server-side processing | No | Yes |
-| API access | No | Yes |
-| Cloud drive export | No | Yes |
-| Desktop app | Free forever | Free forever |
+**Full tier matrix with concrete limits:** Notion → "Feature Funnel & Tier Matrix"
+
+| Action | Unauth | Free Account | Pro |
+|---|---|---|---|
+| Run predefined recipes (browser) | Unlimited | Unlimited | Unlimited |
+| Recipe editor (create custom) | No (AccountGated) | Yes | Yes |
+| Export `.bnto.json` | Yes (from tool page) | Yes | Yes |
+| Save recipes to account | No | **3 recipes** | Unlimited |
+| Execution history (browser-local) | **10 entries** (read-only, no re-run) | 10 entries (plus server-synced) | 10 entries (plus server-synced) |
+| Execution history (server-synced) | No | **7-day retention** (re-run, cross-device) | **30-day retention** |
+| `/my-recipes` dashboard | Bare-bones (read-only history list) | Full (re-run, save, create) | Full + sharing, cloud export |
+| File size limit | 25 MB | 25 MB | 500 MB |
+| Server-node execution | No | No | Usage-based |
+| Team sharing | No | No | Yes (up to 5 members) |
+| API access | No | No | Yes |
+| Cloud drive export | No | No | Yes |
+| Desktop app | Free forever | Free forever | Free forever |
 
 ---
 
@@ -102,10 +106,12 @@ Upgrade prompts trigger at natural value moments — never on artificial browser
 
 ## Unauthenticated Users
 
-- All browser recipes, unlimited
-- Recipe editor, create and run
-- Export `.bnto.json` files
-- No persistence — closing the browser loses unsaved work
+- Run all predefined browser recipes, unlimited
+- **No recipe editor access** — custom recipe creation requires a free account (AccountGated)
+- Export `.bnto.json` from tool page results
+- **Browser-local execution history** — last 10 runs tracked in IndexedDB. Read-only list on `/my-recipes` (no re-run, no details). Deliberately minimal to create upgrade pressure
+- `/my-recipes` accessible but bare-bones — read-only history list, AccountGated Saved tab, conversion banner
+- No server-side persistence — Convex-backed history, saved recipes, and cross-device sync require an account
 - No server-side session — browser execution is 100% client-side
 
 ---
