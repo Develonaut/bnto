@@ -225,9 +225,14 @@ Update all documentation and strategy files to reflect the simplified auth model
 
 #### Wave 3 (sequential — test)
 
-- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: AccountGate conversion flow — unauthenticated user sees gated content with sign-up prompt on dashboard/history surfaces
+- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: AuthGate conversion flow — unauthenticated user sees gated content with sign-up prompt on dashboard/history surfaces. Tests both `AuthGate.Action` (dialog on click) and `AuthGate.Section` (blur + overlay)
 - [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: browser-local execution history shows recent runs for unauthenticated users; authenticated users see Convex-backed history
 - [ ] `@bnto/backend` — `/backend-engineer` — Unit tests for execution analytics queries
+
+#### Wave 4 (sequential — conversion data migration)
+
+- [ ] `@bnto/core` + `@bnto/backend` — `/core-architect` + `/backend-engineer` — **Local→Convex execution history migration on signup:** When a user signs up, read their browser-local execution history (IndexedDB) and batch-write it to Convex. Deduplicate by execution ID. Clear local history after successful migration. The `core.executions` layer should handle this transparently — detect auth state change (unauth→auth) and trigger migration automatically. No user action required.
+- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: **anonymous→signup conversion preserves history.** Full journey: (1) run a recipe as unauthenticated user, (2) verify execution appears in browser-local history, (3) sign up, (4) verify the same execution now appears in Convex-backed history on `/my-recipes`, (5) verify browser-local history is cleared. This is the C1→C2 conversion journey from `journeys/auth.md`.
 
 ---
 
