@@ -37,7 +37,7 @@ describe("usage analytics fields", () => {
       await t.run(async (ctx) => {
         const user = (await ctx.db.get(userId))!;
         await ctx.db.patch(userId, {
-          totalRuns: (user.totalRuns ?? 0) + 1,
+          totalRuns: user.totalRuns + 1,
           lastRunAt: Date.now(),
         });
       });
@@ -55,7 +55,7 @@ describe("usage analytics fields", () => {
         await t.run(async (ctx) => {
           const user = (await ctx.db.get(userId))!;
           await ctx.db.patch(userId, {
-            totalRuns: (user.totalRuns ?? 0) + 1,
+            totalRuns: user.totalRuns + 1,
             lastRunAt: Date.now(),
           });
         });
@@ -63,35 +63,6 @@ describe("usage analytics fields", () => {
 
       const user = await t.run(async (ctx) => ctx.db.get(userId));
       expect(user!.totalRuns).toBe(5);
-    });
-
-    it("handles users without totalRuns (backward compat)", async () => {
-      const t = convexTest(schema, modules);
-
-      // Insert user without totalRuns — simulates pre-migration docs
-      const userId = await t.run(async (ctx) => {
-        return ctx.db.insert("users", {
-          email: "legacy@example.com",
-          plan: "free",
-          // totalRuns not set — optional field
-        });
-      });
-
-      const user = await t.run(async (ctx) => ctx.db.get(userId));
-      // Code should treat undefined as 0
-      expect(user!.totalRuns ?? 0).toBe(0);
-
-      // First run on legacy user increments from undefined → 1
-      await t.run(async (ctx) => {
-        const u = (await ctx.db.get(userId))!;
-        await ctx.db.patch(userId, {
-          totalRuns: (u.totalRuns ?? 0) + 1,
-          lastRunAt: Date.now(),
-        });
-      });
-
-      const updated = await t.run(async (ctx) => ctx.db.get(userId));
-      expect(updated!.totalRuns).toBe(1);
     });
   });
 
@@ -112,7 +83,7 @@ describe("usage analytics fields", () => {
       await t.run(async (ctx) => {
         const user = (await ctx.db.get(userId))!;
         await ctx.db.patch(userId, {
-          totalRuns: (user.totalRuns ?? 0) + 1,
+          totalRuns: user.totalRuns + 1,
           lastRunAt: firstRunTime,
         });
       });
@@ -124,7 +95,7 @@ describe("usage analytics fields", () => {
       await t.run(async (ctx) => {
         const user = (await ctx.db.get(userId))!;
         await ctx.db.patch(userId, {
-          totalRuns: (user.totalRuns ?? 0) + 1,
+          totalRuns: user.totalRuns + 1,
           lastRunAt: secondRunTime,
         });
       });
