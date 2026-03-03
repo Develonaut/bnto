@@ -19,7 +19,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 **Scope rule:** Each task targets ONE package. Don't touch files outside the tagged package unless the task explicitly says so.
 
-**Sprint branches:** Each active sprint gets a long-lived branch (`sprint/<id>-<short-name>`, e.g. `sprint/3-platform-features`). Task branches are created from and PR'd back to the sprint branch — not `main`. When a sprint completes, one PR merges the sprint branch into `main` (single deploy). This prevents Vercel deployment rate-limiting from per-task merges. The user creates sprint branches manually — if one doesn't exist yet for the current sprint, ask the user to create it or confirm you should.
+**Branching:** Feature branches target `main` directly. Create a branch from `main` (`git checkout -b <type>/<short-description> main`), do the work, PR into `main`, squash merge. Use worktrees (`/pickup --w`) for isolation when multiple agents are active — see the pickup skill for the smart isolation model.
 
 **Co-location decision (Feb 2026):** UI components and editor features live in `apps/web` for now. No separate `@bnto/ui` or `@bnto/editor` packages until there's a real second consumer (desktop app). Engine, core API, and data layer logic stays in `@bnto/core`. When the UI package is extracted, it will be published as `@bnto/ui` (npm) under the name **Motorway** — the Mini Motorways-inspired design system (surface, elevation, pressable, spring animations, warm palette).
 
@@ -189,8 +189,6 @@ Update all documentation and strategy files to reflect the simplified auth model
 ### Sprint 3: Platform Features (M2)
 **Goal:** Accounts earn their keep. Users who sign up get persistence, history, and a reason to stay. Conversion hooks are natural — Save, History, Server Nodes — not artificial run caps. See [pricing-model.md](strategy/pricing-model.md) for the full free vs premium framework.
 
-**Sprint branch:** `sprint/3-platform-features`
-
 **Prerequisite:** Sprint 3A (anonymous user removal) must be complete. The anonymous system is gone — auth is binary (signed in or not). Conversion prompts are value-driven.
 
 **Persona ownership:**
@@ -235,8 +233,6 @@ Update all documentation and strategy files to reflect the simplified auth model
 
 ### Sprint 4: Recipe Editor (Headless-First)
 **Goal:** Users can create recipes from a blank canvas or customize existing ones — add/remove/configure nodes, run, and export as `.bnto.json`. The editor is free (pricing-model.md: "recipe editor is free"). Power users who create custom recipes are the highest-intent Pro upgrade candidates.
-
-**Sprint branch:** `sprint/4-recipe-editor`
 
 **Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The bento box visual (compartment cards on a grid) is one skin; the code editor (CodeMirror 6) is another. Both are views of the same `Definition` in the shared store. Users can switch between them on the fly. See [editor-architecture.md](.claude/strategy/editor-architecture.md) for the shared layer design and [visual-editor.md](.claude/strategy/visual-editor.md) for the bento box visual editor.
 
@@ -319,8 +315,6 @@ The editor runs recipes and shows execution state on the canvas. Compartments vi
 ### Sprint 4B: Code Editor (CodeMirror 6)
 
 **Goal:** A schema-aware `.bnto.json` code editor for power users — the coding-oriented counterpart to the visual canvas. Users who prefer code get the same power as the visual canvas, with the speed and precision of text editing. Slash commands bring Notion-like ergonomics. The code editor is free (same as the visual editor).
-
-**Sprint branch:** TBD — will be created when Sprint 4B begins.
 
 **Required reading:** Before picking up ANY task in Sprint 4B, read [code-editor.md](.claude/strategy/code-editor.md) — the design document covering tech choice rationale (CM6 over Monaco), architecture (headless-first + store sync), feature tiers, slash command implementation, JSON Schema strategy, CLI/TUI parallels, React integration pattern, theming, and performance considerations. Also read the persona at `.claude/skills/code-editor-expert/SKILL.md` for CM6-specific APIs, extension patterns, and gotchas.
 

@@ -1,37 +1,81 @@
 ---
 name: pickup
 description: Pickup Work — Two-Phase Task Execution
-args: "[--w | --worktree]"
+args: "[--worktree | --w | --here]"
 ---
 
 # Pickup Work — Two-Phase Task Execution
 
-This skill uses a **propose-then-execute** workflow. Phase 1 researches the next available task and presents a proposal. Phase 2 executes only after user approval.
+This skill uses a **propose-then-execute** workflow. Phase 1 researches the next available task, checks the landscape for conflicts, and presents a proposal with an isolation recommendation. Phase 2 executes only after user approval.
 
 ## Arguments
 
 | Flag | Description |
 |------|-------------|
-| `--w`, `--worktree` | Execute Phase 2 in an isolated git worktree. The main working tree stays clean while you work. Phase 1 (research) always runs on the main tree. |
+| *(no flag)* | **Smart default.** Phase 1 checks the landscape (active branches, worktrees, in-flight work) and recommends worktree or current tree. You choose in the proposal. |
+| `--worktree`, `--w` | **Force worktree.** Skip the recommendation — always create an isolated worktree. Good when you know multiple agents will be active. |
+| `--here` | **Force current tree.** Skip the recommendation — work directly on the current tree with a feature branch. Good for quick fixes or when you're the only agent. |
 
-**Usage:** `/pickup --w` or `/pickup --worktree`
+**Usage:** `/pickup`, `/pickup --w`, `/pickup --here`
 
 ---
 
 ## Phase 1: Research & Propose
 
-**Do NOT write any code yet.** Your only job in Phase 1 is to understand the next task and present a clear proposal for the user to approve or reject.
+**Do NOT write any code yet.** Your only job in Phase 1 is to understand the next task, assess the landscape, and present a clear proposal for the user to approve or reject.
+
+### Step 0: Check the Landscape
+
+Before looking at tasks, understand what's happening in the repo right now. Run these checks:
+
+```bash
+# What branches exist locally?
+git branch --list
+
+# Any active worktrees?
+git worktree list
+
+# Any uncommitted changes on the current tree?
+git status --short
+
+# Recent activity on main?
+git log --oneline -5 main
+```
+
+Then scan `PLAN.md` for **CLAIMED** tasks — note which packages they target. This tells you where other agents are working.
+
+**Build a conflict picture:**
+
+| Check | What it tells you |
+|---|---|
+| Active worktrees | Other agents are working in isolation — low conflict risk with them |
+| Local branches ahead of main | Someone has unpushed work — check which packages |
+| Uncommitted changes | Another agent may be mid-task on the current tree |
+| CLAIMED tasks in PLAN.md | Which packages have active work — avoid overlap |
+
+You'll use this to make an isolation recommendation in Step 4.
 
 ### Step 1: Read the Plan
 
 Read `.claude/PLAN.md`. Find the **current sprint** (the first sprint with unclaimed tasks).
 
-### Step 2: Identify the Next Task
+### Step 2: Identify the Next Task(s)
 
 - Find unclaimed tasks (`- [ ]` without **CLAIMED**) in the earliest available wave
 - **Do not pick tasks from a wave if the previous wave has unclaimed or claimed (in-progress) tasks** — waves are sequential
 - If all tasks in the current wave are claimed or done, report that no tasks are available right now and stop
-- If multiple unclaimed tasks exist in the same wave, list all of them so the user can choose
+- If multiple unclaimed tasks exist in the same wave, list all of them
+
+**Batch pickup:** Look for tasks that form a natural batch — same package scope, same domain, logically connected. An agent building `EditorToolbar`, `NodePalette`, and `NodeConfigPanel` in the same wave shouldn't PR after each one. Recommend batching when:
+
+| Signal | Batch? |
+|---|---|
+| Same `[package]` tag, same wave, shared files/context | Yes — recommend as a batch |
+| Same wave but different packages (e.g., `[core]` + `[web]`) | Maybe — only if one depends on the other and they're small |
+| Different waves | No — waves are sequential |
+| Batch would exceed ~1 day of agent work | No — too large, split into smaller batches |
+
+When recommending a batch, present it as a single proposal with all tasks listed, a combined scope estimate, and a note on why batching makes sense.
 
 ### Step 3: Research the Task
 
@@ -47,11 +91,38 @@ For the candidate task(s), do quick research to understand what's involved:
 
 Present a clear summary to the user with:
 
-1. **Task:** The task description from PLAN.md (verbatim)
+1. **Task(s):** The task description(s) from PLAN.md (verbatim). If recommending a batch, list all tasks and explain why they form a natural unit (shared context, same files, logical sequence).
 2. **Sprint / Wave:** Which sprint and wave it belongs to
-3. **Sprint branch:** The sprint's long-lived branch (e.g., `sprint/3-platform-features`). Found in PLAN.md under the sprint header. If not listed, flag it — the user needs to create one or confirm targeting `main`.
-4. **Package scope:** Which packages/directories will be touched
-5. **Persona(s):** Which domain expert persona(s) will be activated
+3. **Package scope:** Which packages/directories will be touched
+4. **Persona(s):** Which domain expert persona(s) will be activated
+5. **Isolation:** Your recommendation — worktree or current tree. Include reasoning. **Batches of 2+ tasks strongly favor worktrees** — the agent needs room to work without blocking others.
+
+```
+Isolation: Worktree recommended
+Reason: Agent in worktree-agent-af9a7b90 is touching @bnto/backend (CLAIMED: rename workflows table).
+        This task also touches @bnto/backend. Worktree avoids file conflicts.
+```
+
+or:
+
+```
+Isolation: Current tree is fine
+Reason: This task is pure @bnto/nodes work. No other agents active in that package.
+        Small scope, no overlap with in-flight work.
+```
+
+**Isolation decision tree:**
+
+| Condition | Recommendation |
+|---|---|
+| Other agents have CLAIMED tasks in the same package | Worktree |
+| Uncommitted changes exist on the current tree | Worktree |
+| Task is Medium or Large scope | Worktree (safer for long-running work) |
+| Multiple agents will be active in parallel | Worktree |
+| Task is Small scope, no package overlap, you're the only agent | Current tree is fine |
+| User passed `--worktree` | Worktree (skip recommendation) |
+| User passed `--here` | Current tree (skip recommendation) |
+
 6. **Approach:** 3-5 bullet points describing what you plan to do
 7. **Files to modify:** List of files you expect to create or change
 8. **Tests:** What tests you'll write (unit, integration, E2E, screenshots)
@@ -65,8 +136,6 @@ If there are multiple available tasks in the wave, present all of them so the us
 ---
 
 ## Phase 2: Execute (after user approval)
-
-**CRITICAL: Do NOT enter a worktree unless the user explicitly passed `--w` or `--worktree`.** If the user invoked `/pickup` without the flag, you work on the current tree. Never use `EnterWorktree` on your own initiative. If you are already inside a worktree from a previous session, that does NOT authorize worktree usage for new tasks — ask the user.
 
 Only proceed here after the user says to go ahead. The user may:
 - Approve as-is → proceed with the plan
@@ -89,31 +158,31 @@ Before doing ANY work, read and internalize the project's coding standards and a
 
 **Read ALL of these files now.** Do not skim, do not skip. You will be held to every rule in them. The inlined summaries later in this prompt are reminders — the rule files and CLAUDE.md are the source of truth.
 
-### Step 2: Claim the Task
+### Step 2: Claim the Task(s)
 
-Edit `PLAN.md` to mark your task: change `- [ ]` to `- [ ] **CLAIMED**`
+Edit `PLAN.md` to mark your task(s): change `- [ ]` to `- [ ] **CLAIMED**`
 
-### Step 2b: Determine the Sprint Branch
+If you're picking up a batch, claim all tasks in the batch at once. This signals to other agents that the entire batch is spoken for.
 
-**Sprint branches are the default merge target.** Each active sprint has a long-lived branch (`sprint/<id>-<short-name>`, e.g. `sprint/3-platform-features`). Task branches are created from and PR'd into the sprint branch — not `main`. This prevents Vercel deployment rate-limiting.
+### Step 2b: Set Up Isolation
 
-1. **Identify the sprint branch** for your task's sprint. Check if it exists: `git ls-remote --heads origin sprint/<id>-*`
-2. **If the sprint branch doesn't exist**, ask the user to create it or confirm you should create one (e.g., `git checkout -b sprint/3-platform-features origin/main && git push -u origin sprint/3-platform-features`).
-3. **If the user explicitly says to target `main`**, skip the sprint branch and use `main` as the base instead.
+**Determine your isolation mode** based on what was approved in Phase 1:
 
-### Step 2c: Enter Worktree (ONLY if `--w` / `--worktree` flag was explicitly passed)
+#### If worktree (approved in proposal, or `--worktree` / `--w` flag):
 
-**NEVER enter a worktree unless the user explicitly passed `--w` or `--worktree` in their `/pickup` invocation.** This is strictly opt-in. If the flag was not passed, skip this entire step — no exceptions, no judgment calls, no "it would be better in a worktree." Work directly on the main tree (create a branch in Step 5).
-
-If the user invoked `/pickup --w` or `/pickup --worktree`, create an isolated git worktree **now**, before writing any code:
-
-1. **CRITICAL: Ensure you start from the sprint branch.** Before creating the worktree, check out the sprint branch and pull: `git checkout sprint/<id>-<name> && git pull`. Worktrees branch from HEAD — if HEAD is wrong, the worktree inherits that divergence. If no sprint branch exists (or the user told you to target `main`), use `main` instead.
-2. Use the `EnterWorktree` tool with a name based on the branch you'd create (e.g., `feat/execution-history`)
-3. The worktree creates an isolated copy of the repo at `.claude/worktrees/<name>` with a new branch based on HEAD (which is now the sprint branch)
+1. Ensure you start from a clean `main`: `git checkout main && git pull`
+2. Use the `EnterWorktree` tool with a name based on your feature branch (e.g., `feat/editor-toolbar`)
+3. The worktree creates an isolated copy at `.claude/worktrees/<name>` with a new branch based on HEAD
 4. Your session's working directory switches to the worktree — all subsequent file reads, edits, and commands operate there
 5. The main working tree stays completely untouched
 
 **Why worktrees?** They let the user (or other agents) keep working on the main tree while you work in isolation. No stashing, no branch switching conflicts, no accidental interference with in-progress work.
+
+#### If current tree (approved in proposal, or `--here` flag):
+
+1. Ensure you start from a clean `main`: `git checkout main && git pull`
+2. Create a feature branch: `git checkout -b <type>/<short-description>` (e.g., `feat/editor-toolbar`, `fix/skeleton-shift`)
+3. Continue working on the main tree — be aware that other agents may also be here
 
 ### Step 3: Activate Your Persona
 
@@ -175,14 +244,6 @@ Write the code for your task. Follow the rules in `CLAUDE.md` and `.claude/rules
 - **Hook decomposition** — if a hook does fetching + transformation + subscription + side effects, split it into focused sub-hooks. Signs it's too big: >30 lines, multiple unrelated state, hard to name without "and"
 - **Bento Box Principle** — every file < 250 lines, every function < 20 lines. No utility grab bags, no god objects. See `.claude/rules/code-standards.md` for the full checklist
 
-#### Go Code Standards (CRITICAL)
-
-- **One concept per file, one purpose per function** — same Bento Box Principle applies to Go
-- **Error handling**: Always wrap errors with context — `return fmt.Errorf("loading workflow %s: %w", path, err)` not bare `return err`. Never swallow errors
-- **Context propagation**: Pass `context.Context` through the chain. Check cancellation in loops and before expensive operations
-- **Interface design**: Small, consumer-defined. Accept interfaces, return structs. No mega-interfaces
-- **Package boundaries**: `engine/` orchestrates (doesn't do I/O), `registry/` registers (doesn't execute), `node/` types execute (don't know about other types), `storage/` persists, `validator/` validates. No circular deps
-
 #### Other Standards
 
 - **TypeScript:** infer types, no `any`, no gratuitous `as` assertions, types flow down from core
@@ -215,19 +276,18 @@ Run `/code-review` to audit all your changes against the project's coding standa
 
 Run ALL checks. Do not skip any even if you think your changes are safe:
 
-#### Go checks
 ```bash
-task vet               # go vet — must pass clean
-task test              # engine tests with race detector — must pass
-task api:test          # API server tests with race detector — must pass
-```
+# Rust checks (only if you touched engine/ files)
+task wasm:lint          # clippy — must pass clean
+task wasm:test:unit     # Rust unit tests — must pass
 
-#### TypeScript checks
-```bash
+# TypeScript checks (always run)
 task ui:build          # TypeScript compilation — must pass
 task ui:test           # Frontend tests — must pass
 task ui:lint           # Lint all TS packages — must pass
 ```
+
+Or run `task check` to execute all of the above in one command.
 
 **If any check fails:**
 1. Fix the issue
@@ -242,11 +302,11 @@ task ui:lint           # Lint all TS packages — must pass
 
 Your work MUST include tests. Determine which type based on what you built:
 
-- **Go engine logic** (node execution, validation, path resolution) -> **Unit tests** in `archive/engine-go/pkg/*/` next to the source. Cover happy path, error cases, and edge cases.
-- **Go API endpoints** (`archive/api-go/`) -> **Integration tests** using `httptest`. Cover request/response contracts.
-- **Core hooks/adapters** (`@bnto/core`) -> **Unit tests** using Vitest in `packages/@bnto/core/`.
-- **Backend functions** (`@bnto/backend`) -> **Unit/integration tests** in `packages/@bnto/backend/__tests__/`.
-- **Configuration or type-only changes** -> Tests not required.
+- **Rust engine logic** (node crates, WASM bindings) -> **Unit tests** in `#[cfg(test)]` blocks + WASM integration tests via `wasm-bindgen-test`
+- **Core hooks/adapters** (`@bnto/core`) -> **Unit tests** using Vitest in `packages/core/`
+- **Backend functions** (`@bnto/backend`) -> **Unit/integration tests** in `packages/@bnto/backend/__tests__/`
+- **Pure utils/functions** (any `utils/` directory) -> **Unit tests** co-located next to the source file
+- **Configuration or type-only changes** -> Tests not required
 
 **No exceptions.** If your task adds a function and you didn't write a test, you're not done. Go back and write the tests before proceeding.
 
@@ -298,19 +358,18 @@ If screenshots already exist and the change modifies visual output, run with `--
 
 After all checks pass, provide a summary:
 
-1. **Sprint branch** — name of the sprint branch this work targets (e.g., `sprint/3-platform-features`). Found in PLAN.md under the sprint header. If no sprint branch is listed, ask the user.
-2. **Branch** — name of the feature branch this work is on (e.g., `feat/execution-history`)
-3. **PR** — confirm you are creating a PR and state which branch it targets (e.g., "Creating PR targeting `sprint/3-platform-features`"). PRs target the sprint branch by default, not `main`.
+1. **Branch** — name of the feature branch (e.g., `feat/editor-toolbar`)
+2. **Isolation** — worktree or current tree
+3. **PR target** — `main` (always)
 4. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
 5. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
 6. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
-7. **Go checks result** — confirm `task vet`, `task test`, `task api:test` passed clean
-8. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
-9. **Files changed** — files created/modified, with brief description of each
+7. **Checks result** — confirm `task check` (or individual checks) passed clean. List which checks ran.
+8. **Files changed** — files created/modified, with brief description of each
 
 ### Step 8b: Create the PR
 
-**PRs target the sprint branch by default**, not `main`. Use `--base sprint/<id>-<name>` when creating the PR. If the user explicitly told you to target `main`, use `--base main` instead.
+**PRs always target `main`.** Use `--base main` when creating the PR.
 
 When creating the PR with `gh pr create`, use this format for the body:
 
@@ -321,7 +380,7 @@ When creating the PR with `gh pr create`, use this format for the body:
 ## Verification
 <What you actually did to verify the change works. Be specific:>
 - What checks you ran and their results (e.g., "task ui:build — passed clean")
-- What tests you wrote or ran (e.g., "Added 3 unit tests in wasmExecutionService.test.ts — all pass")
+- What tests you wrote or ran (e.g., "Added 3 unit tests in historyService.test.ts — all pass")
 - What you manually verified (e.g., "Read the generated output file and confirmed correct CSV headers")
 - For UI changes: what screenshots you captured and visually inspected
 - For docs/config-only changes: what you reviewed to confirm correctness
@@ -332,7 +391,8 @@ When creating the PR with `gh pr create`, use this format for the body:
 ### Step 9: Update the Plan
 
 Edit `.claude/PLAN.md`:
-- Change your task from `- [ ] **CLAIMED**` to `- [x]` (mark done)
+- Change each completed task from `- [ ] **CLAIMED**` to `- [x]` (mark done)
+- If you picked up a batch, mark all completed tasks. If any task in the batch wasn't finished, leave it as `- [ ] **CLAIMED**` and note what remains
 - If your completion unblocks the next wave (all tasks in current wave are now `[x]`), note this in your summary so the user knows to start new agents on the next wave
 
 ---
@@ -416,10 +476,8 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 ## DO NOT
 
-- **Branch-based workflow is mandatory.** If you're in a worktree (from `--w` flag), the worktree already created a branch — use it. Otherwise, create a feature branch (`git checkout -b <type>/<short-description>`) before committing. Never commit directly to `main` or to the sprint branch — PRs are required. If the user asks you to commit, create a branch first (or use the worktree branch), commit YOUR OWN work from this task (never bundle other agents' changes), then ask if they want you to push and create a PR. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
-- **PRs target the sprint branch by default.** Task feature branches are created from and PR'd into the sprint branch (e.g., `sprint/3-platform-features`), not `main`. Only target `main` if the user explicitly says so. When the sprint completes, the user merges the sprint branch into `main` (single deploy)
-- **Worktrees are strictly opt-in.** NEVER use `EnterWorktree` or create a worktree unless the user explicitly passed `--w` or `--worktree` in their `/pickup` invocation. Being inside an existing worktree from a previous session does NOT authorize creating or using worktrees for new tasks. If unsure, work on the main tree
-- **Worktrees start from the sprint branch.** When using `--w` / `--worktree`, ALWAYS check out the sprint branch and pull before creating the worktree. If no sprint branch exists (or the user told you to target `main`), use `main`. The worktree branches from HEAD — if HEAD is wrong, the worktree inherits that divergence
+- **Branch-based workflow is mandatory.** If you're in a worktree, the worktree already created a branch — use it. Otherwise, create a feature branch (`git checkout -b <type>/<short-description>`) before committing. Never commit directly to `main` — PRs are required. If the user asks you to commit, create a branch first (or use the worktree branch), commit YOUR OWN work from this task (never bundle other agents' changes), then ask if they want you to push and create a PR. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
+- **PRs always target `main`.** Feature branches are created from `main` and PR'd into `main`. Always squash merge.
 - **Do not modify files outside your package scope** — other agents may be working there
 - **Do not modify `CLAUDE.md`, `.claude/rules/`, or config files** unless your task explicitly requires it
 - **Do not install new dependencies** without noting it in your summary. If a dependency is needed, prefer one already in the monorepo
@@ -428,8 +486,9 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 ## Multi-Agent Awareness
 
-- **Worktrees eliminate conflicts.** If you're running in a worktree (`--w` flag), you have a fully isolated copy of the repo. No file conflicts with the main tree or other agents. This is the recommended mode for parallel agent work
+- **Worktrees are the safe default for parallel work.** If the landscape check shows other agents active, use a worktree. Each worktree is a fully isolated copy of the repo — no file conflicts with the main tree or other agents
 - **File conflicts (non-worktree):** If you need to modify a file and see it has been recently changed (check `git diff`), read the current state carefully before editing. Work with what's there, not what you expected
 - **Schema changes:** If your task adds to any schema, append — don't reorganize existing structures. Other agents may depend on the current structure
 - **Shared indexes/exports:** If you add to a barrel export (`index.ts`), add your entries at the end to minimize merge conflicts
-- **Port conflicts:** Only start `task dev` when running E2E tests (and check if it's already running first). For non-E2E verification, use the checks (`task vet`, `task test`, `task ui:build`, `task ui:test`, `task ui:lint`)
+- **Port conflicts:** Only start `task dev` when running E2E tests (and check if it's already running first). For non-E2E verification, use `task check`
+- **Worktree cleanup:** When your PR is merged, the worktree can be cleaned up. On session exit, the user will be prompted to keep or remove it
