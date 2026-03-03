@@ -78,7 +78,7 @@ function UsageStatsSkeleton() {
   return (
     <Row wrap className="gap-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <Card key={i} elevation="sm" className="flex-1 px-4 py-3">
+        <Card key={i} loading elevation="sm" className="flex-1 px-4 py-3">
           <Stack className="gap-0.5">
             <Skeleton className="h-3.5 w-16" />
             <Skeleton className="h-7 w-12" />

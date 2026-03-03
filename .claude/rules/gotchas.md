@@ -22,24 +22,34 @@ See [convex.md](convex.md#convexquery-skip-guard-critical) for the full rule.
 
 Pages using Convex hooks (`useMutation`, `useQuery`) crash during static generation because there's no `ConvexProvider` at build time.
 
-**Fix:** Extract the Convex-dependent code into a separate client component and load it via `next/dynamic` with `ssr: false`.
+**Fix:** Push `"use client"` to the smallest leaf component that needs Convex hooks. The page stays a server component and renders static content (headings, descriptions) on the server. Client leaves handle their own loading state.
 
 ```tsx
-// page.tsx -- must be "use client" to use ssr: false
-"use client";
-import dynamic from "next/dynamic";
-
-const MyForm = dynamic(
-  () => import("./my-form").then((m) => m.MyForm),
-  { ssr: false },
-);
+// page.tsx -- server component, renders heading on the server
+import { MyForm } from "./_components/MyForm";
+import { Heading } from "@/components/ui/Heading";
 
 export default function Page() {
-  return <MyForm />;
+  return (
+    <>
+      <Heading level={1}>Page Title</Heading>   {/* server-rendered */}
+      <MyForm />                                  {/* client leaf */}
+    </>
+  );
+}
+
+// _components/MyForm.tsx -- client boundary at the leaf
+"use client";
+export function MyForm() {
+  const { data, isLoading } = core.recipes.useRecipes();
+  if (isLoading) return <Skeleton />;
+  return <form>...</form>;
 }
 ```
 
-Note: `ssr: false` requires `"use client"` on the importing file in Next.js 16.
+**Anti-pattern:** `"use client"` on a page + `dynamic(() => ..., { ssr: false })` for Convex components. This puts the SSR bypass at the trunk level — the page renders nothing on the server, and the dynamic import adds an extra loading waterfall. `ssr: false` belongs at the leaf, not the trunk.
+
+**When `ssr: false` IS correct:** Leaf components that require browser-only APIs with no SSR fallback — ReactFlow (`@xyflow/react`), Canvas, WebGL. These genuinely cannot render on the server. Use `dynamic` + `ssr: false` in the parent component that imports the leaf, keeping the bypass as close to the browser-only code as possible.
 
 ## Convex Module Filenames -- No Hyphens
 

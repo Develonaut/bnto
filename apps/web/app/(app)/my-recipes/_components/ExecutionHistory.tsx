@@ -3,6 +3,7 @@
 import { core } from "@bnto/core";
 
 import { useDelayedLoading } from "../_hooks/useDelayedLoading";
+import { AuthGatedAction } from "@/components/blocks/AuthGatedAction";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -35,11 +36,10 @@ function slugToTitle(slug: string): string {
  * Routes transparently: authenticated users see Convex-backed history,
  * unauthenticated users see browser-local (IndexedDB) history.
  *
- * Authenticated users get a re-run link on each row that navigates
- * to the recipe page. Unauthenticated users see read-only history.
+ * Re-run button is always visible. For unauthenticated users, it's
+ * wrapped in AuthGatedAction — clicking opens a conversion dialog.
  */
 export function ExecutionHistory() {
-  const { isAuthenticated } = core.auth.useAuth();
   const { items, isLoading, status, loadMore } =
     core.executions.useExecutionHistory({ pageSize: 20 });
   const showSkeleton = useDelayedLoading(isLoading);
@@ -84,14 +84,19 @@ export function ExecutionHistory() {
               </Stack>
               <Row align="center" className="shrink-0 gap-2">
                 <StatusBadge status={execution.status} />
-                {isAuthenticated && rerunHref && (
-                  <Button
-                    href={rerunHref}
-                    variant="ghost"
-                    className="h-7 px-2 text-xs"
+                {rerunHref && (
+                  <AuthGatedAction
+                    title="Sign up to re-run recipes"
+                    description="Create a free account to re-run recipes and keep your full execution history."
                   >
-                    Re-run
-                  </Button>
+                    <Button
+                      href={rerunHref}
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                    >
+                      Re-run
+                    </Button>
+                  </AuthGatedAction>
                 )}
               </Row>
             </Row>
@@ -120,7 +125,7 @@ function ExecutionHistorySkeleton() {
   return (
     <Stack className="gap-2">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i} elevation="sm" className="px-4 py-3">
+        <Card key={i} loading elevation="sm" className="px-4 py-3">
           <Row justify="between" align="center" className="gap-3">
             <Stack className="min-w-0 flex-1 gap-0.5">
               <Skeleton className="h-5 w-28" />
