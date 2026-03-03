@@ -19,15 +19,13 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 **Scope rule:** Each task targets ONE package. Don't touch files outside the tagged package unless the task explicitly says so.
 
-**Sprint branches:** Each active sprint gets a long-lived branch (`sprint/<id>-<short-name>`, e.g. `sprint/3-platform-features`). Task branches are created from and PR'd back to the sprint branch — not `main`. When a sprint completes, one PR merges the sprint branch into `main` (single deploy). This prevents Vercel deployment rate-limiting from per-task merges. The user creates sprint branches manually — if one doesn't exist yet for the current sprint, ask the user to create it or confirm you should.
-
 **Co-location decision (Feb 2026):** UI components and editor features live in `apps/web` for now. No separate `@bnto/ui` or `@bnto/editor` packages until there's a real second consumer (desktop app). Engine, core API, and data layer logic stays in `@bnto/core`. When the UI package is extracted, it will be published as `@bnto/ui` (npm) under the name **Motorway** — the Mini Motorways-inspired design system (surface, elevation, pressable, spring animations, warm palette).
 
 ---
 
 ## Current State
 
-- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 in progress (5 tasks claimed). Sprint 3A (anonymous removal) — Waves 1-4 complete, Wave 5 has remaining production cleanup
+- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 in progress (3/7 done, 4 available). Sprint 3A (anonymous removal) — Waves 1-4 complete, Wave 5 has remaining production cleanup
 - **Active:** Sprint 4 (Recipe Editor) — Waves 1-2 complete (headless CRUD + editor store + hooks + adapters). Wave 3+ awaiting pickup
 - **Next:** Sprint 4B (Code Editor) — Wave 1+ awaiting Sprint 4 Wave 2 completion
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
@@ -189,8 +187,6 @@ Update all documentation and strategy files to reflect the simplified auth model
 ### Sprint 3: Platform Features (M2)
 **Goal:** Accounts earn their keep. Users who sign up get persistence, history, and a reason to stay. Conversion hooks are natural — Save, History, Server Nodes — not artificial run caps. See [pricing-model.md](strategy/pricing-model.md) for the full free vs premium framework.
 
-**Sprint branch:** `sprint/3-platform-features`
-
 **Prerequisite:** Sprint 3A (anonymous user removal) must be complete. The anonymous system is gone — auth is binary (signed in or not). Conversion prompts are value-driven.
 
 **Persona ownership:**
@@ -218,12 +214,12 @@ Update all documentation and strategy files to reflect the simplified auth model
 #### Wave 2 (parallel — dashboard + auth behavior)
 
 - [x] `apps/web` — `/frontend-engineer` — Dashboard page (`/my-recipes`): saved workflows, recent executions, usage stats, Recent/Saved tabs, sign-up conversion prompt for unauthenticated users
-- [ ] **CLAIMED** `@bnto/core` + `apps/web` — `/core-architect` + `/frontend-engineer` — **Browser-local execution history:** IndexedDB adapter in `@bnto/core` for unauthenticated users. Core routes internally — `core.executions.useHistory()` returns data regardless of auth state, web app never knows if it came from Convex or IndexedDB. 10-entry cap, oldest rotated out. Stores: slug, timestamp, status, duration. Foundation for AccountGate conversion. **This is the dependency for execution history tab and save prompt.**
-- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — **Execution history tab in `/my-recipes`** (no standalone `/executions` route). List of past runs with status. Re-run for authenticated users only. Three-tier access per Feature Funnel (Notion): unauth=read-only browser-local, free=7-day server-synced with re-run, pro=30-day. Consumes `core.executions.useHistory()` — doesn't know about storage backend. **Depends on browser-local history task above.**
-- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): After successful browser execution for unauthenticated users, surface AccountGate with save-focused copy — "Want to save this recipe? Sign up — it's free." Natural value moment, not a blocking gate. **Depends on browser-local history task.**
-- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation, cookie-based default mode (moved from Sprint 2A Wave 5)
+- [x] `@bnto/core` + `apps/web` — `/core-architect` + `/frontend-engineer` — **Browser-local execution history:** IndexedDB adapter in `@bnto/core` for unauthenticated users. Core routes internally — `core.executions.useHistory()` returns data regardless of auth state, web app never knows if it came from Convex or IndexedDB. 10-entry cap, oldest rotated out. Stores: slug, timestamp, status, duration. Foundation for AccountGate conversion. **This is the dependency for execution history tab and save prompt.**
+- [ ] `apps/web` — `/frontend-engineer` — **Execution history tab in `/my-recipes`** (no standalone `/executions` route). List of past runs with status. Re-run for authenticated users only. Three-tier access per Feature Funnel (Notion): unauth=read-only browser-local, free=7-day server-synced with re-run, pro=30-day. Consumes `core.executions.useHistory()` — doesn't know about storage backend. **Depends on browser-local history task above.**
+- [ ] `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): After successful browser execution for unauthenticated users, surface AccountGate with save-focused copy — "Want to save this recipe? Sign up — it's free." Natural value moment, not a blocking gate. **Depends on browser-local history task.**
+- [ ] `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation, cookie-based default mode (moved from Sprint 2A Wave 5)
 - [x] `apps/web` — `/frontend-engineer` — Pricing page update: Free vs Pro side-by-side comparison (persistence, collaboration, premium compute)
-- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — **Data fetching & skeleton audit:** Scan all existing components in `apps/web/` for violations of the co-located query pattern, prop drilling, mismatched skeletons, missing skeletons, separate `*Skeleton.tsx` files (for simple cases), transforms outside `select`, and loading wrapper anti-patterns. Fix violations in-place. Reference: [data-fetching-strategy.md](strategy/data-fetching-strategy.md), [skeletons.md](rules/skeletons.md)
+- [ ] `apps/web` — `/frontend-engineer` — **Data fetching & skeleton audit:** Scan all existing components in `apps/web/` for violations of the co-located query pattern, prop drilling, mismatched skeletons, missing skeletons, separate `*Skeleton.tsx` files (for simple cases), transforms outside `select`, and loading wrapper anti-patterns. Fix violations in-place. Reference: [data-fetching-strategy.md](strategy/data-fetching-strategy.md), [skeletons.md](rules/skeletons.md)
 
 #### Wave 3 (sequential — test)
 
@@ -235,8 +231,6 @@ Update all documentation and strategy files to reflect the simplified auth model
 
 ### Sprint 4: Recipe Editor (Headless-First)
 **Goal:** Users can create recipes from a blank canvas or customize existing ones — add/remove/configure nodes, run, and export as `.bnto.json`. The editor is free (pricing-model.md: "recipe editor is free"). Power users who create custom recipes are the highest-intent Pro upgrade candidates.
-
-**Sprint branch:** `sprint/4-recipe-editor`
 
 **Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The bento box visual (compartment cards on a grid) is one skin; the code editor (CodeMirror 6) is another. Both are views of the same `Definition` in the shared store. Users can switch between them on the fly. See [editor-architecture.md](.claude/strategy/editor-architecture.md) for the shared layer design and [visual-editor.md](.claude/strategy/visual-editor.md) for the bento box visual editor.
 
@@ -317,8 +311,6 @@ The editor runs recipes and shows execution state on the canvas. Compartments vi
 ### Sprint 4B: Code Editor (CodeMirror 6)
 
 **Goal:** A schema-aware `.bnto.json` code editor for power users — the coding-oriented counterpart to the visual canvas. Users who prefer code get the same power as the visual canvas, with the speed and precision of text editing. Slash commands bring Notion-like ergonomics. The code editor is free (same as the visual editor).
-
-**Sprint branch:** TBD — will be created when Sprint 4B begins.
 
 **Required reading:** Before picking up ANY task in Sprint 4B, read [code-editor.md](.claude/strategy/code-editor.md) — the design document covering tech choice rationale (CM6 over Monaco), architecture (headless-first + store sync), feature tiers, slash command implementation, JSON Schema strategy, CLI/TUI parallels, React integration pattern, theming, and performance considerations. Also read the persona at `.claude/skills/code-editor-expert/SKILL.md` for CM6-specific APIs, extension patterns, and gotchas.
 

@@ -49,14 +49,13 @@ Present a clear summary to the user with:
 
 1. **Task:** The task description from PLAN.md (verbatim)
 2. **Sprint / Wave:** Which sprint and wave it belongs to
-3. **Sprint branch:** The sprint's long-lived branch (e.g., `sprint/3-platform-features`). Found in PLAN.md under the sprint header. If not listed, flag it — the user needs to create one or confirm targeting `main`.
-4. **Package scope:** Which packages/directories will be touched
-5. **Persona(s):** Which domain expert persona(s) will be activated
-6. **Approach:** 3-5 bullet points describing what you plan to do
-7. **Files to modify:** List of files you expect to create or change
-8. **Tests:** What tests you'll write (unit, integration, E2E, screenshots)
-9. **Risks / Open questions:** Anything unclear or potentially tricky
-10. **Scope estimate:** Small (< 1 hour), Medium (1-3 hours), Large (3+ hours)
+3. **Package scope:** Which packages/directories will be touched
+4. **Persona(s):** Which domain expert persona(s) will be activated
+5. **Approach:** 3-5 bullet points describing what you plan to do
+6. **Files to modify:** List of files you expect to create or change
+7. **Tests:** What tests you'll write (unit, integration, E2E, screenshots)
+8. **Risks / Open questions:** Anything unclear or potentially tricky
+9. **Scope estimate:** Small (< 1 hour), Medium (1-3 hours), Large (3+ hours)
 
 If there are multiple available tasks in the wave, present all of them so the user can pick.
 
@@ -298,15 +297,14 @@ If screenshots already exist and the change modifies visual output, run with `--
 
 After all checks pass, provide a summary:
 
-1. **Sprint branch** — name of the sprint branch this work targets (e.g., `sprint/3-platform-features`). Found in PLAN.md under the sprint header. If no sprint branch is listed, ask the user.
-2. **Branch** — name of the feature branch this work is on (e.g., `feat/execution-history`)
-3. **PR** — confirm you are creating a PR and state which branch it targets (e.g., "Creating PR targeting `sprint/3-platform-features`"). PRs target the sprint branch by default, not `main`.
-4. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
-5. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
-6. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
-7. **Go checks result** — confirm `task vet`, `task test`, `task api:test` passed clean
-8. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
-9. **Files changed** — files created/modified, with brief description of each
+1. **Branch** — name of the branch this work is on (e.g., `feat/execution-history`)
+2. **PR** — confirm you are creating a PR and state which branch it targets (e.g., "Creating PR targeting `sprint/3-platform-features`"). PRs target the sprint branch by default, not `main`.
+3. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
+4. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
+5. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
+6. **Go checks result** — confirm `task vet`, `task test`, `task api:test` passed clean
+7. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
+8. **Files changed** — files created/modified, with brief description of each
 
 ### Step 8b: Create the PR
 
