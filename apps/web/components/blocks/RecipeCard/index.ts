@@ -10,7 +10,6 @@ import {
   RecipeCardDescription,
   RecipeCardTags,
   RecipeCardMeta,
-  RecipeCardSkeleton,
 } from "./RecipeCardRoot";
 
 export const RecipeCard = Object.assign(RecipeCardRoot, {
@@ -25,5 +24,4 @@ export const RecipeCard = Object.assign(RecipeCardRoot, {
   Description: RecipeCardDescription,
   Tags: RecipeCardTags,
   Meta: RecipeCardMeta,
-  Skeleton: RecipeCardSkeleton,
 });
