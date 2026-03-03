@@ -189,6 +189,8 @@ Update all documentation and strategy files to reflect the simplified auth model
 ### Sprint 3: Platform Features (M2)
 **Goal:** Accounts earn their keep. Users who sign up get persistence, history, and a reason to stay. Conversion hooks are natural — Save, History, Server Nodes — not artificial run caps. See [pricing-model.md](strategy/pricing-model.md) for the full free vs premium framework.
 
+**Sprint branch:** `sprint/3-platform-features`
+
 **Prerequisite:** Sprint 3A (anonymous user removal) must be complete. The anonymous system is gone — auth is binary (signed in or not). Conversion prompts are value-driven.
 
 **Persona ownership:**
@@ -233,6 +235,8 @@ Update all documentation and strategy files to reflect the simplified auth model
 
 ### Sprint 4: Recipe Editor (Headless-First)
 **Goal:** Users can create recipes from a blank canvas or customize existing ones — add/remove/configure nodes, run, and export as `.bnto.json`. The editor is free (pricing-model.md: "recipe editor is free"). Power users who create custom recipes are the highest-intent Pro upgrade candidates.
+
+**Sprint branch:** TBD — will be created when Sprint 4 Wave 3+ begins.
 
 **Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The bento box visual (compartment cards on a grid) is one skin; the code editor (CodeMirror 6) is another. Both are views of the same `Definition` in the shared store. Users can switch between them on the fly. See [editor-architecture.md](.claude/strategy/editor-architecture.md) for the shared layer design and [visual-editor.md](.claude/strategy/visual-editor.md) for the bento box visual editor.
 
@@ -313,6 +317,8 @@ The editor runs recipes and shows execution state on the canvas. Compartments vi
 ### Sprint 4B: Code Editor (CodeMirror 6)
 
 **Goal:** A schema-aware `.bnto.json` code editor for power users — the coding-oriented counterpart to the visual canvas. Users who prefer code get the same power as the visual canvas, with the speed and precision of text editing. Slash commands bring Notion-like ergonomics. The code editor is free (same as the visual editor).
+
+**Sprint branch:** TBD — will be created when Sprint 4B begins.
 
 **Required reading:** Before picking up ANY task in Sprint 4B, read [code-editor.md](.claude/strategy/code-editor.md) — the design document covering tech choice rationale (CM6 over Monaco), architecture (headless-first + store sync), feature tiers, slash command implementation, JSON Schema strategy, CLI/TUI parallels, React integration pattern, theming, and performance considerations. Also read the persona at `.claude/skills/code-editor-expert/SKILL.md` for CM6-specific APIs, extension patterns, and gotchas.
 
