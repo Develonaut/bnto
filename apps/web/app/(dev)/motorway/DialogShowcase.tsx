@@ -1,13 +1,12 @@
 "use client";
 
+import { AuthGatedAction } from "@/components/blocks/AuthGatedAction";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Heading } from "@/components/ui/Heading";
 import { Row } from "@/components/ui/Row";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
-import { Card } from "@/components/ui/Card";
-import { Skeleton } from "@/components/ui/Skeleton";
 
 /* ── Basic Dialog ───────────────────────────────────────────── */
 
@@ -147,70 +146,34 @@ function ForcedChoiceDialogDemo() {
   );
 }
 
-/* ── Auth Gate Demo ─────────────────────────────────────────── */
+/* ── Auth Gated Action Demo ─────────────────────────────────── */
 
-function AccountGateDemo() {
+function AuthGatedActionDemo() {
   return (
     <Stack className="gap-3">
       <Text size="sm" color="muted">
-        Blurs content and overlays a sign-up prompt for unauthenticated users.
-        Since you&apos;re viewing the showcase, here&apos;s the visual effect:
+        Wraps interactive elements. Authenticated users click through normally.
+        Unauthenticated users see a conversion dialog prompting sign-up.
       </Text>
-      <div className="relative rounded-xl border border-border p-6">
-        {/* Simulated blurred content */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none select-none blur-[6px] opacity-75"
+      <Row className="flex-wrap gap-3">
+        <AuthGatedAction
+          title="Sign up to re-run recipes"
+          description="Create a free account to re-run recipes and keep your full execution history."
         >
-          <Stack className="gap-4">
-            <Row className="gap-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i} elevation="sm" className="flex-1 px-4 py-3">
-                  <Stack className="gap-1.5">
-                    <Skeleton className="h-3 w-16" />
-                    <Skeleton className="h-6 w-12" />
-                  </Stack>
-                </Card>
-              ))}
-            </Row>
-            <Stack className="gap-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i} elevation="sm" className="px-4 py-3">
-                  <Row justify="between" align="center">
-                    <Stack className="gap-1">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-20" />
-                    </Stack>
-                    <Skeleton className="h-5 w-16 rounded-full" />
-                  </Row>
-                </Card>
-              ))}
-            </Stack>
-          </Stack>
-        </div>
-
-        {/* Floating sign-up card */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Card elevation="lg" className="w-full max-w-sm p-8">
-            <Stack className="items-center gap-4 text-center">
-              <Heading level={3} size="sm">
-                Sign in to get started
-              </Heading>
-              <Text size="sm" color="muted" className="max-w-xs">
-                Create a free account to save recipes and track history.
-              </Text>
-              <Row className="gap-3 pt-2">
-                <Button variant="primary" elevation="sm" onClick={() => {}}>
-                  Sign in
-                </Button>
-                <Button variant="outline" onClick={() => {}}>
-                  Create account
-                </Button>
-              </Row>
-            </Stack>
-          </Card>
-        </div>
-      </div>
+          <Button variant="ghost" className="h-7 px-2 text-xs">
+            Re-run
+          </Button>
+        </AuthGatedAction>
+        <AuthGatedAction>
+          <Button variant="primary">Save recipe</Button>
+        </AuthGatedAction>
+        <AuthGatedAction
+          title="Sign up to export"
+          description="Export your recipe as a .bnto.json file."
+        >
+          <Button variant="outline">Export</Button>
+        </AuthGatedAction>
+      </Row>
     </Stack>
   );
 }
@@ -235,10 +198,10 @@ export function DialogShowcase() {
         </Row>
       </Stack>
 
-      {/* Account Gate */}
+      {/* Auth Gated Action */}
       <Stack className="gap-3">
-        <Heading level={4}>Account Gate</Heading>
-        <AccountGateDemo />
+        <Heading level={4}>Auth Gated Action</Heading>
+        <AuthGatedActionDemo />
       </Stack>
     </Stack>
   );
