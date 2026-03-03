@@ -48,10 +48,41 @@ jobs:
         run: pnpm --filter @bnto/web run build
 
       - name: Lighthouse CI
+        id: lhci
         uses: treosh/lighthouse-ci-action@v12
         with:
           configPath: ./lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Format results
+        if: always() && steps.lhci.outcome != 'skipped'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const links = ${{ steps.lhci.outputs.links }};
+            const results = ${{ steps.lhci.outputs.manifest }};
+            if (!results || !results.length) return;
+
+            const rows = results.map(r => {
+              const url = new URL(r.url);
+              const path = url.pathname === '/' ? '/' : url.pathname;
+              const perf = Math.round(r.summary.performance * 100);
+              const a11y = Math.round(r.summary.accessibility * 100);
+              const bp = Math.round(r.summary['best-practices'] * 100);
+              const seo = Math.round(r.summary.seo * 100);
+              const link = links[r.url] || '';
+              const name = link ? `[${path}](${link})` : path;
+              return `| ${name} | ${perf} | ${a11y} | ${bp} | ${seo} |`;
+            });
+
+            const summary = [
+              '### Lighthouse Results',
+              '',
+              '| URL | Performance | Accessibility | Best Practices | SEO |',
+              '|-----|------------|---------------|----------------|-----|',
+              ...rows,
+            ].join('\n');
+
+            core.summary.addRaw(summary);
+            await core.summary.write();
