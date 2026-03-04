@@ -3,13 +3,16 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   ReactFlowProvider,
+  Panel as CanvasPanel,
   useReactFlow,
   useStoreApi,
   applyNodeChanges,
   type OnNodesChange,
 } from "@xyflow/react";
-import { getRecipeBySlug } from "@bnto/nodes";
-import { Stack } from "@/components/ui/Stack";
+import { getRecipeBySlug, RECIPES } from "@bnto/nodes";
+import { cn } from "@/lib/cn";
+import { Card } from "@/components/ui/Card";
+import { Select } from "@/components/ui/Select";
 import {
   EditorProvider,
   useEditorStore,
@@ -22,25 +25,23 @@ import { useEditorSelection } from "@/editor/hooks/useEditorSelection";
 import { BentoCanvas } from "./canvas/BentoCanvas";
 import type { CompartmentNodeType } from "./canvas/CompartmentNode";
 import { EditorSidebar } from "./EditorSidebar";
-import { EditorToolbar } from "./EditorToolbar";
+import { CanvasToolbar } from "./CanvasToolbar";
 import { NodePalette } from "./NodePalette";
 import { NodeConfigPanel } from "./NodeConfigPanel";
 
 /**
- * RecipeEditor — composes EditorToolbar + BentoCanvas + NodeConfigPanel.
+ * RecipeEditor — canvas-first editor with floating panels.
+ *
+ * The canvas fills the entire container. Sidebar (left) and config
+ * panel (right) float on top as elevated Card surfaces. Toolbar and
+ * recipe selector float via ReactFlow `<Panel>` components.
  *
  * Two entry modes:
  *   <RecipeEditor slug="compress-images" />  — loads predefined recipe
  *   <RecipeEditor />                         — blank canvas
- *
- * Wraps children in EditorProvider (Zustand) + ReactFlowProvider (RF).
- * The inner component handles wiring between the editor store and the
- * canvas. All editor hooks share the same ReactFlowProvider context —
- * BentoCanvas runs in `standalone` mode (no internal provider).
  */
 
 interface RecipeEditorProps {
-  /** Predefined recipe slug to load. Omit for blank canvas. */
   slug?: string;
 }
 
@@ -63,14 +64,16 @@ function RecipeEditor({ slug }: RecipeEditorProps) {
 
 function RecipeEditorInner() {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeSlug, setActiveSlug] = useState<string>("blank");
+
   const { selectedNodeId } = useEditorSelection();
-  const { setPositionGetter } = useEditorActions();
+  const { setPositionGetter, loadRecipe, createBlank } = useEditorActions();
   const definition = useEditorStore((s) => s.definition);
   const { setNodes } = useReactFlow<CompartmentNodeType>();
   const storeApi = useStoreApi<CompartmentNodeType>();
 
-  /* Register position getter so the store can read RF positions for undo
-   * snapshots. Uses storeApi (non-reactive) to avoid re-render loops. */
+  /* Register position getter so the store can read RF positions for undo. */
   useEffect(() => {
     setPositionGetter(() => {
       const positions: Record<string, { x: number; y: number }> = {};
@@ -111,41 +114,99 @@ function RecipeEditorInner() {
     [setNodes],
   );
 
-  /* Read current RF nodes for BentoCanvas. */
   const nodes = useCanvasNodes();
 
-  return (
-    <Stack gap="sm" data-testid="recipe-editor">
-      {/* Toolbar */}
-      <EditorToolbar onOpenPalette={() => setPaletteOpen(true)} />
+  const handleRecipeChange = useCallback(
+    (slug: string) => {
+      setActiveSlug(slug);
+      if (slug === "blank") {
+        createBlank();
+      } else {
+        loadRecipe(slug);
+      }
+    },
+    [loadRecipe, createBlank],
+  );
 
-      {/* Canvas + Config panel side-by-side */}
-      <div className="flex gap-4">
-        {/* Canvas — takes remaining space. standalone=true to share
-         * ReactFlowProvider with sibling hooks. */}
-        <div className="relative flex-1 min-w-0">
-          <BentoCanvas
-            nodes={nodes}
-            height={520}
-            interactive
-            standalone
-            onNodesChange={onNodesChange}
+  const handleReset = useCallback(() => {
+    handleRecipeChange(activeSlug);
+  }, [handleRecipeChange, activeSlug]);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((prev) => !prev);
+  }, []);
+
+  return (
+    <>
+      <div
+        className="relative h-[600px] overflow-hidden rounded-xl border border-border"
+        data-testid="recipe-editor"
+      >
+        {/* Canvas fills the entire container */}
+        <BentoCanvas
+          nodes={nodes}
+          height={600}
+          interactive
+          standalone
+          onNodesChange={onNodesChange}
+          className="rounded-none border-0"
+        >
+          {/* Recipe selector — top-left floating panel */}
+          <CanvasPanel position="top-left" className="m-2">
+            <Card elevation="md" className="p-1">
+              <Select value={activeSlug} onValueChange={handleRecipeChange}>
+                <Select.Trigger size="sm" className="w-[180px]">
+                  <Select.Value placeholder="Select recipe…" />
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="blank">Blank Canvas</Select.Item>
+                  <Select.Separator />
+                  {RECIPES.map((recipe) => (
+                    <Select.Item key={recipe.slug} value={recipe.slug}>
+                      {recipe.name}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            </Card>
+          </CanvasPanel>
+
+          {/* Floating toolbar — bottom-center */}
+          <CanvasPanel position="bottom-center" className="mb-3">
+            <CanvasToolbar
+              onOpenPalette={() => setPaletteOpen(true)}
+              onReset={handleReset}
+            />
+          </CanvasPanel>
+        </BentoCanvas>
+
+        {/* Left floating sidebar — node list */}
+        <div className="pointer-events-auto absolute bottom-2 left-2 top-14 z-10">
+          <EditorSidebar
+            collapsed={sidebarCollapsed}
+            onToggle={toggleSidebar}
+            selectedNodeId={selectedNodeId}
           />
-          {/* Sidebar overlays the canvas from top-left, full height */}
-          <div className="absolute inset-y-0 left-0 z-10 p-2">
-            <EditorSidebar selectedNodeId={selectedNodeId} />
-          </div>
         </div>
 
-        {/* Config panel — fixed width on the right */}
-        <div className="w-72 shrink-0">
+        {/* Right floating config panel — slides in when node selected.
+            CSS property transition (not entrance animation) — correct per
+            animation decision tree for transform/opacity state changes. */}
+        <div
+          className={cn(
+            "pointer-events-auto absolute bottom-2 right-2 top-2 z-10 w-72 motion-safe:transition-[transform,opacity] motion-safe:duration-slow motion-safe:ease-spring-bouncy",
+            selectedNodeId
+              ? "translate-x-0 opacity-100"
+              : "pointer-events-none translate-x-[110%] opacity-0",
+          )}
+        >
           <NodeConfigPanel selectedNodeId={selectedNodeId} />
         </div>
       </div>
 
       {/* Node palette (slide-out sheet) */}
       <NodePalette open={paletteOpen} onOpenChange={setPaletteOpen} />
-    </Stack>
+    </>
   );
 }
 

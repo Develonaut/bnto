@@ -10,6 +10,7 @@ import {
   type OnNodesChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { cn } from "@/lib/cn";
 
 import { CompartmentNode, type CompartmentNodeType } from "./CompartmentNode";
 
@@ -53,6 +54,8 @@ type BentoCanvasProps = {
   standalone?: boolean;
   /** ReactFlow children — Panel overlays, Controls, etc. */
   children?: ReactNode;
+  /** Override container classes (e.g., strip border when embedded). */
+  className?: string;
 };
 
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
@@ -123,6 +126,7 @@ export function BentoCanvas({
   onNodesChange,
   standalone = false,
   children,
+  className,
 }: BentoCanvasProps) {
   const inner = (
     <BentoCanvasInner
@@ -136,7 +140,10 @@ export function BentoCanvas({
 
   return (
     <div
-      className="w-full overflow-hidden rounded-xl border border-border bg-background"
+      className={cn(
+        "w-full overflow-hidden rounded-xl border border-border bg-background",
+        className,
+      )}
       style={{ height }}
     >
       {standalone ? inner : <ReactFlowProvider>{inner}</ReactFlowProvider>}
