@@ -5,7 +5,12 @@
  * Canvas components (BentoCanvas, CompartmentNode) render the bento
  * box grid editor. Conveyor components (ConveyorCanvas, StationNode,
  * ConveyorEdge) render the Mini Motorways-style pipeline view.
+ * RecipeEditor composes them with the toolbar, palette, and config panel.
  */
 
 export * from "./canvas";
 export * from "./conveyor";
+export { RecipeEditor } from "./RecipeEditor";
+export { EditorToolbar } from "./EditorToolbar";
+export { NodePalette } from "./NodePalette";
+export { NodeConfigPanel } from "./NodeConfigPanel";

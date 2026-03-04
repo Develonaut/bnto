@@ -27,8 +27,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **FOCUS: Lean MVP Editor (Sprint 4 Wave 3).** The creation experience is the product differentiator. Everything else is tabled until users can make their own bntos.
-- **Active:** Sprint 4 (Recipe Editor) — Waves 1-2 complete. Wave 3 rewritten as lean MVP editor. Editor work lives in Motorway `/editor` section until ready for production integration.
+- **FOCUS: Lean MVP Editor.** The creation experience is the product differentiator. Everything else is tabled until users can make their own bntos.
+- **Active:** Sprint 4 (Recipe Editor) — Waves 1-3 complete. Editor components shipped (EditorToolbar, NodePalette, NodeConfigPanel, RecipeEditor, BentoCanvas). Editor lives in Motorway `/editor` section until ready for production integration.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor MVP ships.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
@@ -308,11 +308,11 @@ Zustand store that wraps the pure functions into a reactive state machine. Hooks
 
 - [x] `apps/web` — **Motorway showcase component sharing**: `StationNode`, `ConveyorEdge`, `ConveyorCanvas`, `CompartmentNode`, and `BentoCanvas` extracted to shared location. Both Motorway showcase and production editor import from the same source.
 - [x] `apps/web` — **Enable canvas interaction**: `BentoCanvas` accepts `interactive` prop for draggable/selectable/pannable mode with `onNodesChange` for controlled state. Backward compatible.
-- [ ] `apps/web` — **Motorway Editor section**: Add an "Editor" tab/section to the Motorway dev page. Wraps `EditorProvider` + interactive `BentoCanvas` wired to `useEditorStore`. Recipe selector to load predefined recipes or create blank. This is the playground where all subsequent editor components are tested.
-- [ ] `apps/web` — **`EditorToolbar` component (minimal)**: Simple action bar — recipe selector dropdown (Tier 1 recipes + "Blank"), Add Node button, Remove Selected button, Run button, Export button. No undo/redo, no reset/replay for MVP. Reads/dispatches to `useEditorStore`.
-- [ ] `apps/web` — **`NodePalette` component (minimal)**: Simple list or dropdown of available node types from `useNodePalette()`. Click-to-add (adds compartment at next available slot). Grouped by category. Browser-capable nodes only for now. No slide-out panel — keep it simple.
-- [ ] `apps/web` — **`NodeConfigPanel` component**: Panel that renders when a compartment is selected. Uses `useEditorNode(selectedNodeId)` to get schema + current params. Auto-generates form fields from `ParameterSchema` (Atomiton pattern): string → text input, number → number input with min/max, boolean → toggle, enum → select dropdown. `visibleWhen` and `requiredWhen` handled reactively. Parameter changes dispatch `updateParams` to store. This is the highest-effort component — the schema-driven form generation is the core value.
-- [ ] `apps/web` — **`RecipeEditor` component + execution + export**: Composes `EditorToolbar` + `BentoCanvas` + `NodeConfigPanel`. Run button wired to browser WASM execution. Export button triggers `.bnto.json` download via `useEditorExport().download()`. Two entry modes: `<RecipeEditor slug="compress-images" />` (loads predefined) or `<RecipeEditor />` (blank canvas).
+- [x] `apps/web` — **Motorway Editor section**: Editor tab in the Motorway dev page. Wraps `EditorProvider` + interactive `BentoCanvas` wired to `useEditorStore`. Recipe selector to load predefined recipes or create blank.
+- [x] `apps/web` — **`EditorToolbar` component**: Action bar — recipe selector dropdown, Add Node, Remove Selected, Run, Export `.bnto.json`, Undo/Redo. Reads/dispatches to `useEditorStore`.
+- [x] `apps/web` — **`NodePalette` component**: Slide-out panel listing available node types from `useNodePalette()`. Click-to-add. Grouped by category. Browser-capable badge.
+- [x] `apps/web` — **`NodeConfigPanel` component**: Side panel that renders when a compartment is selected. Uses `useEditorNode(selectedNodeId)` to get schema + current params. Auto-generates form fields from `ParameterSchema` (Atomiton pattern). `visibleWhen` and `requiredWhen` handled reactively.
+- [x] `apps/web` — **`RecipeEditor` component**: Composes `EditorToolbar` + `BentoCanvas` + `NodeConfigPanel`. Two entry modes: `<RecipeEditor slug="compress-images" />` (loads predefined) or `<RecipeEditor />` (blank canvas).
 
 **Deferred from old Wave 3-4 (not MVP):**
 - Execution state visualization on compartments (status-driven elevation/color) — nice polish, not needed for MVP
