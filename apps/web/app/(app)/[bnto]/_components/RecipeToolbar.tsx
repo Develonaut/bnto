@@ -6,9 +6,11 @@ import { FileUpload } from "@/components/ui/FileUpload";
 import { Row } from "@/components/ui/Row";
 import {
   ArrowLeftIcon,
+  SaveIcon,
   DownloadIcon,
   TrashIcon,
 } from "@/components/ui/icons";
+import { AuthGate } from "@/components/blocks/AuthGate";
 import { RunButton } from "./RunButton";
 import type { RunPhase } from "./RunButton";
 
@@ -40,7 +42,11 @@ export function RecipeToolbar({
   centerContent,
 }: RecipeToolbarProps) {
   return (
-    <div role="toolbar" aria-label="Recipe actions" className="flex min-h-10 flex-col gap-3 md:flex-row md:items-center md:gap-4">
+    <div
+      role="toolbar"
+      aria-label="Recipe actions"
+      className="flex min-h-10 flex-col gap-3 md:flex-row md:items-center md:gap-4"
+    >
       {/* Left: back button + file count + mobile actions */}
       <Row gap="xs">
         <Button
@@ -49,7 +55,9 @@ export function RecipeToolbar({
           elevation="sm"
           disabled={isProcessing}
           onClick={onBack}
-          aria-label={activePhase === 3 ? "Back to configure" : "Back to file selection"}
+          aria-label={
+            activePhase === 3 ? "Back to configure" : "Back to file selection"
+          }
         >
           <ArrowLeftIcon className="size-4" />
         </Button>
@@ -71,11 +79,29 @@ export function RecipeToolbar({
           )}
           {activePhase === 2 && (
             <FileUpload.Clear asChild>
-              <Button variant="outline" size="icon" elevation="md" aria-label="Clear all files">
+              <Button
+                variant="outline"
+                size="icon"
+                elevation="md"
+                aria-label="Clear all files"
+              >
                 <TrashIcon className="size-4" />
               </Button>
             </FileUpload.Clear>
           )}
+          <AuthGate.Action
+            title="Sign up to save recipes"
+            description="Create a free account to save your recipe settings and pick up where you left off."
+          >
+            <Button
+              variant="outline"
+              size="icon"
+              elevation="md"
+              aria-label="Save recipe"
+            >
+              <SaveIcon className="size-4" />
+            </Button>
+          </AuthGate.Action>
           <RunButton
             phase={resolvedPhase}
             hasFiles={fileCount > 0}
@@ -107,11 +133,29 @@ export function RecipeToolbar({
         )}
         {activePhase === 2 && (
           <FileUpload.Clear asChild>
-            <Button variant="outline" size="icon" elevation="md" aria-label="Clear all files">
+            <Button
+              variant="outline"
+              size="icon"
+              elevation="md"
+              aria-label="Clear all files"
+            >
               <TrashIcon className="size-4" />
             </Button>
           </FileUpload.Clear>
         )}
+        <AuthGate.Action
+          title="Sign up to save recipes"
+          description="Create a free account to save your recipe settings and pick up where you left off."
+        >
+          <Button
+            variant="outline"
+            size="icon"
+            elevation="md"
+            aria-label="Save recipe"
+          >
+            <SaveIcon className="size-4" />
+          </Button>
+        </AuthGate.Action>
         <RunButton
           phase={resolvedPhase}
           hasFiles={fileCount > 0}
