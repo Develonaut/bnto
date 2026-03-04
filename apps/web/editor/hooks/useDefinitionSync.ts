@@ -6,6 +6,9 @@
  * Does NOT handle full replacement (loadRecipe, undo); callers
  * must run definitionToBento + setNodes for those cases.
  *
+ * Checks against current RF nodes (not just previous IDs) to
+ * avoid duplicates when the palette adds a node to RF directly.
+ *
  * Must be inside both EditorProvider and ReactFlowProvider.
  */
 
@@ -19,14 +22,18 @@ import type { BentoNode } from "../adapters/types";
 
 function useDefinitionSync(): void {
   const nodes = useEditorStore((s) => s.definition.nodes ?? []);
-  const { setNodes, deleteElements } = useReactFlow<BentoNode>();
+  const { setNodes, deleteElements, getNodes } = useReactFlow<BentoNode>();
   const prevIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const currentIds = new Set(nodes.map((n) => n.id));
     const prevIds = prevIdsRef.current;
 
-    const added = nodes.filter((n) => !prevIds.has(n.id));
+    /* Guard against duplicate IDs if another consumer has already
+     * added the node to RF. */
+    const rfIds = new Set(getNodes().map((n) => n.id));
+
+    const added = nodes.filter((n) => !prevIds.has(n.id) && !rfIds.has(n.id));
     const removed = [...prevIds].filter((id) => !currentIds.has(id));
 
     if (added.length > 0) {
@@ -46,7 +53,7 @@ function useDefinitionSync(): void {
     }
 
     prevIdsRef.current = currentIds;
-  }, [nodes, setNodes, deleteElements]);
+  }, [nodes, setNodes, deleteElements, getNodes]);
 }
 
 export { useDefinitionSync };

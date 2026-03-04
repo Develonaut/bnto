@@ -110,6 +110,10 @@ function createEditorStore(initialDefinition?: Definition) {
         isDirty: true,
         ...history,
       });
+      /* Return the new node's ID so callers can immediately
+       * add it to ReactFlow and fitView without async. */
+      const nodes = result.definition.nodes ?? [];
+      return nodes.length > 0 ? nodes[nodes.length - 1]!.id : null;
     },
 
     removeNode: (id) => {

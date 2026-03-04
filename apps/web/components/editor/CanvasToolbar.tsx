@@ -7,7 +7,7 @@ import { Text } from "@/components/ui/Text";
 import {
   PlusIcon,
   TrashIcon,
-  DownloadIcon,
+  PlayIcon,
   RotateCcwIcon,
   Undo2Icon,
   Redo2Icon,
@@ -16,26 +16,25 @@ import { useEditorActions } from "@/editor/hooks/useEditorActions";
 import { useEditorStore } from "@/editor/hooks/useEditorStore";
 import { useEditorSelection } from "@/editor/hooks/useEditorSelection";
 import { useEditorUndoRedo } from "@/editor/hooks/useEditorUndoRedo";
-import { useEditorExport } from "@/editor/hooks/useEditorExport";
+import { NodePaletteMenu } from "./NodePaletteMenu";
 
 /**
  * CanvasToolbar — floating toolbar rendered inside a ReactFlow
  * `<Panel position="bottom-center">`.
  *
- * Contains: Add Node, Remove Selected, Undo/Redo, Reset, Export.
- * Buttons follow the NavButton pattern (ghost + elevation="sm").
+ * Contains: Add Node (dropdown menu), Remove Selected, Undo/Redo,
+ * Reset, Run. Export lives in the sidebar file menu.
  */
 
 interface CanvasToolbarProps {
-  onOpenPalette?: () => void;
   onReset?: () => void;
+  onRun?: () => void;
 }
 
-function CanvasToolbar({ onOpenPalette, onReset }: CanvasToolbarProps) {
+function CanvasToolbar({ onReset, onRun }: CanvasToolbarProps) {
   const { removeNode } = useEditorActions();
   const { selectedNodeId } = useEditorSelection();
   const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
-  const { download, canExport } = useEditorExport();
   const isDirty = useEditorStore((s) => s.isDirty);
   const nodeCount = useEditorStore((s) => s.definition.nodes?.length ?? 0);
 
@@ -43,18 +42,17 @@ function CanvasToolbar({ onOpenPalette, onReset }: CanvasToolbarProps) {
     if (selectedNodeId) removeNode(selectedNodeId);
   }, [selectedNodeId, removeNode]);
 
-  const handleExport = useCallback(() => {
-    download();
-  }, [download]);
-
   return (
     <Toolbar elevation="md" className="pointer-events-auto">
-      {/* Add / Remove */}
+      {/* Add (dropdown) / Remove */}
       <Toolbar.Group>
-        <Button variant="ghost" elevation="sm" onClick={onOpenPalette}>
-          <PlusIcon className="size-4" />
-          Add
-        </Button>
+        <NodePaletteMenu>
+          <NodePaletteMenu.Trigger variant="ghost" elevation="sm">
+            <PlusIcon className="size-4" />
+            Add
+          </NodePaletteMenu.Trigger>
+          <NodePaletteMenu.Content side="top" offset="lg" />
+        </NodePaletteMenu>
         <Button
           size="icon"
           variant="ghost"
@@ -105,16 +103,16 @@ function CanvasToolbar({ onOpenPalette, onReset }: CanvasToolbarProps) {
 
       <Toolbar.Divider />
 
-      {/* Export + count */}
+      {/* Run + count */}
       <Toolbar.Group>
         <Button
           variant="ghost"
           elevation="sm"
-          onClick={handleExport}
-          disabled={!canExport || nodeCount === 0}
+          onClick={onRun}
+          disabled={nodeCount === 0}
         >
-          <DownloadIcon className="size-4" />
-          Export
+          <PlayIcon className="size-4" />
+          Run
         </Button>
         <Text size="xs" color="muted" className="font-mono">
           {nodeCount}
