@@ -1,11 +1,12 @@
 /**
  * Editor store types.
  *
- * ReactFlow owns visual state (positions, selection, viewport).
- * The editor store owns domain structure (node types, params, validation).
+ * ReactFlow is the single source of truth for node state.
+ * The store owns metadata, history, validation, and execution.
  */
 
-import type { Definition, Position, NodeTypeName, ValidationError } from "@bnto/nodes";
+import type { ValidationError } from "@bnto/nodes";
+import type { BentoNode } from "../adapters/types";
 
 // ---------------------------------------------------------------------------
 // Execution state — per-node status tracking
@@ -16,32 +17,34 @@ type NodeExecutionStatus = "idle" | "pending" | "active" | "completed" | "failed
 type ExecutionState = Record<string, NodeExecutionStatus>;
 
 // ---------------------------------------------------------------------------
-// Undo snapshot — captures both definition and RF positions
+// Recipe metadata — root definition fields without child nodes
 // ---------------------------------------------------------------------------
 
-interface UndoSnapshot {
-  definition: Definition;
-  positions: Record<string, { x: number; y: number }>;
+interface RecipeMetadata {
+  id: string;
+  name: string;
+  type: string;
+  version: string;
 }
 
 // ---------------------------------------------------------------------------
-// Position getter — registered by the visual editor
+// Node getter — registered by the visual editor
 // ---------------------------------------------------------------------------
 
-/** Reads current RF node positions without importing React. */
-type PositionGetter = () => Record<string, { x: number; y: number }>;
+/** Reads current RF nodes without importing React. */
+type NodeGetter = () => BentoNode[];
 
 // ---------------------------------------------------------------------------
 // State shape
 // ---------------------------------------------------------------------------
 
 interface EditorState {
-  definition: Definition;
+  recipeMetadata: RecipeMetadata;
   isDirty: boolean;
   validationErrors: ValidationError[];
   executionState: ExecutionState;
-  undoStack: UndoSnapshot[];
-  redoStack: UndoSnapshot[];
+  undoStack: BentoNode[][];
+  redoStack: BentoNode[][];
 }
 
 // ---------------------------------------------------------------------------
@@ -51,18 +54,25 @@ interface EditorState {
 interface EditorActions {
   loadRecipe: (slug: string) => void;
   createBlank: () => void;
-  addNode: (type: NodeTypeName, position?: Position) => string | null;
-  removeNode: (id: string) => void;
-  updateParams: (nodeId: string, params: Record<string, unknown>) => void;
-  /** Returns snapshot so caller can restore RF positions. */
-  undo: () => UndoSnapshot | null;
-  /** Returns snapshot so caller can restore RF positions. */
-  redo: () => UndoSnapshot | null;
+
+  /** Snapshot current RF nodes to undo stack, clear redo. */
+  pushUndo: () => void;
+  /** Set isDirty = true. */
+  markDirty: () => void;
+  /** Derive Definition from RF nodes, run validateDefinition. */
+  revalidate: () => void;
+
+  /** Returns BentoNode[] snapshot so caller can setNodes(). Null if empty. */
+  undo: () => BentoNode[] | null;
+  /** Returns BentoNode[] snapshot so caller can setNodes(). Null if empty. */
+  redo: () => BentoNode[] | null;
+
   resetDirty: () => void;
   setExecutionState: (state: ExecutionState) => void;
   resetExecution: () => void;
-  setDefinition: (definition: Definition) => void;
-  setPositionGetter: (getter: PositionGetter) => void;
+  setNodeGetter: (getter: NodeGetter) => void;
+  setRecipeMetadata: (metadata: RecipeMetadata) => void;
+  resetHistory: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -77,6 +87,6 @@ export type {
   EditorActions,
   NodeExecutionStatus,
   ExecutionState,
-  UndoSnapshot,
-  PositionGetter,
+  RecipeMetadata,
+  NodeGetter,
 };

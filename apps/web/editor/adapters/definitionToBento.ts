@@ -41,8 +41,6 @@ function definitionToBento(definition: Definition): BentoLayout {
           nodeType: node.type,
           name: node.name,
           parameters: node.parameters,
-          // Deprecated — same as RF node.id
-          nodeId: node.id,
         },
       };
     });

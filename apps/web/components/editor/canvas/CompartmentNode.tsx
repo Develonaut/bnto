@@ -1,9 +1,9 @@
-import type { NodeProps, Node } from "@xyflow/react";
+import type { NodeProps } from "@xyflow/react";
 import { Animate } from "@/components/ui/Animate";
 import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/Pressable";
 import { Text } from "@/components/ui/Text";
-import type { CompartmentNodeData } from "@/editor/adapters/types";
+import type { CompartmentNodeData, BentoNode } from "@/editor/adapters/types";
 
 /**
  * A bento box compartment — a .surface Card that acts as a "building"
@@ -20,7 +20,8 @@ import type { CompartmentNodeData } from "@/editor/adapters/types";
 
 export type CompartmentStatus = "idle" | "pending" | "active" | "completed";
 
-export type CompartmentNodeType = Node<CompartmentNodeData, "compartment">;
+/** @deprecated Use BentoNode from @/editor/adapters/types instead. */
+export type CompartmentNodeType = BentoNode;
 
 const SURFACE_CLASS: Record<NonNullable<CompartmentNodeData["variant"]>, string> = {
   primary: "surface-primary",
