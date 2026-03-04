@@ -4,6 +4,6 @@
   "installCommand": "pnpm install",
   "buildCommand": "pnpm turbo run build --filter=@bnto/web",
   "git": {
-    "deploymentEnabled": true
+    "deploymentEnabled": false
   }
 }

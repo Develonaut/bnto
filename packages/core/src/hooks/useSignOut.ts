@@ -8,7 +8,7 @@ import { core } from "../core";
  * Orchestrated sign-out hook.
  *
  * Returns a memoized function that performs the full sign-out sequence:
- * signal cookie + cache clear + Convex session termination.
+ * signal cookie + cache clear + persisted auth clear + Convex session termination.
  *
  * The caller is responsible for navigation (e.g., `router.replace("/signin")`).
  */
