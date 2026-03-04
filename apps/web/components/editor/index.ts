@@ -11,6 +11,6 @@
 export * from "./canvas";
 export * from "./conveyor";
 export { RecipeEditor } from "./RecipeEditor";
-export { EditorToolbar } from "./EditorToolbar";
+export { CanvasToolbar } from "./CanvasToolbar";
 export { NodePalette } from "./NodePalette";
 export { NodeConfigPanel } from "./NodeConfigPanel";

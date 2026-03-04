@@ -46,59 +46,63 @@ function NodeConfigPanel({ selectedNodeId }: NodeConfigPanelProps) {
 
   if (!selectedNodeId || !node || !typeInfo) {
     return (
-      <Card elevation="sm" className="p-4">
-        <Text size="sm" color="muted" className="text-center">
-          Select a node to configure
-        </Text>
+      <Card elevation="md" className="h-full">
+        <div className="p-4">
+          <Text size="sm" color="muted" className="text-center">
+            Select a node to configure
+          </Text>
+        </div>
       </Card>
     );
   }
 
   return (
-    <Card elevation="sm" className="overflow-y-auto p-4">
-      <Stack gap="md">
-        {/* Header */}
-        <div>
-          <Heading level={3} size="xs">
-            {typeInfo.label}
-          </Heading>
-          <Text size="xs" color="muted" className="mt-0.5">
-            {typeInfo.description}
-          </Text>
-          <div className="mt-2 flex gap-1.5">
-            <Badge variant="secondary" className="text-xs">
-              {typeInfo.category}
-            </Badge>
-            {typeInfo.browserCapable ? (
+    <Card elevation="md" className="h-full">
+      <div className="h-full overflow-y-auto p-4">
+        <Stack gap="md">
+          {/* Header */}
+          <div>
+            <Heading level={3} size="xs">
+              {typeInfo.label}
+            </Heading>
+            <Text size="xs" color="muted" className="mt-0.5">
+              {typeInfo.description}
+            </Text>
+            <div className="mt-2 flex gap-1.5">
               <Badge variant="secondary" className="text-xs">
-                Browser
+                {typeInfo.category}
               </Badge>
-            ) : (
-              <Badge variant="outline" className="text-xs">
-                Pro
-              </Badge>
-            )}
+              {typeInfo.browserCapable ? (
+                <Badge variant="secondary" className="text-xs">
+                  Browser
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-xs">
+                  Pro
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Parameter fields */}
-        {visibleParams.length === 0 ? (
-          <Text size="xs" color="muted">
-            No configurable parameters.
-          </Text>
-        ) : (
-          <Stack gap="sm">
-            {visibleParams.map((param) => (
-              <ParameterField
-                key={param.name}
-                param={param}
-                value={node.parameters[param.name]}
-                onChange={handleParamChange}
-              />
-            ))}
-          </Stack>
-        )}
-      </Stack>
+          {/* Parameter fields */}
+          {visibleParams.length === 0 ? (
+            <Text size="xs" color="muted">
+              No configurable parameters.
+            </Text>
+          ) : (
+            <Stack gap="sm">
+              {visibleParams.map((param) => (
+                <ParameterField
+                  key={param.name}
+                  param={param}
+                  value={node.parameters[param.name]}
+                  onChange={handleParamChange}
+                />
+              ))}
+            </Stack>
+          )}
+        </Stack>
+      </div>
     </Card>
   );
 }
