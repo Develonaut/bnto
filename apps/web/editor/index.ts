@@ -36,6 +36,7 @@ export { useEditorUndoRedo } from "./hooks/useEditorUndoRedo";
 
 // Adapters
 export { definitionToBento } from "./adapters/definitionToBento";
+export { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
 export { syncPositionsToDefinition } from "./adapters/syncPositionsToDefinition";
 export { definitionNodeToRfNode } from "./adapters/definitionNodeToRfNode";
 export { SLOTS, CELL, GAP, STRIDE } from "./adapters/bentoSlots";

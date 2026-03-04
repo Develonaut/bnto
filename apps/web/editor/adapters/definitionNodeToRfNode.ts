@@ -32,12 +32,18 @@ function definitionNodeToRfNode(
     type: "compartment" as const,
     position: node.position ?? { x: slot.x, y: slot.y },
     data: {
+      // Visual fields
       label: node.name || (info?.label ?? node.type),
       sublabel: info?.category ?? "",
       variant,
       width: slot.w,
       height: slot.h,
       status: "idle" as const,
+      // Domain fields — RF as source of truth
+      nodeType: node.type,
+      name: node.name,
+      parameters: node.parameters,
+      // Deprecated — same as RF node.id
       nodeId: node.id,
     },
   };
