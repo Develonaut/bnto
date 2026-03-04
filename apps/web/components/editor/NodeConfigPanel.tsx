@@ -7,7 +7,7 @@ import { Panel } from "@/components/ui/Panel";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 import { useEditorNode } from "@/editor/hooks/useEditorNode";
-import { useEditorActions } from "@/editor/hooks/useEditorActions";
+import { useUpdateNodeParams } from "@/editor/hooks/useUpdateNodeParams";
 import { ParameterField } from "./ParameterField";
 
 /**
@@ -34,7 +34,7 @@ interface NodeConfigPanelProps {
 
 function NodeConfigPanel({ selectedNodeId }: NodeConfigPanelProps) {
   const { node, typeInfo, visibleParams } = useEditorNode(selectedNodeId);
-  const { updateParams } = useEditorActions();
+  const updateParams = useUpdateNodeParams();
 
   const handleParamChange = useCallback(
     (paramName: string, value: unknown) => {

@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Menu } from "@/components/ui/Menu";
 import { Text } from "@/components/ui/Text";
 import { SearchIcon } from "@/components/ui/icons";
-import { useEditorActions, useEditorStore } from "@/editor";
+import { useEditorStore } from "@/editor";
 import { useNodePalette } from "@/editor/hooks/useNodePalette";
+import { useAddNode } from "@/editor/hooks/useAddNode";
 import { SLOTS } from "@/editor/adapters/bentoSlots";
 
 /**
@@ -43,7 +44,7 @@ function NodePaletteMenuContent({
   ...props
 }: Omit<ComponentProps<typeof Menu.Content>, "children">) {
   const [search, setSearch] = useState("");
-  const { addNode } = useEditorActions();
+  const addNode = useAddNode();
   const { groups } = useNodePalette();
   const nodeCount = useEditorStore((s) => s.definition.nodes?.length ?? 0);
   const isFull = nodeCount >= SLOTS.length;

@@ -23,7 +23,11 @@ export { EditorProvider } from "./EditorProvider";
 
 // Hooks
 export { useEditorStore } from "./hooks/useEditorStore";
+export { useEditorStoreApi } from "./hooks/useEditorStoreApi";
 export { useEditorActions } from "./hooks/useEditorActions";
+export { useAddNode } from "./hooks/useAddNode";
+export { useRemoveNode } from "./hooks/useRemoveNode";
+export { useUpdateNodeParams } from "./hooks/useUpdateNodeParams";
 export { useEditorNode } from "./hooks/useEditorNode";
 export type { EditorNodeResult } from "./hooks/useEditorNode";
 export { useNodePalette } from "./hooks/useNodePalette";

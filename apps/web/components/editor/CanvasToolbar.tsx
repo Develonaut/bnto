@@ -12,10 +12,10 @@ import {
   Undo2Icon,
   Redo2Icon,
 } from "@/components/ui/icons";
-import { useEditorActions } from "@/editor/hooks/useEditorActions";
 import { useEditorStore } from "@/editor/hooks/useEditorStore";
 import { useEditorSelection } from "@/editor/hooks/useEditorSelection";
 import { useEditorUndoRedo } from "@/editor/hooks/useEditorUndoRedo";
+import { useRemoveNode } from "@/editor/hooks/useRemoveNode";
 import { NodePaletteMenu } from "./NodePaletteMenu";
 
 /**
@@ -32,7 +32,7 @@ interface CanvasToolbarProps {
 }
 
 function CanvasToolbar({ onReset, onRun }: CanvasToolbarProps) {
-  const { removeNode } = useEditorActions();
+  const removeNode = useRemoveNode();
   const { selectedNodeId } = useEditorSelection();
   const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
   const isDirty = useEditorStore((s) => s.isDirty);
