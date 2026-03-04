@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 import { NavButton } from "@/components/blocks/NavButton";
@@ -16,16 +16,6 @@ import { LoaderIcon } from "@/components/ui/icons";
 
 type Mode = "signin" | "signup";
 
-const HAS_ACCOUNT_COOKIE = "bnto-has-account";
-
-function hasCookie(name: string) {
-  return typeof document !== "undefined" && document.cookie.includes(name);
-}
-
-function setHasAccountCookie() {
-  document.cookie = `${HAS_ACCOUNT_COOKIE}=1; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
-}
-
 interface SignInFormProps {
   defaultMode?: Mode;
 }
@@ -33,14 +23,14 @@ interface SignInFormProps {
 export function SignInForm({ defaultMode }: SignInFormProps) {
   const { email: signInEmail } = core.auth.useSignIn();
   const { email: signUpEmail } = core.auth.useSignUp();
+  const auth = core.auth.useAuth();
   const router = useRouter();
 
-  // Default to signup for new visitors, signin for returning users.
-  // The bnto-has-account cookie is set on successful auth and persists for 1 year.
-  const resolvedDefault = defaultMode ?? (hasCookie(HAS_ACCOUNT_COOKIE) ? "signin" : "signup");
+  // Default to signin for returning users (persisted), signup for new visitors.
+  const resolvedDefault = defaultMode ?? (auth.hasAccount ? "signin" : "signup");
   const [mode, setMode] = useState<Mode>(resolvedDefault);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(auth.user?.email ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,8 +38,11 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
   const isSignUp = mode === "signup";
 
   function toggleMode() {
-    setMode(isSignUp ? "signin" : "signup");
+    const next = isSignUp ? "signin" : "signup";
+    setMode(next);
     setError("");
+    // Pre-fill email for signin (returning user), clear for signup (new account)
+    setEmail(next === "signin" ? (auth.user?.email ?? "") : "");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -63,7 +56,6 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
       } else {
         await signInEmail({ email, password });
       }
-      setHasAccountCookie();
       router.replace("/");
     } catch {
       setError(
@@ -102,14 +94,19 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
               <form onSubmit={handleSubmit} className="grid gap-4">
                 {isSignUp && (
                   <Input
+                    id="name"
+                    name="name"
                     type="text"
                     placeholder="Your name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
+                    autoComplete="name"
                   />
                 )}
                 <Input
+                  id="email"
+                  name="email"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
@@ -118,6 +115,8 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
                   autoComplete="email"
                 />
                 <PasswordInput
+                  id="password"
+                  name="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
