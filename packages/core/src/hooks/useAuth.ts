@@ -55,11 +55,13 @@ export function useAuth(): AuthState {
   // Auto-persist the live user when session resolves.
   // Guard on isAuthenticated so sign-out clearing the store
   // doesn't get overwritten before the session terminates.
+  // Deps: re-run when auth status or user identity changes, not on every render.
+  const liveUserId = liveUser?.id;
   useEffect(() => {
     if (isAuthenticated && liveUser) {
       core.auth.rememberUser(liveUser);
     }
-  }, [isAuthenticated, liveUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, liveUserId]);
 
   return {
     isAuthenticated,
