@@ -47,19 +47,19 @@ function AuthGateCTA() {
   );
 }
 
-/** Compact CTA for popover — fits in tight spaces. */
-function AuthGatePopoverCTA() {
+/** CTA for menu prompt. */
+function AuthGateMenuCTA() {
   return (
-    <Row className="gap-2">
+    <Row className="gap-2 justify-center">
       <Button
         href="/signin"
         variant="primary"
         elevation="sm"
-        className="h-7 px-3 text-xs"
+        className="h-8 px-4 text-sm"
       >
         Sign up free
       </Button>
-      <Button href="/signin" variant="ghost" className="h-7 px-3 text-xs">
+      <Button href="/signin" variant="ghost" className="h-8 px-4 text-sm">
         Sign in
       </Button>
     </Row>
@@ -163,17 +163,17 @@ function AuthGateAction({
           {children}
         </span>
       </Popover.Anchor>
-      <Menu.Content side="top" align="center" className="w-64 p-4">
-        <Stack className="gap-3">
-          <Stack className="gap-1">
-            <Text size="sm" weight="medium">
+      <Menu.Content side="top" align="center" className="w-72 p-5">
+        <Stack className="gap-4">
+          <Stack className="gap-1.5">
+            <Text size="base" weight="medium">
               {title}
             </Text>
-            <Text size="xs" color="muted">
+            <Text size="sm" color="muted">
               {description}
             </Text>
           </Stack>
-          <AuthGatePopoverCTA />
+          <AuthGateMenuCTA />
         </Stack>
       </Menu.Content>
     </Menu>
