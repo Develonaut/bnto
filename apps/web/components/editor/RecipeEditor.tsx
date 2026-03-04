@@ -5,7 +5,6 @@ import {
   ReactFlowProvider,
   useReactFlow,
   useStoreApi,
-  useStore,
   applyNodeChanges,
   type OnNodesChange,
 } from "@xyflow/react";
@@ -17,10 +16,12 @@ import {
   useEditorActions,
   definitionToBento,
 } from "@/editor";
+import { useCanvasNodes } from "@/editor/hooks/useCanvasNodes";
 import { useDefinitionSync } from "@/editor/hooks/useDefinitionSync";
 import { useEditorSelection } from "@/editor/hooks/useEditorSelection";
 import { BentoCanvas } from "./canvas/BentoCanvas";
 import type { CompartmentNodeType } from "./canvas/CompartmentNode";
+import { EditorSidebar } from "./EditorSidebar";
 import { EditorToolbar } from "./EditorToolbar";
 import { NodePalette } from "./NodePalette";
 import { NodeConfigPanel } from "./NodeConfigPanel";
@@ -110,8 +111,8 @@ function RecipeEditorInner() {
     [setNodes],
   );
 
-  /* Read current RF nodes for BentoCanvas — use store API for stable ref. */
-  const nodes = useReactFlowNodes();
+  /* Read current RF nodes for BentoCanvas. */
+  const nodes = useCanvasNodes();
 
   return (
     <Stack gap="sm" data-testid="recipe-editor">
@@ -122,7 +123,7 @@ function RecipeEditorInner() {
       <div className="flex gap-4">
         {/* Canvas — takes remaining space. standalone=true to share
          * ReactFlowProvider with sibling hooks. */}
-        <div className="flex-1 min-w-0">
+        <div className="relative flex-1 min-w-0">
           <BentoCanvas
             nodes={nodes}
             height={520}
@@ -130,6 +131,10 @@ function RecipeEditorInner() {
             standalone
             onNodesChange={onNodesChange}
           />
+          {/* Sidebar overlays the canvas from top-left, full height */}
+          <div className="absolute inset-y-0 left-0 z-10 p-2">
+            <EditorSidebar selectedNodeId={selectedNodeId} />
+          </div>
         </div>
 
         {/* Config panel — fixed width on the right */}
@@ -142,12 +147,6 @@ function RecipeEditorInner() {
       <NodePalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </Stack>
   );
-}
-
-/* ── Subscribe to RF node array for reactive canvas updates ──── */
-
-function useReactFlowNodes(): CompartmentNodeType[] {
-  return useStore((s) => s.nodes) as CompartmentNodeType[];
 }
 
 export { RecipeEditor };
