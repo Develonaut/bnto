@@ -90,7 +90,6 @@ export function RecipeToolbar({
             </FileUpload.Clear>
           )}
           <AuthGate.Action
-            variant="dialog"
             title="Sign up to save recipes"
             description="Create a free account to save your recipe settings and pick up where you left off."
           >
@@ -145,7 +144,6 @@ export function RecipeToolbar({
           </FileUpload.Clear>
         )}
         <AuthGate.Action
-          variant="dialog"
           title="Sign up to save recipes"
           description="Create a free account to save your recipe settings and pick up where you left off."
         >
