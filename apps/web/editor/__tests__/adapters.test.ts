@@ -216,7 +216,8 @@ describe("definitionNodeToRfNode", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
     // Simulate a node without position by omitting it
-    const { position: _, ...nodeWithoutPosition } = def.nodes![0]!;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructuring to omit position
+    const { position: _omitted, ...nodeWithoutPosition } = def.nodes![0]!;
     const node = nodeWithoutPosition as Definition;
 
     const result = definitionNodeToRfNode(node, 0);

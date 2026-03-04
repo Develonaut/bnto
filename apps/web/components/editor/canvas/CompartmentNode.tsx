@@ -31,13 +31,6 @@ const SURFACE_CLASS: Record<NonNullable<CompartmentNodeData["variant"]>, string>
   warning: "surface-warning",
 };
 
-const ELEVATION_BY_STATUS: Record<CompartmentStatus, "none" | "sm" | "md" | "lg"> = {
-  idle: "lg",
-  pending: "sm",
-  active: "lg",
-  completed: "md",
-};
-
 export function CompartmentNode({ data, selected }: NodeProps<CompartmentNodeType>) {
   const w = data.width ?? 120;
   const h = data.height ?? 120;

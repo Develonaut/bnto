@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 
 /**
  * Returns the value from the previous render.
@@ -8,15 +8,18 @@ import { useEffect, useRef } from "react";
  *
  *   const prevCount = usePrevious(items.length);
  *   if (prevCount !== undefined && items.length > prevCount) { … }
+ *
+ * Uses the "update state during render" pattern (React-approved) instead
+ * of reading a ref during render (flagged by react-hooks/refs in React 19).
  */
 function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T>(undefined);
+  const [pair, setPair] = useState<[T | undefined, T]>([undefined, value]);
 
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
+  if (pair[1] !== value) {
+    setPair([pair[1], value]);
+  }
 
-  return ref.current;
+  return pair[0];
 }
 
 export { usePrevious };

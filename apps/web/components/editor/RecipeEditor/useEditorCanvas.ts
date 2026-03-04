@@ -46,11 +46,10 @@ function useEditorCanvas({ initialSlug }: UseEditorCanvasOptions = {}) {
   }, [setPositionGetter, storeApi]);
 
   /* Seed initial nodes via defaultNodes (uncontrolled mode).
-   * RF reads this once on mount and owns the state from there.
-   * eslint-disable: definition captured at mount time intentionally. */
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   * RF reads this once on mount and owns the state from there. */
   const defaultNodes = useMemo(
     () => definitionToBento(definition).nodes as CompartmentNodeType[],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- definition captured at mount time intentionally
     [],
   );
 
