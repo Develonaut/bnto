@@ -1,44 +1,25 @@
 /**
- * RF-first parameter update.
+ * Store-delegate parameter update.
  *
- * Updates a node's parameters in the ReactFlow data field directly,
- * then updates the editor store for undo/validation/isDirty.
+ * Delegates to the editor store's updateParams action, which updates the
+ * definition. Existing sync effects propagate changes to ReactFlow.
  *
- * Must be inside both EditorProvider and ReactFlowProvider.
+ * Must be inside EditorProvider.
  */
 
 "use client";
 
 import { useCallback } from "react";
-import { useReactFlow } from "@xyflow/react";
-import type { BentoNode } from "../adapters/types";
 import { useEditorStoreApi } from "./useEditorStoreApi";
 
 function useUpdateNodeParams() {
-  const { setNodes } = useReactFlow<BentoNode>();
   const storeApi = useEditorStoreApi();
 
   return useCallback(
     (nodeId: string, params: Record<string, unknown>) => {
-      // 1. Update RF node data directly — instant visual feedback
-      setNodes((prev) =>
-        prev.map((n) =>
-          n.id === nodeId
-            ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  parameters: { ...n.data.parameters, ...params },
-                },
-              }
-            : n,
-        ),
-      );
-
-      // 2. Delegate to store (handles definition update, undo, validation, isDirty)
       storeApi.getState().updateParams(nodeId, params);
     },
-    [setNodes, storeApi],
+    [storeApi],
   );
 }
 

@@ -1,12 +1,10 @@
 /**
  * Hook for dispatching editor actions.
  *
- * Composes RF-first mutation hooks (addNode, removeNode, updateParams)
- * with store-level actions (loadRecipe, undo, redo, etc.). The RF-first
- * hooks write to ReactFlow directly for instant visual feedback, then
- * delegate to the store for undo/validation/isDirty.
+ * Composes named mutation hooks (addNode, removeNode, updateParams)
+ * with store-level actions (loadRecipe, undo, redo, etc.).
  *
- * Must be inside both EditorProvider and ReactFlowProvider.
+ * Must be inside EditorProvider.
  */
 
 "use client";
