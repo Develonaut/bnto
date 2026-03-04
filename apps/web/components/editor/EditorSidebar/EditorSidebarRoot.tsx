@@ -38,7 +38,7 @@ function EditorSidebarRoot({
 }: EditorSidebarProps) {
   const nodes = useCanvasNodes();
   const { download, canExport } = useEditorExport();
-  const { handleSelectNode } = useAutoSelect({ nodes, selectedNodeId });
+  const { handleSelectNode } = useAutoSelect({ selectedNodeId });
 
   return (
     <Panel collapsed={collapsed} onToggle={onToggle} className="h-full w-56">
