@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 3, 2026
+**Last Updated:** March 4, 2026
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -27,10 +27,11 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **FOCUS: Lean MVP Editor.** The creation experience is the product differentiator. Everything else is tabled until users can make their own bntos.
-- **Active:** Sprint 4 (Recipe Editor) — Waves 1-3 complete. Editor components shipped (EditorToolbar, NodePalette, NodeConfigPanel, RecipeEditor, BentoCanvas). Editor lives in Motorway `/editor` section until ready for production integration.
+- **FOCUS: Self-describing recipes + runnable editor.** Sprint 4 (visual editor) complete. Sprint 4C (I/O Nodes) is next — makes recipes self-describing so custom editor creations can actually run. See [io-nodes.md](.claude/strategy/io-nodes.md) for the architecture reference.
+- **Next up:** Sprint 4C Wave 1 (`@bnto/nodes` — I/O node types, schemas, recipe updates). Unblocked now.
+- **In flight:** PR #88 — RF-first mutation hooks (editor store refinement). Must merge before Sprint 4C Wave 2.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
-- **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor MVP ships.
+- **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor + I/O nodes ship.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
 - **Tabled:** Save button on recipe toolbar — removed (March 2026). No save infrastructure to connect to yet. Will return with editor + accounts.
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
@@ -420,25 +421,29 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 **Dependencies:** Sprint 4 Wave 1 (`@bnto/nodes` pure functions) must be complete — it is. Sprint 4 Wave 3 (editor components) should be complete for editor integration — it is. Sprint 4B (Code Editor) is NOT a dependency.
 
+**Prerequisite:** PR #88 (RF-first mutation hooks) must be merged before Wave 2 starts. Wave 1 (`@bnto/nodes` only) can begin immediately — it has no dependency on the editor store.
+
 #### Wave 1 (parallel — node type definitions + schemas + recipe updates) `@bnto/nodes`
 
 Define the two new node types, their parameter schemas, and update all 6 predefined recipes to use them. Pure TypeScript — no React, no UI, no engine changes.
+
+**Internal ordering:** Tasks 1-5 (registry, schemas, helpers) can run in parallel. Tasks 6-8 (recipe updates, blank definition, tests) depend on 1-5 being complete.
 
 - [ ] `@bnto/nodes` — **Add `input` and `output` to node type registry**: Add to `NODE_TYPES` constant, `NodeTypeName` union, `NODE_TYPE_INFO` metadata. New category: `"io"`. Both `browserCapable: true`, `isContainer: false`. See [io-nodes.md § Proposal](strategy/io-nodes.md#proposal-two-new-node-types) for the full type definitions.
 - [ ] `@bnto/nodes` — **Input node schema** (`schemas/input.ts`): Parameters: `mode` (enum: `file-upload`, `text`, `url`), `accept` (array of MIME types), `extensions` (array), `label` (string), `multiple` (boolean, default true), `maxFileSize` (number), `maxFiles` (number), `placeholder` (string). `accept`/`extensions`/`label` visible when mode is `file-upload`. `placeholder` visible when mode is `text` or `url`.
 - [ ] `@bnto/nodes` — **Output node schema** (`schemas/output.ts`): Parameters: `mode` (enum: `download`, `display`, `preview`), `filename` (string template), `zip` (boolean, default true), `label` (string), `autoDownload` (boolean, default false). `filename`/`zip`/`autoDownload` visible when mode is `download`.
 - [ ] `@bnto/nodes` — **`deriveAcceptSpec(definition)`**: Pure function that finds the input node in a definition and extracts `accept`, `extensions`, `label` into an `AcceptSpec`. Returns `undefined` if no input node found. Used by `definitionToRecipe()` to populate `Recipe.accept` from the definition instead of duplicating it.
 - [ ] `@bnto/nodes` — **`getInputNode(definition)` / `getOutputNode(definition)`**: Pure helper functions that find the input/output node in a definition's node tree. Return `Definition | undefined`. Used by adapters and renderers.
-- [ ] `@bnto/nodes` — **Update all 6 predefined recipes**: Add input and output nodes to each recipe definition. Remove `file-system "list"` nodes that read `{{.INPUT_DIR}}/*` — the input node replaces them. Remove `{{.OUTPUT_DIR}}` from process node parameters — the output node declares delivery. Keep `Recipe.accept` populated via `deriveAcceptSpec()` for backward compatibility. See [io-nodes.md § Migration](strategy/io-nodes.md#migration-strategy) for the per-recipe mapping.
-- [ ] `@bnto/nodes` — **Update `createBlankDefinition()`**: Blank definitions start with an input node (mode: `file-upload`, accept: `*`) and an output node (mode: `download`). Users configure them from there.
-- [ ] `@bnto/nodes` — **Unit tests**: Validate input/output schemas. `deriveAcceptSpec()` extracts correct values. `getInputNode()`/`getOutputNode()` find nodes in flat and nested definitions. Updated recipes pass validation. `createBlankDefinition()` includes I/O nodes. Round-trip: `definition → recipe → definition` preserves I/O nodes.
+- [ ] `@bnto/nodes` — **Update all 6 predefined recipes**: Add input and output nodes to each recipe definition. Remove `file-system "list"` nodes that read `{{.INPUT_DIR}}/*` — the input node replaces them. Remove `{{.OUTPUT_DIR}}` from process node parameters — the output node declares delivery. Keep `Recipe.accept` populated via `deriveAcceptSpec()` for backward compatibility. See [io-nodes.md § Migration](strategy/io-nodes.md#migration-strategy) for the per-recipe mapping. *(Depends on tasks 1-5)*
+- [ ] `@bnto/nodes` — **Update `createBlankDefinition()`**: Blank definitions start with an input node (mode: `file-upload`, accept: `*`) and an output node (mode: `download`). Users configure them from there. *(Depends on tasks 1-5)*
+- [ ] `@bnto/nodes` — **Unit tests**: Validate input/output schemas. `deriveAcceptSpec()` extracts correct values. `getInputNode()`/`getOutputNode()` find nodes in flat and nested definitions. Updated recipes pass validation. `createBlankDefinition()` includes I/O nodes. Round-trip: `definition → recipe → definition` preserves I/O nodes. *(Depends on all above)*
 
 #### Wave 2 (parallel — core adapter + editor store updates) `@bnto/core` + `apps/web`
 
 Wire the browser adapter to read I/O nodes from the definition instead of relying on `Recipe.accept` and hardcoded output handling. Update the editor store to treat I/O nodes as persistent (always present, not deletable).
 
-- [ ] `@bnto/core` — **Browser adapter reads input node**: When `browserInstance.run()` is called, the adapter reads `getInputNode(definition)` to determine accepted file types and validation rules. Falls back to `Recipe.accept` if no input node found (backward compat).
-- [ ] `@bnto/core` — **Browser adapter reads output node**: After execution, the adapter reads `getOutputNode(definition)` to determine output behavior (zip, auto-download, label). Falls back to current behavior if no output node found.
+- [ ] `@bnto/core` — **Browser adapter reads input node**: The adapter receives the full `Definition` via the execution context. On run: `getInputNode(definition)` → if found, use its `accept`/`extensions` for file validation. If not found, fall back to `Recipe.accept`. The input node is the single source of truth for what files a recipe accepts.
+- [ ] `@bnto/core` — **Browser adapter reads output node**: After execution, `getOutputNode(definition)` → if found, use its `mode`/`zip`/`autoDownload`/`label` for result delivery. If not found, current behavior (download all, zip if multiple). The output node is the single source of truth for how results are presented.
 - [ ] `apps/web` — **Editor store: I/O node protection**: `useEditorStore.removeNode()` prevents deletion of input/output nodes (they're structural). `addNode()` prevents adding a second input or output node. I/O nodes are always the first and last in position order.
 - [ ] `apps/web` — **Definition ↔ Bento adapters**: `definitionToBento()` maps input/output nodes to distinct compartment variants (visual differentiation in the grid — different color/icon). `bentoToDefinition()` preserves I/O node position constraints.
 
