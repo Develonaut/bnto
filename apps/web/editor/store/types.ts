@@ -51,7 +51,7 @@ interface EditorState {
 interface EditorActions {
   loadRecipe: (slug: string) => void;
   createBlank: () => void;
-  addNode: (type: NodeTypeName, position?: Position) => void;
+  addNode: (type: NodeTypeName, position?: Position) => string | null;
   removeNode: (id: string) => void;
   updateParams: (nodeId: string, params: Record<string, unknown>) => void;
   /** Returns snapshot so caller can restore RF positions. */
