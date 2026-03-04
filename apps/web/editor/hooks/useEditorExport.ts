@@ -1,8 +1,8 @@
 /**
  * Hook for exporting the current editor state as a Recipe or .bnto.json file.
  *
- * Before export, patches current ReactFlow positions into the definition
- * so the exported recipe reflects the visual layout.
+ * Reads RF nodes directly and reconstructs a Definition via
+ * rfNodesToDefinition. No patching needed — RF is the source of truth.
  */
 
 "use client";
@@ -10,8 +10,10 @@
 import { useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { definitionToRecipe, validateDefinition } from "@bnto/nodes";
-import type { RecipeMetadata, Recipe, Definition } from "@bnto/nodes";
+import type { RecipeMetadata as NodeRecipeMetadata, Recipe } from "@bnto/nodes";
 import { useEditorStore } from "./useEditorStore";
+import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
+import type { BentoNode } from "../adapters/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,27 +25,9 @@ interface ExportResult {
 }
 
 interface EditorExportResult {
-  exportAsRecipe: (metadata?: RecipeMetadata) => ExportResult;
-  download: (metadata?: RecipeMetadata) => void;
+  exportAsRecipe: (metadata?: NodeRecipeMetadata) => ExportResult;
+  download: (metadata?: NodeRecipeMetadata) => void;
   canExport: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Patch RF node positions into a Definition for export. */
-function patchPositions(
-  definition: Definition,
-  positionMap: Map<string, { x: number; y: number }>,
-): Definition {
-  return {
-    ...definition,
-    nodes: (definition.nodes ?? []).map((child) => {
-      const pos = positionMap.get(child.id);
-      return pos ? { ...child, position: pos } : child;
-    }),
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -51,38 +35,37 @@ function patchPositions(
 // ---------------------------------------------------------------------------
 
 function useEditorExport(): EditorExportResult {
-  const definition = useEditorStore((s) => s.definition);
   const validationErrors = useEditorStore((s) => s.validationErrors);
-  const { getNodes } = useReactFlow();
+  const recipeMetadata = useEditorStore((s) => s.recipeMetadata);
+  const { getNodes } = useReactFlow<BentoNode>();
 
   const canExport = validationErrors.length === 0;
 
   const exportAsRecipe = useCallback(
-    (metadata?: RecipeMetadata): ExportResult => {
-      // Build position map from RF nodes — each node's data.nodeId links
-      // back to the Definition node ID
+    (metadata?: NodeRecipeMetadata): ExportResult => {
       const rfNodes = getNodes();
-      const positionMap = new Map<string, { x: number; y: number }>();
-      for (const n of rfNodes) {
-        const nodeId = (n.data as Record<string, unknown>)?.nodeId;
-        if (typeof nodeId === "string") {
-          positionMap.set(nodeId, n.position);
-        }
-      }
-      const patched = patchPositions(definition, positionMap);
+      const rootDefinition = {
+        ...recipeMetadata,
+        position: { x: 0, y: 0 },
+        metadata: {},
+        parameters: {},
+        inputPorts: [] as never[],
+        outputPorts: [] as never[],
+      };
+      const definition = rfNodesToDefinition(rfNodes, rootDefinition);
 
-      const errors = validateDefinition(patched);
+      const errors = validateDefinition(definition);
       if (errors.length > 0) {
         return { recipe: null, errors };
       }
-      const recipe = definitionToRecipe(patched, metadata);
+      const recipe = definitionToRecipe(definition, metadata);
       return { recipe, errors: [] };
     },
-    [definition, getNodes],
+    [recipeMetadata, getNodes],
   );
 
   const download = useCallback(
-    (metadata?: RecipeMetadata) => {
+    (metadata?: NodeRecipeMetadata) => {
       const result = exportAsRecipe(metadata);
       if (!result.recipe) return;
 

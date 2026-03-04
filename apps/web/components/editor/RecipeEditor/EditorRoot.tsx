@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { getRecipeBySlug } from "@bnto/nodes";
 import { EditorProvider } from "@/editor";
+import type { RecipeMetadata } from "@/editor";
 import { EditorCanvas } from "./EditorCanvas";
 
 /**
@@ -23,13 +24,16 @@ interface RecipeEditorProps {
 }
 
 function RecipeEditorRoot({ slug }: RecipeEditorProps) {
-  const initialDefinition = useMemo(() => {
+  const initialMetadata = useMemo((): RecipeMetadata | undefined => {
     if (!slug) return undefined;
-    return getRecipeBySlug(slug)?.definition;
+    const recipe = getRecipeBySlug(slug);
+    if (!recipe) return undefined;
+    const def = recipe.definition;
+    return { id: def.id, name: def.name, type: def.type, version: def.version };
   }, [slug]);
 
   return (
-    <EditorProvider initialDefinition={initialDefinition}>
+    <EditorProvider initialMetadata={initialMetadata}>
       <ReactFlowProvider>
         <EditorCanvas initialSlug={slug} />
       </ReactFlowProvider>

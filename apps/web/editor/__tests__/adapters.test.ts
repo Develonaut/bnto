@@ -7,12 +7,10 @@
 import { describe, it, expect } from "vitest";
 import { definitionToBento } from "../adapters/definitionToBento";
 import { SLOTS } from "../adapters/bentoSlots";
-import { syncPositionsToDefinition } from "../adapters/syncPositionsToDefinition";
-import { definitionNodeToRfNode } from "../adapters/definitionNodeToRfNode";
+import { createCompartmentNode } from "../adapters/createCompartmentNode";
 import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
 import { createBlankDefinition, addNode } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
-import { NODE_TYPE_INFO, NODE_TYPE_NAMES } from "@bnto/nodes";
+import { NODE_TYPE_INFO, NODE_TYPE_NAMES, NODE_SCHEMAS } from "@bnto/nodes";
 
 // ---------------------------------------------------------------------------
 // definitionToBento
@@ -88,13 +86,12 @@ describe("definitionToBento", () => {
     expect(result.nodes[0]!.data.label).toBe(expected);
   });
 
-  it("links compartment back to definition node via nodeId", () => {
+  it("RF node id matches definition node id", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
     const nodeId = def.nodes![0]!.id;
 
     const result = definitionToBento(def);
-    expect(result.nodes[0]!.data.nodeId).toBe(nodeId);
     expect(result.nodes[0]!.id).toBe(nodeId);
   });
 
@@ -133,149 +130,68 @@ describe("definitionToBento", () => {
 });
 
 // ---------------------------------------------------------------------------
-// syncPositionsToDefinition
+// createCompartmentNode
 // ---------------------------------------------------------------------------
 
-describe("syncPositionsToDefinition", () => {
-  it("patches node positions from bento compartments", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    def = addNode(def, "spreadsheet").definition;
-
-    const bento = definitionToBento(def);
-    const modified = {
-      ...bento,
-      nodes: bento.nodes.map((n, i) =>
-        i === 0 ? { ...n, position: { x: 500, y: 300 } } : n,
-      ),
-    };
-
-    const result = syncPositionsToDefinition(def, modified.nodes);
-    expect(result.nodes![0]!.position).toEqual({ x: 500, y: 300 });
-    expect(result.nodes![1]!.position).toEqual(bento.nodes[1]!.position);
-  });
-
-  it("preserves node parameters and type", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-
-    const bento = definitionToBento(def);
-    const result = syncPositionsToDefinition(def, bento.nodes);
-
-    expect(result.nodes![0]!.type).toBe("image");
-    expect(result.nodes![0]!.parameters).toEqual(def.nodes![0]!.parameters);
-    expect(result.nodes![0]!.name).toBe(def.nodes![0]!.name);
-  });
-
-  it("preserves root definition metadata", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-
-    const bento = definitionToBento(def);
-    const result = syncPositionsToDefinition(def, bento.nodes);
-
-    expect(result.id).toBe(def.id);
-    expect(result.name).toBe(def.name);
-    expect(result.type).toBe(def.type);
-    expect(result.edges).toEqual(def.edges);
-  });
-
-  it("handles empty bento nodes gracefully", () => {
-    const def = createBlankDefinition();
-    const result = syncPositionsToDefinition(def, []);
-    expect(result.nodes).toEqual([]);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// definitionNodeToRfNode
-// ---------------------------------------------------------------------------
-
-describe("definitionNodeToRfNode", () => {
-  it("converts a definition child node to a BentoNode", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const node = def.nodes![0]!;
-
-    const result = definitionNodeToRfNode(node, 0);
+describe("createCompartmentNode", () => {
+  it("creates a BentoNode from a node type and slot index", () => {
+    const result = createCompartmentNode("image", 0);
     expect(result).not.toBeNull();
-    expect(result!.id).toBe(node.id);
     expect(result!.type).toBe("compartment");
-  });
-
-  it("uses node position when available, falls back to slot position", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "image", { x: 42, y: 99 }).definition;
-    const node = def.nodes![0]!;
-
-    const result = definitionNodeToRfNode(node, 0);
-    expect(result!.position).toEqual({ x: 42, y: 99 });
-  });
-
-  it("falls back to slot position when node has no position", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    // Simulate a node without position by omitting it
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructuring to omit position
-    const { position: _omitted, ...nodeWithoutPosition } = def.nodes![0]!;
-    const node = nodeWithoutPosition as Definition;
-
-    const result = definitionNodeToRfNode(node, 0);
-    expect(result!.position).toEqual({ x: SLOTS[0]!.x, y: SLOTS[0]!.y });
+    expect(result!.data.nodeType).toBe("image");
   });
 
   it("returns null when slot index exceeds available slots", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const node = def.nodes![0]!;
-
-    const result = definitionNodeToRfNode(node, SLOTS.length + 5);
+    const result = createCompartmentNode("image", SLOTS.length + 5);
     expect(result).toBeNull();
   });
 
-  it("maps category to variant color", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const node = def.nodes![0]!;
+  it("uses slot position by default", () => {
+    const result = createCompartmentNode("image", 2);
+    expect(result!.position).toEqual({ x: SLOTS[2]!.x, y: SLOTS[2]!.y });
+  });
 
-    const result = definitionNodeToRfNode(node, 0);
+  it("uses custom position when provided", () => {
+    const result = createCompartmentNode("image", 0, { x: 42, y: 99 });
+    expect(result!.position).toEqual({ x: 42, y: 99 });
+  });
+
+  it("maps category to variant color", () => {
+    const result = createCompartmentNode("image", 0);
     expect(result!.data.variant).toBe("primary");
   });
 
-  it("sets compartment dimensions from slot", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const node = def.nodes![0]!;
-
-    const result = definitionNodeToRfNode(node, 0);
+  it("sets slot dimensions", () => {
+    const result = createCompartmentNode("image", 0);
     expect(result!.data.width).toBe(SLOTS[0]!.w);
     expect(result!.data.height).toBe(SLOTS[0]!.h);
   });
 
-  it("produces same output as definitionToBento for matching index", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const node = def.nodes![0]!;
-
-    const fromBatch = definitionToBento(def).nodes[0]!;
-    const fromSingle = definitionNodeToRfNode(node, 0)!;
-
-    expect(fromSingle.id).toBe(fromBatch.id);
-    expect(fromSingle.type).toBe(fromBatch.type);
-    expect(fromSingle.data.label).toBe(fromBatch.data.label);
-    expect(fromSingle.data.variant).toBe(fromBatch.data.variant);
-    expect(fromSingle.data.nodeId).toBe(fromBatch.data.nodeId);
+  it("generates a UUID for node id", () => {
+    const result = createCompartmentNode("image", 0);
+    expect(result!.id).toBeTruthy();
+    expect(result!.id.length).toBeGreaterThan(0);
   });
 
-  it("populates domain fields (nodeType, name, parameters) in node data", () => {
-    let def = createBlankDefinition();
-    def = addNode(def, "spreadsheet").definition;
-    const node = def.nodes![0]!;
+  it("builds default parameters from schema", () => {
+    const result = createCompartmentNode("image", 0);
+    const schema = NODE_SCHEMAS["image"];
+    const expectedDefaults: Record<string, unknown> = {};
+    for (const param of schema.parameters) {
+      if (param.default !== undefined) {
+        expectedDefaults[param.name] = param.default;
+      }
+    }
+    expect(result!.data.parameters).toEqual(expectedDefaults);
+  });
 
-    const result = definitionNodeToRfNode(node, 0)!;
-    expect(result.data.nodeType).toBe(node.type);
-    expect(result.data.name).toBe(node.name);
-    expect(result.data.parameters).toEqual(node.parameters);
+  it("works with all 10 node types", () => {
+    for (const typeName of NODE_TYPE_NAMES) {
+      const result = createCompartmentNode(typeName, 0);
+      expect(result).not.toBeNull();
+      expect(result!.data.nodeType).toBe(typeName);
+      expect(result!.data.label).toBeTruthy();
+    }
   });
 });
 

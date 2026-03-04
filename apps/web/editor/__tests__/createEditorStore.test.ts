@@ -1,23 +1,41 @@
 /**
- * Editor store tests — verify all store operations via Vitest.
+ * Editor store tests — verify the thin RF-first store.
  *
- * Tests the vanilla Zustand store directly (no React rendering).
- * Each test creates a fresh store instance via the factory.
+ * The store no longer owns node state — ReactFlow does.
+ * It manages: recipe metadata, undo/redo history, validation,
+ * execution state, and dirty flag.
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { createEditorStore } from "../store/createEditorStore";
 import type { EditorStore } from "../store/types";
 import type { StoreApi } from "zustand";
-import { createBlankDefinition } from "@bnto/nodes";
-import { NODE_TYPE_NAMES } from "@bnto/nodes";
+import type { BentoNode } from "../adapters/types";
 
 // ---------------------------------------------------------------------------
-// Helper to get current state
+// Helpers
 // ---------------------------------------------------------------------------
 
 function state(store: StoreApi<EditorStore>) {
   return store.getState();
+}
+
+function makeBentoNode(id: string, type = "image"): BentoNode {
+  return {
+    id,
+    type: "compartment",
+    position: { x: 0, y: 0 },
+    data: {
+      label: "Test",
+      variant: "primary",
+      width: 200,
+      height: 200,
+      status: "idle",
+      nodeType: type,
+      name: "Test",
+      parameters: {},
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -34,41 +52,42 @@ describe("createEditorStore", () => {
   // --- Initialization ---
 
   describe("initialization", () => {
-    it("starts with a blank definition when no initial provided", () => {
+    it("starts with blank recipe metadata", () => {
       const s = state(store);
-      expect(s.definition.type).toBe("group");
-      expect(s.definition.nodes).toEqual([]);
+      expect(s.recipeMetadata.type).toBe("group");
       expect(s.isDirty).toBe(false);
       expect(s.undoStack).toEqual([]);
       expect(s.redoStack).toEqual([]);
     });
 
-    it("accepts a custom initial definition", () => {
-      const custom = createBlankDefinition();
-      custom.name = "My Custom Recipe";
-      const customStore = createEditorStore(custom);
-      expect(state(customStore).definition.name).toBe("My Custom Recipe");
+    it("accepts custom initial metadata", () => {
+      const custom = createEditorStore({
+        id: "test-id",
+        name: "Custom",
+        type: "group",
+        version: "1.0.0",
+      });
+      expect(state(custom).recipeMetadata.name).toBe("Custom");
     });
 
-    it("validates the initial definition", () => {
-      const s = state(store);
-      expect(s.validationErrors).toEqual([]);
+    it("starts with empty validation errors", () => {
+      expect(state(store).validationErrors).toEqual([]);
     });
   });
 
   // --- loadRecipe ---
 
   describe("loadRecipe", () => {
-    it("loads a predefined recipe by slug", () => {
+    it("loads recipe metadata by slug", () => {
       state(store).loadRecipe("compress-images");
-      const s = state(store);
-      expect(s.definition.name).toBe("Compress Images");
-      expect(s.definition.nodes!.length).toBeGreaterThan(0);
-      expect(s.isDirty).toBe(false);
+      expect(state(store).recipeMetadata.name).toBe("Compress Images");
+      expect(state(store).isDirty).toBe(false);
     });
 
     it("resets history when loading a recipe", () => {
-      state(store).addNode("image");
+      // Simulate some history
+      state(store).setNodeGetter(() => [makeBentoNode("a")]);
+      state(store).pushUndo();
       expect(state(store).undoStack.length).toBe(1);
 
       state(store).loadRecipe("compress-images");
@@ -77,237 +96,153 @@ describe("createEditorStore", () => {
     });
 
     it("does nothing for an unknown slug", () => {
-      const before = state(store).definition;
+      const before = state(store).recipeMetadata;
       state(store).loadRecipe("nonexistent-recipe");
-      expect(state(store).definition).toBe(before);
+      expect(state(store).recipeMetadata).toBe(before);
     });
   });
 
   // --- createBlank ---
 
   describe("createBlank", () => {
-    it("resets to a fresh blank definition", () => {
-      state(store).addNode("image");
-      state(store).addNode("spreadsheet");
-      expect(state(store).definition.nodes!.length).toBe(2);
-
+    it("resets to blank metadata", () => {
+      state(store).loadRecipe("compress-images");
       state(store).createBlank();
-      expect(state(store).definition.nodes).toEqual([]);
+      expect(state(store).recipeMetadata.type).toBe("group");
       expect(state(store).isDirty).toBe(false);
       expect(state(store).undoStack).toEqual([]);
     });
   });
 
-  // --- addNode ---
+  // --- pushUndo ---
 
-  describe("addNode", () => {
-    it("adds a node to the definition", () => {
-      state(store).addNode("image");
-      const s = state(store);
-      expect(s.definition.nodes!.length).toBe(1);
-      expect(s.definition.nodes![0]!.type).toBe("image");
-      expect(s.isDirty).toBe(true);
-    });
+  describe("pushUndo", () => {
+    it("captures current RF nodes via nodeGetter", () => {
+      const nodes = [makeBentoNode("a"), makeBentoNode("b")];
+      state(store).setNodeGetter(() => nodes);
 
-    it("adds a node with a custom position", () => {
-      state(store).addNode("image", { x: 100, y: 200 });
-      const node = state(store).definition.nodes![0]!;
-      expect(node.position).toEqual({ x: 100, y: 200 });
-    });
-
-    it("pushes to undo stack", () => {
-      state(store).addNode("image");
+      state(store).pushUndo();
       expect(state(store).undoStack.length).toBe(1);
+      expect(state(store).undoStack[0]).toEqual(nodes);
     });
 
-    it("clears redo stack on new action", () => {
-      state(store).addNode("image");
+    it("uses empty array when no getter registered", () => {
+      state(store).pushUndo();
+      expect(state(store).undoStack[0]).toEqual([]);
+    });
+
+    it("clears redo stack", () => {
+      state(store).setNodeGetter(() => []);
+      state(store).pushUndo();
       state(store).undo();
       expect(state(store).redoStack.length).toBe(1);
 
-      state(store).addNode("spreadsheet");
+      state(store).pushUndo();
       expect(state(store).redoStack).toEqual([]);
     });
-
-    it("works with all 10 node types", () => {
-      for (const type of NODE_TYPE_NAMES) {
-        const fresh = createEditorStore();
-        state(fresh).addNode(type);
-        expect(state(fresh).definition.nodes!.length).toBe(1);
-        expect(state(fresh).definition.nodes![0]!.type).toBe(type);
-      }
-    });
   });
 
-  // --- removeNode ---
+  // --- markDirty ---
 
-  describe("removeNode", () => {
-    it("removes a node by ID", () => {
-      state(store).addNode("image");
-      const nodeId = state(store).definition.nodes![0]!.id;
-
-      state(store).removeNode(nodeId);
-      expect(state(store).definition.nodes).toEqual([]);
-    });
-
-    it("pushes to undo stack", () => {
-      state(store).addNode("image");
-      const undoCount = state(store).undoStack.length;
-      const nodeId = state(store).definition.nodes![0]!.id;
-
-      state(store).removeNode(nodeId);
-      expect(state(store).undoStack.length).toBe(undoCount + 1);
-    });
-  });
-
-  // --- updateParams ---
-
-  describe("updateParams", () => {
-    it("updates parameters on a node", () => {
-      state(store).addNode("image");
-      const nodeId = state(store).definition.nodes![0]!.id;
-
-      state(store).updateParams(nodeId, { quality: 90 });
-      const node = state(store).definition.nodes![0]!;
-      expect(node.parameters.quality).toBe(90);
-    });
-
-    it("merges with existing parameters", () => {
-      state(store).addNode("image");
-      const nodeId = state(store).definition.nodes![0]!.id;
-
-      state(store).updateParams(nodeId, { quality: 90 });
-      state(store).updateParams(nodeId, { format: "webp" });
-      const node = state(store).definition.nodes![0]!;
-      expect(node.parameters.quality).toBe(90);
-      expect(node.parameters.format).toBe("webp");
-    });
-
-    it("pushes to undo stack", () => {
-      state(store).addNode("image");
-      const nodeId = state(store).definition.nodes![0]!.id;
-      const undoCount = state(store).undoStack.length;
-
-      state(store).updateParams(nodeId, { quality: 50 });
-      expect(state(store).undoStack.length).toBe(undoCount + 1);
+  describe("markDirty", () => {
+    it("sets isDirty to true", () => {
+      expect(state(store).isDirty).toBe(false);
+      state(store).markDirty();
+      expect(state(store).isDirty).toBe(true);
     });
   });
 
   // --- Undo / Redo ---
 
   describe("undo/redo", () => {
-    it("undoes the last operation", () => {
-      state(store).addNode("image");
-      expect(state(store).definition.nodes!.length).toBe(1);
+    it("returns BentoNode[] snapshot on undo", () => {
+      const nodes = [makeBentoNode("a")];
+      state(store).setNodeGetter(() => nodes);
+      state(store).pushUndo();
 
-      state(store).undo();
-      expect(state(store).definition.nodes).toEqual([]);
+      // Simulate mutation — now getter returns different state
+      state(store).setNodeGetter(() => [makeBentoNode("a"), makeBentoNode("b")]);
+
+      const snapshot = state(store).undo();
+      expect(snapshot).toEqual(nodes);
     });
 
-    it("redoes an undone operation", () => {
-      state(store).addNode("image");
+    it("returns BentoNode[] snapshot on redo", () => {
+      const nodes = [makeBentoNode("a")];
+      state(store).setNodeGetter(() => nodes);
+      state(store).pushUndo();
+      state(store).setNodeGetter(() => []);
       state(store).undo();
-      expect(state(store).definition.nodes).toEqual([]);
 
-      state(store).redo();
-      expect(state(store).definition.nodes!.length).toBe(1);
+      // Now redo should give back the empty state that was captured
+      state(store).setNodeGetter(() => nodes); // simulate caller restored undo
+      const snapshot = state(store).redo();
+      expect(snapshot).toEqual([]);
     });
 
     it("returns null with empty undo stack", () => {
-      const result = state(store).undo();
-      expect(result).toBeNull();
+      expect(state(store).undo()).toBeNull();
     });
 
     it("returns null with empty redo stack", () => {
-      const result = state(store).redo();
-      expect(result).toBeNull();
-    });
-
-    it("returns the restored snapshot on undo", () => {
-      state(store).addNode("image");
-      const result = state(store).undo();
-      expect(result).not.toBeNull();
-      expect(result!.definition).toBeDefined();
-      expect(result!.positions).toBeDefined();
-    });
-
-    it("returns the restored snapshot on redo", () => {
-      state(store).addNode("image");
-      state(store).undo();
-      const result = state(store).redo();
-      expect(result).not.toBeNull();
-      expect(result!.definition).toBeDefined();
-      expect(result!.positions).toBeDefined();
-    });
-
-    it("captures positions from positionGetter in undo snapshot", () => {
-      const mockPositions = { "node-1": { x: 100, y: 200 } };
-      state(store).setPositionGetter(() => mockPositions);
-
-      state(store).addNode("image");
-      const snapshot = state(store).undoStack[0]!;
-      expect(snapshot.positions).toEqual(mockPositions);
+      expect(state(store).redo()).toBeNull();
     });
 
     it("supports multiple undo levels", () => {
-      state(store).addNode("image");
-      state(store).addNode("spreadsheet");
-      state(store).addNode("transform");
-      expect(state(store).definition.nodes!.length).toBe(3);
+      const nodesA = [makeBentoNode("a")];
+      const nodesAB = [makeBentoNode("a"), makeBentoNode("b")];
+      const nodesABC = [makeBentoNode("a"), makeBentoNode("b"), makeBentoNode("c")];
 
-      state(store).undo();
-      expect(state(store).definition.nodes!.length).toBe(2);
-      state(store).undo();
-      expect(state(store).definition.nodes!.length).toBe(1);
-      state(store).undo();
-      expect(state(store).definition.nodes!.length).toBe(0);
-    });
+      state(store).setNodeGetter(() => []);
+      state(store).pushUndo(); // snapshot: []
 
-    it("maintains redo chain through multiple undos", () => {
-      state(store).addNode("image");
-      state(store).addNode("spreadsheet");
+      state(store).setNodeGetter(() => nodesA);
+      state(store).pushUndo(); // snapshot: [a]
 
-      state(store).undo();
-      state(store).undo();
+      state(store).setNodeGetter(() => nodesAB);
+      state(store).pushUndo(); // snapshot: [a, b]
 
-      state(store).redo();
-      expect(state(store).definition.nodes!.length).toBe(1);
-      state(store).redo();
-      expect(state(store).definition.nodes!.length).toBe(2);
+      state(store).setNodeGetter(() => nodesABC);
+
+      const snap1 = state(store).undo();
+      expect(snap1).toEqual(nodesAB);
+
+      state(store).setNodeGetter(() => nodesAB);
+      const snap2 = state(store).undo();
+      expect(snap2).toEqual(nodesA);
+
+      state(store).setNodeGetter(() => nodesA);
+      const snap3 = state(store).undo();
+      expect(snap3).toEqual([]);
     });
 
     it("marks dirty after undo", () => {
-      state(store).addNode("image");
+      state(store).setNodeGetter(() => []);
+      state(store).pushUndo();
       state(store).resetDirty();
-      expect(state(store).isDirty).toBe(false);
 
       state(store).undo();
       expect(state(store).isDirty).toBe(true);
     });
   });
 
-  // --- setPositionGetter ---
+  // --- setNodeGetter ---
 
-  describe("setPositionGetter", () => {
-    it("captures positions from the registered getter", () => {
-      const positions = { "a": { x: 10, y: 20 }, "b": { x: 30, y: 40 } };
-      state(store).setPositionGetter(() => positions);
+  describe("setNodeGetter", () => {
+    it("captures nodes from the registered getter in pushUndo", () => {
+      const nodes = [makeBentoNode("x"), makeBentoNode("y")];
+      state(store).setNodeGetter(() => nodes);
 
-      state(store).addNode("image");
-      expect(state(store).undoStack[0]!.positions).toEqual(positions);
-    });
-
-    it("uses empty positions when no getter registered", () => {
-      state(store).addNode("image");
-      expect(state(store).undoStack[0]!.positions).toEqual({});
+      state(store).pushUndo();
+      expect(state(store).undoStack[0]).toEqual(nodes);
     });
   });
 
   // --- resetDirty ---
 
   describe("resetDirty", () => {
-    it("marks the definition as clean", () => {
-      state(store).addNode("image");
+    it("marks as clean", () => {
+      state(store).markDirty();
       expect(state(store).isDirty).toBe(true);
 
       state(store).resetDirty();
@@ -319,11 +254,8 @@ describe("createEditorStore", () => {
 
   describe("execution state", () => {
     it("sets per-node execution state", () => {
-      state(store).addNode("image");
-      const nodeId = state(store).definition.nodes![0]!.id;
-
-      state(store).setExecutionState({ [nodeId]: "active" });
-      expect(state(store).executionState[nodeId]).toBe("active");
+      state(store).setExecutionState({ "node-1": "active" });
+      expect(state(store).executionState["node-1"]).toBe("active");
     });
 
     it("resets execution state", () => {
@@ -339,28 +271,31 @@ describe("createEditorStore", () => {
     });
   });
 
-  // --- setDefinition ---
+  // --- setRecipeMetadata ---
 
-  describe("setDefinition", () => {
-    it("replaces the definition directly", () => {
-      const newDef = createBlankDefinition();
-      newDef.name = "From Code Editor";
-
-      state(store).setDefinition(newDef);
-      expect(state(store).definition.name).toBe("From Code Editor");
-      expect(state(store).isDirty).toBe(true);
+  describe("setRecipeMetadata", () => {
+    it("updates recipe metadata", () => {
+      state(store).setRecipeMetadata({
+        id: "new-id",
+        name: "New Name",
+        type: "group",
+        version: "2.0.0",
+      });
+      expect(state(store).recipeMetadata.name).toBe("New Name");
     });
+  });
 
-    it("pushes previous definition to undo stack", () => {
-      const newDef = createBlankDefinition();
-      state(store).setDefinition(newDef);
-      expect(state(store).undoStack.length).toBe(1);
-    });
+  // --- resetHistory ---
 
-    it("validates the new definition", () => {
-      const newDef = createBlankDefinition();
-      state(store).setDefinition(newDef);
-      expect(state(store).validationErrors).toEqual([]);
+  describe("resetHistory", () => {
+    it("clears undo and redo stacks", () => {
+      state(store).setNodeGetter(() => []);
+      state(store).pushUndo();
+      state(store).pushUndo();
+
+      state(store).resetHistory();
+      expect(state(store).undoStack).toEqual([]);
+      expect(state(store).redoStack).toEqual([]);
     });
   });
 });

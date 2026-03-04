@@ -1,25 +1,23 @@
 /**
- * Editor store factory — headless state machine for recipe editing.
+ * Editor store factory — thin state machine for recipe editing.
  *
- * Wraps @bnto/nodes pure functions into a reactive Zustand store with
- * undo/redo history. This is the single source of truth for both the
- * visual (BentoCanvas) and code (CodeMirror) editors.
+ * ReactFlow is the single source of truth for node state.
+ * This store only owns: recipe metadata, undo/redo history,
+ * validation errors, execution state, and dirty flag.
  *
- * ReactFlow owns visual state (positions, selection, viewport).
- * This store owns domain structure (node types, params, validation).
+ * Mutations (add/remove/update) happen directly in RF via hooks.
+ * The hooks call pushUndo/markDirty/revalidate on this store.
  */
 
 import { createStore } from "zustand/vanilla";
-import type { Definition } from "@bnto/nodes";
 import {
   createBlankDefinition,
-  addNode,
-  removeNode,
-  updateNodeParams,
-  validateDefinition,
   getRecipeBySlug,
+  validateDefinition,
 } from "@bnto/nodes";
-import type { EditorStore, EditorState, UndoSnapshot, PositionGetter } from "./types";
+import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
+import type { EditorStore, RecipeMetadata, NodeGetter } from "./types";
+import type { BentoNode } from "../adapters/types";
 
 // ---------------------------------------------------------------------------
 // History helpers
@@ -27,45 +25,34 @@ import type { EditorStore, EditorState, UndoSnapshot, PositionGetter } from "./t
 
 const MAX_UNDO_HISTORY = 50;
 
-/** Capture current definition + RF positions into an undo snapshot. */
-function captureSnapshot(
-  definition: Definition,
-  positionGetter: PositionGetter | null,
-): UndoSnapshot {
-  return {
-    definition,
-    positions: positionGetter ? positionGetter() : {},
-  };
+// ---------------------------------------------------------------------------
+// Metadata helpers
+// ---------------------------------------------------------------------------
+
+function metadataFromBlank(): RecipeMetadata {
+  const def = createBlankDefinition();
+  return { id: def.id, name: def.name, type: def.type, version: def.version };
 }
 
-/** Push a snapshot onto the undo stack, clear redo. */
-function pushHistory(
-  state: EditorState,
-  positionGetter: PositionGetter | null,
-): Pick<EditorState, "undoStack" | "redoStack"> {
-  const snapshot = captureSnapshot(state.definition, positionGetter);
-  const stack = [...state.undoStack, snapshot];
-  return {
-    undoStack: stack.length > MAX_UNDO_HISTORY ? stack.slice(-MAX_UNDO_HISTORY) : stack,
-    redoStack: [],
-  };
+function metadataFromDefinition(def: { id: string; name: string; type: string; version: string }): RecipeMetadata {
+  return { id: def.id, name: def.name, type: def.type, version: def.version };
 }
 
 // ---------------------------------------------------------------------------
 // Store factory
 // ---------------------------------------------------------------------------
 
-function createEditorStore(initialDefinition?: Definition) {
-  const definition = initialDefinition ?? createBlankDefinition();
+function createEditorStore(initialMetadata?: RecipeMetadata) {
+  const metadata = initialMetadata ?? metadataFromBlank();
 
   // Closure — not in Zustand state, avoids serialization issues.
-  let positionGetter: PositionGetter | null = null;
+  let nodeGetter: NodeGetter | null = null;
 
   return createStore<EditorStore>()((set, get) => ({
     // Initial state
-    definition,
+    recipeMetadata: metadata,
     isDirty: false,
-    validationErrors: validateDefinition(definition),
+    validationErrors: [],
     executionState: {},
     undoStack: [],
     redoStack: [],
@@ -75,11 +62,10 @@ function createEditorStore(initialDefinition?: Definition) {
     loadRecipe: (slug) => {
       const recipe = getRecipeBySlug(slug);
       if (!recipe) return;
-      const def = recipe.definition;
       set({
-        definition: def,
+        recipeMetadata: metadataFromDefinition(recipe.definition),
         isDirty: false,
-        validationErrors: validateDefinition(def),
+        validationErrors: validateDefinition(recipe.definition),
         executionState: {},
         undoStack: [],
         redoStack: [],
@@ -87,74 +73,56 @@ function createEditorStore(initialDefinition?: Definition) {
     },
 
     createBlank: () => {
-      const def = createBlankDefinition();
       set({
-        definition: def,
+        recipeMetadata: metadataFromBlank(),
         isDirty: false,
-        validationErrors: validateDefinition(def),
+        validationErrors: [],
         executionState: {},
         undoStack: [],
         redoStack: [],
       });
     },
 
-    // --- Node operations ---
+    // --- Thin actions for RF-first hooks ---
 
-    addNode: (type, position) => {
+    pushUndo: () => {
+      const nodes = nodeGetter ? nodeGetter() : [];
       const state = get();
-      const history = pushHistory(state, positionGetter);
-      const result = addNode(state.definition, type, position);
+      const stack = [...state.undoStack, nodes];
       set({
-        definition: result.definition,
-        validationErrors: result.errors,
-        isDirty: true,
-        ...history,
-      });
-      /* Return the new node's ID so callers can immediately
-       * add it to ReactFlow and fitView without async. */
-      const nodes = result.definition.nodes ?? [];
-      return nodes.length > 0 ? nodes[nodes.length - 1]!.id : null;
-    },
-
-    removeNode: (id) => {
-      const state = get();
-      const history = pushHistory(state, positionGetter);
-      const result = removeNode(state.definition, id);
-      set({
-        definition: result.definition,
-        validationErrors: result.errors,
-        isDirty: true,
-        ...history,
+        undoStack: stack.length > MAX_UNDO_HISTORY ? stack.slice(-MAX_UNDO_HISTORY) : stack,
+        redoStack: [],
       });
     },
 
-    updateParams: (nodeId, params) => {
-      const state = get();
-      const history = pushHistory(state, positionGetter);
-      const result = updateNodeParams(state.definition, nodeId, params);
-      set({
-        definition: result.definition,
-        validationErrors: result.errors,
-        isDirty: true,
-        ...history,
+    markDirty: () => {
+      set({ isDirty: true });
+    },
+
+    revalidate: () => {
+      const nodes = nodeGetter ? nodeGetter() : [];
+      const definition = rfNodesToDefinition(nodes as BentoNode[], {
+        ...get().recipeMetadata,
+        position: { x: 0, y: 0 },
+        metadata: {},
+        parameters: {},
+        inputPorts: [],
+        outputPorts: [],
       });
+      set({ validationErrors: validateDefinition(definition) });
     },
 
     // --- History ---
-    // undo/redo return the restored snapshot so the caller can apply
-    // position data back to ReactFlow.
 
     undo: () => {
       const state = get();
       if (state.undoStack.length === 0) return null;
       const snapshot = state.undoStack[state.undoStack.length - 1]!;
-      const currentSnapshot = captureSnapshot(state.definition, positionGetter);
+      const currentNodes = nodeGetter ? nodeGetter() : [];
       set({
-        definition: snapshot.definition,
-        validationErrors: validateDefinition(snapshot.definition),
         isDirty: true,
         undoStack: state.undoStack.slice(0, -1),
-        redoStack: [...state.redoStack, currentSnapshot],
+        redoStack: [...state.redoStack, currentNodes],
       });
       return snapshot;
     },
@@ -163,12 +131,10 @@ function createEditorStore(initialDefinition?: Definition) {
       const state = get();
       if (state.redoStack.length === 0) return null;
       const snapshot = state.redoStack[state.redoStack.length - 1]!;
-      const currentSnapshot = captureSnapshot(state.definition, positionGetter);
+      const currentNodes = nodeGetter ? nodeGetter() : [];
       set({
-        definition: snapshot.definition,
-        validationErrors: validateDefinition(snapshot.definition),
         isDirty: true,
-        undoStack: [...state.undoStack, currentSnapshot],
+        undoStack: [...state.undoStack, currentNodes],
         redoStack: state.redoStack.slice(0, -1),
       });
       return snapshot;
@@ -188,19 +154,16 @@ function createEditorStore(initialDefinition?: Definition) {
       set({ executionState: {} });
     },
 
-    setDefinition: (newDefinition) => {
-      const state = get();
-      const history = pushHistory(state, positionGetter);
-      set({
-        definition: newDefinition,
-        validationErrors: validateDefinition(newDefinition),
-        isDirty: true,
-        ...history,
-      });
+    setNodeGetter: (getter) => {
+      nodeGetter = getter;
     },
 
-    setPositionGetter: (getter) => {
-      positionGetter = getter;
+    setRecipeMetadata: (newMetadata) => {
+      set({ recipeMetadata: newMetadata });
+    },
+
+    resetHistory: () => {
+      set({ undoStack: [], redoStack: [] });
     },
   }));
 }

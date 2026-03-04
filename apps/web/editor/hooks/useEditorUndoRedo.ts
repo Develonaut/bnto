@@ -1,8 +1,8 @@
 /**
- * Undo/redo with RF position restoration.
+ * Undo/redo with direct RF node restoration.
  *
- * When a snapshot is returned from the store, applies the saved
- * position map back to ReactFlow nodes via setNodes.
+ * Undo/redo return BentoNode[] snapshots from the store.
+ * This hook applies them directly to RF via setNodes.
  *
  * Must be inside both EditorProvider and ReactFlowProvider.
  */
@@ -12,7 +12,7 @@
 import { useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useEditorStore } from "./useEditorStore";
-import type { UndoSnapshot } from "../store/types";
+import type { BentoNode } from "../adapters/types";
 
 interface EditorUndoRedoResult {
   undo: () => void;
@@ -26,31 +26,17 @@ function useEditorUndoRedo(): EditorUndoRedoResult {
   const storeRedo = useEditorStore((s) => s.redo);
   const canUndo = useEditorStore((s) => s.undoStack.length > 0);
   const canRedo = useEditorStore((s) => s.redoStack.length > 0);
-  const { setNodes } = useReactFlow();
-
-  const applyPositions = useCallback(
-    (snapshot: UndoSnapshot) => {
-      const positions = snapshot.positions;
-      if (Object.keys(positions).length === 0) return;
-      setNodes((prev) =>
-        prev.map((node) => {
-          const pos = positions[node.id];
-          return pos ? { ...node, position: pos } : node;
-        }),
-      );
-    },
-    [setNodes],
-  );
+  const { setNodes } = useReactFlow<BentoNode>();
 
   const undo = useCallback(() => {
     const snapshot = storeUndo();
-    if (snapshot) applyPositions(snapshot);
-  }, [storeUndo, applyPositions]);
+    if (snapshot) setNodes(snapshot);
+  }, [storeUndo, setNodes]);
 
   const redo = useCallback(() => {
     const snapshot = storeRedo();
-    if (snapshot) applyPositions(snapshot);
-  }, [storeRedo, applyPositions]);
+    if (snapshot) setNodes(snapshot);
+  }, [storeRedo, setNodes]);
 
   return { undo, redo, canUndo, canRedo };
 }

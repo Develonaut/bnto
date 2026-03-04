@@ -68,6 +68,9 @@ type BentoCanvasProps = {
   className?: string;
 };
 
+const EMPTY_EDGES: never[] = [];
+const PRO_OPTIONS = { hideAttribution: true } as const;
+
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
 
 type BentoCanvasInnerProps = {
@@ -100,7 +103,7 @@ function BentoCanvasInner({
   return (
     <ReactFlow<CompartmentNodeType>
       defaultNodes={defaultNodes}
-      edges={[]}
+      edges={EMPTY_EDGES}
       nodeTypes={nodeTypes}
       nodesDraggable={interactive && !disable?.drag}
       nodesConnectable={false}
@@ -110,7 +113,7 @@ function BentoCanvasInner({
       zoomOnPinch={interactive && !disable?.zoom}
       zoomOnDoubleClick={false}
       preventScrolling={!interactive}
-      proOptions={{ hideAttribution: true }}
+      proOptions={PRO_OPTIONS}
     >
       {/* Grid lines matching Mini Motorways editing view —
        * warm lines on cream background, like graph paper.
