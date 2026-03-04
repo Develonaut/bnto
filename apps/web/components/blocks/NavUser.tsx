@@ -26,11 +26,9 @@ import { Text } from "@/components/ui/Text";
  * The menu gates the check — the trigger is always stable.
  */
 export function NavUser() {
-  const { isLoading, user } = core.auth.useAuth();
+  const { isAuthenticated, isLoading, user } = core.auth.useAuth();
   const signOut = core.auth.useSignOut();
   const router = useRouter();
-
-  const isSignedIn = !!user?.email;
 
   function handleSignOut() {
     signOut();
@@ -59,16 +57,16 @@ export function NavUser() {
               <Skeleton className="h-4 w-24" />
               <Skeleton className="mt-1.5 h-3 w-36" />
             </div>
-          ) : isSignedIn ? (
+          ) : isAuthenticated ? (
             <>
               <div className="px-3 py-2">
-                {user.name && (
+                {user?.name && (
                   <Text size="sm" className="font-medium">
                     {user.name}
                   </Text>
                 )}
                 <Text size="xs" color="muted">
-                  {user.email}
+                  {user?.email}
                 </Text>
               </div>
 

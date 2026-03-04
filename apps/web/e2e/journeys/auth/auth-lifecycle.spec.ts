@@ -94,7 +94,7 @@ test.describe("New user journey @auth", () => {
     // Should stay on /signin — NOT bounce back to /
     await expect(page).toHaveURL("/signin");
 
-    // After sign-out, bnto-has-account cookie is still set → shows signin mode
+    // After sign-out, hasAccount persists in store → shows signin mode
     await expect(
       page.getByRole("heading", { name: "Welcome back" }),
     ).toBeVisible();
@@ -118,18 +118,21 @@ test.describe("New user journey @auth", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("Returning user journey @auth", () => {
-  test("returning user sees signin form (bnto-has-account cookie)", async ({
+  test("returning user sees signin form (persisted auth store)", async ({
     page,
   }) => {
-    // Simulate a returning user by setting the cookie before navigating
-    await page.context().addCookies([
-      {
-        name: "bnto-has-account",
-        value: "1",
-        domain: "localhost",
-        path: "/",
-      },
-    ]);
+    // Simulate a returning user by seeding the persisted auth store
+    await page.goto("/signin");
+    await page.evaluate(() => {
+      const state = {
+        state: {
+          user: { id: "seed", name: "Test User", email: "test@example.com", image: null },
+          hasAccount: true,
+        },
+        version: 0,
+      };
+      localStorage.setItem("bnto-auth", JSON.stringify(state));
+    });
 
     await page.goto("/signin");
 
@@ -227,6 +230,24 @@ test.describe("Auth form behavior @auth", () => {
       page.getByRole("heading", { name: "Create an account" }),
     ).toBeVisible();
     await expect(page.getByPlaceholder("Your name")).toBeVisible();
+  });
+
+  test("switching to signup clears pre-filled email", async ({ page }) => {
+    const email = testEmail();
+    await signUp(page, email);
+    await signOut(page);
+
+    // After sign-out, persisted user email should pre-fill the signin form
+    const emailInput = page.getByPlaceholder("Enter your email");
+    await expect(emailInput).toHaveValue(email);
+
+    // Toggle to signup — email should clear (new account = new email)
+    await page.getByRole("button", { name: "Sign up" }).click();
+    await expect(emailInput).toHaveValue("");
+
+    // Toggle back to signin — email should re-fill from persisted user
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(emailInput).toHaveValue(email);
   });
 
   test("invalid credentials show error message", async ({ page }) => {

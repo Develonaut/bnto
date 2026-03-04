@@ -36,6 +36,23 @@ async function signUp(
   await page.waitForURL("/", { timeout: 15000 });
 }
 
+/** Seed the persisted auth store in localStorage to simulate a returning user. */
+async function seedAuthStore(
+  page: import("@playwright/test").Page,
+  user: { id: string; name: string; email: string },
+) {
+  await page.evaluate(
+    ({ user: u }) => {
+      const state = {
+        state: { user: { ...u, image: null }, hasAccount: true },
+        version: 0,
+      };
+      localStorage.setItem("bnto-auth", JSON.stringify(state));
+    },
+    { user },
+  );
+}
+
 /** Sign in an existing user and wait until we land on home. */
 async function signIn(
   page: import("@playwright/test").Page,
@@ -43,10 +60,8 @@ async function signIn(
 ) {
   await page.goto("/signin");
 
-  // Set has-account cookie so form shows sign-in mode
-  await page.context().addCookies([
-    { name: "bnto-has-account", value: "1", domain: "localhost", path: "/" },
-  ]);
+  // Seed persisted auth store so form shows sign-in mode
+  await seedAuthStore(page, { id: "seed", name: TEST_NAME, email });
   await page.goto("/signin");
   await expect(
     page.getByRole("heading", { name: "Welcome back" }),
@@ -175,17 +190,20 @@ test.describe("Session cookie lifecycle @auth", () => {
     expect(jwtCleared || refreshCleared).toBeTruthy();
   });
 
-  test("bnto-has-account cookie persists through sign-out", async ({
+  test("hasAccount persists through sign-out (localStorage store)", async ({
     page,
   }) => {
     const email = testEmail();
     await signUp(page, email);
     await signOut(page);
 
-    // bnto-has-account should survive sign-out (it's permanent, not session-scoped)
-    const hasAccount = await getCookie(page, "bnto-has-account");
-    expect(hasAccount).toBeDefined();
-    expect(hasAccount!.value).toBe("1");
+    // hasAccount in the persisted auth store should survive sign-out
+    const storeData = await page.evaluate(() =>
+      localStorage.getItem("bnto-auth"),
+    );
+    expect(storeData).not.toBeNull();
+    const parsed = JSON.parse(storeData!);
+    expect(parsed.state.hasAccount).toBe(true);
 
     // Verify the form shows "Welcome back" (not "Create an account")
     await expect(
@@ -193,19 +211,33 @@ test.describe("Session cookie lifecycle @auth", () => {
     ).toBeVisible();
   });
 
-  test("fresh browser context without bnto-has-account sees signup form", async ({
+  test("email pre-fills on signin page after sign-out", async ({
     page,
   }) => {
-    // Fresh context — no cookies at all
+    const email = testEmail();
+    await signUp(page, email);
+    await signOut(page);
+
+    // The persisted user's email should pre-fill the email input
+    const emailInput = page.getByPlaceholder("Enter your email");
+    await expect(emailInput).toHaveValue(email);
+  });
+
+  test("fresh browser context without auth store sees signup form", async ({
+    page,
+  }) => {
+    // Fresh context — no localStorage at all
     await page.goto("/signin");
 
     await expect(
       page.getByRole("heading", { name: "Create an account" }),
     ).toBeVisible();
 
-    // Verify no bnto-has-account cookie exists
-    const hasAccount = await getCookie(page, "bnto-has-account");
-    expect(hasAccount).toBeUndefined();
+    // Verify no auth store exists
+    const storeData = await page.evaluate(() =>
+      localStorage.getItem("bnto-auth"),
+    );
+    expect(storeData).toBeNull();
   });
 });
 
@@ -351,11 +383,14 @@ test.describe("Auth round-trip verification @auth", () => {
     // 1. Sign up
     await signUp(page, email);
 
-    // 2. Verify session cookies exist
+    // 2. Verify session cookies + persisted store exist
     let jwt = await getCookie(page, "__convexAuthJWT");
     expect(jwt).toBeDefined();
-    const hasAccount = await getCookie(page, "bnto-has-account");
-    expect(hasAccount).toBeDefined();
+    const storeData = await page.evaluate(() =>
+      localStorage.getItem("bnto-auth"),
+    );
+    expect(storeData).not.toBeNull();
+    expect(JSON.parse(storeData!).state.hasAccount).toBe(true);
 
     // 3. Sign out
     await signOut(page);
@@ -363,9 +398,11 @@ test.describe("Auth round-trip verification @auth", () => {
     // 4. Wait for server cleanup
     await page.waitForTimeout(3000);
 
-    // 5. Verify bnto-has-account persists but session is invalidated
-    const hasAccountAfter = await getCookie(page, "bnto-has-account");
-    expect(hasAccountAfter).toBeDefined();
+    // 5. Verify hasAccount persists but session is invalidated
+    const storeAfter = await page.evaluate(() =>
+      localStorage.getItem("bnto-auth"),
+    );
+    expect(JSON.parse(storeAfter!).state.hasAccount).toBe(true);
 
     // Protected route should reject
     await page.goto("/executions");
