@@ -1,18 +1,23 @@
 /**
  * Hook for accessing a single node's data, schema, and visible params.
  *
- * Returns the node from the definition tree, its schema, and the
- * parameters that should be visible given the current parameter values
+ * Reads from ReactFlow's internal nodeLookup (O(1) access) — RF is the
+ * single source of truth for node domain state during editing.
+ *
+ * Returns the node data, its type info, schema, and the parameters
+ * that should be visible given the current parameter values
  * (conditional visibility via visibleWhen).
+ *
+ * Must be inside a ReactFlowProvider.
  */
 
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
+import { useStore } from "@xyflow/react";
 import type { NodeTypeName, NodeSchema, ParameterSchema } from "@bnto/nodes";
 import { NODE_TYPE_INFO, getNodeSchema } from "@bnto/nodes";
-import { useEditorStore } from "./useEditorStore";
-import { findNodeById } from "../utils/findNodeById";
+import type { CompartmentNodeData } from "../adapters/types";
 
 // ---------------------------------------------------------------------------
 // Visible params resolver
@@ -41,10 +46,10 @@ function resolveVisibleParams(
 // ---------------------------------------------------------------------------
 
 interface EditorNodeResult {
-  /** The node definition, or null if not found. */
-  node: import("@bnto/nodes").Definition | null;
+  /** The node's domain data from RF, or null if not found. */
+  node: CompartmentNodeData | null;
   /** Node type info (label, category, capabilities). */
-  typeInfo: typeof NODE_TYPE_INFO[NodeTypeName] | null;
+  typeInfo: (typeof NODE_TYPE_INFO)[NodeTypeName] | null;
   /** Full schema for the node type. */
   schema: NodeSchema | null;
   /** Parameters visible given current parameter values. */
@@ -54,29 +59,34 @@ interface EditorNodeResult {
 /**
  * Access a node by ID with its schema and conditionally visible params.
  *
- * Subscribes to the editor store — re-renders when the definition changes.
+ * Reads from RF's internal nodeLookup Map — O(1) access, no recursive
+ * tree search. Subscribes to RF store — re-renders when node data changes.
  */
 function useEditorNode(nodeId: string | null): EditorNodeResult {
-  const definition = useEditorStore((s) => s.definition);
+  const selector = useCallback(
+    (s: { nodeLookup: Map<string, { data: Record<string, unknown> }> }) => {
+      if (!nodeId) return null;
+      const rfNode = s.nodeLookup.get(nodeId);
+      return rfNode ? (rfNode.data as CompartmentNodeData) : null;
+    },
+    [nodeId],
+  );
+
+  const nodeData = useStore(selector);
 
   return useMemo(() => {
-    if (!nodeId) {
+    if (!nodeData) {
       return { node: null, typeInfo: null, schema: null, visibleParams: [] };
     }
 
-    const node = findNodeById(definition, nodeId);
-    if (!node) {
-      return { node: null, typeInfo: null, schema: null, visibleParams: [] };
-    }
-
-    const typeInfo = NODE_TYPE_INFO[node.type as NodeTypeName] ?? null;
-    const schema = getNodeSchema(node.type) ?? null;
+    const typeInfo = NODE_TYPE_INFO[nodeData.nodeType as NodeTypeName] ?? null;
+    const schema = getNodeSchema(nodeData.nodeType) ?? null;
     const visibleParams = schema
-      ? resolveVisibleParams(schema, node.parameters)
+      ? resolveVisibleParams(schema, nodeData.parameters)
       : [];
 
-    return { node, typeInfo, schema, visibleParams };
-  }, [definition, nodeId]);
+    return { node: nodeData, typeInfo, schema, visibleParams };
+  }, [nodeData]);
 }
 
 export { useEditorNode };
