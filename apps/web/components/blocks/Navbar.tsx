@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { GithubIcon, MenuIcon } from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Container } from "@/components/ui/Container";
+import { Toolbar } from "@/components/ui/Toolbar";
 import { GITHUB_URL } from "@/lib/copy";
 
 import { DesktopNav } from "./DesktopNav";
@@ -49,51 +49,49 @@ export const Navbar = () => {
     <section>
       <div className="fixed top-0 z-50 flex w-full justify-center pt-4">
         <Container size="lg">
-          <Card className="rounded-full" elevation="sm">
-            <div className="flex items-center gap-3.5 px-6 py-3">
-              {/* Logo — flex-1 so left/right columns balance for true centering */}
-              <div className="flex min-w-0 flex-1 items-center">
-                <NavButton
-                  href="/"
-                  elevation="sm"
-                  className="text-xl font-display font-black tracking-tighter"
-                >
-                  bnto
-                </NavButton>
-              </div>
+          <Toolbar>
+            {/* Logo — flex-1 so left/right columns balance for true centering */}
+            <Toolbar.Group className="min-w-0 flex-1">
+              <NavButton
+                href="/"
+                elevation="sm"
+                className="text-xl font-display font-black tracking-tighter"
+              >
+                bnto
+              </NavButton>
+            </Toolbar.Group>
 
-              <DesktopNav />
+            <DesktopNav />
 
-              {/* Right side — flex-1 mirrors the logo column */}
-              <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-                <div className="lg:hidden">
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    elevation="sm"
-                    onClick={() => setMobileOpen(!mobileOpen)}
-                  >
-                    <MenuIcon />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </div>
+            {/* Right side — flex-1 mirrors the logo column */}
+            <Toolbar.Group className="min-w-0 flex-1 justify-end gap-2">
+              <div className="lg:hidden">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="icon"
                   elevation="sm"
-                  href={GITHUB_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hidden lg:inline-flex"
+                  onClick={() => setMobileOpen(!mobileOpen)}
                 >
-                  <GithubIcon />
-                  <span className="sr-only">GitHub</span>
+                  <MenuIcon />
+                  <span className="sr-only">Open menu</span>
                 </Button>
-                <NavThemeMenu />
-                <NavUser />
               </div>
-            </div>
-          </Card>
+              <Button
+                variant="outline"
+                size="icon"
+                elevation="sm"
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden lg:inline-flex"
+              >
+                <GithubIcon />
+                <span className="sr-only">GitHub</span>
+              </Button>
+              <NavThemeMenu />
+              <NavUser />
+            </Toolbar.Group>
+          </Toolbar>
         </Container>
       </div>
 

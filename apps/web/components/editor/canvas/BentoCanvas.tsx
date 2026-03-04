@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -30,6 +30,9 @@ import { CompartmentNode, type CompartmentNodeType } from "./CompartmentNode";
  *   true — editor mode. Nodes draggable, selectable, canvas pannable.
  *     Consumer provides `onNodesChange` for controlled position state.
  *     No edge connections — execution order is positional in bento grid.
+ *
+ * Children are rendered inside ReactFlow — use for `<Panel>` overlays
+ * (e.g., floating toolbar, minimap, controls).
  */
 
 type BentoCanvasProps = {
@@ -48,6 +51,8 @@ type BentoCanvasProps = {
    * same RF context as the canvas.
    */
   standalone?: boolean;
+  /** ReactFlow children — Panel overlays, Controls, etc. */
+  children?: ReactNode;
 };
 
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
@@ -56,7 +61,8 @@ function BentoCanvasInner({
   nodes,
   interactive = false,
   onNodesChange,
-}: Pick<BentoCanvasProps, "nodes" | "interactive" | "onNodesChange">) {
+  children,
+}: Pick<BentoCanvasProps, "nodes" | "interactive" | "onNodesChange" | "children">) {
   const { fitView } = useReactFlow();
   const nodeTypes = useMemo(() => ({ compartment: CompartmentNode }), []);
 
@@ -103,6 +109,7 @@ function BentoCanvasInner({
         gap={40}
         color="var(--border)"
       />
+      {children}
     </ReactFlow>
   );
 }
@@ -115,13 +122,16 @@ export function BentoCanvas({
   interactive = false,
   onNodesChange,
   standalone = false,
+  children,
 }: BentoCanvasProps) {
   const inner = (
     <BentoCanvasInner
       nodes={nodes}
       interactive={interactive}
       onNodesChange={onNodesChange}
-    />
+    >
+      {children}
+    </BentoCanvasInner>
   );
 
   return (
