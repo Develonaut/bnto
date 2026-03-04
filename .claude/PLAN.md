@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 2, 2026
+**Last Updated:** March 3, 2026
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -27,9 +27,12 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Active:** Sprint 3 (Platform Features, M2) — Wave 1 complete, Wave 2 in progress (3/7 done, 4 unclaimed). Sprint 3A — COMPLETE (all 5 waves done)
-- **Active:** Sprint 4 (Recipe Editor) — Waves 1-3 complete, Wave 4 ready for pickup. Editor work lives in Motorway `/editor` section until ready for production
-- **Ready:** Sprint 4B (Code Editor) — Wave 1 unblocked (Sprint 4 Waves 1-2 done), 3 unclaimed tasks in `@bnto/nodes`
+- **FOCUS: Lean MVP Editor.** The creation experience is the product differentiator. Everything else is tabled until users can make their own bntos.
+- **Active:** Sprint 4 (Recipe Editor) — Waves 1-3 complete. Editor components shipped (EditorToolbar, NodePalette, NodeConfigPanel, RecipeEditor, BentoCanvas). Editor lives in Motorway `/editor` section until ready for production integration.
+- **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
+- **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor MVP ships.
+- **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
+- **Tabled:** Save button on recipe toolbar — removed (March 2026). No save infrastructure to connect to yet. Will return with editor + accounts.
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
 - **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
@@ -223,16 +226,18 @@ Update all documentation and strategy files to reflect the simplified auth model
 - [x] `apps/web` — `/frontend-engineer` — Pricing page update: Free vs Pro side-by-side comparison (persistence, collaboration, premium compute)
 - [x] `apps/web` — `/frontend-engineer` — **Data fetching & skeleton audit:** Scan all existing components in `apps/web/` for violations of the co-located query pattern, prop drilling, mismatched skeletons, missing skeletons, separate `*Skeleton.tsx` files (for simple cases), transforms outside `select`, and loading wrapper anti-patterns. Fix violations in-place. Reference: [data-fetching-strategy.md](strategy/data-fetching-strategy.md), [skeletons.md](rules/skeletons.md) *(PR #74 — no violations found, 5 ssr:false usages all justified)*
 
-#### Wave 3 (sequential — test)
+#### Wave 3 (sequential — test) — TABLED (March 2026)
 
-- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: AuthGate conversion flow — unauthenticated user sees gated content with sign-up prompt on dashboard/history surfaces. Tests both `AuthGate.Action` (dialog on click) and `AuthGate.Section` (blur + overlay)
-- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: browser-local execution history shows recent runs for unauthenticated users; authenticated users see Convex-backed history
-- [ ] `@bnto/backend` — `/backend-engineer` — Unit tests for execution analytics queries
+**Moved to backlog.** Platform features are built and working. Test coverage deferred — editor MVP is the priority. See backlog section "Testing: Sprint 3 Deferred E2E Tests."
+
+- [ ] ~~`apps/web` — Playwright E2E: AuthGate conversion flow~~
+- [ ] ~~`apps/web` — Playwright E2E: browser-local execution history~~
+- [ ] ~~`@bnto/backend` — Unit tests for execution analytics queries~~
 
 #### Wave 4 (sequential — conversion data migration)
 
-- [ ] `@bnto/core` + `@bnto/backend` — `/core-architect` + `/backend-engineer` — **Execution history bug investigation + fix:** (1) Authenticated users may not be writing executions to Convex (only IndexedDB). Verify both write paths work. (2) Re-run button not rendering in execution history despite slug being present — investigate rendering/data issue. (3) **Local→Convex execution history migration on signup:** When a user signs up, read their browser-local execution history (IndexedDB) and batch-write it to Convex. Deduplicate by execution ID. Clear local history after successful migration. The `core.executions` layer should handle this transparently — detect auth state change (unauth→auth) and trigger migration automatically. No user action required.
-- [ ] `apps/web` — `/frontend-engineer` — Playwright E2E: **anonymous→signup conversion preserves history.** Full journey: (1) run a recipe as unauthenticated user, (2) verify execution appears in browser-local history, (3) sign up, (4) verify the same execution now appears in Convex-backed history on `/my-recipes`, (5) verify browser-local history is cleared. This is the C1→C2 conversion journey from `journeys/auth.md`.
+- [x] `@bnto/core` + `@bnto/backend` — `/core-architect` + `/backend-engineer` — **Execution history bug investigation + fix:** (1) Authenticated users may not be writing executions to Convex (only IndexedDB). Verify both write paths work. (2) Re-run button not rendering in execution history despite slug being present — investigate rendering/data issue. (3) **Local→Convex execution history migration on signup:** When a user signs up, read their browser-local execution history (IndexedDB) and batch-write it to Convex. Deduplicate by execution ID. Clear local history after successful migration. The `core.executions` layer should handle this transparently — detect auth state change (unauth→auth) and trigger migration automatically. No user action required. *(PR #78)*
+- [x] `apps/web` — `/frontend-engineer` — Playwright E2E: **anonymous→signup conversion preserves history.** Full journey: (1) run a recipe as unauthenticated user, (2) verify execution appears in browser-local history, (3) sign up, (4) verify the same execution now appears in Convex-backed history on `/my-recipes`, (5) verify browser-local history is cleared. This is the C1→C2 conversion journey from `journeys/auth.md`. *(PR #78)*
 
 ---
 
@@ -264,10 +269,9 @@ Dumb components (BentoCanvas / CodeEditor)     ← Wave 3+
 |------|-------------|------------|-----------|
 | Wave 1 | — (pure functions, no persona needed) | — | `@bnto/nodes` pure functions — framework-agnostic, no React or ReactFlow dependency |
 | Wave 2 | `/reactflow-expert` | — | Zustand store wraps ReactFlow's change/apply pattern. Definition ↔ Flow adapters are the core seam. ReactFlow Expert owns all graph state management and adapter design |
-| Wave 3 | `/reactflow-expert` + `/frontend-engineer` | — | ReactFlow Expert owns canvas interaction, connection validation, drag-and-drop. Frontend Engineer owns component composition (RecipeEditor, EditorToolbar, NodeConfigPanel, NodePalette), theming (Motorway tokens), and animation (Animate.* API) |
-| Wave 4 | `/reactflow-expert` + `/frontend-engineer` | — | ReactFlow Expert maps execution state to node visual state on canvas. Frontend Engineer handles progress UI patterns and E2E test composition |
+| Wave 3 | `/reactflow-expert` + `/frontend-engineer` | — | ReactFlow Expert owns canvas interaction, connection validation. Frontend Engineer owns component composition (RecipeEditor, EditorToolbar, NodeConfigPanel, NodePalette), theming (Motorway tokens), and animation (Animate.* API) |
 
-**Rule:** For ANY work touching ReactFlow APIs, graph state, canvas interaction, or the Definition ↔ Flow adapter layer — invoke `/reactflow-expert`. This persona is THE authority on `@xyflow/react` in this codebase. When visual skin work begins (Wave 3+), invoke BOTH `/reactflow-expert` AND `/frontend-engineer` together.
+**Rule:** For ANY work touching ReactFlow APIs, graph state, canvas interaction, or the Definition ↔ Flow adapter layer — invoke `/reactflow-expert`. This persona is THE authority on `@xyflow/react` in this codebase. When visual skin work begins (Wave 3), invoke BOTH `/reactflow-expert` AND `/frontend-engineer` together.
 
 #### Wave 1 (parallel — headless definition operations)
 
@@ -292,30 +296,30 @@ Zustand store that wraps the pure functions into a reactive state machine. Hooks
 - [x] `apps/web` — **Definition ↔ Bento adapters**: `definitionToBento(definition)` → `{ nodes: CompartmentNodeType[] }`. `bentoToDefinition(nodes)` → `Definition`. Pure functions that bridge the headless model to the visual layer. Map node types to compartment variants, positions, and sizes. No edges — execution order derived from compartment position. Unit tested — round-trip: `definition → bento → definition` produces equivalent output.
 - [x] `apps/web` — **Unit tests for store + hooks**: Store operations tested via Vitest (no rendering). Hook tests via `renderHook`. Adapter round-trip tests. Undo/redo verification.
 
-#### Wave 3 (visual canvas integration — recommended order below)
+#### Wave 3 (Lean MVP Editor — the priority)
 
-Wire the headless store to the bento box canvas. The compartment grid becomes a live, interactive editor. **`/reactflow-expert` + `/frontend-engineer` co-lead.** ReactFlow Expert owns canvas interaction and node positioning. Frontend Engineer owns component composition, theming, and animation.
+**Goal: Ship the creation loop.** Users can load a recipe (or start blank), add/remove/configure nodes, run it, and export as `.bnto.json`. Functional, not polished. This is the product differentiator — what makes bnto more than another TinyPNG.
 
-**Development home: Motorway `/editor` section.** All editor work lives in a dedicated "Editor" tab/section within the Motorway dev page (`app/(dev)/motorway/`). This is the testing ground — iterate here until the editor is ready for production integration into the app. The Motorway page imports real production components (never mock/fake versions).
+**Development home: Motorway `/editor` section.** All editor work lives in a dedicated "Editor" tab/section within the Motorway dev page (`app/(dev)/motorway/`). Iterate here until the editor is ready for production integration into a real route. The Motorway page imports real production components (never mock/fake versions).
 
-**Recommended execution order:** Tasks are logically parallel but have natural dependencies. Work in this order: (1) Motorway Editor section → (2) Toolbar, Palette, ConfigPanel in parallel → (3) RecipeEditor composition → (4) Wire into Motorway Editor section.
+**`/reactflow-expert` + `/frontend-engineer` co-lead.** ReactFlow Expert owns canvas interaction and node positioning. Frontend Engineer owns component composition and theming.
+
+**Execution order:** (1) Motorway Editor section with canvas → (2) Toolbar + Palette + ConfigPanel → (3) RecipeEditor composition with run + export.
 
 - [x] `apps/web` — **Motorway showcase component sharing**: `StationNode`, `ConveyorEdge`, `ConveyorCanvas`, `CompartmentNode`, and `BentoCanvas` extracted to shared location. Both Motorway showcase and production editor import from the same source.
 - [x] `apps/web` — **Enable canvas interaction**: `BentoCanvas` accepts `interactive` prop for draggable/selectable/pannable mode with `onNodesChange` for controlled state. Backward compatible.
-- [x] `apps/web` — **Motorway Editor section**: Add an "Editor" tab/section to the Motorway dev page. This is the development home for all editor components — a dedicated playground to load recipes, add/remove compartments, configure parameters, run, and export. Starts with the interactive `BentoCanvas` and grows as components are built.
-- [x] `apps/web` — **`EditorToolbar` component**: Action bar above canvas — recipe selector dropdown (all Tier 1 recipes + "Blank"), Add Node button (opens palette), Remove Selected button, Run button, Reset/Replay button, Export `.bnto.json` button, Undo/Redo buttons. Reads/dispatches to `useEditorStore`.
-- [x] `apps/web` — **`NodePalette` component**: Slide-out panel listing available node types from `useNodePalette()`. Click-to-add (adds compartment at next available slot). Grouped by category. Browser-capable badge. Server-only nodes shown grayed with "Pro" badge (visible but not addable in browser context — definitions always available per pricing model).
-- [x] `apps/web` — **`NodeConfigPanel` component**: Side panel that renders when a compartment is selected. Uses `useEditorNode(selectedNodeId)` to get schema + current params. Auto-generates form fields from `ParameterSchema` (Atomiton pattern): string → text input, number → number input with min/max, boolean → toggle, enum → select dropdown. `visibleWhen` and `requiredWhen` handled reactively. Parameter changes dispatch `updateParams` to store.
-- [x] `apps/web` — **`RecipeEditor` component**: Composes `EditorToolbar` + `BentoCanvas` + `NodeConfigPanel`. Reads from `useEditorStore`. Two entry modes: `<RecipeEditor slug="compress-images" />` (loads predefined) or `<RecipeEditor />` (blank canvas). Includes `EditorModeToggle` placeholder (visual ↔ code toggle, wired when Sprint 4B code editor ships).
+- [x] `apps/web` — **Motorway Editor section**: Editor tab in the Motorway dev page. Wraps `EditorProvider` + interactive `BentoCanvas` wired to `useEditorStore`. Recipe selector to load predefined recipes or create blank.
+- [x] `apps/web` — **`EditorToolbar` component**: Action bar — recipe selector dropdown, Add Node, Remove Selected, Run, Export `.bnto.json`, Undo/Redo. Reads/dispatches to `useEditorStore`.
+- [x] `apps/web` — **`NodePalette` component**: Slide-out panel listing available node types from `useNodePalette()`. Click-to-add. Grouped by category. Browser-capable badge.
+- [x] `apps/web` — **`NodeConfigPanel` component**: Side panel that renders when a compartment is selected. Uses `useEditorNode(selectedNodeId)` to get schema + current params. Auto-generates form fields from `ParameterSchema` (Atomiton pattern). `visibleWhen` and `requiredWhen` handled reactively.
+- [x] `apps/web` — **`RecipeEditor` component**: Composes `EditorToolbar` + `BentoCanvas` + `NodeConfigPanel`. Two entry modes: `<RecipeEditor slug="compress-images" />` (loads predefined) or `<RecipeEditor />` (blank canvas).
 
-#### Wave 4 (parallel — execution + polish)
-
-The editor runs recipes and shows execution state on the canvas. Compartments visually reflect processing progress — each lights up as it processes, then settles as the next activates. **`/reactflow-expert` + `/frontend-engineer` co-lead.**
-
-- [ ] `apps/web` — **Execution integration**: Wire Run button to browser WASM execution path. When running: compartments show execution state (idle → pending → active → completed) via status-driven elevation changes and variant color shifts. Progress callbacks from `browserExecutionService` update `executionState` in editor store.
-- [ ] `apps/web` — **Export `.bnto.json`**: Download button in toolbar that serializes current editor state to a valid `.bnto.json` file via `useEditorExport().download()`. Validates before export. Users can take their recipe anywhere — CLI, desktop, share with others.
-- [ ] `@bnto/backend` — **Tag editor users**: When a user opens the editor, set `hasUsedEditor: true` on their user record. Highest-intent Pro upgrade candidates. Query: `ctx.db.query("users").withIndex("by_hasUsedEditor")`.
-- [ ] `apps/web` — **E2E tests**: Load recipe → canvas renders matching compartments. Add node → compartment appears in next slot. Remove node → compartment removed, remaining reflow. Configure params → node updates. Export → valid `.bnto.json` file. Run → execution progress shown on compartments. Blank canvas → add nodes → build a recipe from scratch.
+**Deferred from old Wave 3-4 (not MVP):**
+- Execution state visualization on compartments (status-driven elevation/color) — nice polish, not needed for MVP
+- Tag editor users in Convex (`hasUsedEditor`) — conversion tracking, not needed until save/accounts matter
+- E2E tests — come after the editor works
+- Undo/redo buttons in toolbar — store supports it, UI can wait
+- `EditorModeToggle` placeholder — Sprint 4B concern
 
 ---
 
@@ -649,6 +653,14 @@ Web app domain (`bnto.io`) delivered in Sprint 2C. API domain (`api.bnto.io`) de
 - [ ] `apps/web` — Move metadata validation to unit tests (`bntoRegistry.test.ts`)
 - [x] `apps/web` — ~~Add Lighthouse CI with `seo: 90` threshold~~ — Delivered in Sprint 3 Wave 1: `.github/workflows/lighthouse.yml` + `lighthouserc.json` + `task seo:audit`
 - [ ] `apps/web` — Slim E2E to redirects + 404 + noindex only
+
+### Testing: Sprint 3 Deferred E2E Tests
+
+**Deferred from Sprint 3 Wave 3 (March 2026).** Platform features are built and working. Test coverage deferred until editor MVP ships.
+
+- [ ] `apps/web` — Playwright E2E: AuthGate conversion flow
+- [ ] `apps/web` — Playwright E2E: browser-local execution history
+- [ ] `@bnto/backend` — Unit tests for execution analytics queries
 
 ### Testing: Standardize E2E Selectors on data-testid
 

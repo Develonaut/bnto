@@ -8,6 +8,9 @@ vi.mock("../adapters/convex/executionAdapter", () => ({
     funcRef: mockFuncRef,
     args: {},
   })),
+  logExecutionEventStart: vi.fn(),
+  completeExecutionEvent: vi.fn(),
+  migrateLocalHistory: vi.fn(),
 }));
 
 vi.mock("../adapters/local/localHistoryAdapter", () => ({
@@ -48,54 +51,47 @@ describe("createHistoryService", () => {
       expect(typeof result.transform).toBe("function");
     });
 
-    it("transform converts raw execution doc to Execution type", () => {
+    it("transform converts raw execution event doc to Execution type", () => {
       const { transform } = service.serverRef();
 
       const rawDoc = {
-        _id: "exec_123",
+        _id: "evt_123",
         userId: "user_456",
-        recipeId: "wf_789",
+        slug: "compress-images",
         status: "completed" as const,
-        progress: [{ nodeId: "n1", status: "completed" }],
-        startedAt: 1000,
-        completedAt: 2000,
+        timestamp: 1000,
+        durationMs: 1000,
       };
 
       const result = transform(rawDoc);
 
-      expect(result.id).toBe("exec_123");
+      expect(result.id).toBe("evt_123");
       expect(result.userId).toBe("user_456");
-      expect(result.recipeId).toBe("wf_789");
+      expect(result.slug).toBe("compress-images");
       expect(result.status).toBe("completed");
       expect(result.startedAt).toBe(1000);
       expect(result.completedAt).toBe(2000);
     });
 
-    it("transform handles nullable fields", () => {
+    it("transform handles started events (no duration)", () => {
       const { transform } = service.serverRef();
 
       const rawDoc = {
-        _id: "exec_456",
+        _id: "evt_456",
         userId: "user_789",
-        status: "pending" as const,
-        progress: [],
-        startedAt: 3000,
-        recipeId: null,
-        error: null,
-        result: null,
-        outputFiles: null,
-        sessionId: null,
-        completedAt: null,
+        slug: "clean-csv",
+        status: "started" as const,
+        timestamp: 3000,
+        durationMs: null,
       };
 
       const result = transform(rawDoc);
 
-      expect(result.recipeId).toBeUndefined();
-      expect(result.error).toBeUndefined();
-      expect(result.result).toBeUndefined();
-      expect(result.outputFiles).toBeUndefined();
-      expect(result.sessionId).toBeUndefined();
+      expect(result.slug).toBe("clean-csv");
+      expect(result.status).toBe("running");
+      expect(result.startedAt).toBe(3000);
       expect(result.completedAt).toBeUndefined();
+      expect(result.error).toBeUndefined();
     });
   });
 

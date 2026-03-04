@@ -1,29 +1,38 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
 import { core } from "@bnto/core";
 
-import { Animate } from "@/components/ui/Animate";
+import { useControlled } from "@/hooks/useControlled";
+
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Dialog } from "@/components/ui/Dialog";
-import { Heading } from "@/components/ui/Heading";
+import { Menu } from "@/components/ui/Menu";
+import { Popover } from "@/components/ui/Popover";
 import { Row } from "@/components/ui/Row";
 import { Stack } from "@/components/ui/Stack";
 import { Text } from "@/components/ui/Text";
 
 /* ── Shared props ─────────────────────────────────────────────── */
 
-interface AuthGateBaseProps {
+interface AuthGateActionProps {
   children: ReactNode;
   /** Prompt heading shown to unauthenticated users. */
   title?: string;
   /** Prompt body — explain why signing up is worth it. */
   description?: string;
+  /**
+   * Prompt style: "menu" anchors a springy Card near the trigger,
+   * "dialog" opens a full overlay. Menu is lighter weight.
+   */
+  variant?: "menu" | "dialog";
+  /** Controlled open state — parent can programmatically open the prompt. */
+  open?: boolean;
+  /** Called when the prompt's open state changes (dismiss, close, etc.). */
+  onOpenChange?: (open: boolean) => void;
 }
 
-/* ── Shared CTA buttons ───────────────────────────────────────── */
+/* ── Shared CTA ───────────────────────────────────────────────── */
 
 function AuthGateCTA() {
   return (
@@ -32,6 +41,25 @@ function AuthGateCTA() {
         Sign up free
       </Button>
       <Button href="/signin" variant="outline">
+        Sign in
+      </Button>
+    </Row>
+  );
+}
+
+/** CTA for menu prompt. */
+function AuthGateMenuCTA() {
+  return (
+    <Row className="gap-2 justify-center">
+      <Button
+        href="/signin"
+        variant="primary"
+        elevation="sm"
+        className="h-8 px-4 text-sm"
+      >
+        Sign up free
+      </Button>
+      <Button href="/signin" variant="ghost" className="h-8 px-4 text-sm">
         Sign in
       </Button>
     </Row>
@@ -49,123 +77,111 @@ function useAuthGate() {
 
 /**
  * Wraps an interactive element. Authenticated users click through normally.
- * Unauthenticated users see a dismissible conversion Dialog.
+ * Unauthenticated users see a conversion prompt.
  *
- * The "carrot-on-stick" pattern: features are visible to everyone,
- * but gated interactions convert at the moment of intent.
+ * Two variants:
+ * - "menu" (default): springy Card anchored near the trigger
+ * - "dialog": full overlay dialog for heavier prompts
  */
 function AuthGateAction({
   children,
   title = "Sign up to continue",
   description = "Create a free account to unlock this feature.",
-}: AuthGateBaseProps) {
-  const { isGated, isLoading } = useAuthGate();
-  const [open, setOpen] = useState(false);
+  variant = "menu",
+  open: controlledOpen,
+  onOpenChange,
+}: AuthGateActionProps) {
+  const { isGated } = useAuthGate();
+  const [open, setOpen] = useControlled(controlledOpen, false, onOpenChange);
 
-  if (isLoading || !isGated) {
+  if (!isGated) {
     return <>{children}</>;
   }
 
-  return (
-    <>
-      <span
-        role="button"
-        tabIndex={0}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen(true);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
+  if (variant === "dialog") {
+    return (
+      <>
+        <span
+          role="button"
+          tabIndex={0}
+          onClickCapture={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setOpen(true);
-          }
-        }}
-        className="inline-flex cursor-pointer"
-      >
-        {children}
-      </span>
+          }}
+          onKeyDownCapture={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(true);
+            }
+          }}
+          className="inline-flex cursor-pointer"
+        >
+          {children}
+        </span>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <Dialog.Content>
-          <Dialog.Header>
-            <Dialog.Title>{title}</Dialog.Title>
-            <Dialog.Close />
-          </Dialog.Header>
-          <Dialog.Body>
-            <Text color="muted">{description}</Text>
-          </Dialog.Body>
-          <Dialog.Footer>
-            <Dialog.Close asChild>
-              <Button variant="ghost">Cancel</Button>
-            </Dialog.Close>
-            <AuthGateCTA />
-          </Dialog.Footer>
-        </Dialog.Content>
-      </Dialog>
-    </>
-  );
-}
-
-/* ── AuthGate.Section ─────────────────────────────────────────── */
-
-/**
- * Wraps a whole section. Authenticated users see content normally.
- * Unauthenticated users see blurred, non-interactive content with a
- * floating sign-up card — "peek behind the curtain."
- *
- * The "velvet rope" pattern: show the structure but gate interaction.
- */
-function AuthGateSection({
-  children,
-  title = "Sign in to get started",
-  description = "Create a free account to save your recipes, track execution history, and pick up where you left off.",
-}: AuthGateBaseProps) {
-  const { isGated, isLoading } = useAuthGate();
-
-  if (isLoading || !isGated) {
-    return <>{children}</>;
+        <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>{title}</Dialog.Title>
+              <Dialog.Close />
+            </Dialog.Header>
+            <Dialog.Body>
+              <Text color="muted">{description}</Text>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <AuthGateCTA />
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog>
+      </>
+    );
   }
 
+  // Menu mode (default) — anchored Card with spring animation
   return (
-    <div className="relative">
-      {/* Blurred, non-interactive content underneath */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none select-none blur-[6px] opacity-60"
-      >
-        {children}
-      </div>
-
-      {/* Floating sign-up prompt */}
-      <div className="absolute inset-0 z-10 flex items-start justify-center pt-16">
-        <Animate.ScaleIn from={0.6} easing="spring-bouncier">
-          <Card elevation="lg" className="w-full max-w-md p-8">
-            <Stack className="items-center gap-4 text-center">
-              <Heading level={2} size="md">
-                {title}
-              </Heading>
-              <Text color="muted" leading="snug" className="max-w-sm">
-                {description}
-              </Text>
-              <AuthGateCTA />
-            </Stack>
-          </Card>
-        </Animate.ScaleIn>
-      </div>
-    </div>
+    <Menu open={open} onOpenChange={setOpen}>
+      <Popover.Anchor asChild>
+        <span
+          role="button"
+          tabIndex={0}
+          onClickCapture={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen(true);
+          }}
+          onKeyDownCapture={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              e.stopPropagation();
+              setOpen(true);
+            }
+          }}
+          className="inline-flex cursor-pointer"
+        >
+          {children}
+        </span>
+      </Popover.Anchor>
+      <Menu.Content side="top" align="center" className="w-72 p-5">
+        <Stack className="gap-4">
+          <Stack className="gap-1.5">
+            <Text size="base" weight="medium">
+              {title}
+            </Text>
+            <Text size="sm" color="muted">
+              {description}
+            </Text>
+          </Stack>
+          <AuthGateMenuCTA />
+        </Stack>
+      </Menu.Content>
+    </Menu>
   );
 }
 
 /* ── Compound export ──────────────────────────────────────────── */
 
-export const AuthGate = Object.assign(
-  /** @deprecated Use AuthGate.Action or AuthGate.Section explicitly. */
-  AuthGateAction,
-  {
-    Action: AuthGateAction,
-    Section: AuthGateSection,
-  },
-);
+export const AuthGate = Object.assign(AuthGateAction, {
+  Action: AuthGateAction,
+});
