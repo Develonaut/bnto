@@ -6,11 +6,9 @@ import { FileUpload } from "@/components/ui/FileUpload";
 import { Row } from "@/components/ui/Row";
 import {
   ArrowLeftIcon,
-  SaveIcon,
   DownloadIcon,
   TrashIcon,
 } from "@/components/ui/icons";
-import { AuthGate } from "@/components/blocks/AuthGate";
 import { RunButton } from "./RunButton";
 import type { RunPhase } from "./RunButton";
 
@@ -89,19 +87,6 @@ export function RecipeToolbar({
               </Button>
             </FileUpload.Clear>
           )}
-          <AuthGate.Action
-            title="Sign up to save recipes"
-            description="Create a free account to save your recipe settings and pick up where you left off."
-          >
-            <Button
-              variant="outline"
-              size="icon"
-              elevation="md"
-              aria-label="Save recipe"
-            >
-              <SaveIcon className="size-4" />
-            </Button>
-          </AuthGate.Action>
           <RunButton
             phase={resolvedPhase}
             hasFiles={fileCount > 0}
@@ -143,19 +128,6 @@ export function RecipeToolbar({
             </Button>
           </FileUpload.Clear>
         )}
-        <AuthGate.Action
-          title="Sign up to save recipes"
-          description="Create a free account to save your recipe settings and pick up where you left off."
-        >
-          <Button
-            variant="outline"
-            size="icon"
-            elevation="md"
-            aria-label="Save recipe"
-          >
-            <SaveIcon className="size-4" />
-          </Button>
-        </AuthGate.Action>
         <RunButton
           phase={resolvedPhase}
           hasFiles={fileCount > 0}
