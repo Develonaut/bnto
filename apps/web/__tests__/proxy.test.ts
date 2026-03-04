@@ -27,7 +27,7 @@ vi.mock("@convex-dev/auth/nextjs/server", () => ({
     capturedHandler = handler;
     // Return a function that calls the handler with mock convexAuth.
     // Accepts optional second arg to match the real NextMiddleware signature.
-    return async (request: NextRequest, _event?: unknown) => {
+    return async (request: NextRequest) => {
       const isAuth = request.cookies.has("__convexAuthJWT");
       const result = await handler!(request, {
         convexAuth: { isAuthenticated: async () => isAuth },

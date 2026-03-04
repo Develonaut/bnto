@@ -92,6 +92,13 @@ export function MobileNavMenu({
               {/* Bottom section */}
               <Stack className="gap-6">
                 <Row className="gap-4">
+                  <Button
+                    variant="outline"
+                    href="/create"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Create
+                  </Button>
                   {PAGE_LINKS.map((link) => (
                     <Button
                       key={link.href}

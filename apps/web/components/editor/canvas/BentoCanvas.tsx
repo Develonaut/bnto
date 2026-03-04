@@ -7,7 +7,7 @@ import {
   Background,
   BackgroundVariant,
   useReactFlow,
-  type OnNodesChange,
+  useStore,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { cn } from "@/lib/cn";
@@ -26,24 +26,34 @@ import { CompartmentNode, type CompartmentNodeType } from "./CompartmentNode";
  * when nodes are added or removed — the "city growing" effect from
  * Mini Motorways where the camera pulls back as neighborhoods expand.
  *
- * Two modes via the `interactive` prop:
- *   false (default) — read-only showcase. No drag, no zoom, no select.
- *   true — editor mode. Nodes draggable, selectable, canvas pannable.
- *     Consumer provides `onNodesChange` for controlled position state.
- *     No edge connections — execution order is positional in bento grid.
+ * Two rendering modes:
+ *
+ *   Controlled (nodes prop) — read-only showcase. External state
+ *     passed as `nodes` prop, ReactFlow renders it directly.
+ *
+ *   Uncontrolled (defaultNodes prop) — editor mode. `defaultNodes`
+ *     seeds RF's internal store on mount. RF owns node state.
+ *     Use `useReactFlow().setNodes()` for programmatic updates.
+ *     Drag, select, and pan are handled internally by RF.
  *
  * Children are rendered inside ReactFlow — use for `<Panel>` overlays
  * (e.g., floating toolbar, minimap, controls).
  */
 
 type BentoCanvasProps = {
-  nodes: CompartmentNodeType[];
+  /** Initial nodes — RF manages state internally after mount. */
+  defaultNodes: CompartmentNodeType[];
   /** Canvas height in px. Default: 480 */
   height?: number;
   /** Enable drag, select, pan, zoom. Default: false (read-only). */
   interactive?: boolean;
-  /** Controlled mode callback — required when interactive. */
-  onNodesChange?: OnNodesChange<CompartmentNodeType>;
+  /** Disable specific behaviors (overrides interactive). */
+  disable?: {
+    drag?: boolean;
+    pan?: boolean;
+    zoom?: boolean;
+    select?: boolean;
+  };
   /**
    * When true, skips the internal ReactFlowProvider wrapper.
    * Use this when the canvas is embedded inside a parent that already
@@ -60,46 +70,44 @@ type BentoCanvasProps = {
 
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
 
+type BentoCanvasInnerProps = {
+  defaultNodes: CompartmentNodeType[];
+  interactive?: boolean;
+  disable?: BentoCanvasProps["disable"];
+  children?: ReactNode;
+};
+
 function BentoCanvasInner({
-  nodes,
+  defaultNodes,
   interactive = false,
-  onNodesChange,
+  disable,
   children,
-}: Pick<BentoCanvasProps, "nodes" | "interactive" | "onNodesChange" | "children">) {
+}: BentoCanvasInnerProps) {
   const { fitView } = useReactFlow();
   const nodeTypes = useMemo(() => ({ compartment: CompartmentNode }), []);
 
-  /* Track previous count to distinguish first render from updates.
-   * First render = instant fitView (no animation). Subsequent changes
-   * = smooth 600ms zoom transition. */
-  const prevCount = useRef(0);
-  const nodeCount = nodes.length;
+  /* Fit all nodes on initial mount only — frames the default layout.
+   * After mount, the palette and sidebar own fitView targeting. */
+  const hasFitted = useRef(false);
+  const nodeCount = useStore((s) => s.nodes.length);
 
   useEffect(() => {
-    const prev = prevCount.current;
-    prevCount.current = nodeCount;
-
-    /* Empty canvas — nothing to fit. */
-    if (nodeCount === 0) return;
-
-    const timer = setTimeout(() => {
-      fitView({ duration: prev === 0 ? 0 : 600, padding: 0.2 });
-    }, 80);
-    return () => clearTimeout(timer);
+    if (hasFitted.current || nodeCount === 0) return;
+    hasFitted.current = true;
+    fitView({ duration: 0, padding: 0.2 });
   }, [nodeCount, fitView]);
 
   return (
     <ReactFlow<CompartmentNodeType>
-      nodes={nodes}
+      defaultNodes={defaultNodes}
       edges={[]}
       nodeTypes={nodeTypes}
-      onNodesChange={interactive ? onNodesChange : undefined}
-      nodesDraggable={interactive}
+      nodesDraggable={interactive && !disable?.drag}
       nodesConnectable={false}
-      elementsSelectable={interactive}
-      panOnDrag={interactive}
-      zoomOnScroll={interactive}
-      zoomOnPinch={interactive}
+      elementsSelectable={interactive && !disable?.select}
+      panOnDrag={interactive && !disable?.pan}
+      zoomOnScroll={interactive && !disable?.zoom}
+      zoomOnPinch={interactive && !disable?.zoom}
       zoomOnDoubleClick={false}
       preventScrolling={!interactive}
       proOptions={{ hideAttribution: true }}
@@ -120,19 +128,19 @@ function BentoCanvasInner({
 /* ── Public canvas wrapper ──────────────────────────────────── */
 
 export function BentoCanvas({
-  nodes,
-  height = 480,
+  defaultNodes,
+  height,
   interactive = false,
-  onNodesChange,
+  disable,
   standalone = false,
   children,
   className,
 }: BentoCanvasProps) {
   const inner = (
     <BentoCanvasInner
-      nodes={nodes}
+      defaultNodes={defaultNodes}
       interactive={interactive}
-      onNodesChange={onNodesChange}
+      disable={disable}
     >
       {children}
     </BentoCanvasInner>
@@ -144,7 +152,7 @@ export function BentoCanvas({
         "w-full overflow-hidden rounded-xl border border-border bg-background",
         className,
       )}
-      style={{ height }}
+      style={height ? { height } : undefined}
     >
       {standalone ? inner : <ReactFlowProvider>{inner}</ReactFlowProvider>}
     </div>

@@ -31,24 +31,15 @@ const SURFACE_CLASS: Record<NonNullable<CompartmentNodeData["variant"]>, string>
   warning: "surface-warning",
 };
 
-const ELEVATION_BY_STATUS: Record<CompartmentStatus, "none" | "sm" | "md" | "lg"> = {
-  idle: "lg",
-  pending: "sm",
-  active: "lg",
-  completed: "md",
-};
-
-export function CompartmentNode({ data }: NodeProps<CompartmentNodeType>) {
+export function CompartmentNode({ data, selected }: NodeProps<CompartmentNodeType>) {
   const w = data.width ?? 120;
   const h = data.height ?? 120;
   const status = data.status ?? "idle";
-  const elevation = ELEVATION_BY_STATUS[status];
-
   return (
     <Animate.ScaleIn from={0.7} easing="spring-bouncy">
-      <Pressable asChild spring="bounciest" muted={status === "pending"}>
+      <Pressable asChild spring="bounciest" toggle active={selected} muted={status === "pending"}>
         <Card
-          elevation={elevation}
+          elevation="lg"
           className={`${SURFACE_CLASS[data.variant ?? "primary"]} flex flex-col items-center justify-center rounded-xl`}
           style={{ width: w, height: h }}
         >

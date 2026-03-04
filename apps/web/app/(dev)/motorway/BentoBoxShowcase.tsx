@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
+import { useReactFlow } from "@xyflow/react";
 import {
-  Plus,
-  Minus,
-  RotateCcw,
-  Play,
-  ChevronLeft,
-  ChevronRight,
-  Square,
-} from "lucide-react";
+  PlusIcon,
+  MinusIcon,
+  RotateCcwIcon,
+  PlayIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  SquareIcon,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/Button";
 import { Row } from "@/components/ui/Row";
 import { Text } from "@/components/ui/Text";
@@ -101,6 +102,24 @@ function buildNodes(
   });
 }
 
+/* ── Headless node sync — rendered as a child inside <ReactFlow> ── */
+
+function NodeSync({
+  count,
+  activeIndex,
+}: {
+  count: number;
+  activeIndex: number | null;
+}) {
+  const { setNodes } = useReactFlow<CompartmentNodeType>();
+
+  useEffect(() => {
+    setNodes(buildNodes(count, activeIndex));
+  }, [count, activeIndex, setNodes]);
+
+  return null;
+}
+
 /* ── Showcase ─────────────────────────────────────────────────── */
 
 export function BentoBoxShowcase() {
@@ -109,10 +128,7 @@ export function BentoBoxShowcase() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const running = activeIndex !== null;
 
-  const nodes = useMemo(
-    () => buildNodes(count, activeIndex),
-    [count, activeIndex],
-  );
+  const defaultNodes = useMemo(() => buildNodes(1, null), []);
 
   const add = useCallback(() => {
     setCount((c) => Math.min(c + 1, SLOTS.length));
@@ -148,7 +164,7 @@ export function BentoBoxShowcase() {
           onClick={add}
           disabled={count >= SLOTS.length || running}
         >
-          <Plus className="size-3.5" />
+          <PlusIcon className="size-3.5" />
           Add
         </Button>
         <Button
@@ -157,7 +173,7 @@ export function BentoBoxShowcase() {
           onClick={remove}
           disabled={count <= 0 || running}
         >
-          <Minus className="size-3.5" />
+          <MinusIcon className="size-3.5" />
           Remove
         </Button>
         <Button
@@ -166,7 +182,7 @@ export function BentoBoxShowcase() {
           onClick={reset}
           disabled={count <= 1 && !running}
         >
-          <RotateCcw className="size-3.5" />
+          <RotateCcwIcon className="size-3.5" />
           Reset
         </Button>
         <Text size="sm" color="muted" className="ml-auto font-mono">
@@ -183,13 +199,13 @@ export function BentoBoxShowcase() {
             onClick={run}
             disabled={count === 0}
           >
-            <Play className="size-3.5" />
+            <PlayIcon className="size-3.5" />
             Run
           </Button>
         ) : (
           <>
             <Button size="md" variant="ghost" onClick={stop}>
-              <Square className="size-3.5" />
+              <SquareIcon className="size-3.5" />
               Stop
             </Button>
             <Button
@@ -198,7 +214,7 @@ export function BentoBoxShowcase() {
               onClick={prev}
               disabled={activeIndex === 0}
             >
-              <ChevronLeft className="size-3.5" />
+              <ChevronLeftIcon className="size-3.5" />
               Prev
             </Button>
             <Button
@@ -207,7 +223,7 @@ export function BentoBoxShowcase() {
               onClick={next}
               disabled={activeIndex === count - 1}
             >
-              <ChevronRight className="size-3.5" />
+              <ChevronRightIcon className="size-3.5" />
               Next
             </Button>
             <Text size="sm" color="muted" className="ml-auto font-mono">
@@ -217,8 +233,11 @@ export function BentoBoxShowcase() {
         )}
       </Row>
 
-      {/* Canvas — the bento box */}
-      <BentoCanvas nodes={nodes} />
+      {/* Canvas — the bento box. NodeSync lives inside <ReactFlow>
+          and calls setNodes() when count/activeIndex changes. */}
+      <BentoCanvas defaultNodes={defaultNodes}>
+        <NodeSync count={count} activeIndex={activeIndex} />
+      </BentoCanvas>
     </div>
   );
 }

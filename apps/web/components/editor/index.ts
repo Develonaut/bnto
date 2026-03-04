@@ -10,7 +10,7 @@
 
 export * from "./canvas";
 export * from "./conveyor";
-export { RecipeEditor } from "./RecipeEditor";
+export { RecipeEditor } from "./RecipeEditor/index";
 export { CanvasToolbar } from "./CanvasToolbar";
-export { NodePalette } from "./NodePalette";
+export { NodePaletteMenu } from "./NodePaletteMenu";
 export { NodeConfigPanel } from "./NodeConfigPanel";

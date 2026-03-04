@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 
 /**
  * Manages controlled vs uncontrolled state for a component prop.
@@ -23,10 +23,13 @@ export function useControlled<T>(
   onChange?: (value: T) => void,
 ): [T, (next: T) => void] {
   const isControlled = controlledValue !== undefined;
-  const isControlledRef = useRef(isControlled);
+
+  /* Track the initial controlled mode via state — React 19's react-hooks/refs
+   * rule forbids reading ref.current during render. State is the safe alternative. */
+  const [initiallyControlled] = useState(isControlled);
 
   if (process.env.NODE_ENV !== "production") {
-    if (isControlledRef.current !== isControlled) {
+    if (initiallyControlled !== isControlled) {
       console.error(
         "useControlled: component switched between controlled and uncontrolled. " +
         "Decide between using a controlled or uncontrolled value for the lifetime of the component.",
@@ -44,7 +47,6 @@ export function useControlled<T>(
       }
       onChange?.(next);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- isControlled is stable
     [isControlled, onChange],
   );
 

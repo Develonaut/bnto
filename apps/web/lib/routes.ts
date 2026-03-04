@@ -12,6 +12,7 @@
 
 export const ROUTES = {
   home: "/",
+  create: "/create",
   signin: "/signin",
   signup: "/signup",
   waitlist: "/waitlist",
