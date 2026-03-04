@@ -1,9 +1,9 @@
 "use client";
 
-import { useStore } from "@xyflow/react";
-import type { CompartmentNodeType } from "@/components/editor/canvas/CompartmentNode";
+import { useEditorStore } from "./useEditorStore";
+import type { BentoNode } from "../adapters/types";
 
-/** Subscribe to the ReactFlow node array, typed as CompartmentNodeType[]. */
-export function useCanvasNodes(): CompartmentNodeType[] {
-  return useStore((s) => s.nodes) as CompartmentNodeType[];
+/** Subscribe to the editor store's node array. */
+export function useCanvasNodes(): BentoNode[] {
+  return useEditorStore((s) => s.nodes);
 }
