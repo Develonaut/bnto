@@ -17,6 +17,7 @@
 | Repo structure               | [monorepo-structure.md](.claude/strategy/monorepo-structure.md)    |
 | Editor architecture          | [editor-architecture.md](.claude/strategy/editor-architecture.md)  |
 | Conveyor belt system         | [visual-editor.md](.claude/strategy/visual-editor.md)              |
+| Input/output nodes           | [io-nodes.md](.claude/strategy/io-nodes.md)                        |
 | Strategic direction          | [ROADMAP.md](.claude/ROADMAP.md)                                  |
 | Implementation task          | [PLAN.md](.claude/PLAN.md)                                        |
 | Free vs premium decisions    | [pricing-model.md](.claude/strategy/pricing-model.md)              |
@@ -231,6 +232,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [design-language.md](.claude/strategy/design-language.md) | Visual identity, brand personality |
 | [editor-architecture.md](.claude/strategy/editor-architecture.md) | Shared editor layer — store, hooks, package strategy, switchable editors |
 | [visual-editor.md](.claude/strategy/visual-editor.md) | Bento box visual editor — compartment design, grid layout, execution state |
+| [io-nodes.md](.claude/strategy/io-nodes.md) | Input & output nodes — self-describing recipe I/O, generic renderers, migration |
 | [code-editor.md](.claude/strategy/code-editor.md) | Code editor design — CM6, slash commands, JSON Schema |
 | [core-unification.md](.claude/strategy/core-unification.md) | Core API unification — patterns, rationale, copyable prompt |
 | [skills/](.claude/skills/) | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit) |

@@ -400,6 +400,69 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 ---
 
+### Sprint 4C: Input & Output Nodes
+
+**Goal:** Make recipes self-describing. Add `input` and `output` as first-class node types so the `.bnto.json` definition declares what a recipe needs and what it produces — no hardcoded UI per slug. This is the bridge between "predefined recipes with bespoke UI" and "custom recipes anyone can run."
+
+**Required reading:** [io-nodes.md](.claude/strategy/io-nodes.md) — the full architecture reference. Covers the problem, node schemas, migration strategy, engine impact, UI impact, and open questions.
+
+**Why now:** The editor (Sprint 4) lets users create recipes. But custom recipes can't run because the UI doesn't know what input to collect or how to present output. I/O nodes close this gap. They also eliminate per-slug UI hardcoding (6 config components + switch router + type map) and enable future community recipe sharing.
+
+**Scope:** Two new node types in `@bnto/nodes`, updated predefined recipes, generic I/O renderers in `apps/web`, and wiring through `@bnto/core`'s browser adapter. No Rust engine changes — I/O nodes are declarations consumed by the environment, not the engine.
+
+**Persona ownership:**
+| Wave | Lead Persona | Supporting | Rationale |
+|------|-------------|------------|-----------|
+| Wave 1 | — (pure TS, no persona needed) | — | `@bnto/nodes` type definitions, schemas, recipe updates — framework-agnostic |
+| Wave 2 | `/core-architect` | — | Browser adapter reads I/O nodes to configure execution. Core owns the bridge |
+| Wave 3 | `/frontend-engineer` | `/reactflow-expert` | Generic I/O renderers replace hardcoded components. ReactFlow Expert advises on editor compartment rendering |
+| Wave 4 | `/frontend-engineer` | — | Migration + E2E verification |
+
+**Dependencies:** Sprint 4 Wave 1 (`@bnto/nodes` pure functions) must be complete — it is. Sprint 4 Wave 3 (editor components) should be complete for editor integration — it is. Sprint 4B (Code Editor) is NOT a dependency.
+
+#### Wave 1 (parallel — node type definitions + schemas + recipe updates) `@bnto/nodes`
+
+Define the two new node types, their parameter schemas, and update all 6 predefined recipes to use them. Pure TypeScript — no React, no UI, no engine changes.
+
+- [ ] `@bnto/nodes` — **Add `input` and `output` to node type registry**: Add to `NODE_TYPES` constant, `NodeTypeName` union, `NODE_TYPE_INFO` metadata. New category: `"io"`. Both `browserCapable: true`, `isContainer: false`. See [io-nodes.md § Proposal](strategy/io-nodes.md#proposal-two-new-node-types) for the full type definitions.
+- [ ] `@bnto/nodes` — **Input node schema** (`schemas/input.ts`): Parameters: `mode` (enum: `file-upload`, `text`, `url`), `accept` (array of MIME types), `extensions` (array), `label` (string), `multiple` (boolean, default true), `maxFileSize` (number), `maxFiles` (number), `placeholder` (string). `accept`/`extensions`/`label` visible when mode is `file-upload`. `placeholder` visible when mode is `text` or `url`.
+- [ ] `@bnto/nodes` — **Output node schema** (`schemas/output.ts`): Parameters: `mode` (enum: `download`, `display`, `preview`), `filename` (string template), `zip` (boolean, default true), `label` (string), `autoDownload` (boolean, default false). `filename`/`zip`/`autoDownload` visible when mode is `download`.
+- [ ] `@bnto/nodes` — **`deriveAcceptSpec(definition)`**: Pure function that finds the input node in a definition and extracts `accept`, `extensions`, `label` into an `AcceptSpec`. Returns `undefined` if no input node found. Used by `definitionToRecipe()` to populate `Recipe.accept` from the definition instead of duplicating it.
+- [ ] `@bnto/nodes` — **`getInputNode(definition)` / `getOutputNode(definition)`**: Pure helper functions that find the input/output node in a definition's node tree. Return `Definition | undefined`. Used by adapters and renderers.
+- [ ] `@bnto/nodes` — **Update all 6 predefined recipes**: Add input and output nodes to each recipe definition. Remove `file-system "list"` nodes that read `{{.INPUT_DIR}}/*` — the input node replaces them. Remove `{{.OUTPUT_DIR}}` from process node parameters — the output node declares delivery. Keep `Recipe.accept` populated via `deriveAcceptSpec()` for backward compatibility. See [io-nodes.md § Migration](strategy/io-nodes.md#migration-strategy) for the per-recipe mapping.
+- [ ] `@bnto/nodes` — **Update `createBlankDefinition()`**: Blank definitions start with an input node (mode: `file-upload`, accept: `*`) and an output node (mode: `download`). Users configure them from there.
+- [ ] `@bnto/nodes` — **Unit tests**: Validate input/output schemas. `deriveAcceptSpec()` extracts correct values. `getInputNode()`/`getOutputNode()` find nodes in flat and nested definitions. Updated recipes pass validation. `createBlankDefinition()` includes I/O nodes. Round-trip: `definition → recipe → definition` preserves I/O nodes.
+
+#### Wave 2 (parallel — core adapter + editor store updates) `@bnto/core` + `apps/web`
+
+Wire the browser adapter to read I/O nodes from the definition instead of relying on `Recipe.accept` and hardcoded output handling. Update the editor store to treat I/O nodes as persistent (always present, not deletable).
+
+- [ ] `@bnto/core` — **Browser adapter reads input node**: When `browserInstance.run()` is called, the adapter reads `getInputNode(definition)` to determine accepted file types and validation rules. Falls back to `Recipe.accept` if no input node found (backward compat).
+- [ ] `@bnto/core` — **Browser adapter reads output node**: After execution, the adapter reads `getOutputNode(definition)` to determine output behavior (zip, auto-download, label). Falls back to current behavior if no output node found.
+- [ ] `apps/web` — **Editor store: I/O node protection**: `useEditorStore.removeNode()` prevents deletion of input/output nodes (they're structural). `addNode()` prevents adding a second input or output node. I/O nodes are always the first and last in position order.
+- [ ] `apps/web` — **Definition ↔ Bento adapters**: `definitionToBento()` maps input/output nodes to distinct compartment variants (visual differentiation in the grid — different color/icon). `bentoToDefinition()` preserves I/O node position constraints.
+
+#### Wave 3 (parallel — generic UI renderers) `apps/web`
+
+Build generic `InputRenderer` and `OutputRenderer` components that read the I/O node config and render the appropriate widget. These replace the hardcoded per-slug I/O.
+
+- [ ] `apps/web` — **`InputRenderer` component**: Reads the input node from the current recipe definition. For `mode: "file-upload"`: renders `FileUpload.Dropzone` with `accept` and `extensions` from the node's parameters. For `mode: "text"` / `mode: "url"`: renders placeholder UI with "coming soon" message (forward compatibility). Props: `definition`, `onFilesChange`, `files`.
+- [ ] `apps/web` — **`OutputRenderer` component**: Reads the output node from the current recipe definition. For `mode: "download"`: renders the `FileCard` grid + ZIP download using `label`, `zip`, and `autoDownload` from the node's parameters. For `mode: "display"` / `mode: "preview"`: renders placeholder UI. Props: `definition`, `results`, `onDownload`.
+- [ ] `apps/web` — **Editor: I/O compartment rendering**: Input and output nodes render as distinct compartments in `BentoCanvas` — different variant color, appropriate icon (upload icon for input, download icon for output), always pinned to first/last position. `NodeConfigPanel` renders I/O node parameters from their schemas (mode selector, accept config, etc.).
+- [ ] `apps/web` — **Unit tests for renderers**: `InputRenderer` renders dropzone for file-upload mode. `OutputRenderer` renders file cards for download mode. Both handle missing I/O nodes gracefully (fallback).
+
+#### Wave 4 (sequential — migration + verification) `apps/web`
+
+Migrate the recipe page to use generic renderers. Verify all 6 predefined recipes work with the new I/O nodes. Clean up hardcoded components.
+
+- [ ] `apps/web` — **Migrate `RecipeShell`**: Replace hardcoded `FileUpload.Dropzone` with `InputRenderer`. Replace hardcoded `BrowserExecutionResults` with `OutputRenderer`. `RecipeShell` reads I/O config from the definition, not from slug-keyed maps.
+- [ ] `apps/web` — **Migrate `useRecipeFlow`**: The hook reads input node config to determine accepted file types (for validation) and output node config to determine delivery behavior. Remove `BntoConfigMap` type and `DEFAULT_CONFIGS` — processing parameters stay in per-recipe config components for now, but I/O is driven by nodes.
+- [ ] `apps/web` — **Deprecate per-slug I/O code**: Mark `RecipeConfigSection` switch router, `BntoConfigMap` type, and `DEFAULT_CONFIGS` as deprecated. They still handle processing parameters (quality, width, format) until NodeConfigPanel replaces them. Only the I/O portions are removed.
+- [ ] `apps/web` — **E2E verification**: All 6 predefined recipes still work end-to-end — file upload, processing, results, download. Screenshot regression for recipe pages. Editor: create blank recipe → input/output nodes present → add process node → configure → run → results appear via OutputRenderer. Export `.bnto.json` → I/O nodes present in output.
+- [ ] `apps/web` — **Validation**: `task ui:build` passes. `task ui:test` passes. `task e2e` passes. No TypeScript errors from updated types.
+
+---
+
 ## Phase 2: Desktop App (Local Execution)
 
 **Goal:** Free desktop app. Same React frontend, local engine execution. Free forever, unlimited runs. No account needed. Trust signal and top-of-funnel growth driver.
