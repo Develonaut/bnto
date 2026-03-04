@@ -16,9 +16,9 @@ import { Row } from "@/components/ui/Row";
 import { Text } from "@/components/ui/Text";
 import type {
   CompartmentNodeType,
-  CompartmentData,
   CompartmentStatus,
 } from "@/components/editor/canvas/CompartmentNode";
+import type { CompartmentNodeData } from "@/editor/adapters/types";
 import { SLOTS } from "@/editor/adapters/bentoSlots";
 
 /**
@@ -47,7 +47,9 @@ const BentoCanvas = dynamic(
 
 /* ── Compartment palette ─────────────────────────────────────── */
 
-const PALETTE: CompartmentData[] = [
+type PaletteEntry = Pick<CompartmentNodeData, "label" | "sublabel" | "variant">;
+
+const PALETTE: PaletteEntry[] = [
   { label: "Drop Files", sublabel: "Input", variant: "muted" },
   { label: "Compress", sublabel: "Image", variant: "primary" },
   { label: "Resize", sublabel: "Transform", variant: "secondary" },
@@ -79,8 +81,9 @@ function buildNodes(
   return Array.from({ length: count }, (_, i) => {
     const slot = SLOTS[i]!;
     const data = PALETTE[i % PALETTE.length]!;
+    const nodeId = `compartment-${i}`;
     return {
-      id: `compartment-${i}`,
+      id: nodeId,
       type: "compartment" as const,
       position: { x: slot.x, y: slot.y },
       data: {
@@ -88,6 +91,11 @@ function buildNodes(
         width: slot.w,
         height: slot.h,
         status: statusForIndex(i, activeIndex),
+        // Domain fields (showcase uses demo values)
+        nodeType: "image",
+        name: data.label,
+        parameters: {},
+        nodeId,
       },
     };
   });

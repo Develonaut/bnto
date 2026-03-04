@@ -23,18 +23,33 @@ type CompartmentVariant =
 /**
  * Full compartment data produced by the definitionToBento adapter.
  *
- * All fields are required because the adapter always computes them.
+ * Contains both visual fields (for rendering CompartmentNode) and
+ * domain fields (RF as single source of truth for node state).
+ *
  * Uses `type` (not `interface`) so it satisfies RF's
  * `Record<string, unknown>` constraint on Node data.
  */
 type CompartmentNodeData = {
+  // --- Visual fields (for rendering) ---
   label: string;
   sublabel?: string;
   variant: CompartmentVariant;
   width: number;
   height: number;
   status: "idle" | "pending" | "active" | "completed";
-  /** Original node ID — links compartment back to the Definition node. */
+
+  // --- Domain fields (RF as source of truth) ---
+  /** Node type name (e.g., "image", "spreadsheet", "loop"). */
+  nodeType: string;
+  /** Human-readable node name from the Definition. */
+  name: string;
+  /** Node-specific configuration parameters. */
+  parameters: Record<string, unknown>;
+
+  /**
+   * Original node ID — links compartment back to the Definition node.
+   * @deprecated Redundant with RF node `id`. Kept for compat, remove in PR 7.
+   */
   nodeId: string;
 };
 

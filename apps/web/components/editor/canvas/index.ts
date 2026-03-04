@@ -9,7 +9,6 @@
 export { BentoCanvas } from "./BentoCanvas";
 export {
   CompartmentNode,
-  type CompartmentData,
   type CompartmentNodeType,
   type CompartmentStatus,
 } from "./CompartmentNode";
