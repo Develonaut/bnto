@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { Animate } from "@/components/ui/Animate";
 import { Card } from "@/components/ui/Card";
@@ -32,7 +33,10 @@ const SURFACE_CLASS: Record<NonNullable<CompartmentNodeData["variant"]>, string>
   warning: "surface-warning",
 };
 
-export function CompartmentNode({ data, selected }: NodeProps<CompartmentNodeType>) {
+export const CompartmentNode = memo(function CompartmentNode({
+  data,
+  selected,
+}: NodeProps<CompartmentNodeType>) {
   const w = data.width ?? 120;
   const h = data.height ?? 120;
   const status = data.status ?? "idle";
@@ -56,4 +60,4 @@ export function CompartmentNode({ data, selected }: NodeProps<CompartmentNodeTyp
       </Pressable>
     </Animate.ScaleIn>
   );
-}
+});

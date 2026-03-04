@@ -13,7 +13,7 @@
 
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useStore } from "@xyflow/react";
 import type { NodeTypeName, NodeSchema, ParameterSchema } from "@bnto/nodes";
 import { NODE_TYPE_INFO, getNodeSchema } from "@bnto/nodes";
@@ -63,16 +63,13 @@ interface EditorNodeResult {
  * tree search. Subscribes to RF store — re-renders when node data changes.
  */
 function useEditorNode(nodeId: string | null): EditorNodeResult {
-  const selector = useCallback(
+  const nodeData = useStore(
     (s: { nodeLookup: Map<string, { data: Record<string, unknown> }> }) => {
       if (!nodeId) return null;
       const rfNode = s.nodeLookup.get(nodeId);
       return rfNode ? (rfNode.data as CompartmentNodeData) : null;
     },
-    [nodeId],
   );
-
-  const nodeData = useStore(selector);
 
   return useMemo(() => {
     if (!nodeData) {
