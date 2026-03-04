@@ -12,6 +12,7 @@ import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
 import { ConveyorShowcase } from "./ConveyorShowcase";
+import { EditorShowcase } from "./EditorShowcase";
 import { DialogShowcase } from "./DialogShowcase";
 import { GridShowcase } from "./GridShowcase";
 import { FileListShowcase } from "./FileListShowcase";
@@ -51,6 +52,7 @@ export default function MotorwayPage() {
           <Tabs.Trigger value="grids">Grids</Tabs.Trigger>
           <Tabs.Trigger value="progress">Progress</Tabs.Trigger>
           <Tabs.Trigger value="features">Features</Tabs.Trigger>
+          <Tabs.Trigger value="editor">Editor</Tabs.Trigger>
         </Tabs.List>
 
         {/* ── Surfaces ────────────────────────────────────────── */}
@@ -252,6 +254,16 @@ export default function MotorwayPage() {
               <ConveyorShowcase />
             </ShowcaseSection>
           </Stack>
+        </Tabs.Content>
+        {/* ── Editor ──────────────────────────────────────────── */}
+        <Tabs.Content value="editor">
+          <ShowcaseSection
+            id="recipe-editor"
+            title="Recipe Editor"
+            description="Interactive recipe editor. Load a predefined recipe or start blank. Add/remove nodes, configure parameters, export as .bnto.json. The development playground for the visual editor."
+          >
+            <EditorShowcase />
+          </ShowcaseSection>
         </Tabs.Content>
       </Tabs>
     </div>

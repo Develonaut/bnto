@@ -40,6 +40,14 @@ type BentoCanvasProps = {
   interactive?: boolean;
   /** Controlled mode callback — required when interactive. */
   onNodesChange?: OnNodesChange<CompartmentNodeType>;
+  /**
+   * When true, skips the internal ReactFlowProvider wrapper.
+   * Use this when the canvas is embedded inside a parent that already
+   * provides a ReactFlowProvider (e.g., RecipeEditor). This lets
+   * sibling hooks (useEditorSelection, useEditorUndoRedo) share the
+   * same RF context as the canvas.
+   */
+  standalone?: boolean;
 };
 
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
@@ -106,19 +114,22 @@ export function BentoCanvas({
   height = 480,
   interactive = false,
   onNodesChange,
+  standalone = false,
 }: BentoCanvasProps) {
+  const inner = (
+    <BentoCanvasInner
+      nodes={nodes}
+      interactive={interactive}
+      onNodesChange={onNodesChange}
+    />
+  );
+
   return (
     <div
       className="w-full overflow-hidden rounded-xl border border-border bg-background"
       style={{ height }}
     >
-      <ReactFlowProvider>
-        <BentoCanvasInner
-          nodes={nodes}
-          interactive={interactive}
-          onNodesChange={onNodesChange}
-        />
-      </ReactFlowProvider>
+      {standalone ? inner : <ReactFlowProvider>{inner}</ReactFlowProvider>}
     </div>
   );
 }
