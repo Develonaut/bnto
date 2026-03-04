@@ -45,12 +45,6 @@ type CompartmentNodeData = {
   name: string;
   /** Node-specific configuration parameters. */
   parameters: Record<string, unknown>;
-
-  /**
-   * Original node ID — links compartment back to the Definition node.
-   * @deprecated Redundant with RF node `id`. Kept for compat, remove in PR 7.
-   */
-  nodeId: string;
 };
 
 // ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { BntoCoreProvider, TelemetryProvider } from "@bnto/core";
 import { isAuthPath } from "@/lib/routes";
+import "@/lib/featureFlags"; // registers window.__bnto__ console API
 
 interface ProvidersProps {
   children: React.ReactNode;

@@ -1,19 +1,23 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useReactFlow, useStoreApi } from "@xyflow/react";
+import { getRecipeBySlug, createBlankDefinition } from "@bnto/nodes";
 import { usePrevious } from "@/components/ui/usePrevious";
-import { useEditorStore, useEditorActions, definitionToBento } from "@/editor";
-import { useDefinitionSync } from "@/editor/hooks/useDefinitionSync";
+import { useEditorStore, definitionToBento } from "@/editor";
 import { useEditorSelection } from "@/editor/hooks/useEditorSelection";
-import type { CompartmentNodeType } from "../canvas/CompartmentNode";
+import type { BentoNode } from "@/editor/adapters/types";
+import { useEditorStoreApi } from "@/editor/hooks/useEditorStoreApi";
 
 /**
  * useEditorCanvas — all editor orchestration logic.
  *
- * Owns selection, sync, position registration, recipe change,
- * sidebar toggle, and default nodes computation. The component
- * that consumes this hook is a pure render shell.
+ * RF is the single source of truth for node state. This hook owns:
+ * - Recipe loading (definition → RF nodes directly)
+ * - Node getter registration (store reads RF for undo snapshots)
+ * - Selection, sidebar toggle, default nodes
+ *
+ * No sync effects — mutations go straight to RF via useAddNode etc.
  */
 
 interface UseEditorCanvasOptions {
@@ -28,65 +32,49 @@ function useEditorCanvas({ initialSlug }: UseEditorCanvasOptions = {}) {
   const prevSelectedNodeId = usePrevious(selectedNodeId);
   /* Keep showing the last node's config while the panel slides out. */
   const configNodeId = selectedNodeId ?? prevSelectedNodeId ?? null;
-  const { setPositionGetter, loadRecipe, createBlank } = useEditorActions();
-  const definition = useEditorStore((s) => s.definition);
-  const recipeName = useEditorStore((s) => s.definition.name ?? "Untitled");
-  const { setNodes } = useReactFlow<CompartmentNodeType>();
-  const storeApi = useStoreApi<CompartmentNodeType>();
 
-  /* Register position getter so the store can read RF positions for undo. */
+  const storeApi = useEditorStoreApi();
+  const recipeName = useEditorStore((s) => s.recipeMetadata.name ?? "Untitled");
+  const { setNodes } = useReactFlow<BentoNode>();
+  const rfStoreApi = useStoreApi<BentoNode>();
+
+  /* Register node getter so the store can read RF nodes for undo snapshots. */
   useEffect(() => {
-    setPositionGetter(() => {
-      const positions: Record<string, { x: number; y: number }> = {};
-      for (const node of storeApi.getState().nodes) {
-        positions[node.id] = node.position;
-      }
-      return positions;
-    });
-  }, [setPositionGetter, storeApi]);
+    storeApi.getState().setNodeGetter(() =>
+      rfStoreApi.getState().nodes as BentoNode[],
+    );
+  }, [storeApi, rfStoreApi]);
 
   /* Seed initial nodes via defaultNodes (uncontrolled mode).
    * RF reads this once on mount and owns the state from there. */
-  const defaultNodes = useMemo(
-    () => definitionToBento(definition).nodes as CompartmentNodeType[],
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- definition captured at mount time intentionally
-    [],
-  );
+  const defaultNodes = useMemo(() => {
+    if (initialSlug && initialSlug !== "blank") {
+      const recipe = getRecipeBySlug(initialSlug);
+      if (recipe) return definitionToBento(recipe.definition).nodes as BentoNode[];
+    }
+    return definitionToBento(createBlankDefinition()).nodes as BentoNode[];
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- captured at mount time intentionally
+  }, []);
 
-  /* Incremental sync: definition changes -> RF node additions/removals. */
-  useDefinitionSync();
-
-  /* Full replacement sync: when the definition reference changes entirely
-   * (loadRecipe, undo/redo, param updates), re-convert to bento nodes.
-   * Preserves RF selection state so param edits in the config panel
-   * don't deselect the active node and close the panel. */
-  const prevDefRef = useRef(definition);
-  useEffect(() => {
-    if (prevDefRef.current === definition) return;
-    prevDefRef.current = definition;
-    const layout = definitionToBento(definition);
-    const freshNodes = layout.nodes as CompartmentNodeType[];
-    setNodes((prev) => {
-      const selectedIds = new Set(
-        prev.filter((n) => n.selected).map((n) => n.id),
-      );
-      return freshNodes.map((n) => ({
-        ...n,
-        selected: selectedIds.has(n.id),
-      }));
-    });
-  }, [definition, setNodes]);
-
+  /* Recipe change handler — converts definition to RF nodes directly. */
   const handleRecipeChange = useCallback(
     (slug: string) => {
       setActiveSlug(slug);
+      const { loadRecipe, createBlank } = storeApi.getState();
+
       if (slug === "blank") {
         createBlank();
+        const blank = createBlankDefinition();
+        setNodes(definitionToBento(blank).nodes as BentoNode[]);
       } else {
         loadRecipe(slug);
+        const recipe = getRecipeBySlug(slug);
+        if (recipe) {
+          setNodes(definitionToBento(recipe.definition).nodes as BentoNode[]);
+        }
       }
     },
-    [loadRecipe, createBlank],
+    [storeApi, setNodes],
   );
 
   const handleReset = useCallback(() => {

@@ -96,7 +96,6 @@ function buildNodes(
         nodeType: "image",
         name: data.label,
         parameters: {},
-        nodeId,
       },
     };
   });

@@ -8,20 +8,20 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import type { Definition } from "@bnto/nodes";
 import { EditorContext } from "./context";
 import { createEditorStore } from "./store/createEditorStore";
+import type { RecipeMetadata } from "./store/types";
 
 interface EditorProviderProps {
-  /** Initial definition. Defaults to blank canvas if omitted. */
-  initialDefinition?: Definition;
+  /** Initial recipe metadata. Defaults to blank if omitted. */
+  initialMetadata?: RecipeMetadata;
   children: ReactNode;
 }
 
-function EditorProvider({ initialDefinition, children }: EditorProviderProps) {
+function EditorProvider({ initialMetadata, children }: EditorProviderProps) {
   // useState with initializer — creates the store once on first render.
   // Avoids useRef .current access during render (react-hooks/refs).
-  const [store] = useState(() => createEditorStore(initialDefinition));
+  const [store] = useState(() => createEditorStore(initialMetadata));
 
   return (
     <EditorContext.Provider value={store}>
