@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useMemo, useState, type ComponentProps } from "react";
 import type { NodeTypeName } from "@bnto/nodes";
-import { Badge, Menu, SearchIcon, Text } from "@bnto/ui";
+import { Badge, MenuContent, MenuSeparator, MenuLabel, MenuItem, SearchIcon, Text } from "@bnto/ui";
 import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorActions } from "../../hooks/useEditorActions";
 import { useNodePalette } from "../../hooks/useNodePalette";
@@ -18,7 +18,7 @@ import { SLOTS } from "../../adapters/bentoSlots";
 function NodePaletteMenuContent({
   className,
   ...props
-}: Omit<ComponentProps<typeof Menu.Content>, "children">) {
+}: Omit<ComponentProps<typeof MenuContent>, "children">) {
   const [search, setSearch] = useState("");
   const { addNode } = useEditorActions();
   const { groups } = useNodePalette();
@@ -53,7 +53,7 @@ function NodePaletteMenuContent({
   const hasResults = filteredGroups.length > 0;
 
   return (
-    <Menu.Content className={className ?? "w-[28rem] p-2"} {...props}>
+    <MenuContent className={className ?? "w-[28rem] p-2"} {...props}>
       {/* Search header — sticky, doesn't close menu on click */}
       <div className="px-1 pb-2">
         <div className="flex items-center gap-2 rounded-md bg-input px-2.5 py-1.5">
@@ -80,13 +80,13 @@ function NodePaletteMenuContent({
         <div className="grid grid-cols-2 gap-1">
           {filteredGroups.map((group, i) => (
             <Fragment key={group.category.name}>
-              {i > 0 && <Menu.Separator className="col-span-2" />}
-              <Menu.Label className="col-span-2">{group.category.label}</Menu.Label>
+              {i > 0 && <MenuSeparator className="col-span-2" />}
+              <MenuLabel className="col-span-2">{group.category.label}</MenuLabel>
               {group.items.map((item) => {
                 const isServerOnly = !item.browserCapable;
                 const disabled = isFull || isServerOnly;
                 return (
-                  <Menu.Item
+                  <MenuItem
                     key={item.name}
                     onClick={() => handleAdd(item.name as NodeTypeName)}
                     disabled={disabled}
@@ -103,7 +103,7 @@ function NodePaletteMenuContent({
                     <span className="text-xs leading-normal text-muted-foreground text-wrap">
                       {item.description}
                     </span>
-                  </Menu.Item>
+                  </MenuItem>
                 );
               })}
             </Fragment>
@@ -117,7 +117,7 @@ function NodePaletteMenuContent({
           )}
         </div>
       </div>
-    </Menu.Content>
+    </MenuContent>
   );
 }
 

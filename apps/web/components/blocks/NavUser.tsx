@@ -3,12 +3,17 @@
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 
+import { CircleUserIcon, LogInIcon, LogOutIcon } from "@bnto/ui";
 import {
-  CircleUserIcon,
-  LogInIcon,
-  LogOutIcon,
+  Menu,
+  MenuTrigger,
+  MenuContent,
+  MenuSeparator,
+  MenuItem,
+  Skeleton,
+  Stack,
+  Text,
 } from "@bnto/ui";
-import { Menu, Skeleton, Stack, Text } from "@bnto/ui";
 
 /**
  * Auth-aware navbar component.
@@ -38,7 +43,7 @@ export function NavUser() {
 
   return (
     <Menu>
-      <Menu.Trigger
+      <MenuTrigger
         variant="primary"
         size="icon"
         elevation="sm"
@@ -46,8 +51,8 @@ export function NavUser() {
         data-testid="nav-user-menu"
       >
         <CircleUserIcon />
-      </Menu.Trigger>
-      <Menu.Content className="w-56 p-2" offset="lg">
+      </MenuTrigger>
+      <MenuContent className="w-56 p-2" offset="lg">
         <Stack className="gap-1">
           {isLoading ? (
             <div className="px-3 py-2">
@@ -67,21 +72,21 @@ export function NavUser() {
                 </Text>
               </div>
 
-              <Menu.Separator />
+              <MenuSeparator />
 
-              <Menu.Item onClick={handleSignOut} data-testid="nav-sign-out">
+              <MenuItem onClick={handleSignOut} data-testid="nav-sign-out">
                 <LogOutIcon />
                 Sign out
-              </Menu.Item>
+              </MenuItem>
             </>
           ) : (
-            <Menu.Item onClick={handleSignIn} data-testid="nav-sign-in">
+            <MenuItem onClick={handleSignIn} data-testid="nav-sign-in">
               <LogInIcon />
               Sign in
-            </Menu.Item>
+            </MenuItem>
           )}
         </Stack>
-      </Menu.Content>
+      </MenuContent>
     </Menu>
   );
 }

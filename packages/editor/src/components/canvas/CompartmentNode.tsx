@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
-import { Animate, Card, cn, DownloadIcon, Pressable, Text, UploadIcon } from "@bnto/ui";
+import { ScaleIn, Card, cn, DownloadIcon, Pressable, Text, UploadIcon } from "@bnto/ui";
 import type { CompartmentVariant, BentoNode } from "../../adapters/types";
 
 /**
@@ -37,16 +37,17 @@ export const CompartmentNode = memo(function CompartmentNode({
   const h = data.height ?? 120;
   const status = data.status ?? "idle";
   return (
-    <Animate.ScaleIn from={0.7} easing="spring-bouncy">
+    <ScaleIn from={0.7} easing="spring-bouncy">
       <Pressable asChild spring="bounciest" toggle active={selected} muted={status === "pending"}>
         <Card
           elevation="lg"
-          className={cn(SURFACE_CLASS[data.variant ?? "primary"], "flex flex-col items-center justify-center rounded-xl")}
+          className={cn(
+            SURFACE_CLASS[data.variant ?? "primary"],
+            "flex flex-col items-center justify-center rounded-xl",
+          )}
           style={{ width: w, height: h }}
         >
-          {data.icon === "upload" && (
-            <UploadIcon className="mb-1 size-4 text-muted-foreground" />
-          )}
+          {data.icon === "upload" && <UploadIcon className="mb-1 size-4 text-muted-foreground" />}
           {data.icon === "download" && (
             <DownloadIcon className="mb-1 size-4 text-muted-foreground" />
           )}
@@ -60,6 +61,6 @@ export const CompartmentNode = memo(function CompartmentNode({
           )}
         </Card>
       </Pressable>
-    </Animate.ScaleIn>
+    </ScaleIn>
   );
 });

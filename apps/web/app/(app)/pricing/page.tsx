@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { Pricing } from "@/components/blocks/Pricing";
-import { AppShell } from "@bnto/ui";
+import { AppShellContent } from "@bnto/ui";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 export default function PricingPage() {
   return (
-    <AppShell.Content>
+    <AppShellContent>
       <Pricing />
-    </AppShell.Content>
+    </AppShellContent>
   );
 }

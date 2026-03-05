@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Card, Grid, Heading, Text } from "@bnto/ui";
+import { Card, Grid, GridItem, Heading, Text } from "@bnto/ui";
 import { PhaseIndicator } from "@/app/(app)/[bnto]/_components/PhaseIndicator";
 
 const MOCK_H1 = "Compress Images Online Free";
@@ -31,7 +31,7 @@ export function PhaseShell({
   return (
     <Grid cols={9} rows={5} gap="md">
       {/* Heading/Description -- always cols 1-3, rows 1-2 */}
-      <Grid.Item colSpan={3} rowSpan={2} colStart={1} rowStart={1}>
+      <GridItem colSpan={3} rowSpan={2} colStart={1} rowStart={1}>
         <div className="flex h-full flex-col justify-start">
           <Heading level={2} size="lg">
             {MOCK_H1}
@@ -40,40 +40,37 @@ export function PhaseShell({
             {MOCK_DESCRIPTION}
           </Text>
         </div>
-      </Grid.Item>
+      </GridItem>
 
       {/* Control panels -- cols 4-7, rows 1-2 (phase-specific) */}
       {controlPanel}
 
       {/* Phase indicator -- cols 7-9, row 1 */}
-      <Grid.Item colSpan={3} rowSpan={1} colStart={7} rowStart={1}>
-        <Card
-          className="flex h-full items-center justify-center p-4"
-          elevation="sm"
-        >
+      <GridItem colSpan={3} rowSpan={1} colStart={7} rowStart={1}>
+        <Card className="flex h-full items-center justify-center p-4" elevation="sm">
           <PhaseIndicator activePhase={phase} />
         </Card>
-      </Grid.Item>
+      </GridItem>
 
       {/* Action bar -- cols 8-9, row 2 */}
-      <Grid.Item colSpan={2} rowSpan={1} colStart={8} rowStart={2}>
+      <GridItem colSpan={2} rowSpan={1} colStart={8} rowStart={2}>
         {actionBar}
-      </Grid.Item>
+      </GridItem>
 
       {/* Stats card -- cols 1-3, row 3 */}
-      <Grid.Item colSpan={3} rowSpan={1} colStart={1} rowStart={3}>
+      <GridItem colSpan={3} rowSpan={1} colStart={1} rowStart={3}>
         {statsCard}
-      </Grid.Item>
+      </GridItem>
 
       {/* Left bottom card -- cols 1-3, row 4 */}
-      <Grid.Item colSpan={3} rowSpan={1} colStart={1} rowStart={4}>
+      <GridItem colSpan={3} rowSpan={1} colStart={1} rowStart={4}>
         {leftBottomCard}
-      </Grid.Item>
+      </GridItem>
 
       {/* Main content -- cols 4-9, rows 3-5 */}
-      <Grid.Item colSpan={6} rowSpan={3} colStart={4} rowStart={3}>
+      <GridItem colSpan={6} rowSpan={3} colStart={4} rowStart={3}>
         {mainContent}
-      </Grid.Item>
+      </GridItem>
     </Grid>
   );
 }

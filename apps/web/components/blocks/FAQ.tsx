@@ -1,6 +1,14 @@
 "use client";
 
-import { Accordion, Heading, Stack, Text } from "@bnto/ui";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+  Heading,
+  Stack,
+  Text,
+} from "@bnto/ui";
 import { GITHUB_URL } from "@/lib/copy";
 
 const faqs = [
@@ -45,9 +53,7 @@ export function FAQ({ headerTag = "h2" }: { headerTag?: "h1" | "h2" }) {
   return (
     <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
       <Stack gap="md">
-        <Heading level={headerTag === "h1" ? 1 : 2}>
-          Frequently asked questions
-        </Heading>
+        <Heading level={headerTag === "h1" ? 1 : 2}>Frequently asked questions</Heading>
         <Text color="muted" leading="snug" className="max-w-md">
           Can&apos;t find what you need?{" "}
           <a
@@ -64,14 +70,12 @@ export function FAQ({ headerTag = "h2" }: { headerTag?: "h1" | "h2" }) {
 
       <Accordion type="single" collapsible className="w-full">
         {faqs.map((item, i) => (
-          <Accordion.Item key={i} value={`faq-${i}`}>
-            <Accordion.Trigger className="text-left hover:no-underline">
+          <AccordionItem key={i} value={`faq-${i}`}>
+            <AccordionTrigger className="text-left hover:no-underline">
               {item.question}
-            </Accordion.Trigger>
-            <Accordion.Content className="text-muted-foreground">
-              {item.answer}
-            </Accordion.Content>
-          </Accordion.Item>
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground">{item.answer}</AccordionContent>
+          </AccordionItem>
         ))}
       </Accordion>
     </div>

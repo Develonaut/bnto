@@ -1,6 +1,6 @@
 "use client";
 
-import { Animate } from "@bnto/ui";
+import { FadeIn } from "@bnto/ui";
 import { CleanCsvConfig } from "./configs/CleanCsvConfig";
 import { CompressImagesConfig } from "./configs/CompressImagesConfig";
 import { ConvertFormatConfig } from "./configs/ConvertFormatConfig";
@@ -24,9 +24,9 @@ export function RecipeConfigSection({ slug, config, onChange }: RecipeConfigSect
   if (!content) return null;
 
   return (
-    <Animate.FadeIn>
+    <FadeIn>
       <div>{content}</div>
-    </Animate.FadeIn>
+    </FadeIn>
   );
 }
 
@@ -37,13 +37,27 @@ function renderConfig(
 ) {
   switch (slug) {
     case "compress-images":
-      return <CompressImagesConfig value={config as BntoConfigMap["compress-images"]} onChange={onChange} />;
+      return (
+        <CompressImagesConfig
+          value={config as BntoConfigMap["compress-images"]}
+          onChange={onChange}
+        />
+      );
     case "resize-images":
-      return <ResizeImagesConfig value={config as BntoConfigMap["resize-images"]} onChange={onChange} />;
+      return (
+        <ResizeImagesConfig value={config as BntoConfigMap["resize-images"]} onChange={onChange} />
+      );
     case "convert-image-format":
-      return <ConvertFormatConfig value={config as BntoConfigMap["convert-image-format"]} onChange={onChange} />;
+      return (
+        <ConvertFormatConfig
+          value={config as BntoConfigMap["convert-image-format"]}
+          onChange={onChange}
+        />
+      );
     case "rename-files":
-      return <RenameFilesConfig value={config as BntoConfigMap["rename-files"]} onChange={onChange} />;
+      return (
+        <RenameFilesConfig value={config as BntoConfigMap["rename-files"]} onChange={onChange} />
+      );
     case "clean-csv":
       return <CleanCsvConfig value={config as BntoConfigMap["clean-csv"]} onChange={onChange} />;
     case "rename-csv-columns":

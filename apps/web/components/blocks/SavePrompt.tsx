@@ -2,7 +2,7 @@
 
 import { core } from "@bnto/core";
 
-import { Animate, Button, Card, Row, Stack, Text } from "@bnto/ui";
+import { SlideUp, Button, Card, Row, Stack, Text } from "@bnto/ui";
 
 /**
  * Post-execution conversion prompt for unauthenticated users.
@@ -19,7 +19,7 @@ export function SavePrompt({ show }: { show: boolean }) {
   if (isLoading || isAuthenticated || !show) return null;
 
   return (
-    <Animate.SlideUp>
+    <SlideUp>
       <Card elevation="sm" className="px-5 py-4">
         <Row justify="between" align="center" wrap className="gap-3">
           <Stack className="min-w-0 gap-0.5">
@@ -35,6 +35,6 @@ export function SavePrompt({ show }: { show: boolean }) {
           </Button>
         </Row>
       </Card>
-    </Animate.SlideUp>
+    </SlideUp>
   );
 }

@@ -14,11 +14,11 @@ Forms across the app use ad-hoc `useState` for each field with no validation lib
 
 ### What exists today
 
-| Surface | Pattern | Validation | Complexity |
-|---|---|---|---|
-| **SignInForm** (auth) | Raw `useState` per field (name, email, password, error, loading) | Try/catch on submit, single error string | Low |
-| **Recipe configs** (6 variants) | Controlled components with `value` + `onChange` props, parent Zustand store | None — engine validates at execution | Low |
-| **recipeFlowStore** (Zustand) | Factory-created per page mount, typed per slug via `BntoConfigMap` | None | Medium |
+| Surface                         | Pattern                                                                     | Validation                               | Complexity |
+| ------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------- | ---------- |
+| **SignInForm** (auth)           | Raw `useState` per field (name, email, password, error, loading)            | Try/catch on submit, single error string | Low        |
+| **Recipe configs** (6 variants) | Controlled components with `value` + `onChange` props, parent Zustand store | None — engine validates at execution     | Low        |
+| **recipeFlowStore** (Zustand)   | Factory-created per page mount, typed per slug via `BntoConfigMap`          | None                                     | Medium     |
 
 ### What's NOT installed
 
@@ -26,7 +26,7 @@ Forms across the app use ad-hoc `useState` for each field with no validation lib
 - Zustand is used for app state (not forms)
 - React Query for server state
 - Radix UI primitives for inputs (Input, Select, Slider, Switch, Checkbox, etc.)
-- All input components have Motorway visual treatment and dot-notation composition
+- All input components have Motorway visual treatment and flat named export composition
 
 ---
 
@@ -38,13 +38,13 @@ The product has two fundamentally different "form" paradigms. The library choice
 
 Submit-once forms with validation. Small in number, low-to-medium complexity.
 
-| Surface | Sprint | Fields | Notes |
-|---|---|---|---|
-| Sign-in | Existing | email, password | Basic validation needed |
-| Sign-up | Existing | name, email, password | Email format, password min length |
-| Settings/Profile | Sprint 3+ | name, email, avatar? | Not yet built |
-| Team invite | Sprint 7 | email, role | Simple CRUD |
-| Billing management | Sprint 7 | — | Stripe handles heavy form work |
+| Surface            | Sprint    | Fields                | Notes                             |
+| ------------------ | --------- | --------------------- | --------------------------------- |
+| Sign-in            | Existing  | email, password       | Basic validation needed           |
+| Sign-up            | Existing  | name, email, password | Email format, password min length |
+| Settings/Profile   | Sprint 3+ | name, email, avatar?  | Not yet built                     |
+| Team invite        | Sprint 7  | email, role           | Simple CRUD                       |
+| Billing management | Sprint 7  | —                     | Stripe handles heavy form work    |
 
 **Total: 4-5 traditional forms across the entire product lifecycle.**
 
@@ -52,13 +52,13 @@ Submit-once forms with validation. Small in number, low-to-medium complexity.
 
 Continuous, reactive state that updates Zustand stores on every change. Validation is domain-specific, driven by `ParameterSchema` from `@bnto/nodes`. A traditional form library would be a hindrance here.
 
-| Surface | Sprint | Notes |
-|---|---|---|
-| Recipe config components (6 types) | Existing | Controlled components, parent Zustand store |
-| NodeConfigPanel (10 node types) | Sprint 4 Wave 3 | Auto-generated from `ParameterSchema` schemas |
-| Code editor (JSON editing) | Sprint 4B | CodeMirror 6 owns its own state model |
-| Per-file config overrides | Backlog | Zustand store extension |
-| Desktop local preferences | Sprint 5-6 | Simple key-value settings |
+| Surface                            | Sprint          | Notes                                         |
+| ---------------------------------- | --------------- | --------------------------------------------- |
+| Recipe config components (6 types) | Existing        | Controlled components, parent Zustand store   |
+| NodeConfigPanel (10 node types)    | Sprint 4 Wave 3 | Auto-generated from `ParameterSchema` schemas |
+| Code editor (JSON editing)         | Sprint 4B       | CodeMirror 6 owns its own state model         |
+| Per-file config overrides          | Backlog         | Zustand store extension                       |
+| Desktop local preferences          | Sprint 5-6      | Simple key-value settings                     |
 
 **These surfaces use Zustand + pure validation functions from `@bnto/nodes`. Do NOT apply a form library here.**
 
@@ -68,16 +68,16 @@ Continuous, reactive state that updates Zustand stores on every change. Validati
 
 ### React Hook Form (RHF)
 
-| Metric | Value |
-|---|---|
-| GitHub Stars | 44.5k |
-| npm Downloads | ~7M weekly |
-| Bundle Size | ~10 KB gzipped |
-| Maintenance | Active (updated Feb 2026) |
-| State Model | Uncontrolled (refs) — minimal re-renders |
+| Metric          | Value                                     |
+| --------------- | ----------------------------------------- |
+| GitHub Stars    | 44.5k                                     |
+| npm Downloads   | ~7M weekly                                |
+| Bundle Size     | ~10 KB gzipped                            |
+| Maintenance     | Active (updated Feb 2026)                 |
+| State Model     | Uncontrolled (refs) — minimal re-renders  |
 | Zod Integration | First-class via `@hookform/resolvers/zod` |
-| shadcn/ui | Official integration guide |
-| TypeScript | Strong |
+| shadcn/ui       | Official integration guide                |
+| TypeScript      | Strong                                    |
 
 **Pros:** Dominant ecosystem, tiny bundle, proven performance model (uncontrolled inputs = fewer re-renders), shadcn/ui first-class support, every React developer knows it.
 
@@ -85,16 +85,16 @@ Continuous, reactive state that updates Zustand stores on every change. Validati
 
 ### TanStack Form
 
-| Metric | Value |
-|---|---|
-| GitHub Stars | ~5k |
-| npm Downloads | ~115k weekly |
-| Bundle Size | Varies by framework adapter |
-| Maintenance | Active (TanStack ecosystem) |
-| State Model | Fine-grained reactivity |
-| Zod Integration | Plugin-based validation |
-| shadcn/ui | Newer official integration guide |
-| TypeScript | Best-in-class type inference |
+| Metric          | Value                            |
+| --------------- | -------------------------------- |
+| GitHub Stars    | ~5k                              |
+| npm Downloads   | ~115k weekly                     |
+| Bundle Size     | Varies by framework adapter      |
+| Maintenance     | Active (TanStack ecosystem)      |
+| State Model     | Fine-grained reactivity          |
+| Zod Integration | Plugin-based validation          |
+| shadcn/ui       | Newer official integration guide |
+| TypeScript      | Best-in-class type inference     |
 
 **Pros:** Zero dependencies, best TypeScript type safety, fine-grained field control, framework-agnostic core (could work with future Tauri/non-React consumer).
 
@@ -102,26 +102,26 @@ Continuous, reactive state that updates Zustand stores on every change. Validati
 
 ### Formik
 
-| Metric | Value |
-|---|---|
-| GitHub Stars | 34.2k |
-| npm Downloads | ~600k weekly (declining) |
-| Bundle Size | ~44 KB gzipped |
-| Maintenance | Slow (last major: 2021) |
-| State Model | Controlled via Context — re-renders entire form tree |
-| Zod Integration | Via Yup primarily |
+| Metric          | Value                                                |
+| --------------- | ---------------------------------------------------- |
+| GitHub Stars    | 34.2k                                                |
+| npm Downloads   | ~600k weekly (declining)                             |
+| Bundle Size     | ~44 KB gzipped                                       |
+| Maintenance     | Slow (last major: 2021)                              |
+| State Model     | Controlled via Context — re-renders entire form tree |
+| Zod Integration | Via Yup primarily                                    |
 
 **Not recommended.** Bundle is 4x RHF, maintenance is slow, re-render model is the worst of all options. Effectively legacy.
 
 ### Conform
 
-| Metric | Value |
-|---|---|
-| GitHub Stars | ~2.5k |
-| npm Downloads | ~50k weekly |
-| Bundle Size | Small |
-| Maintenance | Active (v1.17.0, Feb 2026) |
-| State Model | Progressive enhancement, web standards |
+| Metric        | Value                                  |
+| ------------- | -------------------------------------- |
+| GitHub Stars  | ~2.5k                                  |
+| npm Downloads | ~50k weekly                            |
+| Bundle Size   | Small                                  |
+| Maintenance   | Active (v1.17.0, Feb 2026)             |
+| State Model   | Progressive enhancement, web standards |
 
 **Interesting for SSR-heavy apps** but bnto's forms are all client-side (`"use client"`). Progressive enhancement doesn't add value here.
 
@@ -149,6 +149,7 @@ Continuous, reactive state that updates Zustand stores on every change. Validati
 ### Why NOT TanStack Form
 
 TanStack Form has better TypeScript inference, but:
+
 - 40x smaller community
 - shadcn/ui integration is less mature
 - We have 4-5 simple forms — the type safety advantage doesn't justify the ecosystem risk
@@ -213,7 +214,11 @@ export function useSignInForm() {
 import { useSignInForm } from "@bnto/form";
 
 export function SignInForm() {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useSignInForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useSignInForm();
 
   return (
     <form onSubmit={handleSubmit(handleSignIn)}>

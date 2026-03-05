@@ -5,7 +5,7 @@ import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { core, createRecipeFlowStore, deriveAcceptedTypes } from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
-import { getRecipeBySlug, type Definition } from "@bnto/nodes";
+import { getRecipeBySlug } from "@bnto/nodes";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { toDropzoneAccept } from "@bnto/ui";
 import type { BntoConfigMap, BntoSlug } from "../_components/configs/types";
@@ -63,12 +63,9 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   const browserExec = core.executions.useExecutionState(browserInstance);
 
   // -- Cloud execution --
-  const { progress: uploadProgress, upload, reset: resetUpload } =
-    core.uploads.useUploadFiles();
+  const { progress: uploadProgress, upload, reset: resetUpload } = core.uploads.useUploadFiles();
   const { mutateAsync: startCloudExec } = core.executions.useRunPredefined();
-  const { data: cloudExecution } = core.executions.useExecution(
-    executionId ?? "",
-  );
+  const { data: cloudExecution } = core.executions.useExecution(executionId ?? "");
 
   // -- Resolved phase (unified across both paths) --
   const resolvedPhase: RunPhase = isBrowserPath

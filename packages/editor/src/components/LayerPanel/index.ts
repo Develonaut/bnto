@@ -1,9 +1,3 @@
-"use client";
-
-import { LayerPanelRoot } from "./LayerPanelRoot";
-import { LayerPanelTrigger } from "./LayerPanelTrigger";
-
-export const LayerPanel = Object.assign(LayerPanelRoot, {
-  Root: LayerPanelRoot,
-  Trigger: LayerPanelTrigger,
-});
+export { LayerPanelRoot as LayerPanel } from "./LayerPanelRoot";
+export type { LayerPanelProps } from "./LayerPanelRoot";
+export { LayerPanelTrigger } from "./LayerPanelTrigger";

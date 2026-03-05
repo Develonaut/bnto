@@ -4,9 +4,9 @@ import { forwardRef } from "react";
 import type { ComponentProps } from "react";
 
 import { Button } from "../Button";
-import { Popover } from "../../overlay/Popover";
+import { PopoverAnchor, PopoverTrigger } from "../../overlay/Popover";
 
-/* Renders as our Button component inside a Popover.Anchor wrapper.
+/* Renders as our Button component inside a PopoverAnchor wrapper.
  *
  * The Button uses .pressable which animates via CSS transform.
  * Without the Anchor, Radix uses the Trigger itself as the
@@ -14,7 +14,7 @@ import { Popover } from "../../overlay/Popover";
  * the Button's spring animation plays, dragging the dropdown
  * with it.
  *
- * Popover.Anchor renders a static <div> that wraps the Trigger.
+ * PopoverAnchor renders a static <div> that wraps the Trigger.
  * Radix detects the custom anchor and tells Floating UI to read
  * position from the Anchor instead of the Trigger. Since the
  * Anchor has no transform, its bounding rect never changes —
@@ -22,13 +22,13 @@ import { Popover } from "../../overlay/Popover";
 export const MenuTrigger = forwardRef<HTMLButtonElement, ComponentProps<typeof Button>>(
   ({ children, ...props }, ref) => {
     return (
-      <Popover.Anchor className="inline-flex">
-        <Popover.Trigger asChild>
+      <PopoverAnchor className="inline-flex">
+        <PopoverTrigger asChild>
           <Button ref={ref} {...props}>
             {children}
           </Button>
-        </Popover.Trigger>
-      </Popover.Anchor>
+        </PopoverTrigger>
+      </PopoverAnchor>
     );
   },
 );

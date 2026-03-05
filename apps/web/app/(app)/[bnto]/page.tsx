@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AppShell } from "@bnto/ui";
+import { AppShellContent } from "@bnto/ui";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { RecipeShell } from "./_components/RecipeShell";
@@ -33,11 +33,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function BntoPage({
-  params,
-}: {
-  params: Promise<{ bnto: string }>;
-}) {
+export default async function BntoPage({ params }: { params: Promise<{ bnto: string }> }) {
   const { bnto: slug } = await params;
   const entry = getBntoBySlug(slug);
   if (!entry) notFound();
@@ -45,9 +41,9 @@ export default async function BntoPage({
   return (
     <>
       <BntoJsonLd entry={entry} />
-      <AppShell.Content>
+      <AppShellContent>
         <RecipeShell key={slug} entry={entry} />
-      </AppShell.Content>
+      </AppShellContent>
     </>
   );
 }

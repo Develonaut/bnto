@@ -23,12 +23,12 @@ Before reviewing ANY code, read and internalize these files. They are the source
 
 Identify which packages the changed files belong to and invoke the relevant persona skill(s):
 
-| Changed files in... | Persona skill |
-|---|---|
-| `engine/` | `/rust-expert` |
-| `apps/web/` | `/frontend-engineer` + `/nextjs-expert` |
-| `packages/core/` | `/core-architect` |
-| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer` |
+| Changed files in...                               | Persona skill                           |
+| ------------------------------------------------- | --------------------------------------- |
+| `engine/`                                         | `/rust-expert`                          |
+| `apps/web/`                                       | `/frontend-engineer` + `/nextjs-expert` |
+| `packages/core/`                                  | `/core-architect`                       |
+| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer`                     |
 
 **If changes touch auth, security headers, input validation, file uploads, or Convex mutations**, also invoke `/security-engineer` — the security persona owns trust boundaries across all packages.
 
@@ -41,9 +41,11 @@ Identify which packages the changed files belong to and invoke the relevant pers
 Determine what needs review:
 
 ### Uncommitted changes
+
 !`git diff --name-only HEAD 2>/dev/null; git diff --cached --name-only 2>/dev/null; git ls-files --others --exclude-standard`
 
 ### Current branch
+
 !`git branch --show-current`
 
 Read every changed file in full. You cannot review code you haven't read.
@@ -65,7 +67,7 @@ For EACH changed file, verify:
 - [ ] **One export per file**: Every exported component, hook, or function gets its own file. No `hooks.ts` grab bags, no `utils.ts` grab bags, no multi-component files. Only exception: shadcn primitives (thin `forwardRef` wrappers)
 - [ ] **Folder organization**: Components (PascalCase `.tsx`) at folder root, hooks in `hooks/` subdirectory (`use-kebab-case.ts`), pure functions in `utils/` subdirectory (`kebab-case.ts`). Test files co-located next to implementation
 - [ ] **Components are render shells**: No `useState`, `useEffect`, handlers, or business logic in the component body. All logic lives in a `use<Component>Props` hook or pure functions. Components call one props hook and spread onto JSX
-- [ ] **Compose, don't configure**: Consumers compose which parts appear via JSX children, not boolean/config props. Domain components with 3+ sub-parts use dot-notation namespace via `Object.assign`, NOT flat barrel exports
+- [ ] **Compose, don't configure**: Consumers compose which parts appear via JSX children, not boolean/config props. Multi-part components use flat prefixed exports (`CardHeader`, `DialogContent`), NOT `Object.assign` dot-notation (breaks RSC)
 - [ ] **Pure functions -> logic hooks -> props hooks -> components**: Business rules in pure testable functions, logic hooks compose them reactively, props hooks build the complete props object, components are render shells
 - [ ] **Hook decomposition**: Hooks doing multiple things split into focused sub-hooks. Signs it's too big: >30 lines, multiple unrelated state, hard to name without "and"
 - [ ] **Primitives vs business components**: Generic in `primitives/` (no domain knowledge), domain-specific in `components/`
@@ -162,19 +164,24 @@ Search the codebase for references to anything that was changed (class names, pr
 Present findings organized by severity:
 
 ### Violations (must fix)
+
 Issues that break architecture rules, introduce bugs, or violate hard constraints. List each with:
+
 - **File**: path and line number
 - **Rule**: which standard is violated (reference the rule file)
 - **Issue**: what's wrong
 - **Fix**: specific recommendation
 
 ### Warnings (should fix)
+
 Issues that don't break rules but degrade code quality. Style inconsistencies, missing optimizations, suboptimal patterns.
 
 ### Notes
+
 Observations, questions, or suggestions that aren't violations.
 
 ### Checklist Summary
+
 ```
 Architecture & Layers:    PASS / FAIL (count)
 Bento Box:                PASS / FAIL (count)

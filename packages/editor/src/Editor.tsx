@@ -13,8 +13,8 @@
  *     </EditorCanvas>
  *   </EditorRoot>
  *
- * Flat exports (not dot-notation) because Object.assign compound components
- * don't work across the Server/Client boundary — sub-properties are undefined.
+ * Flat named exports — compound components use prefixed names (EditorCanvas,
+ * EditorToolbar) for RSC compatibility.
  */
 
 import { EditorCanvasRoot } from "./components/EditorCanvas/EditorCanvasRoot";

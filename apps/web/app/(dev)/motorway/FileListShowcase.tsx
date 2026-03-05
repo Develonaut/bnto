@@ -2,7 +2,20 @@
 
 import { useState } from "react";
 
-import { Button, Card, FileUpload, UploadIcon, XIcon } from "@bnto/ui";
+import {
+  Button,
+  Card,
+  FileUpload,
+  FileUploadDropzone,
+  FileUploadClear,
+  FileUploadList,
+  FileUploadItem,
+  FileUploadItemMetadata,
+  FileUploadItemActions,
+  FileUploadItemDelete,
+  UploadIcon,
+  XIcon,
+} from "@bnto/ui";
 
 export function FileListShowcase() {
   const [files, setFiles] = useState<File[]>([]);
@@ -10,19 +23,17 @@ export function FileListShowcase() {
   return (
     <FileUpload value={files} onValueChange={setFiles} accept={{ "image/*": [] }}>
       {files.length === 0 && (
-        <FileUpload.Dropzone className="gap-3 px-6 py-10">
+        <FileUploadDropzone className="gap-3 px-6 py-10">
           <div className="rounded-full bg-muted p-3 text-muted-foreground">
             <UploadIcon className="size-6" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-foreground">
-              Drag & drop files here
-            </p>
+            <p className="text-sm font-medium text-foreground">Drag & drop files here</p>
             <p className="mt-1 text-xs text-muted-foreground">
               or click to browse &middot; accepts images
             </p>
           </div>
-        </FileUpload.Dropzone>
+        </FileUploadDropzone>
       )}
 
       {files.length > 0 && (
@@ -31,36 +42,33 @@ export function FileListShowcase() {
             <p className="text-sm font-medium text-foreground">
               {files.length} {files.length === 1 ? "file" : "files"} selected
             </p>
-            <FileUpload.Clear asChild>
+            <FileUploadClear asChild>
               <Button variant="outline" elevation="md">
                 Clear all
               </Button>
-            </FileUpload.Clear>
+            </FileUploadClear>
           </div>
 
-          <FileUpload.List>
+          <FileUploadList>
             {files.map((file, i) => (
-              <FileUpload.Item
+              <FileUploadItem
                 key={`${file.name}-${file.size}-${file.lastModified}`}
                 value={file}
                 index={i}
               >
-                <Card
-                  className="flex items-center gap-3 rounded-lg px-4 py-3"
-                  elevation="sm"
-                >
-                  <FileUpload.ItemMetadata />
-                  <FileUpload.ItemActions>
-                    <FileUpload.ItemDelete asChild>
+                <Card className="flex items-center gap-3 rounded-lg px-4 py-3" elevation="sm">
+                  <FileUploadItemMetadata />
+                  <FileUploadItemActions>
+                    <FileUploadItemDelete asChild>
                       <Button variant="outline" size="icon" elevation="sm">
                         <XIcon className="size-4" />
                       </Button>
-                    </FileUpload.ItemDelete>
-                  </FileUpload.ItemActions>
+                    </FileUploadItemDelete>
+                  </FileUploadItemActions>
                 </Card>
-              </FileUpload.Item>
+              </FileUploadItem>
             ))}
-          </FileUpload.List>
+          </FileUploadList>
         </div>
       )}
     </FileUpload>

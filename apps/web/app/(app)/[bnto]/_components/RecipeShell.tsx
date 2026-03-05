@@ -1,7 +1,17 @@
 "use client";
 
 import type { BntoEntry } from "@/lib/bntoRegistry";
-import { Animate, Container, FileUpload, Grid, Heading, Stack } from "@bnto/ui";
+import {
+  FadeIn,
+  SlideUp,
+  BouncyStagger,
+  Container,
+  FileUpload,
+  FileUploadDropzone,
+  Grid,
+  Heading,
+  Stack,
+} from "@bnto/ui";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
 import { DropzoneContent } from "./DropzoneContent";
 import { ErrorCard } from "./ErrorCard";
@@ -58,9 +68,9 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
     >
       <PhaseIndicator activePhase={activePhase} />
 
-      <Animate.FadeIn>
+      <FadeIn>
         <Heading level={1}>{entry.h1}</Heading>
-      </Animate.FadeIn>
+      </FadeIn>
       <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
         {entry.description}
       </p>
@@ -74,11 +84,11 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
       >
         {/* Phase 1: Dropzone — full width to match Phases 2–3 */}
         {activePhase === 1 && (
-          <Animate.SlideUp>
-            <FileUpload.Dropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
+          <SlideUp>
+            <FileUploadDropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
               <DropzoneContent label={acceptLabel} />
-            </FileUpload.Dropzone>
-          </Animate.SlideUp>
+            </FileUploadDropzone>
+          </SlideUp>
         )}
 
         {/* Phases 2–3: Toolbar persists, content below changes */}
@@ -107,9 +117,9 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
               isBrowserPath &&
               browserExec.status === "failed" &&
               browserExec.error && (
-                <Animate.SlideUp>
+                <SlideUp>
                   <ErrorCard error={browserExec.error} />
-                </Animate.SlideUp>
+                </SlideUp>
               )}
 
             {/* Phase 3 (cloud): Upload/execution progress — cloud path not yet persistent */}
@@ -128,7 +138,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
             {/* Persistent file grid — always visible in Phases 2 and 3.
              * Columns adapt to file count: 1 file = full width,
              * 2 files = 2 cols on md+, 3+ files = 2 cols on md / 3 cols on lg. */}
-            <Animate.BouncyStagger asChild>
+            <BouncyStagger asChild>
               <Grid
                 cols={1}
                 gap="sm"
@@ -164,7 +174,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
                   );
                 })}
               </Grid>
-            </Animate.BouncyStagger>
+            </BouncyStagger>
           </Stack>
         )}
       </FileUpload>

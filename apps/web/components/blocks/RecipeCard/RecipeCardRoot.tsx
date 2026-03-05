@@ -151,7 +151,7 @@ function RecipeCardMeta({ nodeCount, updatedAt }: { nodeCount: number; updatedAt
   );
 }
 
-/* ── Exports (used by index.ts Object.assign) ────────────────── */
+/* ── Exports (re-exported from index.ts) ────────────────── */
 
 export {
   RecipeCardHeader,

@@ -1,4 +1,14 @@
-import { AppShell, ArrowLeftIcon, Button, Heading, Row, Stack, Text } from "@bnto/ui";
+import {
+  AppShellHeader,
+  AppShellMain,
+  AppShellContent,
+  ArrowLeftIcon,
+  Button,
+  Heading,
+  Row,
+  Stack,
+  Text,
+} from "@bnto/ui";
 
 import { Navbar } from "@/components/blocks/Navbar";
 import { Footer } from "@/components/blocks/Footer";
@@ -15,29 +25,20 @@ import { GITHUB_URL } from "@/lib/copy";
 export default function NotFound() {
   return (
     <>
-      <AppShell.Header>
+      <AppShellHeader>
         <Navbar />
-      </AppShell.Header>
-      <AppShell.Main>
-        <AppShell.Content>
-          <Stack
-            align="center"
-            justify="center"
-            className="min-h-[60vh] text-center"
-          >
+      </AppShellHeader>
+      <AppShellMain>
+        <AppShellContent>
+          <Stack align="center" justify="center" className="min-h-[60vh] text-center">
             <Stack gap="md" align="center" className="max-w-lg">
-              <Text
-                size="sm"
-                mono
-                color="muted"
-                className="uppercase tracking-wider"
-              >
+              <Text size="sm" mono color="muted" className="uppercase tracking-wider">
                 404
               </Text>
               <Heading level={1}>Page Not Found</Heading>
               <Text color="muted" size="lg" balance>
-                Sorry, we couldn&apos;t find the page you&apos;re looking for.
-                The page might have been removed or the URL might be incorrect.
+                Sorry, we couldn&apos;t find the page you&apos;re looking for. The page might have
+                been removed or the URL might be incorrect.
               </Text>
             </Stack>
 
@@ -56,8 +57,8 @@ export default function NotFound() {
               </Button>
             </Row>
           </Stack>
-        </AppShell.Content>
-      </AppShell.Main>
+        </AppShellContent>
+      </AppShellMain>
       <Footer />
     </>
   );

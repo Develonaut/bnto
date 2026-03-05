@@ -4,6 +4,10 @@ import type { ReactNode } from "react";
 import {
   cn,
   Panel,
+  PanelHeader,
+  PanelDivider,
+  PanelContent,
+  PanelFooter,
   Text,
   CopyIcon,
   DownloadIcon,
@@ -14,7 +18,7 @@ import {
 import { useEditorExport } from "../../hooks/useEditorExport";
 import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorPanels } from "../../hooks/useEditorPanels";
-import { FileMenu } from "./FileMenu";
+import { FileMenu, FileMenuItem, FileMenuSeparator } from "./FileMenu";
 import { NodeList } from "./NodeList";
 import { useAutoSelect } from "../../hooks/useAutoSelect";
 
@@ -56,43 +60,43 @@ function LayerPanelRoot({ footer }: LayerPanelProps) {
       )}
     >
       <Panel className="h-full w-full">
-        <Panel.Header className="gap-2 px-3 pt-3 pb-2">
+        <PanelHeader className="gap-2 px-3 pt-3 pb-2">
           <Text size="sm" className="min-w-0 flex-1 truncate font-medium">
             {name}
           </Text>
           <FileMenu>
-            <FileMenu.Item onClick={handleDownload} disabled={!canDownload}>
+            <FileMenuItem onClick={handleDownload} disabled={!canDownload}>
               <DownloadIcon className="size-4" />
               Download
-            </FileMenu.Item>
-            <FileMenu.Separator />
-            <FileMenu.Item disabled>
+            </FileMenuItem>
+            <FileMenuSeparator />
+            <FileMenuItem disabled>
               <PlusIcon className="size-4" />
               New Recipe
-            </FileMenu.Item>
-            <FileMenu.Item disabled>
+            </FileMenuItem>
+            <FileMenuItem disabled>
               <CopyIcon className="size-4" />
               Duplicate
-            </FileMenu.Item>
-            <FileMenu.Item disabled>
+            </FileMenuItem>
+            <FileMenuItem disabled>
               <PenLineIcon className="size-4" />
               Rename
-            </FileMenu.Item>
-            <FileMenu.Separator />
-            <FileMenu.Item disabled className="text-destructive">
+            </FileMenuItem>
+            <FileMenuSeparator />
+            <FileMenuItem disabled className="text-destructive">
               <TrashIcon className="size-4" />
               Delete
-            </FileMenu.Item>
+            </FileMenuItem>
           </FileMenu>
-        </Panel.Header>
-        <Panel.Divider />
-        <Panel.Content>
+        </PanelHeader>
+        <PanelDivider />
+        <PanelContent>
           <NodeList nodes={nodes} selectedNodeId={selectedNodeId} onSelect={handleSelectNode} />
-        </Panel.Content>
+        </PanelContent>
         {footer && (
           <>
-            <Panel.Divider />
-            <Panel.Footer>{footer}</Panel.Footer>
+            <PanelDivider />
+            <PanelFooter>{footer}</PanelFooter>
           </>
         )}
       </Panel>

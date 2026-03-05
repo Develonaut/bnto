@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Animate, Card, Text } from "@bnto/ui";
+import { ScaleIn, Card, Text } from "@bnto/ui";
 import type { StationData, StationNodeType } from "./types";
 
 /**
@@ -53,7 +53,7 @@ export const StationNode = memo(function StationNode({
        * We set animation-delay directly because React Flow's DOM
        * structure prevents stagger-cascade from reaching child nodes
        * (nodes are nested inside RF's own wrappers, not direct children). */}
-      <Animate.ScaleIn
+      <ScaleIn
         from={0.85}
         easing="spring-bouncy"
         style={{ animationDelay: `${(data.staggerIndex ?? 0) * 80}ms` }}
@@ -74,7 +74,7 @@ export const StationNode = memo(function StationNode({
             </Text>
           )}
         </Card>
-      </Animate.ScaleIn>
+      </ScaleIn>
 
       {/* Source handle (right side) — invisible, same as target */}
       {!data.hideSource && (

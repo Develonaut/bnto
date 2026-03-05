@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AppShell } from "@bnto/ui";
+import { AppShellHeader, AppShellMain } from "@bnto/ui";
 import { Navbar } from "@/components/blocks/Navbar";
 
 export const metadata: Metadata = {
@@ -9,10 +9,10 @@ export const metadata: Metadata = {
 export default function DevLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <AppShell.Header>
+      <AppShellHeader>
         <Navbar />
-      </AppShell.Header>
-      <AppShell.Main>{children}</AppShell.Main>
+      </AppShellHeader>
+      <AppShellMain>{children}</AppShellMain>
     </>
   );
 }

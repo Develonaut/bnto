@@ -1,12 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Button, FileUpload, Row } from "@bnto/ui";
-import {
-  ArrowLeftIcon,
-  DownloadIcon,
-  TrashIcon,
-} from "@bnto/ui";
+import { Button, FileUploadClear, Row } from "@bnto/ui";
+import { ArrowLeftIcon, DownloadIcon, TrashIcon } from "@bnto/ui";
 import { RunButton } from "./RunButton";
 import type { RunPhase } from "./RunButton";
 
@@ -51,9 +47,7 @@ export function RecipeToolbar({
           elevation="sm"
           disabled={isProcessing}
           onClick={onBack}
-          aria-label={
-            activePhase === 3 ? "Back to configure" : "Back to file selection"
-          }
+          aria-label={activePhase === 3 ? "Back to configure" : "Back to file selection"}
         >
           <ArrowLeftIcon className="size-4" />
         </Button>
@@ -74,22 +68,13 @@ export function RecipeToolbar({
             </Button>
           )}
           {activePhase === 2 && (
-            <FileUpload.Clear asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                elevation="md"
-                aria-label="Clear all files"
-              >
+            <FileUploadClear asChild>
+              <Button variant="outline" size="icon" elevation="md" aria-label="Clear all files">
                 <TrashIcon className="size-4" />
               </Button>
-            </FileUpload.Clear>
+            </FileUploadClear>
           )}
-          <RunButton
-            phase={resolvedPhase}
-            hasFiles={fileCount > 0}
-            onRun={onRun}
-          />
+          <RunButton phase={resolvedPhase} hasFiles={fileCount > 0} onRun={onRun} />
         </Row>
       </Row>
 
@@ -115,22 +100,13 @@ export function RecipeToolbar({
           </Button>
         )}
         {activePhase === 2 && (
-          <FileUpload.Clear asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              elevation="md"
-              aria-label="Clear all files"
-            >
+          <FileUploadClear asChild>
+            <Button variant="outline" size="icon" elevation="md" aria-label="Clear all files">
               <TrashIcon className="size-4" />
             </Button>
-          </FileUpload.Clear>
+          </FileUploadClear>
         )}
-        <RunButton
-          phase={resolvedPhase}
-          hasFiles={fileCount > 0}
-          onRun={onRun}
-        />
+        <RunButton phase={resolvedPhase} hasFiles={fileCount > 0} onRun={onRun} />
       </Row>
     </div>
   );

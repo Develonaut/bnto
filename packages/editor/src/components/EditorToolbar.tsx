@@ -4,6 +4,8 @@ import { useCallback } from "react";
 import {
   Button,
   Toolbar,
+  ToolbarGroup,
+  ToolbarDivider,
   PlusIcon,
   TrashIcon,
   RotateCcwIcon,
@@ -14,9 +16,9 @@ import { useEditorUndoRedo } from "../hooks/useEditorUndoRedo";
 import { useEditorActions } from "../hooks/useEditorActions";
 import { useEditorStore } from "../hooks/useEditorStore";
 import { useEditorStoreApi } from "../hooks/useEditorStoreApi";
-import { LayerPanel } from "./LayerPanel";
-import { ConfigPanel } from "./ConfigPanel";
-import { NodePaletteMenu } from "./NodePaletteMenu";
+import { LayerPanelTrigger } from "./LayerPanel";
+import { ConfigPanelTrigger } from "./ConfigPanel";
+import { NodePaletteMenu, NodePaletteMenuTrigger, NodePaletteMenuContent } from "./NodePaletteMenu";
 
 /**
  * EditorToolbar — self-contained bottom-center toolbar.
@@ -43,24 +45,24 @@ function EditorToolbar() {
   return (
     <div className="pointer-events-auto absolute bottom-0 left-1/2 -translate-x-1/2">
       <Toolbar elevation="md">
-        <Toolbar.Group>
-          <LayerPanel.Trigger />
-        </Toolbar.Group>
+        <ToolbarGroup>
+          <LayerPanelTrigger />
+        </ToolbarGroup>
 
-        <Toolbar.Divider />
+        <ToolbarDivider />
 
         {/* Add / Remove */}
-        <Toolbar.Group>
+        <ToolbarGroup>
           <NodePaletteMenu>
-            <NodePaletteMenu.Trigger
+            <NodePaletteMenuTrigger
               size="icon"
               variant="ghost"
               elevation="sm"
               aria-label="Add node"
             >
               <PlusIcon className="size-4" />
-            </NodePaletteMenu.Trigger>
-            <NodePaletteMenu.Content side="top" offset="lg" />
+            </NodePaletteMenuTrigger>
+            <NodePaletteMenuContent side="top" offset="lg" />
           </NodePaletteMenu>
           <Button
             size="icon"
@@ -72,12 +74,12 @@ function EditorToolbar() {
           >
             <TrashIcon className="size-4" />
           </Button>
-        </Toolbar.Group>
+        </ToolbarGroup>
 
-        <Toolbar.Divider />
+        <ToolbarDivider />
 
         {/* Undo / Redo / Reset */}
-        <Toolbar.Group>
+        <ToolbarGroup>
           <Button
             size="icon"
             variant="ghost"
@@ -108,13 +110,13 @@ function EditorToolbar() {
           >
             <RotateCcwIcon className="size-4" />
           </Button>
-        </Toolbar.Group>
+        </ToolbarGroup>
 
-        <Toolbar.Divider />
+        <ToolbarDivider />
 
-        <Toolbar.Group>
-          <ConfigPanel.Trigger />
-        </Toolbar.Group>
+        <ToolbarGroup>
+          <ConfigPanelTrigger />
+        </ToolbarGroup>
       </Toolbar>
     </div>
   );

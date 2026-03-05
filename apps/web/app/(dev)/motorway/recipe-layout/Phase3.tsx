@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Grid, Text } from "@bnto/ui";
+import { Card, GridItem, Text } from "@bnto/ui";
 import { PhaseShell } from "./PhaseShell";
 import { MockResultCard } from "./MockCards";
 import { ActionBar } from "./SharedPanels";
@@ -10,7 +10,7 @@ import { StatsCard } from "./StatsCard";
 
 function SizeComparisonPanel() {
   return (
-    <Grid.Item colSpan={3} rowSpan={2} colStart={4} rowStart={1}>
+    <GridItem colSpan={3} rowSpan={2} colStart={4} rowStart={1}>
       <Card className="flex h-full flex-col p-4" elevation="sm">
         <Text size="xs" color="muted" weight="semibold" className="mb-3 uppercase tracking-wider">
           Size Comparison
@@ -22,8 +22,13 @@ function SizeComparisonPanel() {
               { name: "product-shot.png", originalW: "75%", compressedW: "20%" },
             ].map(({ name, originalW, compressedW }) => (
               <div key={name}>
-                <Text size="xs" color="muted">{name}</Text>
-                <div className="mt-1 h-4 rounded-sm bg-muted-foreground/20" style={{ width: originalW }} />
+                <Text size="xs" color="muted">
+                  {name}
+                </Text>
+                <div
+                  className="mt-1 h-4 rounded-sm bg-muted-foreground/20"
+                  style={{ width: originalW }}
+                />
                 <div className="mt-0.5 h-4 rounded-sm bg-primary" style={{ width: compressedW }} />
               </div>
             ))}
@@ -32,29 +37,39 @@ function SizeComparisonPanel() {
         <div className="mt-2 flex gap-4">
           <div className="flex items-center gap-1.5">
             <div className="size-2 rounded-full bg-muted-foreground/20" />
-            <Text size="xs" color="muted">Original</Text>
+            <Text size="xs" color="muted">
+              Original
+            </Text>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="size-2 rounded-full bg-primary" />
-            <Text size="xs" color="muted">Compressed</Text>
+            <Text size="xs" color="muted">
+              Compressed
+            </Text>
           </div>
         </div>
       </Card>
-    </Grid.Item>
+    </GridItem>
   );
 }
 
 function SavingsDonutTile() {
   return (
-    <Grid.Item colSpan={1} rowSpan={1} colStart={7} rowStart={2}>
+    <GridItem colSpan={1} rowSpan={1} colStart={7} rowStart={2}>
       <Card className="flex h-full flex-col items-center justify-center p-4" elevation="sm">
         <div className="relative flex size-16 items-center justify-center">
           <svg viewBox="0 0 36 36" className="size-16 -rotate-90">
             <circle cx="18" cy="18" r="14" fill="none" strokeWidth="4" className="stroke-muted" />
             <circle
-              cx="18" cy="18" r="14" fill="none" strokeWidth="4"
-              strokeDasharray="88 88" strokeDashoffset="23"
-              strokeLinecap="round" className="stroke-primary"
+              cx="18"
+              cy="18"
+              r="14"
+              fill="none"
+              strokeWidth="4"
+              strokeDasharray="88 88"
+              strokeDashoffset="23"
+              strokeLinecap="round"
+              className="stroke-primary"
             />
           </svg>
           <span className="absolute text-sm font-bold tabular-nums">74%</span>
@@ -63,7 +78,7 @@ function SavingsDonutTile() {
           saved
         </Text>
       </Card>
-    </Grid.Item>
+    </GridItem>
   );
 }
 

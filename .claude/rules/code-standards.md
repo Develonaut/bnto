@@ -24,13 +24,13 @@ Like a traditional Japanese bento box where each compartment serves a specific p
 
 **Every exported component, hook, or utility function gets its own file.** No exceptions for "they're related" or "they're small."
 
-| Type | Rule | File naming |
-|---|---|---|
-| **Components** | One exported component per file | `WorkflowCard.tsx` |
-| **Hooks** | One exported hook per file | `use-run-workflow.ts` |
-| **Functions** | One exported function per file | `validate-workflow.ts` |
+| Type           | Rule                            | File naming            |
+| -------------- | ------------------------------- | ---------------------- |
+| **Components** | One exported component per file | `WorkflowCard.tsx`     |
+| **Hooks**      | One exported hook per file      | `use-run-workflow.ts`  |
+| **Functions**  | One exported function per file  | `validate-workflow.ts` |
 
-**The only exception:** Compound primitives that mirror a single HTML element's anatomy (shadcn's `Card` + `CardHeader` + `CardContent`) can share a file in `primitives/`. These MUST be exported as dot-notation namespaces.
+**The only exception:** Compound primitives that mirror a single HTML element's anatomy (shadcn's `Card` + `CardHeader` + `CardContent`) can share a file in `primitives/`. These MUST be exported as flat named exports with prefixed names (e.g., `CardHeader`, not `Card.Header`).
 
 ### Anti-Patterns
 
@@ -123,6 +123,7 @@ function useAddNode() {
 ```
 
 **Why this matters:**
+
 - Pure actions are testable with plain objects — no React, no store, no mocking
 - Hooks become ~5-line wrappers with zero logic to get wrong
 - The pattern is followable — every hook looks the same (get state, call action, apply result)
@@ -132,12 +133,12 @@ function useAddNode() {
 
 ### Testing Strategy
 
-| Layer | What to test | How | Effort |
-|---|---|---|---|
-| **Pure functions (TS)** | Logic, edge cases, business rules | Unit tests (Vitest) -- pure input/output | **Heavy** |
-| **Hooks (TS)** | Non-trivial logic, derived state | `renderHook` when worth it | **Medium** |
-| **Components (TS)** | Renders correctly | Snapshot or minimal render | **Light** |
-| **Flows** | Everything works together | E2E tests (Playwright) | **Targeted** |
+| Layer                   | What to test                      | How                                      | Effort       |
+| ----------------------- | --------------------------------- | ---------------------------------------- | ------------ |
+| **Pure functions (TS)** | Logic, edge cases, business rules | Unit tests (Vitest) -- pure input/output | **Heavy**    |
+| **Hooks (TS)**          | Non-trivial logic, derived state  | `renderHook` when worth it               | **Medium**   |
+| **Components (TS)**     | Renders correctly                 | Snapshot or minimal render               | **Light**    |
+| **Flows**               | Everything works together         | E2E tests (Playwright)                   | **Targeted** |
 
 **Test pure functions heavily. Test hooks and components lightly. E2E captures the user experience.**
 
@@ -147,14 +148,14 @@ function useAddNode() {
 
 #### File Naming Conventions
 
-| Type | Convention | Example |
-|---|---|---|
-| Components | PascalCase `.tsx` | `WorkflowCard.tsx`, `Button.tsx` |
-| Hooks | camelCase with `use` prefix | `useRunWorkflow.ts` |
-| Utils/functions (TS) | camelCase `.ts` | `formatDuration.ts` |
-| Component folders | PascalCase | `WorkflowEditor/` |
-| Context files | `context.ts` | `context.ts` (always this name inside a component folder) |
-| Barrel exports | `index.ts` | `index.ts` |
+| Type                 | Convention                  | Example                                                   |
+| -------------------- | --------------------------- | --------------------------------------------------------- |
+| Components           | PascalCase `.tsx`           | `WorkflowCard.tsx`, `Button.tsx`                          |
+| Hooks                | camelCase with `use` prefix | `useRunWorkflow.ts`                                       |
+| Utils/functions (TS) | camelCase `.ts`             | `formatDuration.ts`                                       |
+| Component folders    | PascalCase                  | `WorkflowEditor/`                                         |
+| Context files        | `context.ts`                | `context.ts` (always this name inside a component folder) |
+| Barrel exports       | `index.ts`                  | `index.ts`                                                |
 
 ---
 

@@ -1,7 +1,6 @@
 "use client";
 
-import { Badge, Button, Card, CheckIcon, Heading, Stack, Text } from "@bnto/ui";
-
+import { Badge, Button, Card, CardContent, CheckIcon, Heading, Stack, Text } from "@bnto/ui";
 
 const FREE_FEATURES = [
   "Unlimited image compression, resizing, and conversion",
@@ -44,19 +43,25 @@ export function Pricing() {
       <Stack gap="md">
         <Heading level={2}>Simple pricing.</Heading>
         <Text color="muted" leading="snug" balance className="mx-auto max-w-xl">
-          Every browser tool is free, unlimited, forever. Pro adds persistence,
-          collaboration, and premium compute.
+          Every browser tool is free, unlimited, forever. Pro adds persistence, collaboration, and
+          premium compute.
         </Text>
       </Stack>
 
       <div className="mx-auto mt-12 grid max-w-3xl grid-cols-1 gap-6 md:grid-cols-2">
         {/* Free tier */}
         <Card>
-          <Card.Content className="flex flex-col gap-6 px-6 py-6">
+          <CardContent className="flex flex-col gap-6 px-6 py-6">
             <Stack gap="xs">
-              <Heading level={3} size="sm">Free</Heading>
-              <Text size="lg" weight="bold">$0</Text>
-              <Text size="sm" color="muted">Forever. No strings attached.</Text>
+              <Heading level={3} size="sm">
+                Free
+              </Heading>
+              <Text size="lg" weight="bold">
+                $0
+              </Text>
+              <Text size="sm" color="muted">
+                Forever. No strings attached.
+              </Text>
             </Stack>
 
             <FeatureList features={FREE_FEATURES} />
@@ -64,18 +69,22 @@ export function Pricing() {
             <Button variant="outline" href="/" className="w-full">
               Start using bnto
             </Button>
-          </Card.Content>
+          </CardContent>
         </Card>
 
         {/* Pro tier */}
         <Card className="ring-2 ring-primary">
-          <Card.Content className="flex flex-col gap-6 px-6 py-6">
+          <CardContent className="flex flex-col gap-6 px-6 py-6">
             <Stack gap="xs">
               <div className="flex items-center justify-center gap-2">
-                <Heading level={3} size="sm">Pro</Heading>
+                <Heading level={3} size="sm">
+                  Pro
+                </Heading>
                 <Badge variant="secondary">Coming soon</Badge>
               </div>
-              <Text size="lg" weight="bold">TBD</Text>
+              <Text size="lg" weight="bold">
+                TBD
+              </Text>
               <Text size="sm" color="muted">
                 Save, collaborate, and run premium nodes.
               </Text>
@@ -86,15 +95,15 @@ export function Pricing() {
             <Button elevation="sm" disabled className="w-full">
               Coming soon
             </Button>
-          </Card.Content>
+          </CardContent>
         </Card>
       </div>
 
       <Stack gap="sm" className="mx-auto mt-12 max-w-xl">
         <Text size="sm" color="muted">
-          Browser tools will always be free and unlimited.
-          Pro is for users who want to save their work, collaborate with a team,
-          or use server-powered features like AI and video processing.
+          Browser tools will always be free and unlimited. Pro is for users who want to save their
+          work, collaborate with a team, or use server-powered features like AI and video
+          processing.
         </Text>
       </Stack>
     </div>

@@ -8,29 +8,29 @@
 
 **STOP.** Read the relevant documentation first.
 
-| If you're working on...      | Read this first                                                    |
-| ---------------------------- | ------------------------------------------------------------------ |
-| Any code                     | [code-standards.md](.claude/rules/code-standards.md)              |
-| Any UI / styling work        | [rules/theming.md](.claude/rules/theming.md)                       |
-| Data fetching / hooks        | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md) |
-| Architecture decisions       | [rules/architecture.md](.claude/rules/architecture.md)             |
-| Repo structure               | [monorepo-structure.md](.claude/strategy/monorepo-structure.md)    |
-| Editor architecture          | [editor-architecture.md](.claude/strategy/editor-architecture.md)  |
-| Conveyor belt system         | [visual-editor.md](.claude/strategy/visual-editor.md)              |
-| Input/output nodes           | [io-nodes.md](.claude/strategy/io-nodes.md)                        |
-| Editor user journey          | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)  |
-| Strategic direction          | [ROADMAP.md](.claude/ROADMAP.md)                                  |
-| Implementation task          | [PLAN.md](.claude/PLAN.md)                                        |
-| Free vs premium decisions    | [pricing-model.md](.claude/strategy/pricing-model.md)              |
-| Writing integration tests    | [journeys/](.claude/journeys/) — user journey test matrices        |
-| Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                  |
-| SEO & URL strategy           | [rules/seo.md](.claude/rules/seo.md)                              |
-| Code editor (Sprint 4B)      | [code-editor.md](.claude/strategy/code-editor.md)                      |
-| Understanding the product    | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) |
-| Core principles (always)     | [core-principles.md](.claude/strategy/core-principles.md)          |
-| `@bnto/core` internals       | [core-api.md](.claude/rules/core-api.md) + [core-unification.md](.claude/strategy/core-unification.md) |
-| Environment variables        | [environment-variables.md](.claude/environment-variables.md)       |
-| Go engine node migration     | [go-engine-migration.md](.claude/strategy/go-engine-migration.md)  |
+| If you're working on...        | Read this first                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Any code                       | [code-standards.md](.claude/rules/code-standards.md)                                                   |
+| Any UI / styling work          | [rules/theming.md](.claude/rules/theming.md)                                                           |
+| Data fetching / hooks          | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)                                |
+| Architecture decisions         | [rules/architecture.md](.claude/rules/architecture.md)                                                 |
+| Repo structure                 | [monorepo-structure.md](.claude/strategy/monorepo-structure.md)                                        |
+| Editor architecture            | [editor-architecture.md](.claude/strategy/editor-architecture.md)                                      |
+| Conveyor belt system           | [visual-editor.md](.claude/strategy/visual-editor.md)                                                  |
+| Input/output nodes             | [io-nodes.md](.claude/strategy/io-nodes.md)                                                            |
+| Editor user journey            | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)                                      |
+| Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                                       |
+| Implementation task            | [PLAN.md](.claude/PLAN.md)                                                                             |
+| Free vs premium decisions      | [pricing-model.md](.claude/strategy/pricing-model.md)                                                  |
+| Writing integration tests      | [journeys/](.claude/journeys/) — user journey test matrices                                            |
+| Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                                                         |
+| SEO & URL strategy             | [rules/seo.md](.claude/rules/seo.md)                                                                   |
+| Code editor (Sprint 4B)        | [code-editor.md](.claude/strategy/code-editor.md)                                                      |
+| Understanding the product      | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)                                |
+| Core principles (always)       | [core-principles.md](.claude/strategy/core-principles.md)                                              |
+| `@bnto/core` internals         | [core-api.md](.claude/rules/core-api.md) + [core-unification.md](.claude/strategy/core-unification.md) |
+| Environment variables          | [environment-variables.md](.claude/environment-variables.md)                                           |
+| Go engine node migration       | [go-engine-migration.md](.claude/strategy/go-engine-migration.md)                                      |
 
 ---
 
@@ -89,7 +89,7 @@ Write tests at every layer. If a function can be tested as pure Rust (no WASM bo
 
 ## Commands
 
-```bash
+````bash
 # Rust WASM engine (via Taskfile)
 task wasm:build         # Build WASM crates (release, web target)
 task wasm:build:dev     # Build WASM in dev mode (faster, better errors)
@@ -140,7 +140,7 @@ task e2e:isolated       # Starts own Next.js on port 4001 (slower — only if po
 task build:all          # Build engine + API + frontend
 task test:all           # Test engine + API + frontend
 task check              # Full quality gate (vet + test + build)
-```
+````
 
 ---
 
@@ -206,57 +206,57 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 
 ### Rules (auto-loaded, always active)
 
-| Document | Purpose |
-|----------|---------|
-| [code-standards.md](.claude/rules/code-standards.md) | Bento Box Principle, size limits, file organization |
-| [architecture.md](.claude/rules/architecture.md) | Layered architecture, data flow, deployment topology |
-| [components.md](.claude/rules/components.md) | Component patterns, hooks, dot-notation, CSS-first states |
-| [theming.md](.claude/rules/theming.md) | Color tokens, fonts, radius, shadows |
-| [animation.md](.claude/rules/animation.md) | Motion language, CSS animation system, Animate.* API |
-| [seo.md](.claude/rules/seo.md) | URL strategy, slug registry, metadata, shipping checklist |
-| [pre-commit.md](.claude/rules/pre-commit.md) | Mandatory checklist before every commit |
-| [core-api.md](.claude/rules/core-api.md) | @bnto/core client/service/adapter pattern |
-| [auth-routing.md](.claude/rules/auth-routing.md) | Proxy route protection, auth flow |
-| [convex.md](.claude/rules/convex.md) | Query patterns, validators, N+1 prevention |
-| [gotchas.md](.claude/rules/gotchas.md) | Known pitfalls and fixes |
+| Document                                             | Purpose                                                     |
+| ---------------------------------------------------- | ----------------------------------------------------------- |
+| [code-standards.md](.claude/rules/code-standards.md) | Bento Box Principle, size limits, file organization         |
+| [architecture.md](.claude/rules/architecture.md)     | Layered architecture, data flow, deployment topology        |
+| [components.md](.claude/rules/components.md)         | Component patterns, hooks, flat exports, CSS-first states   |
+| [theming.md](.claude/rules/theming.md)               | Color tokens, fonts, radius, shadows                        |
+| [animation.md](.claude/rules/animation.md)           | Motion language, CSS animation system, animation components |
+| [seo.md](.claude/rules/seo.md)                       | URL strategy, slug registry, metadata, shipping checklist   |
+| [pre-commit.md](.claude/rules/pre-commit.md)         | Mandatory checklist before every commit                     |
+| [core-api.md](.claude/rules/core-api.md)             | @bnto/core client/service/adapter pattern                   |
+| [auth-routing.md](.claude/rules/auth-routing.md)     | Proxy route protection, auth flow                           |
+| [convex.md](.claude/rules/convex.md)                 | Query patterns, validators, N+1 prevention                  |
+| [gotchas.md](.claude/rules/gotchas.md)               | Known pitfalls and fixes                                    |
 
 ### Strategy & Reference (read on demand)
 
-| Document | Purpose |
-|----------|---------|
-| [ROADMAP.md](.claude/ROADMAP.md) | Strategic roadmap — milestones, direction, big decisions |
-| [PLAN.md](.claude/PLAN.md) | Build plan — sprints, waves, what's next |
-| [pricing-model.md](.claude/strategy/pricing-model.md) | Free vs premium — nodes, recipes, features, terminology |
+| Document                                                                | Purpose                                                                          |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [ROADMAP.md](.claude/ROADMAP.md)                                        | Strategic roadmap — milestones, direction, big decisions                         |
+| [PLAN.md](.claude/PLAN.md)                                              | Build plan — sprints, waves, what's next                                         |
+| [pricing-model.md](.claude/strategy/pricing-model.md)                   | Free vs premium — nodes, recipes, features, terminology                          |
 | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md) | Hybrid Convex native + React Query, co-located queries, self-fetching components |
-| [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) | Full architecture, tech decisions, phases |
-| [monorepo-structure.md](.claude/strategy/monorepo-structure.md) | Repo structure, packages, CLI-to-API mapping |
-| [core-principles.md](.claude/strategy/core-principles.md) | TDD, Grain, Modularity, Abstraction |
-| [design-language.md](.claude/strategy/design-language.md) | Visual identity, brand personality |
-| [editor-architecture.md](.claude/strategy/editor-architecture.md) | Shared editor layer — store, hooks, package strategy, switchable editors |
-| [visual-editor.md](.claude/strategy/visual-editor.md) | Bento box visual editor — compartment design, grid layout, execution state |
-| [io-nodes.md](.claude/strategy/io-nodes.md) | Input & output nodes — self-describing recipe I/O, generic renderers, migration |
-| [editor-user-journey.md](.claude/strategy/editor-user-journey.md) | Editor user journey — stages, flows, success criteria, phased delivery |
-| [code-editor.md](.claude/strategy/code-editor.md) | Code editor design — CM6, slash commands, JSON Schema |
-| [core-unification.md](.claude/strategy/core-unification.md) | Core API unification — patterns, rationale, copyable prompt |
-| [go-engine-migration.md](.claude/strategy/go-engine-migration.md) | Go engine node inventory — migration reference before archive deletion |
-| [skills/](.claude/skills/) | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit) |
+| [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) | Full architecture, tech decisions, phases                                        |
+| [monorepo-structure.md](.claude/strategy/monorepo-structure.md)         | Repo structure, packages, CLI-to-API mapping                                     |
+| [core-principles.md](.claude/strategy/core-principles.md)               | TDD, Grain, Modularity, Abstraction                                              |
+| [design-language.md](.claude/strategy/design-language.md)               | Visual identity, brand personality                                               |
+| [editor-architecture.md](.claude/strategy/editor-architecture.md)       | Shared editor layer — store, hooks, package strategy, switchable editors         |
+| [visual-editor.md](.claude/strategy/visual-editor.md)                   | Bento box visual editor — compartment design, grid layout, execution state       |
+| [io-nodes.md](.claude/strategy/io-nodes.md)                             | Input & output nodes — self-describing recipe I/O, generic renderers, migration  |
+| [editor-user-journey.md](.claude/strategy/editor-user-journey.md)       | Editor user journey — stages, flows, success criteria, phased delivery           |
+| [code-editor.md](.claude/strategy/code-editor.md)                       | Code editor design — CM6, slash commands, JSON Schema                            |
+| [core-unification.md](.claude/strategy/core-unification.md)             | Core API unification — patterns, rationale, copyable prompt                      |
+| [go-engine-migration.md](.claude/strategy/go-engine-migration.md)       | Go engine node inventory — migration reference before archive deletion           |
+| [skills/](.claude/skills/)                                              | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)       |
 
 ### Domain Expert Personas (invoke with `/persona-name`)
 
 Persona skills are domain experts that can be activated to adopt specialized knowledge for a specific area of the codebase. Invoke them directly when working in their domain, or let workflow skills (`/pickup`, `/pre-commit`, `/code-review`) activate them automatically.
 
-| Persona | Domain | Invoke |
-|---------|--------|--------|
-| Frontend Engineer | `apps/web/` — React, Next.js, components, theming, animation, E2E | `/frontend-engineer` |
-| Next.js Expert | `apps/web/` — App Router optimization, server/client boundaries, caching, streaming, bundle size, Core Web Vitals | `/nextjs-expert` |
-| ReactFlow Expert | Visual editor canvas — `@xyflow/react`, graph state, custom nodes/edges, headless-first | `/reactflow-expert` |
-| Code Editor Expert | JSON code editor — CodeMirror 6, slash commands, schema-aware editing, headless-first | `/code-editor-expert` |
-| Rust Expert | `engine/` — WASM, node crates, execution engine | `/rust-expert` |
-| Core Architect | `packages/core/` — transport-agnostic API, clients, services, adapters | `/core-architect` |
-| Backend Engineer | `packages/@bnto/backend/`, `packages/@bnto/auth/` — Convex, schema, auth | `/backend-engineer` |
-| Go Engineer | `archive/engine-go/`, `archive/api-go/` — Go engine, API server | `/go-engineer` |
-| Security Engineer | Cross-cutting — trust boundaries, attack surfaces, defense-in-depth | `/security-engineer` |
-| Quality Engineer | `apps/web/e2e/`, `.claude/journeys/` — E2E testing, journey design, screenshot regression, test infrastructure | `/quality-engineer` |
+| Persona            | Domain                                                                                                            | Invoke                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- | --------------------- |
+| Frontend Engineer  | `apps/web/` — React, Next.js, components, theming, animation, E2E                                                 | `/frontend-engineer`  |
+| Next.js Expert     | `apps/web/` — App Router optimization, server/client boundaries, caching, streaming, bundle size, Core Web Vitals | `/nextjs-expert`      |
+| ReactFlow Expert   | Visual editor canvas — `@xyflow/react`, graph state, custom nodes/edges, headless-first                           | `/reactflow-expert`   |
+| Code Editor Expert | JSON code editor — CodeMirror 6, slash commands, schema-aware editing, headless-first                             | `/code-editor-expert` |
+| Rust Expert        | `engine/` — WASM, node crates, execution engine                                                                   | `/rust-expert`        |
+| Core Architect     | `packages/core/` — transport-agnostic API, clients, services, adapters                                            | `/core-architect`     |
+| Backend Engineer   | `packages/@bnto/backend/`, `packages/@bnto/auth/` — Convex, schema, auth                                          | `/backend-engineer`   |
+| Go Engineer        | `archive/engine-go/`, `archive/api-go/` — Go engine, API server                                                   | `/go-engineer`        |
+| Security Engineer  | Cross-cutting — trust boundaries, attack surfaces, defense-in-depth                                               | `/security-engineer`  |
+| Quality Engineer   | `apps/web/e2e/`, `.claude/journeys/` — E2E testing, journey design, screenshot regression, test infrastructure    | `/quality-engineer`   |
 
 | Project Manager | `.claude/PLAN.md`, `.claude/ROADMAP.md` — roadmap alignment, sprint planning | `/project-manager` |
 

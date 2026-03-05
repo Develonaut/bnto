@@ -1,5 +1,5 @@
 import { MyRecipesTabs } from "./_components/MyRecipesTabs";
-import { AppShell, Heading, Stack, Text } from "@bnto/ui";
+import { AppShellContent, Heading, Stack, Text } from "@bnto/ui";
 
 /**
  * My Recipes dashboard — server component.
@@ -10,19 +10,17 @@ import { AppShell, Heading, Stack, Text } from "@bnto/ui";
  */
 export default function MyRecipesPage() {
   return (
-    <AppShell.Content>
+    <AppShellContent>
       <Stack className="gap-8">
         <Stack className="gap-1">
           <Heading level={1} size="lg">
             My Recipes
           </Heading>
-          <Text color="muted">
-            Your saved recipes and recent activity.
-          </Text>
+          <Text color="muted">Your saved recipes and recent activity.</Text>
         </Stack>
 
         <MyRecipesTabs />
       </Stack>
-    </AppShell.Content>
+    </AppShellContent>
   );
 }

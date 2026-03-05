@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Menu, ChevronDownIcon } from "@bnto/ui";
+import { Menu, MenuTrigger, MenuContent, MenuItem, MenuSeparator, ChevronDownIcon } from "@bnto/ui";
 
 /**
  * FileMenu — composable file operations dropdown.
@@ -18,7 +18,7 @@ interface FileMenuProps {
 function FileMenuRoot({ children }: FileMenuProps) {
   return (
     <Menu>
-      <Menu.Trigger
+      <MenuTrigger
         size="icon"
         variant="ghost"
         elevation="sm"
@@ -26,16 +26,14 @@ function FileMenuRoot({ children }: FileMenuProps) {
         className="group"
       >
         <ChevronDownIcon className="size-4 transition-transform duration-fast group-data-[state=open]:rotate-180" />
-      </Menu.Trigger>
-      <Menu.Content side="bottom" offset="sm" className="w-52 p-1.5">
+      </MenuTrigger>
+      <MenuContent side="bottom" offset="sm" className="w-52 p-1.5">
         {children}
-      </Menu.Content>
+      </MenuContent>
     </Menu>
   );
 }
 
-export const FileMenu = Object.assign(FileMenuRoot, {
-  Root: FileMenuRoot,
-  Item: Menu.Item,
-  Separator: Menu.Separator,
-});
+export { FileMenuRoot as FileMenu };
+export { MenuItem as FileMenuItem };
+export { MenuSeparator as FileMenuSeparator };

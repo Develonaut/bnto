@@ -9,6 +9,7 @@ import {
   PasswordInput,
   RadialSlider,
   RadioGroup,
+  RadioGroupItem,
   Row,
   Slider,
   Stack,
@@ -29,7 +30,9 @@ export function InputShowcase() {
     <Stack className="gap-10">
       {/* Text inputs */}
       <div>
-        <Text size="sm" color="muted" className="mb-3">Text inputs</Text>
+        <Text size="sm" color="muted" className="mb-3">
+          Text inputs
+        </Text>
         <div className="grid grid-cols-3 gap-4">
           <Stack gap="xs">
             <Label htmlFor="input-default">Default</Label>
@@ -48,7 +51,9 @@ export function InputShowcase() {
 
       {/* Password inputs */}
       <div>
-        <Text size="sm" color="muted" className="mb-3">Password inputs</Text>
+        <Text size="sm" color="muted" className="mb-3">
+          Password inputs
+        </Text>
         <div className="grid grid-cols-3 gap-4">
           <Stack gap="xs">
             <Label htmlFor="password-default">Default</Label>
@@ -67,7 +72,9 @@ export function InputShowcase() {
 
       {/* Textarea */}
       <div>
-        <Text size="sm" color="muted" className="mb-3">Textarea</Text>
+        <Text size="sm" color="muted" className="mb-3">
+          Textarea
+        </Text>
         <div className="grid grid-cols-2 gap-4">
           <Stack gap="xs">
             <Label htmlFor="textarea-default">Description</Label>
@@ -75,14 +82,19 @@ export function InputShowcase() {
           </Stack>
           <Stack gap="xs">
             <Label htmlFor="textarea-filled">With content</Label>
-            <Textarea id="textarea-filled" defaultValue="Compress PNG, JPEG, and WebP images without losing quality. Files never leave your browser." />
+            <Textarea
+              id="textarea-filled"
+              defaultValue="Compress PNG, JPEG, and WebP images without losing quality. Files never leave your browser."
+            />
           </Stack>
         </div>
       </div>
 
       {/* Toggles — switches and checkboxes */}
       <div>
-        <Text size="sm" color="muted" className="mb-3">Toggles</Text>
+        <Text size="sm" color="muted" className="mb-3">
+          Toggles
+        </Text>
         <Row className="flex-wrap gap-8">
           <Row className="items-center gap-2">
             <Switch checked={switchA} onCheckedChange={setSwitchA} />
@@ -113,21 +125,23 @@ export function InputShowcase() {
 
       {/* Radio groups */}
       <div>
-        <Text size="sm" color="muted" className="mb-3">Radio groups</Text>
+        <Text size="sm" color="muted" className="mb-3">
+          Radio groups
+        </Text>
         <div className="grid grid-cols-2 gap-8">
           <Stack gap="sm">
             <Label>Output format</Label>
             <RadioGroup value={radioVal} onValueChange={setRadioVal}>
               <Row className="items-center gap-2">
-                <RadioGroup.Item value="jpeg" id="radio-jpeg" />
+                <RadioGroupItem value="jpeg" id="radio-jpeg" />
                 <Label htmlFor="radio-jpeg">JPEG</Label>
               </Row>
               <Row className="items-center gap-2">
-                <RadioGroup.Item value="png" id="radio-png" />
+                <RadioGroupItem value="png" id="radio-png" />
                 <Label htmlFor="radio-png">PNG</Label>
               </Row>
               <Row className="items-center gap-2">
-                <RadioGroup.Item value="webp" id="radio-webp" />
+                <RadioGroupItem value="webp" id="radio-webp" />
                 <Label htmlFor="radio-webp">WebP</Label>
               </Row>
             </RadioGroup>
@@ -136,16 +150,22 @@ export function InputShowcase() {
             <Label>Disabled</Label>
             <RadioGroup defaultValue="medium" disabled>
               <Row className="items-center gap-2">
-                <RadioGroup.Item value="small" id="radio-small" />
-                <Label htmlFor="radio-small" className="text-muted-foreground">Small</Label>
+                <RadioGroupItem value="small" id="radio-small" />
+                <Label htmlFor="radio-small" className="text-muted-foreground">
+                  Small
+                </Label>
               </Row>
               <Row className="items-center gap-2">
-                <RadioGroup.Item value="medium" id="radio-medium" />
-                <Label htmlFor="radio-medium" className="text-muted-foreground">Medium</Label>
+                <RadioGroupItem value="medium" id="radio-medium" />
+                <Label htmlFor="radio-medium" className="text-muted-foreground">
+                  Medium
+                </Label>
               </Row>
               <Row className="items-center gap-2">
-                <RadioGroup.Item value="large" id="radio-large" />
-                <Label htmlFor="radio-large" className="text-muted-foreground">Large</Label>
+                <RadioGroupItem value="large" id="radio-large" />
+                <Label htmlFor="radio-large" className="text-muted-foreground">
+                  Large
+                </Label>
               </Row>
             </RadioGroup>
           </Stack>
@@ -154,12 +174,16 @@ export function InputShowcase() {
 
       {/* Sliders */}
       <div>
-        <Text size="sm" color="muted" className="mb-3">Sliders</Text>
+        <Text size="sm" color="muted" className="mb-3">
+          Sliders
+        </Text>
         <div className="grid grid-cols-3 gap-8">
           <Stack gap="sm">
             <Row className="justify-between">
               <Label>Quality</Label>
-              <Text size="xs" mono color="muted">{slider[0]}%</Text>
+              <Text size="xs" mono color="muted">
+                {slider[0]}%
+              </Text>
             </Row>
             <Slider value={slider} onValueChange={setSlider} max={100} />
           </Stack>
@@ -175,7 +199,9 @@ export function InputShowcase() {
               size={180}
               aria-label="Quality"
             >
-              <Text size="lg" mono className="font-semibold">{dial}%</Text>
+              <Text size="lg" mono className="font-semibold">
+                {dial}%
+              </Text>
             </RadialSlider>
           </Stack>
           <Stack gap="sm" className="items-center">
@@ -191,7 +217,9 @@ export function InputShowcase() {
               hideRing
               aria-label="Half-circle gauge"
             >
-              <Text size="lg" mono className="font-semibold">{halfDial}%</Text>
+              <Text size="lg" mono className="font-semibold">
+                {halfDial}%
+              </Text>
             </RadialSlider>
           </Stack>
         </div>

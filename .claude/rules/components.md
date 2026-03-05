@@ -80,13 +80,13 @@ If the skeleton is complex (10+ lines, multiple elements), extract it to a named
 
 Bias toward smaller files early. A folder of focused files is easier to navigate and test than one large file.
 
-| Signal | Action |
-|---|---|
-| File approaches 100-150 lines | Look for extraction opportunities |
-| More than 2-3 sub-components in one file | Break into folder + barrel export |
-| Logic is reused or independently testable | Extract to its own file |
-| Multiple components need the same logic | Extract to a shared hook |
-| Skeleton is complex or shared | Extract to its own file |
+| Signal                                    | Action                            |
+| ----------------------------------------- | --------------------------------- |
+| File approaches 100-150 lines             | Look for extraction opportunities |
+| More than 2-3 sub-components in one file  | Break into folder + barrel export |
+| Logic is reused or independently testable | Extract to its own file           |
+| Multiple components need the same logic   | Extract to a shared hook          |
+| Skeleton is complex or shared             | Extract to its own file           |
 
 When a component graduates to a folder:
 
@@ -98,7 +98,7 @@ Feature/
 |-- context.ts                   # React context (if needed)
 |-- utils/
 |   +-- computeValue.ts          # Pure functions
-+-- index.ts                     # Re-export with Object.assign (strips Root)
++-- index.ts                     # Re-export as flat named exports (strips Root)
 ```
 
 **The default is a single file. Folders are for when you've outgrown it.**
@@ -110,6 +110,7 @@ Feature/
 When a component earns a hook, follow these conventions:
 
 **Naming:** Hook names match the component with a `use` prefix. No "Props" suffix.
+
 - `WorkflowCard` -> `useWorkflowCard`
 - `ExecutionForm` -> `useExecutionForm`
 
@@ -170,58 +171,45 @@ const Container = forwardRef<HTMLDivElement, ContainerProps>(
 
 ---
 
-## Compound Composition & Dot-Notation
+## Compound Composition — Flat Named Exports
 
-**ALL multi-part components use dot-notation namespacing -- no exceptions.** This includes shadcn/ui primitives. Flat named exports (`Card`, `CardHeader`, `CardTitle`) are legacy.
+**ALL multi-part components use flat named exports with prefixed names.** No `Object.assign` dot-notation — it breaks React Server Components (sub-properties are undefined on "client reference" objects).
 
 ```tsx
 // The only way
-<Dialog.Root open={open} onOpenChange={setOpen}>
-  <Dialog.Trigger asChild>{children}</Dialog.Trigger>
-  <Dialog.Content>
-    <Dialog.Title>New Workflow</Dialog.Title>
-  </Dialog.Content>
-</Dialog.Root>
+<Dialog open={open} onOpenChange={setOpen}>
+  <DialogTrigger asChild>{children}</DialogTrigger>
+  <DialogContent>
+    <DialogTitle>New Workflow</DialogTitle>
+  </DialogContent>
+</Dialog>
 ```
 
-**Implementation:** Assembled via `Object.assign`. Include a `Root:` self-reference so consumers can use either `<Feature>` or `<Feature.Root>`.
+**Naming convention:** Sub-components are prefixed with the parent name: `CardHeader`, `DialogContent`, `TabsList`, `PanelFooter`. This makes imports self-documenting and avoids name collisions.
 
-**The main component function uses a `Root` suffix internally.** The barrel (`index.ts` or single-file assembly) strips the suffix for the public export.
+**The main component function uses a `Root` suffix internally.** The barrel (`index.ts` or single-file export) re-exports it without the suffix.
 
-For **primitives** (thin wrappers around shadcn/Radix), use a single file:
+For **primitives** (thin wrappers around shadcn/Radix), export directly from the file:
 
 ```tsx
-// Card.tsx -- imports primitives, assembles namespace
-import { Card as PrimitiveCard, CardHeader, CardTitle, ... } from "../primitives/card";
-
-function CardRoot(props: ComponentProps<typeof PrimitiveCard>) {
-  return <PrimitiveCard {...props} />;
-}
-
-export const Card = Object.assign(CardRoot, {
-  Root: CardRoot,
-  Header: CardHeader,
-  Title: CardTitle,
-});
+// Card.tsx -- all sub-components exported individually
+export function Card({ ... }: CardProps) { ... }
+export const CardHeader = forwardRef<...>(({ className, ...props }, ref) => ( ... ));
+export const CardTitle = forwardRef<...>(({ className, ...props }, ref) => ( ... ));
 ```
 
-For **business components** with Bnto-specific logic, each sub-component in its own file, assembled in `index.ts`:
+For **business components** with Bnto-specific logic, each sub-component in its own file, re-exported from `index.ts`:
 
 ```tsx
 // FeatureRoot.tsx -- exports with Root suffix
 export function FeatureRoot({ ... }: FeatureProps) { ... }
 
-// index.ts -- strips Root suffix for public API
-import { FeatureRoot } from "./FeatureRoot";
-import { FeatureItem } from "./FeatureItem";
-
-export const Feature = Object.assign(FeatureRoot, {
-  Root: FeatureRoot,
-  Item: FeatureItem,
-});
+// index.ts -- strips Root suffix, re-exports all sub-components
+export { FeatureRoot as Feature } from "./FeatureRoot";
+export { FeatureItem } from "./FeatureItem";
 ```
 
-**Migration rule:** When you touch a file with flat primitive imports (`DialogTitle`, `CardHeader`), migrate to dot-notation in the same PR.
+**Do NOT use `Object.assign` to create compound namespaces.** This pattern was removed repo-wide because it doesn't work across the RSC boundary.
 
 ### Primitives as Base
 
@@ -243,19 +231,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 // BAD -- copy-pasting the primitive and bypassing it entirely
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, ...props }, ref) => (
-    <button className={cn("inline-flex ...", className)} ref={ref} {...props} />
-  ),
-);
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(({ className, ...props }, ref) => (
+  <button className={cn("inline-flex ...", className)} ref={ref} {...props} />
+));
 ```
 
 ### Primitives vs Business Components
 
-| Type | Location | Domain knowledge | File sharing |
-|---|---|---|---|
-| **Primitives** | `primitives/` | None -- generic, reusable | shadcn compound wrappers can share a file |
-| **Business** | `components/` or `apps/web/` | Domain-specific | One component per file, always |
+| Type           | Location                     | Domain knowledge          | File sharing                              |
+| -------------- | ---------------------------- | ------------------------- | ----------------------------------------- |
+| **Primitives** | `primitives/`                | None -- generic, reusable | shadcn compound wrappers can share a file |
+| **Business**   | `components/` or `apps/web/` | Domain-specific           | One component per file, always            |
 
 ---
 
@@ -267,7 +253,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 ```tsx
 // GOOD -- CSS handles the visual state
-<span className="opacity-0 hover:opacity-100 focus-within:opacity-100" />
+<span className="opacity-0 hover:opacity-100 focus-within:opacity-100" />;
 
 // BAD -- JS re-renders for a visual hover effect
 const [hovered, setHovered] = useState(false);
@@ -275,7 +261,7 @@ const [hovered, setHovered] = useState(false);
   onMouseEnter={() => setHovered(true)}
   onMouseLeave={() => setHovered(false)}
   style={{ opacity: hovered ? 1 : 0 }}
-/>
+/>;
 ```
 
 ### Data Attributes Over Ternary ClassNames
@@ -305,9 +291,8 @@ Every `group-hover:` that reveals interactive controls **MUST** also have `group
 
 ```tsx
 // GOOD -- keyboard users see the same controls
-className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+className = "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100";
 
 // BAD -- invisible to keyboard users
-className="opacity-0 group-hover:opacity-100"
+className = "opacity-0 group-hover:opacity-100";
 ```
-

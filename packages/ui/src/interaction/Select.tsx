@@ -4,24 +4,20 @@ import type { ComponentProps } from "react";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "../icons";
-import { Animate } from "../animation/Animate";
+import { ScaleIn } from "../animation/Animate";
 import { Card } from "../surface/Card";
 
 import { cn } from "../utils/cn";
 
-function SelectGroup({
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Group>) {
+export function SelectGroup({ ...props }: ComponentProps<typeof SelectPrimitive.Group>) {
   return <SelectPrimitive.Group data-slot="select-group" {...props} />;
 }
 
-function SelectValue({
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Value>) {
+export function SelectValue({ ...props }: ComponentProps<typeof SelectPrimitive.Value>) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
-function SelectTrigger({
+export function SelectTrigger({
   className,
   size = "default",
   children,
@@ -47,7 +43,7 @@ function SelectTrigger({
   );
 }
 
-function SelectContent({
+export function SelectContent({
   className,
   children,
   position = "popper",
@@ -67,15 +63,12 @@ function SelectContent({
         align={align}
         {...props}
       >
-        <Animate.ScaleIn
+        <ScaleIn
           from={0.6}
           easing="spring-bouncier"
           style={{ transformOrigin: "var(--radix-select-content-transform-origin)" }}
         >
-          <Card
-            className={className}
-            elevation="lg"
-          >
+          <Card className={className} elevation="lg">
             <div className="overflow-x-hidden overflow-y-auto">
               <SelectScrollUpButton />
               <SelectPrimitive.Viewport
@@ -90,16 +83,13 @@ function SelectContent({
               <SelectScrollDownButton />
             </div>
           </Card>
-        </Animate.ScaleIn>
+        </ScaleIn>
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );
 }
 
-function SelectLabel({
-  className,
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Label>) {
+export function SelectLabel({ className, ...props }: ComponentProps<typeof SelectPrimitive.Label>) {
   return (
     <SelectPrimitive.Label
       data-slot="select-label"
@@ -109,7 +99,7 @@ function SelectLabel({
   );
 }
 
-function SelectItem({
+export function SelectItem({
   className,
   children,
   ...props
@@ -133,7 +123,7 @@ function SelectItem({
   );
 }
 
-function SelectSeparator({
+export function SelectSeparator({
   className,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Separator>) {
@@ -146,17 +136,14 @@ function SelectSeparator({
   );
 }
 
-function SelectScrollUpButton({
+export function SelectScrollUpButton({
   className,
   ...props
 }: ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
   return (
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
-      className={cn(
-        "flex cursor-default items-center justify-center py-1",
-        className,
-      )}
+      className={cn("flex cursor-default items-center justify-center py-1", className)}
       {...props}
     >
       <ChevronUpIcon className="size-4" />
@@ -164,17 +151,14 @@ function SelectScrollUpButton({
   );
 }
 
-function SelectScrollDownButton({
+export function SelectScrollDownButton({
   className,
   ...props
 }: ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
   return (
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
-      className={cn(
-        "flex cursor-default items-center justify-center py-1",
-        className,
-      )}
+      className={cn("flex cursor-default items-center justify-center py-1", className)}
       {...props}
     >
       <ChevronDownIcon className="size-4" />
@@ -182,23 +166,6 @@ function SelectScrollDownButton({
   );
 }
 
-function SelectRoot({
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Root>) {
+export function Select({ ...props }: ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot="select" {...props} />;
 }
-
-const Select = Object.assign(SelectRoot, {
-  Root: SelectRoot,
-  Group: SelectGroup,
-  Value: SelectValue,
-  Trigger: SelectTrigger,
-  Content: SelectContent,
-  Label: SelectLabel,
-  Item: SelectItem,
-  Separator: SelectSeparator,
-  ScrollUpButton: SelectScrollUpButton,
-  ScrollDownButton: SelectScrollDownButton,
-});
-
-export { Select };

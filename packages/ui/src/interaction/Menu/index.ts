@@ -1,21 +1,11 @@
-import { Popover } from "../../overlay/Popover";
+import { PopoverClose } from "../../overlay/Popover";
 
-import { MenuRootWrapper } from "./MenuRootWrapper";
-import { MenuTrigger } from "./MenuTrigger";
-import { MenuContent } from "./MenuContent";
-import { MenuItem } from "./MenuItem";
-import { MenuLabel } from "./MenuLabel";
-import { MenuSeparator } from "./MenuSeparator";
+export { MenuRootWrapper as Menu } from "./MenuRootWrapper";
+export { MenuTrigger } from "./MenuTrigger";
+export { MenuContent } from "./MenuContent";
+export { MenuItem } from "./MenuItem";
+export { MenuLabel } from "./MenuLabel";
+export { MenuSeparator } from "./MenuSeparator";
 
 /** Closes the menu when its child is clicked. Renders no wrapper element. */
-const MenuClose = Popover.Close;
-
-export const Menu = Object.assign(MenuRootWrapper, {
-  Root: MenuRootWrapper,
-  Trigger: MenuTrigger,
-  Content: MenuContent,
-  Close: MenuClose,
-  Item: MenuItem,
-  Label: MenuLabel,
-  Separator: MenuSeparator,
-});
+export const MenuClose = PopoverClose;

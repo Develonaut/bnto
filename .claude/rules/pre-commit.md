@@ -41,7 +41,7 @@ For EACH file you modified, verify against the Bento Box Principle (`code-standa
 - [ ] **One Export Per File**: Every exported component, hook, or function in its own file. No `hooks.ts` grab bags, no `utils.ts` grab bags, no multi-component files. Folder + barrel export for related pieces. Only exception: shadcn primitives.
 - [ ] **Single Responsibility**: TS files target 50-100 lines, hard cap 250. TS functions < 20 lines. Go files < 250 lines, Go functions < 20 lines. No utility grab bags, no god objects. More than 2-3 sub-components in one file = break into folder + barrel.
 - [ ] **Composition**: Small pieces that compose together. Compound components, not mega-prop components.
-- [ ] **Dot-Notation Compliance**: ALL multi-part components (including primitives like Dialog, Card, DropdownMenu) use dot-notation (`Dialog.Title`, not `DialogTitle`). If you touched a file with flat primitive imports, migrate them to dot-notation. Report PASS or FAIL with specific files.
+- [ ] **Flat Named Exports**: ALL multi-part components use flat prefixed exports (`DialogTitle`, `CardHeader`), NOT `Object.assign` dot-notation (`Dialog.Title`, `Card.Header`). Dot-notation breaks React Server Components. If you see `Object.assign` compound patterns, convert to flat exports. Report PASS or FAIL with specific files.
 - [ ] **Primitives vs Business Components**: Generic in `primitives/`, domain-specific in `components/`.
 - [ ] **React Query `select` Rule**: Every `useQuery` that transforms data (`.map()`, `toFoo()`, spread) MUST do it inside `select`. Returning `data ? toFoo(data) : null` or `{ ...data, isLoading }` from the hook body creates new references every render -> infinite loops.
 - [ ] **Cost Check**: No new paid services without explicit discussion.
@@ -85,11 +85,11 @@ Tests are **mandatory** for most changes. Determine which type:
 
 **Screenshots are for page-level layout** (site navigation, auth forms). **Execution flows are verified programmatically** (magic bytes, data attributes, file sizes, download events).
 
-| What changed | Verification | Screenshot regeneration needed? |
-|---|---|---|
-| Page layout, routing, chrome, auth forms | Screenshots (`toHaveScreenshot()`) in `pages/` and `auth/` specs | Yes — two-pass regeneration |
-| Execution flows, WASM output, file processing | Programmatic assertions (magic bytes, data attributes) in `journeys/browser/` specs | No |
-| Components used in both | Run all E2E tests, regenerate page-level screenshots only | Only if page layout shifted |
+| What changed                                  | Verification                                                                        | Screenshot regeneration needed? |
+| --------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------- |
+| Page layout, routing, chrome, auth forms      | Screenshots (`toHaveScreenshot()`) in `pages/` and `auth/` specs                    | Yes — two-pass regeneration     |
+| Execution flows, WASM output, file processing | Programmatic assertions (magic bytes, data attributes) in `journeys/browser/` specs | No                              |
+| Components used in both                       | Run all E2E tests, regenerate page-level screenshots only                           | Only if page layout shifted     |
 
 **When to regenerate page-level screenshots:**
 
@@ -113,6 +113,7 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 **If yes -- you MUST write or update e2e tests.** Use programmatic assertions for execution flows (magic bytes, file sizes, data attributes). Use screenshots only for page-level layout verification.
 
 **E2e test conventions:**
+
 - Always import `{ test, expect }` from `./fixtures` (NOT from `@playwright/test`)
 - Always set `test.use({ reducedMotion: "reduce" })` to disable animations
 - Use shared helpers from `helpers.ts` (`uploadFiles`, `runAndComplete`, `downloadAndVerify`, `navigateToRecipe`, `assertBrowserExecution`)
@@ -144,7 +145,7 @@ Present a summary to the user before committing:
 3. **Did you touch UI?** -- Yes or No.
 4. **If yes:** What e2e tests did you write or update? List spec files and screenshot assertions.
 5. **If no UI touched:** What unit/integration tests were written?
-6. **Dot-notation compliance** -- PASS or FAIL. If FAIL, list files with flat multi-part imports.
+6. **Flat named exports** -- PASS or FAIL. If FAIL, list files with `Object.assign` dot-notation patterns.
 7. **TS checks result** -- confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
 8. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test:unit` passed clean (skip if no Rust files touched)
 9. **Lighthouse audit result** -- confirm `task seo:audit` passed clean, or SKIPPED (no `apps/web/` changes)

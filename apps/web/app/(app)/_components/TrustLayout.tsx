@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  CheckIcon,
-  GithubIcon,
-} from "@bnto/ui";
+import { CheckIcon, GithubIcon } from "@bnto/ui";
 
-import { Animate, Button, Card, Center, IconBadge, Row, Stack, Text } from "@bnto/ui";
+import { ScaleIn, SlideUp, Button, Card, Center, IconBadge, Row, Stack, Text } from "@bnto/ui";
 import { GITHUB_URL } from "@/lib/copy";
 
 /* ── Data ────────────────────────────────────────────────────── */
@@ -23,13 +20,13 @@ const ANTI_PATTERNS = [
 
 export function TrustLayout() {
   return (
-    <Animate.ScaleIn from={0.9} easing="spring-bouncy">
+    <ScaleIn from={0.9} easing="spring-bouncy">
       <Center className="w-full">
         <Card className="w-full max-w-sm p-6">
           <Stack className="gap-5">
             <Stack className="gap-3">
               {ANTI_PATTERNS.map((item, i) => (
-                <Animate.SlideUp key={item} index={i} distance={8} easing="spring-bouncy">
+                <SlideUp key={item} index={i} distance={8} easing="spring-bouncy">
                   <Row className="gap-3">
                     <IconBadge variant="destructive" size="sm">
                       <CheckIcon className="size-3.5" />
@@ -38,7 +35,7 @@ export function TrustLayout() {
                       {item}
                     </span>
                   </Row>
-                </Animate.SlideUp>
+                </SlideUp>
               ))}
             </Stack>
 
@@ -62,6 +59,6 @@ export function TrustLayout() {
           </Stack>
         </Card>
       </Center>
-    </Animate.ScaleIn>
+    </ScaleIn>
   );
 }

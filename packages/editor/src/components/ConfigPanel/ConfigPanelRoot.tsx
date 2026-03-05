@@ -1,7 +1,18 @@
 "use client";
 
 import { useCallback } from "react";
-import { cn, Badge, Heading, Panel, Stack, Text, usePrevious } from "@bnto/ui";
+import {
+  cn,
+  Badge,
+  Heading,
+  Panel,
+  PanelHeader,
+  PanelDivider,
+  PanelContent,
+  Stack,
+  Text,
+  usePrevious,
+} from "@bnto/ui";
 import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { useEditorActions } from "../../hooks/useEditorActions";
@@ -48,13 +59,13 @@ function ConfigPanelRoot() {
     return (
       <div onPointerDownCapture={(e) => e.stopPropagation()} className={slotCn}>
         <Panel className="h-full w-full">
-          <Panel.Content>
+          <PanelContent>
             <div className="p-4">
               <Text size="sm" color="muted" className="text-center">
                 Select a node to configure
               </Text>
             </div>
-          </Panel.Content>
+          </PanelContent>
         </Panel>
       </div>
     );
@@ -63,7 +74,7 @@ function ConfigPanelRoot() {
   return (
     <div onPointerDownCapture={(e) => e.stopPropagation()} className={slotCn}>
       <Panel className="h-full w-full">
-        <Panel.Header className="gap-2 px-3 pt-3 pb-2">
+        <PanelHeader className="gap-2 px-3 pt-3 pb-2">
           <Heading level={3} size="xs" className="min-w-0 flex-1 truncate">
             {typeInfo.label}
           </Heading>
@@ -81,14 +92,14 @@ function ConfigPanelRoot() {
               </Badge>
             )}
           </div>
-        </Panel.Header>
+        </PanelHeader>
         {typeInfo.description && (
           <Text size="xs" color="muted" className="px-3 pb-1">
             {typeInfo.description}
           </Text>
         )}
-        <Panel.Divider />
-        <Panel.Content>
+        <PanelDivider />
+        <PanelContent>
           <div className="p-3">
             {visibleParams.length === 0 ? (
               <Text size="xs" color="muted">
@@ -107,7 +118,7 @@ function ConfigPanelRoot() {
               </Stack>
             )}
           </div>
-        </Panel.Content>
+        </PanelContent>
       </Panel>
     </div>
   );

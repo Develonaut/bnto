@@ -10,13 +10,13 @@ import { cn } from "../utils/cn";
 import { createCn } from "../utils/createCn";
 import { Button } from "../interaction/Button";
 
-const SheetTrigger = SheetPrimitive.Trigger;
+export const SheetTrigger = SheetPrimitive.Trigger;
 
-const SheetClose = SheetPrimitive.Close;
+export const SheetClose = SheetPrimitive.Close;
 
 const SheetPortal = SheetPrimitive.Portal;
 
-const SheetOverlay = forwardRef<
+export const SheetOverlay = forwardRef<
   ElementRef<typeof SheetPrimitive.Overlay>,
   ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
@@ -54,35 +54,36 @@ interface SheetContentProps extends ComponentPropsWithoutRef<typeof SheetPrimiti
   side?: SheetSide;
 }
 
-const SheetContent = forwardRef<ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, ...props }, ref) => (
-    <SheetPortal>
-      <SheetOverlay />
-      <SheetPrimitive.Content ref={ref} className={sheetCn({ side }, className)} {...props}>
-        <SheetPrimitive.Close asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            elevation="md"
-            className="absolute top-4 right-4 size-8"
-          >
-            <XIcon className="size-4" />
-            <span className="sr-only">Close</span>
-          </Button>
-        </SheetPrimitive.Close>
-        {children}
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  ),
-);
+export const SheetContent = forwardRef<
+  ElementRef<typeof SheetPrimitive.Content>,
+  SheetContentProps
+>(({ side = "right", className, children, ...props }, ref) => (
+  <SheetPortal>
+    <SheetOverlay />
+    <SheetPrimitive.Content ref={ref} className={sheetCn({ side }, className)} {...props}>
+      <SheetPrimitive.Close asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          elevation="md"
+          className="absolute top-4 right-4 size-8"
+        >
+          <XIcon className="size-4" />
+          <span className="sr-only">Close</span>
+        </Button>
+      </SheetPrimitive.Close>
+      {children}
+    </SheetPrimitive.Content>
+  </SheetPortal>
+));
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
-const SheetHeader = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
+export const SheetHeader = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props} />
 );
 SheetHeader.displayName = "SheetHeader";
 
-const SheetFooter = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
+export const SheetFooter = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
     {...props}
@@ -90,7 +91,7 @@ const SheetFooter = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) =>
 );
 SheetFooter.displayName = "SheetFooter";
 
-const SheetTitle = forwardRef<
+export const SheetTitle = forwardRef<
   ElementRef<typeof SheetPrimitive.Title>,
   ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
 >(({ className, ...props }, ref) => (
@@ -102,7 +103,7 @@ const SheetTitle = forwardRef<
 ));
 SheetTitle.displayName = SheetPrimitive.Title.displayName;
 
-const SheetDescription = forwardRef<
+export const SheetDescription = forwardRef<
   ElementRef<typeof SheetPrimitive.Description>,
   ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
 >(({ className, ...props }, ref) => (
@@ -114,21 +115,6 @@ const SheetDescription = forwardRef<
 ));
 SheetDescription.displayName = SheetPrimitive.Description.displayName;
 
-/* ── Namespace ───────────────────────────────────────────────── */
-
-function SheetRoot(props: ComponentProps<typeof SheetPrimitive.Root>) {
+export function Sheet(props: ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root {...props} />;
 }
-
-export const Sheet = Object.assign(SheetRoot, {
-  Root: SheetRoot,
-  Trigger: SheetTrigger,
-  Close: SheetClose,
-  Portal: SheetPortal,
-  Overlay: SheetOverlay,
-  Content: SheetContent,
-  Header: SheetHeader,
-  Footer: SheetFooter,
-  Title: SheetTitle,
-  Description: SheetDescription,
-});
