@@ -1,27 +1,33 @@
 /**
- * Hook for dispatching editor actions.
+ * useEditorActions — composed editor action API.
  *
- * Exposes store actions directly — all mutations live in the store.
- * useShallow compares each property individually so the wrapper object
- * doesn't cause re-renders (all function refs are referentially stable).
+ * Composes action hooks (addNode, removeNode, updateParams) with
+ * store actions (selectNode, undo/redo, entry points, utility).
  *
- * Must be inside EditorProvider.
+ * This is the primary action hook for components — they import
+ * useEditorActions instead of individual hooks or store selectors.
+ *
+ * Must be inside EditorProvider + ReactFlowProvider.
  */
 
 "use client";
 
-import { useShallow } from "zustand/react/shallow";
+import { useShallow } from "@bnto/core";
 import { useEditorStore } from "./useEditorStore";
+import { useAddNode } from "./useAddNode";
+import { useRemoveNode } from "./useRemoveNode";
+import { useUpdateParams } from "./useUpdateParams";
 
 function useEditorActions() {
-  return useEditorStore(
+  const addNode = useAddNode();
+  const removeNode = useRemoveNode();
+  const updateParams = useUpdateParams();
+
+  const storeActions = useEditorStore(
     useShallow((s) => ({
       loadRecipe: s.loadRecipe,
       createBlank: s.createBlank,
-      addNode: s.addNode,
-      removeNode: s.removeNode,
       selectNode: s.selectNode,
-      updateParams: s.updateConfigParams,
       undo: s.undo,
       redo: s.redo,
       pushUndo: s.pushUndo,
@@ -34,6 +40,13 @@ function useEditorActions() {
       resetHistory: s.resetHistory,
     })),
   );
+
+  return {
+    ...storeActions,
+    addNode,
+    removeNode,
+    updateParams,
+  };
 }
 
 export { useEditorActions };

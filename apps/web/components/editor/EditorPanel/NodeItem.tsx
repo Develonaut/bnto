@@ -2,8 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { Text } from "@/components/ui/Text";
-import type { BentoNode } from "@/editor/adapters/types";
-import type { CompartmentVariant } from "@/editor/adapters/types";
+import type { BentoNode, CompartmentVariant } from "@/editor/adapters/types";
 
 /**
  * NodeItem — single row in the sidebar node list.

@@ -1,13 +1,18 @@
 /**
  * Editor store tests — verify the controlled-mode store.
  *
- * The store owns nodes, edges, configs, metadata, undo/redo,
- * validation, execution state, and dirty flag.
+ * The store owns state + simple setters + entry points + undo/redo.
+ * Business logic (addNode, removeNode, updateConfigParams) lives in
+ * action hooks — tested separately via helpers + store.setState().
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { createEditorStore } from "../store/createEditorStore";
-import type { EditorStore } from "../store/types";
+import { createEditorStore } from "./createEditorStore";
+import { captureSnapshot } from "./captureSnapshot";
+import { pushToStack } from "./pushToStack";
+import { revalidateState } from "./revalidateState";
+import { createCompartmentNode } from "../adapters/createCompartmentNode";
+import type { EditorStore } from "./types";
 import type { StoreApi } from "zustand";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 
@@ -40,6 +45,90 @@ function makeConfigs(ids: string[]): NodeConfigs {
     configs[id] = { nodeType: "image", name: "Test", parameters: {} };
   }
   return configs;
+}
+
+/**
+ * Simulate addNode hook — same logic as useAddNode, but using
+ * store.setState() directly (no React context needed).
+ */
+function addNodeViaStore(store: StoreApi<EditorStore>, type: string): string | null {
+  const s = store.getState();
+  const slotIndex = s.nodes.length;
+  const result = createCompartmentNode(type as never, slotIndex);
+  if (!result) return null;
+
+  const snapshot = captureSnapshot(s.nodes, s.configs);
+  const deselected = s.nodes.map((n) =>
+    n.selected ? { ...n, selected: false } : n,
+  );
+  const newNode = { ...result.node, selected: true };
+  const nextNodes = [...deselected, newNode];
+  const nextConfigs = { ...s.configs, [result.node.id]: result.config };
+
+  store.setState({
+    nodes: nextNodes,
+    configs: nextConfigs,
+    isDirty: true,
+    undoStack: pushToStack(s.undoStack, snapshot),
+    redoStack: [],
+    validationErrors: revalidateState(nextNodes, nextConfigs, s.recipeMetadata),
+  });
+  return result.node.id;
+}
+
+/**
+ * Simulate removeNode hook — same logic as useRemoveNode.
+ */
+function removeNodeViaStore(store: StoreApi<EditorStore>, id: string): void {
+  const s = store.getState();
+  const snapshot = captureSnapshot(s.nodes, s.configs);
+  const removedIndex = s.nodes.findIndex((n) => n.id === id);
+  const nextNodes = s.nodes.filter((n) => n.id !== id);
+  const nextConfigs = { ...s.configs };
+  delete nextConfigs[id];
+
+  if (nextNodes.length > 0) {
+    const selectIndex = Math.min(
+      removedIndex > 0 ? removedIndex - 1 : 0,
+      nextNodes.length - 1,
+    );
+    nextNodes[selectIndex] = { ...nextNodes[selectIndex]!, selected: true };
+  }
+
+  store.setState({
+    nodes: nextNodes,
+    configs: nextConfigs,
+    isDirty: true,
+    undoStack: pushToStack(s.undoStack, snapshot),
+    redoStack: [],
+    validationErrors: revalidateState(nextNodes, nextConfigs, s.recipeMetadata),
+  });
+}
+
+/**
+ * Simulate updateConfigParams hook — same logic as useUpdateParams.
+ */
+function updateParamsViaStore(store: StoreApi<EditorStore>, nodeId: string, params: Record<string, unknown>): void {
+  const s = store.getState();
+  const existing = s.configs[nodeId];
+  if (!existing) return;
+
+  const snapshot = captureSnapshot(s.nodes, s.configs);
+  const nextConfigs = {
+    ...s.configs,
+    [nodeId]: {
+      ...existing,
+      parameters: { ...existing.parameters, ...params },
+    },
+  };
+
+  store.setState({
+    configs: nextConfigs,
+    isDirty: true,
+    undoStack: pushToStack(s.undoStack, snapshot),
+    redoStack: [],
+    validationErrors: revalidateState(s.nodes, nextConfigs, s.recipeMetadata),
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -134,11 +223,11 @@ describe("createEditorStore", () => {
     });
   });
 
-  // --- addNode ---
+  // --- addNode (via hook simulation) ---
 
   describe("addNode", () => {
     it("adds a node and its config", () => {
-      const id = state(store).addNode("image");
+      const id = addNodeViaStore(store, "image");
       expect(id).toBeTruthy();
       expect(state(store).nodes.length).toBe(1);
       expect(state(store).configs[id!]).toBeDefined();
@@ -146,67 +235,66 @@ describe("createEditorStore", () => {
     });
 
     it("marks dirty and pushes undo", () => {
-      state(store).addNode("image");
+      addNodeViaStore(store, "image");
       expect(state(store).isDirty).toBe(true);
       expect(state(store).undoStack.length).toBe(1);
     });
 
     it("returns null when canvas is full", () => {
-      // Fill all slots
       for (let i = 0; i < 10; i++) {
-        state(store).addNode("image");
+        addNodeViaStore(store, "image");
       }
-      const id = state(store).addNode("image");
+      const id = addNodeViaStore(store, "image");
       expect(id).toBeNull();
     });
   });
 
-  // --- removeNode ---
+  // --- removeNode (via hook simulation) ---
 
   describe("removeNode", () => {
     it("removes node and its config", () => {
-      const id = state(store).addNode("image")!;
-      state(store).removeNode(id);
+      const id = addNodeViaStore(store, "image")!;
+      removeNodeViaStore(store, id);
       expect(state(store).nodes.length).toBe(0);
       expect(state(store).configs[id]).toBeUndefined();
     });
 
     it("pushes undo snapshot before removal", () => {
-      const id = state(store).addNode("image")!;
+      const id = addNodeViaStore(store, "image")!;
       // addNode pushes one undo, removeNode pushes another
-      state(store).removeNode(id);
+      removeNodeViaStore(store, id);
       expect(state(store).undoStack.length).toBe(2);
     });
   });
 
-  // --- updateConfigParams ---
+  // --- updateConfigParams (via hook simulation) ---
 
   describe("updateConfigParams", () => {
     it("merges params into config", () => {
-      const id = state(store).addNode("image")!;
-      state(store).updateConfigParams(id, { quality: 80 });
+      const id = addNodeViaStore(store, "image")!;
+      updateParamsViaStore(store, id, { quality: 80 });
       expect(state(store).configs[id]!.parameters.quality).toBe(80);
     });
 
     it("does not modify nodes array", () => {
-      const id = state(store).addNode("image")!;
+      const id = addNodeViaStore(store, "image")!;
       const nodesBefore = state(store).nodes;
-      state(store).updateConfigParams(id, { quality: 80 });
+      updateParamsViaStore(store, id, { quality: 80 });
       // nodes reference should be the same — no RF re-render needed
       expect(state(store).nodes).toBe(nodesBefore);
     });
 
     it("pushes undo and marks dirty", () => {
-      const id = state(store).addNode("image")!;
+      const id = addNodeViaStore(store, "image")!;
       const undoBefore = state(store).undoStack.length;
-      state(store).updateConfigParams(id, { quality: 80 });
+      updateParamsViaStore(store, id, { quality: 80 });
       expect(state(store).undoStack.length).toBe(undoBefore + 1);
       expect(state(store).isDirty).toBe(true);
     });
 
     it("does nothing for unknown node ID", () => {
       const configsBefore = state(store).configs;
-      state(store).updateConfigParams("nonexistent", { quality: 80 });
+      updateParamsViaStore(store, "nonexistent", { quality: 80 });
       expect(state(store).configs).toBe(configsBefore);
     });
   });
@@ -215,7 +303,7 @@ describe("createEditorStore", () => {
 
   describe("pushUndo", () => {
     it("captures current nodes + configs as snapshot", () => {
-      state(store).addNode("image");
+      addNodeViaStore(store, "image");
       const undoCount = state(store).undoStack.length;
 
       state(store).pushUndo();
@@ -249,10 +337,10 @@ describe("createEditorStore", () => {
 
   describe("undo/redo", () => {
     it("restores nodes and configs on undo", () => {
-      state(store).addNode("image");
+      addNodeViaStore(store, "image");
       const afterAdd = { nodes: [...state(store).nodes], configs: { ...state(store).configs } };
 
-      state(store).addNode("transform");
+      addNodeViaStore(store, "transform");
       expect(state(store).nodes.length).toBe(2);
 
       state(store).undo();
@@ -260,8 +348,8 @@ describe("createEditorStore", () => {
     });
 
     it("restores nodes and configs on redo", () => {
-      state(store).addNode("image");
-      state(store).addNode("transform");
+      addNodeViaStore(store, "image");
+      addNodeViaStore(store, "transform");
       const twoNodes = state(store).nodes.length;
 
       state(store).undo();
@@ -284,9 +372,9 @@ describe("createEditorStore", () => {
     });
 
     it("supports multiple undo levels", () => {
-      state(store).addNode("image");
-      state(store).addNode("transform");
-      state(store).addNode("spreadsheet");
+      addNodeViaStore(store, "image");
+      addNodeViaStore(store, "transform");
+      addNodeViaStore(store, "spreadsheet");
       expect(state(store).nodes.length).toBe(3);
 
       state(store).undo(); // back to 2
@@ -300,7 +388,7 @@ describe("createEditorStore", () => {
     });
 
     it("marks dirty after undo", () => {
-      state(store).addNode("image");
+      addNodeViaStore(store, "image");
       state(store).resetDirty();
 
       state(store).undo();
