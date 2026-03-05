@@ -2,7 +2,7 @@
 
 import { Button, Card, CheckCircle2Icon, DownloadIcon, IconBadge, Row, Stack } from "@bnto/ui";
 import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
-import { formatFileSize } from "@/src/utils/formatFileSize";
+import { formatFileSize } from "@bnto/ui";
 
 interface BrowserExecutionResultsProps {
   execution: BrowserExecution;

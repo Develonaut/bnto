@@ -7,7 +7,7 @@ import { core, createRecipeFlowStore, deriveAcceptedTypes } from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
 import { getRecipeBySlug, type Definition } from "@bnto/nodes";
 import type { BntoEntry } from "@/lib/bntoRegistry";
-import { toDropzoneAccept } from "@/src/utils/toDropzoneAccept";
+import { toDropzoneAccept } from "@bnto/ui";
 import type { BntoConfigMap, BntoSlug } from "../_components/configs/types";
 import { DEFAULT_CONFIGS } from "../_components/configs/types";
 import type { RunPhase } from "../_components/RunButton";

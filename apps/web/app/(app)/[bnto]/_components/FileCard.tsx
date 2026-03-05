@@ -9,7 +9,7 @@ import {
   LoaderIcon,
   XIcon,
 } from "@bnto/ui";
-import { formatFileSize } from "@/src/utils/formatFileSize";
+import { formatFileSize } from "@bnto/ui";
 
 interface FileCardProps {
   file: File;

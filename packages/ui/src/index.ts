@@ -4,6 +4,8 @@
 export { cn } from "./utils/cn";
 export { createCn } from "./utils/createCn";
 export { resolveResponsive } from "./utils/responsive";
+export { toDropzoneAccept } from "./utils/toDropzoneAccept";
+export { formatFileSize } from "./utils/formatFileSize";
 export type { Breakpoints, ResponsiveProp } from "./utils/responsive";
 export {
   resolveGap,

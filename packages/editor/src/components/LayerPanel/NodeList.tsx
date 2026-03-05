@@ -1,7 +1,7 @@
 "use client";
 
 import { Text } from "@bnto/ui";
-import type { BentoNode } from "@/editor/adapters/types";
+import type { BentoNode } from "../../adapters/types";
 import { NodeItem } from "./NodeItem";
 
 /**

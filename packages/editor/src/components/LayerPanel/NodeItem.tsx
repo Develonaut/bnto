@@ -1,7 +1,7 @@
 "use client";
 
 import { cn, Text } from "@bnto/ui";
-import type { BentoNode, CompartmentVariant } from "@/editor/adapters/types";
+import type { BentoNode, CompartmentVariant } from "../../adapters/types";
 
 /**
  * NodeItem — single row in the sidebar node list.

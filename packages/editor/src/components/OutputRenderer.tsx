@@ -4,7 +4,7 @@ import type { Definition } from "@bnto/nodes";
 import type { BrowserFileResult } from "@bnto/core";
 import { deriveOutputConfig } from "@bnto/core";
 import { Button, Card, CheckCircle2Icon, DownloadIcon, IconBadge, Row, Stack } from "@bnto/ui";
-import { formatFileSize } from "@/src/utils/formatFileSize";
+import { formatFileSize } from "@bnto/ui";
 
 interface OutputRendererProps {
   definition: Definition;

@@ -3,7 +3,7 @@
  *
  * Usage (Server Component page):
  *
- *   import { EditorRoot, EditorCanvas, EditorLayerPanel, EditorConfigPanel, EditorToolbar } from "@/editor/Editor";
+ *   import { EditorRoot, EditorCanvas, EditorLayerPanel, EditorConfigPanel, EditorToolbar } from "@bnto/editor";
  *
  *   <EditorRoot slug="compress-images">
  *     <EditorCanvas>

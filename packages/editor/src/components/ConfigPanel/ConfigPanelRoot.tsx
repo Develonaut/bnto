@@ -2,10 +2,10 @@
 
 import { useCallback } from "react";
 import { cn, Badge, Heading, Panel, Stack, Text, usePrevious } from "@bnto/ui";
-import { useEditorStore } from "@/editor/hooks/useEditorStore";
-import { useEditorNode } from "@/editor/hooks/useEditorNode";
-import { useEditorActions } from "@/editor/hooks/useEditorActions";
-import { useEditorPanels } from "@/editor/hooks/useEditorPanels";
+import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditorNode } from "../../hooks/useEditorNode";
+import { useEditorActions } from "../../hooks/useEditorActions";
+import { useEditorPanels } from "../../hooks/useEditorPanels";
 import { ParameterField } from "../ParameterField";
 
 /**

@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from "react";
 import { Button, PanelLeftIcon, PanelLeftCloseIcon } from "@bnto/ui";
-import { useEditorPanels } from "@/editor/hooks/useEditorPanels";
+import { useEditorPanels } from "../../hooks/useEditorPanels";
 
 /**
  * LayerPanel.Trigger — toolbar button that toggles the layers panel.

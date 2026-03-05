@@ -10,10 +10,10 @@ import {
   Undo2Icon,
   Redo2Icon,
 } from "@bnto/ui";
-import { useEditorUndoRedo } from "@/editor/hooks/useEditorUndoRedo";
-import { useEditorActions } from "@/editor/hooks/useEditorActions";
-import { useEditorStore } from "@/editor/hooks/useEditorStore";
-import { useEditorStoreApi } from "@/editor/hooks/useEditorStoreApi";
+import { useEditorUndoRedo } from "../hooks/useEditorUndoRedo";
+import { useEditorActions } from "../hooks/useEditorActions";
+import { useEditorStore } from "../hooks/useEditorStore";
+import { useEditorStoreApi } from "../hooks/useEditorStoreApi";
 import { LayerPanel } from "./LayerPanel";
 import { ConfigPanel } from "./ConfigPanel";
 import { NodePaletteMenu } from "./NodePaletteMenu";

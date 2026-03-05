@@ -3,10 +3,10 @@
 import { Fragment, useCallback, useMemo, useState, type ComponentProps } from "react";
 import type { NodeTypeName } from "@bnto/nodes";
 import { Badge, Menu, SearchIcon, Text } from "@bnto/ui";
-import { useEditorStore } from "@/editor/hooks/useEditorStore";
-import { useEditorActions } from "@/editor/hooks/useEditorActions";
-import { useNodePalette } from "@/editor/hooks/useNodePalette";
-import { SLOTS } from "@/editor/adapters/bentoSlots";
+import { useEditorStore } from "../hooks/useEditorStore";
+import { useEditorActions } from "../hooks/useEditorActions";
+import { useNodePalette } from "../hooks/useNodePalette";
+import { SLOTS } from "../adapters/bentoSlots";
 
 /**
  * NodePaletteMenu — composable Menu for adding nodes to the canvas.

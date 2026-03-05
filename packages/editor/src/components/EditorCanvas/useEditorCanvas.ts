@@ -1,7 +1,7 @@
 "use client";
 
-import { useEditorStore } from "@/editor/hooks/useEditorStore";
-import { useEditorSelection } from "@/editor/hooks/useEditorSelection";
+import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditorSelection } from "../../hooks/useEditorSelection";
 
 /**
  * useEditorCanvas — bridges RF selection events → store and

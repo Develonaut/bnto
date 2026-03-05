@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { EditorProvider } from "@/editor/EditorProvider";
+import { EditorProvider } from "../../EditorProvider";
 
 /**
  * EditorCanvasRoot — editor providers shell.

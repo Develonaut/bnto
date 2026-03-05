@@ -27,8 +27,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **FOCUS: Package extraction + code standards review before editor.** Sprint 4C (I/O Nodes) complete — all tasks merged (PR #102). Recipes are self-describing.
-- **Next up:** (1) Sprint 4D — extract `@bnto/ui` (Motorway design system), (2) Sprint 4E — extract `@bnto/editor`, (3) Sprint 4F — code standards audit across all packages. Clean, well-structured code before leaning into the complex editor work.
+- **FOCUS: Package extraction + code standards review before editor.** Sprint 4D (`@bnto/ui`) complete (PR #103). Sprint 4E (`@bnto/editor`) complete — all editor code extracted to `packages/editor/`.
+- **Next up:** Sprint 4F — code standards audit across all packages. Clean, well-structured code before leaning into the complex editor work.
 - **Then:** Sprint 5 — editor to production (compartment redesign, `/editor` route, execution, save, E2E). This is the M2 completion path.
 - **Uncommitted editor work:** 7 files modified on `main` (CanvasToolbar, FileMenu, NodeConfigPanel, EditorCanvas, EditorOverlay, useEditorCanvas, icons) — needs branch/PR before next sprint.
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
@@ -257,15 +257,15 @@ Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: 
 
 #### Wave 1 (parallel — package scaffold + move)
 
-- [ ] `packages/editor` — **Bootstrap package**: Create `packages/editor/` with `package.json` (`@bnto/editor`), `tsconfig.json`. Dependencies: `@bnto/ui`, `@bnto/core`, `@bnto/nodes`, `@xyflow/react`
-- [ ] `packages/editor` — **Move editor components**: Move `apps/web/components/editor/` → `packages/editor/src/`. This includes `RecipeEditor/`, `EditorPanel/`, `CanvasToolbar`, `NodeConfigPanel`, `NodePalette`, `CompartmentNode`, adapters, hooks, store, actions
-- [ ] `packages/editor` — **Move editor store**: Ensure `useEditorStore` and all editor Zustand state lives in `@bnto/editor`
+- [x] `packages/editor` — **Bootstrap package**: Create `packages/editor/` with `package.json` (`@bnto/editor`), `tsconfig.json`. Dependencies: `@bnto/ui`, `@bnto/core`, `@bnto/nodes`, `@xyflow/react`
+- [x] `packages/editor` — **Move editor components**: Move `apps/web/editor/` → `packages/editor/src/`. This includes EditorCanvas, EditorToolbar, LayerPanel, ConfigPanel, CompartmentNode, NodePaletteMenu, adapters, hooks, store, actions
+- [x] `packages/editor` — **Move editor store**: Ensure `useEditorStore` and all editor Zustand state lives in `@bnto/editor`
 
 #### Wave 2 (sequential — rewire + verify)
 
-- [ ] `apps/web` — **Update all editor imports**: Replace `@/components/editor/` imports with `@bnto/editor` across the web app
-- [ ] `apps/web` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass. No behavior changes
-- [ ] `apps/web` — **Tailwind source directive**: Add `@source "../../node_modules/@bnto/editor"` to `globals.css` if editor has its own Tailwind classes
+- [x] `apps/web` — **Update all editor imports**: Replace `@/editor/` imports with `@bnto/editor` across the web app
+- [x] `apps/web` — **Verify**: `task ui:build`, `task ui:test`, `task check` all pass. No behavior changes. 90 editor tests + 66 web tests pass
+- [x] `apps/web` — **Tailwind source directive**: Add `@source "../../../packages/editor/src"` to `globals.css`
 
 ---
 
