@@ -1,8 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-import { LoaderIcon, PlayIcon, RotateCcwIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/Button";
+import { Button, LoaderIcon, PlayIcon, RotateCcwIcon } from "@bnto/ui";
 
 export type RunPhase =
   | "idle"

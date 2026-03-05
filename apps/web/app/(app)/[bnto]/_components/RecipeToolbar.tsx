@@ -1,14 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Button } from "@/components/ui/Button";
-import { FileUpload } from "@/components/ui/FileUpload";
-import { Row } from "@/components/ui/Row";
+import { Button, FileUpload, Row } from "@bnto/ui";
 import {
   ArrowLeftIcon,
   DownloadIcon,
   TrashIcon,
-} from "@/components/ui/icons";
+} from "@bnto/ui";
 import { RunButton } from "./RunButton";
 import type { RunPhase } from "./RunButton";
 

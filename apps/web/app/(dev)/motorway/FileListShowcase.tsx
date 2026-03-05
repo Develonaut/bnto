@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { FileUpload } from "@/components/ui/FileUpload";
-import { UploadIcon, XIcon } from "@/components/ui/icons";
+import { Button, Card, FileUpload, UploadIcon, XIcon } from "@bnto/ui";
 
 export function FileListShowcase() {
   const [files, setFiles] = useState<File[]>([]);

@@ -3,14 +3,7 @@
 import { useState } from "react";
 import type { RecipeListItem } from "@bnto/core";
 
-import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/Button";
-import { Grid } from "@/components/ui/Grid";
-import { Heading } from "@/components/ui/Heading";
-import { Row } from "@/components/ui/Row";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Animate, Button, Grid, Heading, Row, Skeleton, Stack, Text } from "@bnto/ui";
 import { RecipeCard } from "@/components/blocks/RecipeCard";
 import { SavedRecipeCard } from "@/components/blocks/SavedRecipeCard";
 import { getBntoIcon } from "@/lib/bntoIcons";

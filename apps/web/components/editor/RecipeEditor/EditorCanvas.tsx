@@ -1,7 +1,7 @@
 "use client";
 
 import { RECIPES } from "@bnto/nodes";
-import { Select } from "@/components/ui/Select";
+import { Select } from "@bnto/ui";
 import { BentoCanvas } from "../canvas/BentoCanvas";
 import { EditorPanel } from "../EditorPanel";
 import { CanvasToolbar } from "../CanvasToolbar";

@@ -1,8 +1,6 @@
 "use client";
 
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { Switch } from "@/components/ui/Switch";
+import { Input, Label, Switch } from "@bnto/ui";
 import type { ResizeImagesConfig as Config } from "./types";
 
 interface ResizeImagesConfigProps {

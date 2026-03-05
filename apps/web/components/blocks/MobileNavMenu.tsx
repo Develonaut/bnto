@@ -5,14 +5,18 @@ import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 
 import { useFeatureFlag } from "@/lib/featureFlags";
-import { GithubIcon, LogOutIcon, XIcon } from "@/components/ui/icons";
+import {
+  Button,
+  Container,
+  GithubIcon,
+  LogOutIcon,
+  Row,
+  Sheet,
+  Stack,
+  Text,
+  XIcon,
+} from "@bnto/ui";
 
-import { Button } from "@/components/ui/Button";
-import { Container } from "@/components/ui/Container";
-import { Row } from "@/components/ui/Row";
-import { Sheet } from "@/components/ui/Sheet";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
 import { GITHUB_URL } from "@/lib/copy";
 import { RECIPES, PAGE_LINKS } from "./navData";
 

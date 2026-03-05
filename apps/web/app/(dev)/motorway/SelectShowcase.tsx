@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 
-import { Label } from "@/components/ui/Label";
-import { Row } from "@/components/ui/Row";
-import { Select } from "@/components/ui/Select";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Label, Row, Select, Stack, Text } from "@bnto/ui";
 
 export function SelectShowcase() {
   const [format, setFormat] = useState("webp");

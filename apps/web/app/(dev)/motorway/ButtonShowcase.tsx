@@ -15,13 +15,9 @@ import {
   StarIcon,
   UnderlineIcon,
   ZapIcon,
-} from "@/components/ui/icons";
+} from "@bnto/ui";
 
-import { Button } from "@/components/ui/Button";
-import { Heading } from "@/components/ui/Heading";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Button, Heading, Row, Stack, Text } from "@bnto/ui";
 
 type Variant = "primary" | "secondary" | "outline" | "muted" | "destructive" | "success" | "warning";
 type ButtonState = "resting" | "hover" | "pressed" | "disabled";

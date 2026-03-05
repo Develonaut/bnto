@@ -1,8 +1,6 @@
 "use client";
 
-import { Label } from "@/components/ui/Label";
-import { Select } from "@/components/ui/Select";
-import { Slider } from "@/components/ui/Slider";
+import { Label, Select, Slider } from "@bnto/ui";
 import type { ConvertFormatConfig as Config } from "./types";
 
 const FORMAT_OPTIONS = [

@@ -2,17 +2,19 @@ import type { PropsWithChildren } from "react";
 import Link from "next/link";
 
 import type { Execution } from "@bnto/core";
-import type { LucideIcon } from "@/components/ui/icons";
-import { BlocksIcon } from "@/components/ui/icons";
-import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { Heading } from "@/components/ui/Heading";
-import { IconBadge } from "@/components/ui/IconBadge";
-import { Pressable } from "@/components/ui/Pressable";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import {
+  Badge,
+  BlocksIcon,
+  Card,
+  Heading,
+  IconBadge,
+  Pressable,
+  Row,
+  Stack,
+  Text,
+  type LucideIcon,
+} from "@bnto/ui";
+import { StatusBadge } from "@/components/blocks/StatusBadge";
 import { cn } from "@/lib/cn";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 

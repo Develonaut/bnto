@@ -2,15 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Grid } from "@/components/ui/Grid";
-import { Heading } from "@/components/ui/Heading";
-import { RadialSlider } from "@/components/ui/RadialSlider";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Switch } from "@/components/ui/Switch";
-import { Text } from "@/components/ui/Text";
+import { Button, Card, Grid, Heading, RadialSlider, Row, Stack, Switch, Text } from "@bnto/ui";
 import {
   CheckCircle2Icon,
   DownloadIcon,
@@ -19,7 +11,7 @@ import {
   PlayIcon,
   TrashIcon,
   UploadIcon,
-} from "@/components/ui/icons";
+} from "@bnto/ui";
 
 import { PhaseIndicator } from "@/app/(app)/[bnto]/_components/PhaseIndicator";
 

@@ -11,10 +11,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   SquareIcon,
-} from "@/components/ui/icons";
-import { Button } from "@/components/ui/Button";
-import { Row } from "@/components/ui/Row";
-import { Text } from "@/components/ui/Text";
+} from "@bnto/ui";
+import { Button, Row, Text } from "@bnto/ui";
 import type { CompartmentStatus } from "@/components/editor/canvas/CompartmentNode";
 import type { BentoNode } from "@/editor/adapters/types";
 import type { CompartmentNodeData } from "@/editor/adapters/types";

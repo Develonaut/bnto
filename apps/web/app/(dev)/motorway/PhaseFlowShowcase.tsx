@@ -2,11 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
-import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/Button";
-import { FileUpload } from "@/components/ui/FileUpload";
-import { Heading } from "@/components/ui/Heading";
-import { ArrowLeftIcon, ArrowRightIcon } from "@/components/ui/icons";
+import { Animate, ArrowLeftIcon, ArrowRightIcon, Button, FileUpload, Heading } from "@bnto/ui";
 import { DropzoneContent } from "@/app/(app)/[bnto]/_components/DropzoneContent";
 import { FileCard } from "@/app/(app)/[bnto]/_components/FileCard";
 import { PhaseIndicator } from "@/app/(app)/[bnto]/_components/PhaseIndicator";

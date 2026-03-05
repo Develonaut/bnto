@@ -7,11 +7,8 @@ import {
   CircleUserIcon,
   LogInIcon,
   LogOutIcon,
-} from "@/components/ui/icons";
-import { Menu } from "@/components/ui/Menu";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+} from "@bnto/ui";
+import { Menu, Skeleton, Stack, Text } from "@bnto/ui";
 
 /**
  * Auth-aware navbar component.

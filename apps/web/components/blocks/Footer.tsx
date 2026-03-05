@@ -2,12 +2,8 @@ import type { CSSProperties } from "react";
 
 import Link from "next/link";
 
-import { ArrowUpRightIcon, GithubIcon } from "@/components/ui/icons";
+import { ArrowUpRightIcon, Container, GithubIcon, Row, Stack, Text } from "@bnto/ui";
 
-import { Container } from "@/components/ui/Container";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
 import { GITHUB_URL, LICENSE_LINE, TAGLINE, TRUST_LINE } from "@/lib/copy";
 
 import { NavButton } from "./NavButton";

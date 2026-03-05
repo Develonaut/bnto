@@ -1,12 +1,7 @@
 "use client";
 
 import { AuthGate } from "@/components/blocks/AuthGate";
-import { Button } from "@/components/ui/Button";
-import { Dialog } from "@/components/ui/Dialog";
-import { Heading } from "@/components/ui/Heading";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Button, Dialog, Heading, Row, Stack, Text } from "@bnto/ui";
 
 /* ── Basic Dialog ───────────────────────────────────────────── */
 

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../../node_modules/@bnto/ui";
 @import "./theme.css";
 @import "./animations.css";
 @import "./surface.css";

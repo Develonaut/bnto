@@ -1,7 +1,5 @@
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
-import { Animate } from "@/components/ui/Animate";
-import { Card } from "@/components/ui/Card";
-import { Text } from "@/components/ui/Text";
+import { Animate, Card, Text } from "@bnto/ui";
 
 /**
  * Custom React Flow node that renders as a .surface Card — the "building"

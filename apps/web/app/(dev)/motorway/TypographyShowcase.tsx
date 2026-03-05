@@ -1,6 +1,4 @@
-import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
-import { Stack } from "@/components/ui/Stack";
+import { Heading, Stack, Text } from "@bnto/ui";
 
 export function TypographyShowcase() {
   return (

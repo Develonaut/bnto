@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 
-import { Card } from "@/components/ui/Card";
-import { Grid } from "@/components/ui/Grid";
-import { Stack } from "@/components/ui/Stack";
-import { Tabs } from "@/components/ui/Tabs";
-import { Text } from "@/components/ui/Text";
+import { Card, Grid, Stack, Tabs, Text } from "@bnto/ui";
 
 /* ── Cell helper ─────────────────────────────────────────────── */
 

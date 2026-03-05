@@ -1,4 +1,4 @@
-import { AppShell } from "@/components/ui/AppShell";
+import { AppShell } from "@bnto/ui";
 import { Navbar } from "@/components/blocks/Navbar";
 
 /**
