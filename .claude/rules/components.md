@@ -78,14 +78,15 @@ If the skeleton is complex (10+ lines, multiple elements), extract it to a named
 
 ## When to Graduate to Separate Files
 
-Start with a single file. Break out when complexity **earns** it -- not preemptively.
+Bias toward smaller files early. A folder of focused files is easier to navigate and test than one large file.
 
 | Signal | Action |
 |---|---|
-| File exceeds ~250 lines | Time to split |
-| Logic is complex and you want to test it independently | Extract to a hook |
+| File approaches 100-150 lines | Look for extraction opportunities |
+| More than 2-3 sub-components in one file | Break into folder + barrel export |
+| Logic is reused or independently testable | Extract to its own file |
 | Multiple components need the same logic | Extract to a shared hook |
-| Skeleton is complex and shared | Extract to its own file |
+| Skeleton is complex or shared | Extract to its own file |
 
 When a component graduates to a folder:
 
