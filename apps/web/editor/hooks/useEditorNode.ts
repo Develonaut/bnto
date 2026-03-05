@@ -1,23 +1,20 @@
 /**
- * Hook for accessing a single node's data, schema, and visible params.
+ * Hook for accessing a single node's visual data, config, schema,
+ * and visible params.
  *
- * Reads from ReactFlow's internal nodeLookup (O(1) access) — RF is the
- * single source of truth for node domain state during editing.
+ * Visual data comes from the store's nodes array.
+ * Domain data (nodeType, parameters) comes from the store's configs map.
  *
- * Returns the node data, its type info, schema, and the parameters
- * that should be visible given the current parameter values
- * (conditional visibility via visibleWhen).
- *
- * Must be inside a ReactFlowProvider.
+ * Must be inside an EditorProvider.
  */
 
 "use client";
 
 import { useMemo } from "react";
-import { useStore } from "@xyflow/react";
 import type { NodeTypeName, NodeSchema, ParameterSchema } from "@bnto/nodes";
 import { NODE_TYPE_INFO, getNodeSchema } from "@bnto/nodes";
-import type { CompartmentNodeData } from "../adapters/types";
+import { useEditorStore } from "./useEditorStore";
+import type { CompartmentNodeData, NodeConfig } from "../adapters/types";
 
 // ---------------------------------------------------------------------------
 // Visible params resolver
@@ -46,8 +43,10 @@ function resolveVisibleParams(
 // ---------------------------------------------------------------------------
 
 interface EditorNodeResult {
-  /** The node's domain data from RF, or null if not found. */
+  /** The node's visual data, or null if not found. */
   node: CompartmentNodeData | null;
+  /** The node's domain config (nodeType, name, parameters), or null. */
+  config: NodeConfig | null;
   /** Node type info (label, category, capabilities). */
   typeInfo: (typeof NODE_TYPE_INFO)[NodeTypeName] | null;
   /** Full schema for the node type. */
@@ -57,33 +56,34 @@ interface EditorNodeResult {
 }
 
 /**
- * Access a node by ID with its schema and conditionally visible params.
+ * Access a node by ID with its config, schema, and conditionally visible params.
  *
- * Reads from RF's internal nodeLookup Map — O(1) access, no recursive
- * tree search. Subscribes to RF store — re-renders when node data changes.
+ * Visual data from store nodes, domain data from store configs.
  */
 function useEditorNode(nodeId: string | null): EditorNodeResult {
-  const nodeData = useStore(
-    (s: { nodeLookup: Map<string, { data: Record<string, unknown> }> }) => {
-      if (!nodeId) return null;
-      const rfNode = s.nodeLookup.get(nodeId);
-      return rfNode ? (rfNode.data as CompartmentNodeData) : null;
-    },
-  );
+  const nodeData = useEditorStore((s) => {
+    if (!nodeId) return null;
+    return s.nodes.find((n) => n.id === nodeId)?.data ?? null;
+  });
+
+  const config = useEditorStore((s) => {
+    if (!nodeId) return null;
+    return s.configs[nodeId] ?? null;
+  });
 
   return useMemo(() => {
-    if (!nodeData) {
-      return { node: null, typeInfo: null, schema: null, visibleParams: [] };
+    if (!nodeData || !config) {
+      return { node: null, config: null, typeInfo: null, schema: null, visibleParams: [] };
     }
 
-    const typeInfo = NODE_TYPE_INFO[nodeData.nodeType as NodeTypeName] ?? null;
-    const schema = getNodeSchema(nodeData.nodeType) ?? null;
+    const typeInfo = NODE_TYPE_INFO[config.nodeType as NodeTypeName] ?? null;
+    const schema = getNodeSchema(config.nodeType) ?? null;
     const visibleParams = schema
-      ? resolveVisibleParams(schema, nodeData.parameters)
+      ? resolveVisibleParams(schema, config.parameters)
       : [];
 
-    return { node: nodeData, typeInfo, schema, visibleParams };
-  }, [nodeData]);
+    return { node: nodeData, config, typeInfo, schema, visibleParams };
+  }, [nodeData, config]);
 }
 
 export { useEditorNode };

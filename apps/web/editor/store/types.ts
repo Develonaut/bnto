@@ -1,12 +1,14 @@
 /**
  * Editor store types.
  *
- * ReactFlow is the single source of truth for node state.
- * The store owns metadata, history, validation, and execution.
+ * The store owns nodes, edges, and configs (controlled mode).
+ * RF receives these as props — the store is the single source of truth.
  */
 
+import type { Edge, NodeChange, EdgeChange } from "@xyflow/react";
 import type { ValidationError } from "@bnto/nodes";
-import type { BentoNode } from "../adapters/types";
+import type { BentoNode, NodeConfig, NodeConfigs } from "../adapters/types";
+import type { NodeTypeName } from "@bnto/nodes";
 
 // ---------------------------------------------------------------------------
 // Execution state — per-node status tracking
@@ -28,23 +30,31 @@ interface RecipeMetadata {
 }
 
 // ---------------------------------------------------------------------------
-// Node getter — registered by the visual editor
+// Undo/redo snapshot — captures both nodes and configs atomically
 // ---------------------------------------------------------------------------
 
-/** Reads current RF nodes without importing React. */
-type NodeGetter = () => BentoNode[];
+interface EditorSnapshot {
+  nodes: BentoNode[];
+  configs: NodeConfigs;
+}
 
 // ---------------------------------------------------------------------------
 // State shape
 // ---------------------------------------------------------------------------
 
 interface EditorState {
+  // --- Graph state (store owns, RF receives as props) ---
+  nodes: BentoNode[];
+  edges: Edge[];
+  configs: NodeConfigs;
+
+  // --- Metadata ---
   recipeMetadata: RecipeMetadata;
   isDirty: boolean;
   validationErrors: ValidationError[];
   executionState: ExecutionState;
-  undoStack: BentoNode[][];
-  redoStack: BentoNode[][];
+  undoStack: EditorSnapshot[];
+  redoStack: EditorSnapshot[];
 }
 
 // ---------------------------------------------------------------------------
@@ -52,25 +62,36 @@ interface EditorState {
 // ---------------------------------------------------------------------------
 
 interface EditorActions {
+  // --- Entry points ---
   loadRecipe: (slug: string) => void;
   createBlank: () => void;
 
-  /** Snapshot current RF nodes to undo stack, clear redo. */
+  // --- RF controlled-mode change handlers ---
+  onNodesChange: (changes: NodeChange<BentoNode>[]) => void;
+  onEdgesChange: (changes: EdgeChange[]) => void;
+
+  // --- Graph mutations ---
+  setNodes: (nodes: BentoNode[]) => void;
+  addNode: (type: NodeTypeName, position?: { x: number; y: number }) => string | null;
+  removeNode: (id: string) => void;
+
+  // --- Config mutations (no RF re-render) ---
+  setConfigs: (configs: NodeConfigs) => void;
+  setConfig: (nodeId: string, config: NodeConfig) => void;
+  removeConfig: (nodeId: string) => void;
+  updateConfigParams: (nodeId: string, params: Record<string, unknown>) => void;
+
+  // --- History ---
   pushUndo: () => void;
-  /** Set isDirty = true. */
+  undo: () => void;
+  redo: () => void;
+
+  // --- Utility ---
   markDirty: () => void;
-  /** Derive Definition from RF nodes, run validateDefinition. */
   revalidate: () => void;
-
-  /** Returns BentoNode[] snapshot so caller can setNodes(). Null if empty. */
-  undo: () => BentoNode[] | null;
-  /** Returns BentoNode[] snapshot so caller can setNodes(). Null if empty. */
-  redo: () => BentoNode[] | null;
-
   resetDirty: () => void;
   setExecutionState: (state: ExecutionState) => void;
   resetExecution: () => void;
-  setNodeGetter: (getter: NodeGetter) => void;
   setRecipeMetadata: (metadata: RecipeMetadata) => void;
   resetHistory: () => void;
 }
@@ -85,8 +106,8 @@ export type {
   EditorStore,
   EditorState,
   EditorActions,
+  EditorSnapshot,
   NodeExecutionStatus,
   ExecutionState,
   RecipeMetadata,
-  NodeGetter,
 };

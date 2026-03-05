@@ -1,8 +1,7 @@
 /**
  * Hook for dispatching editor actions.
  *
- * Composes RF-first mutation hooks (addNode, removeNode, updateParams)
- * with store-level actions (loadRecipe, undo, redo, etc.).
+ * Exposes store actions directly — all mutations live in the store now.
  *
  * Must be inside EditorProvider.
  */
@@ -11,39 +10,27 @@
 
 import { useShallow } from "zustand/react/shallow";
 import { useEditorStore } from "./useEditorStore";
-import { useAddNode } from "./useAddNode";
-import { useRemoveNode } from "./useRemoveNode";
-import { useUpdateNodeParams } from "./useUpdateNodeParams";
 
 function useEditorActions() {
-  const addNode = useAddNode();
-  const removeNode = useRemoveNode();
-  const updateParams = useUpdateNodeParams();
-
-  const storeActions = useEditorStore(
+  return useEditorStore(
     useShallow((s) => ({
       loadRecipe: s.loadRecipe,
       createBlank: s.createBlank,
+      addNode: s.addNode,
+      removeNode: s.removeNode,
+      updateParams: s.updateConfigParams,
       undo: s.undo,
       redo: s.redo,
-      resetDirty: s.resetDirty,
-      setExecutionState: s.setExecutionState,
-      resetExecution: s.resetExecution,
-      setNodeGetter: s.setNodeGetter,
-      setRecipeMetadata: s.setRecipeMetadata,
-      resetHistory: s.resetHistory,
       pushUndo: s.pushUndo,
       markDirty: s.markDirty,
       revalidate: s.revalidate,
+      resetDirty: s.resetDirty,
+      setExecutionState: s.setExecutionState,
+      resetExecution: s.resetExecution,
+      setRecipeMetadata: s.setRecipeMetadata,
+      resetHistory: s.resetHistory,
     })),
   );
-
-  return {
-    ...storeActions,
-    addNode,
-    removeNode,
-    updateParams,
-  };
 }
 
 export { useEditorActions };

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback } from "react";
-import { useStore } from "@xyflow/react";
 import { Button } from "@/components/ui/Button";
 import { Toolbar } from "@/components/ui/Toolbar";
 import { Text } from "@/components/ui/Text";
@@ -16,7 +15,7 @@ import {
 import { useEditorStore } from "@/editor/hooks/useEditorStore";
 import { useEditorSelection } from "@/editor/hooks/useEditorSelection";
 import { useEditorUndoRedo } from "@/editor/hooks/useEditorUndoRedo";
-import { useRemoveNode } from "@/editor/hooks/useRemoveNode";
+import { useEditorActions } from "@/editor/hooks/useEditorActions";
 import { NodePaletteMenu } from "./NodePaletteMenu";
 
 /**
@@ -33,11 +32,11 @@ interface CanvasToolbarProps {
 }
 
 function CanvasToolbar({ onReset, onRun }: CanvasToolbarProps) {
-  const removeNode = useRemoveNode();
+  const { removeNode } = useEditorActions();
   const { selectedNodeId } = useEditorSelection();
   const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
   const isDirty = useEditorStore((s) => s.isDirty);
-  const nodeCount = useStore((s) => s.nodes.length);
+  const nodeCount = useEditorStore((s) => s.nodes.length);
 
   const handleRemove = useCallback(() => {
     if (selectedNodeId) removeNode(selectedNodeId);

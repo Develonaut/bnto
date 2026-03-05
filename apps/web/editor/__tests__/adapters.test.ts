@@ -17,10 +17,11 @@ import { NODE_TYPE_INFO, NODE_TYPE_NAMES, NODE_SCHEMAS } from "@bnto/nodes";
 // ---------------------------------------------------------------------------
 
 describe("definitionToBento", () => {
-  it("returns empty nodes for a blank definition", () => {
+  it("returns empty nodes and configs for a blank definition", () => {
     const def = createBlankDefinition();
     const result = definitionToBento(def);
     expect(result.nodes).toEqual([]);
+    expect(result.configs).toEqual({});
   });
 
   it("maps child nodes to compartment nodes", () => {
@@ -32,16 +33,21 @@ describe("definitionToBento", () => {
     expect(result.nodes.length).toBe(2);
   });
 
-  it("populates domain fields (nodeType, name, parameters) in node data", () => {
+  it("stores domain fields in configs map, not in node.data", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
     const childNode = def.nodes![0]!;
 
     const result = definitionToBento(def);
+    const config = result.configs[childNode.id]!;
+    expect(config.nodeType).toBe(childNode.type);
+    expect(config.name).toBe(childNode.name);
+    expect(config.parameters).toEqual(childNode.parameters);
+
+    // node.data should NOT have domain fields
     const data = result.nodes[0]!.data;
-    expect(data.nodeType).toBe(childNode.type);
-    expect(data.name).toBe(childNode.name);
-    expect(data.parameters).toEqual(childNode.parameters);
+    expect("nodeType" in data).toBe(false);
+    expect("parameters" in data).toBe(false);
   });
 
   it("assigns bento slot positions, not definition positions", () => {
@@ -95,6 +101,17 @@ describe("definitionToBento", () => {
     expect(result.nodes[0]!.id).toBe(nodeId);
   });
 
+  it("configs map keys match RF node ids", () => {
+    let def = createBlankDefinition();
+    def = addNode(def, "image").definition;
+    def = addNode(def, "transform").definition;
+
+    const result = definitionToBento(def);
+    for (const node of result.nodes) {
+      expect(result.configs[node.id]).toBeDefined();
+    }
+  });
+
   it("caps at SLOTS.length compartments", () => {
     let def = createBlankDefinition();
     for (let i = 0; i < SLOTS.length + 3; i++) {
@@ -125,6 +142,7 @@ describe("definitionToBento", () => {
       expect(result.nodes.length).toBe(1);
       expect(result.nodes[0]!.data.label).toBeTruthy();
       expect(result.nodes[0]!.data.variant).toBeTruthy();
+      expect(result.configs[result.nodes[0]!.id]!.nodeType).toBe(typeName);
     }
   });
 });
@@ -134,11 +152,11 @@ describe("definitionToBento", () => {
 // ---------------------------------------------------------------------------
 
 describe("createCompartmentNode", () => {
-  it("creates a BentoNode from a node type and slot index", () => {
+  it("creates a BentoNode + NodeConfig from a node type and slot index", () => {
     const result = createCompartmentNode("image", 0);
     expect(result).not.toBeNull();
-    expect(result!.type).toBe("compartment");
-    expect(result!.data.nodeType).toBe("image");
+    expect(result!.node.type).toBe("compartment");
+    expect(result!.config.nodeType).toBe("image");
   });
 
   it("returns null when slot index exceeds available slots", () => {
@@ -148,32 +166,42 @@ describe("createCompartmentNode", () => {
 
   it("uses slot position by default", () => {
     const result = createCompartmentNode("image", 2);
-    expect(result!.position).toEqual({ x: SLOTS[2]!.x, y: SLOTS[2]!.y });
+    expect(result!.node.position).toEqual({ x: SLOTS[2]!.x, y: SLOTS[2]!.y });
   });
 
   it("uses custom position when provided", () => {
     const result = createCompartmentNode("image", 0, { x: 42, y: 99 });
-    expect(result!.position).toEqual({ x: 42, y: 99 });
+    expect(result!.node.position).toEqual({ x: 42, y: 99 });
   });
 
   it("maps category to variant color", () => {
     const result = createCompartmentNode("image", 0);
-    expect(result!.data.variant).toBe("primary");
+    expect(result!.node.data.variant).toBe("primary");
   });
 
   it("sets slot dimensions", () => {
     const result = createCompartmentNode("image", 0);
-    expect(result!.data.width).toBe(SLOTS[0]!.w);
-    expect(result!.data.height).toBe(SLOTS[0]!.h);
+    expect(result!.node.data.width).toBe(SLOTS[0]!.w);
+    expect(result!.node.data.height).toBe(SLOTS[0]!.h);
   });
 
   it("generates a UUID for node id", () => {
     const result = createCompartmentNode("image", 0);
-    expect(result!.id).toBeTruthy();
-    expect(result!.id.length).toBeGreaterThan(0);
+    expect(result!.node.id).toBeTruthy();
+    expect(result!.node.id.length).toBeGreaterThan(0);
   });
 
-  it("builds default parameters from schema", () => {
+  it("keeps domain data in config, not in node.data", () => {
+    const result = createCompartmentNode("image", 0);
+    expect(result!.config.nodeType).toBe("image");
+    expect(result!.config.parameters).toBeDefined();
+
+    const data = result!.node.data;
+    expect("nodeType" in data).toBe(false);
+    expect("parameters" in data).toBe(false);
+  });
+
+  it("builds default parameters from schema in config", () => {
     const result = createCompartmentNode("image", 0);
     const schema = NODE_SCHEMAS["image"];
     const expectedDefaults: Record<string, unknown> = {};
@@ -182,15 +210,15 @@ describe("createCompartmentNode", () => {
         expectedDefaults[param.name] = param.default;
       }
     }
-    expect(result!.data.parameters).toEqual(expectedDefaults);
+    expect(result!.config.parameters).toEqual(expectedDefaults);
   });
 
   it("works with all 10 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       const result = createCompartmentNode(typeName, 0);
       expect(result).not.toBeNull();
-      expect(result!.data.nodeType).toBe(typeName);
-      expect(result!.data.label).toBeTruthy();
+      expect(result!.config.nodeType).toBe(typeName);
+      expect(result!.node.data.label).toBeTruthy();
     }
   });
 });
@@ -200,13 +228,13 @@ describe("createCompartmentNode", () => {
 // ---------------------------------------------------------------------------
 
 describe("rfNodesToDefinition", () => {
-  it("converts RF nodes back to Definition child nodes", () => {
+  it("converts RF nodes + configs back to Definition child nodes", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
     def = addNode(def, "spreadsheet").definition;
 
     const bento = definitionToBento(def);
-    const result = rfNodesToDefinition(bento.nodes, def);
+    const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
     expect(result.nodes!.length).toBe(2);
     expect(result.nodes![0]!.type).toBe("image");
@@ -219,7 +247,7 @@ describe("rfNodesToDefinition", () => {
     const originalId = def.nodes![0]!.id;
 
     const bento = definitionToBento(def);
-    const result = rfNodesToDefinition(bento.nodes, def);
+    const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
     expect(result.nodes![0]!.id).toBe(originalId);
   });
@@ -229,12 +257,11 @@ describe("rfNodesToDefinition", () => {
     def = addNode(def, "image").definition;
 
     const bento = definitionToBento(def);
-    // Simulate a drag — user moved the node
     const movedNodes = bento.nodes.map((n) => ({
       ...n,
       position: { x: 777, y: 333 },
     }));
-    const result = rfNodesToDefinition(movedNodes, def);
+    const result = rfNodesToDefinition(movedNodes, def, bento.configs);
 
     expect(result.nodes![0]!.position).toEqual({ x: 777, y: 333 });
   });
@@ -245,7 +272,7 @@ describe("rfNodesToDefinition", () => {
     const originalParams = def.nodes![0]!.parameters;
 
     const bento = definitionToBento(def);
-    const result = rfNodesToDefinition(bento.nodes, def);
+    const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
     expect(result.nodes![0]!.parameters).toEqual(originalParams);
   });
@@ -255,7 +282,7 @@ describe("rfNodesToDefinition", () => {
     def = addNode(def, "image").definition;
 
     const bento = definitionToBento(def);
-    const result = rfNodesToDefinition(bento.nodes, def);
+    const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
     expect(result.id).toBe(def.id);
     expect(result.name).toBe(def.name);
@@ -265,7 +292,7 @@ describe("rfNodesToDefinition", () => {
 
   it("handles empty RF nodes gracefully", () => {
     const def = createBlankDefinition();
-    const result = rfNodesToDefinition([], def);
+    const result = rfNodesToDefinition([], def, {});
 
     expect(result.nodes).toEqual([]);
     expect(result.id).toBe(def.id);
@@ -278,7 +305,7 @@ describe("rfNodesToDefinition", () => {
     def = addNode(def, "file-system").definition;
 
     const bento = definitionToBento(def);
-    const roundTripped = rfNodesToDefinition(bento.nodes, def);
+    const roundTripped = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
     for (let i = 0; i < def.nodes!.length; i++) {
       const original = def.nodes![i]!;
@@ -288,5 +315,16 @@ describe("rfNodesToDefinition", () => {
       expect(result.name).toBe(original.name);
       expect(result.parameters).toEqual(original.parameters);
     }
+  });
+
+  it("uses label as fallback name when config is missing", () => {
+    let def = createBlankDefinition();
+    def = addNode(def, "image").definition;
+
+    const bento = definitionToBento(def);
+    // Pass empty configs — adapter should use node.data.label as fallback
+    const result = rfNodesToDefinition(bento.nodes, def, {});
+
+    expect(result.nodes![0]!.name).toBe(bento.nodes[0]!.data.label);
   });
 });

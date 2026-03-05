@@ -12,8 +12,8 @@ import { useEditorCanvas } from "./useEditorCanvas";
 /**
  * EditorCanvas — render shell for the recipe editor.
  *
- * All orchestration logic (selection, sync, recipe change, etc.)
- * lives in useEditorCanvas. This component is pure layout.
+ * All orchestration logic lives in useEditorCanvas.
+ * This component is pure layout.
  */
 
 interface EditorCanvasProps {
@@ -30,7 +30,10 @@ function EditorCanvas({ initialSlug }: EditorCanvasProps) {
     activeSlug,
     handleRecipeChange,
     handleReset,
-    defaultNodes,
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
   } = useEditorCanvas({ initialSlug });
 
   return (
@@ -38,9 +41,12 @@ function EditorCanvas({ initialSlug }: EditorCanvasProps) {
       className="relative h-full overflow-hidden"
       data-testid="recipe-editor"
     >
-      {/* Canvas — full bleed, no children. Fills entire viewport. */}
+      {/* Canvas — controlled mode, store owns state. */}
       <BentoCanvas
-        defaultNodes={defaultNodes}
+        nodes={nodes}
+        onNodesChange={onNodesChange}
+        edges={edges}
+        onEdgesChange={onEdgesChange}
         interactive
         disable={{ drag: true }}
         standalone
@@ -49,7 +55,6 @@ function EditorCanvas({ initialSlug }: EditorCanvasProps) {
 
       {/* Floating panel layer */}
       <EditorOverlay>
-        {/* Left sidebar — full height of safe area */}
         <EditorOverlay.Sidebar>
           <EditorSidebar
             collapsed={sidebarCollapsed}
@@ -75,12 +80,10 @@ function EditorCanvas({ initialSlug }: EditorCanvasProps) {
           />
         </EditorOverlay.Sidebar>
 
-        {/* Right config panel — slides in when node selected */}
         <EditorOverlay.ConfigPanel visible={!!selectedNodeId}>
           <NodeConfigPanel selectedNodeId={configNodeId} />
         </EditorOverlay.ConfigPanel>
 
-        {/* Floating toolbar — bottom-center */}
         <EditorOverlay.Toolbar>
           <CanvasToolbar onReset={handleReset} />
         </EditorOverlay.Toolbar>
