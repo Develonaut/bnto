@@ -74,6 +74,7 @@ interface EditorActions {
   setNodes: (nodes: BentoNode[]) => void;
   addNode: (type: NodeTypeName, position?: { x: number; y: number }) => string | null;
   removeNode: (id: string) => void;
+  selectNode: (id: string | null) => void;
 
   // --- Config mutations (no RF re-render) ---
   setConfigs: (configs: NodeConfigs) => void;

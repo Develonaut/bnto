@@ -3,7 +3,7 @@
 import { Panel } from "@/components/ui/Panel";
 import { Text } from "@/components/ui/Text";
 import { useEditorExport } from "@/editor/hooks/useEditorExport";
-import { useCanvasNodes } from "@/editor/hooks/useCanvasNodes";
+import { useEditorStore } from "@/editor/hooks/useEditorStore";
 import { FileMenu } from "./FileMenu";
 import { NodeList } from "./NodeList";
 import { useAutoSelect } from "./useAutoSelect";
@@ -36,9 +36,9 @@ function EditorSidebarRoot({
   name = "Untitled",
   footer,
 }: EditorSidebarProps) {
-  const nodes = useCanvasNodes();
+  const nodes = useEditorStore((s) => s.nodes);
   const { download, canExport } = useEditorExport();
-  const { handleSelectNode } = useAutoSelect({ nodes, selectedNodeId });
+  const { handleSelectNode } = useAutoSelect({ selectedNodeId });
 
   return (
     <Panel collapsed={collapsed} onToggle={onToggle} className="h-full w-56">

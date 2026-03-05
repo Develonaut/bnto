@@ -15,10 +15,8 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Row } from "@/components/ui/Row";
 import { Text } from "@/components/ui/Text";
-import type {
-  CompartmentNodeType,
-  CompartmentStatus,
-} from "@/components/editor/canvas/CompartmentNode";
+import type { CompartmentStatus } from "@/components/editor/canvas/CompartmentNode";
+import type { BentoNode } from "@/editor/adapters/types";
 import type { CompartmentNodeData } from "@/editor/adapters/types";
 import { SLOTS } from "@/editor/adapters/bentoSlots";
 
@@ -78,7 +76,7 @@ function statusForIndex(
 function buildNodes(
   count: number,
   activeIndex: number | null,
-): CompartmentNodeType[] {
+): BentoNode[] {
   return Array.from({ length: count }, (_, i) => {
     const slot = SLOTS[i]!;
     const data = PALETTE[i % PALETTE.length]!;
@@ -110,7 +108,7 @@ function NodeSync({
   count: number;
   activeIndex: number | null;
 }) {
-  const { setNodes } = useReactFlow<CompartmentNodeType>();
+  const { setNodes } = useReactFlow<BentoNode>();
 
   useEffect(() => {
     setNodes(buildNodes(count, activeIndex));

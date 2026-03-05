@@ -47,6 +47,3 @@ export type {
   NodeConfig,
   NodeConfigs,
 } from "./adapters/types";
-
-// Utils
-export { findNodeById } from "./utils/findNodeById";

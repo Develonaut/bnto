@@ -4,7 +4,7 @@ import { Animate } from "@/components/ui/Animate";
 import { Card } from "@/components/ui/Card";
 import { Pressable } from "@/components/ui/Pressable";
 import { Text } from "@/components/ui/Text";
-import type { CompartmentNodeData, BentoNode } from "@/editor/adapters/types";
+import type { CompartmentVariant, BentoNode } from "@/editor/adapters/types";
 
 /**
  * A bento box compartment — a .surface Card that acts as a "building"
@@ -15,16 +15,14 @@ import type { CompartmentNodeData, BentoNode } from "@/editor/adapters/types";
  * create the varied-compartment look of a real bento box — some are
  * small squares, others are wide rectangles, others tall.
  *
- * Domain data (nodeType, name, parameters) is carried in the RF node's
- * data field — RF is the single source of truth during editing.
+ * Domain data (nodeType, name, parameters) lives in the configs store,
+ * NOT in node.data. Only visual fields (label, variant, etc.) are in
+ * node.data — this prevents parameter changes from re-rendering nodes.
  */
 
 export type CompartmentStatus = "idle" | "pending" | "active" | "completed";
 
-/** @deprecated Use BentoNode from @/editor/adapters/types instead. */
-export type CompartmentNodeType = BentoNode;
-
-const SURFACE_CLASS: Record<NonNullable<CompartmentNodeData["variant"]>, string> = {
+const SURFACE_CLASS: Record<CompartmentVariant, string> = {
   primary: "surface-primary",
   secondary: "surface-secondary",
   accent: "surface-accent",
@@ -36,7 +34,7 @@ const SURFACE_CLASS: Record<NonNullable<CompartmentNodeData["variant"]>, string>
 export const CompartmentNode = memo(function CompartmentNode({
   data,
   selected,
-}: NodeProps<CompartmentNodeType>) {
+}: NodeProps<BentoNode>) {
   const w = data.width ?? 120;
   const h = data.height ?? 120;
   const status = data.status ?? "idle";

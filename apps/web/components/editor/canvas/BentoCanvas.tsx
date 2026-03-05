@@ -13,7 +13,8 @@ import type { NodeChange, EdgeChange, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { cn } from "@/lib/cn";
 
-import { CompartmentNode, type CompartmentNodeType } from "./CompartmentNode";
+import { CompartmentNode } from "./CompartmentNode";
+import type { BentoNode } from "@/editor/adapters/types";
 
 /**
  * A React Flow canvas styled as a bento box grid.
@@ -31,15 +32,15 @@ import { CompartmentNode, type CompartmentNodeType } from "./CompartmentNode";
 
 type BentoCanvasProps = {
   /** Controlled mode: nodes from external store. */
-  nodes?: CompartmentNodeType[];
+  nodes?: BentoNode[];
   /** Controlled mode: RF change handler. */
-  onNodesChange?: (changes: NodeChange<CompartmentNodeType>[]) => void;
+  onNodesChange?: (changes: NodeChange<BentoNode>[]) => void;
   /** Controlled mode: edges from external store. */
   edges?: Edge[];
   /** Controlled mode: edge change handler. */
   onEdgesChange?: (changes: EdgeChange[]) => void;
   /** Uncontrolled mode: initial nodes (RF owns state after mount). */
-  defaultNodes?: CompartmentNodeType[];
+  defaultNodes?: BentoNode[];
   /** Canvas height in px. Default: 480 */
   height?: number;
   /** Enable drag, select, pan, zoom. Default: false (read-only). */
@@ -73,11 +74,11 @@ const NODE_TYPES = { compartment: CompartmentNode } as const;
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
 
 type BentoCanvasInnerProps = {
-  nodes?: CompartmentNodeType[];
-  onNodesChange?: (changes: NodeChange<CompartmentNodeType>[]) => void;
+  nodes?: BentoNode[];
+  onNodesChange?: (changes: NodeChange<BentoNode>[]) => void;
   edges?: Edge[];
   onEdgesChange?: (changes: EdgeChange[]) => void;
-  defaultNodes?: CompartmentNodeType[];
+  defaultNodes?: BentoNode[];
   interactive?: boolean;
   disable?: BentoCanvasProps["disable"];
   children?: ReactNode;
@@ -114,7 +115,7 @@ function BentoCanvasInner({
   const isControlled = !!onNodesChange;
 
   return (
-    <ReactFlow<CompartmentNodeType>
+    <ReactFlow<BentoNode>
       {...(isControlled
         ? { nodes, onNodesChange, edges: edges ?? EMPTY_EDGES, onEdgesChange }
         : { defaultNodes, edges: EMPTY_EDGES })}

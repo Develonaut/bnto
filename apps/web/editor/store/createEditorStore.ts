@@ -29,7 +29,16 @@ import type { BentoNode, NodeConfigs } from "../adapters/types";
 const MAX_UNDO_HISTORY = 50;
 
 function captureSnapshot(nodes: BentoNode[], configs: NodeConfigs): EditorSnapshot {
-  return { nodes: [...nodes], configs: { ...configs } };
+  // Deep-clone configs so later mutations don't corrupt snapshots.
+  // Each NodeConfig contains a parameters record that may be mutated.
+  const clonedConfigs: NodeConfigs = {};
+  for (const [id, config] of Object.entries(configs)) {
+    clonedConfigs[id] = {
+      ...config,
+      parameters: { ...config.parameters },
+    };
+  }
+  return { nodes: [...nodes], configs: clonedConfigs };
 }
 
 // ---------------------------------------------------------------------------
@@ -157,28 +166,53 @@ function createEditorStore(options?: CreateEditorStoreOptions | RecipeMetadata) 
       const snapshot = captureSnapshot(state.nodes, state.configs);
       const stack = [...state.undoStack, snapshot];
 
+      // Auto-select the new node, deselect all others
+      const deselected = state.nodes.map((n) =>
+        n.selected ? { ...n, selected: false } : n
+      );
+      const newNode = { ...result.node, selected: true };
+      const nextNodes = [...deselected, newNode];
+      const nextConfigs = { ...state.configs, [result.node.id]: result.config };
+
       set({
-        nodes: [...state.nodes, result.node],
-        configs: { ...state.configs, [result.node.id]: result.config },
+        nodes: nextNodes,
+        configs: nextConfigs,
         isDirty: true,
         undoStack: stack.length > MAX_UNDO_HISTORY ? stack.slice(-MAX_UNDO_HISTORY) : stack,
         redoStack: [],
-        validationErrors: revalidateState(
-          [...state.nodes, result.node],
-          { ...state.configs, [result.node.id]: result.config },
-          state.recipeMetadata,
-        ),
+        validationErrors: revalidateState(nextNodes, nextConfigs, state.recipeMetadata),
       });
       return result.node.id;
+    },
+
+    selectNode: (id) => {
+      set((s) => ({
+        nodes: s.nodes.map((n) =>
+          n.id === id
+            ? n.selected ? n : { ...n, selected: true }
+            : n.selected ? { ...n, selected: false } : n
+        ),
+      }));
     },
 
     removeNode: (id) => {
       const state = get();
       const snapshot = captureSnapshot(state.nodes, state.configs);
       const stack = [...state.undoStack, snapshot];
+
+      const removedIndex = state.nodes.findIndex((n) => n.id === id);
       const nextNodes = state.nodes.filter((n) => n.id !== id);
       const nextConfigs = { ...state.configs };
       delete nextConfigs[id];
+
+      // Auto-select the nearest remaining node after removal
+      if (nextNodes.length > 0) {
+        const selectIndex = Math.min(
+          removedIndex > 0 ? removedIndex - 1 : 0,
+          nextNodes.length - 1,
+        );
+        nextNodes[selectIndex] = { ...nextNodes[selectIndex]!, selected: true };
+      }
 
       set({
         nodes: nextNodes,

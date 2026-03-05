@@ -34,7 +34,8 @@ function useEditorCanvas({ initialSlug }: UseEditorCanvasOptions = {}) {
   const onNodesChange = useEditorStore((s) => s.onNodesChange);
   const onEdgesChange = useEditorStore((s) => s.onEdgesChange);
 
-  /* Seed initial recipe into store on first render. */
+  /* Seed initial recipe into store on first render. useState
+   * initializer runs exactly once — safe for Strict Mode. */
   useState(() => {
     if (initialSlug && initialSlug !== "blank") {
       storeApi.getState().loadRecipe(initialSlug);

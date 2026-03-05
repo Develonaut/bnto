@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 import { Text } from "@/components/ui/Text";
-import type { CompartmentNodeType } from "../canvas/CompartmentNode";
+import type { BentoNode } from "@/editor/adapters/types";
 import type { CompartmentVariant } from "@/editor/adapters/types";
 
 /**
@@ -22,7 +22,7 @@ const DOT_COLOR: Record<CompartmentVariant, string> = {
 };
 
 interface NodeItemProps {
-  node: CompartmentNodeType;
+  node: BentoNode;
   selected: boolean;
   onSelect: (nodeId: string) => void;
 }
