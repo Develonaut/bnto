@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { usePrevious } from "@/components/ui/usePrevious";
 import { useEditorStore } from "@/editor";
 import { useEditorSelection } from "@/editor/hooks/useEditorSelection";
@@ -34,15 +34,13 @@ function useEditorCanvas({ initialSlug }: UseEditorCanvasOptions = {}) {
   const onNodesChange = useEditorStore((s) => s.onNodesChange);
   const onEdgesChange = useEditorStore((s) => s.onEdgesChange);
 
-  /* Seed initial recipe into store once. Ref guard prevents
-   * double-fire in React Strict Mode (which calls effects twice). */
-  const initialized = useRef(false);
-  if (!initialized.current) {
-    initialized.current = true;
+  /* Seed initial recipe into store on first render. useState
+   * initializer runs exactly once — safe for Strict Mode. */
+  useState(() => {
     if (initialSlug && initialSlug !== "blank") {
       storeApi.getState().loadRecipe(initialSlug);
     }
-  }
+  });
 
   /* Recipe change handler — delegates to store. */
   const handleRecipeChange = useCallback(
