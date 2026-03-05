@@ -39,7 +39,7 @@ For EACH file you modified, verify against the Bento Box Principle (`code-standa
 - [ ] **Component complexity**: Logic inline is fine. Extract a hook only when the component earns it (~20+ lines of logic, reuse needed, or testability). No mandatory hooks for simple components.
 - [ ] **Pure Functions -> Logic Hooks -> Components**: Business rules in pure functions (no React). Logic hooks compose them reactively -- extract when complex or shared, not for every component.
 - [ ] **One Export Per File**: Every exported component, hook, or function in its own file. No `hooks.ts` grab bags, no `utils.ts` grab bags, no multi-component files. Folder + barrel export for related pieces. Only exception: shadcn primitives.
-- [ ] **Single Responsibility**: TS files < 250 lines, TS functions < 20 lines. Go files < 250 lines, Go functions < 20 lines. No utility grab bags, no god objects.
+- [ ] **Single Responsibility**: TS files target 50-100 lines, hard cap 250. TS functions < 20 lines. Go files < 250 lines, Go functions < 20 lines. No utility grab bags, no god objects. More than 2-3 sub-components in one file = break into folder + barrel.
 - [ ] **Composition**: Small pieces that compose together. Compound components, not mega-prop components.
 - [ ] **Dot-Notation Compliance**: ALL multi-part components (including primitives like Dialog, Card, DropdownMenu) use dot-notation (`Dialog.Title`, not `DialogTitle`). If you touched a file with flat primitive imports, migrate them to dot-notation. Report PASS or FAIL with specific files.
 - [ ] **Primitives vs Business Components**: Generic in `primitives/`, domain-specific in `components/`.
