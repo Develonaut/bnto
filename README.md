@@ -1,16 +1,22 @@
-# Bnto
+# Bnto — Free Online File Tools Powered by Rust & WebAssembly
 
-**Compress images, clean CSVs, rename files, and convert formats.**
+[![CI](https://github.com/Develonaut/bnto/actions/workflows/ci.yml/badge.svg)](https://github.com/Develonaut/bnto/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Rust](https://img.shields.io/badge/Rust-WASM-black?logo=rust)](https://www.rust-lang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-Free, instant, private. Processed in your browser.
+**Compress images, clean CSVs, rename files, and convert formats — online, free, no sign-up.**
 
-Everything runs client-side via Rust compiled to WebAssembly. Your files never leave your machine. No uploads, no accounts, no limits.
+Everything runs client-side via Rust compiled to WebAssembly. Your files never leave your browser. No uploads, no accounts, no limits.
 
-## Available Tools
+> **Try it now:** [bnto.io](https://bnto.io)
+
+## Tools
 
 | Tool | What it does |
 |------|-------------|
-| [Compress Images](https://bnto.io/compress-images) | Shrink JPEG, PNG, and WebP images |
+| [Compress Images](https://bnto.io/compress-images) | Shrink JPEG, PNG, and WebP images without uploading to a server |
 | [Resize Images](https://bnto.io/resize-images) | Resize to exact dimensions or percentages |
 | [Convert Image Format](https://bnto.io/convert-image-format) | Convert between PNG, JPEG, WebP, and GIF |
 | [Clean CSV](https://bnto.io/clean-csv) | Remove empty rows, trim whitespace, deduplicate |
@@ -19,16 +25,24 @@ Everything runs client-side via Rust compiled to WebAssembly. Your files never l
 
 ## Why Bnto?
 
-- **Private:** Files never leave your browser. Processing happens 100% client-side via Rust compiled to WebAssembly
+- **Private:** Files never leave your browser. Processing happens 100% client-side via Rust compiled to WebAssembly. No server uploads, ever
 - **Free:** All browser-based tools are free with no limits. No signup required
 - **Fast:** Near-native performance from compiled Rust, not interpreted JavaScript
+- **Offline-capable:** Once loaded, tools work without an internet connection
 - **Open Source:** MIT licensed. The entire engine and web app are right here
 
-## Quick Start
+## How It Works
 
-Visit **[bnto.io](https://bnto.io)**, pick a tool, drop your files.
+Pick a tool, drop your files, get results. Processing happens instantly in your browser using a Rust engine compiled to WebAssembly — no server round-trips, no waiting.
 
-That's it.
+```
+You drop files
+  → Browser loads Rust/WASM engine in a Web Worker
+  → Files are processed entirely in-browser
+  → You download the results
+```
+
+Your files never touch a server. The browser IS the server.
 
 ## For Developers
 
@@ -112,10 +126,9 @@ bnto/
 │       ├── bnto-csv/            # CSV clean/rename columns
 │       ├── bnto-file/           # File rename
 │       └── bnto-wasm/           # cdylib entry point (single WASM binary)
-├── archive/                     # Preserved reference code (not active)
-│   ├── engine-go/               # Go CLI + engine (~33K LOC)
-│   └── api-go/                  # Go HTTP API server (~2.5K LOC)
-└── .claude/                     # Strategy docs, decisions, plan, rules
+└── archive/                     # Preserved reference code (not active)
+    ├── engine-go/               # Go CLI + engine (~33K LOC)
+    └── api-go/                  # Go HTTP API server (~2.5K LOC)
 ```
 
 ## Contributing
