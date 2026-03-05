@@ -332,10 +332,10 @@ Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: 
 
 Make every node immediately identifiable at a glance. Icon registry + category color mapping. This is the highest-impact visual improvement — transforms the editor from prototype to product.
 
-- [ ] `@bnto/editor` — **Icon registry**: Create `adapters/nodeIcons.ts` — maps `NodeTypeName` to Lucide icon component. Pure data, one file. Icons: image=`ImageIcon`, spreadsheet=`Table`, file-system=`FolderOpen`, transform=`Shuffle`, edit-fields=`PenLine`, http-request=`Globe`, shell-command=`TerminalSquare`, group=`Braces`, loop=`RefreshCw`, parallel=`Columns3`, input=`Upload`, output=`Download`
-- [ ] `@bnto/editor` — **Category color registry**: Create `adapters/nodeColors.ts` — maps `NodeCategory` to `CompartmentVariant`. Pure data, one file. image=primary, spreadsheet=secondary, file=accent, data=muted, network=secondary, control=warning, system=muted, io=info
-- [ ] `@bnto/editor` — **CompartmentNode redesign**: Update `CompartmentNode.tsx` — add large icon (32px) above label, restructure from centered-text to icon-above-text layout. Import from icon/color registries. Category-driven variant color
-- [ ] `@bnto/editor` — **Adapter integration**: Update `definitionToBento` adapter to use icon/color registries when converting Definition to BentoNode (set variant from category, set size from tier)
+- [x] `@bnto/editor` — **Icon registry**: Create `adapters/nodeIcons.ts` — maps `NodeTypeName` to Lucide icon component. Pure data, one file. Icons: image=`ImageIcon`, spreadsheet=`Table`, file-system=`FolderOpen`, transform=`Shuffle`, edit-fields=`PenLine`, http-request=`Globe`, shell-command=`TerminalSquare`, group=`Braces`, loop=`RefreshCw`, parallel=`Columns3`, input=`Upload`, output=`Download`
+- [x] `@bnto/editor` — **Category color registry**: Create `adapters/nodeColors.ts` — maps `NodeCategory` to `CompartmentVariant`. Pure data, one file. image=primary, spreadsheet=secondary, file=accent, data=muted, network=secondary, control=warning, system=muted, io=info
+- [x] `@bnto/editor` — **CompartmentNode redesign**: Update `CompartmentNode.tsx` — add large icon (32px) above label, restructure from centered-text to icon-above-text layout. Import from icon/color registries. Category-driven variant color
+- [x] `@bnto/editor` — **Adapter integration**: Update `definitionToBento` adapter to use icon/color registries when converting Definition to BentoNode (set variant from category, set size from tier)
 
 #### Wave 2 (parallel — Production Route + Entry)
 
