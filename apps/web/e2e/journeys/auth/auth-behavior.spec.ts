@@ -20,14 +20,9 @@ test.use({ reducedMotion: "reduce" });
 // ---------------------------------------------------------------------------
 
 /** Sign up a new user and wait until we land on home. */
-async function signUp(
-  page: import("@playwright/test").Page,
-  email: string,
-) {
+async function signUp(page: import("@playwright/test").Page, email: string) {
   await page.goto("/signin");
-  await expect(
-    page.getByRole("heading", { name: "Create an account" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
 
   await page.getByPlaceholder("Your name").fill(TEST_NAME);
   await page.getByPlaceholder("Enter your email").fill(email);
@@ -54,18 +49,13 @@ async function seedAuthStore(
 }
 
 /** Sign in an existing user and wait until we land on home. */
-async function signIn(
-  page: import("@playwright/test").Page,
-  email: string,
-) {
+async function signIn(page: import("@playwright/test").Page, email: string) {
   await page.goto("/signin");
 
   // Seed persisted auth store so form shows sign-in mode
   await seedAuthStore(page, { id: "seed", name: TEST_NAME, email });
   await page.goto("/signin");
-  await expect(
-    page.getByRole("heading", { name: "Welcome back" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 
   await page.getByPlaceholder("Enter your email").fill(email);
   await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
@@ -115,9 +105,7 @@ test.describe("Sign-out signal cookie @auth", () => {
     expect(signalCookie!.value).toBe("1");
   });
 
-  test("signal cookie prevents /signin → / bounce during sign-out", async ({
-    page,
-  }) => {
+  test("signal cookie prevents /signin → / bounce during sign-out", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
 
@@ -165,9 +153,7 @@ test.describe("Session cookie lifecycle @auth", () => {
     expect(refresh).toBeDefined();
   });
 
-  test("session cookies are cleared after sign-out completes", async ({
-    page,
-  }) => {
+  test("session cookies are cleared after sign-out completes", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
 
@@ -190,30 +176,22 @@ test.describe("Session cookie lifecycle @auth", () => {
     expect(jwtCleared || refreshCleared).toBeTruthy();
   });
 
-  test("hasAccount persists through sign-out (localStorage store)", async ({
-    page,
-  }) => {
+  test("hasAccount persists through sign-out (localStorage store)", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
     await signOut(page);
 
     // hasAccount in the persisted auth store should survive sign-out
-    const storeData = await page.evaluate(() =>
-      localStorage.getItem("bnto-auth"),
-    );
+    const storeData = await page.evaluate(() => localStorage.getItem("bnto-auth"));
     expect(storeData).not.toBeNull();
     const parsed = JSON.parse(storeData!);
     expect(parsed.state.hasAccount).toBe(true);
 
     // Verify the form shows "Welcome back" (not "Create an account")
-    await expect(
-      page.getByRole("heading", { name: "Welcome back" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
   });
 
-  test("email pre-fills on signin page after sign-out", async ({
-    page,
-  }) => {
+  test("email pre-fills on signin page after sign-out", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
     await signOut(page);
@@ -223,20 +201,14 @@ test.describe("Session cookie lifecycle @auth", () => {
     await expect(emailInput).toHaveValue(email);
   });
 
-  test("fresh browser context without auth store sees signup form", async ({
-    page,
-  }) => {
+  test("fresh browser context without auth store sees signup form", async ({ page }) => {
     // Fresh context — no localStorage at all
     await page.goto("/signin");
 
-    await expect(
-      page.getByRole("heading", { name: "Create an account" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
 
     // Verify no auth store exists
-    const storeData = await page.evaluate(() =>
-      localStorage.getItem("bnto-auth"),
-    );
+    const storeData = await page.evaluate(() => localStorage.getItem("bnto-auth"));
     expect(storeData).toBeNull();
   });
 });
@@ -246,9 +218,7 @@ test.describe("Session cookie lifecycle @auth", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("Session persistence @auth", () => {
-  test("authenticated session persists across page navigation", async ({
-    page,
-  }) => {
+  test("authenticated session persists across page navigation", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
 
@@ -269,35 +239,25 @@ test.describe("Session persistence @auth", () => {
     await expect(page.getByText(email)).toBeVisible();
   });
 
-  test("auth state is consistent after back/forward navigation", async ({
-    page,
-  }) => {
+  test("auth state is consistent after back/forward navigation", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
 
     // Navigate to a recipe page
     await page.goto("/compress-images");
-    await expect(
-      page.locator('[data-testid="nav-user-menu"]'),
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
 
     // Navigate to another page
     await page.goto("/clean-csv");
-    await expect(
-      page.locator('[data-testid="nav-user-menu"]'),
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
 
     // Go back
     await page.goBack();
-    await expect(
-      page.locator('[data-testid="nav-user-menu"]'),
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
 
     // Go forward
     await page.goForward();
-    await expect(
-      page.locator('[data-testid="nav-user-menu"]'),
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -306,9 +266,7 @@ test.describe("Session persistence @auth", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("Mid-session auth loss @auth", () => {
-  test("clearing JWT cookie triggers session loss redirect", async ({
-    page,
-  }) => {
+  test("clearing JWT cookie triggers session loss redirect", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
 
@@ -328,17 +286,13 @@ test.describe("Mid-session auth loss @auth", () => {
     await page.waitForURL("/signin", { timeout: 10000 });
   });
 
-  test("clearing JWT while on public page — SessionProvider detects loss", async ({
-    page,
-  }) => {
+  test("clearing JWT while on public page — SessionProvider detects loss", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
 
     // Navigate to a public page
     await page.goto("/compress-images");
-    await expect(
-      page.locator('[data-testid="nav-user-menu"]'),
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
 
     // Simulate token expiry by clearing JWT cookie
     await page.context().clearCookies({ name: "__convexAuthJWT" });
@@ -363,9 +317,9 @@ test.describe("Mid-session auth loss @auth", () => {
     } else {
       // Still on public page — verify nav shows unauthenticated state.
       // The user menu should no longer be visible (replaced by sign-in link).
-      await expect(
-        page.locator('[data-testid="nav-user-menu"]'),
-      ).not.toBeVisible({ timeout: 10000 });
+      await expect(page.locator('[data-testid="nav-user-menu"]')).not.toBeVisible({
+        timeout: 10000,
+      });
     }
   });
 });
@@ -386,9 +340,7 @@ test.describe("Auth round-trip verification @auth", () => {
     // 2. Verify session cookies + persisted store exist
     let jwt = await getCookie(page, "__convexAuthJWT");
     expect(jwt).toBeDefined();
-    const storeData = await page.evaluate(() =>
-      localStorage.getItem("bnto-auth"),
-    );
+    const storeData = await page.evaluate(() => localStorage.getItem("bnto-auth"));
     expect(storeData).not.toBeNull();
     expect(JSON.parse(storeData!).state.hasAccount).toBe(true);
 
@@ -399,9 +351,7 @@ test.describe("Auth round-trip verification @auth", () => {
     await page.waitForTimeout(3000);
 
     // 5. Verify hasAccount persists but session is invalidated
-    const storeAfter = await page.evaluate(() =>
-      localStorage.getItem("bnto-auth"),
-    );
+    const storeAfter = await page.evaluate(() => localStorage.getItem("bnto-auth"));
     expect(JSON.parse(storeAfter!).state.hasAccount).toBe(true);
 
     // Protected route should reject
@@ -415,10 +365,13 @@ test.describe("Auth round-trip verification @auth", () => {
     jwt = await getCookie(page, "__convexAuthJWT");
     expect(jwt).toBeDefined();
 
-    // 8. Verify authenticated state in UI
-    const userMenu = page.locator('[data-testid="nav-user-menu"]');
-    await expect(userMenu).toBeVisible({ timeout: 10000 });
-    await userMenu.click();
+    // 8. Verify authenticated state in UI — wait for auth to fully resolve
+    const signOutItem = page.locator('[data-testid="nav-sign-out"]');
+    await expect(async () => {
+      const userMenu = page.locator('[data-testid="nav-user-menu"]');
+      await userMenu.click();
+      await expect(signOutItem).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 15000 });
     await expect(page.getByText(email)).toBeVisible();
   });
 });
