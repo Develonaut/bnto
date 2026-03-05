@@ -67,7 +67,11 @@ function SelectContent({
         align={align}
         {...props}
       >
-        <Animate.ScaleIn from={0.6} origin="top" easing="spring-bouncier">
+        <Animate.ScaleIn
+          from={0.6}
+          easing="spring-bouncier"
+          style={{ transformOrigin: "var(--radix-select-content-transform-origin)" }}
+        >
           <Card
             className={className}
             elevation="lg"
