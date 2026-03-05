@@ -1,9 +1,8 @@
 "use client";
 
-import { CheckCircle2Icon, LoaderIcon, XCircleIcon, ClockIcon } from "@bnto/ui";
+import { CheckCircle2Icon, LoaderIcon, XCircleIcon, ClockIcon, cn } from "@bnto/ui";
 import { core } from "@bnto/core";
 import type { Execution, NodeProgress } from "@bnto/core";
-import { cn } from "@/lib/cn";
 import { useElapsedTime, formatElapsed } from "../_hooks/useElapsedTime";
 
 interface ExecutionProgressProps {

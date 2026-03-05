@@ -1,9 +1,7 @@
 "use client";
 
-import { CheckCircle2Icon, LoaderIcon, XCircleIcon } from "@bnto/ui";
+import { CheckCircle2Icon, LoaderIcon, XCircleIcon, cn, formatFileSize } from "@bnto/ui";
 import type { FileUploadProgress } from "@bnto/core";
-import { cn } from "@/lib/cn";
-import { formatFileSize } from "@bnto/ui";
 
 interface UploadProgressProps {
   files: FileUploadProgress[];
@@ -27,9 +25,7 @@ export function UploadProgress({ files }: UploadProgressProps) {
         >
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">
-                {file.fileName}
-              </p>
+              <p className="truncate text-sm font-medium text-foreground">{file.fileName}</p>
               <p className="text-xs text-muted-foreground">
                 {formatFileSize(file.loaded)} / {formatFileSize(file.total)}
               </p>
@@ -55,33 +51,18 @@ export function UploadProgress({ files }: UploadProgressProps) {
   );
 }
 
-function FileStatusIcon({
-  status,
-}: {
-  status: FileUploadProgress["status"];
-}) {
+function FileStatusIcon({ status }: { status: FileUploadProgress["status"] }) {
   switch (status) {
     case "pending":
-      return (
-        <LoaderIcon className="size-4 shrink-0 text-muted-foreground" />
-      );
+      return <LoaderIcon className="size-4 shrink-0 text-muted-foreground" />;
     case "uploading":
       return (
-        <LoaderIcon
-          className={cn(
-            "size-4 shrink-0 text-primary",
-            "motion-safe:animate-spin",
-          )}
-        />
+        <LoaderIcon className={cn("size-4 shrink-0 text-primary", "motion-safe:animate-spin")} />
       );
     case "completed":
-      return (
-        <CheckCircle2Icon className="size-4 shrink-0 text-success" />
-      );
+      return <CheckCircle2Icon className="size-4 shrink-0 text-success" />;
     case "failed":
-      return (
-        <XCircleIcon className="size-4 shrink-0 text-destructive" />
-      );
+      return <XCircleIcon className="size-4 shrink-0 text-destructive" />;
   }
 }
 

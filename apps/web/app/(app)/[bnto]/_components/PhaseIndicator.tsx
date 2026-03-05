@@ -1,5 +1,4 @@
-import { cn } from "@/lib/cn";
-import { CheckIcon } from "@bnto/ui";
+import { cn, CheckIcon } from "@bnto/ui";
 
 type Phase = 1 | 2 | 3;
 
@@ -29,13 +28,8 @@ const ALL_STEPS: StepDef[] = [
  * and display numbers adjust to stay sequential (1, 2 instead of 1, 3).
  * Circles + labels on desktop, circles only on mobile.
  */
-export function PhaseIndicator({
-  activePhase,
-  hasConfig = true,
-}: PhaseIndicatorProps) {
-  const steps = hasConfig
-    ? ALL_STEPS
-    : ALL_STEPS.filter((s) => s.phase !== 2);
+export function PhaseIndicator({ activePhase, hasConfig = true }: PhaseIndicatorProps) {
+  const steps = hasConfig ? ALL_STEPS : ALL_STEPS.filter((s) => s.phase !== 2);
 
   return (
     <nav aria-label="Recipe progress" className="flex items-center justify-center gap-0">
@@ -67,7 +61,9 @@ export function PhaseIndicator({
                   "surface pressable pointer-events-none flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors duration-fast",
                   isCompleted && "surface-primary elevation-sm bg-primary text-primary-foreground",
                   isActive && "surface-primary elevation-sm bg-primary text-primary-foreground",
-                  !isCompleted && !isActive && "surface-card elevation-none border border-border text-muted-foreground",
+                  !isCompleted &&
+                    !isActive &&
+                    "surface-card elevation-none border border-border text-muted-foreground",
                 )}
               >
                 {isCompleted ? (

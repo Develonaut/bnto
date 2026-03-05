@@ -1,14 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Button, LoaderIcon, PlayIcon, RotateCcwIcon } from "@bnto/ui";
+import { cn, Button, LoaderIcon, PlayIcon, RotateCcwIcon } from "@bnto/ui";
 
-export type RunPhase =
-  | "idle"
-  | "uploading"
-  | "running"
-  | "completed"
-  | "failed";
+export type RunPhase = "idle" | "uploading" | "running" | "completed" | "failed";
 
 interface RunButtonProps {
   phase: RunPhase;
