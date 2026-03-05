@@ -21,6 +21,7 @@ import { RecipeConfigSection } from "./RecipeConfigSection";
 import { RecipeResultsSection } from "./RecipeResultsSection";
 import { RecipeToolbar } from "./RecipeToolbar";
 import { ToolbarProgress } from "./ToolbarProgress";
+import { OpenInEditorLink } from "./OpenInEditorLink";
 import { deriveActivePhase } from "./phaseMapping";
 
 /**
@@ -74,6 +75,8 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
       <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
         {entry.description}
       </p>
+
+      <OpenInEditorLink slug={entry.slug} />
 
       <FileUpload
         value={files}

@@ -34,7 +34,9 @@ function createEditorStore(slug?: string) {
 
   return createEnhancedStore<EditorStore>()((set, get) => ({
     // --- Initial state ---
-    nodes: initial.nodes,
+    nodes: initial.selectedNodeId
+      ? initial.nodes.map((n) => (n.id === initial.selectedNodeId ? { ...n, selected: true } : n))
+      : initial.nodes,
     edges: [],
     configs: initial.configs,
     slug: initial.slug,
@@ -44,9 +46,9 @@ function createEditorStore(slug?: string) {
     executionState: {},
     undoStack: [],
     redoStack: [],
-    selectedNodeId: null,
+    selectedNodeId: initial.selectedNodeId,
     layersOpen: false,
-    configOpen: false,
+    configOpen: initial.selectedNodeId !== null,
 
     // --- Entry points ---
 
