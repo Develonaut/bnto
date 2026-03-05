@@ -841,6 +841,52 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 - [ ] `@bnto/core` — Profile `createZipBlob` memory limits for large batches
 - [ ] `.claude/strategy/` — Write `file-limits.md` with results and decisions
 
+### Chore: Go Engine Archival & Node Migration Reference
+
+**Priority: High.** The archived Go engine (`archive/engine-go/`, ~33K LOC) and API server (`archive/api-go/`, ~2.5K LOC) are slated for deletion. Before removal, all 10 node type implementations have been documented in [go-engine-migration.md](strategy/go-engine-migration.md) as a migration reference.
+
+**Migration reference doc:** `.claude/strategy/go-engine-migration.md` — complete implementation details, parameters, patterns, dependencies, and open decisions for all 10 Go node types.
+
+**What's fully migrated (safe to delete):**
+- `image` — compress, resize, convert (Rust `bnto-image`, 224 tests)
+- `file-system` rename/move (Rust `bnto-file`, 32 tests)
+- `spreadsheet` CSV clean + rename (Rust `bnto-csv`, 42 tests)
+
+**What's partially migrated (gaps documented):**
+- `file-system` — missing: read, write, copy, delete, mkdir, exists, list with glob
+- `spreadsheet` — missing: Excel (.xlsx) read/write (`excelize/v2` equivalent)
+
+**What's not migrated (documented for future):**
+- Orchestration: `group`, `loop`, `parallel` — needed for multi-step recipes
+- Data: `transform` (expr-lang), `edit-fields` (Go templates) — needed for Tier 2 recipes
+- Server-only: `http-request`, `shell-command` — M4 Pro tier
+
+**Tasks:**
+- [x] `.claude/strategy/` — Create `go-engine-migration.md` with full node inventory, parameters, patterns, dependencies, and migration paths
+- [ ] `archive/` — **Final review**: Walk through `go-engine-migration.md` with the team, confirm nothing is missing before deletion
+- [ ] `archive/` — **Delete `archive/engine-go/`**: Remove Go engine source code. Update `go.work`, `.gitignore`, `Taskfile.yml`, `bnto.code-workspace` to remove Go engine references
+- [ ] `archive/` — **Delete `archive/api-go/`**: Remove Go API server source code. Update Docker, Taskfile, and CI references. (Note: if M4 cloud uses Go, fork to a separate repo first)
+- [ ] `.claude/` — **Update docs**: Remove Go engine references from CLAUDE.md, architecture.md, monorepo-structure.md, ROADMAP.md. Update "What's Built" section in PLAN.md
+- [ ] `infra` — **Clean up Taskfile**: Remove `task build`, `task test`, `task vet`, `task api:*` commands that target the Go engine
+- [ ] `infra` — **Clean up CI**: Remove Go-related checks from CI if any remain (Go checks already removed from CI Gate, but verify)
+
+### Engine: Unmigrated Node Operations (Rust WASM)
+
+**Priority: Medium.** Bring Go engine operations that have no Rust equivalent yet. Reference: [go-engine-migration.md](strategy/go-engine-migration.md).
+
+**Tier 2 recipe blockers:**
+- [ ] `engine` — **`bnto-image`: composite operation** — overlay/watermark. Needed for `/watermark-images` (Tier 2, 30K+ monthly searches). See Go `image.go` composite logic
+- [ ] `engine` — **`bnto-image`: EXIF metadata strip** — needed for `/strip-exif` (Tier 2, 15K+ monthly searches). Go used `imaging` library strip
+- [ ] `engine` — **`bnto-csv`: merge operation** — concat + deduplicate multiple CSVs. Needed for `/merge-csv` (Tier 2, 12K+ monthly searches)
+- [ ] `engine` — **`bnto-csv`: CSV-to-JSON conversion** — needed for `/csv-to-json` (Tier 2, 25K+ monthly searches). May be a `transform` concern
+
+**Orchestration (multi-step recipe support):**
+- [ ] `@bnto/core` or `engine` — **Multi-step recipe orchestration**: Design how the browser adapter handles recipes with multiple processing nodes (group/loop pattern from Go). Currently the Web Worker processes one file through one node type. Multi-step requires either JS-side orchestration or WASM-side pipeline support. See `go-engine-migration.md` § Orchestration Nodes
+- [ ] `engine` — **Expression evaluation in browser**: Choose a JS expression evaluator to replace `expr-lang/expr` for `transform` node and `loop` while/break conditions. Candidates: `expr-eval`, `filtrex`, custom safe evaluator
+
+**Excel support:**
+- [ ] `engine` — **`bnto-csv`: Excel (.xlsx) read/write** — Go used `excelize/v2`. Rust options: `calamine` (read) + `rust_xlsxwriter` (write). Lower priority than CSV operations
+
 ### Engine: Spreadsheet Node Template Resolution — M3/M4 (Go engine)
 
 **Milestone: M3/M4.** Go engine work — not blocking M1 (browser execution uses Rust/JS, not Go). The `clean-csv` predefined Bnto fails in cloud execution. The `read-csv` node (type: `spreadsheet`) receives `<no value>` for its input file path template variable.
@@ -1038,6 +1084,7 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 | `.claude/strategy/visual-editor.md` | Bento box visual editor — compartment design, grid layout, execution state |
 | `.claude/strategy/code-editor.md` | Code editor design — CM6, slash commands, JSON Schema |
 | `.claude/strategy/conveyor-belt.md` | Conveyor belt showcase — Motorway page R&D (not the editor) |
+| `.claude/strategy/go-engine-migration.md` | Go engine node inventory — migration reference before archive deletion |
 | `.claude/strategy/cloud-desktop-strategy.md` | Architecture, cost analysis, cloud execution topology |
 | `.claude/strategy/core-principles.md` | Trust commitments, "For Claude Code" guidance |
 | `.claude/rules/` | Auto-loaded rules (architecture, code-standards, components, etc.) |
