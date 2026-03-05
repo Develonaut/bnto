@@ -5,6 +5,7 @@ import {
   Card,
   DownloadIcon,
   Grid,
+  GridItem,
   PlayIcon,
   RadialSlider,
   Row,
@@ -21,11 +22,8 @@ export function QualitySliderPanel({
   onChange: (v: number) => void;
 }) {
   return (
-    <Grid.Item colSpan={3} rowSpan={2} colStart={4} rowStart={1}>
-      <Card
-        className="flex h-full items-center justify-center p-4"
-        elevation="sm"
-      >
+    <GridItem colSpan={3} rowSpan={2} colStart={4} rowStart={1}>
+      <Card className="flex h-full items-center justify-center p-4" elevation="sm">
         <RadialSlider
           min={1}
           max={100}
@@ -42,17 +40,14 @@ export function QualitySliderPanel({
           </div>
         </RadialSlider>
       </Card>
-    </Grid.Item>
+    </GridItem>
   );
 }
 
 export function AutoDownloadTile({ defaultChecked = false }: { defaultChecked?: boolean }) {
   return (
-    <Grid.Item colSpan={1} rowSpan={1} colStart={7} rowStart={2}>
-      <Card
-        className="flex h-full flex-col items-center justify-center gap-2 p-4"
-        elevation="sm"
-      >
+    <GridItem colSpan={1} rowSpan={1} colStart={7} rowStart={2}>
+      <Card className="flex h-full flex-col items-center justify-center gap-2 p-4" elevation="sm">
         <Switch defaultChecked={defaultChecked} />
         <Text size="xs" color="muted" className="text-center leading-tight">
           Auto
@@ -60,7 +55,7 @@ export function AutoDownloadTile({ defaultChecked = false }: { defaultChecked?: 
           download
         </Text>
       </Card>
-    </Grid.Item>
+    </GridItem>
   );
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
-import type { ComponentProps, HTMLAttributes } from "react";
+import type { HTMLAttributes } from "react";
 
 import { cn } from "../utils/cn";
 
@@ -9,7 +9,7 @@ import type { SpringMode } from "./Pressable";
 import { Surface } from "./Surface";
 import type { SurfaceElevation } from "./Surface";
 
-const PrimitiveCard = forwardRef<
+export const Card = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement> & {
     elevation?: SurfaceElevation;
@@ -31,73 +31,43 @@ const PrimitiveCard = forwardRef<
     {...props}
   />
 ));
-PrimitiveCard.displayName = "Card";
+Card.displayName = "Card";
 
-const CardHeader = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
-    {...props}
-  />
-));
+export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6", className)} {...props} />
+  ),
+);
 CardHeader.displayName = "CardHeader";
 
-const CardTitle = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("leading-none font-semibold tracking-tight", className)}
-    {...props}
-  />
-));
+export const CardTitle = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn("leading-none font-semibold tracking-tight", className)}
+      {...props}
+    />
+  ),
+);
 CardTitle.displayName = "CardTitle";
 
-const CardDescription = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("text-muted-foreground text-sm", className)}
-    {...props}
-  />
-));
+export const CardDescription = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("text-muted-foreground text-sm", className)} {...props} />
+  ),
+);
 CardDescription.displayName = "CardDescription";
 
-const CardContent = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
-));
+export const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  ),
+);
 CardContent.displayName = "CardContent";
 
-const CardFooter = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("flex items-center p-6 pt-0", className)}
-    {...props}
-  />
-));
+export const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("flex items-center p-6 pt-0", className)} {...props} />
+  ),
+);
 CardFooter.displayName = "CardFooter";
-
-function CardRoot(props: ComponentProps<typeof PrimitiveCard>) {
-  return <PrimitiveCard {...props} />;
-}
-
-export const Card = Object.assign(CardRoot, {
-  Root: CardRoot,
-  Header: CardHeader,
-  Title: CardTitle,
-  Description: CardDescription,
-  Content: CardContent,
-  Footer: CardFooter,
-});

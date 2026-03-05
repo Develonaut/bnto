@@ -3,7 +3,18 @@
 import { core } from "@bnto/core";
 
 import { useDelayedLoading } from "../_hooks/useDelayedLoading";
-import { Button, Card, EmptyState, HistoryIcon, Skeleton, Stack, Text } from "@bnto/ui";
+import {
+  Button,
+  Card,
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+  HistoryIcon,
+  Skeleton,
+  Stack,
+  Text,
+} from "@bnto/ui";
 import { getBntoBySlug } from "@/lib/bntoRegistry";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
@@ -30,8 +41,9 @@ function slugToTitle(slug: string): string {
  * Read-only view — recipe name + timestamp. Observable, not actionable.
  */
 export function ExecutionHistory() {
-  const { items, isLoading, status, loadMore } =
-    core.executions.useExecutionHistory({ pageSize: 20 });
+  const { items, isLoading, status, loadMore } = core.executions.useExecutionHistory({
+    pageSize: 20,
+  });
   const showSkeleton = useDelayedLoading(isLoading);
 
   if (showSkeleton) return <ExecutionHistorySkeleton />;
@@ -41,13 +53,13 @@ export function ExecutionHistory() {
     return (
       <div className="min-h-[240px]">
         <EmptyState size="sm">
-          <EmptyState.Icon size="sm">
+          <EmptyStateIcon size="sm">
             <HistoryIcon />
-          </EmptyState.Icon>
-          <EmptyState.Title>No runs yet</EmptyState.Title>
-          <EmptyState.Description>
+          </EmptyStateIcon>
+          <EmptyStateTitle>No runs yet</EmptyStateTitle>
+          <EmptyStateDescription>
             Run a recipe to see your execution history here.
-          </EmptyState.Description>
+          </EmptyStateDescription>
         </EmptyState>
       </div>
     );
@@ -75,11 +87,7 @@ export function ExecutionHistory() {
       })}
 
       {status !== "Exhausted" && (
-        <Button
-          variant="ghost"
-          className="self-start"
-          onClick={() => loadMore(20)}
-        >
+        <Button variant="ghost" className="self-start" onClick={() => loadMore(20)}>
           Load more
         </Button>
       )}

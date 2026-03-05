@@ -53,31 +53,27 @@ type ToolbarRootProps = ComponentProps<typeof Card> & {
   size?: ToolbarSize;
 };
 
-const ToolbarRoot = forwardRef<HTMLDivElement, ToolbarRootProps>(
+export const Toolbar = forwardRef<HTMLDivElement, ToolbarRootProps>(
   ({ size = "default", elevation = "sm", className, children, ...props }, ref) => (
     <Card ref={ref} elevation={elevation} className={toolbarCn({ size }, className)} {...props}>
       {children}
     </Card>
   ),
 );
-ToolbarRoot.displayName = "Toolbar";
+Toolbar.displayName = "Toolbar";
 
 /* ── Group ─────────────────────────────────────────────────── */
 
-const ToolbarGroup = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+export const ToolbarGroup = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn("flex items-center gap-1", className)}
-      {...props}
-    />
+    <div ref={ref} className={cn("flex items-center gap-1", className)} {...props} />
   ),
 );
 ToolbarGroup.displayName = "Toolbar.Group";
 
 /* ── Divider ───────────────────────────────────────────────── */
 
-const ToolbarDivider = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+export const ToolbarDivider = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
@@ -89,11 +85,3 @@ const ToolbarDivider = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>
   ),
 );
 ToolbarDivider.displayName = "Toolbar.Divider";
-
-/* ── Namespace ─────────────────────────────────────────────── */
-
-export const Toolbar = Object.assign(ToolbarRoot, {
-  Root: ToolbarRoot,
-  Group: ToolbarGroup,
-  Divider: ToolbarDivider,
-});

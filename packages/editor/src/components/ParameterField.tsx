@@ -2,7 +2,17 @@
 
 import { useCallback } from "react";
 import type { ParameterSchema } from "@bnto/nodes";
-import { Input, Label, Select, Switch, Text } from "@bnto/ui";
+import {
+  Input,
+  Label,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Switch,
+  Text,
+} from "@bnto/ui";
 
 /**
  * ParameterField — auto-generated form field from ParameterSchema.
@@ -30,26 +40,21 @@ function ParameterField({ param, value, onChange }: ParameterFieldProps) {
     <div className="flex flex-col gap-1.5">
       <Label htmlFor={`param-${param.name}`} className="text-xs font-medium">
         {param.label}
-        {param.required && (
-          <span className="ml-0.5 text-destructive">*</span>
-        )}
+        {param.required && <span className="ml-0.5 text-destructive">*</span>}
       </Label>
 
       {param.type === "enum" && param.enumValues ? (
-        <Select
-          value={String(value ?? param.default ?? "")}
-          onValueChange={handleChange}
-        >
-          <Select.Trigger size="sm" id={`param-${param.name}`}>
-            <Select.Value placeholder={param.placeholder ?? "Select\u2026"} />
-          </Select.Trigger>
-          <Select.Content>
+        <Select value={String(value ?? param.default ?? "")} onValueChange={handleChange}>
+          <SelectTrigger size="sm" id={`param-${param.name}`}>
+            <SelectValue placeholder={param.placeholder ?? "Select\u2026"} />
+          </SelectTrigger>
+          <SelectContent>
             {param.enumValues.map((enumVal) => (
-              <Select.Item key={enumVal} value={enumVal}>
+              <SelectItem key={enumVal} value={enumVal}>
                 {enumVal}
-              </Select.Item>
+              </SelectItem>
             ))}
-          </Select.Content>
+          </SelectContent>
         </Select>
       ) : param.type === "boolean" ? (
         <Switch

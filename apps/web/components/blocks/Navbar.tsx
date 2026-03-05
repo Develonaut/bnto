@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Button, Container, GithubIcon, MenuIcon, Toolbar } from "@bnto/ui";
+import { Button, Container, GithubIcon, MenuIcon, Toolbar, ToolbarGroup } from "@bnto/ui";
 
 import { GITHUB_URL } from "@/lib/copy";
 
@@ -48,7 +48,7 @@ export const Navbar = () => {
         <Container size="lg">
           <Toolbar>
             {/* Logo — flex-1 so left/right columns balance for true centering */}
-            <Toolbar.Group className="min-w-0 flex-1">
+            <ToolbarGroup className="min-w-0 flex-1">
               <NavButton
                 href="/"
                 elevation="sm"
@@ -56,12 +56,12 @@ export const Navbar = () => {
               >
                 bnto
               </NavButton>
-            </Toolbar.Group>
+            </ToolbarGroup>
 
             <DesktopNav />
 
             {/* Right side — flex-1 mirrors the logo column */}
-            <Toolbar.Group className="min-w-0 flex-1 justify-end gap-2">
+            <ToolbarGroup className="min-w-0 flex-1 justify-end gap-2">
               <div className="lg:hidden">
                 <Button
                   variant="secondary"
@@ -87,7 +87,7 @@ export const Navbar = () => {
               </Button>
               <NavThemeMenu />
               <NavUser />
-            </Toolbar.Group>
+            </ToolbarGroup>
           </Toolbar>
         </Container>
       </div>

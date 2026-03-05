@@ -1,6 +1,6 @@
 import type { BrowserExecution, BrowserFileResult, FileUploadProgress } from "@bnto/core";
 import type { RunPhase } from "./RunButton";
-import { Animate } from "@bnto/ui";
+import { SlideUp } from "@bnto/ui";
 import { BrowserExecutionProgress } from "./BrowserExecutionProgress";
 import { BrowserExecutionResults } from "./BrowserExecutionResults";
 import { ExecutionProgress } from "./ExecutionProgress";
@@ -38,26 +38,23 @@ export function RecipeResultsSection({
   if (isBrowserPath) {
     if (browserExec.status === "processing") {
       return (
-        <Animate.SlideUp>
+        <SlideUp>
           <BrowserExecutionProgress execution={browserExec} />
-        </Animate.SlideUp>
+        </SlideUp>
       );
     }
     if (browserExec.status === "completed") {
       return (
-        <Animate.SlideUp>
-          <BrowserExecutionResults
-            execution={browserExec}
-            onDownload={onDownload}
-          />
-        </Animate.SlideUp>
+        <SlideUp>
+          <BrowserExecutionResults execution={browserExec} onDownload={onDownload} />
+        </SlideUp>
       );
     }
     if (browserExec.status === "failed" && browserExec.error) {
       return (
-        <Animate.SlideUp>
+        <SlideUp>
           <ErrorCard error={browserExec.error} />
-        </Animate.SlideUp>
+        </SlideUp>
       );
     }
     return null;
@@ -66,37 +63,37 @@ export function RecipeResultsSection({
   // --- Cloud path ---
   if (uploadProgress.files.length > 0 && resolvedPhase === "uploading") {
     return (
-      <Animate.SlideUp>
+      <SlideUp>
         <UploadProgress files={uploadProgress.files} />
-      </Animate.SlideUp>
+      </SlideUp>
     );
   }
   if (executionId && resolvedPhase === "running") {
     return (
-      <Animate.SlideUp>
+      <SlideUp>
         <ExecutionProgress executionId={executionId} />
-      </Animate.SlideUp>
+      </SlideUp>
     );
   }
   if (executionId && resolvedPhase === "completed") {
     return (
-      <Animate.SlideUp>
+      <SlideUp>
         <ExecutionResults executionId={executionId} />
-      </Animate.SlideUp>
+      </SlideUp>
     );
   }
   if (executionId && resolvedPhase === "failed") {
     return (
-      <Animate.SlideUp>
+      <SlideUp>
         <ExecutionProgress executionId={executionId} />
-      </Animate.SlideUp>
+      </SlideUp>
     );
   }
   if (!executionId && resolvedPhase === "failed" && clientError) {
     return (
-      <Animate.SlideUp>
+      <SlideUp>
         <ErrorCard error={clientError} />
-      </Animate.SlideUp>
+      </SlideUp>
     );
   }
 

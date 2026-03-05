@@ -3,7 +3,7 @@
 import { ExecutionHistory } from "./ExecutionHistory";
 import { RecipeGrid } from "./RecipeGrid";
 import { UsageStats } from "./UsageStats";
-import { Stack, Tabs } from "@bnto/ui";
+import { Stack, Tabs, TabsList, TabsTrigger, TabsContent } from "@bnto/ui";
 
 /**
  * Interactive tabs + data leaves for the My Recipes page.
@@ -19,10 +19,10 @@ export function MyRecipesTabs() {
       <UsageStats />
 
       <Tabs defaultValue="saved">
-        <Tabs.List>
-          <Tabs.Trigger value="saved">Saved</Tabs.Trigger>
-          <Tabs.Trigger value="history">History</Tabs.Trigger>
-        </Tabs.List>
+        <TabsList>
+          <TabsTrigger value="saved">Saved</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
 
         {/*
          * forceMount keeps both panels in the DOM so switching
@@ -33,21 +33,21 @@ export function MyRecipesTabs() {
          * panel stays in normal flow and determines container height.
          */}
         <div className="relative">
-          <Tabs.Content
+          <TabsContent
             value="saved"
             forceMount
             className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
           >
             <RecipeGrid />
-          </Tabs.Content>
+          </TabsContent>
 
-          <Tabs.Content
+          <TabsContent
             value="history"
             forceMount
             className="pt-4 data-[state=inactive]:invisible data-[state=inactive]:absolute data-[state=inactive]:inset-0"
           >
             <ExecutionHistory />
-          </Tabs.Content>
+          </TabsContent>
         </div>
       </Tabs>
     </Stack>

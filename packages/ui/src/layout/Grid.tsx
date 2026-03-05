@@ -75,7 +75,7 @@ type GridRootProps = HTMLAttributes<HTMLElement> & {
   animated?: boolean;
 };
 
-function GridRoot({
+export function Grid({
   cols = 1,
   rows,
   gap = "md",
@@ -126,7 +126,7 @@ type GridItemProps = HTMLAttributes<HTMLDivElement> & {
   rowStart?: Start;
 };
 
-const GridItem = forwardRef<HTMLDivElement, GridItemProps>(
+export const GridItem = forwardRef<HTMLDivElement, GridItemProps>(
   ({ colSpan, rowSpan, colStart, rowStart, className, ...props }, ref) => (
     <div
       ref={ref}
@@ -142,12 +142,5 @@ const GridItem = forwardRef<HTMLDivElement, GridItemProps>(
   ),
 );
 GridItem.displayName = "Grid.Item";
-
-/* ── Namespace ───────────────────────────────────────────────── */
-
-export const Grid = Object.assign(GridRoot, {
-  Root: GridRoot,
-  Item: GridItem,
-});
 
 export type { GridRootProps, GridItemProps, Cols, Rows, Span, Start, Flow };

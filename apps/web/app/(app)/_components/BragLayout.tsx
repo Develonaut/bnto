@@ -5,7 +5,8 @@ import { Fragment } from "react";
 import { CheckIcon, CircleMinusIcon, ZapIcon } from "@bnto/ui";
 
 import {
-  Animate,
+  Stagger,
+  ScaleIn,
   AnimatedCounter,
   Card,
   ComparisonBar,
@@ -126,15 +127,15 @@ export function BragLayout() {
   );
 
   return (
-    <Animate.Stagger asChild>
+    <Stagger asChild>
       <Stack className="gap-3">
-        <Animate.ScaleIn index={0} from={0.9} easing="spring-bouncy">
+        <ScaleIn index={0} from={0.9} easing="spring-bouncy">
           {speedCard}
-        </Animate.ScaleIn>
-        <Animate.ScaleIn index={1} from={0.9} easing="spring-bouncy">
+        </ScaleIn>
+        <ScaleIn index={1} from={0.9} easing="spring-bouncy">
           {comparisonCard}
-        </Animate.ScaleIn>
+        </ScaleIn>
       </Stack>
-    </Animate.Stagger>
+    </Stagger>
   );
 }

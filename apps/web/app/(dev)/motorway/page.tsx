@@ -1,6 +1,6 @@
 "use client";
 
-import { Heading, Stack, Tabs, Text } from "@bnto/ui";
+import { Heading, Stack, Tabs, TabsList, TabsTrigger, TabsContent, Text } from "@bnto/ui";
 
 import { AnimationShowcase } from "./AnimationShowcase";
 import { EmptyStateShowcase } from "./EmptyStateShowcase";
@@ -32,28 +32,27 @@ export default function MotorwayPage() {
           Motorway
         </Heading>
         <Text color="muted" className="mt-1 max-w-xl">
-          The bnto design system. Warm, organized, satisfying, like a
-          well-packed bento box on a Mini Motorways map. 3D surfaces, springy
-          motion, three themed palettes.
+          The bnto design system. Warm, organized, satisfying, like a well-packed bento box on a
+          Mini Motorways map. 3D surfaces, springy motion, three themed palettes.
         </Text>
       </div>
 
       <Tabs defaultValue="surfaces" className="[&>[role=tabpanel]]:mt-8">
-        <Tabs.List>
-          <Tabs.Trigger value="surfaces">Surfaces</Tabs.Trigger>
-          <Tabs.Trigger value="typography">Typography</Tabs.Trigger>
-          <Tabs.Trigger value="controls">Controls</Tabs.Trigger>
-          <Tabs.Trigger value="layout">Layout</Tabs.Trigger>
-          <Tabs.Trigger value="motion">Motion</Tabs.Trigger>
-          <Tabs.Trigger value="overlays">Overlays</Tabs.Trigger>
-          <Tabs.Trigger value="forms">Forms</Tabs.Trigger>
-          <Tabs.Trigger value="grids">Grids</Tabs.Trigger>
-          <Tabs.Trigger value="progress">Progress</Tabs.Trigger>
-          <Tabs.Trigger value="features">Features</Tabs.Trigger>
-        </Tabs.List>
+        <TabsList>
+          <TabsTrigger value="surfaces">Surfaces</TabsTrigger>
+          <TabsTrigger value="typography">Typography</TabsTrigger>
+          <TabsTrigger value="controls">Controls</TabsTrigger>
+          <TabsTrigger value="layout">Layout</TabsTrigger>
+          <TabsTrigger value="motion">Motion</TabsTrigger>
+          <TabsTrigger value="overlays">Overlays</TabsTrigger>
+          <TabsTrigger value="forms">Forms</TabsTrigger>
+          <TabsTrigger value="grids">Grids</TabsTrigger>
+          <TabsTrigger value="progress">Progress</TabsTrigger>
+          <TabsTrigger value="features">Features</TabsTrigger>
+        </TabsList>
 
         {/* ── Surfaces ────────────────────────────────────────── */}
-        <Tabs.Content value="surfaces">
+        <TabsContent value="surfaces">
           <Stack gap="xl" className="gap-16">
             <ShowcaseSection
               id="colors"
@@ -79,10 +78,10 @@ export default function MotorwayPage() {
               <SpringableShowcase />
             </ShowcaseSection>
           </Stack>
-        </Tabs.Content>
+        </TabsContent>
 
         {/* ── Typography ──────────────────────────────────────── */}
-        <Tabs.Content value="typography">
+        <TabsContent value="typography">
           <ShowcaseSection
             id="typography"
             title="Typography"
@@ -90,10 +89,10 @@ export default function MotorwayPage() {
           >
             <TypographyShowcase />
           </ShowcaseSection>
-        </Tabs.Content>
+        </TabsContent>
 
         {/* ── Controls ──────────────────────────────────────── */}
-        <Tabs.Content value="controls">
+        <TabsContent value="controls">
           <Stack gap="xl" className="gap-16">
             <ShowcaseSection
               id="buttons"
@@ -119,10 +118,10 @@ export default function MotorwayPage() {
               <InputShowcase />
             </ShowcaseSection>
           </Stack>
-        </Tabs.Content>
+        </TabsContent>
 
         {/* ── Layout ──────────────────────────────────────────── */}
-        <Tabs.Content value="layout">
+        <TabsContent value="layout">
           <Stack gap="xl" className="gap-16">
             <ShowcaseSection
               id="menus"
@@ -164,10 +163,10 @@ export default function MotorwayPage() {
               <EmptyStateShowcase />
             </ShowcaseSection>
           </Stack>
-        </Tabs.Content>
+        </TabsContent>
 
         {/* ── Motion ────────────────────────────────────────── */}
-        <Tabs.Content value="motion">
+        <TabsContent value="motion">
           <ShowcaseSection
             id="motion"
             title="Motion"
@@ -175,10 +174,10 @@ export default function MotorwayPage() {
           >
             <AnimationShowcase />
           </ShowcaseSection>
-        </Tabs.Content>
+        </TabsContent>
 
         {/* ── Overlays ──────────────────────────────────────────── */}
-        <Tabs.Content value="overlays">
+        <TabsContent value="overlays">
           <ShowcaseSection
             id="overlays"
             title="Dialogs & Overlays"
@@ -186,10 +185,10 @@ export default function MotorwayPage() {
           >
             <DialogShowcase />
           </ShowcaseSection>
-        </Tabs.Content>
+        </TabsContent>
 
         {/* ── Forms ───────────────────────────────────────────── */}
-        <Tabs.Content value="forms">
+        <TabsContent value="forms">
           <Stack gap="xl" className="gap-16">
             <ShowcaseSection
               id="forms"
@@ -207,10 +206,10 @@ export default function MotorwayPage() {
               <FileListShowcase />
             </ShowcaseSection>
           </Stack>
-        </Tabs.Content>
+        </TabsContent>
 
         {/* ── Grids ───────────────────────────────────────────── */}
-        <Tabs.Content value="grids">
+        <TabsContent value="grids">
           <ShowcaseSection
             id="grid"
             title="Grid"
@@ -218,10 +217,10 @@ export default function MotorwayPage() {
           >
             <GridShowcase />
           </ShowcaseSection>
-        </Tabs.Content>
+        </TabsContent>
 
         {/* ── Progress ──────────────────────────────────────────── */}
-        <Tabs.Content value="progress">
+        <TabsContent value="progress">
           <ShowcaseSection
             id="progress-indicators"
             title="Progress Indicators"
@@ -229,10 +228,10 @@ export default function MotorwayPage() {
           >
             <ProgressShowcase />
           </ShowcaseSection>
-        </Tabs.Content>
+        </TabsContent>
 
         {/* ── Features ─────────────────────────────────────────── */}
-        <Tabs.Content value="features">
+        <TabsContent value="features">
           <Stack gap="xl" className="gap-16">
             <ShowcaseSection
               id="phase-flow"
@@ -242,7 +241,7 @@ export default function MotorwayPage() {
               <PhaseFlowShowcase />
             </ShowcaseSection>
           </Stack>
-        </Tabs.Content>
+        </TabsContent>
       </Tabs>
     </div>
   );

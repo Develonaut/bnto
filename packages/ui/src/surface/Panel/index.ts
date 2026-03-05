@@ -1,15 +1,6 @@
-import { PanelRoot } from "./PanelRoot";
-import { PanelHeader } from "./PanelHeader";
-import { PanelTrigger } from "./PanelTrigger";
-import { PanelDivider } from "./PanelDivider";
-import { PanelContent } from "./PanelContent";
-import { PanelFooter } from "./PanelFooter";
-
-export const Panel = Object.assign(PanelRoot, {
-  Root: PanelRoot,
-  Header: PanelHeader,
-  Trigger: PanelTrigger,
-  Divider: PanelDivider,
-  Content: PanelContent,
-  Footer: PanelFooter,
-});
+export { PanelRoot as Panel } from "./PanelRoot";
+export { PanelHeader } from "./PanelHeader";
+export { PanelTrigger } from "./PanelTrigger";
+export { PanelDivider } from "./PanelDivider";
+export { PanelContent } from "./PanelContent";
+export { PanelFooter } from "./PanelFooter";

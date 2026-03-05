@@ -1,6 +1,14 @@
 "use client";
 
-import { Label, Select, Slider } from "@bnto/ui";
+import {
+  Label,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Slider,
+} from "@bnto/ui";
 import type { ConvertFormatConfig as Config } from "./types";
 
 const FORMAT_OPTIONS = [
@@ -14,36 +22,41 @@ interface ConvertFormatConfigProps {
   onChange: (config: Config) => void;
 }
 
-export function ConvertFormatConfig({
-  value,
-  onChange,
-}: ConvertFormatConfigProps) {
+export function ConvertFormatConfig({ value, onChange }: ConvertFormatConfigProps) {
   return (
     <div className="flex w-full items-end gap-4">
       <div className="flex shrink-0 flex-col gap-1">
-        <Label id="convert-format-label" className="text-muted-foreground text-xs">Format</Label>
+        <Label id="convert-format-label" className="text-muted-foreground text-xs">
+          Format
+        </Label>
         <Select
           value={value.format}
-          onValueChange={(format) =>
-            onChange({ ...value, format: format as Config["format"] })
-          }
+          onValueChange={(format) => onChange({ ...value, format: format as Config["format"] })}
         >
-          <Select.Trigger className="w-24" aria-labelledby="convert-format-label" aria-describedby="convert-format-help">
-            <Select.Value />
-          </Select.Trigger>
-          <Select.Content>
+          <SelectTrigger
+            className="w-24"
+            aria-labelledby="convert-format-label"
+            aria-describedby="convert-format-help"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
             {FORMAT_OPTIONS.map((opt) => (
-              <Select.Item key={opt.value} value={opt.value}>
+              <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
-              </Select.Item>
+              </SelectItem>
             ))}
-          </Select.Content>
+          </SelectContent>
         </Select>
-        <p id="convert-format-help" className="text-muted-foreground text-xs">Output type</p>
+        <p id="convert-format-help" className="text-muted-foreground text-xs">
+          Output type
+        </p>
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <Label id="convert-quality-label" className="text-muted-foreground text-xs">Quality</Label>
+        <Label id="convert-quality-label" className="text-muted-foreground text-xs">
+          Quality
+        </Label>
         <div className="flex items-center gap-3">
           <Slider
             className="w-full"
@@ -62,7 +75,9 @@ export function ConvertFormatConfig({
             {value.quality}%
           </span>
         </div>
-        <p id="convert-quality-help" className="text-muted-foreground text-xs">Lower values reduce file size</p>
+        <p id="convert-quality-help" className="text-muted-foreground text-xs">
+          Lower values reduce file size
+        </p>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { cn } from "../utils/cn";
 
 import { BentoItemContext } from "./bentoGridContext";
-import { Grid } from "./Grid";
+import { Grid, GridItem } from "./Grid";
 import { partitionBentoChildren } from "./partitionBentoChildren";
 import type { GapSize } from "../utils/layoutTypes";
 
@@ -24,10 +24,10 @@ interface PinnedProps {
   children: ReactNode;
 }
 
-function BentoPinned({ children }: PinnedProps) {
+export function BentoGridPinned({ children }: PinnedProps) {
   return <>{children}</>;
 }
-BentoPinned.displayName = "BentoGrid.Pinned";
+BentoGridPinned.displayName = "BentoGrid.Pinned";
 
 /* ── Component ───────────────────────────────────────────────── */
 
@@ -40,7 +40,7 @@ type BentoGridProps = {
   children: ReactNode;
 };
 
-function BentoGridRoot({
+export function BentoGrid({
   cols = 3,
   gap = "md",
   minRowHeight = "10rem",
@@ -55,29 +55,22 @@ function BentoGridRoot({
       cols={1}
       gap={gap}
       flow="dense"
-      className={cn(
-        cols >= 2 && "md:grid-cols-2",
-        cols >= 3 && "lg:grid-cols-3",
-        className,
-      )}
+      className={cn(cols >= 2 && "md:grid-cols-2", cols >= 3 && "lg:grid-cols-3", className)}
       style={{ gridTemplateRows: `repeat(${rows}, minmax(${minRowHeight}, auto))` }}
     >
       {entries.map((entry) => (
         <BentoItemContext.Provider key={entry.key} value={entry.layout}>
-          <Grid.Item colSpan={entry.layout.colSpan} rowSpan={entry.layout.rowSpan} className="min-h-0">
+          <GridItem
+            colSpan={entry.layout.colSpan}
+            rowSpan={entry.layout.rowSpan}
+            className="min-h-0"
+          >
             {entry.element}
-          </Grid.Item>
+          </GridItem>
         </BentoItemContext.Provider>
       ))}
     </Grid>
   );
 }
-
-/* ── Namespace ───────────────────────────────────────────────── */
-
-export const BentoGrid = Object.assign(BentoGridRoot, {
-  Root: BentoGridRoot,
-  Pinned: BentoPinned,
-});
 
 export type { BentoGridProps };

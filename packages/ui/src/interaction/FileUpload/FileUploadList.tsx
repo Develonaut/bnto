@@ -3,15 +3,11 @@
 import type { ComponentProps } from "react";
 
 import { cn } from "../../utils/cn";
-import { Animate } from "../../animation/Animate";
+import { Stagger } from "../../animation/Animate";
 
-export function FileUploadList({
-  className,
-  children,
-  ...props
-}: ComponentProps<"div">) {
+export function FileUploadList({ className, children, ...props }: ComponentProps<"div">) {
   return (
-    <Animate.Stagger
+    <Stagger
       interval={60}
       role="list"
       data-slot="file-upload-list"
@@ -19,6 +15,6 @@ export function FileUploadList({
       className={cn("flex flex-col gap-2", className)}
     >
       {children}
-    </Animate.Stagger>
+    </Stagger>
   );
 }

@@ -5,7 +5,7 @@ import type { ComponentProps, ElementType } from "react";
 import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "../../utils/cn";
-import { Popover } from "../../overlay/Popover";
+import { PopoverClose } from "../../overlay/Popover";
 
 const ITEM_BASE =
   "flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-sm transition-colors select-none outline-hidden [&_svg:not([class*='size-'])]:size-4 hover:bg-muted focus-visible:bg-muted disabled:pointer-events-none disabled:opacity-50";
@@ -28,13 +28,13 @@ export function MenuItem({
 }: ComponentProps<"button"> & { asChild?: boolean }) {
   const Comp: ElementType = asChild ? Slot : "button";
   return (
-    <Popover.Close asChild>
+    <PopoverClose asChild>
       <Comp
         ref={ref}
         type={asChild ? undefined : "button"}
         className={cn(ITEM_BASE, className)}
         {...props}
       />
-    </Popover.Close>
+    </PopoverClose>
   );
 }

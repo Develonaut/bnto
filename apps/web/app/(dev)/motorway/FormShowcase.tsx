@@ -4,6 +4,11 @@ import { useState } from "react";
 import {
   Button,
   Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
   Checkbox,
   Input,
   Label,
@@ -20,13 +25,13 @@ export function FormShowcase() {
 
   return (
     <Card elevation="lg">
-      <Card.Header>
-        <Card.Title className="font-display">Form Elements</Card.Title>
-        <Card.Description>
+      <CardHeader>
+        <CardTitle className="font-display">Form Elements</CardTitle>
+        <CardDescription>
           Inputs, switches, checkboxes, and controls with shadow integration
-        </Card.Description>
-      </Card.Header>
-      <Card.Content className="space-y-6">
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
         <div className="grid grid-cols-2 gap-6">
           <Stack gap="sm">
             <Label htmlFor="name">Name</Label>
@@ -58,11 +63,11 @@ export function FormShowcase() {
           <Label>Quality: {sliderVal[0]}%</Label>
           <Slider value={sliderVal} onValueChange={setSliderVal} max={100} />
         </Stack>
-      </Card.Content>
-      <Card.Footer className="gap-3">
+      </CardContent>
+      <CardFooter className="gap-3">
         <Button>Save changes</Button>
         <Button variant="muted">Cancel</Button>
-      </Card.Footer>
+      </CardFooter>
     </Card>
   );
 }

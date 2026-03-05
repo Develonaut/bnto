@@ -2,7 +2,16 @@
 
 import { useState, useMemo } from "react";
 import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
-import { Animate, ArrowLeftIcon, ArrowRightIcon, Button, FileUpload, Heading } from "@bnto/ui";
+import {
+  SlideUp,
+  BouncyStagger,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  Button,
+  FileUpload,
+  FileUploadDropzone,
+  Heading,
+} from "@bnto/ui";
 import { DropzoneContent } from "@/app/(app)/[bnto]/_components/DropzoneContent";
 import { FileCard } from "@/app/(app)/[bnto]/_components/FileCard";
 import { PhaseIndicator } from "@/app/(app)/[bnto]/_components/PhaseIndicator";
@@ -34,10 +43,7 @@ function createMockFiles(): File[] {
 }
 
 /** Create mock BrowserExecution for different states. */
-function createMockExecution(
-  phase: SimPhase,
-  files: File[],
-): BrowserExecution {
+function createMockExecution(phase: SimPhase, files: File[]): BrowserExecution {
   const base: BrowserExecution = {
     id: "mock-exec",
     status: "idle",
@@ -54,7 +60,7 @@ function createMockExecution(
         fileIndex: 1,
         totalFiles: files.length,
         percent: 64,
-        overallPercent: Math.round(((1 * 100) + 64) / files.length),
+        overallPercent: Math.round((1 * 100 + 64) / files.length),
         message: "Compressing profile-pic.png\u2026",
       },
       results: [mockResult(files[0]!)],
@@ -104,12 +110,9 @@ export function PhaseFlowShowcase() {
   const mockExec = useMemo(() => createMockExecution(simPhase, mockFiles), [simPhase, mockFiles]);
 
   const files = simPhase === "idle" ? [] : mockFiles;
-  const activePhase: 1 | 2 | 3 =
-    simPhase === "idle" ? 1 : simPhase === "files-selected" ? 2 : 3;
+  const activePhase: 1 | 2 | 3 = simPhase === "idle" ? 1 : simPhase === "files-selected" ? 2 : 3;
   const resolvedPhase: RunPhase =
-    simPhase === "processing" ? "running"
-    : simPhase === "completed" ? "completed"
-    : "idle";
+    simPhase === "processing" ? "running" : simPhase === "completed" ? "completed" : "idle";
 
   const prev = () => setSimPhase(PHASE_ORDER[Math.max(0, phaseIndex - 1)]!);
   const next = () => setSimPhase(PHASE_ORDER[Math.min(PHASE_ORDER.length - 1, phaseIndex + 1)]!);
@@ -136,7 +139,12 @@ export function PhaseFlowShowcase() {
             </button>
           ))}
         </div>
-        <Button variant="outline" size="icon" onClick={next} disabled={phaseIndex === PHASE_ORDER.length - 1}>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={next}
+          disabled={phaseIndex === PHASE_ORDER.length - 1}
+        >
           <ArrowRightIcon className="size-4" />
         </Button>
       </div>
@@ -149,71 +157,70 @@ export function PhaseFlowShowcase() {
           Reduce image file sizes while maintaining visual quality.
         </p>
 
-          <FileUpload
-            value={files}
-            onValueChange={() => {}}
-            accept={{ "image/*": [] }}
-            multiple
-            disabled={simPhase === "processing"}
-          >
-            {/* Phase 1: Dropzone */}
-            {activePhase === 1 && (
-              <Animate.SlideUp>
-                <FileUpload.Dropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
-                  <DropzoneContent label="JPEG, PNG, WebP" />
-                </FileUpload.Dropzone>
-              </Animate.SlideUp>
-            )}
+        <FileUpload
+          value={files}
+          onValueChange={() => {}}
+          accept={{ "image/*": [] }}
+          multiple
+          disabled={simPhase === "processing"}
+        >
+          {/* Phase 1: Dropzone */}
+          {activePhase === 1 && (
+            <SlideUp>
+              <FileUploadDropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
+                <DropzoneContent label="JPEG, PNG, WebP" />
+              </FileUploadDropzone>
+            </SlideUp>
+          )}
 
-            {/* Phases 2-3: Toolbar + persistent file grid */}
-            {(activePhase === 2 || activePhase === 3) && (
-              <div className="space-y-4 text-left">
-                <RecipeToolbar
-                  activePhase={activePhase as 2 | 3}
-                  resolvedPhase={resolvedPhase}
-                  isProcessing={simPhase === "processing"}
-                  fileCount={files.length}
-                  onBack={prev}
-                  onRun={next}
-                  onDownloadAll={() => {}}
-                  centerContent={
-                    activePhase === 2 ? (
-                      <RecipeConfigSection
-                        slug="compress-images"
-                        config={config}
-                        onChange={(c) => setConfig(c as BntoConfigMap["compress-images"])}
-                      />
-                    ) : (
-                      <ToolbarProgress execution={mockExec} />
-                    )
-                  }
-                />
+          {/* Phases 2-3: Toolbar + persistent file grid */}
+          {(activePhase === 2 || activePhase === 3) && (
+            <div className="space-y-4 text-left">
+              <RecipeToolbar
+                activePhase={activePhase as 2 | 3}
+                resolvedPhase={resolvedPhase}
+                isProcessing={simPhase === "processing"}
+                fileCount={files.length}
+                onBack={prev}
+                onRun={next}
+                onDownloadAll={() => {}}
+                centerContent={
+                  activePhase === 2 ? (
+                    <RecipeConfigSection
+                      slug="compress-images"
+                      config={config}
+                      onChange={(c) => setConfig(c as BntoConfigMap["compress-images"])}
+                    />
+                  ) : (
+                    <ToolbarProgress execution={mockExec} />
+                  )
+                }
+              />
 
-                {/* Persistent file grid */}
-                <Animate.BouncyStagger className="flex flex-col gap-2">
-                  {files.map((file, i) => {
-                    const result = activePhase === 3 ? mockExec.results[i] : undefined;
-                    const isFileProcessing =
-                      simPhase === "processing" &&
-                      mockExec.fileProgress?.fileIndex === i;
+              {/* Persistent file grid */}
+              <BouncyStagger className="flex flex-col gap-2">
+                {files.map((file, i) => {
+                  const result = activePhase === 3 ? mockExec.results[i] : undefined;
+                  const isFileProcessing =
+                    simPhase === "processing" && mockExec.fileProgress?.fileIndex === i;
 
-                    return (
-                      <FileCard
-                        key={file.name}
-                        file={file}
-                        result={result}
-                        isProcessing={isFileProcessing}
-                        isExecuting={activePhase === 3}
-                        onDelete={() => {}}
-                        onDownload={() => {}}
-                      />
-                    );
-                  })}
-                </Animate.BouncyStagger>
-              </div>
-            )}
-          </FileUpload>
-        </div>
+                  return (
+                    <FileCard
+                      key={file.name}
+                      file={file}
+                      result={result}
+                      isProcessing={isFileProcessing}
+                      isExecuting={activePhase === 3}
+                      onDelete={() => {}}
+                      onDownload={() => {}}
+                    />
+                  );
+                })}
+              </BouncyStagger>
+            </div>
+          )}
+        </FileUpload>
+      </div>
     </div>
   );
 }

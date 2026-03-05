@@ -1,9 +1,9 @@
-import { Card, Grid } from "@bnto/ui";
+import { Card, Grid, GridItem } from "@bnto/ui";
 
 export function CardShowcase() {
   return (
     <Grid cols={6} rows={3} gap="md" animated>
-      <Grid.Item colSpan={2} rowSpan={1}>
+      <GridItem colSpan={2} rowSpan={1}>
         <Card
           elevation="none"
           className="flex h-full min-h-24 items-center justify-center rounded-xl font-display font-semibold"
@@ -11,8 +11,8 @@ export function CardShowcase() {
         >
           none
         </Card>
-      </Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={2} colStart={3}>
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={2} colStart={3}>
         <Card
           elevation="sm"
           className="flex h-full min-h-24 items-center justify-center rounded-xl font-display font-semibold"
@@ -20,8 +20,8 @@ export function CardShowcase() {
         >
           sm
         </Card>
-      </Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={3} colStart={5}>
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={3} colStart={5}>
         <Card
           elevation="lg"
           className="flex h-full min-h-24 items-center justify-center rounded-xl font-display font-semibold"
@@ -29,8 +29,8 @@ export function CardShowcase() {
         >
           lg
         </Card>
-      </Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={2} rowStart={2}>
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={2} rowStart={2}>
         <Card
           elevation="md"
           className="flex h-full min-h-24 items-center justify-center rounded-xl font-display font-semibold"
@@ -38,8 +38,8 @@ export function CardShowcase() {
         >
           md (default)
         </Card>
-      </Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={1} colStart={3} rowStart={3}>
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={1} colStart={3} rowStart={3}>
         <Card
           elevation="sm"
           className="flex h-full min-h-24 items-center justify-center rounded-xl font-display font-semibold"
@@ -47,7 +47,7 @@ export function CardShowcase() {
         >
           sm
         </Card>
-      </Grid.Item>
+      </GridItem>
     </Grid>
   );
 }

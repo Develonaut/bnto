@@ -1,7 +1,15 @@
 "use client";
 
-import { Animate, Stack, Text } from "@bnto/ui";
-import { RecipeCard } from "@/components/blocks/RecipeCard";
+import { BouncyStagger, Stack, Text } from "@bnto/ui";
+import {
+  RecipeCard,
+  RecipeCardHeader,
+  RecipeCardIcon,
+  RecipeCardCategory,
+  RecipeCardContent,
+  RecipeCardTitle,
+  RecipeCardTags,
+} from "@/components/blocks/RecipeCard";
 import { getBntoIcon } from "@/lib/bntoIcons";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 
@@ -10,20 +18,20 @@ import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 export function RecipeGrid() {
   return (
     <Stack className="gap-3">
-      <Animate.BouncyStagger className="grid grid-cols-2 gap-4" from={0.85}>
+      <BouncyStagger className="grid grid-cols-2 gap-4" from={0.85}>
         {BNTO_REGISTRY.map((entry) => (
           <RecipeCard key={entry.slug} href={`/${entry.slug}`}>
-            <RecipeCard.Header>
-              <RecipeCard.Icon icon={getBntoIcon(entry.slug)} />
-              <RecipeCard.Category>{entry.features[0]}</RecipeCard.Category>
-            </RecipeCard.Header>
-            <RecipeCard.Content>
-              <RecipeCard.Title>{entry.h1.replace(/ Online Free$/, "")}</RecipeCard.Title>
-              <RecipeCard.Tags tags={entry.features} limit={3} />
-            </RecipeCard.Content>
+            <RecipeCardHeader>
+              <RecipeCardIcon icon={getBntoIcon(entry.slug)} />
+              <RecipeCardCategory>{entry.features[0]}</RecipeCardCategory>
+            </RecipeCardHeader>
+            <RecipeCardContent>
+              <RecipeCardTitle>{entry.h1.replace(/ Online Free$/, "")}</RecipeCardTitle>
+              <RecipeCardTags tags={entry.features} limit={3} />
+            </RecipeCardContent>
           </RecipeCard>
         ))}
-      </Animate.BouncyStagger>
+      </BouncyStagger>
       <Text size="xs" color="muted" className="text-center">
         Pick a tool to get started. No signup needed.
       </Text>

@@ -3,8 +3,27 @@
 import { useState } from "react";
 import type { RecipeListItem } from "@bnto/core";
 
-import { Animate, Button, Grid, Heading, Row, Skeleton, Stack, Text } from "@bnto/ui";
-import { RecipeCard } from "@/components/blocks/RecipeCard";
+import {
+  Stagger,
+  ScaleIn,
+  Button,
+  Grid,
+  GridItem,
+  Heading,
+  Row,
+  Skeleton,
+  Stack,
+  Text,
+} from "@bnto/ui";
+import {
+  RecipeCard,
+  RecipeCardHeader,
+  RecipeCardContent,
+  RecipeCardIcon,
+  RecipeCardCategory,
+  RecipeCardTitle,
+  RecipeCardTags,
+} from "@/components/blocks/RecipeCard";
 import { SavedRecipeCard } from "@/components/blocks/SavedRecipeCard";
 import { getBntoIcon } from "@/lib/bntoIcons";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
@@ -45,10 +64,7 @@ export function RecipeCardShowcase() {
   return (
     <Stack gap="lg">
       <Row gap="sm" className="items-center">
-        <Button
-          variant={loading ? "secondary" : "outline"}
-          onClick={() => setLoading((l) => !l)}
-        >
+        <Button variant={loading ? "secondary" : "outline"} onClick={() => setLoading((l) => !l)}>
           {loading ? "Load Content" : "Show Loading"}
         </Button>
         <Text size="sm" color="muted">
@@ -61,75 +77,79 @@ export function RecipeCardShowcase() {
       {/* SavedRecipeCard — domain wrapper pattern */}
       <Stack gap="sm">
         <div>
-          <Heading level={3} size="xs">SavedRecipeCard</Heading>
+          <Heading level={3} size="xs">
+            SavedRecipeCard
+          </Heading>
           <Text size="sm" color="muted">
             Domain wrapper that composes RecipeCard sub-components with saved recipe data.
           </Text>
         </div>
-        <Animate.Stagger asChild>
+        <Stagger asChild>
           <Grid cols={4} gap="md" animated>
             {MOCK_RECIPES.map((item, i) => (
-              <Grid.Item key={item.recipe.id}>
-                <Animate.ScaleIn index={i} from={0.85} easing="spring-bouncy" className="h-full">
+              <GridItem key={item.recipe.id}>
+                <ScaleIn index={i} from={0.85} easing="spring-bouncy" className="h-full">
                   <SavedRecipeCard
                     recipe={item.recipe}
                     lastStatus={item.lastStatus}
                     loading={loading}
                   />
-                </Animate.ScaleIn>
-              </Grid.Item>
+                </ScaleIn>
+              </GridItem>
             ))}
           </Grid>
-        </Animate.Stagger>
+        </Stagger>
       </Stack>
 
       {/* RecipeCard — direct composition pattern */}
       <Stack gap="sm">
         <div>
-          <Heading level={3} size="xs">RecipeCard</Heading>
+          <Heading level={3} size="xs">
+            RecipeCard
+          </Heading>
           <Text size="sm" color="muted">
             Direct composition with sub-components. Caller controls layout and content.
           </Text>
         </div>
-        <Animate.Stagger asChild>
+        <Stagger asChild>
           <Grid cols={4} gap="md" animated>
             {registrySlice.map((entry, i) => (
-              <Grid.Item key={entry.slug}>
-                <Animate.ScaleIn index={i} from={0.85} easing="spring-bouncy" className="h-full">
+              <GridItem key={entry.slug}>
+                <ScaleIn index={i} from={0.85} easing="spring-bouncy" className="h-full">
                   <RecipeCard href={`/${entry.slug}`} loading={loading}>
                     {loading ? (
                       <>
-                        <RecipeCard.Header>
+                        <RecipeCardHeader>
                           <Skeleton className="size-10 rounded-lg" />
                           <Skeleton className="h-3 w-8" />
-                        </RecipeCard.Header>
-                        <RecipeCard.Content>
+                        </RecipeCardHeader>
+                        <RecipeCardContent>
                           <Skeleton className="h-5 w-3/4" />
                           <Row wrap className="gap-1.5 pt-1">
                             <Skeleton className="h-5 w-12 rounded-full" />
                             <Skeleton className="h-5 w-28 rounded-full" />
                             <Skeleton className="h-5 w-20 rounded-full" />
                           </Row>
-                        </RecipeCard.Content>
+                        </RecipeCardContent>
                       </>
                     ) : (
                       <>
-                        <RecipeCard.Header>
-                          <RecipeCard.Icon icon={getBntoIcon(entry.slug)} />
-                          <RecipeCard.Category>{entry.features[0]}</RecipeCard.Category>
-                        </RecipeCard.Header>
-                        <RecipeCard.Content>
-                          <RecipeCard.Title>{entry.h1.replace(/ Online Free$/, "")}</RecipeCard.Title>
-                          <RecipeCard.Tags tags={entry.features} limit={3} />
-                        </RecipeCard.Content>
+                        <RecipeCardHeader>
+                          <RecipeCardIcon icon={getBntoIcon(entry.slug)} />
+                          <RecipeCardCategory>{entry.features[0]}</RecipeCardCategory>
+                        </RecipeCardHeader>
+                        <RecipeCardContent>
+                          <RecipeCardTitle>{entry.h1.replace(/ Online Free$/, "")}</RecipeCardTitle>
+                          <RecipeCardTags tags={entry.features} limit={3} />
+                        </RecipeCardContent>
                       </>
                     )}
                   </RecipeCard>
-                </Animate.ScaleIn>
-              </Grid.Item>
+                </ScaleIn>
+              </GridItem>
             ))}
           </Grid>
-        </Animate.Stagger>
+        </Stagger>
       </Stack>
     </Stack>
   );
