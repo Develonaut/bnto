@@ -78,6 +78,7 @@ export const core = {
   },
 
   auth: {
+    ...baseCore.auth,
     useReady,
     useIsAuthenticated,
     useSessionStatus,
