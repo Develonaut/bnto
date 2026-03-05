@@ -22,6 +22,7 @@ import { NotificationCards } from "./NotificationCards";
 import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
 import { ProgressShowcase } from "./ProgressShowcase";
 import { RecipeCardShowcase } from "./RecipeCardShowcase";
+import { SelectShowcase } from "./SelectShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
 import { LoadingCardShowcase, SpringableShowcase } from "./SpringableShowcase";
 import { TypographyShowcase } from "./TypographyShowcase";
@@ -103,6 +104,14 @@ export default function MotorwayPage() {
               description="Every variant, size, icon layout, and press state. Buttons sit on the ground plane and sink when pressed."
             >
               <ButtonShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="selects"
+              title="Selects"
+              description="Dropdown selects with 3D surface popover. Grouped items, placeholder state, small trigger variant."
+            >
+              <SelectShowcase />
             </ShowcaseSection>
 
             <ShowcaseSection

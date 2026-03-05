@@ -656,6 +656,160 @@ Migrate the recipe page to use generic renderers. Verify all 6 predefined recipe
 
 ## Backlog
 
+### UX: Compartment Node Visual Redesign (Mini Motorways Buildings)
+
+**Priority: High.** The current `CompartmentNode` renders as a flat colored card with centered text — all nodes look identical except for color. There's no visual personality, no sense of what each node *does*, and no connection to the Mini Motorways "building" metaphor. Nodes should be immediately identifiable at a glance, like buildings on a Mini Motorways map.
+
+**Current state:** `CompartmentNode.tsx` renders a `.surface` Card with `label` + `sublabel` text. Variant colors exist (primary, secondary, accent, muted, success, warning) but are arbitrarily assigned. All nodes are the same 120×120 size. No icons. No category-driven visual identity.
+
+**Goal:** Each compartment feels like a distinct building in a bento box. You can identify what a node does without reading its label. The canvas reads like a well-packed bento — varied compartment sizes, category-driven colors, icons as visual anchors. Execution state drives elevation changes with satisfying springy pops as compartments progress.
+
+**Design principles:**
+- **No edges/connections** — execution order = compartment position. The bento box metaphor is about spatial arrangement, not wiring
+- **Elevation-driven execution state** — compartments physically rise and settle as they execute. The `.surface` Card system already supports this via the `elevation` prop with spring animations
+- **Icons are the building silhouette** — large, centered, immediately communicates the node's purpose
+- **Category = neighborhood** — nodes of the same category share a color, making the canvas scannable
+
+**Phase 1: Icon registry + category color mapping**
+
+Add a prominent icon to each node type and map categories to consistent variant colors. This is the biggest visual bang for effort — immediately makes every node recognizable.
+
+Icon mapping (Lucide icons):
+
+| Node Type | Icon | Visual metaphor |
+|---|---|---|
+| `image` | `ImageIcon` | Universal image symbol |
+| `spreadsheet` | `Table` | Rows and columns |
+| `file-system` | `FolderOpen` | File operations |
+| `transform` | `Shuffle` | Data flowing between shapes |
+| `edit-fields` | `PenLine` | Editing values |
+| `http-request` | `Globe` | Network/external call |
+| `shell-command` | `TerminalSquare` | Command line |
+| `group` | `Braces` | Container/grouping |
+| `loop` | `RefreshCw` | Iteration/cycling |
+| `parallel` | `Columns3` | Concurrent lanes |
+
+Category → color mapping:
+
+| Category | Variant | Rationale |
+|---|---|---|
+| `image` | `primary` (terracotta) | Hero category, warm and prominent |
+| `spreadsheet` | `secondary` (teal) | Cool counterpoint, data-oriented |
+| `file` | `accent` (golden) | Foundation operations |
+| `data` | `muted` (warm off-white) | Background/subtle operations |
+| `network` | `secondary` (teal) | External connections |
+| `control` | `warning` (warm orange) | Orchestration, meta-level |
+| `system` | `muted` (warm off-white) | Power-user, understated |
+
+Node anatomy (Phase 1):
+```
+┌─────────────────────┐
+│                     │
+│     [icon 32px]     │  ← Large category icon, muted foreground
+│                     │
+│      Image          │  ← Label (font-display, semibold, sm)
+│      image          │  ← Sublabel (font-mono, xs, muted)
+│                     │
+└─────────────────────┘
+```
+
+**Phase 2: Elevation-driven execution states**
+
+Replace the current flat status handling with elevation transitions that make compartments physically pop as they progress. The Card `.surface` system already provides springy elevation changes — we just need to map states correctly.
+
+| State | Elevation | Visual effect |
+|---|---|---|
+| `idle` | `none` or `sm` | Flat/barely lifted — resting in the bento box |
+| `pending` | `sm` | Slight lift, muted appearance — waiting in queue |
+| `active` | `md` | Rising up — "being serviced" like a MM building |
+| `completed` | `lg` | Full pop — satisfying spring bounce to max elevation |
+
+The spring animation on Card elevation changes creates the Mini Motorways "building materializing" feel automatically. As the recipe runs, compartments pop up one by one in sequence — like buildings appearing on the map.
+
+**Phase 3: Bento grid layout**
+
+Replace the current horizontal strip (all nodes in a single row at 220px stride) with a proper bento box grid that uses varied compartment sizes. Different node types get different footprints:
+
+| Tier | Size | Used for |
+|---|---|---|
+| **Standard** | 140×140 | Most nodes (image, spreadsheet, transform, etc.) |
+| **Compact** | 100×100 | Simple nodes (edit-fields with no parameters) |
+| **Wide** | 200×140 | Nodes with more visual content (future inline controls) |
+| **Container** | 240×180+ | Group, loop, parallel — larger to suggest they hold children |
+
+The grid layout algorithm should pack compartments like a real bento box — no uniform grid, but a visually balanced arrangement. Update `bentoSlots.ts` to support varied slot sizes.
+
+**Future (not in scope):**
+- Inline micro-controls on nodes (radial dials, parameter badges) — nice-to-have after core visual identity ships
+- Interactive connection handles — design decision is no edges
+- Per-node execution progress bars — elevation + status color is sufficient
+
+**Tasks:**
+- [ ] `apps/web` — **Icon registry**: Create `editor/adapters/nodeIcons.ts` — maps `NodeTypeName → LucideIcon`. Pure data, one file
+- [ ] `apps/web` — **Category color registry**: Create `editor/adapters/nodeColors.ts` — maps `NodeCategory → CompartmentVariant`. Pure data, one file
+- [ ] `apps/web` — **CompartmentNode redesign**: Update `CompartmentNode.tsx` — add icon rendering above label, restructure layout from centered-text to icon-above-text. Import from icon/color registries
+- [ ] `apps/web` — **Elevation state mapping**: Update `CompartmentNode.tsx` status → elevation mapping: idle=none/sm, pending=sm, active=md, completed=lg. Leverage existing Card spring animations
+- [ ] `apps/web` — **Bento grid layout**: Update `bentoSlots.ts` with varied slot sizes per node type tier (standard/compact/wide/container). Replace horizontal strip with proper 2D bento packing
+- [ ] `apps/web` — **Adapter integration**: Update `definitionToBento` adapter to use icon/color registries when converting Definition → BentoNode (set variant from category, set size from tier)
+- [ ] `apps/web` — **Motorway showcase**: Update Motorway editor showcase to demonstrate the new visual treatment with all node types visible
+- [ ] `apps/web` — **E2E verification**: Verify editor canvas renders correctly with new node visuals. Update screenshots if page-level layout changed
+
+### UX: Editor User Journey — Full Implementation
+
+**Priority: High.** The editor exists (Sprint 4D/4E) — canvas, node palette, config panel, undo/redo, export. But there's no production route, no execution integration, no file I/O on the canvas, and no save. This task wires the editor into a complete user journey.
+
+**Strategy doc:** [editor-user-journey.md](.claude/strategy/editor-user-journey.md)
+**E2E test matrix:** [journeys/editor.md](.claude/journeys/editor.md)
+
+**Success criteria:**
+1. Task completion — build compress-images from scratch, run it, download results, < 5 min
+2. Round-trip fidelity — export `.bnto.json` → re-import → identical state
+3. Predefined recipe parity — editor is a superset of recipe pages
+
+#### Wave 1 (parallel — Production Route + Entry) refs: Discover + Enter
+
+- [ ] `apps/web` — `/frontend-engineer` — Create `/editor` route with AccountGate (sign-in prompt for unauthenticated users)
+- [ ] `apps/web` — `/frontend-engineer` — `?from={slug}` query param loads predefined recipe from `@bnto/nodes` registry
+- [ ] `apps/web` — `/frontend-engineer` — Auto-scaffold Input + Output compartments for blank canvas (default when no `?from=`)
+- [ ] `apps/web` — `/frontend-engineer` — Add `/editor` to app navigation (authenticated users only)
+- [ ] `apps/web` — `/frontend-engineer` — "Open in Editor" bridge button on recipe pages → `/editor?from={slug}`
+
+#### Wave 2 (parallel — Input/Output Nodes) refs: Build + Test, Interaction Model
+
+**Dependency:** Sprint 4C (I/O Nodes) provides `@bnto/nodes` foundation.
+
+- [ ] `@bnto/nodes` — `/frontend-engineer` — `input` and `output` node types with full `ParameterSchema` (mode, accept, extensions, label, multiple, etc.)
+- [ ] `apps/web` — `/frontend-engineer` — Input node compartment on canvas with config panel = dropzone + file list
+- [ ] `apps/web` — `/frontend-engineer` — Output node compartment on canvas with config panel = download list + auto-download toggle
+- [ ] `@bnto/nodes` — `/frontend-engineer` — Update all 6 predefined recipe definitions with explicit I/O nodes
+- [ ] `apps/web` — `/frontend-engineer` — Generic `InputRenderer` and `OutputRenderer` driven by node parameters
+- [ ] `apps/web` — `/frontend-engineer` — I/O nodes are always present — users can configure but not delete them
+
+#### Wave 3 (sequential — Execution Integration) refs: Test + Refine
+
+- [ ] `apps/web` — `/frontend-engineer` — Wire Run button → `core.executions.createExecution()` → browser WASM engine
+- [ ] `apps/web` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed)
+- [ ] `apps/web` — `/frontend-engineer` — Results routed to Output node config panel (download list)
+- [ ] `apps/web` — `/frontend-engineer` — Auto-download toggle on Output node
+- [ ] `apps/web` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute)
+- [ ] `apps/web` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant)
+
+#### Wave 4 (parallel — Save + Bridge) refs: Save, Feature Funnel
+
+- [ ] `@bnto/backend` — `/backend-engineer` — Recipe save mutation (Convex schema: recipes table with userId, definition, metadata)
+- [ ] `@bnto/core` — `/core-architect` — `core.recipes.save()` and `core.recipes.useMyRecipes()` hooks
+- [ ] `apps/web` — `/frontend-engineer` — Save button in editor toolbar, tier limits (Free: 3 recipes, Pro: unlimited)
+- [ ] `apps/web` — `/frontend-engineer` — My Recipes integration (load saved recipes into editor)
+- [ ] `apps/web` — `/frontend-engineer` — Dirty state tracking + unsaved changes warning on navigation
+
+#### Wave 5 (sequential — E2E + Polish) refs: E2E Matrix, Success Criteria
+
+- [ ] `apps/web` — `/quality-engineer` — E2E test suite for editor entry + build + execute + export flows (see [journeys/editor.md](.claude/journeys/editor.md))
+- [ ] `apps/web` — `/quality-engineer` — Predefined recipe parity tests (all 6 recipes via `?from={slug}`)
+- [ ] `apps/web` — `/frontend-engineer` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
+- [ ] `apps/web` — `/quality-engineer` — Round-trip fidelity test (export → re-import → deep equality)
+- [ ] `apps/web` — `/frontend-engineer` — Accessibility audit (focus management, screen reader labels on canvas nodes)
+
 ### Chore: Codebase File Size & Structure Audit
 
 **Priority: High.** Code standards have been tightened (March 2026): files target 50-100 lines (hard cap 250), functions get their own file if reused or more than a few lines, components with more than 2-3 sub-components break into folder + barrel. The existing codebase predates these tighter limits and needs a sweep.
@@ -839,6 +993,52 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 - [ ] `apps/web` — UI performance audit at scale (FileCard grid, BouncyStagger, responsive layout)
 - [ ] `@bnto/core` — Profile `createZipBlob` memory limits for large batches
 - [ ] `.claude/strategy/` — Write `file-limits.md` with results and decisions
+
+### Chore: Go Engine Archival & Node Migration Reference
+
+**Priority: High.** The archived Go engine (`archive/engine-go/`, ~33K LOC) and API server (`archive/api-go/`, ~2.5K LOC) are slated for deletion. Before removal, all 10 node type implementations have been documented in [go-engine-migration.md](strategy/go-engine-migration.md) as a migration reference.
+
+**Migration reference doc:** `.claude/strategy/go-engine-migration.md` — complete implementation details, parameters, patterns, dependencies, and open decisions for all 10 Go node types.
+
+**What's fully migrated (safe to delete):**
+- `image` — compress, resize, convert (Rust `bnto-image`, 224 tests)
+- `file-system` rename/move (Rust `bnto-file`, 32 tests)
+- `spreadsheet` CSV clean + rename (Rust `bnto-csv`, 42 tests)
+
+**What's partially migrated (gaps documented):**
+- `file-system` — missing: read, write, copy, delete, mkdir, exists, list with glob
+- `spreadsheet` — missing: Excel (.xlsx) read/write (`excelize/v2` equivalent)
+
+**What's not migrated (documented for future):**
+- Orchestration: `group`, `loop`, `parallel` — needed for multi-step recipes
+- Data: `transform` (expr-lang), `edit-fields` (Go templates) — needed for Tier 2 recipes
+- Server-only: `http-request`, `shell-command` — M4 Pro tier
+
+**Tasks:**
+- [x] `.claude/strategy/` — Create `go-engine-migration.md` with full node inventory, parameters, patterns, dependencies, and migration paths
+- [ ] `archive/` — **Final review**: Walk through `go-engine-migration.md` with the team, confirm nothing is missing before deletion
+- [ ] `archive/` — **Delete `archive/engine-go/`**: Remove Go engine source code. Update `go.work`, `.gitignore`, `Taskfile.yml`, `bnto.code-workspace` to remove Go engine references
+- [ ] `archive/` — **Delete `archive/api-go/`**: Remove Go API server source code. Update Docker, Taskfile, and CI references. (Note: if M4 cloud uses Go, fork to a separate repo first)
+- [ ] `.claude/` — **Update docs**: Remove Go engine references from CLAUDE.md, architecture.md, monorepo-structure.md, ROADMAP.md. Update "What's Built" section in PLAN.md
+- [ ] `infra` — **Clean up Taskfile**: Remove `task build`, `task test`, `task vet`, `task api:*` commands that target the Go engine
+- [ ] `infra` — **Clean up CI**: Remove Go-related checks from CI if any remain (Go checks already removed from CI Gate, but verify)
+
+### Engine: Unmigrated Node Operations (Rust WASM)
+
+**Priority: Medium.** Bring Go engine operations that have no Rust equivalent yet. Reference: [go-engine-migration.md](strategy/go-engine-migration.md).
+
+**Tier 2 recipe blockers:**
+- [ ] `engine` — **`bnto-image`: composite operation** — overlay/watermark. Needed for `/watermark-images` (Tier 2, 30K+ monthly searches). See Go `image.go` composite logic
+- [ ] `engine` — **`bnto-image`: EXIF metadata strip** — needed for `/strip-exif` (Tier 2, 15K+ monthly searches). Go used `imaging` library strip
+- [ ] `engine` — **`bnto-csv`: merge operation** — concat + deduplicate multiple CSVs. Needed for `/merge-csv` (Tier 2, 12K+ monthly searches)
+- [ ] `engine` — **`bnto-csv`: CSV-to-JSON conversion** — needed for `/csv-to-json` (Tier 2, 25K+ monthly searches). May be a `transform` concern
+
+**Orchestration (multi-step recipe support):**
+- [ ] `@bnto/core` or `engine` — **Multi-step recipe orchestration**: Design how the browser adapter handles recipes with multiple processing nodes (group/loop pattern from Go). Currently the Web Worker processes one file through one node type. Multi-step requires either JS-side orchestration or WASM-side pipeline support. See `go-engine-migration.md` § Orchestration Nodes
+- [ ] `engine` — **Expression evaluation in browser**: Choose a JS expression evaluator to replace `expr-lang/expr` for `transform` node and `loop` while/break conditions. Candidates: `expr-eval`, `filtrex`, custom safe evaluator
+
+**Excel support:**
+- [ ] `engine` — **`bnto-csv`: Excel (.xlsx) read/write** — Go used `excelize/v2`. Rust options: `calamine` (read) + `rust_xlsxwriter` (write). Lower priority than CSV operations
 
 ### Engine: Spreadsheet Node Template Resolution — M3/M4 (Go engine)
 
@@ -1031,12 +1231,14 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 
 | Document | Purpose |
 |----------|---------|
-| `.claude/journeys/` | User journey test matrices — auth, engine, API, web app |
+| `.claude/journeys/` | User journey test matrices — auth, engine, API, web app, editor |
 | `.claude/strategy/bntos.md` | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers |
 | `.claude/strategy/editor-architecture.md` | Shared editor layer — store, hooks, package strategy, switchable editors |
+| `.claude/strategy/editor-user-journey.md` | Editor user journey — stages, flows, success criteria, phased delivery |
 | `.claude/strategy/visual-editor.md` | Bento box visual editor — compartment design, grid layout, execution state |
 | `.claude/strategy/code-editor.md` | Code editor design — CM6, slash commands, JSON Schema |
 | `.claude/strategy/conveyor-belt.md` | Conveyor belt showcase — Motorway page R&D (not the editor) |
+| `.claude/strategy/go-engine-migration.md` | Go engine node inventory — migration reference before archive deletion |
 | `.claude/strategy/cloud-desktop-strategy.md` | Architecture, cost analysis, cloud execution topology |
 | `.claude/strategy/core-principles.md` | Trust commitments, "For Claude Code" guidance |
 | `.claude/rules/` | Auto-loaded rules (architecture, code-standards, components, etc.) |
