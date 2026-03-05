@@ -2,6 +2,7 @@
 
 import { getQueryClient } from "../client";
 import { setSignoutSignal } from "../lib/setSignoutSignal";
+import { clearSignoutSignal } from "../lib/clearSignoutSignal";
 import { onAuthError } from "../authError";
 import { authStore } from "../stores/authStore";
 import type { AuthUser } from "../types/auth";
@@ -42,6 +43,9 @@ export function createAuthClient() {
     clearPersistedAuth: () => {
       authStore.getState().clear();
     },
+
+    /** Clear the signout signal (call before sign-in to avoid stale suppression). */
+    clearSignoutSignal,
 
     /** Subscribe to auth errors from queries/mutations. */
     onAuthError,
