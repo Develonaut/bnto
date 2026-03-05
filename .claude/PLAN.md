@@ -665,11 +665,15 @@ Migrate the recipe page to use generic renderers. Verify all 6 predefined recipe
 
 **Approach:** Audit by package, one PR per package. Don't change behavior — only restructure. Tests must pass before and after.
 
+**Cross-package DRY rule:** Any utility function used by more than one package (`cn`, `createCn`, type guards, format helpers, etc.) must move to a shared `@bnto/utils` package. Duplicated logic across packages is a signal — consolidate into `@bnto/utils` with one function per file, domain-grouped folders.
+
 **Tasks:**
+- [ ] `packages/@bnto/utils` — **Create shared utils package**: Scaffold `@bnto/utils` with `package.json`, `tsconfig.json`, barrel export. Zero runtime deps. This is the home for cross-package pure functions
+- [ ] `packages/@bnto/utils` — **Identify and consolidate cross-package utils**: Scan all packages for duplicated or shared utilities (`cn`, `createCn`, type guards, formatters, validators). Move to `@bnto/utils`, update imports across consumers
 - [ ] `apps/web` — **Scan for oversized files**: Find all `.ts`/`.tsx` files over 100 lines. Triage each: split into folder + barrel, extract functions to own files, or justify as-is (hard cap 250)
 - [ ] `apps/web` — **Component decomposition audit**: Find components with more than 2-3 sub-components defined in one file. Break into folder structure (`FeatureRoot.tsx`, sub-parts, `index.ts` barrel)
-- [ ] `apps/web` — **Utils/lib audit**: Find any multi-function files in `lib/`, `utils/`, or similar. Each exported function gets its own camelCase file. Group in domain folders
-- [ ] `packages/core` — **Same audit**: Oversized files, multi-function modules, sub-component cohabitation. Split and barrel
+- [ ] `apps/web` — **Utils/lib audit**: Find any multi-function files in `lib/`, `utils/`, or similar. Each exported function gets its own camelCase file. Group in domain folders. Move cross-package utils to `@bnto/utils`
+- [ ] `packages/core` — **Same audit**: Oversized files, multi-function modules, sub-component cohabitation. Split and barrel. Move shared utils to `@bnto/utils`
 - [ ] `packages/@bnto/backend` — **Same audit**: Convex function files, helpers, validators. One function per file where practical
 - [ ] `packages/@bnto/nodes` — **Same audit**: Schema files, registry, helpers
 - [ ] **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after restructuring. No behavior changes — only file organization
