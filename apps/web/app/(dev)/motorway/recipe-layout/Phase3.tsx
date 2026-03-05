@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Grid, GridItem, Text } from "@bnto/ui";
+import { Card, GridItem, Text } from "@bnto/ui";
 import { PhaseShell } from "./PhaseShell";
 import { MockResultCard } from "./MockCards";
 import { ActionBar } from "./SharedPanels";
