@@ -1,13 +1,13 @@
 "use client";
 
 import { Fragment, useCallback, useMemo, useState, type ComponentProps } from "react";
-import { useStore } from "@xyflow/react";
 import type { NodeTypeName } from "@bnto/nodes";
 import { Badge } from "@/components/ui/Badge";
 import { Menu } from "@/components/ui/Menu";
 import { Text } from "@/components/ui/Text";
 import { SearchIcon } from "@/components/ui/icons";
-import { useAddNode } from "@/editor/hooks/useAddNode";
+import { useEditorStore } from "@/editor/hooks/useEditorStore";
+import { useEditorActions } from "@/editor/hooks/useEditorActions";
 import { useNodePalette } from "@/editor/hooks/useNodePalette";
 import { SLOTS } from "@/editor/adapters/bentoSlots";
 
@@ -44,9 +44,9 @@ function NodePaletteMenuContent({
   ...props
 }: Omit<ComponentProps<typeof Menu.Content>, "children">) {
   const [search, setSearch] = useState("");
-  const addNode = useAddNode();
+  const { addNode } = useEditorActions();
   const { groups } = useNodePalette();
-  const nodeCount = useStore((s) => s.nodes.length);
+  const nodeCount = useEditorStore((s) => s.nodes.length);
   const isFull = nodeCount >= SLOTS.length;
 
   /* Filter groups by search term. */

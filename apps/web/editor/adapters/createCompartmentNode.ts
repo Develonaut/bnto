@@ -1,16 +1,16 @@
 /**
- * Direct node factory — (NodeTypeName, slotIndex) → BentoNode.
+ * Direct node factory — (NodeTypeName, slotIndex) → BentoNode + NodeConfig.
  *
- * Skips the Definition intermediary entirely. The mutation hooks
- * call this to create a new RF node in one step instead of the
- * old two-step addNode(definition) + definitionNodeToRfNode().
+ * Returns both the visual RF node (thin data) and the domain config
+ * as separate objects. The store adds the node to its nodes array and
+ * the config to its configs map.
  *
  * Pure function — no React, no DOM, fully testable.
  */
 
 import type { NodeTypeName } from "@bnto/nodes";
 import { NODE_TYPE_INFO, NODE_SCHEMAS } from "@bnto/nodes";
-import type { BentoNode } from "./types";
+import type { BentoNode, NodeConfig } from "./types";
 import { SLOTS } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";
 
@@ -27,8 +27,13 @@ function buildDefaultParams(nodeType: NodeTypeName): Record<string, unknown> {
   return params;
 }
 
+interface CompartmentNodeResult {
+  node: BentoNode;
+  config: NodeConfig;
+}
+
 /**
- * Create a BentoNode directly from a node type and slot index.
+ * Create a BentoNode + NodeConfig from a node type and slot index.
  *
  * Returns null if the slot index is out of range (canvas full).
  */
@@ -36,7 +41,7 @@ function createCompartmentNode(
   type: NodeTypeName,
   slotIndex: number,
   position?: { x: number; y: number },
-): BentoNode | null {
+): CompartmentNodeResult | null {
   const slot = SLOTS[slotIndex];
   if (!slot) return null;
 
@@ -45,7 +50,7 @@ function createCompartmentNode(
   const label = info?.label ?? type;
   const id = crypto.randomUUID();
 
-  return {
+  const node: BentoNode = {
     id,
     type: "compartment" as const,
     position: position ?? { x: slot.x, y: slot.y },
@@ -56,11 +61,17 @@ function createCompartmentNode(
       width: slot.w,
       height: slot.h,
       status: "idle" as const,
-      nodeType: type,
-      name: label,
-      parameters: buildDefaultParams(type),
     },
   };
+
+  const config: NodeConfig = {
+    nodeType: type,
+    name: label,
+    parameters: buildDefaultParams(type),
+  };
+
+  return { node, config };
 }
 
 export { createCompartmentNode };
+export type { CompartmentNodeResult };

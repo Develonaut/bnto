@@ -33,7 +33,7 @@ interface NodeConfigPanelProps {
 }
 
 function NodeConfigPanel({ selectedNodeId }: NodeConfigPanelProps) {
-  const { node, typeInfo, visibleParams } = useEditorNode(selectedNodeId);
+  const { node, config, typeInfo, visibleParams } = useEditorNode(selectedNodeId);
   const { updateParams } = useEditorActions();
 
   const handleParamChange = useCallback(
@@ -44,7 +44,7 @@ function NodeConfigPanel({ selectedNodeId }: NodeConfigPanelProps) {
     [selectedNodeId, updateParams],
   );
 
-  if (!selectedNodeId || !node || !typeInfo) {
+  if (!selectedNodeId || !node || !config || !typeInfo) {
     return (
       <Panel collapsed={false} onToggle={noop} className="h-full w-full">
         <Panel.Content>
@@ -97,7 +97,7 @@ function NodeConfigPanel({ selectedNodeId }: NodeConfigPanelProps) {
                 <ParameterField
                   key={param.name}
                   param={param}
-                  value={node.parameters[param.name]}
+                  value={config.parameters[param.name]}
                   onChange={handleParamChange}
                 />
               ))}

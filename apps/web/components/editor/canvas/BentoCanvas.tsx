@@ -9,6 +9,7 @@ import {
   useReactFlow,
   useStore,
 } from "@xyflow/react";
+import type { NodeChange, EdgeChange, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { cn } from "@/lib/cn";
 
@@ -17,32 +18,28 @@ import { CompartmentNode, type CompartmentNodeType } from "./CompartmentNode";
 /**
  * A React Flow canvas styled as a bento box grid.
  *
- * Compartments (surface cards) sit on a warm grid background — matching
- * the Mini Motorways editing view where buildings appear on the map.
- * Grid lines use BackgroundVariant.Lines (not dots) to match the
- * gameplay screenshot's visible graph-paper grid.
- *
- * Automatically adjusts the viewport with a smooth zoom animation
- * when nodes are added or removed — the "city growing" effect from
- * Mini Motorways where the camera pulls back as neighborhoods expand.
- *
  * Two rendering modes:
  *
- *   Controlled (nodes prop) — read-only showcase. External state
- *     passed as `nodes` prop, ReactFlow renders it directly.
+ *   Controlled (nodes + onNodesChange) — editor mode. External store
+ *     owns node state, passes it as props. RF renders but doesn't own.
  *
- *   Uncontrolled (defaultNodes prop) — editor mode. `defaultNodes`
+ *   Uncontrolled (defaultNodes) — read-only showcase. `defaultNodes`
  *     seeds RF's internal store on mount. RF owns node state.
- *     Use `useReactFlow().setNodes()` for programmatic updates.
- *     Drag, select, and pan are handled internally by RF.
  *
- * Children are rendered inside ReactFlow — use for `<Panel>` overlays
- * (e.g., floating toolbar, minimap, controls).
+ * Children are rendered inside ReactFlow — use for `<Panel>` overlays.
  */
 
 type BentoCanvasProps = {
-  /** Initial nodes — RF manages state internally after mount. */
-  defaultNodes: CompartmentNodeType[];
+  /** Controlled mode: nodes from external store. */
+  nodes?: CompartmentNodeType[];
+  /** Controlled mode: RF change handler. */
+  onNodesChange?: (changes: NodeChange<CompartmentNodeType>[]) => void;
+  /** Controlled mode: edges from external store. */
+  edges?: Edge[];
+  /** Controlled mode: edge change handler. */
+  onEdgesChange?: (changes: EdgeChange[]) => void;
+  /** Uncontrolled mode: initial nodes (RF owns state after mount). */
+  defaultNodes?: CompartmentNodeType[];
   /** Canvas height in px. Default: 480 */
   height?: number;
   /** Enable drag, select, pan, zoom. Default: false (read-only). */
@@ -57,14 +54,12 @@ type BentoCanvasProps = {
   /**
    * When true, skips the internal ReactFlowProvider wrapper.
    * Use this when the canvas is embedded inside a parent that already
-   * provides a ReactFlowProvider (e.g., RecipeEditor). This lets
-   * sibling hooks (useEditorSelection, useEditorUndoRedo) share the
-   * same RF context as the canvas.
+   * provides a ReactFlowProvider.
    */
   standalone?: boolean;
   /** ReactFlow children — Panel overlays, Controls, etc. */
   children?: ReactNode;
-  /** Override container classes (e.g., strip border when embedded). */
+  /** Override container classes. */
   className?: string;
 };
 
@@ -78,13 +73,21 @@ const NODE_TYPES = { compartment: CompartmentNode } as const;
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
 
 type BentoCanvasInnerProps = {
-  defaultNodes: CompartmentNodeType[];
+  nodes?: CompartmentNodeType[];
+  onNodesChange?: (changes: NodeChange<CompartmentNodeType>[]) => void;
+  edges?: Edge[];
+  onEdgesChange?: (changes: EdgeChange[]) => void;
+  defaultNodes?: CompartmentNodeType[];
   interactive?: boolean;
   disable?: BentoCanvasProps["disable"];
   children?: ReactNode;
 };
 
 function BentoCanvasInner({
+  nodes,
+  onNodesChange,
+  edges,
+  onEdgesChange,
   defaultNodes,
   interactive = false,
   disable,
@@ -92,8 +95,7 @@ function BentoCanvasInner({
 }: BentoCanvasInnerProps) {
   const { fitView } = useReactFlow();
 
-  /* Fit all nodes on initial mount only — frames the default layout.
-   * After mount, the palette and sidebar own fitView targeting. */
+  /* Fit all nodes on initial mount only. */
   const hasFitted = useRef(false);
   const nodeCount = useStore((s) => s.nodes.length);
 
@@ -103,10 +105,15 @@ function BentoCanvasInner({
     fitView({ duration: 0, padding: 0.2 });
   }, [nodeCount, fitView]);
 
+  // Controlled mode: nodes + onNodesChange props
+  // Uncontrolled mode: defaultNodes prop
+  const isControlled = !!onNodesChange;
+
   return (
     <ReactFlow<CompartmentNodeType>
-      defaultNodes={defaultNodes}
-      edges={EMPTY_EDGES}
+      {...(isControlled
+        ? { nodes, onNodesChange, edges: edges ?? EMPTY_EDGES, onEdgesChange }
+        : { defaultNodes, edges: EMPTY_EDGES })}
       nodeTypes={NODE_TYPES}
       nodesDraggable={interactive && !disable?.drag}
       nodesConnectable={false}
@@ -118,9 +125,6 @@ function BentoCanvasInner({
       preventScrolling={!interactive}
       proOptions={PRO_OPTIONS}
     >
-      {/* Grid lines matching Mini Motorways editing view —
-       * warm lines on cream background, like graph paper.
-       * Gap=40 gives a subtle density similar to the game. */}
       <Background
         variant={BackgroundVariant.Lines}
         gap={40}
@@ -134,6 +138,10 @@ function BentoCanvasInner({
 /* ── Public canvas wrapper ──────────────────────────────────── */
 
 export function BentoCanvas({
+  nodes,
+  onNodesChange,
+  edges,
+  onEdgesChange,
   defaultNodes,
   height,
   interactive = false,
@@ -144,6 +152,10 @@ export function BentoCanvas({
 }: BentoCanvasProps) {
   const inner = (
     <BentoCanvasInner
+      nodes={nodes}
+      onNodesChange={onNodesChange}
+      edges={edges}
+      onEdgesChange={onEdgesChange}
       defaultNodes={defaultNodes}
       interactive={interactive}
       disable={disable}
