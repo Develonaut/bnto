@@ -72,64 +72,76 @@ Pricing, revenue projections, and "ready to charge" criteria live in Notion ("SE
 
 **Monetization model (updated Feb 2026):** Browser execution is free unlimited. Pro sells real value — persistence, collaboration, premium compute. See ROADMAP.md for the full model.
 
-| Sprint | What Ships | Revenue Implication |
-|--------|-----------|---------------------|
-| Sprint 2B | Browser execution (M1 MVP) | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine. |
-| Sprint 2C | Launch readiness (content + domain) | **bnto.io live and indexable.** Real content on every page. SEO crawling begins. First real users possible. |
-| Sprint 2D | Recipe page UX overhaul | **COMPLETE.** Progressive phase-driven flow. Motorway design language on every tool page. |
-| Sprint H | Housekeeping | **COMPLETE.** FileUpload rewrite, Rust test audit, EXIF coverage, Pressable, CI, ESLint. |
-| Sprint 3 | Platform features (accounts, history) | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented. |
-| Sprint 4 | Recipe editor (headless + visual) | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
-| Sprint 4D-4E | Package extraction (`@bnto/ui`, `@bnto/editor`) | Clean architecture. Packages ready for desktop (M3). |
-| Sprint 4F | Code standards review | Technical hygiene. Every file conforms to updated standards. |
-| Sprint 5 | Editor to production | **M2 completion.** Editor gives users a reason to create accounts. Save custom recipes = highest-intent Pro signal. |
-| Sprint 6-7 | Desktop app | Top-of-funnel. Word of mouth begins. Free forever — trust signal. |
-| Sprint 8 | Stripe + Pro tier | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing. |
+| Sprint       | What Ships                                      | Revenue Implication                                                                                                              |
+| ------------ | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Sprint 2B    | Browser execution (M1 MVP)                      | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine.                                       |
+| Sprint 2C    | Launch readiness (content + domain)             | **bnto.io live and indexable.** Real content on every page. SEO crawling begins. First real users possible.                      |
+| Sprint 2D    | Recipe page UX overhaul                         | **COMPLETE.** Progressive phase-driven flow. Motorway design language on every tool page.                                        |
+| Sprint H     | Housekeeping                                    | **COMPLETE.** FileUpload rewrite, Rust test audit, EXIF coverage, Pressable, CI, ESLint.                                         |
+| Sprint 3     | Platform features (accounts, history)           | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented.                                       |
+| Sprint 4     | Recipe editor (headless + visual)               | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
+| Sprint 4D-4E | Package extraction (`@bnto/ui`, `@bnto/editor`) | Clean architecture. Packages ready for desktop (M3).                                                                             |
+| Sprint 4F    | Code standards review                           | Technical hygiene. Every file conforms to updated standards.                                                                     |
+| Sprint 5     | Editor to production                            | **M2 completion.** Editor gives users a reason to create accounts. Save custom recipes = highest-intent Pro signal.              |
+| Sprint 6-7   | Desktop app                                     | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                                                |
+| Sprint 8     | Stripe + Pro tier                               | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.                   |
 
 ---
 
 ## Completed Sprints (collapsed)
 
 ### Phase 0: Foundation — COMPLETE
+
 Monorepo restructuring, engine solidification with TDD (>90% coverage on all 10 node types), integration test fixtures, CLI smoke tests, Go API server, Convex setup, web app shell, @bnto/core hooks.
 
 ### Sprint 1: Infrastructure Migration — COMPLETE
+
 Moved from Railway/Convex Auth to Vercel/Better Auth. Auth provider, Convex schema, Vercel deployment, proxy middleware, sign-in/sign-up/sign-out pages, route protection. Wave 4 (auth verification) was skipped — gaps caught and resolved in Sprint 2A.
 
 ### Sprint 2: Predefined Bntos + Cloud Execution — Waves 1-4 COMPLETE
+
 6 Tier 1 fixtures, SEO URL routing, bnto registry, tool page UI (file drop, per-bnto config), R2 file transit, Railway deployment, env config (R2/Convex/Vercel/Railway), execution UI (RunButton, ExecutionProgress, ExecutionResults), predefined execution path. Wave 5 (pipeline verification) blocked by auth — deferred to Sprint 2A Wave 5.
 
 ### Sprint 2A: Auth Fix — COMPLETE
+
 Migrated to `@convex-dev/auth` (eliminates JWT race condition). Anonymous sessions, proxy middleware, integration tests (A1-A7, C1-C3, S1-S3). Core integration test harness (ConvexHttpClient factory). Execution + upload/download integration tests. Playwright E2E pipeline verification. Auth evaluation documented in git history.
 
 ### Sprint 2.5: Codebase Polish — COMPLETE
+
 Node.js subpath imports (`#components/*`, `#lib/*`), camelCase file rename (hooks, utils, lib), PascalCase component rename, dot-notation primitive wrappers, Button audit/migration, Button pseudo-state fix, Button animations (Mini Motorways motion language). Font review (DM Sans → Geist evaluation) deferred to backlog.
 
 ### Sprint 2B: Browser Execution (M1 MVP) — COMPLETE
+
 All 6 Tier 1 bntos running 100% client-side via Rust→WASM. `@bnto/nodes` package (engine-agnostic definitions), Rust workspace with 5 crates, Web Worker wrapper, browser adapter in `@bnto/core`, BntoPageShell browser routing, ZIP download for multi-file results. Rust evaluation checkpoint PASSED. WASM bundle: 1.6MB raw / 606KB gzipped. 44+ Rust unit tests, WASM integration tests, Playwright E2E with screenshot assertions for all 6 bntos. **M1 milestone delivered.**
 
 ### Sprint 2C: Launch Readiness — COMPLETE
+
 bnto.io live and indexable. All Mainline template content replaced with real bnto content (home, pricing, FAQ, privacy, footer, navbar). Messaging audit (no false claims). CSS animation refactor (JS → CSS-driven). Site navigation E2E tests. 15/15 static pages generate cleanly.
 
 ---
 
 ### Sprint 2D: Recipe Page UX Overhaul — COMPLETE
+
 Progressive phase-driven flow (Files → Configure → Results) with Motorway design language. RecipeShell, PhaseIndicator, FileCard, RecipeConfigSection, useRecipeFlow, per-instance execution stores. 27+ screenshots regenerated. All 4 waves complete.
 
 ---
 
 ### Sprint H: Housekeeping — COMPLETE
+
 Tech debt cleanup: FileUpload→react-dropzone, core.browser→core.wasm rename, shared ESLint config, Pressable component, React import sweep, GitHub Actions CI (PR #10), Rust test audit, EXIF orientation coverage. All tasks delivered.
 
 ### Sprint 3A: Remove Anonymous User System — COMPLETE
+
 Eliminated anonymous Convex session system across 5 waves (backend schema, core hooks, web components, auth E2E, docs cleanup). Auth is now binary: signed in or not. 13/13 auth E2E tests passing. All anonymous references removed from schema, code, and docs.
 
 ### Sprint 3: Platform Features (M2) — COMPLETE (Wave 3 tabled)
+
 Accounts earn their keep: execution history (IndexedDB for unauth, Convex for auth), `/my-recipes` dashboard, PostHog telemetry, Lighthouse CI, save prompt conversion hook, pricing page, browser auth verification, execution history migration on signup. Wave 3 (3 E2E test tasks) tabled — see backlog "Testing: Sprint 3 Deferred E2E Tests."
 
 ---
 
 ### Sprint 4: Recipe Editor (Headless-First) — COMPLETE
+
 Headless-first editor: Wave 1 (`@bnto/nodes` pure functions — CRUD, adapters, tests), Wave 2 (Zustand store, ReactFlow adapters, hooks), Wave 3 (Motorway MVP — BentoCanvas, EditorToolbar, NodePalette, NodeConfigPanel, RecipeEditor). Architecture: `@bnto/nodes` → pure functions → Zustand store → React hooks → visual skin. Two entry points: `createBlankDefinition()` or `loadRecipe(slug)`. See [editor-architecture.md](.claude/strategy/editor-architecture.md), [visual-editor.md](.claude/strategy/visual-editor.md).
 
 ---
@@ -145,6 +157,7 @@ Headless-first editor: Wave 1 (`@bnto/nodes` pure functions — CRUD, adapters, 
 **Tech choice: CodeMirror 6, not Monaco.** ~40 KB gzipped vs ~2.4 MB (60x smaller). CSS variable theming (direct OKLCH integration). Native mobile support. Headless state (`EditorState` without DOM). See [code-editor.md § Tech Choice](.claude/strategy/code-editor.md) for the full comparison table and evidence (Sourcegraph, Replit, Chrome DevTools migrations).
 
 **Key implementation patterns** (from design doc + persona):
+
 - **React integration:** Custom `useCodeEditor` hook with `useRef`/`useEffect` — NOT `@uiw/react-codemirror`. CM6 author recommends imperative integration.
 - **Theming:** CM6 `EditorView.theme()` with CSS variables (`var(--background)`, `var(--primary)`, etc.). Dark mode automatic. See [code-editor.md § Theming](.claude/strategy/code-editor.md).
 - **Slash commands:** CM6 `CompletionSource` or `StateField` + `showTooltip` facet. Context-aware — only activates inside `"nodes"` arrays. See [code-editor.md § Slash Commands](.claude/strategy/code-editor.md).
@@ -212,6 +225,7 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 ---
 
 ### Sprint 4C: Input & Output Nodes — COMPLETE
+
 Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: Wave 1 (`@bnto/nodes` — I/O types, schemas, recipe updates, 22 tests), Wave 2 (`@bnto/core` adapter reads I/O nodes, editor store singleton constraints), Wave 3 (generic InputRenderer/OutputRenderer, I/O compartment rendering), Wave 4 (RecipeShell migration, per-slug I/O code deleted, E2E verified). See [io-nodes.md](.claude/strategy/io-nodes.md).
 
 ---
@@ -288,9 +302,10 @@ Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: 
 
 #### Wave 2 (sequential — cross-cutting + verify)
 
-- [ ] `all packages` — **Cross-package DRY audit**: Identify duplicated utilities across packages (`cn`, `createCn`, type guards, format helpers). Consolidate into `@bnto/ui` (styling utils) or `@bnto/core` (logic utils) as appropriate
-- [ ] `all packages` — **Remove Object.assign dot-notation repo-wide**: Replace all compound `Object.assign` namespaces with flat named exports (e.g., `Card` + `CardContent` + `CardHeader` instead of `Card.Content`). Applies to `@bnto/ui`, `apps/web/editor`, and any other packages using the pattern. Update all consumers to flat imports. Remove `"use client"` directives that were added solely to work around the RSC boundary limitation of `Object.assign`. Recover server-side rendering benefits for components that don't need client interactivity
-- [ ] `all packages` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after all restructuring
+- [x] `all packages` — **Cross-package DRY audit**: Identify duplicated utilities across packages (`cn`, `createCn`, type guards, format helpers). Consolidate into `@bnto/ui` (styling utils) or `@bnto/core` (logic utils) as appropriate
+- [x] `all packages` — **Remove Object.assign dot-notation repo-wide**: Replace all compound `Object.assign` namespaces with flat named exports (e.g., `Card` + `CardContent` + `CardHeader` instead of `Card.Content`). Applies to `@bnto/ui`, `apps/web/editor`, and any other packages using the pattern. Update all consumers to flat imports. Remove `"use client"` directives that were added solely to work around the RSC boundary limitation of `Object.assign`. Recover server-side rendering benefits for components that don't need client interactivity
+- [x] `apps/web` — **Server Component audit**: Invoke `/nextjs-expert` + `/frontend-engineer`. Audit every `"use client"` directive in `apps/web/`. For each file: (1) Does it genuinely need client interactivity (hooks, state, event handlers)? (2) Can the `"use client"` boundary be pushed deeper — keep the trunk/branch as a server component and extract only the interactive leaf as client? (3) Are there pages or layouts marked `"use client"` that should be server components composing client islands? Goal: maximize server-rendered HTML, minimize client JS bundle, push `"use client"` to the smallest possible leaves
+- [x] `all packages` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after all restructuring
 
 ---
 
@@ -466,6 +481,7 @@ End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude
 **ABSORBED into Sprint 4 (Recipe Editor).** Sprint 4 now covers the full visual editor: headless definition CRUD, Zustand store, ReactFlow canvas, node palette, property editor, and execution state visualization. The headless-first architecture means all visual editor work builds on the same pure-function foundation.
 
 **Remaining items not yet in Sprint 4:**
+
 - [ ] `apps/web` — Execution history with full per-node logs and re-run support (depends on Sprint 3 accounts/history)
 - [ ] `apps/web` — Workflow versioning and duplication (depends on Sprint 3 save infrastructure)
 - [ ] `apps/web` — Container node visual nesting (group/loop as collapsible sub-canvases — future enhancement)
@@ -476,7 +492,7 @@ End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude
 
 ## Immediate Backlog
 
-*All immediate items complete — Convex deploy pipeline and PostHog events resolved. See completed sprints.*
+_All immediate items complete — Convex deploy pipeline and PostHog events resolved. See completed sprints._
 
 ---
 
@@ -490,12 +506,12 @@ End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude
 
 Replace the current flat status handling with elevation transitions that make compartments physically pop as they progress. The Card `.surface` system already provides springy elevation changes — we just need to map states correctly.
 
-| State | Elevation | Visual effect |
-|---|---|---|
-| `idle` | `none` or `sm` | Flat/barely lifted — resting in the bento box |
-| `pending` | `sm` | Slight lift, muted appearance — waiting in queue |
-| `active` | `md` | Rising up — "being serviced" like a MM building |
-| `completed` | `lg` | Full pop — satisfying spring bounce to max elevation |
+| State       | Elevation      | Visual effect                                        |
+| ----------- | -------------- | ---------------------------------------------------- |
+| `idle`      | `none` or `sm` | Flat/barely lifted — resting in the bento box        |
+| `pending`   | `sm`           | Slight lift, muted appearance — waiting in queue     |
+| `active`    | `md`           | Rising up — "being serviced" like a MM building      |
+| `completed` | `lg`           | Full pop — satisfying spring bounce to max elevation |
 
 The spring animation on Card elevation changes creates the Mini Motorways "building materializing" feel automatically. As the recipe runs, compartments pop up one by one in sequence — like buildings appearing on the map.
 
@@ -503,21 +519,23 @@ The spring animation on Card elevation changes creates the Mini Motorways "build
 
 Replace the current horizontal strip (all nodes in a single row at 220px stride) with a proper bento box grid that uses varied compartment sizes. Different node types get different footprints:
 
-| Tier | Size | Used for |
-|---|---|---|
-| **Standard** | 140×140 | Most nodes (image, spreadsheet, transform, etc.) |
-| **Compact** | 100×100 | Simple nodes (edit-fields with no parameters) |
-| **Wide** | 200×140 | Nodes with more visual content (future inline controls) |
+| Tier          | Size     | Used for                                                     |
+| ------------- | -------- | ------------------------------------------------------------ |
+| **Standard**  | 140×140  | Most nodes (image, spreadsheet, transform, etc.)             |
+| **Compact**   | 100×100  | Simple nodes (edit-fields with no parameters)                |
+| **Wide**      | 200×140  | Nodes with more visual content (future inline controls)      |
 | **Container** | 240×180+ | Group, loop, parallel — larger to suggest they hold children |
 
 The grid layout algorithm should pack compartments like a real bento box — no uniform grid, but a visually balanced arrangement. Update `bentoSlots.ts` to support varied slot sizes.
 
 **Future (not in scope):**
+
 - Inline micro-controls on nodes (radial dials, parameter badges) — nice-to-have after core visual identity ships
 - Interactive connection handles — design decision is no edges
 - Per-node execution progress bars — elevation + status color is sufficient
 
 **Tasks:**
+
 - [ ] `apps/web` — **Icon registry**: Create `editor/adapters/nodeIcons.ts` — maps `NodeTypeName → LucideIcon`. Pure data, one file
 - [ ] `apps/web` — **Category color registry**: Create `editor/adapters/nodeColors.ts` — maps `NodeCategory → CompartmentVariant`. Pure data, one file
 - [ ] `apps/web` — **CompartmentNode redesign**: Update `CompartmentNode.tsx` — add icon rendering above label, restructure layout from centered-text to icon-above-text. Import from icon/color registries
@@ -535,6 +553,7 @@ The grid layout algorithm should pack compartments like a real bento box — no 
 **E2E test matrix:** [journeys/editor.md](.claude/journeys/editor.md)
 
 **Success criteria (carried to Sprint 5):**
+
 1. Task completion — build compress-images from scratch, run it, download results, < 5 min
 2. Round-trip fidelity — export `.bnto.json` → re-import → identical state
 3. Predefined recipe parity — editor is a superset of recipe pages
@@ -550,6 +569,7 @@ The grid layout algorithm should pack compartments like a real bento box — no 
 **Cross-package DRY rule:** Any utility function used by more than one package (`cn`, `createCn`, type guards, format helpers, etc.) must move to a shared `@bnto/utils` package. Duplicated logic across packages is a signal — consolidate into `@bnto/utils` with one function per file, domain-grouped folders.
 
 **Tasks:**
+
 - [ ] `packages/@bnto/utils` — **Create shared utils package**: Scaffold `@bnto/utils` with `package.json`, `tsconfig.json`, barrel export. Zero runtime deps. This is the home for cross-package pure functions
 - [ ] `packages/@bnto/utils` — **Identify and consolidate cross-package utils**: Scan all packages for duplicated or shared utilities (`cn`, `createCn`, type guards, formatters, validators). Move to `@bnto/utils`, update imports across consumers
 - [ ] `apps/web` — **Scan for oversized files**: Find all `.ts`/`.tsx` files over 100 lines. Triage each: split into folder + barrel, extract functions to own files, or justify as-is (hard cap 250)
@@ -567,6 +587,7 @@ The grid layout algorithm should pack compartments like a real bento box — no 
 **Goal:** When an unhandled error occurs, the user sees a helpful dialog (not a white screen) with a "Report this issue" button that opens a pre-filled GitHub issue on `Develonaut/bnto`.
 
 **Current state (as of research):**
+
 - No error boundaries or error pages exist (only `not-found.tsx` for 404)
 - PostHog captures product events but NOT unhandled exceptions
 - Auth session loss is handled (`SessionProvider.onSessionLost` → redirect to `/signin`)
@@ -581,6 +602,7 @@ Next.js App Router has built-in error boundary support via convention files. The
 3. **`app/[bnto]/error.tsx`** — Catches errors on recipe/tool pages. Same approach — branded error UI with report button.
 
 **Error dialog UX requirements:**
+
 - Show a branded, friendly error message (not a stack trace dump)
 - "Report this issue" button that opens a GitHub issue via URL pre-fill
 - "Try again" button that calls `reset()` (the Next.js error boundary reset function)
@@ -592,6 +614,7 @@ Next.js App Router has built-in error boundary support via convention files. The
 URL pattern: `https://github.com/Develonaut/bnto/issues/new?labels[]=bug&title=...&body=...`
 
 The body should include (as Markdown):
+
 - **Error message** — `error.message` (first 200 chars)
 - **Route** — `window.location.pathname`
 - **Component stack** — from `error.digest` or React's `errorInfo.componentStack` (truncated to 5 frames)
@@ -603,6 +626,7 @@ The body should include (as Markdown):
 **CRITICAL: URL length limit.** GitHub returns 414 for URLs over ~8,000 chars. The `body` must be truncated. Strategy: truncate stack traces to first 5 frames, cap total body at ~4,000 chars (leaves room for encoding overhead). Use `encodeURIComponent()` on all values.
 
 **Helper function for building the issue URL:**
+
 ```typescript
 // Pure function — no React dependency, testable in isolation
 function buildGitHubIssueUrl(error: Error, route: string): string {
@@ -614,7 +638,9 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
     `- **Browser:** \`${navigator.userAgent}\``,
     `- **Timestamp:** ${new Date().toISOString()}`,
     `- **Version:** \`${process.env.NEXT_PUBLIC_APP_VERSION ?? "unknown"}\``,
-    error.stack ? `\n<details><summary>Stack trace</summary>\n\n\`\`\`\n${error.stack.split("\n").slice(0, 8).join("\n")}\n\`\`\`\n</details>` : "",
+    error.stack
+      ? `\n<details><summary>Stack trace</summary>\n\n\`\`\`\n${error.stack.split("\n").slice(0, 8).join("\n")}\n\`\`\`\n</details>`
+      : "",
   ].join("\n\n");
 
   const params = new URLSearchParams({
@@ -627,17 +653,20 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 ```
 
 **PostHog integration (optional enhancement):**
+
 - Capture `app_error` event via `core.telemetry.capture()` with error message, route, and digest
 - This gives the dev team server-side visibility even if users don't file issues
 - Only if PostHog is already initialized — never block error UI on telemetry
 
 **Testing strategy:**
+
 - Unit test `buildGitHubIssueUrl()` — verify URL structure, encoding, truncation
 - Unit test that the URL stays under 8,000 chars even with long stack traces
 - E2E test: trigger an error (e.g., render a component that throws), verify the error dialog appears with "Report" and "Try again" buttons
 - E2E test: verify "Try again" calls `reset()` and re-renders
 
 **Files to create/modify:**
+
 - `apps/web/app/global-error.tsx` — Root-level catch-all (standalone `<html>`)
 - `apps/web/app/(app)/error.tsx` — App shell error boundary (uses design system)
 - `apps/web/app/[bnto]/error.tsx` — Recipe page error boundary (uses design system)
@@ -645,6 +674,7 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 - `apps/web/components/ErrorReport.tsx` — Shared error dialog UI (Card + buttons + error details)
 
 **Design system compliance:**
+
 - Use `Card elevation="md"` for the error dialog container
 - Use `Heading`, `Text`, `Button`, `Stack` for layout
 - Use `font-mono` for error message and stack trace display
@@ -653,11 +683,13 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 - The `global-error.tsx` file cannot use the design system (it replaces `<html>`) — use minimal inline styles matching the theme tokens
 
 **Scope boundaries:**
+
 - This is error REPORTING, not error RECOVERY. Don't add retry logic to individual components
 - Don't add Sentry or a third-party error tracking service — keep it simple with GitHub issues + PostHog events
 - Don't change existing `try/catch` patterns in auth forms or execution — those handle expected errors with user-friendly messages. This boundary catches UNEXPECTED errors only
 
 **Tasks:**
+
 - [ ] `apps/web` — Create `buildGitHubIssueUrl()` pure function in `lib/` with unit tests (URL construction, encoding, truncation, length limit)
 - [ ] `apps/web` — Create `ErrorReport` component — branded error dialog with "Report this issue" (GitHub link), "Try again" (reset), and "Go home" (navigation)
 - [ ] `apps/web` — Create `app/global-error.tsx` — root catch-all with minimal inline-styled error UI + GitHub issue link
@@ -691,6 +723,7 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 ### UX: Compositional BouncyStagger Audit
 
 **Priority: High.** Apply `BouncyStagger` compositionally (per-section opt-in) instead of wrapping entire `AppShell.Content` — the shell-level wrap caused a ~20px layout jump.
+
 - [x] `apps/web` — Audit all pages using `AppShell.Content` — identify sections that benefit from staggered entrance
 - [x] `apps/web` — Add `BouncyStagger` to card grids (home page BntoGallery, recipe card lists)
 - [x] `apps/web` — Add `BouncyStagger` to file card lists in RecipeShell (already done in phase flow)
@@ -730,20 +763,24 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 **Migration reference doc:** `.claude/strategy/go-engine-migration.md` — complete implementation details, parameters, patterns, dependencies, and open decisions for all 10 Go node types.
 
 **What's fully migrated (safe to delete):**
+
 - `image` — compress, resize, convert (Rust `bnto-image`, 224 tests)
 - `file-system` rename/move (Rust `bnto-file`, 32 tests)
 - `spreadsheet` CSV clean + rename (Rust `bnto-csv`, 42 tests)
 
 **What's partially migrated (gaps documented):**
+
 - `file-system` — missing: read, write, copy, delete, mkdir, exists, list with glob
 - `spreadsheet` — missing: Excel (.xlsx) read/write (`excelize/v2` equivalent)
 
 **What's not migrated (documented for future):**
+
 - Orchestration: `group`, `loop`, `parallel` — needed for multi-step recipes
 - Data: `transform` (expr-lang), `edit-fields` (Go templates) — needed for Tier 2 recipes
 - Server-only: `http-request`, `shell-command` — M4 Pro tier
 
 **Tasks:**
+
 - [x] `.claude/strategy/` — Create `go-engine-migration.md` with full node inventory, parameters, patterns, dependencies, and migration paths
 - [ ] `archive/` — **Final review**: Walk through `go-engine-migration.md` with the team, confirm nothing is missing before deletion
 - [ ] `archive/` — **Delete `archive/engine-go/`**: Remove Go engine source code. Update `go.work`, `.gitignore`, `Taskfile.yml`, `bnto.code-workspace` to remove Go engine references
@@ -757,16 +794,19 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 **Priority: Medium.** Bring Go engine operations that have no Rust equivalent yet. Reference: [go-engine-migration.md](strategy/go-engine-migration.md).
 
 **Tier 2 recipe blockers:**
+
 - [ ] `engine` — **`bnto-image`: composite operation** — overlay/watermark. Needed for `/watermark-images` (Tier 2, 30K+ monthly searches). See Go `image.go` composite logic
 - [ ] `engine` — **`bnto-image`: EXIF metadata strip** — needed for `/strip-exif` (Tier 2, 15K+ monthly searches). Go used `imaging` library strip
 - [ ] `engine` — **`bnto-csv`: merge operation** — concat + deduplicate multiple CSVs. Needed for `/merge-csv` (Tier 2, 12K+ monthly searches)
 - [ ] `engine` — **`bnto-csv`: CSV-to-JSON conversion** — needed for `/csv-to-json` (Tier 2, 25K+ monthly searches). May be a `transform` concern
 
 **Orchestration (multi-step recipe support):**
+
 - [ ] `@bnto/core` or `engine` — **Multi-step recipe orchestration**: Design how the browser adapter handles recipes with multiple processing nodes (group/loop pattern from Go). Currently the Web Worker processes one file through one node type. Multi-step requires either JS-side orchestration or WASM-side pipeline support. See `go-engine-migration.md` § Orchestration Nodes
 - [ ] `engine` — **Expression evaluation in browser**: Choose a JS expression evaluator to replace `expr-lang/expr` for `transform` node and `loop` while/break conditions. Candidates: `expr-eval`, `filtrex`, custom safe evaluator
 
 **Excel support:**
+
 - [ ] `engine` — **`bnto-csv`: Excel (.xlsx) read/write** — Go used `excelize/v2`. Rust options: `calamine` (read) + `rust_xlsxwriter` (write). Lower priority than CSV operations
 
 ### Engine: Spreadsheet Node Template Resolution — M3/M4 (Go engine)
@@ -809,10 +849,10 @@ Convex dev (`zealous-canary-422`) has stale Better Auth records and test artifac
 
 **Milestone: M4.** R2 is only used for cloud (server-side) execution. Not needed for M1 browser execution.
 
-| Bucket | Prefix | Auto-delete after |
-|---|---|---|
-| `bnto-transit` + `bnto-transit-dev` | `uploads/` | 1 hour |
-| `bnto-transit` + `bnto-transit-dev` | `executions/` | 24 hours |
+| Bucket                              | Prefix        | Auto-delete after |
+| ----------------------------------- | ------------- | ----------------- |
+| `bnto-transit` + `bnto-transit-dev` | `uploads/`    | 1 hour            |
+| `bnto-transit` + `bnto-transit-dev` | `executions/` | 24 hours          |
 
 - [ ] `infra` — Configure R2 lifecycle rules in Cloudflare dashboard (prod + dev buckets)
 
@@ -900,6 +940,7 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 **Priority: Pre-launch.** Audit `"use client"` directives — push boundaries down to smallest leaf, convert parents to Server Components, lazy load modals/below-fold with `next/dynamic`.
 
 **Known issues from dashboard page work (Sprint 3):**
+
 - `app/(app)/my-recipes/page.tsx` uses `dynamic()` with `ssr: false` for all data-dependent components (UsageStats, WorkflowGrid, RecentExecutions). This is an anti-pattern — it means null render during SSR → loading fallback after hydration → skeleton → data (triple-jump). The page should be restructured: page.tsx as a Server Component composing small client leaves that each handle their own loading states. Only the Convex-dependent leaf components need `"use client"`.
 - Skeleton dimensions were manually aligned to prevent layout shift but the root cause is the SSR gap from `ssr: false`. With proper Server Component structure, static parts (heading, tab list) render immediately in HTML, and only data-fetching leaves show skeletons.
 - `AppShell.Content` needed `min-h-[80svh]` as a band-aid to prevent footer visibility during the SSR→hydration gap. This should become unnecessary once pages use proper Server Component composition.
@@ -949,23 +990,22 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 - JSON editor must represent recursive structure faithfully
 - Visual editor (Sprint 4) must support drill-down into group nodes
 
-
 ---
 
 ## Reference
 
-| Document | Purpose |
-|----------|---------|
-| `.claude/journeys/` | User journey test matrices — auth, engine, API, web app, editor |
-| `.claude/strategy/bntos.md` | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers |
-| `.claude/strategy/editor-architecture.md` | Shared editor layer — store, hooks, package strategy, switchable editors |
-| `.claude/strategy/editor-user-journey.md` | Editor user journey — stages, flows, success criteria, phased delivery |
-| `.claude/strategy/visual-editor.md` | Bento box visual editor — compartment design, grid layout, execution state |
-| `.claude/strategy/code-editor.md` | Code editor design — CM6, slash commands, JSON Schema |
-| `.claude/strategy/conveyor-belt.md` | Conveyor belt showcase — Motorway page R&D (not the editor) |
-| `.claude/strategy/go-engine-migration.md` | Go engine node inventory — migration reference before archive deletion |
-| `.claude/strategy/cloud-desktop-strategy.md` | Architecture, cost analysis, cloud execution topology |
-| `.claude/strategy/core-principles.md` | Trust commitments, "For Claude Code" guidance |
-| `.claude/rules/` | Auto-loaded rules (architecture, code-standards, components, etc.) |
-| `.claude/skills/` | Agent skills (pickup, project-manager, code-review, pre-commit) |
-| Notion: "SEO & Monetization Strategy" | Pricing, revenue projections, quota limits |
+| Document                                     | Purpose                                                                    |
+| -------------------------------------------- | -------------------------------------------------------------------------- |
+| `.claude/journeys/`                          | User journey test matrices — auth, engine, API, web app, editor            |
+| `.claude/strategy/bntos.md`                  | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers             |
+| `.claude/strategy/editor-architecture.md`    | Shared editor layer — store, hooks, package strategy, switchable editors   |
+| `.claude/strategy/editor-user-journey.md`    | Editor user journey — stages, flows, success criteria, phased delivery     |
+| `.claude/strategy/visual-editor.md`          | Bento box visual editor — compartment design, grid layout, execution state |
+| `.claude/strategy/code-editor.md`            | Code editor design — CM6, slash commands, JSON Schema                      |
+| `.claude/strategy/conveyor-belt.md`          | Conveyor belt showcase — Motorway page R&D (not the editor)                |
+| `.claude/strategy/go-engine-migration.md`    | Go engine node inventory — migration reference before archive deletion     |
+| `.claude/strategy/cloud-desktop-strategy.md` | Architecture, cost analysis, cloud execution topology                      |
+| `.claude/strategy/core-principles.md`        | Trust commitments, "For Claude Code" guidance                              |
+| `.claude/rules/`                             | Auto-loaded rules (architecture, code-standards, components, etc.)         |
+| `.claude/skills/`                            | Agent skills (pickup, project-manager, code-review, pre-commit)            |
+| Notion: "SEO & Monetization Strategy"        | Pricing, revenue projections, quota limits                                 |

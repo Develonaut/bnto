@@ -1,5 +1,3 @@
-"use client";
-
 import { BouncyStagger, Stack, Text } from "@bnto/ui";
 import {
   RecipeCard,
