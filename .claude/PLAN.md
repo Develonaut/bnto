@@ -755,6 +755,62 @@ The grid layout algorithm should pack compartments like a real bento box — no 
 - [ ] `apps/web` — **Motorway showcase**: Update Motorway editor showcase to demonstrate the new visual treatment with all node types visible
 - [ ] `apps/web` — **E2E verification**: Verify editor canvas renders correctly with new node visuals. Update screenshots if page-level layout changed
 
+### UX: Editor User Journey — Full Implementation
+
+**Priority: High.** The editor exists (Sprint 4D/4E) — canvas, node palette, config panel, undo/redo, export. But there's no production route, no execution integration, no file I/O on the canvas, and no save. This task wires the editor into a complete user journey.
+
+**Strategy doc:** [editor-user-journey.md](.claude/strategy/editor-user-journey.md)
+**E2E test matrix:** [journeys/editor.md](.claude/journeys/editor.md)
+
+**Success criteria:**
+1. Task completion — build compress-images from scratch, run it, download results, < 5 min
+2. Round-trip fidelity — export `.bnto.json` → re-import → identical state
+3. Predefined recipe parity — editor is a superset of recipe pages
+
+#### Wave 1 (parallel — Production Route + Entry) refs: Discover + Enter
+
+- [ ] `apps/web` — `/frontend-engineer` — Create `/editor` route with AccountGate (sign-in prompt for unauthenticated users)
+- [ ] `apps/web` — `/frontend-engineer` — `?from={slug}` query param loads predefined recipe from `@bnto/nodes` registry
+- [ ] `apps/web` — `/frontend-engineer` — Auto-scaffold Input + Output compartments for blank canvas (default when no `?from=`)
+- [ ] `apps/web` — `/frontend-engineer` — Add `/editor` to app navigation (authenticated users only)
+- [ ] `apps/web` — `/frontend-engineer` — "Open in Editor" bridge button on recipe pages → `/editor?from={slug}`
+
+#### Wave 2 (parallel — Input/Output Nodes) refs: Build + Test, Interaction Model
+
+**Dependency:** Sprint 4C (I/O Nodes) provides `@bnto/nodes` foundation.
+
+- [ ] `@bnto/nodes` — `/frontend-engineer` — `input` and `output` node types with full `ParameterSchema` (mode, accept, extensions, label, multiple, etc.)
+- [ ] `apps/web` — `/frontend-engineer` — Input node compartment on canvas with config panel = dropzone + file list
+- [ ] `apps/web` — `/frontend-engineer` — Output node compartment on canvas with config panel = download list + auto-download toggle
+- [ ] `@bnto/nodes` — `/frontend-engineer` — Update all 6 predefined recipe definitions with explicit I/O nodes
+- [ ] `apps/web` — `/frontend-engineer` — Generic `InputRenderer` and `OutputRenderer` driven by node parameters
+- [ ] `apps/web` — `/frontend-engineer` — I/O nodes are always present — users can configure but not delete them
+
+#### Wave 3 (sequential — Execution Integration) refs: Test + Refine
+
+- [ ] `apps/web` — `/frontend-engineer` — Wire Run button → `core.executions.createExecution()` → browser WASM engine
+- [ ] `apps/web` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed)
+- [ ] `apps/web` — `/frontend-engineer` — Results routed to Output node config panel (download list)
+- [ ] `apps/web` — `/frontend-engineer` — Auto-download toggle on Output node
+- [ ] `apps/web` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute)
+- [ ] `apps/web` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant)
+
+#### Wave 4 (parallel — Save + Bridge) refs: Save, Feature Funnel
+
+- [ ] `@bnto/backend` — `/backend-engineer` — Recipe save mutation (Convex schema: recipes table with userId, definition, metadata)
+- [ ] `@bnto/core` — `/core-architect` — `core.recipes.save()` and `core.recipes.useMyRecipes()` hooks
+- [ ] `apps/web` — `/frontend-engineer` — Save button in editor toolbar, tier limits (Free: 3 recipes, Pro: unlimited)
+- [ ] `apps/web` — `/frontend-engineer` — My Recipes integration (load saved recipes into editor)
+- [ ] `apps/web` — `/frontend-engineer` — Dirty state tracking + unsaved changes warning on navigation
+
+#### Wave 5 (sequential — E2E + Polish) refs: E2E Matrix, Success Criteria
+
+- [ ] `apps/web` — `/quality-engineer` — E2E test suite for editor entry + build + execute + export flows (see [journeys/editor.md](.claude/journeys/editor.md))
+- [ ] `apps/web` — `/quality-engineer` — Predefined recipe parity tests (all 6 recipes via `?from={slug}`)
+- [ ] `apps/web` — `/frontend-engineer` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
+- [ ] `apps/web` — `/quality-engineer` — Round-trip fidelity test (export → re-import → deep equality)
+- [ ] `apps/web` — `/frontend-engineer` — Accessibility audit (focus management, screen reader labels on canvas nodes)
+
 ### Chore: Codebase File Size & Structure Audit
 
 **Priority: High.** Code standards have been tightened (March 2026): files target 50-100 lines (hard cap 250), functions get their own file if reused or more than a few lines, components with more than 2-3 sub-components break into folder + barrel. The existing codebase predates these tighter limits and needs a sweep.
@@ -1176,9 +1232,10 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 
 | Document | Purpose |
 |----------|---------|
-| `.claude/journeys/` | User journey test matrices — auth, engine, API, web app |
+| `.claude/journeys/` | User journey test matrices — auth, engine, API, web app, editor |
 | `.claude/strategy/bntos.md` | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers |
 | `.claude/strategy/editor-architecture.md` | Shared editor layer — store, hooks, package strategy, switchable editors |
+| `.claude/strategy/editor-user-journey.md` | Editor user journey — stages, flows, success criteria, phased delivery |
 | `.claude/strategy/visual-editor.md` | Bento box visual editor — compartment design, grid layout, execution state |
 | `.claude/strategy/code-editor.md` | Code editor design — CM6, slash commands, JSON Schema |
 | `.claude/strategy/conveyor-belt.md` | Conveyor belt showcase — Motorway page R&D (not the editor) |
