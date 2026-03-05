@@ -220,7 +220,7 @@ describe("recipeFlowStore", () => {
   });
 
   describe("full cloud execution flow", () => {
-    it("tracks idle → uploading → running → failed → reset", () => {
+    it("tracks idle -> uploading -> running -> failed -> reset", () => {
       const files = [mockFile("photo.jpg")];
       store.getState().setFiles(files);
       store.getState().setConfig({ quality: 60 });
@@ -246,7 +246,7 @@ describe("recipeFlowStore", () => {
       expect(store.getState().config).toEqual({ quality: 80 });
     });
 
-    it("tracks idle → uploading → running (happy path — completed is set externally)", () => {
+    it("tracks idle -> uploading -> running (happy path — completed is set externally)", () => {
       store.getState().setFiles([mockFile("data.csv")]);
       store.getState().startUpload();
       store.getState().startExecution("exec-456");
