@@ -106,7 +106,7 @@ function BentoCanvasInner({
     // Defer fitView to the next animation frame so RF has time to
     // measure node DOM dimensions before calculating viewport bounds.
     requestAnimationFrame(() => {
-      fitView({ duration: 0, padding: 0.2 });
+      fitView({ duration: 0, padding: 0.3, maxZoom: 1 });
     });
   }, [nodeCount, fitView]);
 
@@ -130,11 +130,7 @@ function BentoCanvasInner({
       preventScrolling={!interactive}
       proOptions={PRO_OPTIONS}
     >
-      <Background
-        variant={BackgroundVariant.Lines}
-        gap={40}
-        color="var(--border)"
-      />
+      <Background variant={BackgroundVariant.Lines} gap={40} color="var(--border)" />
       {children}
     </ReactFlow>
   );

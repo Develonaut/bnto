@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  NODE_TYPES,
-  NODE_TYPE_NAMES,
-  NODE_TYPE_INFO,
-} from "./nodeTypes";
+import { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./nodeTypes";
 import { isNodeType } from "./isNodeType";
 import { getNodeTypeInfo } from "./getNodeTypeInfo";
 import { getBrowserCapableTypes } from "./getBrowserCapableTypes";
@@ -60,21 +56,18 @@ describe("NODE_TYPE_INFO", () => {
       expect(info.category).toBeTruthy();
       expect(typeof info.isContainer).toBe("boolean");
       expect(typeof info.browserCapable).toBe("boolean");
+      expect(info.icon).toBeTruthy();
     }
   });
 
   it("container types are group, loop, and parallel", () => {
-    const containers = Object.values(NODE_TYPE_INFO).filter(
-      (i) => i.isContainer,
-    );
+    const containers = Object.values(NODE_TYPE_INFO).filter((i) => i.isContainer);
     const names = containers.map((c) => c.name).sort();
     expect(names).toEqual(["group", "loop", "parallel"]);
   });
 
   it("server-only types are file-system, http-request, and shell-command", () => {
-    const serverOnly = Object.values(NODE_TYPE_INFO).filter(
-      (i) => !i.browserCapable,
-    );
+    const serverOnly = Object.values(NODE_TYPE_INFO).filter((i) => !i.browserCapable);
     const names = serverOnly.map((s) => s.name).sort();
     expect(names).toEqual(["file-system", "http-request", "shell-command"]);
   });

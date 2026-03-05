@@ -41,8 +41,8 @@ type CompartmentNodeData = {
   width: number;
   height: number;
   status: "idle" | "pending" | "active" | "completed";
-  /** Optional icon key for I/O nodes (e.g. "upload", "download"). */
-  icon?: "upload" | "download";
+  /** Icon identifier string (from NodeTypeInfo.icon) — resolved to a component by the renderer. */
+  icon?: string;
 };
 
 // ---------------------------------------------------------------------------
