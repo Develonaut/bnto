@@ -6,10 +6,10 @@ import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Row } from "@/components/ui/Row";
 import { Text } from "@/components/ui/Text";
-import type { StationNodeType } from "@/components/editor/conveyor/StationNode";
-import type { ConveyorEdgeType } from "@/components/editor/conveyor/ConveyorEdge";
-import { PieceShape } from "@/components/editor/conveyor/PieceShape";
-import type { PieceType } from "@/components/editor/conveyor/BeltPiece";
+import type { StationNodeType } from "@/components/editor/archive/conveyor/StationNode";
+import type { ConveyorEdgeType } from "@/components/editor/archive/conveyor/ConveyorEdge";
+import { PieceShape } from "@/components/editor/archive/conveyor/PieceShape";
+import type { PieceType } from "@/components/editor/archive/conveyor/BeltPiece";
 
 /**
  * Conveyor Belt showcase — a Mini Motorways-style "level" showing
@@ -31,7 +31,7 @@ import type { PieceType } from "@/components/editor/conveyor/BeltPiece";
  */
 
 const ConveyorCanvas = dynamic(
-  () => import("@/components/editor/conveyor/ConveyorCanvas").then((m) => m.ConveyorCanvas),
+  () => import("@/components/editor/archive/conveyor/ConveyorCanvas").then((m) => m.ConveyorCanvas),
   { ssr: false },
 );
 
