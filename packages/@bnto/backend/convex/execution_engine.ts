@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 450; // 15 min at 2s intervals
@@ -28,12 +29,7 @@ export const executeWorkflow = internalAction({
       return;
     }
 
-    const goExecutionId = await callGoApi(
-      ctx,
-      args,
-      goApiUrl,
-      startTime,
-    );
+    const goExecutionId = await callGoApi(ctx, args, goApiUrl, startTime);
     if (!goExecutionId) return; // already failed inside callGoApi
 
     await ctx.runMutation(internal.executions.updateProgress, {
@@ -80,25 +76,32 @@ async function callGoApi(
 
 /** Fetch the current execution status from the Go API. */
 async function fetchExecutionStatus(goApiUrl: string, goExecutionId: string) {
-  const response = await fetch(
-    `${goApiUrl}/api/executions/${goExecutionId}`,
-  );
+  const response = await fetch(`${goApiUrl}/api/executions/${goExecutionId}`);
   if (!response.ok) {
     throw new Error(`Poll returned ${response.status}`);
   }
   return response.json();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Convex action ctx.runMutation has a dynamic signature that can't be statically typed
 type RunCtx = { runMutation: (...a: any[]) => Promise<any> };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PollArgs = { executionId: any; eventId?: any; sessionId?: string };
+type PollArgs = {
+  executionId: Id<"executions">;
+  eventId?: Id<"executionEvents">;
+  sessionId?: string;
+};
 
 /** Handle a single poll response — complete, fail, or update progress. */
 async function handlePollResult(
   ctx: RunCtx,
   args: PollArgs,
-  execution: { status: string; result?: unknown; outputFiles?: unknown; error?: string; progress?: unknown[] },
+  execution: {
+    status: string;
+    result?: unknown;
+    outputFiles?: unknown;
+    error?: string;
+    progress?: unknown[];
+  },
   goExecutionId: string,
   startTime: number,
 ): Promise<boolean> {
@@ -143,7 +146,12 @@ async function pollExecution(
       const done = await handlePollResult(ctx, args, execution, goExecutionId, startTime);
       if (done) return;
     } catch (e) {
-      await failExecution(ctx, args, `Poll error: ${e instanceof Error ? e.message : String(e)}`, startTime);
+      await failExecution(
+        ctx,
+        args,
+        `Poll error: ${e instanceof Error ? e.message : String(e)}`,
+        startTime,
+      );
       return;
     }
   }
@@ -174,10 +182,7 @@ function sleep(ms: number): Promise<void> {
  * Build the JSON body for POST /api/run.
  * When a sessionId is present, the Go API pulls input files from R2.
  */
-function buildRunRequestBody(
-  definition: unknown,
-  sessionId: string | undefined,
-) {
+function buildRunRequestBody(definition: unknown, sessionId: string | undefined) {
   if (sessionId) {
     return { definition, sessionId };
   }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ClockIcon, LoaderIcon, Row, Stack } from "@bnto/ui";
 import type { BrowserExecution } from "@bnto/core";
+import { useElapsedTime, formatElapsed } from "../_hooks/useElapsedTime";
 
 interface BrowserExecutionProgressProps {
   execution: BrowserExecution;
@@ -14,13 +14,8 @@ interface BrowserExecutionProgressProps {
  * Shows per-file progress with a progress bar, elapsed time,
  * and status messages from the Web Worker.
  */
-export function BrowserExecutionProgress({
-  execution,
-}: BrowserExecutionProgressProps) {
-  const elapsed = useElapsedTime(
-    execution.startedAt,
-    execution.status === "processing",
-  );
+export function BrowserExecutionProgress({ execution }: BrowserExecutionProgressProps) {
+  const elapsed = useElapsedTime(execution.startedAt, execution.status === "processing");
   const { fileProgress } = execution;
 
   return (
@@ -64,33 +59,4 @@ export function BrowserExecutionProgress({
       )}
     </Stack>
   );
-}
-
-/** Count seconds since start, ticking every second while active. */
-function useElapsedTime(
-  startedAt: number | undefined,
-  isActive: boolean,
-): number {
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    if (!startedAt || !isActive) {
-      return;
-    }
-
-    const compute = () => Math.floor((Date.now() - startedAt) / 1000);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- timer sync with Date.now()
-    setElapsed(compute());
-    const interval = setInterval(() => setElapsed(compute()), 1000);
-    return () => clearInterval(interval);
-  }, [startedAt, isActive]);
-
-  return elapsed;
-}
-
-function formatElapsed(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}m ${s}s`;
 }

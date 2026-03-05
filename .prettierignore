@@ -1,0 +1,17 @@
+node_modules
+dist
+.next
+.next-e2e
+out
+build
+public/wasm
+engine/target
+archive
+pnpm-lock.yaml
+*.wasm
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico

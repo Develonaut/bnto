@@ -11,10 +11,12 @@
  */
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
+import prettierConfig from "eslint-config-prettier";
 
 export const baseConfig = tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
+  prettierConfig,
   {
     rules: {
       // Align with code-standards.md: no `any` without justification
@@ -38,12 +40,6 @@ export const baseConfig = tseslint.config(
     },
   },
   {
-    ignores: [
-      "dist/**",
-      "node_modules/**",
-      "**/*.test.ts",
-      "**/*.test.tsx",
-      "**/__tests__/**",
-    ],
+    ignores: ["dist/**", "node_modules/**", "**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"],
   },
 );

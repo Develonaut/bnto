@@ -13,35 +13,16 @@
  */
 
 import type {
-  WorkerRequest,
-  WorkerResponse,
   ProcessRequest,
   ProgressResponse,
   ResultResponse,
   ErrorResponse,
+  WorkerResponse,
 } from "./workerProtocol";
+import { createWorkerInstance, attachInitListener, sendRequest } from "./initWorker";
+import type { ProgressCallback, ProcessResult, PendingRequest } from "./workerTypes";
 
-/** Callback for progress updates during file processing. */
-export type ProgressCallback = (percent: number, message: string) => void;
-
-/** The result of processing a single file. */
-export interface ProcessResult {
-  /** Processed file as a Blob (ready for download or display). */
-  blob: Blob;
-  /** Output filename (e.g., "photo-compressed.jpg"). */
-  filename: string;
-  /** Output MIME type. */
-  mimeType: string;
-  /** Processing metadata (compression ratio, timing, etc.). */
-  metadata: Record<string, unknown>;
-}
-
-/** Tracks a pending request waiting for a response from the worker. */
-interface PendingRequest {
-  resolve: (result: ProcessResult) => void;
-  reject: (error: Error) => void;
-  onProgress?: ProgressCallback;
-}
+export type { ProgressCallback, ProcessResult } from "./workerTypes";
 
 export class BntoWorker {
   private worker: Worker | null = null;
@@ -151,45 +132,15 @@ export class BntoWorker {
   // ==========================================================================
 
   private async doInit(): Promise<string> {
+    const onMessage = (r: WorkerResponse) => this.handleMessage(r);
     return new Promise<string>((resolve, reject) => {
-      this.worker = this.createWorkerInstance(reject);
-      this.attachInitListener(resolve, reject);
-      this.send({ type: "init", baseUrl: globalThis.location?.origin ?? "" });
+      this.worker = createWorkerInstance(onMessage, reject);
+      attachInitListener(this.worker, resolve, reject, onMessage);
+      sendRequest(this.worker, {
+        type: "init",
+        baseUrl: globalThis.location?.origin ?? "",
+      });
     });
-  }
-
-  /** Create the Web Worker and attach the default message + error handlers. */
-  private createWorkerInstance(onError: (err: Error) => void): Worker {
-    const worker = new Worker(
-      new URL("./bnto.worker.ts", import.meta.url),
-      { type: "module" },
-    );
-    worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
-      this.handleMessage(event.data);
-    };
-    worker.onerror = (event) => {
-      onError(new Error(`Worker error: ${event.message || "Unknown worker error"}`));
-    };
-    return worker;
-  }
-
-  /** One-time listener for the "ready" response during init. */
-  private attachInitListener(
-    resolve: (version: string) => void,
-    reject: (err: Error) => void,
-  ): void {
-    const normalHandler = this.worker!.onmessage;
-    this.worker!.onmessage = (event: MessageEvent<WorkerResponse>) => {
-      const response = event.data;
-      if (response.type === "ready") {
-        this.worker!.onmessage = normalHandler;
-        resolve(response.version);
-      } else if (response.type === "worker-error") {
-        reject(new Error(response.message));
-      } else {
-        this.handleMessage(response);
-      }
-    };
   }
 
   private handleMessage(response: WorkerResponse): void {
@@ -238,9 +189,5 @@ export class BntoWorker {
 
     this.pending.delete(response.id);
     pending.reject(new Error(response.message));
-  }
-
-  private send(request: WorkerRequest): void {
-    this.worker?.postMessage(request);
   }
 }

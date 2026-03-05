@@ -5,6 +5,7 @@
   "description": "Recipe editor — visual canvas, store, adapters, and hooks",
   "type": "module",
   "scripts": {
+    "build": "tsc --noEmit",
     "test": "vitest run"
   },
   "exports": {
@@ -22,6 +23,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "^19.0.0",
     "typescript": "catalog:",

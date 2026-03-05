@@ -13,13 +13,25 @@ function stateWithNodes(): EditorState {
       id: "a",
       type: "compartment",
       position: { x: 0, y: 0 },
-      data: { label: "A", variant: "primary", width: 200, height: 200, status: "idle" },
+      data: {
+        label: "A",
+        variant: "primary",
+        width: 200,
+        height: 200,
+        status: "idle",
+      },
     },
     {
       id: "b",
       type: "compartment",
       position: { x: 0, y: 0 },
-      data: { label: "B", variant: "primary", width: 200, height: 200, status: "idle" },
+      data: {
+        label: "B",
+        variant: "primary",
+        width: 200,
+        height: 200,
+        status: "idle",
+      },
     },
   ];
   const configs: NodeConfigs = {
@@ -30,12 +42,18 @@ function stateWithNodes(): EditorState {
     nodes,
     edges: [],
     configs,
-    recipeMetadata: { id: "test", name: "Test", type: "group", version: "1.0.0" },
+    recipeMetadata: {
+      id: "test",
+      name: "Test",
+      type: "group",
+      version: "1.0.0",
+    },
     isDirty: false,
     validationErrors: [],
     executionState: {},
     undoStack: [],
     redoStack: [],
+    slug: null,
     selectedNodeId: null,
     layersOpen: false,
     configOpen: false,
@@ -48,7 +66,13 @@ function stateWithIoNode(): EditorState {
     id: "input",
     type: "compartment",
     position: { x: 0, y: 0 },
-    data: { label: "Input", variant: "info", width: 200, height: 200, status: "idle" },
+    data: {
+      label: "Input",
+      variant: "info",
+      width: 200,
+      height: 200,
+      status: "idle",
+    },
   });
   state.configs.input = { nodeType: "input", name: "Input", parameters: {} };
   return state;

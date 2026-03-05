@@ -12,10 +12,7 @@ import type { RawExecutionEventDoc } from "../types/raw";
  * Reads from executionEvents table (has slug for re-run button).
  * Guards on `useReady()` to avoid crashes before ConvexProvider mounts.
  */
-export function useServerExecutionHistory(options?: {
-  pageSize?: number;
-  enabled?: boolean;
-}) {
+export function useServerExecutionHistory(options?: { pageSize?: number; enabled?: boolean }) {
   const ready = useReady();
   const { pageSize = 20, enabled = true } = options ?? {};
   const { funcRef, args, transform } = core.executions.historyRefMethod();
@@ -26,11 +23,10 @@ export function useServerExecutionHistory(options?: {
     { initialNumItems: pageSize },
   );
 
+  // useMemo, not select — usePaginatedQuery is Convex-native, not React Query.
+  // Convex pagination doesn't support select transforms.
   const items: Execution[] = useMemo(
-    () =>
-      enabled
-        ? results.map((doc) => transform(doc as unknown as RawExecutionEventDoc))
-        : [],
+    () => (enabled ? results.map((doc) => transform(doc as unknown as RawExecutionEventDoc)) : []),
     [results, transform, enabled],
   );
 

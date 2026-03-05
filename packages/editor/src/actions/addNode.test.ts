@@ -12,10 +12,16 @@ function blankState(overrides?: Partial<EditorState>): EditorState {
     nodes: [],
     edges: [],
     configs: {},
-    recipeMetadata: { id: "test", name: "Test", type: "group", version: "1.0.0" },
+    recipeMetadata: {
+      id: "test",
+      name: "Test",
+      type: "group",
+      version: "1.0.0",
+    },
     isDirty: false,
     validationErrors: [],
     executionState: {},
+    slug: null,
     undoStack: [],
     redoStack: [],
     ...overrides,
@@ -27,13 +33,25 @@ function stateWithIoNodes(): EditorState {
     id: "input",
     type: "compartment",
     position: { x: 0, y: 0 },
-    data: { label: "Input", variant: "info", width: 200, height: 200, status: "idle" },
+    data: {
+      label: "Input",
+      variant: "info",
+      width: 200,
+      height: 200,
+      status: "idle",
+    },
   };
   const outputNode: BentoNode = {
     id: "output",
     type: "compartment",
     position: { x: 0, y: 0 },
-    data: { label: "Output", variant: "info", width: 200, height: 200, status: "idle" },
+    data: {
+      label: "Output",
+      variant: "info",
+      width: 200,
+      height: 200,
+      status: "idle",
+    },
   };
   const configs: NodeConfigs = {
     input: { nodeType: "input", name: "Input", parameters: {} },
