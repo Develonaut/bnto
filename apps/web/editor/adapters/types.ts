@@ -41,6 +41,8 @@ type CompartmentNodeData = {
   width: number;
   height: number;
   status: "idle" | "pending" | "active" | "completed";
+  /** Optional icon key for I/O nodes (e.g. "upload", "download"). */
+  icon?: "upload" | "download";
 };
 
 // ---------------------------------------------------------------------------

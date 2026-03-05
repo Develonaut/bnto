@@ -2,6 +2,7 @@ import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { Animate } from "@/components/ui/Animate";
 import { Card } from "@/components/ui/Card";
+import { DownloadIcon, UploadIcon } from "@/components/ui/icons";
 import { Pressable } from "@/components/ui/Pressable";
 import { Text } from "@/components/ui/Text";
 import type { CompartmentVariant, BentoNode } from "@/editor/adapters/types";
@@ -47,6 +48,12 @@ export const CompartmentNode = memo(function CompartmentNode({
           className={`${SURFACE_CLASS[data.variant ?? "primary"]} flex flex-col items-center justify-center rounded-xl`}
           style={{ width: w, height: h }}
         >
+          {data.icon === "upload" && (
+            <UploadIcon className="mb-1 size-4 text-muted-foreground" />
+          )}
+          {data.icon === "download" && (
+            <DownloadIcon className="mb-1 size-4 text-muted-foreground" />
+          )}
           <Text size="sm" className="font-display font-semibold leading-tight">
             {data.label}
           </Text>

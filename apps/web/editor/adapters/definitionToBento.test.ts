@@ -150,6 +150,26 @@ describe("definitionToBento", () => {
     }
   });
 
+  it("assigns upload/download icons to I/O nodes", () => {
+    const def = createBlankDefinition();
+    const result = definitionToBento(def);
+
+    const inputNode = result.nodes.find((n) => n.id === "input")!;
+    const outputNode = result.nodes.find((n) => n.id === "output")!;
+    expect(inputNode.data.icon).toBe("upload");
+    expect(outputNode.data.icon).toBe("download");
+  });
+
+  it("does not assign icons to non-I/O nodes", () => {
+    let def = createBlankDefinition();
+    def = addNode(def, "image").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+
+    const result = definitionToBento(def);
+    const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
+    expect(rfNode.data.icon).toBeUndefined();
+  });
+
   it("handles all 12 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       let def = createBlankDefinition();

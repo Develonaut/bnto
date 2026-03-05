@@ -7,6 +7,7 @@
  */
 
 import { getRecipe } from "@/lib/menu";
+import { toDropzoneAccept as toDropzoneAcceptFromString } from "@/src/utils/toDropzoneAccept";
 
 interface AcceptedTypes {
   /** Value for the HTML <input accept="..."> attribute. */
@@ -66,36 +67,13 @@ export function isFileAccepted(file: File, slug: string): boolean {
  *
  * Returns `undefined` for wildcard slugs (react-dropzone accepts all
  * files when `accept` is omitted).
+ *
+ * Delegates to the pure `toDropzoneAccept(accept: string)` utility
+ * after resolving the slug to an accept string.
  */
 export function toDropzoneAccept(
   slug: string,
 ): Record<string, string[]> | undefined {
   const { accept } = getAcceptedTypes(slug);
-  if (accept === "*/*") return undefined;
-
-  const tokens = accept.split(",");
-  const mimes: string[] = [];
-  const extensions: string[] = [];
-
-  for (const t of tokens) {
-    if (t.startsWith(".")) extensions.push(t);
-    else mimes.push(t);
-  }
-
-  const result: Record<string, string[]> = {};
-  for (const mime of mimes) {
-    result[mime] = [];
-  }
-
-  // Attach bare extensions to the first MIME key, or create a wildcard entry
-  if (extensions.length > 0) {
-    const firstMime = mimes[0];
-    if (firstMime) {
-      result[firstMime] = extensions;
-    } else {
-      result["application/octet-stream"] = extensions;
-    }
-  }
-
-  return result;
+  return toDropzoneAcceptFromString(accept);
 }
