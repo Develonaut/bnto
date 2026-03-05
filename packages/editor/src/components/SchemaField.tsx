@@ -18,11 +18,10 @@ interface SchemaFieldProps {
   meta: NodeParamMeta;
   fieldInfo: FieldTypeInfo;
   value: unknown;
-  required: boolean;
   onChange: (name: string, value: unknown) => void;
 }
 
-function SchemaField({ name, meta, fieldInfo, value, required, onChange }: SchemaFieldProps) {
+function SchemaField({ name, meta, fieldInfo, value, onChange }: SchemaFieldProps) {
   const handleChange = useCallback(
     (newValue: unknown) => onChange(name, newValue),
     [name, onChange],
@@ -35,7 +34,7 @@ function SchemaField({ name, meta, fieldInfo, value, required, onChange }: Schem
     <div className="flex flex-col gap-1.5" data-testid={`schema-field-${name}`}>
       <Label htmlFor={id} className="text-xs font-medium">
         {meta.label}
-        {required && <span className="ml-0.5 text-destructive">*</span>}
+        {fieldInfo.required && <span className="ml-0.5 text-destructive">*</span>}
       </Label>
 
       <Control id={id} fieldInfo={fieldInfo} meta={meta} value={value} onChange={handleChange} />

@@ -39,10 +39,8 @@ function SchemaForm({ schema, values, visibleParams, onChange }: SchemaFormProps
           const zodField = schema.schema.shape[paramName];
           const fieldInfo = zodField
             ? inferFieldType(zodField)
-            : { type: "string" as const, control: "text" as const };
-          const outerType = (zodField?._def?.typeName ?? "") as string;
-          const required = outerType !== "ZodOptional" && outerType !== "ZodDefault";
-          return { paramName, meta, fieldInfo, required };
+            : { type: "string" as const, control: "text" as const, required: true };
+          return { paramName, meta, fieldInfo };
         })
         .filter(Boolean),
     [schema, visibleParams],
@@ -67,7 +65,6 @@ function SchemaForm({ schema, values, visibleParams, onChange }: SchemaFormProps
             meta={field.meta}
             fieldInfo={field.fieldInfo}
             value={values[field.paramName]}
-            required={field.required}
             onChange={onChange}
           />
         );

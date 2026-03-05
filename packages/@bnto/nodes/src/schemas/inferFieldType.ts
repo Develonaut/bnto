@@ -38,6 +38,8 @@ interface FieldTypeInfo {
   type: "string" | "number" | "boolean" | "enum";
   /** UI control to render — determined by type + constraints. */
   control: FieldControl;
+  /** Whether the field is required (not wrapped in ZodOptional or ZodDefault). */
+  required: boolean;
   /** Enum values if the field is an enum. */
   enumValues?: readonly string[];
   /** Minimum value for number fields. */
@@ -86,6 +88,8 @@ function extractNumberChecks(zodType: z.ZodTypeAny): { min?: number; max?: numbe
  * that the config panel needs to render the correct form component.
  */
 function inferFieldType(zodField: z.ZodTypeAny): FieldTypeInfo {
+  const outerTypeName = (zodField._def.typeName ?? "") as string;
+  const required = outerTypeName !== "ZodOptional" && outerTypeName !== "ZodDefault";
   const inner = unwrap(zodField);
   const typeName = inner._def.typeName as string;
 
@@ -93,6 +97,7 @@ function inferFieldType(zodField: z.ZodTypeAny): FieldTypeInfo {
     return {
       type: "enum",
       control: "select",
+      required,
       enumValues: inner._def.values as readonly string[],
     };
   }
@@ -103,16 +108,17 @@ function inferFieldType(zodField: z.ZodTypeAny): FieldTypeInfo {
     return {
       type: "number",
       control: isBounded ? "slider" : "number",
+      required,
       min,
       max,
     };
   }
 
   if (typeName === "ZodBoolean") {
-    return { type: "boolean", control: "switch" };
+    return { type: "boolean", control: "switch", required };
   }
 
-  return { type: "string", control: "text" };
+  return { type: "string", control: "text", required };
 }
 
 export { inferFieldType };

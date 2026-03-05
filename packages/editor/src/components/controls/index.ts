@@ -34,8 +34,3 @@ export const CONTROL_REGISTRY: Record<FieldControl, ComponentType<ControlProps>>
 };
 
 export type { ControlProps } from "./types";
-export { SelectControl } from "./SelectControl";
-export { SwitchControl } from "./SwitchControl";
-export { SliderControl } from "./SliderControl";
-export { NumberControl } from "./NumberControl";
-export { TextControl } from "./TextControl";

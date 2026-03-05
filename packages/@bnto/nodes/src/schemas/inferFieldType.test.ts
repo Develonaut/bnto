@@ -18,6 +18,7 @@ describe("inferFieldType", () => {
     const info = inferFieldType(field);
     expect(info.type).toBe("enum");
     expect(info.control).toBe("select");
+    expect(info.required).toBe(true);
     expect(info.enumValues).toEqual(["a", "b", "c"]);
   });
 
@@ -25,6 +26,7 @@ describe("inferFieldType", () => {
     const info = inferFieldType(z.boolean());
     expect(info.type).toBe("boolean");
     expect(info.control).toBe("switch");
+    expect(info.required).toBe(true);
   });
 
   it("maps bounded z.number().min().max() → slider", () => {
@@ -57,25 +59,28 @@ describe("inferFieldType", () => {
     expect(info.control).toBe("text");
   });
 
-  it("unwraps z.optional() wrappers", () => {
+  it("unwraps z.optional() wrappers and marks not required", () => {
     const info = inferFieldType(z.enum(["x", "y"]).optional());
     expect(info.type).toBe("enum");
     expect(info.control).toBe("select");
+    expect(info.required).toBe(false);
     expect(info.enumValues).toEqual(["x", "y"]);
   });
 
-  it("unwraps z.default() wrappers", () => {
+  it("unwraps z.default() wrappers and marks not required", () => {
     const info = inferFieldType(z.number().min(0).max(10).default(5));
     expect(info.type).toBe("number");
     expect(info.control).toBe("slider");
+    expect(info.required).toBe(false);
     expect(info.min).toBe(0);
     expect(info.max).toBe(10);
   });
 
-  it("unwraps nested optional + default", () => {
+  it("unwraps nested optional + default and marks not required", () => {
     const info = inferFieldType(z.boolean().optional().default(true));
     expect(info.type).toBe("boolean");
     expect(info.control).toBe("switch");
+    expect(info.required).toBe(false);
   });
 
   it("image quality field → slider (bounded 1-100)", () => {
