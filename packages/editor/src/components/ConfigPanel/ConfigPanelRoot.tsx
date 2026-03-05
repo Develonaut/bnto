@@ -9,16 +9,14 @@ import {
   PanelHeader,
   PanelDivider,
   PanelContent,
-  Stack,
   Text,
   usePrevious,
 } from "@bnto/ui";
-import { inferFieldType } from "@bnto/nodes";
 import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { useEditorActions } from "../../hooks/useEditorActions";
 import { useEditorPanels } from "../../hooks/useEditorPanels";
-import { ParameterField } from "../ParameterField";
+import { SchemaForm } from "../SchemaForm";
 
 /**
  * ConfigPanel — self-contained right-side panel.
@@ -27,6 +25,9 @@ import { ParameterField } from "../ParameterField";
  * Uses usePrevious so the panel keeps showing the last selected
  * node's config while it slides out (no flash to empty).
  * Includes its own slide-in overlay positioning.
+ *
+ * Parameter fields are rendered by SchemaForm — fully schema-driven,
+ * no manual field iteration or type switching.
  */
 
 function ConfigPanelRoot() {
@@ -102,37 +103,17 @@ function ConfigPanelRoot() {
         <PanelDivider />
         <PanelContent>
           <div className="p-3">
-            {visibleParams.length === 0 ? (
+            {schemaDef ? (
+              <SchemaForm
+                schema={schemaDef}
+                values={config.parameters}
+                visibleParams={visibleParams}
+                onChange={handleParamChange}
+              />
+            ) : (
               <Text size="xs" color="muted">
                 No configurable parameters.
               </Text>
-            ) : (
-              <Stack gap="sm">
-                {visibleParams.map((paramName) => {
-                  const meta = schemaDef!.params[paramName];
-                  if (!meta) return null;
-                  const zodField = schemaDef!.schema.shape[paramName];
-                  const fieldInfo = zodField
-                    ? inferFieldType(zodField)
-                    : { type: "string" as const };
-                  const outerType = zodField?._def?.typeName ?? "";
-                  const required = outerType !== "ZodOptional" && outerType !== "ZodDefault";
-                  return (
-                    <ParameterField
-                      key={paramName}
-                      name={paramName}
-                      meta={meta}
-                      type={fieldInfo.type}
-                      value={config.parameters[paramName]}
-                      required={required}
-                      enumValues={fieldInfo.enumValues}
-                      min={fieldInfo.min}
-                      max={fieldInfo.max}
-                      onChange={handleParamChange}
-                    />
-                  );
-                })}
-              </Stack>
             )}
           </div>
         </PanelContent>

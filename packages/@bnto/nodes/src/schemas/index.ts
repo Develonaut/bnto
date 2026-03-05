@@ -14,7 +14,7 @@ export { getRequiredParams } from "./getRequiredParams";
 export { getConditionallyRequired } from "./getConditionallyRequired";
 export { getVisibleParams } from "./getVisibleParams";
 export { inferFieldType } from "./inferFieldType";
-export type { FieldTypeInfo } from "./inferFieldType";
+export type { FieldTypeInfo, FieldControl } from "./inferFieldType";
 
 // Types
 export type { NodeSchemaDefinition, NodeParamMeta, ParamCondition } from "./types";

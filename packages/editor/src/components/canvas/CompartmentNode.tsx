@@ -44,6 +44,7 @@ export const CompartmentNode = memo(function CompartmentNode({
             "flex flex-col items-center justify-center gap-1 rounded-xl",
           )}
           style={{ width: w, height: h }}
+          data-testid="compartment-node"
         >
           {Icon && <Icon className="size-8 text-muted-foreground" />}
           <Text size="sm" className="font-display font-semibold leading-tight text-center">

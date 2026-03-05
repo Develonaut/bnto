@@ -389,19 +389,17 @@ interface NodeSchemaDefinition {
 - [x] `@bnto/nodes` — **Wire into definition validation**: Edit `src/validate.ts` — after checking core fields (id, type, version), call `validateNodeParams()` for each node in the tree. Report per-field errors: `"node 'resize-1': parameter 'quality' must be between 1 and 100"`
 - [x] `@bnto/nodes` — **Update all tests**: `src/schemas/registry.test.ts` (structural tests for new `NodeSchemaDefinition`), `src/schemas/ioSchemas.test.ts`, `src/validate.test.ts` (param validation cases)
 
-#### Wave 3 (sequential — Dynamic Parameter Forms with AutoForm)
+#### Wave 3 (sequential — Schema-Driven Parameter Forms)
 
-Replace hand-rolled `ParameterField` rendering with `@autoform/zod` + `@autoform/react` — a proven community solution that generates form fields from Zod schemas automatically. This eliminates the manual `inferFieldType()` → switch-on-type → render pattern and gives us rich, type-safe forms for free.
+Replace hand-rolled `ParameterField` switch-on-type rendering with a registry-driven `SchemaForm` component. AutoForm (`@autoform/react`) was evaluated but rejected: requires react-hook-form (submit-based model incompatible with real-time onChange), no conditional visibility support, and custom field renderers would exceed the current code size. Instead, built a `CONTROL_REGISTRY` map that dispatches Zod-inferred `FieldControl` types to individual `@bnto/ui` control components — same schema-driven result, zero new dependencies.
 
 **Depends on:** Wave 2 complete (Zod schemas exist for all 12 node types).
 
-**Scope:** Map every Zod type and constraint used in `@bnto/nodes` schemas to the right form control. Create an enum→control mapping document so every field type renders the best UI (sliders for bounded numbers, selects for enums, switches for booleans, textareas for long strings, etc.). Enrich `NodeParamMeta` with AutoForm field overrides where needed.
-
-- [ ] `@bnto/nodes` — Install `@autoform/zod` + `@autoform/react` dependencies
-- [ ] `@bnto/nodes` — Create Zod type → form control mapping document (enum→select, bounded number→slider, boolean→switch, string with format→specialized input, etc.)
-- [ ] `packages/editor` — Replace `ParameterField` switch-on-type rendering with AutoForm-driven fields
-- [ ] `packages/editor` — Wire `NodeParamMeta` (labels, descriptions, placeholders, visibility rules) into AutoForm field overrides
-- [ ] `packages/editor` — E2E test: config panel renders correct controls for each node type's parameters
+- [x] `@bnto/nodes` — ~~Install `@autoform/zod` + `@autoform/react`~~ Skipped: AutoForm requires react-hook-form, no conditional visibility, submit-based model incompatible with real-time onChange. Built schema-driven forms natively instead
+- [x] `@bnto/nodes` — Create Zod type → form control mapping (enum→select, bounded number→slider, boolean→switch, unbounded number→number input, string→text input). Mapping documented in `inferFieldType.ts`, `FieldControl` type exported
+- [x] `packages/editor` — Replace `ParameterField` switch-on-type rendering with registry-driven `SchemaForm` + `SchemaField` + `CONTROL_REGISTRY` map. Each control is its own file in `controls/` barrel
+- [x] `packages/editor` — Wire `NodeParamMeta` (labels, descriptions, placeholders, visibility rules) through SchemaForm. visibleWhen filtering drives which fields render. Slider shows value readout for bounded numbers
+- [x] `packages/editor` — E2E test: config panel renders correct controls (3 tests — select/slider for image, visibleWhen conditional fields, text/select for spreadsheet)
 
 **Execution boundary contract (called out for Sprint 5 Wave 3 wiring):**
 

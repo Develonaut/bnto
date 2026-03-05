@@ -77,7 +77,13 @@ export {
   GROUP_MODES,
   ERROR_STRATEGIES,
 } from "./schemas";
-export type { NodeSchemaDefinition, NodeParamMeta, ParamCondition, FieldTypeInfo } from "./schemas";
+export type {
+  NodeSchemaDefinition,
+  NodeParamMeta,
+  ParamCondition,
+  FieldTypeInfo,
+  FieldControl,
+} from "./schemas";
 export { inferFieldType } from "./schemas";
 
 // I/O node helpers (Sprint 4C — self-describing recipes)
