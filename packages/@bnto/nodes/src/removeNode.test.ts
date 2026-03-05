@@ -5,24 +5,27 @@ import { createBlankDefinition } from "./createBlankDefinition";
 import { removeNode } from "./removeNode";
 import { isValid } from "./definitionResult";
 
+// Blank definition now has 2 I/O nodes (input + output).
+const IO_NODE_COUNT = 2;
+
 describe("removeNode", () => {
   it("removes a node by ID", () => {
     const blank = createBlankDefinition();
     const { definition: withNode } = addNode(blank, "image");
-    const nodeId = withNode.nodes![0]!.id;
+    const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = removeNode(withNode, nodeId);
-    expect(result.definition.nodes).toHaveLength(0);
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT);
     expect(isValid(result)).toBe(true);
   });
 
   it("does not mutate the original definition", () => {
     const blank = createBlankDefinition();
     const { definition: withNode } = addNode(blank, "image");
-    const nodeId = withNode.nodes![0]!.id;
+    const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     removeNode(withNode, nodeId);
-    expect(withNode.nodes).toHaveLength(1);
+    expect(withNode.nodes).toHaveLength(IO_NODE_COUNT + 1);
   });
 
   it("returns the same definition if node ID not found", () => {
@@ -30,7 +33,7 @@ describe("removeNode", () => {
     const { definition: withNode } = addNode(blank, "image");
 
     const result = removeNode(withNode, "nonexistent-id");
-    expect(result.definition.nodes).toHaveLength(1);
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT + 1);
     expect(result.definition).toBe(withNode);
   });
 
@@ -38,8 +41,8 @@ describe("removeNode", () => {
     const blank = createBlankDefinition();
     const r1 = addNode(blank, "image");
     const r2 = addNode(r1.definition, "transform");
-    const node1Id = r2.definition.nodes![0]!.id;
-    const node2Id = r2.definition.nodes![1]!.id;
+    const node1Id = r2.definition.nodes![IO_NODE_COUNT]!.id;
+    const node2Id = r2.definition.nodes![IO_NODE_COUNT + 1]!.id;
 
     // Manually add an edge between the two nodes
     const withEdge = {
@@ -50,8 +53,8 @@ describe("removeNode", () => {
     };
 
     const result = removeNode(withEdge, node1Id);
-    expect(result.definition.nodes).toHaveLength(1);
-    expect(result.definition.nodes![0]!.id).toBe(node2Id);
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT + 1);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.id).toBe(node2Id);
     expect(result.definition.edges).toHaveLength(0);
   });
 
@@ -60,9 +63,9 @@ describe("removeNode", () => {
     const r1 = addNode(blank, "image");
     const r2 = addNode(r1.definition, "transform");
     const r3 = addNode(r2.definition, "spreadsheet");
-    const node1Id = r3.definition.nodes![0]!.id;
-    const node2Id = r3.definition.nodes![1]!.id;
-    const node3Id = r3.definition.nodes![2]!.id;
+    const node1Id = r3.definition.nodes![IO_NODE_COUNT]!.id;
+    const node2Id = r3.definition.nodes![IO_NODE_COUNT + 1]!.id;
+    const node3Id = r3.definition.nodes![IO_NODE_COUNT + 2]!.id;
 
     const withEdges = {
       ...r3.definition,
@@ -74,7 +77,7 @@ describe("removeNode", () => {
 
     // Remove node1 — only e1 should be removed (it references node1 as source)
     const result = removeNode(withEdges, node1Id);
-    expect(result.definition.nodes).toHaveLength(2);
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT + 2);
     expect(result.definition.edges).toHaveLength(1);
     expect(result.definition.edges![0]!.id).toBe("e2");
   });
@@ -84,25 +87,25 @@ describe("removeNode", () => {
     const r1 = addNode(blank, "image");
     const r2 = addNode(r1.definition, "transform");
     const r3 = addNode(r2.definition, "spreadsheet");
-    const middleNodeId = r3.definition.nodes![1]!.id;
+    const middleNodeId = r3.definition.nodes![IO_NODE_COUNT + 1]!.id;
 
     const result = removeNode(r3.definition, middleNodeId);
-    expect(result.definition.nodes).toHaveLength(2);
-    expect(result.definition.nodes![0]!.type).toBe("image");
-    expect(result.definition.nodes![1]!.type).toBe("spreadsheet");
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT + 2);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.type).toBe("image");
+    expect(result.definition.nodes![IO_NODE_COUNT + 1]!.type).toBe("spreadsheet");
   });
 
-  it("handles removing from a definition with no nodes", () => {
+  it("handles removing from a definition with only I/O nodes", () => {
     const blank = createBlankDefinition();
     const result = removeNode(blank, "nonexistent");
-    expect(result.definition.nodes).toHaveLength(0);
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT);
     expect(result.definition).toBe(blank);
   });
 
   it("removes a nested node inside a container", () => {
     const blank = createBlankDefinition();
     const { definition: withLoop } = addNode(blank, "loop");
-    const loopNode = withLoop.nodes![0]!;
+    const loopNode = withLoop.nodes![IO_NODE_COUNT]!;
 
     const childNode = {
       id: "child-1",
@@ -118,21 +121,19 @@ describe("removeNode", () => {
 
     const withChild = {
       ...withLoop,
-      nodes: [{ ...loopNode, nodes: [childNode] }],
+      nodes: [...withLoop.nodes!.slice(0, IO_NODE_COUNT), { ...loopNode, nodes: [childNode] }],
     };
 
     const result = removeNode(withChild, "child-1");
-    // Loop still exists, but its child is gone
-    expect(result.definition.nodes).toHaveLength(1);
-    expect(result.definition.nodes![0]!.nodes).toHaveLength(0);
-    // Note: loop node itself may have validation errors (missing mode param)
-    // — this test verifies recursive removal, not loop configuration validity
+    // I/O nodes + loop still exists, but its child is gone
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT + 1);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.nodes).toHaveLength(0);
   });
 
   it("cleans up edges inside a container when removing a nested node", () => {
     const blank = createBlankDefinition();
     const { definition: withLoop } = addNode(blank, "loop");
-    const loopNode = withLoop.nodes![0]!;
+    const loopNode = withLoop.nodes![IO_NODE_COUNT]!;
 
     const child1 = {
       id: "child-1",
@@ -160,26 +161,29 @@ describe("removeNode", () => {
 
     const withChildren = {
       ...withLoop,
-      nodes: [{
-        ...loopNode,
-        nodes: [child1, child2],
-        edges: [{ id: "e1", source: "child-1", target: "child-2" }],
-      }],
+      nodes: [
+        ...withLoop.nodes!.slice(0, IO_NODE_COUNT),
+        {
+          ...loopNode,
+          nodes: [child1, child2],
+          edges: [{ id: "e1", source: "child-1", target: "child-2" }],
+        },
+      ],
     };
 
     // Remove child-1 — the edge inside the loop should also be cleaned
     const result = removeNode(withChildren, "child-1");
-    expect(result.definition.nodes![0]!.nodes).toHaveLength(1);
-    expect(result.definition.nodes![0]!.nodes![0]!.id).toBe("child-2");
-    expect(result.definition.nodes![0]!.edges).toHaveLength(0);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.nodes).toHaveLength(1);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.nodes![0]!.id).toBe("child-2");
+    expect(result.definition.nodes![IO_NODE_COUNT]!.edges).toHaveLength(0);
   });
 
   it("does not affect root edges when removing a nested node", () => {
     const blank = createBlankDefinition();
     const { definition: withLoop } = addNode(blank, "loop");
     const { definition: withImage } = addNode(withLoop, "image");
-    const loopNode = withImage.nodes![0]!;
-    const imageNode = withImage.nodes![1]!;
+    const loopNode = withImage.nodes![IO_NODE_COUNT]!;
+    const imageNode = withImage.nodes![IO_NODE_COUNT + 1]!;
 
     const childNode = {
       id: "child-1",
@@ -198,6 +202,7 @@ describe("removeNode", () => {
       ...withImage,
       edges: [{ id: "root-e1", source: loopNode.id, target: imageNode.id }],
       nodes: [
+        ...withImage.nodes!.slice(0, IO_NODE_COUNT),
         { ...loopNode, nodes: [childNode] },
         imageNode,
       ],
@@ -207,6 +212,6 @@ describe("removeNode", () => {
     const result = removeNode(withAll, "child-1");
     expect(result.definition.edges).toHaveLength(1);
     expect(result.definition.edges![0]!.id).toBe("root-e1");
-    expect(result.definition.nodes![0]!.nodes).toHaveLength(0);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.nodes).toHaveLength(0);
   });
 });

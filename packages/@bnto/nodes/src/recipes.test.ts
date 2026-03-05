@@ -99,6 +99,31 @@ describe("recipe definitions", () => {
     }
   });
 
+  it("every definition has an input node with id 'input'", () => {
+    for (const recipe of RECIPES) {
+      const inputNode = recipe.definition.nodes!.find((n) => n.type === "input");
+      expect(inputNode).toBeDefined();
+      expect(inputNode!.id).toBe("input");
+      expect(inputNode!.parameters.mode).toBe("file-upload");
+    }
+  });
+
+  it("every definition has an output node with id 'output'", () => {
+    for (const recipe of RECIPES) {
+      const outputNode = recipe.definition.nodes!.find((n) => n.type === "output");
+      expect(outputNode).toBeDefined();
+      expect(outputNode!.id).toBe("output");
+      expect(outputNode!.parameters.mode).toBe("download");
+    }
+  });
+
+  it("input node accept matches recipe-level accept mimeTypes", () => {
+    for (const recipe of RECIPES) {
+      const inputNode = recipe.definition.nodes!.find((n) => n.type === "input")!;
+      expect(inputNode.parameters.accept).toEqual(recipe.accept.mimeTypes);
+    }
+  });
+
   it("edges reference valid child node ids", () => {
     for (const recipe of RECIPES) {
       const nodeIds = new Set(

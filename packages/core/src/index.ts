@@ -71,3 +71,5 @@ export { useShallow } from "zustand/react/shallow";
 
 // ── Browser utilities (for app-layer use) ─────────────────────────────────
 export { downloadBlob } from "./adapters/browser/downloadBlob";
+export { deriveAcceptedTypes } from "./adapters/browser/deriveAcceptedTypes";
+export { deriveOutputConfig } from "./adapters/browser/deriveOutputConfig";

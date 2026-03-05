@@ -1,12 +1,12 @@
 /**
  * Shared navigation data for desktop and mobile navbars.
  *
- * Recipe links are derived from the engine-generated menu — no duplicate
+ * Recipe links are derived from @bnto/nodes RECIPES — no duplicate
  * data to maintain. Short nav descriptions override the longer SEO copy.
  * Both Navbar (desktop) and MobileNavMenu (mobile) consume these.
  */
 
-import { MENU } from "@/lib/menu";
+import { RECIPES as ALL_RECIPES } from "@bnto/nodes";
 
 export interface RecipeLink {
   label: string;
@@ -45,7 +45,7 @@ export const RECIPES: RecipeCategory[] = buildRecipeCategories();
 function buildRecipeCategories(): RecipeCategory[] {
   const grouped = new Map<string, RecipeLink[]>();
 
-  for (const recipe of MENU) {
+  for (const recipe of ALL_RECIPES) {
     const links = grouped.get(recipe.category) ?? [];
     links.push({
       label: recipe.name,

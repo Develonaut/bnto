@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { CATEGORIES, getCategoryInfo } from "./categories";
 
 describe("CATEGORIES", () => {
-  it("contains all 7 categories", () => {
-    expect(CATEGORIES).toHaveLength(7);
+  it("contains all 8 categories", () => {
+    expect(CATEGORIES).toHaveLength(8);
   });
 
   it("every category has required fields", () => {

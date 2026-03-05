@@ -4,35 +4,38 @@ import { addNode } from "./addNode";
 import { createBlankDefinition } from "./createBlankDefinition";
 import { updateNodeParams } from "./updateNodeParams";
 
+// Blank definition now has 2 I/O nodes (input + output).
+const IO_NODE_COUNT = 2;
+
 describe("updateNodeParams", () => {
   it("merges new parameters into an existing node", () => {
     const blank = createBlankDefinition();
     const { definition: withNode } = addNode(blank, "image");
-    const nodeId = withNode.nodes![0]!.id;
+    const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = updateNodeParams(withNode, nodeId, { quality: 50 });
-    expect(result.definition.nodes![0]!.parameters.quality).toBe(50);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.quality).toBe(50);
   });
 
   it("preserves existing parameters not in the update", () => {
     const blank = createBlankDefinition();
     const { definition: withNode } = addNode(blank, "image");
-    const nodeId = withNode.nodes![0]!.id;
+    const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     // Image defaults include maintainAspect: true
     const result = updateNodeParams(withNode, nodeId, { quality: 50 });
-    expect(result.definition.nodes![0]!.parameters.maintainAspect).toBe(true);
-    expect(result.definition.nodes![0]!.parameters.quality).toBe(50);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.maintainAspect).toBe(true);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.quality).toBe(50);
   });
 
   it("does not mutate the original definition", () => {
     const blank = createBlankDefinition();
     const { definition: withNode } = addNode(blank, "image");
-    const nodeId = withNode.nodes![0]!.id;
-    const originalQuality = withNode.nodes![0]!.parameters.quality;
+    const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
+    const originalQuality = withNode.nodes![IO_NODE_COUNT]!.parameters.quality;
 
     updateNodeParams(withNode, nodeId, { quality: 10 });
-    expect(withNode.nodes![0]!.parameters.quality).toBe(originalQuality);
+    expect(withNode.nodes![IO_NODE_COUNT]!.parameters.quality).toBe(originalQuality);
   });
 
   it("returns the same definition if node ID not found", () => {
@@ -46,7 +49,7 @@ describe("updateNodeParams", () => {
   it("can set multiple parameters at once", () => {
     const blank = createBlankDefinition();
     const { definition: withNode } = addNode(blank, "image");
-    const nodeId = withNode.nodes![0]!.id;
+    const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = updateNodeParams(withNode, nodeId, {
       operation: "resize",
@@ -54,7 +57,7 @@ describe("updateNodeParams", () => {
       height: 600,
     });
 
-    const params = result.definition.nodes![0]!.parameters;
+    const params = result.definition.nodes![IO_NODE_COUNT]!.parameters;
     expect(params.operation).toBe("resize");
     expect(params.width).toBe(800);
     expect(params.height).toBe(600);
@@ -63,42 +66,42 @@ describe("updateNodeParams", () => {
   it("can add new parameters that didn't exist before", () => {
     const blank = createBlankDefinition();
     const { definition: withNode } = addNode(blank, "image");
-    const nodeId = withNode.nodes![0]!.id;
+    const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = updateNodeParams(withNode, nodeId, {
       operation: "optimize",
       input: "{{.item}}",
     });
 
-    expect(result.definition.nodes![0]!.parameters.input).toBe("{{.item}}");
+    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.input).toBe("{{.item}}");
   });
 
   it("can overwrite existing parameter values", () => {
     const blank = createBlankDefinition();
     const { definition: withNode } = addNode(blank, "image");
-    const nodeId = withNode.nodes![0]!.id;
+    const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     // Quality defaults to 80, overwrite it
     const result = updateNodeParams(withNode, nodeId, { quality: 95 });
-    expect(result.definition.nodes![0]!.parameters.quality).toBe(95);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.quality).toBe(95);
   });
 
   it("updates the correct node when multiple nodes exist", () => {
     const blank = createBlankDefinition();
     const r1 = addNode(blank, "image");
     const r2 = addNode(r1.definition, "transform");
-    const secondNodeId = r2.definition.nodes![1]!.id;
+    const secondNodeId = r2.definition.nodes![IO_NODE_COUNT + 1]!.id;
 
     const result = updateNodeParams(r2.definition, secondNodeId, {
       expression: "{{.item}}",
     });
 
-    // First node unchanged
-    expect(result.definition.nodes![0]!.parameters).toEqual(
-      r2.definition.nodes![0]!.parameters,
+    // First added node unchanged
+    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters).toEqual(
+      r2.definition.nodes![IO_NODE_COUNT]!.parameters,
     );
-    // Second node updated
-    expect(result.definition.nodes![1]!.parameters.expression).toBe(
+    // Second added node updated
+    expect(result.definition.nodes![IO_NODE_COUNT + 1]!.parameters.expression).toBe(
       "{{.item}}",
     );
   });
@@ -106,7 +109,7 @@ describe("updateNodeParams", () => {
   it("works on nested nodes (inside containers)", () => {
     const blank = createBlankDefinition();
     const { definition: withLoop } = addNode(blank, "loop");
-    const loopNode = withLoop.nodes![0]!;
+    const loopNode = withLoop.nodes![IO_NODE_COUNT]!;
 
     // Manually add a child node inside the loop
     const childNode = {
@@ -123,10 +126,10 @@ describe("updateNodeParams", () => {
 
     const withChild = {
       ...withLoop,
-      nodes: [{ ...loopNode, nodes: [childNode] }],
+      nodes: [...withLoop.nodes!.slice(0, IO_NODE_COUNT), { ...loopNode, nodes: [childNode] }],
     };
 
     const result = updateNodeParams(withChild, "child-1", { quality: 50 });
-    expect(result.definition.nodes![0]!.nodes![0]!.parameters.quality).toBe(50);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.nodes![0]!.parameters.quality).toBe(50);
   });
 });

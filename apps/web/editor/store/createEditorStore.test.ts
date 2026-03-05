@@ -8,10 +8,9 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { createEditorStore } from "./createEditorStore";
-import { captureSnapshot } from "./captureSnapshot";
-import { pushToStack } from "./pushToStack";
-import { revalidateState } from "./revalidateState";
-import { createCompartmentNode } from "../adapters/createCompartmentNode";
+import { addNode } from "../actions/addNode";
+import { removeNode } from "../actions/removeNode";
+import { updateParams } from "../actions/updateParams";
 import type { EditorStore } from "./types";
 import type { StoreApi } from "zustand";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
@@ -47,88 +46,26 @@ function makeConfigs(ids: string[]): NodeConfigs {
   return configs;
 }
 
-/**
- * Simulate addNode hook — same logic as useAddNode, but using
- * store.setState() directly (no React context needed).
- */
+/** Call the pure addNode action and apply to store. */
 function addNodeViaStore(store: StoreApi<EditorStore>, type: string): string | null {
-  const s = store.getState();
-  const slotIndex = s.nodes.length;
-  const result = createCompartmentNode(type as never, slotIndex);
+  const result = addNode(store.getState(), type as never);
   if (!result) return null;
-
-  const snapshot = captureSnapshot(s.nodes, s.configs);
-  const deselected = s.nodes.map((n) =>
-    n.selected ? { ...n, selected: false } : n,
-  );
-  const newNode = { ...result.node, selected: true };
-  const nextNodes = [...deselected, newNode];
-  const nextConfigs = { ...s.configs, [result.node.id]: result.config };
-
-  store.setState({
-    nodes: nextNodes,
-    configs: nextConfigs,
-    isDirty: true,
-    undoStack: pushToStack(s.undoStack, snapshot),
-    redoStack: [],
-    validationErrors: revalidateState(nextNodes, nextConfigs, s.recipeMetadata),
-  });
-  return result.node.id;
+  store.setState(result.nextState);
+  return result.nodeId;
 }
 
-/**
- * Simulate removeNode hook — same logic as useRemoveNode.
- */
+/** Call the pure removeNode action and apply to store. */
 function removeNodeViaStore(store: StoreApi<EditorStore>, id: string): void {
-  const s = store.getState();
-  const snapshot = captureSnapshot(s.nodes, s.configs);
-  const removedIndex = s.nodes.findIndex((n) => n.id === id);
-  const nextNodes = s.nodes.filter((n) => n.id !== id);
-  const nextConfigs = { ...s.configs };
-  delete nextConfigs[id];
-
-  if (nextNodes.length > 0) {
-    const selectIndex = Math.min(
-      removedIndex > 0 ? removedIndex - 1 : 0,
-      nextNodes.length - 1,
-    );
-    nextNodes[selectIndex] = { ...nextNodes[selectIndex]!, selected: true };
-  }
-
-  store.setState({
-    nodes: nextNodes,
-    configs: nextConfigs,
-    isDirty: true,
-    undoStack: pushToStack(s.undoStack, snapshot),
-    redoStack: [],
-    validationErrors: revalidateState(nextNodes, nextConfigs, s.recipeMetadata),
-  });
+  const nextState = removeNode(store.getState(), id);
+  if (!nextState) return;
+  store.setState(nextState);
 }
 
-/**
- * Simulate updateConfigParams hook — same logic as useUpdateParams.
- */
+/** Call the pure updateParams action and apply to store. */
 function updateParamsViaStore(store: StoreApi<EditorStore>, nodeId: string, params: Record<string, unknown>): void {
-  const s = store.getState();
-  const existing = s.configs[nodeId];
-  if (!existing) return;
-
-  const snapshot = captureSnapshot(s.nodes, s.configs);
-  const nextConfigs = {
-    ...s.configs,
-    [nodeId]: {
-      ...existing,
-      parameters: { ...existing.parameters, ...params },
-    },
-  };
-
-  store.setState({
-    configs: nextConfigs,
-    isDirty: true,
-    undoStack: pushToStack(s.undoStack, snapshot),
-    redoStack: [],
-    validationErrors: revalidateState(s.nodes, nextConfigs, s.recipeMetadata),
-  });
+  const nextState = updateParams(store.getState(), nodeId, params);
+  if (!nextState) return;
+  store.setState(nextState);
 }
 
 // ---------------------------------------------------------------------------
@@ -217,8 +154,9 @@ describe("createEditorStore", () => {
       state(store).createBlank();
       expect(state(store).recipeMetadata.type).toBe("group");
       expect(state(store).isDirty).toBe(false);
-      expect(state(store).nodes).toEqual([]);
-      expect(state(store).configs).toEqual({});
+      // createBlank loads I/O nodes from createBlankDefinition()
+      expect(state(store).nodes.length).toBe(2); // input + output
+      expect(Object.keys(state(store).configs).length).toBe(2);
       expect(state(store).undoStack).toEqual([]);
     });
   });
@@ -264,6 +202,44 @@ describe("createEditorStore", () => {
       // addNode pushes one undo, removeNode pushes another
       removeNodeViaStore(store, id);
       expect(state(store).undoStack.length).toBe(2);
+    });
+  });
+
+  // --- I/O node protection ---
+
+  describe("I/O node protection", () => {
+    it("prevents deletion of input nodes", () => {
+      state(store).createBlank(); // loads input + output
+      const before = state(store).nodes.length;
+      removeNodeViaStore(store, "input");
+      expect(state(store).nodes.length).toBe(before);
+    });
+
+    it("prevents deletion of output nodes", () => {
+      state(store).createBlank();
+      const before = state(store).nodes.length;
+      removeNodeViaStore(store, "output");
+      expect(state(store).nodes.length).toBe(before);
+    });
+
+    it("prevents adding a second input node", () => {
+      state(store).createBlank();
+      const id = addNodeViaStore(store, "input");
+      expect(id).toBeNull();
+    });
+
+    it("prevents adding a second output node", () => {
+      state(store).createBlank();
+      const id = addNodeViaStore(store, "output");
+      expect(id).toBeNull();
+    });
+
+    it("allows deleting non-I/O nodes", () => {
+      state(store).createBlank();
+      const id = addNodeViaStore(store, "image")!;
+      const before = state(store).nodes.length;
+      removeNodeViaStore(store, id);
+      expect(state(store).nodes.length).toBe(before - 1);
     });
   });
 

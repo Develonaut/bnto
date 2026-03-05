@@ -20,7 +20,9 @@ export const NODE_TYPES = {
   group: "group",
   httpRequest: "http-request",
   image: "image",
+  input: "input",
   loop: "loop",
+  output: "output",
   parallel: "parallel",
   shellCommand: "shell-command",
   spreadsheet: "spreadsheet",
@@ -40,6 +42,7 @@ export type NodeCategory =
   | "data"
   | "file"
   | "image"
+  | "io"
   | "network"
   | "spreadsheet"
   | "control"
@@ -72,7 +75,7 @@ export interface NodeTypeInfo {
 }
 
 /**
- * Metadata for all 10 registered node types.
+ * Metadata for all 12 registered node types.
  *
  * Maps node type name → info. The engine owns the implementations;
  * this metadata describes capabilities without coupling to any runtime.
@@ -122,6 +125,15 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     isContainer: false,
     browserCapable: true,
   },
+  input: {
+    name: "input",
+    label: "Input",
+    description:
+      "Declares how data enters the recipe. Read by the environment to render the appropriate input widget.",
+    category: "io",
+    isContainer: false,
+    browserCapable: true,
+  },
   loop: {
     name: "loop",
     label: "Loop",
@@ -129,6 +141,15 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
       "Iterate over arrays (forEach), repeat N times, or loop while condition.",
     category: "control",
     isContainer: true,
+    browserCapable: true,
+  },
+  output: {
+    name: "output",
+    label: "Output",
+    description:
+      "Declares how results are delivered. Read by the environment to render the appropriate output widget.",
+    category: "io",
+    isContainer: false,
     browserCapable: true,
   },
   parallel: {
