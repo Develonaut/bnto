@@ -12,6 +12,7 @@
 import type { NodeTypeName } from "@bnto/nodes";
 import type { EditorState } from "../store/types";
 import { createCompartmentNode } from "../adapters/createCompartmentNode";
+import { STRIDE } from "../adapters/bentoSlots";
 import { captureSnapshot } from "../store/captureSnapshot";
 import { pushToStack } from "../store/pushToStack";
 import { revalidateState } from "../store/revalidateState";
@@ -29,9 +30,7 @@ export function addNode(
 ): AddNodeResult | null {
   // Only one input and one output node allowed per recipe.
   if (isIoNodeType(type)) {
-    const alreadyExists = Object.values(state.configs).some(
-      (c) => c.nodeType === type,
-    );
+    const alreadyExists = Object.values(state.configs).some((c) => c.nodeType === type);
     if (alreadyExists) return null;
   }
 
@@ -42,11 +41,35 @@ export function addNode(
   const snapshot = captureSnapshot(state.nodes, state.configs);
 
   // Auto-select the new node, deselect all others
-  const deselected = state.nodes.map((n) =>
-    n.selected ? { ...n, selected: false } : n,
-  );
-  const newNode = { ...result.node, selected: true };
-  const nextNodes = [...deselected, newNode];
+  const deselected = state.nodes.map((n) => (n.selected ? { ...n, selected: false } : n));
+
+  // Insert before the output node so output stays last.
+  // Place the new node at the output's position and shift the output right.
+  const outputIndex = deselected.findIndex((n) => state.configs[n.id]?.nodeType === "output");
+
+  let nextNodes: typeof deselected;
+  if (outputIndex >= 0) {
+    const outputNode = deselected[outputIndex]!;
+    const newNode = {
+      ...result.node,
+      selected: true,
+      position: { ...outputNode.position },
+    };
+    const shiftedOutput = {
+      ...outputNode,
+      position: { x: outputNode.position.x + STRIDE, y: outputNode.position.y },
+    };
+    nextNodes = [
+      ...deselected.slice(0, outputIndex),
+      newNode,
+      shiftedOutput,
+      ...deselected.slice(outputIndex + 1),
+    ];
+  } else {
+    const newNode = { ...result.node, selected: true };
+    nextNodes = [...deselected, newNode];
+  }
+
   const nextConfigs = { ...state.configs, [result.node.id]: result.config };
 
   return {
@@ -56,11 +79,7 @@ export function addNode(
       isDirty: true,
       undoStack: pushToStack(state.undoStack, snapshot),
       redoStack: [],
-      validationErrors: revalidateState(
-        nextNodes,
-        nextConfigs,
-        state.recipeMetadata,
-      ),
+      validationErrors: revalidateState(nextNodes, nextConfigs, state.recipeMetadata),
     },
     nodeId: result.node.id,
   };

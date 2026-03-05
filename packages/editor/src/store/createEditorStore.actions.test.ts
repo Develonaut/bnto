@@ -27,10 +27,9 @@ describe("createEditorStore — actions", () => {
 
   describe("addNode", () => {
     it("adds a node and its config", () => {
-      const before = state(store).nodes.length;
       const id = addNodeViaStore(store, "image");
       expect(id).toBeTruthy();
-      expect(state(store).nodes.length).toBe(before + 1);
+      expect(state(store).nodes.length).toBe(3); // input + image + output
       expect(state(store).configs[id!]).toBeDefined();
       expect(state(store).configs[id!]!.nodeType).toBe("image");
     });
@@ -54,10 +53,10 @@ describe("createEditorStore — actions", () => {
 
   describe("removeNode", () => {
     it("removes node and its config", () => {
-      const before = state(store).nodes.length;
       const id = addNodeViaStore(store, "image")!;
       removeNodeViaStore(store, id);
-      expect(state(store).nodes.length).toBe(before);
+      // After remove: input + output = 2
+      expect(state(store).nodes.length).toBe(2);
       expect(state(store).configs[id]).toBeUndefined();
     });
 
