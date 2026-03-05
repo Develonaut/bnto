@@ -1,5 +1,3 @@
-"use client";
-
 import { CheckIcon, GithubIcon } from "@bnto/ui";
 
 import { ScaleIn, SlideUp, Button, Card, Center, IconBadge, Row, Stack, Text } from "@bnto/ui";

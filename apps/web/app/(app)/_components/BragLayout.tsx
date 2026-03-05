@@ -1,5 +1,3 @@
-"use client";
-
 import { Fragment } from "react";
 
 import { CheckIcon, CircleMinusIcon, ZapIcon } from "@bnto/ui";
