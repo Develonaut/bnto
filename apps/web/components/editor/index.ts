@@ -9,7 +9,7 @@
  */
 
 export * from "./canvas";
-export * from "./conveyor";
+// Conveyor components archived — see ./archive/conveyor/
 export { RecipeEditor } from "./RecipeEditor/index";
 export { CanvasToolbar } from "./CanvasToolbar";
 export { NodePaletteMenu } from "./NodePaletteMenu";
