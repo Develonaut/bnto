@@ -1,19 +1,13 @@
 import type { ReactNode } from "react";
 import { Menu } from "@/components/ui/Menu";
-import { ChevronUpIcon } from "@/components/ui/icons";
+import { ChevronDownIcon } from "@/components/ui/icons";
 
 /**
  * FileMenu — composable file operations dropdown.
  *
- * The trigger renders a compact chevron button. Children are Menu.Item
- * elements composed by the consumer.
- *
- * Usage:
- *   <FileMenu>
- *     <Menu.Item onClick={onDownload}>Download</Menu.Item>
- *     <Menu.Separator />
- *     <Menu.Item disabled>Duplicate</Menu.Item>
- *   </FileMenu>
+ * Chevron points down when closed, rotates to point up when open.
+ * Uses Radix data-state on the trigger + group selector for the icon.
+ * Matches toolbar button size/elevation.
  */
 
 interface FileMenuProps {
@@ -28,9 +22,9 @@ function FileMenuRoot({ children }: FileMenuProps) {
         variant="ghost"
         elevation="sm"
         aria-label="File options"
-        className="size-7"
+        className="group"
       >
-        <ChevronUpIcon className="size-3.5" />
+        <ChevronDownIcon className="size-4 transition-transform duration-fast group-data-[state=open]:rotate-180" />
       </Menu.Trigger>
       <Menu.Content side="bottom" offset="sm" className="w-52 p-1.5">
         {children}

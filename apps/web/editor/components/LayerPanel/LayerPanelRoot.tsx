@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { cn } from "@/lib/cn";
 import { Panel } from "@/components/ui/Panel";
 import { Text } from "@/components/ui/Text";
 import {
@@ -12,39 +13,31 @@ import {
 } from "@/components/ui/icons";
 import { useEditorExport } from "@/editor/hooks/useEditorExport";
 import { useEditorStore } from "@/editor/hooks/useEditorStore";
+import { useEditorPanels } from "@/editor/hooks/useEditorPanels";
 import { FileMenu } from "./FileMenu";
 import { NodeList } from "./NodeList";
 import { useAutoSelect } from "@/editor/hooks/useAutoSelect";
 
 /**
- * EditorPanel — floating Panel with file header + node list.
+ * LayerPanel — self-contained left-side panel.
  *
- * Header shows the recipe/bnto name with a file menu (Download,
- * Duplicate, Rename, Delete) and a collapse toggle. Below is a
- * scrollable list of canvas nodes.
- *
- * Reads nodes directly from the editor store (controlled mode).
- * Clicking a node updates selection via selectNode().
+ * Reads selection from the editor store. Slides in from the left
+ * with spring-bouncy easing, mirrors the ConfigPanel's right-side
+ * slide-in pattern.
  */
 
-interface EditorPanelProps {
-  collapsed: boolean;
-  onToggle: () => void;
-  selectedNodeId: string | null;
-  /** Recipe/bnto name shown in the header. */
-  name?: string;
+interface LayerPanelProps {
   /** Optional footer content (e.g., recipe selector). */
   footer?: ReactNode;
 }
 
-function EditorPanelRoot({
-  collapsed,
-  onToggle,
-  selectedNodeId,
-  name = "Untitled",
+function LayerPanelRoot({
   footer,
-}: EditorPanelProps) {
+}: LayerPanelProps) {
   const nodes = useEditorStore((s) => s.nodes);
+  const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
+  const name = useEditorStore((s) => s.recipeMetadata.name ?? "Untitled");
+  const { layersOpen } = useEditorPanels();
   const { download, canExport } = useEditorExport();
   const { handleSelectNode } = useAutoSelect({ selectedNodeId });
 
@@ -52,16 +45,25 @@ function EditorPanelRoot({
   const handleDownload = () => download();
 
   return (
-    <Panel collapsed={collapsed} onToggle={onToggle} className="h-full w-56">
+    <div
+      onPointerDownCapture={(e) => e.stopPropagation()}
+      className={cn(
+        "pointer-events-auto absolute bottom-0 left-0 top-0 w-56",
+        "motion-safe:transition-[translate,opacity]",
+        layersOpen
+          ? "translate-x-0 opacity-100 motion-safe:duration-slow motion-safe:ease-spring-bouncy"
+          : "pointer-events-none -translate-x-[110%] opacity-0 motion-safe:duration-fast motion-safe:ease-out",
+      )}
+    >
+    <Panel className="h-full w-full">
       <Panel.Header className="gap-2 px-3 pt-3 pb-2">
-        <Panel.Trigger />
         <Text size="sm" className="min-w-0 flex-1 truncate font-medium">
           {name}
         </Text>
         <FileMenu>
           <FileMenu.Item onClick={handleDownload} disabled={!canDownload}>
             <DownloadIcon className="size-4" />
-            Download .bnto.json
+            Download
           </FileMenu.Item>
           <FileMenu.Separator />
           <FileMenu.Item disabled>
@@ -83,7 +85,7 @@ function EditorPanelRoot({
           </FileMenu.Item>
         </FileMenu>
       </Panel.Header>
-      {!collapsed && <Panel.Divider />}
+      <Panel.Divider />
       <Panel.Content>
         <NodeList
           nodes={nodes}
@@ -98,8 +100,9 @@ function EditorPanelRoot({
         </>
       )}
     </Panel>
+    </div>
   );
 }
 
-export { EditorPanelRoot };
-export type { EditorPanelProps };
+export { LayerPanelRoot };
+export type { LayerPanelProps };

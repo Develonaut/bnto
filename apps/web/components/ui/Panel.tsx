@@ -10,21 +10,25 @@ import { Card } from "./Card";
 import { PanelLeftIcon, PanelLeftCloseIcon } from "./icons";
 
 /**
- * Panel — collapsible floating Card surface.
+ * Panel — floating Card surface with optional collapse behavior.
  *
- * Collapses to a compact pill (rounded-full) with a single toggle button.
- * Expands to show header + scrollable content. Spring-animated width
- * transition. Used for editor sidebar, config panels, inspectors.
+ * Always-expanded by default. When `collapsed` + `onToggle` are provided,
+ * collapses to a compact pill (rounded-full) with a single toggle button.
+ * Spring-animated width transition. Used for editor sidebar, config panels.
  *
- * Usage:
+ * Usage (always expanded):
+ *   <Panel className="h-full w-full">
+ *     <Panel.Header><Text>Title</Text></Panel.Header>
+ *     <Panel.Content><NodeList /></Panel.Content>
+ *   </Panel>
+ *
+ * Usage (collapsible):
  *   <Panel collapsed={collapsed} onToggle={toggle} className="w-56">
  *     <Panel.Header>
- *       <Panel.Trigger />   (must be a direct child of Header)
+ *       <Panel.Trigger />
  *       <Text>Title</Text>
  *     </Panel.Header>
- *     <Panel.Content>
- *       <NodeList />
- *     </Panel.Content>
+ *     <Panel.Content><NodeList /></Panel.Content>
  *   </Panel>
  */
 
@@ -32,7 +36,7 @@ import { PanelLeftIcon, PanelLeftCloseIcon } from "./icons";
 
 interface PanelContextValue {
   collapsed: boolean;
-  onToggle: () => void;
+  onToggle?: () => void;
 }
 
 const PanelContext = createContext<PanelContextValue | null>(null);
@@ -46,8 +50,8 @@ function usePanelContext() {
 /* ── Root ──────────────────────────────────────────────────── */
 
 interface PanelRootProps extends Omit<ComponentProps<typeof Card>, "children"> {
-  collapsed: boolean;
-  onToggle: () => void;
+  collapsed?: boolean;
+  onToggle?: () => void;
   children: React.ReactNode;
 }
 
@@ -58,7 +62,7 @@ const PANEL_BASE =
   "flex h-full flex-col motion-safe:transition-[width,padding] motion-safe:duration-slow motion-safe:ease-spring-bouncy";
 
 const PanelRoot = forwardRef<HTMLDivElement, PanelRootProps>(
-  ({ collapsed, onToggle, elevation = "md", className, children, ...props }, ref) => (
+  ({ collapsed = false, onToggle, elevation = "md", className, children, ...props }, ref) => (
     <PanelContext.Provider value={{ collapsed, onToggle }}>
       <Card
         ref={ref}

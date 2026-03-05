@@ -82,35 +82,30 @@ describe("createEditorStore", () => {
   // --- Initialization ---
 
   describe("initialization", () => {
-    it("starts with blank recipe metadata", () => {
+    it("starts with blank recipe metadata and I/O nodes", () => {
       const s = state(store);
       expect(s.recipeMetadata.type).toBe("group");
       expect(s.isDirty).toBe(false);
-      expect(s.nodes).toEqual([]);
-      expect(s.configs).toEqual({});
+      expect(s.nodes.length).toBe(2); // input + output
+      expect(Object.keys(s.configs).length).toBe(2);
       expect(s.undoStack).toEqual([]);
       expect(s.redoStack).toEqual([]);
     });
 
-    it("accepts custom initial metadata (legacy signature)", () => {
-      const custom = createEditorStore({
-        id: "test-id",
-        name: "Custom",
-        type: "group",
-        version: "1.0.0",
-      });
-      expect(state(custom).recipeMetadata.name).toBe("Custom");
+    it("resolves a slug into recipe nodes and metadata", () => {
+      const custom = createEditorStore("compress-images");
+      const s = state(custom);
+      expect(s.recipeMetadata.name).toBe("Compress Images");
+      expect(s.slug).toBe("compress-images");
+      expect(s.nodes.length).toBeGreaterThan(0);
+      expect(Object.keys(s.configs).length).toBeGreaterThan(0);
     });
 
-    it("accepts initial nodes and configs", () => {
-      const nodes = [makeBentoNode("a")];
-      const configs = makeConfigs(["a"]);
-      const custom = createEditorStore({
-        initialNodes: nodes,
-        initialConfigs: configs,
-      });
-      expect(state(custom).nodes).toEqual(nodes);
-      expect(state(custom).configs).toEqual(configs);
+    it("falls back to blank for unknown slug", () => {
+      const custom = createEditorStore("nonexistent");
+      const s = state(custom);
+      expect(s.slug).toBe("nonexistent");
+      expect(s.recipeMetadata.type).toBe("group");
     });
 
     it("starts with empty validation errors", () => {
@@ -165,9 +160,10 @@ describe("createEditorStore", () => {
 
   describe("addNode", () => {
     it("adds a node and its config", () => {
+      const before = state(store).nodes.length;
       const id = addNodeViaStore(store, "image");
       expect(id).toBeTruthy();
-      expect(state(store).nodes.length).toBe(1);
+      expect(state(store).nodes.length).toBe(before + 1);
       expect(state(store).configs[id!]).toBeDefined();
       expect(state(store).configs[id!]!.nodeType).toBe("image");
     });
@@ -191,9 +187,10 @@ describe("createEditorStore", () => {
 
   describe("removeNode", () => {
     it("removes node and its config", () => {
+      const before = state(store).nodes.length;
       const id = addNodeViaStore(store, "image")!;
       removeNodeViaStore(store, id);
-      expect(state(store).nodes.length).toBe(0);
+      expect(state(store).nodes.length).toBe(before);
       expect(state(store).configs[id]).toBeUndefined();
     });
 
@@ -314,13 +311,13 @@ describe("createEditorStore", () => {
   describe("undo/redo", () => {
     it("restores nodes and configs on undo", () => {
       addNodeViaStore(store, "image");
-      const afterAdd = { nodes: [...state(store).nodes], configs: { ...state(store).configs } };
+      const afterAdd = state(store).nodes.length;
 
       addNodeViaStore(store, "transform");
-      expect(state(store).nodes.length).toBe(2);
+      expect(state(store).nodes.length).toBe(afterAdd + 1);
 
       state(store).undo();
-      expect(state(store).nodes.length).toBe(afterAdd.nodes.length);
+      expect(state(store).nodes.length).toBe(afterAdd);
     });
 
     it("restores nodes and configs on redo", () => {
@@ -348,19 +345,20 @@ describe("createEditorStore", () => {
     });
 
     it("supports multiple undo levels", () => {
+      const baseline = state(store).nodes.length;
       addNodeViaStore(store, "image");
       addNodeViaStore(store, "transform");
       addNodeViaStore(store, "spreadsheet");
-      expect(state(store).nodes.length).toBe(3);
+      expect(state(store).nodes.length).toBe(baseline + 3);
 
-      state(store).undo(); // back to 2
-      expect(state(store).nodes.length).toBe(2);
+      state(store).undo();
+      expect(state(store).nodes.length).toBe(baseline + 2);
 
-      state(store).undo(); // back to 1
-      expect(state(store).nodes.length).toBe(1);
+      state(store).undo();
+      expect(state(store).nodes.length).toBe(baseline + 1);
 
-      state(store).undo(); // back to 0
-      expect(state(store).nodes.length).toBe(0);
+      state(store).undo();
+      expect(state(store).nodes.length).toBe(baseline);
     });
 
     it("marks dirty after undo", () => {
