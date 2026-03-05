@@ -10,13 +10,14 @@
  */
 
 import type { Definition } from "./definition";
+import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 
 /** Creates a blank recipe definition ready for the editor. */
 export function createBlankDefinition(): Definition {
   return {
     id: crypto.randomUUID(),
     type: "group",
-    version: "1.0.0",
+    version: CURRENT_FORMAT_VERSION,
     name: "New Recipe",
     position: { x: 0, y: 0 },
     metadata: {
@@ -32,7 +33,7 @@ export function createBlankDefinition(): Definition {
       {
         id: "input",
         type: "input",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Input Files",
         position: { x: 0, y: 100 },
         metadata: {},
@@ -49,7 +50,7 @@ export function createBlankDefinition(): Definition {
       {
         id: "output",
         type: "output",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Output",
         position: { x: 400, y: 100 },
         metadata: {},

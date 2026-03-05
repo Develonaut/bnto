@@ -5,12 +5,12 @@
  */
 
 import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
 
 export const renameFiles: Recipe = {
   slug: "rename-files",
   name: "Rename Files",
-  description:
-    "Batch rename files with patterns. Free, no signup required.",
+  description: "Batch rename files with patterns. Free, no signup required.",
   category: "file",
   accept: {
     mimeTypes: ["*/*"],
@@ -25,12 +25,11 @@ export const renameFiles: Recipe = {
   definition: {
     id: "rename-files",
     type: "group",
-    version: "1.0.0",
+    version: CURRENT_FORMAT_VERSION,
     name: "Rename Files",
     position: { x: 0, y: 0 },
     metadata: {
-      description:
-        "Lists files and renames each by adding a prefix.",
+      description: "Lists files and renames each by adding a prefix.",
     },
     parameters: {},
     inputPorts: [],
@@ -39,7 +38,7 @@ export const renameFiles: Recipe = {
       {
         id: "input",
         type: "input",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Input Files",
         position: { x: 0, y: 100 },
         metadata: {},
@@ -56,7 +55,7 @@ export const renameFiles: Recipe = {
       {
         id: "rename-loop",
         type: "loop",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Rename Each File",
         position: { x: 300, y: 100 },
         metadata: {},
@@ -70,7 +69,7 @@ export const renameFiles: Recipe = {
           {
             id: "rename-file",
             type: "file-system",
-            version: "1.0.0",
+            version: CURRENT_FORMAT_VERSION,
             name: "Rename File",
             position: { x: 100, y: 100 },
             metadata: {},
@@ -88,7 +87,7 @@ export const renameFiles: Recipe = {
       {
         id: "output",
         type: "output",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Renamed Files",
         position: { x: 500, y: 100 },
         metadata: {},

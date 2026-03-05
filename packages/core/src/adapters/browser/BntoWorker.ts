@@ -62,6 +62,7 @@ export class BntoWorker {
       throw new Error("BntoWorker not initialized. Call init() first.");
     }
 
+    const worker = this.worker;
     const id = String(this.nextId++);
     const data = await file.arrayBuffer();
 
@@ -79,7 +80,7 @@ export class BntoWorker {
       };
 
       // Transfer the ArrayBuffer to avoid copying.
-      this.worker!.postMessage(request, [data]);
+      worker.postMessage(request, [data]);
     });
   }
 

@@ -5,12 +5,12 @@
  */
 
 import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
 
 export const convertImageFormat: Recipe = {
   slug: "convert-image-format",
   name: "Convert Image Format",
-  description:
-    "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
+  description: "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
   category: "image",
   accept: {
     mimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
@@ -26,12 +26,11 @@ export const convertImageFormat: Recipe = {
   definition: {
     id: "convert-image-format",
     type: "group",
-    version: "1.0.0",
+    version: CURRENT_FORMAT_VERSION,
     name: "Convert Image Format",
     position: { x: 0, y: 0 },
     metadata: {
-      description:
-        "Lists image files and converts each to a target format.",
+      description: "Lists image files and converts each to a target format.",
     },
     parameters: {},
     inputPorts: [],
@@ -40,7 +39,7 @@ export const convertImageFormat: Recipe = {
       {
         id: "input",
         type: "input",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Input Files",
         position: { x: 0, y: 100 },
         metadata: {},
@@ -57,7 +56,7 @@ export const convertImageFormat: Recipe = {
       {
         id: "convert-loop",
         type: "loop",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Convert Each Image",
         position: { x: 300, y: 100 },
         metadata: {},
@@ -71,7 +70,7 @@ export const convertImageFormat: Recipe = {
           {
             id: "convert-image",
             type: "image",
-            version: "1.0.0",
+            version: CURRENT_FORMAT_VERSION,
             name: "Convert Image",
             position: { x: 100, y: 100 },
             metadata: {},
@@ -91,7 +90,7 @@ export const convertImageFormat: Recipe = {
       {
         id: "output",
         type: "output",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Converted Images",
         position: { x: 500, y: 100 },
         metadata: {},

@@ -13,6 +13,7 @@ export const INPUT_MODES = ["file-upload", "text", "url"] as const;
 
 export const inputSchema: NodeSchema = {
   nodeType: "input",
+  schemaVersion: 1,
   parameters: [
     {
       name: "mode",

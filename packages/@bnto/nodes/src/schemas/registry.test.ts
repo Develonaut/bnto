@@ -51,6 +51,12 @@ describe("every schema", () => {
     }
   });
 
+  it("has a schemaVersion >= 1", () => {
+    for (const schema of allSchemas) {
+      expect(schema.schemaVersion).toBeGreaterThanOrEqual(1);
+    }
+  });
+
   it("has a parameters array", () => {
     for (const schema of allSchemas) {
       expect(Array.isArray(schema.parameters)).toBe(true);
@@ -83,11 +89,7 @@ describe("every schema", () => {
   it("number parameters with min/max have min <= max", () => {
     for (const schema of allSchemas) {
       for (const param of schema.parameters) {
-        if (
-          param.type === "number" &&
-          param.min !== undefined &&
-          param.max !== undefined
-        ) {
+        if (param.type === "number" && param.min !== undefined && param.max !== undefined) {
           expect(param.min).toBeLessThanOrEqual(param.max);
         }
       }

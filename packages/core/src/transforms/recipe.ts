@@ -1,7 +1,4 @@
-import type {
-  RawRecipeDoc,
-  RawRecipeListProjection,
-} from "../types/raw";
+import type { RawRecipeDoc, RawRecipeListProjection } from "../types/raw";
 import type { Recipe, RecipeListItem } from "../types";
 
 export function toRecipe(doc: RawRecipeDoc): Recipe {
@@ -11,6 +8,7 @@ export function toRecipe(doc: RawRecipeDoc): Recipe {
     name: doc.name,
     definition: doc.definition,
     version: doc.version,
+    formatVersion: doc.formatVersion,
     isPublic: doc.isPublic,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,

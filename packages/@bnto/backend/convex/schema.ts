@@ -30,6 +30,8 @@ export default defineSchema({
     // RecipeDefinition JSON — validated by engine, stored opaquely here
     definition: v.any(),
     version: v.number(),
+    // Definition format version (semver) — tracks which format spec the definition uses
+    formatVersion: v.optional(v.string()),
     isPublic: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -46,9 +48,7 @@ export default defineSchema({
       v.literal("completed"),
       v.literal("failed"),
     ),
-    progress: v.array(
-      v.object({ nodeId: v.string(), status: v.string() }),
-    ),
+    progress: v.array(v.object({ nodeId: v.string(), status: v.string() })),
     // Result JSON from Go engine — shape varies
     result: v.optional(v.any()),
     error: v.optional(v.string()),
@@ -75,12 +75,7 @@ export default defineSchema({
   executionLogs: defineTable({
     executionId: v.id("executions"),
     nodeId: v.string(),
-    level: v.union(
-      v.literal("info"),
-      v.literal("warn"),
-      v.literal("error"),
-      v.literal("debug"),
-    ),
+    level: v.union(v.literal("info"), v.literal("warn"), v.literal("error"), v.literal("debug")),
     message: v.string(),
     timestamp: v.number(),
   }).index("by_execution", ["executionId"]),
@@ -93,11 +88,7 @@ export default defineSchema({
     slug: v.string(),
     timestamp: v.number(),
     durationMs: v.optional(v.number()),
-    status: v.union(
-      v.literal("started"),
-      v.literal("completed"),
-      v.literal("failed"),
-    ),
+    status: v.union(v.literal("started"), v.literal("completed"), v.literal("failed")),
     executionId: v.optional(v.id("executions")),
   })
     .index("by_userId", ["userId"])

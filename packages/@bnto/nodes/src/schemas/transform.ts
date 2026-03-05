@@ -8,14 +8,14 @@ import type { NodeSchema } from "./types";
 
 export const transformSchema: NodeSchema = {
   nodeType: "transform",
+  schemaVersion: 1,
   parameters: [
     {
       name: "expression",
       type: "string",
       required: false,
       label: "Expression",
-      description:
-        "Expr expression for a single transformation. Mutually exclusive with mappings.",
+      description: "Expr expression for a single transformation. Mutually exclusive with mappings.",
       placeholder: 'firstName + " " + lastName',
     },
     {

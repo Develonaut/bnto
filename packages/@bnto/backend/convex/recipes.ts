@@ -15,9 +15,7 @@ export const list = query({
     return recipes.map((r) => ({
       _id: r._id,
       name: r.name,
-      nodeCount: Array.isArray(r.definition?.nodes)
-        ? r.definition.nodes.length
-        : 0,
+      nodeCount: Array.isArray(r.definition?.nodes) ? r.definition.nodes.length : 0,
       updatedAt: r.updatedAt,
     }));
   },
@@ -43,9 +41,7 @@ export const getByName = query({
     if (userId === null) return null;
     return ctx.db
       .query("recipes")
-      .withIndex("by_user_name", (q) =>
-        q.eq("userId", userId).eq("name", args.name),
-      )
+      .withIndex("by_user_name", (q) => q.eq("userId", userId).eq("name", args.name))
       .unique();
   },
 });
@@ -63,18 +59,21 @@ export const save = mutation({
 
     const existing = await ctx.db
       .query("recipes")
-      .withIndex("by_user_name", (q) =>
-        q.eq("userId", userId).eq("name", args.name),
-      )
+      .withIndex("by_user_name", (q) => q.eq("userId", userId).eq("name", args.name))
       .unique();
 
     const now = Date.now();
+
+    // Extract format version from the definition if present
+    const formatVersion =
+      typeof args.definition?.version === "string" ? args.definition.version : undefined;
 
     if (existing !== null) {
       await ctx.db.patch(existing._id, {
         definition: args.definition,
         isPublic: args.isPublic ?? existing.isPublic,
         version: existing.version + 1,
+        formatVersion: formatVersion ?? existing.formatVersion,
         updatedAt: now,
       });
       return existing._id;
@@ -85,6 +84,7 @@ export const save = mutation({
       name: args.name,
       definition: args.definition,
       version: 1,
+      formatVersion,
       isPublic: args.isPublic ?? false,
       createdAt: now,
       updatedAt: now,

@@ -5,6 +5,7 @@
  */
 
 import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
 
 export const compressImages: Recipe = {
   slug: "compress-images",
@@ -26,12 +27,11 @@ export const compressImages: Recipe = {
   definition: {
     id: "compress-images",
     type: "group",
-    version: "1.0.0",
+    version: CURRENT_FORMAT_VERSION,
     name: "Compress Images",
     position: { x: 0, y: 0 },
     metadata: {
-      description:
-        "Lists image files and compresses each one to WebP format.",
+      description: "Lists image files and compresses each one to WebP format.",
     },
     parameters: {},
     inputPorts: [],
@@ -40,7 +40,7 @@ export const compressImages: Recipe = {
       {
         id: "input",
         type: "input",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Input Files",
         position: { x: 0, y: 100 },
         metadata: {},
@@ -57,7 +57,7 @@ export const compressImages: Recipe = {
       {
         id: "compress-loop",
         type: "loop",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Compress Each Image",
         position: { x: 300, y: 100 },
         metadata: {},
@@ -71,7 +71,7 @@ export const compressImages: Recipe = {
           {
             id: "compress-image",
             type: "image",
-            version: "1.0.0",
+            version: CURRENT_FORMAT_VERSION,
             name: "Compress Image",
             position: { x: 100, y: 100 },
             metadata: {},
@@ -90,7 +90,7 @@ export const compressImages: Recipe = {
       {
         id: "output",
         type: "output",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Compressed Images",
         position: { x: 500, y: 100 },
         metadata: {},

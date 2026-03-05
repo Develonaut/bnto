@@ -5,12 +5,12 @@
  */
 
 import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
 
 export const resizeImages: Recipe = {
   slug: "resize-images",
   name: "Resize Images",
-  description:
-    "Resize images to exact dimensions or percentages. Free, no signup required.",
+  description: "Resize images to exact dimensions or percentages. Free, no signup required.",
   category: "image",
   accept: {
     mimeTypes: ["image/jpeg", "image/png", "image/webp"],
@@ -18,13 +18,7 @@ export const resizeImages: Recipe = {
     label: "JPEG, PNG, or WebP images",
     mimePrefix: "image/",
   },
-  features: [
-    "PNG",
-    "JPEG",
-    "WebP",
-    "Custom dimensions",
-    "Browser-based",
-  ],
+  features: ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"],
   seo: {
     title: "Resize Images Online Free -- bnto",
     h1: "Resize Images Online Free",
@@ -32,12 +26,11 @@ export const resizeImages: Recipe = {
   definition: {
     id: "resize-images",
     type: "group",
-    version: "1.0.0",
+    version: CURRENT_FORMAT_VERSION,
     name: "Resize Images",
     position: { x: 0, y: 0 },
     metadata: {
-      description:
-        "Lists image files and resizes each one via a loop.",
+      description: "Lists image files and resizes each one via a loop.",
     },
     parameters: {},
     inputPorts: [],
@@ -46,7 +39,7 @@ export const resizeImages: Recipe = {
       {
         id: "input",
         type: "input",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Input Files",
         position: { x: 0, y: 100 },
         metadata: {},
@@ -63,7 +56,7 @@ export const resizeImages: Recipe = {
       {
         id: "resize-loop",
         type: "loop",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Resize Each Image",
         position: { x: 300, y: 100 },
         metadata: {},
@@ -77,7 +70,7 @@ export const resizeImages: Recipe = {
           {
             id: "resize-image",
             type: "image",
-            version: "1.0.0",
+            version: CURRENT_FORMAT_VERSION,
             name: "Resize Image",
             position: { x: 100, y: 100 },
             metadata: {},
@@ -96,7 +89,7 @@ export const resizeImages: Recipe = {
       {
         id: "output",
         type: "output",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Resized Images",
         position: { x: 500, y: 100 },
         metadata: {},

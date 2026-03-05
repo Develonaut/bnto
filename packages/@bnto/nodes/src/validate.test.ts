@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Definition } from "./definition";
 import { validateDefinition, validateEdges } from "./validate";
+import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 
 /** Creates a minimal valid definition for testing. */
 function validDef(overrides: Partial<Definition> = {}): Definition {
@@ -59,6 +60,25 @@ describe("validateDefinition — core fields", () => {
   it("catches all three missing at once", () => {
     const errors = validateDefinition(validDef({ id: "", type: "", version: "" }));
     expect(errors.length).toBeGreaterThanOrEqual(2); // id + type stops further checks
+  });
+});
+
+describe("validateDefinition — version compatibility", () => {
+  it("accepts current format version", () => {
+    const errors = validateDefinition(validDef({ version: CURRENT_FORMAT_VERSION }));
+    expect(errors.filter((e) => e.field === "version")).toHaveLength(0);
+  });
+
+  it("accepts same major with higher minor", () => {
+    const errors = validateDefinition(validDef({ version: "1.5.0" }));
+    expect(errors.filter((e) => e.field === "version")).toHaveLength(0);
+  });
+
+  it("rejects incompatible major version", () => {
+    const errors = validateDefinition(validDef({ version: "2.0.0" }));
+    expect(errors.some((e) => e.field === "version" && e.message.includes("unsupported"))).toBe(
+      true,
+    );
   });
 });
 
@@ -287,10 +307,7 @@ describe("validateDefinition — recursive group validation", () => {
   it("validates child nodes inside a group", () => {
     const def = validDef({
       type: "group",
-      nodes: [
-        validDef({ id: "good-child" }),
-        validDef({ id: "bad-child", type: "banana" }),
-      ],
+      nodes: [validDef({ id: "good-child" }), validDef({ id: "bad-child", type: "banana" })],
       edges: [],
     });
     const errors = validateDefinition(def);

@@ -11,6 +11,7 @@ export const GROUP_MODES = ["sequential", "parallel"] as const;
 
 export const groupSchema: NodeSchema = {
   nodeType: "group",
+  schemaVersion: 1,
   parameters: [
     {
       name: "mode",

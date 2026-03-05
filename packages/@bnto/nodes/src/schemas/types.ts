@@ -6,13 +6,7 @@
  */
 
 /** Supported parameter value types for schema definitions. */
-export type ParameterType =
-  | "string"
-  | "number"
-  | "boolean"
-  | "enum"
-  | "object"
-  | "array";
+export type ParameterType = "string" | "number" | "boolean" | "enum" | "object" | "array";
 
 /**
  * Describes a single parameter a node type accepts.
@@ -55,7 +49,10 @@ export interface ParameterSchema {
    * Example: `items` is required only when `mode` is `"forEach"`.
    */
   requiredWhen?:
-    | { /** The parameter name to check. */ param: string; /** The value that triggers the requirement. */ equals: string }
+    | {
+        /** The parameter name to check. */ param: string;
+        /** The value that triggers the requirement. */ equals: string;
+      }
     | Array<{ param: string; equals: string }>;
 
   /**
@@ -68,7 +65,10 @@ export interface ParameterSchema {
    * `operation` is `"composite"`.
    */
   visibleWhen?:
-    | { /** The parameter name to check. */ param: string; /** The value that triggers visibility. */ equals: string }
+    | {
+        /** The parameter name to check. */ param: string;
+        /** The value that triggers visibility. */ equals: string;
+      }
     | Array<{ param: string; equals: string }>;
 
   /** Placeholder text for string inputs. */
@@ -83,6 +83,15 @@ export interface ParameterSchema {
 export interface NodeSchema {
   /** The node type name (e.g., "http-request", "image"). */
   nodeType: string;
+
+  /**
+   * Parameter schema version — tracks changes to this node type's parameters.
+   *
+   * Bump when parameters are added, removed, renamed, or have their
+   * type/constraints changed. Enables future migration of saved recipes
+   * that reference older parameter shapes.
+   */
+  schemaVersion: number;
 
   /** All parameters this node type accepts. */
   parameters: readonly ParameterSchema[];

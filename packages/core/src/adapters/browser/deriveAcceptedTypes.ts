@@ -57,7 +57,9 @@ export function deriveAcceptedTypes(definition: Definition): AcceptedTypes {
 function deriveMimePrefix(mimeTypes: string[]): string | undefined {
   if (mimeTypes.length === 0) return undefined;
 
-  const prefix = mimeTypes[0]!.split("/")[0]!;
+  const first = mimeTypes[0];
+  if (!first) return undefined;
+  const prefix = first.split("/")[0];
   const allMatch = mimeTypes.every((t) => t.startsWith(`${prefix}/`));
   return allMatch ? `${prefix}/` : undefined;
 }

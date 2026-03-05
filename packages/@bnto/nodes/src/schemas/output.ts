@@ -13,6 +13,7 @@ export const OUTPUT_MODES = ["download", "display", "preview"] as const;
 
 export const outputSchema: NodeSchema = {
   nodeType: "output",
+  schemaVersion: 1,
   parameters: [
     {
       name: "mode",

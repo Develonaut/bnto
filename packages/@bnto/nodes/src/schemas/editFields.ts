@@ -9,6 +9,7 @@ import type { NodeSchema } from "./types";
 
 export const editFieldsSchema: NodeSchema = {
   nodeType: "edit-fields",
+  schemaVersion: 1,
   parameters: [
     {
       name: "values",

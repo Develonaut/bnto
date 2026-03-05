@@ -12,6 +12,7 @@ export const LOOP_MODES = ["forEach", "times", "while"] as const;
 
 export const loopSchema: NodeSchema = {
   nodeType: "loop",
+  schemaVersion: 1,
   parameters: [
     {
       name: "mode",

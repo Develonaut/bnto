@@ -11,6 +11,7 @@ export const ERROR_STRATEGIES = ["failFast", "collectAll"] as const;
 
 export const parallelSchema: NodeSchema = {
   nodeType: "parallel",
+  schemaVersion: 1,
   parameters: [
     {
       name: "tasks",
@@ -24,8 +25,7 @@ export const parallelSchema: NodeSchema = {
       type: "number",
       required: false,
       label: "Max Workers",
-      description:
-        "Maximum number of concurrent workers. Defaults to the number of tasks.",
+      description: "Maximum number of concurrent workers. Defaults to the number of tasks.",
       min: 1,
     },
     {
@@ -33,8 +33,7 @@ export const parallelSchema: NodeSchema = {
       type: "enum",
       required: false,
       label: "Error Strategy",
-      description:
-        "How to handle task errors — fail immediately or collect all results.",
+      description: "How to handle task errors — fail immediately or collect all results.",
       default: "failFast",
       enumValues: ERROR_STRATEGIES,
     },

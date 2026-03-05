@@ -14,6 +14,7 @@ export const SPREADSHEET_FORMATS = ["csv", "excel"] as const;
 
 export const spreadsheetSchema: NodeSchema = {
   nodeType: "spreadsheet",
+  schemaVersion: 1,
   parameters: [
     {
       name: "operation",
@@ -44,8 +45,7 @@ export const spreadsheetSchema: NodeSchema = {
       type: "array",
       required: false,
       label: "Rows",
-      description:
-        "Data rows for write operations. Array of objects with column headers as keys.",
+      description: "Data rows for write operations. Array of objects with column headers as keys.",
       visibleWhen: { param: "operation", equals: "write" },
       requiredWhen: { param: "operation", equals: "write" },
     },

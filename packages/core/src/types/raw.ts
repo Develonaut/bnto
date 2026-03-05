@@ -18,6 +18,8 @@ export interface RawRecipeDoc {
   name: string;
   definition: RecipeDefinition;
   version: number;
+  /** Definition format version (semver) — tracks which format spec the definition uses. */
+  formatVersion?: string;
   isPublic: boolean;
   createdAt: number;
   updatedAt: number;

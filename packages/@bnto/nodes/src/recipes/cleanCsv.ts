@@ -5,24 +5,19 @@
  */
 
 import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
 
 export const cleanCsv: Recipe = {
   slug: "clean-csv",
   name: "Clean CSV",
-  description:
-    "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
+  description: "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
   category: "spreadsheet",
   accept: {
     mimeTypes: ["text/csv"],
     extensions: [".csv"],
     label: "CSV files",
   },
-  features: [
-    "CSV",
-    "Remove duplicates",
-    "Trim whitespace",
-    "Browser-based",
-  ],
+  features: ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"],
   seo: {
     title: "Clean CSV Online Free -- bnto",
     h1: "Clean CSV Online Free",
@@ -30,12 +25,11 @@ export const cleanCsv: Recipe = {
   definition: {
     id: "clean-csv",
     type: "group",
-    version: "1.0.0",
+    version: CURRENT_FORMAT_VERSION,
     name: "Clean CSV",
     position: { x: 0, y: 0 },
     metadata: {
-      description:
-        "Reads a CSV, filters empty rows, trims whitespace, and writes a clean version.",
+      description: "Reads a CSV, filters empty rows, trims whitespace, and writes a clean version.",
     },
     parameters: {},
     inputPorts: [],
@@ -44,7 +38,7 @@ export const cleanCsv: Recipe = {
       {
         id: "input",
         type: "input",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Input Files",
         position: { x: 0, y: 100 },
         metadata: {},
@@ -61,7 +55,7 @@ export const cleanCsv: Recipe = {
       {
         id: "read-csv",
         type: "spreadsheet",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Read CSV",
         position: { x: 200, y: 100 },
         metadata: {},
@@ -76,7 +70,7 @@ export const cleanCsv: Recipe = {
       {
         id: "write-clean-csv",
         type: "spreadsheet",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Write Clean CSV",
         position: { x: 400, y: 100 },
         metadata: {},
@@ -92,7 +86,7 @@ export const cleanCsv: Recipe = {
       {
         id: "output",
         type: "output",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Cleaned CSV",
         position: { x: 600, y: 100 },
         metadata: {},
