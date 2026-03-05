@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { createCompartmentNode } from "./createCompartmentNode";
 import { SLOTS } from "./bentoSlots";
-import { NODE_TYPE_NAMES, NODE_SCHEMAS } from "@bnto/nodes";
+import { NODE_TYPE_NAMES, NODE_SCHEMA_DEFS } from "@bnto/nodes";
 
 describe("createCompartmentNode", () => {
   it("creates a BentoNode + NodeConfig from a node type and slot index", () => {
@@ -59,11 +59,16 @@ describe("createCompartmentNode", () => {
 
   it("builds default parameters from schema in config", () => {
     const result = createCompartmentNode("image", 0);
-    const schema = NODE_SCHEMAS["image"];
+    const schemaDef = NODE_SCHEMA_DEFS["image"];
+    // Extract defaults from Zod schema
+    const shape = schemaDef.schema.shape as Record<
+      string,
+      { _def?: { typeName?: string; defaultValue?: () => unknown } }
+    >;
     const expectedDefaults: Record<string, unknown> = {};
-    for (const param of schema.parameters) {
-      if (param.default !== undefined) {
-        expectedDefaults[param.name] = param.default;
+    for (const [name, field] of Object.entries(shape)) {
+      if (field?._def?.typeName === "ZodDefault" && typeof field._def.defaultValue === "function") {
+        expectedDefaults[name] = field._def.defaultValue();
       }
     }
     expect(result!.config.parameters).toEqual(expectedDefaults);

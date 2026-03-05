@@ -330,21 +330,21 @@ Activate the existing `Definition.version` field as a meaningful format version.
 
 **`@bnto/nodes` changes:**
 
-- [ ] `@bnto/nodes` — **Format version constant**: Create `src/formatVersion.ts` — exports `CURRENT_FORMAT_VERSION = "1.0.0"`, `SUPPORTED_FORMAT_VERSIONS = ["1.0.0"]`, `isSupportedVersion(version: string): boolean`, `isCompatibleVersion(version: string): boolean` (semver-major match). ~30 lines
-- [ ] `@bnto/nodes` — **Version validation**: Edit `src/validate.ts` — change version check from "is present" to "is present AND is a supported version". Error: `"unsupported format version 'X' — supported: 1.0.0"`
-- [ ] `@bnto/nodes` — **Replace hardcoded versions**: Edit `src/createBlankDefinition.ts`, `src/addNode.ts`, all 6 recipe files in `src/recipes/*.ts` — replace hardcoded `"1.0.0"` with `CURRENT_FORMAT_VERSION` import
-- [ ] `@bnto/nodes` — **Schema version field**: Add `schemaVersion: number` to `NodeSchema` interface in `src/schemas/types.ts`. Add `schemaVersion: 1` to all 12 node schema files. Metadata only for now — no migration logic until a schema actually changes. The field exists from day one so future changes are traceable
-- [ ] `@bnto/nodes` — **Export + tests**: Export new versioning functions from `src/index.ts`. Create `src/formatVersion.test.ts` (valid/invalid versions, major-version matching). Update `src/validate.test.ts` (unsupported version produces error). Update `src/createBlankDefinition.test.ts` and `src/recipes.test.ts` to reference constant
+- [x] `@bnto/nodes` — **Format version constant**: Create `src/formatVersion.ts` — exports `CURRENT_FORMAT_VERSION = "1.0.0"`, `SUPPORTED_FORMAT_VERSIONS = ["1.0.0"]`, `isSupportedVersion(version: string): boolean`, `isCompatibleVersion(version: string): boolean` (semver-major match). ~30 lines
+- [x] `@bnto/nodes` — **Version validation**: Edit `src/validate.ts` — change version check from "is present" to "is present AND is a supported version". Error: `"unsupported format version 'X' — supported: 1.0.0"`
+- [x] `@bnto/nodes` — **Replace hardcoded versions**: Edit `src/createBlankDefinition.ts`, `src/addNode.ts`, all 6 recipe files in `src/recipes/*.ts` — replace hardcoded `"1.0.0"` with `CURRENT_FORMAT_VERSION` import
+- [x] `@bnto/nodes` — **Schema version field**: Add `schemaVersion: number` to `NodeSchema` interface in `src/schemas/types.ts`. Add `schemaVersion: 1` to all 12 node schema files. Metadata only for now — no migration logic until a schema actually changes. The field exists from day one so future changes are traceable
+- [x] `@bnto/nodes` — **Export + tests**: Export new versioning functions from `src/index.ts`. Create `src/formatVersion.test.ts` (valid/invalid versions, major-version matching). Update `src/validate.test.ts` (unsupported version produces error). Update `src/createBlankDefinition.test.ts` and `src/recipes.test.ts` to reference constant
 
 **`@bnto/backend` + `@bnto/core` changes:**
 
-- [ ] `@bnto/backend` — **Add `formatVersion` to recipes table**: Edit `convex/schema.ts` — add `formatVersion: v.string()` field (the existing `version: v.number()` stays as the save counter). Edit `convex/recipes.ts` — set `formatVersion` from definition's version field on create and update
-- [ ] `@bnto/core` — **Propagate `formatVersion`**: Add `formatVersion: string` to `RawRecipeDoc` in `src/types/raw.ts`, `Recipe` in `src/types/recipe.ts`. Map through in `src/transforms/recipe.ts`
+- [x] `@bnto/backend` — **Add `formatVersion` to recipes table**: Edit `convex/schema.ts` — add `formatVersion: v.string()` field (the existing `version: v.number()` stays as the save counter). Edit `convex/recipes.ts` — set `formatVersion` from definition's version field on create and update
+- [x] `@bnto/core` — **Propagate `formatVersion`**: Add `formatVersion: string` to `RawRecipeDoc` in `src/types/raw.ts`, `Recipe` in `src/types/recipe.ts`. Map through in `src/transforms/recipe.ts`
 
 **Editor + Rust parity:**
 
-- [ ] `@bnto/editor` — **Use constant**: Edit `src/adapters/rfNodesToDefinition.ts` — replace hardcoded `"1.0.0"` with `CURRENT_FORMAT_VERSION` import
-- [ ] `engine` — **Rust parity constant**: Add `FORMAT_VERSION: &str = "1.0.0"` to `engine/crates/bnto-core/src/lib.rs`. No runtime checking needed (WASM receives pre-validated data from JS), but the constant exists for cross-stack parity
+- [x] `@bnto/editor` — **Use constant**: Edit `src/adapters/rfNodesToDefinition.ts` — replace hardcoded `"1.0.0"` with `CURRENT_FORMAT_VERSION` import
+- [x] `engine` — **Rust parity constant**: Add `FORMAT_VERSION: &str = "1.0.0"` to `engine/crates/bnto-core/src/lib.rs`. No runtime checking needed (WASM receives pre-validated data from JS), but the constant exists for cross-stack parity
 
 #### Wave 2 (sequential — Zod Node Schemas)
 
@@ -381,13 +381,27 @@ interface NodeSchemaDefinition {
 
 **Tasks:**
 
-- [ ] `@bnto/nodes` — **Add Zod dependency**: Add `zod` to `package.json` dependencies (~13KB minified, tree-shakeable, zero transitive deps)
-- [ ] `@bnto/nodes` — **New schema types**: Rewrite `src/schemas/types.ts` — replace `ParameterSchema`/`NodeSchema` with `NodeSchemaDefinition` (Zod schema + `NodeParamMeta` UI metadata map + `schemaVersion`). Keep `visibleWhen`/`requiredWhen` condition types for UI metadata
-- [ ] `@bnto/nodes` — **Migrate all 12 node schemas**: Rewrite each file in `src/schemas/` (image, input, output, fileSystem, httpRequest, spreadsheet, transform, editFields, loop, group, parallel, shellCommand). Each gets a `z.object()` schema with proper types/constraints + a `params` map with UI labels/descriptions/visibility rules. Keep existing enum constant arrays (`IMAGE_OPERATIONS`, `IMAGE_FORMATS`, etc.) — they feed into `z.enum()`. Export inferred TypeScript type per node
-- [ ] `@bnto/nodes` — **Registry + helpers update**: Update `src/schemas/registry.ts` to `Record<NodeTypeName, NodeSchemaDefinition>`. Adapt `getNodeSchema.ts`, `getRequiredParams.ts` (derive from Zod shape), `getVisibleParams.ts` (read from `params` metadata), `getConditionallyRequired.ts`, `matchesCondition.ts`
-- [ ] `@bnto/nodes` — **Parameter validation function**: Create `src/validateNodeParams.ts` — `validateNodeParams(nodeType: string, params: Record<string, unknown>)` calls `schema.safeParse(params)`, returns field-level errors. Create `src/validateNodeParams.test.ts` — valid/invalid params for each of the 12 node types
-- [ ] `@bnto/nodes` — **Wire into definition validation**: Edit `src/validate.ts` — after checking core fields (id, type, version), call `validateNodeParams()` for each node in the tree. Report per-field errors: `"node 'resize-1': parameter 'quality' must be between 1 and 100"`
-- [ ] `@bnto/nodes` — **Update all tests**: `src/schemas/registry.test.ts` (structural tests for new `NodeSchemaDefinition`), `src/schemas/ioSchemas.test.ts`, `src/validate.test.ts` (param validation cases)
+- [x] `@bnto/nodes` — **Add Zod dependency**: Add `zod` to `package.json` dependencies (~13KB minified, tree-shakeable, zero transitive deps)
+- [x] `@bnto/nodes` — **New schema types**: Rewrite `src/schemas/types.ts` — replace `ParameterSchema`/`NodeSchema` with `NodeSchemaDefinition` (Zod schema + `NodeParamMeta` UI metadata map + `schemaVersion`). Keep `visibleWhen`/`requiredWhen` condition types for UI metadata
+- [x] `@bnto/nodes` — **Migrate all 12 node schemas**: Rewrite each file in `src/schemas/` (image, input, output, fileSystem, httpRequest, spreadsheet, transform, editFields, loop, group, parallel, shellCommand). Each gets a `z.object()` schema with proper types/constraints + a `params` map with UI labels/descriptions/visibility rules. Keep existing enum constant arrays (`IMAGE_OPERATIONS`, `IMAGE_FORMATS`, etc.) — they feed into `z.enum()`. Export inferred TypeScript type per node
+- [x] `@bnto/nodes` — **Registry + helpers update**: Update `src/schemas/registry.ts` to `Record<NodeTypeName, NodeSchemaDefinition>`. Adapt `getNodeSchema.ts`, `getRequiredParams.ts` (derive from Zod shape), `getVisibleParams.ts` (read from `params` metadata), `getConditionallyRequired.ts`, `matchesCondition.ts`
+- [x] `@bnto/nodes` — **Parameter validation function**: Create `src/validateNodeParams.ts` — `validateNodeParams(nodeType: string, params: Record<string, unknown>)` calls `schema.safeParse(params)`, returns field-level errors. Create `src/validateNodeParams.test.ts` — valid/invalid params for each of the 12 node types
+- [x] `@bnto/nodes` — **Wire into definition validation**: Edit `src/validate.ts` — after checking core fields (id, type, version), call `validateNodeParams()` for each node in the tree. Report per-field errors: `"node 'resize-1': parameter 'quality' must be between 1 and 100"`
+- [x] `@bnto/nodes` — **Update all tests**: `src/schemas/registry.test.ts` (structural tests for new `NodeSchemaDefinition`), `src/schemas/ioSchemas.test.ts`, `src/validate.test.ts` (param validation cases)
+
+#### Wave 3 (sequential — Dynamic Parameter Forms with AutoForm)
+
+Replace hand-rolled `ParameterField` rendering with `@autoform/zod` + `@autoform/react` — a proven community solution that generates form fields from Zod schemas automatically. This eliminates the manual `inferFieldType()` → switch-on-type → render pattern and gives us rich, type-safe forms for free.
+
+**Depends on:** Wave 2 complete (Zod schemas exist for all 12 node types).
+
+**Scope:** Map every Zod type and constraint used in `@bnto/nodes` schemas to the right form control. Create an enum→control mapping document so every field type renders the best UI (sliders for bounded numbers, selects for enums, switches for booleans, textareas for long strings, etc.). Enrich `NodeParamMeta` with AutoForm field overrides where needed.
+
+- [ ] `@bnto/nodes` — Install `@autoform/zod` + `@autoform/react` dependencies
+- [ ] `@bnto/nodes` — Create Zod type → form control mapping document (enum→select, bounded number→slider, boolean→switch, string with format→specialized input, etc.)
+- [ ] `packages/editor` — Replace `ParameterField` switch-on-type rendering with AutoForm-driven fields
+- [ ] `packages/editor` — Wire `NodeParamMeta` (labels, descriptions, placeholders, visibility rules) into AutoForm field overrides
+- [ ] `packages/editor` — E2E test: config panel renders correct controls for each node type's parameters
 
 **Execution boundary contract (called out for Sprint 5 Wave 3 wiring):**
 

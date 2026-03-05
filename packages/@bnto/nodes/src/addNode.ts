@@ -15,18 +15,43 @@ import type { DefinitionResult } from "./definitionResult";
 import type { NodeTypeName } from "./nodeTypes";
 import { NODE_TYPE_INFO } from "./nodeTypes";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
-import { NODE_SCHEMAS } from "./schemas/registry";
+import { NODE_SCHEMA_DEFS } from "./schemas/registry";
 import { validateDefinition } from "./validate";
 
-/** Builds a default parameter object from the schema for a node type. */
-function buildDefaultParams(nodeType: NodeTypeName): Record<string, unknown> {
-  const schema = NODE_SCHEMAS[nodeType];
-  if (!schema) return {};
+/** Unwrap Zod wrappers (ZodDefault, ZodOptional) to find the inner type. */
+function unwrapZod(field: unknown): {
+  typeName?: string;
+  values?: unknown[];
+  defaultValue?: () => unknown;
+} {
+  const def = (field as { _def?: Record<string, unknown> })?._def;
+  if (!def) return {};
+  const typeName = def.typeName as string | undefined;
+  if (typeName === "ZodDefault") {
+    const inner = unwrapZod(def.innerType);
+    return { ...inner, defaultValue: def.defaultValue as (() => unknown) | undefined };
+  }
+  if (typeName === "ZodOptional" || typeName === "ZodNullable") {
+    return unwrapZod(def.innerType);
+  }
+  return { typeName, values: def.values as unknown[] | undefined };
+}
 
+/** Builds default parameters from the Zod schema for a node type. */
+function buildDefaultParams(nodeType: NodeTypeName): Record<string, unknown> {
+  const schemaDef = NODE_SCHEMA_DEFS[nodeType];
+  if (!schemaDef) return {};
+  const result = schemaDef.schema.safeParse({});
+  if (result.success) return { ...result.data };
+  // Required fields missing — extract defaults and first enum values
+  const shape = schemaDef.schema.shape as Record<string, unknown>;
   const params: Record<string, unknown> = {};
-  for (const param of schema.parameters) {
-    if (param.default !== undefined) {
-      params[param.name] = param.default;
+  for (const [name, field] of Object.entries(shape)) {
+    const info = unwrapZod(field);
+    if (info.defaultValue && typeof info.defaultValue === "function") {
+      params[name] = info.defaultValue();
+    } else if (info.typeName === "ZodEnum" && info.values?.length) {
+      params[name] = info.values[0];
     }
   }
   return params;

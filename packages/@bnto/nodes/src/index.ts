@@ -7,7 +7,7 @@
  * - Go engine (CLI + cloud)
  * - Web app config UI
  *
- * Zero runtime dependencies. Pure TypeScript types and constants.
+ * Zero runtime dependencies except Zod (for schema validation).
  */
 
 // Recipe definition types (mirrors Go engine/pkg/node/)
@@ -55,9 +55,12 @@ export {
 export { validateDefinition, validateEdges } from "./validate";
 export type { ValidationError } from "./validate";
 
-// Parameter schemas — drives config panel UI
+// Node parameter validation (Zod-based)
+export { validateNodeParams } from "./validateNodeParams";
+
+// Parameter schemas — Zod-based registry + helpers
 export {
-  NODE_SCHEMAS,
+  NODE_SCHEMA_DEFS,
   getNodeSchema,
   getRequiredParams,
   getConditionallyRequired,
@@ -74,7 +77,8 @@ export {
   GROUP_MODES,
   ERROR_STRATEGIES,
 } from "./schemas";
-export type { NodeSchema, ParameterSchema, ParameterType } from "./schemas";
+export type { NodeSchemaDefinition, NodeParamMeta, ParamCondition, FieldTypeInfo } from "./schemas";
+export { inferFieldType } from "./schemas";
 
 // I/O node helpers (Sprint 4C — self-describing recipes)
 export { getInputNode } from "./getInputNode";
