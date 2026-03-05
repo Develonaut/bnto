@@ -1,12 +1,13 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Panel } from "@/components/ui/Panel";
 import { Text } from "@/components/ui/Text";
 import { useEditorExport } from "@/editor/hooks/useEditorExport";
 import { useEditorStore } from "@/editor/hooks/useEditorStore";
 import { FileMenu } from "./FileMenu";
 import { NodeList } from "./NodeList";
-import { useAutoSelect } from "./useAutoSelect";
+import { useAutoSelect } from "@/editor/hooks/useAutoSelect";
 
 /**
  * EditorSidebar — floating Panel with file header + node list.
@@ -26,7 +27,7 @@ interface EditorSidebarProps {
   /** Recipe/bnto name shown in the header. */
   name?: string;
   /** Optional footer content (e.g., recipe selector). */
-  footer?: React.ReactNode;
+  footer?: ReactNode;
 }
 
 function EditorSidebarRoot({

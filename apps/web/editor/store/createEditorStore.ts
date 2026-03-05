@@ -1,11 +1,16 @@
 /**
- * Editor store factory — owns all editor state (controlled mode).
+ * Editor store factory — owns state and simple setters (controlled mode).
+ *
+ * The store is the state layer only. Business logic (addNode, removeNode,
+ * updateConfigParams) lives in action hooks that use storeApi for atomic
+ * state updates. See editor/hooks/ for the three-layer pattern:
+ *
+ *   Pure functions (helpers) → Action hooks → Consumer hooks (useEditorActions)
  *
  * The store owns: nodes, edges, configs, recipe metadata, undo/redo,
  * validation, execution state, and dirty flag.
  *
  * ReactFlow receives nodes/edges as props (controlled mode).
- * Parameter changes update configs only — no RF re-render.
  */
 
 import { createStore } from "zustand/vanilla";
@@ -15,31 +20,10 @@ import {
   getRecipeBySlug,
   validateDefinition,
 } from "@bnto/nodes";
-import type { NodeTypeName } from "@bnto/nodes";
 import { definitionToBento } from "../adapters/definitionToBento";
-import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
-import { createCompartmentNode } from "../adapters/createCompartmentNode";
-import type { EditorStore, EditorSnapshot, RecipeMetadata } from "./types";
+import type { EditorStore, RecipeMetadata } from "./types";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
-
-// ---------------------------------------------------------------------------
-// History helpers
-// ---------------------------------------------------------------------------
-
-const MAX_UNDO_HISTORY = 50;
-
-function captureSnapshot(nodes: BentoNode[], configs: NodeConfigs): EditorSnapshot {
-  // Deep-clone configs so later mutations don't corrupt snapshots.
-  // Each NodeConfig contains a parameters record that may be mutated.
-  const clonedConfigs: NodeConfigs = {};
-  for (const [id, config] of Object.entries(configs)) {
-    clonedConfigs[id] = {
-      ...config,
-      parameters: { ...config.parameters },
-    };
-  }
-  return { nodes: [...nodes], configs: clonedConfigs };
-}
+import { captureSnapshot, pushToStack, revalidateState } from "./helpers";
 
 // ---------------------------------------------------------------------------
 // Metadata helpers
@@ -55,22 +39,6 @@ function metadataFromDefinition(def: { id: string; name: string; type: string; v
 }
 
 // ---------------------------------------------------------------------------
-// Revalidation helper
-// ---------------------------------------------------------------------------
-
-function revalidateState(nodes: BentoNode[], configs: NodeConfigs, metadata: RecipeMetadata) {
-  const definition = rfNodesToDefinition(nodes, {
-    ...metadata,
-    position: { x: 0, y: 0 },
-    metadata: {},
-    parameters: {},
-    inputPorts: [],
-    outputPorts: [],
-  }, configs);
-  return validateDefinition(definition);
-}
-
-// ---------------------------------------------------------------------------
 // Store factory
 // ---------------------------------------------------------------------------
 
@@ -82,8 +50,6 @@ interface CreateEditorStoreOptions {
 
 function createEditorStore(options?: CreateEditorStoreOptions | RecipeMetadata) {
   // Support both old signature (RecipeMetadata) and new (options object).
-  // RecipeMetadata has `id` + `name` + `type` + `version` as required fields.
-  // CreateEditorStoreOptions has optional `initialMetadata`, `initialNodes`, `initialConfigs`.
   const isLegacy = options && "id" in options && "version" in options;
   const opts: CreateEditorStoreOptions = isLegacy
     ? { initialMetadata: options as RecipeMetadata }
@@ -151,38 +117,10 @@ function createEditorStore(options?: CreateEditorStoreOptions | RecipeMetadata) 
       }));
     },
 
-    // --- Graph mutations ---
+    // --- Graph setters ---
 
     setNodes: (nodes) => {
       set({ nodes });
-    },
-
-    addNode: (type: NodeTypeName, position?) => {
-      const state = get();
-      const slotIndex = state.nodes.length;
-      const result = createCompartmentNode(type, slotIndex, position);
-      if (!result) return null;
-
-      const snapshot = captureSnapshot(state.nodes, state.configs);
-      const stack = [...state.undoStack, snapshot];
-
-      // Auto-select the new node, deselect all others
-      const deselected = state.nodes.map((n) =>
-        n.selected ? { ...n, selected: false } : n
-      );
-      const newNode = { ...result.node, selected: true };
-      const nextNodes = [...deselected, newNode];
-      const nextConfigs = { ...state.configs, [result.node.id]: result.config };
-
-      set({
-        nodes: nextNodes,
-        configs: nextConfigs,
-        isDirty: true,
-        undoStack: stack.length > MAX_UNDO_HISTORY ? stack.slice(-MAX_UNDO_HISTORY) : stack,
-        redoStack: [],
-        validationErrors: revalidateState(nextNodes, nextConfigs, state.recipeMetadata),
-      });
-      return result.node.id;
     },
 
     selectNode: (id) => {
@@ -190,41 +128,12 @@ function createEditorStore(options?: CreateEditorStoreOptions | RecipeMetadata) 
         nodes: s.nodes.map((n) =>
           n.id === id
             ? n.selected ? n : { ...n, selected: true }
-            : n.selected ? { ...n, selected: false } : n
+            : n.selected ? { ...n, selected: false } : n,
         ),
       }));
     },
 
-    removeNode: (id) => {
-      const state = get();
-      const snapshot = captureSnapshot(state.nodes, state.configs);
-      const stack = [...state.undoStack, snapshot];
-
-      const removedIndex = state.nodes.findIndex((n) => n.id === id);
-      const nextNodes = state.nodes.filter((n) => n.id !== id);
-      const nextConfigs = { ...state.configs };
-      delete nextConfigs[id];
-
-      // Auto-select the nearest remaining node after removal
-      if (nextNodes.length > 0) {
-        const selectIndex = Math.min(
-          removedIndex > 0 ? removedIndex - 1 : 0,
-          nextNodes.length - 1,
-        );
-        nextNodes[selectIndex] = { ...nextNodes[selectIndex]!, selected: true };
-      }
-
-      set({
-        nodes: nextNodes,
-        configs: nextConfigs,
-        isDirty: true,
-        undoStack: stack.length > MAX_UNDO_HISTORY ? stack.slice(-MAX_UNDO_HISTORY) : stack,
-        redoStack: [],
-        validationErrors: revalidateState(nextNodes, nextConfigs, state.recipeMetadata),
-      });
-    },
-
-    // --- Config mutations (no RF re-render) ---
+    // --- Config setters ---
 
     setConfigs: (configs) => {
       set({ configs });
@@ -244,38 +153,13 @@ function createEditorStore(options?: CreateEditorStoreOptions | RecipeMetadata) 
       });
     },
 
-    updateConfigParams: (nodeId, params) => {
-      const state = get();
-      const existing = state.configs[nodeId];
-      if (!existing) return;
-
-      const snapshot = captureSnapshot(state.nodes, state.configs);
-      const stack = [...state.undoStack, snapshot];
-      const nextConfigs = {
-        ...state.configs,
-        [nodeId]: {
-          ...existing,
-          parameters: { ...existing.parameters, ...params },
-        },
-      };
-
-      set({
-        configs: nextConfigs,
-        isDirty: true,
-        undoStack: stack.length > MAX_UNDO_HISTORY ? stack.slice(-MAX_UNDO_HISTORY) : stack,
-        redoStack: [],
-        validationErrors: revalidateState(state.nodes, nextConfigs, state.recipeMetadata),
-      });
-    },
-
     // --- History ---
 
     pushUndo: () => {
       const state = get();
       const snapshot = captureSnapshot(state.nodes, state.configs);
-      const stack = [...state.undoStack, snapshot];
       set({
-        undoStack: stack.length > MAX_UNDO_HISTORY ? stack.slice(-MAX_UNDO_HISTORY) : stack,
+        undoStack: pushToStack(state.undoStack, snapshot),
         redoStack: [],
       });
     },
