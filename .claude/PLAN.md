@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 5, 2026
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -21,19 +21,18 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 **Branching:** Feature branches target `main` directly. Create a branch from `main` (`git checkout -b <type>/<short-description> main`), do the work, PR into `main`, squash merge. Use worktrees (`/pickup --w`) for isolation when multiple agents are active — see the pickup skill for the smart isolation model.
 
-**Co-location decision (Feb 2026):** UI components and editor features live in `apps/web` for now. No separate `@bnto/ui` or `@bnto/editor` packages until there's a real second consumer (desktop app). Engine, core API, and data layer logic stays in `@bnto/core`. When the UI package is extracted, it will be published as `@bnto/ui` (npm) under the name **Motorway** — the Mini Motorways-inspired design system (surface, elevation, pressable, spring animations, warm palette).
+**Co-location decision (Feb 2026, updated March 2026):** UI components and editor features currently live in `apps/web`. Sprint 4D extracts UI to `@bnto/ui` (branded **Motorway** — Mini Motorways-inspired design system). Sprint 4E extracts editor to `@bnto/editor`. This extraction happens BEFORE the editor production sprint to establish clean package boundaries and make the complex editor work easier to follow. Engine, core API, and data layer logic stays in `@bnto/core`.
 
 ---
 
 ## Current State
 
-- **FOCUS: Self-describing recipes + runnable editor.** Sprint 4 (visual editor) complete. Sprint 4C (I/O Nodes) is next — makes recipes self-describing so custom editor creations can actually run. See [io-nodes.md](.claude/strategy/io-nodes.md) for the architecture reference.
-- **Next up:** Sprint 4C Wave 1 (`@bnto/nodes` — I/O node types, schemas, recipe updates). Unblocked now.
-- **Parallel track:** Sprint 4D (UI Package Extraction) — extract `apps/web/components/ui/` to `packages/ui` (`@bnto/ui` / Motorway). Prerequisite for editor package extraction. Can run in parallel with Sprint 4C.
-- **RF store refactor complete:** PRs #86-#94 merged. Sprint 4C Waves 1-2 are both unblocked.
-- **Sequence:** Sprint 4C (I/O Nodes) → Sprint 4D (UI Package) → Sprint 4E (Editor Package) → hook up I/O nodes with predefined recipes in editor.
+- **FOCUS: Package extraction + code standards review before editor.** Sprint 4C (I/O Nodes) complete — all tasks merged (PR #102). Recipes are self-describing.
+- **Next up:** (1) Sprint 4D — extract `@bnto/ui` (Motorway design system), (2) Sprint 4E — extract `@bnto/editor`, (3) Sprint 4F — code standards audit across all packages. Clean, well-structured code before leaning into the complex editor work.
+- **Then:** Sprint 5 — editor to production (compartment redesign, `/editor` route, execution, save, E2E). This is the M2 completion path.
+- **Uncommitted editor work:** 7 files modified on `main` (CanvasToolbar, FileMenu, NodeConfigPanel, EditorCanvas, EditorOverlay, useEditorCanvas, icons) — needs branch/PR before next sprint.
+- **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
-- **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor + I/O nodes ship.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
 - **Tabled:** Save button on recipe toolbar — removed (March 2026). No save infrastructure to connect to yet. Will return with editor + accounts.
 - **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
@@ -81,8 +80,11 @@ Pricing, revenue projections, and "ready to charge" criteria live in Notion ("SE
 | Sprint H | Housekeeping | **COMPLETE.** FileUpload rewrite, Rust test audit, EXIF coverage, Pressable, CI, ESLint. |
 | Sprint 3 | Platform features (accounts, history) | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented. |
 | Sprint 4 | Recipe editor (headless + visual) | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
-| Sprint 5-6 | Desktop app | Top-of-funnel. Word of mouth begins. Free forever — trust signal. |
-| Sprint 7 | Stripe + Pro tier | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing. |
+| Sprint 4D-4E | Package extraction (`@bnto/ui`, `@bnto/editor`) | Clean architecture. Packages ready for desktop (M3). |
+| Sprint 4F | Code standards review | Technical hygiene. Every file conforms to updated standards. |
+| Sprint 5 | Editor to production | **M2 completion.** Editor gives users a reason to create accounts. Save custom recipes = highest-intent Pro signal. |
+| Sprint 6-7 | Desktop app | Top-of-funnel. Word of mouth begins. Free forever — trust signal. |
+| Sprint 8 | Stripe + Pro tier | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing. |
 
 ---
 
@@ -119,210 +121,16 @@ Progressive phase-driven flow (Files → Configure → Results) with Motorway de
 ### Sprint H: Housekeeping — COMPLETE
 Tech debt cleanup: FileUpload→react-dropzone, core.browser→core.wasm rename, shared ESLint config, Pressable component, React import sweep, GitHub Actions CI (PR #10), Rust test audit, EXIF orientation coverage. All tasks delivered.
 
----
+### Sprint 3A: Remove Anonymous User System — COMPLETE
+Eliminated anonymous Convex session system across 5 waves (backend schema, core hooks, web components, auth E2E, docs cleanup). Auth is now binary: signed in or not. 13/13 auth E2E tests passing. All anonymous references removed from schema, code, and docs.
 
-### Sprint 3A: Remove Anonymous User System
-
-**Goal:** Eliminate the anonymous Convex session system. The model becomes binary: you're signed in or you're not. No invisible Convex users, no anonymous→real upgrade flow. Browser execution is free unlimited without any server-side session.
-
-**Why now:** The anonymous system added complexity to every layer (schema, auth, core hooks, UI, tests) without serving any current product goal. Removing it before Sprint 3 Wave 2 (dashboard, conversion hooks) prevents building new features on top of dead infrastructure.
-
-**What stays:** `@convex-dev/auth` password provider, session cookies, proxy route protection, sign-in/sign-up/sign-out flows. The auth system itself is fine — we're only removing the anonymous session layer on top of it.
-
-**Persona ownership:**
-| Package | Persona |
-|---------|---------|
-| `@bnto/backend` | `/backend-engineer` |
-| `@bnto/core` | `/core-architect` |
-| `@bnto/auth` | `/backend-engineer` |
-| `apps/web` | `/frontend-engineer` |
-| `.claude/` docs | No specific persona |
-
-#### Wave 1 (backend — schema + auth simplification)
-
-Strip anonymous plumbing from the data layer. This is the foundation — everything else depends on schema being clean.
-
-- [x] `@bnto/backend` — Remove anonymous auth provider from `convex/auth.ts`. Keep only password provider. Simplify `convex/_helpers/user_lifecycle.ts`
-- [x] `@bnto/backend` — Schema cleanup: remove `isAnonymous`, quota fields, `by_anonymous` index from users table
-- [x] `@bnto/backend` — Simplify `convex/execution_events.ts` to require userId on all execution events
-- [x] `@bnto/backend` — Delete anonymous test files. Update remaining tests to remove anonymous scenarios
-- [x] `@bnto/backend` — **Validation:** `task ui:test` passes for `@bnto/backend`. All remaining tests green
-
-#### Wave 2 (core — hooks + types + adapters)
-
-Remove anonymous hooks and types from `@bnto/core`. This is the transport-agnostic API layer — clean it so the web app has a simple auth surface.
-
-- [x] `@bnto/core` — Delete anonymous/quota hooks. Remove exports from `reactCore.ts`
-- [x] `@bnto/core` — Simplify `useSignUp.ts` and `useAuth.ts`. Auth state is binary
-- [x] `@bnto/core` — Clean types and transforms: remove `isAnonymous` and quota fields
-- [x] `@bnto/core` — Delete anonymous integration tests. Update remaining tests
-- [x] `@bnto/core` — **Validation:** `task ui:test` passes for `@bnto/core`. All remaining tests green
-
-#### Wave 3 (web — components + auth flow)
-
-Remove anonymous UI patterns from the web app. Simplify auth page, remove gate components, clean up providers.
-
-- [x] `apps/web` — Delete `UpgradePrompt.tsx`. **AccountGate retained** — it's the primary conversion component for enticing unauthenticated users to create accounts. Used on `/my-recipes` and available for any gated surface
-- [x] `apps/web` — Simplify providers, NavUser, SignInForm: remove anonymous session handling
-- [x] `apps/web` — Simplify recipe flow: browser execution is always allowed, no gates
-- [x] `apps/web` — **Validation:** `task ui:build` passes. No TypeScript errors from removed types/hooks
-
-#### Wave 4 (auth E2E — verify the simplified system)
-
-Comprehensive E2E tests proving the simplified auth model works end-to-end. Every user-facing flow tested.
-
-- [x] `apps/web` — Delete `anonymous-conversion.spec.ts` E2E test file
-- [x] `apps/web` — **E2E: New user journey** — fresh visitor → /signin defaults to signup mode → fill form → create account → lands on home → user menu shows email → sign out → stays on /signin (no bounce)
-- [x] `apps/web` — **E2E: Returning user journey** — /signin shows "Welcome back" → sign in → lands on home → user menu shows email → can access protected routes
-- [x] `apps/web` — **E2E: Sign-out round-trip** — sign up → home → sign out → /signin → sign back in → home → user menu shows same email
-- [x] `apps/web` — **E2E: Route protection** — unauthenticated user hits /executions → redirected to /signin. Authenticated user hits /signin → redirected to /. Sign out → protected routes blocked again
-- [x] `apps/web` — **E2E: Browser execution without account** — visit recipe page (e.g. /compress-images) with no account → drop files → run → execution completes → download works. No sign-up prompt blocking the flow
-- [x] `apps/web` — **E2E: Form toggle** — signup ↔ signin toggle works. Invalid credentials show error. Duplicate email on signup signs in existing user
-- [x] `apps/web` — **Validation:** All E2E tests pass (13/13 auth, screenshots regenerated). Test account cleanup via global teardown
-
-#### Wave 5 (docs + cleanup)
-
-Update all documentation and strategy files to reflect the simplified auth model. Remove references to anonymous users, quotas, and conversion funnels that no longer exist.
-
-- [x] `.claude/` — Update `PLAN.md`, `pricing-model.md`, `auth-routing.md`, `environment-variables.md` to remove anonymous references
-- [x] `.claude/` — Update journey docs: `journeys/auth.md` (remove anonymous conversion rows)
-- [x] `.claude/` — Update persona skills that reference anonymous patterns: `backend-engineer`, `security-engineer`, `security-review`
-- [x] `@bnto/backend` — Production schema cleanup: mutation to delete orphaned anonymous user records, then deploy strict schema removing the optional fields
-- [x] **Validation:** `task check` passes (full quality gate). Grep verification confirms no dead references
+### Sprint 3: Platform Features (M2) — COMPLETE (Wave 3 tabled)
+Accounts earn their keep: execution history (IndexedDB for unauth, Convex for auth), `/my-recipes` dashboard, PostHog telemetry, Lighthouse CI, save prompt conversion hook, pricing page, browser auth verification, execution history migration on signup. Wave 3 (3 E2E test tasks) tabled — see backlog "Testing: Sprint 3 Deferred E2E Tests."
 
 ---
 
-### Sprint 3: Platform Features (M2)
-**Goal:** Accounts earn their keep. Users who sign up get persistence, history, and a reason to stay. Conversion hooks are natural — Save, History, Server Nodes — not artificial run caps. See [pricing-model.md](strategy/pricing-model.md) for the full free vs premium framework.
-
-**Prerequisite:** Sprint 3A (anonymous user removal) must be complete. The anonymous system is gone — auth is binary (signed in or not). Conversion prompts are value-driven.
-
-**Persona ownership:**
-| Package | Persona |
-|---------|---------|
-| `@bnto/backend` | `/backend-engineer` |
-| `@bnto/core` | `/core-architect` |
-| `apps/web` | `/frontend-engineer` |
-| `infra` | No specific persona — general |
-
-#### Pre-work — COMPLETE
-~~Anonymous→password userId fix~~, FIXME cleanup, privacy policy rewrite, README review, Knip dead code audit (14 files, 11 deps), naming audit, codebase standards review (149 violations), schema analytics fields, site navigation E2E tests.
-
-#### Wave 1 (parallel — core hooks + UI components + infra decisions)
-
-- [x] `@bnto/core` — `/core-architect` — `useExecutionHistory()` hook (paginated, per-user)
-- [x] `@bnto/core` — `/core-architect` — `useUsageAnalytics()` hook (total runs, most-used bntos, last activity)
-- [x] `apps/web` — `/frontend-engineer` — RecipeCard component (name, node count, last run status, last updated)
-- [x] `apps/web` — `/frontend-engineer` — StatusBadge component (pending, running, completed, failed)
-- [x] `apps/web` — `/frontend-engineer` — EmptyState component (no workflows yet)
-- [x] `infra` — **Analytics layer decision:** PostHog selected. Decision doc at `.claude/decisions/analytics.md`. Privacy policy updated to remove premature "no tracking" promises. Copy across FAQ, pricing, hero updated to be honest, not aspirational.
-- [x] `@bnto/core` — `/core-architect` — **PostHog telemetry integration:** `core.telemetry` namespace (client → adapter), `TelemetryProvider` with config injection, E2E test hook via `window.__bnto_telemetry__`. Production-only env vars (Vercel). 2 E2E tests.
-- [x] `infra` — **SEO validation tooling:** Lighthouse CI in GitHub Actions (advisory, all 10 public routes). `task seo:audit` for local audits. Google Search Console verified via Cloudflare DNS. `@lhci/cli` installed as dev dep.
-
-#### Wave 2 (parallel — dashboard + auth behavior)
-
-- [x] `apps/web` — `/frontend-engineer` — Dashboard page (`/my-recipes`): saved workflows, recent executions, usage stats, Recent/Saved tabs, sign-up conversion prompt for unauthenticated users
-- [x] `@bnto/core` + `apps/web` — `/core-architect` + `/frontend-engineer` — **Browser-local execution history:** IndexedDB adapter in `@bnto/core` for unauthenticated users. Core routes internally — `core.executions.useHistory()` returns data regardless of auth state, web app never knows if it came from Convex or IndexedDB. 10-entry cap, oldest rotated out. Stores: slug, timestamp, status, duration. Foundation for AccountGate conversion. *(Merged in #70)*
-- [x] `apps/web` — `/frontend-engineer` — **Execution history tab in `/my-recipes`** (no standalone `/executions` route). List of past runs with status. Re-run for authenticated users only. Three-tier access per Feature Funnel (Notion): unauth=read-only browser-local, free=7-day server-synced with re-run, pro=30-day. Consumes `core.executions.useHistory()` — doesn't know about storage backend. *(PR #74)*
-- [x] `apps/web` — `/frontend-engineer` — **Save prompt** (conversion hook): After successful browser execution for unauthenticated users, surface inline save-focused prompt — "Want to save this recipe? Sign up — it's free." Natural value moment, not a blocking gate. *(PR #74)*
-- [x] `apps/web` — `/frontend-engineer` — **Browser auth behavior verification:** Token expiry, sign-out invalidation, cookie-based default mode (moved from Sprint 2A Wave 5) — PR #75
-- [x] `apps/web` — `/frontend-engineer` — Pricing page update: Free vs Pro side-by-side comparison (persistence, collaboration, premium compute)
-- [x] `apps/web` — `/frontend-engineer` — **Data fetching & skeleton audit:** Scan all existing components in `apps/web/` for violations of the co-located query pattern, prop drilling, mismatched skeletons, missing skeletons, separate `*Skeleton.tsx` files (for simple cases), transforms outside `select`, and loading wrapper anti-patterns. Fix violations in-place. Reference: [data-fetching-strategy.md](strategy/data-fetching-strategy.md), [skeletons.md](rules/skeletons.md) *(PR #74 — no violations found, 5 ssr:false usages all justified)*
-
-#### Wave 3 (sequential — test) — TABLED (March 2026)
-
-**Moved to backlog.** Platform features are built and working. Test coverage deferred — editor MVP is the priority. See backlog section "Testing: Sprint 3 Deferred E2E Tests."
-
-- [ ] ~~`apps/web` — Playwright E2E: AuthGate conversion flow~~
-- [ ] ~~`apps/web` — Playwright E2E: browser-local execution history~~
-- [ ] ~~`@bnto/backend` — Unit tests for execution analytics queries~~
-
-#### Wave 4 (sequential — conversion data migration)
-
-- [x] `@bnto/core` + `@bnto/backend` — `/core-architect` + `/backend-engineer` — **Execution history bug investigation + fix:** (1) Authenticated users may not be writing executions to Convex (only IndexedDB). Verify both write paths work. (2) Re-run button not rendering in execution history despite slug being present — investigate rendering/data issue. (3) **Local→Convex execution history migration on signup:** When a user signs up, read their browser-local execution history (IndexedDB) and batch-write it to Convex. Deduplicate by execution ID. Clear local history after successful migration. The `core.executions` layer should handle this transparently — detect auth state change (unauth→auth) and trigger migration automatically. No user action required. *(PR #78)*
-- [x] `apps/web` — `/frontend-engineer` — Playwright E2E: **anonymous→signup conversion preserves history.** Full journey: (1) run a recipe as unauthenticated user, (2) verify execution appears in browser-local history, (3) sign up, (4) verify the same execution now appears in Convex-backed history on `/my-recipes`, (5) verify browser-local history is cleared. This is the C1→C2 conversion journey from `journeys/auth.md`. *(PR #78)*
-
----
-
-### Sprint 4: Recipe Editor (Headless-First)
-**Goal:** Users can create recipes from a blank canvas or customize existing ones — add/remove/configure nodes, run, and export as `.bnto.json`. The editor is free (pricing-model.md: "recipe editor is free"). Power users who create custom recipes are the highest-intent Pro upgrade candidates.
-
-**Architecture: headless-first.** The editor is built as layers. Logic lives in pure functions, a state machine, and hooks — no visual dependency. The bento box visual (compartment cards on a grid) is one skin; the code editor (CodeMirror 6) is another. Both are views of the same `Definition` in the shared store. Users can switch between them on the fly. See [editor-architecture.md](.claude/strategy/editor-architecture.md) for the shared layer design and [visual-editor.md](.claude/strategy/visual-editor.md) for the bento box visual editor.
-
-```
-@bnto/nodes (types, schemas, validation)      ← already built
-         ↓
-Pure functions (definition CRUD, adapters)     ← Wave 1
-         ↓
-Editor store (Zustand — headless operations)   ← Wave 2
-         ↓
-React hooks (reactive bindings)                ← Wave 2
-         ↓
-Dumb components (BentoCanvas / CodeEditor)     ← Wave 3+
-```
-
-**Two entry points, same state:** `createBlankDefinition()` (empty bento box) or `loadRecipe(slug)` (pre-assembled recipe from `@bnto/nodes`). Both produce the same `EditorState` shape — same operations, same output, same visual.
-
-**Prior art:** Atomiton's `createFieldsFromSchema` pattern. Define node parameter schemas once (`@bnto/nodes/schemas/`), auto-derive config panel UI. ~70-80% of fields need zero UI code. Already built in `@bnto/nodes` — schemas exist for all 10 node types with `visibleWhen`, `requiredWhen`, enum values, min/max, and defaults.
-
-**What this is NOT:** Save to Convex (Sprint 3 prerequisite), execution history, workflow versioning, container node nesting (group/loop as visual sub-canvases), or the JSON/code editor (Sprint 4B — CodeMirror 6, shares the headless store but is a distinct coding-oriented experience with its own persona). Those layer on naturally once the headless foundation exists.
-
-**Persona ownership:**
-| Wave | Lead Persona | Supporting | Rationale |
-|------|-------------|------------|-----------|
-| Wave 1 | — (pure functions, no persona needed) | — | `@bnto/nodes` pure functions — framework-agnostic, no React or ReactFlow dependency |
-| Wave 2 | `/reactflow-expert` | — | Zustand store wraps ReactFlow's change/apply pattern. Definition ↔ Flow adapters are the core seam. ReactFlow Expert owns all graph state management and adapter design |
-| Wave 3 | `/reactflow-expert` + `/frontend-engineer` | — | ReactFlow Expert owns canvas interaction, connection validation. Frontend Engineer owns component composition (RecipeEditor, EditorToolbar, NodeConfigPanel, NodePalette), theming (Motorway tokens), and animation (Animate.* API) |
-
-**Rule:** For ANY work touching ReactFlow APIs, graph state, canvas interaction, or the Definition ↔ Flow adapter layer — invoke `/reactflow-expert`. This persona is THE authority on `@xyflow/react` in this codebase. When visual skin work begins (Wave 3), invoke BOTH `/reactflow-expert` AND `/frontend-engineer` together.
-
-#### Wave 1 (parallel — headless definition operations)
-
-Pure functions that manipulate `Definition` trees. No React, no store, no UI. Fully testable in isolation. These are the atomic operations the editor performs.
-
-- [x] `@bnto/nodes` — **`createBlankDefinition()`**: Returns a minimal valid `Definition` — root group node with one input port and one output port, no children. The "blank canvas" entry point.
-- [x] `@bnto/nodes` — **`addNode(definition, nodeType, position?)`**: Inserts a new child node into the root group with default parameters from the schema. Auto-generates unique ID, creates default ports from `NODE_TYPE_INFO`. Returns new `Definition` (immutable — never mutate).
-- [x] `@bnto/nodes` — **`removeNode(definition, nodeId)`**: Removes a node and all edges connected to it. Returns new `Definition`.
-- [x] `@bnto/nodes` — **`updateNodeParams(definition, nodeId, params)`**: Merges new parameter values into a node's `parameters` object. Validates against `NodeSchema` (type checks, required fields, enum values, min/max). Returns new `Definition` or validation errors.
-- [x] `@bnto/nodes` — **`moveNode(definition, nodeId, position)`**: Updates a node's `position`. Returns new `Definition`.
-- [x] `@bnto/nodes` — **`definitionToRecipe(definition, metadata?)`**: Wraps a `Definition` into a `Recipe` with slug, name, description, accept spec. For export.
-- [x] `@bnto/nodes` — **Unit tests for all CRUD operations**: Every function tested with all 10 node types. Edge cases: remove node (clean removal), update params with invalid values (validation errors), blank definition is valid, move node to new position, nested container operations.
-
-#### Wave 2 (parallel — editor store + React hooks)
-
-Zustand store that wraps the pure functions into a reactive state machine. Hooks provide the React binding layer. Still headless — no visual components. **`/reactflow-expert` leads** — owns the Definition ↔ Bento adapter design and Zustand store architecture.
-
-- [x] `apps/web` — **`useEditorStore` (Zustand)**: Editor state: `definition` (current `Definition`), `selectedNodeId`, `isDirty`, `validationErrors[]`, `executionState` (per-node status map). Actions: `loadRecipe(slug)`, `createBlank()`, `addNode(type)`, `removeNode(id)`, `selectNode(id)`, `updateParams(nodeId, params)`, `moveNode(...)`, `resetDirty()`. All actions delegate to Wave 1 pure functions. Undo/redo via history stack (store snapshots).
-- [x] `apps/web` — **`useEditorNode(nodeId)` hook**: Returns node data + schema + visible params (conditional visibility resolved). Subscribes to store slice — re-renders only when this node changes.
-- [x] `apps/web` — **`useNodePalette()` hook**: Returns available node types from `NODE_TYPE_INFO`, grouped by category, with `browserCapable` flags. Filters server-only nodes based on context (browser editor = browser-capable only).
-- [x] `apps/web` — **`useEditorExport()` hook**: Returns `{ exportAsRecipe, download }` — wraps current definition as a `Recipe` or triggers browser `.bnto.json` file download. Validates definition before export. Pure serialization — no visual dependency.
-- [x] `apps/web` — **Definition ↔ Bento adapters**: `definitionToBento(definition)` → `{ nodes: CompartmentNodeType[] }`. `bentoToDefinition(nodes)` → `Definition`. Pure functions that bridge the headless model to the visual layer. Map node types to compartment variants, positions, and sizes. No edges — execution order derived from compartment position. Unit tested — round-trip: `definition → bento → definition` produces equivalent output.
-- [x] `apps/web` — **Unit tests for store + hooks**: Store operations tested via Vitest (no rendering). Hook tests via `renderHook`. Adapter round-trip tests. Undo/redo verification.
-
-#### Wave 3 (Lean MVP Editor — the priority)
-
-**Goal: Ship the creation loop.** Users can load a recipe (or start blank), add/remove/configure nodes, run it, and export as `.bnto.json`. Functional, not polished. This is the product differentiator — what makes bnto more than another TinyPNG.
-
-**Development home: Motorway `/editor` section.** All editor work lives in a dedicated "Editor" tab/section within the Motorway dev page (`app/(dev)/motorway/`). Iterate here until the editor is ready for production integration into a real route. The Motorway page imports real production components (never mock/fake versions).
-
-**`/reactflow-expert` + `/frontend-engineer` co-lead.** ReactFlow Expert owns canvas interaction and node positioning. Frontend Engineer owns component composition and theming.
-
-**Execution order:** (1) Motorway Editor section with canvas → (2) Toolbar + Palette + ConfigPanel → (3) RecipeEditor composition with run + export.
-
-- [x] `apps/web` — **Motorway showcase component sharing**: `StationNode`, `ConveyorEdge`, `ConveyorCanvas`, `CompartmentNode`, and `BentoCanvas` extracted to shared location. Both Motorway showcase and production editor import from the same source.
-- [x] `apps/web` — **Enable canvas interaction**: `BentoCanvas` accepts `interactive` prop for draggable/selectable/pannable mode with `onNodesChange` for controlled state. Backward compatible.
-- [x] `apps/web` — **Motorway Editor section**: Editor tab in the Motorway dev page. Wraps `EditorProvider` + interactive `BentoCanvas` wired to `useEditorStore`. Recipe selector to load predefined recipes or create blank.
-- [x] `apps/web` — **`EditorToolbar` component**: Action bar — recipe selector dropdown, Add Node, Remove Selected, Run, Export `.bnto.json`, Undo/Redo. Reads/dispatches to `useEditorStore`.
-- [x] `apps/web` — **`NodePalette` component**: Slide-out panel listing available node types from `useNodePalette()`. Click-to-add. Grouped by category. Browser-capable badge.
-- [x] `apps/web` — **`NodeConfigPanel` component**: Side panel that renders when a compartment is selected. Uses `useEditorNode(selectedNodeId)` to get schema + current params. Auto-generates form fields from `ParameterSchema` (Atomiton pattern). `visibleWhen` and `requiredWhen` handled reactively.
-- [x] `apps/web` — **`RecipeEditor` component**: Composes `EditorToolbar` + `BentoCanvas` + `NodeConfigPanel`. Two entry modes: `<RecipeEditor slug="compress-images" />` (loads predefined) or `<RecipeEditor />` (blank canvas).
-
-**Deferred from old Wave 3-4 (not MVP):**
-- Execution state visualization on compartments (status-driven elevation/color) — nice polish, not needed for MVP
-- Tag editor users in Convex (`hasUsedEditor`) — conversion tracking, not needed until save/accounts matter
-- E2E tests — come after the editor works
-- Undo/redo buttons in toolbar — store supports it, UI can wait
-- `EditorModeToggle` placeholder — Sprint 4B concern
+### Sprint 4: Recipe Editor (Headless-First) — COMPLETE
+Headless-first editor: Wave 1 (`@bnto/nodes` pure functions — CRUD, adapters, tests), Wave 2 (Zustand store, ReactFlow adapters, hooks), Wave 3 (Motorway MVP — BentoCanvas, EditorToolbar, NodePalette, NodeConfigPanel, RecipeEditor). Architecture: `@bnto/nodes` → pure functions → Zustand store → React hooks → visual skin. Two entry points: `createBlankDefinition()` or `loadRecipe(slug)`. See [editor-architecture.md](.claude/strategy/editor-architecture.md), [visual-editor.md](.claude/strategy/visual-editor.md).
 
 ---
 
@@ -403,120 +211,153 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 ---
 
-### Sprint 4C: Input & Output Nodes
+### Sprint 4C: Input & Output Nodes — COMPLETE
+Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: Wave 1 (`@bnto/nodes` — I/O types, schemas, recipe updates, 22 tests), Wave 2 (`@bnto/core` adapter reads I/O nodes, editor store singleton constraints), Wave 3 (generic InputRenderer/OutputRenderer, I/O compartment rendering), Wave 4 (RecipeShell migration, per-slug I/O code deleted, E2E verified). See [io-nodes.md](.claude/strategy/io-nodes.md).
 
-**Goal:** Make recipes self-describing. Add `input` and `output` as first-class node types so the `.bnto.json` definition declares what a recipe needs and what it produces — no hardcoded UI per slug. This is the bridge between "predefined recipes with bespoke UI" and "custom recipes anyone can run."
+---
 
-**Required reading:** [io-nodes.md](.claude/strategy/io-nodes.md) — the full architecture reference. Covers the problem, node schemas, migration strategy, engine impact, UI impact, and open questions.
+### Sprint 4D: Extract `@bnto/ui` (Motorway Design System)
 
-**Why now:** The editor (Sprint 4) lets users create recipes. But custom recipes can't run because the UI doesn't know what input to collect or how to present output. I/O nodes close this gap. They also eliminate per-slug UI hardcoding (6 config components + switch router + type map) and enable future community recipe sharing.
+**Goal:** Move all UI primitives, design tokens, and shared components from `apps/web/components/` to `packages/ui/` as `@bnto/ui`. Zero domain knowledge — pure visual building blocks. This establishes the package boundary before the editor ships, making the complex editor code easier to follow for both humans and agents.
 
-**Scope:** Two new node types in `@bnto/nodes`, updated predefined recipes, generic I/O renderers in `apps/web`, and wiring through `@bnto/core`'s browser adapter. No Rust engine changes — I/O nodes are declarations consumed by the environment, not the engine.
+**Persona ownership:** `/frontend-engineer` leads all waves. `/nextjs-expert` advises on import restructuring.
+
+#### Wave 1 (parallel — package scaffold + primitives)
+
+- [ ] `packages/ui` — **Bootstrap package**: Create `packages/ui/` with `package.json` (`@bnto/ui`), `tsconfig.json`, barrel export. Zero runtime deps except React + Tailwind
+- [ ] `packages/ui` — **Move primitives**: Move `apps/web/components/primitives/` → `packages/ui/src/primitives/`. These are thin shadcn/Radix wrappers with zero domain knowledge
+- [ ] `packages/ui` — **Move utility layer**: Move `cn.ts`, `create-cn.ts` → `packages/ui/src/utils/`. These are the styling foundation
+- [ ] `packages/ui` — **Move CSS tokens**: Move design token definitions from `globals.css` into a consumable format. The `@theme inline` block and token variables stay in the app's CSS but reference `@bnto/ui` token values
+
+#### Wave 2 (parallel — shared components)
+
+- [ ] `packages/ui` — **Move layout components**: `Stack`, `Row`, `Grid`, `Container`, `PageLayout`, `BentoGrid` → `packages/ui/src/layout/`
+- [ ] `packages/ui` — **Move typography components**: `Heading`, `Text`, `Badge`, `Label` → `packages/ui/src/typography/`
+- [ ] `packages/ui` — **Move feedback components**: `Skeleton`, `LinearProgress`, `ToolbarProgress`, `Spinner` → `packages/ui/src/feedback/`
+- [ ] `packages/ui` — **Move surface components**: `Card` (with surface/pressable system), `Separator` → `packages/ui/src/surface/`
+- [ ] `packages/ui` — **Move interaction components**: `Button`, `Switch`, `Select`, `Slider`, `RadialSlider`, `RadioGroup`, `Checkbox` → `packages/ui/src/interaction/`
+- [ ] `packages/ui` — **Move overlay components**: `Dialog`, `Sheet`, `Popover`, `DropdownMenu`, `Tooltip` → `packages/ui/src/overlay/`
+- [ ] `packages/ui` — **Move animation components**: `Animate.*` composition API → `packages/ui/src/animation/`
+
+#### Wave 3 (sequential — rewire + verify)
+
+- [ ] `apps/web` — **Update all imports**: Replace `@/components/ui/` and `@/components/primitives/` imports with `@bnto/ui` across the entire web app
+- [ ] `apps/web` — **Tailwind v4 source directive**: Add `@source "../../node_modules/@bnto/ui"` to `globals.css` so Tailwind scans the extracted package
+- [ ] `apps/web` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass. No behavior changes — only import paths changed
+
+---
+
+### Sprint 4E: Extract `@bnto/editor`
+
+**Goal:** Move all editor components from `apps/web/components/editor/` to `packages/editor/` as `@bnto/editor`. Editor depends on `@bnto/ui` + `@bnto/core` + `@bnto/nodes`. This separates the complex editor system from the web app shell.
+
+**Prerequisite:** Sprint 4D complete (`@bnto/ui` extracted).
+
+**Persona ownership:** `/frontend-engineer` + `/reactflow-expert` lead.
+
+#### Wave 1 (parallel — package scaffold + move)
+
+- [ ] `packages/editor` — **Bootstrap package**: Create `packages/editor/` with `package.json` (`@bnto/editor`), `tsconfig.json`. Dependencies: `@bnto/ui`, `@bnto/core`, `@bnto/nodes`, `@xyflow/react`
+- [ ] `packages/editor` — **Move editor components**: Move `apps/web/components/editor/` → `packages/editor/src/`. This includes `RecipeEditor/`, `EditorPanel/`, `CanvasToolbar`, `NodeConfigPanel`, `NodePalette`, `CompartmentNode`, adapters, hooks, store, actions
+- [ ] `packages/editor` — **Move editor store**: Ensure `useEditorStore` and all editor Zustand state lives in `@bnto/editor`
+
+#### Wave 2 (sequential — rewire + verify)
+
+- [ ] `apps/web` — **Update all editor imports**: Replace `@/components/editor/` imports with `@bnto/editor` across the web app
+- [ ] `apps/web` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass. No behavior changes
+- [ ] `apps/web` — **Tailwind source directive**: Add `@source "../../node_modules/@bnto/editor"` to `globals.css` if editor has its own Tailwind classes
+
+---
+
+### Sprint 4F: Code Standards Review
+
+**Goal:** Audit all active code against updated `code-standards.md` (March 2026 tightened limits). Every file conforms to size limits, naming conventions, and composition patterns. Clean slate before the editor production sprint.
+
+**Prerequisite:** Sprint 4E complete (packages extracted, imports stable).
+
+**Persona ownership:** `/frontend-engineer` leads. Each package audit is an independent task.
+
+#### Wave 1 (parallel — per-package audit)
+
+- [ ] `packages/ui` — **File size + structure audit**: Scan for files over 100 lines. Split oversized files. One export per file. Folder + barrel where earned. Verify dot-notation compliance
+- [ ] `packages/editor` — **File size + structure audit**: Same scan. Editor files are likely the biggest offenders — split aggressively. Verify actions pattern (pure functions for state mutations, thin hook wrappers)
+- [ ] `packages/core` — **File size + structure audit**: Oversized adapters, services, clients. One function per file in utils. Verify `select` rule on all `useQuery` calls
+- [ ] `packages/@bnto/backend` — **File size + structure audit**: Convex function files, helpers, validators
+- [ ] `packages/@bnto/nodes` — **File size + structure audit**: Schema files, registry, helpers
+- [ ] `apps/web` — **File size + structure audit**: Pages, route components, lib/. Focus on what remains after UI/editor extraction
+
+#### Wave 2 (sequential — cross-cutting + verify)
+
+- [ ] `all packages` — **Cross-package DRY audit**: Identify duplicated utilities across packages (`cn`, `createCn`, type guards, format helpers). Consolidate into `@bnto/ui` (styling utils) or `@bnto/core` (logic utils) as appropriate
+- [ ] `all packages` — **Dot-notation compliance sweep**: Every multi-part component uses dot-notation. Migrate any remaining flat imports
+- [ ] `all packages` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after all restructuring
+
+---
+
+### Sprint 5: Editor to Production (M2 Completion)
+
+**Goal:** Ship the editor as a real product surface. Users can access `/editor`, build recipes from scratch or customize predefined ones, run them, see results, and save to their account. This is the M2 completion path — the editor gives users a reason to create accounts.
+
+**Prerequisite:** Sprint 4F (Code Standards Review) complete. Packages extracted (`@bnto/ui`, `@bnto/editor`), code clean. Uncommitted editor work on `main` must be branched/PR'd first.
 
 **Persona ownership:**
 | Wave | Lead Persona | Supporting | Rationale |
 |------|-------------|------------|-----------|
-| Wave 1 | — (pure TS, no persona needed) | — | `@bnto/nodes` type definitions, schemas, recipe updates — framework-agnostic |
-| Wave 2 | `/core-architect` | — | Browser adapter reads I/O nodes to configure execution. Core owns the bridge |
-| Wave 3 | `/frontend-engineer` | `/reactflow-expert` | Generic I/O renderers replace hardcoded components. ReactFlow Expert advises on editor compartment rendering |
-| Wave 4 | `/frontend-engineer` | — | Migration + E2E verification |
+| Wave 1 | `/frontend-engineer` | `/reactflow-expert` | Node visual identity, compartment redesign |
+| Wave 2 | `/frontend-engineer` | — | Production route, entry points, navigation |
+| Wave 3 | `/frontend-engineer` | `/reactflow-expert` | Execution integration, elevation-driven progress |
+| Wave 4 | `/backend-engineer` + `/core-architect` + `/frontend-engineer` | — | Save infrastructure, My Recipes integration |
+| Wave 5 | `/quality-engineer` + `/frontend-engineer` | — | E2E tests, keyboard shortcuts, polish |
 
-**Dependencies:** Sprint 4 Wave 1 (`@bnto/nodes` pure functions) must be complete — it is. Sprint 4 Wave 3 (editor components) should be complete for editor integration — it is. Sprint 4B (Code Editor) is NOT a dependency.
+#### Wave 1 (parallel — Compartment Node Visual Redesign Phase 1)
 
-**Prerequisite:** RF store refactor complete (PRs #86-#94 merged). All waves are unblocked.
+Make every node immediately identifiable at a glance. Icon registry + category color mapping. This is the highest-impact visual improvement — transforms the editor from prototype to product.
 
-#### Wave 1 (parallel — node type definitions + schemas + recipe updates) `@bnto/nodes`
+- [ ] `@bnto/editor` — **Icon registry**: Create `adapters/nodeIcons.ts` — maps `NodeTypeName` to Lucide icon component. Pure data, one file. Icons: image=`ImageIcon`, spreadsheet=`Table`, file-system=`FolderOpen`, transform=`Shuffle`, edit-fields=`PenLine`, http-request=`Globe`, shell-command=`TerminalSquare`, group=`Braces`, loop=`RefreshCw`, parallel=`Columns3`, input=`Upload`, output=`Download`
+- [ ] `@bnto/editor` — **Category color registry**: Create `adapters/nodeColors.ts` — maps `NodeCategory` to `CompartmentVariant`. Pure data, one file. image=primary, spreadsheet=secondary, file=accent, data=muted, network=secondary, control=warning, system=muted, io=info
+- [ ] `@bnto/editor` — **CompartmentNode redesign**: Update `CompartmentNode.tsx` — add large icon (32px) above label, restructure from centered-text to icon-above-text layout. Import from icon/color registries. Category-driven variant color
+- [ ] `@bnto/editor` — **Adapter integration**: Update `definitionToBento` adapter to use icon/color registries when converting Definition to BentoNode (set variant from category, set size from tier)
 
-Define the two new node types, their parameter schemas, and update all 6 predefined recipes to use them. Pure TypeScript — no React, no UI, no engine changes.
+#### Wave 2 (parallel — Production Route + Entry)
 
-**Internal ordering:** Tasks 1-5 (registry, schemas, helpers) can run in parallel. Tasks 6-8 (recipe updates, blank definition, tests) depend on 1-5 being complete.
+Create the `/editor` route and wire entry points from recipe pages and navigation.
 
-- [x] `@bnto/nodes` — **Add `input` and `output` to node type registry**: Added to `NODE_TYPES`, `NodeTypeName`, `NODE_TYPE_INFO`. Category `"io"`, `browserCapable: true`, `isContainer: false`.
-- [x] `@bnto/nodes` — **Input node schema** (`schemas/input.ts`): Parameters: `mode`, `accept`, `extensions`, `label`, `multiple`, `maxFileSize`, `maxFiles`, `placeholder`.
-- [x] `@bnto/nodes` — **Output node schema** (`schemas/output.ts`): Parameters: `mode`, `filename`, `zip`, `label`, `autoDownload`.
-- [x] `@bnto/nodes` — **`deriveAcceptSpec(definition)`**: Pure function extracts accept spec from input node.
-- [x] `@bnto/nodes` — **`getInputNode(definition)` / `getOutputNode(definition)`**: Helper functions find I/O nodes in definition tree.
-- [x] `@bnto/nodes` — **Update all 6 predefined recipes**: Added input/output nodes to all recipes.
-- [x] `@bnto/nodes` — **Update `createBlankDefinition()`**: Blank definitions start with input + output nodes.
-- [x] `@bnto/nodes` — **Unit tests**: 22 tests covering schemas, helpers, recipes, blank definition, round-trip.
+- [ ] `apps/web` — `/frontend-engineer` — Create `/editor` route with AccountGate (sign-in prompt for unauthenticated users)
+- [ ] `apps/web` — `/frontend-engineer` — `?from={slug}` query param loads predefined recipe from `@bnto/nodes` registry
+- [ ] `apps/web` — `/frontend-engineer` — Auto-scaffold Input + Output compartments for blank canvas (default when no `?from=`)
+- [ ] `apps/web` — `/frontend-engineer` — Add `/editor` to app navigation (authenticated users only)
+- [ ] `apps/web` — `/frontend-engineer` — "Open in Editor" bridge button on recipe pages → `/editor?from={slug}`
 
-#### Wave 2 (parallel — core adapter + editor store updates) `@bnto/core` + `apps/web`
+#### Wave 3 (sequential — Execution Integration)
 
-Wire the browser adapter to read I/O nodes from the definition instead of relying on `Recipe.accept` and hardcoded output handling. Update the editor store to treat I/O nodes as persistent (always present, not deletable).
+Wire the Run button to browser WASM execution. Elevation-driven progress on compartments. Results routed to Output node.
 
-- [x] `@bnto/core` — **Browser adapter reads input node**: `deriveAcceptedTypes(definition)` reads input node for accepted types. `deriveOutputConfig(definition)` reads output node config. Both with wildcard fallback.
-- [x] `@bnto/core` — **Browser adapter reads output node**: Output config derived from definition's output node (mode, zip, autoDownload, label).
-- [x] `apps/web` — **Editor store: I/O node protection**: `addNode()` enforces singleton constraint for I/O types. `removeNode()` prevents deletion (deletion-protected). Actions pattern with pure functions + thin hook wrappers.
-- [x] `apps/web` — **Definition ↔ Bento adapters**: `definitionToBento()` maps I/O nodes to `"info"` visual variant. `bentoToDefinition()` preserves I/O node constraints.
+- [ ] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `core.executions.createExecution()` → browser WASM engine
+- [ ] `@bnto/editor` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed). Leverage existing Card spring animations
+- [ ] `@bnto/editor` — `/frontend-engineer` — Results routed to Output node config panel (download list)
+- [ ] `@bnto/editor` — `/frontend-engineer` — Auto-download toggle on Output node
+- [ ] `@bnto/editor` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute)
+- [ ] `@bnto/editor` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant)
 
-#### Wave 3 (parallel — generic UI renderers) `apps/web`
+#### Wave 4 (parallel — Save + Bridge)
 
-Build generic `InputRenderer` and `OutputRenderer` components that read the I/O node config and render the appropriate widget. These replace the hardcoded per-slug I/O.
+Convex persistence for custom recipes. My Recipes integration. This is the M2 conversion moment — users create recipes, want to save them, create accounts.
 
-- [x] `apps/web` — **`InputRenderer` component**: Reads input node from definition, renders FileUpload.Dropzone with derived accept/extensions.
-- [x] `apps/web` — **`OutputRenderer` component**: Reads output node from definition, renders FileCard grid + download controls.
-- [x] `apps/web` — **Editor: I/O compartment rendering**: I/O nodes render with `"info"` variant, upload/download icons, `getIoIcon()` helper. Pinned first/last in position order.
-- [x] `apps/web` — **Unit tests for renderers**: Tests for `getIoIcon()`, `toDropzoneAccept()`, adapter functions with I/O node derivation.
+- [ ] `@bnto/backend` — `/backend-engineer` — Recipe save mutation (Convex schema: recipes table with userId, definition, metadata)
+- [ ] `@bnto/core` — `/core-architect` — `core.recipes.save()` and `core.recipes.useMyRecipes()` hooks
+- [ ] `apps/web` — `/frontend-engineer` — Save button in editor toolbar, tier limits (Free: 3 recipes, Pro: unlimited)
+- [ ] `apps/web` — `/frontend-engineer` — My Recipes integration (load saved recipes into editor)
+- [ ] `apps/web` — `/frontend-engineer` — Dirty state tracking + unsaved changes warning on navigation
 
-#### Wave 4 (sequential — migration + verification) `apps/web`
+#### Wave 5 (sequential — E2E + Polish)
 
-Migrate the recipe page to use generic renderers. Verify all 6 predefined recipes work with the new I/O nodes. Clean up hardcoded components.
+End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude/journeys/editor.md) for the full test matrix.
 
-- [x] `apps/web` — **Migrate `RecipeShell` + `useRecipeFlow`**: RecipeShell uses hook-provided `acceptLabel`/`dropzoneAccept` from definition's input node. `useRecipeFlow` derives I/O config via `deriveAcceptedTypes(definition)` from `@bnto/core`. Trust boundary cast at `recipe.definition as Definition`.
-- [x] `apps/web` — **Delete per-slug I/O code**: Deleted `getAcceptedTypes.ts` (79 lines) and its tests (107 lines). All slug-based I/O logic replaced by definition-based derivation. `BntoConfigMap`/`DEFAULT_CONFIGS` correctly preserved (they handle processing config, not I/O).
-- [ ] `apps/web` — **E2E verification**: All 6 predefined recipes still work end-to-end. *(Requires running dev server)*
-- [x] `apps/web` — **Validation**: `task check` passes clean (build + test + lint).
-
----
-
-### Sprint 4D: UI Package Extraction (`@bnto/ui` / Motorway)
-
-**Goal:** Extract `apps/web/components/ui/` into `packages/ui` (`@bnto/ui`) so the editor package (`@bnto/editor`, Sprint 4E) can import shared UI primitives without depending on the web app. This is the "second consumer" that justifies the extraction.
-
-**Can run in parallel with Sprint 4C** (I/O Nodes). No shared files — 4C touches `@bnto/nodes` + `@bnto/core` + recipe pages, 4D touches `components/ui/` and package infrastructure.
-
-**What moves:** Everything in `apps/web/components/ui/` (~53 files, ~62 total with subdirectories). This includes primitives (Button, Card, Dialog, etc.), composition components (Animate, BentoGrid, Grid), layout (Container, Row, Stack, AppShell), and utilities (createCn, cn, icons).
-
-**What stays in `apps/web`:**
-- `components/blocks/` — app-specific compositions (Navbar, Footer, RecipeCard, AuthGate, etc.)
-- `components/editor/` — editor components (future `@bnto/editor`)
-- `components/ThemeProvider.tsx`, `useTheme.ts` — app-level theme wiring
-- `app/globals.css` — CSS token definitions (consumed by `@bnto/ui` via Tailwind `@source`)
-
-**Persona ownership:**
-| Wave | Lead Persona | Rationale |
-|------|-------------|-----------|
-| Wave 1 | `/frontend-engineer` | Package scaffolding, build config, exports |
-| Wave 2 | `/frontend-engineer` | Move files, update all imports across `apps/web` |
-| Wave 3 | `/frontend-engineer` | Verify build, tests, E2E, no regressions |
-
-#### Wave 1 (sequential — package setup)
-
-- [ ] `packages/ui` — **Scaffold `@bnto/ui` package**: `package.json` (name: `@bnto/ui`), `tsconfig.json`, barrel `index.ts`. Match build config pattern from `@bnto/core`. Add to `pnpm-workspace.yaml` if needed. Add `@bnto/ui` as dependency of `apps/web`.
-- [ ] `packages/ui` — **Tailwind source directive**: Add `@source` in `apps/web/app/globals.css` pointing to `@bnto/ui` so Tailwind scans the extracted package for class names. See [gotchas.md](rules/gotchas.md#tailwind-v4--monorepo).
-- [ ] `packages/ui` — **Export strategy**: Decide barrel vs direct imports. Primitives are leaf components — barrel re-export is fine for server components, but client components should be importable directly to avoid bundle bloat. Document the pattern.
-
-#### Wave 2 (sequential — migration)
-
-- [ ] `packages/ui` — **Move `components/ui/` files**: Move all files from `apps/web/components/ui/` to `packages/ui/src/`. Preserve directory structure (e.g., `FileUpload/` folder stays as-is).
-- [ ] `apps/web` — **Update all imports**: Find-and-replace `@/components/ui/` → `@bnto/ui` (or the agreed import pattern) across all files in `apps/web/`. This includes `components/blocks/`, `components/editor/`, all page files, and any `_components/` folders.
-- [ ] `packages/ui` — **Resolve internal dependencies**: `createCn.ts` imports from `tailwind-variants`, `cn.ts` imports from `clsx`/`tailwind-merge`. Ensure these are dependencies of `@bnto/ui`, not just `apps/web`. Move any shared type files that UI components depend on.
-- [ ] `packages/ui` — **Handle theme tokens**: UI components reference CSS variables (`--background`, `--primary`, etc.) via Tailwind utilities. These are defined in `apps/web/app/globals.css`. Verify that `@bnto/ui` components work correctly when the CSS is provided by the consuming app (no bundled CSS in the package).
-
-#### Wave 3 (sequential — verify)
-
-- [ ] `apps/web` — **Build verification**: `task ui:build` passes. No TypeScript errors from updated imports. No missing module errors.
-- [ ] `apps/web` — **Test verification**: `task ui:test` passes. `task e2e` passes. No visual regressions.
-- [ ] `apps/web` — **Stale reference scan**: Grep for any remaining `@/components/ui/` imports — should be zero. Grep for any remaining `../ui/` relative imports that should now use `@bnto/ui`.
-- [ ] `packages/ui` — **Package build**: `@bnto/ui` builds independently (`pnpm --filter @bnto/ui build`). Exports resolve correctly when imported from `apps/web`.
-
----
-
-### Sprint 4E: Editor Package Extraction (`@bnto/editor`) — Planned
-
-**Goal:** Extract `apps/web/components/editor/` into `packages/editor` (`@bnto/editor`). Depends on Sprint 4D (`@bnto/ui` must be a package first so `@bnto/editor` can import from it).
-
-**Status:** Not yet scoped in detail. Will be planned after Sprint 4D ships. Key consideration: editor components import from both `@bnto/ui` (primitives) and `@bnto/core` (execution, store hooks). The extraction must preserve these dependency directions without creating circular imports.
+- [ ] `apps/web` — `/quality-engineer` — E2E test suite for editor entry + build + execute + export flows
+- [ ] `apps/web` — `/quality-engineer` — Predefined recipe parity tests (all 6 recipes via `?from={slug}`)
+- [ ] `apps/web` — `/frontend-engineer` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
+- [ ] `apps/web` — `/quality-engineer` — Round-trip fidelity test (export → re-import → deep equality)
+- [ ] `apps/web` — `/frontend-engineer` — Accessibility audit (focus management, screen reader labels on canvas nodes)
 
 ---
 
@@ -526,7 +367,7 @@ Migrate the recipe page to use generic renderers. Verify all 6 predefined recipe
 
 **Desktop tech: Tauri (Rust-native).** M1 Rust evaluation passed — one codebase for browser WASM + desktop native + CLI.
 
-### Sprint 5: Desktop Bootstrap
+### Sprint 6: Desktop Bootstrap
 
 **Persona ownership:**
 | Package | Persona |
@@ -554,9 +395,9 @@ Migrate the recipe page to use generic renderers. Verify all 6 predefined recipe
 
 ---
 
-### Sprint 6: Local Execution
+### Sprint 7: Local Execution
 
-**Persona ownership:** Same as Sprint 5 — `/frontend-engineer` (desktop UI), `/core-architect` (adapter), `/rust-expert` (engine).
+**Persona ownership:** Same as Sprint 6 — `/frontend-engineer` (desktop UI), `/core-architect` (adapter), `/rust-expert` (engine).
 
 #### Wave 1 (parallel — execution)
 
@@ -583,9 +424,9 @@ Migrate the recipe page to use generic renderers. Verify all 6 predefined recipe
 
 **Goal:** Wire up payments, enforce quotas, make the product feel complete.
 
-**"Ready to charge" gate:** Before Sprint 7, confirm: real users running browser bntos, conversion hooks built and tested (Save, History, Premium), people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
+**"Ready to charge" gate:** Before Sprint 8, confirm: real users running browser bntos, conversion hooks built and tested (Save, History, Premium), people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
 
-### Sprint 7: Stripe + Pro Tier (M5)
+### Sprint 8: Stripe + Pro Tier (M5)
 
 **Goal:** First revenue. Pro sells real value — not artificial limits on browser-native operations.
 
@@ -620,7 +461,7 @@ Migrate the recipe page to use generic renderers. Verify all 6 predefined recipe
 
 ---
 
-### ~~Sprint 8: Visual Editor + History~~
+### ~~Old Sprint 8: Visual Editor + History~~
 
 **ABSORBED into Sprint 4 (Recipe Editor).** Sprint 4 now covers the full visual editor: headless definition CRUD, Zustand store, ReactFlow canvas, node palette, property editor, and execution state visualization. The headless-first architecture means all visual editor work builds on the same pure-function foundation.
 
@@ -635,83 +476,15 @@ Migrate the recipe page to use generic renderers. Verify all 6 predefined recipe
 
 ## Immediate Backlog
 
-### Infra: Convex Production Deployment Pipeline
-
-**Priority: High.** Convex production (`gregarious-donkey-712`) was never deployed — discovered when anonymous auth started failing on bnto.io with 400 errors. `npx convex deploy --yes` and `npx @convex-dev/auth` had to be run manually. There is no automatic mechanism to deploy Convex functions to production when code merges to `main`.
-
-- [x] `infra` — Investigate options: GitHub Actions step on merge to main, Vercel build hook (`--cmd`), or manual deploy gate
-- [x] `infra` — Implement chosen mechanism so Convex prod stays in sync with main
-- [x] `.claude/rules/pre-commit.md` — Add Convex deploy reminder to the push/PR workflow if manual
-
-### Infra: PostHog Events Not Appearing in Dashboard
-
-**Priority: High.** Recipe telemetry events (`files_added`, `recipe_run_started`, `recipe_run_completed`, etc.) are wired and verified in E2E tests via `window.__bnto_telemetry__`, but events may not be reaching the PostHog dashboard when using bnto.io in production.
-
-- [x] `apps/web` — Verify `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` are set correctly on Vercel production
-- [x] `apps/web` — Check if PostHog `init()` is actually called in production (DNT check, env var presence)
-- [x] `apps/web` — Inspect network tab on bnto.io for PostHog requests (`/i/v0/e/` or `/decide/`)
-- [x] `apps/web` — Verify events appear in PostHog Live Events view after a real compress-images run
+*All immediate items complete — Convex deploy pipeline and PostHog events resolved. See completed sprints.*
 
 ---
 
 ## Backlog
 
-### UX: Compartment Node Visual Redesign (Mini Motorways Buildings)
+### UX: Compartment Node Visual Redesign — Phases 2-3 (Mini Motorways Buildings)
 
-**Priority: High.** The current `CompartmentNode` renders as a flat colored card with centered text — all nodes look identical except for color. There's no visual personality, no sense of what each node *does*, and no connection to the Mini Motorways "building" metaphor. Nodes should be immediately identifiable at a glance, like buildings on a Mini Motorways map.
-
-**Current state:** `CompartmentNode.tsx` renders a `.surface` Card with `label` + `sublabel` text. Variant colors exist (primary, secondary, accent, muted, success, warning) but are arbitrarily assigned. All nodes are the same 120×120 size. No icons. No category-driven visual identity.
-
-**Goal:** Each compartment feels like a distinct building in a bento box. You can identify what a node does without reading its label. The canvas reads like a well-packed bento — varied compartment sizes, category-driven colors, icons as visual anchors. Execution state drives elevation changes with satisfying springy pops as compartments progress.
-
-**Design principles:**
-- **No edges/connections** — execution order = compartment position. The bento box metaphor is about spatial arrangement, not wiring
-- **Elevation-driven execution state** — compartments physically rise and settle as they execute. The `.surface` Card system already supports this via the `elevation` prop with spring animations
-- **Icons are the building silhouette** — large, centered, immediately communicates the node's purpose
-- **Category = neighborhood** — nodes of the same category share a color, making the canvas scannable
-
-**Phase 1: Icon registry + category color mapping**
-
-Add a prominent icon to each node type and map categories to consistent variant colors. This is the biggest visual bang for effort — immediately makes every node recognizable.
-
-Icon mapping (Lucide icons):
-
-| Node Type | Icon | Visual metaphor |
-|---|---|---|
-| `image` | `ImageIcon` | Universal image symbol |
-| `spreadsheet` | `Table` | Rows and columns |
-| `file-system` | `FolderOpen` | File operations |
-| `transform` | `Shuffle` | Data flowing between shapes |
-| `edit-fields` | `PenLine` | Editing values |
-| `http-request` | `Globe` | Network/external call |
-| `shell-command` | `TerminalSquare` | Command line |
-| `group` | `Braces` | Container/grouping |
-| `loop` | `RefreshCw` | Iteration/cycling |
-| `parallel` | `Columns3` | Concurrent lanes |
-
-Category → color mapping:
-
-| Category | Variant | Rationale |
-|---|---|---|
-| `image` | `primary` (terracotta) | Hero category, warm and prominent |
-| `spreadsheet` | `secondary` (teal) | Cool counterpoint, data-oriented |
-| `file` | `accent` (golden) | Foundation operations |
-| `data` | `muted` (warm off-white) | Background/subtle operations |
-| `network` | `secondary` (teal) | External connections |
-| `control` | `warning` (warm orange) | Orchestration, meta-level |
-| `system` | `muted` (warm off-white) | Power-user, understated |
-
-Node anatomy (Phase 1):
-```
-┌─────────────────────┐
-│                     │
-│     [icon 32px]     │  ← Large category icon, muted foreground
-│                     │
-│      Image          │  ← Label (font-display, semibold, sm)
-│      image          │  ← Sublabel (font-mono, xs, muted)
-│                     │
-└─────────────────────┘
-```
+**Phase 1 promoted to Sprint 5 Wave 1** (icon registry + category color mapping). Phases 2-3 remain in backlog as polish.
 
 **Phase 2: Elevation-driven execution states**
 
@@ -754,65 +527,21 @@ The grid layout algorithm should pack compartments like a real bento box — no 
 - [ ] `apps/web` — **Motorway showcase**: Update Motorway editor showcase to demonstrate the new visual treatment with all node types visible
 - [ ] `apps/web` — **E2E verification**: Verify editor canvas renders correctly with new node visuals. Update screenshots if page-level layout changed
 
-### UX: Editor User Journey — Full Implementation
+### ~~UX: Editor User Journey — Full Implementation~~ — PROMOTED TO SPRINT 5
 
-**Priority: High.** The editor exists (Sprint 4D/4E) — canvas, node palette, config panel, undo/redo, export. But there's no production route, no execution integration, no file I/O on the canvas, and no save. This task wires the editor into a complete user journey.
+**Absorbed into Sprint 5: Editor to Production (March 2026).** All waves promoted. Wave 2 (I/O Nodes) delivered by Sprint 4C (PR #102). See Sprint 5 for the active task list.
 
 **Strategy doc:** [editor-user-journey.md](.claude/strategy/editor-user-journey.md)
 **E2E test matrix:** [journeys/editor.md](.claude/journeys/editor.md)
 
-**Success criteria:**
+**Success criteria (carried to Sprint 5):**
 1. Task completion — build compress-images from scratch, run it, download results, < 5 min
 2. Round-trip fidelity — export `.bnto.json` → re-import → identical state
 3. Predefined recipe parity — editor is a superset of recipe pages
 
-#### Wave 1 (parallel — Production Route + Entry) refs: Discover + Enter
+### ~~Chore: Codebase File Size & Structure Audit~~ — PROMOTED TO SPRINT 4F
 
-- [ ] `apps/web` — `/frontend-engineer` — Create `/editor` route with AccountGate (sign-in prompt for unauthenticated users)
-- [ ] `apps/web` — `/frontend-engineer` — `?from={slug}` query param loads predefined recipe from `@bnto/nodes` registry
-- [ ] `apps/web` — `/frontend-engineer` — Auto-scaffold Input + Output compartments for blank canvas (default when no `?from=`)
-- [ ] `apps/web` — `/frontend-engineer` — Add `/editor` to app navigation (authenticated users only)
-- [ ] `apps/web` — `/frontend-engineer` — "Open in Editor" bridge button on recipe pages → `/editor?from={slug}`
-
-#### Wave 2 (parallel — Input/Output Nodes) refs: Build + Test, Interaction Model
-
-**Dependency:** Sprint 4C (I/O Nodes) provides `@bnto/nodes` foundation.
-
-- [ ] `@bnto/nodes` — `/frontend-engineer` — `input` and `output` node types with full `ParameterSchema` (mode, accept, extensions, label, multiple, etc.)
-- [ ] `apps/web` — `/frontend-engineer` — Input node compartment on canvas with config panel = dropzone + file list
-- [ ] `apps/web` — `/frontend-engineer` — Output node compartment on canvas with config panel = download list + auto-download toggle
-- [ ] `@bnto/nodes` — `/frontend-engineer` — Update all 6 predefined recipe definitions with explicit I/O nodes
-- [ ] `apps/web` — `/frontend-engineer` — Generic `InputRenderer` and `OutputRenderer` driven by node parameters
-- [ ] `apps/web` — `/frontend-engineer` — I/O nodes are always present — users can configure but not delete them
-
-#### Wave 3 (sequential — Execution Integration) refs: Test + Refine
-
-- [ ] `apps/web` — `/frontend-engineer` — Wire Run button → `core.executions.createExecution()` → browser WASM engine
-- [ ] `apps/web` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed)
-- [ ] `apps/web` — `/frontend-engineer` — Results routed to Output node config panel (download list)
-- [ ] `apps/web` — `/frontend-engineer` — Auto-download toggle on Output node
-- [ ] `apps/web` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute)
-- [ ] `apps/web` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant)
-
-#### Wave 4 (parallel — Save + Bridge) refs: Save, Feature Funnel
-
-- [ ] `@bnto/backend` — `/backend-engineer` — Recipe save mutation (Convex schema: recipes table with userId, definition, metadata)
-- [ ] `@bnto/core` — `/core-architect` — `core.recipes.save()` and `core.recipes.useMyRecipes()` hooks
-- [ ] `apps/web` — `/frontend-engineer` — Save button in editor toolbar, tier limits (Free: 3 recipes, Pro: unlimited)
-- [ ] `apps/web` — `/frontend-engineer` — My Recipes integration (load saved recipes into editor)
-- [ ] `apps/web` — `/frontend-engineer` — Dirty state tracking + unsaved changes warning on navigation
-
-#### Wave 5 (sequential — E2E + Polish) refs: E2E Matrix, Success Criteria
-
-- [ ] `apps/web` — `/quality-engineer` — E2E test suite for editor entry + build + execute + export flows (see [journeys/editor.md](.claude/journeys/editor.md))
-- [ ] `apps/web` — `/quality-engineer` — Predefined recipe parity tests (all 6 recipes via `?from={slug}`)
-- [ ] `apps/web` — `/frontend-engineer` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
-- [ ] `apps/web` — `/quality-engineer` — Round-trip fidelity test (export → re-import → deep equality)
-- [ ] `apps/web` — `/frontend-engineer` — Accessibility audit (focus management, screen reader labels on canvas nodes)
-
-### Chore: Codebase File Size & Structure Audit
-
-**Priority: High.** Code standards have been tightened (March 2026): files target 50-100 lines (hard cap 250), functions get their own file if reused or more than a few lines, components with more than 2-3 sub-components break into folder + barrel. The existing codebase predates these tighter limits and needs a sweep.
+**Promoted (March 2026).** Core audit scope absorbed into Sprint 4F (Code Standards Review). The `@bnto/utils` package idea below remains in backlog — Sprint 4F consolidates shared utils into `@bnto/ui` (styling) or `@bnto/core` (logic) instead of creating a separate package.
 
 **Goal:** Every file in the active codebase (`apps/web/`, `packages/core/`, `packages/@bnto/`) conforms to the updated size limits in `code-standards.md`. Directory structure reads like a table of contents — each file named after what it does, co-located tests where applicable.
 
@@ -1118,7 +847,7 @@ Current E2E tests mix CSS classes, `getByRole`, `getByText`, and `data-testid`. 
 
 ### Testing: Concurrent Quota Race Condition — M4/M5 (server-side quotas)
 
-**Milestone: M4/M5.** Quota enforcement only applies to server-side bntos. Browser bntos are free unlimited. This race condition matters when server-side execution has limits.
+**Milestone: M4/M5 (Sprint 8+).** Quota enforcement only applies to server-side bntos. Browser bntos are free unlimited. This race condition matters when server-side execution has limits.
 
 - [ ] `@bnto/core` — Integration test: fire 2+ concurrent `startPredefined` calls for a user at limit-1 runs, verify at most 1 succeeds
 - [ ] `@bnto/backend` — If race confirmed, investigate Convex transaction isolation guarantees or atomic increment patterns
@@ -1147,13 +876,9 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 - [ ] `@bnto/core` — Referral service/hooks
 - [ ] `apps/web` — Referral link generation UI + landing page `?ref=CODE` capture
 
-### UI: Extract Motorway Design System (`@bnto/ui`)
+### ~~UI: Extract Motorway Design System~~ — PROMOTED TO SPRINT 4D/4E
 
-**Trigger: Desktop app (M3).** Extract `apps/web/components/ui/` → `packages/ui/` as `@bnto/ui` (branded **Motorway**). Zero domain knowledge, purely generic design system. Triggered when desktop creates a second consumer.
-
-- [ ] `packages/ui` — Bootstrap package, move primitives + utility layer + CSS tokens
-- [ ] `apps/web` — Update imports to `@bnto/ui`
-- [ ] `apps/desktop` — Wire `@bnto/ui` as dependency
+**Promoted (March 2026).** Package extraction moved from backlog to active sprints (4D + 4E). Extraction happens before editor production sprint to establish clean package boundaries. See Sprint 4D (`@bnto/ui`) and Sprint 4E (`@bnto/editor`) for the full task lists.
 
 ### Showcase: Radial Light Source Controls
 
