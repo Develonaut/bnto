@@ -1,11 +1,25 @@
 /**
  * Editor module — public API for the recipe editor.
  *
- * This barrel export is the single import point for editor functionality.
- * Consumers import from "@/editor" (alias) or "./editor".
+ * Components (flat exports for RSC compatibility):
+ *
+ *   <EditorRoot slug="compress-images">
+ *     <EditorCanvas />
+ *   </EditorRoot>
  */
 
-// Store
+// --- Compound components ---
+
+export {
+  EditorRoot,
+  EditorCanvas,
+  EditorLayerPanel,
+  EditorConfigPanel,
+  EditorToolbar,
+} from "./Editor";
+
+// --- Store ---
+
 export { createEditorStore } from "./store/createEditorStore";
 export type {
   EditorStore,
@@ -17,11 +31,13 @@ export type {
   RecipeMetadata,
 } from "./store/types";
 
-// Context + Provider
+// --- Context + Provider ---
+
 export { EditorContext } from "./context";
 export { EditorProvider } from "./EditorProvider";
 
-// Hooks
+// --- Hooks ---
+
 export { useEditorStore } from "./hooks/useEditorStore";
 export { useEditorStoreApi } from "./hooks/useEditorStoreApi";
 export { useEditorActions } from "./hooks/useEditorActions";
@@ -37,8 +53,10 @@ export { useEditorExport } from "./hooks/useEditorExport";
 export type { ExportResult, EditorExportResult } from "./hooks/useEditorExport";
 export { useEditorSelection } from "./hooks/useEditorSelection";
 export { useEditorUndoRedo } from "./hooks/useEditorUndoRedo";
+export { useEditorPanels } from "./hooks/useEditorPanels";
 
-// Adapters
+// --- Adapters ---
+
 export { definitionToBento } from "./adapters/definitionToBento";
 export { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
 export { createCompartmentNode } from "./adapters/createCompartmentNode";

@@ -13,7 +13,7 @@ import {
   SquareIcon,
 } from "@bnto/ui";
 import { Button, Row, Text } from "@bnto/ui";
-import type { CompartmentStatus } from "@/components/editor/canvas/CompartmentNode";
+import type { CompartmentStatus } from "@/editor/components/canvas/CompartmentNode";
 import type { BentoNode } from "@/editor/adapters/types";
 import type { CompartmentNodeData } from "@/editor/adapters/types";
 import { SLOTS } from "@/editor/adapters/bentoSlots";
@@ -38,7 +38,7 @@ import { SLOTS } from "@/editor/adapters/bentoSlots";
  */
 
 const BentoCanvas = dynamic(
-  () => import("@/components/editor/canvas/BentoCanvas").then((m) => m.BentoCanvas),
+  () => import("@/editor/components/canvas/BentoCanvas").then((m) => m.BentoCanvas),
   { ssr: false },
 );
 

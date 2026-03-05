@@ -23,57 +23,34 @@ import {
   validateDefinition,
 } from "@bnto/nodes";
 import { definitionToBento } from "../adapters/definitionToBento";
-import type { EditorStore, RecipeMetadata } from "./types";
-import type { BentoNode, NodeConfigs } from "../adapters/types";
+import type { EditorStore } from "./types";
 import { captureSnapshot } from "./captureSnapshot";
 import { pushToStack } from "./pushToStack";
 import { revalidateState } from "./revalidateState";
-
-// ---------------------------------------------------------------------------
-// Metadata helpers
-// ---------------------------------------------------------------------------
-
-function metadataFromBlank(): RecipeMetadata {
-  const def = createBlankDefinition();
-  return { id: def.id, name: def.name, type: def.type, version: def.version };
-}
-
-function metadataFromDefinition(def: { id: string; name: string; type: string; version: string }): RecipeMetadata {
-  return { id: def.id, name: def.name, type: def.type, version: def.version };
-}
+import { resolveInitialState, metadataFromBlank, metadataFromDefinition } from "./resolveInitialState";
 
 // ---------------------------------------------------------------------------
 // Store factory
 // ---------------------------------------------------------------------------
 
-interface CreateEditorStoreOptions {
-  initialMetadata?: RecipeMetadata;
-  initialNodes?: BentoNode[];
-  initialConfigs?: NodeConfigs;
-}
-
-function createEditorStore(options?: CreateEditorStoreOptions | RecipeMetadata) {
-  // Support both old signature (RecipeMetadata) and new (options object).
-  const isLegacy = options && "id" in options && "version" in options;
-  const opts: CreateEditorStoreOptions = isLegacy
-    ? { initialMetadata: options as RecipeMetadata }
-    : (options as CreateEditorStoreOptions | undefined) ?? {};
-
-  const metadata = opts.initialMetadata ?? metadataFromBlank();
-  const initNodes = opts.initialNodes ?? [];
-  const initConfigs = opts.initialConfigs ?? {};
+function createEditorStore(slug?: string) {
+  const initial = resolveInitialState(slug);
 
   return createEnhancedStore<EditorStore>()((set, get) => ({
     // --- Initial state ---
-    nodes: initNodes,
+    nodes: initial.nodes,
     edges: [],
-    configs: initConfigs,
-    recipeMetadata: metadata,
+    configs: initial.configs,
+    slug: initial.slug,
+    recipeMetadata: initial.metadata,
     isDirty: false,
     validationErrors: [],
     executionState: {},
     undoStack: [],
     redoStack: [],
+    selectedNodeId: null,
+    layersOpen: false,
+    configOpen: false,
 
     // --- Entry points ---
 
@@ -134,6 +111,8 @@ function createEditorStore(options?: CreateEditorStoreOptions | RecipeMetadata) 
             ? n.selected ? n : { ...n, selected: true }
             : n.selected ? { ...n, selected: false } : n,
         ),
+        /* Auto-open config panel when selecting a node. */
+        ...(id ? { configOpen: true } : {}),
       }));
     },
 
@@ -196,6 +175,26 @@ function createEditorStore(options?: CreateEditorStoreOptions | RecipeMetadata) 
         redoStack: state.redoStack.slice(0, -1),
         validationErrors: revalidateState(snapshot.nodes, snapshot.configs, state.recipeMetadata),
       });
+    },
+
+    // --- Selection ---
+
+    setSelectedNodeId: (id) => {
+      set({ selectedNodeId: id, ...(id ? { configOpen: true } : {}) });
+    },
+
+    // --- Panel visibility ---
+
+    toggleLayers: () => {
+      set((s) => ({ layersOpen: !s.layersOpen }));
+    },
+
+    toggleConfig: () => {
+      set((s) => ({ configOpen: !s.configOpen }));
+    },
+
+    openConfig: () => {
+      set({ configOpen: true });
     },
 
     // --- Utility ---

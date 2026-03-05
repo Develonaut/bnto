@@ -3,12 +3,10 @@
 import { Heading, Stack, Tabs, Text } from "@bnto/ui";
 
 import { AnimationShowcase } from "./AnimationShowcase";
-import { BentoBoxShowcase } from "./BentoBoxShowcase";
 import { EmptyStateShowcase } from "./EmptyStateShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
-import { ConveyorShowcase } from "./ConveyorShowcase";
 import { DialogShowcase } from "./DialogShowcase";
 import { GridShowcase } from "./GridShowcase";
 import { FileListShowcase } from "./FileListShowcase";
@@ -29,7 +27,9 @@ export default function MotorwayPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8">
       {/* Header */}
       <div>
-        <Heading level={1} size="md">Motorway</Heading>
+        <Heading level={1} size="md">
+          Motorway
+        </Heading>
         <Text color="muted" className="mt-1 max-w-xl">
           The bnto design system. Warm, organized, satisfying, like a
           well-packed bento box on a Mini Motorways map. 3D surfaces, springy
@@ -77,7 +77,6 @@ export default function MotorwayPage() {
             >
               <SpringableShowcase />
             </ShowcaseSection>
-
           </Stack>
         </Tabs.Content>
 
@@ -240,22 +239,6 @@ export default function MotorwayPage() {
               description="Step through the recipe page phases: Dropzone → Configure → Processing → Completed. The file grid persists across phases — no DOM jumping."
             >
               <PhaseFlowShowcase />
-            </ShowcaseSection>
-
-            <ShowcaseSection
-              id="bento-box"
-              title="Bento Box"
-              description="Add compartments to the grid and watch the box grow. Surface cards of different sizes tile like a real bento box. The viewport smoothly zooms out as the recipe expands — like Mini Motorways pulling back as the city grows."
-            >
-              <BentoBoxShowcase />
-            </ShowcaseSection>
-
-            <ShowcaseSection
-              id="conveyor"
-              title="Conveyor Belts"
-              description="Animated connections between stations. Data flows like sushi on a kaiten belt — items ride the surface between processing nodes."
-            >
-              <ConveyorShowcase />
             </ShowcaseSection>
           </Stack>
         </Tabs.Content>

@@ -1,3 +1,5 @@
+"use client";
+
 import { BookOpen, FolderOpen, Inbox, Plus, Search } from "lucide-react";
 
 import { Animate, Button, Card, EmptyState, Grid, Heading, Stack, Text } from "@bnto/ui";

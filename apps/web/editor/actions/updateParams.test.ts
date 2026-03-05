@@ -29,6 +29,9 @@ function stateWithNode(): EditorState {
     executionState: {},
     undoStack: [],
     redoStack: [],
+    selectedNodeId: null,
+    layersOpen: false,
+    configOpen: false,
   } as EditorState;
 }
 

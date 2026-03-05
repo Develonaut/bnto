@@ -12,6 +12,7 @@
 
 "use client";
 
+import { useCallback } from "react";
 import { useShallow } from "@bnto/core";
 import { useEditorStore } from "./useEditorStore";
 import { useAddNode } from "./useAddNode";
@@ -22,6 +23,7 @@ function useEditorActions() {
   const addNode = useAddNode();
   const removeNode = useRemoveNode();
   const updateParams = useUpdateParams();
+  const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
 
   const storeActions = useEditorStore(
     useShallow((s) => ({
@@ -41,10 +43,16 @@ function useEditorActions() {
     })),
   );
 
+  const removeSelectedNode = useCallback(() => {
+    if (selectedNodeId) removeNode(selectedNodeId);
+  }, [selectedNodeId, removeNode]);
+
   return {
     ...storeActions,
     addNode,
     removeNode,
+    removeSelectedNode,
+    selectedNodeId,
     updateParams,
   };
 }
