@@ -9,7 +9,6 @@
 
 "use client";
 
-import { useCallback } from "react";
 import { useEditorStore } from "./useEditorStore";
 
 interface EditorUndoRedoResult {
@@ -20,18 +19,10 @@ interface EditorUndoRedoResult {
 }
 
 function useEditorUndoRedo(): EditorUndoRedoResult {
-  const storeUndo = useEditorStore((s) => s.undo);
-  const storeRedo = useEditorStore((s) => s.redo);
+  const undo = useEditorStore((s) => s.undo);
+  const redo = useEditorStore((s) => s.redo);
   const canUndo = useEditorStore((s) => s.undoStack.length > 0);
   const canRedo = useEditorStore((s) => s.redoStack.length > 0);
-
-  const undo = useCallback(() => {
-    storeUndo();
-  }, [storeUndo]);
-
-  const redo = useCallback(() => {
-    storeRedo();
-  }, [storeRedo]);
 
   return { undo, redo, canUndo, canRedo };
 }

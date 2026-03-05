@@ -7,8 +7,4 @@
  */
 
 export { BentoCanvas } from "./BentoCanvas";
-export {
-  CompartmentNode,
-  type CompartmentNodeType,
-  type CompartmentStatus,
-} from "./CompartmentNode";
+export { CompartmentNode, type CompartmentStatus } from "./CompartmentNode";
