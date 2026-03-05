@@ -23,49 +23,11 @@ import {
   validateDefinition,
 } from "@bnto/nodes";
 import { definitionToBento } from "../adapters/definitionToBento";
-import type { EditorStore, RecipeMetadata } from "./types";
+import type { EditorStore } from "./types";
 import { captureSnapshot } from "./captureSnapshot";
 import { pushToStack } from "./pushToStack";
 import { revalidateState } from "./revalidateState";
-
-// ---------------------------------------------------------------------------
-// Metadata helpers
-// ---------------------------------------------------------------------------
-
-function metadataFromBlank(): RecipeMetadata {
-  const def = createBlankDefinition();
-  return { id: def.id, name: def.name, type: def.type, version: def.version };
-}
-
-function metadataFromDefinition(def: { id: string; name: string; type: string; version: string }): RecipeMetadata {
-  return { id: def.id, name: def.name, type: def.type, version: def.version };
-}
-
-// ---------------------------------------------------------------------------
-// Resolve initial state from slug or blank
-// ---------------------------------------------------------------------------
-
-function resolveInitialState(slug?: string) {
-  if (slug) {
-    const recipe = getRecipeBySlug(slug);
-    if (recipe) {
-      const { nodes, configs } = definitionToBento(recipe.definition);
-      return {
-        slug,
-        metadata: metadataFromDefinition(recipe.definition),
-        nodes,
-        configs,
-      };
-    }
-  }
-  const blank = definitionToBento(createBlankDefinition());
-  return {
-    slug: slug ?? null,
-    metadata: metadataFromBlank(),
-    nodes: blank.nodes,
-    configs: blank.configs,
-  };
-}
+import { resolveInitialState, metadataFromBlank, metadataFromDefinition } from "./resolveInitialState";
 
 // ---------------------------------------------------------------------------
 // Store factory

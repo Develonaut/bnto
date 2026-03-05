@@ -10,9 +10,9 @@ import { EditorProvider } from "@/editor/EditorProvider";
  * Wraps children with EditorProvider (store) + ReactFlowProvider.
  * Compose visual parts as children:
  *
- *   <Editor.Root slug="compress-images">
- *     <Editor.Canvas />
- *   </Editor.Root>
+ *   <EditorRoot slug="compress-images">
+ *     <EditorCanvas />
+ *   </EditorRoot>
  */
 
 interface EditorCanvasRootProps {

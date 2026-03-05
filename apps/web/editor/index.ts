@@ -1,11 +1,11 @@
 /**
  * Editor module — public API for the recipe editor.
  *
- * Compound component:
+ * Components (flat exports for RSC compatibility):
  *
- *   <Editor.Root slug="compress-images">
- *     <Editor.Canvas />
- *   </Editor.Root>
+ *   <EditorRoot slug="compress-images">
+ *     <EditorCanvas />
+ *   </EditorRoot>
  */
 
 // --- Compound components ---

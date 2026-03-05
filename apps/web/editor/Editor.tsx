@@ -1,20 +1,22 @@
 "use client";
 
 /**
- * Editor — compound component namespace for the recipe editor.
+ * Editor — flat re-exports for the recipe editor.
  *
- * Usage:
+ * Usage (Server Component page):
  *
- *   <Editor.Root slug="compress-images">
- *     <Editor.Canvas>
- *       <Editor.LayerPanel />
- *       <Editor.ConfigPanel />
- *       <Editor.Toolbar />
- *     </Editor.Canvas>
- *   </Editor.Root>
+ *   import { EditorRoot, EditorCanvas, EditorLayerPanel, EditorConfigPanel, EditorToolbar } from "@/editor/Editor";
  *
- * Each sub-component is also exported individually for Server Component
- * pages that can't use Object.assign dot-notation across the RSC boundary.
+ *   <EditorRoot slug="compress-images">
+ *     <EditorCanvas>
+ *       <EditorLayerPanel />
+ *       <EditorConfigPanel />
+ *       <EditorToolbar />
+ *     </EditorCanvas>
+ *   </EditorRoot>
+ *
+ * Flat exports (not dot-notation) because Object.assign compound components
+ * don't work across the Server/Client boundary — sub-properties are undefined.
  */
 
 import { EditorCanvasRoot } from "./components/EditorCanvas/EditorCanvasRoot";

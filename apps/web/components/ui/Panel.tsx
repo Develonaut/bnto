@@ -1,7 +1,7 @@
 "use client";
 
 import { Children, createContext, forwardRef, isValidElement, useContext } from "react";
-import type { ComponentProps, HTMLAttributes } from "react";
+import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 
@@ -52,7 +52,7 @@ function usePanelContext() {
 interface PanelRootProps extends Omit<ComponentProps<typeof Card>, "children"> {
   collapsed?: boolean;
   onToggle?: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 /* CSS property transition (not an entrance animation) — Animate.* components
