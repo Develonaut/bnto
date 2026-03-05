@@ -12,10 +12,10 @@ import {
   Row,
   Stack,
   Text,
+  cn,
   type LucideIcon,
 } from "@bnto/ui";
 import { StatusBadge } from "@/components/blocks/StatusBadge";
-import { cn } from "@/lib/cn";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
 /* ── Root ────────────────────────────────────────────────────── */
@@ -28,7 +28,13 @@ type RecipeCardRootProps = PropsWithChildren<{
   loading?: boolean;
 }>;
 
-export function RecipeCardRoot({ onClick, href, className, loading, children }: RecipeCardRootProps) {
+export function RecipeCardRoot({
+  onClick,
+  href,
+  className,
+  loading,
+  children,
+}: RecipeCardRootProps) {
   const card = (
     <Card loading={loading} className={cn("flex h-full flex-col justify-between p-5", className)}>
       {children}
@@ -62,7 +68,11 @@ export function RecipeCardRoot({ onClick, href, className, loading, children }: 
 /* ── Structural sub-components ───────────────────────────────── */
 
 function RecipeCardHeader({ children }: PropsWithChildren) {
-  return <Row align="start" justify="between">{children}</Row>;
+  return (
+    <Row align="start" justify="between">
+      {children}
+    </Row>
+  );
 }
 
 function RecipeCardContent({ children }: PropsWithChildren) {
@@ -116,7 +126,9 @@ function RecipeCardTags({ tags, limit = 3 }: { tags: string[]; limit?: number })
   return (
     <Row wrap className="gap-1.5 pt-1">
       {tags.slice(0, limit).map((tag) => (
-        <Badge key={tag} size="sm">{tag}</Badge>
+        <Badge key={tag} size="sm">
+          {tag}
+        </Badge>
       ))}
     </Row>
   );
@@ -126,9 +138,15 @@ function RecipeCardMeta({ nodeCount, updatedAt }: { nodeCount: number; updatedAt
   const nodeLabel = nodeCount === 1 ? "1 node" : `${nodeCount} nodes`;
   return (
     <Row className="gap-2">
-      <Text as="span" size="xs" color="muted">{nodeLabel}</Text>
-      <Text as="span" size="xs" color="muted">&middot;</Text>
-      <Text as="span" size="xs" color="muted">{formatTimeAgo(updatedAt)}</Text>
+      <Text as="span" size="xs" color="muted">
+        {nodeLabel}
+      </Text>
+      <Text as="span" size="xs" color="muted">
+        &middot;
+      </Text>
+      <Text as="span" size="xs" color="muted">
+        {formatTimeAgo(updatedAt)}
+      </Text>
     </Row>
   );
 }
