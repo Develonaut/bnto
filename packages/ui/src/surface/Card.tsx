@@ -7,12 +7,14 @@ import { cn } from "../utils/cn";
 
 import type { SpringMode } from "./Pressable";
 import { Surface } from "./Surface";
-import type { SurfaceElevation } from "./Surface";
+import type { SurfaceElevation, SurfaceVariant } from "./Surface";
 
 export const Card = forwardRef<
   HTMLDivElement,
   HTMLAttributes<HTMLDivElement> & {
     elevation?: SurfaceElevation;
+    /** Color variant forwarded to Surface. Default uses card surface colors. */
+    color?: SurfaceVariant;
     /** Spring animation mode. Explicit value overrides `loading` default. */
     spring?: SpringMode;
     /** Flush with ground plane. Explicit value overrides `loading` default. */
@@ -22,15 +24,16 @@ export const Card = forwardRef<
     /** Sugar for spring="bounciest" + grounded={loading}. */
     loading?: boolean;
   }
->(({ className, elevation = "md", spring, grounded, dashed, loading, ...props }, ref) => (
+>(({ className, elevation = "md", color, spring, grounded, dashed, loading, ...props }, ref) => (
   <Surface
     ref={ref}
     elevation={elevation}
+    variant={color}
     spring={spring ?? (loading !== undefined ? "bounciest" : undefined)}
     grounded={grounded ?? loading}
     dashed={dashed}
     rounded="xl"
-    className={cn("bg-card text-card-foreground", className)}
+    className={cn(color ? undefined : "bg-card text-card-foreground", className)}
     {...props}
   />
 ));

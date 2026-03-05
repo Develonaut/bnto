@@ -97,7 +97,7 @@ export function MobileNavMenu({
               <Stack className="gap-6">
                 <Row className="gap-4">
                   <Button variant="outline" href="/editor" onClick={() => onOpenChange(false)}>
-                    Editor
+                    Create
                   </Button>
                   {PAGE_LINKS.map((link) => (
                     <Button
