@@ -23,6 +23,11 @@ export interface CategoryInfo {
  */
 export const CATEGORIES: readonly CategoryInfo[] = [
   {
+    name: "io",
+    label: "Input / Output",
+    description: "Declares how data enters and exits the recipe.",
+  },
+  {
     name: "image",
     label: "Image",
     description: "Image processing — resize, convert, compress, composite.",

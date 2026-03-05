@@ -11,8 +11,8 @@ import {
 } from "./nodeTypes";
 
 describe("NODE_TYPES", () => {
-  it("contains all 10 registered node types", () => {
-    expect(Object.keys(NODE_TYPES)).toHaveLength(10);
+  it("contains all 12 registered node types", () => {
+    expect(Object.keys(NODE_TYPES)).toHaveLength(12);
   });
 
   it("maps camelCase keys to kebab-case type names", () => {
@@ -22,7 +22,9 @@ describe("NODE_TYPES", () => {
     expect(NODE_TYPES.shellCommand).toBe("shell-command");
     expect(NODE_TYPES.group).toBe("group");
     expect(NODE_TYPES.image).toBe("image");
+    expect(NODE_TYPES.input).toBe("input");
     expect(NODE_TYPES.loop).toBe("loop");
+    expect(NODE_TYPES.output).toBe("output");
     expect(NODE_TYPES.parallel).toBe("parallel");
     expect(NODE_TYPES.spreadsheet).toBe("spreadsheet");
     expect(NODE_TYPES.transform).toBe("transform");
@@ -30,8 +32,8 @@ describe("NODE_TYPES", () => {
 });
 
 describe("NODE_TYPE_NAMES", () => {
-  it("contains all 10 node type name strings", () => {
-    expect(NODE_TYPE_NAMES).toHaveLength(10);
+  it("contains all 12 node type name strings", () => {
+    expect(NODE_TYPE_NAMES).toHaveLength(12);
   });
 
   it("matches the values of NODE_TYPES", () => {
@@ -78,11 +80,35 @@ describe("NODE_TYPE_INFO", () => {
   });
 });
 
+describe("IO node types", () => {
+  it("input and output are registered", () => {
+    expect(NODE_TYPE_INFO["input"]).toBeDefined();
+    expect(NODE_TYPE_INFO["output"]).toBeDefined();
+  });
+
+  it("input and output are in the 'io' category", () => {
+    expect(NODE_TYPE_INFO["input"].category).toBe("io");
+    expect(NODE_TYPE_INFO["output"].category).toBe("io");
+  });
+
+  it("input and output are browser-capable", () => {
+    expect(NODE_TYPE_INFO["input"].browserCapable).toBe(true);
+    expect(NODE_TYPE_INFO["output"].browserCapable).toBe(true);
+  });
+
+  it("input and output are NOT containers", () => {
+    expect(NODE_TYPE_INFO["input"].isContainer).toBe(false);
+    expect(NODE_TYPE_INFO["output"].isContainer).toBe(false);
+  });
+});
+
 describe("isNodeType", () => {
   it("returns true for valid node type names", () => {
     expect(isNodeType("image")).toBe(true);
     expect(isNodeType("http-request")).toBe(true);
     expect(isNodeType("shell-command")).toBe(true);
+    expect(isNodeType("input")).toBe(true);
+    expect(isNodeType("output")).toBe(true);
   });
 
   it("returns false for invalid strings", () => {

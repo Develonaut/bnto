@@ -217,8 +217,9 @@ describe("createEditorStore", () => {
       state(store).createBlank();
       expect(state(store).recipeMetadata.type).toBe("group");
       expect(state(store).isDirty).toBe(false);
-      expect(state(store).nodes).toEqual([]);
-      expect(state(store).configs).toEqual({});
+      // createBlank loads I/O nodes from createBlankDefinition()
+      expect(state(store).nodes.length).toBe(2); // input + output
+      expect(Object.keys(state(store).configs).length).toBe(2);
       expect(state(store).undoStack).toEqual([]);
     });
   });
