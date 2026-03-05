@@ -2,7 +2,7 @@
 
 import type { BrowserExecution } from "@bnto/core";
 import { CheckCircle2Icon, LinearProgress, LoaderIcon } from "@bnto/ui";
-import { formatFileSize } from "@/src/utils/formatFileSize";
+import { formatFileSize } from "@bnto/ui";
 
 interface ToolbarProgressProps {
   execution: BrowserExecution;

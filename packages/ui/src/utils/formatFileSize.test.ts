@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatFileSize } from "../formatFileSize";
+import { formatFileSize } from "./formatFileSize";
 
 describe("formatFileSize", () => {
   it("formats zero bytes", () => {

@@ -2,9 +2,8 @@
 
 import type { Definition } from "@bnto/nodes";
 import { deriveAcceptedTypes } from "@bnto/core";
-import { FileUpload } from "@bnto/ui";
+import { FileUpload, toDropzoneAccept } from "@bnto/ui";
 import { DropzoneContent } from "./DropzoneContent";
-import { toDropzoneAccept } from "@bnto/ui";
 
 interface InputRendererProps {
   definition: Definition;

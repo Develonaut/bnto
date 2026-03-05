@@ -93,3 +93,6 @@ blob-report/
 # Rust / WASM
 engine/target/
 engine/crates/*/pkg/
+
+# Claude Code worktrees
+.claude/worktrees/

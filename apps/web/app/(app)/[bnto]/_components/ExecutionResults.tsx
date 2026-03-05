@@ -11,7 +11,7 @@ import {
   Stack,
 } from "@bnto/ui";
 import { core } from "@bnto/core";
-import { formatFileSize } from "@/src/utils/formatFileSize";
+import { formatFileSize } from "@bnto/ui";
 
 interface ExecutionResultsProps {
   executionId: string;
