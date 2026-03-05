@@ -1,16 +1,14 @@
 /**
- * Bnto slug registry — thin wrapper over the engine-generated menu.
+ * Bnto slug registry — thin wrapper over @bnto/nodes recipes.
  *
  * Drives generateStaticParams, generateMetadata, sitemap, gallery,
  * llms.txt, and middleware slug validation from one place.
  *
- * All data originates in engine/pkg/menu/recipes/*.json. This module
- * maps Recipe → BntoEntry to preserve the existing consumer API.
- *
- * To regenerate: `task menu:generate`
+ * All recipe data lives in @bnto/nodes (the single source of truth).
+ * This module maps Recipe → BntoEntry to preserve the existing consumer API.
  */
 
-import { MENU, getRecipe, isValidMenuSlug, type Recipe } from "./menu";
+import { RECIPES, getRecipeBySlug, type Recipe } from "@bnto/nodes";
 
 export interface BntoEntry {
   slug: string;
@@ -35,16 +33,16 @@ function toBntoEntry(r: Recipe): BntoEntry {
 /**
  * All registered Tier 1 bntos. Each entry maps to a public URL at /{slug}.
  */
-export const BNTO_REGISTRY: readonly BntoEntry[] = MENU.map(toBntoEntry);
+export const BNTO_REGISTRY: readonly BntoEntry[] = RECIPES.map(toBntoEntry);
 
 /** Returns true if the slug maps to a registered bnto. */
 export function isValidBntoSlug(slug: string): boolean {
-  return isValidMenuSlug(slug);
+  return getRecipeBySlug(slug) !== undefined;
 }
 
 /** Returns the registry entry for a slug, or undefined if not found. */
 export function getBntoBySlug(slug: string): BntoEntry | undefined {
-  const recipe = getRecipe(slug);
+  const recipe = getRecipeBySlug(slug);
   return recipe ? toBntoEntry(recipe) : undefined;
 }
 

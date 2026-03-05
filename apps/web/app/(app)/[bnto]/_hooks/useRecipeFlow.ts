@@ -5,9 +5,8 @@ import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { core, createRecipeFlowStore, deriveAcceptedTypes } from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
-import type { Definition } from "@bnto/nodes";
+import { getRecipeBySlug, type Definition } from "@bnto/nodes";
 import type { BntoEntry } from "@/lib/bntoRegistry";
-import { getRecipe } from "@/lib/menu";
 import { toDropzoneAccept } from "@/src/utils/toDropzoneAccept";
 import type { BntoConfigMap, BntoSlug } from "../_components/configs/types";
 import { DEFAULT_CONFIGS } from "../_components/configs/types";
@@ -47,9 +46,8 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   const { data: currentUser } = core.user.useCurrentUser();
 
   // -- Definition + I/O config (derived from input node, not slug) --
-  const recipe = getRecipe(entry.slug);
-  // Trust boundary: definition is Record<string, unknown> from generated JSON
-  const definition = recipe?.definition as Definition | undefined;
+  const recipe = getRecipeBySlug(entry.slug);
+  const definition = recipe?.definition;
   const { acceptLabel, dropzoneAccept } = useMemo(() => {
     if (!definition) return { acceptLabel: "files", dropzoneAccept: undefined };
     const { accept, label } = deriveAcceptedTypes(definition);

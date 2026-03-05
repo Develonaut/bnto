@@ -112,10 +112,7 @@ tasks:
       - echo "=== all checks passed ==="
 
   # Menu generation
-  menu:generate:
-    desc: Generate menu JSON from engine for web app
-    cmds:
-      - cd archive/engine-go && go run ./cmd/bnto menu --json > ../../apps/web/lib/generated/menu.json
+  # menu:generate is no longer needed — apps import RECIPES from @bnto/nodes directly
 
   # E2E tests
   e2e:
