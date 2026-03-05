@@ -6,11 +6,10 @@
  * Falls back to a blank canvas when the slug is missing or unknown.
  */
 
-import {
-  createBlankDefinition,
-  getRecipeBySlug,
-} from "@bnto/nodes";
+import { createBlankDefinition, getRecipeBySlug } from "@bnto/nodes";
 import { definitionToBento } from "../adapters/definitionToBento";
+import { isIoNodeType } from "../helpers/isIoNodeType";
+import type { NodeConfigs } from "../adapters/types";
 import type { RecipeMetadata } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -22,8 +21,25 @@ function metadataFromBlank(): RecipeMetadata {
   return { id: def.id, name: def.name, type: def.type, version: def.version };
 }
 
-function metadataFromDefinition(def: { id: string; name: string; type: string; version: string }): RecipeMetadata {
+function metadataFromDefinition(def: {
+  id: string;
+  name: string;
+  type: string;
+  version: string;
+}): RecipeMetadata {
   return { id: def.id, name: def.name, type: def.type, version: def.version };
+}
+
+// ---------------------------------------------------------------------------
+// Pre-selection helper
+// ---------------------------------------------------------------------------
+
+/** Returns the ID of the first processing (non-I/O) node, or null. */
+function findPrimaryNodeId(configs: NodeConfigs): string | null {
+  for (const [id, config] of Object.entries(configs)) {
+    if (!isIoNodeType(config.nodeType)) return id;
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -40,6 +56,7 @@ function resolveInitialState(slug?: string) {
         metadata: metadataFromDefinition(recipe.definition),
         nodes,
         configs,
+        selectedNodeId: findPrimaryNodeId(configs),
       };
     }
   }
@@ -49,6 +66,7 @@ function resolveInitialState(slug?: string) {
     metadata: metadataFromBlank(),
     nodes: blank.nodes,
     configs: blank.configs,
+    selectedNodeId: null,
   };
 }
 
