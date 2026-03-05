@@ -49,8 +49,8 @@ export const executeWorkflow = internalAction({
 
 /** POST the recipe definition to the Go API. Returns the Go execution ID or null on failure. */
 async function callGoApi(
-  ctx: { runMutation: (...a: any[]) => Promise<any> }, // eslint-disable-line @typescript-eslint/no-explicit-any
-  args: { executionId: any; definition: any; eventId?: any; sessionId?: string }, // eslint-disable-line @typescript-eslint/no-explicit-any
+  ctx: RunCtx,
+  args: PollArgs & { definition: unknown },
   goApiUrl: string,
   startTime: number,
 ): Promise<string | null> {
@@ -78,10 +78,59 @@ async function callGoApi(
   }
 }
 
+/** Fetch the current execution status from the Go API. */
+async function fetchExecutionStatus(goApiUrl: string, goExecutionId: string) {
+  const response = await fetch(
+    `${goApiUrl}/api/executions/${goExecutionId}`,
+  );
+  if (!response.ok) {
+    throw new Error(`Poll returned ${response.status}`);
+  }
+  return response.json();
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RunCtx = { runMutation: (...a: any[]) => Promise<any> };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PollArgs = { executionId: any; eventId?: any; sessionId?: string };
+
+/** Handle a single poll response — complete, fail, or update progress. */
+async function handlePollResult(
+  ctx: RunCtx,
+  args: PollArgs,
+  execution: { status: string; result?: unknown; outputFiles?: unknown; error?: string; progress?: unknown[] },
+  goExecutionId: string,
+  startTime: number,
+): Promise<boolean> {
+  if (execution.status === "completed") {
+    await ctx.runMutation(internal.executions.complete, {
+      executionId: args.executionId,
+      result: execution.result ?? null,
+      outputFiles: execution.outputFiles,
+      eventId: args.eventId,
+      startTime,
+    });
+    return true;
+  }
+
+  if (execution.status === "failed") {
+    await failExecution(ctx, args, execution.error ?? "Execution failed", startTime);
+    return true;
+  }
+
+  await ctx.runMutation(internal.executions.updateProgress, {
+    executionId: args.executionId,
+    status: "running",
+    progress: execution.progress ?? [],
+    goExecutionId,
+  });
+  return false;
+}
+
 /** Poll the Go API for execution status until complete, failed, or timeout. */
 async function pollExecution(
-  ctx: { runMutation: (...a: any[]) => Promise<any> }, // eslint-disable-line @typescript-eslint/no-explicit-any
-  args: { executionId: any; eventId?: any; sessionId?: string }, // eslint-disable-line @typescript-eslint/no-explicit-any
+  ctx: RunCtx,
+  args: PollArgs,
   goApiUrl: string,
   goExecutionId: string,
   startTime: number,
@@ -90,64 +139,22 @@ async function pollExecution(
     await sleep(POLL_INTERVAL_MS);
 
     try {
-      const response = await fetch(
-        `${goApiUrl}/api/executions/${goExecutionId}`,
-      );
-      if (!response.ok) {
-        throw new Error(`Poll returned ${response.status}`);
-      }
-      const execution = await response.json();
-
-      if (execution.status === "completed") {
-        await ctx.runMutation(internal.executions.complete, {
-          executionId: args.executionId,
-          result: execution.result ?? null,
-          outputFiles: execution.outputFiles,
-          eventId: args.eventId,
-          startTime,
-        });
-        return;
-      }
-
-      if (execution.status === "failed") {
-        await failExecution(
-          ctx,
-          args,
-          execution.error ?? "Execution failed",
-          startTime,
-        );
-        return;
-      }
-
-      await ctx.runMutation(internal.executions.updateProgress, {
-        executionId: args.executionId,
-        status: "running",
-        progress: execution.progress ?? [],
-        goExecutionId,
-      });
+      const execution = await fetchExecutionStatus(goApiUrl, goExecutionId);
+      const done = await handlePollResult(ctx, args, execution, goExecutionId, startTime);
+      if (done) return;
     } catch (e) {
-      await failExecution(
-        ctx,
-        args,
-        `Poll error: ${e instanceof Error ? e.message : String(e)}`,
-        startTime,
-      );
+      await failExecution(ctx, args, `Poll error: ${e instanceof Error ? e.message : String(e)}`, startTime);
       return;
     }
   }
 
-  await failExecution(
-    ctx,
-    args,
-    "Execution timed out (polling limit reached)",
-    startTime,
-  );
+  await failExecution(ctx, args, "Execution timed out (polling limit reached)", startTime);
 }
 
 /** Record an execution failure via the internal mutation. */
 async function failExecution(
-  ctx: { runMutation: (...a: any[]) => Promise<any> }, // eslint-disable-line @typescript-eslint/no-explicit-any
-  args: { executionId: any; eventId?: any }, // eslint-disable-line @typescript-eslint/no-explicit-any
+  ctx: RunCtx,
+  args: Pick<PollArgs, "executionId" | "eventId">,
   error: string,
   startTime: number,
 ) {

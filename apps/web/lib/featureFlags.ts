@@ -43,25 +43,6 @@ export function listFlags(): FlagValues {
   return read();
 }
 
-// --- React hook: reactive rendering via useSyncExternalStore ---
-
-import { useSyncExternalStore } from "react";
-
-export function useFeatureFlag(flag: FeatureFlag): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      window.addEventListener(CHANGE_EVENT, cb);
-      window.addEventListener("storage", cb);
-      return () => {
-        window.removeEventListener(CHANGE_EVENT, cb);
-        window.removeEventListener("storage", cb);
-      };
-    },
-    () => getFlag(flag),
-    () => DEFAULTS[flag],
-  );
-}
-
 // --- Console API: window.__bnto__ ---
 
 declare global {

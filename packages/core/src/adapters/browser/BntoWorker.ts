@@ -152,44 +152,44 @@ export class BntoWorker {
 
   private async doInit(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
-      // Create the worker using the URL pattern that bundlers understand.
-      this.worker = new Worker(
-        new URL("./bnto.worker.ts", import.meta.url),
-        { type: "module" },
-      );
-
-      // Handle all messages from the worker.
-      this.worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
-        this.handleMessage(event.data);
-      };
-
-      // Handle worker-level errors (syntax errors, uncaught exceptions).
-      this.worker.onerror = (event) => {
-        const message = event.message || "Unknown worker error";
-        reject(new Error(`Worker error: ${message}`));
-      };
-
-      // Set up a one-time listener for the "ready" response.
-      const originalHandler = this.worker.onmessage;
-      this.worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
-        const response = event.data;
-        if (response.type === "ready") {
-          // Restore the normal message handler.
-          this.worker!.onmessage = originalHandler;
-          resolve(response.version);
-        } else if (response.type === "worker-error") {
-          reject(new Error(response.message));
-        } else {
-          // Forward unexpected messages to the normal handler.
-          this.handleMessage(response);
-        }
-      };
-
-      // Send the init request with the page origin so the worker
-      // can construct absolute URLs for WASM assets. Workers created
-      // from bundled module URLs may not resolve relative paths correctly.
+      this.worker = this.createWorkerInstance(reject);
+      this.attachInitListener(resolve, reject);
       this.send({ type: "init", baseUrl: globalThis.location?.origin ?? "" });
     });
+  }
+
+  /** Create the Web Worker and attach the default message + error handlers. */
+  private createWorkerInstance(onError: (err: Error) => void): Worker {
+    const worker = new Worker(
+      new URL("./bnto.worker.ts", import.meta.url),
+      { type: "module" },
+    );
+    worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+      this.handleMessage(event.data);
+    };
+    worker.onerror = (event) => {
+      onError(new Error(`Worker error: ${event.message || "Unknown worker error"}`));
+    };
+    return worker;
+  }
+
+  /** One-time listener for the "ready" response during init. */
+  private attachInitListener(
+    resolve: (version: string) => void,
+    reject: (err: Error) => void,
+  ): void {
+    const normalHandler = this.worker!.onmessage;
+    this.worker!.onmessage = (event: MessageEvent<WorkerResponse>) => {
+      const response = event.data;
+      if (response.type === "ready") {
+        this.worker!.onmessage = normalHandler;
+        resolve(response.version);
+      } else if (response.type === "worker-error") {
+        reject(new Error(response.message));
+      } else {
+        this.handleMessage(response);
+      }
+    };
   }
 
   private handleMessage(response: WorkerResponse): void {

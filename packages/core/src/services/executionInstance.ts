@@ -70,6 +70,13 @@ function createThrottledProgress(
 // Instance factory
 // ---------------------------------------------------------------------------
 
+/** Generate a unique execution ID. */
+function generateExecutionId(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `exec-${Date.now()}`;
+}
+
 export function createExecutionInstance(
   execute: (
     slug: string,
@@ -81,6 +88,14 @@ export function createExecutionInstance(
   const store = createExecutionInstanceStore();
   let aborted = false;
 
+  /** Build a progress callback that respects abort and throttles updates. */
+  function buildProgressCallback(): (progress: BrowserFileProgressInput) => void {
+    const throttled = createThrottledProgress(store);
+    return (progress) => {
+      if (!aborted) throttled(progress);
+    };
+  }
+
   return {
     [EXECUTION_STORE]: store,
 
@@ -90,37 +105,19 @@ export function createExecutionInstance(
       params: Record<string, unknown> = {},
     ): Promise<BrowserRunResult> => {
       aborted = false;
-      const id =
-        typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `exec-${Date.now()}`;
       const startedAt = Date.now();
-      store.getState().start(id, startedAt);
+      store.getState().start(generateExecutionId(), startedAt);
 
       try {
-        const throttled = createThrottledProgress(store);
-        const onProgress = (progress: BrowserFileProgressInput) => {
-          if (aborted) return;
-          throttled(progress);
-        };
-
-        const results = await execute(slug, files, params, onProgress);
+        const results = await execute(slug, files, params, buildProgressCallback());
         const durationMs = Date.now() - startedAt;
-
-        if (aborted) {
-          return { status: "aborted", results: [], durationMs };
-        }
-
+        if (aborted) return { status: "aborted", results: [], durationMs };
         store.getState().complete(results, Date.now());
         return { status: "completed", results, durationMs };
       } catch (e) {
         const durationMs = Date.now() - startedAt;
+        if (aborted) return { status: "aborted", results: [], durationMs };
         const error = e instanceof Error ? e.message : "Processing failed";
-
-        if (aborted) {
-          return { status: "aborted", results: [], durationMs };
-        }
-
         store.getState().fail(error, Date.now());
         return { status: "failed", results: [], durationMs, error };
       }

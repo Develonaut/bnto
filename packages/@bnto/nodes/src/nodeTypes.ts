@@ -189,9 +189,6 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   },
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;
 
-// Functions extracted to individual files per one-export-per-file rule.
-// Re-exported here for backward compatibility.
-export { isNodeType } from "./isNodeType";
-export { getNodeTypeInfo } from "./getNodeTypeInfo";
-export { getBrowserCapableTypes } from "./getBrowserCapableTypes";
-export { getContainerTypes } from "./getContainerTypes";
+// Functions live in individual files per one-export-per-file rule:
+// isNodeType.ts, getNodeTypeInfo.ts, getBrowserCapableTypes.ts, getContainerTypes.ts
+// Import them directly or via the package barrel (index.ts).

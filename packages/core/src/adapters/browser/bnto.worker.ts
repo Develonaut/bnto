@@ -139,25 +139,30 @@ async function handleInit(baseUrl: string): Promise<void> {
 // Process — Run a WASM node on a single file
 // =============================================================================
 
+/** Resolve the WASM function for a node type, or send an error. */
+function resolveNodeFn(id: string, nodeType: string): WasmCombinedFn | null {
+  if (!initialized) {
+    sendError(id, "WASM not initialized. Send 'init' first.");
+    return null;
+  }
+  const fn = nodeRegistry.get(nodeType);
+  if (!fn) {
+    sendError(id, `Unsupported node type: ${nodeType}`);
+    return null;
+  }
+  return fn;
+}
+
 function handleProcess(request: {
   id: string;
   data: ArrayBuffer;
   filename: string;
-  mimeType: string;
   nodeType: string;
   params: Record<string, unknown>;
 }): void {
-  if (!initialized) {
-    sendError(request.id, "WASM not initialized. Send 'init' first.");
-    return;
-  }
-
   const { id, data, filename, nodeType, params } = request;
-  const fn = nodeRegistry.get(nodeType);
-  if (!fn) {
-    sendError(id, `Unsupported node type: ${nodeType}`);
-    return;
-  }
+  const fn = resolveNodeFn(id, nodeType);
+  if (!fn) return;
 
   try {
     const result = callWasmNode(fn, data, filename, params, (pct, msg) => {
@@ -169,13 +174,16 @@ function handleProcess(request: {
   }
 }
 
+/** Copy WASM output bytes into a standalone ArrayBuffer (avoids linear memory invalidation). */
+function copyToBuffer(source: Uint8Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(source.byteLength);
+  new Uint8Array(buffer).set(source);
+  return buffer;
+}
+
 /**
  * Call a combined WASM function and package the output.
- *
- * Combined functions process the file ONCE and return a JS object with both
- * metadata (JSON string) and processed bytes (Uint8Array). This eliminates
- * the old dual-call pattern that doubled CPU time and caused progress
- * regression (0→100→0→100).
+ * Single WASM call — processes the file once, returns metadata + bytes.
  */
 function callWasmNode(
   fn: WasmCombinedFn,
@@ -184,26 +192,12 @@ function callWasmNode(
   params: Record<string, unknown>,
   onProgress: (percent: number, message: string) => void,
 ) {
-  const bytes = new Uint8Array(data);
-  const paramsJson = JSON.stringify(params);
-
-  // Single WASM call — processes the file once, returns everything.
-  const result = fn(bytes, filename, paramsJson, onProgress);
-
-  // Parse the metadata JSON string from the Rust side.
-  const meta = JSON.parse(result.metadata) as Record<string, unknown>;
-
-  // Copy into a guaranteed ArrayBuffer (not ArrayBufferLike).
-  // The Uint8Array from WASM may be backed by the WASM linear memory,
-  // which can be invalidated by subsequent WASM calls.
-  const outputBuffer = new ArrayBuffer(result.data.byteLength);
-  new Uint8Array(outputBuffer).set(result.data);
-
+  const result = fn(new Uint8Array(data), filename, JSON.stringify(params), onProgress);
   return {
-    data: outputBuffer,
+    data: copyToBuffer(result.data),
     filename: result.filename,
     mimeType: result.mimeType,
-    metadata: meta,
+    metadata: JSON.parse(result.metadata) as Record<string, unknown>,
   };
 }
 

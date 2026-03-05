@@ -86,32 +86,34 @@ export async function addEntry(entry: LocalHistoryEntry): Promise<void> {
   }
 }
 
+/** Walk a cursor and collect entries up to a limit, newest-first. */
+function collectFromCursor(
+  cursorRequest: IDBRequest<IDBCursorWithValue | null>,
+  limit: number,
+): Promise<LocalHistoryEntry[]> {
+  const entries: LocalHistoryEntry[] = [];
+  return new Promise((resolve, reject) => {
+    cursorRequest.onsuccess = () => {
+      const cursor = cursorRequest.result;
+      if (cursor && entries.length < limit) {
+        entries.push(cursor.value as LocalHistoryEntry);
+        cursor.continue();
+      } else {
+        resolve(entries);
+      }
+    };
+    cursorRequest.onerror = () => reject(cursorRequest.error);
+  });
+}
+
 /** Get all entries, newest-first. Returns at most MAX_ENTRIES. */
 export async function getEntries(): Promise<LocalHistoryEntry[]> {
   const db = await openDatabase();
 
   try {
     const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
-    const index = store.index("by_timestamp");
-
-    const entries: LocalHistoryEntry[] = [];
-    const cursorRequest = index.openCursor(null, "prev");
-
-    await new Promise<void>((resolve, reject) => {
-      cursorRequest.onsuccess = () => {
-        const cursor = cursorRequest.result;
-        if (cursor && entries.length < MAX_ENTRIES) {
-          entries.push(cursor.value as LocalHistoryEntry);
-          cursor.continue();
-        } else {
-          resolve();
-        }
-      };
-      cursorRequest.onerror = () => reject(cursorRequest.error);
-    });
-
-    return entries;
+    const index = tx.objectStore(STORE_NAME).index("by_timestamp");
+    return await collectFromCursor(index.openCursor(null, "prev"), MAX_ENTRIES);
   } finally {
     db.close();
   }
