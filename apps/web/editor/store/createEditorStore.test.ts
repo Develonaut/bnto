@@ -7,10 +7,12 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { createEditorStore } from "../store/createEditorStore";
-import { captureSnapshot, pushToStack, revalidateState } from "../store/helpers";
+import { createEditorStore } from "./createEditorStore";
+import { captureSnapshot } from "./captureSnapshot";
+import { pushToStack } from "./pushToStack";
+import { revalidateState } from "./revalidateState";
 import { createCompartmentNode } from "../adapters/createCompartmentNode";
-import type { EditorStore } from "../store/types";
+import type { EditorStore } from "./types";
 import type { StoreApi } from "zustand";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 

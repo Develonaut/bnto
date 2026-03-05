@@ -1,5 +1,4 @@
-import { createStore } from "zustand/vanilla";
-import { persist } from "zustand/middleware";
+import { createEnhancedStore } from "./createEnhancedStore";
 import type { AuthUser } from "../types/auth";
 
 // ---------------------------------------------------------------------------
@@ -18,23 +17,18 @@ interface AuthStoreState {
 }
 
 // ---------------------------------------------------------------------------
-// Singleton store — persisted to localStorage
+// Singleton store — persisted to localStorage via createEnhancedStore
 // ---------------------------------------------------------------------------
 
-const STORE_KEY = "bnto-auth";
+export const authStore = createEnhancedStore<AuthStoreState>({
+  persist: { name: "bnto-auth" },
+})((set) => ({
+  user: null,
+  hasAccount: false,
 
-export const authStore = createStore<AuthStoreState>()(
-  persist(
-    (set) => ({
-      user: null,
-      hasAccount: false,
+  setUser: (user) => set({ user, hasAccount: true }),
 
-      setUser: (user) => set({ user, hasAccount: true }),
-
-      clear: () => set({ user: null }),
-    }),
-    { name: STORE_KEY },
-  ),
-);
+  clear: () => set({ user: null }),
+}));
 
 export type { AuthStoreState };

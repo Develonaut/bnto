@@ -13,7 +13,7 @@
  * ReactFlow receives nodes/edges as props (controlled mode).
  */
 
-import { createStore } from "zustand/vanilla";
+import { createEnhancedStore } from "@bnto/core";
 import { applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
 import {
   createBlankDefinition,
@@ -23,7 +23,9 @@ import {
 import { definitionToBento } from "../adapters/definitionToBento";
 import type { EditorStore, RecipeMetadata } from "./types";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
-import { captureSnapshot, pushToStack, revalidateState } from "./helpers";
+import { captureSnapshot } from "./captureSnapshot";
+import { pushToStack } from "./pushToStack";
+import { revalidateState } from "./revalidateState";
 
 // ---------------------------------------------------------------------------
 // Metadata helpers
@@ -59,7 +61,7 @@ function createEditorStore(options?: CreateEditorStoreOptions | RecipeMetadata) 
   const initNodes = opts.initialNodes ?? [];
   const initConfigs = opts.initialConfigs ?? {};
 
-  return createStore<EditorStore>()((set, get) => ({
+  return createEnhancedStore<EditorStore>()((set, get) => ({
     // --- Initial state ---
     nodes: initNodes,
     edges: [],

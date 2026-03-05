@@ -16,7 +16,9 @@ import { useCallback } from "react";
 import type { NodeTypeName } from "@bnto/nodes";
 import { useEditorStoreApi } from "./useEditorStoreApi";
 import { createCompartmentNode } from "../adapters/createCompartmentNode";
-import { captureSnapshot, pushToStack, revalidateState } from "../store/helpers";
+import { captureSnapshot } from "../store/captureSnapshot";
+import { pushToStack } from "../store/pushToStack";
+import { revalidateState } from "../store/revalidateState";
 
 function useAddNode() {
   const storeApi = useEditorStoreApi();

@@ -15,7 +15,7 @@ import type { RecipeMetadata as NodeRecipeMetadata, Recipe } from "@bnto/nodes";
 import { useEditorStore } from "./useEditorStore";
 import { useEditorStoreApi } from "./useEditorStoreApi";
 import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
-import { triggerDownload } from "../adapters/triggerDownload";
+import { downloadBlob } from "@bnto/core";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -63,7 +63,7 @@ function useEditorExport(): EditorExportResult {
       if (!result.recipe) return;
 
       const json = JSON.stringify(result.recipe.definition, null, 2);
-      triggerDownload(`${result.recipe.slug}.bnto.json`, json);
+      downloadBlob(new Blob([json], { type: "application/json" }), `${result.recipe.slug}.bnto.json`);
     },
     [exportAsRecipe],
   );

@@ -3,7 +3,7 @@
 import { RECIPES } from "@bnto/nodes";
 import { Select } from "@/components/ui/Select";
 import { BentoCanvas } from "../canvas/BentoCanvas";
-import { EditorSidebar } from "../EditorSidebar";
+import { EditorPanel } from "../EditorPanel";
 import { CanvasToolbar } from "../CanvasToolbar";
 import { NodeConfigPanel } from "../NodeConfigPanel";
 import { EditorOverlay } from "./EditorOverlay";
@@ -56,7 +56,7 @@ function EditorCanvas({ initialSlug }: EditorCanvasProps) {
       {/* Floating panel layer */}
       <EditorOverlay>
         <EditorOverlay.Sidebar>
-          <EditorSidebar
+          <EditorPanel
             collapsed={sidebarCollapsed}
             onToggle={toggleSidebar}
             selectedNodeId={selectedNodeId}

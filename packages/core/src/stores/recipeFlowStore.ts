@@ -1,4 +1,4 @@
-import { createStore } from "zustand/vanilla";
+import { createEnhancedStore } from "./createEnhancedStore";
 import type { RecipeFlow } from "../types/recipeFlow";
 
 // ---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ export function createRecipeFlowStore(
 ) {
   const initial = createInitialState(defaultConfig);
 
-  return createStore<RecipeFlowState>()((set) => ({
+  return createEnhancedStore<RecipeFlowState>()((set) => ({
     ...initial,
 
     setFiles: (files) =>

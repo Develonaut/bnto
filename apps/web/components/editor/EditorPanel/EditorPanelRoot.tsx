@@ -3,6 +3,13 @@
 import type { ReactNode } from "react";
 import { Panel } from "@/components/ui/Panel";
 import { Text } from "@/components/ui/Text";
+import {
+  CopyIcon,
+  DownloadIcon,
+  PenLineIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@/components/ui/icons";
 import { useEditorExport } from "@/editor/hooks/useEditorExport";
 import { useEditorStore } from "@/editor/hooks/useEditorStore";
 import { FileMenu } from "./FileMenu";
@@ -10,17 +17,17 @@ import { NodeList } from "./NodeList";
 import { useAutoSelect } from "@/editor/hooks/useAutoSelect";
 
 /**
- * EditorSidebar — floating Panel with file header + node list.
+ * EditorPanel — floating Panel with file header + node list.
  *
- * Header shows the recipe/bnto name with a file menu (Export,
+ * Header shows the recipe/bnto name with a file menu (Download,
  * Duplicate, Rename, Delete) and a collapse toggle. Below is a
  * scrollable list of canvas nodes.
  *
- * Reads nodes directly from the ReactFlow store (not Zustand editor).
- * Clicking a node updates RF selection via setNodes().
+ * Reads nodes directly from the editor store (controlled mode).
+ * Clicking a node updates selection via selectNode().
  */
 
-interface EditorSidebarProps {
+interface EditorPanelProps {
   collapsed: boolean;
   onToggle: () => void;
   selectedNodeId: string | null;
@@ -30,16 +37,19 @@ interface EditorSidebarProps {
   footer?: ReactNode;
 }
 
-function EditorSidebarRoot({
+function EditorPanelRoot({
   collapsed,
   onToggle,
   selectedNodeId,
   name = "Untitled",
   footer,
-}: EditorSidebarProps) {
+}: EditorPanelProps) {
   const nodes = useEditorStore((s) => s.nodes);
   const { download, canExport } = useEditorExport();
   const { handleSelectNode } = useAutoSelect({ selectedNodeId });
+
+  const canDownload = canExport && nodes.length > 0;
+  const handleDownload = () => download();
 
   return (
     <Panel collapsed={collapsed} onToggle={onToggle} className="h-full w-56">
@@ -48,10 +58,30 @@ function EditorSidebarRoot({
         <Text size="sm" className="min-w-0 flex-1 truncate font-medium">
           {name}
         </Text>
-        <FileMenu
-          onExport={download}
-          canExport={canExport && nodes.length > 0}
-        />
+        <FileMenu>
+          <FileMenu.Item onClick={handleDownload} disabled={!canDownload}>
+            <DownloadIcon className="size-4" />
+            Download .bnto.json
+          </FileMenu.Item>
+          <FileMenu.Separator />
+          <FileMenu.Item disabled>
+            <PlusIcon className="size-4" />
+            New Recipe
+          </FileMenu.Item>
+          <FileMenu.Item disabled>
+            <CopyIcon className="size-4" />
+            Duplicate
+          </FileMenu.Item>
+          <FileMenu.Item disabled>
+            <PenLineIcon className="size-4" />
+            Rename
+          </FileMenu.Item>
+          <FileMenu.Separator />
+          <FileMenu.Item disabled className="text-destructive">
+            <TrashIcon className="size-4" />
+            Delete
+          </FileMenu.Item>
+        </FileMenu>
       </Panel.Header>
       {!collapsed && <Panel.Divider />}
       <Panel.Content>
@@ -61,15 +91,15 @@ function EditorSidebarRoot({
           onSelect={handleSelectNode}
         />
       </Panel.Content>
-      {footer && !collapsed && (
+      {footer && (
         <>
           <Panel.Divider />
-          <div className="px-2 py-2">{footer}</div>
+          <Panel.Footer>{footer}</Panel.Footer>
         </>
       )}
     </Panel>
   );
 }
 
-export { EditorSidebarRoot };
-export type { EditorSidebarProps };
+export { EditorPanelRoot };
+export type { EditorPanelProps };

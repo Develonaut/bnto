@@ -42,7 +42,6 @@ export { useEditorUndoRedo } from "./hooks/useEditorUndoRedo";
 export { definitionToBento } from "./adapters/definitionToBento";
 export { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
 export { createCompartmentNode } from "./adapters/createCompartmentNode";
-export { triggerDownload } from "./adapters/triggerDownload";
 export { SLOTS, CELL, GAP, STRIDE } from "./adapters/bentoSlots";
 export type {
   BentoNode,
