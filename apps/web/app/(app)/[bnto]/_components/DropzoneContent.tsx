@@ -1,4 +1,4 @@
-import { UploadIcon } from "@/components/ui/icons";
+import { UploadIcon } from "@bnto/ui";
 
 /**
  * Presentational content for the file dropzone.

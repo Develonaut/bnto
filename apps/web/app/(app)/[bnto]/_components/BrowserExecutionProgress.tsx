@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LoaderIcon, ClockIcon } from "@/components/ui/icons";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
+import { ClockIcon, LoaderIcon, Row, Stack } from "@bnto/ui";
 import type { BrowserExecution } from "@bnto/core";
 
 interface BrowserExecutionProgressProps {

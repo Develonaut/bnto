@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { Pricing } from "@/components/blocks/Pricing";
-import { AppShell } from "@/components/ui/AppShell";
+import { AppShell } from "@bnto/ui";
 
 export const metadata: Metadata = {
   title: "Pricing",

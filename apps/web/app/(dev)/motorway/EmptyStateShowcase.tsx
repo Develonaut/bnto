@@ -1,13 +1,6 @@
 import { BookOpen, FolderOpen, Inbox, Plus, Search } from "lucide-react";
 
-import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Grid } from "@/components/ui/Grid";
-import { Heading } from "@/components/ui/Heading";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Animate, Button, Card, EmptyState, Grid, Heading, Stack, Text } from "@bnto/ui";
 
 export function EmptyStateShowcase() {
   return (

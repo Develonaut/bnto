@@ -1,7 +1,7 @@
 import type { Execution, RecipeListItem } from "@bnto/core";
 
 import { RecipeCard } from "@/components/blocks/RecipeCard";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Skeleton } from "@bnto/ui";
 
 interface SavedRecipeCardProps {
   recipe: RecipeListItem;

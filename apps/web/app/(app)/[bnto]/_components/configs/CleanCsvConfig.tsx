@@ -1,7 +1,6 @@
 "use client";
 
-import { Label } from "@/components/ui/Label";
-import { Switch } from "@/components/ui/Switch";
+import { Label, Switch } from "@bnto/ui";
 import type { CleanCsvConfig as Config } from "./types";
 
 interface CleanCsvConfigProps {

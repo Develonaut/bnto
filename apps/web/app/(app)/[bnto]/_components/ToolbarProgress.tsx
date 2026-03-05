@@ -1,8 +1,7 @@
 "use client";
 
 import type { BrowserExecution } from "@bnto/core";
-import { CheckCircle2Icon, LoaderIcon } from "@/components/ui/icons";
-import { LinearProgress } from "@/components/ui/LinearProgress";
+import { CheckCircle2Icon, LinearProgress, LoaderIcon } from "@bnto/ui";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface ToolbarProgressProps {

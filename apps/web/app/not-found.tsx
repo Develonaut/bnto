@@ -1,13 +1,7 @@
-import { ArrowLeftIcon } from "@/components/ui/icons";
+import { AppShell, ArrowLeftIcon, Button, Heading, Row, Stack, Text } from "@bnto/ui";
 
 import { Navbar } from "@/components/blocks/Navbar";
 import { Footer } from "@/components/blocks/Footer";
-import { AppShell } from "@/components/ui/AppShell";
-import { Button } from "@/components/ui/Button";
-import { Heading } from "@/components/ui/Heading";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
 import { GITHUB_URL } from "@/lib/copy";
 
 /**

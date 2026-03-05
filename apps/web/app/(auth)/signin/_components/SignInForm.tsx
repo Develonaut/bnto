@@ -5,14 +5,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 import { NavButton } from "@/components/blocks/NavButton";
-import { Button } from "@/components/ui/Button";
-import { Container } from "@/components/ui/Container";
-import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
-import { Stack } from "@/components/ui/Stack";
-import { Input } from "@/components/ui/Input";
-import { PasswordInput } from "@/components/ui/PasswordInput";
-import { LoaderIcon } from "@/components/ui/icons";
+import {
+  Button,
+  Container,
+  Heading,
+  Input,
+  LoaderIcon,
+  PasswordInput,
+  Stack,
+  Text,
+} from "@bnto/ui";
 
 type Mode = "signin" | "signup";
 

@@ -3,8 +3,7 @@
 import { ExecutionHistory } from "./ExecutionHistory";
 import { RecipeGrid } from "./RecipeGrid";
 import { UsageStats } from "./UsageStats";
-import { Tabs } from "@/components/ui/Tabs";
-import { Stack } from "@/components/ui/Stack";
+import { Stack, Tabs } from "@bnto/ui";
 
 /**
  * Interactive tabs + data leaves for the My Recipes page.

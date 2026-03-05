@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 
-import { Checkbox } from "@/components/ui/Checkbox";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { PasswordInput } from "@/components/ui/PasswordInput";
-import { RadialSlider } from "@/components/ui/RadialSlider";
-import { RadioGroup } from "@/components/ui/RadioGroup";
-import { Row } from "@/components/ui/Row";
-import { Slider } from "@/components/ui/Slider";
-import { Stack } from "@/components/ui/Stack";
-import { Switch } from "@/components/ui/Switch";
-import { Text } from "@/components/ui/Text";
-import { Textarea } from "@/components/ui/Textarea";
+import {
+  Checkbox,
+  Input,
+  Label,
+  PasswordInput,
+  RadialSlider,
+  RadioGroup,
+  Row,
+  Slider,
+  Stack,
+  Switch,
+  Text,
+  Textarea,
+} from "@bnto/ui";
 
 export function InputShowcase() {
   const [switchA, setSwitchA] = useState(true);

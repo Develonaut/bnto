@@ -3,13 +3,8 @@
 import { core } from "@bnto/core";
 
 import { useDelayedLoading } from "../_hooks/useDelayedLoading";
-import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Grid } from "@/components/ui/Grid";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { Animate, Button, EmptyState, FolderOpenIcon, Grid, Skeleton } from "@bnto/ui";
 import { RecipeCard } from "@/components/blocks/RecipeCard";
-import { FolderOpenIcon } from "@/components/ui/icons";
 
 /**
  * Saved recipes grid — self-fetching.

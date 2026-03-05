@@ -1,11 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { Badge } from "@/components/ui/Badge";
-import { Heading } from "@/components/ui/Heading";
-import { Panel } from "@/components/ui/Panel";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Badge, Heading, Panel, Stack, Text } from "@bnto/ui";
 import { useEditorNode } from "@/editor/hooks/useEditorNode";
 import { useEditorActions } from "@/editor/hooks/useEditorActions";
 import { ParameterField } from "./ParameterField";

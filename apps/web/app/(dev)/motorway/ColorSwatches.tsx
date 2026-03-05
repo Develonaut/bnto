@@ -1,6 +1,5 @@
 import { cn } from "@/lib/cn";
-import { Card } from "@/components/ui/Card";
-import { Grid } from "@/components/ui/Grid";
+import { Card, Grid } from "@bnto/ui";
 
 function Swatch({ name, bg, fg, surface }: { name: string; bg: string; fg: string; surface: string }) {
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2Icon, LoaderIcon, XCircleIcon } from "@/components/ui/icons";
+import { CheckCircle2Icon, LoaderIcon, XCircleIcon } from "@bnto/ui";
 import type { FileUploadProgress } from "@bnto/core";
 import { cn } from "@/lib/cn";
 import { formatFileSize } from "@/src/utils/formatFileSize";

@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 
 import { usePathname } from "next/navigation";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@bnto/ui";
 
 export function NavButton({
   href,

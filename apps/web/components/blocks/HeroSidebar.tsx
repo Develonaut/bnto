@@ -4,14 +4,9 @@ import {
   LaptopIcon,
   ShieldCheckIcon,
   ZapIcon,
-} from "@/components/ui/icons";
+} from "@bnto/ui";
 
-import { Button } from "@/components/ui/Button";
-import { Heading } from "@/components/ui/Heading";
-import { IconBadge } from "@/components/ui/IconBadge";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Button, Heading, IconBadge, Row, Stack, Text } from "@bnto/ui";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 import {
   GALLERY_HEADING,

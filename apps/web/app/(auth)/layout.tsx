@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { AppShell } from "@/components/ui/AppShell";
+import { AppShell } from "@bnto/ui";
 
 export default function AuthLayout({
   children,

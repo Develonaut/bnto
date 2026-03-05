@@ -2,11 +2,7 @@
 
 import { useCallback } from "react";
 import type { ParameterSchema } from "@bnto/nodes";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { Select } from "@/components/ui/Select";
-import { Switch } from "@/components/ui/Switch";
-import { Text } from "@/components/ui/Text";
+import { Input, Label, Select, Switch, Text } from "@bnto/ui";
 
 /**
  * ParameterField — auto-generated form field from ParameterSchema.

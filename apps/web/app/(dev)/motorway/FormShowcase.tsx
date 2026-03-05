@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Checkbox } from "@/components/ui/Checkbox";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { Row } from "@/components/ui/Row";
-import { Slider } from "@/components/ui/Slider";
-import { Stack } from "@/components/ui/Stack";
-import { Switch } from "@/components/ui/Switch";
-import { Textarea } from "@/components/ui/Textarea";
+import {
+  Button,
+  Card,
+  Checkbox,
+  Input,
+  Label,
+  Row,
+  Slider,
+  Stack,
+  Switch,
+  Textarea,
+} from "@bnto/ui";
 
 export function FormShowcase() {
   const [switchOn, setSwitchOn] = useState(false);

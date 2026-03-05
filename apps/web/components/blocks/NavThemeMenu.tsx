@@ -2,13 +2,16 @@
 
 import { useTheme } from "@/components/useTheme";
 
-import { RotateCcwIcon, SunIcon } from "@/components/ui/icons";
+import {
+  AnimatedThemeToggle,
+  Button,
+  Menu,
+  RadialSlider,
+  RotateCcwIcon,
+  SunIcon,
+  Text,
+} from "@bnto/ui";
 
-import { AnimatedThemeToggle } from "@/components/ui/AnimatedThemeToggle";
-import { Button } from "@/components/ui/Button";
-import { Menu } from "@/components/ui/Menu";
-import { RadialSlider } from "@/components/ui/RadialSlider";
-import { Text } from "@/components/ui/Text";
 import {
   THEME_STORE_DEFAULT_ANGLE,
   useThemeStore,

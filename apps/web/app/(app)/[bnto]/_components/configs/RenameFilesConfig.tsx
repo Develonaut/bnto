@@ -1,7 +1,6 @@
 "use client";
 
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
+import { Input, Label } from "@bnto/ui";
 import type { RenameFilesConfig as Config } from "./types";
 
 interface RenameFilesConfigProps {

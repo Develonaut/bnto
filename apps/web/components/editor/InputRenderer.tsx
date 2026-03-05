@@ -2,7 +2,7 @@
 
 import type { Definition } from "@bnto/nodes";
 import { deriveAcceptedTypes } from "@bnto/core";
-import { FileUpload } from "@/components/ui/FileUpload";
+import { FileUpload } from "@bnto/ui";
 import { DropzoneContent } from "@/app/(app)/[bnto]/_components/DropzoneContent";
 import { toDropzoneAccept } from "@/src/utils/toDropzoneAccept";
 

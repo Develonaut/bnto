@@ -3,9 +3,7 @@
 import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Row } from "@/components/ui/Row";
-import { Text } from "@/components/ui/Text";
+import { Button, Row, Text } from "@bnto/ui";
 import type { StationNodeType } from "@/components/editor/archive/conveyor/StationNode";
 import type { ConveyorEdgeType } from "@/components/editor/archive/conveyor/ConveyorEdge";
 import { PieceShape } from "@/components/editor/archive/conveyor/PieceShape";

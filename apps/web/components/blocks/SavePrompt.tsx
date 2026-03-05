@@ -2,12 +2,7 @@
 
 import { core } from "@bnto/core";
 
-import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Animate, Button, Card, Row, Stack, Text } from "@bnto/ui";
 
 /**
  * Post-execution conversion prompt for unauthenticated users.

@@ -1,12 +1,7 @@
 "use client";
 
-import { CheckCircle2Icon, DownloadIcon } from "@/components/ui/icons";
+import { Button, Card, CheckCircle2Icon, DownloadIcon, IconBadge, Row, Stack } from "@bnto/ui";
 import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { IconBadge } from "@/components/ui/IconBadge";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface BrowserExecutionResultsProps {

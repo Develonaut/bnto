@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import { GithubIcon, MenuIcon } from "@/components/ui/icons";
+import { Button, Container, GithubIcon, MenuIcon, Toolbar } from "@bnto/ui";
 
-import { Button } from "@/components/ui/Button";
-import { Container } from "@/components/ui/Container";
-import { Toolbar } from "@/components/ui/Toolbar";
 import { GITHUB_URL } from "@/lib/copy";
 
 import { DesktopNav } from "./DesktopNav";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { usePrevious } from "@/components/ui/usePrevious";
+import { usePrevious } from "@bnto/ui";
 import { useEditorStore } from "@/editor";
 import { useEditorSelection } from "@/editor/hooks/useEditorSelection";
 import { useEditorStoreApi } from "@/editor/hooks/useEditorStoreApi";

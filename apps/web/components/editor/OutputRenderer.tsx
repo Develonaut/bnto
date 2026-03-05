@@ -3,12 +3,7 @@
 import type { Definition } from "@bnto/nodes";
 import type { BrowserFileResult } from "@bnto/core";
 import { deriveOutputConfig } from "@bnto/core";
-import { CheckCircle2Icon, DownloadIcon } from "@/components/ui/icons";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { IconBadge } from "@/components/ui/IconBadge";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
+import { Button, Card, CheckCircle2Icon, DownloadIcon, IconBadge, Row, Stack } from "@bnto/ui";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface OutputRendererProps {

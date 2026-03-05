@@ -1,12 +1,7 @@
 "use client";
 
 import type { BntoEntry } from "@/lib/bntoRegistry";
-import { Animate } from "@/components/ui/Animate";
-import { Container } from "@/components/ui/Container";
-import { FileUpload } from "@/components/ui/FileUpload";
-import { Grid } from "@/components/ui/Grid";
-import { Heading } from "@/components/ui/Heading";
-import { Stack } from "@/components/ui/Stack";
+import { Animate, Container, FileUpload, Grid, Heading, Stack } from "@bnto/ui";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
 import { DropzoneContent } from "./DropzoneContent";
 import { ErrorCard } from "./ErrorCard";

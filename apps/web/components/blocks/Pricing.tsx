@@ -1,11 +1,5 @@
-import { CheckIcon } from "@/components/ui/icons";
+import { Badge, Button, Card, CheckIcon, Heading, Stack, Text } from "@bnto/ui";
 
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
 
 const FREE_FEATURES = [
   "Unlimited image compression, resizing, and conversion",

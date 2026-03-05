@@ -9,11 +9,9 @@ import {
   SparklesIcon,
   Columns3Icon,
   RotateCcwIcon,
-} from "@/components/ui/icons";
+} from "@bnto/ui";
 
-import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Animate, Button, Card } from "@bnto/ui";
 
 /* ── Helpers ─────────────────────────────────────────────── */
 

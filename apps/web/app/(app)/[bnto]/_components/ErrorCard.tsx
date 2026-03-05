@@ -1,6 +1,4 @@
-import { XCircleIcon } from "@/components/ui/icons";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
+import { Row, Stack, XCircleIcon } from "@bnto/ui";
 
 interface ErrorCardProps {
   error: string;

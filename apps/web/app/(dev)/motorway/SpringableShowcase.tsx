@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
-import { Row } from "@/components/ui/Row";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Button, Card, Heading, Row, Skeleton, Stack, Text } from "@bnto/ui";
 
 /* ── Shared OptionBar ──────────────────────────────────────────── */
 

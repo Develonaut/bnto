@@ -6,16 +6,18 @@ import {
   CheckIcon,
   CircleMinusIcon,
   ZapIcon,
-} from "@/components/ui/icons";
+} from "@bnto/ui";
 
-import { Animate } from "@/components/ui/Animate";
-import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
-import { ComparisonBar } from "@/components/ui/ComparisonBar";
-import { Card } from "@/components/ui/Card";
-import { IconBadge } from "@/components/ui/IconBadge";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import {
+  Animate,
+  AnimatedCounter,
+  Card,
+  ComparisonBar,
+  IconBadge,
+  Row,
+  Stack,
+  Text,
+} from "@bnto/ui";
 import { cn } from "@/lib/cn";
 
 /* ── Data ────────────────────────────────────────────────────── */

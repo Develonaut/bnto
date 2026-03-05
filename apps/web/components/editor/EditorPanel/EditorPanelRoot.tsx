@@ -1,15 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Panel } from "@/components/ui/Panel";
-import { Text } from "@/components/ui/Text";
+import { Panel, Text } from "@bnto/ui";
 import {
   CopyIcon,
   DownloadIcon,
   PenLineIcon,
   PlusIcon,
   TrashIcon,
-} from "@/components/ui/icons";
+} from "@bnto/ui";
 import { useEditorExport } from "@/editor/hooks/useEditorExport";
 import { useEditorStore } from "@/editor/hooks/useEditorStore";
 import { FileMenu } from "./FileMenu";

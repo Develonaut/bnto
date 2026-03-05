@@ -1,9 +1,6 @@
 "use client";
 
-import { LinearProgress } from "@/components/ui/LinearProgress";
-import { CheckCircle2Icon, LoaderIcon } from "@/components/ui/icons";
-import { Heading } from "@/components/ui/Heading";
-import { Text } from "@/components/ui/Text";
+import { CheckCircle2Icon, Heading, LinearProgress, LoaderIcon, Text } from "@bnto/ui";
 
 /**
  * Showcase of LinearProgress primitive at different values,

@@ -1,18 +1,14 @@
 "use client";
 
 import type { BrowserFileResult } from "@bnto/core";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Button, Card, IconBadge, Row, Stack } from "@bnto/ui";
 import {
   CheckCircle2Icon,
   DownloadIcon,
   FileIcon,
   LoaderIcon,
   XIcon,
-} from "@/components/ui/icons";
-import { IconBadge } from "@/components/ui/IconBadge";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
+} from "@bnto/ui";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface FileCardProps {
