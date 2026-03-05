@@ -42,6 +42,7 @@ gh pr diff <number>
 ```
 
 **Stop immediately if:**
+
 - PR state is not `OPEN` — report the current state and stop
 - PR is a draft — tell the user to mark it ready first
 
@@ -50,16 +51,18 @@ gh pr diff <number>
 Check that all required status checks are passing.
 
 Parse `statusCheckRollup` from Step 2. For each check:
+
 - Name, status (pass/fail/pending), conclusion
 
 **Required checks to verify:**
 
-| Check | Workflow | Blocking? |
-|---|---|---|
-| **CI Gate** | `ci.yml` — Rust lint/test + TypeScript build/test/lint | Yes — must pass |
+| Check             | Workflow                                                                  | Blocking?                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **CI Gate**       | `ci.yml` — Rust lint/test + TypeScript build/test/lint                    | Yes — must pass                                                                                             |
 | **Lighthouse CI** | `lighthouse.yml` — Performance, Accessibility, Best Practices, SEO audits | Yes — error-level assertions (a11y, best practices, SEO ≥ 90) must pass. Performance warnings are advisory. |
 
 **Determine status for EACH required check:**
+
 - All checks passing = CI PASS
 - Any check failing = CI FAIL — list the failing checks with their names and conclusions
 - Any check pending = CI PENDING — list pending checks, ask user if they want to wait
@@ -140,13 +143,72 @@ gh pr merge <number> --rebase --delete-branch
 ```
 
 After merge:
+
 1. Confirm the merge succeeded
 2. Confirm the remote branch was deleted
-3. Suggest `git checkout main && git pull` to update local
+3. Run the cleanup steps in Step 8
 
 **If merge fails:** report the error. Common causes:
+
 - Branch protection rules not met (missing reviews, required checks)
 - Merge conflict appeared between check and merge
 - Permission issues
 
 Report the specific error and suggest next steps.
+
+## Step 8: Post-Merge Cleanup
+
+After a successful merge, clean up the local environment so you're back on a fresh `main`.
+
+### Determine your context
+
+```bash
+# Are we in a worktree?
+git worktree list
+```
+
+### If on a feature branch (normal flow):
+
+```bash
+# Switch back to main and pull the merged changes
+git checkout main && git pull
+
+# Delete the local feature branch
+git branch -d <branch-name>
+```
+
+### If in a worktree:
+
+```bash
+# Get the worktree path and main repo path
+git worktree list
+```
+
+1. Exit the worktree — switch the session back to the main repo root
+2. Remove the worktree:
+
+```bash
+cd /Users/ryan/Code/bnto
+git worktree remove .claude/worktrees/<name>
+```
+
+3. Update main:
+
+```bash
+git checkout main && git pull
+```
+
+4. Delete the local branch if it still exists:
+
+```bash
+git branch -d <branch-name>
+```
+
+### Confirm cleanup
+
+Report to the user:
+
+- Current branch: `main`
+- Local branch deleted: yes/no
+- Worktree removed: yes/no (if applicable)
+- `main` is up to date with origin
