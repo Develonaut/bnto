@@ -13,6 +13,7 @@ import {
   Text,
   usePrevious,
 } from "@bnto/ui";
+import { inferFieldType } from "@bnto/nodes";
 import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { useEditorActions } from "../../hooks/useEditorActions";
@@ -34,7 +35,7 @@ function ConfigPanelRoot() {
   const configNodeId = selectedNodeId ?? prevSelectedNodeId ?? null;
 
   const { configOpen } = useEditorPanels();
-  const { node, config, typeInfo, visibleParams } = useEditorNode(configNodeId);
+  const { node, config, typeInfo, schemaDef, visibleParams } = useEditorNode(configNodeId);
   const { updateParams } = useEditorActions();
 
   /* CSS transition for panel open/close — Animate.* covers entrance animations,
@@ -107,14 +108,30 @@ function ConfigPanelRoot() {
               </Text>
             ) : (
               <Stack gap="sm">
-                {visibleParams.map((param) => (
-                  <ParameterField
-                    key={param.name}
-                    param={param}
-                    value={config.parameters[param.name]}
-                    onChange={handleParamChange}
-                  />
-                ))}
+                {visibleParams.map((paramName) => {
+                  const meta = schemaDef!.params[paramName];
+                  if (!meta) return null;
+                  const zodField = schemaDef!.schema.shape[paramName];
+                  const fieldInfo = zodField
+                    ? inferFieldType(zodField)
+                    : { type: "string" as const };
+                  const outerType = zodField?._def?.typeName ?? "";
+                  const required = outerType !== "ZodOptional" && outerType !== "ZodDefault";
+                  return (
+                    <ParameterField
+                      key={paramName}
+                      name={paramName}
+                      meta={meta}
+                      type={fieldInfo.type}
+                      value={config.parameters[paramName]}
+                      required={required}
+                      enumValues={fieldInfo.enumValues}
+                      min={fieldInfo.min}
+                      max={fieldInfo.max}
+                      onChange={handleParamChange}
+                    />
+                  );
+                })}
               </Stack>
             )}
           </div>

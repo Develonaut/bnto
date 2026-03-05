@@ -1,5 +1,5 @@
 /**
- * Tests for the NODE_SCHEMAS registry, helpers, and structural invariants.
+ * Tests for the NODE_SCHEMA_DEFS registry, helpers, and structural invariants.
  */
 
 import { describe, expect, it } from "vitest";
@@ -7,11 +7,12 @@ import { describe, expect, it } from "vitest";
 import { NODE_TYPE_NAMES } from "../nodeTypes";
 
 import {
-  NODE_SCHEMAS,
+  NODE_SCHEMA_DEFS,
   getNodeSchema,
   getRequiredParams,
   getConditionallyRequired,
   getVisibleParams,
+  inferFieldType,
   HTTP_METHODS,
   FILE_OPERATIONS,
   LOOP_MODES,
@@ -27,72 +28,151 @@ import {
 
 // ---------- Registry completeness ----------
 
-describe("NODE_SCHEMAS", () => {
+describe("NODE_SCHEMA_DEFS", () => {
   it("has a schema for every registered node type", () => {
     for (const name of NODE_TYPE_NAMES) {
-      expect(NODE_SCHEMAS[name]).toBeDefined();
-      expect(NODE_SCHEMAS[name].nodeType).toBe(name);
+      expect(NODE_SCHEMA_DEFS[name]).toBeDefined();
+      expect(NODE_SCHEMA_DEFS[name].nodeType).toBe(name);
     }
   });
 
   it("has exactly 12 entries", () => {
-    expect(Object.keys(NODE_SCHEMAS)).toHaveLength(12);
+    expect(Object.keys(NODE_SCHEMA_DEFS)).toHaveLength(12);
   });
 });
 
 // ---------- Structural invariants ----------
 
-describe("every schema", () => {
-  const allSchemas = Object.values(NODE_SCHEMAS);
+describe("every schema definition", () => {
+  const allDefs = Object.values(NODE_SCHEMA_DEFS);
 
   it("has a non-empty nodeType", () => {
-    for (const schema of allSchemas) {
-      expect(schema.nodeType).toBeTruthy();
+    for (const def of allDefs) {
+      expect(def.nodeType).toBeTruthy();
     }
   });
 
   it("has a schemaVersion >= 1", () => {
-    for (const schema of allSchemas) {
-      expect(schema.schemaVersion).toBeGreaterThanOrEqual(1);
+    for (const def of allDefs) {
+      expect(def.schemaVersion).toBeGreaterThanOrEqual(1);
     }
   });
 
-  it("has a parameters array", () => {
-    for (const schema of allSchemas) {
-      expect(Array.isArray(schema.parameters)).toBe(true);
+  it("has a Zod schema with a shape", () => {
+    for (const def of allDefs) {
+      expect(def.schema).toBeDefined();
+      expect(def.schema.shape).toBeDefined();
     }
   });
 
-  it("every parameter has required fields", () => {
-    for (const schema of allSchemas) {
-      for (const param of schema.parameters) {
-        expect(param.name).toBeTruthy();
-        expect(param.type).toBeTruthy();
-        expect(typeof param.required).toBe("boolean");
-        expect(param.label).toBeTruthy();
-        expect(param.description).toBeTruthy();
+  it("has params metadata for every field in the Zod shape", () => {
+    for (const def of allDefs) {
+      const shapeKeys = Object.keys(def.schema.shape);
+      for (const key of shapeKeys) {
+        expect(def.params[key]).toBeDefined();
+        expect(def.params[key].label).toBeTruthy();
+        expect(def.params[key].description).toBeTruthy();
       }
     }
   });
 
-  it("enum parameters always have enumValues", () => {
-    for (const schema of allSchemas) {
-      for (const param of schema.parameters) {
-        if (param.type === "enum") {
-          expect(param.enumValues).toBeDefined();
-          expect(param.enumValues!.length).toBeGreaterThan(0);
+  it("has no extra params keys beyond the Zod shape", () => {
+    for (const def of allDefs) {
+      const shapeKeys = new Set(Object.keys(def.schema.shape));
+      for (const key of Object.keys(def.params)) {
+        expect(shapeKeys.has(key)).toBe(true);
+      }
+    }
+  });
+
+  it("enum fields inferred via inferFieldType have enumValues", () => {
+    for (const def of allDefs) {
+      for (const [key, zodField] of Object.entries(def.schema.shape)) {
+        const info = inferFieldType(zodField);
+        if (info.type === "enum") {
+          expect(info.enumValues).toBeDefined();
+          expect(info.enumValues!.length).toBeGreaterThan(0);
         }
       }
     }
   });
 
-  it("number parameters with min/max have min <= max", () => {
-    for (const schema of allSchemas) {
-      for (const param of schema.parameters) {
-        if (param.type === "number" && param.min !== undefined && param.max !== undefined) {
-          expect(param.min).toBeLessThanOrEqual(param.max);
+  it("number fields with min/max have min <= max", () => {
+    for (const def of allDefs) {
+      for (const [, zodField] of Object.entries(def.schema.shape)) {
+        const info = inferFieldType(zodField);
+        if (info.type === "number" && info.min !== undefined && info.max !== undefined) {
+          expect(info.min).toBeLessThanOrEqual(info.max);
         }
       }
+    }
+  });
+});
+
+// ---------- Zod schema parsing ----------
+
+describe("Zod schemas parse correctly", () => {
+  it("image accepts empty object (all optional except operation via enum)", () => {
+    const result = NODE_SCHEMA_DEFS["image"].schema.safeParse({ operation: "resize" });
+    expect(result.success).toBe(true);
+  });
+
+  it("image rejects invalid operation", () => {
+    const result = NODE_SCHEMA_DEFS["image"].schema.safeParse({ operation: "explode" });
+    expect(result.success).toBe(false);
+  });
+
+  it("http-request requires url", () => {
+    const result = NODE_SCHEMA_DEFS["http-request"].schema.safeParse({ method: "GET" });
+    expect(result.success).toBe(false);
+  });
+
+  it("http-request passes with url and defaults method", () => {
+    const result = NODE_SCHEMA_DEFS["http-request"].schema.safeParse({
+      url: "https://example.com",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.method).toBe("GET");
+    }
+  });
+
+  it("shell-command requires command", () => {
+    const result = NODE_SCHEMA_DEFS["shell-command"].schema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("loop requires mode", () => {
+    const result = NODE_SCHEMA_DEFS["loop"].schema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("group defaults mode to sequential", () => {
+    const result = NODE_SCHEMA_DEFS["group"].schema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.mode).toBe("sequential");
+    }
+  });
+
+  it("edit-fields requires values", () => {
+    const result = NODE_SCHEMA_DEFS["edit-fields"].schema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("input defaults mode to file-upload", () => {
+    const result = NODE_SCHEMA_DEFS["input"].schema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.mode).toBe("file-upload");
+    }
+  });
+
+  it("output defaults mode to download", () => {
+    const result = NODE_SCHEMA_DEFS["output"].schema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.mode).toBe("download");
     }
   });
 });
@@ -112,30 +192,30 @@ describe("getNodeSchema", () => {
 });
 
 describe("getRequiredParams", () => {
-  it("returns only required params", () => {
+  it("returns required param names for http-request", () => {
     const required = getRequiredParams("http-request");
-    expect(required.length).toBe(2);
-    for (const p of required) {
-      expect(p.required).toBe(true);
-    }
+    expect(required).toContain("url");
   });
 
   it("returns empty array for unknown type", () => {
     expect(getRequiredParams("unknown")).toEqual([]);
+  });
+
+  it("returns empty for group (all optional/defaulted)", () => {
+    const required = getRequiredParams("group");
+    expect(required).toHaveLength(0);
   });
 });
 
 describe("getConditionallyRequired", () => {
   it("finds items when loop mode is forEach", () => {
     const params = getConditionallyRequired("loop", "mode", "forEach");
-    expect(params).toHaveLength(1);
-    expect(params[0].name).toBe("items");
+    expect(params).toContain("items");
   });
 
   it("finds count when loop mode is times", () => {
     const params = getConditionallyRequired("loop", "mode", "times");
-    expect(params).toHaveLength(1);
-    expect(params[0].name).toBe("count");
+    expect(params).toContain("count");
   });
 
   it("returns empty for non-matching value", () => {
@@ -150,24 +230,21 @@ describe("getConditionallyRequired", () => {
 
 describe("getVisibleParams", () => {
   it("returns resize-specific params for image resize", () => {
-    const params = getVisibleParams("image", "operation", "resize");
-    const names = params.map((p) => p.name);
+    const names = getVisibleParams("image", "operation", "resize");
     expect(names).toContain("width");
     expect(names).toContain("height");
     expect(names).toContain("maintainAspect");
   });
 
   it("excludes resize params when operation is convert", () => {
-    const params = getVisibleParams("image", "operation", "convert");
-    const names = params.map((p) => p.name);
+    const names = getVisibleParams("image", "operation", "convert");
     expect(names).not.toContain("width");
     expect(names).not.toContain("height");
     expect(names).not.toContain("maintainAspect");
   });
 
   it("includes params without visibleWhen (always visible)", () => {
-    const params = getVisibleParams("image", "operation", "resize");
-    const names = params.map((p) => p.name);
+    const names = getVisibleParams("image", "operation", "resize");
     expect(names).toContain("operation");
     expect(names).toContain("input");
     expect(names).toContain("output");
@@ -176,6 +253,54 @@ describe("getVisibleParams", () => {
 
   it("returns empty for unknown type", () => {
     expect(getVisibleParams("unknown", "op", "val")).toEqual([]);
+  });
+});
+
+// ---------- inferFieldType ----------
+
+describe("inferFieldType", () => {
+  it("detects enum type from Zod enum", () => {
+    const shape = NODE_SCHEMA_DEFS["image"].schema.shape;
+    const info = inferFieldType(shape.operation);
+    expect(info.type).toBe("enum");
+    expect(info.enumValues).toEqual(IMAGE_OPERATIONS);
+  });
+
+  it("detects number type with min/max", () => {
+    const shape = NODE_SCHEMA_DEFS["image"].schema.shape;
+    const info = inferFieldType(shape.quality);
+    expect(info.type).toBe("number");
+    expect(info.min).toBe(1);
+    expect(info.max).toBe(100);
+  });
+
+  it("detects boolean type", () => {
+    const shape = NODE_SCHEMA_DEFS["image"].schema.shape;
+    const info = inferFieldType(shape.maintainAspect);
+    expect(info.type).toBe("boolean");
+  });
+
+  it("detects string type for plain strings", () => {
+    const shape = NODE_SCHEMA_DEFS["http-request"].schema.shape;
+    const info = inferFieldType(shape.url);
+    expect(info.type).toBe("string");
+  });
+
+  it("unwraps optional/default wrappers", () => {
+    // quality is z.number().min(1).max(100).optional().default(80)
+    const shape = NODE_SCHEMA_DEFS["image"].schema.shape;
+    const info = inferFieldType(shape.quality);
+    expect(info.type).toBe("number");
+    expect(info.min).toBe(1);
+    expect(info.max).toBe(100);
+  });
+
+  it("detects enum inside default wrapper", () => {
+    // method is z.enum(HTTP_METHODS).default("GET")
+    const shape = NODE_SCHEMA_DEFS["http-request"].schema.shape;
+    const info = inferFieldType(shape.method);
+    expect(info.type).toBe("enum");
+    expect(info.enumValues).toEqual(HTTP_METHODS);
   });
 });
 

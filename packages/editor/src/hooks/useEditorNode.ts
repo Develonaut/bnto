@@ -11,7 +11,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { NodeTypeName, NodeSchema, ParameterSchema } from "@bnto/nodes";
+import type { NodeTypeName, NodeSchemaDefinition } from "@bnto/nodes";
 import { NODE_TYPE_INFO, getNodeSchema } from "@bnto/nodes";
 import { useEditorStore } from "./useEditorStore";
 import type { CompartmentNodeData, NodeConfig } from "../adapters/types";
@@ -21,21 +21,19 @@ import type { CompartmentNodeData, NodeConfig } from "../adapters/types";
 // ---------------------------------------------------------------------------
 
 function resolveVisibleParams(
-  schema: NodeSchema,
+  schemaDef: NodeSchemaDefinition,
   parameters: Record<string, unknown>,
-): ParameterSchema[] {
-  return schema.parameters.filter((param) => {
-    if (!param.visibleWhen) return true;
+): string[] {
+  return Object.entries(schemaDef.params)
+    .filter(([, meta]) => {
+      if (!meta.visibleWhen) return true;
 
-    const conditions = Array.isArray(param.visibleWhen)
-      ? param.visibleWhen
-      : [param.visibleWhen];
+      const conditions = Array.isArray(meta.visibleWhen) ? meta.visibleWhen : [meta.visibleWhen];
 
-    // OR logic — any matching condition makes the param visible
-    return conditions.some(
-      (cond) => String(parameters[cond.param] ?? "") === cond.equals,
-    );
-  });
+      // OR logic — any matching condition makes the param visible
+      return conditions.some((cond) => String(parameters[cond.param] ?? "") === cond.equals);
+    })
+    .map(([name]) => name);
 }
 
 // ---------------------------------------------------------------------------
@@ -49,10 +47,10 @@ interface EditorNodeResult {
   config: NodeConfig | null;
   /** Node type info (label, category, capabilities). */
   typeInfo: (typeof NODE_TYPE_INFO)[NodeTypeName] | null;
-  /** Full schema for the node type. */
-  schema: NodeSchema | null;
-  /** Parameters visible given current parameter values. */
-  visibleParams: ParameterSchema[];
+  /** Full schema definition for the node type. */
+  schemaDef: NodeSchemaDefinition | null;
+  /** Parameter names visible given current parameter values. */
+  visibleParams: string[];
 }
 
 /**
@@ -73,16 +71,14 @@ function useEditorNode(nodeId: string | null): EditorNodeResult {
 
   return useMemo(() => {
     if (!nodeData || !config) {
-      return { node: null, config: null, typeInfo: null, schema: null, visibleParams: [] };
+      return { node: null, config: null, typeInfo: null, schemaDef: null, visibleParams: [] };
     }
 
     const typeInfo = NODE_TYPE_INFO[config.nodeType as NodeTypeName] ?? null;
-    const schema = getNodeSchema(config.nodeType) ?? null;
-    const visibleParams = schema
-      ? resolveVisibleParams(schema, config.parameters)
-      : [];
+    const schemaDef = getNodeSchema(config.nodeType) ?? null;
+    const visibleParams = schemaDef ? resolveVisibleParams(schemaDef, config.parameters) : [];
 
-    return { node: nodeData, config, typeInfo, schema, visibleParams };
+    return { node: nodeData, config, typeInfo, schemaDef, visibleParams };
   }, [nodeData, config]);
 }
 

@@ -4,24 +4,30 @@
  * Go source: engine/pkg/node/library/group/group.go
  */
 
-import type { NodeSchema } from "./types";
+import { z } from "zod";
+import type { NodeSchemaDefinition } from "./types";
 
 /** Valid group execution modes. */
 export const GROUP_MODES = ["sequential", "parallel"] as const;
 
-export const groupSchema: NodeSchema = {
+/** Zod schema for group node parameters. */
+export const groupParamsSchema = z.object({
+  mode: z.enum(GROUP_MODES).optional().default("sequential"),
+});
+
+/** Inferred TypeScript type for group node parameters. */
+export type GroupParams = z.infer<typeof groupParamsSchema>;
+
+/** Full schema definition for the group node type. */
+export const groupNodeSchema: NodeSchemaDefinition = {
   nodeType: "group",
   schemaVersion: 1,
-  parameters: [
-    {
-      name: "mode",
-      type: "enum",
-      required: false,
+  schema: groupParamsSchema,
+  params: {
+    mode: {
       label: "Mode",
       description:
         "How child nodes execute — sequentially (one after another) or in parallel (concurrently).",
-      default: "sequential",
-      enumValues: GROUP_MODES,
     },
-  ],
-} as const;
+  },
+};

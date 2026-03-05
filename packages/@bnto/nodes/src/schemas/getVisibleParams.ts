@@ -1,27 +1,31 @@
 /**
- * Returns parameters that are visible for a given condition.
+ * Returns parameter names that are visible for a given condition.
  */
 
-import type { ParameterSchema } from "./types";
 import { getNodeSchema } from "./getNodeSchema";
 import { matchesCondition } from "./matchesCondition";
 
 /**
- * Returns parameters that are visible when a specific parameter
+ * Returns parameter names that are visible when a specific parameter
  * has a specific value.
  *
+ * Parameters without a visibleWhen condition are always visible.
+ *
  * Example: `getVisibleParams("image", "operation", "resize")`
- * returns width, height, and maintainAspect parameters.
+ * returns names including width, height, and maintainAspect.
  */
 export function getVisibleParams(
   typeName: string,
   paramName: string,
   paramValue: string,
-): readonly ParameterSchema[] {
-  const schema = getNodeSchema(typeName);
-  if (!schema) return [];
-  return schema.parameters.filter((p) => {
-    if (!p.visibleWhen) return true;
-    return matchesCondition(p.visibleWhen, paramName, paramValue);
-  });
+): string[] {
+  const schemaDef = getNodeSchema(typeName);
+  if (!schemaDef) return [];
+
+  return Object.entries(schemaDef.params)
+    .filter(([, meta]) => {
+      if (!meta.visibleWhen) return true;
+      return matchesCondition(meta.visibleWhen, paramName, paramValue);
+    })
+    .map(([name]) => name);
 }

@@ -6,7 +6,7 @@ import { isValid } from "./definitionResult";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 import { NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./nodeTypes";
 import type { NodeTypeName } from "./nodeTypes";
-import { NODE_SCHEMAS } from "./schemas/registry";
+import { NODE_SCHEMA_DEFS } from "./schemas/registry";
 
 // Blank definition now has 2 I/O nodes (input + output).
 // Newly added nodes appear after them.
@@ -145,17 +145,21 @@ describe("addNode", () => {
 
   describe("default parameters match schema", () => {
     for (const typeName of NODE_TYPE_NAMES) {
-      const schema = NODE_SCHEMAS[typeName];
-      const defaultParams = schema.parameters.filter((p) => p.default !== undefined);
+      const schemaDef = NODE_SCHEMA_DEFS[typeName];
+      // Parse empty object to discover Zod defaults
+      const parsed = schemaDef.schema.safeParse({});
+      if (!parsed.success) continue;
+      const defaults = parsed.data as Record<string, unknown>;
+      const defaultKeys = Object.keys(defaults);
 
-      if (defaultParams.length > 0) {
+      if (defaultKeys.length > 0) {
         it(`${typeName} includes all schema defaults`, () => {
           const blank = createBlankDefinition();
           const result = addNode(blank, typeName);
           const params = result.definition.nodes![IO_NODE_COUNT]!.parameters;
 
-          for (const param of defaultParams) {
-            expect(params[param.name]).toBe(param.default);
+          for (const key of defaultKeys) {
+            expect(params[key]).toBe(defaults[key]);
           }
         });
       }

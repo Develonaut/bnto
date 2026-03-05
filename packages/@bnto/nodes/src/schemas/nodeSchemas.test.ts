@@ -1,188 +1,211 @@
 /**
- * Tests for individual node type schemas — validates parameter shapes
- * match the Go engine's validator rules and node implementations.
+ * Tests for individual node type schemas — validates Zod shapes,
+ * defaults, visibility rules, and conditional requirements match
+ * the Go engine's validator rules and node implementations.
  */
 import { describe, expect, it } from "vitest";
 
-import { NODE_SCHEMAS } from "./index";
-import type { NodeSchema, ParameterSchema } from "./types";
-
-function findParam(schema: NodeSchema, name: string): ParameterSchema {
-  const param = schema.parameters.find((p) => p.name === name);
-  if (!param) throw new Error(`"${name}" not found in ${schema.nodeType}`);
-  return param;
-}
+import { NODE_SCHEMA_DEFS, inferFieldType } from "./index";
 
 describe("http-request schema", () => {
-  const schema = NODE_SCHEMAS["http-request"];
+  const def = NODE_SCHEMA_DEFS["http-request"];
 
-  it("requires url and method", () => {
-    const names = schema.parameters.filter((p) => p.required).map((p) => p.name).sort();
-    expect(names).toEqual(["method", "url"]);
+  it("url is required (not optional, not defaulted)", () => {
+    const outerType = def.schema.shape.url._def.typeName;
+    expect(outerType).not.toBe("ZodOptional");
+    expect(outerType).not.toBe("ZodDefault");
+  });
+
+  it("method defaults to GET", () => {
+    const result = def.schema.safeParse({ url: "https://example.com" });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.method).toBe("GET");
   });
 
   it("method enum has 7 values matching Go validator", () => {
-    const m = findParam(schema, "method");
-    expect(m.enumValues).toHaveLength(7);
-    expect(m.enumValues).toContain("GET");
-    expect(m.enumValues).toContain("OPTIONS");
+    const info = inferFieldType(def.schema.shape.method);
+    expect(info.type).toBe("enum");
+    expect(info.enumValues).toHaveLength(7);
+    expect(info.enumValues).toContain("GET");
+    expect(info.enumValues).toContain("OPTIONS");
   });
 
   it("timeout defaults to 30", () => {
-    expect(findParam(schema, "timeout").default).toBe(30);
+    const result = def.schema.safeParse({ url: "https://example.com" });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.timeout).toBe(30);
   });
 });
 
 describe("file-system schema", () => {
-  const schema = NODE_SCHEMAS["file-system"];
+  const def = NODE_SCHEMA_DEFS["file-system"];
 
-  it("requires only operation", () => {
-    const required = schema.parameters.filter((p) => p.required);
-    expect(required).toHaveLength(1);
-    expect(required[0].name).toBe("operation");
+  it("operation is required", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(false);
   });
 
   it("operation enum has 8 values matching Go validator", () => {
-    const op = findParam(schema, "operation");
-    expect(op.enumValues).toHaveLength(8);
-    expect(op.enumValues).toContain("list");
-    expect(op.enumValues).toContain("delete");
+    const info = inferFieldType(def.schema.shape.operation);
+    expect(info.type).toBe("enum");
+    expect(info.enumValues).toHaveLength(8);
+    expect(info.enumValues).toContain("list");
+    expect(info.enumValues).toContain("delete");
   });
 
   it("content is conditionally required for write", () => {
-    expect(findParam(schema, "content").requiredWhen).toEqual({
-      param: "operation", equals: "write",
+    expect(def.params.content.requiredWhen).toEqual({
+      param: "operation",
+      equals: "write",
     });
   });
 });
 
 describe("loop schema", () => {
-  const schema = NODE_SCHEMAS["loop"];
+  const def = NODE_SCHEMA_DEFS["loop"];
 
-  it("requires mode", () => {
-    const required = schema.parameters.filter((p) => p.required);
-    expect(required).toHaveLength(1);
-    expect(required[0].name).toBe("mode");
+  it("mode is required", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(false);
   });
 
   it("mode-specific params are conditionally required", () => {
-    expect(findParam(schema, "items").requiredWhen).toEqual({ param: "mode", equals: "forEach" });
-    expect(findParam(schema, "count").requiredWhen).toEqual({ param: "mode", equals: "times" });
-    expect(findParam(schema, "condition").requiredWhen).toEqual({ param: "mode", equals: "while" });
+    expect(def.params.items.requiredWhen).toEqual({ param: "mode", equals: "forEach" });
+    expect(def.params.count.requiredWhen).toEqual({ param: "mode", equals: "times" });
+    expect(def.params.condition.requiredWhen).toEqual({ param: "mode", equals: "while" });
   });
 });
 
 describe("shell-command schema", () => {
-  const schema = NODE_SCHEMAS["shell-command"];
+  const def = NODE_SCHEMA_DEFS["shell-command"];
 
-  it("requires command", () => {
-    const required = schema.parameters.filter((p) => p.required);
-    expect(required).toHaveLength(1);
-    expect(required[0].name).toBe("command");
+  it("command is required", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(false);
   });
 
   it("has correct defaults for timeout, retry, stall", () => {
-    expect(findParam(schema, "timeout").default).toBe(120);
-    expect(findParam(schema, "retry").default).toBe(0);
-    expect(findParam(schema, "retryDelay").default).toBe(5);
-    expect(findParam(schema, "stallTimeout").default).toBe(0);
+    const result = def.schema.safeParse({ command: "echo hello" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.timeout).toBe(120);
+      expect(result.data.retry).toBe(0);
+      expect(result.data.retryDelay).toBe(5);
+      expect(result.data.stallTimeout).toBe(0);
+    }
   });
 });
 
 describe("edit-fields schema", () => {
-  const schema = NODE_SCHEMAS["edit-fields"];
+  const def = NODE_SCHEMA_DEFS["edit-fields"];
 
-  it("requires values as object", () => {
-    const required = schema.parameters.filter((p) => p.required);
-    expect(required).toHaveLength(1);
-    expect(required[0].name).toBe("values");
-    expect(required[0].type).toBe("object");
+  it("values is required", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(false);
   });
 
   it("keepOnlySet defaults to false", () => {
-    expect(findParam(schema, "keepOnlySet").default).toBe(false);
+    const result = def.schema.safeParse({ values: { name: "test" } });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.keepOnlySet).toBe(false);
   });
 });
 
 describe("image schema", () => {
-  const schema = NODE_SCHEMAS["image"];
+  const def = NODE_SCHEMA_DEFS["image"];
 
-  it("requires operation", () => {
-    const required = schema.parameters.filter((p) => p.required);
-    expect(required).toHaveLength(1);
-    expect(required[0].name).toBe("operation");
+  it("operation is required", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(false);
   });
 
   it("quality defaults to 80 with 1-100 range", () => {
-    const q = findParam(schema, "quality");
-    expect(q.default).toBe(80);
-    expect(q.min).toBe(1);
-    expect(q.max).toBe(100);
+    const result = def.schema.safeParse({ operation: "resize" });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.quality).toBe(80);
+
+    const info = inferFieldType(def.schema.shape.quality);
+    expect(info.min).toBe(1);
+    expect(info.max).toBe(100);
   });
 
   it("resize params visible only for resize", () => {
     for (const name of ["width", "height", "maintainAspect"]) {
-      expect(findParam(schema, name).visibleWhen).toEqual({
-        param: "operation", equals: "resize",
+      expect(def.params[name].visibleWhen).toEqual({
+        param: "operation",
+        equals: "resize",
       });
     }
   });
 
   it("composite requires base and overlay", () => {
-    expect(findParam(schema, "base").requiredWhen).toEqual({
-      param: "operation", equals: "composite",
+    expect(def.params.base.requiredWhen).toEqual({
+      param: "operation",
+      equals: "composite",
     });
-    expect(findParam(schema, "overlay").requiredWhen).toEqual({
-      param: "operation", equals: "composite",
+    expect(def.params.overlay.requiredWhen).toEqual({
+      param: "operation",
+      equals: "composite",
     });
   });
 });
 
 describe("spreadsheet schema", () => {
-  const schema = NODE_SCHEMAS["spreadsheet"];
+  const def = NODE_SCHEMA_DEFS["spreadsheet"];
 
   it("requires operation, format, and path", () => {
-    const names = schema.parameters.filter((p) => p.required).map((p) => p.name).sort();
-    expect(names).toEqual(["format", "operation", "path"]);
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("passes with required fields", () => {
+    const result = def.schema.safeParse({ operation: "read", format: "csv", path: "/file.csv" });
+    expect(result.success).toBe(true);
   });
 
   it("rows conditionally required for write", () => {
-    expect(findParam(schema, "rows").requiredWhen).toEqual({
-      param: "operation", equals: "write",
+    expect(def.params.rows.requiredWhen).toEqual({
+      param: "operation",
+      equals: "write",
     });
   });
 });
 
 describe("transform schema", () => {
-  it("has expression and mappings, neither required", () => {
-    const schema = NODE_SCHEMAS["transform"];
-    expect(findParam(schema, "expression").required).toBe(false);
-    expect(findParam(schema, "mappings").required).toBe(false);
+  const def = NODE_SCHEMA_DEFS["transform"];
+
+  it("has no required parameters", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(true);
   });
 });
 
 describe("group schema", () => {
-  const schema = NODE_SCHEMAS["group"];
+  const def = NODE_SCHEMA_DEFS["group"];
 
   it("has no required parameters", () => {
-    expect(schema.parameters.filter((p) => p.required)).toHaveLength(0);
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(true);
   });
 
   it("mode defaults to sequential", () => {
-    expect(findParam(schema, "mode").default).toBe("sequential");
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.mode).toBe("sequential");
   });
 });
 
 describe("parallel schema", () => {
-  const schema = NODE_SCHEMAS["parallel"];
+  const def = NODE_SCHEMA_DEFS["parallel"];
 
   it("requires tasks", () => {
-    const required = schema.parameters.filter((p) => p.required);
-    expect(required).toHaveLength(1);
-    expect(required[0].name).toBe("tasks");
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(false);
   });
 
   it("errorStrategy defaults to failFast", () => {
-    expect(findParam(schema, "errorStrategy").default).toBe("failFast");
+    const result = def.schema.safeParse({ tasks: [{ a: 1 }] });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.errorStrategy).toBe("failFast");
   });
 });

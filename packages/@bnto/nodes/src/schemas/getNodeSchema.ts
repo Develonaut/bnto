@@ -1,12 +1,12 @@
 /**
- * Lookup function for node type schemas.
+ * Lookup function for node type schema definitions.
  */
 
 import type { NodeTypeName } from "../nodeTypes";
-import type { NodeSchema } from "./types";
-import { NODE_SCHEMAS } from "./registry";
+import type { NodeSchemaDefinition } from "./types";
+import { NODE_SCHEMA_DEFS } from "./registry";
 
-/** Returns the schema for a node type, or undefined if not registered. */
-export function getNodeSchema(typeName: string): NodeSchema | undefined {
-  return NODE_SCHEMAS[typeName as NodeTypeName];
+/** Returns the schema definition for a node type, or undefined if not registered. */
+export function getNodeSchema(typeName: string): NodeSchemaDefinition | undefined {
+  return NODE_SCHEMA_DEFS[typeName as NodeTypeName];
 }

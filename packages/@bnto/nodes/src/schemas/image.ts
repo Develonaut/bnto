@@ -5,7 +5,8 @@
  * Validator: engine/pkg/validator/validators.go → validateImage
  */
 
-import type { NodeSchema } from "./types";
+import { z } from "zod";
+import type { NodeSchemaDefinition } from "./types";
 
 /**
  * Valid image processing operations.
@@ -18,124 +19,96 @@ export const IMAGE_OPERATIONS = ["resize", "convert", "optimize", "composite"] a
 /** Supported output image formats. */
 export const IMAGE_FORMATS = ["png", "jpeg", "webp"] as const;
 
-export const imageSchema: NodeSchema = {
+/** Zod schema for image node parameters. */
+export const imageParamsSchema = z.object({
+  operation: z.enum(IMAGE_OPERATIONS),
+  input: z.string().optional(),
+  output: z.string().optional(),
+  format: z.enum(IMAGE_FORMATS).optional(),
+  quality: z.number().min(1).max(100).optional().default(80),
+  width: z.number().min(1).optional(),
+  height: z.number().min(1).optional(),
+  maintainAspect: z.boolean().optional().default(true),
+  base: z.string().optional(),
+  overlay: z.string().optional(),
+  position: z.string().optional().default("center"),
+  x: z.number().optional().default(0),
+  y: z.number().optional().default(0),
+});
+
+/** Inferred TypeScript type for image node parameters. */
+export type ImageParams = z.infer<typeof imageParamsSchema>;
+
+/** Full schema definition for the image node type. */
+export const imageNodeSchema: NodeSchemaDefinition = {
   nodeType: "image",
   schemaVersion: 1,
-  parameters: [
-    {
-      name: "operation",
-      type: "enum",
-      required: true,
+  schema: imageParamsSchema,
+  params: {
+    operation: {
       label: "Operation",
       description: "The image processing operation to perform.",
-      enumValues: IMAGE_OPERATIONS,
     },
-    {
-      name: "input",
-      type: "string",
-      required: false,
+    input: {
       label: "Input",
       description: "Input image file path.",
       placeholder: "{{.item}}",
     },
-    {
-      name: "output",
-      type: "string",
-      required: false,
+    output: {
       label: "Output",
       description: "Output image file path.",
       placeholder: "{{.OUTPUT_DIR}}/{{basename .item}}",
     },
-    {
-      name: "format",
-      type: "enum",
-      required: false,
+    format: {
       label: "Format",
       description: "Output image format.",
-      enumValues: IMAGE_FORMATS,
       visibleWhen: { param: "operation", equals: "convert" },
     },
-    {
-      name: "quality",
-      type: "number",
-      required: false,
+    quality: {
       label: "Quality",
       description: "Output quality (1-100). Higher is better quality but larger file size.",
-      default: 80,
-      min: 1,
-      max: 100,
     },
-    {
-      name: "width",
-      type: "number",
-      required: false,
+    width: {
       label: "Width",
       description: "Target width in pixels for resize.",
-      min: 1,
       visibleWhen: { param: "operation", equals: "resize" },
     },
-    {
-      name: "height",
-      type: "number",
-      required: false,
+    height: {
       label: "Height",
       description: "Target height in pixels for resize (optional if maintainAspect is true).",
-      min: 1,
       visibleWhen: { param: "operation", equals: "resize" },
     },
-    {
-      name: "maintainAspect",
-      type: "boolean",
-      required: false,
+    maintainAspect: {
       label: "Maintain Aspect Ratio",
       description: "Preserve the original aspect ratio when resizing.",
-      default: true,
       visibleWhen: { param: "operation", equals: "resize" },
     },
-    {
-      name: "base",
-      type: "string",
-      required: false,
+    base: {
       label: "Base Image",
       description: "Path to the base (background) image for compositing.",
       visibleWhen: { param: "operation", equals: "composite" },
       requiredWhen: { param: "operation", equals: "composite" },
     },
-    {
-      name: "overlay",
-      type: "string",
-      required: false,
+    overlay: {
       label: "Overlay Image",
       description: "Path to the overlay (foreground) image for compositing.",
       visibleWhen: { param: "operation", equals: "composite" },
       requiredWhen: { param: "operation", equals: "composite" },
     },
-    {
-      name: "position",
-      type: "string",
-      required: false,
+    position: {
       label: "Position",
       description: 'Overlay position — "center" or use x/y offsets.',
-      default: "center",
       visibleWhen: { param: "operation", equals: "composite" },
     },
-    {
-      name: "x",
-      type: "number",
-      required: false,
+    x: {
       label: "X Offset",
       description: "Horizontal offset for overlay placement in pixels.",
-      default: 0,
       visibleWhen: { param: "operation", equals: "composite" },
     },
-    {
-      name: "y",
-      type: "number",
-      required: false,
+    y: {
       label: "Y Offset",
       description: "Vertical offset for overlay placement in pixels.",
-      default: 0,
       visibleWhen: { param: "operation", equals: "composite" },
     },
-  ],
-} as const;
+  },
+};

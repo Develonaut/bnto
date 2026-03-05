@@ -1,43 +1,42 @@
 /**
- * Node schema registry -- the assembled mapping of node type name to schema.
+ * Node schema registry — maps node type name to its schema definition.
  *
- * Separated from index.ts so helper files can import NODE_SCHEMAS
+ * Separated from index.ts so helper files can import NODE_SCHEMA_DEFS
  * without circular dependencies.
  */
 
 import type { NodeTypeName } from "../nodeTypes";
-import type { NodeSchema } from "./types";
+import type { NodeSchemaDefinition } from "./types";
 
-import { editFieldsSchema } from "./editFields";
-import { fileSystemSchema } from "./fileSystem";
-import { groupSchema } from "./group";
-import { httpRequestSchema } from "./httpRequest";
-import { imageSchema } from "./image";
-import { inputSchema } from "./input";
-import { loopSchema } from "./loop";
-import { outputSchema } from "./output";
-import { parallelSchema } from "./parallel";
-import { shellCommandSchema } from "./shellCommand";
-import { spreadsheetSchema } from "./spreadsheet";
-import { transformSchema } from "./transform";
+import { editFieldsNodeSchema } from "./editFields";
+import { fileSystemNodeSchema } from "./fileSystem";
+import { groupNodeSchema } from "./group";
+import { httpRequestNodeSchema } from "./httpRequest";
+import { imageNodeSchema } from "./image";
+import { inputNodeSchema } from "./input";
+import { loopNodeSchema } from "./loop";
+import { outputNodeSchema } from "./output";
+import { parallelNodeSchema } from "./parallel";
+import { shellCommandNodeSchema } from "./shellCommand";
+import { spreadsheetNodeSchema } from "./spreadsheet";
+import { transformNodeSchema } from "./transform";
 
 /**
- * Parameter schemas for all 12 registered node types.
+ * Schema definitions for all 12 registered node types.
  *
- * Maps node type name -> schema. Drives the config panel UI --
- * each schema describes what parameters the node accepts.
+ * Maps node type name -> NodeSchemaDefinition (Zod schema + UI metadata).
  */
-export const NODE_SCHEMAS: Record<NodeTypeName, NodeSchema> = {
-  "edit-fields": editFieldsSchema,
-  "file-system": fileSystemSchema,
-  group: groupSchema,
-  "http-request": httpRequestSchema,
-  image: imageSchema,
-  input: inputSchema,
-  loop: loopSchema,
-  output: outputSchema,
-  parallel: parallelSchema,
-  "shell-command": shellCommandSchema,
-  spreadsheet: spreadsheetSchema,
-  transform: transformSchema,
+export const NODE_SCHEMA_DEFS: Record<NodeTypeName, NodeSchemaDefinition> = {
+  "edit-fields": editFieldsNodeSchema,
+  "file-system": fileSystemNodeSchema,
+  group: groupNodeSchema,
+  "http-request": httpRequestNodeSchema,
+  image: imageNodeSchema,
+  input: inputNodeSchema,
+  loop: loopNodeSchema,
+  output: outputNodeSchema,
+  parallel: parallelNodeSchema,
+  "shell-command": shellCommandNodeSchema,
+  spreadsheet: spreadsheetNodeSchema,
+  transform: transformNodeSchema,
 } as const;

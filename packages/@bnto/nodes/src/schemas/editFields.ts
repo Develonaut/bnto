@@ -5,27 +5,32 @@
  * Validator: engine/pkg/validator/validators.go → validateEditFields
  */
 
-import type { NodeSchema } from "./types";
+import { z } from "zod";
+import type { NodeSchemaDefinition } from "./types";
 
-export const editFieldsSchema: NodeSchema = {
+/** Zod schema for edit-fields node parameters. */
+export const editFieldsParamsSchema = z.object({
+  values: z.record(z.unknown()),
+  keepOnlySet: z.boolean().optional().default(false),
+});
+
+/** Inferred TypeScript type for edit-fields node parameters. */
+export type EditFieldsParams = z.infer<typeof editFieldsParamsSchema>;
+
+/** Full schema definition for the edit-fields node type. */
+export const editFieldsNodeSchema: NodeSchemaDefinition = {
   nodeType: "edit-fields",
   schemaVersion: 1,
-  parameters: [
-    {
-      name: "values",
-      type: "object",
-      required: true,
+  schema: editFieldsParamsSchema,
+  params: {
+    values: {
       label: "Values",
       description:
         "Map of field names to values. Values can be static or Go template expressions (e.g., {{.record.name}}).",
     },
-    {
-      name: "keepOnlySet",
-      type: "boolean",
-      required: false,
+    keepOnlySet: {
       label: "Keep Only Set Fields",
       description: "When true, only output fields that are explicitly set in values.",
-      default: false,
     },
-  ],
-} as const;
+  },
+};

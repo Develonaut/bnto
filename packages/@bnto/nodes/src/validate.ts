@@ -13,6 +13,7 @@ import type { ValidationError } from "./validationError";
 import { isNodeType } from "./isNodeType";
 import { isCompatibleVersion } from "./formatVersion";
 import { TYPE_VALIDATORS } from "./validateTypeSpecific";
+import { validateNodeParams } from "./validateNodeParams";
 
 // Re-export ValidationError so existing consumers don't break
 export type { ValidationError } from "./validationError";
@@ -132,8 +133,13 @@ export function validateDefinition(def: Definition): ValidationError[] {
   // Type must be known
   errors.push(...validateType(def));
 
-  // Type-specific parameter validation
+  // Type-specific parameter validation (hand-rolled validators from Go)
   errors.push(...validateTypeSpecific(def));
+
+  // Zod-based parameter validation (field-level constraints)
+  if (def.parameters) {
+    errors.push(...validateNodeParams(def.type, def.id, def.parameters));
+  }
 
   // Recursive child validation for container nodes
   if (def.type === "group" || def.type === "loop" || def.type === "parallel") {

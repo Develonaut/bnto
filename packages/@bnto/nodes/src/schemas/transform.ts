@@ -4,27 +4,33 @@
  * Go source: engine/pkg/node/library/transform/transform.go
  */
 
-import type { NodeSchema } from "./types";
+import { z } from "zod";
+import type { NodeSchemaDefinition } from "./types";
 
-export const transformSchema: NodeSchema = {
+/** Zod schema for transform node parameters. */
+export const transformParamsSchema = z.object({
+  expression: z.string().optional(),
+  mappings: z.record(z.string()).optional(),
+});
+
+/** Inferred TypeScript type for transform node parameters. */
+export type TransformParams = z.infer<typeof transformParamsSchema>;
+
+/** Full schema definition for the transform node type. */
+export const transformNodeSchema: NodeSchemaDefinition = {
   nodeType: "transform",
   schemaVersion: 1,
-  parameters: [
-    {
-      name: "expression",
-      type: "string",
-      required: false,
+  schema: transformParamsSchema,
+  params: {
+    expression: {
       label: "Expression",
       description: "Expr expression for a single transformation. Mutually exclusive with mappings.",
       placeholder: 'firstName + " " + lastName',
     },
-    {
-      name: "mappings",
-      type: "object",
-      required: false,
+    mappings: {
       label: "Mappings",
       description:
         "Map of field names to expr expressions for multi-field transformations. Mutually exclusive with expression.",
     },
-  ],
-} as const;
+  },
+};
