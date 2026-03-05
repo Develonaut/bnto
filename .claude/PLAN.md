@@ -439,11 +439,11 @@ Make every node immediately identifiable at a glance. Icon registry + category c
 
 Create the `/editor` route and wire entry points from recipe pages and navigation.
 
-- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — Create `/editor` route with AccountGate (sign-in prompt for unauthenticated users)
-- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — `?from={slug}` query param loads predefined recipe from `@bnto/nodes` registry
-- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — Auto-scaffold Input + Output compartments for blank canvas (default when no `?from=`)
-- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — Add `/editor` to app navigation (authenticated users only)
-- [ ] **CLAIMED** `apps/web` — `/frontend-engineer` — "Open in Editor" bridge button on recipe pages → `/editor?from={slug}`
+- [x] `apps/web` — `/frontend-engineer` — Create `/editor` route (public, no auth gate — editor is free per pricing model)
+- [x] `apps/web` — `/frontend-engineer` — `?from={slug}` query param loads predefined recipe from `@bnto/nodes` registry
+- [x] `apps/web` — `/frontend-engineer` — Auto-scaffold Input + Output compartments for blank canvas (default when no `?from=`)
+- [x] `apps/web` — `/frontend-engineer` — Add `/editor` to app navigation (visible to all users)
+- [x] `apps/web` — `/frontend-engineer` — "Open in Editor" bridge button on recipe pages → `/editor?from={slug}`
 
 #### Wave 3 (sequential — Execution Integration)
 
