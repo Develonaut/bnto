@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { core, createRecipeFlowStore } from "@bnto/core";
+import { core, createRecipeFlowStore, deriveAcceptedTypes } from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
+import type { Definition } from "@bnto/nodes";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { getRecipe } from "@/lib/menu";
+import { toDropzoneAccept } from "@/src/utils/toDropzoneAccept";
 import type { BntoConfigMap, BntoSlug } from "../_components/configs/types";
 import { DEFAULT_CONFIGS } from "../_components/configs/types";
 import type { RunPhase } from "../_components/RunButton";
@@ -43,6 +45,16 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   );
 
   const { data: currentUser } = core.user.useCurrentUser();
+
+  // -- Definition + I/O config (derived from input node, not slug) --
+  const recipe = getRecipe(entry.slug);
+  // Trust boundary: definition is Record<string, unknown> from generated JSON
+  const definition = recipe?.definition as Definition | undefined;
+  const { acceptLabel, dropzoneAccept } = useMemo(() => {
+    if (!definition) return { acceptLabel: "files", dropzoneAccept: undefined };
+    const { accept, label } = deriveAcceptedTypes(definition);
+    return { acceptLabel: label, dropzoneAccept: toDropzoneAccept(accept) };
+  }, [definition]);
 
   // -- Execution path: browser (WASM) vs cloud (R2 + Go API) --
   const isBrowserPath = core.executions.hasImplementation(entry.slug);
@@ -140,7 +152,6 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     }
 
     // Cloud path
-    const definition = getRecipe(entry.slug)?.definition;
     if (!definition) return;
 
     try {
@@ -167,6 +178,7 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     entry.slug,
     files,
     config,
+    definition,
     isBrowserPath,
     browserInstance,
     upload,
@@ -196,6 +208,9 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     currentUser: currentUser ?? null,
     // Execution path
     isBrowserPath,
+    // I/O (derived from definition's input node)
+    acceptLabel,
+    dropzoneAccept,
     // Files + config (from store)
     files,
     config: config as BntoConfigMap[BntoSlug],

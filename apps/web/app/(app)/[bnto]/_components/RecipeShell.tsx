@@ -8,7 +8,6 @@ import { Grid } from "@/components/ui/Grid";
 import { Heading } from "@/components/ui/Heading";
 import { Stack } from "@/components/ui/Stack";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
-import { getAcceptedTypes, toDropzoneAccept } from "../_lib/getAcceptedTypes";
 import { DropzoneContent } from "./DropzoneContent";
 import { ErrorCard } from "./ErrorCard";
 import { FileCard } from "./FileCard";
@@ -48,6 +47,8 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
   const {
     currentUser,
     isBrowserPath,
+    acceptLabel,
+    dropzoneAccept,
     files,
     config,
     setFiles,
@@ -64,8 +65,6 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
     handleResetExecution,
   } = useRecipeFlow({ entry });
 
-  const { label } = getAcceptedTypes(entry.slug);
-  const accept = toDropzoneAccept(entry.slug);
   const activePhase = deriveActivePhase(resolvedPhase, files.length);
 
   return (
@@ -89,7 +88,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
       <FileUpload
         value={files}
         onValueChange={setFiles}
-        accept={accept}
+        accept={dropzoneAccept}
         multiple
         disabled={isProcessing}
       >
@@ -97,7 +96,7 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
           {activePhase === 1 && (
             <Animate.SlideUp>
               <FileUpload.Dropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
-                <DropzoneContent label={label} />
+                <DropzoneContent label={acceptLabel} />
               </FileUpload.Dropzone>
             </Animate.SlideUp>
           )}
