@@ -11,14 +11,7 @@
  */
 
 // Recipe definition types (mirrors Go engine/pkg/node/)
-export type {
-  Definition,
-  Position,
-  Metadata,
-  Port,
-  Edge,
-  FieldsConfig,
-} from "./definition";
+export type { Definition, Position, Metadata, Port, Edge, FieldsConfig } from "./definition";
 
 // Execution types
 export type { ExecutionContext, NodeResult } from "./execution";
@@ -50,11 +43,16 @@ export {
   resizeImages,
 } from "./recipes";
 
-// Definition validation
+// Format versioning
 export {
-  validateDefinition,
-  validateEdges,
-} from "./validate";
+  CURRENT_FORMAT_VERSION,
+  SUPPORTED_FORMAT_VERSIONS,
+  isSupportedVersion,
+  isCompatibleVersion,
+} from "./formatVersion";
+
+// Definition validation
+export { validateDefinition, validateEdges } from "./validate";
 export type { ValidationError } from "./validate";
 
 // Parameter schemas — drives config panel UI
@@ -76,11 +74,7 @@ export {
   GROUP_MODES,
   ERROR_STRATEGIES,
 } from "./schemas";
-export type {
-  NodeSchema,
-  ParameterSchema,
-  ParameterType,
-} from "./schemas";
+export type { NodeSchema, ParameterSchema, ParameterType } from "./schemas";
 
 // I/O node helpers (Sprint 4C — self-describing recipes)
 export { getInputNode } from "./getInputNode";

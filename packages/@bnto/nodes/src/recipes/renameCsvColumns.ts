@@ -5,12 +5,12 @@
  */
 
 import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
 
 export const renameCsvColumns: Recipe = {
   slug: "rename-csv-columns",
   name: "Rename CSV Columns",
-  description:
-    "Rename CSV column headers in bulk. Free, no signup required.",
+  description: "Rename CSV column headers in bulk. Free, no signup required.",
   category: "spreadsheet",
   accept: {
     mimeTypes: ["text/csv"],
@@ -25,12 +25,11 @@ export const renameCsvColumns: Recipe = {
   definition: {
     id: "rename-csv-columns",
     type: "group",
-    version: "1.0.0",
+    version: CURRENT_FORMAT_VERSION,
     name: "Rename CSV Columns",
     position: { x: 0, y: 0 },
     metadata: {
-      description:
-        "Reads a CSV and writes it with column data preserved.",
+      description: "Reads a CSV and writes it with column data preserved.",
     },
     parameters: {},
     inputPorts: [],
@@ -39,7 +38,7 @@ export const renameCsvColumns: Recipe = {
       {
         id: "input",
         type: "input",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Input Files",
         position: { x: 0, y: 100 },
         metadata: {},
@@ -56,7 +55,7 @@ export const renameCsvColumns: Recipe = {
       {
         id: "read-csv",
         type: "spreadsheet",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Read CSV",
         position: { x: 200, y: 100 },
         metadata: {},
@@ -71,7 +70,7 @@ export const renameCsvColumns: Recipe = {
       {
         id: "write-csv",
         type: "spreadsheet",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Write CSV",
         position: { x: 400, y: 100 },
         metadata: {},
@@ -87,7 +86,7 @@ export const renameCsvColumns: Recipe = {
       {
         id: "output",
         type: "output",
-        version: "1.0.0",
+        version: CURRENT_FORMAT_VERSION,
         name: "Renamed CSV",
         position: { x: 600, y: 100 },
         metadata: {},

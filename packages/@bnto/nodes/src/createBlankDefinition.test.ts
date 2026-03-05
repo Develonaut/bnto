@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createBlankDefinition } from "./createBlankDefinition";
 import { validateDefinition } from "./validate";
+import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 
 describe("createBlankDefinition", () => {
   it("returns a valid definition with no validation errors", () => {
@@ -25,7 +26,7 @@ describe("createBlankDefinition", () => {
 
   it("has version 1.0.0", () => {
     const def = createBlankDefinition();
-    expect(def.version).toBe("1.0.0");
+    expect(def.version).toBe(CURRENT_FORMAT_VERSION);
   });
 
   it("has one input port and one output port with unique IDs", () => {

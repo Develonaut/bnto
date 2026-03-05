@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { RECIPES, getRecipeBySlug } from "./recipes";
+import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 
 const EXPECTED_SLUGS = [
   "compress-images",
@@ -68,7 +69,7 @@ describe("recipe definitions", () => {
 
   it("every definition has version 1.0.0", () => {
     for (const recipe of RECIPES) {
-      expect(recipe.definition.version).toBe("1.0.0");
+      expect(recipe.definition.version).toBe(CURRENT_FORMAT_VERSION);
     }
   });
 
@@ -91,7 +92,7 @@ describe("recipe definitions", () => {
       for (const node of recipe.definition.nodes!) {
         expect(node.id).toBeTruthy();
         expect(node.type).toBeTruthy();
-        expect(node.version).toBe("1.0.0");
+        expect(node.version).toBe(CURRENT_FORMAT_VERSION);
         expect(node.name).toBeTruthy();
         expect(node.position).toBeDefined();
         expect(node.parameters).toBeDefined();
@@ -126,9 +127,7 @@ describe("recipe definitions", () => {
 
   it("edges reference valid child node ids", () => {
     for (const recipe of RECIPES) {
-      const nodeIds = new Set(
-        recipe.definition.nodes!.map((n) => n.id),
-      );
+      const nodeIds = new Set(recipe.definition.nodes!.map((n) => n.id));
       for (const edge of recipe.definition.edges!) {
         expect(nodeIds.has(edge.source)).toBe(true);
         expect(nodeIds.has(edge.target)).toBe(true);

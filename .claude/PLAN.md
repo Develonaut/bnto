@@ -28,7 +28,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 ## Current State
 
 - **FOCUS: Package extraction + code standards review before editor.** Sprint 4D (`@bnto/ui`) complete (PR #103). Sprint 4E (`@bnto/editor`) complete — all editor code extracted to `packages/editor/`.
-- **Next up:** Sprint 4F — code standards audit across all packages. Clean, well-structured code before leaning into the complex editor work.
+- **Next up:** Sprint 4G — format versioning + Zod node validation. Activate `.bnto.json` format versioning, replace hand-rolled parameter schemas with Zod validators. Must land before editor ships.
 - **Then:** Sprint 5 — editor to production (compartment redesign, `/editor` route, execution, save, E2E). This is the M2 completion path.
 - **Uncommitted editor work:** 7 files modified on `main` (CanvasToolbar, FileMenu, NodeConfigPanel, EditorCanvas, EditorOverlay, useEditorCanvas, icons) — needs branch/PR before next sprint.
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
@@ -82,6 +82,7 @@ Pricing, revenue projections, and "ready to charge" criteria live in Notion ("SE
 | Sprint 4     | Recipe editor (headless + visual)               | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
 | Sprint 4D-4E | Package extraction (`@bnto/ui`, `@bnto/editor`) | Clean architecture. Packages ready for desktop (M3).                                                                             |
 | Sprint 4F    | Code standards review                           | Technical hygiene. Every file conforms to updated standards.                                                                     |
+| Sprint 4G    | Versioning + Zod node validation                | Format versioning locked down. Node parameters validated at execution boundary. Foundation for community recipes + marketplace.  |
 | Sprint 5     | Editor to production                            | **M2 completion.** Editor gives users a reason to create accounts. Save custom recipes = highest-intent Pro signal.              |
 | Sprint 6-7   | Desktop app                                     | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                                                |
 | Sprint 8     | Stripe + Pro tier                               | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.                   |
@@ -310,6 +311,91 @@ Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: 
 #### Wave 3 (sequential — store ownership audit)
 
 - [x] `packages/core` — **Zustand store ownership audit**: `@bnto/core` owns the store creator (`createEnhancedStore`) but should NOT own every domain's Zustand store. Audit `packages/core/src/stores/` — for each store, determine if it belongs in core (auth, session — cross-cutting) or should be owned by its domain package (editor state → `@bnto/editor`, UI preferences → `apps/web`). Move domain-specific stores to their owning package. Core provides the factory, domains own their instances
+
+---
+
+### Sprint 4G: Versioning & Node Validation
+
+**Goal:** Establish format versioning and runtime node validation before any users exist. Two waves: (1) activate `.bnto.json` format versioning across the stack, (2) replace the hand-rolled `ParameterSchema` DSL with Zod schemas that serve as runtime validators, config panel drivers, and versioned parameter contracts. **Critical runtime contract: recipe execution must validate all node parameters against their schemas before a run starts. If validation fails, the run is rejected with field-level errors — no partial execution.**
+
+**Prerequisite:** Sprint 4F (Code Standards Review) complete. This must land before Sprint 5 (Editor to Production) because the editor will be creating and exporting recipes — format versioning and parameter validation must be baked in from day one.
+
+**Why now:** Pre-release. No legacy recipes in the wild. No migration debt. Define v1 as the canonical format and build the infrastructure to handle future changes cleanly. The `.bnto.json` format is MIT-licensed and promised portable — once files exist in the wild, retrofitting versioning breaks that promise.
+
+**Persona ownership:** No persona needed — this is foundational `@bnto/nodes` + `@bnto/backend` plumbing.
+
+#### Wave 1 (parallel — Format Versioning)
+
+Activate the existing `Definition.version` field as a meaningful format version. Replace all hardcoded `"1.0.0"` strings with a single constant. Add version validation. Propagate format version through Convex persistence.
+
+**`@bnto/nodes` changes:**
+
+- [ ] `@bnto/nodes` — **Format version constant**: Create `src/formatVersion.ts` — exports `CURRENT_FORMAT_VERSION = "1.0.0"`, `SUPPORTED_FORMAT_VERSIONS = ["1.0.0"]`, `isSupportedVersion(version: string): boolean`, `isCompatibleVersion(version: string): boolean` (semver-major match). ~30 lines
+- [ ] `@bnto/nodes` — **Version validation**: Edit `src/validate.ts` — change version check from "is present" to "is present AND is a supported version". Error: `"unsupported format version 'X' — supported: 1.0.0"`
+- [ ] `@bnto/nodes` — **Replace hardcoded versions**: Edit `src/createBlankDefinition.ts`, `src/addNode.ts`, all 6 recipe files in `src/recipes/*.ts` — replace hardcoded `"1.0.0"` with `CURRENT_FORMAT_VERSION` import
+- [ ] `@bnto/nodes` — **Schema version field**: Add `schemaVersion: number` to `NodeSchema` interface in `src/schemas/types.ts`. Add `schemaVersion: 1` to all 12 node schema files. Metadata only for now — no migration logic until a schema actually changes. The field exists from day one so future changes are traceable
+- [ ] `@bnto/nodes` — **Export + tests**: Export new versioning functions from `src/index.ts`. Create `src/formatVersion.test.ts` (valid/invalid versions, major-version matching). Update `src/validate.test.ts` (unsupported version produces error). Update `src/createBlankDefinition.test.ts` and `src/recipes.test.ts` to reference constant
+
+**`@bnto/backend` + `@bnto/core` changes:**
+
+- [ ] `@bnto/backend` — **Add `formatVersion` to recipes table**: Edit `convex/schema.ts` — add `formatVersion: v.string()` field (the existing `version: v.number()` stays as the save counter). Edit `convex/recipes.ts` — set `formatVersion` from definition's version field on create and update
+- [ ] `@bnto/core` — **Propagate `formatVersion`**: Add `formatVersion: string` to `RawRecipeDoc` in `src/types/raw.ts`, `Recipe` in `src/types/recipe.ts`. Map through in `src/transforms/recipe.ts`
+
+**Editor + Rust parity:**
+
+- [ ] `@bnto/editor` — **Use constant**: Edit `src/adapters/rfNodesToDefinition.ts` — replace hardcoded `"1.0.0"` with `CURRENT_FORMAT_VERSION` import
+- [ ] `engine` — **Rust parity constant**: Add `FORMAT_VERSION: &str = "1.0.0"` to `engine/crates/bnto-core/src/lib.rs`. No runtime checking needed (WASM receives pre-validated data from JS), but the constant exists for cross-stack parity
+
+#### Wave 2 (sequential — Zod Node Schemas)
+
+Replace the hand-rolled `ParameterSchema` DSL with Zod schemas. Each node type owns its own validator. Zod schemas serve triple duty: (1) runtime validation at execution boundary, (2) config panel UI metadata for the editor, (3) TypeScript type inference via `z.infer<>`.
+
+**Depends on:** Wave 1 complete (`schemaVersion` field exists on `NodeSchema`).
+
+**Architecture:**
+
+```
+Zod Schema (single source of truth per node type)
+  ├── Runtime validation  →  schema.safeParse(parameters) at execution boundary
+  ├── Config panel UI     →  UI metadata (labels, descriptions, visibleWhen) paired with schema
+  ├── Type inference      →  z.infer<typeof imageParamsSchema> — TS types for free
+  └── Version contract    →  schemaVersion tracks parameter changes, enables future migration
+```
+
+Each node schema file exports three things:
+
+1. **Zod schema** (`imageParamsSchema`) — the validator
+2. **Schema definition** (`imageNodeSchema: NodeSchemaDefinition`) — Zod schema + UI metadata + schemaVersion
+3. **Inferred type** (`ImageParams`) — TypeScript type derived from the Zod schema
+
+The `NodeSchemaDefinition` type replaces the current `NodeSchema` interface:
+
+```typescript
+interface NodeSchemaDefinition {
+  nodeType: string;
+  schemaVersion: number;
+  schema: z.ZodObject<any>; // Zod schema for validation
+  params: Record<string, NodeParamMeta>; // UI metadata (label, description, visibleWhen, etc.)
+}
+```
+
+**Tasks:**
+
+- [ ] `@bnto/nodes` — **Add Zod dependency**: Add `zod` to `package.json` dependencies (~13KB minified, tree-shakeable, zero transitive deps)
+- [ ] `@bnto/nodes` — **New schema types**: Rewrite `src/schemas/types.ts` — replace `ParameterSchema`/`NodeSchema` with `NodeSchemaDefinition` (Zod schema + `NodeParamMeta` UI metadata map + `schemaVersion`). Keep `visibleWhen`/`requiredWhen` condition types for UI metadata
+- [ ] `@bnto/nodes` — **Migrate all 12 node schemas**: Rewrite each file in `src/schemas/` (image, input, output, fileSystem, httpRequest, spreadsheet, transform, editFields, loop, group, parallel, shellCommand). Each gets a `z.object()` schema with proper types/constraints + a `params` map with UI labels/descriptions/visibility rules. Keep existing enum constant arrays (`IMAGE_OPERATIONS`, `IMAGE_FORMATS`, etc.) — they feed into `z.enum()`. Export inferred TypeScript type per node
+- [ ] `@bnto/nodes` — **Registry + helpers update**: Update `src/schemas/registry.ts` to `Record<NodeTypeName, NodeSchemaDefinition>`. Adapt `getNodeSchema.ts`, `getRequiredParams.ts` (derive from Zod shape), `getVisibleParams.ts` (read from `params` metadata), `getConditionallyRequired.ts`, `matchesCondition.ts`
+- [ ] `@bnto/nodes` — **Parameter validation function**: Create `src/validateNodeParams.ts` — `validateNodeParams(nodeType: string, params: Record<string, unknown>)` calls `schema.safeParse(params)`, returns field-level errors. Create `src/validateNodeParams.test.ts` — valid/invalid params for each of the 12 node types
+- [ ] `@bnto/nodes` — **Wire into definition validation**: Edit `src/validate.ts` — after checking core fields (id, type, version), call `validateNodeParams()` for each node in the tree. Report per-field errors: `"node 'resize-1': parameter 'quality' must be between 1 and 100"`
+- [ ] `@bnto/nodes` — **Update all tests**: `src/schemas/registry.test.ts` (structural tests for new `NodeSchemaDefinition`), `src/schemas/ioSchemas.test.ts`, `src/validate.test.ts` (param validation cases)
+
+**Execution boundary contract (called out for Sprint 5 Wave 3 wiring):**
+
+When the editor wires Run → `core.executions.createExecution()` in Sprint 5 Wave 3, the execution path MUST call `validateDefinition()` (which now includes per-node parameter validation via Zod) before invoking the WASM engine. If validation fails → reject with errors, surface in the UI, no engine invocation. This validation gate already has a natural home: the execution service in `@bnto/core` that sits between the editor and the WASM engine.
+
+**What this enables for Sprint 4B (Code Editor, tabled):**
+
+`zod-to-json-schema` converts these Zod schemas → JSON Schema for CM6 autocompletion and inline validation. One line per node type, zero drift from runtime validation. The JSON Schema generation step lives in Sprint 4B Wave 1, not here.
 
 ---
 

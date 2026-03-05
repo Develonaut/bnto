@@ -9,6 +9,7 @@ import type { NodeSchema } from "./types";
 
 export const shellCommandSchema: NodeSchema = {
   nodeType: "shell-command",
+  schemaVersion: 1,
   parameters: [
     {
       name: "command",

@@ -8,18 +8,11 @@
 import type { NodeSchema } from "./types";
 
 /** Valid HTTP methods accepted by the http-request node. */
-export const HTTP_METHODS = [
-  "GET",
-  "POST",
-  "PUT",
-  "PATCH",
-  "DELETE",
-  "HEAD",
-  "OPTIONS",
-] as const;
+export const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as const;
 
 export const httpRequestSchema: NodeSchema = {
   nodeType: "http-request",
+  schemaVersion: 1,
   parameters: [
     {
       name: "url",

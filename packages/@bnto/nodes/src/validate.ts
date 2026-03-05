@@ -11,6 +11,7 @@
 import type { Definition } from "./definition";
 import type { ValidationError } from "./validationError";
 import { isNodeType } from "./isNodeType";
+import { isCompatibleVersion } from "./formatVersion";
 import { TYPE_VALIDATORS } from "./validateTypeSpecific";
 
 // Re-export ValidationError so existing consumers don't break
@@ -25,13 +26,11 @@ const CORE_REQUIRED_FIELDS: Array<{ field: keyof Definition; message: (id: strin
 
 /** Validates core required fields: id, type, version. */
 function validateCore(def: Definition): ValidationError[] {
-  return CORE_REQUIRED_FIELDS
-    .filter(({ field }) => !def[field])
-    .map(({ field, message }) => ({
-      nodeId: def.id || "",
-      field,
-      message: message(def.id || ""),
-    }));
+  return CORE_REQUIRED_FIELDS.filter(({ field }) => !def[field]).map(({ field, message }) => ({
+    nodeId: def.id || "",
+    field,
+    message: message(def.id || ""),
+  }));
 }
 
 /** Validates that the node type is a known registered type. */
@@ -121,6 +120,15 @@ export function validateDefinition(def: Definition): ValidationError[] {
   // Stop further validation if core fields are missing
   if (!def.id || !def.type) return errors;
 
+  // Version must be compatible with this engine
+  if (def.version && !isCompatibleVersion(def.version)) {
+    errors.push({
+      nodeId: def.id,
+      field: "version",
+      message: `node '${def.id}' has unsupported format version '${def.version}'`,
+    });
+  }
+
   // Type must be known
   errors.push(...validateType(def));
 
@@ -134,4 +142,3 @@ export function validateDefinition(def: Definition): ValidationError[] {
 
   return errors;
 }
-
