@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Explorer dropdown menu — categorized recipe links from the engine menu.
  *

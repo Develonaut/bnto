@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge, Button, Card, CardContent, CheckIcon, Heading, Stack, Text } from "@bnto/ui";
 
 const FREE_FEATURES = [
