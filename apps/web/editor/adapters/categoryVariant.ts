@@ -10,6 +10,7 @@ const CATEGORY_VARIANT: Record<string, CompartmentVariant> = {
   network: "warning",
   control: "success",
   system: "warning",
+  io: "info",
 };
 
 export { CATEGORY_VARIANT };

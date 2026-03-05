@@ -87,6 +87,16 @@ describe("definitionToBento", () => {
     expect(rfNode.data.variant).toBe("primary");
   });
 
+  it("maps I/O nodes to info variant", () => {
+    const def = createBlankDefinition();
+    const result = definitionToBento(def);
+
+    const inputNode = result.nodes.find((n) => n.id === "input")!;
+    const outputNode = result.nodes.find((n) => n.id === "output")!;
+    expect(inputNode.data.variant).toBe("info");
+    expect(outputNode.data.variant).toBe("info");
+  });
+
   it("uses node name as compartment label", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;

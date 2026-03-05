@@ -17,7 +17,8 @@ type CompartmentVariant =
   | "accent"
   | "muted"
   | "success"
-  | "warning";
+  | "warning"
+  | "info";
 
 // ---------------------------------------------------------------------------
 // Compartment data — visual fields only (thin node.data)

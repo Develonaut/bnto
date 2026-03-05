@@ -29,6 +29,7 @@ const SURFACE_CLASS: Record<CompartmentVariant, string> = {
   muted: "surface-muted",
   success: "surface-success",
   warning: "surface-warning",
+  info: "surface-muted",
 };
 
 export const CompartmentNode = memo(function CompartmentNode({
