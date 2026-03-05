@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Editor module — public API for the recipe editor.
  *

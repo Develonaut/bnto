@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   # Go tasks (archive/engine-go/)
@@ -38,7 +38,7 @@ tasks:
   api:dev:
     desc: Run Go API server locally (port 8080)
     dir: ./archive/api-go
-    dotenv: ['../../.env.development']
+    dotenv: ["../../.env.development"]
     cmds: [go run ./cmd/server]
 
   api:tunnel:
@@ -86,19 +86,8 @@ tasks:
 
   # Quality gate
   check:
-    desc: Run all quality checks (vet, test, lint, build — Go + Rust + TypeScript)
+    desc: Run all quality checks (Rust + TypeScript)
     cmds:
-      - echo "=== go vet ==="
-      - task: vet
-      - echo "=== go engine tests ==="
-      - cd archive/engine-go && go test -race -coverprofile=coverage.out ./...
-      - go tool cover -func=archive/engine-go/coverage.out | tail -1
-      - rm archive/engine-go/coverage.out
-      - echo "=== go api tests ==="
-      - go test -race ./archive/api-go/...
-      - echo "=== go build ==="
-      - cd archive/engine-go && go build ./cmd/bnto
-      - cd archive/api-go && go build ./cmd/server
       - echo "=== rust lint ==="
       - task: wasm:lint
       - echo "=== rust unit tests ==="

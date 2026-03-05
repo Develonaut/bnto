@@ -17,17 +17,13 @@
 
 import { createEnhancedStore } from "@bnto/core";
 import { applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
-import {
-  createBlankDefinition,
-  getRecipeBySlug,
-  validateDefinition,
-} from "@bnto/nodes";
-import { definitionToBento } from "../adapters/definitionToBento";
 import type { EditorStore } from "./types";
 import { captureSnapshot } from "./captureSnapshot";
 import { pushToStack } from "./pushToStack";
 import { revalidateState } from "./revalidateState";
-import { resolveInitialState, metadataFromBlank, metadataFromDefinition } from "./resolveInitialState";
+import { resolveInitialState } from "./resolveInitialState";
+import { loadRecipe } from "../actions/loadRecipe";
+import { createBlank } from "../actions/createBlank";
 
 // ---------------------------------------------------------------------------
 // Store factory
@@ -55,33 +51,12 @@ function createEditorStore(slug?: string) {
     // --- Entry points ---
 
     loadRecipe: (slug) => {
-      const recipe = getRecipeBySlug(slug);
-      if (!recipe) return;
-      const { nodes, configs } = definitionToBento(recipe.definition);
-      set({
-        nodes,
-        configs,
-        recipeMetadata: metadataFromDefinition(recipe.definition),
-        isDirty: false,
-        validationErrors: validateDefinition(recipe.definition),
-        executionState: {},
-        undoStack: [],
-        redoStack: [],
-      });
+      const result = loadRecipe(slug);
+      if (result) set(result);
     },
 
     createBlank: () => {
-      const blank = definitionToBento(createBlankDefinition());
-      set({
-        nodes: blank.nodes,
-        configs: blank.configs,
-        recipeMetadata: metadataFromBlank(),
-        isDirty: false,
-        validationErrors: [],
-        executionState: {},
-        undoStack: [],
-        redoStack: [],
-      });
+      set(createBlank());
     },
 
     // --- RF controlled-mode change handlers ---
@@ -108,8 +83,12 @@ function createEditorStore(slug?: string) {
       set((s) => ({
         nodes: s.nodes.map((n) =>
           n.id === id
-            ? n.selected ? n : { ...n, selected: true }
-            : n.selected ? { ...n, selected: false } : n,
+            ? n.selected
+              ? n
+              : { ...n, selected: true }
+            : n.selected
+              ? { ...n, selected: false }
+              : n,
         ),
         /* Auto-open config panel when selecting a node. */
         ...(id ? { configOpen: true } : {}),

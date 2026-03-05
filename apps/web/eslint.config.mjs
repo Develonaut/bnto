@@ -1,11 +1,23 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import prettierConfig from "eslint-config-prettier";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  globalIgnores([".next/**", ".next-e2e/**", "out/**", "build/**", "e2e/**", "next-env.d.ts", "public/wasm/**", "playwright-report/**", "test-results/**"]),
+  prettierConfig,
+  globalIgnores([
+    ".next/**",
+    ".next-e2e/**",
+    "out/**",
+    "build/**",
+    "e2e/**",
+    "next-env.d.ts",
+    "public/wasm/**",
+    "playwright-report/**",
+    "test-results/**",
+  ]),
   {
     files: ["components/ui/file-upload.tsx"],
     rules: {

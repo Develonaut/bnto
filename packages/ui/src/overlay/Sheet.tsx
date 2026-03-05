@@ -8,6 +8,7 @@ import { XIcon } from "../icons";
 
 import { cn } from "../utils/cn";
 import { createCn } from "../utils/createCn";
+import { Button } from "../interaction/Button";
 
 const SheetTrigger = SheetPrimitive.Trigger;
 
@@ -21,7 +22,7 @@ const SheetOverlay = forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
     className={cn(
-      "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80",
+      "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-background/40 backdrop-blur-sm",
       className,
     )}
     {...props}
@@ -49,55 +50,41 @@ const sheetCn = createCn({
   },
 });
 
-interface SheetContentProps
-  extends ComponentPropsWithoutRef<typeof SheetPrimitive.Content> {
+interface SheetContentProps extends ComponentPropsWithoutRef<typeof SheetPrimitive.Content> {
   side?: SheetSide;
 }
 
-const SheetContent = forwardRef<
-  ElementRef<typeof SheetPrimitive.Content>,
-  SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content
-      ref={ref}
-      className={sheetCn({ side }, className)}
-      {...props}
-    >
-      <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
-        <XIcon className="size-4" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-));
+const SheetContent = forwardRef<ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
+  ({ side = "right", className, children, ...props }, ref) => (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content ref={ref} className={sheetCn({ side }, className)} {...props}>
+        <SheetPrimitive.Close asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            elevation="md"
+            className="absolute top-4 right-4 size-8"
+          >
+            <XIcon className="size-4" />
+            <span className="sr-only">Close</span>
+          </Button>
+        </SheetPrimitive.Close>
+        {children}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  ),
+);
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
-const SheetHeader = ({
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col space-y-2 text-center sm:text-left",
-      className,
-    )}
-    {...props}
-  />
+const SheetHeader = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props} />
 );
 SheetHeader.displayName = "SheetHeader";
 
-const SheetFooter = ({
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) => (
+const SheetFooter = ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className,
-    )}
+    className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
     {...props}
   />
 );

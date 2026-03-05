@@ -1,11 +1,7 @@
 import type { CSSProperties } from "react";
-import {
-  getSmoothStepPath,
-  Position,
-  type EdgeProps,
-  type Edge,
-} from "@xyflow/react";
-import { BeltPiece, VARIANT_PIECE_MAP, type PieceType } from "./BeltPiece";
+import { getSmoothStepPath, Position, type EdgeProps } from "@xyflow/react";
+import { BeltPiece, VARIANT_PIECE_MAP } from "./BeltPiece";
+import type { ConveyorEdgeType } from "./types";
 
 /**
  * Custom React Flow edge — a thick conveyor belt connection between stations.
@@ -27,30 +23,6 @@ import { BeltPiece, VARIANT_PIECE_MAP, type PieceType } from "./BeltPiece";
  * defined in conveyor.css. The <g> wrapper carries the class so all child
  * paths inherit the CSS custom properties.
  */
-
-export type ConveyorEdgeData = {
-  /** Color variant — matches source station variant. Default: "muted" */
-  variant?: "primary" | "secondary" | "accent" | "muted" | "success";
-  /** Speed variant — "fast" for batch processing, "paused" for idle */
-  speed?: "normal" | "fast" | "paused";
-  /** Show border outline — useful in dark themes where belts need
-   * contrast against the background (see Tokyo Night reference). */
-  bordered?: boolean;
-  /** Position in the entrance stagger. Belts fade in AFTER stations
-   * pop in — delay = 400ms base + staggerIndex * 80ms. */
-  staggerIndex?: number;
-  /** Number of sushi pieces traveling this belt (0 = none). */
-  pieces?: number;
-  /** Traversal time per piece in seconds. Default: 2.5 */
-  pieceSpeed?: number;
-  /** Shape of the sushi pieces. Default: "tekka" */
-  pieceType?: PieceType;
-  /** Render layer — set internally by ConveyorCanvas.
-   * "body" = belt track only, "pieces" = sushi only. */
-  layer?: "body" | "pieces";
-};
-
-export type ConveyorEdgeType = Edge<ConveyorEdgeData, "conveyor">;
 
 /* ── Constants ──────────────────────────────────────────────── */
 
@@ -76,10 +48,14 @@ const PIECE_INSET = 30;
 /** Move a point INTO its node — opposite to the handle direction. */
 function inset(x: number, y: number, position: Position, amount: number) {
   switch (position) {
-    case Position.Right:  return { x: x - amount, y };
-    case Position.Left:   return { x: x + amount, y };
-    case Position.Bottom: return { x, y: y - amount };
-    case Position.Top:    return { x, y: y + amount };
+    case Position.Right:
+      return { x: x - amount, y };
+    case Position.Left:
+      return { x: x + amount, y };
+    case Position.Bottom:
+      return { x, y: y - amount };
+    case Position.Top:
+      return { x, y: y + amount };
   }
 }
 

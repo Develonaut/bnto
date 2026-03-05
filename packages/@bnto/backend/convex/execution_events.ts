@@ -92,7 +92,7 @@ export const completeEvent = mutation({
 
 /**
  * Batch-insert execution events from local history (migration on signup).
- * Deduplicates by slug+timestamp — skips entries that already exist.
+ * TODO: Add deduplication by slug+timestamp to prevent duplicate migration entries
  */
 export const migrateFromLocal = mutation({
   args: {

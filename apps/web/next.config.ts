@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   // Standalone output for Docker (Railway). Vercel ignores this — it uses its own adapter.
   output: "standalone",
   outputFileTracingRoot: resolve(__dirname, "../../"),
-  transpilePackages: ["@bnto/auth", "@bnto/core", "@bnto/editor", "@bnto/ui"],
+  transpilePackages: ["@bnto/auth", "@bnto/core", "@bnto/editor", "@bnto/nodes", "@bnto/ui"],
   devIndicators: false,
   // Allow e2e tests to use a separate build directory so they don't
   // corrupt the dev server's .next cache (set via NEXT_DIST_DIR env var).
@@ -17,7 +17,10 @@ const nextConfig: NextConfig = {
   // set to "/ingest" (not the PostHog URL) when this is active.
   async rewrites() {
     return [
-      { source: "/ingest/static/:path*", destination: "https://us-assets.i.posthog.com/static/:path*" },
+      {
+        source: "/ingest/static/:path*",
+        destination: "https://us-assets.i.posthog.com/static/:path*",
+      },
       { source: "/ingest/:path*", destination: "https://us.i.posthog.com/:path*" },
     ];
   },

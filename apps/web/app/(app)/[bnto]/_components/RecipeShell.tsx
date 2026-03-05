@@ -10,23 +10,8 @@ import { PhaseIndicator } from "./PhaseIndicator";
 import { RecipeConfigSection } from "./RecipeConfigSection";
 import { RecipeResultsSection } from "./RecipeResultsSection";
 import { RecipeToolbar } from "./RecipeToolbar";
-import type { RunPhase } from "./RunButton";
 import { ToolbarProgress } from "./ToolbarProgress";
-/** Map the unified RunPhase + file count to the 3-step PhaseIndicator. */
-function deriveActivePhase(
-  resolvedPhase: RunPhase,
-  fileCount: number,
-): 1 | 2 | 3 {
-  switch (resolvedPhase) {
-    case "uploading":
-    case "running":
-    case "completed":
-    case "failed":
-      return 3;
-    default:
-      return fileCount > 0 ? 2 : 1;
-  }
-}
+import { deriveActivePhase } from "./phaseMapping";
 
 /**
  * Recipe page orchestrator with Motorway styling.
@@ -87,115 +72,101 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
         multiple
         disabled={isProcessing}
       >
-          {/* Phase 1: Dropzone — full width to match Phases 2–3 */}
-          {activePhase === 1 && (
-            <Animate.SlideUp>
-              <FileUpload.Dropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
-                <DropzoneContent label={acceptLabel} />
-              </FileUpload.Dropzone>
-            </Animate.SlideUp>
-          )}
+        {/* Phase 1: Dropzone — full width to match Phases 2–3 */}
+        {activePhase === 1 && (
+          <Animate.SlideUp>
+            <FileUpload.Dropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
+              <DropzoneContent label={acceptLabel} />
+            </FileUpload.Dropzone>
+          </Animate.SlideUp>
+        )}
 
-          {/* Phases 2–3: Toolbar persists, content below changes */}
-          {(activePhase === 2 || activePhase === 3) && (
-            <Stack className="gap-4 text-left">
-              <RecipeToolbar
-                activePhase={activePhase as 2 | 3}
-                resolvedPhase={resolvedPhase}
-                isProcessing={isProcessing}
-                fileCount={files.length}
-                onBack={
-                  activePhase === 3
-                    ? handleResetExecution
-                    : () => setFiles([])
-                }
-                onRun={handleRun}
-                onDownloadAll={downloadAll}
-                centerContent={
-                  activePhase === 2 ? (
-                    <RecipeConfigSection
-                      slug={entry.slug}
-                      config={config}
-                      onChange={setConfig}
-                    />
-                  ) : isBrowserPath &&
-                    (browserExec.status === "processing" ||
-                      browserExec.status === "completed") ? (
-                    <ToolbarProgress execution={browserExec} />
-                  ) : undefined
-                }
-              />
+        {/* Phases 2–3: Toolbar persists, content below changes */}
+        {(activePhase === 2 || activePhase === 3) && (
+          <Stack className="gap-4 text-left">
+            <RecipeToolbar
+              activePhase={activePhase as 2 | 3}
+              resolvedPhase={resolvedPhase}
+              isProcessing={isProcessing}
+              fileCount={files.length}
+              onBack={activePhase === 3 ? handleResetExecution : () => setFiles([])}
+              onRun={handleRun}
+              onDownloadAll={downloadAll}
+              centerContent={
+                activePhase === 2 ? (
+                  <RecipeConfigSection slug={entry.slug} config={config} onChange={setConfig} />
+                ) : isBrowserPath &&
+                  (browserExec.status === "processing" || browserExec.status === "completed") ? (
+                  <ToolbarProgress execution={browserExec} />
+                ) : undefined
+              }
+            />
 
-              {/* Phase 3 (browser): Error card above the grid */}
-              {activePhase === 3 &&
-                isBrowserPath &&
-                browserExec.status === "failed" &&
-                browserExec.error && (
-                  <Animate.SlideUp>
-                    <ErrorCard error={browserExec.error} />
-                  </Animate.SlideUp>
-                )}
-
-              {/* Phase 3 (cloud): Upload/execution progress — cloud path not yet persistent */}
-              {activePhase === 3 && !isBrowserPath && (
-                <RecipeResultsSection
-                  isBrowserPath={false}
-                  resolvedPhase={resolvedPhase}
-                  browserExec={browserExec}
-                  onDownload={downloadResult}
-                  executionId={executionId}
-                  uploadProgress={uploadProgress}
-                  clientError={clientError}
-                />
+            {/* Phase 3 (browser): Error card above the grid */}
+            {activePhase === 3 &&
+              isBrowserPath &&
+              browserExec.status === "failed" &&
+              browserExec.error && (
+                <Animate.SlideUp>
+                  <ErrorCard error={browserExec.error} />
+                </Animate.SlideUp>
               )}
 
-              {/* Persistent file grid — always visible in Phases 2 and 3.
-                 * Columns adapt to file count: 1 file = full width,
-                 * 2 files = 2 cols on md+, 3+ files = 2 cols on md / 3 cols on lg. */}
-              <Animate.BouncyStagger asChild>
-                <Grid
-                  cols={1}
-                  gap="sm"
-                  role="list"
-                  aria-label="Selected files"
-                  className={
-                    files.length >= 3
-                      ? "md:grid-cols-2 lg:grid-cols-3"
-                      : files.length === 2
-                        ? "md:grid-cols-2"
-                        : undefined
-                  }
-                >
-                  {files.map((file, i) => {
-                    const result =
-                      activePhase === 3 && isBrowserPath
-                        ? browserExec.results[i]
-                        : undefined;
-                    const isFileProcessing =
-                      activePhase === 3 &&
-                      isBrowserPath &&
-                      browserExec.status === "processing" &&
-                      browserExec.fileProgress?.fileIndex === i;
+            {/* Phase 3 (cloud): Upload/execution progress — cloud path not yet persistent */}
+            {activePhase === 3 && !isBrowserPath && (
+              <RecipeResultsSection
+                isBrowserPath={false}
+                resolvedPhase={resolvedPhase}
+                browserExec={browserExec}
+                onDownload={downloadResult}
+                executionId={executionId}
+                uploadProgress={uploadProgress}
+                clientError={clientError}
+              />
+            )}
 
-                    return (
-                      <FileCard
-                        key={`${file.name}-${file.size}-${file.lastModified}`}
-                        file={file}
-                        result={result}
-                        isProcessing={isFileProcessing}
-                        isExecuting={activePhase === 3}
-                        onDelete={() =>
-                          setFiles(files.filter((_, j) => j !== i))
-                        }
-                        onDownload={downloadResult}
-                      />
-                    );
-                  })}
-                </Grid>
-              </Animate.BouncyStagger>
+            {/* Persistent file grid — always visible in Phases 2 and 3.
+             * Columns adapt to file count: 1 file = full width,
+             * 2 files = 2 cols on md+, 3+ files = 2 cols on md / 3 cols on lg. */}
+            <Animate.BouncyStagger asChild>
+              <Grid
+                cols={1}
+                gap="sm"
+                role="list"
+                aria-label="Selected files"
+                className={
+                  files.length >= 3
+                    ? "md:grid-cols-2 lg:grid-cols-3"
+                    : files.length === 2
+                      ? "md:grid-cols-2"
+                      : undefined
+                }
+              >
+                {files.map((file, i) => {
+                  const result =
+                    activePhase === 3 && isBrowserPath ? browserExec.results[i] : undefined;
+                  const isFileProcessing =
+                    activePhase === 3 &&
+                    isBrowserPath &&
+                    browserExec.status === "processing" &&
+                    browserExec.fileProgress?.fileIndex === i;
 
-            </Stack>
-          )}
+                  return (
+                    <FileCard
+                      key={`${file.name}-${file.size}-${file.lastModified}`}
+                      file={file}
+                      result={result}
+                      isProcessing={isFileProcessing}
+                      isExecuting={activePhase === 3}
+                      onDelete={() => setFiles(files.filter((_, j) => j !== i))}
+                      onDownload={downloadResult}
+                    />
+                  );
+                })}
+              </Grid>
+            </Animate.BouncyStagger>
+          </Stack>
+        )}
       </FileUpload>
     </Container>
   );

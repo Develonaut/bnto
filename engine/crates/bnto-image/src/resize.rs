@@ -68,9 +68,9 @@ use crate::orientation::decode_with_orientation;
 // Configuration Constants
 // =============================================================================
 
-/// Default JPEG quality when re-encoding after resize.
-/// We use the same default as compress-images for consistency.
-const DEFAULT_JPEG_QUALITY: u8 = 80;
+// Default JPEG quality — imported from bnto-core so all image operations
+// (compress, resize, convert) share a single source of truth.
+use bnto_core::DEFAULT_JPEG_QUALITY;
 
 /// Maximum image dimension we allow (width or height).
 /// 16384 pixels is the practical limit for most browsers and the
