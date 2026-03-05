@@ -14,7 +14,7 @@ import "@xyflow/react/dist/style.css";
 import { cn } from "@bnto/ui";
 
 import { CompartmentNode } from "./CompartmentNode";
-import type { BentoNode } from "@/editor/adapters/types";
+import type { BentoNode } from "../../adapters/types";
 
 /**
  * A React Flow canvas styled as a bento box grid.

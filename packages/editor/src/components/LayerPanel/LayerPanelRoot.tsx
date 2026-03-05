@@ -11,12 +11,12 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@bnto/ui";
-import { useEditorExport } from "@/editor/hooks/useEditorExport";
-import { useEditorStore } from "@/editor/hooks/useEditorStore";
-import { useEditorPanels } from "@/editor/hooks/useEditorPanels";
+import { useEditorExport } from "../../hooks/useEditorExport";
+import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditorPanels } from "../../hooks/useEditorPanels";
 import { FileMenu } from "./FileMenu";
 import { NodeList } from "./NodeList";
-import { useAutoSelect } from "@/editor/hooks/useAutoSelect";
+import { useAutoSelect } from "../../hooks/useAutoSelect";
 
 /**
  * LayerPanel — self-contained left-side panel.

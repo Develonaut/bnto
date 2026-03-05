@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   // Standalone output for Docker (Railway). Vercel ignores this — it uses its own adapter.
   output: "standalone",
   outputFileTracingRoot: resolve(__dirname, "../../"),
-  transpilePackages: ["@bnto/auth", "@bnto/core", "@bnto/ui"],
+  transpilePackages: ["@bnto/auth", "@bnto/core", "@bnto/editor", "@bnto/ui"],
   devIndicators: false,
   // Allow e2e tests to use a separate build directory so they don't
   // corrupt the dev server's .next cache (set via NEXT_DIST_DIR env var).
