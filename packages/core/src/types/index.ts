@@ -27,10 +27,7 @@ export type { LocalHistoryEntry } from "./localHistory";
 
 export type { User } from "./user";
 
-export type {
-  UsageAnalytics,
-  SlugAggregate,
-} from "./analytics";
+export type { UsageAnalytics, SlugAggregate } from "./analytics";
 
 export type {
   UploadFileInput,
@@ -51,10 +48,4 @@ export type {
   BrowserRunResult,
 } from "./browser";
 
-export type { RunPhase, RecipeFlow } from "./recipeFlow";
-
-export type {
-  TelemetryConfig,
-  TelemetryProperties,
-  TelemetryUserTraits,
-} from "./telemetry";
+export type { TelemetryConfig, TelemetryProperties, TelemetryUserTraits } from "./telemetry";

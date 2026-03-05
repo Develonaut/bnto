@@ -3,7 +3,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { core, createRecipeFlowStore, deriveAcceptedTypes } from "@bnto/core";
+import { core, deriveAcceptedTypes } from "@bnto/core";
+import { createRecipeFlowStore } from "../_stores/recipeFlowStore";
 import type { BrowserFileResult } from "@bnto/core";
 import { getRecipeBySlug } from "@bnto/nodes";
 import type { BntoEntry } from "@/lib/bntoRegistry";
