@@ -305,7 +305,7 @@ Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: 
 - [x] `all packages` — **Cross-package DRY audit**: Identify duplicated utilities across packages (`cn`, `createCn`, type guards, format helpers). Consolidate into `@bnto/ui` (styling utils) or `@bnto/core` (logic utils) as appropriate
 - [x] `all packages` — **Remove Object.assign dot-notation repo-wide**: Replace all compound `Object.assign` namespaces with flat named exports (e.g., `Card` + `CardContent` + `CardHeader` instead of `Card.Content`). Applies to `@bnto/ui`, `apps/web/editor`, and any other packages using the pattern. Update all consumers to flat imports. Remove `"use client"` directives that were added solely to work around the RSC boundary limitation of `Object.assign`. Recover server-side rendering benefits for components that don't need client interactivity
 - [x] `apps/web` — **Server Component audit**: Invoke `/nextjs-expert` + `/frontend-engineer`. Audit every `"use client"` directive in `apps/web/`. For each file: (1) Does it genuinely need client interactivity (hooks, state, event handlers)? (2) Can the `"use client"` boundary be pushed deeper — keep the trunk/branch as a server component and extract only the interactive leaf as client? (3) Are there pages or layouts marked `"use client"` that should be server components composing client islands? Goal: maximize server-rendered HTML, minimize client JS bundle, push `"use client"` to the smallest possible leaves
-- [ ] `all packages` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after all restructuring
+- [x] `all packages` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after all restructuring
 
 ---
 
