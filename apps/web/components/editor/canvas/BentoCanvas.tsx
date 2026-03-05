@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -71,6 +71,10 @@ type BentoCanvasProps = {
 const EMPTY_EDGES: never[] = [];
 const PRO_OPTIONS = { hideAttribution: true } as const;
 
+/** Module-level constant — stable reference prevents RF from
+ * unmounting/remounting all nodes on every render. */
+const NODE_TYPES = { compartment: CompartmentNode } as const;
+
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
 
 type BentoCanvasInnerProps = {
@@ -87,7 +91,6 @@ function BentoCanvasInner({
   children,
 }: BentoCanvasInnerProps) {
   const { fitView } = useReactFlow();
-  const nodeTypes = useMemo(() => ({ compartment: CompartmentNode }), []);
 
   /* Fit all nodes on initial mount only — frames the default layout.
    * After mount, the palette and sidebar own fitView targeting. */
@@ -104,7 +107,7 @@ function BentoCanvasInner({
     <ReactFlow<CompartmentNodeType>
       defaultNodes={defaultNodes}
       edges={EMPTY_EDGES}
-      nodeTypes={nodeTypes}
+      nodeTypes={NODE_TYPES}
       nodesDraggable={interactive && !disable?.drag}
       nodesConnectable={false}
       elementsSelectable={interactive && !disable?.select}
