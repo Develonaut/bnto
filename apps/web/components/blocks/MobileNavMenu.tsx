@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 
-import { useFeatureFlag } from "@/lib/featureFlags";
+import { useFeatureFlag } from "@/lib/useFeatureFlag";
 import {
   Button,
   Container,

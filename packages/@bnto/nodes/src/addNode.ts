@@ -50,6 +50,25 @@ function buildDefaultPorts(nodeType: NodeTypeName) {
   };
 }
 
+/** Creates a new node definition with defaults from its type schema. */
+function createNode(nodeType: NodeTypeName, position: Position): Definition {
+  const info = NODE_TYPE_INFO[nodeType];
+  const ports = buildDefaultPorts(nodeType);
+
+  return {
+    id: crypto.randomUUID(),
+    type: nodeType,
+    version: "1.0.0",
+    name: info.label,
+    position,
+    metadata: {},
+    parameters: buildDefaultParams(nodeType),
+    inputPorts: ports.inputPorts,
+    outputPorts: ports.outputPorts,
+    ...(info.isContainer ? { nodes: [], edges: [] } : {}),
+  };
+}
+
 /**
  * Adds a new child node to the root group definition.
  *
@@ -61,22 +80,7 @@ export function addNode(
   nodeType: NodeTypeName,
   position?: Position,
 ): DefinitionResult {
-  const info = NODE_TYPE_INFO[nodeType];
-  const ports = buildDefaultPorts(nodeType);
-
-  const newNode: Definition = {
-    id: crypto.randomUUID(),
-    type: nodeType,
-    version: "1.0.0",
-    name: info.label,
-    position: position ?? { x: 0, y: 0 },
-    metadata: {},
-    parameters: buildDefaultParams(nodeType),
-    inputPorts: ports.inputPorts,
-    outputPorts: ports.outputPorts,
-    ...(info.isContainer ? { nodes: [], edges: [] } : {}),
-  };
-
+  const newNode = createNode(nodeType, position ?? { x: 0, y: 0 });
   const updated: Definition = {
     ...definition,
     nodes: [...(definition.nodes ?? []), newNode],

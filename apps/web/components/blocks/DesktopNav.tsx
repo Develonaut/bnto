@@ -8,7 +8,7 @@
  * Extracted from Navbar for single-responsibility.
  */
 
-import { useFeatureFlag } from "@/lib/featureFlags";
+import { useFeatureFlag } from "@/lib/useFeatureFlag";
 
 import { NavButton } from "./NavButton";
 import { RecipesMenu } from "./RecipesMenu";

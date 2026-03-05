@@ -12,6 +12,7 @@ import type { BntoConfigMap, BntoSlug } from "../_components/configs/types";
 import { DEFAULT_CONFIGS } from "../_components/configs/types";
 import type { RunPhase } from "../_components/RunButton";
 import { toBrowserPhase, toCloudPhase } from "../_components/phaseMapping";
+import { runRecipeAction } from "./runRecipeAction";
 
 /**
  * Manages the full recipe page lifecycle — files, config, execution, results.
@@ -107,82 +108,33 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     });
   }, [browserExec.results, entry.slug]);
 
-  const handleRun = useCallback(async () => {
-    if (files.length === 0) return;
-
-    const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
-    const runProps = {
-      slug: entry.slug,
-      fileCount: files.length,
-      totalBytes,
-      executionPath: isBrowserPath ? "browser" : "cloud",
-    };
-
-    core.telemetry.capture("recipe_run_started", runProps);
-    const startTime = Date.now();
-
-    if (isBrowserPath) {
-      const result = await browserInstance.run(
-        entry.slug,
-        files,
-        config as Record<string, unknown>,
-      );
-
-      const durationMs = Date.now() - startTime;
-
-      if (result.status === "completed" && result.results.length > 0) {
-        const outputBytes = result.results.reduce((sum, r) => sum + r.blob.size, 0);
-        core.telemetry.capture("recipe_run_completed", {
-          ...runProps,
-          durationMs,
-          outputFileCount: result.results.length,
-          outputBytes,
-        });
-        await core.executions.downloadAllResults(result.results, entry.slug);
-      } else if (result.status === "failed") {
-        core.telemetry.capture("recipe_run_failed", {
-          ...runProps,
-          durationMs,
-          error: result.error ?? "unknown",
-        });
-      }
-      return;
-    }
-
-    // Cloud path
-    if (!definition) return;
-
-    try {
-      store.getState().startUpload();
-      const session = await upload(files);
-      const id = await startCloudExec({
+  const handleRun = useCallback(
+    () =>
+      runRecipeAction({
         slug: entry.slug,
+        files,
+        config: config as Record<string, unknown>,
+        isBrowserPath,
+        browserInstance,
         definition,
-        sessionId: session.sessionId,
-      });
-      store.getState().startExecution(String(id));
-    } catch (e) {
-      const durationMs = Date.now() - startTime;
-      core.telemetry.capture("recipe_run_failed", {
-        ...runProps,
-        durationMs,
-        error: e instanceof Error ? e.message : "unknown",
-      });
-      store.getState().failCloud(
-        e instanceof Error ? e.message : "Something went wrong",
-      );
-    }
-  }, [
-    entry.slug,
-    files,
-    config,
-    definition,
-    isBrowserPath,
-    browserInstance,
-    upload,
-    startCloudExec,
-    store,
-  ]);
+        upload,
+        startCloudExec,
+        onStartUpload: () => store.getState().startUpload(),
+        onStartExecution: (id) => store.getState().startExecution(id),
+        onFail: (msg) => store.getState().failCloud(msg),
+      }),
+    [
+      entry.slug,
+      files,
+      config,
+      definition,
+      isBrowserPath,
+      browserInstance,
+      upload,
+      startCloudExec,
+      store,
+    ],
+  );
 
   const handleResetExecution = useCallback(() => {
     if (isBrowserPath) {

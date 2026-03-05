@@ -4,11 +4,11 @@ import {
   NODE_TYPES,
   NODE_TYPE_NAMES,
   NODE_TYPE_INFO,
-  isNodeType,
-  getNodeTypeInfo,
-  getBrowserCapableTypes,
-  getContainerTypes,
 } from "./nodeTypes";
+import { isNodeType } from "./isNodeType";
+import { getNodeTypeInfo } from "./getNodeTypeInfo";
+import { getBrowserCapableTypes } from "./getBrowserCapableTypes";
+import { getContainerTypes } from "./getContainerTypes";
 
 describe("NODE_TYPES", () => {
   it("contains all 12 registered node types", () => {

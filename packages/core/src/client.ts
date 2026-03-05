@@ -20,6 +20,23 @@ let convexClient: ConvexReactClient;
 let convexQueryClient: ConvexQueryClient;
 let queryClient: QueryClient;
 
+/** Create QueryClient wired with auth error handling and Convex bridge. */
+function createWiredQueryClient(cqc: ConvexQueryClient): QueryClient {
+  const handleError = (error: Error) => {
+    if (isAuthError(error)) emitAuthError();
+  };
+  return new QueryClient({
+    queryCache: new QueryCache({ onError: handleError }),
+    mutationCache: new MutationCache({ onError: handleError }),
+    defaultOptions: {
+      queries: {
+        queryKeyHashFn: cqc.hashFn(),
+        queryFn: cqc.queryFn(),
+      },
+    },
+  });
+}
+
 function ensureClients() {
   if (!convexClient) {
     const url = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -31,24 +48,7 @@ function ensureClients() {
     }
     convexClient = new ConvexReactClient(url);
     convexQueryClient = new ConvexQueryClient(convexClient);
-    queryClient = new QueryClient({
-      queryCache: new QueryCache({
-        onError: (error) => {
-          if (isAuthError(error)) emitAuthError();
-        },
-      }),
-      mutationCache: new MutationCache({
-        onError: (error) => {
-          if (isAuthError(error)) emitAuthError();
-        },
-      }),
-      defaultOptions: {
-        queries: {
-          queryKeyHashFn: convexQueryClient.hashFn(),
-          queryFn: convexQueryClient.queryFn(),
-        },
-      },
-    });
+    queryClient = createWiredQueryClient(convexQueryClient);
     convexQueryClient.connect(queryClient);
   }
   return { convexClient, convexQueryClient, queryClient };

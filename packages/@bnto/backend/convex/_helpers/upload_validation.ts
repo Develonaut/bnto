@@ -68,13 +68,9 @@ export type UploadValidationError = {
   maxSizeBytes?: number;
 };
 
-/**
- * Validate an entire upload batch against plan limits.
- * Returns the first validation error found, or null if all files pass.
- */
-export function validateUploadBatch(
+/** Validate batch-level constraints (empty, too large). */
+function validateBatchSize(
   files: UploadFileInput[],
-  plan: string,
 ): UploadValidationError | null {
   if (files.length === 0) {
     return { code: "EMPTY_BATCH", message: "At least one file is required" };
@@ -85,34 +81,53 @@ export function validateUploadBatch(
       message: `Maximum ${MAX_UPLOAD_BATCH_SIZE} files per upload batch`,
     };
   }
+  return null;
+}
+
+/** Validate a single file against type and size constraints. */
+function validateFile(
+  file: UploadFileInput,
+  plan: string,
+  maxSizeBytes: number,
+): UploadValidationError | null {
+  if (!file.name.trim()) {
+    return { code: "INVALID_FILE_NAME", message: "File name cannot be empty" };
+  }
+  if (!isAllowedMimeType(file.contentType)) {
+    return {
+      code: "INVALID_FILE_TYPE",
+      message: `File type "${file.contentType}" is not supported`,
+      fileName: file.name,
+    };
+  }
+  if (!isFileSizeAllowed(file.sizeBytes, plan)) {
+    const maxSizeMB = Math.round(maxSizeBytes / (1024 * 1024));
+    return {
+      code: "FILE_TOO_LARGE",
+      message: `File "${file.name}" exceeds the ${maxSizeMB}MB limit for the ${plan} plan`,
+      fileName: file.name,
+      maxSizeBytes,
+    };
+  }
+  return null;
+}
+
+/**
+ * Validate an entire upload batch against plan limits.
+ * Returns the first validation error found, or null if all files pass.
+ */
+export function validateUploadBatch(
+  files: UploadFileInput[],
+  plan: string,
+): UploadValidationError | null {
+  const batchError = validateBatchSize(files);
+  if (batchError) return batchError;
 
   const maxSizeBytes = getMaxFileSize(plan);
-  const maxSizeMB = Math.round(maxSizeBytes / (1024 * 1024));
-
   for (const file of files) {
-    if (!file.name.trim()) {
-      return {
-        code: "INVALID_FILE_NAME",
-        message: "File name cannot be empty",
-      };
-    }
-    if (!isAllowedMimeType(file.contentType)) {
-      return {
-        code: "INVALID_FILE_TYPE",
-        message: `File type "${file.contentType}" is not supported`,
-        fileName: file.name,
-      };
-    }
-    if (!isFileSizeAllowed(file.sizeBytes, plan)) {
-      return {
-        code: "FILE_TOO_LARGE",
-        message: `File "${file.name}" exceeds the ${maxSizeMB}MB limit for the ${plan} plan`,
-        fileName: file.name,
-        maxSizeBytes,
-      };
-    }
+    const fileError = validateFile(file, plan, maxSizeBytes);
+    if (fileError) return fileError;
   }
-
   return null;
 }
 
