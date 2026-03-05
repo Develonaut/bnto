@@ -7,9 +7,9 @@ const CATEGORY_VARIANT: Record<string, CompartmentVariant> = {
   spreadsheet: "secondary",
   file: "accent",
   data: "muted",
-  network: "warning",
-  control: "success",
-  system: "warning",
+  network: "secondary",
+  control: "warning",
+  system: "muted",
   io: "info",
 };
 

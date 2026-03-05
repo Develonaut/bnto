@@ -90,6 +90,8 @@ export { definitionToBento } from "./adapters/definitionToBento";
 export { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
 export { createCompartmentNode } from "./adapters/createCompartmentNode";
 export { SLOTS, CELL, GAP, STRIDE } from "./adapters/bentoSlots";
+export { ICON_COMPONENTS } from "./adapters/nodeIcons";
+export { CATEGORY_VARIANT } from "./adapters/categoryVariant";
 export type {
   BentoNode,
   BentoLayout,

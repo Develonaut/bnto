@@ -15,6 +15,7 @@ import { cn } from "@bnto/ui";
 
 import { CompartmentNode } from "./CompartmentNode";
 import type { BentoNode } from "../../adapters/types";
+import { FIT_VIEW_OPTIONS } from "../../constants";
 
 /**
  * A React Flow canvas styled as a bento box grid.
@@ -106,7 +107,7 @@ function BentoCanvasInner({
     // Defer fitView to the next animation frame so RF has time to
     // measure node DOM dimensions before calculating viewport bounds.
     requestAnimationFrame(() => {
-      fitView({ duration: 0, padding: 0.2 });
+      fitView({ ...FIT_VIEW_OPTIONS, duration: 0 });
     });
   }, [nodeCount, fitView]);
 
@@ -126,15 +127,12 @@ function BentoCanvasInner({
       panOnDrag={interactive && !disable?.pan}
       zoomOnScroll={interactive && !disable?.zoom}
       zoomOnPinch={interactive && !disable?.zoom}
+      maxZoom={FIT_VIEW_OPTIONS.maxZoom}
       zoomOnDoubleClick={false}
       preventScrolling={!interactive}
       proOptions={PRO_OPTIONS}
     >
-      <Background
-        variant={BackgroundVariant.Lines}
-        gap={40}
-        color="var(--border)"
-      />
+      <Background variant={BackgroundVariant.Lines} gap={40} color="var(--border)" />
       {children}
     </ReactFlow>
   );

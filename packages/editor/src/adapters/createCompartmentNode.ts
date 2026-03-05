@@ -46,7 +46,7 @@ function createCompartmentNode(
   if (!slot) return null;
 
   const info = NODE_TYPE_INFO[type];
-  const variant = info ? CATEGORY_VARIANT[info.category] ?? "muted" : "muted";
+  const variant = info ? (CATEGORY_VARIANT[info.category] ?? "muted") : "muted";
   const label = info?.label ?? type;
   const id = crypto.randomUUID();
 
@@ -61,6 +61,7 @@ function createCompartmentNode(
       width: slot.w,
       height: slot.h,
       status: "idle" as const,
+      icon: info?.icon,
     },
   };
 

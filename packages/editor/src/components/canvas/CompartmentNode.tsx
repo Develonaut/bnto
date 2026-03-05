@@ -1,20 +1,16 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
-import { ScaleIn, Card, cn, DownloadIcon, Pressable, Text, UploadIcon } from "@bnto/ui";
+import { ScaleIn, Card, cn, Pressable, Text } from "@bnto/ui";
 import type { CompartmentVariant, BentoNode } from "../../adapters/types";
+import { ICON_COMPONENTS } from "../../adapters/nodeIcons";
 
 /**
  * A bento box compartment — a .surface Card that acts as a "building"
  * on the Mini Motorways-style grid. Each compartment pops onto the
  * grid with a springy bounce, like buildings materializing on the map.
  *
- * Compartments have variable sizes (width/height via data props) to
- * create the varied-compartment look of a real bento box — some are
- * small squares, others are wide rectangles, others tall.
- *
- * Domain data (nodeType, name, parameters) lives in the configs store,
- * NOT in node.data. Only visual fields (label, variant, etc.) are in
- * node.data — this prevents parameter changes from re-rendering nodes.
+ * Layout: large icon (32px) above the label, with category sublabel below.
+ * Icon and variant color are driven by the node type and category registries.
  */
 
 export type CompartmentStatus = "idle" | "pending" | "active" | "completed";
@@ -36,6 +32,8 @@ export const CompartmentNode = memo(function CompartmentNode({
   const w = data.width ?? 120;
   const h = data.height ?? 120;
   const status = data.status ?? "idle";
+  const Icon = data.icon ? ICON_COMPONENTS[data.icon] : undefined;
+
   return (
     <ScaleIn from={0.7} easing="spring-bouncy">
       <Pressable asChild spring="bounciest" toggle active={selected} muted={status === "pending"}>
@@ -43,19 +41,16 @@ export const CompartmentNode = memo(function CompartmentNode({
           elevation="lg"
           className={cn(
             SURFACE_CLASS[data.variant ?? "primary"],
-            "flex flex-col items-center justify-center rounded-xl",
+            "flex flex-col items-center justify-center gap-1 rounded-xl",
           )}
           style={{ width: w, height: h }}
         >
-          {data.icon === "upload" && <UploadIcon className="mb-1 size-4 text-muted-foreground" />}
-          {data.icon === "download" && (
-            <DownloadIcon className="mb-1 size-4 text-muted-foreground" />
-          )}
-          <Text size="sm" className="font-display font-semibold leading-tight">
+          {Icon && <Icon className="size-8 text-muted-foreground" />}
+          <Text size="sm" className="font-display font-semibold leading-tight text-center">
             {data.label}
           </Text>
           {data.sublabel && (
-            <Text size="xs" color="muted" className="mt-0.5">
+            <Text size="xs" color="muted" className="capitalize">
               {data.sublabel}
             </Text>
           )}

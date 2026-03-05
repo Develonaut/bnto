@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useEditorActions } from "./useEditorActions";
+import { FIT_VIEW_OPTIONS } from "../constants";
 
 /**
  * useAutoSelect — selection management for the editor.
@@ -36,7 +37,7 @@ function useAutoSelect({ selectedNodeId }: UseAutoSelectOptions) {
    * genuine DOM side effect — fitView requires measured node dimensions. */
   useEffect(() => {
     if (!selectedNodeId) return;
-    fitView({ nodes: [{ id: selectedNodeId }], duration: 400, padding: 0.5 });
+    fitView({ ...FIT_VIEW_OPTIONS, nodes: [{ id: selectedNodeId }], duration: 400 });
   }, [selectedNodeId, fitView]);
 
   return { handleSelectNode };
