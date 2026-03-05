@@ -3,6 +3,10 @@
  *
  * Factory pattern: each EditorProvider creates its own store instance.
  * Multiple editors on the same page get independent stores.
+ *
+ * Pass `slug` to pre-populate with a predefined recipe, or omit for blank.
+ * The store is created with the recipe data already loaded — no render-cycle
+ * init hacks needed.
  */
 
 "use client";
@@ -10,18 +14,15 @@
 import { useState, type ReactNode } from "react";
 import { EditorContext } from "./context";
 import { createEditorStore } from "./store/createEditorStore";
-import type { RecipeMetadata } from "./store/types";
 
 interface EditorProviderProps {
-  /** Initial recipe metadata. Defaults to blank if omitted. */
-  initialMetadata?: RecipeMetadata;
+  /** Predefined recipe slug. Omit for blank canvas. */
+  slug?: string;
   children: ReactNode;
 }
 
-function EditorProvider({ initialMetadata, children }: EditorProviderProps) {
-  // useState with initializer — creates the store once on first render.
-  // Avoids useRef .current access during render (react-hooks/refs).
-  const [store] = useState(() => createEditorStore(initialMetadata));
+function EditorProvider({ slug, children }: EditorProviderProps) {
+  const [store] = useState(() => createEditorStore(slug));
 
   return (
     <EditorContext.Provider value={store}>

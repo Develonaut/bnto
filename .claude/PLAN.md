@@ -289,7 +289,7 @@ Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: 
 #### Wave 2 (sequential — cross-cutting + verify)
 
 - [ ] `all packages` — **Cross-package DRY audit**: Identify duplicated utilities across packages (`cn`, `createCn`, type guards, format helpers). Consolidate into `@bnto/ui` (styling utils) or `@bnto/core` (logic utils) as appropriate
-- [ ] `all packages` — **Dot-notation compliance sweep**: Every multi-part component uses dot-notation. Migrate any remaining flat imports
+- [ ] `all packages` — **Remove Object.assign dot-notation repo-wide**: Replace all compound `Object.assign` namespaces with flat named exports (e.g., `Card` + `CardContent` + `CardHeader` instead of `Card.Content`). Applies to `@bnto/ui`, `apps/web/editor`, and any other packages using the pattern. Update all consumers to flat imports. Remove `"use client"` directives that were added solely to work around the RSC boundary limitation of `Object.assign`. Recover server-side rendering benefits for components that don't need client interactivity
 - [ ] `all packages` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after all restructuring
 
 ---

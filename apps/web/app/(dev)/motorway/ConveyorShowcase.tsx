@@ -2,12 +2,11 @@
 
 import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
-import { RotateCcw } from "lucide-react";
-import { Button, Row, Text } from "@bnto/ui";
-import type { StationNodeType } from "@/components/editor/archive/conveyor/StationNode";
-import type { ConveyorEdgeType } from "@/components/editor/archive/conveyor/ConveyorEdge";
-import { PieceShape } from "@/components/editor/archive/conveyor/PieceShape";
-import type { PieceType } from "@/components/editor/archive/conveyor/BeltPiece";
+import { Button, RotateCcwIcon, Row, Text } from "@bnto/ui";
+import type { StationNodeType } from "@/editor/components/archive/conveyor/StationNode";
+import type { ConveyorEdgeType } from "@/editor/components/archive/conveyor/ConveyorEdge";
+import { PieceShape } from "@/editor/components/archive/conveyor/PieceShape";
+import type { PieceType } from "@/editor/components/archive/conveyor/BeltPiece";
 
 /**
  * Conveyor Belt showcase — a Mini Motorways-style "level" showing
@@ -29,7 +28,7 @@ import type { PieceType } from "@/components/editor/archive/conveyor/BeltPiece";
  */
 
 const ConveyorCanvas = dynamic(
-  () => import("@/components/editor/archive/conveyor/ConveyorCanvas").then((m) => m.ConveyorCanvas),
+  () => import("@/editor/components/archive/conveyor/ConveyorCanvas").then((m) => m.ConveyorCanvas),
   { ssr: false },
 );
 
@@ -138,7 +137,7 @@ export function ConveyorShowcase() {
           onClick={handleReload}
           aria-label="Replay entrance animations"
         >
-          <RotateCcw className="size-3.5" />
+          <RotateCcwIcon className="size-3.5" />
           Replay
         </Button>
       </Row>

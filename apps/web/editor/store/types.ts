@@ -48,12 +48,20 @@ interface EditorState {
   configs: NodeConfigs;
 
   // --- Metadata ---
+  slug: string | null;
   recipeMetadata: RecipeMetadata;
   isDirty: boolean;
   validationErrors: ValidationError[];
   executionState: ExecutionState;
   undoStack: EditorSnapshot[];
   redoStack: EditorSnapshot[];
+
+  // --- Selection ---
+  selectedNodeId: string | null;
+
+  // --- Panel visibility ---
+  layersOpen: boolean;
+  configOpen: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -82,6 +90,14 @@ interface EditorActions {
   pushUndo: () => void;
   undo: () => void;
   redo: () => void;
+
+  // --- Selection ---
+  setSelectedNodeId: (id: string | null) => void;
+
+  // --- Panel visibility ---
+  toggleLayers: () => void;
+  toggleConfig: () => void;
+  openConfig: () => void;
 
   // --- Utility ---
   markDirty: () => void;

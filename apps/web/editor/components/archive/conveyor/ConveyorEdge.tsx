@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import {
   getSmoothStepPath,
   Position,
@@ -137,7 +138,7 @@ export function ConveyorEdge({
     return (
       <g
         className="belt-pieces belt-enter"
-        style={{ "--belt-enter-delay": `${enterDelay}ms` } as React.CSSProperties}
+        style={{ "--belt-enter-delay": `${enterDelay}ms` } as CSSProperties}
       >
         {Array.from({ length: pieceCount }, (_, i) => (
           <BeltPiece
@@ -166,7 +167,7 @@ export function ConveyorEdge({
   return (
     <g
       className={`belt-${variant} belt-enter`}
-      style={{ "--belt-enter-delay": `${enterDelay}ms` } as React.CSSProperties}
+      style={{ "--belt-enter-delay": `${enterDelay}ms` } as CSSProperties}
     >
       {/* Optional: Border outline for dark themes */}
       {bordered && (

@@ -1,10 +1,24 @@
-import { RecipeEditor } from "@/components/editor/RecipeEditor";
+import {
+  EditorRoot,
+  EditorCanvas,
+  EditorLayerPanel,
+  EditorConfigPanel,
+  EditorToolbar,
+} from "@/editor/Editor";
 
 /**
  * /create — full-viewport recipe editor.
  *
- * Server component page — RecipeEditor has its own "use client" boundary.
+ * Server component page — each Editor piece is a "use client" component.
  */
 export default function CreatePage() {
-  return <RecipeEditor />;
+  return (
+    <EditorRoot>
+      <EditorCanvas>
+        <EditorLayerPanel />
+        <EditorConfigPanel />
+        <EditorToolbar />
+      </EditorCanvas>
+    </EditorRoot>
+  );
 }

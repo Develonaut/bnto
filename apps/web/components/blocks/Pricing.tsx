@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge, Button, Card, CheckIcon, Heading, Stack, Text } from "@bnto/ui";
 
 

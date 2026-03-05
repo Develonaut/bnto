@@ -11,7 +11,7 @@ import {
 } from "@xyflow/react";
 import type { NodeChange, EdgeChange, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { cn } from "@/lib/cn";
+import { cn } from "@bnto/ui";
 
 import { CompartmentNode } from "./CompartmentNode";
 import type { BentoNode } from "@/editor/adapters/types";

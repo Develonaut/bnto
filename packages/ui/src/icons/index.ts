@@ -76,6 +76,7 @@ export {
   EllipsisVertical as EllipsisVerticalIcon,
   Search as SearchIcon,
   X as XIcon,
+  SlidersHorizontal as SlidersHorizontalIcon,
   XCircle as XCircleIcon,
   Zap as ZapIcon,
 } from "lucide-react";
