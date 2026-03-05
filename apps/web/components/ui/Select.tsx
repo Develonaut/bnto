@@ -67,22 +67,28 @@ function SelectContent({
         align={align}
         {...props}
       >
-        <Animate.ScaleIn from={0.6} origin="top" easing="spring-bouncier">
+        <Animate.ScaleIn
+          from={0.6}
+          easing="spring-bouncier"
+          style={{ transformOrigin: "var(--radix-select-content-transform-origin)" }}
+        >
           <Card
-            className={cn("overflow-x-hidden overflow-y-auto", className)}
+            className={className}
             elevation="lg"
           >
-            <SelectScrollUpButton />
-            <SelectPrimitive.Viewport
-              className={cn(
-                "p-1",
-                position === "popper" &&
-                  "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
-              )}
-            >
-              {children}
-            </SelectPrimitive.Viewport>
-            <SelectScrollDownButton />
+            <div className="overflow-x-hidden overflow-y-auto">
+              <SelectScrollUpButton />
+              <SelectPrimitive.Viewport
+                className={cn(
+                  "p-1",
+                  position === "popper" &&
+                    "w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
+                )}
+              >
+                {children}
+              </SelectPrimitive.Viewport>
+              <SelectScrollDownButton />
+            </div>
           </Card>
         </Animate.ScaleIn>
       </SelectPrimitive.Content>
