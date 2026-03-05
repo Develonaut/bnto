@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Editor — flat re-exports for the recipe editor.
  *

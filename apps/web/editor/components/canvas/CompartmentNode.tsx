@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
-import { Animate, Card, DownloadIcon, Pressable, Text, UploadIcon } from "@bnto/ui";
+import { Animate, Card, cn, DownloadIcon, Pressable, Text, UploadIcon } from "@bnto/ui";
 import type { CompartmentVariant, BentoNode } from "@/editor/adapters/types";
 
 /**
@@ -41,7 +41,7 @@ export const CompartmentNode = memo(function CompartmentNode({
       <Pressable asChild spring="bounciest" toggle active={selected} muted={status === "pending"}>
         <Card
           elevation="lg"
-          className={`${SURFACE_CLASS[data.variant ?? "primary"]} flex flex-col items-center justify-center rounded-xl`}
+          className={cn(SURFACE_CLASS[data.variant ?? "primary"], "flex flex-col items-center justify-center rounded-xl")}
           style={{ width: w, height: h }}
         >
           {data.icon === "upload" && (

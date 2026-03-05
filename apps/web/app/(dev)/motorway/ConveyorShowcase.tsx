@@ -2,8 +2,7 @@
 
 import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
-import { RotateCcw } from "lucide-react";
-import { Button, Row, Text } from "@bnto/ui";
+import { Button, RotateCcwIcon, Row, Text } from "@bnto/ui";
 import type { StationNodeType } from "@/editor/components/archive/conveyor/StationNode";
 import type { ConveyorEdgeType } from "@/editor/components/archive/conveyor/ConveyorEdge";
 import { PieceShape } from "@/editor/components/archive/conveyor/PieceShape";
@@ -138,7 +137,7 @@ export function ConveyorShowcase() {
           onClick={handleReload}
           aria-label="Replay entrance animations"
         >
-          <RotateCcw className="size-3.5" />
+          <RotateCcwIcon className="size-3.5" />
           Replay
         </Button>
       </Row>

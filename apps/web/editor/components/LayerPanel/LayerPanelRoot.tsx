@@ -55,51 +55,51 @@ function LayerPanelRoot({
           : "pointer-events-none -translate-x-[110%] opacity-0 motion-safe:duration-fast motion-safe:ease-out",
       )}
     >
-    <Panel className="h-full w-full">
-      <Panel.Header className="gap-2 px-3 pt-3 pb-2">
-        <Text size="sm" className="min-w-0 flex-1 truncate font-medium">
-          {name}
-        </Text>
-        <FileMenu>
-          <FileMenu.Item onClick={handleDownload} disabled={!canDownload}>
-            <DownloadIcon className="size-4" />
-            Download
-          </FileMenu.Item>
-          <FileMenu.Separator />
-          <FileMenu.Item disabled>
-            <PlusIcon className="size-4" />
-            New Recipe
-          </FileMenu.Item>
-          <FileMenu.Item disabled>
-            <CopyIcon className="size-4" />
-            Duplicate
-          </FileMenu.Item>
-          <FileMenu.Item disabled>
-            <PenLineIcon className="size-4" />
-            Rename
-          </FileMenu.Item>
-          <FileMenu.Separator />
-          <FileMenu.Item disabled className="text-destructive">
-            <TrashIcon className="size-4" />
-            Delete
-          </FileMenu.Item>
-        </FileMenu>
-      </Panel.Header>
-      <Panel.Divider />
-      <Panel.Content>
-        <NodeList
-          nodes={nodes}
-          selectedNodeId={selectedNodeId}
-          onSelect={handleSelectNode}
-        />
-      </Panel.Content>
-      {footer && (
-        <>
-          <Panel.Divider />
-          <Panel.Footer>{footer}</Panel.Footer>
-        </>
-      )}
-    </Panel>
+      <Panel className="h-full w-full">
+        <Panel.Header className="gap-2 px-3 pt-3 pb-2">
+          <Text size="sm" className="min-w-0 flex-1 truncate font-medium">
+            {name}
+          </Text>
+          <FileMenu>
+            <FileMenu.Item onClick={handleDownload} disabled={!canDownload}>
+              <DownloadIcon className="size-4" />
+              Download
+            </FileMenu.Item>
+            <FileMenu.Separator />
+            <FileMenu.Item disabled>
+              <PlusIcon className="size-4" />
+              New Recipe
+            </FileMenu.Item>
+            <FileMenu.Item disabled>
+              <CopyIcon className="size-4" />
+              Duplicate
+            </FileMenu.Item>
+            <FileMenu.Item disabled>
+              <PenLineIcon className="size-4" />
+              Rename
+            </FileMenu.Item>
+            <FileMenu.Separator />
+            <FileMenu.Item disabled className="text-destructive">
+              <TrashIcon className="size-4" />
+              Delete
+            </FileMenu.Item>
+          </FileMenu>
+        </Panel.Header>
+        <Panel.Divider />
+        <Panel.Content>
+          <NodeList
+            nodes={nodes}
+            selectedNodeId={selectedNodeId}
+            onSelect={handleSelectNode}
+          />
+        </Panel.Content>
+        {footer && (
+          <>
+            <Panel.Divider />
+            <Panel.Footer>{footer}</Panel.Footer>
+          </>
+        )}
+      </Panel>
     </div>
   );
 }

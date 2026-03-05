@@ -61,53 +61,53 @@ function ConfigPanelRoot() {
 
   return (
     <div onPointerDownCapture={(e) => e.stopPropagation()} className={slotCn}>
-    <Panel className="h-full w-full">
-      <Panel.Header className="gap-2 px-3 pt-3 pb-2">
-        <Heading level={3} size="xs" className="min-w-0 flex-1 truncate">
-          {typeInfo.label}
-        </Heading>
-        <div className="flex gap-1.5">
-          <Badge variant="secondary" className="text-xs">
-            {typeInfo.category}
-          </Badge>
-          {typeInfo.browserCapable ? (
+      <Panel className="h-full w-full">
+        <Panel.Header className="gap-2 px-3 pt-3 pb-2">
+          <Heading level={3} size="xs" className="min-w-0 flex-1 truncate">
+            {typeInfo.label}
+          </Heading>
+          <div className="flex gap-1.5">
             <Badge variant="secondary" className="text-xs">
-              Browser
+              {typeInfo.category}
             </Badge>
-          ) : (
-            <Badge variant="outline" className="text-xs">
-              Pro
-            </Badge>
-          )}
-        </div>
-      </Panel.Header>
-      {typeInfo.description && (
-        <Text size="xs" color="muted" className="px-3 pb-1">
-          {typeInfo.description}
-        </Text>
-      )}
-      <Panel.Divider />
-      <Panel.Content>
-        <div className="p-3">
-          {visibleParams.length === 0 ? (
-            <Text size="xs" color="muted">
-              No configurable parameters.
-            </Text>
-          ) : (
-            <Stack gap="sm">
-              {visibleParams.map((param) => (
-                <ParameterField
-                  key={param.name}
-                  param={param}
-                  value={config.parameters[param.name]}
-                  onChange={handleParamChange}
-                />
-              ))}
-            </Stack>
-          )}
-        </div>
-      </Panel.Content>
-    </Panel>
+            {typeInfo.browserCapable ? (
+              <Badge variant="secondary" className="text-xs">
+                Browser
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs">
+                Pro
+              </Badge>
+            )}
+          </div>
+        </Panel.Header>
+        {typeInfo.description && (
+          <Text size="xs" color="muted" className="px-3 pb-1">
+            {typeInfo.description}
+          </Text>
+        )}
+        <Panel.Divider />
+        <Panel.Content>
+          <div className="p-3">
+            {visibleParams.length === 0 ? (
+              <Text size="xs" color="muted">
+                No configurable parameters.
+              </Text>
+            ) : (
+              <Stack gap="sm">
+                {visibleParams.map((param) => (
+                  <ParameterField
+                    key={param.name}
+                    param={param}
+                    value={config.parameters[param.name]}
+                    onChange={handleParamChange}
+                  />
+                ))}
+              </Stack>
+            )}
+          </div>
+        </Panel.Content>
+      </Panel>
     </div>
   );
 }
