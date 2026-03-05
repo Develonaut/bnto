@@ -109,9 +109,14 @@ mod tests {
     fn test_format_version_is_valid_semver() {
         // FORMAT_VERSION should be a valid semver string (major.minor.patch)
         let parts: Vec<&str> = FORMAT_VERSION.split('.').collect();
-        assert_eq!(parts.len(), 3, "FORMAT_VERSION must have 3 parts (major.minor.patch)");
+        assert_eq!(
+            parts.len(),
+            3,
+            "FORMAT_VERSION must have 3 parts (major.minor.patch)"
+        );
         for part in &parts {
-            part.parse::<u32>().expect("Each semver part must be a valid number");
+            part.parse::<u32>()
+                .expect("Each semver part must be a valid number");
         }
     }
 
