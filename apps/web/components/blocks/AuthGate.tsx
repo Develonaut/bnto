@@ -5,13 +5,7 @@ import { core } from "@bnto/core";
 
 import { useControlled } from "@/hooks/useControlled";
 
-import { Button } from "@/components/ui/Button";
-import { Dialog } from "@/components/ui/Dialog";
-import { Menu } from "@/components/ui/Menu";
-import { Popover } from "@/components/ui/Popover";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Button, Dialog, Menu, Popover, Row, Stack, Text } from "@bnto/ui";
 
 /* ── Shared props ─────────────────────────────────────────────── */
 

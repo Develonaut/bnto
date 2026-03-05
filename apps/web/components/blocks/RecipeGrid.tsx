@@ -1,8 +1,6 @@
 "use client";
 
-import { Animate } from "@/components/ui/Animate";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Animate, Stack, Text } from "@bnto/ui";
 import { RecipeCard } from "@/components/blocks/RecipeCard";
 import { getBntoIcon } from "@/lib/bntoIcons";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";

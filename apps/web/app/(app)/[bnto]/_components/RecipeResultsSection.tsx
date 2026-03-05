@@ -1,6 +1,6 @@
 import type { BrowserExecution, BrowserFileResult, FileUploadProgress } from "@bnto/core";
 import type { RunPhase } from "./RunButton";
-import { Animate } from "@/components/ui/Animate";
+import { Animate } from "@bnto/ui";
 import { BrowserExecutionProgress } from "./BrowserExecutionProgress";
 import { BrowserExecutionResults } from "./BrowserExecutionResults";
 import { ExecutionProgress } from "./ExecutionProgress";

@@ -2,10 +2,7 @@
 
 import { Fragment, useCallback, useMemo, useState, type ComponentProps } from "react";
 import type { NodeTypeName } from "@bnto/nodes";
-import { Badge } from "@/components/ui/Badge";
-import { Menu } from "@/components/ui/Menu";
-import { Text } from "@/components/ui/Text";
-import { SearchIcon } from "@/components/ui/icons";
+import { Badge, Menu, SearchIcon, Text } from "@bnto/ui";
 import { useEditorStore } from "@/editor/hooks/useEditorStore";
 import { useEditorActions } from "@/editor/hooks/useEditorActions";
 import { useNodePalette } from "@/editor/hooks/useNodePalette";

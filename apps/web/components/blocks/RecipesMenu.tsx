@@ -6,8 +6,7 @@
 
 import Link from "next/link";
 
-import { BookOpenIcon } from "@/components/ui/icons";
-import { Menu } from "@/components/ui/Menu";
+import { BookOpenIcon, Menu } from "@bnto/ui";
 
 import { RECIPES } from "./navData";
 

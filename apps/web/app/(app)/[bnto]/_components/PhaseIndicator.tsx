@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { CheckIcon } from "@/components/ui/icons";
+import { CheckIcon } from "@bnto/ui";
 
 type Phase = 1 | 2 | 3;
 

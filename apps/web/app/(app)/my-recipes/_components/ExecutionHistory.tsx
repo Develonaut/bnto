@@ -3,13 +3,7 @@
 import { core } from "@bnto/core";
 
 import { useDelayedLoading } from "../_hooks/useDelayedLoading";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
-import { HistoryIcon } from "@/components/ui/icons";
+import { Button, Card, EmptyState, HistoryIcon, Skeleton, Stack, Text } from "@bnto/ui";
 import { getBntoBySlug } from "@/lib/bntoRegistry";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 

@@ -1,14 +1,7 @@
-import { InView } from "@/components/ui/Animate";
+import { AppShell, Button, Divider, GithubIcon, Heading, InView, Stack, Text } from "@bnto/ui";
 import { HeroSidebar } from "@/components/blocks/HeroSidebar";
 import { RecipeGrid } from "@/components/blocks/RecipeGrid";
-import { GithubIcon } from "@/components/ui/icons";
 
-import { AppShell } from "@/components/ui/AppShell";
-import { Button } from "@/components/ui/Button";
-import { Divider } from "@/components/ui/Divider";
-import { Heading } from "@/components/ui/Heading";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
 import { GITHUB_URL } from "@/lib/copy";
 
 import { BragLayout } from "./_components/BragLayout";

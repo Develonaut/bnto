@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { Menu } from "@/components/ui/Menu";
-import { Row } from "@/components/ui/Row";
+import { Menu, Row } from "@bnto/ui";
 
 const DEMO_LINKS = [
   { label: "Compress Images", description: "Shrink PNG, JPEG, and WebP without losing quality", url: "#" },

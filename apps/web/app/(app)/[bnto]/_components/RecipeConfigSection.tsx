@@ -1,6 +1,6 @@
 "use client";
 
-import { Animate } from "@/components/ui/Animate";
+import { Animate } from "@bnto/ui";
 import { CleanCsvConfig } from "./configs/CleanCsvConfig";
 import { CompressImagesConfig } from "./configs/CompressImagesConfig";
 import { ConvertFormatConfig } from "./configs/ConvertFormatConfig";

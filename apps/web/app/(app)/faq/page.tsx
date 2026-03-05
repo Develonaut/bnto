@@ -1,5 +1,5 @@
 import { FAQ } from "@/components/blocks/FAQ";
-import { AppShell } from "@/components/ui/AppShell";
+import { AppShell } from "@bnto/ui";
 
 export default function FaqPage() {
   return (

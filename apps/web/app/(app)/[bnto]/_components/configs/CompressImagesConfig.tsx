@@ -1,7 +1,6 @@
 "use client";
 
-import { Label } from "@/components/ui/Label";
-import { Slider } from "@/components/ui/Slider";
+import { Label, Slider } from "@bnto/ui";
 import type { CompressImagesConfig as Config } from "./types";
 
 interface CompressImagesConfigProps {
