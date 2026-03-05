@@ -102,7 +102,11 @@ function BentoCanvasInner({
   useEffect(() => {
     if (hasFitted.current || nodeCount === 0) return;
     hasFitted.current = true;
-    fitView({ duration: 0, padding: 0.2 });
+    // Defer fitView to the next animation frame so RF has time to
+    // measure node DOM dimensions before calculating viewport bounds.
+    requestAnimationFrame(() => {
+      fitView({ duration: 0, padding: 0.2 });
+    });
   }, [nodeCount, fitView]);
 
   // Controlled mode: nodes + onNodesChange props
