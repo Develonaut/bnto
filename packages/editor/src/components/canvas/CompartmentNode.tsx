@@ -1,7 +1,7 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { Animate, Card, cn, DownloadIcon, Pressable, Text, UploadIcon } from "@bnto/ui";
-import type { CompartmentVariant, BentoNode } from "@/editor/adapters/types";
+import type { CompartmentVariant, BentoNode } from "../../adapters/types";
 
 /**
  * A bento box compartment — a .surface Card that acts as a "building"

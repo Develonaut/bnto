@@ -1,0 +1,30 @@
+{
+  "name": "@bnto/editor",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Recipe editor — visual canvas, store, adapters, and hooks",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@bnto/core": "workspace:*",
+    "@bnto/nodes": "workspace:*",
+    "@bnto/ui": "workspace:*",
+    "@xyflow/react": "^12.10.1",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

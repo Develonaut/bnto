@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Editor module — public API for the recipe editor.
  *
@@ -31,9 +33,8 @@ export type {
   RecipeMetadata,
 } from "./store/types";
 
-// --- Context + Provider ---
+// --- Provider ---
 
-export { EditorContext } from "./context";
 export { EditorProvider } from "./EditorProvider";
 
 // --- Hooks ---
@@ -54,6 +55,36 @@ export type { ExportResult, EditorExportResult } from "./hooks/useEditorExport";
 export { useEditorSelection } from "./hooks/useEditorSelection";
 export { useEditorUndoRedo } from "./hooks/useEditorUndoRedo";
 export { useEditorPanels } from "./hooks/useEditorPanels";
+
+// --- Canvas ---
+
+export { CompartmentNode } from "./components/canvas/CompartmentNode";
+export type { CompartmentStatus } from "./components/canvas/CompartmentNode";
+export { BentoCanvas } from "./components/canvas/BentoCanvas";
+
+// --- Renderers ---
+
+export { InputRenderer } from "./components/InputRenderer";
+export { OutputRenderer } from "./components/OutputRenderer";
+
+// --- Archive: Conveyor ---
+
+export {
+  ConveyorCanvas,
+  StationNode,
+  ConveyorEdge,
+  BeltPiece,
+  PieceShape,
+  VARIANT_PIECE_MAP,
+  SALMON_CLIP,
+} from "./components/archive/conveyor";
+export type {
+  StationData,
+  StationNodeType,
+  ConveyorEdgeData,
+  ConveyorEdgeType,
+  PieceType,
+} from "./components/archive/conveyor";
 
 // --- Adapters ---
 

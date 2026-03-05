@@ -32,9 +32,13 @@
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "^3.2.2"
   },
+  "scripts": {
+    "test": "vitest run"
+  },
   "devDependencies": {
     "@types/react": "catalog:",
     "@types/react-dom": "^19.0.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

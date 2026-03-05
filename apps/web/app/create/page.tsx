@@ -4,7 +4,7 @@ import {
   EditorLayerPanel,
   EditorConfigPanel,
   EditorToolbar,
-} from "@/editor/Editor";
+} from "@bnto/editor";
 
 /**
  * /create — full-viewport recipe editor.
