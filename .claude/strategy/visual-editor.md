@@ -36,18 +36,22 @@ The bento box is a natural fit for Bnto's product identity — the name literall
 Each node renders as a `.surface` Card — the same Motorway elevation system used across the app.
 
 ```
-┌─────────────────┐
-│                  │  ← Surface card with warm shadow
-│   Compress       │  ← Label (font-display, semibold)
-│   Image          │  ← Sublabel (muted, small)
-│                  │
-└─────────────────┘
+┌─────────────────────┐
+│                     │
+│     [icon 32px]     │  ← Large category icon (Lucide), muted foreground
+│                     │
+│      Compress       │  ← Label (font-display, semibold, sm)
+│      image          │  ← Sublabel (font-mono, xs, muted)
+│                     │
+└─────────────────────┘
 ```
 
+Each node type has a distinct icon (from Lucide) that acts as its "building silhouette" — you can identify what a node does without reading its label. Icons are mapped via `editor/adapters/nodeIcons.ts`. Category-driven variant colors are mapped via `editor/adapters/nodeColors.ts`.
+
 **Properties:**
-- Variable width/height (120px base, up to 340px wide)
-- 6 variant colors via `.surface-{variant}` CSS classes (primary, secondary, accent, muted, success, warning)
-- Status-driven elevation: idle → lg, pending → sm, active → lg, completed → md
+- Variable width/height based on node type tier (compact 100px, standard 140px, wide 200px, container 240px+)
+- Category-driven variant colors via `.surface-{variant}` CSS classes — nodes of the same category share a color (image=primary, spreadsheet=secondary, file=accent, data=muted, control=warning)
+- Elevation-driven execution state: idle → none/sm (resting), pending → sm (waiting), active → md (rising), completed → lg (springy pop)
 - Springy entrance animation (`Animate.ScaleIn` with `spring-bouncy` easing)
 - Pressable interaction (Motorway press effect)
 
@@ -89,12 +93,12 @@ When a recipe runs, compartments visually reflect execution progress:
 
 | Status | Elevation | Visual | Meaning |
 |--------|-----------|--------|---------|
-| `idle` | `lg` | Normal | Not running |
-| `pending` | `sm` | Muted/subdued | Waiting in queue |
-| `active` | `lg` | Full color, prominent | Currently processing |
-| `completed` | `md` | Settled | Done |
+| `idle` | `none`/`sm` | Flat, resting in the bento box | Not running |
+| `pending` | `sm` | Slight lift, muted appearance | Waiting in queue |
+| `active` | `md` | Rising up — "being serviced" | Currently processing |
+| `completed` | `lg` | Full springy pop to max elevation | Done — satisfying bounce |
 
-The progression flows through compartments in order — each lights up as it processes, then settles back as the next one activates.
+The progression flows through compartments in order — each physically rises as it processes, then pops to full height when complete. The Card `.surface` spring animations create the Mini Motorways "building materializing" feel automatically. As the recipe runs, compartments pop up one by one in sequence — like buildings appearing on the map.
 
 ---
 
