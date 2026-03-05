@@ -307,6 +307,10 @@ Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: 
 - [x] `apps/web` — **Server Component audit**: Invoke `/nextjs-expert` + `/frontend-engineer`. Audit every `"use client"` directive in `apps/web/`. For each file: (1) Does it genuinely need client interactivity (hooks, state, event handlers)? (2) Can the `"use client"` boundary be pushed deeper — keep the trunk/branch as a server component and extract only the interactive leaf as client? (3) Are there pages or layouts marked `"use client"` that should be server components composing client islands? Goal: maximize server-rendered HTML, minimize client JS bundle, push `"use client"` to the smallest possible leaves
 - [x] `all packages` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after all restructuring
 
+#### Wave 3 (sequential — store ownership audit)
+
+- [x] `packages/core` — **Zustand store ownership audit**: `@bnto/core` owns the store creator (`createEnhancedStore`) but should NOT own every domain's Zustand store. Audit `packages/core/src/stores/` — for each store, determine if it belongs in core (auth, session — cross-cutting) or should be owned by its domain package (editor state → `@bnto/editor`, UI preferences → `apps/web`). Move domain-specific stores to their owning package. Core provides the factory, domains own their instances
+
 ---
 
 ### Sprint 5: Editor to Production (M2 Completion)

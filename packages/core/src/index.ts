@@ -44,8 +44,6 @@ export type {
   BrowserFileProgress,
   BrowserRunResult,
   LocalHistoryEntry,
-  RunPhase,
-  RecipeFlow,
   TelemetryConfig,
   TelemetryProperties,
   TelemetryUserTraits,
@@ -55,7 +53,6 @@ export type {
 export type { AuthUser, AuthState, AuthStatus } from "./types/auth";
 
 // ── Store types (for consumer selectors) ──────────────────────────────────
-export type { RecipeFlowState } from "./stores/recipeFlowStore";
 export type { ExecutionInstanceState } from "./stores/executionInstanceStore";
 
 // ── Service types (for instance consumers) ────────────────────────────────
@@ -63,7 +60,6 @@ export type { ExecutionInstance } from "./services/executionInstance";
 export type { ExecutionState } from "./hooks/useExecutionState";
 
 // ── Store factories (for app-layer orchestration) ─────────────────────────
-export { createRecipeFlowStore } from "./stores/recipeFlowStore";
 export { createEnhancedStore } from "./stores/createEnhancedStore";
 
 // ── Store utilities (for app-layer selectors) ────────────────────────────
