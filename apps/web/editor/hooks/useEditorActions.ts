@@ -12,7 +12,7 @@
 
 "use client";
 
-import { useShallow } from "zustand/react/shallow";
+import { useShallow } from "@bnto/core";
 import { useEditorStore } from "./useEditorStore";
 import { useAddNode } from "./useAddNode";
 import { useRemoveNode } from "./useRemoveNode";

@@ -36,7 +36,7 @@ interface EditorExportResult {
 // Hook
 // ---------------------------------------------------------------------------
 
-function useEditorExport(): EditorExportResult {
+function useEditorExport() {
   const validationErrors = useEditorStore((s) => s.validationErrors);
   const storeApi = useEditorStoreApi();
 

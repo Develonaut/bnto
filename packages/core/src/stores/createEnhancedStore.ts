@@ -28,7 +28,7 @@
 import { createStore } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 import { persist } from "zustand/middleware";
-import type { StateCreator, StoreMutatorIdentifier } from "zustand/vanilla";
+import type { StateCreator } from "zustand/vanilla";
 import type { PersistOptions } from "zustand/middleware";
 
 // ---------------------------------------------------------------------------

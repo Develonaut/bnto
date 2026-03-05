@@ -66,5 +66,8 @@ export type { ExecutionState } from "./hooks/useExecutionState";
 export { createRecipeFlowStore } from "./stores/recipeFlowStore";
 export { createEnhancedStore } from "./stores/createEnhancedStore";
 
+// ── Store utilities (for app-layer selectors) ────────────────────────────
+export { useShallow } from "zustand/react/shallow";
+
 // ── Browser utilities (for app-layer use) ─────────────────────────────────
 export { downloadBlob } from "./adapters/browser/downloadBlob";

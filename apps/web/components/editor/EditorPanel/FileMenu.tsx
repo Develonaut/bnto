@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { Menu } from "@/components/ui/Menu";
 import { ChevronUpIcon } from "@/components/ui/icons";
