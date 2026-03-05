@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { addNode } from "./addNode";
 import { createBlankDefinition } from "./createBlankDefinition";
 import { isValid } from "./definitionResult";
+import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 import { NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./nodeTypes";
 import type { NodeTypeName } from "./nodeTypes";
 import { NODE_SCHEMAS } from "./schemas/registry";
@@ -95,7 +96,7 @@ describe("addNode", () => {
         const node = result.definition.nodes![IO_NODE_COUNT]!;
         expect(node.type).toBe(typeName);
         expect(node.id).toBeTruthy();
-        expect(node.version).toBe("1.0.0");
+        expect(node.version).toBe(CURRENT_FORMAT_VERSION);
         expect(node.name).toBe(NODE_TYPE_INFO[typeName].label);
       });
     }
@@ -127,9 +128,7 @@ describe("addNode", () => {
   });
 
   describe("non-container nodes get output port", () => {
-    const nonContainerTypes = NODE_TYPE_NAMES.filter(
-      (t) => !NODE_TYPE_INFO[t].isContainer,
-    );
+    const nonContainerTypes = NODE_TYPE_NAMES.filter((t) => !NODE_TYPE_INFO[t].isContainer);
 
     for (const typeName of nonContainerTypes) {
       it(`${typeName} has an output port with unique ID`, () => {
@@ -147,9 +146,7 @@ describe("addNode", () => {
   describe("default parameters match schema", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       const schema = NODE_SCHEMAS[typeName];
-      const defaultParams = schema.parameters.filter(
-        (p) => p.default !== undefined,
-      );
+      const defaultParams = schema.parameters.filter((p) => p.default !== undefined);
 
       if (defaultParams.length > 0) {
         it(`${typeName} includes all schema defaults`, () => {

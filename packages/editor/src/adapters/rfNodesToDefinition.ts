@@ -7,7 +7,7 @@
  * Pure function — no React, no DOM, fully testable.
  */
 
-import type { Definition } from "@bnto/nodes";
+import { type Definition, CURRENT_FORMAT_VERSION } from "@bnto/nodes";
 import type { RecipeMetadata } from "../store/types";
 import type { BentoNode, NodeConfigs } from "./types";
 
@@ -33,7 +33,7 @@ function rfNodesToDefinition(
     return {
       id: rfNode.id,
       type: config?.nodeType ?? "unknown",
-      version: "1.0.0",
+      version: CURRENT_FORMAT_VERSION,
       name: config?.name ?? rfNode.data.label,
       position: rfNode.position,
       parameters: config?.parameters ?? {},

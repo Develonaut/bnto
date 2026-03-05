@@ -14,6 +14,7 @@ import type { Definition, Position } from "./definition";
 import type { DefinitionResult } from "./definitionResult";
 import type { NodeTypeName } from "./nodeTypes";
 import { NODE_TYPE_INFO } from "./nodeTypes";
+import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 import { NODE_SCHEMAS } from "./schemas/registry";
 import { validateDefinition } from "./validate";
 
@@ -58,7 +59,7 @@ function createNode(nodeType: NodeTypeName, position: Position): Definition {
   return {
     id: crypto.randomUUID(),
     type: nodeType,
-    version: "1.0.0",
+    version: CURRENT_FORMAT_VERSION,
     name: info.label,
     position,
     metadata: {},

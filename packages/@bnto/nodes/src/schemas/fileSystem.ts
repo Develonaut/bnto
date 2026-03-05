@@ -21,6 +21,7 @@ export const FILE_OPERATIONS = [
 
 export const fileSystemSchema: NodeSchema = {
   nodeType: "file-system",
+  schemaVersion: 1,
   parameters: [
     {
       name: "operation",
@@ -35,8 +36,7 @@ export const fileSystemSchema: NodeSchema = {
       type: "string",
       required: false,
       label: "Path",
-      description:
-        "File or directory path. Supports glob patterns for list and delete.",
+      description: "File or directory path. Supports glob patterns for list and delete.",
       placeholder: "/path/to/file.txt",
     },
     {

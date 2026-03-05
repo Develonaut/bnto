@@ -56,6 +56,16 @@ pub use progress::ProgressReporter;
 // quality, defining it once in bnto-core prevents the values from drifting
 // apart over time.
 
+/// The current `.bnto.json` format version.
+///
+/// This must stay in sync with `CURRENT_FORMAT_VERSION` in `@bnto/nodes`.
+/// The WASM engine uses this to verify that a definition it receives is
+/// compatible with the node processors it has compiled in.
+///
+/// Semver rules: definitions with the same major version are compatible.
+/// A definition at "1.3.0" works fine on an engine that supports "1.0.0".
+pub const FORMAT_VERSION: &str = "1.0.0";
+
 /// Default JPEG quality when not specified by the user (0-100 scale).
 /// 80 is the industry sweet spot: significant file size savings with barely
 /// noticeable quality loss for most photos. Used across compress, resize,
@@ -94,6 +104,16 @@ pub fn version() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_format_version_is_valid_semver() {
+        // FORMAT_VERSION should be a valid semver string (major.minor.patch)
+        let parts: Vec<&str> = FORMAT_VERSION.split('.').collect();
+        assert_eq!(parts.len(), 3, "FORMAT_VERSION must have 3 parts (major.minor.patch)");
+        for part in &parts {
+            part.parse::<u32>().expect("Each semver part must be a valid number");
+        }
+    }
 
     #[test]
     fn test_version_returns_cargo_version() {
