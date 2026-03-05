@@ -29,7 +29,9 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 - **FOCUS: Self-describing recipes + runnable editor.** Sprint 4 (visual editor) complete. Sprint 4C (I/O Nodes) is next — makes recipes self-describing so custom editor creations can actually run. See [io-nodes.md](.claude/strategy/io-nodes.md) for the architecture reference.
 - **Next up:** Sprint 4C Wave 1 (`@bnto/nodes` — I/O node types, schemas, recipe updates). Unblocked now.
-- **In flight:** PR #88 — RF-first mutation hooks (editor store refinement). Must merge before Sprint 4C Wave 2.
+- **Parallel track:** Sprint 4D (UI Package Extraction) — extract `apps/web/components/ui/` to `packages/ui` (`@bnto/ui` / Motorway). Prerequisite for editor package extraction. Can run in parallel with Sprint 4C.
+- **RF store refactor complete:** PRs #86-#94 merged. Sprint 4C Waves 1-2 are both unblocked.
+- **Sequence:** Sprint 4C (I/O Nodes) → Sprint 4D (UI Package) → Sprint 4E (Editor Package) → hook up I/O nodes with predefined recipes in editor.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor + I/O nodes ship.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
@@ -421,7 +423,7 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 **Dependencies:** Sprint 4 Wave 1 (`@bnto/nodes` pure functions) must be complete — it is. Sprint 4 Wave 3 (editor components) should be complete for editor integration — it is. Sprint 4B (Code Editor) is NOT a dependency.
 
-**Prerequisite:** PR #88 (RF-first mutation hooks) must be merged before Wave 2 starts. Wave 1 (`@bnto/nodes` only) can begin immediately — it has no dependency on the editor store.
+**Prerequisite:** RF store refactor complete (PRs #86-#94 merged). All waves are unblocked.
 
 #### Wave 1 (parallel — node type definitions + schemas + recipe updates) `@bnto/nodes`
 
@@ -465,6 +467,57 @@ Migrate the recipe page to use generic renderers. Verify all 6 predefined recipe
 - [ ] `apps/web` — **Deprecate per-slug I/O code**: Mark `RecipeConfigSection` switch router, `BntoConfigMap` type, and `DEFAULT_CONFIGS` as deprecated. They still handle processing parameters (quality, width, format) until NodeConfigPanel replaces them. Only the I/O portions are removed.
 - [ ] `apps/web` — **E2E verification**: All 6 predefined recipes still work end-to-end — file upload, processing, results, download. Screenshot regression for recipe pages. Editor: create blank recipe → input/output nodes present → add process node → configure → run → results appear via OutputRenderer. Export `.bnto.json` → I/O nodes present in output.
 - [ ] `apps/web` — **Validation**: `task ui:build` passes. `task ui:test` passes. `task e2e` passes. No TypeScript errors from updated types.
+
+---
+
+### Sprint 4D: UI Package Extraction (`@bnto/ui` / Motorway)
+
+**Goal:** Extract `apps/web/components/ui/` into `packages/ui` (`@bnto/ui`) so the editor package (`@bnto/editor`, Sprint 4E) can import shared UI primitives without depending on the web app. This is the "second consumer" that justifies the extraction.
+
+**Can run in parallel with Sprint 4C** (I/O Nodes). No shared files — 4C touches `@bnto/nodes` + `@bnto/core` + recipe pages, 4D touches `components/ui/` and package infrastructure.
+
+**What moves:** Everything in `apps/web/components/ui/` (~53 files, ~62 total with subdirectories). This includes primitives (Button, Card, Dialog, etc.), composition components (Animate, BentoGrid, Grid), layout (Container, Row, Stack, AppShell), and utilities (createCn, cn, icons).
+
+**What stays in `apps/web`:**
+- `components/blocks/` — app-specific compositions (Navbar, Footer, RecipeCard, AuthGate, etc.)
+- `components/editor/` — editor components (future `@bnto/editor`)
+- `components/ThemeProvider.tsx`, `useTheme.ts` — app-level theme wiring
+- `app/globals.css` — CSS token definitions (consumed by `@bnto/ui` via Tailwind `@source`)
+
+**Persona ownership:**
+| Wave | Lead Persona | Rationale |
+|------|-------------|-----------|
+| Wave 1 | `/frontend-engineer` | Package scaffolding, build config, exports |
+| Wave 2 | `/frontend-engineer` | Move files, update all imports across `apps/web` |
+| Wave 3 | `/frontend-engineer` | Verify build, tests, E2E, no regressions |
+
+#### Wave 1 (sequential — package setup)
+
+- [ ] `packages/ui` — **Scaffold `@bnto/ui` package**: `package.json` (name: `@bnto/ui`), `tsconfig.json`, barrel `index.ts`. Match build config pattern from `@bnto/core`. Add to `pnpm-workspace.yaml` if needed. Add `@bnto/ui` as dependency of `apps/web`.
+- [ ] `packages/ui` — **Tailwind source directive**: Add `@source` in `apps/web/app/globals.css` pointing to `@bnto/ui` so Tailwind scans the extracted package for class names. See [gotchas.md](rules/gotchas.md#tailwind-v4--monorepo).
+- [ ] `packages/ui` — **Export strategy**: Decide barrel vs direct imports. Primitives are leaf components — barrel re-export is fine for server components, but client components should be importable directly to avoid bundle bloat. Document the pattern.
+
+#### Wave 2 (sequential — migration)
+
+- [ ] `packages/ui` — **Move `components/ui/` files**: Move all files from `apps/web/components/ui/` to `packages/ui/src/`. Preserve directory structure (e.g., `FileUpload/` folder stays as-is).
+- [ ] `apps/web` — **Update all imports**: Find-and-replace `@/components/ui/` → `@bnto/ui` (or the agreed import pattern) across all files in `apps/web/`. This includes `components/blocks/`, `components/editor/`, all page files, and any `_components/` folders.
+- [ ] `packages/ui` — **Resolve internal dependencies**: `createCn.ts` imports from `tailwind-variants`, `cn.ts` imports from `clsx`/`tailwind-merge`. Ensure these are dependencies of `@bnto/ui`, not just `apps/web`. Move any shared type files that UI components depend on.
+- [ ] `packages/ui` — **Handle theme tokens**: UI components reference CSS variables (`--background`, `--primary`, etc.) via Tailwind utilities. These are defined in `apps/web/app/globals.css`. Verify that `@bnto/ui` components work correctly when the CSS is provided by the consuming app (no bundled CSS in the package).
+
+#### Wave 3 (sequential — verify)
+
+- [ ] `apps/web` — **Build verification**: `task ui:build` passes. No TypeScript errors from updated imports. No missing module errors.
+- [ ] `apps/web` — **Test verification**: `task ui:test` passes. `task e2e` passes. No visual regressions.
+- [ ] `apps/web` — **Stale reference scan**: Grep for any remaining `@/components/ui/` imports — should be zero. Grep for any remaining `../ui/` relative imports that should now use `@bnto/ui`.
+- [ ] `packages/ui` — **Package build**: `@bnto/ui` builds independently (`pnpm --filter @bnto/ui build`). Exports resolve correctly when imported from `apps/web`.
+
+---
+
+### Sprint 4E: Editor Package Extraction (`@bnto/editor`) — Planned
+
+**Goal:** Extract `apps/web/components/editor/` into `packages/editor` (`@bnto/editor`). Depends on Sprint 4D (`@bnto/ui` must be a package first so `@bnto/editor` can import from it).
+
+**Status:** Not yet scoped in detail. Will be planned after Sprint 4D ships. Key consideration: editor components import from both `@bnto/ui` (primitives) and `@bnto/core` (execution, store hooks). The extraction must preserve these dependency directions without creating circular imports.
 
 ---
 
@@ -603,6 +656,134 @@ Migrate the recipe page to use generic renderers. Verify all 6 predefined recipe
 ---
 
 ## Backlog
+
+### Chore: Codebase File Size & Structure Audit
+
+**Priority: High.** Code standards have been tightened (March 2026): files target 50-100 lines (hard cap 250), functions get their own file if reused or more than a few lines, components with more than 2-3 sub-components break into folder + barrel. The existing codebase predates these tighter limits and needs a sweep.
+
+**Goal:** Every file in the active codebase (`apps/web/`, `packages/core/`, `packages/@bnto/`) conforms to the updated size limits in `code-standards.md`. Directory structure reads like a table of contents — each file named after what it does, co-located tests where applicable.
+
+**Approach:** Audit by package, one PR per package. Don't change behavior — only restructure. Tests must pass before and after.
+
+**Cross-package DRY rule:** Any utility function used by more than one package (`cn`, `createCn`, type guards, format helpers, etc.) must move to a shared `@bnto/utils` package. Duplicated logic across packages is a signal — consolidate into `@bnto/utils` with one function per file, domain-grouped folders.
+
+**Tasks:**
+- [ ] `packages/@bnto/utils` — **Create shared utils package**: Scaffold `@bnto/utils` with `package.json`, `tsconfig.json`, barrel export. Zero runtime deps. This is the home for cross-package pure functions
+- [ ] `packages/@bnto/utils` — **Identify and consolidate cross-package utils**: Scan all packages for duplicated or shared utilities (`cn`, `createCn`, type guards, formatters, validators). Move to `@bnto/utils`, update imports across consumers
+- [ ] `apps/web` — **Scan for oversized files**: Find all `.ts`/`.tsx` files over 100 lines. Triage each: split into folder + barrel, extract functions to own files, or justify as-is (hard cap 250)
+- [ ] `apps/web` — **Component decomposition audit**: Find components with more than 2-3 sub-components defined in one file. Break into folder structure (`FeatureRoot.tsx`, sub-parts, `index.ts` barrel)
+- [ ] `apps/web` — **Utils/lib audit**: Find any multi-function files in `lib/`, `utils/`, or similar. Each exported function gets its own camelCase file. Group in domain folders. Move cross-package utils to `@bnto/utils`
+- [ ] `packages/core` — **Same audit**: Oversized files, multi-function modules, sub-component cohabitation. Split and barrel. Move shared utils to `@bnto/utils`
+- [ ] `packages/@bnto/backend` — **Same audit**: Convex function files, helpers, validators. One function per file where practical
+- [ ] `packages/@bnto/nodes` — **Same audit**: Schema files, registry, helpers
+- [ ] **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after restructuring. No behavior changes — only file organization
+
+### UX: Global Error Boundary with GitHub Issue Reporter
+
+**Priority: Medium.** Add a global error boundary that catches unhandled React errors and presents a branded error dialog with enough context to file a GitHub issue. Currently there are zero error boundaries — any unhandled throw crashes the page with a white screen. No `error.tsx`, `global-error.tsx`, or React ErrorBoundary exists.
+
+**Goal:** When an unhandled error occurs, the user sees a helpful dialog (not a white screen) with a "Report this issue" button that opens a pre-filled GitHub issue on `Develonaut/bnto`.
+
+**Current state (as of research):**
+- No error boundaries or error pages exist (only `not-found.tsx` for 404)
+- PostHog captures product events but NOT unhandled exceptions
+- Auth session loss is handled (`SessionProvider.onSessionLost` → redirect to `/signin`)
+- Scattered `try/catch` in auth forms and recipe execution — no centralized error handling
+
+**Architecture — Next.js App Router error files:**
+
+Next.js App Router has built-in error boundary support via convention files. These are React Error Boundaries under the hood. The implementing agent should create:
+
+1. **`app/global-error.tsx`** — Catches errors in the root layout itself. Must be `"use client"` and must render its own `<html>` and `<body>` tags (replaces the entire document). This is the last-resort catch-all.
+2. **`app/(app)/error.tsx`** — Catches errors within the authenticated app shell (dashboard, settings, etc.). Can use the app's design system since the root layout is still intact.
+3. **`app/[bnto]/error.tsx`** — Catches errors on recipe/tool pages. Same approach — branded error UI with report button.
+
+**Error dialog UX requirements:**
+- Show a branded, friendly error message (not a stack trace dump)
+- "Report this issue" button that opens a GitHub issue via URL pre-fill
+- "Try again" button that calls `reset()` (the Next.js error boundary reset function)
+- "Go home" link as fallback navigation
+- Use existing design system components (`Card`, `Button`, `Heading`, `Stack`) where available (not in `global-error.tsx` which replaces the document)
+
+**GitHub issue pre-fill approach:**
+
+URL pattern: `https://github.com/Develonaut/bnto/issues/new?labels[]=bug&title=...&body=...`
+
+The body should include (as Markdown):
+- **Error message** — `error.message` (first 200 chars)
+- **Route** — `window.location.pathname`
+- **Component stack** — from `error.digest` or React's `errorInfo.componentStack` (truncated to 5 frames)
+- **Browser/OS** — `navigator.userAgent`
+- **App version** — read from env var (set at build time, e.g., `NEXT_PUBLIC_APP_VERSION` or `process.env.npm_package_version`)
+- **JS stack trace** — `error.stack` (first 5 frames, inside a `<details>` block to collapse it)
+- **Timestamp** — `new Date().toISOString()`
+
+**CRITICAL: URL length limit.** GitHub returns 414 for URLs over ~8,000 chars. The `body` must be truncated. Strategy: truncate stack traces to first 5 frames, cap total body at ~4,000 chars (leaves room for encoding overhead). Use `encodeURIComponent()` on all values.
+
+**Helper function for building the issue URL:**
+```typescript
+// Pure function — no React dependency, testable in isolation
+function buildGitHubIssueUrl(error: Error, route: string): string {
+  const title = `[Bug] ${error.message.slice(0, 80)}`;
+  const body = [
+    `## Error\n\`${error.message.slice(0, 200)}\``,
+    `## Route\n\`${route}\``,
+    `## Environment`,
+    `- **Browser:** \`${navigator.userAgent}\``,
+    `- **Timestamp:** ${new Date().toISOString()}`,
+    `- **Version:** \`${process.env.NEXT_PUBLIC_APP_VERSION ?? "unknown"}\``,
+    error.stack ? `\n<details><summary>Stack trace</summary>\n\n\`\`\`\n${error.stack.split("\n").slice(0, 8).join("\n")}\n\`\`\`\n</details>` : "",
+  ].join("\n\n");
+
+  const params = new URLSearchParams({
+    title,
+    body: body.slice(0, 4000),
+    "labels[]": "bug",
+  });
+  return `https://github.com/Develonaut/bnto/issues/new?${params}`;
+}
+```
+
+**PostHog integration (optional enhancement):**
+- Capture `app_error` event via `core.telemetry.capture()` with error message, route, and digest
+- This gives the dev team server-side visibility even if users don't file issues
+- Only if PostHog is already initialized — never block error UI on telemetry
+
+**Testing strategy:**
+- Unit test `buildGitHubIssueUrl()` — verify URL structure, encoding, truncation
+- Unit test that the URL stays under 8,000 chars even with long stack traces
+- E2E test: trigger an error (e.g., render a component that throws), verify the error dialog appears with "Report" and "Try again" buttons
+- E2E test: verify "Try again" calls `reset()` and re-renders
+
+**Files to create/modify:**
+- `apps/web/app/global-error.tsx` — Root-level catch-all (standalone `<html>`)
+- `apps/web/app/(app)/error.tsx` — App shell error boundary (uses design system)
+- `apps/web/app/[bnto]/error.tsx` — Recipe page error boundary (uses design system)
+- `apps/web/lib/buildGitHubIssueUrl.ts` — Pure function for issue URL construction
+- `apps/web/components/ErrorReport.tsx` — Shared error dialog UI (Card + buttons + error details)
+
+**Design system compliance:**
+- Use `Card elevation="md"` for the error dialog container
+- Use `Heading`, `Text`, `Button`, `Stack` for layout
+- Use `font-mono` for error message and stack trace display
+- Use `Animate.FadeIn` for the error dialog entrance
+- Use `destructive` color for the error icon/accent
+- The `global-error.tsx` file cannot use the design system (it replaces `<html>`) — use minimal inline styles matching the theme tokens
+
+**Scope boundaries:**
+- This is error REPORTING, not error RECOVERY. Don't add retry logic to individual components
+- Don't add Sentry or a third-party error tracking service — keep it simple with GitHub issues + PostHog events
+- Don't change existing `try/catch` patterns in auth forms or execution — those handle expected errors with user-friendly messages. This boundary catches UNEXPECTED errors only
+
+**Tasks:**
+- [ ] `apps/web` — Create `buildGitHubIssueUrl()` pure function in `lib/` with unit tests (URL construction, encoding, truncation, length limit)
+- [ ] `apps/web` — Create `ErrorReport` component — branded error dialog with "Report this issue" (GitHub link), "Try again" (reset), and "Go home" (navigation)
+- [ ] `apps/web` — Create `app/global-error.tsx` — root catch-all with minimal inline-styled error UI + GitHub issue link
+- [ ] `apps/web` — Create `app/(app)/error.tsx` — app shell error boundary using `ErrorReport` component
+- [ ] `apps/web` — Create `app/[bnto]/error.tsx` — recipe page error boundary using `ErrorReport` component
+- [ ] `apps/web` — (Optional) Capture `app_error` PostHog event on boundary trigger via `core.telemetry.capture()`
+- [ ] `apps/web` — Add `NEXT_PUBLIC_APP_VERSION` to build env (Vercel env var or `package.json` read)
+- [ ] `apps/web` — E2E test: trigger error, verify dialog renders with Report/Try Again/Go Home buttons
 
 ### Infra: Tag-Based Release Pipeline (GitHub Actions + Vercel)
 

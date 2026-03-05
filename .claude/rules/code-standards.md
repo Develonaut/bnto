@@ -14,11 +14,11 @@ Like a traditional Japanese bento box where each compartment serves a specific p
 
 ### Size Limits
 
-- **Files:** < 250 lines (max 500 with justification)
-- **Functions:** < 20 lines (max 30 with justification)
-- **Components:** One exported component per file
+- **Files:** Target 50-100 lines. Hard cap at 250 -- no exceptions. If a file approaches 150 lines, look for extraction opportunities
+- **Functions:** < 20 lines. No escape hatch
+- **Components:** One exported component per file. Target 50-100 lines of JSX + logic. If a component has more than 2-3 sub-components defined in the same file, break into a folder with barrel export
 - **Hooks:** One exported hook per file
-- **Functions:** One exported function per file (group by domain folder, not grab-bag files)
+- **Functions/utils:** One exported function per file. If a function is more than a few lines or reused anywhere, it gets its own file (camelCase, e.g., `formatDuration.ts`). Group related functions in a domain folder, not a grab-bag file
 
 ### One Export Per File (strict)
 
@@ -47,18 +47,18 @@ Like a traditional Japanese bento box where each compartment serves a specific p
 
 Everything else follows from this: **small, focused pieces that compose together.** This applies at every level -- components compose in JSX, hooks compose in functions, packages compose in the architecture.
 
-**Don't prematurely decompose.** A single file with 80 lines of straightforward code is better than three files with 25 lines each and a barrel export. Extract when complexity demands it, not because a rule says to.
+**Bias toward small files early.** Directory structure is your organization tool -- a folder of 5 focused files is easier to navigate, test, and fix than one 200-line file. Each file named after what it does makes the folder a readable table of contents. Co-located tests (`formatDuration.test.ts` next to `formatDuration.ts`) keep fixes focused.
 
 ### How code naturally grows
 
 ```
 1. Start inline -- everything in one component file
-2. Logic gets complex -> extract a hook / helper function in the same file
-3. Hook/function outgrows the file -> move to its own file
-4. Multiple related files -> graduate to a folder / package
+2. Logic grows -> extract to its own file immediately (not "when it gets complex")
+3. Related files accumulate -> group in a domain folder with barrel export
+4. Folder becomes a package boundary -> graduate to a package
 ```
 
-Each step is triggered by real complexity, not by pattern compliance.
+The trigger is size and reuse, not complexity. A 15-line utility function that's used in two places already earns its own file.
 
 ### The Layers: Pure Functions -> Logic Hooks -> Components
 
