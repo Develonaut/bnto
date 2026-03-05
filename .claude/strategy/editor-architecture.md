@@ -28,14 +28,16 @@ The visual editor shows a bento box where each compartment is a node. The code e
 
 ## Layered Architecture
 
-The editor follows the same layered pattern as `@bnto/core`. For the bento box visual editor, **ReactFlow is the source of truth for graph state** — see [ReactFlow Performance Patterns](#reactflow-performance-patterns) for the full model. The Zustand store is thinned to metadata only (dirty flag, validation errors, undo/redo history, recipe metadata).
+The editor follows the same layered pattern as `@bnto/core`. The Zustand store owns all state (nodes, edges, configs, metadata, undo/redo) and passes nodes/edges to ReactFlow as props (**controlled mode**). This eliminates sync bugs between stores and enables atomic state updates (e.g., add a node + push undo + revalidate in one `setState` call).
 
 ```
 @bnto/nodes (pure types + functions)
          ↓
-ReactFlow store (graph state) + thin Zustand (editor metadata)
+Zustand store (nodes, edges, configs, metadata, undo/redo)
          ↓
-React hooks (RF-first mutations + business logic)
+Action hooks (business logic — addNode, removeNode, updateParams)
+         ↓
+Consumer hooks (useEditorActions, useEditorUndoRedo, useEditorExport)
          ↓
 Dumb components (render only — zero business logic)
     ↓                    ↓
@@ -64,54 +66,59 @@ Framework-agnostic. No React, no store, no DOM. Fully testable in isolation.
 
 These are pure `Definition → Definition` transforms. Immutable — never mutate, always return new.
 
-### Layer 2: State Management (ReactFlow + thin Zustand)
+### Layer 2: State Management (Zustand controlled mode)
 
-For the visual editor, **ReactFlow owns graph state** — nodes, edges, positions, selection, viewport. A thin Zustand store holds editor-level metadata that RF doesn't manage. See [ReactFlow Performance Patterns](#reactflow-performance-patterns) for the full model.
+The Zustand store owns **all** editor state — nodes, edges, configs, metadata, undo/redo. ReactFlow receives nodes/edges as controlled props and handles rendering + interaction. The store's `onNodesChange` / `onEdgesChange` handlers apply RF's change events back to the store (controlled mode).
+
+**Thin node.data:** RF nodes carry visual-only data (`label`, `variant`, `width`, `height`, `status`). Domain data (`nodeType`, `name`, `parameters`) lives in a separate `configs` map — parameter changes don't trigger RF re-renders.
 
 ```typescript
-// ReactFlow owns (via useStore / useReactFlow):
-//   - nodes[] with full data (type, name, parameters in node.data)
-//   - edges[]
-//   - selection
-//   - viewport (pan, zoom)
-//   - nodeLookup Map (O(1) access)
-
-// Thin Zustand store (editor metadata only):
+// Store owns everything:
 interface EditorState {
+  nodes: BentoNode[];             // RF nodes (visual data in node.data)
+  edges: Edge[];                  // RF edges
+  configs: NodeConfigs;           // Domain data keyed by node ID (no RF re-render)
+  recipeMetadata: RecipeMetadata; // Root-level recipe fields
   isDirty: boolean;
   validationErrors: ValidationError[];
-  recipeMetadata: { name: string; slug: string; description: string };
-  undoStack: CompartmentNodeType[][];   // RF node snapshots
-  redoStack: CompartmentNodeType[][];
+  executionState: ExecutionState; // Per-node execution status
+  undoStack: EditorSnapshot[];    // Snapshots of nodes + configs
+  redoStack: EditorSnapshot[];
 }
 ```
 
 **Key rules:**
 - **No `definition` in the store during editing.** Definition exists only at load/export boundaries
-- **No `selectedNodeId` in Zustand.** RF owns selection state
-- Undo/redo via RF node snapshots (`getNodes()` before mutation, `setNodes()` on undo)
-- Factory pattern: `createEditorStore()` — thin wrapper for metadata + undo history
-- Graph mutations go through `setNodes()` / `setEdges()`, never through Zustand actions
+- **Selection via RF's `node.selected` flag.** The store's `selectNode` action maps over nodes
+- **Undo/redo snapshots capture both nodes AND configs** atomically
+- Factory pattern: `createEditorStore()` — supports initial state injection for testing
+- Business mutations (`addNode`, `removeNode`, `updateConfigParams`) live in **action hooks** that use `storeApi.setState()` for atomic updates — not in the store itself
 - For the code editor (future), the store mediates between CM6 document state and the shared `Definition` format. The code editor's relationship to the store differs from the visual editor's — see [Switchable Editors](#switchable-editors)
 
-### Layer 3: React Hooks
+### Layer 3: React Hooks (Three-Layer Pattern)
 
-Thin reactive bindings that subscribe to store slices. No business logic — just select and return.
+Hooks follow a three-layer pattern: pure helpers → action hooks → consumer hooks.
+
+**Pure helpers** (`store/helpers.ts`) — framework-agnostic functions used by both the store and action hooks. Snapshot capture, undo stack management, revalidation.
+
+**Action hooks** (`useAddNode`, `useRemoveNode`, `useUpdateParams`) — business logic hooks that read state via `storeApi.getState()`, compute the next state, and write atomically via `storeApi.setState()`. Each hook owns one mutation concern plus its cross-cutting side effects (undo snapshot, dirty flag, validation, auto-select).
+
+**Consumer hooks** — the public API components import:
 
 ```typescript
-// Slice selectors — re-render only when your slice changes
-useEditorDefinition()        // → Definition
-useSelectedNode()            // → node data + schema for selected node
-useEditorActions()           // → action dispatchers
-useEditorDirty()             // → boolean
-useValidationErrors()        // → ValidationError[]
+useEditorActions()           // → composed API: addNode, removeNode, updateParams + store actions
+useEditorNode(nodeId)        // → node data + config + schema + visible params
+useEditorUndoRedo()          // → undo, redo, canUndo, canRedo
+useEditorExport()            // → exportAsRecipe, download, canExport
+useEditorSelection()         // → selectedNodeId (from RF selection change events)
+useAutoSelect(options)       // → handleSelectNode + center-on-select effect
 useNodePalette()             // → available node types grouped by category
-useEditorExport()            // → { exportAsRecipe, download }
 ```
 
 **Rules:**
 - Hooks select specific slices, never the whole store
-- No transforms in hooks — if you need derived data, add a selector to the store
+- Action hooks use `storeApi.setState()` for atomic multi-field updates
+- Components only import consumer hooks (Layer 3), never action hooks directly
 - Hooks are the only React layer. Everything below is framework-agnostic
 
 ### Layer 4: Dumb Components
@@ -142,86 +149,93 @@ Components receive data via hooks and render. That's it. Zero business logic, ze
 
 The bento box visual editor uses ReactFlow (`@xyflow/react`) as the canvas runtime. This section documents the performance patterns and state ownership model that make the editor fast and sync-bug-free. These patterns are proven in production at [atomiton](https://github.com/atomiton) and align with ReactFlow's recommended architecture.
 
-### ReactFlow as Single Source of Truth
+### Controlled Mode: Zustand Owns, ReactFlow Renders
 
-**The core insight: ReactFlow IS the store for graph state.**
+**The core insight: Zustand owns state, ReactFlow renders it.**
 
-During editing, ReactFlow owns all node/edge state — positions, data, selection, viewport. There is no parallel Zustand store mirroring graph structure. The `Definition` type (from `@bnto/nodes`) only exists at **boundaries**: on load (Definition → RF nodes) and on export (RF nodes → Definition).
+The store owns all node/edge state. ReactFlow receives `nodes`, `edges`, `onNodesChange`, and `onEdgesChange` as controlled props. RF handles rendering, interactions (drag, select, zoom), and emits change events — the store applies those changes and re-renders RF with updated props. This is RF's **controlled mode** (similar to controlled `<input>` in React).
 
 ```
-Load:   Definition → definitionToRFNodes() → setNodes()     [one-time conversion]
-Edit:   RF owns everything. Mutations go through setNodes()  [during editing]
-Export: getNodes() → rfNodesToDefinition() → Definition      [on-demand conversion]
+Load:   Definition → definitionToBento() → store.setState()   [one-time conversion]
+Edit:   Store owns state. RF renders as controlled props.      [during editing]
+Export: store.nodes → rfNodesToDefinition() → Definition       [on-demand conversion]
 ```
 
-**Why this matters:** A parallel store that mirrors RF state creates sync bugs. Every `useEffect` that watches one store and writes to another is a race condition waiting to happen. The fix isn't better sync — it's eliminating the need for sync entirely.
+**Why controlled mode:** It enables atomic state updates. When adding a node, the store sets nodes + configs + undoStack + isDirty + validationErrors in a single `setState()` call — one render, one consistent state. With RF as the store, mutations require reading from RF, computing, writing back, then separately updating Zustand — two stores, race conditions, sync effects.
 
-**Six principles (from atomiton):**
+**Thin node.data:** RF nodes carry visual-only fields (`label`, `variant`, `width`, `height`, `status`). Domain data (`nodeType`, `name`, `parameters`) lives in the store's `configs` map. This means parameter edits update `configs` only — RF doesn't re-render.
 
-1. **RF IS the store.** No parallel Zustand store for graph structure. `useEditorStore` = `useStore` from `@xyflow/react` with shallow equality.
-2. **Definition only at boundaries.** `definitionToRFNodes()` on load. `rfNodesToDefinition()` on export. During editing, RF owns all state.
-3. **Pure builder functions.** Node creation/updates are pure functions. Hooks orchestrate: pure function → `setNodes()`.
-4. **O(1) node access.** RF's internal `nodeLookup` Map — never `nodes.find()` for lookups.
+**Six principles:**
+
+1. **Zustand owns, RF renders.** Controlled props: `nodes={store.nodes}`, `onNodesChange={store.onNodesChange}`.
+2. **Definition only at boundaries.** `definitionToBento()` on load. `rfNodesToDefinition()` on export. During editing, `Definition` doesn't exist.
+3. **Pure builder functions.** Node creation is a pure function (`createCompartmentNode`). Hooks orchestrate: pure function → `storeApi.setState()`.
+4. **Thin node.data.** Visual-only data in RF nodes, domain data in separate configs map. No RF re-render on parameter changes.
 5. **DOM-direct execution state.** Progress via data attributes and CSS variables during execution. Zero re-renders.
 6. **No sync effects.** Zero `useEffect` watching one store and writing to another. Single source of truth eliminates sync bugs entirely.
 
 ### Three-Layer Hook Pattern
 
-All editor mutations follow the same layering: pure functions → RF-first hooks → business hooks. Each layer has a single responsibility.
+All editor mutations follow the same layering: pure helpers → action hooks → consumer hooks. Each layer has a single responsibility.
 
 ```
-Layer 1: Pure Functions (@bnto/nodes + editor/adapters/)
+Layer 1: Pure Helpers (store/helpers.ts + adapters/)
          No React. No store. Fully testable in isolation.
-         createBlankDefinition(), addNode(), definitionToRFNodes()
+         captureSnapshot(), pushToStack(), revalidateState(),
+         createCompartmentNode(), definitionToBento()
 
               ↓
 
-Layer 2: RF-First Hooks (editor/hooks/)
-         Call pure functions → setNodes(). Operate on RF state directly.
-         useAddNode(), useRemoveNode(), useUpdateNodeParams()
+Layer 2: Action Hooks (editor/hooks/)
+         Use storeApi for atomic state updates with business logic.
+         useAddNode(), useRemoveNode(), useUpdateParams()
 
               ↓
 
-Layer 3: Business Hooks (editor/hooks/)
-         Compose RF-first hooks + side effects (undo snapshots, dirty tracking, validation).
+Layer 3: Consumer Hooks (editor/hooks/)
+         Compose action hooks + store selectors into the public API.
          useEditorActions(), useEditorExport(), useEditorUndoRedo()
 ```
 
-**Layer 1 — Pure functions** are the foundation. They accept data and return data. No React, no store, no DOM. These are where the real logic lives and where the heaviest testing happens.
+**Layer 1 — Pure helpers** are the foundation. They accept data and return data. No React, no store, no DOM. These are where the real logic lives and where the heaviest testing happens.
 
 ```typescript
-// Pure function — no React, easy to test
-import { addNode } from "@bnto/nodes";
-const updated = addNode(definition, "image", { x: 100, y: 200 });
+// Pure helper — no React, easy to test
+import { captureSnapshot, pushToStack, revalidateState } from "../store/helpers";
+const snapshot = captureSnapshot(nodes, configs);
+const nextStack = pushToStack(undoStack, snapshot);
 ```
 
-**Layer 2 — RF-first hooks** bridge pure functions to ReactFlow's store. Each hook does one thing: call a pure function, then call `setNodes()` or `setEdges()`. These hooks use `useReactFlow()` to get `setNodes`/`getNodes`.
+**Layer 2 — Action hooks** read state via `storeApi.getState()`, call pure helpers, and write atomically via `storeApi.setState()`. Each hook owns one mutation plus its cross-cutting effects (undo, dirty, validation, auto-select).
 
 ```typescript
-// RF-first hook — pure function → setNodes()
+// Action hook — pure helpers → storeApi.setState()
 function useAddNode() {
-  const { setNodes } = useReactFlow();
-  return useCallback((nodeType: NodeTypeName, position: XYPosition) => {
-    const rfNode = createCompartmentNode(nodeType, position);
-    setNodes(prev => [...prev, rfNode]);
-    return rfNode.id;
-  }, [setNodes]);
+  const storeApi = useEditorStoreApi();
+  return useCallback((type: NodeTypeName, position?) => {
+    const state = storeApi.getState();
+    const result = createCompartmentNode(type, state.nodes.length, position);
+    if (!result) return null;
+    const snapshot = captureSnapshot(state.nodes, state.configs);
+    // ... compute next state ...
+    storeApi.setState({ nodes: nextNodes, configs: nextConfigs, isDirty: true, ... });
+    return result.node.id;
+  }, [storeApi]);
 }
 ```
 
-**Layer 3 — Business hooks** compose RF-first hooks with cross-cutting concerns. Undo/redo snapshots, dirty flag, validation, export. These are the hooks that components import.
+**Layer 3 — Consumer hooks** compose action hooks with store selectors. These are the hooks that components import.
 
 ```typescript
-// Business hook — composes RF-first + side effects
+// Consumer hook — composes action hooks + store selectors
 function useEditorActions() {
   const addNode = useAddNode();
-  const { pushUndo } = useEditorUndoRedo();
-  return {
-    addNode: (type, position) => {
-      pushUndo();  // snapshot before mutation
-      return addNode(type, position);
-    },
-  };
+  const removeNode = useRemoveNode();
+  const updateParams = useUpdateParams();
+  const storeActions = useEditorStore(useShallow(s => ({
+    selectNode: s.selectNode, undo: s.undo, redo: s.redo, ...
+  })));
+  return { ...storeActions, addNode, removeNode, updateParams };
 }
 ```
 
@@ -229,21 +243,22 @@ function useEditorActions() {
 
 ### State Ownership Table
 
-Clear separation between what ReactFlow owns and what thin Zustand owns. No overlap.
+All state lives in the Zustand store. ReactFlow renders it as controlled props.
 
 | State | Owner | Access Pattern | Why |
 |---|---|---|---|
-| **Node positions** | ReactFlow | `useStore(s => s.nodes)` | RF handles drag, zoom-to-fit, viewport math |
-| **Node data** (type, name, params) | ReactFlow (`node.data`) | `useStore(s => s.nodeLookup.get(id))` | Keeps all node state in one place — no sync needed |
-| **Node selection** | ReactFlow | `useStore(s => s.nodeLookup.get(id)?.selected)` | RF handles click-to-select, multi-select, keyboard |
-| **Viewport** (pan, zoom) | ReactFlow | `useStore(s => s.transform)` | RF handles gestures, fitView, zoom controls |
-| **Edges** | ReactFlow | `useStore(s => s.edges)` | RF handles edge routing, hit testing |
-| **isDirty** | Zustand (thin) | `useEditorStore(s => s.isDirty)` | Not graph state — UI metadata |
-| **validationErrors** | Zustand (thin) | `useEditorStore(s => s.validationErrors)` | Derived from definition, not graph state |
-| **recipeMetadata** (name, slug, description) | Zustand (thin) | `useEditorStore(s => s.recipeMetadata)` | Recipe-level metadata, not per-node |
-| **undoStack / redoStack** | Zustand (thin) | `useEditorUndoRedo()` | Snapshots of RF node arrays |
+| **nodes** (visual data) | Zustand store | `useEditorStore(s => s.nodes)` | Controlled mode — store owns, RF renders |
+| **edges** | Zustand store | `useEditorStore(s => s.edges)` | Store applies RF edge change events |
+| **configs** (domain data) | Zustand store | `useEditorStore(s => s.configs[id])` | Separate from RF nodes — no RF re-render on param changes |
+| **Node selection** | Zustand (via RF) | `useEditorSelection()` → RF `onSelectionChange` | RF emits selection events, store tracks via `node.selected` flag |
+| **Viewport** (pan, zoom) | ReactFlow | `useReactFlow().fitView()` | RF handles gestures, zoom — not in Zustand |
+| **isDirty** | Zustand store | `useEditorStore(s => s.isDirty)` | Editor metadata |
+| **validationErrors** | Zustand store | `useEditorStore(s => s.validationErrors)` | Derived from nodes + configs at mutation time |
+| **recipeMetadata** | Zustand store | `useEditorStore(s => s.recipeMetadata)` | Recipe-level metadata (id, name, type, version) |
+| **undoStack / redoStack** | Zustand store | `useEditorUndoRedo()` | Atomic snapshots of nodes + configs |
+| **executionState** | Zustand store | `useEditorStore(s => s.executionState)` | Per-node execution status tracking |
 
-**The thin Zustand store** holds only what ReactFlow doesn't: editor-level metadata, undo/redo history, and validation state. It never duplicates graph state.
+**The store owns everything.** ReactFlow is a pure renderer — it receives `nodes` and `edges` as props and emits change events that the store applies. Domain data lives in `configs` to avoid RF re-renders on parameter changes.
 
 ### Entry/Exit Boundary Pattern
 
@@ -260,24 +275,24 @@ Clear separation between what ReactFlow owns and what thin Zustand owns. No over
                     │                                   │
                     └─────────────────────────────────┘
 
-ENTRY: definitionToRFNodes(definition) → CompartmentNodeType[]
+ENTRY: definitionToBento(definition) → { nodes: BentoNode[], configs: NodeConfigs }
   - Called once on recipe load or createBlank()
-  - Computes bento slot positions from node index
-  - Stores nodeType, name, parameters in RF node.data
+  - Splits Definition into visual nodes (RF) + domain configs (separate map)
+  - Store receives both via setState()
   - After this call, Definition is discarded
 
-EXIT: rfNodesToDefinition(nodes) → Definition
+EXIT: rfNodesToDefinition(nodes, metadata, configs) → Definition
   - Called on export (download .bnto.json) or save
-  - Reads node.data fields, extracts positions from RF node.position
-  - Builds a valid Definition from RF state
-  - Pure function — does not modify RF state
+  - Reads store's nodes + configs + metadata
+  - Builds a valid Definition from store state
+  - Pure function — does not modify store state
 ```
 
-**Entry boundary:** When a recipe loads (predefined or blank), `definitionToRFNodes()` converts the `Definition` into an array of `CompartmentNodeType[]` and calls `setNodes()`. After this, the original `Definition` is not stored anywhere — RF owns the data.
+**Entry boundary:** When a recipe loads, `definitionToBento()` splits the `Definition` into RF nodes (visual) and configs (domain). The store receives both via `setState()`. The original `Definition` is discarded.
 
-**Exit boundary:** When the user exports or saves, `rfNodesToDefinition()` reads `getNodes()` from RF and constructs a `Definition`. This is a read-only operation — it doesn't change RF state.
+**Exit boundary:** When the user exports, `rfNodesToDefinition()` reads the store's nodes, configs, and metadata to reconstruct a `Definition`. Pure function — read-only.
 
-**No mid-editing Definition.** During editing, there is no `Definition` object being maintained. Mutations go through `setNodes()`. This eliminates the entire category of sync bugs where Definition and RF nodes drift apart.
+**No mid-editing Definition.** During editing, there is no `Definition` object being maintained. Mutations go through `storeApi.setState()`. This eliminates the entire category of sync bugs where Definition and store state drift apart.
 
 ### O(1) Node Access via `nodeLookup`
 

@@ -15,6 +15,7 @@ import type { RecipeMetadata as NodeRecipeMetadata, Recipe } from "@bnto/nodes";
 import { useEditorStore } from "./useEditorStore";
 import { useEditorStoreApi } from "./useEditorStoreApi";
 import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
+import { downloadBlob } from "@bnto/core";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,7 +36,7 @@ interface EditorExportResult {
 // Hook
 // ---------------------------------------------------------------------------
 
-function useEditorExport(): EditorExportResult {
+function useEditorExport() {
   const validationErrors = useEditorStore((s) => s.validationErrors);
   const storeApi = useEditorStoreApi();
 
@@ -44,15 +45,7 @@ function useEditorExport(): EditorExportResult {
   const exportAsRecipe = useCallback(
     (metadata?: NodeRecipeMetadata): ExportResult => {
       const { nodes, configs, recipeMetadata } = storeApi.getState();
-      const rootDefinition = {
-        ...recipeMetadata,
-        position: { x: 0, y: 0 },
-        metadata: {},
-        parameters: {},
-        inputPorts: [] as never[],
-        outputPorts: [] as never[],
-      };
-      const definition = rfNodesToDefinition(nodes, rootDefinition, configs);
+      const definition = rfNodesToDefinition(nodes, recipeMetadata, configs);
 
       const errors = validateDefinition(definition);
       if (errors.length > 0) {
@@ -70,13 +63,7 @@ function useEditorExport(): EditorExportResult {
       if (!result.recipe) return;
 
       const json = JSON.stringify(result.recipe.definition, null, 2);
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${result.recipe.slug}.bnto.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(new Blob([json], { type: "application/json" }), `${result.recipe.slug}.bnto.json`);
     },
     [exportAsRecipe],
   );

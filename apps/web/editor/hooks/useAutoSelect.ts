@@ -2,17 +2,17 @@
 
 import { useCallback, useEffect } from "react";
 import { useReactFlow } from "@xyflow/react";
-import { useEditorActions } from "@/editor/hooks/useEditorActions";
+import { useEditorActions } from "./useEditorActions";
 
 /**
- * useAutoSelect — selection management for the editor sidebar.
+ * useAutoSelect — selection management for the editor.
  *
  * Two concerns:
  *   1. Programmatic node selection via the store's selectNode action
  *   2. Center-on-select via fitView (genuine DOM side effect)
  *
- * Auto-select on add/remove is handled in the store's addNode and
- * removeNode actions — no effects needed here.
+ * Auto-select on add/remove is handled in the useAddNode and
+ * useRemoveNode action hooks — no effects needed here.
  */
 
 interface UseAutoSelectOptions {

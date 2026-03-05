@@ -26,6 +26,7 @@
     "@tanstack/react-query": "catalog:",
     "convex": "catalog:",
     "fflate": "^0.8.2",
+    "immer": "^11.1.4",
     "posthog-js": "^1.205.0",
     "zustand": "^5.0.11"
   },

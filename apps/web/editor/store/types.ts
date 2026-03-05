@@ -8,7 +8,6 @@
 import type { Edge, NodeChange, EdgeChange } from "@xyflow/react";
 import type { ValidationError } from "@bnto/nodes";
 import type { BentoNode, NodeConfig, NodeConfigs } from "../adapters/types";
-import type { NodeTypeName } from "@bnto/nodes";
 
 // ---------------------------------------------------------------------------
 // Execution state — per-node status tracking
@@ -70,17 +69,14 @@ interface EditorActions {
   onNodesChange: (changes: NodeChange<BentoNode>[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
 
-  // --- Graph mutations ---
+  // --- Graph setters ---
   setNodes: (nodes: BentoNode[]) => void;
-  addNode: (type: NodeTypeName, position?: { x: number; y: number }) => string | null;
-  removeNode: (id: string) => void;
   selectNode: (id: string | null) => void;
 
-  // --- Config mutations (no RF re-render) ---
+  // --- Config setters ---
   setConfigs: (configs: NodeConfigs) => void;
   setConfig: (nodeId: string, config: NodeConfig) => void;
   removeConfig: (nodeId: string) => void;
-  updateConfigParams: (nodeId: string, params: Record<string, unknown>) => void;
 
   // --- History ---
   pushUndo: () => void;

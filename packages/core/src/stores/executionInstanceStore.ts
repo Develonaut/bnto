@@ -1,4 +1,4 @@
-import { createStore } from "zustand/vanilla";
+import { createEnhancedStore } from "./createEnhancedStore";
 import type {
   BrowserExecution,
   BrowserFileProgressInput,
@@ -38,7 +38,7 @@ const INITIAL_STATE: BrowserExecution = {
 // ---------------------------------------------------------------------------
 
 export function createExecutionInstanceStore() {
-  return createStore<ExecutionInstanceState>()((set) => ({
+  return createEnhancedStore<ExecutionInstanceState>()((set) => ({
     ...INITIAL_STATE,
 
     start: (id, startedAt) =>
@@ -64,7 +64,7 @@ export function createExecutionInstanceStore() {
           fileProgress.fileIndex === prev.fileIndex &&
           fileProgress.percent < prev.percent
         ) {
-          return state;
+          return;
         }
 
         // Compute overall batch progress: how far through ALL files.
@@ -74,9 +74,7 @@ export function createExecutionInstanceStore() {
           ((fileProgress.fileIndex * 100) + fileProgress.percent) / total,
         );
 
-        return {
-          fileProgress: { ...fileProgress, overallPercent },
-        };
+        state.fileProgress = { ...fileProgress, overallPercent };
       }),
 
     complete: (results, completedAt) =>
