@@ -1,7 +1,7 @@
 "use client";
 
 import { Text } from "@/components/ui/Text";
-import type { CompartmentNodeType } from "../canvas/CompartmentNode";
+import type { BentoNode } from "@/editor/adapters/types";
 import { NodeItem } from "./NodeItem";
 
 /**
@@ -9,7 +9,7 @@ import { NodeItem } from "./NodeItem";
  */
 
 interface NodeListProps {
-  nodes: CompartmentNodeType[];
+  nodes: BentoNode[];
   selectedNodeId: string | null;
   onSelect: (nodeId: string) => void;
 }
