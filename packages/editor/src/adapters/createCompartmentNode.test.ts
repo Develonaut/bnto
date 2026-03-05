@@ -69,6 +69,14 @@ describe("createCompartmentNode", () => {
     expect(result!.config.parameters).toEqual(expectedDefaults);
   });
 
+  it("sets icon from NodeTypeInfo.icon", () => {
+    const result = createCompartmentNode("image", 0);
+    expect(result!.node.data.icon).toBe("image");
+
+    const ioResult = createCompartmentNode("input", 0);
+    expect(ioResult!.node.data.icon).toBe("upload");
+  });
+
   it("works with all 12 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       const result = createCompartmentNode(typeName, 0);

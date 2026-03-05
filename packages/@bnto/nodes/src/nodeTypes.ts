@@ -33,9 +33,7 @@ export const NODE_TYPES = {
 export type NodeTypeName = (typeof NODE_TYPES)[keyof typeof NODE_TYPES];
 
 /** All node type names as a readonly array. */
-export const NODE_TYPE_NAMES: readonly NodeTypeName[] = Object.values(
-  NODE_TYPES,
-) as NodeTypeName[];
+export const NODE_TYPE_NAMES: readonly NodeTypeName[] = Object.values(NODE_TYPES) as NodeTypeName[];
 
 /** Node category for grouping in the UI and documentation. */
 export type NodeCategory =
@@ -72,6 +70,15 @@ export interface NodeTypeInfo {
    * are not available in browser context.
    */
   browserCapable: boolean;
+
+  /**
+   * Icon identifier — a Lucide icon name for visual consumers.
+   *
+   * Pure string metadata (no React/Lucide dependency). Consumers
+   * resolve this to an actual icon component using their own icon system.
+   * e.g. "image" → ImageIcon, "table" → TableIcon
+   */
+  icon: string;
 }
 
 /**
@@ -84,29 +91,29 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "edit-fields": {
     name: "edit-fields",
     label: "Edit Fields",
-    description:
-      "Set field values from static values or template expressions.",
+    description: "Set field values from static values or template expressions.",
     category: "data",
     isContainer: false,
     browserCapable: true,
+    icon: "pen-line",
   },
   "file-system": {
     name: "file-system",
     label: "File System",
-    description:
-      "File operations: read, write, copy, move, delete, mkdir, exists, list.",
+    description: "File operations: read, write, copy, move, delete, mkdir, exists, list.",
     category: "file",
     isContainer: false,
     browserCapable: false,
+    icon: "folder-open",
   },
   group: {
     name: "group",
     label: "Group",
-    description:
-      "Container for child nodes. Orchestrates sequential or parallel execution.",
+    description: "Container for child nodes. Orchestrates sequential or parallel execution.",
     category: "control",
     isContainer: true,
     browserCapable: true,
+    icon: "braces",
   },
   "http-request": {
     name: "http-request",
@@ -115,15 +122,16 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "network",
     isContainer: false,
     browserCapable: false,
+    icon: "globe",
   },
   image: {
     name: "image",
     label: "Image",
-    description:
-      "Image processing: resize, convert formats, optimize, composite, batch.",
+    description: "Image processing: resize, convert formats, optimize, composite, batch.",
     category: "image",
     isContainer: false,
     browserCapable: true,
+    icon: "image",
   },
   input: {
     name: "input",
@@ -133,15 +141,16 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "io",
     isContainer: false,
     browserCapable: true,
+    icon: "upload",
   },
   loop: {
     name: "loop",
     label: "Loop",
-    description:
-      "Iterate over arrays (forEach), repeat N times, or loop while condition.",
+    description: "Iterate over arrays (forEach), repeat N times, or loop while condition.",
     category: "control",
     isContainer: true,
     browserCapable: true,
+    icon: "refresh-cw",
   },
   output: {
     name: "output",
@@ -151,24 +160,25 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "io",
     isContainer: false,
     browserCapable: true,
+    icon: "download",
   },
   parallel: {
     name: "parallel",
     label: "Parallel",
-    description:
-      "Execute tasks concurrently with configurable worker pool and error strategy.",
+    description: "Execute tasks concurrently with configurable worker pool and error strategy.",
     category: "control",
     isContainer: true,
     browserCapable: true,
+    icon: "columns-3",
   },
   "shell-command": {
     name: "shell-command",
     label: "Shell Command",
-    description:
-      "Execute shell commands with stall detection, retry, and streaming output.",
+    description: "Execute shell commands with stall detection, retry, and streaming output.",
     category: "system",
     isContainer: false,
     browserCapable: false,
+    icon: "terminal-square",
   },
   spreadsheet: {
     name: "spreadsheet",
@@ -177,15 +187,16 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "spreadsheet",
     isContainer: false,
     browserCapable: true,
+    icon: "table",
   },
   transform: {
     name: "transform",
     label: "Transform",
-    description:
-      "Transform data using expressions (single value) or field mappings.",
+    description: "Transform data using expressions (single value) or field mappings.",
     category: "data",
     isContainer: false,
     browserCapable: true,
+    icon: "shuffle",
   },
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;
 

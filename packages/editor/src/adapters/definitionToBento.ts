@@ -19,46 +19,34 @@ function definitionToBento(definition: Definition): BentoLayout {
   const children = definition.nodes ?? [];
   const configs: NodeConfigs = {};
 
-  const nodes: BentoNode[] = children
-    .slice(0, SLOTS.length)
-    .map((node, index) => {
-      const slot = SLOTS[index]!;
-      const info = NODE_TYPE_INFO[node.type as NodeTypeName];
-      const variant = info
-        ? CATEGORY_VARIANT[info.category] ?? "muted"
-        : "muted";
-      const label = node.name || (info?.label ?? node.type);
+  const nodes: BentoNode[] = children.slice(0, SLOTS.length).map((node, index) => {
+    const slot = SLOTS[index]!;
+    const info = NODE_TYPE_INFO[node.type as NodeTypeName];
+    const variant = info ? (CATEGORY_VARIANT[info.category] ?? "muted") : "muted";
+    const label = node.name || (info?.label ?? node.type);
 
-      // Domain data → configs map (not node.data)
-      configs[node.id] = {
-        nodeType: node.type,
-        name: node.name,
-        parameters: node.parameters,
-      };
+    // Domain data → configs map (not node.data)
+    configs[node.id] = {
+      nodeType: node.type,
+      name: node.name,
+      parameters: node.parameters,
+    };
 
-      // I/O nodes get an icon indicator
-      const icon =
-        node.type === "input"
-          ? ("upload" as const)
-          : node.type === "output"
-            ? ("download" as const)
-            : undefined;
-
-      return {
-        id: node.id,
-        type: "compartment" as const,
-        position: { x: slot.x, y: slot.y },
-        data: {
-          label,
-          sublabel: info?.category ?? "",
-          variant,
-          width: slot.w,
-          height: slot.h,
-          status: "idle" as const,
-          icon,
-        },
-      };
-    });
+    return {
+      id: node.id,
+      type: "compartment" as const,
+      position: { x: slot.x, y: slot.y },
+      data: {
+        label,
+        sublabel: info?.category ?? "",
+        variant,
+        width: slot.w,
+        height: slot.h,
+        status: "idle" as const,
+        icon: info?.icon,
+      },
+    };
+  });
 
   return { nodes, configs };
 }

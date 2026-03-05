@@ -79,6 +79,11 @@ export {
   SlidersHorizontal as SlidersHorizontalIcon,
   XCircle as XCircleIcon,
   Zap as ZapIcon,
+  Table as TableIcon,
+  Shuffle as ShuffleIcon,
+  TerminalSquare as TerminalSquareIcon,
+  Braces as BracesIcon,
+  RefreshCw as RefreshCwIcon,
 } from "lucide-react";
 
 export type { LucideIcon } from "lucide-react";
