@@ -17,15 +17,18 @@ export const Card = forwardRef<
     spring?: SpringMode;
     /** Flush with ground plane. Explicit value overrides `loading` default. */
     grounded?: boolean;
+    /** Render with a dashed border instead of a solid one. */
+    dashed?: boolean;
     /** Sugar for spring="bounciest" + grounded={loading}. */
     loading?: boolean;
   }
->(({ className, elevation = "md", spring, grounded, loading, ...props }, ref) => (
+>(({ className, elevation = "md", spring, grounded, dashed, loading, ...props }, ref) => (
   <Surface
     ref={ref}
     elevation={elevation}
     spring={spring ?? (loading !== undefined ? "bounciest" : undefined)}
     grounded={grounded ?? loading}
+    dashed={dashed}
     rounded="xl"
     className={cn("bg-card text-card-foreground", className)}
     {...props}

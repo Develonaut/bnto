@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 
-import { useFeatureFlag } from "@/lib/useFeatureFlag";
 import {
   Button,
   Container,
@@ -30,7 +29,6 @@ export function MobileNavMenu({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const showEditor = useFeatureFlag("editor");
   const { isAuthenticated, user } = core.auth.useAuth();
   const signOut = core.auth.useSignOut();
   const router = useRouter();
@@ -98,11 +96,9 @@ export function MobileNavMenu({
               {/* Bottom section */}
               <Stack className="gap-6">
                 <Row className="gap-4">
-                  {showEditor && (
-                    <Button variant="outline" href="/create" onClick={() => onOpenChange(false)}>
-                      Create
-                    </Button>
-                  )}
+                  <Button variant="outline" href="/editor" onClick={() => onOpenChange(false)}>
+                    Editor
+                  </Button>
                   {PAGE_LINKS.map((link) => (
                     <Button
                       key={link.href}

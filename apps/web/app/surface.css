@@ -99,6 +99,19 @@
   --elevation-shadow-mag: 14;
 }
 
+/* ── Dashed variant ────────────────────────────────────────────────
+ * Overrides the solid border on .surface with a dashed border.
+ * Uses the same --border token as the default, but styled as dashed.
+ * Works at any elevation tier — the dashed border is on the face,
+ * walls and shadow still render normally (or not, at elevation-none).
+ * ────────────────────────────────────────────────────────────────── */
+
+.surface-dashed {
+  border-color: transparent;
+  outline: 3px dashed var(--border);
+  outline-offset: -4px;
+}
+
 /* ── Reset ──────────────────────────────────────────────────────── */
 
 .elevation-none {
@@ -195,7 +208,9 @@
 .pressable.surface-ghost:active,
 .pressable.surface-ghost[data-active] {
   border-color: transparent;
-  transition: border-color var(--pressable-press-dur, 34ms) ease-out var(--pressable-press-dur, 34ms), transform var(--pressable-press-dur, 34ms);
+  transition:
+    border-color var(--pressable-press-dur, 34ms) ease-out var(--pressable-press-dur, 34ms),
+    transform var(--pressable-press-dur, 34ms);
 }
 
 /* ── Muted modifier ──────────────────────────────────────────────
@@ -209,11 +224,7 @@
  * ────────────────────────────────────────────────────────────────── */
 
 .surface[data-muted] {
-  --face-bg: color-mix(
-    in oklch,
-    var(--variant-bg, var(--card)) 60%,
-    var(--muted)
-  );
+  --face-bg: color-mix(in oklch, var(--variant-bg, var(--card)) 60%, var(--muted));
   --face-fg: var(--muted-foreground);
 }
 
@@ -246,10 +257,8 @@
 :is(.springable, .pressable)::before,
 :is(.springable, .pressable)::after {
   transition:
-    transform var(--pressable-dur, 150ms)
-      var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
-    opacity var(--pressable-dur, 150ms)
-      var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+    transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
+    opacity var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
 }
 
 /* Grounded — flush with ground, muted appearance.
@@ -308,32 +317,21 @@
 .pressable:focus-visible,
 .pressable[data-hover],
 .pressable[data-state="open"] {
-  transform: translate(
-    calc(var(--elevation-x) * -0.66),
-    calc(var(--elevation-y) * -0.66)
-  );
+  transform: translate(calc(var(--elevation-x) * -0.66), calc(var(--elevation-y) * -0.66));
 }
 
 .pressable:hover::before,
 .pressable:focus-visible::before,
 .pressable[data-hover]::before,
 .pressable[data-state="open"]::before {
-  transform: translate3d(
-    calc(var(--elevation-x) * 0.66),
-    calc(var(--elevation-y) * 0.66),
-    -1px
-  );
+  transform: translate3d(calc(var(--elevation-x) * 0.66), calc(var(--elevation-y) * 0.66), -1px);
 }
 
 .pressable:hover::after,
 .pressable:focus-visible::after,
 .pressable[data-hover]::after,
 .pressable[data-state="open"]::after {
-  transform: translate3d(
-    calc(var(--shadow-x) * 0.66),
-    calc(var(--shadow-y) * 0.66),
-    -2px
-  );
+  transform: translate3d(calc(var(--shadow-x) * 0.66), calc(var(--shadow-y) * 0.66), -2px);
 }
 
 /* Active — face flush with ground, walls gone, shadow invisible.
@@ -373,28 +371,17 @@
 /* Toggle ON resting — same depth as normal hover (33% sunk toward ground).
  * Clearly visible as "pressed in" without needing to hover to see it. */
 .pressable[data-toggle][data-active] {
-  transform: translate(
-    calc(var(--elevation-x) * -0.66),
-    calc(var(--elevation-y) * -0.66)
-  );
+  transform: translate(calc(var(--elevation-x) * -0.66), calc(var(--elevation-y) * -0.66));
   transition-duration: var(--pressable-dur, 150ms);
 }
 
 .pressable[data-toggle][data-active]::before {
-  transform: translate3d(
-    calc(var(--elevation-x) * 0.66),
-    calc(var(--elevation-y) * 0.66),
-    -1px
-  );
+  transform: translate3d(calc(var(--elevation-x) * 0.66), calc(var(--elevation-y) * 0.66), -1px);
   transition-duration: var(--pressable-dur, 150ms);
 }
 
 .pressable[data-toggle][data-active]::after {
-  transform: translate3d(
-    calc(var(--shadow-x) * 0.66),
-    calc(var(--shadow-y) * 0.66),
-    -2px
-  );
+  transform: translate3d(calc(var(--shadow-x) * 0.66), calc(var(--shadow-y) * 0.66), -2px);
   opacity: 0.66;
   transition-duration: var(--pressable-dur, 150ms);
 }
@@ -403,28 +390,17 @@
  * A clear extra dip to give feedback before flush on press. */
 .pressable[data-toggle][data-active]:hover,
 .pressable[data-toggle][data-active]:focus-visible {
-  transform: translate(
-    calc(var(--elevation-x) * -0.33),
-    calc(var(--elevation-y) * -0.33)
-  );
+  transform: translate(calc(var(--elevation-x) * -0.33), calc(var(--elevation-y) * -0.33));
 }
 
 .pressable[data-toggle][data-active]:hover::before,
 .pressable[data-toggle][data-active]:focus-visible::before {
-  transform: translate3d(
-    calc(var(--elevation-x) * 0.33),
-    calc(var(--elevation-y) * 0.33),
-    -1px
-  );
+  transform: translate3d(calc(var(--elevation-x) * 0.33), calc(var(--elevation-y) * 0.33), -1px);
 }
 
 .pressable[data-toggle][data-active]:hover::after,
 .pressable[data-toggle][data-active]:focus-visible::after {
-  transform: translate3d(
-    calc(var(--shadow-x) * 0.33),
-    calc(var(--shadow-y) * 0.33),
-    -2px
-  );
+  transform: translate3d(calc(var(--shadow-x) * 0.33), calc(var(--shadow-y) * 0.33), -2px);
   opacity: 0.33;
 }
 

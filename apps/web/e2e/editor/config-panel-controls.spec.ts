@@ -27,7 +27,7 @@ async function addAndSelectNode(page: import("@playwright/test").Page, nodeLabel
 
 test.describe("config panel controls @browser", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/create");
+    await page.goto("/editor");
     await page.waitForSelector('[data-testid="recipe-editor"]', {
       timeout: 10000,
     });

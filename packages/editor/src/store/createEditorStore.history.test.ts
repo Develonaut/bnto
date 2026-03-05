@@ -82,20 +82,19 @@ describe("createEditorStore — history", () => {
     });
 
     it("supports multiple undo levels", () => {
-      const baseline = state(store).nodes.length;
       addNodeViaStore(store, "image");
       addNodeViaStore(store, "transform");
       addNodeViaStore(store, "spreadsheet");
-      expect(state(store).nodes.length).toBe(baseline + 3);
+      expect(state(store).nodes.length).toBe(5); // input + 3 nodes + output
 
       state(store).undo();
-      expect(state(store).nodes.length).toBe(baseline + 2);
+      expect(state(store).nodes.length).toBe(4);
 
       state(store).undo();
-      expect(state(store).nodes.length).toBe(baseline + 1);
+      expect(state(store).nodes.length).toBe(3);
 
       state(store).undo();
-      expect(state(store).nodes.length).toBe(baseline);
+      expect(state(store).nodes.length).toBe(2); // input + output
     });
 
     it("marks dirty after undo", () => {

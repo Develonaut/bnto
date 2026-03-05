@@ -70,7 +70,9 @@ const PRO_OPTIONS = { hideAttribution: true } as const;
 
 /** Module-level constant — stable reference prevents RF from
  * unmounting/remounting all nodes on every render. */
-const NODE_TYPES = { compartment: CompartmentNode } as const;
+const NODE_TYPES = {
+  compartment: CompartmentNode,
+} as const;
 
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
 

@@ -42,6 +42,8 @@ type SurfaceProps = ComponentProps<"div"> & {
   spring?: SpringMode;
   /** Flush with the ground plane, muted appearance. Requires `spring`. */
   grounded?: boolean;
+  /** Render with a dashed border instead of a solid one. */
+  dashed?: boolean;
   /** Merge onto child element instead of wrapping in a `<div>`. */
   asChild?: boolean;
 };
@@ -52,6 +54,7 @@ export function Surface({
   rounded = "lg",
   spring,
   grounded,
+  dashed,
   asChild,
   className,
   style,
@@ -66,6 +69,7 @@ export function Surface({
         `elevation-${elevation}`,
         variant !== "default" && `surface-${variant}`,
         spring && "springable",
+        dashed && "surface-dashed",
         roundedMap[rounded],
         className,
       )}
