@@ -1,5 +1,4 @@
-import { Card } from "@/components/ui/Card";
-import { Grid } from "@/components/ui/Grid";
+import { Card, Grid } from "@bnto/ui";
 
 export function CardShowcase() {
   return (

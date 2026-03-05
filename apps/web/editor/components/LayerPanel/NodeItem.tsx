@@ -1,7 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { Text } from "@/components/ui/Text";
+import { cn, Text } from "@bnto/ui";
 import type { BentoNode, CompartmentVariant } from "@/editor/adapters/types";
 
 /**

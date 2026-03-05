@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { ConvexAuthNextjsServerProvider } from "@bnto/auth/server";
-import { AppShell } from "@/components/ui/AppShell";
+import { AppShell } from "@bnto/ui";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import {
   DEFAULT_TITLE,

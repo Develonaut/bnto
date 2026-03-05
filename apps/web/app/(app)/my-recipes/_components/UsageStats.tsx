@@ -3,11 +3,7 @@
 import { core } from "@bnto/core";
 
 import { useDelayedLoading } from "../_hooks/useDelayedLoading";
-import { Card } from "@/components/ui/Card";
-import { Row } from "@/components/ui/Row";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Card, Row, Skeleton, Stack, Text } from "@bnto/ui";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
 /**

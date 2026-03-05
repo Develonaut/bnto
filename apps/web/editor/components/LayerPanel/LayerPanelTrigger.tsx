@@ -1,8 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { Button } from "@/components/ui/Button";
-import { PanelLeftIcon, PanelLeftCloseIcon } from "@/components/ui/icons";
+import { Button, PanelLeftIcon, PanelLeftCloseIcon } from "@bnto/ui";
 import { useEditorPanels } from "@/editor/hooks/useEditorPanels";
 
 /**

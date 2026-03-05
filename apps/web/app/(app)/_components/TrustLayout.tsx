@@ -3,16 +3,9 @@
 import {
   CheckIcon,
   GithubIcon,
-} from "@/components/ui/icons";
+} from "@bnto/ui";
 
-import { Animate } from "@/components/ui/Animate";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Center } from "@/components/ui/Center";
-import { IconBadge } from "@/components/ui/IconBadge";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { Animate, Button, Card, Center, IconBadge, Row, Stack, Text } from "@bnto/ui";
 import { GITHUB_URL } from "@/lib/copy";
 
 /* ── Data ────────────────────────────────────────────────────── */

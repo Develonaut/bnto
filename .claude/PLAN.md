@@ -224,26 +224,26 @@ Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: 
 
 #### Wave 1 (parallel — package scaffold + primitives)
 
-- [ ] `packages/ui` — **Bootstrap package**: Create `packages/ui/` with `package.json` (`@bnto/ui`), `tsconfig.json`, barrel export. Zero runtime deps except React + Tailwind
-- [ ] `packages/ui` — **Move primitives**: Move `apps/web/components/primitives/` → `packages/ui/src/primitives/`. These are thin shadcn/Radix wrappers with zero domain knowledge
-- [ ] `packages/ui` — **Move utility layer**: Move `cn.ts`, `create-cn.ts` → `packages/ui/src/utils/`. These are the styling foundation
-- [ ] `packages/ui` — **Move CSS tokens**: Move design token definitions from `globals.css` into a consumable format. The `@theme inline` block and token variables stay in the app's CSS but reference `@bnto/ui` token values
+- [x] `packages/ui` — **Bootstrap package**: Create `packages/ui/` with `package.json` (`@bnto/ui`), `tsconfig.json`, barrel export. Zero runtime deps except React + Tailwind
+- [x] `packages/ui` — **Move primitives**: Move `apps/web/components/primitives/` → `packages/ui/src/primitives/`. These are thin shadcn/Radix wrappers with zero domain knowledge
+- [x] `packages/ui` — **Move utility layer**: Move `cn.ts`, `create-cn.ts` → `packages/ui/src/utils/`. These are the styling foundation
+- [x] `packages/ui` — **Move CSS tokens**: Move design token definitions from `globals.css` into a consumable format. The `@theme inline` block and token variables stay in the app's CSS but reference `@bnto/ui` token values
 
 #### Wave 2 (parallel — shared components)
 
-- [ ] `packages/ui` — **Move layout components**: `Stack`, `Row`, `Grid`, `Container`, `PageLayout`, `BentoGrid` → `packages/ui/src/layout/`
-- [ ] `packages/ui` — **Move typography components**: `Heading`, `Text`, `Badge`, `Label` → `packages/ui/src/typography/`
-- [ ] `packages/ui` — **Move feedback components**: `Skeleton`, `LinearProgress`, `ToolbarProgress`, `Spinner` → `packages/ui/src/feedback/`
-- [ ] `packages/ui` — **Move surface components**: `Card` (with surface/pressable system), `Separator` → `packages/ui/src/surface/`
-- [ ] `packages/ui` — **Move interaction components**: `Button`, `Switch`, `Select`, `Slider`, `RadialSlider`, `RadioGroup`, `Checkbox` → `packages/ui/src/interaction/`
-- [ ] `packages/ui` — **Move overlay components**: `Dialog`, `Sheet`, `Popover`, `DropdownMenu`, `Tooltip` → `packages/ui/src/overlay/`
-- [ ] `packages/ui` — **Move animation components**: `Animate.*` composition API → `packages/ui/src/animation/`
+- [x] `packages/ui` — **Move layout components**: `Stack`, `Row`, `Grid`, `Container`, `PageLayout`, `BentoGrid` → `packages/ui/src/layout/`
+- [x] `packages/ui` — **Move typography components**: `Heading`, `Text`, `Badge`, `Label` → `packages/ui/src/typography/`
+- [x] `packages/ui` — **Move feedback components**: `Skeleton`, `LinearProgress`, `ToolbarProgress`, `Spinner` → `packages/ui/src/feedback/`
+- [x] `packages/ui` — **Move surface components**: `Card` (with surface/pressable system), `Separator` → `packages/ui/src/surface/`
+- [x] `packages/ui` — **Move interaction components**: `Button`, `Switch`, `Select`, `Slider`, `RadialSlider`, `RadioGroup`, `Checkbox` → `packages/ui/src/interaction/`
+- [x] `packages/ui` — **Move overlay components**: `Dialog`, `Sheet`, `Popover`, `DropdownMenu`, `Tooltip` → `packages/ui/src/overlay/`
+- [x] `packages/ui` — **Move animation components**: `Animate.*` composition API → `packages/ui/src/animation/`
 
 #### Wave 3 (sequential — rewire + verify)
 
-- [ ] `apps/web` — **Update all imports**: Replace `@/components/ui/` and `@/components/primitives/` imports with `@bnto/ui` across the entire web app
-- [ ] `apps/web` — **Tailwind v4 source directive**: Add `@source "../../node_modules/@bnto/ui"` to `globals.css` so Tailwind scans the extracted package
-- [ ] `apps/web` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass. No behavior changes — only import paths changed
+- [x] `apps/web` — **Update all imports**: Replace `@/components/ui/` and `@/components/primitives/` imports with `@bnto/ui` across the entire web app
+- [x] `apps/web` — **Tailwind v4 source directive**: Add `@source "../../node_modules/@bnto/ui"` to `globals.css` so Tailwind scans the extracted package
+- [x] `apps/web` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass. No behavior changes — only import paths changed
 
 ---
 

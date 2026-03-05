@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect } from "react";
-import { DownloadIcon, FileDownIcon, LoaderIcon, CheckCircle2Icon } from "@/components/ui/icons";
+import {
+  Button,
+  CheckCircle2Icon,
+  DownloadIcon,
+  FileDownIcon,
+  LoaderIcon,
+  Row,
+  Stack,
+} from "@bnto/ui";
 import { core } from "@bnto/core";
-import { Button } from "@/components/ui/Button";
-import { Row } from "@/components/ui/Row";
-import { Stack } from "@/components/ui/Stack";
 import { formatFileSize } from "@/src/utils/formatFileSize";
 
 interface ExecutionResultsProps {

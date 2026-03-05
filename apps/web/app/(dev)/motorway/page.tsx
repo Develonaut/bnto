@@ -1,9 +1,6 @@
 "use client";
 
-import { Heading } from "@/components/ui/Heading";
-import { Stack } from "@/components/ui/Stack";
-import { Tabs } from "@/components/ui/Tabs";
-import { Text } from "@/components/ui/Text";
+import { Heading, Stack, Tabs, Text } from "@bnto/ui";
 
 import { AnimationShowcase } from "./AnimationShowcase";
 import { EmptyStateShowcase } from "./EmptyStateShowcase";

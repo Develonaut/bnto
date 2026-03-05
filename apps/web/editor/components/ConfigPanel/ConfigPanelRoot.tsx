@@ -1,13 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { cn } from "@/lib/cn";
-import { Badge } from "@/components/ui/Badge";
-import { Heading } from "@/components/ui/Heading";
-import { Panel } from "@/components/ui/Panel";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
-import { usePrevious } from "@/components/ui/usePrevious";
+import { cn, Badge, Heading, Panel, Stack, Text, usePrevious } from "@bnto/ui";
 import { useEditorStore } from "@/editor/hooks/useEditorStore";
 import { useEditorNode } from "@/editor/hooks/useEditorNode";
 import { useEditorActions } from "@/editor/hooks/useEditorActions";

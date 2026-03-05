@@ -1,8 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { Button } from "@/components/ui/Button";
-import { SlidersHorizontalIcon } from "@/components/ui/icons";
+import { Button, SlidersHorizontalIcon } from "@bnto/ui";
 import { useEditorPanels } from "@/editor/hooks/useEditorPanels";
 
 /**

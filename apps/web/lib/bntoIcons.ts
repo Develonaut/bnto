@@ -1,4 +1,4 @@
-import type { LucideIcon } from "@/components/ui/icons";
+import type { LucideIcon } from "@bnto/ui";
 import {
   ArrowRightLeftIcon,
   Columns3Icon,
@@ -6,7 +6,7 @@ import {
   PenLineIcon,
   ScalingIcon,
   SparklesIcon,
-} from "@/components/ui/icons";
+} from "@bnto/ui";
 
 const BNTO_ICONS: Record<string, LucideIcon> = {
   "compress-images": Minimize2Icon,

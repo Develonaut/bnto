@@ -1,10 +1,6 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
-import { Animate } from "@/components/ui/Animate";
-import { Card } from "@/components/ui/Card";
-import { DownloadIcon, UploadIcon } from "@/components/ui/icons";
-import { Pressable } from "@/components/ui/Pressable";
-import { Text } from "@/components/ui/Text";
+import { Animate, Card, DownloadIcon, Pressable, Text, UploadIcon } from "@bnto/ui";
 import type { CompartmentVariant, BentoNode } from "@/editor/adapters/types";
 
 /**

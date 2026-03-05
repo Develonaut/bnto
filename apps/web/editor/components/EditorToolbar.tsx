@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback } from "react";
-import { Button } from "@/components/ui/Button";
-import { Toolbar } from "@/components/ui/Toolbar";
 import {
+  Button,
+  Toolbar,
   PlusIcon,
   TrashIcon,
   RotateCcwIcon,
   Undo2Icon,
   Redo2Icon,
-} from "@/components/ui/icons";
+} from "@bnto/ui";
 import { useEditorUndoRedo } from "@/editor/hooks/useEditorUndoRedo";
 import { useEditorActions } from "@/editor/hooks/useEditorActions";
 import { useEditorStore } from "@/editor/hooks/useEditorStore";

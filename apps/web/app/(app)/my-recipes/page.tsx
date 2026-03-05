@@ -1,8 +1,5 @@
 import { MyRecipesTabs } from "./_components/MyRecipesTabs";
-import { AppShell } from "@/components/ui/AppShell";
-import { Heading } from "@/components/ui/Heading";
-import { Stack } from "@/components/ui/Stack";
-import { Text } from "@/components/ui/Text";
+import { AppShell, Heading, Stack, Text } from "@bnto/ui";
 
 /**
  * My Recipes dashboard — server component.

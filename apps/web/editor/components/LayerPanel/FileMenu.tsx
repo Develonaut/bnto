@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import { Menu } from "@/components/ui/Menu";
-import { ChevronDownIcon } from "@/components/ui/icons";
+import { Menu, ChevronDownIcon } from "@bnto/ui";
 
 /**
  * FileMenu — composable file operations dropdown.
