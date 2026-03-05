@@ -1,22 +1,21 @@
 ---
 name: pickup
 description: Pickup Work — Two-Phase Task Execution
-args: "[--worktree | --w | --here]"
+args: "[--worktree | --w]"
 ---
 
 # Pickup Work — Two-Phase Task Execution
 
-This skill uses a **propose-then-execute** workflow. Phase 1 researches the next available task, checks the landscape for conflicts, and presents a proposal with an isolation recommendation. Phase 2 executes only after user approval.
+This skill uses a **propose-then-execute** workflow. Phase 1 researches the next available task, checks the landscape for conflicts, and presents a proposal. Phase 2 executes only after user approval.
 
 ## Arguments
 
-| Flag | Description |
-|------|-------------|
-| *(no flag)* | **Smart default.** Phase 1 checks the landscape (active branches, worktrees, in-flight work) and recommends worktree or current tree. You choose in the proposal. |
-| `--worktree`, `--w` | **Force worktree.** Skip the recommendation — always create an isolated worktree. Good when you know multiple agents will be active. |
-| `--here` | **Force current tree.** Skip the recommendation — work directly on the current tree with a feature branch. Good for quick fixes or when you're the only agent. |
+| Flag                | Description                                                                                                                                        |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _(no flag)_         | **Default.** Work on `main` with a feature branch. No worktree, no isolation — just branch and go.                                                 |
+| `--worktree`, `--w` | **Force worktree.** Create an isolated worktree. Only use when the user explicitly asks for isolation or multiple agents need to work in parallel. |
 
-**Usage:** `/pickup`, `/pickup --w`, `/pickup --here`
+**Usage:** `/pickup`, `/pickup --w`
 
 ---
 
@@ -29,13 +28,7 @@ This skill uses a **propose-then-execute** workflow. Phase 1 researches the next
 Before looking at tasks, understand what's happening in the repo right now. Run these checks:
 
 ```bash
-# What branches exist locally?
-git branch --list
-
-# Any active worktrees?
-git worktree list
-
-# Any uncommitted changes on the current tree?
+# Any uncommitted changes?
 git status --short
 
 # Recent activity on main?
@@ -43,17 +36,6 @@ git log --oneline -5 main
 ```
 
 Then scan `PLAN.md` for **CLAIMED** tasks — note which packages they target. This tells you where other agents are working.
-
-**Build a conflict picture:**
-
-| Check | What it tells you |
-|---|---|
-| Active worktrees | Other agents are working in isolation — low conflict risk with them |
-| Local branches ahead of main | Someone has unpushed work — check which packages |
-| Uncommitted changes | Another agent may be mid-task on the current tree |
-| CLAIMED tasks in PLAN.md | Which packages have active work — avoid overlap |
-
-You'll use this to make an isolation recommendation in Step 4.
 
 ### Step 1: Read the Plan
 
@@ -68,12 +50,12 @@ Read `.claude/PLAN.md`. Find the **current sprint** (the first sprint with uncla
 
 **Batch pickup:** Look for tasks that form a natural batch — same package scope, same domain, logically connected. An agent building `EditorToolbar`, `NodePalette`, and `NodeConfigPanel` in the same wave shouldn't PR after each one. Recommend batching when:
 
-| Signal | Batch? |
-|---|---|
-| Same `[package]` tag, same wave, shared files/context | Yes — recommend as a batch |
+| Signal                                                      | Batch?                                                     |
+| ----------------------------------------------------------- | ---------------------------------------------------------- |
+| Same `[package]` tag, same wave, shared files/context       | Yes — recommend as a batch                                 |
 | Same wave but different packages (e.g., `[core]` + `[web]`) | Maybe — only if one depends on the other and they're small |
-| Different waves | No — waves are sequential |
-| Batch would exceed ~1 day of agent work | No — too large, split into smaller batches |
+| Different waves                                             | No — waves are sequential                                  |
+| Batch would exceed ~1 day of agent work                     | No — too large, split into smaller batches                 |
 
 When recommending a batch, present it as a single proposal with all tasks listed, a combined scope estimate, and a note on why batching makes sense.
 
@@ -95,39 +77,11 @@ Present a clear summary to the user with:
 2. **Sprint / Wave:** Which sprint and wave it belongs to
 3. **Package scope:** Which packages/directories will be touched
 4. **Persona(s):** Which domain expert persona(s) will be activated
-5. **Isolation:** Your recommendation — worktree or current tree. Include reasoning. **Batches of 2+ tasks strongly favor worktrees** — the agent needs room to work without blocking others.
-
-```
-Isolation: Worktree recommended
-Reason: Agent in worktree-agent-af9a7b90 is touching @bnto/backend (CLAIMED: rename workflows table).
-        This task also touches @bnto/backend. Worktree avoids file conflicts.
-```
-
-or:
-
-```
-Isolation: Current tree is fine
-Reason: This task is pure @bnto/nodes work. No other agents active in that package.
-        Small scope, no overlap with in-flight work.
-```
-
-**Isolation decision tree:**
-
-| Condition | Recommendation |
-|---|---|
-| Other agents have CLAIMED tasks in the same package | Worktree |
-| Uncommitted changes exist on the current tree | Worktree |
-| Task is Medium or Large scope | Worktree (safer for long-running work) |
-| Multiple agents will be active in parallel | Worktree |
-| Task is Small scope, no package overlap, you're the only agent | Current tree is fine |
-| User passed `--worktree` | Worktree (skip recommendation) |
-| User passed `--here` | Current tree (skip recommendation) |
-
-6. **Approach:** 3-5 bullet points describing what you plan to do
-7. **Files to modify:** List of files you expect to create or change
-8. **Tests:** What tests you'll write (unit, integration, E2E, screenshots)
-9. **Risks / Open questions:** Anything unclear or potentially tricky
-10. **Scope estimate:** Small (< 1 hour), Medium (1-3 hours), Large (3+ hours)
+5. **Approach:** 3-5 bullet points describing what you plan to do
+6. **Files to modify:** List of files you expect to create or change
+7. **Tests:** What tests you'll write (unit, integration, E2E, screenshots)
+8. **Risks / Open questions:** Anything unclear or potentially tricky
+9. **Scope estimate:** Small (< 1 hour), Medium (1-3 hours), Large (3+ hours)
 
 If there are multiple available tasks in the wave, present all of them so the user can pick.
 
@@ -138,6 +92,7 @@ If there are multiple available tasks in the wave, present all of them so the us
 ## Phase 2: Execute (after user approval)
 
 Only proceed here after the user says to go ahead. The user may:
+
 - Approve as-is → proceed with the plan
 - Approve with changes → adjust your approach, then proceed
 - Reject → stop, or propose a different task
@@ -164,40 +119,35 @@ Edit `PLAN.md` to mark your task(s): change `- [ ]` to `- [ ] **CLAIMED**`
 
 If you're picking up a batch, claim all tasks in the batch at once. This signals to other agents that the entire batch is spoken for.
 
-### Step 2b: Set Up Isolation
+### Step 2b: Set Up Branch
 
-**Determine your isolation mode** based on what was approved in Phase 1:
+**Default: work on `main` with a feature branch.** Worktrees are only used when the user explicitly passes `--w`.
 
-#### If worktree (approved in proposal, or `--worktree` / `--w` flag):
+1. Ensure you start from a clean `main`: `git checkout main && git pull`
+2. Create a feature branch: `git checkout -b <type>/<short-description>` (e.g., `feat/editor-toolbar`, `fix/skeleton-shift`)
+
+#### If worktree (`--worktree` / `--w` flag only):
 
 1. Ensure you start from a clean `main`: `git checkout main && git pull`
 2. Use the `EnterWorktree` tool with a name based on your feature branch (e.g., `feat/editor-toolbar`)
 3. The worktree creates an isolated copy at `.claude/worktrees/<name>` with a new branch based on HEAD
 4. Your session's working directory switches to the worktree — all subsequent file reads, edits, and commands operate there
-5. The main working tree stays completely untouched
-
-**Why worktrees?** They let the user (or other agents) keep working on the main tree while you work in isolation. No stashing, no branch switching conflicts, no accidental interference with in-progress work.
-
-#### If current tree (approved in proposal, or `--here` flag):
-
-1. Ensure you start from a clean `main`: `git checkout main && git pull`
-2. Create a feature branch: `git checkout -b <type>/<short-description>` (e.g., `feat/editor-toolbar`, `fix/skeleton-shift`)
-3. Continue working on the main tree — be aware that other agents may also be here
 
 ### Step 3: Activate Your Persona
 
 Now that you know your task's `[package]` tag, activate the domain expert persona by invoking it as a skill:
 
-| Package tag | Persona skill |
-|---|---|
-| `[engine]` | `/rust-expert` |
-| `[engine-go]`, `[api-go]` | `/go-engineer` |
-| `[web]`, `[ui]` | `/frontend-engineer` |
-| `[core]` | `/core-architect` |
-| `[backend]`, `[auth]` | `/backend-engineer` |
-| `[monorepo]`, `[infra]` | No persona — use general standards |
+| Package tag               | Persona skill                      |
+| ------------------------- | ---------------------------------- |
+| `[engine]`                | `/rust-expert`                     |
+| `[engine-go]`, `[api-go]` | `/go-engineer`                     |
+| `[web]`, `[ui]`           | `/frontend-engineer`               |
+| `[core]`                  | `/core-architect`                  |
+| `[backend]`, `[auth]`     | `/backend-engineer`                |
+| `[monorepo]`, `[infra]`   | No persona — use general standards |
 
 **Sprint-specific persona overrides:**
+
 - **Sprint 4B (Code Editor):** ALL tasks invoke `/code-editor-expert` regardless of package tag. Wave 2+ tasks also invoke `/frontend-engineer`. Read [code-editor.md](.claude/strategy/code-editor.md) and the persona SKILL.md before starting.
 - **Sprint 4 Wave 2+ (Visual Editor):** ALL tasks invoke `/reactflow-expert`. Wave 3+ also invoke `/frontend-engineer`.
 
@@ -264,7 +214,7 @@ Write the code for your task. Follow the rules in `CLAUDE.md` and `.claude/rules
 - `onboarding/` — split-screen layouts, upload zones (workflow import)
 - `project/`, `projects/` — project cards, article layouts (workflow detail pages)
 
-**Don't copy blindly** — adapt the layout, structure, and interaction patterns to fit our design system. The value is in the *composition patterns*, not the exact styling.
+**Don't copy blindly** — adapt the layout, structure, and interaction patterns to fit our design system. The value is in the _composition patterns_, not the exact styling.
 
 ### Step 6: Verify — Code Review + Automated Checks
 
@@ -290,6 +240,7 @@ task ui:lint           # Lint all TS packages — must pass
 Or run `task check` to execute all of the above in one command.
 
 **If any check fails:**
+
 1. Fix the issue
 2. Re-run ALL checks from the top (not just the one that failed)
 3. Repeat until all pass clean
@@ -321,6 +272,7 @@ Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, 
 **If yes — you MUST write or update e2e tests with screenshot assertions.** This is non-negotiable. Unit tests alone are not proof that UI works. The user needs to see tangible visual evidence that the feature renders correctly.
 
 **Required e2e coverage:**
+
 - Add to or create spec files in `apps/web/e2e/`. Use existing helpers and patterns from sibling spec files.
 - Test the actual user flow, not just that a page renders.
 - Include `await expect(page).toHaveScreenshot()` assertions — at minimum:
@@ -336,6 +288,7 @@ Ask yourself: **did you create, modify, or wire up ANY component, dialog, form, 
 If screenshots already exist and the change modifies visual output, run with `--update-snapshots` after confirming the new appearance is correct.
 
 **E2e test conventions:**
+
 - Always set `test.use({ reducedMotion: "reduce" })` to disable animations
 - Use `data-testid` markers for reliable state detection
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes
@@ -359,13 +312,12 @@ If screenshots already exist and the change modifies visual output, run with `--
 After all checks pass, provide a summary:
 
 1. **Branch** — name of the feature branch (e.g., `feat/editor-toolbar`)
-2. **Isolation** — worktree or current tree
-3. **PR target** — `main` (always)
-4. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
-5. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
-6. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
-7. **Checks result** — confirm `task check` (or individual checks) passed clean. List which checks ran.
-8. **Files changed** — files created/modified, with brief description of each
+2. **PR target** — `main` (always)
+3. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
+4. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
+5. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
+6. **Checks result** — confirm `task check` (or individual checks) passed clean. List which checks ran.
+7. **Files changed** — files created/modified, with brief description of each
 
 ### Step 8b: Create the PR
 
@@ -391,6 +343,7 @@ When creating the PR with `gh pr create`, use this format for the body:
 ### Step 9: Update the Plan
 
 Edit `.claude/PLAN.md`:
+
 - Change each completed task from `- [ ] **CLAIMED**` to `- [x]` (mark done)
 - If you picked up a batch, mark all completed tasks. If any task in the batch wasn't finished, leave it as `- [ ] **CLAIMED**` and note what remains
 - If your completion unblocks the next wave (all tasks in current wave are now `[x]`), note this in your summary so the user knows to start new agents on the next wave
@@ -439,12 +392,14 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 ```
 
 **Common mistakes agents make:**
+
 1. Running `E2E_PORT=4001 pnpm ... playwright test` WITHOUT `task e2e:isolated` first — this fails because no server is listening on port 4001. Either use `task e2e:isolated` (which starts a server) or run against port 4000.
 2. Running from the repo root instead of `apps/web/` — Playwright config is in `apps/web/`, so you must `cd apps/web` first (or use `pnpm --filter @bnto/web exec playwright test`).
 3. Skipping the `lsof -ti:4000` check — always check first. If port 4000 is active, just use it.
 4. Using `task e2e:isolated` when `task dev` is already running — unnecessarily slow. Just run `cd apps/web && pnpm exec playwright test`.
 
 **Key details:**
+
 - `task e2e:isolated` uses port 4001 + `NEXT_DIST_DIR=.next-e2e` (separate build cache)
 - `task e2e` uses port 4000 and reuses a running `task dev`
 - Both share the same Convex dev deployment (cloud-hosted, no conflict)
@@ -452,6 +407,7 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 - Test fixtures are shared with the Go engine (`engine/tests/fixtures/`)
 
 **Shared test helpers** (in `e2e/helpers.ts`):
+
 - `navigateToRecipe(page, slug, h1)` — navigate to recipe page, wait for heading visible
 - `assertBrowserExecution(page)` — verify `data-execution-mode="browser"` on shell
 - `uploadFiles(page, filePaths[])` — set file input, wait for count text, return run button
@@ -464,6 +420,7 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 **Screenshot strategy:** Page-level screenshots only (site navigation, auth forms). Execution flows verified programmatically (magic bytes, data attributes, file sizes).
 
 **Data attributes for E2E observability:**
+
 - `data-testid="run-button"` + `data-phase` — RunButton lifecycle (idle, uploading, running, completed, failed)
 - `data-testid="execution-progress"` + `data-status` — ExecutionProgress status
 - `data-testid="node-progress"` + `data-node-id` + `data-node-status` — per-node progress
@@ -476,7 +433,7 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 ## DO NOT
 
-- **Branch-based workflow is mandatory.** If you're in a worktree, the worktree already created a branch — use it. Otherwise, create a feature branch (`git checkout -b <type>/<short-description>`) before committing. Never commit directly to `main` — PRs are required. If the user asks you to commit, create a branch first (or use the worktree branch), commit YOUR OWN work from this task (never bundle other agents' changes), then ask if they want you to push and create a PR. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
+- **Branch-based workflow is mandatory.** Create a feature branch (`git checkout -b <type>/<short-description>`) before committing. Never commit directly to `main` — PRs are required. If the user asks you to commit, create a branch first, commit YOUR OWN work from this task (never bundle other agents' changes), then ask if they want you to push and create a PR. Before pushing, ALWAYS ask the user for explicit confirmation — never push autonomously
 - **PRs always target `main`.** Feature branches are created from `main` and PR'd into `main`. Always squash merge.
 - **Do not modify files outside your package scope** — other agents may be working there
 - **Do not modify `CLAUDE.md`, `.claude/rules/`, or config files** unless your task explicitly requires it
@@ -486,9 +443,8 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 ## Multi-Agent Awareness
 
-- **Worktrees are the safe default for parallel work.** If the landscape check shows other agents active, use a worktree. Each worktree is a fully isolated copy of the repo — no file conflicts with the main tree or other agents
-- **File conflicts (non-worktree):** If you need to modify a file and see it has been recently changed (check `git diff`), read the current state carefully before editing. Work with what's there, not what you expected
+- **Feature branches on `main` are the default.** Worktrees are only used when explicitly requested via `--w`.
+- **File conflicts:** If you need to modify a file and see it has been recently changed (check `git diff`), read the current state carefully before editing. Work with what's there, not what you expected
 - **Schema changes:** If your task adds to any schema, append — don't reorganize existing structures. Other agents may depend on the current structure
 - **Shared indexes/exports:** If you add to a barrel export (`index.ts`), add your entries at the end to minimize merge conflicts
 - **Port conflicts:** Only start `task dev` when running E2E tests (and check if it's already running first). For non-E2E verification, use `task check`
-- **Worktree cleanup:** When your PR is merged, the worktree can be cleaned up. On session exit, the user will be prompted to keep or remove it
