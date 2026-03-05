@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { Menu } from "@bnto/ui";
+import { Menu, MenuTrigger } from "@bnto/ui";
 
 /**
  * NodePaletteMenu root — delegates to Menu.
@@ -10,9 +10,9 @@ import { Menu } from "@bnto/ui";
  * editor-specific node palette content.
  *
  *   <NodePaletteMenu>
- *     <NodePaletteMenu.Trigger variant="ghost">
+ *     <NodePaletteMenuTrigger variant="ghost">
  *       <PlusIcon /> Add
- *     </NodePaletteMenu.Trigger>
+ *     </NodePaletteMenuTrigger>
  *     <NodePaletteMenu.Content side="top" />
  *   </NodePaletteMenu>
  */
@@ -21,7 +21,7 @@ function NodePaletteMenuRoot({ children, ...props }: ComponentProps<typeof Menu>
   return <Menu {...props}>{children}</Menu>;
 }
 
-/** Pass-through to Menu.Trigger. */
-const NodePaletteMenuTrigger = Menu.Trigger;
+/** Pass-through to MenuTrigger. */
+const NodePaletteMenuTrigger = MenuTrigger;
 
 export { NodePaletteMenuRoot, NodePaletteMenuTrigger };

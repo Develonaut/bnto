@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Card, Grid, Stack, Tabs, Text } from "@bnto/ui";
+import { Card, Grid, GridItem, Stack, Tabs, TabsList, TabsTrigger, Text } from "@bnto/ui";
 
 /* ── Cell helper ─────────────────────────────────────────────── */
 
@@ -16,9 +16,18 @@ const TINTS = [
 
 function GridCell({ n, label }: { n: number; label?: string }) {
   return (
-    <Card elevation="sm" className={`${TINTS[(n - 1) % TINTS.length]} flex h-full flex-col items-center justify-center gap-1 p-4`}>
-      <Text size="lg" className="font-display font-bold tabular-nums">{n}</Text>
-      {label && <Text size="xs" color="muted" className="text-center">{label}</Text>}
+    <Card
+      elevation="sm"
+      className={`${TINTS[(n - 1) % TINTS.length]} flex h-full flex-col items-center justify-center gap-1 p-4`}
+    >
+      <Text size="lg" className="font-display font-bold tabular-nums">
+        {n}
+      </Text>
+      {label && (
+        <Text size="xs" color="muted" className="text-center">
+          {label}
+        </Text>
+      )}
     </Card>
   );
 }
@@ -29,19 +38,41 @@ type LayoutKey = "hero" | "dashboard" | "mosaic" | "magazine";
 
 const LAYOUTS: { key: LayoutKey; label: string; description: string }[] = [
   { key: "hero", label: "Hero", description: "6\u00d74 \u00b7 featured card + sidebar + footer" },
-  { key: "dashboard", label: "Dashboard", description: "6\u00d75 \u00b7 stat cards + main + sidebar" },
-  { key: "mosaic", label: "Mosaic", description: "6\u00d76 \u00b7 varied sizes, explicit placement" },
-  { key: "magazine", label: "Magazine", description: "6\u00d76 \u00b7 hero image + headline + articles" },
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    description: "6\u00d75 \u00b7 stat cards + main + sidebar",
+  },
+  {
+    key: "mosaic",
+    label: "Mosaic",
+    description: "6\u00d76 \u00b7 varied sizes, explicit placement",
+  },
+  {
+    key: "magazine",
+    label: "Magazine",
+    description: "6\u00d76 \u00b7 hero image + headline + articles",
+  },
 ];
 
 function HeroLayout() {
   return (
     <Grid cols={6} rows={4} gap="md" animated>
-      <Grid.Item colSpan={4} rowSpan={3}><GridCell n={1} label="Hero" /></Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={2} colStart={5}><GridCell n={2} label="Sidebar Top" /></Grid.Item>
-      <Grid.Item colSpan={2} colStart={5} rowStart={3}><GridCell n={3} label="Sidebar Bottom" /></Grid.Item>
-      <Grid.Item colSpan={3} rowStart={4}><GridCell n={4} label="Footer Left" /></Grid.Item>
-      <Grid.Item colSpan={3} colStart={4} rowStart={4}><GridCell n={5} label="Footer Right" /></Grid.Item>
+      <GridItem colSpan={4} rowSpan={3}>
+        <GridCell n={1} label="Hero" />
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={2} colStart={5}>
+        <GridCell n={2} label="Sidebar Top" />
+      </GridItem>
+      <GridItem colSpan={2} colStart={5} rowStart={3}>
+        <GridCell n={3} label="Sidebar Bottom" />
+      </GridItem>
+      <GridItem colSpan={3} rowStart={4}>
+        <GridCell n={4} label="Footer Left" />
+      </GridItem>
+      <GridItem colSpan={3} colStart={4} rowStart={4}>
+        <GridCell n={5} label="Footer Right" />
+      </GridItem>
     </Grid>
   );
 }
@@ -49,12 +80,24 @@ function HeroLayout() {
 function DashboardLayout() {
   return (
     <Grid cols={6} rows={5} gap="md" animated>
-      <Grid.Item colSpan={2}><GridCell n={1} label="Stat A" /></Grid.Item>
-      <Grid.Item colSpan={2}><GridCell n={2} label="Stat B" /></Grid.Item>
-      <Grid.Item colSpan={2}><GridCell n={3} label="Stat C" /></Grid.Item>
-      <Grid.Item colSpan={4} rowSpan={3} rowStart={2}><GridCell n={4} label="Main Content" /></Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={3} colStart={5} rowStart={2}><GridCell n={5} label="Sidebar" /></Grid.Item>
-      <Grid.Item colSpan={6} rowStart={5}><GridCell n={6} label="Footer" /></Grid.Item>
+      <GridItem colSpan={2}>
+        <GridCell n={1} label="Stat A" />
+      </GridItem>
+      <GridItem colSpan={2}>
+        <GridCell n={2} label="Stat B" />
+      </GridItem>
+      <GridItem colSpan={2}>
+        <GridCell n={3} label="Stat C" />
+      </GridItem>
+      <GridItem colSpan={4} rowSpan={3} rowStart={2}>
+        <GridCell n={4} label="Main Content" />
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={3} colStart={5} rowStart={2}>
+        <GridCell n={5} label="Sidebar" />
+      </GridItem>
+      <GridItem colSpan={6} rowStart={5}>
+        <GridCell n={6} label="Footer" />
+      </GridItem>
     </Grid>
   );
 }
@@ -62,12 +105,24 @@ function DashboardLayout() {
 function MosaicLayout() {
   return (
     <Grid cols={6} rows={6} gap="md" animated>
-      <Grid.Item colSpan={3} rowSpan={3}><GridCell n={1} label="Large" /></Grid.Item>
-      <Grid.Item colSpan={3} rowSpan={2} colStart={4}><GridCell n={2} label="Wide" /></Grid.Item>
-      <Grid.Item colSpan={1} rowSpan={4} colStart={4} rowStart={3}><GridCell n={3} label="Tall" /></Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={2} colStart={5} rowStart={3}><GridCell n={4} label="Medium" /></Grid.Item>
-      <Grid.Item colSpan={3} rowSpan={3} rowStart={4}><GridCell n={5} label="Large" /></Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={2} colStart={5} rowStart={5}><GridCell n={6} label="Medium" /></Grid.Item>
+      <GridItem colSpan={3} rowSpan={3}>
+        <GridCell n={1} label="Large" />
+      </GridItem>
+      <GridItem colSpan={3} rowSpan={2} colStart={4}>
+        <GridCell n={2} label="Wide" />
+      </GridItem>
+      <GridItem colSpan={1} rowSpan={4} colStart={4} rowStart={3}>
+        <GridCell n={3} label="Tall" />
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={2} colStart={5} rowStart={3}>
+        <GridCell n={4} label="Medium" />
+      </GridItem>
+      <GridItem colSpan={3} rowSpan={3} rowStart={4}>
+        <GridCell n={5} label="Large" />
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={2} colStart={5} rowStart={5}>
+        <GridCell n={6} label="Medium" />
+      </GridItem>
     </Grid>
   );
 }
@@ -75,12 +130,24 @@ function MosaicLayout() {
 function MagazineLayout() {
   return (
     <Grid cols={6} rows={6} gap="md" animated>
-      <Grid.Item colSpan={3} rowSpan={4}><GridCell n={1} label="Hero Image" /></Grid.Item>
-      <Grid.Item colSpan={3} rowSpan={2} colStart={4}><GridCell n={2} label="Headline" /></Grid.Item>
-      <Grid.Item colSpan={3} rowSpan={2} colStart={4} rowStart={3}><GridCell n={3} label="Pull Quote" /></Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={2} rowStart={5}><GridCell n={4} label="Article 1" /></Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={2} colStart={3} rowStart={5}><GridCell n={5} label="Article 2" /></Grid.Item>
-      <Grid.Item colSpan={2} rowSpan={2} colStart={5} rowStart={5}><GridCell n={6} label="Article 3" /></Grid.Item>
+      <GridItem colSpan={3} rowSpan={4}>
+        <GridCell n={1} label="Hero Image" />
+      </GridItem>
+      <GridItem colSpan={3} rowSpan={2} colStart={4}>
+        <GridCell n={2} label="Headline" />
+      </GridItem>
+      <GridItem colSpan={3} rowSpan={2} colStart={4} rowStart={3}>
+        <GridCell n={3} label="Pull Quote" />
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={2} rowStart={5}>
+        <GridCell n={4} label="Article 1" />
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={2} colStart={3} rowStart={5}>
+        <GridCell n={5} label="Article 2" />
+      </GridItem>
+      <GridItem colSpan={2} rowSpan={2} colStart={5} rowStart={5}>
+        <GridCell n={6} label="Article 3" />
+      </GridItem>
     </Grid>
   );
 }
@@ -102,13 +169,13 @@ export function GridShowcase() {
   return (
     <Stack gap="md">
       <Tabs value={layout} onValueChange={setLayout}>
-        <Tabs.List>
+        <TabsList>
           {LAYOUTS.map((l) => (
-            <Tabs.Trigger key={l.key} value={l.key}>
+            <TabsTrigger key={l.key} value={l.key}>
               {l.label}
-            </Tabs.Trigger>
+            </TabsTrigger>
           ))}
-        </Tabs.List>
+        </TabsList>
       </Tabs>
 
       <div key={layout}>

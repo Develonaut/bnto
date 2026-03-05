@@ -3,8 +3,26 @@
 import { core } from "@bnto/core";
 
 import { useDelayedLoading } from "../_hooks/useDelayedLoading";
-import { Animate, Button, EmptyState, FolderOpenIcon, Grid, Skeleton } from "@bnto/ui";
-import { RecipeCard } from "@/components/blocks/RecipeCard";
+import {
+  BouncyStagger,
+  Button,
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateTitle,
+  EmptyStateDescription,
+  FolderOpenIcon,
+  Grid,
+  GridItem,
+  Skeleton,
+} from "@bnto/ui";
+import {
+  RecipeCard,
+  RecipeCardHeader,
+  RecipeCardContent,
+  RecipeCardIcon,
+  RecipeCardTitle,
+  RecipeCardMeta,
+} from "@/components/blocks/RecipeCard";
 
 /**
  * Saved recipes grid — self-fetching.
@@ -27,14 +45,13 @@ export function RecipeGrid() {
     return (
       <div className="min-h-[240px]">
         <EmptyState size="md">
-          <EmptyState.Icon>
+          <EmptyStateIcon>
             <FolderOpenIcon />
-          </EmptyState.Icon>
-          <EmptyState.Title>Save your recipes</EmptyState.Title>
-          <EmptyState.Description>
-            Sign in to save recipes, build custom workflows, and pick up where
-            you left off.
-          </EmptyState.Description>
+          </EmptyStateIcon>
+          <EmptyStateTitle>Save your recipes</EmptyStateTitle>
+          <EmptyStateDescription>
+            Sign in to save recipes, build custom workflows, and pick up where you left off.
+          </EmptyStateDescription>
           <Button href="/signin" variant="primary" elevation="sm" className="mt-2">
             Sign in
           </Button>
@@ -47,17 +64,17 @@ export function RecipeGrid() {
     return (
       <Grid cols={{ mobile: 1, tablet: 2, desktop: 3 }} gap="md">
         {Array.from({ length: 3 }).map((_, i) => (
-          <Grid.Item key={i}>
+          <GridItem key={i}>
             <RecipeCard loading>
-              <RecipeCard.Header>
+              <RecipeCardHeader>
                 <Skeleton className="size-10 rounded-lg" />
-              </RecipeCard.Header>
-              <RecipeCard.Content>
+              </RecipeCardHeader>
+              <RecipeCardContent>
                 <Skeleton className="h-5 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
-              </RecipeCard.Content>
+              </RecipeCardContent>
             </RecipeCard>
-          </Grid.Item>
+          </GridItem>
         ))}
       </Grid>
     );
@@ -68,38 +85,33 @@ export function RecipeGrid() {
     return (
       <div className="min-h-[240px]">
         <EmptyState size="md">
-          <EmptyState.Icon>
+          <EmptyStateIcon>
             <FolderOpenIcon />
-          </EmptyState.Icon>
-          <EmptyState.Title>No saved recipes yet</EmptyState.Title>
-          <EmptyState.Description>
-            Run a recipe and save it to see it here.
-          </EmptyState.Description>
+          </EmptyStateIcon>
+          <EmptyStateTitle>No saved recipes yet</EmptyStateTitle>
+          <EmptyStateDescription>Run a recipe and save it to see it here.</EmptyStateDescription>
         </EmptyState>
       </div>
     );
   }
 
   return (
-    <Animate.BouncyStagger asChild from={0.85}>
+    <BouncyStagger asChild from={0.85}>
       <Grid cols={{ mobile: 1, tablet: 2, desktop: 3 }} gap="md">
         {recipes.map((recipe) => (
-          <Grid.Item key={recipe.id}>
+          <GridItem key={recipe.id}>
             <RecipeCard>
-              <RecipeCard.Header>
-                <RecipeCard.Icon />
-              </RecipeCard.Header>
-              <RecipeCard.Content>
-                <RecipeCard.Title>{recipe.name}</RecipeCard.Title>
-                <RecipeCard.Meta
-                  nodeCount={recipe.nodeCount}
-                  updatedAt={recipe.updatedAt}
-                />
-              </RecipeCard.Content>
+              <RecipeCardHeader>
+                <RecipeCardIcon />
+              </RecipeCardHeader>
+              <RecipeCardContent>
+                <RecipeCardTitle>{recipe.name}</RecipeCardTitle>
+                <RecipeCardMeta nodeCount={recipe.nodeCount} updatedAt={recipe.updatedAt} />
+              </RecipeCardContent>
             </RecipeCard>
-          </Grid.Item>
+          </GridItem>
         ))}
       </Grid>
-    </Animate.BouncyStagger>
+    </BouncyStagger>
   );
 }

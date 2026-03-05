@@ -5,7 +5,22 @@ import { core } from "@bnto/core";
 
 import { useControlled } from "@/hooks/useControlled";
 
-import { Button, Dialog, Menu, Popover, Row, Stack, Text } from "@bnto/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+  DialogBody,
+  DialogFooter,
+  Menu,
+  MenuContent,
+  PopoverAnchor,
+  Row,
+  Stack,
+  Text,
+} from "@bnto/ui";
 
 /* ── Shared props ─────────────────────────────────────────────── */
 
@@ -45,12 +60,7 @@ function AuthGateCTA() {
 function AuthGateMenuCTA() {
   return (
     <Row className="gap-2 justify-center">
-      <Button
-        href="/signin"
-        variant="primary"
-        elevation="sm"
-        className="h-8 px-4 text-sm"
-      >
+      <Button href="/signin" variant="primary" elevation="sm" className="h-8 px-4 text-sm">
         Sign up free
       </Button>
       <Button href="/signin" variant="ghost" className="h-8 px-4 text-sm">
@@ -116,18 +126,18 @@ function AuthGateAction({
         </span>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <Dialog.Content>
-            <Dialog.Header>
-              <Dialog.Title>{title}</Dialog.Title>
-              <Dialog.Close />
-            </Dialog.Header>
-            <Dialog.Body>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{title}</DialogTitle>
+              <DialogClose />
+            </DialogHeader>
+            <DialogBody>
               <Text color="muted">{description}</Text>
-            </Dialog.Body>
-            <Dialog.Footer>
+            </DialogBody>
+            <DialogFooter>
               <AuthGateCTA />
-            </Dialog.Footer>
-          </Dialog.Content>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
       </>
     );
@@ -136,7 +146,7 @@ function AuthGateAction({
   // Menu mode (default) — anchored Card with spring animation
   return (
     <Menu open={open} onOpenChange={setOpen}>
-      <Popover.Anchor asChild>
+      <PopoverAnchor asChild>
         <span
           role="button"
           tabIndex={0}
@@ -156,8 +166,8 @@ function AuthGateAction({
         >
           {children}
         </span>
-      </Popover.Anchor>
-      <Menu.Content side="top" align="center" className="w-72 p-5">
+      </PopoverAnchor>
+      <MenuContent side="top" align="center" className="w-72 p-5">
         <Stack className="gap-4">
           <Stack className="gap-1.5">
             <Text size="base" weight="medium">
@@ -169,13 +179,9 @@ function AuthGateAction({
           </Stack>
           <AuthGateMenuCTA />
         </Stack>
-      </Menu.Content>
+      </MenuContent>
     </Menu>
   );
 }
 
-/* ── Compound export ──────────────────────────────────────────── */
-
-export const AuthGate = Object.assign(AuthGateAction, {
-  Action: AuthGateAction,
-});
+export { AuthGateAction as AuthGate };

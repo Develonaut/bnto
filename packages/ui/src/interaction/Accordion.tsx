@@ -8,19 +8,15 @@ import { ChevronDownIcon } from "../icons";
 
 import { cn } from "../utils/cn";
 
-const AccordionItem = forwardRef<
+export const AccordionItem = forwardRef<
   ElementRef<typeof AccordionPrimitive.Item>,
   ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
 >(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Item
-    ref={ref}
-    className={cn("border-b", className)}
-    {...props}
-  />
+  <AccordionPrimitive.Item ref={ref} className={cn("border-b", className)} {...props} />
 ));
 AccordionItem.displayName = "AccordionItem";
 
-const AccordionTrigger = forwardRef<
+export const AccordionTrigger = forwardRef<
   ElementRef<typeof AccordionPrimitive.Trigger>,
   ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
 >(({ className, children, ...props }, ref) => (
@@ -42,7 +38,7 @@ const AccordionTrigger = forwardRef<
 ));
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
 
-const AccordionContent = forwardRef<
+export const AccordionContent = forwardRef<
   ElementRef<typeof AccordionPrimitive.Content>,
   ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
@@ -56,17 +52,6 @@ const AccordionContent = forwardRef<
 ));
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;
 
-function AccordionRoot(
-  props: ComponentProps<typeof AccordionPrimitive.Root>,
-) {
+export function Accordion(props: ComponentProps<typeof AccordionPrimitive.Root>) {
   return <AccordionPrimitive.Root {...props} />;
 }
-
-const Accordion = Object.assign(AccordionRoot, {
-  Root: AccordionRoot,
-  Item: AccordionItem,
-  Trigger: AccordionTrigger,
-  Content: AccordionContent,
-});
-
-export { Accordion };

@@ -14,7 +14,7 @@ const TabsValueContext = createContext<string | undefined>(undefined);
 
 /* ── Root ───────────────────────────────────────────────────── */
 
-function TabsRoot({
+export function Tabs({
   value: controlledValue,
   defaultValue,
   onValueChange,
@@ -33,18 +33,14 @@ function TabsRoot({
 
   return (
     <TabsValueContext.Provider value={activeValue}>
-      <TabsPrimitive.Root
-        value={activeValue}
-        onValueChange={handleValueChange}
-        {...props}
-      />
+      <TabsPrimitive.Root value={activeValue} onValueChange={handleValueChange} {...props} />
     </TabsValueContext.Provider>
   );
 }
 
 /* ── List ───────────────────────────────────────────────────── */
 
-const TabsList = forwardRef<
+export const TabsList = forwardRef<
   ElementRef<typeof TabsPrimitive.List>,
   ComponentPropsWithoutRef<typeof TabsPrimitive.List>
 >(({ className, ...props }, ref) => (
@@ -58,7 +54,7 @@ TabsList.displayName = "Tabs.List";
 
 /* ── Trigger ────────────────────────────────────────────────── */
 
-const TabsTrigger = forwardRef<
+export const TabsTrigger = forwardRef<
   ElementRef<typeof TabsPrimitive.Trigger>,
   ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
 >(({ className, value, ...props }, ref) => {
@@ -70,10 +66,7 @@ const TabsTrigger = forwardRef<
       <TabsPrimitive.Trigger
         ref={ref}
         value={value}
-        className={cn(
-          buttonCn({ variant: "outline" }),
-          className,
-        )}
+        className={cn(buttonCn({ variant: "outline" }), className)}
         {...props}
       />
     </Button>
@@ -83,7 +76,7 @@ TabsTrigger.displayName = "Tabs.Trigger";
 
 /* ── Content ────────────────────────────────────────────────── */
 
-const TabsContent = forwardRef<
+export const TabsContent = forwardRef<
   ElementRef<typeof TabsPrimitive.Content>,
   ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
 >(({ className, ...props }, ref) => (
@@ -97,12 +90,3 @@ const TabsContent = forwardRef<
   />
 ));
 TabsContent.displayName = "Tabs.Content";
-
-/* ── Namespace ──────────────────────────────────────────────── */
-
-export const Tabs = Object.assign(TabsRoot, {
-  Root: TabsRoot,
-  List: TabsList,
-  Trigger: TabsTrigger,
-  Content: TabsContent,
-});

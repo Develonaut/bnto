@@ -11,7 +11,19 @@ import {
   RotateCcwIcon,
 } from "@bnto/ui";
 
-import { Animate, Button, Card } from "@bnto/ui";
+import {
+  Stagger,
+  ScaleIn,
+  FadeIn,
+  SlideUp,
+  SlideDown,
+  PulseSoft,
+  Breathe,
+  BouncyStagger as BouncyStaggerAnim,
+  Button,
+  Card,
+  CardContent,
+} from "@bnto/ui";
 
 /* ── Helpers ─────────────────────────────────────────────── */
 
@@ -65,28 +77,26 @@ function StaggerCascade() {
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
         Stagger cascade. Cards materialize like buildings on the map
       </SectionLabel>
-      <Animate.Stagger key={key} className="grid grid-cols-3 gap-4">
+      <Stagger key={key} className="grid grid-cols-3 gap-4">
         {DEMO_RECIPES.map((recipe, i) => {
           const Icon = recipe.icon;
           return (
-            <Animate.ScaleIn key={recipe.title} index={i} from={0.85}>
+            <ScaleIn key={recipe.title} index={i} from={0.85}>
               <Card className="h-full">
-                <Card.Content className="flex flex-col gap-3 p-5">
+                <CardContent className="flex flex-col gap-3 p-5">
                   <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Icon className="size-5" />
                   </div>
                   <h3 className="font-display text-base font-semibold tracking-tight">
                     {recipe.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Browser-based, no signup
-                  </p>
-                </Card.Content>
+                  <p className="text-xs text-muted-foreground">Browser-based, no signup</p>
+                </CardContent>
               </Card>
-            </Animate.ScaleIn>
+            </ScaleIn>
           );
         })}
-      </Animate.Stagger>
+      </Stagger>
     </div>
   );
 }
@@ -102,26 +112,26 @@ function EntranceAnimations() {
         Entrance animations. Springy pop for appearing elements
       </SectionLabel>
       <div key={key} className="grid grid-cols-4 gap-4">
-        <Animate.FadeIn>
+        <FadeIn>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             fade-in
           </Card>
-        </Animate.FadeIn>
-        <Animate.ScaleIn>
+        </FadeIn>
+        <ScaleIn>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             scale-in
           </Card>
-        </Animate.ScaleIn>
-        <Animate.SlideUp>
+        </ScaleIn>
+        <SlideUp>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             slide-up
           </Card>
-        </Animate.SlideUp>
-        <Animate.SlideDown>
+        </SlideUp>
+        <SlideDown>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             slide-down
           </Card>
-        </Animate.SlideDown>
+        </SlideDown>
       </div>
     </div>
   );
@@ -135,25 +145,24 @@ function HeroPopIn() {
   return (
     <div>
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
-        Hero pop-in. <code className="font-mono text-xs">from=0.5</code>{" "}
-        for dramatic entrance
+        Hero pop-in. <code className="font-mono text-xs">from=0.5</code> for dramatic entrance
       </SectionLabel>
       <div key={key} className="flex gap-4">
-        <Animate.ScaleIn from={0.5} className="flex-1">
+        <ScaleIn from={0.5} className="flex-1">
           <Card className="flex h-32 items-center justify-center rounded-xl font-display text-lg font-bold">
             Hero Card
           </Card>
-        </Animate.ScaleIn>
-        <Animate.ScaleIn from={0.5} easing="spring-bouncy" className="flex-1">
+        </ScaleIn>
+        <ScaleIn from={0.5} easing="spring-bouncy" className="flex-1">
           <Card className="flex h-32 items-center justify-center rounded-xl font-display text-lg font-bold">
             Bouncy Spring
           </Card>
-        </Animate.ScaleIn>
-        <Animate.ScaleIn from={0.5} easing="spring-bouncier" className="flex-1">
+        </ScaleIn>
+        <ScaleIn from={0.5} easing="spring-bouncier" className="flex-1">
           <Card className="flex h-32 items-center justify-center rounded-xl font-display text-lg font-bold">
             Bouncier Spring
           </Card>
-        </Animate.ScaleIn>
+        </ScaleIn>
       </div>
     </div>
   );
@@ -169,26 +178,24 @@ function BouncyStagger() {
       <SectionLabel onReplay={() => setKey((k) => k + 1)}>
         Bouncy stagger. Composed API — children bounce onto the map
       </SectionLabel>
-      <Animate.BouncyStagger key={key} className="grid grid-cols-3 gap-4">
+      <BouncyStaggerAnim key={key} className="grid grid-cols-3 gap-4">
         {DEMO_RECIPES.map((recipe) => {
           const Icon = recipe.icon;
           return (
             <Card key={recipe.title} className="h-full">
-              <Card.Content className="flex flex-col gap-3 p-5">
+              <CardContent className="flex flex-col gap-3 p-5">
                 <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Icon className="size-5" />
                 </div>
                 <h3 className="font-display text-base font-semibold tracking-tight">
                   {recipe.title}
                 </h3>
-                <p className="text-xs text-muted-foreground">
-                  Browser-based, no signup
-                </p>
-              </Card.Content>
+                <p className="text-xs text-muted-foreground">Browser-based, no signup</p>
+              </CardContent>
             </Card>
           );
         })}
-      </Animate.BouncyStagger>
+      </BouncyStaggerAnim>
     </div>
   );
 }
@@ -198,20 +205,18 @@ function BouncyStagger() {
 function EmphasisAnimations() {
   return (
     <div>
-      <SectionLabel>
-        Emphasis. Calm looping animations for ambient presence
-      </SectionLabel>
+      <SectionLabel>Emphasis. Calm looping animations for ambient presence</SectionLabel>
       <div className="grid grid-cols-2 gap-4">
-        <Animate.PulseSoft>
+        <PulseSoft>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             pulse-soft
           </Card>
-        </Animate.PulseSoft>
-        <Animate.Breathe>
+        </PulseSoft>
+        <Breathe>
           <Card className="flex h-24 items-center justify-center rounded-xl font-display text-sm font-semibold">
             breathe
           </Card>
-        </Animate.Breathe>
+        </Breathe>
       </div>
     </div>
   );

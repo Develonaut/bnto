@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { AppShell } from "@bnto/ui";
+import { AppShellHeader } from "@bnto/ui";
 import { Navbar } from "@/components/blocks/Navbar";
 
 /**
@@ -14,9 +14,9 @@ import { Navbar } from "@/components/blocks/Navbar";
 export default function EditorLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-dvh flex-col">
-      <AppShell.Header>
+      <AppShellHeader>
         <Navbar />
-      </AppShell.Header>
+      </AppShellHeader>
       <main className="flex-1 overflow-hidden">{children}</main>
     </div>
   );

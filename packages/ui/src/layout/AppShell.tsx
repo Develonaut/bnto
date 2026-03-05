@@ -28,15 +28,13 @@ import { createCn } from "../utils/createCn";
 
 /* ── Root ──────────────────────────────────────────────────── */
 
-function AppShellRoot({ className, ...props }: ComponentProps<"div">) {
-  return (
-    <div className={cn("flex min-h-svh flex-col", className)} {...props} />
-  );
+export function AppShell({ className, ...props }: ComponentProps<"div">) {
+  return <div className={cn("flex min-h-svh flex-col", className)} {...props} />;
 }
 
 /* ── Header ───────────────────────────────────────────────── */
 
-function AppShellHeader({ className, ...props }: ComponentProps<"header">) {
+export function AppShellHeader({ className, ...props }: ComponentProps<"header">) {
   return <header className={cn("relative z-50", className)} {...props} />;
 }
 
@@ -60,17 +58,13 @@ type AppShellMainProps = ComponentProps<"main"> & {
   clearance?: "default" | "none";
 };
 
-function AppShellMain({ clearance, className, ...props }: AppShellMainProps) {
+export function AppShellMain({ clearance, className, ...props }: AppShellMainProps) {
   return <main className={mainCn({ clearance }, className)} {...props} />;
 }
 
 /* ── Content ──────────────────────────────────────────────── */
 
-function AppShellContent({
-  className,
-  children,
-  ...props
-}: ComponentProps<"div">) {
+export function AppShellContent({ className, children, ...props }: ComponentProps<"div">) {
   return (
     <div className={cn("min-h-[80svh] flex-1 py-12", className)} {...props}>
       <Container>
@@ -79,12 +73,3 @@ function AppShellContent({
     </div>
   );
 }
-
-/* ── Export ────────────────────────────────────────────────── */
-
-export const AppShell = Object.assign(AppShellRoot, {
-  Root: AppShellRoot,
-  Header: AppShellHeader,
-  Main: AppShellMain,
-  Content: AppShellContent,
-});

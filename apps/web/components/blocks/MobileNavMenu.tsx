@@ -12,6 +12,9 @@ import {
   LogOutIcon,
   Row,
   Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetClose,
   Stack,
   Text,
   XIcon,
@@ -39,8 +42,8 @@ export function MobileNavMenu({
   }
 
   return (
-    <Sheet.Root open={open} onOpenChange={onOpenChange}>
-      <Sheet.Content
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
         aria-describedby={undefined}
         side="top"
         className="inset-0 z-[100] h-dvh w-full bg-primary text-primary-foreground [&>button]:hidden"
@@ -49,17 +52,17 @@ export function MobileNavMenu({
           <Container className="pb-12">
             {/* Visually hidden title for accessibility */}
             <div className="absolute -m-px h-px w-px overflow-hidden border-0 p-0">
-              <Sheet.Title className="text-primary">Navigation</Sheet.Title>
+              <SheetTitle className="text-primary">Navigation</SheetTitle>
             </div>
 
             {/* Close button */}
             <div className="flex justify-end pt-5">
-              <Sheet.Close asChild>
+              <SheetClose asChild>
                 <Button variant="secondary" size="icon">
                   <XIcon />
                   <span className="sr-only">Close menu</span>
                 </Button>
-              </Sheet.Close>
+              </SheetClose>
             </div>
 
             <Stack className="h-full justify-between gap-20 pt-16">
@@ -70,10 +73,7 @@ export function MobileNavMenu({
                 </div>
                 <div className="grid w-full grid-cols-2 gap-x-4 gap-y-10">
                   {RECIPES.map((category) => (
-                    <Stack
-                      key={category.title}
-                      className="gap-4 text-primary-foreground"
-                    >
+                    <Stack key={category.title} className="gap-4 text-primary-foreground">
                       <div className="text-xs uppercase tracking-wider text-primary-foreground/60">
                         {category.title}
                       </div>
@@ -99,11 +99,7 @@ export function MobileNavMenu({
               <Stack className="gap-6">
                 <Row className="gap-4">
                   {showEditor && (
-                    <Button
-                      variant="outline"
-                      href="/create"
-                      onClick={() => onOpenChange(false)}
-                    >
+                    <Button variant="outline" href="/create" onClick={() => onOpenChange(false)}>
                       Create
                     </Button>
                   )}
@@ -136,10 +132,7 @@ export function MobileNavMenu({
                     {(user.name || user.email) && (
                       <div>
                         {user.name && (
-                          <Text
-                            size="sm"
-                            className="font-medium text-primary-foreground"
-                          >
+                          <Text size="sm" className="font-medium text-primary-foreground">
                             {user.name}
                           </Text>
                         )}
@@ -150,11 +143,7 @@ export function MobileNavMenu({
                         )}
                       </div>
                     )}
-                    <Button
-                      variant="outline"
-                      onClick={handleSignOut}
-                      data-testid="mobile-sign-out"
-                    >
+                    <Button variant="outline" onClick={handleSignOut} data-testid="mobile-sign-out">
                       <LogOutIcon />
                       Sign out
                     </Button>
@@ -173,7 +162,7 @@ export function MobileNavMenu({
             </Stack>
           </Container>
         </div>
-      </Sheet.Content>
-    </Sheet.Root>
+      </SheetContent>
+    </Sheet>
   );
 }

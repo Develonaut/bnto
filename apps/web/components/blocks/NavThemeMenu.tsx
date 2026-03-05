@@ -6,16 +6,15 @@ import {
   AnimatedThemeToggle,
   Button,
   Menu,
+  MenuTrigger,
+  MenuContent,
   RadialSlider,
   RotateCcwIcon,
   SunIcon,
   Text,
 } from "@bnto/ui";
 
-import {
-  THEME_STORE_DEFAULT_ANGLE,
-  useThemeStore,
-} from "@/lib/stores/themeStore";
+import { THEME_STORE_DEFAULT_ANGLE, useThemeStore } from "@/lib/stores/themeStore";
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -47,8 +46,7 @@ export function NavThemeMenu() {
   const setLightAngle = useThemeStore((s) => s.setLightAngle);
   const { setTheme, resolvedTheme } = useTheme();
 
-  const isDefault =
-    lightAngle === THEME_STORE_DEFAULT_ANGLE && resolvedTheme === "light";
+  const isDefault = lightAngle === THEME_STORE_DEFAULT_ANGLE && resolvedTheme === "light";
 
   const handleReset = () => {
     setLightAngle(THEME_STORE_DEFAULT_ANGLE);
@@ -57,11 +55,11 @@ export function NavThemeMenu() {
 
   return (
     <Menu>
-      <Menu.Trigger variant="outline" size="icon" elevation="sm">
+      <MenuTrigger variant="outline" size="icon" elevation="sm">
         <SunIcon />
         <span className="sr-only">Theme settings</span>
-      </Menu.Trigger>
-      <Menu.Content className="w-auto p-4" offset="lg">
+      </MenuTrigger>
+      <MenuContent className="w-auto p-4" offset="lg">
         <div className="flex flex-col items-center gap-3">
           {/* Theme toggle + city name */}
           <div className="flex w-full items-center gap-3">
@@ -98,17 +96,12 @@ export function NavThemeMenu() {
             </span>
           </RadialSlider>
           {/* Reset — always visible, disabled when at default */}
-          <Button
-            variant="muted"
-            onClick={handleReset}
-            disabled={isDefault}
-            className="w-full"
-          >
+          <Button variant="muted" onClick={handleReset} disabled={isDefault} className="w-full">
             <RotateCcwIcon />
             Reset
           </Button>
         </div>
-      </Menu.Content>
+      </MenuContent>
     </Menu>
   );
 }

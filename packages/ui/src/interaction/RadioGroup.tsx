@@ -6,7 +6,7 @@ import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 
 import { cn } from "../utils/cn";
 
-function RadioGroupRoot({
+export function RadioGroup({
   className,
   ...props
 }: ComponentProps<typeof RadioGroupPrimitive.Root>) {
@@ -19,7 +19,7 @@ function RadioGroupRoot({
   );
 }
 
-function RadioGroupItem({
+export function RadioGroupItem({
   className,
   ...props
 }: ComponentProps<typeof RadioGroupPrimitive.Item>) {
@@ -32,7 +32,12 @@ function RadioGroupItem({
         "disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
-      style={{ "--pressable-ease": "var(--ease-spring-bouncier)", "--pressable-dur": "400ms" } as CSSProperties}
+      style={
+        {
+          "--pressable-ease": "var(--ease-spring-bouncier)",
+          "--pressable-dur": "400ms",
+        } as CSSProperties
+      }
       {...props}
     >
       <RadioGroupPrimitive.Indicator
@@ -44,10 +49,3 @@ function RadioGroupItem({
     </RadioGroupPrimitive.Item>
   );
 }
-
-const RadioGroup = Object.assign(RadioGroupRoot, {
-  Root: RadioGroupRoot,
-  Item: RadioGroupItem,
-});
-
-export { RadioGroup };

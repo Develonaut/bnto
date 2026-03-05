@@ -3,7 +3,7 @@
 import { useMemo, type ComponentProps } from "react";
 
 import { cn } from "../../utils/cn";
-import { Animate } from "../../animation/Animate";
+import { SlideUp } from "../../animation/Animate";
 
 import { FileUploadItemContext } from "./context";
 
@@ -18,7 +18,7 @@ export function FileUploadItem({
 
   return (
     <FileUploadItemContext.Provider value={ctx}>
-      <Animate.SlideUp index={index} easing="spring-bouncier">
+      <SlideUp index={index} easing="spring-bouncier">
         <div
           role="listitem"
           data-slot="file-upload-item"
@@ -27,7 +27,7 @@ export function FileUploadItem({
         >
           {children}
         </div>
-      </Animate.SlideUp>
+      </SlideUp>
     </FileUploadItemContext.Provider>
   );
 }

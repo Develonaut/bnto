@@ -2,7 +2,7 @@
 
 import type { Definition } from "@bnto/nodes";
 import { deriveAcceptedTypes } from "@bnto/core";
-import { FileUpload, toDropzoneAccept } from "@bnto/ui";
+import { FileUpload, FileUploadDropzone, toDropzoneAccept } from "@bnto/ui";
 import { DropzoneContent } from "./DropzoneContent";
 
 interface InputRendererProps {
@@ -19,12 +19,7 @@ interface InputRendererProps {
  * Phase 1: Only `file-upload` mode is implemented. `text` and `url` modes
  * render placeholder UI for forward compatibility.
  */
-export function InputRenderer({
-  definition,
-  files,
-  onFilesChange,
-  disabled,
-}: InputRendererProps) {
+export function InputRenderer({ definition, files, onFilesChange, disabled }: InputRendererProps) {
   const { accept, label } = deriveAcceptedTypes(definition);
   const inputNode = definition.nodes?.find((n) => n.type === "input");
   const mode = (inputNode?.parameters?.mode as string) ?? "file-upload";
@@ -56,9 +51,9 @@ export function InputRenderer({
       multiple
       disabled={disabled}
     >
-      <FileUpload.Dropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
+      <FileUploadDropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
         <DropzoneContent label={label} />
-      </FileUpload.Dropzone>
+      </FileUploadDropzone>
     </FileUpload>
   );
 }

@@ -32,14 +32,14 @@ import { Heading } from "@/components/ui/Heading";
 export default function Page() {
   return (
     <>
-      <Heading level={1}>Page Title</Heading>   {/* server-rendered */}
-      <MyForm />                                  {/* client leaf */}
+      <Heading level={1}>Page Title</Heading> {/* server-rendered */}
+      <MyForm /> {/* client leaf */}
     </>
   );
 }
 
 // _components/MyForm.tsx -- client boundary at the leaf
-"use client";
+("use client");
 export function MyForm() {
   const { data, isLoading } = core.recipes.useRecipes();
   if (isLoading) return <Skeleton />;
@@ -70,6 +70,7 @@ convex/_helpers/enrich_with_data.ts
 Convex validates all existing documents against the new schema on deploy. If you rename or change a field type, the deploy will fail.
 
 **Fix:**
+
 1. Temporarily relax the schema (make old and new fields optional)
 2. Deploy: `npx convex deploy --yes`
 3. Run a cleanup mutation: `npx convex run --prod <function>`
@@ -139,29 +140,26 @@ After renaming or moving packages in the monorepo, old `node_modules` symlinks c
 
 **Fix:** Delete `node_modules` in the affected packages and run `pnpm install`.
 
-## Object.assign + Shared Radix Primitives (Dot-Notation)
+## No Object.assign Compound Components (RSC Incompatible)
 
-When two component wrappers use `Object.assign` on the **same Radix primitive** (e.g., Dialog and Sheet both use `DialogPrimitive.Root`), the last one to load overwrites the first's sub-components. `Dialog.Content` silently becomes `SheetContent`.
+`Object.assign` dot-notation (`<Dialog.Content>`, `<Card.Header>`) does NOT work in React Server Components. Server components get "client reference" objects — sub-properties assigned via `Object.assign` are undefined at render time.
 
-This happens because `Object.assign` **mutates its first argument**. If two wrappers target the same function reference, they stomp each other.
-
-**Fix:** Create a wrapper function for each root so they have distinct object identities:
+**Fix (already applied repo-wide):** Use flat named exports with prefixed names instead:
 
 ```tsx
-// components/Dialog.tsx
-import { Dialog as PrimitiveDialog, DialogContent, ... } from "../primitives/dialog";
+// GOOD -- flat exports, RSC compatible
+import { Dialog, DialogContent, DialogTitle } from "@bnto/ui";
 
-// Distinct function -- Object.assign targets THIS, not the shared Radix primitive
-function DialogRoot(props: ComponentProps<typeof PrimitiveDialog>) {
-  return <PrimitiveDialog {...props} />;
-}
+<Dialog open={open}>
+  <DialogContent>
+    <DialogTitle>Title</DialogTitle>
+  </DialogContent>
+</Dialog>
 
-export const Dialog = Object.assign(DialogRoot, {
-  Root: DialogRoot,
-  Content: DialogContent,
-  ...
-});
+// BAD -- Object.assign dot-notation, breaks in RSC
+<Dialog.Content>
+  <Dialog.Title>Title</Dialog.Title>
+</Dialog.Content>
 ```
 
-**Symptoms:** Component renders with wrong styling (e.g., Dialog slides in from the right like a Sheet). Check `data-slot` attributes in DevTools -- they'll reveal which primitive is actually rendering.
-
+**If you see `Object.assign` compound patterns anywhere in the codebase, convert them to flat exports.**
