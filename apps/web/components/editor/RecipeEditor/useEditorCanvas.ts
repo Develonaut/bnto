@@ -39,6 +39,8 @@ function useEditorCanvas({ initialSlug }: UseEditorCanvasOptions = {}) {
   useState(() => {
     if (initialSlug && initialSlug !== "blank") {
       storeApi.getState().loadRecipe(initialSlug);
+    } else {
+      storeApi.getState().createBlank();
     }
   });
 
