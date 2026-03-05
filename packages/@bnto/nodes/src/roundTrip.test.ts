@@ -60,9 +60,10 @@ describe("round-trip: full editor lifecycle", () => {
     const blank = createBlankDefinition();
 
     // Add three nodes (blank starts with 2 I/O nodes)
+    // Use types that produce valid defaults (no required string fields)
     const r1 = addNode(blank, "image", { x: 100, y: 0 });
     const r2 = addNode(r1.definition, "transform", { x: 200, y: 0 });
-    const r3 = addNode(r2.definition, "spreadsheet", { x: 300, y: 0 });
+    const r3 = addNode(r2.definition, "group", { x: 300, y: 0 });
     expect(r3.definition.nodes).toHaveLength(5); // 2 I/O + 3 added
 
     // Add edges connecting the 3 added nodes (indices 2, 3, 4)
@@ -95,9 +96,7 @@ describe("round-trip: full editor lifecycle", () => {
 
     // Add a new node to the existing recipe
     const result = addNode(recipeDef, "edit-fields", { x: 500, y: 100 });
-    expect(result.definition.nodes!.length).toBe(
-      recipeDef.nodes!.length + 1,
-    );
+    expect(result.definition.nodes!.length).toBe(recipeDef.nodes!.length + 1);
 
     // Re-export as a custom recipe
     const custom = definitionToRecipe(result.definition, {
@@ -106,9 +105,7 @@ describe("round-trip: full editor lifecycle", () => {
     });
 
     expect(custom.slug).toBe("custom-compress-images");
-    expect(custom.definition.nodes!.length).toBe(
-      recipeDef.nodes!.length + 1,
-    );
+    expect(custom.definition.nodes!.length).toBe(recipeDef.nodes!.length + 1);
   });
 
   it("all operations maintain immutability", () => {

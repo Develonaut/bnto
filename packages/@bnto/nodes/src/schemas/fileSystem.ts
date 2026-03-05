@@ -5,7 +5,8 @@
  * Validator: engine/pkg/validator/validators.go -> validateFileSystem
  */
 
-import type { NodeSchema } from "./types";
+import { z } from "zod";
+import type { NodeSchemaDefinition } from "./types";
 
 /** Valid file system operations. */
 export const FILE_OPERATIONS = [
@@ -19,39 +20,40 @@ export const FILE_OPERATIONS = [
   "list",
 ] as const;
 
-export const fileSystemSchema: NodeSchema = {
+/** Zod schema for file-system node parameters. */
+export const fileSystemParamsSchema = z.object({
+  operation: z.enum(FILE_OPERATIONS),
+  path: z.string().optional(),
+  content: z.string().optional(),
+  source: z.string().optional(),
+  dest: z.string().optional(),
+});
+
+/** Inferred TypeScript type for file-system node parameters. */
+export type FileSystemParams = z.infer<typeof fileSystemParamsSchema>;
+
+/** Full schema definition for the file-system node type. */
+export const fileSystemNodeSchema: NodeSchemaDefinition = {
   nodeType: "file-system",
   schemaVersion: 1,
-  parameters: [
-    {
-      name: "operation",
-      type: "enum",
-      required: true,
+  schema: fileSystemParamsSchema,
+  params: {
+    operation: {
       label: "Operation",
       description: "The file system operation to perform.",
-      enumValues: FILE_OPERATIONS,
     },
-    {
-      name: "path",
-      type: "string",
-      required: false,
+    path: {
       label: "Path",
       description: "File or directory path. Supports glob patterns for list and delete.",
       placeholder: "/path/to/file.txt",
     },
-    {
-      name: "content",
-      type: "string",
-      required: false,
+    content: {
       label: "Content",
       description: "Content to write to the file.",
       visibleWhen: { param: "operation", equals: "write" },
       requiredWhen: { param: "operation", equals: "write" },
     },
-    {
-      name: "source",
-      type: "string",
-      required: false,
+    source: {
       label: "Source",
       description: "Source file path for copy or move operations.",
       visibleWhen: [
@@ -63,10 +65,7 @@ export const fileSystemSchema: NodeSchema = {
         { param: "operation", equals: "move" },
       ],
     },
-    {
-      name: "dest",
-      type: "string",
-      required: false,
+    dest: {
       label: "Destination",
       description: "Destination file path for copy or move operations.",
       visibleWhen: [
@@ -78,5 +77,5 @@ export const fileSystemSchema: NodeSchema = {
         { param: "operation", equals: "move" },
       ],
     },
-  ],
-} as const;
+  },
+};

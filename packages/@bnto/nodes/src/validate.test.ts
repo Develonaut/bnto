@@ -8,7 +8,7 @@ import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 function validDef(overrides: Partial<Definition> = {}): Definition {
   return {
     id: "test-node",
-    type: "image",
+    type: "group",
     version: "1.0.0",
     name: "Test Node",
     position: { x: 0, y: 0 },
@@ -90,33 +90,23 @@ describe("validateDefinition — unknown type", () => {
     expect(errors[0].message).toContain("unknown type 'banana'");
   });
 
-  it("accepts all 10 registered types", () => {
-    const types = [
-      "edit-fields",
-      "file-system",
-      "group",
-      "http-request",
-      "image",
-      "loop",
-      "parallel",
-      "shell-command",
-      "spreadsheet",
-      "transform",
-    ];
-    for (const type of types) {
-      const def = validDef({ type });
-      // Add required params so type-specific validators pass
-      if (type === "http-request") {
-        def.parameters = { url: "https://example.com", method: "GET" };
-      } else if (type === "loop") {
-        def.parameters = { mode: "times", count: 3 };
-      } else if (type === "file-system") {
-        def.parameters = { operation: "read" };
-      } else if (type === "shell-command") {
-        def.parameters = { command: "echo hello" };
-      } else if (type === "edit-fields") {
-        def.parameters = { values: { name: "test" } };
-      }
+  it("accepts all 12 registered types with valid params", () => {
+    const typeParams: Record<string, Record<string, unknown>> = {
+      "edit-fields": { values: { name: "test" } },
+      "file-system": { operation: "read" },
+      group: {},
+      "http-request": { url: "https://example.com", method: "GET" },
+      image: { operation: "resize" },
+      input: {},
+      loop: { mode: "times", count: 3 },
+      output: {},
+      parallel: { tasks: [{ a: 1 }] },
+      "shell-command": { command: "echo hello" },
+      spreadsheet: { operation: "read", format: "csv", path: "/f.csv" },
+      transform: {},
+    };
+    for (const [type, params] of Object.entries(typeParams)) {
+      const def = validDef({ type, parameters: params });
       const errors = validateDefinition(def);
       const typeErrors = errors.filter((e) => e.message.includes("unknown type"));
       expect(typeErrors).toHaveLength(0);
@@ -160,8 +150,9 @@ describe("validateDefinition — http-request", () => {
   it("reports both missing url and method", () => {
     const def = validDef({ type: "http-request", parameters: {} });
     const errors = validateDefinition(def);
-    expect(errors.filter((e) => e.field === "url")).toHaveLength(1);
-    expect(errors.filter((e) => e.field === "method")).toHaveLength(1);
+    // Both hand-rolled and Zod validators catch url; hand-rolled catches method
+    expect(errors.some((e) => e.field === "url")).toBe(true);
+    expect(errors.some((e) => e.field === "method")).toBe(true);
   });
 });
 
@@ -197,7 +188,7 @@ describe("validateDefinition — loop", () => {
   });
 
   it("passes with valid forEach params", () => {
-    const def = validDef({ type: "loop", parameters: { mode: "forEach", items: [1, 2, 3] } });
+    const def = validDef({ type: "loop", parameters: { mode: "forEach", items: "{{.files}}" } });
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);
   });
@@ -278,22 +269,22 @@ describe("validateDefinition — minimal validation types", () => {
     expect(errors).toHaveLength(0);
   });
 
-  it("parallel with no children passes", () => {
+  it("parallel requires tasks (Zod)", () => {
     const def = validDef({ type: "parallel" });
     const errors = validateDefinition(def);
-    expect(errors).toHaveLength(0);
+    expect(errors.some((e) => e.field === "tasks")).toBe(true);
   });
 
-  it("spreadsheet with no params passes", () => {
+  it("spreadsheet requires operation, format, path (Zod)", () => {
     const def = validDef({ type: "spreadsheet" });
     const errors = validateDefinition(def);
-    expect(errors).toHaveLength(0);
+    expect(errors.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("image with no params passes", () => {
+  it("image requires operation (Zod)", () => {
     const def = validDef({ type: "image" });
     const errors = validateDefinition(def);
-    expect(errors).toHaveLength(0);
+    expect(errors.some((e) => e.field === "operation")).toBe(true);
   });
 
   it("transform with no params passes", () => {

@@ -1,98 +1,66 @@
 /**
  * Schema types — describe the parameters each node type accepts.
  *
- * These types power the config panel UI (Atomiton `createFieldsFromSchema` pattern).
- * ~70-80% of parameter fields need zero UI code — the schema drives the form.
+ * Zod schemas are the single source of truth for validation.
+ * NodeParamMeta provides UI metadata (labels, descriptions, visibility rules)
+ * that pairs with each Zod field.
  */
 
-/** Supported parameter value types for schema definitions. */
-export type ParameterType = "string" | "number" | "boolean" | "enum" | "object" | "array";
+import type { z } from "zod";
+
+/** Condition for visibleWhen/requiredWhen rules — single or OR array. */
+export type ParamCondition =
+  | { param: string; equals: string }
+  | Array<{ param: string; equals: string }>;
 
 /**
- * Describes a single parameter a node type accepts.
+ * UI metadata for a single parameter.
  *
- * Captures everything the config panel UI needs to render a form field:
- * type, label, description, constraints, and defaults.
+ * This is the information the config panel UI needs that Zod can't express:
+ * labels, descriptions, placeholders, conditional visibility/requirement.
  */
-export interface ParameterSchema {
-  /** Parameter key as used in `.bnto.json` `parameters` object. */
-  name: string;
-
-  /** Value type — drives which form control the UI renders. */
-  type: ParameterType;
-
-  /** Whether the parameter must be provided. */
-  required: boolean;
-
+export interface NodeParamMeta {
   /** Human-readable label for the config panel. */
   label: string;
 
   /** One-sentence description of what the parameter does. */
   description: string;
 
-  /** Default value when the parameter is omitted. */
-  default?: unknown;
-
-  /** Valid values for `"enum"` type parameters. */
-  enumValues?: readonly string[];
-
-  /** Minimum value for `"number"` type parameters. */
-  min?: number;
-
-  /** Maximum value for `"number"` type parameters. */
-  max?: number;
-
-  /**
-   * Conditional requirement — parameter is required only when
-   * another parameter matches a specific value.
-   *
-   * Example: `items` is required only when `mode` is `"forEach"`.
-   */
-  requiredWhen?:
-    | {
-        /** The parameter name to check. */ param: string;
-        /** The value that triggers the requirement. */ equals: string;
-      }
-    | Array<{ param: string; equals: string }>;
+  /** Placeholder text for string/number inputs. */
+  placeholder?: string;
 
   /**
    * Conditional visibility — parameter is shown only when
    * another parameter matches a specific value.
-   *
-   * Single condition or array of conditions (OR logic — any match triggers visibility).
-   *
-   * Example: `base` and `overlay` are shown only when
-   * `operation` is `"composite"`.
    */
-  visibleWhen?:
-    | {
-        /** The parameter name to check. */ param: string;
-        /** The value that triggers visibility. */ equals: string;
-      }
-    | Array<{ param: string; equals: string }>;
+  visibleWhen?: ParamCondition;
 
-  /** Placeholder text for string inputs. */
-  placeholder?: string;
+  /**
+   * Conditional requirement — parameter is required only when
+   * another parameter matches a specific value.
+   */
+  requiredWhen?: ParamCondition;
 }
 
 /**
- * Describes all parameters for a single node type.
+ * Complete schema definition for a node type.
  *
- * One `NodeSchema` per node type — drives the entire config panel form.
+ * Combines Zod validation schema with UI metadata and versioning.
  */
-export interface NodeSchema {
+export interface NodeSchemaDefinition {
   /** The node type name (e.g., "http-request", "image"). */
   nodeType: string;
 
   /**
    * Parameter schema version — tracks changes to this node type's parameters.
-   *
    * Bump when parameters are added, removed, renamed, or have their
-   * type/constraints changed. Enables future migration of saved recipes
-   * that reference older parameter shapes.
+   * type/constraints changed.
    */
   schemaVersion: number;
 
-  /** All parameters this node type accepts. */
-  parameters: readonly ParameterSchema[];
+  /** Zod schema for runtime validation of node parameters. */
+  schema: z.ZodObject<z.ZodRawShape>;
+
+  /** UI metadata keyed by parameter name — drives the config panel. */
+  params: Record<string, NodeParamMeta>;
 }

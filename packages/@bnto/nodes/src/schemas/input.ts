@@ -6,82 +6,69 @@
  * text area, URL input).
  */
 
-import type { NodeSchema } from "./types";
+import { z } from "zod";
+import type { NodeSchemaDefinition } from "./types";
 
 /** Valid input modes — determines which UI widget the environment renders. */
 export const INPUT_MODES = ["file-upload", "text", "url"] as const;
 
-export const inputSchema: NodeSchema = {
+/** Zod schema for input node parameters. */
+export const inputParamsSchema = z.object({
+  mode: z.enum(INPUT_MODES).default("file-upload"),
+  accept: z.array(z.string()).optional(),
+  extensions: z.array(z.string()).optional(),
+  label: z.string().optional(),
+  multiple: z.boolean().optional().default(true),
+  maxFileSize: z.number().min(0).optional().default(0),
+  maxFiles: z.number().min(0).optional().default(0),
+  placeholder: z.string().optional(),
+});
+
+/** Inferred TypeScript type for input node parameters. */
+export type InputParams = z.infer<typeof inputParamsSchema>;
+
+/** Full schema definition for the input node type. */
+export const inputNodeSchema: NodeSchemaDefinition = {
   nodeType: "input",
   schemaVersion: 1,
-  parameters: [
-    {
-      name: "mode",
-      type: "enum",
-      required: true,
+  schema: inputParamsSchema,
+  params: {
+    mode: {
       label: "Mode",
       description: "How data is provided to the recipe.",
-      default: "file-upload",
-      enumValues: INPUT_MODES,
     },
-    {
-      name: "accept",
-      type: "array",
-      required: false,
+    accept: {
       label: "Accepted MIME Types",
       description: 'MIME types accepted (e.g., "image/jpeg", "image/png").',
       visibleWhen: { param: "mode", equals: "file-upload" },
     },
-    {
-      name: "extensions",
-      type: "array",
-      required: false,
+    extensions: {
       label: "File Extensions",
       description: 'File extensions accepted (e.g., ".jpg", ".png").',
       visibleWhen: { param: "mode", equals: "file-upload" },
     },
-    {
-      name: "label",
-      type: "string",
-      required: false,
+    label: {
       label: "Label",
       description: "Human-readable label for the input control.",
       placeholder: "JPEG, PNG, or WebP images",
       visibleWhen: { param: "mode", equals: "file-upload" },
     },
-    {
-      name: "multiple",
-      type: "boolean",
-      required: false,
+    multiple: {
       label: "Multiple",
       description: "Whether multiple files or items are accepted.",
-      default: true,
       visibleWhen: { param: "mode", equals: "file-upload" },
     },
-    {
-      name: "maxFileSize",
-      type: "number",
-      required: false,
+    maxFileSize: {
       label: "Max File Size",
       description: "Maximum file size in bytes. 0 = no limit.",
-      default: 0,
-      min: 0,
       visibleWhen: { param: "mode", equals: "file-upload" },
     },
-    {
-      name: "maxFiles",
-      type: "number",
-      required: false,
+    maxFiles: {
       label: "Max Files",
       description: "Maximum number of files. 0 = no limit.",
-      default: 0,
-      min: 0,
       visibleWhen: { param: "mode", equals: "file-upload" },
     },
-    {
-      name: "placeholder",
-      type: "string",
-      required: false,
+    placeholder: {
       label: "Placeholder",
       description: "Placeholder text for text or URL input.",
       visibleWhen: [
@@ -89,5 +76,5 @@ export const inputSchema: NodeSchema = {
         { param: "mode", equals: "url" },
       ],
     },
-  ],
-} as const;
+  },
+};

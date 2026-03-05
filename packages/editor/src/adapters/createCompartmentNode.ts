@@ -9,19 +9,25 @@
  */
 
 import type { NodeTypeName } from "@bnto/nodes";
-import { NODE_TYPE_INFO, NODE_SCHEMAS } from "@bnto/nodes";
+import { NODE_TYPE_INFO, NODE_SCHEMA_DEFS } from "@bnto/nodes";
 import type { BentoNode, NodeConfig } from "./types";
 import { SLOTS } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";
 
-/** Builds default parameters from the schema for a node type. */
+/** Builds default parameters from the Zod schema for a node type. */
 function buildDefaultParams(nodeType: NodeTypeName): Record<string, unknown> {
-  const schema = NODE_SCHEMAS[nodeType];
-  if (!schema) return {};
+  const schemaDef = NODE_SCHEMA_DEFS[nodeType];
+  if (!schemaDef) return {};
+  // Parse an empty object through the schema to get Zod defaults
+  const result = schemaDef.schema.safeParse({});
+  if (result.success) return { ...result.data };
+  // If parsing fails (required fields missing), extract defaults manually
+  const shape = schemaDef.schema.shape as Record<string, unknown>;
   const params: Record<string, unknown> = {};
-  for (const param of schema.parameters) {
-    if (param.default !== undefined) {
-      params[param.name] = param.default;
+  for (const [name, field] of Object.entries(shape)) {
+    const def = (field as { _def?: { typeName?: string; defaultValue?: () => unknown } })?._def;
+    if (def?.typeName === "ZodDefault" && typeof def.defaultValue === "function") {
+      params[name] = def.defaultValue();
     }
   }
   return params;
