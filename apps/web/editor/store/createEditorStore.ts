@@ -2,10 +2,12 @@
  * Editor store factory — owns state and simple setters (controlled mode).
  *
  * The store is the state layer only. Business logic (addNode, removeNode,
- * updateConfigParams) lives in action hooks that use storeApi for atomic
- * state updates. See editor/hooks/ for the three-layer pattern:
+ * updateParams) lives in pure action functions (editor/actions/) that take
+ * EditorState and return Partial<EditorState>. Hooks are thin wrappers
+ * that bridge actions to the store. See editor/actions/ + editor/hooks/
+ * for the three-layer pattern:
  *
- *   Pure functions (helpers) → Action hooks → Consumer hooks (useEditorActions)
+ *   Pure actions → Thin wrapper hooks → Consumer hooks (useEditorActions)
  *
  * The store owns: nodes, edges, configs, recipe metadata, undo/redo,
  * validation, execution state, and dirty flag.

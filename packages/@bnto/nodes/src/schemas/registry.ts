@@ -13,14 +13,16 @@ import { fileSystemSchema } from "./fileSystem";
 import { groupSchema } from "./group";
 import { httpRequestSchema } from "./httpRequest";
 import { imageSchema } from "./image";
+import { inputSchema } from "./input";
 import { loopSchema } from "./loop";
+import { outputSchema } from "./output";
 import { parallelSchema } from "./parallel";
 import { shellCommandSchema } from "./shellCommand";
 import { spreadsheetSchema } from "./spreadsheet";
 import { transformSchema } from "./transform";
 
 /**
- * Parameter schemas for all 10 registered node types.
+ * Parameter schemas for all 12 registered node types.
  *
  * Maps node type name -> schema. Drives the config panel UI --
  * each schema describes what parameters the node accepts.
@@ -31,7 +33,9 @@ export const NODE_SCHEMAS: Record<NodeTypeName, NodeSchema> = {
   group: groupSchema,
   "http-request": httpRequestSchema,
   image: imageSchema,
+  input: inputSchema,
   loop: loopSchema,
+  output: outputSchema,
   parallel: parallelSchema,
   "shell-command": shellCommandSchema,
   spreadsheet: spreadsheetSchema,

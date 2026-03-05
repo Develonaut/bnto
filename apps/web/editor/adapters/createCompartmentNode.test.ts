@@ -69,7 +69,7 @@ describe("createCompartmentNode", () => {
     expect(result!.config.parameters).toEqual(expectedDefaults);
   });
 
-  it("works with all 10 node types", () => {
+  it("works with all 12 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       const result = createCompartmentNode(typeName, 0);
       expect(result).not.toBeNull();

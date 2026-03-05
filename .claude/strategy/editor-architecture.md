@@ -33,9 +33,11 @@ The editor follows the same layered pattern as `@bnto/core`. The Zustand store o
 ```
 @bnto/nodes (pure types + functions)
          ↓
+Pure actions (editor/actions/ — EditorState → Partial<EditorState>)
+         ↓
 Zustand store (nodes, edges, configs, metadata, undo/redo)
          ↓
-Action hooks (business logic — addNode, removeNode, updateParams)
+Thin wrapper hooks (useAddNode, useRemoveNode, useUpdateParams)
          ↓
 Consumer hooks (useEditorActions, useEditorUndoRedo, useEditorExport)
          ↓
@@ -97,11 +99,11 @@ interface EditorState {
 
 ### Layer 3: React Hooks (Three-Layer Pattern)
 
-Hooks follow a three-layer pattern: pure helpers → action hooks → consumer hooks.
+Hooks follow a three-layer pattern: pure actions → thin wrapper hooks → consumer hooks.
 
-**Pure helpers** (`store/helpers.ts`) — framework-agnostic functions used by both the store and action hooks. Snapshot capture, undo stack management, revalidation.
+**Pure actions** (`editor/actions/`) — pure functions that take `EditorState` + args and return `Partial<EditorState>` (or null if blocked). No React, no store access — independently testable with plain state objects. This is where ALL state mutation logic lives: undo capture, dirty flag, validation, auto-select, I/O guards.
 
-**Action hooks** (`useAddNode`, `useRemoveNode`, `useUpdateParams`) — business logic hooks that read state via `storeApi.getState()`, compute the next state, and write atomically via `storeApi.setState()`. Each hook owns one mutation concern plus its cross-cutting side effects (undo snapshot, dirty flag, validation, auto-select).
+**Thin wrapper hooks** (`useAddNode`, `useRemoveNode`, `useUpdateParams`) — ~5-line hooks that call `storeApi.getState()`, pass it to the pure action, and apply the result via `storeApi.setState()`. No business logic in the callback — just bridge the action to the store.
 
 **Consumer hooks** — the public API components import:
 
@@ -174,60 +176,57 @@ Export: store.nodes → rfNodesToDefinition() → Definition       [on-demand co
 5. **DOM-direct execution state.** Progress via data attributes and CSS variables during execution. Zero re-renders.
 6. **No sync effects.** Zero `useEffect` watching one store and writing to another. Single source of truth eliminates sync bugs entirely.
 
-### Three-Layer Hook Pattern
+### Three-Layer Pattern: Actions → Hooks → Components
 
-All editor mutations follow the same layering: pure helpers → action hooks → consumer hooks. Each layer has a single responsibility.
+All editor mutations follow the same layering: pure actions → thin wrapper hooks → consumer hooks. Each layer has a single responsibility.
 
 ```
-Layer 1: Pure Helpers (store/helpers.ts + adapters/)
+Layer 1: Pure Helpers + Actions (store/ + actions/)
          No React. No store. Fully testable in isolation.
-         captureSnapshot(), pushToStack(), revalidateState(),
-         createCompartmentNode(), definitionToBento()
+         captureSnapshot(), pushToStack(), revalidateState()   (helpers)
+         addNode(), removeNode(), updateParams()               (actions)
 
               ↓
 
-Layer 2: Action Hooks (editor/hooks/)
-         Use storeApi for atomic state updates with business logic.
+Layer 2: Thin Wrapper Hooks (editor/hooks/)
+         ~5 lines each. Call action, apply result to store.
          useAddNode(), useRemoveNode(), useUpdateParams()
 
               ↓
 
 Layer 3: Consumer Hooks (editor/hooks/)
-         Compose action hooks + store selectors into the public API.
+         Compose wrapper hooks + store selectors into the public API.
          useEditorActions(), useEditorExport(), useEditorUndoRedo()
 ```
 
-**Layer 1 — Pure helpers** are the foundation. They accept data and return data. No React, no store, no DOM. These are where the real logic lives and where the heaviest testing happens.
+**Layer 1 — Pure helpers and actions** are the foundation. Helpers are small utilities (snapshot, stack, validation). Actions are the state mutation functions — they take `EditorState` + args and return `Partial<EditorState>` or null. All business logic lives here: I/O guards, undo capture, auto-select, dirty flag, validation. Tested with plain state objects — no React, no store.
 
 ```typescript
-// Pure helper — no React, easy to test
-import { captureSnapshot, pushToStack, revalidateState } from "../store/helpers";
-const snapshot = captureSnapshot(nodes, configs);
-const nextStack = pushToStack(undoStack, snapshot);
+// Pure action — takes state, returns next state. No React, no store.
+import { addNode } from "../actions/addNode";
+const result = addNode(currentState, "image");
+// result = { nextState: Partial<EditorState>, nodeId: string } | null
 ```
 
-**Layer 2 — Action hooks** read state via `storeApi.getState()`, call pure helpers, and write atomically via `storeApi.setState()`. Each hook owns one mutation plus its cross-cutting effects (undo, dirty, validation, auto-select).
+**Layer 2 — Thin wrapper hooks** bridge pure actions to the store. Each hook is ~5 lines: get state, call action, apply result. **No business logic in the callback.**
 
 ```typescript
-// Action hook — pure helpers → storeApi.setState()
+// Thin wrapper hook — bridges action to store
 function useAddNode() {
   const storeApi = useEditorStoreApi();
   return useCallback((type: NodeTypeName, position?) => {
-    const state = storeApi.getState();
-    const result = createCompartmentNode(type, state.nodes.length, position);
+    const result = addNode(storeApi.getState(), type, position);
     if (!result) return null;
-    const snapshot = captureSnapshot(state.nodes, state.configs);
-    // ... compute next state ...
-    storeApi.setState({ nodes: nextNodes, configs: nextConfigs, isDirty: true, ... });
-    return result.node.id;
+    storeApi.setState(result.nextState);
+    return result.nodeId;
   }, [storeApi]);
 }
 ```
 
-**Layer 3 — Consumer hooks** compose action hooks with store selectors. These are the hooks that components import.
+**Layer 3 — Consumer hooks** compose wrapper hooks with store selectors. These are the hooks that components import.
 
 ```typescript
-// Consumer hook — composes action hooks + store selectors
+// Consumer hook — composes wrapper hooks + store selectors
 function useEditorActions() {
   const addNode = useAddNode();
   const removeNode = useRemoveNode();
@@ -239,7 +238,7 @@ function useEditorActions() {
 }
 ```
 
-**The rule:** Components only import Layer 3. Layer 3 composes Layer 2. Layer 2 calls Layer 1. Never skip layers.
+**The rule:** Components only import Layer 3. Layer 3 composes Layer 2. Layer 2 calls Layer 1. Never skip layers. Business logic NEVER lives inside hook callbacks — it belongs in pure action functions.
 
 ### State Ownership Table
 

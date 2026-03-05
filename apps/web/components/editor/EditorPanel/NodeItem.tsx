@@ -18,6 +18,7 @@ const DOT_COLOR: Record<CompartmentVariant, string> = {
   muted: "bg-muted-foreground",
   success: "bg-green-500",
   warning: "bg-amber-500",
+  info: "bg-blue-500",
 };
 
 interface NodeItemProps {

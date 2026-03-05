@@ -37,11 +37,28 @@ export const renameCsvColumns: Recipe = {
     outputPorts: [],
     nodes: [
       {
+        id: "input",
+        type: "input",
+        version: "1.0.0",
+        name: "Input Files",
+        position: { x: 0, y: 100 },
+        metadata: {},
+        parameters: {
+          mode: "file-upload",
+          accept: ["text/csv"],
+          extensions: [".csv"],
+          label: "CSV files",
+          multiple: false,
+        },
+        inputPorts: [],
+        outputPorts: [{ id: "out-1", name: "files" }],
+      },
+      {
         id: "read-csv",
         type: "spreadsheet",
         version: "1.0.0",
         name: "Read CSV",
-        position: { x: 100, y: 100 },
+        position: { x: 200, y: 100 },
         metadata: {},
         parameters: {
           operation: "read",
@@ -56,7 +73,7 @@ export const renameCsvColumns: Recipe = {
         type: "spreadsheet",
         version: "1.0.0",
         name: "Write CSV",
-        position: { x: 300, y: 100 },
+        position: { x: 400, y: 100 },
         metadata: {},
         parameters: {
           operation: "write",
@@ -67,7 +84,27 @@ export const renameCsvColumns: Recipe = {
         inputPorts: [{ id: "in-1", name: "rows" }],
         outputPorts: [],
       },
+      {
+        id: "output",
+        type: "output",
+        version: "1.0.0",
+        name: "Renamed CSV",
+        position: { x: 600, y: 100 },
+        metadata: {},
+        parameters: {
+          mode: "download",
+          label: "Renamed CSV",
+          zip: false,
+          autoDownload: false,
+        },
+        inputPorts: [{ id: "in-1", name: "files" }],
+        outputPorts: [],
+      },
     ],
-    edges: [{ id: "e1", source: "read-csv", target: "write-csv" }],
+    edges: [
+      { id: "e1", source: "input", target: "read-csv" },
+      { id: "e2", source: "read-csv", target: "write-csv" },
+      { id: "e3", source: "write-csv", target: "output" },
+    ],
   },
 };

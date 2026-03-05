@@ -8,6 +8,7 @@
 
 import type { Definition } from "./definition";
 import type { Recipe, AcceptSpec, SEOSpec } from "./recipe";
+import { deriveAcceptSpec } from "./deriveAcceptSpec";
 
 /** Metadata overrides for recipe export. */
 export interface RecipeMetadata {
@@ -48,7 +49,7 @@ export function definitionToRecipe(
     description:
       metadata?.description ?? `Custom recipe: ${name}`,
     category: metadata?.category ?? "custom",
-    accept: metadata?.accept ?? {
+    accept: metadata?.accept ?? deriveAcceptSpec(definition) ?? {
       mimeTypes: [],
       extensions: [],
       label: "Any files",

@@ -138,6 +138,8 @@ function useWorkflowEditor({ workflowId, onSuccess }: WorkflowEditorProps) {
 
 **Hook decomposition:** If a hook grows past ~50 lines or does multiple unrelated things, break it into smaller hooks. But don't preemptively decompose a 20-line hook into three 7-line hooks.
 
+**State mutation hooks:** When a hook's callback computes the next state (undo capture, guards, validation, transforms) and writes it to a store, extract that computation into a pure action function. The hook becomes a ~5-line wrapper: get state → call action → apply result. See the [Actions Pattern](code-standards.md#actions-pattern-state-mutation-logic-in-pure-functions) in code-standards.md.
+
 ---
 
 ## Layout & Typography: `cn` + `createCn`

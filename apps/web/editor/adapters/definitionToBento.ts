@@ -36,6 +36,14 @@ function definitionToBento(definition: Definition): BentoLayout {
         parameters: node.parameters,
       };
 
+      // I/O nodes get an icon indicator
+      const icon =
+        node.type === "input"
+          ? ("upload" as const)
+          : node.type === "output"
+            ? ("download" as const)
+            : undefined;
+
       return {
         id: node.id,
         type: "compartment" as const,
@@ -47,6 +55,7 @@ function definitionToBento(definition: Definition): BentoLayout {
           width: slot.w,
           height: slot.h,
           status: "idle" as const,
+          icon,
         },
       };
     });

@@ -85,6 +85,51 @@ export function canEditWorkflow(workflow: Workflow, userId: string): boolean {
 
 **The layers are a gravity model, not a mandate.** Pure functions always make sense. Logic hooks earn their way in when complexity or reuse demands it.
 
+### Actions Pattern: State Mutation Logic in Pure Functions
+
+**State mutation logic belongs in pure action functions, not inside hook callbacks.** When a hook computes the next state (undo capture, validation, guards, transforms) and writes it to a store, that computation is a pure function waiting to be extracted.
+
+```typescript
+// BAD -- business logic buried inside a hook callback
+function useAddNode() {
+  const storeApi = useEditorStoreApi();
+  return useCallback((type) => {
+    const state = storeApi.getState();
+    if (isIoNodeType(type) && alreadyExists(state, type)) return null; // guard
+    const snapshot = captureSnapshot(state.nodes, state.configs);      // undo
+    const nextNodes = [...deselected, newNode];                        // transform
+    storeApi.setState({ nodes: nextNodes, isDirty: true, ... });       // write
+  }, [storeApi]);
+}
+
+// GOOD -- pure action function + thin wrapper hook
+// actions/addNode.ts
+export function addNode(state: EditorState, type: NodeTypeName): AddNodeResult | null {
+  if (isIoNodeType(type) && alreadyExists(state, type)) return null;
+  const snapshot = captureSnapshot(state.nodes, state.configs);
+  return { nextState: { nodes: nextNodes, isDirty: true, ... }, nodeId };
+}
+
+// hooks/useAddNode.ts (~5 lines)
+function useAddNode() {
+  const storeApi = useEditorStoreApi();
+  return useCallback((type) => {
+    const result = addNode(storeApi.getState(), type);
+    if (!result) return null;
+    storeApi.setState(result.nextState);
+    return result.nodeId;
+  }, [storeApi]);
+}
+```
+
+**Why this matters:**
+- Pure actions are testable with plain objects — no React, no store, no mocking
+- Hooks become ~5-line wrappers with zero logic to get wrong
+- The pattern is followable — every hook looks the same (get state, call action, apply result)
+- Actions compose — other actions or tests can call them without a store
+
+**When to apply:** Any hook callback that does more than "get state → call one function → apply result" should have its logic extracted into a pure action. The hook is just the bridge between the action and the store.
+
 ### Testing Strategy
 
 | Layer | What to test | How | Effort |

@@ -99,8 +99,18 @@ describe("definitionToRecipe", () => {
     expect(recipe.category).toBe("custom");
   });
 
-  it("defaults to accepting any files", () => {
+  it("derives accept spec from the definition's input node", () => {
     const def = createBlankDefinition();
+    const recipe = definitionToRecipe(def);
+
+    // Blank definition's input node accepts ["*/*"] with label "Any files"
+    expect(recipe.accept.mimeTypes).toEqual(["*/*"]);
+    expect(recipe.accept.extensions).toEqual([]);
+    expect(recipe.accept.label).toBe("Any files");
+  });
+
+  it("falls back to generic accept when definition has no input node", () => {
+    const def = { ...createBlankDefinition(), nodes: [] };
     const recipe = definitionToRecipe(def);
 
     expect(recipe.accept.mimeTypes).toEqual([]);
@@ -113,8 +123,9 @@ describe("definitionToRecipe", () => {
     const { definition: withNodes } = addNode(blank, "image");
     const recipe = definitionToRecipe(withNodes);
 
-    expect(recipe.definition.nodes).toHaveLength(1);
-    expect(recipe.definition.nodes![0]!.type).toBe("image");
+    // 2 I/O nodes + 1 added image node = 3
+    expect(recipe.definition.nodes).toHaveLength(3);
+    expect(recipe.definition.nodes![2]!.type).toBe("image");
   });
 
   it("partial overrides don't affect unset fields", () => {

@@ -70,7 +70,9 @@ export {
   getVisibleParams,
   HTTP_METHODS,
   FILE_OPERATIONS,
+  INPUT_MODES,
   LOOP_MODES,
+  OUTPUT_MODES,
   IMAGE_OPERATIONS,
   IMAGE_FORMATS,
   SPREADSHEET_OPERATIONS,
@@ -83,6 +85,11 @@ export type {
   ParameterSchema,
   ParameterType,
 } from "./schemas";
+
+// I/O node helpers (Sprint 4C — self-describing recipes)
+export { getInputNode } from "./getInputNode";
+export { getOutputNode } from "./getOutputNode";
+export { deriveAcceptSpec } from "./deriveAcceptSpec";
 
 // Definition CRUD operations (Sprint 4 Wave 1 — editor foundation)
 export { createBlankDefinition } from "./createBlankDefinition";

@@ -12,33 +12,33 @@ import { compressImages } from "./recipes";
 
 describe("round-trip: full editor lifecycle", () => {
   it("create → add → configure → move → export", () => {
-    // 1. Start with a blank canvas
+    // 1. Start with a blank canvas (has input + output nodes)
     const blank = createBlankDefinition();
     expect(validateDefinition(blank)).toHaveLength(0);
 
-    // 2. Add an image node
+    // 2. Add an image node (blank starts with 2 I/O nodes)
     const r1 = addNode(blank, "image", { x: 100, y: 100 });
     expect(isValid(r1)).toBe(true);
-    expect(r1.definition.nodes).toHaveLength(1);
+    expect(r1.definition.nodes).toHaveLength(3);
 
     // 3. Add a transform node
     const r2 = addNode(r1.definition, "transform", { x: 300, y: 100 });
     expect(isValid(r2)).toBe(true);
-    expect(r2.definition.nodes).toHaveLength(2);
+    expect(r2.definition.nodes).toHaveLength(4);
 
-    // 4. Configure the image node
-    const imageNodeId = r2.definition.nodes![0]!.id;
+    // 4. Configure the image node (index 2, after input & output)
+    const imageNodeId = r2.definition.nodes![2]!.id;
     const r3 = updateNodeParams(r2.definition, imageNodeId, {
       operation: "optimize",
       quality: 75,
     });
-    expect(r3.definition.nodes![0]!.parameters.operation).toBe("optimize");
-    expect(r3.definition.nodes![0]!.parameters.quality).toBe(75);
+    expect(r3.definition.nodes![2]!.parameters.operation).toBe("optimize");
+    expect(r3.definition.nodes![2]!.parameters.quality).toBe(75);
 
-    // 5. Move the transform node
-    const transformNodeId = r3.definition.nodes![1]!.id;
+    // 5. Move the transform node (index 3)
+    const transformNodeId = r3.definition.nodes![3]!.id;
     const r4 = moveNode(r3.definition, transformNodeId, { x: 500, y: 200 });
-    expect(r4.definition.nodes![1]!.position).toEqual({ x: 500, y: 200 });
+    expect(r4.definition.nodes![3]!.position).toEqual({ x: 500, y: 200 });
 
     // 6. Export as recipe
     const recipe = definitionToRecipe(r4.definition, {
@@ -52,23 +52,23 @@ describe("round-trip: full editor lifecycle", () => {
     });
 
     expect(recipe.slug).toBe("my-image-pipeline");
-    expect(recipe.definition.nodes).toHaveLength(2);
-    expect(recipe.definition.nodes![0]!.parameters.quality).toBe(75);
+    expect(recipe.definition.nodes).toHaveLength(4);
+    expect(recipe.definition.nodes![2]!.parameters.quality).toBe(75);
   });
 
   it("create → add → remove → verify cleanup", () => {
     const blank = createBlankDefinition();
 
-    // Add three nodes
+    // Add three nodes (blank starts with 2 I/O nodes)
     const r1 = addNode(blank, "image", { x: 100, y: 0 });
     const r2 = addNode(r1.definition, "transform", { x: 200, y: 0 });
     const r3 = addNode(r2.definition, "spreadsheet", { x: 300, y: 0 });
-    expect(r3.definition.nodes).toHaveLength(3);
+    expect(r3.definition.nodes).toHaveLength(5); // 2 I/O + 3 added
 
-    // Add edges connecting them
-    const node1 = r3.definition.nodes![0]!.id;
-    const node2 = r3.definition.nodes![1]!.id;
-    const node3 = r3.definition.nodes![2]!.id;
+    // Add edges connecting the 3 added nodes (indices 2, 3, 4)
+    const node1 = r3.definition.nodes![2]!.id;
+    const node2 = r3.definition.nodes![3]!.id;
+    const node3 = r3.definition.nodes![4]!.id;
 
     const withEdges = {
       ...r3.definition,
@@ -80,7 +80,7 @@ describe("round-trip: full editor lifecycle", () => {
 
     // Remove the middle node — both edges should be cleaned up
     const result = removeNode(withEdges, node2);
-    expect(result.definition.nodes).toHaveLength(2);
+    expect(result.definition.nodes).toHaveLength(4); // 2 I/O + 2 remaining
     // e1 referenced node2 as target, e2 referenced node2 as source — both gone
     expect(result.definition.edges).toHaveLength(0);
     expect(isValid(result)).toBe(true);
@@ -115,9 +115,9 @@ describe("round-trip: full editor lifecycle", () => {
     const original = createBlankDefinition();
     const originalJson = JSON.stringify(original);
 
-    // Perform various operations
+    // Perform various operations (blank has 2 I/O nodes, image is at index 2)
     const r1 = addNode(original, "image");
-    const nodeId = r1.definition.nodes![0]!.id;
+    const nodeId = r1.definition.nodes![2]!.id;
     updateNodeParams(r1.definition, nodeId, { quality: 50 });
     moveNode(r1.definition, nodeId, { x: 999, y: 999 });
     removeNode(r1.definition, nodeId);

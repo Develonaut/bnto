@@ -9,11 +9,12 @@ import { createBlankDefinition, addNode } from "@bnto/nodes";
 import { NODE_TYPE_INFO, NODE_TYPE_NAMES } from "@bnto/nodes";
 
 describe("definitionToBento", () => {
-  it("returns empty nodes and configs for a blank definition", () => {
+  it("returns I/O nodes for a blank definition", () => {
     const def = createBlankDefinition();
     const result = definitionToBento(def);
-    expect(result.nodes).toEqual([]);
-    expect(result.configs).toEqual({});
+    // Blank definition has 2 I/O nodes (input + output)
+    expect(result.nodes.length).toBe(2);
+    expect(Object.keys(result.configs).length).toBe(2);
   });
 
   it("maps child nodes to compartment nodes", () => {
@@ -22,13 +23,14 @@ describe("definitionToBento", () => {
     def = addNode(def, "spreadsheet").definition;
 
     const result = definitionToBento(def);
-    expect(result.nodes.length).toBe(2);
+    // 2 I/O nodes + 2 added = 4
+    expect(result.nodes.length).toBe(4);
   });
 
   it("stores domain fields in configs map, not in node.data", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
-    const childNode = def.nodes![0]!;
+    const childNode = def.nodes!.find((n) => n.type === "image")!;
 
     const result = definitionToBento(def);
     const config = result.configs[childNode.id]!;
@@ -37,26 +39,31 @@ describe("definitionToBento", () => {
     expect(config.parameters).toEqual(childNode.parameters);
 
     // node.data should NOT have domain fields
-    const data = result.nodes[0]!.data;
-    expect("nodeType" in data).toBe(false);
-    expect("parameters" in data).toBe(false);
+    const rfNode = result.nodes.find((n) => n.id === childNode.id)!;
+    expect("nodeType" in rfNode.data).toBe(false);
+    expect("parameters" in rfNode.data).toBe(false);
   });
 
   it("assigns bento slot positions, not definition positions", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image", { x: 999, y: 888 }).definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
     const result = definitionToBento(def);
-    expect(result.nodes[0]!.position).toEqual({ x: SLOTS[0]!.x, y: SLOTS[0]!.y });
+    const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
+    // Image is 3rd node (after input + output), so slot index 2
+    expect(rfNode.position).toEqual({ x: SLOTS[2]!.x, y: SLOTS[2]!.y });
   });
 
   it("assigns slot dimensions to compartment data", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
     const result = definitionToBento(def);
-    expect(result.nodes[0]!.data.width).toBe(SLOTS[0]!.w);
-    expect(result.nodes[0]!.data.height).toBe(SLOTS[0]!.h);
+    const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
+    expect(rfNode.data.width).toBe(SLOTS[2]!.w);
+    expect(rfNode.data.height).toBe(SLOTS[2]!.h);
   });
 
   it("sets node type as compartment", () => {
@@ -64,33 +71,51 @@ describe("definitionToBento", () => {
     def = addNode(def, "transform").definition;
 
     const result = definitionToBento(def);
-    expect(result.nodes[0]!.type).toBe("compartment");
+    // All nodes (including I/O) are compartments
+    for (const node of result.nodes) {
+      expect(node.type).toBe("compartment");
+    }
   });
 
   it("maps node category to compartment variant color", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
     const result = definitionToBento(def);
-    expect(result.nodes[0]!.data.variant).toBe("primary");
+    const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
+    expect(rfNode.data.variant).toBe("primary");
+  });
+
+  it("maps I/O nodes to info variant", () => {
+    const def = createBlankDefinition();
+    const result = definitionToBento(def);
+
+    const inputNode = result.nodes.find((n) => n.id === "input")!;
+    const outputNode = result.nodes.find((n) => n.id === "output")!;
+    expect(inputNode.data.variant).toBe("info");
+    expect(outputNode.data.variant).toBe("info");
   });
 
   it("uses node name as compartment label", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
     const expected = NODE_TYPE_INFO["image"].label;
+    const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
     const result = definitionToBento(def);
-    expect(result.nodes[0]!.data.label).toBe(expected);
+    const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
+    expect(rfNode.data.label).toBe(expected);
   });
 
   it("RF node id matches definition node id", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
-    const nodeId = def.nodes![0]!.id;
+    const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
     const result = definitionToBento(def);
-    expect(result.nodes[0]!.id).toBe(nodeId);
+    const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
+    expect(rfNode.id).toBe(imageNode.id);
   });
 
   it("configs map keys match RF node ids", () => {
@@ -125,16 +150,39 @@ describe("definitionToBento", () => {
     }
   });
 
-  it("handles all 10 node types", () => {
+  it("assigns upload/download icons to I/O nodes", () => {
+    const def = createBlankDefinition();
+    const result = definitionToBento(def);
+
+    const inputNode = result.nodes.find((n) => n.id === "input")!;
+    const outputNode = result.nodes.find((n) => n.id === "output")!;
+    expect(inputNode.data.icon).toBe("upload");
+    expect(outputNode.data.icon).toBe("download");
+  });
+
+  it("does not assign icons to non-I/O nodes", () => {
+    let def = createBlankDefinition();
+    def = addNode(def, "image").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+
+    const result = definitionToBento(def);
+    const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
+    expect(rfNode.data.icon).toBeUndefined();
+  });
+
+  it("handles all 12 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       let def = createBlankDefinition();
       def = addNode(def, typeName).definition;
 
       const result = definitionToBento(def);
-      expect(result.nodes.length).toBe(1);
-      expect(result.nodes[0]!.data.label).toBeTruthy();
-      expect(result.nodes[0]!.data.variant).toBeTruthy();
-      expect(result.configs[result.nodes[0]!.id]!.nodeType).toBe(typeName);
+      // 2 I/O base + 1 added = 3
+      expect(result.nodes.length).toBe(3);
+      const addedNode = def.nodes![def.nodes!.length - 1]!;
+      const rfNode = result.nodes.find((n) => n.id === addedNode.id)!;
+      expect(rfNode.data.label).toBeTruthy();
+      expect(rfNode.data.variant).toBeTruthy();
+      expect(result.configs[rfNode.id]!.nodeType).toBe(typeName);
     }
   });
 });

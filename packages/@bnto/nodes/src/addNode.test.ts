@@ -7,13 +7,17 @@ import { NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./nodeTypes";
 import type { NodeTypeName } from "./nodeTypes";
 import { NODE_SCHEMAS } from "./schemas/registry";
 
+// Blank definition now has 2 I/O nodes (input + output).
+// Newly added nodes appear after them.
+const IO_NODE_COUNT = 2;
+
 describe("addNode", () => {
-  it("adds a node to an empty definition", () => {
+  it("adds a node to a definition with I/O nodes", () => {
     const blank = createBlankDefinition();
     const result = addNode(blank, "image");
 
-    expect(result.definition.nodes).toHaveLength(1);
-    expect(result.definition.nodes![0]!.type).toBe("image");
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT + 1);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.type).toBe("image");
     expect(isValid(result)).toBe(true);
   });
 
@@ -23,7 +27,7 @@ describe("addNode", () => {
     addNode(blank, "image");
 
     expect(blank.nodes).toBe(originalNodes);
-    expect(blank.nodes).toHaveLength(0);
+    expect(blank.nodes).toHaveLength(IO_NODE_COUNT);
   });
 
   it("generates a unique UUID for each node", () => {
@@ -31,36 +35,38 @@ describe("addNode", () => {
     const r1 = addNode(blank, "image");
     const r2 = addNode(blank, "image");
 
-    expect(r1.definition.nodes![0]!.id).toBeTruthy();
-    expect(r2.definition.nodes![0]!.id).toBeTruthy();
-    expect(r1.definition.nodes![0]!.id).not.toBe(r2.definition.nodes![0]!.id);
+    const n1 = r1.definition.nodes![IO_NODE_COUNT]!;
+    const n2 = r2.definition.nodes![IO_NODE_COUNT]!;
+    expect(n1.id).toBeTruthy();
+    expect(n2.id).toBeTruthy();
+    expect(n1.id).not.toBe(n2.id);
   });
 
   it("uses the provided position", () => {
     const blank = createBlankDefinition();
     const result = addNode(blank, "image", { x: 100, y: 200 });
 
-    expect(result.definition.nodes![0]!.position).toEqual({ x: 100, y: 200 });
+    expect(result.definition.nodes![IO_NODE_COUNT]!.position).toEqual({ x: 100, y: 200 });
   });
 
   it("defaults to position {x: 0, y: 0} when no position given", () => {
     const blank = createBlankDefinition();
     const result = addNode(blank, "image");
 
-    expect(result.definition.nodes![0]!.position).toEqual({ x: 0, y: 0 });
+    expect(result.definition.nodes![IO_NODE_COUNT]!.position).toEqual({ x: 0, y: 0 });
   });
 
   it("sets the node name from NODE_TYPE_INFO label", () => {
     const blank = createBlankDefinition();
     const result = addNode(blank, "image");
 
-    expect(result.definition.nodes![0]!.name).toBe("Image");
+    expect(result.definition.nodes![IO_NODE_COUNT]!.name).toBe("Image");
   });
 
   it("populates default parameters from schema", () => {
     const blank = createBlankDefinition();
     const result = addNode(blank, "image");
-    const params = result.definition.nodes![0]!.parameters;
+    const params = result.definition.nodes![IO_NODE_COUNT]!.parameters;
 
     // Image schema has quality: 80 as default
     expect(params.quality).toBe(80);
@@ -73,20 +79,20 @@ describe("addNode", () => {
     const r1 = addNode(blank, "image");
     const r2 = addNode(r1.definition, "transform");
 
-    expect(r2.definition.nodes).toHaveLength(2);
-    expect(r2.definition.nodes![0]!.type).toBe("image");
-    expect(r2.definition.nodes![1]!.type).toBe("transform");
+    expect(r2.definition.nodes).toHaveLength(IO_NODE_COUNT + 2);
+    expect(r2.definition.nodes![IO_NODE_COUNT]!.type).toBe("image");
+    expect(r2.definition.nodes![IO_NODE_COUNT + 1]!.type).toBe("transform");
   });
 
   // Test every node type can be added
-  describe("works for all 10 node types", () => {
+  describe("works for all 12 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       it(`adds ${typeName} node`, () => {
         const blank = createBlankDefinition();
         const result = addNode(blank, typeName);
 
-        expect(result.definition.nodes).toHaveLength(1);
-        const node = result.definition.nodes![0]!;
+        expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT + 1);
+        const node = result.definition.nodes![IO_NODE_COUNT]!;
         expect(node.type).toBe(typeName);
         expect(node.id).toBeTruthy();
         expect(node.version).toBe("1.0.0");
@@ -102,7 +108,7 @@ describe("addNode", () => {
       it(`${typeName} has empty nodes and edges arrays`, () => {
         const blank = createBlankDefinition();
         const result = addNode(blank, typeName);
-        const node = result.definition.nodes![0]!;
+        const node = result.definition.nodes![IO_NODE_COUNT]!;
 
         expect(node.nodes).toEqual([]);
         expect(node.edges).toEqual([]);
@@ -111,7 +117,7 @@ describe("addNode", () => {
       it(`${typeName} has an input port with unique ID`, () => {
         const blank = createBlankDefinition();
         const result = addNode(blank, typeName);
-        const node = result.definition.nodes![0]!;
+        const node = result.definition.nodes![IO_NODE_COUNT]!;
 
         expect(node.inputPorts).toHaveLength(1);
         expect(node.inputPorts[0]!.name).toBe("input");
@@ -129,7 +135,7 @@ describe("addNode", () => {
       it(`${typeName} has an output port with unique ID`, () => {
         const blank = createBlankDefinition();
         const result = addNode(blank, typeName);
-        const node = result.definition.nodes![0]!;
+        const node = result.definition.nodes![IO_NODE_COUNT]!;
 
         expect(node.outputPorts).toHaveLength(1);
         expect(node.outputPorts[0]!.name).toBe("output");
@@ -149,7 +155,7 @@ describe("addNode", () => {
         it(`${typeName} includes all schema defaults`, () => {
           const blank = createBlankDefinition();
           const result = addNode(blank, typeName);
-          const params = result.definition.nodes![0]!.parameters;
+          const params = result.definition.nodes![IO_NODE_COUNT]!.parameters;
 
           for (const param of defaultParams) {
             expect(params[param.name]).toBe(param.default);

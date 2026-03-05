@@ -40,10 +40,30 @@ describe("createBlankDefinition", () => {
     expect(def.inputPorts[0]!.id).not.toBe(def.outputPorts[0]!.id);
   });
 
-  it("starts with empty nodes and edges", () => {
+  it("starts with input and output nodes, no edges", () => {
     const def = createBlankDefinition();
-    expect(def.nodes).toEqual([]);
+    expect(def.nodes).toHaveLength(2);
+    expect(def.nodes![0]!.type).toBe("input");
+    expect(def.nodes![0]!.id).toBe("input");
+    expect(def.nodes![1]!.type).toBe("output");
+    expect(def.nodes![1]!.id).toBe("output");
     expect(def.edges).toEqual([]);
+  });
+
+  it("input node has file-upload mode with accept */*", () => {
+    const def = createBlankDefinition();
+    const inputNode = def.nodes![0]!;
+    expect(inputNode.parameters.mode).toBe("file-upload");
+    expect(inputNode.parameters.accept).toEqual(["*/*"]);
+    expect(inputNode.parameters.multiple).toBe(true);
+  });
+
+  it("output node has download mode", () => {
+    const def = createBlankDefinition();
+    const outputNode = def.nodes![1]!;
+    expect(outputNode.parameters.mode).toBe("download");
+    expect(outputNode.parameters.zip).toBe(true);
+    expect(outputNode.parameters.autoDownload).toBe(false);
   });
 
   it("has a createdAt timestamp in metadata", () => {

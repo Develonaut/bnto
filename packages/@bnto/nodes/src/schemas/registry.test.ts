@@ -21,6 +21,8 @@ import {
   SPREADSHEET_FORMATS,
   GROUP_MODES,
   ERROR_STRATEGIES,
+  INPUT_MODES,
+  OUTPUT_MODES,
 } from "./index";
 
 // ---------- Registry completeness ----------
@@ -33,8 +35,8 @@ describe("NODE_SCHEMAS", () => {
     }
   });
 
-  it("has exactly 10 entries", () => {
-    expect(Object.keys(NODE_SCHEMAS)).toHaveLength(10);
+  it("has exactly 12 entries", () => {
+    expect(Object.keys(NODE_SCHEMAS)).toHaveLength(12);
   });
 });
 
@@ -212,5 +214,19 @@ describe("enum constants", () => {
 
   it("ERROR_STRATEGIES has 2 strategies", () => {
     expect(ERROR_STRATEGIES).toHaveLength(2);
+  });
+
+  it("INPUT_MODES has 3 modes", () => {
+    expect(INPUT_MODES).toHaveLength(3);
+    expect(INPUT_MODES).toContain("file-upload");
+    expect(INPUT_MODES).toContain("text");
+    expect(INPUT_MODES).toContain("url");
+  });
+
+  it("OUTPUT_MODES has 3 modes", () => {
+    expect(OUTPUT_MODES).toHaveLength(3);
+    expect(OUTPUT_MODES).toContain("download");
+    expect(OUTPUT_MODES).toContain("display");
+    expect(OUTPUT_MODES).toContain("preview");
   });
 });

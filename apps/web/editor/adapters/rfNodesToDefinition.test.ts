@@ -16,20 +16,23 @@ describe("rfNodesToDefinition", () => {
     const bento = definitionToBento(def);
     const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
-    expect(result.nodes!.length).toBe(2);
-    expect(result.nodes![0]!.type).toBe("image");
-    expect(result.nodes![1]!.type).toBe("spreadsheet");
+    // 2 I/O nodes + 2 added = 4
+    expect(result.nodes!.length).toBe(4);
+    const nonIo = result.nodes!.filter((n) => n.type !== "input" && n.type !== "output");
+    expect(nonIo[0]!.type).toBe("image");
+    expect(nonIo[1]!.type).toBe("spreadsheet");
   });
 
   it("preserves node IDs through the round-trip", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
-    const originalId = def.nodes![0]!.id;
+    const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
     const bento = definitionToBento(def);
     const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
-    expect(result.nodes![0]!.id).toBe(originalId);
+    const resultImage = result.nodes!.find((n) => n.type === "image")!;
+    expect(resultImage.id).toBe(imageNode.id);
   });
 
   it("preserves node positions from RF state", () => {
@@ -43,18 +46,20 @@ describe("rfNodesToDefinition", () => {
     }));
     const result = rfNodesToDefinition(movedNodes, def, bento.configs);
 
-    expect(result.nodes![0]!.position).toEqual({ x: 777, y: 333 });
+    const resultImage = result.nodes!.find((n) => n.type === "image")!;
+    expect(resultImage.position).toEqual({ x: 777, y: 333 });
   });
 
   it("preserves node parameters through the round-trip", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
-    const originalParams = def.nodes![0]!.parameters;
+    const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
     const bento = definitionToBento(def);
     const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
-    expect(result.nodes![0]!.parameters).toEqual(originalParams);
+    const resultImage = result.nodes!.find((n) => n.type === "image")!;
+    expect(resultImage.parameters).toEqual(imageNode.parameters);
   });
 
   it("preserves root definition metadata", () => {
@@ -100,11 +105,14 @@ describe("rfNodesToDefinition", () => {
   it("uses label as fallback name when config is missing", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
     const bento = definitionToBento(def);
+    const rfImage = bento.nodes.find((n) => n.id === imageNode.id)!;
     // Pass empty configs — adapter should use node.data.label as fallback
     const result = rfNodesToDefinition(bento.nodes, def, {});
 
-    expect(result.nodes![0]!.name).toBe(bento.nodes[0]!.data.label);
+    const resultImage = result.nodes!.find((n) => n.id === imageNode.id)!;
+    expect(resultImage.name).toBe(rfImage.data.label);
   });
 });
