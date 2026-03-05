@@ -657,6 +657,104 @@ Migrate the recipe page to use generic renderers. Verify all 6 predefined recipe
 
 ## Backlog
 
+### UX: Compartment Node Visual Redesign (Mini Motorways Buildings)
+
+**Priority: High.** The current `CompartmentNode` renders as a flat colored card with centered text — all nodes look identical except for color. There's no visual personality, no sense of what each node *does*, and no connection to the Mini Motorways "building" metaphor. Nodes should be immediately identifiable at a glance, like buildings on a Mini Motorways map.
+
+**Current state:** `CompartmentNode.tsx` renders a `.surface` Card with `label` + `sublabel` text. Variant colors exist (primary, secondary, accent, muted, success, warning) but are arbitrarily assigned. All nodes are the same 120×120 size. No icons. No category-driven visual identity.
+
+**Goal:** Each compartment feels like a distinct building in a bento box. You can identify what a node does without reading its label. The canvas reads like a well-packed bento — varied compartment sizes, category-driven colors, icons as visual anchors. Execution state drives elevation changes with satisfying springy pops as compartments progress.
+
+**Design principles:**
+- **No edges/connections** — execution order = compartment position. The bento box metaphor is about spatial arrangement, not wiring
+- **Elevation-driven execution state** — compartments physically rise and settle as they execute. The `.surface` Card system already supports this via the `elevation` prop with spring animations
+- **Icons are the building silhouette** — large, centered, immediately communicates the node's purpose
+- **Category = neighborhood** — nodes of the same category share a color, making the canvas scannable
+
+**Phase 1: Icon registry + category color mapping**
+
+Add a prominent icon to each node type and map categories to consistent variant colors. This is the biggest visual bang for effort — immediately makes every node recognizable.
+
+Icon mapping (Lucide icons):
+
+| Node Type | Icon | Visual metaphor |
+|---|---|---|
+| `image` | `ImageIcon` | Universal image symbol |
+| `spreadsheet` | `Table` | Rows and columns |
+| `file-system` | `FolderOpen` | File operations |
+| `transform` | `Shuffle` | Data flowing between shapes |
+| `edit-fields` | `PenLine` | Editing values |
+| `http-request` | `Globe` | Network/external call |
+| `shell-command` | `TerminalSquare` | Command line |
+| `group` | `Braces` | Container/grouping |
+| `loop` | `RefreshCw` | Iteration/cycling |
+| `parallel` | `Columns3` | Concurrent lanes |
+
+Category → color mapping:
+
+| Category | Variant | Rationale |
+|---|---|---|
+| `image` | `primary` (terracotta) | Hero category, warm and prominent |
+| `spreadsheet` | `secondary` (teal) | Cool counterpoint, data-oriented |
+| `file` | `accent` (golden) | Foundation operations |
+| `data` | `muted` (warm off-white) | Background/subtle operations |
+| `network` | `secondary` (teal) | External connections |
+| `control` | `warning` (warm orange) | Orchestration, meta-level |
+| `system` | `muted` (warm off-white) | Power-user, understated |
+
+Node anatomy (Phase 1):
+```
+┌─────────────────────┐
+│                     │
+│     [icon 32px]     │  ← Large category icon, muted foreground
+│                     │
+│      Image          │  ← Label (font-display, semibold, sm)
+│      image          │  ← Sublabel (font-mono, xs, muted)
+│                     │
+└─────────────────────┘
+```
+
+**Phase 2: Elevation-driven execution states**
+
+Replace the current flat status handling with elevation transitions that make compartments physically pop as they progress. The Card `.surface` system already provides springy elevation changes — we just need to map states correctly.
+
+| State | Elevation | Visual effect |
+|---|---|---|
+| `idle` | `none` or `sm` | Flat/barely lifted — resting in the bento box |
+| `pending` | `sm` | Slight lift, muted appearance — waiting in queue |
+| `active` | `md` | Rising up — "being serviced" like a MM building |
+| `completed` | `lg` | Full pop — satisfying spring bounce to max elevation |
+
+The spring animation on Card elevation changes creates the Mini Motorways "building materializing" feel automatically. As the recipe runs, compartments pop up one by one in sequence — like buildings appearing on the map.
+
+**Phase 3: Bento grid layout**
+
+Replace the current horizontal strip (all nodes in a single row at 220px stride) with a proper bento box grid that uses varied compartment sizes. Different node types get different footprints:
+
+| Tier | Size | Used for |
+|---|---|---|
+| **Standard** | 140×140 | Most nodes (image, spreadsheet, transform, etc.) |
+| **Compact** | 100×100 | Simple nodes (edit-fields with no parameters) |
+| **Wide** | 200×140 | Nodes with more visual content (future inline controls) |
+| **Container** | 240×180+ | Group, loop, parallel — larger to suggest they hold children |
+
+The grid layout algorithm should pack compartments like a real bento box — no uniform grid, but a visually balanced arrangement. Update `bentoSlots.ts` to support varied slot sizes.
+
+**Future (not in scope):**
+- Inline micro-controls on nodes (radial dials, parameter badges) — nice-to-have after core visual identity ships
+- Interactive connection handles — design decision is no edges
+- Per-node execution progress bars — elevation + status color is sufficient
+
+**Tasks:**
+- [ ] `apps/web` — **Icon registry**: Create `editor/adapters/nodeIcons.ts` — maps `NodeTypeName → LucideIcon`. Pure data, one file
+- [ ] `apps/web` — **Category color registry**: Create `editor/adapters/nodeColors.ts` — maps `NodeCategory → CompartmentVariant`. Pure data, one file
+- [ ] `apps/web` — **CompartmentNode redesign**: Update `CompartmentNode.tsx` — add icon rendering above label, restructure layout from centered-text to icon-above-text. Import from icon/color registries
+- [ ] `apps/web` — **Elevation state mapping**: Update `CompartmentNode.tsx` status → elevation mapping: idle=none/sm, pending=sm, active=md, completed=lg. Leverage existing Card spring animations
+- [ ] `apps/web` — **Bento grid layout**: Update `bentoSlots.ts` with varied slot sizes per node type tier (standard/compact/wide/container). Replace horizontal strip with proper 2D bento packing
+- [ ] `apps/web` — **Adapter integration**: Update `definitionToBento` adapter to use icon/color registries when converting Definition → BentoNode (set variant from category, set size from tier)
+- [ ] `apps/web` — **Motorway showcase**: Update Motorway editor showcase to demonstrate the new visual treatment with all node types visible
+- [ ] `apps/web` — **E2E verification**: Verify editor canvas renders correctly with new node visuals. Update screenshots if page-level layout changed
+
 ### Chore: Codebase File Size & Structure Audit
 
 **Priority: High.** Code standards have been tightened (March 2026): files target 50-100 lines (hard cap 250), functions get their own file if reused or more than a few lines, components with more than 2-3 sub-components break into folder + barrel. The existing codebase predates these tighter limits and needs a sweep.
