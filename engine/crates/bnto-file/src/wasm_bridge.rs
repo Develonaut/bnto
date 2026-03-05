@@ -56,8 +56,8 @@ use bnto_core::progress::ProgressReporter;
 use crate::rename::RenameFiles;
 
 // Helper: convert BntoError to JsValue at the WASM boundary.
-// This conversion lives in each node crate (not bnto-core) to keep
-// bnto-core target-agnostic (no wasm-bindgen dependency).
+// Each node crate has its own copy because Rust's orphan rule prevents
+// implementing From<BntoError> for JsValue in bnto-core.
 fn bnto_err_to_js(error: BntoError) -> JsValue {
     JsError::new(&error.to_string()).into()
 }

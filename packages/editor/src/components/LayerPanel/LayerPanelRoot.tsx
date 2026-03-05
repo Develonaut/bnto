@@ -31,9 +31,7 @@ interface LayerPanelProps {
   footer?: ReactNode;
 }
 
-function LayerPanelRoot({
-  footer,
-}: LayerPanelProps) {
+function LayerPanelRoot({ footer }: LayerPanelProps) {
   const nodes = useEditorStore((s) => s.nodes);
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const name = useEditorStore((s) => s.recipeMetadata.name ?? "Untitled");
@@ -44,6 +42,8 @@ function LayerPanelRoot({
   const canDownload = canExport && nodes.length > 0;
   const handleDownload = () => download();
 
+  /* CSS transition for panel open/close — Animate.* covers entrance animations,
+     not boolean state transitions. See animation.md decision tree. */
   return (
     <div
       onPointerDownCapture={(e) => e.stopPropagation()}
@@ -87,11 +87,7 @@ function LayerPanelRoot({
         </Panel.Header>
         <Panel.Divider />
         <Panel.Content>
-          <NodeList
-            nodes={nodes}
-            selectedNodeId={selectedNodeId}
-            onSelect={handleSelectNode}
-          />
+          <NodeList nodes={nodes} selectedNodeId={selectedNodeId} onSelect={handleSelectNode} />
         </Panel.Content>
         {footer && (
           <>

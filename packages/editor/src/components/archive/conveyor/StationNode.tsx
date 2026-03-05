@@ -1,5 +1,7 @@
-import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
+import { memo } from "react";
+import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Animate, Card, Text } from "@bnto/ui";
+import type { StationData, StationNodeType } from "./types";
 
 /**
  * Custom React Flow node that renders as a .surface Card — the "building"
@@ -16,26 +18,6 @@ import { Animate, Card, Text } from "@bnto/ui";
  * Handles are invisible — belts slide under card edges seamlessly.
  */
 
-export type StationData = {
-  label: string;
-  sublabel?: string;
-  variant?:
-    | "primary"
-    | "secondary"
-    | "accent"
-    | "muted"
-    | "success"
-    | "warning";
-  /** Hide the target (left) handle — for input-only nodes */
-  hideTarget?: boolean;
-  /** Hide the source (right) handle — for output-only nodes */
-  hideSource?: boolean;
-  /** Position in the stagger cascade (0-based). Controls entrance delay. */
-  staggerIndex?: number;
-};
-
-export type StationNodeType = Node<StationData, "station">;
-
 const SURFACE_CLASS: Record<NonNullable<StationData["variant"]>, string> = {
   primary: "surface-primary",
   secondary: "surface-secondary",
@@ -45,7 +27,9 @@ const SURFACE_CLASS: Record<NonNullable<StationData["variant"]>, string> = {
   warning: "surface-warning",
 };
 
-export function StationNode({ data }: NodeProps<StationNodeType>) {
+export const StationNode = memo(function StationNode({
+  data,
+}: NodeProps<StationNodeType>) {
   const variant = data.variant ?? "primary";
 
   return (
@@ -102,4 +86,4 @@ export function StationNode({ data }: NodeProps<StationNodeType>) {
       )}
     </div>
   );
-}
+});

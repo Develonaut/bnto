@@ -1,20 +1,9 @@
-import type {
-  RawAnalyticsDoc,
-  RawSlugAggregateDoc,
-} from "../types/raw";
-import type {
-  UsageAnalytics,
-  SlugAggregate,
-} from "../types/analytics";
-
-/** Map legacy "starter" plan to "free" — one paid tier now. */
-function normalizePlan(plan: "free" | "starter" | "pro"): "free" | "pro" {
-  return plan === "starter" ? "free" : plan;
-}
+import type { RawAnalyticsDoc, RawSlugAggregateDoc } from "../types/raw";
+import type { UsageAnalytics, SlugAggregate } from "../types/analytics";
 
 export function toUsageAnalytics(doc: RawAnalyticsDoc): UsageAnalytics {
   return {
-    plan: normalizePlan(doc.plan),
+    plan: doc.plan === "starter" ? "free" : doc.plan,
     totalRuns: doc.totalRuns,
     lastRunAt: doc.lastRunAt,
   };

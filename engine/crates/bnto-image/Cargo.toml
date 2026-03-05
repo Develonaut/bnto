@@ -67,7 +67,6 @@ bnto-core = { path = "../bnto-core" }
 
 # The Rust ↔ JS bridge (see workspace root Cargo.toml for details)
 wasm-bindgen = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true, features = ["console"] }
 

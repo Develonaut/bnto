@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -6,10 +7,6 @@ export const metadata: Metadata = {
     "bnto privacy policy. Learn how we handle your data, what we collect, and how we use analytics to improve the service.",
 };
 
-export default function PrivacyLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function PrivacyLayout({ children }: { children: ReactNode }) {
   return children;
 }

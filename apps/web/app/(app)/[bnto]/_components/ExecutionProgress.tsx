@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { CheckCircle2Icon, LoaderIcon, XCircleIcon, ClockIcon } from "@bnto/ui";
 import { core } from "@bnto/core";
 import type { Execution, NodeProgress } from "@bnto/core";
 import { cn } from "@/lib/cn";
+import { useElapsedTime, formatElapsed } from "../_hooks/useElapsedTime";
 
 interface ExecutionProgressProps {
   executionId: string;
@@ -20,7 +20,8 @@ interface ExecutionProgressProps {
  */
 export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
   const { data: execution, isLoading } = core.executions.useExecution(executionId);
-  const elapsed = useElapsedTime(execution);
+  const isActive = execution?.status === "pending" || execution?.status === "running";
+  const elapsed = useElapsedTime(execution?.startedAt, isActive);
 
   if (isLoading || !execution) {
     return (
@@ -31,9 +32,7 @@ export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
       >
         <div className="flex items-center gap-3">
           <LoaderIcon className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
-          <p className="text-sm text-muted-foreground">
-            Starting execution&hellip;
-          </p>
+          <p className="text-sm text-muted-foreground">Starting execution&hellip;</p>
         </div>
       </div>
     );
@@ -48,9 +47,7 @@ export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <StatusIcon status={execution.status} />
-          <p className="text-sm font-medium text-foreground">
-            {getStatusLabel(execution.status)}
-          </p>
+          <p className="text-sm font-medium text-foreground">{getStatusLabel(execution.status)}</p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ClockIcon className="size-3.5" />
@@ -73,9 +70,7 @@ export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
         >
           <p className="text-sm text-destructive">{friendlyError(execution.error)}</p>
           {execution.error !== friendlyError(execution.error) && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {execution.error}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{execution.error}</p>
           )}
         </div>
       )}
@@ -103,9 +98,7 @@ function NodeProgressRow({ node }: { node: NodeProgress }) {
         )}
       />
       <span className="text-muted-foreground">{node.nodeId}</span>
-      <span className="ml-auto text-xs text-muted-foreground">
-        {node.status}
-      </span>
+      <span className="ml-auto text-xs text-muted-foreground">{node.status}</span>
     </li>
   );
 }
@@ -114,13 +107,9 @@ function StatusIcon({ status }: { status: Execution["status"] }) {
   switch (status) {
     case "pending":
     case "running":
-      return (
-        <LoaderIcon className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
-      );
+      return <LoaderIcon className="size-5 shrink-0 text-primary motion-safe:animate-spin" />;
     case "completed":
-      return (
-        <CheckCircle2Icon className="size-5 shrink-0 text-success" />
-      );
+      return <CheckCircle2Icon className="size-5 shrink-0 text-success" />;
     case "failed":
       return <XCircleIcon className="size-5 shrink-0 text-destructive" />;
   }
@@ -139,32 +128,6 @@ function getStatusLabel(status: Execution["status"]): string {
   }
 }
 
-/** Count seconds since execution started, ticking every second while active. */
-function useElapsedTime(execution: Execution | null | undefined) {
-  const [elapsed, setElapsed] = useState(0);
-  const startedAt = execution?.startedAt;
-  const completedAt = execution?.completedAt;
-  const isActive =
-    execution?.status === "pending" || execution?.status === "running";
-
-  useEffect(() => {
-    const compute = () => {
-      if (!startedAt) return 0;
-      return Math.floor(((completedAt ?? Date.now()) - startedAt) / 1000);
-    };
-
-    // Sync elapsed with external time source on each subscription change.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- timer sync with Date.now()
-    setElapsed(compute());
-
-    if (!startedAt || !isActive) return;
-    const interval = setInterval(() => setElapsed(compute()), 1000);
-    return () => clearInterval(interval);
-  }, [startedAt, completedAt, isActive]);
-
-  return elapsed;
-}
-
 /** Translate backend error strings into user-friendly messages. */
 function friendlyError(raw: string): string {
   if (raw.includes("file transit not configured"))
@@ -178,11 +141,4 @@ function friendlyError(raw: string): string {
   if (raw.match(/Go API returned [45]\d\d/))
     return "The processing server returned an error. Please try again.";
   return raw;
-}
-
-function formatElapsed(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}m ${s}s`;
 }

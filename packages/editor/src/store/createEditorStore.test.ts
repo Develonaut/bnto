@@ -6,17 +6,10 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
+import type { StoreApi } from "zustand";
 import { createEditorStore } from "./createEditorStore";
 import type { EditorStore } from "./types";
-import type { StoreApi } from "zustand";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function state(store: StoreApi<EditorStore>) {
-  return store.getState();
-}
+import { state } from "./test-helpers";
 
 // ---------------------------------------------------------------------------
 // Tests

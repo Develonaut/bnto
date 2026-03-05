@@ -67,12 +67,6 @@ resolver = "2"
 # (strings, numbers, arrays, etc.) across the Rust ↔ JS boundary.
 wasm-bindgen = "0.2"
 
-# wasm-bindgen-futures: Lets us use Rust's async/await with JavaScript
-# Promises. When our Rust code needs to do something asynchronous
-# (like processing a large file in chunks), this converts between
-# Rust Futures and JS Promises seamlessly.
-wasm-bindgen-futures = "0.4"
-
 # js-sys: Provides Rust bindings to JavaScript's built-in objects.
 # Things like `Array`, `Uint8Array`, `Date`, `JSON`, `Promise`, etc.
 # We use this when we need to work with JS data structures from Rust.

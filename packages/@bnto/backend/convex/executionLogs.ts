@@ -12,12 +12,11 @@ export const list = query({
     const execution = await ctx.db.get(args.executionId);
     if (execution === null || execution.userId !== userId) return [];
 
+    // Bounded fetch — executionLogs grows unboundedly per execution
     return ctx.db
       .query("executionLogs")
-      .withIndex("by_execution", (q) =>
-        q.eq("executionId", args.executionId),
-      )
-      .collect();
+      .withIndex("by_execution", (q) => q.eq("executionId", args.executionId))
+      .take(1000);
   },
 });
 
@@ -26,12 +25,7 @@ export const insert = internalMutation({
   args: {
     executionId: v.id("executions"),
     nodeId: v.string(),
-    level: v.union(
-      v.literal("info"),
-      v.literal("warn"),
-      v.literal("error"),
-      v.literal("debug"),
-    ),
+    level: v.union(v.literal("info"), v.literal("warn"), v.literal("error"), v.literal("debug")),
     message: v.string(),
     timestamp: v.number(),
   },

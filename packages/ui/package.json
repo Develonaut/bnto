@@ -33,6 +33,7 @@
     "tailwind-variants": "^3.2.2"
   },
   "scripts": {
+    "build": "tsc --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {

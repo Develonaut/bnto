@@ -55,9 +55,11 @@ use crate::orientation::decode_with_orientation;
 // Configuration Constants
 // =============================================================================
 
-/// Default quality when re-encoding to a lossy format.
-/// 80 is the sweet spot: noticeable file size savings with minimal quality loss.
-const DEFAULT_QUALITY: u8 = 80;
+// Default JPEG quality — imported from bnto-core so all image operations
+// (compress, resize, convert) share a single source of truth.
+// Aliased to `DEFAULT_QUALITY` for readability in this file since convert
+// handles multiple formats, not just JPEG.
+use bnto_core::DEFAULT_JPEG_QUALITY as DEFAULT_QUALITY;
 
 /// Maximum quality for WebP output. The Rust `image` crate's WebP encoder is
 /// lossless-only, and quality values above 85 tend to produce very large files

@@ -1,13 +1,13 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import type { PointerEvent } from "react";
+import type { PointerEvent, RefObject } from "react";
 
 import { angleToValue, pointerToAngle } from "./valueMapping";
 
 interface UseRadialPointerOptions {
-  containerRef: React.RefObject<HTMLDivElement | null>;
-  thumbRef: React.RefObject<HTMLDivElement | null>;
+  containerRef: RefObject<HTMLDivElement | null>;
+  thumbRef: RefObject<HTMLDivElement | null>;
   min: number;
   max: number;
   startAngle: number;

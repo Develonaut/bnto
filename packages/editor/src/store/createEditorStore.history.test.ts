@@ -3,26 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { createEditorStore } from "./createEditorStore";
-import { addNode } from "../actions/addNode";
-import type { EditorStore } from "./types";
 import type { StoreApi } from "zustand";
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function state(store: StoreApi<EditorStore>) {
-  return store.getState();
-}
-
-/** Call the pure addNode action and apply to store. */
-function addNodeViaStore(store: StoreApi<EditorStore>, type: string): string | null {
-  const result = addNode(store.getState(), type as never);
-  if (!result) return null;
-  store.setState(result.nextState);
-  return result.nodeId;
-}
+import { createEditorStore } from "./createEditorStore";
+import type { EditorStore } from "./types";
+import { state, addNodeViaStore } from "./test-helpers";
 
 // ---------------------------------------------------------------------------
 // Tests

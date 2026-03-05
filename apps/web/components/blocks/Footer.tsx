@@ -26,9 +26,7 @@ const TOOL_SECTIONS = [
   },
   {
     title: "File",
-    links: [
-      { name: "Rename Files", href: "/rename-files" },
-    ],
+    links: [{ name: "Rename Files", href: "/rename-files" }],
   },
   {
     title: "Company",
@@ -49,7 +47,12 @@ export function Footer() {
           <Stack gap="md" className="lg:max-w-xs">
             <NavButton
               href="/"
-              style={{ "--face-bg": "var(--background)", "--face-fg": "var(--foreground)" } as CSSProperties}
+              style={
+                {
+                  "--face-bg": "var(--background)",
+                  "--face-fg": "var(--foreground)",
+                } as CSSProperties
+              }
               className="w-fit text-xl font-display font-black tracking-tighter"
             >
               bnto
@@ -109,16 +112,10 @@ export function Footer() {
         <div className="flex flex-col items-center justify-between gap-3 border-t border-border py-6 text-xs text-muted-foreground sm:flex-row">
           <p>{LICENSE_LINE}</p>
           <Row className="gap-4">
-            <Link
-              href="/motorway"
-              className="transition-colors hover:text-foreground"
-            >
+            <Link href="/motorway" className="transition-colors hover:text-foreground">
               Motorway
             </Link>
-            <Link
-              href="/privacy"
-              className="transition-colors hover:text-foreground"
-            >
+            <Link href="/privacy" className="transition-colors hover:text-foreground">
               Privacy Policy
             </Link>
           </Row>

@@ -1,0 +1,16 @@
+pre-commit:
+  parallel: false
+  commands:
+    prettier:
+      glob: "*.{ts,tsx,js,mjs,json,css,md,yml,yaml}"
+      run: pnpm prettier --write {staged_files}
+      stage_fixed: true
+
+    lint:
+      glob: "*.{ts,tsx,js,mjs}"
+      exclude: "^(archive/|engine/|node_modules/|\\.next)"
+      run: pnpm turbo run lint
+
+    typecheck:
+      glob: "*.{ts,tsx}"
+      run: pnpm turbo run build

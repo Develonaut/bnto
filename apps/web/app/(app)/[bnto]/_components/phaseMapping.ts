@@ -86,10 +86,7 @@ export function toBrowserPhase(status: string): RunPhase {
  *   if we haven't created the execution yet or haven't received data)
  * @returns The RunPhase the button should display
  */
-export function toCloudPhase(
-  localPhase: RunPhase,
-  executionStatus: string | undefined,
-): RunPhase {
+export function toCloudPhase(localPhase: RunPhase, executionStatus: string | undefined): RunPhase {
   // Client is still uploading files to R2 — server doesn't know yet
   if (localPhase === "uploading") return "uploading";
 
@@ -108,5 +105,24 @@ export function toCloudPhase(
     // Unknown server status — fall back to client's phase
     default:
       return localPhase;
+  }
+}
+
+/**
+ * Map the unified RunPhase + file count to the 3-step PhaseIndicator.
+ *
+ * Phase 1 = no files yet (upload prompt)
+ * Phase 2 = files selected (configure)
+ * Phase 3 = execution in progress or complete
+ */
+export function deriveActivePhase(resolvedPhase: RunPhase, fileCount: number): 1 | 2 | 3 {
+  switch (resolvedPhase) {
+    case "uploading":
+    case "running":
+    case "completed":
+    case "failed":
+      return 3;
+    default:
+      return fileCount > 0 ? 2 : 1;
   }
 }

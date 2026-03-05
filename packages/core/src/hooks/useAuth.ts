@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { useSessionStatus } from "./useSessionStatus";
@@ -44,13 +44,12 @@ export function useAuth(): AuthState {
   const signingOut = hasSignoutSignal();
   const isAuthenticated = status === "authenticated" && !signingOut;
   const isLoading = status === "loading" || userLoading;
-  const liveUser = currentUser ? toAuthUser(currentUser) : null;
+  const liveUser = useMemo(() => (currentUser ? toAuthUser(currentUser) : null), [currentUser]);
 
   // Auto-persist live user when session resolves.
-  const liveUserId = liveUser?.id;
   useEffect(() => {
     if (isAuthenticated && liveUser) core.auth.rememberUser(liveUser);
-  }, [isAuthenticated, liveUserId]);
+  }, [isAuthenticated, liveUser]);
 
   return {
     isAuthenticated,

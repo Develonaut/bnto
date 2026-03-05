@@ -3,38 +3,17 @@
 import { Fragment, useCallback, useMemo, useState, type ComponentProps } from "react";
 import type { NodeTypeName } from "@bnto/nodes";
 import { Badge, Menu, SearchIcon, Text } from "@bnto/ui";
-import { useEditorStore } from "../hooks/useEditorStore";
-import { useEditorActions } from "../hooks/useEditorActions";
-import { useNodePalette } from "../hooks/useNodePalette";
-import { SLOTS } from "../adapters/bentoSlots";
+import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditorActions } from "../../hooks/useEditorActions";
+import { useNodePalette } from "../../hooks/useNodePalette";
+import { SLOTS } from "../../adapters/bentoSlots";
 
 /**
- * NodePaletteMenu — composable Menu for adding nodes to the canvas.
+ * NodePaletteMenuContent — search header + categorized node type list.
  *
- * Compound component (dot-notation) that wraps the generic Menu with
- * editor-specific node palette content. Search filter at the top,
- * categorized node list below. Clicking adds the node and selects it
- * so the config panel opens immediately.
- *
- *   <NodePaletteMenu>
- *     <NodePaletteMenu.Trigger variant="ghost">
- *       <PlusIcon /> Add
- *     </NodePaletteMenu.Trigger>
- *     <NodePaletteMenu.Content side="top" />
- *   </NodePaletteMenu>
+ * Clicking a node adds it to the canvas and selects it so the config
+ * panel opens immediately.
  */
-
-/* ── Root — delegates to Menu ──────────────────────────────────── */
-
-function NodePaletteMenuRoot({ children, ...props }: ComponentProps<typeof Menu>) {
-  return <Menu {...props}>{children}</Menu>;
-}
-
-/* ── Trigger — pass-through to Menu.Trigger ────────────────────── */
-
-const NodePaletteMenuTrigger = Menu.Trigger;
-
-/* ── Content — search header + categorized node type list ──────── */
 
 function NodePaletteMenuContent({
   className,
@@ -102,9 +81,7 @@ function NodePaletteMenuContent({
           {filteredGroups.map((group, i) => (
             <Fragment key={group.category.name}>
               {i > 0 && <Menu.Separator className="col-span-2" />}
-              <Menu.Label className="col-span-2">
-                {group.category.label}
-              </Menu.Label>
+              <Menu.Label className="col-span-2">{group.category.label}</Menu.Label>
               {group.items.map((item) => {
                 const isServerOnly = !item.browserCapable;
                 const disabled = isFull || isServerOnly;
@@ -116,9 +93,7 @@ function NodePaletteMenuContent({
                     className="flex-col items-start gap-1 py-2.5 text-left"
                   >
                     <span className="flex w-full items-center gap-2">
-                      <span className="text-sm leading-normal font-medium">
-                        {item.label}
-                      </span>
+                      <span className="text-sm leading-normal font-medium">{item.label}</span>
                       {isServerOnly && (
                         <Badge variant="outline" className="shrink-0 text-xs">
                           Pro
@@ -146,8 +121,4 @@ function NodePaletteMenuContent({
   );
 }
 
-export const NodePaletteMenu = Object.assign(NodePaletteMenuRoot, {
-  Root: NodePaletteMenuRoot,
-  Trigger: NodePaletteMenuTrigger,
-  Content: NodePaletteMenuContent,
-});
+export { NodePaletteMenuContent };

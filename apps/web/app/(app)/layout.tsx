@@ -1,8 +1,10 @@
+import type { ReactNode } from "react";
+
 import { AppShell } from "@bnto/ui";
 import { Navbar } from "@/components/blocks/Navbar";
 import { Footer } from "@/components/blocks/Footer";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <AppShell.Header>

@@ -55,10 +55,9 @@ use crate::format::ImageFormat;
 // Configuration Constants
 // =============================================================================
 
-/// Default JPEG quality when the user doesn't specify one.
-/// 80 is a widely-accepted sweet spot: significant file size reduction
-/// with barely noticeable quality loss for most photos.
-const DEFAULT_JPEG_QUALITY: u8 = 80;
+// Default JPEG quality — imported from bnto-core so all image operations
+// (compress, resize, convert) share a single source of truth.
+use bnto_core::DEFAULT_JPEG_QUALITY;
 
 /// Minimum JPEG quality we allow. Below this, images look terrible.
 /// We enforce this as a safety net so users can't accidentally destroy

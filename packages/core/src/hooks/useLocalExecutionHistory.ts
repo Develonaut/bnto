@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { core } from "../core";
 import { useReady } from "./useReady";
 import { localEntryToExecution } from "../transforms/localHistory";
-import type { Execution } from "../types";
 
 /**
  * IndexedDB-backed execution history (unauthenticated users).
@@ -22,7 +21,7 @@ export function useLocalExecutionHistory(options?: { enabled?: boolean }) {
   });
 
   return {
-    items: (localEntries ?? []) as Execution[],
+    items: localEntries ?? [],
     isLoading: !ready || isLoading,
     status: "Exhausted" as const,
     loadMore: (_numItems: number) => {},

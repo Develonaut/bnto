@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 
 import { cn } from "../utils/cn";
 
@@ -78,24 +79,26 @@ export function ComparisonBar({
                   "data-[active=true]:w-[var(--bar-width)]",
                   item.className ?? (i === 0 ? "bg-primary" : "bg-muted-foreground/30"),
                 )}
-                style={{
-                  "--bar-width": `${widthPercent}%`,
-                  transitionDelay: mounted ? `${delay}ms` : "0ms",
-                } as React.CSSProperties}
+                style={
+                  {
+                    "--bar-width": `${widthPercent}%`,
+                    transitionDelay: mounted ? `${delay}ms` : "0ms",
+                  } as CSSProperties
+                }
               />
             </div>
             <div className="flex items-baseline justify-between">
               <div className="flex flex-col">
-                <span className={cn(
-                  "text-[10px] font-medium",
-                  i === 0 ? "text-primary" : "text-muted-foreground",
-                )}>
+                <span
+                  className={cn(
+                    "text-[10px] font-medium",
+                    i === 0 ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
                   {item.label}
                 </span>
                 {item.subtitle && (
-                  <span className="text-muted-foreground/50 text-[9px]">
-                    {item.subtitle}
-                  </span>
+                  <span className="text-muted-foreground/50 text-[9px]">{item.subtitle}</span>
                 )}
               </div>
               <span className="text-muted-foreground text-[10px]">

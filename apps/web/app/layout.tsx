@@ -1,14 +1,10 @@
+import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { ConvexAuthNextjsServerProvider } from "@bnto/auth/server";
 import { AppShell } from "@bnto/ui";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import {
-  DEFAULT_TITLE,
-  SITE_DESCRIPTION,
-  SITE_TITLE,
-  TITLE_TEMPLATE,
-} from "@/lib/copy";
+import { DEFAULT_TITLE, SITE_DESCRIPTION, SITE_TITLE, TITLE_TEMPLATE } from "@/lib/copy";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -74,11 +70,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <ConvexAuthNextjsServerProvider>
       <html lang="en" suppressHydrationWarning>
@@ -93,9 +85,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Providers>
-              <AppShell>
-                {children}
-              </AppShell>
+              <AppShell>{children}</AppShell>
             </Providers>
           </ThemeProvider>
         </body>

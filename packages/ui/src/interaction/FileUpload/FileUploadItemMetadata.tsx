@@ -4,20 +4,11 @@ import type { ComponentProps } from "react";
 
 import { FileIcon } from "../../icons";
 import { cn } from "../../utils/cn";
+import { formatFileSize } from "../../utils/formatFileSize";
 
 import { useFileUploadItemContext } from "./context";
 
-function formatBytes(bytes: number) {
-  if (bytes === 0) return "0 B";
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / 1024 ** i).toFixed(i ? 1 : 0)} ${sizes[i]}`;
-}
-
-export function FileUploadItemMetadata({
-  className,
-  ...props
-}: ComponentProps<"div">) {
+export function FileUploadItemMetadata({ className, ...props }: ComponentProps<"div">) {
   const { file } = useFileUploadItemContext("FileUpload.ItemMetadata");
 
   return (
@@ -32,7 +23,7 @@ export function FileUploadItemMetadata({
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-sm font-semibold">{file.name}</span>
         <span className="truncate text-xs text-muted-foreground">
-          {file.type || "unknown"} &middot; {formatBytes(file.size)}
+          {file.type || "unknown"} &middot; {formatFileSize(file.size)}
         </span>
       </div>
     </div>

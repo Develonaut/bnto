@@ -23,10 +23,11 @@ function ConfigPanelRoot() {
   const configNodeId = selectedNodeId ?? prevSelectedNodeId ?? null;
 
   const { configOpen } = useEditorPanels();
-  const { node, config, typeInfo, visibleParams } =
-    useEditorNode(configNodeId);
+  const { node, config, typeInfo, visibleParams } = useEditorNode(configNodeId);
   const { updateParams } = useEditorActions();
 
+  /* CSS transition for panel open/close — Animate.* covers entrance animations,
+     not boolean state transitions. See animation.md decision tree. */
   const slotCn = cn(
     "pointer-events-auto absolute bottom-0 right-0 top-0 w-72",
     "motion-safe:transition-[translate,opacity]",

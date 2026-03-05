@@ -48,6 +48,21 @@ pub use processor::NodeProcessor;
 pub use progress::ProgressReporter;
 
 // =============================================================================
+// Shared Constants
+// =============================================================================
+//
+// Constants used by multiple node crates live here so there's a single source
+// of truth. When compress, resize, and convert all need the same default JPEG
+// quality, defining it once in bnto-core prevents the values from drifting
+// apart over time.
+
+/// Default JPEG quality when not specified by the user (0-100 scale).
+/// 80 is the industry sweet spot: significant file size savings with barely
+/// noticeable quality loss for most photos. Used across compress, resize,
+/// and convert operations.
+pub const DEFAULT_JPEG_QUALITY: u8 = 80;
+
+// =============================================================================
 // Utility Functions (Pure Rust — no WASM boundary)
 // =============================================================================
 //

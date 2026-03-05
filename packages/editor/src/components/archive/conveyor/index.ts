@@ -9,12 +9,14 @@
  */
 
 export { ConveyorCanvas } from "./ConveyorCanvas";
-export { StationNode, type StationData, type StationNodeType } from "./StationNode";
-export {
-  ConveyorEdge,
-  type ConveyorEdgeData,
-  type ConveyorEdgeType,
-} from "./ConveyorEdge";
+export { StationNode } from "./StationNode";
+export { ConveyorEdge } from "./ConveyorEdge";
+export type {
+  StationData,
+  StationNodeType,
+  ConveyorEdgeData,
+  ConveyorEdgeType,
+} from "./types";
 export {
   BeltPiece,
   VARIANT_PIECE_MAP,

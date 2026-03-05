@@ -13,7 +13,13 @@ function stateWithNode(): EditorState {
       id: "a",
       type: "compartment",
       position: { x: 0, y: 0 },
-      data: { label: "A", variant: "primary", width: 200, height: 200, status: "idle" },
+      data: {
+        label: "A",
+        variant: "primary",
+        width: 200,
+        height: 200,
+        status: "idle",
+      },
     },
   ];
   const configs: NodeConfigs = {
@@ -23,12 +29,18 @@ function stateWithNode(): EditorState {
     nodes,
     edges: [],
     configs,
-    recipeMetadata: { id: "test", name: "Test", type: "group", version: "1.0.0" },
+    recipeMetadata: {
+      id: "test",
+      name: "Test",
+      type: "group",
+      version: "1.0.0",
+    },
     isDirty: false,
     validationErrors: [],
     executionState: {},
     undoStack: [],
     redoStack: [],
+    slug: null,
     selectedNodeId: null,
     layersOpen: false,
     configOpen: false,
@@ -49,7 +61,9 @@ describe("updateParams", () => {
   });
 
   it("returns null for unknown node", () => {
-    const result = updateParams(stateWithNode(), "nonexistent", { quality: 60 });
+    const result = updateParams(stateWithNode(), "nonexistent", {
+      quality: 60,
+    });
     expect(result).toBeNull();
   });
 
