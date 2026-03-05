@@ -19,7 +19,8 @@ import { ProgressShowcase } from "./ProgressShowcase";
 import { RecipeCardShowcase } from "./RecipeCardShowcase";
 import { SelectShowcase } from "./SelectShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
-import { LoadingCardShowcase, SpringableShowcase } from "./SpringableShowcase";
+import { LoadingCardShowcase } from "./LoadingCardShowcase";
+import { SpringableShowcase } from "./SpringableShowcase";
 import { TypographyShowcase } from "./TypographyShowcase";
 
 export default function MotorwayPage() {

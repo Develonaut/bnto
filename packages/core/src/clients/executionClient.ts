@@ -42,6 +42,25 @@ export function createExecutionClient(
 ) {
   let getIsAuthenticated: AuthStatusGetter = () => false;
 
+  /** Record execution to local + server history (fire-and-forget). */
+  function recordToHistory(
+    slug: string,
+    files: File[],
+    result: BrowserRunResult,
+    serverEventId: string | null,
+  ): void {
+    history.record(buildHistoryEntry(slug, files, result)).catch(() => {});
+    if (serverEventId) {
+      history
+        .recordServerComplete(
+          serverEventId,
+          result.durationMs,
+          result.status as "completed" | "failed",
+        )
+        .catch(() => {});
+    }
+  }
+
   /**
    * Wrap an instance's run() to auto-record to history.
    * Always writes to IndexedDB. Also writes to Convex for authenticated users.
@@ -56,32 +75,14 @@ export function createExecutionClient(
         files: File[],
         params?: Record<string, unknown>,
       ): Promise<BrowserRunResult> => {
-        const isAuth = getIsAuthenticated();
-
-        // For authenticated users, log start to Convex before running
-        let serverEventId: string | null = null;
-        if (isAuth) {
-          serverEventId = await history.recordServerStart(slug).catch(() => null);
-        }
+        const serverEventId = getIsAuthenticated()
+          ? await history.recordServerStart(slug).catch(() => null)
+          : null;
 
         const result = await originalRun(slug, files, params);
-
         if (result.status !== "aborted") {
-          // Always write to IndexedDB (fire-and-forget)
-          history.record(buildHistoryEntry(slug, files, result)).catch(() => {});
-
-          // Complete Convex event if we started one
-          if (serverEventId) {
-            history
-              .recordServerComplete(
-                serverEventId,
-                result.durationMs,
-                result.status as "completed" | "failed",
-              )
-              .catch(() => {});
-          }
+          recordToHistory(slug, files, result, serverEventId);
         }
-
         return result;
       },
     };

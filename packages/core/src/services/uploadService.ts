@@ -45,6 +45,54 @@ function uploadFileToR2(
   });
 }
 
+/** Convert File[] to UploadFileInput[] for the backend. */
+function toUploadInputs(files: File[]): UploadFileInput[] {
+  return files.map((f) => ({
+    name: f.name,
+    contentType: f.type || "application/octet-stream",
+    sizeBytes: f.size,
+  }));
+}
+
+/** Initialize per-file progress tracking entries. */
+function initProgress(files: File[]): FileUploadProgress[] {
+  return files.map((f) => ({
+    fileName: f.name,
+    loaded: 0,
+    total: f.size,
+    status: "pending" as const,
+  }));
+}
+
+/** Upload a single file and update progress tracking. */
+async function uploadWithTracking(
+  file: File,
+  url: string,
+  index: number,
+  progress: FileUploadProgress[],
+  onProgress?: OnUploadProgress,
+): Promise<void> {
+  progress[index] = { ...progress[index], status: "uploading" };
+  onProgress?.([...progress]);
+
+  try {
+    await uploadFileToR2(file, url, (loaded, total) => {
+      progress[index] = { ...progress[index], loaded, total };
+      onProgress?.([...progress]);
+    });
+    progress[index] = { ...progress[index], loaded: file.size, status: "completed" };
+    onProgress?.([...progress]);
+  } catch (error) {
+    progress[index] = {
+      ...progress[index],
+      status: "failed",
+      error: error instanceof Error ? error.message : "Upload failed",
+    };
+    onProgress?.([...progress]);
+    throw error;
+  }
+}
+
 export function createUploadService() {
   return {
     /** Request presigned URLs from the backend. */
@@ -52,62 +100,21 @@ export function createUploadService() {
 
     /**
      * Upload files to R2 via presigned URLs with progress tracking.
-     *
-     * 1. Calls the backend to generate presigned URLs (returns a sessionId).
-     * 2. Uploads each file in parallel with per-file progress.
-     * 3. Calls onProgress after each progress event.
-     * 4. Returns the sessionId on success.
+     * Returns the sessionId on success.
      */
     uploadFiles: async (
       files: File[],
       onProgress?: OnUploadProgress,
     ): Promise<UploadSession> => {
-      const inputs: UploadFileInput[] = files.map((f) => ({
-        name: f.name,
-        contentType: f.type || "application/octet-stream",
-        sizeBytes: f.size,
-      }));
-
-      const session = await generateUploadUrls(inputs);
-
-      const progress: FileUploadProgress[] = files.map((f) => ({
-        fileName: f.name,
-        loaded: 0,
-        total: f.size,
-        status: "pending" as const,
-      }));
-
+      const session = await generateUploadUrls(toUploadInputs(files));
+      const progress = initProgress(files);
       onProgress?.(progress);
 
-      const uploadPromises = session.urls.map(async (presigned, index) => {
-        const file = files[index];
-        progress[index] = { ...progress[index], status: "uploading" };
-        onProgress?.([...progress]);
-
-        try {
-          await uploadFileToR2(file, presigned.url, (loaded, total) => {
-            progress[index] = { ...progress[index], loaded, total };
-            onProgress?.([...progress]);
-          });
-
-          progress[index] = {
-            ...progress[index],
-            loaded: file.size,
-            status: "completed",
-          };
-          onProgress?.([...progress]);
-        } catch (error) {
-          progress[index] = {
-            ...progress[index],
-            status: "failed",
-            error: error instanceof Error ? error.message : "Upload failed",
-          };
-          onProgress?.([...progress]);
-          throw error;
-        }
-      });
-
-      await Promise.all(uploadPromises);
+      await Promise.all(
+        session.urls.map((presigned, i) =>
+          uploadWithTracking(files[i], presigned.url, i, progress, onProgress),
+        ),
+      );
 
       return session;
     },

@@ -7,6 +7,8 @@ import { cn } from "../utils/cn";
 import { createCn } from "../utils/createCn";
 import { SPRING_STYLES } from "../surface/Pressable";
 import type { SpringMode } from "../surface/Pressable";
+import { resolveElevationClass, stripSizeElevation } from "./resolveElevation";
+import type { ElevationOverride } from "./resolveElevation";
 
 /* ── Class split ──────────────────────────────────────────────
  * Behavior: always applied (even with asChild). Pressable
@@ -52,19 +54,20 @@ const buttonCn = createCn({
   },
 });
 
-type ElevationOverride = boolean | "none" | "sm" | "md" | "lg";
-
-/** Strip the size-variant's built-in elevation-{sm|md|lg} and replace it. */
-function resolveElevationClass(elevation: ElevationOverride): string | undefined {
-  if (elevation === true) return undefined; // use size variant's built-in elevation
-  if (elevation === false || elevation === "none") return "elevation-none";
-  return `elevation-${elevation}`;
-}
-
-/** Remove elevation-sm / elevation-md / elevation-lg tokens from a class string. */
-function stripSizeElevation(classes: string): string {
-  return classes.replace(/\belevation-(?:sm|md|lg)\b/g, "").trim();
-}
+type ButtonProps = Omit<ComponentProps<"button">, "ref"> &
+  Omit<ComponentProps<"a">, "ref"> & {
+    variant?: ButtonVariant;
+    size?: ButtonSize;
+    asChild?: boolean;
+    elevation?: ElevationOverride;
+    spring?: SpringMode;
+    muted?: boolean;
+    hovered?: boolean;
+    pressed?: boolean;
+    toggle?: boolean;
+    href?: string;
+    ref?: Ref<HTMLElement>;
+  };
 
 function Button({
   className,
@@ -81,35 +84,9 @@ function Button({
   style,
   ref,
   ...props
-}: Omit<ComponentProps<"button">, "ref"> &
-  Omit<ComponentProps<"a">, "ref"> & {
-    variant?: ButtonVariant;
-    size?: ButtonSize;
-    asChild?: boolean;
-    elevation?: ElevationOverride;
-    spring?: SpringMode;
-    muted?: boolean;
-    hovered?: boolean;
-    pressed?: boolean;
-    toggle?: boolean;
-    href?: string;
-    ref?: Ref<HTMLElement>;
-  }) {
-  const isLink = !!href;
-  const isInternal = isLink && href.startsWith("/") && !props.target;
-  const Comp: ElementType = asChild
-    ? Slot
-    : isInternal
-      ? Link
-      : isLink
-        ? "a"
-        : "button";
-  const dataHover = hovered && !pressed ? "" : undefined;
-  const dataActive = pressed ? "" : undefined;
-  const dataToggle = toggle ? "" : undefined;
+}: ButtonProps) {
+  const Comp = resolveComponent(asChild, href, props.target);
   const elevationClass = resolveElevationClass(elevation);
-  // When elevation is overridden (not true), strip the size variant's built-in
-  // elevation-{sm|md|lg} so it doesn't compete via CSS source order.
   const sizeClasses = !asChild ? buttonCn({ variant, size }) : "";
   const resolvedSizeClasses = elevationClass
     ? stripSizeElevation(sizeClasses)
@@ -120,15 +97,22 @@ function Button({
       ref={ref}
       data-slot="button"
       data-muted={muted || undefined}
-      data-hover={dataHover}
-      data-active={dataActive}
-      data-toggle={dataToggle}
-      {...(isLink ? { href } : {})}
+      data-hover={hovered && !pressed ? "" : undefined}
+      data-active={pressed ? "" : undefined}
+      data-toggle={toggle ? "" : undefined}
+      {...(!!href ? { href } : {})}
       className={cn(PRESSABLE_BASE, resolvedSizeClasses, elevationClass, className)}
       style={{ ...SPRING_STYLES[spring], ...style }}
       {...props}
     />
   );
+}
+
+function resolveComponent(asChild: boolean, href?: string, target?: string): ElementType {
+  if (asChild) return Slot;
+  if (!href) return "button";
+  if (href.startsWith("/") && !target) return Link;
+  return "a";
 }
 
 export { Button, buttonCn };

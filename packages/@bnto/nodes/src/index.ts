@@ -27,16 +27,12 @@ export type { ExecutionContext, NodeResult } from "./execution";
 export type { Recipe, AcceptSpec, SEOSpec } from "./recipe";
 
 // Node type registry
-export {
-  NODE_TYPES,
-  NODE_TYPE_NAMES,
-  NODE_TYPE_INFO,
-  isNodeType,
-  getNodeTypeInfo,
-  getBrowserCapableTypes,
-  getContainerTypes,
-} from "./nodeTypes";
+export { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./nodeTypes";
 export type { NodeTypeName, NodeCategory, NodeTypeInfo } from "./nodeTypes";
+export { isNodeType } from "./isNodeType";
+export { getNodeTypeInfo } from "./getNodeTypeInfo";
+export { getBrowserCapableTypes } from "./getBrowserCapableTypes";
+export { getContainerTypes } from "./getContainerTypes";
 
 // Categories
 export { CATEGORIES, getCategoryInfo } from "./categories";

@@ -279,12 +279,12 @@ Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: 
 
 #### Wave 1 (parallel — per-package audit)
 
-- [ ] `packages/ui` — **File size + structure audit**: Scan for files over 100 lines. Split oversized files. One export per file. Folder + barrel where earned. Verify dot-notation compliance
-- [ ] `packages/editor` — **File size + structure audit**: Same scan. Editor files are likely the biggest offenders — split aggressively. Verify actions pattern (pure functions for state mutations, thin hook wrappers)
-- [ ] `packages/core` — **File size + structure audit**: Oversized adapters, services, clients. One function per file in utils. Verify `select` rule on all `useQuery` calls
-- [ ] `packages/@bnto/backend` — **File size + structure audit**: Convex function files, helpers, validators
-- [ ] `packages/@bnto/nodes` — **File size + structure audit**: Schema files, registry, helpers
-- [ ] `apps/web` — **File size + structure audit**: Pages, route components, lib/. Focus on what remains after UI/editor extraction
+- [x] `packages/ui` — **File size + structure audit**: Scan for files over 100 lines. Split oversized files. One export per file. Folder + barrel where earned. Verify dot-notation compliance
+- [x] `packages/editor` — **File size + structure audit**: Same scan. Editor files are likely the biggest offenders — split aggressively. Verify actions pattern (pure functions for state mutations, thin hook wrappers)
+- [x] `packages/core` — **File size + structure audit**: Oversized adapters, services, clients. One function per file in utils. Verify `select` rule on all `useQuery` calls
+- [x] `packages/@bnto/backend` — **File size + structure audit**: Convex function files, helpers, validators
+- [x] `packages/@bnto/nodes` — **File size + structure audit**: Schema files, registry, helpers
+- [x] `apps/web` — **File size + structure audit**: Pages, route components, lib/. Focus on what remains after UI/editor extraction
 
 #### Wave 2 (sequential — cross-cutting + verify)
 

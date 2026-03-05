@@ -10,57 +10,46 @@ import { core } from "../core";
 import type { AuthUser, AuthState } from "../types/auth";
 import type { User } from "../types";
 
+/** Map a Convex User to the AuthUser shape (profile subset). */
+function toAuthUser(user: User): AuthUser {
+  return {
+    id: user.id,
+    name: user.name ?? "",
+    email: user.email ?? "",
+    image: user.image ?? null,
+  };
+}
+
+/** Read persisted auth state from the localStorage-backed store. */
+function usePersistedAuth() {
+  return useStore(
+    core.auth.store,
+    useShallow((s) => ({ user: s.user, hasAccount: s.hasAccount })),
+  );
+}
+
 /**
  * Unified auth state — session + persisted user in one hook.
  *
  * Persisted fields (user, hasAccount) are available instantly from localStorage.
  * Once the Convex session resolves, the live user takes precedence and is
- * auto-persisted for next visit. This means `user` is non-null immediately
- * for returning visitors — no flash of unauthenticated state.
+ * auto-persisted for next visit.
  */
 export function useAuth(): AuthState {
   const status = useSessionStatus();
   const { data, isLoading: userLoading } = useCurrentUser();
-
-  const persisted = useStore(
-    core.auth.store,
-    useShallow((s) => ({
-      user: s.user,
-      hasAccount: s.hasAccount,
-    })),
-  );
-
-  // convexQuery select returns User | null, but the unknown→select bridge
-  // loses the output type. Trust the transform at the boundary.
+  const persisted = usePersistedAuth();
   const currentUser = data as User | null;
 
-  // During the sign-out window (~10s), the HttpOnly session cookie may
-  // still be valid but the user has initiated sign-out. The signout signal
-  // cookie bridges this gap — treat as unauthenticated while it's present.
   const signingOut = hasSignoutSignal();
   const isAuthenticated = status === "authenticated" && !signingOut;
   const isLoading = status === "loading" || userLoading;
+  const liveUser = currentUser ? toAuthUser(currentUser) : null;
 
-  // Live user from session takes precedence. Fall back to persisted user
-  // so returning visitors see their profile instantly while session loads.
-  const liveUser: AuthUser | null = currentUser
-    ? {
-        id: currentUser.id,
-        name: currentUser.name ?? "",
-        email: currentUser.email ?? "",
-        image: currentUser.image ?? null,
-      }
-    : null;
-
-  // Auto-persist the live user when session resolves.
-  // Guard on isAuthenticated so sign-out clearing the store
-  // doesn't get overwritten before the session terminates.
-  // Deps: re-run when auth status or user identity changes, not on every render.
+  // Auto-persist live user when session resolves.
   const liveUserId = liveUser?.id;
   useEffect(() => {
-    if (isAuthenticated && liveUser) {
-      core.auth.rememberUser(liveUser);
-    }
+    if (isAuthenticated && liveUser) core.auth.rememberUser(liveUser);
   }, [isAuthenticated, liveUserId]);
 
   return {

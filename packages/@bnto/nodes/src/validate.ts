@@ -9,46 +9,29 @@
  */
 
 import type { Definition } from "./definition";
-import { isNodeType } from "./nodeTypes";
+import type { ValidationError } from "./validationError";
+import { isNodeType } from "./isNodeType";
 import { TYPE_VALIDATORS } from "./validateTypeSpecific";
 
-/** A single validation error with location and message. */
-export interface ValidationError {
-  /** The node ID where the error occurred. */
-  nodeId: string;
+// Re-export ValidationError so existing consumers don't break
+export type { ValidationError } from "./validationError";
 
-  /** The field that failed validation (e.g., "type", "url", "mode"). */
-  field: string;
-
-  /** Human-readable error message. */
-  message: string;
-}
+/** Core required fields and their error messages. */
+const CORE_REQUIRED_FIELDS: Array<{ field: keyof Definition; message: (id: string) => string }> = [
+  { field: "id", message: () => "node is missing required field 'id'" },
+  { field: "type", message: (id) => `node '${id}' is missing required field 'type'` },
+  { field: "version", message: (id) => `node '${id}' is missing required field 'version'` },
+];
 
 /** Validates core required fields: id, type, version. */
 function validateCore(def: Definition): ValidationError[] {
-  const errors: ValidationError[] = [];
-
-  if (!def.id) {
-    errors.push({ nodeId: "", field: "id", message: "node is missing required field 'id'" });
-  }
-
-  if (!def.type) {
-    errors.push({
+  return CORE_REQUIRED_FIELDS
+    .filter(({ field }) => !def[field])
+    .map(({ field, message }) => ({
       nodeId: def.id || "",
-      field: "type",
-      message: `node '${def.id || ""}' is missing required field 'type'`,
-    });
-  }
-
-  if (!def.version) {
-    errors.push({
-      nodeId: def.id || "",
-      field: "version",
-      message: `node '${def.id || ""}' is missing required field 'version'`,
-    });
-  }
-
-  return errors;
+      field,
+      message: message(def.id || ""),
+    }));
 }
 
 /** Validates that the node type is a known registered type. */

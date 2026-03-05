@@ -3,8 +3,7 @@
 import type { Definition } from "@bnto/nodes";
 import type { BrowserFileResult } from "@bnto/core";
 import { deriveOutputConfig } from "@bnto/core";
-import { Button, Card, CheckCircle2Icon, DownloadIcon, IconBadge, Row, Stack } from "@bnto/ui";
-import { formatFileSize } from "@bnto/ui";
+import { OutputFileCard } from "./OutputFileCard";
 
 interface OutputRendererProps {
   definition: Definition;
@@ -64,55 +63,5 @@ export function OutputRenderer({
         ))}
       </div>
     </div>
-  );
-}
-
-function OutputFileCard({
-  result,
-  onDownload,
-}: {
-  result: BrowserFileResult;
-  onDownload: (result: BrowserFileResult) => void;
-}) {
-  // Trust boundary: metadata is Record<string, unknown> from WASM engine
-  const originalSize = result.metadata.originalSize as number | undefined;
-  const ratio = result.metadata.ratio as number | undefined;
-
-  return (
-    <Card
-      className="flex items-center gap-3 rounded-lg px-4 py-3"
-      elevation="sm"
-      data-testid="output-file"
-    >
-      <Row className="min-w-0 flex-1 gap-3">
-        <IconBadge variant="primary" size="lg">
-          <CheckCircle2Icon className="size-5" />
-        </IconBadge>
-        <Stack className="min-w-0 flex-1 gap-0">
-          <span className="truncate text-sm font-semibold">
-            {result.filename}
-          </span>
-          <span className="truncate text-xs text-muted-foreground">
-            {formatFileSize(result.blob.size)}
-            {originalSize != null && ratio != null && (
-              <span>
-                {" "}
-                &middot; {Math.round((1 - ratio) * 100)}% smaller
-              </span>
-            )}
-          </span>
-        </Stack>
-      </Row>
-
-      <Button
-        variant="outline"
-        size="icon"
-        elevation="sm"
-        onClick={() => onDownload(result)}
-        aria-label={`Download ${result.filename}`}
-      >
-        <DownloadIcon className="size-4" />
-      </Button>
-    </Card>
   );
 }

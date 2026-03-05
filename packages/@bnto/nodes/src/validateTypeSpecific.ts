@@ -14,7 +14,7 @@ import type { Definition } from "./definition";
 import { HTTP_METHODS } from "./schemas/httpRequest";
 import { LOOP_MODES } from "./schemas/loop";
 import { FILE_OPERATIONS } from "./schemas/fileSystem";
-import type { ValidationError } from "./validate";
+import type { ValidationError } from "./validationError";
 
 /** Valid HTTP methods — derived from the schema's canonical array. */
 const VALID_HTTP_METHODS = new Set<string>(HTTP_METHODS);
@@ -35,68 +35,48 @@ function getStringParam(def: Definition, key: string): string | undefined {
   return undefined;
 }
 
+/** Validates the method parameter value is a known HTTP method. */
+function validateMethod(def: Definition, method: string): ValidationError[] {
+  if (VALID_HTTP_METHODS.has(method)) return [];
+  return [err(def.id, "method", `http-request node '${def.id}' has invalid method '${method}' (must be GET, POST, PUT, PATCH, DELETE, HEAD, or OPTIONS)`)];
+}
+
 /** Validates http-request node: url and method required, method must be valid. */
 export function validateHttpRequest(def: Definition): ValidationError[] {
   const errors: ValidationError[] = [];
-
   if (!getStringParam(def, "url")) {
     errors.push(err(def.id, "url", `http-request node '${def.id}' missing required parameter 'url'`));
   }
-
   const method = getStringParam(def, "method");
   if (!method) {
     errors.push(err(def.id, "method", `http-request node '${def.id}' missing required parameter 'method'`));
-  } else if (!VALID_HTTP_METHODS.has(method)) {
-    errors.push(
-      err(
-        def.id,
-        "method",
-        `http-request node '${def.id}' has invalid method '${method}' (must be GET, POST, PUT, PATCH, DELETE, HEAD, or OPTIONS)`,
-      ),
-    );
+  } else {
+    errors.push(...validateMethod(def, method));
   }
-
   return errors;
 }
 
+/** Mode-specific required parameters: mode -> [paramName, ...]. */
+const LOOP_MODE_REQUIRED_PARAMS: Record<string, string[]> = {
+  forEach: ["items"],
+  times: ["count"],
+  while: ["condition"],
+};
+
 /** Validates loop node: mode required, mode-specific params required. */
 export function validateLoop(def: Definition): ValidationError[] {
-  const errors: ValidationError[] = [];
-
   const mode = getStringParam(def, "mode");
   if (!mode) {
-    errors.push(err(def.id, "mode", `loop node '${def.id}' missing required parameter 'mode'`));
-    return errors;
+    return [err(def.id, "mode", `loop node '${def.id}' missing required parameter 'mode'`)];
   }
-
   if (!VALID_LOOP_MODES.has(mode)) {
-    errors.push(
-      err(
-        def.id,
-        "mode",
-        `loop node '${def.id}' has invalid mode '${mode}' (must be forEach, times, or while)`,
-      ),
-    );
-    return errors;
+    return [err(def.id, "mode", `loop node '${def.id}' has invalid mode '${mode}' (must be forEach, times, or while)`)];
   }
 
-  if (mode === "forEach" && def.parameters["items"] == null) {
-    errors.push(
-      err(def.id, "items", `loop node '${def.id}' with mode 'forEach' missing required parameter 'items'`),
-    );
-  }
-  if (mode === "times" && def.parameters["count"] == null) {
-    errors.push(
-      err(def.id, "count", `loop node '${def.id}' with mode 'times' missing required parameter 'count'`),
-    );
-  }
-  if (mode === "while" && def.parameters["condition"] == null) {
-    errors.push(
-      err(def.id, "condition", `loop node '${def.id}' with mode 'while' missing required parameter 'condition'`),
-    );
-  }
-
-  return errors;
+  const requiredParams = LOOP_MODE_REQUIRED_PARAMS[mode] ?? [];
+  return requiredParams
+    .filter((param) => def.parameters[param] == null)
+    .map((param) => err(def.id, param, `loop node '${def.id}' with mode '${mode}' missing required parameter '${param}'`));
 }
 
 /** Validates file-system node: operation required, must be valid. */
