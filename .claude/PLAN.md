@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 5, 2026
+**Last Updated:** March 6, 2026
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -29,14 +29,13 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 - **FOCUS: Editor to production.** Sprint 5 Waves 1-2 complete (compartment redesign, `/editor` route, nav integration). Sprint 4G complete (format versioning, Zod schemas, schema-driven config panel).
 - **Active work — execution order:**
-  1. **Sprint 5A Wave 1** — `isIoNode` flag, hover delete overlay, placeholder slot, exit animation
-  2. **Sprint 4H** — Pipeline executor extraction (architecture correctness — **must land before Sprint 5 Wave 3**)
-  3. **Sprint 5 Wave 3** — execution wiring (Run → WASM, elevation progress, results at Output node)
+  1. **Sprint 5A Wave 1** — finish exit animation (isIoNode, hover delete, placeholder DONE — exit animation remains)
+  2. **Sprint 4H** ‖ **Sprint 5B** — run in parallel (4H: pipeline executor extraction; 5B: visual hierarchy — both unblocked, no shared dependencies)
+  3. **Sprint 5 Wave 3** — execution wiring (Run → `executePipeline` → WASM → elevation). Blocked on Sprint 4H completion.
   4. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
-  5. **Sprint 5B** — visual hierarchy (I/O distinction, selection ring, category pips)
-  6. **Sprint 5C** — copy + nav label cleanup (~30 min)
-  7. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern)
-  8. **Sprint 5 Waves 4–5** — save infrastructure, My Recipes, final E2E
+  5. **Sprint 5C** — copy + nav label cleanup (~30 min)
+  6. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern)
+  7. **Sprint 5 Waves 4–5** — save infrastructure, My Recipes, final E2E
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
@@ -209,8 +208,8 @@ Format versioning activated across the stack. Zod schemas replaced hand-rolled `
 
 Wire the Run button to browser WASM execution. Elevation-driven progress on compartments. Results routed to Output node.
 
-- [ ] `@bnto/core` — `/core-architect` — **Extract pipeline executor**: Create `executePipeline(recipe, files, runNode, onProgress)` as a runtime-agnostic function in `@bnto/core` (NOT inside the browser adapter). `BntoWorker.processFiles()` becomes a thin adapter that calls `executePipeline()` with the worker's `processFile` as `runNode`. Add unit tests using a mock `runNode` — no browser/WASM needed.
-- [ ] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `core.executions.createExecution()` → browser WASM engine
+- ~~`@bnto/core` — Extract pipeline executor~~ — **Completed by Sprint 4H.** `executePipeline()` exists and is exported from `@bnto/core` before this wave starts.
+- [ ] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `executePipeline()` → browser WASM engine. Import `executePipeline` and `NodeRunner` from `@bnto/core`. Build `NodeRunner` from `core.executions` browser adapter's `processFile`. Do NOT call `BntoWorker.processFiles()` directly.
 - [ ] `@bnto/editor` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed). Leverage existing Card spring animations
 - [ ] `@bnto/editor` — `/frontend-engineer` — Results routed to Output node config panel (download list)
 - [ ] `@bnto/editor` — `/frontend-engineer` — Auto-download toggle on Output node
@@ -260,15 +259,14 @@ End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude
 
 #### Wave 1 — Node Hover Overlay + Placeholder Slot
 
-> **This is the FIRST thing to pick up.** Do this before Sprint 5 Wave 3 (execution wiring).
+> **Partially complete.** Three of four implementation tasks are done (PR #120). The exit animation remains — it requires adding `motion/react` to `@bnto/editor` dependencies first.
 
-The two most impactful canvas changes: a delete affordance on non-I/O nodes and a placeholder slot for blank canvases. Both are pure render-layer changes — no store modifications.
-
-- [ ] **CLAIMED** `packages/editor` — **`CompartmentNode` hover overlay**: Wrap the existing `Pressable/Card` in a `group relative` div. Add an absolutely-positioned delete button (`top-1.5 right-1.5`) visible only on `group-hover` via Tailwind (`opacity-0 group-hover:opacity-100 transition-opacity`). Button uses `e.stopPropagation()` so hover-click deletes without also selecting. Size: `size-5`, icon `XIcon size-3`. Styled as ghost (`text-muted-foreground`) with destructive hover state (`hover:text-destructive hover:bg-destructive/10`). Hidden entirely when `data.isIoNode === true`.
-- [ ] **CLAIMED** `packages/editor` — **`PlaceholderSlot` component**: New component rendered inside `BentoCanvas` when `nodes.length === 2` and both are I/O nodes. Renders a `Card variant="muted"` with `border-dashed`, `PlusIcon` centered (32px, muted foreground), and a subtle `animate-pulse` on the border. Clicking calls `openNodePalette()` from `useEditorPanels`. Uses `120×120` standard slot size. Disappears as soon as any non-I/O node exists in the store.
-- [ ] **CLAIMED** `packages/editor` — **`isIoNode` flag in adapter**: Update `createCompartmentNode.ts` — add `isIoNode: boolean` to `BentoNode.data`. Set from `isIoNodeType(nodeType)`. Consumed by `CompartmentNode` to conditionally render the delete overlay.
-- [ ] **CLAIMED** `packages/editor` — **Node exit animation**: Wrap `CompartmentNode` in `AnimatePresence` so deleted nodes exit with a spring scale-down (reverse of the entrance). Use `motion/react` exit prop: `exit={{ scale: 0.7, opacity: 0 }}` with a spring transition. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
-- [ ] **CLAIMED** `packages/editor` — **Unit tests**: `PlaceholderSlot` renders when only I/O nodes present. Disappears when a processing node is added. Hover overlay does not render for `input`/`output` nodes. Hover overlay renders for all other node types.
+- [x] `packages/editor` — **`CompartmentNode` hover overlay**: `DeleteOverlay` component with `group-hover:opacity-100`, `stopPropagation`, destructive variant. Hidden when `data.isIoNode === true`.
+- [x] `packages/editor` — **`PlaceholderSlot` component**: Dashed muted card with centered Plus button. Opens palette via `useEditorPanels`. Disappears when a non-I/O node exists.
+- [x] `packages/editor` — **`isIoNode` flag in adapter**: `createCompartmentNode.ts:72` and `definitionToBento.ts:48` both set `isIoNode: isIoNodeType(type)`. Tests at `createCompartmentNode.test.ts:85-97` and `definitionToBento.test.ts:167-183`.
+- [ ] `packages/editor` — **Add `motion/react` dependency**: Run `pnpm --filter @bnto/editor add motion`. Required for `AnimatePresence` exit animations. `@bnto/ui` does NOT have this dep — it uses CSS-only animations. The editor needs the JS library for unmount transitions.
+- [ ] `packages/editor` — **Node exit animation**: Wrap `CompartmentNode` list in `AnimatePresence` (from `motion/react`) so deleted nodes exit with a spring scale-down (reverse of the entrance). Use exit prop: `exit={{ scale: 0.7, opacity: 0 }}` with a spring transition. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
+- [ ] `packages/editor` — **Unit tests for remaining work**: Exit animation triggers on node removal. `PlaceholderSlot` renders when only I/O nodes present (existing: `placeholderVisibility.test.ts`). Hover overlay does not render for I/O nodes (existing: implicitly tested via `isIoNode` adapter tests — add explicit `CompartmentNode` render test).
 
 #### Wave 2 — Config Panel Identity Echo
 
@@ -285,6 +283,7 @@ Make the config panel feel like it belongs to the node that was clicked. One loo
 
 Make the LayerPanel the canonical surface for recipe structure management. Drag-to-reorder in the list gives users control over execution order without any canvas arrow buttons.
 
+- [ ] `packages/editor` — **Add `@dnd-kit/sortable` dependency**: Run `pnpm --filter @bnto/editor add @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities`. Required for drag-to-reorder in the LayerPanel. Not currently installed.
 - [ ] `packages/editor` — **`NodeList` drag-to-reorder**: Add drag handles to `NodeItem` in `NodeList`. Use `@dnd-kit/sortable`. Each `NodeItem` gets a `GripVerticalIcon` drag handle on the left, visible always. I/O nodes at top/bottom are locked — cannot be reordered (render without drag handle, add `data-locked` for styling). Dragging updates position via a new `reorderNode(fromIndex, toIndex)` store action.
 - [ ] `packages/editor` — **`reorderNode` store action + pure function**: Create `actions/reorderNode.ts` — pure function `reorderNode(state, fromIndex, toIndex): Partial<EditorState>`. Moves node in `nodes` array while preserving I/O nodes at fixed positions. Captures undo snapshot. Updates `isDirty`. Thin wrapper hook `useReorderNode` follows the three-layer pattern.
 - [ ] `packages/editor` — **Adapter sync**: After reorder, `rfNodesToDefinition` already reads `nodes` array order as execution order — no changes needed. Add unit test to verify order preserved on export.
@@ -344,7 +343,7 @@ Verify all UX changes hold together as a system. No regressions on existing edit
 Differentiate Input and Output from processing nodes through elevation, color, and shape — not just icon. These are the walls of the bento box, not a compartment inside it.
 
 - [ ] `packages/editor` — **I/O node sizing**: Update `definitionToBento` adapter — set `width: 160, height: 90` for nodes where `isIoNodeType(nodeType)` is true. Processing nodes keep `120×120`. Different aspect ratio signals "different kind of thing" before the label is read.
-- [ ] `packages/editor` — **I/O node color + elevation**: In `CompartmentNode.tsx`, when `data.isIoNode` is true, render `Card color="muted" elevation="sm"`. When false, render `Card elevation="md"`. Muted cards read as "part of the canvas" — warm cream that doesn't compete with the steps in between.
+- [ ] `packages/editor` — **I/O node color + elevation**: In `CompartmentNode.tsx`, **replace** the current uniform `elevation={selected ? "lg" : "sm"}` with conditional logic: when `data.isIoNode` is true, render `Card color="muted" elevation={selected ? "md" : "sm"}`. When false (processing), render `Card elevation={selected ? "lg" : "md"}`. This is a conscious replacement of the existing scheme, not an addition. Muted cards read as "part of the canvas" — warm cream that doesn't compete with the steps in between.
 - [ ] `packages/editor` — **I/O node Pressable behavior**: Remove `toggle` and `active` props from the `Pressable` wrapper for I/O nodes. They can still receive clicks for selection feedback but shouldn't feel like pressable configuration buttons.
 - [ ] `packages/editor` — **Unit tests**: I/O nodes render with `color="muted"`, `elevation="sm"`, and `160×90` dimensions. Processing nodes render with `elevation="md"` and `120×120`. Adapter sets `isIoNode` correctly for all 12 node types.
 
@@ -381,9 +380,9 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 **Tasks:**
 
-- [ ] `apps/web` — **Rename nav "Create" → "New Recipe"**: Update `AppNav` (or wherever the nav item is defined). Label: "New Recipe". Route: `/editor` (unchanged). Decision: "Create" is vague. "New Recipe" matches the product mental model and pairs with the recipe pages.
-- [ ] `apps/web` — **Update recipe page CTA copy**: Change "Customize in Editor" → "Open in Editor" on all predefined recipe pages. "Customize" implies minor tweaks; "Open" implies full access and pairs with "New Recipe" in the nav.
-- [ ] `apps/web` — **Verify**: All nav + recipe page CTA copy consistent. No remaining "Create" or "Customize in Editor" references.
+- [ ] `apps/web` — **Rename nav "Create" → "New Recipe"**: Update `DesktopNav.tsx:15` and `MobileNavMenu.tsx:100` (both say "Create"). Label: "New Recipe". Route: `/editor` (unchanged). Decision: "Create" is vague. "New Recipe" matches the product mental model and pairs with the recipe pages.
+- [ ] `apps/web` — **Update recipe page CTA copy**: Change "Customize in Editor" → "Open in Editor" in `OpenInEditorLink.tsx:12`. Currently reads "Customize in Editor". "Customize" implies minor tweaks; "Open" implies full access and pairs with "New Recipe" in the nav.
+- [ ] `apps/web` — **Verify**: All nav + recipe page CTA copy consistent. No remaining "Create" or "Customize in Editor" references. Grep for both strings across `apps/web/`.
 
 > **Future copy consideration (post-Sprint 5 Wave 3):** Once execution is wired in the editor, revisit the recipe page CTA. "Open in Editor" is functional but "Make it yours →" or "Build your own version" signals creative ownership more than "Open" and may convert better. Worth A/B testing once traffic exists. Do not change this now — the editor needs to actually run recipes before a possessive CTA is honest.
 
@@ -416,7 +415,8 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 - [ ] `packages/editor` — **Grid fade on run mode**: `BentoCanvas` reads `editorMode`. In `"run"` mode: fade the ReactFlow background grid (CSS `opacity` transition, ~300ms). In `"edit"` mode: grid visible. The grid disappearing signals "this is no longer a configuration surface."
 - [ ] `packages/editor` — **Node interaction lock in run mode**: `CompartmentNode` reads `editorMode` from store (via context or prop). In `"run"` mode: disable `Pressable` (remove `onClick` handler or add `pointer-events-none` wrapper). Nodes should not be selectable during execution — they're displaying state, not accepting input.
-- [ ] `packages/editor` — **Elevation sequence integration**: Wire node `status` field (`idle | pending | active | completed`) to elevation during run mode. This is the visual "traffic flowing" moment. `CompartmentNode` already has `status` in its data type — connect it to `Card elevation` during run mode execution.
+- [ ] `packages/editor` — **Bridge `executionState` to node `data.status`**: The store has `executionState: Record<string, NodeExecutionStatus>` and `setExecutionState()`, but nothing currently syncs this into each `BentoNode.data.status` during re-renders. Add a derived state selector or `onNodesChange` integration that maps `executionState[nodeId]` → `node.data.status` so `CompartmentNode` receives live status updates. Without this bridge, the elevation sequence has no input.
+- [ ] `packages/editor` — **Elevation sequence integration**: Wire the now-live `data.status` field (`idle | pending | active | completed`) to elevation during run mode. This is the visual "traffic flowing" moment. `CompartmentNode` reads `data.status` (bridged above) and maps it to `Card elevation` during run mode execution.
 - [ ] `packages/editor` — **Unit tests**: Canvas grid has reduced opacity in run mode. Nodes are non-interactive in run mode. Elevation changes with status in run mode.
 
 #### Wave 3 — Results at Output Node + E2E
@@ -467,7 +467,10 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 No browser APIs. No WASM. No Worker. Pure TypeScript types and vitest.
 
-- [ ] `@bnto/core` — `/core-architect` — **`engine/types.ts`**: Define the engine layer vocabulary. `NodeRunner` (single-file contract every runtime implements — `(file, nodeType, params, onProgress?) => Promise<FileResult>`), `FileInput`, `FileResult`, `RecipeDefinition` (ordered node list, node type, params, I/O markers), `PipelineProgressCallback` (`(nodeIndex, fileIndex, totalFiles, percent, message) => void`), `PipelineResult` (all output files, per-node metadata, total duration). Zero imports from browser, WASM, or Worker code.
+- [ ] `@bnto/core` — `/core-architect` — **`engine/types.ts`**: Define the engine layer vocabulary. `NodeRunner` (single-file contract every runtime implements — `(file, nodeType, params, onProgress?) => Promise<FileResult>`), `FileInput`, `FileResult`, `PipelineDefinition` (ordered node list, node type, params, I/O markers), `PipelineProgressCallback` (`(nodeIndex, fileIndex, totalFiles, percent, message) => void`), `PipelineResult` (all output files, per-node metadata, total duration). Zero imports from browser, WASM, or Worker code.
+
+  > **Naming: `PipelineDefinition`, NOT `RecipeDefinition`.** `RecipeDefinition` already exists in `packages/core/src/types/recipe.ts` (the Convex-backed recipe shape with `id`, `type`, `version`, `ports`, `edges`, recursive `nodes`). The pipeline executor's input is a simpler ordered node list for execution — different type, different purpose. Use `PipelineDefinition` to avoid ambiguity.
+
 - [ ] `@bnto/core` — `/core-architect` — **`engine/executePipeline.test.ts`**: Write the full test suite against the not-yet-implemented `executePipeline`. Use `vi.fn()` as `NodeRunner` — no real engine needed. Tests must cover:
   - **Single processing node:** `runNode` called once per file; results collected in input order
   - **Multi-node recipe:** outputs of node N passed as inputs to node N+1; `runNode` called `nodes × files` times
@@ -478,10 +481,12 @@ No browser APIs. No WASM. No Worker. Pure TypeScript types and vitest.
   - **Single file:** behaves identically to multi-file with one file
   - **Progress aggregation:** `onProgress` receives `(nodeIndex, fileIndex, totalFiles, percent, message)` in the correct sequence
   - **Node order guarantee:** `runNode` calls happen in recipe order, not I/O node order
-  - **`runNode` receives correct args:** filename, nodeType, params match recipe definition per-node
+  - **`runNode` receives correct args:** filename, nodeType, params match `PipelineDefinition` per-node
   - **Result structure:** `PipelineResult.files` contains all output files; `PipelineResult.durationMs` is a positive number
 
   Model: follow the depth of `executionInstanceStore.test.ts` — happy path, error cases, edge cases, boundary behavior documented in test names.
+
+  > **Type naming reminder:** The test file imports `PipelineDefinition` (not `RecipeDefinition`) from `../engine/types`. See Wave 1 naming note.
 
 ---
 
@@ -489,7 +494,7 @@ No browser APIs. No WASM. No Worker. Pure TypeScript types and vitest.
 
 > **TDD gate:** Wave 2 is complete when `pnpm --filter @bnto/core test` reports all `executePipeline.test.ts` tests passing. No partial credit.
 
-- [ ] `@bnto/core` — `/core-architect` — **`engine/executePipeline.ts`**: Implement `executePipeline(recipe, files, runNode, onProgress)`. Walk `recipe.order`, skip nodes where `node.type === "input" || node.type === "output"`, iterate all current files through each processing node sequentially, chain outputs, aggregate progress, return `PipelineResult`. No browser APIs. No WASM. No dynamic imports. The only I/O this function does is call `runNode`.
+- [ ] `@bnto/core` — `/core-architect` — **`engine/executePipeline.ts`**: Implement `executePipeline(definition, files, runNode, onProgress)`. Walk `definition.order`, skip nodes where `node.type === "input" || node.type === "output"`, iterate all current files through each processing node sequentially, chain outputs, aggregate progress, return `PipelineResult`. No browser APIs. No WASM. No dynamic imports. The only I/O this function does is call `runNode`. The function accepts `PipelineDefinition` (not `RecipeDefinition` — see Wave 1 naming note).
 - [ ] `@bnto/core` — `/core-architect` — **Run `pnpm --filter @bnto/core test`**: All `executePipeline.test.ts` tests green. Existing tests (`BntoWorker.test.ts`, `browserExecutionService.test.ts`, `executionInstanceStore.test.ts`, etc.) still pass — no regressions.
 
 ---
@@ -503,9 +508,12 @@ With the executor proven correct by tests, remove the iteration logic from the p
 - [ ] `@bnto/core` — `/core-architect` — **`types/browser.ts`**: Remove `processFiles()` from `BrowserEngine` interface. `processFile` stays. The engine interface is now single-file only. Run tests — green.
 - [ ] `@bnto/core` — `/core-architect` — **`adapters/browser/BntoWorker.ts`**: Remove `processFiles()` method. The worker wrapper exposes `processFile` only. Run tests — green.
 - [ ] `@bnto/core` — `/core-architect` — **`adapters/browser/toBrowserEngine.ts`**: Remove `processFiles` pass-through. Only `processFile` adapted. Run tests — green.
-- [ ] `@bnto/core` — `/core-architect` — **`adapters/browser/BntoWorker.test.ts`**: Remove the `processFiles` test block (terminate + processFiles throws, processFiles after terminate). Iteration semantics are now proven by `executePipeline.test.ts`. All remaining `BntoWorker` tests stay — init, `processFile`, progress callbacks, terminate. Run tests — green.
-- [ ] `@bnto/core` — `/core-architect` — **`services/browserExecutionService.ts`**: Replace the `engine.processFiles()` call in `execute()` with `executePipeline()`. Build a single-node recipe from the slug + params. Inject `(file, nodeType, params, onProgress) => engine.processFile(file, nodeType, params, onProgress)` as `NodeRunner`. Run tests — green.
-- [ ] `@bnto/core` — `/core-architect` — **`services/browserExecutionService.test.ts`**: Replace all `processFiles` mock references with `processFile` mock. The service no longer calls `engine.processFiles()`. Verify the new mock receives correct calls. Run tests — green.
+- [ ] `@bnto/core` — `/core-architect` — **`adapters/browser/BntoWorker.test.ts`**: Remove the `processFiles` test at line 302 (`"processFiles after terminate throws a clear error"`). This is the only `processFiles`-specific test — other terminate tests and all `processFile` tests stay. The `processFiles` method itself is removed from `BntoWorker.ts` in a prior task. Run tests — green.
+- [ ] `@bnto/core` — `/core-architect` — **`services/browserExecutionService.ts`**: Replace the `engine.processFiles()` call in `execute()` with `executePipeline()`. Build a single-node `PipelineDefinition` from the slug + params. Inject `(file, nodeType, params, onProgress) => engine.processFile(file, nodeType, params, onProgress)` as `NodeRunner`. Run tests — green.
+
+  > **Progress callback signature change:** The current `execute()` wraps the engine's `(fileIndex, percent, message)` into `BrowserFileProgressInput`. After switching to `executePipeline`, the pipeline's `PipelineProgressCallback` provides `(nodeIndex, fileIndex, totalFiles, percent, message)` — it adds `nodeIndex`. The service must adapt: map `nodeIndex` from the pipeline callback into the existing `BrowserFileProgressInput` shape (ignore `nodeIndex` for now since the service builds a single-node pipeline). When multi-node editor execution arrives (Sprint 5 Wave 3), the progress shape will need to expand.
+
+- [ ] `@bnto/core` — `/core-architect` — **`services/browserExecutionService.test.ts`**: Replace all `processFiles` mock references with `processFile` mock. The service no longer calls `engine.processFiles()`. The mock engine's `processFiles` method is removed from `createMockEngine()`. Update progress tests: the `onProgress` callback now comes from `executePipeline` internals, not from the engine's `processFiles`. Verify `processFile` receives correct per-file calls. Run tests — green.
 
 ---
 
@@ -513,9 +521,25 @@ With the executor proven correct by tests, remove the iteration logic from the p
 
 > **Final gate:** `pnpm --filter @bnto/core test` all green. All 6 recipe pages work. Sprint 5 Wave 3 is unblocked.
 
-- [ ] `@bnto/core` — `/core-architect` — **`index.ts`**: Export `executePipeline`, `NodeRunner`, `FileInput`, `FileResult`, `RecipeDefinition`, `PipelineResult` from `@bnto/core`. Sprint 5 Wave 3 and the future CLI import from here — not from internal paths.
+- [ ] `@bnto/core` — `/core-architect` — **`index.ts`**: Export `executePipeline`, `NodeRunner`, `FileInput`, `FileResult`, `PipelineDefinition`, `PipelineResult` from `@bnto/core`. Sprint 5 Wave 3 and the future CLI import from here — not from internal paths.
 - [ ] `@bnto/core` — `/core-architect` — **JSDoc on `executePipeline`**: Document the layer contract. What `NodeRunner` is responsible for. Why no browser APIs belong here. The explicit loop node override point (future). This comment is the first thing the next engineer reads before touching execution.
 - [ ] `apps/web` — `/quality-engineer` — **E2E smoke test**: All 6 recipe pages process files correctly end-to-end. `compress-images`, `resize-images`, `convert-image-format`, `clean-csv`, `rename-csv-columns`, `rename-files`. Multi-file upload → processing → download works. Behavior is identical to before the refactor — zero user-visible change, correct architecture underneath.
+
+---
+
+### Audit: Session Summary Validation
+
+**Goal:** Re-validate the plan against the session summary to confirm all decisions, architecture rules, and sprint definitions are correctly captured and no gaps remain.
+
+**When:** After Sprint 4H Wave 4 completes and before Sprint 5 Wave 3 starts. This is the checkpoint — the pipeline executor is proven correct, the plan is groomed, and execution wiring is about to begin.
+
+**Reference document:** `/Users/ryan/Downloads/bnto-session-summary.md`
+
+- [ ] `/project-manager` — **Re-run codebase audit**: Read the session summary in full. For each decision documented in the summary, verify it is correctly reflected in PLAN.md, `decisions/implicit-iteration.md`, `strategy/design-language.md`, and `decisions/editor-ux-direction.md`. Report any remaining gaps.
+- [ ] `/project-manager` — **Verify Sprint 4H deliverables**: Confirm `packages/core/src/engine/` directory exists. Confirm `executePipeline.ts`, `executePipeline.test.ts`, and `types.ts` exist. Confirm all tests pass (`pnpm --filter @bnto/core test`). Confirm `executePipeline` and `NodeRunner` are exported from `@bnto/core` index. Confirm `processFiles()` is removed from `BrowserEngine` interface, `BntoWorker`, and `toBrowserEngine`.
+- [ ] `/project-manager` — **Verify animation identity**: Confirm `ScaleIn from={0.7} easing="spring-bouncy"` still exists on `CompartmentNode.tsx`. Confirm `AnimatePresence` exit animation is wired. Confirm `strategy/design-language.md` has the "Editor Animation Language" section with PROTECTED headers.
+- [ ] `/project-manager` — **Verify execution order**: Confirm the "Active work — execution order" in PLAN.md Current State matches the actual dependency graph. Confirm Sprint 5 Wave 3 is unblocked (4H complete). Confirm Sprint 6 prerequisites are met (execution wired).
+- [ ] `/project-manager` — **Report**: Produce a pass/fail summary. If all pass, Sprint 5 Wave 3 is greenlit. If any fail, document what needs fixing before execution wiring starts.
 
 ---
 
