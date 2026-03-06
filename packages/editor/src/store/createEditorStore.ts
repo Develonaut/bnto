@@ -49,6 +49,7 @@ function createEditorStore(slug?: string) {
     selectedNodeId: initial.selectedNodeId,
     layersOpen: false,
     configOpen: initial.selectedNodeId !== null,
+    paletteOpen: false,
 
     // --- Entry points ---
 
@@ -176,6 +177,14 @@ function createEditorStore(slug?: string) {
 
     openConfig: () => {
       set({ configOpen: true });
+    },
+
+    openPalette: () => {
+      set({ paletteOpen: true });
+    },
+
+    closePalette: () => {
+      set({ paletteOpen: false });
     },
 
     // --- Utility ---
