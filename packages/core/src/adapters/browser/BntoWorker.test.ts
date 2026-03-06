@@ -149,9 +149,9 @@ describe("BntoWorker", () => {
       const bnto = new BntoWorker();
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
 
-      await expect(
-        bnto.processFile(file, "compress-images"),
-      ).rejects.toThrow("BntoWorker not initialized");
+      await expect(bnto.processFile(file, "compress-images")).rejects.toThrow(
+        "BntoWorker not initialized",
+      );
     });
 
     it("sends a process request and resolves with the result", async () => {
@@ -199,12 +199,7 @@ describe("BntoWorker", () => {
 
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
       const onProgress = vi.fn();
-      const resultPromise = bnto.processFile(
-        file,
-        "compress-images",
-        {},
-        onProgress,
-      );
+      const resultPromise = bnto.processFile(file, "compress-images", {}, onProgress);
 
       await tick();
 
@@ -294,23 +289,9 @@ describe("BntoWorker", () => {
 
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
 
-      await expect(
-        bnto.processFile(file, "compress-images"),
-      ).rejects.toThrow("BntoWorker not initialized");
-    });
-
-    it("processFiles after terminate throws a clear error", async () => {
-      const bnto = await initWorker();
-      bnto.terminate();
-
-      const files = [
-        new File(["a"], "a.jpg", { type: "image/jpeg" }),
-        new File(["b"], "b.jpg", { type: "image/jpeg" }),
-      ];
-
-      await expect(
-        bnto.processFiles(files, "compress-images"),
-      ).rejects.toThrow("BntoWorker not initialized");
+      await expect(bnto.processFile(file, "compress-images")).rejects.toThrow(
+        "BntoWorker not initialized",
+      );
     });
 
     it("can be re-initialized after terminate", async () => {

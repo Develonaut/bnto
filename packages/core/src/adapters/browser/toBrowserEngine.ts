@@ -58,9 +58,6 @@ export function toBrowserEngine(worker: BntoWorker): BrowserEngine {
     processFile: (file, nodeType, params, onProgress) =>
       worker.processFile(file, nodeType, params ?? {}, onProgress),
 
-    processFiles: (files, nodeType, params, onProgress) =>
-      worker.processFiles(files, nodeType, params ?? {}, onProgress),
-
     // These pass through directly — signatures already match.
     terminate: () => worker.terminate(),
     get isReady() {
