@@ -30,8 +30,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **FOCUS: Editor to production.** Sprint 5 Waves 1-2 complete (compartment redesign, `/editor` route, nav integration). Sprint 4G complete (format versioning, Zod schemas, schema-driven config panel).
 - **Active work — execution order:**
   1. **Sprint 5A Wave 1** — finish exit animation (isIoNode, hover delete, placeholder DONE — exit animation remains)
-  2. **Sprint 4H** ‖ **Sprint 5B** — run in parallel (4H: pipeline executor extraction; 5B: visual hierarchy — both unblocked, no shared dependencies)
-  3. **Sprint 5 Wave 3** — execution wiring (Run → `executePipeline` → WASM → elevation). Blocked on Sprint 4H completion.
+  2. ~~**Sprint 4H**~~ **COMPLETE** ‖ **Sprint 5B** — 5B: visual hierarchy (unblocked, no shared dependencies)
+  3. **Sprint 5 Wave 3** — execution wiring (Run → `executePipeline` → WASM → elevation). **Unblocked** — Sprint 4H complete.
   4. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
   5. **Sprint 5C** — copy + nav label cleanup (~30 min)
   6. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern)
@@ -521,9 +521,9 @@ With the executor proven correct by tests, remove the iteration logic from the p
 
 > **Final gate:** `pnpm --filter @bnto/core test` all green. All 6 recipe pages work. Sprint 5 Wave 3 is unblocked.
 
-- [ ] `@bnto/core` — `/core-architect` — **`index.ts`**: Export `executePipeline`, `NodeRunner`, `FileInput`, `FileResult`, `PipelineDefinition`, `PipelineResult` from `@bnto/core`. Sprint 5 Wave 3 and the future CLI import from here — not from internal paths.
-- [ ] `@bnto/core` — `/core-architect` — **JSDoc on `executePipeline`**: Document the layer contract. What `NodeRunner` is responsible for. Why no browser APIs belong here. The explicit loop node override point (future). This comment is the first thing the next engineer reads before touching execution.
-- [ ] `apps/web` — `/quality-engineer` — **E2E smoke test**: All 6 recipe pages process files correctly end-to-end. `compress-images`, `resize-images`, `convert-image-format`, `clean-csv`, `rename-csv-columns`, `rename-files`. Multi-file upload → processing → download works. Behavior is identical to before the refactor — zero user-visible change, correct architecture underneath.
+- [x] `@bnto/core` — `/core-architect` — **`index.ts`**: Export `executePipeline`, `NodeRunner`, `FileInput`, `FileResult`, `PipelineDefinition`, `PipelineResult` from `@bnto/core`. Sprint 5 Wave 3 and the future CLI import from here — not from internal paths.
+- [x] `@bnto/core` — `/core-architect` — **JSDoc on `executePipeline`**: Document the layer contract. What `NodeRunner` is responsible for. Why no browser APIs belong here. The explicit loop node override point (future). This comment is the first thing the next engineer reads before touching execution.
+- [x] `apps/web` — `/quality-engineer` — **E2E smoke test**: All 6 recipe pages process files correctly end-to-end. `compress-images`, `resize-images`, `convert-image-format`, `clean-csv`, `rename-csv-columns`, `rename-files`. Multi-file upload → processing → download works. Behavior is identical to before the refactor — zero user-visible change, correct architecture underneath.
 
 ---
 

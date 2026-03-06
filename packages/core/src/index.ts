@@ -65,6 +65,18 @@ export { createEnhancedStore } from "./stores/createEnhancedStore";
 // ── Store utilities (for app-layer selectors) ────────────────────────────
 export { useShallow } from "zustand/react/shallow";
 
+// ── Pipeline engine (runtime-agnostic execution) ─────────────────────────
+export { executePipeline } from "./engine/executePipeline";
+export type {
+  NodeRunner,
+  FileInput,
+  FileResult,
+  PipelineDefinition,
+  PipelineNode,
+  PipelineProgressCallback,
+  PipelineResult,
+} from "./engine/types";
+
 // ── Browser utilities (for app-layer use) ─────────────────────────────────
 export { downloadBlob } from "./adapters/browser/downloadBlob";
 export { deriveAcceptedTypes } from "./adapters/browser/deriveAcceptedTypes";
