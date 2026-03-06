@@ -14,6 +14,7 @@ import { NODE_TYPE_INFO } from "@bnto/nodes";
 import type { BentoNode, BentoLayout, NodeConfigs } from "./types";
 import { SLOTS } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";
+import { isIoNodeType } from "../helpers/isIoNodeType";
 
 function definitionToBento(definition: Definition): BentoLayout {
   const children = definition.nodes ?? [];
@@ -44,6 +45,7 @@ function definitionToBento(definition: Definition): BentoLayout {
         height: slot.h,
         status: "idle" as const,
         icon: info?.icon,
+        isIoNode: isIoNodeType(node.type),
       },
     };
   });

@@ -1,21 +1,30 @@
 "use client";
 
+import { useShallow } from "@bnto/core";
 import { useEditorStore } from "./useEditorStore";
 
 /**
  * useEditorPanels — panel visibility from the editor store.
  *
- * Toolbar buttons and overlay slots both read from the same store
- * instead of prop-drilling visibility state through the component tree.
+ * Toolbar buttons, overlay slots, and canvas placeholders all read
+ * from the same store instead of prop-drilling visibility state.
+ *
+ * Uses useShallow so consumers only re-render when a selected
+ * value actually changes — not on every store mutation.
  */
 function useEditorPanels() {
-  const layersOpen = useEditorStore((s) => s.layersOpen);
-  const configOpen = useEditorStore((s) => s.configOpen);
-  const toggleLayers = useEditorStore((s) => s.toggleLayers);
-  const toggleConfig = useEditorStore((s) => s.toggleConfig);
-  const openConfig = useEditorStore((s) => s.openConfig);
-
-  return { layersOpen, configOpen, toggleLayers, toggleConfig, openConfig };
+  return useEditorStore(
+    useShallow((s) => ({
+      layersOpen: s.layersOpen,
+      configOpen: s.configOpen,
+      paletteOpen: s.paletteOpen,
+      toggleLayers: s.toggleLayers,
+      toggleConfig: s.toggleConfig,
+      openConfig: s.openConfig,
+      openPalette: s.openPalette,
+      closePalette: s.closePalette,
+    })),
+  );
 }
 
 export { useEditorPanels };
