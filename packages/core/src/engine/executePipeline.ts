@@ -26,6 +26,12 @@ import type {
  * **Future: loop node override.** When the `loop` node type arrives,
  * it will need special handling here (iterate its children N times).
  * That logic belongs in this function — not in any runtime adapter.
+ *
+ * @param definition - Ordered node list to execute. I/O nodes are skipped automatically.
+ * @param files - Input files to feed through the pipeline.
+ * @param runNode - Runtime-specific single-file processor (browser WASM, CLI, server, mock).
+ * @param onProgress - Optional callback fired per-file per-node with pipeline-level context.
+ * @returns All output files from the final processing node, plus wall-clock duration.
  */
 export async function executePipeline(
   definition: PipelineDefinition,
