@@ -40,6 +40,13 @@ export interface NodeParamMeta {
    * another parameter matches a specific value.
    */
   requiredWhen?: ParamCondition;
+
+  /**
+   * Hidden from the config panel entirely. Used for engine wiring
+   * fields (e.g., input/output path templates) that the editor
+   * handles implicitly via node placement.
+   */
+  hidden?: boolean;
 }
 
 /**

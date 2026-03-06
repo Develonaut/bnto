@@ -594,7 +594,20 @@ End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude
 
 ## Immediate Backlog
 
-_All immediate items complete — Convex deploy pipeline and PostHog events resolved. See completed sprints._
+### Editor: Smart I/O — Implicit vs Explicit Looping
+
+**Status:** Needs design decision (review with full project context + Notion workspace)
+
+When a recipe has multi-file input and a processing node (e.g., Image compress), should the editor:
+
+- **Option A (Smart/implicit):** Automatically iterate over inputs — user adds `Input → Image (compress) → Output`, engine handles the loop. Simple, fewer nodes, covers 90% of cases.
+- **Option B (Explicit):** User builds iteration manually — `Input → Loop (forEach) → Image (compress inside loop) → Output`. More flexible, more transparent, matches current Go engine model.
+
+**Proposed direction:** Smart by default (Option A) with an advanced toggle to switch to explicit looping for power users. This affects engine processing, definition schema, and editor UX. Needs a deep review session with Notion context (Bnto Directory, MVP Scope, recipe specs) before implementation.
+
+**Touches:** `@bnto/nodes` (definition schema), `engine/` (execution model), `@bnto/editor` (node placement + wiring), recipe definitions (compress-images etc.), `io-nodes.md` strategy doc.
+
+---
 
 ---
 

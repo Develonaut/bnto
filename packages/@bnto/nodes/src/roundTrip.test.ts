@@ -29,10 +29,10 @@ describe("round-trip: full editor lifecycle", () => {
     // 4. Configure the image node (index 2, after input & output)
     const imageNodeId = r2.definition.nodes![2]!.id;
     const r3 = updateNodeParams(r2.definition, imageNodeId, {
-      operation: "optimize",
+      operation: "compress",
       quality: 75,
     });
-    expect(r3.definition.nodes![2]!.parameters.operation).toBe("optimize");
+    expect(r3.definition.nodes![2]!.parameters.operation).toBe("compress");
     expect(r3.definition.nodes![2]!.parameters.quality).toBe(75);
 
     // 5. Move the transform node (index 3)

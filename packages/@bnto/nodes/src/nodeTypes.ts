@@ -127,7 +127,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   image: {
     name: "image",
     label: "Image",
-    description: "Image processing: resize, convert formats, optimize, composite, batch.",
+    description: "Image processing: resize, convert formats, compress, composite, batch.",
     category: "image",
     isContainer: false,
     browserCapable: true,
