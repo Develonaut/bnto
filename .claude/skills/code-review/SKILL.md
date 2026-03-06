@@ -5,7 +5,7 @@ description: Review code changes against project standards
 
 # Code Review
 
-Review all changed files against the project's coding standards, architecture rules, and known gotchas. This is a **read-only review** — you are auditing code quality, not committing or implementing.
+Review all changed files against the project's coding standards, architecture rules, and known gotchas. **Fix violations and warnings immediately** — don't just report them, apply the fixes yourself.
 
 ## Step 0: Read the Standards
 
@@ -159,26 +159,37 @@ Verify the changes didn't leave stale artifacts behind:
 
 Search the codebase for references to anything that was changed (class names, prop names, component names, function signatures, selectors, text strings). Flag anything that still references the old version.
 
-## Step 12: Review Summary
+## Step 12: Fix Violations & Warnings
 
-Present findings organized by severity:
+**Do not just report issues — fix them.** For every violation or warning found in Steps 2-11, apply the fix immediately. This includes editing files, updating imports, refactoring code, and cleaning up stale artifacts.
 
-### Violations (must fix)
+### Fixing workflow
 
-Issues that break architecture rules, introduce bugs, or violate hard constraints. List each with:
+1. For each violation or warning found, apply the fix directly using Edit/Write tools
+2. After all fixes are applied, re-run `task ui:build` and `task ui:test` to verify nothing broke
+3. If a fix introduces new issues, fix those too — repeat until clean
+
+### What NOT to fix automatically
+
+- **Notes** — observations or suggestions that aren't violations. Present these to the user for consideration
+- **Architectural questions** — if a fix would require significant restructuring or a design decision, present the issue and recommendation to the user instead of acting unilaterally
+
+## Step 13: Review Summary
+
+After fixing all issues, present a summary:
+
+### Fixes Applied
+
+List each fix with:
 
 - **File**: path and line number
-- **Rule**: which standard is violated (reference the rule file)
-- **Issue**: what's wrong
-- **Fix**: specific recommendation
-
-### Warnings (should fix)
-
-Issues that don't break rules but degrade code quality. Style inconsistencies, missing optimizations, suboptimal patterns.
+- **Rule**: which standard was violated
+- **What was wrong**: brief description
+- **What was fixed**: what you changed
 
 ### Notes
 
-Observations, questions, or suggestions that aren't violations.
+Observations, questions, or suggestions that aren't violations — presented for the user's consideration.
 
 ### Checklist Summary
 
@@ -197,4 +208,4 @@ Unit/Integration Tests:   PASS / FAIL — NEVER skip without explicit user permi
 E2E Tests:                PASS / FAIL — NEVER skip without explicit user permission
 ```
 
-**Overall verdict:** PASS / NEEDS FIXES (with count of violations)
+**Overall verdict:** PASS / FIXED (count of fixes applied)
