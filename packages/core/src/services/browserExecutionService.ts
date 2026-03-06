@@ -20,13 +20,52 @@ import { downloadBlob } from "../adapters/browser/downloadBlob";
 import { createZipBlob } from "../adapters/browser/createZipBlob";
 import { BntoWorker } from "../adapters/browser/BntoWorker";
 import { toBrowserEngine } from "../adapters/browser/toBrowserEngine";
+import { executePipeline } from "../engine/executePipeline";
 import { createExecutionInstance } from "./executionInstance";
 import type { ExecutionInstance } from "./executionInstance";
-import type {
-  BrowserEngine,
-  BrowserFileResult,
-  BrowserFileProgressInput,
-} from "../types/browser";
+import type { BrowserEngine, BrowserFileResult, BrowserFileProgressInput } from "../types/browser";
+import type { FileInput, NodeRunner } from "../engine/types";
+
+// ---------------------------------------------------------------------------
+// Conversion helpers: File <-> FileInput, BrowserFileResult <-> FileResult
+// ---------------------------------------------------------------------------
+
+/** Convert a Uint8Array to an ArrayBuffer suitable for Blob construction. */
+function toArrayBuffer(data: Uint8Array): ArrayBuffer {
+  return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
+}
+
+/** Convert browser File objects to platform-agnostic FileInput[]. */
+async function filesToInputs(files: File[]): Promise<FileInput[]> {
+  return Promise.all(
+    files.map(async (f) => ({
+      name: f.name,
+      data: new Uint8Array(await f.arrayBuffer()),
+      mimeType: f.type || "application/octet-stream",
+    })),
+  );
+}
+
+/** Build a NodeRunner that delegates to a BrowserEngine's processFile. */
+function createRunNode(browserEngine: BrowserEngine): NodeRunner {
+  return async (file, nodeType, nodeParams, fileOnProgress) => {
+    const blob = new Blob([toArrayBuffer(file.data)], { type: file.mimeType });
+    const browserFile = new File([blob], file.name, { type: file.mimeType });
+    const result = await browserEngine.processFile(
+      browserFile,
+      nodeType,
+      nodeParams,
+      fileOnProgress,
+    );
+    const resultData = new Uint8Array(await result.blob.arrayBuffer());
+    return {
+      name: result.filename,
+      data: resultData,
+      mimeType: result.mimeType,
+      metadata: result.metadata,
+    };
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Service factory
@@ -66,20 +105,33 @@ export function createBrowserExecutionService(engineOverride?: BrowserEngine) {
 
     const browserEngine = await ensureEngine();
 
-    return browserEngine.processFiles(
-      files,
-      nodeType,
-      params,
+    const definition = {
+      nodes: [
+        { id: "input", type: "input", params: {} },
+        { id: "process", type: nodeType, params },
+        { id: "output", type: "output", params: {} },
+      ],
+    };
+
+    const fileInputs = await filesToInputs(files);
+    const runNode = createRunNode(browserEngine);
+
+    const pipelineResult = await executePipeline(
+      definition,
+      fileInputs,
+      runNode,
       onProgress
-        ? (fileIndex, percent, message) =>
-            onProgress({
-              fileIndex,
-              totalFiles: files.length,
-              percent,
-              message,
-            })
+        ? (_nodeIndex, fileIndex, totalFiles, percent, message) =>
+            onProgress({ fileIndex, totalFiles, percent, message })
         : undefined,
     );
+
+    return pipelineResult.files.map((f) => ({
+      blob: new Blob([toArrayBuffer(f.data)], { type: f.mimeType }),
+      filename: f.name,
+      mimeType: f.mimeType,
+      metadata: f.metadata ?? {},
+    }));
   };
 
   return {
@@ -94,8 +146,7 @@ export function createBrowserExecutionService(engineOverride?: BrowserEngine) {
      * Create an isolated execution instance with its own store.
      * Usage: `const [instance] = useState(() => core.executions.createExecution())`
      */
-    createExecution: (): ExecutionInstance =>
-      createExecutionInstance(execute),
+    createExecution: (): ExecutionInstance => createExecutionInstance(execute),
 
     execute,
 

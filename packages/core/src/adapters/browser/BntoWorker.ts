@@ -84,30 +84,6 @@ export class BntoWorker {
     });
   }
 
-  /**
-   * Process multiple files sequentially through a WASM node.
-   * Reports per-file progress with file index context.
-   */
-  async processFiles(
-    files: File[],
-    nodeType: string,
-    params: Record<string, unknown> = {},
-    onProgress?: (fileIndex: number, percent: number, message: string) => void,
-  ): Promise<ProcessResult[]> {
-    const results: ProcessResult[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const fileProgress: ProgressCallback | undefined = onProgress
-        ? (percent, message) => onProgress(i, percent, message)
-        : undefined;
-
-      const result = await this.processFile(files[i], nodeType, params, fileProgress);
-      results.push(result);
-    }
-
-    return results;
-  }
-
   /** Clean up the worker. Call when done processing. */
   terminate(): void {
     if (this.worker) {
