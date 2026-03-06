@@ -27,10 +27,15 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **FOCUS: Package extraction + code standards review before editor.** Sprint 4D (`@bnto/ui`) complete (PR #103). Sprint 4E (`@bnto/editor`) complete — all editor code extracted to `packages/editor/`.
-- **Next up:** Sprint 4G — format versioning + Zod node validation. Activate `.bnto.json` format versioning, replace hand-rolled parameter schemas with Zod validators. Must land before editor ships.
-- **Then:** Sprint 5 — editor to production (compartment redesign, `/editor` route, execution, save, E2E). This is the M2 completion path.
-- **Uncommitted editor work:** 7 files modified on `main` (CanvasToolbar, FileMenu, NodeConfigPanel, EditorCanvas, EditorOverlay, useEditorCanvas, icons) — needs branch/PR before next sprint.
+- **FOCUS: Editor to production.** Sprint 5 Waves 1-2 complete (compartment redesign, `/editor` route, nav integration). Sprint 4G complete (format versioning, Zod schemas, schema-driven config panel).
+- **Active work — execution order:**
+  1. **Sprint 5A Wave 1** — `isIoNode` flag, hover delete overlay, placeholder slot, exit animation
+  2. **Sprint 5 Wave 3** — execution wiring (Run → WASM, elevation progress, results at Output node)
+  3. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
+  4. **Sprint 5B** — visual hierarchy (I/O distinction, selection ring, category pips)
+  5. **Sprint 5C** — copy + nav label cleanup (~30 min)
+  6. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern)
+  7. **Sprint 5 Waves 4–5** — save infrastructure, My Recipes, final E2E
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
@@ -40,7 +45,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
 - **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), automatic Convex production deploy on merge to main, Lighthouse CI on PRs, PostHog telemetry wired
-- **Packages:** `@bnto/core`, `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`
+- **Packages:** `@bnto/core`, `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/ui`, `@bnto/editor`
 
 ---
 
@@ -51,7 +56,9 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] @bnto/core: Layered singleton (clients → services → adapters), React Query + Convex adapter, 38+ hooks
 - [x] @bnto/auth: `@convex-dev/auth` integration, password auth
 - [x] @bnto/backend: Convex schema (users, workflows, executions, executionLogs), auth, crons, analytics fields
-- [x] @bnto/nodes: Engine-agnostic node definitions, schemas, recipes, validation (10 node types)
+- [x] @bnto/nodes: Engine-agnostic node definitions, Zod schemas, recipes, validation (10 node types)
+- [x] @bnto/ui: Extracted Motorway design system — primitives, layout, typography, feedback, surface, interaction, overlay, animation components
+- [x] @bnto/editor: Extracted editor package — EditorCanvas, EditorToolbar, LayerPanel, ConfigPanel, CompartmentNode, NodePaletteMenu, adapters, hooks, store, actions
 - [x] Web app: Auth flow, SEO infrastructure, middleware, landing pages (real content), privacy policy
 - [x] Playwright E2E: 27+ screenshots, user journey tests, execution flow tests, site navigation (desktop + mobile)
 - [x] Rust WASM engine: 5 crates, single cdylib, Web Worker wrapper, progress reporting, 44+ unit tests
@@ -63,6 +70,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Sprint 3 pre-work: Anonymous→password userId preservation, FIXME cleanup, Knip audit, naming audit, codebase standards review, schema analytics fields
 - [x] GitHub Actions CI: Rust (fmt + clippy + unit + WASM) + TypeScript (build + lint + test) + CI Gate
 - [x] convexQuery skip guards: All adapter functions use `"skip"` for falsy IDs (PR #23)
+- [x] Format versioning + Zod node validation (Sprint 4G): `.bnto.json` format version constant, schema versioning, Zod parameter schemas for all 12 node types, schema-driven config panel with registry-based controls
+- [x] Editor production route (Sprint 5 W1-W2): `/editor` route, `?from={slug}` recipe loading, compartment node redesign (icons + category colors), "Open in Editor" nav integration
 
 ---
 
@@ -72,20 +81,20 @@ Pricing, revenue projections, and "ready to charge" criteria live in Notion ("SE
 
 **Monetization model (updated Feb 2026):** Browser execution is free unlimited. Pro sells real value — persistence, collaboration, premium compute. See ROADMAP.md for the full model.
 
-| Sprint       | What Ships                                      | Revenue Implication                                                                                                              |
-| ------------ | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Sprint 2B    | Browser execution (M1 MVP)                      | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine.                                       |
-| Sprint 2C    | Launch readiness (content + domain)             | **bnto.io live and indexable.** Real content on every page. SEO crawling begins. First real users possible.                      |
-| Sprint 2D    | Recipe page UX overhaul                         | **COMPLETE.** Progressive phase-driven flow. Motorway design language on every tool page.                                        |
-| Sprint H     | Housekeeping                                    | **COMPLETE.** FileUpload rewrite, Rust test audit, EXIF coverage, Pressable, CI, ESLint.                                         |
-| Sprint 3     | Platform features (accounts, history)           | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented.                                       |
-| Sprint 4     | Recipe editor (headless + visual)               | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
-| Sprint 4D-4E | Package extraction (`@bnto/ui`, `@bnto/editor`) | Clean architecture. Packages ready for desktop (M3).                                                                             |
-| Sprint 4F    | Code standards review                           | Technical hygiene. Every file conforms to updated standards.                                                                     |
-| Sprint 4G    | Versioning + Zod node validation                | Format versioning locked down. Node parameters validated at execution boundary. Foundation for community recipes + marketplace.  |
-| Sprint 5     | Editor to production                            | **M2 completion.** Editor gives users a reason to create accounts. Save custom recipes = highest-intent Pro signal.              |
-| Sprint 6-7   | Desktop app                                     | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                                                |
-| Sprint 8     | Stripe + Pro tier                               | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.                   |
+| Sprint       | What Ships                                   | Revenue Implication                                                                                                              |
+| ------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Sprint 2B    | Browser execution (M1 MVP)                   | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine.                                       |
+| Sprint 2C    | Launch readiness (content + domain)          | **bnto.io live and indexable.** Real content on every page. SEO crawling begins. First real users possible.                      |
+| Sprint 2D    | Recipe page UX overhaul                      | **COMPLETE.** Progressive phase-driven flow. Motorway design language on every tool page.                                        |
+| Sprint H     | Housekeeping                                 | **COMPLETE.** FileUpload rewrite, Rust test audit, EXIF coverage, Pressable, CI, ESLint.                                         |
+| Sprint 3     | Platform features (accounts, history)        | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented.                                       |
+| Sprint 4     | Recipe editor (headless + visual)            | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
+| Sprint 4D-4G | Package extraction + versioning + validation | Clean architecture. Zod schemas. Packages ready for desktop (M3).                                                                |
+| Sprint 5     | Editor to production                         | **M2 completion.** Editor gives users a reason to create accounts. Save custom recipes = highest-intent Pro signal.              |
+| Sprint 5A-5C | Editor UX polish                             | Prototype → product. Visual hierarchy, interaction patterns, copy.                                                               |
+| Sprint 6     | Edit/Run mode                                | Mini Motorways feel. Same canvas for editing and running.                                                                        |
+| Sprint 7-8   | Desktop app                                  | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                                                |
+| Sprint 9     | Stripe + Pro tier                            | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.                   |
 
 ---
 
@@ -119,13 +128,9 @@ All 6 Tier 1 bntos running 100% client-side via Rust→WASM. `@bnto/nodes` packa
 
 bnto.io live and indexable. All Mainline template content replaced with real bnto content (home, pricing, FAQ, privacy, footer, navbar). Messaging audit (no false claims). CSS animation refactor (JS → CSS-driven). Site navigation E2E tests. 15/15 static pages generate cleanly.
 
----
-
 ### Sprint 2D: Recipe Page UX Overhaul — COMPLETE
 
 Progressive phase-driven flow (Files → Configure → Results) with Motorway design language. RecipeShell, PhaseIndicator, FileCard, RecipeConfigSection, useRecipeFlow, per-instance execution stores. 27+ screenshots regenerated. All 4 waves complete.
-
----
 
 ### Sprint H: Housekeeping — COMPLETE
 
@@ -139,17 +144,291 @@ Eliminated anonymous Convex session system across 5 waves (backend schema, core 
 
 Accounts earn their keep: execution history (IndexedDB for unauth, Convex for auth), `/my-recipes` dashboard, PostHog telemetry, Lighthouse CI, save prompt conversion hook, pricing page, browser auth verification, execution history migration on signup. Wave 3 (3 E2E test tasks) tabled — see backlog "Testing: Sprint 3 Deferred E2E Tests."
 
----
-
 ### Sprint 4: Recipe Editor (Headless-First) — COMPLETE
 
 Headless-first editor: Wave 1 (`@bnto/nodes` pure functions — CRUD, adapters, tests), Wave 2 (Zustand store, ReactFlow adapters, hooks), Wave 3 (Motorway MVP — BentoCanvas, EditorToolbar, NodePalette, NodeConfigPanel, RecipeEditor). Architecture: `@bnto/nodes` → pure functions → Zustand store → React hooks → visual skin. Two entry points: `createBlankDefinition()` or `loadRecipe(slug)`. See [editor-architecture.md](.claude/strategy/editor-architecture.md), [visual-editor.md](.claude/strategy/visual-editor.md).
 
+### Sprint 4C: Input & Output Nodes — COMPLETE
+
+Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: Wave 1 (`@bnto/nodes` — I/O types, schemas, recipe updates, 22 tests), Wave 2 (`@bnto/core` adapter reads I/O nodes, editor store singleton constraints), Wave 3 (generic InputRenderer/OutputRenderer, I/O compartment rendering), Wave 4 (RecipeShell migration, per-slug I/O code deleted, E2E verified). See [io-nodes.md](.claude/strategy/io-nodes.md).
+
+### Sprint 4D: Extract `@bnto/ui` (Motorway Design System) — COMPLETE
+
+Moved all UI primitives, design tokens, and shared components from `apps/web/components/` to `packages/ui/` as `@bnto/ui`. Zero domain knowledge — pure visual building blocks. 3 waves: package scaffold + primitives, shared components, rewire + verify (PR #103).
+
+### Sprint 4E: Extract `@bnto/editor` — COMPLETE
+
+Moved all editor components from `apps/web/components/editor/` to `packages/editor/` as `@bnto/editor`. Editor depends on `@bnto/ui` + `@bnto/core` + `@bnto/nodes`. 2 waves: package scaffold + move, rewire + verify. 90 editor tests + 66 web tests pass.
+
+### Sprint 4F: Code Standards Review — COMPLETE
+
+Audited all active code against updated `code-standards.md` (March 2026 tightened limits). 3 waves: per-package file size + structure audit (all 6 packages), cross-cutting DRY + Object.assign + Server Component audit, Zustand store ownership audit. Every file conforms.
+
+### Sprint 4G: Versioning & Node Validation — COMPLETE
+
+Format versioning activated across the stack. Zod schemas replaced hand-rolled `ParameterSchema` DSL for all 12 node types. Schema-driven config panel with `CONTROL_REGISTRY` map dispatching Zod-inferred `FieldControl` types to `@bnto/ui` controls. 3 waves: format version constants + schema version field, Zod migration + validation function, schema-driven `SchemaForm` + `SchemaField` components (PRs #114-#116).
+
 ---
 
-### Sprint 4B: Code Editor (CodeMirror 6)
+## Active Sprints
+
+### Sprint 5: Editor to Production (M2 Completion)
+
+**Goal:** Ship the editor as a real product surface. Users can access `/editor`, build recipes from scratch or customize predefined ones, run them, see results, and save to their account. This is the M2 completion path — the editor gives users a reason to create accounts.
+
+**Persona ownership:**
+| Wave | Lead Persona | Supporting | Rationale |
+|------|-------------|------------|-----------|
+| Wave 1 | `/frontend-engineer` | `/reactflow-expert` | Node visual identity, compartment redesign |
+| Wave 2 | `/frontend-engineer` | — | Production route, entry points, navigation |
+| Wave 3 | `/frontend-engineer` | `/reactflow-expert` | Execution integration, elevation-driven progress |
+| Wave 4 | `/backend-engineer` + `/core-architect` + `/frontend-engineer` | — | Save infrastructure, My Recipes integration |
+| Wave 5 | `/quality-engineer` + `/frontend-engineer` | — | E2E tests, keyboard shortcuts, polish |
+
+#### Wave 1 (parallel — Compartment Node Visual Redesign Phase 1) — COMPLETE
+
+- [x] `@bnto/editor` — **Icon registry**: `adapters/nodeIcons.ts` — maps `NodeTypeName` to Lucide icon component
+- [x] `@bnto/editor` — **Category color registry**: `adapters/nodeColors.ts` — maps `NodeCategory` to `CompartmentVariant`
+- [x] `@bnto/editor` — **CompartmentNode redesign**: Icon-above-text layout, category-driven variant color
+- [x] `@bnto/editor` — **Adapter integration**: `definitionToBento` uses icon/color registries
+
+#### Wave 2 (parallel — Production Route + Entry) — COMPLETE
+
+- [x] `apps/web` — `/editor` route (public, no auth gate)
+- [x] `apps/web` — `?from={slug}` query param loads predefined recipe
+- [x] `apps/web` — Auto-scaffold Input + Output compartments for blank canvas
+- [x] `apps/web` — Add `/editor` to app navigation
+- [x] `apps/web` — "Open in Editor" bridge button on recipe pages
+
+#### Wave 3 (sequential — Execution Integration)
+
+> **Execution order note:** Do Sprint 5A Wave 1 first (isIoNode flag + hover delete + placeholder). Then come back here for execution wiring.
+
+Wire the Run button to browser WASM execution. Elevation-driven progress on compartments. Results routed to Output node.
+
+- [ ] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `core.executions.createExecution()` → browser WASM engine
+- [ ] `@bnto/editor` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed). Leverage existing Card spring animations
+- [ ] `@bnto/editor` — `/frontend-engineer` — Results routed to Output node config panel (download list)
+- [ ] `@bnto/editor` — `/frontend-engineer` — Auto-download toggle on Output node
+- [ ] `@bnto/editor` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute)
+- [ ] `@bnto/editor` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant)
+
+**Execution boundary contract:** The execution path MUST call `validateDefinition()` (which includes per-node parameter validation via Zod) before invoking the WASM engine. If validation fails → reject with errors, surface in the UI, no engine invocation.
+
+#### Wave 4 (parallel — Save + Bridge)
+
+Convex persistence for custom recipes. My Recipes integration. This is the M2 conversion moment — users create recipes, want to save them, create accounts.
+
+- [ ] `@bnto/backend` — `/backend-engineer` — Recipe save mutation (Convex schema: recipes table with userId, definition, metadata)
+- [ ] `@bnto/core` — `/core-architect` — `core.recipes.save()` and `core.recipes.useMyRecipes()` hooks
+- [ ] `apps/web` — `/frontend-engineer` — Save button in editor toolbar, tier limits (Free: 3 recipes, Pro: unlimited)
+- [ ] `apps/web` — `/frontend-engineer` — My Recipes integration (load saved recipes into editor)
+- [ ] `apps/web` — `/frontend-engineer` — Dirty state tracking + unsaved changes warning on navigation
+
+#### Wave 5 (sequential — E2E + Polish)
+
+End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude/journeys/editor.md) for the full test matrix.
+
+- [ ] `apps/web` — `/quality-engineer` — E2E test suite for editor entry + build + execute + export flows
+- [ ] `apps/web` — `/quality-engineer` — Predefined recipe parity tests (all 6 recipes via `?from={slug}`)
+- [ ] `apps/web` — `/frontend-engineer` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
+- [ ] `apps/web` — `/quality-engineer` — Round-trip fidelity test (export → re-import → deep equality)
+- [ ] `apps/web` — `/frontend-engineer` — Accessibility audit (focus management, screen reader labels on canvas nodes)
+
+---
+
+### Sprint 5A: Editor UX — Node Interaction + Empty State + Config Polish
+
+**Goal:** Close the felt gap between prototype and product. Controls live where they belong: on node (delete), in LayerPanel (reorder), in config panel (configure). Empty canvas entry gives an immediate, clear signal of what to do next.
+
+**Prerequisite:** Sprint 5 Waves 1–2 complete (route + entry points exist, compartment nodes live).
+
+**Persona ownership:** `/frontend-engineer` leads all waves.
+
+**Design constraints (non-negotiable):**
+
+- Keep `Pressable/Card` as base node primitive — NOT Surface
+- Whole card surface is the click target (select + open config)
+- No edges, no arrow-reorder buttons on nodes
+- I/O nodes protected (no delete, no removal from toolbar)
+
+> ⚠️ **Animation rule — read before touching `CompartmentNode.tsx`:** The `<ScaleIn from={0.7} easing="spring-bouncy">` wrapper on every `CompartmentNode` is the Mini Motorways building pop-in. It is the single most important animation in the editor and a core part of the brand identity. Do not remove it, replace it with `FadeIn`, or flatten the spring curve. See `strategy/design-language.md` § "Editor Animation Language" for full rationale. If you refactor `CompartmentNode.tsx` for any reason, verify `ScaleIn` survives.
+
+#### Wave 1 — Node Hover Overlay + Placeholder Slot
+
+> **This is the FIRST thing to pick up.** Do this before Sprint 5 Wave 3 (execution wiring).
+
+The two most impactful canvas changes: a delete affordance on non-I/O nodes and a placeholder slot for blank canvases. Both are pure render-layer changes — no store modifications.
+
+- [ ] `packages/editor` — **`CompartmentNode` hover overlay**: Wrap the existing `Pressable/Card` in a `group relative` div. Add an absolutely-positioned delete button (`top-1.5 right-1.5`) visible only on `group-hover` via Tailwind (`opacity-0 group-hover:opacity-100 transition-opacity`). Button uses `e.stopPropagation()` so hover-click deletes without also selecting. Size: `size-5`, icon `XIcon size-3`. Styled as ghost (`text-muted-foreground`) with destructive hover state (`hover:text-destructive hover:bg-destructive/10`). Hidden entirely when `data.isIoNode === true`.
+- [ ] `packages/editor` — **`PlaceholderSlot` component**: New component rendered inside `BentoCanvas` when `nodes.length === 2` and both are I/O nodes. Renders a `Card variant="muted"` with `border-dashed`, `PlusIcon` centered (32px, muted foreground), and a subtle `animate-pulse` on the border. Clicking calls `openNodePalette()` from `useEditorPanels`. Uses `120×120` standard slot size. Disappears as soon as any non-I/O node exists in the store.
+- [ ] `packages/editor` — **`isIoNode` flag in adapter**: Update `createCompartmentNode.ts` — add `isIoNode: boolean` to `BentoNode.data`. Set from `isIoNodeType(nodeType)`. Consumed by `CompartmentNode` to conditionally render the delete overlay.
+- [ ] `packages/editor` — **Node exit animation**: Wrap `CompartmentNode` in `AnimatePresence` so deleted nodes exit with a spring scale-down (reverse of the entrance). Use `motion/react` exit prop: `exit={{ scale: 0.7, opacity: 0 }}` with a spring transition. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
+- [ ] `packages/editor` — **Unit tests**: `PlaceholderSlot` renders when only I/O nodes present. Disappears when a processing node is added. Hover overlay does not render for `input`/`output` nodes. Hover overlay renders for all other node types.
+
+#### Wave 2 — Config Panel Identity Echo
+
+> **Do this after Sprint 5 Wave 3 (execution wiring).**
+
+Make the config panel feel like it belongs to the node that was clicked. One look at the panel header and the user knows which compartment they're configuring.
+
+- [ ] `packages/editor` — **Config panel node icon**: Update `ConfigPanelRoot.tsx` — import `ICON_COMPONENTS` from `adapters/nodeIcons`. Render the node's icon (24px, `text-muted-foreground`) to the left of the heading in `PanelHeader`. Icon sourced from `typeInfo.iconKey`. If no icon exists for the type, render nothing.
+- [ ] `packages/editor` — **Config panel empty state improvement**: When no node is selected (`!configNodeId`), replace "Select a node to configure" with: a `PlusIcon` (muted, 24px), a `Text` heading "Nothing selected", and a `Text size="xs" color="muted"` body "Click a compartment to configure it, or add a new one."
+- [ ] `packages/editor` — **SchemaForm field grouping**: Add optional `group?: string` key to `NodeParamMeta` in `@bnto/nodes`. When consecutive visible params share the same `group` value, `SchemaForm` renders a `PanelDivider` with the group label above them. Start with Loop node: group `{ mode, items }` as "Iteration" and `{ breakCondition }` as "Control". Purely a rendering concern — no store changes.
+- [ ] `packages/editor` — **Unit tests**: Config panel header renders node icon when a node is selected. Config panel shows improved empty state when no node is selected. `SchemaForm` renders group dividers between param groups.
+
+#### Wave 3 — LayerPanel Drag-to-Reorder
+
+Make the LayerPanel the canonical surface for recipe structure management. Drag-to-reorder in the list gives users control over execution order without any canvas arrow buttons.
+
+- [ ] `packages/editor` — **`NodeList` drag-to-reorder**: Add drag handles to `NodeItem` in `NodeList`. Use `@dnd-kit/sortable`. Each `NodeItem` gets a `GripVerticalIcon` drag handle on the left, visible always. I/O nodes at top/bottom are locked — cannot be reordered (render without drag handle, add `data-locked` for styling). Dragging updates position via a new `reorderNode(fromIndex, toIndex)` store action.
+- [ ] `packages/editor` — **`reorderNode` store action + pure function**: Create `actions/reorderNode.ts` — pure function `reorderNode(state, fromIndex, toIndex): Partial<EditorState>`. Moves node in `nodes` array while preserving I/O nodes at fixed positions. Captures undo snapshot. Updates `isDirty`. Thin wrapper hook `useReorderNode` follows the three-layer pattern.
+- [ ] `packages/editor` — **Adapter sync**: After reorder, `rfNodesToDefinition` already reads `nodes` array order as execution order — no changes needed. Add unit test to verify order preserved on export.
+- [ ] `packages/editor` — **Unit tests**: `reorderNode` moves nodes correctly. I/O nodes cannot be moved to non-terminal positions. Undo restores previous order. `NodeList` renders drag handles for non-I/O nodes only.
+
+#### Wave 4 — Empty Canvas Entry + Auto-behaviors
+
+The first frame of the editor experience should tell the user what to do. Auto-behaviors reduce friction for new users without adding complexity for returning ones.
+
+- [ ] `packages/editor` — **Auto-open palette on blank canvas**: In `EditorCanvasRoot`, after the store initializes with a blank definition, call `openNodePalette()` once if `nodes.length === 2` (only I/O nodes). Use `useEffect` with one RAF (`requestAnimationFrame`) delay. Only fires once per session via `useRef` flag.
+- [ ] `packages/editor` — **Auto-select Input node on blank canvas**: After the canvas renders on blank canvas entry, auto-select the `input` node and open the config panel. Shows the file dropzone immediately. Same `useRef` once-per-session guard.
+- [ ] `packages/editor` — **Run button in `EditorToolbar`**: Add Run button between the node navigation group and undo group. `variant="primary"` (terracotta), `elevation="sm"`, `size="icon"` with `PlayIcon`. Disabled when definition has no processing nodes or execution is in progress. Fires `handleRun` (stub for now — wired in Sprint 5 Wave 3).
+- [ ] `packages/editor` — **Unit tests**: Palette auto-opens once on blank canvas mount. Does not fire on subsequent renders or after a node is added. Input node auto-selected on blank canvas. Run button disabled when no processing nodes exist.
+
+#### Wave 5 — Verify + E2E
+
+Verify all UX changes hold together as a system. No regressions on existing editor tests.
+
+- [ ] `packages/editor` — **Verify unit tests**: `task ui:test` passes across all `packages/editor` tests. No regressions in existing store, action, adapter, or hook tests.
+- [ ] `apps/web` — **E2E: blank canvas entry**: Navigate to `/editor`. Palette auto-opens. Input node selected, config panel shows "Input" header with Upload icon. Click a node type — `PlaceholderSlot` disappears, real node appears with spring pop-in animation.
+- [ ] `apps/web` — **E2E: node hover delete**: Hover a non-I/O compartment — delete × appears. Click × — node removed with spring exit animation, without selecting it first. Hover Input or Output compartment — no × appears.
+- [ ] `apps/web` — **E2E: LayerPanel reorder**: Open LayerPanel. Drag a processing node up/down — order updates on canvas. I/O nodes cannot be dragged. Undo restores previous order.
+- [ ] `apps/web` — **E2E: config panel identity**: Select a node. Config panel header shows the node's icon and label. Deselect (click canvas background) — config panel shows improved empty state.
+- [ ] `apps/web` — **Screenshot update**: Regenerate editor E2E screenshots after all visual changes. `task e2e` green.
+
+---
+
+### Sprint 5B: Node Visual Identity — Hierarchy, Selection, and I/O Distinction
+
+**Goal:** Make the canvas immediately readable at a glance. Right now all three node types render identically — same card color, same size, same elevation. This sprint establishes a clear three-tier visual language: I/O nodes (grounded structural anchors) → processing nodes (lifted, configurable steps) → selected node (highlighted, active focus).
+
+**Decision doc:** `.claude/decisions/editor-ux-direction.md` — visual hierarchy section.
+
+**Prerequisite:** Sprint 5A Wave 1 complete (`isIoNode` flag exists in adapter).
+
+**Persona ownership:** `/frontend-engineer` leads all waves.
+
+**Design constraints (non-negotiable):**
+
+- Keep `Pressable asChild` wrapping `Card` as the base for all node types — including I/O. Don't introduce a separate primitive.
+- I/O nodes are NOT pressable-to-configure. They can be selected for metadata but don't open a configurable config panel. Reflect this visually.
+- No color for color's sake. Every visual change communicates information (type, state, or category).
+- Selected ring must be visible at a glance — not just an elevation change.
+
+> ⚠️ **Animation rule:** `<ScaleIn from={0.7} easing="spring-bouncy">` must remain on ALL node types including I/O after this sprint's visual changes. The pop-in is non-negotiable. See `strategy/design-language.md` § "Node Entrance: The Building Pop-In".
+
+**The three-tier system:**
+
+| Tier          | Nodes         | Elevation (rest) | Elevation (selected)       | Color                | Shape                     |
+| ------------- | ------------- | ---------------- | -------------------------- | -------------------- | ------------------------- |
+| Structural    | input, output | `sm`             | `md`                       | `muted` (warm cream) | wider, shorter — `160×90` |
+| Processing    | all others    | `md`             | `lg`                       | `card` (white)       | square — `120×120`        |
+| Selected ring | any selected  | —                | + `ring-2 ring-primary/60` | —                    | —                         |
+
+#### Wave 1 — I/O Node Distinction
+
+Differentiate Input and Output from processing nodes through elevation, color, and shape — not just icon. These are the walls of the bento box, not a compartment inside it.
+
+- [ ] `packages/editor` — **I/O node sizing**: Update `definitionToBento` adapter — set `width: 160, height: 90` for nodes where `isIoNodeType(nodeType)` is true. Processing nodes keep `120×120`. Different aspect ratio signals "different kind of thing" before the label is read.
+- [ ] `packages/editor` — **I/O node color + elevation**: In `CompartmentNode.tsx`, when `data.isIoNode` is true, render `Card color="muted" elevation="sm"`. When false, render `Card elevation="md"`. Muted cards read as "part of the canvas" — warm cream that doesn't compete with the steps in between.
+- [ ] `packages/editor` — **I/O node Pressable behavior**: Remove `toggle` and `active` props from the `Pressable` wrapper for I/O nodes. They can still receive clicks for selection feedback but shouldn't feel like pressable configuration buttons.
+- [ ] `packages/editor` — **Unit tests**: I/O nodes render with `color="muted"`, `elevation="sm"`, and `160×90` dimensions. Processing nodes render with `elevation="md"` and `120×120`. Adapter sets `isIoNode` correctly for all 12 node types.
+
+#### Wave 2 — Processing Node Category Accents + Selected State
+
+Make the selected state obvious and give processing nodes a subtle category signal without overwhelming the calm Motorway aesthetic.
+
+- [ ] `packages/editor` — **Selected ring**: Add `ring-2 ring-primary/60 ring-offset-2 ring-offset-background rounded-xl` to the outer `group relative` wrapper when `selected` is true, via `cn()`. Creates a visible terracotta outline that reads as "active focus" at a glance.
+- [ ] `packages/editor` — **Elevation on selection**: `elevation={selected ? "lg" : "md"}` for processing nodes. `elevation={selected ? "md" : "sm"}` for I/O nodes. Ring + elevation change together make selection unmistakable.
+- [ ] `packages/editor` — **Category color pip**: Add `border-l-[3px]` in category color to processing nodes. Create `adapters/categoryBorderColor.ts` mapping `CompartmentVariant` → Tailwind border class (e.g. `primary` → `border-primary/70`). I/O nodes get no pip.
+- [ ] `packages/editor` — **Unit tests**: Selected processing node has ring class. Unselected has no ring. Category pip border renders for processing nodes. I/O nodes have no pip. Elevation changes correctly for both types on selection.
+
+#### Wave 3 — LayerPanel Visual Parity
+
+The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look distinct in the list too.
+
+- [ ] `packages/editor` — **`NodeItem` I/O distinction**: Update `NodeItem.tsx` — when `node.data.isIoNode` is true, render dot indicator in `text-muted-foreground`. Add `text-xs text-muted-foreground` "I/O" sublabel to reinforce structural vs. configurable distinction.
+- [ ] `packages/editor` — **`NodeItem` selected state**: When a node is selected in the store, the `NodeItem` row gets `bg-muted/50` background highlight.
+- [ ] `packages/editor` — **Unit tests**: I/O `NodeItem` renders muted dot and "I/O" sublabel. Selected `NodeItem` applies background highlight. Processing `NodeItem` uses category color dot.
+
+#### Wave 4 — Verify + Screenshot
+
+- [ ] `packages/editor` — **Verify unit tests**: All 5A + 5B tests pass. No regressions.
+- [ ] `apps/web` — **E2E: visual hierarchy**: Navigate to `/editor?from=compress-images`. Input and Output cards are visibly different from the Image processing node (different size, muted tone). Click the Image node — ring appears, elevation lifts. Click Input node — different selection treatment (no ring, subtle lift). LayerPanel echoes the visual distinction.
+- [ ] `apps/web` — **Screenshot update**: Regenerate editor E2E screenshots. `task e2e` green.
+
+---
+
+### Sprint 5C: Editor Copy + Nav Label Cleanup
+
+**Goal:** Nail the copy and labels across editor entry points. Small changes, high signal — language shapes how users understand what they're looking at.
+
+**Prerequisite:** Sprint 5 Wave 2 (production route) complete.
+
+**Tasks:**
+
+- [ ] `apps/web` — **Rename nav "Create" → "New Recipe"**: Update `AppNav` (or wherever the nav item is defined). Label: "New Recipe". Route: `/editor` (unchanged). Decision: "Create" is vague. "New Recipe" matches the product mental model and pairs with the recipe pages.
+- [ ] `apps/web` — **Update recipe page CTA copy**: Change "Customize in Editor" → "Open in Editor" on all predefined recipe pages. "Customize" implies minor tweaks; "Open" implies full access and pairs with "New Recipe" in the nav.
+- [ ] `apps/web` — **Verify**: All nav + recipe page CTA copy consistent. No remaining "Create" or "Customize in Editor" references.
+
+> **Future copy consideration (post-Sprint 5 Wave 3):** Once execution is wired in the editor, revisit the recipe page CTA. "Open in Editor" is functional but "Make it yours →" or "Build your own version" signals creative ownership more than "Open" and may convert better. Worth A/B testing once traffic exists. Do not change this now — the editor needs to actually run recipes before a possessive CTA is honest.
+
+---
+
+### Sprint 6: Edit Mode ↔ Run Mode (Mini Motorways Pattern)
+
+**Goal:** Make the editor feel like Mini Motorways — pause to edit the road network, unpause to watch traffic flow. The same canvas surface serves both editing and running. No separate screens.
+
+**Prerequisite:** Sprint 5 Wave 3 (execution wired). The mode switch requires execution to exist — don't build this before execution works.
+
+**Decision doc:** `.claude/decisions/editor-ux-direction.md` — "Vision: Edit Mode ↔ Run Mode" section. Read this before picking up any task in this sprint.
+
+**The two modes:**
+
+- **Edit mode (current state):** Canvas grid visible. Nodes are pressable/selectable. Config panel slides in on click. LayerPanel open. Toolbar shows full node management controls. Run button triggers mode switch.
+- **Run mode:** Canvas grid fades or hides. Nodes are static (no click interaction). Config panel + LayerPanel close. Toolbar collapses to just Stop button. Nodes animate through the elevation sequence (idle → pending → active → completed). Output node shows results or download prompt.
+- **Transition:** Run button → run mode. Stop button → edit mode, canvas restored to exact state before run.
+
+**Why this matters:** The power-user loop is edit → run → tweak → run again. Forcing a screen change breaks that loop. The Mini Motorways analogy is exact: pausing to lay roads, unpausing to watch traffic.
+
+#### Wave 1 — Editor Mode State
+
+- [ ] `packages/editor` — **`editorMode` in store**: Add `editorMode: "edit" | "run"` to `EditorState`. Add `setEditorMode(mode)` action (pure function + hook wrapper). Default: `"edit"`. Run button dispatches `setEditorMode("run")`. Stop button dispatches `setEditorMode("edit")`.
+- [ ] `packages/editor` — **Mode-aware toolbar**: `EditorToolbar` reads `editorMode`. In `"edit"` mode: full controls (add, navigate, delete, undo/redo, reset, Run button). In `"run"` mode: toolbar collapses to just a Stop button (`variant="destructive"`, `PlayIcon` replaced with `SquareIcon`). Animate the collapse with `Animate.FadeIn`.
+- [ ] `packages/editor` — **Mode-aware panels**: `EditorConfigPanel` and `EditorLayerPanel` both read `editorMode`. In `"run"` mode: panels slide out and stay closed (cannot be opened by clicking nodes). In `"edit"` mode: panels behave normally.
+- [ ] `packages/editor` — **Unit tests**: Store transitions between `edit` and `run` correctly. Toolbar renders stop-only in run mode. Panels are non-interactive in run mode.
+
+#### Wave 2 — Canvas Grid Transition
+
+- [ ] `packages/editor` — **Grid fade on run mode**: `BentoCanvas` reads `editorMode`. In `"run"` mode: fade the ReactFlow background grid (CSS `opacity` transition, ~300ms). In `"edit"` mode: grid visible. The grid disappearing signals "this is no longer a configuration surface."
+- [ ] `packages/editor` — **Node interaction lock in run mode**: `CompartmentNode` reads `editorMode` from store (via context or prop). In `"run"` mode: disable `Pressable` (remove `onClick` handler or add `pointer-events-none` wrapper). Nodes should not be selectable during execution — they're displaying state, not accepting input.
+- [ ] `packages/editor` — **Elevation sequence integration**: Wire node `status` field (`idle | pending | active | completed`) to elevation during run mode. This is the visual "traffic flowing" moment. `CompartmentNode` already has `status` in its data type — connect it to `Card elevation` during run mode execution.
+- [ ] `packages/editor` — **Unit tests**: Canvas grid has reduced opacity in run mode. Nodes are non-interactive in run mode. Elevation changes with status in run mode.
+
+#### Wave 3 — Results at Output Node + E2E
+
+- [ ] `packages/editor` — **Output node run-mode state**: When execution completes, the `output` node shows a completion state — icon changes to `CheckCircle`, sublabel shows file count (e.g., "3 files ready"), elevation holds at `lg`. Clicking the completed Output node (only in run mode, after completion) triggers download. This is the delivery moment.
+- [ ] `packages/editor` — **Return to edit mode after download**: After download triggers, show a brief "Done" state then auto-transition back to edit mode (2s delay or on Stop button press). Canvas grid reappears, panels re-open, toolbar restores. User is back in the same canvas state they left.
+- [ ] `apps/web` — **E2E: mode switch flow**: Open `/editor?from=compress-images`. Add files to Input node. Click Run — toolbar collapses to Stop, grid fades, panels close. Nodes animate through elevation sequence. Output node shows completion. Click output node — download triggers. Canvas returns to edit mode.
+- [ ] `apps/web` — **Screenshot update**: Capture both edit mode and run mode states. `task e2e` green.
+
+---
+
+### Sprint 4B: Code Editor (CodeMirror 6) — TABLED
 
 **Goal:** A schema-aware `.bnto.json` code editor for power users — the coding-oriented counterpart to the visual canvas. Users who prefer code get the same power as the visual canvas, with the speed and precision of text editing. Slash commands bring Notion-like ergonomics. The code editor is free (same as the visual editor).
+
+**Status:** Unblocked but deferred until visual editor ships to production.
 
 **Required reading:** Before picking up ANY task in Sprint 4B, read [code-editor.md](.claude/strategy/code-editor.md) — the design document covering tech choice rationale (CM6 over Monaco), architecture (headless-first + store sync), feature tiers, slash command implementation, JSON Schema strategy, CLI/TUI parallels, React integration pattern, theming, and performance considerations. Also read the persona at `.claude/skills/code-editor-expert/SKILL.md` for CM6-specific APIs, extension patterns, and gotchas.
 
@@ -225,394 +504,13 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 ---
 
-### Sprint 4C: Input & Output Nodes — COMPLETE
-
-Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: Wave 1 (`@bnto/nodes` — I/O types, schemas, recipe updates, 22 tests), Wave 2 (`@bnto/core` adapter reads I/O nodes, editor store singleton constraints), Wave 3 (generic InputRenderer/OutputRenderer, I/O compartment rendering), Wave 4 (RecipeShell migration, per-slug I/O code deleted, E2E verified). See [io-nodes.md](.claude/strategy/io-nodes.md).
-
----
-
-### Sprint 4D: Extract `@bnto/ui` (Motorway Design System)
-
-**Goal:** Move all UI primitives, design tokens, and shared components from `apps/web/components/` to `packages/ui/` as `@bnto/ui`. Zero domain knowledge — pure visual building blocks. This establishes the package boundary before the editor ships, making the complex editor code easier to follow for both humans and agents.
-
-**Persona ownership:** `/frontend-engineer` leads all waves. `/nextjs-expert` advises on import restructuring.
-
-#### Wave 1 (parallel — package scaffold + primitives)
-
-- [x] `packages/ui` — **Bootstrap package**: Create `packages/ui/` with `package.json` (`@bnto/ui`), `tsconfig.json`, barrel export. Zero runtime deps except React + Tailwind
-- [x] `packages/ui` — **Move primitives**: Move `apps/web/components/primitives/` → `packages/ui/src/primitives/`. These are thin shadcn/Radix wrappers with zero domain knowledge
-- [x] `packages/ui` — **Move utility layer**: Move `cn.ts`, `create-cn.ts` → `packages/ui/src/utils/`. These are the styling foundation
-- [x] `packages/ui` — **Move CSS tokens**: Move design token definitions from `globals.css` into a consumable format. The `@theme inline` block and token variables stay in the app's CSS but reference `@bnto/ui` token values
-
-#### Wave 2 (parallel — shared components)
-
-- [x] `packages/ui` — **Move layout components**: `Stack`, `Row`, `Grid`, `Container`, `PageLayout`, `BentoGrid` → `packages/ui/src/layout/`
-- [x] `packages/ui` — **Move typography components**: `Heading`, `Text`, `Badge`, `Label` → `packages/ui/src/typography/`
-- [x] `packages/ui` — **Move feedback components**: `Skeleton`, `LinearProgress`, `ToolbarProgress`, `Spinner` → `packages/ui/src/feedback/`
-- [x] `packages/ui` — **Move surface components**: `Card` (with surface/pressable system), `Separator` → `packages/ui/src/surface/`
-- [x] `packages/ui` — **Move interaction components**: `Button`, `Switch`, `Select`, `Slider`, `RadialSlider`, `RadioGroup`, `Checkbox` → `packages/ui/src/interaction/`
-- [x] `packages/ui` — **Move overlay components**: `Dialog`, `Sheet`, `Popover`, `DropdownMenu`, `Tooltip` → `packages/ui/src/overlay/`
-- [x] `packages/ui` — **Move animation components**: `Animate.*` composition API → `packages/ui/src/animation/`
-
-#### Wave 3 (sequential — rewire + verify)
-
-- [x] `apps/web` — **Update all imports**: Replace `@/components/ui/` and `@/components/primitives/` imports with `@bnto/ui` across the entire web app
-- [x] `apps/web` — **Tailwind v4 source directive**: Add `@source "../../node_modules/@bnto/ui"` to `globals.css` so Tailwind scans the extracted package
-- [x] `apps/web` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass. No behavior changes — only import paths changed
-
----
-
-### Sprint 4E: Extract `@bnto/editor`
-
-**Goal:** Move all editor components from `apps/web/components/editor/` to `packages/editor/` as `@bnto/editor`. Editor depends on `@bnto/ui` + `@bnto/core` + `@bnto/nodes`. This separates the complex editor system from the web app shell.
-
-**Prerequisite:** Sprint 4D complete (`@bnto/ui` extracted).
-
-**Persona ownership:** `/frontend-engineer` + `/reactflow-expert` lead.
-
-#### Wave 1 (parallel — package scaffold + move)
-
-- [x] `packages/editor` — **Bootstrap package**: Create `packages/editor/` with `package.json` (`@bnto/editor`), `tsconfig.json`. Dependencies: `@bnto/ui`, `@bnto/core`, `@bnto/nodes`, `@xyflow/react`
-- [x] `packages/editor` — **Move editor components**: Move `apps/web/editor/` → `packages/editor/src/`. This includes EditorCanvas, EditorToolbar, LayerPanel, ConfigPanel, CompartmentNode, NodePaletteMenu, adapters, hooks, store, actions
-- [x] `packages/editor` — **Move editor store**: Ensure `useEditorStore` and all editor Zustand state lives in `@bnto/editor`
-
-#### Wave 2 (sequential — rewire + verify)
-
-- [x] `apps/web` — **Update all editor imports**: Replace `@/editor/` imports with `@bnto/editor` across the web app
-- [x] `apps/web` — **Verify**: `task ui:build`, `task ui:test`, `task check` all pass. No behavior changes. 90 editor tests + 66 web tests pass
-- [x] `apps/web` — **Tailwind source directive**: Add `@source "../../../packages/editor/src"` to `globals.css`
-
----
-
-### Sprint 4F: Code Standards Review
-
-**Goal:** Audit all active code against updated `code-standards.md` (March 2026 tightened limits). Every file conforms to size limits, naming conventions, and composition patterns. Clean slate before the editor production sprint.
-
-**Prerequisite:** Sprint 4E complete (packages extracted, imports stable).
-
-**Persona ownership:** `/frontend-engineer` leads. Each package audit is an independent task.
-
-#### Wave 1 (parallel — per-package audit)
-
-- [x] `packages/ui` — **File size + structure audit**: Scan for files over 100 lines. Split oversized files. One export per file. Folder + barrel where earned. Verify dot-notation compliance
-- [x] `packages/editor` — **File size + structure audit**: Same scan. Editor files are likely the biggest offenders — split aggressively. Verify actions pattern (pure functions for state mutations, thin hook wrappers)
-- [x] `packages/core` — **File size + structure audit**: Oversized adapters, services, clients. One function per file in utils. Verify `select` rule on all `useQuery` calls
-- [x] `packages/@bnto/backend` — **File size + structure audit**: Convex function files, helpers, validators
-- [x] `packages/@bnto/nodes` — **File size + structure audit**: Schema files, registry, helpers
-- [x] `apps/web` — **File size + structure audit**: Pages, route components, lib/. Focus on what remains after UI/editor extraction
-
-#### Wave 2 (sequential — cross-cutting + verify)
-
-- [x] `all packages` — **Cross-package DRY audit**: Identify duplicated utilities across packages (`cn`, `createCn`, type guards, format helpers). Consolidate into `@bnto/ui` (styling utils) or `@bnto/core` (logic utils) as appropriate
-- [x] `all packages` — **Remove Object.assign dot-notation repo-wide**: Replace all compound `Object.assign` namespaces with flat named exports (e.g., `Card` + `CardContent` + `CardHeader` instead of `Card.Content`). Applies to `@bnto/ui`, `apps/web/editor`, and any other packages using the pattern. Update all consumers to flat imports. Remove `"use client"` directives that were added solely to work around the RSC boundary limitation of `Object.assign`. Recover server-side rendering benefits for components that don't need client interactivity
-- [x] `apps/web` — **Server Component audit**: Invoke `/nextjs-expert` + `/frontend-engineer`. Audit every `"use client"` directive in `apps/web/`. For each file: (1) Does it genuinely need client interactivity (hooks, state, event handlers)? (2) Can the `"use client"` boundary be pushed deeper — keep the trunk/branch as a server component and extract only the interactive leaf as client? (3) Are there pages or layouts marked `"use client"` that should be server components composing client islands? Goal: maximize server-rendered HTML, minimize client JS bundle, push `"use client"` to the smallest possible leaves
-- [x] `all packages` — **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after all restructuring
-
-#### Wave 3 (sequential — store ownership audit)
-
-- [x] `packages/core` — **Zustand store ownership audit**: `@bnto/core` owns the store creator (`createEnhancedStore`) but should NOT own every domain's Zustand store. Audit `packages/core/src/stores/` — for each store, determine if it belongs in core (auth, session — cross-cutting) or should be owned by its domain package (editor state → `@bnto/editor`, UI preferences → `apps/web`). Move domain-specific stores to their owning package. Core provides the factory, domains own their instances
-
----
-
-### Sprint 4G: Versioning & Node Validation
-
-**Goal:** Establish format versioning and runtime node validation before any users exist. Two waves: (1) activate `.bnto.json` format versioning across the stack, (2) replace the hand-rolled `ParameterSchema` DSL with Zod schemas that serve as runtime validators, config panel drivers, and versioned parameter contracts. **Critical runtime contract: recipe execution must validate all node parameters against their schemas before a run starts. If validation fails, the run is rejected with field-level errors — no partial execution.**
-
-**Prerequisite:** Sprint 4F (Code Standards Review) complete. This must land before Sprint 5 (Editor to Production) because the editor will be creating and exporting recipes — format versioning and parameter validation must be baked in from day one.
-
-**Why now:** Pre-release. No legacy recipes in the wild. No migration debt. Define v1 as the canonical format and build the infrastructure to handle future changes cleanly. The `.bnto.json` format is MIT-licensed and promised portable — once files exist in the wild, retrofitting versioning breaks that promise.
-
-**Persona ownership:** No persona needed — this is foundational `@bnto/nodes` + `@bnto/backend` plumbing.
-
-#### Wave 1 (parallel — Format Versioning)
-
-Activate the existing `Definition.version` field as a meaningful format version. Replace all hardcoded `"1.0.0"` strings with a single constant. Add version validation. Propagate format version through Convex persistence.
-
-**`@bnto/nodes` changes:**
-
-- [x] `@bnto/nodes` — **Format version constant**: Create `src/formatVersion.ts` — exports `CURRENT_FORMAT_VERSION = "1.0.0"`, `SUPPORTED_FORMAT_VERSIONS = ["1.0.0"]`, `isSupportedVersion(version: string): boolean`, `isCompatibleVersion(version: string): boolean` (semver-major match). ~30 lines
-- [x] `@bnto/nodes` — **Version validation**: Edit `src/validate.ts` — change version check from "is present" to "is present AND is a supported version". Error: `"unsupported format version 'X' — supported: 1.0.0"`
-- [x] `@bnto/nodes` — **Replace hardcoded versions**: Edit `src/createBlankDefinition.ts`, `src/addNode.ts`, all 6 recipe files in `src/recipes/*.ts` — replace hardcoded `"1.0.0"` with `CURRENT_FORMAT_VERSION` import
-- [x] `@bnto/nodes` — **Schema version field**: Add `schemaVersion: number` to `NodeSchema` interface in `src/schemas/types.ts`. Add `schemaVersion: 1` to all 12 node schema files. Metadata only for now — no migration logic until a schema actually changes. The field exists from day one so future changes are traceable
-- [x] `@bnto/nodes` — **Export + tests**: Export new versioning functions from `src/index.ts`. Create `src/formatVersion.test.ts` (valid/invalid versions, major-version matching). Update `src/validate.test.ts` (unsupported version produces error). Update `src/createBlankDefinition.test.ts` and `src/recipes.test.ts` to reference constant
-
-**`@bnto/backend` + `@bnto/core` changes:**
-
-- [x] `@bnto/backend` — **Add `formatVersion` to recipes table**: Edit `convex/schema.ts` — add `formatVersion: v.string()` field (the existing `version: v.number()` stays as the save counter). Edit `convex/recipes.ts` — set `formatVersion` from definition's version field on create and update
-- [x] `@bnto/core` — **Propagate `formatVersion`**: Add `formatVersion: string` to `RawRecipeDoc` in `src/types/raw.ts`, `Recipe` in `src/types/recipe.ts`. Map through in `src/transforms/recipe.ts`
-
-**Editor + Rust parity:**
-
-- [x] `@bnto/editor` — **Use constant**: Edit `src/adapters/rfNodesToDefinition.ts` — replace hardcoded `"1.0.0"` with `CURRENT_FORMAT_VERSION` import
-- [x] `engine` — **Rust parity constant**: Add `FORMAT_VERSION: &str = "1.0.0"` to `engine/crates/bnto-core/src/lib.rs`. No runtime checking needed (WASM receives pre-validated data from JS), but the constant exists for cross-stack parity
-
-#### Wave 2 (sequential — Zod Node Schemas)
-
-Replace the hand-rolled `ParameterSchema` DSL with Zod schemas. Each node type owns its own validator. Zod schemas serve triple duty: (1) runtime validation at execution boundary, (2) config panel UI metadata for the editor, (3) TypeScript type inference via `z.infer<>`.
-
-**Depends on:** Wave 1 complete (`schemaVersion` field exists on `NodeSchema`).
-
-**Architecture:**
-
-```
-Zod Schema (single source of truth per node type)
-  ├── Runtime validation  →  schema.safeParse(parameters) at execution boundary
-  ├── Config panel UI     →  UI metadata (labels, descriptions, visibleWhen) paired with schema
-  ├── Type inference      →  z.infer<typeof imageParamsSchema> — TS types for free
-  └── Version contract    →  schemaVersion tracks parameter changes, enables future migration
-```
-
-Each node schema file exports three things:
-
-1. **Zod schema** (`imageParamsSchema`) — the validator
-2. **Schema definition** (`imageNodeSchema: NodeSchemaDefinition`) — Zod schema + UI metadata + schemaVersion
-3. **Inferred type** (`ImageParams`) — TypeScript type derived from the Zod schema
-
-The `NodeSchemaDefinition` type replaces the current `NodeSchema` interface:
-
-```typescript
-interface NodeSchemaDefinition {
-  nodeType: string;
-  schemaVersion: number;
-  schema: z.ZodObject<any>; // Zod schema for validation
-  params: Record<string, NodeParamMeta>; // UI metadata (label, description, visibleWhen, etc.)
-}
-```
-
-**Tasks:**
-
-- [x] `@bnto/nodes` — **Add Zod dependency**: Add `zod` to `package.json` dependencies (~13KB minified, tree-shakeable, zero transitive deps)
-- [x] `@bnto/nodes` — **New schema types**: Rewrite `src/schemas/types.ts` — replace `ParameterSchema`/`NodeSchema` with `NodeSchemaDefinition` (Zod schema + `NodeParamMeta` UI metadata map + `schemaVersion`). Keep `visibleWhen`/`requiredWhen` condition types for UI metadata
-- [x] `@bnto/nodes` — **Migrate all 12 node schemas**: Rewrite each file in `src/schemas/` (image, input, output, fileSystem, httpRequest, spreadsheet, transform, editFields, loop, group, parallel, shellCommand). Each gets a `z.object()` schema with proper types/constraints + a `params` map with UI labels/descriptions/visibility rules. Keep existing enum constant arrays (`IMAGE_OPERATIONS`, `IMAGE_FORMATS`, etc.) — they feed into `z.enum()`. Export inferred TypeScript type per node
-- [x] `@bnto/nodes` — **Registry + helpers update**: Update `src/schemas/registry.ts` to `Record<NodeTypeName, NodeSchemaDefinition>`. Adapt `getNodeSchema.ts`, `getRequiredParams.ts` (derive from Zod shape), `getVisibleParams.ts` (read from `params` metadata), `getConditionallyRequired.ts`, `matchesCondition.ts`
-- [x] `@bnto/nodes` — **Parameter validation function**: Create `src/validateNodeParams.ts` — `validateNodeParams(nodeType: string, params: Record<string, unknown>)` calls `schema.safeParse(params)`, returns field-level errors. Create `src/validateNodeParams.test.ts` — valid/invalid params for each of the 12 node types
-- [x] `@bnto/nodes` — **Wire into definition validation**: Edit `src/validate.ts` — after checking core fields (id, type, version), call `validateNodeParams()` for each node in the tree. Report per-field errors: `"node 'resize-1': parameter 'quality' must be between 1 and 100"`
-- [x] `@bnto/nodes` — **Update all tests**: `src/schemas/registry.test.ts` (structural tests for new `NodeSchemaDefinition`), `src/schemas/ioSchemas.test.ts`, `src/validate.test.ts` (param validation cases)
-
-#### Wave 3 (sequential — Schema-Driven Parameter Forms)
-
-Replace hand-rolled `ParameterField` switch-on-type rendering with a registry-driven `SchemaForm` component. AutoForm (`@autoform/react`) was evaluated but rejected: requires react-hook-form (submit-based model incompatible with real-time onChange), no conditional visibility support, and custom field renderers would exceed the current code size. Instead, built a `CONTROL_REGISTRY` map that dispatches Zod-inferred `FieldControl` types to individual `@bnto/ui` control components — same schema-driven result, zero new dependencies.
-
-**Depends on:** Wave 2 complete (Zod schemas exist for all 12 node types).
-
-- [x] `@bnto/nodes` — ~~Install `@autoform/zod` + `@autoform/react`~~ Skipped: AutoForm requires react-hook-form, no conditional visibility, submit-based model incompatible with real-time onChange. Built schema-driven forms natively instead
-- [x] `@bnto/nodes` — Create Zod type → form control mapping (enum→select, bounded number→slider, boolean→switch, unbounded number→number input, string→text input). Mapping documented in `inferFieldType.ts`, `FieldControl` type exported
-- [x] `packages/editor` — Replace `ParameterField` switch-on-type rendering with registry-driven `SchemaForm` + `SchemaField` + `CONTROL_REGISTRY` map. Each control is its own file in `controls/` barrel
-- [x] `packages/editor` — Wire `NodeParamMeta` (labels, descriptions, placeholders, visibility rules) through SchemaForm. visibleWhen filtering drives which fields render. Slider shows value readout for bounded numbers
-- [x] `packages/editor` — E2E test: config panel renders correct controls (3 tests — select/slider for image, visibleWhen conditional fields, text/select for spreadsheet)
-
-**Execution boundary contract (called out for Sprint 5 Wave 3 wiring):**
-
-When the editor wires Run → `core.executions.createExecution()` in Sprint 5 Wave 3, the execution path MUST call `validateDefinition()` (which now includes per-node parameter validation via Zod) before invoking the WASM engine. If validation fails → reject with errors, surface in the UI, no engine invocation. This validation gate already has a natural home: the execution service in `@bnto/core` that sits between the editor and the WASM engine.
-
-**What this enables for Sprint 4B (Code Editor, tabled):**
-
-`zod-to-json-schema` converts these Zod schemas → JSON Schema for CM6 autocompletion and inline validation. One line per node type, zero drift from runtime validation. The JSON Schema generation step lives in Sprint 4B Wave 1, not here.
-
----
-
-### Sprint 5: Editor to Production (M2 Completion)
-
-**Goal:** Ship the editor as a real product surface. Users can access `/editor`, build recipes from scratch or customize predefined ones, run them, see results, and save to their account. This is the M2 completion path — the editor gives users a reason to create accounts.
-
-**Prerequisite:** Sprint 4F (Code Standards Review) complete. Packages extracted (`@bnto/ui`, `@bnto/editor`), code clean. Uncommitted editor work on `main` must be branched/PR'd first.
-
-**Persona ownership:**
-| Wave | Lead Persona | Supporting | Rationale |
-|------|-------------|------------|-----------|
-| Wave 1 | `/frontend-engineer` | `/reactflow-expert` | Node visual identity, compartment redesign |
-| Wave 2 | `/frontend-engineer` | — | Production route, entry points, navigation |
-| Wave 3 | `/frontend-engineer` | `/reactflow-expert` | Execution integration, elevation-driven progress |
-| Wave 4 | `/backend-engineer` + `/core-architect` + `/frontend-engineer` | — | Save infrastructure, My Recipes integration |
-| Wave 5 | `/quality-engineer` + `/frontend-engineer` | — | E2E tests, keyboard shortcuts, polish |
-
-#### Wave 1 (parallel — Compartment Node Visual Redesign Phase 1)
-
-Make every node immediately identifiable at a glance. Icon registry + category color mapping. This is the highest-impact visual improvement — transforms the editor from prototype to product.
-
-- [x] `@bnto/editor` — **Icon registry**: Create `adapters/nodeIcons.ts` — maps `NodeTypeName` to Lucide icon component. Pure data, one file. Icons: image=`ImageIcon`, spreadsheet=`Table`, file-system=`FolderOpen`, transform=`Shuffle`, edit-fields=`PenLine`, http-request=`Globe`, shell-command=`TerminalSquare`, group=`Braces`, loop=`RefreshCw`, parallel=`Columns3`, input=`Upload`, output=`Download`
-- [x] `@bnto/editor` — **Category color registry**: Create `adapters/nodeColors.ts` — maps `NodeCategory` to `CompartmentVariant`. Pure data, one file. image=primary, spreadsheet=secondary, file=accent, data=muted, network=secondary, control=warning, system=muted, io=info
-- [x] `@bnto/editor` — **CompartmentNode redesign**: Update `CompartmentNode.tsx` — add large icon (32px) above label, restructure from centered-text to icon-above-text layout. Import from icon/color registries. Category-driven variant color
-- [x] `@bnto/editor` — **Adapter integration**: Update `definitionToBento` adapter to use icon/color registries when converting Definition to BentoNode (set variant from category, set size from tier)
-
-#### Wave 2 (parallel — Production Route + Entry)
-
-Create the `/editor` route and wire entry points from recipe pages and navigation.
-
-- [x] `apps/web` — `/frontend-engineer` — Create `/editor` route (public, no auth gate — editor is free per pricing model)
-- [x] `apps/web` — `/frontend-engineer` — `?from={slug}` query param loads predefined recipe from `@bnto/nodes` registry
-- [x] `apps/web` — `/frontend-engineer` — Auto-scaffold Input + Output compartments for blank canvas (default when no `?from=`)
-- [x] `apps/web` — `/frontend-engineer` — Add `/editor` to app navigation (visible to all users)
-- [x] `apps/web` — `/frontend-engineer` — "Open in Editor" bridge button on recipe pages → `/editor?from={slug}`
-
-#### Wave 3 (sequential — Execution Integration)
-
-Wire the Run button to browser WASM execution. Elevation-driven progress on compartments. Results routed to Output node.
-
-- [ ] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `core.executions.createExecution()` → browser WASM engine
-- [ ] `@bnto/editor` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed). Leverage existing Card spring animations
-- [ ] `@bnto/editor` — `/frontend-engineer` — Results routed to Output node config panel (download list)
-- [ ] `@bnto/editor` — `/frontend-engineer` — Auto-download toggle on Output node
-- [ ] `@bnto/editor` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute)
-- [ ] `@bnto/editor` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant)
-
-#### Wave 4 (parallel — Save + Bridge)
-
-Convex persistence for custom recipes. My Recipes integration. This is the M2 conversion moment — users create recipes, want to save them, create accounts.
-
-- [ ] `@bnto/backend` — `/backend-engineer` — Recipe save mutation (Convex schema: recipes table with userId, definition, metadata)
-- [ ] `@bnto/core` — `/core-architect` — `core.recipes.save()` and `core.recipes.useMyRecipes()` hooks
-- [ ] `apps/web` — `/frontend-engineer` — Save button in editor toolbar, tier limits (Free: 3 recipes, Pro: unlimited)
-- [ ] `apps/web` — `/frontend-engineer` — My Recipes integration (load saved recipes into editor)
-- [ ] `apps/web` — `/frontend-engineer` — Dirty state tracking + unsaved changes warning on navigation
-
-#### Wave 5 (sequential — E2E + Polish)
-
-End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude/journeys/editor.md) for the full test matrix.
-
-- [ ] `apps/web` — `/quality-engineer` — E2E test suite for editor entry + build + execute + export flows
-- [ ] `apps/web` — `/quality-engineer` — Predefined recipe parity tests (all 6 recipes via `?from={slug}`)
-- [ ] `apps/web` — `/frontend-engineer` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
-- [ ] `apps/web` — `/quality-engineer` — Round-trip fidelity test (export → re-import → deep equality)
-- [ ] `apps/web` — `/frontend-engineer` — Accessibility audit (focus management, screen reader labels on canvas nodes)
-
----
-
-### Sprint 5A: Editor UX — Node Interaction + Empty State + Config Polish
-
-**Goal:** Close the felt gap between prototype and product. Controls live where they belong: on node (delete), in LayerPanel (reorder), in config panel (configure). Empty canvas entry gives an immediate, clear signal of what to do next.
-
-**Prerequisite:** Sprint 5 Waves 1–2 complete (route + entry points exist, compartment nodes live).
-
-**Persona ownership:** `/frontend-engineer` leads all waves.
-
-**Design constraints (non-negotiable):**
-
-- Keep `Pressable/Card` as base node primitive — NOT Surface
-- Whole card surface is the click target (select + open config)
-- No edges, no arrow-reorder buttons on nodes
-- I/O nodes protected (no delete, no removal from toolbar)
-
-> ⚠️ **Animation rule — read before touching `CompartmentNode.tsx`:** The `<ScaleIn from={0.7} easing="spring-bouncy">` wrapper on every `CompartmentNode` is the Mini Motorways building pop-in. It is the single most important animation in the editor and a core part of the brand identity. Do not remove it, replace it with `FadeIn`, or flatten the spring curve. See `strategy/design-language.md` § "Editor Animation Language" for full rationale. If you refactor `CompartmentNode.tsx` for any reason, verify `ScaleIn` survives.
-
-#### Wave 1 — Node Hover Overlay + Placeholder Slot
-
-The two most impactful canvas changes: a delete affordance on non-I/O nodes and a placeholder slot for blank canvases. Both are pure render-layer changes — no store modifications.
-
-- [ ] `packages/editor` — **`CompartmentNode` hover overlay**: Wrap the existing `Pressable/Card` in a `group relative` div. Add an absolutely-positioned delete button (`top-1.5 right-1.5`) visible only on `group-hover` via Tailwind (`opacity-0 group-hover:opacity-100 transition-opacity`). Button uses `e.stopPropagation()` so hover-click deletes without also selecting. Size: `size-5`, icon `XIcon size-3`. Styled as ghost (`text-muted-foreground`) with destructive hover state (`hover:text-destructive hover:bg-destructive/10`). Hidden entirely when `data.isIoNode === true`.
-- [ ] `packages/editor` — **`PlaceholderSlot` component**: New component rendered inside `BentoCanvas` when `nodes.length === 2` and both are I/O nodes. Renders a `Card variant="muted"` with `border-dashed`, `PlusIcon` centered (32px, muted foreground), and a subtle `animate-pulse` on the border. Clicking calls `openNodePalette()` from `useEditorPanels`. Uses `120×120` standard slot size. Disappears as soon as any non-I/O node exists in the store.
-- [ ] `packages/editor` — **`isIoNode` flag in adapter**: Update `createCompartmentNode.ts` — add `isIoNode: boolean` to `BentoNode.data`. Set from `isIoNodeType(nodeType)`. Consumed by `CompartmentNode` to conditionally render the delete overlay.
-- [ ] `packages/editor` — **Node exit animation**: Wrap `CompartmentNode` in `AnimatePresence` so deleted nodes exit with a spring scale-down (reverse of the entrance). Use `motion/react` exit prop: `exit={{ scale: 0.7, opacity: 0 }}` with a spring transition. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
-- [ ] `packages/editor` — **Unit tests**: `PlaceholderSlot` renders when only I/O nodes present. Disappears when a processing node is added. Hover overlay does not render for `input`/`output` nodes. Hover overlay renders for all other node types.
-
-#### Wave 2 — Config Panel Identity Echo
-
-Make the config panel feel like it belongs to the node that was clicked. One look at the panel header and the user knows which compartment they're configuring.
-
-- [ ] `packages/editor` — **Config panel node icon**: Update `ConfigPanelRoot.tsx` — import `ICON_COMPONENTS` from `adapters/nodeIcons`. Render the node's icon (24px, `text-muted-foreground`) to the left of the heading in `PanelHeader`. Icon sourced from `typeInfo.iconKey`. If no icon exists for the type, render nothing.
-- [ ] `packages/editor` — **Config panel empty state improvement**: When no node is selected (`!configNodeId`), replace "Select a node to configure" with: a `PlusIcon` (muted, 24px), a `Text` heading "Nothing selected", and a `Text size="xs" color="muted"` body "Click a compartment to configure it, or add a new one."
-- [ ] `packages/editor` — **SchemaForm field grouping**: Add optional `group?: string` key to `NodeParamMeta` in `@bnto/nodes`. When consecutive visible params share the same `group` value, `SchemaForm` renders a `PanelDivider` with the group label above them. Start with Loop node: group `{ mode, items }` as "Iteration" and `{ breakCondition }` as "Control". Purely a rendering concern — no store changes.
-- [ ] `packages/editor` — **Unit tests**: Config panel header renders node icon when a node is selected. Config panel shows improved empty state when no node is selected. `SchemaForm` renders group dividers between param groups.
-
-#### Wave 3 — LayerPanel Drag-to-Reorder
-
-Make the LayerPanel the canonical surface for recipe structure management. Drag-to-reorder in the list gives users control over execution order without any canvas arrow buttons.
-
-- [ ] `packages/editor` — **`NodeList` drag-to-reorder**: Add drag handles to `NodeItem` in `NodeList`. Use `@dnd-kit/sortable`. Each `NodeItem` gets a `GripVerticalIcon` drag handle on the left, visible always. I/O nodes at top/bottom are locked — cannot be reordered (render without drag handle, add `data-locked` for styling). Dragging updates position via a new `reorderNode(fromIndex, toIndex)` store action.
-- [ ] `packages/editor` — **`reorderNode` store action + pure function**: Create `actions/reorderNode.ts` — pure function `reorderNode(state, fromIndex, toIndex): Partial<EditorState>`. Moves node in `nodes` array while preserving I/O nodes at fixed positions. Captures undo snapshot. Updates `isDirty`. Thin wrapper hook `useReorderNode` follows the three-layer pattern.
-- [ ] `packages/editor` — **Adapter sync**: After reorder, `rfNodesToDefinition` already reads `nodes` array order as execution order — no changes needed. Add unit test to verify order preserved on export.
-- [ ] `packages/editor` — **Unit tests**: `reorderNode` moves nodes correctly. I/O nodes cannot be moved to non-terminal positions. Undo restores previous order. `NodeList` renders drag handles for non-I/O nodes only.
-
-#### Wave 4 — Empty Canvas Entry + Auto-behaviors
-
-The first frame of the editor experience should tell the user what to do. Auto-behaviors reduce friction for new users without adding complexity for returning ones.
-
-- [ ] `packages/editor` — **Auto-open palette on blank canvas**: In `EditorCanvasRoot`, after the store initializes with a blank definition, call `openNodePalette()` once if `nodes.length === 2` (only I/O nodes). Use `useEffect` with one RAF (`requestAnimationFrame`) delay. Only fires once per session via `useRef` flag.
-- [ ] `packages/editor` — **Auto-select Input node on blank canvas**: After the canvas renders on blank canvas entry, auto-select the `input` node and open the config panel. Shows the file dropzone immediately. Same `useRef` once-per-session guard.
-- [ ] `packages/editor` — **Run button in `EditorToolbar`**: Add Run button between the node navigation group and undo group. `variant="primary"` (terracotta), `elevation="sm"`, `size="icon"` with `PlayIcon`. Disabled when definition has no processing nodes or execution is in progress. Fires `handleRun` (stub for now — wired in Sprint 5 Wave 3).
-- [ ] `packages/editor` — **Unit tests**: Palette auto-opens once on blank canvas mount. Does not fire on subsequent renders or after a node is added. Input node auto-selected on blank canvas. Run button disabled when no processing nodes exist.
-
-#### Wave 5 — Verify + E2E
-
-Verify all UX changes hold together as a system. No regressions on existing editor tests.
-
-- [ ] `packages/editor` — **Verify unit tests**: `task ui:test` passes across all `packages/editor` tests. No regressions in existing store, action, adapter, or hook tests.
-- [ ] `apps/web` — **E2E: blank canvas entry**: Navigate to `/editor`. Palette auto-opens. Input node selected, config panel shows "Input" header with Upload icon. Click a node type — `PlaceholderSlot` disappears, real node appears with spring pop-in animation.
-- [ ] `apps/web` — **E2E: node hover delete**: Hover a non-I/O compartment — delete × appears. Click × — node removed with spring exit animation, without selecting it first. Hover Input or Output compartment — no × appears.
-- [ ] `apps/web` — **E2E: LayerPanel reorder**: Open LayerPanel. Drag a processing node up/down — order updates on canvas. I/O nodes cannot be dragged. Undo restores previous order.
-- [ ] `apps/web` — **E2E: config panel identity**: Select a node. Config panel header shows the node's icon and label. Deselect (click canvas background) — config panel shows improved empty state.
-- [ ] `apps/web` — **Screenshot update**: Regenerate editor E2E screenshots after all visual changes. `task e2e` green.
-
----
-
-### Sprint 5B: Node Visual Identity — Hierarchy, Selection, and I/O Distinction
-
-**Goal:** Make the canvas immediately readable at a glance. Right now all three node types render identically — same card color, same size, same elevation. This sprint establishes a clear three-tier visual language: I/O nodes (grounded structural anchors) → processing nodes (lifted, configurable steps) → selected node (highlighted, active focus).
-
-**Decision doc:** `.claude/decisions/editor-ux-direction.md` — visual hierarchy section.
-
-**Prerequisite:** Sprint 5A Wave 1 complete (`isIoNode` flag exists in adapter).
-
-**Persona ownership:** `/frontend-engineer` leads all waves.
-
-**Design constraints (non-negotiable):**
-
-- Keep `Pressable asChild` wrapping `Card` as the base for all node types — including I/O. Don’t introduce a separate primitive.
-- I/O nodes are NOT pressable-to-configure. They can be selected for metadata but don’t open a configurable config panel. Reflect this visually.
-- No color for color’s sake. Every visual change communicates information (type, state, or category).
-- Selected ring must be visible at a glance — not just an elevation change.
-
-> ⚠️ **Animation rule:** `<ScaleIn from={0.7} easing="spring-bouncy">` must remain on ALL node types including I/O after this sprint’s visual changes. The pop-in is non-negotiable. See `strategy/design-language.md` § "Node Entrance: The Building Pop-In".
-
-**The three-tier system:**
-
-| Tier          | Nodes         | Elevation (rest) | Elevation (selected)       | Color                | Shape                     |
-| ------------- | ------------- | ---------------- | -------------------------- | -------------------- | ------------------------- |
-| Structural    | input, output | `sm`             | `md`                       | `muted` (warm cream) | wider, shorter — `160×90` |
-| Processing    | all others    | `md`             | `lg`                       | `card` (white)       | square — `120×120`        |
-| Selected ring | any selected  | —                | + `ring-2 ring-primary/60` | —                    | —                         |
-
-#### Wave 1 — I/O Node Distinction
-
-Differentiate Input and Output from processing nodes through elevation, color, and shape — not just icon. These are the walls of the bento box, not a compartment inside it.
-
-- [ ] `packages/editor` — **I/O node sizing**: Update `definitionToBento` adapter — set `width: 160, height: 90` for nodes where `isIoNodeType(nodeType)` is true. Processing nodes keep `120×120`. Different aspect ratio signals "different kind of thing" before the label is read.
-- [ ] `packages/editor` — **I/O node color + elevation**: In `CompartmentNode.tsx`, when `data.isIoNode` is true, render `Card color="muted" elevation="sm"`. When false, render `Card elevation="md"`. Muted cards read as "part of the canvas" — warm cream that doesn’t compete with the steps in between.
-- [ ] `packages/editor` — **I/O node Pressable behavior**: Remove `toggle` and `active` props from the `Pressable` wrapper for I/O nodes. They can still receive clicks for selection feedback but shouldn’t feel like pressable configuration buttons.
-- [ ] `packages/editor` — **Unit tests**: I/O nodes render with `color="muted"`, `elevation="sm"`, and `160×90` dimensions. Processing nodes render with `elevation="md"` and `120×120`. Adapter sets `isIoNode` correctly for all 12 node types.
-
-#### Wave 2 — Processing Node Category Accents + Selected State
-
-Make the selected state obvious and give processing nodes a subtle category signal without overwhelming the calm Motorway aesthetic.
-
-- [ ] `packages/editor` — **Selected ring**: Add `ring-2 ring-primary/60 ring-offset-2 ring-offset-background rounded-xl` to the outer `group relative` wrapper when `selected` is true, via `cn()`. Creates a visible terracotta outline that reads as "active focus" at a glance.
-- [ ] `packages/editor` — **Elevation on selection**: `elevation={selected ? "lg" : "md"}` for processing nodes. `elevation={selected ? "md" : "sm"}` for I/O nodes. Ring + elevation change together make selection unmistakable.
-- [ ] `packages/editor` — **Category color pip**: Add `border-l-[3px]` in category color to processing nodes. Create `adapters/categoryBorderColor.ts` mapping `CompartmentVariant` → Tailwind border class (e.g. `primary` → `border-primary/70`). I/O nodes get no pip.
-- [ ] `packages/editor` — **Unit tests**: Selected processing node has ring class. Unselected has no ring. Category pip border renders for processing nodes. I/O nodes have no pip. Elevation changes correctly for both types on selection.
-
-#### Wave 3 — LayerPanel Visual Parity
-
-The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look distinct in the list too.
-
-- [ ] `packages/editor` — **`NodeItem` I/O distinction**: Update `NodeItem.tsx` — when `node.data.isIoNode` is true, render dot indicator in `text-muted-foreground`. Add `text-xs text-muted-foreground` "I/O" sublabel to reinforce structural vs. configurable distinction.
-- [ ] `packages/editor` — **`NodeItem` selected state**: When a node is selected in the store, the `NodeItem` row gets `bg-muted/50` background highlight.
-- [ ] `packages/editor` — **Unit tests**: I/O `NodeItem` renders muted dot and "I/O" sublabel. Selected `NodeItem` applies background highlight. Processing `NodeItem` uses category color dot.
-
-#### Wave 4 — Verify + Screenshot
-
-- [ ] `packages/editor` — **Verify unit tests**: All 5A + 5B tests pass. No regressions.
-- [ ] `apps/web` — **E2E: visual hierarchy**: Navigate to `/editor?from=compress-images`. Input and Output cards are visibly different from the Image processing node (different size, muted tone). Click the Image node — ring appears, elevation lifts. Click Input node — different selection treatment (no ring, subtle lift). LayerPanel echoes the visual distinction.
-- [ ] `apps/web` — **Screenshot update**: Regenerate editor E2E screenshots. `task e2e` green.
-
----
-
 ## Phase 2: Desktop App (Local Execution)
 
 **Goal:** Free desktop app. Same React frontend, local engine execution. Free forever, unlimited runs. No account needed. Trust signal and top-of-funnel growth driver.
 
 **Desktop tech: Tauri (Rust-native).** M1 Rust evaluation passed — one codebase for browser WASM + desktop native + CLI.
 
-### Sprint 6: Desktop Bootstrap
+### Sprint 7: Desktop Bootstrap
 
 **Persona ownership:**
 | Package | Persona |
@@ -640,9 +538,9 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 ---
 
-### Sprint 7: Local Execution
+### Sprint 8: Local Execution
 
-**Persona ownership:** Same as Sprint 6 — `/frontend-engineer` (desktop UI), `/core-architect` (adapter), `/rust-expert` (engine).
+**Persona ownership:** Same as Sprint 7 — `/frontend-engineer` (desktop UI), `/core-architect` (adapter), `/rust-expert` (engine).
 
 #### Wave 1 (parallel — execution)
 
@@ -669,9 +567,9 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 **Goal:** Wire up payments, enforce quotas, make the product feel complete.
 
-**"Ready to charge" gate:** Before Sprint 8, confirm: real users running browser bntos, conversion hooks built and tested (Save, History, Premium), people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
+**"Ready to charge" gate:** Before Sprint 9, confirm: real users running browser bntos, conversion hooks built and tested (Save, History, Premium), people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
 
-### Sprint 8: Stripe + Pro Tier (M5)
+### Sprint 9: Stripe + Pro Tier (M5)
 
 **Goal:** First revenue. Pro sells real value — not artificial limits on browser-native operations.
 
@@ -706,20 +604,6 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 ---
 
-### ~~Old Sprint 8: Visual Editor + History~~
-
-**ABSORBED into Sprint 4 (Recipe Editor).** Sprint 4 now covers the full visual editor: headless definition CRUD, Zustand store, ReactFlow canvas, node palette, property editor, and execution state visualization. The headless-first architecture means all visual editor work builds on the same pure-function foundation.
-
-**Remaining items not yet in Sprint 4:**
-
-- [ ] `apps/web` — Execution history with full per-node logs and re-run support (depends on Sprint 3 accounts/history)
-- [ ] `apps/web` — Workflow versioning and duplication (depends on Sprint 3 save infrastructure)
-- [ ] `apps/web` — Container node visual nesting (group/loop as collapsible sub-canvases — future enhancement)
-- [ ] `apps/web` — Drag-and-drop from node palette to canvas position (Sprint 4 Wave 3 uses click-to-add; drag-and-drop is a polish pass)
-- [x] `apps/web` — JSON/Code editor → **Promoted to Sprint 4B** (CodeMirror 6, 5 waves, own persona `/code-editor-expert`). See Sprint 4B above.
-
----
-
 ## Immediate Backlog
 
 ### Editor: Smart I/O — Implicit vs Explicit Looping
@@ -737,13 +621,11 @@ When a recipe has multi-file input and a processing node (e.g., Image compress),
 
 ---
 
----
-
 ## Backlog
 
 ### UX: Compartment Node Visual Redesign — Phases 2-3 (Mini Motorways Buildings)
 
-**Phase 1 promoted to Sprint 5 Wave 1** (icon registry + category color mapping). Phases 2-3 remain in backlog as polish.
+**Phase 1 delivered in Sprint 5 Wave 1** (icon registry + category color mapping). Phases 2-3 remain in backlog as polish.
 
 **Phase 2: Elevation-driven execution states**
 
@@ -779,49 +661,10 @@ The grid layout algorithm should pack compartments like a real bento box — no 
 
 **Tasks:**
 
-- [ ] `apps/web` — **Icon registry**: Create `editor/adapters/nodeIcons.ts` — maps `NodeTypeName → LucideIcon`. Pure data, one file
-- [ ] `apps/web` — **Category color registry**: Create `editor/adapters/nodeColors.ts` — maps `NodeCategory → CompartmentVariant`. Pure data, one file
-- [ ] `apps/web` — **CompartmentNode redesign**: Update `CompartmentNode.tsx` — add icon rendering above label, restructure layout from centered-text to icon-above-text. Import from icon/color registries
-- [ ] `apps/web` — **Elevation state mapping**: Update `CompartmentNode.tsx` status → elevation mapping: idle=none/sm, pending=sm, active=md, completed=lg. Leverage existing Card spring animations
-- [ ] `apps/web` — **Bento grid layout**: Update `bentoSlots.ts` with varied slot sizes per node type tier (standard/compact/wide/container). Replace horizontal strip with proper 2D bento packing
-- [ ] `apps/web` — **Adapter integration**: Update `definitionToBento` adapter to use icon/color registries when converting Definition → BentoNode (set variant from category, set size from tier)
-- [ ] `apps/web` — **Motorway showcase**: Update Motorway editor showcase to demonstrate the new visual treatment with all node types visible
+- [ ] `packages/editor` — **Elevation state mapping**: Update `CompartmentNode.tsx` status → elevation mapping: idle=none/sm, pending=sm, active=md, completed=lg. Leverage existing Card spring animations
+- [ ] `packages/editor` — **Bento grid layout**: Update `bentoSlots.ts` with varied slot sizes per node type tier (standard/compact/wide/container). Replace horizontal strip with proper 2D bento packing
+- [ ] `packages/editor` — **Motorway showcase**: Update Motorway editor showcase to demonstrate the new visual treatment with all node types visible
 - [ ] `apps/web` — **E2E verification**: Verify editor canvas renders correctly with new node visuals. Update screenshots if page-level layout changed
-
-### ~~UX: Editor User Journey — Full Implementation~~ — PROMOTED TO SPRINT 5
-
-**Absorbed into Sprint 5: Editor to Production (March 2026).** All waves promoted. Wave 2 (I/O Nodes) delivered by Sprint 4C (PR #102). See Sprint 5 for the active task list.
-
-**Strategy doc:** [editor-user-journey.md](.claude/strategy/editor-user-journey.md)
-**E2E test matrix:** [journeys/editor.md](.claude/journeys/editor.md)
-
-**Success criteria (carried to Sprint 5):**
-
-1. Task completion — build compress-images from scratch, run it, download results, < 5 min
-2. Round-trip fidelity — export `.bnto.json` → re-import → identical state
-3. Predefined recipe parity — editor is a superset of recipe pages
-
-### ~~Chore: Codebase File Size & Structure Audit~~ — PROMOTED TO SPRINT 4F
-
-**Promoted (March 2026).** Core audit scope absorbed into Sprint 4F (Code Standards Review). The `@bnto/utils` package idea below remains in backlog — Sprint 4F consolidates shared utils into `@bnto/ui` (styling) or `@bnto/core` (logic) instead of creating a separate package.
-
-**Goal:** Every file in the active codebase (`apps/web/`, `packages/core/`, `packages/@bnto/`) conforms to the updated size limits in `code-standards.md`. Directory structure reads like a table of contents — each file named after what it does, co-located tests where applicable.
-
-**Approach:** Audit by package, one PR per package. Don't change behavior — only restructure. Tests must pass before and after.
-
-**Cross-package DRY rule:** Any utility function used by more than one package (`cn`, `createCn`, type guards, format helpers, etc.) must move to a shared `@bnto/utils` package. Duplicated logic across packages is a signal — consolidate into `@bnto/utils` with one function per file, domain-grouped folders.
-
-**Tasks:**
-
-- [ ] `packages/@bnto/utils` — **Create shared utils package**: Scaffold `@bnto/utils` with `package.json`, `tsconfig.json`, barrel export. Zero runtime deps. This is the home for cross-package pure functions
-- [ ] `packages/@bnto/utils` — **Identify and consolidate cross-package utils**: Scan all packages for duplicated or shared utilities (`cn`, `createCn`, type guards, formatters, validators). Move to `@bnto/utils`, update imports across consumers
-- [ ] `apps/web` — **Scan for oversized files**: Find all `.ts`/`.tsx` files over 100 lines. Triage each: split into folder + barrel, extract functions to own files, or justify as-is (hard cap 250)
-- [ ] `apps/web` — **Component decomposition audit**: Find components with more than 2-3 sub-components defined in one file. Break into folder structure (`FeatureRoot.tsx`, sub-parts, `index.ts` barrel)
-- [ ] `apps/web` — **Utils/lib audit**: Find any multi-function files in `lib/`, `utils/`, or similar. Each exported function gets its own camelCase file. Group in domain folders. Move cross-package utils to `@bnto/utils`
-- [ ] `packages/core` — **Same audit**: Oversized files, multi-function modules, sub-component cohabitation. Split and barrel. Move shared utils to `@bnto/utils`
-- [ ] `packages/@bnto/backend` — **Same audit**: Convex function files, helpers, validators. One function per file where practical
-- [ ] `packages/@bnto/nodes` — **Same audit**: Schema files, registry, helpers
-- [ ] **Verify**: `task ui:build`, `task ui:test`, `task e2e` all pass after restructuring. No behavior changes — only file organization
 
 ### UX: Global Error Boundary with GitHub Issue Reporter
 
@@ -962,16 +805,6 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 - [ ] `apps/web` — Design the primitive API — how does it compose with Radix primitives that need `asChild`? Should it handle overlays or just the floating card?
 - [ ] `apps/web` — Implement `Popup` (or `FloatingSurface`) primitive in `components/ui/`
 - [ ] `apps/web` — Migrate Dialog.Content, Menu.Content, and AccountGate to use the shared primitive
-
-### UX: Compositional BouncyStagger Audit
-
-**Priority: High.** Apply `BouncyStagger` compositionally (per-section opt-in) instead of wrapping entire `AppShell.Content` — the shell-level wrap caused a ~20px layout jump.
-
-- [x] `apps/web` — Audit all pages using `AppShell.Content` — identify sections that benefit from staggered entrance
-- [x] `apps/web` — Add `BouncyStagger` to card grids (home page BntoGallery, recipe card lists)
-- [x] `apps/web` — Add `BouncyStagger` to file card lists in RecipeShell (already done in phase flow)
-- [x] `apps/web` — Verify no layout shift on any page after compositional application
-- [x] `apps/web` — Update Motorway showcase (`PhaseFlowShowcase`) to demonstrate the compositional pattern
 
 ### UX: Standardize Forms with React Hook Form + Zod
 
@@ -1130,7 +963,7 @@ Current E2E tests mix CSS classes, `getByRole`, `getByText`, and `data-testid`. 
 
 ### Testing: Concurrent Quota Race Condition — M4/M5 (server-side quotas)
 
-**Milestone: M4/M5 (Sprint 8+).** Quota enforcement only applies to server-side bntos. Browser bntos are free unlimited. This race condition matters when server-side execution has limits.
+**Milestone: M4/M5 (Sprint 9+).** Quota enforcement only applies to server-side bntos. Browser bntos are free unlimited. This race condition matters when server-side execution has limits.
 
 - [ ] `@bnto/core` — Integration test: fire 2+ concurrent `startPredefined` calls for a user at limit-1 runs, verify at most 1 succeeds
 - [ ] `@bnto/backend` — If race confirmed, investigate Convex transaction isolation guarantees or atomic increment patterns
@@ -1158,65 +991,6 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 - [ ] `@bnto/backend` — `referrals` table + `applyReferral` mutation
 - [ ] `@bnto/core` — Referral service/hooks
 - [ ] `apps/web` — Referral link generation UI + landing page `?ref=CODE` capture
-
-### Sprint 5C: Editor Copy + Nav Label Cleanup
-
-**Goal:** Nail the copy and labels across editor entry points. Small changes, high signal — language shapes how users understand what they're looking at.
-
-**Prerequisite:** Sprint 5 Wave 2 (production route) complete.
-
-**Tasks:**
-
-- [ ] `apps/web` — **Rename nav "Create" → "New Recipe"**: Update `AppNav` (or wherever the nav item is defined). Label: "New Recipe". Route: `/editor` (unchanged). Decision: "Create" is vague. "New Recipe" matches the product mental model and pairs with the recipe pages.
-- [ ] `apps/web` — **Update recipe page CTA copy**: Change "Customize in Editor" → "Open in Editor" on all predefined recipe pages. "Customize" implies minor tweaks; "Open" implies full access and pairs with "New Recipe" in the nav.
-- [ ] `apps/web` — **Verify**: All nav + recipe page CTA copy consistent. No remaining "Create" or "Customize in Editor" references.
-
-> **Future copy consideration (post-Sprint 5 Wave 3):** Once execution is wired in the editor, revisit the recipe page CTA. "Open in Editor" is functional but "Make it yours →" or "Build your own version" signals creative ownership more than "Open" and may convert better. Worth A/B testing once traffic exists. Do not change this now — the editor needs to actually run recipes before a possessive CTA is honest.
-
----
-
-### Sprint 6: Edit Mode ↔ Run Mode (Mini Motorways Pattern)
-
-**Goal:** Make the editor feel like Mini Motorways — pause to edit the road network, unpause to watch traffic flow. The same canvas surface serves both editing and running. No separate screens.
-
-**Prerequisite:** Sprint 5 Wave 3 (execution wired). The mode switch requires execution to exist — don't build this before execution works.
-
-**Decision doc:** `.claude/decisions/editor-ux-direction.md` — "Vision: Edit Mode ↔ Run Mode" section. Read this before picking up any task in this sprint.
-
-**The two modes:**
-
-- **Edit mode (current state):** Canvas grid visible. Nodes are pressable/selectable. Config panel slides in on click. LayerPanel open. Toolbar shows full node management controls. Run button triggers mode switch.
-- **Run mode:** Canvas grid fades or hides. Nodes are static (no click interaction). Config panel + LayerPanel close. Toolbar collapses to just Stop button. Nodes animate through the elevation sequence (idle → pending → active → completed). Output node shows results or download prompt.
-- **Transition:** Run button → run mode. Stop button → edit mode, canvas restored to exact state before run.
-
-**Why this matters:** The power-user loop is edit → run → tweak → run again. Forcing a screen change breaks that loop. The Mini Motorways analogy is exact: pausing to lay roads, unpausing to watch traffic.
-
-#### Wave 1 — Editor Mode State
-
-- [ ] `packages/editor` — **`editorMode` in store**: Add `editorMode: "edit" | "run"` to `EditorState`. Add `setEditorMode(mode)` action (pure function + hook wrapper). Default: `"edit"`. Run button dispatches `setEditorMode("run")`. Stop button dispatches `setEditorMode("edit")`.
-- [ ] `packages/editor` — **Mode-aware toolbar**: `EditorToolbar` reads `editorMode`. In `"edit"` mode: full controls (add, navigate, delete, undo/redo, reset, Run button). In `"run"` mode: toolbar collapses to just a Stop button (`variant="destructive"`, `PlayIcon` replaced with `SquareIcon`). Animate the collapse with `Animate.FadeIn`.
-- [ ] `packages/editor` — **Mode-aware panels**: `EditorConfigPanel` and `EditorLayerPanel` both read `editorMode`. In `"run"` mode: panels slide out and stay closed (cannot be opened by clicking nodes). In `"edit"` mode: panels behave normally.
-- [ ] `packages/editor` — **Unit tests**: Store transitions between `edit` and `run` correctly. Toolbar renders stop-only in run mode. Panels are non-interactive in run mode.
-
-#### Wave 2 — Canvas Grid Transition
-
-- [ ] `packages/editor` — **Grid fade on run mode**: `BentoCanvas` reads `editorMode`. In `"run"` mode: fade the ReactFlow background grid (CSS `opacity` transition, ~300ms). In `"edit"` mode: grid visible. The grid disappearing signals "this is no longer a configuration surface."
-- [ ] `packages/editor` — **Node interaction lock in run mode**: `CompartmentNode` reads `editorMode` from store (via context or prop). In `"run"` mode: disable `Pressable` (remove `onClick` handler or add `pointer-events-none` wrapper). Nodes should not be selectable during execution — they're displaying state, not accepting input.
-- [ ] `packages/editor` — **Elevation sequence integration**: Wire node `status` field (`idle | pending | active | completed`) to elevation during run mode. This is the visual "traffic flowing" moment. `CompartmentNode` already has `status` in its data type — connect it to `Card elevation` during run mode execution.
-- [ ] `packages/editor` — **Unit tests**: Canvas grid has reduced opacity in run mode. Nodes are non-interactive in run mode. Elevation changes with status in run mode.
-
-#### Wave 3 — Results at Output Node + E2E
-
-- [ ] `packages/editor` — **Output node run-mode state**: When execution completes, the `output` node shows a completion state — icon changes to `CheckCircle`, sublabel shows file count (e.g., "3 files ready"), elevation holds at `lg`. Clicking the completed Output node (only in run mode, after completion) triggers download. This is the delivery moment.
-- [ ] `packages/editor` — **Return to edit mode after download**: After download triggers, show a brief "Done" state then auto-transition back to edit mode (2s delay or on Stop button press). Canvas grid reappears, panels re-open, toolbar restores. User is back in the same canvas state they left.
-- [ ] `apps/web` — **E2E: mode switch flow**: Open `/editor?from=compress-images`. Add files to Input node. Click Run — toolbar collapses to Stop, grid fades, panels close. Nodes animate through elevation sequence. Output node shows completion. Click output node — download triggers. Canvas returns to edit mode.
-- [ ] `apps/web` — **Screenshot update**: Capture both edit mode and run mode states. `task e2e` green.
-
----
-
-### ~~UI: Extract Motorway Design System~~ — PROMOTED TO SPRINT 4D/4E
-
-**Promoted (March 2026).** Package extraction moved from backlog to active sprints (4D + 4E). Extraction happens before editor production sprint to establish clean package boundaries. See Sprint 4D (`@bnto/ui`) and Sprint 4E (`@bnto/editor`) for the full task lists.
 
 ### Showcase: Radial Light Source Controls
 
@@ -1258,7 +1032,7 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 
 ### UX: Conversion Hook Messaging Audit — M2/M5
 
-**M2 (Sprint 3) for hook UX, M5 (Sprint 7) for Stripe.** Value-driven conversion hooks (Save, History, Premium Bntos, Team) — no "limit reached" messaging for browser bntos.
+**M2 (Sprint 3) for hook UX, M5 (Sprint 9) for Stripe.** Value-driven conversion hooks (Save, History, Premium Bntos, Team) — no "limit reached" messaging for browser bntos.
 
 - [ ] `@bnto/backend` — Separate browser (no limits) from server-side (quota) error paths
 - [ ] `apps/web` — Design conversion hook components with value-driven CTAs
