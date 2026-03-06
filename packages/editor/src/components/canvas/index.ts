@@ -8,3 +8,4 @@
 
 export { BentoCanvas } from "./BentoCanvas";
 export { CompartmentNode, type CompartmentStatus } from "./CompartmentNode";
+export { PlaceholderSlot } from "./PlaceholderSlot";
