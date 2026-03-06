@@ -14,11 +14,9 @@ import { captureSnapshot } from "../store/captureSnapshot";
 import { pushToStack } from "../store/pushToStack";
 import { revalidateState } from "../store/revalidateState";
 import { isIoNodeType } from "../helpers/isIoNodeType";
+import { STRIDE } from "../adapters/bentoSlots";
 
-export function removeNode(
-  state: EditorState,
-  id: string,
-): Partial<EditorState> | null {
+export function removeNode(state: EditorState, id: string): Partial<EditorState> | null {
   // I/O nodes are structural — they cannot be deleted.
   const config = state.configs[id];
   if (config && isIoNodeType(config.nodeType)) return null;
@@ -30,12 +28,18 @@ export function removeNode(
   const nextConfigs = { ...state.configs };
   delete nextConfigs[id];
 
+  // Reflow positions — close the gap left by the removed node.
+  // Nodes are in a horizontal strip; reposition each to its new index slot.
+  for (let i = 0; i < nextNodes.length; i++) {
+    const expectedX = i * STRIDE;
+    if (nextNodes[i]!.position.x !== expectedX) {
+      nextNodes[i] = { ...nextNodes[i]!, position: { ...nextNodes[i]!.position, x: expectedX } };
+    }
+  }
+
   // Auto-select the nearest remaining node after removal.
   if (nextNodes.length > 0) {
-    const selectIndex = Math.min(
-      removedIndex > 0 ? removedIndex - 1 : 0,
-      nextNodes.length - 1,
-    );
+    const selectIndex = Math.min(removedIndex > 0 ? removedIndex - 1 : 0, nextNodes.length - 1);
     nextNodes[selectIndex] = { ...nextNodes[selectIndex]!, selected: true };
   }
 
@@ -45,10 +49,6 @@ export function removeNode(
     isDirty: true,
     undoStack: pushToStack(state.undoStack, snapshot),
     redoStack: [],
-    validationErrors: revalidateState(
-      nextNodes,
-      nextConfigs,
-      state.recipeMetadata,
-    ),
+    validationErrors: revalidateState(nextNodes, nextConfigs, state.recipeMetadata),
   };
 }

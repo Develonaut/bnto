@@ -107,4 +107,25 @@ describe("removeNode", () => {
     const result = removeNode(stateWithNodes(), "a");
     expect(result!.isDirty).toBe(true);
   });
+
+  it("reflows positions to close gap after removal", () => {
+    const state = stateWithNodes();
+    // Place nodes at stride positions: a=0, b=220
+    state.nodes[0] = { ...state.nodes[0]!, position: { x: 0, y: 0 } };
+    state.nodes[1] = { ...state.nodes[1]!, position: { x: 220, y: 0 } };
+    // Add a third node at x=440
+    state.nodes.push({
+      id: "c",
+      type: "compartment",
+      position: { x: 440, y: 0 },
+      data: { label: "C", variant: "primary", width: 200, height: 200, status: "idle" },
+    });
+    state.configs.c = { nodeType: "edit-fields", name: "C", parameters: {} };
+
+    // Remove the middle node "b" — "c" should slide left to x=220
+    const result = removeNode(state, "b");
+    expect(result!.nodes!).toHaveLength(2);
+    expect(result!.nodes![0]!.position.x).toBe(0);
+    expect(result!.nodes![1]!.position.x).toBe(220);
+  });
 });

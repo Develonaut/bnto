@@ -69,7 +69,7 @@ describe("updateNodeParams", () => {
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = updateNodeParams(withNode, nodeId, {
-      operation: "optimize",
+      operation: "compress",
       input: "{{.item}}",
     });
 
@@ -101,9 +101,7 @@ describe("updateNodeParams", () => {
       r2.definition.nodes![IO_NODE_COUNT]!.parameters,
     );
     // Second added node updated
-    expect(result.definition.nodes![IO_NODE_COUNT + 1]!.parameters.expression).toBe(
-      "{{.item}}",
-    );
+    expect(result.definition.nodes![IO_NODE_COUNT + 1]!.parameters.expression).toBe("{{.item}}");
   });
 
   it("works on nested nodes (inside containers)", () => {
