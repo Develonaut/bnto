@@ -37,6 +37,49 @@
   }
 }
 
+/* ── Exit Keyframes ─────────────────────────────────────────────
+ * Mirror the entrance keyframes. "to" only — animation starts
+ * from the element's natural state and ends at the exit state.
+ * animation-fill-mode: both ensures elements stay at exit state
+ * after the animation finishes (invisible, ready for DOM removal).
+ * ────────────────────────────────────────────────────────────── */
+
+/* Opacity + scale — cards, panels shrinking off the map */
+@keyframes scale-out {
+  to {
+    opacity: 0;
+    scale: var(--scale-to, 0.9);
+  }
+}
+
+/* Rubber band pop — scale up slightly, then shrink to nothing.
+ * Feels like a balloon popping: brief expansion, then collapse. */
+@keyframes scale-pop-out {
+  20% {
+    opacity: 1;
+    scale: var(--scale-pop, 1.08);
+  }
+  to {
+    opacity: 0;
+    scale: var(--scale-to, 0.5);
+  }
+}
+
+/* Pure opacity — overlays, subtle fades */
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Opacity + upward translate — list items sliding away */
+@keyframes slide-up-out {
+  to {
+    opacity: 0;
+    translate: 0 calc(-1 * var(--slide-distance, 8px));
+  }
+}
+
 /* ── Accordion Keyframes ────────────────────────────────────────
  * Height reveal/hide driven by Radix's data-state attribute.
  * Uses --radix-accordion-content-height for the natural height.
@@ -99,9 +142,7 @@
  *   style="--stagger-index: N" and class="motion-safe:animate-slide-up"
  * ──────────────────────────────────────────────────────────── */
 .stagger-cascade > * {
-  animation-delay: calc(
-    var(--stagger-index, 0) * var(--stagger-interval, 60ms)
-  );
+  animation-delay: calc(var(--stagger-index, 0) * var(--stagger-interval, 60ms));
 }
 
 /* ── InView gate: pause entrance animations until visible ────
