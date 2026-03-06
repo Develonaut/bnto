@@ -30,12 +30,13 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **FOCUS: Editor to production.** Sprint 5 Waves 1-2 complete (compartment redesign, `/editor` route, nav integration). Sprint 4G complete (format versioning, Zod schemas, schema-driven config panel).
 - **Active work — execution order:**
   1. **Sprint 5A Wave 1** — `isIoNode` flag, hover delete overlay, placeholder slot, exit animation
-  2. **Sprint 5 Wave 3** — execution wiring (Run → WASM, elevation progress, results at Output node)
-  3. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
-  4. **Sprint 5B** — visual hierarchy (I/O distinction, selection ring, category pips)
-  5. **Sprint 5C** — copy + nav label cleanup (~30 min)
-  6. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern)
-  7. **Sprint 5 Waves 4–5** — save infrastructure, My Recipes, final E2E
+  2. **Sprint 4H** — Pipeline executor extraction (architecture correctness — **must land before Sprint 5 Wave 3**)
+  3. **Sprint 5 Wave 3** — execution wiring (Run → WASM, elevation progress, results at Output node)
+  4. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
+  5. **Sprint 5B** — visual hierarchy (I/O distinction, selection ring, category pips)
+  6. **Sprint 5C** — copy + nav label cleanup (~30 min)
+  7. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern)
+  8. **Sprint 5 Waves 4–5** — save infrastructure, My Recipes, final E2E
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
@@ -204,8 +205,11 @@ Format versioning activated across the stack. Zod schemas replaced hand-rolled `
 
 > **Execution order note:** Do Sprint 5A Wave 1 first (isIoNode flag + hover delete + placeholder). Then come back here for execution wiring.
 
+> ⚠️ **Architecture rule:** Do NOT call `BntoWorker.processFiles()` directly for multi-file execution. That method is a temporary placeholder in the wrong layer. The editor MUST wire execution through a runtime-agnostic `executePipeline()` function (see `decisions/implicit-iteration.md`). If `executePipeline()` doesn't exist yet in `@bnto/core`, create it as part of this wave before wiring the Run button. The browser worker is injected as `runNode` — the loop logic stays in the executor, not in the adapter.
+
 Wire the Run button to browser WASM execution. Elevation-driven progress on compartments. Results routed to Output node.
 
+- [ ] `@bnto/core` — `/core-architect` — **Extract pipeline executor**: Create `executePipeline(recipe, files, runNode, onProgress)` as a runtime-agnostic function in `@bnto/core` (NOT inside the browser adapter). `BntoWorker.processFiles()` becomes a thin adapter that calls `executePipeline()` with the worker's `processFile` as `runNode`. Add unit tests using a mock `runNode` — no browser/WASM needed.
 - [ ] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `core.executions.createExecution()` → browser WASM engine
 - [ ] `@bnto/editor` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed). Leverage existing Card spring animations
 - [ ] `@bnto/editor` — `/frontend-engineer` — Results routed to Output node config panel (download list)
@@ -260,11 +264,11 @@ End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude
 
 The two most impactful canvas changes: a delete affordance on non-I/O nodes and a placeholder slot for blank canvases. Both are pure render-layer changes — no store modifications.
 
-- [ ] `packages/editor` — **`CompartmentNode` hover overlay**: Wrap the existing `Pressable/Card` in a `group relative` div. Add an absolutely-positioned delete button (`top-1.5 right-1.5`) visible only on `group-hover` via Tailwind (`opacity-0 group-hover:opacity-100 transition-opacity`). Button uses `e.stopPropagation()` so hover-click deletes without also selecting. Size: `size-5`, icon `XIcon size-3`. Styled as ghost (`text-muted-foreground`) with destructive hover state (`hover:text-destructive hover:bg-destructive/10`). Hidden entirely when `data.isIoNode === true`.
-- [ ] `packages/editor` — **`PlaceholderSlot` component**: New component rendered inside `BentoCanvas` when `nodes.length === 2` and both are I/O nodes. Renders a `Card variant="muted"` with `border-dashed`, `PlusIcon` centered (32px, muted foreground), and a subtle `animate-pulse` on the border. Clicking calls `openNodePalette()` from `useEditorPanels`. Uses `120×120` standard slot size. Disappears as soon as any non-I/O node exists in the store.
-- [ ] `packages/editor` — **`isIoNode` flag in adapter**: Update `createCompartmentNode.ts` — add `isIoNode: boolean` to `BentoNode.data`. Set from `isIoNodeType(nodeType)`. Consumed by `CompartmentNode` to conditionally render the delete overlay.
-- [ ] `packages/editor` — **Node exit animation**: Wrap `CompartmentNode` in `AnimatePresence` so deleted nodes exit with a spring scale-down (reverse of the entrance). Use `motion/react` exit prop: `exit={{ scale: 0.7, opacity: 0 }}` with a spring transition. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
-- [ ] `packages/editor` — **Unit tests**: `PlaceholderSlot` renders when only I/O nodes present. Disappears when a processing node is added. Hover overlay does not render for `input`/`output` nodes. Hover overlay renders for all other node types.
+- [ ] **CLAIMED** `packages/editor` — **`CompartmentNode` hover overlay**: Wrap the existing `Pressable/Card` in a `group relative` div. Add an absolutely-positioned delete button (`top-1.5 right-1.5`) visible only on `group-hover` via Tailwind (`opacity-0 group-hover:opacity-100 transition-opacity`). Button uses `e.stopPropagation()` so hover-click deletes without also selecting. Size: `size-5`, icon `XIcon size-3`. Styled as ghost (`text-muted-foreground`) with destructive hover state (`hover:text-destructive hover:bg-destructive/10`). Hidden entirely when `data.isIoNode === true`.
+- [ ] **CLAIMED** `packages/editor` — **`PlaceholderSlot` component**: New component rendered inside `BentoCanvas` when `nodes.length === 2` and both are I/O nodes. Renders a `Card variant="muted"` with `border-dashed`, `PlusIcon` centered (32px, muted foreground), and a subtle `animate-pulse` on the border. Clicking calls `openNodePalette()` from `useEditorPanels`. Uses `120×120` standard slot size. Disappears as soon as any non-I/O node exists in the store.
+- [ ] **CLAIMED** `packages/editor` — **`isIoNode` flag in adapter**: Update `createCompartmentNode.ts` — add `isIoNode: boolean` to `BentoNode.data`. Set from `isIoNodeType(nodeType)`. Consumed by `CompartmentNode` to conditionally render the delete overlay.
+- [ ] **CLAIMED** `packages/editor` — **Node exit animation**: Wrap `CompartmentNode` in `AnimatePresence` so deleted nodes exit with a spring scale-down (reverse of the entrance). Use `motion/react` exit prop: `exit={{ scale: 0.7, opacity: 0 }}` with a spring transition. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
+- [ ] **CLAIMED** `packages/editor` — **Unit tests**: `PlaceholderSlot` renders when only I/O nodes present. Disappears when a processing node is added. Hover overlay does not render for `input`/`output` nodes. Hover overlay renders for all other node types.
 
 #### Wave 2 — Config Panel Identity Echo
 
@@ -421,6 +425,97 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 - [ ] `packages/editor` — **Return to edit mode after download**: After download triggers, show a brief "Done" state then auto-transition back to edit mode (2s delay or on Stop button press). Canvas grid reappears, panels re-open, toolbar restores. User is back in the same canvas state they left.
 - [ ] `apps/web` — **E2E: mode switch flow**: Open `/editor?from=compress-images`. Add files to Input node. Click Run — toolbar collapses to Stop, grid fades, panels close. Nodes animate through elevation sequence. Output node shows completion. Click output node — download triggers. Canvas returns to edit mode.
 - [ ] `apps/web` — **Screenshot update**: Capture both edit mode and run mode states. `task e2e` green.
+
+---
+
+### Sprint 4H: Pipeline Executor Extraction — TDD-First Architecture Correction
+
+**Goal:** Extract all orchestration logic out of runtime adapters into a single, runtime-agnostic `executePipeline()` function. Prove it correct with comprehensive tests that run in pure Node.js — no browser, no WASM, no Worker. Once the tests are green, the cleanup follows. Any runtime placed on top inherits correct behavior automatically.
+
+**The principle:** If we can make it run and work flawlessly at the engine/core level with tests, we can put any app layer in front of it and know we're good.
+
+**Why this order (tests before cleanup):** Tests define the contract. Writing them first forces precise thinking about what `executePipeline` must do — then the implementation and the adapter cleanup follow naturally. This is also what protects the refactor: existing tests stay green throughout, new tests prove the new layer is correct before anything depends on it.
+
+**Why now, not later:** Sprint 5 Wave 3 wires the editor to the execution engine. If this isn't fixed first, the editor builds on the wrong foundation. This is the prerequisite — not optional.
+
+**Decision doc:** `.claude/decisions/implicit-iteration.md` — full audit, architecture diagram, rules, exact file list. Read before picking up any task.
+
+**Task runner:** `pnpm --filter @bnto/core test` (runs vitest in Node.js, `environment: "node"` per `vitest.config.ts`). These tests require zero browser setup.
+
+**Persona ownership:** `/core-architect` leads all waves.
+
+**Files changing:**
+
+| File                                                         | Change                                                                                                              |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `packages/core/src/engine/types.ts`                          | **NEW** — `NodeRunner`, `FileInput`, `FileResult`, `RecipeDefinition`, `PipelineProgressCallback`, `PipelineResult` |
+| `packages/core/src/engine/executePipeline.ts`                | **NEW** — runtime-agnostic pipeline executor                                                                        |
+| `packages/core/src/engine/executePipeline.test.ts`           | **NEW** — comprehensive unit tests, mock `NodeRunner`, pure Node.js                                                 |
+| `packages/core/src/types/browser.ts`                         | Remove `processFiles()` from `BrowserEngine` interface                                                              |
+| `packages/core/src/adapters/browser/BntoWorker.ts`           | Remove `processFiles()` method                                                                                      |
+| `packages/core/src/adapters/browser/toBrowserEngine.ts`      | Remove `processFiles` pass-through                                                                                  |
+| `packages/core/src/adapters/browser/BntoWorker.test.ts`      | Remove `processFiles` tests — iteration proven by `executePipeline.test.ts`                                         |
+| `packages/core/src/services/browserExecutionService.ts`      | Replace `engine.processFiles()` with `executePipeline(singleNodeRecipe, files, runNode)`                            |
+| `packages/core/src/services/browserExecutionService.test.ts` | Replace `processFiles` mocks with `processFile` mocks                                                               |
+| `packages/core/src/index.ts`                                 | Export `executePipeline`, `NodeRunner`, core engine types                                                           |
+
+---
+
+#### Wave 1 — Define types and write tests first
+
+> **TDD gate:** Tests must be written and failing correctly before implementation starts. A failing test that correctly describes behavior is a passing wave.
+
+No browser APIs. No WASM. No Worker. Pure TypeScript types and vitest.
+
+- [ ] `@bnto/core` — `/core-architect` — **`engine/types.ts`**: Define the engine layer vocabulary. `NodeRunner` (single-file contract every runtime implements — `(file, nodeType, params, onProgress?) => Promise<FileResult>`), `FileInput`, `FileResult`, `RecipeDefinition` (ordered node list, node type, params, I/O markers), `PipelineProgressCallback` (`(nodeIndex, fileIndex, totalFiles, percent, message) => void`), `PipelineResult` (all output files, per-node metadata, total duration). Zero imports from browser, WASM, or Worker code.
+- [ ] `@bnto/core` — `/core-architect` — **`engine/executePipeline.test.ts`**: Write the full test suite against the not-yet-implemented `executePipeline`. Use `vi.fn()` as `NodeRunner` — no real engine needed. Tests must cover:
+  - **Single processing node:** `runNode` called once per file; results collected in input order
+  - **Multi-node recipe:** outputs of node N passed as inputs to node N+1; `runNode` called `nodes × files` times
+  - **I/O node skipping:** `input` and `output` type nodes do not call `runNode` — they are structural markers only
+  - **Call count assertion:** `expect(runNode).toHaveBeenCalledTimes(processingNodes * files.length)` — proves the loop is right
+  - **Node failure propagates:** if `runNode` rejects, `executePipeline` rejects with the error; no silent swallowing
+  - **Empty file array:** resolves with empty results, no errors, no `runNode` calls
+  - **Single file:** behaves identically to multi-file with one file
+  - **Progress aggregation:** `onProgress` receives `(nodeIndex, fileIndex, totalFiles, percent, message)` in the correct sequence
+  - **Node order guarantee:** `runNode` calls happen in recipe order, not I/O node order
+  - **`runNode` receives correct args:** filename, nodeType, params match recipe definition per-node
+  - **Result structure:** `PipelineResult.files` contains all output files; `PipelineResult.durationMs` is a positive number
+
+  Model: follow the depth of `executionInstanceStore.test.ts` — happy path, error cases, edge cases, boundary behavior documented in test names.
+
+---
+
+#### Wave 2 — Implement `executePipeline` until tests go green
+
+> **TDD gate:** Wave 2 is complete when `pnpm --filter @bnto/core test` reports all `executePipeline.test.ts` tests passing. No partial credit.
+
+- [ ] `@bnto/core` — `/core-architect` — **`engine/executePipeline.ts`**: Implement `executePipeline(recipe, files, runNode, onProgress)`. Walk `recipe.order`, skip nodes where `node.type === "input" || node.type === "output"`, iterate all current files through each processing node sequentially, chain outputs, aggregate progress, return `PipelineResult`. No browser APIs. No WASM. No dynamic imports. The only I/O this function does is call `runNode`.
+- [ ] `@bnto/core` — `/core-architect` — **Run `pnpm --filter @bnto/core test`**: All `executePipeline.test.ts` tests green. Existing tests (`BntoWorker.test.ts`, `browserExecutionService.test.ts`, `executionInstanceStore.test.ts`, etc.) still pass — no regressions.
+
+---
+
+#### Wave 3 — Strip `processFiles` from browser adapter
+
+> **TDD gate:** All tests must stay green after every file change. Run `pnpm --filter @bnto/core test` after each file. Do not move to the next file if tests are red.
+
+With the executor proven correct by tests, remove the iteration logic from the places it doesn't belong.
+
+- [ ] `@bnto/core` — `/core-architect` — **`types/browser.ts`**: Remove `processFiles()` from `BrowserEngine` interface. `processFile` stays. The engine interface is now single-file only. Run tests — green.
+- [ ] `@bnto/core` — `/core-architect` — **`adapters/browser/BntoWorker.ts`**: Remove `processFiles()` method. The worker wrapper exposes `processFile` only. Run tests — green.
+- [ ] `@bnto/core` — `/core-architect` — **`adapters/browser/toBrowserEngine.ts`**: Remove `processFiles` pass-through. Only `processFile` adapted. Run tests — green.
+- [ ] `@bnto/core` — `/core-architect` — **`adapters/browser/BntoWorker.test.ts`**: Remove the `processFiles` test block (terminate + processFiles throws, processFiles after terminate). Iteration semantics are now proven by `executePipeline.test.ts`. All remaining `BntoWorker` tests stay — init, `processFile`, progress callbacks, terminate. Run tests — green.
+- [ ] `@bnto/core` — `/core-architect` — **`services/browserExecutionService.ts`**: Replace the `engine.processFiles()` call in `execute()` with `executePipeline()`. Build a single-node recipe from the slug + params. Inject `(file, nodeType, params, onProgress) => engine.processFile(file, nodeType, params, onProgress)` as `NodeRunner`. Run tests — green.
+- [ ] `@bnto/core` — `/core-architect` — **`services/browserExecutionService.test.ts`**: Replace all `processFiles` mock references with `processFile` mock. The service no longer calls `engine.processFiles()`. Verify the new mock receives correct calls. Run tests — green.
+
+---
+
+#### Wave 4 — Export, document, E2E
+
+> **Final gate:** `pnpm --filter @bnto/core test` all green. All 6 recipe pages work. Sprint 5 Wave 3 is unblocked.
+
+- [ ] `@bnto/core` — `/core-architect` — **`index.ts`**: Export `executePipeline`, `NodeRunner`, `FileInput`, `FileResult`, `RecipeDefinition`, `PipelineResult` from `@bnto/core`. Sprint 5 Wave 3 and the future CLI import from here — not from internal paths.
+- [ ] `@bnto/core` — `/core-architect` — **JSDoc on `executePipeline`**: Document the layer contract. What `NodeRunner` is responsible for. Why no browser APIs belong here. The explicit loop node override point (future). This comment is the first thing the next engineer reads before touching execution.
+- [ ] `apps/web` — `/quality-engineer` — **E2E smoke test**: All 6 recipe pages process files correctly end-to-end. `compress-images`, `resize-images`, `convert-image-format`, `clean-csv`, `rename-csv-columns`, `rename-files`. Multi-file upload → processing → download works. Behavior is identical to before the refactor — zero user-visible change, correct architecture underneath.
 
 ---
 

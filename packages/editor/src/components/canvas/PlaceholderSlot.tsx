@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback } from "react";
+import { memo } from "react";
 import { Button, Card } from "@bnto/ui";
 import { Plus } from "lucide-react";
 import { useEditorPanels } from "../../hooks/useEditorPanels";
@@ -22,10 +22,6 @@ import { CELL } from "../../adapters/bentoSlots";
 const PlaceholderSlot = memo(function PlaceholderSlot() {
   const { openPalette } = useEditorPanels();
 
-  const handleClick = useCallback(() => {
-    openPalette();
-  }, [openPalette]);
-
   return (
     <Card
       dashed
@@ -39,7 +35,7 @@ const PlaceholderSlot = memo(function PlaceholderSlot() {
         size="icon"
         variant="primary"
         elevation="sm"
-        onClick={handleClick}
+        onClick={openPalette}
         aria-label="Add node"
         className="nopan nodrag nowheel"
       >
