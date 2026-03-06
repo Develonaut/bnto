@@ -478,6 +478,134 @@ End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude
 
 ---
 
+### Sprint 5A: Editor UX — Node Interaction + Empty State + Config Polish
+
+**Goal:** Close the felt gap between prototype and product. Controls live where they belong: on node (delete), in LayerPanel (reorder), in config panel (configure). Empty canvas entry gives an immediate, clear signal of what to do next.
+
+**Prerequisite:** Sprint 5 Waves 1–2 complete (route + entry points exist, compartment nodes live).
+
+**Persona ownership:** `/frontend-engineer` leads all waves.
+
+**Design constraints (non-negotiable):**
+
+- Keep `Pressable/Card` as base node primitive — NOT Surface
+- Whole card surface is the click target (select + open config)
+- No edges, no arrow-reorder buttons on nodes
+- I/O nodes protected (no delete, no removal from toolbar)
+
+> ⚠️ **Animation rule — read before touching `CompartmentNode.tsx`:** The `<ScaleIn from={0.7} easing="spring-bouncy">` wrapper on every `CompartmentNode` is the Mini Motorways building pop-in. It is the single most important animation in the editor and a core part of the brand identity. Do not remove it, replace it with `FadeIn`, or flatten the spring curve. See `strategy/design-language.md` § "Editor Animation Language" for full rationale. If you refactor `CompartmentNode.tsx` for any reason, verify `ScaleIn` survives.
+
+#### Wave 1 — Node Hover Overlay + Placeholder Slot
+
+The two most impactful canvas changes: a delete affordance on non-I/O nodes and a placeholder slot for blank canvases. Both are pure render-layer changes — no store modifications.
+
+- [ ] `packages/editor` — **`CompartmentNode` hover overlay**: Wrap the existing `Pressable/Card` in a `group relative` div. Add an absolutely-positioned delete button (`top-1.5 right-1.5`) visible only on `group-hover` via Tailwind (`opacity-0 group-hover:opacity-100 transition-opacity`). Button uses `e.stopPropagation()` so hover-click deletes without also selecting. Size: `size-5`, icon `XIcon size-3`. Styled as ghost (`text-muted-foreground`) with destructive hover state (`hover:text-destructive hover:bg-destructive/10`). Hidden entirely when `data.isIoNode === true`.
+- [ ] `packages/editor` — **`PlaceholderSlot` component**: New component rendered inside `BentoCanvas` when `nodes.length === 2` and both are I/O nodes. Renders a `Card variant="muted"` with `border-dashed`, `PlusIcon` centered (32px, muted foreground), and a subtle `animate-pulse` on the border. Clicking calls `openNodePalette()` from `useEditorPanels`. Uses `120×120` standard slot size. Disappears as soon as any non-I/O node exists in the store.
+- [ ] `packages/editor` — **`isIoNode` flag in adapter**: Update `createCompartmentNode.ts` — add `isIoNode: boolean` to `BentoNode.data`. Set from `isIoNodeType(nodeType)`. Consumed by `CompartmentNode` to conditionally render the delete overlay.
+- [ ] `packages/editor` — **Node exit animation**: Wrap `CompartmentNode` in `AnimatePresence` so deleted nodes exit with a spring scale-down (reverse of the entrance). Use `motion/react` exit prop: `exit={{ scale: 0.7, opacity: 0 }}` with a spring transition. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
+- [ ] `packages/editor` — **Unit tests**: `PlaceholderSlot` renders when only I/O nodes present. Disappears when a processing node is added. Hover overlay does not render for `input`/`output` nodes. Hover overlay renders for all other node types.
+
+#### Wave 2 — Config Panel Identity Echo
+
+Make the config panel feel like it belongs to the node that was clicked. One look at the panel header and the user knows which compartment they're configuring.
+
+- [ ] `packages/editor` — **Config panel node icon**: Update `ConfigPanelRoot.tsx` — import `ICON_COMPONENTS` from `adapters/nodeIcons`. Render the node's icon (24px, `text-muted-foreground`) to the left of the heading in `PanelHeader`. Icon sourced from `typeInfo.iconKey`. If no icon exists for the type, render nothing.
+- [ ] `packages/editor` — **Config panel empty state improvement**: When no node is selected (`!configNodeId`), replace "Select a node to configure" with: a `PlusIcon` (muted, 24px), a `Text` heading "Nothing selected", and a `Text size="xs" color="muted"` body "Click a compartment to configure it, or add a new one."
+- [ ] `packages/editor` — **SchemaForm field grouping**: Add optional `group?: string` key to `NodeParamMeta` in `@bnto/nodes`. When consecutive visible params share the same `group` value, `SchemaForm` renders a `PanelDivider` with the group label above them. Start with Loop node: group `{ mode, items }` as "Iteration" and `{ breakCondition }` as "Control". Purely a rendering concern — no store changes.
+- [ ] `packages/editor` — **Unit tests**: Config panel header renders node icon when a node is selected. Config panel shows improved empty state when no node is selected. `SchemaForm` renders group dividers between param groups.
+
+#### Wave 3 — LayerPanel Drag-to-Reorder
+
+Make the LayerPanel the canonical surface for recipe structure management. Drag-to-reorder in the list gives users control over execution order without any canvas arrow buttons.
+
+- [ ] `packages/editor` — **`NodeList` drag-to-reorder**: Add drag handles to `NodeItem` in `NodeList`. Use `@dnd-kit/sortable`. Each `NodeItem` gets a `GripVerticalIcon` drag handle on the left, visible always. I/O nodes at top/bottom are locked — cannot be reordered (render without drag handle, add `data-locked` for styling). Dragging updates position via a new `reorderNode(fromIndex, toIndex)` store action.
+- [ ] `packages/editor` — **`reorderNode` store action + pure function**: Create `actions/reorderNode.ts` — pure function `reorderNode(state, fromIndex, toIndex): Partial<EditorState>`. Moves node in `nodes` array while preserving I/O nodes at fixed positions. Captures undo snapshot. Updates `isDirty`. Thin wrapper hook `useReorderNode` follows the three-layer pattern.
+- [ ] `packages/editor` — **Adapter sync**: After reorder, `rfNodesToDefinition` already reads `nodes` array order as execution order — no changes needed. Add unit test to verify order preserved on export.
+- [ ] `packages/editor` — **Unit tests**: `reorderNode` moves nodes correctly. I/O nodes cannot be moved to non-terminal positions. Undo restores previous order. `NodeList` renders drag handles for non-I/O nodes only.
+
+#### Wave 4 — Empty Canvas Entry + Auto-behaviors
+
+The first frame of the editor experience should tell the user what to do. Auto-behaviors reduce friction for new users without adding complexity for returning ones.
+
+- [ ] `packages/editor` — **Auto-open palette on blank canvas**: In `EditorCanvasRoot`, after the store initializes with a blank definition, call `openNodePalette()` once if `nodes.length === 2` (only I/O nodes). Use `useEffect` with one RAF (`requestAnimationFrame`) delay. Only fires once per session via `useRef` flag.
+- [ ] `packages/editor` — **Auto-select Input node on blank canvas**: After the canvas renders on blank canvas entry, auto-select the `input` node and open the config panel. Shows the file dropzone immediately. Same `useRef` once-per-session guard.
+- [ ] `packages/editor` — **Run button in `EditorToolbar`**: Add Run button between the node navigation group and undo group. `variant="primary"` (terracotta), `elevation="sm"`, `size="icon"` with `PlayIcon`. Disabled when definition has no processing nodes or execution is in progress. Fires `handleRun` (stub for now — wired in Sprint 5 Wave 3).
+- [ ] `packages/editor` — **Unit tests**: Palette auto-opens once on blank canvas mount. Does not fire on subsequent renders or after a node is added. Input node auto-selected on blank canvas. Run button disabled when no processing nodes exist.
+
+#### Wave 5 — Verify + E2E
+
+Verify all UX changes hold together as a system. No regressions on existing editor tests.
+
+- [ ] `packages/editor` — **Verify unit tests**: `task ui:test` passes across all `packages/editor` tests. No regressions in existing store, action, adapter, or hook tests.
+- [ ] `apps/web` — **E2E: blank canvas entry**: Navigate to `/editor`. Palette auto-opens. Input node selected, config panel shows "Input" header with Upload icon. Click a node type — `PlaceholderSlot` disappears, real node appears with spring pop-in animation.
+- [ ] `apps/web` — **E2E: node hover delete**: Hover a non-I/O compartment — delete × appears. Click × — node removed with spring exit animation, without selecting it first. Hover Input or Output compartment — no × appears.
+- [ ] `apps/web` — **E2E: LayerPanel reorder**: Open LayerPanel. Drag a processing node up/down — order updates on canvas. I/O nodes cannot be dragged. Undo restores previous order.
+- [ ] `apps/web` — **E2E: config panel identity**: Select a node. Config panel header shows the node's icon and label. Deselect (click canvas background) — config panel shows improved empty state.
+- [ ] `apps/web` — **Screenshot update**: Regenerate editor E2E screenshots after all visual changes. `task e2e` green.
+
+---
+
+### Sprint 5B: Node Visual Identity — Hierarchy, Selection, and I/O Distinction
+
+**Goal:** Make the canvas immediately readable at a glance. Right now all three node types render identically — same card color, same size, same elevation. This sprint establishes a clear three-tier visual language: I/O nodes (grounded structural anchors) → processing nodes (lifted, configurable steps) → selected node (highlighted, active focus).
+
+**Decision doc:** `.claude/decisions/editor-ux-direction.md` — visual hierarchy section.
+
+**Prerequisite:** Sprint 5A Wave 1 complete (`isIoNode` flag exists in adapter).
+
+**Persona ownership:** `/frontend-engineer` leads all waves.
+
+**Design constraints (non-negotiable):**
+
+- Keep `Pressable asChild` wrapping `Card` as the base for all node types — including I/O. Don’t introduce a separate primitive.
+- I/O nodes are NOT pressable-to-configure. They can be selected for metadata but don’t open a configurable config panel. Reflect this visually.
+- No color for color’s sake. Every visual change communicates information (type, state, or category).
+- Selected ring must be visible at a glance — not just an elevation change.
+
+> ⚠️ **Animation rule:** `<ScaleIn from={0.7} easing="spring-bouncy">` must remain on ALL node types including I/O after this sprint’s visual changes. The pop-in is non-negotiable. See `strategy/design-language.md` § "Node Entrance: The Building Pop-In".
+
+**The three-tier system:**
+
+| Tier          | Nodes         | Elevation (rest) | Elevation (selected)       | Color                | Shape                     |
+| ------------- | ------------- | ---------------- | -------------------------- | -------------------- | ------------------------- |
+| Structural    | input, output | `sm`             | `md`                       | `muted` (warm cream) | wider, shorter — `160×90` |
+| Processing    | all others    | `md`             | `lg`                       | `card` (white)       | square — `120×120`        |
+| Selected ring | any selected  | —                | + `ring-2 ring-primary/60` | —                    | —                         |
+
+#### Wave 1 — I/O Node Distinction
+
+Differentiate Input and Output from processing nodes through elevation, color, and shape — not just icon. These are the walls of the bento box, not a compartment inside it.
+
+- [ ] `packages/editor` — **I/O node sizing**: Update `definitionToBento` adapter — set `width: 160, height: 90` for nodes where `isIoNodeType(nodeType)` is true. Processing nodes keep `120×120`. Different aspect ratio signals "different kind of thing" before the label is read.
+- [ ] `packages/editor` — **I/O node color + elevation**: In `CompartmentNode.tsx`, when `data.isIoNode` is true, render `Card color="muted" elevation="sm"`. When false, render `Card elevation="md"`. Muted cards read as "part of the canvas" — warm cream that doesn’t compete with the steps in between.
+- [ ] `packages/editor` — **I/O node Pressable behavior**: Remove `toggle` and `active` props from the `Pressable` wrapper for I/O nodes. They can still receive clicks for selection feedback but shouldn’t feel like pressable configuration buttons.
+- [ ] `packages/editor` — **Unit tests**: I/O nodes render with `color="muted"`, `elevation="sm"`, and `160×90` dimensions. Processing nodes render with `elevation="md"` and `120×120`. Adapter sets `isIoNode` correctly for all 12 node types.
+
+#### Wave 2 — Processing Node Category Accents + Selected State
+
+Make the selected state obvious and give processing nodes a subtle category signal without overwhelming the calm Motorway aesthetic.
+
+- [ ] `packages/editor` — **Selected ring**: Add `ring-2 ring-primary/60 ring-offset-2 ring-offset-background rounded-xl` to the outer `group relative` wrapper when `selected` is true, via `cn()`. Creates a visible terracotta outline that reads as "active focus" at a glance.
+- [ ] `packages/editor` — **Elevation on selection**: `elevation={selected ? "lg" : "md"}` for processing nodes. `elevation={selected ? "md" : "sm"}` for I/O nodes. Ring + elevation change together make selection unmistakable.
+- [ ] `packages/editor` — **Category color pip**: Add `border-l-[3px]` in category color to processing nodes. Create `adapters/categoryBorderColor.ts` mapping `CompartmentVariant` → Tailwind border class (e.g. `primary` → `border-primary/70`). I/O nodes get no pip.
+- [ ] `packages/editor` — **Unit tests**: Selected processing node has ring class. Unselected has no ring. Category pip border renders for processing nodes. I/O nodes have no pip. Elevation changes correctly for both types on selection.
+
+#### Wave 3 — LayerPanel Visual Parity
+
+The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look distinct in the list too.
+
+- [ ] `packages/editor` — **`NodeItem` I/O distinction**: Update `NodeItem.tsx` — when `node.data.isIoNode` is true, render dot indicator in `text-muted-foreground`. Add `text-xs text-muted-foreground` "I/O" sublabel to reinforce structural vs. configurable distinction.
+- [ ] `packages/editor` — **`NodeItem` selected state**: When a node is selected in the store, the `NodeItem` row gets `bg-muted/50` background highlight.
+- [ ] `packages/editor` — **Unit tests**: I/O `NodeItem` renders muted dot and "I/O" sublabel. Selected `NodeItem` applies background highlight. Processing `NodeItem` uses category color dot.
+
+#### Wave 4 — Verify + Screenshot
+
+- [ ] `packages/editor` — **Verify unit tests**: All 5A + 5B tests pass. No regressions.
+- [ ] `apps/web` — **E2E: visual hierarchy**: Navigate to `/editor?from=compress-images`. Input and Output cards are visibly different from the Image processing node (different size, muted tone). Click the Image node — ring appears, elevation lifts. Click Input node — different selection treatment (no ring, subtle lift). LayerPanel echoes the visual distinction.
+- [ ] `apps/web` — **Screenshot update**: Regenerate editor E2E screenshots. `task e2e` green.
+
+---
+
 ## Phase 2: Desktop App (Local Execution)
 
 **Goal:** Free desktop app. Same React frontend, local engine execution. Free forever, unlimited runs. No account needed. Trust signal and top-of-funnel growth driver.
@@ -1030,6 +1158,61 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 - [ ] `@bnto/backend` — `referrals` table + `applyReferral` mutation
 - [ ] `@bnto/core` — Referral service/hooks
 - [ ] `apps/web` — Referral link generation UI + landing page `?ref=CODE` capture
+
+### Sprint 5C: Editor Copy + Nav Label Cleanup
+
+**Goal:** Nail the copy and labels across editor entry points. Small changes, high signal — language shapes how users understand what they're looking at.
+
+**Prerequisite:** Sprint 5 Wave 2 (production route) complete.
+
+**Tasks:**
+
+- [ ] `apps/web` — **Rename nav "Create" → "New Recipe"**: Update `AppNav` (or wherever the nav item is defined). Label: "New Recipe". Route: `/editor` (unchanged). Decision: "Create" is vague. "New Recipe" matches the product mental model and pairs with the recipe pages.
+- [ ] `apps/web` — **Update recipe page CTA copy**: Change "Customize in Editor" → "Open in Editor" on all predefined recipe pages. "Customize" implies minor tweaks; "Open" implies full access and pairs with "New Recipe" in the nav.
+- [ ] `apps/web` — **Verify**: All nav + recipe page CTA copy consistent. No remaining "Create" or "Customize in Editor" references.
+
+> **Future copy consideration (post-Sprint 5 Wave 3):** Once execution is wired in the editor, revisit the recipe page CTA. "Open in Editor" is functional but "Make it yours →" or "Build your own version" signals creative ownership more than "Open" and may convert better. Worth A/B testing once traffic exists. Do not change this now — the editor needs to actually run recipes before a possessive CTA is honest.
+
+---
+
+### Sprint 6: Edit Mode ↔ Run Mode (Mini Motorways Pattern)
+
+**Goal:** Make the editor feel like Mini Motorways — pause to edit the road network, unpause to watch traffic flow. The same canvas surface serves both editing and running. No separate screens.
+
+**Prerequisite:** Sprint 5 Wave 3 (execution wired). The mode switch requires execution to exist — don't build this before execution works.
+
+**Decision doc:** `.claude/decisions/editor-ux-direction.md` — "Vision: Edit Mode ↔ Run Mode" section. Read this before picking up any task in this sprint.
+
+**The two modes:**
+
+- **Edit mode (current state):** Canvas grid visible. Nodes are pressable/selectable. Config panel slides in on click. LayerPanel open. Toolbar shows full node management controls. Run button triggers mode switch.
+- **Run mode:** Canvas grid fades or hides. Nodes are static (no click interaction). Config panel + LayerPanel close. Toolbar collapses to just Stop button. Nodes animate through the elevation sequence (idle → pending → active → completed). Output node shows results or download prompt.
+- **Transition:** Run button → run mode. Stop button → edit mode, canvas restored to exact state before run.
+
+**Why this matters:** The power-user loop is edit → run → tweak → run again. Forcing a screen change breaks that loop. The Mini Motorways analogy is exact: pausing to lay roads, unpausing to watch traffic.
+
+#### Wave 1 — Editor Mode State
+
+- [ ] `packages/editor` — **`editorMode` in store**: Add `editorMode: "edit" | "run"` to `EditorState`. Add `setEditorMode(mode)` action (pure function + hook wrapper). Default: `"edit"`. Run button dispatches `setEditorMode("run")`. Stop button dispatches `setEditorMode("edit")`.
+- [ ] `packages/editor` — **Mode-aware toolbar**: `EditorToolbar` reads `editorMode`. In `"edit"` mode: full controls (add, navigate, delete, undo/redo, reset, Run button). In `"run"` mode: toolbar collapses to just a Stop button (`variant="destructive"`, `PlayIcon` replaced with `SquareIcon`). Animate the collapse with `Animate.FadeIn`.
+- [ ] `packages/editor` — **Mode-aware panels**: `EditorConfigPanel` and `EditorLayerPanel` both read `editorMode`. In `"run"` mode: panels slide out and stay closed (cannot be opened by clicking nodes). In `"edit"` mode: panels behave normally.
+- [ ] `packages/editor` — **Unit tests**: Store transitions between `edit` and `run` correctly. Toolbar renders stop-only in run mode. Panels are non-interactive in run mode.
+
+#### Wave 2 — Canvas Grid Transition
+
+- [ ] `packages/editor` — **Grid fade on run mode**: `BentoCanvas` reads `editorMode`. In `"run"` mode: fade the ReactFlow background grid (CSS `opacity` transition, ~300ms). In `"edit"` mode: grid visible. The grid disappearing signals "this is no longer a configuration surface."
+- [ ] `packages/editor` — **Node interaction lock in run mode**: `CompartmentNode` reads `editorMode` from store (via context or prop). In `"run"` mode: disable `Pressable` (remove `onClick` handler or add `pointer-events-none` wrapper). Nodes should not be selectable during execution — they're displaying state, not accepting input.
+- [ ] `packages/editor` — **Elevation sequence integration**: Wire node `status` field (`idle | pending | active | completed`) to elevation during run mode. This is the visual "traffic flowing" moment. `CompartmentNode` already has `status` in its data type — connect it to `Card elevation` during run mode execution.
+- [ ] `packages/editor` — **Unit tests**: Canvas grid has reduced opacity in run mode. Nodes are non-interactive in run mode. Elevation changes with status in run mode.
+
+#### Wave 3 — Results at Output Node + E2E
+
+- [ ] `packages/editor` — **Output node run-mode state**: When execution completes, the `output` node shows a completion state — icon changes to `CheckCircle`, sublabel shows file count (e.g., "3 files ready"), elevation holds at `lg`. Clicking the completed Output node (only in run mode, after completion) triggers download. This is the delivery moment.
+- [ ] `packages/editor` — **Return to edit mode after download**: After download triggers, show a brief "Done" state then auto-transition back to edit mode (2s delay or on Stop button press). Canvas grid reappears, panels re-open, toolbar restores. User is back in the same canvas state they left.
+- [ ] `apps/web` — **E2E: mode switch flow**: Open `/editor?from=compress-images`. Add files to Input node. Click Run — toolbar collapses to Stop, grid fades, panels close. Nodes animate through elevation sequence. Output node shows completion. Click output node — download triggers. Canvas returns to edit mode.
+- [ ] `apps/web` — **Screenshot update**: Capture both edit mode and run mode states. `task e2e` green.
+
+---
 
 ### ~~UI: Extract Motorway Design System~~ — PROMOTED TO SPRINT 4D/4E
 
