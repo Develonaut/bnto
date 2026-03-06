@@ -50,7 +50,6 @@ type BentoCanvasProps = {
   disable?: {
     drag?: boolean;
     pan?: boolean;
-    zoom?: boolean;
     select?: boolean;
   };
   /**
@@ -127,11 +126,12 @@ function BentoCanvasInner({
       nodesConnectable={false}
       elementsSelectable={interactive && !disable?.select}
       panOnDrag={interactive && !disable?.pan}
-      zoomOnScroll={interactive && !disable?.zoom}
-      zoomOnPinch={interactive && !disable?.zoom}
-      maxZoom={FIT_VIEW_OPTIONS.maxZoom}
+      zoomOnScroll={false}
+      zoomOnPinch={false}
       zoomOnDoubleClick={false}
-      preventScrolling={!interactive}
+      minZoom={FIT_VIEW_OPTIONS.maxZoom}
+      maxZoom={FIT_VIEW_OPTIONS.maxZoom}
+      preventScrolling={interactive}
       proOptions={PRO_OPTIONS}
     >
       <Background variant={BackgroundVariant.Lines} gap={40} color="var(--border)" />

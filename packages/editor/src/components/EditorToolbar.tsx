@@ -11,11 +11,13 @@ import {
   RotateCcwIcon,
   Undo2Icon,
   Redo2Icon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@bnto/ui";
 import { useEditorUndoRedo } from "../hooks/useEditorUndoRedo";
-import { useEditorActions } from "../hooks/useEditorActions";
 import { useEditorStore } from "../hooks/useEditorStore";
 import { useEditorStoreApi } from "../hooks/useEditorStoreApi";
+import { useNodeNavigation } from "../hooks/useNodeNavigation";
 import { LayerPanelTrigger } from "./LayerPanel";
 import { ConfigPanelTrigger } from "./ConfigPanel";
 import { NodePaletteMenu, NodePaletteMenuTrigger, NodePaletteMenuContent } from "./NodePaletteMenu";
@@ -28,7 +30,8 @@ import { NodePaletteMenu, NodePaletteMenuTrigger, NodePaletteMenuContent } from 
  */
 
 function EditorToolbar() {
-  const { removeSelectedNode, selectedNodeId: selId } = useEditorActions();
+  const { canPrev, canNext, canDelete, handlePrev, handleNext, removeSelectedNode } =
+    useNodeNavigation();
   const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
   const isDirty = useEditorStore((s) => s.isDirty);
   const storeApi = useEditorStoreApi();
@@ -51,12 +54,12 @@ function EditorToolbar() {
 
         <ToolbarDivider />
 
-        {/* Add / Remove */}
+        {/* Add / Navigate / Remove */}
         <ToolbarGroup>
           <NodePaletteMenu>
             <NodePaletteMenuTrigger
               size="icon"
-              variant="ghost"
+              variant="primary"
               elevation="sm"
               aria-label="Add node"
             >
@@ -68,8 +71,28 @@ function EditorToolbar() {
             size="icon"
             variant="ghost"
             elevation="sm"
+            onClick={handlePrev}
+            disabled={!canPrev}
+            aria-label="Previous node"
+          >
+            <ChevronLeftIcon className="size-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            elevation="sm"
+            onClick={handleNext}
+            disabled={!canNext}
+            aria-label="Next node"
+          >
+            <ChevronRightIcon className="size-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            elevation="sm"
             onClick={removeSelectedNode}
-            disabled={!selId}
+            disabled={!canDelete}
             aria-label="Remove selected node"
           >
             <TrashIcon className="size-4" />

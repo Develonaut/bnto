@@ -246,13 +246,48 @@ describe("getVisibleParams", () => {
   it("includes params without visibleWhen (always visible)", () => {
     const names = getVisibleParams("image", "operation", "resize");
     expect(names).toContain("operation");
-    expect(names).toContain("input");
-    expect(names).toContain("output");
     expect(names).toContain("quality");
+  });
+
+  it("excludes hidden params (engine wiring fields)", () => {
+    const names = getVisibleParams("image", "operation", "resize");
+    expect(names).not.toContain("input");
+    expect(names).not.toContain("output");
   });
 
   it("returns empty for unknown type", () => {
     expect(getVisibleParams("unknown", "op", "val")).toEqual([]);
+  });
+
+  // --- parameters-map overload (used by editor config panel) ---
+
+  it("parameters-map: returns visible params for current values", () => {
+    const names = getVisibleParams("image", { operation: "resize", quality: 80 });
+    expect(names).toContain("width");
+    expect(names).toContain("height");
+    expect(names).toContain("maintainAspect");
+    expect(names).toContain("operation");
+    expect(names).toContain("quality");
+  });
+
+  it("parameters-map: excludes hidden params", () => {
+    const names = getVisibleParams("image", { operation: "compress" });
+    expect(names).not.toContain("input");
+    expect(names).not.toContain("output");
+  });
+
+  it("parameters-map: evaluates visibleWhen against current values", () => {
+    const convert = getVisibleParams("image", { operation: "convert" });
+    expect(convert).toContain("format");
+    expect(convert).not.toContain("width");
+
+    const resize = getVisibleParams("image", { operation: "resize" });
+    expect(resize).toContain("width");
+    expect(resize).not.toContain("format");
+  });
+
+  it("parameters-map: returns empty for unknown type", () => {
+    expect(getVisibleParams("unknown", { op: "val" })).toEqual([]);
   });
 });
 

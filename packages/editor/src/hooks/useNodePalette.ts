@@ -36,7 +36,10 @@ interface NodePaletteResult {
 // ---------------------------------------------------------------------------
 
 function computePalette(browserOnly: boolean): NodePaletteResult {
-  const allTypes = NODE_TYPE_NAMES.map((name) => NODE_TYPE_INFO[name]);
+  // I/O nodes are structural (always present) — never shown in the palette.
+  const allTypes = NODE_TYPE_NAMES.map((name) => NODE_TYPE_INFO[name]).filter(
+    (t) => t.category !== "io",
+  );
   const browserTypes = allTypes.filter((t) => t.browserCapable);
   const displayTypes = browserOnly ? browserTypes : allTypes;
 
@@ -48,12 +51,12 @@ function computePalette(browserOnly: boolean): NodePaletteResult {
     categoryMap.set(nodeType.category, existing);
   }
 
-  const groups: PaletteGroup[] = CATEGORIES
-    .filter((cat) => categoryMap.has(cat.name))
-    .map((cat) => ({
+  const groups: PaletteGroup[] = CATEGORIES.filter((cat) => categoryMap.has(cat.name)).map(
+    (cat) => ({
       category: cat,
       items: categoryMap.get(cat.name)!,
-    }));
+    }),
+  );
 
   return { groups, allTypes, browserTypes };
 }

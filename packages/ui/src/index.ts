@@ -76,6 +76,7 @@ export {
 } from "./surface/Panel";
 export { Pressable, SPRING_STYLES } from "./surface/Pressable";
 export { Surface } from "./surface/Surface";
+export type { SurfaceVariant, SurfaceElevation, SurfaceRounded } from "./surface/Surface";
 export { Toolbar, ToolbarGroup, ToolbarDivider } from "./surface/Toolbar";
 
 /* Interaction */

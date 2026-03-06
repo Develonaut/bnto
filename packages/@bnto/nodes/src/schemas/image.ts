@@ -14,7 +14,7 @@ import type { NodeSchemaDefinition } from "./types";
  * NOTE: "batch" is not yet implemented in any engine (Rust WASM or Go).
  * It will be added here when batch image processing is built. See ROADMAP.md.
  */
-export const IMAGE_OPERATIONS = ["resize", "convert", "optimize", "composite"] as const;
+export const IMAGE_OPERATIONS = ["resize", "convert", "compress", "composite"] as const;
 
 /** Supported output image formats. */
 export const IMAGE_FORMATS = ["png", "jpeg", "webp"] as const;
@@ -53,11 +53,13 @@ export const imageNodeSchema: NodeSchemaDefinition = {
       label: "Input",
       description: "Input image file path.",
       placeholder: "{{.item}}",
+      hidden: true,
     },
     output: {
       label: "Output",
       description: "Output image file path.",
       placeholder: "{{.OUTPUT_DIR}}/{{basename .item}}",
+      hidden: true,
     },
     format: {
       label: "Format",

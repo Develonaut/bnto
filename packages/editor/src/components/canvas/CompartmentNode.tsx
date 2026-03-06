@@ -10,7 +10,6 @@ import { ICON_COMPONENTS } from "../../adapters/nodeIcons";
  * grid with a springy bounce, like buildings materializing on the map.
  *
  * Layout: large icon (32px) above the label, with category sublabel below.
- * All non-I/O nodes use the default white card variant.
  */
 
 export type CompartmentStatus = "idle" | "pending" | "active" | "completed";
@@ -28,7 +27,7 @@ export const CompartmentNode = memo(function CompartmentNode({
     <ScaleIn from={0.7} easing="spring-bouncy">
       <Pressable asChild spring="bounciest" toggle active={selected} muted={status === "pending"}>
         <Card
-          elevation="lg"
+          elevation={selected ? "lg" : "sm"}
           className="flex flex-col items-center justify-center gap-1 rounded-xl"
           style={{ width: w, height: h }}
           data-testid="compartment-node"

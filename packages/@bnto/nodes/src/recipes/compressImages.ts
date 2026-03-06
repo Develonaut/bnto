@@ -76,7 +76,7 @@ export const compressImages: Recipe = {
             position: { x: 100, y: 100 },
             metadata: {},
             parameters: {
-              operation: "optimize",
+              operation: "compress",
               input: "{{.item}}",
               output: "{{.OUTPUT_DIR}}/{{basename .item}}",
               quality: 80,

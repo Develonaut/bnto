@@ -12,29 +12,9 @@
 
 import { useMemo } from "react";
 import type { NodeTypeName, NodeSchemaDefinition } from "@bnto/nodes";
-import { NODE_TYPE_INFO, getNodeSchema } from "@bnto/nodes";
+import { NODE_TYPE_INFO, getNodeSchema, getVisibleParams } from "@bnto/nodes";
 import { useEditorStore } from "./useEditorStore";
 import type { CompartmentNodeData, NodeConfig } from "../adapters/types";
-
-// ---------------------------------------------------------------------------
-// Visible params resolver
-// ---------------------------------------------------------------------------
-
-function resolveVisibleParams(
-  schemaDef: NodeSchemaDefinition,
-  parameters: Record<string, unknown>,
-): string[] {
-  return Object.entries(schemaDef.params)
-    .filter(([, meta]) => {
-      if (!meta.visibleWhen) return true;
-
-      const conditions = Array.isArray(meta.visibleWhen) ? meta.visibleWhen : [meta.visibleWhen];
-
-      // OR logic — any matching condition makes the param visible
-      return conditions.some((cond) => String(parameters[cond.param] ?? "") === cond.equals);
-    })
-    .map(([name]) => name);
-}
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -76,7 +56,7 @@ function useEditorNode(nodeId: string | null): EditorNodeResult {
 
     const typeInfo = NODE_TYPE_INFO[config.nodeType as NodeTypeName] ?? null;
     const schemaDef = getNodeSchema(config.nodeType) ?? null;
-    const visibleParams = schemaDef ? resolveVisibleParams(schemaDef, config.parameters) : [];
+    const visibleParams = schemaDef ? getVisibleParams(config.nodeType, config.parameters) : [];
 
     return { node: nodeData, config, typeInfo, schemaDef, visibleParams };
   }, [nodeData, config]);
