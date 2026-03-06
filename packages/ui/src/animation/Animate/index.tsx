@@ -5,7 +5,6 @@ export { SlideUp } from "./SlideUp";
 export { SlideDown } from "./SlideDown";
 export { PulseSoft } from "./PulseSoft";
 export { Breathe } from "./Breathe";
-export { Bouncy } from "./Bouncy";
 export { BouncyStagger } from "./BouncyStagger";
 export { InView } from "../InView";
 export { Presence } from "../Presence";

@@ -174,7 +174,6 @@ export {
   SlideDown,
   PulseSoft,
   Breathe,
-  Bouncy,
   BouncyStagger,
   InView,
   Presence,
