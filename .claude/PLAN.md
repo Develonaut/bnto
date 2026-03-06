@@ -467,11 +467,11 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 No browser APIs. No WASM. No Worker. Pure TypeScript types and vitest.
 
-- [ ] `@bnto/core` — `/core-architect` — **`engine/types.ts`**: Define the engine layer vocabulary. `NodeRunner` (single-file contract every runtime implements — `(file, nodeType, params, onProgress?) => Promise<FileResult>`), `FileInput`, `FileResult`, `PipelineDefinition` (ordered node list, node type, params, I/O markers), `PipelineProgressCallback` (`(nodeIndex, fileIndex, totalFiles, percent, message) => void`), `PipelineResult` (all output files, per-node metadata, total duration). Zero imports from browser, WASM, or Worker code.
+- [x] `@bnto/core` — `/core-architect` — **`engine/types.ts`**: Define the engine layer vocabulary. `NodeRunner` (single-file contract every runtime implements — `(file, nodeType, params, onProgress?) => Promise<FileResult>`), `FileInput`, `FileResult`, `PipelineDefinition` (ordered node list, node type, params, I/O markers), `PipelineProgressCallback` (`(nodeIndex, fileIndex, totalFiles, percent, message) => void`), `PipelineResult` (all output files, per-node metadata, total duration). Zero imports from browser, WASM, or Worker code.
 
   > **Naming: `PipelineDefinition`, NOT `RecipeDefinition`.** `RecipeDefinition` already exists in `packages/core/src/types/recipe.ts` (the Convex-backed recipe shape with `id`, `type`, `version`, `ports`, `edges`, recursive `nodes`). The pipeline executor's input is a simpler ordered node list for execution — different type, different purpose. Use `PipelineDefinition` to avoid ambiguity.
 
-- [ ] `@bnto/core` — `/core-architect` — **`engine/executePipeline.test.ts`**: Write the full test suite against the not-yet-implemented `executePipeline`. Use `vi.fn()` as `NodeRunner` — no real engine needed. Tests must cover:
+- [x] `@bnto/core` — `/core-architect` — **`engine/executePipeline.test.ts`**: Write the full test suite against the not-yet-implemented `executePipeline`. Use `vi.fn()` as `NodeRunner` — no real engine needed. Tests must cover:
   - **Single processing node:** `runNode` called once per file; results collected in input order
   - **Multi-node recipe:** outputs of node N passed as inputs to node N+1; `runNode` called `nodes × files` times
   - **I/O node skipping:** `input` and `output` type nodes do not call `runNode` — they are structural markers only
@@ -494,8 +494,8 @@ No browser APIs. No WASM. No Worker. Pure TypeScript types and vitest.
 
 > **TDD gate:** Wave 2 is complete when `pnpm --filter @bnto/core test` reports all `executePipeline.test.ts` tests passing. No partial credit.
 
-- [ ] `@bnto/core` — `/core-architect` — **`engine/executePipeline.ts`**: Implement `executePipeline(definition, files, runNode, onProgress)`. Walk `definition.order`, skip nodes where `node.type === "input" || node.type === "output"`, iterate all current files through each processing node sequentially, chain outputs, aggregate progress, return `PipelineResult`. No browser APIs. No WASM. No dynamic imports. The only I/O this function does is call `runNode`. The function accepts `PipelineDefinition` (not `RecipeDefinition` — see Wave 1 naming note).
-- [ ] `@bnto/core` — `/core-architect` — **Run `pnpm --filter @bnto/core test`**: All `executePipeline.test.ts` tests green. Existing tests (`BntoWorker.test.ts`, `browserExecutionService.test.ts`, `executionInstanceStore.test.ts`, etc.) still pass — no regressions.
+- [x] `@bnto/core` — `/core-architect` — **`engine/executePipeline.ts`**: Implement `executePipeline(definition, files, runNode, onProgress)`. Walk `definition.order`, skip nodes where `node.type === "input" || node.type === "output"`, iterate all current files through each processing node sequentially, chain outputs, aggregate progress, return `PipelineResult`. No browser APIs. No WASM. No dynamic imports. The only I/O this function does is call `runNode`. The function accepts `PipelineDefinition` (not `RecipeDefinition` — see Wave 1 naming note).
+- [x] `@bnto/core` — `/core-architect` — **Run `pnpm --filter @bnto/core test`**: All `executePipeline.test.ts` tests green. Existing tests (`BntoWorker.test.ts`, `browserExecutionService.test.ts`, `executionInstanceStore.test.ts`, etc.) still pass — no regressions.
 
 ---
 
