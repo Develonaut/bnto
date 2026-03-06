@@ -57,6 +57,7 @@ function stateWithNodes(): EditorState {
     selectedNodeId: null,
     layersOpen: false,
     configOpen: false,
+    paletteOpen: false,
   } as EditorState;
 }
 
