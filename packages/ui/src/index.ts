@@ -176,6 +176,8 @@ export {
   Breathe,
   BouncyStagger,
   InView,
+  Presence,
+  PresenceList,
 } from "./animation/Animate";
 export { AnimatedCounter } from "./animation/AnimatedCounter";
 export { AnimatedThemeToggle } from "./animation/AnimatedThemeToggle";

@@ -7,3 +7,5 @@ export { PulseSoft } from "./PulseSoft";
 export { Breathe } from "./Breathe";
 export { BouncyStagger } from "./BouncyStagger";
 export { InView } from "../InView";
+export { Presence } from "../Presence";
+export { PresenceList } from "../PresenceList";
