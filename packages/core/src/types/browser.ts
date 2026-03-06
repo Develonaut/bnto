@@ -26,14 +26,6 @@ export interface BrowserEngine {
     onProgress?: (percent: number, message: string) => void,
   ): Promise<BrowserFileResult>;
 
-  /** Process multiple files sequentially. Reports per-file progress. */
-  processFiles(
-    files: File[],
-    nodeType: string,
-    params?: Record<string, unknown>,
-    onProgress?: (fileIndex: number, percent: number, message: string) => void,
-  ): Promise<BrowserFileResult[]>;
-
   /** Terminate the engine and clean up resources. */
   terminate(): void;
 
