@@ -14,6 +14,7 @@ import "@xyflow/react/dist/style.css";
 import { cn } from "@bnto/ui";
 
 import { CompartmentNode } from "./CompartmentNode";
+import { PlaceholderSlot } from "./PlaceholderSlot";
 import type { BentoNode } from "../../adapters/types";
 import { FIT_VIEW_OPTIONS } from "../../constants";
 
@@ -71,6 +72,7 @@ const PRO_OPTIONS = { hideAttribution: true } as const;
  * unmounting/remounting all nodes on every render. */
 const NODE_TYPES = {
   compartment: CompartmentNode,
+  placeholder: PlaceholderSlot,
 } as const;
 
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */

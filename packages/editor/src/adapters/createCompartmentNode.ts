@@ -13,6 +13,7 @@ import { NODE_TYPE_INFO, NODE_SCHEMA_DEFS } from "@bnto/nodes";
 import type { BentoNode, NodeConfig } from "./types";
 import { SLOTS } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";
+import { isIoNodeType } from "../helpers/isIoNodeType";
 
 /** Builds default parameters from the Zod schema for a node type. */
 function buildDefaultParams(nodeType: NodeTypeName): Record<string, unknown> {
@@ -68,6 +69,7 @@ function createCompartmentNode(
       height: slot.h,
       status: "idle" as const,
       icon: info?.icon,
+      isIoNode: isIoNodeType(type),
     },
   };
 

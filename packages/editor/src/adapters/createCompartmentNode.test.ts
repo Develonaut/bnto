@@ -82,6 +82,21 @@ describe("createCompartmentNode", () => {
     expect(ioResult!.node.data.icon).toBe("upload");
   });
 
+  it("sets isIoNode true for input nodes", () => {
+    const result = createCompartmentNode("input", 0);
+    expect(result!.node.data.isIoNode).toBe(true);
+  });
+
+  it("sets isIoNode true for output nodes", () => {
+    const result = createCompartmentNode("output", 0);
+    expect(result!.node.data.isIoNode).toBe(true);
+  });
+
+  it("sets isIoNode false for processing nodes", () => {
+    const result = createCompartmentNode("image", 0);
+    expect(result!.node.data.isIoNode).toBe(false);
+  });
+
   it("works with all 12 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       const result = createCompartmentNode(typeName, 0);

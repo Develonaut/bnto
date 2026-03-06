@@ -62,6 +62,7 @@ interface EditorState {
   // --- Panel visibility ---
   layersOpen: boolean;
   configOpen: boolean;
+  paletteOpen: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -98,6 +99,8 @@ interface EditorActions {
   toggleLayers: () => void;
   toggleConfig: () => void;
   openConfig: () => void;
+  openPalette: () => void;
+  closePalette: () => void;
 
   // --- Utility ---
   markDirty: () => void;

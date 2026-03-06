@@ -43,6 +43,8 @@ type CompartmentNodeData = {
   status: "idle" | "pending" | "active" | "completed";
   /** Icon identifier string (from NodeTypeInfo.icon) — resolved to a component by the renderer. */
   icon?: string;
+  /** True for input/output nodes — protects them from deletion and reordering. */
+  isIoNode?: boolean;
 };
 
 // ---------------------------------------------------------------------------
