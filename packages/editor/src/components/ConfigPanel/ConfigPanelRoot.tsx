@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
   cn,
   Badge,
@@ -16,7 +16,10 @@ import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { useEditorActions } from "../../hooks/useEditorActions";
 import { useEditorPanels } from "../../hooks/useEditorPanels";
+import { useEditorExecutionContext } from "../../hooks/EditorExecutionContext";
 import { SchemaForm } from "../SchemaForm";
+import { OutputRenderer } from "../OutputRenderer";
+import { rfNodesToDefinition } from "../../adapters/rfNodesToDefinition";
 
 /**
  * ConfigPanel — self-contained right-side panel.
@@ -26,8 +29,8 @@ import { SchemaForm } from "../SchemaForm";
  * node's config while it slides out (no flash to empty).
  * Includes its own slide-in overlay positioning.
  *
- * Parameter fields are rendered by SchemaForm — fully schema-driven,
- * no manual field iteration or type switching.
+ * When the output node is selected and execution has completed,
+ * shows the results download list instead of parameters.
  */
 
 function ConfigPanelRoot() {
@@ -38,9 +41,13 @@ function ConfigPanelRoot() {
   const { configOpen } = useEditorPanels();
   const { node, config, typeInfo, schemaDef, visibleParams } = useEditorNode(configNodeId);
   const { updateParams } = useEditorActions();
+  const execution = useEditorExecutionContext();
 
-  /* CSS transition for panel open/close — Animate.* covers entrance animations,
-     not boolean state transitions. See animation.md decision tree. */
+  const nodes = useEditorStore((s) => s.nodes);
+  const configs = useEditorStore((s) => s.configs);
+  const recipeMetadata = useEditorStore((s) => s.recipeMetadata);
+
+  /* CSS transition for panel open/close */
   const slotCn = cn(
     "pointer-events-auto absolute bottom-0 right-0 top-0 w-72",
     "motion-safe:transition-[translate,opacity]",
@@ -55,6 +62,15 @@ function ConfigPanelRoot() {
       updateParams(configNodeId, { [paramName]: value });
     },
     [configNodeId, updateParams],
+  );
+
+  const isOutputNode = config?.nodeType === "output";
+  const hasResults = execution.phase === "completed" && execution.results.length > 0;
+  const showResults = isOutputNode && hasResults;
+
+  const definition = useMemo(
+    () => (showResults ? rfNodesToDefinition(nodes, recipeMetadata, configs) : null),
+    [showResults, nodes, recipeMetadata, configs],
   );
 
   if (!configNodeId || !node || !config || !typeInfo) {
@@ -103,7 +119,13 @@ function ConfigPanelRoot() {
         <PanelDivider />
         <PanelContent>
           <div className="p-3">
-            {schemaDef ? (
+            {showResults && definition ? (
+              <OutputRenderer
+                definition={definition}
+                results={execution.results}
+                onDownload={execution.downloadFile}
+              />
+            ) : schemaDef ? (
               <SchemaForm
                 schema={schemaDef}
                 values={config.parameters}

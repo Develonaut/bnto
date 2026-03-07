@@ -1,7 +1,8 @@
 /**
  * Rename CSV Columns recipe — rename column headers in bulk.
  *
- * Go source: engine/pkg/menu/recipes/rename-csv-columns.json
+ * Simplified from Go engine's read+write multi-node structure to a flat
+ * 3-node pipeline: input → spreadsheet:rename → output.
  */
 
 import type { Recipe } from "../recipe";
@@ -29,7 +30,7 @@ export const renameCsvColumns: Recipe = {
     name: "Rename CSV Columns",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Reads a CSV and writes it with column data preserved.",
+      description: "Renames column headers in a CSV file.",
     },
     parameters: {},
     inputPorts: [],
@@ -53,42 +54,24 @@ export const renameCsvColumns: Recipe = {
         outputPorts: [{ id: "out-1", name: "files" }],
       },
       {
-        id: "read-csv",
+        id: "rename-columns",
         type: "spreadsheet",
         version: CURRENT_FORMAT_VERSION,
-        name: "Read CSV",
-        position: { x: 200, y: 100 },
+        name: "Rename Columns",
+        position: { x: 300, y: 100 },
         metadata: {},
         parameters: {
-          operation: "read",
-          format: "csv",
-          path: "{{.INPUT_CSV}}",
+          operation: "rename",
         },
-        inputPorts: [],
-        outputPorts: [{ id: "out-1", name: "rows" }],
-      },
-      {
-        id: "write-csv",
-        type: "spreadsheet",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Write CSV",
-        position: { x: 400, y: 100 },
-        metadata: {},
-        parameters: {
-          operation: "write",
-          format: "csv",
-          path: "{{.OUTPUT_CSV}}",
-          rows: '{{index . "read-csv" "rows"}}',
-        },
-        inputPorts: [{ id: "in-1", name: "rows" }],
-        outputPorts: [],
+        inputPorts: [{ id: "in-1", name: "files" }],
+        outputPorts: [{ id: "out-1", name: "files" }],
       },
       {
         id: "output",
         type: "output",
         version: CURRENT_FORMAT_VERSION,
         name: "Renamed CSV",
-        position: { x: 600, y: 100 },
+        position: { x: 500, y: 100 },
         metadata: {},
         parameters: {
           mode: "download",
@@ -101,9 +84,8 @@ export const renameCsvColumns: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "read-csv" },
-      { id: "e2", source: "read-csv", target: "write-csv" },
-      { id: "e3", source: "write-csv", target: "output" },
+      { id: "e1", source: "input", target: "rename-columns" },
+      { id: "e2", source: "rename-columns", target: "output" },
     ],
   },
 };

@@ -1,7 +1,8 @@
 /**
  * Convert Image Format recipe — convert between PNG, JPEG, WebP, and GIF.
  *
- * Go source: engine/pkg/menu/recipes/convert-image-format.json
+ * Simplified from Go engine's nested loop structure to a flat
+ * 3-node pipeline: input → image:convert → output.
  */
 
 import type { Recipe } from "../recipe";
@@ -30,7 +31,7 @@ export const convertImageFormat: Recipe = {
     name: "Convert Image Format",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Lists image files and converts each to a target format.",
+      description: "Converts each image to a target format.",
     },
     parameters: {},
     inputPorts: [],
@@ -54,38 +55,19 @@ export const convertImageFormat: Recipe = {
         outputPorts: [{ id: "out-1", name: "files" }],
       },
       {
-        id: "convert-loop",
-        type: "loop",
+        id: "convert-image",
+        type: "image",
         version: CURRENT_FORMAT_VERSION,
-        name: "Convert Each Image",
+        name: "Convert Image",
         position: { x: 300, y: 100 },
         metadata: {},
         parameters: {
-          mode: "forEach",
-          items: '{{index . "input" "files"}}',
+          operation: "convert",
+          format: "webp",
+          quality: 80,
         },
-        inputPorts: [{ id: "in-1", name: "items" }],
-        outputPorts: [],
-        nodes: [
-          {
-            id: "convert-image",
-            type: "image",
-            version: CURRENT_FORMAT_VERSION,
-            name: "Convert Image",
-            position: { x: 100, y: 100 },
-            metadata: {},
-            parameters: {
-              operation: "convert",
-              input: "{{.item}}",
-              output: "{{.OUTPUT_DIR}}/{{basename .item}}.webp",
-              format: "webp",
-              quality: 80,
-            },
-            inputPorts: [],
-            outputPorts: [],
-          },
-        ],
-        edges: [],
+        inputPorts: [{ id: "in-1", name: "files" }],
+        outputPorts: [{ id: "out-1", name: "files" }],
       },
       {
         id: "output",
@@ -105,8 +87,8 @@ export const convertImageFormat: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "convert-loop" },
-      { id: "e2", source: "convert-loop", target: "output" },
+      { id: "e1", source: "input", target: "convert-image" },
+      { id: "e2", source: "convert-image", target: "output" },
     ],
   },
 };

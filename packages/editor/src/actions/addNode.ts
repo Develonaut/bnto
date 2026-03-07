@@ -14,9 +14,7 @@ import { isIoNodeType } from "@bnto/nodes";
 import type { EditorState } from "../store/types";
 import { createCompartmentNode } from "../adapters/createCompartmentNode";
 import { STRIDE } from "../adapters/bentoSlots";
-import { captureSnapshot } from "../store/captureSnapshot";
-import { pushToStack } from "../store/pushToStack";
-import { revalidateState } from "../store/revalidateState";
+import { withUndo } from "../store/withUndo";
 
 interface AddNodeResult {
   nextState: Partial<EditorState>;
@@ -37,8 +35,6 @@ export function addNode(
   const slotIndex = state.nodes.length;
   const result = createCompartmentNode(type, slotIndex, position);
   if (!result) return null;
-
-  const snapshot = captureSnapshot(state.nodes, state.configs);
 
   // Auto-select the new node, deselect all others
   const deselected = state.nodes.map((n) => (n.selected ? { ...n, selected: false } : n));
@@ -73,14 +69,7 @@ export function addNode(
   const nextConfigs = { ...state.configs, [result.node.id]: result.config };
 
   return {
-    nextState: {
-      nodes: nextNodes,
-      configs: nextConfigs,
-      isDirty: true,
-      undoStack: pushToStack(state.undoStack, snapshot),
-      redoStack: [],
-      validationErrors: revalidateState(nextNodes, nextConfigs, state.recipeMetadata),
-    },
+    nextState: withUndo(state, { nodes: nextNodes, configs: nextConfigs }),
     nodeId: result.node.id,
   };
 }

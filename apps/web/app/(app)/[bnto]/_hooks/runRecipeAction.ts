@@ -1,6 +1,7 @@
-import { core, slugToPipeline } from "@bnto/core";
+import { core, flattenDefinition } from "@bnto/core";
 import type { ExecutionInstance } from "@bnto/core";
 import type { Definition } from "@bnto/nodes";
+import { getRecipeBySlug } from "@bnto/nodes";
 
 interface RunRecipeParams {
   slug: string;
@@ -54,11 +55,16 @@ async function runBrowserPath(
   runProps: Record<string, unknown>,
   startTime: number,
 ) {
-  // Resolve slug → definition, then run via definition-based path
-  const pipeline = slugToPipeline(slug, config);
-  if (!pipeline) {
-    throw new Error(`No browser implementation for slug "${slug}"`);
+  // Look up the recipe definition and build a pipeline from it
+  const recipe = getRecipeBySlug(slug);
+  if (!recipe) {
+    throw new Error(`No recipe definition for slug "${slug}"`);
   }
+
+  // Merge user config into the processing node's parameters
+  const definition = mergeConfigIntoDefinition(recipe.definition, config);
+  const pipeline = flattenDefinition(definition);
+
   const result = await browserInstance.run(pipeline, files);
   const durationMs = Date.now() - startTime;
 
@@ -78,6 +84,28 @@ async function runBrowserPath(
       error: result.error ?? "unknown",
     });
   }
+}
+
+/**
+ * Merge user config (quality, format, width, etc.) into the processing
+ * node's parameters. Processing nodes are those that aren't input/output.
+ */
+function mergeConfigIntoDefinition(
+  definition: Definition,
+  config: Record<string, unknown>,
+): Definition {
+  if (!definition.nodes || Object.keys(config).length === 0) return definition;
+
+  return {
+    ...definition,
+    nodes: definition.nodes.map((node) => {
+      if (node.type === "input" || node.type === "output") return node;
+      return {
+        ...node,
+        parameters: { ...node.parameters, ...config },
+      };
+    }),
+  };
 }
 
 async function runCloudPath(

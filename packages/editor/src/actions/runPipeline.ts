@@ -8,7 +8,8 @@
  */
 
 import { validateDefinition } from "@bnto/nodes";
-import type { PipelineDefinition, PipelineNode } from "@bnto/core";
+import { flattenDefinition } from "@bnto/core";
+import type { PipelineDefinition } from "@bnto/core";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 import type { RecipeMetadata, ExecutionState } from "../store/types";
 import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
@@ -42,7 +43,7 @@ interface RunPipelineError {
  *
  * 1. Converts RF nodes + configs → Definition (via adapter)
  * 2. Validates the definition (Zod schemas per node type)
- * 3. Builds a flat PipelineDefinition for executePipeline()
+ * 3. Uses flattenDefinition() to build PipelineDefinition
  * 4. Returns initial execution state (all processing nodes → "pending")
  *
  * Returns either a ready-to-run result or validation errors.
@@ -59,23 +60,13 @@ function preparePipeline(input: RunPipelineInput): RunPipelineResult | RunPipeli
     return { errors: validationErrors.map((e) => e.message) };
   }
 
-  // Step 3: Flatten Definition nodes into PipelineNode[]
-  const pipelineNodes: PipelineNode[] = (definition.nodes ?? []).map((child) => ({
-    id: child.id,
-    type: child.type,
-    params: child.parameters ?? {},
-  }));
+  // Step 3: Flatten Definition → PipelineDefinition (preserves container nesting)
+  const pipeline = flattenDefinition(definition);
 
   // Step 4: Build initial execution state — processing nodes "pending", I/O "idle"
-  const initialExecutionState: ExecutionState = {};
-  for (const node of pipelineNodes) {
-    initialExecutionState[node.id] =
-      node.type === "input" || node.type === "output" ? "idle" : "pending";
-  }
-
   return {
-    definition: { nodes: pipelineNodes },
-    initialExecutionState,
+    definition: pipeline,
+    initialExecutionState: buildExecutionState(pipeline, "pending"),
   };
 }
 
@@ -84,5 +75,17 @@ function isPipelineError(result: RunPipelineResult | RunPipelineError): result i
   return "errors" in result;
 }
 
-export { preparePipeline, isPipelineError };
+/** Build execution state from pipeline nodes with a given status for processing nodes. */
+function buildExecutionState(
+  definition: PipelineDefinition,
+  processingStatus: "pending" | "active" | "completed",
+): ExecutionState {
+  const state: ExecutionState = {};
+  for (const node of definition.nodes) {
+    state[node.id] = node.type === "input" || node.type === "output" ? "idle" : processingStatus;
+  }
+  return state;
+}
+
+export { preparePipeline, isPipelineError, buildExecutionState };
 export type { RunPipelineInput, RunPipelineResult, RunPipelineError };

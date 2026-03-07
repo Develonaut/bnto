@@ -67,6 +67,7 @@ export { useShallow } from "zustand/react/shallow";
 
 // ── Pipeline engine (runtime-agnostic execution) ─────────────────────────
 export { executePipeline } from "./engine/executePipeline";
+export { flattenDefinition } from "./engine/flattenDefinition";
 export type {
   NodeRunner,
   FileInput,

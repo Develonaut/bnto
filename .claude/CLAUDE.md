@@ -18,6 +18,7 @@
 | Editor architecture            | [editor-architecture.md](.claude/strategy/editor-architecture.md)                                      |
 | Conveyor belt system           | [visual-editor.md](.claude/strategy/visual-editor.md)                                                  |
 | Input/output nodes             | [io-nodes.md](.claude/strategy/io-nodes.md)                                                            |
+| Node architecture & execution  | [node-architecture.md](.claude/strategy/node-architecture.md)                                          |
 | Editor user journey            | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)                                      |
 | Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                                       |
 | Implementation task            | [PLAN.md](.claude/PLAN.md)                                                                             |

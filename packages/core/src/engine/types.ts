@@ -65,14 +65,19 @@ export type NodeRunner = (
  *
  * Simpler than RecipeDefinition (which has ports, edges, positions, metadata).
  * This is just what the executor needs: type, params, and I/O markers.
+ *
+ * Container nodes (loop, group, parallel) have `children` — a sub-pipeline
+ * the executor runs recursively.
  */
 export interface PipelineNode {
   /** Unique node ID within this pipeline. */
   id: string;
-  /** Node type name (e.g., "compress-images", "input", "output"). */
+  /** Node type name (e.g., "image", "input", "output", "loop", "group"). */
   type: string;
   /** Parameters for this node (quality, format, pattern, etc.). */
   params: Record<string, unknown>;
+  /** Child nodes for container types (loop, group, parallel). */
+  children?: PipelineNode[];
 }
 
 /**

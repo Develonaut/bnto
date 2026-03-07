@@ -47,18 +47,50 @@ export async function loadWasmModule(baseUrl: string) {
  * Combined functions process a file ONCE and return both metadata + bytes.
  * This replaces the old dual-function pattern that processed each file TWICE,
  * causing progress bars to jump 0→100→0→100 and doubling CPU time.
+ *
+ * Primary keys use `nodeType:operation` compound format (e.g., "image:compress").
+ * Legacy slug keys (e.g., "compress-images") are preserved for backward compat.
  */
 export function registerNodeTypes(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic WASM module
   m: Record<string, any>,
   registry: Map<string, WasmCombinedFn>,
 ): void {
+  // Primary: nodeType:operation compound keys
+  registry.set("image:compress", m.compress_image_combined);
+  registry.set("image:resize", m.resize_image_combined);
+  registry.set("image:convert", m.convert_image_format_combined);
+  registry.set("spreadsheet:clean", m.clean_csv_combined);
+  registry.set("spreadsheet:rename", m.rename_csv_columns_combined);
+  registry.set("file-system:rename", m.rename_file_combined);
+
+  // Legacy: slug-based keys (backward compat for recipe pages)
   registry.set("compress-images", m.compress_image_combined);
   registry.set("resize-images", m.resize_image_combined);
   registry.set("convert-image-format", m.convert_image_format_combined);
   registry.set("clean-csv", m.clean_csv_combined);
   registry.set("rename-csv-columns", m.rename_csv_columns_combined);
   registry.set("rename-files", m.rename_file_combined);
+}
+
+/**
+ * Resolve the WASM function for a node type + params.
+ *
+ * Tries `nodeType:operation` first (from params.operation), then falls
+ * back to direct key lookup (legacy slug-based dispatch).
+ */
+export function resolveWasmFn(
+  registry: Map<string, WasmCombinedFn>,
+  nodeType: string,
+  params: Record<string, unknown>,
+): WasmCombinedFn | undefined {
+  const operation = params.operation;
+  if (typeof operation === "string") {
+    const compoundKey = `${nodeType}:${operation}`;
+    const fn = registry.get(compoundKey);
+    if (fn) return fn;
+  }
+  return registry.get(nodeType);
 }
 
 /** Copy WASM output bytes into a standalone ArrayBuffer (avoids linear memory invalidation). */

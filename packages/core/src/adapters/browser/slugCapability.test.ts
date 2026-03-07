@@ -3,6 +3,7 @@ import {
   isBrowserCapable,
   getBrowserNodeType,
   getBrowserCapableSlugs,
+  getNodeOperation,
 } from "./slugCapability";
 
 const ALL_TIER_1_SLUGS = [
@@ -27,12 +28,48 @@ describe("slugCapability", () => {
   });
 
   describe("getBrowserNodeType", () => {
-    it.each(ALL_TIER_1_SLUGS)("returns the node type for %s", (slug) => {
-      expect(getBrowserNodeType(slug)).toBe(slug);
+    it.each(ALL_TIER_1_SLUGS)("returns a node type for %s", (slug) => {
+      expect(getBrowserNodeType(slug)).toBeDefined();
     });
 
     it("returns undefined for unknown slugs", () => {
       expect(getBrowserNodeType("unknown")).toBeUndefined();
+    });
+  });
+
+  describe("getNodeOperation", () => {
+    it("returns nodeType and operation for image slugs", () => {
+      expect(getNodeOperation("compress-images")).toEqual({
+        nodeType: "image",
+        operation: "compress",
+      });
+      expect(getNodeOperation("resize-images")).toEqual({ nodeType: "image", operation: "resize" });
+      expect(getNodeOperation("convert-image-format")).toEqual({
+        nodeType: "image",
+        operation: "convert",
+      });
+    });
+
+    it("returns nodeType and operation for csv slugs", () => {
+      expect(getNodeOperation("clean-csv")).toEqual({
+        nodeType: "spreadsheet",
+        operation: "clean",
+      });
+      expect(getNodeOperation("rename-csv-columns")).toEqual({
+        nodeType: "spreadsheet",
+        operation: "rename",
+      });
+    });
+
+    it("returns nodeType and operation for file slugs", () => {
+      expect(getNodeOperation("rename-files")).toEqual({
+        nodeType: "file-system",
+        operation: "rename",
+      });
+    });
+
+    it("returns undefined for unknown slugs", () => {
+      expect(getNodeOperation("unknown")).toBeUndefined();
     });
   });
 

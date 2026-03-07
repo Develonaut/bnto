@@ -3,9 +3,16 @@ import type {
   FileResult,
   NodeRunner,
   PipelineDefinition,
+  PipelineNode,
   PipelineProgressCallback,
   PipelineResult,
 } from "./types";
+
+/** Container node types that have children sub-pipelines. */
+const CONTAINER_TYPES = new Set(["loop", "group", "parallel"]);
+
+/** I/O marker types that are skipped during execution. */
+const IO_TYPES = new Set(["input", "output"]);
 
 /**
  * Runtime-agnostic pipeline executor.
@@ -15,17 +22,9 @@ import type {
  * dependency is `runNode` — a single-file processing function that
  * every runtime (browser WASM, CLI, server, test mock) implements.
  *
- * No browser APIs. No WASM. No Worker. No dynamic imports.
- * This function is pure orchestration logic — testable in plain Node.js.
- *
- * **Why `NodeRunner` is injected:** The executor doesn't know (or care)
- * whether files are processed by WASM in a Web Worker, a native Rust
- * binary, or a remote Go API. The caller provides the runtime-specific
- * implementation. This is what makes the function runtime-agnostic.
- *
- * **Future: loop node override.** When the `loop` node type arrives,
- * it will need special handling here (iterate its children N times).
- * That logic belongs in this function — not in any runtime adapter.
+ * Supports container nodes (loop, group) by executing their children
+ * recursively. A `loop` runs its children once per file. A `group`
+ * runs its children once on the full batch.
  *
  * @param definition - Ordered node list to execute. I/O nodes are skipped automatically.
  * @param files - Input files to feed through the pipeline.
@@ -42,9 +41,7 @@ export async function executePipeline(
   const start = performance.now();
 
   // Filter to only processing nodes — I/O nodes are structural markers
-  const processingNodes = definition.nodes.filter(
-    (node) => node.type !== "input" && node.type !== "output",
-  );
+  const processingNodes = definition.nodes.filter((node) => !IO_TYPES.has(node.type));
 
   // No processing nodes → pass input files through unchanged
   if (processingNodes.length === 0 || files.length === 0) {
@@ -66,30 +63,76 @@ export async function executePipeline(
 
   for (let nodeIndex = 0; nodeIndex < processingNodes.length; nodeIndex++) {
     const node = processingNodes[nodeIndex];
-    const nodeResults: FileResult[] = [];
-
-    for (let fileIndex = 0; fileIndex < currentBatch.length; fileIndex++) {
-      const file = currentBatch[fileIndex];
-
-      // Build a per-file progress callback that adds pipeline-level context.
-      // Always pass a function to runNode (not undefined) so runtimes
-      // can call onProgress?.() without null-checking.
-      const fileProgress = (percent: number, message: string) => {
-        onProgress?.(nodeIndex, fileIndex, currentBatch.length, percent, message);
-      };
-
-      // FileResult is a superset of FileInput (same name/data/mimeType),
-      // so it satisfies the NodeRunner's FileInput parameter directly.
-      const result = await runNode(file, node.type, node.params, fileProgress);
-      nodeResults.push(result);
-    }
-
-    // Chain: this node's outputs become the next node's inputs
-    currentBatch = nodeResults;
+    currentBatch = await executeNode(node, currentBatch, runNode, onProgress, nodeIndex);
   }
 
   return {
     files: currentBatch,
     durationMs: performance.now() - start,
   };
+}
+
+/** Execute a single node — dispatches to container or primitive handling. */
+async function executeNode(
+  node: PipelineNode,
+  batch: FileResult[],
+  runNode: NodeRunner,
+  onProgress: PipelineProgressCallback | undefined,
+  nodeIndex: number,
+): Promise<FileResult[]> {
+  if (CONTAINER_TYPES.has(node.type) && node.children?.length) {
+    return executeContainerNode(node, batch, runNode);
+  }
+  return executePrimitiveNode(node, batch, runNode, onProgress, nodeIndex);
+}
+
+/** Execute a primitive node — runs each file through the node. */
+async function executePrimitiveNode(
+  node: PipelineNode,
+  batch: FileResult[],
+  runNode: NodeRunner,
+  onProgress: PipelineProgressCallback | undefined,
+  nodeIndex: number,
+): Promise<FileResult[]> {
+  const nodeResults: FileResult[] = [];
+
+  for (let fileIndex = 0; fileIndex < batch.length; fileIndex++) {
+    const file = batch[fileIndex];
+    const fileProgress = (percent: number, message: string) => {
+      onProgress?.(nodeIndex, fileIndex, batch.length, percent, message);
+    };
+    const result = await runNode(file, node.type, node.params, fileProgress);
+    nodeResults.push(result);
+  }
+
+  return nodeResults;
+}
+
+/**
+ * Execute a container node by running its children sub-pipeline.
+ *
+ * - `loop`: runs children once PER file (each iteration gets a single-file batch)
+ * - `group`: runs children once on the FULL batch
+ * - `parallel`: same as group for now (concurrent execution is future)
+ */
+async function executeContainerNode(
+  node: PipelineNode,
+  batch: FileResult[],
+  runNode: NodeRunner,
+): Promise<FileResult[]> {
+  const children = node.children ?? [];
+  const childPipeline: PipelineDefinition = { nodes: children };
+
+  if (node.type === "loop") {
+    const allResults: FileResult[] = [];
+    for (const file of batch) {
+      const iterationResult = await executePipeline(childPipeline, [file], runNode);
+      allResults.push(...iterationResult.files);
+    }
+    return allResults;
+  }
+
+  // group / parallel: run children on the full batch
+  const result = await executePipeline(childPipeline, batch, runNode);
+  return result.files;
 }

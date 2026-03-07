@@ -15,9 +15,15 @@ import {
  * CompartmentNode — a processing node on the bento grid.
  *
  * Full-size card, higher elevation, delete button when selected.
+ * Status-driven rendering:
+ *   idle      — default appearance
+ *   pending   — muted (dimmed, waiting)
+ *   active    — elevated (currently executing)
+ *   completed — default appearance (settled back)
+ *   failed    — destructive border ring
  */
 
-export type CompartmentStatus = "idle" | "pending" | "active" | "completed";
+export type CompartmentStatus = "idle" | "pending" | "active" | "completed" | "failed";
 
 export const CompartmentNode = memo(function CompartmentNode({
   id,
@@ -25,14 +31,17 @@ export const CompartmentNode = memo(function CompartmentNode({
   selected,
 }: NodeProps<BentoNode>) {
   const status = (data.status ?? "idle") as CompartmentStatus;
+  const isFailed = status === "failed";
+  const isActive = status === "active";
 
   return (
     <NodeRoot
       width={data.width}
       height={data.height}
-      elevation={selected ? "lg" : "md"}
+      elevation={isActive ? "lg" : selected ? "lg" : "md"}
       muted={status === "pending"}
       selected={selected}
+      failed={isFailed}
     >
       <NodeHeader>
         <NodeDeleteButton nodeId={id} selected={selected} />
@@ -40,7 +49,7 @@ export const CompartmentNode = memo(function CompartmentNode({
       <NodeBody>
         <NodeIcon icon={data.icon} />
         <NodeLabel>{data.label}</NodeLabel>
-        <NodeSublabel>{data.sublabel}</NodeSublabel>
+        <NodeSublabel>{isFailed ? "Failed" : data.sublabel}</NodeSublabel>
       </NodeBody>
     </NodeRoot>
   );

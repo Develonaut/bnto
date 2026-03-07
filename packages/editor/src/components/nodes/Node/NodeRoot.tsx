@@ -1,5 +1,5 @@
 import type { ReactNode, ComponentProps } from "react";
-import { ScaleIn, Card, Pressable } from "@bnto/ui";
+import { ScaleIn, Card, Pressable, cn } from "@bnto/ui";
 import { CELL } from "../../../adapters/bentoSlots";
 
 type CardProps = ComponentProps<typeof Card>;
@@ -12,6 +12,12 @@ type CardProps = ComponentProps<typeof Card>;
  * When `selected`, `data-active` on the wrapper makes the card
  * sit flush with the ground via `.pressable[data-active]` CSS.
  */
+
+const JUSTIFY_MAP = {
+  start: "justify-start",
+  center: "justify-center",
+  end: "justify-end",
+} as const;
 
 interface NodeRootProps {
   /** Inner card width (defaults to CELL). */
@@ -28,6 +34,8 @@ interface NodeRootProps {
   muted?: boolean;
   /** Card sits flush with ground when selected. */
   selected?: boolean;
+  /** Destructive ring when a node has failed during execution. */
+  failed?: boolean;
   /** Composed content — NodeHeader, NodeBody, NodeFooter. */
   children: ReactNode;
 }
@@ -40,15 +48,10 @@ function NodeRoot({
   align,
   muted = false,
   selected = false,
+  failed = false,
   children,
 }: NodeRootProps) {
-  const justifyMap = {
-    start: "justify-start",
-    center: "justify-center",
-    end: "justify-end",
-  } as const;
-
-  const slotClass = align ? `pointer-events-none flex items-center ${justifyMap[align]}` : "";
+  const slotClass = align ? `pointer-events-none flex items-center ${JUSTIFY_MAP[align]}` : "";
 
   return (
     <div style={{ width: CELL, height: CELL }} className={slotClass} data-testid="node-slot">
@@ -57,7 +60,10 @@ function NodeRoot({
           <Card
             elevation={elevation}
             color={color}
-            className="group relative flex flex-col rounded-xl pointer-events-auto"
+            className={cn(
+              "group relative flex flex-col rounded-xl pointer-events-auto",
+              failed && "ring-2 ring-destructive/60",
+            )}
             style={{ width, height }}
             data-testid="node-card"
           >
