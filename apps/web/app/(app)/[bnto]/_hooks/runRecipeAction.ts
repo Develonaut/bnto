@@ -1,4 +1,4 @@
-import { core } from "@bnto/core";
+import { core, slugToPipeline } from "@bnto/core";
 import type { ExecutionInstance } from "@bnto/core";
 import type { Definition } from "@bnto/nodes";
 
@@ -54,7 +54,12 @@ async function runBrowserPath(
   runProps: Record<string, unknown>,
   startTime: number,
 ) {
-  const result = await browserInstance.run(slug, files, config);
+  // Resolve slug → definition, then run via definition-based path
+  const pipeline = slugToPipeline(slug, config);
+  if (!pipeline) {
+    throw new Error(`No browser implementation for slug "${slug}"`);
+  }
+  const result = await browserInstance.run(pipeline, files);
   const durationMs = Date.now() - startTime;
 
   if (result.status === "completed" && result.results.length > 0) {
@@ -76,7 +81,16 @@ async function runBrowserPath(
 }
 
 async function runCloudPath(
-  { definition, slug, files, upload, startCloudExec, onStartUpload, onStartExecution, onFail }: RunRecipeParams,
+  {
+    definition,
+    slug,
+    files,
+    upload,
+    startCloudExec,
+    onStartUpload,
+    onStartExecution,
+    onFail,
+  }: RunRecipeParams,
   runProps: Record<string, unknown>,
   startTime: number,
 ) {

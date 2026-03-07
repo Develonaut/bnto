@@ -8,14 +8,13 @@
  * through `core.executions.useExecutionState(instance)`.
  */
 
-import {
-  createExecutionInstanceStore,
-} from "../stores/executionInstanceStore";
+import { createExecutionInstanceStore } from "../stores/executionInstanceStore";
 import type {
   BrowserFileResult,
   BrowserFileProgressInput,
   BrowserRunResult,
 } from "../types/browser";
+import type { PipelineDefinition } from "../engine/types";
 
 // ---------------------------------------------------------------------------
 // Symbol for opaque store access
@@ -29,11 +28,8 @@ export const EXECUTION_STORE = Symbol.for("bnto:execution-store");
 // ---------------------------------------------------------------------------
 
 export interface ExecutionInstance {
-  run: (
-    slug: string,
-    files: File[],
-    params?: Record<string, unknown>,
-  ) => Promise<BrowserRunResult>;
+  /** Execute a PipelineDefinition. Callers with a slug use slugToPipeline() first. */
+  run: (definition: PipelineDefinition, files: File[]) => Promise<BrowserRunResult>;
   reset: () => void;
   /** @internal Symbol-keyed store for useExecutionState(). */
   [EXECUTION_STORE]: ReturnType<typeof createExecutionInstanceStore>;
@@ -45,14 +41,11 @@ export interface ExecutionInstance {
 
 const THROTTLE_MS = 16;
 
-function createThrottledProgress(
-  store: ReturnType<typeof createExecutionInstanceStore>,
-) {
+function createThrottledProgress(store: ReturnType<typeof createExecutionInstanceStore>) {
   let lastUpdate = 0;
 
   return (progress: BrowserFileProgressInput) => {
-    const now =
-      typeof performance !== "undefined" ? performance.now() : Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
 
     const current = store.getState().fileProgress;
     const isFirst = current === null;
@@ -77,14 +70,14 @@ function generateExecutionId(): string {
     : `exec-${Date.now()}`;
 }
 
-export function createExecutionInstance(
-  execute: (
-    slug: string,
-    files: File[],
-    params: Record<string, unknown>,
-    onProgress?: (progress: BrowserFileProgressInput) => void,
-  ) => Promise<BrowserFileResult[]>,
-): ExecutionInstance {
+/** Definition-based executor signature. */
+type PipelineExecutor = (
+  definition: PipelineDefinition,
+  files: File[],
+  onProgress?: (progress: BrowserFileProgressInput) => void,
+) => Promise<BrowserFileResult[]>;
+
+export function createExecutionInstance(executePipeline: PipelineExecutor): ExecutionInstance {
   const store = createExecutionInstanceStore();
   let aborted = false;
 
@@ -99,17 +92,13 @@ export function createExecutionInstance(
   return {
     [EXECUTION_STORE]: store,
 
-    run: async (
-      slug: string,
-      files: File[],
-      params: Record<string, unknown> = {},
-    ): Promise<BrowserRunResult> => {
+    run: async (definition, files) => {
       aborted = false;
       const startedAt = Date.now();
       store.getState().start(generateExecutionId(), startedAt);
 
       try {
-        const results = await execute(slug, files, params, buildProgressCallback());
+        const results = await executePipeline(definition, files, buildProgressCallback());
         const durationMs = Date.now() - startedAt;
         if (aborted) return { status: "aborted", results: [], durationMs };
         store.getState().complete(results, Date.now());
