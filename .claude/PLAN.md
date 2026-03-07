@@ -332,20 +332,20 @@ Verify all UX changes hold together as a system. No regressions on existing edit
 
 **The three-tier system:**
 
-| Tier          | Nodes         | Elevation (rest) | Elevation (selected)       | Color                | Shape                     |
-| ------------- | ------------- | ---------------- | -------------------------- | -------------------- | ------------------------- |
-| Structural    | input, output | `sm`             | `md`                       | `muted` (warm cream) | wider, shorter — `160×90` |
-| Processing    | all others    | `md`             | `lg`                       | `card` (white)       | square — `120×120`        |
-| Selected ring | any selected  | —                | + `ring-2 ring-primary/60` | —                    | —                         |
+| Tier          | Nodes         | Elevation (rest) | Elevation (selected)       | Color                | Shape              |
+| ------------- | ------------- | ---------------- | -------------------------- | -------------------- | ------------------ |
+| Structural    | input, output | `sm`             | `md`                       | `muted` (warm cream) | square — `90×90`   |
+| Processing    | all others    | `md`             | `lg`                       | `card` (white)       | square — `120×120` |
+| Selected ring | any selected  | —                | + `ring-2 ring-primary/60` | —                    | —                  |
 
 #### Wave 1 — I/O Node Distinction
 
 Differentiate Input and Output from processing nodes through elevation, color, and shape — not just icon. These are the walls of the bento box, not a compartment inside it.
 
-- [ ] `packages/editor` — **I/O node sizing**: Update `definitionToBento` adapter — set `width: 160, height: 90` for nodes where `isIoNodeType(nodeType)` is true. Processing nodes keep `120×120`. Different aspect ratio signals "different kind of thing" before the label is read.
-- [ ] `packages/editor` — **I/O node color + elevation**: In `CompartmentNode.tsx`, **replace** the current uniform `elevation={selected ? "lg" : "sm"}` with conditional logic: when `data.isIoNode` is true, render `Card color="muted" elevation={selected ? "md" : "sm"}`. When false (processing), render `Card elevation={selected ? "lg" : "md"}`. This is a conscious replacement of the existing scheme, not an addition. Muted cards read as "part of the canvas" — warm cream that doesn't compete with the steps in between.
-- [ ] `packages/editor` — **I/O node Pressable behavior**: Remove `toggle` and `active` props from the `Pressable` wrapper for I/O nodes. They can still receive clicks for selection feedback but shouldn't feel like pressable configuration buttons.
-- [ ] `packages/editor` — **Unit tests**: I/O nodes render with `color="muted"`, `elevation="sm"`, and `160×90` dimensions. Processing nodes render with `elevation="md"` and `120×120`. Adapter sets `isIoNode` correctly for all 12 node types.
+- [x] `packages/editor` — **I/O node sizing**: Update `definitionToBento` adapter — set `width: 160, height: 90` for nodes where `isIoNodeType(nodeType)` is true. Processing nodes keep `120×120`. Different aspect ratio signals "different kind of thing" before the label is read.
+- [x] `packages/editor` — **I/O node color + elevation**: In `CompartmentNode.tsx`, **replace** the current uniform `elevation={selected ? "lg" : "sm"}` with conditional logic: when `data.isIoNode` is true, render `Card color="muted" elevation={selected ? "md" : "sm"}`. When false (processing), render `Card elevation={selected ? "lg" : "md"}`. This is a conscious replacement of the existing scheme, not an addition. Muted cards read as "part of the canvas" — warm cream that doesn't compete with the steps in between.
+- [x] `packages/editor` — **I/O node Pressable behavior**: Remove `toggle` and `active` props from the `Pressable` wrapper for I/O nodes. They can still receive clicks for selection feedback but shouldn't feel like pressable configuration buttons.
+- [x] `packages/editor` — **Unit tests**: I/O nodes render with `color="muted"`, `elevation="sm"`, and `160×90` dimensions. Processing nodes render with `elevation="md"` and `120×120`. Adapter sets `isIoNode` correctly for all 12 node types.
 
 #### Wave 2 — Processing Node Category Accents + Selected State
 

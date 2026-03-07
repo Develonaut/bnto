@@ -65,7 +65,7 @@ type NodeConfigs = Record<string, NodeConfig>;
 // ReactFlow-compatible node — extends RF's Node with typed data
 // ---------------------------------------------------------------------------
 
-type BentoNode = Node<CompartmentNodeData, "compartment">;
+type BentoNode = Node<CompartmentNodeData, "compartment" | "io">;
 
 type BentoLayout = {
   nodes: BentoNode[];

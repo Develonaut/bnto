@@ -7,7 +7,7 @@ import { useEditorPanels } from "../../hooks/useEditorPanels";
 import { CELL } from "../../adapters/bentoSlots";
 
 /**
- * PlaceholderSlot — a ReactFlow node type for the empty slot CTA.
+ * PlaceholderNode — a ReactFlow node type for the empty slot CTA.
  *
  * Rendered as a dashed muted card with a centered icon button.
  * Positioned at the next available slot in the bento grid (after
@@ -19,7 +19,7 @@ import { CELL } from "../../adapters/bentoSlots";
  * Non-interactive to ReactFlow (not selectable, not draggable).
  */
 
-const PlaceholderSlot = memo(function PlaceholderSlot() {
+const PlaceholderNode = memo(function PlaceholderNode() {
   const { openPalette } = useEditorPanels();
 
   return (
@@ -29,7 +29,7 @@ const PlaceholderSlot = memo(function PlaceholderSlot() {
       elevation="none"
       className="pointer-events-auto flex items-center justify-center rounded-xl"
       style={{ width: CELL, height: CELL, transformStyle: "flat" }}
-      data-testid="placeholder-slot"
+      data-testid="placeholder-node"
     >
       <Button
         size="icon"
@@ -45,4 +45,4 @@ const PlaceholderSlot = memo(function PlaceholderSlot() {
   );
 });
 
-export { PlaceholderSlot };
+export { PlaceholderNode };

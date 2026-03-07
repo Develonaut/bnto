@@ -11,7 +11,7 @@ describe("createCompartmentNode", () => {
   it("creates a BentoNode + NodeConfig from a node type and slot index", () => {
     const result = createCompartmentNode("image", 0);
     expect(result).not.toBeNull();
-    expect(result!.node.type).toBe("compartment");
+    expect(result!.node.type).toBe("compartment"); // processing → "compartment"
     expect(result!.config.nodeType).toBe("image");
   });
 
@@ -35,10 +35,22 @@ describe("createCompartmentNode", () => {
     expect(result!.node.data.variant).toBe("primary");
   });
 
-  it("sets slot dimensions", () => {
+  it("sets slot dimensions for processing nodes", () => {
     const result = createCompartmentNode("image", 0);
     expect(result!.node.data.width).toBe(SLOTS[0]!.w);
     expect(result!.node.data.height).toBe(SLOTS[0]!.h);
+  });
+
+  it("sets I/O-specific dimensions for input nodes", () => {
+    const result = createCompartmentNode("input", 0);
+    expect(result!.node.data.width).toBe(100);
+    expect(result!.node.data.height).toBe(100);
+  });
+
+  it("sets I/O-specific dimensions for output nodes", () => {
+    const result = createCompartmentNode("output", 0);
+    expect(result!.node.data.width).toBe(100);
+    expect(result!.node.data.height).toBe(100);
   });
 
   it("generates a UUID for node id", () => {
@@ -74,12 +86,27 @@ describe("createCompartmentNode", () => {
     expect(result!.config.parameters).toEqual(expectedDefaults);
   });
 
-  it("sets icon from NodeTypeInfo.icon", () => {
+  it("sets static icon for processing nodes via getNodeIcon", () => {
     const result = createCompartmentNode("image", 0);
     expect(result!.node.data.icon).toBe("image");
+  });
 
-    const ioResult = createCompartmentNode("input", 0);
-    expect(ioResult!.node.data.icon).toBe("upload");
+  it("sets contextual icon for I/O nodes via getNodeIcon", () => {
+    // Input defaults to file-upload mode → "file-up"
+    const inputResult = createCompartmentNode("input", 0);
+    expect(inputResult!.node.data.icon).toBe("file-up");
+
+    // Output defaults to download mode → "download"
+    const outputResult = createCompartmentNode("output", 0);
+    expect(outputResult!.node.data.icon).toBe("download");
+  });
+
+  it("sets human-readable sublabel", () => {
+    const inputResult = createCompartmentNode("input", 0);
+    expect(inputResult!.node.data.sublabel).toBe("File Upload");
+
+    const imageResult = createCompartmentNode("image", 0);
+    expect(imageResult!.node.data.sublabel).toBe("Image");
   });
 
   it("sets isIoNode true for input nodes", () => {

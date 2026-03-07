@@ -7,7 +7,7 @@ function ioNodes(): BentoNode[] {
   return [
     {
       id: "input",
-      type: "compartment",
+      type: "io",
       position: { x: SLOTS[0]!.x, y: SLOTS[0]!.y },
       data: {
         label: "Input",
@@ -19,7 +19,7 @@ function ioNodes(): BentoNode[] {
     },
     {
       id: "output",
-      type: "compartment",
+      type: "io",
       position: { x: SLOTS[1]!.x, y: SLOTS[1]!.y },
       data: {
         label: "Output",

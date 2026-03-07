@@ -10,42 +10,47 @@
  */
 
 import type { Definition, NodeTypeName } from "@bnto/nodes";
-import { NODE_TYPE_INFO } from "@bnto/nodes";
+import { NODE_TYPE_INFO, getNodeIcon, getNodeSublabel, isIoNodeType } from "@bnto/nodes";
 import type { BentoNode, BentoLayout, NodeConfigs } from "./types";
-import { SLOTS } from "./bentoSlots";
+import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";
-import { isIoNodeType } from "../helpers/isIoNodeType";
 
 function definitionToBento(definition: Definition): BentoLayout {
   const children = definition.nodes ?? [];
   const configs: NodeConfigs = {};
 
-  const nodes: BentoNode[] = children.slice(0, SLOTS.length).map((node, index) => {
-    const slot = SLOTS[index]!;
-    const info = NODE_TYPE_INFO[node.type as NodeTypeName];
+  // All nodes occupy the same CELL×CELL slot — uniform grid, no cursor math.
+  // I/O nodes render a smaller inner card; alignment is handled by the renderer.
+  const nodes: BentoNode[] = children.slice(0, SLOTS.length).map((node, i) => {
+    const slot = SLOTS[i]!;
+    const nodeType = node.type as NodeTypeName;
+    const info = NODE_TYPE_INFO[nodeType];
     const variant = info ? (CATEGORY_VARIANT[info.category] ?? "muted") : "muted";
-    const label = node.name || (info?.label ?? node.type);
 
-    // Domain data → configs map (not node.data)
     configs[node.id] = {
       nodeType: node.type,
       name: node.name,
       parameters: node.parameters,
     };
 
+    const isIo = isIoNodeType(node.type);
+    const label = isIo ? (info?.label ?? node.type) : node.name || (info?.label ?? node.type);
+    const icon = getNodeIcon(nodeType, node.parameters);
+    const sublabel = getNodeSublabel(nodeType, node.parameters);
+
     return {
       id: node.id,
-      type: "compartment" as const,
+      type: isIo ? ("io" as const) : ("compartment" as const),
       position: { x: slot.x, y: slot.y },
       data: {
         label,
-        sublabel: info?.category ?? "",
+        sublabel,
         variant,
-        width: slot.w,
-        height: slot.h,
+        width: isIo ? IO_CARD_SIZE : slot.w,
+        height: isIo ? IO_CARD_SIZE : slot.h,
         status: "idle" as const,
-        icon: info?.icon,
-        isIoNode: isIoNodeType(node.type),
+        icon,
+        isIoNode: isIo,
       },
     };
   });

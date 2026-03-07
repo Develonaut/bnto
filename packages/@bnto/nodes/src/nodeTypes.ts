@@ -113,7 +113,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "control",
     isContainer: true,
     browserCapable: true,
-    icon: "braces",
+    icon: "box",
   },
   "http-request": {
     name: "http-request",
@@ -141,7 +141,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "io",
     isContainer: false,
     browserCapable: true,
-    icon: "upload",
+    icon: "file-up",
   },
   loop: {
     name: "loop",
@@ -150,7 +150,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "control",
     isContainer: true,
     browserCapable: true,
-    icon: "refresh-cw",
+    icon: "repeat",
   },
   output: {
     name: "output",
@@ -169,7 +169,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "control",
     isContainer: true,
     browserCapable: true,
-    icon: "columns-3",
+    icon: "git-fork",
   },
   "shell-command": {
     name: "shell-command",
@@ -178,7 +178,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "system",
     isContainer: false,
     browserCapable: false,
-    icon: "terminal-square",
+    icon: "terminal",
   },
   spreadsheet: {
     name: "spreadsheet",
@@ -187,7 +187,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "spreadsheet",
     isContainer: false,
     browserCapable: true,
-    icon: "table",
+    icon: "sheet",
   },
   transform: {
     name: "transform",
@@ -196,7 +196,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     category: "data",
     isContainer: false,
     browserCapable: true,
-    icon: "shuffle",
+    icon: "arrow-left-right",
   },
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;
 
