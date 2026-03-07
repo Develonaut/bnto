@@ -12,8 +12,8 @@ import {
   PlusIcon,
   MinusIcon,
   XIcon,
-  ImageIcon,
-  FileTextIcon,
+  FileUpIcon,
+  DownloadIcon,
   ArrowRightLeftIcon,
   SparklesIcon,
   ScalingIcon,
@@ -43,16 +43,16 @@ const NODE_POOL: Omit<MockNode, "id">[] = [
 ];
 
 const IO_NODES: MockNode[] = [
-  { id: "input", label: "Input", sublabel: "files", icon: ImageIcon, isIoNode: true },
-  { id: "output", label: "Output", sublabel: "results", icon: FileTextIcon, isIoNode: true },
+  { id: "input", label: "Input", sublabel: "File Upload", icon: FileUpIcon, isIoNode: true },
+  { id: "output", label: "Output", sublabel: "Download", icon: DownloadIcon, isIoNode: true },
 ];
 
 let nodeCounter = 0;
 
 /* ── Node size constants ──────────────────────────────────────── */
 
-const IO_SIZE = 120;
-const COMPARTMENT_SIZE = 160;
+const IO_SIZE = 100;
+const COMPARTMENT_SIZE = 120;
 
 /* ── Shared node internals ───────────────────────────────────── */
 
@@ -69,19 +69,27 @@ function NodeCard({ node, size, selected, onSelect, onDelete }: NodeCardProps) {
 
   return (
     <div className="group relative" onClick={onSelect}>
-      <Pressable asChild spring="bounciest" toggle active={selected}>
+      <Pressable
+        asChild
+        spring="bounciest"
+        toggle={!node.isIoNode}
+        active={!node.isIoNode && selected}
+      >
         <Card
-          elevation={selected ? "lg" : "sm"}
+          elevation={node.isIoNode ? (selected ? "md" : "sm") : selected ? "lg" : "md"}
+          color={node.isIoNode ? "muted" : undefined}
           className="flex flex-col items-center justify-center gap-1 rounded-xl"
-          style={{ width: size, height: size }}
+          style={{ width: node.isIoNode ? IO_SIZE : size, height: node.isIoNode ? IO_SIZE : size }}
         >
           <Icon className="size-8 text-muted-foreground" />
           <Text size="sm" className="font-display font-semibold leading-tight text-center">
             {node.label}
           </Text>
-          <Text size="xs" color="muted" className="capitalize">
-            {node.sublabel}
-          </Text>
+          {node.sublabel && (
+            <Text size="xs" color="muted">
+              {node.sublabel}
+            </Text>
+          )}
         </Card>
       </Pressable>
 
@@ -109,7 +117,7 @@ function NodeCard({ node, size, selected, onSelect, onDelete }: NodeCardProps) {
 type SelectableProps = { node: MockNode; selected: boolean; onSelect: () => void };
 
 function IONode(props: SelectableProps) {
-  return <NodeCard {...props} size={IO_SIZE} />;
+  return <NodeCard {...props} size={COMPARTMENT_SIZE} />;
 }
 
 function CompartmentNode(props: SelectableProps & { onDelete?: () => void }) {

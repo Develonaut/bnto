@@ -9,11 +9,16 @@
  */
 
 import type { NodeTypeName } from "@bnto/nodes";
-import { NODE_TYPE_INFO, NODE_SCHEMA_DEFS } from "@bnto/nodes";
+import {
+  NODE_TYPE_INFO,
+  NODE_SCHEMA_DEFS,
+  getNodeIcon,
+  getNodeSublabel,
+  isIoNodeType,
+} from "@bnto/nodes";
 import type { BentoNode, NodeConfig } from "./types";
-import { SLOTS } from "./bentoSlots";
+import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";
-import { isIoNodeType } from "../helpers/isIoNodeType";
 
 /** Builds default parameters from the Zod schema for a node type. */
 function buildDefaultParams(nodeType: NodeTypeName): Record<string, unknown> {
@@ -56,27 +61,36 @@ function createCompartmentNode(
   const variant = info ? (CATEGORY_VARIANT[info.category] ?? "muted") : "muted";
   const label = info?.label ?? type;
   const id = crypto.randomUUID();
+  const parameters = buildDefaultParams(type);
+
+  const isIo = isIoNodeType(type);
+  // Icon via getNodeIcon — single source of truth from @bnto/nodes.
+  const icon = getNodeIcon(type, parameters);
+  const sublabel = getNodeSublabel(type, parameters);
+  // All nodes use uniform CELL×CELL slots — no y-offset math.
+  // I/O visual size is handled by the renderer.
+  const defaultPos = { x: slot.x, y: slot.y };
 
   const node: BentoNode = {
     id,
-    type: "compartment" as const,
-    position: position ?? { x: slot.x, y: slot.y },
+    type: isIo ? ("io" as const) : ("compartment" as const),
+    position: position ?? defaultPos,
     data: {
       label,
-      sublabel: info?.category ?? "",
+      sublabel,
       variant,
-      width: slot.w,
-      height: slot.h,
+      width: isIo ? IO_CARD_SIZE : slot.w,
+      height: isIo ? IO_CARD_SIZE : slot.h,
       status: "idle" as const,
-      icon: info?.icon,
-      isIoNode: isIoNodeType(type),
+      icon,
+      isIoNode: isIo,
     },
   };
 
   const config: NodeConfig = {
     nodeType: type,
     name: label,
-    parameters: buildDefaultParams(type),
+    parameters,
   };
 
   return { node, config };

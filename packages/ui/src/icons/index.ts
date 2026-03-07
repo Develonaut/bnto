@@ -84,6 +84,18 @@ export {
   TerminalSquare as TerminalSquareIcon,
   Braces as BracesIcon,
   RefreshCw as RefreshCwIcon,
+  SquareArrowRight as SquareArrowRightIcon,
+  SquareArrowRightExit as SquareArrowRightExitIcon,
+  FileUp as FileUpIcon,
+  TextCursorInput as TextCursorInputIcon,
+  Link as LinkIcon,
+  Monitor as MonitorIcon,
+  Repeat as RepeatIcon,
+  GitFork as GitForkIcon,
+  Box as BoxIcon,
+  ArrowLeftRight as ArrowLeftRightIcon,
+  Sheet as SheetIcon,
+  Terminal as TerminalIcon,
 } from "lucide-react";
 
 export type { LucideIcon } from "lucide-react";

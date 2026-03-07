@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { BentoCanvas } from "../canvas/BentoCanvas";
+import { Canvas } from "./Canvas";
 import { EditorOverlay } from "./EditorOverlay";
 import { useEditorCanvas } from "./useEditorCanvas";
 import { usePlaceholderNodes } from "../../hooks/usePlaceholderNodes";
@@ -24,7 +24,7 @@ function CanvasShell({ children }: CanvasShellProps) {
 
   return (
     <div className="relative h-full overflow-hidden" data-testid="recipe-editor">
-      <BentoCanvas
+      <Canvas
         nodes={displayNodes}
         onNodesChange={handleNodesChange}
         edges={edges}

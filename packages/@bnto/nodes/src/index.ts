@@ -26,6 +26,9 @@ export { isNodeType } from "./isNodeType";
 export { getNodeTypeInfo } from "./getNodeTypeInfo";
 export { getBrowserCapableTypes } from "./getBrowserCapableTypes";
 export { getContainerTypes } from "./getContainerTypes";
+export { getNodeIcon } from "./getNodeIcon";
+export { getNodeSublabel } from "./getNodeSublabel";
+export { isIoNodeType } from "./isIoNodeType";
 
 // Categories
 export { CATEGORIES, getCategoryInfo } from "./categories";

@@ -13,7 +13,7 @@ import type { EditorState } from "../store/types";
 import { captureSnapshot } from "../store/captureSnapshot";
 import { pushToStack } from "../store/pushToStack";
 import { revalidateState } from "../store/revalidateState";
-import { isIoNodeType } from "../helpers/isIoNodeType";
+import { isIoNodeType } from "@bnto/nodes";
 import { STRIDE } from "../adapters/bentoSlots";
 
 export function removeNode(state: EditorState, id: string): Partial<EditorState> | null {

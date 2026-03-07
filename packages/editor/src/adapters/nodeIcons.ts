@@ -3,38 +3,49 @@
 import type { LucideIcon } from "@bnto/ui";
 import {
   ImageIcon,
-  TableIcon,
+  SheetIcon,
   FolderOpenIcon,
-  ShuffleIcon,
+  ArrowLeftRightIcon,
   PenLineIcon,
   GlobeIcon,
-  TerminalSquareIcon,
-  BracesIcon,
-  RefreshCwIcon,
-  Columns3Icon,
-  UploadIcon,
+  TerminalIcon,
+  RepeatIcon,
+  GitForkIcon,
+  BoxIcon,
+  // I/O contextual icons (from getNodeIcon)
+  FileUpIcon,
+  TextCursorInputIcon,
+  LinkIcon,
   DownloadIcon,
+  MonitorIcon,
+  EyeIcon,
 } from "@bnto/ui";
 
 /**
- * Maps icon identifier strings (from NodeTypeInfo.icon) to Lucide components.
+ * Maps icon identifier strings to Lucide components.
  *
- * Consumers look up NODE_TYPE_INFO[type].icon to get the string,
- * then resolve it here to an actual component for rendering.
+ * getNodeIcon() in @bnto/nodes returns these strings.
+ * This registry resolves them to renderable components.
  */
 const ICON_COMPONENTS: Record<string, LucideIcon> = {
+  // Processing node icons (static from NODE_TYPE_INFO)
   image: ImageIcon,
-  table: TableIcon,
+  sheet: SheetIcon,
   "folder-open": FolderOpenIcon,
-  shuffle: ShuffleIcon,
+  "arrow-left-right": ArrowLeftRightIcon,
   "pen-line": PenLineIcon,
   globe: GlobeIcon,
-  "terminal-square": TerminalSquareIcon,
-  braces: BracesIcon,
-  "refresh-cw": RefreshCwIcon,
-  "columns-3": Columns3Icon,
-  upload: UploadIcon,
+  terminal: TerminalIcon,
+  repeat: RepeatIcon,
+  "git-fork": GitForkIcon,
+  box: BoxIcon,
+  // I/O contextual icons (from getNodeIcon)
+  "file-up": FileUpIcon,
+  "text-cursor-input": TextCursorInputIcon,
+  link: LinkIcon,
   download: DownloadIcon,
+  monitor: MonitorIcon,
+  eye: EyeIcon,
 };
 
 export { ICON_COMPONENTS };

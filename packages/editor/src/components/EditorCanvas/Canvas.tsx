@@ -13,10 +13,10 @@ import type { NodeChange, EdgeChange, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { cn } from "@bnto/ui";
 
-import { CompartmentNode } from "./CompartmentNode";
-import { PlaceholderSlot } from "./PlaceholderSlot";
+import { CompartmentNode, IoNode, PlaceholderNode } from "../nodes";
 import type { BentoNode } from "../../adapters/types";
 import { FIT_VIEW_OPTIONS } from "../../constants";
+import { PLACEHOLDER_ID } from "../../helpers/injectPlaceholder";
 
 /**
  * A React Flow canvas styled as a bento box grid.
@@ -32,7 +32,7 @@ import { FIT_VIEW_OPTIONS } from "../../constants";
  * Children are rendered inside ReactFlow — use for `<Panel>` overlays.
  */
 
-type BentoCanvasProps = {
+type CanvasProps = {
   /** Controlled mode: nodes from external store. */
   nodes?: BentoNode[];
   /** Controlled mode: RF change handler. */
@@ -72,23 +72,24 @@ const PRO_OPTIONS = { hideAttribution: true } as const;
  * unmounting/remounting all nodes on every render. */
 const NODE_TYPES = {
   compartment: CompartmentNode,
-  placeholder: PlaceholderSlot,
+  io: IoNode,
+  placeholder: PlaceholderNode,
 } as const;
 
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
 
-type BentoCanvasInnerProps = {
+type CanvasInnerProps = {
   nodes?: BentoNode[];
   onNodesChange?: (changes: NodeChange<BentoNode>[]) => void;
   edges?: Edge[];
   onEdgesChange?: (changes: EdgeChange[]) => void;
   defaultNodes?: BentoNode[];
   interactive?: boolean;
-  disable?: BentoCanvasProps["disable"];
+  disable?: CanvasProps["disable"];
   children?: ReactNode;
 };
 
-function BentoCanvasInner({
+function CanvasInner({
   nodes,
   onNodesChange,
   edges,
@@ -97,22 +98,28 @@ function BentoCanvasInner({
   interactive = false,
   disable,
   children,
-}: BentoCanvasInnerProps) {
+}: CanvasInnerProps) {
   const { fitView } = useReactFlow();
 
-  /* Fit all nodes on initial mount only. */
-  const hasFitted = useRef(false);
+  /* Fit viewport whenever the node count changes (add/remove).
+   * Initial mount uses duration: 0 (instant); subsequent changes
+   * animate smoothly so the user sees the viewport adjust.
+   * When only I/O + placeholder remain, fit to the placeholder
+   * so the viewport centers on the "add node" prompt. */
+  const prevCountRef = useRef<number | null>(null);
   const nodeCount = useStore((s) => s.nodes.length);
+  const hasProcessingNodes = useStore((s) => s.nodes.some((n) => n.type === "compartment"));
 
   useEffect(() => {
-    if (hasFitted.current || nodeCount === 0) return;
-    hasFitted.current = true;
-    // Defer fitView to the next animation frame so RF has time to
-    // measure node DOM dimensions before calculating viewport bounds.
+    if (nodeCount === 0) return;
+    const isInitial = prevCountRef.current === null;
+    prevCountRef.current = nodeCount;
+    const includeNodes = hasProcessingNodes ? undefined : [{ id: PLACEHOLDER_ID }];
+    // Defer fitView so RF has time to measure node DOM dimensions.
     requestAnimationFrame(() => {
-      fitView({ ...FIT_VIEW_OPTIONS, duration: 0 });
+      fitView({ ...FIT_VIEW_OPTIONS, duration: isInitial ? 0 : 300, nodes: includeNodes });
     });
-  }, [nodeCount, fitView]);
+  }, [nodeCount, fitView, hasProcessingNodes]);
 
   // Controlled mode: nodes + onNodesChange props
   // Uncontrolled mode: defaultNodes prop
@@ -144,7 +151,7 @@ function BentoCanvasInner({
 
 /* ── Public canvas wrapper ──────────────────────────────────── */
 
-export function BentoCanvas({
+export function Canvas({
   nodes,
   onNodesChange,
   edges,
@@ -156,9 +163,9 @@ export function BentoCanvas({
   standalone = false,
   children,
   className,
-}: BentoCanvasProps) {
+}: CanvasProps) {
   const inner = (
-    <BentoCanvasInner
+    <CanvasInner
       nodes={nodes}
       onNodesChange={onNodesChange}
       edges={edges}
@@ -168,7 +175,7 @@ export function BentoCanvas({
       disable={disable}
     >
       {children}
-    </BentoCanvasInner>
+    </CanvasInner>
   );
 
   return (

@@ -36,4 +36,7 @@ const SLOTS: { x: number; y: number; w: number; h: number }[] = Array.from(
   }),
 );
 
-export { CELL, GAP, STRIDE, SLOTS };
+/** I/O inner card size — visually smaller, but the RF node is still CELL×CELL. */
+const IO_CARD_SIZE = 100;
+
+export { CELL, GAP, STRIDE, SLOTS, IO_CARD_SIZE };

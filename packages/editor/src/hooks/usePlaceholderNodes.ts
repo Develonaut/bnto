@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from "react";
 import type { NodeChange } from "@xyflow/react";
 import { useEditorStore } from "./useEditorStore";
-import { isIoNodeType } from "../helpers/isIoNodeType";
+import { isIoNodeType } from "@bnto/nodes";
 import { injectPlaceholder } from "../helpers/injectPlaceholder";
 import { filterPlaceholderChanges } from "../helpers/filterPlaceholderChanges";
 import type { BentoNode } from "../adapters/types";
