@@ -96,6 +96,7 @@ export {
   ArrowLeftRight as ArrowLeftRightIcon,
   Sheet as SheetIcon,
   Terminal as TerminalIcon,
+  CircleAlert as CircleAlertIcon,
 } from "lucide-react";
 
 export type { LucideIcon } from "lucide-react";

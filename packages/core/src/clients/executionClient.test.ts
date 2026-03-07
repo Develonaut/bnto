@@ -6,6 +6,17 @@ import type { BrowserExecutionService } from "../services/browserExecutionServic
 import type { HistoryService } from "../services/historyService";
 import type { ExecutionInstance } from "../services/executionInstance";
 import type { BrowserRunResult } from "../types/browser";
+import type { PipelineDefinition } from "../engine/types";
+
+// ── Shared definition ──────────────────────────────────────────────────────
+
+const COMPRESS_DEFINITION: PipelineDefinition = {
+  nodes: [
+    { id: "input", type: "input", params: {} },
+    { id: "process", type: "compress-images", params: {} },
+    { id: "output", type: "output", params: {} },
+  ],
+};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,15 +54,13 @@ function mockInstance(runResult: BrowserRunResult): ExecutionInstance {
   };
 }
 
-function mockBrowserService(
-  instance: ExecutionInstance,
-): BrowserExecutionService {
+function mockBrowserService(instance: ExecutionInstance): BrowserExecutionService {
   return {
     isCapable: vi.fn(),
     hasImplementation: vi.fn(),
     getCapableSlugs: vi.fn(),
     createExecution: vi.fn(() => instance),
-    execute: vi.fn(),
+    runPipeline: vi.fn(),
     downloadResult: vi.fn(),
     downloadAllResults: vi.fn(),
   } as unknown as BrowserExecutionService;
@@ -59,9 +68,7 @@ function mockBrowserService(
 
 const completedResult: BrowserRunResult = {
   status: "completed",
-  results: [
-    { blob: new Blob(), filename: "out.jpg", mimeType: "image/jpeg", metadata: {} },
-  ],
+  results: [{ blob: new Blob(), filename: "out.jpg", mimeType: "image/jpeg", metadata: {} }],
   durationMs: 150,
 };
 
@@ -99,7 +106,7 @@ describe("createExecutionClient — auto-recording", () => {
       const wrapped = client.createExecution();
 
       const files = [new File(["a"], "a.jpg"), new File(["b"], "b.jpg")];
-      await wrapped.run("compress-images", files);
+      await wrapped.run(COMPRESS_DEFINITION, files);
 
       expect(historyService.record).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -119,8 +126,7 @@ describe("createExecutionClient — auto-recording", () => {
       const client = createExecutionClient(execService, browser, historyService);
       const wrapped = client.createExecution();
 
-      const result = await wrapped.run("compress-images", []);
-
+      const result = await wrapped.run(COMPRESS_DEFINITION, []);
       expect(result).toBe(completedResult);
     });
   });
@@ -132,7 +138,7 @@ describe("createExecutionClient — auto-recording", () => {
       const client = createExecutionClient(execService, browser, historyService);
       const wrapped = client.createExecution();
 
-      await wrapped.run("compress-images", []);
+      await wrapped.run(COMPRESS_DEFINITION, []);
 
       expect(historyService.record).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -152,8 +158,7 @@ describe("createExecutionClient — auto-recording", () => {
       const client = createExecutionClient(execService, browser, historyService);
       const wrapped = client.createExecution();
 
-      await wrapped.run("compress-images", []);
-
+      await wrapped.run(COMPRESS_DEFINITION, []);
       expect(historyService.record).not.toHaveBeenCalled();
     });
 
@@ -163,8 +168,7 @@ describe("createExecutionClient — auto-recording", () => {
       const client = createExecutionClient(execService, browser, historyService);
       const wrapped = client.createExecution();
 
-      const result = await wrapped.run("compress-images", []);
-
+      const result = await wrapped.run(COMPRESS_DEFINITION, []);
       expect(result).toBe(abortedResult);
     });
   });
@@ -173,14 +177,11 @@ describe("createExecutionClient — auto-recording", () => {
     it("does not throw when history.record rejects", async () => {
       const instance = mockInstance(completedResult);
       const browser = mockBrowserService(instance);
-      vi.mocked(historyService.record).mockRejectedValue(
-        new Error("IndexedDB full"),
-      );
+      vi.mocked(historyService.record).mockRejectedValue(new Error("IndexedDB full"));
       const client = createExecutionClient(execService, browser, historyService);
       const wrapped = client.createExecution();
 
-      const result = await wrapped.run("compress-images", []);
-
+      const result = await wrapped.run(COMPRESS_DEFINITION, []);
       expect(result).toBe(completedResult);
     });
   });
@@ -193,7 +194,6 @@ describe("createExecutionClient — auto-recording", () => {
       const wrapped = client.createExecution();
 
       wrapped.reset();
-
       expect(instance.reset).toHaveBeenCalled();
     });
 
@@ -204,6 +204,30 @@ describe("createExecutionClient — auto-recording", () => {
       const wrapped = client.createExecution();
 
       expect(wrapped[EXECUTION_STORE]).toBe(fakeStore);
+    });
+  });
+
+  describe("history slug derivation", () => {
+    it("uses first processing node type as slug for history", async () => {
+      const multiNodeDef: PipelineDefinition = {
+        nodes: [
+          { id: "in", type: "input", params: {} },
+          { id: "resize", type: "resize-images", params: {} },
+          { id: "compress", type: "compress-images", params: {} },
+          { id: "out", type: "output", params: {} },
+        ],
+      };
+
+      const instance = mockInstance(completedResult);
+      const browser = mockBrowserService(instance);
+      const client = createExecutionClient(execService, browser, historyService);
+      const wrapped = client.createExecution();
+
+      await wrapped.run(multiNodeDef, [new File(["a"], "a.jpg")]);
+
+      expect(historyService.record).toHaveBeenCalledWith(
+        expect.objectContaining({ slug: "resize-images" }),
+      );
     });
   });
 });

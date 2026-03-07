@@ -347,14 +347,9 @@ Differentiate Input and Output from processing nodes through elevation, color, a
 - [x] `packages/editor` — **I/O node Pressable behavior**: Remove `toggle` and `active` props from the `Pressable` wrapper for I/O nodes. They can still receive clicks for selection feedback but shouldn't feel like pressable configuration buttons.
 - [x] `packages/editor` — **Unit tests**: I/O nodes render with `color="muted"`, `elevation="sm"`, and `160×90` dimensions. Processing nodes render with `elevation="md"` and `120×120`. Adapter sets `isIoNode` correctly for all 12 node types.
 
-#### Wave 2 — Processing Node Category Accents + Selected State
+#### Wave 2 — Processing Node Category Accents + Selected State — **TABLED**
 
-Make the selected state obvious and give processing nodes a subtle category signal without overwhelming the calm Motorway aesthetic.
-
-- [ ] `packages/editor` — **Selected ring**: Add `ring-2 ring-primary/60 ring-offset-2 ring-offset-background rounded-xl` to the outer `group relative` wrapper when `selected` is true, via `cn()`. Creates a visible terracotta outline that reads as "active focus" at a glance.
-- [ ] `packages/editor` — **Elevation on selection**: `elevation={selected ? "lg" : "md"}` for processing nodes. `elevation={selected ? "md" : "sm"}` for I/O nodes. Ring + elevation change together make selection unmistakable.
-- [ ] `packages/editor` — **Category color pip**: Add `border-l-[3px]` in category color to processing nodes. Create `adapters/categoryBorderColor.ts` mapping `CompartmentVariant` → Tailwind border class (e.g. `primary` → `border-primary/70`). I/O nodes get no pip.
-- [ ] `packages/editor` — **Unit tests**: Selected processing node has ring class. Unselected has no ring. Category pip border renders for processing nodes. I/O nodes have no pip. Elevation changes correctly for both types on selection.
+> **Tabled (March 2026).** Selected state and category pip need more design iteration. Existing Pressable pressed state handles selection well enough for now. Will revisit when editor UX is more mature.
 
 #### Wave 3 — LayerPanel Visual Parity
 

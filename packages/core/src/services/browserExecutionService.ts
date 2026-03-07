@@ -11,11 +11,7 @@
  * Tests can inject a mock engine via the `engineOverride` parameter.
  */
 
-import {
-  isBrowserCapable,
-  getBrowserNodeType,
-  getBrowserCapableSlugs,
-} from "../adapters/browser/slugCapability";
+import { isBrowserCapable, getBrowserCapableSlugs } from "../adapters/browser/slugCapability";
 import { downloadBlob } from "../adapters/browser/downloadBlob";
 import { createZipBlob } from "../adapters/browser/createZipBlob";
 import { BntoWorker } from "../adapters/browser/BntoWorker";
@@ -24,10 +20,10 @@ import { executePipeline } from "../engine/executePipeline";
 import { createExecutionInstance } from "./executionInstance";
 import type { ExecutionInstance } from "./executionInstance";
 import type { BrowserEngine, BrowserFileResult, BrowserFileProgressInput } from "../types/browser";
-import type { FileInput, NodeRunner } from "../engine/types";
+import type { FileInput, NodeRunner, PipelineDefinition } from "../engine/types";
 
 // ---------------------------------------------------------------------------
-// Conversion helpers: File <-> FileInput, BrowserFileResult <-> FileResult
+// Conversion helpers
 // ---------------------------------------------------------------------------
 
 /** Convert a Uint8Array to an ArrayBuffer suitable for Blob construction. */
@@ -67,6 +63,16 @@ function createRunNode(browserEngine: BrowserEngine): NodeRunner {
   };
 }
 
+/** Convert pipeline FileResult[] to BrowserFileResult[]. */
+function toBrowserResults(files: import("../engine/types").FileResult[]): BrowserFileResult[] {
+  return files.map((f) => ({
+    blob: new Blob([toArrayBuffer(f.data)], { type: f.mimeType }),
+    filename: f.name,
+    mimeType: f.mimeType,
+    metadata: f.metadata ?? {},
+  }));
+}
+
 // ---------------------------------------------------------------------------
 // Service factory
 // ---------------------------------------------------------------------------
@@ -88,31 +94,19 @@ export function createBrowserExecutionService(engineOverride?: BrowserEngine) {
     return engine;
   }
 
-  /** Low-level stateless execution — no store management. */
-  const execute = async (
-    slug: string,
+  /**
+   * Execute a PipelineDefinition with File[].
+   *
+   * This is the single execution method. All callers — recipe pages, editor,
+   * instances — converge here. Handles engine init, file conversion, and
+   * delegates to the runtime-agnostic executePipeline().
+   */
+  const runPipeline = async (
+    definition: PipelineDefinition,
     files: File[],
-    params: Record<string, unknown> = {},
     onProgress?: (progress: BrowserFileProgressInput) => void,
   ): Promise<BrowserFileResult[]> => {
-    const nodeType = getBrowserNodeType(slug);
-    if (!nodeType) {
-      throw new Error(
-        `No browser implementation for slug "${slug}". ` +
-          `Available: ${getBrowserCapableSlugs().join(", ")}`,
-      );
-    }
-
     const browserEngine = await ensureEngine();
-
-    const definition = {
-      nodes: [
-        { id: "input", type: "input", params: {} },
-        { id: "process", type: nodeType, params },
-        { id: "output", type: "output", params: {} },
-      ],
-    };
-
     const fileInputs = await filesToInputs(files);
     const runNode = createRunNode(browserEngine);
 
@@ -126,12 +120,7 @@ export function createBrowserExecutionService(engineOverride?: BrowserEngine) {
         : undefined,
     );
 
-    return pipelineResult.files.map((f) => ({
-      blob: new Blob([toArrayBuffer(f.data)], { type: f.mimeType }),
-      filename: f.name,
-      mimeType: f.mimeType,
-      metadata: f.metadata ?? {},
-    }));
+    return toBrowserResults(pipelineResult.files);
   };
 
   return {
@@ -146,9 +135,13 @@ export function createBrowserExecutionService(engineOverride?: BrowserEngine) {
      * Create an isolated execution instance with its own store.
      * Usage: `const [instance] = useState(() => core.executions.createExecution())`
      */
-    createExecution: (): ExecutionInstance => createExecutionInstance(execute),
+    createExecution: (): ExecutionInstance => createExecutionInstance(runPipeline),
 
-    execute,
+    /**
+     * Execute a PipelineDefinition directly with File[].
+     * Callers with a slug use `slugToPipeline()` first.
+     */
+    runPipeline,
 
     downloadResult: (result: BrowserFileResult) => {
       downloadBlob(result.blob, result.filename);

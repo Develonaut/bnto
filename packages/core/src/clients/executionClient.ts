@@ -7,6 +7,8 @@ import type { ExecutionInstance } from "../services/executionInstance";
 import type { StartPredefinedInput } from "../types";
 import type { LocalHistoryEntry } from "../types/localHistory";
 import type { BrowserRunResult } from "../types/browser";
+import type { PipelineDefinition } from "../engine/types";
+import { slugToPipeline } from "../adapters/browser/slugToPipeline";
 
 /** Build a history entry from a completed/failed execution result. */
 function buildHistoryEntry(
@@ -70,18 +72,20 @@ export function createExecutionClient(
 
     return {
       ...instance,
-      run: async (
-        slug: string,
-        files: File[],
-        params?: Record<string, unknown>,
-      ): Promise<BrowserRunResult> => {
+      run: async (definition: PipelineDefinition, files: File[]): Promise<BrowserRunResult> => {
+        // Derive slug from definition for history — use the first processing node's type
+        const processingNode = definition.nodes.find(
+          (n) => n.type !== "input" && n.type !== "output",
+        );
+        const historySlug = processingNode?.type ?? "unknown";
+
         const serverEventId = getIsAuthenticated()
-          ? await history.recordServerStart(slug).catch(() => null)
+          ? await history.recordServerStart(historySlug).catch(() => null)
           : null;
 
-        const result = await originalRun(slug, files, params);
+        const result = await originalRun(definition, files);
         if (result.status !== "aborted") {
-          recordToHistory(slug, files, result, serverEventId);
+          recordToHistory(historySlug, files, result, serverEventId);
         }
         return result;
       },
@@ -107,8 +111,7 @@ export function createExecutionClient(
     },
 
     // ── Mutations ─────────────────────────────────────────────────
-    startPredefined: (input: StartPredefinedInput) =>
-      executions.startPredefined(input),
+    startPredefined: (input: StartPredefinedInput) => executions.startPredefined(input),
 
     // ── Browser Execution ─────────────────────────────────────────
     /** Check if a slug can run in the browser. */
@@ -125,11 +128,20 @@ export function createExecutionClient(
      * Each instance has independent state — no cross-page leaks.
      * Usage: `const [instance] = useState(() => core.executions.createExecution())`
      */
-    createExecution: (): ExecutionInstance =>
-      wrapInstance(browser.createExecution()),
+    createExecution: (): ExecutionInstance => wrapInstance(browser.createExecution()),
 
-    /** Execute without lifecycle management. For callers managing their own state. */
-    execute: browser.execute,
+    /**
+     * Execute a PipelineDefinition directly with File[].
+     * Callers with a slug use `slugToPipeline()` first.
+     */
+    runPipeline: browser.runPipeline,
+
+    /**
+     * Resolve a predefined slug to a PipelineDefinition.
+     * Returns null if the slug has no browser implementation.
+     */
+    slugToPipeline: (slug: string, params?: Record<string, unknown>) =>
+      slugToPipeline(slug, params),
 
     /** Download a single browser execution result. */
     downloadResult: browser.downloadResult,

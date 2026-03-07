@@ -2,9 +2,32 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createBrowserExecutionService } from "./browserExecutionService";
 import { EXECUTION_STORE } from "./executionInstance";
 import type { BrowserEngine, BrowserFileResult, BrowserFileProgressInput } from "../types/browser";
+import type { PipelineDefinition } from "../engine/types";
 
 // ---------------------------------------------------------------------------
-// Mock engine — processFile only (processFiles removed from BrowserEngine)
+// Shared definitions (replaces slug-based calls)
+// ---------------------------------------------------------------------------
+
+const COMPRESS_DEFINITION: PipelineDefinition = {
+  nodes: [
+    { id: "input", type: "input", params: {} },
+    { id: "process", type: "compress-images", params: {} },
+    { id: "output", type: "output", params: {} },
+  ],
+};
+
+function compressDef(params: Record<string, unknown> = {}): PipelineDefinition {
+  return {
+    nodes: [
+      { id: "input", type: "input", params: {} },
+      { id: "process", type: "compress-images", params },
+      { id: "output", type: "output", params: {} },
+    ],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Mock engine
 // ---------------------------------------------------------------------------
 
 function createMockEngine(overrides: Partial<BrowserEngine> = {}): BrowserEngine {
@@ -70,30 +93,31 @@ describe("browserExecutionService", () => {
     });
   });
 
-  describe("execute", () => {
-    it("throws for unknown slug", async () => {
-      await expect(service.execute("unknown-slug", [new File([""], "test.jpg")])).rejects.toThrow(
-        'No browser implementation for slug "unknown-slug"',
-      );
+  describe("getCapableSlugs", () => {
+    it("returns array including compress-images", () => {
+      expect(service.getCapableSlugs()).toContain("compress-images");
     });
+  });
 
+  // ─────────────────────────────────────────────────────────────────
+  // runPipeline — the single execution method
+  // ─────────────────────────────────────────────────────────────────
+
+  describe("runPipeline", () => {
     it("initializes the engine before processing", async () => {
-      await service.execute("compress-images", [new File(["data"], "test.jpg")]);
-
+      await service.runPipeline(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
       expect(mockEngine.init).toHaveBeenCalledOnce();
     });
 
-    it("calls processFile for each file with correct arguments", async () => {
+    it("calls processFile with correct node type and params", async () => {
       const files = [new File(["data"], "test.jpg")];
-      const params = { quality: 80 };
-
-      await service.execute("compress-images", files, params);
+      await service.runPipeline(compressDef({ quality: 80 }), files);
 
       expect(mockEngine.processFile).toHaveBeenCalledOnce();
       expect(mockEngine.processFile).toHaveBeenCalledWith(
         expect.any(File),
         "compress-images",
-        params,
+        { quality: 80 },
         expect.any(Function),
       );
     });
@@ -106,12 +130,9 @@ describe("browserExecutionService", () => {
         metadata: { ratio: 0.5 },
       };
 
-      const engine = createMockEngine({
-        processFile: vi.fn().mockResolvedValue(expectedResult),
-      });
+      const engine = createMockEngine({ processFile: vi.fn().mockResolvedValue(expectedResult) });
       const svc = createBrowserExecutionService(engine);
-
-      const results = await svc.execute("compress-images", [new File(["data"], "test.jpg")]);
+      const results = await svc.runPipeline(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
 
       expect(results).toHaveLength(1);
       expect(results[0].filename).toBe("output.jpg");
@@ -119,16 +140,31 @@ describe("browserExecutionService", () => {
       expect(results[0].metadata).toEqual({ ratio: 0.5 });
     });
 
-    it("forwards progress updates with totalFiles", async () => {
+    it("handles multi-node pipeline", async () => {
+      const def: PipelineDefinition = {
+        nodes: [
+          { id: "in", type: "input", params: {} },
+          { id: "resize", type: "resize-images", params: { width: 800 } },
+          { id: "compress", type: "compress-images", params: { quality: 75 } },
+          { id: "out", type: "output", params: {} },
+        ],
+      };
+
+      const results = await service.runPipeline(def, [new File(["data"], "test.jpg")]);
+      expect(results).toHaveLength(1);
+      expect(mockEngine.processFile).toHaveBeenCalledTimes(2);
+    });
+
+    it("forwards progress updates", async () => {
       const engine = createMockEngine({
         processFile: vi
           .fn()
           .mockImplementation(
             async (
               _file: File,
-              _nodeType: string,
+              _type: string,
               _params: Record<string, unknown>,
-              onProgress?: (percent: number, message: string) => void,
+              onProgress?: (p: number, m: string) => void,
             ) => {
               onProgress?.(50, "Processing...");
               onProgress?.(100, "Done");
@@ -143,39 +179,43 @@ describe("browserExecutionService", () => {
       });
       const svc = createBrowserExecutionService(engine);
 
-      const progressUpdates: BrowserFileProgressInput[] = [];
-      const files = [new File(["a"], "a.jpg"), new File(["b"], "b.jpg")];
+      const updates: BrowserFileProgressInput[] = [];
+      await svc.runPipeline(
+        COMPRESS_DEFINITION,
+        [new File(["a"], "a.jpg"), new File(["b"], "b.jpg")],
+        (p) => updates.push({ ...p }),
+      );
 
-      await svc.execute("compress-images", files, {}, (progress) => {
-        progressUpdates.push({ ...progress });
-      });
-
-      // executePipeline calls processFile per-file, each fires 2 progress updates
-      expect(progressUpdates.length).toBeGreaterThanOrEqual(2);
-      // First file progress
-      expect(progressUpdates[0]).toEqual({
+      expect(updates.length).toBeGreaterThanOrEqual(2);
+      expect(updates[0]).toEqual({
         fileIndex: 0,
         totalFiles: 2,
         percent: 50,
         message: "Processing...",
       });
-      expect(progressUpdates[1]).toEqual({
-        fileIndex: 0,
-        totalFiles: 2,
-        percent: 100,
-        message: "Done",
-      });
     });
 
     it("does not crash when no progress callback provided", async () => {
-      const results = await service.execute("compress-images", [new File(["data"], "test.jpg")]);
-
+      const results = await service.runPipeline(COMPRESS_DEFINITION, [
+        new File(["data"], "test.jpg"),
+      ]);
       expect(results).toHaveLength(1);
-      expect(mockEngine.processFile).toHaveBeenCalledOnce();
+    });
+
+    it("returns empty array for empty files", async () => {
+      const results = await service.runPipeline(COMPRESS_DEFINITION, []);
+      expect(results).toEqual([]);
+      expect(mockEngine.processFile).not.toHaveBeenCalled();
+    });
+
+    it("does not fire progress for empty file array", async () => {
+      const updates: BrowserFileProgressInput[] = [];
+      await service.runPipeline(COMPRESS_DEFINITION, [], (p) => updates.push({ ...p }));
+      expect(updates).toHaveLength(0);
     });
   });
 
-  describe("execute — engine init failure", () => {
+  describe("runPipeline — engine init failure", () => {
     it("propagates init() error without masking it", async () => {
       const engine = createMockEngine({
         init: vi.fn().mockRejectedValue(new Error("WASM module failed to load")),
@@ -183,9 +223,8 @@ describe("browserExecutionService", () => {
       const svc = createBrowserExecutionService(engine);
 
       await expect(
-        svc.execute("compress-images", [new File(["data"], "test.jpg")]),
+        svc.runPipeline(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]),
       ).rejects.toThrow("WASM module failed to load");
-
       expect(engine.processFile).not.toHaveBeenCalled();
     });
 
@@ -195,9 +234,9 @@ describe("browserExecutionService", () => {
       });
       const svc = createBrowserExecutionService(engine);
 
-      await expect(svc.execute("compress-images", [new File(["data"], "test.jpg")])).rejects.toBe(
-        "string error from WASM",
-      );
+      await expect(
+        svc.runPipeline(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]),
+      ).rejects.toBe("string error from WASM");
     });
 
     it("still calls init even if engine was previously used", async () => {
@@ -208,27 +247,19 @@ describe("browserExecutionService", () => {
       const engine = createMockEngine({ init: initFn });
       const svc = createBrowserExecutionService(engine);
 
-      // First call succeeds.
-      await svc.execute("compress-images", [new File(["data"], "test.jpg")]);
+      await svc.runPipeline(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
       expect(initFn).toHaveBeenCalledTimes(1);
 
-      // Second call fails at init.
       await expect(
-        svc.execute("compress-images", [new File(["data"], "test.jpg")]),
+        svc.runPipeline(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]),
       ).rejects.toThrow("WASM out of memory");
       expect(initFn).toHaveBeenCalledTimes(2);
-      expect(engine.processFile).toHaveBeenCalledTimes(1); // only first call
-    });
-  });
-
-  describe("getCapableSlugs", () => {
-    it("returns array including compress-images", () => {
-      expect(service.getCapableSlugs()).toContain("compress-images");
+      expect(engine.processFile).toHaveBeenCalledTimes(1);
     });
   });
 
   // ─────────────────────────────────────────────────────────────────
-  // Orchestration lifecycle via createExecution()
+  // createExecution — instance lifecycle
   // ─────────────────────────────────────────────────────────────────
 
   describe("createExecution — instance isolation", () => {
@@ -250,11 +281,10 @@ describe("browserExecutionService", () => {
       const a = service.createExecution();
       const b = service.createExecution();
 
-      await a.run("compress-images", [new File(["data"], "test.jpg")]);
+      await a.run(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
 
       expect(getStore(a).getState().status).toBe("completed");
       expect(getStore(a).getState().results).toHaveLength(1);
-
       expect(getStore(b).getState().status).toBe("idle");
       expect(getStore(b).getState().results).toEqual([]);
     });
@@ -263,13 +293,11 @@ describe("browserExecutionService", () => {
       const a = service.createExecution();
       const b = service.createExecution();
 
-      await a.run("compress-images", [new File(["a"], "a.jpg")]);
-
+      await a.run(COMPRESS_DEFINITION, [new File(["a"], "a.jpg")]);
       expect(getStore(a).getState().status).toBe("completed");
       expect(getStore(b).getState().status).toBe("idle");
 
-      await b.run("compress-images", [new File(["b"], "b.jpg")]);
-
+      await b.run(COMPRESS_DEFINITION, [new File(["b"], "b.jpg")]);
       expect(getStore(a).getState().status).toBe("completed");
       expect(getStore(b).getState().status).toBe("completed");
     });
@@ -278,9 +306,8 @@ describe("browserExecutionService", () => {
       const a = service.createExecution();
       const b = service.createExecution();
 
-      await a.run("compress-images", [new File(["a"], "a.jpg")]);
-      await b.run("compress-images", [new File(["b"], "b.jpg")]);
-
+      await a.run(COMPRESS_DEFINITION, [new File(["a"], "a.jpg")]);
+      await b.run(COMPRESS_DEFINITION, [new File(["b"], "b.jpg")]);
       a.reset();
 
       expect(getStore(a).getState().status).toBe("idle");
@@ -297,15 +324,12 @@ describe("browserExecutionService", () => {
         metadata: { ratio: 0.5 },
       };
 
-      const engine = createMockEngine({
-        processFile: vi.fn().mockResolvedValue(expectedResult),
-      });
+      const engine = createMockEngine({ processFile: vi.fn().mockResolvedValue(expectedResult) });
       const svc = createBrowserExecutionService(engine);
       const instance = svc.createExecution();
 
       expect(getStore(instance).getState().status).toBe("idle");
-
-      await instance.run("compress-images", [new File(["data"], "test.jpg")]);
+      await instance.run(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
 
       const state = getStore(instance).getState();
       expect(state.status).toBe("completed");
@@ -319,7 +343,7 @@ describe("browserExecutionService", () => {
 
     it("generates a unique execution ID", async () => {
       const instance = service.createExecution();
-      await instance.run("compress-images", [new File(["data"], "test.jpg")]);
+      await instance.run(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
 
       expect(getStore(instance).getState().id).toBeTruthy();
       expect(getStore(instance).getState().id.length).toBeGreaterThan(0);
@@ -328,10 +352,7 @@ describe("browserExecutionService", () => {
 
   describe("createExecution — progress updates", () => {
     it("updates store with progress during execution", async () => {
-      const progressSnapshots: Array<{
-        fileIndex: number;
-        percent: number;
-      }> = [];
+      const progressSnapshots: Array<{ fileIndex: number; percent: number }> = [];
 
       const engine = createMockEngine({
         processFile: vi
@@ -339,9 +360,9 @@ describe("browserExecutionService", () => {
           .mockImplementation(
             async (
               _file: File,
-              _nodeType: string,
+              _type: string,
               _params: Record<string, unknown>,
-              onProgress?: (percent: number, message: string) => void,
+              onProgress?: (p: number, m: string) => void,
             ) => {
               onProgress?.(50, "Compressing...");
               const s = getStore(instance).getState();
@@ -362,11 +383,10 @@ describe("browserExecutionService", () => {
       const svc = createBrowserExecutionService(engine);
       const instance = svc.createExecution();
 
-      await instance.run("compress-images", [new File(["a"], "a.jpg")]);
+      await instance.run(COMPRESS_DEFINITION, [new File(["a"], "a.jpg")]);
 
       expect(progressSnapshots).toHaveLength(1);
       expect(progressSnapshots[0]).toEqual({ fileIndex: 0, percent: 50 });
-
       expect(getStore(instance).getState().fileProgress).toBeNull();
     });
   });
@@ -379,7 +399,7 @@ describe("browserExecutionService", () => {
       const svc = createBrowserExecutionService(engine);
       const instance = svc.createExecution();
 
-      await instance.run("compress-images", [new File(["data"], "test.jpg")]);
+      await instance.run(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
 
       const state = getStore(instance).getState();
       expect(state.status).toBe("failed");
@@ -389,32 +409,21 @@ describe("browserExecutionService", () => {
     });
 
     it("handles non-Error thrown values", async () => {
-      const engine = createMockEngine({
-        processFile: vi.fn().mockRejectedValue("string error"),
-      });
+      const engine = createMockEngine({ processFile: vi.fn().mockRejectedValue("string error") });
       const svc = createBrowserExecutionService(engine);
       const instance = svc.createExecution();
 
-      await instance.run("compress-images", [new File(["data"], "test.jpg")]);
+      await instance.run(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
 
       expect(getStore(instance).getState().status).toBe("failed");
       expect(getStore(instance).getState().error).toBe("Processing failed");
-    });
-
-    it("fails on unknown slug", async () => {
-      const instance = service.createExecution();
-      await instance.run("unknown-slug", [new File(["data"], "test.jpg")]);
-
-      const state = getStore(instance).getState();
-      expect(state.status).toBe("failed");
-      expect(state.error).toContain("No browser implementation");
     });
   });
 
   describe("createExecution — reset", () => {
     it("returns store to idle", async () => {
       const instance = service.createExecution();
-      await instance.run("compress-images", [new File(["data"], "test.jpg")]);
+      await instance.run(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
       expect(getStore(instance).getState().status).toBe("completed");
 
       instance.reset();
@@ -437,9 +446,9 @@ describe("browserExecutionService", () => {
           .mockImplementation(
             async (
               _file: File,
-              _nodeType: string,
+              _type: string,
               _params: Record<string, unknown>,
-              onProgress?: (percent: number, message: string) => void,
+              onProgress?: (p: number, m: string) => void,
             ) => {
               onProgress?.(50, "Processing...");
               return processPromise;
@@ -449,8 +458,7 @@ describe("browserExecutionService", () => {
       const svc = createBrowserExecutionService(engine);
       const instance = svc.createExecution();
 
-      const runPromise = instance.run("compress-images", [new File(["data"], "test.jpg")]);
-
+      const runPromise = instance.run(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
       await new Promise((r) => setTimeout(r, 0));
 
       instance.reset();
@@ -480,9 +488,9 @@ describe("browserExecutionService", () => {
           .mockImplementation(
             async (
               _file: File,
-              _nodeType: string,
+              _type: string,
               _params: Record<string, unknown>,
-              onProgress?: (percent: number, message: string) => void,
+              onProgress?: (p: number, m: string) => void,
             ) => {
               onProgress?.(10, "First");
               return {
@@ -497,8 +505,7 @@ describe("browserExecutionService", () => {
       const svc = createBrowserExecutionService(engine);
       const instance = svc.createExecution();
 
-      await instance.run("compress-images", [new File(["a"], "a.jpg")]);
-
+      await instance.run(COMPRESS_DEFINITION, [new File(["a"], "a.jpg")]);
       expect(getStore(instance).getState().status).toBe("completed");
     });
 
@@ -509,20 +516,11 @@ describe("browserExecutionService", () => {
           .mockImplementation(
             async (
               _file: File,
-              _nodeType: string,
+              _type: string,
               _params: Record<string, unknown>,
-              onProgress?: (percent: number, message: string) => void,
+              onProgress?: (p: number, m: string) => void,
             ) => {
-              onProgress?.(10, "Start");
-              onProgress?.(20, "20%");
-              onProgress?.(30, "30%");
-              onProgress?.(40, "40%");
-              onProgress?.(50, "50%");
-              onProgress?.(60, "60%");
-              onProgress?.(70, "70%");
-              onProgress?.(80, "80%");
-              onProgress?.(90, "90%");
-              onProgress?.(100, "Done");
+              for (let i = 10; i <= 100; i += 10) onProgress?.(i, `${i}%`);
               return {
                 blob: new Blob(["out"], { type: "image/jpeg" }),
                 filename: "out.jpg",
@@ -540,7 +538,7 @@ describe("browserExecutionService", () => {
       const spy = vi.fn(originalProgress.bind(store.getState()));
       store.setState({ progress: spy });
 
-      await instance.run("compress-images", [new File(["a"], "a.jpg")]);
+      await instance.run(COMPRESS_DEFINITION, [new File(["a"], "a.jpg")]);
 
       const percents = spy.mock.calls.map((c: [{ percent: number }]) => c[0].percent);
       expect(percents[0]).toBe(10);
@@ -555,9 +553,9 @@ describe("browserExecutionService", () => {
           .mockImplementation(
             async (
               _file: File,
-              _nodeType: string,
+              _type: string,
               _params: Record<string, unknown>,
-              onProgress?: (percent: number, message: string) => void,
+              onProgress?: (p: number, m: string) => void,
             ) => {
               const idx = callCount++;
               onProgress?.(100, `File ${idx + 1} done`);
@@ -583,7 +581,7 @@ describe("browserExecutionService", () => {
         },
       });
 
-      await instance.run("compress-images", [new File(["a"], "a.jpg"), new File(["b"], "b.jpg")]);
+      await instance.run(COMPRESS_DEFINITION, [new File(["a"], "a.jpg"), new File(["b"], "b.jpg")]);
 
       const fileIndexes = progressHistory.map((p) => p.fileIndex);
       expect(fileIndexes).toContain(0);
@@ -592,42 +590,13 @@ describe("browserExecutionService", () => {
   });
 
   // ─────────────────────────────────────────────────────────────────
-  // Edge cases — empty files, boundary conditions
+  // Edge cases
   // ─────────────────────────────────────────────────────────────────
-
-  describe("execute — edge cases", () => {
-    it("handles empty file array", async () => {
-      const engine = createMockEngine();
-      const svc = createBrowserExecutionService(engine);
-
-      const results = await svc.execute("compress-images", []);
-
-      expect(results).toEqual([]);
-      // With empty files, executePipeline short-circuits — no processFile calls
-      expect(engine.processFile).not.toHaveBeenCalled();
-    });
-
-    it("does not fire progress for empty file array", async () => {
-      const engine = createMockEngine();
-      const svc = createBrowserExecutionService(engine);
-
-      const progressUpdates: BrowserFileProgressInput[] = [];
-      await svc.execute("compress-images", [], {}, (progress) => {
-        progressUpdates.push({ ...progress });
-      });
-
-      // No files → no progress callbacks
-      expect(progressUpdates).toHaveLength(0);
-    });
-  });
 
   describe("createExecution — edge cases", () => {
     it("run with empty file array completes with empty results", async () => {
-      const engine = createMockEngine();
-      const svc = createBrowserExecutionService(engine);
-      const instance = svc.createExecution();
-
-      await instance.run("compress-images", []);
+      const instance = service.createExecution();
+      await instance.run(COMPRESS_DEFINITION, []);
 
       expect(getStore(instance).getState().status).toBe("completed");
       expect(getStore(instance).getState().results).toEqual([]);
@@ -635,20 +604,19 @@ describe("browserExecutionService", () => {
 
     it("run with large batch (100 files) tracks progress correctly", async () => {
       const fileCount = 100;
-
       const engine = createMockEngine({
         processFile: vi
           .fn()
           .mockImplementation(
             async (
               file: File,
-              _nodeType: string,
+              _type: string,
               _params: Record<string, unknown>,
-              onProgress?: (percent: number, message: string) => void,
+              onProgress?: (p: number, m: string) => void,
             ) => {
-              onProgress?.(100, `Done`);
+              onProgress?.(100, "Done");
               return {
-                blob: new Blob([`data`], { type: "image/jpeg" }),
+                blob: new Blob(["data"], { type: "image/jpeg" }),
                 filename: file.name.replace(".jpg", "-out.jpg"),
                 mimeType: "image/jpeg",
                 metadata: {},
@@ -663,8 +631,7 @@ describe("browserExecutionService", () => {
         { length: fileCount },
         (_, i) => new File([`data-${i}`], `file-${i}.jpg`),
       );
-
-      await instance.run("compress-images", files);
+      await instance.run(COMPRESS_DEFINITION, files);
 
       expect(getStore(instance).getState().status).toBe("completed");
       expect(getStore(instance).getState().results).toHaveLength(fileCount);
@@ -675,11 +642,11 @@ describe("browserExecutionService", () => {
     it("clears prior state when starting a new run", async () => {
       const instance = service.createExecution();
 
-      await instance.run("compress-images", [new File(["data"], "test.jpg")]);
+      await instance.run(COMPRESS_DEFINITION, [new File(["data"], "test.jpg")]);
       expect(getStore(instance).getState().status).toBe("completed");
       expect(getStore(instance).getState().results).toHaveLength(1);
 
-      await instance.run("compress-images", [new File(["data2"], "test2.jpg")]);
+      await instance.run(COMPRESS_DEFINITION, [new File(["data2"], "test2.jpg")]);
       expect(getStore(instance).getState().status).toBe("completed");
     });
   });
