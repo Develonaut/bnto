@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { EditorProvider } from "../../EditorProvider";
+import { EditorExecutionProvider } from "../../hooks/EditorExecutionContext";
 
 /**
  * EditorCanvasRoot — editor providers shell.
@@ -24,7 +25,7 @@ function EditorCanvasRoot({ slug, children }: EditorCanvasRootProps) {
   return (
     <EditorProvider slug={slug}>
       <ReactFlowProvider>
-        {children}
+        <EditorExecutionProvider>{children}</EditorExecutionProvider>
       </ReactFlowProvider>
     </EditorProvider>
   );

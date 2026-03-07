@@ -10,18 +10,14 @@
  */
 
 import type { EditorState } from "../store/types";
-import { captureSnapshot } from "../store/captureSnapshot";
-import { pushToStack } from "../store/pushToStack";
-import { revalidateState } from "../store/revalidateState";
 import { isIoNodeType } from "@bnto/nodes";
 import { STRIDE } from "../adapters/bentoSlots";
+import { withUndo } from "../store/withUndo";
 
 export function removeNode(state: EditorState, id: string): Partial<EditorState> | null {
   // I/O nodes are structural — they cannot be deleted.
   const config = state.configs[id];
   if (config && isIoNodeType(config.nodeType)) return null;
-
-  const snapshot = captureSnapshot(state.nodes, state.configs);
 
   const removedIndex = state.nodes.findIndex((n) => n.id === id);
   const nextNodes = state.nodes.filter((n) => n.id !== id);
@@ -43,12 +39,5 @@ export function removeNode(state: EditorState, id: string): Partial<EditorState>
     nextNodes[selectIndex] = { ...nextNodes[selectIndex]!, selected: true };
   }
 
-  return {
-    nodes: nextNodes,
-    configs: nextConfigs,
-    isDirty: true,
-    undoStack: pushToStack(state.undoStack, snapshot),
-    redoStack: [],
-    validationErrors: revalidateState(nextNodes, nextConfigs, state.recipeMetadata),
-  };
+  return withUndo(state, { nodes: nextNodes, configs: nextConfigs });
 }

@@ -13,7 +13,7 @@ import { core } from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
 import { useEditorStoreApi } from "./useEditorStoreApi";
 import { useEditorStore } from "./useEditorStore";
-import { preparePipeline, isPipelineError } from "../actions/runPipeline";
+import { preparePipeline, isPipelineError, buildExecutionState } from "../actions/runPipeline";
 import type { ExecutionState } from "../store/types";
 
 // ---------------------------------------------------------------------------
@@ -90,25 +90,14 @@ function useEditorExecution(): EditorExecutionResult {
       setResults([]);
 
       try {
-        // Mark all processing nodes as active during execution
-        const activeState: ExecutionState = { ...prepared.initialExecutionState };
-        for (const node of prepared.definition.nodes) {
-          if (node.type !== "input" && node.type !== "output") {
-            activeState[node.id] = "active";
-          }
-        }
-        storeApi.setState({ executionState: activeState });
+        storeApi.setState({ executionState: buildExecutionState(prepared.definition, "active") });
 
         // Run via core's definition-based execution path
         const browserResults = await core.executions.runPipeline(prepared.definition, files);
 
-        // Mark all processing nodes as completed
-        const finalState: ExecutionState = {};
-        for (const node of prepared.definition.nodes) {
-          if (node.type === "input") finalState[node.id] = "idle";
-          else finalState[node.id] = "completed";
-        }
-        storeApi.setState({ executionState: finalState });
+        storeApi.setState({
+          executionState: buildExecutionState(prepared.definition, "completed"),
+        });
 
         setResults(browserResults);
         setPhase("completed");
@@ -122,6 +111,7 @@ function useEditorExecution(): EditorExecutionResult {
         storeApi.setState({ executionState: failedState });
 
         const message = err instanceof Error ? err.message : "Pipeline execution failed";
+        console.error("[editor execution]", message, err);
         setErrors([message]);
         setPhase("failed");
       }

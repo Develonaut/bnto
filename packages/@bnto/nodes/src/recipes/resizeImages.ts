@@ -1,7 +1,8 @@
 /**
  * Resize Images recipe — resize to exact dimensions or percentages.
  *
- * Go source: engine/pkg/menu/recipes/resize-images.json
+ * Simplified from Go engine's nested loop structure to a flat
+ * 3-node pipeline: input → image:resize → output.
  */
 
 import type { Recipe } from "../recipe";
@@ -30,7 +31,7 @@ export const resizeImages: Recipe = {
     name: "Resize Images",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Lists image files and resizes each one via a loop.",
+      description: "Resizes each image to the specified dimensions.",
     },
     parameters: {},
     inputPorts: [],
@@ -54,37 +55,18 @@ export const resizeImages: Recipe = {
         outputPorts: [{ id: "out-1", name: "files" }],
       },
       {
-        id: "resize-loop",
-        type: "loop",
+        id: "resize-image",
+        type: "image",
         version: CURRENT_FORMAT_VERSION,
-        name: "Resize Each Image",
+        name: "Resize Image",
         position: { x: 300, y: 100 },
         metadata: {},
         parameters: {
-          mode: "forEach",
-          items: '{{index . "input" "files"}}',
+          operation: "resize",
+          width: 200,
         },
-        inputPorts: [{ id: "in-1", name: "items" }],
-        outputPorts: [],
-        nodes: [
-          {
-            id: "resize-image",
-            type: "image",
-            version: CURRENT_FORMAT_VERSION,
-            name: "Resize Image",
-            position: { x: 100, y: 100 },
-            metadata: {},
-            parameters: {
-              operation: "resize",
-              input: "{{.item}}",
-              output: "{{.OUTPUT_DIR}}/{{basename .item}}",
-              width: 200,
-            },
-            inputPorts: [],
-            outputPorts: [],
-          },
-        ],
-        edges: [],
+        inputPorts: [{ id: "in-1", name: "files" }],
+        outputPorts: [{ id: "out-1", name: "files" }],
       },
       {
         id: "output",
@@ -104,8 +86,8 @@ export const resizeImages: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "resize-loop" },
-      { id: "e2", source: "resize-loop", target: "output" },
+      { id: "e1", source: "input", target: "resize-image" },
+      { id: "e2", source: "resize-image", target: "output" },
     ],
   },
 };

@@ -7,9 +7,12 @@
  *
  * This separates slug resolution from execution — callers resolve
  * the slug once, then pass the definition to runPipeline().
+ *
+ * @deprecated Use Definition → flattenDefinition() → executePipeline() instead.
+ * Kept for backward compat with recipe pages during transition.
  */
 
-import { getBrowserNodeType } from "./slugCapability";
+import { getNodeOperation } from "./slugCapability";
 import type { PipelineDefinition } from "../../engine/types";
 
 /**
@@ -21,13 +24,17 @@ export function slugToPipeline(
   slug: string,
   params: Record<string, unknown> = {},
 ): PipelineDefinition | null {
-  const nodeType = getBrowserNodeType(slug);
-  if (!nodeType) return null;
+  const nodeOp = getNodeOperation(slug);
+  if (!nodeOp) return null;
 
   return {
     nodes: [
       { id: "input", type: "input", params: {} },
-      { id: "process", type: nodeType, params },
+      {
+        id: "process",
+        type: nodeOp.nodeType,
+        params: { ...params, operation: nodeOp.operation },
+      },
       { id: "output", type: "output", params: {} },
     ],
   };

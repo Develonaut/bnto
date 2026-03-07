@@ -53,7 +53,7 @@ export type { ExportResult, EditorExportResult } from "./hooks/useEditorExport";
 export { useEditorSelection } from "./hooks/useEditorSelection";
 export { useEditorUndoRedo } from "./hooks/useEditorUndoRedo";
 export { useEditorPanels } from "./hooks/useEditorPanels";
-export { useEditorExecution } from "./hooks/useEditorExecution";
+export { useEditorExecutionContext as useEditorExecution } from "./hooks/EditorExecutionContext";
 export type { EditorExecutionResult, ExecutionPhase } from "./hooks/useEditorExecution";
 export { useExecutionNodes } from "./hooks/useExecutionNodes";
 

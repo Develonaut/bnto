@@ -16,7 +16,7 @@ import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { useEditorActions } from "../../hooks/useEditorActions";
 import { useEditorPanels } from "../../hooks/useEditorPanels";
-import { useEditorExecution } from "../../hooks/useEditorExecution";
+import { useEditorExecutionContext } from "../../hooks/EditorExecutionContext";
 import { SchemaForm } from "../SchemaForm";
 import { OutputRenderer } from "../OutputRenderer";
 import { rfNodesToDefinition } from "../../adapters/rfNodesToDefinition";
@@ -41,7 +41,7 @@ function ConfigPanelRoot() {
   const { configOpen } = useEditorPanels();
   const { node, config, typeInfo, schemaDef, visibleParams } = useEditorNode(configNodeId);
   const { updateParams } = useEditorActions();
-  const execution = useEditorExecution();
+  const execution = useEditorExecutionContext();
 
   const nodes = useEditorStore((s) => s.nodes);
   const configs = useEditorStore((s) => s.configs);

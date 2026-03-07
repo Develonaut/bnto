@@ -1,7 +1,8 @@
 /**
  * Rename Files recipe — batch rename files with patterns.
  *
- * Go source: engine/pkg/menu/recipes/rename-files.json
+ * Simplified from Go engine's nested loop structure to a flat
+ * 3-node pipeline: input → file-system:rename → output.
  */
 
 import type { Recipe } from "../recipe";
@@ -29,7 +30,7 @@ export const renameFiles: Recipe = {
     name: "Rename Files",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Lists files and renames each by adding a prefix.",
+      description: "Renames each file by adding a prefix.",
     },
     parameters: {},
     inputPorts: [],
@@ -53,36 +54,17 @@ export const renameFiles: Recipe = {
         outputPorts: [{ id: "out-1", name: "files" }],
       },
       {
-        id: "rename-loop",
-        type: "loop",
+        id: "rename-file",
+        type: "file-system",
         version: CURRENT_FORMAT_VERSION,
-        name: "Rename Each File",
+        name: "Rename File",
         position: { x: 300, y: 100 },
         metadata: {},
         parameters: {
-          mode: "forEach",
-          items: '{{index . "input" "files"}}',
+          operation: "rename",
         },
-        inputPorts: [{ id: "in-1", name: "items" }],
-        outputPorts: [],
-        nodes: [
-          {
-            id: "rename-file",
-            type: "file-system",
-            version: CURRENT_FORMAT_VERSION,
-            name: "Rename File",
-            position: { x: 100, y: 100 },
-            metadata: {},
-            parameters: {
-              operation: "move",
-              source: "{{.item}}",
-              dest: "{{.OUTPUT_DIR}}/renamed-{{basename .item}}",
-            },
-            inputPorts: [],
-            outputPorts: [],
-          },
-        ],
-        edges: [],
+        inputPorts: [{ id: "in-1", name: "files" }],
+        outputPorts: [{ id: "out-1", name: "files" }],
       },
       {
         id: "output",
@@ -102,8 +84,8 @@ export const renameFiles: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "rename-loop" },
-      { id: "e2", source: "rename-loop", target: "output" },
+      { id: "e1", source: "input", target: "rename-file" },
+      { id: "e2", source: "rename-file", target: "output" },
     ],
   },
 };

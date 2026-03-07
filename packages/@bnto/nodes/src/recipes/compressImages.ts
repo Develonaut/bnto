@@ -1,7 +1,9 @@
 /**
  * Compress Images recipe — optimize PNG, JPEG, and WebP images.
  *
- * Go source: engine/pkg/menu/recipes/compress-images.json
+ * Simplified from Go engine's nested loop structure to a flat
+ * 3-node pipeline: input → image:compress → output.
+ * The executor handles per-file iteration inherently.
  */
 
 import type { Recipe } from "../recipe";
@@ -31,7 +33,7 @@ export const compressImages: Recipe = {
     name: "Compress Images",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Lists image files and compresses each one to WebP format.",
+      description: "Compresses each image to reduce file size.",
     },
     parameters: {},
     inputPorts: [],
@@ -55,37 +57,18 @@ export const compressImages: Recipe = {
         outputPorts: [{ id: "out-1", name: "files" }],
       },
       {
-        id: "compress-loop",
-        type: "loop",
+        id: "compress-image",
+        type: "image",
         version: CURRENT_FORMAT_VERSION,
-        name: "Compress Each Image",
+        name: "Compress Image",
         position: { x: 300, y: 100 },
         metadata: {},
         parameters: {
-          mode: "forEach",
-          items: '{{index . "input" "files"}}',
+          operation: "compress",
+          quality: 80,
         },
-        inputPorts: [{ id: "in-1", name: "items" }],
-        outputPorts: [],
-        nodes: [
-          {
-            id: "compress-image",
-            type: "image",
-            version: CURRENT_FORMAT_VERSION,
-            name: "Compress Image",
-            position: { x: 100, y: 100 },
-            metadata: {},
-            parameters: {
-              operation: "compress",
-              input: "{{.item}}",
-              output: "{{.OUTPUT_DIR}}/{{basename .item}}",
-              quality: 80,
-            },
-            inputPorts: [],
-            outputPorts: [],
-          },
-        ],
-        edges: [],
+        inputPorts: [{ id: "in-1", name: "files" }],
+        outputPorts: [{ id: "out-1", name: "files" }],
       },
       {
         id: "output",
@@ -105,8 +88,8 @@ export const compressImages: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "compress-loop" },
-      { id: "e2", source: "compress-loop", target: "output" },
+      { id: "e1", source: "input", target: "compress-image" },
+      { id: "e2", source: "compress-image", target: "output" },
     ],
   },
 };

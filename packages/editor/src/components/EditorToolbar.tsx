@@ -21,7 +21,7 @@ import { useEditorUndoRedo } from "../hooks/useEditorUndoRedo";
 import { useEditorStore } from "../hooks/useEditorStore";
 import { useEditorStoreApi } from "../hooks/useEditorStoreApi";
 import { useNodeNavigation } from "../hooks/useNodeNavigation";
-import { useEditorExecution } from "../hooks/useEditorExecution";
+import { useEditorExecutionContext } from "../hooks/EditorExecutionContext";
 import { LayerPanelTrigger } from "./LayerPanel";
 import { ConfigPanelTrigger } from "./ConfigPanel";
 import { NodePaletteMenu, NodePaletteMenuTrigger, NodePaletteMenuContent } from "./NodePaletteMenu";
@@ -39,7 +39,7 @@ function EditorToolbar() {
   const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
   const isDirty = useEditorStore((s) => s.isDirty);
   const storeApi = useEditorStoreApi();
-  const execution = useEditorExecution();
+  const execution = useEditorExecutionContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleReset = useCallback(() => {
@@ -153,6 +153,7 @@ function EditorToolbar() {
             aria-label={showReset ? "Reset" : isRunning ? "Running" : "Run"}
             data-testid="editor-run-button"
             data-phase={execution.phase}
+            data-error={execution.errors[0] ?? undefined}
           >
             {isRunning ? (
               <LoaderIcon className="size-4 animate-spin" />

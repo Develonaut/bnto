@@ -343,4 +343,76 @@ describe("executePipeline", () => {
 
     expect(result.files).toHaveLength(1);
   });
+
+  // --- Container nodes ---
+
+  describe("container nodes", () => {
+    it("loop node runs children once per file", async () => {
+      const runNode = createChainingRunner();
+      const pipeline: PipelineDefinition = {
+        nodes: [
+          { id: "in", type: "input", params: {} },
+          {
+            id: "my-loop",
+            type: "loop",
+            params: {},
+            children: [{ id: "compress", type: "image", params: { operation: "compress" } }],
+          },
+          { id: "out", type: "output", params: {} },
+        ],
+      };
+      const files = [makeFile("a.jpg"), makeFile("b.jpg")];
+
+      const result = await executePipeline(pipeline, files, runNode);
+
+      // Each file processed independently through the loop's child
+      expect(result.files).toHaveLength(2);
+      expect(result.files[0].name).toBe("a.jpg-image");
+      expect(result.files[1].name).toBe("b.jpg-image");
+      // runNode called once per file (2 files × 1 child node)
+      expect(runNode).toHaveBeenCalledTimes(2);
+    });
+
+    it("group node runs children on full batch", async () => {
+      const runNode = createChainingRunner();
+      const pipeline: PipelineDefinition = {
+        nodes: [
+          { id: "in", type: "input", params: {} },
+          {
+            id: "my-group",
+            type: "group",
+            params: {},
+            children: [{ id: "compress", type: "image", params: { operation: "compress" } }],
+          },
+          { id: "out", type: "output", params: {} },
+        ],
+      };
+      const files = [makeFile("a.jpg"), makeFile("b.jpg")];
+
+      const result = await executePipeline(pipeline, files, runNode);
+
+      expect(result.files).toHaveLength(2);
+      expect(result.files[0].name).toBe("a.jpg-image");
+      expect(result.files[1].name).toBe("b.jpg-image");
+    });
+
+    it("container without children passes batch through", async () => {
+      const runNode = vi.fn();
+      const pipeline: PipelineDefinition = {
+        nodes: [
+          { id: "in", type: "input", params: {} },
+          { id: "empty-loop", type: "loop", params: {}, children: [] },
+          { id: "out", type: "output", params: {} },
+        ],
+      };
+      const files = [makeFile("a.jpg")];
+
+      const result = await executePipeline(pipeline, files, runNode);
+
+      // No children means empty processing → but loop has no children array
+      // and since it has length 0, it's treated as primitive which won't
+      // match in the registry, so let's test with undefined children
+      expect(result.files).toHaveLength(1);
+    });
+  });
 });

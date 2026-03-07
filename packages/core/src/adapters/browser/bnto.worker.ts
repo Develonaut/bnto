@@ -13,7 +13,7 @@
 
 import type { WorkerRequest } from "./workerProtocol";
 import type { WasmCombinedFn } from "./wasmLoader";
-import { loadWasmModule, registerNodeTypes, callWasmNode } from "./wasmLoader";
+import { loadWasmModule, registerNodeTypes, callWasmNode, resolveWasmFn } from "./wasmLoader";
 import { send, sendProgress, sendResult, sendError, sendWorkerError } from "./workerResponses";
 
 // =============================================================================
@@ -77,15 +77,21 @@ async function handleInit(baseUrl: string): Promise<void> {
 // Process — Run a WASM node on a single file
 // =============================================================================
 
-/** Resolve the WASM function for a node type, or send an error. */
-function resolveNodeFn(id: string, nodeType: string): WasmCombinedFn | null {
+/** Resolve the WASM function for a node type + params, or send an error. */
+function resolveNodeFn(
+  id: string,
+  nodeType: string,
+  params: Record<string, unknown>,
+): WasmCombinedFn | null {
   if (!initialized) {
     sendError(id, "WASM not initialized. Send 'init' first.");
     return null;
   }
-  const fn = nodeRegistry.get(nodeType);
+  const fn = resolveWasmFn(nodeRegistry, nodeType, params);
   if (!fn) {
-    sendError(id, `Unsupported node type: ${nodeType}`);
+    const operation = params.operation;
+    const detail = typeof operation === "string" ? `${nodeType}:${operation}` : nodeType;
+    sendError(id, `Unsupported node type: ${detail}`);
     return null;
   }
   return fn;
@@ -99,7 +105,7 @@ function handleProcess(request: {
   params: Record<string, unknown>;
 }): void {
   const { id, data, filename, nodeType, params } = request;
-  const fn = resolveNodeFn(id, nodeType);
+  const fn = resolveNodeFn(id, nodeType, params);
   if (!fn) return;
 
   try {

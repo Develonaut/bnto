@@ -2,6 +2,7 @@
 
 **Last Updated:** March 2026
 **Status:** Architecture defined — informing Sprint 4 + 4B implementation
+**Execution model:** See [node-architecture.md](node-architecture.md) for the three-layer node model and WASM dispatch
 
 ---
 
@@ -15,10 +16,10 @@ This document defines the **shared editor layer** — the architecture that make
 
 ## Two Editors, One Foundation
 
-| Editor | What It Is | Who It's For | Technology |
-|--------|-----------|--------------|------------|
+| Editor                 | What It Is                                                           | Who It's For                  | Technology                   |
+| ---------------------- | -------------------------------------------------------------------- | ----------------------------- | ---------------------------- |
 | **Bento Box** (visual) | Spatial grid of compartments — add, remove, arrange, configure nodes | Visual thinkers, casual users | React Flow (`@xyflow/react`) |
-| **Code Editor** (JSON) | Schema-aware `.bnto.json` text editor with slash commands | Power users, developers | CodeMirror 6 |
+| **Code Editor** (JSON) | Schema-aware `.bnto.json` text editor with slash commands            | Power users, developers       | CodeMirror 6                 |
 
 Both editors are **dumb views of the same store.** Switching between them is instant — render a different component, same state. No data migration, no serialization delay, no loss.
 
@@ -52,6 +53,7 @@ BentoCanvas          CodeEditor
 Framework-agnostic. No React, no store, no DOM. Fully testable in isolation.
 
 **Already built:**
+
 - `Definition`, `Recipe`, `Port`, `Edge` types
 - `NODE_TYPE_INFO` registry (10 node types with metadata)
 - `NODE_SCHEMAS` (parameter schemas for all 10 types with `visibleWhen`, `requiredWhen`, enums, min/max, defaults)
@@ -59,6 +61,7 @@ Framework-agnostic. No React, no store, no DOM. Fully testable in isolation.
 - 6 predefined recipes (`compressImages()`, `cleanCsv()`, etc.)
 
 **Sprint 4 Wave 1 (to build):**
+
 - `createBlankDefinition()` — minimal valid Definition
 - `addNode(definition, nodeType, position?)` — insert with defaults
 - `removeNode(definition, nodeId)` — remove + cascade cleanup
@@ -77,19 +80,20 @@ The Zustand store owns **all** editor state — nodes, edges, configs, metadata,
 ```typescript
 // Store owns everything:
 interface EditorState {
-  nodes: BentoNode[];             // RF nodes (visual data in node.data)
-  edges: Edge[];                  // RF edges
-  configs: NodeConfigs;           // Domain data keyed by node ID (no RF re-render)
+  nodes: BentoNode[]; // RF nodes (visual data in node.data)
+  edges: Edge[]; // RF edges
+  configs: NodeConfigs; // Domain data keyed by node ID (no RF re-render)
   recipeMetadata: RecipeMetadata; // Root-level recipe fields
   isDirty: boolean;
   validationErrors: ValidationError[];
   executionState: ExecutionState; // Per-node execution status
-  undoStack: EditorSnapshot[];    // Snapshots of nodes + configs
+  undoStack: EditorSnapshot[]; // Snapshots of nodes + configs
   redoStack: EditorSnapshot[];
 }
 ```
 
 **Key rules:**
+
 - **No `definition` in the store during editing.** Definition exists only at load/export boundaries
 - **Selection via RF's `node.selected` flag.** The store's `selectNode` action maps over nodes
 - **Undo/redo snapshots capture both nodes AND configs** atomically
@@ -108,16 +112,17 @@ Hooks follow a three-layer pattern: pure actions → thin wrapper hooks → cons
 **Consumer hooks** — the public API components import:
 
 ```typescript
-useEditorActions()           // → composed API: addNode, removeNode, updateParams + store actions
-useEditorNode(nodeId)        // → node data + config + schema + visible params
-useEditorUndoRedo()          // → undo, redo, canUndo, canRedo
-useEditorExport()            // → exportAsRecipe, download, canExport
-useEditorSelection()         // → selectedNodeId (from RF selection change events)
-useAutoSelect(options)       // → handleSelectNode + center-on-select effect
-useNodePalette()             // → available node types grouped by category
+useEditorActions(); // → composed API: addNode, removeNode, updateParams + store actions
+useEditorNode(nodeId); // → node data + config + schema + visible params
+useEditorUndoRedo(); // → undo, redo, canUndo, canRedo
+useEditorExport(); // → exportAsRecipe, download, canExport
+useEditorSelection(); // → selectedNodeId (from RF selection change events)
+useAutoSelect(options); // → handleSelectNode + center-on-select effect
+useNodePalette(); // → available node types grouped by category
 ```
 
 **Rules:**
+
 - Hooks select specific slices, never the whole store
 - Action hooks use `storeApi.setState()` for atomic multi-field updates
 - Components only import consumer hooks (Layer 3), never action hooks directly
@@ -128,6 +133,7 @@ useNodePalette()             // → available node types grouped by category
 Components receive data via hooks and render. That's it. Zero business logic, zero data fetching, zero direct store access.
 
 **Bento Box (visual):**
+
 - `BentoCanvas` — React Flow grid, renders compartments
 - `CompartmentNode` — surface Card for a single node
 - `NodePalette` — sidebar listing available node types
@@ -135,11 +141,13 @@ Components receive data via hooks and render. That's it. Zero business logic, ze
 - `EditorToolbar` — action bar (add, remove, run, export, undo/redo)
 
 **Code Editor (JSON):**
+
 - `CodeEditor` — CodeMirror 6 wrapper, renders JSON text
 - Slash command extensions — inline node insertion menu
 - Breadcrumb panel — JSON path navigation
 
 **Shared (editor chrome):**
+
 - `RecipeEditor` — top-level shell that composes toolbar + active editor + config panel
 - Editor mode toggle — switch between visual / code / split view
 
@@ -214,12 +222,15 @@ const result = addNode(currentState, "image");
 // Thin wrapper hook — bridges action to store
 function useAddNode() {
   const storeApi = useEditorStoreApi();
-  return useCallback((type: NodeTypeName, position?) => {
-    const result = addNode(storeApi.getState(), type, position);
-    if (!result) return null;
-    storeApi.setState(result.nextState);
-    return result.nodeId;
-  }, [storeApi]);
+  return useCallback(
+    (type: NodeTypeName, position?) => {
+      const result = addNode(storeApi.getState(), type, position);
+      if (!result) return null;
+      storeApi.setState(result.nextState);
+      return result.nodeId;
+    },
+    [storeApi],
+  );
 }
 ```
 
@@ -244,18 +255,18 @@ function useEditorActions() {
 
 All state lives in the Zustand store. ReactFlow renders it as controlled props.
 
-| State | Owner | Access Pattern | Why |
-|---|---|---|---|
-| **nodes** (visual data) | Zustand store | `useEditorStore(s => s.nodes)` | Controlled mode — store owns, RF renders |
-| **edges** | Zustand store | `useEditorStore(s => s.edges)` | Store applies RF edge change events |
-| **configs** (domain data) | Zustand store | `useEditorStore(s => s.configs[id])` | Separate from RF nodes — no RF re-render on param changes |
-| **Node selection** | Zustand (via RF) | `useEditorSelection()` → RF `onSelectionChange` | RF emits selection events, store tracks via `node.selected` flag |
-| **Viewport** (pan, zoom) | ReactFlow | `useReactFlow().fitView()` | RF handles gestures, zoom — not in Zustand |
-| **isDirty** | Zustand store | `useEditorStore(s => s.isDirty)` | Editor metadata |
-| **validationErrors** | Zustand store | `useEditorStore(s => s.validationErrors)` | Derived from nodes + configs at mutation time |
-| **recipeMetadata** | Zustand store | `useEditorStore(s => s.recipeMetadata)` | Recipe-level metadata (id, name, type, version) |
-| **undoStack / redoStack** | Zustand store | `useEditorUndoRedo()` | Atomic snapshots of nodes + configs |
-| **executionState** | Zustand store | `useEditorStore(s => s.executionState)` | Per-node execution status tracking |
+| State                     | Owner            | Access Pattern                                  | Why                                                              |
+| ------------------------- | ---------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
+| **nodes** (visual data)   | Zustand store    | `useEditorStore(s => s.nodes)`                  | Controlled mode — store owns, RF renders                         |
+| **edges**                 | Zustand store    | `useEditorStore(s => s.edges)`                  | Store applies RF edge change events                              |
+| **configs** (domain data) | Zustand store    | `useEditorStore(s => s.configs[id])`            | Separate from RF nodes — no RF re-render on param changes        |
+| **Node selection**        | Zustand (via RF) | `useEditorSelection()` → RF `onSelectionChange` | RF emits selection events, store tracks via `node.selected` flag |
+| **Viewport** (pan, zoom)  | ReactFlow        | `useReactFlow().fitView()`                      | RF handles gestures, zoom — not in Zustand                       |
+| **isDirty**               | Zustand store    | `useEditorStore(s => s.isDirty)`                | Editor metadata                                                  |
+| **validationErrors**      | Zustand store    | `useEditorStore(s => s.validationErrors)`       | Derived from nodes + configs at mutation time                    |
+| **recipeMetadata**        | Zustand store    | `useEditorStore(s => s.recipeMetadata)`         | Recipe-level metadata (id, name, type, version)                  |
+| **undoStack / redoStack** | Zustand store    | `useEditorUndoRedo()`                           | Atomic snapshots of nodes + configs                              |
+| **executionState**        | Zustand store    | `useEditorStore(s => s.executionState)`         | Per-node execution status tracking                               |
 
 **The store owns everything.** ReactFlow is a pure renderer — it receives `nodes` and `edges` as props and emits change events that the store applies. Domain data lives in `configs` to avoid RF re-renders on parameter changes.
 
@@ -299,10 +310,10 @@ ReactFlow (v12.10+) maintains an internal `nodeLookup` Map alongside the `nodes`
 
 ```typescript
 // O(1) — use for targeted lookups
-const node = useStore(s => s.nodeLookup.get(nodeId));
+const node = useStore((s) => s.nodeLookup.get(nodeId));
 
 // O(n) — avoid for single lookups, fine for rendering all nodes
-const allNodes = useStore(s => s.nodes);
+const allNodes = useStore((s) => s.nodes);
 ```
 
 For bnto's typical scale (3-10 nodes), the performance difference is negligible. The pattern matters more for correctness — `nodeLookup` returns the internal node with selection state, measured dimensions, and computed positions that the `nodes` array doesn't always reflect immediately.
@@ -333,9 +344,15 @@ function useNodeExecutionState(nodeId: string) {
 CSS handles the visual feedback:
 
 ```css
-[data-execution-state="running"] { /* pulse animation */ }
-[data-execution-state="completed"] { /* success styling */ }
-[data-execution-state="error"] { /* error styling */ }
+[data-execution-state="running"] {
+  /* pulse animation */
+}
+[data-execution-state="completed"] {
+  /* success styling */
+}
+[data-execution-state="error"] {
+  /* error styling */
+}
 ```
 
 This pattern keeps execution visualization at 0 React re-renders regardless of update frequency.
@@ -491,17 +508,17 @@ Both produce the same `EditorState` shape. Same store, same hooks, same operatio
 
 The layered architecture dictates the build order:
 
-| Sprint | Wave | What | Layer |
-|--------|------|------|-------|
-| **Sprint 4** | Wave 1 | Definition CRUD pure functions | Layer 1 (`@bnto/nodes`) |
-| **Sprint 4** | Wave 2 | Editor store + hooks + adapters | Layer 2-3 (`apps/web/editor/`) |
-| **Sprint 4** | Wave 3 | Bento box visual editor components | Layer 4 (visual skin) |
-| **Sprint 4** | Wave 4 | Execution visualization + export | Layer 4 (visual skin) |
-| **Sprint 4B** | Wave 1 | JSON Schema generation | Layer 1 (`@bnto/nodes`) |
-| **Sprint 4B** | Wave 2 | CodeMirror 6 foundation | Layer 4 (code skin) |
-| **Sprint 4B** | Wave 3 | Slash commands + command registry | Layer 4 (code skin) |
-| **Sprint 4B** | Wave 4 | Store sync + split view | Layer 3-4 (sync + UI) |
-| **Sprint 4B** | Wave 5 | Breadcrumbs, polish, E2E | Layer 4 (code skin) |
+| Sprint        | Wave   | What                               | Layer                          |
+| ------------- | ------ | ---------------------------------- | ------------------------------ |
+| **Sprint 4**  | Wave 1 | Definition CRUD pure functions     | Layer 1 (`@bnto/nodes`)        |
+| **Sprint 4**  | Wave 2 | Editor store + hooks + adapters    | Layer 2-3 (`apps/web/editor/`) |
+| **Sprint 4**  | Wave 3 | Bento box visual editor components | Layer 4 (visual skin)          |
+| **Sprint 4**  | Wave 4 | Execution visualization + export   | Layer 4 (visual skin)          |
+| **Sprint 4B** | Wave 1 | JSON Schema generation             | Layer 1 (`@bnto/nodes`)        |
+| **Sprint 4B** | Wave 2 | CodeMirror 6 foundation            | Layer 4 (code skin)            |
+| **Sprint 4B** | Wave 3 | Slash commands + command registry  | Layer 4 (code skin)            |
+| **Sprint 4B** | Wave 4 | Store sync + split view            | Layer 3-4 (sync + UI)          |
+| **Sprint 4B** | Wave 5 | Breadcrumbs, polish, E2E           | Layer 4 (code skin)            |
 
 Sprint 4 Waves 1-2 are prerequisites for Sprint 4B — the code editor consumes the shared store.
 
@@ -509,27 +526,27 @@ Sprint 4 Waves 1-2 are prerequisites for Sprint 4B — the code editor consumes 
 
 ## Design Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| **Visual metaphor** | Bento box grid (not conveyor belt pipeline) | Spatial arrangement is simpler, more intuitive for non-developers. No edge management complexity. Matches the product name. |
-| **No edges in visual editor** | Execution order = position order | Bento box metaphor is about arrangement, not wiring. Code editor can handle edges for advanced cases. |
-| **RF as graph source of truth** | ReactFlow owns all node/edge state during editing | Eliminates sync bugs between parallel stores. Definition only at load/export boundaries. Proven at scale in atomiton. See [ReactFlow Performance Patterns](#reactflow-performance-patterns). |
-| **Thin Zustand for metadata** | isDirty, validation, undo/redo, recipe metadata only | Zustand handles what RF doesn't — editor-level concerns, not graph structure. No overlap with RF state. |
-| **Switchable editors** | Visual ↔ Code on the fly via shared store | Power users switch freely. No lock-in to one editing mode. |
-| **Store location** | Co-located in `apps/web/editor/`, future `@bnto/editor` | Follow co-location rule. Extract when desktop needs it. |
-| **Store not in `@bnto/core`** | Separate domain (authoring ≠ transport) | Core is for backend communication. Editor is client-side authoring. Different concerns. |
-| **Dumb components** | All business logic in store/hooks/pure fns | Components render, nothing more. Makes editors interchangeable. |
-| **Visual editor tech** | React Flow (`@xyflow/react`) | Already in use for bento box prototype. Grid layout, zoom-to-fit, node positioning. |
-| **Code editor tech** | CodeMirror 6 | 60x smaller than Monaco. CSS variable theming. Mobile support. Headless state. See [code-editor.md](code-editor.md). |
+| Decision                        | Choice                                                  | Rationale                                                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Visual metaphor**             | Bento box grid (not conveyor belt pipeline)             | Spatial arrangement is simpler, more intuitive for non-developers. No edge management complexity. Matches the product name.                                                                  |
+| **No edges in visual editor**   | Execution order = position order                        | Bento box metaphor is about arrangement, not wiring. Code editor can handle edges for advanced cases.                                                                                        |
+| **RF as graph source of truth** | ReactFlow owns all node/edge state during editing       | Eliminates sync bugs between parallel stores. Definition only at load/export boundaries. Proven at scale in atomiton. See [ReactFlow Performance Patterns](#reactflow-performance-patterns). |
+| **Thin Zustand for metadata**   | isDirty, validation, undo/redo, recipe metadata only    | Zustand handles what RF doesn't — editor-level concerns, not graph structure. No overlap with RF state.                                                                                      |
+| **Switchable editors**          | Visual ↔ Code on the fly via shared store               | Power users switch freely. No lock-in to one editing mode.                                                                                                                                   |
+| **Store location**              | Co-located in `apps/web/editor/`, future `@bnto/editor` | Follow co-location rule. Extract when desktop needs it.                                                                                                                                      |
+| **Store not in `@bnto/core`**   | Separate domain (authoring ≠ transport)                 | Core is for backend communication. Editor is client-side authoring. Different concerns.                                                                                                      |
+| **Dumb components**             | All business logic in store/hooks/pure fns              | Components render, nothing more. Makes editors interchangeable.                                                                                                                              |
+| **Visual editor tech**          | React Flow (`@xyflow/react`)                            | Already in use for bento box prototype. Grid layout, zoom-to-fit, node positioning.                                                                                                          |
+| **Code editor tech**            | CodeMirror 6                                            | 60x smaller than Monaco. CSS variable theming. Mobile support. Headless state. See [code-editor.md](code-editor.md).                                                                         |
 
 ---
 
 ## References
 
-| Document | What It Covers |
-|----------|---------------|
+| Document                             | What It Covers                                                             |
+| ------------------------------------ | -------------------------------------------------------------------------- |
 | [visual-editor.md](visual-editor.md) | Bento box visual editor — compartment design, grid layout, execution state |
-| [code-editor.md](code-editor.md) | CodeMirror 6 — tech choice, slash commands, JSON Schema, theming |
-| [PLAN.md](../PLAN.md) → Sprint 4 | Visual editor task breakdown (Waves 1-4) |
-| [PLAN.md](../PLAN.md) → Sprint 4B | Code editor task breakdown (Waves 1-5) |
-| [pricing-model.md](pricing-model.md) | Recipe editor is free. Create, run, export = free. Save, share = Pro. |
+| [code-editor.md](code-editor.md)     | CodeMirror 6 — tech choice, slash commands, JSON Schema, theming           |
+| [PLAN.md](../PLAN.md) → Sprint 4     | Visual editor task breakdown (Waves 1-4)                                   |
+| [PLAN.md](../PLAN.md) → Sprint 4B    | Code editor task breakdown (Waves 1-5)                                     |
+| [pricing-model.md](pricing-model.md) | Recipe editor is free. Create, run, export = free. Save, share = Pro.      |

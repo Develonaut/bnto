@@ -59,6 +59,8 @@ type CanvasProps = {
    * provides a ReactFlowProvider.
    */
   standalone?: boolean;
+  /** Called when a node is clicked. */
+  onNodeClick?: (event: React.MouseEvent, node: BentoNode) => void;
   /** ReactFlow children — Panel overlays, Controls, etc. */
   children?: ReactNode;
   /** Override container classes. */
@@ -86,6 +88,7 @@ type CanvasInnerProps = {
   defaultNodes?: BentoNode[];
   interactive?: boolean;
   disable?: CanvasProps["disable"];
+  onNodeClick?: (event: React.MouseEvent, node: BentoNode) => void;
   children?: ReactNode;
 };
 
@@ -97,6 +100,7 @@ function CanvasInner({
   defaultNodes,
   interactive = false,
   disable,
+  onNodeClick,
   children,
 }: CanvasInnerProps) {
   const { fitView } = useReactFlow();
@@ -131,6 +135,7 @@ function CanvasInner({
         ? { nodes, onNodesChange, edges: edges ?? EMPTY_EDGES, onEdgesChange }
         : { defaultNodes, edges: EMPTY_EDGES })}
       nodeTypes={NODE_TYPES}
+      onNodeClick={onNodeClick}
       nodesDraggable={interactive && !disable?.drag}
       nodesConnectable={false}
       elementsSelectable={interactive && !disable?.select}
@@ -161,6 +166,7 @@ export function Canvas({
   interactive = false,
   disable,
   standalone = false,
+  onNodeClick,
   children,
   className,
 }: CanvasProps) {
@@ -173,6 +179,7 @@ export function Canvas({
       defaultNodes={defaultNodes}
       interactive={interactive}
       disable={disable}
+      onNodeClick={onNodeClick}
     >
       {children}
     </CanvasInner>
