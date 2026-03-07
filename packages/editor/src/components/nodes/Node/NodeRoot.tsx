@@ -28,6 +28,8 @@ interface NodeRootProps {
   muted?: boolean;
   /** Card sits flush with ground when selected. */
   selected?: boolean;
+  /** Destructive ring when a node has failed during execution. */
+  failed?: boolean;
   /** Composed content — NodeHeader, NodeBody, NodeFooter. */
   children: ReactNode;
 }
@@ -40,6 +42,7 @@ function NodeRoot({
   align,
   muted = false,
   selected = false,
+  failed = false,
   children,
 }: NodeRootProps) {
   const justifyMap = {
@@ -57,7 +60,7 @@ function NodeRoot({
           <Card
             elevation={elevation}
             color={color}
-            className="group relative flex flex-col rounded-xl pointer-events-auto"
+            className={`group relative flex flex-col rounded-xl pointer-events-auto${failed ? " ring-2 ring-destructive/60" : ""}`}
             style={{ width, height }}
             data-testid="node-card"
           >

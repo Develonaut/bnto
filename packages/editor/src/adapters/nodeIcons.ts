@@ -19,6 +19,7 @@ import {
   DownloadIcon,
   MonitorIcon,
   EyeIcon,
+  CheckCircle2Icon,
 } from "@bnto/ui";
 
 /**
@@ -46,6 +47,7 @@ const ICON_COMPONENTS: Record<string, LucideIcon> = {
   download: DownloadIcon,
   monitor: MonitorIcon,
   eye: EyeIcon,
+  "check-circle": CheckCircle2Icon,
 };
 
 export { ICON_COMPONENTS };

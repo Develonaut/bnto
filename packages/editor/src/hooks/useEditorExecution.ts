@@ -8,7 +8,7 @@
  * preparePipeline(), and runs it through core.executions.runPipeline().
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { core } from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
 import { useEditorStoreApi } from "./useEditorStoreApi";
@@ -27,6 +27,8 @@ interface EditorExecutionResult {
   results: BrowserFileResult[];
   errors: string[];
   canRun: boolean;
+  autoDownload: boolean;
+  setAutoDownload: (enabled: boolean) => void;
   run: (files: File[]) => Promise<void>;
   reset: () => void;
   downloadFile: (file: BrowserFileResult) => void;
@@ -50,9 +52,21 @@ function useEditorExecution(): EditorExecutionResult {
   const [phase, setPhase] = useState<ExecutionPhase>("idle");
   const [results, setResults] = useState<BrowserFileResult[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+  const [autoDownload, setAutoDownload] = useState(false);
 
   const resultsRef = useRef<BrowserFileResult[]>([]);
   resultsRef.current = results;
+
+  // Auto-download when execution completes
+  useEffect(() => {
+    if (phase === "completed" && autoDownload && resultsRef.current.length > 0) {
+      if (resultsRef.current.length === 1) {
+        core.executions.downloadResult(resultsRef.current[0]!);
+      } else {
+        core.executions.downloadAllResults(resultsRef.current, "editor-results");
+      }
+    }
+  }, [phase, autoDownload]);
 
   const run = useCallback(
     async (files: File[]) => {
@@ -132,16 +146,23 @@ function useEditorExecution(): EditorExecutionResult {
     await core.executions.downloadAllResults(currentResults, "editor-results");
   }, []);
 
-  return {
-    phase,
-    results,
-    errors,
-    canRun: hasProcessingNodes && phase !== "running",
-    run,
-    reset,
-    downloadFile,
-    downloadAll,
-  };
+  const canRun = hasProcessingNodes && phase !== "running";
+
+  return useMemo(
+    () => ({
+      phase,
+      results,
+      errors,
+      canRun,
+      autoDownload,
+      setAutoDownload,
+      run,
+      reset,
+      downloadFile,
+      downloadAll,
+    }),
+    [phase, results, errors, canRun, autoDownload, run, reset, downloadFile, downloadAll],
+  );
 }
 
 export { useEditorExecution };

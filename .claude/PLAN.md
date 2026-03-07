@@ -29,7 +29,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 - **FOCUS: Editor to production.** Sprint 5 Waves 1-2 complete (compartment redesign, `/editor` route, nav integration). Sprint 4G complete (format versioning, Zod schemas, schema-driven config panel).
 - **Active work — execution order:**
-  1. **Sprint 5A Wave 1** — finish exit animation (isIoNode, hover delete, placeholder DONE — exit animation remains)
+  1. ~~**Sprint 5A Wave 1**~~ **COMPLETE** — exit animation, isIoNode, hover delete, placeholder all done
   2. ~~**Sprint 4H**~~ **COMPLETE** ‖ **Sprint 5B** — 5B: visual hierarchy (unblocked, no shared dependencies)
   3. **Sprint 5 Wave 3** — execution wiring (Run → `executePipeline` → WASM → elevation). **Unblocked** — Sprint 4H complete.
   4. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
@@ -209,12 +209,12 @@ Format versioning activated across the stack. Zod schemas replaced hand-rolled `
 Wire the Run button to browser WASM execution. Elevation-driven progress on compartments. Results routed to Output node.
 
 - ~~`@bnto/core` — Extract pipeline executor~~ — **Completed by Sprint 4H.** `executePipeline()` exists and is exported from `@bnto/core` before this wave starts.
-- [ ] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `executePipeline()` → browser WASM engine. Import `executePipeline` and `NodeRunner` from `@bnto/core`. Build `NodeRunner` from `core.executions` browser adapter's `processFile`. Do NOT call `BntoWorker.processFiles()` directly.
-- [ ] `@bnto/editor` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed). Leverage existing Card spring animations
-- [ ] `@bnto/editor` — `/frontend-engineer` — Results routed to Output node config panel (download list)
-- [ ] `@bnto/editor` — `/frontend-engineer` — Auto-download toggle on Output node
-- [ ] `@bnto/editor` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute)
-- [ ] `@bnto/editor` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant)
+- [x] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `executePipeline()` → browser WASM engine. Import `executePipeline` and `NodeRunner` from `@bnto/core`. Build `NodeRunner` from `core.executions` browser adapter's `processFile`. Do NOT call `BntoWorker.processFiles()` directly.
+- [x] `@bnto/editor` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed). Leverage existing Card spring animations
+- [x] `@bnto/editor` — `/frontend-engineer` — Results routed to Output node config panel (download list)
+- [x] `@bnto/editor` — `/frontend-engineer` — Auto-download toggle on Output node
+- [x] `@bnto/editor` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute)
+- [x] `@bnto/editor` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant)
 
 **Execution boundary contract:** The execution path MUST call `validateDefinition()` (which includes per-node parameter validation via Zod) before invoking the WASM engine. If validation fails → reject with errors, surface in the UI, no engine invocation.
 
@@ -259,14 +259,14 @@ End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude
 
 #### Wave 1 — Node Hover Overlay + Placeholder Slot
 
-> **Partially complete.** Three of four implementation tasks are done (PR #120). The exit animation remains — it requires adding `motion/react` to `@bnto/editor` dependencies first.
+> **COMPLETE.** All tasks done — isIoNode flag, hover delete overlay, placeholder slot, exit animation with `react-animate-presence` + `tailwindcss-motion`.
 
 - [x] `packages/editor` — **`CompartmentNode` hover overlay**: `DeleteOverlay` component with `group-hover:opacity-100`, `stopPropagation`, destructive variant. Hidden when `data.isIoNode === true`.
 - [x] `packages/editor` — **`PlaceholderSlot` component**: Dashed muted card with centered Plus button. Opens palette via `useEditorPanels`. Disappears when a non-I/O node exists.
 - [x] `packages/editor` — **`isIoNode` flag in adapter**: `createCompartmentNode.ts:72` and `definitionToBento.ts:48` both set `isIoNode: isIoNodeType(type)`. Tests at `createCompartmentNode.test.ts:85-97` and `definitionToBento.test.ts:167-183`.
-- [ ] **CLAIMED** `packages/editor` — **Add `react-animate-presence` + `tailwindcss-motion` dependencies**: Lightweight CSS-first exit animations. `react-animate-presence` (~1-2 KB) delays DOM removal until exit animation completes. `tailwindcss-motion` provides exit utility classes. No need for full `motion/react` (18 KB).
-- [ ] **CLAIMED** `packages/editor` — **Node exit animation**: Use `react-animate-presence` to wrap compartment nodes so deleted nodes exit with a spring scale-down (reverse of the entrance). Exit classes: `motion-scale-out-75 motion-opacity-out-0` with spring easing. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
-- [ ] **CLAIMED** `packages/editor` — **Unit tests for remaining work**: Exit animation triggers on node removal. `PlaceholderSlot` renders when only I/O nodes present (existing: `placeholderVisibility.test.ts`). Hover overlay does not render for I/O nodes (existing: implicitly tested via `isIoNode` adapter tests — add explicit `CompartmentNode` render test).
+- [x] `packages/editor` — **Add `react-animate-presence` + `tailwindcss-motion` dependencies**: Lightweight CSS-first exit animations. `react-animate-presence` (~1-2 KB) delays DOM removal until exit animation completes. `tailwindcss-motion` provides exit utility classes. No need for full `motion/react` (18 KB).
+- [x] `packages/editor` — **Node exit animation**: Use `react-animate-presence` to wrap compartment nodes so deleted nodes exit with a spring scale-down (reverse of the entrance). Exit classes: `motion-scale-out-75 motion-opacity-out-0` with spring easing. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
+- [x] `packages/editor` — **Unit tests for remaining work**: Exit animation triggers on node removal. `PlaceholderSlot` renders when only I/O nodes present (existing: `placeholderVisibility.test.ts`). Hover overlay does not render for I/O nodes (existing: implicitly tested via `isIoNode` adapter tests — add explicit `CompartmentNode` render test).
 
 #### Wave 2 — Config Panel Identity Echo
 

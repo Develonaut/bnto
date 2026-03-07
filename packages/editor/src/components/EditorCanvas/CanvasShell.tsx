@@ -5,6 +5,7 @@ import { Canvas } from "./Canvas";
 import { EditorOverlay } from "./EditorOverlay";
 import { useEditorCanvas } from "./useEditorCanvas";
 import { usePlaceholderNodes } from "../../hooks/usePlaceholderNodes";
+import { useExecutionNodes } from "../../hooks/useExecutionNodes";
 
 /**
  * CanvasShell — the canvas surface with floating overlay children.
@@ -20,7 +21,8 @@ interface CanvasShellProps {
 
 function CanvasShell({ children }: CanvasShellProps) {
   const { nodes, edges, onNodesChange, onEdgesChange } = useEditorCanvas();
-  const { displayNodes, handleNodesChange } = usePlaceholderNodes(nodes, onNodesChange);
+  const statusNodes = useExecutionNodes(nodes);
+  const { displayNodes, handleNodesChange } = usePlaceholderNodes(statusNodes, onNodesChange);
 
   return (
     <div className="relative h-full overflow-hidden" data-testid="recipe-editor">
