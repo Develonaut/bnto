@@ -6,9 +6,8 @@
  * Falls back to a blank canvas when the slug is missing or unknown.
  */
 
-import { createBlankDefinition, getRecipeBySlug } from "@bnto/nodes";
+import { createBlankDefinition, getRecipeBySlug, isIoNodeType } from "@bnto/nodes";
 import { definitionToBento } from "../adapters/definitionToBento";
-import { isIoNodeType } from "../helpers/isIoNodeType";
 import type { NodeConfigs } from "../adapters/types";
 import type { RecipeMetadata } from "./types";
 

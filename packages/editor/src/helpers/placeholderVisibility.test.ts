@@ -7,8 +7,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { isIoNodeType } from "../../helpers/isIoNodeType";
-import type { NodeConfigs } from "../../adapters/types";
+import { isIoNodeType } from "@bnto/nodes";
+import type { NodeConfigs } from "../adapters/types";
 
 /** Mirror the store selector logic from CanvasShell. */
 function shouldShowPlaceholder(configs: NodeConfigs): boolean {

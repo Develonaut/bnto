@@ -10,13 +10,13 @@
  */
 
 import type { NodeTypeName } from "@bnto/nodes";
+import { isIoNodeType } from "@bnto/nodes";
 import type { EditorState } from "../store/types";
 import { createCompartmentNode } from "../adapters/createCompartmentNode";
 import { STRIDE } from "../adapters/bentoSlots";
 import { captureSnapshot } from "../store/captureSnapshot";
 import { pushToStack } from "../store/pushToStack";
 import { revalidateState } from "../store/revalidateState";
-import { isIoNodeType } from "../helpers/isIoNodeType";
 
 interface AddNodeResult {
   nextState: Partial<EditorState>;

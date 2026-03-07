@@ -57,8 +57,8 @@ export function Pressable({
   ...props
 }: PressableProps) {
   const Comp = asChild ? Slot : "button";
-  const dataHover = (hovered && !pressed) ? "" : undefined;
-  const dataActive = (pressed || active) ? "" : undefined;
+  const dataHover = hovered && !pressed ? "" : undefined;
+  const dataActive = pressed || active ? "" : undefined;
   const dataToggle = toggle ? "" : undefined;
 
   return (

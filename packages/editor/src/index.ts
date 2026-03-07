@@ -56,9 +56,10 @@ export { useEditorPanels } from "./hooks/useEditorPanels";
 
 // --- Canvas ---
 
-export { CompartmentNode } from "./components/canvas/CompartmentNode";
-export type { CompartmentStatus } from "./components/canvas/CompartmentNode";
-export { BentoCanvas } from "./components/canvas/BentoCanvas";
+export { Canvas } from "./components/EditorCanvas/Canvas";
+export { CompartmentNode, type CompartmentStatus } from "./components/nodes/CompartmentNode";
+export { IoNode } from "./components/nodes/IoNode";
+export { PlaceholderNode } from "./components/nodes/PlaceholderNode";
 
 // --- Schema-driven forms ---
 

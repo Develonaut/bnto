@@ -10,7 +10,7 @@
 import { useCallback, useMemo } from "react";
 import { useEditorStore } from "./useEditorStore";
 import { useEditorActions } from "./useEditorActions";
-import { isIoNodeType } from "../helpers/isIoNodeType";
+import { isIoNodeType } from "@bnto/nodes";
 
 function useNodeNavigation() {
   const { removeSelectedNode, selectedNodeId: selId, selectNode } = useEditorActions();
