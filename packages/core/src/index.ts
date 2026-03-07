@@ -81,3 +81,5 @@ export type {
 export { downloadBlob } from "./adapters/browser/downloadBlob";
 export { deriveAcceptedTypes } from "./adapters/browser/deriveAcceptedTypes";
 export { deriveOutputConfig } from "./adapters/browser/deriveOutputConfig";
+export { slugToPipeline } from "./adapters/browser/slugToPipeline";
+export { createZipBlob } from "./adapters/browser/createZipBlob";
