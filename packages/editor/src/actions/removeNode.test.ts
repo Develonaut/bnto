@@ -56,9 +56,7 @@ function stateWithNodes(): EditorState {
     slug: null,
     definition: null,
     selectedNodeId: null,
-    layersOpen: false,
-    configOpen: false,
-    paletteOpen: false,
+    panels: { layers: false, config: false, palette: false, run: false },
   } as EditorState;
 }
 
