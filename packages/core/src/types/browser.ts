@@ -1,37 +1,9 @@
 // ---------------------------------------------------------------------------
 // Browser execution types (transport-agnostic — no WASM imports)
 //
-// These types define the contract between @bnto/core and whatever browser
-// engine implementation is used (e.g., Rust→WASM via Web Worker).
+// These types define the result shapes and state for browser-based execution
+// via the Rust WASM pipeline executor.
 // ---------------------------------------------------------------------------
-
-/**
- * Abstract engine interface for browser-based execution.
- *
- * Implemented by the WASM Web Worker wrapper (BntoWorker).
- * Engine initializes lazily on first use — no manual registration needed.
- *
- * The engine processes files entirely in the browser — no backend,
- * no R2, no network. Files never leave the user's machine.
- */
-export interface BrowserEngine {
-  /** Initialize the engine (load WASM, warm up worker). Safe to call multiple times. */
-  init(): Promise<void>;
-
-  /** Process a single file. Returns the processed file as a blob. */
-  processFile(
-    file: File,
-    nodeType: string,
-    params?: Record<string, unknown>,
-    onProgress?: (percent: number, message: string) => void,
-  ): Promise<BrowserFileResult>;
-
-  /** Terminate the engine and clean up resources. */
-  terminate(): void;
-
-  /** Whether the engine is initialized and ready to process files. */
-  readonly isReady: boolean;
-}
 
 /** Result of processing a single file in the browser. */
 export interface BrowserFileResult {

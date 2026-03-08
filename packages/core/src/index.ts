@@ -38,7 +38,6 @@ export type {
   UploadProgress,
   OutputFileUrl,
   DownloadUrlsResult,
-  BrowserEngine,
   BrowserFileResult,
   BrowserExecution,
   BrowserFileProgress,
@@ -65,17 +64,9 @@ export { createEnhancedStore } from "./stores/createEnhancedStore";
 // ── Store utilities (for app-layer selectors) ────────────────────────────
 export { useShallow } from "zustand/react/shallow";
 
-// ── Pipeline engine (runtime-agnostic execution) ─────────────────────────
-export { executePipeline } from "./engine/executePipeline";
-export type {
-  NodeRunner,
-  FileInput,
-  FileResult,
-  PipelineDefinition,
-  PipelineNode,
-  PipelineProgressCallback,
-  PipelineResult,
-} from "./engine/types";
+// ── Pipeline types (execution-oriented definition for WASM) ───────────────
+export type { PipelineDefinition, PipelineNode } from "./types/pipeline";
+export { definitionToPipeline } from "./transforms/definitionToPipeline";
 
 // ── Pipeline events (structured progress from Rust executor) ─────────────
 export type {
@@ -93,5 +84,4 @@ export type {
 export { downloadBlob } from "./adapters/browser/downloadBlob";
 export { deriveAcceptedTypes } from "./adapters/browser/deriveAcceptedTypes";
 export { deriveOutputConfig } from "./adapters/browser/deriveOutputConfig";
-export { slugToPipeline } from "./adapters/browser/slugToPipeline";
 export { createZipBlob } from "./adapters/browser/createZipBlob";

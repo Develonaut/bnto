@@ -31,6 +31,7 @@ export { getNodeTypeInfo } from "./getNodeTypeInfo";
 export { getNodeIcon } from "./getNodeIcon";
 export { getNodeSublabel } from "./getNodeSublabel";
 export { isIoNodeType } from "./isIoNodeType";
+export { isContainerNodeType } from "./isContainerNodeType";
 
 // Categories
 export { CATEGORIES, getCategoryInfo } from "./categories";

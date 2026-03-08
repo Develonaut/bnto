@@ -196,6 +196,20 @@ tasks:
       - cp engine/crates/bnto-wasm/pkg/bnto_wasm_bg.wasm apps/web/public/wasm/bnto_wasm_bg.wasm
       - cp engine/crates/bnto-wasm/pkg/bnto_wasm.js apps/web/public/wasm/bnto_wasm.js
 
+  wasm:snapshot:
+    desc: Generate catalog.snapshot.json from engine registry
+    dir: ./engine
+    cmds:
+      - cargo test --package bnto-wasm generate_catalog_snapshot -- --ignored --nocapture
+
+  wasm:codegen:
+    desc: Full engine codegen pipeline (build WASM + snapshot + generate TS catalog)
+    cmds:
+      - task: wasm:build
+      - task: wasm:copy
+      - task: wasm:snapshot
+      - task: nodes:generate
+
   wasm:deploy:
     desc: Build WASM and copy to web app (full pipeline)
     cmds:

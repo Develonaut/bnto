@@ -8,6 +8,7 @@
  */
 
 import { validateDefinition } from "@bnto/nodes";
+import { definitionToPipeline } from "@bnto/core";
 import type { PipelineDefinition, PipelineNode } from "@bnto/core";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 import type { RecipeMetadata, ExecutionState } from "../store/types";
@@ -42,7 +43,7 @@ interface RunPipelineError {
  *
  * 1. Converts RF nodes + configs → Definition (via adapter)
  * 2. Validates the definition (Zod schemas per node type)
- * 3. Builds a flat PipelineDefinition for executePipeline()
+ * 3. Converts Definition → PipelineDefinition (via @bnto/core)
  * 4. Returns initial execution state (all processing nodes → "pending")
  *
  * Returns either a ready-to-run result or validation errors.
@@ -59,29 +60,30 @@ function preparePipeline(input: RunPipelineInput): RunPipelineResult | RunPipeli
     return { errors: validationErrors.map((e) => e.message) };
   }
 
-  // Step 3: Flatten Definition nodes into PipelineNode[]
-  const pipelineNodes: PipelineNode[] = (definition.nodes ?? []).map((child) => ({
-    id: child.id,
-    type: child.type,
-    params: child.parameters ?? {},
-  }));
+  // Step 3: Convert Definition → PipelineDefinition (recursive, strips metadata)
+  const pipeline = definitionToPipeline(definition);
 
   // Step 4: Build initial execution state — processing nodes "pending", I/O "idle"
   const initialExecutionState: ExecutionState = {};
-  for (const node of pipelineNodes) {
-    initialExecutionState[node.id] =
-      node.type === "input" || node.type === "output" ? "idle" : "pending";
-  }
+  collectNodeStates(pipeline.nodes, initialExecutionState);
 
-  return {
-    definition: { nodes: pipelineNodes },
-    initialExecutionState,
-  };
+  return { definition: pipeline, initialExecutionState };
 }
 
 /** Type guard to check if the result is an error. */
 function isPipelineError(result: RunPipelineResult | RunPipelineError): result is RunPipelineError {
   return "errors" in result;
+}
+
+// ---------------------------------------------------------------------------
+// Internal — collect execution state from pipeline nodes
+// ---------------------------------------------------------------------------
+
+function collectNodeStates(nodes: PipelineNode[], state: ExecutionState): void {
+  for (const node of nodes) {
+    state[node.id] = node.type === "input" || node.type === "output" ? "idle" : "pending";
+    if (node.children) collectNodeStates(node.children, state);
+  }
 }
 
 export { preparePipeline, isPipelineError };

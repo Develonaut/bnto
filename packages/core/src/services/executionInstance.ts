@@ -14,7 +14,7 @@ import type {
   BrowserFileProgressInput,
   BrowserRunResult,
 } from "../types/browser";
-import type { PipelineDefinition } from "../engine/types";
+import type { PipelineDefinition } from "../types/pipeline";
 
 // ---------------------------------------------------------------------------
 // Symbol for opaque store access
@@ -28,7 +28,7 @@ export const EXECUTION_STORE = Symbol.for("bnto:execution-store");
 // ---------------------------------------------------------------------------
 
 export interface ExecutionInstance {
-  /** Execute a PipelineDefinition. Callers with a slug use slugToPipeline() first. */
+  /** Execute a PipelineDefinition with File[]. */
   run: (definition: PipelineDefinition, files: File[]) => Promise<BrowserRunResult>;
   reset: () => void;
   /** @internal Symbol-keyed store for useExecutionState(). */
