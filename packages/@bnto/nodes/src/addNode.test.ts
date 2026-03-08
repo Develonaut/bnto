@@ -146,6 +146,7 @@ describe("addNode", () => {
   describe("default parameters match schema", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       const schemaDef = NODE_SCHEMA_DEFS[typeName];
+      if (!schemaDef) continue;
       // Parse empty object to discover Zod defaults
       const parsed = schemaDef.schema.safeParse({});
       if (!parsed.success) continue;

@@ -16,17 +16,19 @@ export { getVisibleParams } from "./getVisibleParams";
 export { inferFieldType } from "./inferFieldType";
 export type { FieldTypeInfo, FieldControl } from "./inferFieldType";
 
+// Engine operations helper
+export { getEngineOperations } from "./deriveOperations";
+
 // Types
 export type { NodeSchemaDefinition, NodeParamMeta, ParamCondition } from "./types";
 
 // Per-type enum constants
-export { HTTP_METHODS } from "./httpRequest";
 export { FILE_OPERATIONS } from "./fileSystem";
 export { INPUT_MODES } from "./input";
 export { LOOP_MODES } from "./loop";
 export { OUTPUT_MODES } from "./output";
 export { IMAGE_OPERATIONS, IMAGE_FORMATS } from "./image";
-export { SPREADSHEET_OPERATIONS, SPREADSHEET_FORMATS } from "./spreadsheet";
+export { SPREADSHEET_OPERATIONS } from "./spreadsheet";
 export { GROUP_MODES } from "./group";
 export { ERROR_STRATEGIES } from "./parallel";
 
@@ -39,8 +41,6 @@ export { outputParamsSchema, outputNodeSchema } from "./output";
 export type { OutputParams } from "./output";
 export { fileSystemParamsSchema, fileSystemNodeSchema } from "./fileSystem";
 export type { FileSystemParams } from "./fileSystem";
-export { httpRequestParamsSchema, httpRequestNodeSchema } from "./httpRequest";
-export type { HttpRequestParams } from "./httpRequest";
 export { spreadsheetParamsSchema, spreadsheetNodeSchema } from "./spreadsheet";
 export type { SpreadsheetParams } from "./spreadsheet";
 export { transformParamsSchema, transformNodeSchema } from "./transform";
@@ -53,5 +53,3 @@ export { groupParamsSchema, groupNodeSchema } from "./group";
 export type { GroupParams } from "./group";
 export { parallelParamsSchema, parallelNodeSchema } from "./parallel";
 export type { ParallelParams } from "./parallel";
-export { shellCommandParamsSchema, shellCommandNodeSchema } from "./shellCommand";
-export type { ShellCommandParams } from "./shellCommand";

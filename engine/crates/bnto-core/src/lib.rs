@@ -67,7 +67,10 @@ pub mod registry;
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};
 pub use executor::execute_pipeline;
-pub use metadata::{Constraints, NodeCategory, NodeMetadata, ParameterDef, ParameterType};
+pub use metadata::{
+    Constraints, NodeCategory, NodeMetadata, NodeTypeInfo, ParameterDef, ParameterType,
+    all_node_types,
+};
 pub use pipeline::{
     PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode, PipelineResult,
 };

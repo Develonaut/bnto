@@ -57,7 +57,8 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   }, [definition]);
 
   // -- Execution path: browser (WASM) vs cloud (R2 + Go API) --
-  const isBrowserPath = core.executions.hasImplementation(entry.slug);
+  // All predefined recipes with definitions are browser-capable (Tier 1 = WASM).
+  const isBrowserPath = !!recipe;
 
   // -- Per-instance browser execution (isolated store per page mount) --
   const [browserInstance] = useState(() => core.executions.createExecution());

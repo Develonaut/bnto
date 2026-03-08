@@ -236,6 +236,7 @@ fn extract_files(files_js: JsValue) -> Result<Vec<PipelineFile>, JsValue> {
             name,
             data,
             mime_type,
+            metadata: serde_json::Map::new(),
         });
     }
 

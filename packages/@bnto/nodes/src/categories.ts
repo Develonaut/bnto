@@ -30,17 +30,17 @@ export const CATEGORIES: readonly CategoryInfo[] = [
   {
     name: "image",
     label: "Image",
-    description: "Image processing — resize, convert, compress, composite.",
+    description: "Image processing — resize, convert, compress.",
   },
   {
     name: "spreadsheet",
     label: "Spreadsheet",
-    description: "CSV and Excel operations — read, write, transform.",
+    description: "CSV operations — clean, rename columns.",
   },
   {
     name: "file",
     label: "File",
-    description: "File system operations — read, write, copy, move, list.",
+    description: "File system operations — rename.",
   },
   {
     name: "data",
@@ -65,8 +65,6 @@ export const CATEGORIES: readonly CategoryInfo[] = [
 ] as const;
 
 /** Returns category info by name, or undefined if not found. */
-export function getCategoryInfo(
-  name: string,
-): CategoryInfo | undefined {
+export function getCategoryInfo(name: string): CategoryInfo | undefined {
   return CATEGORIES.find((c) => c.name === name);
 }

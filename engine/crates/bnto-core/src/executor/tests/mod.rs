@@ -1,0 +1,259 @@
+use super::*;
+use crate::events::RecordingReporter;
+use crate::processor::{NodeOutput, OutputFile};
+
+// =========================================================================
+// Mock Processors for Testing
+// =========================================================================
+
+/// Echoes input files back unchanged. The simplest possible processor.
+struct EchoProcessor;
+
+impl crate::processor::NodeProcessor for EchoProcessor {
+    fn name(&self) -> &str {
+        "echo"
+    }
+
+    fn process(
+        &self,
+        input: NodeInput,
+        _progress: &ProgressReporter,
+    ) -> Result<NodeOutput, BntoError> {
+        Ok(NodeOutput {
+            files: vec![OutputFile {
+                data: input.data,
+                filename: input.filename,
+                mime_type: input
+                    .mime_type
+                    .unwrap_or_else(|| "application/octet-stream".to_string()),
+            }],
+            metadata: serde_json::Map::new(),
+        })
+    }
+}
+
+/// Converts filename to uppercase. Verifies data transformation works.
+struct UpperCaseProcessor;
+
+impl crate::processor::NodeProcessor for UpperCaseProcessor {
+    fn name(&self) -> &str {
+        "uppercase"
+    }
+
+    fn process(
+        &self,
+        input: NodeInput,
+        _progress: &ProgressReporter,
+    ) -> Result<NodeOutput, BntoError> {
+        Ok(NodeOutput {
+            files: vec![OutputFile {
+                data: input.data,
+                filename: input.filename.to_uppercase(),
+                mime_type: input
+                    .mime_type
+                    .unwrap_or_else(|| "application/octet-stream".to_string()),
+            }],
+            metadata: serde_json::Map::new(),
+        })
+    }
+}
+
+/// Always fails. For testing error handling.
+struct FailProcessor;
+
+impl crate::processor::NodeProcessor for FailProcessor {
+    fn name(&self) -> &str {
+        "fail"
+    }
+
+    fn process(
+        &self,
+        _input: NodeInput,
+        _progress: &ProgressReporter,
+    ) -> Result<NodeOutput, BntoError> {
+        Err(BntoError::ProcessingFailed(
+            "intentional test failure".to_string(),
+        ))
+    }
+}
+
+/// Reports progress at 25/50/75/100%. For testing progress events.
+struct SlowProcessor;
+
+impl crate::processor::NodeProcessor for SlowProcessor {
+    fn name(&self) -> &str {
+        "slow"
+    }
+
+    fn process(
+        &self,
+        input: NodeInput,
+        progress: &ProgressReporter,
+    ) -> Result<NodeOutput, BntoError> {
+        progress.report(25, "Quarter done");
+        progress.report(50, "Half done");
+        progress.report(75, "Three quarters");
+        progress.report(100, "Complete");
+
+        Ok(NodeOutput {
+            files: vec![OutputFile {
+                data: input.data,
+                filename: input.filename,
+                mime_type: input
+                    .mime_type
+                    .unwrap_or_else(|| "application/octet-stream".to_string()),
+            }],
+            metadata: serde_json::Map::new(),
+        })
+    }
+}
+
+/// Returns two files per input. Verifies file count changes through pipeline.
+struct DoubleProcessor;
+
+impl crate::processor::NodeProcessor for DoubleProcessor {
+    fn name(&self) -> &str {
+        "double"
+    }
+
+    fn process(
+        &self,
+        input: NodeInput,
+        _progress: &ProgressReporter,
+    ) -> Result<NodeOutput, BntoError> {
+        let mime = input
+            .mime_type
+            .unwrap_or_else(|| "application/octet-stream".to_string());
+        Ok(NodeOutput {
+            files: vec![
+                OutputFile {
+                    data: input.data.clone(),
+                    filename: format!("{}-a", input.filename),
+                    mime_type: mime.clone(),
+                },
+                OutputFile {
+                    data: input.data,
+                    filename: format!("{}-b", input.filename),
+                    mime_type: mime,
+                },
+            ],
+            metadata: serde_json::Map::new(),
+        })
+    }
+}
+
+/// Simulates a compression processor that produces metadata with stats.
+/// Attaches originalSize, compressedSize, and compressionRatio to the output.
+/// Used to verify that metadata survives through the pipeline to final results.
+struct MetadataProcessor;
+
+impl crate::processor::NodeProcessor for MetadataProcessor {
+    fn name(&self) -> &str {
+        "metadata"
+    }
+
+    fn process(
+        &self,
+        input: NodeInput,
+        _progress: &ProgressReporter,
+    ) -> Result<NodeOutput, BntoError> {
+        let original_size = input.data.len() as u64;
+        // Simulate compression: output is half the input size.
+        let compressed_data = vec![0u8; input.data.len() / 2];
+        let compressed_size = compressed_data.len() as u64;
+        let ratio = compressed_size as f64 / original_size as f64;
+
+        let mut metadata = serde_json::Map::new();
+        metadata.insert(
+            "originalSize".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(original_size)),
+        );
+        metadata.insert(
+            "compressedSize".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(compressed_size)),
+        );
+        if let Some(ratio_num) = serde_json::Number::from_f64(ratio) {
+            metadata.insert(
+                "compressionRatio".to_string(),
+                serde_json::Value::Number(ratio_num),
+            );
+        }
+
+        Ok(NodeOutput {
+            files: vec![OutputFile {
+                data: compressed_data,
+                filename: input.filename,
+                mime_type: input
+                    .mime_type
+                    .unwrap_or_else(|| "application/octet-stream".to_string()),
+            }],
+            metadata,
+        })
+    }
+}
+
+// =========================================================================
+// Test Helpers
+// =========================================================================
+
+/// Create a simple file for testing.
+fn make_file(name: &str, data: &[u8]) -> PipelineFile {
+    PipelineFile {
+        name: name.to_string(),
+        data: data.to_vec(),
+        mime_type: "application/octet-stream".to_string(),
+        metadata: serde_json::Map::new(),
+    }
+}
+
+/// Build a registry with mock processors under test compound keys.
+fn mock_registry() -> NodeRegistry {
+    let mut registry = NodeRegistry::new();
+    registry.register("test:echo", Box::new(EchoProcessor));
+    registry.register("test:uppercase", Box::new(UpperCaseProcessor));
+    registry.register("test:fail", Box::new(FailProcessor));
+    registry.register("test:slow", Box::new(SlowProcessor));
+    registry.register("test:double", Box::new(DoubleProcessor));
+    registry.register("test:metadata", Box::new(MetadataProcessor));
+    registry
+}
+
+/// Build a registry that maps REAL recipe operation keys to mock processors.
+/// This lets us test real recipe JSON structures without needing actual
+/// image/CSV/file processors — we verify the orchestration, not the processing.
+fn recipe_registry() -> NodeRegistry {
+    let mut registry = NodeRegistry::new();
+    // Image operations → EchoProcessor (preserves files, verifies routing).
+    registry.register("image:compress", Box::new(EchoProcessor));
+    registry.register("image:resize", Box::new(EchoProcessor));
+    registry.register("image:convert", Box::new(EchoProcessor));
+    // CSV operations → EchoProcessor.
+    registry.register("spreadsheet:clean", Box::new(EchoProcessor));
+    registry.register("spreadsheet:rename", Box::new(EchoProcessor));
+    // File operations → UpperCaseProcessor (verifies transformation happened).
+    registry.register("file-system:rename", Box::new(UpperCaseProcessor));
+    registry
+}
+
+/// Parse a JSON string into a PipelineDefinition.
+fn parse_def(json: &str) -> PipelineDefinition {
+    serde_json::from_str(json).unwrap()
+}
+
+/// A fake time source that always returns 1000ms.
+/// Keeps tests deterministic — no real clock needed.
+fn fake_now() -> u64 {
+    1000
+}
+
+// =========================================================================
+// Test Submodules
+// =========================================================================
+
+mod basic;
+mod containers;
+mod errors;
+mod metadata;
+mod progress;
+mod recipes;
+mod sub_pipelines;

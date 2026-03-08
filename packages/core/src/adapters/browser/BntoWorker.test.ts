@@ -34,7 +34,6 @@ class MockWorker {
 let mockWorkerInstance: MockWorker;
 
 beforeEach(() => {
-  // Use a class so `new Worker(...)` works correctly.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mock Worker constructor
   vi.stubGlobal("Worker", function (this: any) {
     mockWorkerInstance = new MockWorker();
@@ -47,7 +46,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** Wait one microtask tick so async operations (like file.arrayBuffer()) complete. */
+/** Wait one microtask tick so async operations complete. */
 function tick(): Promise<void> {
   return new Promise((r) => setTimeout(r, 0));
 }
@@ -61,11 +60,11 @@ async function initWorker(): Promise<BntoWorker> {
   return bnto;
 }
 
-/** Find the most recent "process" message in mock.calls. */
-function findProcessCall() {
+/** Find the most recent "execute-pipeline" message in mock.calls. */
+function findPipelineCall() {
   const calls = mockWorkerInstance.postMessage.mock.calls;
   for (let i = calls.length - 1; i >= 0; i--) {
-    if (calls[i][0]?.type === "process") return calls[i][0];
+    if (calls[i][0]?.type === "execute-pipeline") return calls[i][0];
   }
   return null;
 }
@@ -144,129 +143,114 @@ describe("BntoWorker", () => {
     });
   });
 
-  describe("processFile", () => {
+  describe("executePipeline", () => {
     it("throws if not initialized", async () => {
       const bnto = new BntoWorker();
-      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
 
-      await expect(bnto.processFile(file, "compress-images")).rejects.toThrow(
-        "BntoWorker not initialized",
-      );
+      await expect(bnto.executePipeline("{}", [])).rejects.toThrow("BntoWorker not initialized");
     });
 
-    it("sends a process request and resolves with the result", async () => {
+    it("sends pipeline request and resolves with result", async () => {
       const bnto = await initWorker();
 
-      const file = new File(["test data"], "photo.jpg", {
-        type: "image/jpeg",
-      });
-      const resultPromise = bnto.processFile(file, "compress-images", {
-        quality: 80,
+      const defJson = JSON.stringify({
+        nodes: [
+          { id: "in", type: "input", params: {} },
+          { id: "proc", type: "compress-images", params: { quality: 80 } },
+          { id: "out", type: "output", params: {} },
+        ],
       });
 
-      // Wait for file.arrayBuffer() to resolve so postMessage fires.
+      const file = new File(["test data"], "photo.jpg", { type: "image/jpeg" });
+      const resultPromise = bnto.executePipeline(defJson, [file]);
+
       await tick();
 
-      const request = findProcessCall();
+      const request = findPipelineCall();
       expect(request).not.toBeNull();
-      expect(request.type).toBe("process");
-      expect(request.filename).toBe("photo.jpg");
-      expect(request.mimeType).toBe("image/jpeg");
-      expect(request.nodeType).toBe("compress-images");
-      expect(request.params).toEqual({ quality: 80 });
+      expect(request.type).toBe("execute-pipeline");
+      expect(request.definitionJson).toBe(defJson);
+      expect(request.files).toHaveLength(1);
 
-      // Simulate the worker responding with result.
-      const outputData = new ArrayBuffer(4);
+      // Simulate pipeline result
       mockWorkerInstance.simulateMessage({
-        type: "result",
+        type: "pipeline-result",
         id: request.id,
-        data: outputData,
-        filename: "photo-compressed.jpg",
-        mimeType: "image/jpeg",
-        metadata: { ratio: 0.5 },
+        files: [
+          {
+            name: "photo-compressed.jpg",
+            data: new ArrayBuffer(4),
+            mimeType: "image/jpeg",
+            metadata: '{"ratio":0.5}',
+          },
+        ],
+        durationMs: 100,
       });
 
       const result = await resultPromise;
-      expect(result.filename).toBe("photo-compressed.jpg");
-      expect(result.mimeType).toBe("image/jpeg");
-      expect(result.metadata).toEqual({ ratio: 0.5 });
-      expect(result.blob).toBeInstanceOf(Blob);
-      expect(result.blob.size).toBe(4);
+      expect(result.files).toHaveLength(1);
+      expect(result.files[0].name).toBe("photo-compressed.jpg");
+      expect(result.durationMs).toBe(100);
     });
 
-    it("forwards progress callbacks", async () => {
+    it("forwards pipeline progress events", async () => {
       const bnto = await initWorker();
 
-      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
-      const onProgress = vi.fn();
-      const resultPromise = bnto.processFile(file, "compress-images", {}, onProgress);
+      const onEvent = vi.fn();
+      const resultPromise = bnto.executePipeline("{}", [new File(["a"], "a.jpg")], onEvent);
 
       await tick();
 
-      const request = findProcessCall();
-      expect(request).not.toBeNull();
+      const request = findPipelineCall();
 
-      // Simulate progress updates.
       mockWorkerInstance.simulateMessage({
-        type: "progress",
+        type: "pipeline-progress",
         id: request.id,
-        percent: 25,
-        message: "Decoding...",
-      });
-      mockWorkerInstance.simulateMessage({
-        type: "progress",
-        id: request.id,
-        percent: 75,
-        message: "Compressing...",
+        eventJson: JSON.stringify({
+          type: "NodeStarted",
+          nodeId: "proc",
+          nodeIndex: 0,
+          totalNodes: 1,
+          nodeType: "compress-images",
+        }),
       });
 
-      expect(onProgress).toHaveBeenCalledTimes(2);
-      expect(onProgress).toHaveBeenCalledWith(25, "Decoding...");
-      expect(onProgress).toHaveBeenCalledWith(75, "Compressing...");
+      expect(onEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "NodeStarted", nodeId: "proc" }),
+      );
 
-      // Complete the request.
       mockWorkerInstance.simulateMessage({
-        type: "result",
+        type: "pipeline-result",
         id: request.id,
-        data: new ArrayBuffer(2),
-        filename: "test-compressed.jpg",
-        mimeType: "image/jpeg",
-        metadata: {},
+        files: [],
+        durationMs: 50,
       });
       await resultPromise;
     });
 
-    it("rejects on error response", async () => {
+    it("rejects on pipeline error", async () => {
       const bnto = await initWorker();
 
-      const file = new File(["bad"], "bad.xyz", {
-        type: "application/octet-stream",
-      });
-      const resultPromise = bnto.processFile(file, "compress-images");
+      const resultPromise = bnto.executePipeline("{}", [new File(["a"], "a.jpg")]);
 
       await tick();
 
-      const request = findProcessCall();
-      expect(request).not.toBeNull();
-
+      const request = findPipelineCall();
       mockWorkerInstance.simulateMessage({
-        type: "error",
+        type: "pipeline-error",
         id: request.id,
-        message: "Unsupported format",
+        message: "Invalid node type: unknown",
       });
 
-      await expect(resultPromise).rejects.toThrow("Unsupported format");
+      await expect(resultPromise).rejects.toThrow("Invalid node type: unknown");
     });
   });
 
   describe("terminate", () => {
-    it("terminates the worker and rejects pending requests", async () => {
+    it("terminates the worker and rejects pending pipelines", async () => {
       const bnto = await initWorker();
 
-      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
-      const resultPromise = bnto.processFile(file, "compress-images");
-
-      // Wait for the process message to be queued before terminating.
+      const resultPromise = bnto.executePipeline("{}", [new File(["a"], "a.jpg")]);
       await tick();
 
       bnto.terminate();
@@ -279,19 +263,8 @@ describe("BntoWorker", () => {
     it("is safe to call multiple times", async () => {
       const bnto = await initWorker();
       bnto.terminate();
-      bnto.terminate(); // Should not throw.
-      expect(bnto.isReady).toBe(false);
-    });
-
-    it("processFile after terminate throws a clear error", async () => {
-      const bnto = await initWorker();
       bnto.terminate();
-
-      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
-
-      await expect(bnto.processFile(file, "compress-images")).rejects.toThrow(
-        "BntoWorker not initialized",
-      );
+      expect(bnto.isReady).toBe(false);
     });
 
     it("can be re-initialized after terminate", async () => {
@@ -299,7 +272,6 @@ describe("BntoWorker", () => {
       bnto.terminate();
       expect(bnto.isReady).toBe(false);
 
-      // Re-init creates a new worker.
       const reinitPromise = bnto.init();
       mockWorkerInstance.simulateMessage({ type: "ready", version: "0.2.0" });
       const version = await reinitPromise;

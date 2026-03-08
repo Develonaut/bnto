@@ -6,63 +6,24 @@ import { describe, expect, it } from "vitest";
 
 import { NODE_SCHEMA_DEFS, inferFieldType } from "./index";
 
-describe("http-request schema", () => {
-  const def = NODE_SCHEMA_DEFS["http-request"];
-
-  it("url is required (not optional, not defaulted)", () => {
-    const outerType = def.schema.shape.url._def.typeName;
-    expect(outerType).not.toBe("ZodOptional");
-    expect(outerType).not.toBe("ZodDefault");
-  });
-
-  it("method defaults to GET", () => {
-    const result = def.schema.safeParse({ url: "https://example.com" });
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.method).toBe("GET");
-  });
-
-  it("method enum has 7 values", () => {
-    const info = inferFieldType(def.schema.shape.method);
-    expect(info.type).toBe("enum");
-    expect(info.enumValues).toHaveLength(7);
-    expect(info.enumValues).toContain("GET");
-    expect(info.enumValues).toContain("OPTIONS");
-  });
-
-  it("timeout defaults to 30", () => {
-    const result = def.schema.safeParse({ url: "https://example.com" });
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.timeout).toBe(30);
-  });
-});
-
 describe("file-system schema", () => {
-  const def = NODE_SCHEMA_DEFS["file-system"];
+  const def = NODE_SCHEMA_DEFS["file-system"]!;
 
   it("operation is required", () => {
     const result = def.schema.safeParse({});
     expect(result.success).toBe(false);
   });
 
-  it("operation enum has 9 values (8 legacy + rename from engine)", () => {
+  it("operation enum has 1 value (engine-only: rename)", () => {
     const info = inferFieldType(def.schema.shape.operation);
     expect(info.type).toBe("enum");
-    expect(info.enumValues).toHaveLength(9);
-    expect(info.enumValues).toContain("list");
-    expect(info.enumValues).toContain("delete");
+    expect(info.enumValues).toHaveLength(1);
     expect(info.enumValues).toContain("rename");
-  });
-
-  it("content is conditionally required for write", () => {
-    expect(def.params.content.requiredWhen).toEqual({
-      param: "operation",
-      equals: "write",
-    });
   });
 });
 
 describe("loop schema", () => {
-  const def = NODE_SCHEMA_DEFS["loop"];
+  const def = NODE_SCHEMA_DEFS["loop"]!;
 
   it("mode is required", () => {
     const result = def.schema.safeParse({});
@@ -77,28 +38,8 @@ describe("loop schema", () => {
   });
 });
 
-describe("shell-command schema", () => {
-  const def = NODE_SCHEMA_DEFS["shell-command"];
-
-  it("command is required", () => {
-    const result = def.schema.safeParse({});
-    expect(result.success).toBe(false);
-  });
-
-  it("has correct defaults for timeout, retry, stall", () => {
-    const result = def.schema.safeParse({ command: "echo hello" });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.timeout).toBe(120);
-      expect(result.data.retry).toBe(0);
-      expect(result.data.retryDelay).toBe(5);
-      expect(result.data.stallTimeout).toBe(0);
-    }
-  });
-});
-
 describe("edit-fields schema", () => {
-  const def = NODE_SCHEMA_DEFS["edit-fields"];
+  const def = NODE_SCHEMA_DEFS["edit-fields"]!;
 
   it("values is required", () => {
     const result = def.schema.safeParse({});
@@ -113,7 +54,7 @@ describe("edit-fields schema", () => {
 });
 
 describe("image schema", () => {
-  const def = NODE_SCHEMA_DEFS["image"];
+  const def = NODE_SCHEMA_DEFS["image"]!;
 
   it("operation is required", () => {
     const result = def.schema.safeParse({});
@@ -139,41 +80,38 @@ describe("image schema", () => {
     }
   });
 
-  it("composite requires base and overlay", () => {
-    expect(def.params.base.requiredWhen).toEqual({
-      param: "operation",
-      equals: "composite",
-    });
-    expect(def.params.overlay.requiredWhen).toEqual({
-      param: "operation",
-      equals: "composite",
-    });
+  it("rejects composite (removed — no engine processor)", () => {
+    const result = def.schema.safeParse({ operation: "composite" });
+    expect(result.success).toBe(false);
   });
 });
 
 describe("spreadsheet schema", () => {
-  const def = NODE_SCHEMA_DEFS["spreadsheet"];
+  const def = NODE_SCHEMA_DEFS["spreadsheet"]!;
 
-  it("requires operation, format, and path", () => {
+  it("requires operation", () => {
     const result = def.schema.safeParse({});
     expect(result.success).toBe(false);
   });
 
-  it("passes with required fields", () => {
-    const result = def.schema.safeParse({ operation: "read", format: "csv", path: "/file.csv" });
+  it("passes with engine operation clean", () => {
+    const result = def.schema.safeParse({ operation: "clean" });
     expect(result.success).toBe(true);
   });
 
-  it("rows conditionally required for write", () => {
-    expect(def.params.rows.requiredWhen).toEqual({
-      param: "operation",
-      equals: "write",
-    });
+  it("passes with engine operation rename", () => {
+    const result = def.schema.safeParse({ operation: "rename" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects removed legacy operation read", () => {
+    const result = def.schema.safeParse({ operation: "read" });
+    expect(result.success).toBe(false);
   });
 });
 
 describe("transform schema", () => {
-  const def = NODE_SCHEMA_DEFS["transform"];
+  const def = NODE_SCHEMA_DEFS["transform"]!;
 
   it("has no required parameters", () => {
     const result = def.schema.safeParse({});
@@ -182,7 +120,7 @@ describe("transform schema", () => {
 });
 
 describe("group schema", () => {
-  const def = NODE_SCHEMA_DEFS["group"];
+  const def = NODE_SCHEMA_DEFS["group"]!;
 
   it("has no required parameters", () => {
     const result = def.schema.safeParse({});
@@ -197,7 +135,7 @@ describe("group schema", () => {
 });
 
 describe("parallel schema", () => {
-  const def = NODE_SCHEMA_DEFS["parallel"];
+  const def = NODE_SCHEMA_DEFS["parallel"]!;
 
   it("requires tasks", () => {
     const result = def.schema.safeParse({});
