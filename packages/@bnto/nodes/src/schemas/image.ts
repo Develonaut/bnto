@@ -4,22 +4,30 @@
  * Engine-level metadata (defaults, constraints, MIME types) comes from
  * the generated catalog module. UI-only metadata (visibleWhen, hidden,
  * placeholder) stays here.
+ *
+ * Operations are derived from the engine catalog — only engine-backed
+ * operations are valid.
  */
 
 import { z } from "zod";
 import type { NodeSchemaDefinition } from "./types";
-import { getProcessorDefaults, getParamConstraints } from "../generated/catalog";
+import { getProcessorDefaults, getParamConstraints, PROCESSOR_MAP } from "../generated/catalog";
+import { getEngineOperations } from "./deriveOperations";
 
 /**
- * Valid image processing operations.
+ * Valid image processing operations — derived from engine PROCESSORS.
  *
- * NOTE: "batch" is not yet implemented in the engine.
- * It will be added here when batch image processing is built. See ROADMAP.md.
+ * Currently: ["compress", "convert", "resize"]
  */
-export const IMAGE_OPERATIONS = ["resize", "convert", "compress", "composite"] as const;
+export const IMAGE_OPERATIONS = getEngineOperations("image");
 
-/** Supported output image formats. */
-export const IMAGE_FORMATS = ["png", "jpeg", "webp"] as const;
+/**
+ * Supported output image formats — derived from engine's image:convert
+ * processor format param options.
+ */
+const convertProc = PROCESSOR_MAP.get("image:convert");
+const formatParam = convertProc?.parameters.find((p) => p.name === "format");
+export const IMAGE_FORMATS = (formatParam?.options ?? ["jpeg", "png", "webp"]) as readonly string[];
 
 // --- Engine-sourced constraints ---
 
@@ -31,10 +39,10 @@ const heightConstraints = getParamConstraints("image", "resize", "height");
 
 /** Zod schema for image node parameters. */
 export const imageParamsSchema = z.object({
-  operation: z.enum(IMAGE_OPERATIONS),
+  operation: z.enum(IMAGE_OPERATIONS as [string, ...string[]]),
   input: z.string().optional(),
   output: z.string().optional(),
-  format: z.enum(IMAGE_FORMATS).optional(),
+  format: z.enum(IMAGE_FORMATS as [string, ...string[]]).optional(),
   quality: z
     .number()
     .min(qualityConstraints?.min ?? 1)
@@ -53,12 +61,6 @@ export const imageParamsSchema = z.object({
     .boolean()
     .optional()
     .default(resizeDefaults.maintainAspect as boolean),
-  // Legacy composite params — not in engine, kept for Go-era compat
-  base: z.string().optional(),
-  overlay: z.string().optional(),
-  position: z.string().optional().default("center"),
-  x: z.number().optional().default(0),
-  y: z.number().optional().default(0),
 });
 
 /** Inferred TypeScript type for image node parameters. */
@@ -109,33 +111,6 @@ export const imageNodeSchema: NodeSchemaDefinition = {
       label: "Maintain Aspect Ratio",
       description: "Preserve the original aspect ratio when resizing.",
       visibleWhen: { param: "operation", equals: "resize" },
-    },
-    base: {
-      label: "Base Image",
-      description: "Path to the base (background) image for compositing.",
-      visibleWhen: { param: "operation", equals: "composite" },
-      requiredWhen: { param: "operation", equals: "composite" },
-    },
-    overlay: {
-      label: "Overlay Image",
-      description: "Path to the overlay (foreground) image for compositing.",
-      visibleWhen: { param: "operation", equals: "composite" },
-      requiredWhen: { param: "operation", equals: "composite" },
-    },
-    position: {
-      label: "Position",
-      description: 'Overlay position — "center" or use x/y offsets.',
-      visibleWhen: { param: "operation", equals: "composite" },
-    },
-    x: {
-      label: "X Offset",
-      description: "Horizontal offset for overlay placement in pixels.",
-      visibleWhen: { param: "operation", equals: "composite" },
-    },
-    y: {
-      label: "Y Offset",
-      description: "Vertical offset for overlay placement in pixels.",
-      visibleWhen: { param: "operation", equals: "composite" },
     },
   },
 };

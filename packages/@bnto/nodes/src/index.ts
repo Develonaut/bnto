@@ -81,7 +81,7 @@ export {
   getRequiredParams,
   getConditionallyRequired,
   getVisibleParams,
-  HTTP_METHODS,
+  getEngineOperations,
   FILE_OPERATIONS,
   INPUT_MODES,
   LOOP_MODES,
@@ -89,7 +89,6 @@ export {
   IMAGE_OPERATIONS,
   IMAGE_FORMATS,
   SPREADSHEET_OPERATIONS,
-  SPREADSHEET_FORMATS,
   GROUP_MODES,
   ERROR_STRATEGIES,
 } from "./schemas";

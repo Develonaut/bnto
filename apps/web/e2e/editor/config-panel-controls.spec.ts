@@ -14,8 +14,12 @@ test.use({ reducedMotion: "reduce" });
 
 /** Add a node by type label via the palette menu, then click it on canvas. */
 async function addAndSelectNode(page: import("@playwright/test").Page, nodeLabel: string) {
-  // Open palette
-  await page.getByRole("button", { name: "Add node" }).click();
+  // Open palette — target the toolbar button specifically to avoid
+  // ambiguity with the PlaceholderNode's "Add node" button.
+  const toolbarButton = page
+    .locator('[data-testid="editor-toolbar"]')
+    .getByRole("button", { name: "Add node" });
+  await toolbarButton.click();
   // Click the menu item button (not the category label)
   await page.getByRole("button", { name: new RegExp(`^${nodeLabel}\\s`) }).click();
   // Wait for the node to appear on canvas
@@ -85,7 +89,7 @@ test.describe("config panel controls @browser", () => {
     ).toBeVisible();
   });
 
-  test("spreadsheet node: select for operation and format, text for path", async ({ page }) => {
+  test("spreadsheet node: select for operation, switches for clean params", async ({ page }) => {
     await addAndSelectNode(page, "Spreadsheet");
 
     const configField = page.locator('[data-testid="schema-field-operation"]');
@@ -94,19 +98,28 @@ test.describe("config panel controls @browser", () => {
     }
     await configField.waitFor({ timeout: 5000 });
 
-    // Operation = select
+    // Operation = select (enum with engine-backed operations: clean, rename)
     await expect(configField.locator('[data-testid^="control-select"]')).toBeVisible();
 
-    // Format = select
+    // trimWhitespace = switch (boolean, default true)
     await expect(
       page
-        .locator('[data-testid="schema-field-format"]')
-        .locator('[data-testid^="control-select"]'),
+        .locator('[data-testid="schema-field-trimWhitespace"]')
+        .locator('[data-testid^="control-switch"]'),
     ).toBeVisible();
 
-    // Path = text input
+    // removeEmptyRows = switch (boolean, default true)
     await expect(
-      page.locator('[data-testid="schema-field-path"]').locator('[data-testid^="control-text"]'),
+      page
+        .locator('[data-testid="schema-field-removeEmptyRows"]')
+        .locator('[data-testid^="control-switch"]'),
+    ).toBeVisible();
+
+    // removeDuplicates = switch (boolean, default true)
+    await expect(
+      page
+        .locator('[data-testid="schema-field-removeDuplicates"]')
+        .locator('[data-testid^="control-switch"]'),
     ).toBeVisible();
   });
 });

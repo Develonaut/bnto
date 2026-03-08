@@ -10,10 +10,7 @@ interface BrowserExecutionResultsProps {
 }
 
 /** Displays browser execution output files matching the Phase 2 file list style. */
-export function BrowserExecutionResults({
-  execution,
-  onDownload,
-}: BrowserExecutionResultsProps) {
+export function BrowserExecutionResults({ execution, onDownload }: BrowserExecutionResultsProps) {
   const { results } = execution;
   if (results.length === 0) return null;
 
@@ -46,8 +43,7 @@ function BrowserFileRow({
   result: BrowserFileResult;
   onDownload: (result: BrowserFileResult) => void;
 }) {
-  const originalSize = result.metadata.originalSize as number | undefined;
-  const ratio = result.metadata.ratio as number | undefined;
+  const { originalSize, compressionRatio } = result.metadata;
 
   return (
     <Card
@@ -63,11 +59,8 @@ function BrowserFileRow({
           <span className="truncate text-sm font-semibold">{result.filename}</span>
           <span className="truncate text-xs text-muted-foreground">
             {formatFileSize(result.blob.size)}
-            {originalSize != null && ratio != null && (
-              <span>
-                {" "}
-                &middot; {Math.round((1 - ratio) * 100)}% smaller
-              </span>
+            {originalSize != null && compressionRatio != null && (
+              <span> &middot; {Math.round(compressionRatio)}% smaller</span>
             )}
           </span>
         </Stack>

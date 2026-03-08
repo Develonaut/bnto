@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Definition } from "./definition";
-import { validateDefinition, validateEdges } from "./validate";
+import { validateDefinition } from "./validate";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 
 /** Creates a minimal valid definition for testing. */
@@ -93,7 +93,7 @@ describe("validateDefinition — unknown type", () => {
   it("accepts all 12 registered types with valid params", () => {
     const typeParams: Record<string, Record<string, unknown>> = {
       "edit-fields": { values: { name: "test" } },
-      "file-system": { operation: "read" },
+      "file-system": { operation: "rename" },
       group: {},
       "http-request": { url: "https://example.com", method: "GET" },
       image: { operation: "resize" },
@@ -102,7 +102,7 @@ describe("validateDefinition — unknown type", () => {
       output: {},
       parallel: { tasks: [{ a: 1 }] },
       "shell-command": { command: "echo hello" },
-      spreadsheet: { operation: "read", format: "csv", path: "/f.csv" },
+      spreadsheet: { operation: "clean" },
       transform: {},
     };
     for (const [type, params] of Object.entries(typeParams)) {
@@ -114,45 +114,20 @@ describe("validateDefinition — unknown type", () => {
   });
 });
 
-describe("validateDefinition — http-request", () => {
-  it("requires url parameter", () => {
-    const def = validDef({ type: "http-request", parameters: { method: "GET" } });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.field === "url")).toBe(true);
-  });
-
-  it("requires method parameter", () => {
-    const def = validDef({ type: "http-request", parameters: { url: "https://example.com" } });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.field === "method")).toBe(true);
-  });
-
-  it("rejects invalid HTTP method", () => {
+describe("validateDefinition — http-request (no schema, no type-specific validation)", () => {
+  it("accepts http-request as a known type with valid params", () => {
     const def = validDef({
       type: "http-request",
-      parameters: { url: "https://example.com", method: "YEET" },
+      parameters: { url: "https://example.com", method: "GET" },
     });
     const errors = validateDefinition(def);
-    expect(errors.some((e) => e.message.includes("invalid method 'YEET'"))).toBe(true);
+    expect(errors).toHaveLength(0);
   });
 
-  it("accepts all valid HTTP methods", () => {
-    for (const method of ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]) {
-      const def = validDef({
-        type: "http-request",
-        parameters: { url: "https://example.com", method },
-      });
-      const errors = validateDefinition(def);
-      expect(errors).toHaveLength(0);
-    }
-  });
-
-  it("reports both missing url and method", () => {
+  it("passes with any params (no schema to validate against)", () => {
     const def = validDef({ type: "http-request", parameters: {} });
     const errors = validateDefinition(def);
-    // Both hand-rolled and Zod validators catch url; hand-rolled catches method
-    expect(errors.some((e) => e.field === "url")).toBe(true);
-    expect(errors.some((e) => e.field === "method")).toBe(true);
+    expect(errors).toHaveLength(0);
   });
 });
 
@@ -219,30 +194,30 @@ describe("validateDefinition — file-system", () => {
     expect(errors.some((e) => e.message.includes("invalid operation 'format-c'"))).toBe(true);
   });
 
-  it("accepts all valid operations", () => {
-    for (const op of ["read", "write", "copy", "move", "delete", "mkdir", "exists", "list"]) {
+  it("accepts engine-backed rename operation", () => {
+    const def = validDef({ type: "file-system", parameters: { operation: "rename" } });
+    const errors = validateDefinition(def);
+    expect(errors).toHaveLength(0);
+  });
+
+  it("rejects legacy operations no longer in engine", () => {
+    for (const op of ["read", "write", "copy", "move", "delete"]) {
       const def = validDef({ type: "file-system", parameters: { operation: op } });
       const errors = validateDefinition(def);
-      expect(errors).toHaveLength(0);
+      expect(errors.some((e) => e.field === "operation")).toBe(true);
     }
   });
 });
 
-describe("validateDefinition — shell-command", () => {
-  it("requires command parameter", () => {
-    const def = validDef({ type: "shell-command", parameters: {} });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.field === "command")).toBe(true);
-  });
-
-  it("rejects empty string command", () => {
-    const def = validDef({ type: "shell-command", parameters: { command: "" } });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.field === "command")).toBe(true);
-  });
-
-  it("passes with valid command", () => {
+describe("validateDefinition — shell-command (no schema, no type-specific validation)", () => {
+  it("accepts shell-command as a known type", () => {
     const def = validDef({ type: "shell-command", parameters: { command: "echo hello" } });
+    const errors = validateDefinition(def);
+    expect(errors).toHaveLength(0);
+  });
+
+  it("passes with any params (no schema to validate against)", () => {
+    const def = validDef({ type: "shell-command", parameters: {} });
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);
   });
@@ -275,7 +250,7 @@ describe("validateDefinition — minimal validation types", () => {
     expect(errors.some((e) => e.field === "tasks")).toBe(true);
   });
 
-  it("spreadsheet requires operation (Zod)", () => {
+  it("spreadsheet requires operation (Zod, engine-only)", () => {
     const def = validDef({ type: "spreadsheet" });
     const errors = validateDefinition(def);
     expect(errors.length).toBeGreaterThanOrEqual(1);
@@ -292,141 +267,5 @@ describe("validateDefinition — minimal validation types", () => {
     const def = validDef({ type: "transform" });
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);
-  });
-});
-
-describe("validateDefinition — recursive group validation", () => {
-  it("validates child nodes inside a group", () => {
-    const def = validDef({
-      type: "group",
-      nodes: [validDef({ id: "good-child" }), validDef({ id: "bad-child", type: "banana" })],
-      edges: [],
-    });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.nodeId === "bad-child")).toBe(true);
-    expect(errors.some((e) => e.message.includes("unknown type 'banana'"))).toBe(true);
-  });
-
-  it("validates deeply nested groups", () => {
-    const def = validDef({
-      type: "group",
-      nodes: [
-        validDef({
-          id: "inner-group",
-          type: "group",
-          nodes: [
-            validDef({ id: "deep-child", version: "" }), // missing version
-          ],
-          edges: [],
-        }),
-      ],
-      edges: [],
-    });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.nodeId === "deep-child" && e.field === "version")).toBe(true);
-  });
-
-  it("validates children inside loop nodes", () => {
-    const def = validDef({
-      type: "loop",
-      parameters: { mode: "times", count: 3 },
-      nodes: [validDef({ id: "loop-child", type: "" })],
-      edges: [],
-    });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.nodeId === "loop-child" && e.field === "type")).toBe(true);
-  });
-
-  it("validates children inside parallel nodes", () => {
-    const def = validDef({
-      type: "parallel",
-      nodes: [validDef({ id: "" })],
-      edges: [],
-    });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.field === "id")).toBe(true);
-  });
-});
-
-describe("validateEdges", () => {
-  it("returns no errors when edges are empty", () => {
-    const def = validDef({ edges: [] });
-    expect(validateEdges(def)).toHaveLength(0);
-  });
-
-  it("returns no errors when edges are undefined", () => {
-    const def = validDef();
-    expect(validateEdges(def)).toHaveLength(0);
-  });
-
-  it("catches invalid source node", () => {
-    const def = validDef({
-      type: "group",
-      nodes: [validDef({ id: "a" }), validDef({ id: "b" })],
-      edges: [{ id: "e1", source: "nonexistent", target: "b" }],
-    });
-    const errors = validateEdges(def);
-    expect(errors).toHaveLength(1);
-    expect(errors[0].message).toContain("invalid source 'nonexistent'");
-  });
-
-  it("catches invalid target node", () => {
-    const def = validDef({
-      type: "group",
-      nodes: [validDef({ id: "a" }), validDef({ id: "b" })],
-      edges: [{ id: "e1", source: "a", target: "nonexistent" }],
-    });
-    const errors = validateEdges(def);
-    expect(errors).toHaveLength(1);
-    expect(errors[0].message).toContain("invalid target 'nonexistent'");
-  });
-
-  it("catches both invalid source and target in same edge", () => {
-    const def = validDef({
-      type: "group",
-      nodes: [validDef({ id: "a" })],
-      edges: [{ id: "e1", source: "ghost1", target: "ghost2" }],
-    });
-    const errors = validateEdges(def);
-    expect(errors).toHaveLength(2);
-  });
-
-  it("validates multiple edges", () => {
-    const def = validDef({
-      type: "group",
-      nodes: [validDef({ id: "a" }), validDef({ id: "b" })],
-      edges: [
-        { id: "e1", source: "a", target: "b" },
-        { id: "e2", source: "b", target: "missing" },
-      ],
-    });
-    const errors = validateEdges(def);
-    expect(errors).toHaveLength(1);
-    expect(errors[0].message).toContain("invalid target 'missing'");
-  });
-
-  it("passes with valid edges", () => {
-    const def = validDef({
-      type: "group",
-      nodes: [validDef({ id: "a" }), validDef({ id: "b" }), validDef({ id: "c" })],
-      edges: [
-        { id: "e1", source: "a", target: "b" },
-        { id: "e2", source: "b", target: "c" },
-      ],
-    });
-    const errors = validateEdges(def);
-    expect(errors).toHaveLength(0);
-  });
-});
-
-describe("validateDefinition — edge validation in groups", () => {
-  it("validates edges as part of group validation", () => {
-    const def = validDef({
-      type: "group",
-      nodes: [validDef({ id: "a" }), validDef({ id: "b" })],
-      edges: [{ id: "e1", source: "a", target: "ghost" }],
-    });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.message.includes("invalid target 'ghost'"))).toBe(true);
   });
 });

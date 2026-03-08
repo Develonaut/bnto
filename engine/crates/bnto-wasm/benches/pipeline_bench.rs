@@ -68,6 +68,7 @@ fn file(name: &str, data: &[u8], mime: &str) -> PipelineFile {
         name: name.to_string(),
         data: data.to_vec(),
         mime_type: mime.to_string(),
+        metadata: serde_json::Map::new(),
     }
 }
 

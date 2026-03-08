@@ -5,6 +5,8 @@
 // via the Rust WASM pipeline executor.
 // ---------------------------------------------------------------------------
 
+import type { ProcessorMetadata } from "./processorMetadata";
+
 /** Result of processing a single file in the browser. */
 export interface BrowserFileResult {
   /** Processed file as a Blob (ready for download or display). */
@@ -14,7 +16,7 @@ export interface BrowserFileResult {
   /** Output MIME type (e.g., "image/jpeg"). */
   mimeType: string;
   /** Processing metadata (compression ratio, timing, etc.). */
-  metadata: Record<string, unknown>;
+  metadata: ProcessorMetadata;
 }
 
 /** State of an in-progress or completed browser execution. */

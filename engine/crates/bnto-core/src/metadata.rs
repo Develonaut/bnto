@@ -256,7 +256,7 @@ pub fn all_node_types() -> Vec<NodeTypeInfo> {
         NodeTypeInfo {
             name: "file-system".to_string(),
             label: "File System".to_string(),
-            description: "File operations: rename, copy, move, delete, mkdir, exists, list.".to_string(),
+            description: "File operations: rename files with find/replace, case transforms, and patterns.".to_string(),
             category: NodeCategory::File,
             is_container: false,
             platforms: vec!["browser".to_string()],
@@ -283,7 +283,7 @@ pub fn all_node_types() -> Vec<NodeTypeInfo> {
         NodeTypeInfo {
             name: "image".to_string(),
             label: "Image".to_string(),
-            description: "Image processing: resize, convert formats, compress, composite, batch.".to_string(),
+            description: "Image processing: compress, resize, and convert formats.".to_string(),
             category: NodeCategory::Image,
             is_container: false,
             platforms: vec!["browser".to_string()],
@@ -337,7 +337,7 @@ pub fn all_node_types() -> Vec<NodeTypeInfo> {
         NodeTypeInfo {
             name: "spreadsheet".to_string(),
             label: "Spreadsheet".to_string(),
-            description: "Read and write CSV or Excel files.".to_string(),
+            description: "Spreadsheet operations: clean data and rename columns.".to_string(),
             category: NodeCategory::Spreadsheet,
             is_container: false,
             platforms: vec!["browser".to_string()],

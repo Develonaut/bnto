@@ -55,8 +55,24 @@ export function createBrowserExecutionService() {
 
     if (files.length === 0) return [];
 
+    // Bridge WASM PipelineEvents to the progress callback.
+    // The engine emits FileProgress events with percent, fileIndex, etc.
+    // We translate those into the BrowserFileProgressInput shape that
+    // the execution store expects.
+    const eventHandler = (event: PipelineEvent) => {
+      onEvent?.(event);
+      if (onProgress && event.type === "FileProgress") {
+        onProgress({
+          fileIndex: event.fileIndex,
+          totalFiles: event.totalFiles,
+          percent: event.percent,
+          message: event.message,
+        });
+      }
+    };
+
     const definitionJson = JSON.stringify(definition);
-    const result = await worker.executePipeline(definitionJson, files, onEvent);
+    const result = await worker.executePipeline(definitionJson, files, eventHandler);
 
     return result.files.map((f) => ({
       blob: new Blob([f.data], { type: f.mimeType }),

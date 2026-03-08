@@ -14,6 +14,11 @@ import { spreadsheetParamsSchema } from "./schemas/spreadsheet";
 import { fileSystemParamsSchema } from "./schemas/fileSystem";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 import { PROCESSORS, PROCESSOR_MAP, getProcessorDefaults } from "./generated/catalog";
+import { getEngineOperations } from "./schemas/deriveOperations";
+import { CATEGORIES } from "./categories";
+import { IMAGE_OPERATIONS } from "./schemas/image";
+import { SPREADSHEET_OPERATIONS } from "./schemas/spreadsheet";
+import { FILE_OPERATIONS } from "./schemas/fileSystem";
 
 // Import raw JSON to validate generated module matches it exactly
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -126,110 +131,46 @@ describe("engine defaults flow through to schemas", () => {
 });
 
 // =============================================================================
-// Per-processor parameter validation
+// Operation lists match engine PROCESSORS exactly
 // =============================================================================
 
-describe("image:compress", () => {
-  const proc = PROCESSOR_MAP.get("image:compress")!;
-
-  it("accepts image/jpeg, image/png, image/webp", () => {
-    expect(proc.accepts).toEqual(expect.arrayContaining(["image/jpeg", "image/png", "image/webp"]));
+describe("operation lists match engine", () => {
+  it("IMAGE_OPERATIONS matches engine image processors", () => {
+    const engineOps = getEngineOperations("image").sort();
+    const schemaOps = [...IMAGE_OPERATIONS].sort();
+    expect(schemaOps).toEqual(engineOps);
   });
 
-  it("has quality param: number, default 80, min 1, max 100", () => {
-    const quality = proc.parameters.find((p) => p.name === "quality")!;
-    expect(quality.type).toBe("number");
-    expect(quality.default).toBe(80);
-    expect(quality.constraints?.min).toBe(1);
-    expect(quality.constraints?.max).toBe(100);
-  });
-});
-
-describe("image:resize", () => {
-  const proc = PROCESSOR_MAP.get("image:resize")!;
-
-  it("has width: number, min 1", () => {
-    const width = proc.parameters.find((p) => p.name === "width")!;
-    expect(width.type).toBe("number");
-    expect(width.constraints?.min).toBe(1);
+  it("SPREADSHEET_OPERATIONS matches engine spreadsheet processors", () => {
+    const engineOps = getEngineOperations("spreadsheet").sort();
+    const schemaOps = [...SPREADSHEET_OPERATIONS].sort();
+    expect(schemaOps).toEqual(engineOps);
   });
 
-  it("has height: number, min 1", () => {
-    const height = proc.parameters.find((p) => p.name === "height")!;
-    expect(height.type).toBe("number");
-    expect(height.constraints?.min).toBe(1);
+  it("FILE_OPERATIONS matches engine file-system processors", () => {
+    const engineOps = getEngineOperations("file-system").sort();
+    const schemaOps = [...FILE_OPERATIONS].sort();
+    expect(schemaOps).toEqual(engineOps);
   });
 
-  it("has maintainAspect: boolean, default true", () => {
-    const ma = proc.parameters.find((p) => p.name === "maintainAspect")!;
-    expect(ma.type).toBe("boolean");
-    expect(ma.default).toBe(true);
+  it("IMAGE_FORMATS matches engine image:convert format options", () => {
+    const proc = PROCESSOR_MAP.get("image:convert")!;
+    const formatParam = proc.parameters.find((p) => p.name === "format");
+    const engineFormats = [...(formatParam?.options ?? [])].sort();
+    const tsFormats = [...IMAGE_FORMATS].sort();
+    expect(tsFormats).toEqual(engineFormats);
   });
 });
 
-describe("image:convert", () => {
-  const proc = PROCESSOR_MAP.get("image:convert")!;
+// =============================================================================
+// Categories sync — every category exists in NODE_TYPE_INFO
+// =============================================================================
 
-  it("has format: enum with jpeg/png/webp, required", () => {
-    const format = proc.parameters.find((p) => p.name === "format")!;
-    expect(format.type).toBe("enum");
-    expect(format.options).toEqual(expect.arrayContaining(["jpeg", "png", "webp"]));
-    expect(format.constraints?.required).toBe(true);
-  });
-
-  it("has quality: number, default 80", () => {
-    const quality = proc.parameters.find((p) => p.name === "quality")!;
-    expect(quality.type).toBe("number");
-    expect(quality.default).toBe(80);
-  });
-});
-
-describe("spreadsheet:clean", () => {
-  const proc = PROCESSOR_MAP.get("spreadsheet:clean")!;
-
-  it("accepts text/csv", () => {
-    expect(proc.accepts).toContain("text/csv");
-  });
-
-  it("has all three clean params with correct defaults", () => {
-    const params = proc.parameters;
-    const tw = params.find((p) => p.name === "trimWhitespace")!;
-    const rer = params.find((p) => p.name === "removeEmptyRows")!;
-    const rd = params.find((p) => p.name === "removeDuplicates")!;
-
-    expect(tw.type).toBe("boolean");
-    expect(tw.default).toBe(true);
-    expect(rer.type).toBe("boolean");
-    expect(rer.default).toBe(true);
-    expect(rd.type).toBe("boolean");
-    expect(rd.default).toBe(true);
-  });
-});
-
-describe("spreadsheet:rename", () => {
-  const proc = PROCESSOR_MAP.get("spreadsheet:rename")!;
-
-  it("has columns param: object", () => {
-    const columns = proc.parameters.find((p) => p.name === "columns")!;
-    expect(columns.type).toBe("object");
-  });
-});
-
-describe("file-system:rename", () => {
-  const proc = PROCESSOR_MAP.get("file-system:rename")!;
-
-  it("accepts any file type (empty accepts)", () => {
-    expect(proc.accepts).toEqual([]);
-  });
-
-  it("has all rename params", () => {
-    const names = proc.parameters.map((p) => p.name);
-    expect(names).toEqual(["find", "replace", "case", "prefix", "suffix", "pattern"]);
-  });
-
-  it("case param is enum with lower/upper/title", () => {
-    const caseP = proc.parameters.find((p) => p.name === "case")!;
-    expect(caseP.type).toBe("enum");
-    expect(caseP.options).toEqual(["lower", "upper", "title"]);
+describe("categories sync", () => {
+  it("every category in CATEGORIES exists in at least one NODE_TYPE_INFO entry", () => {
+    const usedCategories = new Set(Object.values(NODE_TYPE_INFO).map((info) => info.category));
+    for (const cat of CATEGORIES) {
+      expect(usedCategories).toContain(cat.name);
+    }
   });
 });

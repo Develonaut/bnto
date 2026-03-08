@@ -42,6 +42,7 @@ export type {
   BrowserExecution,
   BrowserFileProgress,
   BrowserRunResult,
+  ProcessorMetadata,
   LocalHistoryEntry,
   TelemetryConfig,
   TelemetryProperties,
