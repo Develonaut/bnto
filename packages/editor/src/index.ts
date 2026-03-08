@@ -32,6 +32,7 @@ export type {
   RecipeMetadata,
   PanelId,
   PanelState,
+  RunLogEntry,
 } from "./store/types";
 
 // --- Provider ---

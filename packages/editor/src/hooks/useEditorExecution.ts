@@ -14,8 +14,7 @@ import type { BrowserFileResult, PipelineEvent } from "@bnto/core";
 import { useEditorStoreApi } from "./useEditorStoreApi";
 import { useEditorStore } from "./useEditorStore";
 import { preparePipeline, isPipelineError } from "../actions/runPipeline";
-import type { ExecutionState } from "../store/types";
-import type { RunLogEntry } from "../components/RunPanel/types";
+import type { ExecutionState, RunLogEntry } from "../store/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -154,7 +153,7 @@ function useEditorExecution(): EditorExecutionResult {
         setPhase("failed");
       }
     },
-    [storeApi],
+    [storeApi, appendLog],
   );
 
   const reset = useCallback(() => {
