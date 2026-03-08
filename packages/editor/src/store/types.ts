@@ -12,6 +12,7 @@
 
 import type { Edge, NodeChange, EdgeChange } from "@xyflow/react";
 import type { Definition, ValidationError } from "@bnto/nodes";
+import type { PipelineEvent } from "@bnto/core";
 import type { BentoNode, NodeConfig, NodeConfigs } from "../adapters/types";
 
 // ---------------------------------------------------------------------------
@@ -21,6 +22,12 @@ import type { BentoNode, NodeConfig, NodeConfigs } from "../adapters/types";
 type NodeExecutionStatus = "idle" | "pending" | "active" | "completed" | "failed";
 
 type ExecutionState = Record<string, NodeExecutionStatus>;
+
+/** A single log entry — a pipeline event with a capture timestamp. */
+interface RunLogEntry {
+  timestamp: number;
+  event: PipelineEvent;
+}
 
 // ---------------------------------------------------------------------------
 // Recipe metadata — root definition fields without child nodes
@@ -139,6 +146,7 @@ export type {
   EditorSnapshot,
   NodeExecutionStatus,
   ExecutionState,
+  RunLogEntry,
   RecipeMetadata,
   PanelId,
   PanelState,

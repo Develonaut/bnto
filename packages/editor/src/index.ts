@@ -15,6 +15,7 @@ export {
   EditorCanvas,
   EditorLayerPanel,
   EditorConfigPanel,
+  EditorRunPanel,
   EditorToolbar,
 } from "./Editor";
 
@@ -31,6 +32,7 @@ export type {
   RecipeMetadata,
   PanelId,
   PanelState,
+  RunLogEntry,
 } from "./store/types";
 
 // --- Provider ---
