@@ -1,9 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useCallback, type ReactNode } from "react";
 import { Canvas } from "./Canvas";
 import { EditorOverlay } from "./EditorOverlay";
 import { useEditorCanvas } from "./useEditorCanvas";
+import { useEditorStore } from "../../hooks/useEditorStore";
+import { useExecutionNodes } from "../../hooks/useExecutionNodes";
 import { usePlaceholderNodes } from "../../hooks/usePlaceholderNodes";
 
 /**
@@ -20,7 +22,16 @@ interface CanvasShellProps {
 
 function CanvasShell({ children }: CanvasShellProps) {
   const { nodes, edges, onNodesChange, onEdgesChange } = useEditorCanvas();
-  const { displayNodes, handleNodesChange } = usePlaceholderNodes(nodes, onNodesChange);
+  const statusNodes = useExecutionNodes(nodes);
+  const { displayNodes, handleNodesChange } = usePlaceholderNodes(statusNodes, onNodesChange);
+  const selectNode = useEditorStore((s) => s.selectNode);
+
+  const handleNodeClick = useCallback(
+    (nodeId: string) => {
+      selectNode(nodeId);
+    },
+    [selectNode],
+  );
 
   return (
     <div className="relative h-full overflow-hidden" data-testid="recipe-editor">
@@ -29,6 +40,7 @@ function CanvasShell({ children }: CanvasShellProps) {
         onNodesChange={handleNodesChange}
         edges={edges}
         onEdgesChange={onEdgesChange}
+        onNodeClick={handleNodeClick}
         interactive
         disable={{ drag: true }}
         standalone

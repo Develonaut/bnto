@@ -11,12 +11,15 @@ import { NodeRoot, NodeBody, NodeIcon, NodeLabel, NodeSublabel } from "./Node";
  */
 
 export const IoNode = memo(function IoNode({ id, data, selected }: NodeProps<BentoNode>) {
+  const status = data.status ?? "idle";
+  const isCompleted = status === "completed";
+
   return (
     <NodeRoot
       width={data.width}
       height={data.height}
-      elevation={selected ? "md" : "sm"}
-      color="muted"
+      elevation={isCompleted ? "md" : selected ? "md" : "sm"}
+      color={isCompleted ? "success" : "muted"}
       align={id === "input" ? "end" : "start"}
       selected={selected}
     >

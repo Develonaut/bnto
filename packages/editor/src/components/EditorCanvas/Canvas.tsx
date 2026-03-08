@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -59,6 +59,8 @@ type CanvasProps = {
    * provides a ReactFlowProvider.
    */
   standalone?: boolean;
+  /** Called when a node is clicked. Receives the node ID. */
+  onNodeClick?: (nodeId: string) => void;
   /** ReactFlow children — Panel overlays, Controls, etc. */
   children?: ReactNode;
   /** Override container classes. */
@@ -86,6 +88,7 @@ type CanvasInnerProps = {
   defaultNodes?: BentoNode[];
   interactive?: boolean;
   disable?: CanvasProps["disable"];
+  onNodeClick?: (nodeId: string) => void;
   children?: ReactNode;
 };
 
@@ -97,6 +100,7 @@ function CanvasInner({
   defaultNodes,
   interactive = false,
   disable,
+  onNodeClick,
   children,
 }: CanvasInnerProps) {
   const { fitView } = useReactFlow();
@@ -125,12 +129,25 @@ function CanvasInner({
   // Uncontrolled mode: defaultNodes prop
   const isControlled = !!onNodesChange;
 
+  /** Skip clicks on placeholder nodes and interactive child elements (buttons). */
+  const handleNodeClick = useCallback(
+    (_event: React.MouseEvent, node: { id: string; type?: string }) => {
+      if (!onNodeClick) return;
+      if (node.type === "placeholder") return;
+      const target = _event.target as HTMLElement;
+      if (target.closest("button, a, input, select, textarea")) return;
+      onNodeClick(node.id);
+    },
+    [onNodeClick],
+  );
+
   return (
     <ReactFlow<BentoNode>
       {...(isControlled
         ? { nodes, onNodesChange, edges: edges ?? EMPTY_EDGES, onEdgesChange }
         : { defaultNodes, edges: EMPTY_EDGES })}
       nodeTypes={NODE_TYPES}
+      onNodeClick={onNodeClick ? handleNodeClick : undefined}
       nodesDraggable={interactive && !disable?.drag}
       nodesConnectable={false}
       elementsSelectable={interactive && !disable?.select}
@@ -161,6 +178,7 @@ export function Canvas({
   interactive = false,
   disable,
   standalone = false,
+  onNodeClick,
   children,
   className,
 }: CanvasProps) {
@@ -173,6 +191,7 @@ export function Canvas({
       defaultNodes={defaultNodes}
       interactive={interactive}
       disable={disable}
+      onNodeClick={onNodeClick}
     >
       {children}
     </CanvasInner>
