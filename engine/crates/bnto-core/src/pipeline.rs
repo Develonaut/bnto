@@ -111,7 +111,7 @@ pub struct PipelineNode {
 /// This is the engine's internal file representation — it holds raw bytes,
 /// not a browser File object or filesystem path. The adapter layer
 /// (WASM bridge, CLI, Tauri) converts from its native file type to this.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct PipelineFile {
     /// The filename (e.g., "photo.jpg", "data.csv").
     pub name: String,
@@ -121,6 +121,12 @@ pub struct PipelineFile {
 
     /// The MIME type (e.g., "image/jpeg", "text/csv").
     pub mime_type: String,
+
+    /// Metadata from the processor that created this file.
+    /// Carries through the pipeline so the final result includes
+    /// stats like compression ratio, original size, etc.
+    /// Empty for files that haven't been processed yet (inputs).
+    pub metadata: serde_json::Map<String, serde_json::Value>,
 }
 
 /// A single output file produced by the pipeline.

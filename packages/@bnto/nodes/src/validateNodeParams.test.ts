@@ -1,8 +1,9 @@
 /**
  * Tests for validateNodeParams — Zod-based parameter validation.
  *
- * Validates that all 12 node types produce correct field-level errors
+ * Validates that node types with schemas produce correct field-level errors
  * for invalid parameters and pass cleanly for valid ones.
+ * Types without schemas (http-request, shell-command) return empty arrays.
  */
 
 import { describe, expect, it } from "vitest";
@@ -46,32 +47,19 @@ describe("validateNodeParams", () => {
     });
   });
 
-  // ---------- http-request ----------
+  // ---------- http-request (no schema — returns empty) ----------
 
   describe("http-request", () => {
-    it("passes with valid params", () => {
+    it("returns empty (no schema for this type)", () => {
+      const errors = validateNodeParams("http-request", "n1", {});
+      expect(errors).toHaveLength(0);
+    });
+
+    it("returns empty even with valid-looking params", () => {
       const errors = validateNodeParams("http-request", "n1", {
         url: "https://example.com",
         method: "GET",
       });
-      expect(errors).toHaveLength(0);
-    });
-
-    it("fails when url is missing", () => {
-      const errors = validateNodeParams("http-request", "n1", { method: "GET" });
-      expect(errors.some((e) => e.field === "url")).toBe(true);
-    });
-
-    it("fails when method is invalid", () => {
-      const errors = validateNodeParams("http-request", "n1", {
-        url: "https://example.com",
-        method: "YEET",
-      });
-      expect(errors.length).toBeGreaterThan(0);
-    });
-
-    it("passes with url only (method defaults to GET)", () => {
-      const errors = validateNodeParams("http-request", "n1", { url: "https://example.com" });
       expect(errors).toHaveLength(0);
     });
   });
@@ -79,8 +67,8 @@ describe("validateNodeParams", () => {
   // ---------- file-system ----------
 
   describe("file-system", () => {
-    it("passes with valid operation", () => {
-      const errors = validateNodeParams("file-system", "n1", { operation: "read" });
+    it("passes with engine-backed rename operation", () => {
+      const errors = validateNodeParams("file-system", "n1", { operation: "rename" });
       expect(errors).toHaveLength(0);
     });
 
@@ -91,6 +79,11 @@ describe("validateNodeParams", () => {
 
     it("fails when operation is invalid", () => {
       const errors = validateNodeParams("file-system", "n1", { operation: "format-c" });
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it("fails for removed legacy operations", () => {
+      const errors = validateNodeParams("file-system", "n1", { operation: "read" });
       expect(errors.length).toBeGreaterThan(0);
     });
   });
@@ -124,25 +117,17 @@ describe("validateNodeParams", () => {
     });
   });
 
-  // ---------- shell-command ----------
+  // ---------- shell-command (no schema — returns empty) ----------
 
   describe("shell-command", () => {
-    it("passes with valid command", () => {
-      const errors = validateNodeParams("shell-command", "n1", { command: "echo hello" });
+    it("returns empty (no schema for this type)", () => {
+      const errors = validateNodeParams("shell-command", "n1", {});
       expect(errors).toHaveLength(0);
     });
 
-    it("fails when command is missing", () => {
-      const errors = validateNodeParams("shell-command", "n1", {});
-      expect(errors.some((e) => e.field === "command")).toBe(true);
-    });
-
-    it("fails when timeout is out of range", () => {
-      const errors = validateNodeParams("shell-command", "n1", {
-        command: "sleep",
-        timeout: 100000,
-      });
-      expect(errors.some((e) => e.field === "timeout")).toBe(true);
+    it("returns empty even with valid-looking params", () => {
+      const errors = validateNodeParams("shell-command", "n1", { command: "echo hello" });
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -163,12 +148,13 @@ describe("validateNodeParams", () => {
   // ---------- spreadsheet ----------
 
   describe("spreadsheet", () => {
-    it("passes with required params", () => {
-      const errors = validateNodeParams("spreadsheet", "n1", {
-        operation: "read",
-        format: "csv",
-        path: "/file.csv",
-      });
+    it("passes with engine operation clean", () => {
+      const errors = validateNodeParams("spreadsheet", "n1", { operation: "clean" });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("passes with engine operation rename", () => {
+      const errors = validateNodeParams("spreadsheet", "n1", { operation: "rename" });
       expect(errors).toHaveLength(0);
     });
 
@@ -176,6 +162,11 @@ describe("validateNodeParams", () => {
       const errors = validateNodeParams("spreadsheet", "n1", {});
       expect(errors.length).toBeGreaterThanOrEqual(1);
       expect(errors.some((e) => e.message.includes("operation"))).toBe(true);
+    });
+
+    it("fails for removed legacy operation read", () => {
+      const errors = validateNodeParams("spreadsheet", "n1", { operation: "read" });
+      expect(errors.length).toBeGreaterThan(0);
     });
   });
 
@@ -248,7 +239,7 @@ describe("validateNodeParams", () => {
 
   describe("error messages", () => {
     it("includes nodeId in error messages", () => {
-      const errors = validateNodeParams("http-request", "my-node", {});
+      const errors = validateNodeParams("image", "my-node", {});
       for (const error of errors) {
         expect(error.nodeId).toBe("my-node");
         expect(error.message).toContain("my-node");
@@ -256,10 +247,10 @@ describe("validateNodeParams", () => {
     });
 
     it("includes field path in error messages", () => {
-      const errors = validateNodeParams("http-request", "n1", {});
-      const urlError = errors.find((e) => e.field === "url");
-      expect(urlError).toBeDefined();
-      expect(urlError!.message).toContain("url");
+      const errors = validateNodeParams("image", "n1", {});
+      const opError = errors.find((e) => e.field === "operation");
+      expect(opError).toBeDefined();
+      expect(opError!.message).toContain("operation");
     });
   });
 });

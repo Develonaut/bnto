@@ -71,7 +71,7 @@ describe("createCompartmentNode", () => {
 
   it("builds default parameters from schema in config", () => {
     const result = createCompartmentNode("image", 0);
-    const schemaDef = NODE_SCHEMA_DEFS["image"];
+    const schemaDef = NODE_SCHEMA_DEFS["image"]!;
     // Extract defaults from Zod schema
     const shape = schemaDef.schema.shape as Record<
       string,

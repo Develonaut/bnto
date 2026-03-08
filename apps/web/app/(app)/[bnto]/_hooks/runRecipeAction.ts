@@ -1,6 +1,7 @@
-import { core, slugToPipeline } from "@bnto/core";
+import { core, definitionToPipeline } from "@bnto/core";
 import type { ExecutionInstance } from "@bnto/core";
 import type { Definition } from "@bnto/nodes";
+import { getRecipeBySlug } from "@bnto/nodes";
 
 interface RunRecipeParams {
   slug: string;
@@ -54,11 +55,12 @@ async function runBrowserPath(
   runProps: Record<string, unknown>,
   startTime: number,
 ) {
-  // Resolve slug → definition, then run via definition-based path
-  const pipeline = slugToPipeline(slug, config);
-  if (!pipeline) {
+  const recipe = getRecipeBySlug(slug);
+  if (!recipe) {
     throw new Error(`No browser implementation for slug "${slug}"`);
   }
+
+  const pipeline = definitionToPipeline(recipe.definition, config);
   const result = await browserInstance.run(pipeline, files);
   const durationMs = Date.now() - startTime;
 

@@ -46,7 +46,10 @@ function EditorToolbar() {
   }, [storeApi]);
 
   return (
-    <div className="pointer-events-auto absolute bottom-0 left-1/2 -translate-x-1/2">
+    <div
+      className="pointer-events-auto absolute bottom-0 left-1/2 -translate-x-1/2"
+      data-testid="editor-toolbar"
+    >
       <Toolbar elevation="md">
         <ToolbarGroup>
           <LayerPanelTrigger />

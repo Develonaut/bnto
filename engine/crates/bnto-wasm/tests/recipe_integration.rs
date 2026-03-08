@@ -79,6 +79,7 @@ fn file(name: &str, data: &[u8], mime: &str) -> PipelineFile {
         name: name.to_string(),
         data: data.to_vec(),
         mime_type: mime.to_string(),
+        metadata: serde_json::Map::new(),
     }
 }
 
@@ -189,6 +190,72 @@ fn compress_images_recipe_handles_batch() {
             f.name
         );
     }
+}
+
+// =============================================================================
+// Compress Images — metadata verification
+// =============================================================================
+
+#[test]
+fn compress_images_metadata_includes_size_stats() {
+    // The compress processor should attach originalSize, compressedSize,
+    // and compressionRatio to the output metadata. This metadata flows
+    // through the pipeline and ends up in PipelineFileResult.metadata,
+    // which the UI reads to show "X% smaller" on each result card.
+    let def = parse(
+        r#"{
+        "nodes": [
+            { "id": "input", "type": "input" },
+            {
+                "id": "batch-compress", "type": "group",
+                "nodes": [{
+                    "id": "compress-loop", "type": "loop",
+                    "parameters": { "mode": "forEach" },
+                    "nodes": [{
+                        "id": "compress-image", "type": "image",
+                        "parameters": { "operation": "compress", "quality": 50 }
+                    }]
+                }]
+            },
+            { "id": "output", "type": "output" }
+        ]
+    }"#,
+    );
+
+    let registry = real_registry();
+    let reporter = PipelineReporter::new_noop();
+    let input_size = SMALL_JPEG.len() as u64;
+    let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
+
+    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now)
+        .expect("compress pipeline should succeed");
+
+    assert_eq!(result.files.len(), 1);
+    let metadata = &result.files[0].metadata;
+
+    // Must contain originalSize matching input.
+    assert_eq!(
+        metadata["originalSize"].as_u64().unwrap(),
+        input_size,
+        "originalSize should match the input file size"
+    );
+
+    // Must contain compressedSize matching actual output.
+    let compressed_size = metadata["compressedSize"].as_u64().unwrap();
+    assert_eq!(
+        compressed_size,
+        result.files[0].data.len() as u64,
+        "compressedSize should match the output data length"
+    );
+
+    // Must contain compressionRatio as a percentage (0-100).
+    // The engine computes: (1 - compressed/original) * 100.
+    let ratio = metadata["compressionRatio"].as_f64().unwrap();
+    assert!(
+        ratio > 0.0 && ratio < 100.0,
+        "compressionRatio {} should be between 0 and 100 (percentage)",
+        ratio
+    );
 }
 
 // =============================================================================

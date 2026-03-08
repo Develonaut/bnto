@@ -1,6 +1,11 @@
 pre-commit:
   parallel: false
   commands:
+    wasm-codegen:
+      glob: "engine/**/*.{rs,toml}"
+      run: task wasm:codegen
+      stage_fixed: true
+
     prettier:
       glob: "*.{ts,tsx,js,mjs,json,css,md,yml,yaml}"
       run: pnpm prettier --write {staged_files}

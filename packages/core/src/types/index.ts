@@ -39,8 +39,9 @@ export type {
 
 export type { OutputFileUrl, DownloadUrlsResult } from "./download";
 
+export type { ProcessorMetadata } from "./processorMetadata";
+
 export type {
-  BrowserEngine,
   BrowserFileResult,
   BrowserExecution,
   BrowserFileProgress,

@@ -7,8 +7,8 @@ import type { ExecutionInstance } from "../services/executionInstance";
 import type { StartPredefinedInput } from "../types";
 import type { LocalHistoryEntry } from "../types/localHistory";
 import type { BrowserRunResult } from "../types/browser";
-import type { PipelineDefinition } from "../engine/types";
-import { slugToPipeline } from "../adapters/browser/slugToPipeline";
+import type { PipelineDefinition } from "../types/pipeline";
+import { isIoNodeType } from "@bnto/nodes";
 
 /** Build a history entry from a completed/failed execution result. */
 function buildHistoryEntry(
@@ -34,8 +34,8 @@ type AuthStatusGetter = () => boolean;
 /**
  * Execution client — unified public API for execution operations.
  *
- * Consumers use `core.executions` for everything — capability detection,
- * instance creation, downloads, history, and auto-recording.
+ * Consumers use `core.executions` for everything — instance creation,
+ * downloads, history, and auto-recording.
  */
 export function createExecutionClient(
   executions: ExecutionService,
@@ -74,9 +74,7 @@ export function createExecutionClient(
       ...instance,
       run: async (definition: PipelineDefinition, files: File[]): Promise<BrowserRunResult> => {
         // Derive slug from definition for history — use the first processing node's type
-        const processingNode = definition.nodes.find(
-          (n) => n.type !== "input" && n.type !== "output",
-        );
+        const processingNode = definition.nodes.find((n) => !isIoNodeType(n.type));
         const historySlug = processingNode?.type ?? "unknown";
 
         const serverEventId = getIsAuthenticated()
@@ -114,12 +112,6 @@ export function createExecutionClient(
     startPredefined: (input: StartPredefinedInput) => executions.startPredefined(input),
 
     // ── Browser Execution ─────────────────────────────────────────
-    /** Check if a slug can run in the browser. */
-    isCapable: (slug: string) => browser.isCapable(slug),
-    /** Check if a browser implementation exists for a slug. */
-    hasImplementation: (slug: string) => browser.hasImplementation(slug),
-    /** List all slugs capable of browser execution. */
-    getCapableSlugs: () => browser.getCapableSlugs(),
 
     /**
      * Create an isolated execution instance with its own store.
@@ -130,18 +122,8 @@ export function createExecutionClient(
      */
     createExecution: (): ExecutionInstance => wrapInstance(browser.createExecution()),
 
-    /**
-     * Execute a PipelineDefinition directly with File[].
-     * Callers with a slug use `slugToPipeline()` first.
-     */
+    /** Execute a PipelineDefinition directly with File[]. */
     runPipeline: browser.runPipeline,
-
-    /**
-     * Resolve a predefined slug to a PipelineDefinition.
-     * Returns null if the slug has no browser implementation.
-     */
-    slugToPipeline: (slug: string, params?: Record<string, unknown>) =>
-      slugToPipeline(slug, params),
 
     /** Download a single browser execution result. */
     downloadResult: browser.downloadResult,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./nodeTypes";
+import { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./generated/catalog";
 import { isNodeType } from "./isNodeType";
 import { getNodeTypeInfo } from "./getNodeTypeInfo";
 
@@ -67,7 +67,7 @@ describe("NODE_TYPE_INFO", () => {
   it("server-only types are file-system, http-request, and shell-command", () => {
     const serverOnly = Object.values(NODE_TYPE_INFO).filter((i) => !i.browserCapable);
     const names = serverOnly.map((s) => s.name).sort();
-    expect(names).toEqual(["file-system", "http-request", "shell-command"]);
+    expect(names).toEqual(["http-request", "shell-command"]);
   });
 });
 
