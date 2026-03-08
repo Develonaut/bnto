@@ -1,5 +1,115 @@
 {
   "version": "1.0.0",
+  "nodeTypes": [
+    {
+      "name": "edit-fields",
+      "label": "Edit Fields",
+      "description": "Set field values from static values or template expressions.",
+      "category": "data",
+      "isContainer": false,
+      "platforms": ["browser"],
+      "icon": "pen-line"
+    },
+    {
+      "name": "file-system",
+      "label": "File System",
+      "description": "File operations: rename, copy, move, delete, mkdir, exists, list.",
+      "category": "file",
+      "isContainer": false,
+      "platforms": ["browser"],
+      "icon": "folder-open"
+    },
+    {
+      "name": "group",
+      "label": "Group",
+      "description": "Container for child nodes. Orchestrates sequential or parallel execution.",
+      "category": "control",
+      "isContainer": true,
+      "platforms": ["browser"],
+      "icon": "box"
+    },
+    {
+      "name": "http-request",
+      "label": "HTTP Request",
+      "description": "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).",
+      "category": "network",
+      "isContainer": false,
+      "platforms": ["server"],
+      "icon": "globe"
+    },
+    {
+      "name": "image",
+      "label": "Image",
+      "description": "Image processing: resize, convert formats, compress, composite, batch.",
+      "category": "image",
+      "isContainer": false,
+      "platforms": ["browser"],
+      "icon": "image"
+    },
+    {
+      "name": "input",
+      "label": "Input",
+      "description": "Declares how data enters the recipe. Read by the environment to render the appropriate input widget.",
+      "category": "io",
+      "isContainer": false,
+      "platforms": ["browser"],
+      "icon": "file-up"
+    },
+    {
+      "name": "loop",
+      "label": "Loop",
+      "description": "Iterate over arrays (forEach), repeat N times, or loop while condition.",
+      "category": "control",
+      "isContainer": true,
+      "platforms": ["browser"],
+      "icon": "repeat"
+    },
+    {
+      "name": "output",
+      "label": "Output",
+      "description": "Declares how results are delivered. Read by the environment to render the appropriate output widget.",
+      "category": "io",
+      "isContainer": false,
+      "platforms": ["browser"],
+      "icon": "download"
+    },
+    {
+      "name": "parallel",
+      "label": "Parallel",
+      "description": "Execute tasks concurrently with configurable worker pool and error strategy.",
+      "category": "control",
+      "isContainer": true,
+      "platforms": ["browser"],
+      "icon": "git-fork"
+    },
+    {
+      "name": "shell-command",
+      "label": "Shell Command",
+      "description": "Execute shell commands with stall detection, retry, and streaming output.",
+      "category": "system",
+      "isContainer": false,
+      "platforms": ["server"],
+      "icon": "terminal"
+    },
+    {
+      "name": "spreadsheet",
+      "label": "Spreadsheet",
+      "description": "Read and write CSV or Excel files.",
+      "category": "spreadsheet",
+      "isContainer": false,
+      "platforms": ["browser"],
+      "icon": "sheet"
+    },
+    {
+      "name": "transform",
+      "label": "Transform",
+      "description": "Transform data using expressions (single value) or field mappings.",
+      "category": "data",
+      "isContainer": false,
+      "platforms": ["browser"],
+      "icon": "arrow-left-right"
+    }
+  ],
   "processors": [
     {
       "nodeType": "file-system",

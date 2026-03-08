@@ -1,38 +1,27 @@
-/** Main-thread wrapper for the WASM Web Worker — typed, promise-based file processing. */
+/** Main-thread wrapper for the WASM Web Worker — typed, promise-based pipeline execution. */
 
 import type {
-  ProcessRequest,
   ExecutePipelineRequest,
-  ProgressResponse,
-  ResultResponse,
-  ErrorResponse,
   PipelineProgressResponse,
   PipelineResultResponse,
   PipelineErrorResponse,
   WorkerResponse,
 } from "./workerProtocol";
 import { createWorkerInstance, attachInitListener, sendRequest } from "./initWorker";
-import type {
-  ProgressCallback,
-  ProcessResult,
-  PendingRequest,
-  PendingPipelineRequest,
-  PipelineExecutionResult,
-} from "./workerTypes";
+import type { PendingPipelineRequest, PipelineExecutionResult } from "./workerTypes";
 import type { PipelineEvent } from "../../types/pipelineEvents";
 
-export type { ProgressCallback, ProcessResult, PipelineExecutionResult } from "./workerTypes";
+export type { PipelineExecutionResult } from "./workerTypes";
 
 export class BntoWorker {
   private worker: Worker | null = null;
   private initPromise: Promise<string> | null = null;
-  private pending = new Map<string, PendingRequest>();
   private pendingPipelines = new Map<string, PendingPipelineRequest>();
   private nextId = 0;
 
   /**
    * Initialize the WASM module in the worker.
-   * Must be called before processFile(). Safe to call multiple times.
+   * Must be called before executePipeline(). Safe to call multiple times.
    * Returns the WASM engine version string.
    */
   async init(): Promise<string> {
@@ -41,47 +30,6 @@ export class BntoWorker {
 
     this.initPromise = this.doInit();
     return this.initPromise;
-  }
-
-  /**
-   * Process a single file through a WASM node.
-   *
-   * @param file - The File object to process.
-   * @param nodeType - Node type (e.g., "compress-images").
-   * @param params - Node-specific config (e.g., { quality: 80 }).
-   * @param onProgress - Optional callback for progress updates.
-   * @returns The processed file as a Blob with metadata.
-   */
-  async processFile(
-    file: File,
-    nodeType: string,
-    params: Record<string, unknown> = {},
-    onProgress?: ProgressCallback,
-  ): Promise<ProcessResult> {
-    if (!this.worker) {
-      throw new Error("BntoWorker not initialized. Call init() first.");
-    }
-
-    const worker = this.worker;
-    const id = String(this.nextId++);
-    const data = await file.arrayBuffer();
-
-    return new Promise<ProcessResult>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject, onProgress });
-
-      const request: ProcessRequest = {
-        type: "process",
-        id,
-        data,
-        filename: file.name,
-        mimeType: file.type || "application/octet-stream",
-        nodeType,
-        params,
-      };
-
-      // Transfer the ArrayBuffer to avoid copying.
-      worker.postMessage(request, [data]);
-    });
   }
 
   /**
@@ -140,12 +88,6 @@ export class BntoWorker {
     }
     this.initPromise = null;
 
-    // Reject any pending requests.
-    for (const [, pending] of this.pending) {
-      pending.reject(new Error("Worker terminated"));
-    }
-    this.pending.clear();
-
     for (const [, pending] of this.pendingPipelines) {
       pending.reject(new Error("Worker terminated"));
     }
@@ -175,12 +117,6 @@ export class BntoWorker {
 
   private handleMessage(response: WorkerResponse): void {
     switch (response.type) {
-      case "progress":
-        return this.handleProgress(response);
-      case "result":
-        return this.handleResult(response);
-      case "error":
-        return this.handleError(response);
       case "pipeline-progress":
         return this.handlePipelineProgress(response);
       case "pipeline-result":
@@ -193,33 +129,6 @@ export class BntoWorker {
       case "ready":
         return; // Handled during init.
     }
-  }
-
-  private handleProgress(response: ProgressResponse): void {
-    const pending = this.pending.get(response.id);
-    pending?.onProgress?.(response.percent, response.message);
-  }
-
-  private handleResult(response: ResultResponse): void {
-    const pending = this.pending.get(response.id);
-    if (!pending) return;
-
-    this.pending.delete(response.id);
-
-    pending.resolve({
-      blob: new Blob([response.data], { type: response.mimeType }),
-      filename: response.filename,
-      mimeType: response.mimeType,
-      metadata: response.metadata,
-    });
-  }
-
-  private handleError(response: ErrorResponse): void {
-    const pending = this.pending.get(response.id);
-    if (!pending) return;
-
-    this.pending.delete(response.id);
-    pending.reject(new Error(response.message));
   }
 
   private handlePipelineProgress(response: PipelineProgressResponse): void {

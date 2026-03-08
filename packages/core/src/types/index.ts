@@ -40,7 +40,6 @@ export type {
 export type { OutputFileUrl, DownloadUrlsResult } from "./download";
 
 export type {
-  BrowserEngine,
   BrowserFileResult,
   BrowserExecution,
   BrowserFileProgress,

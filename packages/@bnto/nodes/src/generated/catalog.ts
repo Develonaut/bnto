@@ -2,14 +2,193 @@
  * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
  *
  * Run `task nodes:generate` to regenerate after engine changes.
- * Source: engine/crates/bnto-wasm/src/catalog.rs
+ * Source: engine/crates/bnto-core/src/metadata.rs
  *
- * This module is the TypeScript representation of the Rust engine's
- * self-describing processor metadata. It provides typed definitions,
- * defaults, and constraints for all engine-implemented node operations.
+ * The Rust engine is the single source of truth for all node metadata.
+ * To add or modify a node type, edit `all_node_types()` in the engine,
+ * then run `task wasm:build` → `task nodes:generate`.
+ *
+ * Engine catalog v1.0.0
  */
 
-// --- Types ---
+// =============================================================================
+// Node Types — All 12 registered node types
+// =============================================================================
+
+/**
+ * All registered node type names.
+ * Maps camelCase keys to kebab-case type name strings.
+ */
+export const NODE_TYPES = {
+  editFields: "edit-fields",
+  fileSystem: "file-system",
+  group: "group",
+  httpRequest: "http-request",
+  image: "image",
+  input: "input",
+  loop: "loop",
+  output: "output",
+  parallel: "parallel",
+  shellCommand: "shell-command",
+  spreadsheet: "spreadsheet",
+  transform: "transform",
+} as const;
+
+/** Union of all valid node type name strings. */
+export type NodeTypeName = (typeof NODE_TYPES)[keyof typeof NODE_TYPES];
+
+/** All node type names as a readonly array. */
+export const NODE_TYPE_NAMES: readonly NodeTypeName[] = Object.values(NODE_TYPES) as NodeTypeName[];
+
+/** Node category for grouping in the UI and documentation. */
+export type NodeCategory =
+  | "control"
+  | "data"
+  | "file"
+  | "image"
+  | "io"
+  | "network"
+  | "spreadsheet"
+  | "system";
+
+/** Metadata describing a node type's behavior and capabilities. */
+export interface NodeTypeInfo {
+  /** The node type name as used in `.bnto.json` definitions. */
+  name: NodeTypeName;
+  /** Human-readable display label. */
+  label: string;
+  /** One-sentence description of what the node does. */
+  description: string;
+  /** Category for grouping. */
+  category: NodeCategory;
+  /** Whether this node can contain child nodes (group, loop). */
+  isContainer: boolean;
+  /** Whether this node type is available for browser execution. */
+  browserCapable: boolean;
+  /** Lucide icon name for visual consumers. */
+  icon: string;
+}
+
+/**
+ * Metadata for all 12 registered node types.
+ * Maps node type name → info.
+ */
+export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
+  "edit-fields": {
+    name: "edit-fields",
+    label: "Edit Fields",
+    description: "Set field values from static values or template expressions.",
+    category: "data",
+    isContainer: false,
+    browserCapable: true,
+    icon: "pen-line",
+  },
+  "file-system": {
+    name: "file-system",
+    label: "File System",
+    description: "File operations: rename, copy, move, delete, mkdir, exists, list.",
+    category: "file",
+    isContainer: false,
+    browserCapable: true,
+    icon: "folder-open",
+  },
+  group: {
+    name: "group",
+    label: "Group",
+    description: "Container for child nodes. Orchestrates sequential or parallel execution.",
+    category: "control",
+    isContainer: true,
+    browserCapable: true,
+    icon: "box",
+  },
+  "http-request": {
+    name: "http-request",
+    label: "HTTP Request",
+    description: "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).",
+    category: "network",
+    isContainer: false,
+    browserCapable: false,
+    icon: "globe",
+  },
+  image: {
+    name: "image",
+    label: "Image",
+    description: "Image processing: resize, convert formats, compress, composite, batch.",
+    category: "image",
+    isContainer: false,
+    browserCapable: true,
+    icon: "image",
+  },
+  input: {
+    name: "input",
+    label: "Input",
+    description:
+      "Declares how data enters the recipe. Read by the environment to render the appropriate input widget.",
+    category: "io",
+    isContainer: false,
+    browserCapable: true,
+    icon: "file-up",
+  },
+  loop: {
+    name: "loop",
+    label: "Loop",
+    description: "Iterate over arrays (forEach), repeat N times, or loop while condition.",
+    category: "control",
+    isContainer: true,
+    browserCapable: true,
+    icon: "repeat",
+  },
+  output: {
+    name: "output",
+    label: "Output",
+    description:
+      "Declares how results are delivered. Read by the environment to render the appropriate output widget.",
+    category: "io",
+    isContainer: false,
+    browserCapable: true,
+    icon: "download",
+  },
+  parallel: {
+    name: "parallel",
+    label: "Parallel",
+    description: "Execute tasks concurrently with configurable worker pool and error strategy.",
+    category: "control",
+    isContainer: true,
+    browserCapable: true,
+    icon: "git-fork",
+  },
+  "shell-command": {
+    name: "shell-command",
+    label: "Shell Command",
+    description: "Execute shell commands with stall detection, retry, and streaming output.",
+    category: "system",
+    isContainer: false,
+    browserCapable: false,
+    icon: "terminal",
+  },
+  spreadsheet: {
+    name: "spreadsheet",
+    label: "Spreadsheet",
+    description: "Read and write CSV or Excel files.",
+    category: "spreadsheet",
+    isContainer: false,
+    browserCapable: true,
+    icon: "sheet",
+  },
+  transform: {
+    name: "transform",
+    label: "Transform",
+    description: "Transform data using expressions (single value) or field mappings.",
+    category: "data",
+    isContainer: false,
+    browserCapable: true,
+    icon: "arrow-left-right",
+  },
+} as const satisfies Record<NodeTypeName, NodeTypeInfo>;
+
+// =============================================================================
+// Processors — 6 implemented operations
+// =============================================================================
 
 export type ParamType = "number" | "string" | "boolean" | "enum" | "object";
 
@@ -37,8 +216,6 @@ export interface ProcessorDef {
   readonly platforms: readonly string[];
   readonly parameters: readonly ProcessorParam[];
 }
-
-// --- Processor definitions (from engine catalog v1.0.0) ---
 
 export const PROCESSORS: readonly ProcessorDef[] = [
   {
@@ -234,14 +411,7 @@ export const PROCESSOR_MAP = new Map<string, ProcessorDef>(
   PROCESSORS.map((p) => [`${p.nodeType}:${p.operation}`, p]),
 );
 
-/**
- * Get the engine defaults for a specific processor.
- *
- * Returns a record of parameter names to their default values,
- * including only parameters that have engine-defined defaults.
- * Recipe-specific overrides (e.g., format: "webp") are NOT included —
- * those are authoring choices, not engine defaults.
- */
+/** Get the engine defaults for a specific processor. */
 export function getProcessorDefaults(nodeType: string, operation: string): Record<string, unknown> {
   const proc = PROCESSOR_MAP.get(`${nodeType}:${operation}`);
   if (!proc) return {};
@@ -254,12 +424,7 @@ export function getProcessorDefaults(nodeType: string, operation: string): Recor
   return defaults;
 }
 
-/**
- * Get the engine constraints for a specific parameter.
- *
- * Returns { min, max, required } if the engine defines constraints,
- * or undefined if no constraints exist.
- */
+/** Get the engine constraints for a specific parameter. */
 export function getParamConstraints(
   nodeType: string,
   operation: string,
@@ -271,9 +436,7 @@ export function getParamConstraints(
   return param?.constraints;
 }
 
-/**
- * Get the accepted MIME types for a specific processor.
- */
+/** Get the accepted MIME types for a specific processor. */
 export function getProcessorAccepts(nodeType: string, operation: string): readonly string[] {
   const proc = PROCESSOR_MAP.get(`${nodeType}:${operation}`);
   return proc?.accepts ?? [];

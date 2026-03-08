@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { NODE_TYPE_INFO } from "./nodeTypes";
+import { NODE_TYPE_INFO } from "./generated/catalog";
 import { imageParamsSchema, IMAGE_FORMATS } from "./schemas/image";
 import { spreadsheetParamsSchema } from "./schemas/spreadsheet";
 import { fileSystemParamsSchema } from "./schemas/fileSystem";

@@ -6,7 +6,7 @@ import type { BrowserExecutionService } from "../services/browserExecutionServic
 import type { HistoryService } from "../services/historyService";
 import type { ExecutionInstance } from "../services/executionInstance";
 import type { BrowserRunResult } from "../types/browser";
-import type { PipelineDefinition } from "../engine/types";
+import type { PipelineDefinition } from "../types/pipeline";
 
 // ── Shared definition ──────────────────────────────────────────────────────
 
@@ -56,9 +56,6 @@ function mockInstance(runResult: BrowserRunResult): ExecutionInstance {
 
 function mockBrowserService(instance: ExecutionInstance): BrowserExecutionService {
   return {
-    isCapable: vi.fn(),
-    hasImplementation: vi.fn(),
-    getCapableSlugs: vi.fn(),
     createExecution: vi.fn(() => instance),
     runPipeline: vi.fn(),
     downloadResult: vi.fn(),

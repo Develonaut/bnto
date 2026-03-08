@@ -37,6 +37,10 @@ use serde::Serialize;
 /// The `version` field matches `FORMAT_VERSION` in bnto-core, which must
 /// stay in sync with `CURRENT_FORMAT_VERSION` in `@bnto/nodes`.
 ///
+/// Contains two sections:
+///   - `nodeTypes` — all 12 node type definitions (the registry of what exists)
+///   - `processors` — the 6 implemented processor operations (what the engine can run)
+///
 /// RUST CONCEPT: `#[serde(rename_all = "camelCase")]`
 /// Ensures JSON output uses camelCase keys (JavaScript convention).
 #[derive(Serialize)]
@@ -45,6 +49,10 @@ struct CatalogEnvelope {
     /// The format version of the catalog (matches bnto-core FORMAT_VERSION).
     /// Consumers can use this to verify they understand the catalog schema.
     version: String,
+
+    /// All 12 registered node types with their metadata.
+    /// Sorted alphabetically by name for stable output.
+    node_types: Vec<bnto_core::NodeTypeInfo>,
 
     /// The list of all registered processor metadata entries.
     /// Sorted by compound key (nodeType:operation) for stable output.
@@ -91,9 +99,13 @@ pub fn node_catalog() -> Result<String, JsValue> {
         key_a.cmp(&key_b)
     });
 
-    // --- Step 4: Wrap in an envelope with the format version ---
+    // --- Step 4: Get all node type definitions (already sorted alphabetically) ---
+    let node_types = bnto_core::all_node_types();
+
+    // --- Step 5: Wrap in an envelope with the format version ---
     let envelope = CatalogEnvelope {
         version: bnto_core::FORMAT_VERSION.to_string(),
+        node_types,
         processors: catalog,
     };
 
@@ -118,6 +130,7 @@ mod tests {
 
         let envelope = CatalogEnvelope {
             version: bnto_core::FORMAT_VERSION.to_string(),
+            node_types: bnto_core::all_node_types(),
             processors: catalog,
         };
 
@@ -193,6 +206,7 @@ mod tests {
 
         let envelope = CatalogEnvelope {
             version: bnto_core::FORMAT_VERSION.to_string(),
+            node_types: bnto_core::all_node_types(),
             processors: catalog,
         };
 
@@ -203,6 +217,8 @@ mod tests {
 
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
+        assert!(parsed["nodeTypes"].is_array());
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 12);
         assert!(parsed["processors"].is_array());
         assert_eq!(parsed["processors"].as_array().unwrap().len(), 6);
     }
@@ -227,6 +243,7 @@ mod tests {
 
         let envelope = CatalogEnvelope {
             version: bnto_core::FORMAT_VERSION.to_string(),
+            node_types: bnto_core::all_node_types(),
             processors: catalog,
         };
 
