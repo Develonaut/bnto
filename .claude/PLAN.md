@@ -737,6 +737,33 @@ When a recipe has multi-file input and a processing node (e.g., Image compress),
 
 ## Backlog
 
+### Codebase Audit: Go-Era Artifacts & Migration Debt
+
+**Priority: Medium.** Audit the entire codebase to remove artifacts from the Go engine migration era. During the transition from Go→Rust, several patterns were duplicated or left as compatibility shims. Now that the Rust engine owns execution and `@bnto/nodes` owns definitions, these should be cleaned up.
+
+**What to look for:**
+
+1. **Duplicated execution logic** — `@bnto/core` may still have JS-side pipeline orchestration (`executePipeline.ts`) that duplicates what the Rust executor now handles. Verify the deprecated path is truly dead and remove it.
+2. **Go-era parameter schemas** — `@bnto/nodes` schemas for `spreadsheet` and `file-system` still reference Go-era operations (`read`/`write` for spreadsheet, `path`/`content`/`source`/`dest` for file-system). These don't match the Rust processors (`clean`/`rename` and `find`/`replace`/`prefix`/`suffix`). Align the TS schemas with what the engine actually implements.
+3. **Deprecated API methods** — `browserExecutionService.hasImplementation()` is an alias for `isCapable()`. Migrate consumers and remove the alias.
+4. **Split comment patterns** — Comments that say "Go engine does X" or reference `archive/engine-go/` behavior as if it's current.
+5. **Oversized Rust files** — `executor.rs` (2068 lines), node crate files (1000-2000 lines each) violate Bento Box. Split into focused modules.
+6. **`processFile` API path** — The single-file `processFile()` worker API may be dead code now that `executePipeline()` handles everything. Verify and remove if so.
+
+**Scope:** `packages/core/`, `packages/@bnto/nodes/`, `engine/crates/`, `apps/web/` (any remaining Go references in UI code).
+
+**Tasks:**
+
+- [ ] `packages/@bnto/nodes` — Align `spreadsheet` and `file-system` Zod schemas with Rust processor parameters (clean/rename, find/replace/prefix/suffix)
+- [ ] `packages/core` — Remove deprecated `hasImplementation()` alias, migrate `useRecipeFlow.ts` to `isCapable()`
+- [ ] `packages/core` — Verify `processFile` worker path is dead code and remove if so
+- [ ] `packages/core` — Remove or deprecate `executePipeline.ts` if fully replaced by Rust executor
+- [ ] `engine` — Split `executor.rs` into focused modules (executor, primitive execution, container execution)
+- [ ] `engine` — Add comment density pass to executor.rs sections 400+ for consistency with other files
+- [ ] Cross-cutting — Grep for "Go engine", "Go API", "archive/engine-go" references in non-archive code and remove stale ones
+
+---
+
 ### UX: Compartment Node Visual Redesign — Phases 2-3 (Mini Motorways Buildings)
 
 **Phase 1 delivered in Sprint 5 Wave 1** (icon registry + category color mapping). Phases 2-3 remain in backlog as polish.
@@ -945,6 +972,14 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 - [ ] `apps/web` — UI performance audit at scale (FileCard grid, BouncyStagger, responsive layout)
 - [ ] `@bnto/core` — Profile `createZipBlob` memory limits for large batches
 - [ ] `.claude/strategy/` — Write `file-limits.md` with results and decisions
+
+### Chore: Remove Remaining Go References from Codebase
+
+**Priority: Low.** Three files outside `@bnto/nodes` still reference "Go engine." Clean up in a small PR.
+
+- [ ] `packages/core/src/__tests__/integration/execution.test.ts:22` — Remove "Go engine" reference
+- [ ] `packages/core/src/__tests__/integration/transit-pipeline.test.ts:10` — Remove "Go engine" reference
+- [ ] `packages/@bnto/backend/convex/schema.ts:52` — Remove "Go engine" comment (note: `goExecutionId` field still exists, may need schema migration)
 
 ### Chore: Go Engine Archival & Node Migration Reference
 
