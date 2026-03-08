@@ -77,6 +77,18 @@ export type {
   PipelineResult,
 } from "./engine/types";
 
+// ── Pipeline events (structured progress from Rust executor) ─────────────
+export type {
+  PipelineEvent,
+  PipelineStartedEvent,
+  NodeStartedEvent,
+  FileProgressEvent,
+  NodeCompletedEvent,
+  NodeFailedEvent,
+  PipelineCompletedEvent,
+  PipelineFailedEvent,
+} from "./types/pipelineEvents";
+
 // ── Browser utilities (for app-layer use) ─────────────────────────────────
 export { downloadBlob } from "./adapters/browser/downloadBlob";
 export { deriveAcceptedTypes } from "./adapters/browser/deriveAcceptedTypes";
