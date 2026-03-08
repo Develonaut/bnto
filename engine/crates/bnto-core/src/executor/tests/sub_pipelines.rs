@@ -183,8 +183,7 @@ fn test_multi_file_progress_tracking() {
         (2, 100, "c.jpg"),
     ];
 
-    for (i, (expected_idx, expected_pct, expected_name)) in expected_sequence.iter().enumerate()
-    {
+    for (i, (expected_idx, expected_pct, expected_name)) in expected_sequence.iter().enumerate() {
         if let PipelineEvent::FileProgress {
             file_index,
             total_files,
@@ -340,9 +339,7 @@ fn test_node_completed_fields_are_correct() {
     // Find NodeCompleted for "proc".
     let completed = events
         .iter()
-        .find(
-            |e| matches!(e, PipelineEvent::NodeCompleted { node_id, .. } if node_id == "proc"),
-        )
+        .find(|e| matches!(e, PipelineEvent::NodeCompleted { node_id, .. } if node_id == "proc"))
         .expect("Should have NodeCompleted for 'proc'");
 
     if let PipelineEvent::NodeCompleted {
@@ -486,9 +483,7 @@ fn test_container_node_event_nesting() {
     // FileProgress events should reference the leaf node (the processor).
     let leaf_progress: Vec<&PipelineEvent> = events
         .iter()
-        .filter(
-            |e| matches!(e, PipelineEvent::FileProgress { node_id, .. } if node_id == "leaf"),
-        )
+        .filter(|e| matches!(e, PipelineEvent::FileProgress { node_id, .. } if node_id == "leaf"))
         .collect();
     assert_eq!(
         leaf_progress.len(),

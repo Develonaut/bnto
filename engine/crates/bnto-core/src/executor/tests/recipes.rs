@@ -695,18 +695,18 @@ fn test_recipe_compress_images_event_sequence() {
     ));
 
     // Should have NodeStarted for the batch-compress group (sub-recipe).
-    let group_started = events.iter().any(|e| {
-        matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "batch-compress")
-    });
+    let group_started = events.iter().any(
+        |e| matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "batch-compress"),
+    );
     assert!(
         group_started,
         "Should emit NodeStarted for sub-recipe group node"
     );
 
     // Should have NodeStarted for the loop inside the sub-recipe.
-    let loop_started = events.iter().any(|e| {
-        matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "compress-loop")
-    });
+    let loop_started = events.iter().any(
+        |e| matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "compress-loop"),
+    );
     assert!(
         loop_started,
         "Should emit NodeStarted for loop node inside sub-recipe"
