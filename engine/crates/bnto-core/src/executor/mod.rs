@@ -204,9 +204,24 @@ fn execute_node(
     // Pass pipeline_total_files and file_offset so that progress events
     // always report relative to the user's original input batch.
     let result = if is_container_node(&node.node_type) {
-        execute_container_node(node, files, registry, reporter, pipeline_total_files, file_offset, now_ms)
+        execute_container_node(
+            node,
+            files,
+            registry,
+            reporter,
+            pipeline_total_files,
+            file_offset,
+            now_ms,
+        )
     } else {
-        execute_primitive_node(node, files, registry, reporter, pipeline_total_files, file_offset)
+        execute_primitive_node(
+            node,
+            files,
+            registry,
+            reporter,
+            pipeline_total_files,
+            file_offset,
+        )
     };
 
     // --- Handle success or failure ---
@@ -441,8 +456,13 @@ fn execute_container_node(
         // is future work.
         "group" | "parallel" => {
             let result = execute_sub_pipeline(
-                &sub_definition, files, registry, reporter,
-                pipeline_total_files, file_offset, now_ms,
+                &sub_definition,
+                files,
+                registry,
+                reporter,
+                pipeline_total_files,
+                file_offset,
+                now_ms,
             )?;
             Ok(NodeExecutionResult {
                 files_processed: result.files_processed,
