@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import {
   Button,
   Toolbar,
@@ -13,17 +13,15 @@ import {
   Redo2Icon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  PlayIcon,
-  LoaderIcon,
 } from "@bnto/ui";
 import { useEditorUndoRedo } from "../hooks/useEditorUndoRedo";
 import { useEditorStore } from "../hooks/useEditorStore";
 import { useEditorStoreApi } from "../hooks/useEditorStoreApi";
-import { useEditorExecutionContext } from "../hooks/EditorExecutionContext";
 import { useNodeNavigation } from "../hooks/useNodeNavigation";
 import { LayerPanelTrigger } from "./LayerPanel";
 import { ConfigPanelTrigger } from "./ConfigPanel";
 import { RunPanelTrigger } from "./RunPanel";
+import { RunButton } from "./RunButton";
 import { NodePaletteMenu, NodePaletteMenuTrigger, NodePaletteMenuContent } from "./NodePaletteMenu";
 
 /**
@@ -39,8 +37,6 @@ function EditorToolbar() {
   const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
   const isDirty = useEditorStore((s) => s.isDirty);
   const storeApi = useEditorStoreApi();
-  const { phase, canRun, run, reset } = useEditorExecutionContext();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleReset = useCallback(() => {
     const { loadRecipe, createBlank, slug } = storeApi.getState();
@@ -51,57 +47,11 @@ function EditorToolbar() {
     }
   }, [storeApi]);
 
-  /** Open the hidden file input to select files for execution. */
-  const handleRunClick = useCallback(() => {
-    if (phase === "completed" || phase === "failed") {
-      reset();
-      return;
-    }
-    fileInputRef.current?.click();
-  }, [phase, reset]);
-
-  /** Files selected — run the pipeline. */
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (!files || files.length === 0) return;
-      run(Array.from(files));
-      // Reset the input so the same file can be re-selected.
-      e.target.value = "";
-    },
-    [run],
-  );
-
-  const runIcon =
-    phase === "running" ? (
-      <LoaderIcon className="size-4 motion-safe:animate-spin" />
-    ) : phase === "completed" || phase === "failed" ? (
-      <RotateCcwIcon className="size-4" />
-    ) : (
-      <PlayIcon className="size-4" />
-    );
-
-  const runLabel =
-    phase === "running"
-      ? "Running"
-      : phase === "completed" || phase === "failed"
-        ? "Reset run"
-        : "Run";
-
   return (
     <div
       className="pointer-events-auto absolute bottom-0 left-1/2 -translate-x-1/2"
       data-testid="editor-toolbar"
     >
-      {/* Hidden file input for selecting input files */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={handleFileChange}
-        data-testid="run-file-input"
-      />
       <Toolbar elevation="md">
         <ToolbarGroup>
           <LayerPanelTrigger />
@@ -158,17 +108,7 @@ function EditorToolbar() {
 
         {/* Run / Reset execution */}
         <ToolbarGroup>
-          <Button
-            size="icon"
-            variant={phase === "failed" ? "destructive" : "primary"}
-            elevation="sm"
-            onClick={handleRunClick}
-            disabled={!canRun && phase !== "completed" && phase !== "failed"}
-            aria-label={runLabel}
-            data-testid="run-button"
-          >
-            {runIcon}
-          </Button>
+          <RunButton />
         </ToolbarGroup>
 
         <ToolbarDivider />
