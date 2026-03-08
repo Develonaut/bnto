@@ -8,10 +8,9 @@
 //
 // HOW DOES FILE RENAMING WORK IN THE BROWSER?
 //
-//   In the Go engine (CLI/server), rename-files uses the real filesystem:
-//   it lists files, then calls `os.Rename()` to move them. But in the
-//   browser, there IS no filesystem. Files are just blobs of data with
-//   a name attached.
+//   On native platforms (CLI/desktop), rename-files uses the real filesystem
+//   to move files. But in the browser, there IS no filesystem. Files are
+//   just blobs of data with a name attached.
 //
 //   So the browser version is a FILENAME TRANSFORMER:
 //     1. Take a file's current name (e.g., "IMG_1234.jpg")
@@ -84,6 +83,84 @@ impl NodeProcessor for RenameFiles {
     /// Returns the node type name — used for logging and progress reporting.
     fn name(&self) -> &str {
         "rename-files"
+    }
+
+    /// Return self-describing metadata for the rename-files processor.
+    ///
+    /// Parameters: find, replace, case (enum), prefix, suffix, pattern — all
+    /// optional strings/enums. Accepts any file type (empty accepts = wildcard).
+    fn metadata(&self) -> bnto_core::NodeMetadata {
+        use bnto_core::metadata::*;
+        NodeMetadata {
+            node_type: "file-system".to_string(),
+            operation: "rename".to_string(),
+            name: "Rename Files".to_string(),
+            description: "Transform filenames using patterns, find/replace, and case rules"
+                .to_string(),
+            category: NodeCategory::File,
+            // Empty accepts = any file type. Rename-files doesn't care about
+            // the file's content — it only transforms the filename string.
+            accepts: vec![],
+            platforms: vec!["browser".to_string()],
+            parameters: vec![
+                ParameterDef {
+                    name: "find".to_string(),
+                    label: "Find".to_string(),
+                    description: "Text or regex pattern to search for in the filename".to_string(),
+                    param_type: ParameterType::String,
+                    default: None,
+                    constraints: None,
+                },
+                ParameterDef {
+                    name: "replace".to_string(),
+                    label: "Replace".to_string(),
+                    description: "Replacement text (used with Find)".to_string(),
+                    param_type: ParameterType::String,
+                    default: None,
+                    constraints: None,
+                },
+                ParameterDef {
+                    name: "case".to_string(),
+                    label: "Case".to_string(),
+                    description: "Transform the filename to a specific case".to_string(),
+                    param_type: ParameterType::Enum {
+                        options: vec![
+                            "lower".to_string(),
+                            "upper".to_string(),
+                            "title".to_string(),
+                        ],
+                    },
+                    default: None,
+                    constraints: None,
+                },
+                ParameterDef {
+                    name: "prefix".to_string(),
+                    label: "Prefix".to_string(),
+                    description: "Text to prepend to the filename".to_string(),
+                    param_type: ParameterType::String,
+                    default: None,
+                    constraints: None,
+                },
+                ParameterDef {
+                    name: "suffix".to_string(),
+                    label: "Suffix".to_string(),
+                    description: "Text to append before the file extension".to_string(),
+                    param_type: ParameterType::String,
+                    default: None,
+                    constraints: None,
+                },
+                ParameterDef {
+                    name: "pattern".to_string(),
+                    label: "Pattern".to_string(),
+                    description:
+                        "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})"
+                            .to_string(),
+                    param_type: ParameterType::String,
+                    default: None,
+                    constraints: None,
+                },
+            ],
+        }
     }
 
     /// Process a single file: transform its filename according to the params.

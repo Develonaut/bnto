@@ -99,6 +99,52 @@ impl NodeProcessor for CleanCsv {
         "clean-csv"
     }
 
+    /// Return self-describing metadata for the clean-csv processor.
+    ///
+    /// Parameters: trimWhitespace, removeEmptyRows, removeDuplicates — all
+    /// booleans, all default to true. Accepts text/csv files only.
+    fn metadata(&self) -> bnto_core::NodeMetadata {
+        use bnto_core::metadata::*;
+        NodeMetadata {
+            node_type: "spreadsheet".to_string(),
+            operation: "clean".to_string(),
+            name: "Clean CSV".to_string(),
+            description: "Remove empty rows, trim whitespace, and deduplicate CSV data"
+                .to_string(),
+            category: NodeCategory::Spreadsheet,
+            accepts: vec!["text/csv".to_string()],
+            platforms: vec!["browser".to_string()],
+            parameters: vec![
+                ParameterDef {
+                    name: "trimWhitespace".to_string(),
+                    label: "Trim Whitespace".to_string(),
+                    description: "Remove leading and trailing whitespace from every cell"
+                        .to_string(),
+                    param_type: ParameterType::Boolean,
+                    default: Some(serde_json::json!(true)),
+                    constraints: None,
+                },
+                ParameterDef {
+                    name: "removeEmptyRows".to_string(),
+                    label: "Remove Empty Rows".to_string(),
+                    description: "Skip rows where every cell is blank".to_string(),
+                    param_type: ParameterType::Boolean,
+                    default: Some(serde_json::json!(true)),
+                    constraints: None,
+                },
+                ParameterDef {
+                    name: "removeDuplicates".to_string(),
+                    label: "Remove Duplicates".to_string(),
+                    description: "Remove duplicate rows, keeping the first occurrence"
+                        .to_string(),
+                    param_type: ParameterType::Boolean,
+                    default: Some(serde_json::json!(true)),
+                    constraints: None,
+                },
+            ],
+        }
+    }
+
     /// Clean a CSV file: trim whitespace, remove empty rows, deduplicate.
     ///
     /// This is the main entry point. The Web Worker calls this (via the
