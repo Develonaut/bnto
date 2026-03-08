@@ -28,11 +28,20 @@ import type { RunLogEntry } from "../store/types";
 
 type ExecutionPhase = "idle" | "running" | "completed" | "failed";
 
+interface FileProgress {
+  fileIndex: number;
+  totalFiles: number;
+  overallPercent: number;
+  message: string;
+}
+
 interface EditorExecutionResult {
   phase: ExecutionPhase;
   results: BrowserFileResult[];
   errors: string[];
   logs: RunLogEntry[];
+  fileProgress: FileProgress | null;
+  inputFiles: File[];
   canRun: boolean;
   run: (files: File[]) => Promise<void>;
   reset: () => void;
@@ -58,6 +67,8 @@ function useEditorExecution(): EditorExecutionResult {
   const [results, setResults] = useState<BrowserFileResult[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [logs, setLogs] = useState<RunLogEntry[]>([]);
+  const [fileProgress, setFileProgress] = useState<FileProgress | null>(null);
+  const [inputFiles, setInputFiles] = useState<File[]>([]);
 
   const resultsRef = useRef<BrowserFileResult[]>([]);
   resultsRef.current = results;
@@ -87,6 +98,8 @@ function useEditorExecution(): EditorExecutionResult {
       setErrors([]);
       setResults([]);
       setLogs([]);
+      setFileProgress(null);
+      setInputFiles(files);
 
       // Auto-open the run panel when execution starts.
       storeApi.getState().openPanel("run");
@@ -100,6 +113,18 @@ function useEditorExecution(): EditorExecutionResult {
           const next = applyPipelineEvent(storeApi.getState().executionState, event);
           if (next !== storeApi.getState().executionState) {
             storeApi.setState({ executionState: next });
+          }
+
+          if (event.type === "FileProgress") {
+            const overallPercent = Math.round(
+              ((event.fileIndex + event.percent / 100) / event.totalFiles) * 100,
+            );
+            setFileProgress({
+              fileIndex: event.fileIndex,
+              totalFiles: event.totalFiles,
+              overallPercent,
+              message: event.message,
+            });
           }
         };
 
@@ -131,6 +156,8 @@ function useEditorExecution(): EditorExecutionResult {
     setResults([]);
     setErrors([]);
     setLogs([]);
+    setFileProgress(null);
+    setInputFiles([]);
   }, [storeApi]);
 
   const downloadFile = useCallback((file: BrowserFileResult) => {
@@ -148,6 +175,8 @@ function useEditorExecution(): EditorExecutionResult {
     results,
     errors,
     logs,
+    fileProgress,
+    inputFiles,
     canRun: hasProcessingNodes && phase !== "running",
     run,
     reset,

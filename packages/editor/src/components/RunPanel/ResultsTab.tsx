@@ -1,25 +1,32 @@
 "use client";
 
-import { useCallback } from "react";
-import { Button, Text, DownloadIcon, CheckCircle2Icon, XCircleIcon, LoaderIcon } from "@bnto/ui";
+import {
+  Button,
+  CheckCircle2Icon,
+  DownloadIcon,
+  LinearProgress,
+  LoaderIcon,
+  ResultFileCard,
+  Text,
+  XCircleIcon,
+} from "@bnto/ui";
+import { formatFileSize } from "@bnto/ui";
 import type { BrowserFileResult } from "@bnto/core";
-import type { ExecutionPhase } from "../../hooks/useEditorExecution";
-
-interface ResultsTabProps {
-  phase: ExecutionPhase;
-  results: BrowserFileResult[];
-  errors: string[];
-  onDownloadFile: (file: BrowserFileResult) => void;
-  onDownloadAll: () => void;
-}
+import { useFileResultProps } from "@bnto/core";
+import { useEditorExecutionContext } from "../../hooks/EditorExecutionContext";
 
 /**
- * ResultsTab — shows execution output files and errors.
+ * ResultsTab — consumes execution state directly from context.
  *
- * Idle: prompt to run. Running: spinner. Completed: file list with
- * download buttons. Failed: error messages.
+ * Running: LinearProgress with file counter.
+ * Completed: summary header + ResultFileCards + download all.
+ * Failed: error messages.
+ * Idle: prompt.
  */
-function ResultsTab({ phase, results, errors, onDownloadFile, onDownloadAll }: ResultsTabProps) {
+function ResultsTab() {
+  const { phase, results, errors, fileProgress, inputFiles, downloadAll } =
+    useEditorExecutionContext();
+
   if (phase === "idle") {
     return (
       <div className="flex h-full items-center justify-center p-4">
@@ -32,46 +39,27 @@ function ResultsTab({ phase, results, errors, onDownloadFile, onDownloadAll }: R
 
   if (phase === "running") {
     return (
-      <div className="flex h-full items-center justify-center gap-2 p-4">
-        <LoaderIcon className="size-4 motion-safe:animate-spin text-muted-foreground" />
-        <Text size="xs" color="muted">
-          Running...
-        </Text>
+      <div className="flex h-full flex-col gap-4 p-4">
+        <RunningProgress />
       </div>
     );
   }
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
-      {errors.length > 0 && (
-        <div className="flex flex-col gap-1 border-b border-border p-3">
-          {errors.map((error, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <XCircleIcon className="mt-0.5 size-3.5 shrink-0 text-destructive" />
-              <Text size="xs" className="text-destructive">
-                {error}
-              </Text>
-            </div>
-          ))}
-        </div>
-      )}
+      {errors.length > 0 && <ErrorSection />}
+
       {results.length > 0 && (
         <>
-          <div className="flex flex-col gap-0.5 p-2">
+          <CompletedSummary />
+          <div className="flex flex-col gap-1.5 p-2">
             {results.map((file, i) => (
-              <ResultRow key={i} file={file} onDownload={onDownloadFile} />
+              <ResultRow key={`${file.filename}-${i}`} result={file} />
             ))}
           </div>
-          {results.length > 1 && (
-            <div className="border-t border-border p-2">
-              <Button size="sm" variant="outline" className="w-full" onClick={onDownloadAll}>
-                <DownloadIcon className="size-3.5" />
-                Download All ({results.length})
-              </Button>
-            </div>
-          )}
         </>
       )}
+
       {results.length === 0 && errors.length === 0 && (
         <div className="flex h-full items-center justify-center p-4">
           <Text size="xs" color="muted">
@@ -83,33 +71,109 @@ function ResultsTab({ phase, results, errors, onDownloadFile, onDownloadAll }: R
   );
 }
 
-function ResultRow({
-  file,
-  onDownload,
-}: {
-  file: BrowserFileResult;
-  onDownload: (file: BrowserFileResult) => void;
-}) {
-  const handleClick = useCallback(() => onDownload(file), [file, onDownload]);
-  const sizeKb = (file.blob.size / 1024).toFixed(1);
+/** Single result row using the shared ResultFileCard. */
+function ResultRow({ result }: { result: BrowserFileResult }) {
+  const { downloadFile } = useEditorExecutionContext();
+  const props = useFileResultProps(result);
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="flex items-center gap-2 rounded-md px-2 py-1.5 text-left hover:bg-muted/50"
-    >
-      <CheckCircle2Icon className="size-3.5 shrink-0 text-primary" />
-      <div className="min-w-0 flex-1">
-        <Text size="xs" className="truncate font-medium">
-          {file.filename}
+    <ResultFileCard
+      filename={props.filename}
+      extension={props.extension}
+      outputSize={props.outputSize}
+      originalSize={props.originalSize}
+      savings={props.savings}
+      action={
+        <Button
+          variant="outline"
+          size="sm"
+          icon={<DownloadIcon />}
+          onClick={() => downloadFile(result)}
+          aria-label={`Download ${result.filename}`}
+        />
+      }
+    />
+  );
+}
+
+/** Progress bar with file counter while execution is running. */
+function RunningProgress() {
+  const { fileProgress, inputFiles } = useEditorExecutionContext();
+  const totalFiles = inputFiles.length;
+
+  if (!fileProgress) {
+    return (
+      <LinearProgress
+        value={0}
+        icon={<LoaderIcon className="size-4 shrink-0 text-primary motion-safe:animate-spin" />}
+        label={totalFiles > 0 ? `0 of ${totalFiles} files` : "Initializing..."}
+        valueLabel=""
+      />
+    );
+  }
+
+  return (
+    <LinearProgress
+      value={fileProgress.overallPercent}
+      icon={<LoaderIcon className="size-4 shrink-0 text-primary motion-safe:animate-spin" />}
+      label={`Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}...`}
+    />
+  );
+}
+
+/** Summary header showing file count, total savings, and download all button. */
+function CompletedSummary() {
+  const { results, downloadAll } = useEditorExecutionContext();
+
+  const totalSaved = results.reduce((acc, r) => {
+    const orig = r.metadata.originalSize as number | undefined;
+    return orig != null ? acc + (orig - r.blob.size) : acc;
+  }, 0);
+
+  const label = `${results.length} ${results.length === 1 ? "file" : "files"} processed`;
+  const saved = totalSaved > 0 ? `${formatFileSize(totalSaved)} saved` : null;
+
+  return (
+    <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
+      <div className="flex items-center gap-2">
+        <CheckCircle2Icon className="size-4 text-primary" />
+        <Text size="xs" className="font-medium">
+          {label}
         </Text>
-        <Text size="xs" color="muted">
-          {sizeKb} KB
-        </Text>
+        {saved && (
+          <Text size="xs" color="muted" className="font-mono tabular-nums">
+            {saved}
+          </Text>
+        )}
       </div>
-      <DownloadIcon className="size-3.5 shrink-0 text-muted-foreground" />
-    </button>
+      {results.length > 1 && (
+        <Button
+          variant="outline"
+          size="sm"
+          icon={<DownloadIcon />}
+          onClick={downloadAll}
+          aria-label={`Download all ${results.length} files`}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Error messages section. */
+function ErrorSection() {
+  const { errors } = useEditorExecutionContext();
+
+  return (
+    <div className="flex flex-col gap-1 border-b border-border p-3">
+      {errors.map((error, i) => (
+        <div key={i} className="flex items-start gap-2">
+          <XCircleIcon className="mt-0.5 size-3.5 shrink-0 text-destructive" />
+          <Text size="xs" className="text-destructive">
+            {error}
+          </Text>
+        </div>
+      ))}
+    </div>
   );
 }
 

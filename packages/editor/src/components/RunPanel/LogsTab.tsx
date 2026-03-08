@@ -4,18 +4,16 @@ import { useEffect, useRef } from "react";
 import { Text } from "@bnto/ui";
 import type { RunLogEntry } from "./types";
 import { formatLogEntry } from "./formatLogEntry";
-
-interface LogsTabProps {
-  logs: RunLogEntry[];
-}
+import { useEditorExecutionContext } from "../../hooks/EditorExecutionContext";
 
 /**
- * LogsTab — streams engine execution events like a console log.
+ * LogsTab — consumes logs directly from execution context.
  *
  * Auto-scrolls to the bottom as new entries arrive.
  * Each entry is formatted as a timestamped line with event details.
  */
-function LogsTab({ logs }: LogsTabProps) {
+function LogsTab() {
+  const { logs } = useEditorExecutionContext();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

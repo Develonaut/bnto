@@ -58,6 +58,8 @@ export type { ExecutionInstanceState } from "./stores/executionInstanceStore";
 // ── Service types (for instance consumers) ────────────────────────────────
 export type { ExecutionInstance } from "./services/executionInstance";
 export type { ExecutionState } from "./hooks/useExecutionState";
+export { useFileResultProps } from "./hooks/useFileResultProps";
+export type { FileResultDisplayProps } from "./hooks/useFileResultProps";
 
 // ── Store factories (for app-layer orchestration) ─────────────────────────
 export { createEnhancedStore } from "./stores/createEnhancedStore";
