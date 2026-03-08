@@ -14,7 +14,13 @@ import type { BrowserFileResult, PipelineEvent } from "@bnto/core";
 import { useEditorStoreApi } from "./useEditorStoreApi";
 import { useEditorStore } from "./useEditorStore";
 import { preparePipeline, isPipelineError } from "../actions/runPipeline";
-import type { ExecutionState } from "../store/types";
+import {
+  applyPipelineEvent,
+  buildPendingState,
+  buildFinalState,
+  buildFailedState,
+} from "../actions/executionState";
+import type { RunLogEntry } from "../store/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,6 +32,7 @@ interface EditorExecutionResult {
   phase: ExecutionPhase;
   results: BrowserFileResult[];
   errors: string[];
+  logs: RunLogEntry[];
   canRun: boolean;
   run: (files: File[]) => Promise<void>;
   reset: () => void;
@@ -50,9 +57,14 @@ function useEditorExecution(): EditorExecutionResult {
   const [phase, setPhase] = useState<ExecutionPhase>("idle");
   const [results, setResults] = useState<BrowserFileResult[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+  const [logs, setLogs] = useState<RunLogEntry[]>([]);
 
   const resultsRef = useRef<BrowserFileResult[]>([]);
   resultsRef.current = results;
+
+  const appendLog = useCallback((entry: RunLogEntry) => {
+    setLogs((prev) => [...prev, entry]);
+  }, []);
 
   const run = useCallback(
     async (files: File[]) => {
@@ -74,41 +86,23 @@ function useEditorExecution(): EditorExecutionResult {
       setPhase("running");
       setErrors([]);
       setResults([]);
+      setLogs([]);
+
+      // Auto-open the run panel when execution starts.
+      storeApi.getState().openPanel("run");
 
       try {
-        // Mark all processing nodes as pending before execution starts.
-        const pendingState: ExecutionState = { ...prepared.initialExecutionState };
-        for (const node of prepared.definition.nodes) {
-          if (node.type !== "input" && node.type !== "output") {
-            pendingState[node.id] = "pending";
-          }
-        }
+        const pendingState = buildPendingState(prepared.definition, prepared.initialExecutionState);
         storeApi.setState({ executionState: pendingState });
 
-        // Handle structured PipelineEvents from the Rust executor.
-        // These drive real-time per-node status in the editor.
         const onEvent = (event: PipelineEvent) => {
-          const current = storeApi.getState().executionState;
-          switch (event.type) {
-            case "NodeStarted":
-              storeApi.setState({
-                executionState: { ...current, [event.nodeId]: "active" },
-              });
-              break;
-            case "NodeCompleted":
-              storeApi.setState({
-                executionState: { ...current, [event.nodeId]: "completed" },
-              });
-              break;
-            case "NodeFailed":
-              storeApi.setState({
-                executionState: { ...current, [event.nodeId]: "failed" },
-              });
-              break;
+          appendLog({ timestamp: Date.now(), event });
+          const next = applyPipelineEvent(storeApi.getState().executionState, event);
+          if (next !== storeApi.getState().executionState) {
+            storeApi.setState({ executionState: next });
           }
         };
 
-        // Run via core's definition-based execution path with structured events.
         const browserResults = await core.executions.runPipeline(
           prepared.definition,
           files,
@@ -116,31 +110,19 @@ function useEditorExecution(): EditorExecutionResult {
           onEvent,
         );
 
-        // Finalize: mark output node as completed, input as idle.
-        const finalState: ExecutionState = {};
-        for (const node of prepared.definition.nodes) {
-          if (node.type === "input") finalState[node.id] = "idle";
-          else finalState[node.id] = "completed";
-        }
-        storeApi.setState({ executionState: finalState });
-
+        storeApi.setState({ executionState: buildFinalState(prepared.definition) });
         setResults(browserResults);
         setPhase("completed");
       } catch (err) {
-        const currentExec = storeApi.getState().executionState;
-        const failedState: ExecutionState = { ...currentExec };
-        for (const [nodeId, status] of Object.entries(failedState)) {
-          if (status === "active") failedState[nodeId] = "failed";
-          if (status === "pending") failedState[nodeId] = "idle";
-        }
-        storeApi.setState({ executionState: failedState });
-
+        storeApi.setState({
+          executionState: buildFailedState(storeApi.getState().executionState),
+        });
         const message = err instanceof Error ? err.message : "Pipeline execution failed";
         setErrors([message]);
         setPhase("failed");
       }
     },
-    [storeApi],
+    [storeApi, appendLog],
   );
 
   const reset = useCallback(() => {
@@ -148,6 +130,7 @@ function useEditorExecution(): EditorExecutionResult {
     setPhase("idle");
     setResults([]);
     setErrors([]);
+    setLogs([]);
   }, [storeApi]);
 
   const downloadFile = useCallback((file: BrowserFileResult) => {
@@ -164,6 +147,7 @@ function useEditorExecution(): EditorExecutionResult {
     phase,
     results,
     errors,
+    logs,
     canRun: hasProcessingNodes && phase !== "running",
     run,
     reset,
