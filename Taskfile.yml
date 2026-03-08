@@ -90,8 +90,8 @@ tasks:
     cmds:
       - echo "=== rust lint ==="
       - task: wasm:lint
-      - echo "=== rust unit tests ==="
-      - task: wasm:test:unit
+      - echo "=== rust tests (unit + WASM integration) ==="
+      - task: wasm:test
       - echo "=== typescript build ==="
       - task: ui:build
       - echo "=== typescript tests ==="
@@ -199,6 +199,12 @@ tasks:
       - task: wasm:build
       - task: wasm:copy
 
+  wasm:bench:
+    desc: Run Criterion benchmarks (results in engine/target/criterion/)
+    dir: ./engine
+    cmds:
+      - cargo bench
+
   wasm:clean:
     desc: Clean all Rust build artifacts
     dir: ./engine
@@ -218,5 +224,5 @@ tasks:
     cmds:
       - task: test
       - task: api:test
-      - task: wasm:test:unit
+      - task: wasm:test
       - task: ui:test

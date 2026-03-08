@@ -1,0 +1,42 @@
+# Engine Benchmark Baseline
+# Generated: 2026-03-07
+# Machine: macOS Darwin 24.6.0 (Apple Silicon)
+# Rust: stable, release profile (optimized)
+# Framework: Criterion.rs (100 samples per benchmark)
+#
+# To regenerate: cd engine && cargo bench
+# To compare against this baseline after changes: cargo bench
+# Criterion stores detailed HTML reports in engine/target/criterion/
+
+## Node-Level (single file, direct pipeline)
+
+node/image:compress/jpeg           210.19 us    [209.73 - 210.67 us]
+node/image:resize/jpeg             235.39 us    [234.82 - 236.02 us]
+node/image:convert/jpeg_to_png       1.86 ms    [  1.86 -   1.87 ms]
+node/spreadsheet:clean/csv          15.19 us    [ 15.17 -  15.21 us]
+node/file-system:rename/txt           1.18 us    [  1.18 -   1.18 us]
+
+## Recipe-Level (full composite with group/loop containers)
+
+recipe/compress-images/1-file      213.11 us    [212.67 - 213.56 us]
+recipe/clean-csv/1-file             15.68 us    [ 15.65 -  15.70 us]
+recipe/rename-files/1-file           1.92 us    [  1.92 -   1.92 us]
+
+## Batch Scaling (compress-images, N files)
+
+recipe/compress-images/batch/1     213.98 us    4,673 files/sec
+recipe/compress-images/batch/5       1.07 ms    4,685 files/sec
+recipe/compress-images/batch/10      2.14 ms    4,680 files/sec
+
+## Registry Lookup
+
+registry/resolve                    48.23 ns    [ 48.16 -  48.31 ns]
+
+## Key Observations
+#
+# - Compress overhead (recipe vs node): ~3 us (group+loop container traversal)
+# - Batch scaling is perfectly linear: 10x files = 10x time, ~4,680 files/sec
+# - Convert (JPEG->PNG) is ~9x slower than compress (PNG encoding is expensive)
+# - CSV clean is ~14x faster than image compress (text vs pixel processing)
+# - File rename is ~180x faster than compress (pure string ops, no codec)
+# - Registry resolve is 48ns — negligible overhead per node dispatch

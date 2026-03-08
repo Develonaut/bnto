@@ -7,9 +7,9 @@
 ## Step 1: Automated Checks
 
 ```bash
-# Rust checks
+# Rust checks (if engine/ files changed)
 task wasm:lint          # clippy (Rust linter) -- must pass clean
-task wasm:test:unit     # Rust unit tests (native) -- must pass
+task wasm:test          # Rust unit tests + WASM integration tests -- must pass
 
 # Frontend checks
 task ui:build           # TypeScript compilation -- must pass
@@ -147,7 +147,7 @@ Present a summary to the user before committing:
 5. **If no UI touched:** What unit/integration tests were written?
 6. **Flat named exports** -- PASS or FAIL. If FAIL, list files with `Object.assign` dot-notation patterns.
 7. **TS checks result** -- confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
-8. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test:unit` passed clean (skip if no Rust files touched)
+8. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test` passed clean (skip if no Rust files touched)
 9. **Lighthouse audit result** -- confirm `task seo:audit` passed clean, or SKIPPED (no `apps/web/` changes)
 10. **Files changed** -- brief description of each
 
