@@ -86,7 +86,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "file-system": {
     name: "file-system",
     label: "File System",
-    description: "File operations: rename, copy, move, delete, mkdir, exists, list.",
+    description: "File operations: rename files with find/replace, case transforms, and patterns.",
     category: "file",
     isContainer: false,
     browserCapable: true,
@@ -113,7 +113,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   image: {
     name: "image",
     label: "Image",
-    description: "Image processing: resize, convert formats, compress, composite, batch.",
+    description: "Image processing: compress, resize, and convert formats.",
     category: "image",
     isContainer: false,
     browserCapable: true,
@@ -169,7 +169,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   spreadsheet: {
     name: "spreadsheet",
     label: "Spreadsheet",
-    description: "Read and write CSV or Excel files.",
+    description: "Spreadsheet operations: clean data and rename columns.",
     category: "spreadsheet",
     isContainer: false,
     browserCapable: true,
