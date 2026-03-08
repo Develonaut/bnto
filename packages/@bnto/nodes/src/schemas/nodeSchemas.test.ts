@@ -1,7 +1,6 @@
 /**
  * Tests for individual node type schemas — validates Zod shapes,
- * defaults, visibility rules, and conditional requirements match
- * the Go engine's validator rules and node implementations.
+ * defaults, visibility rules, and conditional requirements.
  */
 import { describe, expect, it } from "vitest";
 
@@ -22,7 +21,7 @@ describe("http-request schema", () => {
     if (result.success) expect(result.data.method).toBe("GET");
   });
 
-  it("method enum has 7 values matching Go validator", () => {
+  it("method enum has 7 values", () => {
     const info = inferFieldType(def.schema.shape.method);
     expect(info.type).toBe("enum");
     expect(info.enumValues).toHaveLength(7);
@@ -45,12 +44,13 @@ describe("file-system schema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("operation enum has 8 values matching Go validator", () => {
+  it("operation enum has 9 values (8 legacy + rename from engine)", () => {
     const info = inferFieldType(def.schema.shape.operation);
     expect(info.type).toBe("enum");
-    expect(info.enumValues).toHaveLength(8);
+    expect(info.enumValues).toHaveLength(9);
     expect(info.enumValues).toContain("list");
     expect(info.enumValues).toContain("delete");
+    expect(info.enumValues).toContain("rename");
   });
 
   it("content is conditionally required for write", () => {
@@ -69,8 +69,9 @@ describe("loop schema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("mode-specific params are conditionally required", () => {
-    expect(def.params.items.requiredWhen).toEqual({ param: "mode", equals: "forEach" });
+  it("mode-specific params are conditionally required (items is optional)", () => {
+    // items is optional — the Rust engine iterates files directly
+    expect(def.params.items.requiredWhen).toBeUndefined();
     expect(def.params.count.requiredWhen).toEqual({ param: "mode", equals: "times" });
     expect(def.params.condition.requiredWhen).toEqual({ param: "mode", equals: "while" });
   });

@@ -1,17 +1,19 @@
 /**
  * Image node schema — parameters for image processing operations.
  *
- * Go source: engine/pkg/node/library/image/image.go
- * Validator: engine/pkg/validator/validators.go → validateImage
+ * Engine-level metadata (defaults, constraints, MIME types) comes from
+ * the generated catalog module. UI-only metadata (visibleWhen, hidden,
+ * placeholder) stays here.
  */
 
 import { z } from "zod";
 import type { NodeSchemaDefinition } from "./types";
+import { getProcessorDefaults, getParamConstraints } from "../generated/catalog";
 
 /**
  * Valid image processing operations.
  *
- * NOTE: "batch" is not yet implemented in any engine (Rust WASM or Go).
+ * NOTE: "batch" is not yet implemented in the engine.
  * It will be added here when batch image processing is built. See ROADMAP.md.
  */
 export const IMAGE_OPERATIONS = ["resize", "convert", "compress", "composite"] as const;
@@ -19,16 +21,39 @@ export const IMAGE_OPERATIONS = ["resize", "convert", "compress", "composite"] a
 /** Supported output image formats. */
 export const IMAGE_FORMATS = ["png", "jpeg", "webp"] as const;
 
+// --- Engine-sourced constraints ---
+
+const compressDefaults = getProcessorDefaults("image", "compress");
+const resizeDefaults = getProcessorDefaults("image", "resize");
+const qualityConstraints = getParamConstraints("image", "compress", "quality");
+const widthConstraints = getParamConstraints("image", "resize", "width");
+const heightConstraints = getParamConstraints("image", "resize", "height");
+
 /** Zod schema for image node parameters. */
 export const imageParamsSchema = z.object({
   operation: z.enum(IMAGE_OPERATIONS),
   input: z.string().optional(),
   output: z.string().optional(),
   format: z.enum(IMAGE_FORMATS).optional(),
-  quality: z.number().min(1).max(100).optional().default(80),
-  width: z.number().min(1).optional(),
-  height: z.number().min(1).optional(),
-  maintainAspect: z.boolean().optional().default(true),
+  quality: z
+    .number()
+    .min(qualityConstraints?.min ?? 1)
+    .max(qualityConstraints?.max ?? 100)
+    .optional()
+    .default(compressDefaults.quality as number),
+  width: z
+    .number()
+    .min(widthConstraints?.min ?? 1)
+    .optional(),
+  height: z
+    .number()
+    .min(heightConstraints?.min ?? 1)
+    .optional(),
+  maintainAspect: z
+    .boolean()
+    .optional()
+    .default(resizeDefaults.maintainAspect as boolean),
+  // Legacy composite params — not in engine, kept for Go-era compat
   base: z.string().optional(),
   overlay: z.string().optional(),
   position: z.string().optional().default("center"),

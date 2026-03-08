@@ -8,6 +8,9 @@ import type {
   ResultResponse,
   ErrorResponse,
   WorkerErrorResponse,
+  PipelineProgressResponse,
+  PipelineResultResponse,
+  PipelineErrorResponse,
 } from "./workerProtocol";
 
 // Worker postMessage with Transferable[] for zero-copy ArrayBuffer transfers.
@@ -58,4 +61,32 @@ export function sendWorkerError(message: string): void {
     type: "worker-error",
     message,
   } satisfies WorkerErrorResponse);
+}
+
+export function sendPipelineProgress(id: string, eventJson: string): void {
+  self.postMessage({
+    type: "pipeline-progress",
+    id,
+    eventJson,
+  } satisfies PipelineProgressResponse);
+}
+
+export function sendPipelineResult(
+  id: string,
+  files: PipelineResultResponse["files"],
+  durationMs: number,
+): void {
+  const transferables = files.map((f) => f.data);
+  postMessageWithTransfer(
+    { type: "pipeline-result", id, files, durationMs } satisfies PipelineResultResponse,
+    transferables,
+  );
+}
+
+export function sendPipelineError(id: string, message: string): void {
+  self.postMessage({
+    type: "pipeline-error",
+    id,
+    message,
+  } satisfies PipelineErrorResponse);
 }

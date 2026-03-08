@@ -31,21 +31,49 @@
 /// Every error that can happen during node execution is defined here.
 pub mod errors;
 
+/// Structured pipeline events — rich progress reporting for multi-node execution.
+/// Powers per-node status highlighting in the editor, progress bars, and error display.
+pub mod events;
+
+/// Node metadata types — self-describing processor definitions.
+/// Each processor declares its name, category, parameters, accepted MIME types,
+/// and whether it runs in the browser. Powers the `node_catalog()` WASM export.
+pub mod metadata;
+
+/// The pipeline executor — walks nodes, iterates files, chains outputs.
+/// This is the engine's brain. See `.claude/strategy/engine-execution.md`.
+pub mod executor;
+
+/// Pipeline definition types — what the engine receives to execute.
+/// Mirrors the TypeScript `PipelineDefinition` / `PipelineNode` types.
+pub mod pipeline;
+
 /// The NodeProcessor trait — the contract every node type must implement.
 /// If you're building a new node (like image compression), you implement this.
 pub mod processor;
 
 /// Progress reporting — how nodes tell the UI "I'm 50% done".
-/// Uses JavaScript callbacks via wasm-bindgen.
+/// Uses target-agnostic closures (no WASM dependency).
 pub mod progress;
+
+/// Node registry — maps compound keys (e.g., "image:compress") to processors.
+/// Replaces the JS-side `wasmLoader.ts` registry.
+pub mod registry;
 
 // --- Re-exports ---
 // These `pub use` statements let users import directly from the crate root.
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
 // `use bnto_core::BntoError`. Convenience!
 pub use errors::BntoError;
+pub use events::{PipelineEvent, PipelineReporter};
+pub use executor::execute_pipeline;
+pub use metadata::{Constraints, NodeCategory, NodeMetadata, ParameterDef, ParameterType};
+pub use pipeline::{
+    PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode, PipelineResult,
+};
 pub use processor::NodeProcessor;
 pub use progress::ProgressReporter;
+pub use registry::NodeRegistry;
 
 // =============================================================================
 // Shared Constants

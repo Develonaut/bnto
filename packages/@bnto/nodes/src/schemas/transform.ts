@@ -1,8 +1,4 @@
-/**
- * Transform node schema — parameters for data transformations via expr.
- *
- * Go source: engine/pkg/node/library/transform/transform.go
- */
+/** Transform node schema — parameters for data transformations via expr. */
 
 import { z } from "zod";
 import type { NodeSchemaDefinition } from "./types";

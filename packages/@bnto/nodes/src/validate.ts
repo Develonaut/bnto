@@ -1,8 +1,7 @@
 /**
- * Definition validation — ported from Go engine/pkg/validator/omakase.go.
- *
- * Pure functions that validate `.bnto.json` definitions structurally.
- * Returns arrays of errors (never throws) so the UI can display all issues.
+ * Definition validation — pure functions that validate `.bnto.json`
+ * definitions structurally. Returns arrays of errors (never throws)
+ * so the UI can display all issues.
  *
  * Does NOT include preflight checks (shell PATH, file existence) —
  * those are environment-specific and belong in the execution layer.
@@ -133,7 +132,7 @@ export function validateDefinition(def: Definition): ValidationError[] {
   // Type must be known
   errors.push(...validateType(def));
 
-  // Type-specific parameter validation (hand-rolled validators from Go)
+  // Type-specific parameter validation
   errors.push(...validateTypeSpecific(def));
 
   // Zod-based parameter validation (field-level constraints)

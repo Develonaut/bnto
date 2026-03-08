@@ -342,6 +342,75 @@ impl NodeProcessor for ResizeImages {
         "resize-images"
     }
 
+    /// Return self-describing metadata for the resize-images processor.
+    ///
+    /// Parameters: width (number), height (number), maintainAspect (boolean),
+    /// and quality (number). All optional — width and height have no defaults
+    /// (omitting them means "don't resize that dimension").
+    fn metadata(&self) -> bnto_core::NodeMetadata {
+        use bnto_core::metadata::*;
+        NodeMetadata {
+            node_type: "image".to_string(),
+            operation: "resize".to_string(),
+            name: "Resize Images".to_string(),
+            description: "Change image dimensions while maintaining quality".to_string(),
+            category: NodeCategory::Image,
+            accepts: vec![
+                "image/jpeg".to_string(),
+                "image/png".to_string(),
+                "image/webp".to_string(),
+            ],
+            platforms: vec!["browser".to_string()],
+            parameters: vec![
+                ParameterDef {
+                    name: "width".to_string(),
+                    label: "Width".to_string(),
+                    description: "Target width in pixels".to_string(),
+                    param_type: ParameterType::Number,
+                    default: None,
+                    constraints: Some(Constraints {
+                        min: Some(1.0),
+                        max: None,
+                        required: false,
+                    }),
+                },
+                ParameterDef {
+                    name: "height".to_string(),
+                    label: "Height".to_string(),
+                    description: "Target height in pixels".to_string(),
+                    param_type: ParameterType::Number,
+                    default: None,
+                    constraints: Some(Constraints {
+                        min: Some(1.0),
+                        max: None,
+                        required: false,
+                    }),
+                },
+                ParameterDef {
+                    name: "maintainAspect".to_string(),
+                    label: "Maintain Aspect Ratio".to_string(),
+                    description: "Keep the original width-to-height ratio when resizing"
+                        .to_string(),
+                    param_type: ParameterType::Boolean,
+                    default: Some(serde_json::json!(true)),
+                    constraints: None,
+                },
+                ParameterDef {
+                    name: "quality".to_string(),
+                    label: "Quality".to_string(),
+                    description: "Output quality for lossy formats (1-100)".to_string(),
+                    param_type: ParameterType::Number,
+                    default: Some(serde_json::json!(80)),
+                    constraints: Some(Constraints {
+                        min: Some(1.0),
+                        max: Some(100.0),
+                        required: false,
+                    }),
+                },
+            ],
+        }
+    }
+
     /// Process a single image: detect format, decode, resize, re-encode.
     ///
     /// This is the main entry point called by the Web Worker for each file.

@@ -1,11 +1,8 @@
 /**
- * Core recipe definition types — 1:1 mapping with Go engine's `node` package.
+ * Core recipe definition types — the JSON-serializable structure of `.bnto.json` files.
  *
- * These types represent the JSON-serializable structure of `.bnto.json` files.
- * Every execution target (Rust WASM, JS, Go, desktop) reads and validates
+ * Every execution target (Rust WASM, desktop, web editor) reads and validates
  * against these types.
- *
- * Go source: engine/pkg/node/definition.go
  */
 
 /**
@@ -59,11 +56,7 @@ export interface Definition {
   edges?: Edge[];
 }
 
-/**
- * Visual location of a node in the editor canvas.
- *
- * Go source: engine/pkg/node/definition.go → Position
- */
+/** Visual location of a node in the editor canvas. */
 export interface Position {
   /** X coordinate in pixels. */
   x: number;
@@ -72,11 +65,7 @@ export interface Position {
   y: number;
 }
 
-/**
- * Additional node metadata — extensible without changing the core Definition.
- *
- * Go source: engine/pkg/node/definition.go → Metadata
- */
+/** Additional node metadata — extensible without changing the core Definition. */
 export interface Metadata {
   /** Human-readable description. */
   description?: string;
@@ -99,8 +88,6 @@ export interface Metadata {
  *
  * Ports are where edges attach. A node can have multiple input and
  * output ports for complex data flow patterns.
- *
- * Go source: engine/pkg/node/definition.go → Port
  */
 export interface Port {
   /** Unique port identifier within the node. */
@@ -118,8 +105,6 @@ export interface Port {
  *
  * Data flows from the source node's output port to the target
  * node's input port.
- *
- * Go source: engine/pkg/node/definition.go → Edge
  */
 export interface Edge {
   /** Unique edge identifier. */
@@ -141,9 +126,7 @@ export interface Edge {
 /**
  * Field editor configuration for edit-fields nodes.
  *
- * Values can be static or use Go template expressions (e.g., `{{.item}}`).
- *
- * Go source: engine/pkg/node/definition.go → FieldsConfig
+ * Values can be static or use template expressions (e.g., `{{.item}}`).
  */
 export interface FieldsConfig {
   /** Field values — static values or template strings. */

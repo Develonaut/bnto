@@ -1,11 +1,8 @@
-/**
- * Clean CSV recipe — remove empty rows, trim whitespace, deduplicate.
- *
- * Go source: engine/pkg/menu/recipes/clean-csv.json
- */
+/** Clean CSV recipe — remove empty rows, trim whitespace, deduplicate. */
 
-import type { Recipe } from "../recipe";
-import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import type { Recipe } from "../../recipe";
+import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
+import { csvCleaner } from "../primitives/csvCleaner";
 
 export const cleanCsv: Recipe = {
   slug: "clean-csv",
@@ -29,7 +26,7 @@ export const cleanCsv: Recipe = {
     name: "Clean CSV",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Reads a CSV, filters empty rows, trims whitespace, and writes a clean version.",
+      description: "Accepts a CSV file and cleans it using a reusable CSV cleaner sub-recipe.",
     },
     parameters: {},
     inputPorts: [],
@@ -52,43 +49,13 @@ export const cleanCsv: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      {
-        id: "read-csv",
-        type: "spreadsheet",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Read CSV",
-        position: { x: 200, y: 100 },
-        metadata: {},
-        parameters: {
-          operation: "read",
-          format: "csv",
-          path: "{{.INPUT_CSV}}",
-        },
-        inputPorts: [],
-        outputPorts: [{ id: "out-1", name: "rows" }],
-      },
-      {
-        id: "write-clean-csv",
-        type: "spreadsheet",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Write Clean CSV",
-        position: { x: 400, y: 100 },
-        metadata: {},
-        parameters: {
-          operation: "write",
-          format: "csv",
-          path: "{{.OUTPUT_CSV}}",
-          rows: '{{index . "read-csv" "rows"}}',
-        },
-        inputPorts: [{ id: "in-1", name: "rows" }],
-        outputPorts: [],
-      },
+      csvCleaner,
       {
         id: "output",
         type: "output",
         version: CURRENT_FORMAT_VERSION,
         name: "Cleaned CSV",
-        position: { x: 600, y: 100 },
+        position: { x: 500, y: 100 },
         metadata: {},
         parameters: {
           mode: "download",
@@ -101,9 +68,8 @@ export const cleanCsv: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "read-csv" },
-      { id: "e2", source: "read-csv", target: "write-clean-csv" },
-      { id: "e3", source: "write-clean-csv", target: "output" },
+      { id: "e1", source: "input", target: "csv-cleaner" },
+      { id: "e2", source: "csv-cleaner", target: "output" },
     ],
   },
 };

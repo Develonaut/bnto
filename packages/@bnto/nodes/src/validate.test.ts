@@ -169,10 +169,10 @@ describe("validateDefinition — loop", () => {
     expect(errors.some((e) => e.message.includes("invalid mode 'infinite'"))).toBe(true);
   });
 
-  it("requires items for forEach mode", () => {
+  it("forEach mode with no items is valid (engine iterates incoming files)", () => {
     const def = validDef({ type: "loop", parameters: { mode: "forEach" } });
     const errors = validateDefinition(def);
-    expect(errors.some((e) => e.field === "items")).toBe(true);
+    expect(errors).toHaveLength(0);
   });
 
   it("requires count for times mode", () => {
@@ -187,7 +187,7 @@ describe("validateDefinition — loop", () => {
     expect(errors.some((e) => e.field === "condition")).toBe(true);
   });
 
-  it("passes with valid forEach params", () => {
+  it("passes with forEach and optional items param", () => {
     const def = validDef({ type: "loop", parameters: { mode: "forEach", items: "{{.files}}" } });
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);
@@ -275,10 +275,11 @@ describe("validateDefinition — minimal validation types", () => {
     expect(errors.some((e) => e.field === "tasks")).toBe(true);
   });
 
-  it("spreadsheet requires operation, format, path (Zod)", () => {
+  it("spreadsheet requires operation (Zod)", () => {
     const def = validDef({ type: "spreadsheet" });
     const errors = validateDefinition(def);
-    expect(errors.length).toBeGreaterThanOrEqual(3);
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+    expect(errors.some((e) => e.field === "operation")).toBe(true);
   });
 
   it("image requires operation (Zod)", () => {

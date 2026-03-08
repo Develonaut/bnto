@@ -317,9 +317,58 @@ impl ConvertImageFormat {
 
 impl NodeProcessor for ConvertImageFormat {
     /// The unique identifier for this node type.
-    /// Matches the slug in the bnto registry and the Go engine's node name.
+    /// Matches the slug in the bnto registry.
     fn name(&self) -> &str {
         "convert-image-format"
+    }
+
+    /// Return self-describing metadata for the convert-image-format processor.
+    ///
+    /// Parameters: format (enum — required, picks the target format) and
+    /// quality (number, 1-100, for lossy format output).
+    fn metadata(&self) -> bnto_core::NodeMetadata {
+        use bnto_core::metadata::*;
+        NodeMetadata {
+            node_type: "image".to_string(),
+            operation: "convert".to_string(),
+            name: "Convert Image Format".to_string(),
+            description: "Convert images between JPEG, PNG, and WebP formats".to_string(),
+            category: NodeCategory::Image,
+            accepts: vec![
+                "image/jpeg".to_string(),
+                "image/png".to_string(),
+                "image/webp".to_string(),
+            ],
+            platforms: vec!["browser".to_string()],
+            parameters: vec![
+                ParameterDef {
+                    name: "format".to_string(),
+                    label: "Output Format".to_string(),
+                    description: "The target image format to convert to".to_string(),
+                    param_type: ParameterType::Enum {
+                        options: vec!["jpeg".to_string(), "png".to_string(), "webp".to_string()],
+                    },
+                    default: None,
+                    constraints: Some(Constraints {
+                        min: None,
+                        max: None,
+                        required: true,
+                    }),
+                },
+                ParameterDef {
+                    name: "quality".to_string(),
+                    label: "Quality".to_string(),
+                    description: "Output quality for lossy formats (1-100)".to_string(),
+                    param_type: ParameterType::Number,
+                    default: Some(serde_json::json!(80)),
+                    constraints: Some(Constraints {
+                        min: Some(1.0),
+                        max: Some(100.0),
+                        required: false,
+                    }),
+                },
+            ],
+        }
     }
 
     /// Convert a single image from one format to another.

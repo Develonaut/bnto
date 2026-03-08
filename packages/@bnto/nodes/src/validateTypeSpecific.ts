@@ -1,5 +1,5 @@
 /**
- * Type-specific parameter validators — ported from Go engine/pkg/validator/validators.go.
+ * Type-specific parameter validators.
  *
  * Each function validates the `parameters` of a specific node type.
  * Returns an array of ValidationError (never throws).
@@ -38,27 +38,44 @@ function getStringParam(def: Definition, key: string): string | undefined {
 /** Validates the method parameter value is a known HTTP method. */
 function validateMethod(def: Definition, method: string): ValidationError[] {
   if (VALID_HTTP_METHODS.has(method)) return [];
-  return [err(def.id, "method", `http-request node '${def.id}' has invalid method '${method}' (must be GET, POST, PUT, PATCH, DELETE, HEAD, or OPTIONS)`)];
+  return [
+    err(
+      def.id,
+      "method",
+      `http-request node '${def.id}' has invalid method '${method}' (must be GET, POST, PUT, PATCH, DELETE, HEAD, or OPTIONS)`,
+    ),
+  ];
 }
 
 /** Validates http-request node: url and method required, method must be valid. */
 export function validateHttpRequest(def: Definition): ValidationError[] {
   const errors: ValidationError[] = [];
   if (!getStringParam(def, "url")) {
-    errors.push(err(def.id, "url", `http-request node '${def.id}' missing required parameter 'url'`));
+    errors.push(
+      err(def.id, "url", `http-request node '${def.id}' missing required parameter 'url'`),
+    );
   }
   const method = getStringParam(def, "method");
   if (!method) {
-    errors.push(err(def.id, "method", `http-request node '${def.id}' missing required parameter 'method'`));
+    errors.push(
+      err(def.id, "method", `http-request node '${def.id}' missing required parameter 'method'`),
+    );
   } else {
     errors.push(...validateMethod(def, method));
   }
   return errors;
 }
 
-/** Mode-specific required parameters: mode -> [paramName, ...]. */
+/**
+ * Mode-specific required parameters: mode -> [paramName, ...].
+ *
+ * Note: `forEach` has NO required params. The Rust engine iterates over the
+ * incoming file batch directly — it doesn't read from an `items` parameter.
+ * The Go engine used `items` with template expressions like
+ * `{{index . "input" "files"}}`, but those are deprecated.
+ */
 const LOOP_MODE_REQUIRED_PARAMS: Record<string, string[]> = {
-  forEach: ["items"],
+  forEach: [],
   times: ["count"],
   while: ["condition"],
 };
@@ -70,13 +87,25 @@ export function validateLoop(def: Definition): ValidationError[] {
     return [err(def.id, "mode", `loop node '${def.id}' missing required parameter 'mode'`)];
   }
   if (!VALID_LOOP_MODES.has(mode)) {
-    return [err(def.id, "mode", `loop node '${def.id}' has invalid mode '${mode}' (must be forEach, times, or while)`)];
+    return [
+      err(
+        def.id,
+        "mode",
+        `loop node '${def.id}' has invalid mode '${mode}' (must be forEach, times, or while)`,
+      ),
+    ];
   }
 
   const requiredParams = LOOP_MODE_REQUIRED_PARAMS[mode] ?? [];
   return requiredParams
     .filter((param) => def.parameters[param] == null)
-    .map((param) => err(def.id, param, `loop node '${def.id}' with mode '${mode}' missing required parameter '${param}'`));
+    .map((param) =>
+      err(
+        def.id,
+        param,
+        `loop node '${def.id}' with mode '${mode}' missing required parameter '${param}'`,
+      ),
+    );
 }
 
 /** Validates file-system node: operation required, must be valid. */
@@ -86,14 +115,18 @@ export function validateFileSystem(def: Definition): ValidationError[] {
   const operation = getStringParam(def, "operation");
   if (!operation) {
     errors.push(
-      err(def.id, "operation", `file-system node '${def.id}' missing required parameter 'operation'`),
+      err(
+        def.id,
+        "operation",
+        `file-system node '${def.id}' missing required parameter 'operation'`,
+      ),
     );
   } else if (!VALID_FILE_OPERATIONS.has(operation)) {
     errors.push(
       err(
         def.id,
         "operation",
-        `file-system node '${def.id}' has invalid operation '${operation}' (must be read, write, copy, move, delete, mkdir, exists, or list)`,
+        `file-system node '${def.id}' has invalid operation '${operation}' (must be rename, read, write, copy, move, delete, mkdir, exists, or list)`,
       ),
     );
   }
@@ -104,7 +137,9 @@ export function validateFileSystem(def: Definition): ValidationError[] {
 /** Validates shell-command node: command required (non-empty). */
 export function validateShellCommand(def: Definition): ValidationError[] {
   if (!getStringParam(def, "command")) {
-    return [err(def.id, "command", `shell-command node '${def.id}' missing required parameter 'command'`)];
+    return [
+      err(def.id, "command", `shell-command node '${def.id}' missing required parameter 'command'`),
+    ];
   }
   return [];
 }
@@ -112,7 +147,9 @@ export function validateShellCommand(def: Definition): ValidationError[] {
 /** Validates edit-fields node: values parameter required. */
 export function validateEditFields(def: Definition): ValidationError[] {
   if (def.parameters["values"] == null) {
-    return [err(def.id, "values", `edit-fields node '${def.id}' missing required parameter 'values'`)];
+    return [
+      err(def.id, "values", `edit-fields node '${def.id}' missing required parameter 'values'`),
+    ];
   }
   return [];
 }
@@ -121,21 +158,19 @@ export function validateEditFields(def: Definition): ValidationError[] {
  * Dispatch map from node type name to its validator function.
  *
  * Types not listed here (group, parallel, spreadsheet, image, transform)
- * have no type-specific validation — matching Go behavior.
+ * have no type-specific validation.
  */
-export const TYPE_VALIDATORS: Record<
-  string,
-  ((def: Definition) => ValidationError[]) | undefined
-> = {
-  "http-request": validateHttpRequest,
-  "file-system": validateFileSystem,
-  "shell-command": validateShellCommand,
-  loop: validateLoop,
-  "edit-fields": validateEditFields,
-  // These types have no type-specific validation (matching Go)
-  group: undefined,
-  parallel: undefined,
-  spreadsheet: undefined,
-  image: undefined,
-  transform: undefined,
-};
+export const TYPE_VALIDATORS: Record<string, ((def: Definition) => ValidationError[]) | undefined> =
+  {
+    "http-request": validateHttpRequest,
+    "file-system": validateFileSystem,
+    "shell-command": validateShellCommand,
+    loop: validateLoop,
+    "edit-fields": validateEditFields,
+    // These types have no type-specific validation
+    group: undefined,
+    parallel: undefined,
+    spreadsheet: undefined,
+    image: undefined,
+    transform: undefined,
+  };

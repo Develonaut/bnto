@@ -10,6 +10,10 @@ import type {
 /**
  * Runtime-agnostic pipeline executor.
  *
+ * @deprecated The Rust executor in `bnto-core` now owns pipeline execution.
+ * Use `core.executions.runPipeline()` which delegates to the WASM executor.
+ * This JS-side executor is kept as a fallback for test mocks with `engineOverride`.
+ *
  * Walks an ordered list of nodes, skips I/O markers, and chains file
  * outputs through each processing node sequentially. The only external
  * dependency is `runNode` — a single-file processing function that
@@ -17,15 +21,6 @@ import type {
  *
  * No browser APIs. No WASM. No Worker. No dynamic imports.
  * This function is pure orchestration logic — testable in plain Node.js.
- *
- * **Why `NodeRunner` is injected:** The executor doesn't know (or care)
- * whether files are processed by WASM in a Web Worker, a native Rust
- * binary, or a remote Go API. The caller provides the runtime-specific
- * implementation. This is what makes the function runtime-agnostic.
- *
- * **Future: loop node override.** When the `loop` node type arrives,
- * it will need special handling here (iterate its children N times).
- * That logic belongs in this function — not in any runtime adapter.
  *
  * @param definition - Ordered node list to execute. I/O nodes are skipped automatically.
  * @param files - Input files to feed through the pipeline.

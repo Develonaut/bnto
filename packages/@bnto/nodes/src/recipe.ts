@@ -2,10 +2,8 @@
  * Recipe types — predefined bnto definitions with metadata.
  *
  * A recipe bundles SEO metadata, file acceptance rules, and a full
- * definition into a single JSON blob. The engine owns these
- * definitions; consumers (web, desktop, CLI) read them.
- *
- * Go source: engine/pkg/menu/types.go
+ * definition into a single JSON blob. Consumers (web, desktop, CLI)
+ * read them.
  */
 
 import type { Definition } from "./definition";

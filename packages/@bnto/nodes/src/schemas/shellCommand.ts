@@ -1,8 +1,7 @@
 /**
  * Shell Command node schema — parameters for executing shell commands.
  *
- * Go source: engine/pkg/node/library/shellcommand/shellcommand.go
- * Validator: engine/pkg/validator/validators.go → validateShellCommand
+ * Server-only — not available in browser execution.
  */
 
 import { z } from "zod";

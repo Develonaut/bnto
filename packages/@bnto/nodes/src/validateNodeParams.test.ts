@@ -172,9 +172,10 @@ describe("validateNodeParams", () => {
       expect(errors).toHaveLength(0);
     });
 
-    it("fails when all required fields are missing", () => {
+    it("fails when operation is missing", () => {
       const errors = validateNodeParams("spreadsheet", "n1", {});
-      expect(errors.length).toBeGreaterThanOrEqual(3);
+      expect(errors.length).toBeGreaterThanOrEqual(1);
+      expect(errors.some((e) => e.message.includes("operation"))).toBe(true);
     });
   });
 

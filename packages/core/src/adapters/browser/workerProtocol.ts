@@ -36,7 +36,22 @@ export interface ProcessRequest {
   params: Record<string, unknown>;
 }
 
-export type WorkerRequest = InitRequest | ProcessRequest;
+/** Execute an entire pipeline through the WASM executor. */
+export interface ExecutePipelineRequest {
+  type: "execute-pipeline";
+  /** Unique ID for this request (correlates with responses). */
+  id: string;
+  /** JSON string of the pipeline definition. */
+  definitionJson: string;
+  /** Input files as transferable objects. */
+  files: Array<{
+    name: string;
+    data: ArrayBuffer;
+    mimeType: string;
+  }>;
+}
+
+export type WorkerRequest = InitRequest | ProcessRequest | ExecutePipelineRequest;
 
 // =============================================================================
 // Worker → Main Thread (responses)
@@ -91,9 +106,46 @@ export interface WorkerErrorResponse {
   message: string;
 }
 
+/** Structured pipeline event forwarded from the Rust executor. */
+export interface PipelineProgressResponse {
+  type: "pipeline-progress";
+  /** The request ID this event belongs to. */
+  id: string;
+  /** JSON-serialized PipelineEvent from the Rust executor. */
+  eventJson: string;
+}
+
+/** Pipeline execution completed — all result files. */
+export interface PipelineResultResponse {
+  type: "pipeline-result";
+  /** The request ID this result belongs to. */
+  id: string;
+  /** Output files from the pipeline. */
+  files: Array<{
+    name: string;
+    data: ArrayBuffer;
+    mimeType: string;
+    metadata?: string;
+  }>;
+  /** Total pipeline duration in milliseconds. */
+  durationMs: number;
+}
+
+/** Pipeline execution failed. */
+export interface PipelineErrorResponse {
+  type: "pipeline-error";
+  /** The request ID this error belongs to. */
+  id: string;
+  /** Human-readable error message. */
+  message: string;
+}
+
 export type WorkerResponse =
   | ReadyResponse
   | ProgressResponse
   | ResultResponse
   | ErrorResponse
-  | WorkerErrorResponse;
+  | WorkerErrorResponse
+  | PipelineProgressResponse
+  | PipelineResultResponse
+  | PipelineErrorResponse;

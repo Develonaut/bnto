@@ -1,10 +1,23 @@
 /**
- * Individual recipe exports — re-exported from ../recipes.ts with RECIPES array.
+ * Recipe exports — composites (public, user-facing) and primitives (building blocks).
  */
 
-export { cleanCsv } from "./cleanCsv";
-export { compressImages } from "./compressImages";
-export { convertImageFormat } from "./convertImageFormat";
-export { renameFiles } from "./renameFiles";
-export { renameCsvColumns } from "./renameCsvColumns";
-export { resizeImages } from "./resizeImages";
+// Composite recipes — the 6 predefined bntos that map to public URLs
+export {
+  cleanCsv,
+  compressImages,
+  convertImageFormat,
+  renameCsvColumns,
+  renameFiles,
+  resizeImages,
+} from "./composites";
+
+// Primitive recipes — standalone building blocks used by composites
+export {
+  batchCompress,
+  batchConvert,
+  batchRename,
+  batchResize,
+  columnRenamer,
+  csvCleaner,
+} from "./primitives";

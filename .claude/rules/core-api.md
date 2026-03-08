@@ -64,12 +64,12 @@ These rules govern how `@bnto/core` exposes functionality to consumers. See [cor
 
 ```typescript
 // GOOD -- domain concept
-core.executions.createExecution()
-core.executions.clearHistory()
+core.executions.createExecution();
+core.executions.clearHistory();
 
 // BAD -- technology leaked
-core.wasm.createExecution()
-core.executions.clearLocalHistory()
+core.wasm.createExecution();
+core.executions.clearLocalHistory();
 ```
 
 **Test:** Read every method name on the `core` singleton. If you can identify the underlying technology from the name alone, it's a leak.
@@ -124,6 +124,8 @@ import { useAuthActions } from "@convex-dev/auth/react";
 
 The execution API accepts a **self-describing definition**. It doesn't know or care where the definition came from (predefined, custom, marketplace). The definition contains its own metadata (slug, name, nodes).
 
+**Engine owns pipeline execution.** `core.executions.runPipeline()` converts browser types (File to bytes, Definition to WASM struct) and delegates to a single WASM call (`run_pipeline`). The Rust engine handles graph walking, file iteration, container semantics, and progress events internally. The JS-side `executePipeline.ts` orchestrator (which loops over files and calls per-file WASM functions) is **deprecated** in favor of the Rust executor. See [engine-execution.md](../strategy/engine-execution.md).
+
 ```typescript
 // GOOD -- execution is definition-agnostic
 core.executions.start({ definition, sessionId });
@@ -138,13 +140,13 @@ core.executions.startPredefined({ slug: "compress-images", definition, sessionId
 
 The `core` singleton exposes exactly 5 top-level domains:
 
-| Domain | Responsibility | Key methods |
-|---|---|---|
-| `core.recipes` | Recipe definitions (predefined or user-created) | `listQueryOptions()`, `save()`, `remove()`, `run()` |
-| `core.executions` | Unified execution -- browser + future server | `createExecution()`, `useExecutionState()`, `isCapable()`, `downloadResult()` |
-| `core.user` | Profile + usage stats (absorbed analytics) | `meQueryOptions()`, `usageQueryOptions()`, `useCurrentUser()` |
-| `core.auth` | Session state + auth actions (absorbed session) | `useReady()`, `useIsAuthenticated()`, `useAuth()`, `useSignOut()` |
-| `core.telemetry` | Product event tracking (PostHog) | `capture()`, `identify()`, `reset()` |
+| Domain            | Responsibility                                                | Key methods                                                                                    |
+| ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `core.recipes`    | Recipe definitions (predefined or user-created)               | `listQueryOptions()`, `save()`, `remove()`, `run()`                                            |
+| `core.executions` | Unified execution -- delegates to engine via single WASM call | `createExecution()`, `useExecutionState()`, `isCapable()`, `downloadResult()`, `runPipeline()` |
+| `core.user`       | Profile + usage stats (absorbed analytics)                    | `meQueryOptions()`, `usageQueryOptions()`, `useCurrentUser()`                                  |
+| `core.auth`       | Session state + auth actions (absorbed session)               | `useReady()`, `useIsAuthenticated()`, `useAuth()`, `useSignOut()`                              |
+| `core.telemetry`  | Product event tracking (PostHog)                              | `capture()`, `identify()`, `reset()`                                                           |
 
 **Removed from public API:** `core.wasm` (→ executions), `core.recipe` (→ app layer), `core.analytics` (→ user), `core.session` (→ auth)
 
@@ -154,15 +156,16 @@ The `core` singleton exposes exactly 5 top-level domains:
 
 ## State Management
 
-| Type | Tool | Example |
-|---|---|---|
-| **Server state (single entity)** | React Query (via `convexQuery` bridge) | Recipe detail, execution detail |
-| **Server state (paginated)** | Convex native `usePaginatedQuery` | Recipe lists, execution history |
-| **Client app state** | Zustand (via core store layer) | Editor content, UI preferences |
-| **Local UI state** | `useState` | Modal open, active tab, form inputs |
-| **URL state** | Router params / search params | Active tab, filters, selected recipe |
+| Type                             | Tool                                   | Example                              |
+| -------------------------------- | -------------------------------------- | ------------------------------------ |
+| **Server state (single entity)** | React Query (via `convexQuery` bridge) | Recipe detail, execution detail      |
+| **Server state (paginated)**     | Convex native `usePaginatedQuery`      | Recipe lists, execution history      |
+| **Client app state**             | Zustand (via core store layer)         | Editor content, UI preferences       |
+| **Local UI state**               | `useState`                             | Modal open, active tab, form inputs  |
+| **URL state**                    | Router params / search params          | Active tab, filters, selected recipe |
 
 **Rules:**
+
 - Select specific state slices, not entire stores (`useStore(s => s.field)`, not `useStore()`)
 - Server data goes through `@bnto/core`, never fetched directly in components
 - If only one component needs it, `useState` is fine -- don't over-engineer
@@ -186,6 +189,7 @@ const { data, isLoading } = useQuery({
 ```
 
 **Checklist for every `useQuery` call:**
+
 - [ ] No transforms outside `select` -- `data ? toFoo(data) : null` must move into `select`
 - [ ] No `.map()` / `.filter()` outside `select`
 - [ ] No spread of query data -- `{ ...data, isLoading }` creates new objects
@@ -204,7 +208,7 @@ export function usePaginatedHook(id: string, options?: { pageSize?: number }) {
   const { funcRef, args, transform } = core.domain.refMethod(id);
   const { results, status, loadMore } = usePaginatedQuery(
     funcRef,
-    ready && id ? args : "skip",        // skip until provider + valid ID
+    ready && id ? args : "skip", // skip until provider + valid ID
     { initialNumItems: pageSize },
   );
   const items = useMemo(() => transform(results), [results, transform]);
@@ -213,6 +217,7 @@ export function usePaginatedHook(id: string, options?: { pageSize?: number }) {
 ```
 
 **Rules:**
+
 - [ ] Always guard: `ready && condition ? args : "skip"`
 - [ ] Include `!ready` in `isLoading` so consumers see loading state before provider mounts
 - [ ] Transform via `useMemo` -- `usePaginatedQuery` returns raw Convex docs

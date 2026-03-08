@@ -1,9 +1,4 @@
-/**
- * Loop node schema — parameters for iteration (forEach, times, while).
- *
- * Go source: engine/pkg/node/library/loop/loop.go
- * Validator: engine/pkg/validator/validators.go → validateLoop
- */
+/** Loop node schema — parameters for iteration (forEach, times, while). */
 
 import { z } from "zod";
 import type { NodeSchemaDefinition } from "./types";
@@ -35,10 +30,12 @@ export const loopNodeSchema: NodeSchemaDefinition = {
     },
     items: {
       label: "Items",
-      description: "Template expression resolving to an array to iterate over.",
+      description:
+        "Optional template expression for the item source. The Rust engine " +
+        "iterates over the incoming file batch by default — this is only " +
+        "needed for custom data sources.",
       placeholder: '{{index . "list-files" "files"}}',
       visibleWhen: { param: "mode", equals: "forEach" },
-      requiredWhen: { param: "mode", equals: "forEach" },
     },
     count: {
       label: "Count",

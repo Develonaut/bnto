@@ -14,12 +14,23 @@
 import type { WorkerRequest } from "./workerProtocol";
 import type { WasmCombinedFn } from "./wasmLoader";
 import { loadWasmModule, registerNodeTypes, callWasmNode } from "./wasmLoader";
-import { send, sendProgress, sendResult, sendError, sendWorkerError } from "./workerResponses";
+import {
+  send,
+  sendProgress,
+  sendResult,
+  sendError,
+  sendWorkerError,
+  sendPipelineProgress,
+  sendPipelineResult,
+  sendPipelineError,
+} from "./workerResponses";
 
 // =============================================================================
 // State
 // =============================================================================
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- WASM module is untyped
+let wasmModule: any = null;
 let wasmVersion: (() => string) | null = null;
 const nodeRegistry = new Map<string, WasmCombinedFn>();
 let initialized = false;
@@ -37,6 +48,9 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         break;
       case "process":
         handleProcess(request);
+        break;
+      case "execute-pipeline":
+        handleExecutePipeline(request);
         break;
       default:
         sendWorkerError(`Unknown request type: ${(request as { type: string }).type}`);
@@ -57,12 +71,13 @@ async function handleInit(baseUrl: string): Promise<void> {
   }
 
   try {
-    const wasmModule = await loadWasmModule(baseUrl);
+    const loadedModule = await loadWasmModule(baseUrl);
+    wasmModule = loadedModule;
 
-    const version: () => string = wasmModule.version;
+    const version: () => string = loadedModule.version;
     wasmVersion = version;
-    registerNodeTypes(wasmModule, nodeRegistry);
-    wasmModule.setup(); // Initialize panic hooks.
+    registerNodeTypes(loadedModule, nodeRegistry);
+    loadedModule.setup(); // Initialize panic hooks.
 
     initialized = true;
     send({ type: "ready", version: version() });
@@ -90,6 +105,69 @@ function resolveNodeFn(id: string, nodeType: string): WasmCombinedFn | null {
   }
   return fn;
 }
+
+// =============================================================================
+// Execute Pipeline — Run a full pipeline through the WASM executor
+// =============================================================================
+
+function handleExecutePipeline(request: {
+  id: string;
+  definitionJson: string;
+  files: Array<{ name: string; data: ArrayBuffer; mimeType: string }>;
+}): void {
+  const { id, definitionJson, files } = request;
+
+  if (!initialized || !wasmModule) {
+    sendPipelineError(id, "WASM not initialized. Send 'init' first.");
+    return;
+  }
+
+  try {
+    // Build the files array in the format WASM expects:
+    // [{name: string, data: Uint8Array, mimeType: string}]
+    const wasmFiles = files.map((f) => ({
+      name: f.name,
+      data: new Uint8Array(f.data),
+      mimeType: f.mimeType,
+    }));
+
+    // Progress callback — forwards each PipelineEvent JSON string
+    // from the Rust executor to the main thread.
+    const progressCallback = (eventJson: string) => {
+      sendPipelineProgress(id, eventJson);
+    };
+
+    // Call the WASM execute_pipeline export.
+    // Returns { files: [{name, data, mimeType, metadata?}], durationMs }
+    const result = wasmModule.execute_pipeline(definitionJson, wasmFiles, progressCallback);
+
+    // Convert result files: Uint8Array → ArrayBuffer for transfer.
+    const resultFiles = Array.from(
+      result.files as Iterable<{
+        name: string;
+        data: Uint8Array;
+        mimeType: string;
+        metadata?: string;
+      }>,
+    ).map((f) => ({
+      name: f.name as string,
+      data: (f.data as Uint8Array).buffer.slice(
+        (f.data as Uint8Array).byteOffset,
+        (f.data as Uint8Array).byteOffset + (f.data as Uint8Array).byteLength,
+      ) as ArrayBuffer,
+      mimeType: f.mimeType as string,
+      metadata: f.metadata,
+    }));
+
+    sendPipelineResult(id, resultFiles, result.durationMs as number);
+  } catch (err) {
+    sendPipelineError(id, err instanceof Error ? err.message : String(err));
+  }
+}
+
+// =============================================================================
+// Process — Run a WASM node on a single file
+// =============================================================================
 
 function handleProcess(request: {
   id: string;

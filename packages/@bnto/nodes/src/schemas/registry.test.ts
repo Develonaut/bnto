@@ -208,9 +208,9 @@ describe("getRequiredParams", () => {
 });
 
 describe("getConditionallyRequired", () => {
-  it("finds items when loop mode is forEach", () => {
+  it("items is not conditionally required for forEach (engine iterates files directly)", () => {
     const params = getConditionallyRequired("loop", "mode", "forEach");
-    expect(params).toContain("items");
+    expect(params).not.toContain("items");
   });
 
   it("finds count when loop mode is times", () => {
@@ -346,8 +346,8 @@ describe("enum constants", () => {
     expect(HTTP_METHODS).toHaveLength(7);
   });
 
-  it("FILE_OPERATIONS has 8 operations", () => {
-    expect(FILE_OPERATIONS).toHaveLength(8);
+  it("FILE_OPERATIONS has 9 operations", () => {
+    expect(FILE_OPERATIONS).toHaveLength(9);
   });
 
   it("LOOP_MODES has 3 modes", () => {
@@ -362,8 +362,8 @@ describe("enum constants", () => {
     expect(IMAGE_FORMATS).toHaveLength(3);
   });
 
-  it("SPREADSHEET_OPERATIONS has 2 operations", () => {
-    expect(SPREADSHEET_OPERATIONS).toHaveLength(2);
+  it("SPREADSHEET_OPERATIONS has 4 operations", () => {
+    expect(SPREADSHEET_OPERATIONS).toHaveLength(4);
   });
 
   it("SPREADSHEET_FORMATS has 2 formats", () => {

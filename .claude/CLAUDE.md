@@ -18,6 +18,8 @@
 | Editor architecture            | [editor-architecture.md](.claude/strategy/editor-architecture.md)                                      |
 | Conveyor belt system           | [visual-editor.md](.claude/strategy/visual-editor.md)                                                  |
 | Input/output nodes             | [io-nodes.md](.claude/strategy/io-nodes.md)                                                            |
+| Node architecture & execution  | [node-architecture.md](.claude/strategy/node-architecture.md)                                          |
+| Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                                            |
 | Editor user journey            | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)                                      |
 | Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                                       |
 | Implementation task            | [PLAN.md](.claude/PLAN.md)                                                                             |
@@ -98,6 +100,7 @@ task wasm:test:unit     # Run Rust unit tests only (fast, native)
 task wasm:lint          # Run clippy (Rust linter)
 task wasm:fmt           # Auto-format Rust code
 task wasm:fmt:check     # Check Rust formatting (CI)
+task wasm:bench         # Run Criterion benchmarks (results in engine/target/criterion/)
 task wasm:clean         # Clean Rust build artifacts
 
 ```bash
@@ -222,24 +225,25 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 
 ### Strategy & Reference (read on demand)
 
-| Document                                                                | Purpose                                                                          |
-| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| [ROADMAP.md](.claude/ROADMAP.md)                                        | Strategic roadmap — milestones, direction, big decisions                         |
-| [PLAN.md](.claude/PLAN.md)                                              | Build plan — sprints, waves, what's next                                         |
-| [pricing-model.md](.claude/strategy/pricing-model.md)                   | Free vs premium — nodes, recipes, features, terminology                          |
-| [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md) | Hybrid Convex native + React Query, co-located queries, self-fetching components |
-| [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) | Full architecture, tech decisions, phases                                        |
-| [monorepo-structure.md](.claude/strategy/monorepo-structure.md)         | Repo structure, packages, CLI-to-API mapping                                     |
-| [core-principles.md](.claude/strategy/core-principles.md)               | TDD, Grain, Modularity, Abstraction                                              |
-| [design-language.md](.claude/strategy/design-language.md)               | Visual identity, brand personality                                               |
-| [editor-architecture.md](.claude/strategy/editor-architecture.md)       | Shared editor layer — store, hooks, package strategy, switchable editors         |
-| [visual-editor.md](.claude/strategy/visual-editor.md)                   | Bento box visual editor — compartment design, grid layout, execution state       |
-| [io-nodes.md](.claude/strategy/io-nodes.md)                             | Input & output nodes — self-describing recipe I/O, generic renderers, migration  |
-| [editor-user-journey.md](.claude/strategy/editor-user-journey.md)       | Editor user journey — stages, flows, success criteria, phased delivery           |
-| [code-editor.md](.claude/strategy/code-editor.md)                       | Code editor design — CM6, slash commands, JSON Schema                            |
-| [core-unification.md](.claude/strategy/core-unification.md)             | Core API unification — patterns, rationale, copyable prompt                      |
-| [go-engine-migration.md](.claude/strategy/go-engine-migration.md)       | Go engine node inventory — migration reference before archive deletion           |
-| [skills/](.claude/skills/)                                              | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)       |
+| Document                                                                | Purpose                                                                            |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [ROADMAP.md](.claude/ROADMAP.md)                                        | Strategic roadmap — milestones, direction, big decisions                           |
+| [PLAN.md](.claude/PLAN.md)                                              | Build plan — sprints, waves, what's next                                           |
+| [pricing-model.md](.claude/strategy/pricing-model.md)                   | Free vs premium — nodes, recipes, features, terminology                            |
+| [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md) | Hybrid Convex native + React Query, co-located queries, self-fetching components   |
+| [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) | Full architecture, tech decisions, phases                                          |
+| [monorepo-structure.md](.claude/strategy/monorepo-structure.md)         | Repo structure, packages, CLI-to-API mapping                                       |
+| [core-principles.md](.claude/strategy/core-principles.md)               | TDD, Grain, Modularity, Abstraction                                                |
+| [design-language.md](.claude/strategy/design-language.md)               | Visual identity, brand personality                                                 |
+| [editor-architecture.md](.claude/strategy/editor-architecture.md)       | Shared editor layer — store, hooks, package strategy, switchable editors           |
+| [visual-editor.md](.claude/strategy/visual-editor.md)                   | Bento box visual editor — compartment design, grid layout, execution state         |
+| [io-nodes.md](.claude/strategy/io-nodes.md)                             | Input & output nodes — self-describing recipe I/O, generic renderers, migration    |
+| [editor-user-journey.md](.claude/strategy/editor-user-journey.md)       | Editor user journey — stages, flows, success criteria, phased delivery             |
+| [code-editor.md](.claude/strategy/code-editor.md)                       | Code editor design — CM6, slash commands, JSON Schema                              |
+| [core-unification.md](.claude/strategy/core-unification.md)             | Core API unification — patterns, rationale, copyable prompt                        |
+| [engine-execution.md](.claude/strategy/engine-execution.md)             | Engine execution architecture — pipeline executor, progress events, multi-consumer |
+| [go-engine-migration.md](.claude/strategy/go-engine-migration.md)       | Go engine node inventory — migration reference before archive deletion             |
+| [skills/](.claude/skills/)                                              | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)         |
 
 ### Domain Expert Personas (invoke with `/persona-name`)
 

@@ -21,6 +21,7 @@ import { createExecutionInstance } from "./executionInstance";
 import type { ExecutionInstance } from "./executionInstance";
 import type { BrowserEngine, BrowserFileResult, BrowserFileProgressInput } from "../types/browser";
 import type { FileInput, NodeRunner, PipelineDefinition } from "../engine/types";
+import type { PipelineEvent } from "../types/pipelineEvents";
 
 // ---------------------------------------------------------------------------
 // Conversion helpers
@@ -80,6 +81,8 @@ function toBrowserResults(files: import("../engine/types").FileResult[]): Browse
 export function createBrowserExecutionService(engineOverride?: BrowserEngine) {
   /** Lazy-initialized engine. Created on first use, persists for page lifetime. */
   let engine: BrowserEngine | null = engineOverride ?? null;
+  /** Direct worker reference for WASM pipeline execution. */
+  let workerInstance: BntoWorker | null = null;
 
   /** Ensure the browser engine is ready. Creates it lazily if needed. */
   async function ensureEngine(): Promise<BrowserEngine> {
@@ -87,26 +90,46 @@ export function createBrowserExecutionService(engineOverride?: BrowserEngine) {
       if (typeof window === "undefined") {
         throw new Error("Browser execution requires a browser environment.");
       }
-      const worker = new BntoWorker();
-      engine = toBrowserEngine(worker);
+      workerInstance = new BntoWorker();
+      engine = toBrowserEngine(workerInstance);
     }
     await engine.init();
     return engine;
   }
 
   /**
-   * Execute a PipelineDefinition with File[].
+   * Execute a PipelineDefinition with File[] via the WASM pipeline executor.
    *
-   * This is the single execution method. All callers — recipe pages, editor,
-   * instances — converge here. Handles engine init, file conversion, and
-   * delegates to the runtime-agnostic executePipeline().
+   * This is the primary execution path. The entire pipeline runs inside WASM —
+   * the Rust executor handles node walking, file iteration, and output chaining.
+   * Structured PipelineEvents are forwarded via the optional onEvent callback.
+   *
+   * Falls back to the JS-side executePipeline() when no direct worker is
+   * available (e.g., when engineOverride is provided for testing).
    */
   const runPipeline = async (
     definition: PipelineDefinition,
     files: File[],
     onProgress?: (progress: BrowserFileProgressInput) => void,
+    onEvent?: (event: PipelineEvent) => void,
   ): Promise<BrowserFileResult[]> => {
-    const browserEngine = await ensureEngine();
+    await ensureEngine();
+
+    // Primary path: WASM pipeline executor (engine owns execution).
+    if (workerInstance) {
+      const definitionJson = JSON.stringify(definition);
+      const result = await workerInstance.executePipeline(definitionJson, files, onEvent);
+
+      return result.files.map((f) => ({
+        blob: new Blob([f.data], { type: f.mimeType }),
+        filename: f.name,
+        mimeType: f.mimeType,
+        metadata: f.metadata ? JSON.parse(f.metadata) : {},
+      }));
+    }
+
+    // Fallback: JS-side executor (for test mocks with engineOverride).
+    const browserEngine = engine!;
     const fileInputs = await filesToInputs(files);
     const runNode = createRunNode(browserEngine);
 
@@ -126,7 +149,7 @@ export function createBrowserExecutionService(engineOverride?: BrowserEngine) {
   return {
     /** Check if a slug has a browser implementation. */
     isCapable: (slug: string) => isBrowserCapable(slug),
-    /** Check if a slug has a browser implementation. */
+    /** @deprecated Use `isCapable` instead. Alias kept for backward compatibility. */
     hasImplementation: (slug: string) => isBrowserCapable(slug),
     /** List all slugs with browser implementations. */
     getCapableSlugs: () => getBrowserCapableSlugs(),
