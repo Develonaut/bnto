@@ -43,6 +43,16 @@ interface EditorSnapshot {
 }
 
 // ---------------------------------------------------------------------------
+// Panel visibility — centralized panel state
+// ---------------------------------------------------------------------------
+
+/** All panel identifiers. Add new panels here — one place to extend. */
+type PanelId = "layers" | "config" | "palette" | "run";
+
+/** Map of panel IDs to their open/closed state. */
+type PanelState = Record<PanelId, boolean>;
+
+// ---------------------------------------------------------------------------
 // State shape
 // ---------------------------------------------------------------------------
 
@@ -68,9 +78,7 @@ interface EditorState {
   selectedNodeId: string | null;
 
   // --- Panel visibility ---
-  layersOpen: boolean;
-  configOpen: boolean;
-  paletteOpen: boolean;
+  panels: PanelState;
 }
 
 // ---------------------------------------------------------------------------
@@ -104,11 +112,9 @@ interface EditorActions {
   setSelectedNodeId: (id: string | null) => void;
 
   // --- Panel visibility ---
-  toggleLayers: () => void;
-  toggleConfig: () => void;
-  openConfig: () => void;
-  openPalette: () => void;
-  closePalette: () => void;
+  openPanel: (id: PanelId) => void;
+  closePanel: (id: PanelId) => void;
+  togglePanel: (id: PanelId) => void;
 
   // --- Utility ---
   markDirty: () => void;
@@ -134,4 +140,6 @@ export type {
   NodeExecutionStatus,
   ExecutionState,
   RecipeMetadata,
+  PanelId,
+  PanelState,
 };

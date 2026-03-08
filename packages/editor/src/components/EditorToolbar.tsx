@@ -23,6 +23,7 @@ import { useEditorExecutionContext } from "../hooks/EditorExecutionContext";
 import { useNodeNavigation } from "../hooks/useNodeNavigation";
 import { LayerPanelTrigger } from "./LayerPanel";
 import { ConfigPanelTrigger } from "./ConfigPanel";
+import { RunPanelTrigger } from "./RunPanel";
 import { NodePaletteMenu, NodePaletteMenuTrigger, NodePaletteMenuContent } from "./NodePaletteMenu";
 
 /**
@@ -209,6 +210,7 @@ function EditorToolbar() {
         <ToolbarDivider />
 
         <ToolbarGroup>
+          <RunPanelTrigger />
           <ConfigPanelTrigger />
         </ToolbarGroup>
       </Toolbar>

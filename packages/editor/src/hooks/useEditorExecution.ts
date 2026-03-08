@@ -15,6 +15,7 @@ import { useEditorStoreApi } from "./useEditorStoreApi";
 import { useEditorStore } from "./useEditorStore";
 import { preparePipeline, isPipelineError } from "../actions/runPipeline";
 import type { ExecutionState } from "../store/types";
+import type { RunLogEntry } from "../components/RunPanel/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,6 +27,7 @@ interface EditorExecutionResult {
   phase: ExecutionPhase;
   results: BrowserFileResult[];
   errors: string[];
+  logs: RunLogEntry[];
   canRun: boolean;
   run: (files: File[]) => Promise<void>;
   reset: () => void;
@@ -50,9 +52,14 @@ function useEditorExecution(): EditorExecutionResult {
   const [phase, setPhase] = useState<ExecutionPhase>("idle");
   const [results, setResults] = useState<BrowserFileResult[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+  const [logs, setLogs] = useState<RunLogEntry[]>([]);
 
   const resultsRef = useRef<BrowserFileResult[]>([]);
   resultsRef.current = results;
+
+  const appendLog = useCallback((entry: RunLogEntry) => {
+    setLogs((prev) => [...prev, entry]);
+  }, []);
 
   const run = useCallback(
     async (files: File[]) => {
@@ -74,6 +81,10 @@ function useEditorExecution(): EditorExecutionResult {
       setPhase("running");
       setErrors([]);
       setResults([]);
+      setLogs([]);
+
+      // Auto-open the run panel when execution starts.
+      storeApi.getState().openPanel("run");
 
       try {
         // Mark all processing nodes as pending before execution starts.
@@ -86,8 +97,11 @@ function useEditorExecution(): EditorExecutionResult {
         storeApi.setState({ executionState: pendingState });
 
         // Handle structured PipelineEvents from the Rust executor.
-        // These drive real-time per-node status in the editor.
+        // These drive real-time per-node status AND the run panel logs.
         const onEvent = (event: PipelineEvent) => {
+          // Stream event to logs panel.
+          appendLog({ timestamp: Date.now(), event });
+
           const current = storeApi.getState().executionState;
           switch (event.type) {
             case "NodeStarted":
@@ -148,6 +162,7 @@ function useEditorExecution(): EditorExecutionResult {
     setPhase("idle");
     setResults([]);
     setErrors([]);
+    setLogs([]);
   }, [storeApi]);
 
   const downloadFile = useCallback((file: BrowserFileResult) => {
@@ -164,6 +179,7 @@ function useEditorExecution(): EditorExecutionResult {
     phase,
     results,
     errors,
+    logs,
     canRun: hasProcessingNodes && phase !== "running",
     run,
     reset,
