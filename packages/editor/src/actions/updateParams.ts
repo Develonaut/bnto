@@ -8,9 +8,7 @@
  */
 
 import type { EditorState } from "../store/types";
-import { captureSnapshot } from "../store/captureSnapshot";
-import { pushToStack } from "../store/pushToStack";
-import { revalidateState } from "../store/revalidateState";
+import { withUndo } from "../store/withUndo";
 
 export function updateParams(
   state: EditorState,
@@ -20,7 +18,6 @@ export function updateParams(
   const existing = state.configs[nodeId];
   if (!existing) return null;
 
-  const snapshot = captureSnapshot(state.nodes, state.configs);
   const nextConfigs = {
     ...state.configs,
     [nodeId]: {
@@ -29,11 +26,5 @@ export function updateParams(
     },
   };
 
-  return {
-    configs: nextConfigs,
-    isDirty: true,
-    undoStack: pushToStack(state.undoStack, snapshot),
-    redoStack: [],
-    validationErrors: revalidateState(state.nodes, nextConfigs, state.recipeMetadata),
-  };
+  return withUndo(state, { configs: nextConfigs });
 }
