@@ -13,10 +13,9 @@
 export {
   EditorRoot,
   EditorCanvas,
-  EditorLayerPanel,
-  EditorConfigPanel,
-  EditorRunPanel,
   EditorToolbar,
+  EditorLeftToolbar,
+  EditorRightToolbar,
 } from "./Editor";
 
 // --- Store ---

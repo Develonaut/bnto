@@ -18,11 +18,8 @@ import { useEditorUndoRedo } from "../hooks/useEditorUndoRedo";
 import { useEditorStore } from "../hooks/useEditorStore";
 import { useEditorStoreApi } from "../hooks/useEditorStoreApi";
 import { useNodeNavigation } from "../hooks/useNodeNavigation";
-import { LayerPanelTrigger } from "./LayerPanel";
-import { ConfigPanelTrigger } from "./ConfigPanel";
-import { RunPanelTrigger } from "./RunPanel";
+import { usePanel } from "../hooks/usePanel";
 import { RunButton } from "./RunButton";
-import { NodePaletteMenu, NodePaletteMenuTrigger, NodePaletteMenuContent } from "./NodePaletteMenu";
 
 /**
  * EditorToolbar — self-contained bottom-center toolbar.
@@ -32,6 +29,7 @@ import { NodePaletteMenu, NodePaletteMenuTrigger, NodePaletteMenuContent } from 
  */
 
 function EditorToolbar() {
+  const { toggle: togglePalette } = usePanel("palette");
   const { canPrev, canNext, canDelete, handlePrev, handleNext, removeSelectedNode } =
     useNodeNavigation();
   const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
@@ -53,25 +51,17 @@ function EditorToolbar() {
       data-testid="editor-toolbar"
     >
       <Toolbar elevation="md">
-        <ToolbarGroup>
-          <LayerPanelTrigger />
-        </ToolbarGroup>
-
-        <ToolbarDivider />
-
         {/* Add / Navigate / Remove */}
         <ToolbarGroup>
-          <NodePaletteMenu>
-            <NodePaletteMenuTrigger
-              size="icon"
-              variant="primary"
-              elevation="sm"
-              aria-label="Add node"
-            >
-              <PlusIcon className="size-4" />
-            </NodePaletteMenuTrigger>
-            <NodePaletteMenuContent side="top" offset="lg" />
-          </NodePaletteMenu>
+          <Button
+            size="icon"
+            variant="primary"
+            elevation="sm"
+            onClick={togglePalette}
+            aria-label="Add node"
+          >
+            <PlusIcon className="size-4" />
+          </Button>
           <Button
             size="icon"
             variant="ghost"
@@ -145,13 +135,6 @@ function EditorToolbar() {
           >
             <RotateCcwIcon className="size-4" />
           </Button>
-        </ToolbarGroup>
-
-        <ToolbarDivider />
-
-        <ToolbarGroup>
-          <RunPanelTrigger />
-          <ConfigPanelTrigger />
         </ToolbarGroup>
       </Toolbar>
     </div>

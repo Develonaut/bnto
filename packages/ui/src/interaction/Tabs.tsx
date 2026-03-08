@@ -61,12 +61,14 @@ export const TabsTrigger = forwardRef<
   const activeValue = useContext(TabsValueContext);
   const isActive = activeValue === value;
 
+  const variant = isActive ? "muted" : "outline";
+
   return (
-    <Button asChild toggle pressed={isActive} variant="outline">
+    <Button asChild toggle pressed={isActive} variant={variant}>
       <TabsPrimitive.Trigger
         ref={ref}
         value={value}
-        className={cn(buttonCn({ variant: "outline" }), className)}
+        className={cn(buttonCn({ variant }), className)}
         {...props}
       />
     </Button>
