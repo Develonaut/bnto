@@ -13,10 +13,13 @@ import {
   usePrevious,
 } from "@bnto/ui";
 import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditorStoreApi } from "../../hooks/useEditorStoreApi";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { useEditorActions } from "../../hooks/useEditorActions";
 import { useEditorPanels } from "../../hooks/useEditorPanels";
 import { SchemaForm } from "../SchemaForm";
+import { SurfacedParamsSection } from "./SurfacedParamsSection";
+import { updateSurfacedParam } from "../../actions/updateSurfacedParam";
 
 /**
  * ConfigPanel — self-contained right-side panel.
@@ -36,8 +39,10 @@ function ConfigPanelRoot() {
   const configNodeId = selectedNodeId ?? prevSelectedNodeId ?? null;
 
   const { configOpen } = useEditorPanels();
-  const { node, config, typeInfo, schemaDef, visibleParams } = useEditorNode(configNodeId);
+  const { node, config, typeInfo, schemaDef, visibleParams, surfacedGroups } =
+    useEditorNode(configNodeId);
   const { updateParams } = useEditorActions();
+  const storeApi = useEditorStoreApi();
 
   /* CSS transition for panel open/close — Animate.* covers entrance animations,
      not boolean state transitions. See animation.md decision tree. */
@@ -55,6 +60,15 @@ function ConfigPanelRoot() {
       updateParams(configNodeId, { [paramName]: value });
     },
     [configNodeId, updateParams],
+  );
+
+  const handleSurfacedParamChange = useCallback(
+    (leafNodeId: string, paramName: string, value: unknown) => {
+      const state = storeApi.getState();
+      const result = updateSurfacedParam(state, leafNodeId, { [paramName]: value });
+      if (result) storeApi.setState(result);
+    },
+    [storeApi],
   );
 
   if (!configNodeId || !node || !config || !typeInfo) {
@@ -78,7 +92,7 @@ function ConfigPanelRoot() {
       <Panel className="h-full w-full">
         <PanelHeader className="gap-2 px-3 pt-3 pb-2">
           <Heading level={3} size="xs" className="min-w-0 flex-1 truncate">
-            {typeInfo.label}
+            {config.displayName || config.name || typeInfo.label}
           </Heading>
           <div className="flex gap-1.5">
             <Badge variant="secondary" className="text-xs">
@@ -102,20 +116,47 @@ function ConfigPanelRoot() {
         )}
         <PanelDivider />
         <PanelContent>
-          <div className="p-3">
-            {schemaDef ? (
-              <SchemaForm
-                schema={schemaDef}
-                values={config.parameters}
-                visibleParams={visibleParams}
-                onChange={handleParamChange}
+          {surfacedGroups.length > 0 ? (
+            <>
+              <SurfacedParamsSection
+                groups={surfacedGroups}
+                onParamChange={handleSurfacedParamChange}
               />
-            ) : (
-              <Text size="xs" color="muted">
-                No configurable parameters.
-              </Text>
-            )}
-          </div>
+              {schemaDef && visibleParams.length > 0 && (
+                <>
+                  <PanelDivider />
+                  <div className="px-3 pt-1">
+                    <Text size="xs" color="muted" className="font-medium uppercase tracking-wider">
+                      Advanced
+                    </Text>
+                  </div>
+                  <div className="p-3">
+                    <SchemaForm
+                      schema={schemaDef}
+                      values={config.parameters}
+                      visibleParams={visibleParams}
+                      onChange={handleParamChange}
+                    />
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <div className="p-3">
+              {schemaDef ? (
+                <SchemaForm
+                  schema={schemaDef}
+                  values={config.parameters}
+                  visibleParams={visibleParams}
+                  onChange={handleParamChange}
+                />
+              ) : (
+                <Text size="xs" color="muted">
+                  No configurable parameters.
+                </Text>
+              )}
+            </div>
+          )}
         </PanelContent>
       </Panel>
     </div>

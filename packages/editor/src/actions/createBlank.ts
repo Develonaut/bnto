@@ -12,10 +12,12 @@ import { definitionToBento } from "../adapters/definitionToBento";
 import { metadataFromBlank } from "../store/resolveInitialState";
 
 export function createBlank(): Partial<EditorState> {
-  const blank = definitionToBento(createBlankDefinition());
+  const blankDef = createBlankDefinition();
+  const blank = definitionToBento(blankDef);
   return {
     nodes: blank.nodes,
     configs: blank.configs,
+    definition: blankDef,
     recipeMetadata: metadataFromBlank(),
     isDirty: false,
     validationErrors: [],

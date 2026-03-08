@@ -39,6 +39,7 @@ function createEditorStore(slug?: string) {
       : initial.nodes,
     edges: [],
     configs: initial.configs,
+    definition: initial.definition,
     slug: initial.slug,
     recipeMetadata: initial.metadata,
     isDirty: false,

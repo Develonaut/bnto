@@ -807,6 +807,32 @@ The grid layout algorithm should pack compartments like a real bento box — no 
 - [ ] `packages/editor` — **Motorway showcase**: Update Motorway editor showcase to demonstrate the new visual treatment with all node types visible
 - [ ] `apps/web` — **E2E verification**: Verify editor canvas renders correctly with new node visuals. Update screenshots if page-level layout changed
 
+### UX: Expandable Container Nodes (Recipe/Group Drill-Down)
+
+**Priority: Near-term.** Container nodes (groups, sub-recipes) should have an expand button that reveals their inner node structure as a vertical layout within the canvas. Currently containers are opaque — the user sees "Compress Image / Recipe" but can't see the loop → leaf structure inside without reading the `.bnto.json`.
+
+**Behavior:**
+
+- Container cards (any node with `isContainer: true` or `displayName`) show a small expand/collapse toggle
+- Clicking expand opens the container inline, displaying child nodes in a vertical stack layout below the parent card
+- Nested containers can be expanded recursively (group → loop → leaf)
+- Collapsed is the default — users who just want to tweak surfaced params never need to expand
+- Expanded state is visual-only (editor store), does not affect the Definition
+
+**Design direction:** Think of it like a folder in a file tree — click to reveal contents, click again to collapse. The vertical layout avoids disrupting the horizontal bento grid. Child nodes render at a smaller scale or indented to show nesting depth.
+
+**Dependencies:** Requires the definition tree to be stored in the editor (already done — `definition` field in EditorState). May benefit from the bento grid layout work (Phase 3 above) for proper space allocation.
+
+**Tasks:**
+
+- [ ] `packages/editor` — **Expand/collapse state**: Add `expandedNodeIds: Set<string>` to EditorState + toggle action
+- [ ] `packages/editor` — **Expanded container renderer**: New component that renders child nodes vertically when a container is expanded. Reads children from `definition` tree via `findDefinitionById`
+- [ ] `packages/editor` — **Expand toggle UI**: Add expand/collapse button to CompartmentNode for container types
+- [ ] `packages/editor` — **Nested expansion**: Support recursive expand (expanded group shows its loop, which can also be expanded to show the leaf)
+- [ ] `apps/web` — **E2E**: Verify expand/collapse works, screenshots if layout changes
+
+---
+
 ### UX: Global Error Boundary with GitHub Issue Reporter
 
 **Priority: Medium.** Add a global error boundary that catches unhandled React errors and presents a branded error dialog with enough context to file a GitHub issue. Currently there are zero error boundaries — any unhandled throw crashes the page with a white screen. No `error.tsx`, `global-error.tsx`, or React ErrorBoundary exists.

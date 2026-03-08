@@ -29,10 +29,16 @@ const OUTPUT_MODE_LABELS: Record<string, string> = {
  * Returns the sublabel for a node given its type and params.
  *
  * For I/O nodes, the sublabel reflects the configured mode.
- * For control flow nodes, the sublabel is the node's own label.
+ * For control flow nodes with a displayName, the sublabel is "Recipe"
+ * (it's a pre-composed sub-recipe, not a bare group).
+ * For bare control flow nodes, the sublabel is the node's own label.
  * For everything else, the sublabel is the category label.
  */
-export function getNodeSublabel(nodeType: NodeTypeName, params?: Record<string, unknown>): string {
+export function getNodeSublabel(
+  nodeType: NodeTypeName,
+  params?: Record<string, unknown>,
+  metadata?: { customData?: Record<string, string> },
+): string {
   if (nodeType === "input") {
     return INPUT_MODE_LABELS[params?.mode as string] ?? "Input";
   }
@@ -42,9 +48,12 @@ export function getNodeSublabel(nodeType: NodeTypeName, params?: Record<string, 
 
   const info = NODE_TYPE_INFO[nodeType];
 
-  // Control flow nodes use their own label — "Loop", "Group", "Parallel" —
-  // rather than the generic "Control Flow" category label.
-  if (info.category === "control") return info.label;
+  // Pre-composed sub-recipes (containers with displayName) show "Recipe".
+  // Bare control flow nodes show their own label ("Loop", "Group", "Parallel").
+  if (info.category === "control") {
+    if (metadata?.customData?.displayName) return "Recipe";
+    return info.label;
+  }
 
   return getCategoryInfo(info.category)?.label ?? nodeType;
 }

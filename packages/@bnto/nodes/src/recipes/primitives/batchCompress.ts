@@ -12,6 +12,7 @@ export const batchCompress: Definition = {
   position: { x: 250, y: 100 },
   metadata: {
     description: "Reusable sub-recipe: loops over files and compresses each one.",
+    customData: { displayName: "Compress Image" },
   },
   parameters: {},
   inputPorts: [{ id: "in-1", name: "files" }],

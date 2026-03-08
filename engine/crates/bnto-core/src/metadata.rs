@@ -203,7 +203,7 @@ pub struct Constraints {
 /// Rust uses `snake_case` for field names (`param_type`), but JavaScript
 /// uses `camelCase` (`paramType`). This attribute automatically converts
 /// field names when serializing to JSON: `param_type` → `"paramType"`.
-#[derive(Debug, Clone, Serialize, PartialEq, Default)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ParameterDef {
     /// The parameter's key name, as it appears in the config JSON.
@@ -281,6 +281,58 @@ pub struct ParameterDef {
     /// show the parameter as required only under that condition.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub required_when: Option<ParamCondition>,
+
+    /// Whether this parameter is eligible for surfacing in container config panels.
+    ///
+    /// When a user clicks a composite group node (e.g., "Batch Compress"), the
+    /// editor auto-detects leaf node params and surfaces them in the group's
+    /// config panel. `surfaceable: true` (the default) means the param can be
+    /// surfaced. `surfaceable: false` means it's internal wiring (loop `items`,
+    /// template expressions) and should never appear in surfaced views.
+    ///
+    /// This defaults to `true` — most params are user-facing. Only set to
+    /// `false` for internal engine wiring parameters.
+    #[serde(default = "default_true")]
+    pub surfaceable: bool,
+}
+
+/// Helper function that returns `true` — used as the default value for
+/// `surfaceable` via `#[serde(default = "default_true")]`. Serde requires
+/// a named function for default values (can't use inline `true`).
+/// The `allow(dead_code)` is needed because serde only calls this during
+/// deserialization, and we currently only serialize (engine → JSON).
+#[allow(dead_code)]
+fn default_true() -> bool {
+    true
+}
+
+/// Manual `Default` implementation for `ParameterDef`.
+///
+/// WHY NOT `#[derive(Default)]`?
+/// Rust's derived `Default` sets `bool` fields to `false`. But `surfaceable`
+/// should default to `true` — most parameters ARE user-facing. The derived
+/// `Default` would give us `surfaceable: false`, which is the opposite of
+/// what we want. So we implement `Default` by hand and set `surfaceable: true`.
+///
+/// NOTE: `#[serde(default = "default_true")]` only applies during JSON
+/// deserialization. It does NOT affect `Default::default()`. They are
+/// completely separate mechanisms in Rust.
+impl Default for ParameterDef {
+    fn default() -> Self {
+        Self {
+            name: String::default(),
+            label: String::default(),
+            description: String::default(),
+            param_type: ParameterType::default(),
+            default: None,
+            constraints: None,
+            placeholder: None,
+            hidden: None,
+            visible_when: None,
+            required_when: None,
+            surfaceable: true,
+        }
+    }
 }
 
 // =============================================================================
@@ -718,6 +770,41 @@ mod tests {
         assert!(!json.contains("hidden"));
         assert!(!json.contains("visibleWhen"));
         assert!(!json.contains("requiredWhen"));
+    }
+
+    #[test]
+    fn test_parameter_def_surfaceable_defaults_to_true() {
+        // The `surfaceable` field should default to `true` — most params are
+        // user-facing controls that should appear in surfaced container views.
+        let param = ParameterDef {
+            name: "quality".to_string(),
+            label: "Quality".to_string(),
+            description: "Compression quality".to_string(),
+            param_type: ParameterType::Number,
+            ..Default::default()
+        };
+        // Default::default() should give surfaceable = true.
+        assert!(param.surfaceable, "surfaceable should default to true");
+        // And it should serialize with the field present.
+        let json = serde_json::to_string(&param).unwrap();
+        assert!(json.contains(r#""surfaceable":true"#));
+    }
+
+    #[test]
+    fn test_parameter_def_surfaceable_false_serializes() {
+        // Internal wiring params (like loop `items`) should be explicitly
+        // marked `surfaceable: false` so the editor doesn't surface them.
+        let param = ParameterDef {
+            name: "items".to_string(),
+            label: "Items".to_string(),
+            description: "Template expression for iteration items".to_string(),
+            param_type: ParameterType::String,
+            surfaceable: false,
+            ..Default::default()
+        };
+        assert!(!param.surfaceable);
+        let json = serde_json::to_string(&param).unwrap();
+        assert!(json.contains(r#""surfaceable":false"#));
     }
 
     #[test]

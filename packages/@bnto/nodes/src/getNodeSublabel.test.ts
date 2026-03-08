@@ -53,10 +53,23 @@ describe("getNodeSublabel", () => {
   });
 
   // --- Control flow nodes use their own label, not "Control Flow" ---
-  it("returns node label for control flow nodes", () => {
+  it("returns node label for bare control flow nodes", () => {
     expect(getNodeSublabel("loop")).toBe("Loop");
     expect(getNodeSublabel("group")).toBe("Group");
     expect(getNodeSublabel("parallel")).toBe("Parallel");
+  });
+
+  // --- Pre-composed sub-recipes show "Recipe" ---
+  it("returns 'Recipe' for control flow nodes with displayName", () => {
+    const meta = { customData: { displayName: "Compress Image" } };
+    expect(getNodeSublabel("group", {}, meta)).toBe("Recipe");
+    expect(getNodeSublabel("loop", {}, meta)).toBe("Recipe");
+    expect(getNodeSublabel("parallel", {}, meta)).toBe("Recipe");
+  });
+
+  it("returns node label for control flow nodes without displayName", () => {
+    expect(getNodeSublabel("group", {}, {})).toBe("Group");
+    expect(getNodeSublabel("group", {}, { customData: undefined })).toBe("Group");
   });
 
   // --- Edit Fields uses category label "Data", not "Edit Fields" ---

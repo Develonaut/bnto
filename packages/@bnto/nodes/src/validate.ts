@@ -10,6 +10,7 @@
 import type { Definition } from "./definition";
 import type { ValidationError } from "./validationError";
 import { isNodeType } from "./isNodeType";
+import { isContainerNodeType } from "./isContainerNodeType";
 import { isCompatibleVersion } from "./formatVersion";
 import { TYPE_VALIDATORS } from "./validateTypeSpecific";
 import { validateNodeParams } from "./validateNodeParams";
@@ -140,8 +141,8 @@ export function validateDefinition(def: Definition): ValidationError[] {
     errors.push(...validateNodeParams(def.type, def.id, def.parameters));
   }
 
-  // Recursive child validation for container nodes
-  if (def.type === "group" || def.type === "loop" || def.type === "parallel") {
+  // Recursive child validation for container nodes (driven by engine metadata)
+  if (isContainerNodeType(def.type)) {
     errors.push(...validateChildren(def));
   }
 

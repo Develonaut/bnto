@@ -12,6 +12,7 @@ export const batchResize: Definition = {
   position: { x: 250, y: 100 },
   metadata: {
     description: "Reusable sub-recipe: loops over files and resizes each one.",
+    customData: { displayName: "Resize Image" },
   },
   parameters: {},
   inputPorts: [{ id: "in-1", name: "files" }],

@@ -55,6 +55,8 @@ type CompartmentNodeData = {
 type NodeConfig = {
   nodeType: string;
   name: string;
+  /** User-friendly label from metadata.customData.displayName (optional). */
+  displayName?: string;
   parameters: Record<string, unknown>;
 };
 
