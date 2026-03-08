@@ -340,8 +340,13 @@ mod tests {
     fn test_definition_schema_has_all_defs() {
         // The $defs block should contain all 5 type definitions.
         let schema = definition_json_schema();
-        let defs = schema["$defs"].as_object().expect("$defs should be an object");
-        assert!(defs.contains_key("Definition"), "Missing Definition in $defs");
+        let defs = schema["$defs"]
+            .as_object()
+            .expect("$defs should be an object");
+        assert!(
+            defs.contains_key("Definition"),
+            "Missing Definition in $defs"
+        );
         assert!(defs.contains_key("Port"), "Missing Port in $defs");
         assert!(defs.contains_key("Edge"), "Missing Edge in $defs");
         assert!(defs.contains_key("Metadata"), "Missing Metadata in $defs");
@@ -358,10 +363,7 @@ mod tests {
             .expect("required should be an array");
 
         // Convert to strings for comparison.
-        let required_strs: Vec<&str> = required
-            .iter()
-            .map(|v| v.as_str().unwrap())
-            .collect();
+        let required_strs: Vec<&str> = required.iter().map(|v| v.as_str().unwrap()).collect();
 
         assert!(required_strs.contains(&"id"));
         assert!(required_strs.contains(&"type"));
@@ -393,10 +395,7 @@ mod tests {
         let required = port["required"]
             .as_array()
             .expect("Port required should be an array");
-        let required_strs: Vec<&str> = required
-            .iter()
-            .map(|v| v.as_str().unwrap())
-            .collect();
+        let required_strs: Vec<&str> = required.iter().map(|v| v.as_str().unwrap()).collect();
         assert!(required_strs.contains(&"id"));
         assert!(required_strs.contains(&"name"));
     }
@@ -409,10 +408,7 @@ mod tests {
         let required = edge["required"]
             .as_array()
             .expect("Edge required should be an array");
-        let required_strs: Vec<&str> = required
-            .iter()
-            .map(|v| v.as_str().unwrap())
-            .collect();
+        let required_strs: Vec<&str> = required.iter().map(|v| v.as_str().unwrap()).collect();
         assert!(required_strs.contains(&"id"));
         assert!(required_strs.contains(&"source"));
         assert!(required_strs.contains(&"target"));

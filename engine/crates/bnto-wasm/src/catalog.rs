@@ -243,8 +243,7 @@ mod tests {
         );
         // Verify it has the expected $ref to the Definition type.
         assert_eq!(
-            parsed["definitionSchema"]["$ref"],
-            "#/$defs/Definition",
+            parsed["definitionSchema"]["$ref"], "#/$defs/Definition",
             "definitionSchema should reference $defs/Definition"
         );
     }

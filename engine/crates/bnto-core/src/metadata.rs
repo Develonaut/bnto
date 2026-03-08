@@ -242,7 +242,6 @@ pub struct ParameterDef {
     // config panel uses to render smarter controls. They're all `Option`
     // so existing processors (which don't set them) keep working — `None`
     // values are omitted from the JSON output via `skip_serializing_if`.
-
     /// Placeholder text for string/number inputs in the UI.
     ///
     /// Example: `"compressed-{{name}}"` for a filename template field.
