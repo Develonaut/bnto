@@ -1,10 +1,9 @@
 import {
   EditorRoot,
   EditorCanvas,
-  EditorLayerPanel,
-  EditorConfigPanel,
-  EditorRunPanel,
   EditorToolbar,
+  EditorLeftToolbar,
+  EditorRightToolbar,
 } from "@bnto/editor";
 
 /**
@@ -26,10 +25,9 @@ export default async function EditorPage({
   return (
     <EditorRoot slug={from}>
       <EditorCanvas>
-        <EditorLayerPanel />
-        <EditorConfigPanel />
-        <EditorRunPanel />
+        <EditorLeftToolbar />
         <EditorToolbar />
+        <EditorRightToolbar />
       </EditorCanvas>
     </EditorRoot>
   );

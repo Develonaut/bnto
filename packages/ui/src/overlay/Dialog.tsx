@@ -4,11 +4,10 @@ import { forwardRef } from "react";
 import type { ElementRef, ComponentPropsWithoutRef, ComponentProps } from "react";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { ScaleIn } from "../animation/Animate";
 import { Button } from "../interaction/Button";
-import { Card } from "../surface/Card";
 import { XIcon } from "../icons";
 import { cn } from "../utils/cn";
+import { Popup } from "./Popup";
 
 /* ── Root ───────────────────────────────────────────────────── */
 
@@ -80,14 +79,12 @@ export const DialogContent = forwardRef<
       {/* Centering wrapper — fixed fullscreen, z-50 above overlay,
           pointer-events-none so clicks outside dismiss via overlay. */}
       <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-        <ScaleIn from={0.6} easing="spring-bouncier">
-          <Card
-            elevation="lg"
-            className={cn("pointer-events-auto relative w-full max-w-lg p-8", className)}
-          >
-            {children}
-          </Card>
-        </ScaleIn>
+        <Popup
+          elevation="lg"
+          className={cn("pointer-events-auto relative w-full max-w-lg p-8", className)}
+        >
+          {children}
+        </Popup>
       </div>
     </DialogPrimitive.Content>
   </DialogPortal>
