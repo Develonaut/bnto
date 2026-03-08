@@ -23,9 +23,9 @@ export type { ExecutionContext, NodeResult } from "./execution";
 // Recipe types
 export type { Recipe, AcceptSpec, SEOSpec } from "./recipe";
 
-// Node type registry
-export { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./nodeTypes";
-export type { NodeTypeName, NodeCategory, NodeTypeInfo } from "./nodeTypes";
+// Node type registry (generated from engine catalog)
+export { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./generated/catalog";
+export type { NodeTypeName, NodeCategory, NodeTypeInfo } from "./generated/catalog";
 export { isNodeType } from "./isNodeType";
 export { getNodeTypeInfo } from "./getNodeTypeInfo";
 export { getNodeIcon } from "./getNodeIcon";

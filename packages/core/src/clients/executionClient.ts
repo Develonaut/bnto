@@ -8,6 +8,7 @@ import type { StartPredefinedInput } from "../types";
 import type { LocalHistoryEntry } from "../types/localHistory";
 import type { BrowserRunResult } from "../types/browser";
 import type { PipelineDefinition } from "../types/pipeline";
+import { isIoNodeType } from "@bnto/nodes";
 
 /** Build a history entry from a completed/failed execution result. */
 function buildHistoryEntry(
@@ -73,9 +74,7 @@ export function createExecutionClient(
       ...instance,
       run: async (definition: PipelineDefinition, files: File[]): Promise<BrowserRunResult> => {
         // Derive slug from definition for history — use the first processing node's type
-        const processingNode = definition.nodes.find(
-          (n) => n.type !== "input" && n.type !== "output",
-        );
+        const processingNode = definition.nodes.find((n) => !isIoNodeType(n.type));
         const historySlug = processingNode?.type ?? "unknown";
 
         const serverEventId = getIsAuthenticated()

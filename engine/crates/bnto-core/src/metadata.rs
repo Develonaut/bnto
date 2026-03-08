@@ -177,6 +177,185 @@ pub struct ParameterDef {
 }
 
 // =============================================================================
+// NodeTypeInfo — Node-type-level metadata (all 12 types)
+// =============================================================================
+//
+// WHY IS THIS SEPARATE FROM NodeMetadata?
+// NodeMetadata describes a PROCESSOR (one specific operation, like "image:compress").
+// NodeTypeInfo describes a NODE TYPE (like "image") — the umbrella that may have
+// multiple processors underneath it.
+//
+// The TypeScript side needs to know about ALL 12 node types (including ones the
+// engine doesn't have processors for yet, like "http-request" and "shell-command").
+// This struct is the engine's definition of every node type — its label, icon,
+// category, whether it's a container, and what platforms it can run on.
+//
+// The codegen script reads this from the catalog snapshot and generates the
+// TypeScript `NODE_TYPE_INFO` map, so adding a new node type is:
+//   1. Add it to `all_node_types()` below
+//   2. Run `task wasm:build` → `task nodes:generate`
+//   3. Done — TypeScript picks it up automatically
+
+/// Everything the UI needs to know about a node type — independent of any
+/// specific processor/operation.
+///
+/// This is the engine's authoritative definition of each node type.
+/// The codegen script generates the TypeScript `NODE_TYPE_INFO` from this.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct NodeTypeInfo {
+    /// The node type name as used in `.bnto.json` definitions.
+    /// e.g., `"image"`, `"spreadsheet"`, `"file-system"`, `"input"`
+    pub name: String,
+
+    /// Human-readable display label.
+    /// e.g., `"Image"`, `"Spreadsheet"`, `"File System"`, `"Input"`
+    pub label: String,
+
+    /// One-sentence description of what the node type does.
+    pub description: String,
+
+    /// Category for UI grouping/filtering.
+    pub category: NodeCategory,
+
+    /// Whether this node can contain child nodes (group, loop, parallel).
+    pub is_container: bool,
+
+    /// Platforms this node type can run on.
+    /// Derived from processor registration — if any processor for this type
+    /// runs on "browser", the node type has "browser" in its platforms.
+    /// For types without processors yet (http-request, shell-command), this
+    /// is set to the expected platforms when implemented.
+    pub platforms: Vec<String>,
+
+    /// Lucide icon name for visual consumers.
+    /// Pure string metadata — consumers resolve to their own icon component.
+    /// e.g., `"image"` → ImageIcon, `"table"` → TableIcon
+    pub icon: String,
+}
+
+/// Return metadata for all 12 registered node types.
+///
+/// This is the engine's single source of truth for what node types exist,
+/// what they're called, what category they belong to, and where they run.
+/// The `node_catalog()` WASM export includes this in the catalog snapshot,
+/// and the codegen script generates TypeScript's `NODE_TYPE_INFO` from it.
+///
+/// Node types are listed in alphabetical order by name for stable output.
+pub fn all_node_types() -> Vec<NodeTypeInfo> {
+    vec![
+        NodeTypeInfo {
+            name: "edit-fields".to_string(),
+            label: "Edit Fields".to_string(),
+            description: "Set field values from static values or template expressions.".to_string(),
+            category: NodeCategory::Data,
+            is_container: false,
+            platforms: vec!["browser".to_string()],
+            icon: "pen-line".to_string(),
+        },
+        NodeTypeInfo {
+            name: "file-system".to_string(),
+            label: "File System".to_string(),
+            description: "File operations: rename, copy, move, delete, mkdir, exists, list.".to_string(),
+            category: NodeCategory::File,
+            is_container: false,
+            platforms: vec!["browser".to_string()],
+            icon: "folder-open".to_string(),
+        },
+        NodeTypeInfo {
+            name: "group".to_string(),
+            label: "Group".to_string(),
+            description: "Container for child nodes. Orchestrates sequential or parallel execution.".to_string(),
+            category: NodeCategory::Control,
+            is_container: true,
+            platforms: vec!["browser".to_string()],
+            icon: "box".to_string(),
+        },
+        NodeTypeInfo {
+            name: "http-request".to_string(),
+            label: "HTTP Request".to_string(),
+            description: "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).".to_string(),
+            category: NodeCategory::Network,
+            is_container: false,
+            platforms: vec!["server".to_string()],
+            icon: "globe".to_string(),
+        },
+        NodeTypeInfo {
+            name: "image".to_string(),
+            label: "Image".to_string(),
+            description: "Image processing: resize, convert formats, compress, composite, batch.".to_string(),
+            category: NodeCategory::Image,
+            is_container: false,
+            platforms: vec!["browser".to_string()],
+            icon: "image".to_string(),
+        },
+        NodeTypeInfo {
+            name: "input".to_string(),
+            label: "Input".to_string(),
+            description: "Declares how data enters the recipe. Read by the environment to render the appropriate input widget.".to_string(),
+            category: NodeCategory::Io,
+            is_container: false,
+            platforms: vec!["browser".to_string()],
+            icon: "file-up".to_string(),
+        },
+        NodeTypeInfo {
+            name: "loop".to_string(),
+            label: "Loop".to_string(),
+            description: "Iterate over arrays (forEach), repeat N times, or loop while condition.".to_string(),
+            category: NodeCategory::Control,
+            is_container: true,
+            platforms: vec!["browser".to_string()],
+            icon: "repeat".to_string(),
+        },
+        NodeTypeInfo {
+            name: "output".to_string(),
+            label: "Output".to_string(),
+            description: "Declares how results are delivered. Read by the environment to render the appropriate output widget.".to_string(),
+            category: NodeCategory::Io,
+            is_container: false,
+            platforms: vec!["browser".to_string()],
+            icon: "download".to_string(),
+        },
+        NodeTypeInfo {
+            name: "parallel".to_string(),
+            label: "Parallel".to_string(),
+            description: "Execute tasks concurrently with configurable worker pool and error strategy.".to_string(),
+            category: NodeCategory::Control,
+            is_container: true,
+            platforms: vec!["browser".to_string()],
+            icon: "git-fork".to_string(),
+        },
+        NodeTypeInfo {
+            name: "shell-command".to_string(),
+            label: "Shell Command".to_string(),
+            description: "Execute shell commands with stall detection, retry, and streaming output.".to_string(),
+            category: NodeCategory::System,
+            is_container: false,
+            platforms: vec!["server".to_string()],
+            icon: "terminal".to_string(),
+        },
+        NodeTypeInfo {
+            name: "spreadsheet".to_string(),
+            label: "Spreadsheet".to_string(),
+            description: "Read and write CSV or Excel files.".to_string(),
+            category: NodeCategory::Spreadsheet,
+            is_container: false,
+            platforms: vec!["browser".to_string()],
+            icon: "sheet".to_string(),
+        },
+        NodeTypeInfo {
+            name: "transform".to_string(),
+            label: "Transform".to_string(),
+            description: "Transform data using expressions (single value) or field mappings.".to_string(),
+            category: NodeCategory::Data,
+            is_container: false,
+            platforms: vec!["browser".to_string()],
+            icon: "arrow-left-right".to_string(),
+        },
+    ]
+}
+
+// =============================================================================
 // NodeMetadata — The complete self-description of a processor
 // =============================================================================
 
@@ -239,6 +418,92 @@ pub struct NodeMetadata {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // --- NodeTypeInfo Tests ---
+
+    #[test]
+    fn test_all_node_types_returns_12_entries() {
+        // The engine defines all 12 node types.
+        let types = all_node_types();
+        assert_eq!(types.len(), 12, "Should have exactly 12 node types");
+    }
+
+    #[test]
+    fn test_all_node_types_sorted_alphabetically() {
+        // Entries should be sorted by name for deterministic output.
+        let types = all_node_types();
+        let names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
+        let mut sorted = names.clone();
+        sorted.sort();
+        assert_eq!(names, sorted, "Node types should be alphabetically sorted");
+    }
+
+    #[test]
+    fn test_all_node_types_unique_names() {
+        // Every node type name should be unique.
+        let types = all_node_types();
+        let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
+        names.sort();
+        names.dedup();
+        assert_eq!(names.len(), 12, "All node type names should be unique");
+    }
+
+    #[test]
+    fn test_container_types_are_group_loop_parallel() {
+        // Only group, loop, and parallel should be containers.
+        let types = all_node_types();
+        let mut containers: Vec<&str> = types
+            .iter()
+            .filter(|t| t.is_container)
+            .map(|t| t.name.as_str())
+            .collect();
+        containers.sort();
+        assert_eq!(containers, vec!["group", "loop", "parallel"]);
+    }
+
+    #[test]
+    fn test_io_types_are_input_output() {
+        // Only input and output should have the Io category.
+        let types = all_node_types();
+        let mut io_types: Vec<&str> = types
+            .iter()
+            .filter(|t| t.category == NodeCategory::Io)
+            .map(|t| t.name.as_str())
+            .collect();
+        io_types.sort();
+        assert_eq!(io_types, vec!["input", "output"]);
+    }
+
+    #[test]
+    fn test_server_only_types() {
+        // http-request and shell-command should only have "server" platform.
+        let types = all_node_types();
+        let mut server_only: Vec<&str> = types
+            .iter()
+            .filter(|t| !t.platforms.contains(&"browser".to_string()))
+            .map(|t| t.name.as_str())
+            .collect();
+        server_only.sort();
+        assert_eq!(server_only, vec!["http-request", "shell-command"]);
+    }
+
+    #[test]
+    fn test_node_type_info_serializes_camel_case() {
+        // NodeTypeInfo should serialize with camelCase keys.
+        let info = NodeTypeInfo {
+            name: "image".to_string(),
+            label: "Image".to_string(),
+            description: "Image processing".to_string(),
+            category: NodeCategory::Image,
+            is_container: false,
+            platforms: vec!["browser".to_string()],
+            icon: "image".to_string(),
+        };
+        let json = serde_json::to_string(&info).unwrap();
+        // isContainer should be camelCase in JSON
+        assert!(json.contains(r#""isContainer":false"#));
+        assert!(!json.contains("is_container"));
+    }
 
     // --- Serialization Tests ---
     // These verify that our types serialize to the expected JSON format,
