@@ -3,12 +3,14 @@
 import type { ReactNode } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { EditorProvider } from "../../EditorProvider";
+import { EditorExecutionProvider } from "../../hooks/EditorExecutionContext";
 
 /**
  * EditorCanvasRoot — editor providers shell.
  *
- * Wraps children with EditorProvider (store) + ReactFlowProvider.
- * Compose visual parts as children:
+ * Wraps children with EditorProvider (store) + ReactFlowProvider +
+ * EditorExecutionProvider. The execution provider shares a single
+ * useEditorExecution() instance across all editor components.
  *
  *   <EditorRoot slug="compress-images">
  *     <EditorCanvas />
@@ -24,7 +26,7 @@ function EditorCanvasRoot({ slug, children }: EditorCanvasRootProps) {
   return (
     <EditorProvider slug={slug}>
       <ReactFlowProvider>
-        {children}
+        <EditorExecutionProvider>{children}</EditorExecutionProvider>
       </ReactFlowProvider>
     </EditorProvider>
   );
