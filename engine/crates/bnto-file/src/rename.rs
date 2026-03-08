@@ -110,6 +110,14 @@ impl NodeProcessor for RenameFiles {
                     param_type: ParameterType::String,
                     default: None,
                     constraints: None,
+                    placeholder: None,
+                    hidden: None,
+                    // Only show when operation is "rename".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "rename".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "replace".to_string(),
@@ -118,6 +126,14 @@ impl NodeProcessor for RenameFiles {
                     param_type: ParameterType::String,
                     default: None,
                     constraints: None,
+                    placeholder: None,
+                    hidden: None,
+                    // Only show when operation is "rename".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "rename".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "case".to_string(),
@@ -132,6 +148,14 @@ impl NodeProcessor for RenameFiles {
                     },
                     default: None,
                     constraints: None,
+                    placeholder: None,
+                    hidden: None,
+                    // Only show when operation is "rename".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "rename".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "prefix".to_string(),
@@ -140,6 +164,14 @@ impl NodeProcessor for RenameFiles {
                     param_type: ParameterType::String,
                     default: None,
                     constraints: None,
+                    placeholder: None,
+                    hidden: None,
+                    // Only show when operation is "rename".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "rename".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "suffix".to_string(),
@@ -148,6 +180,14 @@ impl NodeProcessor for RenameFiles {
                     param_type: ParameterType::String,
                     default: None,
                     constraints: None,
+                    placeholder: None,
+                    hidden: None,
+                    // Only show when operation is "rename".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "rename".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "pattern".to_string(),
@@ -158,6 +198,15 @@ impl NodeProcessor for RenameFiles {
                     param_type: ParameterType::String,
                     default: None,
                     constraints: None,
+                    // Show placeholder hint for the template syntax.
+                    placeholder: Some("{{name}}-compressed.{{ext}}".to_string()),
+                    hidden: None,
+                    // Only show when operation is "rename".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "rename".to_string(),
+                    })),
+                    required_when: None,
                 },
             ],
         }

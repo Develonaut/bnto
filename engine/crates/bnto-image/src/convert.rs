@@ -354,6 +354,14 @@ impl NodeProcessor for ConvertImageFormat {
                         max: None,
                         required: true,
                     }),
+                    placeholder: None,
+                    hidden: None,
+                    // Only show format selector when operation is "convert".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "convert".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "quality".to_string(),
@@ -366,6 +374,11 @@ impl NodeProcessor for ConvertImageFormat {
                         max: Some(100.0),
                         required: false,
                     }),
+                    // Quality is always visible — no conditions needed.
+                    placeholder: None,
+                    hidden: None,
+                    visible_when: None,
+                    required_when: None,
                 },
             ],
         }

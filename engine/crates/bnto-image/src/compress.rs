@@ -351,6 +351,11 @@ impl NodeProcessor for CompressImages {
                     max: Some(100.0),
                     required: false,
                 }),
+                // No UI metadata needed — quality is always visible.
+                placeholder: None,
+                hidden: None,
+                visible_when: None,
+                required_when: None,
             }],
         }
     }

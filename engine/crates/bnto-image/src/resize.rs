@@ -373,6 +373,14 @@ impl NodeProcessor for ResizeImages {
                         max: None,
                         required: false,
                     }),
+                    placeholder: None,
+                    hidden: None,
+                    // Only show width when operation is "resize".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "resize".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "height".to_string(),
@@ -385,6 +393,14 @@ impl NodeProcessor for ResizeImages {
                         max: None,
                         required: false,
                     }),
+                    placeholder: None,
+                    hidden: None,
+                    // Only show height when operation is "resize".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "resize".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "maintainAspect".to_string(),
@@ -394,6 +410,14 @@ impl NodeProcessor for ResizeImages {
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::json!(true)),
                     constraints: None,
+                    placeholder: None,
+                    hidden: None,
+                    // Only show aspect ratio toggle when operation is "resize".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "resize".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "quality".to_string(),
@@ -406,6 +430,11 @@ impl NodeProcessor for ResizeImages {
                         max: Some(100.0),
                         required: false,
                     }),
+                    // Quality is always visible — no conditions needed.
+                    placeholder: None,
+                    hidden: None,
+                    visible_when: None,
+                    required_when: None,
                 },
             ],
         }

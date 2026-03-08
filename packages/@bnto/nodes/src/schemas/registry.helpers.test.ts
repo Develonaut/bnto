@@ -162,8 +162,8 @@ describe("inferFieldType", () => {
   });
 
   it("detects string type for plain strings", () => {
-    const shape = NODE_SCHEMA_DEFS["image"]!.schema.shape;
-    const info = inferFieldType(shape.input);
+    const shape = NODE_SCHEMA_DEFS["file-system"]!.schema.shape;
+    const info = inferFieldType(shape.find);
     expect(info.type).toBe("string");
   });
 

@@ -122,6 +122,14 @@ impl NodeProcessor for CleanCsv {
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::json!(true)),
                     constraints: None,
+                    placeholder: None,
+                    hidden: None,
+                    // Only show when operation is "clean".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "clean".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "removeEmptyRows".to_string(),
@@ -130,6 +138,14 @@ impl NodeProcessor for CleanCsv {
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::json!(true)),
                     constraints: None,
+                    placeholder: None,
+                    hidden: None,
+                    // Only show when operation is "clean".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "clean".to_string(),
+                    })),
+                    required_when: None,
                 },
                 ParameterDef {
                     name: "removeDuplicates".to_string(),
@@ -138,6 +154,14 @@ impl NodeProcessor for CleanCsv {
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::json!(true)),
                     constraints: None,
+                    placeholder: None,
+                    hidden: None,
+                    // Only show when operation is "clean".
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "clean".to_string(),
+                    })),
+                    required_when: None,
                 },
             ],
         }

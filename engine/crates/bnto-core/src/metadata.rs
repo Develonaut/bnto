@@ -25,6 +25,67 @@
 use serde::Serialize;
 
 // =============================================================================
+// ParamCondition — Conditional Visibility / Requirement Rules
+// =============================================================================
+//
+// WHY DO WE NEED THIS?
+// Some parameters only make sense in certain contexts. For example, the "width"
+// and "height" parameters in the image node only matter when the operation is
+// "resize" — they're meaningless for "compress" or "convert". Rather than
+// hardcoding this logic in the UI, we let the engine DECLARE these conditions
+// as metadata. The UI reads the condition and hides/shows parameters accordingly.
+//
+// HOW IT WORKS:
+//   - `ParamCondition::Single` = "show this param when <param> equals <value>"
+//   - `ParamCondition::Any`    = "show this param when ANY of these conditions match" (OR logic)
+//
+// RUST CONCEPT: `#[serde(untagged)]`
+// Normally serde adds a "type" tag to distinguish enum variants in JSON.
+// `untagged` tells serde to try each variant in order and use the first one
+// that matches the JSON shape. This lets us serialize:
+//   - Single as: `{"param": "operation", "equals": "resize"}`
+//   - Any as:    `[{"param": "...", "equals": "..."}, ...]`
+// The consumer just checks: is it an object? → Single. Is it an array? → Any.
+
+/// A single condition entry: "when `param` has the value `equals`".
+///
+/// Used both standalone (in `ParamCondition::Single`) and as entries
+/// in the `ParamCondition::Any` array.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamConditionEntry {
+    /// The name of the parameter to check against.
+    /// Example: `"operation"` — check the value of the "operation" parameter.
+    pub param: String,
+
+    /// The value that triggers visibility/requirement.
+    /// Example: `"resize"` — only show this param when operation is "resize".
+    pub equals: String,
+}
+
+/// Conditional visibility/requirement rule for a parameter.
+///
+/// Tells the UI when to show a parameter or when to make it required.
+///
+/// RUST CONCEPT: `#[serde(untagged)]`
+/// `untagged` means serde figures out which variant to use based on the
+/// JSON shape, without adding a type discriminator field. This produces
+/// cleaner JSON:
+///   - `Single` serializes as a plain object: `{"param": "operation", "equals": "resize"}`
+///   - `Any` serializes as an array: `[{"param": "...", "equals": "..."}, ...]`
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(untagged)]
+pub enum ParamCondition {
+    /// Show/require when a single parameter matches a value.
+    /// Serializes as: `{"param": "operation", "equals": "resize"}`
+    Single(ParamConditionEntry),
+
+    /// Show/require when ANY of multiple conditions match (OR logic).
+    /// Serializes as: `[{"param": "...", "equals": "..."}, ...]`
+    Any(Vec<ParamConditionEntry>),
+}
+
+// =============================================================================
 // NodeCategory — What kind of node is this?
 // =============================================================================
 
@@ -174,6 +235,52 @@ pub struct ParameterDef {
     /// Optional validation constraints (min/max range, required flag).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub constraints: Option<Constraints>,
+
+    // ----- UI Metadata Fields -----
+    // These fields enrich the parameter definition with hints that the UI
+    // config panel uses to render smarter controls. They're all `Option`
+    // so existing processors (which don't set them) keep working — `None`
+    // values are omitted from the JSON output via `skip_serializing_if`.
+
+    /// Placeholder text for string/number inputs in the UI.
+    ///
+    /// Example: `"compressed-{{name}}"` for a filename template field.
+    /// The UI shows this as grayed-out hint text inside the input control.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub placeholder: Option<String>,
+
+    /// Whether this parameter is hidden from the config panel.
+    ///
+    /// Hidden parameters are engine wiring fields (e.g., input/output path
+    /// templates) that the editor handles implicitly — the user never sees
+    /// them, but the engine needs them in the definition.
+    ///
+    /// `None` or `Some(false)` = visible (default). `Some(true)` = hidden.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hidden: Option<bool>,
+
+    /// Conditional visibility — show this parameter only when another
+    /// parameter has a specific value.
+    ///
+    /// Example: The "width" parameter in image:resize should only appear
+    /// when `operation` is `"resize"`. Setting `visible_when` tells the UI
+    /// to hide this parameter until the condition is met.
+    ///
+    /// RUST CONCEPT: `#[serde(skip_serializing_if = "Option::is_none")]`
+    /// When this field is `None`, it won't appear in the JSON output at all.
+    /// This keeps the serialized catalog compact for parameters that are
+    /// always visible (which is the common case).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub visible_when: Option<ParamCondition>,
+
+    /// Conditional requirement — this parameter is required only when
+    /// another parameter has a specific value.
+    ///
+    /// Example: A "columns" mapping might only be required when the
+    /// operation is "rename". Setting `required_when` tells the UI to
+    /// show the parameter as required only under that condition.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub required_when: Option<ParamCondition>,
 }
 
 // =============================================================================
@@ -585,6 +692,11 @@ mod tests {
                 max: Some(100.0),
                 required: false,
             }),
+            // New UI metadata fields — None = omitted from JSON.
+            placeholder: None,
+            hidden: None,
+            visible_when: None,
+            required_when: None,
         };
         let json = serde_json::to_string(&param).unwrap();
         // Should use "paramType" not "param_type".
@@ -602,10 +714,19 @@ mod tests {
             param_type: ParameterType::Number,
             default: None,
             constraints: None,
+            placeholder: None,
+            hidden: None,
+            visible_when: None,
+            required_when: None,
         };
         let json = serde_json::to_string(&param).unwrap();
         assert!(!json.contains("default"));
         assert!(!json.contains("constraints"));
+        // UI metadata fields should also be omitted when None.
+        assert!(!json.contains("placeholder"));
+        assert!(!json.contains("hidden"));
+        assert!(!json.contains("visibleWhen"));
+        assert!(!json.contains("requiredWhen"));
     }
 
     #[test]
@@ -659,6 +780,10 @@ mod tests {
                     max: Some(100.0),
                     required: false,
                 }),
+                placeholder: None,
+                hidden: None,
+                visible_when: None,
+                required_when: None,
             }],
         };
 
@@ -677,5 +802,93 @@ mod tests {
         assert_eq!(parsed["parameters"].as_array().unwrap().len(), 1);
         assert_eq!(parsed["parameters"][0]["name"], "quality");
         assert_eq!(parsed["parameters"][0]["default"], 80);
+    }
+
+    // --- ParamCondition Serialization Tests ---
+
+    #[test]
+    fn test_param_condition_single_serializes_as_object() {
+        // A Single condition should serialize as a flat JSON object
+        // with "param" and "equals" keys (camelCase).
+        let condition = ParamCondition::Single(ParamConditionEntry {
+            param: "operation".to_string(),
+            equals: "resize".to_string(),
+        });
+        let json = serde_json::to_string(&condition).unwrap();
+        // Should be a flat object, not wrapped in a type tag.
+        assert_eq!(json, r#"{"param":"operation","equals":"resize"}"#);
+    }
+
+    #[test]
+    fn test_param_condition_any_serializes_as_array() {
+        // An Any condition should serialize as a JSON array of condition objects.
+        // This represents OR logic: show when ANY condition matches.
+        let condition = ParamCondition::Any(vec![
+            ParamConditionEntry {
+                param: "operation".to_string(),
+                equals: "resize".to_string(),
+            },
+            ParamConditionEntry {
+                param: "operation".to_string(),
+                equals: "crop".to_string(),
+            },
+        ]);
+        let json = serde_json::to_string(&condition).unwrap();
+        // Should be an array of objects.
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert!(parsed.is_array(), "Any condition should be a JSON array");
+        assert_eq!(parsed.as_array().unwrap().len(), 2);
+        assert_eq!(parsed[0]["param"], "operation");
+        assert_eq!(parsed[0]["equals"], "resize");
+        assert_eq!(parsed[1]["equals"], "crop");
+    }
+
+    #[test]
+    fn test_parameter_def_with_ui_fields_serializes_camel_case() {
+        // When UI metadata fields are set, they should appear in JSON
+        // with camelCase keys (visibleWhen, not visible_when).
+        let param = ParameterDef {
+            name: "width".to_string(),
+            label: "Width".to_string(),
+            description: "Target width in pixels".to_string(),
+            param_type: ParameterType::Number,
+            default: None,
+            constraints: None,
+            placeholder: Some("e.g. 800".to_string()),
+            hidden: None,
+            visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                param: "operation".to_string(),
+                equals: "resize".to_string(),
+            })),
+            required_when: None,
+        };
+        let json = serde_json::to_string(&param).unwrap();
+        // "visibleWhen" should be camelCase (not "visible_when").
+        assert!(json.contains(r#""visibleWhen""#));
+        assert!(!json.contains("visible_when"));
+        // "placeholder" should be present.
+        assert!(json.contains(r#""placeholder":"e.g. 800""#));
+        // "hidden" and "requiredWhen" should be omitted (they're None).
+        assert!(!json.contains("hidden"));
+        assert!(!json.contains("requiredWhen"));
+    }
+
+    #[test]
+    fn test_parameter_def_hidden_field_serialization() {
+        // When hidden is Some(true), it should appear in JSON.
+        let param = ParameterDef {
+            name: "inputPath".to_string(),
+            label: "Input Path".to_string(),
+            description: "Internal path template".to_string(),
+            param_type: ParameterType::String,
+            default: None,
+            constraints: None,
+            placeholder: None,
+            hidden: Some(true),
+            visible_when: None,
+            required_when: None,
+        };
+        let json = serde_json::to_string(&param).unwrap();
+        assert!(json.contains(r#""hidden":true"#));
     }
 }
