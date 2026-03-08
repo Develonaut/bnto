@@ -111,16 +111,11 @@ impl NodeProcessor for RenameCsvColumns {
                     "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
                         .to_string(),
                 param_type: ParameterType::Object,
-                default: None,
-                constraints: None,
-                placeholder: None,
-                hidden: None,
-                // Only show column mapping when operation is "rename".
                 visible_when: Some(ParamCondition::Single(ParamConditionEntry {
                     param: "operation".to_string(),
                     equals: "rename".to_string(),
                 })),
-                required_when: None,
+                ..Default::default()
             }],
         }
     }

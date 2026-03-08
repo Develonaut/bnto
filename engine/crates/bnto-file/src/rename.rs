@@ -107,33 +107,21 @@ impl NodeProcessor for RenameFiles {
                     name: "find".to_string(),
                     label: "Find".to_string(),
                     description: "Text or regex pattern to search for in the filename".to_string(),
-                    param_type: ParameterType::String,
-                    default: None,
-                    constraints: None,
-                    placeholder: None,
-                    hidden: None,
-                    // Only show when operation is "rename".
                     visible_when: Some(ParamCondition::Single(ParamConditionEntry {
                         param: "operation".to_string(),
                         equals: "rename".to_string(),
                     })),
-                    required_when: None,
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "replace".to_string(),
                     label: "Replace".to_string(),
                     description: "Replacement text (used with Find)".to_string(),
-                    param_type: ParameterType::String,
-                    default: None,
-                    constraints: None,
-                    placeholder: None,
-                    hidden: None,
-                    // Only show when operation is "rename".
                     visible_when: Some(ParamCondition::Single(ParamConditionEntry {
                         param: "operation".to_string(),
                         equals: "rename".to_string(),
                     })),
-                    required_when: None,
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "case".to_string(),
@@ -146,48 +134,31 @@ impl NodeProcessor for RenameFiles {
                             "title".to_string(),
                         ],
                     },
-                    default: None,
-                    constraints: None,
-                    placeholder: None,
-                    hidden: None,
-                    // Only show when operation is "rename".
                     visible_when: Some(ParamCondition::Single(ParamConditionEntry {
                         param: "operation".to_string(),
                         equals: "rename".to_string(),
                     })),
-                    required_when: None,
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "prefix".to_string(),
                     label: "Prefix".to_string(),
                     description: "Text to prepend to the filename".to_string(),
-                    param_type: ParameterType::String,
-                    default: None,
-                    constraints: None,
-                    placeholder: None,
-                    hidden: None,
-                    // Only show when operation is "rename".
                     visible_when: Some(ParamCondition::Single(ParamConditionEntry {
                         param: "operation".to_string(),
                         equals: "rename".to_string(),
                     })),
-                    required_when: None,
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "suffix".to_string(),
                     label: "Suffix".to_string(),
                     description: "Text to append before the file extension".to_string(),
-                    param_type: ParameterType::String,
-                    default: None,
-                    constraints: None,
-                    placeholder: None,
-                    hidden: None,
-                    // Only show when operation is "rename".
                     visible_when: Some(ParamCondition::Single(ParamConditionEntry {
                         param: "operation".to_string(),
                         equals: "rename".to_string(),
                     })),
-                    required_when: None,
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "pattern".to_string(),
@@ -195,18 +166,12 @@ impl NodeProcessor for RenameFiles {
                     description:
                         "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})"
                             .to_string(),
-                    param_type: ParameterType::String,
-                    default: None,
-                    constraints: None,
-                    // Show placeholder hint for the template syntax.
                     placeholder: Some("{{name}}-compressed.{{ext}}".to_string()),
-                    hidden: None,
-                    // Only show when operation is "rename".
                     visible_when: Some(ParamCondition::Single(ParamConditionEntry {
                         param: "operation".to_string(),
                         equals: "rename".to_string(),
                     })),
-                    required_when: None,
+                    ..Default::default()
                 },
             ],
         }

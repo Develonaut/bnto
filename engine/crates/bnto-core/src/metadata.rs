@@ -139,12 +139,13 @@ pub enum NodeCategory {
 /// Examples of serialized output:
 ///   `ParameterType::Number`              → `{"type": "number"}`
 ///   `ParameterType::Enum { options: .. }` → `{"type": "enum", "options": ["jpeg", "png"]}`
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Default)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum ParameterType {
     /// A numeric value (integer or float). Used for quality, width, height.
     Number,
     /// A text string. Used for find/replace patterns, prefixes, suffixes.
+    #[default]
     String,
     /// A true/false toggle. Used for trimWhitespace, removeEmptyRows.
     Boolean,
@@ -202,7 +203,7 @@ pub struct Constraints {
 /// Rust uses `snake_case` for field names (`param_type`), but JavaScript
 /// uses `camelCase` (`paramType`). This attribute automatically converts
 /// field names when serializing to JSON: `param_type` → `"paramType"`.
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ParameterDef {
     /// The parameter's key name, as it appears in the config JSON.
@@ -692,11 +693,7 @@ mod tests {
                 max: Some(100.0),
                 required: false,
             }),
-            // New UI metadata fields — None = omitted from JSON.
-            placeholder: None,
-            hidden: None,
-            visible_when: None,
-            required_when: None,
+            ..Default::default()
         };
         let json = serde_json::to_string(&param).unwrap();
         // Should use "paramType" not "param_type".
@@ -712,12 +709,7 @@ mod tests {
             label: "Width".to_string(),
             description: "Target width".to_string(),
             param_type: ParameterType::Number,
-            default: None,
-            constraints: None,
-            placeholder: None,
-            hidden: None,
-            visible_when: None,
-            required_when: None,
+            ..Default::default()
         };
         let json = serde_json::to_string(&param).unwrap();
         assert!(!json.contains("default"));
@@ -780,10 +772,7 @@ mod tests {
                     max: Some(100.0),
                     required: false,
                 }),
-                placeholder: None,
-                hidden: None,
-                visible_when: None,
-                required_when: None,
+                ..Default::default()
             }],
         };
 
@@ -855,12 +844,11 @@ mod tests {
             default: None,
             constraints: None,
             placeholder: Some("e.g. 800".to_string()),
-            hidden: None,
             visible_when: Some(ParamCondition::Single(ParamConditionEntry {
                 param: "operation".to_string(),
                 equals: "resize".to_string(),
             })),
-            required_when: None,
+            ..Default::default()
         };
         let json = serde_json::to_string(&param).unwrap();
         // "visibleWhen" should be camelCase (not "visible_when").
@@ -883,10 +871,8 @@ mod tests {
             param_type: ParameterType::String,
             default: None,
             constraints: None,
-            placeholder: None,
             hidden: Some(true),
-            visible_when: None,
-            required_when: None,
+            ..Default::default()
         };
         let json = serde_json::to_string(&param).unwrap();
         assert!(json.contains(r#""hidden":true"#));

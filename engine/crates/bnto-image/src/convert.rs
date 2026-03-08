@@ -348,20 +348,16 @@ impl NodeProcessor for ConvertImageFormat {
                     param_type: ParameterType::Enum {
                         options: vec!["jpeg".to_string(), "png".to_string(), "webp".to_string()],
                     },
-                    default: None,
                     constraints: Some(Constraints {
                         min: None,
                         max: None,
                         required: true,
                     }),
-                    placeholder: None,
-                    hidden: None,
-                    // Only show format selector when operation is "convert".
                     visible_when: Some(ParamCondition::Single(ParamConditionEntry {
                         param: "operation".to_string(),
                         equals: "convert".to_string(),
                     })),
-                    required_when: None,
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "quality".to_string(),
@@ -374,11 +370,7 @@ impl NodeProcessor for ConvertImageFormat {
                         max: Some(100.0),
                         required: false,
                     }),
-                    // Quality is always visible — no conditions needed.
-                    placeholder: None,
-                    hidden: None,
-                    visible_when: None,
-                    required_when: None,
+                    ..Default::default()
                 },
             ],
         }
