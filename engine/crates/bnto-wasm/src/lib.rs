@@ -37,6 +37,33 @@
 use wasm_bindgen::prelude::*;
 
 // =============================================================================
+// Pipeline Executor — WASM bridge for the core executor
+// =============================================================================
+//
+// The execute module provides `execute_pipeline()` — a single WASM function
+// that takes a pipeline definition (JSON), input files, and a progress callback,
+// then runs the entire pipeline in Rust and returns all results. This replaces
+// the JS-side `executePipeline.ts` orchestration.
+mod execute;
+
+// Re-export the execute_pipeline function so it's available as a WASM export.
+// The #[wasm_bindgen] attribute on the function in execute.rs makes it callable
+// from JavaScript automatically.
+pub use execute::execute_pipeline;
+
+// =============================================================================
+// Node Catalog — Self-describing processor metadata
+// =============================================================================
+//
+// The catalog module provides `node_catalog()` — a WASM function that returns
+// a JSON string describing every registered processor (name, params, MIME types,
+// platforms). Used to validate TS `@bnto/nodes` definitions against the engine.
+mod catalog;
+
+// Re-export so it's available as a WASM export.
+pub use catalog::node_catalog;
+
+// =============================================================================
 // BntoError → JsValue Conversion
 // =============================================================================
 //

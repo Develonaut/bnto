@@ -61,6 +61,7 @@ wasm-bindgen = { workspace = true }
 js-sys = { workspace = true }
 
 # Serialization (for params and metadata)
+serde = { workspace = true }
 serde_json = { workspace = true }
 
 # Panic hook — shows real error messages in browser console
@@ -72,3 +73,12 @@ console_error_panic_hook = "0.1"
 
 [dev-dependencies]
 wasm-bindgen-test = { workspace = true }
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# =============================================================================
+# Benchmarks
+# =============================================================================
+
+[[bench]]
+name = "pipeline_bench"
+harness = false

@@ -1,0 +1,242 @@
+{
+  "version": "1.0.0",
+  "processors": [
+    {
+      "nodeType": "file-system",
+      "operation": "rename",
+      "name": "Rename Files",
+      "description": "Transform filenames using patterns, find/replace, and case rules",
+      "category": "file",
+      "accepts": [],
+      "platforms": ["browser"],
+      "parameters": [
+        {
+          "name": "find",
+          "label": "Find",
+          "description": "Text or regex pattern to search for in the filename",
+          "paramType": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "replace",
+          "label": "Replace",
+          "description": "Replacement text (used with Find)",
+          "paramType": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "case",
+          "label": "Case",
+          "description": "Transform the filename to a specific case",
+          "paramType": {
+            "type": "enum",
+            "options": ["lower", "upper", "title"]
+          }
+        },
+        {
+          "name": "prefix",
+          "label": "Prefix",
+          "description": "Text to prepend to the filename",
+          "paramType": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "suffix",
+          "label": "Suffix",
+          "description": "Text to append before the file extension",
+          "paramType": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "pattern",
+          "label": "Pattern",
+          "description": "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
+          "paramType": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    {
+      "nodeType": "image",
+      "operation": "compress",
+      "name": "Compress Images",
+      "description": "Reduce image file size while maintaining quality",
+      "category": "image",
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
+      "parameters": [
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Compression quality (1 = smallest file, 100 = best quality)",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          }
+        }
+      ]
+    },
+    {
+      "nodeType": "image",
+      "operation": "convert",
+      "name": "Convert Image Format",
+      "description": "Convert images between JPEG, PNG, and WebP formats",
+      "category": "image",
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
+      "parameters": [
+        {
+          "name": "format",
+          "label": "Output Format",
+          "description": "The target image format to convert to",
+          "paramType": {
+            "type": "enum",
+            "options": ["jpeg", "png", "webp"]
+          },
+          "constraints": {
+            "required": true
+          }
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality for lossy formats (1-100)",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          }
+        }
+      ]
+    },
+    {
+      "nodeType": "image",
+      "operation": "resize",
+      "name": "Resize Images",
+      "description": "Change image dimensions while maintaining quality",
+      "category": "image",
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
+      "parameters": [
+        {
+          "name": "width",
+          "label": "Width",
+          "description": "Target width in pixels",
+          "paramType": {
+            "type": "number"
+          },
+          "constraints": {
+            "min": 1.0,
+            "required": false
+          }
+        },
+        {
+          "name": "height",
+          "label": "Height",
+          "description": "Target height in pixels",
+          "paramType": {
+            "type": "number"
+          },
+          "constraints": {
+            "min": 1.0,
+            "required": false
+          }
+        },
+        {
+          "name": "maintainAspect",
+          "label": "Maintain Aspect Ratio",
+          "description": "Keep the original width-to-height ratio when resizing",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality for lossy formats (1-100)",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          }
+        }
+      ]
+    },
+    {
+      "nodeType": "spreadsheet",
+      "operation": "clean",
+      "name": "Clean CSV",
+      "description": "Remove empty rows, trim whitespace, and deduplicate CSV data",
+      "category": "spreadsheet",
+      "accepts": ["text/csv"],
+      "platforms": ["browser"],
+      "parameters": [
+        {
+          "name": "trimWhitespace",
+          "label": "Trim Whitespace",
+          "description": "Remove leading and trailing whitespace from every cell",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true
+        },
+        {
+          "name": "removeEmptyRows",
+          "label": "Remove Empty Rows",
+          "description": "Skip rows where every cell is blank",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true
+        },
+        {
+          "name": "removeDuplicates",
+          "label": "Remove Duplicates",
+          "description": "Remove duplicate rows, keeping the first occurrence",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true
+        }
+      ]
+    },
+    {
+      "nodeType": "spreadsheet",
+      "operation": "rename",
+      "name": "Rename CSV Columns",
+      "description": "Rename column headers in a CSV file",
+      "category": "spreadsheet",
+      "accepts": ["text/csv"],
+      "platforms": ["browser"],
+      "parameters": [
+        {
+          "name": "columns",
+          "label": "Column Mapping",
+          "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
+          "paramType": {
+            "type": "object"
+          }
+        }
+      ]
+    }
+  ]
+}
