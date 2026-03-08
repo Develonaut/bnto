@@ -12,6 +12,7 @@ export const csvCleaner: Definition = {
   position: { x: 250, y: 100 },
   metadata: {
     description: "Reusable sub-recipe: trims whitespace, removes empty rows, deduplicates.",
+    customData: { displayName: "Clean CSV" },
   },
   parameters: {},
   inputPorts: [{ id: "in-1", name: "files" }],

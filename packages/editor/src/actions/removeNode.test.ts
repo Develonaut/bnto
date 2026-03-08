@@ -54,6 +54,7 @@ function stateWithNodes(): EditorState {
     undoStack: [],
     redoStack: [],
     slug: null,
+    definition: null,
     selectedNodeId: null,
     layersOpen: false,
     configOpen: false,

@@ -20,6 +20,7 @@ export function loadRecipe(slug: string): Partial<EditorState> | null {
   return {
     nodes,
     configs,
+    definition: recipe.definition,
     recipeMetadata: metadataFromDefinition(recipe.definition),
     isDirty: false,
     validationErrors: validateDefinition(recipe.definition),

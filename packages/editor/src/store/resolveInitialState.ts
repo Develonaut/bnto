@@ -6,7 +6,7 @@
  * Falls back to a blank canvas when the slug is missing or unknown.
  */
 
-import { createBlankDefinition, getRecipeBySlug, isIoNodeType } from "@bnto/nodes";
+import { type Definition, createBlankDefinition, getRecipeBySlug, isIoNodeType } from "@bnto/nodes";
 import { definitionToBento } from "../adapters/definitionToBento";
 import type { NodeConfigs } from "../adapters/types";
 import type { RecipeMetadata } from "./types";
@@ -52,6 +52,7 @@ function resolveInitialState(slug?: string) {
       const { nodes, configs } = definitionToBento(recipe.definition);
       return {
         slug,
+        definition: recipe.definition as Definition,
         metadata: metadataFromDefinition(recipe.definition),
         nodes,
         configs,
@@ -59,9 +60,11 @@ function resolveInitialState(slug?: string) {
       };
     }
   }
-  const blank = definitionToBento(createBlankDefinition());
+  const blankDef = createBlankDefinition();
+  const blank = definitionToBento(blankDef);
   return {
     slug: slug ?? null,
+    definition: blankDef as Definition,
     metadata: metadataFromBlank(),
     nodes: blank.nodes,
     configs: blank.configs,

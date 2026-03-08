@@ -19,6 +19,7 @@
 | Conveyor belt system           | [visual-editor.md](.claude/strategy/visual-editor.md)                                                  |
 | Input/output nodes             | [io-nodes.md](.claude/strategy/io-nodes.md)                                                            |
 | Node architecture & execution  | [node-architecture.md](.claude/strategy/node-architecture.md)                                          |
+| Node system responsibilities   | [node-responsibilities.md](.claude/rules/node-responsibilities.md)                                     |
 | Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                                            |
 | Editor user journey            | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)                                      |
 | Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                                       |
@@ -209,19 +210,20 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 
 ### Rules (auto-loaded, always active)
 
-| Document                                             | Purpose                                                     |
-| ---------------------------------------------------- | ----------------------------------------------------------- |
-| [code-standards.md](.claude/rules/code-standards.md) | Bento Box Principle, size limits, file organization         |
-| [architecture.md](.claude/rules/architecture.md)     | Layered architecture, data flow, deployment topology        |
-| [components.md](.claude/rules/components.md)         | Component patterns, hooks, flat exports, CSS-first states   |
-| [theming.md](.claude/rules/theming.md)               | Color tokens, fonts, radius, shadows                        |
-| [animation.md](.claude/rules/animation.md)           | Motion language, CSS animation system, animation components |
-| [seo.md](.claude/rules/seo.md)                       | URL strategy, slug registry, metadata, shipping checklist   |
-| [pre-commit.md](.claude/rules/pre-commit.md)         | Mandatory checklist before every commit                     |
-| [core-api.md](.claude/rules/core-api.md)             | @bnto/core client/service/adapter pattern                   |
-| [auth-routing.md](.claude/rules/auth-routing.md)     | Proxy route protection, auth flow                           |
-| [convex.md](.claude/rules/convex.md)                 | Query patterns, validators, N+1 prevention                  |
-| [gotchas.md](.claude/rules/gotchas.md)               | Known pitfalls and fixes                                    |
+| Document                                                           | Purpose                                                     |
+| ------------------------------------------------------------------ | ----------------------------------------------------------- |
+| [code-standards.md](.claude/rules/code-standards.md)               | Bento Box Principle, size limits, file organization         |
+| [architecture.md](.claude/rules/architecture.md)                   | Layered architecture, data flow, deployment topology        |
+| [components.md](.claude/rules/components.md)                       | Component patterns, hooks, flat exports, CSS-first states   |
+| [theming.md](.claude/rules/theming.md)                             | Color tokens, fonts, radius, shadows                        |
+| [animation.md](.claude/rules/animation.md)                         | Motion language, CSS animation system, animation components |
+| [seo.md](.claude/rules/seo.md)                                     | URL strategy, slug registry, metadata, shipping checklist   |
+| [pre-commit.md](.claude/rules/pre-commit.md)                       | Mandatory checklist before every commit                     |
+| [core-api.md](.claude/rules/core-api.md)                           | @bnto/core client/service/adapter pattern                   |
+| [auth-routing.md](.claude/rules/auth-routing.md)                   | Proxy route protection, auth flow                           |
+| [convex.md](.claude/rules/convex.md)                               | Query patterns, validators, N+1 prevention                  |
+| [node-responsibilities.md](.claude/rules/node-responsibilities.md) | Engine / @bnto/nodes / Editor responsibility matrix         |
+| [gotchas.md](.claude/rules/gotchas.md)                             | Known pitfalls and fixes                                    |
 
 ### Strategy & Reference (read on demand)
 

@@ -72,6 +72,7 @@ interface RawParameter {
   hidden?: boolean;
   visibleWhen?: ParamConditionEntry | ParamConditionEntry[];
   requiredWhen?: ParamConditionEntry | ParamConditionEntry[];
+  surfaceable?: boolean;
 }
 
 // --- Read catalog ---
@@ -235,6 +236,10 @@ function generateParam(p: RawParameter): string {
   if (p.requiredWhen !== undefined) {
     lines.push(`  requiredWhen: ${serializeCondition(p.requiredWhen)},`);
   }
+  // surfaceable defaults to true — only emit when false to keep output compact
+  if (p.surfaceable === false) {
+    lines.push(`  surfaceable: false,`);
+  }
   lines.push("}");
   return lines.join("\n");
 }
@@ -291,6 +296,8 @@ export interface ProcessorParam {
   readonly hidden?: boolean;
   readonly visibleWhen?: ParamCondition;
   readonly requiredWhen?: ParamCondition;
+  /** Whether this param is eligible for surfacing in container config panels. Defaults to true. */
+  readonly surfaceable?: boolean;
 }
 
 export interface ProcessorDef {
@@ -541,6 +548,10 @@ function generateNodeParamMeta(param: RawParameter): string {
   }
   if (param.requiredWhen !== undefined) {
     lines.push(`      requiredWhen: ${serializeCondition(param.requiredWhen)},`);
+  }
+  // surfaceable defaults to true — only emit when false
+  if (param.surfaceable === false) {
+    lines.push(`      surfaceable: false,`);
   }
   lines.push(`    },`);
   return lines.join("\n");

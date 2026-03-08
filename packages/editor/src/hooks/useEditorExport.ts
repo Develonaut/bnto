@@ -44,8 +44,8 @@ function useEditorExport() {
 
   const exportAsRecipe = useCallback(
     (metadata?: NodeRecipeMetadata): ExportResult => {
-      const { nodes, configs, recipeMetadata } = storeApi.getState();
-      const definition = rfNodesToDefinition(nodes, recipeMetadata, configs);
+      const { nodes, configs, recipeMetadata, definition: storedDefinition } = storeApi.getState();
+      const definition = rfNodesToDefinition(nodes, recipeMetadata, configs, storedDefinition);
 
       const errors = validateDefinition(definition);
       if (errors.length > 0) {
@@ -63,7 +63,10 @@ function useEditorExport() {
       if (!result.recipe) return;
 
       const json = JSON.stringify(result.recipe.definition, null, 2);
-      downloadBlob(new Blob([json], { type: "application/json" }), `${result.recipe.slug}.bnto.json`);
+      downloadBlob(
+        new Blob([json], { type: "application/json" }),
+        `${result.recipe.slug}.bnto.json`,
+      );
     },
     [exportAsRecipe],
   );

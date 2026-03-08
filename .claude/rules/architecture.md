@@ -107,6 +107,12 @@ See [core-api.md](core-api.md) for the full API design rules and [core-unificati
 - Archived Go engine for cloud/server-side execution (M4). See `archive/engine-go/` for internals.
 - Archived Go HTTP API server for Railway. See `archive/api-go/` for internals.
 
+## Node System Layers
+
+The node system spans three layers: Engine (Rust), `@bnto/nodes` (TypeScript), and Editor. Each layer has distinct responsibilities. See [node-responsibilities.md](node-responsibilities.md) for the full decision matrix, golden rule, and common violations to watch for.
+
+**Key principle:** The engine defines what nodes CAN do. `@bnto/nodes` makes that knowledge available in TypeScript (mostly generated). The editor manages the visual experience.
+
 ## Execution Model: Engine Owns the Pipeline
 
 **The Rust engine owns pipeline execution.** The `bnto-core` crate contains the `PipelineExecutor` -- it handles graph walking, topological ordering, container node semantics (loop/group), per-file iteration, `NodeProcessor` dispatch, and structured progress events. JS / `@bnto/core` is a thin adapter: convert browser types (File to bytes, Definition to WASM struct), make a single WASM call (`run_pipeline`), and relay progress events to the UI.
