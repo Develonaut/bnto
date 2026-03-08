@@ -2,21 +2,25 @@
  * @bnto/nodes — Engine-agnostic node definitions, types, and metadata.
  *
  * This package is consumed by every execution target:
- * - Rust WASM (browser)
- * - JS library adapters (browser fallback)
- * - Go engine (CLI + cloud)
- * - Web app config UI
+ * - Rust WASM engine (browser — primary)
+ * - Web app config UI / editor
+ * - Desktop (Tauri, planned)
+ *
+ * The Rust engine's self-describing catalog (`engine/catalog.snapshot.json`)
+ * is the source of truth for processor metadata. This package provides
+ * the TypeScript types, Zod schemas, and UI metadata that the engine
+ * catalog validates against via `catalogValidation.test.ts`.
  *
  * Zero runtime dependencies except Zod (for schema validation).
  */
 
-// Recipe definition types (mirrors Go engine/pkg/node/)
+// Recipe definition types
 export type { Definition, Position, Metadata, Port, Edge, FieldsConfig } from "./definition";
 
 // Execution types
 export type { ExecutionContext, NodeResult } from "./execution";
 
-// Recipe types (mirrors Go engine/pkg/menu/)
+// Recipe types
 export type { Recipe, AcceptSpec, SEOSpec } from "./recipe";
 
 // Node type registry
@@ -24,8 +28,6 @@ export { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./nodeTypes";
 export type { NodeTypeName, NodeCategory, NodeTypeInfo } from "./nodeTypes";
 export { isNodeType } from "./isNodeType";
 export { getNodeTypeInfo } from "./getNodeTypeInfo";
-export { getBrowserCapableTypes } from "./getBrowserCapableTypes";
-export { getContainerTypes } from "./getContainerTypes";
 export { getNodeIcon } from "./getNodeIcon";
 export { getNodeSublabel } from "./getNodeSublabel";
 export { isIoNodeType } from "./isIoNodeType";
@@ -44,6 +46,16 @@ export {
   renameCsvColumns,
   renameFiles,
   resizeImages,
+} from "./recipes";
+
+// Reusable sub-recipe building blocks
+export {
+  batchCompress,
+  batchConvert,
+  batchRename,
+  batchResize,
+  columnRenamer,
+  csvCleaner,
 } from "./recipes";
 
 // Format versioning
@@ -106,3 +118,13 @@ export type { RecipeMetadata } from "./definitionToRecipe";
 // Definition result type (mutation return shape)
 export { isValid } from "./definitionResult";
 export type { DefinitionResult } from "./definitionResult";
+
+// Engine catalog (generated from engine/catalog.snapshot.json)
+export {
+  PROCESSORS,
+  PROCESSOR_MAP,
+  getProcessorDefaults,
+  getParamConstraints,
+  getProcessorAccepts,
+} from "./generated/catalog";
+export type { ProcessorDef, ProcessorParam, ParamType } from "./generated/catalog";

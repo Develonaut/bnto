@@ -1340,7 +1340,7 @@ mod tests {
         // Verify the file_index and total_files are correct for each event.
         // Events should come in pairs: (file 0, 0%), (file 0, 100%),
         // (file 1, 0%), (file 1, 100%), (file 2, 0%), (file 2, 100%).
-        let expected_sequence = vec![
+        let expected_sequence = [
             (0, 0, "a.jpg"),
             (0, 100, "a.jpg"),
             (1, 0, "b.jpg"),

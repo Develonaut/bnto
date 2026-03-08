@@ -100,8 +100,11 @@ tasks:
       - task: ui:lint
       - echo "=== all checks passed ==="
 
-  # Menu generation
-  # menu:generate is no longer needed — apps import RECIPES from @bnto/nodes directly
+  # Node codegen (engine → TypeScript)
+  nodes:generate:
+    desc: Generate TypeScript node definitions from engine catalog snapshot
+    cmds:
+      - npx tsx packages/@bnto/nodes/scripts/generate-from-catalog.ts
 
   # E2E tests
   e2e:
