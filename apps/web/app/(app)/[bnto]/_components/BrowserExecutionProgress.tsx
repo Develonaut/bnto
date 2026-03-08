@@ -32,8 +32,8 @@ export function BrowserExecutionProgress({ execution }: BrowserExecutionProgress
           <LoaderIcon className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
           <p className="text-sm font-medium text-foreground">
             {fileProgress
-              ? `Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}\u2026`
-              : "Initializing engine\u2026"}
+              ? `Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}...`
+              : "Initializing engine..."}
           </p>
         </Row>
         <Row className="gap-1.5 text-xs text-muted-foreground">

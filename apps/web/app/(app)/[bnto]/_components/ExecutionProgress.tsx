@@ -117,9 +117,9 @@ function StatusIcon({ status }: { status: Execution["status"] }) {
 function getStatusLabel(status: Execution["status"]): string {
   switch (status) {
     case "pending":
-      return "Queued\u2026";
+      return "Queued...";
     case "running":
-      return "Processing\u2026";
+      return "Processing...";
     case "completed":
       return "Completed";
     case "failed":
