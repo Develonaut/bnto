@@ -1,25 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import { useShallow } from "@bnto/core";
 import { useEditorStore } from "./useEditorStore";
 import type { PanelId } from "../store/types";
-
-/**
- * useEditorPanels — centralized panel visibility from the editor store.
- *
- * All panels are identified by PanelId. Consumers read `panels[id]`
- * for visibility and call `openPanel`, `closePanel`, `togglePanel`
- * with the panel ID. No per-panel booleans or per-panel toggle methods.
- */
-function useEditorPanels() {
-  const panels = useEditorStore(useShallow((s) => s.panels));
-  const openPanel = useEditorStore((s) => s.openPanel);
-  const closePanel = useEditorStore((s) => s.closePanel);
-  const togglePanel = useEditorStore((s) => s.togglePanel);
-
-  return { panels, openPanel, closePanel, togglePanel };
-}
 
 /**
  * usePanel — convenience hook for a single panel's open state + toggle.
@@ -40,4 +23,4 @@ function usePanel(id: PanelId) {
   return { isOpen, open, close, toggle };
 }
 
-export { useEditorPanels, usePanel };
+export { usePanel };

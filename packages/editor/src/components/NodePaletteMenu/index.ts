@@ -1,5 +1,3 @@
-export {
-  NodePaletteMenuRoot as NodePaletteMenu,
-  NodePaletteMenuTrigger,
-} from "./NodePaletteMenuRoot";
+export { NodePaletteMenuRoot as NodePaletteMenu } from "./NodePaletteMenuRoot";
+export { NodePaletteMenuTrigger } from "./NodePaletteMenuTrigger";
 export { NodePaletteMenuContent } from "./NodePaletteMenuContent";

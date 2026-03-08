@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from "react";
 import { Button, TerminalIcon } from "@bnto/ui";
-import { usePanel } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/usePanel";
 
 /**
  * RunPanel.Trigger — toolbar button that toggles the run panel.

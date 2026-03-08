@@ -1,8 +1,8 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { Menu, MenuTrigger } from "@bnto/ui";
-import { usePanel } from "../../hooks/useEditorPanels";
+import { Menu } from "@bnto/ui";
+import { usePanel } from "../../hooks/usePanel";
 
 /**
  * NodePaletteMenu root — controlled by editor store state.
@@ -29,7 +29,4 @@ function NodePaletteMenuRoot({
   );
 }
 
-/** Pass-through to MenuTrigger. */
-const NodePaletteMenuTrigger = MenuTrigger;
-
-export { NodePaletteMenuRoot, NodePaletteMenuTrigger };
+export { NodePaletteMenuRoot };

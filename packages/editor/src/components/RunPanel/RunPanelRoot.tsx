@@ -11,7 +11,7 @@ import {
   TabsContent,
   Text,
 } from "@bnto/ui";
-import { usePanel } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/usePanel";
 import { useEditorExecutionContext } from "../../hooks/EditorExecutionContext";
 import { ResultsTab } from "./ResultsTab";
 import { LogsTab } from "./LogsTab";

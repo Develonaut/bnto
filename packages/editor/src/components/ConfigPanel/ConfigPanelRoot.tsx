@@ -16,7 +16,7 @@ import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorStoreApi } from "../../hooks/useEditorStoreApi";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { useEditorActions } from "../../hooks/useEditorActions";
-import { usePanel } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/usePanel";
 import { SchemaForm } from "../SchemaForm";
 import { SurfacedParamsSection } from "./SurfacedParamsSection";
 import { updateSurfacedParam } from "../../actions/updateSurfacedParam";

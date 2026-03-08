@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from "react";
 import { Button, SlidersHorizontalIcon } from "@bnto/ui";
-import { usePanel } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/usePanel";
 
 /**
  * ConfigPanel.Trigger — toolbar button that toggles the config panel.
