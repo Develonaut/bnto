@@ -45,6 +45,28 @@ use crate::progress::ProgressReporter;
 use crate::registry::NodeRegistry;
 
 // =============================================================================
+// Pipeline Context — Shared State Threaded Through Execution
+// =============================================================================
+
+/// Bundles the shared, immutable state that every executor function needs.
+///
+/// Without this struct, each internal function would need 4+ extra parameters
+/// (registry, reporter, pipeline_total_files, now_ms). Bundling them keeps
+/// function signatures clean and under clippy's 7-argument limit.
+struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
+    /// Maps node types to processor implementations.
+    registry: &'a NodeRegistry,
+    /// Receives structured progress events for the consumer.
+    reporter: &'a PipelineReporter,
+    /// The ORIGINAL number of input files the user provided.
+    /// Used in FileProgress events so the UI says "X of 4", not "1 of 1"
+    /// even when loop containers split files into single-file batches.
+    pipeline_total_files: usize,
+    /// Returns current time in milliseconds (injected for testability).
+    now_ms: F,
+}
+
+// =============================================================================
 // Public API
 // =============================================================================
 
@@ -95,8 +117,17 @@ pub fn execute_pipeline(
     let total_nodes = processing_nodes.len();
     let total_files = files.len();
 
+    // Bundle shared state into a context struct so internal functions
+    // stay under clippy's 7-argument limit.
+    let ctx = PipelineContext {
+        registry,
+        reporter,
+        pipeline_total_files: total_files,
+        now_ms,
+    };
+
     // --- Step 3: Emit PipelineStarted event ---
-    reporter.emit(PipelineEvent::PipelineStarted {
+    ctx.reporter.emit(PipelineEvent::PipelineStarted {
         total_nodes,
         total_files,
     });
@@ -109,19 +140,13 @@ pub fn execute_pipeline(
 
     for (node_index, node) in processing_nodes.iter().enumerate() {
         // Execute this node (handles both primitive and container nodes).
-        // Pass `total_files` (the original input count) so that progress
-        // events always report "X of N" relative to the user's input batch,
-        // even when container nodes (loop) split files into single-file batches.
         let result = execute_node(
+            &ctx,
             node,
             current_files,
-            registry,
-            reporter,
             node_index,
             total_nodes,
-            total_files,
             0, // file_offset — starts at 0 for top-level nodes
-            &now_ms,
         )?;
 
         // Track total files processed across all nodes.
@@ -132,9 +157,9 @@ pub fn execute_pipeline(
     }
 
     // --- Step 5: Calculate total duration and emit PipelineCompleted ---
-    let duration_ms = now_ms() - start_ms;
+    let duration_ms = (ctx.now_ms)() - start_ms;
 
-    reporter.emit(PipelineEvent::PipelineCompleted {
+    ctx.reporter.emit(PipelineEvent::PipelineCompleted {
         duration_ms,
         total_files_processed,
     });
@@ -179,21 +204,18 @@ struct NodeExecutionResult {
 ///
 /// This is the recursive workhorse. For primitive nodes, it iterates files
 /// and calls the processor. For container nodes, it recurses into children.
-fn execute_node(
+fn execute_node<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
     node: &PipelineNode,
     files: Vec<PipelineFile>,
-    registry: &NodeRegistry,
-    reporter: &PipelineReporter,
     node_index: usize,
     total_nodes: usize,
-    pipeline_total_files: usize,
     file_offset: usize,
-    now_ms: &(impl Fn() -> u64 + Copy),
 ) -> Result<NodeExecutionResult, BntoError> {
-    let node_start = now_ms();
+    let node_start = (ctx.now_ms)();
 
     // --- Emit NodeStarted event ---
-    reporter.emit(PipelineEvent::NodeStarted {
+    ctx.reporter.emit(PipelineEvent::NodeStarted {
         node_id: node.id.clone(),
         node_index,
         total_nodes,
@@ -201,35 +223,18 @@ fn execute_node(
     });
 
     // --- Decide: container or primitive? ---
-    // Pass pipeline_total_files and file_offset so that progress events
-    // always report relative to the user's original input batch.
     let result = if is_container_node(&node.node_type) {
-        execute_container_node(
-            node,
-            files,
-            registry,
-            reporter,
-            pipeline_total_files,
-            file_offset,
-            now_ms,
-        )
+        execute_container_node(ctx, node, files, file_offset)
     } else {
-        execute_primitive_node(
-            node,
-            files,
-            registry,
-            reporter,
-            pipeline_total_files,
-            file_offset,
-        )
+        execute_primitive_node(ctx, node, files, file_offset)
     };
 
     // --- Handle success or failure ---
     match result {
         Ok(exec_result) => {
             // Emit NodeCompleted on success.
-            let duration_ms = now_ms() - node_start;
-            reporter.emit(PipelineEvent::NodeCompleted {
+            let duration_ms = (ctx.now_ms)() - node_start;
+            ctx.reporter.emit(PipelineEvent::NodeCompleted {
                 node_id: node.id.clone(),
                 duration_ms,
                 files_processed: exec_result.files_processed,
@@ -238,11 +243,11 @@ fn execute_node(
         }
         Err(error) => {
             // Emit NodeFailed, then PipelineFailed, then propagate.
-            reporter.emit(PipelineEvent::NodeFailed {
+            ctx.reporter.emit(PipelineEvent::NodeFailed {
                 node_id: node.id.clone(),
                 error: error.to_string(),
             });
-            reporter.emit(PipelineEvent::PipelineFailed {
+            ctx.reporter.emit(PipelineEvent::PipelineFailed {
                 node_id: node.id.clone(),
                 error: error.to_string(),
             });
@@ -256,16 +261,15 @@ fn execute_node(
 // =============================================================================
 
 /// Execute a primitive node: look up the processor, iterate files, call it.
-fn execute_primitive_node(
+fn execute_primitive_node<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
     node: &PipelineNode,
     files: Vec<PipelineFile>,
-    registry: &NodeRegistry,
-    reporter: &PipelineReporter,
-    pipeline_total_files: usize,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
     // --- Step 1: Resolve the processor from the registry ---
-    let processor = registry
+    let processor = ctx
+        .registry
         .resolve(&node.node_type, &node.params)
         .ok_or_else(|| {
             // Build a descriptive error message including the compound key.
@@ -330,10 +334,10 @@ fn execute_primitive_node(
         // Emit FileProgress at 0% to signal "starting this file".
         // Use `file_offset + file_index` so the UI reports the global position
         // (e.g., "3 of 4") even when a loop container sends one file at a time.
-        reporter.emit(PipelineEvent::FileProgress {
+        ctx.reporter.emit(PipelineEvent::FileProgress {
             node_id: node_id.clone(),
             file_index: file_offset + file_index,
-            total_files: pipeline_total_files,
+            total_files: ctx.pipeline_total_files,
             percent: 0,
             message: format!("Processing {}...", &file_name),
         });
@@ -350,10 +354,10 @@ fn execute_primitive_node(
         let output = processor.process(input, &file_progress_reporter)?;
 
         // Emit FileProgress at 100% to signal "done with this file".
-        reporter.emit(PipelineEvent::FileProgress {
+        ctx.reporter.emit(PipelineEvent::FileProgress {
             node_id: node_id.clone(),
             file_index: file_offset + file_index,
-            total_files: pipeline_total_files,
+            total_files: ctx.pipeline_total_files,
             percent: 100,
             message: format!("Completed {}", &file_name),
         });
@@ -387,14 +391,11 @@ fn execute_primitive_node(
 /// - `loop` — run children sub-pipeline once PER file (each iteration gets one file)
 /// - `group` — run children sub-pipeline once on the FULL batch
 /// - `parallel` — same as group for now (concurrent execution is future work)
-fn execute_container_node(
+fn execute_container_node<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
     node: &PipelineNode,
     files: Vec<PipelineFile>,
-    registry: &NodeRegistry,
-    reporter: &PipelineReporter,
-    pipeline_total_files: usize,
     file_offset: usize,
-    now_ms: &(impl Fn() -> u64 + Copy),
 ) -> Result<NodeExecutionResult, BntoError> {
     // Get children, defaulting to empty if none (passthrough).
     let children = match &node.children {
@@ -433,13 +434,10 @@ fn execute_container_node(
             for (i, file) in files.into_iter().enumerate() {
                 let single_file_batch = vec![file];
                 let result = execute_sub_pipeline(
+                    ctx,
                     &sub_definition,
                     single_file_batch,
-                    registry,
-                    reporter,
-                    pipeline_total_files,
                     file_offset + i, // each iteration is one file further
-                    now_ms,
                 )?;
                 total_processed += result.files_processed;
                 all_output_files.extend(result.output_files);
@@ -455,15 +453,7 @@ fn execute_container_node(
         // "parallel" is the same as "group" for now — concurrent execution
         // is future work.
         "group" | "parallel" => {
-            let result = execute_sub_pipeline(
-                &sub_definition,
-                files,
-                registry,
-                reporter,
-                pipeline_total_files,
-                file_offset,
-                now_ms,
-            )?;
+            let result = execute_sub_pipeline(ctx, &sub_definition, files, file_offset)?;
             Ok(NodeExecutionResult {
                 files_processed: result.files_processed,
                 output_files: result.output_files,
@@ -489,14 +479,11 @@ fn execute_container_node(
 /// This is essentially `execute_pipeline` but without the top-level
 /// PipelineStarted/PipelineCompleted events (those belong to the
 /// outer pipeline, not each container's children).
-fn execute_sub_pipeline(
+fn execute_sub_pipeline<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
     definition: &PipelineDefinition,
     files: Vec<PipelineFile>,
-    registry: &NodeRegistry,
-    reporter: &PipelineReporter,
-    pipeline_total_files: usize,
     file_offset: usize,
-    now_ms: &(impl Fn() -> u64 + Copy),
 ) -> Result<NodeExecutionResult, BntoError> {
     // Filter out I/O nodes from children too.
     let processing_nodes: Vec<&PipelineNode> = definition
@@ -511,15 +498,12 @@ fn execute_sub_pipeline(
 
     for (node_index, node) in processing_nodes.iter().enumerate() {
         let result = execute_node(
+            ctx,
             node,
             current_files,
-            registry,
-            reporter,
             node_index,
             total_nodes,
-            pipeline_total_files,
             file_offset,
-            now_ms,
         )?;
         total_files_processed += result.files_processed;
         current_files = result.output_files;
