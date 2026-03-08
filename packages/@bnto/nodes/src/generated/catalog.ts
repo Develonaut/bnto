@@ -190,6 +190,11 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
 // Processors — 6 implemented operations
 // =============================================================================
 
+/** Condition for visibleWhen/requiredWhen rules — single or OR array. */
+export type ParamCondition =
+  | { readonly param: string; readonly equals: string }
+  | ReadonlyArray<{ readonly param: string; readonly equals: string }>;
+
 export type ParamType = "number" | "string" | "boolean" | "enum" | "object";
 
 export interface ProcessorParam {
@@ -204,6 +209,10 @@ export interface ProcessorParam {
     readonly max?: number;
     readonly required?: boolean;
   };
+  readonly placeholder?: string;
+  readonly hidden?: boolean;
+  readonly visibleWhen?: ParamCondition;
+  readonly requiredWhen?: ParamCondition;
 }
 
 export interface ProcessorDef {
@@ -232,12 +241,14 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         label: "Find",
         description: "Text or regex pattern to search for in the filename",
         type: "string" as const,
+        visibleWhen: { param: "operation", equals: "rename" },
       },
       {
         name: "replace",
         label: "Replace",
         description: "Replacement text (used with Find)",
         type: "string" as const,
+        visibleWhen: { param: "operation", equals: "rename" },
       },
       {
         name: "case",
@@ -245,18 +256,21 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Transform the filename to a specific case",
         type: "enum" as const,
         options: ["lower", "upper", "title"] as const,
+        visibleWhen: { param: "operation", equals: "rename" },
       },
       {
         name: "prefix",
         label: "Prefix",
         description: "Text to prepend to the filename",
         type: "string" as const,
+        visibleWhen: { param: "operation", equals: "rename" },
       },
       {
         name: "suffix",
         label: "Suffix",
         description: "Text to append before the file extension",
         type: "string" as const,
+        visibleWhen: { param: "operation", equals: "rename" },
       },
       {
         name: "pattern",
@@ -264,6 +278,8 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description:
           "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
         type: "string" as const,
+        placeholder: "{{name}}-compressed.{{ext}}",
+        visibleWhen: { param: "operation", equals: "rename" },
       },
     ],
   },
@@ -302,6 +318,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         type: "enum" as const,
         options: ["jpeg", "png", "webp"] as const,
         constraints: { required: true },
+        visibleWhen: { param: "operation", equals: "convert" },
       },
       {
         name: "quality",
@@ -328,6 +345,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Target width in pixels",
         type: "number" as const,
         constraints: { min: 1, required: false },
+        visibleWhen: { param: "operation", equals: "resize" },
       },
       {
         name: "height",
@@ -335,6 +353,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Target height in pixels",
         type: "number" as const,
         constraints: { min: 1, required: false },
+        visibleWhen: { param: "operation", equals: "resize" },
       },
       {
         name: "maintainAspect",
@@ -342,6 +361,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Keep the original width-to-height ratio when resizing",
         type: "boolean" as const,
         default: true,
+        visibleWhen: { param: "operation", equals: "resize" },
       },
       {
         name: "quality",
@@ -368,6 +388,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Remove leading and trailing whitespace from every cell",
         type: "boolean" as const,
         default: true,
+        visibleWhen: { param: "operation", equals: "clean" },
       },
       {
         name: "removeEmptyRows",
@@ -375,6 +396,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Skip rows where every cell is blank",
         type: "boolean" as const,
         default: true,
+        visibleWhen: { param: "operation", equals: "clean" },
       },
       {
         name: "removeDuplicates",
@@ -382,6 +404,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Remove duplicate rows, keeping the first occurrence",
         type: "boolean" as const,
         default: true,
+        visibleWhen: { param: "operation", equals: "clean" },
       },
     ],
   },
@@ -399,6 +422,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         label: "Column Mapping",
         description: 'Map of old column names to new names (e.g., {"Name": "full_name"})',
         type: "object" as const,
+        visibleWhen: { param: "operation", equals: "rename" },
       },
     ],
   },

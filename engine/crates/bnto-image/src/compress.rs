@@ -351,6 +351,7 @@ impl NodeProcessor for CompressImages {
                     max: Some(100.0),
                     required: false,
                 }),
+                ..Default::default()
             }],
         }
     }

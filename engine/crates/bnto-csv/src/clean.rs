@@ -121,7 +121,11 @@ impl NodeProcessor for CleanCsv {
                         .to_string(),
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::json!(true)),
-                    constraints: None,
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "clean".to_string(),
+                    })),
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "removeEmptyRows".to_string(),
@@ -129,7 +133,11 @@ impl NodeProcessor for CleanCsv {
                     description: "Skip rows where every cell is blank".to_string(),
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::json!(true)),
-                    constraints: None,
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "clean".to_string(),
+                    })),
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "removeDuplicates".to_string(),
@@ -137,7 +145,11 @@ impl NodeProcessor for CleanCsv {
                     description: "Remove duplicate rows, keeping the first occurrence".to_string(),
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::json!(true)),
-                    constraints: None,
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "clean".to_string(),
+                    })),
+                    ..Default::default()
                 },
             ],
         }
