@@ -46,3 +46,13 @@ export {
   renameFiles,
   resizeImages,
 };
+
+// Re-export reusable sub-recipe building blocks
+export {
+  batchCompress,
+  batchConvert,
+  batchRename,
+  batchResize,
+  columnRenamer,
+  csvCleaner,
+} from "./recipes/index";

@@ -1,11 +1,8 @@
-/**
- * Rename Files recipe — batch rename files with patterns.
- *
- * Go source: engine/pkg/menu/recipes/rename-files.json
- */
+/** Rename Files recipe — batch rename files with patterns. */
 
-import type { Recipe } from "../recipe";
-import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import type { Recipe } from "../../recipe";
+import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
+import { batchRename } from "../primitives/batchRename";
 
 export const renameFiles: Recipe = {
   slug: "rename-files",
@@ -29,7 +26,7 @@ export const renameFiles: Recipe = {
     name: "Rename Files",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Lists files and renames each by adding a prefix.",
+      description: "Accepts files and renames each one using a reusable batch rename sub-recipe.",
     },
     parameters: {},
     inputPorts: [],
@@ -52,38 +49,7 @@ export const renameFiles: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      {
-        id: "rename-loop",
-        type: "loop",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Rename Each File",
-        position: { x: 300, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "forEach",
-          items: '{{index . "input" "files"}}',
-        },
-        inputPorts: [{ id: "in-1", name: "items" }],
-        outputPorts: [],
-        nodes: [
-          {
-            id: "rename-file",
-            type: "file-system",
-            version: CURRENT_FORMAT_VERSION,
-            name: "Rename File",
-            position: { x: 100, y: 100 },
-            metadata: {},
-            parameters: {
-              operation: "move",
-              source: "{{.item}}",
-              dest: "{{.OUTPUT_DIR}}/renamed-{{basename .item}}",
-            },
-            inputPorts: [],
-            outputPorts: [],
-          },
-        ],
-        edges: [],
-      },
+      batchRename,
       {
         id: "output",
         type: "output",
@@ -102,8 +68,8 @@ export const renameFiles: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "rename-loop" },
-      { id: "e2", source: "rename-loop", target: "output" },
+      { id: "e1", source: "input", target: "batch-rename" },
+      { id: "e2", source: "batch-rename", target: "output" },
     ],
   },
 };

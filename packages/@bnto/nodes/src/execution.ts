@@ -1,8 +1,4 @@
-/**
- * Execution context types — data passed between nodes during recipe runs.
- *
- * Go source: engine/pkg/node/executable.go
- */
+/** Execution context types — data passed between nodes during recipe runs. */
 
 /**
  * Data passed between nodes during recipe execution.

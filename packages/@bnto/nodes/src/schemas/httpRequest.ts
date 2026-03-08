@@ -1,8 +1,7 @@
 /**
  * HTTP Request node schema — parameters for making HTTP requests.
  *
- * Go source: engine/pkg/node/library/http/http.go
- * Validator: engine/pkg/validator/validators.go → validateHTTPRequest
+ * Server-only — not available in browser execution.
  */
 
 import { z } from "zod";

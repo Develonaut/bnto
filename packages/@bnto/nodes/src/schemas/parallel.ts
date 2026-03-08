@@ -1,8 +1,4 @@
-/**
- * Parallel node schema — parameters for concurrent task execution.
- *
- * Go source: engine/pkg/node/library/parallel/parallel.go
- */
+/** Parallel node schema — parameters for concurrent task execution. */
 
 import { z } from "zod";
 import type { NodeSchemaDefinition } from "./types";
