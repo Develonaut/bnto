@@ -1,8 +1,8 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { Menu, MenuTrigger } from "@bnto/ui";
-import { useEditorPanels } from "../../hooks/useEditorPanels";
+import { Menu } from "@bnto/ui";
+import { usePanel } from "../../hooks/usePanel";
 
 /**
  * NodePaletteMenu root — controlled by editor store state.
@@ -20,20 +20,13 @@ function NodePaletteMenuRoot({
   children,
   ...props
 }: Omit<ComponentProps<typeof Menu>, "open" | "onOpenChange">) {
-  const { paletteOpen, openPalette, closePalette } = useEditorPanels();
+  const { isOpen, open, close } = usePanel("palette");
 
   return (
-    <Menu
-      open={paletteOpen}
-      onOpenChange={(open) => (open ? openPalette() : closePalette())}
-      {...props}
-    >
+    <Menu open={isOpen} onOpenChange={(v) => (v ? open() : close())} {...props}>
       {children}
     </Menu>
   );
 }
 
-/** Pass-through to MenuTrigger. */
-const NodePaletteMenuTrigger = MenuTrigger;
-
-export { NodePaletteMenuRoot, NodePaletteMenuTrigger };
+export { NodePaletteMenuRoot };

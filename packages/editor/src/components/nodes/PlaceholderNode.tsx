@@ -3,7 +3,7 @@
 import { memo } from "react";
 import { Button, Card } from "@bnto/ui";
 import { Plus } from "lucide-react";
-import { useEditorPanels } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/usePanel";
 import { CELL } from "../../adapters/bentoSlots";
 
 /**
@@ -20,7 +20,7 @@ import { CELL } from "../../adapters/bentoSlots";
  */
 
 const PlaceholderNode = memo(function PlaceholderNode() {
-  const { openPalette } = useEditorPanels();
+  const { open: openPalette } = usePanel("palette");
 
   return (
     <Card

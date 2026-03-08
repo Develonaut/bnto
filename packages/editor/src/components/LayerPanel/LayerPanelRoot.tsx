@@ -17,7 +17,7 @@ import {
 } from "@bnto/ui";
 import { useEditorExport } from "../../hooks/useEditorExport";
 import { useEditorStore } from "../../hooks/useEditorStore";
-import { useEditorPanels } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/usePanel";
 import { FileMenu, FileMenuItem, FileMenuSeparator } from "./FileMenu";
 import { NodeList } from "./NodeList";
 import { useAutoSelect } from "../../hooks/useAutoSelect";
@@ -39,7 +39,7 @@ function LayerPanelRoot({ footer }: LayerPanelProps) {
   const nodes = useEditorStore((s) => s.nodes);
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const name = useEditorStore((s) => s.recipeMetadata.name ?? "Untitled");
-  const { layersOpen } = useEditorPanels();
+  const { isOpen: layersOpen } = usePanel("layers");
   const { download, canExport } = useEditorExport();
   const { handleSelectNode } = useAutoSelect({ selectedNodeId });
 

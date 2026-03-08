@@ -16,7 +16,7 @@ import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorStoreApi } from "../../hooks/useEditorStoreApi";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { useEditorActions } from "../../hooks/useEditorActions";
-import { useEditorPanels } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/usePanel";
 import { SchemaForm } from "../SchemaForm";
 import { SurfacedParamsSection } from "./SurfacedParamsSection";
 import { updateSurfacedParam } from "../../actions/updateSurfacedParam";
@@ -38,7 +38,7 @@ function ConfigPanelRoot() {
   const prevSelectedNodeId = usePrevious(selectedNodeId);
   const configNodeId = selectedNodeId ?? prevSelectedNodeId ?? null;
 
-  const { configOpen } = useEditorPanels();
+  const { isOpen: configOpen } = usePanel("config");
   const { node, config, typeInfo, schemaDef, visibleParams, surfacedGroups } =
     useEditorNode(configNodeId);
   const { updateParams } = useEditorActions();
