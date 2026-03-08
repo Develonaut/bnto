@@ -35,6 +35,11 @@ pub mod errors;
 /// Powers per-node status highlighting in the editor, progress bars, and error display.
 pub mod events;
 
+/// Definition JSON Schema — validates `.bnto.json` files.
+/// Generates a JSON Schema (Draft 2020-12) describing the Definition structure
+/// so any consumer can validate recipe files without reimplementing TS types.
+pub mod definition_schema;
+
 /// Node metadata types — self-describing processor definitions.
 /// Each processor declares its name, category, parameters, accepted MIME types,
 /// and whether it runs in the browser. Powers the `node_catalog()` WASM export.
@@ -64,12 +69,13 @@ pub mod registry;
 // These `pub use` statements let users import directly from the crate root.
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
 // `use bnto_core::BntoError`. Convenience!
+pub use definition_schema::definition_json_schema;
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};
 pub use executor::execute_pipeline;
 pub use metadata::{
-    Constraints, NodeCategory, NodeMetadata, NodeTypeInfo, ParameterDef, ParameterType,
-    all_node_types,
+    Constraints, NodeCategory, NodeMetadata, NodeTypeInfo, ParamCondition, ParamConditionEntry,
+    ParameterDef, ParameterType, all_node_types,
 };
 pub use pipeline::{
     PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode, PipelineResult,

@@ -367,24 +367,32 @@ impl NodeProcessor for ResizeImages {
                     label: "Width".to_string(),
                     description: "Target width in pixels".to_string(),
                     param_type: ParameterType::Number,
-                    default: None,
                     constraints: Some(Constraints {
                         min: Some(1.0),
                         max: None,
                         required: false,
                     }),
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "resize".to_string(),
+                    })),
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "height".to_string(),
                     label: "Height".to_string(),
                     description: "Target height in pixels".to_string(),
                     param_type: ParameterType::Number,
-                    default: None,
                     constraints: Some(Constraints {
                         min: Some(1.0),
                         max: None,
                         required: false,
                     }),
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "resize".to_string(),
+                    })),
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "maintainAspect".to_string(),
@@ -393,7 +401,11 @@ impl NodeProcessor for ResizeImages {
                         .to_string(),
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::json!(true)),
-                    constraints: None,
+                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                        param: "operation".to_string(),
+                        equals: "resize".to_string(),
+                    })),
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "quality".to_string(),
@@ -406,6 +418,7 @@ impl NodeProcessor for ResizeImages {
                         max: Some(100.0),
                         required: false,
                     }),
+                    ..Default::default()
                 },
             ],
         }
