@@ -3,7 +3,7 @@
 import { memo } from "react";
 import { Button, Card } from "@bnto/ui";
 import { Plus } from "lucide-react";
-import { usePanel } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/usePanel";
 import { CELL } from "../../adapters/bentoSlots";
 
 /**

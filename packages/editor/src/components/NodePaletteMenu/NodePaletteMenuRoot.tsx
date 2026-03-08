@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from "react";
 import { Menu, MenuTrigger } from "@bnto/ui";
-import { usePanel } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/usePanel";
 
 /**
  * NodePaletteMenu root — controlled by editor store state.

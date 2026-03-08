@@ -17,7 +17,7 @@ import {
 } from "@bnto/ui";
 import { useEditorExport } from "../../hooks/useEditorExport";
 import { useEditorStore } from "../../hooks/useEditorStore";
-import { usePanel } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/usePanel";
 import { FileMenu, FileMenuItem, FileMenuSeparator } from "./FileMenu";
 import { NodeList } from "./NodeList";
 import { useAutoSelect } from "../../hooks/useAutoSelect";
