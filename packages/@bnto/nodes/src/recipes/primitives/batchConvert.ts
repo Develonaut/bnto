@@ -12,6 +12,7 @@ export const batchConvert: Definition = {
   position: { x: 250, y: 100 },
   metadata: {
     description: "Reusable sub-recipe: loops over files and converts each to the target format.",
+    customData: { displayName: "Convert Image" },
   },
   parameters: {},
   inputPorts: [{ id: "in-1", name: "files" }],

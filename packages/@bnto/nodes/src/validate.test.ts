@@ -237,6 +237,47 @@ describe("validateDefinition — edit-fields", () => {
   });
 });
 
+describe("validateDefinition — container types via isContainerNodeType", () => {
+  it("validates children for all container types (group, loop, parallel)", () => {
+    for (const containerType of ["group", "loop", "parallel"]) {
+      const params =
+        containerType === "loop"
+          ? { mode: "forEach" }
+          : containerType === "parallel"
+            ? { tasks: [{ a: 1 }] }
+            : {};
+
+      const def = validDef({
+        type: containerType,
+        parameters: params,
+        nodes: [
+          validDef({ id: "" }), // invalid child — missing id
+        ],
+        edges: [],
+      });
+      const errors = validateDefinition(def);
+      expect(
+        errors.some((e) => e.field === "id"),
+        `${containerType} should validate children recursively`,
+      ).toBe(true);
+    }
+  });
+
+  it("does NOT validate children for non-container types", () => {
+    const def = validDef({
+      type: "image",
+      parameters: { operation: "compress" },
+      nodes: [
+        validDef({ id: "" }), // invalid child — but image is not a container
+      ],
+      edges: [],
+    });
+    const errors = validateDefinition(def);
+    // Should have no id-missing errors — non-container nodes don't recurse
+    expect(errors.some((e) => e.field === "id")).toBe(false);
+  });
+});
+
 describe("validateDefinition — minimal validation types", () => {
   it("group with no children passes", () => {
     const def = validDef({ type: "group" });

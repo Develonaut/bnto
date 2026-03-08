@@ -1,12 +1,17 @@
 /**
  * Editor store types.
  *
- * The store owns nodes, edges, and configs (controlled mode).
- * RF receives these as props — the store is the single source of truth.
+ * The store holds two complementary views of the recipe:
+ * - **Graph** (nodes, edges, configs) — flat RF working state for visual editing
+ * - **Definition** — the nested tree the engine takes, with container children
+ *
+ * There is no overlap. Top-level params live in the graph (configs).
+ * Nested container children live in the definition. On export,
+ * rfNodesToDefinition() merges both into a complete Definition.
  */
 
 import type { Edge, NodeChange, EdgeChange } from "@xyflow/react";
-import type { ValidationError } from "@bnto/nodes";
+import type { Definition, ValidationError } from "@bnto/nodes";
 import type { BentoNode, NodeConfig, NodeConfigs } from "../adapters/types";
 
 // ---------------------------------------------------------------------------
@@ -42,10 +47,13 @@ interface EditorSnapshot {
 // ---------------------------------------------------------------------------
 
 interface EditorState {
-  // --- Graph state (store owns, RF receives as props) ---
+  // --- Graph: flat RF working state (store owns, RF renders as controlled props) ---
   nodes: BentoNode[];
   edges: Edge[];
   configs: NodeConfigs;
+
+  // --- Definition: nested tree the engine takes (container children live here) ---
+  definition: Definition | null;
 
   // --- Metadata ---
   slug: string | null;

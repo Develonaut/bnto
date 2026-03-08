@@ -12,6 +12,7 @@ export const columnRenamer: Definition = {
   position: { x: 250, y: 100 },
   metadata: {
     description: "Reusable sub-recipe: renames column headers in a CSV file.",
+    customData: { displayName: "Rename Columns" },
   },
   parameters: {},
   inputPorts: [{ id: "in-1", name: "files" }],

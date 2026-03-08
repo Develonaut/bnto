@@ -213,6 +213,8 @@ export interface ProcessorParam {
   readonly hidden?: boolean;
   readonly visibleWhen?: ParamCondition;
   readonly requiredWhen?: ParamCondition;
+  /** Whether this param is eligible for surfacing in container config panels. Defaults to true. */
+  readonly surfaceable?: boolean;
 }
 
 export interface ProcessorDef {

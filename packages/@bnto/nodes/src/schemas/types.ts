@@ -47,6 +47,14 @@ export interface NodeParamMeta {
    * handles implicitly via node placement.
    */
   hidden?: boolean;
+
+  /**
+   * Whether this parameter is eligible for surfacing in container config panels.
+   * Defaults to `true` — most params are user-facing. Set to `false` for
+   * internal wiring parameters (loop items, template expressions) that should
+   * never appear in surfaced views.
+   */
+  surfaceable?: boolean;
 }
 
 /**

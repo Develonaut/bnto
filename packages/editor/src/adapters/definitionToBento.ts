@@ -27,16 +27,20 @@ function definitionToBento(definition: Definition): BentoLayout {
     const info = NODE_TYPE_INFO[nodeType];
     const variant = info ? (CATEGORY_VARIANT[info.category] ?? "muted") : "muted";
 
+    const displayName = node.metadata?.customData?.displayName;
     configs[node.id] = {
       nodeType: node.type,
       name: node.name,
+      ...(displayName ? { displayName } : {}),
       parameters: node.parameters,
     };
 
     const isIo = isIoNodeType(node.type);
-    const label = isIo ? (info?.label ?? node.type) : node.name || (info?.label ?? node.type);
+    const label = isIo
+      ? (info?.label ?? node.type)
+      : displayName || node.name || (info?.label ?? node.type);
     const icon = getNodeIcon(nodeType, node.parameters);
-    const sublabel = getNodeSublabel(nodeType, node.parameters);
+    const sublabel = getNodeSublabel(nodeType, node.parameters, node.metadata);
 
     return {
       id: node.id,

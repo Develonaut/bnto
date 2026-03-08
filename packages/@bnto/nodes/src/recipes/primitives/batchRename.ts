@@ -12,6 +12,7 @@ export const batchRename: Definition = {
   position: { x: 250, y: 100 },
   metadata: {
     description: "Reusable sub-recipe: loops over files and renames each one.",
+    customData: { displayName: "Rename Files" },
   },
   parameters: {},
   inputPorts: [{ id: "in-1", name: "files" }],
