@@ -37,8 +37,8 @@
 use crate::errors::BntoError;
 use crate::events::{PipelineEvent, PipelineReporter};
 use crate::pipeline::{
-    is_container_node, is_io_node, PipelineDefinition, PipelineFile, PipelineFileResult,
-    PipelineNode, PipelineResult,
+    PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode, PipelineResult,
+    is_container_node, is_io_node,
 };
 use crate::processor::NodeInput;
 use crate::progress::ProgressReporter;
@@ -412,8 +412,7 @@ fn execute_container_node(
         // "parallel" is the same as "group" for now — concurrent execution
         // is future work.
         "group" | "parallel" => {
-            let result =
-                execute_sub_pipeline(&sub_definition, files, registry, reporter, now_ms)?;
+            let result = execute_sub_pipeline(&sub_definition, files, registry, reporter, now_ms)?;
             Ok(NodeExecutionResult {
                 files_processed: result.files_processed,
                 output_files: result.output_files,
@@ -875,10 +874,7 @@ mod tests {
         let registry = mock_registry();
         let reporter = PipelineReporter::new_noop();
 
-        let files = vec![
-            make_file("a.txt", b"aaa"),
-            make_file("b.txt", b"bbb"),
-        ];
+        let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
         let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
         // Each file processed individually through the loop.
@@ -906,10 +902,7 @@ mod tests {
         let registry = mock_registry();
         let reporter = PipelineReporter::new_noop();
 
-        let files = vec![
-            make_file("a.txt", b"aaa"),
-            make_file("b.txt", b"bbb"),
-        ];
+        let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
         let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
         assert_eq!(result.files.len(), 2);
@@ -941,10 +934,7 @@ mod tests {
         let registry = mock_registry();
         let reporter = PipelineReporter::new_noop();
 
-        let files = vec![
-            make_file("a.txt", b"aaa"),
-            make_file("b.txt", b"bbb"),
-        ];
+        let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
         let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
         assert_eq!(result.files.len(), 2);
@@ -1003,7 +993,11 @@ mod tests {
         // 4. FileProgress (100%)
         // 5. NodeCompleted
         // 6. PipelineCompleted
-        assert!(events.len() >= 4, "Expected at least 4 events, got {}", events.len());
+        assert!(
+            events.len() >= 4,
+            "Expected at least 4 events, got {}",
+            events.len()
+        );
 
         // First event is PipelineStarted.
         assert!(matches!(events[0], PipelineEvent::PipelineStarted { .. }));
@@ -1048,13 +1042,23 @@ mod tests {
         assert_eq!(node_started.len(), 2, "Should have 2 NodeStarted events");
 
         // First NodeStarted should be for n1.
-        if let PipelineEvent::NodeStarted { node_id, node_index, .. } = &node_started[0] {
+        if let PipelineEvent::NodeStarted {
+            node_id,
+            node_index,
+            ..
+        } = &node_started[0]
+        {
             assert_eq!(node_id, "n1");
             assert_eq!(*node_index, 0);
         }
 
         // Second NodeStarted should be for n2.
-        if let PipelineEvent::NodeStarted { node_id, node_index, .. } = &node_started[1] {
+        if let PipelineEvent::NodeStarted {
+            node_id,
+            node_index,
+            ..
+        } = &node_started[1]
+        {
             assert_eq!(node_id, "n2");
             assert_eq!(*node_index, 1);
         }
@@ -1158,7 +1162,9 @@ mod tests {
         let events = recorder.events();
 
         // Should have NodeFailed and PipelineFailed events.
-        let has_node_failed = events.iter().any(|e| matches!(e, PipelineEvent::NodeFailed { .. }));
+        let has_node_failed = events
+            .iter()
+            .any(|e| matches!(e, PipelineEvent::NodeFailed { .. }));
         let has_pipeline_failed = events
             .iter()
             .any(|e| matches!(e, PipelineEvent::PipelineFailed { .. }));
@@ -1205,9 +1211,9 @@ mod tests {
         }
 
         // n3 should never have a NodeStarted event.
-        let n3_started = events.iter().any(|e| {
-            matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "n3")
-        });
+        let n3_started = events
+            .iter()
+            .any(|e| matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "n3"));
         assert!(!n3_started, "n3 should never start");
     }
 
@@ -1243,10 +1249,18 @@ mod tests {
 
         // Assert the exact sequence: PipelineStarted → NodeStarted →
         // FileProgress(0%) → FileProgress(100%) → NodeCompleted → PipelineCompleted
-        assert_eq!(events.len(), 6, "Expected exactly 6 events for 1 file, 1 node");
+        assert_eq!(
+            events.len(),
+            6,
+            "Expected exactly 6 events for 1 file, 1 node"
+        );
 
         // Event 0: PipelineStarted with correct counts.
-        if let PipelineEvent::PipelineStarted { total_nodes, total_files } = &events[0] {
+        if let PipelineEvent::PipelineStarted {
+            total_nodes,
+            total_files,
+        } = &events[0]
+        {
             assert_eq!(*total_nodes, 1, "1 processing node (I/O excluded)");
             assert_eq!(*total_files, 1);
         } else {
@@ -1254,7 +1268,13 @@ mod tests {
         }
 
         // Event 1: NodeStarted with correct ID and index.
-        if let PipelineEvent::NodeStarted { node_id, node_index, total_nodes, node_type } = &events[1] {
+        if let PipelineEvent::NodeStarted {
+            node_id,
+            node_index,
+            total_nodes,
+            node_type,
+        } = &events[1]
+        {
             assert_eq!(node_id, "proc");
             assert_eq!(*node_index, 0);
             assert_eq!(*total_nodes, 1);
@@ -1264,26 +1284,49 @@ mod tests {
         }
 
         // Event 2: FileProgress at 0% (processing starts).
-        if let PipelineEvent::FileProgress { node_id, file_index, total_files, percent, message } = &events[2] {
+        if let PipelineEvent::FileProgress {
+            node_id,
+            file_index,
+            total_files,
+            percent,
+            message,
+        } = &events[2]
+        {
             assert_eq!(node_id, "proc");
             assert_eq!(*file_index, 0);
             assert_eq!(*total_files, 1);
             assert_eq!(*percent, 0);
-            assert!(message.contains("photo.jpg"), "Message should include filename: {}", message);
+            assert!(
+                message.contains("photo.jpg"),
+                "Message should include filename: {}",
+                message
+            );
         } else {
             panic!("Event 2 should be FileProgress(0%), got {:?}", events[2]);
         }
 
         // Event 3: FileProgress at 100% (processing done).
-        if let PipelineEvent::FileProgress { percent, message, .. } = &events[3] {
+        if let PipelineEvent::FileProgress {
+            percent, message, ..
+        } = &events[3]
+        {
             assert_eq!(*percent, 100);
-            assert!(message.contains("photo.jpg"), "Message should include filename: {}", message);
+            assert!(
+                message.contains("photo.jpg"),
+                "Message should include filename: {}",
+                message
+            );
         } else {
             panic!("Event 3 should be FileProgress(100%), got {:?}", events[3]);
         }
 
         // Event 4: NodeCompleted with correct file count and duration.
-        if let PipelineEvent::NodeCompleted { node_id, files_processed, duration_ms } = &events[4] {
+        if let PipelineEvent::NodeCompleted {
+            node_id,
+            files_processed,
+            duration_ms,
+        } = &events[4]
+        {
             assert_eq!(node_id, "proc");
             assert_eq!(*files_processed, 1);
             // Duration should be non-negative (we use fake_now so it's 0).
@@ -1293,7 +1336,11 @@ mod tests {
         }
 
         // Event 5: PipelineCompleted with correct totals.
-        if let PipelineEvent::PipelineCompleted { total_files_processed, duration_ms } = &events[5] {
+        if let PipelineEvent::PipelineCompleted {
+            total_files_processed,
+            duration_ms,
+        } = &events[5]
+        {
             assert_eq!(*total_files_processed, 1);
             assert_eq!(*duration_ms, 0);
         } else {
@@ -1335,7 +1382,11 @@ mod tests {
             .collect();
 
         // 3 files × 2 progress events each (0% + 100%) = 6 FileProgress events.
-        assert_eq!(progress_events.len(), 6, "3 files × (0% + 100%) = 6 progress events");
+        assert_eq!(
+            progress_events.len(),
+            6,
+            "3 files × (0% + 100%) = 6 progress events"
+        );
 
         // Verify the file_index and total_files are correct for each event.
         // Events should come in pairs: (file 0, 0%), (file 0, 100%),
@@ -1349,7 +1400,8 @@ mod tests {
             (2, 100, "c.jpg"),
         ];
 
-        for (i, (expected_idx, expected_pct, expected_name)) in expected_sequence.iter().enumerate() {
+        for (i, (expected_idx, expected_pct, expected_name)) in expected_sequence.iter().enumerate()
+        {
             if let PipelineEvent::FileProgress {
                 file_index,
                 total_files,
@@ -1372,7 +1424,9 @@ mod tests {
                 assert!(
                     message.contains(expected_name),
                     "Event {} message should contain '{}': {}",
-                    i, expected_name, message
+                    i,
+                    expected_name,
+                    message
                 );
             } else {
                 panic!("Expected FileProgress at index {}", i);
@@ -1380,7 +1434,11 @@ mod tests {
         }
 
         // PipelineCompleted should report total files processed = 3.
-        if let PipelineEvent::PipelineCompleted { total_files_processed, .. } = events.last().unwrap() {
+        if let PipelineEvent::PipelineCompleted {
+            total_files_processed,
+            ..
+        } = events.last().unwrap()
+        {
             assert_eq!(*total_files_processed, 3);
         } else {
             panic!("Last event should be PipelineCompleted");
@@ -1405,10 +1463,7 @@ mod tests {
         let recorder = RecordingReporter::new();
         let reporter = recorder.reporter();
 
-        let files = vec![
-            make_file("x.txt", b"hello"),
-            make_file("y.txt", b"world"),
-        ];
+        let files = vec![make_file("x.txt", b"hello"), make_file("y.txt", b"world")];
         execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
         let events = recorder.events();
@@ -1424,12 +1479,23 @@ mod tests {
             .collect();
 
         // Each node processes 2 files → 2 × (0% + 100%) = 4 events per node.
-        assert_eq!(n1_progress.len(), 4, "n1 should emit 4 progress events (2 files × 2)");
-        assert_eq!(n2_progress.len(), 4, "n2 should emit 4 progress events (2 files × 2)");
+        assert_eq!(
+            n1_progress.len(),
+            4,
+            "n1 should emit 4 progress events (2 files × 2)"
+        );
+        assert_eq!(
+            n2_progress.len(),
+            4,
+            "n2 should emit 4 progress events (2 files × 2)"
+        );
 
         // Verify file_index resets to 0 for the second node.
         if let PipelineEvent::FileProgress { file_index, .. } = n2_progress[0] {
-            assert_eq!(*file_index, 0, "file_index should reset to 0 for n2's first file");
+            assert_eq!(
+                *file_index, 0,
+                "file_index should reset to 0 for n2's first file"
+            );
         }
 
         // Verify NodeCompleted reports correct file counts for each node.
@@ -1440,14 +1506,24 @@ mod tests {
         assert_eq!(completed.len(), 2);
 
         for node_completed in &completed {
-            if let PipelineEvent::NodeCompleted { files_processed, .. } = node_completed {
+            if let PipelineEvent::NodeCompleted {
+                files_processed, ..
+            } = node_completed
+            {
                 assert_eq!(*files_processed, 2, "Each node processed 2 files");
             }
         }
 
         // PipelineCompleted should report total_files_processed = 4 (2 files × 2 nodes).
-        if let PipelineEvent::PipelineCompleted { total_files_processed, .. } = events.last().unwrap() {
-            assert_eq!(*total_files_processed, 4, "2 files × 2 nodes = 4 total processed");
+        if let PipelineEvent::PipelineCompleted {
+            total_files_processed,
+            ..
+        } = events.last().unwrap()
+        {
+            assert_eq!(
+                *total_files_processed, 4,
+                "2 files × 2 nodes = 4 total processed"
+            );
         }
     }
 
@@ -1481,10 +1557,17 @@ mod tests {
         // Find NodeCompleted for "proc".
         let completed = events
             .iter()
-            .find(|e| matches!(e, PipelineEvent::NodeCompleted { node_id, .. } if node_id == "proc"))
+            .find(
+                |e| matches!(e, PipelineEvent::NodeCompleted { node_id, .. } if node_id == "proc"),
+            )
             .expect("Should have NodeCompleted for 'proc'");
 
-        if let PipelineEvent::NodeCompleted { node_id, files_processed, .. } = completed {
+        if let PipelineEvent::NodeCompleted {
+            node_id,
+            files_processed,
+            ..
+        } = completed
+        {
             assert_eq!(node_id, "proc");
             assert_eq!(*files_processed, 5, "Should report 5 files processed");
         }
@@ -1519,7 +1602,10 @@ mod tests {
             .expect("Should have NodeFailed event");
 
         if let PipelineEvent::NodeFailed { node_id, error } = node_failed {
-            assert_eq!(node_id, "broken", "NodeFailed should reference the failing node");
+            assert_eq!(
+                node_id, "broken",
+                "NodeFailed should reference the failing node"
+            );
             assert!(
                 error.contains("intentional test failure"),
                 "Error message should be descriptive: {}",
@@ -1534,7 +1620,10 @@ mod tests {
             .expect("Should have PipelineFailed event");
 
         if let PipelineEvent::PipelineFailed { node_id, error } = pipeline_failed {
-            assert_eq!(node_id, "broken", "PipelineFailed should reference the failing node");
+            assert_eq!(
+                node_id, "broken",
+                "PipelineFailed should reference the failing node"
+            );
             assert!(!error.is_empty(), "Error message should not be empty");
         }
     }
@@ -1566,10 +1655,7 @@ mod tests {
         let recorder = RecordingReporter::new();
         let reporter = recorder.reporter();
 
-        let files = vec![
-            make_file("a.txt", b"aaa"),
-            make_file("b.txt", b"bbb"),
-        ];
+        let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
         execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
         let events = recorder.events();
@@ -1578,15 +1664,19 @@ mod tests {
         let started: Vec<(&str, &str)> = events
             .iter()
             .filter_map(|e| match e {
-                PipelineEvent::NodeStarted { node_id, node_type, .. } => {
-                    Some((node_id.as_str(), node_type.as_str()))
-                }
+                PipelineEvent::NodeStarted {
+                    node_id, node_type, ..
+                } => Some((node_id.as_str(), node_type.as_str())),
                 _ => None,
             })
             .collect();
 
         // Group starts first, then loop, then leaf (once per file).
-        assert!(started.len() >= 4, "Expected at least 4 NodeStarted: group + loop + 2× leaf, got {}", started.len());
+        assert!(
+            started.len() >= 4,
+            "Expected at least 4 NodeStarted: group + loop + 2× leaf, got {}",
+            started.len()
+        );
         assert_eq!(started[0], ("group1", "group"), "Group should start first");
         assert_eq!(started[1], ("loop1", "loop"), "Loop should start second");
         // Leaf starts once per file inside the loop.
@@ -1603,16 +1693,25 @@ mod tests {
             .collect();
 
         // Leaf completes twice (per file), then loop, then group.
-        assert!(completed_ids.len() >= 4, "Expected at least 4 NodeCompleted events");
+        assert!(
+            completed_ids.len() >= 4,
+            "Expected at least 4 NodeCompleted events"
+        );
         assert_eq!(completed_ids[0], "leaf", "First leaf completes");
         assert_eq!(completed_ids[1], "leaf", "Second leaf completes");
 
         // FileProgress events should reference the leaf node (the processor).
         let leaf_progress: Vec<&PipelineEvent> = events
             .iter()
-            .filter(|e| matches!(e, PipelineEvent::FileProgress { node_id, .. } if node_id == "leaf"))
+            .filter(
+                |e| matches!(e, PipelineEvent::FileProgress { node_id, .. } if node_id == "leaf"),
+            )
             .collect();
-        assert_eq!(leaf_progress.len(), 4, "2 files × (0% + 100%) = 4 leaf progress events");
+        assert_eq!(
+            leaf_progress.len(),
+            4,
+            "2 files × (0% + 100%) = 4 leaf progress events"
+        );
     }
 
     #[test]
@@ -1640,7 +1739,11 @@ mod tests {
         let events = recorder.events();
 
         // PipelineStarted should report 3 nodes (not 5).
-        if let PipelineEvent::PipelineStarted { total_nodes, total_files } = &events[0] {
+        if let PipelineEvent::PipelineStarted {
+            total_nodes,
+            total_files,
+        } = &events[0]
+        {
             assert_eq!(*total_nodes, 3, "3 processing nodes, 2 I/O excluded");
             assert_eq!(*total_files, 1);
         } else {
@@ -1650,7 +1753,10 @@ mod tests {
         // Each NodeStarted should have total_nodes = 3.
         for event in &events {
             if let PipelineEvent::NodeStarted { total_nodes, .. } = event {
-                assert_eq!(*total_nodes, 3, "NodeStarted.total_nodes should match pipeline total");
+                assert_eq!(
+                    *total_nodes, 3,
+                    "NodeStarted.total_nodes should match pipeline total"
+                );
             }
         }
     }
@@ -1686,7 +1792,10 @@ mod tests {
         // Should still get PipelineCompleted.
         assert!(matches!(
             events.last().unwrap(),
-            PipelineEvent::PipelineCompleted { total_files_processed: 0, .. }
+            PipelineEvent::PipelineCompleted {
+                total_files_processed: 0,
+                ..
+            }
         ));
     }
 
@@ -1976,7 +2085,10 @@ mod tests {
         let registry = recipe_registry();
         let reporter = PipelineReporter::new_noop();
 
-        let files = vec![make_file("photo.jpg", b"jpeg"), make_file("icon.png", b"png")];
+        let files = vec![
+            make_file("photo.jpg", b"jpeg"),
+            make_file("icon.png", b"png"),
+        ];
         let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
         assert_eq!(result.files.len(), 2);
@@ -2119,10 +2231,7 @@ mod tests {
         let registry = mock_registry();
         let reporter = PipelineReporter::new_noop();
 
-        let files = vec![
-            make_file("a.txt", b"aaa"),
-            make_file("b.txt", b"bbb"),
-        ];
+        let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
         let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
         // Each file goes through echo then uppercase inside the loop.
@@ -2310,7 +2419,11 @@ mod tests {
 
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
-        assert!(err.contains("spreadsheet:pivot"), "Error should name the missing key: {}", err);
+        assert!(
+            err.contains("spreadsheet:pivot"),
+            "Error should name the missing key: {}",
+            err
+        );
     }
 
     #[test]
@@ -2351,7 +2464,10 @@ mod tests {
         let has_pipeline_failed = events
             .iter()
             .any(|e| matches!(e, PipelineEvent::PipelineFailed { .. }));
-        assert!(has_pipeline_failed, "Should emit PipelineFailed for nested failure");
+        assert!(
+            has_pipeline_failed,
+            "Should emit PipelineFailed for nested failure"
+        );
     }
 
     // --- Progress Events with Recipe Structures ---
@@ -2363,10 +2479,7 @@ mod tests {
         let recorder = RecordingReporter::new();
         let reporter = recorder.reporter();
 
-        let files = vec![
-            make_file("a.jpg", b"aaa"),
-            make_file("b.jpg", b"bbb"),
-        ];
+        let files = vec![make_file("a.jpg", b"aaa"), make_file("b.jpg", b"bbb")];
         execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
         let events = recorder.events();
@@ -2375,19 +2488,28 @@ mod tests {
         assert!(matches!(events[0], PipelineEvent::PipelineStarted { .. }));
 
         // Should end with PipelineCompleted.
-        assert!(matches!(events.last().unwrap(), PipelineEvent::PipelineCompleted { .. }));
+        assert!(matches!(
+            events.last().unwrap(),
+            PipelineEvent::PipelineCompleted { .. }
+        ));
 
         // Should have NodeStarted for the batch-compress group (sub-recipe).
         let group_started = events.iter().any(|e| {
             matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "batch-compress")
         });
-        assert!(group_started, "Should emit NodeStarted for sub-recipe group node");
+        assert!(
+            group_started,
+            "Should emit NodeStarted for sub-recipe group node"
+        );
 
         // Should have NodeStarted for the loop inside the sub-recipe.
         let loop_started = events.iter().any(|e| {
             matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "compress-loop")
         });
-        assert!(loop_started, "Should emit NodeStarted for loop node inside sub-recipe");
+        assert!(
+            loop_started,
+            "Should emit NodeStarted for loop node inside sub-recipe"
+        );
 
         // Should have NodeStarted for the child processor (runs per file).
         let child_started_count = events
@@ -2396,7 +2518,10 @@ mod tests {
                 matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "compress-image")
             })
             .count();
-        assert_eq!(child_started_count, 2, "Child processor should start once per file");
+        assert_eq!(
+            child_started_count, 2,
+            "Child processor should start once per file"
+        );
 
         // Should have NodeCompleted for the child processor (runs per file).
         let child_completed_count = events
@@ -2405,7 +2530,10 @@ mod tests {
                 matches!(e, PipelineEvent::NodeCompleted { node_id, .. } if node_id == "compress-image")
             })
             .count();
-        assert_eq!(child_completed_count, 2, "Child processor should complete once per file");
+        assert_eq!(
+            child_completed_count, 2,
+            "Child processor should complete once per file"
+        );
     }
 
     #[test]
@@ -2423,8 +2551,15 @@ mod tests {
         // PipelineStarted should report the csv-cleaner group as 1 processing
         // node at the top level (I/O nodes excluded). The group's children are
         // counted separately during sub-pipeline execution.
-        if let PipelineEvent::PipelineStarted { total_nodes, total_files } = &events[0] {
-            assert_eq!(*total_nodes, 1, "1 top-level processing node (csv-cleaner group), I/O excluded");
+        if let PipelineEvent::PipelineStarted {
+            total_nodes,
+            total_files,
+        } = &events[0]
+        {
+            assert_eq!(
+                *total_nodes, 1,
+                "1 top-level processing node (csv-cleaner group), I/O excluded"
+            );
             assert_eq!(*total_files, 1);
         } else {
             panic!("First event should be PipelineStarted");
@@ -2435,7 +2570,10 @@ mod tests {
             .iter()
             .filter(|e| matches!(e, PipelineEvent::NodeStarted { .. }))
             .count();
-        assert_eq!(node_started_count, 2, "Group + processor = 2 NodeStarted events");
+        assert_eq!(
+            node_started_count, 2,
+            "Group + processor = 2 NodeStarted events"
+        );
     }
 
     // --- Smoke Tests: All 6 Recipes Deserialize ---
@@ -2486,7 +2624,12 @@ mod tests {
 
         for (i, json) in recipes.iter().enumerate() {
             let result: Result<PipelineDefinition, _> = serde_json::from_str(json);
-            assert!(result.is_ok(), "Recipe {} failed to deserialize: {:?}", i, result.err());
+            assert!(
+                result.is_ok(),
+                "Recipe {} failed to deserialize: {:?}",
+                i,
+                result.err()
+            );
         }
     }
 
@@ -2540,8 +2683,17 @@ mod tests {
             let def = parse_def(json);
             let reporter = PipelineReporter::new_noop();
             let result = execute_pipeline(&def, files.clone(), &registry, &reporter, fake_now);
-            assert!(result.is_ok(), "Recipe {} failed to execute: {:?}", i, result.err());
-            assert!(!result.unwrap().files.is_empty(), "Recipe {} produced no output files", i);
+            assert!(
+                result.is_ok(),
+                "Recipe {} failed to execute: {:?}",
+                i,
+                result.err()
+            );
+            assert!(
+                !result.unwrap().files.is_empty(),
+                "Recipe {} produced no output files",
+                i
+            );
         }
     }
 }

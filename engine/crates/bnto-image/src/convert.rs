@@ -346,11 +346,7 @@ impl NodeProcessor for ConvertImageFormat {
                     label: "Output Format".to_string(),
                     description: "The target image format to convert to".to_string(),
                     param_type: ParameterType::Enum {
-                        options: vec![
-                            "jpeg".to_string(),
-                            "png".to_string(),
-                            "webp".to_string(),
-                        ],
+                        options: vec!["jpeg".to_string(), "png".to_string(), "webp".to_string()],
                     },
                     default: None,
                     constraints: Some(Constraints {

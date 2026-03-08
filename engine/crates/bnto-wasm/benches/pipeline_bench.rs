@@ -20,9 +20,11 @@
 // The first run establishes a baseline. Subsequent runs compare against it.
 // Results are saved in `engine/target/criterion/`.
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 
-use bnto_core::{execute_pipeline, NodeRegistry, PipelineDefinition, PipelineFile, PipelineReporter};
+use bnto_core::{
+    NodeRegistry, PipelineDefinition, PipelineFile, PipelineReporter, execute_pipeline,
+};
 
 // --- Test fixtures ---
 // We embed real files for realistic benchmarks.
@@ -34,16 +36,16 @@ static MESSY_CSV: &[u8] = include_bytes!("../../../../test-fixtures/csv/messy.cs
 /// Build the production registry with all 6 real processors.
 fn real_registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
-    registry.register("image:compress", Box::new(bnto_image::CompressImages::new()));
+    registry.register(
+        "image:compress",
+        Box::new(bnto_image::CompressImages::new()),
+    );
     registry.register("image:resize", Box::new(bnto_image::ResizeImages::new()));
     registry.register(
         "image:convert",
         Box::new(bnto_image::ConvertImageFormat::new()),
     );
-    registry.register(
-        "spreadsheet:clean",
-        Box::new(bnto_csv::CleanCsv::new()),
-    );
+    registry.register("spreadsheet:clean", Box::new(bnto_csv::CleanCsv::new()));
     registry.register(
         "spreadsheet:rename",
         Box::new(bnto_csv::RenameCsvColumns::new()),
@@ -214,19 +216,14 @@ fn bench_recipes(c: &mut Criterion) {
     let mut batch_group = c.benchmark_group("recipe/compress-images/batch");
     for count in [1, 5, 10] {
         batch_group.throughput(Throughput::Elements(count as u64));
-        batch_group.bench_with_input(
-            BenchmarkId::from_parameter(count),
-            &count,
-            |b, &count| {
-                b.iter(|| {
-                    let files: Vec<PipelineFile> = (0..count)
-                        .map(|i| file(&format!("photo_{}.jpg", i), SMALL_JPEG, "image/jpeg"))
-                        .collect();
-                    execute_pipeline(&compress_recipe, files, &registry, &reporter, fake_now)
-                        .unwrap();
-                })
-            },
-        );
+        batch_group.bench_with_input(BenchmarkId::from_parameter(count), &count, |b, &count| {
+            b.iter(|| {
+                let files: Vec<PipelineFile> = (0..count)
+                    .map(|i| file(&format!("photo_{}.jpg", i), SMALL_JPEG, "image/jpeg"))
+                    .collect();
+                execute_pipeline(&compress_recipe, files, &registry, &reporter, fake_now).unwrap();
+            })
+        });
     }
     batch_group.finish();
 
@@ -304,5 +301,10 @@ fn bench_registry(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_individual_nodes, bench_recipes, bench_registry);
+criterion_group!(
+    benches,
+    bench_individual_nodes,
+    bench_recipes,
+    bench_registry
+);
 criterion_main!(benches);

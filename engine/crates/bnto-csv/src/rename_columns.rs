@@ -107,8 +107,9 @@ impl NodeProcessor for RenameCsvColumns {
             parameters: vec![ParameterDef {
                 name: "columns".to_string(),
                 label: "Column Mapping".to_string(),
-                description: "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
-                    .to_string(),
+                description:
+                    "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
+                        .to_string(),
                 param_type: ParameterType::Object,
                 default: None,
                 constraints: None,

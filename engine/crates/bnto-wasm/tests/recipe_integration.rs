@@ -23,9 +23,7 @@
 // 4. Output file count matches expectations
 // 5. Output filenames follow expected patterns
 
-use bnto_core::{
-    execute_pipeline, PipelineDefinition, PipelineFile, PipelineReporter,
-};
+use bnto_core::{PipelineDefinition, PipelineFile, PipelineReporter, execute_pipeline};
 
 // --- Test fixture data ---
 // We embed small test files directly so tests run without filesystem access.
@@ -49,12 +47,24 @@ static SIMPLE_CSV: &[u8] = include_bytes!("../../../../test-fixtures/csv/simple.
 /// This is the exact same registry the WASM bridge creates.
 fn real_registry() -> bnto_core::NodeRegistry {
     let mut registry = bnto_core::NodeRegistry::new();
-    registry.register("image:compress", Box::new(bnto_image::CompressImages::new()));
+    registry.register(
+        "image:compress",
+        Box::new(bnto_image::CompressImages::new()),
+    );
     registry.register("image:resize", Box::new(bnto_image::ResizeImages::new()));
-    registry.register("image:convert", Box::new(bnto_image::ConvertImageFormat::new()));
+    registry.register(
+        "image:convert",
+        Box::new(bnto_image::ConvertImageFormat::new()),
+    );
     registry.register("spreadsheet:clean", Box::new(bnto_csv::CleanCsv::new()));
-    registry.register("spreadsheet:rename", Box::new(bnto_csv::RenameCsvColumns::new()));
-    registry.register("file-system:rename", Box::new(bnto_file::RenameFiles::new()));
+    registry.register(
+        "spreadsheet:rename",
+        Box::new(bnto_csv::RenameCsvColumns::new()),
+    );
+    registry.register(
+        "file-system:rename",
+        Box::new(bnto_file::RenameFiles::new()),
+    );
     registry
 }
 
@@ -84,7 +94,8 @@ fn fake_now() -> u64 {
 #[test]
 fn compress_images_recipe_produces_smaller_output() {
     // The composite recipe: Input → Group("Batch Compress") → Loop → image:compress → Output
-    let def = parse(r#"{
+    let def = parse(
+        r#"{
         "nodes": [
             { "id": "input", "type": "input" },
             {
@@ -100,7 +111,8 @@ fn compress_images_recipe_produces_smaller_output() {
             },
             { "id": "output", "type": "output" }
         ]
-    }"#);
+    }"#,
+    );
 
     let registry = real_registry();
     let reporter = PipelineReporter::new_noop();
@@ -136,7 +148,8 @@ fn compress_images_recipe_produces_smaller_output() {
 
 #[test]
 fn compress_images_recipe_handles_batch() {
-    let def = parse(r#"{
+    let def = parse(
+        r#"{
         "nodes": [
             { "id": "input", "type": "input" },
             {
@@ -152,7 +165,8 @@ fn compress_images_recipe_handles_batch() {
             },
             { "id": "output", "type": "output" }
         ]
-    }"#);
+    }"#,
+    );
 
     let registry = real_registry();
     let reporter = PipelineReporter::new_noop();
@@ -169,7 +183,11 @@ fn compress_images_recipe_handles_batch() {
 
     // Both should have non-empty data.
     for f in &result.files {
-        assert!(!f.data.is_empty(), "output file '{}' should have data", f.name);
+        assert!(
+            !f.data.is_empty(),
+            "output file '{}' should have data",
+            f.name
+        );
     }
 }
 
@@ -179,7 +197,8 @@ fn compress_images_recipe_handles_batch() {
 
 #[test]
 fn resize_images_recipe_produces_output() {
-    let def = parse(r#"{
+    let def = parse(
+        r#"{
         "nodes": [
             { "id": "input", "type": "input" },
             {
@@ -195,7 +214,8 @@ fn resize_images_recipe_produces_output() {
             },
             { "id": "output", "type": "output" }
         ]
-    }"#);
+    }"#,
+    );
 
     let registry = real_registry();
     let reporter = PipelineReporter::new_noop();
@@ -216,7 +236,8 @@ fn resize_images_recipe_produces_output() {
 
 #[test]
 fn convert_image_format_recipe_produces_png() {
-    let def = parse(r#"{
+    let def = parse(
+        r#"{
         "nodes": [
             { "id": "input", "type": "input" },
             {
@@ -232,7 +253,8 @@ fn convert_image_format_recipe_produces_png() {
             },
             { "id": "output", "type": "output" }
         ]
-    }"#);
+    }"#,
+    );
 
     let registry = real_registry();
     let reporter = PipelineReporter::new_noop();
@@ -258,7 +280,8 @@ fn convert_image_format_recipe_produces_png() {
 
 #[test]
 fn clean_csv_recipe_produces_cleaned_output() {
-    let def = parse(r#"{
+    let def = parse(
+        r#"{
         "nodes": [
             { "id": "input", "type": "input" },
             {
@@ -275,7 +298,8 @@ fn clean_csv_recipe_produces_cleaned_output() {
             },
             { "id": "output", "type": "output" }
         ]
-    }"#);
+    }"#,
+    );
 
     let registry = real_registry();
     let reporter = PipelineReporter::new_noop();
@@ -287,8 +311,8 @@ fn clean_csv_recipe_produces_cleaned_output() {
     assert_eq!(result.files.len(), 1);
 
     // Output should be valid UTF-8 CSV.
-    let output_str = std::str::from_utf8(&result.files[0].data)
-        .expect("cleaned CSV should be valid UTF-8");
+    let output_str =
+        std::str::from_utf8(&result.files[0].data).expect("cleaned CSV should be valid UTF-8");
 
     // Cleaned CSV should be shorter than the messy input
     // (empty rows removed, whitespace trimmed).
@@ -300,7 +324,10 @@ fn clean_csv_recipe_produces_cleaned_output() {
     );
 
     // Should still contain header row.
-    assert!(output_str.contains(','), "cleaned CSV should have comma-separated values");
+    assert!(
+        output_str.contains(','),
+        "cleaned CSV should have comma-separated values"
+    );
 }
 
 // =============================================================================
@@ -309,7 +336,8 @@ fn clean_csv_recipe_produces_cleaned_output() {
 
 #[test]
 fn rename_csv_columns_recipe_produces_output() {
-    let def = parse(r#"{
+    let def = parse(
+        r#"{
         "nodes": [
             { "id": "input", "type": "input" },
             {
@@ -324,7 +352,8 @@ fn rename_csv_columns_recipe_produces_output() {
             },
             { "id": "output", "type": "output" }
         ]
-    }"#);
+    }"#,
+    );
 
     let registry = real_registry();
     let reporter = PipelineReporter::new_noop();
@@ -336,8 +365,8 @@ fn rename_csv_columns_recipe_produces_output() {
     assert_eq!(result.files.len(), 1);
 
     // Output should be valid UTF-8 CSV.
-    let output_str = std::str::from_utf8(&result.files[0].data)
-        .expect("renamed CSV should be valid UTF-8");
+    let output_str =
+        std::str::from_utf8(&result.files[0].data).expect("renamed CSV should be valid UTF-8");
 
     // The header should contain the new column name.
     let first_line = output_str.lines().next().unwrap_or("");
@@ -354,7 +383,8 @@ fn rename_csv_columns_recipe_produces_output() {
 
 #[test]
 fn rename_files_recipe_applies_prefix() {
-    let def = parse(r#"{
+    let def = parse(
+        r#"{
         "nodes": [
             { "id": "input", "type": "input" },
             {
@@ -370,7 +400,8 @@ fn rename_files_recipe_applies_prefix() {
             },
             { "id": "output", "type": "output" }
         ]
-    }"#);
+    }"#,
+    );
 
     let registry = real_registry();
     let reporter = PipelineReporter::new_noop();
@@ -407,7 +438,8 @@ fn compress_recipe_emits_expected_events() {
     use bnto_core::PipelineEvent;
     use std::sync::{Arc, Mutex};
 
-    let def = parse(r#"{
+    let def = parse(
+        r#"{
         "nodes": [
             { "id": "input", "type": "input" },
             {
@@ -423,7 +455,8 @@ fn compress_recipe_emits_expected_events() {
             },
             { "id": "output", "type": "output" }
         ]
-    }"#);
+    }"#,
+    );
 
     let registry = real_registry();
 
@@ -442,19 +475,28 @@ fn compress_recipe_emits_expected_events() {
 
     // First event should be PipelineStarted.
     assert!(
-        matches!(collected.first(), Some(PipelineEvent::PipelineStarted { .. })),
+        matches!(
+            collected.first(),
+            Some(PipelineEvent::PipelineStarted { .. })
+        ),
         "first event should be PipelineStarted"
     );
 
     // Last event should be PipelineCompleted.
     assert!(
-        matches!(collected.last(), Some(PipelineEvent::PipelineCompleted { .. })),
+        matches!(
+            collected.last(),
+            Some(PipelineEvent::PipelineCompleted { .. })
+        ),
         "last event should be PipelineCompleted"
     );
 
     // Should have NodeStarted for the batch-compress group.
-    let group_started = collected.iter().any(|e| {
-        matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "batch-compress")
-    });
-    assert!(group_started, "should emit NodeStarted for batch-compress group");
+    let group_started = collected.iter().any(
+        |e| matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "batch-compress"),
+    );
+    assert!(
+        group_started,
+        "should emit NodeStarted for batch-compress group"
+    );
 }

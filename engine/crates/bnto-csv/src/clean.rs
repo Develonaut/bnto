@@ -109,8 +109,7 @@ impl NodeProcessor for CleanCsv {
             node_type: "spreadsheet".to_string(),
             operation: "clean".to_string(),
             name: "Clean CSV".to_string(),
-            description: "Remove empty rows, trim whitespace, and deduplicate CSV data"
-                .to_string(),
+            description: "Remove empty rows, trim whitespace, and deduplicate CSV data".to_string(),
             category: NodeCategory::Spreadsheet,
             accepts: vec!["text/csv".to_string()],
             platforms: vec!["browser".to_string()],
@@ -135,8 +134,7 @@ impl NodeProcessor for CleanCsv {
                 ParameterDef {
                     name: "removeDuplicates".to_string(),
                     label: "Remove Duplicates".to_string(),
-                    description: "Remove duplicate rows, keeping the first occurrence"
-                        .to_string(),
+                    description: "Remove duplicate rows, keeping the first occurrence".to_string(),
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::json!(true)),
                     constraints: None,

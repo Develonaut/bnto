@@ -130,11 +130,7 @@ mod tests {
         let registry = crate::execute::create_default_registry();
         let catalog = registry.catalog();
 
-        assert_eq!(
-            catalog.len(),
-            6,
-            "Catalog should have exactly 6 processors"
-        );
+        assert_eq!(catalog.len(), 6, "Catalog should have exactly 6 processors");
     }
 
     #[test]
@@ -178,7 +174,8 @@ mod tests {
             assert!(
                 entry.platforms.contains(&"browser".to_string()),
                 "{}:{} should include 'browser' platform",
-                entry.node_type, entry.operation
+                entry.node_type,
+                entry.operation
             );
         }
     }

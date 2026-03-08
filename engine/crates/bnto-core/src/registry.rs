@@ -265,7 +265,10 @@ mod tests {
     #[test]
     fn test_resolve_missing_operation_uses_default() {
         let mut registry = NodeRegistry::new();
-        registry.register("custom:default", Box::new(MockProcessor::new("custom-default")));
+        registry.register(
+            "custom:default",
+            Box::new(MockProcessor::new("custom-default")),
+        );
 
         // Params with no "operation" field → uses "default".
         let params = serde_json::Map::new();
@@ -280,7 +283,10 @@ mod tests {
         let mut registry = NodeRegistry::new();
         registry.register("image:compress", Box::new(MockProcessor::new("compress")));
         registry.register("image:resize", Box::new(MockProcessor::new("resize")));
-        registry.register("spreadsheet:clean", Box::new(MockProcessor::new("clean-csv")));
+        registry.register(
+            "spreadsheet:clean",
+            Box::new(MockProcessor::new("clean-csv")),
+        );
 
         assert_eq!(registry.len(), 3);
 

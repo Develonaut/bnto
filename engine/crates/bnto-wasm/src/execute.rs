@@ -54,10 +54,7 @@ pub(crate) fn create_default_registry() -> NodeRegistry {
         "image:compress",
         Box::new(bnto_image::CompressImages::new()),
     );
-    registry.register(
-        "image:resize",
-        Box::new(bnto_image::ResizeImages::new()),
-    );
+    registry.register("image:resize", Box::new(bnto_image::ResizeImages::new()));
     registry.register(
         "image:convert",
         Box::new(bnto_image::ConvertImageFormat::new()),
@@ -65,10 +62,7 @@ pub(crate) fn create_default_registry() -> NodeRegistry {
 
     // --- CSV/spreadsheet processors ---
     // These handle CSV files (UTF-8 text).
-    registry.register(
-        "spreadsheet:clean",
-        Box::new(bnto_csv::CleanCsv::new()),
-    );
+    registry.register("spreadsheet:clean", Box::new(bnto_csv::CleanCsv::new()));
     registry.register(
         "spreadsheet:rename",
         Box::new(bnto_csv::RenameCsvColumns::new()),
@@ -120,10 +114,8 @@ pub fn execute_pipeline(
     progress_callback: js_sys::Function,
 ) -> Result<JsValue, JsValue> {
     // --- Step 1: Parse the pipeline definition from JSON ---
-    let definition: bnto_core::PipelineDefinition =
-        serde_json::from_str(definition_json).map_err(|e| {
-            JsValue::from_str(&format!("Failed to parse pipeline definition: {}", e))
-        })?;
+    let definition: bnto_core::PipelineDefinition = serde_json::from_str(definition_json)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse pipeline definition: {}", e)))?;
 
     // --- Step 2: Extract files from the JavaScript array ---
     let files = extract_files(files_js)?;
@@ -169,19 +161,19 @@ pub fn execute_pipeline(
             .map_err(|_| JsValue::from_str("Failed to set result file data"))?;
 
         // Set the MIME type.
-        js_sys::Reflect::set(&obj, &"mimeType".into(), &JsValue::from_str(&file.mime_type))
-            .map_err(|_| JsValue::from_str("Failed to set result file mimeType"))?;
+        js_sys::Reflect::set(
+            &obj,
+            &"mimeType".into(),
+            &JsValue::from_str(&file.mime_type),
+        )
+        .map_err(|_| JsValue::from_str("Failed to set result file mimeType"))?;
 
         // Set metadata as a JSON string (if not empty).
         if !file.metadata.is_empty()
             && let Ok(meta_json) = serde_json::to_string(&file.metadata)
         {
-            js_sys::Reflect::set(
-                &obj,
-                &"metadata".into(),
-                &JsValue::from_str(&meta_json),
-            )
-            .map_err(|_| JsValue::from_str("Failed to set result file metadata"))?;
+            js_sys::Reflect::set(&obj, &"metadata".into(), &JsValue::from_str(&meta_json))
+                .map_err(|_| JsValue::from_str("Failed to set result file metadata"))?;
         }
 
         result_array.push(&obj);
