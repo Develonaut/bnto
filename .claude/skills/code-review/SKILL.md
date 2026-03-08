@@ -148,16 +148,22 @@ Quick coverage check — flag if missing:
 
 Flag any missing test coverage.
 
-## Step 11: Stale Artifact Check
+## Step 11: Stale Artifact & Dead Code Check
 
-Verify the changes didn't leave stale artifacts behind:
+Verify the changes didn't leave stale artifacts or dead code behind:
 
 - [ ] **Test assertions** updated for changed behavior, props, APIs, DOM structure
 - [ ] **Code references** updated for renamed/removed/changed exports, props, interfaces
 - [ ] **Documentation** updated for changed behavior documented in comments, JSDoc, or markdown
 - [ ] **Imports** — no broken imports from renames or moves
+- [ ] **Dead exports** — no barrel exports (`index.ts`) re-exporting symbols that have zero consumers outside their own package. When files are deleted, refactored, or consolidated, their barrel exports often survive. For each new or modified file created by the changeset, verify that every symbol exported from its package barrel actually has at least one external consumer. Delete dead exports and their source files if the source file has no other consumers either
+- [ ] **Orphaned files** — no source files left behind after deletes or renames (trigger files, sub-components, hooks) that are no longer imported by anything
 
 Search the codebase for references to anything that was changed (class names, prop names, component names, function signatures, selectors, text strings). Flag anything that still references the old version.
+
+### Dead export detection method
+
+For shared packages (`@bnto/ui`, `@bnto/core`, `@bnto/nodes`, `@bnto/editor`), grep for each exported symbol across the monorepo excluding the package's own `src/` directory. If a symbol appears only in its own barrel export and source file — it's dead. **Exception:** compound component sub-exports (e.g., `SelectScrollUpButton`) that are used internally by a sibling export AND exported for external composition are acceptable even without current external consumers.
 
 ## Step 12: Fix Violations & Warnings
 

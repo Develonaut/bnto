@@ -9,11 +9,12 @@ import { cn } from "../utils/cn";
  *   <Divider label="Free. No signup." />
  * ────────────────────────────────────────────────────────────── */
 
-const lineCn = [
+const baseCn = [
   "h-px flex-1",
   "bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,currentColor_4px,currentColor_10px)]",
-  "[mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]",
 ];
+
+const fadeCn = "[mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]";
 
 type DividerProps = ComponentProps<"div"> & {
   /** Centered label text. */
@@ -23,20 +24,21 @@ type DividerProps = ComponentProps<"div"> & {
 export function Divider({ label, className, ...props }: DividerProps) {
   return (
     <div
-      className={cn(
-        "text-muted-foreground/40 flex items-center gap-4",
-        className,
-      )}
+      className={cn("text-muted-foreground/40 flex items-center gap-4", className)}
       role="separator"
       {...props}
     >
-      <div className={cn(lineCn)} />
-      {label && (
-        <span className="text-foreground/65 bg-muted shrink-0 rounded-sm px-3 py-1 font-mono text-xs uppercase tracking-widest">
-          {label}
-        </span>
+      {label ? (
+        <>
+          <div className={cn(baseCn, fadeCn)} />
+          <span className="text-foreground/65 bg-muted shrink-0 rounded-sm px-3 py-1 font-mono text-xs uppercase tracking-widest">
+            {label}
+          </span>
+          <div className={cn(baseCn, fadeCn)} />
+        </>
+      ) : (
+        <div className={cn(baseCn)} />
       )}
-      <div className={cn(lineCn)} />
     </div>
   );
 }

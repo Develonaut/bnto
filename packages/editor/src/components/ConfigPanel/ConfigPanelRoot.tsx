@@ -1,36 +1,22 @@
 "use client";
 
 import { useCallback } from "react";
-import {
-  cn,
-  Badge,
-  Heading,
-  Panel,
-  PanelHeader,
-  PanelDivider,
-  PanelContent,
-  Text,
-  usePrevious,
-} from "@bnto/ui";
+import { Badge, Divider, Heading, SlidersHorizontalIcon, Text, usePrevious } from "@bnto/ui";
 import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorStoreApi } from "../../hooks/useEditorStoreApi";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { useEditorActions } from "../../hooks/useEditorActions";
-import { usePanel } from "../../hooks/usePanel";
 import { SchemaForm } from "../SchemaForm";
 import { SurfacedParamsSection } from "./SurfacedParamsSection";
 import { updateSurfacedParam } from "../../actions/updateSurfacedParam";
+import { EditorMenuPanel } from "../EditorMenuPanel";
 
 /**
- * ConfigPanel — self-contained right-side panel.
+ * ConfigPanel — Menu-based config panel.
  *
- * Reads selectedNodeId and visibility from the store.
- * Uses usePrevious so the panel keeps showing the last selected
- * node's config while it slides out (no flash to empty).
- * Includes its own slide-in overlay positioning.
- *
- * Parameter fields are rendered by SchemaForm — fully schema-driven,
- * no manual field iteration or type switching.
+ * Opens to the left from the right toolbar trigger. Store controls
+ * open/close, Radix handles positioning. Parameter fields are
+ * rendered by SchemaForm — fully schema-driven.
  */
 
 function ConfigPanelRoot() {
@@ -38,21 +24,10 @@ function ConfigPanelRoot() {
   const prevSelectedNodeId = usePrevious(selectedNodeId);
   const configNodeId = selectedNodeId ?? prevSelectedNodeId ?? null;
 
-  const { isOpen: configOpen } = usePanel("config");
   const { node, config, typeInfo, schemaDef, visibleParams, surfacedGroups } =
     useEditorNode(configNodeId);
   const { updateParams } = useEditorActions();
   const storeApi = useEditorStoreApi();
-
-  /* CSS transition for panel open/close — Animate.* covers entrance animations,
-     not boolean state transitions. See animation.md decision tree. */
-  const slotCn = cn(
-    "pointer-events-auto absolute bottom-0 right-0 top-0 w-72",
-    "motion-safe:transition-[translate,opacity]",
-    configOpen
-      ? "translate-x-0 opacity-100 motion-safe:duration-slow motion-safe:ease-spring-bouncy"
-      : "pointer-events-none translate-x-[110%] opacity-0 motion-safe:duration-fast motion-safe:ease-out",
-  );
 
   const handleParamChange = useCallback(
     (paramName: string, value: unknown) => {
@@ -71,95 +46,99 @@ function ConfigPanelRoot() {
     [storeApi],
   );
 
-  if (!configNodeId || !node || !config || !typeInfo) {
-    return (
-      <div onPointerDownCapture={(e) => e.stopPropagation()} className={slotCn}>
-        <Panel className="h-full w-full">
-          <PanelContent>
-            <div className="p-4">
-              <Text size="sm" color="muted" className="text-center">
-                Select a node to configure
-              </Text>
-            </div>
-          </PanelContent>
-        </Panel>
-      </div>
-    );
-  }
+  const hasContent = configNodeId && node && config && typeInfo;
 
   return (
-    <div onPointerDownCapture={(e) => e.stopPropagation()} className={slotCn}>
-      <Panel className="h-full w-full">
-        <PanelHeader className="gap-2 px-3 pt-3 pb-2">
-          <Heading level={3} size="xs" className="min-w-0 flex-1 truncate">
-            {config.displayName || config.name || typeInfo.label}
-          </Heading>
-          <div className="flex gap-1.5">
-            <Badge variant="secondary" className="text-xs">
-              {typeInfo.category}
-            </Badge>
-            {typeInfo.browserCapable ? (
-              <Badge variant="secondary" className="text-xs">
-                Browser
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-xs">
-                Pro
-              </Badge>
-            )}
-          </div>
-        </PanelHeader>
-        {typeInfo.description && (
-          <Text size="xs" color="muted" className="px-3 pb-1">
-            {typeInfo.description}
+    <EditorMenuPanel
+      panelId="config"
+      side="left"
+      width="w-72"
+      label="Properties"
+      icon={<SlidersHorizontalIcon className="size-4" />}
+    >
+      {!hasContent ? (
+        <div className="p-4">
+          <Text size="sm" color="muted" className="text-center">
+            Select a node to configure
           </Text>
-        )}
-        <PanelDivider />
-        <PanelContent>
-          {surfacedGroups.length > 0 ? (
-            <>
-              <SurfacedParamsSection
-                groups={surfacedGroups}
-                onParamChange={handleSurfacedParamChange}
-              />
-              {schemaDef && visibleParams.length > 0 && (
-                <>
-                  <PanelDivider />
-                  <div className="px-3 pt-1">
-                    <Text size="xs" color="muted" className="font-medium uppercase tracking-wider">
-                      Advanced
-                    </Text>
-                  </div>
-                  <div className="p-3">
-                    <SchemaForm
-                      schema={schemaDef}
-                      values={config.parameters}
-                      visibleParams={visibleParams}
-                      onChange={handleParamChange}
-                    />
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <div className="p-3">
-              {schemaDef ? (
-                <SchemaForm
-                  schema={schemaDef}
-                  values={config.parameters}
-                  visibleParams={visibleParams}
-                  onChange={handleParamChange}
-                />
+        </div>
+      ) : (
+        <>
+          <div className="flex shrink-0 items-center gap-2 px-3 pt-3 pb-2">
+            <Heading level={3} size="xs" className="min-w-0 flex-1 truncate">
+              {config.displayName || config.name || typeInfo.label}
+            </Heading>
+            <div className="flex gap-1.5">
+              <Badge variant="secondary" className="text-xs">
+                {typeInfo.category}
+              </Badge>
+              {typeInfo.browserCapable ? (
+                <Badge variant="secondary" className="text-xs">
+                  Browser
+                </Badge>
               ) : (
-                <Text size="xs" color="muted">
-                  No configurable parameters.
-                </Text>
+                <Badge variant="outline" className="text-xs">
+                  Pro
+                </Badge>
               )}
             </div>
+          </div>
+          {typeInfo.description && (
+            <Text size="xs" color="muted" className="px-3 pb-1">
+              {typeInfo.description}
+            </Text>
           )}
-        </PanelContent>
-      </Panel>
-    </div>
+          <Divider />
+          <div className="flex-1 overflow-y-auto">
+            {surfacedGroups.length > 0 ? (
+              <>
+                <SurfacedParamsSection
+                  groups={surfacedGroups}
+                  onParamChange={handleSurfacedParamChange}
+                />
+                {schemaDef && visibleParams.length > 0 && (
+                  <>
+                    <Divider />
+                    <div className="px-3 pt-1">
+                      <Text
+                        size="xs"
+                        color="muted"
+                        className="font-medium uppercase tracking-wider"
+                      >
+                        Advanced
+                      </Text>
+                    </div>
+                    <div className="p-3">
+                      <SchemaForm
+                        schema={schemaDef}
+                        values={config.parameters}
+                        visibleParams={visibleParams}
+                        onChange={handleParamChange}
+                      />
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="p-3">
+                {schemaDef ? (
+                  <SchemaForm
+                    schema={schemaDef}
+                    values={config.parameters}
+                    visibleParams={visibleParams}
+                    onChange={handleParamChange}
+                  />
+                ) : (
+                  <Text size="xs" color="muted">
+                    No configurable parameters.
+                  </Text>
+                )}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </EditorMenuPanel>
   );
 }
 

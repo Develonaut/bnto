@@ -1,31 +1,38 @@
 "use client";
 
-import { Fragment, useCallback, useMemo, useState, type ComponentProps } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import type { NodeTypeName } from "@bnto/nodes";
-import { Badge, MenuContent, MenuSeparator, MenuLabel, MenuItem, SearchIcon, Text } from "@bnto/ui";
+import {
+  Badge,
+  BlocksIcon,
+  Divider,
+  MenuLabel,
+  MenuItem,
+  MenuSeparator,
+  SearchIcon,
+  Text,
+} from "@bnto/ui";
 import { useEditorStore } from "../../hooks/useEditorStore";
 import { useEditorActions } from "../../hooks/useEditorActions";
 import { useNodePalette } from "../../hooks/useNodePalette";
 import { SLOTS } from "../../adapters/bentoSlots";
+import { EditorMenuPanel } from "../EditorMenuPanel";
 
 /**
- * NodePaletteMenuContent — search header + categorized node type list.
+ * NodePalettePanel — Menu-based node palette panel.
  *
- * Clicking a node adds it to the canvas and selects it so the config
- * panel opens immediately.
+ * Opens to the right from the left toolbar trigger. Shows a searchable
+ * categorized grid of node types. Clicking a node adds it to the canvas.
+ * Toggled via toolbar button. Same-side siblings close automatically.
  */
 
-function NodePaletteMenuContent({
-  className,
-  ...props
-}: Omit<ComponentProps<typeof MenuContent>, "children">) {
+function NodePalettePanelRoot() {
   const [search, setSearch] = useState("");
   const { addNode } = useEditorActions();
   const { groups } = useNodePalette();
   const nodeCount = useEditorStore((s) => s.nodes.length);
   const isFull = nodeCount >= SLOTS.length;
 
-  /* Filter groups by search term. */
   const filteredGroups = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return groups;
@@ -42,7 +49,6 @@ function NodePaletteMenuContent({
       .filter((group) => group.items.length > 0);
   }, [groups, search]);
 
-  /* Just add the node — the sidebar effect handles selection + fitView. */
   const handleAdd = useCallback(
     (typeName: NodeTypeName) => {
       addNode(typeName);
@@ -53,9 +59,14 @@ function NodePaletteMenuContent({
   const hasResults = filteredGroups.length > 0;
 
   return (
-    <MenuContent className={className ?? "w-[28rem] p-2"} {...props}>
-      {/* Search header — sticky, doesn't close menu on click */}
-      <div className="px-1 pb-2">
+    <EditorMenuPanel
+      panelId="palette"
+      side="right"
+      width="w-[28rem]"
+      label="Add node"
+      icon={<BlocksIcon className="size-4" />}
+    >
+      <div className="shrink-0 px-3 pt-3 pb-0">
         <div className="flex items-center gap-2 rounded-md bg-input px-2.5 py-1.5">
           <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
           <input
@@ -75,8 +86,9 @@ function NodePaletteMenuContent({
         </Text>
       )}
 
-      {/* Scrollable multi-column node list */}
-      <div className="max-h-72 overflow-y-auto">
+      <Divider />
+
+      <div className="min-h-0 flex-1 overflow-y-auto p-3">
         <div className="grid grid-cols-2 gap-1">
           {filteredGroups.map((group, i) => (
             <Fragment key={group.category.name}>
@@ -109,7 +121,6 @@ function NodePaletteMenuContent({
             </Fragment>
           ))}
 
-          {/* No results */}
           {!hasResults && search.trim() && (
             <Text size="xs" color="muted" className="col-span-2 px-3 py-4 text-center">
               No nodes match &ldquo;{search}&rdquo;
@@ -117,8 +128,8 @@ function NodePaletteMenuContent({
           )}
         </div>
       </div>
-    </MenuContent>
+    </EditorMenuPanel>
   );
 }
 
-export { NodePaletteMenuContent };
+export { NodePalettePanelRoot };

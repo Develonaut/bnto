@@ -3,8 +3,7 @@
 import { forwardRef } from "react";
 import type { ComponentPropsWithoutRef, ElementRef } from "react";
 
-import { ScaleIn } from "../../animation/Animate";
-import { Card } from "../../surface/Card";
+import { Popup } from "../../overlay/Popup";
 import { PopoverContentUnstyled, PopoverPortal } from "../../overlay/Popover";
 
 type MenuOffset = "sm" | "md" | "lg" | "xl";
@@ -15,14 +14,6 @@ const OFFSET_PX: Record<MenuOffset, number> = {
   lg: 24,
   xl: 32,
 };
-
-/** Map Radix side -> ScaleIn origin so the menu scales from the edge nearest the trigger. */
-const SIDE_ORIGIN = {
-  top: "bottom",
-  bottom: "top",
-  left: "right",
-  right: "left",
-} as const;
 
 export const MenuContent = forwardRef<
   ElementRef<typeof PopoverContentUnstyled>,
@@ -56,11 +47,9 @@ export const MenuContent = forwardRef<
         className="z-50 outline-hidden"
         {...props}
       >
-        <ScaleIn from={0.6} origin={SIDE_ORIGIN[side]} easing="spring-bouncier">
-          <Card className={className} elevation={elevation}>
-            {children}
-          </Card>
-        </ScaleIn>
+        <Popup side={side} elevation={elevation} className={className}>
+          {children}
+        </Popup>
       </PopoverContentUnstyled>
     </PopoverPortal>
   ),

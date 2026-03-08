@@ -59,6 +59,17 @@ type PanelId = "layers" | "config" | "palette" | "run";
 /** Map of panel IDs to their open/closed state. */
 type PanelState = Record<PanelId, boolean>;
 
+/** Side slot — panels on the same side are mutually exclusive. */
+type PanelSide = "left" | "right";
+
+/** Which side each panel lives on. Panels sharing a side are exclusive. */
+const PANEL_SIDES: Partial<Record<PanelId, PanelSide>> = {
+  layers: "left",
+  palette: "left",
+  config: "right",
+  run: "right",
+};
+
 // ---------------------------------------------------------------------------
 // State shape
 // ---------------------------------------------------------------------------
@@ -150,4 +161,6 @@ export type {
   RecipeMetadata,
   PanelId,
   PanelState,
+  PanelSide,
 };
+export { PANEL_SIDES };

@@ -24,6 +24,7 @@ import { revalidateState } from "./revalidateState";
 import { resolveInitialState } from "./resolveInitialState";
 import { loadRecipe } from "../actions/loadRecipe";
 import { createBlank } from "../actions/createBlank";
+import { autoOpenConfig, closeSameSideSiblings } from "./panelHelpers";
 
 // ---------------------------------------------------------------------------
 // Store factory
@@ -97,8 +98,7 @@ function createEditorStore(slug?: string) {
               ? { ...n, selected: false }
               : n,
         ),
-        /* Auto-open config panel when selecting a node. */
-        ...(id ? { panels: { ...s.panels, config: true } } : {}),
+        panels: id ? autoOpenConfig(s.panels) : s.panels,
       }));
     },
 
@@ -168,14 +168,14 @@ function createEditorStore(slug?: string) {
     setSelectedNodeId: (id) => {
       set((s) => ({
         selectedNodeId: id,
-        ...(id ? { panels: { ...s.panels, config: true } } : {}),
+        panels: id ? autoOpenConfig(s.panels) : s.panels,
       }));
     },
 
     // --- Panel visibility ---
 
     openPanel: (id: PanelId) => {
-      set((s) => ({ panels: { ...s.panels, [id]: true } }));
+      set((s) => ({ panels: closeSameSideSiblings(s.panels, id) }));
     },
 
     closePanel: (id: PanelId) => {
@@ -183,7 +183,10 @@ function createEditorStore(slug?: string) {
     },
 
     togglePanel: (id: PanelId) => {
-      set((s) => ({ panels: { ...s.panels, [id]: !s.panels[id] } }));
+      set((s) => {
+        if (s.panels[id]) return { panels: { ...s.panels, [id]: false } };
+        return { panels: closeSameSideSiblings(s.panels, id) };
+      });
     },
 
     // --- Utility ---

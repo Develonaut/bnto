@@ -4,8 +4,7 @@ import type { ComponentProps } from "react";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "../icons";
-import { ScaleIn } from "../animation/Animate";
-import { Card } from "../surface/Card";
+import { Popup } from "../overlay/Popup";
 
 import { cn } from "../utils/cn";
 
@@ -63,27 +62,21 @@ export function SelectContent({
         align={align}
         {...props}
       >
-        <ScaleIn
-          from={0.6}
-          easing="spring-bouncier"
-          style={{ transformOrigin: "var(--radix-select-content-transform-origin)" }}
-        >
-          <Card className={className} elevation="lg">
-            <div className="overflow-x-hidden overflow-y-auto">
-              <SelectScrollUpButton />
-              <SelectPrimitive.Viewport
-                className={cn(
-                  "p-1",
-                  position === "popper" &&
-                    "w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
-                )}
-              >
-                {children}
-              </SelectPrimitive.Viewport>
-              <SelectScrollDownButton />
-            </div>
-          </Card>
-        </ScaleIn>
+        <Popup originStyle="var(--radix-select-content-transform-origin)" className={className}>
+          <div className="overflow-x-hidden overflow-y-auto">
+            <SelectScrollUpButton />
+            <SelectPrimitive.Viewport
+              className={cn(
+                "p-1",
+                position === "popper" &&
+                  "w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
+              )}
+            >
+              {children}
+            </SelectPrimitive.Viewport>
+            <SelectScrollDownButton />
+          </div>
+        </Popup>
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );

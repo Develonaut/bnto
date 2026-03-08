@@ -3,33 +3,30 @@
  *
  * Usage (Server Component page):
  *
- *   import { EditorRoot, EditorCanvas, EditorLayerPanel, EditorConfigPanel, EditorRunPanel, EditorToolbar } from "@bnto/editor";
+ *   import { EditorRoot, EditorCanvas, EditorToolbar, EditorLeftToolbar, EditorRightToolbar } from "@bnto/editor";
  *
  *   <EditorRoot slug="compress-images">
  *     <EditorCanvas>
- *       <EditorLayerPanel />
- *       <EditorConfigPanel />
- *       <EditorRunPanel />
  *       <EditorToolbar />
+ *       <EditorLeftToolbar />
+ *       <EditorRightToolbar />
  *     </EditorCanvas>
  *   </EditorRoot>
  *
- * Flat named exports — compound components use prefixed names (EditorCanvas,
- * EditorToolbar) for RSC compatibility.
+ * All panels are Menu-based — they live inside their respective toolbars
+ * and open from their trigger buttons. No separate composition needed.
  */
 
 import { EditorCanvasRoot } from "./components/EditorCanvas/EditorCanvasRoot";
 import { CanvasShell } from "./components/EditorCanvas/CanvasShell";
-import { LayerPanel } from "./components/LayerPanel";
-import { ConfigPanel } from "./components/ConfigPanel";
-import { RunPanel } from "./components/RunPanel";
 import { EditorToolbar } from "./components/EditorToolbar";
+import { EditorLeftToolbar } from "./components/EditorLeftToolbar";
+import { EditorRightToolbar } from "./components/EditorRightToolbar";
 
 export {
   EditorCanvasRoot as EditorRoot,
   CanvasShell as EditorCanvas,
-  LayerPanel as EditorLayerPanel,
-  ConfigPanel as EditorConfigPanel,
-  RunPanel as EditorRunPanel,
   EditorToolbar,
+  EditorLeftToolbar,
+  EditorRightToolbar,
 };
