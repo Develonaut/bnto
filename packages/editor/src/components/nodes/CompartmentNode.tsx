@@ -17,7 +17,7 @@ import {
  * Full-size card, higher elevation, delete button when selected.
  */
 
-export type CompartmentStatus = "idle" | "pending" | "active" | "completed";
+export type CompartmentStatus = "idle" | "pending" | "active" | "completed" | "failed";
 
 export const CompartmentNode = memo(function CompartmentNode({
   id,
@@ -25,14 +25,16 @@ export const CompartmentNode = memo(function CompartmentNode({
   selected,
 }: NodeProps<BentoNode>) {
   const status = (data.status ?? "idle") as CompartmentStatus;
+  const isFailed = status === "failed";
 
   return (
     <NodeRoot
       width={data.width}
       height={data.height}
-      elevation={selected ? "lg" : "md"}
+      elevation={isFailed || selected ? "lg" : "md"}
       muted={status === "pending"}
       selected={selected}
+      failed={isFailed}
     >
       <NodeHeader>
         <NodeDeleteButton nodeId={id} selected={selected} />
