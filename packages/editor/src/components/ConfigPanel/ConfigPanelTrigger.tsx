@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from "react";
 import { Button, SlidersHorizontalIcon } from "@bnto/ui";
-import { useEditorPanels } from "../../hooks/useEditorPanels";
+import { usePanel } from "../../hooks/useEditorPanels";
 
 /**
  * ConfigPanel.Trigger — toolbar button that toggles the config panel.
@@ -10,16 +10,16 @@ import { useEditorPanels } from "../../hooks/useEditorPanels";
  * Reads visibility from the editor store. No props needed.
  */
 function ConfigPanelTrigger(props: Omit<ComponentProps<typeof Button>, "onClick" | "children">) {
-  const { configOpen, toggleConfig } = useEditorPanels();
+  const { isOpen, toggle } = usePanel("config");
 
   return (
     <Button
       size="icon"
       variant="ghost"
       elevation="sm"
-      onClick={toggleConfig}
+      onClick={toggle}
       aria-label="Properties"
-      aria-expanded={configOpen}
+      aria-expanded={isOpen}
       {...props}
     >
       <SlidersHorizontalIcon className="size-4" />

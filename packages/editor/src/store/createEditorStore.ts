@@ -17,7 +17,7 @@
 
 import { createEnhancedStore } from "@bnto/core";
 import { applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
-import type { EditorStore } from "./types";
+import type { EditorStore, PanelId } from "./types";
 import { captureSnapshot } from "./captureSnapshot";
 import { pushToStack } from "./pushToStack";
 import { revalidateState } from "./revalidateState";
@@ -48,9 +48,12 @@ function createEditorStore(slug?: string) {
     undoStack: [],
     redoStack: [],
     selectedNodeId: initial.selectedNodeId,
-    layersOpen: false,
-    configOpen: initial.selectedNodeId !== null,
-    paletteOpen: false,
+    panels: {
+      layers: false,
+      config: initial.selectedNodeId !== null,
+      palette: false,
+      run: false,
+    },
 
     // --- Entry points ---
 
@@ -95,7 +98,7 @@ function createEditorStore(slug?: string) {
               : n,
         ),
         /* Auto-open config panel when selecting a node. */
-        ...(id ? { configOpen: true } : {}),
+        ...(id ? { panels: { ...s.panels, config: true } } : {}),
       }));
     },
 
@@ -163,29 +166,24 @@ function createEditorStore(slug?: string) {
     // --- Selection ---
 
     setSelectedNodeId: (id) => {
-      set({ selectedNodeId: id, ...(id ? { configOpen: true } : {}) });
+      set((s) => ({
+        selectedNodeId: id,
+        ...(id ? { panels: { ...s.panels, config: true } } : {}),
+      }));
     },
 
     // --- Panel visibility ---
 
-    toggleLayers: () => {
-      set((s) => ({ layersOpen: !s.layersOpen }));
+    openPanel: (id: PanelId) => {
+      set((s) => ({ panels: { ...s.panels, [id]: true } }));
     },
 
-    toggleConfig: () => {
-      set((s) => ({ configOpen: !s.configOpen }));
+    closePanel: (id: PanelId) => {
+      set((s) => ({ panels: { ...s.panels, [id]: false } }));
     },
 
-    openConfig: () => {
-      set({ configOpen: true });
-    },
-
-    openPalette: () => {
-      set({ paletteOpen: true });
-    },
-
-    closePalette: () => {
-      set({ paletteOpen: false });
+    togglePanel: (id: PanelId) => {
+      set((s) => ({ panels: { ...s.panels, [id]: !s.panels[id] } }));
     },
 
     // --- Utility ---

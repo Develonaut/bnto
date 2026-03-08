@@ -29,6 +29,8 @@ export type {
   NodeExecutionStatus,
   ExecutionState,
   RecipeMetadata,
+  PanelId,
+  PanelState,
 } from "./store/types";
 
 // --- Provider ---
@@ -52,7 +54,7 @@ export { useEditorExport } from "./hooks/useEditorExport";
 export type { ExportResult, EditorExportResult } from "./hooks/useEditorExport";
 export { useEditorSelection } from "./hooks/useEditorSelection";
 export { useEditorUndoRedo } from "./hooks/useEditorUndoRedo";
-export { useEditorPanels } from "./hooks/useEditorPanels";
+export { useEditorPanels, usePanel } from "./hooks/useEditorPanels";
 export { useEditorExecution } from "./hooks/useEditorExecution";
 export type { EditorExecutionResult, ExecutionPhase } from "./hooks/useEditorExecution";
 export { EditorExecutionProvider, useEditorExecutionContext } from "./hooks/EditorExecutionContext";
