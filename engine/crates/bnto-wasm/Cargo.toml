@@ -73,6 +73,9 @@ console_error_panic_hook = "0.1"
 
 [dev-dependencies]
 wasm-bindgen-test = { workspace = true }
+
+# Criterion uses Rayon which can't compile for wasm32. Only include for native targets.
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 
 # =============================================================================
