@@ -1,9 +1,4 @@
-/**
- * Edit Fields node schema — parameters for setting field values.
- *
- * Go source: engine/pkg/node/library/editfields/editfields.go
- * Validator: engine/pkg/validator/validators.go → validateEditFields
- */
+/** Edit Fields node schema — parameters for setting field values. */
 
 import { z } from "zod";
 import type { NodeSchemaDefinition } from "./types";
@@ -26,7 +21,7 @@ export const editFieldsNodeSchema: NodeSchemaDefinition = {
     values: {
       label: "Values",
       description:
-        "Map of field names to values. Values can be static or Go template expressions (e.g., {{.record.name}}).",
+        "Map of field names to values. Values can be static or template expressions (e.g., {{.record.name}}).",
     },
     keepOnlySet: {
       label: "Keep Only Set Fields",

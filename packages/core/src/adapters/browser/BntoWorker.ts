@@ -1,33 +1,33 @@
-/**
- * BntoWorker — Main-thread wrapper for the WASM Web Worker.
- *
- * Provides a typed, promise-based API for processing files in the browser
- * via WASM. Manages the worker lifecycle (create, init, terminate) and
- * routes responses back to the correct request callbacks.
- *
- * Usage:
- *   const worker = new BntoWorker();
- *   await worker.init();
- *   const result = await worker.processFile(file, "compress-images", { quality: 80 }, onProgress);
- *   worker.terminate();
- */
+/** Main-thread wrapper for the WASM Web Worker — typed, promise-based file processing. */
 
 import type {
   ProcessRequest,
+  ExecutePipelineRequest,
   ProgressResponse,
   ResultResponse,
   ErrorResponse,
+  PipelineProgressResponse,
+  PipelineResultResponse,
+  PipelineErrorResponse,
   WorkerResponse,
 } from "./workerProtocol";
 import { createWorkerInstance, attachInitListener, sendRequest } from "./initWorker";
-import type { ProgressCallback, ProcessResult, PendingRequest } from "./workerTypes";
+import type {
+  ProgressCallback,
+  ProcessResult,
+  PendingRequest,
+  PendingPipelineRequest,
+  PipelineExecutionResult,
+} from "./workerTypes";
+import type { PipelineEvent } from "../../types/pipelineEvents";
 
-export type { ProgressCallback, ProcessResult } from "./workerTypes";
+export type { ProgressCallback, ProcessResult, PipelineExecutionResult } from "./workerTypes";
 
 export class BntoWorker {
   private worker: Worker | null = null;
   private initPromise: Promise<string> | null = null;
   private pending = new Map<string, PendingRequest>();
+  private pendingPipelines = new Map<string, PendingPipelineRequest>();
   private nextId = 0;
 
   /**
@@ -84,6 +84,54 @@ export class BntoWorker {
     });
   }
 
+  /**
+   * Execute a full pipeline through the WASM executor.
+   *
+   * Sends the pipeline definition and files to the worker, which delegates
+   * to the Rust executor. Progress events are forwarded via the onEvent callback.
+   *
+   * @param definitionJson - JSON string of the pipeline definition.
+   * @param files - Input files to process.
+   * @param onEvent - Optional callback for structured PipelineEvent updates.
+   * @returns The pipeline execution result with all output files.
+   */
+  async executePipeline(
+    definitionJson: string,
+    files: File[],
+    onEvent?: (event: PipelineEvent) => void,
+  ): Promise<PipelineExecutionResult> {
+    if (!this.worker) {
+      throw new Error("BntoWorker not initialized. Call init() first.");
+    }
+
+    const worker = this.worker;
+    const id = String(this.nextId++);
+
+    // Convert File objects to transferable ArrayBuffer format.
+    const fileData = await Promise.all(
+      files.map(async (f) => ({
+        name: f.name,
+        data: await f.arrayBuffer(),
+        mimeType: f.type || "application/octet-stream",
+      })),
+    );
+
+    return new Promise<PipelineExecutionResult>((resolve, reject) => {
+      this.pendingPipelines.set(id, { resolve, reject, onEvent });
+
+      const request: ExecutePipelineRequest = {
+        type: "execute-pipeline",
+        id,
+        definitionJson,
+        files: fileData,
+      };
+
+      // Transfer all file ArrayBuffers to avoid copying.
+      const transferables = fileData.map((f) => f.data);
+      worker.postMessage(request, transferables);
+    });
+  }
+
   /** Clean up the worker. Call when done processing. */
   terminate(): void {
     if (this.worker) {
@@ -97,6 +145,11 @@ export class BntoWorker {
       pending.reject(new Error("Worker terminated"));
     }
     this.pending.clear();
+
+    for (const [, pending] of this.pendingPipelines) {
+      pending.reject(new Error("Worker terminated"));
+    }
+    this.pendingPipelines.clear();
   }
 
   /** Whether the worker has been initialized and is ready. */
@@ -123,21 +176,22 @@ export class BntoWorker {
   private handleMessage(response: WorkerResponse): void {
     switch (response.type) {
       case "progress":
-        this.handleProgress(response);
-        break;
+        return this.handleProgress(response);
       case "result":
-        this.handleResult(response);
-        break;
+        return this.handleResult(response);
       case "error":
-        this.handleError(response);
-        break;
+        return this.handleError(response);
+      case "pipeline-progress":
+        return this.handlePipelineProgress(response);
+      case "pipeline-result":
+        return this.handlePipelineResult(response);
+      case "pipeline-error":
+        return this.handlePipelineError(response);
       case "worker-error":
-        // Worker-level error not tied to a specific request.
         console.error("[BntoWorker]", response.message);
-        break;
+        return;
       case "ready":
-        // Ignore — handled during init.
-        break;
+        return; // Handled during init.
     }
   }
 
@@ -165,6 +219,37 @@ export class BntoWorker {
     if (!pending) return;
 
     this.pending.delete(response.id);
+    pending.reject(new Error(response.message));
+  }
+
+  private handlePipelineProgress(response: PipelineProgressResponse): void {
+    const pending = this.pendingPipelines.get(response.id);
+    if (!pending?.onEvent) return;
+
+    try {
+      const event = JSON.parse(response.eventJson) as PipelineEvent;
+      pending.onEvent(event);
+    } catch {
+      // Ignore malformed event JSON — progress is best-effort.
+    }
+  }
+
+  private handlePipelineResult(response: PipelineResultResponse): void {
+    const pending = this.pendingPipelines.get(response.id);
+    if (!pending) return;
+
+    this.pendingPipelines.delete(response.id);
+    pending.resolve({
+      files: response.files,
+      durationMs: response.durationMs,
+    });
+  }
+
+  private handlePipelineError(response: PipelineErrorResponse): void {
+    const pending = this.pendingPipelines.get(response.id);
+    if (!pending) return;
+
+    this.pendingPipelines.delete(response.id);
     pending.reject(new Error(response.message));
   }
 }

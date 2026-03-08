@@ -1,8 +1,4 @@
-/**
- * Group node schema — parameters for the container node.
- *
- * Go source: engine/pkg/node/library/group/group.go
- */
+/** Group node schema — parameters for the container node. */
 
 import { z } from "zod";
 import type { NodeSchemaDefinition } from "./types";

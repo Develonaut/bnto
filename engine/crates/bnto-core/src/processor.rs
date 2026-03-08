@@ -31,6 +31,7 @@
 // 4. The compiler catches missing methods at build time (not runtime!)
 
 use crate::errors::BntoError;
+use crate::metadata::{NodeCategory, NodeMetadata};
 use crate::progress::ProgressReporter;
 
 // =============================================================================
@@ -174,6 +175,28 @@ pub trait NodeProcessor {
         // RUST CONCEPT: `Vec::new()`
         // Creates a new empty vector (dynamic array). Like `[]` in JavaScript.
         Vec::new()
+    }
+
+    /// Return the processor's self-describing metadata.
+    ///
+    /// This tells consumers everything about this processor: what it's called,
+    /// what category it belongs to, what parameters it accepts, what files it
+    /// handles, and whether it runs in the browser.
+    ///
+    /// Every concrete processor SHOULD override this with its real metadata.
+    /// The default returns a placeholder "unknown" metadata — useful for tests
+    /// and mocks that don't need real metadata.
+    fn metadata(&self) -> NodeMetadata {
+        NodeMetadata {
+            node_type: "unknown".to_string(),
+            operation: "default".to_string(),
+            name: self.name().to_string(),
+            description: String::new(),
+            category: NodeCategory::Data,
+            accepts: vec![],
+            platforms: vec![],
+            parameters: vec![],
+        }
     }
 }
 

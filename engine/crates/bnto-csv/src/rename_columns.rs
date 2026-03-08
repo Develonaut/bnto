@@ -90,6 +90,33 @@ impl NodeProcessor for RenameCsvColumns {
         "rename-csv-columns"
     }
 
+    /// Return self-describing metadata for the rename-csv-columns processor.
+    ///
+    /// Parameters: columns (object — a mapping of old column names to new names).
+    /// Accepts text/csv files only.
+    fn metadata(&self) -> bnto_core::NodeMetadata {
+        use bnto_core::metadata::*;
+        NodeMetadata {
+            node_type: "spreadsheet".to_string(),
+            operation: "rename".to_string(),
+            name: "Rename CSV Columns".to_string(),
+            description: "Rename column headers in a CSV file".to_string(),
+            category: NodeCategory::Spreadsheet,
+            accepts: vec!["text/csv".to_string()],
+            platforms: vec!["browser".to_string()],
+            parameters: vec![ParameterDef {
+                name: "columns".to_string(),
+                label: "Column Mapping".to_string(),
+                description:
+                    "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
+                        .to_string(),
+                param_type: ParameterType::Object,
+                default: None,
+                constraints: None,
+            }],
+        }
+    }
+
     /// Process a CSV file: rename column headers based on the provided mapping.
     ///
     /// ARGUMENTS:

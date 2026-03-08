@@ -3,8 +3,6 @@ import { describe, expect, it } from "vitest";
 import { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./nodeTypes";
 import { isNodeType } from "./isNodeType";
 import { getNodeTypeInfo } from "./getNodeTypeInfo";
-import { getBrowserCapableTypes } from "./getBrowserCapableTypes";
-import { getContainerTypes } from "./getContainerTypes";
 
 describe("NODE_TYPES", () => {
   it("contains all 12 registered node types", () => {
@@ -122,31 +120,5 @@ describe("getNodeTypeInfo", () => {
 
   it("returns undefined for an unknown type", () => {
     expect(getNodeTypeInfo("unknown")).toBeUndefined();
-  });
-});
-
-describe("getBrowserCapableTypes", () => {
-  it("returns only browser-capable types", () => {
-    const types = getBrowserCapableTypes();
-    for (const t of types) {
-      expect(t.browserCapable).toBe(true);
-    }
-  });
-
-  it("excludes server-only types", () => {
-    const names = getBrowserCapableTypes().map((t) => t.name);
-    expect(names).not.toContain("shell-command");
-    expect(names).not.toContain("file-system");
-    expect(names).not.toContain("http-request");
-  });
-});
-
-describe("getContainerTypes", () => {
-  it("returns only container types", () => {
-    const types = getContainerTypes();
-    expect(types).toHaveLength(3);
-    for (const t of types) {
-      expect(t.isContainer).toBe(true);
-    }
   });
 });

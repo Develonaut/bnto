@@ -1,11 +1,8 @@
-/**
- * Rename CSV Columns recipe — rename column headers in bulk.
- *
- * Go source: engine/pkg/menu/recipes/rename-csv-columns.json
- */
+/** Rename CSV Columns recipe — rename column headers in bulk. */
 
-import type { Recipe } from "../recipe";
-import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import type { Recipe } from "../../recipe";
+import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
+import { columnRenamer } from "../primitives/columnRenamer";
 
 export const renameCsvColumns: Recipe = {
   slug: "rename-csv-columns",
@@ -29,7 +26,8 @@ export const renameCsvColumns: Recipe = {
     name: "Rename CSV Columns",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Reads a CSV and writes it with column data preserved.",
+      description:
+        "Accepts a CSV file and renames its column headers using a reusable column renamer sub-recipe.",
     },
     parameters: {},
     inputPorts: [],
@@ -52,43 +50,13 @@ export const renameCsvColumns: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      {
-        id: "read-csv",
-        type: "spreadsheet",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Read CSV",
-        position: { x: 200, y: 100 },
-        metadata: {},
-        parameters: {
-          operation: "read",
-          format: "csv",
-          path: "{{.INPUT_CSV}}",
-        },
-        inputPorts: [],
-        outputPorts: [{ id: "out-1", name: "rows" }],
-      },
-      {
-        id: "write-csv",
-        type: "spreadsheet",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Write CSV",
-        position: { x: 400, y: 100 },
-        metadata: {},
-        parameters: {
-          operation: "write",
-          format: "csv",
-          path: "{{.OUTPUT_CSV}}",
-          rows: '{{index . "read-csv" "rows"}}',
-        },
-        inputPorts: [{ id: "in-1", name: "rows" }],
-        outputPorts: [],
-      },
+      columnRenamer,
       {
         id: "output",
         type: "output",
         version: CURRENT_FORMAT_VERSION,
         name: "Renamed CSV",
-        position: { x: 600, y: 100 },
+        position: { x: 500, y: 100 },
         metadata: {},
         parameters: {
           mode: "download",
@@ -101,9 +69,8 @@ export const renameCsvColumns: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "read-csv" },
-      { id: "e2", source: "read-csv", target: "write-csv" },
-      { id: "e3", source: "write-csv", target: "output" },
+      { id: "e1", source: "input", target: "column-renamer" },
+      { id: "e2", source: "column-renamer", target: "output" },
     ],
   },
 };

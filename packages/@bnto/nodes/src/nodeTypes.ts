@@ -1,11 +1,13 @@
 /**
  * Node type registry — the canonical list of all node types and their metadata.
  *
- * This is the TypeScript equivalent of Go's `registry.DefaultRegistry()`.
- * It defines what each node type does, what category it belongs to,
+ * Defines what each node type does, what category it belongs to,
  * and whether it can contain child nodes.
  *
- * Go source: engine/pkg/api/service.go → DefaultRegistry()
+ * The Rust engine's catalog (`engine/catalog.snapshot.json`) is the source
+ * of truth for processor-level metadata. This registry covers all 12 node
+ * types (including types the engine doesn't implement yet like http-request,
+ * shell-command, etc.) and adds UI-specific metadata (icons, labels).
  */
 
 /**
@@ -200,6 +202,6 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   },
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;
 
-// Functions live in individual files per one-export-per-file rule:
-// isNodeType.ts, getNodeTypeInfo.ts, getBrowserCapableTypes.ts, getContainerTypes.ts
+// Helper functions live in individual files per one-export-per-file rule:
+// isNodeType.ts, getNodeTypeInfo.ts
 // Import them directly or via the package barrel (index.ts).

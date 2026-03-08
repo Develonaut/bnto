@@ -315,9 +315,44 @@ impl CompressImages {
 
 impl NodeProcessor for CompressImages {
     /// The unique identifier for this node type.
-    /// Matches the slug in the bnto registry and the Go engine's node name.
+    /// Matches the slug in the bnto registry.
     fn name(&self) -> &str {
         "compress-images"
+    }
+
+    /// Return the self-describing metadata for this processor.
+    ///
+    /// This tells consumers (and the `node_catalog()` WASM export) everything
+    /// about compress-images: it's an image processor that accepts JPEG/PNG/WebP,
+    /// runs in the browser, and has one parameter — `quality` (1-100, default 80).
+    fn metadata(&self) -> bnto_core::NodeMetadata {
+        use bnto_core::metadata::*;
+        NodeMetadata {
+            node_type: "image".to_string(),
+            operation: "compress".to_string(),
+            name: "Compress Images".to_string(),
+            description: "Reduce image file size while maintaining quality".to_string(),
+            category: NodeCategory::Image,
+            accepts: vec![
+                "image/jpeg".to_string(),
+                "image/png".to_string(),
+                "image/webp".to_string(),
+            ],
+            platforms: vec!["browser".to_string()],
+            parameters: vec![ParameterDef {
+                name: "quality".to_string(),
+                label: "Quality".to_string(),
+                description: "Compression quality (1 = smallest file, 100 = best quality)"
+                    .to_string(),
+                param_type: ParameterType::Number,
+                default: Some(serde_json::json!(80)),
+                constraints: Some(Constraints {
+                    min: Some(1.0),
+                    max: Some(100.0),
+                    required: false,
+                }),
+            }],
+        }
     }
 
     /// Process a single image: detect format, decode, re-encode with compression.

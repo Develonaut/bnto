@@ -1,11 +1,8 @@
-/**
- * Resize Images recipe — resize to exact dimensions or percentages.
- *
- * Go source: engine/pkg/menu/recipes/resize-images.json
- */
+/** Resize Images recipe — resize to exact dimensions or percentages. */
 
-import type { Recipe } from "../recipe";
-import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import type { Recipe } from "../../recipe";
+import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
+import { batchResize } from "../primitives/batchResize";
 
 export const resizeImages: Recipe = {
   slug: "resize-images",
@@ -30,7 +27,8 @@ export const resizeImages: Recipe = {
     name: "Resize Images",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Lists image files and resizes each one via a loop.",
+      description:
+        "Accepts image files and resizes each one using a reusable batch resize sub-recipe.",
     },
     parameters: {},
     inputPorts: [],
@@ -53,39 +51,7 @@ export const resizeImages: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      {
-        id: "resize-loop",
-        type: "loop",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Resize Each Image",
-        position: { x: 300, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "forEach",
-          items: '{{index . "input" "files"}}',
-        },
-        inputPorts: [{ id: "in-1", name: "items" }],
-        outputPorts: [],
-        nodes: [
-          {
-            id: "resize-image",
-            type: "image",
-            version: CURRENT_FORMAT_VERSION,
-            name: "Resize Image",
-            position: { x: 100, y: 100 },
-            metadata: {},
-            parameters: {
-              operation: "resize",
-              input: "{{.item}}",
-              output: "{{.OUTPUT_DIR}}/{{basename .item}}",
-              width: 200,
-            },
-            inputPorts: [],
-            outputPorts: [],
-          },
-        ],
-        edges: [],
-      },
+      batchResize,
       {
         id: "output",
         type: "output",
@@ -104,8 +70,8 @@ export const resizeImages: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "resize-loop" },
-      { id: "e2", source: "resize-loop", target: "output" },
+      { id: "e1", source: "input", target: "batch-resize" },
+      { id: "e2", source: "batch-resize", target: "output" },
     ],
   },
 };

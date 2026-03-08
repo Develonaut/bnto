@@ -25,12 +25,12 @@ Before reviewing ANY code, read and internalize the project's coding standards a
 
 Identify which packages the changed files belong to and invoke the relevant persona skill(s):
 
-| Changed files in... | Persona skill |
-|---|---|
-| `engine/` | `/rust-expert` |
-| `apps/web/` | `/frontend-engineer` + `/nextjs-expert` |
-| `packages/core/` | `/core-architect` |
-| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer` |
+| Changed files in...                               | Persona skill                           |
+| ------------------------------------------------- | --------------------------------------- |
+| `engine/`                                         | `/rust-expert`                          |
+| `apps/web/`                                       | `/frontend-engineer` + `/nextjs-expert` |
+| `packages/core/`                                  | `/core-architect`                       |
+| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer`                     |
 
 **If changes touch auth, security headers, input validation, file uploads, or Convex mutations**, also invoke `/security-engineer` — the security persona owns trust boundaries across all packages.
 
@@ -43,9 +43,11 @@ Identify which packages the changed files belong to and invoke the relevant pers
 ## Context
 
 ### Files changed
+
 !`git diff --name-only HEAD 2>/dev/null; git ls-files --others --exclude-standard`
 
 ### Current branch
+
 !`git branch --show-current`
 
 ## Step 1: Code Review
@@ -59,12 +61,14 @@ Run `/code-review` to audit all changed files against the project's coding stand
 Run these sequentially — stop on first failure:
 
 ### Rust checks (if engine/ files changed)
+
 ```bash
 task wasm:lint          # clippy (Rust linter) — must pass clean
-task wasm:test:unit     # Rust unit tests (native) — must pass
+task wasm:test          # Rust unit tests + WASM integration tests — must pass
 ```
 
 ### TypeScript checks
+
 ```bash
 task ui:build          # TypeScript compilation — must pass
 task ui:test           # Frontend tests — must pass
@@ -82,6 +86,7 @@ task seo:audit         # Build + run Lighthouse against all public routes — mu
 ```
 
 This runs Lighthouse against 10 public URLs (homepage, 6 recipe pages, pricing, FAQ, privacy) and asserts:
+
 - **Performance:** ≥ 90 (warn level — report but don't block)
 - **Accessibility, Best Practices, SEO:** ≥ 90 (error level — must pass)
 
@@ -113,6 +118,7 @@ Do NOT reason about whether the change is "visual" or "behavioral" or "internal.
 4. Visually inspect all screenshots
 
 **Required e2e coverage for NEW UI:**
+
 - Add to or create spec files in `apps/web/e2e/`. Use existing helpers and patterns from sibling spec files.
 - Test the actual user flow, not just that a page renders.
 - Include `await expect(page).toHaveScreenshot()` assertions
@@ -140,7 +146,7 @@ Before committing, present a summary to the user including the checklist below.
 3. **If yes:** Confirm E2E tests were run. List the command used and results (pass count, fail count). If screenshots were updated, confirm two-run verification. If E2E tests were NOT run, state that user granted explicit permission to skip (quote their message).
 4. **Unit/Integration tests** — Confirm `task ui:test` passed. If new logic was added, list new test files.
 5. **TS checks result** — confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
-6. **Rust checks result** — confirm `task wasm:lint`, `task wasm:test:unit` passed clean, or SKIPPED (no Rust changes)
+6. **Rust checks result** — confirm `task wasm:lint`, `task wasm:test` passed clean, or SKIPPED (no Rust changes)
 7. **Lighthouse audit result** — confirm `task seo:audit` passed clean, or SKIPPED (no `apps/web/` changes)
 8. **Files changed** — files created/modified, with brief description of each
 
