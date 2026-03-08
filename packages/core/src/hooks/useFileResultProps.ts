@@ -26,15 +26,18 @@ function useFileResultProps(result: BrowserFileResult): FileResultDisplayProps {
     const origBytes = result.metadata.originalSize as number | undefined;
     const outputBytes = result.blob.size;
 
-    // Compute savings from originalSize if available (engine may or may not set compressionRatio).
-    const hasSavings = origBytes != null && origBytes > outputBytes;
-    const savingsPercent = hasSavings ? Math.round((1 - outputBytes / origBytes) * 100) : undefined;
+    // Always show originalSize when the engine provides it.
+    // Savings are shown as negative percentage when the file got smaller.
+    const hasOriginal = origBytes != null && origBytes !== outputBytes;
+    const savingsPercent = hasOriginal
+      ? Math.round((1 - outputBytes / origBytes) * 100)
+      : undefined;
 
     return {
       filename: result.filename,
       extension: extractExtension(result.filename),
       outputSize: formatFileSize(outputBytes),
-      originalSize: hasSavings ? formatFileSize(origBytes) : undefined,
+      originalSize: hasOriginal ? formatFileSize(origBytes) : undefined,
       savings: savingsPercent != null && savingsPercent > 0 ? `-${savingsPercent}%` : undefined,
       download,
     };

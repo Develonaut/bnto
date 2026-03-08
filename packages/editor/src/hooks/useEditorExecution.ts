@@ -85,6 +85,7 @@ function useEditorExecution(): EditorExecutionResult {
         nodes: state.nodes,
         configs: state.configs,
         recipeMetadata: state.recipeMetadata,
+        definition: state.definition,
       });
 
       if (isPipelineError(prepared)) {
