@@ -49,7 +49,7 @@ export function ToolbarProgress({ execution }: ToolbarProgressProps) {
         <LinearProgress
           value={0}
           icon={<LoaderIcon className="size-4 shrink-0 text-primary motion-safe:animate-spin" />}
-          label="Initializing\u2026"
+          label="Initializing..."
           valueLabel=""
         />
       </div>
@@ -67,7 +67,7 @@ export function ToolbarProgress({ execution }: ToolbarProgressProps) {
       <LinearProgress
         value={fileProgress.overallPercent}
         icon={<LoaderIcon className="size-4 shrink-0 text-primary motion-safe:animate-spin" />}
-        label={`Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}\u2026`}
+        label={`Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}...`}
       />
     </div>
   );

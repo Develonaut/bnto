@@ -109,6 +109,9 @@ pub fn execute_pipeline(
 
     for (node_index, node) in processing_nodes.iter().enumerate() {
         // Execute this node (handles both primitive and container nodes).
+        // Pass `total_files` (the original input count) so that progress
+        // events always report "X of N" relative to the user's input batch,
+        // even when container nodes (loop) split files into single-file batches.
         let result = execute_node(
             node,
             current_files,
@@ -116,6 +119,8 @@ pub fn execute_pipeline(
             reporter,
             node_index,
             total_nodes,
+            total_files,
+            0, // file_offset — starts at 0 for top-level nodes
             &now_ms,
         )?;
 
@@ -181,6 +186,8 @@ fn execute_node(
     reporter: &PipelineReporter,
     node_index: usize,
     total_nodes: usize,
+    pipeline_total_files: usize,
+    file_offset: usize,
     now_ms: &(impl Fn() -> u64 + Copy),
 ) -> Result<NodeExecutionResult, BntoError> {
     let node_start = now_ms();
@@ -194,10 +201,12 @@ fn execute_node(
     });
 
     // --- Decide: container or primitive? ---
+    // Pass pipeline_total_files and file_offset so that progress events
+    // always report relative to the user's original input batch.
     let result = if is_container_node(&node.node_type) {
-        execute_container_node(node, files, registry, reporter, now_ms)
+        execute_container_node(node, files, registry, reporter, pipeline_total_files, file_offset, now_ms)
     } else {
-        execute_primitive_node(node, files, registry, reporter)
+        execute_primitive_node(node, files, registry, reporter, pipeline_total_files, file_offset)
     };
 
     // --- Handle success or failure ---
@@ -237,6 +246,8 @@ fn execute_primitive_node(
     files: Vec<PipelineFile>,
     registry: &NodeRegistry,
     reporter: &PipelineReporter,
+    pipeline_total_files: usize,
+    file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
     // --- Step 1: Resolve the processor from the registry ---
     let processor = registry
@@ -255,12 +266,16 @@ fn execute_primitive_node(
         })?;
 
     // --- Step 2: Process each file ---
-    let total_files = files.len();
+    // `local_file_count` is how many files THIS node received (used for
+    // pre-allocation and the final files_processed count).
+    // `pipeline_total_files` is the ORIGINAL input count from the user
+    // (used in progress events so the UI says "X of 4", not "1 of 1").
+    let local_file_count = files.len();
 
     // PERFORMANCE: Pre-allocate with capacity. Most processors produce 1 output
-    // per input, so `total_files` is a good estimate. Avoids repeated
+    // per input, so `local_file_count` is a good estimate. Avoids repeated
     // reallocation and copying as the Vec grows.
-    let mut output_files: Vec<PipelineFile> = Vec::with_capacity(total_files);
+    let mut output_files: Vec<PipelineFile> = Vec::with_capacity(local_file_count);
 
     // PERFORMANCE: Clone node.id once outside the loop. Each file iteration
     // needs the node_id for progress events, but cloning inside the loop
@@ -298,10 +313,12 @@ fn execute_primitive_node(
         let file_name = file.name;
 
         // Emit FileProgress at 0% to signal "starting this file".
+        // Use `file_offset + file_index` so the UI reports the global position
+        // (e.g., "3 of 4") even when a loop container sends one file at a time.
         reporter.emit(PipelineEvent::FileProgress {
             node_id: node_id.clone(),
-            file_index,
-            total_files,
+            file_index: file_offset + file_index,
+            total_files: pipeline_total_files,
             percent: 0,
             message: format!("Processing {}...", &file_name),
         });
@@ -320,8 +337,8 @@ fn execute_primitive_node(
         // Emit FileProgress at 100% to signal "done with this file".
         reporter.emit(PipelineEvent::FileProgress {
             node_id: node_id.clone(),
-            file_index,
-            total_files,
+            file_index: file_offset + file_index,
+            total_files: pipeline_total_files,
             percent: 100,
             message: format!("Completed {}", &file_name),
         });
@@ -340,7 +357,7 @@ fn execute_primitive_node(
     }
 
     Ok(NodeExecutionResult {
-        files_processed: total_files,
+        files_processed: local_file_count,
         output_files,
     })
 }
@@ -360,6 +377,8 @@ fn execute_container_node(
     files: Vec<PipelineFile>,
     registry: &NodeRegistry,
     reporter: &PipelineReporter,
+    pipeline_total_files: usize,
+    file_offset: usize,
     now_ms: &(impl Fn() -> u64 + Copy),
 ) -> Result<NodeExecutionResult, BntoError> {
     // Get children, defaulting to empty if none (passthrough).
@@ -391,16 +410,20 @@ fn execute_container_node(
         "loop" => {
             // --- Loop: run sub-pipeline once PER file ---
             // Each iteration gets a single-file batch. Results are collected.
+            // We increment file_offset so each iteration's progress events
+            // report the correct global position (e.g., file 2 of 4, not 1 of 1).
             let mut all_output_files: Vec<PipelineFile> = Vec::new();
             let mut total_processed: usize = 0;
 
-            for file in files {
+            for (i, file) in files.into_iter().enumerate() {
                 let single_file_batch = vec![file];
                 let result = execute_sub_pipeline(
                     &sub_definition,
                     single_file_batch,
                     registry,
                     reporter,
+                    pipeline_total_files,
+                    file_offset + i, // each iteration is one file further
                     now_ms,
                 )?;
                 total_processed += result.files_processed;
@@ -417,7 +440,10 @@ fn execute_container_node(
         // "parallel" is the same as "group" for now — concurrent execution
         // is future work.
         "group" | "parallel" => {
-            let result = execute_sub_pipeline(&sub_definition, files, registry, reporter, now_ms)?;
+            let result = execute_sub_pipeline(
+                &sub_definition, files, registry, reporter,
+                pipeline_total_files, file_offset, now_ms,
+            )?;
             Ok(NodeExecutionResult {
                 files_processed: result.files_processed,
                 output_files: result.output_files,
@@ -448,6 +474,8 @@ fn execute_sub_pipeline(
     files: Vec<PipelineFile>,
     registry: &NodeRegistry,
     reporter: &PipelineReporter,
+    pipeline_total_files: usize,
+    file_offset: usize,
     now_ms: &(impl Fn() -> u64 + Copy),
 ) -> Result<NodeExecutionResult, BntoError> {
     // Filter out I/O nodes from children too.
@@ -469,6 +497,8 @@ fn execute_sub_pipeline(
             reporter,
             node_index,
             total_nodes,
+            pipeline_total_files,
+            file_offset,
             now_ms,
         )?;
         total_files_processed += result.files_processed;
