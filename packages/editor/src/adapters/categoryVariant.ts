@@ -10,7 +10,7 @@ const CATEGORY_VARIANT: Record<string, CompartmentVariant> = {
   network: "secondary",
   control: "warning",
   system: "muted",
-  io: "info",
+  io: "muted",
 };
 
 export { CATEGORY_VARIANT };
