@@ -1,8 +1,8 @@
 /** Compress Images recipe — optimize PNG, JPEG, and WebP images. */
 
-import type { Recipe } from "../../recipe";
-import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
-import { batchCompress } from "../primitives/batchCompress";
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { getProcessorDefaults } from "../generated/catalog";
 
 export const compressImages: Recipe = {
   slug: "compress-images",
@@ -28,8 +28,7 @@ export const compressImages: Recipe = {
     name: "Compress Images",
     position: { x: 0, y: 0 },
     metadata: {
-      description:
-        "Accepts image files and compresses each one using a reusable batch compression sub-recipe.",
+      description: "Accepts image files and compresses each one.",
     },
     parameters: {},
     inputPorts: [],
@@ -52,7 +51,34 @@ export const compressImages: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      batchCompress,
+      {
+        id: "compress-loop",
+        type: "loop",
+        version: CURRENT_FORMAT_VERSION,
+        name: "Compress Each Image",
+        position: { x: 250, y: 100 },
+        metadata: {},
+        parameters: { mode: "forEach" },
+        inputPorts: [{ id: "in-1", name: "items" }],
+        outputPorts: [],
+        nodes: [
+          {
+            id: "compress-image",
+            type: "image",
+            version: CURRENT_FORMAT_VERSION,
+            name: "Compress Image",
+            position: { x: 0, y: 0 },
+            metadata: {},
+            parameters: {
+              operation: "compress",
+              ...getProcessorDefaults("image", "compress"),
+            },
+            inputPorts: [],
+            outputPorts: [],
+          },
+        ],
+        edges: [],
+      },
       {
         id: "output",
         type: "output",
@@ -71,8 +97,8 @@ export const compressImages: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "batch-compress" },
-      { id: "e2", source: "batch-compress", target: "output" },
+      { id: "e1", source: "input", target: "compress-loop" },
+      { id: "e2", source: "compress-loop", target: "output" },
     ],
   },
 };

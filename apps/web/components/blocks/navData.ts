@@ -6,7 +6,7 @@
  * Both Navbar (desktop) and MobileNavMenu (mobile) consume these.
  */
 
-import { RECIPES as ALL_RECIPES } from "@bnto/nodes";
+import { RECIPES as NODE_RECIPES } from "@bnto/nodes";
 
 export interface RecipeLink {
   label: string;
@@ -45,7 +45,7 @@ export const RECIPES: RecipeCategory[] = buildRecipeCategories();
 function buildRecipeCategories(): RecipeCategory[] {
   const grouped = new Map<string, RecipeLink[]>();
 
-  for (const recipe of ALL_RECIPES) {
+  for (const recipe of NODE_RECIPES) {
     const links = grouped.get(recipe.category) ?? [];
     links.push({
       label: recipe.name,
@@ -55,12 +55,10 @@ function buildRecipeCategories(): RecipeCategory[] {
     grouped.set(recipe.category, links);
   }
 
-  return CATEGORY_ORDER
-    .filter((cat) => grouped.has(cat))
-    .map((cat) => ({
-      title: CATEGORY_TITLES[cat] ?? cat,
-      links: grouped.get(cat)!,
-    }));
+  return CATEGORY_ORDER.filter((cat) => grouped.has(cat)).map((cat) => ({
+    title: CATEGORY_TITLES[cat] ?? cat,
+    links: grouped.get(cat)!,
+  }));
 }
 
 export interface PageLink {

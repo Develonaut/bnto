@@ -1,8 +1,8 @@
 /** Rename Files recipe — batch rename files with patterns. */
 
-import type { Recipe } from "../../recipe";
-import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
-import { batchRename } from "../primitives/batchRename";
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { getProcessorDefaults } from "../generated/catalog";
 
 export const renameFiles: Recipe = {
   slug: "rename-files",
@@ -26,7 +26,7 @@ export const renameFiles: Recipe = {
     name: "Rename Files",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Accepts files and renames each one using a reusable batch rename sub-recipe.",
+      description: "Accepts files and renames each one.",
     },
     parameters: {},
     inputPorts: [],
@@ -49,7 +49,35 @@ export const renameFiles: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      batchRename,
+      {
+        id: "rename-loop",
+        type: "loop",
+        version: CURRENT_FORMAT_VERSION,
+        name: "Rename Each File",
+        position: { x: 250, y: 100 },
+        metadata: {},
+        parameters: { mode: "forEach" },
+        inputPorts: [{ id: "in-1", name: "items" }],
+        outputPorts: [],
+        nodes: [
+          {
+            id: "rename-file",
+            type: "file-system",
+            version: CURRENT_FORMAT_VERSION,
+            name: "Rename File",
+            position: { x: 0, y: 0 },
+            metadata: {},
+            parameters: {
+              operation: "rename",
+              ...getProcessorDefaults("file-system", "rename"),
+              prefix: "renamed-",
+            },
+            inputPorts: [],
+            outputPorts: [],
+          },
+        ],
+        edges: [],
+      },
       {
         id: "output",
         type: "output",
@@ -68,8 +96,8 @@ export const renameFiles: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "batch-rename" },
-      { id: "e2", source: "batch-rename", target: "output" },
+      { id: "e1", source: "input", target: "rename-loop" },
+      { id: "e2", source: "rename-loop", target: "output" },
     ],
   },
 };

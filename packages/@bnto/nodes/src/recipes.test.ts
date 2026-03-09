@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { RECIPES, getRecipeBySlug } from "./recipes";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 
-const EXPECTED_SLUGS = [
+const PUBLIC_SLUGS = [
   "compress-images",
   "resize-images",
   "convert-image-format",
@@ -19,7 +19,7 @@ describe("RECIPES", () => {
 
   it("contains every expected slug", () => {
     const slugs = RECIPES.map((r) => r.slug);
-    for (const expected of EXPECTED_SLUGS) {
+    for (const expected of PUBLIC_SLUGS) {
       expect(slugs).toContain(expected);
     }
   });
@@ -148,7 +148,7 @@ describe("getRecipeBySlug", () => {
   });
 
   it("finds every recipe by its slug", () => {
-    for (const expected of EXPECTED_SLUGS) {
+    for (const expected of PUBLIC_SLUGS) {
       const recipe = getRecipeBySlug(expected);
       expect(recipe).toBeDefined();
       expect(recipe!.slug).toBe(expected);
