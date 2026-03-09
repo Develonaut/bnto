@@ -85,7 +85,7 @@ function NodeRoot({
             elevation={elevation}
             color={color}
             className={cn(
-              "group relative flex flex-col rounded-xl overflow-hidden pointer-events-auto",
+              "group relative flex flex-col rounded-xl pointer-events-auto",
               failed && "ring-2 ring-destructive",
             )}
             style={{ width, height }}
@@ -93,8 +93,14 @@ function NodeRoot({
             data-state={status}
             data-progress={progress !== undefined ? progress : undefined}
           >
-            <NodeProgressFill progress={progress} />
-            {children}
+            {/* Clip wrapper — contains the progress fill without putting
+                overflow-hidden on Card (which flattens preserve-3d).
+                z-0 keeps it below node content. */}
+            <div className="absolute inset-0 z-0 overflow-hidden rounded-xl pointer-events-none">
+              <NodeProgressFill progress={progress} />
+            </div>
+            {/* Content wrapper — z-[1] ensures buttons/labels sit above the fill. */}
+            <div className="relative z-[1] flex flex-1 flex-col">{children}</div>
           </Card>
         </Pressable>
       </ScaleIn>
