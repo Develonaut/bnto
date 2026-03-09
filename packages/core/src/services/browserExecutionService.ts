@@ -97,6 +97,11 @@ export function createBrowserExecutionService() {
     },
 
     downloadAllResults: async (results: BrowserFileResult[], slug?: string) => {
+      // Single file: download directly (no zip wrapper needed)
+      if (results.length === 1) {
+        downloadBlob(results[0].blob, results[0].filename);
+        return;
+      }
       const zipBlob = await createZipBlob(results);
       const name = slug ? `${slug}-results.zip` : "bnto-results.zip";
       downloadBlob(zipBlob, name);
