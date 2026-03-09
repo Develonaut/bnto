@@ -4,10 +4,13 @@ import { createCn } from "../utils/createCn";
 
 type IconBadgeVariant =
   | "primary"
+  | "secondary"
+  | "accent"
   | "muted"
   | "destructive"
   | "success"
-  | "warning";
+  | "warning"
+  | "info";
 type IconBadgeSize = "sm" | "md" | "lg";
 type IconBadgeShape = "circle" | "square";
 
@@ -16,10 +19,13 @@ const iconBadgeCn = createCn({
   variants: {
     variant: {
       primary: "bg-primary/10 text-primary",
-      muted: "bg-muted text-muted-foreground",
+      secondary: "bg-secondary/20 text-secondary-foreground",
+      accent: "bg-accent/15 text-accent",
+      muted: "bg-foreground/[0.06] text-foreground",
       destructive: "bg-destructive/10 text-destructive",
       success: "bg-success/10 text-success",
-      warning: "bg-warning/10 text-warning",
+      warning: "bg-warning/10 text-[oklch(0.58_0.16_50)]",
+      info: "bg-chart-2/10 text-chart-2",
     },
     size: {
       sm: "size-8",
@@ -45,12 +51,6 @@ type IconBadgeProps = Omit<ComponentProps<"div">, "children"> & {
   children: ReactNode;
 };
 
-export function IconBadge({
-  variant,
-  size,
-  shape,
-  className,
-  ...props
-}: IconBadgeProps) {
+export function IconBadge({ variant, size, shape, className, ...props }: IconBadgeProps) {
   return <div className={iconBadgeCn({ variant, size, shape }, className)} {...props} />;
 }

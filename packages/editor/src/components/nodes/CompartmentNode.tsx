@@ -1,15 +1,7 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import type { BentoNode } from "../../adapters/types";
-import {
-  NodeRoot,
-  NodeHeader,
-  NodeBody,
-  NodeIcon,
-  NodeLabel,
-  NodeSublabel,
-  NodeDeleteButton,
-} from "./Node";
+import { NodeRoot, NodeHeader, NodeBody, NodeIcon, NodeLabel, NodeDeleteButton } from "./Node";
 import { resolveNodePresentation } from "./resolveNodePresentation";
 
 /**
@@ -46,9 +38,8 @@ export const CompartmentNode = memo(function CompartmentNode({
         <NodeDeleteButton nodeId={id} selected={selected} />
       </NodeHeader>
       <NodeBody>
-        <NodeIcon icon={data.icon} />
+        <NodeIcon icon={data.icon} variant={data.variant} />
         <NodeLabel>{data.label}</NodeLabel>
-        <NodeSublabel>{data.sublabel}</NodeSublabel>
       </NodeBody>
     </NodeRoot>
   );

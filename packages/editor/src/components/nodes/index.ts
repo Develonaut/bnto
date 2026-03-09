@@ -15,7 +15,6 @@ export {
   NodeFooter,
   NodeIcon,
   NodeLabel,
-  NodeSublabel,
   NodeDeleteButton,
 } from "./Node";
 

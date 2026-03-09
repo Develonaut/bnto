@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
  * NodeBody — center zone of the node card.
  *
  * Vertically and horizontally centered, fills remaining space.
- * Use for NodeIcon, NodeLabel, NodeSublabel.
+ * Use for NodeIcon, NodeLabel.
  */
 
 function NodeBody({ children }: { children: ReactNode }) {
