@@ -46,7 +46,7 @@ export const CompartmentNode = memo(function CompartmentNode({
         <NodeDeleteButton nodeId={id} selected={selected} />
       </NodeHeader>
       <NodeBody>
-        <NodeIcon icon={data.icon} />
+        <NodeIcon icon={data.icon} variant={data.variant} />
         <NodeLabel>{data.label}</NodeLabel>
         <NodeSublabel>{data.sublabel}</NodeSublabel>
       </NodeBody>
