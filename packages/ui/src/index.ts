@@ -57,6 +57,15 @@ export { LinearProgress } from "./feedback/LinearProgress";
 export { ResultFileCard } from "./feedback/ResultFileCard";
 export type { ResultFileCardProps } from "./feedback/ResultFileCard";
 export { Skeleton } from "./feedback/Skeleton";
+export {
+  StatusBanner,
+  StatusBannerRow,
+  StatusBannerIcon,
+  StatusBannerLabel,
+  StatusBannerSpacer,
+  StatusBannerProgress,
+} from "./feedback/StatusBanner";
+export type { StatusBannerProps, StatusBannerVariant } from "./feedback/StatusBanner";
 
 /* Surface */
 export {

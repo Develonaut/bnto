@@ -61,6 +61,9 @@ export type { ExecutionState } from "./hooks/useExecutionState";
 export { useFileResultProps } from "./hooks/useFileResultProps";
 export type { FileResultDisplayProps } from "./hooks/useFileResultProps";
 
+// ── Utils (pure functions) ────────────────────────────────────────────────
+export { computeTotalSaved } from "./utils/computeTotalSaved";
+
 // ── Store factories (for app-layer orchestration) ─────────────────────────
 export { createEnhancedStore } from "./stores/createEnhancedStore";
 
