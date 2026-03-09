@@ -2,8 +2,8 @@
  * NodeProgressFill — horizontal progress overlay inside a node card.
  *
  * Uses `transform: scaleX()` for compositor-only animation (no reflow).
- * Color is a lightened version of the card's variant background via
- * `color-mix()` (defined in surface.css as `.node-progress-fill`).
+ * Color is the primary (terracotta) at low opacity so the fill is
+ * visible on white cards and blends on colored variants.
  * Renders null when progress is undefined or 0.
  */
 

@@ -495,17 +495,17 @@
 
 /* ── Node Progress Fill ─────────────────────────────────────────────
  * Horizontal fill overlay inside bento grid nodes during execution.
- * Uses color-mix() to lighten the card's variant background.
- * Light mode: mix toward white. Dark mode: mix toward dark gray.
+ * Uses the primary (terracotta) color at low opacity so the fill
+ * is visible on white card surfaces and blends on colored variants.
  * ────────────────────────────────────────────────────────────────── */
 
 .node-progress-fill {
-  background: color-mix(in oklch, var(--variant-bg, var(--card)) 40%, white);
-  z-index: 0;
+  background: var(--primary);
+  opacity: 0.15;
 }
 
 .dark .node-progress-fill {
-  background: color-mix(in oklch, var(--variant-bg, var(--card)) 40%, oklch(0.2 0 0));
+  opacity: 0.2;
 }
 
 /* ---------------------------------------------------------------------------
