@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { Button, PlayIcon, LoaderIcon, RotateCcwIcon } from "@bnto/ui";
-import { useEditorExecutionContext } from "../hooks/EditorExecutionContext";
+import { useEditorExecution } from "../hooks/useEditorExecution";
 
 /**
  * RunButton — run/reset button with hidden file input for selecting files.
@@ -11,7 +11,7 @@ import { useEditorExecutionContext } from "../hooks/EditorExecutionContext";
  * completed/failed → reset icon (clears execution state).
  */
 function RunButton() {
-  const { phase, canRun, run, reset } = useEditorExecutionContext();
+  const { phase, canRun, run, reset } = useEditorExecution();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleClick = useCallback(() => {

@@ -9,7 +9,7 @@
  * useEditorCanvas). All other consumers should read `selectedNodeId`
  * directly from the store via `useEditorStore((s) => s.selectedNodeId)`.
  *
- * Must be used inside a ReactFlowProvider + EditorProvider.
+ * Must be used inside a ReactFlowProvider + EditorRoot.
  */
 
 "use client";
@@ -23,9 +23,12 @@ function useEditorSelection(): { selectedNodeId: string | null } {
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const setSelectedNodeId = useEditorStore((s) => s.setSelectedNodeId);
 
-  const onChange = useCallback(({ nodes }: { nodes: Node[] }) => {
-    setSelectedNodeId(nodes.length === 1 ? nodes[0]!.id : null);
-  }, [setSelectedNodeId]);
+  const onChange = useCallback(
+    ({ nodes }: { nodes: Node[] }) => {
+      setSelectedNodeId(nodes.length === 1 ? nodes[0]!.id : null);
+    },
+    [setSelectedNodeId],
+  );
 
   useOnSelectionChange({ onChange });
 

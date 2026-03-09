@@ -129,9 +129,9 @@ describe("createEditorStore", () => {
       expect(state(store).executionState["node-1"]).toBe("active");
     });
 
-    it("resets execution state", () => {
+    it("resets node statuses", () => {
       state(store).setExecutionState({ "node-1": "completed" });
-      state(store).resetExecution();
+      state(store).resetNodeStatuses();
       expect(state(store).executionState).toEqual({});
     });
 

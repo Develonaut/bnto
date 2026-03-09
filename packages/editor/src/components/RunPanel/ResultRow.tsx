@@ -3,11 +3,11 @@
 import { Button, DownloadIcon, ResultFileCard } from "@bnto/ui";
 import type { BrowserFileResult } from "@bnto/core";
 import { useFileResultProps } from "@bnto/core";
-import { useEditorExecutionContext } from "../../hooks/EditorExecutionContext";
+import { useEditorStore } from "../../hooks/useEditorStore";
 
 /** Single result row using the shared ResultFileCard. */
 function ResultRow({ result }: { result: BrowserFileResult }) {
-  const { downloadFile } = useEditorExecutionContext();
+  const downloadFile = useEditorStore((s) => s.downloadResult);
   const props = useFileResultProps(result);
 
   return (
