@@ -122,6 +122,13 @@ csv = "1.3"
 # Used for find/replace patterns in filenames (e.g., "IMG_(\d+)" → "photo_$1").
 regex = "1"
 
+# png: Low-level PNG encoder/decoder. We use this directly when writing
+# indexed (8-bit palette) PNGs after color quantization. The higher-level
+# `image` crate always writes truecolor PNGs — to write a palette-based
+# PNG we need the `png` crate's API directly. Already a transitive dep
+# of `image`, so this adds zero binary size.
+png = "0.18"
+
 # =============================================================================
 # Build Profiles
 # =============================================================================

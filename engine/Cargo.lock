@@ -99,6 +99,8 @@ dependencies = [
  "bnto-core",
  "image",
  "js-sys",
+ "png",
+ "quantizr",
  "serde",
  "serde_json",
  "thiserror",
@@ -600,6 +602,12 @@ checksum = "7186d3822593aa4393561d186d1393b3923e9d6163d3fbfd6e825e3e6cf3e6a8"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "quantizr"
+version = "1.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b28ab4659f6754222a9e96c7a48f68dba03a620f23803c67ccd4ca7c35d55f5f"
 
 [[package]]
 name = "quick-error"

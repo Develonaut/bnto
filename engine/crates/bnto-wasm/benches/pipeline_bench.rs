@@ -29,6 +29,7 @@ use bnto_core::{
 // --- Test fixtures ---
 // We embed real files for realistic benchmarks.
 static SMALL_JPEG: &[u8] = include_bytes!("../../../../test-fixtures/images/small.jpg");
+static LARGE_PNG: &[u8] = include_bytes!("../../../../test-fixtures/images/large.png");
 static MESSY_CSV: &[u8] = include_bytes!("../../../../test-fixtures/csv/messy.csv");
 
 // --- Helpers ---
@@ -302,10 +303,64 @@ fn bench_registry(c: &mut Criterion) {
     });
 }
 
+// =============================================================================
+// PNG Compression Benchmarks — Track Quantization Performance
+// =============================================================================
+//
+// PNG compression uses quantizr (median cut + Floyd-Steinberg dithering) to
+// reduce 24-bit truecolor to 8-bit indexed palette before DEFLATE. Tracks
+// both speed and output size for regression detection.
+//
+// HOW TO RUN:
+//   cd engine
+//   cargo bench -- png
+//
+// Criterion HTML reports in engine/target/criterion/ for visual comparison.
+
+fn bench_png_compression(c: &mut Criterion) {
+    let registry = real_registry();
+    let reporter = PipelineReporter::new_noop();
+
+    // Simple pipeline: input → compress → output
+    let compress_def = parse(
+        r#"{
+        "nodes": [
+            { "id": "input", "type": "input" },
+            { "id": "compress", "type": "image", "parameters": { "operation": "compress" } },
+            { "id": "output", "type": "output" }
+        ]
+    }"#,
+    );
+
+    // --- Benchmark: PNG compression speed on large.png (1.0 MB) ---
+    c.bench_function("node/image:compress/png/large", |b| {
+        b.iter(|| {
+            let files = vec![file("photo.png", LARGE_PNG, "image/png")];
+            execute_pipeline(&compress_def, files, &registry, &reporter, fake_now).unwrap()
+        })
+    });
+
+    // --- One-shot: Print output size for regression tracking ---
+    // Not a timing benchmark — reports the compression ratio so we can
+    // verify quantizr output sizes haven't regressed.
+    let files = vec![file("photo.png", LARGE_PNG, "image/png")];
+    let result = execute_pipeline(&compress_def, files, &registry, &reporter, fake_now).unwrap();
+    if let Some(output_file) = result.files.first() {
+        let input_kb = LARGE_PNG.len() / 1024;
+        let output_kb = output_file.data.len() / 1024;
+        let reduction_pct = (1.0 - output_file.data.len() as f64 / LARGE_PNG.len() as f64) * 100.0;
+        eprintln!(
+            "\n  PNG compression: {} KB → {} KB ({:.1}% reduction)\n",
+            input_kb, output_kb, reduction_pct
+        );
+    }
+}
+
 criterion_group!(
     benches,
     bench_individual_nodes,
     bench_recipes,
-    bench_registry
+    bench_registry,
+    bench_png_compression
 );
 criterion_main!(benches);
