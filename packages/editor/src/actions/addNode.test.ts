@@ -21,7 +21,6 @@ function blankState(overrides?: Partial<EditorState>): EditorState {
     isDirty: false,
     validationErrors: [],
     executionState: {},
-    slug: null,
     undoStack: [],
     redoStack: [],
     ...overrides,

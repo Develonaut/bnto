@@ -15,6 +15,7 @@ import {
 } from "@bnto/ui";
 import {
   RECIPES,
+  getRecipeBySlug,
   batchCompress,
   batchConvert,
   batchRename,
@@ -24,7 +25,6 @@ import {
 } from "@bnto/nodes";
 import type { Definition } from "@bnto/nodes";
 import { getEditorStore } from "../../store/instance";
-import { loadDefinition } from "../../actions/loadDefinition";
 import type { ExecutionPhase, FileProgress } from "../../store/types";
 import { MOCK_RESULTS } from "./devMockData";
 
@@ -101,7 +101,7 @@ function DevTab() {
 
   const handleLoadSubRecipe = useCallback((id: string) => {
     const sub = SUB_RECIPES.find((s) => s.definition.id === id);
-    if (sub) getEditorStore().setState(loadDefinition(sub.definition));
+    if (sub) getEditorStore().getState().loadDefinition(sub.definition);
   }, []);
 
   return (
@@ -163,12 +163,17 @@ function ProgressControl({
 }
 
 function RecipeSelect() {
+  const handleLoadRecipe = useCallback((slug: string) => {
+    const recipe = getRecipeBySlug(slug);
+    if (recipe) getEditorStore().getState().loadDefinition(recipe.definition);
+  }, []);
+
   return (
     <Stack className="gap-1.5">
       <Text size="xs" color="muted" weight="medium">
         Load Recipe
       </Text>
-      <Select onValueChange={(slug) => getEditorStore().getState().loadRecipe(slug)}>
+      <Select onValueChange={handleLoadRecipe}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select recipe..." />
         </SelectTrigger>

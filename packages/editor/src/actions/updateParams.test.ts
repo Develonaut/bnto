@@ -40,7 +40,6 @@ function stateWithNode(): EditorState {
     executionState: {},
     undoStack: [],
     redoStack: [],
-    slug: null,
     definition: null,
     selectedNodeId: null,
     panels: { layers: false, config: false, palette: false, run: false },

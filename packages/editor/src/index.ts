@@ -3,7 +3,7 @@
  *
  * Components (flat exports for RSC compatibility):
  *
- *   <EditorRoot slug="compress-images">
+ *   <EditorRoot definition={recipe.definition}>
  *     <EditorCanvas />
  *   </EditorRoot>
  */
@@ -102,7 +102,7 @@ export type {
 
 // --- Adapters ---
 
-export { definitionToBento } from "./adapters/definitionToBento";
+export { definitionToGraph } from "./adapters/definitionToGraph";
 export { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
 export { createCompartmentNode } from "./adapters/createCompartmentNode";
 export { SLOTS, CELL, GAP, STRIDE } from "./adapters/bentoSlots";

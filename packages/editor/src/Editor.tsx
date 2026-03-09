@@ -5,7 +5,7 @@
  *
  *   import { EditorRoot, EditorCanvas, EditorToolbar, EditorLeftToolbar, EditorRightToolbar } from "@bnto/editor";
  *
- *   <EditorRoot slug="compress-images">
+ *   <EditorRoot definition={recipe.definition}>
  *     <EditorCanvas>
  *       <EditorToolbar />
  *       <EditorLeftToolbar />

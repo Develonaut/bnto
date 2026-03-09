@@ -1,8 +1,8 @@
 /**
- * Definition → Bento adapter.
+ * Definition → Graph adapter.
  *
- * Converts a Definition's child nodes into BentoNodes (visual-only data)
- * and a configs map (domain data). Pure function — no React, no DOM.
+ * Converts a Definition (nested tree) into Graph state (flat editor
+ * working state): BentoNode[] + NodeConfigs. Pure function — no React, no DOM.
  *
  * Domain fields (nodeType, name, parameters) go into configs[nodeId],
  * NOT into node.data. This prevents parameter changes from triggering
@@ -15,7 +15,7 @@ import type { BentoNode, BentoLayout, NodeConfigs } from "./types";
 import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";
 
-function definitionToBento(definition: Definition): BentoLayout {
+function definitionToGraph(definition: Definition): BentoLayout {
   const children = definition.nodes ?? [];
   const configs: NodeConfigs = {};
 
@@ -62,4 +62,4 @@ function definitionToBento(definition: Definition): BentoLayout {
   return { nodes, configs };
 }
 
-export { definitionToBento };
+export { definitionToGraph };

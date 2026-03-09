@@ -97,7 +97,6 @@ interface EditorState {
   definition: Definition | null;
 
   // --- Metadata ---
-  slug: string | null;
   recipeMetadata: RecipeMetadata;
   isDirty: boolean;
   validationErrors: ValidationError[];
@@ -126,7 +125,7 @@ interface EditorState {
 
 interface EditorActions {
   // --- Entry points ---
-  loadRecipe: (slug: string) => void;
+  loadDefinition: (def: Definition) => void;
   createBlank: () => void;
 
   // --- RF controlled-mode change handlers ---

@@ -37,9 +37,9 @@ function EditorToolbar() {
   const storeApi = useEditorStoreApi();
 
   const handleReset = useCallback(() => {
-    const { loadRecipe, createBlank, slug } = storeApi.getState();
-    if (slug) {
-      loadRecipe(slug);
+    const { loadDefinition, createBlank, definition } = storeApi.getState();
+    if (definition) {
+      loadDefinition(definition);
     } else {
       createBlank();
     }

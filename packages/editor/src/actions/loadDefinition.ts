@@ -1,24 +1,23 @@
 /**
  * loadDefinition action — pure function that computes the next editor state
- * after loading a raw Definition (e.g., a sub-recipe primitive).
+ * after loading a Definition.
  *
- * Mirrors loadRecipe but accepts a Definition directly instead of
- * looking it up by slug. Used by the DevTab to load sub-recipes.
+ * This is the primary entry point for initializing the editor with a recipe.
+ * The editor accepts definitions directly — slug lookup belongs at the app layer.
  */
 
 import { validateDefinition } from "@bnto/nodes";
 import type { Definition } from "@bnto/nodes";
 import type { EditorState } from "../store/types";
-import { definitionToBento } from "../adapters/definitionToBento";
+import { definitionToGraph } from "../adapters/definitionToGraph";
 import { metadataFromDefinition } from "../store/resolveInitialState";
 
 export function loadDefinition(def: Definition): Partial<EditorState> {
-  const { nodes, configs } = definitionToBento(def);
+  const { nodes, configs } = definitionToGraph(def);
   return {
     nodes,
     configs,
     definition: def,
-    slug: null,
     recipeMetadata: metadataFromDefinition(def),
     isDirty: false,
     validationErrors: validateDefinition(def),
