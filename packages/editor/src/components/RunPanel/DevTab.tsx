@@ -13,30 +13,10 @@ import {
   Stack,
   Text,
 } from "@bnto/ui";
-import {
-  RECIPES,
-  getRecipeBySlug,
-  batchCompress,
-  batchConvert,
-  batchRename,
-  batchResize,
-  columnRenamer,
-  csvCleaner,
-} from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import { RECIPES, getRecipeBySlug } from "@bnto/nodes";
 import { getEditorStore } from "../../store/instance";
 import type { ExecutionPhase, FileProgress } from "../../store/types";
 import { MOCK_RESULTS } from "./devMockData";
-
-/** Sub-recipes (primitives) available for direct loading. */
-const SUB_RECIPES: { label: string; definition: Definition }[] = [
-  { label: "Batch Compress", definition: batchCompress },
-  { label: "Batch Convert", definition: batchConvert },
-  { label: "Batch Rename", definition: batchRename },
-  { label: "Batch Resize", definition: batchResize },
-  { label: "Column Renamer", definition: columnRenamer },
-  { label: "CSV Cleaner", definition: csvCleaner },
-];
 
 /** Build a FileProgress object for a given percentage. */
 function buildFileProgress(percent: number): FileProgress {
@@ -54,7 +34,7 @@ function buildFileProgress(percent: number): FileProgress {
  * Allows forcing:
  * - Execution phase (idle, running, completed, failed)
  * - Progress percentage (0–100%)
- * - Recipe and sub-recipe loading
+ * - Recipe loading (6 public recipes)
  *
  * Only rendered when NODE_ENV === "development".
  */
@@ -99,18 +79,12 @@ function DevTab() {
     });
   }, []);
 
-  const handleLoadSubRecipe = useCallback((id: string) => {
-    const sub = SUB_RECIPES.find((s) => s.definition.id === id);
-    if (sub) getEditorStore().getState().loadDefinition(sub.definition);
-  }, []);
-
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
       <Stack className="gap-4">
         <PhaseControls onForce={forcePhase} />
         <ProgressControl progress={progress} onForce={forceProgress} />
         <RecipeSelect />
-        <SubRecipeSelect onSelect={handleLoadSubRecipe} />
       </Stack>
     </div>
   );
@@ -181,28 +155,6 @@ function RecipeSelect() {
           {RECIPES.map((recipe) => (
             <SelectItem key={recipe.slug} value={recipe.slug}>
               {recipe.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </Stack>
-  );
-}
-
-function SubRecipeSelect({ onSelect }: { onSelect: (id: string) => void }) {
-  return (
-    <Stack className="gap-1.5">
-      <Text size="xs" color="muted" weight="medium">
-        Load Sub-Recipe
-      </Text>
-      <Select onValueChange={onSelect}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select sub-recipe..." />
-        </SelectTrigger>
-        <SelectContent>
-          {SUB_RECIPES.map((sub) => (
-            <SelectItem key={sub.definition.id} value={sub.definition.id}>
-              {sub.label}
             </SelectItem>
           ))}
         </SelectContent>

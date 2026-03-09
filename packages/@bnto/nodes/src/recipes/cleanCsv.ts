@@ -1,8 +1,8 @@
 /** Clean CSV recipe — remove empty rows, trim whitespace, deduplicate. */
 
-import type { Recipe } from "../../recipe";
-import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
-import { csvCleaner } from "../primitives/csvCleaner";
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { getProcessorDefaults } from "../generated/catalog";
 
 export const cleanCsv: Recipe = {
   slug: "clean-csv",
@@ -26,7 +26,7 @@ export const cleanCsv: Recipe = {
     name: "Clean CSV",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Accepts a CSV file and cleans it using a reusable CSV cleaner sub-recipe.",
+      description: "Accepts a CSV file and cleans it.",
     },
     parameters: {},
     inputPorts: [],
@@ -49,7 +49,20 @@ export const cleanCsv: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      csvCleaner,
+      {
+        id: "clean",
+        type: "spreadsheet",
+        version: CURRENT_FORMAT_VERSION,
+        name: "Clean CSV",
+        position: { x: 250, y: 100 },
+        metadata: {},
+        parameters: {
+          operation: "clean",
+          ...getProcessorDefaults("spreadsheet", "clean"),
+        },
+        inputPorts: [{ id: "in-1", name: "files" }],
+        outputPorts: [{ id: "out-1", name: "files" }],
+      },
       {
         id: "output",
         type: "output",
@@ -68,8 +81,8 @@ export const cleanCsv: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "csv-cleaner" },
-      { id: "e2", source: "csv-cleaner", target: "output" },
+      { id: "e1", source: "input", target: "clean" },
+      { id: "e2", source: "clean", target: "output" },
     ],
   },
 };

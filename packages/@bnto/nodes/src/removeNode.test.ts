@@ -47,9 +47,7 @@ describe("removeNode", () => {
     // Manually add an edge between the two nodes
     const withEdge = {
       ...r2.definition,
-      edges: [
-        { id: "e1", source: node1Id, target: node2Id },
-      ],
+      edges: [{ id: "e1", source: node1Id, target: node2Id }],
     };
 
     const result = removeNode(withEdge, node1Id);
@@ -100,6 +98,34 @@ describe("removeNode", () => {
     const result = removeNode(blank, "nonexistent");
     expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT);
     expect(result.definition).toBe(blank);
+  });
+
+  it("prevents removing root-level input node", () => {
+    const blank = createBlankDefinition();
+    const result = removeNode(blank, "input");
+    expect(result.definition).toBe(blank);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.message).toContain("I/O nodes are required");
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT);
+  });
+
+  it("prevents removing root-level output node", () => {
+    const blank = createBlankDefinition();
+    const result = removeNode(blank, "output");
+    expect(result.definition).toBe(blank);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.message).toContain("I/O nodes are required");
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT);
+  });
+
+  it("allows removing non-I/O nodes normally", () => {
+    const blank = createBlankDefinition();
+    const { definition: withNode } = addNode(blank, "image");
+    const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
+
+    const result = removeNode(withNode, nodeId);
+    expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT);
+    expect(isValid(result)).toBe(true);
   });
 
   it("removes a nested node inside a container", () => {
