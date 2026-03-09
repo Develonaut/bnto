@@ -1,9 +1,7 @@
 /**
- * All predefined Tier 1 recipes — the bnto catalog.
+ * All predefined recipes — the bnto catalog.
  *
- * Each recipe maps to a public URL at `/{slug}` and drives static
- * generation, metadata, and the file drop zone.
- *
+ * Every recipe is a complete `Recipe` with I/O nodes.
  * Individual recipe definitions live in `./recipes/` (one file per recipe).
  */
 
@@ -19,9 +17,9 @@ import {
 } from "./recipes/index";
 
 /**
- * All predefined recipes in the catalog.
+ * All predefined recipes — the 6 Tier 1 bntos that map to public URLs.
  *
- * Order determines display order in the UI grid.
+ * Order determines display order in the UI grid on the home page.
  */
 export const RECIPES: readonly Recipe[] = [
   compressImages,
@@ -37,7 +35,7 @@ export function getRecipeBySlug(slug: string): Recipe | undefined {
   return RECIPES.find((r) => r.slug === slug);
 }
 
-// Re-export individual recipes for direct access
+// Re-export all recipes for direct access
 export {
   cleanCsv,
   compressImages,
@@ -46,13 +44,3 @@ export {
   renameFiles,
   resizeImages,
 };
-
-// Re-export reusable sub-recipe building blocks
-export {
-  batchCompress,
-  batchConvert,
-  batchRename,
-  batchResize,
-  columnRenamer,
-  csvCleaner,
-} from "./recipes/index";

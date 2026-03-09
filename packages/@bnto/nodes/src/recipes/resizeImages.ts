@@ -1,8 +1,8 @@
 /** Resize Images recipe — resize to exact dimensions or percentages. */
 
-import type { Recipe } from "../../recipe";
-import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
-import { batchResize } from "../primitives/batchResize";
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { getProcessorDefaults } from "../generated/catalog";
 
 export const resizeImages: Recipe = {
   slug: "resize-images",
@@ -27,8 +27,7 @@ export const resizeImages: Recipe = {
     name: "Resize Images",
     position: { x: 0, y: 0 },
     metadata: {
-      description:
-        "Accepts image files and resizes each one using a reusable batch resize sub-recipe.",
+      description: "Accepts image files and resizes each one.",
     },
     parameters: {},
     inputPorts: [],
@@ -51,7 +50,35 @@ export const resizeImages: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      batchResize,
+      {
+        id: "resize-loop",
+        type: "loop",
+        version: CURRENT_FORMAT_VERSION,
+        name: "Resize Each Image",
+        position: { x: 250, y: 100 },
+        metadata: {},
+        parameters: { mode: "forEach" },
+        inputPorts: [{ id: "in-1", name: "items" }],
+        outputPorts: [],
+        nodes: [
+          {
+            id: "resize-image",
+            type: "image",
+            version: CURRENT_FORMAT_VERSION,
+            name: "Resize Image",
+            position: { x: 0, y: 0 },
+            metadata: {},
+            parameters: {
+              operation: "resize",
+              ...getProcessorDefaults("image", "resize"),
+              width: 200,
+            },
+            inputPorts: [],
+            outputPorts: [],
+          },
+        ],
+        edges: [],
+      },
       {
         id: "output",
         type: "output",
@@ -70,8 +97,8 @@ export const resizeImages: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "batch-resize" },
-      { id: "e2", source: "batch-resize", target: "output" },
+      { id: "e1", source: "input", target: "resize-loop" },
+      { id: "e2", source: "resize-loop", target: "output" },
     ],
   },
 };

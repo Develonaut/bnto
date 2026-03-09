@@ -10,6 +10,7 @@
 
 import type { Definition } from "./definition";
 import type { DefinitionResult } from "./definitionResult";
+import { isIoNodeType } from "./isIoNodeType";
 import { validateDefinition } from "./validate";
 
 /** Recursively find and remove a node by ID, cleaning up edges at each level. */
@@ -27,9 +28,7 @@ function removeFromTree(node: Definition, nodeId: string): Definition {
   }
 
   // Not found at this level — recurse into children
-  const updatedChildren = node.nodes.map((child) =>
-    removeFromTree(child, nodeId),
-  );
+  const updatedChildren = node.nodes.map((child) => removeFromTree(child, nodeId));
 
   // Only create new object if something actually changed
   const changed = updatedChildren.some((c, i) => c !== node.nodes![i]);
@@ -41,11 +40,27 @@ function removeFromTree(node: Definition, nodeId: string): Definition {
 /**
  * Removes a node by ID from the definition tree.
  * Also removes edges connected to that node at the same nesting level.
+ *
+ * I/O nodes (input/output) at the root level cannot be removed — they
+ * are structural requirements for a valid recipe. Attempting to remove
+ * one returns the original definition with an error.
  */
-export function removeNode(
-  definition: Definition,
-  nodeId: string,
-): DefinitionResult {
+export function removeNode(definition: Definition, nodeId: string): DefinitionResult {
+  // Guard: prevent removal of root-level I/O nodes
+  const rootNode = definition.nodes?.find((n) => n.id === nodeId);
+  if (rootNode && isIoNodeType(rootNode.type)) {
+    return {
+      definition,
+      errors: [
+        {
+          nodeId,
+          field: "type",
+          message: `cannot remove ${rootNode.type} node '${nodeId}' — I/O nodes are required`,
+        },
+      ],
+    };
+  }
+
   const updated = removeFromTree(definition, nodeId);
 
   return {
