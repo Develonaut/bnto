@@ -34,6 +34,7 @@ function EditorToolbar() {
     useNodeNavigation();
   const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
   const isDirty = useEditorStore((s) => s.isDirty);
+  const hasRun = useEditorStore((s) => s.executionPhase !== "idle");
   const storeApi = useEditorStoreApi();
 
   const handleReset = useCallback(() => {
@@ -130,7 +131,7 @@ function EditorToolbar() {
             variant="ghost"
             elevation="sm"
             onClick={handleReset}
-            disabled={!isDirty}
+            disabled={!isDirty && !hasRun}
             aria-label="Reset"
           >
             <RotateCcwIcon className="size-4" />
