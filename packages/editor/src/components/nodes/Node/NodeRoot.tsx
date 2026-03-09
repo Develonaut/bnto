@@ -1,5 +1,5 @@
 import type { ReactNode, ComponentProps } from "react";
-import { cn, ScaleIn, Card, Pressable } from "@bnto/ui";
+import { ScaleIn, Card, Pressable } from "@bnto/ui";
 import { CELL } from "../../../adapters/bentoSlots";
 
 type CardProps = ComponentProps<typeof Card>;
@@ -9,8 +9,8 @@ type CardProps = ComponentProps<typeof Card>;
  *
  * Follows the same Pressable → Card pattern as RecipeCard:
  * Pressable wraps Card, CSS handles all interaction states.
- * When `selected`, `data-active` on the wrapper makes the card
- * sit flush with the ground via `.pressable[data-active]` CSS.
+ * During execution, status-driven props (pressed/hovered/active)
+ * animate the card through elevation states.
  */
 
 const JUSTIFY_MAP = {
@@ -32,10 +32,14 @@ interface NodeRootProps {
   align?: "start" | "center" | "end";
   /** Pressable muted state (e.g. pending status). */
   muted?: boolean;
-  /** Card sits flush with ground when selected. */
-  selected?: boolean;
-  /** Shows a destructive ring when the node has failed. */
-  failed?: boolean;
+  /** Pressable: programmatic pressed state (flush with ground). */
+  pressed?: boolean;
+  /** Pressable: programmatic hover state (partially sunk). */
+  hovered?: boolean;
+  /** Pressable: programmatic active state (flush with ground). */
+  active?: boolean;
+  /** Current execution status — exposed as data attribute for testing. */
+  status?: string;
   /** Composed content — NodeHeader, NodeBody, NodeFooter. */
   children: ReactNode;
 }
@@ -47,8 +51,10 @@ function NodeRoot({
   color,
   align,
   muted = false,
-  selected = false,
-  failed = false,
+  pressed = false,
+  hovered = false,
+  active = false,
+  status,
   children,
 }: NodeRootProps) {
   const slotClass = align ? `pointer-events-none flex items-center ${JUSTIFY_MAP[align]}` : "";
@@ -56,16 +62,21 @@ function NodeRoot({
   return (
     <div style={{ width: CELL, height: CELL }} className={slotClass} data-testid="node-slot">
       <ScaleIn from={0.7} easing="spring-bouncy">
-        <Pressable asChild spring="bounciest" muted={muted} active={selected}>
+        <Pressable
+          asChild
+          spring="bounciest"
+          muted={muted}
+          pressed={pressed}
+          hovered={hovered}
+          active={active}
+        >
           <Card
             elevation={elevation}
             color={color}
-            className={cn(
-              "group relative flex flex-col rounded-xl pointer-events-auto",
-              failed && "ring-2 ring-destructive",
-            )}
+            className="group relative flex flex-col rounded-xl pointer-events-auto"
             style={{ width, height }}
             data-testid="node-card"
+            data-state={status}
           >
             {children}
           </Card>

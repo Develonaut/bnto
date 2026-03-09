@@ -101,6 +101,7 @@ interface EditorState {
   isDirty: boolean;
   validationErrors: ValidationError[];
   executionState: ExecutionState;
+  nodeProgress: Record<string, number>;
   undoStack: EditorSnapshot[];
   redoStack: EditorSnapshot[];
 

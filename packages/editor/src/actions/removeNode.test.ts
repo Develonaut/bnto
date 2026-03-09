@@ -51,6 +51,7 @@ function stateWithNodes(): EditorState {
     isDirty: false,
     validationErrors: [],
     executionState: {},
+    nodeProgress: {},
     undoStack: [],
     redoStack: [],
     definition: null,

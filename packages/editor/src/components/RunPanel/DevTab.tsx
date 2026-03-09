@@ -17,6 +17,7 @@ import { RECIPES, getRecipeBySlug } from "@bnto/nodes";
 import { getEditorStore } from "../../store/instance";
 import type { ExecutionPhase, FileProgress } from "../../store/types";
 import { MOCK_RESULTS } from "./devMockData";
+import { DevNodeControls } from "./DevNodeControls";
 
 /** Build a FileProgress object for a given percentage. */
 function buildFileProgress(percent: number): FileProgress {
@@ -84,6 +85,7 @@ function DevTab() {
       <Stack className="gap-4">
         <PhaseControls onForce={forcePhase} />
         <ProgressControl progress={progress} onForce={forceProgress} />
+        <DevNodeControls />
         <RecipeSelect />
       </Stack>
     </div>

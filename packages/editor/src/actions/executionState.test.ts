@@ -78,26 +78,19 @@ describe("applyPipelineEvent", () => {
 });
 
 describe("buildPendingState", () => {
-  it("marks processing nodes as pending, I/O as idle", () => {
+  it("marks all nodes as pending including I/O", () => {
     const state = buildPendingState(mockDefinition, {});
+    expect(state["input-1"]).toBe("pending");
     expect(state["compress-1"]).toBe("pending");
     expect(state["resize-1"]).toBe("pending");
-    expect(state["input-1"]).toBeUndefined();
-    expect(state["output-1"]).toBeUndefined();
-  });
-
-  it("preserves base state for non-processing nodes", () => {
-    const base: ExecutionState = { "input-1": "idle" };
-    const state = buildPendingState(mockDefinition, base);
-    expect(state["input-1"]).toBe("idle");
-    expect(state["compress-1"]).toBe("pending");
+    expect(state["output-1"]).toBe("pending");
   });
 });
 
 describe("buildFinalState", () => {
-  it("marks input as idle, everything else as completed", () => {
+  it("marks all nodes as completed including I/O", () => {
     const state = buildFinalState(mockDefinition);
-    expect(state["input-1"]).toBe("idle");
+    expect(state["input-1"]).toBe("completed");
     expect(state["compress-1"]).toBe("completed");
     expect(state["resize-1"]).toBe("completed");
     expect(state["output-1"]).toBe("completed");
