@@ -306,8 +306,18 @@ mod tests {
     fn encode_indexed_png_produces_valid_output() {
         // Create a tiny 2x2 indexed image with 2 colors
         let palette = vec![
-            PaletteColor { r: 255, g: 0, b: 0, a: 255 }, // Red
-            PaletteColor { r: 0, g: 0, b: 255, a: 255 }, // Blue
+            PaletteColor {
+                r: 255,
+                g: 0,
+                b: 0,
+                a: 255,
+            }, // Red
+            PaletteColor {
+                r: 0,
+                g: 0,
+                b: 255,
+                a: 255,
+            }, // Blue
         ];
         let indices = vec![0, 1, 1, 0]; // Checkerboard pattern
 
@@ -319,8 +329,18 @@ mod tests {
     fn encode_indexed_png_with_transparency() {
         // Test that alpha < 255 produces a valid PNG with tRNS chunk
         let palette = vec![
-            PaletteColor { r: 255, g: 0, b: 0, a: 255 }, // Opaque red
-            PaletteColor { r: 0, g: 0, b: 255, a: 128 }, // Semi-transparent blue
+            PaletteColor {
+                r: 255,
+                g: 0,
+                b: 0,
+                a: 255,
+            }, // Opaque red
+            PaletteColor {
+                r: 0,
+                g: 0,
+                b: 255,
+                a: 128,
+            }, // Semi-transparent blue
         ];
         let indices = vec![0, 1, 1, 0];
 

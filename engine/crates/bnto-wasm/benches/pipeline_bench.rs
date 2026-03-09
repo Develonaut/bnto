@@ -348,8 +348,7 @@ fn bench_png_compression(c: &mut Criterion) {
     if let Some(output_file) = result.files.first() {
         let input_kb = LARGE_PNG.len() / 1024;
         let output_kb = output_file.data.len() / 1024;
-        let reduction_pct =
-            (1.0 - output_file.data.len() as f64 / LARGE_PNG.len() as f64) * 100.0;
+        let reduction_pct = (1.0 - output_file.data.len() as f64 / LARGE_PNG.len() as f64) * 100.0;
         eprintln!(
             "\n  PNG compression: {} KB → {} KB ({:.1}% reduction)\n",
             input_kb, output_kb, reduction_pct
