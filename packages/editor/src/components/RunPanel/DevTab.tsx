@@ -13,7 +13,7 @@ import {
   Stack,
   Text,
 } from "@bnto/ui";
-import { ALL_RECIPES, getRecipeBySlug } from "@bnto/nodes";
+import { RECIPES, getRecipeBySlug } from "@bnto/nodes";
 import { getEditorStore } from "../../store/instance";
 import type { ExecutionPhase, FileProgress } from "../../store/types";
 import { MOCK_RESULTS } from "./devMockData";
@@ -34,7 +34,7 @@ function buildFileProgress(percent: number): FileProgress {
  * Allows forcing:
  * - Execution phase (idle, running, completed, failed)
  * - Progress percentage (0–100%)
- * - Recipe loading (all 12 recipes)
+ * - Recipe loading (6 public recipes)
  *
  * Only rendered when NODE_ENV === "development".
  */
@@ -152,7 +152,7 @@ function RecipeSelect() {
           <SelectValue placeholder="Select recipe..." />
         </SelectTrigger>
         <SelectContent>
-          {ALL_RECIPES.map((recipe) => (
+          {RECIPES.map((recipe) => (
             <SelectItem key={recipe.slug} value={recipe.slug}>
               {recipe.name}
             </SelectItem>

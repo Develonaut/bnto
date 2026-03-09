@@ -1,24 +1,24 @@
 import { describe, expect, it } from "vitest";
 
-import { ALL_RECIPES, getRecipeBySlug } from "./recipes";
+import { RECIPES, getRecipeBySlug } from "./recipes";
 
 describe("recipeShape — uniform structure", () => {
-  it("has exactly 12 recipes", () => {
-    expect(ALL_RECIPES).toHaveLength(12);
+  it("has exactly 6 recipes", () => {
+    expect(RECIPES).toHaveLength(6);
   });
 
   it("all slugs are unique", () => {
-    const slugs = ALL_RECIPES.map((r) => r.slug);
+    const slugs = RECIPES.map((r) => r.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
-  it("getRecipeBySlug finds all 12 recipes", () => {
-    for (const recipe of ALL_RECIPES) {
+  it("getRecipeBySlug finds all 6 recipes", () => {
+    for (const recipe of RECIPES) {
       expect(getRecipeBySlug(recipe.slug)).toBe(recipe);
     }
   });
 
-  for (const recipe of ALL_RECIPES) {
+  for (const recipe of RECIPES) {
     describe(`${recipe.slug}`, () => {
       it("has required metadata fields", () => {
         expect(recipe.slug).toBeTruthy();

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Definition } from "./definition";
 import type { Recipe } from "./recipe";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
-import { ALL_RECIPES } from "./recipes";
+import { RECIPES } from "./recipes";
 import { validateRecipe } from "./validateRecipe";
 
 /** Creates a minimal valid recipe for testing. */
@@ -183,7 +183,7 @@ describe("validateRecipe — edge connectivity", () => {
 });
 
 describe("validateRecipe — all 12 recipes pass", () => {
-  for (const recipe of ALL_RECIPES) {
+  for (const recipe of RECIPES) {
     it(`${recipe.slug} passes validation`, () => {
       const errors = validateRecipe(recipe);
       expect(errors).toHaveLength(0);

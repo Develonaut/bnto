@@ -2,7 +2,7 @@
 
 import type { Recipe } from "../recipe";
 import { CURRENT_FORMAT_VERSION } from "../formatVersion";
-import { columnRenamer } from "./columnRenamer";
+import { getProcessorDefaults } from "../generated/catalog";
 
 export const renameCsvColumns: Recipe = {
   slug: "rename-csv-columns",
@@ -26,8 +26,7 @@ export const renameCsvColumns: Recipe = {
     name: "Rename CSV Columns",
     position: { x: 0, y: 0 },
     metadata: {
-      description:
-        "Accepts a CSV file and renames its column headers using a reusable column renamer sub-recipe.",
+      description: "Accepts a CSV file and renames its column headers.",
     },
     parameters: {},
     inputPorts: [],
@@ -50,7 +49,21 @@ export const renameCsvColumns: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      columnRenamer.definition,
+      {
+        id: "rename-columns",
+        type: "spreadsheet",
+        version: CURRENT_FORMAT_VERSION,
+        name: "Rename Columns",
+        position: { x: 250, y: 100 },
+        metadata: {},
+        parameters: {
+          operation: "rename",
+          ...getProcessorDefaults("spreadsheet", "rename"),
+          columns: {},
+        },
+        inputPorts: [{ id: "in-1", name: "files" }],
+        outputPorts: [{ id: "out-1", name: "files" }],
+      },
       {
         id: "output",
         type: "output",
@@ -69,8 +82,8 @@ export const renameCsvColumns: Recipe = {
       },
     ],
     edges: [
-      { id: "e1", source: "input", target: "column-renamer" },
-      { id: "e2", source: "column-renamer", target: "output" },
+      { id: "e1", source: "input", target: "rename-columns" },
+      { id: "e2", source: "rename-columns", target: "output" },
     ],
   },
 };
