@@ -5,17 +5,22 @@
  * | Status    | Pressable                | Elevation | Rationale                          |
  * |-----------|--------------------------|-----------|-------------------------------------|
  * | idle      | active={selected}        | md/lg     | Current default behavior            |
- * | pending   | pressed={true}           | sm        | All nodes press down at run start   |
+ * | pending   | pressed={true}           | sm        | All nodes press down, muted card    |
  * | active    | hovered={true}           | md        | Active node rises slightly          |
  * | completed | (none)                   | lg        | Node pops up — spring handles anim  |
- * | failed    | (none)                   | lg + ring | Red ring, elevated                  |
+ * | failed    | (none)                   | lg        | Elevated                            |
  */
 
+import type { ComponentProps } from "react";
+import type { Card } from "@bnto/ui";
 import type { CompartmentNodeData } from "../../adapters/types";
 
 type NodeStatus = CompartmentNodeData["status"];
+type CardColor = ComponentProps<typeof Card>["color"];
 
 interface NodePresentation {
+  /** Card color variant (e.g. "muted" for pending). */
+  color?: CardColor;
   /** Pressable: programmatic active (flush with ground). */
   active: boolean;
   /** Pressable: programmatic hover (partially sunk). */
@@ -26,20 +31,18 @@ interface NodePresentation {
   muted: boolean;
   /** Card elevation level. */
   elevation: "sm" | "md" | "lg";
-  /** Whether to show a destructive ring. */
-  failed: boolean;
 }
 
 function resolveNodePresentation(status: NodeStatus, selected: boolean): NodePresentation {
   switch (status) {
     case "pending":
       return {
+        color: "muted",
         active: false,
         hovered: false,
         pressed: true,
-        muted: true,
+        muted: false,
         elevation: "sm",
-        failed: false,
       };
     case "active":
       return {
@@ -48,7 +51,6 @@ function resolveNodePresentation(status: NodeStatus, selected: boolean): NodePre
         pressed: false,
         muted: false,
         elevation: "md",
-        failed: false,
       };
     case "completed":
       return {
@@ -57,7 +59,6 @@ function resolveNodePresentation(status: NodeStatus, selected: boolean): NodePre
         pressed: false,
         muted: false,
         elevation: "lg",
-        failed: false,
       };
     case "failed":
       return {
@@ -66,7 +67,6 @@ function resolveNodePresentation(status: NodeStatus, selected: boolean): NodePre
         pressed: false,
         muted: false,
         elevation: "lg",
-        failed: true,
       };
     default:
       return {
@@ -75,7 +75,6 @@ function resolveNodePresentation(status: NodeStatus, selected: boolean): NodePre
         pressed: false,
         muted: false,
         elevation: selected ? "lg" : "md",
-        failed: false,
       };
   }
 }

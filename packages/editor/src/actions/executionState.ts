@@ -32,14 +32,12 @@ function applyPipelineEvent(current: ExecutionState, event: PipelineEvent): Exec
 /**
  * Build the pending state before execution starts.
  *
- * All processing nodes → "pending", I/O nodes → "idle".
+ * All nodes (including I/O) → "pending".
  */
 function buildPendingState(definition: PipelineDefinition, base: ExecutionState): ExecutionState {
   const state: ExecutionState = { ...base };
   for (const node of definition.nodes) {
-    if (node.type !== "input" && node.type !== "output") {
-      state[node.id] = "pending";
-    }
+    state[node.id] = "pending";
   }
   return state;
 }
@@ -47,12 +45,12 @@ function buildPendingState(definition: PipelineDefinition, base: ExecutionState)
 /**
  * Build the final state after successful execution.
  *
- * Input → "idle", everything else → "completed".
+ * All nodes (including I/O) → "completed".
  */
 function buildFinalState(definition: PipelineDefinition): ExecutionState {
   const state: ExecutionState = {};
   for (const node of definition.nodes) {
-    state[node.id] = node.type === "input" ? "idle" : "completed";
+    state[node.id] = "completed";
   }
   return state;
 }

@@ -10,12 +10,17 @@
  * - Progress slider (0–100)
  */
 
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Badge, Button, Row, Slider, Stack, Text } from "@bnto/ui";
 import { isIoNodeType } from "@bnto/nodes";
 import { useEditorStore } from "../../hooks/useEditorStore";
 import { getEditorStore } from "../../store/instance";
 import type { NodeExecutionStatus } from "../../store/types";
+
+/** Delay helper for simulation timing. */
+function wait(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
 
 const STATUS_STEPS: NodeExecutionStatus[] = ["idle", "pending", "active", "completed", "failed"];
 
@@ -52,6 +57,61 @@ function DevNodeControls() {
     }));
   }, []);
 
+  const [simulating, setSimulating] = useState(false);
+  const cancelRef = useRef(false);
+
+  const simulate = useCallback(async () => {
+    if (processingNodes.length === 0) return;
+    cancelRef.current = false;
+    setSimulating(true);
+
+    const store = getEditorStore();
+
+    // Reset all nodes to pending
+    const allIds = processingNodes.map((n) => n.id);
+    const pendingState: Record<string, NodeExecutionStatus> = {};
+    const zeroProgress: Record<string, number> = {};
+    for (const id of allIds) {
+      pendingState[id] = "pending";
+      zeroProgress[id] = 0;
+    }
+    store.setState({ executionState: pendingState, nodeProgress: zeroProgress });
+    await wait(400);
+
+    // Walk each node through active → progress → completed
+    for (const id of allIds) {
+      if (cancelRef.current) break;
+
+      store.setState((s) => ({
+        executionState: { ...s.executionState, [id]: "active" },
+      }));
+
+      // Animate progress 0 → 100 in steps
+      const steps = 10;
+      for (let i = 1; i <= steps; i++) {
+        if (cancelRef.current) break;
+        await wait(80);
+        const percent = Math.round((i / steps) * 100);
+        store.setState((s) => ({
+          nodeProgress: { ...s.nodeProgress, [id]: percent },
+        }));
+      }
+
+      if (cancelRef.current) break;
+      store.setState((s) => ({
+        executionState: { ...s.executionState, [id]: "completed" },
+      }));
+      await wait(300);
+    }
+
+    setSimulating(false);
+  }, [processingNodes]);
+
+  const cancelSimulation = useCallback(() => {
+    cancelRef.current = true;
+    setSimulating(false);
+  }, []);
+
   if (processingNodes.length === 0) {
     return (
       <Text size="xs" color="muted">
@@ -62,9 +122,19 @@ function DevNodeControls() {
 
   return (
     <Stack className="gap-3">
-      <Text size="xs" color="muted" weight="medium">
-        Per-Node Controls
-      </Text>
+      <Row className="items-center justify-between">
+        <Text size="xs" color="muted" weight="medium">
+          Per-Node Controls
+        </Text>
+        <Button
+          variant={simulating ? "destructive" : "outline"}
+          size="sm"
+          className="h-6 px-2 text-[10px]"
+          onClick={simulating ? cancelSimulation : simulate}
+        >
+          {simulating ? "Stop" : "Simulate"}
+        </Button>
+      </Row>
       {processingNodes.map((node) => {
         const config = configs[node.id];
         const status = executionState[node.id] ?? "idle";

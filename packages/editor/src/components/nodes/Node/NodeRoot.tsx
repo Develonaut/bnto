@@ -1,7 +1,6 @@
 import type { ReactNode, ComponentProps } from "react";
-import { cn, ScaleIn, Card, Pressable } from "@bnto/ui";
+import { ScaleIn, Card, Pressable } from "@bnto/ui";
 import { CELL } from "../../../adapters/bentoSlots";
-import { NodeProgressFill } from "./NodeProgressFill";
 
 type CardProps = ComponentProps<typeof Card>;
 
@@ -11,8 +10,7 @@ type CardProps = ComponentProps<typeof Card>;
  * Follows the same Pressable → Card pattern as RecipeCard:
  * Pressable wraps Card, CSS handles all interaction states.
  * During execution, status-driven props (pressed/hovered/active)
- * animate the card through elevation states, and a progress fill
- * overlay shows per-node progress.
+ * animate the card through elevation states.
  */
 
 const JUSTIFY_MAP = {
@@ -34,18 +32,12 @@ interface NodeRootProps {
   align?: "start" | "center" | "end";
   /** Pressable muted state (e.g. pending status). */
   muted?: boolean;
-  /** Card sits flush with ground when selected. */
-  selected?: boolean;
   /** Pressable: programmatic pressed state (flush with ground). */
   pressed?: boolean;
   /** Pressable: programmatic hover state (partially sunk). */
   hovered?: boolean;
   /** Pressable: programmatic active state (flush with ground). */
   active?: boolean;
-  /** Shows a destructive ring when the node has failed. */
-  failed?: boolean;
-  /** Per-node execution progress (0–100). */
-  progress?: number;
   /** Current execution status — exposed as data attribute for testing. */
   status?: string;
   /** Composed content — NodeHeader, NodeBody, NodeFooter. */
@@ -59,12 +51,9 @@ function NodeRoot({
   color,
   align,
   muted = false,
-  selected = false,
   pressed = false,
   hovered = false,
   active = false,
-  failed = false,
-  progress,
   status,
   children,
 }: NodeRootProps) {
@@ -84,23 +73,12 @@ function NodeRoot({
           <Card
             elevation={elevation}
             color={color}
-            className={cn(
-              "group relative flex flex-col rounded-xl pointer-events-auto",
-              failed && "ring-2 ring-destructive",
-            )}
+            className="group relative flex flex-col rounded-xl pointer-events-auto"
             style={{ width, height }}
             data-testid="node-card"
             data-state={status}
-            data-progress={progress !== undefined ? progress : undefined}
           >
-            {/* Clip wrapper — contains the progress fill without putting
-                overflow-hidden on Card (which flattens preserve-3d).
-                z-0 keeps it below node content. */}
-            <div className="absolute inset-0 z-0 overflow-hidden rounded-xl pointer-events-none">
-              <NodeProgressFill progress={progress} />
-            </div>
-            {/* Content wrapper — z-[1] ensures buttons/labels sit above the fill. */}
-            <div className="relative z-[1] flex flex-1 flex-col">{children}</div>
+            {children}
           </Card>
         </Pressable>
       </ScaleIn>

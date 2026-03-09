@@ -87,11 +87,11 @@ test.describe("node progress visualization @browser", () => {
     await expect(completedNode.first()).toBeVisible();
   });
 
-  test("forcing node progress via DevTab updates data-progress", async ({ page }) => {
+  test("forcing node status to active via DevTab shows active state", async ({ page }) => {
     const perNodeSection = page.locator("text=Per-Node Controls").first();
     await expect(perNodeSection).toBeVisible();
 
-    // Find the first node's progress slider and drag it
+    // Find the first node's controls
     const firstNodeControl = page
       .locator("text=Per-Node Controls")
       .locator("..")
@@ -99,18 +99,12 @@ test.describe("node progress visualization @browser", () => {
       .locator("[class*=border-border]")
       .first();
 
-    // Set status to active first so progress fill is visible
+    // Set status to active
     await firstNodeControl.getByRole("button", { name: "active" }).click();
 
-    // Use the slider — click at ~50% position
-    const slider = firstNodeControl.getByRole("slider");
-    await slider.click();
-
-    // Verify data-progress is set on a node card
-    const nodeWithProgress = page.locator('[data-testid="node-card"][data-progress]');
-    await expect(nodeWithProgress.first()).toBeVisible();
-    const progressValue = await nodeWithProgress.first().getAttribute("data-progress");
-    expect(Number(progressValue)).toBeGreaterThanOrEqual(0);
+    // Verify a node card now has data-state="active"
+    const activeNode = page.locator('[data-testid="node-card"][data-state="active"]');
+    await expect(activeNode.first()).toBeVisible();
   });
 
   test("full progression flow: pending → active → completed", async ({ page }) => {

@@ -17,7 +17,7 @@ import { resolveNodePresentation } from "./resolveNodePresentation";
  *
  * Full-size card, higher elevation, delete button when selected.
  * During execution, status drives Pressable props (pressed/hovered/active)
- * and progress fills the node left-to-right.
+ * to animate the card through elevation states.
  */
 
 export type CompartmentStatus = "idle" | "pending" | "active" | "completed" | "failed";
@@ -35,13 +35,11 @@ export const CompartmentNode = memo(function CompartmentNode({
       width={data.width}
       height={data.height}
       elevation={presentation.elevation}
+      color={presentation.color}
       muted={presentation.muted}
-      selected={selected}
       pressed={presentation.pressed}
       hovered={presentation.hovered}
       active={presentation.active}
-      failed={presentation.failed}
-      progress={data.progress}
       status={status}
     >
       <NodeHeader>

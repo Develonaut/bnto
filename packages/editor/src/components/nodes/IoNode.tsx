@@ -18,10 +18,9 @@ export const IoNode = memo(function IoNode({ id, data, selected }: NodeProps<Ben
     <NodeRoot
       width={data.width}
       height={data.height}
-      elevation={isCompleted ? "md" : selected ? "md" : "sm"}
-      color={isCompleted ? "success" : "muted"}
+      elevation={isCompleted ? "lg" : selected ? "md" : "sm"}
+      color="muted"
       align={id === "input" ? "end" : "start"}
-      selected={selected}
     >
       <NodeBody>
         <NodeIcon icon={data.icon} />
