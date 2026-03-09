@@ -4,11 +4,13 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { getRecipeBySlug } from "@bnto/nodes";
 import { createEditorStore } from "./createEditorStore";
 
 describe("panel state", () => {
   it("initializes all panels closed except config when a node is selected", () => {
-    const store = createEditorStore("compress-images");
+    const recipe = getRecipeBySlug("compress-images");
+    const store = createEditorStore(recipe!.definition);
     const state = store.getState();
     expect(state.panels.layers).toBe(false);
     expect(state.panels.palette).toBe(false);

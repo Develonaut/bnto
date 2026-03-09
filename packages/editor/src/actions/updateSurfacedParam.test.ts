@@ -27,7 +27,6 @@ function baseState(def: Definition): EditorState {
     edges: [],
     configs: {},
     definition: def,
-    slug: null,
     recipeMetadata: { id: def.id, name: def.name, type: def.type, version: def.version },
     isDirty: false,
     validationErrors: [],

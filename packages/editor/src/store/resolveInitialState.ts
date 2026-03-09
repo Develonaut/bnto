@@ -1,13 +1,17 @@
 /**
- * resolveInitialState — resolves a slug (or blank) into initial editor state.
+ * resolveInitialState — resolves a Definition (or blank) into initial editor state.
  *
- * Pure function. Looks up the slug in the recipe registry, converts
- * the definition to bento nodes/configs, and extracts metadata.
- * Falls back to a blank canvas when the slug is missing or unknown.
+ * Pure function. Converts the definition to bento nodes/configs and
+ * extracts metadata. Falls back to a blank canvas when no definition
+ * is provided.
+ *
+ * The editor accepts a Definition directly — slug lookup belongs at
+ * the app layer (e.g., the editor page does getRecipeBySlug before
+ * passing the definition here).
  */
 
-import { type Definition, createBlankDefinition, getRecipeBySlug, isIoNodeType } from "@bnto/nodes";
-import { definitionToBento } from "../adapters/definitionToBento";
+import { type Definition, createBlankDefinition, isIoNodeType } from "@bnto/nodes";
+import { definitionToGraph } from "../adapters/definitionToGraph";
 import type { NodeConfigs } from "../adapters/types";
 import type { RecipeMetadata } from "./types";
 
@@ -42,28 +46,23 @@ function findPrimaryNodeId(configs: NodeConfigs): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// Resolve initial state from slug or blank
+// Resolve initial state from definition or blank
 // ---------------------------------------------------------------------------
 
-function resolveInitialState(slug?: string) {
-  if (slug) {
-    const recipe = getRecipeBySlug(slug);
-    if (recipe) {
-      const { nodes, configs } = definitionToBento(recipe.definition);
-      return {
-        slug,
-        definition: recipe.definition as Definition,
-        metadata: metadataFromDefinition(recipe.definition),
-        nodes,
-        configs,
-        selectedNodeId: findPrimaryNodeId(configs),
-      };
-    }
+function resolveInitialState(definition?: Definition) {
+  if (definition) {
+    const { nodes, configs } = definitionToGraph(definition);
+    return {
+      definition,
+      metadata: metadataFromDefinition(definition),
+      nodes,
+      configs,
+      selectedNodeId: findPrimaryNodeId(configs),
+    };
   }
   const blankDef = createBlankDefinition();
-  const blank = definitionToBento(blankDef);
+  const blank = definitionToGraph(blankDef);
   return {
-    slug: slug ?? null,
     definition: blankDef as Definition,
     metadata: metadataFromBlank(),
     nodes: blank.nodes,

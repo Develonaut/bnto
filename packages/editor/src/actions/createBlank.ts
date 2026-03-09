@@ -8,12 +8,12 @@
 
 import { createBlankDefinition } from "@bnto/nodes";
 import type { EditorState } from "../store/types";
-import { definitionToBento } from "../adapters/definitionToBento";
+import { definitionToGraph } from "../adapters/definitionToGraph";
 import { metadataFromBlank } from "../store/resolveInitialState";
 
 export function createBlank(): Partial<EditorState> {
   const blankDef = createBlankDefinition();
-  const blank = definitionToBento(blankDef);
+  const blank = definitionToGraph(blankDef);
   return {
     nodes: blank.nodes,
     configs: blank.configs,
