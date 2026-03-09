@@ -8,8 +8,8 @@ function NodeIcon({ icon, variant = "muted" }: { icon?: string; variant?: Compar
   const Icon = icon ? ICON_COMPONENTS[icon] : undefined;
   if (!Icon) return null;
   return (
-    <IconBadge variant={variant} size="lg">
-      <Icon className="size-5" />
+    <IconBadge variant={variant} size="lg" className="size-12">
+      <Icon className="size-6" />
     </IconBadge>
   );
 }

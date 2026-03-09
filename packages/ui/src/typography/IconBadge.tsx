@@ -24,7 +24,7 @@ const iconBadgeCn = createCn({
       muted: "bg-foreground/[0.06] text-foreground",
       destructive: "bg-destructive/10 text-destructive",
       success: "bg-success/10 text-success",
-      warning: "bg-warning/10 text-warning",
+      warning: "bg-warning/10 text-[oklch(0.58_0.16_50)]",
       info: "bg-chart-2/10 text-chart-2",
     },
     size: {
