@@ -182,6 +182,19 @@ export {
   SheetDescription,
 } from "./overlay/Sheet";
 
+/* Blocks */
+export {
+  RecipeCard,
+  RecipeCardHeader,
+  RecipeCardContent,
+  RecipeCardFooter,
+  RecipeCardIcon,
+  RecipeCardCategory,
+  RecipeCardTitle,
+  RecipeCardDescription,
+  RecipeCardTags,
+} from "./blocks/RecipeCard";
+
 /* Animation */
 export {
   Stagger,

@@ -58,7 +58,7 @@ function DestructiveDialogDemo() {
       <DialogTrigger asChild>
         <Button variant="destructive">Delete Recipe</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-sm">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>Delete recipe?</DialogTitle>
           <DialogClose />
@@ -132,7 +132,7 @@ function ForcedChoiceDialogDemo() {
         <Button variant="outline">Terms & Conditions</Button>
       </DialogTrigger>
       <DialogContent
-        className="max-w-sm"
+        size="sm"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
