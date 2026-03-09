@@ -7,7 +7,9 @@
       "description": "Set field values from static values or template expressions.",
       "category": "data",
       "isContainer": false,
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "icon": "pen-line"
     },
     {
@@ -16,7 +18,9 @@
       "description": "File operations: rename files with find/replace, case transforms, and patterns.",
       "category": "file",
       "isContainer": false,
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "icon": "folder-open"
     },
     {
@@ -25,7 +29,9 @@
       "description": "Container for child nodes. Orchestrates sequential or parallel execution.",
       "category": "control",
       "isContainer": true,
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "icon": "box"
     },
     {
@@ -34,7 +40,9 @@
       "description": "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).",
       "category": "network",
       "isContainer": false,
-      "platforms": ["server"],
+      "platforms": [
+        "server"
+      ],
       "icon": "globe"
     },
     {
@@ -43,7 +51,9 @@
       "description": "Image processing: compress, resize, and convert formats.",
       "category": "image",
       "isContainer": false,
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "icon": "image"
     },
     {
@@ -52,7 +62,9 @@
       "description": "Declares how data enters the recipe. Read by the environment to render the appropriate input widget.",
       "category": "io",
       "isContainer": false,
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "icon": "file-up"
     },
     {
@@ -61,7 +73,9 @@
       "description": "Iterate over arrays (forEach), repeat N times, or loop while condition.",
       "category": "control",
       "isContainer": true,
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "icon": "repeat"
     },
     {
@@ -70,7 +84,9 @@
       "description": "Declares how results are delivered. Read by the environment to render the appropriate output widget.",
       "category": "io",
       "isContainer": false,
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "icon": "download"
     },
     {
@@ -79,7 +95,9 @@
       "description": "Execute tasks concurrently with configurable worker pool and error strategy.",
       "category": "control",
       "isContainer": true,
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "icon": "git-fork"
     },
     {
@@ -88,7 +106,9 @@
       "description": "Execute shell commands with stall detection, retry, and streaming output.",
       "category": "system",
       "isContainer": false,
-      "platforms": ["server"],
+      "platforms": [
+        "server"
+      ],
       "icon": "terminal"
     },
     {
@@ -97,7 +117,9 @@
       "description": "Spreadsheet operations: clean data and rename columns.",
       "category": "spreadsheet",
       "isContainer": false,
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "icon": "sheet"
     },
     {
@@ -106,7 +128,9 @@
       "description": "Transform data using expressions (single value) or field mappings.",
       "category": "data",
       "isContainer": false,
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "icon": "arrow-left-right"
     }
   ],
@@ -118,7 +142,9 @@
       "description": "Transform filenames using patterns, find/replace, and case rules",
       "category": "file",
       "accepts": [],
-      "platforms": ["browser"],
+      "platforms": [
+        "browser"
+      ],
       "parameters": [
         {
           "name": "find",
@@ -152,7 +178,11 @@
           "description": "Transform the filename to a specific case",
           "paramType": {
             "type": "enum",
-            "options": ["lower", "upper", "title"]
+            "options": [
+              "lower",
+              "upper",
+              "title"
+            ]
           },
           "visibleWhen": {
             "param": "operation",
@@ -208,8 +238,14 @@
       "name": "Compress Images",
       "description": "Reduce image file size while maintaining quality",
       "category": "image",
-      "accepts": ["image/jpeg", "image/png", "image/webp"],
-      "platforms": ["browser"],
+      "accepts": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ],
+      "platforms": [
+        "browser"
+      ],
       "parameters": [
         {
           "name": "quality",
@@ -234,8 +270,14 @@
       "name": "Convert Image Format",
       "description": "Convert images between JPEG, PNG, and WebP formats",
       "category": "image",
-      "accepts": ["image/jpeg", "image/png", "image/webp"],
-      "platforms": ["browser"],
+      "accepts": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ],
+      "platforms": [
+        "browser"
+      ],
       "parameters": [
         {
           "name": "format",
@@ -243,7 +285,11 @@
           "description": "The target image format to convert to",
           "paramType": {
             "type": "enum",
-            "options": ["jpeg", "png", "webp"]
+            "options": [
+              "jpeg",
+              "png",
+              "webp"
+            ]
           },
           "constraints": {
             "required": true
@@ -277,8 +323,14 @@
       "name": "Resize Images",
       "description": "Change image dimensions while maintaining quality",
       "category": "image",
-      "accepts": ["image/jpeg", "image/png", "image/webp"],
-      "platforms": ["browser"],
+      "accepts": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ],
+      "platforms": [
+        "browser"
+      ],
       "parameters": [
         {
           "name": "width",
@@ -351,8 +403,12 @@
       "name": "Clean CSV",
       "description": "Remove empty rows, trim whitespace, and deduplicate CSV data",
       "category": "spreadsheet",
-      "accepts": ["text/csv"],
-      "platforms": ["browser"],
+      "accepts": [
+        "text/csv"
+      ],
+      "platforms": [
+        "browser"
+      ],
       "parameters": [
         {
           "name": "trimWhitespace",
@@ -404,8 +460,12 @@
       "name": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file",
       "category": "spreadsheet",
-      "accepts": ["text/csv"],
-      "platforms": ["browser"],
+      "accepts": [
+        "text/csv"
+      ],
+      "platforms": [
+        "browser"
+      ],
       "parameters": [
         {
           "name": "columns",
@@ -491,7 +551,10 @@
                 "type": "number"
               }
             },
-            "required": ["x", "y"],
+            "required": [
+              "x",
+              "y"
+            ],
             "type": "object"
           },
           "type": {
@@ -541,7 +604,11 @@
             "type": "string"
           }
         },
-        "required": ["id", "source", "target"],
+        "required": [
+          "id",
+          "source",
+          "target"
+        ],
         "type": "object"
       },
       "Fields": {
@@ -558,7 +625,9 @@
             "type": "object"
           }
         },
-        "required": ["values"],
+        "required": [
+          "values"
+        ],
         "type": "object"
       },
       "Metadata": {
@@ -611,7 +680,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"],
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object"
       }
     },
