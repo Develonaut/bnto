@@ -12,7 +12,6 @@ describe("panel state", () => {
     const recipe = getRecipeBySlug("compress-images");
     const store = createEditorStore(recipe!.definition);
     const state = store.getState();
-    expect(state.panels.layers).toBe(false);
     expect(state.panels.palette).toBe(false);
     expect(state.panels.run).toBe(false);
     // config opens when selectedNodeId is set by the recipe
@@ -21,15 +20,15 @@ describe("panel state", () => {
 
   it("openPanel sets a panel to true", () => {
     const store = createEditorStore();
-    store.getState().openPanel("layers");
-    expect(store.getState().panels.layers).toBe(true);
+    store.getState().openPanel("palette");
+    expect(store.getState().panels.palette).toBe(true);
   });
 
   it("closePanel sets a panel to false", () => {
     const store = createEditorStore();
-    store.getState().openPanel("layers");
-    store.getState().closePanel("layers");
-    expect(store.getState().panels.layers).toBe(false);
+    store.getState().openPanel("palette");
+    store.getState().closePanel("palette");
+    expect(store.getState().panels.palette).toBe(false);
   });
 
   it("togglePanel flips a panel's state", () => {
@@ -43,9 +42,8 @@ describe("panel state", () => {
 
   it("opening one panel does not affect others", () => {
     const store = createEditorStore();
-    store.getState().openPanel("layers");
+    store.getState().openPanel("palette");
     expect(store.getState().panels.config).toBe(false);
-    expect(store.getState().panels.palette).toBe(false);
     expect(store.getState().panels.run).toBe(false);
   });
 

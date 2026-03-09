@@ -14,7 +14,6 @@ export {
   EditorRoot,
   EditorCanvas,
   EditorToolbar,
-  EditorLeftToolbar,
   EditorRightToolbar,
 } from "./Editor";
 
@@ -79,6 +78,7 @@ export type { SchemaFieldProps } from "./components/SchemaField";
 // --- Dialogs ---
 
 export { OpenRecipeDialog } from "./components/OpenRecipeDialog";
+export { NodePaletteDialog } from "./components/NodePaletteDialog";
 
 // --- Renderers ---
 

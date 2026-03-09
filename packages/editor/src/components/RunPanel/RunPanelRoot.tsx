@@ -29,6 +29,7 @@ function RunPanelRoot() {
       panelId="run"
       side="left"
       width="w-80"
+      boundaryPadding={16}
       label="Run panel"
       icon={<TerminalIcon className="size-4" />}
     >

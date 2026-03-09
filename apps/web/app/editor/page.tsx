@@ -9,7 +9,6 @@ import {
   EditorRoot,
   EditorCanvas,
   EditorToolbar,
-  EditorLeftToolbar,
   EditorRightToolbar,
 } from "@bnto/editor";
 
@@ -44,7 +43,6 @@ export default function EditorPage() {
   return (
     <EditorRoot definition={definition}>
       <EditorCanvas>
-        <EditorLeftToolbar />
         <EditorToolbar />
         <EditorRightToolbar />
       </EditorCanvas>
