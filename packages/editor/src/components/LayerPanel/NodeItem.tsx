@@ -15,6 +15,7 @@ const DOT_COLOR: Record<CompartmentVariant, string> = {
   secondary: "bg-secondary",
   accent: "bg-accent",
   muted: "bg-muted-foreground",
+  destructive: "bg-destructive",
   success: "bg-green-500",
   warning: "bg-amber-500",
   info: "bg-blue-500",
@@ -37,9 +38,7 @@ function NodeItem({ node, selected, onSelect }: NodeItemProps) {
         data-selected={selected}
         className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors duration-fast hover:bg-muted data-[selected=true]:bg-muted data-[selected=true]:ring-2 data-[selected=true]:ring-ring"
       >
-        <span
-          className={cn("size-2 shrink-0 rounded-full", DOT_COLOR[variant])}
-        />
+        <span className={cn("size-2 shrink-0 rounded-full", DOT_COLOR[variant])} />
         <span className="flex min-w-0 flex-1 flex-col">
           <Text size="sm" className="truncate font-medium leading-tight">
             {node.data.label}

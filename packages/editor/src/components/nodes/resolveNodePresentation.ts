@@ -1,82 +1,45 @@
 /**
- * resolveNodePresentation — pure function mapping execution status
- * to Pressable + Card visual props.
+ * resolveNodePresentation — maps execution status to Button props.
  *
- * | Status    | Pressable                | Elevation | Rationale                          |
- * |-----------|--------------------------|-----------|-------------------------------------|
- * | idle      | active={selected}        | md/lg     | Current default behavior            |
- * | pending   | pressed={true}           | sm        | All nodes press down, muted card    |
- * | active    | hovered={true}           | md        | Active node rises slightly          |
- * | completed | (none)                   | lg        | Node pops up — spring handles anim  |
- * | failed    | (none)                   | lg        | Elevated                            |
+ * Status → variant is a simple map. Status → interaction/elevation
+ * is a lookup table. Selected always means pressed.
  */
 
-import type { ComponentProps } from "react";
-import type { Card } from "@bnto/ui";
-import type { CompartmentNodeData } from "../../adapters/types";
+import type { NodeVariant } from "./Node/NodeRoot";
 
-type NodeStatus = CompartmentNodeData["status"];
-type CardColor = ComponentProps<typeof Card>["color"];
+/** Status-to-variant map. Undefined = use node's default variant. */
+const STATUS_VARIANT: Partial<Record<string, NodeVariant>> = {
+  pending: "muted",
+  failed: "destructive",
+};
+
+/** Status-to-elevation map. Undefined = use default (md). */
+const STATUS_ELEVATION: Record<string, "sm" | "md" | "lg"> = {
+  pending: "sm",
+  active: "md",
+  completed: "lg",
+  failed: "lg",
+};
 
 interface NodePresentation {
-  /** Card color variant (e.g. "muted" for pending). */
-  color?: CardColor;
-  /** Pressable: programmatic active (flush with ground). */
-  active: boolean;
-  /** Pressable: programmatic hover (partially sunk). */
+  variant?: NodeVariant;
   hovered: boolean;
-  /** Pressable: programmatic pressed (flush with ground). */
   pressed: boolean;
-  /** Pressable: muted appearance. */
   muted: boolean;
-  /** Card elevation level. */
   elevation: "sm" | "md" | "lg";
 }
 
-function resolveNodePresentation(status: NodeStatus, selected: boolean): NodePresentation {
-  switch (status) {
-    case "pending":
-      return {
-        color: "muted",
-        active: false,
-        hovered: false,
-        pressed: true,
-        muted: false,
-        elevation: "sm",
-      };
-    case "active":
-      return {
-        active: false,
-        hovered: true,
-        pressed: false,
-        muted: false,
-        elevation: "md",
-      };
-    case "completed":
-      return {
-        active: false,
-        hovered: false,
-        pressed: false,
-        muted: false,
-        elevation: "lg",
-      };
-    case "failed":
-      return {
-        active: false,
-        hovered: false,
-        pressed: false,
-        muted: false,
-        elevation: "lg",
-      };
-    default:
-      return {
-        active: selected,
-        hovered: false,
-        pressed: false,
-        muted: false,
-        elevation: selected ? "lg" : "md",
-      };
-  }
+function resolveNodePresentation(status: string | undefined, selected: boolean): NodePresentation {
+  const variant = status ? STATUS_VARIANT[status] : undefined;
+  const baseElevation = status ? STATUS_ELEVATION[status] : undefined;
+
+  return {
+    variant,
+    hovered: status === "active",
+    pressed: selected || status === "pending",
+    muted: false,
+    elevation: baseElevation ?? (selected ? "lg" : "md"),
+  };
 }
 
 export { resolveNodePresentation };

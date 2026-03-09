@@ -19,6 +19,6 @@ export {
 } from "./Node";
 
 // RF node types
-export { CompartmentNode, type CompartmentStatus } from "./CompartmentNode";
+export { CompartmentNode } from "./CompartmentNode";
 export { IoNode } from "./IoNode";
 export { PlaceholderNode } from "./PlaceholderNode";

@@ -99,6 +99,12 @@ export {
 } from "./interaction/Accordion";
 export { Button, buttonCn } from "./interaction/Button";
 export type { SpringMode } from "./interaction/Button";
+export { useButtonProps } from "./interaction/useButtonProps";
+export type {
+  ButtonVariant,
+  UseButtonPropsInput,
+  ButtonSlotsResult,
+} from "./interaction/useButtonProps";
 export { Checkbox } from "./interaction/Checkbox";
 export {
   FileUpload,

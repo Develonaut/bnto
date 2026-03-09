@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import {
   Button,
   CheckCircle2Icon,
@@ -22,20 +23,57 @@ function ExecutionBanner() {
   const phase = useEditorStore((s) => s.executionPhase);
   const results = useEditorStore((s) => s.executionResults);
   const errors = useEditorStore((s) => s.executionErrors);
+  const logs = useEditorStore((s) => s.executionLogs);
   const fileProgress = useEditorStore((s) => s.executionFileProgress);
   const inputFiles = useEditorStore((s) => s.executionInputFiles);
   const downloadAll = useEditorStore((s) => s.downloadAllResults);
+  const selectNode = useEditorStore((s) => s.selectNode);
+
+  const handleErrorClick = useCallback(
+    (index: number) => {
+      // Find the matching log entry to get the nodeId
+      const errorLogs = logs.filter(
+        (l) => l.event.type === "ValidationFailed" || l.event.type === "NodeFailed",
+      );
+      const entry = errorLogs[index];
+      if (entry && "nodeId" in entry.event && entry.event.nodeId) {
+        selectNode(entry.event.nodeId);
+      }
+    },
+    [logs, selectNode],
+  );
 
   if (phase === "failed" || errors.length > 0) {
-    const message = errors.length === 1 ? errors[0] : "Execution failed";
+    const title =
+      errors.length === 0
+        ? "Execution failed"
+        : errors.length === 1
+          ? "1 issue found"
+          : `${errors.length} issues found`;
+
     return (
       <StatusBanner variant="error">
         <StatusBannerRow>
           <StatusBannerIcon>
             <XCircleIcon />
           </StatusBannerIcon>
-          <StatusBannerLabel>{message}</StatusBannerLabel>
+          <StatusBannerLabel>{title}</StatusBannerLabel>
         </StatusBannerRow>
+        {errors.length > 0 && (
+          <ul className="flex flex-col gap-1 pl-6 text-xs text-destructive">
+            {errors.map((err, i) => (
+              <li key={i} className="list-disc">
+                <button
+                  type="button"
+                  className="text-left underline-offset-2 hover:underline"
+                  onClick={() => handleErrorClick(i)}
+                >
+                  {err}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </StatusBanner>
     );
   }
