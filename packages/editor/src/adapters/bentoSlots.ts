@@ -11,7 +11,7 @@
  */
 
 /** Cell size in pixels. */
-const CELL = 200;
+const CELL = 180;
 
 /** Gap between cells in pixels. */
 const GAP = 20;
