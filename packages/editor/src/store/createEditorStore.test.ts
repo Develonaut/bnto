@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import type { StoreApi } from "zustand";
+import { getRecipeBySlug } from "@bnto/nodes";
 import { createEditorStore } from "./createEditorStore";
 import type { EditorStore } from "./types";
 import { state } from "./test-helpers";
@@ -14,6 +15,13 @@ import { state } from "./test-helpers";
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
+
+/** Helper to get a known recipe definition for testing. */
+function compressImagesDefinition() {
+  const recipe = getRecipeBySlug("compress-images");
+  if (!recipe) throw new Error("compress-images recipe not found");
+  return recipe.definition;
+}
 
 describe("createEditorStore", () => {
   let store: StoreApi<EditorStore>;
@@ -35,20 +43,13 @@ describe("createEditorStore", () => {
       expect(s.redoStack).toEqual([]);
     });
 
-    it("resolves a slug into recipe nodes and metadata", () => {
-      const custom = createEditorStore("compress-images");
+    it("initializes from a definition with recipe nodes and metadata", () => {
+      const def = compressImagesDefinition();
+      const custom = createEditorStore(def);
       const s = state(custom);
       expect(s.recipeMetadata.name).toBe("Compress Images");
-      expect(s.slug).toBe("compress-images");
       expect(s.nodes.length).toBeGreaterThan(0);
       expect(Object.keys(s.configs).length).toBeGreaterThan(0);
-    });
-
-    it("falls back to blank for unknown slug", () => {
-      const custom = createEditorStore("nonexistent");
-      const s = state(custom);
-      expect(s.slug).toBe("nonexistent");
-      expect(s.recipeMetadata.type).toBe("group");
     });
 
     it("starts with empty validation errors", () => {
@@ -56,11 +57,12 @@ describe("createEditorStore", () => {
     });
   });
 
-  // --- loadRecipe ---
+  // --- loadDefinition ---
 
-  describe("loadRecipe", () => {
-    it("loads recipe nodes, configs, and metadata by slug", () => {
-      state(store).loadRecipe("compress-images");
+  describe("loadDefinition", () => {
+    it("loads definition nodes, configs, and metadata", () => {
+      const def = compressImagesDefinition();
+      state(store).loadDefinition(def);
       const s = state(store);
       expect(s.recipeMetadata.name).toBe("Compress Images");
       expect(s.isDirty).toBe(false);
@@ -68,19 +70,13 @@ describe("createEditorStore", () => {
       expect(Object.keys(s.configs).length).toBeGreaterThan(0);
     });
 
-    it("resets history when loading a recipe", () => {
+    it("resets history when loading a definition", () => {
       state(store).pushUndo();
       expect(state(store).undoStack.length).toBe(1);
 
-      state(store).loadRecipe("compress-images");
+      state(store).loadDefinition(compressImagesDefinition());
       expect(state(store).undoStack).toEqual([]);
       expect(state(store).redoStack).toEqual([]);
-    });
-
-    it("does nothing for an unknown slug", () => {
-      const before = state(store).recipeMetadata;
-      state(store).loadRecipe("nonexistent-recipe");
-      expect(state(store).recipeMetadata).toBe(before);
     });
   });
 
@@ -88,7 +84,7 @@ describe("createEditorStore", () => {
 
   describe("createBlank", () => {
     it("resets to blank metadata and empty nodes/configs", () => {
-      state(store).loadRecipe("compress-images");
+      state(store).loadDefinition(compressImagesDefinition());
       state(store).createBlank();
       expect(state(store).recipeMetadata.type).toBe("group");
       expect(state(store).isDirty).toBe(false);
@@ -129,15 +125,15 @@ describe("createEditorStore", () => {
       expect(state(store).executionState["node-1"]).toBe("active");
     });
 
-    it("resets execution state", () => {
+    it("resets node statuses", () => {
       state(store).setExecutionState({ "node-1": "completed" });
-      state(store).resetExecution();
+      state(store).resetNodeStatuses();
       expect(state(store).executionState).toEqual({});
     });
 
-    it("loadRecipe resets execution state", () => {
+    it("loadDefinition resets execution state", () => {
       state(store).setExecutionState({ "node-1": "active" });
-      state(store).loadRecipe("compress-images");
+      state(store).loadDefinition(compressImagesDefinition());
       expect(state(store).executionState).toEqual({});
     });
   });

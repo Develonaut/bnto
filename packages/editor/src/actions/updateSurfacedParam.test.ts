@@ -27,7 +27,6 @@ function baseState(def: Definition): EditorState {
     edges: [],
     configs: {},
     definition: def,
-    slug: null,
     recipeMetadata: { id: def.id, name: def.name, type: def.type, version: def.version },
     isDirty: false,
     validationErrors: [],
@@ -36,6 +35,12 @@ function baseState(def: Definition): EditorState {
     redoStack: [],
     selectedNodeId: null,
     panels: { layers: false, config: false, palette: false, run: false },
+    executionPhase: "idle",
+    executionResults: [],
+    executionErrors: [],
+    executionLogs: [],
+    executionFileProgress: null,
+    executionInputFiles: [],
   };
 }
 

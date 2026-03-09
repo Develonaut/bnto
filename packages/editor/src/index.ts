@@ -3,7 +3,7 @@
  *
  * Components (flat exports for RSC compatibility):
  *
- *   <EditorRoot slug="compress-images">
+ *   <EditorRoot definition={recipe.definition}>
  *     <EditorCanvas />
  *   </EditorRoot>
  */
@@ -28,15 +28,17 @@ export type {
   EditorSnapshot,
   NodeExecutionStatus,
   ExecutionState,
+  ExecutionPhase,
+  FileProgress,
   RecipeMetadata,
   PanelId,
   PanelState,
   RunLogEntry,
 } from "./store/types";
 
-// --- Provider ---
+// --- Store instance ---
 
-export { EditorProvider } from "./EditorProvider";
+export { initEditorStore, getEditorStore } from "./store/instance";
 
 // --- Hooks ---
 
@@ -57,8 +59,7 @@ export { useEditorSelection } from "./hooks/useEditorSelection";
 export { useEditorUndoRedo } from "./hooks/useEditorUndoRedo";
 export { usePanel } from "./hooks/usePanel";
 export { useEditorExecution } from "./hooks/useEditorExecution";
-export type { EditorExecutionResult, ExecutionPhase } from "./hooks/useEditorExecution";
-export { EditorExecutionProvider, useEditorExecutionContext } from "./hooks/EditorExecutionContext";
+export type { EditorExecutionResult } from "./hooks/useEditorExecution";
 export { useExecutionNodes } from "./hooks/useExecutionNodes";
 
 // --- Canvas ---
@@ -101,7 +102,7 @@ export type {
 
 // --- Adapters ---
 
-export { definitionToBento } from "./adapters/definitionToBento";
+export { definitionToGraph } from "./adapters/definitionToGraph";
 export { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
 export { createCompartmentNode } from "./adapters/createCompartmentNode";
 export { SLOTS, CELL, GAP, STRIDE } from "./adapters/bentoSlots";

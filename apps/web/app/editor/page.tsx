@@ -1,3 +1,10 @@
+"use client";
+
+import { useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { getRecipeBySlug } from "@bnto/nodes";
+
 import {
   EditorRoot,
   EditorCanvas,
@@ -6,24 +13,36 @@ import {
   EditorRightToolbar,
 } from "@bnto/editor";
 
+import { useFeatureFlag } from "@/lib/useFeatureFlag";
+
 /**
  * /editor — full-viewport recipe editor.
  *
- * Server component page. Reads `?from={slug}` to pre-populate with a
- * predefined recipe, or loads a blank canvas with Input + Output nodes.
+ * Gated behind the `editor` feature flag. When disabled, redirects to /.
+ * Enable via console: `__bnto__.flags.set("editor", true)`
  *
- * The editor is free for all users — no auth required. Auth gates
- * belong on save/share (Sprint 5 Wave 4), not editor access.
+ * Slug lookup happens here (app layer). The editor accepts a Definition
+ * directly — it has no knowledge of slugs or the recipe registry.
  */
-export default async function EditorPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ from?: string }>;
-}) {
-  const { from } = await searchParams;
+export default function EditorPage() {
+  const editorEnabled = useFeatureFlag("editor");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const from = searchParams.get("from") ?? undefined;
+
+  const definition = useMemo(() => {
+    if (!from) return undefined;
+    return getRecipeBySlug(from)?.definition;
+  }, [from]);
+
+  useEffect(() => {
+    if (!editorEnabled) router.replace("/");
+  }, [editorEnabled, router]);
+
+  if (!editorEnabled) return null;
 
   return (
-    <EditorRoot slug={from}>
+    <EditorRoot definition={definition}>
       <EditorCanvas>
         <EditorLeftToolbar />
         <EditorToolbar />

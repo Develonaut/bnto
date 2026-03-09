@@ -40,10 +40,15 @@ function stateWithNode(): EditorState {
     executionState: {},
     undoStack: [],
     redoStack: [],
-    slug: null,
     definition: null,
     selectedNodeId: null,
     panels: { layers: false, config: false, palette: false, run: false },
+    executionPhase: "idle",
+    executionResults: [],
+    executionErrors: [],
+    executionLogs: [],
+    executionFileProgress: null,
+    executionInputFiles: [],
   } as EditorState;
 }
 

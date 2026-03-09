@@ -5,7 +5,7 @@
  * Visual data comes from the store's nodes array.
  * Domain data (nodeType, parameters) comes from the store's configs map.
  *
- * Must be inside an EditorProvider.
+ * Must be inside an EditorRoot.
  */
 
 "use client";

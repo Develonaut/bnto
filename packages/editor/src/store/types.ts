@@ -12,7 +12,7 @@
 
 import type { Edge, NodeChange, EdgeChange } from "@xyflow/react";
 import type { Definition, ValidationError } from "@bnto/nodes";
-import type { PipelineEvent } from "@bnto/core";
+import type { PipelineEvent, BrowserFileResult } from "@bnto/core";
 import type { BentoNode, NodeConfig, NodeConfigs } from "../adapters/types";
 
 // ---------------------------------------------------------------------------
@@ -27,6 +27,19 @@ type ExecutionState = Record<string, NodeExecutionStatus>;
 interface RunLogEntry {
   timestamp: number;
   event: PipelineEvent;
+}
+
+// ---------------------------------------------------------------------------
+// Execution lifecycle — overall run state (phase, results, logs)
+// ---------------------------------------------------------------------------
+
+type ExecutionPhase = "idle" | "running" | "completed" | "failed";
+
+interface FileProgress {
+  fileIndex: number;
+  totalFiles: number;
+  overallPercent: number;
+  message: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -84,7 +97,6 @@ interface EditorState {
   definition: Definition | null;
 
   // --- Metadata ---
-  slug: string | null;
   recipeMetadata: RecipeMetadata;
   isDirty: boolean;
   validationErrors: ValidationError[];
@@ -97,6 +109,14 @@ interface EditorState {
 
   // --- Panel visibility ---
   panels: PanelState;
+
+  // --- Execution lifecycle ---
+  executionPhase: ExecutionPhase;
+  executionResults: BrowserFileResult[];
+  executionErrors: string[];
+  executionLogs: RunLogEntry[];
+  executionFileProgress: FileProgress | null;
+  executionInputFiles: File[];
 }
 
 // ---------------------------------------------------------------------------
@@ -105,7 +125,7 @@ interface EditorState {
 
 interface EditorActions {
   // --- Entry points ---
-  loadRecipe: (slug: string) => void;
+  loadDefinition: (def: Definition) => void;
   createBlank: () => void;
 
   // --- RF controlled-mode change handlers ---
@@ -134,12 +154,19 @@ interface EditorActions {
   closePanel: (id: PanelId) => void;
   togglePanel: (id: PanelId) => void;
 
+  // --- Execution lifecycle ---
+  runExecution: (files: File[]) => Promise<void>;
+  resetRun: () => void;
+  downloadResult: (file: BrowserFileResult) => void;
+  downloadAllResults: () => Promise<void>;
+
   // --- Utility ---
   markDirty: () => void;
   revalidate: () => void;
   resetDirty: () => void;
   setExecutionState: (state: ExecutionState) => void;
-  resetExecution: () => void;
+  /** Reset per-node execution statuses only (not the full run lifecycle). */
+  resetNodeStatuses: () => void;
   setRecipeMetadata: (metadata: RecipeMetadata) => void;
   resetHistory: () => void;
 }
@@ -157,6 +184,8 @@ export type {
   EditorSnapshot,
   NodeExecutionStatus,
   ExecutionState,
+  ExecutionPhase,
+  FileProgress,
   RunLogEntry,
   RecipeMetadata,
   PanelId,

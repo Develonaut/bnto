@@ -15,12 +15,16 @@ import {
 } from "@bnto/ui";
 import { formatFileSize } from "@bnto/ui";
 import { computeTotalSaved } from "@bnto/core";
-import { useEditorExecutionContext } from "../../hooks/EditorExecutionContext";
+import { useEditorStore } from "../../hooks/useEditorStore";
 
 /** Persistent banner that updates across running → completed → failed. */
 function ExecutionBanner() {
-  const { phase, results, errors, fileProgress, inputFiles, downloadAll } =
-    useEditorExecutionContext();
+  const phase = useEditorStore((s) => s.executionPhase);
+  const results = useEditorStore((s) => s.executionResults);
+  const errors = useEditorStore((s) => s.executionErrors);
+  const fileProgress = useEditorStore((s) => s.executionFileProgress);
+  const inputFiles = useEditorStore((s) => s.executionInputFiles);
+  const downloadAll = useEditorStore((s) => s.downloadAllResults);
 
   if (phase === "failed" || errors.length > 0) {
     const message = errors.length === 1 ? errors[0] : "Execution failed";

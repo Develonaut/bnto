@@ -20,6 +20,7 @@ import {
 } from "@bnto/ui";
 
 import { GITHUB_URL } from "@/lib/copy";
+import { CreateMobileButton } from "./CreateMobileButton";
 import { RECIPES, PAGE_LINKS } from "./navData";
 
 export function MobileNavMenu({
@@ -96,9 +97,7 @@ export function MobileNavMenu({
               {/* Bottom section */}
               <Stack className="gap-6">
                 <Row className="gap-4">
-                  <Button variant="outline" href="/editor" onClick={() => onOpenChange(false)}>
-                    Create
-                  </Button>
+                  <CreateMobileButton onClick={() => onOpenChange(false)} />
                   {PAGE_LINKS.map((link) => (
                     <Button
                       key={link.href}

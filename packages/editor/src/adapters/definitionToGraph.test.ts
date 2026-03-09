@@ -1,17 +1,17 @@
 /**
- * definitionToBento tests — verify Definition → BentoNode[] conversion.
+ * definitionToGraph tests — verify Definition → BentoNode[] conversion.
  */
 
 import { describe, it, expect } from "vitest";
-import { definitionToBento } from "./definitionToBento";
+import { definitionToGraph } from "./definitionToGraph";
 import { CELL, SLOTS } from "./bentoSlots";
 import { createBlankDefinition, addNode } from "@bnto/nodes";
 import { NODE_TYPE_INFO, NODE_TYPE_NAMES } from "@bnto/nodes";
 
-describe("definitionToBento", () => {
+describe("definitionToGraph", () => {
   it("returns I/O nodes for a blank definition", () => {
     const def = createBlankDefinition();
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     // Blank definition has 2 I/O nodes (input + output)
     expect(result.nodes.length).toBe(2);
     expect(Object.keys(result.configs).length).toBe(2);
@@ -22,7 +22,7 @@ describe("definitionToBento", () => {
     def = addNode(def, "image").definition;
     def = addNode(def, "spreadsheet").definition;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     // 2 I/O nodes + 2 added = 4
     expect(result.nodes.length).toBe(4);
   });
@@ -32,7 +32,7 @@ describe("definitionToBento", () => {
     def = addNode(def, "image").definition;
     const childNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const config = result.configs[childNode.id]!;
     expect(config.nodeType).toBe(childNode.type);
     expect(config.name).toBe(childNode.name);
@@ -49,7 +49,7 @@ describe("definitionToBento", () => {
     def = addNode(def, "image", { x: 999, y: 888 }).definition;
     const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
     // addNode appends to end: [input, output, image]. Slot index 2 → x = 2 * STRIDE
     expect(rfNode.position).toEqual({ x: SLOTS[2]!.x, y: SLOTS[2]!.y });
@@ -60,7 +60,7 @@ describe("definitionToBento", () => {
     def = addNode(def, "image").definition;
     const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
     expect(rfNode.data.width).toBe(SLOTS[2]!.w);
     expect(rfNode.data.height).toBe(SLOTS[2]!.h);
@@ -68,7 +68,7 @@ describe("definitionToBento", () => {
 
   it("assigns I/O-specific dimensions to I/O nodes", () => {
     const def = createBlankDefinition();
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
 
     const inputNode = result.nodes.find((n) => n.id === "input")!;
     const outputNode = result.nodes.find((n) => n.id === "output")!;
@@ -80,7 +80,7 @@ describe("definitionToBento", () => {
 
   it("places I/O nodes at slot position (renderer handles visual centering)", () => {
     const def = createBlankDefinition();
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
 
     const inputNode = result.nodes.find((n) => n.id === "input")!;
     // All nodes use uniform slot positions — no y-offset in data.
@@ -92,7 +92,7 @@ describe("definitionToBento", () => {
     let def = createBlankDefinition();
     def = addNode(def, "transform").definition;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const inputNode = result.nodes.find((n) => n.id === "input")!;
     const outputNode = result.nodes.find((n) => n.id === "output")!;
     const transformNode = result.nodes.find((n) => n.data.label === "Transform")!;
@@ -107,14 +107,14 @@ describe("definitionToBento", () => {
     def = addNode(def, "image").definition;
     const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
     expect(rfNode.data.variant).toBe("primary");
   });
 
   it("maps I/O nodes to info variant", () => {
     const def = createBlankDefinition();
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
 
     const inputNode = result.nodes.find((n) => n.id === "input")!;
     const outputNode = result.nodes.find((n) => n.id === "output")!;
@@ -128,14 +128,14 @@ describe("definitionToBento", () => {
     const expected = NODE_TYPE_INFO["image"].label;
     const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
     expect(rfNode.data.label).toBe(expected);
   });
 
   it("uses simple labels for I/O nodes", () => {
     const def = createBlankDefinition();
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
 
     const inputNode = result.nodes.find((n) => n.id === "input")!;
     const outputNode = result.nodes.find((n) => n.id === "output")!;
@@ -148,7 +148,7 @@ describe("definitionToBento", () => {
     def = addNode(def, "image").definition;
     const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
     expect(rfNode.id).toBe(imageNode.id);
   });
@@ -158,7 +158,7 @@ describe("definitionToBento", () => {
     def = addNode(def, "image").definition;
     def = addNode(def, "transform").definition;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     for (const node of result.nodes) {
       expect(result.configs[node.id]).toBeDefined();
     }
@@ -170,7 +170,7 @@ describe("definitionToBento", () => {
       def = addNode(def, "transform").definition;
     }
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     expect(result.nodes.length).toBe(SLOTS.length);
   });
 
@@ -179,7 +179,7 @@ describe("definitionToBento", () => {
     def = addNode(def, "image").definition;
     def = addNode(def, "spreadsheet").definition;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     for (const node of result.nodes) {
       expect(node.data.status).toBe("idle");
     }
@@ -187,7 +187,7 @@ describe("definitionToBento", () => {
 
   it("sets contextual icon for I/O nodes via getNodeIcon", () => {
     const def = createBlankDefinition();
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
 
     // Blank definition: input is file-upload mode → "file-up"
     const inputNode = result.nodes.find((n) => n.id === "input")!;
@@ -201,14 +201,14 @@ describe("definitionToBento", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const imageNode = result.nodes.find((n) => n.data.label === "Image")!;
     expect(imageNode.data.icon).toBe("image");
   });
 
   it("sets human-readable sublabel for I/O nodes", () => {
     const def = createBlankDefinition();
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
 
     const inputNode = result.nodes.find((n) => n.id === "input")!;
     expect(inputNode.data.sublabel).toBe("File Upload");
@@ -221,14 +221,14 @@ describe("definitionToBento", () => {
     def = addNode(def, "image").definition;
     const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
     expect(rfNode.data.sublabel).toBe("Image");
   });
 
   it("sets isIoNode true for I/O nodes", () => {
     const def = createBlankDefinition();
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const inputNode = result.nodes.find((n) => n.id === "input")!;
     const outputNode = result.nodes.find((n) => n.id === "output")!;
     expect(inputNode.data.isIoNode).toBe(true);
@@ -240,7 +240,7 @@ describe("definitionToBento", () => {
     def = addNode(def, "image").definition;
     const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const result = definitionToBento(def);
+    const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
     expect(rfNode.data.isIoNode).toBe(false);
   });
@@ -250,7 +250,7 @@ describe("definitionToBento", () => {
       let def = createBlankDefinition();
       def = addNode(def, typeName).definition;
 
-      const result = definitionToBento(def);
+      const result = definitionToGraph(def);
       // 2 I/O base + 1 added = 3
       expect(result.nodes.length).toBe(3);
       const addedNode = def.nodes![def.nodes!.length - 1]!;
