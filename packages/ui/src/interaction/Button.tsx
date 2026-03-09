@@ -5,46 +5,23 @@ import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "../utils/cn";
 import { createCn } from "../utils/createCn";
-import { SPRING_STYLES } from "../surface/Pressable";
-import type { SpringMode } from "../surface/Pressable";
-import { resolveElevationClass, stripSizeElevation } from "./resolveElevation";
+import { useButtonProps, VARIANT_CLASSES } from "./useButtonProps";
+import type { ButtonVariant } from "./useButtonProps";
+import { stripSizeElevation } from "./resolveElevation";
 import type { ElevationOverride } from "./resolveElevation";
+import type { SpringMode } from "../surface/Pressable";
 
-/* ── Class split ──────────────────────────────────────────────
- * Behavior: always applied (even with asChild). Pressable
- * interaction, focus ring, disabled state.
- * Appearance: only for standalone buttons. Layout, typography,
- * surface, colors. With asChild, the child owns its appearance.
+/* ── Size classes ─────────────────────────────────────────────
+ * Button-specific layout: height, padding, font-size, rounded,
+ * built-in elevation per size. These are NOT in useButtonProps
+ * because they're specific to the Button component shape.
  * ──────────────────────────────────────────────────────────── */
-
-const PRESSABLE_BASE = "pressable outline-none";
-
-type ButtonVariant =
-  | "primary"
-  | "destructive"
-  | "success"
-  | "warning"
-  | "outline"
-  | "ghost"
-  | "secondary"
-  | "muted";
 
 type ButtonSize = "sm" | "md" | "lg" | "icon";
 
-const VARIANT_CLASSES = {
-  primary: "surface-primary",
-  destructive: "surface-destructive",
-  success: "surface-success",
-  warning: "surface-warning",
-  outline: "surface-outline",
-  ghost: "surface-ghost",
-  secondary: "surface-secondary",
-  muted: "surface-muted",
-} as const;
-
 /* ── Text button sizes ─────────────────────────────────────── */
 const textCn = createCn({
-  base: "surface inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium shrink-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  base: "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium shrink-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   variants: {
     variant: VARIANT_CLASSES,
     size: {
@@ -62,7 +39,7 @@ const textCn = createCn({
 
 /* ── Icon button sizes ─────────────────────────────────────── */
 const iconCn = createCn({
-  base: "surface inline-flex items-center justify-center shrink-0 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  base: "inline-flex items-center justify-center shrink-0 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   variants: {
     variant: VARIANT_CLASSES,
     size: {
@@ -116,25 +93,36 @@ function Button({
   const Comp = resolveComponent(asChild, href, props.target);
   const isIcon = icon !== undefined || size === "icon";
   const resolvedSize = size === "icon" ? "md" : (size ?? "md");
-  const elevationClass = resolveElevationClass(elevation);
+
+  // Behavior + surface layer from the shared hook
+  const { props: buttonProps } = useButtonProps({
+    variant,
+    elevation,
+    spring,
+    pressed,
+    hovered,
+    muted,
+    toggle,
+  });
+
+  // Appearance layer — size, layout, typography (Button-specific, skipped with asChild)
   const sizeClasses = !asChild
     ? isIcon
       ? iconCn({ variant, size: resolvedSize })
       : textCn({ variant, size: resolvedSize })
     : "";
-  const resolvedSizeClasses = elevationClass ? stripSizeElevation(sizeClasses) : sizeClasses;
+  const resolvedSizeClasses = buttonProps.className.includes("elevation-")
+    ? stripSizeElevation(sizeClasses)
+    : sizeClasses;
 
   return (
     <Comp
       ref={ref}
       data-slot="button"
-      data-muted={muted || undefined}
-      data-hover={hovered && !pressed ? "" : undefined}
-      data-active={pressed ? "" : undefined}
-      data-toggle={toggle ? "" : undefined}
+      {...buttonProps}
       {...(!!href ? { href } : {})}
-      className={cn(PRESSABLE_BASE, resolvedSizeClasses, elevationClass, className)}
-      style={{ ...SPRING_STYLES[spring], ...style }}
+      className={cn(buttonProps.className, resolvedSizeClasses, className)}
+      style={{ ...buttonProps.style, ...style }}
       {...props}
     >
       {isIcon ? (icon ?? children) : children}

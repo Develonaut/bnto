@@ -8,7 +8,7 @@
  */
 
 import { validateDefinition } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import type { Definition, ValidationError } from "@bnto/nodes";
 import { definitionToPipeline } from "@bnto/core";
 import type { PipelineDefinition, PipelineNode } from "@bnto/core";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
@@ -35,6 +35,8 @@ interface RunPipelineResult {
 
 interface RunPipelineError {
   errors: string[];
+  /** Raw validation errors with nodeId for per-node state mapping. */
+  validationErrors: ValidationError[];
 }
 
 // ---------------------------------------------------------------------------
@@ -61,7 +63,15 @@ function preparePipeline(input: RunPipelineInput): RunPipelineResult | RunPipeli
   // Step 2: Validate (includes per-node Zod parameter validation)
   const validationErrors = validateDefinition(definition);
   if (validationErrors.length > 0) {
-    return { errors: validationErrors.map((e) => e.message) };
+    // Build nodeId → label map to replace raw UUIDs in error messages
+    const labelMap = new Map(nodes.map((n) => [n.id, n.data.label]));
+    const friendlyErrors = validationErrors.map((e) => {
+      const label = labelMap.get(e.nodeId);
+      if (!label) return e.message;
+      // Replace "node '<uuid>'" with the human-readable label
+      return e.message.replace(`node '${e.nodeId}'`, `${label} node`);
+    });
+    return { errors: friendlyErrors, validationErrors };
   }
 
   // Step 3: Convert Definition → PipelineDefinition (recursive, strips metadata)

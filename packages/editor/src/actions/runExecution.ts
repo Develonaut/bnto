@@ -44,7 +44,29 @@ async function runExecution(set: SetState, get: GetState, files: File[]): Promis
   });
 
   if (isPipelineError(prepared)) {
-    set({ executionErrors: prepared.errors, executionPhase: "failed" });
+    // Set per-node failed state for nodes that have validation errors
+    const failedNodeIds = new Set(prepared.validationErrors.map((e) => e.nodeId));
+    const nodeStates: Record<string, "failed"> = {};
+    for (const nodeId of failedNodeIds) {
+      nodeStates[nodeId] = "failed";
+    }
+    // Write validation errors into the log so they appear in the Logs tab
+    const now = Date.now();
+    const validationLogs = prepared.validationErrors.map((e) => ({
+      timestamp: now,
+      event: {
+        type: "ValidationFailed" as const,
+        nodeId: e.nodeId,
+        field: e.field,
+        error: e.message,
+      },
+    }));
+    set({
+      executionErrors: prepared.errors,
+      executionPhase: "failed",
+      executionState: { ...get().executionState, ...nodeStates },
+      executionLogs: validationLogs,
+    });
     return;
   }
 
@@ -111,11 +133,15 @@ async function runExecution(set: SetState, get: GetState, files: File[]): Promis
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Pipeline execution failed";
-    set({
-      executionState: buildFailedState(get().executionState),
+    set((s) => ({
+      executionState: buildFailedState(s.executionState),
       executionErrors: [message],
       executionPhase: "failed",
-    });
+      executionLogs: [
+        ...s.executionLogs,
+        { timestamp: Date.now(), event: { type: "PipelineFailed", nodeId: "", error: message } },
+      ],
+    }));
   }
 }
 

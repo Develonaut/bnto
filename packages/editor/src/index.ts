@@ -65,7 +65,7 @@ export { useExecutionNodes } from "./hooks/useExecutionNodes";
 // --- Canvas ---
 
 export { Canvas } from "./components/EditorCanvas/Canvas";
-export { CompartmentNode, type CompartmentStatus } from "./components/nodes/CompartmentNode";
+export { CompartmentNode } from "./components/nodes/CompartmentNode";
 export { IoNode } from "./components/nodes/IoNode";
 export { PlaceholderNode } from "./components/nodes/PlaceholderNode";
 

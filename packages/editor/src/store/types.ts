@@ -23,10 +23,21 @@ type NodeExecutionStatus = "idle" | "pending" | "active" | "completed" | "failed
 
 type ExecutionState = Record<string, NodeExecutionStatus>;
 
-/** A single log entry — a pipeline event with a capture timestamp. */
+/** Editor-local event for validation failures (not a pipeline event). */
+interface ValidationFailedEvent {
+  type: "ValidationFailed";
+  nodeId: string;
+  field: string;
+  error: string;
+}
+
+/** All events that can appear in the run log. */
+type RunLogEvent = PipelineEvent | ValidationFailedEvent;
+
+/** A single log entry — a pipeline or editor event with a capture timestamp. */
 interface RunLogEntry {
   timestamp: number;
-  event: PipelineEvent;
+  event: RunLogEvent;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,6 +199,8 @@ export type {
   ExecutionPhase,
   FileProgress,
   RunLogEntry,
+  RunLogEvent,
+  ValidationFailedEvent,
   RecipeMetadata,
   PanelId,
   PanelState,

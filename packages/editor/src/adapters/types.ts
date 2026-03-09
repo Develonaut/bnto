@@ -16,6 +16,7 @@ type CompartmentVariant =
   | "secondary"
   | "accent"
   | "muted"
+  | "destructive"
   | "success"
   | "warning"
   | "info";

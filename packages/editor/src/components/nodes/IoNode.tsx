@@ -8,19 +8,18 @@ import { NodeRoot, NodeBody, NodeIcon, NodeLabel } from "./Node";
  *
  * Smaller card, centered in the slot, muted color.
  * No header actions — I/O nodes are structural.
+ * NodeRoot owns interaction state (selected → pressed, status → elevation).
  */
 
 export const IoNode = memo(function IoNode({ id, data, selected }: NodeProps<BentoNode>) {
-  const status = data.status ?? "idle";
-  const isCompleted = status === "completed";
-
   return (
     <NodeRoot
       width={data.width}
       height={data.height}
-      elevation={isCompleted ? "lg" : selected ? "md" : "sm"}
-      color="muted"
+      variant="muted"
       align={id === "input" ? "end" : "start"}
+      selected={selected}
+      status={data.status}
     >
       <NodeBody>
         <NodeIcon icon={data.icon} variant={data.variant} />

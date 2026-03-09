@@ -58,6 +58,12 @@ function formatLogEntry(entry: RunLogEntry): FormattedLogEntry {
         icon: "!!",
         message: `Pipeline failed — ${event.error}`,
       };
+    case "ValidationFailed":
+      return {
+        time,
+        icon: "!!",
+        message: `Validation — ${event.error}`,
+      };
   }
 }
 
