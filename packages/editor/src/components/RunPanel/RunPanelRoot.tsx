@@ -22,7 +22,7 @@ const DevTab = isDev ? lazy(() => import("./DevTab").then((m) => ({ default: m.D
  */
 function RunPanelRoot() {
   const results = useEditorStore((s) => s.executionResults);
-  const errors = useEditorStore((s) => s.executionErrors);
+  const logs = useEditorStore((s) => s.executionLogs);
 
   return (
     <EditorMenuPanel
@@ -36,10 +36,10 @@ function RunPanelRoot() {
         <div className="flex shrink-0 items-center gap-2 px-3 pt-3 pb-2">
           <TabsList>
             <TabsTrigger value="results">
-              <Text size="xs">Results{results.length > 0 ? ` (${results.length})` : ""}</Text>
+              <Text size="xs">Run{results.length > 0 ? ` (${results.length})` : ""}</Text>
             </TabsTrigger>
             <TabsTrigger value="logs">
-              <Text size="xs">Logs{errors.length > 0 ? " (!)" : ""}</Text>
+              <Text size="xs">Logs{logs.length > 0 ? ` (${logs.length})` : ""}</Text>
             </TabsTrigger>
             {DevTab && (
               <TabsTrigger value="dev">
