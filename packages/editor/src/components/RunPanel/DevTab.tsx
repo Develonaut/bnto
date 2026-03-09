@@ -27,6 +27,7 @@ import type { Definition } from "@bnto/nodes";
 import { getEditorStore } from "../../store/instance";
 import type { ExecutionPhase, FileProgress } from "../../store/types";
 import { MOCK_RESULTS } from "./devMockData";
+import { DevNodeControls } from "./DevNodeControls";
 
 /** Sub-recipes (primitives) available for direct loading. */
 const SUB_RECIPES: { label: string; definition: Definition }[] = [
@@ -109,6 +110,7 @@ function DevTab() {
       <Stack className="gap-4">
         <PhaseControls onForce={forcePhase} />
         <ProgressControl progress={progress} onForce={forceProgress} />
+        <DevNodeControls />
         <RecipeSelect />
         <SubRecipeSelect onSelect={handleLoadSubRecipe} />
       </Stack>

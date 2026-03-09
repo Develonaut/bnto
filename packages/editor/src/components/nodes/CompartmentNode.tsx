@@ -10,11 +10,14 @@ import {
   NodeSublabel,
   NodeDeleteButton,
 } from "./Node";
+import { resolveNodePresentation } from "./resolveNodePresentation";
 
 /**
  * CompartmentNode — a processing node on the bento grid.
  *
  * Full-size card, higher elevation, delete button when selected.
+ * During execution, status drives Pressable props (pressed/hovered/active)
+ * and progress fills the node left-to-right.
  */
 
 export type CompartmentStatus = "idle" | "pending" | "active" | "completed" | "failed";
@@ -25,16 +28,21 @@ export const CompartmentNode = memo(function CompartmentNode({
   selected,
 }: NodeProps<BentoNode>) {
   const status = (data.status ?? "idle") as CompartmentStatus;
-  const isFailed = status === "failed";
+  const presentation = resolveNodePresentation(status, selected ?? false);
 
   return (
     <NodeRoot
       width={data.width}
       height={data.height}
-      elevation={isFailed || selected ? "lg" : "md"}
-      muted={status === "pending"}
+      elevation={presentation.elevation}
+      muted={presentation.muted}
       selected={selected}
-      failed={isFailed}
+      pressed={presentation.pressed}
+      hovered={presentation.hovered}
+      active={presentation.active}
+      failed={presentation.failed}
+      progress={data.progress}
+      status={status}
     >
       <NodeHeader>
         <NodeDeleteButton nodeId={id} selected={selected} />

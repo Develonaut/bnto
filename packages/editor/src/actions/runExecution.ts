@@ -50,6 +50,7 @@ async function runExecution(set: SetState, get: GetState, files: File[]): Promis
 
   set({
     executionState: prepared.initialExecutionState,
+    nodeProgress: {},
     executionPhase: "running",
     executionErrors: [],
     executionResults: [],
@@ -74,7 +75,14 @@ async function runExecution(set: SetState, get: GetState, files: File[]): Promis
         set({ executionState: next });
       }
 
+      if (event.type === "NodeStarted") {
+        set((s) => ({ nodeProgress: { ...s.nodeProgress, [event.nodeId]: 0 } }));
+      } else if (event.type === "NodeCompleted") {
+        set((s) => ({ nodeProgress: { ...s.nodeProgress, [event.nodeId]: 100 } }));
+      }
+
       if (event.type === "FileProgress") {
+        set((s) => ({ nodeProgress: { ...s.nodeProgress, [event.nodeId]: event.percent } }));
         const overallPercent = Math.round(
           ((event.fileIndex + event.percent / 100) / event.totalFiles) * 100,
         );

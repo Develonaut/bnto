@@ -493,6 +493,21 @@
   }
 }
 
+/* ── Node Progress Fill ─────────────────────────────────────────────
+ * Horizontal fill overlay inside bento grid nodes during execution.
+ * Uses color-mix() to lighten the card's variant background.
+ * Light mode: mix toward white. Dark mode: mix toward dark gray.
+ * ────────────────────────────────────────────────────────────────── */
+
+.node-progress-fill {
+  background: color-mix(in oklch, var(--variant-bg, var(--card)) 40%, white);
+  z-index: 0;
+}
+
+.dark .node-progress-fill {
+  background: color-mix(in oklch, var(--variant-bg, var(--card)) 40%, oklch(0.2 0 0));
+}
+
 /* ---------------------------------------------------------------------------
  * View Transitions — circular theme reveal
  *

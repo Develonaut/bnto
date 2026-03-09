@@ -39,6 +39,7 @@ function createEditorStore(definition?: Definition) {
     isDirty: false,
     validationErrors: [],
     executionState: {},
+    nodeProgress: {},
     undoStack: [],
     redoStack: [],
     selectedNodeId: initial.selectedNodeId,
@@ -196,6 +197,7 @@ function createEditorStore(definition?: Definition) {
     resetRun: () => {
       set({
         executionState: {},
+        nodeProgress: {},
         executionPhase: "idle",
         executionResults: [],
         executionErrors: [],

@@ -31,6 +31,7 @@ function baseState(def: Definition): EditorState {
     isDirty: false,
     validationErrors: [],
     executionState: {},
+    nodeProgress: {},
     undoStack: [],
     redoStack: [],
     selectedNodeId: null,
