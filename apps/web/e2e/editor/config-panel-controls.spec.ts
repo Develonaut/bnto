@@ -31,6 +31,9 @@ async function addAndSelectNode(page: import("@playwright/test").Page, nodeLabel
 
 test.describe("config panel controls @browser", () => {
   test.beforeEach(async ({ page }) => {
+    // Enable the editor feature flag before navigating (default is off)
+    await page.goto("/");
+    await page.evaluate(() => localStorage.setItem("bnto:flags", JSON.stringify({ editor: true })));
     await page.goto("/editor");
     await page.waitForSelector('[data-testid="recipe-editor"]', {
       timeout: 10000,
