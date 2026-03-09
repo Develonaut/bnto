@@ -21,7 +21,7 @@ const iconBadgeCn = createCn({
       primary: "bg-primary/10 text-primary",
       secondary: "bg-secondary/20 text-secondary-foreground",
       accent: "bg-accent/15 text-accent",
-      muted: "bg-muted-foreground/10 text-muted-foreground/70",
+      muted: "bg-foreground/[0.06] text-foreground",
       destructive: "bg-destructive/10 text-destructive",
       success: "bg-success/10 text-success",
       warning: "bg-warning/10 text-warning",
