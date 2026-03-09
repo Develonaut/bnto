@@ -27,7 +27,7 @@ function useEditorActions() {
 
   const storeActions = useEditorStore(
     useShallow((s) => ({
-      loadRecipe: s.loadRecipe,
+      loadDefinition: s.loadDefinition,
       createBlank: s.createBlank,
       selectNode: s.selectNode,
       undo: s.undo,

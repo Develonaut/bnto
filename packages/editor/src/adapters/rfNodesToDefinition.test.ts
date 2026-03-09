@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { rfNodesToDefinition } from "./rfNodesToDefinition";
-import { definitionToBento } from "./definitionToBento";
+import { definitionToGraph } from "./definitionToGraph";
 import { createBlankDefinition, addNode } from "@bnto/nodes";
 
 describe("rfNodesToDefinition", () => {
@@ -13,7 +13,7 @@ describe("rfNodesToDefinition", () => {
     def = addNode(def, "image").definition;
     def = addNode(def, "spreadsheet").definition;
 
-    const bento = definitionToBento(def);
+    const bento = definitionToGraph(def);
     const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
     // 2 I/O nodes + 2 added = 4
@@ -28,7 +28,7 @@ describe("rfNodesToDefinition", () => {
     def = addNode(def, "image").definition;
     const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const bento = definitionToBento(def);
+    const bento = definitionToGraph(def);
     const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
     const resultImage = result.nodes!.find((n) => n.type === "image")!;
@@ -39,7 +39,7 @@ describe("rfNodesToDefinition", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
 
-    const bento = definitionToBento(def);
+    const bento = definitionToGraph(def);
     const movedNodes = bento.nodes.map((n) => ({
       ...n,
       position: { x: 777, y: 333 },
@@ -55,7 +55,7 @@ describe("rfNodesToDefinition", () => {
     def = addNode(def, "image").definition;
     const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const bento = definitionToBento(def);
+    const bento = definitionToGraph(def);
     const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
     const resultImage = result.nodes!.find((n) => n.type === "image")!;
@@ -66,7 +66,7 @@ describe("rfNodesToDefinition", () => {
     let def = createBlankDefinition();
     def = addNode(def, "image").definition;
 
-    const bento = definitionToBento(def);
+    const bento = definitionToGraph(def);
     const result = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
     expect(result.id).toBe(def.id);
@@ -89,7 +89,7 @@ describe("rfNodesToDefinition", () => {
     def = addNode(def, "transform").definition;
     def = addNode(def, "file-system").definition;
 
-    const bento = definitionToBento(def);
+    const bento = definitionToGraph(def);
     const roundTripped = rfNodesToDefinition(bento.nodes, def, bento.configs);
 
     for (let i = 0; i < def.nodes!.length; i++) {
@@ -107,7 +107,7 @@ describe("rfNodesToDefinition", () => {
     def = addNode(def, "image").definition;
     const imageNode = def.nodes!.find((n) => n.type === "image")!;
 
-    const bento = definitionToBento(def);
+    const bento = definitionToGraph(def);
     const rfImage = bento.nodes.find((n) => n.id === imageNode.id)!;
     // Pass empty configs — adapter should use node.data.label as fallback
     const result = rfNodesToDefinition(bento.nodes, def, {});

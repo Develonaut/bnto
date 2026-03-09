@@ -9,12 +9,13 @@
 
 import { createEnhancedStore, core } from "@bnto/core";
 import { applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
+import type { Definition } from "@bnto/nodes";
 import type { EditorStore, PanelId } from "./types";
 import { captureSnapshot } from "./captureSnapshot";
 import { pushToStack } from "./pushToStack";
 import { revalidateState } from "./revalidateState";
 import { resolveInitialState } from "./resolveInitialState";
-import { loadRecipe } from "../actions/loadRecipe";
+import { loadDefinition } from "../actions/loadDefinition";
 import { createBlank } from "../actions/createBlank";
 import { runExecution } from "../actions/runExecution";
 import { autoOpenConfig, closeSameSideSiblings } from "./panelHelpers";
@@ -23,8 +24,8 @@ import { autoOpenConfig, closeSameSideSiblings } from "./panelHelpers";
 // Store factory
 // ---------------------------------------------------------------------------
 
-function createEditorStore(slug?: string) {
-  const initial = resolveInitialState(slug);
+function createEditorStore(definition?: Definition) {
+  const initial = resolveInitialState(definition);
 
   return createEnhancedStore<EditorStore>()((set, get) => ({
     // --- Initial state ---
@@ -34,7 +35,6 @@ function createEditorStore(slug?: string) {
     edges: [],
     configs: initial.configs,
     definition: initial.definition,
-    slug: initial.slug,
     recipeMetadata: initial.metadata,
     isDirty: false,
     validationErrors: [],
@@ -57,9 +57,8 @@ function createEditorStore(slug?: string) {
 
     // --- Entry points ---
 
-    loadRecipe: (slug) => {
-      const result = loadRecipe(slug);
-      if (result) set(result);
+    loadDefinition: (def) => {
+      set(loadDefinition(def));
     },
 
     createBlank: () => {

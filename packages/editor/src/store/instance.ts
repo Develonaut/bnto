@@ -9,14 +9,15 @@
  */
 
 import type { StoreApi } from "zustand";
+import type { Definition } from "@bnto/nodes";
 import type { EditorStore } from "./types";
 import { createEditorStore } from "./createEditorStore";
 
 let store: StoreApi<EditorStore> | null = null;
 
 /** Initialize (or re-initialize) the editor store. Call on mount. */
-function initEditorStore(slug?: string): StoreApi<EditorStore> {
-  store = createEditorStore(slug);
+function initEditorStore(definition?: Definition): StoreApi<EditorStore> {
+  store = createEditorStore(definition);
   return store;
 }
 
