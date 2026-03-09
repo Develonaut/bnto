@@ -5,22 +5,17 @@
  * Use this in event handlers and callbacks where you need the
  * latest state snapshot without causing re-renders.
  *
- * Must be used inside an EditorProvider.
+ * Must be used after the store has been initialized (inside <EditorRoot>).
  */
 
 "use client";
 
-import { useContext } from "react";
 import type { StoreApi } from "zustand";
-import { EditorContext } from "../context";
+import { getEditorStore } from "../store/instance";
 import type { EditorStore } from "../store/types";
 
 function useEditorStoreApi(): StoreApi<EditorStore> {
-  const store = useContext(EditorContext);
-  if (!store) {
-    throw new Error("useEditorStoreApi must be used inside <EditorProvider>");
-  }
-  return store;
+  return getEditorStore();
 }
 
 export { useEditorStoreApi };

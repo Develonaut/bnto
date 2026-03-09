@@ -4,7 +4,7 @@
  * The store owns everything (nodes + configs). Undo/redo restore
  * both atomically — no need to call setNodes() externally.
  *
- * Must be inside an EditorProvider.
+ * Must be inside an EditorRoot.
  */
 
 "use client";
