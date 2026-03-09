@@ -30,7 +30,7 @@ function validDef(overrides: Partial<Definition> = {}): Definition {
 
 describe("collectSurfacedParams — predefined recipes", () => {
   it("surfaces quality param from batchCompress", () => {
-    const groups = collectSurfacedParams(batchCompress);
+    const groups = collectSurfacedParams(batchCompress.definition);
     expect(groups.length).toBeGreaterThanOrEqual(1);
     const qualityGroup = groups.find((g) => g.visibleParams.includes("quality"));
     expect(qualityGroup).toBeDefined();
@@ -39,7 +39,7 @@ describe("collectSurfacedParams — predefined recipes", () => {
   });
 
   it("surfaces width/height/maintainAspect from batchResize", () => {
-    const groups = collectSurfacedParams(batchResize);
+    const groups = collectSurfacedParams(batchResize.definition);
     expect(groups.length).toBeGreaterThanOrEqual(1);
     const resizeGroup = groups.find((g) => g.leafNodeId === "resize-image");
     expect(resizeGroup).toBeDefined();
@@ -49,14 +49,14 @@ describe("collectSurfacedParams — predefined recipes", () => {
   });
 
   it("surfaces format/quality from batchConvert", () => {
-    const groups = collectSurfacedParams(batchConvert);
+    const groups = collectSurfacedParams(batchConvert.definition);
     const convertGroup = groups.find((g) => g.leafNodeId === "convert-image");
     expect(convertGroup).toBeDefined();
     expect(convertGroup!.visibleParams).toContain("format");
   });
 
   it("surfaces rename params from batchRename", () => {
-    const groups = collectSurfacedParams(batchRename);
+    const groups = collectSurfacedParams(batchRename.definition);
     const renameGroup = groups.find((g) => g.leafNodeId === "rename-file");
     expect(renameGroup).toBeDefined();
     // file-system:rename has find, replace, case, prefix, suffix, pattern
@@ -64,7 +64,7 @@ describe("collectSurfacedParams — predefined recipes", () => {
   });
 
   it("surfaces cleaning params from csvCleaner", () => {
-    const groups = collectSurfacedParams(csvCleaner);
+    const groups = collectSurfacedParams(csvCleaner.definition);
     const cleanGroup = groups.find((g) => g.leafNodeId === "clean");
     expect(cleanGroup).toBeDefined();
     expect(cleanGroup!.visibleParams).toContain("trimWhitespace");
@@ -73,7 +73,7 @@ describe("collectSurfacedParams — predefined recipes", () => {
   });
 
   it("surfaces columns param from columnRenamer", () => {
-    const groups = collectSurfacedParams(columnRenamer);
+    const groups = collectSurfacedParams(columnRenamer.definition);
     const renameGroup = groups.find((g) => g.leafNodeId === "rename-columns");
     expect(renameGroup).toBeDefined();
     expect(renameGroup!.visibleParams).toContain("columns");
@@ -92,7 +92,7 @@ describe("collectSurfacedParams — auto mode (default)", () => {
   });
 
   it("excludes operation param from surfaced results", () => {
-    const groups = collectSurfacedParams(batchCompress);
+    const groups = collectSurfacedParams(batchCompress.definition);
     for (const group of groups) {
       expect(group.visibleParams).not.toContain("operation");
     }
@@ -127,7 +127,7 @@ describe("collectSurfacedParams — auto mode (default)", () => {
 describe("collectSurfacedParams — manual override", () => {
   it("mode: manual with include filters to specified params", () => {
     const def = validDef({
-      ...batchCompress,
+      ...batchCompress.definition,
       surfacedParams: {
         mode: "manual",
         include: [{ nodeId: "compress-image", params: ["quality"] }],
@@ -140,7 +140,7 @@ describe("collectSurfacedParams — manual override", () => {
 
   it("mode: auto with exclude hides specified params", () => {
     const def = validDef({
-      ...batchResize,
+      ...batchResize.definition,
       surfacedParams: {
         mode: "auto",
         exclude: [{ nodeId: "resize-image", params: ["maintainAspect"] }],
@@ -156,7 +156,7 @@ describe("collectSurfacedParams — manual override", () => {
 
   it("mode: manual with no matching include returns empty", () => {
     const def = validDef({
-      ...batchCompress,
+      ...batchCompress.definition,
       surfacedParams: {
         mode: "manual",
         include: [{ nodeId: "nonexistent-node" }],
@@ -185,7 +185,8 @@ describe("collectSurfacedParams — displayName from customData", () => {
   });
 
   it("falls back to node name when displayName absent", () => {
-    const groups = collectSurfacedParams(batchCompress);
+    const groups = collectSurfacedParams(batchCompress.definition);
+    // The leaf node "compress-image" has no customData.displayName, falls back to node.name
     const compressGroup = groups.find((g) => g.leafNodeId === "compress-image");
     expect(compressGroup!.label).toBe("Compress Image");
   });

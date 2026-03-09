@@ -45,26 +45,23 @@ export { isContainerNodeType } from "./isContainerNodeType";
 export { CATEGORIES, getCategoryInfo } from "./categories";
 export type { CategoryInfo } from "./categories";
 
-// Predefined recipes (6 Tier 1 bntos)
+// Predefined recipes (all uniform shape with I/O nodes)
 export {
   RECIPES,
+  ALL_RECIPES,
   getRecipeBySlug,
-  cleanCsv,
-  compressImages,
-  convertImageFormat,
-  renameCsvColumns,
-  renameFiles,
-  resizeImages,
-} from "./recipes";
-
-// Reusable sub-recipe building blocks
-export {
   batchCompress,
   batchConvert,
   batchRename,
   batchResize,
+  cleanCsv,
   columnRenamer,
+  compressImages,
+  convertImageFormat,
   csvCleaner,
+  renameCsvColumns,
+  renameFiles,
+  resizeImages,
 } from "./recipes";
 
 // Format versioning
@@ -78,6 +75,9 @@ export {
 // Definition validation
 export { validateDefinition, validateEdges } from "./validate";
 export type { ValidationError } from "./validate";
+
+// Recipe validation (I/O checks, structural checks, connectivity)
+export { validateRecipe } from "./validateRecipe";
 
 // Node parameter validation (Zod-based)
 export { validateNodeParams } from "./validateNodeParams";

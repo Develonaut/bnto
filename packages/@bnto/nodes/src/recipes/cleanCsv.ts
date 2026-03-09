@@ -1,8 +1,8 @@
 /** Clean CSV recipe — remove empty rows, trim whitespace, deduplicate. */
 
-import type { Recipe } from "../../recipe";
-import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
-import { csvCleaner } from "../primitives/csvCleaner";
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { csvCleaner } from "./csvCleaner";
 
 export const cleanCsv: Recipe = {
   slug: "clean-csv",
@@ -49,7 +49,7 @@ export const cleanCsv: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      csvCleaner,
+      csvCleaner.definition,
       {
         id: "output",
         type: "output",

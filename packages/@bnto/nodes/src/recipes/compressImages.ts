@@ -1,8 +1,8 @@
 /** Compress Images recipe — optimize PNG, JPEG, and WebP images. */
 
-import type { Recipe } from "../../recipe";
-import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
-import { batchCompress } from "../primitives/batchCompress";
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { batchCompress } from "./batchCompress";
 
 export const compressImages: Recipe = {
   slug: "compress-images",
@@ -52,7 +52,7 @@ export const compressImages: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      batchCompress,
+      batchCompress.definition,
       {
         id: "output",
         type: "output",

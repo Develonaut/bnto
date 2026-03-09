@@ -1,23 +1,22 @@
 /**
- * Recipe exports — composites (public, user-facing) and primitives (building blocks).
+ * Recipe exports — all 12 predefined recipes.
+ *
+ * Every recipe is a complete `Recipe` with I/O nodes. No distinction
+ * between "primitives" and "composites" — all recipes are uniform.
  */
 
-// Composite recipes — the 6 predefined bntos that map to public URLs
-export {
-  cleanCsv,
-  compressImages,
-  convertImageFormat,
-  renameCsvColumns,
-  renameFiles,
-  resizeImages,
-} from "./composites";
+// Building-block recipes (formerly "primitives")
+export { batchCompress } from "./batchCompress";
+export { batchConvert } from "./batchConvert";
+export { batchRename } from "./batchRename";
+export { batchResize } from "./batchResize";
+export { columnRenamer } from "./columnRenamer";
+export { csvCleaner } from "./csvCleaner";
 
-// Primitive recipes — standalone building blocks used by composites
-export {
-  batchCompress,
-  batchConvert,
-  batchRename,
-  batchResize,
-  columnRenamer,
-  csvCleaner,
-} from "./primitives";
+// Composite recipes — the 6 Tier 1 bntos that map to public URLs
+export { cleanCsv } from "./cleanCsv";
+export { compressImages } from "./compressImages";
+export { convertImageFormat } from "./convertImageFormat";
+export { renameCsvColumns } from "./renameCsvColumns";
+export { renameFiles } from "./renameFiles";
+export { resizeImages } from "./resizeImages";

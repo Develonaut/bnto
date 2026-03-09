@@ -1,8 +1,8 @@
 /** Convert Image Format recipe — convert between PNG, JPEG, WebP, and GIF. */
 
-import type { Recipe } from "../../recipe";
-import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
-import { batchConvert } from "../primitives/batchConvert";
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { batchConvert } from "./batchConvert";
 
 export const convertImageFormat: Recipe = {
   slug: "convert-image-format",
@@ -51,7 +51,7 @@ export const convertImageFormat: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      batchConvert,
+      batchConvert.definition,
       {
         id: "output",
         type: "output",

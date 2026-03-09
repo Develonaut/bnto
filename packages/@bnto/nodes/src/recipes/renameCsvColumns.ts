@@ -1,8 +1,8 @@
 /** Rename CSV Columns recipe — rename column headers in bulk. */
 
-import type { Recipe } from "../../recipe";
-import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
-import { columnRenamer } from "../primitives/columnRenamer";
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { columnRenamer } from "./columnRenamer";
 
 export const renameCsvColumns: Recipe = {
   slug: "rename-csv-columns",
@@ -50,7 +50,7 @@ export const renameCsvColumns: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      columnRenamer,
+      columnRenamer.definition,
       {
         id: "output",
         type: "output",

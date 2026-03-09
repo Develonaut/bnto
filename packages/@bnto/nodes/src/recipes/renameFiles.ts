@@ -1,8 +1,8 @@
 /** Rename Files recipe — batch rename files with patterns. */
 
-import type { Recipe } from "../../recipe";
-import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
-import { batchRename } from "../primitives/batchRename";
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { batchRename } from "./batchRename";
 
 export const renameFiles: Recipe = {
   slug: "rename-files",
@@ -49,7 +49,7 @@ export const renameFiles: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      batchRename,
+      batchRename.definition,
       {
         id: "output",
         type: "output",

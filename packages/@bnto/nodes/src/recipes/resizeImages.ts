@@ -1,8 +1,8 @@
 /** Resize Images recipe — resize to exact dimensions or percentages. */
 
-import type { Recipe } from "../../recipe";
-import { CURRENT_FORMAT_VERSION } from "../../formatVersion";
-import { batchResize } from "../primitives/batchResize";
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { batchResize } from "./batchResize";
 
 export const resizeImages: Recipe = {
   slug: "resize-images",
@@ -51,7 +51,7 @@ export const resizeImages: Recipe = {
         inputPorts: [],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      batchResize,
+      batchResize.definition,
       {
         id: "output",
         type: "output",
