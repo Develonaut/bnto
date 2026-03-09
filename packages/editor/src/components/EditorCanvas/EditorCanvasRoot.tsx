@@ -1,16 +1,14 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { EditorProvider } from "../../EditorProvider";
-import { EditorExecutionProvider } from "../../hooks/EditorExecutionContext";
+import { initEditorStore } from "../../store/instance";
 
 /**
- * EditorCanvasRoot — editor providers shell.
+ * EditorCanvasRoot — initializes the editor store and wraps with ReactFlowProvider.
  *
- * Wraps children with EditorProvider (store) + ReactFlowProvider +
- * EditorExecutionProvider. The execution provider shares a single
- * useEditorExecution() instance across all editor components.
+ * The store is created once on mount via the module-level instance.
+ * No React context needed — hooks access the store directly.
  *
  *   <EditorRoot slug="compress-images">
  *     <EditorCanvas />
@@ -23,13 +21,11 @@ interface EditorCanvasRootProps {
 }
 
 function EditorCanvasRoot({ slug, children }: EditorCanvasRootProps) {
-  return (
-    <EditorProvider slug={slug}>
-      <ReactFlowProvider>
-        <EditorExecutionProvider>{children}</EditorExecutionProvider>
-      </ReactFlowProvider>
-    </EditorProvider>
-  );
+  // Initialize the module-level store once on mount.
+  // useState ensures this only runs once per component lifecycle.
+  useState(() => initEditorStore(slug));
+
+  return <ReactFlowProvider>{children}</ReactFlowProvider>;
 }
 
 export { EditorCanvasRoot };

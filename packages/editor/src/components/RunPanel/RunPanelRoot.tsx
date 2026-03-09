@@ -1,7 +1,7 @@
 "use client";
 
 import { Divider, Tabs, TabsList, TabsTrigger, TabsContent, TerminalIcon, Text } from "@bnto/ui";
-import { useEditorExecutionContext } from "../../hooks/EditorExecutionContext";
+import { useEditorStore } from "../../hooks/useEditorStore";
 import { ResultsTab } from "./ResultsTab";
 import { LogsTab } from "./LogsTab";
 import { EditorMenuPanel } from "../EditorMenuPanel";
@@ -10,10 +10,11 @@ import { EditorMenuPanel } from "../EditorMenuPanel";
  * RunPanel — Menu-based results/logs panel.
  *
  * Opens to the left from the right toolbar trigger. Children
- * consume execution state directly from EditorExecutionContext.
+ * consume execution state directly from the editor store.
  */
 function RunPanelRoot() {
-  const { results, errors } = useEditorExecutionContext();
+  const results = useEditorStore((s) => s.executionResults);
+  const errors = useEditorStore((s) => s.executionErrors);
 
   return (
     <EditorMenuPanel

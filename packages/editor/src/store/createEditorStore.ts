@@ -1,21 +1,13 @@
 /**
- * Editor store factory — owns state and simple setters (controlled mode).
+ * Editor store factory — state layer with simple setters (controlled mode).
  *
- * The store is the state layer only. Business logic (addNode, removeNode,
- * updateParams) lives in pure action functions (editor/actions/) that take
- * EditorState and return Partial<EditorState>. Hooks are thin wrappers
- * that bridge actions to the store. See editor/actions/ + editor/hooks/
- * for the three-layer pattern:
+ * Business logic lives in pure action functions (editor/actions/).
+ * Hooks are thin wrappers bridging actions to the store.
  *
  *   Pure actions → Thin wrapper hooks → Consumer hooks (useEditorActions)
- *
- * The store owns: nodes, edges, configs, recipe metadata, undo/redo,
- * validation, execution state, and dirty flag.
- *
- * ReactFlow receives nodes/edges as props (controlled mode).
  */
 
-import { createEnhancedStore } from "@bnto/core";
+import { createEnhancedStore, core } from "@bnto/core";
 import { applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
 import type { EditorStore, PanelId } from "./types";
 import { captureSnapshot } from "./captureSnapshot";
@@ -24,6 +16,7 @@ import { revalidateState } from "./revalidateState";
 import { resolveInitialState } from "./resolveInitialState";
 import { loadRecipe } from "../actions/loadRecipe";
 import { createBlank } from "../actions/createBlank";
+import { runExecution } from "../actions/runExecution";
 import { autoOpenConfig, closeSameSideSiblings } from "./panelHelpers";
 
 // ---------------------------------------------------------------------------
@@ -55,6 +48,12 @@ function createEditorStore(slug?: string) {
       palette: false,
       run: false,
     },
+    executionPhase: "idle",
+    executionResults: [],
+    executionErrors: [],
+    executionLogs: [],
+    executionFileProgress: null,
+    executionInputFiles: [],
 
     // --- Entry points ---
 
@@ -189,6 +188,34 @@ function createEditorStore(slug?: string) {
       });
     },
 
+    // --- Execution lifecycle ---
+
+    runExecution: async (files) => {
+      await runExecution(set, get, files);
+    },
+
+    resetRun: () => {
+      set({
+        executionState: {},
+        executionPhase: "idle",
+        executionResults: [],
+        executionErrors: [],
+        executionLogs: [],
+        executionFileProgress: null,
+        executionInputFiles: [],
+      });
+    },
+
+    downloadResult: (file) => {
+      core.executions.downloadResult(file);
+    },
+
+    downloadAllResults: async () => {
+      const results = get().executionResults;
+      if (results.length === 0) return;
+      await core.executions.downloadAllResults(results, "editor-results");
+    },
+
     // --- Utility ---
 
     markDirty: () => {
@@ -210,7 +237,7 @@ function createEditorStore(slug?: string) {
       set({ executionState });
     },
 
-    resetExecution: () => {
+    resetNodeStatuses: () => {
       set({ executionState: {} });
     },
 

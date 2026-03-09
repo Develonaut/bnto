@@ -36,6 +36,12 @@ function baseState(def: Definition): EditorState {
     redoStack: [],
     selectedNodeId: null,
     panels: { layers: false, config: false, palette: false, run: false },
+    executionPhase: "idle",
+    executionResults: [],
+    executionErrors: [],
+    executionLogs: [],
+    executionFileProgress: null,
+    executionInputFiles: [],
   };
 }
 

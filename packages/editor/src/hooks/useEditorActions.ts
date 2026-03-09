@@ -7,7 +7,7 @@
  * This is the primary action hook for components — they import
  * useEditorActions instead of individual hooks or store selectors.
  *
- * Must be inside EditorProvider + ReactFlowProvider.
+ * Must be inside EditorRoot + ReactFlowProvider.
  */
 
 "use client";
@@ -37,7 +37,7 @@ function useEditorActions() {
       revalidate: s.revalidate,
       resetDirty: s.resetDirty,
       setExecutionState: s.setExecutionState,
-      resetExecution: s.resetExecution,
+      resetNodeStatuses: s.resetNodeStatuses,
       setRecipeMetadata: s.setRecipeMetadata,
       resetHistory: s.resetHistory,
     })),
