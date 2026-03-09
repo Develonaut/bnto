@@ -1,13 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import {
   Divider,
   PanelLeftIcon,
   Text,
   CopyIcon,
   DownloadIcon,
+  FolderOpenIcon,
   PenLineIcon,
-  PlusIcon,
   TrashIcon,
 } from "@bnto/ui";
 import { useEditorExport } from "../../hooks/useEditorExport";
@@ -16,6 +17,7 @@ import { FileMenu, FileMenuItem, FileMenuSeparator } from "./FileMenu";
 import { NodeList } from "./NodeList";
 import { useAutoSelect } from "../../hooks/useAutoSelect";
 import { EditorMenuPanel } from "../EditorMenuPanel";
+import { OpenRecipeDialog } from "../OpenRecipeDialog";
 
 /**
  * LayerPanel — Menu-based layer panel.
@@ -30,12 +32,14 @@ function LayerPanelRoot() {
   const name = useEditorStore((s) => s.recipeMetadata.name ?? "Untitled");
   const { download, canExport } = useEditorExport();
   const { handleSelectNode } = useAutoSelect({ selectedNodeId });
+  const [openDialogOpen, setOpenDialogOpen] = useState(false);
 
   const canDownload = canExport && nodes.length > 0;
   const handleDownload = () => download();
 
   return (
-    <EditorMenuPanel
+    <>
+      <EditorMenuPanel
       panelId="layers"
       side="right"
       width="w-56"
@@ -47,15 +51,15 @@ function LayerPanelRoot() {
           {name}
         </Text>
         <FileMenu>
+          <FileMenuItem onClick={() => setOpenDialogOpen(true)}>
+            <FolderOpenIcon className="size-4" />
+            Open
+          </FileMenuItem>
           <FileMenuItem onClick={handleDownload} disabled={!canDownload}>
             <DownloadIcon className="size-4" />
             Download
           </FileMenuItem>
           <FileMenuSeparator />
-          <FileMenuItem disabled>
-            <PlusIcon className="size-4" />
-            New Recipe
-          </FileMenuItem>
           <FileMenuItem disabled>
             <CopyIcon className="size-4" />
             Duplicate
@@ -76,6 +80,8 @@ function LayerPanelRoot() {
         <NodeList nodes={nodes} selectedNodeId={selectedNodeId} onSelect={handleSelectNode} />
       </div>
     </EditorMenuPanel>
+    <OpenRecipeDialog open={openDialogOpen} onOpenChange={setOpenDialogOpen} />
+  </>
   );
 }
 

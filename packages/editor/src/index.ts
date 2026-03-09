@@ -76,6 +76,10 @@ export type { SchemaFormProps } from "./components/SchemaForm";
 export { SchemaField } from "./components/SchemaField";
 export type { SchemaFieldProps } from "./components/SchemaField";
 
+// --- Dialogs ---
+
+export { OpenRecipeDialog } from "./components/OpenRecipeDialog";
+
 // --- Renderers ---
 
 export { InputRenderer } from "./components/InputRenderer";

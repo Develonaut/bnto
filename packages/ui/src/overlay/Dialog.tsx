@@ -69,26 +69,41 @@ DialogOverlay.displayName = "Dialog.Overlay";
 
 /* ── Content ────────────────────────────────────────────────── */
 
-export const DialogContent = forwardRef<
-  ElementRef<typeof DialogPrimitive.Content>,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content ref={ref} asChild {...props}>
-      {/* Centering wrapper — fixed fullscreen, z-50 above overlay,
-          pointer-events-none so clicks outside dismiss via overlay. */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-        <Popup
-          elevation="lg"
-          className={cn("pointer-events-auto relative w-full max-w-lg p-8", className)}
-        >
-          {children}
-        </Popup>
-      </div>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-));
+type DialogSize = "sm" | "md" | "lg" | "xl" | "2xl";
+
+const DIALOG_MAX_WIDTH: Record<DialogSize, string> = {
+  sm: "24rem",
+  md: "32rem",
+  lg: "42rem",
+  xl: "56rem",
+  "2xl": "72rem",
+};
+
+type DialogContentProps = ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+  /** Width preset. Default "md". */
+  size?: DialogSize;
+};
+
+export const DialogContent = forwardRef<ElementRef<typeof DialogPrimitive.Content>, DialogContentProps>(
+  ({ className, children, size = "md", style, ...props }, ref) => (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content ref={ref} asChild {...props}>
+        {/* Centering wrapper — fixed fullscreen, z-50 above overlay,
+            pointer-events-none so clicks outside dismiss via overlay. */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <Popup
+            elevation="lg"
+            className={cn("pointer-events-auto relative p-8", className)}
+            style={{ width: "100%", maxWidth: DIALOG_MAX_WIDTH[size], ...style }}
+          >
+            {children}
+          </Popup>
+        </div>
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  ),
+);
 DialogContent.displayName = "Dialog.Content";
 
 /* ── Header ─────────────────────────────────────────────────── */
