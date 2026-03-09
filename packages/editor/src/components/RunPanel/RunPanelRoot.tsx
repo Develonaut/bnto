@@ -9,14 +9,11 @@ import { EditorMenuPanel } from "../EditorMenuPanel";
 /**
  * RunPanel — Menu-based results/logs panel.
  *
- * Opens to the left from the right toolbar trigger. Shows output files
- * in the Results tab and streaming engine events in the Logs tab.
+ * Opens to the left from the right toolbar trigger. Children
+ * consume execution state directly from EditorExecutionContext.
  */
 function RunPanelRoot() {
-  const { phase, results, errors, logs, downloadFile, downloadAll } = useEditorExecutionContext();
-
-  const resultCount = results.length;
-  const hasErrors = errors.length > 0;
+  const { results, errors } = useEditorExecutionContext();
 
   return (
     <EditorMenuPanel
@@ -26,32 +23,24 @@ function RunPanelRoot() {
       label="Run panel"
       icon={<TerminalIcon className="size-4" />}
     >
-      <Tabs defaultValue="results">
+      <Tabs defaultValue="results" className="flex h-full flex-col">
         <div className="flex shrink-0 items-center gap-2 px-3 pt-3 pb-2">
           <TabsList>
             <TabsTrigger value="results">
-              <Text size="xs">Results{resultCount > 0 ? ` (${resultCount})` : ""}</Text>
+              <Text size="xs">Results{results.length > 0 ? ` (${results.length})` : ""}</Text>
             </TabsTrigger>
             <TabsTrigger value="logs">
-              <Text size="xs">Logs{hasErrors ? " (!)" : ""}</Text>
+              <Text size="xs">Logs{errors.length > 0 ? " (!)" : ""}</Text>
             </TabsTrigger>
           </TabsList>
         </div>
         <Divider />
-        <div className="min-h-0 flex-1 overflow-hidden">
-          <TabsContent value="results" className="mt-0 h-full">
-            <ResultsTab
-              phase={phase}
-              results={results}
-              errors={errors}
-              onDownloadFile={downloadFile}
-              onDownloadAll={downloadAll}
-            />
-          </TabsContent>
-          <TabsContent value="logs" className="mt-0 h-full">
-            <LogsTab logs={logs} />
-          </TabsContent>
-        </div>
+        <TabsContent value="results" className="mt-0 min-h-0 flex-1">
+          <ResultsTab />
+        </TabsContent>
+        <TabsContent value="logs" className="mt-0 min-h-0 flex-1">
+          <LogsTab />
+        </TabsContent>
       </Tabs>
     </EditorMenuPanel>
   );

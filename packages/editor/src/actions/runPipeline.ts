@@ -8,6 +8,7 @@
  */
 
 import { validateDefinition } from "@bnto/nodes";
+import type { Definition } from "@bnto/nodes";
 import { definitionToPipeline } from "@bnto/core";
 import type { PipelineDefinition, PipelineNode } from "@bnto/core";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
@@ -22,6 +23,8 @@ interface RunPipelineInput {
   nodes: BentoNode[];
   configs: NodeConfigs;
   recipeMetadata: RecipeMetadata;
+  /** Full nested definition — preserves container children for pipeline export. */
+  definition: Definition | null;
 }
 
 interface RunPipelineResult {
@@ -49,10 +52,11 @@ interface RunPipelineError {
  * Returns either a ready-to-run result or validation errors.
  */
 function preparePipeline(input: RunPipelineInput): RunPipelineResult | RunPipelineError {
-  const { nodes, configs, recipeMetadata } = input;
+  const { nodes, configs, recipeMetadata, definition: storedDefinition } = input;
 
-  // Step 1: Build Definition from current editor state
-  const definition = rfNodesToDefinition(nodes, recipeMetadata, configs);
+  // Step 1: Build Definition from current editor state.
+  // Pass the stored definition so container children (nested nodes) are preserved.
+  const definition = rfNodesToDefinition(nodes, recipeMetadata, configs, storedDefinition);
 
   // Step 2: Validate (includes per-node Zod parameter validation)
   const validationErrors = validateDefinition(definition);

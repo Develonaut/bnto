@@ -54,6 +54,8 @@ export {
   EmptyStateSkeleton,
 } from "./feedback/EmptyState";
 export { LinearProgress } from "./feedback/LinearProgress";
+export { ResultFileCard } from "./feedback/ResultFileCard";
+export type { ResultFileCardProps } from "./feedback/ResultFileCard";
 export { Skeleton } from "./feedback/Skeleton";
 
 /* Surface */
