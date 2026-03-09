@@ -4,13 +4,13 @@ import {
   Button,
   CheckCircle2Icon,
   DownloadIcon,
+  formatFileSize,
   LinearProgress,
   LoaderIcon,
   ResultFileCard,
   Text,
   XCircleIcon,
 } from "@bnto/ui";
-import { formatFileSize } from "@bnto/ui";
 import type { BrowserFileResult } from "@bnto/core";
 import { useFileResultProps } from "@bnto/core";
 import { useEditorExecutionContext } from "../../hooks/EditorExecutionContext";
