@@ -22,6 +22,13 @@ export function createBlank(): Partial<EditorState> {
     isDirty: false,
     validationErrors: [],
     executionState: {},
+    nodeProgress: {},
+    executionPhase: "idle",
+    executionResults: [],
+    executionErrors: [],
+    executionLogs: [],
+    executionFileProgress: null,
+    executionInputFiles: [],
     undoStack: [],
     redoStack: [],
   };

@@ -22,6 +22,13 @@ export function loadDefinition(def: Definition): Partial<EditorState> {
     isDirty: false,
     validationErrors: validateDefinition(def),
     executionState: {},
+    nodeProgress: {},
+    executionPhase: "idle",
+    executionResults: [],
+    executionErrors: [],
+    executionLogs: [],
+    executionFileProgress: null,
+    executionInputFiles: [],
     undoStack: [],
     redoStack: [],
   };
