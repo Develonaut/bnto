@@ -49,6 +49,12 @@ pub mod resize;
 /// and WebP formats by decoding and re-encoding with format-specific settings.
 pub mod convert;
 
+/// PNG color quantization — lossy palette reduction (24-bit → 8-bit indexed)
+/// for dramatically smaller PNGs. Uses quantizr (median cut + Floyd-Steinberg
+/// dithering) to reduce millions of colors to a 256-color palette. This is
+/// the same technique TinyPNG uses: 1051 KB → 447 KB (57% reduction).
+pub mod quantize;
+
 /// WASM bridge — the JavaScript-callable functions that the Web Worker
 /// uses to invoke image processing. This is the "door" between JS and Rust.
 pub mod wasm_bridge;

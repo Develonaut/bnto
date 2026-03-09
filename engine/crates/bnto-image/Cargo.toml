@@ -104,6 +104,27 @@ serde_json = { workspace = true }
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 
 # =============================================================================
+# PNG Quantization — Lossy Color Reduction for Dramatically Smaller PNGs
+# =============================================================================
+#
+# quantizr — Median cut quantization + Floyd-Steinberg dithering. MIT licensed,
+# zero dependencies. Reduces 24-bit truecolor PNGs to 8-bit indexed palette
+# (256 colors max) BEFORE DEFLATE compression. This is exactly what TinyPNG
+# does — and it's why we get ~57% reduction instead of ~5% with lossless alone.
+#
+# Chosen over quantette (Oklab + k-means) after benchmarking:
+#   quantizr:  1051 KB → 447 KB (57.4%), 144 ms
+#   quantette: 1051 KB → 521 KB (50.4%), 319 ms
+# quantizr wins on both size AND speed.
+quantizr = "1.4"
+
+# Low-level PNG encoder for writing indexed (8-bit palette) output.
+# The `image` crate's PngEncoder only writes truecolor PNGs. To write an
+# indexed PNG (palette + indices), we need the `png` crate directly.
+# It's already a transitive dep of `image`, so this adds zero binary size.
+png = { workspace = true }
+
+# =============================================================================
 # Dev Dependencies (testing only — not in the final WASM binary)
 # =============================================================================
 

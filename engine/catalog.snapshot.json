@@ -220,8 +220,8 @@
           },
           "default": 80,
           "constraints": {
-            "min": 1,
-            "max": 100,
+            "min": 1.0,
+            "max": 100.0,
             "required": false
           },
           "surfaceable": true
@@ -263,8 +263,8 @@
           },
           "default": 80,
           "constraints": {
-            "min": 1,
-            "max": 100,
+            "min": 1.0,
+            "max": 100.0,
             "required": false
           },
           "surfaceable": true
@@ -288,7 +288,7 @@
             "type": "number"
           },
           "constraints": {
-            "min": 1,
+            "min": 1.0,
             "required": false
           },
           "visibleWhen": {
@@ -305,7 +305,7 @@
             "type": "number"
           },
           "constraints": {
-            "min": 1,
+            "min": 1.0,
             "required": false
           },
           "visibleWhen": {
@@ -337,8 +337,8 @@
           },
           "default": 80,
           "constraints": {
-            "min": 1,
-            "max": 100,
+            "min": 1.0,
+            "max": 100.0,
             "required": false
           },
           "surfaceable": true
