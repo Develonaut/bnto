@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import { removeNode } from "./removeNode";
 import type { EditorState } from "../store/types";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
+import { STRIDE } from "../adapters/bentoSlots";
 
 function stateWithNodes(): EditorState {
   const nodes: BentoNode[] = [
@@ -116,22 +117,22 @@ describe("removeNode", () => {
 
   it("reflows positions to close gap after removal", () => {
     const state = stateWithNodes();
-    // Place nodes at stride positions: a=0, b=220
+    // Place nodes at stride positions: a=0, b=STRIDE
     state.nodes[0] = { ...state.nodes[0]!, position: { x: 0, y: 0 } };
-    state.nodes[1] = { ...state.nodes[1]!, position: { x: 220, y: 0 } };
-    // Add a third node at x=440
+    state.nodes[1] = { ...state.nodes[1]!, position: { x: STRIDE, y: 0 } };
+    // Add a third node at x=2*STRIDE
     state.nodes.push({
       id: "c",
       type: "compartment",
-      position: { x: 440, y: 0 },
+      position: { x: STRIDE * 2, y: 0 },
       data: { label: "C", variant: "primary", width: 200, height: 200, status: "idle" },
     });
     state.configs.c = { nodeType: "edit-fields", name: "C", parameters: {} };
 
-    // Remove the middle node "b" — "c" should slide left to x=220
+    // Remove the middle node "b" — "c" should slide left to x=STRIDE
     const result = removeNode(state, "b");
     expect(result!.nodes!).toHaveLength(2);
     expect(result!.nodes![0]!.position.x).toBe(0);
-    expect(result!.nodes![1]!.position.x).toBe(220);
+    expect(result!.nodes![1]!.position.x).toBe(STRIDE);
   });
 });
