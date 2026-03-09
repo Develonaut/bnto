@@ -1,74 +1,84 @@
 "use client";
 
 import type { BrowserExecution } from "@bnto/core";
-import { CheckCircle2Icon, LinearProgress, LoaderIcon } from "@bnto/ui";
-import { formatFileSize } from "@bnto/ui";
+import { computeTotalSaved } from "@bnto/core";
+import {
+  CheckCircle2Icon,
+  LoaderIcon,
+  StatusBanner,
+  StatusBannerIcon,
+  StatusBannerLabel,
+  StatusBannerProgress,
+  StatusBannerRow,
+  StatusBannerSpacer,
+  formatFileSize,
+} from "@bnto/ui";
 
 interface ToolbarProgressProps {
   execution: BrowserExecution;
 }
 
 /**
- * Compact inline progress/stats display for the toolbar center area.
+ * Persistent progress/status banner for the recipe toolbar.
  *
- * During processing: spinner + file counter + progress bar
- * After completion: checkmark + summary stats (files processed, total saved)
+ * One StatusBanner stays mounted — props change across phases, no layout shift.
  */
 export function ToolbarProgress({ execution }: ToolbarProgressProps) {
   if (execution.status === "completed") {
-    const totalSaved = execution.results.reduce((acc, r) => {
-      const orig = r.metadata.originalSize as number | undefined;
-      return orig != null ? acc + (orig - r.blob.size) : acc;
-    }, 0);
-
-    const label = `${execution.results.length} ${execution.results.length === 1 ? "file" : "files"} processed`;
-    const saved = totalSaved > 0 ? formatFileSize(totalSaved) + " saved" : undefined;
+    const saved = computeTotalSaved(execution.results);
+    const count = execution.results.length;
 
     return (
       <div
         data-testid="toolbar-progress"
         data-status="completed"
-        data-total-saved={totalSaved}
-        data-files-count={execution.results.length}
+        data-total-saved={saved}
+        data-files-count={count}
       >
-        <LinearProgress
-          value={100}
-          icon={<CheckCircle2Icon className="size-4 shrink-0 text-primary" />}
-          label={label}
-          valueLabel={saved ?? "100%"}
-        />
+        <StatusBanner variant="success">
+          <StatusBannerRow>
+            <StatusBannerIcon>
+              <CheckCircle2Icon />
+            </StatusBannerIcon>
+            <StatusBannerLabel>
+              {count} {count === 1 ? "file" : "files"} processed
+            </StatusBannerLabel>
+            <StatusBannerSpacer />
+            {saved > 0 && (
+              <StatusBannerLabel muted mono>
+                {formatFileSize(saved)} saved
+              </StatusBannerLabel>
+            )}
+          </StatusBannerRow>
+          <StatusBannerProgress value={100} variant="success" />
+        </StatusBanner>
       </div>
     );
   }
 
   const { fileProgress } = execution;
-
-  if (!fileProgress) {
-    return (
-      <div data-testid="toolbar-progress" data-status="processing">
-        <LinearProgress
-          value={0}
-          icon={<LoaderIcon className="size-4 shrink-0 text-primary motion-safe:animate-spin" />}
-          label="Initializing..."
-          valueLabel=""
-        />
-      </div>
-    );
-  }
+  const percent = fileProgress?.overallPercent ?? 0;
+  const label = fileProgress
+    ? `Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}...`
+    : "Initializing...";
 
   return (
     <div
       data-testid="toolbar-progress"
       data-status="processing"
-      data-file-index={fileProgress.fileIndex}
-      data-total-files={fileProgress.totalFiles}
-      data-overall-percent={fileProgress.overallPercent}
+      data-file-index={fileProgress?.fileIndex}
+      data-total-files={fileProgress?.totalFiles}
+      data-overall-percent={percent}
     >
-      <LinearProgress
-        value={fileProgress.overallPercent}
-        icon={<LoaderIcon className="size-4 shrink-0 text-primary motion-safe:animate-spin" />}
-        label={`Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}...`}
-      />
+      <StatusBanner>
+        <StatusBannerRow>
+          <StatusBannerIcon>
+            <LoaderIcon className="motion-safe:animate-spin" />
+          </StatusBannerIcon>
+          <StatusBannerLabel muted>{label}</StatusBannerLabel>
+        </StatusBannerRow>
+        <StatusBannerProgress value={percent} />
+      </StatusBanner>
     </div>
   );
 }
