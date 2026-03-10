@@ -1,7 +1,7 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import type { BentoNode } from "../../adapters/types";
-import { NodeRoot, NodeHeader, NodeBody, NodeIcon, NodeLabel, NodeDeleteButton } from "./Node";
+import { NodeRoot, NodeEdge, NodeBody, NodeIcon, NodeLabel, NodeDeleteButton } from "./Node";
 
 /**
  * CompartmentNode — a processing node on the bento grid.
@@ -19,10 +19,17 @@ export const CompartmentNode = memo(function CompartmentNode({
   const isFailed = status === "failed";
 
   return (
-    <NodeRoot width={data.width} height={data.height} selected={selected} status={status}>
-      <NodeHeader>
-        <NodeDeleteButton nodeId={id} selected={selected} />
-      </NodeHeader>
+    <NodeRoot
+      width={data.width}
+      height={data.height}
+      selected={selected}
+      status={status}
+      edges={
+        <NodeEdge position="right" visible={selected}>
+          <NodeDeleteButton nodeId={id} selected={selected} />
+        </NodeEdge>
+      }
+    >
       <NodeBody>
         <NodeIcon icon={data.icon} variant={data.variant} onSurface={isFailed} />
         <NodeLabel onSurface={isFailed}>{data.label}</NodeLabel>

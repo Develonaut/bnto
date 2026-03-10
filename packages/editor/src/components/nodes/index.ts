@@ -13,6 +13,8 @@ export {
   NodeHeader,
   NodeBody,
   NodeFooter,
+  NodeEdge,
+  type NodeEdgeProps,
   NodeIcon,
   NodeLabel,
   NodeDeleteButton,
