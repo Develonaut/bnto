@@ -22,7 +22,6 @@ import { ShowcaseSection } from "./ShowcaseSection";
 import { LoadingCardShowcase } from "./LoadingCardShowcase";
 import { SpringableShowcase } from "./SpringableShowcase";
 import { TypographyShowcase } from "./TypographyShowcase";
-import { EditorShowcase } from "./EditorShowcase";
 
 export default function MotorwayPage() {
   return (
@@ -49,8 +48,7 @@ export default function MotorwayPage() {
           <TabsTrigger value="forms">Forms</TabsTrigger>
           <TabsTrigger value="grids">Grids</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
-          <TabsTrigger value="editor">Editor</TabsTrigger>
-          <TabsTrigger value="features">Features</TabsTrigger>
+<TabsTrigger value="features">Features</TabsTrigger>
         </TabsList>
 
         {/* ── Surfaces ────────────────────────────────────────── */}
@@ -229,17 +227,6 @@ export default function MotorwayPage() {
             description="LinearProgress primitive at different values, with icons, labels, and helper text."
           >
             <ProgressShowcase />
-          </ShowcaseSection>
-        </TabsContent>
-
-        {/* ── Editor ──────────────────────────────────────────── */}
-        <TabsContent value="editor">
-          <ShowcaseSection
-            id="editor"
-            title="Editor Components"
-            description="Compartment node enter and exit animations. Build and test editor interactions in isolation — no ReactFlow required."
-          >
-            <EditorShowcase />
           </ShowcaseSection>
         </TabsContent>
 
