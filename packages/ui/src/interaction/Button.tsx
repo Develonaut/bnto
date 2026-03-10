@@ -5,17 +5,35 @@ import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "../utils/cn";
 import { createCn } from "../utils/createCn";
-import { useButtonProps, VARIANT_CLASSES } from "./useButtonProps";
-import type { ButtonVariant } from "./useButtonProps";
-import { stripSizeElevation } from "./resolveElevation";
-import type { ElevationOverride } from "./resolveElevation";
+import { SPRING_STYLES } from "../surface/Pressable";
 import type { SpringMode } from "../surface/Pressable";
+import { resolveElevationClass, stripSizeElevation } from "./resolveElevation";
+import type { ElevationOverride } from "./resolveElevation";
 
-/* ── Size classes ─────────────────────────────────────────────
- * Button-specific layout: height, padding, font-size, rounded,
- * built-in elevation per size. These are NOT in useButtonProps
- * because they're specific to the Button component shape.
- * ──────────────────────────────────────────────────────────── */
+/* ── Variant classes ────────────────────────────────────────── */
+
+type ButtonVariant =
+  | "primary"
+  | "destructive"
+  | "success"
+  | "warning"
+  | "outline"
+  | "ghost"
+  | "secondary"
+  | "muted";
+
+const VARIANT_CLASSES: Record<ButtonVariant, string> = {
+  primary: "surface-primary",
+  destructive: "surface-destructive",
+  success: "surface-success",
+  warning: "surface-warning",
+  outline: "surface-outline",
+  ghost: "surface-ghost",
+  secondary: "surface-secondary",
+  muted: "surface-muted",
+};
+
+/* ── Size classes ───────────────────────────────────────────── */
 
 type ButtonSize = "sm" | "md" | "lg" | "icon";
 
@@ -55,12 +73,16 @@ const iconCn = createCn({
   },
 });
 
+/* ── Button ─────────────────────────────────────────────────── */
+
 type ButtonProps = Omit<ComponentProps<"button">, "ref"> &
   Omit<ComponentProps<"a">, "ref"> & {
     variant?: ButtonVariant;
     size?: ButtonSize;
     /** Pass an icon element to render as a square icon button. */
     icon?: ReactNode;
+    /** Render as a different element type (e.g. "div"). Priority: asChild > as > href > "button". */
+    as?: ElementType;
     asChild?: boolean;
     elevation?: ElevationOverride;
     spring?: SpringMode;
@@ -77,6 +99,7 @@ function Button({
   variant,
   size,
   icon,
+  as,
   elevation = true,
   spring = "bounciest",
   muted = false,
@@ -90,28 +113,23 @@ function Button({
   children,
   ...props
 }: ButtonProps) {
-  const Comp = resolveComponent(asChild, href, props.target);
+  const Comp = resolveComponent(as, asChild, href, props.target);
   const isIcon = icon !== undefined || size === "icon";
   const resolvedSize = size === "icon" ? "md" : (size ?? "md");
 
-  // Behavior + surface layer from the shared hook
-  const { props: buttonProps } = useButtonProps({
-    variant,
-    elevation,
-    spring,
-    pressed,
-    hovered,
-    muted,
-    toggle,
-  });
+  // Pressable + surface behavior
+  const elevationClass = resolveElevationClass(elevation);
+  const variantClass = variant ? VARIANT_CLASSES[variant] : undefined;
+  const behaviorCn = cn("pressable outline-none surface", variantClass, elevationClass);
 
-  // Appearance layer — size, layout, typography (Button-specific, skipped with asChild)
-  const sizeClasses = !asChild
+  // Size classes — skipped when asChild or as (consumer owns layout), unless size is explicitly set
+  const applySize = size !== undefined || (!asChild && !as);
+  const sizeClasses = applySize
     ? isIcon
       ? iconCn({ variant, size: resolvedSize })
       : textCn({ variant, size: resolvedSize })
     : "";
-  const resolvedSizeClasses = buttonProps.className.includes("elevation-")
+  const resolvedSizeClasses = behaviorCn.includes("elevation-")
     ? stripSizeElevation(sizeClasses)
     : sizeClasses;
 
@@ -119,10 +137,13 @@ function Button({
     <Comp
       ref={ref}
       data-slot="button"
-      {...buttonProps}
+      data-muted={muted ? "" : undefined}
+      data-hover={hovered && !pressed ? "" : undefined}
+      data-active={pressed ? "" : undefined}
+      data-toggle={toggle ? "" : undefined}
       {...(!!href ? { href } : {})}
-      className={cn(buttonProps.className, resolvedSizeClasses, className)}
-      style={{ ...buttonProps.style, ...style }}
+      className={cn(behaviorCn, resolvedSizeClasses, className)}
+      style={{ ...SPRING_STYLES[spring], ...style }}
       {...props}
     >
       {isIcon ? (icon ?? children) : children}
@@ -130,12 +151,18 @@ function Button({
   );
 }
 
-function resolveComponent(asChild: boolean, href?: string, target?: string): ElementType {
+function resolveComponent(
+  as: ElementType | undefined,
+  asChild: boolean,
+  href?: string,
+  target?: string,
+): ElementType {
   if (asChild) return Slot;
+  if (as) return as;
   if (!href) return "button";
   if (href.startsWith("/") && !target) return Link;
   return "a";
 }
 
 export { Button, textCn as buttonCn };
-export type { SpringMode };
+export type { ButtonVariant, SpringMode };

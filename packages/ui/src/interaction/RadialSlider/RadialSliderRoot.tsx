@@ -5,8 +5,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "../../utils/cn";
 import { GripVerticalIcon } from "../../icons";
-import { Pressable } from "../../surface/Pressable";
-import { Surface } from "../../surface/Surface";
+import { Button } from "../Button";
 
 import { arcPath, polarToOffset } from "./geometry";
 import { valueToAngle } from "./valueMapping";
@@ -83,13 +82,11 @@ export function RadialSliderRoot({
   const onKeyDown = useRadialKeyboard({ min, max, value, step, onChange });
 
   const defaultThumb = (
-    <Pressable asChild spring="bouncy" pressed={isDragging} hovered={isHovering}>
-      <Surface asChild variant="primary" elevation="sm" rounded="full">
-        <div ref={thumbRef} className="flex items-center justify-center size-8 ring-0">
-          <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />
-        </div>
-      </Surface>
-    </Pressable>
+    <Button asChild variant="primary" elevation="sm" spring="bouncy" pressed={isDragging} hovered={isHovering} className="rounded-full">
+      <div ref={thumbRef} className="flex items-center justify-center size-8 ring-0">
+        <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />
+      </div>
+    </Button>
   );
 
   return (

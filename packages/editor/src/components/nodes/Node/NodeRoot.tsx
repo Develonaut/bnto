@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
-import { ScaleIn, useButtonProps, cn } from "@bnto/ui";
+import { Button, ScaleIn, cn } from "@bnto/ui";
 import { CELL } from "../../../adapters/bentoSlots";
 import { resolveNodePresentation } from "../resolveNodePresentation";
 
 /**
  * NodeRoot — the outermost shell for all bento grid nodes.
  *
- * Uses `useButtonProps` to get pressable/surface/elevation slots
- * without wrapping in a Button component. Renders as a plain `<div>`
- * because nodes contain nested interactive elements (delete button, config).
+ * Uses `<Button as="div">` to get pressable/surface/elevation behavior
+ * without rendering a `<button>` element. Nodes contain nested interactive
+ * elements (delete button, config) so the root must be a plain `<div>`.
  *
  * NodeRoot owns interaction state: `selected` and `status` drive
  * pressed/hovered/elevation/variant via resolveNodePresentation.
@@ -53,31 +53,26 @@ function NodeRoot({
   const resolvedVariant = presentation.variant ?? variant;
   const slotClass = align ? `pointer-events-none flex items-center ${JUSTIFY_MAP[align]}` : "";
 
-  const { slots } = useButtonProps({
-    variant: resolvedVariant,
-    elevation: presentation.elevation,
-    pressed: presentation.pressed,
-    hovered: presentation.hovered,
-    muted: presentation.muted,
-  });
-
   return (
     <div style={{ width: CELL, height: CELL }} className={slotClass} data-testid="node-slot">
       <ScaleIn from={0.7} easing="spring-bouncy">
-        <div
-          {...slots.root.props}
+        <Button
+          as="div"
+          variant={resolvedVariant}
+          elevation={presentation.elevation}
+          pressed={presentation.pressed}
+          hovered={presentation.hovered}
+          muted={presentation.muted}
           data-testid="node-card"
           data-state={status}
           className={cn(
-            slots.root.props.className,
-            slots.surface.props.className,
             !resolvedVariant && "bg-card text-card-foreground",
             "group relative flex flex-col rounded-xl pointer-events-auto",
           )}
-          style={{ ...slots.root.props.style, width, height }}
+          style={{ width, height }}
         >
           {children}
-        </div>
+        </Button>
       </ScaleIn>
     </div>
   );

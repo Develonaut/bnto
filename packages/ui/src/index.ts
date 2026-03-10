@@ -85,7 +85,6 @@ export {
   PanelContent,
   PanelFooter,
 } from "./surface/Panel";
-export { Pressable, SPRING_STYLES } from "./surface/Pressable";
 export { Surface } from "./surface/Surface";
 export type { SurfaceVariant, SurfaceElevation, SurfaceRounded } from "./surface/Surface";
 export { Toolbar, ToolbarGroup, ToolbarDivider } from "./surface/Toolbar";
@@ -98,13 +97,7 @@ export {
   AccordionContent,
 } from "./interaction/Accordion";
 export { Button, buttonCn } from "./interaction/Button";
-export type { SpringMode } from "./interaction/Button";
-export { useButtonProps } from "./interaction/useButtonProps";
-export type {
-  ButtonVariant,
-  UseButtonPropsInput,
-  ButtonSlotsResult,
-} from "./interaction/useButtonProps";
+export type { ButtonVariant, SpringMode } from "./interaction/Button";
 export { Checkbox } from "./interaction/Checkbox";
 export {
   FileUpload,
