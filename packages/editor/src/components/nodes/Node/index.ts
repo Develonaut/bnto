@@ -14,3 +14,4 @@ export { NodeEdge, type NodeEdgeProps } from "./NodeEdge";
 export { NodeIcon } from "./NodeIcon";
 export { NodeLabel } from "./NodeLabel";
 export { NodeDeleteButton } from "./NodeDeleteButton";
+export { NodeAddButton } from "./NodeAddButton";

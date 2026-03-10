@@ -5,14 +5,22 @@ import { filterPlaceholderChanges } from "../helpers/filterPlaceholderChanges";
 import type { BentoNode } from "../adapters/types";
 
 /**
- * Wraps the editor canvas nodes to always inject a placeholder
- * before the output node, and filters RF changes targeting it.
+ * Wraps the editor canvas nodes to inject a placeholder before the
+ * output node when the recipe is empty (no compartment nodes).
+ *
+ * When compartment nodes exist the placeholder is skipped — add-node
+ * buttons on each compartment node handle adding.
+ *
+ * Also filters RF changes targeting the placeholder.
  */
 function usePlaceholderNodes(
   nodes: BentoNode[],
   onNodesChange: (changes: NodeChange<BentoNode>[]) => void,
 ) {
-  const displayNodes = useMemo(() => injectPlaceholder(nodes), [nodes]);
+  const displayNodes = useMemo(() => {
+    const hasCompartmentNodes = nodes.some((n) => n.type === "compartment");
+    return hasCompartmentNodes ? nodes : injectPlaceholder(nodes);
+  }, [nodes]);
 
   const handleNodesChange = useCallback(
     (changes: NodeChange<BentoNode>[]) => {

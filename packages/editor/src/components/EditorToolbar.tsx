@@ -10,7 +10,6 @@ import {
   MenuTrigger,
   MenuContent,
   MenuItem,
-  PlusIcon,
   RotateCcwIcon,
   Undo2Icon,
   Redo2Icon,
@@ -35,7 +34,7 @@ import { NodePaletteDialog } from "./NodePaletteDialog";
  */
 
 function EditorToolbar() {
-  const { isOpen: paletteOpen, toggle: togglePalette, close: closePalette } = usePanel("palette");
+  const { isOpen: paletteOpen, close: closePalette } = usePanel("palette");
   const { toggle: toggleConfig } = usePanel("config");
   const { toggle: toggleRunPanel } = usePanel("run");
   const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
@@ -73,13 +72,6 @@ function EditorToolbar() {
               <MenuItem onClick={() => download()} disabled={!canDownload}>Export</MenuItem>
             </MenuContent>
           </Menu>
-        </ToolbarGroup>
-
-        <ToolbarDivider />
-
-        {/* Add */}
-        <ToolbarGroup>
-          <Button icon={<PlusIcon />} variant="primary" elevation="sm" onClick={togglePalette} aria-label="Add node" />
         </ToolbarGroup>
 
         <ToolbarDivider />

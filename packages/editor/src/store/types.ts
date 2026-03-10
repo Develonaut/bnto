@@ -120,6 +120,10 @@ interface EditorState {
   // --- Panel visibility ---
   panels: PanelState;
 
+  // --- Insertion context ---
+  /** When set, the next addNode inserts after this node ID instead of at the end. */
+  insertAfterNodeId: string | null;
+
   // --- Execution lifecycle ---
   executionPhase: ExecutionPhase;
   executionResults: BrowserFileResult[];
@@ -169,6 +173,9 @@ interface EditorActions {
   resetRun: () => void;
   downloadResult: (file: BrowserFileResult) => void;
   downloadAllResults: () => Promise<void>;
+
+  // --- Insertion context ---
+  setInsertAfterNodeId: (id: string | null) => void;
 
   // --- Utility ---
   markDirty: () => void;
