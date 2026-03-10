@@ -18,6 +18,7 @@ export {
   NodeIcon,
   NodeLabel,
   NodeDeleteButton,
+  NodeAddButton,
 } from "./Node";
 
 // RF node types

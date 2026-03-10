@@ -54,6 +54,7 @@ function createEditorStore(definition?: Definition) {
     executionLogs: [],
     executionFileProgress: null,
     executionInputFiles: [],
+    insertAfterNodeId: null,
 
     // --- Entry points ---
 
@@ -185,6 +186,12 @@ function createEditorStore(definition?: Definition) {
         if (s.panels[id]) return { panels: { ...s.panels, [id]: false } };
         return { panels: closeSameSideSiblings(s.panels, id) };
       });
+    },
+
+    // --- Insertion context ---
+
+    setInsertAfterNodeId: (id) => {
+      set({ insertAfterNodeId: id });
     },
 
     // --- Execution lifecycle ---

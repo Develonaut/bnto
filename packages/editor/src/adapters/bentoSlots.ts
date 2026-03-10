@@ -13,18 +13,21 @@
 /** Cell size in pixels — 40px larger than IO_CARD_SIZE (100). */
 const CELL = 140;
 
-/** Gap between cells in pixels — wide enough for edge-positioned actions. */
-const GAP = 30;
+/** Horizontal gap between cells in pixels. */
+const GAP_X = 16;
 
-/** Stride — one cell + one gap. */
-const STRIDE = CELL + GAP;
+/** Vertical gap below cells in pixels — room for edge-positioned actions. */
+const GAP_Y = 30;
+
+/** Stride — one cell + horizontal gap. */
+const STRIDE = CELL + GAP_X;
 
 /** Max number of nodes supported. */
 const MAX_NODES = 10;
 
 /**
  * Predefined slot positions — horizontal strip, uniform size.
- * Generated from index: each node is CELL wide, spaced by GAP.
+ * Generated from index: each node is CELL wide, spaced by GAP_X.
  */
 const SLOTS: { x: number; y: number; w: number; h: number }[] = Array.from(
   { length: MAX_NODES },
@@ -39,4 +42,4 @@ const SLOTS: { x: number; y: number; w: number; h: number }[] = Array.from(
 /** I/O inner card size — visually smaller, but the RF node is still CELL×CELL. */
 const IO_CARD_SIZE = 100;
 
-export { CELL, GAP, STRIDE, SLOTS, IO_CARD_SIZE };
+export { CELL, GAP_X, GAP_Y, STRIDE, SLOTS, IO_CARD_SIZE };

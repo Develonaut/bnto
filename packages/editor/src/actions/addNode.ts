@@ -6,6 +6,10 @@
  * creates the compartment node + config, captures an undo snapshot,
  * auto-selects the new node, and revalidates.
  *
+ * When `afterNodeId` is provided, the new node is inserted immediately
+ * after that node (and all subsequent nodes shift right by one stride).
+ * Otherwise the node is inserted before the output node.
+ *
  * Returns null if the add is blocked (unknown type or duplicate I/O).
  */
 
@@ -24,7 +28,7 @@ interface AddNodeResult {
 export function addNode(
   state: EditorState,
   type: NodeTypeName,
-  position?: { x: number; y: number },
+  afterNodeId?: string | null,
 ): AddNodeResult | null {
   // Only one input and one output node allowed per recipe.
   if (isIoNodeType(type)) {
@@ -33,38 +37,43 @@ export function addNode(
   }
 
   const slotIndex = state.nodes.length;
-  const result = createCompartmentNode(type, slotIndex, position);
+  const result = createCompartmentNode(type, slotIndex);
   if (!result) return null;
 
   // Auto-select the new node, deselect all others
   const deselected = state.nodes.map((n) => (n.selected ? { ...n, selected: false } : n));
 
-  // Insert before the output node so output stays last.
-  // Place the new node at the output's position and shift the output right.
-  const outputIndex = deselected.findIndex((n) => state.configs[n.id]?.nodeType === "output");
-
-  let nextNodes: typeof deselected;
-  if (outputIndex >= 0) {
-    const outputNode = deselected[outputIndex]!;
-    const newNode = {
-      ...result.node,
-      selected: true,
-      position: { ...outputNode.position },
-    };
-    const shiftedOutput = {
-      ...outputNode,
-      position: { x: outputNode.position.x + STRIDE, y: outputNode.position.y },
-    };
-    nextNodes = [
-      ...deselected.slice(0, outputIndex),
-      newNode,
-      shiftedOutput,
-      ...deselected.slice(outputIndex + 1),
-    ];
+  // Determine insertion index
+  let insertIndex: number;
+  if (afterNodeId) {
+    const afterIndex = deselected.findIndex((n) => n.id === afterNodeId);
+    insertIndex = afterIndex >= 0 ? afterIndex + 1 : deselected.length;
   } else {
-    const newNode = { ...result.node, selected: true };
-    nextNodes = [...deselected, newNode];
+    // Default: insert before the output node so output stays last.
+    const outputIndex = deselected.findIndex((n) => state.configs[n.id]?.nodeType === "output");
+    insertIndex = outputIndex >= 0 ? outputIndex : deselected.length;
   }
+
+  // Place the new node at the insertion position and shift everything after right.
+  const target = deselected[insertIndex];
+  const newNode = {
+    ...result.node,
+    selected: true,
+    position: target
+      ? { ...target.position }
+      : { x: slotIndex * STRIDE, y: 0 },
+  };
+
+  const shifted = deselected.slice(insertIndex).map((n) => ({
+    ...n,
+    position: { x: n.position.x + STRIDE, y: n.position.y },
+  }));
+
+  const nextNodes = [
+    ...deselected.slice(0, insertIndex),
+    newNode,
+    ...shifted,
+  ];
 
   const nextConfigs = { ...state.configs, [result.node.id]: result.config };
 

@@ -1,11 +1,15 @@
 import type { ReactNode } from "react";
 import { cn } from "@bnto/ui";
+import { GAP_Y } from "../../../adapters/bentoSlots";
 
 /**
- * NodeEdge — action zone positioned outside the card bounds.
+ * NodeEdge — action zone positioned in the gap below the card.
  *
  * Rendered inside the slot div (outside the card's 3D transform context)
  * so edge content stays stationary when the card presses/hovers.
+ *
+ * Centered vertically within GAP_Y below the card using
+ * `top-full` + half-GAP_Y offset.
  *
  * Visibility cascade (CSS-first, no JS hover state):
  * - default: opacity-0, pointer-events-none (hidden)
@@ -15,33 +19,25 @@ import { cn } from "@bnto/ui";
  * This gives a peek on hover → full interaction on select.
  */
 
-type NodeEdgePosition = "right" | "bottom";
-
 interface NodeEdgeProps {
-  position: NodeEdgePosition;
   /** When true, edge is fully interactive (pointer-events enabled). */
   visible?: boolean;
   children?: ReactNode;
   className?: string;
 }
 
-const POSITION_CLASSES: Record<NodeEdgePosition, string> = {
-  right: "left-full top-1/2 -translate-y-1/2",
-  bottom: "top-full left-1/2 -translate-x-1/2",
-};
-
-function NodeEdge({ position, visible = false, children, className }: NodeEdgeProps) {
+function NodeEdge({ visible = false, children, className }: NodeEdgeProps) {
   return (
     <div
       className={cn(
-        "absolute z-10 flex items-center transition-opacity duration-fast",
+        "absolute left-1/2 z-10 flex items-center transition-opacity duration-fast",
         "nopan nodrag nowheel",
         visible
           ? "opacity-100 pointer-events-auto"
           : "opacity-0 pointer-events-none group-hover:opacity-100 group-focus-within:opacity-100",
-        POSITION_CLASSES[position],
         className,
       )}
+      style={{ top: `calc(100% + ${GAP_Y / 2}px)`, translate: "-50% -50%" }}
     >
       {children}
     </div>

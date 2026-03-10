@@ -64,6 +64,7 @@ function stateWithNodes(): EditorState {
     executionLogs: [],
     executionFileProgress: null,
     executionInputFiles: [],
+    insertAfterNodeId: null,
   } as EditorState;
 }
 
