@@ -44,7 +44,6 @@ function createEditorStore(definition?: Definition) {
     redoStack: [],
     selectedNodeId: initial.selectedNodeId,
     panels: {
-      layers: false,
       config: initial.selectedNodeId !== null,
       palette: false,
       run: false,

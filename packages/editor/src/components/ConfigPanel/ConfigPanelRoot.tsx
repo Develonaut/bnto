@@ -53,6 +53,7 @@ function ConfigPanelRoot() {
       panelId="config"
       side="left"
       width="w-72"
+      boundaryPadding={16}
       label="Properties"
       icon={<SlidersHorizontalIcon className="size-4" />}
     >

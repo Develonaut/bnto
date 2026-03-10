@@ -28,6 +28,8 @@ interface EditorMenuPanelProps {
   label: string;
   /** Width class for the content (e.g. "w-56", "w-72"). */
   width?: string;
+  /** Pixel distance from viewport edge before content repositions. */
+  boundaryPadding?: number;
   /** Extra classes on MenuContent. */
   className?: string;
   children: ReactNode;
@@ -39,6 +41,7 @@ function EditorMenuPanel({
   icon,
   label,
   width = "w-72",
+  boundaryPadding = 96,
   className,
   children,
 }: EditorMenuPanelProps) {
@@ -62,10 +65,10 @@ function EditorMenuPanel({
       <MenuContent
         side={side}
         offset="lg"
-        boundaryPadding={96}
+        boundaryPadding={boundaryPadding}
         onPointerDownOutside={(e) => e.preventDefault()}
         onFocusOutside={(e) => e.preventDefault()}
-        className={cn(width, "h-[calc(100vh-8rem)] flex flex-col p-0", className)}
+        className={cn(width, "min-w-[290px] h-[calc(100vh-8rem)] flex flex-col p-0", className)}
       >
         {children}
       </MenuContent>

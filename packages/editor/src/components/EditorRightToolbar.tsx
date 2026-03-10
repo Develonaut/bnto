@@ -1,24 +1,37 @@
 "use client";
 
-import { Toolbar, ToolbarGroup } from "@bnto/ui";
 import { ConfigPanel } from "./ConfigPanel";
 import { RunPanel } from "./RunPanel";
 
 /**
- * EditorRightToolbar — vertical toolbar on the right edge.
+ * EditorRightToolbar — offscreen anchor for Radix Menu positioning.
  *
- * Contains the config and run panel menus that open to the left.
- * Positioned by the overlay — vertically centered, right edge.
+ * Shifted 48px past the right viewport edge so it's invisible and
+ * non-interactive, but the EditorMenuPanel triggers remain in the DOM
+ * for Radix to position MenuContent relative to them (side="left"
+ * makes panels land near the right edge). MenuContent renders via
+ * Portal so pointer-events-none doesn't affect it.
+ *
+ * Both panels are stacked in the same grid cell so they share a
+ * single anchor point — panels open at a consistent height
+ * regardless of which one is active.
+ *
+ * Toggle buttons live in EditorToolbar (bottom bar).
  */
 function EditorRightToolbar() {
   return (
-    <div className="pointer-events-auto absolute right-0 top-1/2 -translate-y-1/2">
-      <Toolbar elevation="md" className="flex-col px-1.5 py-2 gap-1">
-        <ToolbarGroup className="flex-col">
+    <div
+      className="pointer-events-none absolute -right-12 top-1/2 -translate-y-1/2 opacity-0"
+      aria-hidden="true"
+    >
+      <div className="grid">
+        <div className="[grid-area:1/1]">
           <ConfigPanel />
+        </div>
+        <div className="[grid-area:1/1]">
           <RunPanel />
-        </ToolbarGroup>
-      </Toolbar>
+        </div>
+      </div>
     </div>
   );
 }
