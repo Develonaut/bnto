@@ -4,8 +4,8 @@ import type { ComponentProps } from "react";
 
 import { cn } from "../../utils/cn";
 import { ScaleIn } from "../../animation/Animate";
+import { Button } from "../Button";
 import { Card } from "../../surface/Card";
-import { Pressable } from "../../surface/Pressable";
 
 import { useFileUploadContext } from "./context";
 
@@ -19,7 +19,7 @@ export function FileUploadDropzone({ className, children, ...props }: ComponentP
 
   return (
     <ScaleIn>
-      <Pressable asChild hovered={isDragActive}>
+      <Button asChild hovered={isDragActive}>
         <Card
           {...getRootProps()}
           role="button"
@@ -39,7 +39,7 @@ export function FileUploadDropzone({ className, children, ...props }: ComponentP
           <input {...getInputProps()} aria-label="File upload" />
           {children}
         </Card>
-      </Pressable>
+      </Button>
     </ScaleIn>
   );
 }

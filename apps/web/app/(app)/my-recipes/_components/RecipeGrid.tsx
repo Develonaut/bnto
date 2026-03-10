@@ -13,16 +13,16 @@ import {
   FolderOpenIcon,
   Grid,
   GridItem,
-  Skeleton,
-} from "@bnto/ui";
-import {
   RecipeCard,
   RecipeCardHeader,
   RecipeCardContent,
   RecipeCardIcon,
   RecipeCardTitle,
-  RecipeCardMeta,
-} from "@/components/blocks/RecipeCard";
+  Row,
+  Text,
+  Skeleton,
+} from "@bnto/ui";
+import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
 /**
  * Saved recipes grid — self-fetching.
@@ -106,7 +106,17 @@ export function RecipeGrid() {
               </RecipeCardHeader>
               <RecipeCardContent>
                 <RecipeCardTitle>{recipe.name}</RecipeCardTitle>
-                <RecipeCardMeta nodeCount={recipe.nodeCount} updatedAt={recipe.updatedAt} />
+                <Row className="gap-2">
+                  <Text as="span" size="xs" color="muted">
+                    {recipe.nodeCount === 1 ? "1 node" : `${recipe.nodeCount} nodes`}
+                  </Text>
+                  <Text as="span" size="xs" color="muted">
+                    &middot;
+                  </Text>
+                  <Text as="span" size="xs" color="muted">
+                    {formatTimeAgo(recipe.updatedAt)}
+                  </Text>
+                </Row>
               </RecipeCardContent>
             </RecipeCard>
           </GridItem>

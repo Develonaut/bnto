@@ -7,8 +7,7 @@ import * as SwitchPrimitives from "@radix-ui/react-switch";
 
 import { cn } from "../utils/cn";
 import { CheckIcon, XIcon } from "../icons";
-import { Pressable } from "../surface/Pressable";
-import { Surface } from "../surface/Surface";
+import { Button } from "./Button";
 
 const Switch = forwardRef<
   ElementRef<typeof SwitchPrimitives.Root>,
@@ -22,17 +21,15 @@ const Switch = forwardRef<
     {...props}
     ref={ref}
   >
-    <Pressable asChild spring="bouncy">
-      <Surface asChild variant="primary" elevation="sm" rounded="full">
-        <SwitchPrimitives.Thumb
-          className="group flex items-center justify-center size-8 data-[state=checked]:translate-x-[39px] data-[state=unchecked]:translate-x-[7px] translate-y-px data-[state=unchecked]:[--variant-bg:var(--card)] data-[state=unchecked]:[--variant-fg:var(--card-foreground)] [&_svg]:size-4 [&_svg]:shrink-0"
-          style={{ transition: "transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)), translate 500ms var(--ease-spring-bouncier)" }}
-        >
-          <CheckIcon strokeWidth={4} className="hidden group-data-[state=checked]:block" />
-          <XIcon strokeWidth={4} className="block group-data-[state=checked]:hidden" />
-        </SwitchPrimitives.Thumb>
-      </Surface>
-    </Pressable>
+    <Button asChild variant="primary" elevation="sm" spring="bouncy" className="rounded-full">
+      <SwitchPrimitives.Thumb
+        className="group flex items-center justify-center size-8 data-[state=checked]:translate-x-[39px] data-[state=unchecked]:translate-x-[7px] translate-y-px data-[state=unchecked]:[--variant-bg:var(--card)] data-[state=unchecked]:[--variant-fg:var(--card-foreground)] [&_svg]:size-4 [&_svg]:shrink-0"
+        style={{ transition: "transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)), translate 500ms var(--ease-spring-bouncier)" }}
+      >
+        <CheckIcon strokeWidth={4} className="hidden group-data-[state=checked]:block" />
+        <XIcon strokeWidth={4} className="block group-data-[state=checked]:hidden" />
+      </SwitchPrimitives.Thumb>
+    </Button>
   </SwitchPrimitives.Root>
 ));
 Switch.displayName = SwitchPrimitives.Root.displayName;

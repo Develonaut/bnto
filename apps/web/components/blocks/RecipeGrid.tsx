@@ -7,7 +7,7 @@ import {
   RecipeCardContent,
   RecipeCardTitle,
   RecipeCardTags,
-} from "@/components/blocks/RecipeCard";
+} from "@bnto/ui";
 import { getBntoIcon } from "@/lib/bntoIcons";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 

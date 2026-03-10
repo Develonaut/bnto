@@ -1,11 +1,13 @@
 import type { PropsWithChildren } from "react";
 
+import Link from "next/link";
+
 import type { LucideIcon } from "../../icons";
 import { BlocksIcon } from "../../icons";
+import { Button } from "../../interaction/Button";
 import { Row } from "../../layout/Row";
 import { Stack } from "../../layout/Stack";
 import { Card } from "../../surface/Card";
-import { Pressable } from "../../surface/Pressable";
 import { Badge } from "../../typography/Badge";
 import { Heading } from "../../typography/Heading";
 import { IconBadge } from "../../typography/IconBadge";
@@ -16,6 +18,8 @@ import { cn } from "../../utils/cn";
 
 type RecipeCardRootProps = PropsWithChildren<{
   onClick?: () => void;
+  /** Internal link — renders the card as a Next.js Link. */
+  href?: string;
   className?: string;
   /** Grounded loading state — card springs up when loading clears. */
   loading?: boolean;
@@ -25,6 +29,7 @@ type RecipeCardRootProps = PropsWithChildren<{
 
 export function RecipeCardRoot({
   onClick,
+  href,
   className,
   loading,
   compact,
@@ -40,15 +45,23 @@ export function RecipeCardRoot({
     </Card>
   );
 
-  if (onClick) {
+  if (!href && !onClick) return card;
+
+  const interactive = (
+    <Button asChild className={cn(compact ? "" : "h-full", "text-left")} onClick={onClick}>
+      {card}
+    </Button>
+  );
+
+  if (href) {
     return (
-      <Pressable asChild className={cn(compact ? "" : "h-full", "text-left")} onClick={onClick}>
-        {card}
-      </Pressable>
+      <Link href={href} className={cn(compact ? "" : "h-full", "group")}>
+        {interactive}
+      </Link>
     );
   }
 
-  return card;
+  return interactive;
 }
 
 /* ── Structural sub-components ───────────────────────────────── */

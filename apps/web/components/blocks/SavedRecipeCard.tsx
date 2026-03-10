@@ -5,11 +5,13 @@ import {
   RecipeCardHeader,
   RecipeCardContent,
   RecipeCardIcon,
-  RecipeCardStatus,
   RecipeCardTitle,
-  RecipeCardMeta,
-} from "@/components/blocks/RecipeCard";
-import { Skeleton } from "@bnto/ui";
+  Row,
+  Text,
+  Skeleton,
+} from "@bnto/ui";
+import { StatusBadge } from "@/components/blocks/StatusBadge";
+import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
 interface SavedRecipeCardProps {
   recipe: RecipeListItem;
@@ -37,11 +39,21 @@ export function SavedRecipeCard({ recipe, lastStatus, onClick, loading }: SavedR
         <>
           <RecipeCardHeader>
             <RecipeCardIcon />
-            {lastStatus && <RecipeCardStatus status={lastStatus} />}
+            {lastStatus && <StatusBadge status={lastStatus} />}
           </RecipeCardHeader>
           <RecipeCardContent>
             <RecipeCardTitle>{recipe.name}</RecipeCardTitle>
-            <RecipeCardMeta nodeCount={recipe.nodeCount} updatedAt={recipe.updatedAt} />
+            <Row className="gap-2">
+              <Text as="span" size="xs" color="muted">
+                {recipe.nodeCount === 1 ? "1 node" : `${recipe.nodeCount} nodes`}
+              </Text>
+              <Text as="span" size="xs" color="muted">
+                &middot;
+              </Text>
+              <Text as="span" size="xs" color="muted">
+                {formatTimeAgo(recipe.updatedAt)}
+              </Text>
+            </Row>
           </RecipeCardContent>
         </>
       )}
