@@ -1,12 +1,12 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import type { BentoNode } from "../../adapters/types";
-import { NodeRoot, NodeEdge, NodeBody, NodeIcon, NodeLabel, NodeDeleteButton } from "./Node";
+import { NodeRoot, NodeEdge, NodeBody, NodeIcon, NodeLabel, NodeDeleteButton, NodeAddButton } from "./Node";
 
 /**
  * CompartmentNode — a processing node on the bento grid.
  *
- * Full-size card, delete button when selected.
+ * Full-size card with delete + add buttons in the bottom edge.
  * NodeRoot owns interaction state (selected → pressed, status → elevation).
  */
 
@@ -25,8 +25,11 @@ export const CompartmentNode = memo(function CompartmentNode({
       selected={selected}
       status={status}
       edges={
-        <NodeEdge position="right" visible={selected}>
-          <NodeDeleteButton nodeId={id} selected={selected} />
+        <NodeEdge visible={selected}>
+          <div className="flex gap-1">
+            <NodeDeleteButton nodeId={id} selected={selected} />
+            <NodeAddButton nodeId={id} selected={selected} />
+          </div>
         </NodeEdge>
       }
     >

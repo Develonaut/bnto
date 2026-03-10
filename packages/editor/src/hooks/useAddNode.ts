@@ -16,8 +16,8 @@ function useAddNode() {
   const storeApi = useEditorStoreApi();
 
   return useCallback(
-    (type: NodeTypeName, position?: { x: number; y: number }): string | null => {
-      const result = addNode(storeApi.getState(), type, position);
+    (type: NodeTypeName, afterNodeId?: string | null): string | null => {
+      const result = addNode(storeApi.getState(), type, afterNodeId);
       if (!result) return null;
       storeApi.setState(result.nextState);
       return result.nodeId;

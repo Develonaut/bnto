@@ -81,7 +81,11 @@ function NodeRoot({
           {children}
         </Button>
       </ScaleIn>
-      {edges}
+      {edges && (
+        <div className="absolute top-0 left-0" style={{ width, height }}>
+          {edges}
+        </div>
+      )}
     </div>
   );
 }

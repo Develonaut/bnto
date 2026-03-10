@@ -42,6 +42,7 @@ function baseState(def: Definition): EditorState {
     executionLogs: [],
     executionFileProgress: null,
     executionInputFiles: [],
+    insertAfterNodeId: null,
   };
 }
 

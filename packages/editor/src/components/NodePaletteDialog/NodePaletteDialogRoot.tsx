@@ -14,6 +14,7 @@ import {
   Text,
 } from "@bnto/ui";
 import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditorStoreApi } from "../../hooks/useEditorStoreApi";
 import { useEditorActions } from "../../hooks/useEditorActions";
 import { useNodePalette } from "../../hooks/useNodePalette";
 import { SLOTS } from "../../adapters/bentoSlots";
@@ -35,7 +36,9 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
   const [search, setSearch] = useState("");
   const { addNode } = useEditorActions();
   const { groups } = useNodePalette();
+  const storeApi = useEditorStoreApi();
   const nodeCount = useEditorStore((s) => s.nodes.length);
+  const insertAfterNodeId = useEditorStore((s) => s.insertAfterNodeId);
   const isFull = nodeCount >= SLOTS.length;
 
   const filteredGroups = useMemo(() => {
@@ -54,18 +57,26 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
       .filter((group) => group.items.length > 0);
   }, [groups, search]);
 
+  const handleClose = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) storeApi.setState({ insertAfterNodeId: null });
+      onOpenChange(nextOpen);
+    },
+    [storeApi, onOpenChange],
+  );
+
   const handleAdd = useCallback(
     (typeName: NodeTypeName) => {
-      addNode(typeName);
-      onOpenChange(false);
+      addNode(typeName, insertAfterNodeId);
+      handleClose(false);
     },
-    [addNode, onOpenChange],
+    [addNode, insertAfterNodeId, handleClose],
   );
 
   const hasResults = filteredGroups.length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent size="lg">
         <DialogHeader className="pb-2">
           <DialogTitle>Add Node</DialogTitle>

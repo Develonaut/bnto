@@ -109,7 +109,7 @@ export type {
 export { definitionToGraph } from "./adapters/definitionToGraph";
 export { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
 export { createCompartmentNode } from "./adapters/createCompartmentNode";
-export { SLOTS, CELL, GAP, STRIDE } from "./adapters/bentoSlots";
+export { SLOTS, CELL, GAP_X, GAP_Y, STRIDE } from "./adapters/bentoSlots";
 export { ICON_COMPONENTS } from "./adapters/nodeIcons";
 export { CATEGORY_VARIANT } from "./adapters/categoryVariant";
 export type {
