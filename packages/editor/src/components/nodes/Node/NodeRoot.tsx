@@ -36,7 +36,9 @@ interface NodeRootProps {
   selected?: boolean;
   /** Current execution status. Drives elevation, variant overrides, interaction. */
   status?: string;
-  /** Composed content — NodeHeader, NodeBody, NodeFooter. */
+  /** Content rendered outside the card's transform context (NodeEdge). */
+  edges?: ReactNode;
+  /** Composed content — NodeBody, NodeFooter, NodeHeader. */
   children: ReactNode;
 }
 
@@ -47,14 +49,19 @@ function NodeRoot({
   align,
   selected = false,
   status,
+  edges,
   children,
 }: NodeRootProps) {
   const presentation = resolveNodePresentation(status, selected);
   const resolvedVariant = presentation.variant ?? variant;
-  const slotClass = align ? `pointer-events-none flex items-center ${JUSTIFY_MAP[align]}` : "";
+  const alignClass = align ? `pointer-events-none flex items-center ${JUSTIFY_MAP[align]}` : "";
 
   return (
-    <div style={{ width: CELL, height: CELL }} className={slotClass} data-testid="node-slot">
+    <div
+      style={{ width: CELL, height: CELL }}
+      className={cn("group relative", alignClass)}
+      data-testid="node-slot"
+    >
       <ScaleIn from={0.7} easing="spring-bouncy">
         <Button
           as="div"
@@ -67,13 +74,14 @@ function NodeRoot({
           data-state={status}
           className={cn(
             !resolvedVariant && "bg-card text-card-foreground",
-            "group relative flex flex-col rounded-xl pointer-events-auto",
+            "relative flex flex-col rounded-xl pointer-events-auto",
           )}
           style={{ width, height }}
         >
           {children}
         </Button>
       </ScaleIn>
+      {edges}
     </div>
   );
 }
