@@ -23,7 +23,7 @@ import {
   RecipeCardCategory,
   RecipeCardTitle,
   RecipeCardTags,
-} from "@/components/blocks/RecipeCard";
+} from "@bnto/ui";
 import { SavedRecipeCard } from "@/components/blocks/SavedRecipeCard";
 import { getBntoIcon } from "@/lib/bntoIcons";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";

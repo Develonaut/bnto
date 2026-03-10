@@ -10,8 +10,8 @@
  * └────────┴────────┴────────┴────────┴─ ─ ─ ─┘
  */
 
-/** Cell size in pixels. */
-const CELL = 180;
+/** Cell size in pixels — 40px larger than IO_CARD_SIZE (100). */
+const CELL = 140;
 
 /** Gap between cells in pixels. */
 const GAP = 20;
