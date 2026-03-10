@@ -6,12 +6,15 @@ import {
   Toolbar,
   ToolbarGroup,
   ToolbarDivider,
+  Menu,
+  MenuTrigger,
+  MenuContent,
+  MenuItem,
   PlusIcon,
   RotateCcwIcon,
   Undo2Icon,
   Redo2Icon,
   FolderOpenIcon,
-  DownloadIcon,
   SlidersHorizontalIcon,
   TerminalIcon,
 } from "@bnto/ui";
@@ -61,9 +64,21 @@ function EditorToolbar() {
       data-testid="editor-toolbar"
     >
       <Toolbar elevation="md">
-        {/* Open / Add */}
+        {/* File menu */}
         <ToolbarGroup>
-          <Button icon={<FolderOpenIcon />} variant="ghost" elevation="sm" onClick={() => setOpenDialogOpen(true)} aria-label="Open recipe" />
+          <Menu>
+            <MenuTrigger icon={<FolderOpenIcon />} variant="ghost" elevation="sm" aria-label="File menu" />
+            <MenuContent className="w-44 p-1">
+              <MenuItem onClick={() => setOpenDialogOpen(true)}>Open</MenuItem>
+              <MenuItem onClick={() => download()} disabled={!canDownload}>Export</MenuItem>
+            </MenuContent>
+          </Menu>
+        </ToolbarGroup>
+
+        <ToolbarDivider />
+
+        {/* Add */}
+        <ToolbarGroup>
           <Button icon={<PlusIcon />} variant="primary" elevation="sm" onClick={togglePalette} aria-label="Add node" />
         </ToolbarGroup>
 
@@ -86,13 +101,9 @@ function EditorToolbar() {
 
         <ToolbarDivider />
 
-        {/* Config / Download */}
+        {/* Config */}
         <ToolbarGroup>
           <Button icon={<SlidersHorizontalIcon />} variant="ghost" elevation="sm" onClick={toggleConfig} aria-label="Properties" />
-          <Button variant="ghost" elevation="sm" onClick={() => download()} disabled={!canDownload} aria-label="Download recipe">
-            <DownloadIcon className="size-4" />
-            Download
-          </Button>
         </ToolbarGroup>
       </Toolbar>
     </div>
