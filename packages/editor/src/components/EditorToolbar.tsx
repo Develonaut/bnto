@@ -7,12 +7,9 @@ import {
   ToolbarGroup,
   ToolbarDivider,
   PlusIcon,
-  TrashIcon,
   RotateCcwIcon,
   Undo2Icon,
   Redo2Icon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   FolderOpenIcon,
   DownloadIcon,
   SlidersHorizontalIcon,
@@ -22,7 +19,6 @@ import { useEditorUndoRedo } from "../hooks/useEditorUndoRedo";
 import { useEditorStore } from "../hooks/useEditorStore";
 import { useEditorStoreApi } from "../hooks/useEditorStoreApi";
 import { useEditorExport } from "../hooks/useEditorExport";
-import { useNodeNavigation } from "../hooks/useNodeNavigation";
 import { usePanel } from "../hooks/usePanel";
 import { RunButton } from "./RunButton";
 import { OpenRecipeDialog } from "./OpenRecipeDialog";
@@ -39,8 +35,6 @@ function EditorToolbar() {
   const { isOpen: paletteOpen, toggle: togglePalette, close: closePalette } = usePanel("palette");
   const { toggle: toggleConfig } = usePanel("config");
   const { toggle: toggleRunPanel } = usePanel("run");
-  const { canPrev, canNext, canDelete, handlePrev, handleNext, removeSelectedNode } =
-    useNodeNavigation();
   const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
   const { download, canExport } = useEditorExport();
   const isDirty = useEditorStore((s) => s.isDirty);
@@ -67,13 +61,10 @@ function EditorToolbar() {
       data-testid="editor-toolbar"
     >
       <Toolbar elevation="md">
-        {/* Open / Add / Navigate / Remove */}
+        {/* Open / Add */}
         <ToolbarGroup>
           <Button icon={<FolderOpenIcon />} variant="ghost" elevation="sm" onClick={() => setOpenDialogOpen(true)} aria-label="Open recipe" />
           <Button icon={<PlusIcon />} variant="primary" elevation="sm" onClick={togglePalette} aria-label="Add node" />
-          <Button icon={<ChevronLeftIcon />} variant="ghost" elevation="sm" onClick={handlePrev} disabled={!canPrev} aria-label="Previous node" />
-          <Button icon={<ChevronRightIcon />} variant="ghost" elevation="sm" onClick={handleNext} disabled={!canNext} aria-label="Next node" />
-          <Button icon={<TrashIcon />} variant="ghost" elevation="sm" onClick={removeSelectedNode} disabled={!canDelete} aria-label="Remove selected node" />
         </ToolbarGroup>
 
         <ToolbarDivider />
