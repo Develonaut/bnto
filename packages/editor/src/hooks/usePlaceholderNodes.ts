@@ -1,24 +1,18 @@
 import { useMemo, useCallback } from "react";
 import type { NodeChange } from "@xyflow/react";
-import { useEditorStore } from "./useEditorStore";
-import { isIoNodeType } from "@bnto/nodes";
 import { injectPlaceholder } from "../helpers/injectPlaceholder";
 import { filterPlaceholderChanges } from "../helpers/filterPlaceholderChanges";
 import type { BentoNode } from "../adapters/types";
 
 /**
- * Wraps the editor canvas nodes to inject a placeholder when the
- * canvas only has I/O nodes, and filters RF changes targeting it.
+ * Wraps the editor canvas nodes to always inject a placeholder
+ * before the output node, and filters RF changes targeting it.
  */
 function usePlaceholderNodes(
   nodes: BentoNode[],
   onNodesChange: (changes: NodeChange<BentoNode>[]) => void,
 ) {
-  const onlyIoNodes = useEditorStore((s) =>
-    Object.values(s.configs).every((c) => isIoNodeType(c.nodeType)),
-  );
-
-  const displayNodes = useMemo(() => injectPlaceholder(nodes, onlyIoNodes), [nodes, onlyIoNodes]);
+  const displayNodes = useMemo(() => injectPlaceholder(nodes), [nodes]);
 
   const handleNodesChange = useCallback(
     (changes: NodeChange<BentoNode>[]) => {
