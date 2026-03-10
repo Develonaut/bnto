@@ -6,31 +6,37 @@ import type { BentoNode } from "../adapters/types";
 const PLACEHOLDER_ID = "__placeholder__";
 
 /**
- * Inject a placeholder node between Input and Output when the canvas
- * only has I/O nodes. Input stays at slot 0, placeholder takes slot 1,
- * Output shifts to slot 2.
+ * Inject a placeholder node right before the output node (last in array).
+ * All preceding nodes keep their positions; placeholder takes the slot
+ * where output was, and output shifts one slot right.
  *
- * Returns the original array unchanged when injection isn't needed.
+ * Returns the original array unchanged when fewer than 2 nodes or
+ * no remaining slots.
  */
-function injectPlaceholder(nodes: BentoNode[], onlyIoNodes: boolean): BentoNode[] {
-  if (!onlyIoNodes || nodes.length < 2) return nodes;
+function injectPlaceholder(nodes: BentoNode[]): BentoNode[] {
+  if (nodes.length < 2) return nodes;
+
+  const placeholderSlot = nodes.length - 1;
+  const outputSlot = nodes.length;
+
+  if (!SLOTS[placeholderSlot] || !SLOTS[outputSlot]) return nodes;
 
   const placeholder: Node = {
     id: PLACEHOLDER_ID,
     type: "placeholder",
-    position: { x: SLOTS[1]!.x, y: SLOTS[1]!.y },
+    position: { x: SLOTS[placeholderSlot]!.x, y: SLOTS[placeholderSlot]!.y },
     selectable: false,
     draggable: false,
     data: {},
   };
 
-  const input = nodes[0]!;
+  const before = nodes.slice(0, -1);
   const output = {
-    ...nodes[1]!,
-    position: { x: SLOTS[2]!.x, y: SLOTS[2]!.y },
+    ...nodes[nodes.length - 1]!,
+    position: { x: SLOTS[outputSlot]!.x, y: SLOTS[outputSlot]!.y },
   };
 
-  return [input, placeholder as BentoNode, output];
+  return [...before, placeholder as BentoNode, output];
 }
 
 export { injectPlaceholder, PLACEHOLDER_ID };
