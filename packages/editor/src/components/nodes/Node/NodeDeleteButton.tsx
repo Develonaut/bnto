@@ -8,8 +8,8 @@ import { useRemoveNode } from "../../../hooks/useRemoveNode";
 /**
  * NodeDeleteButton — delete action for a node.
  *
- * Always rendered inside NodeHeader. Disabled when the node
- * is not selected — enabled (interactive) when selected.
+ * Rendered inside NodeEdge. Disabled when the node is not
+ * selected — enabled (interactive) when selected.
  */
 
 const NodeDeleteButton = memo(function NodeDeleteButton({

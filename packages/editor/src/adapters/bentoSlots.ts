@@ -13,8 +13,8 @@
 /** Cell size in pixels — 40px larger than IO_CARD_SIZE (100). */
 const CELL = 140;
 
-/** Gap between cells in pixels. */
-const GAP = 20;
+/** Gap between cells in pixels — wide enough for edge-positioned actions. */
+const GAP = 30;
 
 /** Stride — one cell + one gap. */
 const STRIDE = CELL + GAP;
