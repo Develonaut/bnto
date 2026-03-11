@@ -2,7 +2,7 @@
  * executionState — pure functions for mapping pipeline lifecycle to
  * per-node execution state in the editor store.
  *
- * Extracted from useEditorExecution so the state transitions are
+ * Extracted as pure functions so the state transitions are
  * testable without React or store dependencies.
  */
 

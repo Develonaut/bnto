@@ -1,6 +1,7 @@
 "use client";
 
-import { useEditorStore } from "../../hooks/useEditorStore";
+import { useStore } from "zustand";
+import { useEditorStoreApi } from "../../context";
 import { useEditorSelection } from "../../hooks/useEditorSelection";
 
 /**
@@ -12,12 +13,13 @@ import { useEditorSelection } from "../../hooks/useEditorSelection";
  */
 
 function useEditorCanvas() {
+  const storeApi = useEditorStoreApi();
   useEditorSelection();
 
-  const nodes = useEditorStore((s) => s.nodes);
-  const edges = useEditorStore((s) => s.edges);
-  const onNodesChange = useEditorStore((s) => s.onNodesChange);
-  const onEdgesChange = useEditorStore((s) => s.onEdgesChange);
+  const nodes = useStore(storeApi, (s) => s.nodes);
+  const edges = useStore(storeApi, (s) => s.edges);
+  const onNodesChange = useStore(storeApi, (s) => s.onNodesChange);
+  const onEdgesChange = useStore(storeApi, (s) => s.onEdgesChange);
 
   return { nodes, edges, onNodesChange, onEdgesChange };
 }

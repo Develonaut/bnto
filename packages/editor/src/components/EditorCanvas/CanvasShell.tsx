@@ -4,7 +4,7 @@ import { useCallback, type ReactNode } from "react";
 import { Canvas } from "./Canvas";
 import { EditorOverlay } from "./EditorOverlay";
 import { useEditorCanvas } from "./useEditorCanvas";
-import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditor } from "../../context";
 import { useLayoutNodes } from "../../hooks/useLayoutNodes";
 import { useExecutionNodes } from "../../hooks/useExecutionNodes";
 import { usePlaceholderNodes } from "../../hooks/usePlaceholderNodes";
@@ -31,19 +31,18 @@ function CanvasShell({ children }: CanvasShellProps) {
   const statusNodes = useExecutionNodes(layoutedNodes);
   const { displayNodes, handleNodesChange } = usePlaceholderNodes(statusNodes, onNodesChange);
   const nodesWithDividers = useAddDividerNodes(displayNodes);
-  const selectNode = useEditorStore((s) => s.selectNode);
-  const closePanel = useEditorStore((s) => s.closePanel);
+  const editor = useEditor();
 
   const handleNodeClick = useCallback(
     (nodeId: string) => {
-      selectNode(nodeId);
+      editor.nodes.selectNode(nodeId);
     },
-    [selectNode],
+    [editor],
   );
 
   const handlePaneClick = useCallback(() => {
-    closePanel("config");
-  }, [closePanel]);
+    editor.panels.closePanel("config");
+  }, [editor]);
 
   return (
     <div className="relative h-full overflow-hidden" data-testid="recipe-editor">

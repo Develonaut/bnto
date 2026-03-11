@@ -16,18 +16,13 @@ import {
 } from "@bnto/ui";
 import { formatFileSize } from "@bnto/ui";
 import { computeTotalSaved } from "@bnto/core";
-import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditor } from "../../context";
 
-/** Persistent banner that updates across running → completed → failed. */
+/** Persistent banner that updates across running -> completed -> failed. */
 function ExecutionBanner() {
-  const phase = useEditorStore((s) => s.executionPhase);
-  const results = useEditorStore((s) => s.executionResults);
-  const errors = useEditorStore((s) => s.executionErrors);
-  const logs = useEditorStore((s) => s.executionLogs);
-  const fileProgress = useEditorStore((s) => s.executionFileProgress);
-  const inputFiles = useEditorStore((s) => s.executionInputFiles);
-  const downloadAll = useEditorStore((s) => s.downloadAllResults);
-  const selectNode = useEditorStore((s) => s.selectNode);
+  const editor = useEditor();
+  const { phase, results, errors, logs, fileProgress, inputFiles } =
+    editor.execution.useExecution();
 
   const handleErrorClick = useCallback(
     (index: number) => {
@@ -37,10 +32,10 @@ function ExecutionBanner() {
       );
       const entry = errorLogs[index];
       if (entry && "nodeId" in entry.event && entry.event.nodeId) {
-        selectNode(entry.event.nodeId);
+        editor.nodes.selectNode(entry.event.nodeId);
       }
     },
-    [logs, selectNode],
+    [logs, editor],
   );
 
   if (phase === "failed" || errors.length > 0) {
@@ -119,7 +114,7 @@ function ExecutionBanner() {
           variant="outline"
           size="sm"
           icon={<DownloadIcon />}
-          onClick={downloadAll}
+          onClick={() => editor.execution.downloadAllResults()}
           aria-label={`Download all ${results.length} files`}
         />
       </StatusBannerRow>

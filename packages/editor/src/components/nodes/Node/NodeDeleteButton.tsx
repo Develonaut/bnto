@@ -2,7 +2,7 @@
 
 import { memo, useCallback, type MouseEvent } from "react";
 import { Button, TrashIcon } from "@bnto/ui";
-import { useRemoveNode } from "../../../hooks/useRemoveNode";
+import { useEditor } from "../../../context";
 
 /**
  * NodeDeleteButton — delete action for a node.
@@ -18,14 +18,14 @@ const NodeDeleteButton = memo(function NodeDeleteButton({
   nodeId: string;
   selected?: boolean;
 }) {
-  const removeNode = useRemoveNode();
+  const editor = useEditor();
 
   const handleDelete = useCallback(
     (e: MouseEvent) => {
       e.stopPropagation();
-      removeNode(nodeId);
+      editor.nodes.removeNode(nodeId);
     },
-    [nodeId, removeNode],
+    [nodeId, editor],
   );
 
   return (
