@@ -2,15 +2,18 @@
  * addTopLevel — adds a node at the top-level pipeline.
  *
  * Mode 3 of the addNode action. Inserts before the output node by
- * default, shifts subsequent nodes right by STRIDE, and captures
- * undo state.
+ * default, shifts subsequent nodes right by STRIDE, updates the
+ * definition tree, and captures undo state.
  */
 
+import type { NodeTypeName } from "@bnto/nodes";
+import type { Definition } from "@bnto/nodes";
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
 import type { CompartmentNodeResult } from "../adapters/createCompartmentNode";
 import { STRIDE } from "../adapters/bentoSlots";
 import { withUndo } from "../store/withUndo";
+import { buildChildDefinition } from "./buildChildDefinition";
 
 interface AddNodeResult {
   nextState: Partial<EditorState>;
@@ -25,14 +28,7 @@ function addTopLevel(
   afterNodeId?: string | null,
   isContainer?: boolean,
 ): AddNodeResult {
-  const globalInsertIndex = afterNodeId
-    ? deselected.findIndex((n) => n.id === afterNodeId) + 1
-    : (() => {
-        const outputIdx = deselected.findIndex(
-          (n) => state.configs[n.id]?.nodeType === "output",
-        );
-        return outputIdx >= 0 ? outputIdx : deselected.length;
-      })();
+  const globalInsertIndex = findInsertIndex(deselected, state, afterNodeId);
 
   const shifted = deselected.slice(globalInsertIndex).map((n) =>
     !n.data.parentContainerId
@@ -42,6 +38,7 @@ function addTopLevel(
 
   const nextNodes = [...deselected.slice(0, globalInsertIndex), newNode, ...shifted];
   const nextConfigs = { ...state.configs, [result.node.id]: result.config };
+  const nextDefinition = insertIntoDefinition(state.definition, result, afterNodeId);
 
   const nextExpandedIds = isContainer
     ? new Set([...state.expandedContainerIds, result.node.id])
@@ -51,9 +48,51 @@ function addTopLevel(
     nextState: withUndo(state, {
       nodes: nextNodes,
       configs: nextConfigs,
+      ...(nextDefinition !== state.definition ? { definition: nextDefinition } : {}),
       ...(nextExpandedIds ? { expandedContainerIds: nextExpandedIds } : {}),
     }),
     nodeId: result.node.id,
+  };
+}
+
+/** Find the graph insertion index — after afterNodeId, or before the output node. */
+function findInsertIndex(
+  nodes: BentoNode[],
+  state: EditorState,
+  afterNodeId?: string | null,
+): number {
+  if (afterNodeId) return nodes.findIndex((n) => n.id === afterNodeId) + 1;
+  const outputIdx = nodes.findIndex((n) => state.configs[n.id]?.nodeType === "output");
+  return outputIdx >= 0 ? outputIdx : nodes.length;
+}
+
+/** Insert a Definition node into the definition tree at the correct position. */
+function insertIntoDefinition(
+  definition: Definition | null,
+  result: CompartmentNodeResult,
+  afterNodeId?: string | null,
+): Definition | null {
+  if (!definition) return definition;
+
+  const childDef = buildChildDefinition(
+    result.node.id,
+    result.config.nodeType as NodeTypeName,
+    result.config,
+  );
+
+  const rootNodes = definition.nodes ?? [];
+  let defInsertIndex: number;
+  if (afterNodeId) {
+    const idx = rootNodes.findIndex((n) => n.id === afterNodeId);
+    defInsertIndex = idx >= 0 ? idx + 1 : rootNodes.length;
+  } else {
+    const outputIdx = rootNodes.findIndex((n) => n.type === "output");
+    defInsertIndex = outputIdx >= 0 ? outputIdx : rootNodes.length;
+  }
+
+  return {
+    ...definition,
+    nodes: [...rootNodes.slice(0, defInsertIndex), childDef, ...rootNodes.slice(defInsertIndex)],
   };
 }
 

@@ -16,6 +16,8 @@ import {
   FolderOpenIcon,
   SlidersHorizontalIcon,
   TerminalIcon,
+  PlusIcon,
+  MenuSeparator,
 } from "@bnto/ui";
 import { useEditorUndoRedo } from "../hooks/useEditorUndoRedo";
 import { useEditorStore } from "../hooks/useEditorStore";
@@ -54,6 +56,10 @@ function EditorToolbar() {
     }
   }, [storeApi]);
 
+  const handleNew = useCallback(() => {
+    storeApi.getState().createBlank();
+  }, [storeApi]);
+
   const canDownload = canExport && hasNodes;
 
   return (
@@ -68,7 +74,9 @@ function EditorToolbar() {
           <Menu>
             <MenuTrigger icon={<FolderOpenIcon />} variant="ghost" elevation="sm" aria-label="File menu" />
             <MenuContent className="w-44 p-1">
+              <MenuItem onClick={handleNew}><PlusIcon /> New</MenuItem>
               <MenuItem onClick={() => setOpenDialogOpen(true)}>Open</MenuItem>
+              <MenuSeparator />
               <MenuItem onClick={() => download()} disabled={!canDownload}>Export</MenuItem>
             </MenuContent>
           </Menu>

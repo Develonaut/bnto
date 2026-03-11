@@ -105,6 +105,7 @@ function ToggleShowcase() {
 
 export function ButtonShowcase() {
   const [state, setState] = useState<ButtonState>("resting");
+  const [haptic, setHaptic] = useState(false);
 
   const hovered = state === "hover";
   const pressed = state === "pressed";
@@ -124,6 +125,13 @@ export function ButtonShowcase() {
             {label}
           </Button>
         ))}
+        <Button
+          variant={haptic ? "secondary" : "outline"}
+          size="md"
+          onClick={() => setHaptic((h) => !h)}
+        >
+          Haptic
+        </Button>
       </Row>
 
       {/* All variants × sizes */}
@@ -135,10 +143,10 @@ export function ButtonShowcase() {
               <Text size="xs" color="muted" mono as="span" className="w-24 shrink-0">
                 {label}
               </Text>
-              <Button variant={value} size="md" hovered={hovered} pressed={pressed} disabled={disabled}>Label</Button>
-              <Button variant={value} size="icon" hovered={hovered} pressed={pressed} disabled={disabled}><ZapIcon /></Button>
+              <Button variant={value} size="md" haptic={haptic} hovered={hovered} pressed={pressed} disabled={disabled}>Label</Button>
+              <Button variant={value} size="icon" haptic={haptic} hovered={hovered} pressed={pressed} disabled={disabled}><ZapIcon /></Button>
               {iconEntry && (
-                <Button variant={value} size="md" hovered={hovered} pressed={pressed} disabled={disabled}>
+                <Button variant={value} size="md" haptic={haptic} hovered={hovered} pressed={pressed} disabled={disabled}>
                   {iconEntry.trailing ? <>{iconLabel} {iconEntry.icon}</> : <>{iconEntry.icon} {iconLabel}</>}
                 </Button>
               )}

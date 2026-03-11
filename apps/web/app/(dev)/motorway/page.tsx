@@ -5,6 +5,7 @@ import { Heading, Stack, Tabs, TabsList, TabsTrigger, TabsContent, Text } from "
 import { AnimationShowcase } from "./AnimationShowcase";
 import { EmptyStateShowcase } from "./EmptyStateShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
+import { CopyButtonShowcase } from "./CopyButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
 import { DialogShowcase } from "./DialogShowcase";
@@ -100,6 +101,14 @@ export default function MotorwayPage() {
               description="Every variant, size, icon layout, and press state. Buttons sit on the ground plane and sink when pressed."
             >
               <ButtonShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="copy-button"
+              title="Copy Button"
+              description="Ghost icon button that copies text to the clipboard. Swaps to a check icon on success. Use anywhere — log output, share links, code blocks."
+            >
+              <CopyButtonShowcase />
             </ShowcaseSection>
 
             <ShowcaseSection
