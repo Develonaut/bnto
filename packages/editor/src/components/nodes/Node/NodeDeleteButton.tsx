@@ -8,7 +8,7 @@ import { useRemoveNode } from "../../../hooks/useRemoveNode";
 /**
  * NodeDeleteButton — delete action for a node.
  *
- * Rendered inside NodeEdge. Disabled when the node is not
+ * Rendered inside NodeHeader. Disabled when the node is not
  * selected — enabled (interactive) when selected.
  */
 
@@ -34,12 +34,11 @@ const NodeDeleteButton = memo(function NodeDeleteButton({
       icon={<X />}
       size="sm"
       variant="destructive"
-      elevation="sm"
       disabled={!selected}
       onClick={handleDelete}
       aria-label="Delete node"
       data-testid="delete-node"
-      className="nopan nodrag nowheel"
+      className="nopan nodrag nowheel size-6 [&_svg]:size-3"
     />
   );
 });

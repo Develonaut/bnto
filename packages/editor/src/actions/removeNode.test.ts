@@ -65,6 +65,8 @@ function stateWithNodes(): EditorState {
     executionFileProgress: null,
     executionInputFiles: [],
     insertAfterNodeId: null,
+    insertIntoContainerId: null,
+    expandedContainerIds: new Set(),
   } as EditorState;
 }
 

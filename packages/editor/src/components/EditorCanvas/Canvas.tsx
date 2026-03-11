@@ -13,7 +13,7 @@ import type { NodeChange, EdgeChange, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { cn } from "@bnto/ui";
 
-import { CompartmentNode, IoNode, PlaceholderNode } from "../nodes";
+import { CompartmentNode, IoNode, PlaceholderNode, ContainerGroupNode, AddDividerNode } from "../nodes";
 import type { BentoNode } from "../../adapters/types";
 import { FIT_VIEW_OPTIONS } from "../../constants";
 import { PLACEHOLDER_ID } from "../../helpers/injectPlaceholder";
@@ -76,6 +76,8 @@ const NODE_TYPES = {
   compartment: CompartmentNode,
   io: IoNode,
   placeholder: PlaceholderNode,
+  containerGroup: ContainerGroupNode,
+  addDivider: AddDividerNode,
 } as const;
 
 /* ── Inner canvas — must live inside ReactFlowProvider ──────── */
@@ -133,7 +135,7 @@ function CanvasInner({
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: { id: string; type?: string }) => {
       if (!onNodeClick) return;
-      if (node.type === "placeholder") return;
+      if (node.type === "placeholder" || node.type === "containerGroup" || node.type === "addDivider") return;
       const target = _event.target as HTMLElement;
       if (target.closest("button, a, input, select, textarea")) return;
       onNodeClick(node.id);

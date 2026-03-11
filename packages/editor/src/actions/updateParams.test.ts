@@ -51,6 +51,8 @@ function stateWithNode(): EditorState {
     executionFileProgress: null,
     executionInputFiles: [],
     insertAfterNodeId: null,
+    insertIntoContainerId: null,
+    expandedContainerIds: new Set(),
   } as EditorState;
 }
 
@@ -92,7 +94,7 @@ describe("updateParams", () => {
 
   it("clears redo stack", () => {
     const state = stateWithNode();
-    state.redoStack = [{ nodes: [], configs: {} }];
+    state.redoStack = [{ nodes: [], configs: {}, definition: null, expandedContainerIds: new Set() }];
     const result = updateParams(state, "a", { quality: 60 });
     expect(result!.redoStack).toEqual([]);
   });

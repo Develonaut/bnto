@@ -1,13 +1,23 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import type { BentoNode } from "../../adapters/types";
-import { NodeRoot, NodeEdge, NodeBody, NodeIcon, NodeLabel, NodeDeleteButton, NodeAddButton } from "./Node";
+import {
+  NodeRoot,
+  NodeHeader,
+  NodeBody,
+  NodeIcon,
+  NodeLabel,
+  NodeDeleteButton,
+} from "./Node";
 
 /**
  * CompartmentNode — a processing node on the bento grid.
  *
- * Full-size card with delete + add buttons in the bottom edge.
+ * Full-size card with action buttons in overlaid zones.
  * NodeRoot owns interaction state (selected → pressed, status → elevation).
+ *
+ * Add-node actions are handled by divider nodes between nodes on the canvas.
+ * Containers are always expanded — no collapse toggle needed.
  */
 
 export const CompartmentNode = memo(function CompartmentNode({
@@ -19,20 +29,10 @@ export const CompartmentNode = memo(function CompartmentNode({
   const isFailed = status === "failed";
 
   return (
-    <NodeRoot
-      width={data.width}
-      height={data.height}
-      selected={selected}
-      status={status}
-      edges={
-        <NodeEdge visible={selected}>
-          <div className="flex gap-1">
-            <NodeDeleteButton nodeId={id} selected={selected} />
-            <NodeAddButton nodeId={id} selected={selected} />
-          </div>
-        </NodeEdge>
-      }
-    >
+    <NodeRoot width={data.width} height={data.height} selected={selected} status={status}>
+      <NodeHeader visible={selected}>
+        <NodeDeleteButton nodeId={id} selected={selected} />
+      </NodeHeader>
       <NodeBody>
         <NodeIcon icon={data.icon} variant={data.variant} onSurface={isFailed} />
         <NodeLabel onSurface={isFailed}>{data.label}</NodeLabel>

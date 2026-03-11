@@ -39,6 +39,7 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
   const storeApi = useEditorStoreApi();
   const nodeCount = useEditorStore((s) => s.nodes.length);
   const insertAfterNodeId = useEditorStore((s) => s.insertAfterNodeId);
+  const insertIntoContainerId = useEditorStore((s) => s.insertIntoContainerId);
   const isFull = nodeCount >= SLOTS.length;
 
   const filteredGroups = useMemo(() => {
@@ -59,7 +60,7 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
 
   const handleClose = useCallback(
     (nextOpen: boolean) => {
-      if (!nextOpen) storeApi.setState({ insertAfterNodeId: null });
+      if (!nextOpen) storeApi.setState({ insertAfterNodeId: null, insertIntoContainerId: null });
       onOpenChange(nextOpen);
     },
     [storeApi, onOpenChange],
@@ -67,10 +68,10 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
 
   const handleAdd = useCallback(
     (typeName: NodeTypeName) => {
-      addNode(typeName, insertAfterNodeId);
+      addNode(typeName, insertAfterNodeId, insertIntoContainerId);
       handleClose(false);
     },
-    [addNode, insertAfterNodeId, handleClose],
+    [addNode, insertAfterNodeId, insertIntoContainerId, handleClose],
   );
 
   const hasResults = filteredGroups.length > 0;
