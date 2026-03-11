@@ -63,10 +63,8 @@ Public promises that constrain every build decision.
 
 1. **Free tier never gets worse.** Current limits are the floor, not the ceiling.
 2. **Desktop is free forever.** No "desktop Pro." Local execution is always unlimited.
-3. **MIT license stays MIT.** The engine is always open. Users can run it themselves.
-4. **No dark patterns.** No fake urgency, hidden limits, or surprise charges.
-5. **No overpromising.** Ship it or don't announce it.
-6. **If bnto shuts down, the engine stays open.** No lock-in, ever.
+3. **No dark patterns.** No fake urgency, hidden limits, or surprise charges.
+4. **No overpromising.** Ship it or don't announce it.
 
 ---
 

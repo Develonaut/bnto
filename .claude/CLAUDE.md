@@ -50,7 +50,6 @@ Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M
 - **Cloud (M4)**: Go API on Railway + Cloudflare R2 file transit (premium server-side bntos)
 - **Desktop (M3)**: Tauri (Rust-native) — free local execution
 - **Shared Packages**: `@bnto/core` (transport-agnostic API), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-agnostic node definitions)
-- **Open Source**: MIT licensed
 
 ---
 
@@ -200,7 +199,7 @@ bnto/
 3. **Modularity is our bread and butter** — Think small, build small, compose big
 4. **Abstraction is the goal** — "Did we make this easier?" If no, go back
 5. **Engine is the stable API** — Rust WASM for browser, Tauri native for desktop
-6. **Open source core** — Cloud sells convenience, not proprietary features
+6. **Core engine** — Cloud sells convenience, not lock-in
 
 See [core-principles.md](.claude/strategy/core-principles.md) for the full treatment.
 

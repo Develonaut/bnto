@@ -24,7 +24,6 @@ name = "bnto-image"
 version = "0.1.0"
 edition = "2024"
 description = "Image processing node for Bnto WASM engine — compress, resize, convert"
-license = "MIT"
 
 # wasm-opt flags — must match ALL features Rust enables by default.
 # Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown.

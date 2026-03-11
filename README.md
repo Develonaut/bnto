@@ -1,7 +1,5 @@
 # Bnto — Free Online File Tools Powered by Rust & WebAssembly
 
-[![CI](https://github.com/Develonaut/bnto/actions/workflows/ci.yml/badge.svg)](https://github.com/Develonaut/bnto/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Rust-WASM-black?logo=rust)](https://www.rust-lang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -29,7 +27,6 @@ Everything runs client-side via Rust compiled to WebAssembly. Your files never l
 - **Free:** All browser-based tools are free with no limits. No signup required
 - **Fast:** Near-native performance from compiled Rust, not interpreted JavaScript
 - **Offline-capable:** Once loaded, tools work without an internet connection
-- **Open Source:** MIT licensed. The entire engine and web app are right here
 
 ## How It Works
 
@@ -56,8 +53,6 @@ Your files never touch a server. The browser IS the server.
 ### Setup
 
 ```bash
-git clone https://github.com/Develonaut/bnto.git
-cd bnto
 pnpm install
 ```
 
@@ -130,19 +125,3 @@ bnto/
     ├── engine-go/               # Go CLI + engine (~33K LOC)
     └── api-go/                  # Go HTTP API server (~2.5K LOC)
 ```
-
-## Contributing
-
-Contributions are welcome. To get started:
-
-1. Fork and clone the repository
-2. Install prerequisites (Node.js 18+, pnpm, Task, Rust)
-3. Run `pnpm install` to set up dependencies
-4. Run `task dev` to start the development servers
-5. Run `task check` before submitting a pull request
-
-Please follow the existing code patterns and the [Bento Box Principle](.claude/rules/code-standards.md) -- small, focused files and functions with clear boundaries.
-
-## License
-
-[MIT](LICENSE) -- Copyright 2024-2026 [Develonaut](https://github.com/Develonaut)

@@ -12,7 +12,7 @@ The technical registry of predefined recipes, node types, and implementation sta
 
 ## Node Classification
 
-> **The dividing line:** Nodes that can run in your browser are free. Nodes that need a server cost money. Node *definitions* are always available to everyone (`@bnto/nodes`, MIT licensed). The *execution* of server nodes is what costs money.
+> **The dividing line:** Nodes that can run in your browser are free. Nodes that need a server cost money. Node *definitions* are always available to everyone (`@bnto/nodes`). The *execution* of server nodes is what costs money.
 
 ### Browser Nodes (free, unlimited)
 

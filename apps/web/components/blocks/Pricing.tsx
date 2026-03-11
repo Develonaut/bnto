@@ -8,7 +8,7 @@ const FREE_FEATURES = [
   "No account required",
   "No watermarks or quality reduction",
   "Files never leave your browser",
-  "Open source engine (MIT)",
+  "Powered by Rust + WebAssembly",
 ];
 
 const PRO_FEATURES = [

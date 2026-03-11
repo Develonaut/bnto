@@ -312,16 +312,13 @@ Check:
 
 ---
 
-## Section 7: Open Source Readiness
-
-The repo IS public. Every check below applies NOW, not as a future consideration:
+## Section 7: Repo Hygiene
 
 ### 7a: Sensitive content in code
 
 ```
 !grep -rn "TODO.*secret\|TODO.*credential\|TODO.*password\|TODO.*token\|TODO.*key" --include="*.ts" --include="*.go" --exclude-dir=node_modules --exclude-dir=_generated
 !grep -rn "HACK\|FIXME\|XXX" --include="*.ts" --include="*.go" --exclude-dir=node_modules --exclude-dir=_generated | head -20
-!grep -rn "competitor\|pricing\|revenue\|valuation" --include="*.ts" --include="*.go" --include="*.md" --exclude-dir=node_modules --exclude-dir=_generated | head -20
 ```
 
 ### 7b: Test fixtures
@@ -332,11 +329,10 @@ The repo IS public. Every check below applies NOW, not as a future consideration
 
 Check for real email addresses, phone numbers, or PII in test data.
 
-### 7c: License compliance
+### 7c: Dependency compliance
 
-- [ ] **MIT license file exists** at repo root
-- [ ] **No vendored code with incompatible licenses** — check `vendor/` or embedded third-party code
-- [ ] **Dependency licenses compatible** — no GPL deps in an MIT project (for linked/bundled deps)
+- [ ] **No vendored code with problematic licenses** — check `vendor/` or embedded third-party code
+- [ ] **Dependency licenses compatible** — no GPL deps that would impose obligations on the project
 
 ---
 
@@ -363,7 +359,7 @@ After completing all checks, produce a summary table:
 | Cloudflare R2         | ...        | ...                                           |
 | Convex Deployment     | ...        | ...                                           |
 | Dependencies          | ...        | ...                                           |
-| Open Source Readiness  | ...        | ...                                           |
+| Repo Hygiene           | ...        | ...                                           |
 ```
 
 Risk levels: `LOW` (best practice met), `MEDIUM` (improvement possible), `HIGH` (should fix before production traffic), `CRITICAL` (fix immediately — active vulnerability).
