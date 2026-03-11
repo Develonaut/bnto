@@ -32,6 +32,7 @@ function CanvasShell({ children }: CanvasShellProps) {
   const { displayNodes, handleNodesChange } = usePlaceholderNodes(statusNodes, onNodesChange);
   const nodesWithDividers = useAddDividerNodes(displayNodes);
   const selectNode = useEditorStore((s) => s.selectNode);
+  const closePanel = useEditorStore((s) => s.closePanel);
 
   const handleNodeClick = useCallback(
     (nodeId: string) => {
@@ -39,6 +40,10 @@ function CanvasShell({ children }: CanvasShellProps) {
     },
     [selectNode],
   );
+
+  const handlePaneClick = useCallback(() => {
+    closePanel("config");
+  }, [closePanel]);
 
   return (
     <div className="relative h-full overflow-hidden" data-testid="recipe-editor">
@@ -48,6 +53,7 @@ function CanvasShell({ children }: CanvasShellProps) {
         edges={edges}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
+        onPaneClick={handlePaneClick}
         interactive
         disable={{ drag: true }}
         standalone

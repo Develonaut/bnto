@@ -1,8 +1,7 @@
 "use client";
 
 import { memo, useCallback, type MouseEvent } from "react";
-import { Button } from "@bnto/ui";
-import { X } from "lucide-react";
+import { Button, TrashIcon } from "@bnto/ui";
 import { useRemoveNode } from "../../../hooks/useRemoveNode";
 
 /**
@@ -31,7 +30,7 @@ const NodeDeleteButton = memo(function NodeDeleteButton({
 
   return (
     <Button
-      icon={<X />}
+      icon={<TrashIcon />}
       size="sm"
       variant="destructive"
       disabled={!selected}
