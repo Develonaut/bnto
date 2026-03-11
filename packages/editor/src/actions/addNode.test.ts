@@ -5,6 +5,8 @@
 import { describe, it, expect } from "vitest";
 import { addNode } from "./addNode";
 import type { EditorState } from "../store/types";
+import type { Definition } from "@bnto/nodes";
+import { CURRENT_FORMAT_VERSION } from "@bnto/nodes";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 
 function blankState(overrides?: Partial<EditorState>): EditorState {
@@ -21,8 +23,21 @@ function blankState(overrides?: Partial<EditorState>): EditorState {
     isDirty: false,
     validationErrors: [],
     executionState: {},
+    nodeProgress: {},
     undoStack: [],
     redoStack: [],
+    definition: null,
+    selectedNodeId: null,
+    panels: { config: false, palette: false, run: false },
+    executionPhase: "idle",
+    executionResults: [],
+    executionErrors: [],
+    executionLogs: [],
+    executionFileProgress: null,
+    executionInputFiles: [],
+    insertAfterNodeId: null,
+    insertIntoContainerId: null,
+    expandedContainerIds: new Set(),
     ...overrides,
   } as EditorState;
 }
@@ -95,8 +110,97 @@ describe("addNode", () => {
   });
 
   it("clears redo stack", () => {
-    const state = blankState({ redoStack: [{ nodes: [], configs: {} }] });
+    const state = blankState({
+    redoStack: [{ nodes: [], configs: {}, definition: null, expandedContainerIds: new Set() }],
+  });
     const result = addNode(state, "image");
     expect(result!.nextState.redoStack).toEqual([]);
+  });
+});
+
+function validDef(overrides: Partial<Definition> = {}): Definition {
+  return {
+    id: "root",
+    type: "group",
+    version: CURRENT_FORMAT_VERSION,
+    name: "Root",
+    position: { x: 0, y: 0 },
+    metadata: {},
+    parameters: {},
+    inputPorts: [],
+    outputPorts: [],
+    ...overrides,
+  };
+}
+
+function stateWithContainer(): EditorState {
+  const containerNode: BentoNode = {
+    id: "loop1",
+    type: "compartment",
+    position: { x: 0, y: 0 },
+    data: {
+      label: "Loop",
+      variant: "primary",
+      width: 170,
+      height: 170,
+      status: "idle",
+      isContainer: true,
+      isExpanded: false,
+      depth: 0,
+    },
+  };
+  const def = validDef({
+    nodes: [
+      validDef({ id: "loop1", type: "loop", parameters: {} }),
+    ],
+  });
+  return blankState({
+    nodes: [containerNode],
+    configs: { loop1: { nodeType: "loop", name: "Loop", parameters: {} } },
+    definition: def,
+  });
+}
+
+describe("addNode — child insertion (Mode 1)", () => {
+  it("adds a child into a container", () => {
+    const result = addNode(stateWithContainer(), "image", null, "loop1");
+    expect(result).not.toBeNull();
+    const child = result!.nextState.nodes!.find((n) => n.id === result!.nodeId);
+    expect(child).toBeDefined();
+    expect(child!.data.parentContainerId).toBe("loop1");
+    expect(child!.data.depth).toBe(1);
+  });
+
+  it("auto-expands the container", () => {
+    const result = addNode(stateWithContainer(), "image", null, "loop1");
+    const expandedIds = result!.nextState.expandedContainerIds as Set<string>;
+    expect(expandedIds.has("loop1")).toBe(true);
+  });
+
+  it("marks container as expanded in node data", () => {
+    const result = addNode(stateWithContainer(), "image", null, "loop1");
+    const container = result!.nextState.nodes!.find((n) => n.id === "loop1");
+    expect(container!.data.isExpanded).toBe(true);
+  });
+
+  it("adds child to definition tree", () => {
+    const result = addNode(stateWithContainer(), "image", null, "loop1");
+    const def = result!.nextState.definition as Definition;
+    const loopDef = def.nodes![0]!;
+    expect(loopDef.nodes).toHaveLength(1);
+    expect(loopDef.nodes![0]!.id).toBe(result!.nodeId);
+  });
+
+  it("inserts child right after container in flat array", () => {
+    const result = addNode(stateWithContainer(), "image", null, "loop1");
+    const nodes = result!.nextState.nodes!;
+    const containerIdx = nodes.findIndex((n) => n.id === "loop1");
+    const childIdx = nodes.findIndex((n) => n.id === result!.nodeId);
+    expect(childIdx).toBe(containerIdx + 1);
+  });
+
+  it("returns null for unknown container", () => {
+    const result = addNode(stateWithContainer(), "image", null, "nonexistent");
+    expect(result).toBeNull();
   });
 });

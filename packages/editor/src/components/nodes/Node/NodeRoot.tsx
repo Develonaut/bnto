@@ -10,6 +10,19 @@ import { resolveNodePresentation } from "../resolveNodePresentation";
  * without rendering a `<button>` element. Nodes contain nested interactive
  * elements (delete button, config) so the root must be a plain `<div>`.
  *
+ * The card interior uses a single-cell CSS Grid overlay where all
+ * child zones share the same cell and self-align to their edges:
+ *
+ *   ┌──────────────────┐
+ *   │ ┄ ┄ header ┄ ┄ ┄│  ← self-start (top overlay)
+ *   │                  │
+ *   │      body        │  ← place-self-center
+ *   │                  │
+ *   └──────────────────┘
+ *
+ * Zones overlay without displacing body content — the body stays
+ * perfectly centered regardless of which zones are present.
+ *
  * NodeRoot owns interaction state: `selected` and `status` drive
  * pressed/hovered/elevation/variant via resolveNodePresentation.
  * Consuming nodes pass through what ReactFlow gives them.
@@ -36,9 +49,7 @@ interface NodeRootProps {
   selected?: boolean;
   /** Current execution status. Drives elevation, variant overrides, interaction. */
   status?: string;
-  /** Content rendered outside the card's transform context (NodeEdge). */
-  edges?: ReactNode;
-  /** Composed content — NodeBody, NodeFooter, NodeHeader. */
+  /** Composed content — NodeHeader, NodeBody. */
   children: ReactNode;
 }
 
@@ -49,7 +60,6 @@ function NodeRoot({
   align,
   selected = false,
   status,
-  edges,
   children,
 }: NodeRootProps) {
   const presentation = resolveNodePresentation(status, selected);
@@ -74,18 +84,13 @@ function NodeRoot({
           data-state={status}
           className={cn(
             !resolvedVariant && "bg-card text-card-foreground",
-            "relative flex flex-col rounded-xl pointer-events-auto",
+            "relative grid grid-cols-1 grid-rows-1 rounded-xl pointer-events-auto",
           )}
           style={{ width, height }}
         >
           {children}
         </Button>
       </ScaleIn>
-      {edges && (
-        <div className="absolute top-0 left-0" style={{ width, height }}>
-          {edges}
-        </div>
-      )}
     </div>
   );
 }

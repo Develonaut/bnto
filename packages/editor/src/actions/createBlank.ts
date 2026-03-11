@@ -31,5 +31,6 @@ export function createBlank(): Partial<EditorState> {
     executionInputFiles: [],
     undoStack: [],
     redoStack: [],
+    expandedContainerIds: new Set(),
   };
 }
