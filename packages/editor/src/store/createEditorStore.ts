@@ -18,6 +18,8 @@ import { resolveInitialState } from "./resolveInitialState";
 import { loadDefinition } from "../actions/loadDefinition";
 import { createBlank } from "../actions/createBlank";
 import { runExecution } from "../actions/runExecution";
+import { expandContainer } from "../actions/expandContainer";
+import { collapseContainer } from "../actions/collapseContainer";
 import { autoOpenConfig, closeSameSideSiblings } from "./panelHelpers";
 
 // ---------------------------------------------------------------------------
@@ -27,7 +29,7 @@ import { autoOpenConfig, closeSameSideSiblings } from "./panelHelpers";
 function createEditorStore(definition?: Definition) {
   const initial = resolveInitialState(definition);
 
-  return createEnhancedStore<EditorStore>()((set, get) => ({
+  const store = createEnhancedStore<EditorStore>()((set, get) => ({
     // --- Initial state ---
     nodes: initial.selectedNodeId
       ? initial.nodes.map((n) => (n.id === initial.selectedNodeId ? { ...n, selected: true } : n))
@@ -55,6 +57,8 @@ function createEditorStore(definition?: Definition) {
     executionFileProgress: null,
     executionInputFiles: [],
     insertAfterNodeId: null,
+    insertIntoContainerId: null,
+    expandedContainerIds: new Set(),
 
     // --- Entry points ---
 
@@ -125,7 +129,12 @@ function createEditorStore(definition?: Definition) {
 
     pushUndo: () => {
       const state = get();
-      const snapshot = captureSnapshot(state.nodes, state.configs);
+      const snapshot = captureSnapshot(
+        state.nodes,
+        state.configs,
+        state.definition,
+        state.expandedContainerIds,
+      );
       set({
         undoStack: pushToStack(state.undoStack, snapshot),
         redoStack: [],
@@ -136,10 +145,17 @@ function createEditorStore(definition?: Definition) {
       const state = get();
       if (state.undoStack.length === 0) return;
       const snapshot = state.undoStack[state.undoStack.length - 1]!;
-      const current = captureSnapshot(state.nodes, state.configs);
+      const current = captureSnapshot(
+        state.nodes,
+        state.configs,
+        state.definition,
+        state.expandedContainerIds,
+      );
       set({
         nodes: snapshot.nodes,
         configs: snapshot.configs,
+        definition: snapshot.definition,
+        expandedContainerIds: snapshot.expandedContainerIds,
         isDirty: true,
         undoStack: state.undoStack.slice(0, -1),
         redoStack: [...state.redoStack, current],
@@ -151,10 +167,17 @@ function createEditorStore(definition?: Definition) {
       const state = get();
       if (state.redoStack.length === 0) return;
       const snapshot = state.redoStack[state.redoStack.length - 1]!;
-      const current = captureSnapshot(state.nodes, state.configs);
+      const current = captureSnapshot(
+        state.nodes,
+        state.configs,
+        state.definition,
+        state.expandedContainerIds,
+      );
       set({
         nodes: snapshot.nodes,
         configs: snapshot.configs,
+        definition: snapshot.definition,
+        expandedContainerIds: snapshot.expandedContainerIds,
         isDirty: true,
         undoStack: [...state.undoStack, current],
         redoStack: state.redoStack.slice(0, -1),
@@ -188,10 +211,39 @@ function createEditorStore(definition?: Definition) {
       });
     },
 
+    // --- Container expansion ---
+
+    expandContainer: (nodeId) => {
+      const state = get();
+      const result = expandContainer(state, nodeId);
+      if (result) set(result);
+    },
+
+    collapseContainer: (nodeId) => {
+      const state = get();
+      const result = collapseContainer(state, nodeId);
+      if (result) set(result);
+    },
+
+    toggleContainerExpanded: (nodeId) => {
+      const state = get();
+      if (state.expandedContainerIds.has(nodeId)) {
+        const result = collapseContainer(state, nodeId);
+        if (result) set(result);
+      } else {
+        const result = expandContainer(state, nodeId);
+        if (result) set(result);
+      }
+    },
+
     // --- Insertion context ---
 
     setInsertAfterNodeId: (id) => {
       set({ insertAfterNodeId: id });
+    },
+
+    setInsertIntoContainerId: (id) => {
+      set({ insertIntoContainerId: id });
     },
 
     // --- Execution lifecycle ---
@@ -256,6 +308,18 @@ function createEditorStore(definition?: Definition) {
       set({ undoStack: [], redoStack: [] });
     },
   }));
+
+  // Auto-expand all containers so children are always visible on init
+  if (definition) {
+    const containerNodes = store.getState().nodes.filter((n) => n.data.isContainer);
+    for (const node of containerNodes) {
+      store.getState().expandContainer(node.id);
+    }
+    // Clear undo/redo — initial expansion isn't undoable
+    store.setState({ undoStack: [], redoStack: [], isDirty: false });
+  }
+
+  return store;
 }
 
 export { createEditorStore };

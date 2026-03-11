@@ -14,7 +14,12 @@ import { pushToStack } from "./pushToStack";
 import { revalidateState } from "./revalidateState";
 
 function withUndo(state: EditorState, changes: Partial<EditorState>): Partial<EditorState> {
-  const snapshot = captureSnapshot(state.nodes, state.configs);
+  const snapshot = captureSnapshot(
+    state.nodes,
+    state.configs,
+    state.definition,
+    state.expandedContainerIds,
+  );
   const nextNodes = (changes.nodes ?? state.nodes) as BentoNode[];
   const nextConfigs = (changes.configs ?? state.configs) as NodeConfigs;
 

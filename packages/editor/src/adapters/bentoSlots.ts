@@ -10,14 +10,14 @@
  * └────────┴────────┴────────┴────────┴─ ─ ─ ─┘
  */
 
-/** Cell size in pixels — 40px larger than IO_CARD_SIZE (100). */
-const CELL = 140;
+/** Cell size in pixels — room for grid zones (header, body, footer, edges). */
+const CELL = 170;
 
-/** Horizontal gap between cells in pixels. */
-const GAP_X = 16;
+/** Horizontal gap between cells in pixels — room for divider + add button. */
+const GAP_X = 30;
 
-/** Vertical gap below cells in pixels — room for edge-positioned actions. */
-const GAP_Y = 30;
+/** Vertical gap below cells in pixels — room for divider + add button. */
+const GAP_Y = 22;
 
 /** Stride — one cell + horizontal gap. */
 const STRIDE = CELL + GAP_X;
@@ -42,4 +42,14 @@ const SLOTS: { x: number; y: number; w: number; h: number }[] = Array.from(
 /** I/O inner card size — visually smaller, but the RF node is still CELL×CELL. */
 const IO_CARD_SIZE = 100;
 
-export { CELL, GAP_X, GAP_Y, STRIDE, SLOTS, IO_CARD_SIZE };
+/** Vertical offset from parent to children row when a container is expanded. */
+const ROW_OFFSET = CELL + GAP_Y + 8;
+
+/** Inset from the GAP_X padding for container group overlay borders.
+ *  Set to GAP_X / 2 so the group border aligns with divider center lines. */
+const GROUP_INSET = GAP_X / 2;
+
+/** Maximum nesting depth for container expansion. */
+const MAX_CONTAINER_DEPTH = 3;
+
+export { CELL, GAP_X, GAP_Y, STRIDE, SLOTS, IO_CARD_SIZE, ROW_OFFSET, GROUP_INSET, MAX_CONTAINER_DEPTH };

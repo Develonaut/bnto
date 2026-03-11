@@ -71,6 +71,8 @@ interface RecipeMetadata {
 interface EditorSnapshot {
   nodes: BentoNode[];
   configs: NodeConfigs;
+  definition: Definition | null;
+  expandedContainerIds: Set<string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -120,9 +122,14 @@ interface EditorState {
   // --- Panel visibility ---
   panels: PanelState;
 
+  // --- Container expansion ---
+  expandedContainerIds: Set<string>;
+
   // --- Insertion context ---
   /** When set, the next addNode inserts after this node ID instead of at the end. */
   insertAfterNodeId: string | null;
+  /** When set, the next addNode inserts as a child inside this container. */
+  insertIntoContainerId: string | null;
 
   // --- Execution lifecycle ---
   executionPhase: ExecutionPhase;
@@ -174,8 +181,14 @@ interface EditorActions {
   downloadResult: (file: BrowserFileResult) => void;
   downloadAllResults: () => Promise<void>;
 
+  // --- Container expansion ---
+  toggleContainerExpanded: (nodeId: string) => void;
+  expandContainer: (nodeId: string) => void;
+  collapseContainer: (nodeId: string) => void;
+
   // --- Insertion context ---
   setInsertAfterNodeId: (id: string | null) => void;
+  setInsertIntoContainerId: (id: string | null) => void;
 
   // --- Utility ---
   markDirty: () => void;

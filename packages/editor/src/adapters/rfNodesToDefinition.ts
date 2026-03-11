@@ -35,7 +35,12 @@ function rfNodesToDefinition(
   configs: NodeConfigs = {},
   definition: Definition | null = null,
 ): Definition {
-  const children: Definition[] = rfNodes.map((rfNode) => {
+  // Only include top-level nodes in the export — child nodes are already
+  // in the definition tree from write-through operations.
+  const topLevelNodes = rfNodes.filter(
+    (n) => !n.data.parentContainerId && (n.data.depth === undefined || n.data.depth === 0),
+  );
+  const children: Definition[] = topLevelNodes.map((rfNode) => {
     const config = configs[rfNode.id];
 
     // For container nodes, preserve nested children from definition

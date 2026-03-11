@@ -10,7 +10,7 @@
  */
 
 import type { Definition, NodeTypeName } from "@bnto/nodes";
-import { NODE_TYPE_INFO, getNodeIcon, getNodeSublabel, isIoNodeType } from "@bnto/nodes";
+import { NODE_TYPE_INFO, getNodeIcon, getNodeSublabel, isIoNodeType, isContainerNodeType } from "@bnto/nodes";
 import type { BentoNode, BentoLayout, NodeConfigs } from "./types";
 import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";
@@ -42,6 +42,8 @@ function definitionToGraph(definition: Definition): BentoLayout {
     const icon = getNodeIcon(nodeType, node.parameters);
     const sublabel = getNodeSublabel(nodeType, node.parameters, node.metadata);
 
+    const isContainer = isContainerNodeType(node.type);
+
     return {
       id: node.id,
       type: isIo ? ("io" as const) : ("compartment" as const),
@@ -55,6 +57,7 @@ function definitionToGraph(definition: Definition): BentoLayout {
         status: "idle" as const,
         icon,
         isIoNode: isIo,
+        ...(isContainer ? { isContainer: true, isExpanded: true, depth: 0 } : { depth: 0 }),
       },
     };
   });

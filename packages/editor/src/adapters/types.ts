@@ -48,6 +48,22 @@ type CompartmentNodeData = {
   icon?: string;
   /** True for input/output nodes — protects them from deletion and reordering. */
   isIoNode?: boolean;
+  /** Which container this child belongs to. Absent for top-level nodes. */
+  parentContainerId?: string;
+  /** Whether this node is a container type (group, loop, parallel). */
+  isContainer?: boolean;
+  /** Whether this container's children are expanded on the canvas. */
+  isExpanded?: boolean;
+  /** Direction children flow when expanded: vertical (down) or horizontal (right). */
+  childDirection?: "vertical" | "horizontal";
+  /** Nesting depth: 0 = top-level, 1 = first nesting level, etc. */
+  depth?: number;
+  /** Divider direction: horizontal (top-level gaps) or vertical (child gaps). */
+  dividerDirection?: "horizontal" | "vertical";
+  /** The node ID this divider sits after (null = before first child). */
+  dividerAfterNodeId?: string | null;
+  /** The container ID to insert into (null = top-level insertion). */
+  dividerIntoContainerId?: string | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -70,7 +86,7 @@ type NodeConfigs = Record<string, NodeConfig>;
 // ReactFlow-compatible node — extends RF's Node with typed data
 // ---------------------------------------------------------------------------
 
-type BentoNode = Node<CompartmentNodeData, "compartment" | "io">;
+type BentoNode = Node<CompartmentNodeData, "compartment" | "io" | "containerGroup" | "addDivider" | "placeholder">;
 
 type BentoLayout = {
   nodes: BentoNode[];
