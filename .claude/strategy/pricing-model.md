@@ -11,7 +11,7 @@
 
 > **Nodes that can run in your browser are free. Nodes that need a server cost money.**
 >
-> The node *definitions* are always available to everyone (they're in `@bnto/nodes`, MIT licensed). The *execution* of server nodes is what costs money.
+> The node *definitions* are always available to everyone (they're in `@bnto/nodes`). The *execution* of server nodes is what costs money.
 
 ---
 
