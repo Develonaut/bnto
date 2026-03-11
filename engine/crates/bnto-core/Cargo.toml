@@ -35,8 +35,6 @@ edition = "2024"
 # A short description shown on crates.io and in cargo search results.
 description = "Core WASM engine library for Bnto — shared types, traits, and orchestration"
 
-# The license. Same as the rest of the bnto repo.
-license = "MIT"
 
 # WASM-PACK METADATA
 # wasm-pack reads settings from [package.metadata.wasm-pack.*].

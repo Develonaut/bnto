@@ -25,7 +25,6 @@ name = "bnto-csv"
 version = "0.1.0"
 edition = "2024"
 description = "CSV processing nodes for Bnto WASM engine — clean, rename columns"
-license = "MIT"
 
 # wasm-opt flags — must match ALL features Rust enables by default.
 # Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown.

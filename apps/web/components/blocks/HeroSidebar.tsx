@@ -1,6 +1,5 @@
 import {
-  GithubIcon,
-  GlobeIcon,
+  EyeIcon,
   LaptopIcon,
   ShieldCheckIcon,
   ZapIcon,
@@ -11,7 +10,6 @@ import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 import {
   GALLERY_HEADING,
   GALLERY_SUBHEADING,
-  GITHUB_URL,
   TRUST_LINE,
 } from "@/lib/copy";
 
@@ -21,7 +19,7 @@ const PITCH_POINTS = [
   { icon: ZapIcon, label: `${BNTO_REGISTRY.length} free tools, no limits, no signup` },
   { icon: ShieldCheckIcon, label: "Runs in your browser. Files stay on your device" },
   { icon: LaptopIcon, label: "Batch processing. Drop multiple files at once" },
-  { icon: GlobeIcon, label: "Open source (MIT). Inspect every line" },
+  { icon: EyeIcon, label: "Your files never leave your device" },
 ];
 
 /* ── Hero sidebar ────────────────────────────────────────────── */
@@ -44,16 +42,6 @@ export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
         <Row className="gap-3 pt-2">
           <Button href="#faq" elevation="sm">
             Learn more
-          </Button>
-          <Button
-            variant="outline"
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            elevation="sm"
-          >
-            <GithubIcon />
-            GitHub
           </Button>
         </Row>
       )}

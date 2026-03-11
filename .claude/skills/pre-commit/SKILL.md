@@ -131,7 +131,7 @@ Do NOT reason about whether the change is "visual" or "behavioral" or "internal.
 
 Run `/security-review` to audit the changed files and overall project for security issues — leaked secrets, auth gaps, input validation, XSS vectors, cloud service misconfigurations, and dependency vulnerabilities.
 
-**This is a full audit, not a quick scan.** The security review covers: secret scanning, Go API security (auth, CORS, input validation, execution sandboxing), Convex function security (auth enforcement, quota bypass, upload validation), web app security (headers, XSS, cookies), infrastructure (GitHub, Vercel, Railway, R2, Convex deployment), dependencies, and open source readiness.
+**This is a full audit, not a quick scan.** The security review covers: secret scanning, Go API security (auth, CORS, input validation, execution sandboxing), Convex function security (auth enforcement, quota bypass, upload validation), web app security (headers, XSS, cookies), infrastructure (GitHub, Vercel, Railway, R2, Convex deployment), dependencies, and repo hygiene.
 
 **If the security review surfaces any HIGH or CRITICAL findings, STOP.** Report them to the user before proceeding to the commit step. The user decides whether to fix now or defer.
 

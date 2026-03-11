@@ -1,8 +1,8 @@
 # Security Audit Checklist
 
-**Status:** Active — repo is public, all checks apply now
-**Last Updated:** February 2026
-**Tracks:** Security audit requirements (previously in open-source-strategy.md, now consolidated here)
+**Status:** Active
+**Last Updated:** March 2026
+**Tracks:** Security audit requirements
 **Full audit skill:** `.claude/skills/security-review/SKILL.md`
 
 ---
