@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { Button, PlayIcon, LoaderIcon } from "@bnto/ui";
-import { useEditorExecution } from "../hooks/useEditorExecution";
+import { useExecution } from "../hooks/useExecution";
 
 /**
  * RunButton — run/rerun button with hidden file input for selecting files.
@@ -16,7 +16,7 @@ import { useEditorExecution } from "../hooks/useEditorExecution";
  * near undo/redo — not duplicated here.
  */
 function RunButton() {
-  const { phase, canRun, inputFiles, run } = useEditorExecution();
+  const { phase, canRun, inputFiles, run } = useExecution();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasFiles = inputFiles.length > 0;

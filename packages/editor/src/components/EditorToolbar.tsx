@@ -19,11 +19,8 @@ import {
   PlusIcon,
   MenuSeparator,
 } from "@bnto/ui";
-import { useEditorUndoRedo } from "../hooks/useEditorUndoRedo";
-import { useEditorStore } from "../hooks/useEditorStore";
-import { useEditorStoreApi } from "../hooks/useEditorStoreApi";
-import { useEditorExport } from "../hooks/useEditorExport";
-import { usePanel } from "../hooks/usePanel";
+import { downloadBlob } from "@bnto/core";
+import { useEditor } from "../context";
 import { RunButton } from "./RunButton";
 import { OpenRecipeDialog } from "./OpenRecipeDialog";
 import { NodePaletteDialog } from "./NodePaletteDialog";
@@ -36,29 +33,43 @@ import { NodePaletteDialog } from "./NodePaletteDialog";
  */
 
 function EditorToolbar() {
-  const { isOpen: paletteOpen, close: closePalette } = usePanel("palette");
-  const { toggle: toggleConfig } = usePanel("config");
-  const { toggle: toggleRunPanel } = usePanel("run");
-  const { undo, redo, canUndo, canRedo } = useEditorUndoRedo();
-  const { download, canExport } = useEditorExport();
-  const isDirty = useEditorStore((s) => s.isDirty);
-  const hasRun = useEditorStore((s) => s.executionPhase !== "idle");
-  const hasNodes = useEditorStore((s) => s.nodes.length > 0);
-  const storeApi = useEditorStoreApi();
+  const editor = useEditor();
+  const { isOpen: paletteOpen, close: closePalette } = editor.panels.usePanels("palette");
+  const { toggle: toggleConfig } = editor.panels.usePanels("config");
+  const { toggle: toggleRunPanel } = editor.panels.usePanels("run");
+  const { canUndo, canRedo } = editor.history.useHistory();
+  const { isDirty, validationErrors } = editor.definition.useDefinition();
+  const { phase } = editor.execution.useExecution();
+  const { nodes } = editor.nodes.useNodes();
+
+  const hasRun = phase !== "idle";
+  const hasNodes = nodes.length > 0;
+  const canExport = validationErrors.length === 0;
+
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
 
   const handleReset = useCallback(() => {
-    const { loadDefinition, createBlank, definition } = storeApi.getState();
+    const { definition } = editor.getState();
     if (definition) {
-      loadDefinition(definition);
+      editor.definition.loadDefinition(definition);
     } else {
-      createBlank();
+      editor.definition.createBlank();
     }
-  }, [storeApi]);
+  }, [editor]);
 
   const handleNew = useCallback(() => {
-    storeApi.getState().createBlank();
-  }, [storeApi]);
+    editor.definition.createBlank();
+  }, [editor]);
+
+  const download = useCallback(() => {
+    const result = editor.definition.exportAsRecipe();
+    if (!result.recipe) return;
+    const json = JSON.stringify(result.recipe.definition, null, 2);
+    downloadBlob(
+      new Blob([json], { type: "application/json" }),
+      `${result.recipe.slug}.bnto.json`,
+    );
+  }, [editor]);
 
   const canDownload = canExport && hasNodes;
 
@@ -77,7 +88,7 @@ function EditorToolbar() {
               <MenuItem onClick={handleNew}><PlusIcon /> New</MenuItem>
               <MenuItem onClick={() => setOpenDialogOpen(true)}>Open</MenuItem>
               <MenuSeparator />
-              <MenuItem onClick={() => download()} disabled={!canDownload}>Export</MenuItem>
+              <MenuItem onClick={download} disabled={!canDownload}>Export</MenuItem>
             </MenuContent>
           </Menu>
         </ToolbarGroup>
@@ -94,8 +105,8 @@ function EditorToolbar() {
 
         {/* Undo / Redo / Reset */}
         <ToolbarGroup>
-          <Button icon={<Undo2Icon />} variant="ghost" elevation="sm" onClick={undo} disabled={!canUndo} aria-label="Undo" />
-          <Button icon={<Redo2Icon />} variant="ghost" elevation="sm" onClick={redo} disabled={!canRedo} aria-label="Redo" />
+          <Button icon={<Undo2Icon />} variant="ghost" elevation="sm" onClick={editor.history.undo} disabled={!canUndo} aria-label="Undo" />
+          <Button icon={<Redo2Icon />} variant="ghost" elevation="sm" onClick={editor.history.redo} disabled={!canRedo} aria-label="Redo" />
           <Button icon={<RotateCcwIcon />} variant="ghost" elevation="sm" onClick={handleReset} disabled={!isDirty && !hasRun} aria-label="Reset" />
         </ToolbarGroup>
 

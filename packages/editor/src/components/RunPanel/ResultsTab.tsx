@@ -1,18 +1,19 @@
 "use client";
 
 import { Text } from "@bnto/ui";
-import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditor } from "../../context";
 import { ExecutionBanner } from "./ExecutionBanner";
 import { ResultsList } from "./ResultsList";
 
 /**
- * ResultsTab — consumes execution state directly from the editor store.
+ * ResultsTab — consumes execution state via domain hook.
  *
  * A persistent StatusBanner stays mounted from execution start.
  * Props update across phases — no layout shift.
  */
 function ResultsTab() {
-  const phase = useEditorStore((s) => s.executionPhase);
+  const editor = useEditor();
+  const { phase } = editor.execution.useExecution();
 
   if (phase === "idle") {
     return (

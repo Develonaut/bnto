@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { useReactFlow } from "@xyflow/react";
-import { useEditorActions } from "./useEditorActions";
+import { useEditor } from "../context";
 import { FIT_VIEW_OPTIONS } from "../constants";
 
 /**
@@ -12,8 +12,8 @@ import { FIT_VIEW_OPTIONS } from "../constants";
  *   1. Programmatic node selection via the store's selectNode action
  *   2. Center-on-select via fitView (genuine DOM side effect)
  *
- * Auto-select on add/remove is handled in the useAddNode and
- * useRemoveNode action hooks — no effects needed here.
+ * Auto-select on add/remove is handled in the node service
+ * actions — no effects needed here.
  */
 
 interface UseAutoSelectOptions {
@@ -22,15 +22,15 @@ interface UseAutoSelectOptions {
 
 function useAutoSelect({ selectedNodeId }: UseAutoSelectOptions) {
   const { fitView } = useReactFlow();
-  const { selectNode } = useEditorActions();
+  const editor = useEditor();
 
   /* Select a node programmatically (sidebar click). Updates the store
    * directly — no RF roundtrip via setNodes. */
   const handleSelectNode = useCallback(
     (nodeId: string) => {
-      selectNode(nodeId);
+      editor.nodes.selectNode(nodeId);
     },
-    [selectNode],
+    [editor],
   );
 
   /* Center the selected node whenever selection changes. This is a

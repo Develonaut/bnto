@@ -4,16 +4,17 @@ import { useEffect, useMemo, useRef } from "react";
 import { Text, CopyButton, Divider } from "@bnto/ui";
 import type { RunLogEntry } from "../../store/types";
 import { formatLogEntry } from "./formatLogEntry";
-import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditor } from "../../context";
 
 /**
- * LogsTab — consumes logs directly from the editor store.
+ * LogsTab — consumes logs via domain hook.
  *
  * Auto-scrolls to the bottom as new entries arrive.
  * Each entry is formatted as a timestamped line with event details.
  */
 function LogsTab() {
-  const logs = useEditorStore((s) => s.executionLogs);
+  const editor = useEditor();
+  const { logs } = editor.execution.useExecution();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

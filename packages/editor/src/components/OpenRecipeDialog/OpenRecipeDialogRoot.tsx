@@ -11,7 +11,7 @@ import {
   Divider,
   type LucideIcon,
 } from "@bnto/ui";
-import { useEditorStoreApi } from "../../hooks/useEditorStoreApi";
+import { useEditor } from "../../context";
 import { RecipePickerGrid } from "./RecipePickerGrid";
 import { FileImportDropzone } from "./FileImportDropzone";
 
@@ -36,14 +36,14 @@ function OpenRecipeDialogRoot({
   onOpenChange,
   getIcon,
 }: OpenRecipeDialogProps) {
-  const storeApi = useEditorStoreApi();
+  const editor = useEditor();
 
   const handleLoad = useCallback(
     (definition: Definition) => {
-      storeApi.getState().loadDefinition(definition);
+      editor.definition.loadDefinition(definition);
       onOpenChange(false);
     },
-    [storeApi, onOpenChange],
+    [editor, onOpenChange],
   );
 
   return (

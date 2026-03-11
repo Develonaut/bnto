@@ -7,7 +7,7 @@
  *
  * IMPORTANT: Call this hook exactly ONCE per editor instance (inside
  * useEditorCanvas). All other consumers should read `selectedNodeId`
- * directly from the store via `useEditorStore((s) => s.selectedNodeId)`.
+ * via `editor.nodes.useNodes()` or `useEditorStoreApi()`.
  *
  * Must be used inside a ReactFlowProvider + EditorRoot.
  */
@@ -17,11 +17,13 @@
 import { useCallback } from "react";
 import { useOnSelectionChange } from "@xyflow/react";
 import type { Node } from "@xyflow/react";
-import { useEditorStore } from "./useEditorStore";
+import { useStore } from "zustand";
+import { useEditorStoreApi } from "../context";
 
 function useEditorSelection(): { selectedNodeId: string | null } {
-  const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
-  const setSelectedNodeId = useEditorStore((s) => s.setSelectedNodeId);
+  const storeApi = useEditorStoreApi();
+  const selectedNodeId = useStore(storeApi, (s) => s.selectedNodeId);
+  const setSelectedNodeId = useStore(storeApi, (s) => s.setSelectedNodeId);
 
   const onChange = useCallback(
     ({ nodes }: { nodes: Node[] }) => {

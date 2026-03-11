@@ -4,7 +4,7 @@
  * Business logic lives in pure action functions (editor/actions/).
  * Hooks are thin wrappers bridging actions to the store.
  *
- *   Pure actions → Thin wrapper hooks → Consumer hooks (useEditorActions)
+ *   Pure actions → Services → Clients (EditorInstance)
  */
 
 import { createEnhancedStore, core } from "@bnto/core";

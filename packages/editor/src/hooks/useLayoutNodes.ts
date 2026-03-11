@@ -11,12 +11,14 @@
 "use client";
 
 import { useMemo } from "react";
-import { useEditorStore } from "./useEditorStore";
+import { useStore } from "zustand";
+import { useEditorStoreApi } from "../context";
 import type { BentoNode } from "../adapters/types";
 import { layoutNodes } from "../adapters/layoutNodes";
 
 function useLayoutNodes(nodes: BentoNode[]): BentoNode[] {
-  const expandedIds = useEditorStore((s) => s.expandedContainerIds);
+  const storeApi = useEditorStoreApi();
+  const expandedIds = useStore(storeApi, (s) => s.expandedContainerIds);
 
   return useMemo(
     () => layoutNodes(nodes, expandedIds),
