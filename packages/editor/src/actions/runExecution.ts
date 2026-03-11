@@ -20,6 +20,7 @@ import {
   buildFinalState,
   buildFailedState,
 } from "./executionState";
+import { logEventToConsole } from "./logEventToConsole";
 
 // ---------------------------------------------------------------------------
 // Types — match Zustand factory set/get signatures
@@ -61,6 +62,9 @@ async function runExecution(set: SetState, get: GetState, files: File[]): Promis
         error: e.message,
       },
     }));
+    for (const log of validationLogs) {
+      logEventToConsole(log.event);
+    }
     set({
       executionErrors: prepared.errors,
       executionPhase: "failed",
@@ -88,6 +92,7 @@ async function runExecution(set: SetState, get: GetState, files: File[]): Promis
     set({ executionState: pendingState });
 
     const onEvent = (event: PipelineEvent) => {
+      logEventToConsole(event);
       set((s) => ({
         executionLogs: [...s.executionLogs, { timestamp: Date.now(), event }],
       }));

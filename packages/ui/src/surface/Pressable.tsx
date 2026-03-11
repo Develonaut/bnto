@@ -32,6 +32,8 @@ type PressableProps = ComponentProps<"button"> & {
   spring?: SpringMode;
   /** Toggle mode — element stays depressed when active. */
   toggle?: boolean;
+  /** Haptic pop — squeeze-then-overshoot scale animation on click. */
+  haptic?: boolean;
   /** Programmatic active state (pressed in). */
   active?: boolean;
   /** Programmatic hover state (partially sunk). */
@@ -47,6 +49,7 @@ type PressableProps = ComponentProps<"button"> & {
 export function Pressable({
   spring = "bounciest",
   toggle,
+  haptic,
   active,
   hovered,
   pressed,
@@ -67,6 +70,7 @@ export function Pressable({
       data-hover={dataHover}
       data-active={dataActive}
       data-toggle={dataToggle}
+      data-haptic={haptic ? "" : undefined}
       className={cn("pressable outline-none", className)}
       style={{ ...SPRING_STYLES[spring], ...style }}
       {...props}

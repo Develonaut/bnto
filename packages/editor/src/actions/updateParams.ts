@@ -6,8 +6,8 @@
  * if the node doesn't exist. Config changes don't touch the RF nodes array —
  * no RF re-render needed.
  *
- * Child-aware: if the node has a parentContainerId (it's a child of an
- * expanded container), also writes through to the definition tree.
+ * Definition-aware: writes parameter changes through to the definition
+ * tree so the nested structure stays in sync for export.
  */
 
 import type { EditorState } from "../store/types";
@@ -30,10 +30,9 @@ export function updateParams(
     },
   };
 
-  // Write-through to definition tree for child nodes
-  const node = state.nodes.find((n) => n.id === nodeId);
+  // Write-through to definition tree (children AND top-level nodes)
   let nextDefinition = state.definition;
-  if (node?.data.parentContainerId && nextDefinition) {
+  if (nextDefinition) {
     nextDefinition = updateNodeInTree(nextDefinition, nodeId, params);
   }
 

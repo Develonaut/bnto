@@ -133,6 +133,22 @@
   }
 }
 
+/* Haptic pop — squeeze-then-overshoot on click.
+ * Proven pattern from daisyUI/Tailwind community.
+ * Feels physical: deeper squeeze (0.9), pronounced overshoot (1.05), settle.
+ * 300ms ease-out — snappy but visible. */
+@keyframes haptic-pop {
+  0% {
+    scale: 0.9;
+  }
+  40% {
+    scale: 1.05;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
 /* ── Stagger Cascade ───────────────────────────────────────────
  * Container class. Children receive staggered animation-delay
  * via --stagger-index CSS variable set in JSX.
