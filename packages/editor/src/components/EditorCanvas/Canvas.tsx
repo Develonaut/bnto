@@ -61,6 +61,8 @@ type CanvasProps = {
   standalone?: boolean;
   /** Called when a node is clicked. Receives the node ID. */
   onNodeClick?: (nodeId: string) => void;
+  /** Called when the empty canvas background is clicked (not a node). */
+  onPaneClick?: () => void;
   /** ReactFlow children — Panel overlays, Controls, etc. */
   children?: ReactNode;
   /** Override container classes. */
@@ -91,6 +93,7 @@ type CanvasInnerProps = {
   interactive?: boolean;
   disable?: CanvasProps["disable"];
   onNodeClick?: (nodeId: string) => void;
+  onPaneClick?: () => void;
   children?: ReactNode;
 };
 
@@ -103,15 +106,18 @@ function CanvasInner({
   interactive = false,
   disable,
   onNodeClick,
+  onPaneClick,
   children,
 }: CanvasInnerProps) {
-  const { fitView } = useReactFlow();
+  const { fitView, getNodes } = useReactFlow();
 
   /* Fit viewport whenever the node count changes (add/remove).
    * Initial mount uses duration: 0 (instant); subsequent changes
    * animate smoothly so the user sees the viewport adjust.
-   * When only I/O + placeholder remain, fit to the placeholder
-   * so the viewport centers on the "add node" prompt. */
+   *
+   * Priority: selected node > all processing nodes > placeholder.
+   * Reading selection inside rAF ensures we get the latest state
+   * after React has flushed (e.g. auto-select on addNode). */
   const prevCountRef = useRef<number | null>(null);
   const nodeCount = useStore((s) => s.nodes.length);
   const hasProcessingNodes = useStore((s) => s.nodes.some((n) => n.type === "compartment"));
@@ -120,12 +126,17 @@ function CanvasInner({
     if (nodeCount === 0) return;
     const isInitial = prevCountRef.current === null;
     prevCountRef.current = nodeCount;
-    const includeNodes = hasProcessingNodes ? undefined : [{ id: PLACEHOLDER_ID }];
     // Defer fitView so RF has time to measure node DOM dimensions.
     requestAnimationFrame(() => {
+      const selected = getNodes().find((n) => n.selected);
+      const includeNodes = selected
+        ? [{ id: selected.id }]
+        : hasProcessingNodes
+          ? undefined
+          : [{ id: PLACEHOLDER_ID }];
       fitView({ ...FIT_VIEW_OPTIONS, duration: isInitial ? 0 : 300, nodes: includeNodes });
     });
-  }, [nodeCount, fitView, hasProcessingNodes]);
+  }, [nodeCount, fitView, hasProcessingNodes, getNodes]);
 
   // Controlled mode: nodes + onNodesChange props
   // Uncontrolled mode: defaultNodes prop
@@ -150,6 +161,7 @@ function CanvasInner({
         : { defaultNodes, edges: EMPTY_EDGES })}
       nodeTypes={NODE_TYPES}
       onNodeClick={onNodeClick ? handleNodeClick : undefined}
+      onPaneClick={onPaneClick}
       nodesDraggable={interactive && !disable?.drag}
       nodesConnectable={false}
       elementsSelectable={interactive && !disable?.select}
@@ -181,6 +193,7 @@ export function Canvas({
   disable,
   standalone = false,
   onNodeClick,
+  onPaneClick,
   children,
   className,
 }: CanvasProps) {
@@ -194,6 +207,7 @@ export function Canvas({
       interactive={interactive}
       disable={disable}
       onNodeClick={onNodeClick}
+      onPaneClick={onPaneClick}
     >
       {children}
     </CanvasInner>

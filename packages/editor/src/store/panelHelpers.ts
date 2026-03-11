@@ -28,4 +28,10 @@ function autoOpenConfig(panels: PanelState): PanelState {
   return closeSameSideSiblings(panels, "config");
 }
 
-export { autoOpenConfig, closeSameSideSiblings };
+/** Auto-close config when deselecting all nodes. */
+function autoCloseConfig(panels: PanelState): PanelState {
+  if (!panels.config) return panels;
+  return { ...panels, config: false };
+}
+
+export { autoOpenConfig, autoCloseConfig, closeSameSideSiblings };
