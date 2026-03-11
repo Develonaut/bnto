@@ -20,7 +20,7 @@ import { createBlank } from "../actions/createBlank";
 import { runExecution } from "../actions/runExecution";
 import { expandContainer } from "../actions/expandContainer";
 import { collapseContainer } from "../actions/collapseContainer";
-import { autoOpenConfig, closeSameSideSiblings } from "./panelHelpers";
+import { autoOpenConfig, autoCloseConfig, closeSameSideSiblings } from "./panelHelpers";
 
 // ---------------------------------------------------------------------------
 // Store factory
@@ -101,7 +101,7 @@ function createEditorStore(definition?: Definition) {
               ? { ...n, selected: false }
               : n,
         ),
-        panels: id ? autoOpenConfig(s.panels) : s.panels,
+        panels: id ? autoOpenConfig(s.panels) : autoCloseConfig(s.panels),
       }));
     },
 
@@ -190,7 +190,7 @@ function createEditorStore(definition?: Definition) {
     setSelectedNodeId: (id) => {
       set((s) => ({
         selectedNodeId: id,
-        panels: id ? autoOpenConfig(s.panels) : s.panels,
+        panels: id ? autoOpenConfig(s.panels) : autoCloseConfig(s.panels),
       }));
     },
 

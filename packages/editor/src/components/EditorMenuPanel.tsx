@@ -12,8 +12,11 @@ import type { PanelId } from "../store/types";
  * boundary padding, and store-controlled open state. Each panel
  * provides its icon, panel ID, side, width, and children.
  *
- * Panels are toggled via their toolbar buttons only. Opening a panel
- * closes same-side siblings via the store's PANEL_SIDES map.
+ * Panels close via toolbar toggle or store-driven state changes
+ * (e.g. node deselection closes config, pane click closes panels).
+ * Radix outside-click dismissal is suppressed — the store owns
+ * panel lifecycle so clicking between nodes doesn't re-animate.
+ * Opening a panel closes same-side siblings via PANEL_SIDES map.
  * When open, the trigger icon swaps to an X close icon.
  */
 

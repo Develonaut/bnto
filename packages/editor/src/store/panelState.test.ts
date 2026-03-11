@@ -63,4 +63,20 @@ describe("panel state", () => {
     store.getState().setSelectedNodeId("some-id");
     expect(store.getState().panels.config).toBe(true);
   });
+
+  it("setSelectedNodeId(null) closes config panel", () => {
+    const store = createEditorStore();
+    store.getState().setSelectedNodeId("some-id");
+    expect(store.getState().panels.config).toBe(true);
+    store.getState().setSelectedNodeId(null);
+    expect(store.getState().panels.config).toBe(false);
+  });
+
+  it("selectNode(null) closes config panel", () => {
+    const store = createEditorStore();
+    store.getState().openPanel("config");
+    expect(store.getState().panels.config).toBe(true);
+    store.getState().selectNode(null);
+    expect(store.getState().panels.config).toBe(false);
+  });
 });
