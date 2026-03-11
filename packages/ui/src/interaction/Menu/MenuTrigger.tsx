@@ -24,7 +24,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement, ComponentProps<typeof B
     return (
       <PopoverAnchor className="inline-flex">
         <PopoverTrigger asChild>
-          <Button ref={ref} {...props}>
+          <Button ref={ref} haptic {...props}>
             {children}
           </Button>
         </PopoverTrigger>

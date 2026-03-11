@@ -86,6 +86,8 @@ type ButtonProps = Omit<ComponentProps<"button">, "ref"> &
     asChild?: boolean;
     elevation?: ElevationOverride;
     spring?: SpringMode;
+    /** Haptic pop — squeeze-then-overshoot scale animation on click. */
+    haptic?: boolean;
     muted?: boolean;
     hovered?: boolean;
     pressed?: boolean;
@@ -102,6 +104,7 @@ function Button({
   as,
   elevation = true,
   spring = "bounciest",
+  haptic = false,
   muted = false,
   hovered = false,
   pressed = false,
@@ -141,6 +144,7 @@ function Button({
       data-hover={hovered && !pressed ? "" : undefined}
       data-active={pressed ? "" : undefined}
       data-toggle={toggle ? "" : undefined}
+      data-haptic={haptic || toggle ? "" : undefined}
       {...(!!href ? { href } : {})}
       className={cn(behaviorCn, resolvedSizeClasses, className)}
       style={{ ...SPRING_STYLES[spring], ...style }}
