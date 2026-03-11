@@ -5,22 +5,21 @@
  * addDivider nodes in the gaps. Five locations:
  *
  * 1. **Top-level gaps**: Between consecutive top-level nodes (horizontal).
- * 2. **Empty container**: Single divider below an expanded container with no children.
- * 3. **Before first child**: Below parent, above the first child.
- * 4. **Between children**: Between consecutive children in a column.
- * 5. **After last child**: Below the last child.
+ * 2. **Empty container**: Single divider next to an expanded container with no children.
+ * 3. **Before first child**: Between parent and first child on the flow axis.
+ * 4. **Between children**: Between consecutive children along the flow axis.
+ * 5. **After last child**: After the last child along the flow axis.
  *
+ * Container flow direction alternates by depth (even = vertical, odd = horizontal).
  * Dividers use a stable ID pattern so RF doesn't unmount/remount them.
  */
 
 import type { BentoNode } from "../adapters/types";
-import { CELL, GAP_X, ROW_OFFSET } from "../adapters/bentoSlots";
+import { CELL, GAP_X, DIVIDER_THIN } from "../adapters/bentoSlots";
+import { directionConfigFor, type DirectionConfig } from "./directionConfig";
 
 /** Prefix for divider node IDs — filtered by change handlers. */
 const ADD_DIVIDER_PREFIX = "__add_divider__";
-
-/** Divider thickness for the non-primary axis. */
-const DIVIDER_THIN = 16;
 
 function injectAddDividers(
   nodes: BentoNode[],
@@ -82,76 +81,78 @@ function injectTopLevelDividers(topLevel: BentoNode[], out: BentoNode[]) {
   }
 }
 
-/** Inject vertical dividers for an expanded container's children. */
+/** Inject dividers for an expanded container's children. */
 function injectContainerDividers(
   parent: BentoNode,
   children: BentoNode[] | undefined,
   out: BentoNode[],
 ) {
+  const cfg = directionConfigFor(parent);
+
   if (!children?.length) {
-    injectEmptyContainerDivider(parent, out);
+    injectEmptyContainerDivider(parent, cfg, out);
     return;
   }
 
-  children.sort((a, b) => a.position.y - b.position.y);
-  injectBeforeFirstChild(parent, children[0]!, out);
-  injectBetweenChildren(children, parent.id, out);
-  injectAfterLastChild(children[children.length - 1]!, parent.id, out);
+  children.sort(cfg.sort);
+  injectBeforeFirstChild(parent, children[0]!, cfg, out);
+  injectBetweenChildren(children, parent, cfg, out);
+  injectAfterLastChild(children[children.length - 1]!, parent, cfg, out);
 }
 
-/** Single divider below an empty container to add the first child. */
-function injectEmptyContainerDivider(parent: BentoNode, out: BentoNode[]) {
-  const y = parent.position.y + CELL + (ROW_OFFSET - CELL - DIVIDER_THIN) / 2;
+/** Single divider next to an empty container to add the first child. */
+function injectEmptyContainerDivider(parent: BentoNode, cfg: DirectionConfig, out: BentoNode[]) {
+  const p = cfg.primary(parent) + CELL + (cfg.gap - CELL - DIVIDER_THIN) / 2;
   out.push(createDivider({
     id: `${ADD_DIVIDER_PREFIX}empty__${parent.id}`,
-    x: parent.position.x, y,
-    width: CELL, height: DIVIDER_THIN,
-    direction: "vertical",
+    ...cfg.pos(p, parent),
+    width: cfg.width, height: cfg.height,
+    direction: cfg.direction,
     afterNodeId: null,
     intoContainerId: parent.id,
   }));
 }
 
 /** Divider between parent and first child. */
-function injectBeforeFirstChild(parent: BentoNode, first: BentoNode, out: BentoNode[]) {
-  const y = parent.position.y + CELL + (first.position.y - parent.position.y - CELL - DIVIDER_THIN) / 2;
+function injectBeforeFirstChild(parent: BentoNode, first: BentoNode, cfg: DirectionConfig, out: BentoNode[]) {
+  const p = cfg.primary(parent) + CELL + (cfg.primary(first) - cfg.primary(parent) - CELL - DIVIDER_THIN) / 2;
   out.push(createDivider({
     id: `${ADD_DIVIDER_PREFIX}first__${parent.id}`,
-    x: parent.position.x, y,
-    width: CELL, height: DIVIDER_THIN,
-    direction: "vertical",
+    ...cfg.pos(p, parent),
+    width: cfg.width, height: cfg.height,
+    direction: cfg.direction,
     afterNodeId: null,
     intoContainerId: parent.id,
   }));
 }
 
 /** Dividers between consecutive children. */
-function injectBetweenChildren(children: BentoNode[], parentId: string, out: BentoNode[]) {
+function injectBetweenChildren(children: BentoNode[], parent: BentoNode, cfg: DirectionConfig, out: BentoNode[]) {
   for (let i = 0; i < children.length - 1; i++) {
-    const above = children[i]!;
-    const below = children[i + 1]!;
-    const y = above.position.y + CELL + (below.position.y - above.position.y - CELL - DIVIDER_THIN) / 2;
+    const prev = children[i]!;
+    const next = children[i + 1]!;
+    const p = cfg.primary(prev) + CELL + (cfg.primary(next) - cfg.primary(prev) - CELL - DIVIDER_THIN) / 2;
     out.push(createDivider({
-      id: `${ADD_DIVIDER_PREFIX}${above.id}`,
-      x: above.position.x, y,
-      width: CELL, height: DIVIDER_THIN,
-      direction: "vertical",
-      afterNodeId: above.id,
-      intoContainerId: parentId,
+      id: `${ADD_DIVIDER_PREFIX}${prev.id}`,
+      ...cfg.pos(p, parent),
+      width: cfg.width, height: cfg.height,
+      direction: cfg.direction,
+      afterNodeId: prev.id,
+      intoContainerId: parent.id,
     }));
   }
 }
 
-/** Divider below the last child. */
-function injectAfterLastChild(last: BentoNode, parentId: string, out: BentoNode[]) {
-  const y = last.position.y + CELL + (ROW_OFFSET - CELL - DIVIDER_THIN) / 2;
+/** Divider after the last child. */
+function injectAfterLastChild(last: BentoNode, parent: BentoNode, cfg: DirectionConfig, out: BentoNode[]) {
+  const p = cfg.primary(last) + CELL + (cfg.gap - CELL - DIVIDER_THIN) / 2;
   out.push(createDivider({
-    id: `${ADD_DIVIDER_PREFIX}last__${parentId}`,
-    x: last.position.x, y,
-    width: CELL, height: DIVIDER_THIN,
-    direction: "vertical",
+    id: `${ADD_DIVIDER_PREFIX}last__${parent.id}`,
+    ...cfg.pos(p, parent),
+    width: cfg.width, height: cfg.height,
+    direction: cfg.direction,
     afterNodeId: last.id,
-    intoContainerId: parentId,
+    intoContainerId: parent.id,
   }));
 }
 
