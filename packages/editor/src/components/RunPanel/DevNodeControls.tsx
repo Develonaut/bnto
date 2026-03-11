@@ -7,14 +7,13 @@
  * Lists all non-I/O nodes from the store. Each node shows:
  * - Label and current status badge
  * - Status stepper buttons (pending/active/completed)
- * - Progress slider (0–100)
+ * - Progress slider (0-100)
  */
 
 import { useCallback, useRef, useState } from "react";
 import { Badge, Button, Row, Slider, Stack, Text } from "@bnto/ui";
 import { isIoNodeType } from "@bnto/nodes";
-import { useEditorStore } from "../../hooks/useEditorStore";
-import { getEditorStore } from "../../store/instance";
+import { useEditor } from "../../context";
 import type { NodeExecutionStatus } from "../../store/types";
 
 /** Delay helper for simulation timing. */
@@ -33,10 +32,9 @@ const STATUS_COLORS: Record<NodeExecutionStatus, "outline" | "secondary" | "dest
 };
 
 function DevNodeControls() {
-  const nodes = useEditorStore((s) => s.nodes);
-  const configs = useEditorStore((s) => s.configs);
-  const executionState = useEditorStore((s) => s.executionState);
-  const nodeProgress = useEditorStore((s) => s.nodeProgress);
+  const editor = useEditor();
+  const { nodes, configs } = editor.nodes.useNodes();
+  const { executionState, nodeProgress } = editor.execution.useExecution();
 
   const processingNodes = nodes.filter((n) => {
     const config = configs[n.id];
@@ -44,18 +42,12 @@ function DevNodeControls() {
   });
 
   const setNodeStatus = useCallback((nodeId: string, status: NodeExecutionStatus) => {
-    const store = getEditorStore();
-    store.setState((s) => ({
-      executionState: { ...s.executionState, [nodeId]: status },
-    }));
-  }, []);
+    editor.execution.setNodeStatus(nodeId, status);
+  }, [editor]);
 
   const setNodeProgress = useCallback((nodeId: string, percent: number) => {
-    const store = getEditorStore();
-    store.setState((s) => ({
-      nodeProgress: { ...s.nodeProgress, [nodeId]: percent },
-    }));
-  }, []);
+    editor.execution.setNodeProgress(nodeId, percent);
+  }, [editor]);
 
   const [simulating, setSimulating] = useState(false);
   const cancelRef = useRef(false);
@@ -65,8 +57,6 @@ function DevNodeControls() {
     cancelRef.current = false;
     setSimulating(true);
 
-    const store = getEditorStore();
-
     // Reset all nodes to pending
     const allIds = processingNodes.map((n) => n.id);
     const pendingState: Record<string, NodeExecutionStatus> = {};
@@ -75,37 +65,30 @@ function DevNodeControls() {
       pendingState[id] = "pending";
       zeroProgress[id] = 0;
     }
-    store.setState({ executionState: pendingState, nodeProgress: zeroProgress });
+    editor.execution.forceExecutionState({ executionState: pendingState, nodeProgress: zeroProgress });
     await wait(400);
 
-    // Walk each node through active → progress → completed
+    // Walk each node through active -> progress -> completed
     for (const id of allIds) {
       if (cancelRef.current) break;
 
-      store.setState((s) => ({
-        executionState: { ...s.executionState, [id]: "active" },
-      }));
+      editor.execution.setNodeStatus(id, "active");
 
-      // Animate progress 0 → 100 in steps
+      // Animate progress 0 -> 100 in steps
       const steps = 10;
       for (let i = 1; i <= steps; i++) {
         if (cancelRef.current) break;
         await wait(80);
-        const percent = Math.round((i / steps) * 100);
-        store.setState((s) => ({
-          nodeProgress: { ...s.nodeProgress, [id]: percent },
-        }));
+        editor.execution.setNodeProgress(id, Math.round((i / steps) * 100));
       }
 
       if (cancelRef.current) break;
-      store.setState((s) => ({
-        executionState: { ...s.executionState, [id]: "completed" },
-      }));
+      editor.execution.setNodeStatus(id, "completed");
       await wait(300);
     }
 
     setSimulating(false);
-  }, [processingNodes]);
+  }, [processingNodes, editor]);
 
   const cancelSimulation = useCallback(() => {
     cancelRef.current = true;

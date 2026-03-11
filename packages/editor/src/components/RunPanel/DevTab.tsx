@@ -14,7 +14,7 @@ import {
   Text,
 } from "@bnto/ui";
 import { RECIPES, getRecipeBySlug } from "@bnto/nodes";
-import { getEditorStore } from "../../store/instance";
+import { useEditor } from "../../context";
 import type { ExecutionPhase, FileProgress } from "../../store/types";
 import { MOCK_RESULTS } from "./devMockData";
 import { DevNodeControls } from "./DevNodeControls";
@@ -34,18 +34,18 @@ function buildFileProgress(percent: number): FileProgress {
  *
  * Allows forcing:
  * - Execution phase (idle, running, completed, failed)
- * - Progress percentage (0–100%)
+ * - Progress percentage (0-100%)
  * - Recipe loading (6 public recipes)
  *
  * Only rendered when NODE_ENV === "development".
  */
 function DevTab() {
+  const editor = useEditor();
   const [progress, setProgress] = useState(0);
 
   const forcePhase = useCallback(
     (phase: ExecutionPhase) => {
-      const store = getEditorStore();
-      if (phase === "idle") return store.getState().resetRun();
+      if (phase === "idle") return editor.execution.resetRun();
 
       const stateByPhase = {
         running: {
@@ -67,18 +67,18 @@ function DevTab() {
           executionFileProgress: null,
         },
       };
-      store.setState(stateByPhase[phase]);
+      editor.execution.forceExecutionState(stateByPhase[phase]);
     },
-    [progress],
+    [editor, progress],
   );
 
   const forceProgress = useCallback((percent: number) => {
     setProgress(percent);
-    getEditorStore().setState({
+    editor.execution.forceExecutionState({
       executionPhase: "running",
       executionFileProgress: buildFileProgress(percent),
     });
-  }, []);
+  }, [editor]);
 
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
@@ -139,10 +139,11 @@ function ProgressControl({
 }
 
 function RecipeSelect() {
+  const editor = useEditor();
   const handleLoadRecipe = useCallback((slug: string) => {
     const recipe = getRecipeBySlug(slug);
-    if (recipe) getEditorStore().getState().loadDefinition(recipe.definition);
-  }, []);
+    if (recipe) editor.definition.loadDefinition(recipe.definition);
+  }, [editor]);
 
   return (
     <Stack className="gap-1.5">

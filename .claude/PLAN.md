@@ -36,6 +36,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
   5. **Sprint 5C** — copy + nav label cleanup (~30 min)
   6. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern)
   7. **Sprint 5 Waves 4–5** — save infrastructure, My Recipes, final E2E
+  8. **Sprint 5D** — Editor API layer (`client → service → store` abstraction). Multi-day. Pickup skill: `/editor-api`.
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
@@ -535,6 +536,109 @@ With the executor proven correct by tests, remove the iteration logic from the p
 - [ ] `/project-manager` — **Verify animation identity**: Confirm `ScaleIn from={0.7} easing="spring-bouncy"` still exists on `CompartmentNode.tsx`. Confirm `AnimatePresence` exit animation is wired. Confirm `strategy/design-language.md` has the "Editor Animation Language" section with PROTECTED headers.
 - [ ] `/project-manager` — **Verify execution order**: Confirm the "Active work — execution order" in PLAN.md Current State matches the actual dependency graph. Confirm Sprint 5 Wave 3 is unblocked (4H complete). Confirm Sprint 6 prerequisites are met (execution wired).
 - [ ] `/project-manager` — **Report**: Produce a pass/fail summary. If all pass, Sprint 5 Wave 3 is greenlit. If any fail, document what needs fixing before execution wiring starts.
+
+---
+
+### Sprint 5D: Editor API Layer — Client → Service → Store Abstraction
+
+**Goal:** Add a `client → service → store` abstraction layer inside `packages/editor/`, mirroring `@bnto/core`'s proven pattern. The result: a clean per-instance API (`createEditor()`) that components consume via context, and that tests consume directly without React. Domain-namespaced access (`editor.nodes.addNode()`, `editor.history.undo()`) replaces the inconsistent mix of `useEditorStore()`, `useEditorActions()`, and raw `storeApi.setState()`.
+
+**Strategy doc:** `.claude/strategy/editor-api.md` — full architecture, domain decomposition, file lists, design decisions.
+
+**Pickup skill:** `/editor-api` — resume this work from any session.
+
+**Persona ownership:** `/reactflow-expert` leads all waves. `/frontend-engineer` joins for Wave 4.
+
+**Package:** `[editor]` — all work in `packages/editor/src/`
+
+**Prerequisite:** Sprint 4E (editor extraction) complete.
+
+---
+
+#### Wave 1 — Services + Factory + Tests
+
+> **Gate:** `task ui:build && task ui:test` — all pass. Factory creates a working `EditorInstance`.
+
+No component changes. All existing hooks and patterns continue to work.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/editorTypes.ts`**: Define `EditorInstance`, `NodeClient`, `DefinitionClient`, `ExecutionClient`, `HistoryClient`, `PanelClient` interfaces. Type-only file — no runtime code. Import `EditorState`, `EditorStore`, `StoreApi` from existing types.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/services/nodeService.ts`**: Create `createNodeService(storeApi)`. Wraps: `addNode`, `removeNode`, `selectNode`, `expandContainer`, `collapseContainer`, `toggleContainerExpanded`, `onNodesChange`, `onEdgesChange`, `setNodes`, `setSelectedNodeId`, `setConfig`, `setConfigs`, `removeConfig`, insertion context setters. Each method: call pure action → `storeApi.setState(result)`. Export `NodeService` type.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/services/definitionService.ts`**: Create `createDefinitionService(storeApi)`. Wraps: `loadDefinition`, `createBlank`, `updateParams`, `updateSurfacedParam`, `setRecipeMetadata`, `markDirty`, `resetDirty`, `revalidate`. Export includes `exportAsDefinition()` (reads state → calls `rfNodesToDefinition`). Export `DefinitionService` type.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/services/executionService.ts`**: Create `createExecutionService(storeApi)`. Wraps: `runExecution`, `resetRun`, `downloadResult`, `downloadAllResults`, `setExecutionState`, `resetNodeStatuses`. Export `ExecutionService` type.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/services/historyService.ts`**: Create `createHistoryService(storeApi)`. Wraps: `pushUndo`, `undo`, `redo`, `resetHistory`. Export `HistoryService` type.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/services/panelService.ts`**: Create `createPanelService(storeApi)`. Wraps: `openPanel`, `closePanel`, `togglePanel`. Export `PanelService` type.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/clients/nodeClient.ts`**: Create `createNodeClient(nodeService)`. Spreads nodeService. selectNode delegates to store action which already handles cross-domain atomicity (select node + auto-open/close config panel) internally. Export `NodeClient` type.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/clients/definitionClient.ts`**: Create `createDefinitionClient(definitionService)`. Spreads definitionService. Adds `exportAsRecipe(metadata?)` which calls `exportAsDefinition()` then `definitionToRecipe()`. Export `DefinitionClient` type.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/clients/executionClient.ts`**, **`historyClient.ts`**, **`panelClient.ts`**: Thin passthroughs — `createXClient(service)` returns `{ ...service }`. Export client types.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/createEditor.ts`**: Factory function. `createEditor(definition?) → EditorInstance`. Calls `createEditorStore(definition)` → creates all 5 services → creates all 5 clients → returns `{ nodes, definition, execution, history, panels, getState(), subscribe(), destroy(), _storeApi }`. `destroy()` is a no-op for now (future: cleanup subscriptions).
+
+- [x] `[editor]` — `/reactflow-expert` — **Tests**: `createEditor.test.ts` (23 tests: factory creates instance, imperative add/remove/undo works, `getState()` returns current state, `subscribe()` fires on changes). `nodeService.test.ts` (7 tests). `definitionService.test.ts` (7 tests). `historyService.test.ts` (6 tests). All tests pure TypeScript — no React, no browser.
+
+---
+
+#### Wave 2 — EditorProvider + Context
+
+> **Gate:** `task ui:build && task ui:test && task e2e` — all pass. Old hooks still work via compat bridge.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/context.ts`**: Create `EditorContext` (React context holding `EditorInstance | null`). Export `useEditor()` hook that reads context and throws if null ("useEditor must be used within EditorProvider").
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/EditorProvider.tsx`**: Creates `EditorInstance` via `createEditor(definition)` in `useState` initializer. Provides instance via `EditorContext`. Wraps children in `ReactFlowProvider`. Calls `setEditorStore(instance._storeApi)` on init for backwards compatibility with old hooks.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/store/instance.ts` (modify)**: Add `setEditorStore(storeApi)` function that sets the module-level store variable. This is the compat bridge — EditorProvider sets it, old hooks read it. Export it alongside existing `initEditorStore`, `getEditorStore`.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/components/EditorCanvas/EditorCanvasRoot.tsx` (modify)**: Replace manual `useState(() => initEditorStore())` + `ReactFlowProvider` with `<EditorProvider definition={definition}>`. Internally this calls `createEditor()` and provides context. Verify existing behavior is 100% preserved.
+
+---
+
+#### Wave 3 — Domain-Namespaced Hooks
+
+> **Gate:** `task ui:build && task ui:test` — all pass. New hooks available but not yet consumed.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/hooks/useNodes.ts`**: Uses `useEditor()` + `useStore(editor._storeApi, selector)`. Returns: `nodes`, `edges`, `configs`, `selectedNodeId`, `insertAfterNodeId`, `insertIntoContainerId` (state) + `addNode`, `removeNode`, `selectNode`, `expandContainer`, `collapseContainer`, `onNodesChange`, `onEdgesChange` (actions from `editor.nodes`).
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/hooks/useDefinition.ts`**: Returns: `definition`, `recipeMetadata`, `isDirty`, `validationErrors` (state) + `loadDefinition`, `createBlank`, `updateParams`, `updateSurfacedParam`, `exportAsRecipe`, `setRecipeMetadata`, `markDirty`, `resetDirty` (actions from `editor.definition`).
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/hooks/useExecution.ts`**: Returns: `executionPhase`, `executionResults`, `executionErrors`, `executionLogs`, `executionFileProgress`, `executionInputFiles`, `canRun` (derived) + `run`, `reset`, `downloadFile`, `downloadAll` (actions from `editor.execution`). Replaces `useEditorExecution`.
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/hooks/useHistory.ts`**: Returns: `canUndo` (derived from `undoStack.length > 0`), `canRedo` (derived from `redoStack.length > 0`) + `undo`, `redo` (actions from `editor.history`).
+
+- [x] `[editor]` — `/reactflow-expert` — **`src/hooks/usePanels.ts`**: Takes `panelId: PanelId`. Returns: `isOpen` (from `panels[panelId]`) + `open`, `close`, `toggle` (actions from `editor.panels`, pre-bound to panelId).
+
+---
+
+#### Wave 4 — Component Migration
+
+> **Gate:** `task ui:build && task ui:test && task e2e` after each file. Commit per file.
+
+Migrate file-by-file. Each task is one component file. After migration, the component uses only new hooks — no `useEditorStore`, `useEditorActions`, `useEditorStoreApi`.
+
+- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `EditorToolbar.tsx`**: Replace `useEditorUndoRedo`, `useEditorStore`, `useEditorExport`, `usePanel` → `useHistory()`, `useDefinition()`, `usePanels()`.
+- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `EditorRightToolbar.tsx`**: Replace old hooks → `usePanels()`, `useNodes()`.
+- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `CanvasShell.tsx`**: Replace `useEditorStore` selectors → `useNodes()`.
+- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `NodePaletteDialogRoot.tsx`**: Replace `useEditorActions`, `useEditorStore`, `useEditorStoreApi` → `useNodes()`, `useEditor()`.
+- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `ConfigPanelRoot.tsx`**: Replace `useEditorStore`, `useEditorStoreApi`, `useEditorActions`, raw `updateSurfacedParam` import → `useNodes()`, `useDefinition()`.
+- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `RunPanel/*`**: Replace `useEditorExecution` → `useExecution()`.
+- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate remaining consumers**: `NodeDeleteButton`, `Canvas.tsx`, `useEditorCanvas.ts`, `SurfacedParamsSection.tsx`, any other files still importing old hooks. Grep for `useEditorStore`, `useEditorStoreApi`, `useEditorActions` — zero remaining references outside deprecated hook files.
+
+---
+
+#### Wave 5 — Cleanup
+
+> **Final gate:** `task ui:build && task ui:test && task e2e` — all pass. Grep for deleted exports — zero references.
+
+- [x] `[editor]` — `/reactflow-expert` — **Delete deprecated hooks**: Remove `useEditorStore.ts`, `useEditorStoreApi.ts`, `useEditorActions.ts`, `useAddNode.ts`, `useRemoveNode.ts`, `useUpdateParams.ts`, `useEditorUndoRedo.ts`, `usePanel.ts`, `useEditorExport.ts`, `useEditorExecution.ts`.
+- [x] `[editor]` — `/reactflow-expert` — **Delete singleton**: Remove `src/store/instance.ts`. Remove `setEditorStore` call from EditorProvider (no longer needed).
+- [x] `[editor]` — `/reactflow-expert` — **Update `src/index.ts`**: Remove old exports. Add: `createEditor`, `EditorProvider`, `useEditor`, `useNodes`, `useDefinition`, `useExecution`, `useHistory`, `usePanels`, `EditorInstance` type. Verify: `task ui:build` passes — no broken imports across the monorepo.
+- [x] `[editor]` — `/reactflow-expert` — **Final grep**: Search entire codebase for any remaining references to deleted hooks or `instance.ts`. Zero results required.
 
 ---
 

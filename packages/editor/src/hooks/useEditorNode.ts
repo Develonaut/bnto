@@ -18,7 +18,8 @@ import {
   getVisibleParams,
   collectSurfacedParams,
 } from "@bnto/nodes";
-import { useEditorStore } from "./useEditorStore";
+import { useStore } from "zustand";
+import { useEditorStoreApi } from "../context";
 import type { CompartmentNodeData, NodeConfig } from "../adapters/types";
 import { findDefinitionById } from "../adapters/findDefinitionById";
 
@@ -47,17 +48,19 @@ interface EditorNodeResult {
  * Visual data from store nodes, domain data from store configs.
  */
 function useEditorNode(nodeId: string | null): EditorNodeResult {
-  const nodeData = useEditorStore((s) => {
+  const storeApi = useEditorStoreApi();
+
+  const nodeData = useStore(storeApi, (s) => {
     if (!nodeId) return null;
     return s.nodes.find((n) => n.id === nodeId)?.data ?? null;
   });
 
-  const config = useEditorStore((s) => {
+  const config = useStore(storeApi, (s) => {
     if (!nodeId) return null;
     return s.configs[nodeId] ?? null;
   });
 
-  const definition = useEditorStore((s) => s.definition);
+  const definition = useStore(storeApi, (s) => s.definition);
 
   return useMemo(() => {
     if (!nodeData || !config) {

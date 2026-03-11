@@ -5,8 +5,8 @@ import type { NodeProps } from "@xyflow/react";
 import { Plus } from "lucide-react";
 import { Button, Divider } from "@bnto/ui";
 import type { BentoNode } from "../../adapters/types";
-import { usePanel } from "../../hooks/usePanel";
-import { useEditorStoreApi } from "../../hooks/useEditorStoreApi";
+import { usePanels } from "../../hooks/usePanels";
+import { useEditor } from "../../context";
 
 /**
  * AddDividerNode — a divider element between nodes on the canvas.
@@ -29,8 +29,8 @@ import { useEditorStoreApi } from "../../hooks/useEditorStoreApi";
 export const AddDividerNode = memo(function AddDividerNode({
   data,
 }: NodeProps<BentoNode>) {
-  const { open: openPalette } = usePanel("palette");
-  const storeApi = useEditorStoreApi();
+  const { open: openPalette } = usePanels("palette");
+  const editor = useEditor();
   const [hovered, setHovered] = useState(false);
   const direction = data.dividerDirection ?? "horizontal";
   const afterNodeId = data.dividerAfterNodeId ?? null;
@@ -39,13 +39,11 @@ export const AddDividerNode = memo(function AddDividerNode({
   const handleClick = useCallback(
     (e: MouseEvent) => {
       e.stopPropagation();
-      storeApi.setState({
-        insertAfterNodeId: afterNodeId,
-        insertIntoContainerId: intoContainerId,
-      });
+      editor.nodes.setInsertAfterNodeId(afterNodeId);
+      editor.nodes.setInsertIntoContainerId(intoContainerId);
       openPalette();
     },
-    [afterNodeId, intoContainerId, storeApi, openPalette],
+    [afterNodeId, intoContainerId, editor, openPalette],
   );
 
   // "horizontal" direction = gap between top-level nodes = vertical divider line

@@ -2,13 +2,10 @@
 
 import { useCallback } from "react";
 import { Badge, Divider, Heading, SlidersHorizontalIcon, Text, usePrevious } from "@bnto/ui";
-import { useEditorStore } from "../../hooks/useEditorStore";
-import { useEditorStoreApi } from "../../hooks/useEditorStoreApi";
+import { useEditor } from "../../context";
 import { useEditorNode } from "../../hooks/useEditorNode";
-import { useEditorActions } from "../../hooks/useEditorActions";
 import { SchemaForm } from "../SchemaForm";
 import { SurfacedParamsSection } from "./SurfacedParamsSection";
-import { updateSurfacedParam } from "../../actions/updateSurfacedParam";
 import { EditorMenuPanel } from "../EditorMenuPanel";
 
 /**
@@ -20,30 +17,27 @@ import { EditorMenuPanel } from "../EditorMenuPanel";
  */
 
 function ConfigPanelRoot() {
-  const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
+  const editor = useEditor();
+  const { selectedNodeId } = editor.nodes.useNodes();
   const prevSelectedNodeId = usePrevious(selectedNodeId);
   const configNodeId = selectedNodeId ?? prevSelectedNodeId ?? null;
 
   const { node, config, typeInfo, schemaDef, visibleParams, surfacedGroups } =
     useEditorNode(configNodeId);
-  const { updateParams } = useEditorActions();
-  const storeApi = useEditorStoreApi();
 
   const handleParamChange = useCallback(
     (paramName: string, value: unknown) => {
       if (!configNodeId) return;
-      updateParams(configNodeId, { [paramName]: value });
+      editor.definition.updateParams(configNodeId, { [paramName]: value });
     },
-    [configNodeId, updateParams],
+    [configNodeId, editor],
   );
 
   const handleSurfacedParamChange = useCallback(
     (leafNodeId: string, paramName: string, value: unknown) => {
-      const state = storeApi.getState();
-      const result = updateSurfacedParam(state, leafNodeId, { [paramName]: value });
-      if (result) storeApi.setState(result);
+      editor.definition.updateSurfacedParam(leafNodeId, { [paramName]: value });
     },
-    [storeApi],
+    [editor],
   );
 
   const hasContent = configNodeId && node && config && typeInfo;

@@ -6,6 +6,12 @@
  *   <EditorRoot definition={recipe.definition}>
  *     <EditorCanvas />
  *   </EditorRoot>
+ *
+ * Factory (headless, no React):
+ *
+ *   const editor = createEditor(definition);
+ *   editor.nodes.addNode("image");
+ *   editor.definition.exportAsRecipe();
  */
 
 // --- Compound components ---
@@ -17,7 +23,59 @@ export {
   EditorRightToolbar,
 } from "./Editor";
 
-// --- Store ---
+// --- Editor factory + context ---
+
+export { createEditor } from "./createEditor";
+export { createReactEditor } from "./createReactEditor";
+export { EditorProvider } from "./EditorProvider";
+export { useEditor } from "./context";
+export type {
+  EditorInstance,
+  NodeService,
+  NodeClient,
+  DefinitionService,
+  DefinitionClient,
+  ExecutionService,
+  ExecutionClient,
+  HistoryService,
+  HistoryClient,
+  PanelService,
+  PanelClient,
+  ExportResult,
+} from "./editorTypes";
+export type {
+  ReactEditorInstance,
+  ReactNodeClient,
+  ReactDefinitionClient,
+  ReactExecutionClient,
+  ReactHistoryClient,
+  ReactPanelClient,
+  NodesHookResult,
+  DefinitionHookResult,
+  ExecutionHookResult,
+  HistoryHookResult,
+  PanelsHookResult,
+} from "./reactEditorTypes";
+
+// --- Domain hooks ---
+
+export { useNodes } from "./hooks/useNodes";
+export { useDefinition } from "./hooks/useDefinition";
+export { useExecution } from "./hooks/useExecution";
+export { useHistory } from "./hooks/useHistory";
+export { usePanels } from "./hooks/usePanels";
+
+// --- Internal hooks (rendering pipeline) ---
+
+export { useAutoSelect } from "./hooks/useAutoSelect";
+export { useEditorNode } from "./hooks/useEditorNode";
+export type { EditorNodeResult } from "./hooks/useEditorNode";
+export { useNodePalette } from "./hooks/useNodePalette";
+export type { PaletteGroup, NodePaletteResult } from "./hooks/useNodePalette";
+export { useEditorSelection } from "./hooks/useEditorSelection";
+export { useExecutionNodes } from "./hooks/useExecutionNodes";
+
+// --- Store (internal — prefer createEditor for new code) ---
 
 export { createEditorStore } from "./store/createEditorStore";
 export type {
@@ -34,32 +92,6 @@ export type {
   PanelState,
   RunLogEntry,
 } from "./store/types";
-
-// --- Store instance ---
-
-export { initEditorStore, getEditorStore } from "./store/instance";
-
-// --- Hooks ---
-
-export { useEditorStore } from "./hooks/useEditorStore";
-export { useEditorStoreApi } from "./hooks/useEditorStoreApi";
-export { useEditorActions } from "./hooks/useEditorActions";
-export { useAddNode } from "./hooks/useAddNode";
-export { useRemoveNode } from "./hooks/useRemoveNode";
-export { useUpdateParams } from "./hooks/useUpdateParams";
-export { useAutoSelect } from "./hooks/useAutoSelect";
-export { useEditorNode } from "./hooks/useEditorNode";
-export type { EditorNodeResult } from "./hooks/useEditorNode";
-export { useNodePalette } from "./hooks/useNodePalette";
-export type { PaletteGroup, NodePaletteResult } from "./hooks/useNodePalette";
-export { useEditorExport } from "./hooks/useEditorExport";
-export type { ExportResult, EditorExportResult } from "./hooks/useEditorExport";
-export { useEditorSelection } from "./hooks/useEditorSelection";
-export { useEditorUndoRedo } from "./hooks/useEditorUndoRedo";
-export { usePanel } from "./hooks/usePanel";
-export { useEditorExecution } from "./hooks/useEditorExecution";
-export type { EditorExecutionResult } from "./hooks/useEditorExecution";
-export { useExecutionNodes } from "./hooks/useExecutionNodes";
 
 // --- Canvas ---
 

@@ -13,9 +13,7 @@ import {
   SearchIcon,
   Text,
 } from "@bnto/ui";
-import { useEditorStore } from "../../hooks/useEditorStore";
-import { useEditorStoreApi } from "../../hooks/useEditorStoreApi";
-import { useEditorActions } from "../../hooks/useEditorActions";
+import { useEditor } from "../../context";
 import { useNodePalette } from "../../hooks/useNodePalette";
 import { SLOTS } from "../../adapters/bentoSlots";
 
@@ -34,12 +32,10 @@ interface NodePaletteDialogProps {
 
 function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
   const [search, setSearch] = useState("");
-  const { addNode } = useEditorActions();
+  const editor = useEditor();
   const { groups } = useNodePalette();
-  const storeApi = useEditorStoreApi();
-  const nodeCount = useEditorStore((s) => s.nodes.length);
-  const insertAfterNodeId = useEditorStore((s) => s.insertAfterNodeId);
-  const insertIntoContainerId = useEditorStore((s) => s.insertIntoContainerId);
+  const { nodes, insertAfterNodeId, insertIntoContainerId } = editor.nodes.useNodes();
+  const nodeCount = nodes.length;
   const isFull = nodeCount >= SLOTS.length;
 
   const filteredGroups = useMemo(() => {
@@ -60,18 +56,21 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
 
   const handleClose = useCallback(
     (nextOpen: boolean) => {
-      if (!nextOpen) storeApi.setState({ insertAfterNodeId: null, insertIntoContainerId: null });
+      if (!nextOpen) {
+        editor.nodes.setInsertAfterNodeId(null);
+        editor.nodes.setInsertIntoContainerId(null);
+      }
       onOpenChange(nextOpen);
     },
-    [storeApi, onOpenChange],
+    [editor, onOpenChange],
   );
 
   const handleAdd = useCallback(
     (typeName: NodeTypeName) => {
-      addNode(typeName, insertAfterNodeId, insertIntoContainerId);
+      editor.nodes.addNode(typeName, insertAfterNodeId, insertIntoContainerId);
       handleClose(false);
     },
-    [addNode, insertAfterNodeId, insertIntoContainerId, handleClose],
+    [editor, insertAfterNodeId, insertIntoContainerId, handleClose],
   );
 
   const hasResults = filteredGroups.length > 0;

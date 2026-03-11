@@ -3,11 +3,11 @@
 import { Button, DownloadIcon, ResultFileCard } from "@bnto/ui";
 import type { BrowserFileResult } from "@bnto/core";
 import { useFileResultProps } from "@bnto/core";
-import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditor } from "../../context";
 
 /** Single result row using the shared ResultFileCard. */
 function ResultRow({ result }: { result: BrowserFileResult }) {
-  const downloadFile = useEditorStore((s) => s.downloadResult);
+  const editor = useEditor();
   const props = useFileResultProps(result);
 
   return (
@@ -22,7 +22,7 @@ function ResultRow({ result }: { result: BrowserFileResult }) {
           variant="outline"
           size="sm"
           icon={<DownloadIcon />}
-          onClick={() => downloadFile(result)}
+          onClick={() => editor.execution.downloadResult(result)}
           aria-label={`Download ${result.filename}`}
         />
       }

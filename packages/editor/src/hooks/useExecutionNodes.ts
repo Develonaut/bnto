@@ -12,12 +12,14 @@
  */
 
 import { useMemo } from "react";
-import { useEditorStore } from "./useEditorStore";
+import { useStore } from "zustand";
+import { useEditorStoreApi } from "../context";
 import type { BentoNode, CompartmentNodeData } from "../adapters/types";
 
 function useExecutionNodes(nodes: BentoNode[]): BentoNode[] {
-  const executionState = useEditorStore((s) => s.executionState);
-  const nodeProgress = useEditorStore((s) => s.nodeProgress);
+  const storeApi = useEditorStoreApi();
+  const executionState = useStore(storeApi, (s) => s.executionState);
+  const nodeProgress = useStore(storeApi, (s) => s.nodeProgress);
 
   return useMemo(() => {
     const hasState = Object.keys(executionState).length > 0;

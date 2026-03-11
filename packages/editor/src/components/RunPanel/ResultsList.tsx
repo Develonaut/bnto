@@ -1,11 +1,12 @@
 "use client";
 
-import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditor } from "../../context";
 import { ResultRow } from "./ResultRow";
 
 /** File result cards — only renders when there are results. */
 function ResultsList() {
-  const results = useEditorStore((s) => s.executionResults);
+  const editor = useEditor();
+  const { results } = editor.execution.useExecution();
   if (results.length === 0) return null;
 
   return (

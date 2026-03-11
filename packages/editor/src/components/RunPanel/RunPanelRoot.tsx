@@ -2,7 +2,7 @@
 
 import { lazy, Suspense } from "react";
 import { Divider, Tabs, TabsList, TabsTrigger, TabsContent, TerminalIcon, Text } from "@bnto/ui";
-import { useEditorStore } from "../../hooks/useEditorStore";
+import { useEditor } from "../../context";
 import { ResultsTab } from "./ResultsTab";
 import { LogsTab } from "./LogsTab";
 import { EditorMenuPanel } from "../EditorMenuPanel";
@@ -21,8 +21,8 @@ const DevTab = isDev ? lazy(() => import("./DevTab").then((m) => ({ default: m.D
  * execution phases, progress, and recipe loading.
  */
 function RunPanelRoot() {
-  const results = useEditorStore((s) => s.executionResults);
-  const logs = useEditorStore((s) => s.executionLogs);
+  const editor = useEditor();
+  const { results, logs } = editor.execution.useExecution();
 
   return (
     <EditorMenuPanel

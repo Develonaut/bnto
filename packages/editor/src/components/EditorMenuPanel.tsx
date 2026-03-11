@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { cn, Menu, MenuContent, MenuTrigger, XIcon } from "@bnto/ui";
-import { usePanel } from "../hooks/usePanel";
+import { usePanels } from "../hooks/usePanels";
 import type { PanelId } from "../store/types";
 
 /**
@@ -48,7 +48,7 @@ function EditorMenuPanel({
   className,
   children,
 }: EditorMenuPanelProps) {
-  const { isOpen, toggle } = usePanel(panelId);
+  const { isOpen, toggle } = usePanels(panelId);
 
   return (
     <Menu
