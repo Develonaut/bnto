@@ -2,15 +2,15 @@
  * layoutNodes — repositions nodes based on container expansion state.
  *
  * Top-level nodes stay in a horizontal strip at y=0. When a container
- * is expanded, its children appear in a vertical column below the parent,
- * centered on the parent's x. Also injects containerGroup overlay nodes
- * (dashed boundary).
+ * is expanded, its children flow in an alternating direction based on
+ * nesting depth: even depth = vertical (down), odd depth = horizontal
+ * (right). Also injects containerGroup overlay nodes (dashed boundary).
  *
  * Pure function — no React, no DOM, fully testable.
  */
 
 import type { BentoNode } from "./types";
-import { CELL, STRIDE, ROW_OFFSET, GAP_X, GROUP_INSET } from "./bentoSlots";
+import { CELL, STRIDE, ROW_OFFSET, GAP_X, GROUP_INSET, getChildDirection } from "./bentoSlots";
 
 /** Prefix for containerGroup overlay node IDs. */
 const GROUP_ID_PREFIX = "__group__";
@@ -55,17 +55,16 @@ function layoutNodes(
     const px = parent.position.x;
     const py = parent.position.y;
     const childCount = children.length;
-
-    // Stack children vertically below parent, centered on parent's x
-    const childX = px;
-    const childStartY = py + ROW_OFFSET;
+    const parentDepth = parent.data.depth ?? 0;
+    const direction = getChildDirection(parentDepth);
 
     const positioned: BentoNode[] = [];
     for (let i = 0; i < childCount; i++) {
-      const child: BentoNode = {
-        ...children[i]!,
-        position: { x: childX, y: childStartY + i * ROW_OFFSET },
-      };
+      const position =
+        direction === "vertical"
+          ? { x: px, y: py + ROW_OFFSET + i * ROW_OFFSET }
+          : { x: px + STRIDE + i * STRIDE, y: py };
+      const child: BentoNode = { ...children[i]!, position };
       positioned.push(child);
       result.push(child);
 

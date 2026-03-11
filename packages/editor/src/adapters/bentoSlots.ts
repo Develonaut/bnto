@@ -49,7 +49,15 @@ const ROW_OFFSET = CELL + GAP_Y + 8;
  *  Set to GAP_X / 2 so the group border aligns with divider center lines. */
 const GROUP_INSET = GAP_X / 2;
 
+/** Divider thickness on the non-primary axis (px). */
+const DIVIDER_THIN = 16;
+
 /** Maximum nesting depth for container expansion. */
 const MAX_CONTAINER_DEPTH = 3;
 
-export { CELL, GAP_X, GAP_Y, STRIDE, SLOTS, IO_CARD_SIZE, ROW_OFFSET, GROUP_INSET, MAX_CONTAINER_DEPTH };
+/** Derive child flow direction from container depth. Even = down, odd = right. */
+function getChildDirection(depth: number): "vertical" | "horizontal" {
+  return depth % 2 === 0 ? "vertical" : "horizontal";
+}
+
+export { CELL, GAP_X, GAP_Y, STRIDE, SLOTS, IO_CARD_SIZE, ROW_OFFSET, GROUP_INSET, DIVIDER_THIN, MAX_CONTAINER_DEPTH, getChildDirection };
