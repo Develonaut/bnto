@@ -34,7 +34,7 @@ export function createBlankDefinition(): Definition {
         id: "input",
         type: "input",
         version: CURRENT_FORMAT_VERSION,
-        name: "Input Files",
+        name: "Input",
         position: { x: 0, y: 100 },
         metadata: {},
         parameters: {

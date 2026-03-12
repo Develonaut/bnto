@@ -38,7 +38,7 @@ export const compressImages: Recipe = {
         id: "input",
         type: "input",
         version: CURRENT_FORMAT_VERSION,
-        name: "Input Files",
+        name: "Input",
         position: { x: 0, y: 100 },
         metadata: {},
         parameters: {
@@ -55,7 +55,7 @@ export const compressImages: Recipe = {
         id: "compress-loop",
         type: "loop",
         version: CURRENT_FORMAT_VERSION,
-        name: "Compress Each Image",
+        name: "For Each",
         position: { x: 250, y: 100 },
         metadata: {},
         parameters: { mode: "forEach" },
@@ -66,7 +66,7 @@ export const compressImages: Recipe = {
             id: "compress-image",
             type: "image",
             version: CURRENT_FORMAT_VERSION,
-            name: "Compress Image",
+            name: "Compress",
             position: { x: 0, y: 0 },
             metadata: {},
             parameters: {
@@ -83,7 +83,7 @@ export const compressImages: Recipe = {
         id: "output",
         type: "output",
         version: CURRENT_FORMAT_VERSION,
-        name: "Compressed Images",
+        name: "Output",
         position: { x: 500, y: 100 },
         metadata: {},
         parameters: {

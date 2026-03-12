@@ -1,7 +1,6 @@
 "use client";
 
 import { Fragment, useCallback, useMemo, useState } from "react";
-import type { NodeTypeName } from "@bnto/nodes";
 import {
   Badge,
   Dialog,
@@ -15,19 +14,27 @@ import {
 } from "@bnto/ui";
 import { useEditor } from "../../context";
 import { useNodePalette } from "../../hooks/useNodePalette";
+import type { PaletteItem } from "../../hooks/useNodePalette";
 import { SLOTS } from "../../adapters/bentoSlots";
 
 /**
  * NodePaletteDialog — dialog-based node palette.
  *
- * Shows a searchable categorized grid of node types. Clicking a node
- * adds it to the canvas and closes the dialog. Controlled externally
- * via `open` / `onOpenChange` props driven by the panel store state.
+ * Shows a searchable categorized grid of palette items. Multi-operation
+ * node types (image, spreadsheet, file-system) appear as separate entries
+ * with the operation pre-set. Clicking an item adds the node to the canvas
+ * and closes the dialog.
  */
 
 interface NodePaletteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+/** Unique key for a palette item — disambiguates split operations. */
+function itemKey(item: PaletteItem): string {
+  const op = item.defaultParams?.operation;
+  return op ? `${item.type}:${op}` : item.type;
 }
 
 function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
@@ -46,9 +53,9 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
         ...group,
         items: group.items.filter(
           (item) =>
+            item.type.toLowerCase().includes(term) ||
             item.label.toLowerCase().includes(term) ||
-            item.description.toLowerCase().includes(term) ||
-            item.name.toLowerCase().includes(term),
+            item.description.toLowerCase().includes(term),
         ),
       }))
       .filter((group) => group.items.length > 0);
@@ -66,8 +73,8 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
   );
 
   const handleAdd = useCallback(
-    (typeName: NodeTypeName) => {
-      editor.nodes.addNode(typeName, insertAfterNodeId, insertIntoContainerId);
+    (item: PaletteItem) => {
+      editor.nodes.addNode(item.type, insertAfterNodeId, insertIntoContainerId, item.defaultParams);
       handleClose(false);
     },
     [editor, insertAfterNodeId, insertIntoContainerId, handleClose],
@@ -121,9 +128,9 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
                     const disabled = isFull || isServerOnly;
                     return (
                       <button
-                        key={item.name}
+                        key={itemKey(item)}
                         type="button"
-                        onClick={() => handleAdd(item.name as NodeTypeName)}
+                        onClick={() => handleAdd(item)}
                         disabled={disabled}
                         className="flex flex-col items-start gap-1 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
                       >

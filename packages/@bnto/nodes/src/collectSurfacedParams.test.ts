@@ -188,6 +188,6 @@ describe("collectSurfacedParams — displayName from customData", () => {
     const groups = collectSurfacedParams(compressImages.definition);
     // The leaf node "compress-image" has no customData.displayName, falls back to node.name
     const compressGroup = groups.find((g) => g.leafNodeId === "compress-image");
-    expect(compressGroup!.label).toBe("Compress Image");
+    expect(compressGroup!.label).toBe("Compress");
   });
 });

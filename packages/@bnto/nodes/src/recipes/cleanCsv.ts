@@ -36,7 +36,7 @@ export const cleanCsv: Recipe = {
         id: "input",
         type: "input",
         version: CURRENT_FORMAT_VERSION,
-        name: "Input Files",
+        name: "Input",
         position: { x: 0, y: 100 },
         metadata: {},
         parameters: {
@@ -53,7 +53,7 @@ export const cleanCsv: Recipe = {
         id: "clean",
         type: "spreadsheet",
         version: CURRENT_FORMAT_VERSION,
-        name: "Clean CSV",
+        name: "Clean",
         position: { x: 250, y: 100 },
         metadata: {},
         parameters: {
@@ -67,7 +67,7 @@ export const cleanCsv: Recipe = {
         id: "output",
         type: "output",
         version: CURRENT_FORMAT_VERSION,
-        name: "Cleaned CSV",
+        name: "Output",
         position: { x: 500, y: 100 },
         metadata: {},
         parameters: {

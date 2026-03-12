@@ -132,4 +132,50 @@ describe("createCompartmentNode", () => {
       expect(result!.node.data.label).toBeTruthy();
     }
   });
+
+  it("merges defaultParams into config parameters", () => {
+    const result = createCompartmentNode("image", 0, undefined, { operation: "resize" });
+    expect(result!.config.parameters.operation).toBe("resize");
+  });
+
+  it("uses short operation name as label when operation is pre-set", () => {
+    const compress = createCompartmentNode("image", 0, undefined, { operation: "compress" });
+    expect(compress!.node.data.label).toBe("Compress");
+    expect(compress!.config.name).toBe("Compress");
+
+    const convert = createCompartmentNode("image", 0, undefined, { operation: "convert" });
+    expect(convert!.node.data.label).toBe("Convert");
+
+    const renameFiles = createCompartmentNode("file-system", 0, undefined, { operation: "rename" });
+    expect(renameFiles!.node.data.label).toBe("Rename");
+  });
+
+  it("falls back to NODE_TYPE_INFO label without defaultParams", () => {
+    const result = createCompartmentNode("image", 0);
+    expect(result!.node.data.label).toBe("Image");
+    expect(result!.config.name).toBe("Image");
+  });
+
+  it("defaultParams override schema defaults", () => {
+    // Image schema defaults operation to "compress" — override with "resize"
+    const result = createCompartmentNode("image", 0, undefined, { operation: "resize" });
+    expect(result!.config.parameters.operation).toBe("resize");
+  });
+
+  it("uses mode-based label for loop nodes", () => {
+    const forEach = createCompartmentNode("loop", 0, undefined, { mode: "forEach" });
+    expect(forEach!.node.data.label).toBe("For Each");
+    expect(forEach!.config.name).toBe("For Each");
+
+    const times = createCompartmentNode("loop", 0, undefined, { mode: "times" });
+    expect(times!.node.data.label).toBe("Times");
+
+    const whileLoop = createCompartmentNode("loop", 0, undefined, { mode: "while" });
+    expect(whileLoop!.node.data.label).toBe("While");
+  });
+
+  it("falls back to NODE_TYPE_INFO label for group nodes without mode label map", () => {
+    const result = createCompartmentNode("group", 0, undefined, { mode: "sequential" });
+    expect(result!.node.data.label).toBe("Group");
+  });
 });

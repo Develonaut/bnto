@@ -70,8 +70,6 @@ export { usePanels } from "./hooks/usePanels";
 export { useAutoSelect } from "./hooks/useAutoSelect";
 export { useEditorNode } from "./hooks/useEditorNode";
 export type { EditorNodeResult } from "./hooks/useEditorNode";
-export { useNodePalette } from "./hooks/useNodePalette";
-export type { PaletteGroup, NodePaletteResult } from "./hooks/useNodePalette";
 export { useEditorSelection } from "./hooks/useEditorSelection";
 export { useExecutionNodes } from "./hooks/useExecutionNodes";
 
