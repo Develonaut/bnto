@@ -27,6 +27,9 @@ interface SchemaFieldProps {
 /** Controls that render inline (label left, control right). */
 const INLINE_CONTROLS = new Set(["switch", "select"]);
 
+/** Controls that render their own label (Slider owns its header row). */
+const SELF_LABELED_CONTROLS = new Set(["slider"]);
+
 function SchemaField({ name, meta, fieldInfo, value, onChange }: SchemaFieldProps) {
   const handleChange = useCallback(
     (newValue: unknown) => onChange(name, newValue),
@@ -36,10 +39,11 @@ function SchemaField({ name, meta, fieldInfo, value, onChange }: SchemaFieldProp
   const id = `param-${name}`;
   const Control = CONTROL_REGISTRY[fieldInfo.control];
   const inline = INLINE_CONTROLS.has(fieldInfo.control);
+  const selfLabeled = SELF_LABELED_CONTROLS.has(fieldInfo.control);
 
   const label = (
-    <Label htmlFor={id} className="text-xs font-medium" title={meta.description}>
-      {meta.label}
+    <Label htmlFor={id} title={meta.description}>
+      {meta.displayLabel ?? meta.label}
       {fieldInfo.required && <span className="ml-0.5 text-destructive">*</span>}
     </Label>
   );
@@ -47,6 +51,14 @@ function SchemaField({ name, meta, fieldInfo, value, onChange }: SchemaFieldProp
   const control = (
     <Control id={id} fieldInfo={fieldInfo} meta={meta} value={value} onChange={handleChange} />
   );
+
+  if (selfLabeled) {
+    return (
+      <div data-testid={`schema-field-${name}`}>
+        {control}
+      </div>
+    );
+  }
 
   if (inline) {
     return (

@@ -1,10 +1,18 @@
 "use client";
 
+import { useMemo } from "react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@bnto/ui";
 import type { ControlProps } from "./types";
 
 function SelectControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
   const enumValues = fieldInfo.enumValues ?? [];
+
+  // Build a value→label map from meta.options when display labels are provided
+  const labelMap = useMemo(() => {
+    if (!meta.options) return null;
+    return new Map(meta.options.map((o) => [o.value, o.label]));
+  }, [meta.options]);
+
   return (
     <Select value={String(value ?? "")} onValueChange={onChange}>
       <SelectTrigger size="sm" id={id} data-testid={`control-select-${id}`}>
@@ -13,7 +21,7 @@ function SelectControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
       <SelectContent>
         {enumValues.map((enumVal) => (
           <SelectItem key={enumVal} value={enumVal}>
-            {enumVal}
+            {labelMap?.get(enumVal) ?? enumVal}
           </SelectItem>
         ))}
       </SelectContent>

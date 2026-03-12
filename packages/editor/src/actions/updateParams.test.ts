@@ -131,7 +131,7 @@ describe("updateParams", () => {
               name: "Image",
               position: { x: 0, y: 0 },
               metadata: {},
-              parameters: { operation: "compress", quality: 80 },
+              parameters: { operation: "compress", compression: 20 },
               inputPorts: [],
               outputPorts: [],
             },
@@ -143,16 +143,16 @@ describe("updateParams", () => {
       ...stateWithNode(),
       configs: {
         loop: { nodeType: "loop", name: "Loop", parameters: { mode: "forEach" } },
-        child: { nodeType: "image", name: "Image", parameters: { operation: "compress", quality: 80 } },
+        child: { nodeType: "image", name: "Image", parameters: { operation: "compress", compression: 20 } },
       },
       definition: def,
     };
-    const result = updateParams(state, "child", { quality: 50 });
+    const result = updateParams(state, "child", { compression: 50 });
     expect(result).not.toBeNull();
     // Configs updated
-    expect(result!.configs!.child!.parameters.quality).toBe(50);
+    expect(result!.configs!.child!.parameters.compression).toBe(50);
     // Definition tree updated
     const updatedDef = result!.definition as Definition;
-    expect(updatedDef.nodes![0].nodes![0].parameters.quality).toBe(50);
+    expect(updatedDef.nodes![0].nodes![0].parameters.compression).toBe(50);
   });
 });

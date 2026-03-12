@@ -69,8 +69,8 @@ describe("addNode", () => {
     const result = addNode(blank, "image");
     const params = result.definition.nodes![IO_NODE_COUNT]!.parameters;
 
-    // Image schema has quality: 80 as default
-    expect(params.quality).toBe(80);
+    // Image schema has compression: 20 as default (for compress operation)
+    expect(params.compression).toBe(20);
     // Image schema has maintainAspect: true as default
     expect(params.maintainAspect).toBe(true);
   });

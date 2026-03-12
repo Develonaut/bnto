@@ -248,17 +248,21 @@
       ],
       "parameters": [
         {
-          "name": "quality",
-          "label": "Quality",
-          "description": "Compression quality (1 = smallest file, 100 = best quality)",
+          "name": "compression",
+          "label": "Compression",
+          "description": "How much to compress (1 = minimal, 100 = maximum)",
           "paramType": {
             "type": "number"
           },
-          "default": 80,
+          "default": 20,
           "constraints": {
             "min": 1.0,
             "max": 100.0,
             "required": false
+          },
+          "visibleWhen": {
+            "param": "operation",
+            "equals": "compress"
           },
           "surfaceable": true
         }
@@ -313,6 +317,16 @@
             "max": 100.0,
             "required": false
           },
+          "visibleWhen": [
+            {
+              "param": "operation",
+              "equals": "resize"
+            },
+            {
+              "param": "operation",
+              "equals": "convert"
+            }
+          ],
           "surfaceable": true
         }
       ]
@@ -393,6 +407,16 @@
             "max": 100.0,
             "required": false
           },
+          "visibleWhen": [
+            {
+              "param": "operation",
+              "equals": "resize"
+            },
+            {
+              "param": "operation",
+              "equals": "convert"
+            }
+          ],
           "surfaceable": true
         }
       ]

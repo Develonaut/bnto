@@ -11,7 +11,7 @@ import type { ExecutionState } from "../store/types";
 const mockDefinition: PipelineDefinition = {
   nodes: [
     { id: "input-1", type: "input", params: {} },
-    { id: "compress-1", type: "compress-image", params: { quality: 80 } },
+    { id: "compress-1", type: "compress-image", params: { compression: 20 } },
     { id: "resize-1", type: "resize-image", params: { width: 800 } },
     { id: "output-1", type: "output", params: {} },
   ],

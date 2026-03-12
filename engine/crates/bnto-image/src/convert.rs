@@ -370,6 +370,18 @@ impl NodeProcessor for ConvertImageFormat {
                         max: Some(100.0),
                         required: false,
                     }),
+                    // Quality only applies to resize and convert — compress has its
+                    // own "compression" param with inverted semantics.
+                    visible_when: Some(ParamCondition::Any(vec![
+                        ParamConditionEntry {
+                            param: "operation".to_string(),
+                            equals: "resize".to_string(),
+                        },
+                        ParamConditionEntry {
+                            param: "operation".to_string(),
+                            equals: "convert".to_string(),
+                        },
+                    ])),
                     ..Default::default()
                 },
             ],

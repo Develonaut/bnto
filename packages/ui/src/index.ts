@@ -137,6 +137,7 @@ export {
   SelectScrollDownButton,
 } from "./interaction/Select";
 export { Slider } from "./interaction/Slider";
+export type { SliderPreset } from "./interaction/Slider";
 export { Switch } from "./interaction/Switch";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./interaction/Tabs";
 export { Textarea } from "./interaction/Textarea";

@@ -19,12 +19,12 @@ describe("image:compress", () => {
     expect(proc.accepts).toEqual(expect.arrayContaining(["image/jpeg", "image/png", "image/webp"]));
   });
 
-  it("has quality param: number, default 80, min 1, max 100", () => {
-    const quality = proc.parameters.find((p) => p.name === "quality")!;
-    expect(quality.type).toBe("number");
-    expect(quality.default).toBe(80);
-    expect(quality.constraints?.min).toBe(1);
-    expect(quality.constraints?.max).toBe(100);
+  it("has compression param: number, default 20, min 1, max 100", () => {
+    const compression = proc.parameters.find((p) => p.name === "compression")!;
+    expect(compression.type).toBe("number");
+    expect(compression.default).toBe(20);
+    expect(compression.constraints?.min).toBe(1);
+    expect(compression.constraints?.max).toBe(100);
   });
 });
 

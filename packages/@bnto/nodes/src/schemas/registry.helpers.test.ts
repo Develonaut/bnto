@@ -89,10 +89,16 @@ describe("getVisibleParams", () => {
     expect(names).not.toContain("maintainAspect");
   });
 
-  it("includes params without visibleWhen (always visible)", () => {
-    const names = getVisibleParams("image", "operation", "resize");
-    expect(names).toContain("operation");
-    expect(names).toContain("quality");
+  it("shows quality for resize, compression for compress", () => {
+    const resize = getVisibleParams("image", "operation", "resize");
+    expect(resize).toContain("operation");
+    expect(resize).toContain("quality");
+    expect(resize).not.toContain("compression");
+
+    const compress = getVisibleParams("image", "operation", "compress");
+    expect(compress).toContain("operation");
+    expect(compress).toContain("compression");
+    expect(compress).not.toContain("quality");
   });
 
   it("excludes hidden params (engine wiring fields)", () => {
@@ -108,12 +114,18 @@ describe("getVisibleParams", () => {
   // --- parameters-map overload (used by editor config panel) ---
 
   it("parameters-map: returns visible params for current values", () => {
-    const names = getVisibleParams("image", { operation: "resize", quality: 80 });
-    expect(names).toContain("width");
-    expect(names).toContain("height");
-    expect(names).toContain("maintainAspect");
-    expect(names).toContain("operation");
-    expect(names).toContain("quality");
+    const resize = getVisibleParams("image", { operation: "resize", quality: 80 });
+    expect(resize).toContain("width");
+    expect(resize).toContain("height");
+    expect(resize).toContain("maintainAspect");
+    expect(resize).toContain("operation");
+    expect(resize).toContain("quality");
+    expect(resize).not.toContain("compression");
+
+    const compress = getVisibleParams("image", { operation: "compress", compression: 20 });
+    expect(compress).toContain("operation");
+    expect(compress).toContain("compression");
+    expect(compress).not.toContain("quality");
   });
 
   it("parameters-map: excludes hidden params", () => {
