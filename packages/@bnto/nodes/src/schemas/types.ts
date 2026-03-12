@@ -49,12 +49,14 @@ export interface NodeParamMeta {
   hidden?: boolean;
 
   /**
-   * Whether this parameter is eligible for surfacing in container config panels.
-   * Defaults to `true` — most params are user-facing. Set to `false` for
-   * internal wiring parameters (loop items, template expressions) that should
-   * never appear in surfaced views.
+   * Layout group name — consecutive params with the same group
+   * are rendered together in a compact FieldGroup (e.g., "dimensions"
+   * renders Width + Height side-by-side with aspect lock toggle above).
    */
-  surfaceable?: boolean;
+  group?: string;
+
+  /** Unit suffix displayed inside the input (e.g., "px", "%", "ms"). */
+  suffix?: string;
 }
 
 /**

@@ -5,6 +5,11 @@ import type { NodeSchemaDefinition } from "@bnto/nodes";
 import { inferFieldType } from "@bnto/nodes";
 import { Stack, Text } from "@bnto/ui";
 import { SchemaField } from "./SchemaField";
+import { FieldGroup } from "./FieldGroup";
+import type { GroupField } from "./FieldGroup";
+
+/** Field-to-field gap: "md" (16px) gives fields breathing room now that descriptions are tooltips. */
+const FIELD_GAP = "md" as const;
 
 /**
  * SchemaForm — auto-generates a form from a NodeSchemaDefinition.
@@ -13,9 +18,8 @@ import { SchemaField } from "./SchemaField";
  * parameter names. Renders the correct UI control for each visible parameter
  * using the Zod type → control mapping from `inferFieldType`.
  *
- * This replaces the manual iteration + ParameterField switch pattern that
- * was previously in ConfigPanelRoot. The form is fully schema-driven:
- * add a new node type → add a schema → form renders automatically.
+ * Consecutive fields with the same `group` are collected and rendered together
+ * via FieldGroup (e.g., "dimensions" → aspect lock toggle + side-by-side W/H).
  */
 
 interface SchemaFormProps {
@@ -29,24 +33,52 @@ interface SchemaFormProps {
   onChange: (name: string, value: unknown) => void;
 }
 
-function SchemaForm({ schema, values, visibleParams, onChange }: SchemaFormProps) {
-  const fields = useMemo(
-    () =>
-      visibleParams
-        .map((paramName) => {
-          const meta = schema.params[paramName];
-          if (!meta) return null;
-          const zodField = schema.schema.shape[paramName];
-          const fieldInfo = zodField
-            ? inferFieldType(zodField)
-            : { type: "string" as const, control: "text" as const, required: true };
-          return { paramName, meta, fieldInfo };
-        })
-        .filter(Boolean),
-    [schema, visibleParams],
-  );
+/** A single ungrouped field. */
+interface SingleEntry {
+  kind: "single";
+  paramName: string;
+  meta: GroupField["meta"];
+  fieldInfo: GroupField["fieldInfo"];
+}
 
-  if (fields.length === 0) {
+/** A set of consecutive fields sharing the same group. */
+interface GroupEntry {
+  kind: "group";
+  groupName: string;
+  fields: GroupField[];
+}
+
+type FormEntry = SingleEntry | GroupEntry;
+
+function SchemaForm({ schema, values, visibleParams, onChange }: SchemaFormProps) {
+  const entries = useMemo(() => {
+    const result: FormEntry[] = [];
+    let currentGroup: GroupEntry | null = null;
+
+    for (const paramName of visibleParams) {
+      const meta = schema.params[paramName];
+      if (!meta) continue;
+      const zodField = schema.schema.shape[paramName];
+      const fieldInfo = zodField
+        ? inferFieldType(zodField)
+        : { type: "string" as const, control: "text" as const, required: true };
+      const group = meta.group;
+
+      if (group && currentGroup?.groupName === group) {
+        currentGroup.fields.push({ paramName, meta, fieldInfo });
+      } else if (group) {
+        currentGroup = { kind: "group", groupName: group, fields: [{ paramName, meta, fieldInfo }] };
+        result.push(currentGroup);
+      } else {
+        currentGroup = null;
+        result.push({ kind: "single", paramName, meta, fieldInfo });
+      }
+    }
+
+    return result;
+  }, [schema, visibleParams]);
+
+  if (entries.length === 0) {
     return (
       <Text size="xs" color="muted">
         No configurable parameters.
@@ -55,16 +87,25 @@ function SchemaForm({ schema, values, visibleParams, onChange }: SchemaFormProps
   }
 
   return (
-    <Stack gap="sm">
-      {fields.map((field) => {
-        if (!field) return null;
+    <Stack gap={FIELD_GAP}>
+      {entries.map((entry) => {
+        if (entry.kind === "group") {
+          return (
+            <FieldGroup
+              key={entry.groupName}
+              fields={entry.fields}
+              values={values}
+              onChange={onChange}
+            />
+          );
+        }
         return (
           <SchemaField
-            key={field.paramName}
-            name={field.paramName}
-            meta={field.meta}
-            fieldInfo={field.fieldInfo}
-            value={values[field.paramName]}
+            key={entry.paramName}
+            name={entry.paramName}
+            meta={entry.meta}
+            fieldInfo={entry.fieldInfo}
+            value={values[entry.paramName]}
             onChange={onChange}
           />
         );

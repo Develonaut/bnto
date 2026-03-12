@@ -11,17 +11,11 @@
 "use client";
 
 import { useMemo } from "react";
-import type { NodeTypeName, NodeSchemaDefinition, SurfacedGroup } from "@bnto/nodes";
-import {
-  NODE_TYPE_INFO,
-  getNodeSchema,
-  getVisibleParams,
-  collectSurfacedParams,
-} from "@bnto/nodes";
+import type { NodeTypeName, NodeSchemaDefinition } from "@bnto/nodes";
+import { NODE_TYPE_INFO, getNodeSchema, getVisibleParams } from "@bnto/nodes";
 import { useStore } from "zustand";
 import { useEditorStoreApi } from "../context";
 import type { CompartmentNodeData, NodeConfig } from "../adapters/types";
-import { findDefinitionById } from "../adapters/findDefinitionById";
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -38,8 +32,6 @@ interface EditorNodeResult {
   schemaDef: NodeSchemaDefinition | null;
   /** Parameter names visible given current parameter values. */
   visibleParams: string[];
-  /** Surfaced leaf params for container nodes (empty for non-containers). */
-  surfacedGroups: SurfacedGroup[];
 }
 
 /**
@@ -60,8 +52,6 @@ function useEditorNode(nodeId: string | null): EditorNodeResult {
     return s.configs[nodeId] ?? null;
   });
 
-  const definition = useStore(storeApi, (s) => s.definition);
-
   return useMemo(() => {
     if (!nodeData || !config) {
       return {
@@ -70,7 +60,6 @@ function useEditorNode(nodeId: string | null): EditorNodeResult {
         typeInfo: null,
         schemaDef: null,
         visibleParams: [],
-        surfacedGroups: [],
       };
     }
 
@@ -78,17 +67,8 @@ function useEditorNode(nodeId: string | null): EditorNodeResult {
     const schemaDef = getNodeSchema(config.nodeType) ?? null;
     const visibleParams = schemaDef ? getVisibleParams(config.nodeType, config.parameters) : [];
 
-    // For container nodes, find the matching definition in the tree and surface leaf params
-    let surfacedGroups: SurfacedGroup[] = [];
-    if (typeInfo?.isContainer && definition && nodeId) {
-      const containerDef = findDefinitionById(definition, nodeId);
-      if (containerDef) {
-        surfacedGroups = collectSurfacedParams(containerDef);
-      }
-    }
-
-    return { node: nodeData, config, typeInfo, schemaDef, visibleParams, surfacedGroups };
-  }, [nodeData, config, definition, nodeId]);
+    return { node: nodeData, config, typeInfo, schemaDef, visibleParams };
+  }, [nodeData, config]);
 }
 
 export { useEditorNode };

@@ -4,6 +4,8 @@ import { Input } from "@bnto/ui";
 import type { ControlProps } from "./types";
 
 function NumberControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
+  const suffix = meta.suffix;
+
   return (
     <Input
       id={id}
@@ -17,6 +19,7 @@ function NumberControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
         onChange(num);
       }}
       className="h-8 text-sm"
+      suffix={suffix}
       data-testid={`control-number-${id}`}
     />
   );

@@ -17,7 +17,7 @@ import type { NodeChange, EdgeChange } from "@xyflow/react";
 // ---------------------------------------------------------------------------
 
 interface NodeService {
-  addNode(type: NodeTypeName, afterNodeId?: string | null, intoContainerId?: string | null): string | null;
+  addNode(type: NodeTypeName, afterNodeId?: string | null, intoContainerId?: string | null, defaultParams?: Record<string, unknown>): string | null;
   removeNode(id: string): boolean;
   selectNode(id: string | null): void;
   setSelectedNodeId(id: string | null): void;
@@ -38,7 +38,6 @@ interface DefinitionService {
   loadDefinition(def: Definition): void;
   createBlank(): void;
   updateParams(nodeId: string, params: Record<string, unknown>): boolean;
-  updateSurfacedParam(leafNodeId: string, params: Record<string, unknown>): boolean;
   setRecipeMetadata(metadata: RecipeMetadata): void;
   markDirty(): void;
   resetDirty(): void;

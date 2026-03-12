@@ -5,7 +5,6 @@ import { Badge, Divider, Heading, SlidersHorizontalIcon, Text, usePrevious } fro
 import { useEditor } from "../../context";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { SchemaForm } from "../SchemaForm";
-import { SurfacedParamsSection } from "./SurfacedParamsSection";
 import { EditorMenuPanel } from "../EditorMenuPanel";
 
 /**
@@ -22,7 +21,7 @@ function ConfigPanelRoot() {
   const prevSelectedNodeId = usePrevious(selectedNodeId);
   const configNodeId = selectedNodeId ?? prevSelectedNodeId ?? null;
 
-  const { node, config, typeInfo, schemaDef, visibleParams, surfacedGroups } =
+  const { node, config, typeInfo, schemaDef, visibleParams } =
     useEditorNode(configNodeId);
 
   const handleParamChange = useCallback(
@@ -31,13 +30,6 @@ function ConfigPanelRoot() {
       editor.definition.updateParams(configNodeId, { [paramName]: value });
     },
     [configNodeId, editor],
-  );
-
-  const handleSurfacedParamChange = useCallback(
-    (leafNodeId: string, paramName: string, value: unknown) => {
-      editor.definition.updateSurfacedParam(leafNodeId, { [paramName]: value });
-    },
-    [editor],
   );
 
   const hasContent = configNodeId && node && config && typeInfo;
@@ -85,51 +77,20 @@ function ConfigPanelRoot() {
           )}
           <Divider />
           <div className="flex-1 overflow-y-auto">
-            {surfacedGroups.length > 0 ? (
-              <>
-                <SurfacedParamsSection
-                  groups={surfacedGroups}
-                  onParamChange={handleSurfacedParamChange}
+            <div className="p-3">
+              {schemaDef ? (
+                <SchemaForm
+                  schema={schemaDef}
+                  values={config.parameters}
+                  visibleParams={visibleParams}
+                  onChange={handleParamChange}
                 />
-                {schemaDef && visibleParams.length > 0 && (
-                  <>
-                    <Divider />
-                    <div className="px-3 pt-1">
-                      <Text
-                        size="xs"
-                        color="muted"
-                        className="font-medium uppercase tracking-wider"
-                      >
-                        Advanced
-                      </Text>
-                    </div>
-                    <div className="p-3">
-                      <SchemaForm
-                        schema={schemaDef}
-                        values={config.parameters}
-                        visibleParams={visibleParams}
-                        onChange={handleParamChange}
-                      />
-                    </div>
-                  </>
-                )}
-              </>
-            ) : (
-              <div className="p-3">
-                {schemaDef ? (
-                  <SchemaForm
-                    schema={schemaDef}
-                    values={config.parameters}
-                    visibleParams={visibleParams}
-                    onChange={handleParamChange}
-                  />
-                ) : (
-                  <Text size="xs" color="muted">
-                    No configurable parameters.
-                  </Text>
-                )}
-              </div>
-            )}
+              ) : (
+                <Text size="xs" color="muted">
+                  No configurable parameters.
+                </Text>
+              )}
+            </div>
           </div>
         </>
       )}

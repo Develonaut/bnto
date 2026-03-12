@@ -7,6 +7,7 @@ import {
   NodeBody,
   NodeIcon,
   NodeLabel,
+  NodeSublabel,
   NodeDeleteButton,
 } from "./Node";
 
@@ -36,6 +37,7 @@ export const CompartmentNode = memo(function CompartmentNode({
       <NodeBody>
         <NodeIcon icon={data.icon} variant={data.variant} onSurface={isFailed} />
         <NodeLabel onSurface={isFailed}>{data.label}</NodeLabel>
+        {data.sublabel && <NodeSublabel onSurface={isFailed}>{data.sublabel}</NodeSublabel>}
       </NodeBody>
     </NodeRoot>
   );

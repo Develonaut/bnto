@@ -58,12 +58,11 @@ Three layers own different concerns of the node system. This document is the dec
 - `recipes/` — predefined recipe compositions (reference generated types/defaults)
 - `isContainerNodeType.ts`, `isIoNodeType.ts` — helpers that READ from generated `NODE_TYPE_INFO`
 - `validate.ts` — structural validation (future: migrate to engine-generated JSON Schema via ajv)
-- `collectSurfacedParams.ts` — walk container children, surface leaf params (reads generated schemas)
 
 ### Editor (`packages/editor/`)
 
 - `store/` — Zustand store (nodes, edges, configs, undo/redo, selection)
-- `actions/` — pure state mutation functions (addNode, removeNode, updateParams, updateSurfacedParam)
+- `actions/` — pure state mutation functions (addNode, removeNode, updateParams)
 - `adapters/` — Definition ↔ RF node conversion (definitionToBento, rfNodesToDefinition)
 - `hooks/` — React bindings (useEditorNode, useEditorActions, useEditorExport)
 - `components/` — ConfigPanel, SchemaForm, CompartmentNode, Canvas

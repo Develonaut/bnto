@@ -15,6 +15,7 @@ import {
   getNodeIcon,
   getNodeSublabel,
   isIoNodeType,
+  isContainerNodeType,
 } from "@bnto/nodes";
 import type { BentoNode, NodeConfig } from "./types";
 import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
@@ -39,6 +40,32 @@ function buildDefaultParams(nodeType: NodeTypeName): Record<string, unknown> {
   return params;
 }
 
+/** Human-readable labels for loop modes. */
+const LOOP_MODE_LABELS: Record<string, string> = {
+  forEach: "For Each",
+  times: "Times",
+  while: "While",
+};
+
+/** Derive a short card label from the node's operation or mode parameter. */
+function deriveLabel(
+  type: NodeTypeName,
+  parameters: Record<string, unknown>,
+  fallback: string,
+): string {
+  // Processing nodes: use operation name ("Compress", "Resize", "Convert")
+  const operation = parameters.operation as string | undefined;
+  if (operation) return operation[0]!.toUpperCase() + operation.slice(1);
+
+  // Container nodes: use mode label for loops ("For Each", "While", "Times")
+  if (isContainerNodeType(type)) {
+    const mode = parameters.mode as string | undefined;
+    if (mode && LOOP_MODE_LABELS[mode]) return LOOP_MODE_LABELS[mode]!;
+  }
+
+  return fallback;
+}
+
 interface CompartmentNodeResult {
   node: BentoNode;
   config: NodeConfig;
@@ -53,15 +80,20 @@ function createCompartmentNode(
   type: NodeTypeName,
   slotIndex: number,
   position?: { x: number; y: number },
+  defaultParams?: Record<string, unknown>,
 ): CompartmentNodeResult | null {
   const slot = SLOTS[slotIndex];
   if (!slot) return null;
 
   const info = NODE_TYPE_INFO[type];
   const variant = info ? (CATEGORY_VARIANT[info.category] ?? "muted") : "muted";
-  const label = info?.label ?? type;
   const id = crypto.randomUUID();
-  const parameters = buildDefaultParams(type);
+  const parameters = { ...buildDefaultParams(type), ...defaultParams };
+
+  // Short label derived from the node's active mode or operation.
+  // The sublabel already shows the node type ("Image", "Loop", etc.)
+  // so cards read as "Compress / Image", "For Each / Loop", etc.
+  const label = deriveLabel(type, parameters, info?.label ?? type);
 
   const isIo = isIoNodeType(type);
   // Icon via getNodeIcon — single source of truth from @bnto/nodes.

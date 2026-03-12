@@ -36,7 +36,7 @@ export const renameCsvColumns: Recipe = {
         id: "input",
         type: "input",
         version: CURRENT_FORMAT_VERSION,
-        name: "Input Files",
+        name: "Input",
         position: { x: 0, y: 100 },
         metadata: {},
         parameters: {
@@ -53,7 +53,7 @@ export const renameCsvColumns: Recipe = {
         id: "rename-columns",
         type: "spreadsheet",
         version: CURRENT_FORMAT_VERSION,
-        name: "Rename Columns",
+        name: "Rename",
         position: { x: 250, y: 100 },
         metadata: {},
         parameters: {
@@ -68,7 +68,7 @@ export const renameCsvColumns: Recipe = {
         id: "output",
         type: "output",
         version: CURRENT_FORMAT_VERSION,
-        name: "Renamed CSV",
+        name: "Output",
         position: { x: 500, y: 100 },
         metadata: {},
         parameters: {

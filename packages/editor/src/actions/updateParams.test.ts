@@ -4,6 +4,8 @@
 
 import { describe, it, expect } from "vitest";
 import { updateParams } from "./updateParams";
+import type { Definition } from "@bnto/nodes";
+import { CURRENT_FORMAT_VERSION } from "@bnto/nodes";
 import type { EditorState } from "../store/types";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 
@@ -97,5 +99,60 @@ describe("updateParams", () => {
     state.redoStack = [{ nodes: [], configs: {}, definition: null, expandedContainerIds: new Set() }];
     const result = updateParams(state, "a", { quality: 60 });
     expect(result!.redoStack).toEqual([]);
+  });
+
+  it("writes through to definition tree for nested child", () => {
+    const def: Definition = {
+      id: "root",
+      type: "group",
+      version: CURRENT_FORMAT_VERSION,
+      name: "Root",
+      position: { x: 0, y: 0 },
+      metadata: {},
+      parameters: {},
+      inputPorts: [],
+      outputPorts: [],
+      nodes: [
+        {
+          id: "loop",
+          type: "loop",
+          version: CURRENT_FORMAT_VERSION,
+          name: "Loop",
+          position: { x: 0, y: 0 },
+          metadata: {},
+          parameters: { mode: "forEach" },
+          inputPorts: [],
+          outputPorts: [],
+          nodes: [
+            {
+              id: "child",
+              type: "image",
+              version: CURRENT_FORMAT_VERSION,
+              name: "Image",
+              position: { x: 0, y: 0 },
+              metadata: {},
+              parameters: { operation: "compress", quality: 80 },
+              inputPorts: [],
+              outputPorts: [],
+            },
+          ],
+        },
+      ],
+    };
+    const state: EditorState = {
+      ...stateWithNode(),
+      configs: {
+        loop: { nodeType: "loop", name: "Loop", parameters: { mode: "forEach" } },
+        child: { nodeType: "image", name: "Image", parameters: { operation: "compress", quality: 80 } },
+      },
+      definition: def,
+    };
+    const result = updateParams(state, "child", { quality: 50 });
+    expect(result).not.toBeNull();
+    // Configs updated
+    expect(result!.configs!.child!.parameters.quality).toBe(50);
+    // Definition tree updated
+    const updatedDef = result!.definition as Definition;
+    expect(updatedDef.nodes![0].nodes![0].parameters.quality).toBe(50);
   });
 });

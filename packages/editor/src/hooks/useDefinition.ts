@@ -19,7 +19,6 @@ function useDefinition() {
     loadDefinition: editor.definition.loadDefinition,
     createBlank: editor.definition.createBlank,
     updateParams: editor.definition.updateParams,
-    updateSurfacedParam: editor.definition.updateSurfacedParam,
     exportAsDefinition: editor.definition.exportAsDefinition,
     exportAsRecipe: editor.definition.exportAsRecipe,
     setRecipeMetadata: editor.definition.setRecipeMetadata,

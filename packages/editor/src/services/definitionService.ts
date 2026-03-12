@@ -1,7 +1,7 @@
 /**
  * Definition service — wraps definition-related actions + storeApi.setState().
  *
- * Covers: loadDefinition, createBlank, updateParams, updateSurfacedParam,
+ * Covers: loadDefinition, createBlank, updateParams,
  * metadata, dirty flag, revalidation, and export.
  *
  * Export reads state imperatively and calls rfNodesToDefinition.
@@ -12,7 +12,6 @@ import type { Definition } from "@bnto/nodes";
 import type { EditorStore, RecipeMetadata } from "../store/types";
 import type { DefinitionService } from "../editorTypes";
 import { updateParams } from "../actions/updateParams";
-import { updateSurfacedParam } from "../actions/updateSurfacedParam";
 import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
 
 function createDefinitionService(storeApi: StoreApi<EditorStore>): DefinitionService {
@@ -27,13 +26,6 @@ function createDefinitionService(storeApi: StoreApi<EditorStore>): DefinitionSer
 
     updateParams(nodeId: string, params: Record<string, unknown>) {
       const nextState = updateParams(storeApi.getState(), nodeId, params);
-      if (!nextState) return false;
-      storeApi.setState(nextState);
-      return true;
-    },
-
-    updateSurfacedParam(leafNodeId: string, params: Record<string, unknown>) {
-      const nextState = updateSurfacedParam(storeApi.getState(), leafNodeId, params);
       if (!nextState) return false;
       storeApi.setState(nextState);
       return true;

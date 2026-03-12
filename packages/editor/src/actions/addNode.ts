@@ -36,6 +36,7 @@ export function addNode(
   type: NodeTypeName,
   afterNodeId?: string | null,
   intoContainerId?: string | null,
+  defaultParams?: Record<string, unknown>,
 ): AddNodeResult | null {
   // Only one input and one output node allowed per recipe.
   if (isIoNodeType(type)) {
@@ -45,7 +46,7 @@ export function addNode(
 
   // --- Mode 1: Add as child inside a container ---
   if (intoContainerId) {
-    return addChildIntoContainer(state, type, intoContainerId, afterNodeId);
+    return addChildIntoContainer(state, type, intoContainerId, afterNodeId, defaultParams);
   }
 
   // Check if afterNodeId is a child node (inherits its container context)
@@ -54,7 +55,7 @@ export function addNode(
   const depth = afterNode?.data.depth ?? 0;
 
   const slotIndex = state.nodes.length;
-  const result = createCompartmentNode(type, slotIndex);
+  const result = createCompartmentNode(type, slotIndex, undefined, defaultParams);
   if (!result) return null;
 
   // Auto-select the new node, deselect all others
