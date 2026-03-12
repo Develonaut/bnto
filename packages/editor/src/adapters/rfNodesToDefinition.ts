@@ -57,17 +57,21 @@ function rfNodesToDefinition(
       inputPorts: originalDef?.inputPorts ?? [],
       outputPorts: originalDef?.outputPorts ?? [],
       ...(originalDef?.nodes ? { nodes: originalDef.nodes } : {}),
+      ...(originalDef?.edges ? { edges: originalDef.edges } : {}),
+      ...(originalDef?.fields ? { fields: originalDef.fields } : {}),
+      ...(originalDef?.parentId ? { parentId: originalDef.parentId } : {}),
     };
   });
 
   return {
     ...metadata,
     position: { x: 0, y: 0 },
-    metadata: {},
-    parameters: {},
-    inputPorts: [],
-    outputPorts: [],
+    metadata: definition?.metadata ?? {},
+    parameters: definition?.parameters ?? {},
+    inputPorts: definition?.inputPorts ?? [],
+    outputPorts: definition?.outputPorts ?? [],
     nodes: children,
+    ...(definition?.edges ? { edges: definition.edges } : {}),
   };
 }
 
