@@ -149,7 +149,8 @@ fn test_jpeg_metadata_has_compression_ratio() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"compression": 40}"#, callback);
+    let result =
+        compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"compression": 40}"#, callback);
     assert!(result.is_ok(), "compress_image_combined should succeed");
 
     // --- Extract metadata JSON from the combined result ---
@@ -184,7 +185,12 @@ fn test_jpeg_output_filename_has_compressed_suffix() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image_combined(TEST_JPEG, "my-photo.jpg", r#"{"compression": 20}"#, callback);
+    let result = compress_image_combined(
+        TEST_JPEG,
+        "my-photo.jpg",
+        r#"{"compression": 20}"#,
+        callback,
+    );
     assert!(result.is_ok(), "compress_image_combined should succeed");
 
     // --- Extract filename from the combined result object ---

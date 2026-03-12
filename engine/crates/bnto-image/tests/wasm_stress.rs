@@ -52,8 +52,12 @@ fn test_large_jpeg_no_oom() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result =
-        compress_image_combined(LARGE_JPEG, "big-photo.jpg", r#"{"compression": 20}"#, callback);
+    let result = compress_image_combined(
+        LARGE_JPEG,
+        "big-photo.jpg",
+        r#"{"compression": 20}"#,
+        callback,
+    );
 
     assert!(
         result.is_ok(),
@@ -173,8 +177,12 @@ fn test_large_jpeg_output_smaller_than_input() {
 
     let input_size = LARGE_JPEG.len();
 
-    let result =
-        compress_image_combined(LARGE_JPEG, "big-photo.jpg", r#"{"compression": 20}"#, callback);
+    let result = compress_image_combined(
+        LARGE_JPEG,
+        "big-photo.jpg",
+        r#"{"compression": 20}"#,
+        callback,
+    );
     assert!(result.is_ok(), "Compression should succeed");
 
     // --- Extract bytes and compare sizes ---
