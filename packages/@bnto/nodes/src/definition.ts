@@ -55,38 +55,6 @@ export interface Definition {
   /** Connections between child nodes. */
   edges?: Edge[];
 
-  /**
-   * Controls which leaf node params are surfaced in the container config panel.
-   *
-   * Default (absent or `mode: "auto"`): walk all leaf children, surface all
-   * params marked `surfaceable: true` in the engine schema.
-   *
-   * Power users can switch to `mode: "manual"` to explicitly choose which
-   * params appear, or use `exclude` in auto mode to hide specific params.
-   */
-  surfacedParams?: SurfacedParamsConfig;
-}
-
-/**
- * Configuration for parameter surfacing in container nodes.
- *
- * Controls which leaf node parameters appear in the container's config panel.
- */
-export interface SurfacedParamsConfig {
-  /** "auto" walks children and surfaces all surfaceable params. "manual" only shows explicitly included params. */
-  mode: "auto" | "manual";
-
-  /** Manual mode: which node params to surface. */
-  include?: Array<{
-    nodeId: string;
-    params?: string[];
-  }>;
-
-  /** Auto mode: which node params to hide. */
-  exclude?: Array<{
-    nodeId: string;
-    params: string[];
-  }>;
 }
 
 /** Visual location of a node in the editor canvas. */

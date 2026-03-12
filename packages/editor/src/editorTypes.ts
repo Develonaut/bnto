@@ -38,7 +38,6 @@ interface DefinitionService {
   loadDefinition(def: Definition): void;
   createBlank(): void;
   updateParams(nodeId: string, params: Record<string, unknown>): boolean;
-  updateSurfacedParam(leafNodeId: string, params: Record<string, unknown>): boolean;
   setRecipeMetadata(metadata: RecipeMetadata): void;
   markDirty(): void;
   resetDirty(): void;

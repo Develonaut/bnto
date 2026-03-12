@@ -22,7 +22,6 @@ export type {
   Port,
   Edge,
   FieldsConfig,
-  SurfacedParamsConfig,
 } from "./definition";
 
 // Execution types
@@ -115,10 +114,6 @@ export { updateNodeParams } from "./updateNodeParams";
 export { moveNode } from "./moveNode";
 export { definitionToRecipe } from "./definitionToRecipe";
 export type { RecipeMetadata } from "./definitionToRecipe";
-
-// Parameter surfacing (container → leaf param auto-detection)
-export { collectSurfacedParams } from "./collectSurfacedParams";
-export type { SurfacedGroup } from "./collectSurfacedParams";
 
 // Definition result type (mutation return shape)
 export { isValid } from "./definitionResult";

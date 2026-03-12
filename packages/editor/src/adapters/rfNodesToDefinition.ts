@@ -5,8 +5,8 @@
  * and reconstructs a Definition tree. Used at export boundaries only.
  *
  * When a stored `definition` is provided, container nodes preserve their
- * nested children (with updated parameters from surfaced param edits).
- * This ensures the full recursive structure round-trips through export.
+ * nested children. This ensures the full recursive structure round-trips
+ * through export.
  *
  * Pure function — no React, no DOM, fully testable.
  */
@@ -57,7 +57,6 @@ function rfNodesToDefinition(
       inputPorts: originalDef?.inputPorts ?? [],
       outputPorts: originalDef?.outputPorts ?? [],
       ...(originalDef?.nodes ? { nodes: originalDef.nodes } : {}),
-      ...(originalDef?.surfacedParams ? { surfacedParams: originalDef.surfacedParams } : {}),
     };
   });
 
