@@ -16,6 +16,7 @@
 | Architecture decisions         | [rules/architecture.md](.claude/rules/architecture.md)                                                 |
 | Repo structure                 | [monorepo-structure.md](.claude/strategy/monorepo-structure.md)                                        |
 | Editor architecture            | [editor-architecture.md](.claude/strategy/editor-architecture.md)                                      |
+| Editor API layer (Sprint 5D)   | [editor-api.md](.claude/strategy/editor-api.md)                                                        |
 | Conveyor belt system           | [visual-editor.md](.claude/strategy/visual-editor.md)                                                  |
 | Input/output nodes             | [io-nodes.md](.claude/strategy/io-nodes.md)                                                            |
 | Node architecture & execution  | [node-architecture.md](.claude/strategy/node-architecture.md)                                          |
@@ -237,6 +238,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [core-principles.md](.claude/strategy/core-principles.md)               | TDD, Grain, Modularity, Abstraction                                                |
 | [design-language.md](.claude/strategy/design-language.md)               | Visual identity, brand personality                                                 |
 | [editor-architecture.md](.claude/strategy/editor-architecture.md)       | Shared editor layer — store, hooks, package strategy, switchable editors           |
+| [editor-api.md](.claude/strategy/editor-api.md)                         | Editor API layer — client → service → store abstraction, Sprint 5D                 |
 | [visual-editor.md](.claude/strategy/visual-editor.md)                   | Bento box visual editor — compartment design, grid layout, execution state         |
 | [io-nodes.md](.claude/strategy/io-nodes.md)                             | Input & output nodes — self-describing recipe I/O, generic renderers, migration    |
 | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)       | Editor user journey — stages, flows, success criteria, phased delivery             |
