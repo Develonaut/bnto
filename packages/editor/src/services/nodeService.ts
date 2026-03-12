@@ -19,8 +19,8 @@ import { removeNode } from "../actions/removeNode";
 
 function createNodeService(storeApi: StoreApi<EditorStore>): NodeService {
   return {
-    addNode(type: NodeTypeName, afterNodeId?: string | null, intoContainerId?: string | null) {
-      const result = addNode(storeApi.getState(), type, afterNodeId, intoContainerId);
+    addNode(type: NodeTypeName, afterNodeId?: string | null, intoContainerId?: string | null, defaultParams?: Record<string, unknown>) {
+      const result = addNode(storeApi.getState(), type, afterNodeId, intoContainerId, defaultParams);
       if (!result) return null;
       storeApi.setState(result.nextState);
       return result.nodeId;

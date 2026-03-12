@@ -111,10 +111,23 @@ describe("addNode", () => {
 
   it("clears redo stack", () => {
     const state = blankState({
-    redoStack: [{ nodes: [], configs: {}, definition: null, expandedContainerIds: new Set() }],
-  });
+      redoStack: [{ nodes: [], configs: {}, definition: null, expandedContainerIds: new Set() }],
+    });
     const result = addNode(state, "image");
     expect(result!.nextState.redoStack).toEqual([]);
+  });
+
+  it("pre-sets operation via defaultParams", () => {
+    const result = addNode(blankState(), "image", null, null, { operation: "resize" });
+    expect(result).not.toBeNull();
+    const config = result!.nextState.configs![result!.nodeId];
+    expect(config!.parameters.operation).toBe("resize");
+  });
+
+  it("uses short operation name as node label when operation pre-set", () => {
+    const result = addNode(blankState(), "image", null, null, { operation: "compress" });
+    const config = result!.nextState.configs![result!.nodeId];
+    expect(config!.name).toBe("Compress");
   });
 });
 
@@ -202,5 +215,13 @@ describe("addNode — child insertion (Mode 1)", () => {
   it("returns null for unknown container", () => {
     const result = addNode(stateWithContainer(), "image", null, "nonexistent");
     expect(result).toBeNull();
+  });
+
+  it("pre-sets operation via defaultParams in child-into-container path", () => {
+    const result = addNode(stateWithContainer(), "spreadsheet", null, "loop1", { operation: "clean" });
+    expect(result).not.toBeNull();
+    const config = result!.nextState.configs![result!.nodeId];
+    expect(config!.parameters.operation).toBe("clean");
+    expect(config!.name).toBe("Clean");
   });
 });

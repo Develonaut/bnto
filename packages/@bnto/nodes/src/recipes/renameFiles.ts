@@ -36,7 +36,7 @@ export const renameFiles: Recipe = {
         id: "input",
         type: "input",
         version: CURRENT_FORMAT_VERSION,
-        name: "Input Files",
+        name: "Input",
         position: { x: 0, y: 100 },
         metadata: {},
         parameters: {
@@ -53,7 +53,7 @@ export const renameFiles: Recipe = {
         id: "rename-loop",
         type: "loop",
         version: CURRENT_FORMAT_VERSION,
-        name: "Rename Each File",
+        name: "For Each",
         position: { x: 250, y: 100 },
         metadata: {},
         parameters: { mode: "forEach" },
@@ -64,7 +64,7 @@ export const renameFiles: Recipe = {
             id: "rename-file",
             type: "file-system",
             version: CURRENT_FORMAT_VERSION,
-            name: "Rename File",
+            name: "Rename",
             position: { x: 0, y: 0 },
             metadata: {},
             parameters: {
@@ -82,7 +82,7 @@ export const renameFiles: Recipe = {
         id: "output",
         type: "output",
         version: CURRENT_FORMAT_VERSION,
-        name: "Renamed Files",
+        name: "Output",
         position: { x: 500, y: 100 },
         metadata: {},
         parameters: {

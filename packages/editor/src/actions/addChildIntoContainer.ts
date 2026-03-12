@@ -24,12 +24,13 @@ function addChildIntoContainer(
   type: NodeTypeName,
   containerId: string,
   afterNodeId?: string | null,
+  defaultParams?: Record<string, unknown>,
 ): AddNodeResult | null {
   const container = state.nodes.find((n) => n.id === containerId);
   if (!container) return null;
 
   const slotIndex = state.nodes.length;
-  const result = createCompartmentNode(type, slotIndex);
+  const result = createCompartmentNode(type, slotIndex, undefined, defaultParams);
   if (!result) return null;
 
   const parentDepth = container.data.depth ?? 0;
