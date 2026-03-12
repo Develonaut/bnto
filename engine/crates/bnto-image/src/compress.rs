@@ -389,7 +389,9 @@ impl NodeProcessor for CompressImages {
                 let quality = Self::compression_to_quality(compression);
                 progress.report(
                     5,
-                    &format!("Compressing JPEG (compression: {compression}, quality: {quality})..."),
+                    &format!(
+                        "Compressing JPEG (compression: {compression}, quality: {quality})..."
+                    ),
                 );
                 self.compress_jpeg(&input.data, quality, progress)?
             }
@@ -863,7 +865,10 @@ mod tests {
     #[test]
     fn test_get_compression_default() {
         let params = serde_json::Map::new();
-        assert_eq!(CompressImages::get_compression(&params), DEFAULT_COMPRESSION);
+        assert_eq!(
+            CompressImages::get_compression(&params),
+            DEFAULT_COMPRESSION
+        );
     }
 
     #[test]
@@ -903,7 +908,10 @@ mod tests {
             "compression".to_string(),
             serde_json::Value::String("high".to_string()),
         );
-        assert_eq!(CompressImages::get_compression(&params), DEFAULT_COMPRESSION);
+        assert_eq!(
+            CompressImages::get_compression(&params),
+            DEFAULT_COMPRESSION
+        );
     }
 
     // =========================================================================
@@ -1684,10 +1692,7 @@ mod tests {
             .files[0]
             .data
             .len();
-        let size_c1 = processor
-            .process(input_c1, &noop_progress())
-            .unwrap()
-            .files[0]
+        let size_c1 = processor.process(input_c1, &noop_progress()).unwrap().files[0]
             .data
             .len();
 
