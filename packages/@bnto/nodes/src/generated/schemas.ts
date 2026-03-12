@@ -77,8 +77,9 @@ export const IMAGE_OPERATIONS = ["compress","convert","resize"] as const;
 /** Zod schema for image node parameters (auto-generated from engine). */
 export const imageParamsSchema = z.object({
   operation: z.enum(IMAGE_OPERATIONS as unknown as [string, ...string[]]),
-    quality: z.number().min(1).max(100).optional().default(80),
+    compression: z.number().min(1).max(100).optional().default(20),
     format: z.enum(["jpeg","png","webp"] as const).optional(),
+    quality: z.number().min(1).max(100).optional().default(80),
     width: z.number().min(1).optional(),
     height: z.number().min(1).optional(),
     maintainAspect: z.boolean().optional().default(true),
@@ -97,14 +98,20 @@ export const imageNodeSchema: NodeSchemaDefinition = {
       label: "Operation",
       description: "The image operation to perform.",
     },
-    quality: {
-      label: "Quality",
-      description: "Compression quality (1 = smallest file, 100 = best quality)",
+    compression: {
+      label: "Compression",
+      description: "How much to compress (1 = minimal, 100 = maximum)",
+      visibleWhen: { param: "operation", equals: "compress" },
     },
     format: {
       label: "Output Format",
       description: "The target image format to convert to",
       visibleWhen: { param: "operation", equals: "convert" },
+    },
+    quality: {
+      label: "Quality",
+      description: "Output quality for lossy formats (1-100)",
+      visibleWhen: [{ param: "operation", equals: "resize" }, { param: "operation", equals: "convert" }],
     },
     width: {
       label: "Width",

@@ -7,7 +7,7 @@
  */
 
 export interface CompressImagesConfig {
-  quality: number;
+  compression: number;
 }
 
 export interface ResizeImagesConfig {
@@ -50,7 +50,7 @@ export type BntoSlug = keyof BntoConfigMap;
 
 /** Default configs for each bnto — matches fixture defaults. */
 export const DEFAULT_CONFIGS: BntoConfigMap = {
-  "compress-images": { quality: 80 },
+  "compress-images": { compression: 20 },
   "resize-images": { width: 800, maintainAspectRatio: true },
   "convert-image-format": { format: "webp", quality: 80 },
   "rename-files": { pattern: "renamed-{{name}}" },

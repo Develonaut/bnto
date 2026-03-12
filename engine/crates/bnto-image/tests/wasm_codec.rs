@@ -149,7 +149,7 @@ fn test_jpeg_metadata_has_compression_ratio() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 60}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"compression": 40}"#, callback);
     assert!(result.is_ok(), "compress_image_combined should succeed");
 
     // --- Extract metadata JSON from the combined result ---
@@ -184,7 +184,7 @@ fn test_jpeg_output_filename_has_compressed_suffix() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image_combined(TEST_JPEG, "my-photo.jpg", r#"{"quality": 80}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "my-photo.jpg", r#"{"compression": 20}"#, callback);
     assert!(result.is_ok(), "compress_image_combined should succeed");
 
     // --- Extract filename from the combined result object ---
@@ -231,49 +231,53 @@ fn test_webp_output_filename_has_compressed_suffix() {
 }
 
 // =============================================================================
-// Quality Parameter — Affects Output Size Across WASM
+// Compression Parameter — Affects Output Size Across WASM
 // =============================================================================
 
 #[wasm_bindgen_test]
-fn test_jpeg_lower_quality_produces_smaller_output() {
-    // --- Test: JPEG quality parameter affects output size through WASM ---
+fn test_jpeg_higher_compression_produces_smaller_output() {
+    // --- Test: JPEG compression parameter affects output size through WASM ---
     //
-    // Lower quality = more aggressive compression = smaller file.
-    // This verifies that the quality parameter actually makes it through
+    // Higher compression = more aggressive = smaller file.
+    // This verifies that the compression parameter actually makes it through
     // the JSON → Rust parsing → JPEG encoder pipeline across WASM.
     //
+    // Internally: compression → quality via `101 - compression`.
+    //   compression 80 → quality 21 (aggressive)
+    //   compression 5  → quality 96 (minimal)
+    //
     // If the params_json parsing was broken, both would use the default
-    // quality and produce identical sizes — this test would catch that.
+    // compression and produce identical sizes — this test would catch that.
     //
     // We extract bytes from the combined result's `data` property.
     init_panic_hook();
 
-    // --- Compress at quality 50 (aggressive) ---
-    let result_q50 = compress_image_combined(
+    // --- Compress at compression 80 (aggressive) ---
+    let result_c80 = compress_image_combined(
         TEST_JPEG,
         "photo.jpg",
-        r#"{"quality": 50}"#,
+        r#"{"compression": 80}"#,
         noop_callback(),
     );
-    assert!(result_q50.is_ok(), "Quality 50 should succeed");
-    let bytes_q50 = extract_bytes(&result_q50.unwrap());
+    assert!(result_c80.is_ok(), "Compression 80 should succeed");
+    let bytes_c80 = extract_bytes(&result_c80.unwrap());
 
-    // --- Compress at quality 95 (minimal compression) ---
-    let result_q95 = compress_image_combined(
+    // --- Compress at compression 5 (minimal) ---
+    let result_c5 = compress_image_combined(
         TEST_JPEG,
         "photo.jpg",
-        r#"{"quality": 95}"#,
+        r#"{"compression": 5}"#,
         noop_callback(),
     );
-    assert!(result_q95.is_ok(), "Quality 95 should succeed");
-    let bytes_q95 = extract_bytes(&result_q95.unwrap());
+    assert!(result_c5.is_ok(), "Compression 5 should succeed");
+    let bytes_c5 = extract_bytes(&result_c5.unwrap());
 
-    // Quality 50 output should be smaller than quality 95 output.
+    // Compression 80 output should be smaller than compression 5 output.
     // Both are valid JPEGs (checked by magic bytes tests in wasm.rs).
     assert!(
-        bytes_q50.len() < bytes_q95.len(),
-        "Quality 50 ({} bytes) should produce smaller output than quality 95 ({} bytes)",
-        bytes_q50.len(),
-        bytes_q95.len()
+        bytes_c80.len() < bytes_c5.len(),
+        "Compression 80 ({} bytes) should produce smaller output than compression 5 ({} bytes)",
+        bytes_c80.len(),
+        bytes_c5.len()
     );
 }

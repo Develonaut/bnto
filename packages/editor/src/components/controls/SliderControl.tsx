@@ -1,34 +1,62 @@
 "use client";
 
-import { useCallback } from "react";
-import { Slider } from "@bnto/ui";
+import { useCallback, useMemo } from "react";
+import { Label, Slider } from "@bnto/ui";
+import type { SliderPreset } from "@bnto/ui";
 import type { ControlProps } from "./types";
 
-function SliderControl({ id, fieldInfo, value, onChange }: ControlProps) {
-  const numValue = typeof value === "number" ? value : (fieldInfo.min ?? 0);
+/** Convert between stored and display values when displayInverted is set. */
+function invertValue(value: number, min: number, max: number): number {
+  return min + max - value;
+}
+
+function SliderControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
+  const min = fieldInfo.min ?? 0;
+  const max = fieldInfo.max ?? 100;
+  const storedValue = typeof value === "number" ? value : min;
+  const inverted = meta.displayInverted ?? false;
+
+  // Display value: invert if needed so the slider matches user mental model
+  const displayValue = inverted ? invertValue(storedValue, min, max) : storedValue;
+
+  // Convert presets from stored-value space to display-value space,
+  // sorted ascending by display value so justify-between aligns correctly
+  const displayPresets = useMemo((): SliderPreset[] | undefined => {
+    if (!meta.presets) return undefined;
+    if (!inverted) return [...meta.presets].sort((a, b) => a.value - b.value);
+    return meta.presets
+      .map((p) => ({ ...p, value: invertValue(p.value, min, max) }))
+      .sort((a, b) => a.value - b.value);
+  }, [meta.presets, inverted, min, max]);
 
   const handleValueChange = useCallback(
     (values: number[]) => {
-      onChange(values[0]);
+      const display = values[0]!;
+      onChange(inverted ? invertValue(display, min, max) : display);
     },
-    [onChange],
+    [onChange, inverted, min, max],
+  );
+
+  const hasPresets = displayPresets && displayPresets.length > 0;
+
+  const sliderLabel = (
+    <Label htmlFor={id} title={meta.description}>
+      {meta.displayLabel ?? meta.label}
+      {fieldInfo.required && <span className="ml-0.5 text-destructive">*</span>}
+    </Label>
   );
 
   return (
-    <div className="flex items-center gap-3">
-      <Slider
-        id={id}
-        min={fieldInfo.min}
-        max={fieldInfo.max}
-        value={[numValue]}
-        onValueChange={handleValueChange}
-        className="flex-1"
-        data-testid={`control-slider-${id}`}
-      />
-      <span className="min-w-8 text-right text-xs tabular-nums text-muted-foreground">
-        {numValue}
-      </span>
-    </div>
+    <Slider
+      id={id}
+      min={min}
+      max={max}
+      value={[displayValue]}
+      label={sliderLabel}
+      presets={hasPresets ? displayPresets : undefined}
+      onValueChange={handleValueChange}
+      data-testid={`control-slider-${id}`}
+    />
   );
 }
 

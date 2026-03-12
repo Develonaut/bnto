@@ -56,17 +56,15 @@ use crate::format::ImageFormat;
 // Configuration Constants
 // =============================================================================
 
-// Default JPEG quality — imported from bnto-core so all image operations
-// (compress, resize, convert) share a single source of truth.
-use bnto_core::DEFAULT_JPEG_QUALITY;
+// Default compression level — imported from bnto-core so the compress node
+// uses a centrally-defined default.
+use bnto_core::DEFAULT_COMPRESSION;
 
-/// Minimum JPEG quality we allow. Below this, images look terrible.
-/// We enforce this as a safety net so users can't accidentally destroy
-/// their images.
-const MIN_JPEG_QUALITY: u8 = 1;
+/// Minimum compression level. 1 = barely any compression at all.
+const MIN_COMPRESSION: u8 = 1;
 
-/// Maximum JPEG quality. 100 = virtually no compression.
-const MAX_JPEG_QUALITY: u8 = 100;
+/// Maximum compression level. 100 = most aggressive compression.
+const MAX_COMPRESSION: u8 = 100;
 
 // =============================================================================
 // The CompressImages Processor
@@ -218,19 +216,26 @@ impl CompressImages {
         Ok(output)
     }
 
-    /// Extract the JPEG quality parameter from the node's config params.
+    /// Extract the compression level from the node's config params and
+    /// convert it to JPEG quality for the encoder.
     ///
-    /// The config comes from the `.bnto.json` workflow definition or the
-    /// UI's settings panel. If no quality is specified, we use the default.
+    /// The user-facing semantics are INVERTED from JPEG quality:
+    ///   - compression=1  → minimal compression → jpeg quality ≈ 100
+    ///   - compression=20 → light compression   → jpeg quality ≈ 81 (default)
+    ///   - compression=50 → balanced            → jpeg quality ≈ 51
+    ///   - compression=80 → maximum             → jpeg quality ≈ 21
+    ///   - compression=100 → most aggressive    → jpeg quality = 1
+    ///
+    /// Formula: `jpeg_quality = 101 - compression` (clamped to 1..100)
     ///
     /// RUST CONCEPT: `serde_json::Map<String, serde_json::Value>`
     /// This is a JSON object — keys are strings, values can be anything
     /// (string, number, bool, array, object, null). We need to extract
-    /// a specific key ("quality") and convert it to a u8 number.
-    fn get_quality(params: &serde_json::Map<String, serde_json::Value>) -> u8 {
-        // Try to find the "quality" key in the params.
+    /// a specific key ("compression") and convert it to a u8 number.
+    fn get_compression(params: &serde_json::Map<String, serde_json::Value>) -> u8 {
+        // Try to find the "compression" key in the params.
         //
-        // RUST CONCEPT: `.get("quality")`
+        // RUST CONCEPT: `.get("compression")`
         // Returns `Option<&Value>` — either `Some(&value)` if the key
         // exists, or `None` if it doesn't.
         //
@@ -240,21 +245,36 @@ impl CompressImages {
         // `as_u64()` returns `Some(number)` if the JSON value is a number,
         // or `None` if it's a string, bool, etc.
         //
-        // RUST CONCEPT: `.map(|q| q as u8)`
+        // RUST CONCEPT: `.map(|c| c as u8)`
         // If we have a number, cast it from u64 to u8. `as` is Rust's
         // type casting operator (like `(u8)value` in C or `value as number`
         // in TypeScript, but only for numeric types).
         //
-        // RUST CONCEPT: `.unwrap_or(DEFAULT_JPEG_QUALITY)`
+        // RUST CONCEPT: `.unwrap_or(DEFAULT_COMPRESSION)`
         // If any step in the chain returned None, use the default.
         params
-            .get("quality")
+            .get("compression")
             .and_then(|v| v.as_u64())
-            .map(|q| q as u8)
-            .unwrap_or(DEFAULT_JPEG_QUALITY)
-            // Clamp the quality to our valid range.
+            .map(|c| c as u8)
+            .unwrap_or(DEFAULT_COMPRESSION)
+            // Clamp the compression to our valid range.
             // `.clamp(min, max)` ensures the value is between min and max.
-            .clamp(MIN_JPEG_QUALITY, MAX_JPEG_QUALITY)
+            .clamp(MIN_COMPRESSION, MAX_COMPRESSION)
+    }
+
+    /// Convert a compression level (1-100) to JPEG quality (100-1).
+    ///
+    /// The inversion formula: `jpeg_quality = 101 - compression`
+    /// This ensures:
+    ///   - compression=1   → quality=100 (minimal compression)
+    ///   - compression=100 → quality=1   (maximum compression)
+    ///
+    /// RUST CONCEPT: `saturating_sub`
+    /// Subtraction that bottoms out at 0 instead of panicking on underflow.
+    /// With u8 values, `1u8 - 2u8` would panic in debug mode. Using
+    /// `saturating_sub` prevents that, though our clamp makes it safe anyway.
+    fn compression_to_quality(compression: u8) -> u8 {
+        101u8.saturating_sub(compression).max(1)
     }
 
     /// Generate an output filename from the input filename.
@@ -298,7 +318,12 @@ impl NodeProcessor for CompressImages {
     ///
     /// This tells consumers (and the `node_catalog()` WASM export) everything
     /// about compress-images: it's an image processor that accepts JPEG/PNG/WebP,
-    /// runs in the browser, and has one parameter — `quality` (1-100, default 80).
+    /// runs in the browser, and has one parameter — `compression` (1-100, default 20).
+    ///
+    /// The `compression` parameter uses inverted semantics from JPEG quality:
+    /// higher compression = smaller file = lower visual quality. This matches
+    /// user expectations — they chose "Compress Images", so a higher slider
+    /// should mean more compression.
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
@@ -314,17 +339,20 @@ impl NodeProcessor for CompressImages {
             ],
             platforms: vec!["browser".to_string()],
             parameters: vec![ParameterDef {
-                name: "quality".to_string(),
-                label: "Quality".to_string(),
-                description: "Compression quality (1 = smallest file, 100 = best quality)"
-                    .to_string(),
+                name: "compression".to_string(),
+                label: "Compression".to_string(),
+                description: "How much to compress (1 = minimal, 100 = maximum)".to_string(),
                 param_type: ParameterType::Number,
-                default: Some(serde_json::json!(80)),
+                default: Some(serde_json::json!(20)),
                 constraints: Some(Constraints {
                     min: Some(1.0),
                     max: Some(100.0),
                     required: false,
                 }),
+                visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                    param: "operation".to_string(),
+                    equals: "compress".to_string(),
+                })),
                 ..Default::default()
             }],
         }
@@ -357,8 +385,12 @@ impl NodeProcessor for CompressImages {
 
         let compressed_data = match format {
             ImageFormat::Jpeg => {
-                let quality = Self::get_quality(&input.params);
-                progress.report(5, &format!("Compressing JPEG (quality: {quality})..."));
+                let compression = Self::get_compression(&input.params);
+                let quality = Self::compression_to_quality(compression);
+                progress.report(
+                    5,
+                    &format!("Compressing JPEG (compression: {compression}, quality: {quality})..."),
+                );
                 self.compress_jpeg(&input.data, quality, progress)?
             }
             ImageFormat::Png => {
@@ -424,25 +456,27 @@ impl NodeProcessor for CompressImages {
 
     /// Validate compression parameters before processing.
     ///
-    /// Catches configuration errors early — e.g., quality out of range.
+    /// Catches configuration errors early — e.g., compression out of range.
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
         let mut errors = Vec::new();
 
-        // Check quality parameter if provided
-        if let Some(quality_val) = params.get("quality") {
+        // Check compression parameter if provided
+        if let Some(compression_val) = params.get("compression") {
             // RUST CONCEPT: `match` on multiple patterns
             // We check if the value is a valid number in range.
-            match quality_val.as_u64() {
-                Some(q) if q >= MIN_JPEG_QUALITY as u64 && q <= MAX_JPEG_QUALITY as u64 => {
-                    // Valid quality value — nothing to report
+            match compression_val.as_u64() {
+                Some(c) if c >= MIN_COMPRESSION as u64 && c <= MAX_COMPRESSION as u64 => {
+                    // Valid compression value — nothing to report
                 }
-                Some(q) => {
+                Some(c) => {
                     errors.push(format!(
-                        "Quality must be between {MIN_JPEG_QUALITY} and {MAX_JPEG_QUALITY}, got {q}"
+                        "Compression must be between {MIN_COMPRESSION} and {MAX_COMPRESSION}, got {c}"
                     ));
                 }
                 None => {
-                    errors.push(format!("Quality must be a number, got: {quality_val}"));
+                    errors.push(format!(
+                        "Compression must be a number, got: {compression_val}"
+                    ));
                 }
             }
         }
@@ -501,12 +535,12 @@ mod tests {
         }
     }
 
-    /// Create a test input with quality parameter set.
-    fn make_input_with_quality(data: &[u8], filename: &str, quality: u64) -> NodeInput {
+    /// Create a test input with compression parameter set.
+    fn make_input_with_compression(data: &[u8], filename: &str, compression: u64) -> NodeInput {
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(quality)),
+            "compression".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(compression)),
         );
         NodeInput {
             data: data.to_vec(),
@@ -541,23 +575,23 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_passes_with_valid_quality() {
+    fn test_validate_passes_with_valid_compression() {
         let processor = CompressImages::new();
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(80u64)),
+            "compression".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(50u64)),
         );
         let errors = processor.validate(&params);
         assert!(errors.is_empty(), "Expected no errors, got: {:?}", errors);
     }
 
     #[test]
-    fn test_validate_fails_with_quality_out_of_range() {
+    fn test_validate_fails_with_compression_out_of_range() {
         let processor = CompressImages::new();
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(150u64)),
         );
         let errors = processor.validate(&params);
@@ -566,11 +600,11 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_fails_with_non_numeric_quality() {
+    fn test_validate_fails_with_non_numeric_compression() {
         let processor = CompressImages::new();
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::String("high".to_string()),
         );
         let errors = processor.validate(&params);
@@ -639,32 +673,33 @@ mod tests {
     }
 
     #[test]
-    fn test_compress_jpeg_lower_quality_means_smaller_file() {
-        // Quality 50 should produce a smaller file than quality 90.
+    fn test_compress_jpeg_higher_compression_means_smaller_file() {
+        // Compression 80 should produce a smaller file than compression 20.
+        // (compression 80 → quality 21, compression 20 → quality 81)
         let processor = CompressImages::new();
         let progress = noop_progress();
 
-        let input_q50 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 50);
-        let input_q90 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 90);
+        let input_c80 = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 80);
+        let input_c20 = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 20);
 
-        let output_q50 = processor.process(input_q50, &noop_progress()).unwrap();
-        let output_q90 = processor.process(input_q90, &progress).unwrap();
+        let output_c80 = processor.process(input_c80, &noop_progress()).unwrap();
+        let output_c20 = processor.process(input_c20, &progress).unwrap();
 
         assert!(
-            output_q50.files[0].data.len() < output_q90.files[0].data.len(),
-            "Quality 50 ({} bytes) should be smaller than quality 90 ({} bytes)",
-            output_q50.files[0].data.len(),
-            output_q90.files[0].data.len()
+            output_c80.files[0].data.len() < output_c20.files[0].data.len(),
+            "Compression 80 ({} bytes) should be smaller than compression 20 ({} bytes)",
+            output_c80.files[0].data.len(),
+            output_c20.files[0].data.len()
         );
     }
 
     #[test]
-    fn test_compress_jpeg_quality_clamped_to_range() {
-        // Quality 0 should be clamped to 1 (our minimum).
-        // This shouldn't crash — it should just use the minimum quality.
+    fn test_compress_jpeg_compression_clamped_to_range() {
+        // Compression 0 should be clamped to 1 (our minimum).
+        // This shouldn't crash — it should just use the minimum compression.
         let processor = CompressImages::new();
         let progress = noop_progress();
-        let input = make_input_with_quality(TEST_JPEG, "photo.jpg", 0);
+        let input = make_input_with_compression(TEST_JPEG, "photo.jpg", 0);
 
         // Should not panic or error
         let output = processor.process(input, &progress).unwrap();
@@ -822,53 +857,71 @@ mod tests {
     }
 
     // =========================================================================
-    // Quality Parameter Tests
+    // Compression Parameter Tests
     // =========================================================================
 
     #[test]
-    fn test_get_quality_default() {
+    fn test_get_compression_default() {
         let params = serde_json::Map::new();
-        assert_eq!(CompressImages::get_quality(&params), DEFAULT_JPEG_QUALITY);
+        assert_eq!(CompressImages::get_compression(&params), DEFAULT_COMPRESSION);
     }
 
     #[test]
-    fn test_get_quality_from_params() {
+    fn test_get_compression_from_params() {
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(60u64)),
         );
-        assert_eq!(CompressImages::get_quality(&params), 60);
+        assert_eq!(CompressImages::get_compression(&params), 60);
     }
 
     #[test]
-    fn test_get_quality_clamped_above_max() {
+    fn test_get_compression_clamped_above_max() {
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(200u64)),
         );
-        assert_eq!(CompressImages::get_quality(&params), MAX_JPEG_QUALITY);
+        assert_eq!(CompressImages::get_compression(&params), MAX_COMPRESSION);
     }
 
     #[test]
-    fn test_get_quality_clamped_below_min() {
+    fn test_get_compression_clamped_below_min() {
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(0u64)),
         );
-        assert_eq!(CompressImages::get_quality(&params), MIN_JPEG_QUALITY);
+        assert_eq!(CompressImages::get_compression(&params), MIN_COMPRESSION);
     }
 
     #[test]
-    fn test_get_quality_ignores_non_numeric() {
+    fn test_get_compression_ignores_non_numeric() {
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::String("high".to_string()),
         );
-        assert_eq!(CompressImages::get_quality(&params), DEFAULT_JPEG_QUALITY);
+        assert_eq!(CompressImages::get_compression(&params), DEFAULT_COMPRESSION);
+    }
+
+    // =========================================================================
+    // Compression → Quality Inversion Tests
+    // =========================================================================
+
+    #[test]
+    fn test_compression_to_quality_inversion() {
+        // compression=1 → quality=100 (minimal compression)
+        assert_eq!(CompressImages::compression_to_quality(1), 100);
+        // compression=20 → quality=81 (light, default)
+        assert_eq!(CompressImages::compression_to_quality(20), 81);
+        // compression=50 → quality=51 (balanced)
+        assert_eq!(CompressImages::compression_to_quality(50), 51);
+        // compression=80 → quality=21 (maximum)
+        assert_eq!(CompressImages::compression_to_quality(80), 21);
+        // compression=100 → quality=1 (most aggressive)
+        assert_eq!(CompressImages::compression_to_quality(100), 1);
     }
 
     // =========================================================================
@@ -1376,93 +1429,90 @@ mod tests {
     }
 
     // =========================================================================
-    // Quality Parameter Boundary Tests
+    // Compression Parameter Boundary Tests
     // =========================================================================
     //
-    // The quality parameter controls JPEG compression aggressiveness (1-100).
+    // The compression parameter controls JPEG compression aggressiveness (1-100).
+    // Higher compression = smaller file = lower visual quality.
     // These tests hit every boundary:
-    //   - 0: below minimum → clamped to 1 by get_quality(), rejected by validate()
-    //   - 1: exact minimum → valid, should produce the most compressed output
-    //   - 100: exact maximum → valid, should produce the least compressed output
-    //   - 101: above maximum → clamped to 100 by get_quality(), rejected by validate()
+    //   - 0: below minimum → clamped to 1 by get_compression(), rejected by validate()
+    //   - 1: exact minimum → valid, least compression (largest file)
+    //   - 100: exact maximum → valid, most compression (smallest file)
+    //   - 101: above maximum → clamped to 100 by get_compression(), rejected by validate()
     //
-    // Two paths test quality handling:
-    //   1. `get_quality()` — silent clamping (used during processing)
+    // Two paths test compression handling:
+    //   1. `get_compression()` — silent clamping (used during processing)
     //   2. `validate()` — explicit error messages (used before processing)
-    //
-    // We test both paths because they serve different purposes:
-    //   - get_quality() is defensive: "make it work no matter what"
-    //   - validate() is informative: "tell the user what's wrong"
 
-    // --- get_quality() boundary tests ---
+    // --- get_compression() boundary tests ---
 
     #[test]
-    fn test_get_quality_at_exact_min_boundary() {
-        // Quality = 1 (MIN_JPEG_QUALITY) should pass through unchanged.
+    fn test_get_compression_at_exact_min_boundary() {
+        // Compression = 1 (MIN_COMPRESSION) should pass through unchanged.
         // This is the exact boundary — no clamping needed.
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(1u64)),
         );
         assert_eq!(
-            CompressImages::get_quality(&params),
+            CompressImages::get_compression(&params),
             1,
-            "Quality 1 should pass through as-is (exact minimum boundary)"
+            "Compression 1 should pass through as-is (exact minimum boundary)"
         );
     }
 
     #[test]
-    fn test_get_quality_at_exact_max_boundary() {
-        // Quality = 100 (MAX_JPEG_QUALITY) should pass through unchanged.
+    fn test_get_compression_at_exact_max_boundary() {
+        // Compression = 100 (MAX_COMPRESSION) should pass through unchanged.
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(100u64)),
         );
         assert_eq!(
-            CompressImages::get_quality(&params),
+            CompressImages::get_compression(&params),
             100,
-            "Quality 100 should pass through as-is (exact maximum boundary)"
+            "Compression 100 should pass through as-is (exact maximum boundary)"
         );
     }
 
     #[test]
-    fn test_get_quality_101_clamped_to_max() {
-        // Quality = 101 is just above the max. Should clamp to 100.
+    fn test_get_compression_101_clamped_to_max() {
+        // Compression = 101 is just above the max. Should clamp to 100.
         //
         // RUST CONCEPT: `.clamp(min, max)`
         // Returns max if the value exceeds max. So 101.clamp(1, 100) = 100.
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(101u64)),
         );
         assert_eq!(
-            CompressImages::get_quality(&params),
-            MAX_JPEG_QUALITY,
-            "Quality 101 should be clamped to 100 (just above max)"
+            CompressImages::get_compression(&params),
+            MAX_COMPRESSION,
+            "Compression 101 should be clamped to 100 (just above max)"
         );
     }
 
     // --- validate() boundary tests ---
 
     #[test]
-    fn test_validate_quality_0_fails() {
-        // Quality = 0 is below our minimum (1). The validate() method
+    fn test_validate_compression_0_fails() {
+        // Compression = 0 is below our minimum (1). The validate() method
         // should report this as an out-of-range error so the UI can show
         // the user a helpful message before processing starts.
         let processor = CompressImages::new();
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(0u64)),
         );
         let errors = processor.validate(&params);
         assert_eq!(
             errors.len(),
             1,
-            "Quality 0 should produce exactly one validation error"
+            "Compression 0 should produce exactly one validation error"
         );
         assert!(
             errors[0].contains("between"),
@@ -1472,53 +1522,53 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_quality_1_passes() {
-        // Quality = 1 is the exact minimum boundary. Should pass validation.
+    fn test_validate_compression_1_passes() {
+        // Compression = 1 is the exact minimum boundary. Should pass validation.
         let processor = CompressImages::new();
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(1u64)),
         );
         let errors = processor.validate(&params);
         assert!(
             errors.is_empty(),
-            "Quality 1 should pass validation (exact minimum): got {:?}",
+            "Compression 1 should pass validation (exact minimum): got {:?}",
             errors
         );
     }
 
     #[test]
-    fn test_validate_quality_100_passes() {
-        // Quality = 100 is the exact maximum boundary. Should pass validation.
+    fn test_validate_compression_100_passes() {
+        // Compression = 100 is the exact maximum boundary. Should pass validation.
         let processor = CompressImages::new();
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(100u64)),
         );
         let errors = processor.validate(&params);
         assert!(
             errors.is_empty(),
-            "Quality 100 should pass validation (exact maximum): got {:?}",
+            "Compression 100 should pass validation (exact maximum): got {:?}",
             errors
         );
     }
 
     #[test]
-    fn test_validate_quality_101_fails() {
-        // Quality = 101 is just above the max. Should fail validation.
+    fn test_validate_compression_101_fails() {
+        // Compression = 101 is just above the max. Should fail validation.
         let processor = CompressImages::new();
         let mut params = serde_json::Map::new();
         params.insert(
-            "quality".to_string(),
+            "compression".to_string(),
             serde_json::Value::Number(serde_json::Number::from(101u64)),
         );
         let errors = processor.validate(&params);
         assert_eq!(
             errors.len(),
             1,
-            "Quality 101 should produce exactly one validation error"
+            "Compression 101 should produce exactly one validation error"
         );
         assert!(
             errors[0].contains("between"),
@@ -1527,140 +1577,137 @@ mod tests {
         );
     }
 
-    // --- Actual compression at quality boundaries ---
+    // --- Actual compression at boundaries ---
 
     #[test]
-    fn test_compress_jpeg_at_quality_1_produces_valid_output() {
-        // Quality 1 = maximum compression, worst visual quality.
-        // Should still produce a valid, decodable JPEG — just very small.
+    fn test_compress_jpeg_at_compression_100_produces_valid_output() {
+        // Compression 100 = most aggressive, smallest file.
+        // Should still produce a valid, decodable JPEG.
         let processor = CompressImages::new();
         let progress = noop_progress();
-        let input = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 1);
+        let input = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 100);
 
         let output = processor
             .process(input, &progress)
-            .expect("Quality 1 should produce valid output, not an error");
+            .expect("Compression 100 should produce valid output, not an error");
 
         // Output should be a valid JPEG (check magic bytes)
         assert_eq!(output.files.len(), 1);
         assert_eq!(
             ImageFormat::from_magic_bytes(&output.files[0].data),
             Some(ImageFormat::Jpeg),
-            "Quality 1 output should still be a valid JPEG"
+            "Compression 100 output should still be a valid JPEG"
         );
 
-        // Quality 1 should be noticeably smaller than the original
+        // Max compression should produce a file smaller than the original
         assert!(
             output.files[0].data.len() < TEST_MEDIUM_JPEG.len(),
-            "Quality 1 ({} bytes) should be smaller than original ({} bytes)",
+            "Compression 100 ({} bytes) should be smaller than original ({} bytes)",
             output.files[0].data.len(),
             TEST_MEDIUM_JPEG.len()
         );
     }
 
     #[test]
-    fn test_compress_jpeg_at_quality_100_produces_valid_output() {
-        // Quality 100 = minimal compression, best visual quality.
-        // Should produce a valid JPEG, possibly larger than the original
-        // (re-encoding at max quality can inflate files).
+    fn test_compress_jpeg_at_compression_1_produces_valid_output() {
+        // Compression 1 = minimal compression, best visual quality.
+        // Should produce a valid JPEG, possibly larger than the original.
         let processor = CompressImages::new();
         let progress = noop_progress();
-        let input = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
+        let input = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 1);
 
         let output = processor
             .process(input, &progress)
-            .expect("Quality 100 should produce valid output, not an error");
+            .expect("Compression 1 should produce valid output, not an error");
 
         // Output should be a valid JPEG
         assert_eq!(output.files.len(), 1);
         assert_eq!(
             ImageFormat::from_magic_bytes(&output.files[0].data),
             Some(ImageFormat::Jpeg),
-            "Quality 100 output should be a valid JPEG"
+            "Compression 1 output should be a valid JPEG"
         );
 
         // Output should not be empty
         assert!(
             !output.files[0].data.is_empty(),
-            "Quality 100 output should not be empty"
+            "Compression 1 output should not be empty"
         );
     }
 
     #[test]
-    fn test_quality_1_smaller_than_quality_100() {
-        // The core contract of lossy compression: lower quality = smaller file.
-        // Quality 1 (most aggressive) should always produce a smaller file
-        // than quality 100 (least aggressive) for the same input image.
-        //
-        // This is a stronger test than just "it doesn't crash" — it verifies
-        // the quality parameter actually controls the output size.
+    fn test_compression_100_smaller_than_compression_1() {
+        // The core contract: higher compression = smaller file.
+        // Compression 100 (most aggressive) should always produce a smaller
+        // file than compression 1 (least aggressive) for the same input image.
         let processor = CompressImages::new();
 
-        let input_q1 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 1);
-        let input_q100 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
+        let input_c100 = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 100);
+        let input_c1 = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 1);
 
-        let output_q1 = processor.process(input_q1, &noop_progress()).unwrap();
-        let output_q100 = processor.process(input_q100, &noop_progress()).unwrap();
+        let output_c100 = processor.process(input_c100, &noop_progress()).unwrap();
+        let output_c1 = processor.process(input_c1, &noop_progress()).unwrap();
 
-        let size_q1 = output_q1.files[0].data.len();
-        let size_q100 = output_q100.files[0].data.len();
+        let size_c100 = output_c100.files[0].data.len();
+        let size_c1 = output_c1.files[0].data.len();
 
         assert!(
-            size_q1 < size_q100,
-            "Quality 1 ({} bytes) should be smaller than quality 100 ({} bytes)",
-            size_q1,
-            size_q100
+            size_c100 < size_c1,
+            "Compression 100 ({} bytes) should be smaller than compression 1 ({} bytes)",
+            size_c100,
+            size_c1
         );
     }
 
     #[test]
-    fn test_quality_monotonically_affects_file_size() {
-        // Verify the full ordering: q1 <= q50 <= q100.
-        // JPEG quality should be monotonically non-decreasing with file size.
+    fn test_compression_monotonically_affects_file_size() {
+        // Verify the full ordering: c100 <= c50 <= c1 (file size).
+        // Higher compression should produce smaller or equal files.
         //
-        // WHY THIS MATTERS: If quality 50 produces a LARGER file than
-        // quality 100, something is deeply wrong with our quality pipeline
-        // (e.g., the param isn't being passed through, or it's being
-        // silently replaced with a default).
+        // WHY THIS MATTERS: If compression 50 produces a LARGER file than
+        // compression 1, the inversion formula is broken.
         let processor = CompressImages::new();
 
-        let input_q1 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 1);
-        let input_q50 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 50);
-        let input_q100 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
+        let input_c100 = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 100);
+        let input_c50 = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 50);
+        let input_c1 = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 1);
 
-        let size_q1 = processor.process(input_q1, &noop_progress()).unwrap().files[0]
-            .data
-            .len();
-        let size_q50 = processor
-            .process(input_q50, &noop_progress())
+        let size_c100 = processor
+            .process(input_c100, &noop_progress())
             .unwrap()
             .files[0]
             .data
             .len();
-        let size_q100 = processor
-            .process(input_q100, &noop_progress())
+        let size_c50 = processor
+            .process(input_c50, &noop_progress())
+            .unwrap()
+            .files[0]
+            .data
+            .len();
+        let size_c1 = processor
+            .process(input_c1, &noop_progress())
             .unwrap()
             .files[0]
             .data
             .len();
 
         assert!(
-            size_q1 <= size_q50,
-            "q1 ({} bytes) should be <= q50 ({} bytes)",
-            size_q1,
-            size_q50
+            size_c100 <= size_c50,
+            "c100 ({} bytes) should be <= c50 ({} bytes)",
+            size_c100,
+            size_c50
         );
         assert!(
-            size_q50 <= size_q100,
-            "q50 ({} bytes) should be <= q100 ({} bytes)",
-            size_q50,
-            size_q100
+            size_c50 <= size_c1,
+            "c50 ({} bytes) should be <= c1 ({} bytes)",
+            size_c50,
+            size_c1
         );
 
         // Log sizes for manual inspection during development
         eprintln!(
-            "Quality ordering: q1={} bytes, q50={} bytes, q100={} bytes",
-            size_q1, size_q50, size_q100
+            "Compression ordering: c100={} bytes, c50={} bytes, c1={} bytes",
+            size_c100, size_c50, size_c1
         );
     }
 
@@ -1850,48 +1897,49 @@ mod tests {
     }
 
     #[test]
-    fn test_1x1_jpeg_with_quality_1_produces_valid_output() {
-        // The extreme combo: smallest possible image + lowest quality.
-        // If this doesn't crash, our pipeline handles the most degenerate
-        // valid JPEG case.
+    fn test_1x1_jpeg_with_compression_100_produces_valid_output() {
+        // The extreme combo: smallest possible image + maximum compression.
+        // compression=100 → quality=1 internally. If this doesn't crash,
+        // our pipeline handles the most degenerate valid JPEG case.
         let processor = CompressImages::new();
         let progress = noop_progress();
 
         let jpeg_bytes = create_1x1_jpeg();
-        let input = make_input_with_quality(&jpeg_bytes, "tiny_q1.jpg", 1);
+        let input = make_input_with_compression(&jpeg_bytes, "tiny_c100.jpg", 100);
 
         let output = processor
             .process(input, &progress)
-            .expect("1x1 JPEG at quality 1 should produce valid output");
+            .expect("1x1 JPEG at compression 100 should produce valid output");
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
             ImageFormat::from_magic_bytes(&output.files[0].data),
             Some(ImageFormat::Jpeg),
-            "Output should be a valid JPEG even at 1x1 / quality 1"
+            "Output should be a valid JPEG even at 1x1 / compression 100"
         );
     }
 
     #[test]
-    fn test_1x1_jpeg_with_quality_100_produces_valid_output() {
-        // Smallest possible image + highest quality.
-        // For a 1x1 image, quality 100 vs quality 1 may not differ much
-        // in file size (very little data to compress), but both should work.
+    fn test_1x1_jpeg_with_compression_1_produces_valid_output() {
+        // Smallest possible image + minimal compression.
+        // compression=1 → quality=100 internally. For a 1x1 image,
+        // compression 1 vs 100 may not differ much in file size
+        // (very little data to compress), but both should work.
         let processor = CompressImages::new();
         let progress = noop_progress();
 
         let jpeg_bytes = create_1x1_jpeg();
-        let input = make_input_with_quality(&jpeg_bytes, "tiny_q100.jpg", 100);
+        let input = make_input_with_compression(&jpeg_bytes, "tiny_c1.jpg", 1);
 
         let output = processor
             .process(input, &progress)
-            .expect("1x1 JPEG at quality 100 should produce valid output");
+            .expect("1x1 JPEG at compression 1 should produce valid output");
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
             ImageFormat::from_magic_bytes(&output.files[0].data),
             Some(ImageFormat::Jpeg),
-            "Output should be a valid JPEG even at 1x1 / quality 100"
+            "Output should be a valid JPEG even at 1x1 / compression 1"
         );
     }
 

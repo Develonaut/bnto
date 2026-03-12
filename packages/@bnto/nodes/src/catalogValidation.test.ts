@@ -90,9 +90,9 @@ describe("catalog structure", () => {
 // =============================================================================
 
 describe("engine defaults flow through to schemas", () => {
-  it("image quality default matches engine", () => {
-    const engineDefault = getProcessorDefaults("image", "compress").quality;
-    const zodDefault = imageParamsSchema.shape.quality.parse(undefined);
+  it("image compression default matches engine", () => {
+    const engineDefault = getProcessorDefaults("image", "compress").compression;
+    const zodDefault = imageParamsSchema.shape.compression.parse(undefined);
     expect(zodDefault).toBe(engineDefault);
   });
 
