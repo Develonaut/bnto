@@ -47,6 +47,16 @@ export interface NodeParamMeta {
    * handles implicitly via node placement.
    */
   hidden?: boolean;
+
+  /**
+   * Layout group name — consecutive params with the same group
+   * are rendered together in a compact FieldGroup (e.g., "dimensions"
+   * renders Width + Height side-by-side with aspect lock toggle above).
+   */
+  group?: string;
+
+  /** Unit suffix displayed inside the input (e.g., "px", "%", "ms"). */
+  suffix?: string;
 }
 
 /**
