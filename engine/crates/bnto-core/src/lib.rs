@@ -105,9 +105,16 @@ pub const FORMAT_VERSION: &str = "1.0.0";
 
 /// Default JPEG quality when not specified by the user (0-100 scale).
 /// 80 is the industry sweet spot: significant file size savings with barely
-/// noticeable quality loss for most photos. Used across compress, resize,
-/// and convert operations.
+/// noticeable quality loss for most photos. Used by resize and convert
+/// operations (which genuinely control output encoding quality).
 pub const DEFAULT_JPEG_QUALITY: u8 = 80;
+
+/// Default compression level for the compress-images node (1-100 scale).
+/// 20 ≈ "Light" compression — preserves most visual quality while still
+/// noticeably reducing file size. The user-facing semantics are inverted
+/// from JPEG quality: compression=1 is minimal, compression=100 is maximum.
+/// Internally: `jpeg_quality = 101 - compression` (so compression=20 → quality=81).
+pub const DEFAULT_COMPRESSION: u8 = 20;
 
 // =============================================================================
 // Utility Functions (Pure Rust — no WASM boundary)

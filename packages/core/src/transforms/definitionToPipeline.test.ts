@@ -31,7 +31,7 @@ const SIMPLE_DEF: Definition = {
       name: "Compress",
       position: { x: 200, y: 0 },
       metadata: {},
-      parameters: { operation: "compress", quality: 80 },
+      parameters: { operation: "compress", compression: 20 },
       inputPorts: [{ id: "in-1", name: "files" }],
       outputPorts: [{ id: "out-1", name: "files" }],
     },
@@ -135,7 +135,7 @@ describe("definitionToPipeline", () => {
     expect(pipeline.nodes[1]).toEqual({
       id: "compress",
       type: "image",
-      params: { operation: "compress", quality: 80 },
+      params: { operation: "compress", compression: 20 },
     });
   });
 
@@ -152,16 +152,16 @@ describe("definitionToPipeline", () => {
   });
 
   it("merges config overrides into leaf processing nodes", () => {
-    const pipeline = definitionToPipeline(SIMPLE_DEF, { quality: 50 });
+    const pipeline = definitionToPipeline(SIMPLE_DEF, { compression: 50 });
 
     expect(pipeline.nodes[1]!.params).toEqual({
       operation: "compress",
-      quality: 50,
+      compression: 50,
     });
   });
 
   it("does NOT merge config into I/O nodes", () => {
-    const pipeline = definitionToPipeline(SIMPLE_DEF, { quality: 50 });
+    const pipeline = definitionToPipeline(SIMPLE_DEF, { compression: 50 });
 
     expect(pipeline.nodes[0]!.params).toEqual({ mode: "file-upload" });
     expect(pipeline.nodes[2]!.params).toEqual({ mode: "download" });

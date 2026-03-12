@@ -46,7 +46,7 @@ fn test_compress_jpeg_combined_via_wasm() {
     //
     // The combined function returns a JsValue containing:
     //   { metadata: String, data: Uint8Array, filename: String, mimeType: String }
-    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"compression": 20}"#, callback);
 
     assert!(
         result.is_ok(),
@@ -84,7 +84,7 @@ fn test_compress_jpeg_combined_bytes_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 80}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"compression": 20}"#, callback);
 
     assert!(
         result.is_ok(),

@@ -12,44 +12,41 @@ import {
 test.use({ reducedMotion: "reduce" });
 
 /**
- * Advanced compress-images tests: quality slider and batch processing.
+ * Advanced compress-images tests: compression presets and batch processing.
  *
- * Quality slider test verifies that WASM output actually varies with
- * the quality parameter (not just a pass-through). Batch test verifies
+ * Compression preset test verifies that WASM output actually varies with
+ * the compression parameter (not just a pass-through). Batch test verifies
  * 5+ files across all three codecs process successfully.
  */
 
 /**
- * Adjust a Radix Slider from its default value to a target value.
- * Uses PageUp/PageDown (±10) and Arrow keys (±1).
+ * Move a preset-based Radix Slider to a target index using keyboard.
+ * Presets: 0=Light(20), 1=Balanced(50), 2=Maximum(80).
  */
-async function adjustSlider(page: Page, target: number, defaultValue: number) {
+async function moveSliderToIndex(page: Page, targetIndex: number, startIndex: number) {
   const slider = page.getByRole("slider");
   await slider.focus();
 
-  const diff = target - defaultValue;
-  const abs = Math.abs(diff);
-  const bigKey = diff > 0 ? "PageUp" : "PageDown";
-  const smallKey = diff > 0 ? "ArrowRight" : "ArrowLeft";
+  const diff = targetIndex - startIndex;
+  const key = diff > 0 ? "ArrowRight" : "ArrowLeft";
 
-  for (let i = 0; i < Math.floor(abs / 10); i++)
-    await page.keyboard.press(bigKey);
-  for (let i = 0; i < abs % 10; i++)
-    await page.keyboard.press(smallKey);
+  for (let i = 0; i < Math.abs(diff); i++)
+    await page.keyboard.press(key);
 
-  await expect(slider).toHaveAttribute("aria-valuenow", String(target));
+  await expect(slider).toHaveAttribute("aria-valuenow", String(targetIndex));
 }
 
 /**
- * Compress medium.jpg at a given quality, return output size in bytes.
- * Navigates to a fresh page each time (clean slider state).
+ * Compress medium.jpg at a given preset index, return output size in bytes.
+ * Presets: 0=Light(20), 1=Balanced(50), 2=Maximum(80).
+ * Default is index 0 (Light).
  */
-async function compressAtQuality(page: Page, quality: number): Promise<number> {
+async function compressAtPreset(page: Page, presetIndex: number): Promise<number> {
   await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
   await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "medium.jpg")]);
 
-  await adjustSlider(page, quality, 80);
+  await moveSliderToIndex(page, presetIndex, 0);
 
   await runAndComplete(page);
 
@@ -62,14 +59,14 @@ async function compressAtQuality(page: Page, quality: number): Promise<number> {
 }
 
 test.describe("compress-images — configuration @browser", () => {
-  test("quality slider: q=50 produces smaller output than q=90", async ({
+  test("compression presets: Maximum produces smaller output than Light", async ({
     page,
   }) => {
-    const size90 = await compressAtQuality(page, 90);
-    const size50 = await compressAtQuality(page, 50);
+    const sizeLight = await compressAtPreset(page, 0);    // Light (compression=20)
+    const sizeMax = await compressAtPreset(page, 2);      // Maximum (compression=80)
 
-    // Lower quality MUST produce smaller output
-    expect(size50).toBeLessThan(size90);
+    // Higher compression MUST produce smaller output
+    expect(sizeMax).toBeLessThan(sizeLight);
   });
 });
 

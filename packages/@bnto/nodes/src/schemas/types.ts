@@ -57,6 +57,30 @@ export interface NodeParamMeta {
 
   /** Unit suffix displayed inside the input (e.g., "px", "%", "ms"). */
   suffix?: string;
+
+  /**
+   * Slider presets — clickable named positions along the slider track.
+   * Each preset maps a value to a label (e.g., { value: 80, label: "High" }).
+   * When presets are present, the numeric value display is replaced by preset labels.
+   */
+  presets?: Array<{ value: number; label: string }>;
+
+  /**
+   * Display the slider with inverted semantics — the UI shows (max + min - value)
+   * while the stored value stays as-is. Used when the engine param and user
+   * mental model are inverted (e.g., compression 1-100 displayed as quality).
+   */
+  displayInverted?: boolean;
+
+  /** Override the label shown in the config panel (e.g., show "Quality" for "compression"). */
+  displayLabel?: string;
+
+  /**
+   * Display labels for enum options. Each entry maps a stored value to a
+   * human-readable label (e.g., { value: "compress", label: "Compress" }).
+   * When present, SelectControl uses these labels instead of raw enum values.
+   */
+  options?: Array<{ value: string; label: string }>;
 }
 
 /**

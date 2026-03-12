@@ -18,10 +18,17 @@ import {
   Textarea,
 } from "@bnto/ui";
 
+const compressionPresets = [
+  { value: 20, label: "Light" },
+  { value: 50, label: "Balanced" },
+  { value: 80, label: "Maximum" },
+];
+
 export function InputShowcase() {
   const [switchA, setSwitchA] = useState(true);
   const [switchB, setSwitchB] = useState(false);
   const [slider, setSlider] = useState([65]);
+  const [presetSlider, setPresetSlider] = useState([50]);
   const [dial, setDial] = useState(75);
   const [halfDial, setHalfDial] = useState(60);
   const [radioVal, setRadioVal] = useState("jpeg");
@@ -178,15 +185,15 @@ export function InputShowcase() {
           Sliders
         </Text>
         <div className="grid grid-cols-3 gap-8">
-          <Stack gap="sm">
-            <Row className="justify-between">
-              <Label>Quality</Label>
-              <Text size="xs" mono color="muted">
-                {slider[0]}%
-              </Text>
-            </Row>
-            <Slider value={slider} onValueChange={setSlider} max={100} />
-          </Stack>
+          <Slider label="Quality" value={slider} onValueChange={setSlider} max={100} />
+          <Slider
+            label="Compression"
+            value={presetSlider}
+            onValueChange={setPresetSlider}
+            min={1}
+            max={100}
+            presets={compressionPresets}
+          />
           <Stack gap="sm" className="items-center">
             <Label>Radial</Label>
             <RadialSlider

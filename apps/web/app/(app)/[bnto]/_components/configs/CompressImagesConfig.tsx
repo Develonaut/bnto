@@ -1,7 +1,13 @@
 "use client";
 
-import { Label, Slider } from "@bnto/ui";
+import { Slider } from "@bnto/ui";
 import type { CompressImagesConfig as Config } from "./types";
+
+const COMPRESSION_PRESETS = [
+  { value: 20, label: "Light" },
+  { value: 50, label: "Balanced" },
+  { value: 80, label: "Maximum" },
+];
 
 interface CompressImagesConfigProps {
   value: Config;
@@ -13,27 +19,16 @@ export function CompressImagesConfig({
   onChange,
 }: CompressImagesConfigProps) {
   return (
-    <div className="flex w-full flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-2">
-        <Label id="compress-quality-label" className="text-muted-foreground text-sm">Quality</Label>
-        <span className="text-muted-foreground shrink-0 font-mono text-sm tabular-nums">
-          {value.quality}%
-        </span>
-      </div>
-      <Slider
-        className="w-full"
-        aria-labelledby="compress-quality-label"
-        aria-describedby="compress-quality-help"
-        aria-valuetext={`${value.quality} percent`}
-        value={[value.quality]}
-        onValueChange={([quality]: number[]) =>
-          onChange({ ...value, quality: quality ?? value.quality })
-        }
-        min={1}
-        max={100}
-        step={1}
-      />
-      <p id="compress-quality-help" className="min-h-4 text-xs text-muted-foreground">Lower values reduce file size more but also lower quality</p>
-    </div>
+    <Slider
+      label="Compression"
+      aria-describedby="compress-help"
+      value={[value.compression]}
+      onValueChange={([compression]: number[]) =>
+        onChange({ ...value, compression: compression ?? value.compression })
+      }
+      min={1}
+      max={100}
+      presets={COMPRESSION_PRESETS}
+    />
   );
 }

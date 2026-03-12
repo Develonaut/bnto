@@ -30,10 +30,10 @@ describe("round-trip: full editor lifecycle", () => {
     const imageNodeId = r2.definition.nodes![2]!.id;
     const r3 = updateNodeParams(r2.definition, imageNodeId, {
       operation: "compress",
-      quality: 75,
+      compression: 25,
     });
     expect(r3.definition.nodes![2]!.parameters.operation).toBe("compress");
-    expect(r3.definition.nodes![2]!.parameters.quality).toBe(75);
+    expect(r3.definition.nodes![2]!.parameters.compression).toBe(25);
 
     // 5. Move the transform node (index 3)
     const transformNodeId = r3.definition.nodes![3]!.id;
@@ -53,7 +53,7 @@ describe("round-trip: full editor lifecycle", () => {
 
     expect(recipe.slug).toBe("my-image-pipeline");
     expect(recipe.definition.nodes).toHaveLength(4);
-    expect(recipe.definition.nodes![2]!.parameters.quality).toBe(75);
+    expect(recipe.definition.nodes![2]!.parameters.compression).toBe(25);
   });
 
   it("create → add → remove → verify cleanup", () => {
