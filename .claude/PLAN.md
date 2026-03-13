@@ -30,13 +30,14 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **Editor is fully functional.** Sprint 5D (Editor API layer) complete — `createEditor()` factory, domain-namespaced clients, services, React binding layer, full component migration. Sprint 4H (Pipeline Executor) complete — runtime-agnostic `executePipeline()` extracted and proven with comprehensive tests. Sprint 5 Waves 1-2 complete (compartment redesign, `/editor` route, nav integration). Sprint 4G complete (format versioning, Zod schemas, schema-driven config panel).
 - **Multi-node recipes delivered:** Tier 1B compositions (optimize-images-for-web, generate-thumbnails) — first multi-node predefined recipes with 3-operation pipelines.
 - **Active work — execution order:**
-  1. **Sprint 5A Wave 1** — finish exit animation (isIoNode, hover delete, placeholder DONE — exit animation remains)
-  2. **Sprint 5B** — visual hierarchy (unblocked, no shared dependencies)
-  3. **Sprint 5 Wave 3** — execution wiring (Run → `executePipeline` → WASM → elevation). **Unblocked** — Sprint 4H complete.
-  4. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
-  5. **Sprint 5C** — copy + nav label cleanup (~30 min)
-  6. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern)
-  7. **Sprint 5 Waves 4–5** — save infrastructure, My Recipes, final E2E
+  1. **Editor Beta Launch** — remove feature flag, beta badge on nav/CTAs, dismissible banner on `/editor`, ship what we have (~30 min)
+  2. **Sprint 5A Wave 1** — finish exit animation (isIoNode, hover delete, placeholder DONE — exit animation remains)
+  3. **Sprint 5B** — visual hierarchy (unblocked, no shared dependencies)
+  4. **Sprint 5 Wave 3** — auto-download toggle (remaining task — Run button, results, reset, error states, elevation all DONE)
+  5. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
+  6. **Sprint 5C** — copy + nav label cleanup (~30 min)
+  7. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern). Potential reuse for recipe page run experience.
+  8. **Sprint 5 Waves 4–5** — save button, My Recipes, nav warning, final E2E (backend save mutation + core hooks DONE)
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
@@ -78,6 +79,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Multi-node recipes (Tier 1B): optimize-images-for-web, generate-thumbnails — first multi-node predefined recipes with 3-operation pipelines inside forEach loops
 - [x] Slider presets + select labels: Quality→compression rename, slider preset system, select option labels
 - [x] Definition round-trip fidelity: `captureDefinition()` snapshot, `loadDefinition()` restore, fidelity test suite proving lossless round-trips
+- [x] Editor execution wiring: RunButton → runExecution → core.executions.runPipeline(), ResultsTab/ResultRow in RunPanel, reset/re-run flow, per-node execution state tracking
+- [x] Recipe save backend: Convex save mutation in recipes.ts, core.recipes.save() in recipeClient.ts, useSaveRecipe.ts hook
 
 ---
 
@@ -178,6 +181,22 @@ Format versioning activated across the stack. Zod schemas replaced hand-rolled `
 
 ## Active Sprints
 
+### Editor Beta Launch — Ship What We Have
+
+**Goal:** Get the editor in front of users now. It works — recipes load, config panels configure, visual hierarchy exists. Execution and save are coming, but exploration and feedback don't need to wait. Add a beta signal so expectations are set, then let people play.
+
+**Persona ownership:** `/frontend-engineer`
+
+**Scope:** ~30 minutes. No new packages, no architecture.
+
+- [ ] `apps/web` — **Remove editor feature flag gate**: The editor is currently behind `editor: false` in `featureFlags.ts`. Remove the feature flag check from `DesktopNav`, `MobileNavMenu`, and any other gates. The beta badge replaces the feature flag — users see "Editor Beta" in the nav, no console hack needed.
+- [ ] `apps/web` — **Beta badge on nav link**: Add a `Badge variant="secondary" size="sm"` with text "Beta" next to the editor link in `DesktopNav` and `MobileNavMenu`. Small pill, doesn't dominate the nav.
+- [ ] `apps/web` — **Beta badge on recipe page CTA**: Add the same badge next to "Open in Editor" link in `OpenInEditorLink.tsx`.
+- [ ] `apps/web` — **Dismissible beta banner on `/editor`**: Top-of-editor banner (not a modal — don't block interaction). Brief copy: "The recipe editor is in beta. You can build and preview recipes — execution and save are coming soon." Dismiss button. Persist dismissal in `localStorage` (`bnto-editor-beta-dismissed`). Use `Animate.SlideDown` for entrance. Banner does not render once dismissed.
+- [ ] `apps/web` — **E2E: verify banner renders and dismisses**: Navigate to `/editor`, banner visible. Dismiss it, reload — banner gone.
+
+---
+
 ### Sprint 5: Editor to Production (M2 Completion)
 
 **Goal:** Ship the editor as a real product surface. Users can access `/editor`, build recipes from scratch or customize predefined ones, run them, see results, and save to their account. This is the M2 completion path — the editor gives users a reason to create accounts.
@@ -215,12 +234,12 @@ Format versioning activated across the stack. Zod schemas replaced hand-rolled `
 Wire the Run button to browser WASM execution. Elevation-driven progress on compartments. Results routed to Output node.
 
 - ~~`@bnto/core` — Extract pipeline executor~~ — **Completed by Sprint 4H.** `executePipeline()` exists and is exported from `@bnto/core` before this wave starts.
-- [ ] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `executePipeline()` → browser WASM engine. Import `executePipeline` and `NodeRunner` from `@bnto/core`. Build `NodeRunner` from `core.executions` browser adapter's `processFile`. Do NOT call `BntoWorker.processFiles()` directly.
-- [ ] `@bnto/editor` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed). Leverage existing Card spring animations
-- [ ] `@bnto/editor` — `/frontend-engineer` — Results routed to Output node config panel (download list)
+- [x] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `executePipeline()` → browser WASM engine. `RunButton.tsx` wired through `runExecution.ts` → `core.executions.runPipeline()`.
+- [x] `@bnto/editor` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed). Store infrastructure (`executionState`, `nodeProgress`) in place.
+- [x] `@bnto/editor` — `/frontend-engineer` — Results routed to RunPanel (`ResultsTab`, `ResultRow`) with download capability.
 - [ ] `@bnto/editor` — `/frontend-engineer` — Auto-download toggle on Output node
-- [ ] `@bnto/editor` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute)
-- [ ] `@bnto/editor` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant)
+- [x] `@bnto/editor` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute). Reset button and re-run logic in RunPanel.
+- [x] `@bnto/editor` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant). `executionState` tracked per-node in store.
 
 **Execution boundary contract:** The execution path MUST call `validateDefinition()` (which includes per-node parameter validation via Zod) before invoking the WASM engine. If validation fails → reject with errors, surface in the UI, no engine invocation.
 
@@ -228,11 +247,11 @@ Wire the Run button to browser WASM execution. Elevation-driven progress on comp
 
 Convex persistence for custom recipes. My Recipes integration. This is the M2 conversion moment — users create recipes, want to save them, create accounts.
 
-- [ ] `@bnto/backend` — `/backend-engineer` — Recipe save mutation (Convex schema: recipes table with userId, definition, metadata)
-- [ ] `@bnto/core` — `/core-architect` — `core.recipes.save()` and `core.recipes.useMyRecipes()` hooks
+- [x] `@bnto/backend` — `/backend-engineer` — Recipe save mutation (Convex schema: recipes table with userId, definition, metadata). Exists in `convex/recipes.ts`.
+- [x] `@bnto/core` — `/core-architect` — `core.recipes.save()` and `core.recipes.useMyRecipes()` hooks. `recipeClient.ts` save() + `useSaveRecipe.ts` exist.
 - [ ] `apps/web` — `/frontend-engineer` — Save button in editor toolbar, tier limits (Free: 3 recipes, Pro: unlimited)
 - [ ] `apps/web` — `/frontend-engineer` — My Recipes integration (load saved recipes into editor)
-- [ ] `apps/web` — `/frontend-engineer` — Dirty state tracking + unsaved changes warning on navigation
+- [ ] `apps/web` — `/frontend-engineer` — Unsaved changes warning on navigation (`beforeunload` prompt when `isDirty` is true). `isDirty` tracking already exists in the editor store.
 
 #### Wave 5 (sequential — E2E + Polish)
 
@@ -301,7 +320,7 @@ The first frame of the editor experience should tell the user what to do. Auto-b
 
 - [ ] `packages/editor` — **Auto-open palette on blank canvas**: In `EditorCanvasRoot`, after the store initializes with a blank definition, call `openNodePalette()` once if `nodes.length === 2` (only I/O nodes). Use `useEffect` with one RAF (`requestAnimationFrame`) delay. Only fires once per session via `useRef` flag.
 - [ ] `packages/editor` — **Auto-select Input node on blank canvas**: After the canvas renders on blank canvas entry, auto-select the `input` node and open the config panel. Shows the file dropzone immediately. Same `useRef` once-per-session guard.
-- [ ] `packages/editor` — **Run button in `EditorToolbar`**: Add Run button between the node navigation group and undo group. `variant="primary"` (terracotta), `elevation="sm"`, `size="icon"` with `PlayIcon`. Disabled when definition has no processing nodes or execution is in progress. Fires `handleRun` (stub for now — wired in Sprint 5 Wave 3).
+- [x] `packages/editor` — **Run button in `EditorToolbar`**: Fully wired Run button exists at `EditorToolbar.tsx:100`, connected through `runExecution.ts` → `core.executions.runPipeline()`. Not a stub — fully functional.
 - [ ] `packages/editor` — **Unit tests**: Palette auto-opens once on blank canvas mount. Does not fire on subsequent renders or after a node is added. Input node auto-selected on blank canvas. Run button disabled when no processing nodes exist.
 
 #### Wave 5 — Verify + E2E
@@ -340,7 +359,7 @@ Verify all UX changes hold together as a system. No regressions on existing edit
 
 | Tier          | Nodes         | Elevation (rest) | Elevation (selected)       | Color                | Shape              |
 | ------------- | ------------- | ---------------- | -------------------------- | -------------------- | ------------------ |
-| Structural    | input, output | `sm`             | `md`                       | `muted` (warm cream) | square — `90×90`   |
+| Structural    | input, output | `sm`             | `md`                       | `muted` (warm cream) | square — `100×100` |
 | Processing    | all others    | `md`             | `lg`                       | `card` (white)       | square — `120×120` |
 | Selected ring | any selected  | —                | + `ring-2 ring-primary/60` | —                    | —                  |
 
@@ -348,10 +367,10 @@ Verify all UX changes hold together as a system. No regressions on existing edit
 
 Differentiate Input and Output from processing nodes through elevation, color, and shape — not just icon. These are the walls of the bento box, not a compartment inside it.
 
-- [x] `packages/editor` — **I/O node sizing**: Update `definitionToBento` adapter — set `width: 160, height: 90` for nodes where `isIoNodeType(nodeType)` is true. Processing nodes keep `120×120`. Different aspect ratio signals "different kind of thing" before the label is read.
+- [x] `packages/editor` — **I/O node sizing**: `IO_CARD_SIZE = 100` — I/O nodes render as `100×100` squares. Processing nodes keep `120×120`. Square shape is intentional — uniform aspect ratio with size difference signals "different kind of thing."
 - [x] `packages/editor` — **I/O node color + elevation**: In `CompartmentNode.tsx`, **replace** the current uniform `elevation={selected ? "lg" : "sm"}` with conditional logic: when `data.isIoNode` is true, render `Card color="muted" elevation={selected ? "md" : "sm"}`. When false (processing), render `Card elevation={selected ? "lg" : "md"}`. This is a conscious replacement of the existing scheme, not an addition. Muted cards read as "part of the canvas" — warm cream that doesn't compete with the steps in between.
 - [x] `packages/editor` — **I/O node Pressable behavior**: Remove `toggle` and `active` props from the `Pressable` wrapper for I/O nodes. They can still receive clicks for selection feedback but shouldn't feel like pressable configuration buttons.
-- [x] `packages/editor` — **Unit tests**: I/O nodes render with `color="muted"`, `elevation="sm"`, and `160×90` dimensions. Processing nodes render with `elevation="md"` and `120×120`. Adapter sets `isIoNode` correctly for all 12 node types.
+- [x] `packages/editor` — **Unit tests**: I/O nodes render with `color="muted"`, `elevation="sm"`, and `100×100` dimensions. Processing nodes render with `elevation="md"` and `120×120`. Adapter sets `isIoNode` correctly for all 12 node types.
 
 #### Wave 2 — Processing Node Category Accents + Selected State — **TABLED**
 
