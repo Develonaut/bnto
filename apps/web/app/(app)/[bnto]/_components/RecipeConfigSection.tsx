@@ -4,6 +4,8 @@ import { FadeIn } from "@bnto/ui";
 import { CleanCsvConfig } from "./configs/CleanCsvConfig";
 import { CompressImagesConfig } from "./configs/CompressImagesConfig";
 import { ConvertFormatConfig } from "./configs/ConvertFormatConfig";
+import { GenerateThumbnailsConfig } from "./configs/GenerateThumbnailsConfig";
+import { OptimizeImagesForWebConfig } from "./configs/OptimizeImagesForWebConfig";
 import { RenameCsvColumnsConfig } from "./configs/RenameCsvColumnsConfig";
 import { RenameFilesConfig } from "./configs/RenameFilesConfig";
 import { ResizeImagesConfig } from "./configs/ResizeImagesConfig";
@@ -62,6 +64,20 @@ function renderConfig(
       return <CleanCsvConfig value={config as BntoConfigMap["clean-csv"]} onChange={onChange} />;
     case "rename-csv-columns":
       return <RenameCsvColumnsConfig />;
+    case "optimize-images-for-web":
+      return (
+        <OptimizeImagesForWebConfig
+          value={config as BntoConfigMap["optimize-images-for-web"]}
+          onChange={onChange}
+        />
+      );
+    case "generate-thumbnails":
+      return (
+        <GenerateThumbnailsConfig
+          value={config as BntoConfigMap["generate-thumbnails"]}
+          onChange={onChange}
+        />
+      );
     default:
       return null;
   }

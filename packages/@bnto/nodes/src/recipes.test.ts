@@ -10,11 +10,13 @@ const PUBLIC_SLUGS = [
   "rename-files",
   "clean-csv",
   "rename-csv-columns",
+  "optimize-images-for-web",
+  "generate-thumbnails",
 ];
 
 describe("RECIPES", () => {
-  it("contains all 6 Tier 1 recipes", () => {
-    expect(RECIPES).toHaveLength(6);
+  it("contains all predefined recipes", () => {
+    expect(RECIPES).toHaveLength(8);
   });
 
   it("contains every expected slug", () => {
