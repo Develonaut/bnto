@@ -42,7 +42,7 @@ Slugs are lowercase-hyphen only. Non-canonical variants 301 redirect (handled in
 ```
 title:       "[Action] Online Free -- bnto"  (flexible, must end with " -- bnto")
 description: One sentence. Plain language. Includes the action and "free".
-h1:          Exact target search query from Notion
+h1:          Exact target search query from [seo-monetization.md](../business/seo-monetization.md)
 ```
 
 Titles are for browser tabs and SERP; h1 is for on-page SEO. They may differ.
@@ -76,13 +76,13 @@ Tool pages include a factual description section (what/accepts/outputs/costs) us
 2. Verify fixture runs clean via `bnto run`
 
 ### Registry
-3. Add to Notion (`Bnto Directory & Launch Plan`)
+3. Add to [strategy/bntos.md](../strategy/bntos.md)
 4. Add to `strategy/bntos.md`
 5. Add to `lib/bntoRegistry.ts` with full metadata (title, description, h1, fixture, features)
 6. Verify slug doesn't collide with reserved paths
 
 ### SEO & LLM
-7. h1 matches exact target query from Notion
+7. h1 matches exact target query from [seo-monetization.md](../business/seo-monetization.md)
 8. Page has plain-language description section (what/accepts/outputs/costs)
 9. JSON-LD `featureList` populated
 10. Entry added to `public/llms.txt`
