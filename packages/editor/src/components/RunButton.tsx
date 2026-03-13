@@ -67,6 +67,7 @@ function RunButton() {
         disabled={!canRun && !isDone}
         aria-label={label}
         data-testid="run-button"
+        data-phase={phase}
       >
         {icon}
       </Button>

@@ -1,0 +1,38 @@
+{
+  "description": "CR5: All 6 operations — one of each type added to canvas",
+  "expectedNodeCount": 8,
+  "nodes": [
+    {
+      "type": "input",
+      "operation": null
+    },
+    {
+      "type": "image",
+      "operation": "compress"
+    },
+    {
+      "type": "image",
+      "operation": "resize"
+    },
+    {
+      "type": "image",
+      "operation": "convert"
+    },
+    {
+      "type": "file-system",
+      "operation": "rename"
+    },
+    {
+      "type": "spreadsheet",
+      "operation": "clean"
+    },
+    {
+      "type": "spreadsheet",
+      "operation": "rename"
+    },
+    {
+      "type": "output",
+      "operation": null
+    }
+  ]
+}

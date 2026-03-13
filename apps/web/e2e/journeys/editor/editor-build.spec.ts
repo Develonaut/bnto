@@ -1,0 +1,123 @@
+import { test, expect } from "../../fixtures";
+import {
+  enableEditorFlag,
+  navigateToEditor,
+  addNodeFromPalette,
+  selectNode,
+  ensureConfigPanelOpen,
+} from "../../helpers/editor";
+
+test.use({ reducedMotion: "reduce" });
+
+/**
+ * Editor build & configure — BC1-BC4, BC8
+ *
+ * Tests for adding nodes, removing nodes, selecting and configuring,
+ * updating params, and I/O node protection. All @browser.
+ *
+ * Convention: SETUP → BUILD → VERIFY.
+ */
+
+test.describe("editor build & configure @browser", () => {
+  test.beforeEach(async ({ page }) => {
+    await enableEditorFlag(page);
+    await navigateToEditor(page);
+  });
+
+  test("BC1: add node from palette", async ({ page }) => {
+    // Blank canvas starts with 2 I/O nodes
+    const nodeCards = page.locator('[data-testid="node-card"]');
+    await expect(nodeCards).toHaveCount(2);
+
+    // Add an image compress node
+    await addNodeFromPalette(page, "Compress Images");
+
+    // Should now have 3 nodes: Input, Compress Images, Output
+    await expect(nodeCards).toHaveCount(3);
+    await expect(nodeCards.filter({ hasText: /Compress/i })).toHaveCount(1);
+  });
+
+  test("BC2: remove processing node", async ({ page }) => {
+    // Add a node first
+    await addNodeFromPalette(page, "Compress Images");
+    const nodeCards = page.locator('[data-testid="node-card"]');
+    await expect(nodeCards).toHaveCount(3);
+
+    // Select the processing node
+    await selectNode(page, "Compress");
+
+    // Click delete button (appears on hover/selection)
+    const deleteBtn = page.locator('[data-testid="delete-node"]');
+    await deleteBtn.click();
+
+    // Should be back to 2 I/O nodes
+    await expect(nodeCards).toHaveCount(2);
+  });
+
+  test("BC3: select node opens config panel", async ({ page }) => {
+    await addNodeFromPalette(page, "Compress Images");
+
+    // Select the node
+    await selectNode(page, "Compress");
+    await ensureConfigPanelOpen(page);
+
+    // Config panel should show schema fields
+    const operationField = page.locator('[data-testid="schema-field-operation"]');
+    await expect(operationField).toBeVisible();
+  });
+
+  test("BC4: update params via config panel", async ({ page }) => {
+    await addNodeFromPalette(page, "Resize Images");
+
+    await selectNode(page, "Resize");
+    await ensureConfigPanelOpen(page);
+
+    // Width field should be visible for resize operation
+    const widthField = page.locator('[data-testid="schema-field-width"]');
+    await expect(widthField).toBeVisible();
+
+    // Verify it has a number input control
+    await expect(
+      widthField.locator('[data-testid^="control-number"]'),
+    ).toBeVisible();
+  });
+
+  test("BC8: I/O nodes cannot be deleted", async ({ page }) => {
+    // Click the Input node
+    await selectNode(page, "Input");
+
+    // Delete button should NOT be present for I/O nodes
+    const deleteBtn = page.locator('[data-testid="delete-node"]');
+    await expect(deleteBtn).toHaveCount(0);
+
+    // Click the Output node
+    await selectNode(page, "Output");
+    await expect(deleteBtn).toHaveCount(0);
+  });
+
+  test("BC5: add multiple nodes", async ({ page }) => {
+    await addNodeFromPalette(page, "Compress Images");
+    await addNodeFromPalette(page, "Rename Files");
+
+    const nodeCards = page.locator('[data-testid="node-card"]');
+    // I/O (2) + Compress + Rename = 4
+    await expect(nodeCards).toHaveCount(4);
+    await expect(nodeCards.filter({ hasText: /Compress/i })).toHaveCount(1);
+    await expect(nodeCards.filter({ hasText: /Rename/i })).toHaveCount(1);
+  });
+
+  test("BC6: undo restores deleted node", async ({ page }) => {
+    await addNodeFromPalette(page, "Compress Images");
+    const nodeCards = page.locator('[data-testid="node-card"]');
+    await expect(nodeCards).toHaveCount(3);
+
+    // Delete the processing node
+    await selectNode(page, "Compress");
+    await page.locator('[data-testid="delete-node"]').click();
+    await expect(nodeCards).toHaveCount(2);
+
+    // Undo
+    await page.getByRole("button", { name: "Undo" }).click();
+    await expect(nodeCards).toHaveCount(3);
+  });
+});
