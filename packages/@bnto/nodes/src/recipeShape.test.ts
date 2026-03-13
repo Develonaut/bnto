@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { RECIPES, getRecipeBySlug } from "./recipes";
 
 describe("recipeShape — uniform structure", () => {
-  it("has exactly 6 recipes", () => {
-    expect(RECIPES).toHaveLength(6);
+  it("has exactly 8 recipes", () => {
+    expect(RECIPES).toHaveLength(8);
   });
 
   it("all slugs are unique", () => {
@@ -12,7 +12,7 @@ describe("recipeShape — uniform structure", () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
-  it("getRecipeBySlug finds all 6 recipes", () => {
+  it("getRecipeBySlug finds all recipes", () => {
     for (const recipe of RECIPES) {
       expect(getRecipeBySlug(recipe.slug)).toBe(recipe);
     }
