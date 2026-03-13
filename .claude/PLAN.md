@@ -1289,6 +1289,34 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 - [ ] `apps/web` — Light elevation control → `--light-elevation` CSS variable
 - [ ] `apps/web` — Wire into surface shadow system, replace `LightSourceSlider` on showcase
 
+### UX: Expression Input — Pill Tokens & Variable Picker
+
+**Priority: Medium.** Template expression fields (rename patterns, loop items, break conditions) are plain `<Input>` elements with placeholder hints. Users write `{{name}}-compressed.{{ext}}` with zero editor assistance. This is fine for Tier 1-2 recipes (structured controls handle everything), but becomes a usability cliff when `transform`, `http-request`, and `ai` nodes ship.
+
+**Strategy doc:** [expression-input-ux.md](strategy/expression-input-ux.md) — full competitor analysis (Zapier, Make.com, n8n, Apple Shortcuts, Power Automate, Retool), recommended approach, engine changes, phased rollout.
+
+**Phased delivery:**
+
+**Phase 1 (current — no work needed):** Tier 1-2 recipes use structured controls exclusively. Template fields are hidden or pre-filled. Users never write expressions.
+
+**Phase 2 (when Tier 3 nodes ship — transform, http-request):**
+
+- [ ] `engine` — Add `template_variables: Option<Vec<TemplateVariable>>` to `ParameterDef` in `metadata.rs`. Each variable declares name, label, description, source, example value. Populate in processors that have template params (file-system rename pattern, loop items)
+- [ ] `packages/@bnto/nodes` — Update codegen (`generate-from-catalog.ts`) to propagate `templateVariables` into `NodeSchemaDefinition` params
+- [ ] `packages/editor` — **ExpressionInput component**: Rich text input that renders `{{var}}` as visual pill tokens. Backspace selects/deletes pills. Underlying value stays a template string
+- [ ] `packages/editor` — **Variable picker popover**: Grouped by source (file metadata, upstream outputs, loop context). Search/filter. Inserts pill at cursor
+- [ ] `packages/editor` — **SchemaField dispatch**: If `templateVariables` is set on a param, render `ExpressionInput` instead of `TextControl`
+- [ ] `packages/editor` — **Fixed/Expression toggle**: Per-field toggle (n8n-style) that switches between structured control and expression input. Trailing icon on SchemaField
+- [ ] `apps/web` — E2E: Verify pill token rendering, variable picker insertion, Fixed/Expression toggle
+
+**Phase 3 (when ai nodes ship — Tier 4):**
+
+- [ ] `packages/editor` — Expression validation feedback (red underline for unknown variables, type mismatches)
+- [ ] `packages/editor` — Autocomplete for function names and variable paths (beyond pill insertion)
+- [ ] `packages/editor` — Function reference tab in variable picker (document available template functions)
+
+---
+
 ### Performance: WASM Bundle Size & Processing Benchmarks
 
 **Deferred from Sprint 2B.** WASM bundle: 1.6MB raw / 606KB gzipped. ~20% above 500KB target. Not blocking M1.
