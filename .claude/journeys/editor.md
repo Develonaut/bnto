@@ -109,6 +109,18 @@ User navigates to /editor
 
 ---
 
+## Custom Recipe Tests (Multi-Node Compositions)
+
+| ID | Test | Pipeline | Tag | What it verifies |
+|----|------|----------|-----|-----------------|
+| CR1 | Web-ready image pipeline (3 nodes) | Resize → Convert (WebP) → Compress | `@editor` `@browser` | Multi-image-op chaining, format conversion, size reduction |
+| CR2 | Compress + organize (2 nodes) | Compress → Rename (suffix) | `@editor` `@browser` | Cross-type chaining (image → file), filename mutation |
+| CR3 | Clean & standardize CSV (2 nodes) | Clean → Rename Columns | `@editor` `@browser` | CSV multi-op chaining, whitespace trim, dedup, empty row removal |
+| CR4 | Thumbnail generator (3 nodes) | Resize (100px) → Convert (WebP) → Rename (prefix) | `@editor` `@browser` | Image + file cross-type chain, small output, filename mutation |
+| CR5 | All 6 operations added individually | One of each op | `@editor` | All node types addable, correct operations in exported JSON |
+
+---
+
 ## Success Criteria Coverage
 
 | Criterion | Tests | How verified |
@@ -134,17 +146,22 @@ All phases use programmatic assertions. Screenshots are reserved for page-level 
 
 ---
 
-## Shared Helpers (to create)
+## Shared Helpers (`apps/web/e2e/helpers/editor.ts`)
 
 | Helper | Purpose |
 |--------|---------|
+| `enableEditorFlag(page)` | Set feature flag via `addInitScript` before navigation |
 | `navigateToEditor(page, slug?)` | Navigate to `/editor` or `/editor?from={slug}`, wait for canvas |
-| `addNodeFromPalette(page, nodeType)` | Open palette, click node type, wait for compartment |
-| `selectNode(page, nodeId)` | Click compartment, wait for config panel |
-| `updateParameter(page, paramName, value)` | Change a parameter in the config panel |
-| `dropFilesIntoInput(page, filePaths[])` | Select Input node, upload files via config panel dropzone |
-| `runAndWaitForCompletion(page)` | Click Run, wait for all compartments to reach completed state |
-| `exportAndDownload(page)` | Click Export, capture downloaded `.bnto.json` |
+| `addNodeFromPalette(page, nodeLabel)` | Open palette, click node type, wait for compartment |
+| `selectNode(page, nodeLabel)` | Click compartment, wait for config panel |
+| `ensureConfigPanelOpen(page)` | Open config panel if not already visible |
+| `setNumberParam(page, paramName, value)` | Set a number input parameter in config panel |
+| `setTextParam(page, paramName, value)` | Set a text input parameter in config panel |
+| `setSelectParam(page, paramName, option)` | Select an option from a select dropdown in config panel |
+| `runEditorWithFiles(page, filePaths[])` | Upload files and wait for execution to complete |
+| `openRunPanel(page)` | Open the run panel (idempotent) |
+| `getResultCount(page)` | Count result files in the run panel |
+| `exportRecipe(page)` | Export via File > Export, return downloaded JSON buffer |
 
 ---
 
@@ -160,6 +177,7 @@ All phases use programmatic assertions. Screenshots are reserved for page-level 
 - EX5-EX9: Batch, auto-download, errors
 - XP1-XP4: Export verification
 - PR1-PR6: Predefined recipe parity
+- CR1-CR5: Custom multi-node recipe compositions
 
 ### Wave 3: Persistence (auth-dependent)
 - EN4-EN6: Bridge button, AccountGate, nav
