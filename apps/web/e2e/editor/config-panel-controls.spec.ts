@@ -23,7 +23,7 @@ async function addAndSelectNode(page: import("@playwright/test").Page, nodeLabel
   // Click the menu item button (not the category label)
   await page.getByRole("button", { name: new RegExp(`^${nodeLabel}\\s`) }).click();
   // Wait for the node to appear on canvas
-  const node = page.locator('[data-testid="compartment-node"]').filter({ hasText: nodeLabel });
+  const node = page.locator('[data-testid="node-card"]').filter({ hasText: nodeLabel });
   await node.waitFor({ timeout: 5000 });
   // Click the node to select it and open config panel
   await node.click({ force: true });

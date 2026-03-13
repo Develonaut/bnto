@@ -1,0 +1,22 @@
+{
+  "description": "CR3: Clean & standardize CSV — clean → rename columns",
+  "expectedNodeCount": 4,
+  "nodes": [
+    {
+      "type": "input",
+      "operation": null
+    },
+    {
+      "type": "spreadsheet",
+      "operation": "clean"
+    },
+    {
+      "type": "spreadsheet",
+      "operation": "rename"
+    },
+    {
+      "type": "output",
+      "operation": null
+    }
+  ]
+}
