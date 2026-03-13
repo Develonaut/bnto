@@ -4,9 +4,7 @@ The technical registry of predefined recipes, node types, and implementation sta
 
 **Pricing model** (free vs premium, three-layer framework, terminology): See [pricing-model.md](pricing-model.md) — the single source of truth.
 
-**Strategy layer** (search volume data, prioritization rationale, launch philosophy) lives in Notion:
-> **Notion:** Search the bnto workspace for "Bnto Directory & Launch Plan" using the Notion MCP.
-> Agents: fetch that page when you need target query strings, search volume data, or tier prioritization rationale.
+**Strategy layer** (search volume data, prioritization rationale, launch philosophy): See [seo-monetization.md](../business/seo-monetization.md) and [mvp-roadmap.md](../business/mvp-roadmap.md) in the business docs directory.
 
 ---
 
@@ -207,7 +205,7 @@ See the full checklist in [rules/seo.md](../rules/seo.md#checklist-shipping-a-ne
 
 1. **Classify the node types** — Does it use browser nodes only (free) or server nodes (Pro)? See [pricing-model.md](pricing-model.md).
 2. Create or verify the fixture in `engine/examples/`
-3. Add to Notion, this file, and `lib/bntoRegistry.ts` (with features array)
+3. Add to this file and `lib/bntoRegistry.ts` (with features array)
 4. Verify slug doesn't collide with reserved paths
 5. Page has plain-language description, JSON-LD features, and entry in `llms.txt`
 6. Build passes, h1 matches target query, execution counter increments

@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 6, 2026
+**Last Updated:** March 13, 2026
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -27,21 +27,21 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **FOCUS: Editor to production.** Sprint 5 Waves 1-2 complete (compartment redesign, `/editor` route, nav integration). Sprint 4G complete (format versioning, Zod schemas, schema-driven config panel).
+- **Editor is fully functional.** Sprint 5D (Editor API layer) complete — `createEditor()` factory, domain-namespaced clients, services, React binding layer, full component migration. Sprint 4H (Pipeline Executor) complete — runtime-agnostic `executePipeline()` extracted and proven with comprehensive tests. Sprint 5 Waves 1-2 complete (compartment redesign, `/editor` route, nav integration). Sprint 4G complete (format versioning, Zod schemas, schema-driven config panel).
+- **Multi-node recipes delivered:** Tier 1B compositions (optimize-images-for-web, generate-thumbnails) — first multi-node predefined recipes with 3-operation pipelines.
 - **Active work — execution order:**
   1. **Sprint 5A Wave 1** — finish exit animation (isIoNode, hover delete, placeholder DONE — exit animation remains)
-  2. ~~**Sprint 4H**~~ **COMPLETE** ‖ **Sprint 5B** — 5B: visual hierarchy (unblocked, no shared dependencies)
+  2. **Sprint 5B** — visual hierarchy (unblocked, no shared dependencies)
   3. **Sprint 5 Wave 3** — execution wiring (Run → `executePipeline` → WASM → elevation). **Unblocked** — Sprint 4H complete.
   4. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
   5. **Sprint 5C** — copy + nav label cleanup (~30 min)
   6. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern)
   7. **Sprint 5 Waves 4–5** — save infrastructure, My Recipes, final E2E
-  8. **Sprint 5D** — Editor API layer (`client → service → store` abstraction). Multi-day. Pickup skill: `/editor-api`.
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
 - **Tabled:** Save button on recipe toolbar — removed (March 2026). No save infrastructure to connect to yet. Will return with editor + accounts.
-- **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM
+- **M1 delivered:** All 6 Tier 1 bntos run 100% client-side via Rust→WASM + 2 Tier 1B multi-node compositions
 - **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
@@ -73,12 +73,17 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] convexQuery skip guards: All adapter functions use `"skip"` for falsy IDs (PR #23)
 - [x] Format versioning + Zod node validation (Sprint 4G): `.bnto.json` format version constant, schema versioning, Zod parameter schemas for all 12 node types, schema-driven config panel with registry-based controls
 - [x] Editor production route (Sprint 5 W1-W2): `/editor` route, `?from={slug}` recipe loading, compartment node redesign (icons + category colors), "Open in Editor" nav integration
+- [x] Pipeline executor extraction (Sprint 4H): Runtime-agnostic `executePipeline()` in `@bnto/core`, `NodeRunner` contract, `processFiles()` removed from browser adapter, comprehensive TDD test suite
+- [x] Editor API layer (Sprint 5D): `createEditor()` factory, 5 domain clients (nodes, definition, execution, history, panels), 5 services, React binding layer (`EditorProvider`, `useEditor`, domain hooks), full component migration, deprecated hooks deleted
+- [x] Multi-node recipes (Tier 1B): optimize-images-for-web, generate-thumbnails — first multi-node predefined recipes with 3-operation pipelines inside forEach loops
+- [x] Slider presets + select labels: Quality→compression rename, slider preset system, select option labels
+- [x] Definition round-trip fidelity: `captureDefinition()` snapshot, `loadDefinition()` restore, fidelity test suite proving lossless round-trips
 
 ---
 
 ## Revenue & Monetization Context
 
-Pricing, revenue projections, and "ready to charge" criteria live in Notion ("SEO & Monetization Strategy").
+Pricing, revenue projections, and "ready to charge" criteria live in [.claude/business/](business/) — see [pricing-strategy.md](business/pricing-strategy.md), [seo-monetization.md](business/seo-monetization.md), and [feature-funnel.md](business/feature-funnel.md).
 
 **Monetization model (updated Feb 2026):** Browser execution is free unlimited. Pro sells real value — persistence, collaboration, premium compute. See ROADMAP.md for the full model.
 
@@ -265,9 +270,9 @@ End-to-end verification and keyboard shortcuts. See [journeys/editor.md](.claude
 - [x] `packages/editor` — **`CompartmentNode` hover overlay**: `DeleteOverlay` component with `group-hover:opacity-100`, `stopPropagation`, destructive variant. Hidden when `data.isIoNode === true`.
 - [x] `packages/editor` — **`PlaceholderSlot` component**: Dashed muted card with centered Plus button. Opens palette via `useEditorPanels`. Disappears when a non-I/O node exists.
 - [x] `packages/editor` — **`isIoNode` flag in adapter**: `createCompartmentNode.ts:72` and `definitionToBento.ts:48` both set `isIoNode: isIoNodeType(type)`. Tests at `createCompartmentNode.test.ts:85-97` and `definitionToBento.test.ts:167-183`.
-- [ ] **CLAIMED** `packages/editor` — **Add `react-animate-presence` + `tailwindcss-motion` dependencies**: Lightweight CSS-first exit animations. `react-animate-presence` (~1-2 KB) delays DOM removal until exit animation completes. `tailwindcss-motion` provides exit utility classes. No need for full `motion/react` (18 KB).
-- [ ] **CLAIMED** `packages/editor` — **Node exit animation**: Use `react-animate-presence` to wrap compartment nodes so deleted nodes exit with a spring scale-down (reverse of the entrance). Exit classes: `motion-scale-out-75 motion-opacity-out-0` with spring easing. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
-- [ ] **CLAIMED** `packages/editor` — **Unit tests for remaining work**: Exit animation triggers on node removal. `PlaceholderSlot` renders when only I/O nodes present (existing: `placeholderVisibility.test.ts`). Hover overlay does not render for I/O nodes (existing: implicitly tested via `isIoNode` adapter tests — add explicit `CompartmentNode` render test).
+- [ ] `packages/editor` — **Add `react-animate-presence` + `tailwindcss-motion` dependencies**: Lightweight CSS-first exit animations. `react-animate-presence` (~1-2 KB) delays DOM removal until exit animation completes. `tailwindcss-motion` provides exit utility classes. No need for full `motion/react` (18 KB).
+- [ ] `packages/editor` — **Node exit animation**: Use `react-animate-presence` to wrap compartment nodes so deleted nodes exit with a spring scale-down (reverse of the entrance). Exit classes: `motion-scale-out-75 motion-opacity-out-0` with spring easing. Nodes must not disappear instantly — the exit spring mirrors the entrance spring and is equally important to the feel.
+- [ ] `packages/editor` — **Unit tests for remaining work**: Exit animation triggers on node removal. `PlaceholderSlot` renders when only I/O nodes present (existing: `placeholderVisibility.test.ts`). Hover overlay does not render for I/O nodes (existing: implicitly tested via `isIoNode` adapter tests — add explicit `CompartmentNode` render test).
 
 #### Wave 2 — Config Panel Identity Echo
 
@@ -424,7 +429,7 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 ---
 
-### Sprint 4H: Pipeline Executor Extraction — TDD-First Architecture Correction
+### Sprint 4H: Pipeline Executor Extraction — COMPLETE
 
 **Goal:** Extract all orchestration logic out of runtime adapters into a single, runtime-agnostic `executePipeline()` function. Prove it correct with comprehensive tests that run in pure Node.js — no browser, no WASM, no Worker. Once the tests are green, the cleanup follows. Any runtime placed on top inherits correct behavior automatically.
 
@@ -523,23 +528,9 @@ With the executor proven correct by tests, remove the iteration logic from the p
 
 ---
 
-### Audit: Session Summary Validation
-
-**Goal:** Re-validate the plan against the session summary to confirm all decisions, architecture rules, and sprint definitions are correctly captured and no gaps remain.
-
-**When:** After Sprint 4H Wave 4 completes and before Sprint 5 Wave 3 starts. This is the checkpoint — the pipeline executor is proven correct, the plan is groomed, and execution wiring is about to begin.
-
-**Reference document:** `/Users/ryan/Downloads/bnto-session-summary.md`
-
-- [ ] `/project-manager` — **Re-run codebase audit**: Read the session summary in full. For each decision documented in the summary, verify it is correctly reflected in PLAN.md, `decisions/implicit-iteration.md`, `strategy/design-language.md`, and `decisions/editor-ux-direction.md`. Report any remaining gaps.
-- [ ] `/project-manager` — **Verify Sprint 4H deliverables**: Confirm `packages/core/src/engine/` directory exists. Confirm `executePipeline.ts`, `executePipeline.test.ts`, and `types.ts` exist. Confirm all tests pass (`pnpm --filter @bnto/core test`). Confirm `executePipeline` and `NodeRunner` are exported from `@bnto/core` index. Confirm `processFiles()` is removed from `BrowserEngine` interface, `BntoWorker`, and `toBrowserEngine`.
-- [ ] `/project-manager` — **Verify animation identity**: Confirm `ScaleIn from={0.7} easing="spring-bouncy"` still exists on `CompartmentNode.tsx`. Confirm `AnimatePresence` exit animation is wired. Confirm `strategy/design-language.md` has the "Editor Animation Language" section with PROTECTED headers.
-- [ ] `/project-manager` — **Verify execution order**: Confirm the "Active work — execution order" in PLAN.md Current State matches the actual dependency graph. Confirm Sprint 5 Wave 3 is unblocked (4H complete). Confirm Sprint 6 prerequisites are met (execution wired).
-- [ ] `/project-manager` — **Report**: Produce a pass/fail summary. If all pass, Sprint 5 Wave 3 is greenlit. If any fail, document what needs fixing before execution wiring starts.
-
 ---
 
-### Sprint 5D: Editor API Layer — Client → Service → Store Abstraction
+### Sprint 5D: Editor API Layer — COMPLETE
 
 **Goal:** Add a `client → service → store` abstraction layer inside `packages/editor/`, mirroring `@bnto/core`'s proven pattern. The result: a clean per-instance API (`createEditor()`) that components consume via context, and that tests consume directly without React. Domain-namespaced access (`editor.nodes.addNode()`, `editor.history.undo()`) replaces the inconsistent mix of `useEditorStore()`, `useEditorActions()`, and raw `storeApi.setState()`.
 
@@ -826,14 +817,14 @@ Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert`
 
 ### Editor: Smart I/O — Implicit vs Explicit Looping
 
-**Status:** Needs design decision (review with full project context + Notion workspace)
+**Status:** Needs design decision (review with full project context)
 
 When a recipe has multi-file input and a processing node (e.g., Image compress), should the editor:
 
 - **Option A (Smart/implicit):** Automatically iterate over inputs — user adds `Input → Image (compress) → Output`, engine handles the loop. Simple, fewer nodes, covers 90% of cases.
 - **Option B (Explicit):** User builds iteration manually — `Input → Loop (forEach) → Image (compress inside loop) → Output`. More flexible, more transparent, matches current Go engine model.
 
-**Proposed direction:** Smart by default (Option A) with an advanced toggle to switch to explicit looping for power users. This affects engine processing, definition schema, and editor UX. Needs a deep review session with Notion context (Bnto Directory, MVP Scope, recipe specs) before implementation.
+**Proposed direction:** Smart by default (Option A) with an advanced toggle to switch to explicit looping for power users. This affects engine processing, definition schema, and editor UX. Needs a deep review session with full project context ([bntos.md](strategy/bntos.md), [business/mvp-roadmap.md](business/mvp-roadmap.md)) before implementation.
 
 **Touches:** `@bnto/nodes` (definition schema), `engine/` (execution model), `@bnto/editor` (node placement + wiring), recipe definitions (compress-images etc.), `io-nodes.md` strategy doc.
 
@@ -1359,4 +1350,4 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 | `.claude/strategy/core-principles.md`        | Trust commitments, "For Claude Code" guidance                              |
 | `.claude/rules/`                             | Auto-loaded rules (architecture, code-standards, components, etc.)         |
 | `.claude/skills/`                            | Agent skills (pickup, project-manager, code-review, pre-commit)            |
-| Notion: "SEO & Monetization Strategy"        | Pricing, revenue projections, quota limits                                 |
+| [.claude/business/](business/)               | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |

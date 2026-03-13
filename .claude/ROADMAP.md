@@ -1,6 +1,6 @@
 # Bnto — Strategic Roadmap
 
-**Last Updated:** February 25, 2026
+**Last Updated:** March 13, 2026
 **Purpose:** High-level strategy, milestones, and big decisions. PLAN.md tracks sprint tasks. This tracks the "why" and "where we're going."
 
 ---
@@ -35,6 +35,9 @@ M1: Browser Execution (MVP)          ← DELIVERED (Feb 2026)
 
     Cloud execution pipeline (Sprints 1-2A) also COMPLETE — M4
     infrastructure delivered ahead of schedule.
+
+    Tier 1B multi-node compositions (March 2026): optimize-images-for-web,
+    generate-thumbnails — first multi-node predefined recipes.
 
 M2: Platform Features
     Save workflows, execution history, user accounts.
@@ -257,7 +260,7 @@ Users convert when they want something the browser can't provide alone. These ar
 | **architecture.md** | Rules: layered architecture, data flow, execution model |
 | **bntos.md** | Recipe registry: slugs, tiers, fixtures, node requirements |
 | **core-principles.md** | Trust commitments, design philosophy |
-| **Notion** | Revenue projections, search volume data, competitive analysis |
+| **[business/](business/)** | Revenue projections, search volume data, competitive analysis, brand, pricing strategy, feature funnel |
 
 ---
 

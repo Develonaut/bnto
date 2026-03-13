@@ -2,8 +2,8 @@
 
 **Last Updated:** March 3, 2026
 **Status:** Active — operational rules for agents writing code
-**Full strategy:** Notion → "Pricing Model & Monetization Strategy" (business rationale, conversion psychology, revenue projections)
-**Feature tiers & conversion funnel:** Notion → "Feature Funnel & Tier Matrix" (surface-by-surface breakdown, concrete limits, AccountGate placement)
+**Full strategy:** [pricing-strategy.md](../business/pricing-strategy.md) (business rationale, conversion psychology, revenue projections)
+**Feature tiers & conversion funnel:** [feature-funnel.md](../business/feature-funnel.md) (surface-by-surface breakdown, concrete limits, AccountGate placement)
 
 ---
 
@@ -57,7 +57,7 @@ Use these terms consistently across all code, docs, and UI copy.
 
 ## Three-Tier Gate (Unauth → Free → Pro)
 
-**Full tier matrix with concrete limits:** Notion → "Feature Funnel & Tier Matrix"
+**Full tier matrix with concrete limits:** [feature-funnel.md](../business/feature-funnel.md)
 
 | Action | Unauth | Free Account | Pro |
 |---|---|---|---|
@@ -116,4 +116,4 @@ Upgrade prompts trigger at natural value moments — never on artificial browser
 
 ---
 
-*This file contains operational rules for agents. Full business strategy (pricing rationale, conversion psychology, revenue projections, competitive positioning) lives in Notion.*
+*This file contains operational rules for agents. Full business strategy lives in [.claude/business/](../business/) — see [pricing-strategy.md](../business/pricing-strategy.md) (rationale, conversion psychology) and [competitive-positioning.md](../business/competitive-positioning.md).*
