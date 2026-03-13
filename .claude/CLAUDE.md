@@ -35,6 +35,7 @@
 | `@bnto/core` internals         | [core-api.md](.claude/rules/core-api.md) + [core-unification.md](.claude/strategy/core-unification.md) |
 | Environment variables          | [environment-variables.md](.claude/environment-variables.md)                                           |
 | Go engine node migration       | [go-engine-migration.md](.claude/strategy/go-engine-migration.md)                                      |
+| Expression input UX            | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)                                      |
 
 ---
 
@@ -246,6 +247,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [core-unification.md](.claude/strategy/core-unification.md)             | Core API unification — patterns, rationale, copyable prompt                        |
 | [engine-execution.md](.claude/strategy/engine-execution.md)             | Engine execution architecture — pipeline executor, progress events, multi-consumer |
 | [go-engine-migration.md](.claude/strategy/go-engine-migration.md)       | Go engine node inventory — migration reference before archive deletion             |
+| [expression-input-ux.md](.claude/strategy/expression-input-ux.md)       | Expression input UX — pill tokens, variable picker, competitor analysis, phased rollout |
 | [business/](.claude/business/)                                          | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
 | [skills/](.claude/skills/)                                              | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)         |
 
