@@ -11,15 +11,18 @@ import {
   cleanCsv,
   compressImages,
   convertImageFormat,
+  generateThumbnails,
+  optimizeImagesForWeb,
   renameCsvColumns,
   renameFiles,
   resizeImages,
 } from "./recipes/index";
 
 /**
- * All predefined recipes — the 6 Tier 1 bntos that map to public URLs.
+ * All predefined recipes that map to public URLs.
  *
  * Order determines display order in the UI grid on the home page.
+ * Tier 1: single-op recipes. Tier 2: multi-node compositions.
  */
 export const RECIPES: readonly Recipe[] = [
   compressImages,
@@ -28,6 +31,8 @@ export const RECIPES: readonly Recipe[] = [
   renameFiles,
   cleanCsv,
   renameCsvColumns,
+  optimizeImagesForWeb,
+  generateThumbnails,
 ];
 
 /** Returns the recipe matching a URL slug, or undefined if not found. */
@@ -40,6 +45,8 @@ export {
   cleanCsv,
   compressImages,
   convertImageFormat,
+  generateThumbnails,
+  optimizeImagesForWeb,
   renameCsvColumns,
   renameFiles,
   resizeImages,

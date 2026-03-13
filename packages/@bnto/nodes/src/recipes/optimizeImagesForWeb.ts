@@ -1,0 +1,138 @@
+/** Optimize Images for Web recipe — resize, convert to WebP, and compress. */
+
+import type { Recipe } from "../recipe";
+import { CURRENT_FORMAT_VERSION } from "../formatVersion";
+import { getProcessorDefaults } from "../generated/catalog";
+
+export const optimizeImagesForWeb: Recipe = {
+  slug: "optimize-images-for-web",
+  name: "Optimize Images for Web",
+  description:
+    "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
+  category: "image",
+  accept: {
+    mimeTypes: ["image/jpeg", "image/png", "image/webp"],
+    extensions: [".jpg", ".jpeg", ".png", ".webp"],
+    label: "JPEG, PNG, or WebP images",
+    mimePrefix: "image/",
+  },
+  features: ["Resize", "WebP", "Compress", "Multi-step", "Browser-based"],
+  seo: {
+    title: "Optimize Images for Web Online Free -- bnto",
+    h1: "Optimize Images for Web Online Free",
+  },
+  definition: {
+    id: "optimize-images-for-web",
+    type: "group",
+    version: CURRENT_FORMAT_VERSION,
+    name: "Optimize Images for Web",
+    position: { x: 0, y: 0 },
+    metadata: {
+      description:
+        "Accepts image files, resizes, converts to WebP, and compresses each one.",
+    },
+    parameters: {},
+    inputPorts: [],
+    outputPorts: [],
+    nodes: [
+      {
+        id: "input",
+        type: "input",
+        version: CURRENT_FORMAT_VERSION,
+        name: "Input",
+        position: { x: 0, y: 100 },
+        metadata: {},
+        parameters: {
+          mode: "file-upload",
+          accept: ["image/jpeg", "image/png", "image/webp"],
+          extensions: [".jpg", ".jpeg", ".png", ".webp"],
+          label: "JPEG, PNG, or WebP images",
+          multiple: true,
+        },
+        inputPorts: [],
+        outputPorts: [{ id: "out-1", name: "files" }],
+      },
+      {
+        id: "process-loop",
+        type: "loop",
+        version: CURRENT_FORMAT_VERSION,
+        name: "For Each",
+        position: { x: 250, y: 100 },
+        metadata: {},
+        parameters: { mode: "forEach" },
+        inputPorts: [{ id: "in-1", name: "items" }],
+        outputPorts: [],
+        nodes: [
+          {
+            id: "resize",
+            type: "image",
+            version: CURRENT_FORMAT_VERSION,
+            name: "Resize",
+            position: { x: 0, y: 0 },
+            metadata: {},
+            parameters: {
+              operation: "resize",
+              ...getProcessorDefaults("image", "resize"),
+              width: 800,
+            },
+            inputPorts: [],
+            outputPorts: [],
+          },
+          {
+            id: "convert",
+            type: "image",
+            version: CURRENT_FORMAT_VERSION,
+            name: "Convert",
+            position: { x: 250, y: 0 },
+            metadata: {},
+            parameters: {
+              operation: "convert",
+              ...getProcessorDefaults("image", "convert"),
+              format: "webp",
+            },
+            inputPorts: [],
+            outputPorts: [],
+          },
+          {
+            id: "compress",
+            type: "image",
+            version: CURRENT_FORMAT_VERSION,
+            name: "Compress",
+            position: { x: 500, y: 0 },
+            metadata: {},
+            parameters: {
+              operation: "compress",
+              ...getProcessorDefaults("image", "compress"),
+            },
+            inputPorts: [],
+            outputPorts: [],
+          },
+        ],
+        edges: [
+          { id: "le1", source: "resize", target: "convert" },
+          { id: "le2", source: "convert", target: "compress" },
+        ],
+      },
+      {
+        id: "output",
+        type: "output",
+        version: CURRENT_FORMAT_VERSION,
+        name: "Output",
+        position: { x: 500, y: 100 },
+        metadata: {},
+        parameters: {
+          mode: "download",
+          label: "Optimized Images",
+          zip: true,
+          autoDownload: false,
+        },
+        inputPorts: [{ id: "in-1", name: "files" }],
+        outputPorts: [],
+      },
+    ],
+    edges: [
+      { id: "e1", source: "input", target: "process-loop" },
+      { id: "e2", source: "process-loop", target: "output" },
+    ],
+  },
+};

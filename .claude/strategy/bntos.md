@@ -76,6 +76,19 @@ All 6 run 100% client-side. All use browser nodes only. Free, unlimited, no acco
 
 ---
 
+## Tier 1B: Multi-Node Compositions (Browser Execution)
+
+First multi-node predefined recipes. Each runs a pipeline of 3 operations inside a forEach loop. All browser-only, free, unlimited.
+
+| Recipe | Slug | Persona | Node Types | Pipeline | Fixture |
+|--------|------|---------|-----------|----------|---------|
+| Optimize Images for Web | `/optimize-images-for-web` | Casual | `image` | Resize → Convert (WebP) → Compress | N/A (multi-node) |
+| Generate Thumbnails | `/generate-thumbnails` | Casual | `image`, `file-system` | Resize → Convert (WebP) → Rename (thumb_) | N/A (multi-node) |
+
+**Key insight:** `definitionToPipeline` merges flat `configOverrides` into ALL leaf processing nodes. For multi-node recipes this works because each processor ignores unknown keys — `width` (resize), `format` (convert), `compression`/`prefix` (compress/rename) don't conflict.
+
+---
+
 ## Tier 2: Near-Term Recipes
 
 All browser-only (free, unlimited) except Fetch & Save URL which is hybrid.

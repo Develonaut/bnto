@@ -31,7 +31,7 @@ function toBntoEntry(r: Recipe): BntoEntry {
 }
 
 /**
- * All registered Tier 1 bntos. Each entry maps to a public URL at /{slug}.
+ * All registered bntos. Each entry maps to a public URL at /{slug}.
  */
 export const BNTO_REGISTRY: readonly BntoEntry[] = RECIPES.map(toBntoEntry);
 

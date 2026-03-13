@@ -30,6 +30,18 @@ export interface CleanCsvConfig {
   removeDuplicates: boolean;
 }
 
+export interface OptimizeImagesForWebConfig {
+  width: number;
+  format: "webp" | "jpeg" | "png";
+  compression: number;
+}
+
+export interface GenerateThumbnailsConfig {
+  width: number;
+  format: "webp" | "jpeg" | "png";
+  prefix: string;
+}
+
 /**
  * Column mapping is blocked until array-level transforms ship.
  * Config is empty for now — UI shows a placeholder.
@@ -44,6 +56,8 @@ export type BntoConfigMap = {
   "rename-files": RenameFilesConfig;
   "clean-csv": CleanCsvConfig;
   "rename-csv-columns": RenameCsvColumnsConfig;
+  "optimize-images-for-web": OptimizeImagesForWebConfig;
+  "generate-thumbnails": GenerateThumbnailsConfig;
 };
 
 export type BntoSlug = keyof BntoConfigMap;
@@ -60,4 +74,6 @@ export const DEFAULT_CONFIGS: BntoConfigMap = {
     removeDuplicates: false,
   },
   "rename-csv-columns": {},
+  "optimize-images-for-web": { width: 800, format: "webp", compression: 20 },
+  "generate-thumbnails": { width: 150, format: "webp", prefix: "thumb_" },
 };
