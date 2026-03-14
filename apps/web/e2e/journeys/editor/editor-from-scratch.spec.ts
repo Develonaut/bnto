@@ -25,8 +25,6 @@ test.use({ reducedMotion: "reduce" });
  */
 
 test.describe("editor from-scratch journeys @browser", () => {
-  // No beforeEach needed — feature flag removed, editor is publicly accessible
-
   test("build image compress recipe from scratch", async ({ page }) => {
     // SETUP — blank canvas
     await navigateToEditor(page);

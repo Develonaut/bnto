@@ -25,8 +25,6 @@ test.use({ reducedMotion: "reduce" });
  */
 
 test.describe("editor predefined recipes @browser", () => {
-  // No beforeEach needed — feature flag removed, editor is publicly accessible
-
   test("PR1: compress-images — run and verify JPEG output", async ({ page }) => {
     await navigateToEditor(page, "compress-images");
 
