@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures";
+import { dismissBetaDialog } from "../helpers/editor";
 
 test.use({ reducedMotion: "reduce" });
 
@@ -14,17 +15,13 @@ test.use({ reducedMotion: "reduce" });
 
 /** Navigate to editor, load a recipe, and open the Dev tab. */
 async function setupEditorWithDevTab(page: import("@playwright/test").Page) {
-  await page.goto("/");
-  await page.evaluate(() => localStorage.setItem("bnto:flags", JSON.stringify({ editor: true })));
   await page.goto("/editor");
+  await dismissBetaDialog(page);
   await page.waitForSelector('[data-testid="recipe-editor"]', { timeout: 10000 });
 
-  // Load compress-images recipe via DevTab
-  // First open the run panel
-  const runButton = page
-    .locator('[data-testid="editor-toolbar"]')
-    .getByRole("button", { name: /run/i });
-  await runButton.click();
+  // Open the run panel via the "Run panel" toolbar button
+  const runPanelButton = page.getByRole("button", { name: "Run panel" });
+  await runPanelButton.click();
 
   // Click the Dev tab
   await page.getByRole("tab", { name: "Dev" }).click();
