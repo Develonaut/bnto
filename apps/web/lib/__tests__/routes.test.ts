@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  AUTH_PATHS,
-  isAuthPath,
-  isProtectedPath,
-  PROTECTED_PATHS,
-  ROUTES,
-} from "../routes";
+import { AUTH_PATHS, isAuthPath, isProtectedPath, PROTECTED_PATHS, ROUTES } from "../routes";
 
 describe("ROUTES", () => {
   it("contains all expected route paths", () => {
@@ -33,7 +27,8 @@ describe("AUTH_PATHS", () => {
 });
 
 describe("PROTECTED_PATHS", () => {
-  it("includes executions and settings", () => {
+  it("includes my-recipes, executions, and settings", () => {
+    expect(PROTECTED_PATHS).toContain("/my-recipes");
     expect(PROTECTED_PATHS).toContain("/executions");
     expect(PROTECTED_PATHS).toContain("/settings");
   });
@@ -43,7 +38,6 @@ describe("PROTECTED_PATHS", () => {
     expect(protectedSet.has("/")).toBe(false);
     expect(protectedSet.has("/signin")).toBe(false);
     expect(protectedSet.has("/waitlist")).toBe(false);
-    expect(protectedSet.has("/my-recipes")).toBe(false);
   });
 });
 
@@ -80,8 +74,6 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/")).toBe(false);
     expect(isProtectedPath("/signin")).toBe(false);
     expect(isProtectedPath("/waitlist")).toBe(false);
-    expect(isProtectedPath("/my-recipes")).toBe(false);
-    expect(isProtectedPath("/my-recipes/123")).toBe(false);
   });
 
   it("returns false for bnto slugs and unknown paths", () => {

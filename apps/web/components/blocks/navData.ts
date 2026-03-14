@@ -67,6 +67,7 @@ export interface PageLink {
 }
 
 export const PAGE_LINKS: PageLink[] = [
+  { label: "My Recipes", href: "/my-recipes" },
   { label: "Pricing", href: "/pricing" },
   { label: "FAQ", href: "/faq" },
 ];

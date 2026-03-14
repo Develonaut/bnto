@@ -16,12 +16,7 @@
 
 // --- Compound components ---
 
-export {
-  EditorRoot,
-  EditorCanvas,
-  EditorToolbar,
-  EditorRightToolbar,
-} from "./Editor";
+export { EditorRoot, EditorCanvas, EditorToolbar, EditorRightToolbar } from "./Editor";
 
 // --- Editor factory + context ---
 
@@ -64,6 +59,7 @@ export { useDefinition } from "./hooks/useDefinition";
 export { useExecution } from "./hooks/useExecution";
 export { useHistory } from "./hooks/useHistory";
 export { usePanels } from "./hooks/usePanels";
+export { useUnsavedWarning } from "./hooks/useUnsavedWarning";
 
 // --- Internal hooks (rendering pipeline) ---
 
@@ -108,6 +104,7 @@ export type { SchemaFieldProps } from "./components/SchemaField";
 // --- Dialogs ---
 
 export { OpenRecipeDialog } from "./components/OpenRecipeDialog";
+export { SaveRecipeDialog } from "./components/SaveRecipeDialog";
 export { NodePaletteDialog } from "./components/NodePaletteDialog";
 
 // --- Renderers ---
@@ -139,7 +136,15 @@ export type {
 export { definitionToGraph } from "./adapters/definitionToGraph";
 export { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
 export { createCompartmentNode } from "./adapters/createCompartmentNode";
-export { SLOTS, CELL, GAP_X, GAP_Y, STRIDE, ROW_OFFSET, MAX_CONTAINER_DEPTH } from "./adapters/bentoSlots";
+export {
+  SLOTS,
+  CELL,
+  GAP_X,
+  GAP_Y,
+  STRIDE,
+  ROW_OFFSET,
+  MAX_CONTAINER_DEPTH,
+} from "./adapters/bentoSlots";
 export { layoutNodes } from "./adapters/layoutNodes";
 export { ICON_COMPONENTS } from "./adapters/nodeIcons";
 export { CATEGORY_VARIANT } from "./adapters/categoryVariant";

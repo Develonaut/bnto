@@ -32,7 +32,7 @@ export const AUTH_PATHS = [ROUTES.signin, ROUTES.signup] as const;
  * Paths that require authentication.
  * Unauthenticated users are redirected to /signin.
  */
-export const PROTECTED_PATHS = [ROUTES.executions, ROUTES.settings] as const;
+export const PROTECTED_PATHS = [ROUTES.myRecipes, ROUTES.executions, ROUTES.settings] as const;
 
 type AuthPath = (typeof AUTH_PATHS)[number];
 type ProtectedPath = (typeof PROTECTED_PATHS)[number];
