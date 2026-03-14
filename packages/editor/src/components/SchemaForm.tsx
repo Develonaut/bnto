@@ -60,14 +60,18 @@ function SchemaForm({ schema, values, visibleParams, onChange }: SchemaFormProps
       if (!meta) continue;
       const zodField = schema.schema.shape[paramName];
       const fieldInfo = zodField
-        ? inferFieldType(zodField)
+        ? inferFieldType(zodField, meta)
         : { type: "string" as const, control: "text" as const, required: true };
       const group = meta.group;
 
       if (group && currentGroup?.groupName === group) {
         currentGroup.fields.push({ paramName, meta, fieldInfo });
       } else if (group) {
-        currentGroup = { kind: "group", groupName: group, fields: [{ paramName, meta, fieldInfo }] };
+        currentGroup = {
+          kind: "group",
+          groupName: group,
+          fields: [{ paramName, meta, fieldInfo }],
+        };
         result.push(currentGroup);
       } else {
         currentGroup = null;

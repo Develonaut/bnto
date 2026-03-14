@@ -12,3 +12,9 @@ export { optimizeImagesForWeb } from "./optimizeImagesForWeb";
 export { renameCsvColumns } from "./renameCsvColumns";
 export { renameFiles } from "./renameFiles";
 export { resizeImages } from "./resizeImages";
+
+// I/O node factory functions
+export { defaultInputNode } from "./defaultInputNode";
+export type { InputNodeOptions } from "./defaultInputNode";
+export { defaultOutputNode } from "./defaultOutputNode";
+export type { OutputNodeOptions } from "./defaultOutputNode";

@@ -33,6 +33,11 @@ export const outputNodeSchema: NodeSchemaDefinition = {
     mode: {
       label: "Mode",
       description: "How results are delivered to the user.",
+      options: [
+        { value: "download", label: "Download" },
+        { value: "display", label: "Display" },
+        { value: "preview", label: "Preview" },
+      ],
     },
     filename: {
       label: "Filename Template",

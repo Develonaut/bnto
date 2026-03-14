@@ -81,7 +81,7 @@ describe("input visibility rules", () => {
   it("shows file-upload params in file-upload mode", () => {
     const names = getVisibleParams("input", "mode", "file-upload");
     expect(names).toContain("mode");
-    expect(names).toContain("accept");
+    expect(names).not.toContain("accept"); // hidden: engine wiring field
     expect(names).toContain("extensions");
     expect(names).toContain("label");
     expect(names).toContain("multiple");

@@ -3,6 +3,8 @@
 import type { Recipe } from "../recipe";
 import { CURRENT_FORMAT_VERSION } from "../formatVersion";
 import { getProcessorDefaults } from "../generated/catalog";
+import { defaultInputNode } from "./defaultInputNode";
+import { defaultOutputNode } from "./defaultOutputNode";
 
 export const convertImageFormat: Recipe = {
   slug: "convert-image-format",
@@ -33,23 +35,11 @@ export const convertImageFormat: Recipe = {
     inputPorts: [],
     outputPorts: [],
     nodes: [
-      {
-        id: "input",
-        type: "input",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Input",
-        position: { x: 0, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "file-upload",
-          accept: ["image/jpeg", "image/png", "image/webp", "image/gif"],
-          extensions: [".jpg", ".jpeg", ".png", ".webp", ".gif"],
-          label: "JPEG, PNG, WebP, or GIF images",
-          multiple: true,
-        },
-        inputPorts: [],
-        outputPorts: [{ id: "out-1", name: "files" }],
-      },
+      defaultInputNode({
+        accept: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+        extensions: [".jpg", ".jpeg", ".png", ".webp", ".gif"],
+        label: "JPEG, PNG, WebP, or GIF images",
+      }),
       {
         id: "convert-loop",
         type: "loop",
@@ -79,22 +69,7 @@ export const convertImageFormat: Recipe = {
         ],
         edges: [],
       },
-      {
-        id: "output",
-        type: "output",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Output",
-        position: { x: 500, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "download",
-          label: "Converted Images",
-          zip: true,
-          autoDownload: true,
-        },
-        inputPorts: [{ id: "in-1", name: "files" }],
-        outputPorts: [],
-      },
+      defaultOutputNode({ label: "Converted Images" }),
     ],
     edges: [
       { id: "e1", source: "input", target: "convert-loop" },
