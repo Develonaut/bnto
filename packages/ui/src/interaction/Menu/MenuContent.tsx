@@ -44,7 +44,7 @@ export const MenuContent = forwardRef<
         sideOffset={OFFSET_PX[offset]}
         collisionBoundary={boundary ?? undefined}
         collisionPadding={boundaryPadding}
-        className="z-50 outline-hidden"
+        className="z-dropdown outline-hidden"
         {...props}
       >
         <Popup side={side} elevation={elevation} className={className}>

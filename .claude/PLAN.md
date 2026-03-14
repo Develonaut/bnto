@@ -189,11 +189,11 @@ Format versioning activated across the stack. Zod schemas replaced hand-rolled `
 
 **Scope:** ~30 minutes. No new packages, no architecture.
 
-- [ ] `apps/web` — **Remove editor feature flag gate**: The editor is currently behind `editor: false` in `featureFlags.ts`. Remove the feature flag check from `DesktopNav`, `MobileNavMenu`, and any other gates. The beta badge replaces the feature flag — users see "Editor Beta" in the nav, no console hack needed.
-- [ ] `apps/web` — **Beta badge on nav link**: Add a `Badge variant="secondary" size="sm"` with text "Beta" next to the editor link in `DesktopNav` and `MobileNavMenu`. Small pill, doesn't dominate the nav.
-- [ ] `apps/web` — **Beta badge on recipe page CTA**: Add the same badge next to "Open in Editor" link in `OpenInEditorLink.tsx`.
-- [ ] `apps/web` — **Dismissible beta banner on `/editor`**: Top-of-editor banner (not a modal — don't block interaction). Brief copy: "The recipe editor is in beta. You can build and preview recipes — execution and save are coming soon." Dismiss button. Persist dismissal in `localStorage` (`bnto-editor-beta-dismissed`). Use `Animate.SlideDown` for entrance. Banner does not render once dismissed.
-- [ ] `apps/web` — **E2E: verify banner renders and dismisses**: Navigate to `/editor`, banner visible. Dismiss it, reload — banner gone.
+- [x] `apps/web` — **Remove editor feature flag gate**: The editor is currently behind `editor: false` in `featureFlags.ts`. Remove the feature flag check from `DesktopNav`, `MobileNavMenu`, and any other gates. The beta badge replaces the feature flag — users see "Editor Beta" in the nav, no console hack needed.
+- [x] `apps/web` — **Beta badge on nav link**: Add a `Badge variant="secondary" size="sm"` with text "Beta" next to the editor link in `DesktopNav` and `MobileNavMenu`. Small pill, doesn't dominate the nav.
+- [x] `apps/web` — **Beta badge on recipe page CTA**: Add the same badge next to "Open in Editor" link in `OpenInEditorLink.tsx`.
+- [x] `apps/web` — **Dismissible beta banner on `/editor`**: Top-of-editor banner (not a modal — don't block interaction). Brief copy: "The recipe editor is in beta. You can build and preview recipes — execution and save are coming soon." Dismiss button. Persist dismissal in `localStorage` (`bnto-editor-beta-dismissed`). Use `Animate.SlideDown` for entrance. Banner does not render once dismissed.
+- [x] `apps/web` — **E2E: verify banner renders and dismisses**: Navigate to `/editor`, banner visible. Dismiss it, reload — banner gone.
 
 ---
 

@@ -1,20 +1,17 @@
 "use client";
 
 /**
- * Mobile "Create" button — only visible when the `editor` feature flag is on.
+ * Mobile "Create" button with Beta badge.
  *
- * Console: `__bnto__.flags.set("editor", true)` to enable.
+ * Links to the recipe editor at /editor.
  */
 
-import { Button } from "@bnto/ui";
-import { useFeatureFlag } from "@/lib/useFeatureFlag";
+import { Badge, Button } from "@bnto/ui";
 
 export function CreateMobileButton({ onClick }: { onClick: () => void }) {
-  const editorEnabled = useFeatureFlag("editor");
-  if (!editorEnabled) return null;
   return (
     <Button variant="outline" href="/editor" onClick={onClick}>
-      Create
+      Create <Badge variant="secondary">Beta</Badge>
     </Button>
   );
 }

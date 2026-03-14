@@ -2,7 +2,6 @@ import path from "path";
 import { test, expect } from "../../fixtures";
 import { IMAGE_FIXTURES_DIR, CSV_FIXTURES_DIR } from "../../helpers";
 import {
-  enableEditorFlag,
   navigateToEditor,
   addNodeFromPalette,
   selectNode,
@@ -35,10 +34,6 @@ test.use({ reducedMotion: "reduce" });
  */
 
 test.describe("editor custom recipes @browser", () => {
-  test.beforeEach(async ({ page }) => {
-    await enableEditorFlag(page);
-  });
-
   test("CR1: web-ready image pipeline — resize → convert → compress", async ({ page }) => {
     await navigateToEditor(page);
     const nodeCards = page.locator('[data-testid="node-card"]');

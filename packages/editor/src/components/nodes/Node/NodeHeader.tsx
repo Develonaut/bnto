@@ -19,7 +19,7 @@ function NodeHeader({ visible = false, children }: { visible?: boolean; children
     <div
       className={cn(
         "col-start-1 row-start-1 self-start",
-        "z-10 flex items-center justify-end gap-1 p-2.5",
+        "z-canvas flex items-center justify-end gap-1 p-2.5",
         "transition-opacity duration-fast",
         "nopan nodrag nowheel",
         visible

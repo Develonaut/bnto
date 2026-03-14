@@ -69,7 +69,7 @@ export const AddDividerNode = memo(function AddDividerNode({
         onClick={handleClick}
         aria-label="Add node"
         data-testid="add-divider"
-        className="nopan nodrag nowheel pointer-events-auto z-10 size-5 [&_svg]:size-3"
+        className="nopan nodrag nowheel pointer-events-auto z-canvas size-5 [&_svg]:size-3"
       />
     </div>
   );
