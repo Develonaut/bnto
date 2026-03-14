@@ -30,12 +30,12 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **Editor is fully functional.** Sprint 5D (Editor API layer) complete — `createEditor()` factory, domain-namespaced clients, services, React binding layer, full component migration. Sprint 4H (Pipeline Executor) complete — runtime-agnostic `executePipeline()` extracted and proven with comprehensive tests. Sprint 5 Waves 1-2 complete (compartment redesign, `/editor` route, nav integration). Sprint 4G complete (format versioning, Zod schemas, schema-driven config panel).
 - **Multi-node recipes delivered:** Tier 1B compositions (optimize-images-for-web, generate-thumbnails) — first multi-node predefined recipes with 3-operation pipelines.
 - **Active work — execution order:**
-  1. **Editor Beta Launch** — remove feature flag, beta badge on nav/CTAs, dismissible banner on `/editor`, ship what we have (~30 min)
-  2. **Sprint 5A Wave 1** — finish exit animation (isIoNode, hover delete, placeholder DONE — exit animation remains)
-  3. **Sprint 5B** — visual hierarchy (unblocked, no shared dependencies)
-  4. **Sprint 5 Wave 3** — auto-download toggle (remaining task — Run button, results, reset, error states, elevation all DONE)
-  5. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
-  6. **Sprint 5C** — copy + nav label cleanup (~30 min)
+  1. ~~**Editor Beta Launch**~~ — DONE (PR #173). Feature flag removed, beta badges on nav/CTAs, dismissible banner on `/editor`.
+  2. **Sprint 5C** — copy + nav label cleanup (~30 min, 3 tasks) ← **NEXT**
+  3. **Sprint 5A Wave 1** — finish exit animation (isIoNode, hover delete, placeholder DONE — exit animation remains)
+  4. **Sprint 5B** — visual hierarchy (Wave 1 DONE — I/O sizing/color/elevation. Wave 2 TABLED. Waves 3-4 open)
+  5. **Sprint 5 Wave 3** — auto-download enabled by default on Output node (1 remaining task — Run button, results, reset, error states, elevation all DONE)
+  6. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
   7. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern). Potential reuse for recipe page run experience.
   8. **Sprint 5 Waves 4–5** — save button, My Recipes, nav warning, final E2E (backend save mutation + core hooks DONE)
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
@@ -81,6 +81,9 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Definition round-trip fidelity: `captureDefinition()` snapshot, `loadDefinition()` restore, fidelity test suite proving lossless round-trips
 - [x] Editor execution wiring: RunButton → runExecution → core.executions.runPipeline(), ResultsTab/ResultRow in RunPanel, reset/re-run flow, per-node execution state tracking
 - [x] Recipe save backend: Convex save mutation in recipes.ts, core.recipes.save() in recipeClient.ts, useSaveRecipe.ts hook
+- [x] Editor Beta Launch (PR #173): Feature flag removed, beta badges on nav/CTAs, dismissible banner on `/editor`
+- [x] I/O node visual hierarchy (Sprint 5B W1): Size differentiation (100×100 vs 120×120), muted color for I/O, elevation distinction, Pressable behavior split
+- [x] Node interaction foundations (Sprint 5A W1 partial): `isIoNode` adapter flag, hover delete overlay with `DeleteOverlay` component, `PlaceholderSlot` empty-state component
 
 ---
 
@@ -177,25 +180,21 @@ Audited all active code against updated `code-standards.md` (March 2026 tightene
 
 Format versioning activated across the stack. Zod schemas replaced hand-rolled `ParameterSchema` DSL for all 12 node types. Schema-driven config panel with `CONTROL_REGISTRY` map dispatching Zod-inferred `FieldControl` types to `@bnto/ui` controls. 3 waves: format version constants + schema version field, Zod migration + validation function, schema-driven `SchemaForm` + `SchemaField` components (PRs #114-#116).
 
+### Sprint 4H: Pipeline Executor Extraction — COMPLETE
+
+Runtime-agnostic `executePipeline()` extracted to `@bnto/core`. `NodeRunner` contract, `processFiles()` removed from browser adapter. Comprehensive TDD test suite (pure Node.js, no browser). 4 waves: types + tests, implementation, adapter cleanup, export + E2E verification.
+
+### Sprint 5D: Editor API Layer — COMPLETE
+
+`createEditor()` factory with `client → service → store` abstraction mirroring `@bnto/core`. 5 domain clients (nodes, definition, execution, history, panels), 5 services, React binding layer (`EditorProvider`, `useEditor`, domain hooks), full component migration, deprecated hooks deleted. 5 waves.
+
+### Editor Beta Launch — COMPLETE
+
+Feature flag removed, beta badges on nav/CTAs, dismissible banner on `/editor` with localStorage persistence. E2E verified (PR #173).
+
 ---
 
 ## Active Sprints
-
-### Editor Beta Launch — Ship What We Have
-
-**Goal:** Get the editor in front of users now. It works — recipes load, config panels configure, visual hierarchy exists. Execution and save are coming, but exploration and feedback don't need to wait. Add a beta signal so expectations are set, then let people play.
-
-**Persona ownership:** `/frontend-engineer`
-
-**Scope:** ~30 minutes. No new packages, no architecture.
-
-- [x] `apps/web` — **Remove editor feature flag gate**: The editor is currently behind `editor: false` in `featureFlags.ts`. Remove the feature flag check from `DesktopNav`, `MobileNavMenu`, and any other gates. The beta badge replaces the feature flag — users see "Editor Beta" in the nav, no console hack needed.
-- [x] `apps/web` — **Beta badge on nav link**: Add a `Badge variant="secondary" size="sm"` with text "Beta" next to the editor link in `DesktopNav` and `MobileNavMenu`. Small pill, doesn't dominate the nav.
-- [x] `apps/web` — **Beta badge on recipe page CTA**: Add the same badge next to "Open in Editor" link in `OpenInEditorLink.tsx`.
-- [x] `apps/web` — **Dismissible beta banner on `/editor`**: Top-of-editor banner (not a modal — don't block interaction). Brief copy: "The recipe editor is in beta. You can build and preview recipes — execution and save are coming soon." Dismiss button. Persist dismissal in `localStorage` (`bnto-editor-beta-dismissed`). Use `Animate.SlideDown` for entrance. Banner does not render once dismissed.
-- [x] `apps/web` — **E2E: verify banner renders and dismisses**: Navigate to `/editor`, banner visible. Dismiss it, reload — banner gone.
-
----
 
 ### Sprint 5: Editor to Production (M2 Completion)
 
@@ -237,7 +236,7 @@ Wire the Run button to browser WASM execution. Elevation-driven progress on comp
 - [x] `@bnto/editor` — `/frontend-engineer` — Wire Run button → `executePipeline()` → browser WASM engine. `RunButton.tsx` wired through `runExecution.ts` → `core.executions.runPipeline()`.
 - [x] `@bnto/editor` — `/reactflow-expert` — Elevation-driven progress: compartments pop as nodes execute (idle → active → completed). Store infrastructure (`executionState`, `nodeProgress`) in place.
 - [x] `@bnto/editor` — `/frontend-engineer` — Results routed to RunPanel (`ResultsTab`, `ResultRow`) with download capability.
-- [ ] `@bnto/editor` — `/frontend-engineer` — Auto-download toggle on Output node
+- [ ] `@bnto/editor` — `/frontend-engineer` — Enable auto-download by default on Output node. Flip `autoDownload` default from `false` to `true` in: (1) Zod schema default in `@bnto/nodes/schemas/output.ts`, (2) `DEFAULTS` object in `core/adapters/browser/deriveOutputConfig.ts`, (3) all 8 predefined recipes in `@bnto/nodes/recipes/*.ts`, (4) blank definition in `@bnto/nodes/createBlankDefinition.ts`
 - [x] `@bnto/editor` — `/frontend-engineer` — Reset/re-run flow (clear results, re-execute). Reset button and re-run logic in RunPanel.
 - [x] `@bnto/editor` — `/frontend-engineer` — Error states on individual compartments (node failure → destructive variant). `executionState` tracked per-node in store.
 
@@ -396,7 +395,7 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 **Goal:** Nail the copy and labels across editor entry points. Small changes, high signal — language shapes how users understand what they're looking at.
 
-**Prerequisite:** Sprint 5 Wave 2 (production route) complete.
+**Prerequisite:** Sprint 5 Wave 2 (production route) complete. (satisfied)
 
 **Tasks:**
 
@@ -448,209 +447,9 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 ---
 
-### Sprint 4H: Pipeline Executor Extraction — COMPLETE
-
-**Goal:** Extract all orchestration logic out of runtime adapters into a single, runtime-agnostic `executePipeline()` function. Prove it correct with comprehensive tests that run in pure Node.js — no browser, no WASM, no Worker. Once the tests are green, the cleanup follows. Any runtime placed on top inherits correct behavior automatically.
-
-**The principle:** If we can make it run and work flawlessly at the engine/core level with tests, we can put any app layer in front of it and know we're good.
-
-**Why this order (tests before cleanup):** Tests define the contract. Writing them first forces precise thinking about what `executePipeline` must do — then the implementation and the adapter cleanup follow naturally. This is also what protects the refactor: existing tests stay green throughout, new tests prove the new layer is correct before anything depends on it.
-
-**Why now, not later:** Sprint 5 Wave 3 wires the editor to the execution engine. If this isn't fixed first, the editor builds on the wrong foundation. This is the prerequisite — not optional.
-
-**Decision doc:** `.claude/decisions/implicit-iteration.md` — full audit, architecture diagram, rules, exact file list. Read before picking up any task.
-
-**Task runner:** `pnpm --filter @bnto/core test` (runs vitest in Node.js, `environment: "node"` per `vitest.config.ts`). These tests require zero browser setup.
-
-**Persona ownership:** `/core-architect` leads all waves.
-
-**Files changing:**
-
-| File                                                         | Change                                                                                                              |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| `packages/core/src/engine/types.ts`                          | **NEW** — `NodeRunner`, `FileInput`, `FileResult`, `RecipeDefinition`, `PipelineProgressCallback`, `PipelineResult` |
-| `packages/core/src/engine/executePipeline.ts`                | **NEW** — runtime-agnostic pipeline executor                                                                        |
-| `packages/core/src/engine/executePipeline.test.ts`           | **NEW** — comprehensive unit tests, mock `NodeRunner`, pure Node.js                                                 |
-| `packages/core/src/types/browser.ts`                         | Remove `processFiles()` from `BrowserEngine` interface                                                              |
-| `packages/core/src/adapters/browser/BntoWorker.ts`           | Remove `processFiles()` method                                                                                      |
-| `packages/core/src/adapters/browser/toBrowserEngine.ts`      | Remove `processFiles` pass-through                                                                                  |
-| `packages/core/src/adapters/browser/BntoWorker.test.ts`      | Remove `processFiles` tests — iteration proven by `executePipeline.test.ts`                                         |
-| `packages/core/src/services/browserExecutionService.ts`      | Replace `engine.processFiles()` with `executePipeline(singleNodeRecipe, files, runNode)`                            |
-| `packages/core/src/services/browserExecutionService.test.ts` | Replace `processFiles` mocks with `processFile` mocks                                                               |
-| `packages/core/src/index.ts`                                 | Export `executePipeline`, `NodeRunner`, core engine types                                                           |
 
 ---
 
-#### Wave 1 — Define types and write tests first
-
-> **TDD gate:** Tests must be written and failing correctly before implementation starts. A failing test that correctly describes behavior is a passing wave.
-
-No browser APIs. No WASM. No Worker. Pure TypeScript types and vitest.
-
-- [x] `@bnto/core` — `/core-architect` — **`engine/types.ts`**: Define the engine layer vocabulary. `NodeRunner` (single-file contract every runtime implements — `(file, nodeType, params, onProgress?) => Promise<FileResult>`), `FileInput`, `FileResult`, `PipelineDefinition` (ordered node list, node type, params, I/O markers), `PipelineProgressCallback` (`(nodeIndex, fileIndex, totalFiles, percent, message) => void`), `PipelineResult` (all output files, per-node metadata, total duration). Zero imports from browser, WASM, or Worker code.
-
-  > **Naming: `PipelineDefinition`, NOT `RecipeDefinition`.** `RecipeDefinition` already exists in `packages/core/src/types/recipe.ts` (the Convex-backed recipe shape with `id`, `type`, `version`, `ports`, `edges`, recursive `nodes`). The pipeline executor's input is a simpler ordered node list for execution — different type, different purpose. Use `PipelineDefinition` to avoid ambiguity.
-
-- [x] `@bnto/core` — `/core-architect` — **`engine/executePipeline.test.ts`**: Write the full test suite against the not-yet-implemented `executePipeline`. Use `vi.fn()` as `NodeRunner` — no real engine needed. Tests must cover:
-  - **Single processing node:** `runNode` called once per file; results collected in input order
-  - **Multi-node recipe:** outputs of node N passed as inputs to node N+1; `runNode` called `nodes × files` times
-  - **I/O node skipping:** `input` and `output` type nodes do not call `runNode` — they are structural markers only
-  - **Call count assertion:** `expect(runNode).toHaveBeenCalledTimes(processingNodes * files.length)` — proves the loop is right
-  - **Node failure propagates:** if `runNode` rejects, `executePipeline` rejects with the error; no silent swallowing
-  - **Empty file array:** resolves with empty results, no errors, no `runNode` calls
-  - **Single file:** behaves identically to multi-file with one file
-  - **Progress aggregation:** `onProgress` receives `(nodeIndex, fileIndex, totalFiles, percent, message)` in the correct sequence
-  - **Node order guarantee:** `runNode` calls happen in recipe order, not I/O node order
-  - **`runNode` receives correct args:** filename, nodeType, params match `PipelineDefinition` per-node
-  - **Result structure:** `PipelineResult.files` contains all output files; `PipelineResult.durationMs` is a positive number
-
-  Model: follow the depth of `executionInstanceStore.test.ts` — happy path, error cases, edge cases, boundary behavior documented in test names.
-
-  > **Type naming reminder:** The test file imports `PipelineDefinition` (not `RecipeDefinition`) from `../engine/types`. See Wave 1 naming note.
-
----
-
-#### Wave 2 — Implement `executePipeline` until tests go green
-
-> **TDD gate:** Wave 2 is complete when `pnpm --filter @bnto/core test` reports all `executePipeline.test.ts` tests passing. No partial credit.
-
-- [x] `@bnto/core` — `/core-architect` — **`engine/executePipeline.ts`**: Implement `executePipeline(definition, files, runNode, onProgress)`. Walk `definition.order`, skip nodes where `node.type === "input" || node.type === "output"`, iterate all current files through each processing node sequentially, chain outputs, aggregate progress, return `PipelineResult`. No browser APIs. No WASM. No dynamic imports. The only I/O this function does is call `runNode`. The function accepts `PipelineDefinition` (not `RecipeDefinition` — see Wave 1 naming note).
-- [x] `@bnto/core` — `/core-architect` — **Run `pnpm --filter @bnto/core test`**: All `executePipeline.test.ts` tests green. Existing tests (`BntoWorker.test.ts`, `browserExecutionService.test.ts`, `executionInstanceStore.test.ts`, etc.) still pass — no regressions.
-
----
-
-#### Wave 3 — Strip `processFiles` from browser adapter
-
-> **TDD gate:** All tests must stay green after every file change. Run `pnpm --filter @bnto/core test` after each file. Do not move to the next file if tests are red.
-
-With the executor proven correct by tests, remove the iteration logic from the places it doesn't belong.
-
-- [x] `@bnto/core` — `/core-architect` — **`types/browser.ts`**: Remove `processFiles()` from `BrowserEngine` interface. `processFile` stays. The engine interface is now single-file only. Run tests — green.
-- [x] `@bnto/core` — `/core-architect` — **`adapters/browser/BntoWorker.ts`**: Remove `processFiles()` method. The worker wrapper exposes `processFile` only. Run tests — green.
-- [x] `@bnto/core` — `/core-architect` — **`adapters/browser/toBrowserEngine.ts`**: Remove `processFiles` pass-through. Only `processFile` adapted. Run tests — green.
-- [x] `@bnto/core` — `/core-architect` — **`adapters/browser/BntoWorker.test.ts`**: Remove the `processFiles` test at line 302 (`"processFiles after terminate throws a clear error"`). This is the only `processFiles`-specific test — other terminate tests and all `processFile` tests stay. The `processFiles` method itself is removed from `BntoWorker.ts` in a prior task. Run tests — green.
-- [x] `@bnto/core` — `/core-architect` — **`services/browserExecutionService.ts`**: Replace the `engine.processFiles()` call in `execute()` with `executePipeline()`. Build a single-node `PipelineDefinition` from the slug + params. Inject `(file, nodeType, params, onProgress) => engine.processFile(file, nodeType, params, onProgress)` as `NodeRunner`. Run tests — green.
-
-  > **Progress callback signature change:** The current `execute()` wraps the engine's `(fileIndex, percent, message)` into `BrowserFileProgressInput`. After switching to `executePipeline`, the pipeline's `PipelineProgressCallback` provides `(nodeIndex, fileIndex, totalFiles, percent, message)` — it adds `nodeIndex`. The service must adapt: map `nodeIndex` from the pipeline callback into the existing `BrowserFileProgressInput` shape (ignore `nodeIndex` for now since the service builds a single-node pipeline). When multi-node editor execution arrives (Sprint 5 Wave 3), the progress shape will need to expand.
-
-- [x] `@bnto/core` — `/core-architect` — **`services/browserExecutionService.test.ts`**: Replace all `processFiles` mock references with `processFile` mock. The service no longer calls `engine.processFiles()`. The mock engine's `processFiles` method is removed from `createMockEngine()`. Update progress tests: the `onProgress` callback now comes from `executePipeline` internals, not from the engine's `processFiles`. Verify `processFile` receives correct per-file calls. Run tests — green.
-
----
-
-#### Wave 4 — Export, document, E2E
-
-> **Final gate:** `pnpm --filter @bnto/core test` all green. All 6 recipe pages work. Sprint 5 Wave 3 is unblocked.
-
-- [x] `@bnto/core` — `/core-architect` — **`index.ts`**: Export `executePipeline`, `NodeRunner`, `FileInput`, `FileResult`, `PipelineDefinition`, `PipelineResult` from `@bnto/core`. Sprint 5 Wave 3 and the future CLI import from here — not from internal paths.
-- [x] `@bnto/core` — `/core-architect` — **JSDoc on `executePipeline`**: Document the layer contract. What `NodeRunner` is responsible for. Why no browser APIs belong here. The explicit loop node override point (future). This comment is the first thing the next engineer reads before touching execution.
-- [x] `apps/web` — `/quality-engineer` — **E2E smoke test**: All 6 recipe pages process files correctly end-to-end. `compress-images`, `resize-images`, `convert-image-format`, `clean-csv`, `rename-csv-columns`, `rename-files`. Multi-file upload → processing → download works. Behavior is identical to before the refactor — zero user-visible change, correct architecture underneath.
-
----
-
----
-
-### Sprint 5D: Editor API Layer — COMPLETE
-
-**Goal:** Add a `client → service → store` abstraction layer inside `packages/editor/`, mirroring `@bnto/core`'s proven pattern. The result: a clean per-instance API (`createEditor()`) that components consume via context, and that tests consume directly without React. Domain-namespaced access (`editor.nodes.addNode()`, `editor.history.undo()`) replaces the inconsistent mix of `useEditorStore()`, `useEditorActions()`, and raw `storeApi.setState()`.
-
-**Strategy doc:** `.claude/strategy/editor-api.md` — full architecture, domain decomposition, file lists, design decisions.
-
-**Pickup skill:** `/editor-api` — resume this work from any session.
-
-**Persona ownership:** `/reactflow-expert` leads all waves. `/frontend-engineer` joins for Wave 4.
-
-**Package:** `[editor]` — all work in `packages/editor/src/`
-
-**Prerequisite:** Sprint 4E (editor extraction) complete.
-
----
-
-#### Wave 1 — Services + Factory + Tests
-
-> **Gate:** `task ui:build && task ui:test` — all pass. Factory creates a working `EditorInstance`.
-
-No component changes. All existing hooks and patterns continue to work.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/editorTypes.ts`**: Define `EditorInstance`, `NodeClient`, `DefinitionClient`, `ExecutionClient`, `HistoryClient`, `PanelClient` interfaces. Type-only file — no runtime code. Import `EditorState`, `EditorStore`, `StoreApi` from existing types.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/services/nodeService.ts`**: Create `createNodeService(storeApi)`. Wraps: `addNode`, `removeNode`, `selectNode`, `expandContainer`, `collapseContainer`, `toggleContainerExpanded`, `onNodesChange`, `onEdgesChange`, `setNodes`, `setSelectedNodeId`, `setConfig`, `setConfigs`, `removeConfig`, insertion context setters. Each method: call pure action → `storeApi.setState(result)`. Export `NodeService` type.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/services/definitionService.ts`**: Create `createDefinitionService(storeApi)`. Wraps: `loadDefinition`, `createBlank`, `updateParams`, `updateSurfacedParam`, `setRecipeMetadata`, `markDirty`, `resetDirty`, `revalidate`. Export includes `exportAsDefinition()` (reads state → calls `rfNodesToDefinition`). Export `DefinitionService` type.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/services/executionService.ts`**: Create `createExecutionService(storeApi)`. Wraps: `runExecution`, `resetRun`, `downloadResult`, `downloadAllResults`, `setExecutionState`, `resetNodeStatuses`. Export `ExecutionService` type.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/services/historyService.ts`**: Create `createHistoryService(storeApi)`. Wraps: `pushUndo`, `undo`, `redo`, `resetHistory`. Export `HistoryService` type.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/services/panelService.ts`**: Create `createPanelService(storeApi)`. Wraps: `openPanel`, `closePanel`, `togglePanel`. Export `PanelService` type.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/clients/nodeClient.ts`**: Create `createNodeClient(nodeService)`. Spreads nodeService. selectNode delegates to store action which already handles cross-domain atomicity (select node + auto-open/close config panel) internally. Export `NodeClient` type.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/clients/definitionClient.ts`**: Create `createDefinitionClient(definitionService)`. Spreads definitionService. Adds `exportAsRecipe(metadata?)` which calls `exportAsDefinition()` then `definitionToRecipe()`. Export `DefinitionClient` type.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/clients/executionClient.ts`**, **`historyClient.ts`**, **`panelClient.ts`**: Thin passthroughs — `createXClient(service)` returns `{ ...service }`. Export client types.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/createEditor.ts`**: Factory function. `createEditor(definition?) → EditorInstance`. Calls `createEditorStore(definition)` → creates all 5 services → creates all 5 clients → returns `{ nodes, definition, execution, history, panels, getState(), subscribe(), destroy(), _storeApi }`. `destroy()` is a no-op for now (future: cleanup subscriptions).
-
-- [x] `[editor]` — `/reactflow-expert` — **Tests**: `createEditor.test.ts` (23 tests: factory creates instance, imperative add/remove/undo works, `getState()` returns current state, `subscribe()` fires on changes). `nodeService.test.ts` (7 tests). `definitionService.test.ts` (7 tests). `historyService.test.ts` (6 tests). All tests pure TypeScript — no React, no browser.
-
----
-
-#### Wave 2 — EditorProvider + Context
-
-> **Gate:** `task ui:build && task ui:test && task e2e` — all pass. Old hooks still work via compat bridge.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/context.ts`**: Create `EditorContext` (React context holding `EditorInstance | null`). Export `useEditor()` hook that reads context and throws if null ("useEditor must be used within EditorProvider").
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/EditorProvider.tsx`**: Creates `EditorInstance` via `createEditor(definition)` in `useState` initializer. Provides instance via `EditorContext`. Wraps children in `ReactFlowProvider`. Calls `setEditorStore(instance._storeApi)` on init for backwards compatibility with old hooks.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/store/instance.ts` (modify)**: Add `setEditorStore(storeApi)` function that sets the module-level store variable. This is the compat bridge — EditorProvider sets it, old hooks read it. Export it alongside existing `initEditorStore`, `getEditorStore`.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/components/EditorCanvas/EditorCanvasRoot.tsx` (modify)**: Replace manual `useState(() => initEditorStore())` + `ReactFlowProvider` with `<EditorProvider definition={definition}>`. Internally this calls `createEditor()` and provides context. Verify existing behavior is 100% preserved.
-
----
-
-#### Wave 3 — Domain-Namespaced Hooks
-
-> **Gate:** `task ui:build && task ui:test` — all pass. New hooks available but not yet consumed.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/hooks/useNodes.ts`**: Uses `useEditor()` + `useStore(editor._storeApi, selector)`. Returns: `nodes`, `edges`, `configs`, `selectedNodeId`, `insertAfterNodeId`, `insertIntoContainerId` (state) + `addNode`, `removeNode`, `selectNode`, `expandContainer`, `collapseContainer`, `onNodesChange`, `onEdgesChange` (actions from `editor.nodes`).
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/hooks/useDefinition.ts`**: Returns: `definition`, `recipeMetadata`, `isDirty`, `validationErrors` (state) + `loadDefinition`, `createBlank`, `updateParams`, `updateSurfacedParam`, `exportAsRecipe`, `setRecipeMetadata`, `markDirty`, `resetDirty` (actions from `editor.definition`).
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/hooks/useExecution.ts`**: Returns: `executionPhase`, `executionResults`, `executionErrors`, `executionLogs`, `executionFileProgress`, `executionInputFiles`, `canRun` (derived) + `run`, `reset`, `downloadFile`, `downloadAll` (actions from `editor.execution`). Replaces `useEditorExecution`.
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/hooks/useHistory.ts`**: Returns: `canUndo` (derived from `undoStack.length > 0`), `canRedo` (derived from `redoStack.length > 0`) + `undo`, `redo` (actions from `editor.history`).
-
-- [x] `[editor]` — `/reactflow-expert` — **`src/hooks/usePanels.ts`**: Takes `panelId: PanelId`. Returns: `isOpen` (from `panels[panelId]`) + `open`, `close`, `toggle` (actions from `editor.panels`, pre-bound to panelId).
-
----
-
-#### Wave 4 — Component Migration
-
-> **Gate:** `task ui:build && task ui:test && task e2e` after each file. Commit per file.
-
-Migrate file-by-file. Each task is one component file. After migration, the component uses only new hooks — no `useEditorStore`, `useEditorActions`, `useEditorStoreApi`.
-
-- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `EditorToolbar.tsx`**: Replace `useEditorUndoRedo`, `useEditorStore`, `useEditorExport`, `usePanel` → `useHistory()`, `useDefinition()`, `usePanels()`.
-- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `EditorRightToolbar.tsx`**: Replace old hooks → `usePanels()`, `useNodes()`.
-- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `CanvasShell.tsx`**: Replace `useEditorStore` selectors → `useNodes()`.
-- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `NodePaletteDialogRoot.tsx`**: Replace `useEditorActions`, `useEditorStore`, `useEditorStoreApi` → `useNodes()`, `useEditor()`.
-- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `ConfigPanelRoot.tsx`**: Replace `useEditorStore`, `useEditorStoreApi`, `useEditorActions`, raw `updateSurfacedParam` import → `useNodes()`, `useDefinition()`.
-- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate `RunPanel/*`**: Replace `useEditorExecution` → `useExecution()`.
-- [x] `[editor]` — `/reactflow-expert` + `/frontend-engineer` — **Migrate remaining consumers**: `NodeDeleteButton`, `Canvas.tsx`, `useEditorCanvas.ts`, `SurfacedParamsSection.tsx`, any other files still importing old hooks. Grep for `useEditorStore`, `useEditorStoreApi`, `useEditorActions` — zero remaining references outside deprecated hook files.
-
----
-
-#### Wave 5 — Cleanup
-
-> **Final gate:** `task ui:build && task ui:test && task e2e` — all pass. Grep for deleted exports — zero references.
-
-- [x] `[editor]` — `/reactflow-expert` — **Delete deprecated hooks**: Remove `useEditorStore.ts`, `useEditorStoreApi.ts`, `useEditorActions.ts`, `useAddNode.ts`, `useRemoveNode.ts`, `useUpdateParams.ts`, `useEditorUndoRedo.ts`, `usePanel.ts`, `useEditorExport.ts`, `useEditorExecution.ts`.
-- [x] `[editor]` — `/reactflow-expert` — **Delete singleton**: Remove `src/store/instance.ts`. Remove `setEditorStore` call from EditorProvider (no longer needed).
-- [x] `[editor]` — `/reactflow-expert` — **Update `src/index.ts`**: Remove old exports. Add: `createEditor`, `EditorProvider`, `useEditor`, `useNodes`, `useDefinition`, `useExecution`, `useHistory`, `usePanels`, `EditorInstance` type. Verify: `task ui:build` passes — no broken imports across the monorepo.
-- [x] `[editor]` — `/reactflow-expert` — **Final grep**: Search entire codebase for any remaining references to deleted hooks or `instance.ts`. Zero results required.
-
----
 
 ### Sprint 4B: Code Editor (CodeMirror 6) — TABLED
 
