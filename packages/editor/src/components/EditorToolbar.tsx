@@ -17,12 +17,14 @@ import {
   SlidersHorizontalIcon,
   TerminalIcon,
   PlusIcon,
+  SaveIcon,
   MenuSeparator,
 } from "@bnto/ui";
-import { downloadBlob } from "@bnto/core";
+import { downloadBlob, core } from "@bnto/core";
 import { useEditor } from "../context";
 import { RunButton } from "./RunButton";
 import { OpenRecipeDialog } from "./OpenRecipeDialog";
+import { SaveRecipeDialog } from "./SaveRecipeDialog";
 import { NodePaletteDialog } from "./NodePaletteDialog";
 
 /**
@@ -41,12 +43,16 @@ function EditorToolbar() {
   const { isDirty, validationErrors } = editor.definition.useDefinition();
   const { phase } = editor.execution.useExecution();
   const { nodes } = editor.nodes.useNodes();
+  const { isAuthenticated } = core.auth.useAuth();
+  const saveMutation = core.recipes.useSaveRecipe();
 
   const hasRun = phase !== "idle";
   const hasNodes = nodes.length > 0;
   const canExport = validationErrors.length === 0;
+  const canSave = canExport && hasNodes && isAuthenticated;
 
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const handleReset = useCallback(() => {
     const { definition } = editor.getState();
@@ -65,61 +71,121 @@ function EditorToolbar() {
     const result = editor.definition.exportAsRecipe();
     if (!result.recipe) return;
     const json = JSON.stringify(result.recipe.definition, null, 2);
-    downloadBlob(
-      new Blob([json], { type: "application/json" }),
-      `${result.recipe.slug}.bnto.json`,
-    );
+    downloadBlob(new Blob([json], { type: "application/json" }), `${result.recipe.slug}.bnto.json`);
   }, [editor]);
+
+  const handleSave = useCallback(
+    async (args: { name: string; definition: unknown }) => {
+      await saveMutation.mutateAsync(args);
+    },
+    [saveMutation],
+  );
 
   const canDownload = canExport && hasNodes;
 
   return (
     <>
-    <div
-      className="pointer-events-auto absolute bottom-0 left-1/2 -translate-x-1/2"
-      data-testid="editor-toolbar"
-    >
-      <Toolbar elevation="md">
-        {/* File menu */}
-        <ToolbarGroup>
-          <Menu>
-            <MenuTrigger icon={<FolderOpenIcon />} variant="ghost" elevation="sm" aria-label="File menu" />
-            <MenuContent className="w-44 p-1">
-              <MenuItem onClick={handleNew}><PlusIcon /> New</MenuItem>
-              <MenuItem onClick={() => setOpenDialogOpen(true)}>Open</MenuItem>
-              <MenuSeparator />
-              <MenuItem onClick={download} disabled={!canDownload}>Export</MenuItem>
-            </MenuContent>
-          </Menu>
-        </ToolbarGroup>
+      <div
+        className="pointer-events-auto absolute bottom-0 left-1/2 -translate-x-1/2"
+        data-testid="editor-toolbar"
+      >
+        <Toolbar elevation="md">
+          {/* File menu */}
+          <ToolbarGroup>
+            <Menu>
+              <MenuTrigger
+                icon={<FolderOpenIcon />}
+                variant="ghost"
+                elevation="sm"
+                aria-label="File menu"
+              />
+              <MenuContent className="w-44 p-1">
+                <MenuItem onClick={handleNew}>
+                  <PlusIcon /> New
+                </MenuItem>
+                <MenuItem onClick={() => setOpenDialogOpen(true)}>Open</MenuItem>
+                <MenuSeparator />
+                <MenuItem onClick={() => setSaveDialogOpen(true)} disabled={!canSave}>
+                  <SaveIcon /> Save
+                </MenuItem>
+                <MenuItem onClick={download} disabled={!canDownload}>
+                  Export
+                </MenuItem>
+              </MenuContent>
+            </Menu>
+          </ToolbarGroup>
 
-        <ToolbarDivider />
+          <ToolbarDivider />
 
-        {/* Run / Run panel */}
-        <ToolbarGroup>
-          <RunButton />
-          <Button icon={<TerminalIcon />} variant="ghost" elevation="sm" onClick={toggleRunPanel} aria-label="Run panel" />
-        </ToolbarGroup>
+          {/* Run / Run panel */}
+          <ToolbarGroup>
+            <RunButton />
+            <Button
+              icon={<TerminalIcon />}
+              variant="ghost"
+              elevation="sm"
+              onClick={toggleRunPanel}
+              aria-label="Run panel"
+            />
+          </ToolbarGroup>
 
-        <ToolbarDivider />
+          <ToolbarDivider />
 
-        {/* Undo / Redo / Reset */}
-        <ToolbarGroup>
-          <Button icon={<Undo2Icon />} variant="ghost" elevation="sm" onClick={editor.history.undo} disabled={!canUndo} aria-label="Undo" />
-          <Button icon={<Redo2Icon />} variant="ghost" elevation="sm" onClick={editor.history.redo} disabled={!canRedo} aria-label="Redo" />
-          <Button icon={<RotateCcwIcon />} variant="ghost" elevation="sm" onClick={handleReset} disabled={!isDirty && !hasRun} aria-label="Reset" />
-        </ToolbarGroup>
+          {/* Undo / Redo / Reset */}
+          <ToolbarGroup>
+            <Button
+              icon={<Undo2Icon />}
+              variant="ghost"
+              elevation="sm"
+              onClick={editor.history.undo}
+              disabled={!canUndo}
+              aria-label="Undo"
+            />
+            <Button
+              icon={<Redo2Icon />}
+              variant="ghost"
+              elevation="sm"
+              onClick={editor.history.redo}
+              disabled={!canRedo}
+              aria-label="Redo"
+            />
+            <Button
+              icon={<RotateCcwIcon />}
+              variant="ghost"
+              elevation="sm"
+              onClick={handleReset}
+              disabled={!isDirty && !hasRun}
+              aria-label="Reset"
+            />
+          </ToolbarGroup>
 
-        <ToolbarDivider />
+          <ToolbarDivider />
 
-        {/* Config */}
-        <ToolbarGroup>
-          <Button icon={<SlidersHorizontalIcon />} variant="ghost" elevation="sm" onClick={toggleConfig} aria-label="Properties" />
-        </ToolbarGroup>
-      </Toolbar>
-    </div>
-    <OpenRecipeDialog open={openDialogOpen} onOpenChange={setOpenDialogOpen} />
-    <NodePaletteDialog open={paletteOpen} onOpenChange={(open) => { if (!open) closePalette(); }} />
+          {/* Config */}
+          <ToolbarGroup>
+            <Button
+              icon={<SlidersHorizontalIcon />}
+              variant="ghost"
+              elevation="sm"
+              onClick={toggleConfig}
+              aria-label="Properties"
+            />
+          </ToolbarGroup>
+        </Toolbar>
+      </div>
+      <OpenRecipeDialog open={openDialogOpen} onOpenChange={setOpenDialogOpen} />
+      <SaveRecipeDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        onSave={handleSave}
+        isSaving={saveMutation.isPending}
+      />
+      <NodePaletteDialog
+        open={paletteOpen}
+        onOpenChange={(open) => {
+          if (!open) closePalette();
+        }}
+      />
     </>
   );
 }

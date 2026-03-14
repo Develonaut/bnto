@@ -17,10 +17,12 @@ import { NextRequest } from "next/server";
 const BASE_URL = "http://localhost:3000";
 
 // Mock convexAuthNextjsMiddleware to extract and call our handler directly
-let capturedHandler: ((
-  request: NextRequest,
-  ctx: { convexAuth: { isAuthenticated: () => Promise<boolean> } },
-) => Promise<Response | void>) | null = null;
+let capturedHandler:
+  | ((
+      request: NextRequest,
+      ctx: { convexAuth: { isAuthenticated: () => Promise<boolean> } },
+    ) => Promise<Response | void>)
+  | null = null;
 
 vi.mock("@convex-dev/auth/nextjs/server", () => ({
   convexAuthNextjsMiddleware: (handler: typeof capturedHandler) => {
@@ -44,10 +46,7 @@ vi.mock("@convex-dev/auth/nextjs/server", () => ({
 // Import proxy after mock setup
 const { default: proxy } = await import("../proxy");
 
-function createRequest(
-  pathname: string,
-  cookies: Record<string, string> = {},
-) {
+function createRequest(pathname: string, cookies: Record<string, string> = {}) {
   const url = `${BASE_URL}${pathname}`;
   const request = new NextRequest(url);
   for (const [name, value] of Object.entries(cookies)) {
@@ -87,25 +86,22 @@ describe("proxy", () => {
       expect(response.status).toBe(200);
     });
 
-    it("passes through on /my-recipes (public with conversion prompt)", async () => {
+    it("redirects to /signin on /my-recipes (protected)", async () => {
       const response = await callProxy(createRequest("/my-recipes"));
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(307);
+      expect(new URL(response.headers.get("location")!).pathname).toBe("/signin");
     });
 
     it("redirects to /signin on private route /executions", async () => {
       const response = await callProxy(createRequest("/executions"));
       expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe(
-        "/signin",
-      );
+      expect(new URL(response.headers.get("location")!).pathname).toBe("/signin");
     });
 
     it("redirects to /signin on private route /settings", async () => {
       const response = await callProxy(createRequest("/settings"));
       expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe(
-        "/signin",
-      );
+      expect(new URL(response.headers.get("location")!).pathname).toBe("/signin");
     });
 
     it("passes through on unknown routes (404 at page level)", async () => {
@@ -116,9 +112,7 @@ describe("proxy", () => {
     it("redirects to /signin on protected sub-route", async () => {
       const response = await callProxy(createRequest("/settings/account"));
       expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe(
-        "/signin",
-      );
+      expect(new URL(response.headers.get("location")!).pathname).toBe("/signin");
     });
   });
 
@@ -129,30 +123,22 @@ describe("proxy", () => {
     });
 
     it("passes through on private paths", async () => {
-      const response = await callProxy(
-        createRequest("/my-recipes", AUTH_COOKIES),
-      );
+      const response = await callProxy(createRequest("/my-recipes", AUTH_COOKIES));
       expect(response.status).toBe(200);
     });
 
     it("passes through on /executions", async () => {
-      const response = await callProxy(
-        createRequest("/executions", AUTH_COOKIES),
-      );
+      const response = await callProxy(createRequest("/executions", AUTH_COOKIES));
       expect(response.status).toBe(200);
     });
 
     it("passes through on /settings", async () => {
-      const response = await callProxy(
-        createRequest("/settings", AUTH_COOKIES),
-      );
+      const response = await callProxy(createRequest("/settings", AUTH_COOKIES));
       expect(response.status).toBe(200);
     });
 
     it("redirects from /signin to / (already authenticated)", async () => {
-      const response = await callProxy(
-        createRequest("/signin", AUTH_COOKIES),
-      );
+      const response = await callProxy(createRequest("/signin", AUTH_COOKIES));
       // Proxy redirects authenticated users away from /signin to /
       expect(response.status).toBe(307);
       expect(response.headers.get("location")).toContain("/");
