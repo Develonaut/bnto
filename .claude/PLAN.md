@@ -235,9 +235,9 @@ Build the missing UI controls that make the config panel usable. Raw text inputs
 
 Convex persistence for custom recipes. Backend save mutation + core hooks already exist.
 
-- [ ] **CLAIMED** `apps/web` — Save button in editor toolbar, tier limits (Free: 3 recipes, Pro: unlimited)
-- [ ] **CLAIMED** `apps/web` — My Recipes integration (load saved recipes into editor)
-- [ ] **CLAIMED** `apps/web` — Unsaved changes warning on navigation (`beforeunload` prompt when `isDirty` is true)
+- [x] `apps/web` — Save button in editor toolbar, tier limits (Free: 3 recipes, Pro: unlimited)
+- [x] `apps/web` — My Recipes integration (load saved recipes into editor)
+- [x] `apps/web` — Unsaved changes warning on navigation (`beforeunload` prompt when `isDirty` is true)
 
 #### Wave 4 — E2E Verification
 
