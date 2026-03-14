@@ -3,6 +3,8 @@
 import type { Recipe } from "../recipe";
 import { CURRENT_FORMAT_VERSION } from "../formatVersion";
 import { getProcessorDefaults } from "../generated/catalog";
+import { defaultInputNode } from "./defaultInputNode";
+import { defaultOutputNode } from "./defaultOutputNode";
 
 export const renameFiles: Recipe = {
   slug: "rename-files",
@@ -32,23 +34,11 @@ export const renameFiles: Recipe = {
     inputPorts: [],
     outputPorts: [],
     nodes: [
-      {
-        id: "input",
-        type: "input",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Input",
-        position: { x: 0, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "file-upload",
-          accept: ["*/*"],
-          extensions: [],
-          label: "any files",
-          multiple: true,
-        },
-        inputPorts: [],
-        outputPorts: [{ id: "out-1", name: "files" }],
-      },
+      defaultInputNode({
+        accept: ["*/*"],
+        extensions: [],
+        label: "any files",
+      }),
       {
         id: "rename-loop",
         type: "loop",
@@ -78,22 +68,7 @@ export const renameFiles: Recipe = {
         ],
         edges: [],
       },
-      {
-        id: "output",
-        type: "output",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Output",
-        position: { x: 500, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "download",
-          label: "Renamed Files",
-          zip: true,
-          autoDownload: true,
-        },
-        inputPorts: [{ id: "in-1", name: "files" }],
-        outputPorts: [],
-      },
+      defaultOutputNode({ label: "Renamed Files" }),
     ],
     edges: [
       { id: "e1", source: "input", target: "rename-loop" },

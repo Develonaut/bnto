@@ -89,14 +89,14 @@ describe("getVisibleParams", () => {
     expect(names).not.toContain("maintainAspect");
   });
 
-  it("shows quality for resize, compression for compress", () => {
+  it("shows quality for resize, compression for compress (operation hidden)", () => {
     const resize = getVisibleParams("image", "operation", "resize");
-    expect(resize).toContain("operation");
+    expect(resize).not.toContain("operation"); // hidden: pre-set from palette
     expect(resize).toContain("quality");
     expect(resize).not.toContain("compression");
 
     const compress = getVisibleParams("image", "operation", "compress");
-    expect(compress).toContain("operation");
+    expect(compress).not.toContain("operation"); // hidden: pre-set from palette
     expect(compress).toContain("compression");
     expect(compress).not.toContain("quality");
   });
@@ -118,12 +118,12 @@ describe("getVisibleParams", () => {
     expect(resize).toContain("width");
     expect(resize).toContain("height");
     expect(resize).toContain("maintainAspect");
-    expect(resize).toContain("operation");
+    expect(resize).not.toContain("operation"); // hidden: pre-set from palette
     expect(resize).toContain("quality");
     expect(resize).not.toContain("compression");
 
     const compress = getVisibleParams("image", { operation: "compress", compression: 20 });
-    expect(compress).toContain("operation");
+    expect(compress).not.toContain("operation"); // hidden: pre-set from palette
     expect(compress).toContain("compression");
     expect(compress).not.toContain("quality");
   });

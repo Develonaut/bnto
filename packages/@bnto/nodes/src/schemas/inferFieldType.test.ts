@@ -2,11 +2,15 @@
  * Tests for inferFieldType — Zod type → UI control mapping.
  *
  * Verifies the mapping table documented in inferFieldType.ts:
- *   z.enum()          → select
- *   z.boolean()       → switch
- *   z.number().min().max() → slider (bounded)
- *   z.number()        → number (unbounded)
- *   z.string()        → text
+ *   z.enum()                → select
+ *   z.boolean()             → switch
+ *   z.number().min().max()  → slider (bounded)
+ *   z.number()              → number (unbounded)
+ *   z.string()              → text
+ *   z.string() + meta.control=textarea → textarea
+ *   z.array(z.string())     → tagPicker
+ *   z.record(z.string())    → keyValue
+ *   z.record(z.unknown())   → keyValue
  */
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
@@ -59,6 +63,56 @@ describe("inferFieldType", () => {
     expect(info.control).toBe("text");
   });
 
+  it("maps z.string() with meta.control=textarea → textarea", () => {
+    const info = inferFieldType(z.string(), {
+      label: "Notes",
+      description: "...",
+      control: "textarea",
+    });
+    expect(info.type).toBe("string");
+    expect(info.control).toBe("textarea");
+  });
+
+  it("maps z.string() without textarea meta → text", () => {
+    const info = inferFieldType(z.string(), { label: "Name", description: "..." });
+    expect(info.type).toBe("string");
+    expect(info.control).toBe("text");
+  });
+
+  it("maps z.array(z.string()) → tagPicker", () => {
+    const info = inferFieldType(z.array(z.string()));
+    expect(info.type).toBe("array");
+    expect(info.control).toBe("tagPicker");
+    expect(info.required).toBe(true);
+  });
+
+  it("maps z.array(z.string()).optional() → tagPicker (not required)", () => {
+    const info = inferFieldType(z.array(z.string()).optional());
+    expect(info.type).toBe("array");
+    expect(info.control).toBe("tagPicker");
+    expect(info.required).toBe(false);
+  });
+
+  it("maps z.record(z.string()) → keyValue", () => {
+    const info = inferFieldType(z.record(z.string()));
+    expect(info.type).toBe("record");
+    expect(info.control).toBe("keyValue");
+    expect(info.required).toBe(true);
+  });
+
+  it("maps z.record(z.string()).optional() → keyValue (not required)", () => {
+    const info = inferFieldType(z.record(z.string()).optional());
+    expect(info.type).toBe("record");
+    expect(info.control).toBe("keyValue");
+    expect(info.required).toBe(false);
+  });
+
+  it("maps z.record(z.unknown()) → keyValue", () => {
+    const info = inferFieldType(z.record(z.unknown()));
+    expect(info.type).toBe("record");
+    expect(info.control).toBe("keyValue");
+  });
+
   it("unwraps z.optional() wrappers and marks not required", () => {
     const info = inferFieldType(z.enum(["x", "y"]).optional());
     expect(info.type).toBe("enum");
@@ -89,5 +143,11 @@ describe("inferFieldType", () => {
     expect(info.control).toBe("slider");
     expect(info.min).toBe(1);
     expect(info.max).toBe(100);
+  });
+
+  it("does not map z.array(z.number()) → tagPicker (only string arrays)", () => {
+    const info = inferFieldType(z.array(z.number()));
+    expect(info.type).toBe("string");
+    expect(info.control).toBe("text");
   });
 });

@@ -3,6 +3,15 @@
 import type { Recipe } from "../recipe";
 import { CURRENT_FORMAT_VERSION } from "../formatVersion";
 import { getProcessorDefaults } from "../generated/catalog";
+import { defaultInputNode } from "./defaultInputNode";
+import { defaultOutputNode } from "./defaultOutputNode";
+
+const CSV_INPUT = {
+  accept: ["text/csv"],
+  extensions: [".csv"],
+  label: "CSV files",
+  multiple: false,
+} as const;
 
 export const cleanCsv: Recipe = {
   slug: "clean-csv",
@@ -32,23 +41,7 @@ export const cleanCsv: Recipe = {
     inputPorts: [],
     outputPorts: [],
     nodes: [
-      {
-        id: "input",
-        type: "input",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Input",
-        position: { x: 0, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "file-upload",
-          accept: ["text/csv"],
-          extensions: [".csv"],
-          label: "CSV files",
-          multiple: false,
-        },
-        inputPorts: [],
-        outputPorts: [{ id: "out-1", name: "files" }],
-      },
+      defaultInputNode(CSV_INPUT),
       {
         id: "clean",
         type: "spreadsheet",
@@ -63,22 +56,7 @@ export const cleanCsv: Recipe = {
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [{ id: "out-1", name: "files" }],
       },
-      {
-        id: "output",
-        type: "output",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Output",
-        position: { x: 500, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "download",
-          label: "Cleaned CSV",
-          zip: false,
-          autoDownload: true,
-        },
-        inputPorts: [{ id: "in-1", name: "files" }],
-        outputPorts: [],
-      },
+      defaultOutputNode({ label: "Cleaned CSV", zip: false }),
     ],
     edges: [
       { id: "e1", source: "input", target: "clean" },

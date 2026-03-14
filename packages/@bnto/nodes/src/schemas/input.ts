@@ -36,11 +36,18 @@ export const inputNodeSchema: NodeSchemaDefinition = {
     mode: {
       label: "Mode",
       description: "How data is provided to the recipe.",
+      options: [
+        { value: "file-upload", label: "File Upload" },
+        { value: "text", label: "Text" },
+        { value: "url", label: "URL" },
+      ],
     },
     accept: {
       label: "Accepted MIME Types",
-      description: 'MIME types accepted (e.g., "image/jpeg", "image/png").',
+      description:
+        'MIME types accepted (e.g., "image/jpeg", "image/png"). Derived from extensions.',
       visibleWhen: { param: "mode", equals: "file-upload" },
+      hidden: true,
     },
     extensions: {
       label: "File Extensions",
@@ -52,6 +59,7 @@ export const inputNodeSchema: NodeSchemaDefinition = {
       description: "Human-readable label for the input control.",
       placeholder: "JPEG, PNG, or WebP images",
       visibleWhen: { param: "mode", equals: "file-upload" },
+      hidden: true,
     },
     multiple: {
       label: "Multiple",
@@ -62,11 +70,13 @@ export const inputNodeSchema: NodeSchemaDefinition = {
       label: "Max File Size",
       description: "Maximum file size in bytes. 0 = no limit.",
       visibleWhen: { param: "mode", equals: "file-upload" },
+      hidden: true,
     },
     maxFiles: {
       label: "Max Files",
       description: "Maximum number of files. 0 = no limit.",
       visibleWhen: { param: "mode", equals: "file-upload" },
+      hidden: true,
     },
     placeholder: {
       label: "Placeholder",

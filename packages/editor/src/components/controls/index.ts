@@ -13,17 +13,23 @@ import { SwitchControl } from "./SwitchControl";
 import { SliderControl } from "./SliderControl";
 import { NumberControl } from "./NumberControl";
 import { TextControl } from "./TextControl";
+import { TextareaControl } from "./TextareaControl";
+import { TagPickerControl } from "./TagPickerControl";
+import { KeyValueEditorControl } from "./KeyValueEditorControl";
 
 /**
  * Registry: FieldControl → React component.
  *
- * | Control  | Component      | Renders                        |
- * |----------|----------------|--------------------------------|
- * | select   | SelectControl  | Dropdown (enums)               |
- * | switch   | SwitchControl  | Toggle (booleans)              |
- * | slider   | SliderControl  | Range slider (bounded numbers) |
- * | number   | NumberControl  | Number input (unbounded)       |
- * | text     | TextControl    | Text input (strings, fallback) |
+ * | Control    | Component             | Renders                              |
+ * |------------|-----------------------|--------------------------------------|
+ * | select     | SelectControl         | Dropdown (enums)                     |
+ * | switch     | SwitchControl         | Toggle (booleans)                    |
+ * | slider     | SliderControl         | Range slider (bounded numbers)       |
+ * | number     | NumberControl         | Number input (unbounded)             |
+ * | text       | TextControl           | Text input (strings, fallback)       |
+ * | textarea   | TextareaControl       | Multiline text (strings w/ hint)     |
+ * | tagPicker  | TagPickerControl      | Multi-select combobox (string arrays)|
+ * | keyValue   | KeyValueEditorControl | Key→value pairs (records)            |
  */
 export const CONTROL_REGISTRY: Record<FieldControl, ComponentType<ControlProps>> = {
   select: SelectControl,
@@ -31,6 +37,9 @@ export const CONTROL_REGISTRY: Record<FieldControl, ComponentType<ControlProps>>
   slider: SliderControl,
   number: NumberControl,
   text: TextControl,
+  textarea: TextareaControl,
+  tagPicker: TagPickerControl,
+  keyValue: KeyValueEditorControl,
 };
 
 export type { ControlProps } from "./types";

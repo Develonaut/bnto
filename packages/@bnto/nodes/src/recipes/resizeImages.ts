@@ -3,6 +3,14 @@
 import type { Recipe } from "../recipe";
 import { CURRENT_FORMAT_VERSION } from "../formatVersion";
 import { getProcessorDefaults } from "../generated/catalog";
+import { defaultInputNode } from "./defaultInputNode";
+import { defaultOutputNode } from "./defaultOutputNode";
+
+const IMAGE_INPUT = {
+  accept: ["image/jpeg", "image/png", "image/webp"],
+  extensions: [".jpg", ".jpeg", ".png", ".webp"],
+  label: "JPEG, PNG, or WebP images",
+} as const;
 
 export const resizeImages: Recipe = {
   slug: "resize-images",
@@ -33,23 +41,7 @@ export const resizeImages: Recipe = {
     inputPorts: [],
     outputPorts: [],
     nodes: [
-      {
-        id: "input",
-        type: "input",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Input",
-        position: { x: 0, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "file-upload",
-          accept: ["image/jpeg", "image/png", "image/webp"],
-          extensions: [".jpg", ".jpeg", ".png", ".webp"],
-          label: "JPEG, PNG, or WebP images",
-          multiple: true,
-        },
-        inputPorts: [],
-        outputPorts: [{ id: "out-1", name: "files" }],
-      },
+      defaultInputNode(IMAGE_INPUT),
       {
         id: "resize-loop",
         type: "loop",
@@ -79,22 +71,7 @@ export const resizeImages: Recipe = {
         ],
         edges: [],
       },
-      {
-        id: "output",
-        type: "output",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Output",
-        position: { x: 500, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "download",
-          label: "Resized Images",
-          zip: true,
-          autoDownload: true,
-        },
-        inputPorts: [{ id: "in-1", name: "files" }],
-        outputPorts: [],
-      },
+      defaultOutputNode({ label: "Resized Images" }),
     ],
     edges: [
       { id: "e1", source: "input", target: "resize-loop" },
