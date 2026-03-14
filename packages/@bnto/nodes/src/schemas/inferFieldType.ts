@@ -7,13 +7,17 @@
  *
  * ## Zod Type → UI Control Mapping
  *
- * | Zod Type           | Constraint        | UI Control | Component   |
- * |--------------------|-------------------|------------|-------------|
- * | `z.enum()`         | —                 | select     | Select      |
- * | `z.boolean()`      | —                 | switch     | Switch      |
- * | `z.number()`       | min AND max       | slider     | Slider      |
- * | `z.number()`       | unbounded / one   | number     | Input[num]  |
- * | `z.string()`       | —                 | text       | Input[text] |
+ * | Zod Type                  | Constraint / Hint | UI Control | Component        |
+ * |---------------------------|-------------------|------------|------------------|
+ * | `z.enum()`                | —                 | select     | Select           |
+ * | `z.boolean()`             | —                 | switch     | Switch           |
+ * | `z.number()`              | min AND max       | slider     | Slider           |
+ * | `z.number()`              | unbounded / one   | number     | Input[num]       |
+ * | `z.string()`              | meta.control=textarea | textarea | Textarea     |
+ * | `z.string()`              | —                 | text       | Input[text]      |
+ * | `z.array(z.string())`     | —                 | tagPicker  | Combobox         |
+ * | `z.record(z.string())`    | —                 | keyValue   | KeyValueEditor   |
+ * | `z.record(z.unknown())`   | —                 | keyValue   | KeyValueEditor   |
  *
  * This mapping is the single source of truth for which UI control renders
  * for each Zod type. The `SchemaForm` component in `@bnto/editor` consumes
@@ -21,21 +25,33 @@
  */
 
 import type { z } from "zod";
+import type { NodeParamMeta } from "./types";
 
 /**
  * UI control type — maps directly to a `@bnto/ui` component.
  *
- * - select:  `<Select>` dropdown (for enums)
- * - switch:  `<Switch>` toggle (for booleans)
- * - slider:  `<Slider>` range (for bounded numbers with both min AND max)
- * - number:  `<Input type="number">` (for unbounded numbers)
- * - text:    `<Input type="text">` (for strings, fallback)
+ * - select:    `<Select>` dropdown (for enums)
+ * - switch:    `<Switch>` toggle (for booleans)
+ * - slider:    `<Slider>` range (for bounded numbers with both min AND max)
+ * - number:    `<Input type="number">` (for unbounded numbers)
+ * - text:      `<Input type="text">` (for strings, fallback)
+ * - textarea:  `<Textarea>` multiline (for strings with meta.control = "textarea")
+ * - tagPicker: `<Combobox>` multi-select (for z.array(z.string()))
+ * - keyValue:  `<KeyValueEditor>` key→value pairs (for z.record())
  */
-type FieldControl = "select" | "switch" | "slider" | "number" | "text";
+type FieldControl =
+  | "select"
+  | "switch"
+  | "slider"
+  | "number"
+  | "text"
+  | "textarea"
+  | "tagPicker"
+  | "keyValue";
 
 interface FieldTypeInfo {
   /** Effective type for rendering the correct form control. */
-  type: "string" | "number" | "boolean" | "enum";
+  type: "string" | "number" | "boolean" | "enum" | "array" | "record";
   /** UI control to render — determined by type + constraints. */
   control: FieldControl;
   /** Whether the field is required (not wrapped in ZodOptional or ZodDefault). */
@@ -82,12 +98,37 @@ function extractNumberChecks(zodType: z.ZodTypeAny): { min?: number; max?: numbe
 }
 
 /**
+ * Check if a ZodArray contains string elements (z.array(z.string())).
+ */
+function isStringArray(zodType: z.ZodTypeAny): boolean {
+  const elementType = zodType._def.type;
+  if (!elementType) return false;
+  const innerElement = unwrap(elementType);
+  return (innerElement._def.typeName as string) === "ZodString";
+}
+
+/**
+ * Check if a ZodRecord has string values (z.record(z.string())).
+ * Also matches z.record(z.unknown()) for generic key-value editing.
+ */
+function isKeyValueRecord(zodType: z.ZodTypeAny): boolean {
+  const valueType = zodType._def.valueType;
+  if (!valueType) return false;
+  const innerValue = unwrap(valueType);
+  const typeName = innerValue._def.typeName as string;
+  return typeName === "ZodString" || typeName === "ZodUnknown";
+}
+
+/**
  * Infer the field type info from a Zod schema shape entry.
  *
  * Returns the effective type, UI control, enum values, and numeric constraints
  * that the config panel needs to render the correct form component.
+ *
+ * An optional `meta` parameter allows overriding the inferred control type
+ * via `meta.control` (e.g., setting `control: "textarea"` on a string field).
  */
-function inferFieldType(zodField: z.ZodTypeAny): FieldTypeInfo {
+function inferFieldType(zodField: z.ZodTypeAny, meta?: NodeParamMeta): FieldTypeInfo {
   const outerTypeName = (zodField._def.typeName ?? "") as string;
   const required = outerTypeName !== "ZodOptional" && outerTypeName !== "ZodDefault";
   const inner = unwrap(zodField);
@@ -118,7 +159,17 @@ function inferFieldType(zodField: z.ZodTypeAny): FieldTypeInfo {
     return { type: "boolean", control: "switch", required };
   }
 
-  return { type: "string", control: "text", required };
+  if (typeName === "ZodArray" && isStringArray(inner)) {
+    return { type: "array", control: "tagPicker", required };
+  }
+
+  if (typeName === "ZodRecord" && isKeyValueRecord(inner)) {
+    return { type: "record", control: "keyValue", required };
+  }
+
+  // String fields can be overridden to textarea via meta.control
+  const control = meta?.control === "textarea" ? "textarea" : "text";
+  return { type: "string", control, required };
 }
 
 export { inferFieldType };

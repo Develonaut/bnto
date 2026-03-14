@@ -81,6 +81,13 @@ export interface NodeParamMeta {
    * When present, SelectControl uses these labels instead of raw enum values.
    */
   options?: Array<{ value: string; label: string }>;
+
+  /**
+   * Override the inferred UI control type. Used when the Zod type alone
+   * isn't enough to determine the right control (e.g., a z.string() that
+   * should render as a textarea instead of a single-line input).
+   */
+  control?: "textarea";
 }
 
 /**

@@ -212,24 +212,24 @@ Build the missing UI controls that make the config panel usable. Raw text inputs
 
 **Step 1 — Build UI primitives** in `@bnto/ui/interaction/`:
 
-- [ ] **CLAIMED** `@bnto/ui` — **Textarea**: Multiline text input. Reference: `shadcn-blocks/components/textarea/textarea-form-1.tsx`
-- [ ] **CLAIMED** `@bnto/ui` — **Combobox** (was TagPicker): Multi-select combobox with search, badges, and remove. Built on cmdk + Popover + Command primitive. For `z.array(z.string())` params (Input `extensions`). Reference: `shadcn-blocks/components/combobox/combobox-multi-select-1.tsx`
-- [ ] **CLAIMED** `@bnto/ui` — **KeyValueEditor**: Add/remove key→value pairs. For `z.record(z.string())` params (Spreadsheet `columns`, Transform `mappings`). Reference: `shadcn-blocks/components/input/input-special-1.tsx` (list pattern)
+- [x] `@bnto/ui` — **Textarea**: Multiline text input. Reference: `shadcn-blocks/components/textarea/textarea-form-1.tsx`
+- [x] `@bnto/ui` — **Combobox** (was TagPicker): Multi-select combobox with search, badges, and remove. Built on cmdk + Popover + Command primitive. For `z.array(z.string())` params (Input `extensions`). Reference: `shadcn-blocks/components/combobox/combobox-multi-select-1.tsx`
+- [x] `@bnto/ui` — **KeyValueEditor**: Add/remove key→value pairs. For `z.record(z.string())` params (Spreadsheet `columns`, Transform `mappings`). Reference: `shadcn-blocks/components/input/input-special-1.tsx` (list pattern)
 
 **Step 2 — Motorway showcase** (each new control gets a `ShowcaseSection` under the Controls tab):
 
-- [ ] **CLAIMED** `apps/web` — **Motorway Controls tab update**: Add showcase sections for Textarea, TagPicker, and KeyValueEditor. Column layout showing variants, states, edge cases. This is the living catalog — if it's not on Motorway, it doesn't exist.
+- [x] `apps/web` — **Motorway Controls tab update**: Add showcase sections for Textarea, TagPicker, and KeyValueEditor. Column layout showing variants, states, edge cases. This is the living catalog — if it's not on Motorway, it doesn't exist.
 
 **Step 3 — Wire into editor control registry**:
 
-- [ ] `@bnto/editor` — **TextareaControl**: Create control component, register as `textarea` in `CONTROL_REGISTRY`
-- [ ] `@bnto/editor` — **TagPickerControl**: Create control component, register as `tagPicker` in `CONTROL_REGISTRY`
-- [ ] `@bnto/editor` — **KeyValueEditorControl**: Create control component, register as `keyValue` in `CONTROL_REGISTRY`
+- [x] `@bnto/editor` — **TextareaControl**: Create control component, register as `textarea` in `CONTROL_REGISTRY`
+- [x] `@bnto/editor` — **TagPickerControl**: Create control component, register as `tagPicker` in `CONTROL_REGISTRY`
+- [x] `@bnto/editor` — **KeyValueEditorControl**: Create control component, register as `keyValue` in `CONTROL_REGISTRY`
 
 **Step 4 — Update inference + schemas**:
 
-- [ ] `@bnto/nodes` — **inferFieldType updates**: Map `z.array(z.string())` → `tagPicker`, `z.record(z.string())` → `keyValue`. Add `textarea` hint support via `NodeParamMeta`
-- [ ] `@bnto/nodes` — **Schema metadata cleanup**: Add `hidden: true` to Input node `accept` param (derive from `extensions`). Add `hidden: true` to Parallel node `tasks` param. Add `hidden: true` (or read-only) to `operation` param on image, file-system, and spreadsheet nodes — operation is pre-set from the palette, no need to expose in config panel. Add human-readable labels to `z.enum()` options where missing (Loop `mode`, Input `mode`, Output `mode`). **Also DRY up recipe definitions:** Extract shared `defaultOutputNode()` and `defaultInputNode()` factory functions to eliminate repeated I/O node boilerplate across all 8 recipe files — output params (mode, zip, autoDownload, label) and input params (mode, accept, extensions, multiple) are copy-pasted everywhere
+- [x] `@bnto/nodes` — **inferFieldType updates**: Map `z.array(z.string())` → `tagPicker`, `z.record(z.string())` → `keyValue`. Add `textarea` hint support via `NodeParamMeta`
+- [x] `@bnto/nodes` — **Schema metadata cleanup**: Add `hidden: true` to Input node `accept` param (derive from `extensions`). Add `hidden: true` to Parallel node `tasks` param. Add `hidden: true` (or read-only) to `operation` param on image, file-system, and spreadsheet nodes — operation is pre-set from the palette, no need to expose in config panel. Add human-readable labels to `z.enum()` options where missing (Loop `mode`, Input `mode`, Output `mode`). **Also DRY up recipe definitions:** Extract shared `defaultOutputNode()` and `defaultInputNode()` factory functions to eliminate repeated I/O node boilerplate across all 8 recipe files — output params (mode, zip, autoDownload, label) and input params (mode, accept, extensions, multiple) are copy-pasted everywhere
 
 #### Wave 3 — Save + My Recipes
 

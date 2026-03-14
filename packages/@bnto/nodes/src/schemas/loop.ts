@@ -27,6 +27,11 @@ export const loopNodeSchema: NodeSchemaDefinition = {
     mode: {
       label: "Mode",
       description: "How the loop iterates: over items, N times, or while a condition holds.",
+      options: [
+        { value: "forEach", label: "For Each" },
+        { value: "times", label: "N Times" },
+        { value: "while", label: "While" },
+      ],
     },
     items: {
       label: "Items",

@@ -33,6 +33,7 @@ export const imageNodeSchema: NodeSchemaDefinition = {
     ...generated.params,
     operation: {
       ...generated.params.operation,
+      hidden: true,
       options: [
         { value: "compress", label: "Compress" },
         { value: "convert", label: "Convert" },
