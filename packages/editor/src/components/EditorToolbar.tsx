@@ -20,8 +20,9 @@ import {
   SaveIcon,
   MenuSeparator,
 } from "@bnto/ui";
-import { downloadBlob, core } from "@bnto/core";
+import { core } from "@bnto/core";
 import { useEditor } from "../context";
+import { downloadDefinition } from "../actions/downloadDefinition";
 import { RunButton } from "./RunButton";
 import { OpenRecipeDialog } from "./OpenRecipeDialog";
 import { SaveRecipeDialog } from "./SaveRecipeDialog";
@@ -68,10 +69,7 @@ function EditorToolbar() {
   }, [editor]);
 
   const download = useCallback(() => {
-    const result = editor.definition.exportAsRecipe();
-    if (!result.recipe) return;
-    const json = JSON.stringify(result.recipe.definition, null, 2);
-    downloadBlob(new Blob([json], { type: "application/json" }), `${result.recipe.slug}.bnto.json`);
+    downloadDefinition(editor.definition);
   }, [editor]);
 
   const handleSave = useCallback(

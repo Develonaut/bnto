@@ -244,7 +244,7 @@ Convex persistence for custom recipes. Backend save mutation + core hooks alread
 Existing editor E2E coverage is strong (33+ tests across 5 spec files). This wave fills gaps.
 
 - [ ] `apps/web` — Verify existing E2E tests pass with new controls (TagPicker, KeyValueEditor render for correct params)
-- [ ] `apps/web` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
+- [ ] **CLAIMED** `apps/web` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
 - [ ] `apps/web` — Accessibility audit (focus management, screen reader labels on canvas nodes)
 
 ---
@@ -1039,6 +1039,20 @@ Files: `packages/ui/src/interaction/Menu/MenuTrigger.tsx`, `packages/ui/src/inte
 **Priority: Triage.** Consider removing `sm` and `lg` size variants from Button, keeping only `md`. Emphasis and hierarchy would be controlled through elevation instead of size, making the system feel more consistent.
 
 Files: `packages/ui/src/interaction/Button.tsx`, all consumers of `size="sm"` or `size="lg"`
+
+### Triage: Show mode labels on Input/Output nodes
+
+**Priority: Triage.** Input and Output compartment nodes should display a label showing their current mode (Upload, Text, URL, etc.) so users can see at a glance what each I/O node is configured for.
+
+---
+
+### Triage: Fix reducedMotion type errors in E2E specs
+
+**Priority: Triage.** Multiple E2E spec files have `reducedMotion` type errors in `test.use()` calls — the property isn't recognized by the custom fixtures type. Pre-existing on `main`. Affects `e2e/telemetry/`, `e2e/editor/`, `e2e/journeys/auth/`.
+
+### Triage: Next.js performance audit — leaf-level component boundaries
+
+**Priority: Triage.** Audit `apps/web/` pages and layouts for data-fetching and heavy client-only components that sit near the branch/trunk level instead of being pushed to leaf-level. Break up components to maximize page load — ensure `"use client"`, Convex hooks, and browser-only deps (ReactFlow, etc.) are at the smallest possible leaf, not wrapping entire pages or layouts.
 
 ---
 
