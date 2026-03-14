@@ -50,7 +50,7 @@ const recipes = useQuery(api.recipes.list);
 const state = useStore(instance.store, useShallow(s => ({ ... })));
 ```
 
-See [core-api.md](core-api.md) for the full API design rules and [core-unification.md](../strategy/core-unification.md) for the rationale.
+See [core-api.md](core-api.md) for the full API design rules.
 
 ## Cost-First Architecture
 

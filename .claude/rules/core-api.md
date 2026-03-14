@@ -56,7 +56,7 @@ packages/core/src/
 
 ## API Design Rules
 
-These rules govern how `@bnto/core` exposes functionality to consumers. See [core-unification.md](../strategy/core-unification.md) for the full rationale.
+These rules govern how `@bnto/core` exposes functionality to consumers.
 
 ### No Implementation Detail Leakage
 
