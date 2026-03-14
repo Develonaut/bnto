@@ -60,6 +60,7 @@ export { useExecution } from "./hooks/useExecution";
 export { useHistory } from "./hooks/useHistory";
 export { usePanels } from "./hooks/usePanels";
 export { useUnsavedWarning } from "./hooks/useUnsavedWarning";
+export { useEditorShortcuts } from "./hooks/useEditorShortcuts";
 
 // --- Internal hooks (rendering pipeline) ---
 

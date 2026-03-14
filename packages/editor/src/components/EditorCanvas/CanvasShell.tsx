@@ -9,6 +9,7 @@ import { useLayoutNodes } from "../../hooks/useLayoutNodes";
 import { useExecutionNodes } from "../../hooks/useExecutionNodes";
 import { usePlaceholderNodes } from "../../hooks/usePlaceholderNodes";
 import { useAddDividerNodes } from "../../hooks/useAddDividerNodes";
+import { useEditorShortcuts } from "../../hooks/useEditorShortcuts";
 
 /**
  * CanvasShell — the canvas surface with floating overlay children.
@@ -32,6 +33,7 @@ function CanvasShell({ children }: CanvasShellProps) {
   const { displayNodes, handleNodesChange } = usePlaceholderNodes(statusNodes, onNodesChange);
   const nodesWithDividers = useAddDividerNodes(displayNodes);
   const editor = useEditor();
+  useEditorShortcuts();
 
   const handleNodeClick = useCallback(
     (nodeId: string) => {
