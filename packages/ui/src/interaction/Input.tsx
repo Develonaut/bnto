@@ -1,31 +1,24 @@
 import type { ComponentProps } from "react";
 
 import { cn } from "../utils/cn";
+import { InputWrapper } from "./InputWrapper";
 
 /**
  * Text input with Motorway surface treatment.
  *
- * Because `<input>` is a void element (no ::before/::after pseudo-elements),
- * the surface wrapper lives on a parent `<div>`. The inner `<input>` sits
- * transparently on top so the 3D wall + shadow renders behind it.
+ * Uses InputWrapper for the surface/focus/disabled states. The wrapper
+ * is needed because `<input>` is a void element (no ::before/::after).
  */
 function Input({
   className,
   wrapperClassName,
   type,
   suffix,
+  disabled,
   ...props
 }: ComponentProps<"input"> & { wrapperClassName?: string; suffix?: string }) {
   return (
-    <div
-      className={cn(
-        "surface surface-outline elevation-sm rounded-md",
-        "has-[:focus-visible]:border-ring has-[:focus-visible]:ring-ring/50 has-[:focus-visible]:ring-[3px]",
-        "has-[:disabled]:opacity-50",
-        suffix && "relative",
-        wrapperClassName,
-      )}
-    >
+    <InputWrapper disabled={disabled} className={cn(suffix && "relative", wrapperClassName)}>
       <input
         type={type}
         data-slot="input"
@@ -34,6 +27,7 @@ function Input({
           suffix && "pr-8",
           className,
         )}
+        disabled={disabled}
         {...props}
       />
       {suffix && (
@@ -41,7 +35,7 @@ function Input({
           {suffix}
         </span>
       )}
-    </div>
+    </InputWrapper>
   );
 }
 

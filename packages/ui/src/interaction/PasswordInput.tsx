@@ -35,7 +35,6 @@ function PasswordInput({
         type="button"
         variant="outline"
         size="icon"
-        elevation="md"
         toggle
         pressed={visible}
         disabled={disabled}
@@ -44,11 +43,7 @@ function PasswordInput({
         aria-label={visible ? "Hide password" : "Show password"}
         aria-pressed={visible}
       >
-        {visible ? (
-          <EyeIcon className="size-4" />
-        ) : (
-          <EyeOffIcon className="size-4" />
-        )}
+        {visible ? <EyeIcon className="size-4" /> : <EyeOffIcon className="size-4" />}
       </Button>
     </Row>
   );

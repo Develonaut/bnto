@@ -112,6 +112,7 @@ export {
 } from "./interaction/FileUpload";
 export type { FileUploadProps } from "./interaction/FileUpload";
 export { Input } from "./interaction/Input";
+export { InputWrapper } from "./interaction/InputWrapper";
 export {
   Menu,
   MenuTrigger,
@@ -140,7 +141,21 @@ export { Slider } from "./interaction/Slider";
 export type { SliderPreset } from "./interaction/Slider";
 export { Switch } from "./interaction/Switch";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./interaction/Tabs";
+export {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandSeparator,
+} from "./interaction/Command";
+export { Combobox } from "./interaction/Combobox";
+export type { ComboboxProps, ComboboxOption } from "./interaction/Combobox";
+export { KeyValueEditor } from "./interaction/KeyValueEditor";
+export type { KeyValueEditorProps } from "./interaction/KeyValueEditor";
 export { Textarea } from "./interaction/Textarea";
+export type { TextareaSize } from "./interaction/Textarea";
 
 /* Overlay */
 export {

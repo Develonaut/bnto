@@ -17,6 +17,7 @@ export {
   CheckCircle2 as CheckCircle2Icon,
   ChevronDown as ChevronDownIcon,
   ChevronLeft as ChevronLeftIcon,
+  ChevronsUpDown as ChevronsUpDownIcon,
   ChevronRight as ChevronRightIcon,
   ChevronUp as ChevronUpIcon,
   CircleMinus as CircleMinusIcon,

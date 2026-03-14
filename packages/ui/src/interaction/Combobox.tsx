@@ -1,0 +1,158 @@
+"use client";
+
+import { useState, useCallback, type ComponentProps } from "react";
+
+import { CheckIcon, ChevronsUpDownIcon, XIcon } from "../icons";
+import { cn } from "../utils/cn";
+import { Badge } from "../typography/Badge";
+import { Button } from "./Button";
+import { Popover, PopoverContent, PopoverTrigger } from "../overlay/Popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./Command";
+
+type ComboboxOption = {
+  value: string;
+  label: string;
+};
+
+type ComboboxProps = Omit<ComponentProps<"div">, "onChange"> & {
+  /** Available options to select from. */
+  options: ComboboxOption[];
+  /** Currently selected values. */
+  value: string[];
+  /** Called when selection changes. */
+  onChange: (values: string[]) => void;
+  /** Placeholder when nothing is selected. */
+  placeholder?: string;
+  /** Placeholder for the search input. */
+  searchPlaceholder?: string;
+  /** Text shown when no options match the search. */
+  emptyText?: string;
+  /** Maximum number of selections. */
+  max?: number;
+  /** Disable the combobox. */
+  disabled?: boolean;
+};
+
+function Combobox({
+  options,
+  value,
+  onChange,
+  placeholder = "Select…",
+  searchPlaceholder = "Search…",
+  emptyText = "No results found.",
+  max,
+  disabled = false,
+  className,
+  ...props
+}: ComboboxProps) {
+  const [open, setOpen] = useState(false);
+
+  const toggleOption = useCallback(
+    (optionValue: string) => {
+      if (value.includes(optionValue)) {
+        onChange(value.filter((v) => v !== optionValue));
+      } else {
+        if (max !== undefined && value.length >= max) return;
+        onChange([...value, optionValue]);
+      }
+    },
+    [value, onChange, max],
+  );
+
+  const removeOption = useCallback(
+    (optionValue: string) => {
+      onChange(value.filter((v) => v !== optionValue));
+    },
+    [value, onChange],
+  );
+
+  return (
+    <div data-slot="combobox" className={className} {...props}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            disabled={disabled}
+            className="w-full justify-between font-normal"
+          >
+            <div className="flex flex-1 flex-wrap gap-1 overflow-hidden">
+              {value.length > 0 ? (
+                value.map((v) => {
+                  const label = options.find((o) => o.value === v)?.label ?? v;
+                  return (
+                    <Badge key={v} variant="secondary" size="sm">
+                      {label}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        className="ml-0.5 cursor-pointer rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeOption(v);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            removeOption(v);
+                          }
+                        }}
+                        aria-label={`Remove ${label}`}
+                      >
+                        <XIcon className="size-3 text-muted-foreground hover:text-foreground" />
+                      </span>
+                    </Badge>
+                  );
+                })
+              ) : (
+                <span className="text-muted-foreground">{placeholder}</span>
+              )}
+            </div>
+            <ChevronsUpDownIcon className="ml-1 size-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <Command>
+            <CommandInput placeholder={searchPlaceholder} />
+            <CommandList>
+              <CommandEmpty>{emptyText}</CommandEmpty>
+              <CommandGroup>
+                {options.map((option) => {
+                  const selected = value.includes(option.value);
+                  const atMax = max !== undefined && value.length >= max;
+                  return (
+                    <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      onSelect={() => toggleOption(option.value)}
+                      disabled={!selected && atMax}
+                    >
+                      <CheckIcon className={cn("size-4", selected ? "opacity-100" : "opacity-0")} />
+                      {option.label}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+export { Combobox };
+export type { ComboboxProps, ComboboxOption };
