@@ -8,7 +8,8 @@
     "lint": "turbo run lint",
     "dev": "turbo run dev",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "postinstall": "lefthook install || true"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
