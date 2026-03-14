@@ -100,7 +100,7 @@ export function RecipeGrid() {
       <Grid cols={{ mobile: 1, tablet: 2, desktop: 3 }} gap="md">
         {recipes.map((recipe) => (
           <GridItem key={recipe.id}>
-            <RecipeCard>
+            <RecipeCard href={`/editor?recipe=${recipe.id}`}>
               <RecipeCardHeader>
                 <RecipeCardIcon />
               </RecipeCardHeader>
