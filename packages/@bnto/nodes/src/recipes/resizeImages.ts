@@ -90,7 +90,7 @@ export const resizeImages: Recipe = {
           mode: "download",
           label: "Resized Images",
           zip: true,
-          autoDownload: false,
+          autoDownload: true,
         },
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [],

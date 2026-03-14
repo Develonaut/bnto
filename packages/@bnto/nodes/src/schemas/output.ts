@@ -18,7 +18,7 @@ export const outputParamsSchema = z.object({
   filename: z.string().optional(),
   zip: z.boolean().optional().default(true),
   label: z.string().optional(),
-  autoDownload: z.boolean().optional().default(false),
+  autoDownload: z.boolean().optional().default(true),
 });
 
 /** Inferred TypeScript type for output node parameters. */

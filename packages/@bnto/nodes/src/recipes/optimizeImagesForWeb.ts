@@ -28,8 +28,7 @@ export const optimizeImagesForWeb: Recipe = {
     name: "Optimize Images for Web",
     position: { x: 0, y: 0 },
     metadata: {
-      description:
-        "Accepts image files, resizes, converts to WebP, and compresses each one.",
+      description: "Accepts image files, resizes, converts to WebP, and compresses each one.",
     },
     parameters: {},
     inputPorts: [],
@@ -124,7 +123,7 @@ export const optimizeImagesForWeb: Recipe = {
           mode: "download",
           label: "Optimized Images",
           zip: true,
-          autoDownload: false,
+          autoDownload: true,
         },
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [],

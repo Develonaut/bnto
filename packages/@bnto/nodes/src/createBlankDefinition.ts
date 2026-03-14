@@ -58,7 +58,7 @@ export function createBlankDefinition(): Definition {
           mode: "download",
           label: "Output Files",
           zip: true,
-          autoDownload: false,
+          autoDownload: true,
         },
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [],

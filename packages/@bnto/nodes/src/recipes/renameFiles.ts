@@ -89,7 +89,7 @@ export const renameFiles: Recipe = {
           mode: "download",
           label: "Renamed Files",
           zip: true,
-          autoDownload: false,
+          autoDownload: true,
         },
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [],

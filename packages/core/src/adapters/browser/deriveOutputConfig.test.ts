@@ -13,7 +13,7 @@ describe("deriveOutputConfig", () => {
     const result = deriveOutputConfig(def);
     expect(result.mode).toBe("download");
     expect(result.zip).toBe(true);
-    expect(result.autoDownload).toBe(false);
+    expect(result.autoDownload).toBe(true);
     expect(result.label).toBe("Output Files");
   });
 
@@ -81,7 +81,7 @@ describe("deriveOutputConfig", () => {
     const result = deriveOutputConfig(def);
     expect(result.mode).toBe("download");
     expect(result.zip).toBe(true);
-    expect(result.autoDownload).toBe(false);
+    expect(result.autoDownload).toBe(true);
     expect(result.label).toBe("Results");
     expect(result.filename).toBeUndefined();
   });
