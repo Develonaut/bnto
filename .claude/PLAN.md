@@ -212,13 +212,13 @@ Build the missing UI controls that make the config panel usable. Raw text inputs
 
 **Step 1 — Build UI primitives** in `@bnto/ui/interaction/`:
 
-- [ ] `@bnto/ui` — **Textarea**: Multiline text input. Reference: `shadcn-blocks/components/textarea/textarea-form-1.tsx`
-- [ ] `@bnto/ui` — **TagPicker**: Chip/tag input with add/remove. For `z.array(z.string())` params (Input `extensions`). Reference: `shadcn-blocks/components/combobox/combobox-multi-select-1.tsx`
-- [ ] `@bnto/ui` — **KeyValueEditor**: Add/remove key→value pairs. For `z.record(z.string())` params (Spreadsheet `columns`, Transform `mappings`). Reference: `shadcn-blocks/components/input/input-special-1.tsx` (list pattern)
+- [ ] **CLAIMED** `@bnto/ui` — **Textarea**: Multiline text input. Reference: `shadcn-blocks/components/textarea/textarea-form-1.tsx`
+- [ ] **CLAIMED** `@bnto/ui` — **Combobox** (was TagPicker): Multi-select combobox with search, badges, and remove. Built on cmdk + Popover + Command primitive. For `z.array(z.string())` params (Input `extensions`). Reference: `shadcn-blocks/components/combobox/combobox-multi-select-1.tsx`
+- [ ] **CLAIMED** `@bnto/ui` — **KeyValueEditor**: Add/remove key→value pairs. For `z.record(z.string())` params (Spreadsheet `columns`, Transform `mappings`). Reference: `shadcn-blocks/components/input/input-special-1.tsx` (list pattern)
 
 **Step 2 — Motorway showcase** (each new control gets a `ShowcaseSection` under the Controls tab):
 
-- [ ] `apps/web` — **Motorway Controls tab update**: Add showcase sections for Textarea, TagPicker, and KeyValueEditor. Column layout showing variants, states, edge cases. This is the living catalog — if it's not on Motorway, it doesn't exist.
+- [ ] **CLAIMED** `apps/web` — **Motorway Controls tab update**: Add showcase sections for Textarea, TagPicker, and KeyValueEditor. Column layout showing variants, states, edge cases. This is the living catalog — if it's not on Motorway, it doesn't exist.
 
 **Step 3 — Wire into editor control registry**:
 
@@ -1021,6 +1021,24 @@ The `extensions` parameter on the Input node (`@bnto/nodes/schemas/input.ts`) is
 ### Full Codebase Quality Audit Post-Editor v1
 
 **Priority: P3 — Post-Editor Gate.** After editor v1 ships, run a full codebase sweep: dead code removal (knip per package), code standards compliance, and a domain-by-domain audit where each persona skill verifies its area follows all rules. Cover all packages and apps. Good candidate for a dedicated sprint between editor v1 and M3 work.
+
+### Triage: SelectTrigger missing press animation
+
+**Priority: Triage.** The Select input trigger doesn't animate on click like Menu triggers do. SelectTrigger should have the same pressable spring effect as the Menu trigger component.
+
+Files: `packages/ui/src/interaction/Select.tsx`, `packages/ui/src/interaction/Menu/MenuTrigger.tsx`
+
+### Triage: PopupTrigger shared component
+
+**Priority: Triage.** Menu, Select, and Combobox all trigger popups but have separate trigger styling. Create a shared PopupTrigger component that centralizes the pressable spring animation, surface treatment, and chevron icon behavior so all popup-triggering controls inherit consistent look and feel.
+
+Files: `packages/ui/src/interaction/Menu/MenuTrigger.tsx`, `packages/ui/src/interaction/Select.tsx`, `packages/ui/src/interaction/Combobox.tsx`
+
+### Triage: Remove sm/lg button sizes
+
+**Priority: Triage.** Consider removing `sm` and `lg` size variants from Button, keeping only `md`. Emphasis and hierarchy would be controlled through elevation instead of size, making the system feel more consistent.
+
+Files: `packages/ui/src/interaction/Button.tsx`, all consumers of `size="sm"` or `size="lg"`
 
 ---
 

@@ -5,6 +5,7 @@ import { Heading, Stack, Tabs, TabsList, TabsTrigger, TabsContent, Text } from "
 import { AnimationShowcase } from "./AnimationShowcase";
 import { EmptyStateShowcase } from "./EmptyStateShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
+import { CheckboxShowcase } from "./CheckboxShowcase";
 import { CopyButtonShowcase } from "./CopyButtonShowcase";
 import { CardShowcase } from "./CardShowcase";
 import { ColorSwatches } from "./ColorSwatches";
@@ -13,13 +14,19 @@ import { GridShowcase } from "./GridShowcase";
 import { FileListShowcase } from "./FileListShowcase";
 import { FormShowcase } from "./FormShowcase";
 import { InputShowcase } from "./InputShowcase";
+import { KeyValueEditorShowcase } from "./KeyValueEditorShowcase";
 import { MenuShowcase } from "./MenuShowcase";
 import { NotificationCards } from "./NotificationCards";
 import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
 import { ProgressShowcase } from "./ProgressShowcase";
+import { RadioGroupShowcase } from "./RadioGroupShowcase";
 import { RecipeCardShowcase } from "./RecipeCardShowcase";
 import { SelectShowcase } from "./SelectShowcase";
 import { ShowcaseSection } from "./ShowcaseSection";
+import { SliderShowcase } from "./SliderShowcase";
+import { SwitchShowcase } from "./SwitchShowcase";
+import { ComboboxShowcase } from "./ComboboxShowcase";
+import { TextareaShowcase } from "./TextareaShowcase";
 import { LoadingCardShowcase } from "./LoadingCardShowcase";
 import { SpringableShowcase } from "./SpringableShowcase";
 import { TypographyShowcase } from "./TypographyShowcase";
@@ -49,7 +56,7 @@ export default function MotorwayPage() {
           <TabsTrigger value="forms">Forms</TabsTrigger>
           <TabsTrigger value="grids">Grids</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
-<TabsTrigger value="features">Features</TabsTrigger>
+          <TabsTrigger value="features">Features</TabsTrigger>
         </TabsList>
 
         {/* ── Surfaces ────────────────────────────────────────── */}
@@ -120,11 +127,67 @@ export default function MotorwayPage() {
             </ShowcaseSection>
 
             <ShowcaseSection
+              id="combobox"
+              title="Combobox"
+              description="Multi-select combobox with search, badges, and remove. Built on cmdk + Popover. Used for file extensions, output formats, and any array-of-string params."
+            >
+              <ComboboxShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
               id="inputs"
               title="Inputs"
-              description="Text fields, toggles, checkboxes, linear and radial sliders."
+              description="Text fields, password inputs, toggles, checkboxes, and radio groups."
             >
               <InputShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="textarea"
+              title="Textarea"
+              description="Multiline text input with size variants. Used for expressions, patterns, and long-form text in node config panels."
+            >
+              <TextareaShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="switch"
+              title="Switch"
+              description="Toggle switches for boolean params. On/off state with disabled variant."
+            >
+              <SwitchShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="checkbox"
+              title="Checkbox"
+              description="Checkboxes for boolean selections. Checked, unchecked, and disabled states."
+            >
+              <CheckboxShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="radio-group"
+              title="Radio Group"
+              description="Mutually exclusive option groups. Used for output format, size presets, and single-select enums."
+            >
+              <RadioGroupShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="sliders"
+              title="Sliders"
+              description="Linear sliders with optional presets and radial dial gauges. Used for quality, compression, and percentage params."
+            >
+              <SliderShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="key-value-editor"
+              title="Key-Value Editor"
+              description="Add/remove key→value pairs for record params. Used for column renames, header mappings, and transform definitions."
+            >
+              <KeyValueEditorShowcase />
             </ShowcaseSection>
           </Stack>
         </TabsContent>

@@ -21,6 +21,7 @@ export function SelectShowcase() {
   const [format, setFormat] = useState("webp");
   const [quality, setQuality] = useState("high");
   const [size, setSize] = useState("");
+  const [operation, setOperation] = useState("compress");
 
   return (
     <Stack className="gap-10">
@@ -89,29 +90,6 @@ export function SelectShowcase() {
         </Row>
       </div>
 
-      {/* Small size */}
-      <div>
-        <Text size="sm" color="muted" className="mb-3">
-          Small trigger
-        </Text>
-        <Row className="flex-wrap gap-8">
-          <Stack gap="xs">
-            <Label>Node type</Label>
-            <Select defaultValue="image">
-              <SelectTrigger size="sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="image">Image</SelectItem>
-                <SelectItem value="file">File</SelectItem>
-                <SelectItem value="csv">CSV</SelectItem>
-                <SelectItem value="http">HTTP</SelectItem>
-              </SelectContent>
-            </Select>
-          </Stack>
-        </Row>
-      </div>
-
       {/* With groups and labels */}
       <div>
         <Text size="sm" color="muted" className="mb-3">
@@ -120,7 +98,7 @@ export function SelectShowcase() {
         <Row className="flex-wrap gap-8">
           <Stack gap="xs">
             <Label>Operation</Label>
-            <Select defaultValue="compress">
+            <Select value={operation} onValueChange={setOperation}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

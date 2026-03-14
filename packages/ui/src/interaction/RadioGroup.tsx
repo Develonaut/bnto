@@ -1,8 +1,9 @@
 "use client";
 
-import type { ComponentProps, CSSProperties } from "react";
+import type { ComponentProps } from "react";
 
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
+import { Button } from "./Button";
 
 import { cn } from "../utils/cn";
 
@@ -21,31 +22,29 @@ export function RadioGroup({
 
 export function RadioGroupItem({
   className,
+  disabled,
   ...props
 }: ComponentProps<typeof RadioGroupPrimitive.Item>) {
   return (
-    <RadioGroupPrimitive.Item
-      data-slot="radio-group-item"
-      className={cn(
-        "surface elevation-sm pressable peer size-6 shrink-0 rounded-full outline-none",
-        "focus-visible:outline-2 focus-visible:outline-ring/50 focus-visible:outline-offset-2",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        className,
-      )}
-      style={
-        {
-          "--pressable-ease": "var(--ease-spring-bouncier)",
-          "--pressable-dur": "400ms",
-        } as CSSProperties
-      }
-      {...props}
-    >
-      <RadioGroupPrimitive.Indicator
-        data-slot="radio-group-indicator"
-        className="grid place-content-center"
+    <RadioGroupPrimitive.Item asChild data-slot="radio-group-item" disabled={disabled} {...props}>
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={disabled}
+        spring="bounciest"
+        className={cn(
+          "peer size-6 shrink-0 rounded-full",
+          "focus-visible:outline-2 focus-visible:outline-ring/50 focus-visible:outline-offset-2",
+          className,
+        )}
       >
-        <span className="size-3 rounded-full bg-primary" />
-      </RadioGroupPrimitive.Indicator>
+        <RadioGroupPrimitive.Indicator
+          data-slot="radio-group-indicator"
+          className="grid place-content-center"
+        >
+          <span className="size-3 rounded-full bg-primary" />
+        </RadioGroupPrimitive.Indicator>
+      </Button>
     </RadioGroupPrimitive.Item>
   );
 }

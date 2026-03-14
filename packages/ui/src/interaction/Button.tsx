@@ -114,23 +114,28 @@ function Button({
   style,
   ref,
   children,
+  disabled,
   ...props
 }: ButtonProps) {
   const Comp = resolveComponent(as, asChild, href, props.target);
   const isIcon = icon !== undefined || size === "icon";
   const resolvedSize = size === "icon" ? "md" : (size ?? "md");
 
+  // Disabled buttons use muted variant + no elevation for consistent look with inputs
+  const resolvedVariant = disabled ? "muted" : variant;
+  const resolvedElevation = disabled ? false : elevation;
+
   // Pressable + surface behavior
-  const elevationClass = resolveElevationClass(elevation);
-  const variantClass = variant ? VARIANT_CLASSES[variant] : undefined;
+  const elevationClass = resolveElevationClass(resolvedElevation);
+  const variantClass = resolvedVariant ? VARIANT_CLASSES[resolvedVariant] : undefined;
   const behaviorCn = cn("pressable outline-none surface", variantClass, elevationClass);
 
   // Size classes — skipped when asChild or as (consumer owns layout), unless size is explicitly set
   const applySize = size !== undefined || (!asChild && !as);
   const sizeClasses = applySize
     ? isIcon
-      ? iconCn({ variant, size: resolvedSize })
-      : textCn({ variant, size: resolvedSize })
+      ? iconCn({ variant: resolvedVariant, size: resolvedSize })
+      : textCn({ variant: resolvedVariant, size: resolvedSize })
     : "";
   const resolvedSizeClasses = behaviorCn.includes("elevation-")
     ? stripSizeElevation(sizeClasses)
@@ -145,6 +150,7 @@ function Button({
       data-active={pressed ? "" : undefined}
       data-toggle={toggle ? "" : undefined}
       data-haptic={haptic || toggle ? "" : undefined}
+      disabled={disabled}
       {...(!!href ? { href } : {})}
       className={cn(behaviorCn, resolvedSizeClasses, className)}
       style={{ ...SPRING_STYLES[spring], ...style }}
