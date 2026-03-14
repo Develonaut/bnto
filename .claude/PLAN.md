@@ -244,7 +244,7 @@ Convex persistence for custom recipes. Backend save mutation + core hooks alread
 Existing editor E2E coverage is strong (33+ tests across 5 spec files). This wave fills gaps.
 
 - [ ] `apps/web` — Verify existing E2E tests pass with new controls (TagPicker, KeyValueEditor render for correct params)
-- [ ] **CLAIMED** `apps/web` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
+- [x] `apps/web` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
 - [ ] `apps/web` — Accessibility audit (focus management, screen reader labels on canvas nodes)
 
 ---
@@ -1053,6 +1053,10 @@ Files: `packages/ui/src/interaction/Button.tsx`, all consumers of `size="sm"` or
 ### Triage: Next.js performance audit — leaf-level component boundaries
 
 **Priority: Triage.** Audit `apps/web/` pages and layouts for data-fetching and heavy client-only components that sit near the branch/trunk level instead of being pushed to leaf-level. Break up components to maximize page load — ensure `"use client"`, Convex hooks, and browser-only deps (ReactFlow, etc.) are at the smallest possible leaf, not wrapping entire pages or layouts.
+
+### Triage: File menu transform origin
+
+**Priority: Triage.** The file menu's transform origin doesn't account for the trigger being at the bottom of the page — the menu should animate from the button's position. Fix the popover/menu `transformOrigin` or Radix `side`/`align` props.
 
 ---
 

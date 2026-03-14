@@ -136,22 +136,33 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 - **Code references** -- If you renamed, removed, or changed exports, find and update all consumers.
 - **Documentation** -- If you changed behavior that's documented, update the docs to match.
 
-## Step 7: Proof of Work Summary
+## Step 7: PLAN.md Task Update (MANDATORY)
+
+**If you picked up this work via `/pickup`, you MUST update PLAN.md before committing.**
+
+1. Run `grep -n "CLAIMED" .claude/PLAN.md` to find any CLAIMED tasks
+2. If any CLAIMED tasks are yours, change `- [ ] **CLAIMED**` to `- [x]` in PLAN.md now
+3. If a task is partially done, leave it as `- [ ] **CLAIMED**` and add a note about what remains
+
+**This is a hard gate.** Do NOT proceed to the commit step without updating PLAN.md. Skipping this causes other agents to pick up finished work or miss unblocked waves.
+
+## Step 8: Proof of Work Summary
 
 Present a summary to the user before committing:
 
 1. **Branch** -- name of the feature branch this work is on (e.g., `feat/execution-history`)
 2. **PR target** -- `main` (always). Confirm you are creating a PR targeting `main`.
-3. **Did you touch UI?** -- Yes or No.
-4. **If yes:** What e2e tests did you write or update? List spec files and screenshot assertions.
-5. **If no UI touched:** What unit/integration tests were written?
-6. **Flat named exports** -- PASS or FAIL. If FAIL, list files with `Object.assign` dot-notation patterns.
-7. **TS checks result** -- confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
-8. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test` passed clean (skip if no Rust files touched)
-9. **Lighthouse audit result** -- confirm `task seo:audit` passed clean, or SKIPPED (no `apps/web/` changes)
-10. **Files changed** -- brief description of each
+3. **PLAN.md updated?** -- Yes (list tasks marked done) or N/A (not a `/pickup` task)
+4. **Did you touch UI?** -- Yes or No.
+5. **If yes:** What e2e tests did you write or update? List spec files and screenshot assertions.
+6. **If no UI touched:** What unit/integration tests were written?
+7. **Flat named exports** -- PASS or FAIL. If FAIL, list files with `Object.assign` dot-notation patterns.
+8. **TS checks result** -- confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
+9. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test` passed clean (skip if no Rust files touched)
+10. **Lighthouse audit result** -- confirm `task seo:audit` passed clean, or SKIPPED (no `apps/web/` changes)
+11. **Files changed** -- brief description of each
 
-## Step 8: Commit & Branch Workflow
+## Step 9: Commit & Branch Workflow
 
 **Branch-based development is mandatory.** `main` is protected — all changes go through PRs with CI gate.
 
