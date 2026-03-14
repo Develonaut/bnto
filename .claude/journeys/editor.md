@@ -150,8 +150,8 @@ All phases use programmatic assertions. Screenshots are reserved for page-level 
 
 | Helper | Purpose |
 |--------|---------|
-| `enableEditorFlag(page)` | Set feature flag via `addInitScript` before navigation |
 | `navigateToEditor(page, slug?)` | Navigate to `/editor` or `/editor?from={slug}`, wait for canvas |
+| `dismissBetaDialog(page)` | Dismiss the editor beta dialog if visible (no-op if already dismissed) |
 | `addNodeFromPalette(page, nodeLabel)` | Open palette, click node type, wait for compartment |
 | `selectNode(page, nodeLabel)` | Click compartment, wait for config panel |
 | `ensureConfigPanelOpen(page)` | Open config panel if not already visible |

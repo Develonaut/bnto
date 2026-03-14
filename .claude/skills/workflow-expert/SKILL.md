@@ -124,7 +124,6 @@ Phase 4: VERIFY  -> Download output, validate content (file size, magic bytes, d
 import path from "path";
 import { test, expect } from "../../fixtures";
 import {
-  enableEditorFlag,
   navigateToEditor,
   addNodeFromPalette,
   selectNode,
@@ -137,10 +136,6 @@ import { IMAGE_FIXTURES_DIR, MAGIC } from "../../helpers";
 test.use({ reducedMotion: "reduce" });
 
 test.describe("custom: web-ready image pipeline @editor @browser", () => {
-  test.beforeEach(async ({ page }) => {
-    await enableEditorFlag(page);
-  });
-
   test("build 3-node pipeline: resize -> convert -> compress", async ({ page }) => {
     await navigateToEditor(page);
 

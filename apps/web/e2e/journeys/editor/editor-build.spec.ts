@@ -1,6 +1,5 @@
 import { test, expect } from "../../fixtures";
 import {
-  enableEditorFlag,
   navigateToEditor,
   addNodeFromPalette,
   selectNode,
@@ -20,7 +19,6 @@ test.use({ reducedMotion: "reduce" });
 
 test.describe("editor build & configure @browser", () => {
   test.beforeEach(async ({ page }) => {
-    await enableEditorFlag(page);
     await navigateToEditor(page);
   });
 

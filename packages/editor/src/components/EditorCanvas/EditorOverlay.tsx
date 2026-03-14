@@ -16,7 +16,7 @@ function EditorOverlay({
   return (
     <div
       className={cn(
-        "pointer-events-none absolute inset-4 top-[6rem] z-10",
+        "pointer-events-none absolute inset-4 top-[6rem] z-canvas",
         className,
       )}
       {...props}

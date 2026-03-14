@@ -13,51 +13,24 @@ import { expect } from "../fixtures";
 // ---------------------------------------------------------------------------
 
 /**
- * Enable the editor feature flag via `addInitScript`.
- *
- * Call once per test before any `navigateToEditor` calls.
- * Uses `addInitScript` so localStorage is set BEFORE any page JS runs.
- *
- * The editor page uses `useSyncExternalStore` with a server snapshot that
- * returns `false`. During hydration the client snapshot (which reads
- * localStorage) takes a moment to resolve. The deferred redirect in the
- * editor page gives it time to settle. We also dispatch `bnto:flags-changed`
- * events as a belt-and-suspenders to force `useSyncExternalStore` to re-read.
- */
-export async function enableEditorFlag(page: Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem("bnto:flags", JSON.stringify({ editor: true }));
-
-    // Dispatch bnto:flags-changed after hydration settles so
-    // useSyncExternalStore re-reads the client snapshot (true).
-    const dispatch = () =>
-      window.dispatchEvent(new Event("bnto:flags-changed"));
-    setTimeout(dispatch, 50);
-    setTimeout(dispatch, 150);
-    setTimeout(dispatch, 400);
-  });
-}
-
-/**
- * Navigate to the editor page. Requires `enableEditorFlag` called first.
+ * Navigate to the editor page and wait for it to stabilize.
  *
  * For predefined recipes, pass the slug (e.g. "compress-images").
  *
- * The editor page uses `useSyncExternalStore` with a server snapshot that
- * returns `false`. During hydration, the component may briefly return null
- * (unmounting the editor content) before the client snapshot resolves to
- * `true`. The `addInitScript` from `enableEditorFlag` blocks the redirect
- * and dispatches `bnto:flags-changed` events to force re-evaluation.
- *
- * This function waits for the editor to stabilize after hydration.
+ * Waits for the editor to render at least two node cards (I/O nodes)
+ * and the render pipeline to complete (placeholder or divider visible).
  */
 export async function navigateToEditor(page: Page, slug?: string) {
   const url = slug ? `/editor?from=${slug}` : "/editor";
   await page.goto(url);
 
-  // The editor may flash briefly during hydration then disappear while
-  // useSyncExternalStore resolves. Poll until the editor stabilizes
-  // (recipe-editor testid visible AND at least one node card).
+  // Dismiss the beta dialog if it appears — it's a modal overlay that
+  // blocks canvas interaction. Tests that explicitly verify the dialog
+  // (BN1, BN2) use page.goto directly and skip this helper.
+  await dismissBetaDialog(page);
+
+  // Wait for the editor to stabilize — recipe-editor testid visible
+  // AND at least one node card rendered.
   const editor = page.locator('[data-testid="recipe-editor"]');
   const nodeCards = page.locator('[data-testid="node-card"]');
 
@@ -78,6 +51,31 @@ export async function navigateToEditor(page: Page, slug?: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Beta dialog
+// ---------------------------------------------------------------------------
+
+/**
+ * Dismiss the editor beta dialog if visible.
+ *
+ * Waits briefly for the dialog to appear (it renders after hydration),
+ * then clicks "Get started" and waits for it to close.
+ * No-op if the dialog was already dismissed (localStorage).
+ */
+export async function dismissBetaDialog(page: Page) {
+  const dialog = page.locator('[data-testid="editor-beta-dialog"]');
+  // Wait up to 3s for the dialog to appear — it renders after hydration.
+  // If it doesn't appear (e.g. localStorage already has the dismissal flag),
+  // this times out silently and we move on.
+  try {
+    await dialog.waitFor({ state: "visible", timeout: 3_000 });
+  } catch {
+    return; // Dialog didn't appear — already dismissed or not present
+  }
+  await dialog.getByRole("button", { name: "Get started" }).click();
+  await expect(dialog).not.toBeVisible();
+}
+
+// ---------------------------------------------------------------------------
 // Node palette
 // ---------------------------------------------------------------------------
 
@@ -92,40 +90,32 @@ export async function addNodeFromPalette(page: Page, nodeLabel: string) {
   // - PlaceholderNode (data-testid="placeholder-node"): always enabled
   // - AddDividerNode (data-testid="add-divider"): disabled by default
   //
-  // ReactFlow continuously re-renders canvas nodes, detaching DOM elements
-  // between Playwright's resolution and click dispatch. Use coordinate-based
-  // clicks (page.mouse.click) which bypass element stability checks.
+  // Use data-testid locators with force:true to bypass ReactFlow's
+  // continuous re-rendering which detaches DOM elements between
+  // Playwright's resolution and click dispatch.
   const nodeCards = page.locator('[data-testid="node-card"]');
   const countBefore = await nodeCards.count();
 
   const placeholder = page.locator('[data-testid="placeholder-node"]');
   const divider = page.locator('[data-testid="add-divider"]').first();
 
-  let box: { x: number; y: number; width: number; height: number } | null;
-
   if ((await placeholder.count()) > 0) {
-    box = await placeholder.boundingBox();
+    await placeholder.click({ force: true });
   } else if ((await divider.count()) > 0) {
-    box = await divider.boundingBox();
+    // Divider buttons are disabled={!hovered}. Hover the button to trigger
+    // the parent's onMouseEnter (which enables the button), wait for React
+    // to process, then click. Using dispatchEvent ensures the click fires
+    // even if ReactFlow detaches the element between hover and click.
+    await divider.hover({ force: true });
+    await expect(divider).toBeEnabled({ timeout: 2_000 });
+    await divider.click({ force: true });
   } else {
     throw new Error("addNodeFromPalette: no placeholder or divider trigger found");
   }
 
-  if (!box) {
-    throw new Error("addNodeFromPalette: trigger element has no bounding box");
-  }
-
-  // Hover first — divider buttons are `disabled={!hovered}` and only enable
-  // when the mouse enters. Move the mouse to trigger onMouseEnter, then click.
-  const cx = box.x + box.width / 2;
-  const cy = box.y + box.height / 2;
-  await page.mouse.move(cx, cy);
-  await page.waitForTimeout(100); // Let React process the hover state
-  await page.mouse.click(cx, cy);
-
   // Wait for palette dialog to open
   const dialog = page.getByRole("dialog", { name: "Add Node" });
-  await expect(dialog).toBeVisible();
+  await expect(dialog).toBeVisible({ timeout: 5_000 });
 
   // Click the palette item. The dialog is a React portal (outside ReactFlow),
   // so Playwright's native click works — no coordinate workaround needed.

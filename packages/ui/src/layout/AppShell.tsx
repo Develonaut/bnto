@@ -35,7 +35,7 @@ export function AppShell({ className, ...props }: ComponentProps<"div">) {
 /* ── Header ───────────────────────────────────────────────── */
 
 export function AppShellHeader({ className, ...props }: ComponentProps<"header">) {
-  return <header className={cn("relative z-50", className)} {...props} />;
+  return <header className={cn("relative z-sticky", className)} {...props} />;
 }
 
 /* ── Main ─────────────────────────────────────────────────── */

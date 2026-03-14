@@ -1,16 +1,18 @@
 "use client";
 
 /**
- * "Create" nav button — only visible when the `editor` feature flag is on.
+ * "Create" nav button with Beta badge.
  *
- * Console: `__bnto__.flags.set("editor", true)` to enable.
+ * Links to the recipe editor at /editor.
  */
 
-import { useFeatureFlag } from "@/lib/useFeatureFlag";
+import { Badge } from "@bnto/ui";
 import { NavButton } from "./NavButton";
 
 export function CreateNavButton() {
-  const editorEnabled = useFeatureFlag("editor");
-  if (!editorEnabled) return null;
-  return <NavButton href="/editor">Create</NavButton>;
+  return (
+    <NavButton href="/editor">
+      Create <Badge variant="secondary">Beta</Badge>
+    </NavButton>
+  );
 }

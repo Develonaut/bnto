@@ -31,7 +31,7 @@ export const PopoverContent = forwardRef<
       align={align}
       side={side}
       sideOffset={sideOffset}
-      className="z-50 outline-hidden"
+      className="z-dropdown outline-hidden"
       {...props}
     >
       <Popup side={side} className={className}>
