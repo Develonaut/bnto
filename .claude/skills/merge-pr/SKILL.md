@@ -127,6 +127,23 @@ Ready to merge / Blocked (reasons)
 - **Merge commit** — preserves branch history
 - **Rebase** — linear history, individual commits preserved
 
+## Step 6b: PLAN.md Task Verification (MANDATORY)
+
+Before merging, verify that the author updated PLAN.md:
+
+```bash
+# Check if PLAN.md is in the PR diff
+gh pr diff <number> --name-only | grep -q "PLAN.md"
+```
+
+**If PLAN.md was NOT changed in the PR:**
+
+1. Check if any tasks in PLAN.md are still marked `**CLAIMED**`: `grep -n "CLAIMED" .claude/PLAN.md`
+2. If CLAIMED tasks exist that correspond to this PR's work, **flag this to the user**: "This PR doesn't update PLAN.md — there are still CLAIMED tasks that appear to match this work. The author should mark them `[x]` before merging."
+3. The user decides whether to merge anyway or ask the author to update first
+
+This prevents the recurring problem of agents completing work but forgetting to mark tasks done in PLAN.md.
+
 ## Step 7: Merge
 
 **Only proceed after explicit user confirmation.** Never auto-merge. The user must see the full merge readiness summary and explicitly approve before you execute the merge command.

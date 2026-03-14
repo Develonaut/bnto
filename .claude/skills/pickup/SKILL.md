@@ -307,19 +307,33 @@ If screenshots already exist and the change modifies visual output, run with `--
 
 **Do not skip this.** Leaving stale artifacts behind breaks CI, confuses other developers, and wastes everyone's time debugging phantom failures.
 
-### Step 8: Verify — Proof of Work
+### Step 8: Update PLAN.md (MANDATORY — do this BEFORE the PR)
+
+**You MUST update PLAN.md now.** This is the #1 thing agents forget, and it causes real problems — other agents pick up work that's already done, or miss unblocked waves.
+
+1. Edit `.claude/PLAN.md`
+2. Change each completed task from `- [ ] **CLAIMED**` to `- [x]`
+3. If a task is partially done, leave it as `- [ ] **CLAIMED**` and add a note about what remains
+4. If your completion unblocks the next wave (all tasks in current wave are now `[x]`), note this in your proof of work summary
+
+**Quick check:** Run `grep -n "CLAIMED" .claude/PLAN.md` — if any CLAIMED tasks are yours, update them now.
+
+**Do NOT skip this step.** PLAN.md changes MUST be included in your commit and PR. The `/pre-commit` and `/merge-pr` skills will verify this.
+
+### Step 8b: Proof of Work
 
 After all checks pass, provide a summary:
 
 1. **Branch** — name of the feature branch (e.g., `feat/editor-toolbar`)
 2. **PR target** — `main` (always)
-3. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
-4. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
-5. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
-6. **Checks result** — confirm `task check` (or individual checks) passed clean. List which checks ran.
-7. **Files changed** — files created/modified, with brief description of each
+3. **PLAN.md updated?** — Yes (list tasks marked done) or N/A (not a `/pickup` task)
+4. **Did you touch UI?** — Yes or No. If you created, modified, or wired up any component, dialog, form, page, or layout — the answer is Yes.
+5. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
+6. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
+7. **Checks result** — confirm `task check` (or individual checks) passed clean. List which checks ran.
+8. **Files changed** — files created/modified, with brief description of each
 
-### Step 8b: Create the PR
+### Step 8c: Create the PR
 
 **PRs always target `main`.** Use `--base main` when creating the PR.
 
@@ -339,14 +353,6 @@ When creating the PR with `gh pr create`, use this format for the body:
 ```
 
 **The Verification section documents what YOU did, not what someone else should do.** It's proof of work — past tense, specific, with results. Not a forward-looking checklist of TODOs.
-
-### Step 9: Update the Plan
-
-Edit `.claude/PLAN.md`:
-
-- Change each completed task from `- [ ] **CLAIMED**` to `- [x]` (mark done)
-- If you picked up a batch, mark all completed tasks. If any task in the batch wasn't finished, leave it as `- [ ] **CLAIMED**` and note what remains
-- If your completion unblocks the next wave (all tasks in current wave are now `[x]`), note this in your summary so the user knows to start new agents on the next wave
 
 ---
 

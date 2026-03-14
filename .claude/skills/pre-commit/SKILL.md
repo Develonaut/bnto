@@ -168,7 +168,19 @@ E2E Tests:                PASS / FAIL — NEVER skip without explicit user permi
 Lighthouse CI:            PASS / FAIL / SKIPPED (no web changes)
 ```
 
-## Step 6: Commit & Branch Workflow
+## Step 6: PLAN.md Task Update (MANDATORY)
+
+**If you picked up this work via `/pickup`, you MUST update PLAN.md before committing.**
+
+1. Read `.claude/PLAN.md` and find the task(s) you worked on
+2. Change `- [ ] **CLAIMED**` to `- [x]` for each completed task
+3. If a task is partially done, leave it as `- [ ] **CLAIMED**` and add a note about what remains
+
+**This is a hard gate.** Do NOT proceed to the commit step without updating PLAN.md. If you skip this, the plan becomes stale and other agents pick up work that's already done or miss unblocked waves.
+
+**Quick check:** Run `grep -n "CLAIMED" .claude/PLAN.md` — if any of the CLAIMED tasks are yours, update them now.
+
+## Step 7: Commit & Branch Workflow
 
 **Branch-based development is mandatory.** `main` is protected — all changes go through PRs with CI gate.
 
