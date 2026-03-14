@@ -42,6 +42,7 @@
 
   position: relative;
   transform-style: preserve-3d;
+  transform: translate(calc(var(--elevation-x) * -1), calc(var(--elevation-y) * -1));
   border: 1px solid var(--surface-wall);
   background-color: var(--face-bg);
   color: var(--face-fg);
@@ -246,10 +247,9 @@
  *   --pressable-ease  — transition easing (default ease-out)
  * ────────────────────────────────────────────────────────────────── */
 
-/* Shared foundation — raise + spring transition */
+/* Shared foundation — spring transition (resting transform inherited from .surface) */
 :is(.springable, .pressable) {
   will-change: transform;
-  transform: translate(calc(var(--elevation-x) * -1), calc(var(--elevation-y) * -1));
   transition: transform var(--pressable-dur, 150ms)
     var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
 }
@@ -463,22 +463,6 @@
 .pressable:disabled,
 .pressable[aria-disabled="true"] {
   pointer-events: none;
-  --face-bg: var(--border);
-  --face-fg: var(--muted-foreground);
-  --surface-wall: var(--surface-muted-wall);
-  --surface-shadow: var(--surface-muted-shadow);
-  border-color: var(--surface-muted-wall);
-  transform: translate(0, 0);
-}
-
-.pressable:disabled::before,
-.pressable[aria-disabled="true"]::before {
-  transform: translate3d(0, 0, -1px);
-}
-
-.pressable:disabled::after,
-.pressable[aria-disabled="true"]::after {
-  transform: translate3d(0, 0, -2px);
 }
 
 /* Reduced motion — static, no transforms, no stagger delays */

@@ -15,7 +15,7 @@ function SelectControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
 
   return (
     <Select value={String(value ?? "")} onValueChange={onChange}>
-      <SelectTrigger size="sm" id={id} data-testid={`control-select-${id}`}>
+      <SelectTrigger id={id} data-testid={`control-select-${id}`}>
         <SelectValue placeholder={meta.placeholder ?? "Select\u2026"} />
       </SelectTrigger>
       <SelectContent>

@@ -5,6 +5,7 @@ import type { ComponentProps } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "../icons";
 import { Popup } from "../overlay/Popup";
+import { Button } from "./Button";
 
 import { cn } from "../utils/cn";
 
@@ -18,26 +19,23 @@ export function SelectValue({ ...props }: ComponentProps<typeof SelectPrimitive.
 
 export function SelectTrigger({
   className,
-  size = "default",
   children,
   ...props
-}: ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default";
-}) {
+}: ComponentProps<typeof SelectPrimitive.Trigger>) {
   return (
-    <SelectPrimitive.Trigger
-      data-slot="select-trigger"
-      data-size={size}
-      className={cn(
-        "surface surface-outline elevation-sm data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive flex w-fit items-center justify-between gap-2 rounded-md px-3 py-2 text-sm whitespace-nowrap outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
-      </SelectPrimitive.Icon>
+    <SelectPrimitive.Trigger asChild data-slot="select-trigger" {...props}>
+      <Button
+        variant="outline"
+        className={cn(
+          "w-fit justify-between font-normal data-[placeholder]:text-muted-foreground *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
+          className,
+        )}
+      >
+        {children}
+        <SelectPrimitive.Icon asChild>
+          <ChevronDownIcon className="size-4 opacity-50" />
+        </SelectPrimitive.Icon>
+      </Button>
     </SelectPrimitive.Trigger>
   );
 }
