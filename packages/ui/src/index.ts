@@ -21,6 +21,7 @@ export type { GapSize, ResponsiveGap, Align, Justify, LayoutElement } from "./ut
 export * from "./icons";
 
 /* Hooks */
+export { useKeyDown } from "./hooks/useKeyDown";
 export { usePrevious } from "./hooks/usePrevious";
 
 /* Layout */
