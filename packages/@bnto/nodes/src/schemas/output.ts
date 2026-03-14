@@ -54,6 +54,7 @@ export const outputNodeSchema: NodeSchemaDefinition = {
       label: "Label",
       description: "Label for the download button or display section.",
       placeholder: "Compressed Images",
+      hidden: true,
     },
     autoDownload: {
       label: "Auto-Download",

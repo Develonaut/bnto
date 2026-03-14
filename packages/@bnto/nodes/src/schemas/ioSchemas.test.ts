@@ -83,7 +83,7 @@ describe("input visibility rules", () => {
     expect(names).toContain("mode");
     expect(names).not.toContain("accept"); // hidden: engine wiring field
     expect(names).toContain("extensions");
-    expect(names).toContain("label");
+    expect(names).not.toContain("label"); // hidden
     expect(names).toContain("multiple");
     expect(names).not.toContain("maxFileSize"); // hidden: not needed currently
     expect(names).not.toContain("maxFiles"); // hidden: not needed currently
@@ -113,13 +113,13 @@ describe("output visibility rules", () => {
     expect(names).toContain("filename");
     expect(names).toContain("zip");
     expect(names).toContain("autoDownload");
-    expect(names).toContain("label"); // always visible
+    expect(names).not.toContain("label"); // hidden // always visible
   });
 
   it("hides download-specific params in display mode", () => {
     const names = getVisibleParams("output", "mode", "display");
     expect(names).toContain("mode");
-    expect(names).toContain("label"); // always visible
+    expect(names).not.toContain("label"); // hidden // always visible
     expect(names).not.toContain("filename");
     expect(names).not.toContain("zip");
     expect(names).not.toContain("autoDownload");
@@ -128,7 +128,7 @@ describe("output visibility rules", () => {
   it("hides download-specific params in preview mode", () => {
     const names = getVisibleParams("output", "mode", "preview");
     expect(names).toContain("mode");
-    expect(names).toContain("label");
+    expect(names).not.toContain("label"); // hidden
     expect(names).not.toContain("zip");
   });
 });

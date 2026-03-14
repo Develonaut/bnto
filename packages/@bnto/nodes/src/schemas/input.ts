@@ -59,6 +59,7 @@ export const inputNodeSchema: NodeSchemaDefinition = {
       description: "Human-readable label for the input control.",
       placeholder: "JPEG, PNG, or WebP images",
       visibleWhen: { param: "mode", equals: "file-upload" },
+      hidden: true,
     },
     multiple: {
       label: "Multiple",
