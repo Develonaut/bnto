@@ -90,7 +90,7 @@ export const convertImageFormat: Recipe = {
           mode: "download",
           label: "Converted Images",
           zip: true,
-          autoDownload: false,
+          autoDownload: true,
         },
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [],

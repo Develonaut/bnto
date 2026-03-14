@@ -25,7 +25,7 @@ interface OutputConfig {
 const DEFAULTS: OutputConfig = {
   mode: "download",
   zip: true,
-  autoDownload: false,
+  autoDownload: true,
   label: "Results",
 };
 
@@ -34,7 +34,7 @@ const DEFAULTS: OutputConfig = {
  *
  * Returns the output mode, zip preference, auto-download flag, and label.
  * If no output node is found, returns sensible defaults (download mode,
- * zip enabled, no auto-download).
+ * zip enabled, auto-download on).
  */
 export function deriveOutputConfig(definition: Definition): OutputConfig {
   const outputNode = getOutputNode(definition);
@@ -43,7 +43,7 @@ export function deriveOutputConfig(definition: Definition): OutputConfig {
   const params = outputNode.parameters;
   const mode = (params.mode as OutputConfig["mode"] | undefined) ?? "download";
   const zip = (params.zip as boolean | undefined) ?? true;
-  const autoDownload = (params.autoDownload as boolean | undefined) ?? false;
+  const autoDownload = (params.autoDownload as boolean | undefined) ?? true;
   const label = (params.label as string | undefined) ?? "Results";
   const filename = params.filename as string | undefined;
 

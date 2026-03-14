@@ -74,7 +74,7 @@ export const cleanCsv: Recipe = {
           mode: "download",
           label: "Cleaned CSV",
           zip: false,
-          autoDownload: false,
+          autoDownload: true,
         },
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [],

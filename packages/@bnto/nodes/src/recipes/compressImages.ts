@@ -90,7 +90,7 @@ export const compressImages: Recipe = {
           mode: "download",
           label: "Compressed Images",
           zip: true,
-          autoDownload: false,
+          autoDownload: true,
         },
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [],

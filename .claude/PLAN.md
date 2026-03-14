@@ -204,7 +204,7 @@ Renamed nav "Create" → "New Recipe", recipe page CTA "Customize in Editor" →
 
 #### Wave 1 — Auto-Download Default
 
-- [ ] `@bnto/nodes` + `@bnto/core` — Enable auto-download by default on Output node. Flip `autoDownload` default from `false` to `true` in: (1) Zod schema default in `@bnto/nodes/schemas/output.ts`, (2) `DEFAULTS` object in `core/adapters/browser/deriveOutputConfig.ts`, (3) all 8 predefined recipes in `@bnto/nodes/recipes/*.ts`, (4) blank definition in `@bnto/nodes/createBlankDefinition.ts`
+- [x] `@bnto/nodes` + `@bnto/core` — Enable auto-download by default on Output node. Flip `autoDownload` default from `false` to `true` in: (1) Zod schema default in `@bnto/nodes/schemas/output.ts`, (2) `DEFAULTS` object in `core/adapters/browser/deriveOutputConfig.ts`, (3) all 8 predefined recipes in `@bnto/nodes/recipes/*.ts`, (4) blank definition in `@bnto/nodes/createBlankDefinition.ts`
 
 #### Wave 2 — Config Panel Controls (v1 blockers)
 
@@ -229,7 +229,7 @@ Build the missing UI controls that make the config panel usable. Raw text inputs
 **Step 4 — Update inference + schemas**:
 
 - [ ] `@bnto/nodes` — **inferFieldType updates**: Map `z.array(z.string())` → `tagPicker`, `z.record(z.string())` → `keyValue`. Add `textarea` hint support via `NodeParamMeta`
-- [ ] `@bnto/nodes` — **Schema metadata cleanup**: Add `hidden: true` to Input node `accept` param (derive from `extensions`). Add `hidden: true` to Parallel node `tasks` param. Add `hidden: true` (or read-only) to `operation` param on image, file-system, and spreadsheet nodes — operation is pre-set from the palette, no need to expose in config panel. Add human-readable labels to `z.enum()` options where missing (Loop `mode`, Input `mode`, Output `mode`)
+- [ ] `@bnto/nodes` — **Schema metadata cleanup**: Add `hidden: true` to Input node `accept` param (derive from `extensions`). Add `hidden: true` to Parallel node `tasks` param. Add `hidden: true` (or read-only) to `operation` param on image, file-system, and spreadsheet nodes — operation is pre-set from the palette, no need to expose in config panel. Add human-readable labels to `z.enum()` options where missing (Loop `mode`, Input `mode`, Output `mode`). **Also DRY up recipe definitions:** Extract shared `defaultOutputNode()` and `defaultInputNode()` factory functions to eliminate repeated I/O node boilerplate across all 8 recipe files — output params (mode, zip, autoDownload, label) and input params (mode, accept, extensions, multiple) are copy-pasted everywhere
 
 #### Wave 3 — Save + My Recipes
 

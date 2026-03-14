@@ -62,7 +62,7 @@ function validRecipe(overrides: Partial<Recipe> = {}): Recipe {
           name: "Output",
           position: { x: 500, y: 0 },
           metadata: {},
-          parameters: { mode: "download", label: "Output", zip: true, autoDownload: false },
+          parameters: { mode: "download", label: "Output", zip: true, autoDownload: true },
           inputPorts: [{ id: "in-1", name: "files" }],
           outputPorts: [],
         },
