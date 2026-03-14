@@ -69,11 +69,13 @@ export const inputNodeSchema: NodeSchemaDefinition = {
       label: "Max File Size",
       description: "Maximum file size in bytes. 0 = no limit.",
       visibleWhen: { param: "mode", equals: "file-upload" },
+      hidden: true,
     },
     maxFiles: {
       label: "Max Files",
       description: "Maximum number of files. 0 = no limit.",
       visibleWhen: { param: "mode", equals: "file-upload" },
+      hidden: true,
     },
     placeholder: {
       label: "Placeholder",

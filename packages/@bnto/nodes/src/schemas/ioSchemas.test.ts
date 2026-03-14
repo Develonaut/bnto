@@ -85,8 +85,8 @@ describe("input visibility rules", () => {
     expect(names).toContain("extensions");
     expect(names).toContain("label");
     expect(names).toContain("multiple");
-    expect(names).toContain("maxFileSize");
-    expect(names).toContain("maxFiles");
+    expect(names).not.toContain("maxFileSize"); // hidden: not needed currently
+    expect(names).not.toContain("maxFiles"); // hidden: not needed currently
     expect(names).not.toContain("placeholder");
   });
 

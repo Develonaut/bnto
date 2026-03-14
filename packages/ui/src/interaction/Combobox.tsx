@@ -36,6 +36,8 @@ type ComboboxProps = Omit<ComponentProps<"div">, "onChange"> & {
   emptyText?: string;
   /** Maximum number of selections. */
   max?: number;
+  /** Max visible badges before showing "+N more". Defaults to 2. */
+  maxVisible?: number;
   /** Disable the combobox. */
   disabled?: boolean;
 };
@@ -48,6 +50,7 @@ function Combobox({
   searchPlaceholder = "Search…",
   emptyText = "No results found.",
   max,
+  maxVisible = 2,
   disabled = false,
   className,
   ...props
@@ -84,39 +87,46 @@ function Combobox({
             disabled={disabled}
             className="w-full justify-between font-normal"
           >
-            <div className="flex flex-1 flex-wrap gap-1 overflow-hidden">
+            <div className="flex flex-1 flex-wrap items-center gap-1 overflow-hidden">
               {value.length > 0 ? (
-                value.map((v) => {
-                  const label = options.find((o) => o.value === v)?.label ?? v;
-                  return (
-                    <Badge key={v} variant="secondary" size="sm">
-                      {label}
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        className="ml-0.5 cursor-pointer rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeOption(v);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
+                <>
+                  {value.slice(0, maxVisible).map((v) => {
+                    const label = options.find((o) => o.value === v)?.label ?? v;
+                    return (
+                      <Badge key={v} variant="secondary" size="sm">
+                        {label}
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          className="ml-0.5 cursor-pointer rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          onMouseDown={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
                             removeOption(v);
-                          }
-                        }}
-                        aria-label={`Remove ${label}`}
-                      >
-                        <XIcon className="size-3 text-muted-foreground hover:text-foreground" />
-                      </span>
-                    </Badge>
-                  );
-                })
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              removeOption(v);
+                            }
+                          }}
+                          aria-label={`Remove ${label}`}
+                        >
+                          <XIcon className="size-3 text-muted-foreground hover:text-foreground" />
+                        </span>
+                      </Badge>
+                    );
+                  })}
+                  {value.length > maxVisible && (
+                    <span className="text-xs text-muted-foreground">
+                      +{value.length - maxVisible} more
+                    </span>
+                  )}
+                </>
               ) : (
                 <span className="text-muted-foreground">{placeholder}</span>
               )}
