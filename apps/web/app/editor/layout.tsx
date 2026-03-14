@@ -17,7 +17,7 @@ export default function EditorLayout({ children }: { children: ReactNode }) {
       <AppShellHeader>
         <Navbar />
       </AppShellHeader>
-      <main className="flex-1 overflow-hidden">{children}</main>
+      <main className="relative z-0 flex-1 overflow-hidden">{children}</main>
     </div>
   );
 }

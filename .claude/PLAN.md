@@ -31,13 +31,12 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **Multi-node recipes delivered:** Tier 1B compositions (optimize-images-for-web, generate-thumbnails) — first multi-node predefined recipes with 3-operation pipelines.
 - **Active work — execution order:**
   1. ~~**Editor Beta Launch**~~ — DONE (PR #173). Feature flag removed, beta badges on nav/CTAs, dismissible banner on `/editor`.
-  2. **Sprint 5C** — copy + nav label cleanup (~30 min, 3 tasks) ← **NEXT**
-  3. **Sprint 5A Wave 1** — finish exit animation (isIoNode, hover delete, placeholder DONE — exit animation remains)
-  4. **Sprint 5B** — visual hierarchy (Wave 1 DONE — I/O sizing/color/elevation. Wave 2 TABLED. Waves 3-4 open)
-  5. **Sprint 5 Wave 3** — auto-download enabled by default on Output node (1 remaining task — Run button, results, reset, error states, elevation all DONE)
-  6. **Sprint 5A Waves 2–5** — config panel identity, LayerPanel reorder, auto-behaviors, E2E
-  7. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern). Potential reuse for recipe page run experience.
-  8. **Sprint 5 Waves 4–5** — save button, My Recipes, nav warning, final E2E (backend save mutation + core hooks DONE)
+  2. ~~**Sprint 5C**~~ — DONE. Nav "Create" → "New Recipe", CTA "Open in Editor" verified.
+  3. ~~**Sprint 5A**~~ — DONE. Exit animation, hover delete, placeholder, isIoNode all complete.
+  4. ~~**Sprint 5B**~~ — DONE. Visual hierarchy — I/O sizing/color/elevation, LayerPanel parity, screenshots.
+  5. **Sprint 5 Wave 3** — auto-download enabled by default on Output node (1 remaining task — Run button, results, reset, error states, elevation all DONE) ← **NEXT**
+  6. **Sprint 6** — Edit Mode ↔ Run Mode (Mini Motorways pattern). Potential reuse for recipe page run experience.
+  7. **Sprint 5 Waves 4–5** — save button, My Recipes, nav warning, final E2E (backend save mutation + core hooks DONE)
 - **Tabled:** Sprint 4B (Code Editor) — unblocked but deferred until visual editor ships to production.
 - **Tabled:** Sprint 3 remaining (3 E2E test tasks) — platform features are built and working, test coverage deferred to backlog.
 - **Tabled:** `/my-recipes` dashboard — hidden from nav (March 2026). Brings no value without the editor. Will resurface when users have recipes worth saving.
@@ -399,9 +398,9 @@ The LayerPanel list should visually echo the canvas hierarchy — I/O nodes look
 
 **Tasks:**
 
-- [ ] `apps/web` — **Rename nav "Create" → "New Recipe"**: Update `DesktopNav.tsx:15` and `MobileNavMenu.tsx:100` (both say "Create"). Label: "New Recipe". Route: `/editor` (unchanged). Decision: "Create" is vague. "New Recipe" matches the product mental model and pairs with the recipe pages.
-- [ ] `apps/web` — **Update recipe page CTA copy**: Change "Customize in Editor" → "Open in Editor" in `OpenInEditorLink.tsx:12`. Currently reads "Customize in Editor". "Customize" implies minor tweaks; "Open" implies full access and pairs with "New Recipe" in the nav.
-- [ ] `apps/web` — **Verify**: All nav + recipe page CTA copy consistent. No remaining "Create" or "Customize in Editor" references. Grep for both strings across `apps/web/`.
+- [x] `apps/web` — **Rename nav "Create" → "New Recipe"**: Update `DesktopNav.tsx:15` and `MobileNavMenu.tsx:100` (both say "Create"). Label: "New Recipe". Route: `/editor` (unchanged). Decision: "Create" is vague. "New Recipe" matches the product mental model and pairs with the recipe pages.
+- [x] `apps/web` — **Update recipe page CTA copy**: Change "Customize in Editor" → "Open in Editor" in `OpenInEditorLink.tsx:12`. Currently reads "Customize in Editor". "Customize" implies minor tweaks; "Open" implies full access and pairs with "New Recipe" in the nav. *(Already done in prior work — verified.)*
+- [x] `apps/web` — **Verify**: All nav + recipe page CTA copy consistent. No remaining "Create" or "Customize in Editor" references. Grep for both strings across `apps/web/`.
 
 > **Future copy consideration (post-Sprint 5 Wave 3):** Once execution is wired in the editor, revisit the recipe page CTA. "Open in Editor" is functional but "Make it yours →" or "Build your own version" signals creative ownership more than "Open" and may convert better. Worth A/B testing once traffic exists. Do not change this now — the editor needs to actually run recipes before a possessive CTA is honest.
 
