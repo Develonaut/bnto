@@ -3,7 +3,6 @@ import fs from "fs";
 import { test, expect } from "../../fixtures";
 import { IMAGE_FIXTURES_DIR, CSV_FIXTURES_DIR, MAGIC } from "../../helpers";
 import {
-  enableEditorFlag,
   navigateToEditor,
   addNodeFromPalette,
   runEditorWithFiles,
@@ -26,9 +25,7 @@ test.use({ reducedMotion: "reduce" });
  */
 
 test.describe("editor from-scratch journeys @browser", () => {
-  test.beforeEach(async ({ page }) => {
-    await enableEditorFlag(page);
-  });
+  // No beforeEach needed — feature flag removed, editor is publicly accessible
 
   test("build image compress recipe from scratch", async ({ page }) => {
     // SETUP — blank canvas

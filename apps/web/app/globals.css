@@ -109,6 +109,23 @@
   --tracking-wide: calc(var(--tracking-normal) + 0.025em);
   --tracking-wider: calc(var(--tracking-normal) + 0.05em);
   --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+
+  /* ── Z-Index Scale (100-based) ─────────────────────────────
+   * Layered hierarchy with 100 gaps for future insertion.
+   *
+   * canvas   (10)  — canvas-local overlays (node headers, dividers)
+   * sticky   (100) — sticky chrome (navbar, app shell header)
+   * dropdown (200) — floating UI (popover, select, menu)
+   * modal    (300) — full-screen overlays (dialog, sheet)
+   * toast    (400) — notification toasts
+   * tooltip  (500) — tooltip overlays (topmost)
+   * ──────────────────────────────────────────────────────────── */
+  --z-index-canvas: 10;
+  --z-index-sticky: 100;
+  --z-index-dropdown: 200;
+  --z-index-modal: 300;
+  --z-index-toast: 400;
+  --z-index-tooltip: 500;
 }
 
 @layer base {

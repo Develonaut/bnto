@@ -54,7 +54,7 @@ export function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) outline-hidden",
+          "z-dropdown max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) outline-hidden",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         )}

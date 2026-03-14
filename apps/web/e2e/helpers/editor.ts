@@ -13,51 +13,19 @@ import { expect } from "../fixtures";
 // ---------------------------------------------------------------------------
 
 /**
- * Enable the editor feature flag via `addInitScript`.
- *
- * Call once per test before any `navigateToEditor` calls.
- * Uses `addInitScript` so localStorage is set BEFORE any page JS runs.
- *
- * The editor page uses `useSyncExternalStore` with a server snapshot that
- * returns `false`. During hydration the client snapshot (which reads
- * localStorage) takes a moment to resolve. The deferred redirect in the
- * editor page gives it time to settle. We also dispatch `bnto:flags-changed`
- * events as a belt-and-suspenders to force `useSyncExternalStore` to re-read.
- */
-export async function enableEditorFlag(page: Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem("bnto:flags", JSON.stringify({ editor: true }));
-
-    // Dispatch bnto:flags-changed after hydration settles so
-    // useSyncExternalStore re-reads the client snapshot (true).
-    const dispatch = () =>
-      window.dispatchEvent(new Event("bnto:flags-changed"));
-    setTimeout(dispatch, 50);
-    setTimeout(dispatch, 150);
-    setTimeout(dispatch, 400);
-  });
-}
-
-/**
- * Navigate to the editor page. Requires `enableEditorFlag` called first.
+ * Navigate to the editor page and wait for it to stabilize.
  *
  * For predefined recipes, pass the slug (e.g. "compress-images").
  *
- * The editor page uses `useSyncExternalStore` with a server snapshot that
- * returns `false`. During hydration, the component may briefly return null
- * (unmounting the editor content) before the client snapshot resolves to
- * `true`. The `addInitScript` from `enableEditorFlag` blocks the redirect
- * and dispatches `bnto:flags-changed` events to force re-evaluation.
- *
- * This function waits for the editor to stabilize after hydration.
+ * Waits for the editor to render at least two node cards (I/O nodes)
+ * and the render pipeline to complete (placeholder or divider visible).
  */
 export async function navigateToEditor(page: Page, slug?: string) {
   const url = slug ? `/editor?from=${slug}` : "/editor";
   await page.goto(url);
 
-  // The editor may flash briefly during hydration then disappear while
-  // useSyncExternalStore resolves. Poll until the editor stabilizes
-  // (recipe-editor testid visible AND at least one node card).
+  // Wait for the editor to stabilize — recipe-editor testid visible
+  // AND at least one node card rendered.
   const editor = page.locator('[data-testid="recipe-editor"]');
   const nodeCards = page.locator('[data-testid="node-card"]');
 
@@ -75,6 +43,24 @@ export async function navigateToEditor(page: Page, slug?: string) {
     .locator('[data-testid="placeholder-node"]')
     .or(page.locator('[data-testid="add-divider"]'));
   await pipelineReady.first().waitFor({ timeout: 5_000 });
+}
+
+// ---------------------------------------------------------------------------
+// Beta dialog
+// ---------------------------------------------------------------------------
+
+/**
+ * Dismiss the editor beta dialog if visible.
+ *
+ * Clicks "Get started" and waits for the dialog to close.
+ * No-op if the dialog was already dismissed (localStorage).
+ */
+export async function dismissBetaDialog(page: Page) {
+  const dialog = page.locator('[data-testid="editor-beta-dialog"]');
+  if (await dialog.isVisible().catch(() => false)) {
+    await dialog.getByRole("button", { name: "Get started" }).click();
+    await expect(dialog).not.toBeVisible();
+  }
 }
 
 // ---------------------------------------------------------------------------

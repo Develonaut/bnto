@@ -2,17 +2,19 @@
  * Console-activated feature flags.
  *
  * Flags are backed by localStorage for persistence across refreshes.
- * Enable via browser console: `__bnto__.flags.set("editor", true)`
+ * Enable via browser console: `__bnto__.flags.set("flagName", true)`
+ *
+ * Add new flags to DEFAULTS below. All flags default to false.
  */
 
 const STORAGE_KEY = "bnto:flags";
 const CHANGE_EVENT = "bnto:flags-changed";
 
-/** All flags default to false. Add new flags here. */
-const DEFAULTS = { editor: false } as const;
+/** All flags default to false. Add new flags here as needed. */
+const DEFAULTS: Record<string, boolean> = {};
 
-export type FeatureFlag = keyof typeof DEFAULTS;
-type FlagValues = Record<FeatureFlag, boolean>;
+export type FeatureFlag = string;
+type FlagValues = Record<string, boolean>;
 
 function read(): FlagValues {
   if (typeof window === "undefined") return { ...DEFAULTS };
@@ -30,7 +32,7 @@ function write(values: FlagValues) {
 }
 
 export function getFlag(flag: FeatureFlag): boolean {
-  return read()[flag];
+  return read()[flag] ?? false;
 }
 
 export function setFlag(flag: FeatureFlag, value: boolean) {

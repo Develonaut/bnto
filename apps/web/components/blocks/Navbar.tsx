@@ -9,7 +9,7 @@ import { NavUser } from "./NavUser";
 export const Navbar = () => {
   return (
     <section>
-      <div className="fixed top-0 z-50 flex w-full justify-center pt-4">
+      <div className="fixed top-0 z-sticky flex w-full justify-center pt-4">
         <Container size="lg">
           <Toolbar>
             {/* Logo — flex-1 so left/right columns balance for true centering */}

@@ -1,20 +1,20 @@
 import { test, expect } from "../../fixtures";
-import { enableEditorFlag, navigateToEditor } from "../../helpers/editor";
+import { navigateToEditor } from "../../helpers/editor";
 
 test.use({ reducedMotion: "reduce" });
 
 /**
- * Editor entry & navigation — EN1-EN3
+ * Editor entry & navigation — EN1-EN3 + beta banner
  *
  * Verifies the editor loads correctly for blank canvas, predefined recipes,
- * and invalid slugs. All tests are @browser — no Convex backend needed.
+ * and invalid slugs. Also tests the dismissible beta banner.
+ * All tests are @browser — no Convex backend needed.
  *
  * Convention: SETUP → VERIFY (no execution step for entry tests).
  */
 
 test.describe("editor entry & navigation @browser", () => {
   test("EN1: blank canvas loads with I/O nodes", async ({ page }) => {
-    await enableEditorFlag(page);
     await navigateToEditor(page);
 
     // Blank editor should show input and output I/O nodes
@@ -31,7 +31,6 @@ test.describe("editor entry & navigation @browser", () => {
   });
 
   test("EN2: predefined recipe loads correct nodes", async ({ page }) => {
-    await enableEditorFlag(page);
     await navigateToEditor(page, "compress-images");
 
     // compress-images has: Input, For Each (loop containing Compress), Output
@@ -45,7 +44,6 @@ test.describe("editor entry & navigation @browser", () => {
   });
 
   test("EN2b: clean-csv recipe loads correct nodes", async ({ page }) => {
-    await enableEditorFlag(page);
     await navigateToEditor(page, "clean-csv");
 
     // clean-csv has: Input, Clean, Output (no loop)
@@ -56,7 +54,6 @@ test.describe("editor entry & navigation @browser", () => {
   });
 
   test("EN3: invalid slug falls back to blank canvas", async ({ page }) => {
-    await enableEditorFlag(page);
     await navigateToEditor(page, "nonexistent-recipe");
 
     // Should fall back to blank editor with just I/O nodes
@@ -66,9 +63,31 @@ test.describe("editor entry & navigation @browser", () => {
     await expect(nodeCards.filter({ hasText: "Output" })).toHaveCount(1);
   });
 
-  // EN4 covered by individual recipe load tests above + predefined recipe
-  // execution tests in editor-predefined.spec.ts. Looping page.goto in a
-  // single test is flaky due to Next.js hydration timing with
-  // useSyncExternalStore feature flags. Each recipe is individually verified
-  // by the execution tests instead.
+  test("BN1: beta dialog renders and can be dismissed", async ({ page }) => {
+    await page.goto("/editor");
+
+    // Dialog should be visible on first visit
+    const dialog = page.locator('[data-testid="editor-beta-dialog"]');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText("recipe editor is in beta");
+
+    // Dismiss via "Get started" button
+    await dialog.getByRole("button", { name: "Get started" }).click();
+    await expect(dialog).not.toBeVisible();
+
+    // Reload — dialog should stay dismissed (localStorage)
+    await page.reload();
+    await expect(dialog).not.toBeVisible();
+  });
+
+  test("BN2: beta dialog does not render when previously dismissed", async ({ page }) => {
+    // Pre-set the dismissal flag before navigation
+    await page.addInitScript(() => {
+      localStorage.setItem("bnto-editor-beta-dismissed", "true");
+    });
+    await page.goto("/editor");
+
+    const dialog = page.locator('[data-testid="editor-beta-dialog"]');
+    await expect(dialog).not.toBeVisible();
+  });
 });

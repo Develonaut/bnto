@@ -61,7 +61,7 @@ export const DialogOverlay = forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn("fixed inset-0 z-50 bg-background/40 backdrop-blur-sm", className)}
+    className={cn("fixed inset-0 z-modal bg-background/40 backdrop-blur-sm", className)}
     {...props}
   />
 ));
@@ -89,9 +89,9 @@ export const DialogContent = forwardRef<ElementRef<typeof DialogPrimitive.Conten
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content ref={ref} asChild {...props}>
-        {/* Centering wrapper — fixed fullscreen, z-50 above overlay,
+        {/* Centering wrapper — fixed fullscreen, z-modal above overlay,
             pointer-events-none so clicks outside dismiss via overlay. */}
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-modal flex items-center justify-center pointer-events-none">
           <Popup
             elevation="lg"
             className={cn("pointer-events-auto relative p-8", className)}

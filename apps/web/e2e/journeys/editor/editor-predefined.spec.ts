@@ -3,7 +3,6 @@ import fs from "fs";
 import { test, expect } from "../../fixtures";
 import { IMAGE_FIXTURES_DIR, CSV_FIXTURES_DIR, MAGIC } from "../../helpers";
 import {
-  enableEditorFlag,
   navigateToEditor,
   runEditorWithFiles,
   openRunPanel,
@@ -26,9 +25,7 @@ test.use({ reducedMotion: "reduce" });
  */
 
 test.describe("editor predefined recipes @browser", () => {
-  test.beforeEach(async ({ page }) => {
-    await enableEditorFlag(page);
-  });
+  // No beforeEach needed — feature flag removed, editor is publicly accessible
 
   test("PR1: compress-images — run and verify JPEG output", async ({ page }) => {
     await navigateToEditor(page, "compress-images");
