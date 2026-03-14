@@ -14,7 +14,8 @@ function TagPickerControl({ id, meta, value, onChange }: ControlProps) {
     }
     // When no predefined options, show current values as selectable
     return values.map((v) => ({ value: v, label: v }));
-  }, [meta.options, values]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- values is derived from value prop
+  }, [meta.options, value]);
 
   return (
     <Combobox

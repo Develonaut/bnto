@@ -35,13 +35,14 @@ Zod schema (definition) → inferFieldType() → CONTROL_REGISTRY → renders UI
 | **Switch** | `switch`           | Boolean toggle                                 | `z.boolean()`                                | `Switch`              |
 | **Select** | `select`           | Dropdown with options                          | `z.enum([...])`                              | `Select`              |
 
+| **Textarea** | `textarea` | Multiline text input | `z.string()` with `meta.control = "textarea"` | `Textarea` |
+| **TagPicker** | `tagPicker` | Multi-select chip input with add/remove | `z.array(z.string())` | `Combobox` |
+| **KeyValueEditor** | `keyValue` | Add/remove key→value pairs | `z.record(z.string())` | `KeyValueEditor` |
+
 ### Missing Controls (need to build)
 
 | Control             | `FieldControl` key | Renders                                  | Needed For                          | `@bnto/ui` Primitive Needed |
 | ------------------- | ------------------ | ---------------------------------------- | ----------------------------------- | --------------------------- |
-| **Textarea**        | `textarea`         | Multiline text input                     | Expressions, patterns, long text    | `Textarea`                  |
-| **TagPicker**       | `tagPicker`        | Chip/tag input with add/remove           | `z.array(z.string())` params        | `TagPicker`                 |
-| **KeyValueEditor**  | `keyValue`         | Add/remove key→value pairs               | `z.record(z.string())` params       | `KeyValueEditor`            |
 | **ExpressionInput** | `expression`       | Rich text with pill tokens for `{{var}}` | Template expressions with variables | `ExpressionInput`           |
 
 ---
@@ -61,7 +62,7 @@ Zod schema (definition) → inferFieldType() → CONTROL_REGISTRY → renders UI
 
 | Parameter        | Zod Type                                  | Current | Ideal  | Status |
 | ---------------- | ----------------------------------------- | ------- | ------ | ------ |
-| `operation`      | `z.enum(["compress","convert","resize"])` | select  | select | ✅     |
+| `operation`      | `z.enum(["compress","convert","resize"])` | hidden  | hidden | ✅     |
 | `compression`    | `z.number().min(1).max(100)`              | slider  | slider | ✅     |
 | `format`         | `z.enum(["jpeg","png","webp"])`           | select  | select | ✅     |
 | `quality`        | `z.number().min(1).max(100)`              | slider  | slider | ✅     |
@@ -77,7 +78,7 @@ Zod schema (definition) → inferFieldType() → CONTROL_REGISTRY → renders UI
 
 | Parameter   | Zod Type                            | Current | Ideal          | Status                                     |
 | ----------- | ----------------------------------- | ------- | -------------- | ------------------------------------------ |
-| `operation` | `z.enum(["rename"])`                | select  | select         | ✅                                         |
+| `operation` | `z.enum(["rename"])`                | hidden  | hidden         | ✅                                         |
 | `find`      | `z.string()`                        | text    | text           | ✅                                         |
 | `replace`   | `z.string()`                        | text    | text           | ✅                                         |
 | `case`      | `z.enum(["lower","upper","title"])` | select  | select         | ✅                                         |
@@ -91,31 +92,31 @@ Zod schema (definition) → inferFieldType() → CONTROL_REGISTRY → renders UI
 
 ### Spreadsheet Node (`spreadsheet`)
 
-| Parameter          | Zod Type                     | Current | Ideal        | Status                                     |
-| ------------------ | ---------------------------- | ------- | ------------ | ------------------------------------------ |
-| `operation`        | `z.enum(["clean","rename"])` | select  | select       | ✅                                         |
-| `trimWhitespace`   | `z.boolean()`                | switch  | switch       | ✅                                         |
-| `removeEmptyRows`  | `z.boolean()`                | switch  | switch       | ✅                                         |
-| `removeDuplicates` | `z.boolean()`                | switch  | switch       | ✅                                         |
-| `columns`          | `z.record(z.string())`       | text    | **keyValue** | 🚩 Key-value editor (old→new column names) |
+| Parameter          | Zod Type                     | Current  | Ideal    | Status |
+| ------------------ | ---------------------------- | -------- | -------- | ------ |
+| `operation`        | `z.enum(["clean","rename"])` | hidden   | hidden   | ✅     |
+| `trimWhitespace`   | `z.boolean()`                | switch   | switch   | ✅     |
+| `removeEmptyRows`  | `z.boolean()`                | switch   | switch   | ✅     |
+| `removeDuplicates` | `z.boolean()`                | switch   | switch   | ✅     |
+| `columns`          | `z.record(z.string())`       | keyValue | keyValue | ✅     |
 
-**Status: 4/5 correct.** `columns` needs KeyValueEditor.
+**Status: 5/5 correct.**
 
 ---
 
 ### Input Node (`input`)
 
-| Parameter     | Zod Type                               | Current | Ideal         | Status                                        |
-| ------------- | -------------------------------------- | ------- | ------------- | --------------------------------------------- |
-| `mode`        | `z.enum(["file-upload","text","url"])` | select  | select        | ✅                                            |
-| `accept`      | `z.array(z.string())`                  | text    | **hidden**    | 🚩 Hide — derive from `extensions` internally |
-| `extensions`  | `z.array(z.string())`                  | text    | **tagPicker** | 🚩 Chip input with preset file type groups    |
-| `label`       | `z.string()`                           | text    | text          | ✅                                            |
-| `multiple`    | `z.boolean()`                          | switch  | switch        | ✅                                            |
-| `maxFileSize` | `z.number()`                           | number  | number        | ✅                                            |
-| `maxFiles`    | `z.number()`                           | number  | number        | ✅                                            |
+| Parameter     | Zod Type                               | Current   | Ideal     | Status |
+| ------------- | -------------------------------------- | --------- | --------- | ------ |
+| `mode`        | `z.enum(["file-upload","text","url"])` | select    | select    | ✅     |
+| `accept`      | `z.array(z.string())`                  | hidden    | hidden    | ✅     |
+| `extensions`  | `z.array(z.string())`                  | tagPicker | tagPicker | ✅     |
+| `label`       | `z.string()`                           | hidden    | hidden    | ✅     |
+| `multiple`    | `z.boolean()`                          | switch    | switch    | ✅     |
+| `maxFileSize` | `z.number()`                           | hidden    | hidden    | ✅     |
+| `maxFiles`    | `z.number()`                           | hidden    | hidden    | ✅     |
 
-**Status: 4/7 correct.** `extensions` needs TagPicker. `accept` should be hidden (leaky abstraction).
+**Status: 7/7 correct.**
 
 ---
 
@@ -126,7 +127,7 @@ Zod schema (definition) → inferFieldType() → CONTROL_REGISTRY → renders UI
 | `mode`         | `z.enum(["download","display","preview"])` | select  | select         | ✅                             |
 | `filename`     | `z.string()`                               | text    | **expression** | ⚠️ Has `{{name}}` template var |
 | `zip`          | `z.boolean()`                              | switch  | switch         | ✅                             |
-| `label`        | `z.string()`                               | text    | text           | ✅                             |
+| `label`        | `z.string()`                               | hidden  | hidden         | ✅                             |
 | `autoDownload` | `z.boolean()`                              | switch  | switch         | ✅                             |
 
 **Status: 4/5 correct.** `filename` should use ExpressionInput when available.
