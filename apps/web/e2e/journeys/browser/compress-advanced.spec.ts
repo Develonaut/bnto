@@ -2,12 +2,7 @@ import path from "path";
 import fs from "fs";
 import type { Page } from "@playwright/test";
 import { test, expect } from "../../fixtures";
-import {
-  IMAGE_FIXTURES_DIR,
-  navigateToRecipe,
-  uploadFiles,
-  runAndComplete,
-} from "../../helpers";
+import { IMAGE_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } from "../../helpers";
 
 test.use({ reducedMotion: "reduce" });
 
@@ -19,39 +14,35 @@ test.use({ reducedMotion: "reduce" });
  * 5+ files across all three codecs process successfully.
  */
 
+/** Preset names by index. */
+const PRESET_LABELS = ["Light", "Balanced", "Maximum"] as const;
+
 /**
- * Move a preset-based Radix Slider to a target index using keyboard.
+ * Select a compression preset by clicking its label button.
  * Presets: 0=Light(20), 1=Balanced(50), 2=Maximum(80).
  */
-async function moveSliderToIndex(page: Page, targetIndex: number, startIndex: number) {
-  const slider = page.getByRole("slider");
-  await slider.focus();
-
-  const diff = targetIndex - startIndex;
-  const key = diff > 0 ? "ArrowRight" : "ArrowLeft";
-
-  for (let i = 0; i < Math.abs(diff); i++)
-    await page.keyboard.press(key);
-
-  await expect(slider).toHaveAttribute("aria-valuenow", String(targetIndex));
+async function selectPreset(page: Page, presetIndex: number) {
+  const label = PRESET_LABELS[presetIndex];
+  await page.getByRole("button", { name: label, exact: true }).click();
 }
 
 /**
- * Compress medium.jpg at a given preset index, return output size in bytes.
+ * Compress large.jpg at a given preset index, return output size in bytes.
  * Presets: 0=Light(20), 1=Balanced(50), 2=Maximum(80).
  * Default is index 0 (Light).
  */
 async function compressAtPreset(page: Page, presetIndex: number): Promise<number> {
   await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-  await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "medium.jpg")]);
+  await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "large.jpg")]);
 
-  await moveSliderToIndex(page, presetIndex, 0);
+  if (presetIndex !== 0) {
+    await selectPreset(page, presetIndex);
+  }
 
-  await runAndComplete(page);
-
+  // Capture the auto-download that fires on completion
   const dlPromise = page.waitForEvent("download");
-  await page.locator('[data-testid="output-file"]').getByRole("button", { name: /download/i }).click();
+  await runAndComplete(page);
   const dl = await dlPromise;
 
   const dlPath = await dl.path();
@@ -59,11 +50,9 @@ async function compressAtPreset(page: Page, presetIndex: number): Promise<number
 }
 
 test.describe("compress-images — configuration @browser", () => {
-  test("compression presets: Maximum produces smaller output than Light", async ({
-    page,
-  }) => {
-    const sizeLight = await compressAtPreset(page, 0);    // Light (compression=20)
-    const sizeMax = await compressAtPreset(page, 2);      // Maximum (compression=80)
+  test("compression presets: Maximum produces smaller output than Light", async ({ page }) => {
+    const sizeLight = await compressAtPreset(page, 0); // Light (compression=20)
+    const sizeMax = await compressAtPreset(page, 2); // Maximum (compression=80)
 
     // Higher compression MUST produce smaller output
     expect(sizeMax).toBeLessThan(sizeLight);
@@ -74,13 +63,7 @@ test.describe("compress-images — batch processing @browser", () => {
   test("5 mixed-codec files: all compress and show Download All", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    const batchFiles = [
-      "small.jpg",
-      "small.png",
-      "small.webp",
-      "medium.jpg",
-      "medium.png",
-    ];
+    const batchFiles = ["small.jpg", "small.png", "small.webp", "medium.jpg", "medium.png"];
 
     await uploadFiles(
       page,
@@ -92,9 +75,7 @@ test.describe("compress-images — batch processing @browser", () => {
     const outputFiles = page.locator('[data-testid="output-file"]');
     await expect(outputFiles).toHaveCount(5);
 
-    await expect(
-      page.getByRole("button", { name: /download all/i }).last(),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /download all/i }).last()).toBeVisible();
   });
 
   test("multi-file progress is monotonic (never decreases)", async ({ page }) => {
@@ -103,13 +84,7 @@ test.describe("compress-images — batch processing @browser", () => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
     // Use large files across codecs — slower to compress = more progress samples
-    const batchFiles = [
-      "large.jpg",
-      "large.png",
-      "large.webp",
-      "medium.jpg",
-      "medium.png",
-    ];
+    const batchFiles = ["large.jpg", "large.png", "large.webp", "medium.jpg", "medium.png"];
 
     await uploadFiles(
       page,
@@ -120,9 +95,7 @@ test.describe("compress-images — batch processing @browser", () => {
     await page.evaluate(() => {
       (window as any).__progressSamples = [] as number[];
       const observer = new MutationObserver(() => {
-        const el = document.querySelector(
-          '[data-testid="toolbar-progress"][data-overall-percent]',
-        );
+        const el = document.querySelector('[data-testid="toolbar-progress"][data-overall-percent]');
         if (el) {
           const val = Number(el.getAttribute("data-overall-percent"));
           if (!isNaN(val)) (window as any).__progressSamples.push(val);

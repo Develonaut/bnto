@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { definitionToPipeline } from "./definitionToPipeline";
 import type { Definition } from "@bnto/nodes";
+import { getRecipeBySlug } from "@bnto/nodes";
 
 const SIMPLE_DEF: Definition = {
   id: "root",
@@ -199,6 +200,34 @@ describe("definitionToPipeline", () => {
 
     expect(pipeline.nodes[1]!.params).toEqual({});
     expect(pipeline.nodes[1]!.children![0]!.params).toEqual({ mode: "forEach" });
+  });
+
+  it("merges compression override into real compress-images recipe", () => {
+    const recipe = getRecipeBySlug("compress-images");
+    expect(recipe).toBeDefined();
+
+    const pipeline = definitionToPipeline(recipe!.definition, { compression: 80 });
+
+    // The compress-image node is inside a loop container
+    const loop = pipeline.nodes.find((n) => n.type === "loop");
+    expect(loop).toBeDefined();
+    expect(loop!.children).toBeDefined();
+
+    const compressNode = loop!.children!.find((n) => n.type === "image");
+    expect(compressNode).toBeDefined();
+    expect(compressNode!.params).toHaveProperty("compression", 80);
+    expect(compressNode!.params).toHaveProperty("operation", "compress");
+  });
+
+  it("uses engine defaults when no override provided for compress-images", () => {
+    const recipe = getRecipeBySlug("compress-images");
+    expect(recipe).toBeDefined();
+
+    const pipeline = definitionToPipeline(recipe!.definition);
+
+    const loop = pipeline.nodes.find((n) => n.type === "loop");
+    const compressNode = loop!.children!.find((n) => n.type === "image");
+    expect(compressNode!.params).toHaveProperty("compression", 20);
   });
 
   it("handles definition with no children", () => {
