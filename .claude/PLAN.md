@@ -1178,6 +1178,34 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 - JSON editor must represent recursive structure faithfully
 - Visual editor (Sprint 4) must support drill-down into group nodes
 
+### Bug: Input Node File Extension Filter Not Enforced
+
+**Priority: High.** The `extensions` parameter on the Input node (`@bnto/nodes/schemas/input.ts`) is not respected by the native file dialog — users can select files outside the allowed extensions (e.g., PDFs when only image extensions are configured). The `accept` attribute on the file input likely isn't being derived from the Input node's `extensions` param.
+
+**Fix:** Trace how the Input node's `extensions` array flows to the actual `<input type="file" accept="...">` element. Ensure the file picker's `accept` attribute is built from the extensions list. Add regression tests so this doesn't break again.
+
+**Tasks:**
+
+- [ ] `packages/core` or `packages/editor` — `/frontend-engineer` — Trace the Input node `extensions` param to the file picker `accept` attribute. Fix the gap where extensions aren't being forwarded
+- [ ] `packages/editor` or `apps/web` — `/frontend-engineer` — Add unit/integration tests verifying that Input node `extensions` are reflected in the file dialog filter
+- [ ] `apps/web` — `/quality-engineer` — E2E test: configure Input node with image-only extensions, verify file picker restricts selection
+
+**Note:** The `accept` (MIME types) param is also exposed but may not need to be surfaced to users — file extensions are the more intuitive control. Consider hiding `accept` from the config panel if `extensions` covers the use case. See related UX item below.
+
+---
+
+### UX: Input Node File Extension Control — Multi-Select
+
+**Priority: Medium.** The Input node's `extensions` field is currently a text input where users type extensions manually. This should be a multi-select control (tag picker / chip input) — similar to what's planned for other config panel improvements. The `accept` (MIME types) field is a leaky abstraction for end users and should be hidden from the config panel when `extensions` is available.
+
+**Relates to:** Expression Input UX backlog item (config panel control improvements). The multi-select / tag picker pattern will likely be reused for other array-of-string params across node types.
+
+**Tasks:**
+
+- [ ] `packages/ui` — `/frontend-engineer` — Multi-select / tag picker control component (reusable for any `z.array(z.string())` param)
+- [ ] `packages/editor` — `/frontend-engineer` — Wire tag picker as the control for `extensions` param in `SchemaField` dispatch (new entry in `CONTROL_REGISTRY`)
+- [ ] `packages/editor` — `/frontend-engineer` — Hide `accept` (MIME types) param from config panel — extensions is the user-facing control, accept can be derived internally if needed
+
 ---
 
 ## Reference
