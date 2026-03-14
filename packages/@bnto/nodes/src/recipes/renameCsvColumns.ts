@@ -75,7 +75,7 @@ export const renameCsvColumns: Recipe = {
           mode: "download",
           label: "Renamed CSV",
           zip: false,
-          autoDownload: false,
+          autoDownload: true,
         },
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [],

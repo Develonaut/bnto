@@ -64,7 +64,7 @@ describe("createBlankDefinition", () => {
     const outputNode = def.nodes![1]!;
     expect(outputNode.parameters.mode).toBe("download");
     expect(outputNode.parameters.zip).toBe(true);
-    expect(outputNode.parameters.autoDownload).toBe(false);
+    expect(outputNode.parameters.autoDownload).toBe(true);
   });
 
   it("has a createdAt timestamp in metadata", () => {

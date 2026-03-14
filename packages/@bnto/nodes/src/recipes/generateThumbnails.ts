@@ -125,7 +125,7 @@ export const generateThumbnails: Recipe = {
           mode: "download",
           label: "Thumbnails",
           zip: true,
-          autoDownload: false,
+          autoDownload: true,
         },
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [],
