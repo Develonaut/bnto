@@ -112,7 +112,7 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
       runRecipeAction({
         slug: entry.slug,
         files,
-        config: config as Record<string, unknown>,
+        config: store.getState().config,
         isBrowserPath,
         browserInstance,
         definition,
@@ -125,7 +125,6 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     [
       entry.slug,
       files,
-      config,
       definition,
       isBrowserPath,
       browserInstance,
