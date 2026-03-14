@@ -229,7 +229,7 @@ Build the missing UI controls that make the config panel usable. Raw text inputs
 **Step 4 — Update inference + schemas**:
 
 - [ ] `@bnto/nodes` — **inferFieldType updates**: Map `z.array(z.string())` → `tagPicker`, `z.record(z.string())` → `keyValue`. Add `textarea` hint support via `NodeParamMeta`
-- [ ] `@bnto/nodes` — **Schema metadata cleanup**: Add `hidden: true` to Input node `accept` param (derive from `extensions`). Add `hidden: true` to Parallel node `tasks` param. Add human-readable labels to `z.enum()` options where missing (Loop `mode`, Input `mode`, Output `mode`)
+- [ ] `@bnto/nodes` — **Schema metadata cleanup**: Add `hidden: true` to Input node `accept` param (derive from `extensions`). Add `hidden: true` to Parallel node `tasks` param. Add `hidden: true` (or read-only) to `operation` param on image, file-system, and spreadsheet nodes — operation is pre-set from the palette, no need to expose in config panel. Add human-readable labels to `z.enum()` options where missing (Loop `mode`, Input `mode`, Output `mode`)
 
 #### Wave 3 — Save + My Recipes
 
@@ -1010,9 +1010,17 @@ The `extensions` parameter on the Input node (`@bnto/nodes/schemas/input.ts`) is
 
 ---
 
-### Triage: Operation Select May Be Redundant in Config Panel
+### ~~Triage: Operation Select May Be Redundant in Config Panel~~ — ABSORBED INTO SPRINT 5 W2
 
-**Priority: Triage.** Nodes are added to the canvas with their operation already set (e.g., "Resize" image node). The `operation` select dropdown in the config panel lets users change it, but it's unclear if that's useful — the node label already says "Resize" and the user chose it from the palette. Consider hiding `operation` from the config panel or making it read-only. Affects all node types with an `operation` enum (image, file-system, spreadsheet). See screenshot: config panel shows "Operation: Resize" select on an image node that was added as "Resize".
+**Absorbed into Sprint 5 Wave 2 Step 4** (schema metadata cleanup). Hide `operation` param on image, file-system, and spreadsheet nodes since it's pre-set from the palette.
+
+### Home Page Marquee for Recipe Cards
+
+**Priority: P3 — Post-Editor.** The home page hero has too many recipe cards pushing content below the fold. Use Magic UI's Marquee component to display recipe cards in a scrolling row, keeping the rest of the page above the fold. Reference: https://magicui.design/docs/components/marquee.md
+
+### Full Codebase Quality Audit Post-Editor v1
+
+**Priority: P3 — Post-Editor Gate.** After editor v1 ships, run a full codebase sweep: dead code removal (knip per package), code standards compliance, and a domain-by-domain audit where each persona skill verifies its area follows all rules. Cover all packages and apps. Good candidate for a dedicated sprint between editor v1 and M3 work.
 
 ---
 
