@@ -1,6 +1,6 @@
 # Bnto - Agent & Developer Guide
 
-**Last Updated:** March 3, 2026
+**Last Updated:** March 14, 2026
 
 ---
 
@@ -32,7 +32,6 @@
 | Core principles (always)       | [core-principles.md](.claude/strategy/core-principles.md)               |
 | `@bnto/core` internals         | [core-api.md](.claude/rules/core-api.md)                                |
 | Environment variables          | [environment-variables.md](.claude/environment-variables.md)            |
-| Go engine node migration       | [go-engine-migration.md](.claude/strategy/go-engine-migration.md)       |
 | Expression input UX            | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)       |
 | Config panel controls          | [config-controls.md](.claude/strategy/config-controls.md)               |
 
@@ -42,13 +41,11 @@
 
 **Bnto** is the one place small teams go to get things done — compress images, clean a CSV, rename files, call an API — without the overhead of a platform or the fragility of a script. Simple by default, powerful when you need it.
 
-Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M1 (Browser Execution) is delivered** — all 6 Tier 1 recipes run 100% client-side via Rust→WASM. Files never leave the user's machine. Cloud execution (Go API on Railway) is built and ready for M4 (premium server-side recipes). The dividing line: **browser nodes are free, server nodes are Pro.** See [ROADMAP.md](.claude/ROADMAP.md) and [pricing-model.md](.claude/strategy/pricing-model.md).
+Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M1 (Browser Execution) is delivered** — all 6 Tier 1 recipes run 100% client-side via Rust→WASM. Files never leave the user's machine. The dividing line: **browser nodes are free, server nodes are Pro.** See [ROADMAP.md](.claude/ROADMAP.md) and [pricing-model.md](.claude/strategy/pricing-model.md).
 
 - **Rust WASM Engine (M1, delivered)**: `engine/` — Rust→WASM via `wasm-pack`, all browser execution
-- **Go Engine (archived)**: `archive/engine-go/` — CLI + cloud execution engine (paused, ready for M4)
-- **Go API (archived)**: `archive/api-go/` — HTTP API for cloud execution on Railway (paused, ready for M4)
 - **Web**: Next.js on Vercel + Convex Cloud + `@convex-dev/auth`
-- **Cloud (M4)**: Go API on Railway + Cloudflare R2 file transit (premium server-side bntos)
+- **Cloud (M4, planned)**: Server-side execution for premium recipes (technology TBD)
 - **Desktop (M3)**: Tauri (Rust-native) — free local execution
 - **Shared Packages**: `@bnto/core` (transport-agnostic API), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-agnostic node definitions)
 - **Open Source**: MIT licensed
@@ -59,7 +56,7 @@ Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M
 
 These are enforced in detail by the [rules/](.claude/rules/) files. This section is the quick reference.
 
-1. **Layered Architecture:** `Apps → @bnto/core → Go Engine`. Never skip layers. See [architecture.md](.claude/rules/architecture.md).
+1. **Layered Architecture:** `Apps → @bnto/core → Engine (Rust WASM)`. Never skip layers. See [architecture.md](.claude/rules/architecture.md).
 2. **API Abstraction:** UI code NEVER calls Convex, Tauri, or Go directly. Always through `@bnto/core` hooks.
 3. **Bento Box Principle:** One thing per file/function/package. Files < 250 lines, functions < 20 lines. No `utils.ts` or `helpers.go` grab bags. See [code-standards.md](.claude/rules/code-standards.md).
 4. **Co-location:** UI components live in `apps/web` until a second consumer (desktop) exists. When extracted, UI becomes `@bnto/ui` (officially named **Motorway** — the Mini Motorways design system).
@@ -93,7 +90,7 @@ Write tests at every layer. If a function can be tested as pure Rust (no WASM bo
 
 ## Commands
 
-````bash
+```bash
 # Rust WASM engine (via Taskfile)
 task wasm:build         # Build WASM crates (release, web target)
 task wasm:build:dev     # Build WASM in dev mode (faster, better errors)
@@ -105,18 +102,6 @@ task wasm:fmt:check     # Check Rust formatting (CI)
 task wasm:bench         # Run Criterion benchmarks (results in engine/target/criterion/)
 task wasm:clean         # Clean Rust build artifacts
 
-```bash
-# Go engine (archived — via Taskfile)
-task build              # Build bnto CLI binary (archive/engine-go)
-task test               # Run engine tests with race detector
-task vet                # Run go vet on all Go packages
-
-# API server (archived)
-task api:build          # Build API server binary (archive/api-go)
-task api:test           # Run API server tests with race detector
-task api:dev            # Run Go API server locally (port 8080)
-task api:tunnel         # Start Cloudflare tunnel (exposes local API at api-dev.bnto.io)
-
 # Frontend (via Turborepo)
 task ui:build           # Build all TS packages (with Turbo caching)
 task ui:test            # Run all TS tests
@@ -125,7 +110,6 @@ task ui:lint            # Lint all TS packages
 
 # Development (starts everything)
 task dev                # Start web + Convex dev servers (Next.js on port 4000 + Convex)
-task dev:all            # Start web + Convex + Go API + Cloudflare tunnel in parallel
 
 # E2E tests
 # IMPORTANT: E2E tests need a running dev server. Check if one is running first:
@@ -142,10 +126,10 @@ task e2e:isolated       # Starts own Next.js on port 4001 (slower — only if po
 #   E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 
 # Everything
-task build:all          # Build engine + API + frontend
-task test:all           # Test engine + API + frontend
-task check              # Full quality gate (vet + test + build)
-````
+task build:all          # Build Rust + TypeScript
+task test:all           # Test Rust + TypeScript
+task check              # Full quality gate (lint + test + build)
+```
 
 ---
 
@@ -162,16 +146,13 @@ bnto/
 │   └── @bnto/
 │       ├── auth/                # @bnto/auth — Cloud auth (web only)
 │       └── backend/             # @bnto/backend — Convex schema + functions
-├── engine/                      # Rust WASM engine (browser execution — primary)
+├── engine/                      # Rust WASM engine (browser execution)
 │   └── crates/
 │       ├── bnto-core/           # Core WASM library (types, traits, progress)
 │       ├── bnto-image/          # Image compression/resize/convert
 │       ├── bnto-csv/            # CSV clean/rename columns
 │       ├── bnto-file/           # File rename
 │       └── bnto-wasm/           # cdylib entry point (single WASM binary)
-├── archive/                     # Preserved reference code (not actively developed)
-│   ├── engine-go/               # Go CLI + engine (~33K LOC)
-│   └── api-go/                  # Go HTTP API server (~2.5K LOC)
 └── .claude/                     # Strategy docs, decisions, plan, rules
 ```
 
@@ -244,7 +225,6 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)       | Editor user journey — stages, flows, success criteria, phased delivery                                            |
 | [code-editor.md](.claude/strategy/code-editor.md)                       | Code editor design — CM6, slash commands, JSON Schema                                                             |
 | [engine-execution.md](.claude/strategy/engine-execution.md)             | Engine execution architecture — pipeline executor, progress events, multi-consumer                                |
-| [go-engine-migration.md](.claude/strategy/go-engine-migration.md)       | Go engine node inventory — migration reference before archive deletion                                            |
 | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)       | Expression input UX — pill tokens, variable picker, competitor analysis, phased rollout                           |
 | Private business docs (see `BNTO_PRIVATE_DOCS_PATH` in `.env.local`)    | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
 | [skills/](.claude/skills/)                                              | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)                                        |
@@ -262,7 +242,6 @@ Persona skills are domain experts that can be activated to adopt specialized kno
 | Rust Expert        | `engine/` — WASM, node crates, execution engine                                                                   | `/rust-expert`        |
 | Core Architect     | `packages/core/` — transport-agnostic API, clients, services, adapters                                            | `/core-architect`     |
 | Backend Engineer   | `packages/@bnto/backend/`, `packages/@bnto/auth/` — Convex, schema, auth                                          | `/backend-engineer`   |
-| Go Engineer        | `archive/engine-go/`, `archive/api-go/` — Go engine, API server                                                   | `/go-engineer`        |
 | Security Engineer  | Cross-cutting — trust boundaries, attack surfaces, defense-in-depth                                               | `/security-engineer`  |
 | Quality Engineer   | `apps/web/e2e/`, `.claude/journeys/` — E2E testing, journey design, screenshot regression, test infrastructure    | `/quality-engineer`   |
 | Workflow Expert    | Recipe design, competitive analysis, multi-node compositions, custom recipe journey tests                         | `/workflow-expert`    |

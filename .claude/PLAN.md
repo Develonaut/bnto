@@ -227,14 +227,14 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 #### Wave 1 (parallel — error boundaries + dead code)
 
 - [x] `apps/web` — **Global error boundary**: Create `buildGitHubIssueUrl()` pure function + `ErrorReport` component + `global-error.tsx` + `(app)/error.tsx` + `[bnto]/error.tsx`. Unit tests for URL construction. PostHog `app_error` telemetry on boundary trigger.
-- [ ] `packages/core` — **Dead code removal**: Verify `processFile` worker path is dead code and remove. Remove deprecated `hasImplementation()` alias (migrate consumers to `isCapable()`). Remove or deprecate `executePipeline.ts` if fully replaced by Rust executor.
-- [ ] `packages/@bnto/nodes` — **Align stale schemas**: Align `spreadsheet` and `file-system` Zod schemas with Rust processor parameters (clean/rename, find/replace/prefix/suffix). Remove Go-era operations that don't exist in Rust.
+- [x] `packages/core` — **Dead code removal**: Verified — `processFile` already removed in Sprint 4H, `hasImplementation()` already removed, `executePipeline` is active (JS↔WASM adapter, not redundant). No action needed.
+- [x] `packages/@bnto/nodes` — **Align stale schemas**: Verified — schemas are auto-generated from Rust engine catalog via `task nodes:generate`. Hand-written wrappers only add `hidden: true` on operation field. No Go-era operations remain.
 
 #### Wave 2 (parallel — Go archive + Rust cleanup)
 
-- [ ] `archive/` — **Delete Go engine**: Final review of `go-engine-migration.md`, then delete `archive/engine-go/`. Update `go.work`, `.gitignore`, `Taskfile.yml`, `bnto.code-workspace`.
-- [ ] `archive/` — **Delete Go API**: Delete `archive/api-go/`. Update Docker, Taskfile, CI references. (If M4 cloud uses Go, fork to separate repo first.)
-- [ ] `infra` — **Clean up Taskfile + CI**: Remove `task build`, `task test`, `task vet`, `task api:*` commands targeting Go engine. Verify no Go-related CI checks remain.
+- [x] `archive/` — **Delete Go engine**: Deleted `archive/engine-go/`. Removed `go.work`. Updated `.gitignore`, `Taskfile.yml`, `bnto.code-workspace`, `README.md`, `CLAUDE.md`.
+- [x] `archive/` — **Delete Go API**: Deleted `archive/api-go/`. Deleted `Dockerfile.api`. Updated `.dockerignore`. Updated test fixture references in `transit-helpers.ts`.
+- [x] `infra` — **Clean up Taskfile + CI**: Removed all Go tasks from Taskfile. Updated `build:all`/`test:all` to Rust + TS only. Removed `dev:all`. No Go-related CI checks found.
 - [ ] `engine` — **Split `executor.rs`**: 2068 lines violates Bento Box. Split into focused modules (executor, primitive execution, container execution). Add comment density pass for consistency.
 
 #### Wave 3 (parallel — performance + stale references)

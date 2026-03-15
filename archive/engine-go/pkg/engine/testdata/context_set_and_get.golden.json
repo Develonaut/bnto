@@ -1,8 +1,0 @@
-{
-  "node-1": {
-    "output": "hello"
-  },
-  "node-2": {
-    "count": 42
-  }
-}

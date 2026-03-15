@@ -10,22 +10,23 @@ import { type AuthenticatedClient, api } from "./setup";
 
 // ── Test Fixtures ────────────────────────────────────────────────────────
 
-/** Small PNG from engine test fixtures (~440KB — well under 25MB free limit). */
-export const TEST_IMAGE_PATH = resolve(
-  __dirname,
-  "../../../../../archive/engine-go/tests/fixtures/images/Product_Render.png",
-);
+/** Medium PNG from shared test fixtures (~187KB — well under 25MB free limit). */
+export const TEST_IMAGE_PATH = resolve(__dirname, "../../../../../test-fixtures/images/medium.png");
 
-/** compress-images recipe definition — reads from INPUT_DIR, outputs to OUTPUT_DIR. */
-export const COMPRESS_IMAGES_DEFINITION = JSON.parse(
-  readFileSync(
-    resolve(
-      __dirname,
-      "../../../../../archive/engine-go/tests/fixtures/workflows/compress-images.bnto.json",
-    ),
-    "utf-8",
-  ),
-);
+/** Minimal compress-images recipe definition for integration tests. */
+export const COMPRESS_IMAGES_DEFINITION = {
+  id: "compress-images",
+  type: "group",
+  version: "1.0.0",
+  name: "Compress Images",
+  position: { x: 0, y: 0 },
+  metadata: {},
+  parameters: { operation: "compress" },
+  inputPorts: [],
+  outputPorts: [],
+  nodes: [],
+  edges: [],
+};
 
 export const TEST_SLUG = "compress-images";
 
@@ -101,9 +102,7 @@ export async function pollExecution(
     }
     await new Promise((r) => setTimeout(r, intervalMs));
   }
-  throw new Error(
-    `Execution ${executionId} did not complete within ${timeoutMs}ms`,
-  );
+  throw new Error(`Execution ${executionId} did not complete within ${timeoutMs}ms`);
 }
 
 /**
@@ -115,33 +114,23 @@ export async function uploadAndStartExecution(
 ): Promise<{ executionId: Id<"executions">; sessionId: string }> {
   const fileBuffer = readTestImage();
 
-  const uploadResult = await client.client.action(
-    api.uploads.generateUploadUrls,
-    {
-      files: [
-        {
-          name: "Product_Render.png",
-          contentType: "image/png",
-          sizeBytes: fileBuffer.length,
-        },
-      ],
-    },
-  );
+  const uploadResult = await client.client.action(api.uploads.generateUploadUrls, {
+    files: [
+      {
+        name: "Product_Render.png",
+        contentType: "image/png",
+        sizeBytes: fileBuffer.length,
+      },
+    ],
+  });
 
-  await uploadToPresignedUrl(
-    uploadResult.urls[0].url,
-    fileBuffer,
-    "image/png",
-  );
+  await uploadToPresignedUrl(uploadResult.urls[0].url, fileBuffer, "image/png");
 
-  const executionId = await client.client.mutation(
-    api.executions.startPredefined,
-    {
-      slug: TEST_SLUG,
-      definition: COMPRESS_IMAGES_DEFINITION,
-      sessionId: uploadResult.sessionId,
-    },
-  );
+  const executionId = await client.client.mutation(api.executions.startPredefined, {
+    slug: TEST_SLUG,
+    definition: COMPRESS_IMAGES_DEFINITION,
+    sessionId: uploadResult.sessionId,
+  });
 
   return { executionId, sessionId: uploadResult.sessionId };
 }

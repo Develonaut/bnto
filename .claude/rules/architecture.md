@@ -3,7 +3,7 @@
 ## Layered Architecture
 
 ```
-Apps (web/desktop) -> @bnto/core -> Engine (Rust WASM / Go)
+Apps (web/desktop) -> @bnto/core -> Engine (Rust WASM)
 ```
 
 Each layer only depends on layers below it. Never skip layers.
@@ -102,11 +102,6 @@ See [core-api.md](core-api.md) for the full API design rules.
 - `@bnto/core` detects Tauri runtime and swaps transport adapter
 - Engine runs as native Rust binary (no network, no cloud)
 
-### `archive/` -- Go engine + API (archived)
-
-- Archived Go engine for cloud/server-side execution (M4). See `archive/engine-go/` for internals.
-- Archived Go HTTP API server for Railway. See `archive/api-go/` for internals.
-
 ## Node System Layers
 
 The node system spans three layers: Engine (Rust), `@bnto/nodes` (TypeScript), and Editor. Each layer has distinct responsibilities. See [node-responsibilities.md](node-responsibilities.md) for the full decision matrix, golden rule, and common violations to watch for.
@@ -164,19 +159,19 @@ Components never know which backend they're talking to. `@bnto/core` detects the
 |  +--------+---------------+----------+    |                |
 |           v               v               v                |
 |    +----------+    +----------+    +----------+             |
-|    | Convex   |    | Go Engine|    | Go Engine|             |
-|    | (cloud)  |    | (local)  |    |  (CLI)   |             |
+|    | Convex   |    | Rust     |    | Rust     |             |
+|    | (cloud)  |    | (native) |    |  (CLI)   |             |
 |    +----------+    +----------+    +----------+             |
 +--------------------------------------------------------------+
 ```
 
 ### Cloud Execution (M4)
 
-Cloud execution topology: Browser -> R2 (upload) -> Railway Go API -> R2 (output) -> Browser (download). See `ROADMAP.md` for M4 details.
+Cloud execution topology TBD for M4. See `ROADMAP.md` for details.
 
 ### Development
 
-`task dev` starts Next.js (localhost:4000) + Convex dev. `task dev:all` adds the Go API + Cloudflare tunnel for cloud execution testing.
+`task dev` starts Next.js (localhost:4000) + Convex dev.
 
 ## R2 Storage: Cloud-Only Transit Layer
 

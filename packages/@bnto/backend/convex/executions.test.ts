@@ -173,9 +173,7 @@ describe("executions", () => {
       });
 
       expect(execution!.status).toBe("failed");
-      expect(execution!.error).toBe(
-        "Node image-resize failed: out of memory",
-      );
+      expect(execution!.error).toBe("Node image-resize failed: out of memory");
       expect(execution!.completedAt).toBeDefined();
 
       const event = await t.run(async (ctx) => {
@@ -311,8 +309,7 @@ describe("executions", () => {
   // cannot be tested in convex-test because deleteByPrefix is a "use node" action
   // that requires external R2 access. Scheduling correctness is verified by:
   // 1. Code review of scheduleR2Cleanup helper
-  // 2. Go-side cleanup tests (archive/api-go/internal/r2/cleanup_test.go)
-  // 3. Pre-existing complete/fail tests pass without sessionId (no scheduling triggered)
+  // 2. Pre-existing complete/fail tests pass without sessionId (no scheduling triggered)
 
   describe("listByUser", () => {
     it("returns empty result for unauthenticated user", async () => {
@@ -334,20 +331,34 @@ describe("executions", () => {
       // Convex orders by _creationTime (insertion order), so desc = newest first.
       await t.run(async (ctx) => {
         await ctx.db.insert("executions", {
-          userId, recipeId, status: "completed", progress: [], startedAt: 1000, completedAt: 1500,
+          userId,
+          recipeId,
+          status: "completed",
+          progress: [],
+          startedAt: 1000,
+          completedAt: 1500,
         });
         await ctx.db.insert("executions", {
-          userId, recipeId, status: "failed", progress: [], startedAt: 2000, completedAt: 2200,
+          userId,
+          recipeId,
+          status: "failed",
+          progress: [],
+          startedAt: 2000,
+          completedAt: 2200,
         });
         await ctx.db.insert("executions", {
-          userId, recipeId, status: "completed", progress: [], startedAt: 3000, completedAt: 3800,
+          userId,
+          recipeId,
+          status: "completed",
+          progress: [],
+          startedAt: 3000,
+          completedAt: 3800,
         });
       });
 
-      const result = await t.withIdentity({ subject: userId }).query(
-        api.executions.listByUser,
-        { paginationOpts: { numItems: 10, cursor: null } },
-      );
+      const result = await t
+        .withIdentity({ subject: userId })
+        .query(api.executions.listByUser, { paginationOpts: { numItems: 10, cursor: null } });
 
       expect(result.page).toHaveLength(3);
       // Desc order by _creationTime: most recently inserted first
@@ -370,17 +381,24 @@ describe("executions", () => {
 
       await t.run(async (ctx) => {
         await ctx.db.insert("executions", {
-          userId, recipeId, status: "completed", progress: [], startedAt: 1000,
+          userId,
+          recipeId,
+          status: "completed",
+          progress: [],
+          startedAt: 1000,
         });
         await ctx.db.insert("executions", {
-          userId: otherUserId, recipeId, status: "completed", progress: [], startedAt: 2000,
+          userId: otherUserId,
+          recipeId,
+          status: "completed",
+          progress: [],
+          startedAt: 2000,
         });
       });
 
-      const result = await t.withIdentity({ subject: userId }).query(
-        api.executions.listByUser,
-        { paginationOpts: { numItems: 10, cursor: null } },
-      );
+      const result = await t
+        .withIdentity({ subject: userId })
+        .query(api.executions.listByUser, { paginationOpts: { numItems: 10, cursor: null } });
 
       expect(result.page).toHaveLength(1);
       expect(result.page[0].userId).toEqual(userId);
@@ -394,34 +412,39 @@ describe("executions", () => {
       await t.run(async (ctx) => {
         for (let i = 1; i <= 5; i++) {
           await ctx.db.insert("executions", {
-            userId, recipeId, status: "completed", progress: [], startedAt: i * 1000,
+            userId,
+            recipeId,
+            status: "completed",
+            progress: [],
+            startedAt: i * 1000,
           });
         }
       });
 
       // First page: 2 items
-      const page1 = await t.withIdentity({ subject: userId }).query(
-        api.executions.listByUser,
-        { paginationOpts: { numItems: 2, cursor: null } },
-      );
+      const page1 = await t
+        .withIdentity({ subject: userId })
+        .query(api.executions.listByUser, { paginationOpts: { numItems: 2, cursor: null } });
 
       expect(page1.page).toHaveLength(2);
       expect(page1.isDone).toBe(false);
 
       // Second page: next 2 items
-      const page2 = await t.withIdentity({ subject: userId }).query(
-        api.executions.listByUser,
-        { paginationOpts: { numItems: 2, cursor: page1.continueCursor } },
-      );
+      const page2 = await t
+        .withIdentity({ subject: userId })
+        .query(api.executions.listByUser, {
+          paginationOpts: { numItems: 2, cursor: page1.continueCursor },
+        });
 
       expect(page2.page).toHaveLength(2);
       expect(page2.isDone).toBe(false);
 
       // Third page: last 1 item
-      const page3 = await t.withIdentity({ subject: userId }).query(
-        api.executions.listByUser,
-        { paginationOpts: { numItems: 2, cursor: page2.continueCursor } },
-      );
+      const page3 = await t
+        .withIdentity({ subject: userId })
+        .query(api.executions.listByUser, {
+          paginationOpts: { numItems: 2, cursor: page2.continueCursor },
+        });
 
       expect(page3.page).toHaveLength(1);
       expect(page3.isDone).toBe(true);
