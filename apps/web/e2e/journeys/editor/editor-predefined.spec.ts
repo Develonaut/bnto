@@ -10,8 +10,6 @@ import {
   exportRecipe,
 } from "../../helpers/editor";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Editor predefined recipes — PR1-PR6
  *

@@ -1,7 +1,5 @@
 import { test, expect } from "../fixtures";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * SEO metadata E2E tests.
  *
@@ -24,51 +22,35 @@ const TIER_1_SLUGS = [
   {
     slug: "resize-images",
     title: "Resize Images Online Free -- bnto",
-    description:
-      "Resize images to exact dimensions or percentages. Free, no signup required.",
+    description: "Resize images to exact dimensions or percentages. Free, no signup required.",
     h1: "Resize Images Online Free",
-    features: [
-      "PNG",
-      "JPEG",
-      "WebP",
-      "Custom dimensions",
-      "Browser-based",
-    ],
+    features: ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"],
   },
   {
     slug: "convert-image-format",
     title: "Convert Image Format Online Free -- bnto",
-    description:
-      "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
+    description: "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
     h1: "Convert Image Format Online Free",
     features: ["PNG", "JPEG", "WebP", "GIF", "Browser-based"],
   },
   {
     slug: "rename-files",
     title: "Rename Files Online Free -- bnto",
-    description:
-      "Batch rename files with patterns. Free, no signup required.",
+    description: "Batch rename files with patterns. Free, no signup required.",
     h1: "Rename Files Online Free",
     features: ["Batch rename", "Pattern matching", "Browser-based"],
   },
   {
     slug: "clean-csv",
     title: "Clean CSV Online Free -- bnto",
-    description:
-      "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
+    description: "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
     h1: "Clean CSV Online Free",
-    features: [
-      "CSV",
-      "Remove duplicates",
-      "Trim whitespace",
-      "Browser-based",
-    ],
+    features: ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"],
   },
   {
     slug: "rename-csv-columns",
     title: "Rename CSV Columns Online Free -- bnto",
-    description:
-      "Rename CSV column headers in bulk. Free, no signup required.",
+    description: "Rename CSV column headers in bulk. Free, no signup required.",
     h1: "Rename CSV Columns Online Free",
     features: ["CSV", "Column rename", "Bulk edit", "Browser-based"],
   },
@@ -76,9 +58,7 @@ const TIER_1_SLUGS = [
 
 test.describe("SEO metadata — all Tier 1 slugs @browser", () => {
   for (const entry of TIER_1_SLUGS) {
-    test(`/${entry.slug}: correct title and meta description`, async ({
-      page,
-    }) => {
+    test(`/${entry.slug}: correct title and meta description`, async ({ page }) => {
       await page.goto(`/${entry.slug}`);
 
       // Title tag uses the absolute title from the registry (bypasses template).
@@ -103,9 +83,7 @@ test.describe("SEO metadata — all Tier 1 slugs @browser", () => {
     test(`/${entry.slug}: h1 matches target query`, async ({ page }) => {
       await page.goto(`/${entry.slug}`);
 
-      await expect(
-        page.getByRole("heading", { level: 1, name: entry.h1 }),
-      ).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1, name: entry.h1 })).toBeVisible();
     });
 
     test(`/${entry.slug}: JSON-LD structured data`, async ({ page }) => {
@@ -113,9 +91,7 @@ test.describe("SEO metadata — all Tier 1 slugs @browser", () => {
 
       // Extract JSON-LD from the page
       const jsonLd = await page.evaluate(() => {
-        const script = document.querySelector(
-          'script[type="application/ld+json"]',
-        );
+        const script = document.querySelector('script[type="application/ld+json"]');
         return script ? JSON.parse(script.textContent ?? "{}") : null;
       });
 
@@ -143,9 +119,7 @@ test.describe("SEO — 404 for unknown slugs @browser", () => {
     }
 
     // 404 page content renders
-    await expect(
-      page.getByRole("heading", { name: /Page Not Found/i }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Page Not Found/i })).toBeVisible();
   });
 });
 

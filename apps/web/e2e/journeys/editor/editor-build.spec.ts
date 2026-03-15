@@ -6,8 +6,6 @@ import {
   ensureConfigPanelOpen,
 } from "../../helpers/editor";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Editor build & configure — BC1-BC4, BC8
  *

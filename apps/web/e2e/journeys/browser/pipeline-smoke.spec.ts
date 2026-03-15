@@ -11,8 +11,6 @@ import {
   runAndComplete,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Pipeline smoke test — all 6 Tier 1 bntos
  *

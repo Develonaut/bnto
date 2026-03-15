@@ -1,7 +1,5 @@
 import { test, expect } from "../fixtures";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Site navigation journey — verifies every public route on the site loads
  * without errors, captures screenshot baselines, and confirms navbar/footer
@@ -39,9 +37,7 @@ test.describe("Site navigation — desktop @browser", () => {
     });
   }
 
-  test("navbar: Explore dropdown opens and navigates to tool page", async ({
-    page,
-  }) => {
+  test("navbar: Explore dropdown opens and navigates to tool page", async ({ page }) => {
     await page.goto("/");
 
     // Open Explore dropdown (categorized recipe links)
@@ -62,9 +58,7 @@ test.describe("Site navigation — desktop @browser", () => {
     await expect(page).toHaveURL("/compress-images");
   });
 
-  test("navbar: Pricing and FAQ links navigate correctly", async ({
-    page,
-  }) => {
+  test("navbar: Pricing and FAQ links navigate correctly", async ({ page }) => {
     await page.goto("/");
 
     // Navigate to Pricing via navbar (first match = navbar, before footer)
@@ -82,25 +76,15 @@ test.describe("Site navigation — desktop @browser", () => {
 
   test("footer: links are present and navigate", async ({ page }) => {
     await page.goto("/");
-    await page.evaluate(() =>
-      window.scrollTo(0, document.body.scrollHeight),
-    );
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
     const footer = page.locator("footer");
 
     // Verify key footer links exist
-    await expect(
-      footer.getByRole("link", { name: /Compress Images/ }),
-    ).toBeVisible();
-    await expect(
-      footer.getByRole("link", { name: /Clean CSV/ }),
-    ).toBeVisible();
-    await expect(
-      footer.getByRole("link", { name: "Pricing", exact: true }),
-    ).toBeVisible();
-    await expect(
-      footer.getByRole("link", { name: "Privacy", exact: true }),
-    ).toBeVisible();
+    await expect(footer.getByRole("link", { name: /Compress Images/ })).toBeVisible();
+    await expect(footer.getByRole("link", { name: /Clean CSV/ })).toBeVisible();
+    await expect(footer.getByRole("link", { name: "Pricing", exact: true })).toBeVisible();
+    await expect(footer.getByRole("link", { name: "Privacy", exact: true })).toBeVisible();
 
     // Navigate via footer link
     await footer.getByRole("link", { name: "Pricing", exact: true }).click();
@@ -112,9 +96,7 @@ test.describe("Site navigation — desktop @browser", () => {
     if (!process.env.BASE_URL) {
       expect(response?.status()).toBe(404);
     }
-    await expect(
-      page.getByRole("heading", { name: /Page Not Found/ }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Page Not Found/ })).toBeVisible();
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("desktop-404.png");
   });
@@ -146,9 +128,7 @@ test.describe("Site navigation — mobile @browser", () => {
     });
   }
 
-  test("mobile menu: opens, shows recipes, and navigates", async ({
-    page,
-  }) => {
+  test("mobile menu: opens, shows recipes, and navigates", async ({ page }) => {
     await page.goto("/");
 
     // Open mobile menu via hamburger button
@@ -184,9 +164,7 @@ test.describe("Site navigation — mobile @browser", () => {
     if (!process.env.BASE_URL) {
       expect(response?.status()).toBe(404);
     }
-    await expect(
-      page.getByRole("heading", { name: /Page Not Found/ }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Page Not Found/ })).toBeVisible();
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("mobile-404.png");
   });

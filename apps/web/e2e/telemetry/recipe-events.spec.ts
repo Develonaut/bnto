@@ -7,12 +7,7 @@ import {
   filterEvents,
 } from "../telemetryHelper";
 
-test.use({ reducedMotion: "reduce" });
-
-const FIXTURES_DIR = path.resolve(
-  __dirname,
-  "../../../../test-fixtures/images",
-);
+const FIXTURES_DIR = path.resolve(__dirname, "../../../../test-fixtures/images");
 
 /**
  * Recipe telemetry events — verifies that the recipe flow fires
@@ -28,15 +23,11 @@ test.describe("recipe telemetry events @browser", () => {
     await enableTelemetryCapture(page);
 
     await page.goto("/compress-images");
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Compress Images Online Free" })).toBeVisible();
 
     // --- files_added ---
     const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles([
-      path.join(FIXTURES_DIR, "small.jpg"),
-    ]);
+    await fileInput.setInputFiles([path.join(FIXTURES_DIR, "small.jpg")]);
     await expect(page.getByText("1 file selected")).toBeVisible();
 
     await waitForTelemetryEvent(page, "files_added");
@@ -85,9 +76,7 @@ test.describe("recipe telemetry events @browser", () => {
     // already be captured. If not present, it means auto-download
     // uses downloadAllResults directly (not handleDownloadAll).
     // The manual "Download All" button triggers the event.
-    const downloadAllBtn = page
-      .getByRole("button", { name: /download all/i })
-      .last();
+    const downloadAllBtn = page.getByRole("button", { name: /download all/i }).last();
 
     // Only assert manual download if the button is visible
     if (await downloadAllBtn.isVisible()) {

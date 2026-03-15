@@ -10,8 +10,6 @@ import {
   exportRecipe,
 } from "../../helpers/editor";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Editor from-scratch journeys — build recipes on a blank canvas.
  *
@@ -91,9 +89,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     await addNodeFromPalette(page, "Clean CSV");
 
     // EXECUTE
-    await runEditorWithFiles(page, [
-      path.join(CSV_FIXTURES_DIR, "messy.csv"),
-    ]);
+    await runEditorWithFiles(page, [path.join(CSV_FIXTURES_DIR, "messy.csv")]);
 
     // VERIFY
     await openRunPanel(page);
@@ -185,9 +181,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     await addNodeFromPalette(page, "Compress Images");
 
     // First run
-    await runEditorWithFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await runEditorWithFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     const runButton = page.locator('[data-testid="run-button"]');
     await expect(runButton).toHaveAttribute("data-phase", "completed");

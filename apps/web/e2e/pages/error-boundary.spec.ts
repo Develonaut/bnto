@@ -1,7 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Error boundary journey — verifies that unhandled React errors are caught
  * and display the ErrorReport dialog instead of a white screen.

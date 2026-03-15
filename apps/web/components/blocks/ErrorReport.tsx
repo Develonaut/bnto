@@ -46,7 +46,7 @@ export function ErrorReport({ error, reset }: ErrorReportProps) {
 
   return (
     <Stack align="center" justify="center" className="min-h-[60vh] text-center">
-      <Card elevation="md" className="max-w-lg w-full px-8 py-10">
+      <Card className="max-w-lg w-full px-8 py-10">
         <CardContent>
           <Stack gap="lg" align="center">
             <CircleAlertIcon className="size-12 text-destructive" />

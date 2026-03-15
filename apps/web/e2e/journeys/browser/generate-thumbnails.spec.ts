@@ -12,8 +12,6 @@ import {
   assertWebPBytes,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Browser execution journey — generate-thumbnails
  *
@@ -23,20 +21,12 @@ test.use({ reducedMotion: "reduce" });
 
 test.describe("generate-thumbnails — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(
-      page,
-      "generate-thumbnails",
-      "Generate Thumbnails Online Free",
-    );
+    await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
     await assertBrowserExecution(page);
   });
 
   test("single JPEG: resize + convert + rename lifecycle", async ({ page }) => {
-    await navigateToRecipe(
-      page,
-      "generate-thumbnails",
-      "Generate Thumbnails Online Free",
-    );
+    await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
@@ -44,9 +34,7 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
 
     const outputFile = page.locator('[data-testid="output-file"]');
     await expect(outputFile).toHaveCount(1);
-    await expect(
-      outputFile.getByRole("button", { name: /download/i }),
-    ).toBeVisible();
+    await expect(outputFile.getByRole("button", { name: /download/i })).toBeVisible();
 
     // Output should be WebP with thumb_ prefix
     const buffer = await downloadAndVerify(page, {
@@ -59,11 +47,7 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
   });
 
   test("batch: multiple images with Download All as ZIP", async ({ page }) => {
-    await navigateToRecipe(
-      page,
-      "generate-thumbnails",
-      "Generate Thumbnails Online Free",
-    );
+    await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
 
     await uploadFiles(page, [
       path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
@@ -75,25 +59,17 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
     await expect(page.locator('[data-testid="output-file"]')).toHaveCount(2);
 
     const { download } = await downloadAllAsZip(page);
-    expect(download.suggestedFilename()).toBe(
-      "generate-thumbnails-results.zip",
-    );
+    expect(download.suggestedFilename()).toBe("generate-thumbnails-results.zip");
   });
 
   test("back button resets from completed to configure phase", async ({ page }) => {
-    await navigateToRecipe(
-      page,
-      "generate-thumbnails",
-      "Generate Thumbnails Online Free",
-    );
+    await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     const runButton = await runAndComplete(page);
 
-    const backButton = page
-      .locator('[data-testid="bnto-shell"] button')
-      .first();
+    const backButton = page.locator('[data-testid="bnto-shell"] button').first();
     await backButton.click();
 
     await expect(page.getByText("1 file selected")).toBeVisible();

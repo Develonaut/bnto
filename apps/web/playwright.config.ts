@@ -15,8 +15,7 @@ const isolated = port !== 4000;
 export default defineConfig({
   globalTeardown: "./e2e/global-teardown.ts",
   testDir: "./e2e",
-  snapshotPathTemplate:
-    "{testDir}/{testFileDir}/__screenshots__/{arg}{ext}",
+  snapshotPathTemplate: "{testDir}/{testFileDir}/__screenshots__/{arg}{ext}",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
@@ -30,6 +29,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${port}`,
     trace: "on-first-retry",
+    contextOptions: { reducedMotion: "reduce" },
   },
   projects: [
     {

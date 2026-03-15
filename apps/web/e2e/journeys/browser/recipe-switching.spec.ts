@@ -9,8 +9,6 @@ import {
   runAndComplete,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * User journey — switching between recipes
  *
@@ -20,15 +18,11 @@ test.use({ reducedMotion: "reduce" });
  */
 
 test.describe("recipe switching — state isolation @browser", () => {
-  test("navigating after completion starts fresh (no stale phase)", async ({
-    page,
-  }) => {
+  test("navigating after completion starts fresh (no stale phase)", async ({ page }) => {
     // --- Recipe A: compress-images → run to completion ---
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     await runAndComplete(page);
 
@@ -48,10 +42,7 @@ test.describe("recipe switching — state isolation @browser", () => {
     const runButtonB = page.locator('[data-testid="run-button"]');
     const runButtonCount = await runButtonB.count();
     if (runButtonCount > 0) {
-      await expect(runButtonB.first()).not.toHaveAttribute(
-        "data-phase",
-        "completed",
-      );
+      await expect(runButtonB.first()).not.toHaveAttribute("data-phase", "completed");
     }
   });
 
@@ -61,9 +52,7 @@ test.describe("recipe switching — state isolation @browser", () => {
     // --- Recipe A: compress-images → run to completion ---
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     await runAndComplete(page);
 
@@ -81,15 +70,11 @@ test.describe("recipe switching — state isolation @browser", () => {
     expect(downloadTriggered).toBe(false);
   });
 
-  test("recipe B runs independently after recipe A completes", async ({
-    page,
-  }) => {
+  test("recipe B runs independently after recipe A completes", async ({ page }) => {
     // --- Recipe A: compress-images → run to completion ---
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     await runAndComplete(page);
 
@@ -97,9 +82,7 @@ test.describe("recipe switching — state isolation @browser", () => {
     await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
     // --- Run Recipe B with its own files ---
-    await uploadFiles(page, [
-      path.join(CSV_FIXTURES_DIR, "messy.csv"),
-    ]);
+    await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "messy.csv")]);
 
     const runButtonB = page.locator('[data-testid="run-button"]:visible');
     await expect(runButtonB).toHaveAttribute("data-phase", "idle");
@@ -110,9 +93,7 @@ test.describe("recipe switching — state isolation @browser", () => {
     await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
   });
 
-  test("rapid navigation between recipes doesn't leak state", async ({
-    page,
-  }) => {
+  test("rapid navigation between recipes doesn't leak state", async ({ page }) => {
     const recipes = [
       { slug: "compress-images", h1: "Compress Images Online Free" },
       { slug: "clean-csv", h1: "Clean CSV Online Free" },
@@ -122,9 +103,7 @@ test.describe("recipe switching — state isolation @browser", () => {
     // Run one recipe to completion first
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     await runAndComplete(page);
 

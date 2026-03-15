@@ -9,8 +9,6 @@
 import { test, expect } from "../../fixtures";
 import { navigateToEditor, addNodeFromPalette } from "../../helpers/editor";
 
-test.use({ reducedMotion: "reduce" });
-
 // ---------------------------------------------------------------------------
 // SV4: Unsaved changes warning on navigation @editor
 // ---------------------------------------------------------------------------

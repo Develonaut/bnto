@@ -9,8 +9,6 @@ import {
   runAndComplete,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Browser execution journey — rename-csv-columns
  *
@@ -23,14 +21,10 @@ test.describe("rename-csv-columns — browser execution @browser", () => {
     await assertBrowserExecution(page);
   });
 
-  test("process CSV: output preserves column structure", async ({
-    page,
-  }) => {
+  test("process CSV: output preserves column structure", async ({ page }) => {
     await navigateToRecipe(page, "rename-csv-columns", "Rename CSV Columns Online Free");
 
-    await uploadFiles(page, [
-      path.join(CSV_FIXTURES_DIR, "simple.csv"),
-    ]);
+    await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "simple.csv")]);
 
     await runAndComplete(page);
 
@@ -54,14 +48,10 @@ test.describe("rename-csv-columns — browser execution @browser", () => {
     expect(output).toContain("Bob");
   });
 
-  test("many-column CSV: all columns survive processing", async ({
-    page,
-  }) => {
+  test("many-column CSV: all columns survive processing", async ({ page }) => {
     await navigateToRecipe(page, "rename-csv-columns", "Rename CSV Columns Online Free");
 
-    await uploadFiles(page, [
-      path.join(CSV_FIXTURES_DIR, "many-columns.csv"),
-    ]);
+    await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "many-columns.csv")]);
 
     await runAndComplete(page);
 
