@@ -7,10 +7,13 @@
  * without React or ReactFlow context.
  */
 
+import { isIoNodeType } from "@bnto/nodes";
 import type { ExecutionPhase, PanelState } from "../store/types";
 
 /** Returns the node ID to delete, or null if nothing should happen. */
-function resolveDelete(selectedNodeId: string | null): string | null {
+function resolveDelete(selectedNodeId: string | null, nodeType: string | null): string | null {
+  if (!selectedNodeId) return null;
+  if (nodeType && isIoNodeType(nodeType)) return null;
   return selectedNodeId;
 }
 

@@ -49,6 +49,7 @@ function createEditorStore(definition?: Definition) {
       config: initial.selectedNodeId !== null,
       palette: false,
       run: false,
+      help: false,
     },
     executionPhase: "idle",
     executionResults: [],

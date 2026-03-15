@@ -108,6 +108,7 @@ export type { SchemaFieldProps } from "./components/SchemaField";
 export { OpenRecipeDialog } from "./components/OpenRecipeDialog";
 export { SaveRecipeDialog } from "./components/SaveRecipeDialog";
 export { NodePaletteDialog } from "./components/NodePaletteDialog";
+export { HelpDialog } from "./components/HelpDialog";
 
 // --- Renderers ---
 

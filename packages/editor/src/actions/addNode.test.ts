@@ -28,7 +28,7 @@ function blankState(overrides?: Partial<EditorState>): EditorState {
     redoStack: [],
     definition: null,
     selectedNodeId: null,
-    panels: { config: false, palette: false, run: false },
+    panels: { config: false, palette: false, run: false, help: false },
     executionPhase: "idle",
     executionResults: [],
     executionErrors: [],
@@ -163,9 +163,7 @@ function stateWithContainer(): EditorState {
     },
   };
   const def = validDef({
-    nodes: [
-      validDef({ id: "loop1", type: "loop", parameters: {} }),
-    ],
+    nodes: [validDef({ id: "loop1", type: "loop", parameters: {} })],
   });
   return blankState({
     nodes: [containerNode],
@@ -218,7 +216,9 @@ describe("addNode — child insertion (Mode 1)", () => {
   });
 
   it("pre-sets operation via defaultParams in child-into-container path", () => {
-    const result = addNode(stateWithContainer(), "spreadsheet", null, "loop1", { operation: "clean" });
+    const result = addNode(stateWithContainer(), "spreadsheet", null, "loop1", {
+      operation: "clean",
+    });
     expect(result).not.toBeNull();
     const config = result!.nextState.configs![result!.nodeId];
     expect(config!.parameters.operation).toBe("clean");

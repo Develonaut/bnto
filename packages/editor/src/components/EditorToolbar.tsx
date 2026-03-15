@@ -21,6 +21,7 @@ import {
   DownloadIcon,
   FileUpIcon,
   MenuSeparator,
+  CircleHelpIcon,
 } from "@bnto/ui";
 import { core } from "@bnto/core";
 import { useEditor } from "../context";
@@ -29,12 +30,15 @@ import { RunButton } from "./RunButton";
 import { OpenRecipeDialog } from "./OpenRecipeDialog";
 import { SaveRecipeDialog } from "./SaveRecipeDialog";
 import { NodePaletteDialog } from "./NodePaletteDialog";
+import { HelpDialog } from "./HelpDialog";
+import { ShortcutHint } from "./ShortcutHint";
 
 /**
  * EditorToolbar — self-contained bottom-center toolbar.
  *
  * Includes its own overlay positioning. Reads all state from the store.
  * Panel triggers read visibility from the editor store — no prop drilling.
+ * Help dialog state comes from the panel system (components stay dumb).
  */
 
 function EditorToolbar() {
@@ -42,6 +46,7 @@ function EditorToolbar() {
   const { isOpen: paletteOpen, close: closePalette } = editor.panels.usePanels("palette");
   const { toggle: toggleConfig } = editor.panels.usePanels("config");
   const { toggle: toggleRunPanel } = editor.panels.usePanels("run");
+  const { isOpen: helpOpen, open: openHelp, close: closeHelp } = editor.panels.usePanels("help");
   const { canUndo, canRedo } = editor.history.useHistory();
   const { isDirty, validationErrors } = editor.definition.useDefinition();
   const { phase } = editor.execution.useExecution();
@@ -99,7 +104,7 @@ function EditorToolbar() {
                 elevation="sm"
                 aria-label="File menu"
               />
-              <MenuContent side="top" className="w-44 p-1">
+              <MenuContent side="top" className="w-52 p-1">
                 <MenuItem onClick={handleNew}>
                   <PlusIcon /> New
                 </MenuItem>
@@ -111,7 +116,7 @@ function EditorToolbar() {
                   <SaveIcon /> Save
                 </MenuItem>
                 <MenuItem onClick={download} disabled={!canDownload}>
-                  <DownloadIcon /> Export
+                  <DownloadIcon /> Export <ShortcutHint shortcutId="export" />
                 </MenuItem>
               </MenuContent>
             </Menu>
@@ -173,6 +178,19 @@ function EditorToolbar() {
               aria-label="Properties"
             />
           </ToolbarGroup>
+
+          <ToolbarDivider />
+
+          {/* Help */}
+          <ToolbarGroup>
+            <Button
+              icon={<CircleHelpIcon />}
+              variant="ghost"
+              elevation="sm"
+              onClick={openHelp}
+              aria-label="Help"
+            />
+          </ToolbarGroup>
         </Toolbar>
       </div>
       <OpenRecipeDialog open={openDialogOpen} onOpenChange={setOpenDialogOpen} />
@@ -186,6 +204,12 @@ function EditorToolbar() {
         open={paletteOpen}
         onOpenChange={(open) => {
           if (!open) closePalette();
+        }}
+      />
+      <HelpDialog
+        open={helpOpen}
+        onOpenChange={(open) => {
+          if (!open) closeHelp();
         }}
       />
     </>

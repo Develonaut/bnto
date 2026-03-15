@@ -256,7 +256,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 - [x] `packages/editor` — **File menu transform origin**: Fix popover/menu animation direction — transform origin should account for trigger position.
 - [x] `packages/editor` — **I/O node mode labels**: Display current mode (Upload, Text, URL) on Input/Output compartment nodes.
 - [x] `packages/editor` — **Pre-populate extension TagPicker**: Ship Input node file extension TagPicker with a static list of common extensions (.jpg, .png, .csv, .pdf, etc.).
-- [ ] `apps/web` — **Kbd component + shortcuts dialog**: Create `<Kbd>` primitive for shortcut hints on menu items. Add `Cmd+?` keyboard shortcuts dialog.
+- [x] `apps/web` — **Kbd component + shortcuts dialog**: Create `<Kbd>` primitive for shortcut hints on menu items. Add `Cmd+/` keyboard shortcuts dialog.
 
 ---
 
@@ -1013,9 +1013,9 @@ Files: `packages/ui/src/interaction/Button.tsx`, all consumers of `size="sm"` or
 
 **Priority: Triage.** "Open" and "Export" in the editor File menu are missing icons — "New" has `PlusIcon` and "Save" has `SaveIcon`. Add icons to Open and Export for visual uniformity. File: `packages/editor/src/components/EditorToolbar.tsx`.
 
-### Triage: Kbd Component & Keyboard Shortcuts Dialog
+### ~~Triage: Kbd Component & Keyboard Shortcuts Dialog~~ — DONE
 
-## **Priority: Triage.** Create a `<Kbd>` UI primitive to display keyboard shortcut hints on menu items (e.g., `⌘Z` next to Undo). Also consider a keyboard shortcuts dialog (e.g., `⌘?`) listing all available shortcuts to improve discoverability.
+Delivered in Sprint 6 Wave 4. `<Kbd>` primitive in `@bnto/ui`, `<ShortcutHint>` for menu items, `<HelpDialog>` (⌘/), I/O delete guard at handler level.
 
 ### Triage: Audit Raw useStore Selectors in Editor Components
 
@@ -1060,6 +1060,22 @@ Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `package
 ### Triage: Release branch pipeline with Vercel preview E2E gate
 
 **Priority: Triage.** Set up release branches that cut from main with a CI pipeline running the full test suite (Rust + TS + E2E) against the Vercel preview environment. All checks should be hard blockers; the actual release/deploy is triggered manually after green.
+
+---
+
+### Triage: Persist editor state in localStorage
+
+**Priority: Triage.** Persist the editor store state (nodes, configs, definition, metadata) to `localStorage` so users don't lose work on page refresh. Hydrate from localStorage on editor mount if a saved session exists. Consider a debounced write (e.g., 1s after last change) to avoid thrashing. Clear on explicit "New" or "Open" actions.
+
+Files: `packages/editor/src/store/createEditorStore.ts`, new `packages/editor/src/store/persistence.ts`
+
+---
+
+### Triage: AuthGate & ProGate badge/wrapper components
+
+**Priority: Triage.** Create `<AuthGate>` and `<ProGate>` wrapper components with `variant="popup" | "dialog"` that intercept user interaction on gated features. When an unauthenticated (or non-Pro) user clicks a gated control, show a signup prompt (popup for soft nudge, dialog for hard gate). Include `<AuthGateBadge>` and `<ProGateBadge>` icon badges for visual indication. Share common gate logic between both via a base `<FeatureGate>` component. This is the mechanism for dangling the upgrade carrot to users.
+
+Files: new `packages/ui/src/interaction/FeatureGate/`, `apps/web/` consumers
 
 ---
 
