@@ -246,8 +246,8 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 #### Wave 4 (parallel — triage batch)
 
 - [x] `apps/web` — **Simplify My Recipes page**: Remove stat cards and history section. Show saved recipes grid or empty state.
-- [ ] `packages/ui` — **SelectTrigger press animation**: Add pressable spring effect matching Menu trigger.
-- [ ] `packages/ui` — **PopupTrigger shared component**: Unify Menu, Select, Combobox trigger styling (pressable spring, surface, chevron).
+- [x] `packages/ui` — **SelectTrigger press animation**: Add pressable spring effect matching Menu trigger.
+- [x] `packages/ui` — **PopupTrigger shared component**: Unify Menu, Select, Combobox trigger styling (pressable spring, surface, chevron).
 - [ ] `packages/editor` — **File menu icons**: Add icons to "Open" and "Export" menu items for visual uniformity.
 - [ ] `packages/editor` — **Raw useStore audit**: Migrate raw `useStore(storeApi, ...)` calls to domain hook factories. All reads through editor API layer.
 - [ ] `apps/web` — **Fix reducedMotion type errors**: Fix `reducedMotion` type errors in E2E spec `test.use()` calls.
@@ -1046,6 +1046,14 @@ Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `package
 ### Triage: Delete button on My Recipe cards
 
 **Priority: Triage.** Add a delete action to saved recipe cards on `/my-recipes`. Requires `core.recipes.remove()` wired to a confirmation dialog on each `RecipeCard` in `RecipeGrid.tsx`.
+
+### Triage: iLovePNG recipe parity — next wave candidates
+
+**Priority: Triage.** When planning the next recipe wave, evaluate iLovePNG's offerings for feasibility in Rust WASM: Resize IMAGE, Crop IMAGE, Rotate IMAGE, Watermark IMAGE, Blur face, Upscale, Convert to/from JPG, HTML to IMAGE, Meme generator. Several (resize, crop, rotate, watermark) are likely doable with our existing `image` crate. Others (upscale, blur face, HTML to IMAGE) may need server-side or new deps.
+
+### Triage: Inline handler audit — extract to named handlers
+
+**Priority: Triage.** Audit all React components for inline event handlers (e.g., `onClick={() => ...}`) and refactor to named `const handleOnX = () => {}` pattern. Inline logic in JSX hurts readability and violates the Bento Box principle — component render should be easy to scan at a glance.
 
 ---
 

@@ -5,8 +5,8 @@ import { useState, useCallback, type ComponentProps } from "react";
 import { CheckIcon, ChevronsUpDownIcon, XIcon } from "../icons";
 import { cn } from "../utils/cn";
 import { Badge } from "../typography/Badge";
-import { Button } from "./Button";
-import { Popover, PopoverContent, PopoverTrigger } from "../overlay/Popover";
+import { PopupTriggerButton } from "./PopupTriggerButton";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "../overlay/Popover";
 import {
   Command,
   CommandEmpty,
@@ -79,61 +79,63 @@ function Combobox({
   return (
     <div data-slot="combobox" className={className} {...props}>
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            disabled={disabled}
-            className="w-full justify-between font-normal"
-          >
-            <div className="flex flex-1 flex-wrap items-center gap-1 overflow-hidden">
-              {value.length > 0 ? (
-                <>
-                  {value.slice(0, maxVisible).map((v) => {
-                    const label = options.find((o) => o.value === v)?.label ?? v;
-                    return (
-                      <Badge key={v} variant="secondary" size="sm">
-                        {label}
-                        <span
-                          role="button"
-                          tabIndex={0}
-                          className="ml-0.5 cursor-pointer rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeOption(v);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
+        <PopoverAnchor className="inline-flex w-full">
+          <PopoverTrigger asChild>
+            <PopupTriggerButton
+              open={open}
+              role="combobox"
+              aria-expanded={open}
+              disabled={disabled}
+              className="w-full justify-between font-normal"
+            >
+              <div className="flex flex-1 flex-wrap items-center gap-1 overflow-hidden">
+                {value.length > 0 ? (
+                  <>
+                    {value.slice(0, maxVisible).map((v) => {
+                      const label = options.find((o) => o.value === v)?.label ?? v;
+                      return (
+                        <Badge key={v} variant="secondary" size="sm">
+                          {label}
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            className="ml-0.5 cursor-pointer rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            onMouseDown={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
                               removeOption(v);
-                            }
-                          }}
-                          aria-label={`Remove ${label}`}
-                        >
-                          <XIcon className="size-3 text-muted-foreground hover:text-foreground" />
-                        </span>
-                      </Badge>
-                    );
-                  })}
-                  {value.length > maxVisible && (
-                    <span className="text-xs text-muted-foreground">
-                      +{value.length - maxVisible} more
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span className="text-muted-foreground">{placeholder}</span>
-              )}
-            </div>
-            <ChevronsUpDownIcon className="ml-1 size-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                removeOption(v);
+                              }
+                            }}
+                            aria-label={`Remove ${label}`}
+                          >
+                            <XIcon className="size-3 text-muted-foreground hover:text-foreground" />
+                          </span>
+                        </Badge>
+                      );
+                    })}
+                    {value.length > maxVisible && (
+                      <span className="text-xs text-muted-foreground">
+                        +{value.length - maxVisible} more
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">{placeholder}</span>
+                )}
+              </div>
+              <ChevronsUpDownIcon className="size-4 shrink-0 opacity-50" />
+            </PopupTriggerButton>
+          </PopoverTrigger>
+        </PopoverAnchor>
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command>
             <CommandInput placeholder={searchPlaceholder} />
