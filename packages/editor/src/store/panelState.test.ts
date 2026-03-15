@@ -14,6 +14,7 @@ describe("panel state", () => {
     const state = store.getState();
     expect(state.panels.palette).toBe(false);
     expect(state.panels.run).toBe(false);
+    expect(state.panels.help).toBe(false);
     // config opens when selectedNodeId is set by the recipe
     expect(typeof state.panels.config).toBe("boolean");
   });

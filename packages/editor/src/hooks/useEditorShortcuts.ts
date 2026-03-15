@@ -2,8 +2,8 @@
  * useEditorShortcuts — keyboard shortcuts for the editor canvas.
  *
  * Uses ReactFlow's `useKeyPress` for canvas-scoped shortcuts (undo, redo,
- * delete, run) and `useKeyDown` from `@bnto/ui` for Cmd+S (must
- * preventDefault at document level to block the browser's Save dialog).
+ * delete, run) and `useKeyDown` from `@bnto/ui` for shortcuts that must
+ * preventDefault at document level (Cmd+S, Cmd+/).
  *
  * Input field safety: `useKeyPress` has built-in input exclusion —
  * single keys (Delete/Backspace) are suppressed when an input is focused.
@@ -43,7 +43,9 @@ function useEditorShortcuts() {
   const deletePressed = useKeyPress(["Backspace", "Delete"]);
   useEffect(() => {
     if (!deletePressed) return;
-    const nodeId = resolveDelete(editor.getState().selectedNodeId);
+    const { selectedNodeId, configs } = editor.getState();
+    const nodeType = selectedNodeId ? configs[selectedNodeId]?.nodeType : undefined;
+    const nodeId = resolveDelete(selectedNodeId, nodeType ?? null);
     if (nodeId) editor.nodes.removeNode(nodeId);
   }, [deletePressed, editor]);
 
@@ -68,17 +70,22 @@ function useEditorShortcuts() {
     if (result.deselect) editor.nodes.selectNode(null);
   }, [escapePressed, editor]);
 
-  // --- Export: Cmd+S / Ctrl+S (native listener to preventDefault) ---
-  const handleSave = useCallback(
+  // --- Export: Cmd+S / Ctrl+S (preventDefault to block browser Save) ---
+  // --- Help: Cmd+/ / Ctrl+/ (toggle help dialog via panel system) ---
+  const handleDocumentKeys = useCallback(
     (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s" && !e.shiftKey) {
         e.preventDefault();
         downloadDefinition(editor.definition);
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        e.preventDefault();
+        editor.panels.togglePanel("help");
+      }
     },
     [editor],
   );
-  useKeyDown(handleSave);
+  useKeyDown(handleDocumentKeys);
 }
 
 export { useEditorShortcuts };

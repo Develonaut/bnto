@@ -3,12 +3,24 @@ import { resolveDelete, canTriggerRun, resolveEscape } from "./shortcutActions";
 import type { PanelState } from "../store/types";
 
 describe("resolveDelete", () => {
-  it("returns the selected node ID when one is selected", () => {
-    expect(resolveDelete("node-1")).toBe("node-1");
+  it("returns the selected node ID for a regular node", () => {
+    expect(resolveDelete("node-1", "image")).toBe("node-1");
   });
 
   it("returns null when no node is selected", () => {
-    expect(resolveDelete(null)).toBeNull();
+    expect(resolveDelete(null, null)).toBeNull();
+  });
+
+  it("returns null for input I/O node (handler-level guard)", () => {
+    expect(resolveDelete("node-io", "input")).toBeNull();
+  });
+
+  it("returns null for output I/O node (handler-level guard)", () => {
+    expect(resolveDelete("node-io", "output")).toBeNull();
+  });
+
+  it("returns node ID when nodeType is null (unknown type)", () => {
+    expect(resolveDelete("node-1", null)).toBe("node-1");
   });
 });
 
@@ -39,10 +51,10 @@ describe("canTriggerRun", () => {
 });
 
 describe("resolveEscape", () => {
-  const closedPanels: PanelState = { config: false, palette: false, run: false };
-  const openConfig: PanelState = { config: true, palette: false, run: false };
-  const openRun: PanelState = { config: false, palette: false, run: true };
-  const bothOpen: PanelState = { config: true, palette: false, run: true };
+  const closedPanels: PanelState = { config: false, palette: false, run: false, help: false };
+  const openConfig: PanelState = { config: true, palette: false, run: false, help: false };
+  const openRun: PanelState = { config: false, palette: false, run: true, help: false };
+  const bothOpen: PanelState = { config: true, palette: false, run: true, help: false };
 
   it("closes config panel when open", () => {
     const result = resolveEscape(null, openConfig);

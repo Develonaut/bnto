@@ -45,7 +45,7 @@ function stateWithNode(): EditorState {
     redoStack: [],
     definition: null,
     selectedNodeId: null,
-    panels: { config: false, palette: false, run: false },
+    panels: { config: false, palette: false, run: false, help: false },
     executionPhase: "idle",
     executionResults: [],
     executionErrors: [],
@@ -96,7 +96,9 @@ describe("updateParams", () => {
 
   it("clears redo stack", () => {
     const state = stateWithNode();
-    state.redoStack = [{ nodes: [], configs: {}, definition: null, expandedContainerIds: new Set() }];
+    state.redoStack = [
+      { nodes: [], configs: {}, definition: null, expandedContainerIds: new Set() },
+    ];
     const result = updateParams(state, "a", { quality: 60 });
     expect(result!.redoStack).toEqual([]);
   });
@@ -143,7 +145,11 @@ describe("updateParams", () => {
       ...stateWithNode(),
       configs: {
         loop: { nodeType: "loop", name: "Loop", parameters: { mode: "forEach" } },
-        child: { nodeType: "image", name: "Image", parameters: { operation: "compress", compression: 20 } },
+        child: {
+          nodeType: "image",
+          name: "Image",
+          parameters: { operation: "compress", compression: 20 },
+        },
       },
       definition: def,
     };

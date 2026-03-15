@@ -41,6 +41,7 @@ export { Stack } from "./layout/Stack";
 export { Badge } from "./typography/Badge";
 export { Heading } from "./typography/Heading";
 export { IconBadge } from "./typography/IconBadge";
+export { Kbd, KbdGroup } from "./typography/Kbd";
 export { Label } from "./typography/Label";
 export { Text } from "./typography/Text";
 

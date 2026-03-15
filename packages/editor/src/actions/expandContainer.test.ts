@@ -80,7 +80,7 @@ function makeState(overrides?: Partial<EditorState>): EditorState {
     undoStack: [],
     redoStack: [],
     selectedNodeId: null,
-    panels: { config: false, palette: false, run: false },
+    panels: { config: false, palette: false, run: false, help: false },
     expandedContainerIds: new Set(),
     executionPhase: "idle",
     executionResults: [],
