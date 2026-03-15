@@ -8,6 +8,7 @@ import { Button } from "../../interaction/Button";
 import { Row } from "../../layout/Row";
 import { Stack } from "../../layout/Stack";
 import { Card } from "../../surface/Card";
+import type { SurfaceVariant } from "../../surface/Surface";
 import { Badge } from "../../typography/Badge";
 import { Heading } from "../../typography/Heading";
 import { IconBadge } from "../../typography/IconBadge";
@@ -21,6 +22,8 @@ type RecipeCardRootProps = PropsWithChildren<{
   /** Internal link — renders the card as a Next.js Link. */
   href?: string;
   className?: string;
+  /** Color variant forwarded to Card surface. */
+  color?: SurfaceVariant;
   /** Grounded loading state — card springs up when loading clears. */
   loading?: boolean;
   /** Compact horizontal row layout for lists/dialogs. */
@@ -31,6 +34,7 @@ export function RecipeCardRoot({
   onClick,
   href,
   className,
+  color,
   loading,
   compact,
   children,
@@ -40,7 +44,7 @@ export function RecipeCardRoot({
     : "flex h-full flex-col justify-between p-5";
 
   const card = (
-    <Card loading={loading} className={cn(baseCn, className)}>
+    <Card loading={loading} color={color} className={cn(baseCn, className)}>
       {children}
     </Card>
   );
@@ -84,18 +88,31 @@ function RecipeCardFooter({ children, className }: PropsWithChildren<{ className
 
 /* ── Styled slot sub-components ──────────────────────────────── */
 
-function RecipeCardIcon({ icon: Icon }: { icon?: LucideIcon }) {
+function RecipeCardIcon({
+  icon: Icon,
+  onSurface,
+}: {
+  icon?: LucideIcon;
+  /** Use translucent white badge for colored card surfaces. */
+  onSurface?: boolean;
+}) {
   const Glyph = Icon ?? BlocksIcon;
   return (
-    <IconBadge variant="primary" size="lg" shape="square">
+    <IconBadge variant={onSurface ? "onSurface" : "primary"} size="lg" shape="square">
       <Glyph className="size-5" />
     </IconBadge>
   );
 }
 
-function RecipeCardCategory({ children }: PropsWithChildren) {
+function RecipeCardCategory({ children, onSurface }: PropsWithChildren<{ onSurface?: boolean }>) {
   return (
-    <Text as="span" size="xs" mono color="muted" className="uppercase tracking-wider">
+    <Text
+      as="span"
+      size="xs"
+      mono
+      color={onSurface ? "inherit" : "muted"}
+      className={cn("uppercase tracking-wider", onSurface && "opacity-80")}
+    >
       {children}
     </Text>
   );
@@ -109,19 +126,36 @@ function RecipeCardTitle({ children }: PropsWithChildren) {
   );
 }
 
-function RecipeCardDescription({ children }: PropsWithChildren) {
+function RecipeCardDescription({
+  children,
+  onSurface,
+}: PropsWithChildren<{ onSurface?: boolean }>) {
   return (
-    <Text size="sm" color="muted" leading="snug" className="text-left">
+    <Text
+      size="sm"
+      color={onSurface ? "inherit" : "muted"}
+      leading="snug"
+      className={cn("text-left", onSurface && "opacity-85")}
+    >
       {children}
     </Text>
   );
 }
 
-function RecipeCardTags({ tags, limit = 3 }: { tags: string[]; limit?: number }) {
+function RecipeCardTags({
+  tags,
+  limit = 3,
+  onSurface,
+}: {
+  tags: string[];
+  limit?: number;
+  /** Use translucent white badges for colored card surfaces. */
+  onSurface?: boolean;
+}) {
   return (
     <Row wrap className="gap-1.5 pt-1">
       {tags.slice(0, limit).map((tag) => (
-        <Badge key={tag} size="sm">
+        <Badge key={tag} size="sm" className={onSurface ? "bg-white/20 text-inherit" : undefined}>
           {tag}
         </Badge>
       ))}

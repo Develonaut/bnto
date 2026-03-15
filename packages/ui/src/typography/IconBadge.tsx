@@ -10,7 +10,8 @@ type IconBadgeVariant =
   | "destructive"
   | "success"
   | "warning"
-  | "info";
+  | "info"
+  | "onSurface";
 type IconBadgeSize = "sm" | "md" | "lg";
 type IconBadgeShape = "circle" | "square";
 
@@ -26,6 +27,7 @@ const iconBadgeCn = createCn({
       success: "bg-success/10 text-success",
       warning: "bg-warning/10 text-[oklch(0.58_0.16_50)]",
       info: "bg-chart-2/10 text-chart-2",
+      onSurface: "bg-white/20 text-inherit",
     },
     size: {
       sm: "size-8",

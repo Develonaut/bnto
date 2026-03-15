@@ -133,6 +133,29 @@
   }
 }
 
+/* ── Marquee Keyframes ─────────────────────────────────────────
+ * Infinite linear scroll for horizontal and vertical marquees.
+ * Duration and gap are set per-instance via CSS variables.
+ * ──────────────────────────────────────────────────────────── */
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+  }
+}
+
+@keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-100% - var(--gap)));
+  }
+}
+
 /* ── Stagger Cascade ───────────────────────────────────────────
  * Container class. Children receive staggered animation-delay
  * via --stagger-index CSS variable set in JSX.
