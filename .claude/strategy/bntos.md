@@ -87,9 +87,29 @@ First multi-node predefined recipes. Each runs a pipeline of 3 operations inside
 
 ---
 
-## Tier 2: Near-Term Recipes
+## Tier 2: Explore & Discovery Infrastructure
 
-All browser-only (free, unlimited) except Fetch & Save URL which is hybrid.
+**Prerequisite for recipe expansion.** Before adding more recipes, unify how recipes and nodes are listed across all surfaces. Currently, the home page (8 recipes), navbar Explore menu (6 recipes), editor palette (12 node types), and editor open dialog (all predefined recipes) all use different data transforms and show different subsets.
+
+**What this tier delivers:**
+
+- **Unified listing mechanism** — Single source of truth for what recipes/nodes are available, used by all surfaces (home, Explore, editor, sitemap). Currently `@bnto/nodes` is the source but each surface applies its own adapter/transform.
+- **Dedicated Explore page** — The Explore navbar dropdown becomes a link to `/explore` (or similar), a full-page searchable/filterable recipe & node repository. Think npm registry or Figma community — browse by category, search by keyword, see metadata.
+- **Registry unification** — `bntoRegistry.ts` (web SEO adapter), `navData.ts` (nav categories), `useNodePalette` (editor node types), and `RecipePickerGrid` (editor recipes) all derive from the same unified query. Add a recipe = it appears everywhere automatically.
+
+**Tasks (to be detailed in Sprint 6):**
+
+- Audit all listing surfaces and their data sources
+- Design unified recipe/node query API in `@bnto/core`
+- Build `/explore` page with search, filtering, and category browsing
+- Migrate Explore dropdown to link to `/explore` page
+- Ensure adding a recipe to `@bnto/nodes` automatically propagates to all surfaces
+
+---
+
+## Tier 3: Near-Term Recipes
+
+All browser-only (free, unlimited) except Fetch & Save URL which is hybrid. Requires Tier 2 (Explore & Discovery) to be complete first so new recipes automatically appear across all surfaces.
 
 | Recipe                 | Slug                | Persona   | Node Types             | Blocker                            |
 | ---------------------- | ------------------- | --------- | ---------------------- | ---------------------------------- |
@@ -102,7 +122,7 @@ All browser-only (free, unlimited) except Fetch & Save URL which is hybrid.
 
 ---
 
-## Tier 3: Backlog Recipes
+## Tier 4: Backlog Recipes
 
 | Recipe                  | Slug                 | Classification        | Node Types            | Notes                                     |
 | ----------------------- | -------------------- | --------------------- | --------------------- | ----------------------------------------- |
@@ -118,7 +138,7 @@ All browser-only (free, unlimited) except Fetch & Save URL which is hybrid.
 
 ---
 
-## Tier 4: AI-Powered Recipes (Backlog — M4, Server-Only, Pro Tier)
+## Tier 5: AI-Powered Recipes (Backlog — M4, Server-Only, Pro Tier)
 
 **Uses server nodes.** The `ai` node type requires server-side execution (API keys shouldn't be exposed client-side). These are Pro tier recipes with usage-based pricing — a natural conversion hook because they have real compute cost.
 

@@ -39,9 +39,10 @@ M1: Browser Execution (MVP)          ← DELIVERED (Feb 2026)
     Tier 1B multi-node compositions (March 2026): optimize-images-for-web,
     generate-thumbnails — first multi-node predefined recipes.
 
-M2: Platform Features
-    Save workflows, execution history, user accounts.
-    Convex-backed. This is where accounts earn their keep.
+M2: Platform Features                ← DELIVERED (March 2026)
+    Save workflows, execution history, user accounts, recipe editor v1.
+    Convex-backed. Editor shipped with schema-driven config, save/My Recipes,
+    keyboard shortcuts. Packages extracted: @bnto/ui, @bnto/editor.
 
 M3: Desktop App
     Desktop app with local execution. Free forever, unlimited.
@@ -62,7 +63,7 @@ M5: Monetization
     not artificial run limits on browser-native operations.
 ```
 
-**Key:** Milestones are sequential but overlap. M2 work starts as M1 closes. M1 is delivered — Rust proved out. The M3 desktop decision is made: Tauri (Rust-native).
+**Key:** Milestones are sequential but overlap. M1 and M2 are delivered. The M3 desktop decision is made: Tauri (Rust-native). Next up: quality/growth sprint or M3 bootstrap.
 
 ---
 
@@ -139,30 +140,19 @@ Requires server-side execution. These are the Pro tier differentiators.
 
 ---
 
-## Shared Node Registry
+## Shared Node Registry — DELIVERED
 
-**Problem:** Frontend currently hardcodes per-node config shapes. Two sources of truth (Go engine + frontend). Browser adapter needs a third.
-
-**Solution:** `@bnto/nodes` package — single source of truth for node definitions, schemas, recipes, and validation.
+`@bnto/nodes` is the engine-agnostic foundation — single source of truth for node definitions, schemas, recipes, and validation. **Built and shipping since Sprint 2B.** 12 node types, Zod parameter schemas, 8 predefined recipes, codegen from Rust engine catalog (`catalog.snapshot.json` → `generate-from-catalog.ts`).
 
 ```
 packages/@bnto/nodes/
-├── definitions/      # Node type definitions (what each node does)
-├── schemas/          # Input/output schemas (drives config panel UI)
+├── generated/        # Auto-generated from engine catalog (types, schemas, catalog)
+├── schemas/          # Per-node-type Zod parameter schemas
 ├── recipes/          # Predefined bnto recipes (metadata + definition)
-└── validators/       # Workflow validation (works in browser, CLI, desktop)
+└── validators/       # Definition validation (works in browser, CLI, desktop)
 ```
 
-**Consumed by every execution target:**
-
-- **Rust WASM browser engine** (M1) — executes each node type client-side
-- **Web app config UI** — generates forms from schemas (Atomiton pattern: `createFieldsFromSchema`)
-- **Go engine** (CLI, potentially M3/M4) — existing 28k-line implementation, validates against same schemas
-- **Desktop app** — same validation regardless of engine choice (Tauri if Rust wins, Wails if Go)
-
-**This is the engine-agnostic foundation.** No matter what happens — whether Rust WASM succeeds or we bail to JS adapters — `@bnto/nodes` stays. It's the single source of truth that any execution engine consumes. Build it first.
-
-**This replaces** the current pattern where `engine/pkg/menu/` owns recipes in Go and the web app hardcodes config shapes. Both converge on `@bnto/nodes`.
+**Consumed by:** Rust WASM engine (browser), web app config UI (schema-driven `SchemaForm` + `CONTROL_REGISTRY`), `@bnto/editor` (node CRUD, adapters), `@bnto/core` (execution pipeline). Future: desktop (Tauri), CLI.
 
 ---
 
@@ -230,6 +220,9 @@ Users convert when they want something the browser can't provide alone. These ar
 | **Convex execution logging**         | Approved                | Records who ran what. Ties to history when user signs up.                                               |
 | **Web Workers mandatory**            | Approved                | All WASM processing off main thread. Progress via postMessage.                                          |
 | **Zip + individual downloads**       | Approved                | Both options for multi-file result retrieval.                                                           |
+| **`@bnto/ui` extracted**             | Delivered (March 2026)  | Motorway design system as independent package. Primitives, layout, animation, surface system.           |
+| **`@bnto/editor` extracted**         | Delivered (March 2026)  | Headless-first editor package. ReactFlow canvas, schema-driven config, editor API layer.                |
+| **Code Editor (CM6) tabled**         | Deep backlog            | Power-user luxury. Visual editor is the product. May revisit post-M5.                                   |
 
 ### Engine Decision: Rust Won (Feb 2026)
 

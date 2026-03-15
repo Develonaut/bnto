@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 14, 2026
+**Last Updated:** March 14, 2026 (groomed — Tier 2 Explore & Discovery direction set, Sprint 6 drafted)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -27,10 +27,10 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **Editor is functional and in beta.** Execution wired (RunButton → WASM → results), compartment redesign shipped, I/O visual hierarchy complete, editor UX polish complete (hover delete, exit animations, drag reorder, auto-behaviors), copy/labels cleaned up.
-- **Active work:** Sprint 5 — finishing the editor for v1. Config panel controls (biggest UX gap), auto-download default, save/My Recipes, E2E verification.
-- **Tabled:** Sprint 4B (Code Editor), Sprint 6 (Edit/Run Mode), Sprint 5B W2-4 (LayerPanel polish, processing node accents).
-- **M1 delivered:** All 6 Tier 1 bntos + 2 Tier 1B multi-node compositions run 100% client-side via Rust→WASM
+- **M1 delivered (Feb 2026):** All 6 Tier 1 bntos + 2 Tier 1B multi-node compositions run 100% client-side via Rust→WASM
+- **M2 delivered (March 2026):** Editor v1 shipped — schema-driven config controls, save/My Recipes, keyboard shortcuts, accessibility audit. Accounts, execution history, PostHog telemetry all live.
+- **Sprint 6 (Explore & Discovery) is next.** Unify recipe/node listings across all surfaces, build `/explore` page. Prerequisite for Tier 3 recipe expansion.
+- **Tabled (deep backlog):** Code Editor (CM6), Edit/Run Mode, Sprint 5B W2-4 (LayerPanel polish, processing node accents).
 - **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
@@ -74,6 +74,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Editor UX polish (Sprint 5A): Hover delete overlay, PlaceholderSlot, isIoNode flag, exit animations, config panel identity echo (node icon + empty state), SchemaForm field grouping (FieldGroup), LayerPanel drag-to-reorder, empty canvas auto-behaviors, E2E verification
 - [x] Editor copy cleanup (Sprint 5C): Nav "Create" → "New Recipe", CTA "Customize in Editor" → "Open in Editor"
 - [x] Alternating layout direction for nested containers (#162), fitView selected node priority (#161), container node layout + divider-based add nodes (#160)
+- [x] Sprint 5 Editor v1: Auto-download default, config panel controls (Textarea, Combobox, KeyValueEditor), Motorway showcase, control registry wiring, inferFieldType updates, schema metadata cleanup, DRY recipe I/O nodes, save button + My Recipes integration, unsaved changes warning, E2E verification, keyboard shortcuts, accessibility audit
+- [x] Input node file extension filter fix: `deriveFileInputAccept` pure function, store selector in RunButton, unit tests, E2E verification
 
 ---
 
@@ -192,60 +194,63 @@ Size differentiation (100×100 vs 120×120), muted color for I/O nodes, elevatio
 
 Renamed nav "Create" → "New Recipe", recipe page CTA "Customize in Editor" → "Open in Editor". Grep-verified no remaining old copy.
 
+### Sprint 5: Editor v1 (M2 Completion) — COMPLETE
+
+Editor shipped as usable v1: auto-download default, config panel controls (Textarea, Combobox, KeyValueEditor + control registry wiring), schema metadata cleanup (hidden params, DRY recipe I/O), save to account + My Recipes integration + unsaved changes warning, keyboard shortcuts (undo/redo/delete/run/export), accessibility audit. All 4 waves complete. **M2 milestone delivered.**
+
+---
+
+## What's Next
+
+**M2 is delivered.** Direction decided: **Tier 2 (Explore & Discovery Infrastructure)** → then **Tier 3 (Near-Term Recipes)**. Unify how recipes/nodes are listed before expanding the recipe catalog. See `bntos.md` for the full tier breakdown.
+
+**Next active sprint:** Sprint 6 — Explore & Discovery (Tier 2).
+
 ---
 
 ## Active Sprint
 
-### Sprint 5: Editor v1 (M2 Completion)
+### Sprint 6: Explore & Discovery Infrastructure (Tier 2)
 
-**Goal:** Ship the editor as a usable v1 product. Users can build recipes, configure nodes with proper controls (not raw text inputs), run them, save to their account. This is the M2 completion path.
+**Goal:** Unify how recipes and nodes are listed across all surfaces, then build a dedicated Explore page. When this sprint is done, adding a recipe to `@bnto/nodes` automatically appears on every surface (home, Explore page, editor palette, sitemap). This is a prerequisite for Tier 3 recipe expansion.
 
-**Control strategy:** See [config-controls.md](.claude/strategy/config-controls.md) for the full parameter→control matrix, missing controls list, and build checklist.
+**Problem:** Currently 5+ surfaces list recipes/nodes using different data sources and transforms:
 
-#### Wave 1 — Auto-Download Default
+- Home: `RecipeGrid` → `BNTO_REGISTRY` (8 recipes, web-specific SEO wrapper)
+- Navbar: `RecipesMenu` → `navData.ts` `buildRecipeCategories()` (6 Tier 1 recipes, categorized)
+- Editor palette: `useNodePalette` → `NODE_TYPE_INFO` + `CATEGORIES` + `PROCESSORS` (12 node types)
+- Editor open dialog: `RecipePickerGrid` → `RECIPES` from `@bnto/nodes` (all predefined)
+- Tool pages + sitemap: `bntoRegistry.ts` → `generateStaticParams`
 
-- [x] `@bnto/nodes` + `@bnto/core` — Enable auto-download by default on Output node. Flip `autoDownload` default from `false` to `true` in: (1) Zod schema default in `@bnto/nodes/schemas/output.ts`, (2) `DEFAULTS` object in `core/adapters/browser/deriveOutputConfig.ts`, (3) all 8 predefined recipes in `@bnto/nodes/recipes/*.ts`, (4) blank definition in `@bnto/nodes/createBlankDefinition.ts`
+**Persona ownership:**
 
-#### Wave 2 — Config Panel Controls (v1 blockers)
+| Package       | Persona                                 |
+| ------------- | --------------------------------------- |
+| `@bnto/core`  | `/core-architect`                       |
+| `@bnto/nodes` | `/core-architect`                       |
+| `apps/web`    | `/frontend-engineer` + `/nextjs-expert` |
 
-Build the missing UI controls that make the config panel usable. Raw text inputs for template expressions, comma-separated lists, and key-value pairs are the biggest v1 UX problem. See [config-controls.md](.claude/strategy/config-controls.md) § "Missing Controls" and "Node Parameter Matrix" for the full audit.
+#### Wave 1 (parallel — audit + design)
 
-**Step 1 — Build UI primitives** in `@bnto/ui/interaction/`:
+- [ ] `@bnto/nodes` + `apps/web` — **Audit all listing surfaces**: Map every component/hook that lists recipes or nodes. Document data source, transform, filtering, and output shape for each. Identify divergences (missing recipes, different categories, stale hardcoded lists). Produce a comparison table.
+- [ ] `@bnto/core` — **Design unified recipe/node query API**: Propose how `@bnto/core` exposes a single query that all surfaces consume. Consider: should this be a core client (`core.catalog` or `core.explore`), or a query-only API? What filtering/grouping capabilities does it need? Write a brief design doc or add to `core-api.md`.
 
-- [x] `@bnto/ui` — **Textarea**: Multiline text input. Reference: `shadcn-blocks/components/textarea/textarea-form-1.tsx`
-- [x] `@bnto/ui` — **Combobox** (was TagPicker): Multi-select combobox with search, badges, and remove. Built on cmdk + Popover + Command primitive. For `z.array(z.string())` params (Input `extensions`). Reference: `shadcn-blocks/components/combobox/combobox-multi-select-1.tsx`
-- [x] `@bnto/ui` — **KeyValueEditor**: Add/remove key→value pairs. For `z.record(z.string())` params (Spreadsheet `columns`, Transform `mappings`). Reference: `shadcn-blocks/components/input/input-special-1.tsx` (list pattern)
+#### Wave 2 (parallel — build unified layer)
 
-**Step 2 — Motorway showcase** (each new control gets a `ShowcaseSection` under the Controls tab):
+- [ ] `@bnto/nodes` — **Enrich recipe metadata**: Ensure every predefined recipe in `@bnto/nodes` has enough metadata for all surfaces (category, description, icon, tier, features list). Eliminate the need for `bntoRegistry.ts` to wrap/augment `@bnto/nodes` data with hardcoded SEO fields — move that metadata to the source.
+- [ ] `@bnto/core` — **Implement unified catalog query**: Build the API designed in Wave 1. Single source that provides recipes and node types with filtering by category, tier, search keyword. All surfaces consume this.
+- [ ] `apps/web` — **Migrate home RecipeGrid**: Replace `BNTO_REGISTRY` with the unified catalog query. Home page shows all available recipes.
 
-- [x] `apps/web` — **Motorway Controls tab update**: Add showcase sections for Textarea, TagPicker, and KeyValueEditor. Column layout showing variants, states, edge cases. This is the living catalog — if it's not on Motorway, it doesn't exist.
+#### Wave 3 (parallel — Explore page + surface migration)
 
-**Step 3 — Wire into editor control registry**:
+- [ ] `apps/web` — **Build `/explore` page**: Full-page searchable/filterable recipe & node browser. Categories, search, metadata cards. Server component page with client interactive leaves.
+- [ ] `apps/web` — **Migrate navbar Explore**: Replace dropdown with a link to `/explore`. Keep a compact "quick access" subset if desired, but primary action is navigating to the Explore page.
+- [ ] `apps/web` — **Migrate editor surfaces**: Update `useNodePalette` and `RecipePickerGrid` (open dialog) to consume the unified catalog query instead of direct `@bnto/nodes` imports.
 
-- [x] `@bnto/editor` — **TextareaControl**: Create control component, register as `textarea` in `CONTROL_REGISTRY`
-- [x] `@bnto/editor` — **TagPickerControl**: Create control component, register as `tagPicker` in `CONTROL_REGISTRY`
-- [x] `@bnto/editor` — **KeyValueEditorControl**: Create control component, register as `keyValue` in `CONTROL_REGISTRY`
+#### Wave 4 (sequential — verify)
 
-**Step 4 — Update inference + schemas**:
-
-- [x] `@bnto/nodes` — **inferFieldType updates**: Map `z.array(z.string())` → `tagPicker`, `z.record(z.string())` → `keyValue`. Add `textarea` hint support via `NodeParamMeta`
-- [x] `@bnto/nodes` — **Schema metadata cleanup**: Add `hidden: true` to Input node `accept` param (derive from `extensions`). Add `hidden: true` to Parallel node `tasks` param. Add `hidden: true` (or read-only) to `operation` param on image, file-system, and spreadsheet nodes — operation is pre-set from the palette, no need to expose in config panel. Add human-readable labels to `z.enum()` options where missing (Loop `mode`, Input `mode`, Output `mode`). **Also DRY up recipe definitions:** Extract shared `defaultOutputNode()` and `defaultInputNode()` factory functions to eliminate repeated I/O node boilerplate across all 8 recipe files — output params (mode, zip, autoDownload, label) and input params (mode, accept, extensions, multiple) are copy-pasted everywhere
-
-#### Wave 3 — Save + My Recipes
-
-Convex persistence for custom recipes. Backend save mutation + core hooks already exist.
-
-- [x] `apps/web` — Save button in editor toolbar, tier limits (Free: 3 recipes, Pro: unlimited)
-- [x] `apps/web` — My Recipes integration (load saved recipes into editor)
-- [x] `apps/web` — Unsaved changes warning on navigation (`beforeunload` prompt when `isDirty` is true)
-
-#### Wave 4 — E2E Verification
-
-Existing editor E2E coverage is strong (33+ tests across 5 spec files). This wave fills gaps.
-
-- [x] `apps/web` — Verify existing E2E tests pass with new controls (TagPicker, KeyValueEditor render for correct params)
-- [x] `apps/web` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
-- [x] `apps/web` — Accessibility audit (focus management, screen reader labels on canvas nodes)
+- [ ] `apps/web` — **SEO verification**: Ensure `generateStaticParams`, `generateMetadata`, sitemap, and `llms.txt` all derive from the unified source. Adding a recipe to `@bnto/nodes` = it appears everywhere.
+- [ ] `apps/web` — **E2E tests**: Verify Explore page renders, search/filter works, recipe cards link to tool pages. Verify editor palette and open dialog still show correct items. Page-level screenshots for `/explore`.
 
 ---
 
@@ -258,84 +263,6 @@ Existing editor E2E coverage is strong (33+ tests across 5 spec files). This wav
 ### Sprint 5B Waves 2-4: LayerPanel Polish + Processing Node Accents — TABLED
 
 **Tabled (March 2026).** Category color pips on processing nodes, selected state ring, LayerPanel I/O distinction + selected highlights. Wave 1 (I/O visual hierarchy) shipped. Remaining waves need more design iteration. Existing Pressable pressed state handles selection well enough for v1.
-
-### Sprint 4B: Code Editor (CodeMirror 6) — TABLED
-
-**Goal:** A schema-aware `.bnto.json` code editor for power users — the coding-oriented counterpart to the visual canvas. Users who prefer code get the same power as the visual canvas, with the speed and precision of text editing. Slash commands bring Notion-like ergonomics. The code editor is free (same as the visual editor).
-
-**Status:** Unblocked but deferred until visual editor ships to production.
-
-**Required reading:** Before picking up ANY task in Sprint 4B, read [code-editor.md](.claude/strategy/code-editor.md) — the design document covering tech choice rationale (CM6 over Monaco), architecture (headless-first + store sync), feature tiers, slash command implementation, JSON Schema strategy, CLI/TUI parallels, React integration pattern, theming, and performance considerations. Also read the persona at `.claude/skills/code-editor-expert/SKILL.md` for CM6-specific APIs, extension patterns, and gotchas.
-
-**Architecture: headless-first + CM6.** The code editor shares Sprint 4's headless foundation (Wave 1 pure functions, Wave 2 editor store). CM6 extensions provide JSON-specific intelligence on top. Both editors are views of the same `Definition` in `useEditorStore`. See [code-editor.md § Architecture](.claude/strategy/code-editor.md) for the state flow diagram.
-
-**Tech choice: CodeMirror 6, not Monaco.** ~40 KB gzipped vs ~2.4 MB (60x smaller). CSS variable theming (direct OKLCH integration). Native mobile support. Headless state (`EditorState` without DOM). See [code-editor.md § Tech Choice](.claude/strategy/code-editor.md) for the full comparison table and evidence (Sourcegraph, Replit, Chrome DevTools migrations).
-
-**Key implementation patterns** (from design doc + persona):
-
-- **React integration:** Custom `useCodeEditor` hook with `useRef`/`useEffect` — NOT `@uiw/react-codemirror`. CM6 author recommends imperative integration.
-- **Theming:** CM6 `EditorView.theme()` with CSS variables (`var(--background)`, `var(--primary)`, etc.). Dark mode automatic. See [code-editor.md § Theming](.claude/strategy/code-editor.md).
-- **Slash commands:** CM6 `CompletionSource` or `StateField` + `showTooltip` facet. Context-aware — only activates inside `"nodes"` arrays. See [code-editor.md § Slash Commands](.claude/strategy/code-editor.md).
-- **Store sync:** `Annotation` pattern prevents sync loops between CM6 and Zustand. Debounced JSON parsing (200ms). See [code-editor.md § React Integration](.claude/strategy/code-editor.md).
-- **JSON Schema:** Generated from `@bnto/nodes` types (build step), fed to `codemirror-json-schema` at runtime. See [code-editor.md § JSON Schema Strategy](.claude/strategy/code-editor.md).
-
-**Persona ownership:**
-| Wave | Lead Persona | Supporting | Rationale |
-|------|-------------|------------|-----------|
-| Wave 1 | — (build step, no persona needed) | — | JSON Schema generation from `@bnto/nodes` types — pure TypeScript |
-| Wave 2 | `/code-editor-expert` | `/frontend-engineer` | CM6 foundation, theming, React integration. Frontend Engineer helps with component composition |
-| Wave 3 | `/code-editor-expert` | — | Slash commands and command registry — pure CM6 extension work |
-| Wave 4 | `/code-editor-expert` + `/frontend-engineer` | `/reactflow-expert` | Store sync, split view, command palette. ReactFlow Expert advises on store integration |
-| Wave 5 | `/code-editor-expert` + `/frontend-engineer` | — | Breadcrumbs, polish, E2E tests |
-
-**Rule:** For ANY work touching CodeMirror 6 APIs, editor extensions, slash commands, JSON Schema integration, or CM6 theming — invoke `/code-editor-expert`. This persona is THE authority on CM6 in this codebase.
-
-**Dependencies:** Sprint 4 Wave 1 (pure functions) and Wave 2 (editor store) must complete first. The code editor consumes the shared store — it doesn't own it.
-
-#### Wave 1 (parallel — JSON Schema generation)
-
-Generate a JSON Schema from existing `@bnto/nodes` types. This schema drives CM6 validation, autocompletion, and hover tooltips. Generated, not hand-written — stays in sync with node definitions automatically. Pure TypeScript build step — no persona needed, but read [code-editor.md § JSON Schema Strategy](.claude/strategy/code-editor.md) before starting.
-
-- [ ] `@bnto/nodes` — **JSON Schema generator script**: Build step that derives a JSON Schema from `ParameterSchema` objects (all 10 node types), `Definition` type structure, and `NODE_TYPE_INFO` metadata. Output: `packages/@bnto/nodes/src/generated/bnto.schema.json`. Schema includes per-node-type parameter constraints (`visibleWhen`, `requiredWhen`, enum values, min/max, defaults).
-- [ ] `@bnto/nodes` — **Schema export**: Export the generated schema from the package entry point. Consumers import it as `import schema from "@bnto/nodes/schema"`.
-- [ ] `@bnto/nodes` — **Unit tests for schema generation**: Verify schema validates known-good `.bnto.json` fixtures. Verify schema rejects malformed definitions. Verify per-node-type parameter constraints are present.
-
-#### Wave 2 (parallel — CM6 foundation)
-
-Editor component with JSON language, schema validation, autocompletion, hover tooltips, and warm theme. The core editing experience — everything else builds on this. **Invoke `/code-editor-expert`** — this persona owns all CM6 APIs, extension patterns, theming, and React integration. Also invoke `/frontend-engineer` for component composition.
-
-- [ ] `apps/web` — **Install CM6 packages**: `@codemirror/state`, `@codemirror/view`, `@codemirror/lang-json`, `@codemirror/autocomplete`, `@codemirror/lint`, `@codemirror/commands`, `@codemirror/search`, `codemirror-json-schema`.
-- [ ] `apps/web` — **`bntoTheme()` extension**: CM6 theme using CSS variables from `globals.css`. OKLCH tokens for background, foreground, primary (caret/cursor), accent (selection), muted (gutters), border, destructive (error diagnostics). Dark mode automatic via CSS variable resolution.
-- [ ] `apps/web` — **`useCodeEditor(options)` hook**: Custom React hook (not `@uiw/react-codemirror`). Creates `EditorView` in `useEffect`, stores in `useRef`. Configures: `json()` language, `jsonSchema()` with bnto schema, `bntoTheme()`, standard keymap, history (undo/redo), bracket matching, code folding, line numbers. Cleanup on unmount.
-- [ ] `apps/web` — **`CodeEditor` component**: Thin wrapper around `useCodeEditor`. Renders a `<div ref={containerRef} />` with proper sizing. Lazy-loaded via `next/dynamic({ ssr: false })` — CM6 needs DOM.
-- [ ] `apps/web` — **Unit tests for CM6 extensions**: Theme applies correct CSS variables. Schema validation produces diagnostics for invalid JSON. Autocompletion suggests node type names and parameter names.
-
-#### Wave 3 (parallel — slash commands + command registry)
-
-Inline slash command menu for node template insertion — the bridge between "code editor" and "visual editor" ergonomics. **Invoke `/code-editor-expert`** — this persona owns slash command implementation (CM6 `CompletionSource` vs `StateField` + `showTooltip` approach), context-aware activation, and the command registry pattern.
-
-- [ ] `apps/web` — **Command registry**: `EditorCommand` type with `id`, `label`, `description`, `category`, `icon`, `shortcut`, `slashTrigger`, `available`, `execute`. Registry populated from `NODE_TYPE_INFO` (one "Insert X Node" command per node type) plus editor commands (Format JSON, Validate, Run, Export). Single source of truth shared by slash menu and Cmd-K palette.
-- [ ] `apps/web` — **`bntoSlashCommands()` extension**: CM6 `CompletionSource` (or `StateField` + `showTooltip` — evaluate which approach is better). Activates when user types `/` inside a `"nodes": [...]` array. Shows filterable list of node types with icons and descriptions. On selection, inserts a complete, valid node JSON block with generated ID, default params from schema, and cursor positioned at the first editable parameter.
-- [ ] `apps/web` — **Node template generation**: Pure function `generateNodeTemplate(nodeType)` → formatted JSON string for a new node of the given type, with default parameter values from `ParameterSchema`. Used by both slash commands and command palette.
-- [ ] `apps/web` — **Unit tests for slash commands**: Slash menu activates on `/` at valid position. Menu filters as user types. Selection inserts valid node JSON. Menu doesn't activate outside `"nodes"` array.
-
-#### Wave 4 (parallel — store sync + command palette + split view)
-
-Bidirectional sync between code editor and visual canvas. Cmd-K palette for app-level commands. Split view for simultaneous editing. **Invoke `/code-editor-expert` + `/frontend-engineer`.** Code Editor Expert owns the CM6 `Annotation` sync pattern and store integration. Frontend Engineer owns component composition and split view layout. `/reactflow-expert` advises on store integration with the visual canvas.
-
-- [ ] `apps/web` — **Store sync extension**: CM6 `updateListener` + `Annotation` pattern. Code editor changes → parse JSON → validate → update `useEditorStore.definition`. Store changes → serialize to JSON → dispatch CM6 transaction with `externalUpdate` annotation (prevents sync loop). Debounced parsing (200ms) for performance.
-- [ ] `apps/web` — **Command palette (Cmd-K)**: Uses `cmdk` (shadcn/ui `Command` component). Opens on Cmd-K anywhere in the editor. Lists all commands from the command registry. Keyboard navigable, filterable. Not CM6-specific — works across the entire app.
-- [ ] `apps/web` — **Split view**: Side-by-side `BentoCanvas` + `CodeEditor`, both reading from `useEditorStore`. Changes in either sync through the store. Resizable split pane. Toggle between code-only, visual-only, and split modes via `EditorModeToggle`.
-- [ ] `apps/web` — **Unit tests for sync**: Code edit → store updates. Store change → CM6 document updates. External annotation prevents sync loops. Invalid JSON doesn't crash store.
-
-#### Wave 5 (sequential — breadcrumbs, polish, E2E)
-
-Navigation aids and full end-to-end verification. **Invoke `/code-editor-expert` + `/frontend-engineer`.** Code Editor Expert owns breadcrumb implementation (CM6 `ViewPlugin` + Lezer tree walking) and template expression hints. Frontend Engineer owns E2E test composition.
-
-- [ ] `apps/web` — **Breadcrumb panel**: JSON path breadcrumbs above the editor showing current cursor position: `root > nodes > [0] > parameters > quality`. CM6 `ViewPlugin` watches cursor, walks Lezer parse tree. Clicking a breadcrumb segment navigates the cursor to that position.
-- [ ] `apps/web` — **Format on save**: Pretty-print JSON on Cmd-S. Preserves cursor position.
-- [ ] `apps/web` — **Template expression hints**: Autocomplete for `{{.INPUT_DIR}}`, `{{.item}}`, `{{index . "node-id" "port"}}` inside string values. Custom `CompletionSource` that activates inside `{{...}}` delimiters.
-- [ ] `apps/web` — **E2E tests**: Open code editor → JSON renders with syntax highlighting. Type invalid JSON → error diagnostics appear. Type `/` → slash menu shows node types. Select from slash menu → valid node template inserted. Edit in code editor → visual canvas updates (split view). Edit in visual canvas → code editor updates. Cmd-K → command palette opens. Breadcrumbs show correct path. Export produces valid `.bnto.json`.
 
 ---
 
@@ -748,7 +675,7 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 **What's not migrated (documented for future):**
 
 - Orchestration: `group`, `loop`, `parallel` — needed for multi-step recipes
-- Data: `transform` (expr-lang), `edit-fields` (Go templates) — needed for Tier 2 recipes
+- Data: `transform` (expr-lang), `edit-fields` (Go templates) — needed for Tier 3 recipes
 - Server-only: `http-request`, `shell-command` — M4 Pro tier
 
 **Tasks:**
@@ -765,12 +692,12 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 
 **Priority: Medium.** Bring Go engine operations that have no Rust equivalent yet. Reference: [go-engine-migration.md](strategy/go-engine-migration.md).
 
-**Tier 2 recipe blockers:**
+**Tier 3 recipe blockers:**
 
-- [ ] `engine` — **`bnto-image`: composite operation** — overlay/watermark. Needed for `/watermark-images` (Tier 2, 30K+ monthly searches). See Go `image.go` composite logic
-- [ ] `engine` — **`bnto-image`: EXIF metadata strip** — needed for `/strip-exif` (Tier 2, 15K+ monthly searches). Go used `imaging` library strip
-- [ ] `engine` — **`bnto-csv`: merge operation** — concat + deduplicate multiple CSVs. Needed for `/merge-csv` (Tier 2, 12K+ monthly searches)
-- [ ] `engine` — **`bnto-csv`: CSV-to-JSON conversion** — needed for `/csv-to-json` (Tier 2, 25K+ monthly searches). May be a `transform` concern
+- [ ] `engine` — **`bnto-image`: composite operation** — overlay/watermark. Needed for `/watermark-images` (Tier 3, 30K+ monthly searches). See Go `image.go` composite logic
+- [ ] `engine` — **`bnto-image`: EXIF metadata strip** — needed for `/strip-exif` (Tier 3, 15K+ monthly searches). Go used `imaging` library strip
+- [ ] `engine` — **`bnto-csv`: merge operation** — concat + deduplicate multiple CSVs. Needed for `/merge-csv` (Tier 3, 12K+ monthly searches)
+- [ ] `engine` — **`bnto-csv`: CSV-to-JSON conversion** — needed for `/csv-to-json` (Tier 3, 25K+ monthly searches). May be a `transform` concern
 
 **Orchestration (multi-step recipe support):**
 
@@ -781,33 +708,13 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 
 - [ ] `engine` — **`bnto-csv`: Excel (.xlsx) read/write** — Go used `excelize/v2`. Rust options: `calamine` (read) + `rust_xlsxwriter` (write). Lower priority than CSV operations
 
-### Engine: Spreadsheet Node Template Resolution — M3/M4 (Go engine)
+### Engine: `pdf` Browser Node — Future (Tier 3)
 
-**Milestone: M3/M4.** Go engine work — not blocking M1 (browser execution uses Rust/JS, not Go). The `clean-csv` predefined Bnto fails in cloud execution. The `read-csv` node (type: `spreadsheet`) receives `<no value>` for its input file path template variable.
+**Priority: Medium.** PDF to Images Bnto (Tier 3, 50K+ monthly searches). Browser-side via pdf.js + Canvas (JS), not Go engine. Rewrite of the Go `pdfcpu` approach for client-side execution.
 
-**Discovered via:** Integration E2E test. All image-based pipelines work — only the spreadsheet node path is broken.
-
-- [ ] `engine` — Reproduce locally: `bnto run` with `clean-csv` fixture against a test CSV file
-- [ ] `engine` — Debug template resolution in `spreadsheet` node's `Execute()`
-- [ ] `engine` — Fix template variable resolution so `read-csv` receives the actual file path
-- [ ] `engine` — Verify fix: E2E `clean-csv` test passes (`task e2e`)
-
-### Engine: Loop Node Output Collection — M3/M4 (Go engine)
-
-**Milestone: M3/M4.** Go engine work — not blocking M1. The `loop` node currently collects original items, not sub-node outputs.
-
-**Impact:** The `rename-csv-columns` fixture is a read → write pass-through. True column remapping requires this fix.
-
-- [ ] `engine` — Loop node collects sub-node outputs instead of (or in addition to) original items
-- [ ] `engine` — Alternative: new array-level transform node that operates on all rows at once
-
-### Engine: `pdf` Node Type — M3/M4 (Go engine)
-
-**Milestone: M3/M4.** Go engine work. Required for the PDF to Images Bnto (Tier 2, 50K+ monthly searches).
-
-- [ ] `engine` — Implement `pdf` node type (wrap `pdfcpu` Go library, or shell-command + ghostscript as interim)
+- [ ] `engine` or `apps/web` — Implement browser-side PDF → image conversion (pdf.js + Canvas)
 - [ ] `engine` — Unit tests for PDF → image conversion
-- [ ] `engine` — Integration fixture: `pdf-to-images.bnto.json`
+- [ ] `@bnto/nodes` — Add `pdf` node type definition, recipe fixture `pdf-to-images.bnto.json`
 
 ### Infra: Clean Up Convex Dev Environment (Better Auth Remnants)
 
@@ -904,9 +811,9 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 
 **Phased delivery:**
 
-**Phase 1 (current — no work needed):** Tier 1-2 recipes use structured controls exclusively. Template fields are hidden or pre-filled. Users never write expressions.
+**Phase 1 (current — no work needed):** Tier 1-3 recipes use structured controls exclusively. Template fields are hidden or pre-filled. Users never write expressions.
 
-**Phase 2 (when Tier 3 nodes ship — transform, http-request):**
+**Phase 2 (when Tier 4 nodes ship — transform, http-request):**
 
 - [ ] `engine` — Add `template_variables: Option<Vec<TemplateVariable>>` to `ParameterDef` in `metadata.rs`. Each variable declares name, label, description, source, example value. Populate in processors that have template params (file-system rename pattern, loop items)
 - [ ] `packages/@bnto/nodes` — Update codegen (`generate-from-catalog.ts`) to propagate `templateVariables` into `NodeSchemaDefinition` params
@@ -916,7 +823,7 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 - [ ] `packages/editor` — **Fixed/Expression toggle**: Per-field toggle (n8n-style) that switches between structured control and expression input. Trailing icon on SchemaField
 - [ ] `apps/web` — E2E: Verify pill token rendering, variable picker insertion, Fixed/Expression toggle
 
-**Phase 3 (when ai nodes ship — Tier 4):**
+**Phase 3 (when ai nodes ship — Tier 5):**
 
 - [ ] `packages/editor` — Expression validation feedback (red underline for unknown variables, type mismatches)
 - [ ] `packages/editor` — Autocomplete for function names and variable paths (beyond pill insertion)
@@ -986,41 +893,13 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 - JSON editor must represent recursive structure faithfully
 - Visual editor (Sprint 4) must support drill-down into group nodes
 
-### Bug: Input Node File Extension Filter Not Enforced
-
-**Priority: High. Partially addressed by Sprint 5 Wave 2** (TagPicker control for extensions, hide `accept` param). The extension enforcement bug (file dialog not respecting `extensions`) still needs a separate fix.
-
-The `extensions` parameter on the Input node (`@bnto/nodes/schemas/input.ts`) is not respected by the native file dialog — users can select files outside the allowed extensions (e.g., PDFs when only image extensions are configured). The `accept` attribute on the file input likely isn't being derived from the Input node's `extensions` param.
-
-**Fix:** Trace how the Input node's `extensions` array flows to the actual `<input type="file" accept="...">` element. Ensure the file picker's `accept` attribute is built from the extensions list. Add regression tests so this doesn't break again.
-
-**Tasks:**
-
-- [x] `packages/editor` — `/frontend-engineer` — Trace the Input node `extensions` param to the file picker `accept` attribute. Fix: `deriveFileInputAccept` pure function + store selector in RunButton
-- [x] `packages/editor` — `/frontend-engineer` — Add unit tests (8 tests in `deriveFileInputAccept.test.ts`) verifying extensions → accept derivation
-- [x] `apps/web` — `/quality-engineer` — E2E tests (FA1, FA2 in `editor-predefined.spec.ts`): verify file input `accept` attribute for image and CSV recipes
-
-**Note:** The `accept` (MIME types) param is also exposed but may not need to be surfaced to users — file extensions are the more intuitive control. Consider hiding `accept` from the config panel if `extensions` covers the use case. See related UX item below.
-
----
-
-### UX: Input Node File Extension Control — Multi-Select — ABSORBED INTO SPRINT 5
-
-**Absorbed into Sprint 5 Wave 2** (config panel controls). TagPicker UI primitive, `CONTROL_REGISTRY` wiring for `z.array(z.string())` → `tagPicker`, and hiding `accept` param are all Sprint 5 W2 tasks. See [config-controls.md](.claude/strategy/config-controls.md) for the full matrix.
-
----
-
-### ~~Triage: Operation Select May Be Redundant in Config Panel~~ — ABSORBED INTO SPRINT 5 W2
-
-**Absorbed into Sprint 5 Wave 2 Step 4** (schema metadata cleanup). Hide `operation` param on image, file-system, and spreadsheet nodes since it's pre-set from the palette.
-
 ### Home Page Marquee for Recipe Cards
 
 **Priority: P3 — Post-Editor.** The home page hero has too many recipe cards pushing content below the fold. Use Magic UI's Marquee component to display recipe cards in a scrolling row, keeping the rest of the page above the fold. Reference: https://magicui.design/docs/components/marquee.md
 
 ### Full Codebase Quality Audit Post-Editor v1
 
-**Priority: P3 — Post-Editor Gate.** After editor v1 ships, run a full codebase sweep: dead code removal (knip per package), code standards compliance, and a domain-by-domain audit where each persona skill verifies its area follows all rules. Cover all packages and apps. Good candidate for a dedicated sprint between editor v1 and M3 work.
+**Priority: P2 — Trigger condition met (editor v1 shipped March 2026).** Run a full codebase sweep: dead code removal (knip per package), code standards compliance, and a domain-by-domain audit where each persona skill verifies its area follows all rules. Cover all packages and apps. Good candidate for a dedicated sprint between editor v1 and M3 work.
 
 ### Triage: SelectTrigger missing press animation
 
@@ -1103,6 +982,12 @@ Files: `packages/*/src/**/*.test.ts`, `apps/web/e2e/**/*.spec.ts`
 **Priority: Triage.** Audit React context usage vs store selectors across `@bnto/editor`. Ensure components use direct store subscriptions (`useStore` + selector) instead of React context for state reads. General cleanup: memoize selectors, remove unnecessary re-renders, verify slice granularity.
 
 Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `packages/editor/src/context.ts`
+
+### Deep Backlog: Code Editor (CodeMirror 6) — Post-M5
+
+**Tabled indefinitely (March 2026).** Schema-aware `.bnto.json` code editor for power users — CM6 over Monaco (60x smaller), slash commands, JSON Schema validation, store sync with visual canvas. The visual editor is the product; code editor is a power-user luxury. Design doc: [code-editor.md](.claude/strategy/code-editor.md). May revisit post-M5 if demand emerges.
+
+---
 
 ## Reference
 
