@@ -1,6 +1,7 @@
 ---
 name: pre-commit
 description: Run the mandatory pre-commit checklist
+arguments: "[--review] [--merge]"
 ---
 
 # Pre-Commit Checklist
@@ -8,6 +9,15 @@ description: Run the mandatory pre-commit checklist
 Run through ALL steps below. If any step fails, STOP, fix the issue, and restart from the automated checks.
 
 You are NOT allowed to deem any failures as "pre-existing" or skip them. Report ALL failures to the user and let them decide.
+
+## Arguments
+
+| Argument   | Effect                                                                                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--review` | Run `/code-review` before automated checks. Without this flag, code review is skipped.                                                                       |
+| `--merge`  | After pushing and creating the PR, enable GitHub auto-merge (`gh pr merge --auto --squash --delete-branch`). The PR will merge automatically once CI passes. |
+
+Both arguments are optional and can be combined: `/pre-commit --review --merge`.
 
 ## Step 0: Read the Standards
 
@@ -50,11 +60,15 @@ Identify which packages the changed files belong to and invoke the relevant pers
 
 !`git branch --show-current`
 
-## Step 1: Code Review
+## Step 1: Code Review (requires `--review`)
 
-Run `/code-review` to audit all changed files against the project's coding standards, architecture rules, and known gotchas. This catches structural and architectural issues that linters miss.
+**Skip this step unless `--review` was passed.**
+
+If `--review` was passed: Run `/code-review` to audit all changed files against the project's coding standards, architecture rules, and known gotchas. This catches structural and architectural issues that linters miss.
 
 **Fix any violations before proceeding.** The code review covers: architecture & layer compliance, Bento Box, TypeScript, Rust code quality, React Query & state management, performance, code quality, test coverage, and stale artifacts.
+
+If `--review` was NOT passed: proceed directly to Step 2.
 
 ## Step 2: Automated Checks
 
@@ -141,7 +155,7 @@ Before committing, present a summary to the user including the checklist below.
 
 **CRITICAL: You NEVER get to skip Unit/Integration Tests or E2E Tests on your own.** If any `apps/web/` file was changed, E2E tests MUST be run — no reasoning about "zero visual change" allowed. If you believe a skip is justified, you MUST ask the user for explicit permission and WAIT for their response before proceeding. Silence = run the tests.
 
-1. **Code review result** — confirm `/code-review` passed clean (or list fixes made)
+1. **Code review result** — confirm `/code-review` passed clean (or list fixes made), or SKIPPED (`--review` not passed)
 2. **Did you touch `apps/web/`?** — Yes or No. Check `git diff --name-only` — if ANY file in `apps/web/` is listed, the answer is Yes.
 3. **If yes:** Confirm E2E tests were run. List the command used and results (pass count, fail count). If screenshots were updated, confirm two-run verification. If E2E tests were NOT run, state that user granted explicit permission to skip (quote their message).
 4. **Unit/Integration tests** — Confirm `task ui:test` passed. If new logic was added, list new test files.
@@ -209,3 +223,22 @@ Present the proposed commit message to the user for approval before committing.
 - **CI must pass** before merging. The `CI Gate` check (Rust + TypeScript) is required.
 - **NEVER force-push to `main`** or merge without CI passing.
 - Ask the user before pushing if you're unsure. A request to "commit" does not imply "push."
+
+### Auto-Merge (requires `--merge`)
+
+**Skip this section unless `--merge` was passed.**
+
+After the PR is created, enable GitHub auto-merge so the PR merges automatically once CI passes:
+
+```bash
+gh pr merge <number> --auto --squash --delete-branch
+```
+
+This sets up auto-merge — GitHub will squash-merge and delete the branch as soon as all required status checks pass. No manual `/merge-pr` step needed.
+
+**Report to the user:**
+
+- PR number and URL
+- Auto-merge status: enabled (waiting for CI) or failed (reason)
+
+If auto-merge fails (e.g., branch protection requires reviews), report the error and suggest running `/merge-pr` manually after requirements are met.
