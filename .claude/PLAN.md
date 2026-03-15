@@ -79,7 +79,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Revenue & Monetization Context
 
-Pricing, revenue projections, and "ready to charge" criteria live in [.claude/business/](business/) — see [pricing-strategy.md](business/pricing-strategy.md), [seo-monetization.md](business/seo-monetization.md), and [feature-funnel.md](business/feature-funnel.md).
+Pricing, revenue projections, and "ready to charge" criteria live in private business docs (`BNTO_PRIVATE_DOCS_PATH` in `.env.local`) — see `pricing-strategy.md`, `seo-monetization.md`, and `feature-funnel.md`.
 
 **Monetization model (updated Feb 2026):** Browser execution is free unlimited. Pro sells real value — persistence, collaboration, premium compute. See ROADMAP.md for the full model.
 
@@ -450,7 +450,7 @@ When a recipe has multi-file input and a processing node (e.g., Image compress),
 - **Option A (Smart/implicit):** Automatically iterate over inputs — user adds `Input → Image (compress) → Output`, engine handles the loop. Simple, fewer nodes, covers 90% of cases.
 - **Option B (Explicit):** User builds iteration manually — `Input → Loop (forEach) → Image (compress inside loop) → Output`. More flexible, more transparent, matches current Go engine model.
 
-**Proposed direction:** Smart by default (Option A) with an advanced toggle to switch to explicit looping for power users. This affects engine processing, definition schema, and editor UX. Needs a deep review session with full project context ([bntos.md](strategy/bntos.md), [business/mvp-roadmap.md](business/mvp-roadmap.md)) before implementation.
+**Proposed direction:** Smart by default (Option A) with an advanced toggle to switch to explicit looping for power users. This affects engine processing, definition schema, and editor UX. Needs a deep review session with full project context ([bntos.md](strategy/bntos.md), `mvp-roadmap.md` in private business docs) before implementation.
 
 **Touches:** `@bnto/nodes` (definition schema), `engine/` (execution model), `@bnto/editor` (node placement + wiring), recipe definitions (compress-images etc.), `io-nodes.md` strategy doc.
 
@@ -1084,23 +1084,22 @@ Files: `packages/ui/src/interaction/Button.tsx`, all consumers of `size="sm"` or
 
 ### Triage: Kbd Component & Keyboard Shortcuts Dialog
 
-**Priority: Triage.** Create a `<Kbd>` UI primitive to display keyboard shortcut hints on menu items (e.g., `⌘Z` next to Undo). Also consider a keyboard shortcuts dialog (e.g., `⌘?`) listing all available shortcuts to improve discoverability.
----
+## **Priority: Triage.** Create a `<Kbd>` UI primitive to display keyboard shortcut hints on menu items (e.g., `⌘Z` next to Undo). Also consider a keyboard shortcuts dialog (e.g., `⌘?`) listing all available shortcuts to improve discoverability.
 
 ## Reference
 
-| Document                                     | Purpose                                                                                                           |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `.claude/journeys/`                          | User journey test matrices — auth, engine, API, web app, editor                                                   |
-| `.claude/strategy/bntos.md`                  | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers                                                    |
-| `.claude/strategy/editor-architecture.md`    | Shared editor layer — store, hooks, package strategy, switchable editors                                          |
-| `.claude/strategy/editor-user-journey.md`    | Editor user journey — stages, flows, success criteria, phased delivery                                            |
-| `.claude/strategy/visual-editor.md`          | Bento box visual editor — compartment design, grid layout, execution state                                        |
-| `.claude/strategy/code-editor.md`            | Code editor design — CM6, slash commands, JSON Schema                                                             |
-| `.claude/strategy/visual-editor.md`          | Bento box visual editor — compartment design, grid layout, execution state                                        |
-| `.claude/strategy/go-engine-migration.md`    | Go engine node inventory — migration reference before archive deletion                                            |
-| `.claude/strategy/cloud-desktop-strategy.md` | Architecture, cost analysis, cloud execution topology                                                             |
-| `.claude/strategy/core-principles.md`        | Trust commitments, "For Claude Code" guidance                                                                     |
-| `.claude/rules/`                             | Auto-loaded rules (architecture, code-standards, components, etc.)                                                |
-| `.claude/skills/`                            | Agent skills (pickup, project-manager, code-review, pre-commit)                                                   |
-| [.claude/business/](business/)               | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
+| Document                                                         | Purpose                                                                                                           |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `.claude/journeys/`                                              | User journey test matrices — auth, engine, API, web app, editor                                                   |
+| `.claude/strategy/bntos.md`                                      | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers                                                    |
+| `.claude/strategy/editor-architecture.md`                        | Shared editor layer — store, hooks, package strategy, switchable editors                                          |
+| `.claude/strategy/editor-user-journey.md`                        | Editor user journey — stages, flows, success criteria, phased delivery                                            |
+| `.claude/strategy/visual-editor.md`                              | Bento box visual editor — compartment design, grid layout, execution state                                        |
+| `.claude/strategy/code-editor.md`                                | Code editor design — CM6, slash commands, JSON Schema                                                             |
+| `.claude/strategy/visual-editor.md`                              | Bento box visual editor — compartment design, grid layout, execution state                                        |
+| `.claude/strategy/go-engine-migration.md`                        | Go engine node inventory — migration reference before archive deletion                                            |
+| `.claude/strategy/cloud-desktop-strategy.md`                     | Architecture, cost analysis, cloud execution topology                                                             |
+| `.claude/strategy/core-principles.md`                            | Trust commitments, "For Claude Code" guidance                                                                     |
+| `.claude/rules/`                                                 | Auto-loaded rules (architecture, code-standards, components, etc.)                                                |
+| `.claude/skills/`                                                | Agent skills (pickup, project-manager, code-review, pre-commit)                                                   |
+| Private business docs (`BNTO_PRIVATE_DOCS_PATH` in `.env.local`) | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |

@@ -245,7 +245,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [engine-execution.md](.claude/strategy/engine-execution.md)             | Engine execution architecture — pipeline executor, progress events, multi-consumer                                |
 | [go-engine-migration.md](.claude/strategy/go-engine-migration.md)       | Go engine node inventory — migration reference before archive deletion                                            |
 | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)       | Expression input UX — pill tokens, variable picker, competitor analysis, phased rollout                           |
-| [business/](.claude/business/)                                          | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
+| Private business docs (see `BNTO_PRIVATE_DOCS_PATH` in `.env.local`)    | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
 | [skills/](.claude/skills/)                                              | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)                                        |
 
 ### Domain Expert Personas (invoke with `/persona-name`)

@@ -31,6 +31,7 @@ When adding a bnto to `strategy/bntos.md`, add it to the registry too.
 ## Canonical URLs
 
 Slugs are lowercase-hyphen only. Non-canonical variants 301 redirect (handled in middleware before auth check):
+
 - `/Compress-Images` → `/compress-images`
 - `/compress_images` → `/compress-images`
 - `/compress-images/` → `/compress-images` (no trailing slash)
@@ -42,7 +43,7 @@ Slugs are lowercase-hyphen only. Non-canonical variants 301 redirect (handled in
 ```
 title:       "[Action] Online Free -- bnto"  (flexible, must end with " -- bnto")
 description: One sentence. Plain language. Includes the action and "free".
-h1:          Exact target search query from [seo-monetization.md](../business/seo-monetization.md)
+h1:          Exact target search query from `seo-monetization.md` (private business docs, see `BNTO_PRIVATE_DOCS_PATH`)
 ```
 
 Titles are for browser tabs and SERP; h1 is for on-page SEO. They may differ.
@@ -72,21 +73,25 @@ Tool pages include a factual description section (what/accepts/outputs/costs) us
 ## Checklist: Shipping a New Bnto
 
 ### Engine
+
 1. Create/verify fixture in `engine/examples/`
 2. Verify fixture runs clean via `bnto run`
 
 ### Registry
+
 3. Add to [strategy/bntos.md](../strategy/bntos.md)
 4. Add to `strategy/bntos.md`
 5. Add to `lib/bntoRegistry.ts` with full metadata (title, description, h1, fixture, features)
 6. Verify slug doesn't collide with reserved paths
 
 ### SEO & LLM
-7. h1 matches exact target query from [seo-monetization.md](../business/seo-monetization.md)
+
+7. h1 matches exact target query from `seo-monetization.md` (private business docs, see `BNTO_PRIVATE_DOCS_PATH`)
 8. Page has plain-language description section (what/accepts/outputs/costs)
 9. JSON-LD `featureList` populated
 10. Entry added to `public/llms.txt`
 11. Run `pnpm build` — static page generates without errors
 
 ### Runtime
+
 12. Verify execution increments run counter in Convex
