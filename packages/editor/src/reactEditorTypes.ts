@@ -25,6 +25,7 @@ import type {
   RunLogEntry,
 } from "./store/types";
 import type { BentoNode, NodeConfigs } from "./adapters/types";
+import type { NodeHookResult } from "./hooks/factories/createUseNode";
 
 // ---------------------------------------------------------------------------
 // Hook result types — what each domain hook returns
@@ -77,6 +78,7 @@ interface PanelsHookResult {
 
 interface ReactNodeClient extends NodeClient {
   useNodes(): NodesHookResult;
+  useNode(nodeId: string | null): NodeHookResult;
 }
 
 interface ReactDefinitionClient extends DefinitionClient {
@@ -111,6 +113,7 @@ interface ReactEditorInstance {
 }
 
 export type {
+  NodeHookResult,
   NodesHookResult,
   DefinitionHookResult,
   ExecutionHookResult,
