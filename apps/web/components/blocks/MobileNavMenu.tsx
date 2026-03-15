@@ -7,6 +7,7 @@ import { core } from "@bnto/core";
 import {
   Button,
   Container,
+  GithubIcon,
   LogOutIcon,
   Row,
   Sheet,
@@ -17,6 +18,7 @@ import {
   Text,
   XIcon,
 } from "@bnto/ui";
+import { GITHUB_URL } from "@/lib/copy";
 import { NewRecipeMobileButton } from "./NewRecipeMobileButton";
 import { RECIPES, PAGE_LINKS } from "./navData";
 
@@ -105,6 +107,16 @@ export function MobileNavMenu({
                       {link.label}
                     </Button>
                   ))}
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    href={GITHUB_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <GithubIcon />
+                    <span className="sr-only">GitHub</span>
+                  </Button>
                 </Row>
 
                 {/* Auth section */}

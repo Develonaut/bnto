@@ -1,6 +1,8 @@
 import {
   AppShellContent,
+  Button,
   Divider,
+  GithubIcon,
   Heading,
   InView,
   Stack,
@@ -8,6 +10,8 @@ import {
 } from "@bnto/ui";
 import { HeroSidebar } from "@/components/blocks/HeroSidebar";
 import { RecipeGrid } from "@/components/blocks/RecipeGrid";
+
+import { GITHUB_URL } from "@/lib/copy";
 
 import { BragLayout } from "./_components/BragLayout";
 import { TrustLayout } from "./_components/TrustLayout";
@@ -46,7 +50,7 @@ export default function Home() {
         </div>
       </InView>
 
-      <Divider label="No catch." />
+      <Divider label="Open source." />
 
       {/* No catch — copy + trust card */}
       <InView>
@@ -56,13 +60,26 @@ export default function Home() {
               No catch
             </Text>
             <Heading level={2} size="xl" className="whitespace-pre-line">
-              {"Free tools that stay free.\nYour browser does the work."}
+              {"Free tools that stay free.\nOpen source you can verify."}
             </Heading>
             <Text color="muted" leading="snug">
               No signup. No watermarks. No daily caps. No &apos;20 free compressions per
               month.&apos; Your browser does all the processing, so it costs us nothing to run.
-              We&apos;ll never put a meter on it.
+              We&apos;ll never put a meter on it. The engine is open source and MIT licensed. You
+              can read every line.
             </Text>
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                elevation="sm"
+              >
+                <GithubIcon className="size-4" />
+                View on GitHub
+              </Button>
+            </div>
           </Stack>
           <TrustLayout />
         </div>

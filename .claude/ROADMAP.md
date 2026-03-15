@@ -174,7 +174,7 @@ packages/@bnto/nodes/
 
 > **Nodes that can run in your browser are free. Nodes that need a server cost money.**
 >
-> The node _definitions_ are always available to everyone (they're in `@bnto/nodes`). The _execution_ of server nodes is what costs money.
+> The node _definitions_ are always available to everyone (they're in `@bnto/nodes`, MIT licensed). The _execution_ of server nodes is what costs money.
 
 This is the only principle you need. Everything else follows from it.
 
@@ -279,7 +279,9 @@ From `core-principles.md`:
 
 1. **Free tier never gets worse.** Browser execution is free forever. No artificial caps.
 2. **Desktop is free forever.** No "desktop Pro." Local execution is always unlimited.
-3. **No dark patterns.** Upgrade hooks are natural (save, history, AI) — not artificial limits.
+3. **MIT license stays MIT.** The engine is always open.
+4. **No dark patterns.** Upgrade hooks are natural (save, history, AI) — not artificial limits.
+5. **If bnto shuts down, the engine stays open.** No lock-in, ever.
 
 ---
 

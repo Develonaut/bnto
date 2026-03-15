@@ -115,8 +115,10 @@ From `core-principles.md` and `ROADMAP.md`:
 
 1. Free tier never gets worse
 2. Desktop is free forever
-3. No dark patterns
-4. No overpromising
+3. MIT license stays MIT
+4. No dark patterns
+5. No overpromising
+6. If bnto shuts down, the engine stays open
 
 Flag any plan task that violates these.
 

@@ -2,9 +2,9 @@ import type { CSSProperties } from "react";
 
 import Link from "next/link";
 
-import { Container, Row, Stack, Text } from "@bnto/ui";
+import { ArrowUpRightIcon, Container, GithubIcon, Row, Stack, Text } from "@bnto/ui";
 
-import { LICENSE_LINE, TAGLINE, TRUST_LINE } from "@/lib/copy";
+import { GITHUB_URL, LICENSE_LINE, TAGLINE, TRUST_LINE } from "@/lib/copy";
 
 import { NavButton } from "./NavButton";
 
@@ -33,6 +33,7 @@ const TOOL_SECTIONS = [
     links: [
       { name: "Pricing", href: "/pricing" },
       { name: "Privacy", href: "/privacy" },
+      { name: "GitHub", href: GITHUB_URL, external: true },
     ],
   },
 ];
@@ -59,6 +60,19 @@ export function Footer() {
             <Text size="sm" color="muted" leading="relaxed">
               {TAGLINE} {TRUST_LINE}
             </Text>
+            <Row className="gap-4">
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="Open source — GitHub repository"
+              >
+                <GithubIcon className="size-4" />
+                Open source
+                <ArrowUpRightIcon className="size-3" />
+              </a>
+            </Row>
           </Stack>
 
           {/* Right columns: tool links by category */}

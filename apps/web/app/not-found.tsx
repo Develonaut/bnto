@@ -12,6 +12,7 @@ import {
 
 import { Navbar } from "@/components/blocks/Navbar";
 import { Footer } from "@/components/blocks/Footer";
+import { GITHUB_URL } from "@/lib/copy";
 
 /**
  * Root 404 page — self-contained with Navbar + Footer.
@@ -48,7 +49,9 @@ export default function NotFound() {
               </Button>
               <Button
                 variant="outline"
-                href="mailto:support@bnto.io"
+                href={`${GITHUB_URL}/issues`}
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 Report Issue
               </Button>

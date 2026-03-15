@@ -73,8 +73,10 @@ Non-negotiable public promises from `core-principles.md`:
 
 1. Free tier never gets worse
 2. Desktop is free forever
-3. No dark patterns
-4. No overpromising
+3. MIT license stays MIT
+4. No dark patterns
+5. No overpromising
+6. Engine stays open if bnto shuts down
 
 Flag any plan task that violates these.
 

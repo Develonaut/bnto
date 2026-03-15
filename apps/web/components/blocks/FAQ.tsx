@@ -7,6 +7,8 @@ import {
   Stack,
   Text,
 } from "@bnto/ui";
+import { GITHUB_URL } from "@/lib/copy";
+
 const faqs = [
   {
     question: "Where are my files processed?",
@@ -24,9 +26,9 @@ const faqs = [
       "Images: JPEG, PNG, and WebP for compression, resizing, and format conversion. Data: CSV files for cleaning and column renaming. Files: any file type for batch renaming.",
   },
   {
-    question: "How do I know my files are safe?",
+    question: "Is bnto open source?",
     answer:
-      "All browser-based tools run entirely on your device using WebAssembly. Your files are never uploaded to a server. You can verify this by checking your browser's network tab while processing.",
+      "Yes. The engine is MIT licensed. You can inspect the source code, verify how tools work, or contribute.",
   },
   {
     question: "Will bnto always be free?",
@@ -53,10 +55,12 @@ export function FAQ({ headerTag = "h2" }: { headerTag?: "h1" | "h2" }) {
         <Text color="muted" leading="snug" className="max-w-md">
           Can&apos;t find what you need?{" "}
           <a
-            href="mailto:support@bnto.io"
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="underline underline-offset-4 transition-colors hover:text-foreground"
           >
-            Get in touch
+            Open an issue on GitHub
           </a>
           .
         </Text>

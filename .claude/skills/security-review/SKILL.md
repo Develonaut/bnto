@@ -32,13 +32,13 @@ Before reviewing anything, read these files to understand the architecture and k
 
 **Then invoke domain personas** for the specific packages you're auditing:
 
-| Auditing files in... | Domain persona skill |
-|---|---|
-| `engine/` | `/rust-expert` |
-| `archive/engine-go/`, `archive/api-go/` | `/go-engineer` |
-| `apps/web/` | `/frontend-engineer` |
-| `packages/core/` | `/core-architect` |
-| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer` |
+| Auditing files in...                              | Domain persona skill |
+| ------------------------------------------------- | -------------------- |
+| `engine/`                                         | `/rust-expert`       |
+| `archive/engine-go/`, `archive/api-go/`           | `/go-engineer`       |
+| `apps/web/`                                       | `/frontend-engineer` |
+| `packages/core/`                                  | `/core-architect`    |
+| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer`  |
 
 **Invoke `/security-engineer` and all matching domain persona skills now.** The security persona gives you the adversarial mindset and cross-cutting awareness. The domain personas give you package-specific patterns, gotchas, and quality standards — e.g., Rust `unsafe` blocks, Go context propagation and error wrapping, React XSS vectors, Convex auth enforcement patterns. A full security audit requires both perspectives.
 
@@ -69,6 +69,7 @@ Search for patterns that indicate hardcoded secrets:
 ```
 
 Any `.env` file (except `.env.example`) in git is a **CRITICAL** finding. Check `.gitignore` covers:
+
 - `.env`, `.env.local`, `.env.development`, `.env.production`, `.env.staging`
 - `.env*.local`
 - Any file containing "secret" or "credential"
@@ -101,6 +102,7 @@ The Go API (`archive/api-go/`) is the cloud execution endpoint on Railway. It re
 Read `archive/api-go/internal/server/server.go` and all handler files in `archive/api-go/internal/handler/`.
 
 Check:
+
 - [ ] **Do endpoints require authentication?** Currently, the Go API has no auth layer — Convex actions call it server-to-server. Is this acceptable? Document the trust model
 - [ ] **Is the Go API publicly accessible?** If Railway exposes it to the internet, anyone can POST workflow definitions. Check if Railway has network restrictions or if auth middleware is needed
 - [ ] **Rate limiting** — is there any? Without it, the public endpoint is vulnerable to DoS via expensive workflow executions
@@ -148,6 +150,7 @@ Convex is the data layer. Every query and mutation is a public API endpoint call
 Read every file in `packages/@bnto/backend/convex/` (excluding `_generated/` and `_helpers/`):
 
 For EACH exported query/mutation, verify:
+
 - [ ] **Mutations check `getAppUserId(ctx)`** and reject if null
 - [ ] **Queries that return user data filter by `userId`** — no query returns another user's data
 - [ ] **Resource ownership verified** — mutations that modify a resource check `resource.userId === userId` before modifying
@@ -156,6 +159,7 @@ For EACH exported query/mutation, verify:
 ### 3b: Input validation
 
 For EACH exported query/mutation:
+
 - [ ] **All args use Convex validators** (`v.string()`, `v.id()`, etc.)
 - [ ] **No `v.any()` on external-facing functions** — `v.any()` is acceptable on internal mutations, but public mutations should validate structure
 - [ ] **String inputs are bounded** — very long strings could be used for storage abuse. Check if Convex has built-in limits or if explicit length checks are needed
@@ -163,6 +167,7 @@ For EACH exported query/mutation:
 ### 3c: Upload security
 
 Read `uploads.ts` and `_helpers/upload_validation.ts`:
+
 - [ ] **File type allowlist enforced server-side** — not just client-side
 - [ ] **File size limits enforced server-side per plan**
 - [ ] **Presigned URL expiry is reasonable** (not hours/days)
@@ -172,6 +177,7 @@ Read `uploads.ts` and `_helpers/upload_validation.ts`:
 ### 3d: Download security
 
 Read `downloads.ts`:
+
 - [ ] **Download URLs are scoped to the user's execution** — can't download another user's output files
 - [ ] **R2 keys are validated** — can a client request a download for an arbitrary R2 key?
 - [ ] **Cleanup** — are R2 objects deleted after download or on a TTL?
@@ -211,6 +217,7 @@ Search for dangerous patterns in `apps/web/`:
 For each finding, verify the content is sanitized or comes from a trusted source (not user input).
 
 Also check:
+
 - [ ] **Workflow names, descriptions, and node labels** — are they rendered as text content or injected as HTML?
 - [ ] **Execution log output** — rendered in `<pre>` / `<code>` blocks (safe) or interpolated?
 - [ ] **URL parameters** — any search params rendered directly in the page?
@@ -248,6 +255,7 @@ Read `middleware.ts` and `apps/web/app/providers/`:
 ```
 
 Check:
+
 - [ ] **Repo visibility** — is it public or private? If public, all code and git history is visible
 - [ ] **Branch protection on `main`** — require PR reviews, status checks
 - [ ] **GitHub Actions secrets** — are they scoped correctly? Check `.github/workflows/`
@@ -312,13 +320,16 @@ Check:
 
 ---
 
-## Section 7: Repo Hygiene
+## Section 7: Open Source Readiness
+
+The repo IS public. Every check below applies NOW, not as a future consideration:
 
 ### 7a: Sensitive content in code
 
 ```
 !grep -rn "TODO.*secret\|TODO.*credential\|TODO.*password\|TODO.*token\|TODO.*key" --include="*.ts" --include="*.go" --exclude-dir=node_modules --exclude-dir=_generated
 !grep -rn "HACK\|FIXME\|XXX" --include="*.ts" --include="*.go" --exclude-dir=node_modules --exclude-dir=_generated | head -20
+!grep -rn "competitor\|pricing\|revenue\|valuation" --include="*.ts" --include="*.go" --include="*.md" --exclude-dir=node_modules --exclude-dir=_generated | head -20
 ```
 
 ### 7b: Test fixtures
@@ -329,10 +340,11 @@ Check:
 
 Check for real email addresses, phone numbers, or PII in test data.
 
-### 7c: Dependency compliance
+### 7c: License compliance
 
-- [ ] **No vendored code with problematic licenses** — check `vendor/` or embedded third-party code
-- [ ] **Dependency licenses compatible** — no GPL deps that would impose obligations on the project
+- [ ] **MIT license file exists** at repo root
+- [ ] **No vendored code with incompatible licenses** — check `vendor/` or embedded third-party code
+- [ ] **Dependency licenses compatible** — no GPL deps in an MIT project (for linked/bundled deps)
 
 ---
 
@@ -359,7 +371,7 @@ After completing all checks, produce a summary table:
 | Cloudflare R2         | ...        | ...                                           |
 | Convex Deployment     | ...        | ...                                           |
 | Dependencies          | ...        | ...                                           |
-| Repo Hygiene           | ...        | ...                                           |
+| Open Source Readiness  | ...        | ...                                           |
 ```
 
 Risk levels: `LOW` (best practice met), `MEDIUM` (improvement possible), `HIGH` (should fix before production traffic), `CRITICAL` (fix immediately — active vulnerability).
@@ -371,18 +383,23 @@ Risk levels: `LOW` (best practice met), `MEDIUM` (improvement possible), `HIGH` 
 List specific actions ordered by priority:
 
 ### Critical (fix now)
+
 Items that represent active vulnerabilities or data exposure.
 
 ### High (fix before production)
+
 Items that would be exploitable under real traffic.
 
 ### Medium (fix soon)
+
 Best practices not yet followed, defense-in-depth gaps.
 
 ### Low (when convenient)
+
 Hardening measures, nice-to-haves, future considerations.
 
 For each item, include:
+
 - **What**: The specific issue
 - **Where**: File path and line number (or dashboard/service)
 - **Why**: What could go wrong

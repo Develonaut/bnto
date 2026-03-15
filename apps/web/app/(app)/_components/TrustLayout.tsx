@@ -1,6 +1,7 @@
-import { CheckIcon } from "@bnto/ui";
+import { CheckIcon, GithubIcon } from "@bnto/ui";
 
-import { ScaleIn, SlideUp, Card, Center, IconBadge, Row, Stack, Text } from "@bnto/ui";
+import { ScaleIn, SlideUp, Button, Card, Center, IconBadge, Row, Stack, Text } from "@bnto/ui";
+import { GITHUB_URL } from "@/lib/copy";
 
 /* ── Data ────────────────────────────────────────────────────── */
 
@@ -37,9 +38,21 @@ export function TrustLayout() {
             </Stack>
 
             <div className="border-t border-border pt-4">
-              <Text size="xs" mono color="muted" className="uppercase tracking-wider">
-                Free forever. No limits.
-              </Text>
+              <Row justify="between">
+                <Text size="xs" mono color="muted" className="uppercase tracking-wider">
+                  MIT Licensed &middot; Open Source
+                </Text>
+                <Button
+                  variant="outline"
+                  href={GITHUB_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  elevation="sm"
+                >
+                  <GithubIcon className="size-3.5" />
+                  GitHub
+                </Button>
+              </Row>
             </div>
           </Stack>
         </Card>
