@@ -226,7 +226,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 #### Wave 1 (parallel — error boundaries + dead code)
 
-- [ ] `apps/web` — **Global error boundary**: Create `buildGitHubIssueUrl()` pure function + `ErrorReport` component + `global-error.tsx` + `(app)/error.tsx` + `[bnto]/error.tsx`. Unit tests for URL construction. E2E test for error dialog rendering. See backlog item for full spec.
+- [x] `apps/web` — **Global error boundary**: Create `buildGitHubIssueUrl()` pure function + `ErrorReport` component + `global-error.tsx` + `(app)/error.tsx` + `[bnto]/error.tsx`. Unit tests for URL construction. PostHog `app_error` telemetry on boundary trigger.
 - [ ] `packages/core` — **Dead code removal**: Verify `processFile` worker path is dead code and remove. Remove deprecated `hasImplementation()` alias (migrate consumers to `isCapable()`). Remove or deprecate `executePipeline.ts` if fully replaced by Rust executor.
 - [ ] `packages/@bnto/nodes` — **Align stale schemas**: Align `spreadsheet` and `file-system` Zod schemas with Rust processor parameters (clean/rename, find/replace/prefix/suffix). Remove Go-era operations that don't exist in Rust.
 
@@ -253,6 +253,11 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 - [ ] `packages/editor` — **Raw useStore audit**: Migrate raw `useStore(storeApi, ...)` calls to domain hook factories. All reads through editor API layer.
 - [ ] `apps/web` — **Fix reducedMotion type errors**: Fix `reducedMotion` type errors in E2E spec `test.use()` calls.
 - [ ] `apps/web` — **Remove redundant default props**: Audit for components passing props matching defaults (e.g., `size="md"` when `md` is default).
+- [ ] `apps/web` — **Home page marquee**: Replace static RecipeGrid with scrolling Marquee component (Magic UI pattern) to keep hero content above the fold.
+- [ ] `packages/editor` — **File menu transform origin**: Fix popover/menu animation direction — transform origin should account for trigger position.
+- [ ] `packages/editor` — **I/O node mode labels**: Display current mode (Upload, Text, URL) on Input/Output compartment nodes.
+- [ ] `packages/editor` — **Pre-populate extension TagPicker**: Ship Input node file extension TagPicker with a static list of common extensions (.jpg, .png, .csv, .pdf, etc.).
+- [ ] `apps/web` — **Kbd component + shortcuts dialog**: Create `<Kbd>` primitive for shortcut hints on menu items. Add `Cmd+?` keyboard shortcuts dialog.
 
 ---
 
