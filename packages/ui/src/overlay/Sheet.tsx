@@ -62,12 +62,7 @@ export const SheetContent = forwardRef<
     <SheetOverlay />
     <SheetPrimitive.Content ref={ref} className={sheetCn({ side }, className)} {...props}>
       <SheetPrimitive.Close asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          elevation="md"
-          className="absolute top-4 right-4 size-8"
-        >
+        <Button variant="ghost" size="icon" className="absolute top-4 right-4 size-8">
           <XIcon className="size-4" />
           <span className="sr-only">Close</span>
         </Button>
