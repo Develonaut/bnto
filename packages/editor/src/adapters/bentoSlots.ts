@@ -40,7 +40,7 @@ const SLOTS: { x: number; y: number; w: number; h: number }[] = Array.from(
 );
 
 /** I/O inner card size — visually smaller, but the RF node is still CELL×CELL. */
-const IO_CARD_SIZE = 100;
+const IO_CARD_SIZE = 120;
 
 /** Vertical offset from parent to children row when a container is expanded. */
 const ROW_OFFSET = CELL + GAP_Y + 8;
@@ -60,4 +60,16 @@ function getChildDirection(depth: number): "vertical" | "horizontal" {
   return depth % 2 === 0 ? "vertical" : "horizontal";
 }
 
-export { CELL, GAP_X, GAP_Y, STRIDE, SLOTS, IO_CARD_SIZE, ROW_OFFSET, GROUP_INSET, DIVIDER_THIN, MAX_CONTAINER_DEPTH, getChildDirection };
+export {
+  CELL,
+  GAP_X,
+  GAP_Y,
+  STRIDE,
+  SLOTS,
+  IO_CARD_SIZE,
+  ROW_OFFSET,
+  GROUP_INSET,
+  DIVIDER_THIN,
+  MAX_CONTAINER_DEPTH,
+  getChildDirection,
+};

@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { createCompartmentNode } from "./createCompartmentNode";
-import { SLOTS } from "./bentoSlots";
+import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
 import { NODE_TYPE_NAMES, NODE_SCHEMA_DEFS } from "@bnto/nodes";
 
 describe("createCompartmentNode", () => {
@@ -43,14 +43,14 @@ describe("createCompartmentNode", () => {
 
   it("sets I/O-specific dimensions for input nodes", () => {
     const result = createCompartmentNode("input", 0);
-    expect(result!.node.data.width).toBe(100);
-    expect(result!.node.data.height).toBe(100);
+    expect(result!.node.data.width).toBe(IO_CARD_SIZE);
+    expect(result!.node.data.height).toBe(IO_CARD_SIZE);
   });
 
   it("sets I/O-specific dimensions for output nodes", () => {
     const result = createCompartmentNode("output", 0);
-    expect(result!.node.data.width).toBe(100);
-    expect(result!.node.data.height).toBe(100);
+    expect(result!.node.data.width).toBe(IO_CARD_SIZE);
+    expect(result!.node.data.height).toBe(IO_CARD_SIZE);
   });
 
   it("generates a UUID for node id", () => {

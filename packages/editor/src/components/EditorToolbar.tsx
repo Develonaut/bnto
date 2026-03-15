@@ -18,6 +18,8 @@ import {
   TerminalIcon,
   PlusIcon,
   SaveIcon,
+  DownloadIcon,
+  FileUpIcon,
   MenuSeparator,
 } from "@bnto/ui";
 import { core } from "@bnto/core";
@@ -97,17 +99,19 @@ function EditorToolbar() {
                 elevation="sm"
                 aria-label="File menu"
               />
-              <MenuContent className="w-44 p-1">
+              <MenuContent side="top" className="w-44 p-1">
                 <MenuItem onClick={handleNew}>
                   <PlusIcon /> New
                 </MenuItem>
-                <MenuItem onClick={() => setOpenDialogOpen(true)}>Open</MenuItem>
+                <MenuItem onClick={() => setOpenDialogOpen(true)}>
+                  <FileUpIcon /> Open
+                </MenuItem>
                 <MenuSeparator />
                 <MenuItem onClick={() => setSaveDialogOpen(true)} disabled={!canSave}>
                   <SaveIcon /> Save
                 </MenuItem>
                 <MenuItem onClick={download} disabled={!canDownload}>
-                  Export
+                  <DownloadIcon /> Export
                 </MenuItem>
               </MenuContent>
             </Menu>

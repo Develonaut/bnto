@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { definitionToGraph } from "./definitionToGraph";
-import { CELL, SLOTS } from "./bentoSlots";
+import { CELL, SLOTS, IO_CARD_SIZE } from "./bentoSlots";
 import { createBlankDefinition, addNode } from "@bnto/nodes";
 import { NODE_TYPE_INFO, NODE_TYPE_NAMES } from "@bnto/nodes";
 
@@ -72,10 +72,10 @@ describe("definitionToGraph", () => {
 
     const inputNode = result.nodes.find((n) => n.id === "input")!;
     const outputNode = result.nodes.find((n) => n.id === "output")!;
-    expect(inputNode.data.width).toBe(100);
-    expect(inputNode.data.height).toBe(100);
-    expect(outputNode.data.width).toBe(100);
-    expect(outputNode.data.height).toBe(100);
+    expect(inputNode.data.width).toBe(IO_CARD_SIZE);
+    expect(inputNode.data.height).toBe(IO_CARD_SIZE);
+    expect(outputNode.data.width).toBe(IO_CARD_SIZE);
+    expect(outputNode.data.height).toBe(IO_CARD_SIZE);
   });
 
   it("places I/O nodes at slot position (renderer handles visual centering)", () => {
