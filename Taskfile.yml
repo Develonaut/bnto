@@ -171,6 +171,22 @@ tasks:
     cmds:
       - cargo clean
 
+  # Cache management
+  clean:cache:
+    desc: Clear all build caches (Turbo, Next.js, wasm-pack)
+    cmds:
+      - rm -rf .turbo
+      - rm -rf apps/web/.next
+      - rm -rf apps/web/.next-e2e
+      - rm -rf node_modules/.cache
+      - rm -rf ~/Library/Caches/.wasm-pack
+      - echo "All caches cleared"
+
+  clean:cache:prune:
+    desc: Prune Turbo cache entries older than 7 days
+    cmds:
+      - find .turbo -type f -mtime +7 -delete 2>/dev/null; find .turbo -type d -empty -delete 2>/dev/null; echo "Pruned Turbo cache (entries older than 7 days)"
+
   # Cross-cutting
   build:all:
     desc: Build everything (Rust + TypeScript)
