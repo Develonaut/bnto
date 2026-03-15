@@ -119,16 +119,13 @@ bnto/
 │       ├── auth/                # @bnto/auth -- Cloud auth
 │       ├── backend/             # @bnto/backend -- Convex schema + functions
 │       └── nodes/               # @bnto/nodes -- Engine-agnostic node definitions
-├── engine/                      # Rust WASM engine (browser execution)
-│   └── crates/
-│       ├── bnto-core/           # Core types, traits, progress reporting
-│       ├── bnto-image/          # Image compression/resize/convert
-│       ├── bnto-csv/            # CSV clean/rename columns
-│       ├── bnto-file/           # File rename
-│       └── bnto-wasm/           # cdylib entry point (single WASM binary)
-└── archive/                     # Preserved reference code (not active)
-    ├── engine-go/               # Go CLI + engine (~33K LOC)
-    └── api-go/                  # Go HTTP API server (~2.5K LOC)
+└── engine/                      # Rust WASM engine (browser execution)
+    └── crates/
+        ├── bnto-core/           # Core types, traits, progress reporting
+        ├── bnto-image/          # Image compression/resize/convert
+        ├── bnto-csv/            # CSV clean/rename columns
+        ├── bnto-file/           # File rename
+        └── bnto-wasm/           # cdylib entry point (single WASM binary)
 ```
 
 ## Contributing

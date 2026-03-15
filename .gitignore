@@ -4,10 +4,6 @@
 *.dll
 *.so
 *.dylib
-/bento
-/bnto
-archive/engine-go/bento
-archive/engine-go/bnto
 
 # Test binary, built with `go test -c`
 *.test
@@ -15,8 +11,6 @@ archive/engine-go/bnto
 
 # Output of the go coverage tool
 *.out
-
-# Go workspace file (go.work IS committed — needed for monorepo)
 
 # Dependency directories
 vendor/
@@ -47,9 +41,6 @@ vendor/
 # Test outputs - generated during test runs
 /products/
 /tests/output/
-archive/engine-go/output/
-archive/engine-go/tests/**/*.webp
-archive/engine-go/tests/**/render-*.png
 
 # Environment
 .env
@@ -72,9 +63,6 @@ next-env.d.ts
 
 # Vercel
 .vercel/
-
-# Go API server binary
-archive/api-go/server
 
 # Test coverage
 coverage/

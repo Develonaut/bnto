@@ -18,8 +18,6 @@ task ui:test            # Frontend tests -- must pass
 
 Or run `task check` to execute all of the above in one command.
 
-Note: Go checks (`task vet`, `task test`, `task api:test`) are no longer in CI. The Go engine is archived and not actively developed.
-
 If any check fails: fix the errors, re-run from the top.
 
 ### Lighthouse CI audit (if `apps/web/` files changed)
@@ -34,12 +32,12 @@ Lighthouse CI also runs as a GitHub Actions workflow (`lighthouse.yml`) on every
 
 For EACH file you modified, verify against the Bento Box Principle (`code-standards.md`):
 
-- [ ] **Layered Architecture**: Apps -> `@bnto/core` -> Go Engine. No layer skipping. UI and editor co-located in `apps/web/`.
+- [ ] **Layered Architecture**: Apps -> `@bnto/core` -> Engine (Rust WASM). No layer skipping. UI and editor co-located in `apps/web/`.
 - [ ] **API Abstraction**: No direct Convex queries/mutations in components. No direct Wails bindings in components. All data access via `@bnto/core`.
 - [ ] **Component complexity**: Logic inline is fine. Extract a hook only when the component earns it (~20+ lines of logic, reuse needed, or testability). No mandatory hooks for simple components.
 - [ ] **Pure Functions -> Logic Hooks -> Components**: Business rules in pure functions (no React). Logic hooks compose them reactively -- extract when complex or shared, not for every component.
 - [ ] **One Export Per File**: Every exported component, hook, or function in its own file. No `hooks.ts` grab bags, no `utils.ts` grab bags, no multi-component files. Folder + barrel export for related pieces. Only exception: shadcn primitives.
-- [ ] **Single Responsibility**: TS files target 50-100 lines, hard cap 250. TS functions < 20 lines. Go files < 250 lines, Go functions < 20 lines. No utility grab bags, no god objects. More than 2-3 sub-components in one file = break into folder + barrel.
+- [ ] **Single Responsibility**: TS files target 50-100 lines, hard cap 250. TS functions < 20 lines. No utility grab bags, no god objects. More than 2-3 sub-components in one file = break into folder + barrel.
 - [ ] **Composition**: Small pieces that compose together. Compound components, not mega-prop components.
 - [ ] **Flat Named Exports**: ALL multi-part components use flat prefixed exports (`DialogTitle`, `CardHeader`), NOT `Object.assign` dot-notation (`Dialog.Title`, `Card.Header`). Dot-notation breaks React Server Components. If you see `Object.assign` compound patterns, convert to flat exports. Report PASS or FAIL with specific files.
 - [ ] **Primitives vs Business Components**: Generic in `primitives/`, domain-specific in `components/`.

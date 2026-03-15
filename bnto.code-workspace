@@ -2,24 +2,13 @@
   "folders": [
     { "path": ".", "name": "root" },
     { "path": "engine", "name": "engine (Rust WASM)"},
-    { "path": "archive/engine-go", "name": "archive: engine-go"},
-    { "path": "archive/api-go", "name": "archive: api-go"},
     { "path": "apps", "name": "apps" },
     { "path": "packages", "name": "packages" }
   ],
   "settings": {
-    "go.goroot": "",
-    "go.toolsManagement.autoUpdate": true,
-    "gopls": {
-      "build.directoryFilters": ["-node_modules"],
-      "ui.semanticTokens": true
-    },
     "typescript.tsdk": "node_modules/typescript/lib",
     "editor.formatOnSave": true,
     "editor.defaultFormatter": null,
-    "[go]": {
-      "editor.defaultFormatter": "golang.go"
-    },
     "[typescript]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
@@ -49,13 +38,11 @@
       "**/dist": true,
       "**/.turbo": true,
       "**/pnpm-lock.yaml": true,
-      "**/go.sum": true,
       "**/target": true
     }
   },
   "extensions": {
     "recommendations": [
-      "golang.go",
       "esbenp.prettier-vscode",
       "dbaeumer.vscode-eslint",
       "rust-lang.rust-analyzer",
@@ -105,37 +92,6 @@
         "presentation": { "group": "dev", "reveal": "always" }
       },
       {
-        "label": "Go: Build",
-        "detail": "Build bnto CLI binary",
-        "type": "shell",
-        "command": "task build",
-        "group": "build",
-        "problemMatcher": ["$go"]
-      },
-      {
-        "label": "Go: Vet",
-        "detail": "Run go vet on all Go packages",
-        "type": "shell",
-        "command": "task vet",
-        "problemMatcher": ["$go"]
-      },
-      {
-        "label": "Go: Test Engine",
-        "detail": "Run Go engine tests with race detector",
-        "type": "shell",
-        "command": "task test",
-        "group": "test",
-        "problemMatcher": ["$go"]
-      },
-      {
-        "label": "Go: Test API",
-        "detail": "Run Go API server tests with race detector",
-        "type": "shell",
-        "command": "task api:test",
-        "group": "test",
-        "problemMatcher": ["$go"]
-      },
-      {
         "label": "Lint",
         "detail": "ESLint all TS packages",
         "type": "shell",
@@ -176,10 +132,10 @@
       },
       {
         "label": "Check: All",
-        "detail": "Full quality gate (vet + test + build)",
+        "detail": "Full quality gate (Rust + TypeScript)",
         "type": "shell",
         "command": "task check",
-        "problemMatcher": ["$go", "$tsc"]
+        "problemMatcher": ["$tsc"]
       }
     ]
   }

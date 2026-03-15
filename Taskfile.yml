@@ -1,59 +1,6 @@
 version: "3"
 
 tasks:
-  # Go tasks (archive/engine-go/)
-  build:
-    desc: Build the bnto CLI binary
-    dir: ./archive/engine-go
-    cmds: [go build ./cmd/bnto]
-
-  test:
-    desc: Run all Go tests with race detector
-    dir: ./archive/engine-go
-    cmds: [go test -race ./...]
-
-  test:engine:
-    desc: Run engine tests only (excludes TUI and integration)
-    dir: ./archive/engine-go
-    cmds:
-      - go test -race ./cmd/... ./pkg/engine/... ./pkg/logger/... ./pkg/logs/... ./pkg/node/... ./pkg/paths/... ./pkg/registry/... ./pkg/secrets/... ./pkg/storage/... ./pkg/validator/... ./tests/mocks/...
-
-  test:integration:
-    desc: Run integration tests (auto-builds bnto binary)
-    dir: ./archive/engine-go
-    cmds: [go test -race -v ./tests/integration/...]
-
-  install:
-    desc: Install bnto binary to $GOPATH/bin
-    dir: ./archive/engine-go
-    cmds: [go install ./cmd/bnto]
-
-  vet:
-    desc: Run go vet on all Go packages
-    cmds:
-      - go vet ./archive/engine-go/...
-      - go vet ./archive/api-go/...
-
-  # API server tasks
-  api:dev:
-    desc: Run Go API server locally (port 8080)
-    dir: ./archive/api-go
-    dotenv: ["../../.env.development"]
-    cmds: [go run ./cmd/server]
-
-  api:tunnel:
-    desc: Start Cloudflare tunnel (exposes local API at api-dev.bnto.io)
-    cmds: [cloudflared tunnel run bnto-dev]
-
-  api:test:
-    desc: Run API server tests with race detector
-    cmds: [go test -race ./archive/api-go/...]
-
-  api:build:
-    desc: Build the API server binary
-    dir: ./archive/api-go
-    cmds: [go build ./cmd/server]
-
   # Frontend tasks
   ui:build:
     desc: Build all frontend packages
@@ -67,10 +14,6 @@ tasks:
     desc: Start all dev servers (Next.js on port 4000 + Convex)
     cmds: [pnpm turbo run dev]
 
-  dev:all:
-    desc: Start everything for local dev (web + Convex + Go API + tunnel)
-    deps: [dev, api:dev, api:tunnel]
-
   ui:test:
     desc: Run all frontend tests
     cmds: [pnpm turbo run test]
@@ -79,7 +22,7 @@ tasks:
     desc: Lint all frontend packages
     cmds: [pnpm turbo run lint]
 
-  # Core integration tests (requires task dev:all running)
+  # Core integration tests (requires task dev running)
   core:integration:
     desc: Run @bnto/core integration tests against real Convex dev
     cmds: [pnpm --filter @bnto/core test:integration]
@@ -230,16 +173,13 @@ tasks:
 
   # Cross-cutting
   build:all:
-    desc: Build everything (engine + API + frontend)
+    desc: Build everything (Rust + TypeScript)
     cmds:
-      - task: build
-      - task: api:build
+      - task: wasm:build
       - task: ui:build
 
   test:all:
-    desc: Test everything (Go + Rust + TypeScript)
+    desc: Test everything (Rust + TypeScript)
     cmds:
-      - task: test
-      - task: api:test
       - task: wasm:test
       - task: ui:test

@@ -1,4 +1,4 @@
-# Node.js (not needed for Go API build)
+# Node.js
 node_modules
 **/node_modules
 apps/web/
@@ -7,7 +7,6 @@ packages/
 
 # Build artifacts
 apps/web/.next
-archive/api-go/server
 
 # Git and docs
 .git
