@@ -124,6 +124,7 @@ export {
   MenuSeparator,
 } from "./interaction/Menu";
 export { PasswordInput } from "./interaction/PasswordInput";
+export { PopupTriggerButton } from "./interaction/PopupTriggerButton";
 export { RadialSlider } from "./interaction/RadialSlider";
 export { RadioGroup, RadioGroupItem } from "./interaction/RadioGroup";
 export {

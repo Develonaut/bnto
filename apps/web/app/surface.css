@@ -355,26 +355,6 @@
   transition-duration: var(--pressable-press-dur, 34ms);
 }
 
-/* ── Haptic pop ─────────────────────────────────────────────────────
- *
- * [data-haptic] adds a squeeze-then-overshoot scale animation on
- * :active, layered on top of the normal pressable elevation sink.
- * Feels like physical haptic feedback — a satisfying pop on click.
- *
- * Uses the haptic-pop keyframe: 0.95 → 1.02 → 1, 250ms ease-out.
- * Respects prefers-reduced-motion via the motion-safe: prefix on
- * the animation token in globals.css.
- * ────────────────────────────────────────────────────────────────── */
-.pressable[data-haptic]:active {
-  animation: var(--animate-haptic-pop);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pressable[data-haptic]:active {
-    animation: none;
-  }
-}
-
 /* ── Toggle mode ────────────────────────────────────────────────────
  *
  * Push-button metaphor: toggled ON = depressed near ground.

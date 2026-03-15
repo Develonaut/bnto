@@ -15,7 +15,7 @@ type CopyButtonProps = {
 /**
  * CopyButton — outline icon button that copies text to the clipboard.
  *
- * Swaps to a check icon with a haptic pop for 1.5s after copy.
+ * Swaps to a check icon for 1.5s after copy.
  */
 function CopyButton({ value, label = "Copy to clipboard" }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
@@ -28,13 +28,7 @@ function CopyButton({ value, label = "Copy to clipboard" }: CopyButtonProps) {
   }, [value]);
 
   return (
-    <Button
-      variant="outline"
-      size="icon"
-      haptic
-      onClick={handleCopy}
-      aria-label={label}
-    >
+    <Button variant="outline" size="icon" onClick={handleCopy} aria-label={label}>
       {copied ? <CheckIcon /> : <CopyIcon />}
     </Button>
   );

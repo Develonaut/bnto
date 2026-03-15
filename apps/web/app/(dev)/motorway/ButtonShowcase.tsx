@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import {
   ArrowRightIcon,
@@ -19,7 +19,14 @@ import {
 
 import { Button, Heading, Row, Stack, Text } from "@bnto/ui";
 
-type Variant = "primary" | "secondary" | "outline" | "muted" | "destructive" | "success" | "warning";
+type Variant =
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "muted"
+  | "destructive"
+  | "success"
+  | "warning";
 type ButtonState = "resting" | "hover" | "pressed" | "disabled";
 
 const VARIANTS: { value: Variant; label: string; iconLabel?: string }[] = [
@@ -32,7 +39,7 @@ const VARIANTS: { value: Variant; label: string; iconLabel?: string }[] = [
   { value: "warning", label: "Warning", iconLabel: "Retry" },
 ];
 
-const ICON_LABELS: Record<string, { icon: React.ReactNode; trailing?: boolean }> = {
+const ICON_LABELS: Record<string, { icon: ReactNode; trailing?: boolean }> = {
   Download: { icon: <DownloadIcon /> },
   Favorite: { icon: <StarIcon /> },
   Next: { icon: <ArrowRightIcon />, trailing: true },
@@ -67,15 +74,35 @@ function ToggleShowcase() {
 
       {/* Text formatting toolbar */}
       <Stack className="gap-2">
-        <Text size="xs" color="muted" mono as="span">Formatting toolbar</Text>
+        <Text size="xs" color="muted" mono as="span">
+          Formatting toolbar
+        </Text>
         <Row className="gap-2">
-          <Button variant="outline" size="icon" toggle pressed={bold} onClick={() => setBold(!bold)}>
+          <Button
+            variant="outline"
+            size="icon"
+            toggle
+            pressed={bold}
+            onClick={() => setBold(!bold)}
+          >
             <BoldIcon />
           </Button>
-          <Button variant="outline" size="icon" toggle pressed={italic} onClick={() => setItalic(!italic)}>
+          <Button
+            variant="outline"
+            size="icon"
+            toggle
+            pressed={italic}
+            onClick={() => setItalic(!italic)}
+          >
             <ItalicIcon />
           </Button>
-          <Button variant="outline" size="icon" toggle pressed={underline} onClick={() => setUnderline(!underline)}>
+          <Button
+            variant="outline"
+            size="icon"
+            toggle
+            pressed={underline}
+            onClick={() => setUnderline(!underline)}
+          >
             <UnderlineIcon />
           </Button>
         </Row>
@@ -83,18 +110,44 @@ function ToggleShowcase() {
 
       {/* Action toggles across variants */}
       <Stack className="gap-2">
-        <Text size="xs" color="muted" mono as="span">Action toggles</Text>
+        <Text size="xs" color="muted" mono as="span">
+          Action toggles
+        </Text>
         <Row className="gap-2">
-          <Button variant="primary" size="icon" toggle pressed={pinned} onClick={() => setPinned(!pinned)}>
+          <Button
+            variant="primary"
+            size="icon"
+            toggle
+            pressed={pinned}
+            onClick={() => setPinned(!pinned)}
+          >
             <PinIcon />
           </Button>
-          <Button variant="warning" size="icon" toggle pressed={starred} onClick={() => setStarred(!starred)}>
+          <Button
+            variant="warning"
+            size="icon"
+            toggle
+            pressed={starred}
+            onClick={() => setStarred(!starred)}
+          >
             <StarIcon />
           </Button>
-          <Button variant="success" size="md" toggle pressed={pinned} onClick={() => setPinned(!pinned)}>
+          <Button
+            variant="success"
+            size="md"
+            toggle
+            pressed={pinned}
+            onClick={() => setPinned(!pinned)}
+          >
             <PinIcon /> {pinned ? "Pinned" : "Pin"}
           </Button>
-          <Button variant="secondary" size="md" toggle pressed={starred} onClick={() => setStarred(!starred)}>
+          <Button
+            variant="secondary"
+            size="md"
+            toggle
+            pressed={starred}
+            onClick={() => setStarred(!starred)}
+          >
             <StarIcon /> {starred ? "Starred" : "Star"}
           </Button>
         </Row>
@@ -105,7 +158,6 @@ function ToggleShowcase() {
 
 export function ButtonShowcase() {
   const [state, setState] = useState<ButtonState>("resting");
-  const [haptic, setHaptic] = useState(false);
 
   const hovered = state === "hover";
   const pressed = state === "pressed";
@@ -125,13 +177,6 @@ export function ButtonShowcase() {
             {label}
           </Button>
         ))}
-        <Button
-          variant={haptic ? "secondary" : "outline"}
-          size="md"
-          onClick={() => setHaptic((h) => !h)}
-        >
-          Haptic
-        </Button>
       </Row>
 
       {/* All variants × sizes */}
@@ -143,11 +188,41 @@ export function ButtonShowcase() {
               <Text size="xs" color="muted" mono as="span" className="w-24 shrink-0">
                 {label}
               </Text>
-              <Button variant={value} size="md" haptic={haptic} hovered={hovered} pressed={pressed} disabled={disabled}>Label</Button>
-              <Button variant={value} size="icon" haptic={haptic} hovered={hovered} pressed={pressed} disabled={disabled}><ZapIcon /></Button>
+              <Button
+                variant={value}
+                size="md"
+                hovered={hovered}
+                pressed={pressed}
+                disabled={disabled}
+              >
+                Label
+              </Button>
+              <Button
+                variant={value}
+                size="icon"
+                hovered={hovered}
+                pressed={pressed}
+                disabled={disabled}
+              >
+                <ZapIcon />
+              </Button>
               {iconEntry && (
-                <Button variant={value} size="md" haptic={haptic} hovered={hovered} pressed={pressed} disabled={disabled}>
-                  {iconEntry.trailing ? <>{iconLabel} {iconEntry.icon}</> : <>{iconEntry.icon} {iconLabel}</>}
+                <Button
+                  variant={value}
+                  size="md"
+                  hovered={hovered}
+                  pressed={pressed}
+                  disabled={disabled}
+                >
+                  {iconEntry.trailing ? (
+                    <>
+                      {iconLabel} {iconEntry.icon}
+                    </>
+                  ) : (
+                    <>
+                      {iconEntry.icon} {iconLabel}
+                    </>
+                  )}
                 </Button>
               )}
             </Row>

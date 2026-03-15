@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "../icons";
 import { Popup } from "../overlay/Popup";
-import { Button } from "./Button";
+import { PopupTriggerButton } from "./PopupTriggerButton";
 
 import { cn } from "../utils/cn";
 
@@ -24,8 +24,7 @@ export function SelectTrigger({
 }: ComponentProps<typeof SelectPrimitive.Trigger>) {
   return (
     <SelectPrimitive.Trigger asChild data-slot="select-trigger" {...props}>
-      <Button
-        variant="outline"
+      <PopupTriggerButton
         className={cn(
           "w-fit justify-between font-normal data-[placeholder]:text-muted-foreground *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
           className,
@@ -33,9 +32,9 @@ export function SelectTrigger({
       >
         {children}
         <SelectPrimitive.Icon asChild>
-          <ChevronDownIcon className="size-4 opacity-50" />
+          <ChevronDownIcon className="size-4 shrink-0 opacity-50" />
         </SelectPrimitive.Icon>
-      </Button>
+      </PopupTriggerButton>
     </SelectPrimitive.Trigger>
   );
 }
