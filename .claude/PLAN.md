@@ -252,7 +252,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 - [x] `packages/editor` — **Raw useStore audit**: Migrate raw `useStore(storeApi, ...)` calls to domain hook factories. All reads through editor API layer.
 - [x] `apps/web` — **Fix reducedMotion type errors**: Fix `reducedMotion` type errors in E2E spec `test.use()` calls.
 - [x] `apps/web` — **Remove redundant default props**: Audit for components passing props matching defaults (e.g., `size="md"` when `md` is default).
-- [ ] `apps/web` — **Home page marquee**: Replace static RecipeGrid with scrolling Marquee component (Magic UI pattern) to keep hero content above the fold.
+- [ ] **CLAIMED** `apps/web` — **Home page marquee**: Replace static RecipeGrid with scrolling Marquee component (Magic UI pattern) to keep hero content above the fold.
 - [x] `packages/editor` — **File menu transform origin**: Fix popover/menu animation direction — transform origin should account for trigger position.
 - [x] `packages/editor` — **I/O node mode labels**: Display current mode (Upload, Text, URL) on Input/Output compartment nodes.
 - [x] `packages/editor` — **Pre-populate extension TagPicker**: Ship Input node file extension TagPicker with a static list of common extensions (.jpg, .png, .csv, .pdf, etc.).
@@ -1084,6 +1084,38 @@ Files: new `packages/ui/src/interaction/FeatureGate/`, `apps/web/` consumers
 **Priority: Triage.** Evaluate a flow where the node palette lists primitive node types (e.g. "Image") instead of operations (e.g. "Compress"). After choosing a type, the user picks the mode/operation, which loads the correct config. The config panel would have a mode selector at the top so users can switch operations without removing/re-adding the node. Trade-offs: simpler palette (fewer items) vs. extra click to reach config; explicit mode control vs. current direct-to-operation approach.
 
 Files: `packages/editor/src/components/EditorToolbar.tsx` (palette), `packages/editor/src/components/ConfigPanel/`
+
+---
+
+### Triage: Theme menu lighting direction control via half-radial slider
+
+**Priority: Triage.** Add a lighting direction control to the Theme menu using a half-radial slider UI. This would let users set the direction of the surface lighting effect (shadow/highlight angle) interactively.
+
+---
+
+### Triage: Data-state / CSS-first interaction audit (Radix/shadcn patterns)
+
+**Priority: Triage.** Thorough audit of the codebase to identify places where JS (`useState`, ternary classNames, `onMouseEnter`/`onMouseLeave`) is used for visual states that CSS pseudo-classes, `data-state`, or `data-*` attributes could handle. Research Radix/shadcn recommended patterns for reflecting state via data attributes and CSS selectors. Fix all violations to lean harder into CSS-driven interactions/animations instead of JS re-renders.
+
+Files: cross-cutting — `packages/ui/`, `packages/editor/`, `apps/web/components/`
+
+---
+
+### Triage: Registry consumption via @bnto/core async pattern
+
+**Priority: Triage.** Bootstrap `core.registry.recipes` (or `core.repository.recipes`) so the web client fetches available nodes/recipes/etc. through `@bnto/core` instead of importing `@bnto/nodes` directly. Can be backed by static data initially, but the async pattern means the client won't care when it becomes API-powered in the future. Aligns with the transport-agnostic principle — the registry is just another data source core abstracts.
+
+Files: `packages/core/`, `apps/web/lib/bntoRegistry.ts`, `packages/@bnto/nodes/`
+
+---
+
+### Triage: Surface-aware typography and icon color system
+
+**Priority: Triage.** Research how design systems (shadcn/Radix, Chakra, Mantine, Ark UI) handle text/icon color when components sit on colored surfaces (e.g. a Card with `color="primary"`). Currently `Text`, `Heading`, `Badge`, and `IconBadge` use hardcoded color tokens (`text-muted-foreground`, `bg-primary/10 text-primary`) that don't adapt when the parent surface changes. This forces consumers to manually pass `onSurface` props to every sub-component.
+
+**Goal:** A systematic approach where typography and icon primitives automatically adapt to their parent surface color — either via CSS custom property inheritance, data attributes, or a lightweight variant system. Audit all `@bnto/ui` primitives and `@bnto/editor` node components for manual color overrides that this system would eliminate.
+
+Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `packages/editor/src/components/nodes/Node/NodeIcon.tsx`, `apps/web/app/surface.css`
 
 ---
 
