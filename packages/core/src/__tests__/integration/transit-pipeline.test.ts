@@ -2,14 +2,14 @@
  * Full R2 transit pipeline integration tests against real Convex dev + R2.
  *
  * Tests the complete file lifecycle:
- * - Upload → Execute (via Go API) → Download
+ * - Upload → Execute → Download
  * - Download access control (ownership, auth)
  * - Download error cases (pending execution, no output files)
  *
  * This is the highest-priority integration gap — validates the full
- * browser → R2 → Go engine → R2 → browser pipeline.
+ * browser → R2 → engine → R2 → browser pipeline.
  *
- * Prerequisites: `task dev:all` must be running (Convex dev + Go API + tunnel + R2 dev bucket).
+ * Prerequisites: `task dev` must be running (Convex dev + R2 dev bucket).
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
@@ -55,7 +55,7 @@ describe("full transit pipeline: upload → execute → download", () => {
     expect(execution!.sessionId).toBe(sessionId);
   });
 
-  it("execution completes via Go API transit flow", async () => {
+  it("execution completes via cloud transit flow", async () => {
     const result = await pollExecution(user, executionId);
     expect(result.status).toBe("completed");
     expect(result.error).toBeUndefined();
@@ -81,10 +81,9 @@ describe("full transit pipeline: upload → execute → download", () => {
   it("download URLs are valid for completed execution", async () => {
     await pollExecution(user, executionId);
 
-    const downloadResult = await user.client.action(
-      api.downloads.generateDownloadUrls,
-      { executionId },
-    );
+    const downloadResult = await user.client.action(api.downloads.generateDownloadUrls, {
+      executionId,
+    });
 
     expect(downloadResult.urls.length).toBeGreaterThan(0);
     expect(downloadResult.expiresAt).toBeGreaterThan(Date.now());
@@ -100,10 +99,9 @@ describe("full transit pipeline: upload → execute → download", () => {
   it("downloaded file is a valid image", async () => {
     await pollExecution(user, executionId);
 
-    const downloadResult = await user.client.action(
-      api.downloads.generateDownloadUrls,
-      { executionId },
-    );
+    const downloadResult = await user.client.action(api.downloads.generateDownloadUrls, {
+      executionId,
+    });
 
     const file = downloadResult.urls[0];
     const response = await fetch(file.url);
@@ -165,13 +163,10 @@ describe("download: error cases", () => {
   });
 
   it("rejects download for pending/running execution", async () => {
-    const executionId = await user.client.mutation(
-      api.executions.startPredefined,
-      {
-        slug: TEST_SLUG,
-        definition: COMPRESS_IMAGES_DEFINITION,
-      },
-    );
+    const executionId = await user.client.mutation(api.executions.startPredefined, {
+      slug: TEST_SLUG,
+      definition: COMPRESS_IMAGES_DEFINITION,
+    });
 
     await expect(
       user.client.action(api.downloads.generateDownloadUrls, {
@@ -181,22 +176,16 @@ describe("download: error cases", () => {
   });
 
   it("returns empty URLs for execution with no output files", async () => {
-    const executionId = await user.client.mutation(
-      api.executions.startPredefined,
-      {
-        slug: "test-no-output",
-        definition: MINIMAL_DEFINITION,
-      },
-    );
+    const executionId = await user.client.mutation(api.executions.startPredefined, {
+      slug: "test-no-output",
+      definition: MINIMAL_DEFINITION,
+    });
 
     await pollExecution(user, executionId, {
       timeoutMs: 90_000,
     });
 
-    const result = await user.client.action(
-      api.downloads.generateDownloadUrls,
-      { executionId },
-    );
+    const result = await user.client.action(api.downloads.generateDownloadUrls, { executionId });
 
     expect(result.urls).toHaveLength(0);
   });

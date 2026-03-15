@@ -22,7 +22,7 @@ interface RunRecipeParams {
 }
 
 /**
- * Execute a recipe via browser (WASM) or cloud (R2 + Go API).
+ * Execute a recipe via browser (WASM).
  *
  * Pure action function -- no React, no store access.
  * Tracks telemetry events at start, completion, and failure.

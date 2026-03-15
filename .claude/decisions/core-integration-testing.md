@@ -8,6 +8,7 @@
 ## Problem
 
 We have two testing layers:
+
 - **`convex-test`** (in-memory) — validates function logic but never touches the real deployment
 - **Playwright E2E** (browser) — validates user journeys but is slow and couples to UI
 
@@ -93,7 +94,7 @@ client.setAuth(refreshResult.tokens.token);
 
 3. **Rate limiting:** `@convex-dev/auth` may rate-limit sign-in attempts. Create one authenticated client per suite, not per test.
 
-4. **`task dev:all` required:** Tests need the full dev stack running (Convex dev + Go API via tunnel + R2 dev bucket). CI would need to either skip these or have access to the dev stack.
+4. **`task dev` required:** Tests need the dev stack running (Convex dev + Next.js). CI would need to either skip these or have access to the dev stack.
 
 5. **No backend changes needed.** The `signIn` action is already public. This is purely a test-side concern.
 
@@ -102,6 +103,7 @@ client.setAuth(refreshResult.tokens.token);
 ### `setAdminAuth` with deploy key
 
 `ConvexHttpClient` has an internal `setAdminAuth(deployKey, actingAsIdentity)` method that can impersonate any identity. Rejected because:
+
 - Marked `@internal` — could change without notice
 - Doesn't test the actual auth flow
 - Deploy key in tests is a security concern
@@ -109,5 +111,6 @@ client.setAuth(refreshResult.tokens.token);
 ### Calling Convex functions directly via HTTP
 
 Convex functions are HTTP endpoints under the hood. We could POST directly. Rejected because:
+
 - `ConvexHttpClient` already wraps this cleanly
 - No benefit over using the official client

@@ -131,13 +131,7 @@ function getStatusLabel(status: Execution["status"]): string {
 function friendlyError(raw: string): string {
   if (raw.includes("file transit not configured"))
     return "The file processing server isn't fully configured. Please try again later.";
-  if (raw.includes("GO_API_URL not configured"))
-    return "The processing server isn't available right now. Please try again later.";
   if (raw.includes("timed out") || raw.includes("polling limit"))
     return "The execution took too long and was stopped. Try with fewer or smaller files.";
-  if (raw.includes("Poll error"))
-    return "Lost connection to the processing server. Your execution may still be running.";
-  if (raw.match(/Go API returned [45]\d\d/))
-    return "The processing server returned an error. Please try again.";
   return raw;
 }

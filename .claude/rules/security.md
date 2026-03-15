@@ -48,14 +48,6 @@ Each item maps to a testable assertion — unit tests now, e2e when auth flows a
 
 **Test approach:** Unit tests with `convex-test` — call mutations without auth, call with wrong user, verify rejection.
 
-### Go API Endpoints
-
-- [ ] All endpoints validate authentication tokens
-- [ ] No endpoint is accessible to unauthenticated users unless explicitly public
-- [ ] Token validation rejects expired, malformed, and missing tokens
-
-**Test approach:** Integration tests with `httptest` — request without token, with bad token, with valid token.
-
 ---
 
 ## Input Validation & Injection
@@ -67,13 +59,12 @@ Each item maps to a testable assertion — unit tests now, e2e when auth flows a
 
 **Test approach:** Unit tests with `convex-test` — pass invalid input shapes, verify rejection.
 
-### Go Engine Validation
+### Engine Validation (Rust WASM)
 
-- [ ] Workflow definitions are validated before execution (schema, node types, connections)
+- [ ] Recipe definitions are validated before execution (schema, node types, connections)
 - [ ] Malformed `.bnto.json` files produce clear error messages, not panics
-- [ ] Template expressions (`{{...}}`) are sandboxed — no access to OS env, filesystem, or network
 
-**Test approach:** Unit tests in `engine/pkg/validator/` — malformed workflows, unknown node types, invalid connections. Already partially covered by existing fixture tests.
+**Test approach:** Rust unit tests in `engine/crates/` — malformed definitions, unknown node types, invalid connections. Covered by existing unit + WASM integration tests.
 
 ### XSS Prevention
 
@@ -113,7 +104,7 @@ Each item maps to a testable assertion — unit tests now, e2e when auth flows a
 ### Dependency Surface
 
 - [ ] `package.json` has no unnecessary dependencies
-- [ ] `go.mod` has no unnecessary dependencies
+- [ ] `Cargo.toml` has no unnecessary dependencies
 - [ ] No vendored code with its own license obligations
 
 **Test approach:** Manual review. Compare dependency list against actual imports.
@@ -125,6 +116,6 @@ Each item maps to a testable assertion — unit tests now, e2e when auth flows a
 Run the full security-review skill (`/security-review`) when:
 
 1. **Auth implementation changes** — Sprint 2A completes, auth solution switches
-2. **New API surface exposed** — new Convex functions, Go API endpoints, or web routes
+2. **New API surface exposed** — new Convex functions, WASM exports, or web routes
 3. **Dependency updates** — major version bumps, new dependencies added
 4. **Before any release milestone** — Sprint 3 (monetization), Sprint 7 (Stripe)

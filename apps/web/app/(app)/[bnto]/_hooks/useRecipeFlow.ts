@@ -56,7 +56,7 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     return { acceptLabel: label, dropzoneAccept: toDropzoneAccept(accept) };
   }, [definition]);
 
-  // -- Execution path: browser (WASM) vs cloud (R2 + Go API) --
+  // -- Execution path: browser (WASM) vs cloud (M4, planned) --
   // All predefined recipes with definitions are browser-capable (Tier 1 = WASM).
   const isBrowserPath = !!recipe;
 
@@ -122,16 +122,7 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
         onStartExecution: (id) => store.getState().startExecution(id),
         onFail: (msg) => store.getState().failCloud(msg),
       }),
-    [
-      entry.slug,
-      files,
-      definition,
-      isBrowserPath,
-      browserInstance,
-      upload,
-      startCloudExec,
-      store,
-    ],
+    [entry.slug, files, definition, isBrowserPath, browserInstance, upload, startCloudExec, store],
   );
 
   const handleResetExecution = useCallback(() => {

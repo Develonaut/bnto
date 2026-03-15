@@ -5,7 +5,7 @@
  * signIn action — no React, no browser.
  *
  * Prerequisites:
- *   - `task dev:all` running (Convex dev + Go API + Cloudflare tunnel)
+ *   - `task dev` running (Convex dev)
  *   - CONVEX_URL env var set (defaults to dev deployment)
  *
  * Usage:
@@ -97,9 +97,7 @@ export async function createPasswordClient(
   })) as SignInResult;
 
   if (!result.tokens) {
-    throw new Error(
-      `Password sign-in failed (${options.flow}): ${JSON.stringify(result)}`,
-    );
+    throw new Error(`Password sign-in failed (${options.flow}): ${JSON.stringify(result)}`);
   }
 
   const { token, refreshToken } = result.tokens;
@@ -125,9 +123,7 @@ export async function refreshClientToken(
   })) as SignInResult;
 
   if (!result.tokens) {
-    throw new Error(
-      `Token refresh failed: ${JSON.stringify(result)}`,
-    );
+    throw new Error(`Token refresh failed: ${JSON.stringify(result)}`);
   }
 
   authClient.client.setAuth(result.tokens.token);

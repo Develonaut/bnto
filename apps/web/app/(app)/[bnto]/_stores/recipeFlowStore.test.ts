@@ -162,11 +162,11 @@ describe("recipeFlowStore", () => {
 
     it("preserves executionId from a started execution", () => {
       store.getState().startExecution("exec-99");
-      store.getState().failCloud("Go API timeout");
+      store.getState().failCloud("Server timeout");
 
       expect(store.getState().executionId).toBe("exec-99");
       expect(store.getState().cloudPhase).toBe("failed");
-      expect(store.getState().clientError).toBe("Go API timeout");
+      expect(store.getState().clientError).toBe("Server timeout");
     });
 
     it("can fail from idle (client-side validation error)", () => {

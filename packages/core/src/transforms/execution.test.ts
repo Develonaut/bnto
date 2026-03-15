@@ -85,14 +85,14 @@ describe("toExecution", () => {
     const doc = {
       ...baseDoc,
       status: "failed" as const,
-      error: "Go API returned 500",
+      error: "Server returned 500",
       completedAt: 1500,
     };
 
     const result = toExecution(doc);
 
     expect(result.status).toBe("failed");
-    expect(result.error).toBe("Go API returned 500");
+    expect(result.error).toBe("Server returned 500");
   });
 });
 

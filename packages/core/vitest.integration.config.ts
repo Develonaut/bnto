@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
  * Integration test config — separate from unit tests.
  *
  * These tests call real Convex dev functions via ConvexHttpClient.
- * They require `task dev:all` to be running (Convex dev + Go API + tunnel).
+ * They require `task dev` to be running (Convex dev).
  *
  * Run: pnpm --filter @bnto/core test:integration
  * Or:  task core:integration

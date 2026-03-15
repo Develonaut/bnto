@@ -29,9 +29,9 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos + 2 Tier 1B multi-node compositions run 100% client-side via Rust→WASM
 - **M2 delivered (March 2026):** Editor v1 shipped — schema-driven config controls, save/My Recipes, keyboard shortcuts, accessibility audit. Accounts, execution history, PostHog telemetry all live.
-- **Sprint 6 (Quality & Cleanup) is next.** Lock in quality after M2 — error boundaries, dead code removal, Server Component audit, Go archive cleanup, triage batch.
+- **Sprint 6 (Quality & Cleanup) is next.** Lock in quality after M2 — error boundaries, dead code removal, Server Component audit, triage batch.
 - **Tabled (deep backlog):** Code Editor (CM6), Edit/Run Mode, Sprint 5B W2-4 (LayerPanel polish, processing node accents).
-- **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
+- **Cloud infrastructure:** R2 file transit — ready for M4 (server technology TBD)
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
 - **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), automatic Convex production deploy on merge to main, Lighthouse CI on PRs, PostHog telemetry wired
@@ -41,8 +41,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## What's Built (don't redo)
 
-- [x] Monorepo: Turborepo + pnpm + Taskfile.dev + go.work
-- [x] Go engine + API: 10 node types, CLI, HTTP API on Railway — archived, ready for M4
+- [x] Monorepo: Turborepo + pnpm + Taskfile.dev
 - [x] @bnto/core: Layered singleton (clients → services → adapters), React Query + Convex adapter, 38+ hooks
 - [x] @bnto/auth: `@convex-dev/auth` integration, password auth
 - [x] @bnto/backend: Convex schema (users, workflows, executions, executionLogs), auth, crons, analytics fields
@@ -53,7 +52,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Playwright E2E: 27+ screenshots, user journey tests, execution flow tests, site navigation (desktop + mobile)
 - [x] Rust WASM engine: 5 crates, single cdylib, Web Worker wrapper, progress reporting, 44+ unit tests
 - [x] Browser execution: All 6 Tier 1 bntos client-side via WASM, ZIP download, auto-download
-- [x] Cloud execution: R2 file transit, presigned URLs, Railway deployment — full pipeline verified
+- [x] Cloud execution infrastructure: R2 file transit, presigned URLs — ready for M4
 - [x] Recipe page overhaul (Sprint 2D): RecipeShell, PhaseIndicator, FileCard, RecipeConfigSection, useRecipeFlow
 - [x] Motorway design system: Grid, LinearProgress, ToolbarProgress, RadioGroup, NavButton, RadialSlider, surface system, Pressable + Surface composition
 - [x] Per-instance browser execution stores: Factory pattern, `core.wasm.createExecution()`, no state leaks
@@ -241,8 +240,8 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 - [ ] `apps/web` — **Server Component audit**: Inventory `"use client"` files. Restructure `my-recipes/page.tsx` (eliminate `ssr: false` anti-pattern). Audit all `dynamic({ ssr: false })` usage. Push client boundaries to smallest leaves.
 - [ ] `apps/web` — **Lighthouse audit**: Run `/lighthouse-audit --local` across all public pages. Fix failing a11y, SEO, best-practices assertions.
-- [ ] Cross-cutting — **Go reference sweep**: Grep for "Go engine", "Go API", "archive/engine-go" in non-archive code. Remove stale references. Update CLAUDE.md, architecture.md, ROADMAP.md.
-- [ ] `.claude/` — **Docs cleanup**: Update "What's Built" in PLAN.md, remove Go engine from CLAUDE.md Repository Structure, update architecture.md data flow diagram.
+- [x] Cross-cutting — **Go reference sweep**: Grep for "Go engine", "Go API", "archive/engine-go" in non-archive code. Remove stale references. Update CLAUDE.md, architecture.md, ROADMAP.md.
+- [x] `.claude/` — **Docs cleanup**: Update "What's Built" in PLAN.md, remove Go engine from CLAUDE.md Repository Structure, update architecture.md data flow diagram.
 
 #### Wave 4 (parallel — triage batch)
 

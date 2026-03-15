@@ -7,12 +7,16 @@ const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 450; // 15 min at 2s intervals
 
 /**
- * Internal action: POST recipe definition to Go API, then poll for completion.
- * Writes progress updates to Convex via internal mutations.
+ * Cloud execution engine — M4 infrastructure (archived, not active in M2).
  *
- * When sessionId is provided, the Go API uses it to locate input files
- * in R2 at `uploads/{sessionId}/` and writes output files back to R2
+ * Internal action: POST recipe definition to a server-side execution API,
+ * then poll for completion. Writes progress updates to Convex via internal
+ * mutations. When sessionId is provided, the server uses it to locate input
+ * files in R2 at `uploads/{sessionId}/` and writes output files back to R2
  * at `executions/{executionId}/output/`.
+ *
+ * This file is retained for M4 (premium server-side execution). The server
+ * technology for M4 is TBD — may be Rust compiled service or equivalent.
  */
 export const executeWorkflow = internalAction({
   args: {

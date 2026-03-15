@@ -199,7 +199,7 @@ Users convert when they want something the browser can't provide alone. These ar
 | ---------------- | --------------------------------------- | -------------------------------------------- |
 | **Save**         | "I want to keep this recipe"            | Persistence (Convex-backed storage)          |
 | **History**      | "I need my execution history for audit" | Execution log retention (30-day Pro)         |
-| **Server nodes** | "I need AI to classify these images"    | Server-side compute (Railway, usage-based)   |
+| **Server nodes** | "I need AI to classify these images"    | Server-side compute (usage-based)            |
 | **Team**         | "My team needs shared recipes"          | Collaboration (up to 5 members, no per-seat) |
 
 **No account required for browser execution:** Users run browser recipes instantly — no signup, no account, no friction. Zero backend until they choose to engage. When they sign up, persistence and history become available.
