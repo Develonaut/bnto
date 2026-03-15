@@ -67,7 +67,7 @@ tasks:
     desc: Run Lighthouse CI audit locally against all public routes
     cmds:
       - pnpm --filter @bnto/web build
-      - pnpm --filter @bnto/web exec lhci autorun --config=lighthouserc.json --collect.numberOfRuns=1
+      - pnpm --filter @bnto/web exec lhci autorun --config=../../lighthouserc.json --collect.numberOfRuns=1
 
   # E2E account cleanup
   e2e:cleanup:
