@@ -12,6 +12,7 @@ import type { StoreApi } from "zustand";
 import { useStore } from "zustand";
 import type { EditorStore } from "../../store/types";
 import type { ExecutionHookResult } from "../../reactEditorTypes";
+import { deriveFileInputAccept } from "../../actions/deriveFileInputAccept";
 
 function createUseExecution(storeApi: StoreApi<EditorStore>) {
   return function useExecution(): ExecutionHookResult {
@@ -32,6 +33,8 @@ function createUseExecution(storeApi: StoreApi<EditorStore>) {
       });
     });
 
+    const fileAccept = useStore(storeApi, (s) => deriveFileInputAccept(s.configs));
+
     return {
       phase,
       results,
@@ -40,6 +43,7 @@ function createUseExecution(storeApi: StoreApi<EditorStore>) {
       fileProgress,
       inputFiles,
       canRun,
+      fileAccept,
       executionState,
       nodeProgress,
     };

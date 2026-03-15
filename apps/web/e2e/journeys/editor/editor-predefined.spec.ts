@@ -105,9 +105,7 @@ test.describe("editor predefined recipes @browser", () => {
   test("PR3: rename-files — run and verify renamed output", async ({ page }) => {
     await navigateToEditor(page, "rename-files");
 
-    await runEditorWithFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await runEditorWithFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     await openRunPanel(page);
 
@@ -131,9 +129,7 @@ test.describe("editor predefined recipes @browser", () => {
   test("PR4: resize-images — run and verify output", async ({ page }) => {
     await navigateToEditor(page, "resize-images");
 
-    await runEditorWithFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await runEditorWithFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     await openRunPanel(page);
 
@@ -155,9 +151,7 @@ test.describe("editor predefined recipes @browser", () => {
   test("PR5: convert-image-format — run and verify WebP output", async ({ page }) => {
     await navigateToEditor(page, "convert-image-format");
 
-    await runEditorWithFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await runEditorWithFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     await openRunPanel(page);
 
@@ -188,9 +182,7 @@ test.describe("editor predefined recipes @browser", () => {
   test("PR6: rename-csv-columns — run and verify output", async ({ page }) => {
     await navigateToEditor(page, "rename-csv-columns");
 
-    await runEditorWithFiles(page, [
-      path.join(CSV_FIXTURES_DIR, "simple.csv"),
-    ]);
+    await runEditorWithFiles(page, [path.join(CSV_FIXTURES_DIR, "simple.csv")]);
 
     await openRunPanel(page);
 
@@ -204,6 +196,29 @@ test.describe("editor predefined recipes @browser", () => {
     const downloadPath = await download.path();
     const buffer = fs.readFileSync(downloadPath!);
     expect(buffer.length).toBeGreaterThan(0);
+  });
+
+  test("FA1: file input accept attribute reflects Input node extensions", async ({ page }) => {
+    // Load compress-images — Input node has image MIME types + extensions
+    await navigateToEditor(page, "compress-images");
+
+    const fileInput = page.locator('[data-testid="run-file-input"]');
+    const accept = await fileInput.getAttribute("accept");
+
+    // Should contain image MIME types or file extensions — not be empty/null
+    expect(accept).toBeTruthy();
+    expect(accept).toMatch(/image\/|\.jpg|\.jpeg|\.png|\.webp/);
+  });
+
+  test("FA2: CSV recipe file input accepts CSV extensions", async ({ page }) => {
+    // Load clean-csv — Input node has CSV MIME types + extensions
+    await navigateToEditor(page, "clean-csv");
+
+    const fileInput = page.locator('[data-testid="run-file-input"]');
+    const accept = await fileInput.getAttribute("accept");
+
+    expect(accept).toBeTruthy();
+    expect(accept).toMatch(/\.csv|text\/csv/);
   });
 
   test("XP1: export recipe produces valid JSON", async ({ page }) => {
