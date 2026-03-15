@@ -1,15 +1,9 @@
 "use client";
 
-import { FadeIn } from "@bnto/ui";
-import { CleanCsvConfig } from "./configs/CleanCsvConfig";
-import { CompressImagesConfig } from "./configs/CompressImagesConfig";
-import { ConvertFormatConfig } from "./configs/ConvertFormatConfig";
-import { GenerateThumbnailsConfig } from "./configs/GenerateThumbnailsConfig";
-import { OptimizeImagesForWebConfig } from "./configs/OptimizeImagesForWebConfig";
-import { RenameCsvColumnsConfig } from "./configs/RenameCsvColumnsConfig";
-import { RenameFilesConfig } from "./configs/RenameFilesConfig";
-import { ResizeImagesConfig } from "./configs/ResizeImagesConfig";
+import { Suspense } from "react";
+import { FadeIn, Skeleton } from "@bnto/ui";
 import type { BntoConfigMap, BntoSlug } from "./configs/types";
+import { CONFIG_REGISTRY } from "./configs/registry";
 
 interface RecipeConfigSectionProps {
   slug: string;
@@ -19,66 +13,21 @@ interface RecipeConfigSectionProps {
 
 /**
  * Recipe-specific configuration rendered inline.
- * Routes slug to the correct config component. Returns null for unknown slugs.
+ *
+ * Looks up the lazy-loaded config component from the registry.
+ * Only the config needed for the current recipe is downloaded.
  */
 export function RecipeConfigSection({ slug, config, onChange }: RecipeConfigSectionProps) {
-  const content = renderConfig(slug, config, onChange);
-  if (!content) return null;
+  const ConfigComponent = CONFIG_REGISTRY[slug as BntoSlug];
+  if (!ConfigComponent) return null;
 
   return (
     <FadeIn>
-      <div>{content}</div>
+      <Suspense fallback={<Skeleton className="h-10 w-full" />}>
+        <div>
+          <ConfigComponent value={config} onChange={onChange} />
+        </div>
+      </Suspense>
     </FadeIn>
   );
-}
-
-function renderConfig(
-  slug: string,
-  config: BntoConfigMap[BntoSlug],
-  onChange: (config: BntoConfigMap[BntoSlug]) => void,
-) {
-  switch (slug) {
-    case "compress-images":
-      return (
-        <CompressImagesConfig
-          value={config as BntoConfigMap["compress-images"]}
-          onChange={onChange}
-        />
-      );
-    case "resize-images":
-      return (
-        <ResizeImagesConfig value={config as BntoConfigMap["resize-images"]} onChange={onChange} />
-      );
-    case "convert-image-format":
-      return (
-        <ConvertFormatConfig
-          value={config as BntoConfigMap["convert-image-format"]}
-          onChange={onChange}
-        />
-      );
-    case "rename-files":
-      return (
-        <RenameFilesConfig value={config as BntoConfigMap["rename-files"]} onChange={onChange} />
-      );
-    case "clean-csv":
-      return <CleanCsvConfig value={config as BntoConfigMap["clean-csv"]} onChange={onChange} />;
-    case "rename-csv-columns":
-      return <RenameCsvColumnsConfig />;
-    case "optimize-images-for-web":
-      return (
-        <OptimizeImagesForWebConfig
-          value={config as BntoConfigMap["optimize-images-for-web"]}
-          onChange={onChange}
-        />
-      );
-    case "generate-thumbnails":
-      return (
-        <GenerateThumbnailsConfig
-          value={config as BntoConfigMap["generate-thumbnails"]}
-          onChange={onChange}
-        />
-      );
-    default:
-      return null;
-  }
 }

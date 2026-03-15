@@ -238,7 +238,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 #### Wave 3 (parallel — performance + stale references)
 
-- [ ] `apps/web` — **Server Component audit**: Inventory `"use client"` files. Restructure `my-recipes/page.tsx` (eliminate `ssr: false` anti-pattern). Audit all `dynamic({ ssr: false })` usage. Push client boundaries to smallest leaves.
+- [x] `apps/web` — **Server Component audit**: Removed `"use client"` from 15 pure presentational UI components (animation, layout, surface, feedback). Pushed editor page client boundary down (page.tsx → EditorShell island). Extracted recipe page static header to server-rendered page.tsx. Lazy-loaded config components. Moved currentUser fetch to self-fetching SessionMarker leaf. No `ssr: false` anti-patterns found.
 - [ ] `apps/web` — **Lighthouse audit**: Run `/lighthouse-audit --local` across all public pages. Fix failing a11y, SEO, best-practices assertions.
 - [x] Cross-cutting — **Go reference sweep**: Grep for "Go engine", "Go API", "archive/engine-go" in non-archive code. Remove stale references. Update CLAUDE.md, architecture.md, ROADMAP.md.
 - [x] `.claude/` — **Docs cleanup**: Update "What's Built" in PLAN.md, remove Go engine from CLAUDE.md Repository Structure, update architecture.md data flow diagram.

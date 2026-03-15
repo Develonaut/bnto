@@ -1,5 +1,3 @@
-"use client";
-
 import { forwardRef } from "react";
 import type { HTMLAttributes } from "react";
 
@@ -22,7 +20,8 @@ const Stagger = forwardRef<HTMLDivElement, StaggerProps>(
         ref={ref}
         className={cn("stagger-cascade", className)}
         style={buildStyle(style, {
-          "--stagger-interval": interval != null ? `${interval}${typeof interval === "number" ? "ms" : ""}` : undefined,
+          "--stagger-interval":
+            interval != null ? `${interval}${typeof interval === "number" ? "ms" : ""}` : undefined,
         })}
         {...props}
       />

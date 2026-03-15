@@ -1,17 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { BntoEntry } from "@/lib/bntoRegistry";
-import {
-  FadeIn,
-  SlideUp,
-  BouncyStagger,
-  Container,
-  FileUpload,
-  FileUploadDropzone,
-  Grid,
-  Heading,
-  Stack,
-} from "@bnto/ui";
+import { SlideUp, BouncyStagger, FileUpload, FileUploadDropzone, Grid, Stack } from "@bnto/ui";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
 import { DropzoneContent } from "./DropzoneContent";
 import { ErrorCard } from "./ErrorCard";
@@ -21,22 +12,22 @@ import { RecipeConfigSection } from "./RecipeConfigSection";
 import { RecipeResultsSection } from "./RecipeResultsSection";
 import { RecipeToolbar } from "./RecipeToolbar";
 import { ToolbarProgress } from "./ToolbarProgress";
-import { OpenInEditorLink } from "./OpenInEditorLink";
+import { SessionMarker } from "./SessionMarker";
 import { deriveActivePhase } from "./phaseMapping";
 
 /**
- * Recipe page orchestrator with Motorway styling.
+ * Recipe page interactive flow — client island.
  *
  * Composes the progressive phase flow:
  *   Phase 1 (Files)     → dropzone
  *   Phase 2 (Configure) → file grid + config panel
  *   Phase 3 (Results)   → execution progress / results
  *
- * Uses useRecipeFlow for all state — this component is pure composition.
+ * Static header (h1, description, editor link) is server-rendered
+ * in the parent page.tsx. This component handles the interactive flow only.
  */
-export function RecipeShell({ entry }: { entry: BntoEntry }) {
+export function RecipeShell({ entry, children }: { entry: BntoEntry; children?: ReactNode }) {
   const {
-    currentUser,
     isBrowserPath,
     acceptLabel,
     dropzoneAccept,
@@ -59,24 +50,17 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
   const activePhase = deriveActivePhase(resolvedPhase, files.length);
 
   return (
-    <Container
-      size="md"
-      className="space-y-6 text-center"
+    <div
+      className="space-y-6"
       data-testid="bnto-shell"
       data-session="ready"
-      data-user-id={currentUser?.id ?? ""}
       data-execution-mode={isBrowserPath ? "browser" : "cloud"}
     >
+      <SessionMarker />
       <PhaseIndicator activePhase={activePhase} />
 
-      <FadeIn>
-        <Heading level={1}>{entry.h1}</Heading>
-      </FadeIn>
-      <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
-        {entry.description}
-      </p>
-
-      <OpenInEditorLink slug={entry.slug} />
+      {/* Static header — server-rendered, passed as children from page.tsx */}
+      {children}
 
       <FileUpload
         value={files}
@@ -181,6 +165,6 @@ export function RecipeShell({ entry }: { entry: BntoEntry }) {
           </Stack>
         )}
       </FileUpload>
-    </Container>
+    </div>
   );
 }

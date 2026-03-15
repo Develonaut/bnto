@@ -45,8 +45,6 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     })),
   );
 
-  const { data: currentUser } = core.user.useCurrentUser();
-
   // -- Definition + I/O config (derived from input node, not slug) --
   const recipe = getRecipeBySlug(entry.slug);
   const definition = recipe?.definition;
@@ -144,7 +142,6 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   }, [setFiles, handleResetExecution]);
 
   return {
-    currentUser: currentUser ?? null,
     // Execution path
     isBrowserPath,
     // I/O (derived from definition's input node)

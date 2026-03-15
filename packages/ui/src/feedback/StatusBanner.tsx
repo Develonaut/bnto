@@ -1,5 +1,3 @@
-"use client";
-
 import { forwardRef, type ReactNode } from "react";
 import { createCn } from "../utils/createCn";
 import { cn } from "../utils/cn";

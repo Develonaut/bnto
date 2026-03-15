@@ -1,5 +1,3 @@
-"use client";
-
 import { forwardRef } from "react";
 
 import { Slot } from "@radix-ui/react-slot";
@@ -45,11 +43,15 @@ const ScaleIn = forwardRef<HTMLDivElement, ScaleInProps>(
       <Comp
         ref={ref}
         className={cn("motion-safe:animate-scale-in", className)}
-        style={buildStyle(style, {
-          "--scale-from": from != null ? String(from) : undefined,
-          "--stagger-index": index,
-          transformOrigin: origin ? ORIGIN_MAP[origin] : undefined,
-        }, easing)}
+        style={buildStyle(
+          style,
+          {
+            "--scale-from": from != null ? String(from) : undefined,
+            "--stagger-index": index,
+            transformOrigin: origin ? ORIGIN_MAP[origin] : undefined,
+          },
+          easing,
+        )}
         {...props}
       />
     );

@@ -1,5 +1,3 @@
-"use client";
-
 import { forwardRef } from "react";
 
 import { Slot } from "@radix-ui/react-slot";
@@ -20,10 +18,17 @@ const SlideUp = forwardRef<HTMLDivElement, SlideProps>(
       <Comp
         ref={ref}
         className={cn("motion-safe:animate-slide-up", className)}
-        style={buildStyle(style, {
-          "--slide-distance": distance != null ? `${distance}${typeof distance === "number" ? "px" : ""}` : undefined,
-          "--stagger-index": index,
-        }, easing)}
+        style={buildStyle(
+          style,
+          {
+            "--slide-distance":
+              distance != null
+                ? `${distance}${typeof distance === "number" ? "px" : ""}`
+                : undefined,
+            "--stagger-index": index,
+          },
+          easing,
+        )}
         {...props}
       />
     );
