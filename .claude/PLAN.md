@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 14, 2026 (groomed — Tier 2 Explore & Discovery direction set, Sprint 6 drafted)
+**Last Updated:** March 14, 2026 (groomed — Sprint 6 Quality & Cleanup, Sprint 7 Explore & Discovery)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -29,7 +29,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos + 2 Tier 1B multi-node compositions run 100% client-side via Rust→WASM
 - **M2 delivered (March 2026):** Editor v1 shipped — schema-driven config controls, save/My Recipes, keyboard shortcuts, accessibility audit. Accounts, execution history, PostHog telemetry all live.
-- **Sprint 6 (Explore & Discovery) is next.** Unify recipe/node listings across all surfaces, build `/explore` page. Prerequisite for Tier 3 recipe expansion.
+- **Sprint 6 (Quality & Cleanup) is next.** Lock in quality after M2 — error boundaries, dead code removal, Server Component audit, Go archive cleanup, triage batch.
 - **Tabled (deep backlog):** Code Editor (CM6), Edit/Run Mode, Sprint 5B W2-4 (LayerPanel polish, processing node accents).
 - **Cloud pipeline:** Go API on Railway + R2 file transit — M4 infrastructure ready
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
@@ -95,8 +95,8 @@ Pricing, revenue projections, and "ready to charge" criteria live in private bus
 | Sprint 4     | Recipe editor (headless + visual)            | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
 | Sprint 4D-4G | Package extraction + versioning + validation | Clean architecture. Zod schemas. Packages ready for desktop (M3).                                                                |
 | Sprint 5     | Editor v1 (config controls, save, polish)    | **M2 completion.** Editor gives users a reason to create accounts. Save custom recipes = highest-intent Pro signal.              |
-| Sprint 7-8   | Desktop app                                  | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                                                |
-| Sprint 9     | Stripe + Pro tier                            | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.                   |
+| Sprint 8-9   | Desktop app                                  | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                                                |
+| Sprint 10    | Stripe + Pro tier                            | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.                   |
 
 ---
 
@@ -204,13 +204,59 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **M2 is delivered.** Direction decided: **Tier 2 (Explore & Discovery Infrastructure)** → then **Tier 3 (Near-Term Recipes)**. Unify how recipes/nodes are listed before expanding the recipe catalog. See `bntos.md` for the full tier breakdown.
 
-**Next active sprint:** Sprint 6 — Explore & Discovery (Tier 2).
+**Next up:** Sprint 6 (Quality & Cleanup) → Sprint 7 (Explore & Discovery, Tier 2) → Sprint 8 (Near-Term Recipes, Tier 3).
 
 ---
 
 ## Active Sprint
 
-### Sprint 6: Explore & Discovery Infrastructure (Tier 2)
+### Sprint 6: Quality & Cleanup
+
+**Goal:** Lock in quality after M2. Clean up dead code, add error boundaries, audit performance, resolve triage items. No new features — stabilize what's built before expanding.
+
+**Persona ownership:**
+
+| Package                | Persona                                 |
+| ---------------------- | --------------------------------------- |
+| `apps/web`             | `/frontend-engineer` + `/nextjs-expert` |
+| `packages/core`        | `/core-architect`                       |
+| `packages/@bnto/nodes` | `/core-architect`                       |
+| `engine`               | `/rust-expert`                          |
+| `archive/`             | `/go-engineer`                          |
+
+#### Wave 1 (parallel — error boundaries + dead code)
+
+- [ ] `apps/web` — **Global error boundary**: Create `buildGitHubIssueUrl()` pure function + `ErrorReport` component + `global-error.tsx` + `(app)/error.tsx` + `[bnto]/error.tsx`. Unit tests for URL construction. E2E test for error dialog rendering. See backlog item for full spec.
+- [ ] `packages/core` — **Dead code removal**: Verify `processFile` worker path is dead code and remove. Remove deprecated `hasImplementation()` alias (migrate consumers to `isCapable()`). Remove or deprecate `executePipeline.ts` if fully replaced by Rust executor.
+- [ ] `packages/@bnto/nodes` — **Align stale schemas**: Align `spreadsheet` and `file-system` Zod schemas with Rust processor parameters (clean/rename, find/replace/prefix/suffix). Remove Go-era operations that don't exist in Rust.
+
+#### Wave 2 (parallel — Go archive + Rust cleanup)
+
+- [ ] `archive/` — **Delete Go engine**: Final review of `go-engine-migration.md`, then delete `archive/engine-go/`. Update `go.work`, `.gitignore`, `Taskfile.yml`, `bnto.code-workspace`.
+- [ ] `archive/` — **Delete Go API**: Delete `archive/api-go/`. Update Docker, Taskfile, CI references. (If M4 cloud uses Go, fork to separate repo first.)
+- [ ] `infra` — **Clean up Taskfile + CI**: Remove `task build`, `task test`, `task vet`, `task api:*` commands targeting Go engine. Verify no Go-related CI checks remain.
+- [ ] `engine` — **Split `executor.rs`**: 2068 lines violates Bento Box. Split into focused modules (executor, primitive execution, container execution). Add comment density pass for consistency.
+
+#### Wave 3 (parallel — performance + stale references)
+
+- [ ] `apps/web` — **Server Component audit**: Inventory `"use client"` files. Restructure `my-recipes/page.tsx` (eliminate `ssr: false` anti-pattern). Audit all `dynamic({ ssr: false })` usage. Push client boundaries to smallest leaves.
+- [ ] `apps/web` — **Lighthouse audit**: Run `/lighthouse-audit --local` across all public pages. Fix failing a11y, SEO, best-practices assertions.
+- [ ] Cross-cutting — **Go reference sweep**: Grep for "Go engine", "Go API", "archive/engine-go" in non-archive code. Remove stale references. Update CLAUDE.md, architecture.md, ROADMAP.md.
+- [ ] `.claude/` — **Docs cleanup**: Update "What's Built" in PLAN.md, remove Go engine from CLAUDE.md Repository Structure, update architecture.md data flow diagram.
+
+#### Wave 4 (parallel — triage batch)
+
+- [ ] `apps/web` — **Simplify My Recipes page**: Remove stat cards and history section. Show saved recipes grid or empty state.
+- [ ] `packages/ui` — **SelectTrigger press animation**: Add pressable spring effect matching Menu trigger.
+- [ ] `packages/ui` — **PopupTrigger shared component**: Unify Menu, Select, Combobox trigger styling (pressable spring, surface, chevron).
+- [ ] `packages/editor` — **File menu icons**: Add icons to "Open" and "Export" menu items for visual uniformity.
+- [ ] `packages/editor` — **Raw useStore audit**: Migrate raw `useStore(storeApi, ...)` calls to domain hook factories. All reads through editor API layer.
+- [ ] `apps/web` — **Fix reducedMotion type errors**: Fix `reducedMotion` type errors in E2E spec `test.use()` calls.
+- [ ] `apps/web` — **Remove redundant default props**: Audit for components passing props matching defaults (e.g., `size="md"` when `md` is default).
+
+---
+
+### Sprint 7: Explore & Discovery Infrastructure (Tier 2)
 
 **Goal:** Unify how recipes and nodes are listed across all surfaces, then build a dedicated Explore page. When this sprint is done, adding a recipe to `@bnto/nodes` automatically appears on every surface (home, Explore page, editor palette, sitemap). This is a prerequisite for Tier 3 recipe expansion.
 
@@ -256,7 +302,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 ## Tabled Sprints
 
-### Sprint 6: Edit Mode ↔ Run Mode — TABLED
+### Edit Mode ↔ Run Mode — TABLED
 
 **Tabled (March 2026).** Mini Motorways-inspired edit/run mode switch. Same canvas for editing and running — pause to edit, unpause to watch traffic flow. Requires Sprint 5 execution integration (done). Deferred until v1 editor ships. See `.claude/decisions/editor-ux-direction.md` for the full design.
 
@@ -272,7 +318,9 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **Desktop tech: Tauri (Rust-native).** M1 Rust evaluation passed — one codebase for browser WASM + desktop native + CLI.
 
-### Sprint 7: Desktop Bootstrap
+**Sprint numbering:** Desktop Bootstrap = Sprint 8, Local Execution = Sprint 9.
+
+### Sprint 8: Desktop Bootstrap
 
 **Persona ownership:**
 | Package | Persona |
@@ -300,9 +348,9 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 ---
 
-### Sprint 8: Local Execution
+### Sprint 9: Local Execution
 
-**Persona ownership:** Same as Sprint 7 — `/frontend-engineer` (desktop UI), `/core-architect` (adapter), `/rust-expert` (engine).
+**Persona ownership:** Same as Sprint 8 — `/frontend-engineer` (desktop UI), `/core-architect` (adapter), `/rust-expert` (engine).
 
 #### Wave 1 (parallel — execution)
 
@@ -329,9 +377,9 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **Goal:** Wire up payments, enforce quotas, make the product feel complete.
 
-**"Ready to charge" gate:** Before Sprint 9, confirm: real users running browser bntos, conversion hooks built and tested (Save, History, Premium), people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
+**"Ready to charge" gate:** Before Sprint 10, confirm: real users running browser bntos, conversion hooks built and tested (Save, History, Premium), people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
 
-### Sprint 9: Stripe + Pro Tier (M5)
+### Sprint 10: Stripe + Pro Tier (M5)
 
 **Goal:** First revenue. Pro sells real value — not artificial limits on browser-native operations.
 
@@ -385,9 +433,9 @@ When a recipe has multi-file input and a processing node (e.g., Image compress),
 
 ## Backlog
 
-### Codebase Audit: Go-Era Artifacts & Migration Debt
+### Codebase Audit: Go-Era Artifacts & Migration Debt — PROMOTED TO SPRINT 6
 
-**Priority: Medium.** Audit the entire codebase to remove artifacts from the Go engine migration era. During the transition from Go→Rust, several patterns were duplicated or left as compatibility shims. Now that the Rust engine owns execution and `@bnto/nodes` owns definitions, these should be cleaned up.
+**Promoted to Sprint 6 (Quality & Cleanup), Waves 1-3.** Audit the entire codebase to remove artifacts from the Go engine migration era. During the transition from Go→Rust, several patterns were duplicated or left as compatibility shims. Now that the Rust engine owns execution and `@bnto/nodes` owns definitions, these should be cleaned up.
 
 **What to look for:**
 
@@ -481,9 +529,9 @@ The grid layout algorithm should pack compartments like a real bento box — no 
 
 ---
 
-### UX: Global Error Boundary with GitHub Issue Reporter
+### UX: Global Error Boundary with GitHub Issue Reporter — PROMOTED TO SPRINT 6
 
-**Priority: Medium.** Add a global error boundary that catches unhandled React errors and presents a branded error dialog with enough context to file a GitHub issue. Currently there are zero error boundaries — any unhandled throw crashes the page with a white screen. No `error.tsx`, `global-error.tsx`, or React ErrorBoundary exists.
+**Promoted to Sprint 6 (Quality & Cleanup), Wave 1.** Add a global error boundary that catches unhandled React errors and presents a branded error dialog with enough context to file a GitHub issue. Currently there are zero error boundaries — any unhandled throw crashes the page with a white screen. No `error.tsx`, `global-error.tsx`, or React ErrorBoundary exists.
 
 **Goal:** When an unhandled error occurs, the user sees a helpful dialog (not a white screen) with a "Report this issue" button that opens a pre-filled GitHub issue on `Develonaut/bnto`.
 
@@ -655,9 +703,9 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 - [ ] `packages/core/src/__tests__/integration/transit-pipeline.test.ts:10` — Remove "Go engine" reference
 - [ ] `packages/@bnto/backend/convex/schema.ts:52` — Remove "Go engine" comment (note: `goExecutionId` field still exists, may need schema migration)
 
-### Chore: Go Engine Archival & Node Migration Reference
+### Chore: Go Engine Archival & Node Migration Reference — PROMOTED TO SPRINT 6
 
-**Priority: High.** The archived Go engine (`archive/engine-go/`, ~33K LOC) and API server (`archive/api-go/`, ~2.5K LOC) are slated for deletion. Before removal, all 10 node type implementations have been documented in [go-engine-migration.md](strategy/go-engine-migration.md) as a migration reference.
+**Promoted to Sprint 6 (Quality & Cleanup), Wave 2.** The archived Go engine (`archive/engine-go/`, ~33K LOC) and API server (`archive/api-go/`, ~2.5K LOC) are slated for deletion. Before removal, all 10 node type implementations have been documented in [go-engine-migration.md](strategy/go-engine-migration.md) as a migration reference.
 
 **Migration reference doc:** `.claude/strategy/go-engine-migration.md` — complete implementation details, parameters, patterns, dependencies, and open decisions for all 10 Go node types.
 
@@ -838,9 +886,9 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 - [ ] `engine` — Profile bundle size per crate, evaluate code splitting vs single bundle
 - [ ] `apps/web` — Processing speed + memory benchmarks per node type
 
-### Performance: Next.js Server Component Audit (Pre-Launch)
+### Performance: Next.js Server Component Audit — PROMOTED TO SPRINT 6
 
-**Priority: Pre-launch.** Audit `"use client"` directives — push boundaries down to smallest leaf, convert parents to Server Components, lazy load modals/below-fold with `next/dynamic`.
+**Promoted to Sprint 6 (Quality & Cleanup), Wave 3.** Audit `"use client"` directives — push boundaries down to smallest leaf, convert parents to Server Components, lazy load modals/below-fold with `next/dynamic`.
 
 **Known issues from dashboard page work (Sprint 3):**
 
@@ -897,9 +945,9 @@ The Go engine supports recursive `Definition.Nodes`. The web app must preserve t
 
 **Priority: P3 — Post-Editor.** The home page hero has too many recipe cards pushing content below the fold. Use Magic UI's Marquee component to display recipe cards in a scrolling row, keeping the rest of the page above the fold. Reference: https://magicui.design/docs/components/marquee.md
 
-### Full Codebase Quality Audit Post-Editor v1
+### Full Codebase Quality Audit Post-Editor v1 — PROMOTED TO SPRINT 6
 
-**Priority: P2 — Trigger condition met (editor v1 shipped March 2026).** Run a full codebase sweep: dead code removal (knip per package), code standards compliance, and a domain-by-domain audit where each persona skill verifies its area follows all rules. Cover all packages and apps. Good candidate for a dedicated sprint between editor v1 and M3 work.
+**Promoted to Sprint 6 (Quality & Cleanup).** Run a full codebase sweep: dead code removal (knip per package), code standards compliance, and a domain-by-domain audit where each persona skill verifies its area follows all rules. Cover all packages and apps. Good candidate for a dedicated sprint between editor v1 and M3 work.
 
 ### Triage: SelectTrigger missing press animation
 
