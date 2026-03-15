@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 14, 2026 (groomed — Sprint 6 Quality & Cleanup, Sprint 7 Explore & Discovery)
+**Last Updated:** March 15, 2026 (groomed — Sprint 6 W5 added, stale backlog cleaned, Sprint 7 ready)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -221,7 +221,6 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 | `packages/core`        | `/core-architect`                       |
 | `packages/@bnto/nodes` | `/core-architect`                       |
 | `engine`               | `/rust-expert`                          |
-| `archive/`             | `/go-engineer`                          |
 
 #### Wave 1 (parallel — error boundaries + dead code)
 
@@ -252,11 +251,21 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 - [x] `packages/editor` — **Raw useStore audit**: Migrate raw `useStore(storeApi, ...)` calls to domain hook factories. All reads through editor API layer.
 - [x] `apps/web` — **Fix reducedMotion type errors**: Fix `reducedMotion` type errors in E2E spec `test.use()` calls.
 - [x] `apps/web` — **Remove redundant default props**: Audit for components passing props matching defaults (e.g., `size="md"` when `md` is default).
-- [ ] **CLAIMED** `apps/web` — **Home page marquee**: Replace static RecipeGrid with scrolling Marquee component (Magic UI pattern) to keep hero content above the fold.
+- [x] `apps/web` — **Home page marquee**: Replace static RecipeGrid with scrolling Marquee component (Magic UI pattern) to keep hero content above the fold.
 - [x] `packages/editor` — **File menu transform origin**: Fix popover/menu animation direction — transform origin should account for trigger position.
 - [x] `packages/editor` — **I/O node mode labels**: Display current mode (Upload, Text, URL) on Input/Output compartment nodes.
 - [x] `packages/editor` — **Pre-populate extension TagPicker**: Ship Input node file extension TagPicker with a static list of common extensions (.jpg, .png, .csv, .pdf, etc.).
 - [x] `apps/web` — **Kbd component + shortcuts dialog**: Create `<Kbd>` primitive for shortcut hints on menu items. Add `Cmd+/` keyboard shortcuts dialog.
+
+#### Wave 5 (parallel — final quality + triage cleanup)
+
+- [ ] `apps/web` — **Replace competitor comparison with bnto-first benchmarks**: Rewrite the "How It Works" section's BragLayout to showcase bnto's own capabilities (50ms local WASM, zero uploads, unlimited runs, open source) instead of the TinyPNG/iLoveIMG comparison chart and feature table. Focus on the landscape of problems bnto solves.
+- [ ] `apps/web` — **Delete button on My Recipe cards**: Add delete action to saved recipe cards on `/my-recipes`. Wire `core.recipes.remove()` to a confirmation dialog on RecipeCard.
+- [ ] `packages/editor` — **Persist editor state in localStorage**: Debounced write of editor store (nodes, configs, definition, metadata) to localStorage. Hydrate on mount. Clear on "New" or "Open".
+- [ ] `engine` — **Thin Rust comment density**: Reduce inline comment noise — keep file-level headers and comments on genuinely complex logic, remove obvious per-line explanations. Update CLAUDE.md Rust standards section.
+- [ ] Cross-cutting — **Inline handler audit**: Extract inline `onClick={() => ...}` handlers to named `handleOnX` functions across `packages/ui/`, `packages/editor/`, `apps/web/components/`.
+- [ ] Cross-cutting — **CSS-first interaction audit**: Identify JS `useState`/ternary className patterns for visual states that CSS pseudo-classes or `data-*` attributes could handle. Fix violations in `packages/ui/`, `packages/editor/`, `apps/web/components/`.
+- [ ] Cross-cutting — **Test naming unification**: Audit all test suites for naming consistency — clear action-oriented descriptions, consistent prefixing, logical grouping. Remove duplicate or vague test names.
 
 ---
 
@@ -396,7 +405,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 |---------|---------|
 | `apps/web` | `/frontend-engineer` |
 | `@bnto/backend` | `/backend-engineer` |
-| `archive/api-go` | `/go-engineer` |
+| M4 cloud service | TBD (per M4 architecture decision) |
 
 #### Wave 1 (parallel — payments)
 
@@ -408,7 +417,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 #### Wave 2 (parallel — Pro feature gates)
 
 - [ ] `@bnto/backend` — `/backend-engineer` — Pro feature gates: 30-day history retention, team sharing (up to 5 members), priority processing queue
-- [ ] `archive/api-go` — `/go-engineer` — Server-side execution quota enforcement (applies to premium server-side bntos only — AI, shell, video)
+- [ ] M4 cloud service — Server-side execution quota enforcement (applies to premium server-side bntos only — AI, shell, video). Technology TBD per M4 architecture decision
 - [ ] `apps/web` — `/frontend-engineer` — File size enforcement at R2 presigned URL generation for server-side recipes (Pro-only, size limits TBD based on usage data)
 
 #### Wave 3 (sequential — test)
@@ -427,7 +436,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 When a recipe has multi-file input and a processing node (e.g., Image compress), should the editor:
 
 - **Option A (Smart/implicit):** Automatically iterate over inputs — user adds `Input → Image (compress) → Output`, engine handles the loop. Simple, fewer nodes, covers 90% of cases.
-- **Option B (Explicit):** User builds iteration manually — `Input → Loop (forEach) → Image (compress inside loop) → Output`. More flexible, more transparent, matches current Go engine model.
+- **Option B (Explicit):** User builds iteration manually — `Input → Loop (forEach) → Image (compress inside loop) → Output`. More flexible, more transparent.
 
 **Proposed direction:** Smart by default (Option A) with an advanced toggle to switch to explicit looping for power users. This affects engine processing, definition schema, and editor UX. Needs a deep review session with full project context ([bntos.md](strategy/bntos.md), `mvp-roadmap.md` in private business docs) before implementation.
 
@@ -437,30 +446,9 @@ When a recipe has multi-file input and a processing node (e.g., Image compress),
 
 ## Backlog
 
-### Codebase Audit: Go-Era Artifacts & Migration Debt — PROMOTED TO SPRINT 6
+### ~~Codebase Audit: Go-Era Artifacts & Migration Debt~~ — DONE (Sprint 6)
 
-**Promoted to Sprint 6 (Quality & Cleanup), Waves 1-3.** Audit the entire codebase to remove artifacts from the Go engine migration era. During the transition from Go→Rust, several patterns were duplicated or left as compatibility shims. Now that the Rust engine owns execution and `@bnto/nodes` owns definitions, these should be cleaned up.
-
-**What to look for:**
-
-1. **Duplicated execution logic** — `@bnto/core` may still have JS-side pipeline orchestration (`executePipeline.ts`) that duplicates what the Rust executor now handles. Verify the deprecated path is truly dead and remove it.
-2. **Go-era parameter schemas** — `@bnto/nodes` schemas for `spreadsheet` and `file-system` still reference Go-era operations (`read`/`write` for spreadsheet, `path`/`content`/`source`/`dest` for file-system). These don't match the Rust processors (`clean`/`rename` and `find`/`replace`/`prefix`/`suffix`). Align the TS schemas with what the engine actually implements.
-3. **Deprecated API methods** — `browserExecutionService.hasImplementation()` is an alias for `isCapable()`. Migrate consumers and remove the alias.
-4. **Split comment patterns** — Comments that say "Go engine does X" or reference `archive/engine-go/` behavior as if it's current.
-5. **Oversized Rust files** — `executor.rs` (2068 lines), node crate files (1000-2000 lines each) violate Bento Box. Split into focused modules.
-6. **`processFile` API path** — The single-file `processFile()` worker API may be dead code now that `executePipeline()` handles everything. Verify and remove if so.
-
-**Scope:** `packages/core/`, `packages/@bnto/nodes/`, `engine/crates/`, `apps/web/` (any remaining Go references in UI code).
-
-**Tasks:**
-
-- [ ] `packages/@bnto/nodes` — Align `spreadsheet` and `file-system` Zod schemas with Rust processor parameters (clean/rename, find/replace/prefix/suffix)
-- [ ] `packages/core` — Remove deprecated `hasImplementation()` alias, migrate `useRecipeFlow.ts` to `isCapable()`
-- [ ] `packages/core` — Verify `processFile` worker path is dead code and remove if so
-- [ ] `packages/core` — Remove or deprecate `executePipeline.ts` if fully replaced by Rust executor
-- [ ] `engine` — Split `executor.rs` into focused modules (executor, primitive execution, container execution)
-- [ ] `engine` — Add comment density pass to executor.rs sections 400+ for consistency with other files
-- [ ] Cross-cutting — Grep for "Go engine", "Go API", "archive/engine-go" references in non-archive code and remove stale ones
+Delivered in Sprint 6 Waves 1-3. Go archives deleted, executor split, stale references swept, schemas verified as auto-generated from Rust catalog.
 
 ---
 
@@ -699,46 +687,13 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 - [ ] `@bnto/core` — Profile `createZipBlob` memory limits for large batches
 - [ ] `.claude/strategy/` — Write `file-limits.md` with results and decisions
 
-### Chore: Remove Remaining Go References from Codebase
+### ~~Chore: Remove Remaining Go References from Codebase~~ — DONE (Sprint 6)
 
-**Priority: Low.** Three files outside `@bnto/nodes` still reference "Go engine." Clean up in a small PR.
+Delivered in Sprint 6 Wave 3 (Go reference sweep). Migration reference preserved in `go-engine-migration.md`.
 
-- [ ] `packages/core/src/__tests__/integration/execution.test.ts:22` — Remove "Go engine" reference
-- [ ] `packages/core/src/__tests__/integration/transit-pipeline.test.ts:10` — Remove "Go engine" reference
-- [ ] `packages/@bnto/backend/convex/schema.ts:52` — Remove "Go engine" comment (note: `goExecutionId` field still exists, may need schema migration)
+### ~~Chore: Go Engine Archival & Node Migration Reference~~ — DONE (Sprint 6)
 
-### Chore: Go Engine Archival & Node Migration Reference — PROMOTED TO SPRINT 6
-
-**Promoted to Sprint 6 (Quality & Cleanup), Wave 2.** The archived Go engine (`archive/engine-go/`, ~33K LOC) and API server (`archive/api-go/`, ~2.5K LOC) are slated for deletion. Before removal, all 10 node type implementations have been documented in [go-engine-migration.md](strategy/go-engine-migration.md) as a migration reference.
-
-**Migration reference doc:** `.claude/strategy/go-engine-migration.md` — complete implementation details, parameters, patterns, dependencies, and open decisions for all 10 Go node types.
-
-**What's fully migrated (safe to delete):**
-
-- `image` — compress, resize, convert (Rust `bnto-image`, 224 tests)
-- `file-system` rename/move (Rust `bnto-file`, 32 tests)
-- `spreadsheet` CSV clean + rename (Rust `bnto-csv`, 42 tests)
-
-**What's partially migrated (gaps documented):**
-
-- `file-system` — missing: read, write, copy, delete, mkdir, exists, list with glob
-- `spreadsheet` — missing: Excel (.xlsx) read/write (`excelize/v2` equivalent)
-
-**What's not migrated (documented for future):**
-
-- Orchestration: `group`, `loop`, `parallel` — needed for multi-step recipes
-- Data: `transform` (expr-lang), `edit-fields` (Go templates) — needed for Tier 3 recipes
-- Server-only: `http-request`, `shell-command` — M4 Pro tier
-
-**Tasks:**
-
-- [x] `.claude/strategy/` — Create `go-engine-migration.md` with full node inventory, parameters, patterns, dependencies, and migration paths
-- [ ] `archive/` — **Final review**: Walk through `go-engine-migration.md` with the team, confirm nothing is missing before deletion
-- [ ] `archive/` — **Delete `archive/engine-go/`**: Remove Go engine source code. Update `go.work`, `.gitignore`, `Taskfile.yml`, `bnto.code-workspace` to remove Go engine references
-- [ ] `archive/` — **Delete `archive/api-go/`**: Remove Go API server source code. Update Docker, Taskfile, and CI references. (Note: if M4 cloud uses Go, fork to a separate repo first)
-- [ ] `.claude/` — **Update docs**: Remove Go engine references from CLAUDE.md, architecture.md, ROADMAP.md. Update "What's Built" section in PLAN.md
-- [ ] `infra` — **Clean up Taskfile**: Remove `task build`, `task test`, `task vet`, `task api:*` commands that target the Go engine
-- [ ] `infra` — **Clean up CI**: Remove Go-related checks from CI if any remain (Go checks already removed from CI Gate, but verify)
+Delivered in Sprint 6 Wave 2 (PRs #186, #188). Go archives deleted, Taskfile cleaned, CI cleaned, docs updated.
 
 ### Engine: Unmigrated Node Operations (Rust WASM)
 
@@ -792,7 +747,7 @@ Convex dev (`zealous-canary-422`) has stale Better Auth records and test artifac
 Web app domain (`bnto.io`) delivered in Sprint 2C. API domain (`api.bnto.io`) deferred to M4.
 
 - [x] `infra` — Connect `bnto.io` to Vercel + Cloudflare DNS, verify auth redirects — Delivered in Sprint 2C
-- [ ] `infra` — (M4) Add `api.bnto.io` CNAME → Railway, configure custom domain, update `GO_API_URL`
+- [ ] `infra` — (M4) Configure `api.bnto.io` for M4 cloud service (technology and hosting TBD)
 
 ### Infra: Graduate SEO Validation from E2E to Unit Tests
 
@@ -938,32 +893,20 @@ Pro users auto-save results to Google Drive/OneDrive/Dropbox — removes the "do
 
 ### Recursive Workflow Composability (Web App)
 
-The Go engine supports recursive `Definition.Nodes`. The web app must preserve this composability. Guard rails (not new tasks — apply when building related features):
+The engine supports recursive `Definition.Nodes`. The web app must preserve this composability. Guard rails (not new tasks — apply when building related features):
 
 - Config panels must work at any nesting depth
 - Execution progress must be recursive (group nodes show children's progress)
 - JSON editor must represent recursive structure faithfully
 - Visual editor (Sprint 4) must support drill-down into group nodes
 
-### Home Page Marquee for Recipe Cards
+### ~~Home Page Marquee for Recipe Cards~~ — DONE (Sprint 6 W4)
 
-**Priority: P3 — Post-Editor.** The home page hero has too many recipe cards pushing content below the fold. Use Magic UI's Marquee component to display recipe cards in a scrolling row, keeping the rest of the page above the fold. Reference: https://magicui.design/docs/components/marquee.md
+### ~~Full Codebase Quality Audit Post-Editor v1~~ — DONE (Sprint 6)
 
-### Full Codebase Quality Audit Post-Editor v1 — PROMOTED TO SPRINT 6
+### ~~Triage: SelectTrigger missing press animation~~ — DONE (Sprint 6 W4)
 
-**Promoted to Sprint 6 (Quality & Cleanup).** Run a full codebase sweep: dead code removal (knip per package), code standards compliance, and a domain-by-domain audit where each persona skill verifies its area follows all rules. Cover all packages and apps. Good candidate for a dedicated sprint between editor v1 and M3 work.
-
-### Triage: SelectTrigger missing press animation
-
-**Priority: Triage.** The Select input trigger doesn't animate on click like Menu triggers do. SelectTrigger should have the same pressable spring effect as the Menu trigger component.
-
-Files: `packages/ui/src/interaction/Select.tsx`, `packages/ui/src/interaction/Menu/MenuTrigger.tsx`
-
-### Triage: PopupTrigger shared component
-
-**Priority: Triage.** Menu, Select, and Combobox all trigger popups but have separate trigger styling. Create a shared PopupTrigger component that centralizes the pressable spring animation, surface treatment, and chevron icon behavior so all popup-triggering controls inherit consistent look and feel.
-
-Files: `packages/ui/src/interaction/Menu/MenuTrigger.tsx`, `packages/ui/src/interaction/Select.tsx`, `packages/ui/src/interaction/Combobox.tsx`
+### ~~Triage: PopupTrigger shared component~~ — DONE (Sprint 6 W4)
 
 ### Triage: Remove sm/lg button sizes
 
@@ -971,57 +914,31 @@ Files: `packages/ui/src/interaction/Menu/MenuTrigger.tsx`, `packages/ui/src/inte
 
 Files: `packages/ui/src/interaction/Button.tsx`, all consumers of `size="sm"` or `size="lg"`
 
-### Triage: Show mode labels on Input/Output nodes
+### ~~Triage: Show mode labels on Input/Output nodes~~ — DONE (Sprint 6 W4)
 
-**Priority: Triage.** Input and Output compartment nodes should display a label showing their current mode (Upload, Text, URL, etc.) so users can see at a glance what each I/O node is configured for.
+### ~~Triage: Fix reducedMotion type errors in E2E specs~~ — DONE (Sprint 6 W4)
 
----
+### ~~Triage: Next.js performance audit — leaf-level component boundaries~~ — DONE (Sprint 6 W3)
 
-### Triage: Fix reducedMotion type errors in E2E specs
+Delivered as "Server Component audit" — pushed client boundaries to leaves, lazy-loaded configs, extracted server-rendered static headers.
 
-**Priority: Triage.** Multiple E2E spec files have `reducedMotion` type errors in `test.use()` calls — the property isn't recognized by the custom fixtures type. Pre-existing on `main`. Affects `e2e/telemetry/`, `e2e/editor/`, `e2e/journeys/auth/`.
+### ~~Triage: File menu transform origin~~ — DONE (Sprint 6 W4)
 
-### Triage: Next.js performance audit — leaf-level component boundaries
+### ~~Triage: Remove Redundant Default Props~~ — DONE (Sprint 6 W4)
 
-**Priority: Triage.** Audit `apps/web/` pages and layouts for data-fetching and heavy client-only components that sit near the branch/trunk level instead of being pushed to leaf-level. Break up components to maximize page load — ensure `"use client"`, Convex hooks, and browser-only deps (ReactFlow, etc.) are at the smallest possible leaf, not wrapping entire pages or layouts.
+### ~~Triage: Simplify My Recipes Page~~ — DONE (Sprint 6 W4, PR #191)
 
-### Triage: File menu transform origin
+### ~~Triage: Pre-populate File Extension TagPicker~~ — DONE (Sprint 6 W4)
 
-**Priority: Triage.** The file menu's transform origin doesn't account for the trigger being at the bottom of the page — the menu should animate from the button's position. Fix the popover/menu `transformOrigin` or Radix `side`/`align` props.
+### ~~Triage: Lighthouse Audit & Fixes~~ — DONE (Sprint 6 W3, PR #190)
 
----
-
-### Triage: Remove Redundant Default Props
-
-**Priority: Triage.** Audit the codebase for components passing props that already match the component's default values (e.g. `size="md"` when `md` is the default). Remove redundant prop usage to keep call sites clean.
-
----
-
-### Triage: Simplify My Recipes Page
-
-**Priority: Triage.** Remove the three stat cards (Total Runs, Plan, Last Activity) and history section from `/my-recipes`. Show just the user's saved recipes grid or an empty state. Keep it simple — the current page is over-designed for the amount of content it has.
-
-### Triage: Pre-populate File Extension TagPicker
-
-**Priority: Triage.** The file extension TagPicker on the Input node config panel should ship with a well-defined static list of common extensions (e.g., `.jpg`, `.png`, `.csv`, `.pdf`). Future iteration: allow custom entries via combobox. Relevant control: `schema-field-extensions` in Input node config.
-
-### Triage: Lighthouse Audit & Fixes
-
-**Priority: Triage.** After completing performance and code audits, run a full Lighthouse pass across all public pages to identify regressions. Fix any failing a11y, SEO, or best-practices assertions. Use `/lighthouse-audit --local` to triage.
-
-### Triage: Add Icons to File Menu Items
-
-**Priority: Triage.** "Open" and "Export" in the editor File menu are missing icons — "New" has `PlusIcon` and "Save" has `SaveIcon`. Add icons to Open and Export for visual uniformity. File: `packages/editor/src/components/EditorToolbar.tsx`.
+### ~~Triage: Add Icons to File Menu Items~~ — DONE (Sprint 6 W4)
 
 ### ~~Triage: Kbd Component & Keyboard Shortcuts Dialog~~ — DONE
 
 Delivered in Sprint 6 Wave 4. `<Kbd>` primitive in `@bnto/ui`, `<ShortcutHint>` for menu items, `<HelpDialog>` (⌘/), I/O delete guard at handler level.
 
-### Triage: Audit Raw useStore Selectors in Editor Components
-
-**Priority: Triage.** Audit `@bnto/editor` components and hooks for raw `useStore(storeApi, ...)` calls that bypass the editor API layer. All store reads should go through the domain hook factories (`createUseExecution`, `createUseNodes`, etc.) on the `ReactEditorInstance`. Components consume state via `useExecution()`, `editor.nodes.useNodes()`, etc. — never raw selectors. Migrate any violations found.
-
-Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `packages/editor/src/context.ts`
+### ~~Triage: Audit Raw useStore Selectors in Editor Components~~ — DONE (Sprint 6 W4, PR #196)
 
 ### Triage: Test Naming & Description Unification Pass
 
@@ -1101,11 +1018,9 @@ Files: cross-cutting — `packages/ui/`, `packages/editor/`, `apps/web/component
 
 ---
 
-### Triage: Registry consumption via @bnto/core async pattern
+### ~~Triage: Registry consumption via @bnto/core async pattern~~ — Covered by Sprint 7 W2
 
-**Priority: Triage.** Bootstrap `core.registry.recipes` (or `core.repository.recipes`) so the web client fetches available nodes/recipes/etc. through `@bnto/core` instead of importing `@bnto/nodes` directly. Can be backed by static data initially, but the async pattern means the client won't care when it becomes API-powered in the future. Aligns with the transport-agnostic principle — the registry is just another data source core abstracts.
-
-Files: `packages/core/`, `apps/web/lib/bntoRegistry.ts`, `packages/@bnto/nodes/`
+Subsumed by Sprint 7 Wave 2 "Implement unified catalog query" task.
 
 ---
 
@@ -1116,6 +1031,10 @@ Files: `packages/core/`, `apps/web/lib/bntoRegistry.ts`, `packages/@bnto/nodes/`
 **Goal:** A systematic approach where typography and icon primitives automatically adapt to their parent surface color — either via CSS custom property inheritance, data attributes, or a lightweight variant system. Audit all `@bnto/ui` primitives and `@bnto/editor` node components for manual color overrides that this system would eliminate.
 
 Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `packages/editor/src/components/nodes/Node/NodeIcon.tsx`, `apps/web/app/surface.css`
+
+---
+
+### ~~Triage: Replace competitor comparison with bnto-first benchmarks~~ — Promoted to Sprint 6 W5
 
 ---
 
