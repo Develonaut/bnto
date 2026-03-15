@@ -1043,6 +1043,10 @@ Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `package
 
 **Priority: Triage.** Rust code is now readable without every-line explanations. Keep file-level header comments (purpose, how it fits) but remove most inline comments — only keep them for unorthodox patterns or genuinely complex logic. Update CLAUDE.md "Rust Code Standards" section to reflect the new lighter standard. Applies to all files in `engine/crates/`.
 
+### Triage: Delete button on My Recipe cards
+
+**Priority: Triage.** Add a delete action to saved recipe cards on `/my-recipes`. Requires `core.recipes.remove()` wired to a confirmation dialog on each `RecipeCard` in `RecipeGrid.tsx`.
+
 ---
 
 ## Reference
