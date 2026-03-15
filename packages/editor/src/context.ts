@@ -34,7 +34,7 @@ function useEditor(): ReactEditorInstance {
  * @internal — access the raw Zustand storeApi for rendering pipeline hooks.
  *
  * Only for hooks that need direct store subscriptions (useLayoutNodes,
- * useExecutionNodes, useAddDividerNodes, useEditorSelection, useEditorNode,
+ * useExecutionNodes, useAddDividerNodes, useEditorSelection,
  * useEditorCanvas). Components should use useEditor() instead.
  */
 function useEditorStoreApi(): StoreApi<EditorStore> {

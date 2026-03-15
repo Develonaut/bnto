@@ -45,6 +45,7 @@ export type {
   ReactExecutionClient,
   ReactHistoryClient,
   ReactPanelClient,
+  NodeHookResult,
   NodesHookResult,
   DefinitionHookResult,
   ExecutionHookResult,

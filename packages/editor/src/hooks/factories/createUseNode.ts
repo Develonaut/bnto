@@ -1,0 +1,65 @@
+/**
+ * createUseNode — hook factory for single-node state.
+ *
+ * Returns a useNode(nodeId) hook closure that captures storeApi at
+ * creation time. Subscribes to the specific node's visual data and
+ * domain config, plus derives schema/type metadata.
+ */
+
+"use client";
+
+import { useMemo } from "react";
+import type { StoreApi } from "zustand";
+import { useStore } from "zustand";
+import type { NodeTypeName, NodeSchemaDefinition } from "@bnto/nodes";
+import { NODE_TYPE_INFO, getNodeSchema, getVisibleParams } from "@bnto/nodes";
+import type { EditorStore } from "../../store/types";
+import type { CompartmentNodeData, NodeConfig } from "../../adapters/types";
+
+interface NodeHookResult {
+  /** The node's visual data, or null if not found. */
+  node: CompartmentNodeData | null;
+  /** The node's domain config (nodeType, name, parameters), or null. */
+  config: NodeConfig | null;
+  /** Node type info (label, category, capabilities). */
+  typeInfo: (typeof NODE_TYPE_INFO)[NodeTypeName] | null;
+  /** Full schema definition for the node type. */
+  schemaDef: NodeSchemaDefinition | null;
+  /** Parameter names visible given current parameter values. */
+  visibleParams: string[];
+}
+
+const EMPTY_RESULT: NodeHookResult = {
+  node: null,
+  config: null,
+  typeInfo: null,
+  schemaDef: null,
+  visibleParams: [],
+};
+
+function createUseNode(storeApi: StoreApi<EditorStore>) {
+  return function useNode(nodeId: string | null): NodeHookResult {
+    const nodeData = useStore(storeApi, (s) => {
+      if (!nodeId) return null;
+      return s.nodes.find((n) => n.id === nodeId)?.data ?? null;
+    });
+
+    const config = useStore(storeApi, (s) => {
+      if (!nodeId) return null;
+      return s.configs[nodeId] ?? null;
+    });
+
+    return useMemo(() => {
+      if (!nodeData || !config) return EMPTY_RESULT;
+
+      const typeInfo = NODE_TYPE_INFO[config.nodeType as NodeTypeName] ?? null;
+      const schemaDef = getNodeSchema(config.nodeType) ?? null;
+      const visibleParams = schemaDef ? getVisibleParams(config.nodeType, config.parameters) : [];
+
+      return { node: nodeData, config, typeInfo, schemaDef, visibleParams };
+    }, [nodeData, config]);
+  };
+}
+
+export { createUseNode };
+export type { NodeHookResult };

@@ -24,6 +24,7 @@ import { createUseDefinition } from "./hooks/factories/createUseDefinition";
 import { createUseExecution } from "./hooks/factories/createUseExecution";
 import { createUseHistory } from "./hooks/factories/createUseHistory";
 import { createUsePanels } from "./hooks/factories/createUsePanels";
+import { createUseNode } from "./hooks/factories/createUseNode";
 
 interface CreateReactEditorResult {
   instance: ReactEditorInstance;
@@ -35,7 +36,7 @@ function createReactEditor(definition?: Definition): CreateReactEditorResult {
   const storeApi = base._storeApi;
 
   const instance: ReactEditorInstance = {
-    nodes: { ...base.nodes, useNodes: createUseNodes(storeApi) },
+    nodes: { ...base.nodes, useNodes: createUseNodes(storeApi), useNode: createUseNode(storeApi) },
     definition: { ...base.definition, useDefinition: createUseDefinition(storeApi) },
     execution: { ...base.execution, useExecution: createUseExecution(storeApi) },
     history: { ...base.history, useHistory: createUseHistory(storeApi) },
