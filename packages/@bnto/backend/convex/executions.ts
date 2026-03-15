@@ -97,9 +97,7 @@ export const updateProgress = internalMutation({
   args: {
     executionId: v.id("executions"),
     status: v.union(v.literal("pending"), v.literal("running")),
-    progress: v.array(
-      v.object({ nodeId: v.string(), status: v.string() }),
-    ),
+    progress: v.array(v.object({ nodeId: v.string(), status: v.string() })),
     goExecutionId: v.string(),
   },
   handler: async (ctx, args) => {
@@ -188,8 +186,8 @@ export const fail = internalMutation({
 
 /**
  * Schedule R2 cleanup for transit files.
- * Input session cleanup is a safety net — the Go API deletes input files
- * immediately after download. Output cleanup runs after 2 hours to give
+ * Input session cleanup is a safety net — the execution server deletes input
+ * files immediately after download. Output cleanup runs after 2 hours to give
  * users time to download.
  */
 async function scheduleR2Cleanup(
@@ -204,10 +202,8 @@ async function scheduleR2Cleanup(
     });
   }
   if (options?.hasOutputFiles) {
-    await ctx.scheduler.runAfter(
-      R2_OUTPUT_CLEANUP_DELAY_MS,
-      internal.cleanup.deleteByPrefix,
-      { prefix: `executions/${executionId}/output/` },
-    );
+    await ctx.scheduler.runAfter(R2_OUTPUT_CLEANUP_DELAY_MS, internal.cleanup.deleteByPrefix, {
+      prefix: `executions/${executionId}/output/`,
+    });
   }
 }

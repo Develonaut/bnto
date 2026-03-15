@@ -19,7 +19,7 @@ import {
 } from "./setup";
 import { pollExecution } from "./transit-helpers";
 
-// Minimal definition that the Go engine can process (group with no nodes).
+// Minimal definition that the engine can process (group with no nodes).
 // This will start fast and fail/complete quickly — ideal for testing the
 // execution lifecycle without waiting for real file I/O.
 const MINIMAL_DEFINITION = {
@@ -74,9 +74,7 @@ describe("authenticated user can start execution", () => {
     const events = await user.client.query(api.execution_events.listByUser, {
       limit: 10,
     });
-    const event = events.find(
-      (e: { executionId?: string }) => e.executionId === executionId,
-    );
+    const event = events.find((e: { executionId?: string }) => e.executionId === executionId);
     expect(event).toBeDefined();
     expect(event!.slug).toBe(TEST_SLUG);
     expect(event!.userId).toBe(user.userId);
@@ -166,9 +164,7 @@ describe("execution reaches terminal state", () => {
     const events = await user.client.query(api.execution_events.listByUser, {
       limit: 10,
     });
-    const event = events.find(
-      (e: { executionId?: string }) => e.executionId === executionId,
-    );
+    const event = events.find((e: { executionId?: string }) => e.executionId === executionId);
     expect(event).toBeDefined();
     expect(event!.status).toMatch(/^(completed|failed)$/);
     expect(event!.durationMs).toBeTypeOf("number");

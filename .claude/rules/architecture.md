@@ -93,8 +93,7 @@ See [core-api.md](core-api.md) for the full API design rules.
 
 - Landing page (public, static/SSG routes)
 - Authenticated app routes (dashboard, workflows, executions)
-- UI components and editor features co-located here (future `@bnto/ui` + `@bnto/editor`)
-- Page composition -- imports from `@bnto/core` for data, local components for UI
+- Page composition -- imports from `@bnto/core` for data, `@bnto/ui` for components, `@bnto/editor` for recipe editing
 
 ### `apps/desktop/` -- Tauri application (M3, planned)
 

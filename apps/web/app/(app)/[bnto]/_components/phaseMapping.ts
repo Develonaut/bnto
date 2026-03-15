@@ -2,11 +2,10 @@
  * Phase Mapping — Translates execution status into UI display phases.
  *
  * WHY THIS EXISTS:
- * Bnto has two execution paths — browser (WASM) and cloud (R2 + Go API).
- * Each path uses different status strings internally, but the RunButton
- * only understands one set of display phases: "idle", "uploading", "running",
- * "completed", "failed". These functions act as translators — they convert
- * each path's internal status into the unified RunPhase type that the UI uses.
+ * Bnto has a browser execution path (WASM) with cloud execution planned (M4).
+ * The RunButton only understands one set of display phases: "idle", "uploading",
+ * "running", "completed", "failed". These functions act as translators — they
+ * convert internal status strings into the unified RunPhase type that the UI uses.
  *
  * Think of it like an airport departures board: different airlines use
  * different internal systems, but the board shows the same set of statuses

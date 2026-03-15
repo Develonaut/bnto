@@ -49,9 +49,10 @@ export default defineSchema({
       v.literal("failed"),
     ),
     progress: v.array(v.object({ nodeId: v.string(), status: v.string() })),
-    // Result JSON from Go engine — shape varies
+    // Result JSON from engine — shape varies by execution path
     result: v.optional(v.any()),
     error: v.optional(v.string()),
+    // Legacy: cloud execution ID from M4 server-side path (archived)
     goExecutionId: v.optional(v.string()),
     // R2 file transit — links execution to uploaded input files and output results
     sessionId: v.optional(v.string()),

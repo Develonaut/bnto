@@ -139,13 +139,15 @@ task check              # Full quality gate (lint + test + build)
 bnto/
 ├── apps/
 │   ├── web/                     # Next.js on Vercel
-│   │   └── components/          # UI components (co-located, future @bnto/ui)
-│   └── desktop/                 # Tauri frontend (M3)
+│   └── desktop/                 # Tauri frontend (M3, planned)
 ├── packages/
 │   ├── core/                    # @bnto/core — Transport-agnostic API
+│   ├── ui/                      # @bnto/ui — Motorway design system
+│   ├── editor/                  # @bnto/editor — Recipe editor
 │   └── @bnto/
 │       ├── auth/                # @bnto/auth — Cloud auth (web only)
-│       └── backend/             # @bnto/backend — Convex schema + functions
+│       ├── backend/             # @bnto/backend — Convex schema + functions
+│       └── nodes/               # @bnto/nodes — Engine-agnostic node definitions
 ├── engine/                      # Rust WASM engine (browser execution)
 │   └── crates/
 │       ├── bnto-core/           # Core WASM library (types, traits, progress)
@@ -153,6 +155,7 @@ bnto/
 │       ├── bnto-csv/            # CSV clean/rename columns
 │       ├── bnto-file/           # File rename
 │       └── bnto-wasm/           # cdylib entry point (single WASM binary)
+├── test-fixtures/               # Shared test assets (images, CSVs)
 └── .claude/                     # Strategy docs, decisions, plan, rules
 ```
 

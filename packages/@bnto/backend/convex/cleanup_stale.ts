@@ -11,7 +11,7 @@ const MAX_PER_RUN = 100;
  * Mark stale executions as failed (DB-only, no R2 scheduling).
  *
  * Catches executions stuck in pending/running for >2 hours.
- * Likely caused by Go API crash, network drop, or polling timeout edge case.
+ * Likely caused by server crash, network drop, or polling timeout edge case.
  *
  * Returns the list of cleaned executions so the orchestrating action
  * can schedule R2 cleanup separately.
@@ -27,16 +27,12 @@ export const markStaleAsFailed = internalMutation({
     // table scan with .filter().
     const pendingStale = await ctx.db
       .query("executions")
-      .withIndex("by_status_startedAt", (q) =>
-        q.eq("status", "pending").lt("startedAt", cutoff),
-      )
+      .withIndex("by_status_startedAt", (q) => q.eq("status", "pending").lt("startedAt", cutoff))
       .take(MAX_PER_RUN);
 
     const runningStale = await ctx.db
       .query("executions")
-      .withIndex("by_status_startedAt", (q) =>
-        q.eq("status", "running").lt("startedAt", cutoff),
-      )
+      .withIndex("by_status_startedAt", (q) => q.eq("status", "running").lt("startedAt", cutoff))
       .take(MAX_PER_RUN);
 
     const stale = [...pendingStale, ...runningStale].slice(0, MAX_PER_RUN);
@@ -56,9 +52,7 @@ export const markStaleAsFailed = internalMutation({
     }
 
     if (cleaned.length > 0) {
-      console.log(
-        `markStaleAsFailed: marked ${cleaned.length} stale executions as failed`,
-      );
+      console.log(`markStaleAsFailed: marked ${cleaned.length} stale executions as failed`);
     }
 
     return { cleaned };
@@ -74,9 +68,9 @@ export const markStaleAsFailed = internalMutation({
 export const cleanupStaleExecutions = internalAction({
   args: {},
   handler: async (ctx): Promise<{ cleaned: number }> => {
-    const { cleaned } = await ctx.runMutation(
-      internal.cleanup_stale.markStaleAsFailed,
-    ) as { cleaned: Array<{ id: string; sessionId?: string }> };
+    const { cleaned } = (await ctx.runMutation(internal.cleanup_stale.markStaleAsFailed)) as {
+      cleaned: Array<{ id: string; sessionId?: string }>;
+    };
 
     for (const exec of cleaned) {
       if (exec.sessionId) {
