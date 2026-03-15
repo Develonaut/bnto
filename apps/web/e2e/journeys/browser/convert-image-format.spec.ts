@@ -11,8 +11,6 @@ import {
   assertWebPBytes,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Browser execution journey — convert-image-format
  *
@@ -27,14 +25,10 @@ test.describe("convert-image-format — browser execution @browser", () => {
     await assertBrowserExecution(page);
   });
 
-  test("JPEG → WebP: convert, download, verify WebP magic bytes", async ({
-    page,
-  }) => {
+  test("JPEG → WebP: convert, download, verify WebP magic bytes", async ({ page }) => {
     await navigateToRecipe(page, "convert-image-format", "Convert Image Format Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     await runAndComplete(page);
 
@@ -47,19 +41,15 @@ test.describe("convert-image-format — browser execution @browser", () => {
     assertWebPBytes(buffer);
   });
 
-  test("PNG → JPEG: convert via format selector, verify JPEG magic bytes", async ({
-    page,
-  }) => {
+  test("PNG → JPEG: convert via format selector, verify JPEG magic bytes", async ({ page }) => {
     await navigateToRecipe(page, "convert-image-format", "Convert Image Format Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.png"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.png")]);
 
     // Change target format to JPEG via the select dropdown
-    const formatSelect = page.locator('[data-testid="format-select"]').or(
-      page.getByRole("combobox"),
-    );
+    const formatSelect = page
+      .locator('[data-testid="format-select"]')
+      .or(page.getByRole("combobox"));
     await formatSelect.click();
     await page.getByRole("option", { name: /jpeg/i }).click();
 

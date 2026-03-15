@@ -9,8 +9,6 @@ import {
   runAndComplete,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Browser execution journey — clean-csv
  *
@@ -24,14 +22,10 @@ test.describe("clean-csv — browser execution @browser", () => {
     await assertBrowserExecution(page);
   });
 
-  test("messy CSV: clean, download, verify output is valid CSV", async ({
-    page,
-  }) => {
+  test("messy CSV: clean, download, verify output is valid CSV", async ({ page }) => {
     await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
-    await uploadFiles(page, [
-      path.join(CSV_FIXTURES_DIR, "messy.csv"),
-    ]);
+    await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "messy.csv")]);
 
     await runAndComplete(page);
 
@@ -69,9 +63,7 @@ test.describe("clean-csv — browser execution @browser", () => {
   test("simple CSV: passes through cleanly", async ({ page }) => {
     await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
-    await uploadFiles(page, [
-      path.join(CSV_FIXTURES_DIR, "simple.csv"),
-    ]);
+    await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "simple.csv")]);
 
     await runAndComplete(page);
 

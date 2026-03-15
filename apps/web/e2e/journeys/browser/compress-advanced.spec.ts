@@ -4,8 +4,6 @@ import type { Page } from "@playwright/test";
 import { test, expect } from "../../fixtures";
 import { IMAGE_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Advanced compress-images tests: compression presets and batch processing.
  *

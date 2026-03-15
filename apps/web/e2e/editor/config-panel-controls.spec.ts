@@ -7,8 +7,6 @@ import {
   setSelectParam,
 } from "../helpers/editor";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Editor config panel — schema-driven form controls.
  *

@@ -44,7 +44,7 @@ export function RecipeGrid() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-[240px]">
-        <EmptyState size="md">
+        <EmptyState>
           <EmptyStateIcon>
             <FolderOpenIcon />
           </EmptyStateIcon>
@@ -84,7 +84,7 @@ export function RecipeGrid() {
   if (!recipes || recipes.length === 0) {
     return (
       <div className="min-h-[240px]">
-        <EmptyState size="md">
+        <EmptyState>
           <EmptyStateIcon>
             <FolderOpenIcon />
           </EmptyStateIcon>

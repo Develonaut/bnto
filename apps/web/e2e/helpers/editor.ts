@@ -102,11 +102,15 @@ export async function addNodeFromPalette(page: Page, nodeLabel: string) {
   if ((await placeholder.count()) > 0) {
     await placeholder.click({ force: true });
   } else if ((await divider.count()) > 0) {
-    // Divider buttons are disabled={!hovered}. Hover the button to trigger
-    // the parent's onMouseEnter (which enables the button), wait for React
-    // to process, then click. Using dispatchEvent ensures the click fires
-    // even if ReactFlow detaches the element between hover and click.
-    await divider.hover({ force: true });
+    // Divider buttons are disabled={!hovered}. Hover to trigger the parent's
+    // onMouseEnter which enables the button. Retry because React's synthetic
+    // mouseenter can miss under CPU load (ReactFlow continuous re-renders).
+    let enabled = false;
+    for (let attempt = 0; attempt < 5 && !enabled; attempt++) {
+      await divider.hover({ force: true });
+      await page.waitForTimeout(200);
+      enabled = await divider.isEnabled();
+    }
     await expect(divider).toBeEnabled({ timeout: 2_000 });
     await divider.click({ force: true });
   } else {
@@ -119,8 +123,7 @@ export async function addNodeFromPalette(page: Page, nodeLabel: string) {
 
   // Click the palette item. The dialog is a React portal (outside ReactFlow),
   // so Playwright's native click works — no coordinate workaround needed.
-  const itemButton = dialog
-    .getByRole("button", { name: new RegExp(`^${nodeLabel}\\b`) });
+  const itemButton = dialog.getByRole("button", { name: new RegExp(`^${nodeLabel}\\b`) });
   await itemButton.click({ timeout: 5_000 });
 
   // Wait for the dialog to close and a new node card to appear on canvas.
@@ -139,9 +142,7 @@ export async function selectNode(page: Page, nodeLabel: string) {
   // ReactFlow re-renders can detach node elements between Playwright's
   // element resolution and click dispatch. Using page.evaluate avoids
   // this by finding and clicking in a single synchronous execution.
-  const node = page
-    .locator('[data-testid="node-card"]')
-    .filter({ hasText: new RegExp(nodeLabel) });
+  const node = page.locator('[data-testid="node-card"]').filter({ hasText: new RegExp(nodeLabel) });
   await node.waitFor({ timeout: 5_000 });
   await page.evaluate((label) => {
     const cards = document.querySelectorAll('[data-testid="node-card"]');
@@ -206,9 +207,4 @@ export async function setSelectParam(page: Page, paramName: string, optionValue:
 // Execution & Export (re-exported from editor-execution.ts)
 // ---------------------------------------------------------------------------
 
-export {
-  runEditorWithFiles,
-  openRunPanel,
-  getResultCount,
-  exportRecipe,
-} from "./editor-execution";
+export { runEditorWithFiles, openRunPanel, getResultCount, exportRecipe } from "./editor-execution";

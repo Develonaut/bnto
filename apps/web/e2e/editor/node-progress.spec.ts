@@ -1,8 +1,6 @@
 import { test, expect } from "../fixtures";
 import { dismissBetaDialog } from "../helpers/editor";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Per-node progress visualization — data attribute verification.
  *

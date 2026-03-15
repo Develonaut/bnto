@@ -1,8 +1,6 @@
 import { test, expect } from "../../fixtures";
 import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Auth lifecycle E2E journeys
  *

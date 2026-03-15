@@ -12,8 +12,6 @@ import {
   downloadAllAsZip,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Browser execution journey — compress-images
  *
@@ -32,22 +30,16 @@ test.describe("compress-images — browser execution @browser", () => {
   test("single JPEG: full lifecycle", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     await runAndComplete(page);
 
     const outputFile = page.locator('[data-testid="output-file"]');
     await expect(outputFile).toHaveCount(1);
-    await expect(
-      outputFile.getByRole("button", { name: /download/i }),
-    ).toBeVisible();
+    await expect(outputFile.getByRole("button", { name: /download/i })).toBeVisible();
 
     // Verify download produces valid compressed JPEG
-    const inputSize = fs.statSync(
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ).size;
+    const inputSize = fs.statSync(path.join(IMAGE_FIXTURES_DIR, "small.jpg")).size;
 
     const buffer = await downloadAndVerify(page, {
       filenamePattern: /\.jpe?g$/i,
@@ -77,9 +69,7 @@ test.describe("compress-images — browser execution @browser", () => {
   test("back button resets from completed to configure phase", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     const runButton = await runAndComplete(page);
 

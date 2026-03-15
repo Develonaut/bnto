@@ -6,8 +6,6 @@ import {
   filterEvents,
 } from "../telemetryHelper";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * PostHog telemetry integration — verifies the analytics pipeline works
  * end-to-end: TelemetryProvider initializes PostHog, page views are
@@ -18,15 +16,11 @@ test.use({ reducedMotion: "reduce" });
  */
 
 test.describe("PostHog telemetry @browser", () => {
-  test("initializes and captures initial pageview on load", async ({
-    page,
-  }) => {
+  test("initializes and captures initial pageview on load", async ({ page }) => {
     await enableTelemetryCapture(page);
 
     await page.goto("/");
-    await expect(
-      page.getByRole("heading", { name: /Pick a tool/ }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Pick a tool/ })).toBeVisible();
 
     // Wait for TelemetryProvider's useEffect to fire the initial $pageview
     await waitForTelemetryEvent(page, "$pageview");
@@ -40,19 +34,18 @@ test.describe("PostHog telemetry @browser", () => {
     await enableTelemetryCapture(page);
 
     await page.goto("/");
-    await expect(
-      page.getByRole("heading", { name: /Pick a tool/ }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Pick a tool/ })).toBeVisible();
 
     // Wait for initial pageview from TelemetryProvider
     await waitForTelemetryEvent(page, "$pageview");
 
     // SPA navigate by clicking a recipe card link (not page.goto which
     // does a full navigation and resets the __bnto_telemetry__ array)
-    await page.getByRole("link", { name: /Compress Images/ }).first().click();
-    await expect(
-      page.getByRole("heading", { name: "Compress Images Online Free" }),
-    ).toBeVisible();
+    await page
+      .getByRole("link", { name: /Compress Images/ })
+      .first()
+      .click();
+    await expect(page.getByRole("heading", { name: "Compress Images Online Free" })).toBeVisible();
 
     // Wait for at least 2 pageviews: initial load + SPA navigation
     await waitForTelemetryEvent(page, "$pageview", 2);

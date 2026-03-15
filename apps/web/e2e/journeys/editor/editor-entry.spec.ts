@@ -1,8 +1,6 @@
 import { test, expect } from "../../fixtures";
 import { navigateToEditor } from "../../helpers/editor";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Editor entry & navigation — EN1-EN3 + beta banner
  *

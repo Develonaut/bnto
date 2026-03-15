@@ -9,8 +9,6 @@ import {
   runAndComplete,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * EXIF orientation preservation — all image bntos
  *
@@ -42,9 +40,7 @@ function getJpegDimensions(data: Buffer): { width: number; height: number } {
   for (let i = 0; i < data.length - 9; i++) {
     if (
       data[i] === 0xff &&
-      (data[i + 1] === 0xc0 ||
-        data[i + 1] === 0xc1 ||
-        data[i + 1] === 0xc2)
+      (data[i + 1] === 0xc0 || data[i + 1] === 0xc1 || data[i + 1] === 0xc2)
     ) {
       const height = data.readUInt16BE(i + 5);
       const width = data.readUInt16BE(i + 7);
@@ -55,14 +51,10 @@ function getJpegDimensions(data: Buffer): { width: number; height: number } {
 }
 
 test.describe("EXIF orientation — all image bntos @browser", () => {
-  test("compress: portrait JPEG preserves orientation-corrected dimensions", async ({
-    page,
-  }) => {
+  test("compress: portrait JPEG preserves orientation-corrected dimensions", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg")]);
 
     await runAndComplete(page);
 
@@ -89,14 +81,10 @@ test.describe("EXIF orientation — all image bntos @browser", () => {
     expect(dims.height).toBe(1200);
   });
 
-  test("resize: portrait JPEG uses orientation-corrected dimensions", async ({
-    page,
-  }) => {
+  test("resize: portrait JPEG uses orientation-corrected dimensions", async ({ page }) => {
     await navigateToRecipe(page, "resize-images", "Resize Images Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg")]);
 
     await runAndComplete(page);
 
@@ -120,19 +108,15 @@ test.describe("EXIF orientation — all image bntos @browser", () => {
     expect(dims.height).toBeGreaterThan(dims.width);
   });
 
-  test("convert: portrait JPEG → PNG preserves orientation", async ({
-    page,
-  }) => {
+  test("convert: portrait JPEG → PNG preserves orientation", async ({ page }) => {
     await navigateToRecipe(page, "convert-image-format", "Convert Image Format Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg")]);
 
     // Change target format to PNG
-    const formatSelect = page.locator('[data-testid="format-select"]').or(
-      page.getByRole("combobox"),
-    );
+    const formatSelect = page
+      .locator('[data-testid="format-select"]')
+      .or(page.getByRole("combobox"));
     await formatSelect.click();
     await page.getByRole("option", { name: /png/i }).click();
 

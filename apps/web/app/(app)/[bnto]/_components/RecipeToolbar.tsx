@@ -69,7 +69,7 @@ export function RecipeToolbar({
           )}
           {activePhase === 2 && (
             <FileUploadClear asChild>
-              <Button variant="outline" size="icon" elevation="md" aria-label="Clear all files">
+              <Button variant="outline" size="icon" aria-label="Clear all files">
                 <TrashIcon className="size-4" />
               </Button>
             </FileUploadClear>
@@ -101,7 +101,7 @@ export function RecipeToolbar({
         )}
         {activePhase === 2 && (
           <FileUploadClear asChild>
-            <Button variant="outline" size="icon" elevation="md" aria-label="Clear all files">
+            <Button variant="outline" size="icon" aria-label="Clear all files">
               <TrashIcon className="size-4" />
             </Button>
           </FileUploadClear>

@@ -14,13 +14,7 @@ import {
   exportRecipe,
 } from "../../helpers/editor";
 import { assertDefinitionMatchesFixture } from "../../helpers/definitions";
-import {
-  downloadFirstOutput,
-  assertWebP,
-  assertJpeg,
-} from "../../helpers/assertions";
-
-test.use({ reducedMotion: "reduce" });
+import { downloadFirstOutput, assertWebP, assertJpeg } from "../../helpers/assertions";
 
 /**
  * Custom recipe journeys — multi-node pipelines built from scratch.

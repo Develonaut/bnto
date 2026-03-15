@@ -11,8 +11,6 @@ import {
   assertWebPBytes,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Codec-specific compress-images tests.
  *
@@ -21,9 +19,7 @@ test.use({ reducedMotion: "reduce" });
  */
 
 test.describe("compress-images — codec coverage @browser", () => {
-  test("JPEG: select, compress, download, verify magic bytes", async ({
-    page,
-  }) => {
+  test("JPEG: select, compress, download, verify magic bytes", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "large.jpg")]);
@@ -32,9 +28,7 @@ test.describe("compress-images — codec coverage @browser", () => {
 
     await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
 
-    const inputSize = fs.statSync(
-      path.join(IMAGE_FIXTURES_DIR, "large.jpg"),
-    ).size;
+    const inputSize = fs.statSync(path.join(IMAGE_FIXTURES_DIR, "large.jpg")).size;
 
     await downloadAndVerify(page, {
       filenamePattern: /\.jpe?g$/i,
@@ -43,9 +37,7 @@ test.describe("compress-images — codec coverage @browser", () => {
     });
   });
 
-  test("PNG: select, compress with progress, download, verify magic bytes", async ({
-    page,
-  }) => {
+  test("PNG: select, compress with progress, download, verify magic bytes", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "large.png")]);
@@ -65,9 +57,7 @@ test.describe("compress-images — codec coverage @browser", () => {
 
     await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
 
-    const inputSize = fs.statSync(
-      path.join(IMAGE_FIXTURES_DIR, "large.png"),
-    ).size;
+    const inputSize = fs.statSync(path.join(IMAGE_FIXTURES_DIR, "large.png")).size;
 
     await downloadAndVerify(page, {
       filenamePattern: /\.png$/i,
@@ -76,9 +66,7 @@ test.describe("compress-images — codec coverage @browser", () => {
     });
   });
 
-  test("WebP: select, compress, download, verify RIFF/WEBP header", async ({
-    page,
-  }) => {
+  test("WebP: select, compress, download, verify RIFF/WEBP header", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "large.webp")]);

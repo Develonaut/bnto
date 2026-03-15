@@ -12,8 +12,6 @@ import {
   assertWebPBytes,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Browser execution journey — optimize-images-for-web
  *
@@ -24,20 +22,12 @@ test.use({ reducedMotion: "reduce" });
 
 test.describe("optimize-images-for-web — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(
-      page,
-      "optimize-images-for-web",
-      "Optimize Images for Web Online Free",
-    );
+    await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
     await assertBrowserExecution(page);
   });
 
   test("single JPEG: resize + convert + compress lifecycle", async ({ page }) => {
-    await navigateToRecipe(
-      page,
-      "optimize-images-for-web",
-      "Optimize Images for Web Online Free",
-    );
+    await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
@@ -45,9 +35,7 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
 
     const outputFile = page.locator('[data-testid="output-file"]');
     await expect(outputFile).toHaveCount(1);
-    await expect(
-      outputFile.getByRole("button", { name: /download/i }),
-    ).toBeVisible();
+    await expect(outputFile.getByRole("button", { name: /download/i })).toBeVisible();
 
     // Output should be WebP (convert step) — verify RIFF+WEBP magic bytes
     const buffer = await downloadAndVerify(page, {
@@ -60,11 +48,7 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
   });
 
   test("batch: multiple images with Download All as ZIP", async ({ page }) => {
-    await navigateToRecipe(
-      page,
-      "optimize-images-for-web",
-      "Optimize Images for Web Online Free",
-    );
+    await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
 
     await uploadFiles(page, [
       path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
@@ -76,25 +60,17 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
     await expect(page.locator('[data-testid="output-file"]')).toHaveCount(2);
 
     const { download } = await downloadAllAsZip(page);
-    expect(download.suggestedFilename()).toBe(
-      "optimize-images-for-web-results.zip",
-    );
+    expect(download.suggestedFilename()).toBe("optimize-images-for-web-results.zip");
   });
 
   test("back button resets from completed to configure phase", async ({ page }) => {
-    await navigateToRecipe(
-      page,
-      "optimize-images-for-web",
-      "Optimize Images for Web Online Free",
-    );
+    await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
     const runButton = await runAndComplete(page);
 
-    const backButton = page
-      .locator('[data-testid="bnto-shell"] button')
-      .first();
+    const backButton = page.locator('[data-testid="bnto-shell"] button').first();
     await backButton.click();
 
     await expect(page.getByText("1 file selected")).toBeVisible();

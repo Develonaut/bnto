@@ -40,7 +40,7 @@ export const DialogClose = forwardRef<
 
   return (
     <DialogPrimitive.Close ref={ref} asChild {...props}>
-      <Button variant="ghost" size="icon" elevation="md" className={cn("size-8", className)}>
+      <Button variant="ghost" size="icon" className={cn("size-8", className)}>
         <XIcon className="size-4" />
         <span className="sr-only">Close</span>
       </Button>
@@ -84,26 +84,27 @@ type DialogContentProps = ComponentPropsWithoutRef<typeof DialogPrimitive.Conten
   size?: DialogSize;
 };
 
-export const DialogContent = forwardRef<ElementRef<typeof DialogPrimitive.Content>, DialogContentProps>(
-  ({ className, children, size = "md", style, ...props }, ref) => (
-    <DialogPortal>
-      <DialogOverlay />
-      <DialogPrimitive.Content ref={ref} asChild {...props}>
-        {/* Centering wrapper — fixed fullscreen, z-modal above overlay,
+export const DialogContent = forwardRef<
+  ElementRef<typeof DialogPrimitive.Content>,
+  DialogContentProps
+>(({ className, children, size = "md", style, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content ref={ref} asChild {...props}>
+      {/* Centering wrapper — fixed fullscreen, z-modal above overlay,
             pointer-events-none so clicks outside dismiss via overlay. */}
-        <div className="fixed inset-0 z-modal flex items-center justify-center pointer-events-none">
-          <Popup
-            elevation="lg"
-            className={cn("pointer-events-auto relative p-8", className)}
-            style={{ width: "100%", maxWidth: DIALOG_MAX_WIDTH[size], ...style }}
-          >
-            {children}
-          </Popup>
-        </div>
-      </DialogPrimitive.Content>
-    </DialogPortal>
-  ),
-);
+      <div className="fixed inset-0 z-modal flex items-center justify-center pointer-events-none">
+        <Popup
+          elevation="lg"
+          className={cn("pointer-events-auto relative p-8", className)}
+          style={{ width: "100%", maxWidth: DIALOG_MAX_WIDTH[size], ...style }}
+        >
+          {children}
+        </Popup>
+      </div>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
 DialogContent.displayName = "Dialog.Content";
 
 /* ── Header ─────────────────────────────────────────────────── */

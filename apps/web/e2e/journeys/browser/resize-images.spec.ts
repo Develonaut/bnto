@@ -10,8 +10,6 @@ import {
   downloadAndVerify,
 } from "../../helpers";
 
-test.use({ reducedMotion: "reduce" });
-
 /**
  * Browser execution journey — resize-images
  *
@@ -25,14 +23,10 @@ test.describe("resize-images — browser execution @browser", () => {
     await assertBrowserExecution(page);
   });
 
-  test("single JPEG: resize, download, verify valid image", async ({
-    page,
-  }) => {
+  test("single JPEG: resize, download, verify valid image", async ({ page }) => {
     await navigateToRecipe(page, "resize-images", "Resize Images Online Free");
 
-    await uploadFiles(page, [
-      path.join(IMAGE_FIXTURES_DIR, "medium.jpg"),
-    ]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "medium.jpg")]);
 
     await runAndComplete(page);
 
@@ -56,8 +50,6 @@ test.describe("resize-images — browser execution @browser", () => {
     await runAndComplete(page);
 
     await expect(page.locator('[data-testid="output-file"]')).toHaveCount(2);
-    await expect(
-      page.getByRole("button", { name: /download all/i }).last(),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /download all/i }).last()).toBeVisible();
   });
 });
