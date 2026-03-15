@@ -43,8 +43,9 @@ test.describe("Site navigation — desktop @browser", () => {
     // Open Explore dropdown (categorized recipe links)
     await page.getByRole("button", { name: /Explore/ }).click();
 
-    // Wait for dropdown content — a recipe link becomes visible
-    const compressLink = page.getByRole("link", {
+    // Scope to the dropdown popover so we don't match marquee recipe cards
+    const dropdown = page.locator("[data-radix-popper-content-wrapper]");
+    const compressLink = dropdown.getByRole("link", {
       name: /Compress Images/,
     });
     await expect(compressLink.first()).toBeVisible();

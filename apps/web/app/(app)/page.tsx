@@ -9,7 +9,7 @@ import {
   Text,
 } from "@bnto/ui";
 import { HeroSidebar } from "@/components/blocks/HeroSidebar";
-import { RecipeGrid } from "@/components/blocks/RecipeGrid";
+import { RecipeMarquee } from "@/components/blocks/RecipeMarquee";
 
 import { GITHUB_URL } from "@/lib/copy";
 
@@ -21,10 +21,10 @@ import { TrustLayout } from "./_components/TrustLayout";
 export default function Home() {
   return (
     <AppShellContent>
-      {/* Hero — sidebar + recipe grid */}
+      {/* Hero — sidebar + recipe marquee */}
       <div className="grid items-start gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20">
         <HeroSidebar showCta={false} />
-        <RecipeGrid />
+        <RecipeMarquee />
       </div>
 
       <Divider label="Free. No signup." />
