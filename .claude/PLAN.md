@@ -245,7 +245,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 #### Wave 4 (parallel — triage batch)
 
-- [ ] `apps/web` — **Simplify My Recipes page**: Remove stat cards and history section. Show saved recipes grid or empty state.
+- [x] `apps/web` — **Simplify My Recipes page**: Remove stat cards and history section. Show saved recipes grid or empty state.
 - [ ] `packages/ui` — **SelectTrigger press animation**: Add pressable spring effect matching Menu trigger.
 - [ ] `packages/ui` — **PopupTrigger shared component**: Unify Menu, Select, Combobox trigger styling (pressable spring, surface, chevron).
 - [ ] `packages/editor` — **File menu icons**: Add icons to "Open" and "Export" menu items for visual uniformity.

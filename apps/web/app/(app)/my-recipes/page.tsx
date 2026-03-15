@@ -5,8 +5,8 @@ import { AppShellContent, Heading, Stack, Text } from "@bnto/ui";
  * My Recipes dashboard — server component.
  *
  * Static content (heading, description) renders on the server for faster
- * first paint. The interactive part (tabs + data leaves) lives in
- * MyRecipesTabs — the client boundary is pushed to the smallest leaf.
+ * first paint. The interactive RecipeGrid lives in MyRecipesTabs — the
+ * client boundary is pushed to the smallest leaf.
  */
 export default function MyRecipesPage() {
   return (
@@ -16,7 +16,7 @@ export default function MyRecipesPage() {
           <Heading level={1} size="lg">
             My Recipes
           </Heading>
-          <Text color="muted">Your saved recipes and recent activity.</Text>
+          <Text color="muted">Your saved recipes.</Text>
         </Stack>
 
         <MyRecipesTabs />
