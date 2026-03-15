@@ -49,6 +49,8 @@ interface NodeRootProps {
   selected?: boolean;
   /** Current execution status. Drives elevation, variant overrides, interaction. */
   status?: string;
+  /** Accessible label describing this node (e.g. "Compress Images node"). */
+  "aria-label"?: string;
   /** Composed content — NodeHeader, NodeBody. */
   children: ReactNode;
 }
@@ -60,6 +62,7 @@ function NodeRoot({
   align,
   selected = false,
   status,
+  "aria-label": ariaLabel,
   children,
 }: NodeRootProps) {
   const presentation = resolveNodePresentation(status, selected);
@@ -80,6 +83,9 @@ function NodeRoot({
           pressed={presentation.pressed}
           hovered={presentation.hovered}
           muted={presentation.muted}
+          role="button"
+          aria-label={ariaLabel}
+          aria-selected={selected}
           data-testid="node-card"
           data-state={status}
           className={cn(

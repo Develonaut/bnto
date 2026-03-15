@@ -47,7 +47,12 @@ function CanvasShell({ children }: CanvasShellProps) {
   }, [editor]);
 
   return (
-    <div className="relative h-full overflow-hidden" data-testid="recipe-editor">
+    <div
+      className="relative h-full overflow-hidden"
+      data-testid="recipe-editor"
+      role="application"
+      aria-label="Recipe editor canvas"
+    >
       <Canvas
         nodes={nodesWithDividers}
         onNodesChange={handleNodesChange}

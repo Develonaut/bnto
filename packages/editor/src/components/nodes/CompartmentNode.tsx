@@ -30,7 +30,13 @@ export const CompartmentNode = memo(function CompartmentNode({
   const isFailed = status === "failed";
 
   return (
-    <NodeRoot width={data.width} height={data.height} selected={selected} status={status}>
+    <NodeRoot
+      width={data.width}
+      height={data.height}
+      selected={selected}
+      status={status}
+      aria-label={`${data.label} node`}
+    >
       <NodeHeader visible={selected}>
         <NodeDeleteButton nodeId={id} selected={selected} />
       </NodeHeader>

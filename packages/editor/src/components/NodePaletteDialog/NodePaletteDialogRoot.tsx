@@ -98,6 +98,7 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
               <input
                 type="text"
                 placeholder="Search nodes..."
+                aria-label="Search node types"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
