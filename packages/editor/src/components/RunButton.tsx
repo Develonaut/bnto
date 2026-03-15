@@ -16,7 +16,7 @@ import { useExecution } from "../hooks/useExecution";
  * near undo/redo — not duplicated here.
  */
 function RunButton() {
-  const { phase, canRun, inputFiles, run } = useExecution();
+  const { phase, canRun, inputFiles, fileAccept, run } = useExecution();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasFiles = inputFiles.length > 0;
@@ -55,6 +55,7 @@ function RunButton() {
         ref={fileInputRef}
         type="file"
         multiple
+        accept={fileAccept}
         aria-label="Select files to process"
         className="hidden"
         onChange={handleFileChange}

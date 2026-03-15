@@ -54,6 +54,7 @@ interface ExecutionHookResult {
   fileProgress: FileProgress | null;
   inputFiles: File[];
   canRun: boolean;
+  fileAccept: string | undefined;
   executionState: ExecutionState;
   nodeProgress: Record<string, number>;
 }

@@ -996,9 +996,9 @@ The `extensions` parameter on the Input node (`@bnto/nodes/schemas/input.ts`) is
 
 **Tasks:**
 
-- [ ] `packages/core` or `packages/editor` — `/frontend-engineer` — Trace the Input node `extensions` param to the file picker `accept` attribute. Fix the gap where extensions aren't being forwarded
-- [ ] `packages/editor` or `apps/web` — `/frontend-engineer` — Add unit/integration tests verifying that Input node `extensions` are reflected in the file dialog filter
-- [ ] `apps/web` — `/quality-engineer` — E2E test: configure Input node with image-only extensions, verify file picker restricts selection
+- [x] `packages/editor` — `/frontend-engineer` — Trace the Input node `extensions` param to the file picker `accept` attribute. Fix: `deriveFileInputAccept` pure function + store selector in RunButton
+- [x] `packages/editor` — `/frontend-engineer` — Add unit tests (8 tests in `deriveFileInputAccept.test.ts`) verifying extensions → accept derivation
+- [x] `apps/web` — `/quality-engineer` — E2E tests (FA1, FA2 in `editor-predefined.spec.ts`): verify file input `accept` attribute for image and CSV recipes
 
 **Note:** The `accept` (MIME types) param is also exposed but may not need to be surfaced to users — file extensions are the more intuitive control. Consider hiding `accept` from the config panel if `extensions` covers the use case. See related UX item below.
 
@@ -1085,6 +1085,24 @@ Files: `packages/ui/src/interaction/Button.tsx`, all consumers of `size="sm"` or
 ### Triage: Kbd Component & Keyboard Shortcuts Dialog
 
 ## **Priority: Triage.** Create a `<Kbd>` UI primitive to display keyboard shortcut hints on menu items (e.g., `⌘Z` next to Undo). Also consider a keyboard shortcuts dialog (e.g., `⌘?`) listing all available shortcuts to improve discoverability.
+
+### Triage: Audit Raw useStore Selectors in Editor Components
+
+**Priority: Triage.** Audit `@bnto/editor` components and hooks for raw `useStore(storeApi, ...)` calls that bypass the editor API layer. All store reads should go through the domain hook factories (`createUseExecution`, `createUseNodes`, etc.) on the `ReactEditorInstance`. Components consume state via `useExecution()`, `editor.nodes.useNodes()`, etc. — never raw selectors. Migrate any violations found.
+
+Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `packages/editor/src/context.ts`
+
+### Triage: Test Naming & Description Unification Pass
+
+**Priority: Triage.** Audit all test suites (Vitest unit + Playwright E2E) for naming consistency and organization. Ensure `describe` blocks, `test`/`it` statements, and test IDs follow a unified convention — clear action-oriented descriptions, consistent prefixing (e.g., FA1, PR1), and logical grouping. Remove duplicate or vague test names.
+
+Files: `packages/*/src/**/*.test.ts`, `apps/web/e2e/**/*.spec.ts`
+
+### Triage: Editor Store Performance Pass
+
+**Priority: Triage.** Audit React context usage vs store selectors across `@bnto/editor`. Ensure components use direct store subscriptions (`useStore` + selector) instead of React context for state reads. General cleanup: memoize selectors, remove unnecessary re-renders, verify slice granularity.
+
+Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `packages/editor/src/context.ts`
 
 ## Reference
 
