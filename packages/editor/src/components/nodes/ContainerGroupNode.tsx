@@ -14,9 +14,7 @@ import type { BentoNode } from "../../adapters/types";
  * to cover the bounding box of parent + children.
  */
 
-export const ContainerGroupNode = memo(function ContainerGroupNode({
-  data,
-}: NodeProps<BentoNode>) {
+export const ContainerGroupNode = memo(function ContainerGroupNode({ data }: NodeProps<BentoNode>) {
   const w = data.width ?? 0;
   const h = data.height ?? 0;
 
@@ -24,6 +22,8 @@ export const ContainerGroupNode = memo(function ContainerGroupNode({
     <div
       className="relative pointer-events-none motion-safe:animate-fade-in"
       style={{ width: w, height: h }}
+      role="group"
+      aria-label={data.label ? `${data.label} group` : "Node group"}
     >
       <div className="absolute inset-0 rounded-xl bg-muted/40" />
       <svg className="absolute inset-0 text-muted-foreground/40" width={w} height={h}>

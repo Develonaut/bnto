@@ -55,6 +55,7 @@ function RunButton() {
         ref={fileInputRef}
         type="file"
         multiple
+        aria-label="Select files to process"
         className="hidden"
         onChange={handleFileChange}
         data-testid="run-file-input"
@@ -66,6 +67,7 @@ function RunButton() {
         onClick={handleClick}
         disabled={!canRun && !isDone}
         aria-label={label}
+        aria-busy={phase === "running"}
         data-testid="run-button"
         data-phase={phase}
       >

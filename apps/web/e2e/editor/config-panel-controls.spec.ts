@@ -4,6 +4,7 @@ import {
   addNodeFromPalette,
   selectNode,
   ensureConfigPanelOpen,
+  setSelectParam,
 } from "../helpers/editor";
 
 test.use({ reducedMotion: "reduce" });
@@ -13,7 +14,10 @@ test.use({ reducedMotion: "reduce" });
  *
  * Verifies that SchemaForm renders the correct UI control for each
  * parameter type via the CONTROL_REGISTRY lookup (select, switch,
- * slider, number, text).
+ * slider, number, text, tagPicker, keyValue).
+ *
+ * Note: `operation` is hidden on image/spreadsheet/file-system nodes
+ * (pre-set from palette). Tests verify the surfaced params instead.
  *
  * @browser — no Convex backend needed.
  */
@@ -23,43 +27,35 @@ test.describe("config panel controls @browser", () => {
     await navigateToEditor(page);
   });
 
-  test("image node: select for operation, slider for quality", async ({ page }) => {
+  test("image node: slider for compression", async ({ page }) => {
     await addNodeFromPalette(page, "Compress Images");
     await selectNode(page, "Compress");
     await ensureConfigPanelOpen(page);
 
-    // Operation = select (enum)
-    const configField = page.locator('[data-testid="schema-field-operation"]');
-    await configField.waitFor({ timeout: 5000 });
-    await expect(configField.locator('[data-testid^="control-select"]')).toBeVisible();
-
     // Compression = slider (bounded number 1-100, visible when operation=compress)
     const compressionField = page.locator('[data-testid="schema-field-compression"]');
+    await compressionField.waitFor({ timeout: 5000 });
     await expect(compressionField.locator('[data-testid^="control-slider"]')).toBeVisible();
   });
 
   test("image node: visibleWhen shows width/height for resize", async ({ page }) => {
-    await addNodeFromPalette(page, "Compress Images");
-    await selectNode(page, "Compress");
+    await addNodeFromPalette(page, "Resize Images");
+    await selectNode(page, "Resize");
     await ensureConfigPanelOpen(page);
 
-    const configField = page.locator('[data-testid="schema-field-operation"]');
-    await configField.waitFor({ timeout: 5000 });
-
-    // Width/height NOT visible by default
-    await expect(page.locator('[data-testid="schema-field-width"]')).not.toBeVisible();
-
-    // Select "resize" operation
-    await page.locator('[data-testid^="control-select-param-operation"]').click();
-    await page.getByRole("option", { name: "resize" }).click();
-
-    // Now width/height should appear
-    await expect(page.locator('[data-testid="schema-field-width"]')).toBeVisible();
-    await expect(page.locator('[data-testid="schema-field-height"]')).toBeVisible();
+    // Width should be visible (operation=resize is pre-set from palette)
+    const widthField = page.locator('[data-testid="schema-field-width"]');
+    await widthField.waitFor({ timeout: 5000 });
+    await expect(widthField).toBeVisible();
 
     // Width = number input (unbounded), not slider
+    await expect(widthField.locator('[data-testid^="control-number"]')).toBeVisible();
+
+    // Height = number input
     await expect(
-      page.locator('[data-testid="schema-field-width"]').locator('[data-testid^="control-number"]'),
+      page
+        .locator('[data-testid="schema-field-height"]')
+        .locator('[data-testid^="control-number"]'),
     ).toBeVisible();
 
     // maintainAspect = switch (boolean)
@@ -70,23 +66,15 @@ test.describe("config panel controls @browser", () => {
     ).toBeVisible();
   });
 
-  test("spreadsheet node: select for operation, switches for clean params", async ({ page }) => {
+  test("spreadsheet node: switches for clean params", async ({ page }) => {
     await addNodeFromPalette(page, "Clean CSV");
     await selectNode(page, "Clean");
     await ensureConfigPanelOpen(page);
 
-    const configField = page.locator('[data-testid="schema-field-operation"]');
-    await configField.waitFor({ timeout: 5000 });
-
-    // Operation = select (enum with engine-backed operations: clean, rename)
-    await expect(configField.locator('[data-testid^="control-select"]')).toBeVisible();
-
     // trimWhitespace = switch (boolean, default true)
-    await expect(
-      page
-        .locator('[data-testid="schema-field-trimWhitespace"]')
-        .locator('[data-testid^="control-switch"]'),
-    ).toBeVisible();
+    const trimField = page.locator('[data-testid="schema-field-trimWhitespace"]');
+    await trimField.waitFor({ timeout: 5000 });
+    await expect(trimField.locator('[data-testid^="control-switch"]')).toBeVisible();
 
     // removeEmptyRows = switch (boolean, default true)
     await expect(
@@ -101,5 +89,45 @@ test.describe("config panel controls @browser", () => {
         .locator('[data-testid="schema-field-removeDuplicates"]')
         .locator('[data-testid^="control-switch"]'),
     ).toBeVisible();
+  });
+
+  test("spreadsheet node: keyValue for columns when operation=rename", async ({ page }) => {
+    await addNodeFromPalette(page, "Rename CSV Columns");
+    await selectNode(page, "Rename");
+    await ensureConfigPanelOpen(page);
+
+    // columns = keyValue (z.record(z.string()), visible when operation=rename)
+    const columnsField = page.locator('[data-testid="schema-field-columns"]');
+    await columnsField.waitFor({ timeout: 5000 });
+    await expect(columnsField.locator('[data-testid^="control-keyvalue"]')).toBeVisible();
+  });
+
+  test("transform node: text for expression, keyValue for mappings", async ({ page }) => {
+    await addNodeFromPalette(page, "Transform");
+    await selectNode(page, "Transform");
+    await ensureConfigPanelOpen(page);
+
+    // expression = text (z.string())
+    const expressionField = page.locator('[data-testid="schema-field-expression"]');
+    await expressionField.waitFor({ timeout: 5000 });
+    await expect(expressionField.locator('[data-testid^="control-text"]')).toBeVisible();
+
+    // mappings = keyValue (z.record(z.string()))
+    await expect(
+      page
+        .locator('[data-testid="schema-field-mappings"]')
+        .locator('[data-testid^="control-keyvalue"]'),
+    ).toBeVisible();
+  });
+
+  test("input node: tagPicker for extensions when mode=file-upload", async ({ page }) => {
+    // Select the existing input node (always present on canvas)
+    await selectNode(page, "Input");
+    await ensureConfigPanelOpen(page);
+
+    // extensions = tagPicker (z.array(z.string()), visible when mode=file-upload)
+    const extensionsField = page.locator('[data-testid="schema-field-extensions"]');
+    await extensionsField.waitFor({ timeout: 5000 });
+    await expect(extensionsField.locator('[data-testid^="control-tagpicker"]')).toBeVisible();
   });
 });

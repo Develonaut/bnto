@@ -87,7 +87,7 @@ function EditorToolbar() {
         className="pointer-events-auto absolute bottom-0 left-1/2 -translate-x-1/2"
         data-testid="editor-toolbar"
       >
-        <Toolbar elevation="md">
+        <Toolbar elevation="md" aria-label="Editor toolbar">
           {/* File menu */}
           <ToolbarGroup>
             <Menu>

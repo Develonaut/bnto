@@ -55,7 +55,14 @@ type ToolbarRootProps = ComponentProps<typeof Card> & {
 
 export const Toolbar = forwardRef<HTMLDivElement, ToolbarRootProps>(
   ({ size = "default", elevation = "sm", className, children, ...props }, ref) => (
-    <Card ref={ref} elevation={elevation} className={toolbarCn({ size }, className)} {...props}>
+    <Card
+      ref={ref}
+      role="toolbar"
+      aria-label={props["aria-label"] ?? "Toolbar"}
+      elevation={elevation}
+      className={toolbarCn({ size }, className)}
+      {...props}
+    >
       {children}
     </Card>
   ),

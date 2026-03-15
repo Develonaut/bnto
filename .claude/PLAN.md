@@ -243,9 +243,9 @@ Convex persistence for custom recipes. Backend save mutation + core hooks alread
 
 Existing editor E2E coverage is strong (33+ tests across 5 spec files). This wave fills gaps.
 
-- [ ] `apps/web` — Verify existing E2E tests pass with new controls (TagPicker, KeyValueEditor render for correct params)
+- [x] `apps/web` — Verify existing E2E tests pass with new controls (TagPicker, KeyValueEditor render for correct params)
 - [x] `apps/web` — Keyboard shortcuts: Cmd-Z (undo), Cmd-Shift-Z (redo), Delete (remove), Cmd-Enter (run), Cmd-S (export)
-- [ ] `apps/web` — Accessibility audit (focus management, screen reader labels on canvas nodes)
+- [x] `apps/web` — Accessibility audit (focus management, screen reader labels on canvas nodes)
 
 ---
 
@@ -1085,7 +1085,6 @@ Files: `packages/ui/src/interaction/Button.tsx`, all consumers of `size="sm"` or
 ### Triage: Kbd Component & Keyboard Shortcuts Dialog
 
 **Priority: Triage.** Create a `<Kbd>` UI primitive to display keyboard shortcut hints on menu items (e.g., `⌘Z` next to Undo). Also consider a keyboard shortcuts dialog (e.g., `⌘?`) listing all available shortcuts to improve discoverability.
-
 ---
 
 ## Reference

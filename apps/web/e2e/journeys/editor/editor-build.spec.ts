@@ -59,9 +59,9 @@ test.describe("editor build & configure @browser", () => {
     await selectNode(page, "Compress");
     await ensureConfigPanelOpen(page);
 
-    // Config panel should show schema fields
-    const operationField = page.locator('[data-testid="schema-field-operation"]');
-    await expect(operationField).toBeVisible();
+    // Config panel should show schema fields (operation is hidden, check compression instead)
+    const compressionField = page.locator('[data-testid="schema-field-compression"]');
+    await expect(compressionField).toBeVisible({ timeout: 5000 });
   });
 
   test("BC4: update params via config panel", async ({ page }) => {
@@ -75,9 +75,7 @@ test.describe("editor build & configure @browser", () => {
     await expect(widthField).toBeVisible();
 
     // Verify it has a number input control
-    await expect(
-      widthField.locator('[data-testid^="control-number"]'),
-    ).toBeVisible();
+    await expect(widthField.locator('[data-testid^="control-number"]')).toBeVisible();
   });
 
   test("BC8: I/O nodes cannot be deleted", async ({ page }) => {

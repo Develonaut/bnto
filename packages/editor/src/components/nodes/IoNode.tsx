@@ -20,6 +20,7 @@ export const IoNode = memo(function IoNode({ id, data, selected }: NodeProps<Ben
       align={id === "input" ? "end" : "start"}
       selected={selected}
       status={data.status}
+      aria-label={`${data.label} node`}
     >
       <NodeBody>
         <NodeIcon icon={data.icon} variant={data.variant} />
