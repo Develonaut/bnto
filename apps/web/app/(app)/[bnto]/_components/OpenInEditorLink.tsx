@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge, Button, PenLineIcon } from "@bnto/ui";
 
 /**

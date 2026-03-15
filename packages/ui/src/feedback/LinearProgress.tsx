@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { cn } from "../utils/cn";
 
@@ -41,9 +39,7 @@ export function LinearProgress({
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             {icon}
-            {label && (
-              <span className="truncate text-sm text-muted-foreground">{label}</span>
-            )}
+            {label && <span className="truncate text-sm text-muted-foreground">{label}</span>}
           </div>
           <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">
             {valueLabel ?? `${clamped}%`}
@@ -62,9 +58,7 @@ export function LinearProgress({
           style={{ width: `${clamped}%` }}
         />
       </div>
-      <p className="min-h-4 text-xs text-muted-foreground">
-        {helperText ?? "\u00A0"}
-      </p>
+      <p className="min-h-4 text-xs text-muted-foreground">{helperText ?? "\u00A0"}</p>
     </div>
   );
 }

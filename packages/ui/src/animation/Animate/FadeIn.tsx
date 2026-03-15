@@ -1,5 +1,3 @@
-"use client";
-
 import { forwardRef } from "react";
 
 import { Slot } from "@radix-ui/react-slot";
@@ -15,9 +13,13 @@ const FadeIn = forwardRef<HTMLDivElement, AnimateBaseProps>(
       <Comp
         ref={ref}
         className={cn("motion-safe:animate-fade-in", className)}
-        style={buildStyle(style, {
-          "--stagger-index": index,
-        }, easing)}
+        style={buildStyle(
+          style,
+          {
+            "--stagger-index": index,
+          },
+          easing,
+        )}
         {...props}
       />
     );

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AppShellContent } from "@bnto/ui";
+import { AppShellContent, Container, Heading } from "@bnto/ui";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
+import { OpenInEditorLink } from "./_components/OpenInEditorLink";
 import { RecipeShell } from "./_components/RecipeShell";
 
 /** Only slugs from generateStaticParams are valid — everything else is 404
@@ -42,7 +43,22 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
     <>
       <BntoJsonLd entry={entry} />
       <AppShellContent>
-        <RecipeShell key={slug} entry={entry} />
+        <Container size="md" className="space-y-6 text-center">
+          {/* Interactive recipe flow — PhaseIndicator is at the top, then
+              static header content, then the file upload / execution flow */}
+          <RecipeShell key={slug} entry={entry}>
+            {/* Static header — server-rendered, zero JS.
+                Passed as children so it renders between PhaseIndicator
+                and the interactive flow inside RecipeShell. */}
+            <Heading level={1}>{entry.h1}</Heading>
+            <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
+              {entry.description}
+            </p>
+            <div>
+              <OpenInEditorLink slug={entry.slug} />
+            </div>
+          </RecipeShell>
+        </Container>
       </AppShellContent>
     </>
   );

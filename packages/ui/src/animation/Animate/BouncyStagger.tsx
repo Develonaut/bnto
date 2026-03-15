@@ -1,5 +1,3 @@
-"use client";
-
 import { forwardRef, Children, isValidElement, cloneElement } from "react";
 import type { HTMLAttributes, ReactNode } from "react";
 
@@ -19,7 +17,10 @@ interface BouncyStaggerProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const BouncyStagger = forwardRef<HTMLDivElement, BouncyStaggerProps>(
-  ({ from = 0.6, easing = "spring-bouncy", interval, asChild, className, children, ...props }, ref) => {
+  (
+    { from = 0.6, easing = "spring-bouncy", interval, asChild, className, children, ...props },
+    ref,
+  ) => {
     if (asChild) {
       const child = Children.only(children);
       if (!isValidElement(child)) return null;

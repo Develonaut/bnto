@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { Card } from "../surface/Card";
 import { IconBadge } from "../typography/IconBadge";
