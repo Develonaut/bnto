@@ -1079,6 +1079,14 @@ Files: new `packages/ui/src/interaction/FeatureGate/`, `apps/web/` consumers
 
 ---
 
+### Triage: Palette → primitive node type → mode/operation selection UX
+
+**Priority: Triage.** Evaluate a flow where the node palette lists primitive node types (e.g. "Image") instead of operations (e.g. "Compress"). After choosing a type, the user picks the mode/operation, which loads the correct config. The config panel would have a mode selector at the top so users can switch operations without removing/re-adding the node. Trade-offs: simpler palette (fewer items) vs. extra click to reach config; explicit mode control vs. current direct-to-operation approach.
+
+Files: `packages/editor/src/components/EditorToolbar.tsx` (palette), `packages/editor/src/components/ConfigPanel/`
+
+---
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |
