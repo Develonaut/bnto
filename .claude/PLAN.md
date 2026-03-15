@@ -1060,6 +1060,34 @@ Files: `packages/ui/src/interaction/Button.tsx`, all consumers of `size="sm"` or
 
 ---
 
+### Triage: Remove Redundant Default Props
+
+**Priority: Triage.** Audit the codebase for components passing props that already match the component's default values (e.g. `size="md"` when `md` is the default). Remove redundant prop usage to keep call sites clean.
+
+---
+
+### Triage: Simplify My Recipes Page
+
+**Priority: Triage.** Remove the three stat cards (Total Runs, Plan, Last Activity) and history section from `/my-recipes`. Show just the user's saved recipes grid or an empty state. Keep it simple — the current page is over-designed for the amount of content it has.
+
+### Triage: Pre-populate File Extension TagPicker
+
+**Priority: Triage.** The file extension TagPicker on the Input node config panel should ship with a well-defined static list of common extensions (e.g., `.jpg`, `.png`, `.csv`, `.pdf`). Future iteration: allow custom entries via combobox. Relevant control: `schema-field-extensions` in Input node config.
+
+### Triage: Lighthouse Audit & Fixes
+
+**Priority: Triage.** After completing performance and code audits, run a full Lighthouse pass across all public pages to identify regressions. Fix any failing a11y, SEO, or best-practices assertions. Use `/lighthouse-audit --local` to triage.
+
+### Triage: Add Icons to File Menu Items
+
+**Priority: Triage.** "Open" and "Export" in the editor File menu are missing icons — "New" has `PlusIcon` and "Save" has `SaveIcon`. Add icons to Open and Export for visual uniformity. File: `packages/editor/src/components/EditorToolbar.tsx`.
+
+### Triage: Kbd Component & Keyboard Shortcuts Dialog
+
+**Priority: Triage.** Create a `<Kbd>` UI primitive to display keyboard shortcut hints on menu items (e.g., `⌘Z` next to Undo). Also consider a keyboard shortcuts dialog (e.g., `⌘?`) listing all available shortcuts to improve discoverability.
+
+---
+
 ## Reference
 
 | Document                                     | Purpose                                                                                                           |
