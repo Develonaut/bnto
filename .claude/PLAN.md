@@ -1057,6 +1057,12 @@ Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `package
 
 ---
 
+### Triage: Release branch pipeline with Vercel preview E2E gate
+
+**Priority: Triage.** Set up release branches that cut from main with a CI pipeline running the full test suite (Rust + TS + E2E) against the Vercel preview environment. All checks should be hard blockers; the actual release/deploy is triggered manually after green.
+
+---
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |
