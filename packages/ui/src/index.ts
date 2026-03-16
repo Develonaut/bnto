@@ -21,6 +21,8 @@ export type { GapSize, ResponsiveGap, Align, Justify, LayoutElement } from "./ut
 export * from "./icons";
 
 /* Hooks */
+export { useDialog } from "./hooks/useDialog";
+export type { UseDialogReturn } from "./hooks/useDialog";
 export { useKeyDown } from "./hooks/useKeyDown";
 export { usePrevious } from "./hooks/usePrevious";
 

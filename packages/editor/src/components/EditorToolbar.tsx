@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import {
   Button,
   Toolbar,
@@ -23,6 +23,7 @@ import {
   CircleHelpIcon,
   PenLineIcon,
   Text,
+  useDialog,
 } from "@bnto/ui";
 import { useEditor } from "../context";
 import { downloadDefinition } from "../actions/downloadDefinition";
@@ -58,8 +59,8 @@ function EditorToolbar() {
   const hasNodes = nodes.length > 0;
   const canExport = validationErrors.length === 0;
 
-  const [openDialogOpen, setOpenDialogOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsDialog = useDialog();
+  const openRecipeDialog = useDialog();
   const lastSavedLabel = formatLastSaved({
     lastSavedAt,
     isSyncing,
@@ -112,13 +113,13 @@ function EditorToolbar() {
                   </Text>
                 </div>
                 <MenuSeparator />
-                <MenuItem onClick={() => setSettingsOpen(true)}>
+                <MenuItem onClick={settingsDialog.openDialog}>
                   <PenLineIcon /> Rename
                 </MenuItem>
                 <MenuItem onClick={handleNew}>
                   <PlusIcon /> New
                 </MenuItem>
-                <MenuItem onClick={() => setOpenDialogOpen(true)}>
+                <MenuItem onClick={openRecipeDialog.openDialog}>
                   <FileUpIcon /> Open
                 </MenuItem>
                 <MenuSeparator />
@@ -200,8 +201,8 @@ function EditorToolbar() {
           </ToolbarGroup>
         </Toolbar>
       </div>
-      <RecipeDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <OpenRecipeDialog open={openDialogOpen} onOpenChange={setOpenDialogOpen} />
+      <RecipeDialog open={settingsDialog.open} onOpenChange={settingsDialog.onOpenChange} />
+      <OpenRecipeDialog open={openRecipeDialog.open} onOpenChange={openRecipeDialog.onOpenChange} />
       <NodePaletteDialog
         open={paletteOpen}
         onOpenChange={(open) => {
