@@ -70,11 +70,16 @@ function useEditorShortcuts() {
     if (result.deselect) editor.nodes.selectNode(null);
   }, [escapePressed, editor]);
 
-  // --- Export: Cmd+S / Ctrl+S (preventDefault to block browser Save) ---
+  // --- Save: Cmd+S / Ctrl+S (preventDefault to block browser Save) ---
+  // --- Export: Cmd+D / Ctrl+D (preventDefault to block browser Bookmark) ---
   // --- Help: Cmd+/ / Ctrl+/ (toggle help dialog via panel system) ---
   const handleDocumentKeys = useCallback(
     (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s" && !e.shiftKey) {
+        e.preventDefault();
+        editor.panels.openPanel("save");
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "d" && !e.shiftKey) {
         e.preventDefault();
         downloadDefinition(editor.definition);
       }

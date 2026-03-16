@@ -36,6 +36,7 @@ export { Grid, GridItem } from "./layout/Grid";
 export { Inset } from "./layout/Inset";
 export { Row } from "./layout/Row";
 export { Stack } from "./layout/Stack";
+export { List, ListItem, ListItemContent, ListItemActions } from "./layout/List";
 
 /* Typography */
 export { Badge } from "./typography/Badge";

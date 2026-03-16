@@ -71,9 +71,10 @@ export async function exportRecipe(page: Page) {
 
   // Click Export — MenuItem renders as <button>, not <menuitem>.
   // Scope to the file menu dialog to avoid matching other Export buttons.
+  // Name regex allows trailing shortcut hint text (e.g. "Export ⌘D").
   const downloadPromise = page.waitForEvent("download");
   const fileMenuDialog = page.getByRole("dialog").filter({ hasText: "Export" });
-  await fileMenuDialog.getByRole("button", { name: /^Export$/i }).click();
+  await fileMenuDialog.getByRole("button", { name: /^Export/i }).click();
   const download = await downloadPromise;
 
   const downloadPath = await download.path();

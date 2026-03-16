@@ -260,12 +260,13 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 #### Wave 5 (parallel — final quality + triage cleanup)
 
 - [x] `apps/web` — **Replace competitor comparison with bnto-first benchmarks**: Rewrite the "How It Works" section's BragLayout to showcase bnto's own capabilities (50ms local WASM, zero uploads, unlimited runs, open source) instead of the TinyPNG/iLoveIMG comparison chart and feature table. Focus on the landscape of problems bnto solves.
-- [ ] `apps/web` — **Delete button on My Recipe cards**: Add delete action to saved recipe cards on `/my-recipes`. Wire `core.recipes.remove()` to a confirmation dialog on RecipeCard.
+- [x] `apps/web` — **Delete button on My Recipe cards**: Add delete action to saved recipe cards on `/my-recipes`. Wire `core.recipes.remove()` to a confirmation dialog on RecipeCard.
 - [ ] `packages/editor` — **Persist editor state in localStorage**: Debounced write of editor store (nodes, configs, definition, metadata) to localStorage. Hydrate on mount. Clear on "New" or "Open".
 - [ ] `engine` — **Thin Rust comment density**: Reduce inline comment noise — keep file-level headers and comments on genuinely complex logic, remove obvious per-line explanations. Update CLAUDE.md Rust standards section.
 - [x] Cross-cutting — **Inline handler audit**: Extract inline `onClick={() => ...}` handlers to named `handleOnX` functions across `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 - [x] Cross-cutting — **CSS-first interaction audit**: Identify JS `useState`/ternary className patterns for visual states that CSS pseudo-classes or `data-*` attributes could handle. Fix violations in `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 - [ ] Cross-cutting — **Test naming unification**: Audit all test suites for naming consistency — clear action-oriented descriptions, consistent prefixing, logical grouping. Remove duplicate or vague test names.
+- [ ] `apps/web` — **Standardize E2E selectors on data-testid**: Audit E2E specs and replace fragile `getByRole`/`getByText` selectors with `data-testid` attributes for state detection and element targeting. Keep semantic selectors only for accessibility assertions. Priority: menu items, toolbar buttons, panel controls.
 
 ---
 
@@ -765,11 +766,7 @@ Web app domain (`bnto.io`) delivered in Sprint 2C. API domain (`api.bnto.io`) de
 - [ ] `apps/web` — Playwright E2E: browser-local execution history
 - [ ] `@bnto/backend` — Unit tests for execution analytics queries
 
-### Testing: Standardize E2E Selectors on data-testid
-
-Current E2E tests mix CSS classes, `getByRole`, `getByText`, and `data-testid`. Standardize on `data-testid` for state detection and element targeting. Keep semantic selectors for accessibility assertions.
-
-- [ ] `apps/web` — Audit E2E specs, add `data-testid` attributes, update selectors
+### ~~Testing: Standardize E2E Selectors on data-testid~~ — PROMOTED to Sprint 6 W5
 
 ### Testing: Concurrent Quota Race Condition — M4/M5 (server-side quotas)
 
@@ -960,9 +957,11 @@ Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `package
 
 **Priority: Triage.** Rust code is now readable without every-line explanations. Keep file-level header comments (purpose, how it fits) but remove most inline comments — only keep them for unorthodox patterns or genuinely complex logic. Update CLAUDE.md "Rust Code Standards" section to reflect the new lighter standard. Applies to all files in `engine/crates/`.
 
-### Triage: Delete button on My Recipe cards
+### ~~Triage: Delete button on My Recipe cards~~ — DONE (Sprint 6 W5)
 
-**Priority: Triage.** Add a delete action to saved recipe cards on `/my-recipes`. Requires `core.recipes.remove()` wired to a confirmation dialog on each `RecipeCard` in `RecipeGrid.tsx`.
+### Triage: Auto-save recipes instead of manual Save
+
+**Priority: Triage.** Saving should happen automatically — localStorage if unauthed, Convex if authed. Download/Export is the one manual action. Remove Save from the file menu and keyboard shortcut. If limiting unauthed saves, pop a dialog in the editor when unauthed users hit 3 recipes (prompt to delete one or sign in). Replaces manual Cmd+S/Save button with transparent persistence.
 
 ### Triage: iLovePNG recipe parity — next wave candidates
 
@@ -1035,6 +1034,23 @@ Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `pac
 ---
 
 ### ~~Triage: Replace competitor comparison with bnto-first benchmarks~~ — Promoted to Sprint 6 W5
+
+---
+
+### Triage: Simplify Button behavioral props — CSS-first with data attributes
+
+**Priority: Triage.** Remove `pressed` and `hovered` JS props from Button. These should be CSS-driven via data-state attributes (like `dormant` already is), not prop-controlled re-renders. Specific changes:
+
+- **Remove `hovered` prop** — consumers should use CSS `:hover` or `data-hover` set by the component itself, not a JS boolean prop
+- **Remove `pressed` prop** — replace with `data-active` driven by CSS (`:active`, `aria-pressed`, or `aria-current`) not JS state. NavButton active state → `aria-current="page"`. Tabs → `aria-selected`. Toggle → `aria-pressed`
+- **Evaluate `muted` vs `variant="muted"`** — `muted` prop uses `color-mix()` to blend any variant toward muted. Is this distinct enough from `variant="muted"` to keep? Or can consumers just use the muted variant?
+- **Keep `dormant`** — CSS-first, `.group:hover` driven, no JS state. This is the right pattern
+- **Keep `toggle`** — CSS-driven toggle sink behavior
+- **Audit NodeRoot** — biggest consumer of `hovered`/`pressed`/`muted` props. Migrate to data attributes driven by execution state
+- **Swap dormant/disabled visuals** — dormant currently darkens color/border, but that look fits disabled better. Disabled should use opacity to blend with surface. Dormant should be subtler at rest, waking on group hover
+- **Review in ButtonShowcase** — centralize variation in Motorway showcase, simplify where possible
+
+`packages/ui/src/interaction/Button.tsx`, `apps/web/app/surface.css`, `apps/web/app/(dev)/motorway/ButtonShowcase.tsx`
 
 ---
 
