@@ -294,9 +294,38 @@ jobs:
             - CI Gate: Rust + TypeScript checks passed
             - E2E Tests: Full Playwright suite passed against Vercel preview
             - Lighthouse: Performance/accessibility/SEO audits passed
+            - Convex: Production functions deployed
             - Preview URL: ${{ needs.deploy-preview.outputs.preview-url }}
 
             ---
             Auto-generated from tag `${{ github.ref_name }}`
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── Job 6: Deploy Convex to Production ──
+  convex-deploy:
+    name: Convex Deploy (prod)
+    runs-on: ubuntu-latest
+    needs: [release-gate]
+    if: needs.release-gate.result == 'success' && !contains(github.ref_name, '-')
+    defaults:
+      run:
+        working-directory: packages/@bnto/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Deploy Convex functions to production
+        run: npx convex deploy --yes
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}

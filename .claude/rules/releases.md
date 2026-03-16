@@ -35,9 +35,11 @@ Tag pushed (v*.*.*)
   │
   ├─ Lighthouse (performance/a11y/SEO against preview URL)
   │
-  └─ Release Gate
-       ├─ All jobs must pass
-       └─ Creates GitHub Release (pre-release if tag contains `-`)
+  ├─ Release Gate
+  │    ├─ All jobs must pass
+  │    └─ Creates GitHub Release (pre-release if tag contains `-`)
+  │
+  └─ Convex Deploy (prod) — stable releases only, skipped for beta/rc
 ```
 
 **Workflow file:** `.github/workflows/release.yml`
@@ -135,4 +137,4 @@ Artifacts uploaded on every release:
 1. **Only tag `main`.** Never tag a feature branch.
 2. **Tags are immutable.** Once pushed, don't delete and recreate. If a release is broken, fix forward with a new patch tag.
 3. **CI must pass before promotion.** The release gate is the quality bar.
-4. **Convex deploys separately.** Convex functions deploy on merge to `main`, not on tag. The Vercel preview uses the dev Convex deployment.
+4. **Convex deploys with the release.** Convex production functions deploy after the release gate passes (stable tags only — skipped for beta/rc). Pre-release tags verify against dev Convex.
