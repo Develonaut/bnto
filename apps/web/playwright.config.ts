@@ -10,6 +10,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 
 const remoteUrl = process.env.PLAYWRIGHT_BASE_URL;
+const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 const port = Number(process.env.E2E_PORT ?? 4000);
 const isolated = port !== 4000;
 
@@ -31,6 +32,8 @@ export default defineConfig({
     baseURL: remoteUrl || `http://localhost:${port}`,
     trace: "on-first-retry",
     contextOptions: { reducedMotion: "reduce" },
+    // Bypass Vercel Deployment Protection when testing against preview URLs
+    ...(bypassSecret ? { extraHTTPHeaders: { "x-vercel-protection-bypass": bypassSecret } } : {}),
   },
   projects: [
     {

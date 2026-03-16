@@ -31,10 +31,24 @@ const recipeUrls = RECIPES.map((r) => `${baseUrl}/${r.slug}`);
 const staticUrls = STATIC_PAGES.map((p) => `${baseUrl}${p}`);
 const allUrls = [...staticUrls, ...recipeUrls];
 
+const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+
+const settings: Record<string, unknown> = {
+  preset: "desktop",
+  chromeFlags: "--no-sandbox --disable-gpu",
+};
+
+// Bypass Vercel Deployment Protection for preview URLs
+if (bypassSecret) {
+  settings.extraHeaders = JSON.stringify({
+    "x-vercel-protection-bypass": bypassSecret,
+  });
+}
+
 const collect: Record<string, unknown> = {
   url: allUrls,
   numberOfRuns: 1,
-  settings: { preset: "desktop", chromeFlags: "--no-sandbox --disable-gpu" },
+  settings,
 };
 
 if (withServer) {

@@ -108,13 +108,14 @@ No cherry-picking or release branches needed. `main` is always the source of tru
 
 ## Required Secrets
 
-| Secret                  | Source                                     | Purpose                 |
-| ----------------------- | ------------------------------------------ | ----------------------- |
-| `VERCEL_TOKEN`          | Vercel Dashboard > Settings > Tokens       | Authenticate CLI in CI  |
-| `VERCEL_ORG_ID`         | `.vercel/project.json` after `vercel link` | Identify Vercel org     |
-| `VERCEL_PROJECT_ID`     | `.vercel/project.json` after `vercel link` | Identify Vercel project |
-| `GITHUB_TOKEN`          | Auto-provided by GitHub Actions            | Create GitHub Releases  |
-| `LHCI_GITHUB_APP_TOKEN` | Already configured                         | Lighthouse CI           |
+| Secret                            | Source                                          | Purpose                              |
+| --------------------------------- | ----------------------------------------------- | ------------------------------------ |
+| `VERCEL_TOKEN`                    | Vercel Dashboard > Settings > Tokens            | Authenticate CLI in CI               |
+| `VERCEL_ORG_ID`                   | `.vercel/project.json` after `vercel link`      | Identify Vercel org                  |
+| `VERCEL_PROJECT_ID`               | `.vercel/project.json` after `vercel link`      | Identify Vercel project              |
+| `GITHUB_TOKEN`                    | Auto-provided by GitHub Actions                 | Create GitHub Releases               |
+| `LHCI_GITHUB_APP_TOKEN`           | Already configured                              | Lighthouse CI                        |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | Vercel Project > Deployment Protection > Bypass | Bypass protection for E2E/Lighthouse |
 
 Setup instructions in [environment-variables.md](../environment-variables.md).
 

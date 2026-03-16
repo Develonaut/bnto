@@ -175,7 +175,9 @@ jobs:
         run: |
           url="${{ steps.deploy.outputs.url }}"
           for i in $(seq 1 30); do
-            status=$(curl -s -o /dev/null -w '%{http_code}' "$url")
+            status=$(curl -s -o /dev/null -w '%{http_code}' \
+              -H "x-vercel-protection-bypass: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}" \
+              "$url")
             if [ "$status" = "200" ]; then
               echo "Preview is ready at $url"
               exit 0
@@ -212,6 +214,7 @@ jobs:
         working-directory: apps/web
         env:
           PLAYWRIGHT_BASE_URL: ${{ needs.deploy-preview.outputs.preview-url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           CI: true
 
       - name: Upload test report
@@ -249,6 +252,8 @@ jobs:
 
       - name: Generate Lighthouse config for preview
         run: npx tsx scripts/generate-lighthouserc.ts --base-url ${{ needs.deploy-preview.outputs.preview-url }}
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
       - name: Lighthouse CI
         uses: treosh/lighthouse-ci-action@v12
@@ -256,6 +261,8 @@ jobs:
           configPath: ./lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true
+        env:
+          LHCI_BUILD_CONTEXT__EXTERNAL_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   # ── Job 5: Release Gate ──
   release-gate:
