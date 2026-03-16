@@ -45,6 +45,7 @@ interface DefinitionHookResult {
   recipeMetadata: RecipeMetadata;
   isDirty: boolean;
   validationErrors: ValidationError[];
+  lastSavedAt: number | null;
 }
 
 interface ExecutionHookResult {

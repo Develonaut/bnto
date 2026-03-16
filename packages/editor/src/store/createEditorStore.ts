@@ -50,8 +50,8 @@ function createEditorStore(definition?: Definition) {
       palette: false,
       run: false,
       help: false,
-      save: false,
     },
+    lastSavedAt: null,
     executionPhase: "idle",
     executionResults: [],
     executionErrors: [],
@@ -246,6 +246,12 @@ function createEditorStore(definition?: Definition) {
 
     setInsertIntoContainerId: (id) => {
       set({ insertIntoContainerId: id });
+    },
+
+    // --- Auto-save ---
+
+    setLastSavedAt: (ts) => {
+      set({ lastSavedAt: ts });
     },
 
     // --- Execution lifecycle ---

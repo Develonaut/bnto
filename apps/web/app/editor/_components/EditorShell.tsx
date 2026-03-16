@@ -4,7 +4,13 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { getRecipeBySlug } from "@bnto/nodes";
 
-import { EditorRoot, EditorCanvas, EditorToolbar, EditorRightToolbar } from "@bnto/editor";
+import {
+  EditorRoot,
+  EditorCanvas,
+  EditorToolbar,
+  EditorRightToolbar,
+  useDraftHydration,
+} from "@bnto/editor";
 
 import { EditorBetaDialog } from "./EditorBetaDialog";
 import { EditorEffects } from "./EditorEffects";
@@ -16,6 +22,12 @@ import { SavedRecipeLoader } from "./SavedRecipeLoader";
  * Extracted from page.tsx so the page can be a server component.
  * The layout (navbar, full-viewport chrome) renders on the server;
  * this component handles the interactive editor tree.
+ *
+ * Hydration order:
+ *   1. ?recipe=[id] → fetch saved recipe from Convex
+ *   2. ?from=[slug] → load predefined recipe definition
+ *   3. localStorage draft → restore last auto-saved draft
+ *   4. Blank canvas
  */
 export function EditorShell() {
   const searchParams = useSearchParams();
@@ -26,6 +38,8 @@ export function EditorShell() {
     if (!from) return undefined;
     return getRecipeBySlug(from)?.definition;
   }, [from]);
+
+  const draftDefinition = useDraftHydration({ skip: !!from || !!recipeId });
 
   // Saved recipe — fetch from Convex, render editor once loaded
   if (recipeId) {
@@ -47,11 +61,11 @@ export function EditorShell() {
     );
   }
 
-  // Predefined recipe or blank canvas
+  // Predefined recipe, draft, or blank canvas
   return (
     <>
       <EditorBetaDialog />
-      <EditorRoot definition={predefinedDefinition}>
+      <EditorRoot definition={predefinedDefinition ?? draftDefinition}>
         <EditorEffects />
         <EditorCanvas>
           <EditorToolbar />

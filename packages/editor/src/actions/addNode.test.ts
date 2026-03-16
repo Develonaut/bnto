@@ -29,6 +29,7 @@ function blankState(overrides?: Partial<EditorState>): EditorState {
     definition: null,
     selectedNodeId: null,
     panels: { config: false, palette: false, run: false, help: false },
+    lastSavedAt: null,
     executionPhase: "idle",
     executionResults: [],
     executionErrors: [],

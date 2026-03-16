@@ -1040,6 +1040,14 @@ Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `pac
 
 Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
+### Triage: Simplify editor URL slug patterns — unify `?from` and `?recipe` params
+
+**Priority: Triage.** Currently the editor opens with either `?from=[recipe_name]` (predefined) or `?recipe=[recipeId]` (user-saved). Opening from a predefined recipe is effectively creating a new recipe — consider standardizing to a single `?recipe=[id]` param for all cases. Affects `apps/web/app/editor/` page + `EditorShell.tsx` hydration logic.
+
+### Triage: Audit and remove useEditorStoreApi — migrate to client/service API
+
+**Priority: Triage.** Audit all uses of `useEditorStoreApi`, `storeApi.setState`, `storeApi.getState`, and `storeApi.subscribe` in `packages/editor/src/hooks/` and `packages/editor/src/components/`. Migrate each to use the proper `editor.definition.*`, `editor.nodes.*`, etc. client/service methods. Once all consumers are ported, remove the `useEditorStoreApi` export from `context.ts`.
+
 ---
 
 ## Reference

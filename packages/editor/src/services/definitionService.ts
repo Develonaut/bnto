@@ -43,6 +43,10 @@ function createDefinitionService(storeApi: StoreApi<EditorStore>): DefinitionSer
       storeApi.getState().resetDirty();
     },
 
+    setLastSavedAt(ts: number | null) {
+      storeApi.getState().setLastSavedAt(ts);
+    },
+
     revalidate() {
       storeApi.getState().revalidate();
     },

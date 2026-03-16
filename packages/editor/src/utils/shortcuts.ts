@@ -45,13 +45,6 @@ export const SHORTCUTS: ShortcutDef[] = [
     win: ["Ctrl", "↵"],
   },
   {
-    id: "save",
-    label: "Save",
-    description: "Save the recipe to your account",
-    mac: ["⌘", "S"],
-    win: ["Ctrl", "S"],
-  },
-  {
     id: "export",
     label: "Export",
     description: "Download the recipe as .bnto.json",

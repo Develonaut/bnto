@@ -80,7 +80,7 @@ interface EditorSnapshot {
 // ---------------------------------------------------------------------------
 
 /** All panel identifiers. Add new panels here — one place to extend. */
-type PanelId = "config" | "palette" | "run" | "help" | "save";
+type PanelId = "config" | "palette" | "run" | "help";
 
 /** Map of panel IDs to their open/closed state. */
 type PanelState = Record<PanelId, boolean>;
@@ -124,6 +124,9 @@ interface EditorState {
 
   // --- Container expansion ---
   expandedContainerIds: Set<string>;
+
+  // --- Auto-save ---
+  lastSavedAt: number | null;
 
   // --- Insertion context ---
   /** When set, the next addNode inserts after this node ID instead of at the end. */
@@ -189,6 +192,9 @@ interface EditorActions {
   // --- Insertion context ---
   setInsertAfterNodeId: (id: string | null) => void;
   setInsertIntoContainerId: (id: string | null) => void;
+
+  // --- Auto-save ---
+  setLastSavedAt: (ts: number | null) => void;
 
   // --- Utility ---
   markDirty: () => void;

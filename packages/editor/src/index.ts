@@ -62,6 +62,17 @@ export { useHistory } from "./hooks/useHistory";
 export { usePanels } from "./hooks/usePanels";
 export { useUnsavedWarning } from "./hooks/useUnsavedWarning";
 export { useEditorShortcuts } from "./hooks/useEditorShortcuts";
+export { useAutosave } from "./hooks/useAutosave";
+export { useDraftHydration } from "./hooks/useDraftHydration";
+export type { UseAutosaveOptions } from "./hooks/useAutosave";
+
+// --- Draft persistence ---
+
+export type { Draft } from "./draft/draftTypes";
+export { deserializeDraft } from "./draft/deserializeDraft";
+export { serializeDraft } from "./draft/serializeDraft";
+export { DRAFT_KEY, saveDraft, loadDraft, clearDraft } from "./draft/draftStorage";
+export { formatLastSaved } from "./draft/formatLastSaved";
 
 // --- Internal hooks (rendering pipeline) ---
 
@@ -106,7 +117,6 @@ export type { SchemaFieldProps } from "./components/SchemaField";
 // --- Dialogs ---
 
 export { OpenRecipeDialog } from "./components/OpenRecipeDialog";
-export { SaveRecipeDialog } from "./components/SaveRecipeDialog";
 export { NodePaletteDialog } from "./components/NodePaletteDialog";
 export { HelpDialog } from "./components/HelpDialog";
 

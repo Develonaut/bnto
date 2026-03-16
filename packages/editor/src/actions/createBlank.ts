@@ -20,6 +20,7 @@ export function createBlank(): Partial<EditorState> {
     definition: blankDef,
     recipeMetadata: metadataFromBlank(),
     isDirty: false,
+    lastSavedAt: null,
     validationErrors: [],
     executionState: {},
     nodeProgress: {},

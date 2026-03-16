@@ -81,6 +81,7 @@ function makeState(overrides?: Partial<EditorState>): EditorState {
     redoStack: [],
     selectedNodeId: null,
     panels: { config: false, palette: false, run: false, help: false },
+    lastSavedAt: null,
     expandedContainerIds: new Set(),
     executionPhase: "idle",
     executionResults: [],
