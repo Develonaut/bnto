@@ -72,13 +72,16 @@ function DevTab() {
     [editor, progress],
   );
 
-  const forceProgress = useCallback((percent: number) => {
-    setProgress(percent);
-    editor.execution.forceExecutionState({
-      executionPhase: "running",
-      executionFileProgress: buildFileProgress(percent),
-    });
-  }, [editor]);
+  const forceProgress = useCallback(
+    (percent: number) => {
+      setProgress(percent);
+      editor.execution.forceExecutionState({
+        executionPhase: "running",
+        executionFileProgress: buildFileProgress(percent),
+      });
+    },
+    [editor],
+  );
 
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
@@ -140,10 +143,13 @@ function ProgressControl({
 
 function RecipeSelect() {
   const editor = useEditor();
-  const handleLoadRecipe = useCallback((slug: string) => {
-    const recipe = getRecipeBySlug(slug);
-    if (recipe) editor.definition.loadDefinition(recipe.definition);
-  }, [editor]);
+  const handleLoadRecipe = useCallback(
+    (slug: string) => {
+      const recipe = getRecipeBySlug(slug);
+      if (recipe) editor.definition.loadDefinition(recipe.definition);
+    },
+    [editor],
+  );
 
   return (
     <Stack className="gap-1.5">
@@ -151,7 +157,7 @@ function RecipeSelect() {
         Load Recipe
       </Text>
       <Select onValueChange={handleLoadRecipe}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full" data-testid="recipe-select">
           <SelectValue placeholder="Select recipe..." />
         </SelectTrigger>
         <SelectContent>

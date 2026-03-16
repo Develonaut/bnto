@@ -41,13 +41,19 @@ function DevNodeControls() {
     return config && !isIoNodeType(config.nodeType);
   });
 
-  const setNodeStatus = useCallback((nodeId: string, status: NodeExecutionStatus) => {
-    editor.execution.setNodeStatus(nodeId, status);
-  }, [editor]);
+  const setNodeStatus = useCallback(
+    (nodeId: string, status: NodeExecutionStatus) => {
+      editor.execution.setNodeStatus(nodeId, status);
+    },
+    [editor],
+  );
 
-  const setNodeProgress = useCallback((nodeId: string, percent: number) => {
-    editor.execution.setNodeProgress(nodeId, percent);
-  }, [editor]);
+  const setNodeProgress = useCallback(
+    (nodeId: string, percent: number) => {
+      editor.execution.setNodeProgress(nodeId, percent);
+    },
+    [editor],
+  );
 
   const [simulating, setSimulating] = useState(false);
   const cancelRef = useRef(false);
@@ -65,7 +71,10 @@ function DevNodeControls() {
       pendingState[id] = "pending";
       zeroProgress[id] = 0;
     }
-    editor.execution.forceExecutionState({ executionState: pendingState, nodeProgress: zeroProgress });
+    editor.execution.forceExecutionState({
+      executionState: pendingState,
+      nodeProgress: zeroProgress,
+    });
     await wait(400);
 
     // Walk each node through active -> progress -> completed
@@ -104,7 +113,7 @@ function DevNodeControls() {
   }
 
   return (
-    <Stack className="gap-3">
+    <Stack className="gap-3" data-testid="per-node-controls">
       <Row className="items-center justify-between">
         <Text size="xs" color="muted" weight="medium">
           Per-Node Controls
@@ -124,7 +133,11 @@ function DevNodeControls() {
         const progress = nodeProgress[node.id] ?? 0;
 
         return (
-          <Stack key={node.id} className="gap-1.5 rounded-md border border-border p-2">
+          <Stack
+            key={node.id}
+            className="gap-1.5 rounded-md border border-border p-2"
+            data-testid={`node-control-${node.id}`}
+          >
             <Row className="items-center justify-between">
               <Text size="xs" weight="medium" className="truncate">
                 {config?.displayName ?? config?.name ?? node.id}

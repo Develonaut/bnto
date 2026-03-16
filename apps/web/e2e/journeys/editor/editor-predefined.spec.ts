@@ -40,7 +40,7 @@ test.describe("editor predefined recipes @browser", () => {
 
     // Download and verify JPEG magic bytes
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -87,7 +87,7 @@ test.describe("editor predefined recipes @browser", () => {
 
     // Download and verify it's a non-empty file
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -112,7 +112,7 @@ test.describe("editor predefined recipes @browser", () => {
 
     // Download and verify the file is valid (non-empty)
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     // Filename should contain the rename prefix
@@ -136,7 +136,7 @@ test.describe("editor predefined recipes @browser", () => {
 
     // Download and verify JPEG magic bytes
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -158,7 +158,7 @@ test.describe("editor predefined recipes @browser", () => {
 
     // Download and verify WebP magic bytes (RIFF + WEBP)
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -188,7 +188,7 @@ test.describe("editor predefined recipes @browser", () => {
     await expect(outputFile).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();

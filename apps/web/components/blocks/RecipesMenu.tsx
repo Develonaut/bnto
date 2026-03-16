@@ -17,7 +17,7 @@ export function RecipesMenu() {
         <BookOpenIcon />
         Explore
       </MenuTrigger>
-      <MenuContent className="w-[28rem] p-3" offset="lg">
+      <MenuContent className="w-[28rem] p-3" offset="lg" data-testid="explore-dropdown">
         <ul className="grid grid-cols-2 gap-1">
           {RECIPES.map((category) => (
             <li key={category.title} className="col-span-2">

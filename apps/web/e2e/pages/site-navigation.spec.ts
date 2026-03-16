@@ -9,6 +9,8 @@ import { test, expect } from "../fixtures";
  * Mobile: representative subset + mobile menu + 404
  */
 
+test.use({ reducedMotion: "reduce" });
+
 const PUBLIC_ROUTES = [
   { path: "/", name: "home" },
   { path: "/compress-images", name: "compress-images" },
@@ -44,34 +46,36 @@ test.describe("Site navigation — desktop @browser", () => {
     await page.getByRole("button", { name: /Explore/ }).click();
 
     // Scope to the dropdown popover so we don't match marquee recipe cards
-    const dropdown = page.locator("[data-radix-popper-content-wrapper]");
+    const dropdown = page.locator('[data-testid="explore-dropdown"]');
     const compressLink = dropdown.getByRole("link", {
       name: /Compress Images/,
     });
-    await expect(compressLink.first()).toBeVisible();
+    await expect(compressLink).toBeVisible();
 
     // Screenshot the open dropdown
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(page).toHaveScreenshot("desktop-explore-dropdown.png");
 
     // Navigate to tool page via dropdown
-    await compressLink.first().click();
+    await compressLink.click();
     await expect(page).toHaveURL("/compress-images");
   });
 
   test("navbar: Pricing and FAQ links navigate correctly", async ({ page }) => {
     await page.goto("/");
 
-    // Navigate to Pricing via navbar (first match = navbar, before footer)
-    await page.getByRole("link", { name: "Pricing" }).first().click();
+    const navbar = page.getByRole("banner");
+
+    // Navigate to Pricing via navbar
+    await navbar.getByRole("link", { name: "Pricing" }).click();
     await expect(page).toHaveURL("/pricing");
 
     // Navigate to FAQ
-    await page.getByRole("link", { name: "FAQ" }).first().click();
+    await navbar.getByRole("link", { name: "FAQ" }).click();
     await expect(page).toHaveURL("/faq");
 
-    // Navigate home via logo (first match = navbar, second = footer)
-    await page.getByRole("link", { name: "bnto" }).first().click();
+    // Navigate home via logo
+    await navbar.getByRole("link", { name: "bnto" }).click();
     await expect(page).toHaveURL("/");
   });
 

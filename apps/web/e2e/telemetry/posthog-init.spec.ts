@@ -39,11 +39,13 @@ test.describe("PostHog telemetry @browser", () => {
     // Wait for initial pageview from TelemetryProvider
     await waitForTelemetryEvent(page, "$pageview");
 
-    // SPA navigate by clicking a recipe card link (not page.goto which
-    // does a full navigation and resets the __bnto_telemetry__ array)
+    // SPA navigate by clicking a recipe link (not page.goto which
+    // does a full navigation and resets the __bnto_telemetry__ array).
+    // Use footer link — always visible after scrolling to bottom.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page
+      .getByRole("contentinfo")
       .getByRole("link", { name: /Compress Images/ })
-      .first()
       .click();
     await expect(page.getByRole("heading", { name: "Compress Images Online Free" })).toBeVisible();
 

@@ -33,7 +33,7 @@ test.describe("rename-csv-columns — browser execution @browser", () => {
 
     // Download and verify output is valid CSV with columns preserved
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toMatch(/\.csv$/i);
@@ -59,7 +59,7 @@ test.describe("rename-csv-columns — browser execution @browser", () => {
     await expect(outputFile).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
