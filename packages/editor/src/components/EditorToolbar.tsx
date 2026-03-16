@@ -56,7 +56,7 @@ function EditorToolbar() {
   const canExport = validationErrors.length === 0;
 
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
-  const lastSavedLabel = formatLastSaved(lastSavedAt ?? null);
+  const lastSavedLabel = formatLastSaved(lastSavedAt);
 
   const handleReset = useCallback(() => {
     const { definition } = editor.getState();
@@ -104,14 +104,10 @@ function EditorToolbar() {
                 <MenuItem onClick={download} disabled={!canDownload}>
                   <DownloadIcon /> Export <ShortcutHint shortcutId="export" />
                 </MenuItem>
-                {lastSavedLabel && (
-                  <>
-                    <MenuSeparator />
-                    <Text size="xs" className="px-2 py-1.5 text-muted-foreground">
-                      Last saved {lastSavedLabel}
-                    </Text>
-                  </>
-                )}
+                <MenuSeparator />
+                <Text size="xs" className="px-2 py-1.5 text-center text-muted-foreground">
+                  {lastSavedLabel}
+                </Text>
               </MenuContent>
             </Menu>
           </ToolbarGroup>
