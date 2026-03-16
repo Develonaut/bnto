@@ -80,6 +80,13 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
     [editor, insertAfterNodeId, insertIntoContainerId, handleClose],
   );
 
+  const handleAddItem = useCallback((item: PaletteItem) => () => handleAdd(item), [handleAdd]);
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value),
+    [],
+  );
+
   const hasResults = filteredGroups.length > 0;
 
   return (
@@ -100,7 +107,7 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
                 placeholder="Search nodes..."
                 aria-label="Search node types"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={handleSearchChange}
                 className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 autoFocus
               />
@@ -131,7 +138,7 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
                       <button
                         key={itemKey(item)}
                         type="button"
-                        onClick={() => handleAdd(item)}
+                        onClick={handleAddItem(item)}
                         disabled={disabled}
                         data-testid={`palette-item-${itemKey(item)}`}
                         className="flex flex-col items-start gap-1 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"

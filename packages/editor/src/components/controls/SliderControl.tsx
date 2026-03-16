@@ -29,6 +29,8 @@ function SliderControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
       .sort((a, b) => a.value - b.value);
   }, [meta.presets, inverted, min, max]);
 
+  const sliderValue = useMemo(() => [displayValue], [displayValue]);
+
   const handleValueChange = useCallback(
     (values: number[]) => {
       const display = values[0]!;
@@ -51,7 +53,7 @@ function SliderControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
       id={id}
       min={min}
       max={max}
-      value={[displayValue]}
+      value={sliderValue}
       label={sliderLabel}
       presets={hasPresets ? displayPresets : undefined}
       onValueChange={handleValueChange}

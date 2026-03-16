@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { RECIPES } from "@bnto/nodes";
 import type { Definition } from "@bnto/nodes";
 import {
@@ -26,14 +27,15 @@ interface RecipePickerGridProps {
 }
 
 function RecipePickerGrid({ onSelect, getIcon }: RecipePickerGridProps) {
+  const handleSelect = useCallback(
+    (definition: Definition) => () => onSelect(definition),
+    [onSelect],
+  );
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-1">
       {RECIPES.map((recipe) => (
-        <RecipeCard
-          key={recipe.slug}
-          compact
-          onClick={() => onSelect(recipe.definition)}
-        >
+        <RecipeCard key={recipe.slug} compact onClick={handleSelect(recipe.definition)}>
           <RecipeCardIcon icon={getIcon?.(recipe.slug)} />
           <Stack className="min-w-0 flex-1 gap-1">
             <RecipeCardTitle>{recipe.name}</RecipeCardTitle>

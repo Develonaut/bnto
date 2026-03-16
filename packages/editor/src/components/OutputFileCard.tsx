@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import type { BrowserFileResult } from "@bnto/core";
 import { Button, Card, CheckCircle2Icon, DownloadIcon, IconBadge, Row, Stack } from "@bnto/ui";
 import { formatFileSize } from "@bnto/ui";
@@ -11,6 +12,7 @@ interface OutputFileCardProps {
 
 function OutputFileCard({ result, onDownload }: OutputFileCardProps) {
   const { originalSize, compressionRatio } = result.metadata;
+  const handleDownload = useCallback(() => onDownload(result), [onDownload, result]);
 
   return (
     <Card
@@ -37,7 +39,7 @@ function OutputFileCard({ result, onDownload }: OutputFileCardProps) {
         variant="outline"
         size="icon"
         elevation="sm"
-        onClick={() => onDownload(result)}
+        onClick={handleDownload}
         aria-label={`Download ${result.filename}`}
         data-testid="download-button"
       >

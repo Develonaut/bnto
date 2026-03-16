@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 import { cn } from "../utils/cn";
 import { Button } from "./Button";
@@ -22,6 +22,8 @@ function PasswordInput({
 }: Omit<ComponentProps<"input">, "type"> & { wrapperClassName?: string }) {
   const [visible, setVisible] = useState(false);
 
+  const toggleVisible = useCallback(() => setVisible((v) => !v), []);
+
   return (
     <Row className="gap-2">
       <Input
@@ -39,7 +41,7 @@ function PasswordInput({
         pressed={visible}
         disabled={disabled}
         tabIndex={-1}
-        onClick={() => setVisible((v) => !v)}
+        onClick={toggleVisible}
         aria-label={visible ? "Hide password" : "Show password"}
         aria-pressed={visible}
       >

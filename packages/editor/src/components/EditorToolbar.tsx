@@ -85,6 +85,20 @@ function EditorToolbar() {
     downloadDefinition(editor.definition);
   }, [editor]);
 
+  const handlePaletteOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) closePalette();
+    },
+    [closePalette],
+  );
+
+  const handleHelpOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) closeHelp();
+    },
+    [closeHelp],
+  );
+
   const canDownload = canExport && hasNodes;
 
   return (
@@ -209,18 +223,8 @@ function EditorToolbar() {
       </div>
       <RecipeDialog open={settingsDialog.open} onOpenChange={settingsDialog.onOpenChange} />
       <OpenRecipeDialog open={openRecipeDialog.open} onOpenChange={openRecipeDialog.onOpenChange} />
-      <NodePaletteDialog
-        open={paletteOpen}
-        onOpenChange={(open) => {
-          if (!open) closePalette();
-        }}
-      />
-      <HelpDialog
-        open={helpOpen}
-        onOpenChange={(open) => {
-          if (!open) closeHelp();
-        }}
-      />
+      <NodePaletteDialog open={paletteOpen} onOpenChange={handlePaletteOpenChange} />
+      <HelpDialog open={helpOpen} onOpenChange={handleHelpOpenChange} />
     </>
   );
 }

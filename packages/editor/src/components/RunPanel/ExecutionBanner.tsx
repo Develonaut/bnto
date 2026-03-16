@@ -38,6 +38,13 @@ function ExecutionBanner() {
     [logs, editor],
   );
 
+  const handleErrorClickAt = useCallback(
+    (index: number) => () => handleErrorClick(index),
+    [handleErrorClick],
+  );
+
+  const handleDownloadAll = useCallback(() => editor.execution.downloadAllResults(), [editor]);
+
   if (phase === "failed" || errors.length > 0) {
     const title =
       errors.length === 0
@@ -61,7 +68,7 @@ function ExecutionBanner() {
                 <button
                   type="button"
                   className="text-left underline-offset-2 hover:underline"
-                  onClick={() => handleErrorClick(i)}
+                  onClick={handleErrorClickAt(i)}
                 >
                   {err}
                 </button>
@@ -114,7 +121,7 @@ function ExecutionBanner() {
           variant="outline"
           size="sm"
           icon={<DownloadIcon />}
-          onClick={() => editor.execution.downloadAllResults()}
+          onClick={handleDownloadAll}
           aria-label={`Download all ${results.length} files`}
         />
       </StatusBannerRow>

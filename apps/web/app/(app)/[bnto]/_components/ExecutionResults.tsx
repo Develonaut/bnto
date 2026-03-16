@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import {
   Button,
   CheckCircle2Icon,
@@ -10,6 +10,7 @@ import {
   Row,
   Stack,
 } from "@bnto/ui";
+import type { OutputFileUrl } from "@bnto/core";
 import { core } from "@bnto/core";
 import { formatFileSize } from "@bnto/ui";
 
@@ -35,6 +36,13 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
     execution?.completedAt && execution?.startedAt
       ? Math.round((execution.completedAt - execution.startedAt) / 1000)
       : null;
+
+  const handleDownloadFile = useCallback(
+    (url: OutputFileUrl) => () => downloadFile(url),
+    [downloadFile],
+  );
+
+  const handleDownloadSingleFile = useCallback(() => downloadFile(urls[0]), [downloadFile, urls]);
 
   useEffect(() => {
     if (isCompleted && hasOutputFiles) {
@@ -79,7 +87,7 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => downloadFile(downloadUrl)}
+                  onClick={handleDownloadFile(downloadUrl)}
                   aria-label={`Download ${file.name}`}
                   data-testid="download-button"
                 >
@@ -111,11 +119,7 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
       )}
 
       {outputFiles.length === 1 && isReady && urls.length > 0 && (
-        <Button
-          className="w-full"
-          onClick={() => downloadFile(urls[0])}
-          data-testid="download-button"
-        >
+        <Button className="w-full" onClick={handleDownloadSingleFile} data-testid="download-button">
           <DownloadIcon className="size-4" />
           Download
         </Button>

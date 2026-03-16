@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
 import {
   Label,
   Select,
@@ -23,16 +24,25 @@ interface ConvertFormatConfigProps {
 }
 
 export function ConvertFormatConfig({ value, onChange }: ConvertFormatConfigProps) {
+  const handleFormatChange = useCallback(
+    (format: string) => onChange({ ...value, format: format as Config["format"] }),
+    [onChange, value],
+  );
+
+  const qualityValue = useMemo(() => [value.quality], [value.quality]);
+
+  const handleQualityChange = useCallback(
+    ([quality]: number[]) => onChange({ ...value, quality: quality ?? value.quality }),
+    [onChange, value],
+  );
+
   return (
     <div className="flex w-full items-end gap-4">
       <div className="flex shrink-0 flex-col gap-1">
         <Label id="convert-format-label" className="text-muted-foreground text-xs">
           Format
         </Label>
-        <Select
-          value={value.format}
-          onValueChange={(format) => onChange({ ...value, format: format as Config["format"] })}
-        >
+        <Select value={value.format} onValueChange={handleFormatChange}>
           <SelectTrigger
             className="w-24"
             aria-labelledby="convert-format-label"
@@ -68,10 +78,8 @@ export function ConvertFormatConfig({ value, onChange }: ConvertFormatConfigProp
             aria-labelledby="convert-quality-label"
             aria-describedby="convert-quality-help"
             aria-valuetext={`${value.quality} percent`}
-            value={[value.quality]}
-            onValueChange={([quality]: number[]) =>
-              onChange({ ...value, quality: quality ?? value.quality })
-            }
+            value={qualityValue}
+            onValueChange={handleQualityChange}
             min={1}
             max={100}
             step={1}

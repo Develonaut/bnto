@@ -1,7 +1,7 @@
 ---
 name: pre-commit
 description: Run the mandatory pre-commit checklist
-arguments: "[-r | --review] [-m | --merge]"
+arguments: "-r --review -m --merge"
 ---
 
 # Pre-Commit Checklist
