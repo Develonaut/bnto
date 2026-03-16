@@ -1,53 +1,45 @@
-import { Fragment } from "react";
-
-import { CheckIcon, CircleMinusIcon, ZapIcon } from "@bnto/ui";
+import type { ComponentType } from "react";
 
 import {
-  Stagger,
-  ScaleIn,
   AnimatedCounter,
   Card,
+  CheckIcon,
   ComparisonBar,
+  GlobeIcon,
   IconBadge,
+  RepeatIcon,
   Row,
+  ScaleIn,
+  ShieldCheckIcon,
+  SlideUp,
   Stack,
+  Stagger,
   Text,
-  cn,
+  ZapIcon,
 } from "@bnto/ui";
 
 /* ── Data ────────────────────────────────────────────────────── */
 
-interface ComparisonRow {
+interface Capability {
+  icon: ComponentType<{ className?: string }>;
+  variant: "primary" | "secondary" | "accent" | "success";
   label: string;
-  bnto: string;
-  bntoWin: boolean;
-  tinypng: string;
-  iloveimg: string;
 }
 
-const COMPARISON_ROWS: ComparisonRow[] = [
-  { label: "Speed", bnto: "50ms", bntoWin: true, tinypng: "~8s", iloveimg: "~12s" },
-  { label: "File upload", bnto: "None", bntoWin: true, tinypng: "Required", iloveimg: "Required" },
-  { label: "Daily limit", bnto: "Unlimited", bntoWin: true, tinypng: "20/day", iloveimg: "15/day" },
-  { label: "Signup", bnto: "None", bntoWin: true, tinypng: "For bulk", iloveimg: "For bulk" },
-  { label: "Cost", bnto: "Free", bntoWin: true, tinypng: "$25/yr", iloveimg: "$7/mo" },
+const CAPABILITIES: Capability[] = [
+  {
+    icon: ShieldCheckIcon,
+    variant: "secondary",
+    label: "Runs locally — files never leave your device",
+  },
+  { icon: RepeatIcon, variant: "accent", label: "No daily limits — process unlimited files" },
+  { icon: GlobeIcon, variant: "success", label: "No signup required — just drop files and go" },
+  {
+    icon: CheckIcon,
+    variant: "primary",
+    label: "Free forever — browser tools cost us nothing to run",
+  },
 ];
-
-/* ── Comparison cell ─────────────────────────────────────────── */
-
-function ComparisonCell({ value, win }: { value: string; win?: boolean }) {
-  return (
-    <div className="flex items-center justify-center gap-1.5">
-      {win !== undefined &&
-        (win ? (
-          <CheckIcon className="size-3.5 shrink-0 text-success" />
-        ) : (
-          <CircleMinusIcon className="size-3.5 shrink-0 text-muted-foreground/50" />
-        ))}
-      <span className="text-xs">{value}</span>
-    </div>
-  );
-}
 
 /* ── Brag layout ─────────────────────────────────────────────── */
 
@@ -73,54 +65,30 @@ export function BragLayout() {
           height="h-2.5"
           items={[
             { label: "bnto", value: 50, subtitle: "Local WASM" },
-            { label: "TinyPNG", value: 8000, subtitle: "Upload, process, download" },
-            { label: "iLoveIMG", value: 12000, subtitle: "Upload, queue, download" },
+            { label: "Cloud upload", value: 8000, subtitle: "Upload, process, download" },
           ]}
         />
         <Text size="xs" color="muted">
-          Avg processing time
+          Avg processing time — local vs cloud round-trip
         </Text>
       </Stack>
     </Card>
   );
 
-  const comparisonCard = (
-    <Card>
-      <div className="grid grid-cols-4 overflow-hidden rounded-[inherit]">
-        {/* Header row */}
-        <div className="border-b border-border p-3" />
-        <div className="flex items-center justify-center border-b border-border bg-primary/5 p-3">
-          <span className="font-display text-xs font-semibold text-primary">bnto</span>
-        </div>
-        <div className="flex items-center justify-center border-b border-border p-3">
-          <span className="text-xs font-medium text-muted-foreground">TinyPNG</span>
-        </div>
-        <div className="flex items-center justify-center border-b border-border p-3">
-          <span className="text-xs font-medium text-muted-foreground">iLoveIMG</span>
-        </div>
-
-        {/* Data rows */}
-        {COMPARISON_ROWS.map((row, i) => {
-          const isLast = i === COMPARISON_ROWS.length - 1;
-          const borderCn = isLast ? "" : "border-b border-border";
-          return (
-            <Fragment key={row.label}>
-              <div className={cn("flex items-center p-3", borderCn)}>
-                <span className="text-xs font-medium text-muted-foreground">{row.label}</span>
-              </div>
-              <div className={cn("flex items-center justify-center bg-primary/5 p-3", borderCn)}>
-                <ComparisonCell value={row.bnto} win={row.bntoWin} />
-              </div>
-              <div className={cn("flex items-center justify-center p-3", borderCn)}>
-                <ComparisonCell value={row.tinypng} win={false} />
-              </div>
-              <div className={cn("flex items-center justify-center p-3", borderCn)}>
-                <ComparisonCell value={row.iloveimg} win={false} />
-              </div>
-            </Fragment>
-          );
-        })}
-      </div>
+  const capabilityCard = (
+    <Card className="p-5">
+      <Stack className="gap-3">
+        {CAPABILITIES.map((cap, i) => (
+          <SlideUp key={cap.label} index={i} distance={8} easing="spring-bouncy">
+            <Row className="gap-3">
+              <IconBadge variant={cap.variant} size="sm">
+                <cap.icon className="size-3.5" />
+              </IconBadge>
+              <span className="text-sm">{cap.label}</span>
+            </Row>
+          </SlideUp>
+        ))}
+      </Stack>
     </Card>
   );
 
@@ -131,7 +99,7 @@ export function BragLayout() {
           {speedCard}
         </ScaleIn>
         <ScaleIn index={1} from={0.9} easing="spring-bouncy">
-          {comparisonCard}
+          {capabilityCard}
         </ScaleIn>
       </Stack>
     </Stagger>
