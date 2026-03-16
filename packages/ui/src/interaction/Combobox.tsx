@@ -76,6 +76,32 @@ function Combobox({
     [value, onChange],
   );
 
+  const handleRemoveMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleRemoveClick = useCallback(
+    (e: React.MouseEvent<HTMLSpanElement>) => {
+      e.stopPropagation();
+      const optionValue = e.currentTarget.dataset.value;
+      if (optionValue) removeOption(optionValue);
+    },
+    [removeOption],
+  );
+
+  const handleRemoveKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLSpanElement>) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        const optionValue = e.currentTarget.dataset.value;
+        if (optionValue) removeOption(optionValue);
+      }
+    },
+    [removeOption],
+  );
+
   return (
     <div data-slot="combobox" className={className} {...props}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -99,22 +125,11 @@ function Combobox({
                           <span
                             role="button"
                             tabIndex={0}
+                            data-value={v}
                             className="ml-0.5 cursor-pointer rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeOption(v);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                removeOption(v);
-                              }
-                            }}
+                            onMouseDown={handleRemoveMouseDown}
+                            onClick={handleRemoveClick}
+                            onKeyDown={handleRemoveKeyDown}
                             aria-label={`Remove ${label}`}
                           >
                             <XIcon className="size-3 text-muted-foreground hover:text-foreground" />

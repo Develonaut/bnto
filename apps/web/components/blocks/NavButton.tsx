@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { usePathname } from "next/navigation";
 
@@ -18,15 +18,20 @@ export function NavButton({
   href,
   onClick,
   ...props
-}: { href: string } & Omit<
-  React.ComponentProps<typeof Button>,
-  "variant" | "pressed" | "href"
->) {
+}: { href: string } & Omit<React.ComponentProps<typeof Button>, "variant" | "pressed" | "href">) {
   const pathname = usePathname();
   const [pendingPath, setPendingPath] = useState<string | null>(null);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing optimistic state on navigation complete
   useEffect(() => setPendingPath(null), [pathname]);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      setPendingPath(href);
+      (onClick as ((e: React.MouseEvent) => void) | undefined)?.(e);
+    },
+    [href, onClick],
+  );
 
   return (
     <Button
@@ -35,10 +40,7 @@ export function NavButton({
       {...props}
       href={href}
       pressed={pathname === href || pendingPath === href}
-      onClick={(e: React.MouseEvent) => {
-        setPendingPath(href);
-        (onClick as ((e: React.MouseEvent) => void) | undefined)?.(e);
-      }}
+      onClick={handleClick}
     />
   );
 }

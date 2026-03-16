@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useCallback, type ReactNode } from "react";
 import { core } from "@bnto/core";
 
 import { useControlled } from "@/hooks/useControlled";
@@ -98,6 +98,26 @@ function AuthGateAction({
   const { isGated } = useAuthGate();
   const [open, setOpen] = useControlled(controlledOpen, false, onOpenChange);
 
+  const handleGateClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(true);
+    },
+    [setOpen],
+  );
+
+  const handleGateKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        setOpen(true);
+      }
+    },
+    [setOpen],
+  );
+
   if (!isGated) {
     return <>{children}</>;
   }
@@ -108,18 +128,8 @@ function AuthGateAction({
         <span
           role="button"
           tabIndex={0}
-          onClickCapture={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setOpen(true);
-          }}
-          onKeyDownCapture={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              e.stopPropagation();
-              setOpen(true);
-            }
-          }}
+          onClickCapture={handleGateClick}
+          onKeyDownCapture={handleGateKeyDown}
           className="inline-flex cursor-pointer"
         >
           {children}
@@ -150,18 +160,8 @@ function AuthGateAction({
         <span
           role="button"
           tabIndex={0}
-          onClickCapture={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setOpen(true);
-          }}
-          onKeyDownCapture={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              e.stopPropagation();
-              setOpen(true);
-            }
-          }}
+          onClickCapture={handleGateClick}
+          onKeyDownCapture={handleGateKeyDown}
           className="inline-flex cursor-pointer"
         >
           {children}
