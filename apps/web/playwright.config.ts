@@ -3,14 +3,21 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Playwright E2E test configuration.
  *
- * Tests always run against a local dev server:
- * - Default: port 4000 (your local `task dev`)
- * - Agents: set E2E_PORT=4001 to avoid colliding with a running dev server
- * - Playwright starts its own Next.js instance if no server is running
+ * Two-stage execution to reduce editor test flakiness:
+ *   - "browser" project: pages, browser journeys, auth, telemetry — fully parallel
+ *   - "editor" project: editor component + journey tests — run with --workers=1
+ *
+ * ReactFlow continuously re-renders, so parallel editor tests lose DOM references
+ * between Playwright's element resolution and click dispatch. Serial execution
+ * eliminates the CPU contention that triggers this.
+ *
+ * Usage:
+ *   task e2e              # both stages (browser parallel, then editor serial)
+ *   task e2e:browser      # parallel tests only
+ *   task e2e:editor       # editor tests only (serial)
  */
 
-const port = Number(process.env.E2E_PORT ?? 4000);
-const isolated = port !== 4000;
+const port = 4000;
 
 export default defineConfig({
   globalTeardown: "./e2e/global-teardown.ts",
@@ -33,14 +40,20 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
+      name: "browser",
+      testDir: "./e2e",
+      testIgnore: ["**/editor/**"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "editor",
+      testDir: "./e2e",
+      testMatch: ["**/editor/**"],
       use: { ...devices["Desktop Chrome"] },
     },
   ],
   webServer: {
-    command: isolated
-      ? `NEXT_DIST_DIR=.next-e2e npx next dev --port ${port}`
-      : `pnpm turbo run dev`,
+    command: `pnpm turbo run dev`,
     url: `http://localhost:${port}`,
     reuseExistingServer: true,
     timeout: 120_000,

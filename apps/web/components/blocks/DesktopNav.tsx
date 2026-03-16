@@ -16,7 +16,11 @@ export function DesktopNav() {
       <NewRecipeNavButton />
       <RecipesMenu />
       {PAGE_LINKS.map((link) => (
-        <NavButton key={link.href} href={link.href}>
+        <NavButton
+          key={link.href}
+          href={link.href}
+          data-testid={`nav-link-${link.href.replace("/", "")}`}
+        >
           {link.label}
         </NavButton>
       ))}

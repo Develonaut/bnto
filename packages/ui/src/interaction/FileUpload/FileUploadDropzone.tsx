@@ -36,7 +36,7 @@ export function FileUploadDropzone({ className, children, ...props }: ComponentP
           )}
           onClick={handleClick}
         >
-          <input {...getInputProps()} aria-label="File upload" />
+          <input {...getInputProps()} aria-label="File upload" data-testid="file-input" />
           {children}
         </Card>
       </Button>

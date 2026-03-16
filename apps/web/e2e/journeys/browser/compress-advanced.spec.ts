@@ -21,7 +21,7 @@ const PRESET_LABELS = ["Light", "Balanced", "Maximum"] as const;
  */
 async function selectPreset(page: Page, presetIndex: number) {
   const label = PRESET_LABELS[presetIndex];
-  await page.getByRole("button", { name: label, exact: true }).click();
+  await page.getByTestId("slider-preset", `[data-preset-label="${label}"]`).click();
 }
 
 /**
@@ -70,10 +70,10 @@ test.describe("compress-images — batch processing @browser", () => {
 
     await runAndComplete(page, { timeout: 60000 });
 
-    const outputFiles = page.locator('[data-testid="output-file"]');
+    const outputFiles = page.getByTestId("output-file");
     await expect(outputFiles).toHaveCount(5);
 
-    await expect(page.locator('[data-testid="download-all-button"]:visible')).toBeVisible();
+    await expect(page.getByTestId("download-all-button", ":visible")).toBeVisible();
   });
 
   test("multi-file progress is monotonic (never decreases)", async ({ page }) => {

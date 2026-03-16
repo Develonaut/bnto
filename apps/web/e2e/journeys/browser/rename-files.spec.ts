@@ -29,12 +29,12 @@ test.describe("rename-files — browser execution @browser", () => {
 
     await runAndComplete(page);
 
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
     // Verify download filename includes "renamed-"
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.locator('[data-testid="download-button"]').click();
+    await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toContain("renamed");
@@ -51,7 +51,7 @@ test.describe("rename-files — browser execution @browser", () => {
 
     await runAndComplete(page);
 
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(3);
-    await expect(page.locator('[data-testid="download-all-button"]:visible')).toBeVisible();
+    await expect(page.getByTestId("output-file")).toHaveCount(3);
+    await expect(page.getByTestId("download-all-button", ":visible")).toBeVisible();
   });
 });

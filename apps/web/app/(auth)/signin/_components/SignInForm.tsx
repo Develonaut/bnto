@@ -103,7 +103,7 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
             >
               bnto
             </NavButton>
-            <Heading level={1} size="sm">
+            <Heading level={1} size="sm" data-testid="auth-heading">
               {isSignUp ? "Create an account" : "Welcome back"}
             </Heading>
             <Text color="muted">
@@ -123,6 +123,7 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
                   onChange={(e) => setName(e.target.value)}
                   required
                   autoComplete="name"
+                  data-testid="auth-name-input"
                 />
               )}
               <Input
@@ -134,6 +135,7 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                data-testid="auth-email-input"
               />
               <PasswordInput
                 id="password"
@@ -144,15 +146,21 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
                 required
                 minLength={8}
                 autoComplete={isSignUp ? "new-password" : "current-password"}
+                data-testid="auth-password-input"
               />
 
               {error && (
-                <p className="text-sm text-destructive" role="alert">
+                <p className="text-sm text-destructive" role="alert" data-testid="auth-error">
                   {error}
                 </p>
               )}
 
-              <Button type="submit" disabled={loading} className="mt-2 w-full">
+              <Button
+                type="submit"
+                disabled={loading}
+                data-testid="auth-submit"
+                className="mt-2 w-full"
+              >
                 {loading && <LoaderIcon className="size-4 motion-safe:animate-spin" />}
                 {loading
                   ? isSignUp
@@ -167,7 +175,12 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
 
           <Text size="sm" color="muted" className="text-center">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-            <button type="button" onClick={toggleMode} className="text-primary font-medium">
+            <button
+              type="button"
+              onClick={toggleMode}
+              data-testid="auth-mode-toggle"
+              className="text-primary font-medium"
+            >
               {isSignUp ? "Sign in" : "Sign up"}
             </button>
           </Text>

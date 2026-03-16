@@ -152,6 +152,7 @@ function DevNodeControls() {
                   size="sm"
                   className="h-6 px-1.5 text-[10px]"
                   onClick={() => setNodeStatus(node.id, s)}
+                  data-testid={`node-status-${s}`}
                 >
                   {s}
                 </Button>

@@ -44,7 +44,13 @@ export function MobileNav() {
   return (
     <>
       <div className="lg:hidden">
-        <Button variant="secondary" size="icon" elevation="sm" onClick={() => setOpen(!open)}>
+        <Button
+          variant="secondary"
+          size="icon"
+          elevation="sm"
+          onClick={() => setOpen(!open)}
+          data-testid="mobile-menu-button"
+        >
           <MenuIcon />
           <span className="sr-only">Open menu</span>
         </Button>

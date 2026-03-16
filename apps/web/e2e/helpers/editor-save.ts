@@ -8,27 +8,19 @@ import type { Page } from "@playwright/test";
 import { expect } from "../fixtures";
 
 /**
- * Open the File menu and click Save to open the save dialog.
- * Then fill in the recipe name and confirm.
+ * Fill in the save-recipe dialog and confirm.
+ *
+ * Note: Save is now automatic (debounced auto-save). This helper is only
+ * used by auth-gated tests (SV1-SV3) that trigger the explicit save dialog.
  */
 export async function saveRecipe(page: Page, name: string) {
-  // Open file menu
-  await page
-    .locator('[data-testid="editor-toolbar"]')
-    .getByRole("button", { name: /file menu/i })
-    .click();
-
-  // Click Save menu item (MenuItem renders as <button>)
-  const menuContent = page.getByRole("dialog").filter({ hasText: "Save" });
-  await menuContent.getByRole("button", { name: /^Save$/i }).click();
-
   // Fill in recipe name
-  const nameInput = page.locator('[data-testid="save-recipe-name"]');
+  const nameInput = page.getByTestId("save-recipe-name");
   await nameInput.waitFor({ timeout: 3_000 });
   await nameInput.fill(name);
 
   // Click Save button in dialog
-  await page.locator('[data-testid="save-recipe-confirm"]').click();
+  await page.getByTestId("save-recipe-confirm").click();
 
   // Wait for dialog to close (indicates success)
   await expect(nameInput).not.toBeVisible({ timeout: 10_000 });
@@ -40,7 +32,7 @@ export async function saveRecipe(page: Page, name: string) {
 export async function navigateToMyRecipes(page: Page) {
   await page.goto("/my-recipes");
   // Wait for the page heading
-  await expect(page.getByRole("heading", { name: "My Recipes" })).toBeVisible({
+  await expect(page.getByTestId("my-recipes-heading")).toBeVisible({
     timeout: 10_000,
   });
 }

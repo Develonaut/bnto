@@ -50,7 +50,9 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
             {/* Static header — server-rendered, zero JS.
                 Passed as children so it renders between PhaseIndicator
                 and the interactive flow inside RecipeShell. */}
-            <Heading level={1}>{entry.h1}</Heading>
+            <Heading level={1} data-testid="recipe-heading">
+              {entry.h1}
+            </Heading>
             <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
               {entry.description}
             </p>

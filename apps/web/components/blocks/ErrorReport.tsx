@@ -51,27 +51,41 @@ export function ErrorReport({ error, reset }: ErrorReportProps) {
           <Stack gap="lg" align="center">
             <CircleAlertIcon className="size-12 text-destructive" />
             <Stack gap="md" align="center">
-              <Heading level={2}>Something went wrong</Heading>
+              <Heading level={2} data-testid="error-heading">
+                Something went wrong
+              </Heading>
               <Text color="muted" balance>
                 An unexpected error occurred. You can try again or report this issue on GitHub so we
                 can fix it.
               </Text>
             </Stack>
-            <Text size="sm" mono color="muted" className="max-w-full truncate px-4">
+            <Text
+              size="sm"
+              mono
+              color="muted"
+              className="max-w-full truncate px-4"
+              data-testid="error-message"
+            >
               {error.message}
             </Text>
           </Stack>
         </CardContent>
         <CardFooter>
           <Row gap="sm" className="w-full justify-center pt-2">
-            <Button onClick={reset} className="gap-2">
+            <Button onClick={reset} data-testid="error-try-again" className="gap-2">
               <RefreshCwIcon className="size-4" />
               Try Again
             </Button>
-            <Button variant="outline" href={issueUrl} target="_blank" rel="noopener noreferrer">
+            <Button
+              variant="outline"
+              href={issueUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="error-report-issue"
+            >
               Report Issue
             </Button>
-            <Button variant="ghost" href="/" className="gap-2">
+            <Button variant="ghost" href="/" data-testid="error-back-home" className="gap-2">
               <ArrowLeftIcon className="size-4" />
               Back to Home
             </Button>

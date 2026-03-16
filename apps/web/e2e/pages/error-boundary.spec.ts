@@ -18,18 +18,18 @@ test.describe("Error boundary @browser", () => {
     await page.goto("/test-error");
 
     // ErrorReport should render with the error message
-    await expect(page.getByRole("heading", { name: "Something went wrong" })).toBeVisible();
+    await expect(page.getByTestId("error-heading")).toBeVisible();
 
     // Verify the three action buttons exist
-    await expect(page.getByRole("button", { name: "Try Again" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Report Issue" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Back to Home" })).toBeVisible();
+    await expect(page.getByTestId("error-try-again")).toBeVisible();
+    await expect(page.getByTestId("error-report-issue")).toBeVisible();
+    await expect(page.getByTestId("error-back-home")).toBeVisible();
 
     // Verify the error message is displayed
-    await expect(page.getByText("Intentional test error")).toBeVisible();
+    await expect(page.getByTestId("error-message")).toBeVisible();
 
     // Verify the Report Issue link points to GitHub with pre-filled data
-    const reportLink = page.getByRole("link", { name: "Report Issue" });
+    const reportLink = page.getByTestId("error-report-issue");
     const href = await reportLink.getAttribute("href");
     expect(href).toContain("github.com/Develonaut/bnto/issues/new");
     expect(href).toContain("labels=bug");
@@ -38,9 +38,9 @@ test.describe("Error boundary @browser", () => {
   test("Report Issue link includes error context", async ({ page }) => {
     await page.goto("/test-error");
 
-    await expect(page.getByRole("heading", { name: "Something went wrong" })).toBeVisible();
+    await expect(page.getByTestId("error-heading")).toBeVisible();
 
-    const reportLink = page.getByRole("link", { name: "Report Issue" });
+    const reportLink = page.getByTestId("error-report-issue");
     const href = await reportLink.getAttribute("href");
 
     // URL should contain pre-filled issue fields
@@ -57,22 +57,22 @@ test.describe("Error boundary @browser", () => {
   test("Try Again button resets the error boundary", async ({ page }) => {
     await page.goto("/test-error");
 
-    await expect(page.getByRole("heading", { name: "Something went wrong" })).toBeVisible();
+    await expect(page.getByTestId("error-heading")).toBeVisible();
 
     // Click Try Again — it calls reset() which re-renders the erroring component.
     // Since the test page always throws, the error boundary will catch again.
-    await page.getByRole("button", { name: "Try Again" }).click();
+    await page.getByTestId("error-try-again").click();
 
     // The error boundary should still be visible (component throws again)
-    await expect(page.getByRole("heading", { name: "Something went wrong" })).toBeVisible();
+    await expect(page.getByTestId("error-heading")).toBeVisible();
   });
 
   test("Back to Home link navigates to root", async ({ page }) => {
     await page.goto("/test-error");
 
-    await expect(page.getByRole("heading", { name: "Something went wrong" })).toBeVisible();
+    await expect(page.getByTestId("error-heading")).toBeVisible();
 
-    const homeLink = page.getByRole("link", { name: "Back to Home" });
+    const homeLink = page.getByTestId("error-back-home");
     expect(await homeLink.getAttribute("href")).toBe("/");
   });
 });

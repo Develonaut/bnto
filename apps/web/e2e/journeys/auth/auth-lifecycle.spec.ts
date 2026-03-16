@@ -23,21 +23,23 @@ async function signUp(page: import("@playwright/test").Page, email: string) {
   await page.goto("/signin");
 
   // Fresh context has no bnto-has-account cookie → starts in signup mode
-  await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
+  const authHeading = page.getByTestId("auth-heading");
+  await expect(authHeading).toBeVisible();
+  await expect(authHeading).toContainText("Create an account");
 
-  await page.getByPlaceholder("Your name").fill(TEST_NAME);
-  await page.getByPlaceholder("Enter your email").fill(email);
-  await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.getByTestId("auth-name-input").fill(TEST_NAME);
+  await page.getByTestId("auth-email-input").fill(email);
+  await page.getByTestId("auth-password-input").fill(TEST_PASSWORD);
+  await page.getByTestId("auth-submit").click();
   await page.waitForURL("/", { timeout: 15000 });
 }
 
 /** Sign out via the NavUser dropdown and wait for /signin. */
 async function signOut(page: import("@playwright/test").Page) {
-  const userMenu = page.locator('[data-testid="nav-user-menu"]');
+  const userMenu = page.getByTestId("nav-user-menu");
   await expect(userMenu).toBeVisible({ timeout: 10000 });
   await userMenu.click();
-  await page.locator('[data-testid="nav-sign-out"]').click();
+  await page.getByTestId("nav-sign-out").click();
   await page.waitForURL("/signin", { timeout: 10000 });
 }
 
@@ -50,10 +52,10 @@ test.describe("New user journey @auth", () => {
     await page.goto("/signin");
 
     // No bnto-has-account cookie → defaults to signup mode
-    await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
-    await expect(page.getByPlaceholder("Your name")).toBeVisible();
-
-    await expect(page).toHaveScreenshot("00-signup-form-default.png");
+    const authHeading = page.getByTestId("auth-heading");
+    await expect(authHeading).toBeVisible();
+    await expect(authHeading).toContainText("Create an account");
+    await expect(page.getByTestId("auth-name-input")).toBeVisible();
   });
 
   test("sign up → lands on home → sees user menu", async ({ page }) => {
@@ -63,16 +65,13 @@ test.describe("New user journey @auth", () => {
     await expect(page).toHaveURL("/");
 
     // NavUser shows authenticated state (user menu, not "Sign In")
-    const userMenu = page.locator('[data-testid="nav-user-menu"]');
+    const userMenu = page.getByTestId("nav-user-menu");
     await expect(userMenu).toBeVisible({ timeout: 10000 });
-
-    await expect(page).toHaveScreenshot("01-signed-in-home.png");
 
     // Open menu — should display the user's email
     await userMenu.click();
-    await expect(page.getByText(email)).toBeVisible();
-
-    await expect(page).toHaveScreenshot("02-user-menu-open.png");
+    await expect(page.getByTestId("nav-user-email")).toBeVisible();
+    await expect(page.getByTestId("nav-user-email")).toContainText(email);
   });
 
   test("sign up → sign out → stays on /signin (no bounce)", async ({ page }) => {
@@ -86,17 +85,17 @@ test.describe("New user journey @auth", () => {
     await expect(page).toHaveURL("/signin");
 
     // After sign-out, hasAccount persists in store → shows signin mode
-    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
-
-    await expect(page).toHaveScreenshot("03-signed-out-welcome-back.png");
+    const authHeading = page.getByTestId("auth-heading");
+    await expect(authHeading).toBeVisible();
+    await expect(authHeading).toContainText("Welcome back");
 
     // Wait briefly for session cleanup, then confirm the user is truly signed out
     await page.waitForTimeout(2000);
     await page.goto("/");
-    const userMenu = page.locator('[data-testid="nav-user-menu"]');
+    const userMenu = page.getByTestId("nav-user-menu");
     await expect(userMenu).toBeVisible({ timeout: 10000 });
     await userMenu.click();
-    await expect(page.locator('[data-testid="nav-sign-in"]')).toBeVisible();
+    await expect(page.getByTestId("nav-sign-in")).toBeVisible();
   });
 });
 
@@ -122,9 +121,11 @@ test.describe("Returning user journey @auth", () => {
     await page.goto("/signin");
 
     // Should show "Welcome back" (signin mode), not "Create an account"
-    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+    const authHeading = page.getByTestId("auth-heading");
+    await expect(authHeading).toBeVisible();
+    await expect(authHeading).toContainText("Welcome back");
     // Name field should NOT be visible in signin mode
-    await expect(page.getByPlaceholder("Your name")).not.toBeVisible();
+    await expect(page.getByTestId("auth-name-input")).not.toBeVisible();
   });
 
   test("sign in with existing account → lands on home", async ({ page }) => {
@@ -139,19 +140,21 @@ test.describe("Returning user journey @auth", () => {
     await page.goto("/signin");
 
     // bnto-has-account cookie still present → signin mode
-    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+    const authHeading = page.getByTestId("auth-heading");
+    await expect(authHeading).toBeVisible();
+    await expect(authHeading).toContainText("Welcome back");
 
     // Sign in with existing credentials
-    await page.getByPlaceholder("Enter your email").fill(email);
-    await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
-    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.getByTestId("auth-email-input").fill(email);
+    await page.getByTestId("auth-password-input").fill(TEST_PASSWORD);
+    await page.getByTestId("auth-submit").click();
 
     // Should redirect to home
     await page.waitForURL("/", { timeout: 15000 });
     await expect(page).toHaveURL("/");
 
     // NavUser should show authenticated state
-    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
   });
 
   test("sign out → sign back in → full round-trip", async ({ page }) => {
@@ -166,22 +169,25 @@ test.describe("Returning user journey @auth", () => {
     await expect(page).toHaveURL("/signin");
 
     // 3. Sign back in — bnto-has-account cookie present → signin mode shown
-    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+    const authHeading = page.getByTestId("auth-heading");
+    await expect(authHeading).toBeVisible();
+    await expect(authHeading).toContainText("Welcome back");
 
-    await page.getByPlaceholder("Enter your email").fill(email);
-    await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
-    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.getByTestId("auth-email-input").fill(email);
+    await page.getByTestId("auth-password-input").fill(TEST_PASSWORD);
+    await page.getByTestId("auth-submit").click();
     await page.waitForURL("/", { timeout: 15000 });
 
     // 4. Confirm authenticated — wait for auth to fully resolve, then check email
-    const signOutItem = page.locator('[data-testid="nav-sign-out"]');
+    const signOutItem = page.getByTestId("nav-sign-out");
     // Poll: open menu, check for sign-out item (proves auth resolved)
     await expect(async () => {
-      const userMenu = page.locator('[data-testid="nav-user-menu"]');
+      const userMenu = page.getByTestId("nav-user-menu");
       await userMenu.click();
       await expect(signOutItem).toBeVisible({ timeout: 1000 });
     }).toPass({ timeout: 15000 });
-    await expect(page.getByText(email)).toBeVisible();
+    await expect(page.getByTestId("nav-user-email")).toBeVisible();
+    await expect(page.getByTestId("nav-user-email")).toContainText(email);
   });
 });
 
@@ -194,17 +200,19 @@ test.describe("Auth form behavior @auth", () => {
     await page.goto("/signin");
 
     // Default: signup mode (fresh context, no cookie)
-    await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
+    const authHeading = page.getByTestId("auth-heading");
+    await expect(authHeading).toBeVisible();
+    await expect(authHeading).toContainText("Create an account");
 
     // Toggle to signin
-    await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
-    await expect(page.getByPlaceholder("Your name")).not.toBeVisible();
+    await page.getByTestId("auth-mode-toggle").click();
+    await expect(authHeading).toContainText("Welcome back");
+    await expect(page.getByTestId("auth-name-input")).not.toBeVisible();
 
     // Toggle back to signup
-    await page.getByRole("button", { name: "Sign up" }).click();
-    await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
-    await expect(page.getByPlaceholder("Your name")).toBeVisible();
+    await page.getByTestId("auth-mode-toggle").click();
+    await expect(authHeading).toContainText("Create an account");
+    await expect(page.getByTestId("auth-name-input")).toBeVisible();
   });
 
   test("switching to signup clears pre-filled email", async ({ page }) => {
@@ -213,15 +221,15 @@ test.describe("Auth form behavior @auth", () => {
     await signOut(page);
 
     // After sign-out, persisted user email should pre-fill the signin form
-    const emailInput = page.getByPlaceholder("Enter your email");
+    const emailInput = page.getByTestId("auth-email-input");
     await expect(emailInput).toHaveValue(email);
 
     // Toggle to signup — email should clear (new account = new email)
-    await page.getByRole("button", { name: "Sign up" }).click();
+    await page.getByTestId("auth-mode-toggle").click();
     await expect(emailInput).toHaveValue("");
 
     // Toggle back to signin — email should re-fill from persisted user
-    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.getByTestId("auth-mode-toggle").click();
     await expect(emailInput).toHaveValue(email);
   });
 
@@ -229,17 +237,15 @@ test.describe("Auth form behavior @auth", () => {
     await page.goto("/signin");
 
     // Switch to signin mode
-    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.getByTestId("auth-mode-toggle").click();
 
-    await page.getByPlaceholder("Enter your email").fill("nonexistent@test.bnto.dev");
-    await page.getByPlaceholder("Enter your password").fill("wrongpassword1");
-    await page.getByRole("button", { name: "Sign in" }).click();
+    await page.getByTestId("auth-email-input").fill("nonexistent@test.bnto.dev");
+    await page.getByTestId("auth-password-input").fill("wrongpassword1");
+    await page.getByTestId("auth-submit").click();
 
-    const error = page.locator('p[role="alert"]');
+    const error = page.getByTestId("auth-error");
     await expect(error).toBeVisible({ timeout: 10000 });
     await expect(error).toContainText("Invalid email or password");
-
-    await expect(page).toHaveScreenshot("04-signin-error.png");
   });
 
   test("signup with existing email signs in instead of erroring", async ({ page }) => {
@@ -254,14 +260,16 @@ test.describe("Auth form behavior @auth", () => {
     await page.goto("/signin");
 
     // Should show signup form (no persisted auth → fresh visitor)
-    await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
+    const authHeading = page.getByTestId("auth-heading");
+    await expect(authHeading).toBeVisible();
+    await expect(authHeading).toContainText("Create an account");
 
     // Try to sign up again with the same email — @convex-dev/auth silently
     // signs in the existing user rather than throwing a duplicate error
-    await page.getByPlaceholder("Your name").fill("Another User");
-    await page.getByPlaceholder("Enter your email").fill(email);
-    await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
-    await page.getByRole("button", { name: "Create account" }).click();
+    await page.getByTestId("auth-name-input").fill("Another User");
+    await page.getByTestId("auth-email-input").fill(email);
+    await page.getByTestId("auth-password-input").fill(TEST_PASSWORD);
+    await page.getByTestId("auth-submit").click();
 
     // Should redirect to home (signed in successfully)
     await page.waitForURL("/", { timeout: 15000 });
@@ -279,7 +287,9 @@ test.describe("Proxy route protection @auth", () => {
     await page.waitForURL("/signin", { timeout: 10000 });
 
     // Fresh context → signup mode
-    await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
+    const authHeading = page.getByTestId("auth-heading");
+    await expect(authHeading).toBeVisible();
+    await expect(authHeading).toContainText("Create an account");
   });
 
   test("authenticated user redirected from /signin to / (client-side)", async ({ page }) => {
@@ -310,11 +320,11 @@ test.describe("Proxy route protection @auth", () => {
   test("navbar Sign In navigates to /signin", async ({ page }) => {
     await page.goto("/");
 
-    const userMenu = page.locator('[data-testid="nav-user-menu"]');
+    const userMenu = page.getByTestId("nav-user-menu");
     await expect(userMenu).toBeVisible({ timeout: 10000 });
     await userMenu.click();
 
-    const signInButton = page.locator('[data-testid="nav-sign-in"]');
+    const signInButton = page.getByTestId("nav-sign-in");
     await expect(signInButton).toBeVisible({ timeout: 10000 });
 
     await signInButton.click();

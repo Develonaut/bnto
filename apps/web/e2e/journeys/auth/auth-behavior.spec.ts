@@ -20,12 +20,14 @@ import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
 /** Sign up a new user and wait until we land on home. */
 async function signUp(page: import("@playwright/test").Page, email: string) {
   await page.goto("/signin");
-  await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
+  const authHeading = page.getByTestId("auth-heading");
+  await expect(authHeading).toBeVisible();
+  await expect(authHeading).toContainText("Create an account");
 
-  await page.getByPlaceholder("Your name").fill(TEST_NAME);
-  await page.getByPlaceholder("Enter your email").fill(email);
-  await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.getByTestId("auth-name-input").fill(TEST_NAME);
+  await page.getByTestId("auth-email-input").fill(email);
+  await page.getByTestId("auth-password-input").fill(TEST_PASSWORD);
+  await page.getByTestId("auth-submit").click();
   await page.waitForURL("/", { timeout: 15000 });
 }
 
@@ -53,20 +55,22 @@ async function signIn(page: import("@playwright/test").Page, email: string) {
   // Seed persisted auth store so form shows sign-in mode
   await seedAuthStore(page, { id: "seed", name: TEST_NAME, email });
   await page.goto("/signin");
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  const authHeading = page.getByTestId("auth-heading");
+  await expect(authHeading).toBeVisible();
+  await expect(authHeading).toContainText("Welcome back");
 
-  await page.getByPlaceholder("Enter your email").fill(email);
-  await page.getByPlaceholder("Enter your password").fill(TEST_PASSWORD);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByTestId("auth-email-input").fill(email);
+  await page.getByTestId("auth-password-input").fill(TEST_PASSWORD);
+  await page.getByTestId("auth-submit").click();
   await page.waitForURL("/", { timeout: 15000 });
 }
 
 /** Click sign out and wait for /signin. */
 async function signOut(page: import("@playwright/test").Page) {
-  const userMenu = page.locator('[data-testid="nav-user-menu"]');
+  const userMenu = page.getByTestId("nav-user-menu");
   await expect(userMenu).toBeVisible({ timeout: 10000 });
   await userMenu.click();
-  await page.locator('[data-testid="nav-sign-out"]').click();
+  await page.getByTestId("nav-sign-out").click();
   await page.waitForURL("/signin", { timeout: 10000 });
 }
 
@@ -186,7 +190,9 @@ test.describe("Session cookie lifecycle @auth", () => {
     expect(parsed.state.hasAccount).toBe(true);
 
     // Verify the form shows "Welcome back" (not "Create an account")
-    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+    const authHeading = page.getByTestId("auth-heading");
+    await expect(authHeading).toBeVisible();
+    await expect(authHeading).toContainText("Welcome back");
   });
 
   test("email pre-fills on signin page after sign-out", async ({ page }) => {
@@ -195,7 +201,7 @@ test.describe("Session cookie lifecycle @auth", () => {
     await signOut(page);
 
     // The persisted user's email should pre-fill the email input
-    const emailInput = page.getByPlaceholder("Enter your email");
+    const emailInput = page.getByTestId("auth-email-input");
     await expect(emailInput).toHaveValue(email);
   });
 
@@ -203,7 +209,9 @@ test.describe("Session cookie lifecycle @auth", () => {
     // Fresh context — no localStorage at all
     await page.goto("/signin");
 
-    await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
+    const authHeading = page.getByTestId("auth-heading");
+    await expect(authHeading).toBeVisible();
+    await expect(authHeading).toContainText("Create an account");
 
     // Verify no auth store exists
     const storeData = await page.evaluate(() => localStorage.getItem("bnto-auth"));
@@ -227,14 +235,15 @@ test.describe("Session persistence @auth", () => {
       await page.goto(route);
 
       // User menu should remain visible (authenticated state)
-      const userMenu = page.locator('[data-testid="nav-user-menu"]');
+      const userMenu = page.getByTestId("nav-user-menu");
       await expect(userMenu).toBeVisible({ timeout: 10000 });
     }
 
     // Open menu on last page — email should still be visible
-    const userMenu = page.locator('[data-testid="nav-user-menu"]');
+    const userMenu = page.getByTestId("nav-user-menu");
     await userMenu.click();
-    await expect(page.getByText(email)).toBeVisible();
+    await expect(page.getByTestId("nav-user-email")).toBeVisible();
+    await expect(page.getByTestId("nav-user-email")).toContainText(email);
   });
 
   test("auth state is consistent after back/forward navigation", async ({ page }) => {
@@ -243,19 +252,19 @@ test.describe("Session persistence @auth", () => {
 
     // Navigate to a recipe page
     await page.goto("/compress-images");
-    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
 
     // Navigate to another page
     await page.goto("/clean-csv");
-    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
 
     // Go back
     await page.goBack();
-    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
 
     // Go forward
     await page.goForward();
-    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -269,7 +278,7 @@ test.describe("Mid-session auth loss @auth", () => {
     await signUp(page, email);
 
     // Confirm authenticated state
-    const userMenu = page.locator('[data-testid="nav-user-menu"]');
+    const userMenu = page.getByTestId("nav-user-menu");
     await expect(userMenu).toBeVisible({ timeout: 10000 });
 
     // Simulate token expiry by clearing the JWT cookie
@@ -290,7 +299,7 @@ test.describe("Mid-session auth loss @auth", () => {
 
     // Navigate to a public page
     await page.goto("/compress-images");
-    await expect(page.locator('[data-testid="nav-user-menu"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
 
     // Simulate token expiry by clearing JWT cookie
     await page.context().clearCookies({ name: "__convexAuthJWT" });
@@ -315,7 +324,7 @@ test.describe("Mid-session auth loss @auth", () => {
     } else {
       // Still on public page — verify nav shows unauthenticated state.
       // The user menu should no longer be visible (replaced by sign-in link).
-      await expect(page.locator('[data-testid="nav-user-menu"]')).not.toBeVisible({
+      await expect(page.getByTestId("nav-user-menu")).not.toBeVisible({
         timeout: 10000,
       });
     }
@@ -364,12 +373,13 @@ test.describe("Auth round-trip verification @auth", () => {
     expect(jwt).toBeDefined();
 
     // 8. Verify authenticated state in UI — wait for auth to fully resolve
-    const signOutItem = page.locator('[data-testid="nav-sign-out"]');
+    const signOutItem = page.getByTestId("nav-sign-out");
     await expect(async () => {
-      const userMenu = page.locator('[data-testid="nav-user-menu"]');
+      const userMenu = page.getByTestId("nav-user-menu");
       await userMenu.click();
       await expect(signOutItem).toBeVisible({ timeout: 1000 });
     }).toPass({ timeout: 15000 });
-    await expect(page.getByText(email)).toBeVisible();
+    await expect(page.getByTestId("nav-user-email")).toBeVisible();
+    await expect(page.getByTestId("nav-user-email")).toContainText(email);
   });
 });

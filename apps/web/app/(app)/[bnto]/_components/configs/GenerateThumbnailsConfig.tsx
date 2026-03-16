@@ -22,10 +22,7 @@ interface GenerateThumbnailsConfigProps {
   onChange: (config: Config) => void;
 }
 
-export function GenerateThumbnailsConfig({
-  value,
-  onChange,
-}: GenerateThumbnailsConfigProps) {
+export function GenerateThumbnailsConfig({ value, onChange }: GenerateThumbnailsConfigProps) {
   return (
     <div className="flex w-full items-end gap-4">
       <div className="flex shrink-0 flex-col gap-1">
@@ -55,12 +52,20 @@ export function GenerateThumbnailsConfig({
           value={value.format}
           onValueChange={(format) => onChange({ ...value, format: format as Config["format"] })}
         >
-          <SelectTrigger className="w-24" aria-labelledby="thumb-format-label">
+          <SelectTrigger
+            className="w-24"
+            aria-labelledby="thumb-format-label"
+            data-testid="format-select"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {FORMAT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
+              <SelectItem
+                key={opt.value}
+                value={opt.value}
+                data-testid={`format-option-${opt.value}`}
+              >
                 {opt.label}
               </SelectItem>
             ))}

@@ -4,7 +4,6 @@ import {
   addNodeFromPalette,
   selectNode,
   ensureConfigPanelOpen,
-  setSelectParam,
 } from "../helpers/editor";
 
 /**
@@ -31,9 +30,9 @@ test.describe("config panel controls @browser", () => {
     await ensureConfigPanelOpen(page);
 
     // Compression = slider (bounded number 1-100, visible when operation=compress)
-    const compressionField = page.locator('[data-testid="schema-field-compression"]');
+    const compressionField = page.getByTestId("schema-field-compression");
     await compressionField.waitFor({ timeout: 5000 });
-    await expect(compressionField.locator('[data-testid^="control-slider"]')).toBeVisible();
+    await expect(compressionField.getByTestId("control-slider*")).toBeVisible();
   });
 
   test("image node: visibleWhen shows width/height for resize", async ({ page }) => {
@@ -42,25 +41,21 @@ test.describe("config panel controls @browser", () => {
     await ensureConfigPanelOpen(page);
 
     // Width should be visible (operation=resize is pre-set from palette)
-    const widthField = page.locator('[data-testid="schema-field-width"]');
+    const widthField = page.getByTestId("schema-field-width");
     await widthField.waitFor({ timeout: 5000 });
     await expect(widthField).toBeVisible();
 
     // Width = number input (unbounded), not slider
-    await expect(widthField.locator('[data-testid^="control-number"]')).toBeVisible();
+    await expect(widthField.getByTestId("control-number*")).toBeVisible();
 
     // Height = number input
     await expect(
-      page
-        .locator('[data-testid="schema-field-height"]')
-        .locator('[data-testid^="control-number"]'),
+      page.getByTestId("schema-field-height").getByTestId("control-number*"),
     ).toBeVisible();
 
     // maintainAspect = switch (boolean)
     await expect(
-      page
-        .locator('[data-testid="schema-field-maintainAspect"]')
-        .locator('[data-testid^="control-switch"]'),
+      page.getByTestId("schema-field-maintainAspect").getByTestId("control-switch*"),
     ).toBeVisible();
   });
 
@@ -70,22 +65,18 @@ test.describe("config panel controls @browser", () => {
     await ensureConfigPanelOpen(page);
 
     // trimWhitespace = switch (boolean, default true)
-    const trimField = page.locator('[data-testid="schema-field-trimWhitespace"]');
+    const trimField = page.getByTestId("schema-field-trimWhitespace");
     await trimField.waitFor({ timeout: 5000 });
-    await expect(trimField.locator('[data-testid^="control-switch"]')).toBeVisible();
+    await expect(trimField.getByTestId("control-switch*")).toBeVisible();
 
     // removeEmptyRows = switch (boolean, default true)
     await expect(
-      page
-        .locator('[data-testid="schema-field-removeEmptyRows"]')
-        .locator('[data-testid^="control-switch"]'),
+      page.getByTestId("schema-field-removeEmptyRows").getByTestId("control-switch*"),
     ).toBeVisible();
 
     // removeDuplicates = switch (boolean, default true)
     await expect(
-      page
-        .locator('[data-testid="schema-field-removeDuplicates"]')
-        .locator('[data-testid^="control-switch"]'),
+      page.getByTestId("schema-field-removeDuplicates").getByTestId("control-switch*"),
     ).toBeVisible();
   });
 
@@ -95,9 +86,9 @@ test.describe("config panel controls @browser", () => {
     await ensureConfigPanelOpen(page);
 
     // columns = keyValue (z.record(z.string()), visible when operation=rename)
-    const columnsField = page.locator('[data-testid="schema-field-columns"]');
+    const columnsField = page.getByTestId("schema-field-columns");
     await columnsField.waitFor({ timeout: 5000 });
-    await expect(columnsField.locator('[data-testid^="control-keyvalue"]')).toBeVisible();
+    await expect(columnsField.getByTestId("control-keyvalue*")).toBeVisible();
   });
 
   test("transform node: text for expression, keyValue for mappings", async ({ page }) => {
@@ -106,15 +97,13 @@ test.describe("config panel controls @browser", () => {
     await ensureConfigPanelOpen(page);
 
     // expression = text (z.string())
-    const expressionField = page.locator('[data-testid="schema-field-expression"]');
+    const expressionField = page.getByTestId("schema-field-expression");
     await expressionField.waitFor({ timeout: 5000 });
-    await expect(expressionField.locator('[data-testid^="control-text"]')).toBeVisible();
+    await expect(expressionField.getByTestId("control-text*")).toBeVisible();
 
     // mappings = keyValue (z.record(z.string()))
     await expect(
-      page
-        .locator('[data-testid="schema-field-mappings"]')
-        .locator('[data-testid^="control-keyvalue"]'),
+      page.getByTestId("schema-field-mappings").getByTestId("control-keyvalue*"),
     ).toBeVisible();
   });
 
@@ -124,8 +113,8 @@ test.describe("config panel controls @browser", () => {
     await ensureConfigPanelOpen(page);
 
     // extensions = tagPicker (z.array(z.string()), visible when mode=file-upload)
-    const extensionsField = page.locator('[data-testid="schema-field-extensions"]');
+    const extensionsField = page.getByTestId("schema-field-extensions");
     await extensionsField.waitFor({ timeout: 5000 });
-    await expect(extensionsField.locator('[data-testid^="control-tagpicker"]')).toBeVisible();
+    await expect(extensionsField.getByTestId("control-tagpicker*")).toBeVisible();
   });
 });

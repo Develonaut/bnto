@@ -14,16 +14,16 @@ test.describe("compress-images — error handling @browser", () => {
 
     // Set a file with image/jpeg MIME (bypasses accept filter) but
     // non-image content. WASM will fail to decode this.
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.getByTestId("file-input");
     await fileInput.setInputFiles({
       name: "document.jpg",
       mimeType: "image/jpeg",
       buffer: Buffer.from("This is plain text, not a JPEG image."),
     });
 
-    await expect(page.getByText("1 file selected")).toBeVisible();
+    await expect(page.getByTestId("file-count")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]:visible');
+    const runButton = page.getByTestId("run-button", ":visible");
     await runButton.click();
 
     // Should transition to failed phase
@@ -32,15 +32,15 @@ test.describe("compress-images — error handling @browser", () => {
     });
 
     // Error card should be visible
-    const errorCard = page.locator('[data-testid="client-error"]');
+    const errorCard = page.getByTestId("client-error");
     await expect(errorCard).toBeVisible();
     await expect(errorCard).toContainText("Something went wrong");
 
     // Page should still be functional — back button resets to configure phase
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
-    const backButton = page.locator('[data-testid="back-button"]');
+    const backButton = page.getByTestId("back-button");
     await backButton.click();
-    await expect(page.getByText("1 file selected")).toBeVisible();
+    await expect(page.getByTestId("file-count")).toBeVisible();
     await expect(runButton).toHaveAttribute("data-phase", "idle");
   });
 
@@ -48,7 +48,7 @@ test.describe("compress-images — error handling @browser", () => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
     // File with JPEG extension but garbage bytes.
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.getByTestId("file-input");
     await fileInput.setInputFiles({
       name: "corrupted-photo.jpg",
       mimeType: "image/jpeg",
@@ -58,24 +58,24 @@ test.describe("compress-images — error handling @browser", () => {
       ]),
     });
 
-    await expect(page.getByText("1 file selected")).toBeVisible();
+    await expect(page.getByTestId("file-count")).toBeVisible();
 
-    const runButton = page.locator('[data-testid="run-button"]:visible');
+    const runButton = page.getByTestId("run-button", ":visible");
     await runButton.click();
 
     await expect(runButton).toHaveAttribute("data-phase", "failed", {
       timeout: 30000,
     });
 
-    const errorCard = page.locator('[data-testid="client-error"]');
+    const errorCard = page.getByTestId("client-error");
     await expect(errorCard).toBeVisible();
     await expect(errorCard).toContainText("Something went wrong");
 
     // Back button resets to configure phase, ready to try different files
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
-    const backButton = page.locator('[data-testid="back-button"]');
+    const backButton = page.getByTestId("back-button");
     await backButton.click();
-    await expect(page.getByText("1 file selected")).toBeVisible();
+    await expect(page.getByTestId("file-count")).toBeVisible();
     await expect(runButton).toHaveAttribute("data-phase", "idle");
   });
 });

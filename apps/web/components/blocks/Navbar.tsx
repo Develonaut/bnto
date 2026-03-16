@@ -10,7 +10,7 @@ import { NavUser } from "./NavUser";
 
 export const Navbar = () => {
   return (
-    <section>
+    <section data-testid="navbar">
       <div className="fixed top-0 z-sticky flex w-full justify-center pt-4">
         <Container size="lg">
           <Toolbar>
@@ -19,6 +19,7 @@ export const Navbar = () => {
               <NavButton
                 href="/"
                 elevation="sm"
+                data-testid="nav-link-home"
                 className="text-xl font-display font-black tracking-tighter"
               >
                 bnto
