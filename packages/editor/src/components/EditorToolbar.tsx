@@ -21,6 +21,7 @@ import {
   FileUpIcon,
   MenuSeparator,
   CircleHelpIcon,
+  PenLineIcon,
   Text,
 } from "@bnto/ui";
 import { useEditor } from "../context";
@@ -30,6 +31,7 @@ import { RunButton } from "./RunButton";
 import { OpenRecipeDialog } from "./OpenRecipeDialog";
 import { NodePaletteDialog } from "./NodePaletteDialog";
 import { HelpDialog } from "./HelpDialog";
+import { RecipeDialog } from "./RecipeDialog";
 import { ShortcutHint } from "./ShortcutHint";
 
 /**
@@ -47,7 +49,8 @@ function EditorToolbar() {
   const { toggle: toggleRunPanel } = editor.panels.usePanels("run");
   const { isOpen: helpOpen, open: openHelp, close: closeHelp } = editor.panels.usePanels("help");
   const { canUndo, canRedo } = editor.history.useHistory();
-  const { isDirty, validationErrors, lastSavedAt } = editor.definition.useDefinition();
+  const { isDirty, validationErrors, lastSavedAt, recipeMetadata } =
+    editor.definition.useDefinition();
   const { phase } = editor.execution.useExecution();
   const { nodes } = editor.nodes.useNodes();
 
@@ -56,6 +59,7 @@ function EditorToolbar() {
   const canExport = validationErrors.length === 0;
 
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const lastSavedLabel = formatLastSaved(lastSavedAt);
 
   const handleReset = useCallback(() => {
@@ -94,6 +98,18 @@ function EditorToolbar() {
                 aria-label="File menu"
               />
               <MenuContent side="top" className="w-52 p-1">
+                <div className="px-3 py-2">
+                  <Text weight="medium" size="sm" className="truncate">
+                    {recipeMetadata.name}
+                  </Text>
+                  <Text size="xs" className="text-muted-foreground">
+                    {lastSavedLabel}
+                  </Text>
+                </div>
+                <MenuSeparator />
+                <MenuItem onClick={() => setSettingsOpen(true)}>
+                  <PenLineIcon /> Rename
+                </MenuItem>
                 <MenuItem onClick={handleNew}>
                   <PlusIcon /> New
                 </MenuItem>
@@ -104,10 +120,6 @@ function EditorToolbar() {
                 <MenuItem onClick={download} disabled={!canDownload}>
                   <DownloadIcon /> Export <ShortcutHint shortcutId="export" />
                 </MenuItem>
-                <MenuSeparator />
-                <Text size="xs" className="px-2 py-1.5 text-center text-muted-foreground">
-                  {lastSavedLabel}
-                </Text>
               </MenuContent>
             </Menu>
           </ToolbarGroup>
@@ -183,6 +195,7 @@ function EditorToolbar() {
           </ToolbarGroup>
         </Toolbar>
       </div>
+      <RecipeDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       <OpenRecipeDialog open={openDialogOpen} onOpenChange={setOpenDialogOpen} />
       <NodePaletteDialog
         open={paletteOpen}

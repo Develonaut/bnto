@@ -117,6 +117,7 @@ export type { SchemaFieldProps } from "./components/SchemaField";
 // --- Dialogs ---
 
 export { OpenRecipeDialog } from "./components/OpenRecipeDialog";
+export { RecipeDialog } from "./components/RecipeDialog";
 export { NodePaletteDialog } from "./components/NodePaletteDialog";
 export { HelpDialog } from "./components/HelpDialog";
 
