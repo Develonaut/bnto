@@ -73,7 +73,7 @@ test.describe("compress-images — batch processing @browser", () => {
     const outputFiles = page.locator('[data-testid="output-file"]');
     await expect(outputFiles).toHaveCount(5);
 
-    await expect(page.locator('[data-testid="toolbar-download-all"]:visible')).toBeVisible();
+    await expect(page.locator('[data-testid="download-all-button"]:visible')).toBeVisible();
   });
 
   test("multi-file progress is monotonic (never decreases)", async ({ page }) => {

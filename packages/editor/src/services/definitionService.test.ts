@@ -59,7 +59,13 @@ describe("createDefinitionService", () => {
   });
 
   it("setRecipeMetadata updates metadata", () => {
-    service.setRecipeMetadata({ id: "custom", name: "Custom", type: "group", version: "2.0" });
+    service.setRecipeMetadata({
+      id: "custom",
+      name: "Custom",
+      type: "group",
+      version: "2.0",
+      cloudId: null,
+    });
     expect(storeApi.getState().recipeMetadata.name).toBe("Custom");
   });
 

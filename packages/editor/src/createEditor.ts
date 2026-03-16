@@ -26,8 +26,8 @@ import { createExecutionClient } from "./clients/executionClient";
 import { createHistoryClient } from "./clients/historyClient";
 import { createPanelClient } from "./clients/panelClient";
 
-function createEditor(definition?: Definition): EditorInstance {
-  const storeApi = createEditorStore(definition);
+function createEditor(definition?: Definition, cloudId?: string): EditorInstance {
+  const storeApi = createEditorStore(definition, cloudId);
 
   // --- Services: thin wrappers around pure actions + store ---
   const nodeService = createNodeService(storeApi);

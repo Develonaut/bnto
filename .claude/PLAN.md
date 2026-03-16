@@ -267,6 +267,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 - [x] Cross-cutting — **CSS-first interaction audit**: Identify JS `useState`/ternary className patterns for visual states that CSS pseudo-classes or `data-*` attributes could handle. Fix violations in `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 - [x] Cross-cutting — **Test naming unification**: Audit all test suites for naming consistency — clear action-oriented descriptions, consistent prefixing, logical grouping. Remove duplicate or vague test names.
 - [ ] `apps/web` — **Standardize E2E selectors on data-testid**: Audit E2E specs and replace fragile `getByRole`/`getByText` selectors with `data-testid` attributes for state detection and element targeting. Keep semantic selectors only for accessibility assertions. Priority: menu items, toolbar buttons, panel controls. **Partial (PR #203):** Migrated download buttons, back buttons, toolbar-download-all, explore dropdown, recipe-select, per-node-controls across 20 specs. ~40 `getByRole("button")` calls remain — auth forms, editor toolbar (file menu, undo, run panel, properties, add node), error boundary, site nav (explore, mobile menu), dev node controls (pending/active/completed). Consider adding a `testid()` helper to reduce locator boilerplate.
+- [ ] `apps/web` + `packages/editor` — **Local recipe persistence for unauthenticated users**: Non-authed users auto-save to localStorage but have no way to browse saved recipes outside the editor (My Recipes is auth-gated). Open `/my-recipes` to unauthenticated users with localStorage-backed recipe list. Add upsell messaging: "Your recipes are saved locally on this device. Sign in to sync across devices and never lose your work." This gives unauthenticated users a reason to explore saving, and gives us a natural conversion hook. Scope: (1) remove `/my-recipes` from `PROTECTED_PATHS`, (2) build a localStorage recipe list adapter (list/load/delete), (3) show local recipes in RecipeGrid when unauthed, Convex recipes when authed, (4) add upsell banner/card, (5) update proxy tests.
 
 #### Wave 6 (parallel — Button simplification + polish)
 
@@ -1039,6 +1040,22 @@ Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `pac
 ### ~~Triage: Simplify Button behavioral props — CSS-first with data attributes~~ — Promoted to Sprint 6 W6
 
 Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
+
+### Triage: Simplify editor URL slug patterns — unify `?from` and `?recipe` params
+
+**Priority: Triage.** Currently the editor opens with either `?from=[recipe_name]` (predefined) or `?recipe=[recipeId]` (user-saved). Opening from a predefined recipe is effectively creating a new recipe — consider standardizing to a single `?recipe=[id]` param for all cases. Affects `apps/web/app/editor/` page + `EditorShell.tsx` hydration logic.
+
+### Triage: Audit and remove useEditorStoreApi — migrate to client/service API
+
+**Priority: Triage.** Audit all uses of `useEditorStoreApi`, `storeApi.setState`, `storeApi.getState`, and `storeApi.subscribe` in `packages/editor/src/hooks/` and `packages/editor/src/components/`. Migrate each to use the proper `editor.definition.*`, `editor.nodes.*`, etc. client/service methods. Once all consumers are ported, remove the `useEditorStoreApi` export from `context.ts`.
+
+### Triage: Adopt DialogBody in all existing editor dialogs
+
+**Priority: Triage.** OpenRecipeDialog, HelpDialog, and any other dialogs that compose `DialogHeader`/`DialogFooter` without `DialogBody` should be updated to use the standard `DialogHeader`/`DialogBody`/`DialogFooter` composition for consistent spacing. `RecipeDialog` already follows the pattern — backport to the rest.
+
+### Triage: Adopt a form state management library
+
+**Priority: Triage.** Evaluate and adopt a hook-based or agnostic form library to replace scattered `useState` patterns for form state. Must be actively maintained, performant, and composable via hooks. Formik is the spiritual predecessor but unmaintained — candidates include React Hook Form, TanStack Form, or similar. Goal: standardized form state management with validation, error handling, and field composition that fits the project's hook-first architecture.
 
 ---
 

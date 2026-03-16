@@ -63,8 +63,9 @@ function rfNodesToDefinition(
     };
   });
 
+  const { cloudId: _, ...rootMeta } = metadata;
   return {
-    ...metadata,
+    ...rootMeta,
     position: { x: 0, y: 0 },
     metadata: definition?.metadata ?? {},
     parameters: definition?.parameters ?? {},

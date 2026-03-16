@@ -52,6 +52,6 @@ test.describe("rename-files — browser execution @browser", () => {
     await runAndComplete(page);
 
     await expect(page.locator('[data-testid="output-file"]')).toHaveCount(3);
-    await expect(page.locator('[data-testid="toolbar-download-all"]:visible')).toBeVisible();
+    await expect(page.locator('[data-testid="download-all-button"]:visible')).toBeVisible();
   });
 });

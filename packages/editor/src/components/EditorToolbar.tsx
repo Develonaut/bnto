@@ -17,20 +17,21 @@ import {
   SlidersHorizontalIcon,
   TerminalIcon,
   PlusIcon,
-  SaveIcon,
   DownloadIcon,
   FileUpIcon,
   MenuSeparator,
   CircleHelpIcon,
+  PenLineIcon,
+  Text,
 } from "@bnto/ui";
-import { core } from "@bnto/core";
 import { useEditor } from "../context";
 import { downloadDefinition } from "../actions/downloadDefinition";
+import { formatLastSaved } from "../draft/formatLastSaved";
 import { RunButton } from "./RunButton";
 import { OpenRecipeDialog } from "./OpenRecipeDialog";
-import { SaveRecipeDialog } from "./SaveRecipeDialog";
 import { NodePaletteDialog } from "./NodePaletteDialog";
 import { HelpDialog } from "./HelpDialog";
+import { RecipeDialog } from "./RecipeDialog";
 import { ShortcutHint } from "./ShortcutHint";
 
 /**
@@ -48,19 +49,23 @@ function EditorToolbar() {
   const { toggle: toggleRunPanel } = editor.panels.usePanels("run");
   const { isOpen: helpOpen, open: openHelp, close: closeHelp } = editor.panels.usePanels("help");
   const { canUndo, canRedo } = editor.history.useHistory();
-  const { isDirty, validationErrors } = editor.definition.useDefinition();
+  const { isDirty, validationErrors, lastSavedAt, recipeMetadata, syncedAt, isSyncing } =
+    editor.definition.useDefinition();
   const { phase } = editor.execution.useExecution();
   const { nodes } = editor.nodes.useNodes();
-  const { isAuthenticated } = core.auth.useAuth();
-  const saveMutation = core.recipes.useSaveRecipe();
 
   const hasRun = phase !== "idle";
   const hasNodes = nodes.length > 0;
   const canExport = validationErrors.length === 0;
-  const canSave = canExport && hasNodes && isAuthenticated;
 
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
-  const { isOpen: saveDialogOpen, close: closeSaveDialog } = editor.panels.usePanels("save");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const lastSavedLabel = formatLastSaved({
+    lastSavedAt,
+    isSyncing,
+    cloudId: recipeMetadata.cloudId,
+    syncedAt,
+  });
 
   const handleReset = useCallback(() => {
     const { definition } = editor.getState();
@@ -78,13 +83,6 @@ function EditorToolbar() {
   const download = useCallback(() => {
     downloadDefinition(editor.definition);
   }, [editor]);
-
-  const handleSave = useCallback(
-    async (args: { name: string; definition: unknown }) => {
-      await saveMutation.mutateAsync(args);
-    },
-    [saveMutation],
-  );
 
   const canDownload = canExport && hasNodes;
 
@@ -105,6 +103,18 @@ function EditorToolbar() {
                 aria-label="File menu"
               />
               <MenuContent side="top" className="w-52 p-1">
+                <div className="px-3 py-2">
+                  <Text weight="medium" size="sm" className="truncate">
+                    {recipeMetadata.name}
+                  </Text>
+                  <Text size="xs" className="text-muted-foreground">
+                    {lastSavedLabel}
+                  </Text>
+                </div>
+                <MenuSeparator />
+                <MenuItem onClick={() => setSettingsOpen(true)}>
+                  <PenLineIcon /> Rename
+                </MenuItem>
                 <MenuItem onClick={handleNew}>
                   <PlusIcon /> New
                 </MenuItem>
@@ -112,9 +122,6 @@ function EditorToolbar() {
                   <FileUpIcon /> Open
                 </MenuItem>
                 <MenuSeparator />
-                <MenuItem onClick={() => editor.panels.openPanel("save")} disabled={!canSave}>
-                  <SaveIcon /> Save <ShortcutHint shortcutId="save" />
-                </MenuItem>
                 <MenuItem onClick={download} disabled={!canDownload}>
                   <DownloadIcon /> Export <ShortcutHint shortcutId="export" />
                 </MenuItem>
@@ -193,15 +200,8 @@ function EditorToolbar() {
           </ToolbarGroup>
         </Toolbar>
       </div>
+      <RecipeDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       <OpenRecipeDialog open={openDialogOpen} onOpenChange={setOpenDialogOpen} />
-      <SaveRecipeDialog
-        open={saveDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) closeSaveDialog();
-        }}
-        onSave={handleSave}
-        isSaving={saveMutation.isPending}
-      />
       <NodePaletteDialog
         open={paletteOpen}
         onOpenChange={(open) => {

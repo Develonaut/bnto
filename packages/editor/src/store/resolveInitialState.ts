@@ -21,16 +21,20 @@ import type { RecipeMetadata } from "./types";
 
 function metadataFromBlank(): RecipeMetadata {
   const def = createBlankDefinition();
-  return { id: def.id, name: def.name, type: def.type, version: def.version };
+  return { id: def.id, name: def.name, type: def.type, version: def.version, cloudId: null };
 }
 
-function metadataFromDefinition(def: {
-  id: string;
-  name: string;
-  type: string;
-  version: string;
-}): RecipeMetadata {
-  return { id: def.id, name: def.name, type: def.type, version: def.version };
+function metadataFromDefinition(
+  def: { id: string; name: string; type: string; version: string },
+  cloudId?: string,
+): RecipeMetadata {
+  return {
+    id: def.id,
+    name: def.name,
+    type: def.type,
+    version: def.version,
+    cloudId: cloudId ?? null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -49,12 +53,12 @@ function findPrimaryNodeId(configs: NodeConfigs): string | null {
 // Resolve initial state from definition or blank
 // ---------------------------------------------------------------------------
 
-function resolveInitialState(definition?: Definition) {
+function resolveInitialState(definition?: Definition, cloudId?: string) {
   if (definition) {
     const { nodes, configs } = definitionToGraph(definition);
     return {
       definition,
-      metadata: metadataFromDefinition(definition),
+      metadata: metadataFromDefinition(definition, cloudId),
       nodes,
       configs,
       selectedNodeId: findPrimaryNodeId(configs),

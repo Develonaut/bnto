@@ -18,11 +18,16 @@ import { EditorProvider } from "../../EditorProvider";
 
 interface EditorCanvasRootProps {
   definition?: Definition;
+  cloudId?: string;
   children: ReactNode;
 }
 
-function EditorCanvasRoot({ definition, children }: EditorCanvasRootProps) {
-  return <EditorProvider definition={definition}>{children}</EditorProvider>;
+function EditorCanvasRoot({ definition, cloudId, children }: EditorCanvasRootProps) {
+  return (
+    <EditorProvider definition={definition} cloudId={cloudId}>
+      {children}
+    </EditorProvider>
+  );
 }
 
 export { EditorCanvasRoot };

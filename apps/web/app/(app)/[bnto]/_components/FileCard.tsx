@@ -108,6 +108,7 @@ function CompletedFileCard({
           elevation="sm"
           onClick={() => onDownload(result)}
           aria-label={`Download ${result.filename}`}
+          data-testid="download-button"
         >
           <DownloadIcon className="size-4" />
         </Button>

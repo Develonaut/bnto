@@ -18,8 +18,19 @@ function createUseDefinition(storeApi: StoreApi<EditorStore>) {
     const recipeMetadata = useStore(storeApi, (s) => s.recipeMetadata);
     const isDirty = useStore(storeApi, (s) => s.isDirty);
     const validationErrors = useStore(storeApi, (s) => s.validationErrors);
+    const lastSavedAt = useStore(storeApi, (s) => s.lastSavedAt);
+    const syncedAt = useStore(storeApi, (s) => s.syncedAt);
+    const isSyncing = useStore(storeApi, (s) => s.isSyncing);
 
-    return { definition, recipeMetadata, isDirty, validationErrors };
+    return {
+      definition,
+      recipeMetadata,
+      isDirty,
+      validationErrors,
+      lastSavedAt,
+      syncedAt,
+      isSyncing,
+    };
   };
 }
 

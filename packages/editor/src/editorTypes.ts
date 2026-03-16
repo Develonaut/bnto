@@ -6,9 +6,22 @@
  */
 
 import type { StoreApi } from "zustand";
-import type { NodeTypeName, Definition, RecipeMetadata as NodeRecipeMetadata, Recipe, ValidationError } from "@bnto/nodes";
+import type {
+  NodeTypeName,
+  Definition,
+  RecipeMetadata as NodeRecipeMetadata,
+  Recipe,
+  ValidationError,
+} from "@bnto/nodes";
 import type { BrowserFileResult } from "@bnto/core";
-import type { EditorStore, EditorState, ExecutionState, NodeExecutionStatus, PanelId, RecipeMetadata } from "./store/types";
+import type {
+  EditorStore,
+  EditorState,
+  ExecutionState,
+  NodeExecutionStatus,
+  PanelId,
+  RecipeMetadata,
+} from "./store/types";
 import type { BentoNode, NodeConfig, NodeConfigs } from "./adapters/types";
 import type { NodeChange, EdgeChange } from "@xyflow/react";
 
@@ -17,7 +30,12 @@ import type { NodeChange, EdgeChange } from "@xyflow/react";
 // ---------------------------------------------------------------------------
 
 interface NodeService {
-  addNode(type: NodeTypeName, afterNodeId?: string | null, intoContainerId?: string | null, defaultParams?: Record<string, unknown>): string | null;
+  addNode(
+    type: NodeTypeName,
+    afterNodeId?: string | null,
+    intoContainerId?: string | null,
+    defaultParams?: Record<string, unknown>,
+  ): string | null;
   removeNode(id: string): boolean;
   selectNode(id: string | null): void;
   setSelectedNodeId(id: string | null): void;
@@ -41,6 +59,9 @@ interface DefinitionService {
   setRecipeMetadata(metadata: RecipeMetadata): void;
   markDirty(): void;
   resetDirty(): void;
+  setLastSavedAt(ts: number | null): void;
+  setSyncedAt(ts: number | null): void;
+  setIsSyncing(syncing: boolean): void;
   revalidate(): void;
   exportAsDefinition(): Definition;
 }

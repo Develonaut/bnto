@@ -22,11 +22,17 @@ export function getRecipeQuery(id: string) {
 // ---------------------------------------------------------------------------
 
 export function saveRecipe(args: {
+  id?: string;
   name: string;
   definition: unknown;
   isPublic?: boolean;
 }) {
-  return getConvexClient().mutation(api.recipes.save, args);
+  return getConvexClient().mutation(api.recipes.save, {
+    ...(args.id ? { id: args.id as Id<"recipes"> } : {}),
+    name: args.name,
+    definition: args.definition,
+    isPublic: args.isPublic,
+  });
 }
 
 export function removeRecipe(id: string) {

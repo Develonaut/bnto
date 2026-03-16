@@ -10,17 +10,14 @@ import type { StartExecutionInput } from "../types";
  * Composes recipe and execution services for cross-domain orchestration.
  * Running a recipe creates an execution (cross-domain side effect).
  */
-export function createRecipeClient(
-  recipes: RecipeService,
-  executions: ExecutionService,
-) {
+export function createRecipeClient(recipes: RecipeService, executions: ExecutionService) {
   return {
     // ── Query Options ─────────────────────────────────────────────
     listQueryOptions: () => recipes.listQueryOptions(),
     getQueryOptions: (id: string) => recipes.getQueryOptions(id),
 
     // ── Mutations ─────────────────────────────────────────────────
-    save: (args: { name: string; definition: unknown; isPublic?: boolean }) =>
+    save: (args: { id?: string; name: string; definition: unknown; isPublic?: boolean }) =>
       recipes.save(args),
 
     remove: (id: string) => recipes.remove(id),

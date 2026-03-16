@@ -24,6 +24,7 @@ function ResultRow({ result }: { result: BrowserFileResult }) {
           icon={<DownloadIcon />}
           onClick={() => editor.execution.downloadResult(result)}
           aria-label={`Download ${result.filename}`}
+          data-testid="download-button"
         />
       }
     />

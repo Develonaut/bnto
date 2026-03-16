@@ -64,7 +64,7 @@ export function RecipeToolbar({
               disabled={resolvedPhase !== "completed"}
               onClick={onDownloadAll}
               aria-label="Download all"
-              data-testid="toolbar-download-all"
+              data-testid="download-all-button"
             >
               <DownloadIcon className="size-4" />
             </Button>
@@ -97,7 +97,7 @@ export function RecipeToolbar({
             disabled={resolvedPhase !== "completed"}
             onClick={onDownloadAll}
             aria-label="Download all"
-            data-testid="toolbar-download-all"
+            data-testid="download-all-button"
           >
             <DownloadIcon className="size-4" />
           </Button>
