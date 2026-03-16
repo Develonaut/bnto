@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import {
   Button,
   Dialog,
@@ -13,13 +12,13 @@ import {
   Input,
   Label,
 } from "@bnto/ui";
-import { useEditor } from "../../context";
+import { useRecipeDialogForm } from "./useRecipeDialogForm";
 
 /**
  * RecipeDialog — view and edit recipe metadata (name, and future fields).
  *
- * Pre-populates with the current recipeMetadata. On save, updates
- * metadata via the definition service and closes.
+ * All form state lives in useRecipeDialogForm. This component is a
+ * render shell — it composes the dialog layout and spreads form props.
  */
 
 interface RecipeDialogProps {
@@ -28,23 +27,10 @@ interface RecipeDialogProps {
 }
 
 function RecipeDialogRoot({ open, onOpenChange }: RecipeDialogProps) {
-  const editor = useEditor();
-  const { recipeMetadata } = editor.definition.useDefinition();
-  const [name, setName] = useState(recipeMetadata.name);
-
-  // Sync local state when dialog opens
-  useEffect(() => {
-    if (open) setName(recipeMetadata.name);
-  }, [open, recipeMetadata.name]);
-
-  const trimmed = name.trim();
-  const hasChanges = trimmed.length > 0 && trimmed !== recipeMetadata.name;
-
-  const handleSave = useCallback(() => {
-    if (!trimmed) return;
-    editor.definition.setRecipeMetadata({ ...recipeMetadata, name: trimmed });
-    onOpenChange(false);
-  }, [editor, recipeMetadata, trimmed, onOpenChange]);
+  const { name, setName, hasChanges, handleSubmit } = useRecipeDialogForm({
+    open,
+    onOpenChange,
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -53,12 +39,7 @@ function RecipeDialogRoot({ open, onOpenChange }: RecipeDialogProps) {
           <DialogTitle>Recipe Settings</DialogTitle>
           <DialogClose />
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (hasChanges) handleSave();
-          }}
-        >
+        <form onSubmit={handleSubmit}>
           <DialogBody>
             <fieldset className="space-y-1.5">
               <Label htmlFor="recipe-name">Name</Label>

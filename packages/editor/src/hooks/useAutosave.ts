@@ -16,6 +16,7 @@ import { useEditor } from "../context";
 import { serializeDraft } from "../draft/serializeDraft";
 import { createDebouncedSave } from "../draft/createDebouncedSave";
 import type { Draft } from "../draft/draftTypes";
+import type { ReactEditorInstance } from "../reactEditorTypes";
 
 const AUTOSAVE_DELAY_MS = 2000;
 
@@ -24,6 +25,48 @@ interface UseAutosaveOptions {
   onSave: (draft: Draft) => void;
   /** Called when loadDefinition or createBlank resets the editor. */
   onClear?: () => void;
+}
+
+/** Build the save callback that serializes and persists the current state. */
+function buildSaveCallback(
+  editor: ReactEditorInstance,
+  onSaveRef: { current: (draft: Draft) => void },
+) {
+  return () => {
+    const current = editor.getState();
+    const definition = editor.definition.exportAsDefinition();
+    const draft = serializeDraft(definition, current.recipeMetadata, current.syncedAt);
+
+    onSaveRef.current(draft);
+    editor.definition.setLastSavedAt(draft.savedAt);
+    editor.definition.resetDirty();
+  };
+}
+
+/** Create a store subscriber that schedules saves when dirty. */
+function createDirtySubscriber(
+  editor: ReactEditorInstance,
+  debounced: ReturnType<typeof createDebouncedSave>,
+  onSaveRef: { current: (draft: Draft) => void },
+  onClearRef: { current: (() => void) | undefined },
+) {
+  let prevIsDirty = editor.getState().isDirty;
+  const performSave = buildSaveCallback(editor, onSaveRef);
+
+  return (state: { isDirty: boolean }) => {
+    // Clear draft on loadDefinition / createBlank (isDirty goes false + nodes change)
+    if (prevIsDirty && !state.isDirty) {
+      debounced.cancel();
+      onClearRef.current?.();
+    }
+
+    // Schedule save when editor becomes dirty or stays dirty with new changes
+    if (state.isDirty) {
+      debounced.schedule(performSave);
+    }
+
+    prevIsDirty = state.isDirty;
+  };
 }
 
 function useAutosave({ onSave, onClear }: UseAutosaveOptions) {
@@ -35,30 +78,8 @@ function useAutosave({ onSave, onClear }: UseAutosaveOptions) {
 
   useEffect(() => {
     const debounced = createDebouncedSave(AUTOSAVE_DELAY_MS);
-    let prevIsDirty = editor.getState().isDirty;
-
-    const unsubscribe = editor.subscribe((state) => {
-      // Clear draft on loadDefinition / createBlank (isDirty goes false + nodes change)
-      if (prevIsDirty && !state.isDirty) {
-        debounced.cancel();
-        onClearRef.current?.();
-      }
-
-      // Schedule save when editor becomes dirty or stays dirty with new changes
-      if (state.isDirty) {
-        debounced.schedule(() => {
-          const current = editor.getState();
-          const definition = editor.definition.exportAsDefinition();
-          const draft = serializeDraft(definition, current.recipeMetadata, current.syncedAt);
-
-          onSaveRef.current(draft);
-          editor.definition.setLastSavedAt(draft.savedAt);
-          editor.definition.resetDirty();
-        });
-      }
-
-      prevIsDirty = state.isDirty;
-    });
+    const subscriber = createDirtySubscriber(editor, debounced, onSaveRef, onClearRef);
+    const unsubscribe = editor.subscribe(subscriber);
 
     return () => {
       debounced.flush();
