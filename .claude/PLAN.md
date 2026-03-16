@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 15, 2026 (groomed — Sprint 6 W5 added, stale backlog cleaned, Sprint 7 ready)
+**Last Updated:** March 15, 2026 (groomed — promoted auto-save, Button simplification, theme lighting to Sprint 6 W5-W6; marked stale triage items done)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -29,7 +29,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos + 2 Tier 1B multi-node compositions run 100% client-side via Rust→WASM
 - **M2 delivered (March 2026):** Editor v1 shipped — schema-driven config controls, save/My Recipes, keyboard shortcuts, accessibility audit. Accounts, execution history, PostHog telemetry all live.
-- **Sprint 6 (Quality & Cleanup) is next.** Lock in quality after M2 — error boundaries, dead code removal, Server Component audit, triage batch.
+- **Sprint 6 (Quality & Cleanup) is active.** Lock in quality after M2 — error boundaries, dead code removal, Server Component audit, triage batch.
 - **Tabled (deep backlog):** Code Editor (CM6), Edit/Run Mode, Sprint 5B W2-4 (LayerPanel polish, processing node accents).
 - **Cloud infrastructure:** R2 file transit — ready for M4 (server technology TBD)
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
@@ -261,12 +261,17 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 - [x] `apps/web` — **Replace competitor comparison with bnto-first benchmarks**: Rewrite the "How It Works" section's BragLayout to showcase bnto's own capabilities (50ms local WASM, zero uploads, unlimited runs, open source) instead of the TinyPNG/iLoveIMG comparison chart and feature table. Focus on the landscape of problems bnto solves.
 - [x] `apps/web` — **Delete button on My Recipe cards**: Add delete action to saved recipe cards on `/my-recipes`. Wire `core.recipes.remove()` to a confirmation dialog on RecipeCard.
-- [ ] `packages/editor` — **Persist editor state in localStorage**: Debounced write of editor store (nodes, configs, definition, metadata) to localStorage. Hydrate on mount. Clear on "New" or "Open".
+- [ ] `packages/editor` + `@bnto/core` — **Auto-save recipes**: Replace manual Save with transparent persistence — localStorage if unauthed, Convex if authed. Download/Export remains the one manual action. Remove Save from file menu and keyboard shortcut. If limiting unauthed saves, pop a dialog when unauthed users hit 3 recipes (prompt to delete one or sign in). Debounced write of editor store to localStorage; hydrate on mount; clear on "New" or "Open".
 - [ ] `engine` — **Thin Rust comment density**: Reduce inline comment noise — keep file-level headers and comments on genuinely complex logic, remove obvious per-line explanations. Update CLAUDE.md Rust standards section.
 - [x] Cross-cutting — **Inline handler audit**: Extract inline `onClick={() => ...}` handlers to named `handleOnX` functions across `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 - [x] Cross-cutting — **CSS-first interaction audit**: Identify JS `useState`/ternary className patterns for visual states that CSS pseudo-classes or `data-*` attributes could handle. Fix violations in `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 - [ ] Cross-cutting — **Test naming unification**: Audit all test suites for naming consistency — clear action-oriented descriptions, consistent prefixing, logical grouping. Remove duplicate or vague test names.
 - [ ] `apps/web` — **Standardize E2E selectors on data-testid**: Audit E2E specs and replace fragile `getByRole`/`getByText` selectors with `data-testid` attributes for state detection and element targeting. Keep semantic selectors only for accessibility assertions. Priority: menu items, toolbar buttons, panel controls.
+
+#### Wave 6 (parallel — Button simplification + polish)
+
+- [ ] `packages/ui` — **Simplify Button behavioral props — CSS-first with data attributes**: Remove `pressed` and `hovered` JS props from Button. Replace with CSS-driven data-state attributes (like `dormant` already is). Specific changes: remove `hovered` prop (use CSS `:hover` or `data-hover`), remove `pressed` prop (replace with `data-active` driven by `:active`/`aria-pressed`/`aria-current`), evaluate `muted` vs `variant="muted"`, keep `dormant` and `toggle` (already CSS-first), audit NodeRoot (biggest consumer), swap dormant/disabled visuals (dormant darkens → should be subtler; disabled should use opacity). Remove `sm` and `lg` size variants — keep only `md`. Emphasis/hierarchy controlled through elevation, not size. Review in ButtonShowcase.
+- [ ] `apps/web` — **Theme menu lighting direction control**: Add a half-radial slider to the Theme menu for setting surface lighting direction (shadow/highlight angle). Wire to `--light-elevation` CSS variable and surface shadow system.
 
 ---
 
@@ -905,11 +910,9 @@ The engine supports recursive `Definition.Nodes`. The web app must preserve this
 
 ### ~~Triage: PopupTrigger shared component~~ — DONE (Sprint 6 W4)
 
-### Triage: Remove sm/lg button sizes
+### ~~Triage: Remove sm/lg button sizes~~ — Promoted to Sprint 6 W6 (bundled with Button simplification)
 
-**Priority: Triage.** Consider removing `sm` and `lg` size variants from Button, keeping only `md`. Emphasis and hierarchy would be controlled through elevation instead of size, making the system feel more consistent.
-
-Files: `packages/ui/src/interaction/Button.tsx`, all consumers of `size="sm"` or `size="lg"`
+Bundled with Button behavioral props cleanup in Sprint 6 Wave 6.
 
 ### ~~Triage: Show mode labels on Input/Output nodes~~ — DONE (Sprint 6 W4)
 
@@ -959,17 +962,17 @@ Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `package
 
 ### ~~Triage: Delete button on My Recipe cards~~ — DONE (Sprint 6 W5)
 
-### Triage: Auto-save recipes instead of manual Save
+### ~~Triage: Auto-save recipes instead of manual Save~~ — Promoted to Sprint 6 W5
 
-**Priority: Triage.** Saving should happen automatically — localStorage if unauthed, Convex if authed. Download/Export is the one manual action. Remove Save from the file menu and keyboard shortcut. If limiting unauthed saves, pop a dialog in the editor when unauthed users hit 3 recipes (prompt to delete one or sign in). Replaces manual Cmd+S/Save button with transparent persistence.
+Promoted to Sprint 6 Wave 5 as the consolidated auto-save task (subsumes localStorage persistence).
 
 ### Triage: iLovePNG recipe parity — next wave candidates
 
 **Priority: Triage.** When planning the next recipe wave, evaluate iLovePNG's offerings for feasibility in Rust WASM: Resize IMAGE, Crop IMAGE, Rotate IMAGE, Watermark IMAGE, Blur face, Upscale, Convert to/from JPG, HTML to IMAGE, Meme generator. Several (resize, crop, rotate, watermark) are likely doable with our existing `image` crate. Others (upscale, blur face, HTML to IMAGE) may need server-side or new deps.
 
-### Triage: Inline handler audit — extract to named handlers
+### ~~Triage: Inline handler audit — extract to named handlers~~ — DONE (Sprint 6 W5, PR #201)
 
-**Priority: Triage.** Audit all React components for inline event handlers (e.g., `onClick={() => ...}`) and refactor to named `const handleOnX = () => {}` pattern. Inline logic in JSX hurts readability and violates the Bento Box principle — component render should be easy to scan at a glance.
+Delivered in Sprint 6 Wave 5. Inline handlers extracted to named `handleOnX` functions across `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 
 ---
 
@@ -979,11 +982,9 @@ Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `package
 
 ---
 
-### Triage: Persist editor state in localStorage
+### ~~Triage: Persist editor state in localStorage~~ — Promoted to Sprint 6 W5 (subsumed by auto-save)
 
-**Priority: Triage.** Persist the editor store state (nodes, configs, definition, metadata) to `localStorage` so users don't lose work on page refresh. Hydrate from localStorage on editor mount if a saved session exists. Consider a debounced write (e.g., 1s after last change) to avoid thrashing. Clear on explicit "New" or "Open" actions.
-
-Files: `packages/editor/src/store/createEditorStore.ts`, new `packages/editor/src/store/persistence.ts`
+Subsumed by the auto-save task in Sprint 6 Wave 5, which covers localStorage persistence for unauthed + Convex persistence for authed users.
 
 ---
 
@@ -1003,17 +1004,15 @@ Files: `packages/editor/src/components/EditorToolbar.tsx` (palette), `packages/e
 
 ---
 
-### Triage: Theme menu lighting direction control via half-radial slider
+### ~~Triage: Theme menu lighting direction control via half-radial slider~~ — Promoted to Sprint 6 W6
 
-**Priority: Triage.** Add a lighting direction control to the Theme menu using a half-radial slider UI. This would let users set the direction of the surface lighting effect (shadow/highlight angle) interactively.
+Promoted to Sprint 6 Wave 6.
 
 ---
 
-### Triage: Data-state / CSS-first interaction audit (Radix/shadcn patterns)
+### ~~Triage: Data-state / CSS-first interaction audit (Radix/shadcn patterns)~~ — DONE (Sprint 6 W5, PR #201)
 
-**Priority: Triage.** Thorough audit of the codebase to identify places where JS (`useState`, ternary classNames, `onMouseEnter`/`onMouseLeave`) is used for visual states that CSS pseudo-classes, `data-state`, or `data-*` attributes could handle. Research Radix/shadcn recommended patterns for reflecting state via data attributes and CSS selectors. Fix all violations to lean harder into CSS-driven interactions/animations instead of JS re-renders.
-
-Files: cross-cutting — `packages/ui/`, `packages/editor/`, `apps/web/components/`
+Delivered in Sprint 6 Wave 5. JS `useState`/ternary className patterns for visual states replaced with CSS pseudo-classes and `data-*` attributes across `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 
 ---
 
@@ -1037,20 +1036,9 @@ Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `pac
 
 ---
 
-### Triage: Simplify Button behavioral props — CSS-first with data attributes
+### ~~Triage: Simplify Button behavioral props — CSS-first with data attributes~~ — Promoted to Sprint 6 W6
 
-**Priority: Triage.** Remove `pressed` and `hovered` JS props from Button. These should be CSS-driven via data-state attributes (like `dormant` already is), not prop-controlled re-renders. Specific changes:
-
-- **Remove `hovered` prop** — consumers should use CSS `:hover` or `data-hover` set by the component itself, not a JS boolean prop
-- **Remove `pressed` prop** — replace with `data-active` driven by CSS (`:active`, `aria-pressed`, or `aria-current`) not JS state. NavButton active state → `aria-current="page"`. Tabs → `aria-selected`. Toggle → `aria-pressed`
-- **Evaluate `muted` vs `variant="muted"`** — `muted` prop uses `color-mix()` to blend any variant toward muted. Is this distinct enough from `variant="muted"` to keep? Or can consumers just use the muted variant?
-- **Keep `dormant`** — CSS-first, `.group:hover` driven, no JS state. This is the right pattern
-- **Keep `toggle`** — CSS-driven toggle sink behavior
-- **Audit NodeRoot** — biggest consumer of `hovered`/`pressed`/`muted` props. Migrate to data attributes driven by execution state
-- **Swap dormant/disabled visuals** — dormant currently darkens color/border, but that look fits disabled better. Disabled should use opacity to blend with surface. Dormant should be subtler at rest, waking on group hover
-- **Review in ButtonShowcase** — centralize variation in Motorway showcase, simplify where possible
-
-`packages/ui/src/interaction/Button.tsx`, `apps/web/app/surface.css`, `apps/web/app/(dev)/motorway/ButtonShowcase.tsx`
+Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
 ---
 
