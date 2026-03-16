@@ -162,6 +162,8 @@ function Slider({
                 key={preset.value}
                 type="button"
                 onClick={() => handlePresetClick(preset.value)}
+                data-testid="slider-preset"
+                data-preset-label={preset.label}
                 className={cn(
                   "absolute text-xs cursor-pointer transition-colors duration-fast",
                   isFirst ? "translate-x-0" : isLast ? "-translate-x-full" : "-translate-x-1/2",

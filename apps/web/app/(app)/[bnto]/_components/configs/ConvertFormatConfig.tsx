@@ -37,12 +37,17 @@ export function ConvertFormatConfig({ value, onChange }: ConvertFormatConfigProp
             className="w-24"
             aria-labelledby="convert-format-label"
             aria-describedby="convert-format-help"
+            data-testid="format-select"
           >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {FORMAT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
+              <SelectItem
+                key={opt.value}
+                value={opt.value}
+                data-testid={`format-option-${opt.value}`}
+              >
                 {opt.label}
               </SelectItem>
             ))}

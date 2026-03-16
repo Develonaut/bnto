@@ -41,13 +41,14 @@ export function EditorBetaDialog() {
           <DialogClose />
         </DialogHeader>
         <DialogDescription>
-          The recipe editor is in beta. We&apos;re actively experimenting and
-          testing functionality here, so things may change as we refine the
-          experience.
+          The recipe editor is in beta. We&apos;re actively experimenting and testing functionality
+          here, so things may change as we refine the experience.
         </DialogDescription>
         <DialogFooter>
           <DialogClose asChild>
-            <Button onClick={handleDismiss}>Get started</Button>
+            <Button onClick={handleDismiss} data-testid="beta-get-started">
+              Get started
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

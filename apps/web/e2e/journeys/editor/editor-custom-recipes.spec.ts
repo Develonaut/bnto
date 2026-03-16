@@ -30,7 +30,7 @@ import { downloadFirstOutput, assertWebP, assertJpeg } from "../../helpers/asser
 test.describe("editor custom recipes @browser", () => {
   test("CR1: web-ready image pipeline — resize → convert → compress", async ({ page }) => {
     await navigateToEditor(page);
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
 
     // BUILD — add 3 image processing nodes
     await addNodeFromPalette(page, "Resize Images");
@@ -67,7 +67,7 @@ test.describe("editor custom recipes @browser", () => {
 
   test("CR2: compress + organize — compress → rename with suffix", async ({ page }) => {
     await navigateToEditor(page);
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
 
     // BUILD
     await addNodeFromPalette(page, "Compress Images");
@@ -97,7 +97,7 @@ test.describe("editor custom recipes @browser", () => {
 
   test("CR3: clean & standardize CSV — clean → rename columns", async ({ page }) => {
     await navigateToEditor(page);
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
 
     // BUILD — add both CSV operations
     await addNodeFromPalette(page, "Clean CSV");
@@ -141,7 +141,7 @@ test.describe("editor custom recipes @browser", () => {
 
   test("CR4: thumbnail generator — resize → convert → rename", async ({ page }) => {
     await navigateToEditor(page);
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
 
     // BUILD — 3 nodes spanning image + file types
     await addNodeFromPalette(page, "Resize Images");
@@ -183,7 +183,7 @@ test.describe("editor custom recipes @browser", () => {
 
   test("CR5: all 6 operations — add each from palette, verify structure", async ({ page }) => {
     await navigateToEditor(page);
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
 
     // BUILD — add all 6 browser operations
     await addNodeFromPalette(page, "Compress Images");

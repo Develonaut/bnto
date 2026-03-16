@@ -32,7 +32,7 @@ test.describe("convert-image-format — browser execution @browser", () => {
 
     await runAndComplete(page);
 
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
+    await expect(page.getByTestId("output-file")).toHaveCount(1);
 
     const buffer = await downloadAndVerify(page, {
       filenamePattern: /\.webp$/i,
@@ -47,15 +47,13 @@ test.describe("convert-image-format — browser execution @browser", () => {
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.png")]);
 
     // Change target format to JPEG via the select dropdown
-    const formatSelect = page
-      .locator('[data-testid="format-select"]')
-      .or(page.getByRole("combobox"));
+    const formatSelect = page.getByTestId("format-select");
     await formatSelect.click();
-    await page.getByRole("option", { name: /jpeg/i }).click();
+    await page.getByTestId("format-option-jpeg").click();
 
     await runAndComplete(page);
 
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
+    await expect(page.getByTestId("output-file")).toHaveCount(1);
 
     await downloadAndVerify(page, {
       filenamePattern: /\.jpe?g$/i,

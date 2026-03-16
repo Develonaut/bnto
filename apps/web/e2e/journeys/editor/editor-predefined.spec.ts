@@ -35,12 +35,12 @@ test.describe("editor predefined recipes @browser", () => {
     await openRunPanel(page);
 
     // Should have 1 output file
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
     // Download and verify JPEG magic bytes
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.locator('[data-testid="download-button"]').click();
+    await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -68,7 +68,7 @@ test.describe("editor predefined recipes @browser", () => {
     await openRunPanel(page);
 
     // Should have 2 output files
-    const outputFiles = page.locator('[data-testid="output-file"]');
+    const outputFiles = page.getByTestId("output-file");
     await expect(outputFiles).toHaveCount(2);
   });
 
@@ -82,12 +82,12 @@ test.describe("editor predefined recipes @browser", () => {
     await openRunPanel(page);
 
     // Should have 1 output file
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
     // Download and verify it's a non-empty file
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.locator('[data-testid="download-button"]').click();
+    await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -107,12 +107,12 @@ test.describe("editor predefined recipes @browser", () => {
 
     await openRunPanel(page);
 
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
     // Download and verify the file is valid (non-empty)
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.locator('[data-testid="download-button"]').click();
+    await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     // Filename should contain the rename prefix
@@ -131,12 +131,12 @@ test.describe("editor predefined recipes @browser", () => {
 
     await openRunPanel(page);
 
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
     // Download and verify JPEG magic bytes
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.locator('[data-testid="download-button"]').click();
+    await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -153,12 +153,12 @@ test.describe("editor predefined recipes @browser", () => {
 
     await openRunPanel(page);
 
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
     // Download and verify WebP magic bytes (RIFF + WEBP)
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.locator('[data-testid="download-button"]').click();
+    await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -184,11 +184,11 @@ test.describe("editor predefined recipes @browser", () => {
 
     await openRunPanel(page);
 
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.locator('[data-testid="download-button"]').click();
+    await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -200,7 +200,7 @@ test.describe("editor predefined recipes @browser", () => {
     // Load compress-images — Input node has image MIME types + extensions
     await navigateToEditor(page, "compress-images");
 
-    const fileInput = page.locator('[data-testid="run-file-input"]');
+    const fileInput = page.getByTestId("run-file-input");
     const accept = await fileInput.getAttribute("accept");
 
     // Should contain image MIME types or file extensions — not be empty/null
@@ -212,7 +212,7 @@ test.describe("editor predefined recipes @browser", () => {
     // Load clean-csv — Input node has CSV MIME types + extensions
     await navigateToEditor(page, "clean-csv");
 
-    const fileInput = page.locator('[data-testid="run-file-input"]');
+    const fileInput = page.getByTestId("run-file-input");
     const accept = await fileInput.getAttribute("accept");
 
     expect(accept).toBeTruthy();

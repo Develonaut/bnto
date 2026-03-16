@@ -29,10 +29,7 @@ interface OptimizeImagesForWebConfigProps {
   onChange: (config: Config) => void;
 }
 
-export function OptimizeImagesForWebConfig({
-  value,
-  onChange,
-}: OptimizeImagesForWebConfigProps) {
+export function OptimizeImagesForWebConfig({ value, onChange }: OptimizeImagesForWebConfigProps) {
   return (
     <div className="flex w-full flex-col gap-3">
       <div className="flex w-full items-end gap-4">
@@ -63,12 +60,20 @@ export function OptimizeImagesForWebConfig({
             value={value.format}
             onValueChange={(format) => onChange({ ...value, format: format as Config["format"] })}
           >
-            <SelectTrigger className="w-24" aria-labelledby="optimize-format-label">
+            <SelectTrigger
+              className="w-24"
+              aria-labelledby="optimize-format-label"
+              data-testid="format-select"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {FORMAT_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
+                <SelectItem
+                  key={opt.value}
+                  value={opt.value}
+                  data-testid={`format-option-${opt.value}`}
+                >
                   {opt.label}
                 </SelectItem>
               ))}

@@ -27,7 +27,7 @@ test.describe("recipe switching — state isolation @browser", () => {
     await runAndComplete(page);
 
     // Confirm recipe A completed with results
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
+    await expect(page.getByTestId("output-file")).toHaveCount(1);
 
     // --- Navigate to Recipe B: clean-csv ---
     await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
@@ -36,10 +36,10 @@ test.describe("recipe switching — state isolation @browser", () => {
     await assertBrowserExecution(page);
 
     // No output files from recipe A should be visible
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(0);
+    await expect(page.getByTestId("output-file")).toHaveCount(0);
 
     // Run button must not show completed phase if visible
-    const runButtonB = page.locator('[data-testid="run-button"]');
+    const runButtonB = page.getByTestId("run-button");
     const runButtonCount = await runButtonB.count();
     if (runButtonCount > 0) {
       await expect(runButtonB.first()).not.toHaveAttribute("data-phase", "completed");
@@ -84,13 +84,13 @@ test.describe("recipe switching — state isolation @browser", () => {
     // --- Run Recipe B with its own files ---
     await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "messy.csv")]);
 
-    const runButtonB = page.locator('[data-testid="run-button"]:visible');
+    const runButtonB = page.getByTestId("run-button", ":visible");
     await expect(runButtonB).toHaveAttribute("data-phase", "idle");
 
     await runAndComplete(page);
 
     // Recipe B has its own results — not recipe A's image results
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
+    await expect(page.getByTestId("output-file")).toHaveCount(1);
   });
 
   test("rapid navigation between recipes doesn't leak state", async ({ page }) => {
@@ -111,7 +111,7 @@ test.describe("recipe switching — state isolation @browser", () => {
     for (const recipe of recipes) {
       await navigateToRecipe(page, recipe.slug, recipe.h1);
       await assertBrowserExecution(page);
-      await expect(page.locator('[data-testid="output-file"]')).toHaveCount(0);
+      await expect(page.getByTestId("output-file")).toHaveCount(0);
     }
   });
 });

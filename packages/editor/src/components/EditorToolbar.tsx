@@ -102,6 +102,7 @@ function EditorToolbar() {
                 variant="ghost"
                 elevation="sm"
                 aria-label="File menu"
+                data-testid="toolbar-file-menu"
               />
               <MenuContent side="top" className="w-52 p-1">
                 <div className="px-3 py-2">
@@ -113,17 +114,17 @@ function EditorToolbar() {
                   </Text>
                 </div>
                 <MenuSeparator />
-                <MenuItem onClick={settingsDialog.openDialog}>
+                <MenuItem onClick={settingsDialog.openDialog} data-testid="menu-rename">
                   <PenLineIcon /> Rename
                 </MenuItem>
-                <MenuItem onClick={handleNew}>
+                <MenuItem onClick={handleNew} data-testid="menu-new">
                   <PlusIcon /> New
                 </MenuItem>
-                <MenuItem onClick={openRecipeDialog.openDialog}>
+                <MenuItem onClick={openRecipeDialog.openDialog} data-testid="menu-open">
                   <FileUpIcon /> Open
                 </MenuItem>
                 <MenuSeparator />
-                <MenuItem onClick={download} disabled={!canDownload}>
+                <MenuItem onClick={download} disabled={!canDownload} data-testid="menu-export">
                   <DownloadIcon /> Export <ShortcutHint shortcutId="export" />
                 </MenuItem>
               </MenuContent>
@@ -141,6 +142,7 @@ function EditorToolbar() {
               elevation="sm"
               onClick={toggleRunPanel}
               aria-label="Run panel"
+              data-testid="toolbar-run-panel"
             />
           </ToolbarGroup>
 
@@ -155,6 +157,7 @@ function EditorToolbar() {
               onClick={editor.history.undo}
               disabled={!canUndo}
               aria-label="Undo"
+              data-testid="toolbar-undo"
             />
             <Button
               icon={<Redo2Icon />}
@@ -163,6 +166,7 @@ function EditorToolbar() {
               onClick={editor.history.redo}
               disabled={!canRedo}
               aria-label="Redo"
+              data-testid="toolbar-redo"
             />
             <Button
               icon={<RotateCcwIcon />}
@@ -184,6 +188,7 @@ function EditorToolbar() {
               elevation="sm"
               onClick={toggleConfig}
               aria-label="Properties"
+              data-testid="toolbar-properties"
             />
           </ToolbarGroup>
 
@@ -197,6 +202,7 @@ function EditorToolbar() {
               elevation="sm"
               onClick={openHelp}
               aria-label="Help"
+              data-testid="toolbar-help"
             />
           </ToolbarGroup>
         </Toolbar>

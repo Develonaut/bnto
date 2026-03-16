@@ -102,16 +102,36 @@ function PhaseControls({ onForce }: { onForce: (p: ExecutionPhase) => void }) {
         Force Phase
       </Text>
       <Row gap="xs" className="flex-wrap">
-        <Button variant="outline" size="sm" onClick={() => onForce("idle")}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onForce("idle")}
+          data-testid="dev-phase-idle"
+        >
           Idle
         </Button>
-        <Button variant="outline" size="sm" onClick={() => onForce("running")}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onForce("running")}
+          data-testid="dev-phase-running"
+        >
           Running
         </Button>
-        <Button variant="outline" size="sm" onClick={() => onForce("completed")}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onForce("completed")}
+          data-testid="dev-phase-completed"
+        >
           Completed
         </Button>
-        <Button variant="destructive" size="sm" onClick={() => onForce("failed")}>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => onForce("failed")}
+          data-testid="dev-phase-failed"
+        >
           Failed
         </Button>
       </Row>
@@ -162,7 +182,11 @@ function RecipeSelect() {
         </SelectTrigger>
         <SelectContent>
           {RECIPES.map((recipe) => (
-            <SelectItem key={recipe.slug} value={recipe.slug}>
+            <SelectItem
+              key={recipe.slug}
+              value={recipe.slug}
+              data-testid={`recipe-option-${recipe.slug}`}
+            >
               {recipe.name}
             </SelectItem>
           ))}

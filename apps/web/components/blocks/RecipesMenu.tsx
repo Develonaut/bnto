@@ -13,7 +13,7 @@ import { RECIPES } from "./navData";
 export function RecipesMenu() {
   return (
     <Menu>
-      <MenuTrigger variant="outline" elevation="sm">
+      <MenuTrigger variant="outline" elevation="sm" data-testid="explore-button">
         <BookOpenIcon />
         Explore
       </MenuTrigger>
@@ -26,7 +26,11 @@ export function RecipesMenu() {
                 {category.links.map((link) => (
                   <li key={link.url}>
                     <MenuItem asChild className="flex-col items-start gap-1 py-2.5">
-                      <Link href={link.url} className="no-underline">
+                      <Link
+                        href={link.url}
+                        data-testid={`explore-link-${link.url.replace("/", "")}`}
+                        className="no-underline"
+                      >
                         <span className="text-sm leading-normal font-medium">{link.label}</span>
                         <span className="text-xs leading-normal text-muted-foreground">
                           {link.description}

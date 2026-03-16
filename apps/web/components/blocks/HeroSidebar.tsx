@@ -21,7 +21,7 @@ export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
       <Text size="xs" color="muted" mono className="uppercase tracking-wider">
         {TRUST_LINE}
       </Text>
-      <Heading level={1} className="text-balance">
+      <Heading level={1} className="text-balance" data-testid="gallery-heading">
         {GALLERY_HEADING}
       </Heading>
       <Text color="muted" leading="snug">

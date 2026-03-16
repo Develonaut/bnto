@@ -64,7 +64,7 @@ export function NavUser() {
                     {user.name}
                   </Text>
                 )}
-                <Text size="xs" color="muted">
+                <Text size="xs" color="muted" data-testid="nav-user-email">
                   {user?.email}
                 </Text>
               </div>

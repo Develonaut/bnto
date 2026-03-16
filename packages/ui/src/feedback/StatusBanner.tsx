@@ -121,6 +121,7 @@ function StatusBannerProgress({
   return (
     <div
       role="progressbar"
+      data-testid="status-progressbar"
       aria-valuenow={clamped}
       aria-valuemin={0}
       aria-valuemax={100}

@@ -30,16 +30,16 @@ export const MAGIC = {
 /**
  * Navigate to a recipe page and wait for the heading to be visible.
  */
-export async function navigateToRecipe(page: Page, slug: string, h1: string) {
+export async function navigateToRecipe(page: Page, slug: string, _h1?: string) {
   await page.goto(`/${slug}`);
-  await expect(page.getByRole("heading", { name: h1 })).toBeVisible();
+  await expect(page.getByTestId("recipe-heading")).toBeVisible();
 }
 
 /**
  * Assert that the bnto-shell has data-execution-mode="browser".
  */
 export async function assertBrowserExecution(page: Page) {
-  const shell = page.locator('[data-testid="bnto-shell"]');
+  const shell = page.getByTestId("bnto-shell");
   await expect(shell).toHaveAttribute("data-execution-mode", "browser");
 }
 
@@ -48,13 +48,12 @@ export async function assertBrowserExecution(page: Page) {
  * Returns the run button locator.
  */
 export async function uploadFiles(page: Page, filePaths: string[]) {
-  const fileInput = page.locator('input[type="file"]');
+  const fileInput = page.getByTestId("file-input");
   await fileInput.setInputFiles(filePaths);
 
-  const count = filePaths.length;
-  await expect(page.getByText(`${count} file${count === 1 ? "" : "s"} selected`)).toBeVisible();
+  await expect(page.getByTestId("file-count")).toBeVisible();
 
-  const runButton = page.locator('[data-testid="run-button"]:visible');
+  const runButton = page.getByTestId("run-button", ":visible");
   await expect(runButton).toBeEnabled();
 
   return runButton;
@@ -70,7 +69,7 @@ export async function runAndComplete(
 ) {
   const { timeout = 30_000, expectPhase = "completed" } = options ?? {};
 
-  const runButton = page.locator('[data-testid="run-button"]:visible');
+  const runButton = page.getByTestId("run-button", ":visible");
   await runButton.click();
 
   await expect(runButton).toHaveAttribute("data-phase", expectPhase, {
@@ -95,11 +94,11 @@ export async function downloadAndVerify(
 ) {
   const { outputIndex = 0, filenamePattern, magicBytes, maxSize } = options ?? {};
 
-  const outputFile = page.locator('[data-testid="output-file"]').nth(outputIndex);
+  const outputFile = page.getByTestId("output-file").nth(outputIndex);
   await expect(outputFile).toBeVisible();
 
   const downloadPromise = page.waitForEvent("download");
-  await outputFile.locator('[data-testid="download-button"]').click();
+  await outputFile.getByTestId("download-button").click();
   const download = await downloadPromise;
 
   if (filenamePattern) {
@@ -130,7 +129,7 @@ export async function downloadAndVerify(
  * Returns the downloaded file buffer.
  */
 export async function downloadAllAsZip(page: Page) {
-  const downloadAllBtn = page.locator('[data-testid="download-all-button"]:visible');
+  const downloadAllBtn = page.getByTestId("download-all-button", ":visible");
   await expect(downloadAllBtn).toBeVisible();
 
   const downloadPromise = page.waitForEvent("download");

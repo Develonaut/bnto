@@ -1,7 +1,7 @@
 ---
 name: pre-commit
 description: Run the mandatory pre-commit checklist
-arguments: "[--review] [--merge]"
+arguments: "[-r | --review] [-m | --merge]"
 ---
 
 # Pre-Commit Checklist
@@ -12,12 +12,12 @@ You are NOT allowed to deem any failures as "pre-existing" or skip them. Report 
 
 ## Arguments
 
-| Argument   | Effect                                                                                                                                                       |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `--review` | Run `/code-review` before automated checks. Without this flag, code review is skipped.                                                                       |
-| `--merge`  | After pushing and creating the PR, enable GitHub auto-merge (`gh pr merge --auto --squash --delete-branch`). The PR will merge automatically once CI passes. |
+| Argument         | Effect                                                                                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `-r`, `--review` | Run `/code-review` before automated checks. Without this flag, code review is skipped.                                                                       |
+| `-m`, `--merge`  | After pushing and creating the PR, enable GitHub auto-merge (`gh pr merge --auto --squash --delete-branch`). The PR will merge automatically once CI passes. |
 
-Both arguments are optional and can be combined: `/pre-commit --review --merge`.
+Both arguments are optional and can be combined: `/pre-commit -r -m` (or `/pre-commit --review --merge`).
 
 ## Step 0: Read the Standards
 
@@ -60,15 +60,15 @@ Identify which packages the changed files belong to and invoke the relevant pers
 
 !`git branch --show-current`
 
-## Step 1: Code Review (requires `--review`)
+## Step 1: Code Review (requires `-r` / `--review`)
 
-**Skip this step unless `--review` was passed.**
+**Skip this step unless `-r` or `--review` was passed.**
 
-If `--review` was passed: Run `/code-review` to audit all changed files against the project's coding standards, architecture rules, and known gotchas. This catches structural and architectural issues that linters miss.
+If review was requested: Run `/code-review` to audit all changed files against the project's coding standards, architecture rules, and known gotchas. This catches structural and architectural issues that linters miss.
 
 **Fix any violations before proceeding.** The code review covers: architecture & layer compliance, Bento Box, TypeScript, Rust code quality, React Query & state management, performance, code quality, test coverage, and stale artifacts.
 
-If `--review` was NOT passed: proceed directly to Step 2.
+If review was NOT requested: proceed directly to Step 2.
 
 ## Step 2: Automated Checks
 
@@ -155,7 +155,7 @@ Before committing, present a summary to the user including the checklist below.
 
 **CRITICAL: You NEVER get to skip Unit/Integration Tests or E2E Tests on your own.** If any `apps/web/` file was changed, E2E tests MUST be run — no reasoning about "zero visual change" allowed. If you believe a skip is justified, you MUST ask the user for explicit permission and WAIT for their response before proceeding. Silence = run the tests.
 
-1. **Code review result** — confirm `/code-review` passed clean (or list fixes made), or SKIPPED (`--review` not passed)
+1. **Code review result** — confirm `/code-review` passed clean (or list fixes made), or SKIPPED (review not requested)
 2. **Did you touch `apps/web/`?** — Yes or No. Check `git diff --name-only` — if ANY file in `apps/web/` is listed, the answer is Yes.
 3. **If yes:** Confirm E2E tests were run. List the command used and results (pass count, fail count). If screenshots were updated, confirm two-run verification. If E2E tests were NOT run, state that user granted explicit permission to skip (quote their message).
 4. **Unit/Integration tests** — Confirm `task ui:test` passed. If new logic was added, list new test files.
@@ -224,9 +224,9 @@ Present the proposed commit message to the user for approval before committing.
 - **NEVER force-push to `main`** or merge without CI passing.
 - Ask the user before pushing if you're unsure. A request to "commit" does not imply "push."
 
-### Auto-Merge (requires `--merge`)
+### Auto-Merge (requires `-m` / `--merge`)
 
-**Skip this section unless `--merge` was passed.**
+**Skip this section unless `-m` or `--merge` was passed.**
 
 After the PR is created, enable GitHub auto-merge so the PR merges automatically once CI passes:
 

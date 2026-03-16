@@ -84,7 +84,7 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent size="lg">
+      <DialogContent size="lg" data-testid="node-palette-dialog">
         <DialogHeader className="pb-2">
           <DialogTitle>Add Node</DialogTitle>
           <DialogClose />
@@ -133,6 +133,7 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
                         type="button"
                         onClick={() => handleAdd(item)}
                         disabled={disabled}
+                        data-testid={`palette-item-${itemKey(item)}`}
                         className="flex flex-col items-start gap-1 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
                       >
                         <span className="flex w-full items-center gap-2">
