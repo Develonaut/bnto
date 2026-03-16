@@ -22,7 +22,7 @@ function TagPickerControl({ id, meta, value, onChange }: ControlProps) {
       id={id}
       options={options}
       value={values}
-      onChange={(next) => onChange(next)}
+      onChange={onChange}
       placeholder={meta.placeholder ?? "Select\u2026"}
       data-testid={`control-tagpicker-${id}`}
     />

@@ -33,6 +33,10 @@ export function MobileNavMenu({
   const signOut = core.auth.useSignOut();
   const router = useRouter();
 
+  function handleClose() {
+    onOpenChange(false);
+  }
+
   function handleSignOut() {
     signOut();
     onOpenChange(false);
@@ -80,7 +84,7 @@ export function MobileNavMenu({
                           <li key={link.url}>
                             <Link
                               href={link.url}
-                              onClick={() => onOpenChange(false)}
+                              onClick={handleClose}
                               className="text-lg leading-normal font-medium text-primary-foreground"
                             >
                               {link.label}
@@ -96,13 +100,13 @@ export function MobileNavMenu({
               {/* Bottom section */}
               <Stack className="gap-6">
                 <Row className="gap-4">
-                  <NewRecipeMobileButton onClick={() => onOpenChange(false)} />
+                  <NewRecipeMobileButton onClick={handleClose} />
                   {PAGE_LINKS.map((link) => (
                     <Button
                       key={link.href}
                       variant="outline"
                       href={link.href}
-                      onClick={() => onOpenChange(false)}
+                      onClick={handleClose}
                     >
                       {link.label}
                     </Button>
@@ -146,7 +150,7 @@ export function MobileNavMenu({
                   <Button
                     variant="secondary"
                     href="/signin"
-                    onClick={() => onOpenChange(false)}
+                    onClick={handleClose}
                     data-testid="mobile-sign-in"
                   >
                     Sign In

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 
@@ -37,10 +38,6 @@ export function NavUser() {
     router.replace("/signin");
   }
 
-  function handleSignIn() {
-    router.push("/signin");
-  }
-
   return (
     <Menu>
       <MenuTrigger
@@ -74,9 +71,11 @@ export function NavUser() {
 
               <MenuSeparator />
 
-              <MenuItem onClick={() => router.push("/my-recipes")} data-testid="nav-my-recipes">
-                <BookOpenIcon />
-                My Recipes
+              <MenuItem asChild data-testid="nav-my-recipes">
+                <Link href="/my-recipes">
+                  <BookOpenIcon />
+                  My Recipes
+                </Link>
               </MenuItem>
 
               <MenuSeparator />
@@ -87,9 +86,11 @@ export function NavUser() {
               </MenuItem>
             </>
           ) : (
-            <MenuItem onClick={handleSignIn} data-testid="nav-sign-in">
-              <LogInIcon />
-              Sign in
+            <MenuItem asChild data-testid="nav-sign-in">
+              <Link href="/signin">
+                <LogInIcon />
+                Sign in
+              </Link>
             </MenuItem>
           )}
         </Stack>

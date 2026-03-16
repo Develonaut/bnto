@@ -13,7 +13,7 @@ function KeyValueEditorControl({ id, meta, value, onChange }: ControlProps) {
     <KeyValueEditor
       id={id}
       value={record}
-      onChange={(next) => onChange(next)}
+      onChange={onChange}
       keyPlaceholder={meta.placeholder ?? "Key"}
       valuePlaceholder="Value"
       data-testid={`control-keyvalue-${id}`}

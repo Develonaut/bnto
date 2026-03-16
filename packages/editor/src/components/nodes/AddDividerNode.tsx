@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useState, type MouseEvent } from "react";
+import { memo, useCallback, type MouseEvent } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { Plus } from "lucide-react";
 import { Button, Divider } from "@bnto/ui";
@@ -21,17 +21,13 @@ import { useEditor } from "../../context";
  * Non-interactive to RF (not selectable, not draggable). The plus
  * button is pointer-events-auto inside a pointer-events-none shell.
  *
- * Disabled by default, enabled on hover — matches the NodeDeleteButton
- * pattern. JS state is required because CSS can't toggle the HTML
- * disabled attribute (coordinating parent hover → child prop).
+ * CSS-first hover: the button is invisible by default and revealed
+ * via group-hover / group-focus-within on the parent container.
  */
 
-export const AddDividerNode = memo(function AddDividerNode({
-  data,
-}: NodeProps<BentoNode>) {
+export const AddDividerNode = memo(function AddDividerNode({ data }: NodeProps<BentoNode>) {
   const { open: openPalette } = usePanels("palette");
   const editor = useEditor();
-  const [hovered, setHovered] = useState(false);
   const direction = data.dividerDirection ?? "horizontal";
   const afterNodeId = data.dividerAfterNodeId ?? null;
   const intoContainerId = data.dividerIntoContainerId ?? null;
@@ -52,10 +48,8 @@ export const AddDividerNode = memo(function AddDividerNode({
 
   return (
     <div
-      className="flex items-center justify-center"
+      className="group flex items-center justify-center"
       style={{ width: data.width, height: data.height }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
       <Divider
         orientation={dividerOrientation}
@@ -65,11 +59,10 @@ export const AddDividerNode = memo(function AddDividerNode({
         icon={<Plus />}
         size="sm"
         variant="primary"
-        disabled={!hovered}
         onClick={handleClick}
         aria-label="Add node"
         data-testid="add-divider"
-        className="nopan nodrag nowheel pointer-events-auto z-canvas size-5 [&_svg]:size-3"
+        className="nopan nodrag nowheel pointer-events-none z-canvas size-5 opacity-0 transition-opacity duration-fast group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 [&_svg]:size-3"
       />
     </div>
   );
