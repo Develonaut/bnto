@@ -34,7 +34,7 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
 
     const outputFile = page.locator('[data-testid="output-file"]');
     await expect(outputFile).toHaveCount(1);
-    await expect(outputFile.getByRole("button", { name: /download/i })).toBeVisible();
+    await expect(outputFile.locator('[data-testid="download-button"]')).toBeVisible();
 
     // Output should be WebP with thumb_ prefix
     const buffer = await downloadAndVerify(page, {
@@ -69,7 +69,7 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
 
     const runButton = await runAndComplete(page);
 
-    const backButton = page.locator('[data-testid="bnto-shell"] button').first();
+    const backButton = page.locator('[data-testid="back-button"]');
     await backButton.click();
 
     await expect(page.getByText("1 file selected")).toBeVisible();

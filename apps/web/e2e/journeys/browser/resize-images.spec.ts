@@ -50,6 +50,6 @@ test.describe("resize-images — browser execution @browser", () => {
     await runAndComplete(page);
 
     await expect(page.locator('[data-testid="output-file"]')).toHaveCount(2);
-    await expect(page.getByRole("button", { name: /download all/i }).last()).toBeVisible();
+    await expect(page.locator('[data-testid="toolbar-download-all"]:visible')).toBeVisible();
   });
 });

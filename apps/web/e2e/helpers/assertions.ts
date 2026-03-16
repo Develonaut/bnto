@@ -25,7 +25,7 @@ export async function downloadFirstOutput(page: Page) {
   await expect(outputFile).toHaveCount(1);
 
   const downloadPromise = page.waitForEvent("download");
-  await outputFile.getByRole("button", { name: /download/i }).click();
+  await outputFile.locator('[data-testid="download-button"]').click();
   const download = await downloadPromise;
 
   const downloadPath = await download.path();
@@ -55,4 +55,3 @@ export function assertJpeg(buffer: Buffer) {
     expect(buffer[i]).toBe(MAGIC.JPEG[i]);
   }
 }
-

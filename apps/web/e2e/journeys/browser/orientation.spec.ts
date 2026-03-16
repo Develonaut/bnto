@@ -63,7 +63,7 @@ test.describe("EXIF orientation — all image bntos @browser", () => {
 
     // Download and verify dimensions
     const downloadPromise = page.waitForEvent("download");
-    await outputFileCard.getByRole("button", { name: /download/i }).click();
+    await outputFileCard.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -92,7 +92,7 @@ test.describe("EXIF orientation — all image bntos @browser", () => {
     await expect(outputFileCard).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFileCard.getByRole("button", { name: /download/i }).click();
+    await outputFileCard.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -126,7 +126,7 @@ test.describe("EXIF orientation — all image bntos @browser", () => {
     await expect(outputFileCard).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFileCard.getByRole("button", { name: /download/i }).click();
+    await outputFileCard.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();

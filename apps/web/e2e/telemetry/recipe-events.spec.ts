@@ -76,7 +76,7 @@ test.describe("recipe telemetry events @browser", () => {
     // already be captured. If not present, it means auto-download
     // uses downloadAllResults directly (not handleDownloadAll).
     // The manual "Download All" button triggers the event.
-    const downloadAllBtn = page.getByRole("button", { name: /download all/i }).last();
+    const downloadAllBtn = page.locator('[data-testid="download-all-button"]');
 
     // Only assert manual download if the button is visible
     if (await downloadAllBtn.isVisible()) {

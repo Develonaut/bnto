@@ -11,6 +11,8 @@ import { dismissBetaDialog } from "../helpers/editor";
  * @browser — no Convex backend needed.
  */
 
+test.use({ reducedMotion: "reduce" });
+
 /** Navigate to editor, load a recipe, and open the Dev tab. */
 async function setupEditorWithDevTab(page: import("@playwright/test").Page) {
   await page.goto("/editor");
@@ -25,7 +27,7 @@ async function setupEditorWithDevTab(page: import("@playwright/test").Page) {
   await page.getByRole("tab", { name: "Dev" }).click();
 
   // Load a recipe so we have processing nodes
-  const recipeSelect = page.locator("text=Select recipe...").first();
+  const recipeSelect = page.locator('[data-testid="recipe-select"]');
   await recipeSelect.click();
   await page
     .getByRole("option", { name: /compress/i })
@@ -54,17 +56,12 @@ test.describe("node progress visualization @browser", () => {
   });
 
   test("forcing node status via DevTab updates data-state", async ({ page }) => {
-    // Find the per-node controls section
-    const perNodeSection = page.locator("text=Per-Node Controls").first();
-    await expect(perNodeSection).toBeVisible();
+    // Find the per-node controls section via data-testid
+    const perNodeControls = page.locator('[data-testid="per-node-controls"]');
+    await expect(perNodeControls).toBeVisible();
 
-    // Click the "pending" button on the first node
-    const firstNodeControl = page
-      .locator("text=Per-Node Controls")
-      .locator("..")
-      .locator("..")
-      .locator("[class*=border-border]")
-      .first();
+    // Click the "pending" button on the first node control
+    const firstNodeControl = perNodeControls.locator("[data-testid^='node-control-']").first();
     await firstNodeControl.getByRole("button", { name: "pending" }).click();
 
     // Verify a node card now has data-state="pending"
@@ -83,16 +80,11 @@ test.describe("node progress visualization @browser", () => {
   });
 
   test("forcing node status to active via DevTab shows active state", async ({ page }) => {
-    const perNodeSection = page.locator("text=Per-Node Controls").first();
-    await expect(perNodeSection).toBeVisible();
+    const perNodeControls = page.locator('[data-testid="per-node-controls"]');
+    await expect(perNodeControls).toBeVisible();
 
     // Find the first node's controls
-    const firstNodeControl = page
-      .locator("text=Per-Node Controls")
-      .locator("..")
-      .locator("..")
-      .locator("[class*=border-border]")
-      .first();
+    const firstNodeControl = perNodeControls.locator("[data-testid^='node-control-']").first();
 
     // Set status to active
     await firstNodeControl.getByRole("button", { name: "active" }).click();
@@ -108,15 +100,10 @@ test.describe("node progress visualization @browser", () => {
 
     // After forcing running, processing nodes should have execution state
     // Now use per-node controls to step through
-    const perNodeSection = page.locator("text=Per-Node Controls").first();
-    await expect(perNodeSection).toBeVisible();
+    const perNodeControls = page.locator('[data-testid="per-node-controls"]');
+    await expect(perNodeControls).toBeVisible();
 
-    const firstNodeControl = page
-      .locator("text=Per-Node Controls")
-      .locator("..")
-      .locator("..")
-      .locator("[class*=border-border]")
-      .first();
+    const firstNodeControl = perNodeControls.locator("[data-testid^='node-control-']").first();
 
     // Step: pending
     await firstNodeControl.getByRole("button", { name: "pending" }).click();

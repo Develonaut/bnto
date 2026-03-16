@@ -80,7 +80,7 @@ test.describe("pipeline smoke — all 6 bntos @browser", () => {
 
       // Download and verify filename pattern
       const downloadPromise = page.waitForEvent("download");
-      await outputFile.getByRole("button", { name: /download/i }).click();
+      await outputFile.locator('[data-testid="download-button"]').click();
       const download = await downloadPromise;
 
       expect(download.suggestedFilename()).toMatch(recipe.filenamePattern);

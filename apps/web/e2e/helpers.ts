@@ -7,15 +7,9 @@ import { expect } from "./fixtures";
 // Fixture directories
 // ---------------------------------------------------------------------------
 
-export const IMAGE_FIXTURES_DIR = path.resolve(
-  __dirname,
-  "../../../test-fixtures/images",
-);
+export const IMAGE_FIXTURES_DIR = path.resolve(__dirname, "../../../test-fixtures/images");
 
-export const CSV_FIXTURES_DIR = path.resolve(
-  __dirname,
-  "../../../test-fixtures/csv",
-);
+export const CSV_FIXTURES_DIR = path.resolve(__dirname, "../../../test-fixtures/csv");
 
 // ---------------------------------------------------------------------------
 // Magic byte constants
@@ -38,9 +32,7 @@ export const MAGIC = {
  */
 export async function navigateToRecipe(page: Page, slug: string, h1: string) {
   await page.goto(`/${slug}`);
-  await expect(
-    page.getByRole("heading", { name: h1 }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: h1 })).toBeVisible();
 }
 
 /**
@@ -60,9 +52,7 @@ export async function uploadFiles(page: Page, filePaths: string[]) {
   await fileInput.setInputFiles(filePaths);
 
   const count = filePaths.length;
-  await expect(
-    page.getByText(`${count} file${count === 1 ? "" : "s"} selected`),
-  ).toBeVisible();
+  await expect(page.getByText(`${count} file${count === 1 ? "" : "s"} selected`)).toBeVisible();
 
   const runButton = page.locator('[data-testid="run-button"]:visible');
   await expect(runButton).toBeEnabled();
@@ -103,14 +93,13 @@ export async function downloadAndVerify(
     maxSize?: number;
   },
 ) {
-  const { outputIndex = 0, filenamePattern, magicBytes, maxSize } =
-    options ?? {};
+  const { outputIndex = 0, filenamePattern, magicBytes, maxSize } = options ?? {};
 
   const outputFile = page.locator('[data-testid="output-file"]').nth(outputIndex);
   await expect(outputFile).toBeVisible();
 
   const downloadPromise = page.waitForEvent("download");
-  await outputFile.getByRole("button", { name: /download/i }).click();
+  await outputFile.locator('[data-testid="download-button"]').click();
   const download = await downloadPromise;
 
   if (filenamePattern) {
@@ -141,9 +130,7 @@ export async function downloadAndVerify(
  * Returns the downloaded file buffer.
  */
 export async function downloadAllAsZip(page: Page) {
-  const downloadAllBtn = page
-    .getByRole("button", { name: /download all/i })
-    .last();
+  const downloadAllBtn = page.locator('[data-testid="download-all-button"]');
   await expect(downloadAllBtn).toBeVisible();
 
   const downloadPromise = page.waitForEvent("download");

@@ -48,6 +48,7 @@ export function RecipeToolbar({
           disabled={isProcessing}
           onClick={onBack}
           aria-label={activePhase === 3 ? "Back to configure" : "Back to file selection"}
+          data-testid="back-button"
         >
           <ArrowLeftIcon className="size-4" />
         </Button>
@@ -63,6 +64,7 @@ export function RecipeToolbar({
               disabled={resolvedPhase !== "completed"}
               onClick={onDownloadAll}
               aria-label="Download all"
+              data-testid="toolbar-download-all"
             >
               <DownloadIcon className="size-4" />
             </Button>
@@ -95,6 +97,7 @@ export function RecipeToolbar({
             disabled={resolvedPhase !== "completed"}
             onClick={onDownloadAll}
             aria-label="Download all"
+            data-testid="toolbar-download-all"
           >
             <DownloadIcon className="size-4" />
           </Button>

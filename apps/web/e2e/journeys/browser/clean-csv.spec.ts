@@ -34,7 +34,7 @@ test.describe("clean-csv — browser execution @browser", () => {
 
     // Download and verify output is valid CSV text
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toMatch(/\.csv$/i);
@@ -72,7 +72,7 @@ test.describe("clean-csv — browser execution @browser", () => {
 
     // Download and verify all original data rows are preserved
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();

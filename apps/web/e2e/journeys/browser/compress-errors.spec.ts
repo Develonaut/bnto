@@ -38,7 +38,7 @@ test.describe("compress-images — error handling @browser", () => {
 
     // Page should still be functional — back button resets to configure phase
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
-    const backButton = page.locator('[data-testid="bnto-shell"] button').first();
+    const backButton = page.locator('[data-testid="back-button"]');
     await backButton.click();
     await expect(page.getByText("1 file selected")).toBeVisible();
     await expect(runButton).toHaveAttribute("data-phase", "idle");
@@ -73,7 +73,7 @@ test.describe("compress-images — error handling @browser", () => {
 
     // Back button resets to configure phase, ready to try different files
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
-    const backButton = page.locator('[data-testid="bnto-shell"] button').first();
+    const backButton = page.locator('[data-testid="back-button"]');
     await backButton.click();
     await expect(page.getByText("1 file selected")).toBeVisible();
     await expect(runButton).toHaveAttribute("data-phase", "idle");

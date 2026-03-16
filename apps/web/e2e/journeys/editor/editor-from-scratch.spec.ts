@@ -45,7 +45,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     await expect(outputFile).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -98,7 +98,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     await expect(outputFile).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.getByRole("button", { name: /download/i }).click();
+    await outputFile.locator('[data-testid="download-button"]').click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
