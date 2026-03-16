@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
 import { Slider } from "@bnto/ui";
 import type { CompressImagesConfig as Config } from "./types";
 
@@ -14,18 +15,21 @@ interface CompressImagesConfigProps {
   onChange: (config: Config) => void;
 }
 
-export function CompressImagesConfig({
-  value,
-  onChange,
-}: CompressImagesConfigProps) {
+export function CompressImagesConfig({ value, onChange }: CompressImagesConfigProps) {
+  const compressionValue = useMemo(() => [value.compression], [value.compression]);
+
+  const handleCompressionChange = useCallback(
+    ([compression]: number[]) =>
+      onChange({ ...value, compression: compression ?? value.compression }),
+    [onChange, value],
+  );
+
   return (
     <Slider
       label="Compression"
       aria-describedby="compress-help"
-      value={[value.compression]}
-      onValueChange={([compression]: number[]) =>
-        onChange({ ...value, compression: compression ?? value.compression })
-      }
+      value={compressionValue}
+      onValueChange={handleCompressionChange}
       min={1}
       max={100}
       presets={COMPRESSION_PRESETS}

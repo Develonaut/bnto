@@ -76,6 +76,11 @@ function Combobox({
     [value, onChange],
   );
 
+  const handleToggleOption = useCallback(
+    (optionValue: string) => () => toggleOption(optionValue),
+    [toggleOption],
+  );
+
   const handleRemoveMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -164,7 +169,7 @@ function Combobox({
                     <CommandItem
                       key={option.value}
                       value={option.value}
-                      onSelect={() => toggleOption(option.value)}
+                      onSelect={handleToggleOption(option.value)}
                       disabled={!selected && atMax}
                     >
                       <CheckIcon className={cn("size-4", selected ? "opacity-100" : "opacity-0")} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Button,
   Row,
@@ -96,6 +96,8 @@ function DevTab() {
 }
 
 function PhaseControls({ onForce }: { onForce: (p: ExecutionPhase) => void }) {
+  const handleForce = useCallback((phase: ExecutionPhase) => () => onForce(phase), [onForce]);
+
   return (
     <Stack className="gap-1.5">
       <Text size="xs" color="muted" weight="medium">
@@ -105,7 +107,7 @@ function PhaseControls({ onForce }: { onForce: (p: ExecutionPhase) => void }) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onForce("idle")}
+          onClick={handleForce("idle")}
           data-testid="dev-phase-idle"
         >
           Idle
@@ -113,7 +115,7 @@ function PhaseControls({ onForce }: { onForce: (p: ExecutionPhase) => void }) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onForce("running")}
+          onClick={handleForce("running")}
           data-testid="dev-phase-running"
         >
           Running
@@ -121,7 +123,7 @@ function PhaseControls({ onForce }: { onForce: (p: ExecutionPhase) => void }) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onForce("completed")}
+          onClick={handleForce("completed")}
           data-testid="dev-phase-completed"
         >
           Completed
@@ -129,7 +131,7 @@ function PhaseControls({ onForce }: { onForce: (p: ExecutionPhase) => void }) {
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => onForce("failed")}
+          onClick={handleForce("failed")}
           data-testid="dev-phase-failed"
         >
           Failed
@@ -146,6 +148,9 @@ function ProgressControl({
   progress: number;
   onForce: (p: number) => void;
 }) {
+  const handleValueChange = useCallback(([v]: number[]) => onForce(v), [onForce]);
+  const progressValue = useMemo(() => [progress], [progress]);
+
   return (
     <Stack className="gap-1.5">
       <Row className="justify-between">
@@ -156,7 +161,7 @@ function ProgressControl({
           {progress}%
         </Text>
       </Row>
-      <Slider value={[progress]} onValueChange={([v]) => onForce(v)} min={0} max={100} step={1} />
+      <Slider value={progressValue} onValueChange={handleValueChange} min={0} max={100} step={1} />
     </Stack>
   );
 }

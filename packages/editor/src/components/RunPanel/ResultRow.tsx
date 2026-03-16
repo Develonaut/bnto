@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { Button, DownloadIcon, ResultFileCard } from "@bnto/ui";
 import type { BrowserFileResult } from "@bnto/core";
 import { useFileResultProps } from "@bnto/core";
@@ -9,6 +10,10 @@ import { useEditor } from "../../context";
 function ResultRow({ result }: { result: BrowserFileResult }) {
   const editor = useEditor();
   const props = useFileResultProps(result);
+  const handleDownload = useCallback(
+    () => editor.execution.downloadResult(result),
+    [editor, result],
+  );
 
   return (
     <ResultFileCard
@@ -22,7 +27,7 @@ function ResultRow({ result }: { result: BrowserFileResult }) {
           variant="outline"
           size="sm"
           icon={<DownloadIcon />}
-          onClick={() => editor.execution.downloadResult(result)}
+          onClick={handleDownload}
           aria-label={`Download ${result.filename}`}
           data-testid="download-button"
         />
