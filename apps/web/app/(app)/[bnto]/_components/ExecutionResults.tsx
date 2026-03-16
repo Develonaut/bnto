@@ -31,9 +31,10 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
   const outputFiles = execution?.outputFiles ?? [];
   const hasOutputFiles = outputFiles.length > 0;
   const isCompleted = execution?.status === "completed";
-  const duration = execution?.completedAt && execution?.startedAt
-    ? Math.round((execution.completedAt - execution.startedAt) / 1000)
-    : null;
+  const duration =
+    execution?.completedAt && execution?.startedAt
+      ? Math.round((execution.completedAt - execution.startedAt) / 1000)
+      : null;
 
   useEffect(() => {
     if (isCompleted && hasOutputFiles) {
@@ -52,14 +53,11 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
         <Row className="gap-2">
           <CheckCircle2Icon className="size-5 shrink-0 text-success" />
           <p className="text-sm font-medium text-foreground">
-            {outputFiles.length}{" "}
-            {outputFiles.length === 1 ? "file" : "files"} ready
+            {outputFiles.length} {outputFiles.length === 1 ? "file" : "files"} ready
           </p>
         </Row>
         {duration !== null && (
-          <p className="text-xs text-muted-foreground">
-            Completed in {duration}s
-          </p>
+          <p className="text-xs text-muted-foreground">Completed in {duration}s</p>
         )}
       </Row>
 
@@ -73,12 +71,8 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
               data-testid="output-file"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {file.name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatFileSize(file.sizeBytes)}
-                </p>
+                <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
+                <p className="text-xs text-muted-foreground">{formatFileSize(file.sizeBytes)}</p>
               </div>
 
               {downloadUrl ? (
@@ -87,6 +81,7 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
                   size="icon"
                   onClick={() => downloadFile(downloadUrl)}
                   aria-label={`Download ${file.name}`}
+                  data-testid="download-button"
                 >
                   <DownloadIcon className="size-4" />
                 </Button>

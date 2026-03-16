@@ -12,6 +12,8 @@ interface Draft {
   definition: Definition;
   metadata: RecipeMetadata;
   savedAt: number;
+  /** When last synced to Convex. null = never synced. */
+  syncedAt: number | null;
 }
 
 export type { Draft };

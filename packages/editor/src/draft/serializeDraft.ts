@@ -9,11 +9,16 @@ import type { Definition } from "@bnto/nodes";
 import type { RecipeMetadata } from "../store/types";
 import type { Draft } from "./draftTypes";
 
-function serializeDraft(definition: Definition, metadata: RecipeMetadata): Draft {
+function serializeDraft(
+  definition: Definition,
+  metadata: RecipeMetadata,
+  syncedAt?: number | null,
+): Draft {
   return {
     definition,
     metadata,
     savedAt: Date.now(),
+    syncedAt: syncedAt ?? null,
   };
 }
 

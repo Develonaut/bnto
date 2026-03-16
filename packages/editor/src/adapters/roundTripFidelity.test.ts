@@ -23,15 +23,18 @@ import {
   RECIPES,
 } from "@bnto/nodes";
 import type { Definition } from "@bnto/nodes";
+import type { RecipeMetadata } from "../store/types";
+
+function metaOf(def: Definition): RecipeMetadata {
+  return { id: def.id, name: def.name, type: def.type, version: def.version, cloudId: null };
+}
 
 /** Strip positions from a definition tree for comparison (positions are intentionally lossy). */
 function stripPositions(def: Definition): Omit<Definition, "position"> & { position?: unknown } {
   const { position: _, ...rest } = def;
   return {
     ...rest,
-    ...(rest.nodes
-      ? { nodes: rest.nodes.map(stripPositions) as Definition[] }
-      : {}),
+    ...(rest.nodes ? { nodes: rest.nodes.map(stripPositions) as Definition[] } : {}),
   };
 }
 
@@ -40,7 +43,7 @@ describe("round-trip fidelity", () => {
     it("preserves root identity fields", () => {
       const original = createBlankDefinition();
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       expect(exported.id).toBe(original.id);
       expect(exported.name).toBe(original.name);
@@ -51,7 +54,7 @@ describe("round-trip fidelity", () => {
     it("preserves root metadata", () => {
       const original = createBlankDefinition();
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       expect(exported.metadata).toEqual(original.metadata);
     });
@@ -59,7 +62,7 @@ describe("round-trip fidelity", () => {
     it("preserves root input and output ports", () => {
       const original = createBlankDefinition();
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       expect(exported.inputPorts).toEqual(original.inputPorts);
       expect(exported.outputPorts).toEqual(original.outputPorts);
@@ -68,7 +71,7 @@ describe("round-trip fidelity", () => {
     it("preserves child node count", () => {
       const original = createBlankDefinition();
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       expect(exported.nodes!.length).toBe(original.nodes!.length);
     });
@@ -76,7 +79,7 @@ describe("round-trip fidelity", () => {
     it("preserves I/O node fields through round-trip", () => {
       const original = createBlankDefinition();
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       for (const origChild of original.nodes!) {
         const exportedChild = exported.nodes!.find((n) => n.id === origChild.id)!;
@@ -100,7 +103,7 @@ describe("round-trip fidelity", () => {
       def = addNode(def, "file-system").definition;
 
       const graph = definitionToGraph(def);
-      const exported = rfNodesToDefinition(graph.nodes, def, graph.configs, def);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(def), graph.configs, def);
 
       expect(exported.nodes!.length).toBe(def.nodes!.length);
 
@@ -122,7 +125,7 @@ describe("round-trip fidelity", () => {
       def = addNode(def, "file-system").definition;
 
       const graph = definitionToGraph(def);
-      const exported = rfNodesToDefinition(graph.nodes, def, graph.configs, def);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(def), graph.configs, def);
 
       const originalIds = def.nodes!.map((n) => n.id);
       const exportedIds = exported.nodes!.map((n) => n.id);
@@ -134,7 +137,7 @@ describe("round-trip fidelity", () => {
     it("round-trips compressImages definition (with container children)", () => {
       const original = compressImages.definition;
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       expect(stripPositions(exported)).toEqual(stripPositions(original));
     });
@@ -142,7 +145,7 @@ describe("round-trip fidelity", () => {
     it("round-trips cleanCsv definition", () => {
       const original = cleanCsv.definition;
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       expect(stripPositions(exported)).toEqual(stripPositions(original));
     });
@@ -150,7 +153,7 @@ describe("round-trip fidelity", () => {
     it("round-trips renameFiles definition", () => {
       const original = renameFiles.definition;
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       expect(stripPositions(exported)).toEqual(stripPositions(original));
     });
@@ -159,7 +162,12 @@ describe("round-trip fidelity", () => {
       for (const recipe of RECIPES) {
         const original = recipe.definition;
         const graph = definitionToGraph(original);
-        const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+        const exported = rfNodesToDefinition(
+          graph.nodes,
+          metaOf(original),
+          graph.configs,
+          original,
+        );
 
         expect(stripPositions(exported)).toEqual(stripPositions(original));
       }
@@ -173,7 +181,7 @@ describe("round-trip fidelity", () => {
       expect(loopNode.nodes!.length).toBeGreaterThan(0);
 
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       const exportedLoop = exported.nodes!.find((n) => n.id === loopNode.id)!;
       expect(exportedLoop.nodes).toEqual(loopNode.nodes);
@@ -184,7 +192,7 @@ describe("round-trip fidelity", () => {
       const loopNode = original.nodes!.find((n) => n.type === "loop")!;
 
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       const exportedLoop = exported.nodes!.find((n) => n.id === loopNode.id)!;
       expect(exportedLoop.edges).toEqual(loopNode.edges);
@@ -195,7 +203,7 @@ describe("round-trip fidelity", () => {
       expect(original.edges!.length).toBeGreaterThan(0);
 
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       expect(exported.edges).toEqual(original.edges);
     });
@@ -207,7 +215,7 @@ describe("round-trip fidelity", () => {
       expect(original.metadata.description).toBeTruthy();
 
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       expect(exported.metadata).toEqual(original.metadata);
     });
@@ -219,7 +227,7 @@ describe("round-trip fidelity", () => {
       expect(cleanNode.outputPorts.length).toBeGreaterThan(0);
 
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       const exportedClean = exported.nodes!.find((n) => n.id === cleanNode.id)!;
       expect(exportedClean.inputPorts).toEqual(cleanNode.inputPorts);
@@ -242,7 +250,12 @@ describe("round-trip fidelity", () => {
       };
 
       const graph = definitionToGraph(withDisplayName);
-      const exported = rfNodesToDefinition(graph.nodes, withDisplayName, graph.configs, withDisplayName);
+      const exported = rfNodesToDefinition(
+        graph.nodes,
+        metaOf(withDisplayName),
+        graph.configs,
+        withDisplayName,
+      );
 
       const exportedImage = exported.nodes!.find((n) => n.id === imageNode.id)!;
       expect(exportedImage.metadata).toEqual({ customData: { displayName: "My Compressor" } });
@@ -253,7 +266,7 @@ describe("round-trip fidelity", () => {
     it("uses slot-based positions (not original definition positions)", () => {
       const original = compressImages.definition;
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       // Positions come from SLOTS grid, not the original definition
       for (const exportedChild of exported.nodes!) {
@@ -267,7 +280,7 @@ describe("round-trip fidelity", () => {
     it("root position is always (0,0)", () => {
       const original = compressImages.definition;
       const graph = definitionToGraph(original);
-      const exported = rfNodesToDefinition(graph.nodes, original, graph.configs, original);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(original), graph.configs, original);
 
       expect(exported.position).toEqual({ x: 0, y: 0 });
     });
@@ -279,11 +292,21 @@ describe("round-trip fidelity", () => {
 
       // First round-trip
       const graph1 = definitionToGraph(original);
-      const exported1 = rfNodesToDefinition(graph1.nodes, original, graph1.configs, original);
+      const exported1 = rfNodesToDefinition(
+        graph1.nodes,
+        metaOf(original),
+        graph1.configs,
+        original,
+      );
 
       // Second round-trip (using first export as the new source)
       const graph2 = definitionToGraph(exported1);
-      const exported2 = rfNodesToDefinition(graph2.nodes, exported1, graph2.configs, exported1);
+      const exported2 = rfNodesToDefinition(
+        graph2.nodes,
+        metaOf(exported1),
+        graph2.configs,
+        exported1,
+      );
 
       // After the first round-trip adjusts positions, subsequent round-trips
       // should be fully stable (positions are already slot-based)
@@ -295,10 +318,20 @@ describe("round-trip fidelity", () => {
         const original = recipe.definition;
 
         const graph1 = definitionToGraph(original);
-        const exported1 = rfNodesToDefinition(graph1.nodes, original, graph1.configs, original);
+        const exported1 = rfNodesToDefinition(
+          graph1.nodes,
+          metaOf(original),
+          graph1.configs,
+          original,
+        );
 
         const graph2 = definitionToGraph(exported1);
-        const exported2 = rfNodesToDefinition(graph2.nodes, exported1, graph2.configs, exported1);
+        const exported2 = rfNodesToDefinition(
+          graph2.nodes,
+          metaOf(exported1),
+          graph2.configs,
+          exported1,
+        );
 
         expect(exported2).toEqual(exported1);
       }

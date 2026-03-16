@@ -31,8 +31,8 @@ interface CreateReactEditorResult {
   storeApi: StoreApi<EditorStore>;
 }
 
-function createReactEditor(definition?: Definition): CreateReactEditorResult {
-  const base = createEditor(definition);
+function createReactEditor(definition?: Definition, cloudId?: string): CreateReactEditorResult {
+  const base = createEditor(definition, cloudId);
   const storeApi = base._storeApi;
 
   const instance: ReactEditorInstance = {

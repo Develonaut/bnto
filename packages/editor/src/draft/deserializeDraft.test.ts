@@ -4,13 +4,25 @@ import { deserializeDraft } from "./deserializeDraft";
 describe("deserializeDraft", () => {
   const validDraft = {
     definition: { id: "test", type: "image", name: "Test", version: "1.0", nodes: [] },
-    metadata: { id: "test", name: "Test", type: "image", version: "1.0" },
+    metadata: { id: "test", name: "Test", type: "image", version: "1.0", cloudId: null },
     savedAt: 1710000000000,
+    syncedAt: null,
   };
 
   it("parses valid JSON into a Draft", () => {
     const result = deserializeDraft(JSON.stringify(validDraft));
     expect(result).toEqual(validDraft);
+  });
+
+  it("defaults syncedAt to null for legacy drafts", () => {
+    const legacy = {
+      definition: validDraft.definition,
+      metadata: validDraft.metadata,
+      savedAt: validDraft.savedAt,
+    };
+    const result = deserializeDraft(JSON.stringify(legacy));
+    expect(result).not.toBeNull();
+    expect(result!.syncedAt).toBeNull();
   });
 
   it("returns null for empty string", () => {

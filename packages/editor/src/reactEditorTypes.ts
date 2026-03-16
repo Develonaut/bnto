@@ -46,6 +46,8 @@ interface DefinitionHookResult {
   isDirty: boolean;
   validationErrors: ValidationError[];
   lastSavedAt: number | null;
+  syncedAt: number | null;
+  isSyncing: boolean;
 }
 
 interface ExecutionHookResult {

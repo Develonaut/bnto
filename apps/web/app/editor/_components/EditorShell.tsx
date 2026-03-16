@@ -48,7 +48,7 @@ export function EditorShell() {
         <EditorBetaDialog />
         <SavedRecipeLoader recipeId={recipeId}>
           {(definition) => (
-            <EditorRoot definition={definition}>
+            <EditorRoot definition={definition} cloudId={recipeId}>
               <EditorEffects />
               <EditorCanvas>
                 <EditorToolbar />

@@ -1,6 +1,10 @@
 /**
  * draftStorage — localStorage CRUD for editor drafts.
  *
+ * Per-recipe keys: `bnto_editor_draft:<recipeId>`.
+ * A `_latest` index tracks the most recently saved recipe ID
+ * so hydration can find the right draft without scanning.
+ *
  * Accepts a Storage interface so tests can inject a mock.
  * Returns null for corrupted or missing data.
  */
@@ -8,20 +12,35 @@
 import type { Draft } from "./draftTypes";
 import { deserializeDraft } from "./deserializeDraft";
 
-const DRAFT_KEY = "bnto_editor_draft";
+const DRAFT_KEY_PREFIX = "bnto_editor_draft";
 
-function saveDraft(storage: Storage, draft: Draft): void {
-  storage.setItem(DRAFT_KEY, JSON.stringify(draft));
+/** Build a per-recipe draft key. */
+function draftKey(recipeId: string): string {
+  return `${DRAFT_KEY_PREFIX}:${recipeId}`;
 }
 
-function loadDraft(storage: Storage): Draft | null {
-  const raw = storage.getItem(DRAFT_KEY);
+function saveDraft(storage: Storage, draft: Draft): void {
+  const key = draftKey(draft.metadata.id);
+  storage.setItem(key, JSON.stringify(draft));
+  storage.setItem(`${DRAFT_KEY_PREFIX}:_latest`, draft.metadata.id);
+}
+
+function loadDraft(storage: Storage, recipeId?: string): Draft | null {
+  const id = recipeId ?? storage.getItem(`${DRAFT_KEY_PREFIX}:_latest`);
+  if (!id) return null;
+  const raw = storage.getItem(draftKey(id));
   if (!raw) return null;
   return deserializeDraft(raw);
 }
 
-function clearDraft(storage: Storage): void {
-  storage.removeItem(DRAFT_KEY);
+function clearDraft(storage: Storage, recipeId?: string): void {
+  if (recipeId) {
+    storage.removeItem(draftKey(recipeId));
+  } else {
+    const id = storage.getItem(`${DRAFT_KEY_PREFIX}:_latest`);
+    if (id) storage.removeItem(draftKey(id));
+  }
+  storage.removeItem(`${DRAFT_KEY_PREFIX}:_latest`);
 }
 
-export { DRAFT_KEY, saveDraft, loadDraft, clearDraft };
+export { DRAFT_KEY_PREFIX, draftKey, saveDraft, loadDraft, clearDraft };

@@ -21,6 +21,8 @@ export function createBlank(): Partial<EditorState> {
     recipeMetadata: metadataFromBlank(),
     isDirty: false,
     lastSavedAt: null,
+    syncedAt: null,
+    isSyncing: false,
     validationErrors: [],
     executionState: {},
     nodeProgress: {},

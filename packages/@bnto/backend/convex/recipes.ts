@@ -46,9 +46,10 @@ export const getByName = query({
   },
 });
 
-/** Create or update a recipe. */
+/** Create or update a recipe. When `id` is provided, patches by ID with ownership check. */
 export const save = mutation({
   args: {
+    id: v.optional(v.id("recipes")),
     name: v.string(),
     definition: v.any(),
     isPublic: v.optional(v.boolean()),
@@ -57,16 +58,34 @@ export const save = mutation({
     const userId = await getAppUserId(ctx);
     if (userId === null) throw new ConvexError("Not authenticated");
 
-    const existing = await ctx.db
-      .query("recipes")
-      .withIndex("by_user_name", (q) => q.eq("userId", userId).eq("name", args.name))
-      .unique();
-
     const now = Date.now();
 
     // Extract format version from the definition if present
     const formatVersion =
       typeof args.definition?.version === "string" ? args.definition.version : undefined;
+
+    // ID-based update — direct patch with ownership verification
+    if (args.id) {
+      const existing = await ctx.db.get(args.id);
+      if (existing === null || existing.userId !== userId) {
+        throw new ConvexError("Recipe not found");
+      }
+      await ctx.db.patch(args.id, {
+        name: args.name,
+        definition: args.definition,
+        isPublic: args.isPublic ?? existing.isPublic,
+        version: existing.version + 1,
+        formatVersion: formatVersion ?? existing.formatVersion,
+        updatedAt: now,
+      });
+      return args.id;
+    }
+
+    // Name-based upsert — find existing by user + name
+    const existing = await ctx.db
+      .query("recipes")
+      .withIndex("by_user_name", (q) => q.eq("userId", userId).eq("name", args.name))
+      .unique();
 
     if (existing !== null) {
       await ctx.db.patch(existing._id, {

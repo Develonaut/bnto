@@ -19,7 +19,9 @@ function deserializeDraft(json: string): Draft | null {
     if (!obj.metadata || typeof obj.metadata !== "object") return null;
     if (typeof obj.savedAt !== "number") return null;
 
-    return parsed as Draft;
+    // Backward compat: old drafts lack syncedAt
+    const syncedAt = typeof obj.syncedAt === "number" ? obj.syncedAt : null;
+    return { ...(parsed as Draft), syncedAt };
   } catch {
     return null;
   }

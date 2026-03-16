@@ -141,14 +141,17 @@ describe("createEditorStore", () => {
   // --- setRecipeMetadata ---
 
   describe("setRecipeMetadata", () => {
-    it("updates recipe metadata", () => {
+    it("updates recipe metadata and marks dirty", () => {
+      expect(state(store).isDirty).toBe(false);
       state(store).setRecipeMetadata({
         id: "new-id",
         name: "New Name",
         type: "group",
         version: "2.0.0",
+        cloudId: null,
       });
       expect(state(store).recipeMetadata.name).toBe("New Name");
+      expect(state(store).isDirty).toBe(true);
     });
   });
 

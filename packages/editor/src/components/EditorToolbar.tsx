@@ -49,7 +49,7 @@ function EditorToolbar() {
   const { toggle: toggleRunPanel } = editor.panels.usePanels("run");
   const { isOpen: helpOpen, open: openHelp, close: closeHelp } = editor.panels.usePanels("help");
   const { canUndo, canRedo } = editor.history.useHistory();
-  const { isDirty, validationErrors, lastSavedAt, recipeMetadata } =
+  const { isDirty, validationErrors, lastSavedAt, recipeMetadata, syncedAt, isSyncing } =
     editor.definition.useDefinition();
   const { phase } = editor.execution.useExecution();
   const { nodes } = editor.nodes.useNodes();
@@ -60,7 +60,12 @@ function EditorToolbar() {
 
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const lastSavedLabel = formatLastSaved(lastSavedAt);
+  const lastSavedLabel = formatLastSaved({
+    lastSavedAt,
+    isSyncing,
+    cloudId: recipeMetadata.cloudId,
+    syncedAt,
+  });
 
   const handleReset = useCallback(() => {
     const { definition } = editor.getState();

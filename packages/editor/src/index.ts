@@ -71,8 +71,9 @@ export type { UseAutosaveOptions } from "./hooks/useAutosave";
 export type { Draft } from "./draft/draftTypes";
 export { deserializeDraft } from "./draft/deserializeDraft";
 export { serializeDraft } from "./draft/serializeDraft";
-export { DRAFT_KEY, saveDraft, loadDraft, clearDraft } from "./draft/draftStorage";
+export { DRAFT_KEY_PREFIX, draftKey, saveDraft, loadDraft, clearDraft } from "./draft/draftStorage";
 export { formatLastSaved } from "./draft/formatLastSaved";
+export type { FormatLastSavedOptions } from "./draft/formatLastSaved";
 
 // --- Internal hooks (rendering pipeline) ---
 

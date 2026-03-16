@@ -16,11 +16,12 @@ import type { EditorContextValue } from "./context";
 
 interface EditorProviderProps {
   definition?: Definition;
+  cloudId?: string;
   children: ReactNode;
 }
 
-function EditorProvider({ definition, children }: EditorProviderProps) {
-  const [ctx] = useState<EditorContextValue>(() => createReactEditor(definition));
+function EditorProvider({ definition, cloudId, children }: EditorProviderProps) {
+  const [ctx] = useState<EditorContextValue>(() => createReactEditor(definition, cloudId));
 
   return (
     <EditorContext.Provider value={ctx}>

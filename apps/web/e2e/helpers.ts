@@ -130,7 +130,7 @@ export async function downloadAndVerify(
  * Returns the downloaded file buffer.
  */
 export async function downloadAllAsZip(page: Page) {
-  const downloadAllBtn = page.locator('[data-testid="download-all-button"]');
+  const downloadAllBtn = page.locator('[data-testid="download-all-button"]:visible');
   await expect(downloadAllBtn).toBeVisible();
 
   const downloadPromise = page.waitForEvent("download");

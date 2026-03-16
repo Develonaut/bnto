@@ -26,8 +26,8 @@ import { autoOpenConfig, autoCloseConfig, closeSameSideSiblings } from "./panelH
 // Store factory
 // ---------------------------------------------------------------------------
 
-function createEditorStore(definition?: Definition) {
-  const initial = resolveInitialState(definition);
+function createEditorStore(definition?: Definition, cloudId?: string) {
+  const initial = resolveInitialState(definition, cloudId);
 
   const store = createEnhancedStore<EditorStore>()((set, get) => ({
     // --- Initial state ---
@@ -52,6 +52,8 @@ function createEditorStore(definition?: Definition) {
       help: false,
     },
     lastSavedAt: null,
+    syncedAt: null,
+    isSyncing: false,
     executionPhase: "idle",
     executionResults: [],
     executionErrors: [],
@@ -254,6 +256,14 @@ function createEditorStore(definition?: Definition) {
       set({ lastSavedAt: ts });
     },
 
+    setSyncedAt: (ts) => {
+      set({ syncedAt: ts });
+    },
+
+    setIsSyncing: (syncing) => {
+      set({ isSyncing: syncing });
+    },
+
     // --- Execution lifecycle ---
 
     runExecution: async (files) => {
@@ -309,7 +319,7 @@ function createEditorStore(definition?: Definition) {
     },
 
     setRecipeMetadata: (newMetadata) => {
-      set({ recipeMetadata: newMetadata });
+      set({ recipeMetadata: newMetadata, isDirty: true });
     },
 
     resetHistory: () => {

@@ -37,6 +37,8 @@ export function loadDefinition(def: Definition): Partial<EditorState> {
     recipeMetadata: metadataFromDefinition(def),
     isDirty: false,
     lastSavedAt: null,
+    syncedAt: null,
+    isSyncing: false,
     validationErrors: validateDefinition(def),
     executionState: {},
     nodeProgress: {},

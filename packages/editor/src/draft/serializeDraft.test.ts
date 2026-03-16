@@ -17,6 +17,7 @@ describe("serializeDraft", () => {
     name: "Test Recipe",
     type: "image",
     version: "1.0",
+    cloudId: null,
   };
 
   it("returns a Draft with definition, metadata, and timestamp", () => {
@@ -27,6 +28,7 @@ describe("serializeDraft", () => {
     expect(result.definition).toBe(definition);
     expect(result.metadata).toBe(metadata);
     expect(result.savedAt).toBe(1710000000000);
+    expect(result.syncedAt).toBeNull();
 
     vi.restoreAllMocks();
   });
@@ -38,5 +40,15 @@ describe("serializeDraft", () => {
 
     expect(result.savedAt).toBeGreaterThanOrEqual(before);
     expect(result.savedAt).toBeLessThanOrEqual(after);
+  });
+
+  it("preserves syncedAt when provided", () => {
+    const result = serializeDraft(definition, metadata, 1710000000000);
+    expect(result.syncedAt).toBe(1710000000000);
+  });
+
+  it("defaults syncedAt to null when omitted", () => {
+    const result = serializeDraft(definition, metadata);
+    expect(result.syncedAt).toBeNull();
   });
 });

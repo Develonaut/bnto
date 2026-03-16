@@ -1053,6 +1053,10 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
 **Priority: Triage.** OpenRecipeDialog, HelpDialog, and any other dialogs that compose `DialogHeader`/`DialogFooter` without `DialogBody` should be updated to use the standard `DialogHeader`/`DialogBody`/`DialogFooter` composition for consistent spacing. `RecipeDialog` already follows the pattern — backport to the rest.
 
+### Triage: Adopt a form state management library
+
+**Priority: Triage.** Evaluate and adopt a hook-based or agnostic form library to replace scattered `useState` patterns for form state. Must be actively maintained, performant, and composable via hooks. Formik is the spiritual predecessor but unmaintained — candidates include React Hook Form, TanStack Form, or similar. Goal: standardized form state management with validation, error handling, and field composition that fits the project's hook-first architecture.
+
 ---
 
 ## Reference

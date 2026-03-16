@@ -49,7 +49,7 @@ function useAutosave({ onSave, onClear }: UseAutosaveOptions) {
         debounced.schedule(() => {
           const current = editor.getState();
           const definition = editor.definition.exportAsDefinition();
-          const draft = serializeDraft(definition, current.recipeMetadata);
+          const draft = serializeDraft(definition, current.recipeMetadata, current.syncedAt);
 
           onSaveRef.current(draft);
           editor.definition.setLastSavedAt(draft.savedAt);

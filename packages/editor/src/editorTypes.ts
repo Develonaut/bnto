@@ -60,6 +60,8 @@ interface DefinitionService {
   markDirty(): void;
   resetDirty(): void;
   setLastSavedAt(ts: number | null): void;
+  setSyncedAt(ts: number | null): void;
+  setIsSyncing(syncing: boolean): void;
   revalidate(): void;
   exportAsDefinition(): Definition;
 }
