@@ -74,6 +74,7 @@ blob-report/
 
 # Lighthouse CI
 .lighthouseci/
+lighthouserc.json
 
 # Convex (keep _generated/ checked in — needed for CI/CD builds)
 .vercel

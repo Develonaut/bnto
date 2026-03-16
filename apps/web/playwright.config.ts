@@ -3,12 +3,13 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Playwright E2E test configuration.
  *
- * Tests always run against a local dev server:
- * - Default: port 4000 (your local `task dev`)
- * - Agents: set E2E_PORT=4001 to avoid colliding with a running dev server
- * - Playwright starts its own Next.js instance if no server is running
+ * Three modes:
+ * 1. Remote (CI against Vercel preview): set PLAYWRIGHT_BASE_URL — no local server started
+ * 2. Isolated (agents): set E2E_PORT=4001 — starts own Next.js on that port
+ * 3. Default: port 4000 — reuses your local `task dev`
  */
 
+const remoteUrl = process.env.PLAYWRIGHT_BASE_URL;
 const port = Number(process.env.E2E_PORT ?? 4000);
 const isolated = port !== 4000;
 
@@ -27,7 +28,7 @@ export default defineConfig({
     },
   },
   use: {
-    baseURL: `http://localhost:${port}`,
+    baseURL: remoteUrl || `http://localhost:${port}`,
     trace: "on-first-retry",
     contextOptions: { reducedMotion: "reduce" },
   },
@@ -37,12 +38,17 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  webServer: {
-    command: isolated
-      ? `NEXT_DIST_DIR=.next-e2e npx next dev --port ${port}`
-      : `pnpm turbo run dev`,
-    url: `http://localhost:${port}`,
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  // Disable webServer when testing against a remote URL (e.g. Vercel preview in CI)
+  ...(remoteUrl
+    ? {}
+    : {
+        webServer: {
+          command: isolated
+            ? `NEXT_DIST_DIR=.next-e2e npx next dev --port ${port}`
+            : `pnpm turbo run dev`,
+          url: `http://localhost:${port}`,
+          reuseExistingServer: true,
+          timeout: 120_000,
+        },
+      }),
 });

@@ -34,6 +34,7 @@
 | Environment variables          | [environment-variables.md](.claude/environment-variables.md)            |
 | Expression input UX            | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)       |
 | Config panel controls          | [config-controls.md](.claude/strategy/config-controls.md)               |
+| Releases & versioning          | [releases.md](.claude/rules/releases.md)                                |
 
 ---
 

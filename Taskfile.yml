@@ -66,6 +66,7 @@ tasks:
   seo:audit:
     desc: Run Lighthouse CI audit locally against all public routes
     cmds:
+      - npx tsx scripts/generate-lighthouserc.ts --with-server
       - pnpm --filter @bnto/web build
       - pnpm --filter @bnto/web exec lhci autorun --config=../../lighthouserc.json --collect.numberOfRuns=1
 
@@ -186,6 +187,24 @@ tasks:
     desc: Prune Turbo cache entries older than 7 days
     cmds:
       - find .turbo -type f -mtime +7 -delete 2>/dev/null; find .turbo -type d -empty -delete 2>/dev/null; echo "Pruned Turbo cache (entries older than 7 days)"
+
+  # Release
+  release:tag:
+    desc: "Create a release tag on main (e.g., task release:tag -- v1.0.0)"
+    cmds:
+      - |
+        TAG="{{.CLI_ARGS}}"
+        if [ -z "$TAG" ]; then
+          echo "Usage: task release:tag -- v1.0.0"
+          exit 1
+        fi
+        echo "Tagging main as $TAG..."
+        git checkout main
+        git pull origin main
+        git tag "$TAG"
+        git push origin "$TAG"
+        echo "Tag $TAG pushed. Release workflow will start shortly."
+        echo "Watch progress: https://github.com/bntoio/bnto/actions"
 
   # Cross-cutting
   build:all:

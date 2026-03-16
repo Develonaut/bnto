@@ -34,7 +34,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **Cloud infrastructure:** R2 file transit — ready for M4 (server technology TBD)
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
-- **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), automatic Convex production deploy on merge to main, Lighthouse CI on PRs, PostHog telemetry wired
+- **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), automatic Convex production deploy on merge to main, Lighthouse CI on PRs, tag-triggered release pipeline (Vercel preview → E2E → Lighthouse → GitHub Release), PostHog telemetry wired
 - **Packages:** `@bnto/core`, `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/ui`, `@bnto/editor`
 
 ---
@@ -647,17 +647,18 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 - [ ] `apps/web` — Add `NEXT_PUBLIC_APP_VERSION` to build env (Vercel env var or `package.json` read)
 - [ ] `apps/web` — E2E test: trigger error, verify dialog renders with Report/Try Again/Go Home buttons
 
-### Infra: Tag-Based Release Pipeline (GitHub Actions + Vercel)
+### ~~Infra: Tag-Based Release Pipeline (GitHub Actions + Vercel)~~ — DONE
 
-**Priority: Medium.** Automated release workflow: tag a commit on `main` → GitHub Action builds a Vercel preview → full test suite (unit + E2E) runs against the live preview URL → green = ready to promote to production. Currently deploys are fully manual (`vercel --prod` or MCP tool).
+Delivered via `infra/release-pipeline` branch. Tag-triggered workflow (`release.yml`): CI gate → Vercel preview → E2E tests → Lighthouse → GitHub Release. Playwright config parameterized for remote URLs. Lighthouse config now auto-generated from recipe registry. See [releases.md](rules/releases.md).
 
-- [ ] `infra` — Create GitHub Actions workflow triggered by git tags (`v*` or `release-*`)
-- [ ] `infra` — Workflow step: build Vercel preview deployment via CLI, capture preview URL
-- [ ] `infra` — Workflow step: run Playwright E2E tests against the preview URL (`baseURL` override)
-- [ ] `infra` — Workflow step: run unit/integration tests (`task ui:test`, `task wasm:test:unit`)
-- [ ] `infra` — On all-green: notify (GitHub comment/Slack) with preview URL + "ready to promote" status
-- [ ] `infra` — Optional: auto-promote to production if all checks pass, or require manual promotion via Vercel dashboard
-- [ ] `infra` — Add `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` to GitHub repo secrets
+- [x] `infra` — Create GitHub Actions workflow triggered by git tags (`v*.*.*`)
+- [x] `infra` — Workflow step: build Vercel preview deployment via CLI, capture preview URL
+- [x] `infra` — Workflow step: run Playwright E2E tests against the preview URL (`baseURL` override)
+- [x] `infra` — Workflow step: run unit/integration tests (full CI gate — Rust + TypeScript)
+- [x] `infra` — Workflow step: run Lighthouse CI against preview URL
+- [x] `infra` — On all-green: create GitHub Release (pre-release for beta/rc tags)
+- [x] `infra` — Add `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` to GitHub repo secrets (documented)
+- [x] `infra` — Dynamic Lighthouse config generator (`scripts/generate-lighthouserc.ts`) — replaces hardcoded `lighthouserc.json`
 
 ### UX: Unified Popup/FloatingSurface Primitive
 
@@ -977,9 +978,9 @@ Delivered in Sprint 6 Wave 5. Inline handlers extracted to named `handleOnX` fun
 
 ---
 
-### Triage: Release branch pipeline with Vercel preview E2E gate
+### ~~Triage: Release branch pipeline with Vercel preview E2E gate~~ — DONE (subsumed by Tag-Based Release Pipeline)
 
-**Priority: Triage.** Set up release branches that cut from main with a CI pipeline running the full test suite (Rust + TS + E2E) against the Vercel preview environment. All checks should be hard blockers; the actual release/deploy is triggered manually after green.
+Replaced by tag-triggered approach (no release branches needed). See "Infra: Tag-Based Release Pipeline" above.
 
 ---
 
@@ -1062,6 +1063,37 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 ### Triage: Adopt a form state management library
 
 **Priority: Triage.** Evaluate and adopt a hook-based or agnostic form library to replace scattered `useState` patterns for form state. Must be actively maintained, performant, and composable via hooks. Formik is the spiritual predecessor but unmaintained — candidates include React Hook Form, TanStack Form, or similar. Goal: standardized form state management with validation, error handling, and field composition that fits the project's hook-first architecture.
+
+---
+
+### Infra: Auto-Promote Release to Production
+
+**Priority: Low.** After release-gate passes, auto-run `vercel promote` to make the preview URL production. Currently promotion is manual (Vercel dashboard or `vercel --prod`). Requires `VERCEL_TOKEN` secret (already set up).
+
+- [ ] `infra` — Add optional `promote-production` job gated by environment protection rule
+- [ ] `infra` — `vercel promote <deployment-url> --token=...` to shift production traffic
+
+### Infra: Conventional Commits + Auto-Changelog
+
+**Priority: Medium.** Enforce `feat:`, `fix:`, `BREAKING CHANGE:` commit format. Auto-generate `CHANGELOG.md` from commit history on release tags. Enables semantic version bumping.
+
+- [ ] `infra` — Add `commitlint` + `@commitlint/config-conventional` to pre-commit hooks
+- [ ] `infra` — Add changelog generation step to `release.yml`
+- [ ] `infra` — Include changelog in GitHub Release body
+
+### Infra: Production Deploy Protection (GitHub Environments)
+
+**Priority: Medium.** Require manual approval in GitHub Actions before promoting a release to production. Uses GitHub's environment protection rules.
+
+- [ ] `infra` — Create `production` environment in GitHub repo settings with required reviewers
+- [ ] `infra` — Gate the promote-production job behind the `production` environment
+
+### Infra: Wire Version into App Build
+
+**Priority: Medium.** Wire `NEXT_PUBLIC_APP_VERSION` from the git tag into the Next.js build. Display in error boundary, footer, and dev tools. Enables user bug reports to include the deployed version.
+
+- [ ] `apps/web` — Add `NEXT_PUBLIC_APP_VERSION` env var, populated from `${{ github.ref_name }}` in release workflow
+- [ ] `apps/web` — Display version in error boundary report and footer (dev mode)
 
 ---
 
