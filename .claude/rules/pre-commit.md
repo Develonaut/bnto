@@ -94,14 +94,9 @@ Tests are **mandatory** for most changes. Determine which type:
 If you modified routing, page layout, navbar, footer, or auth forms — regenerate:
 
 ```bash
-lsof -ti:4000  # check if dev server is running
+lsof -ti:4000  # check if dev server is running — start `task dev` if not
 
-# If port 4000 is active:
 cd apps/web && pnpm exec playwright test --update-snapshots && pnpm exec playwright test
-
-# If port 4000 is NOT active:
-E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
-E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 ```
 
 **Intermittent "01 Issue" hydration failures** are known (PopoverTrigger `asChild` SSR mismatch). If the only failures are "01 Issue" overlay detections with zero screenshot mismatches, that's acceptable.
@@ -118,12 +113,12 @@ E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
 - Use `data-testid` markers for reliable state detection
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes
 - Tag describe blocks with `@browser` (no Convex needed) or `@auth` (needs Convex) for selective test runs
-- Agents: check `lsof -ti:4000` first. If a dev server is running, reuse it. If not, use `task e2e:isolated` (port 4001) or start `task dev` yourself
+- Agents: check `lsof -ti:4000` first. If a dev server is running, reuse it. If not, start `task dev` yourself
 
 ### E2E Verification After Tests
 
 1. **Check test output for `[e2e errors]`** -- the shared fixture logs captured console/page errors. Review each error.
-2. **E2E environment** -- agents should check `lsof -ti:4000` first. Reuse running dev server when possible.
+2. **E2E environment** -- ensure `task dev` is running on port 4000 (`lsof -ti:4000` to check). Run `task e2e` to execute both stages (browser parallel, then editor serial).
 
 ### Stale Artifact Cleanup (MANDATORY)
 

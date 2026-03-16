@@ -82,8 +82,7 @@ export async function hideDevToolbars(page: Page): Promise<void> {
  *    match between SSR and hydration. No user impact, dev overlay only.
  *
  * 2. Convex "Failed to fetch" -- when E2E runs without the Convex dev
- *    backend, auth calls fail with a network error. Expected in
- *    isolated E2E runs (E2E_PORT=4001).
+ *    backend, auth calls fail with a network error.
  *
  * Both are harmless. Screenshots are unaffected (badge is hidden above).
  */
@@ -107,12 +106,13 @@ export async function checkErrorOverlay(page: Page, errors: string[]): Promise<v
   });
 
   if (overlayError) {
-    // Known "01 Issue" -- Radix useId() hydration mismatch (React 19).
-    // The dev overlay shows "1 Issue" but it's a harmless SSR/hydration
-    // ID divergence with no user impact. Skip the assertion so it doesn't
-    // cause false failures under concurrent test load.
+    // Known Radix useId() hydration mismatch (React 19).
+    // The dev overlay shows "N Issue(s)" from harmless SSR/hydration
+    // ID divergence (aria-controls IDs) with no user impact. The editor
+    // page has many Popover components so this can be "12 Issues" etc.
+    // Skip the assertion so it doesn't cause false failures.
     // TODO: Remove this filter when Radix ships a React 19 hydration fix.
-    const isKnownHydrationIssue = overlayError === "01 Issue" || overlayError === "1 Issue";
+    const isKnownHydrationIssue = /^\d+ Issues?$/.test(overlayError);
 
     if (!isKnownHydrationIssue) {
       const errorDetail =

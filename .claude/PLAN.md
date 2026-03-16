@@ -1065,6 +1065,18 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
 ---
 
+### Triage: Audit and consolidate E2E journey tests
+
+**Priority: Triage.** Review all journey E2E specs (`e2e/journeys/browser/`, `e2e/journeys/editor/`, `e2e/editor/`) for overlap and redundancy after recent development. Consolidate tests that cover the same flows, remove duplicated assertions, and ensure each spec is testing a distinct user journey rather than repeating similar steps across multiple files.
+
+---
+
+### Triage: Revisit skipped auth E2E tests in editor-save.spec.ts
+
+**Priority: Triage.** Two tests in `e2e/journeys/editor/editor-save.spec.ts` are unconditionally skipped — SV1 (save recipe) and SV3 (load saved recipe). They require auth infrastructure (signed-in user + Convex) and the Save menu item was removed from the toolbar. Revisit when auth test helpers exist and Save is re-introduced. `editor-save.spec.ts:70`
+
+---
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |

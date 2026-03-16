@@ -116,7 +116,7 @@ The test review covers: Rust engine tests, Convex auth enforcement, Core transfo
 
 **Fix any findings before proceeding.** Delete wasteful tests, add missing high-value tests, rewrite anti-pattern tests.
 
-**If you're writing or updating E2E tests**, invoke `/quality-engineer` for guidance on selectors, screenshot workflows, port isolation, and journey-based test design. The quality engineer owns the E2E infrastructure and testing patterns.
+**If you're writing or updating E2E tests**, invoke `/quality-engineer` for guidance on selectors, screenshot workflows, and journey-based test design. The quality engineer owns the E2E infrastructure and testing patterns.
 
 ### Did you touch UI? (MANDATORY — NO EXCEPTIONS)
 
@@ -126,10 +126,11 @@ Do NOT reason about whether the change is "visual" or "behavioral" or "internal.
 
 **When YES — you MUST run E2E tests. This is not optional. You do not get to skip this.**
 
-1. Run the existing E2E test suite to verify nothing is broken
-2. If the change introduces new UI, write new E2E tests with screenshot assertions
-3. If screenshots need updating, run with `--update-snapshots` (two-run verification)
-4. Visually inspect all screenshots
+1. Ensure `task dev` is running on port 4000 (`lsof -ti:4000` to check)
+2. Run both stages: `task e2e` (runs browser tests parallel, then editor tests serial)
+3. If the change introduces new UI, write new E2E tests with screenshot assertions
+4. If screenshots need updating, run with `--update-snapshots` (two-run verification)
+5. Visually inspect all screenshots
 
 **Required e2e coverage for NEW UI:**
 
