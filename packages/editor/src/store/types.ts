@@ -80,7 +80,7 @@ interface EditorSnapshot {
 // ---------------------------------------------------------------------------
 
 /** All panel identifiers. Add new panels here — one place to extend. */
-type PanelId = "config" | "palette" | "run" | "help";
+type PanelId = "config" | "palette" | "run" | "help" | "save";
 
 /** Map of panel IDs to their open/closed state. */
 type PanelState = Record<PanelId, boolean>;

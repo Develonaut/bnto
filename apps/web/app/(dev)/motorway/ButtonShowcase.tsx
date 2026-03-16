@@ -10,29 +10,33 @@ import {
   FileTextIcon,
   HeartIcon,
   ItalicIcon,
+  PenLineIcon,
   PinIcon,
   RotateCcwIcon,
   StarIcon,
+  TrashIcon,
   UnderlineIcon,
   ZapIcon,
 } from "@bnto/ui";
 
-import { Button, Heading, Row, Stack, Text } from "@bnto/ui";
+import { Button, Card, Heading, Row, Stack, Text } from "@bnto/ui";
 
 type Variant =
   | "primary"
   | "secondary"
   | "outline"
+  | "ghost"
   | "muted"
   | "destructive"
   | "success"
   | "warning";
-type ButtonState = "resting" | "hover" | "pressed" | "disabled";
+type ButtonState = "resting" | "hover" | "pressed" | "disabled" | "dormant";
 
 const VARIANTS: { value: Variant; label: string; iconLabel?: string }[] = [
   { value: "primary", label: "Primary", iconLabel: "Download" },
   { value: "secondary", label: "Secondary", iconLabel: "Favorite" },
   { value: "outline", label: "Outline", iconLabel: "Next" },
+  { value: "ghost", label: "Ghost", iconLabel: "Edit" },
   { value: "muted", label: "Muted", iconLabel: "Draft" },
   { value: "destructive", label: "Destructive", iconLabel: "Remove" },
   { value: "success", label: "Success", iconLabel: "Done" },
@@ -43,6 +47,7 @@ const ICON_LABELS: Record<string, { icon: ReactNode; trailing?: boolean }> = {
   Download: { icon: <DownloadIcon /> },
   Favorite: { icon: <StarIcon /> },
   Next: { icon: <ArrowRightIcon />, trailing: true },
+  Edit: { icon: <PenLineIcon /> },
   Draft: { icon: <FileTextIcon /> },
   Remove: { icon: <HeartIcon /> },
   Done: { icon: <CheckIcon /> },
@@ -54,6 +59,7 @@ const STATES: { value: ButtonState; label: string }[] = [
   { value: "hover", label: "Hover" },
   { value: "pressed", label: "Pressed" },
   { value: "disabled", label: "Disabled" },
+  { value: "dormant", label: "Dormant" },
 ];
 
 function ToggleShowcase() {
@@ -156,12 +162,48 @@ function ToggleShowcase() {
   );
 }
 
+function DormantShowcase() {
+  return (
+    <Stack className="gap-6">
+      <Stack className="gap-1">
+        <Heading level={4}>Dormant Buttons</Heading>
+        <Text size="sm" color="muted">
+          Grounded and muted by default. Wake on ancestor{" "}
+          <Text as="span" size="sm" mono>
+            .group
+          </Text>{" "}
+          hover — CSS-first, no JS state.
+        </Text>
+      </Stack>
+
+      <Stack className="gap-3">
+        <Text size="xs" color="muted" mono as="span">
+          Hover the card to wake the buttons
+        </Text>
+        <Card elevation="sm" className="group flex items-center gap-4 px-5 py-4">
+          <Stack className="min-w-0 flex-1 gap-0.5">
+            <Text weight="medium">Recipe name</Text>
+            <Text size="xs" color="muted">
+              3 nodes &middot; 2 hours ago
+            </Text>
+          </Stack>
+          <Row className="gap-1">
+            <Button icon={<PenLineIcon />} variant="primary" dormant />
+            <Button icon={<TrashIcon />} variant="destructive" dormant />
+          </Row>
+        </Card>
+      </Stack>
+    </Stack>
+  );
+}
+
 export function ButtonShowcase() {
   const [state, setState] = useState<ButtonState>("resting");
 
   const hovered = state === "hover";
   const pressed = state === "pressed";
   const disabled = state === "disabled";
+  const dormant = state === "dormant";
 
   return (
     <Stack className="gap-10">
@@ -184,7 +226,7 @@ export function ButtonShowcase() {
         {VARIANTS.map(({ value, label, iconLabel }) => {
           const iconEntry = iconLabel ? ICON_LABELS[iconLabel] : null;
           return (
-            <Row key={value} className="items-center gap-3">
+            <Row key={value} className="group items-center gap-3">
               <Text size="xs" color="muted" mono as="span" className="w-24 shrink-0">
                 {label}
               </Text>
@@ -194,6 +236,7 @@ export function ButtonShowcase() {
                 hovered={hovered}
                 pressed={pressed}
                 disabled={disabled}
+                dormant={dormant}
               >
                 Label
               </Button>
@@ -203,6 +246,7 @@ export function ButtonShowcase() {
                 hovered={hovered}
                 pressed={pressed}
                 disabled={disabled}
+                dormant={dormant}
               >
                 <ZapIcon />
               </Button>
@@ -213,6 +257,7 @@ export function ButtonShowcase() {
                   hovered={hovered}
                   pressed={pressed}
                   disabled={disabled}
+                  dormant={dormant}
                 >
                   {iconEntry.trailing ? (
                     <>
@@ -232,6 +277,9 @@ export function ButtonShowcase() {
 
       {/* Toggle demo */}
       <ToggleShowcase />
+
+      {/* Dormant demo */}
+      <DormantShowcase />
     </Stack>
   );
 }

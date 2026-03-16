@@ -60,7 +60,7 @@ function EditorToolbar() {
   const canSave = canExport && hasNodes && isAuthenticated;
 
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const { isOpen: saveDialogOpen, close: closeSaveDialog } = editor.panels.usePanels("save");
 
   const handleReset = useCallback(() => {
     const { definition } = editor.getState();
@@ -112,8 +112,8 @@ function EditorToolbar() {
                   <FileUpIcon /> Open
                 </MenuItem>
                 <MenuSeparator />
-                <MenuItem onClick={() => setSaveDialogOpen(true)} disabled={!canSave}>
-                  <SaveIcon /> Save
+                <MenuItem onClick={() => editor.panels.openPanel("save")} disabled={!canSave}>
+                  <SaveIcon /> Save <ShortcutHint shortcutId="save" />
                 </MenuItem>
                 <MenuItem onClick={download} disabled={!canDownload}>
                   <DownloadIcon /> Export <ShortcutHint shortcutId="export" />
@@ -196,7 +196,9 @@ function EditorToolbar() {
       <OpenRecipeDialog open={openDialogOpen} onOpenChange={setOpenDialogOpen} />
       <SaveRecipeDialog
         open={saveDialogOpen}
-        onOpenChange={setSaveDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) closeSaveDialog();
+        }}
         onSave={handleSave}
         isSaving={saveMutation.isPending}
       />

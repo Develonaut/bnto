@@ -51,10 +51,34 @@ describe("canTriggerRun", () => {
 });
 
 describe("resolveEscape", () => {
-  const closedPanels: PanelState = { config: false, palette: false, run: false, help: false };
-  const openConfig: PanelState = { config: true, palette: false, run: false, help: false };
-  const openRun: PanelState = { config: false, palette: false, run: true, help: false };
-  const bothOpen: PanelState = { config: true, palette: false, run: true, help: false };
+  const closedPanels: PanelState = {
+    config: false,
+    palette: false,
+    run: false,
+    help: false,
+    save: false,
+  };
+  const openConfig: PanelState = {
+    config: true,
+    palette: false,
+    run: false,
+    help: false,
+    save: false,
+  };
+  const openRun: PanelState = {
+    config: false,
+    palette: false,
+    run: true,
+    help: false,
+    save: false,
+  };
+  const bothOpen: PanelState = {
+    config: true,
+    palette: false,
+    run: true,
+    help: false,
+    save: false,
+  };
 
   it("closes config panel when open", () => {
     const result = resolveEscape(null, openConfig);

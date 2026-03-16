@@ -89,6 +89,9 @@ type ButtonProps = Omit<ComponentProps<"button">, "ref"> &
     muted?: boolean;
     hovered?: boolean;
     pressed?: boolean;
+    /** Dormant — grounded + muted by default, wakes on ancestor .group hover via CSS.
+     * Use for action buttons that reveal on card hover. */
+    dormant?: boolean;
     toggle?: boolean;
     href?: string;
     ref?: Ref<HTMLElement>;
@@ -105,6 +108,7 @@ function Button({
   muted = false,
   hovered = false,
   pressed = false,
+  dormant = false,
   toggle = false,
   asChild = false,
   href,
@@ -145,6 +149,7 @@ function Button({
       data-muted={muted ? "" : undefined}
       data-hover={hovered && !pressed ? "" : undefined}
       data-active={pressed ? "" : undefined}
+      data-dormant={dormant ? "" : undefined}
       data-toggle={toggle ? "" : undefined}
       disabled={disabled}
       {...(!!href ? { href } : {})}

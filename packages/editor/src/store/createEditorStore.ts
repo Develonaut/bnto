@@ -50,6 +50,7 @@ function createEditorStore(definition?: Definition) {
       palette: false,
       run: false,
       help: false,
+      save: false,
     },
     executionPhase: "idle",
     executionResults: [],
