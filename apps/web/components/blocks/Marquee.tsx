@@ -39,8 +39,8 @@ export function Marquee({
           <div
             key={i}
             className={cn("flex shrink-0 justify-around gap-(--gap)", {
-              "motion-safe:animate-marquee flex-row": !vertical,
-              "motion-safe:animate-marquee-vertical flex-col": vertical,
+              "animate-marquee flex-row": !vertical,
+              "animate-marquee-vertical flex-col": vertical,
               "group-hover:[animation-play-state:paused]": pauseOnHover,
               "[animation-direction:reverse]": reverse,
             })}
