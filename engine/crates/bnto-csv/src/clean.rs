@@ -1,108 +1,36 @@
-// =============================================================================
-// Clean CSV Node — Remove Empty Rows, Trim Whitespace, Deduplicate
-// =============================================================================
+// Clean CSV Node — remove empty rows, trim whitespace, deduplicate.
 //
-// WHAT IS THIS FILE?
-// This is the `clean-csv` node. When a user drops a CSV file on the
-// /clean-csv page and clicks "Run", this code does the actual work.
-//
-// WHAT DOES "CLEANING" A CSV MEAN?
-//
-//   1. TRIM WHITESPACE: Remove leading/trailing spaces from every cell.
-//      "  Alice  " becomes "Alice". This is the most common CSV problem —
-//      data exported from spreadsheets often has invisible whitespace.
-//
-//   2. REMOVE EMPTY ROWS: Skip rows where every cell is blank (after
-//      trimming). These are usually accidents from copy-pasting or
-//      exporting from spreadsheets with empty rows at the bottom.
-//
-//   3. REMOVE DUPLICATES: If two rows have the exact same values in
-//      every column, keep only the first one. This is order-preserving —
-//      the first occurrence wins, later duplicates are dropped.
-//
-// Each of these operations is controlled by a boolean parameter so users
-// can enable/disable them individually.
-//
-// HOW THE CSV CRATE WORKS:
-//
-//   The `csv` crate (https://docs.rs/csv) is a high-performance CSV
-//   parser for Rust. It handles:
-//     - Quoted fields ("field with, comma")
-//     - Escaped quotes ("field with ""quote""")
-//     - Different line endings (CRLF on Windows, LF on Mac/Linux)
-//     - Variable-length rows (some rows have more columns than others)
-//
-//   We use `ReaderBuilder` to configure the parser and `WriterBuilder`
-//   to configure the output writer. The crate operates on byte streams
-//   (not strings), which is perfect for WASM since we receive raw bytes.
+// Each cleaning operation (trim, remove empties, deduplicate) is controlled
+// by a boolean parameter so users can enable/disable them individually.
 
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-// =============================================================================
-// CleanCsv — The Node Processor Struct
-// =============================================================================
-
-/// The clean-csv node processor.
-///
-/// RUST CONCEPT: Unit struct
-/// `CleanCsv` has no fields — it's a "unit struct", like an empty class.
-/// It exists so we can implement the `NodeProcessor` trait on it. The
-/// actual configuration comes from `NodeInput.params`, not from the struct.
-/// Think of it as a stateless function handler that implements an interface.
+/// The clean-csv node processor. Stateless — config comes from `NodeInput.params`.
 pub struct CleanCsv;
 
-// RUST CONCEPT: `impl` block
-// An `impl` block adds methods to a struct. It's like defining methods
-// on a class in JavaScript. Here we add `new()` which is the Rust
-// convention for a constructor (Rust doesn't have a special `new` keyword).
 impl CleanCsv {
-    /// Create a new CleanCsv processor.
-    ///
-    /// Since CleanCsv has no fields (it's stateless), this is trivial.
-    /// We still provide it for consistency with other node processors
-    /// (like CompressImages, ResizeImages) that also have `::new()`.
     pub fn new() -> Self {
-        // RUST CONCEPT: `Self`
-        // `Self` is a shorthand for the type we're inside (`CleanCsv`).
-        // `Self` with no fields = create a CleanCsv unit struct.
         Self
     }
 }
 
-// RUST CONCEPT: `Default` trait
-// The `Default` trait provides a `default()` method that creates a
-// "default" instance. For our unit struct, it's the same as `new()`.
-// Implementing Default lets other code write `CleanCsv::default()`
-// and satisfies Clippy's `new_without_default` lint.
 impl Default for CleanCsv {
     fn default() -> Self {
         Self::new()
     }
 }
 
-// =============================================================================
-// NodeProcessor Implementation — The Core Logic
-// =============================================================================
-//
-// RUST CONCEPT: `impl Trait for Type`
-// This implements the `NodeProcessor` trait (interface) for `CleanCsv`.
-// The compiler verifies we've implemented all required methods:
-//   - `name()` — returns the node type name
-//   - `process()` — does the actual CSV cleaning work
+// --- NodeProcessor Implementation ---
 
 impl NodeProcessor for CleanCsv {
-    /// Returns the unique name of this node type.
-    /// Used for progress reporting and logging.
     fn name(&self) -> &str {
         "clean-csv"
     }
 
-    /// Return self-describing metadata for the clean-csv processor.
-    ///
-    /// Parameters: trimWhitespace, removeEmptyRows, removeDuplicates — all
-    /// booleans, all default to true. Accepts text/csv files only.
+    /// Self-describing metadata: trimWhitespace, removeEmptyRows, removeDuplicates
+    /// (all booleans, default true). Accepts text/csv only.
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
@@ -113,404 +41,297 @@ impl NodeProcessor for CleanCsv {
             category: NodeCategory::Spreadsheet,
             accepts: vec!["text/csv".to_string()],
             platforms: vec!["browser".to_string()],
-            parameters: vec![
-                ParameterDef {
-                    name: "trimWhitespace".to_string(),
-                    label: "Trim Whitespace".to_string(),
-                    description: "Remove leading and trailing whitespace from every cell"
-                        .to_string(),
-                    param_type: ParameterType::Boolean,
-                    default: Some(serde_json::json!(true)),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "clean".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "removeEmptyRows".to_string(),
-                    label: "Remove Empty Rows".to_string(),
-                    description: "Skip rows where every cell is blank".to_string(),
-                    param_type: ParameterType::Boolean,
-                    default: Some(serde_json::json!(true)),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "clean".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "removeDuplicates".to_string(),
-                    label: "Remove Duplicates".to_string(),
-                    description: "Remove duplicate rows, keeping the first occurrence".to_string(),
-                    param_type: ParameterType::Boolean,
-                    default: Some(serde_json::json!(true)),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "clean".to_string(),
-                    })),
-                    ..Default::default()
-                },
-            ],
+            parameters: build_clean_parameters(),
         }
     }
 
     /// Clean a CSV file: trim whitespace, remove empty rows, deduplicate.
-    ///
-    /// This is the main entry point. The Web Worker calls this (via the
-    /// WASM bridge) with the raw CSV bytes and configuration parameters.
-    ///
-    /// PARAMETERS (from `input.params`):
-    ///   - `trimWhitespace` (bool, default: true) — trim leading/trailing
-    ///     whitespace from every cell
-    ///   - `removeEmptyRows` (bool, default: true) — skip rows where all
-    ///     cells are empty (after trimming)
-    ///   - `removeDuplicates` (bool, default: true) — remove duplicate
-    ///     rows, keeping the first occurrence
     fn process(
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
     ) -> Result<NodeOutput, BntoError> {
-        // --- Step 1: Report that we're starting ---
         progress.report(0, "Parsing CSV...");
-
-        // --- Step 2: Read configuration parameters ---
-        //
-        // Extract boolean params from the JSON config. If a param is
-        // missing or not a boolean, we use the default value (true).
-        //
-        // RUST CONCEPT: `.get("key")` on a Map
-        // Returns `Option<&Value>` — either `Some(&value)` if the key
-        // exists, or `None` if it doesn't. We chain `.and_then()` to
-        // try converting it to a bool, and `.unwrap_or(true)` to fall
-        // back to the default if anything fails.
-        let trim_whitespace = input
-            .params
-            .get("trimWhitespace")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(true);
-
-        let remove_empty_rows = input
-            .params
-            .get("removeEmptyRows")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(true);
-
-        let remove_duplicates = input
-            .params
-            .get("removeDuplicates")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(true);
-
-        // --- Step 3: Convert bytes to a UTF-8 string ---
-        //
-        // CSV is a text format, so we need to convert the raw bytes
-        // to a Rust string. This can fail if the bytes contain invalid
-        // UTF-8 sequences (e.g., a binary file was uploaded by mistake).
-        //
-        // RUST CONCEPT: `std::str::from_utf8()`
-        // Tries to interpret a byte slice as a UTF-8 string. Returns
-        // `Ok(&str)` if valid, `Err(Utf8Error)` if not.
-        //
-        // RUST CONCEPT: `.map_err(|e| ...)`
-        // If the Result is `Err`, transform the error into our error type.
-        // If it's `Ok`, pass through unchanged. This is how we convert
-        // third-party errors into our `BntoError` type.
-        let csv_text = std::str::from_utf8(&input.data).map_err(|e| {
-            BntoError::InvalidInput(format!(
-                "File is not valid UTF-8 text (is this really a CSV?): {e}"
-            ))
-        })?;
-
-        // --- Step 4: Check for empty input ---
-        //
-        // If the file is completely empty (no bytes at all), there's
-        // nothing to clean. Return an error rather than silently producing
-        // an empty file.
-        if csv_text.trim().is_empty() {
-            return Err(BntoError::InvalidInput(
-                "CSV file is empty — no data to clean".to_string(),
-            ));
-        }
+        let config = CleanConfig::from_params(&input.params);
+        let csv_text = parse_csv_input(&input.data)?;
 
         progress.report(10, "Reading CSV records...");
-
-        // --- Step 5: Parse the CSV using the csv crate ---
-        //
-        // `ReaderBuilder` configures how the CSV parser works:
-        //   - `has_headers(true)` — the first row is treated as column headers
-        //   - `flexible(true)` — rows can have different numbers of fields
-        //     (normally the csv crate returns an error if a row has more or
-        //     fewer fields than the header)
-        //
-        // `.from_reader()` takes anything that implements `Read` — we give
-        // it the byte slice of our CSV text.
-        let mut reader = csv::ReaderBuilder::new()
-            .has_headers(true)
-            .flexible(true)
-            .from_reader(csv_text.as_bytes());
-
-        // --- Step 6: Read the header row ---
-        //
-        // `reader.headers()` returns the first row as a `StringRecord`.
-        // We clone it because we need to own the headers (the reader
-        // borrows them internally and we need them after processing).
-        //
-        // RUST CONCEPT: `.clone()`
-        // Creates a deep copy. We need a copy because `reader.headers()`
-        // returns a reference (`&StringRecord`) that borrows from `reader`.
-        // We can't keep the reference while also iterating `reader.records()`.
-        let headers = reader
-            .headers()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read CSV headers: {e}")))?
-            .clone();
-
-        // If we're trimming, trim the header cells too.
-        // We build a new header record with trimmed values.
-        let cleaned_headers: Vec<String> = if trim_whitespace {
-            headers.iter().map(|h| h.trim().to_string()).collect()
-        } else {
-            headers.iter().map(|h| h.to_string()).collect()
-        };
-
-        // Track the number of columns from the header for padding.
-        let num_columns = cleaned_headers.len();
+        let (cleaned_headers, num_columns) = read_and_clean_headers(csv_text, config.trim)?;
 
         progress.report(20, "Cleaning records...");
-
-        // --- Step 7: Process each data row ---
-        //
-        // We iterate through all records, apply our cleaning operations,
-        // and collect the results into a Vec (dynamic array).
-        //
-        // RUST CONCEPT: `Vec<Vec<String>>`
-        // A vector of vectors of strings. Each inner Vec is one row,
-        // where each String is one cell value. Like `string[][]` in TS.
-        let mut cleaned_rows: Vec<Vec<String>> = Vec::new();
-
-        // Track the original row count for metadata.
-        let mut original_row_count: usize = 0;
-
-        // RUST CONCEPT: `reader.records()`
-        // Returns an iterator over the data rows (skipping the header).
-        // Each item is `Result<StringRecord, csv::Error>` because parsing
-        // can fail for individual rows (e.g., unmatched quotes).
-        for result in reader.records() {
-            // Count every row we encounter (even ones we'll skip).
-            original_row_count += 1;
-
-            // Parse the record. If a row is malformed, we skip it
-            // rather than failing the entire operation.
-            //
-            // RUST CONCEPT: `match` expression
-            // Like a switch statement but more powerful. It checks which
-            // variant the Result is and runs the matching arm.
-            let record = match result {
-                Ok(rec) => rec,
-                // If a row can't be parsed, skip it silently.
-                // This is intentional — a messy CSV might have a few
-                // unparseable rows mixed in with good data.
-                Err(_) => continue,
-            };
-
-            // --- Step 7a: Build the cleaned row ---
-            //
-            // For each cell in the row, optionally trim whitespace.
-            // Also pad the row to have the same number of columns as
-            // the header (in case some rows have fewer fields).
-            let mut row: Vec<String> = record
-                .iter()
-                .map(|cell| {
-                    if trim_whitespace {
-                        cell.trim().to_string()
-                    } else {
-                        cell.to_string()
-                    }
-                })
-                .collect();
-
-            // Normalize row width to match the header:
-            //   - If the row has FEWER columns, pad with empty strings.
-            //   - If the row has MORE columns (e.g., ",," in a 2-col CSV
-            //     creates 3 fields), truncate to match the header width.
-            //
-            // This ensures all rows have exactly `num_columns` fields,
-            // which the CSV writer requires for consistent output.
-            while row.len() < num_columns {
-                row.push(String::new());
-            }
-            // RUST CONCEPT: `.truncate(n)`
-            // Shortens a Vec to `n` elements, dropping any extras.
-            // If the Vec already has `n` or fewer elements, it's a no-op.
-            row.truncate(num_columns);
-
-            // --- Step 7b: Check if the row is empty ---
-            //
-            // A row is "empty" if ALL cells are empty strings (after trimming).
-            // We skip these rows if removeEmptyRows is enabled.
-            if remove_empty_rows {
-                // `.iter()` creates an iterator over the cells.
-                // `.all()` returns true if the closure returns true for
-                // EVERY item. So this checks "are all cells empty?".
-                let is_empty = row.iter().all(|cell| cell.is_empty());
-                if is_empty {
-                    continue; // Skip this row entirely.
-                }
-            }
-
-            // --- Step 7c: Collect the cleaned row ---
-            cleaned_rows.push(row);
-        }
+        let (mut cleaned_rows, original_row_count) =
+            collect_cleaned_rows(csv_text, config.trim, config.remove_empty, num_columns)?;
 
         progress.report(60, "Removing duplicates...");
-
-        // --- Step 8: Remove duplicate rows (if enabled) ---
-        //
-        // We use a HashSet to track which rows we've already seen.
-        // For each row, we join all cells into a single string (separated
-        // by a null byte, which can't appear in CSV text) and check if
-        // we've seen that string before. If yes, skip it.
-        //
-        // RUST CONCEPT: `std::collections::HashSet`
-        // A set of unique values. `.insert()` returns `true` if the
-        // value was new, `false` if it was already in the set.
-        let mut duplicates_removed: usize = 0;
-
-        if remove_duplicates {
-            let mut seen = std::collections::HashSet::new();
-            let before_dedup = cleaned_rows.len();
-
-            // `.retain()` keeps only the rows where the closure returns true.
-            // It modifies the Vec in-place — no new allocation needed.
-            cleaned_rows.retain(|row| {
-                // Join all cells with a null byte separator to create a
-                // unique key for this row. Null bytes can't appear in
-                // normal text, so "a\0b" won't collide with "a" + "\0b".
-                let key = row.join("\0");
-
-                // `.insert()` returns true if the key was NEW (not seen before).
-                // We keep the row only if it's the first time we've seen it.
-                seen.insert(key)
-            });
-
-            duplicates_removed = before_dedup - cleaned_rows.len();
-        }
+        let duplicates_removed = deduplicate_rows(&mut cleaned_rows, config.deduplicate);
 
         progress.report(80, "Writing cleaned CSV...");
-
-        // --- Step 9: Write the cleaned data back to CSV format ---
-        //
-        // We use `csv::WriterBuilder` to create a CSV writer that writes
-        // to an in-memory buffer (Vec<u8>). Then we write the header
-        // followed by each cleaned row.
-        let mut writer = csv::WriterBuilder::new().from_writer(Vec::new());
-
-        // Write the header row first.
-        //
-        // RUST CONCEPT: `?` operator
-        // The `?` at the end is shorthand for "if this returns Err,
-        // immediately return that error from the current function".
-        // It's like an automatic early return on error. Without `?`,
-        // you'd need `match result { Ok(v) => v, Err(e) => return Err(e) }`.
-        writer.write_record(&cleaned_headers).map_err(|e| {
-            BntoError::ProcessingFailed(format!("Failed to write CSV headers: {e}"))
-        })?;
-
-        // Write each cleaned data row.
-        for row in &cleaned_rows {
-            writer.write_record(row).map_err(|e| {
-                BntoError::ProcessingFailed(format!("Failed to write CSV row: {e}"))
-            })?;
-        }
-
-        // Flush the writer and get the bytes out.
-        //
-        // `.into_inner()` consumes the writer and returns the underlying
-        // Vec<u8> buffer. This can fail if there's a flush error.
-        let output_bytes = writer.into_inner().map_err(|e| {
-            BntoError::ProcessingFailed(format!("Failed to finalize CSV output: {e}"))
-        })?;
+        let output_bytes = write_csv_output(&cleaned_headers, &cleaned_rows)?;
 
         progress.report(90, "Building result...");
-
-        // --- Step 10: Calculate the total rows removed ---
-        let rows_removed = original_row_count - cleaned_rows.len();
-
-        // --- Step 11: Generate the output filename ---
-        //
-        // We add "-cleaned" before the file extension, similar to how
-        // the image compressor adds "-compressed".
-        let output_filename = generate_output_filename(&input.filename);
-
-        // --- Step 12: Build the metadata ---
-        //
-        // Metadata is a JSON map that the UI displays in the results panel.
-        // It tells the user what happened to their file.
-        let mut metadata = serde_json::Map::new();
-        metadata.insert(
-            "originalRows".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(original_row_count)),
-        );
-        metadata.insert(
-            "cleanedRows".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(cleaned_rows.len())),
-        );
-        metadata.insert(
-            "rowsRemoved".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(rows_removed)),
-        );
-        metadata.insert(
-            "duplicatesRemoved".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(duplicates_removed)),
-        );
+        let metadata =
+            build_clean_metadata(original_row_count, cleaned_rows.len(), duplicates_removed);
 
         progress.report(100, "Done!");
-
-        // --- Step 13: Return the result ---
-        //
-        // Package up the cleaned CSV bytes, filename, and metadata
-        // into a NodeOutput that the WASM bridge will return to JavaScript.
-        Ok(NodeOutput {
-            files: vec![OutputFile {
-                data: output_bytes,
-                filename: output_filename,
-                mime_type: "text/csv".to_string(),
-            }],
-            metadata,
-        })
+        Ok(build_clean_output(output_bytes, &input.filename, metadata))
     }
 }
 
-// =============================================================================
-// Helper Functions
-// =============================================================================
+// --- Configuration ---
 
-/// Generate an output filename by adding "-cleaned" before the extension.
-///
-/// Examples:
-///   "data.csv"       -> "data-cleaned.csv"
-///   "report"         -> "report-cleaned"
-///   "my.data.csv"    -> "my.data-cleaned.csv"
-///
-/// RUST CONCEPT: `&str` vs `String`
-/// `&str` is a borrowed string slice (read-only view into string data).
-/// `String` is an owned, heap-allocated string (like a JS string).
-/// We take `&str` as input (cheap, no copy) and return `String`
-/// (owned, because we're creating a new string).
+struct CleanConfig {
+    trim: bool,
+    remove_empty: bool,
+    deduplicate: bool,
+}
+
+impl CleanConfig {
+    fn from_params(params: &serde_json::Map<String, serde_json::Value>) -> Self {
+        Self {
+            trim: bool_param(params, "trimWhitespace", true),
+            remove_empty: bool_param(params, "removeEmptyRows", true),
+            deduplicate: bool_param(params, "removeDuplicates", true),
+        }
+    }
+}
+
+fn bool_param(
+    params: &serde_json::Map<String, serde_json::Value>,
+    key: &str,
+    default: bool,
+) -> bool {
+    params.get(key).and_then(|v| v.as_bool()).unwrap_or(default)
+}
+
+fn build_clean_output(
+    data: Vec<u8>,
+    input_filename: &str,
+    metadata: serde_json::Map<String, serde_json::Value>,
+) -> NodeOutput {
+    NodeOutput {
+        files: vec![OutputFile {
+            data,
+            filename: generate_output_filename(input_filename),
+            mime_type: "text/csv".to_string(),
+        }],
+        metadata,
+    }
+}
+
+// --- Metadata Parameter Definitions ---
+
+/// Boolean cleaning parameter, visible when operation=clean.
+fn clean_bool_param(
+    name: &str,
+    label: &str,
+    description: &str,
+) -> bnto_core::metadata::ParameterDef {
+    use bnto_core::metadata::*;
+    ParameterDef {
+        name: name.to_string(),
+        label: label.to_string(),
+        description: description.to_string(),
+        param_type: ParameterType::Boolean,
+        default: Some(serde_json::json!(true)),
+        visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+            param: "operation".to_string(),
+            equals: "clean".to_string(),
+        })),
+        ..Default::default()
+    }
+}
+
+fn build_clean_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
+    vec![
+        clean_bool_param(
+            "trimWhitespace",
+            "Trim Whitespace",
+            "Remove leading and trailing whitespace from every cell",
+        ),
+        clean_bool_param(
+            "removeEmptyRows",
+            "Remove Empty Rows",
+            "Skip rows where every cell is blank",
+        ),
+        clean_bool_param(
+            "removeDuplicates",
+            "Remove Duplicates",
+            "Remove duplicate rows, keeping the first occurrence",
+        ),
+    ]
+}
+
+// --- CSV Parsing ---
+
+/// Validate and convert raw bytes to a UTF-8 string, rejecting empty input.
+fn parse_csv_input(data: &[u8]) -> Result<&str, BntoError> {
+    let csv_text = std::str::from_utf8(data).map_err(|e| {
+        BntoError::InvalidInput(format!(
+            "File is not valid UTF-8 text (is this really a CSV?): {e}"
+        ))
+    })?;
+
+    if csv_text.trim().is_empty() {
+        return Err(BntoError::InvalidInput(
+            "CSV file is empty — no data to clean".to_string(),
+        ));
+    }
+
+    Ok(csv_text)
+}
+
+/// Read and optionally trim the header row. Returns (headers, column_count).
+fn read_and_clean_headers(csv_text: &str, trim: bool) -> Result<(Vec<String>, usize), BntoError> {
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(true)
+        .flexible(true)
+        .from_reader(csv_text.as_bytes());
+
+    let headers = reader
+        .headers()
+        .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read CSV headers: {e}")))?
+        .clone();
+
+    let cleaned: Vec<String> = if trim {
+        headers.iter().map(|h| h.trim().to_string()).collect()
+    } else {
+        headers.iter().map(|h| h.to_string()).collect()
+    };
+
+    let num_columns = cleaned.len();
+    Ok((cleaned, num_columns))
+}
+
+// --- Row Processing ---
+
+/// Iterate data rows, applying trim and empty-row removal.
+/// Returns (cleaned_rows, original_row_count).
+fn collect_cleaned_rows(
+    csv_text: &str,
+    trim: bool,
+    remove_empty: bool,
+    num_columns: usize,
+) -> Result<(Vec<Vec<String>>, usize), BntoError> {
+    let mut reader = csv::ReaderBuilder::new()
+        .has_headers(true)
+        .flexible(true)
+        .from_reader(csv_text.as_bytes());
+
+    let mut cleaned_rows: Vec<Vec<String>> = Vec::new();
+    let mut original_row_count: usize = 0;
+
+    for result in reader.records() {
+        original_row_count += 1;
+        let record = match result {
+            Ok(rec) => rec,
+            Err(_) => continue, // skip malformed rows
+        };
+
+        let row = normalize_row(&record, trim, num_columns);
+
+        if remove_empty && row.iter().all(|cell| cell.is_empty()) {
+            continue;
+        }
+
+        cleaned_rows.push(row);
+    }
+
+    Ok((cleaned_rows, original_row_count))
+}
+
+/// Clean a single record: optionally trim cells, then pad/truncate to match header width.
+fn normalize_row(record: &csv::StringRecord, trim: bool, num_columns: usize) -> Vec<String> {
+    let mut row: Vec<String> = record
+        .iter()
+        .map(|cell| {
+            if trim {
+                cell.trim().to_string()
+            } else {
+                cell.to_string()
+            }
+        })
+        .collect();
+
+    while row.len() < num_columns {
+        row.push(String::new());
+    }
+    row.truncate(num_columns);
+    row
+}
+
+/// Remove duplicate rows in-place using null-byte-joined keys. Returns count removed.
+fn deduplicate_rows(rows: &mut Vec<Vec<String>>, enabled: bool) -> usize {
+    if !enabled {
+        return 0;
+    }
+
+    let mut seen = std::collections::HashSet::new();
+    let before = rows.len();
+
+    // Null byte separator avoids collisions between cell values.
+    rows.retain(|row| seen.insert(row.join("\0")));
+
+    before - rows.len()
+}
+
+// --- CSV Output ---
+
+/// Write cleaned headers and rows to a CSV byte buffer.
+fn write_csv_output(headers: &[String], rows: &[Vec<String>]) -> Result<Vec<u8>, BntoError> {
+    let mut writer = csv::WriterBuilder::new().from_writer(Vec::new());
+
+    writer
+        .write_record(headers)
+        .map_err(|e| BntoError::ProcessingFailed(format!("Failed to write CSV headers: {e}")))?;
+
+    for row in rows {
+        writer
+            .write_record(row)
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to write CSV row: {e}")))?;
+    }
+
+    writer
+        .into_inner()
+        .map_err(|e| BntoError::ProcessingFailed(format!("Failed to finalize CSV output: {e}")))
+}
+
+// --- Result Metadata ---
+
+fn build_clean_metadata(
+    original_row_count: usize,
+    cleaned_row_count: usize,
+    duplicates_removed: usize,
+) -> serde_json::Map<String, serde_json::Value> {
+    let rows_removed = original_row_count - cleaned_row_count;
+    let mut metadata = serde_json::Map::new();
+    metadata.insert(
+        "originalRows".to_string(),
+        serde_json::Value::Number(original_row_count.into()),
+    );
+    metadata.insert(
+        "cleanedRows".to_string(),
+        serde_json::Value::Number(cleaned_row_count.into()),
+    );
+    metadata.insert(
+        "rowsRemoved".to_string(),
+        serde_json::Value::Number(rows_removed.into()),
+    );
+    metadata.insert(
+        "duplicatesRemoved".to_string(),
+        serde_json::Value::Number(duplicates_removed.into()),
+    );
+    metadata
+}
+
+// --- Filename ---
+
+/// Add "-cleaned" before the file extension: "data.csv" -> "data-cleaned.csv"
 fn generate_output_filename(original: &str) -> String {
-    // RUST CONCEPT: `.rfind('.')`
-    // Searches for the LAST occurrence of '.' in the string and returns
-    // its index as `Option<usize>`. `rfind` = "reverse find".
-    // We search from the right so "my.data.csv" splits at the LAST dot.
     if let Some(dot_pos) = original.rfind('.') {
-        // Split into stem ("data") and extension (".csv"), then
-        // insert "-cleaned" between them.
         let stem = &original[..dot_pos];
         let ext = &original[dot_pos..];
         format!("{stem}-cleaned{ext}")
     } else {
-        // No extension found — just append "-cleaned".
         format!("{original}-cleaned")
     }
 }
@@ -518,15 +339,6 @@ fn generate_output_filename(original: &str) -> String {
 // =============================================================================
 // Tests — Every function must be tested!
 // =============================================================================
-//
-// RUST CONCEPT: `#[cfg(test)]`
-// This entire module is only compiled when running tests. It doesn't
-// end up in the WASM binary. This is like Jest's test files — code
-// that only exists for testing purposes.
-//
-// RUST CONCEPT: `mod tests { ... }`
-// A nested module inside clean.rs. It has access to everything in the
-// parent module via `use super::*`.
 
 #[cfg(test)]
 mod tests {
@@ -593,11 +405,8 @@ mod tests {
     #[test]
     fn test_default_creates_same_as_new() {
         // Verify that Default trait works.
-        //
-        // RUST CONCEPT: Clippy lint `default_constructed_unit_structs`
-        // Clippy warns against calling `.default()` on a unit struct
-        // because it's redundant — you can just write `CleanCsv` directly.
-        // But we want to test that Default IS implemented, so we allow it.
+        // Clippy warns against `.default()` on a unit struct, but we want
+        // to test that Default IS implemented, so we allow it.
         #[allow(clippy::default_constructed_unit_structs)]
         let _processor = CleanCsv::default();
         // If we get here without panic, the test passes.
@@ -811,10 +620,6 @@ mod tests {
 
         assert!(result.is_err(), "Empty input should return an error");
 
-        // RUST CONCEPT: `match` to extract the error
-        // We can't use `.unwrap_err()` here because `NodeOutput` doesn't
-        // implement the `Debug` trait (which `unwrap_err` needs to print
-        // the Ok value if it panics). Instead, we use `match` or `if let`.
         if let Err(err) = result {
             assert!(
                 err.to_string().contains("empty"),

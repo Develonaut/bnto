@@ -48,6 +48,8 @@ Identify which packages the changed files belong to and invoke the relevant pers
 
 **If changes touch E2E tests, test fixtures, test helpers, or screenshot baselines**, also invoke `/quality-engineer` — the quality persona owns testing strategy, E2E infrastructure, journey-based test design, screenshot regression workflows, and knows how to run tests correctly (port isolation, two-run screenshot verification, selector patterns).
 
+**If changes affect package structure, public API, directory layout, exports, commands, or README files**, also invoke `/technical-writer` — the technical writer owns all human-facing `README.md` files and will check whether any READMEs need updating to reflect the changes.
+
 **Invoke the matching persona skill(s) now.** Each persona is a domain expert with specialized quality standards, gotchas, and performance patterns that inform a deeper review. If changes span multiple packages, invoke all relevant personas — a commit touching `engine/` and `apps/web/` needs both `/rust-expert` and `/frontend-engineer` activated.
 
 ## Context
@@ -178,6 +180,7 @@ Gotchas:                  PASS / FAIL (count)
 Code Quality:             PASS / FAIL (count)
 Test Coverage:            PASS / FAIL (count)
 Stale Artifacts:          PASS / FAIL (count)
+Documentation:            PASS / FAIL / SKIPPED (no structural changes)
 Unit/Integration Tests:   PASS / FAIL — NEVER skip without explicit user permission
 E2E Tests:                PASS / FAIL — NEVER skip without explicit user permission
 Lighthouse CI:            PASS / FAIL / SKIPPED (no web changes)

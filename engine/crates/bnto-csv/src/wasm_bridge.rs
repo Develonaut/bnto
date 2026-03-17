@@ -1,50 +1,5 @@
-// =============================================================================
-// WASM Bridge — The Door Between JavaScript and Rust (CSV)
-// =============================================================================
-//
-// WHAT IS THIS FILE?
-// This is the translation layer between JavaScript (Web Worker) and our
-// Rust CSV processing code. JavaScript can't call Rust functions directly —
-// it needs `#[wasm_bindgen]` exported functions that convert between
-// JS types (JsValue, Uint8Array, Function) and Rust types (Vec<u8>, &str, etc.).
-//
-// WHY IS THIS SEPARATE FROM clean.rs?
-// Separation of concerns (Bento Box Principle):
-//   - clean.rs: Pure Rust CSV cleaning logic. Testable natively.
-//     Has no knowledge of JavaScript or WASM boundary concerns.
-//   - wasm_bridge.rs: Handles the JS ↔ Rust type conversion. Only this
-//     file imports wasm_bindgen and deals with JsValue.
-//
-// This means we can:
-//   1. Test clean.rs with normal `cargo test` (fast, no browser needed)
-//   2. Test wasm_bridge.rs with `wasm-pack test` (needs Node.js or browser)
-//   3. Reuse clean.rs in non-WASM contexts (CLI, desktop) without changes
-//
-// HOW THE WEB WORKER CALLS US:
-//
-//   JavaScript (Web Worker):
-//   ```js
-//   import init, { setup, clean_csv_combined } from './pkg/bnto_wasm.js';
-//   await init();
-//   setup();
-//
-//   // Read a File object as bytes
-//   const fileBytes = new Uint8Array(await file.arrayBuffer());
-//
-//   // Call our Rust CSV cleaning function (combined = metadata + bytes in one call)
-//   const result = clean_csv_combined(
-//       fileBytes,                          // raw CSV bytes
-//       "data.csv",                         // filename
-//       '{"removeDuplicates": true}',       // JSON config
-//       (percent, message) => {
-//           postMessage({ type: 'progress', percent, message });
-//       }
-//   );
-//
-//   // result is a JS object with metadata JSON string + raw bytes
-//   const metadata = JSON.parse(result.metadata);
-//   const blob = new Blob([result.data], { type: result.mimeType });
-//   ```
+// WASM bridge for CSV processing — `#[wasm_bindgen]` exports that convert
+// between JS types (JsValue, Uint8Array) and Rust types for the Web Worker.
 
 use wasm_bindgen::prelude::*;
 
@@ -92,15 +47,6 @@ fn bnto_err_to_js(error: BntoError) -> JsValue {
 ///      stay target-agnostic — no WASM-specific code)
 ///   2. The function is small enough that duplication is clearer than a
 ///      shared utility that would need its own crate
-///
-/// RUST CONCEPT: `js_sys::Reflect::set()`
-/// This is how you set properties on a JavaScript object from Rust.
-/// It's like doing `obj.key = value` in JS, but through the WASM boundary.
-///
-/// RUST CONCEPT: `.into()`
-/// When you see `&"metadata".into()`, the `.into()` converts a Rust `&str`
-/// into a `JsValue` (a JavaScript string). wasm-bindgen provides these
-/// conversions automatically via the `From` trait.
 fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
     // --- Step 1: Extract the first output file ---
     //
@@ -176,11 +122,6 @@ fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
 ///     mimeType: "text/csv"                                    // MIME type
 ///   }
 ///   ```
-///
-/// RUST CONCEPT: `Result<JsValue, JsValue>`
-/// wasm-bindgen functions that can fail return `Result<T, JsValue>`.
-/// `Ok(value)` becomes a normal return in JS. `Err(value)` throws a
-/// JavaScript Error.
 #[wasm_bindgen]
 pub fn clean_csv_combined(
     data: &[u8],
@@ -192,11 +133,6 @@ pub fn clean_csv_combined(
     //
     // The Web Worker sends config as a JSON string. We parse it into
     // a serde_json::Map (a Rust HashMap that mirrors a JSON object).
-    //
-    // RUST CONCEPT: `.unwrap_or_default()`
-    // If JSON parsing fails (invalid JSON), use an empty map instead
-    // of crashing. This makes the function resilient to bad input —
-    // it'll just use default settings.
     let params: serde_json::Map<String, serde_json::Value> =
         serde_json::from_str(params_json).unwrap_or_default();
 

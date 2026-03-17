@@ -1,50 +1,5 @@
-// =============================================================================
-// WASM Bridge — The Door Between JavaScript and Rust
-// =============================================================================
-//
-// WHAT IS THIS FILE?
-// This is the translation layer between JavaScript (Web Worker) and our
-// Rust image processing code. JavaScript can't call Rust functions directly —
-// it needs `#[wasm_bindgen]` exported functions that convert between
-// JS types (JsValue, Uint8Array, Function) and Rust types (Vec<u8>, &str, etc.).
-//
-// WHY IS THIS SEPARATE FROM compress.rs?
-// Separation of concerns (Bento Box Principle):
-//   - compress.rs: Pure Rust image compression logic. Testable natively.
-//     Has no knowledge of JavaScript or WASM boundary concerns.
-//   - wasm_bridge.rs: Handles the JS ↔ Rust type conversion. Only this
-//     file imports wasm_bindgen and deals with JsValue.
-//
-// This means we can:
-//   1. Test compress.rs with normal `cargo test` (fast, no browser needed)
-//   2. Test wasm_bridge.rs with `wasm-pack test` (needs Node.js or browser)
-//   3. Reuse compress.rs in non-WASM contexts (CLI, desktop) without changes
-//
-// HOW THE WEB WORKER CALLS US:
-//
-//   JavaScript (Web Worker):
-//   ```js
-//   import init, { setup, compress_image_combined } from './pkg/bnto_wasm.js';
-//   await init();
-//   setup();
-//
-//   // Read a File object as bytes
-//   const fileBytes = new Uint8Array(await file.arrayBuffer());
-//
-//   // Call our Rust compression function (combined = metadata + bytes in one call)
-//   const result = compress_image_combined(
-//       fileBytes,           // raw image bytes
-//       "photo.jpg",         // filename
-//       '{"quality": 80}',   // JSON config
-//       (percent, message) => {
-//           postMessage({ type: 'progress', percent, message });
-//       }
-//   );
-//
-//   // result is a JS object with metadata JSON string + raw bytes
-//   const metadata = JSON.parse(result.metadata);
-//   const blob = new Blob([result.data], { type: result.mimeType });
-//   ```
+// WASM bridge for image processing — `#[wasm_bindgen]` exports that convert
+// between JS types (JsValue, Uint8Array) and Rust types for the Web Worker.
 
 use wasm_bindgen::prelude::*;
 
@@ -96,17 +51,6 @@ fn bnto_err_to_js(error: BntoError) -> JsValue {
 ///   - `data`: a Uint8Array (raw bytes, zero-copy via WASM shared memory)
 ///   - `filename`: the output filename as a string
 ///   - `mimeType`: the MIME type as a string
-///
-/// RUST CONCEPT: `js_sys::Reflect::set()`
-/// This is how you set properties on a JavaScript object from Rust.
-/// It's like doing `obj.key = value` in JS, but through the WASM boundary.
-/// `Reflect::set` returns a `Result<bool, JsValue>` — the bool tells us
-/// if the property was set successfully, but we only care about errors.
-///
-/// RUST CONCEPT: `.into()`
-/// When you see `&"metadata".into()`, the `.into()` converts a Rust `&str`
-/// into a `JsValue` (a JavaScript string). wasm-bindgen provides these
-/// conversions automatically via the `From` trait.
 fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
     // --- Step 1: Extract the first output file ---
     //
@@ -114,8 +58,7 @@ fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
     // `.into_iter().next()` moves the first file out of the Vec,
     // consuming the Vec in the process (no copying).
     //
-    // RUST CONCEPT: `.ok_or_else(|| ...)`
-    // Converts an `Option<T>` into a `Result<T, E>`. If the Option is
+    // `.ok_or_else()` converts an `Option<T>` into a `Result<T, E>`. If the Option is
     // `None` (no file), we produce an error. The closure is only called
     // if it IS None (lazy evaluation — saves allocating the error string
     // in the happy path).
@@ -206,11 +149,6 @@ fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
 ///     mimeType: "image/jpeg"                         // MIME type
 ///   }
 ///   ```
-///
-/// RUST CONCEPT: `Result<JsValue, JsValue>`
-/// wasm-bindgen functions that can fail return `Result<T, JsValue>`.
-/// `Ok(value)` becomes a normal return in JS. `Err(value)` throws a
-/// JavaScript Error.
 #[wasm_bindgen]
 pub fn compress_image_combined(
     data: &[u8],
@@ -222,11 +160,6 @@ pub fn compress_image_combined(
     //
     // The Web Worker sends config as a JSON string. We parse it into
     // a serde_json::Map (a Rust HashMap that mirrors a JSON object).
-    //
-    // RUST CONCEPT: `.unwrap_or_default()`
-    // If JSON parsing fails (invalid JSON), use an empty map instead
-    // of crashing. This makes the function resilient to bad input —
-    // it'll just use default settings.
     let params: serde_json::Map<String, serde_json::Value> =
         serde_json::from_str(params_json).unwrap_or_default();
 

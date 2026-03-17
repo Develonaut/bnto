@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 15, 2026 (groomed — promoted auto-save, Button simplification, theme lighting to Sprint 6 W5-W6; marked stale triage items done)
+**Last Updated:** March 17, 2026 (groomed — reconciled Wave 5 against merged PRs, marked CLAIMED tasks, cleaned stale backlog)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -261,13 +261,13 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 - [x] `apps/web` — **Replace competitor comparison with bnto-first benchmarks**: Rewrite the "How It Works" section's BragLayout to showcase bnto's own capabilities (50ms local WASM, zero uploads, unlimited runs, open source) instead of the TinyPNG/iLoveIMG comparison chart and feature table. Focus on the landscape of problems bnto solves.
 - [x] `apps/web` — **Delete button on My Recipe cards**: Add delete action to saved recipe cards on `/my-recipes`. Wire `core.recipes.remove()` to a confirmation dialog on RecipeCard.
-- [ ] **CLAIMED** `packages/editor` + `@bnto/core` — **Auto-save recipes**: Replace manual Save with transparent persistence — localStorage if unauthed, Convex if authed. Download/Export remains the one manual action. Remove Save from file menu and keyboard shortcut. If limiting unauthed saves, pop a dialog when unauthed users hit 3 recipes (prompt to delete one or sign in). Debounced write of editor store to localStorage; hydrate on mount; clear on "New" or "Open".
-- [ ] `engine` — **Thin Rust comment density**: Reduce inline comment noise — keep file-level headers and comments on genuinely complex logic, remove obvious per-line explanations. Update CLAUDE.md Rust standards section.
+- [ ] **CLAIMED** `packages/editor` + `@bnto/core` — **Auto-save recipes**: Replace manual Save with transparent persistence — localStorage if unauthed, Convex if authed. Download/Export remains the one manual action. Remove Save from file menu and keyboard shortcut. If limiting unauthed saves, pop a dialog when unauthed users hit 3 recipes (prompt to delete one or sign in). Debounced write of editor store to localStorage; hydrate on mount; clear on "New" or "Open". _(Auto-save debounce/hydrate already in PR #204. Core infrastructure `listAllDrafts` + `localRecipeService` added in `feat/auto-save-local-recipes`. Remaining: remove Save from menu/shortcuts, 3-recipe limit dialog for unauthed users.)_
+- [x] `engine` — **Thin Rust comment density**: Reduce inline comment noise — keep file-level headers and comments on genuinely complex logic, remove obvious per-line explanations. Update CLAUDE.md Rust standards section.
 - [x] Cross-cutting — **Inline handler audit**: Extract inline `onClick={() => ...}` handlers to named `handleOnX` functions across `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 - [x] Cross-cutting — **CSS-first interaction audit**: Identify JS `useState`/ternary className patterns for visual states that CSS pseudo-classes or `data-*` attributes could handle. Fix violations in `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 - [x] Cross-cutting — **Test naming unification**: Audit all test suites for naming consistency — clear action-oriented descriptions, consistent prefixing, logical grouping. Remove duplicate or vague test names.
-- [ ] `apps/web` — **Standardize E2E selectors on data-testid**: Audit E2E specs and replace fragile `getByRole`/`getByText` selectors with `data-testid` attributes for state detection and element targeting. Keep semantic selectors only for accessibility assertions. Priority: menu items, toolbar buttons, panel controls. **Partial (PR #203):** Migrated download buttons, back buttons, toolbar-download-all, explore dropdown, recipe-select, per-node-controls across 20 specs. ~40 `getByRole("button")` calls remain — auth forms, editor toolbar (file menu, undo, run panel, properties, add node), error boundary, site nav (explore, mobile menu), dev node controls (pending/active/completed). Consider adding a `testid()` helper to reduce locator boilerplate.
-- [ ] **CLAIMED** `apps/web` + `packages/editor` — **Local recipe persistence for unauthenticated users**: Non-authed users auto-save to localStorage but have no way to browse saved recipes outside the editor (My Recipes is auth-gated). Open `/my-recipes` to unauthenticated users with localStorage-backed recipe list. Add upsell messaging: "Your recipes are saved locally on this device. Sign in to sync across devices and never lose your work." This gives unauthenticated users a reason to explore saving, and gives us a natural conversion hook. Scope: (1) remove `/my-recipes` from `PROTECTED_PATHS`, (2) build a localStorage recipe list adapter (list/load/delete), (3) show local recipes in RecipeGrid when unauthed, Convex recipes when authed, (4) add upsell banner/card, (5) update proxy tests.
+- [x] `apps/web` — **Standardize E2E selectors on data-testid**: Audit E2E specs and replace fragile `getByRole`/`getByText` selectors with `data-testid` attributes for state detection and element targeting. Keep semantic selectors only for accessibility assertions. Priority: menu items, toolbar buttons, panel controls. _(PR #203 + #208, merged 2026-03-16)_
+- [x] `apps/web` + `packages/editor` — **Local recipe persistence for unauthenticated users**: Non-authed users auto-save to localStorage but have no way to browse saved recipes outside the editor (My Recipes is auth-gated). Open `/my-recipes` to unauthenticated users with localStorage-backed recipe list. Add upsell messaging: "Your recipes are saved locally on this device. Sign in to sync across devices and never lose your work." This gives unauthenticated users a reason to explore saving, and gives us a natural conversion hook. Scope: (1) remove `/my-recipes` from `PROTECTED_PATHS`, (2) build a localStorage recipe list adapter (list/load/delete), (3) show local recipes in RecipeGrid when unauthed, Convex recipes when authed, (4) add upsell banner/card, (5) update proxy tests. _(Completed in `feat/auto-save-local-recipes` branch)_
 
 #### Wave 6 (parallel — Button simplification + polish)
 
@@ -459,76 +459,13 @@ Delivered in Sprint 6 Waves 1-3. Go archives deleted, executor split, stale refe
 
 ---
 
-### UX: Compartment Node Visual Redesign — Phases 2-3 (Mini Motorways Buildings)
+### ~~UX: Compartment Node Visual Redesign — Phases 2-3~~ — REMOVED
 
-**Phase 1 delivered in Sprint 5 Wave 1** (icon registry + category color mapping). Phases 2-3 remain in backlog as polish.
-
-**Phase 2: Elevation-driven execution states**
-
-Replace the current flat status handling with elevation transitions that make compartments physically pop as they progress. The Card `.surface` system already provides springy elevation changes — we just need to map states correctly.
-
-| State       | Elevation      | Visual effect                                        |
-| ----------- | -------------- | ---------------------------------------------------- |
-| `idle`      | `none` or `sm` | Flat/barely lifted — resting in the bento box        |
-| `pending`   | `sm`           | Slight lift, muted appearance — waiting in queue     |
-| `active`    | `md`           | Rising up — "being serviced" like a MM building      |
-| `completed` | `lg`           | Full pop — satisfying spring bounce to max elevation |
-
-The spring animation on Card elevation changes creates the Mini Motorways "building materializing" feel automatically. As the recipe runs, compartments pop up one by one in sequence — like buildings appearing on the map.
-
-**Phase 3: Bento grid layout**
-
-Replace the current horizontal strip (all nodes in a single row at 220px stride) with a proper bento box grid that uses varied compartment sizes. Different node types get different footprints:
-
-| Tier          | Size     | Used for                                                     |
-| ------------- | -------- | ------------------------------------------------------------ |
-| **Standard**  | 140×140  | Most nodes (image, spreadsheet, transform, etc.)             |
-| **Compact**   | 100×100  | Simple nodes (edit-fields with no parameters)                |
-| **Wide**      | 200×140  | Nodes with more visual content (future inline controls)      |
-| **Container** | 240×180+ | Group, loop, parallel — larger to suggest they hold children |
-
-The grid layout algorithm should pack compartments like a real bento box — no uniform grid, but a visually balanced arrangement. Update `bentoSlots.ts` to support varied slot sizes.
-
-**Future (not in scope):**
-
-- Inline micro-controls on nodes (radial dials, parameter badges) — nice-to-have after core visual identity ships
-- Interactive connection handles — design decision is no edges
-- Per-node execution progress bars — elevation + status color is sufficient
-
-**Tasks:**
-
-- [ ] `packages/editor` — **Elevation state mapping**: Update `CompartmentNode.tsx` status → elevation mapping: idle=none/sm, pending=sm, active=md, completed=lg. Leverage existing Card spring animations
-- [ ] `packages/editor` — **Bento grid layout**: Update `bentoSlots.ts` with varied slot sizes per node type tier (standard/compact/wide/container). Replace horizontal strip with proper 2D bento packing
-- [ ] `packages/editor` — **Motorway showcase**: Update Motorway editor showcase to demonstrate the new visual treatment with all node types visible
-- [ ] `apps/web` — **E2E verification**: Verify editor canvas renders correctly with new node visuals. Update screenshots if page-level layout changed
-
-### UX: Expandable Container Nodes (Recipe/Group Drill-Down)
-
-**Priority: Near-term.** Container nodes (groups, sub-recipes) should have an expand button that reveals their inner node structure as a vertical layout within the canvas. Currently containers are opaque — the user sees "Compress Image / Recipe" but can't see the loop → leaf structure inside without reading the `.bnto.json`.
-
-**Behavior:**
-
-- Container cards (any node with `isContainer: true` or `displayName`) show a small expand/collapse toggle
-- Clicking expand opens the container inline, displaying child nodes in a vertical stack layout below the parent card
-- Nested containers can be expanded recursively (group → loop → leaf)
-- Collapsed is the default — users who just want to tweak surfaced params never need to expand
-- Expanded state is visual-only (editor store), does not affect the Definition
-
-**Design direction:** Think of it like a folder in a file tree — click to reveal contents, click again to collapse. The vertical layout avoids disrupting the horizontal bento grid. Child nodes render at a smaller scale or indented to show nesting depth.
-
-**Dependencies:** Requires the definition tree to be stored in the editor (already done — `definition` field in EditorState). May benefit from the bento grid layout work (Phase 3 above) for proper space allocation.
-
-**Tasks:**
-
-- [ ] `packages/editor` — **Expand/collapse state**: Add `expandedNodeIds: Set<string>` to EditorState + toggle action
-- [ ] `packages/editor` — **Expanded container renderer**: New component that renders child nodes vertically when a container is expanded. Reads children from `definition` tree via `findDefinitionById`
-- [ ] `packages/editor` — **Expand toggle UI**: Add expand/collapse button to CompartmentNode for container types
-- [ ] `packages/editor` — **Nested expansion**: Support recursive expand (expanded group shows its loop, which can also be expanded to show the leaf)
-- [ ] `apps/web` — **E2E**: Verify expand/collapse works, screenshots if layout changes
+Phase 1 delivered (Sprint 5 W1). Phases 2-3 (elevation execution states, bento grid layout) and expandable container nodes removed from backlog — direction has evolved past these designs.
 
 ---
 
-### UX: Global Error Boundary with GitHub Issue Reporter — PROMOTED TO SPRINT 6
+### ~~UX: Global Error Boundary with GitHub Issue Reporter~~ — DONE (Sprint 6 W1, PR #185)
 
 **Promoted to Sprint 6 (Quality & Cleanup), Wave 1.** Add a global error boundary that catches unhandled React errors and presents a branded error dialog with enough context to file a GitHub issue. Currently there are zero error boundaries — any unhandled throw crashes the page with a white screen. No `error.tsx`, `global-error.tsx`, or React ErrorBoundary exists.
 
@@ -647,7 +584,7 @@ function buildGitHubIssueUrl(error: Error, route: string): string {
 - [ ] `apps/web` — Add `NEXT_PUBLIC_APP_VERSION` to build env (Vercel env var or `package.json` read)
 - [ ] `apps/web` — E2E test: trigger error, verify dialog renders with Report/Try Again/Go Home buttons
 
-### Infra: Tag-Based Release Pipeline (GitHub Actions + Vercel)
+### Infra: Tag-Based Release Pipeline (GitHub Actions + Vercel) — IN PROGRESS (PR #209)
 
 **Priority: Medium.** Automated release workflow: tag a commit on `main` → GitHub Action builds a Vercel preview → full test suite (unit + E2E) runs against the live preview URL → green = ready to promote to production. Currently deploys are fully manual (`vercel --prod` or MCP tool).
 
@@ -1080,6 +1017,12 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 ### Triage: Dumb components pass — extract logic from heavy component files
 
 **Priority: Triage.** Components like `packages/editor/src/components/NodePaletteDialog/NodePaletteDialogRoot.tsx` carry too much inline logic. Audit for opportunities to 1) extract reusable utils/patterns and 2) keep components dumb (data in, render out).
+
+---
+
+### Triage: Engine documentation — auto-generated docs for Rust engine
+
+**Priority: Triage.** Set up auto-generated documentation for the Rust engine. Explore `cargo doc`, GitHub wiki integration, or a `docs/` directory at engine root that documents the engine architecture, crate responsibilities, and API surface. Goal: replace the tutorial-style comments removed in `chore/thin-rust-comments` with proper external documentation.
 
 ---
 

@@ -66,15 +66,24 @@ These are enforced in detail by the [rules/](.claude/rules/) files. This section
 
 ## Rust Code Standards
 
-**All Rust code must be heavily commented for learning purposes.** Ryan is learning Rust — every `.rs` file should be written as if the comments will be read by a five-year-old. This means:
+**Comment what's non-obvious, not what's routine.** Rust code should be well-commented but not tutorial-style. The reader is assumed to know basic Rust syntax — don't explain `match`, `unwrap()`, `Vec`, `Option`, `Result`, `impl`, or standard library patterns.
 
-- Explain what every function does in plain English before the function
-- Explain WHY each line exists, not just WHAT it does
-- Explain Rust-specific concepts inline (ownership, borrowing, lifetimes, traits, etc.)
-- Use analogies and simple language in comments
-- Don't assume the reader knows Rust idioms — explain `unwrap()`, `?` operator, `impl`, `match`, etc.
-- Comment density should be high — aim for a comment every 2-3 lines of code minimum
-- Group related logic with section comments (e.g., `// --- Step 1: Read the input file ---`)
+**What to comment:**
+
+- File-level purpose header (1-3 lines explaining what this module does and why it exists)
+- Section separators for logical groupings (`// --- Progress Events ---`)
+- Non-obvious design decisions and trade-offs ("why this approach, not that one")
+- Domain-specific knowledge (business rules, format specs, algorithm choices)
+- Genuinely tricky Rust patterns (lifetime tricks, unsafe blocks, complex trait bounds, macro internals)
+- `///` doc comments on all public items (structs, enums, traits, functions)
+
+**What NOT to comment:**
+
+- Standard Rust patterns (`match`, `?` operator, `Option`/`Result` handling, iterators)
+- What a line of code does when the code is self-evident
+- "RUST CONCEPT:" tutorial blocks explaining language fundamentals
+- Verbose "WHAT IS THIS FILE?" / "WHY IS THIS A SEPARATE FILE?" headers — use a concise 1-3 line module doc instead
+- Serde attributes (`#[serde(rename_all)]`, `#[derive(Deserialize)]`) — these are standard and self-documenting
 
 This applies to all code in `engine/` (Rust WASM) and any other `.rs` files in the repo.
 
@@ -247,7 +256,8 @@ Persona skills are domain experts that can be activated to adopt specialized kno
 | Security Engineer  | Cross-cutting — trust boundaries, attack surfaces, defense-in-depth                                               | `/security-engineer`  |
 | Quality Engineer   | `apps/web/e2e/`, `.claude/journeys/` — E2E testing, journey design, screenshot regression, test infrastructure    | `/quality-engineer`   |
 | Workflow Expert    | Recipe design, competitive analysis, multi-node compositions, custom recipe journey tests                         | `/workflow-expert`    |
+| Technical Writer   | Package READMEs — accuracy audits, structural documentation, staleness prevention                                 | `/technical-writer`   |
 
 | Project Manager | `.claude/PLAN.md`, `.claude/ROADMAP.md` — roadmap alignment, sprint planning | `/project-manager` |
 
-The `/groom` workflow skill invokes `/project-manager` automatically to run a full plan review.
+The `/groom` workflow skill invokes `/project-manager` automatically to run a full plan review. The `/code-review` and `/pre-commit` skills invoke `/technical-writer` when changes affect package structure or public API.

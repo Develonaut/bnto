@@ -1,34 +1,6 @@
 // =============================================================================
 // NodeProcessor Trait — The Contract Every Node Type Must Implement
 // =============================================================================
-//
-// WHAT IS THIS FILE?
-// This defines the "interface" (called a "trait" in Rust) that every node
-// type must implement. If you want to create a new node type (like image
-// compression or CSV cleaning), you implement this trait.
-//
-// RUST CONCEPT: Traits
-// A trait is like a TypeScript `interface` — it defines a set of methods
-// that a type must provide. Unlike interfaces, traits can also provide
-// default implementations for some methods.
-//
-//   trait NodeProcessor {
-//       fn process(...) -> Result<...>;  // You MUST implement this
-//       fn name() -> &str;               // You MUST implement this
-//   }
-//
-// Then a specific node type "implements" the trait:
-//
-//   impl NodeProcessor for ImageCompressor {
-//       fn process(...) -> Result<...> { /* compression logic */ }
-//       fn name() -> &str { "compress-images" }
-//   }
-//
-// WHY A TRAIT (instead of just functions)?
-// 1. It guarantees every node type has the same interface
-// 2. We can write generic code that works with ANY node type
-// 3. We can test with mock implementations
-// 4. The compiler catches missing methods at build time (not runtime!)
 
 use crate::errors::BntoError;
 use crate::metadata::{NodeCategory, NodeMetadata};
@@ -39,17 +11,6 @@ use crate::progress::ProgressReporter;
 // =============================================================================
 
 /// The input data that a node receives for processing.
-///
-/// RUST CONCEPT: `pub struct` with `pub` fields
-/// A `struct` is like a TypeScript `interface` or a JavaScript plain object.
-/// Each field has a name and a type. `pub` makes the field accessible
-/// from outside this module.
-///
-/// RUST CONCEPT: `Vec<u8>`
-/// `Vec` is Rust's dynamic array (like JavaScript's `Array`).
-/// `u8` is an unsigned 8-bit integer (0-255) — one byte.
-/// So `Vec<u8>` is a "vector of bytes" — raw file data.
-/// This is how we represent file contents in Rust.
 pub struct NodeInput {
     /// The raw file data (bytes). For an image, this is the JPEG/PNG/WebP
     /// binary data. For a CSV, this is the UTF-8 text content as bytes.
@@ -60,29 +21,12 @@ pub struct NodeInput {
     pub filename: String,
 
     /// The MIME type of the input (e.g., "image/jpeg", "text/csv").
-    /// This helps us quickly determine how to process the file without
-    /// having to inspect the file contents ("magic bytes").
-    ///
-    /// RUST CONCEPT: `Option<T>`
-    /// `Option<String>` means "there might or might not be a String here".
-    /// It's like `string | null` in TypeScript. It has two variants:
-    ///   - `Some("image/jpeg")` = we have a value
-    ///   - `None` = no value (the MIME type wasn't provided)
-    ///
-    /// This is Rust's way of handling nullable values safely — the compiler
-    /// forces you to check for `None` before using the value.
+    /// `None` when the MIME type wasn't provided by the caller.
     pub mime_type: Option<String>,
 
     /// Configuration parameters for the node (e.g., quality level, target
-    /// format, dimensions). This is a JSON-compatible map of key-value pairs.
-    /// The keys are strings (parameter names from @bnto/nodes schemas),
-    /// and the values are JSON values (strings, numbers, booleans, etc.).
-    ///
-    /// RUST CONCEPT: `serde_json::Value`
-    /// This is Rust's equivalent of JavaScript's `any` — it can hold any
-    /// JSON-compatible value. We use it here because different node types
-    /// have different parameters, and we don't want to define a struct
-    /// for every possible combination.
+    /// format, dimensions). A JSON-compatible map where keys are parameter
+    /// names from @bnto/nodes schemas.
     pub params: serde_json::Map<String, serde_json::Value>,
 }
 
@@ -118,22 +62,8 @@ pub struct OutputFile {
 
 /// The contract that every node type must implement.
 ///
-/// RUST CONCEPT: `async_trait` vs `async fn in traits`
-/// As of Rust 1.75+, traits can have `async fn` methods directly.
-/// However, wasm-bindgen doesn't natively support async trait methods
-/// across the WASM boundary. So for now, we use synchronous `process()`
-/// and handle async at the Web Worker level (the JS wrapper calls
-/// process() and yields to the event loop between files).
-///
-/// RUST CONCEPT: `&self`
-/// `&self` means "a reference to the current instance" — like `this` in JS,
-/// but immutable (read-only). The `&` means we're borrowing, not taking
-/// ownership. The caller still owns the processor after calling the method.
-///
-/// RUST CONCEPT: `Result<NodeOutput, BntoError>`
-/// This return type means "either a successful NodeOutput OR a BntoError".
-/// The caller MUST handle both cases. There's no way to accidentally
-/// ignore the error — the compiler enforces it.
+/// Currently synchronous -- async is handled at the Web Worker level.
+/// wasm-bindgen doesn't support async trait methods across the WASM boundary.
 pub trait NodeProcessor {
     /// The unique name of this node type (e.g., "compress-images").
     /// Used for logging and progress reporting.
@@ -163,17 +93,9 @@ pub trait NodeProcessor {
     ///
     /// Returns a list of validation errors (empty = valid).
     ///
-    /// RUST CONCEPT: Default method implementation
-    /// This method has a body (`{ Vec::new() }`) — it's a "default
-    /// implementation". Types that implement NodeProcessor get this
-    /// method for free. They CAN override it with custom validation,
-    /// but they don't HAVE to. By default, validation passes (empty vec).
+    /// Default implementation passes validation. Override in specific
+    /// node types to add parameter validation.
     fn validate(&self, _params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
-        // Default: no validation errors. Override in specific node types
-        // to add parameter validation.
-        //
-        // RUST CONCEPT: `Vec::new()`
-        // Creates a new empty vector (dynamic array). Like `[]` in JavaScript.
         Vec::new()
     }
 
@@ -215,9 +137,6 @@ mod tests {
     /// the input back as output.
     struct EchoProcessor;
 
-    // RUST CONCEPT: `impl Trait for Type`
-    // This is how you implement a trait (interface) for a specific type.
-    // The compiler checks that you've implemented ALL required methods.
     impl NodeProcessor for EchoProcessor {
         fn name(&self) -> &str {
             "echo"
@@ -255,8 +174,6 @@ mod tests {
             _input: NodeInput,
             _progress: &ProgressReporter,
         ) -> Result<NodeOutput, BntoError> {
-            // Always return an error.
-            // RUST CONCEPT: `Err(...)` is the error variant of Result.
             Err(BntoError::ProcessingFailed(
                 "intentional test failure".to_string(),
             ))
@@ -287,11 +204,6 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_test_input(b"hello world", "test.txt");
 
-        // RUST CONCEPT: `.unwrap()`
-        // `.unwrap()` extracts the value from `Ok(...)` or panics if
-        // it's `Err(...)`. In tests, panicking is fine — it means the
-        // test fails. In production code, NEVER use unwrap() — always
-        // handle errors properly.
         let output = processor.process(input, &progress).unwrap();
 
         assert_eq!(output.files.len(), 1);
@@ -305,15 +217,9 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_test_input(b"data", "test.txt");
 
-        // RUST CONCEPT: `.is_err()`
-        // Checks if a Result is the `Err` variant without unwrapping.
         let result = processor.process(input, &progress);
         assert!(result.is_err());
 
-        // RUST CONCEPT: `if let` pattern matching
-        // `if let Err(e) = result` means "if result is Err, bind the
-        // error to `e` and run this block". It's a concise way to
-        // match on one specific pattern.
         if let Err(e) = result {
             assert!(e.to_string().contains("intentional test failure"));
         }

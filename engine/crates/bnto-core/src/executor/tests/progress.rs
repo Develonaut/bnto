@@ -24,26 +24,13 @@ fn test_single_node_emits_correct_event_sequence() {
 
     let events = recorder.events();
 
-    // Expected sequence:
-    // 1. PipelineStarted
-    // 2. NodeStarted
-    // 3. FileProgress (0%)
-    // 4. FileProgress (100%)
-    // 5. NodeCompleted
-    // 6. PipelineCompleted
     assert!(
         events.len() >= 4,
         "Expected at least 4 events, got {}",
         events.len()
     );
-
-    // First event is PipelineStarted.
     assert!(matches!(events[0], PipelineEvent::PipelineStarted { .. }));
-
-    // Second event is NodeStarted.
     assert!(matches!(events[1], PipelineEvent::NodeStarted { .. }));
-
-    // Last event is PipelineCompleted.
     assert!(matches!(
         events.last().unwrap(),
         PipelineEvent::PipelineCompleted { .. }
@@ -71,7 +58,6 @@ fn test_multi_node_events_in_order() {
 
     let events = recorder.events();
 
-    // Collect NodeStarted events.
     let node_started: Vec<&PipelineEvent> = events
         .iter()
         .filter(|e| matches!(e, PipelineEvent::NodeStarted { .. }))
@@ -79,7 +65,6 @@ fn test_multi_node_events_in_order() {
 
     assert_eq!(node_started.len(), 2, "Should have 2 NodeStarted events");
 
-    // First NodeStarted should be for n1.
     if let PipelineEvent::NodeStarted {
         node_id,
         node_index,
@@ -90,7 +75,6 @@ fn test_multi_node_events_in_order() {
         assert_eq!(*node_index, 0);
     }
 
-    // Second NodeStarted should be for n2.
     if let PipelineEvent::NodeStarted {
         node_id,
         node_index,
@@ -130,10 +114,8 @@ fn test_file_progress_includes_correct_indices() {
         .filter(|e| matches!(e, PipelineEvent::FileProgress { percent: 0, .. }))
         .collect();
 
-    // Should have 3 FileProgress(0%) events — one per file.
     assert_eq!(progress_events.len(), 3);
 
-    // Verify file indices.
     for (i, event) in progress_events.iter().enumerate() {
         if let PipelineEvent::FileProgress {
             file_index,
@@ -147,13 +129,10 @@ fn test_file_progress_includes_correct_indices() {
     }
 }
 
-/// Regression test: when a loop container processes 4 files one at a time,
-/// FileProgress events must report the GLOBAL file count (4), not the
-/// per-iteration local batch size (1). This was the "Processing 1 of 1" bug.
+/// Regression: loop containers must report GLOBAL file count, not per-iteration
+/// batch size (1). This was the "Processing 1 of 1" bug.
 #[test]
 fn test_loop_container_reports_global_file_count() {
-    // A pipeline with a loop container wrapping a processor — mirrors the
-    // real compress-images recipe structure (group > loop > image node).
     let def = parse_def(
         r#"{
         "nodes": [
@@ -174,7 +153,6 @@ fn test_loop_container_reports_global_file_count() {
     let recorder = RecordingReporter::new();
     let reporter = recorder.reporter();
 
-    // 4 files — the bug would show "1 of 1" for each instead of "X of 4".
     let files = vec![
         make_file("a.png", b"aaa"),
         make_file("b.png", b"bbb"),
@@ -185,19 +163,13 @@ fn test_loop_container_reports_global_file_count() {
 
     let events = recorder.events();
 
-    // Collect all FileProgress events at 0% (one per file start).
     let progress_starts: Vec<&PipelineEvent> = events
         .iter()
         .filter(|e| matches!(e, PipelineEvent::FileProgress { percent: 0, .. }))
         .collect();
 
-    assert_eq!(
-        progress_starts.len(),
-        4,
-        "Should have 4 FileProgress(0%) events — one per file"
-    );
+    assert_eq!(progress_starts.len(), 4);
 
-    // Every event must report total_files = 4 (global) and sequential indices.
     for (i, event) in progress_starts.iter().enumerate() {
         if let PipelineEvent::FileProgress {
             file_index,
@@ -219,8 +191,8 @@ fn test_loop_container_reports_global_file_count() {
     }
 }
 
-/// Same test but with nested containers: group > loop > processor.
-/// This mirrors the exact compress-images recipe structure.
+/// Same regression test with nested containers: group > loop > processor.
+/// Mirrors the compress-images recipe structure.
 #[test]
 fn test_nested_group_loop_reports_global_file_count() {
     let def = parse_def(
