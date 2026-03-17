@@ -43,4 +43,25 @@ function clearDraft(storage: Storage, recipeId?: string): void {
   storage.removeItem(`${DRAFT_KEY_PREFIX}:_latest`);
 }
 
-export { DRAFT_KEY_PREFIX, draftKey, saveDraft, loadDraft, clearDraft };
+/**
+ * Enumerate all saved drafts, sorted newest-first by `savedAt`.
+ *
+ * Scans Storage keys for the draft prefix, deserializes each,
+ * and skips the `_latest` index pointer and corrupted entries.
+ */
+function listAllDrafts(storage: Storage): Draft[] {
+  const drafts: Draft[] = [];
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    if (!key || !key.startsWith(`${DRAFT_KEY_PREFIX}:`)) continue;
+    if (key === `${DRAFT_KEY_PREFIX}:_latest`) continue;
+
+    const raw = storage.getItem(key);
+    if (!raw) continue;
+    const draft = deserializeDraft(raw);
+    if (draft) drafts.push(draft);
+  }
+  return drafts.sort((a, b) => b.savedAt - a.savedAt);
+}
+
+export { DRAFT_KEY_PREFIX, draftKey, saveDraft, loadDraft, clearDraft, listAllDrafts };

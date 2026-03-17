@@ -24,14 +24,13 @@ import {
 } from "@bnto/ui";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import { DeleteRecipeButton } from "./DeleteRecipeButton";
+import { LocalRecipeGrid } from "./LocalRecipeGrid";
 
 /**
  * Saved recipes list — self-fetching.
- * Shows ListItems for saved recipes, or an EmptyState when empty.
  *
- * Each row has an icon, name + metadata, and Edit/Delete action buttons.
- * Edit navigates via href (no nested click targets). Delete uses
- * the dormant pattern — muted by default, wakes on row hover.
+ * When authenticated: shows Convex-backed recipes with cloud sync.
+ * When unauthenticated: delegates to LocalRecipeGrid for localStorage drafts.
  */
 export function RecipeGrid() {
   const { isAuthenticated } = core.auth.useAuth();
@@ -39,22 +38,7 @@ export function RecipeGrid() {
   const showSkeleton = useDelayedLoading(isLoading && isAuthenticated);
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-[240px]">
-        <EmptyState>
-          <EmptyStateIcon>
-            <FolderOpenIcon />
-          </EmptyStateIcon>
-          <EmptyStateTitle>Save your recipes</EmptyStateTitle>
-          <EmptyStateDescription>
-            Sign in to save recipes, build custom workflows, and pick up where you left off.
-          </EmptyStateDescription>
-          <Button href="/signin" variant="primary" elevation="sm" className="mt-2">
-            Sign in
-          </Button>
-        </EmptyState>
-      </div>
-    );
+    return <LocalRecipeGrid />;
   }
 
   if (showSkeleton) {

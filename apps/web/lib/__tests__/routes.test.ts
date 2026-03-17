@@ -27,8 +27,7 @@ describe("AUTH_PATHS", () => {
 });
 
 describe("PROTECTED_PATHS", () => {
-  it("includes my-recipes, executions, and settings", () => {
-    expect(PROTECTED_PATHS).toContain("/my-recipes");
+  it("includes executions and settings", () => {
     expect(PROTECTED_PATHS).toContain("/executions");
     expect(PROTECTED_PATHS).toContain("/settings");
   });
@@ -38,6 +37,7 @@ describe("PROTECTED_PATHS", () => {
     expect(protectedSet.has("/")).toBe(false);
     expect(protectedSet.has("/signin")).toBe(false);
     expect(protectedSet.has("/waitlist")).toBe(false);
+    expect(protectedSet.has("/my-recipes")).toBe(false);
   });
 });
 
