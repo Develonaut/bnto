@@ -358,16 +358,8 @@ mod tests {
 
     #[test]
     fn test_default_creates_same_as_new() {
-        // Verify that Default trait works.
-        //
-        // RUST CONCEPT: Clippy lint `default_constructed_unit_structs`
-        // Clippy warns against calling `.default()` on a unit struct
-        // because it's redundant — you can just write `CleanCsv` directly.
-        // But we want to test that Default IS implemented, so we allow it.
         #[allow(clippy::default_constructed_unit_structs)]
         let _processor = CleanCsv::default();
-        // If we get here without panic, the test passes.
-        // CleanCsv is a unit struct, so there's nothing else to check.
     }
 
     #[test]

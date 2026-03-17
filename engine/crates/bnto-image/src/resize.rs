@@ -988,9 +988,7 @@ mod tests {
 
         let result = processor.process(input, &progress);
         assert!(result.is_err());
-        // RUST CONCEPT: `if let Err(e) = result`
-        // We can't use `unwrap_err()` because `NodeOutput` doesn't
-        // implement `Debug`. `if let` pattern matching works without it.
+        // NodeOutput doesn't impl Debug, so use pattern matching instead of unwrap_err().
         if let Err(e) = result {
             assert!(e.to_string().contains("At least one dimension"));
         }
