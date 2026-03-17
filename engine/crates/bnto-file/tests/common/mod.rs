@@ -1,56 +1,26 @@
-// =============================================================================
-// Shared Test Helpers — Used by All WASM Integration Test Files
-// =============================================================================
-//
-// WHAT IS THIS FILE?
-// Common fixtures, helpers, and constants shared across WASM integration
-// test files. In Rust, integration tests (files in `tests/`) are each
-// compiled as separate crates. This `common/mod.rs` module is imported
-// by each test file to avoid duplicating setup code.
-//
-// RUST CONCEPT: `tests/common/mod.rs`
-// Rust's test runner treats each file in `tests/` as an independent
-// test crate. To share code, you put it in `tests/common/mod.rs` and
-// import it with `mod common;` in each test file. The `common` module
-// is NOT itself compiled as a test — it's just a library for tests.
-//
-// RUST CONCEPT: `#[allow(dead_code)]`
-// Each test file imports this module but only uses a subset of the
-// fixtures and helpers. Rust's compiler warns about the unused ones
-// (it checks per-crate, and each test file is its own crate). We
-// silence these warnings because the items ARE used — just by
-// different test files.
+// Shared test helpers for all bnto-file WASM integration tests.
 #![allow(dead_code)]
 
 use wasm_bindgen::prelude::*;
 
-// =============================================================================
-// Test Fixtures — Simple test data
-// =============================================================================
-//
-// For rename-files, the actual file content doesn't matter — only the
-// filename is transformed. So we use simple strings as test data.
-// This is much smaller than the image fixtures in bnto-image.
+// =========================================================================
+// Test Fixtures
+// =========================================================================
 
-/// Simple test data — the content doesn't matter for rename operations.
-/// We just need SOME bytes to verify they pass through unchanged.
+/// Simple test data -- content doesn't matter for rename operations.
 pub const TEST_FILE_DATA: &[u8] = b"Hello, this is test file content.";
 
-/// Larger test data — to verify data integrity with bigger payloads.
+/// Larger test data to verify data integrity with bigger payloads.
 pub const LARGER_TEST_DATA: &[u8] = b"This is a larger test file with more content.\n\
     It has multiple lines and enough data to verify that\n\
     the rename operation passes all bytes through unchanged,\n\
     regardless of the file size or content.";
 
-// =============================================================================
+// =========================================================================
 // Helper Functions
-// =============================================================================
+// =========================================================================
 
-/// Create a JavaScript function that does nothing (for progress callbacks).
-///
-/// Most tests don't care about progress reporting — they just need a
-/// valid callback to pass to the WASM functions. This creates a JS
-/// `function() {}` that accepts any arguments and does nothing.
+/// No-op JS callback for tests that don't need progress reporting.
 pub fn noop_callback() -> js_sys::Function {
     js_sys::eval("(function() {})")
         .expect("Failed to create noop callback")
@@ -58,16 +28,7 @@ pub fn noop_callback() -> js_sys::Function {
         .expect("eval result should be a Function")
 }
 
-/// Create a JavaScript callback that records every (percent, message) call.
-///
-/// Returns a tuple of (callback_function, calls_array). After the rename,
-/// inspect `calls_array` to verify progress was reported correctly.
-///
-/// HOW IT WORKS:
-/// We use `js_sys::eval()` to create a JS closure that captures an array.
-/// Every time the callback is called, it pushes [percent, message] into
-/// the array. After the WASM function returns, we read the array to see
-/// what progress updates were reported.
+/// JS callback that records every (percent, message) call into an array.
 pub fn recording_callback() -> (js_sys::Function, js_sys::Array) {
     let obj = js_sys::eval(
         r#"(function() {
@@ -91,35 +52,16 @@ pub fn recording_callback() -> (js_sys::Function, js_sys::Array) {
     (cb, calls)
 }
 
-/// Initialize panic hook for test reliability.
-///
-/// In production, the bnto-wasm entry point handles this. In these
-/// integration tests, the bnto-wasm entry point isn't loaded, so we
-/// skip the panic hook — errors will still show in the test output,
-/// just without the pretty console.error formatting.
-pub fn init_panic_hook() {
-    // NOTE: console_error_panic_hook was moved to bnto-wasm.
-    // These tests still work fine without it — Rust test runner captures panics.
-}
+/// Panic hook no-op -- bnto-wasm entry point handles this in production.
+pub fn init_panic_hook() {}
 
-// =============================================================================
+// =========================================================================
 // Combined Result Extraction Helpers
-// =============================================================================
+// =========================================================================
 //
-// The `rename_file_combined` WASM function returns a single JS object with
-// all result data bundled together:
-//   { metadata: "JSON string", data: Uint8Array, filename: "string", mimeType: "string" }
-//
-// These helpers extract each property from the combined result. They use
-// `js_sys::Reflect::get()` to read JS object properties from Rust — this
-// is the WASM equivalent of `result.metadata` in JavaScript.
+// rename_file_combined returns:
+//   { metadata: JSON string, data: Uint8Array, filename: string, mimeType: string }
 
-/// Extract metadata JSON string from a combined function result.
-///
-/// RUST CONCEPT: `js_sys::Reflect::get`
-/// In JavaScript you'd write `result.metadata`. In Rust/WASM, we can't
-/// use dot-notation on a JsValue (Rust doesn't know the object's shape).
-/// `Reflect::get` is the Rust equivalent of `Reflect.get(obj, key)` in JS.
 pub fn extract_metadata(result: &wasm_bindgen::JsValue) -> String {
     js_sys::Reflect::get(result, &"metadata".into())
         .expect("result should have metadata property")
@@ -127,13 +69,6 @@ pub fn extract_metadata(result: &wasm_bindgen::JsValue) -> String {
         .expect("metadata should be a string")
 }
 
-/// Extract raw bytes from a combined function result.
-///
-/// RUST CONCEPT: `dyn_into::<T>()`
-/// The `data` property is a JS `Uint8Array`, but Rust sees it as a generic
-/// `JsValue`. `dyn_into()` attempts a runtime downcast — like `as` in
-/// TypeScript but checked at runtime. If the value isn't actually a
-/// Uint8Array, it returns Err instead of panicking.
 pub fn extract_bytes(result: &wasm_bindgen::JsValue) -> Vec<u8> {
     use wasm_bindgen::JsCast;
     let data =
@@ -142,10 +77,6 @@ pub fn extract_bytes(result: &wasm_bindgen::JsValue) -> Vec<u8> {
     array.to_vec()
 }
 
-/// Extract output filename from a combined function result.
-///
-/// This is the new filename AFTER all rename transforms have been applied.
-/// Useful for verifying the rename worked without parsing the full metadata JSON.
 pub fn extract_filename(result: &wasm_bindgen::JsValue) -> String {
     js_sys::Reflect::get(result, &"filename".into())
         .expect("result should have filename property")

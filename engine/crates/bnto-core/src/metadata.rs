@@ -1,26 +1,6 @@
-// =============================================================================
-// Node Metadata — Self-Describing Processor Definitions
-// =============================================================================
-//
-// WHAT IS THIS FILE?
-// This defines the types that let each node processor describe ITSELF — what
-// it's called, what category it belongs to, what parameters it accepts, what
-// file types it can handle, and whether it runs in the browser.
-//
-// WHY DO WE NEED THIS?
-// Currently, node metadata lives in TWO uncoordinated places:
-//   - `@bnto/nodes` (TypeScript) — defines names, labels, categories, schemas
-//   - Rust processors — implicitly know their parameters but don't declare them
-//
-// By adding a `metadata()` method to every processor, the engine becomes the
-// single source of truth for node definitions. The TypeScript side can validate
-// against the engine's output, and eventually consume it directly.
-//
-// HOW IT WORKS:
-// Each processor implements `metadata()` on the `NodeProcessor` trait. The
-// registry collects all metadata into a "catalog" — a JSON-serializable list
-// of every processor's self-description. The `node_catalog()` WASM function
-// exports this catalog to JavaScript.
+// Node metadata — self-describing processor definitions.
+// Each processor declares its parameters, MIME types, category, and platform
+// support. Powers the `node_catalog()` WASM export.
 
 use serde::Serialize;
 
@@ -28,295 +8,142 @@ use serde::Serialize;
 // ParamCondition — Conditional Visibility / Requirement Rules
 // =============================================================================
 //
-// WHY DO WE NEED THIS?
-// Some parameters only make sense in certain contexts. For example, the "width"
-// and "height" parameters in the image node only matter when the operation is
-// "resize" — they're meaningless for "compress" or "convert". Rather than
-// hardcoding this logic in the UI, we let the engine DECLARE these conditions
-// as metadata. The UI reads the condition and hides/shows parameters accordingly.
-//
-// HOW IT WORKS:
-//   - `ParamCondition::Single` = "show this param when <param> equals <value>"
-//   - `ParamCondition::Any`    = "show this param when ANY of these conditions match" (OR logic)
-//
-// RUST CONCEPT: `#[serde(untagged)]`
-// Normally serde adds a "type" tag to distinguish enum variants in JSON.
-// `untagged` tells serde to try each variant in order and use the first one
-// that matches the JSON shape. This lets us serialize:
-//   - Single as: `{"param": "operation", "equals": "resize"}`
-//   - Any as:    `[{"param": "...", "equals": "..."}, ...]`
-// The consumer just checks: is it an object? → Single. Is it an array? → Any.
+// Some parameters only apply in certain contexts (e.g., "width" only matters
+// when operation is "resize"). The engine declares these conditions as metadata
+// so the UI can show/hide parameters dynamically.
 
 /// A single condition entry: "when `param` has the value `equals`".
-///
-/// Used both standalone (in `ParamCondition::Single`) and as entries
-/// in the `ParamCondition::Any` array.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamConditionEntry {
-    /// The name of the parameter to check against.
-    /// Example: `"operation"` — check the value of the "operation" parameter.
     pub param: String,
-
-    /// The value that triggers visibility/requirement.
-    /// Example: `"resize"` — only show this param when operation is "resize".
     pub equals: String,
 }
 
 /// Conditional visibility/requirement rule for a parameter.
 ///
-/// Tells the UI when to show a parameter or when to make it required.
-///
-/// RUST CONCEPT: `#[serde(untagged)]`
-/// `untagged` means serde figures out which variant to use based on the
-/// JSON shape, without adding a type discriminator field. This produces
-/// cleaner JSON:
-///   - `Single` serializes as a plain object: `{"param": "operation", "equals": "resize"}`
-///   - `Any` serializes as an array: `[{"param": "...", "equals": "..."}, ...]`
+/// Uses `#[serde(untagged)]` so Single serializes as a plain object
+/// and Any serializes as an array — no type discriminator field.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum ParamCondition {
     /// Show/require when a single parameter matches a value.
-    /// Serializes as: `{"param": "operation", "equals": "resize"}`
     Single(ParamConditionEntry),
-
     /// Show/require when ANY of multiple conditions match (OR logic).
-    /// Serializes as: `[{"param": "...", "equals": "..."}, ...]`
     Any(Vec<ParamConditionEntry>),
 }
 
 // =============================================================================
-// NodeCategory — What kind of node is this?
+// NodeCategory
 // =============================================================================
 
-/// The broad category a node belongs to. Used for grouping in the UI
-/// (e.g., "Image" tools, "Spreadsheet" tools) and for filtering.
-///
-/// RUST CONCEPT: `#[derive(...)]`
-/// `derive` automatically generates implementations of common traits:
-///   - `Debug` — lets you print the value with `{:?}` (for logging)
-///   - `Clone` — lets you make copies with `.clone()`
-///   - `Serialize` — lets serde convert this to JSON
-///   - `PartialEq` — lets you compare with `==`
-///
-/// RUST CONCEPT: `#[serde(rename_all = "kebab-case")]`
-/// When serialized to JSON, variant names are converted to kebab-case:
-///   `Image` → `"image"`, `Spreadsheet` → `"spreadsheet"`, `FileSystem` → `"file-system"`
-/// This matches the naming convention used in `@bnto/nodes`.
+/// Broad category for UI grouping and filtering.
+/// Serializes to kebab-case to match `@bnto/nodes` conventions.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum NodeCategory {
-    /// Image processing — compress, resize, convert formats
     Image,
-    /// Spreadsheet/CSV operations — clean, rename columns
     Spreadsheet,
-    /// File system operations — rename files
     File,
-    /// Data transformation (future) — JSON, XML, text
     Data,
-    /// Network operations (future) — HTTP requests, API calls
     Network,
-    /// Control flow (future) — loops, conditionals, groups
     Control,
-    /// System operations (future) — shell commands, environment
     System,
-    /// Input/output nodes — file input, file output
     Io,
 }
 
 // =============================================================================
-// ParameterType — What kind of value does a parameter accept?
+// ParameterType
 // =============================================================================
 
-/// The type of a node parameter. This tells the UI what kind of input
-/// control to render (number slider, text field, checkbox, dropdown).
-///
-/// RUST CONCEPT: `#[serde(tag = "type", rename_all = "camelCase")]`
-/// `tag = "type"` means the JSON output includes a `"type"` field that
-/// identifies the variant. `rename_all = "camelCase"` converts variant
-/// names to camelCase in JSON.
-///
-/// Examples of serialized output:
-///   `ParameterType::Number`              → `{"type": "number"}`
-///   `ParameterType::Enum { options: .. }` → `{"type": "enum", "options": ["jpeg", "png"]}`
+/// The type of a node parameter. Determines what UI control to render.
+/// Serializes with an internally tagged `"type"` field.
 #[derive(Debug, Clone, Serialize, PartialEq, Default)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum ParameterType {
-    /// A numeric value (integer or float). Used for quality, width, height.
     Number,
-    /// A text string. Used for find/replace patterns, prefixes, suffixes.
     #[default]
     String,
-    /// A true/false toggle. Used for trimWhitespace, removeEmptyRows.
     Boolean,
-    /// A choice from a fixed set of options (like a dropdown/select).
-    /// The `options` field lists all valid values.
     Enum {
-        /// The list of valid values for this enum parameter.
-        /// Example: `["jpeg", "png", "webp"]` for image format selection.
         options: Vec<std::string::String>,
     },
-    /// A structured object (key-value map). Used for column rename mappings.
     Object,
 }
 
 // =============================================================================
-// Constraints — Validation rules for a parameter
+// Constraints
 // =============================================================================
 
-/// Optional constraints on a parameter's value. These are used for
-/// validation (rejecting out-of-range values) and for UI hints (setting
-/// slider min/max, marking required fields).
-///
-/// RUST CONCEPT: `#[serde(skip_serializing_if = "Option::is_none")]`
-/// When serializing to JSON, fields that are `None` are omitted entirely.
-/// So `Constraints { min: Some(1.0), max: None, required: false }` becomes
-/// `{"min": 1.0, "required": false}` — no `"max"` key at all. This keeps
-/// the JSON output clean and compact.
+/// Validation constraints on a parameter's value.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Constraints {
-    /// The minimum allowed value (for numeric parameters).
-    /// Example: `min: 1.0` for image quality (can't be less than 1).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub min: Option<f64>,
-
-    /// The maximum allowed value (for numeric parameters).
-    /// Example: `max: 100.0` for image quality (can't exceed 100).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max: Option<f64>,
-
-    /// Whether this parameter MUST be provided (can't be omitted).
-    /// Most parameters have defaults and are optional (`required: false`).
     pub required: bool,
 }
 
 // =============================================================================
-// ParameterDef — A single parameter's full definition
+// ParameterDef
 // =============================================================================
 
-/// A complete definition of one parameter a node accepts. This tells both
-/// the engine (for validation) and the UI (for rendering controls) everything
-/// they need to know about the parameter.
-///
-/// RUST CONCEPT: `#[serde(rename_all = "camelCase")]`
-/// Rust uses `snake_case` for field names (`param_type`), but JavaScript
-/// uses `camelCase` (`paramType`). This attribute automatically converts
-/// field names when serializing to JSON: `param_type` → `"paramType"`.
+/// Complete definition of one parameter a node accepts.
+/// Drives both engine validation and UI control rendering.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ParameterDef {
-    /// The parameter's key name, as it appears in the config JSON.
-    /// Example: `"quality"`, `"trimWhitespace"`, `"format"`
+    /// Key name as it appears in config JSON (e.g., "quality").
     pub name: std::string::String,
 
-    /// A human-readable label for the UI.
-    /// Example: `"Quality"`, `"Trim Whitespace"`, `"Output Format"`
+    /// Human-readable label for the UI.
     pub label: std::string::String,
 
-    /// A longer description explaining what this parameter does.
-    /// Shown as a tooltip or help text in the UI.
+    /// Description shown as tooltip or help text.
     pub description: std::string::String,
 
-    /// The type of value this parameter accepts (number, string, boolean, etc.).
-    /// Determines what kind of UI control to render.
+    /// Value type — determines the UI control.
     pub param_type: ParameterType,
 
-    /// The default value for this parameter, if any.
-    /// When the user doesn't provide a value, this is what the processor uses.
-    ///
-    /// RUST CONCEPT: `serde_json::Value`
-    /// This is Rust's equivalent of JavaScript's `any` for JSON values.
-    /// It can hold numbers, strings, booleans, arrays, objects, or null.
-    /// We use it here because different parameters have different default
-    /// types (80 for quality, true for trimWhitespace, "jpeg" for format).
+    /// Default value when user doesn't provide one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default: Option<serde_json::Value>,
 
-    /// Optional validation constraints (min/max range, required flag).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub constraints: Option<Constraints>,
 
-    // ----- UI Metadata Fields -----
-    // These fields enrich the parameter definition with hints that the UI
-    // config panel uses to render smarter controls. They're all `Option`
-    // so existing processors (which don't set them) keep working — `None`
-    // values are omitted from the JSON output via `skip_serializing_if`.
-    /// Placeholder text for string/number inputs in the UI.
-    ///
-    /// Example: `"compressed-{{name}}"` for a filename template field.
-    /// The UI shows this as grayed-out hint text inside the input control.
+    /// Placeholder text for string/number inputs.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub placeholder: Option<String>,
 
-    /// Whether this parameter is hidden from the config panel.
-    ///
-    /// Hidden parameters are engine wiring fields (e.g., input/output path
-    /// templates) that the editor handles implicitly — the user never sees
-    /// them, but the engine needs them in the definition.
-    ///
-    /// `None` or `Some(false)` = visible (default). `Some(true)` = hidden.
+    /// Hidden parameters are engine wiring fields the user never sees.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hidden: Option<bool>,
 
-    /// Conditional visibility — show this parameter only when another
-    /// parameter has a specific value.
-    ///
-    /// Example: The "width" parameter in image:resize should only appear
-    /// when `operation` is `"resize"`. Setting `visible_when` tells the UI
-    /// to hide this parameter until the condition is met.
-    ///
-    /// RUST CONCEPT: `#[serde(skip_serializing_if = "Option::is_none")]`
-    /// When this field is `None`, it won't appear in the JSON output at all.
-    /// This keeps the serialized catalog compact for parameters that are
-    /// always visible (which is the common case).
+    /// Show this parameter only when another parameter has a specific value.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub visible_when: Option<ParamCondition>,
 
-    /// Conditional requirement — this parameter is required only when
-    /// another parameter has a specific value.
-    ///
-    /// Example: A "columns" mapping might only be required when the
-    /// operation is "rename". Setting `required_when` tells the UI to
-    /// show the parameter as required only under that condition.
+    /// Required only when another parameter has a specific value.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub required_when: Option<ParamCondition>,
 
-    /// Whether this parameter is eligible for surfacing in container config panels.
-    ///
-    /// When a user clicks a composite group node (e.g., "Batch Compress"), the
-    /// editor auto-detects leaf node params and surfaces them in the group's
-    /// config panel. `surfaceable: true` (the default) means the param can be
-    /// surfaced. `surfaceable: false` means it's internal wiring (loop `items`,
-    /// template expressions) and should never appear in surfaced views.
-    ///
-    /// This defaults to `true` — most params are user-facing. Only set to
-    /// `false` for internal engine wiring parameters.
+    /// Whether this parameter can be surfaced in container config panels.
+    /// Defaults to `true` — only set `false` for internal wiring parameters.
     #[serde(default = "default_true")]
     pub surfaceable: bool,
 }
 
-/// Helper function that returns `true` — used as the default value for
-/// `surfaceable` via `#[serde(default = "default_true")]`. Serde requires
-/// a named function for default values (can't use inline `true`).
-/// The `allow(dead_code)` is needed because serde only calls this during
-/// deserialization, and we currently only serialize (engine → JSON).
+/// Serde default helper — `#[serde(default = "...")]` requires a named function.
 #[allow(dead_code)]
 fn default_true() -> bool {
     true
 }
 
-/// Manual `Default` implementation for `ParameterDef`.
-///
-/// WHY NOT `#[derive(Default)]`?
-/// Rust's derived `Default` sets `bool` fields to `false`. But `surfaceable`
-/// should default to `true` — most parameters ARE user-facing. The derived
-/// `Default` would give us `surfaceable: false`, which is the opposite of
-/// what we want. So we implement `Default` by hand and set `surfaceable: true`.
-///
-/// NOTE: `#[serde(default = "default_true")]` only applies during JSON
-/// deserialization. It does NOT affect `Default::default()`. They are
-/// completely separate mechanisms in Rust.
+/// Manual Default because `surfaceable` must default to `true`
+/// (derived Default would give `false`).
 impl Default for ParameterDef {
     fn default() -> Self {
         Self {
@@ -339,68 +166,32 @@ impl Default for ParameterDef {
 // NodeTypeInfo — Node-type-level metadata (all 12 types)
 // =============================================================================
 //
-// WHY IS THIS SEPARATE FROM NodeMetadata?
-// NodeMetadata describes a PROCESSOR (one specific operation, like "image:compress").
-// NodeTypeInfo describes a NODE TYPE (like "image") — the umbrella that may have
-// multiple processors underneath it.
+// Separate from NodeMetadata: NodeMetadata describes a PROCESSOR (one operation
+// like "image:compress"). NodeTypeInfo describes a NODE TYPE (like "image") —
+// the umbrella that may have multiple processors.
 //
-// The TypeScript side needs to know about ALL 12 node types (including ones the
-// engine doesn't have processors for yet, like "http-request" and "shell-command").
-// This struct is the engine's definition of every node type — its label, icon,
-// category, whether it's a container, and what platforms it can run on.
-//
-// The codegen script reads this from the catalog snapshot and generates the
-// TypeScript `NODE_TYPE_INFO` map, so adding a new node type is:
-//   1. Add it to `all_node_types()` below
-//   2. Run `task wasm:build` → `task nodes:generate`
-//   3. Done — TypeScript picks it up automatically
+// Adding a new node type: add it to `all_node_types()`, run
+// `task wasm:build` -> `task nodes:generate`, done.
 
 /// Everything the UI needs to know about a node type — independent of any
-/// specific processor/operation.
-///
-/// This is the engine's authoritative definition of each node type.
-/// The codegen script generates the TypeScript `NODE_TYPE_INFO` from this.
+/// specific processor/operation. Codegen generates TS `NODE_TYPE_INFO` from this.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct NodeTypeInfo {
-    /// The node type name as used in `.bnto.json` definitions.
-    /// e.g., `"image"`, `"spreadsheet"`, `"file-system"`, `"input"`
+    /// Node type name as used in `.bnto.json` (e.g., "image", "file-system").
     pub name: String,
-
-    /// Human-readable display label.
-    /// e.g., `"Image"`, `"Spreadsheet"`, `"File System"`, `"Input"`
     pub label: String,
-
-    /// One-sentence description of what the node type does.
     pub description: String,
-
-    /// Category for UI grouping/filtering.
     pub category: NodeCategory,
-
-    /// Whether this node can contain child nodes (group, loop, parallel).
     pub is_container: bool,
-
-    /// Platforms this node type can run on.
-    /// Derived from processor registration — if any processor for this type
-    /// runs on "browser", the node type has "browser" in its platforms.
-    /// For types without processors yet (http-request, shell-command), this
-    /// is set to the expected platforms when implemented.
+    /// Derived from processor registration. Types without processors yet
+    /// (http-request, shell-command) list their expected platforms.
     pub platforms: Vec<String>,
-
-    /// Lucide icon name for visual consumers.
-    /// Pure string metadata — consumers resolve to their own icon component.
-    /// e.g., `"image"` → ImageIcon, `"table"` → TableIcon
+    /// Lucide icon name — consumers resolve to their own icon component.
     pub icon: String,
 }
 
-/// Return metadata for all 12 registered node types.
-///
-/// This is the engine's single source of truth for what node types exist,
-/// what they're called, what category they belong to, and where they run.
-/// The `node_catalog()` WASM export includes this in the catalog snapshot,
-/// and the codegen script generates TypeScript's `NODE_TYPE_INFO` from it.
-///
-/// Node types are listed in alphabetical order by name for stable output.
+/// Return metadata for all 12 registered node types (alphabetical order).
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
     vec![
         NodeTypeInfo {
@@ -515,58 +306,23 @@ pub fn all_node_types() -> Vec<NodeTypeInfo> {
 }
 
 // =============================================================================
-// NodeMetadata — The complete self-description of a processor
+// NodeMetadata
 // =============================================================================
 
-/// Everything a consumer needs to know about a node processor — what it does,
-/// what files it accepts, what parameters it takes, and where it can run.
-/// This is the return type of `NodeProcessor::metadata()`.
-///
-/// The `node_type` + `operation` pair forms the compound key used by the
-/// registry for dispatch (e.g., `"image:compress"`, `"spreadsheet:clean"`).
+/// Complete self-description of a processor. The `node_type` + `operation` pair
+/// forms the compound registry key (e.g., "image:compress", "spreadsheet:clean").
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct NodeMetadata {
-    /// The node type group (e.g., `"image"`, `"spreadsheet"`, `"file-system"`).
-    /// Combined with `operation` to form the registry dispatch key.
     pub node_type: std::string::String,
-
-    /// The specific operation within the node type (e.g., `"compress"`, `"clean"`).
-    /// Combined with `node_type` to form the registry dispatch key.
     pub operation: std::string::String,
-
-    /// A human-readable name for the processor (e.g., `"Compress Images"`).
-    /// Shown in the UI as the node's title.
     pub name: std::string::String,
-
-    /// A description of what this processor does.
-    /// Shown in the UI as the node's subtitle or tooltip.
     pub description: std::string::String,
-
-    /// The category this processor belongs to (for UI grouping/filtering).
     pub category: NodeCategory,
-
-    /// MIME types this processor can handle (e.g., `["image/jpeg", "image/png"]`).
-    /// The UI uses this to filter which files the user can drop on this node.
-    /// An empty list means "accepts any file type" (like rename-files).
+    /// MIME types this processor handles. Empty = accepts any file type.
     pub accepts: Vec<std::string::String>,
-
-    /// The platforms this processor can run on.
-    ///
-    /// Current platform values:
-    ///   - `"browser"` — runs in the browser via WASM (free tier)
-    ///   - `"server"` — runs on a server via Cloud API (Pro tier, M4)
-    ///   - `"desktop"` — runs natively on desktop via Tauri (M3)
-    ///
-    /// All 6 current processors support `["browser"]`. Future processors
-    /// (like AI-powered nodes) might only support `["server"]`. Some nodes
-    /// may support multiple platforms (e.g., image compress runs everywhere).
-    ///
-    /// This replaces the old `browserCapable: bool` field with a more
-    /// flexible list that can grow as bnto adds new execution targets.
+    /// Platforms: "browser" (WASM, free), "server" (Cloud, Pro), "desktop" (Tauri).
     pub platforms: Vec<std::string::String>,
-
-    /// The parameters this processor accepts, with types, defaults, and constraints.
     pub parameters: Vec<ParameterDef>,
 }
 
@@ -582,14 +338,12 @@ mod tests {
 
     #[test]
     fn test_all_node_types_returns_12_entries() {
-        // The engine defines all 12 node types.
         let types = all_node_types();
         assert_eq!(types.len(), 12, "Should have exactly 12 node types");
     }
 
     #[test]
     fn test_all_node_types_sorted_alphabetically() {
-        // Entries should be sorted by name for deterministic output.
         let types = all_node_types();
         let names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         let mut sorted = names.clone();
@@ -599,7 +353,6 @@ mod tests {
 
     #[test]
     fn test_all_node_types_unique_names() {
-        // Every node type name should be unique.
         let types = all_node_types();
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
@@ -609,7 +362,6 @@ mod tests {
 
     #[test]
     fn test_container_types_are_group_loop_parallel() {
-        // Only group, loop, and parallel should be containers.
         let types = all_node_types();
         let mut containers: Vec<&str> = types
             .iter()
@@ -622,7 +374,6 @@ mod tests {
 
     #[test]
     fn test_io_types_are_input_output() {
-        // Only input and output should have the Io category.
         let types = all_node_types();
         let mut io_types: Vec<&str> = types
             .iter()
@@ -635,7 +386,6 @@ mod tests {
 
     #[test]
     fn test_server_only_types() {
-        // http-request and shell-command should only have "server" platform.
         let types = all_node_types();
         let mut server_only: Vec<&str> = types
             .iter()
@@ -648,7 +398,6 @@ mod tests {
 
     #[test]
     fn test_node_type_info_serializes_camel_case() {
-        // NodeTypeInfo should serialize with camelCase keys.
         let info = NodeTypeInfo {
             name: "image".to_string(),
             label: "Image".to_string(),
@@ -659,41 +408,37 @@ mod tests {
             icon: "image".to_string(),
         };
         let json = serde_json::to_string(&info).unwrap();
-        // isContainer should be camelCase in JSON
         assert!(json.contains(r#""isContainer":false"#));
         assert!(!json.contains("is_container"));
     }
 
     // --- Serialization Tests ---
-    // These verify that our types serialize to the expected JSON format,
-    // with camelCase keys, skip_serializing_if working, etc.
 
     #[test]
     fn test_category_serializes_to_kebab_case() {
-        // NodeCategory variants should serialize as kebab-case strings.
-        let json = serde_json::to_string(&NodeCategory::Image).unwrap();
-        assert_eq!(json, r#""image""#);
-
-        let json = serde_json::to_string(&NodeCategory::Spreadsheet).unwrap();
-        assert_eq!(json, r#""spreadsheet""#);
-
-        let json = serde_json::to_string(&NodeCategory::File).unwrap();
-        assert_eq!(json, r#""file""#);
-
-        let json = serde_json::to_string(&NodeCategory::Io).unwrap();
-        assert_eq!(json, r#""io""#);
+        assert_eq!(
+            serde_json::to_string(&NodeCategory::Image).unwrap(),
+            r#""image""#
+        );
+        assert_eq!(
+            serde_json::to_string(&NodeCategory::Spreadsheet).unwrap(),
+            r#""spreadsheet""#
+        );
+        assert_eq!(
+            serde_json::to_string(&NodeCategory::File).unwrap(),
+            r#""file""#
+        );
+        assert_eq!(serde_json::to_string(&NodeCategory::Io).unwrap(), r#""io""#);
     }
 
     #[test]
     fn test_parameter_type_number_serialization() {
-        // Number type serializes with a "type" tag.
         let json = serde_json::to_string(&ParameterType::Number).unwrap();
         assert_eq!(json, r#"{"type":"number"}"#);
     }
 
     #[test]
     fn test_parameter_type_enum_serialization() {
-        // Enum type includes the options list.
         let param = ParameterType::Enum {
             options: vec!["jpeg".to_string(), "png".to_string(), "webp".to_string()],
         };
@@ -704,14 +449,12 @@ mod tests {
 
     #[test]
     fn test_constraints_skips_none_fields() {
-        // Fields that are None should be omitted from the JSON output.
         let constraints = Constraints {
             min: Some(1.0),
             max: None,
             required: false,
         };
         let json = serde_json::to_string(&constraints).unwrap();
-        // Should have "min" but NOT "max".
         assert!(json.contains(r#""min":1.0"#));
         assert!(!json.contains("max"));
         assert!(json.contains(r#""required":false"#));
@@ -732,7 +475,6 @@ mod tests {
 
     #[test]
     fn test_parameter_def_serializes_camel_case() {
-        // ParameterDef fields should be camelCase in JSON.
         let param = ParameterDef {
             name: "quality".to_string(),
             label: "Quality".to_string(),
@@ -747,14 +489,12 @@ mod tests {
             ..Default::default()
         };
         let json = serde_json::to_string(&param).unwrap();
-        // Should use "paramType" not "param_type".
         assert!(json.contains(r#""paramType""#));
         assert!(!json.contains("param_type"));
     }
 
     #[test]
     fn test_parameter_def_skips_none_default() {
-        // When default is None, it should be omitted from JSON.
         let param = ParameterDef {
             name: "width".to_string(),
             label: "Width".to_string(),
@@ -765,7 +505,6 @@ mod tests {
         let json = serde_json::to_string(&param).unwrap();
         assert!(!json.contains("default"));
         assert!(!json.contains("constraints"));
-        // UI metadata fields should also be omitted when None.
         assert!(!json.contains("placeholder"));
         assert!(!json.contains("hidden"));
         assert!(!json.contains("visibleWhen"));
@@ -774,8 +513,6 @@ mod tests {
 
     #[test]
     fn test_parameter_def_surfaceable_defaults_to_true() {
-        // The `surfaceable` field should default to `true` — most params are
-        // user-facing controls that should appear in surfaced container views.
         let param = ParameterDef {
             name: "quality".to_string(),
             label: "Quality".to_string(),
@@ -783,17 +520,14 @@ mod tests {
             param_type: ParameterType::Number,
             ..Default::default()
         };
-        // Default::default() should give surfaceable = true.
         assert!(param.surfaceable, "surfaceable should default to true");
-        // And it should serialize with the field present.
         let json = serde_json::to_string(&param).unwrap();
         assert!(json.contains(r#""surfaceable":true"#));
     }
 
     #[test]
     fn test_parameter_def_surfaceable_false_serializes() {
-        // Internal wiring params (like loop `items`) should be explicitly
-        // marked `surfaceable: false` so the editor doesn't surface them.
+        // Internal wiring params should be explicitly marked non-surfaceable.
         let param = ParameterDef {
             name: "items".to_string(),
             label: "Items".to_string(),
@@ -809,7 +543,6 @@ mod tests {
 
     #[test]
     fn test_node_metadata_serializes_camel_case() {
-        // NodeMetadata fields should be camelCase in JSON.
         let metadata = NodeMetadata {
             node_type: "image".to_string(),
             operation: "compress".to_string(),
@@ -825,7 +558,6 @@ mod tests {
             parameters: vec![],
         };
         let json = serde_json::to_string(&metadata).unwrap();
-        // Should use camelCase field names.
         assert!(json.contains(r#""nodeType":"image""#));
         assert!(json.contains(r#""platforms":["browser"]"#));
         assert!(!json.contains("node_type"));
@@ -833,8 +565,7 @@ mod tests {
 
     #[test]
     fn test_full_metadata_round_trip() {
-        // Build a complete NodeMetadata and verify it serializes to valid JSON
-        // that can be parsed back.
+        // Verify serialize -> parse -> check fields round trip.
         let metadata = NodeMetadata {
             node_type: "image".to_string(),
             operation: "compress".to_string(),
@@ -862,13 +593,9 @@ mod tests {
             }],
         };
 
-        // Serialize to JSON string.
         let json = serde_json::to_string_pretty(&metadata).unwrap();
-
-        // Parse back to a generic JSON Value (round-trip test).
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
 
-        // Verify key fields are present and correct.
         assert_eq!(parsed["nodeType"], "image");
         assert_eq!(parsed["operation"], "compress");
         assert_eq!(parsed["category"], "image");
@@ -883,21 +610,16 @@ mod tests {
 
     #[test]
     fn test_param_condition_single_serializes_as_object() {
-        // A Single condition should serialize as a flat JSON object
-        // with "param" and "equals" keys (camelCase).
         let condition = ParamCondition::Single(ParamConditionEntry {
             param: "operation".to_string(),
             equals: "resize".to_string(),
         });
         let json = serde_json::to_string(&condition).unwrap();
-        // Should be a flat object, not wrapped in a type tag.
         assert_eq!(json, r#"{"param":"operation","equals":"resize"}"#);
     }
 
     #[test]
     fn test_param_condition_any_serializes_as_array() {
-        // An Any condition should serialize as a JSON array of condition objects.
-        // This represents OR logic: show when ANY condition matches.
         let condition = ParamCondition::Any(vec![
             ParamConditionEntry {
                 param: "operation".to_string(),
@@ -909,7 +631,6 @@ mod tests {
             },
         ]);
         let json = serde_json::to_string(&condition).unwrap();
-        // Should be an array of objects.
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert!(parsed.is_array(), "Any condition should be a JSON array");
         assert_eq!(parsed.as_array().unwrap().len(), 2);
@@ -920,8 +641,6 @@ mod tests {
 
     #[test]
     fn test_parameter_def_with_ui_fields_serializes_camel_case() {
-        // When UI metadata fields are set, they should appear in JSON
-        // with camelCase keys (visibleWhen, not visible_when).
         let param = ParameterDef {
             name: "width".to_string(),
             label: "Width".to_string(),
@@ -937,19 +656,15 @@ mod tests {
             ..Default::default()
         };
         let json = serde_json::to_string(&param).unwrap();
-        // "visibleWhen" should be camelCase (not "visible_when").
         assert!(json.contains(r#""visibleWhen""#));
         assert!(!json.contains("visible_when"));
-        // "placeholder" should be present.
         assert!(json.contains(r#""placeholder":"e.g. 800""#));
-        // "hidden" and "requiredWhen" should be omitted (they're None).
         assert!(!json.contains("hidden"));
         assert!(!json.contains("requiredWhen"));
     }
 
     #[test]
     fn test_parameter_def_hidden_field_serialization() {
-        // When hidden is Some(true), it should appear in JSON.
         let param = ParameterDef {
             name: "inputPath".to_string(),
             label: "Input Path".to_string(),

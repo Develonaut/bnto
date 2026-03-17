@@ -6,7 +6,7 @@ use crate::processor::{NodeOutput, OutputFile};
 // Mock Processors for Testing
 // =========================================================================
 
-/// Echoes input files back unchanged. The simplest possible processor.
+/// Echoes input files back unchanged.
 struct EchoProcessor;
 
 impl crate::processor::NodeProcessor for EchoProcessor {
@@ -32,7 +32,7 @@ impl crate::processor::NodeProcessor for EchoProcessor {
     }
 }
 
-/// Converts filename to uppercase. Verifies data transformation works.
+/// Converts filename to uppercase.
 struct UpperCaseProcessor;
 
 impl crate::processor::NodeProcessor for UpperCaseProcessor {
@@ -77,7 +77,7 @@ impl crate::processor::NodeProcessor for FailProcessor {
     }
 }
 
-/// Reports progress at 25/50/75/100%. For testing progress events.
+/// Reports progress at 25/50/75/100%.
 struct SlowProcessor;
 
 impl crate::processor::NodeProcessor for SlowProcessor {
@@ -108,7 +108,7 @@ impl crate::processor::NodeProcessor for SlowProcessor {
     }
 }
 
-/// Returns two files per input. Verifies file count changes through pipeline.
+/// Returns two files per input.
 struct DoubleProcessor;
 
 impl crate::processor::NodeProcessor for DoubleProcessor {
@@ -142,9 +142,8 @@ impl crate::processor::NodeProcessor for DoubleProcessor {
     }
 }
 
-/// Simulates a compression processor that produces metadata with stats.
-/// Attaches originalSize, compressedSize, and compressionRatio to the output.
-/// Used to verify that metadata survives through the pipeline to final results.
+/// Simulates compression: halves data size and attaches size metadata.
+/// Used to verify metadata survives through the pipeline.
 struct MetadataProcessor;
 
 impl crate::processor::NodeProcessor for MetadataProcessor {
@@ -158,7 +157,6 @@ impl crate::processor::NodeProcessor for MetadataProcessor {
         _progress: &ProgressReporter,
     ) -> Result<NodeOutput, BntoError> {
         let original_size = input.data.len() as u64;
-        // Simulate compression: output is half the input size.
         let compressed_data = vec![0u8; input.data.len() / 2];
         let compressed_size = compressed_data.len() as u64;
         let ratio = compressed_size as f64 / original_size as f64;
@@ -196,7 +194,6 @@ impl crate::processor::NodeProcessor for MetadataProcessor {
 // Test Helpers
 // =========================================================================
 
-/// Create a simple file for testing.
 fn make_file(name: &str, data: &[u8]) -> PipelineFile {
     PipelineFile {
         name: name.to_string(),
@@ -218,30 +215,25 @@ fn mock_registry() -> NodeRegistry {
     registry
 }
 
-/// Build a registry that maps REAL recipe operation keys to mock processors.
-/// This lets us test real recipe JSON structures without needing actual
-/// image/CSV/file processors — we verify the orchestration, not the processing.
+/// Maps real recipe operation keys to mock processors so we can test
+/// recipe orchestration without needing actual image/CSV/file processors.
 fn recipe_registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
-    // Image operations → EchoProcessor (preserves files, verifies routing).
     registry.register("image:compress", Box::new(EchoProcessor));
     registry.register("image:resize", Box::new(EchoProcessor));
     registry.register("image:convert", Box::new(EchoProcessor));
-    // CSV operations → EchoProcessor.
     registry.register("spreadsheet:clean", Box::new(EchoProcessor));
     registry.register("spreadsheet:rename", Box::new(EchoProcessor));
-    // File operations → UpperCaseProcessor (verifies transformation happened).
+    // UpperCase verifies transformation happened.
     registry.register("file-system:rename", Box::new(UpperCaseProcessor));
     registry
 }
 
-/// Parse a JSON string into a PipelineDefinition.
 fn parse_def(json: &str) -> PipelineDefinition {
     serde_json::from_str(json).unwrap()
 }
 
-/// A fake time source that always returns 1000ms.
-/// Keeps tests deterministic — no real clock needed.
+/// Always returns 1000ms — keeps tests deterministic.
 fn fake_now() -> u64 {
     1000
 }

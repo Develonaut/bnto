@@ -1,154 +1,59 @@
 // =============================================================================
-// bnto-wasm — The Unified WASM Entry Point
+// bnto-wasm — Unified WASM entry point (single cdylib for all node crates)
 // =============================================================================
 //
-// WHAT IS THIS FILE?
-// This is the ONE file that the browser's Web Worker loads. It's the front door
-// to ALL Bnto's browser-side processing. Every function the Web Worker can call
-// is either defined here or re-exported from a node crate.
-//
-// WHY DOES THIS EXIST?
-// In WASM, each "cdylib" crate produces its own .wasm file with a separate
-// JavaScript heap. If bnto-core and bnto-image were both cdylib, they'd be
-// two separate WASM modules that can't share data. That's a problem!
-//
-// By making this the ONLY cdylib crate and having all others as rlib (Rust
-// libraries), we get:
-//   1. ONE .wasm file — one download, one init() call
-//   2. Shared heap — objects can be passed between node crates freely
-//   3. Smaller total size — shared dependencies are included once
-//
-// HOW THE WEB WORKER USES THIS:
-//
-//   JavaScript (Web Worker):
-//   ```js
-//   import init, { setup, version, compress_image_combined } from './bnto_wasm.js';
-//
-//   // Step 1: Load the WASM binary (one-time)
-//   await init('/wasm/bnto_wasm_bg.wasm');
-//
-//   // Step 2: Initialize panic hooks (one-time)
-//   setup();
-//
-//   // Step 3: Process files! Returns { metadata, data, filename, mimeType }
-//   const result = compress_image_combined(bytes, 'photo.jpg', '{"quality": 80}', progressCb);
-//   ```
+// The ONLY cdylib crate — all node crates are rlib. This gives us one .wasm
+// file, one init() call, a shared heap, and smaller total size.
 
 use wasm_bindgen::prelude::*;
 
 // =============================================================================
-// Pipeline Executor — WASM bridge for the core executor
+// Pipeline Executor
 // =============================================================================
-//
-// The execute module provides `execute_pipeline()` — a single WASM function
-// that takes a pipeline definition (JSON), input files, and a progress callback,
-// then runs the entire pipeline in Rust and returns all results. This replaces
-// the JS-side `executePipeline.ts` orchestration.
-mod execute;
 
-// Re-export the execute_pipeline function so it's available as a WASM export.
-// The #[wasm_bindgen] attribute on the function in execute.rs makes it callable
-// from JavaScript automatically.
+mod execute;
 pub use execute::execute_pipeline;
 
 // =============================================================================
-// Node Catalog — Self-describing processor metadata
+// Node Catalog
 // =============================================================================
-//
-// The catalog module provides `node_catalog()` — a WASM function that returns
-// a JSON string describing every registered processor (name, params, MIME types,
-// platforms). Used to validate TS `@bnto/nodes` definitions against the engine.
-mod catalog;
 
-// Re-export so it's available as a WASM export.
+mod catalog;
 pub use catalog::node_catalog;
 
 // =============================================================================
-// BntoError → JsValue Conversion
+// Re-exports
 // =============================================================================
 //
-// NOTE: The `impl From<BntoError> for JsValue` was removed from bnto-core to
-// keep it target-agnostic. However, it CANNOT live here either — Rust's orphan
-// rule prevents implementing foreign traits for foreign types even when one is
-// from a workspace crate. Instead, each node crate's wasm_bridge.rs has a
-// `bnto_err_to_js()` helper function that does the conversion locally.
+// Re-exporting node crates ensures the linker includes their #[wasm_bindgen]
+// functions in the .wasm binary (otherwise they'd be dead-stripped since
+// nothing in this crate calls them directly — only the Web Worker does from JS).
 
-// =============================================================================
-// Re-export Node Crates
-// =============================================================================
-//
-// IMPORTANT: By re-exporting bnto-image, we ensure the linker includes its
-// code in our .wasm binary. Without this, bnto-image's #[wasm_bindgen]
-// functions would be dead-stripped and the Web Worker couldn't call them.
-//
-// RUST CONCEPT: `pub use`
-// `pub use some_crate;` re-exports the entire crate under our namespace.
-// This is like `export * from './some-module'` in JavaScript. It makes all
-// of bnto-image's public items available to anyone using bnto-wasm.
-
-// Re-export bnto-core's public types (BntoError, NodeProcessor, ProgressReporter)
-// so consumers can access everything through one crate.
 pub use bnto_core;
-
-// Re-export all node crates to ensure their #[wasm_bindgen] functions are
-// linked into our .wasm binary. Without these lines, the bridge functions
-// would be stripped by the linker since nothing in THIS crate calls them
-// directly — only the Web Worker does (from JS).
 pub use bnto_csv;
 pub use bnto_file;
 pub use bnto_image;
 
 // =============================================================================
-// Setup — One-time initialization
+// Setup
 // =============================================================================
 
-/// Initialize the WASM module. Call this ONCE when the Web Worker starts,
-/// before calling any processing functions.
-///
-/// WHAT IT DOES:
-/// Installs a "panic hook" so when Rust code crashes, the browser console
-/// shows the real error message instead of the useless "unreachable" error.
-///
-/// SAFE TO CALL MULTIPLE TIMES — set_once() is idempotent.
-///
-/// USAGE FROM WEB WORKER:
-/// ```js
-/// import init, { setup } from './bnto_wasm.js';
-/// await init('/wasm/bnto_wasm_bg.wasm');
-/// setup();  // Call once, then process files
-/// ```
+/// Initialize the WASM module. Call once when the Web Worker starts.
+/// Installs the panic hook for readable error messages in the browser console.
+/// Safe to call multiple times (idempotent).
 #[wasm_bindgen]
 pub fn setup() {
     console_error_panic_hook::set_once();
 }
 
-/// Returns the version of the Bnto WASM engine.
-///
-/// Useful for the web app to verify the correct WASM version is loaded
-/// and for debugging ("which engine version is this?").
-///
-/// RUST CONCEPT: `env!("CARGO_PKG_VERSION")`
-/// This macro reads the `version` field from THIS crate's Cargo.toml
-/// at compile time. So if Cargo.toml says version = "0.1.0", this
-/// function returns "0.1.0". It's baked into the binary — no runtime
-/// config file needed.
+/// Returns the WASM engine version (from Cargo.toml at compile time).
 #[wasm_bindgen]
 pub fn version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
-/// Health check — proves the WASM module is loaded and working.
-///
-/// Takes a name and returns a greeting. The Web Worker can call this
-/// after init() to verify:
-///   1. WASM binary loaded correctly
-///   2. String data crosses the Rust ↔ JS boundary properly
-///   3. wasm-bindgen's type conversion works
-///
-/// EXAMPLE:
-/// ```js
-/// const msg = greet("Ryan");  // "Hello from Bnto WASM engine, Ryan! v0.1.0"
-/// ```
+/// Health check — proves the WASM module loaded and string data crosses
+/// the Rust/JS boundary correctly.
 #[wasm_bindgen]
 pub fn greet(name: &str) -> String {
     format!("Hello from Bnto WASM engine, {}! v{}", name, version())

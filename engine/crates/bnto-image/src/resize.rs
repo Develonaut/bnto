@@ -2,54 +2,13 @@
 // Resize Images Node — Change Image Dimensions
 // =============================================================================
 //
-// WHAT IS THIS FILE?
-// This is the `resize-images` node. When a user drops images on the
-// /resize-images page and clicks "Run", this code does the actual work.
+// Resize-images node: decode → calculate target dimensions → resize with
+// resampling filter → re-encode in the same format. Supports aspect ratio
+// preservation, configurable quality, and automatic EXIF orientation.
 //
-// HOW DOES IMAGE RESIZING WORK?
-//
-//   The image is a grid of pixels (e.g., 1200×800 = 960,000 pixels). To
-//   make it smaller (say 600×400), we can't just throw away every other
-//   pixel — that would look terrible (staircase edges, moiré patterns).
-//
-//   Instead, we use a "resampling filter" — a mathematical algorithm that
-//   blends nearby pixels together to produce the best-looking result at
-//   the new size. Different filters make different trade-offs:
-//
-//   Lanczos3 (our default for downscaling):
-//     The gold standard for shrinking images. It uses a sinc function
-//     (a mathematical wave) sampled at 3 points to compute each output
-//     pixel from a 6×6 neighborhood of input pixels. This preserves
-//     fine detail and sharp edges better than simpler filters.
-//     Trade-off: slightly slower, can produce faint ringing artifacts
-//     near high-contrast edges (usually invisible in photos).
-//
-//   CatmullRom (our default for upscaling):
-//     A cubic spline that interpolates smoothly between pixels. Uses a
-//     4×4 neighborhood — gentler than Lanczos, which is better for
-//     enlarging images because it doesn't amplify noise or create
-//     ringing. Produces smooth, natural-looking upscales.
-//
-//   The `image` crate handles all the math — we just tell it which filter
-//   to use and the target dimensions.
-//
-// MAINTAIN ASPECT RATIO:
-//   When maintainAspect is true (default), we only need one dimension
-//   (width OR height). The other dimension is calculated from the
-//   original aspect ratio. This prevents distortion (stretching/squishing).
-//
-//   Example: A 1200×800 image resized to width=600:
-//     aspect ratio = 800/1200 = 0.667
-//     new height = 600 × 0.667 = 400
-//     result: 600×400 (same proportions, no distortion)
-//
-// THE RESIZE PIPELINE:
-//   1. Detect format (JPEG, PNG, WebP) from magic bytes or file extension
-//   2. Decode: raw bytes → pixel data (DynamicImage)
-//   3. Calculate target dimensions (respecting aspect ratio if enabled)
-//   4. Resize using the appropriate resampling filter
-//   5. Re-encode: resized pixels → compressed bytes in the SAME format
-//   6. Return the resized bytes + metadata (original dims, new dims, format)
+// Resampling filters:
+//   Lanczos3 (downscale) — 6x6 neighborhood sinc, sharp edges, best quality
+//   CatmullRom (upscale) — 4x4 cubic spline, smooth interpolation, no ringing
 
 use std::io::Cursor;
 
@@ -68,38 +27,21 @@ use crate::orientation::decode_with_orientation;
 // Configuration Constants
 // =============================================================================
 
-// Default JPEG quality — imported from bnto-core so all image operations
-// (compress, resize, convert) share a single source of truth.
 use bnto_core::DEFAULT_JPEG_QUALITY;
 
-/// Maximum image dimension we allow (width or height).
-/// 16384 pixels is the practical limit for most browsers and the
-/// `image` crate. Going higher risks out-of-memory in WASM.
+/// 16384px — practical limit for browsers and the `image` crate in WASM.
 const MAX_DIMENSION: u32 = 16384;
 
-/// Minimum image dimension we allow.
-/// 1×1 is technically valid but usually a mistake.
 const MIN_DIMENSION: u32 = 1;
 
 // =============================================================================
 // The ResizeImages Processor
 // =============================================================================
 
-/// The resize-images node processor.
-///
-/// Takes an image and resizes it to the target dimensions. Supports:
-///   - Width only (height calculated from aspect ratio)
-///   - Height only (width calculated from aspect ratio)
-///   - Both width and height (explicit dimensions, may distort)
-///   - maintainAspect flag (default: true) to prevent distortion
-///
-/// RUST CONCEPT: Zero-Sized Type (ZST)
-/// Same pattern as CompressImages — no stored state, all behavior
-/// comes from the trait implementation methods.
+/// Resize-images node processor. Supports width-only, height-only, or
+/// explicit dimensions with optional aspect ratio preservation.
 pub struct ResizeImages;
 
-// --- Default trait implementation ---
-// Clippy insists on this when we have a no-arg `new()` function.
 impl Default for ResizeImages {
     fn default() -> Self {
         Self::new()
@@ -107,7 +49,6 @@ impl Default for ResizeImages {
 }
 
 impl ResizeImages {
-    /// Create a new ResizeImages processor.
     pub fn new() -> Self {
         Self
     }
@@ -116,26 +57,15 @@ impl ResizeImages {
     // Internal Methods — Parameter Extraction
     // =========================================================================
 
-    /// Extract the target width from the node's config params.
-    ///
-    /// Returns `None` if no width was specified — the caller must then
-    /// calculate it from the height + aspect ratio, or fail if neither
-    /// width nor height was given.
+    /// Extract target width. Returns `None` if unspecified — caller must
+    /// calculate from height + aspect ratio, or fail if neither was given.
     fn get_width(params: &serde_json::Map<String, serde_json::Value>) -> Option<u32> {
-        // Look for the "width" key in the params map.
-        // Chain: get key → try as u64 number → cast to u32.
-        //
-        // RUST CONCEPT: Option chaining with `.and_then()` and `.map()`
-        // Each step either passes a value along or short-circuits to None.
-        // This is Rust's way of handling "maybe" values without null checks.
         params
             .get("width")
             .and_then(|v| v.as_u64())
             .map(|w| w as u32)
     }
 
-    /// Extract the target height from the node's config params.
-    /// Returns `None` if no height was specified.
     fn get_height(params: &serde_json::Map<String, serde_json::Value>) -> Option<u32> {
         params
             .get("height")
@@ -143,21 +73,14 @@ impl ResizeImages {
             .map(|h| h as u32)
     }
 
-    /// Extract the "maintainAspect" flag from params. Default: true.
-    ///
-    /// When true, only one dimension (width or height) is needed — the
-    /// other is calculated to preserve the original proportions.
+    /// Default: true (prevents distortion when only one dimension given).
     fn get_maintain_aspect(params: &serde_json::Map<String, serde_json::Value>) -> bool {
-        // Try to read "maintainAspect" as a boolean.
-        // If missing or not a boolean, default to true (safer — prevents distortion).
         params
             .get("maintainAspect")
             .and_then(|v| v.as_bool())
             .unwrap_or(true)
     }
 
-    /// Extract the JPEG quality for re-encoding after resize.
-    /// Reuses the same "quality" param name as compress-images.
     fn get_quality(params: &serde_json::Map<String, serde_json::Value>) -> u8 {
         params
             .get("quality")
@@ -171,19 +94,13 @@ impl ResizeImages {
     // Internal Methods — Dimension Calculation
     // =========================================================================
 
-    /// Calculate the final (width, height) based on params and the original
-    /// image dimensions.
+    /// Calculate final (width, height) from params + original dimensions.
     ///
     /// Rules:
-    ///   - Both width and height specified: use them directly
-    ///   - Only width specified + maintainAspect: calculate height
-    ///   - Only height specified + maintainAspect: calculate width
+    ///   - Both specified: use directly
+    ///   - One specified + maintainAspect: calculate the other from ratio
     ///   - Neither specified: error
-    ///   - maintainAspect=false and only one dimension: error
-    ///
-    /// RUST CONCEPT: `Result<(u32, u32), BntoError>`
-    /// Returns either a tuple of (width, height) or an error describing
-    /// what's wrong with the parameters.
+    ///   - maintainAspect=false + one dimension: use original for the other
     fn calculate_dimensions(
         target_width: Option<u32>,
         target_height: Option<u32>,
@@ -191,47 +108,35 @@ impl ResizeImages {
         original_height: u32,
         maintain_aspect: bool,
     ) -> Result<(u32, u32), BntoError> {
-        // --- Guard: at least one dimension must be specified ---
         if target_width.is_none() && target_height.is_none() {
             return Err(BntoError::InvalidInput(
                 "At least one dimension (width or height) must be specified".to_string(),
             ));
         }
 
-        // --- Guard: original image must have valid dimensions ---
         if original_width == 0 || original_height == 0 {
             return Err(BntoError::InvalidInput(
                 "Original image has zero dimensions".to_string(),
             ));
         }
 
-        // --- Calculate the final dimensions ---
         let (final_width, final_height) = match (target_width, target_height) {
-            // Both dimensions specified — use them directly.
-            // If maintainAspect is true but both are given, we respect the
-            // explicit values (the user knows what they want).
+            // Both given — use directly (user knows what they want).
             (Some(w), Some(h)) => (w, h),
 
-            // Only width specified — calculate height from aspect ratio.
+            // Width only — calculate height from aspect ratio.
             (Some(w), None) => {
                 if maintain_aspect {
-                    // aspect ratio = original_height / original_width
-                    // new_height = new_width × (original_height / original_width)
-                    //
-                    // We use f64 for the calculation to avoid integer rounding
-                    // errors, then round to the nearest pixel.
+                    // Use f64 to avoid integer rounding errors.
                     let ratio = original_height as f64 / original_width as f64;
                     let h = (w as f64 * ratio).round() as u32;
-                    // Ensure at least 1 pixel
                     (w, h.max(MIN_DIMENSION))
                 } else {
-                    // Without aspect ratio maintenance, we'd need both dimensions.
-                    // Use the original height as a fallback.
                     (w, original_height)
                 }
             }
 
-            // Only height specified — calculate width from aspect ratio.
+            // Height only — calculate width from aspect ratio.
             (None, Some(h)) => {
                 if maintain_aspect {
                     let ratio = original_width as f64 / original_height as f64;
@@ -242,12 +147,10 @@ impl ResizeImages {
                 }
             }
 
-            // Neither specified — we already guarded against this above,
-            // but Rust's match requires exhaustive patterns.
+            // Guarded above — exhaustive match requires this branch.
             (None, None) => unreachable!(),
         };
 
-        // --- Guard: dimensions must be within valid range ---
         if final_width > MAX_DIMENSION || final_height > MAX_DIMENSION {
             return Err(BntoError::InvalidInput(format!(
                 "Target dimensions {}×{} exceed maximum allowed {}×{}",
@@ -269,24 +172,16 @@ impl ResizeImages {
     // Internal Methods — Resize + Re-encode
     // =========================================================================
 
-    /// Choose the best resampling filter based on whether we're
-    /// making the image smaller (downscale) or larger (upscale).
-    ///
-    /// - Downscale: Lanczos3 — best quality for shrinking (sharp edges,
-    ///   preserves detail, uses a 6×6 pixel neighborhood)
-    /// - Upscale: CatmullRom — smooth cubic interpolation, avoids the
-    ///   ringing artifacts Lanczos can produce when enlarging
+    /// Lanczos3 for downscaling (sharp, detail-preserving), CatmullRom for
+    /// upscaling (smooth, avoids ringing artifacts Lanczos can produce).
     fn choose_filter(original_pixels: u32, target_pixels: u32) -> FilterType {
         if target_pixels < original_pixels {
-            // Downscaling — Lanczos3 is the gold standard
             FilterType::Lanczos3
         } else {
-            // Upscaling (or same size) — CatmullRom is smoother
             FilterType::CatmullRom
         }
     }
 
-    /// Resize and re-encode the image as JPEG at the given quality.
     fn encode_jpeg(img: &image::DynamicImage, quality: u8) -> Result<Vec<u8>, BntoError> {
         let mut output = Vec::new();
         let encoder = JpegEncoder::new_with_quality(&mut output, quality);
@@ -295,7 +190,6 @@ impl ResizeImages {
         Ok(output)
     }
 
-    /// Resize and re-encode the image as PNG with maximum compression.
     fn encode_png(img: &image::DynamicImage) -> Result<Vec<u8>, BntoError> {
         let mut output = Vec::new();
         let encoder = PngEncoder::new_with_quality(
@@ -308,7 +202,6 @@ impl ResizeImages {
         Ok(output)
     }
 
-    /// Resize and re-encode the image as lossless WebP.
     fn encode_webp(img: &image::DynamicImage) -> Result<Vec<u8>, BntoError> {
         let mut output = Vec::new();
         let mut cursor_out = Cursor::new(&mut output);
@@ -317,11 +210,7 @@ impl ResizeImages {
         Ok(output)
     }
 
-    /// Generate an output filename from the input filename.
-    ///
-    /// Adds "-resized" before the extension:
-    ///   "photo.jpg" → "photo-resized.jpg"
-    ///   "image.png" → "image-resized.png"
+    /// "photo.jpg" -> "photo-resized.jpg"
     fn output_filename(input_filename: &str, format: ImageFormat) -> String {
         if let Some(dot_pos) = input_filename.rfind('.') {
             let stem = &input_filename[..dot_pos];
@@ -337,16 +226,10 @@ impl ResizeImages {
 // =============================================================================
 
 impl NodeProcessor for ResizeImages {
-    /// The unique identifier for this node type.
     fn name(&self) -> &str {
         "resize-images"
     }
 
-    /// Return self-describing metadata for the resize-images processor.
-    ///
-    /// Parameters: width (number), height (number), maintainAspect (boolean),
-    /// and quality (number). All optional — width and height have no defaults
-    /// (omitting them means "don't resize that dimension").
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
@@ -418,7 +301,7 @@ impl NodeProcessor for ResizeImages {
                         max: Some(100.0),
                         required: false,
                     }),
-                    // Quality only applies to resize and convert — compress has its
+                    // Quality applies to resize and convert — compress has its
                     // own "compression" param with inverted semantics.
                     visible_when: Some(ParamCondition::Any(vec![
                         ParamConditionEntry {
@@ -436,15 +319,11 @@ impl NodeProcessor for ResizeImages {
         }
     }
 
-    /// Process a single image: detect format, decode, resize, re-encode.
-    ///
-    /// This is the main entry point called by the Web Worker for each file.
     fn process(
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
     ) -> Result<NodeOutput, BntoError> {
-        // --- Step 1: Detect the image format ---
         let format = ImageFormat::detect(&input.data, &input.filename).ok_or_else(|| {
             BntoError::UnsupportedFormat(format!(
                 "Could not determine image format for '{}'",
@@ -452,27 +331,17 @@ impl NodeProcessor for ResizeImages {
             ))
         })?;
 
-        // --- Step 2: Extract resize parameters ---
         let target_width = Self::get_width(&input.params);
         let target_height = Self::get_height(&input.params);
         let maintain_aspect = Self::get_maintain_aspect(&input.params);
         let quality = Self::get_quality(&input.params);
 
-        // --- Step 3: Decode the image into pixels ---
-        //
-        // `decode_with_orientation` reads EXIF orientation tags and applies
-        // them to the pixel grid. This is crucial for resize: if a smartphone
-        // photo is 4000×3000 stored pixels with orientation=6 (rotate 90°),
-        // the oriented dimensions are 3000×4000. The user sees a 3000×4000
-        // portrait, so resize should work against THOSE dimensions.
+        // EXIF orientation matters for resize: a 4000x3000 stored image with
+        // orientation=6 is really a 3000x4000 portrait. Resize must work
+        // against the ORIENTED dimensions, not the stored pixel dimensions.
         progress.report(10, "Decoding image...");
-
         let img = decode_with_orientation(&input.data)?;
 
-        // --- Step 4: Calculate the target dimensions ---
-        //
-        // `img.width()` and `img.height()` give us the decoded image's
-        // actual pixel dimensions (not the file size in bytes).
         let original_width = img.width();
         let original_height = img.height();
 
@@ -489,38 +358,25 @@ impl NodeProcessor for ResizeImages {
             &format!("Resizing to {}×{}...", final_width, final_height),
         );
 
-        // --- Step 5: Resize the image ---
-        //
-        // Choose the best resampling filter based on whether we're
-        // making the image smaller or larger.
         let original_pixels = original_width * original_height;
         let target_pixels = final_width * final_height;
         let filter = Self::choose_filter(original_pixels, target_pixels);
 
-        // `img.resize_exact()` resizes to exactly the given dimensions.
-        // This is different from `img.resize()` which would fit within
-        // a bounding box while maintaining aspect ratio. We already
-        // calculated the correct dimensions, so we want exact.
+        // `resize_exact` uses our calculated dimensions directly, unlike
+        // `resize` which fits within a bounding box.
         let resized = img.resize_exact(final_width, final_height, filter);
 
         progress.report(70, "Encoding resized image...");
 
-        // --- Step 6: Re-encode in the SAME format as the input ---
-        //
-        // We preserve the original format so:
-        //   - JPEG in → JPEG out (with quality setting)
-        //   - PNG in → PNG out (lossless)
-        //   - WebP in → WebP out (lossless)
+        // Preserve the original format (JPEG in -> JPEG out, etc.)
         let output_data = match format {
             ImageFormat::Jpeg => Self::encode_jpeg(&resized, quality)?,
             ImageFormat::Png => Self::encode_png(&resized)?,
             ImageFormat::WebP => Self::encode_webp(&resized)?,
         };
 
-        // --- Step 7: Build the output with metadata ---
         let output_filename = Self::output_filename(&input.filename, format);
 
-        // Build metadata map for the UI's results panel.
         let mut metadata = serde_json::Map::new();
         metadata.insert(
             "originalWidth".to_string(),
@@ -563,24 +419,16 @@ impl NodeProcessor for ResizeImages {
         })
     }
 
-    /// Validate resize parameters before processing.
-    ///
-    /// Catches configuration errors early:
-    ///   - At least one dimension (width or height) must be specified
-    ///   - Dimensions must be within valid range
-    ///   - Quality (if provided) must be 1-100
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
         let mut errors = Vec::new();
 
         let width = Self::get_width(params);
         let height = Self::get_height(params);
 
-        // At least one dimension required
         if width.is_none() && height.is_none() {
             errors.push("At least one dimension (width or height) must be specified".to_string());
         }
 
-        // Validate width range
         if let Some(w) = width {
             if w < MIN_DIMENSION {
                 errors.push(format!("Width must be at least {MIN_DIMENSION}, got {w}"));
@@ -590,7 +438,6 @@ impl NodeProcessor for ResizeImages {
             }
         }
 
-        // Validate height range
         if let Some(h) = height {
             if h < MIN_DIMENSION {
                 errors.push(format!("Height must be at least {MIN_DIMENSION}, got {h}"));
@@ -600,12 +447,9 @@ impl NodeProcessor for ResizeImages {
             }
         }
 
-        // Validate quality if provided
         if let Some(quality_val) = params.get("quality") {
             match quality_val.as_u64() {
-                Some(q) if (1..=100).contains(&q) => {
-                    // Valid quality — nothing to report
-                }
+                Some(q) if (1..=100).contains(&q) => {}
                 Some(q) => {
                     errors.push(format!("Quality must be between 1 and 100, got {q}"));
                 }
@@ -620,7 +464,7 @@ impl NodeProcessor for ResizeImages {
 }
 
 // =============================================================================
-// Tests — TDD-style: define expected behavior, then implement
+// Tests
 // =============================================================================
 
 #[cfg(test)]

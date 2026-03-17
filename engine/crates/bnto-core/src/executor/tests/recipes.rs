@@ -4,20 +4,14 @@ use super::*;
 // Real Recipe Structure Tests
 // =========================================================================
 //
-// These tests use the EXACT JSON shapes produced by the TypeScript
-// recipe definitions (with "nodes", "parameters", "version", "position",
-// "metadata", "inputPorts", "outputPorts", "edges" — all the fields
-// the Rust struct silently ignores plus the aliased field names).
+// These tests use EXACT JSON shapes from the TypeScript recipe definitions
+// (with "parameters", "version", "position", "metadata", "inputPorts",
+// "outputPorts", "edges" — all the fields Rust silently ignores).
 //
-// Mock processors verify orchestration — we're testing that the executor
-// correctly walks container nodes, chains outputs, and skips I/O nodes.
-// The actual image/CSV/file processing is tested separately in each
-// node crate's own test suite.
+// Mock processors verify orchestration — the actual image/CSV/file
+// processing is tested in each node crate's own test suite.
 
-/// Helper: JSON for compress-images recipe structure.
-/// Compositional: Group → Input → Group("Batch Compress") → Loop → [image:compress] → Output
-/// This mirrors how users build recipes — the batch processing logic is a
-/// reusable sub-recipe (group node) that could be shared independently.
+/// compress-images: Group -> Loop -> [image:compress]
 fn compress_images_json() -> &'static str {
     r#"{
         "nodes": [
@@ -71,10 +65,7 @@ fn compress_images_json() -> &'static str {
     }"#
 }
 
-/// Helper: JSON for clean-csv recipe structure.
-/// Compositional: Group → Input → Group("CSV Cleaner") → [spreadsheet:clean] → Output
-/// The CSV cleaner is a reusable sub-recipe containing the processor directly
-/// (no loop — CSV operations process the whole file at once).
+/// clean-csv: Group -> [spreadsheet:clean] (no loop — whole-file operation)
 fn clean_csv_json() -> &'static str {
     r#"{
         "nodes": [
@@ -124,9 +115,7 @@ fn clean_csv_json() -> &'static str {
     }"#
 }
 
-/// Helper: JSON for rename-files recipe structure.
-/// Compositional: Group → Input → Group("Batch Rename") → Loop → [file-system:rename] → Output
-/// Same pattern as image recipes — the batch rename logic is a reusable sub-recipe.
+/// rename-files: Group -> Loop -> [file-system:rename]
 fn rename_files_json() -> &'static str {
     r#"{
         "nodes": [
@@ -191,7 +180,6 @@ fn test_recipe_compress_images_single_file() {
     let files = vec![make_file("photo.jpg", b"jpeg-data")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // Loop runs once (1 file), EchoProcessor passes it through.
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "photo.jpg");
     assert_eq!(result.files[0].data, b"jpeg-data");
@@ -212,7 +200,6 @@ fn test_recipe_compress_images_multiple_files() {
     ];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // Loop runs 5 times (once per file).
     assert_eq!(result.files.len(), 5);
     assert_eq!(result.files[0].name, "photo1.jpg");
     assert_eq!(result.files[4].name, "photo5.png");
@@ -220,7 +207,6 @@ fn test_recipe_compress_images_multiple_files() {
 
 #[test]
 fn test_recipe_resize_images() {
-    // Compositional: Input → Group("Batch Resize") → Loop → [image:resize] → Output
     let json = r#"{
         "nodes": [
             { "id": "input", "type": "input", "parameters": {} },
@@ -259,7 +245,6 @@ fn test_recipe_resize_images() {
 
 #[test]
 fn test_recipe_convert_image_format() {
-    // Compositional: Input → Group("Batch Convert") → Loop → [image:convert] → Output
     let json = r#"{
         "nodes": [
             { "id": "input", "type": "input", "parameters": {} },
@@ -306,14 +291,12 @@ fn test_recipe_clean_csv_single_file() {
     let files = vec![make_file("data.csv", b"name,age\nAlice,30\n")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // Flat pipeline: one processor node, file passes through.
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "data.csv");
 }
 
 #[test]
 fn test_recipe_rename_csv_columns() {
-    // Compositional: Input → Group("Column Renamer") → [spreadsheet:rename] → Output
     let json = r#"{
         "nodes": [
             { "id": "input", "type": "input", "parameters": {} },
@@ -356,7 +339,7 @@ fn test_recipe_rename_files() {
     ];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // Loop runs 4 times, UpperCaseProcessor uppercases filenames.
+    // UpperCaseProcessor uppercases filenames.
     assert_eq!(result.files.len(), 4);
     assert_eq!(result.files[0].name, "REPORT.PDF");
     assert_eq!(result.files[1].name, "NOTES.TXT");
@@ -368,7 +351,7 @@ fn test_recipe_rename_files() {
 
 #[test]
 fn test_group_containing_group_containing_loop() {
-    // Group → Group → Loop → EchoProcessor. 3 levels deep.
+    // 3 levels deep: Group -> Group -> Loop -> EchoProcessor.
     let json = r#"{
         "nodes": [
             {
@@ -407,14 +390,13 @@ fn test_group_containing_group_containing_loop() {
     ];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // Files pass through all 3 container levels to the processor.
     assert_eq!(result.files.len(), 3);
     assert_eq!(result.files[0].name, "a.jpg");
 }
 
 #[test]
 fn test_multiple_processors_inside_loop() {
-    // Loop → [echo, then uppercase]. Two sequential processors per iteration.
+    // Loop -> [echo, then uppercase]. Two sequential processors per iteration.
     let json = r#"{
         "nodes": [
             {
@@ -435,7 +417,6 @@ fn test_multiple_processors_inside_loop() {
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // Each file goes through echo then uppercase inside the loop.
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].name, "A.TXT");
     assert_eq!(result.files[1].name, "B.TXT");
@@ -443,7 +424,7 @@ fn test_multiple_processors_inside_loop() {
 
 #[test]
 fn test_sequential_loops_in_pipeline() {
-    // Loop1(echo) → Loop2(uppercase). Two loops in sequence.
+    // Loop1(echo) -> Loop2(uppercase). Two loops in sequence.
     let json = r#"{
         "nodes": [
             {
@@ -470,14 +451,13 @@ fn test_sequential_loops_in_pipeline() {
     let files = vec![make_file("file.txt", b"data")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // Passes through loop1 (echo, unchanged) then loop2 (uppercase).
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "FILE.TXT");
 }
 
 #[test]
 fn test_four_levels_deep_nesting() {
-    // Group → Group → Group → Loop → uppercase. Maximum nesting.
+    // Group -> Group -> Group -> Loop -> uppercase. Maximum nesting.
     let json = r#"{
         "nodes": [
             {
@@ -523,7 +503,6 @@ fn test_four_levels_deep_nesting() {
 
 #[test]
 fn test_recipe_with_only_io_nodes_passthrough() {
-    // Recipe with only input + output. No processing nodes.
     let json = r#"{
         "nodes": [
             {
@@ -562,7 +541,7 @@ fn test_recipe_empty_files_no_error() {
 
 #[test]
 fn test_recipe_container_io_children_skipped() {
-    // A loop containing input + output + processor. I/O children are skipped.
+    // I/O children inside a loop should be skipped.
     let json = r#"{
         "nodes": [
             {
@@ -587,7 +566,6 @@ fn test_recipe_container_io_children_skipped() {
     let files = vec![make_file("photo.jpg", b"data")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // I/O nodes inside loop are skipped, only the processor runs.
     assert_eq!(result.files.len(), 1);
 }
 
@@ -595,7 +573,6 @@ fn test_recipe_container_io_children_skipped() {
 
 #[test]
 fn test_recipe_unregistered_operation_inside_loop() {
-    // Loop contains a node with an operation that has no processor.
     let json = r#"{
         "nodes": [
             {
@@ -629,7 +606,7 @@ fn test_recipe_unregistered_operation_inside_loop() {
 
 #[test]
 fn test_recipe_failure_inside_nested_container() {
-    // Group → Loop → FailProcessor. Error should propagate up.
+    // Group -> Loop -> FailProcessor. Error should propagate up.
     let json = r#"{
         "nodes": [
             {
@@ -685,34 +662,29 @@ fn test_recipe_compress_images_event_sequence() {
 
     let events = recorder.events();
 
-    // Should start with PipelineStarted.
     assert!(matches!(events[0], PipelineEvent::PipelineStarted { .. }));
-
-    // Should end with PipelineCompleted.
     assert!(matches!(
         events.last().unwrap(),
         PipelineEvent::PipelineCompleted { .. }
     ));
 
-    // Should have NodeStarted for the batch-compress group (sub-recipe).
     let group_started = events.iter().any(
         |e| matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "batch-compress"),
     );
     assert!(
         group_started,
-        "Should emit NodeStarted for sub-recipe group node"
+        "Should emit NodeStarted for sub-recipe group"
     );
 
-    // Should have NodeStarted for the loop inside the sub-recipe.
     let loop_started = events.iter().any(
         |e| matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "compress-loop"),
     );
     assert!(
         loop_started,
-        "Should emit NodeStarted for loop node inside sub-recipe"
+        "Should emit NodeStarted for loop inside sub-recipe"
     );
 
-    // Should have NodeStarted for the child processor (runs per file).
+    // Child processor starts once per file.
     let child_started_count = events
         .iter()
         .filter(|e| {
@@ -724,7 +696,6 @@ fn test_recipe_compress_images_event_sequence() {
         "Child processor should start once per file"
     );
 
-    // Should have NodeCompleted for the child processor (runs per file).
     let child_completed_count = events
         .iter()
         .filter(|e| {
@@ -749,24 +720,19 @@ fn test_recipe_clean_csv_event_sequence() {
 
     let events = recorder.events();
 
-    // PipelineStarted should report the csv-cleaner group as 1 processing
-    // node at the top level (I/O nodes excluded). The group's children are
-    // counted separately during sub-pipeline execution.
+    // PipelineStarted: 1 top-level processing node (csv-cleaner group), I/O excluded.
     if let PipelineEvent::PipelineStarted {
         total_nodes,
         total_files,
     } = &events[0]
     {
-        assert_eq!(
-            *total_nodes, 1,
-            "1 top-level processing node (csv-cleaner group), I/O excluded"
-        );
+        assert_eq!(*total_nodes, 1, "1 top-level processing node, I/O excluded");
         assert_eq!(*total_files, 1);
     } else {
         panic!("First event should be PipelineStarted");
     }
 
-    // NodeStarted for the csv-cleaner group + clean processor inside it = 2.
+    // Group + processor inside = 2 NodeStarted events.
     let node_started_count = events
         .iter()
         .filter(|e| matches!(e, PipelineEvent::NodeStarted { .. }))
@@ -781,13 +747,10 @@ fn test_recipe_clean_csv_event_sequence() {
 
 #[test]
 fn test_all_six_recipe_structures_deserialize() {
-    // Verify every recipe structure can be parsed without error.
-    // All 6 use the compositional pattern: Input → Group(sub-recipe) → Output.
     let recipes = [
         compress_images_json(),
         clean_csv_json(),
         rename_files_json(),
-        // Resize: Input → Group → Loop → [image:resize] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
@@ -799,7 +762,6 @@ fn test_all_six_recipe_structures_deserialize() {
                 { "id": "out", "type": "output", "parameters": {} }
             ]
         }"#,
-        // Convert: Input → Group → Loop → [image:convert] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
@@ -811,7 +773,6 @@ fn test_all_six_recipe_structures_deserialize() {
                 { "id": "out", "type": "output", "parameters": {} }
             ]
         }"#,
-        // Rename CSV columns: Input → Group → [spreadsheet:rename] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
@@ -836,12 +797,10 @@ fn test_all_six_recipe_structures_deserialize() {
 
 #[test]
 fn test_all_six_recipes_execute_with_mocks() {
-    // Run every recipe with the compositional sub-recipe pattern.
     let recipes = [
         compress_images_json(),
         clean_csv_json(),
         rename_files_json(),
-        // Resize: Input → Group → Loop → [image:resize] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
@@ -853,7 +812,6 @@ fn test_all_six_recipes_execute_with_mocks() {
                 { "id": "out", "type": "output", "parameters": {} }
             ]
         }"#,
-        // Convert: Input → Group → Loop → [image:convert] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
@@ -865,7 +823,6 @@ fn test_all_six_recipes_execute_with_mocks() {
                 { "id": "out", "type": "output", "parameters": {} }
             ]
         }"#,
-        // Rename CSV columns: Input → Group → [spreadsheet:rename] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },

@@ -4,14 +4,13 @@ use super::*;
 // Thorough Event Reporting Tests
 // =========================================================================
 //
-// These tests assert the EXACT sequence and content of PipelineEvents
-// emitted during execution. They verify what the UI will see — progress
-// bar accuracy, node highlighting, duration tracking, and error messages.
+// Assert the EXACT sequence and content of PipelineEvents emitted during
+// execution. These verify what the UI will see -- progress bars, node
+// highlighting, duration tracking, and error messages.
 
 #[test]
 fn test_single_file_full_event_sequence() {
-    // Verify the exact event sequence for one file through one node.
-    // This is the simplest case — the "golden path" the UI depends on.
+    // Golden path: exact event sequence for one file through one node.
     let def = parse_def(
         r#"{
         "nodes": [
@@ -30,15 +29,12 @@ fn test_single_file_full_event_sequence() {
 
     let events = recorder.events();
 
-    // Assert the exact sequence: PipelineStarted → NodeStarted →
-    // FileProgress(0%) → FileProgress(100%) → NodeCompleted → PipelineCompleted
     assert_eq!(
         events.len(),
         6,
         "Expected exactly 6 events for 1 file, 1 node"
     );
 
-    // Event 0: PipelineStarted with correct counts.
     if let PipelineEvent::PipelineStarted {
         total_nodes,
         total_files,
@@ -50,7 +46,6 @@ fn test_single_file_full_event_sequence() {
         panic!("Event 0 should be PipelineStarted, got {:?}", events[0]);
     }
 
-    // Event 1: NodeStarted with correct ID and index.
     if let PipelineEvent::NodeStarted {
         node_id,
         node_index,
@@ -66,7 +61,6 @@ fn test_single_file_full_event_sequence() {
         panic!("Event 1 should be NodeStarted, got {:?}", events[1]);
     }
 
-    // Event 2: FileProgress at 0% (processing starts).
     if let PipelineEvent::FileProgress {
         node_id,
         file_index,
@@ -88,7 +82,6 @@ fn test_single_file_full_event_sequence() {
         panic!("Event 2 should be FileProgress(0%), got {:?}", events[2]);
     }
 
-    // Event 3: FileProgress at 100% (processing done).
     if let PipelineEvent::FileProgress {
         percent, message, ..
     } = &events[3]
@@ -103,7 +96,6 @@ fn test_single_file_full_event_sequence() {
         panic!("Event 3 should be FileProgress(100%), got {:?}", events[3]);
     }
 
-    // Event 4: NodeCompleted with correct file count and duration.
     if let PipelineEvent::NodeCompleted {
         node_id,
         files_processed,
@@ -112,13 +104,11 @@ fn test_single_file_full_event_sequence() {
     {
         assert_eq!(node_id, "proc");
         assert_eq!(*files_processed, 1);
-        // Duration should be non-negative (we use fake_now so it's 0).
         assert_eq!(*duration_ms, 0, "fake_now produces 0ms duration");
     } else {
         panic!("Event 4 should be NodeCompleted, got {:?}", events[4]);
     }
 
-    // Event 5: PipelineCompleted with correct totals.
     if let PipelineEvent::PipelineCompleted {
         total_files_processed,
         duration_ms,
@@ -133,9 +123,7 @@ fn test_single_file_full_event_sequence() {
 
 #[test]
 fn test_multi_file_progress_tracking() {
-    // 3 files through 1 node. Verify each file gets its own
-    // FileProgress(0%) and FileProgress(100%) with correct indices.
-    // This is what powers "File 2/3 at 50%" in the UI progress bar.
+    // 3 files through 1 node. Powers "File 2/3 at 50%" in the UI progress bar.
     let def = parse_def(
         r#"{
         "nodes": [
@@ -157,23 +145,18 @@ fn test_multi_file_progress_tracking() {
     execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
     let events = recorder.events();
-
-    // Collect all FileProgress events grouped by file_index.
     let progress_events: Vec<&PipelineEvent> = events
         .iter()
         .filter(|e| matches!(e, PipelineEvent::FileProgress { .. }))
         .collect();
 
-    // 3 files × 2 progress events each (0% + 100%) = 6 FileProgress events.
+    // 3 files x 2 progress events each (0% + 100%) = 6 FileProgress events.
     assert_eq!(
         progress_events.len(),
         6,
-        "3 files × (0% + 100%) = 6 progress events"
+        "3 files x (0% + 100%) = 6 progress events"
     );
 
-    // Verify the file_index and total_files are correct for each event.
-    // Events should come in pairs: (file 0, 0%), (file 0, 100%),
-    // (file 1, 0%), (file 1, 100%), (file 2, 0%), (file 2, 100%).
     let expected_sequence = [
         (0, 0, "a.jpg"),
         (0, 100, "a.jpg"),
@@ -215,7 +198,6 @@ fn test_multi_file_progress_tracking() {
         }
     }
 
-    // PipelineCompleted should report total files processed = 3.
     if let PipelineEvent::PipelineCompleted {
         total_files_processed,
         ..
@@ -229,8 +211,7 @@ fn test_multi_file_progress_tracking() {
 
 #[test]
 fn test_multi_node_multi_file_progress() {
-    // 2 files through 2 nodes. Verify that file_index resets per node
-    // and total_files reflects the files available at each stage.
+    // 2 files through 2 nodes. Verify file_index resets per node.
     let def = parse_def(
         r#"{
         "nodes": [
@@ -250,7 +231,6 @@ fn test_multi_node_multi_file_progress() {
 
     let events = recorder.events();
 
-    // Collect FileProgress events per node.
     let n1_progress: Vec<&PipelineEvent> = events
         .iter()
         .filter(|e| matches!(e, PipelineEvent::FileProgress { node_id, .. } if node_id == "n1"))
@@ -260,19 +240,10 @@ fn test_multi_node_multi_file_progress() {
         .filter(|e| matches!(e, PipelineEvent::FileProgress { node_id, .. } if node_id == "n2"))
         .collect();
 
-    // Each node processes 2 files → 2 × (0% + 100%) = 4 events per node.
-    assert_eq!(
-        n1_progress.len(),
-        4,
-        "n1 should emit 4 progress events (2 files × 2)"
-    );
-    assert_eq!(
-        n2_progress.len(),
-        4,
-        "n2 should emit 4 progress events (2 files × 2)"
-    );
+    assert_eq!(n1_progress.len(), 4, "n1: 2 files x 2 events = 4");
+    assert_eq!(n2_progress.len(), 4, "n2: 2 files x 2 events = 4");
 
-    // Verify file_index resets to 0 for the second node.
+    // file_index should reset to 0 for the second node.
     if let PipelineEvent::FileProgress { file_index, .. } = n2_progress[0] {
         assert_eq!(
             *file_index, 0,
@@ -280,7 +251,6 @@ fn test_multi_node_multi_file_progress() {
         );
     }
 
-    // Verify NodeCompleted reports correct file counts for each node.
     let completed: Vec<&PipelineEvent> = events
         .iter()
         .filter(|e| matches!(e, PipelineEvent::NodeCompleted { .. }))
@@ -296,7 +266,6 @@ fn test_multi_node_multi_file_progress() {
         }
     }
 
-    // PipelineCompleted should report total_files_processed = 4 (2 files × 2 nodes).
     if let PipelineEvent::PipelineCompleted {
         total_files_processed,
         ..
@@ -304,14 +273,13 @@ fn test_multi_node_multi_file_progress() {
     {
         assert_eq!(
             *total_files_processed, 4,
-            "2 files × 2 nodes = 4 total processed"
+            "2 files x 2 nodes = 4 total processed"
         );
     }
 }
 
 #[test]
 fn test_node_completed_fields_are_correct() {
-    // Verify NodeCompleted reports accurate files_processed and duration.
     let def = parse_def(
         r#"{
         "nodes": [
@@ -335,8 +303,6 @@ fn test_node_completed_fields_are_correct() {
     execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
     let events = recorder.events();
-
-    // Find NodeCompleted for "proc".
     let completed = events
         .iter()
         .find(|e| matches!(e, PipelineEvent::NodeCompleted { node_id, .. } if node_id == "proc"))
@@ -355,8 +321,8 @@ fn test_node_completed_fields_are_correct() {
 
 #[test]
 fn test_error_events_contain_useful_information() {
-    // Verify NodeFailed and PipelineFailed events include the error
-    // message and correct node_id so the UI can show meaningful errors.
+    // NodeFailed and PipelineFailed should include error message and node_id
+    // so the UI can show meaningful errors.
     let def = parse_def(
         r#"{
         "nodes": [
@@ -375,7 +341,6 @@ fn test_error_events_contain_useful_information() {
 
     let events = recorder.events();
 
-    // Find NodeFailed event and verify its fields.
     let node_failed = events
         .iter()
         .find(|e| matches!(e, PipelineEvent::NodeFailed { .. }))
@@ -393,7 +358,6 @@ fn test_error_events_contain_useful_information() {
         );
     }
 
-    // Find PipelineFailed event and verify it also references the failing node.
     let pipeline_failed = events
         .iter()
         .find(|e| matches!(e, PipelineEvent::PipelineFailed { .. }))
@@ -410,7 +374,7 @@ fn test_error_events_contain_useful_information() {
 
 #[test]
 fn test_container_node_event_nesting() {
-    // Group → Loop → Processor: verify events nest correctly.
+    // Group -> Loop -> Processor: verify events nest correctly.
     // The UI uses this to know which node is "active" at each level.
     let def = parse_def(
         r#"{
@@ -440,7 +404,6 @@ fn test_container_node_event_nesting() {
 
     let events = recorder.events();
 
-    // Collect all NodeStarted events in order.
     let started: Vec<(&str, &str)> = events
         .iter()
         .filter_map(|e| match e {
@@ -451,19 +414,16 @@ fn test_container_node_event_nesting() {
         })
         .collect();
 
-    // Group starts first, then loop, then leaf (once per file).
     assert!(
         started.len() >= 4,
-        "Expected at least 4 NodeStarted: group + loop + 2× leaf, got {}",
+        "Expected at least 4 NodeStarted: group + loop + 2x leaf, got {}",
         started.len()
     );
     assert_eq!(started[0], ("group1", "group"), "Group should start first");
     assert_eq!(started[1], ("loop1", "loop"), "Loop should start second");
-    // Leaf starts once per file inside the loop.
     assert_eq!(started[2].0, "leaf", "Leaf should start for first file");
     assert_eq!(started[3].0, "leaf", "Leaf should start for second file");
 
-    // Verify NodeCompleted nesting: leaf completes before loop, loop before group.
     let completed_ids: Vec<&str> = events
         .iter()
         .filter_map(|e| match e {
@@ -480,7 +440,6 @@ fn test_container_node_event_nesting() {
     assert_eq!(completed_ids[0], "leaf", "First leaf completes");
     assert_eq!(completed_ids[1], "leaf", "Second leaf completes");
 
-    // FileProgress events should reference the leaf node (the processor).
     let leaf_progress: Vec<&PipelineEvent> = events
         .iter()
         .filter(|e| matches!(e, PipelineEvent::FileProgress { node_id, .. } if node_id == "leaf"))
@@ -488,7 +447,7 @@ fn test_container_node_event_nesting() {
     assert_eq!(
         leaf_progress.len(),
         4,
-        "2 files × (0% + 100%) = 4 leaf progress events"
+        "2 files x (0% + 100%) = 4 leaf progress events"
     );
 }
 
@@ -516,7 +475,6 @@ fn test_pipeline_started_excludes_io_nodes() {
 
     let events = recorder.events();
 
-    // PipelineStarted should report 3 nodes (not 5).
     if let PipelineEvent::PipelineStarted {
         total_nodes,
         total_files,
@@ -528,7 +486,6 @@ fn test_pipeline_started_excludes_io_nodes() {
         panic!("First event should be PipelineStarted");
     }
 
-    // Each NodeStarted should have total_nodes = 3.
     for event in &events {
         if let PipelineEvent::NodeStarted { total_nodes, .. } = event {
             assert_eq!(
@@ -561,13 +518,11 @@ fn test_empty_files_emit_pipeline_events() {
 
     let events = recorder.events();
 
-    // Should still get PipelineStarted (total_files: 0).
     assert!(matches!(
         &events[0],
         PipelineEvent::PipelineStarted { total_files: 0, .. }
     ));
 
-    // Should still get PipelineCompleted.
     assert!(matches!(
         events.last().unwrap(),
         PipelineEvent::PipelineCompleted {

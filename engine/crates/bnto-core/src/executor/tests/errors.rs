@@ -52,7 +52,6 @@ fn test_processor_failure_emits_node_failed() {
 
     let events = recorder.events();
 
-    // Should have NodeFailed and PipelineFailed events.
     let has_node_failed = events
         .iter()
         .any(|e| matches!(e, PipelineEvent::NodeFailed { .. }));
@@ -89,7 +88,6 @@ fn test_error_mid_pipeline_stops_execution() {
 
     let events = recorder.events();
 
-    // n1 should complete, n2 should fail, n3 should never start.
     let completed: Vec<&PipelineEvent> = events
         .iter()
         .filter(|e| matches!(e, PipelineEvent::NodeCompleted { .. }))
@@ -101,7 +99,6 @@ fn test_error_mid_pipeline_stops_execution() {
         assert_eq!(node_id, "n1");
     }
 
-    // n3 should never have a NodeStarted event.
     let n3_started = events
         .iter()
         .any(|e| matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "n3"));

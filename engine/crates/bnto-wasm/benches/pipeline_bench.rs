@@ -1,24 +1,8 @@
-// =============================================================================
-// Pipeline Benchmarks — Track Node & Recipe Performance Over Time
-// =============================================================================
+// Pipeline Benchmarks -- track node and recipe performance over time.
 //
-// WHAT ARE THESE BENCHMARKS?
-// These use the Criterion benchmarking framework to measure how fast our
-// engine processes files. Criterion runs each benchmark many times,
-// computes statistics, and reports whether performance has improved or
-// regressed compared to the last run.
-//
-// WHY BENCHMARK AT THE ENGINE LEVEL?
-// The engine is the hot path — every user-facing action (compress, resize,
-// clean CSV) flows through these functions. If a code change accidentally
-// makes compression 2x slower, these benchmarks will catch it.
-//
-// HOW TO RUN:
-//   cd engine
-//   cargo bench
-//
-// The first run establishes a baseline. Subsequent runs compare against it.
-// Results are saved in `engine/target/criterion/`.
+// Uses Criterion to measure engine processing speed. The first run
+// establishes a baseline; subsequent runs detect regressions.
+// Results saved in engine/target/criterion/.
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 
@@ -26,15 +10,10 @@ use bnto_core::{
     NodeRegistry, PipelineDefinition, PipelineFile, PipelineReporter, execute_pipeline,
 };
 
-// --- Test fixtures ---
-// We embed real files for realistic benchmarks.
 static SMALL_JPEG: &[u8] = include_bytes!("../../../../test-fixtures/images/small.jpg");
 static LARGE_PNG: &[u8] = include_bytes!("../../../../test-fixtures/images/large.png");
 static MESSY_CSV: &[u8] = include_bytes!("../../../../test-fixtures/csv/messy.csv");
 
-// --- Helpers ---
-
-/// Build the production registry with all 6 real processors.
 fn real_registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
     registry.register(
@@ -58,12 +37,10 @@ fn real_registry() -> NodeRegistry {
     registry
 }
 
-/// Parse a JSON string into a PipelineDefinition.
 fn parse(json: &str) -> PipelineDefinition {
     serde_json::from_str(json).expect("recipe JSON should parse")
 }
 
-/// Create a PipelineFile.
 fn file(name: &str, data: &[u8], mime: &str) -> PipelineFile {
     PipelineFile {
         name: name.to_string(),
@@ -73,21 +50,18 @@ fn file(name: &str, data: &[u8], mime: &str) -> PipelineFile {
     }
 }
 
-/// Deterministic clock for benchmarks (avoids system clock overhead).
 fn fake_now() -> u64 {
     1000
 }
 
-// =============================================================================
-// Node-Level Benchmarks — Individual Processor Performance
-// =============================================================================
+// =========================================================================
+// Node-Level Benchmarks
+// =========================================================================
 
 fn bench_individual_nodes(c: &mut Criterion) {
     let registry = real_registry();
     let reporter = PipelineReporter::new_noop();
 
-    // --- image:compress ---
-    // Simple pipeline: input → compress → output
     let compress_def = parse(
         r#"{
         "nodes": [
@@ -105,7 +79,6 @@ fn bench_individual_nodes(c: &mut Criterion) {
         })
     });
 
-    // --- image:resize ---
     let resize_def = parse(
         r#"{
         "nodes": [
@@ -123,7 +96,6 @@ fn bench_individual_nodes(c: &mut Criterion) {
         })
     });
 
-    // --- image:convert ---
     let convert_def = parse(
         r#"{
         "nodes": [
@@ -141,7 +113,6 @@ fn bench_individual_nodes(c: &mut Criterion) {
         })
     });
 
-    // --- spreadsheet:clean ---
     let clean_def = parse(
         r#"{
         "nodes": [
@@ -159,7 +130,6 @@ fn bench_individual_nodes(c: &mut Criterion) {
         })
     });
 
-    // --- file-system:rename ---
     let rename_def = parse(
         r#"{
         "nodes": [
@@ -178,15 +148,14 @@ fn bench_individual_nodes(c: &mut Criterion) {
     });
 }
 
-// =============================================================================
-// Recipe-Level Benchmarks — Full Composite Recipe Performance
-// =============================================================================
+// =========================================================================
+// Recipe-Level Benchmarks
+// =========================================================================
 
 fn bench_recipes(c: &mut Criterion) {
     let registry = real_registry();
     let reporter = PipelineReporter::new_noop();
 
-    // --- Compress Images (full composite recipe) ---
     let compress_recipe = parse(
         r#"{
         "nodes": [
@@ -214,7 +183,7 @@ fn bench_recipes(c: &mut Criterion) {
         })
     });
 
-    // --- Batch scaling: measure how performance changes with file count ---
+    // Batch scaling: measure how performance changes with file count.
     let mut batch_group = c.benchmark_group("recipe/compress-images/batch");
     for count in [1, 5, 10] {
         batch_group.throughput(Throughput::Elements(count as u64));
@@ -229,7 +198,6 @@ fn bench_recipes(c: &mut Criterion) {
     }
     batch_group.finish();
 
-    // --- Clean CSV recipe ---
     let clean_recipe = parse(
         r#"{
         "nodes": [
@@ -253,7 +221,6 @@ fn bench_recipes(c: &mut Criterion) {
         })
     });
 
-    // --- Rename Files recipe ---
     let rename_recipe = parse(
         r#"{
         "nodes": [
@@ -282,14 +249,14 @@ fn bench_recipes(c: &mut Criterion) {
     });
 }
 
-// =============================================================================
-// Registry Benchmarks — Lookup Performance
-// =============================================================================
+// =========================================================================
+// Registry Benchmarks
+// =========================================================================
 
 fn bench_registry(c: &mut Criterion) {
     let registry = real_registry();
 
-    // Benchmark the resolve() hot path — this is called once per node per file.
+    // resolve() hot path -- called once per node per file.
     let mut params = serde_json::Map::new();
     params.insert(
         "operation".to_string(),
@@ -303,25 +270,17 @@ fn bench_registry(c: &mut Criterion) {
     });
 }
 
-// =============================================================================
-// PNG Compression Benchmarks — Track Quantization Performance
-// =============================================================================
+// =========================================================================
+// PNG Compression Benchmarks
+// =========================================================================
 //
-// PNG compression uses quantizr (median cut + Floyd-Steinberg dithering) to
-// reduce 24-bit truecolor to 8-bit indexed palette before DEFLATE. Tracks
-// both speed and output size for regression detection.
-//
-// HOW TO RUN:
-//   cd engine
-//   cargo bench -- png
-//
-// Criterion HTML reports in engine/target/criterion/ for visual comparison.
+// PNG uses quantizr (median cut + Floyd-Steinberg dithering) for palette
+// reduction before DEFLATE. Tracks both speed and output size.
 
 fn bench_png_compression(c: &mut Criterion) {
     let registry = real_registry();
     let reporter = PipelineReporter::new_noop();
 
-    // Simple pipeline: input → compress → output
     let compress_def = parse(
         r#"{
         "nodes": [
@@ -332,7 +291,6 @@ fn bench_png_compression(c: &mut Criterion) {
     }"#,
     );
 
-    // --- Benchmark: PNG compression speed on large.png (1.0 MB) ---
     c.bench_function("node/image:compress/png/large", |b| {
         b.iter(|| {
             let files = vec![file("photo.png", LARGE_PNG, "image/png")];
@@ -340,9 +298,7 @@ fn bench_png_compression(c: &mut Criterion) {
         })
     });
 
-    // --- One-shot: Print output size for regression tracking ---
-    // Not a timing benchmark — reports the compression ratio so we can
-    // verify quantizr output sizes haven't regressed.
+    // One-shot: print output size for regression tracking.
     let files = vec![file("photo.png", LARGE_PNG, "image/png")];
     let result = execute_pipeline(&compress_def, files, &registry, &reporter, fake_now).unwrap();
     if let Some(output_file) = result.files.first() {
@@ -350,7 +306,7 @@ fn bench_png_compression(c: &mut Criterion) {
         let output_kb = output_file.data.len() / 1024;
         let reduction_pct = (1.0 - output_file.data.len() as f64 / LARGE_PNG.len() as f64) * 100.0;
         eprintln!(
-            "\n  PNG compression: {} KB → {} KB ({:.1}% reduction)\n",
+            "\n  PNG compression: {} KB -> {} KB ({:.1}% reduction)\n",
             input_kb, output_kb, reduction_pct
         );
     }

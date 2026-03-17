@@ -26,7 +26,6 @@ fn test_loop_node_runs_children_per_file() {
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // Each file processed individually through the loop.
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].name, "A.TXT");
     assert_eq!(result.files[1].name, "B.TXT");
