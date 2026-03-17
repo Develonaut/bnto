@@ -14,7 +14,7 @@
 const CELL = 170;
 
 /** Horizontal gap between cells in pixels — room for divider + add button. */
-const GAP_X = 30;
+const GAP_X = 36;
 
 /** Vertical gap below cells in pixels — room for divider + add button. */
 const GAP_Y = 22;
