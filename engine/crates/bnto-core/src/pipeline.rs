@@ -1,32 +1,7 @@
-// =============================================================================
-// Pipeline Definition Types — What the Engine Receives to Execute
-// =============================================================================
-//
-// WHAT IS THIS FILE?
-// When a user clicks "Run" in the editor, the web app sends a recipe
-// definition (JSON) to the engine. This file defines the Rust types that
-// the engine deserializes that JSON into.
-//
-// These types mirror the TypeScript `PipelineDefinition` / `PipelineNode`
-// types exactly — same JSON shape, same field names. A definition created
-// in the web app can be serialized to JSON and deserialized here without
-// any transformation.
-//
-// WHAT ARE I/O NODES?
-// Recipe definitions include "input" and "output" nodes that serve as
-// structural markers — they tell the editor where files enter and leave
-// the pipeline. The executor silently skips these nodes because they
-// don't perform any processing. Only "processing nodes" (image, csv,
-// file-system, etc.) get dispatched to a NodeProcessor.
-//
-// WHAT ARE CONTAINER NODES?
-// Some nodes contain child nodes:
-// - "loop" — runs children once PER file (each iteration gets one file)
-// - "group" — runs children once on the FULL batch of files
-// - "parallel" — same as group for now (concurrent execution is future)
-//
-// Container nodes enable complex recipes like "for each image, compress
-// then resize" without flattening the node tree.
+// Pipeline definition types — deserialized from JSON recipe definitions.
+// Mirrors the TypeScript `PipelineDefinition` / `PipelineNode` types exactly.
+// I/O nodes are structural markers (skipped by executor); container nodes
+// (loop, group, parallel) hold child nodes for nested execution.
 
 use serde::Deserialize;
 
@@ -35,13 +10,6 @@ use serde::Deserialize;
 // =============================================================================
 
 /// The top-level pipeline definition that the executor receives.
-///
-/// RUST CONCEPT: `#[derive(Deserialize)]`
-/// The `Deserialize` derive macro generates code that can parse JSON
-/// (or any serde-supported format) into this struct. Combined with
-/// `serde_json::from_str()`, we can do:
-///   let def: PipelineDefinition = serde_json::from_str(json_str)?;
-/// and get a fully typed Rust struct from raw JSON.
 #[derive(Debug, Clone, Deserialize)]
 pub struct PipelineDefinition {
     /// The ordered list of nodes in this pipeline.
@@ -50,11 +18,6 @@ pub struct PipelineDefinition {
 }
 
 /// A single node in the pipeline.
-///
-/// RUST CONCEPT: `#[serde(rename = "type")]`
-/// The JSON field is called `"type"`, but `type` is a reserved keyword
-/// in Rust (used for type aliases). So we name the Rust field `node_type`
-/// and tell serde to look for `"type"` in the JSON.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PipelineNode {
@@ -71,28 +34,15 @@ pub struct PipelineNode {
     /// Configuration parameters for this node.
     /// Contains the `operation` field (e.g., "compress", "resize") plus
     /// any operation-specific settings (quality, dimensions, format, etc.).
-    ///
-    /// RUST CONCEPT: `#[serde(default)]`
-    /// If the JSON doesn't have a `params` field, use the default value
-    /// (an empty Map) instead of failing with a parse error. This is
-    /// important because I/O nodes often don't have params.
-    ///
-    /// RUST CONCEPT: `#[serde(alias = "...")]`
-    /// The TypeScript `Definition` type uses `parameters` for this field,
-    /// but the Rust struct uses `params`. The `alias` attribute tells serde
-    /// to accept EITHER name when deserializing. This means the same Rust
-    /// code works with both:
-    ///   - `{ "params": { ... } }` (Rust convention, used in tests)
-    ///   - `{ "parameters": { ... } }` (TypeScript convention, used in recipes)
+    /// Defaults to an empty Map when absent (I/O nodes often have no params).
+    /// Accepts both `params` (Rust convention) and `parameters` (TypeScript
+    /// convention) via serde alias.
     #[serde(default, alias = "parameters")]
     pub params: serde_json::Map<String, serde_json::Value>,
 
     /// Child nodes for container types (loop, group, parallel).
     /// `None` for primitive (leaf) nodes. `Some(vec![...])` for containers.
-    ///
-    /// RUST CONCEPT: `Option<Vec<T>>`
-    /// Doubly-optional: the field might be absent from JSON (`None`),
-    /// or present but empty (`Some(vec![])`). Both mean "no children."
+    /// Both `None` and `Some(vec![])` mean "no children."
     ///
     /// The TypeScript `Definition` type uses `nodes` for child definitions,
     /// but the Rust struct uses `children`. The `alias` lets serde accept

@@ -1,94 +1,42 @@
-// =============================================================================
-// Rename Files Node — Transform Filenames in the Browser
-// =============================================================================
+// Rename Files Node — transform filenames in the browser.
 //
-// WHAT IS THIS FILE?
-// This is the `rename-files` node. When a user drops files on the
-// /rename-files page and clicks "Run", this code does the actual work.
+// Browser version is a filename transformer: takes a file's current name,
+// applies transformation rules (find/replace, case, prefix, suffix, pattern),
+// and returns the same file data with the new name.
 //
-// HOW DOES FILE RENAMING WORK IN THE BROWSER?
-//
-//   On native platforms (CLI/desktop), rename-files uses the real filesystem
-//   to move files. But in the browser, there IS no filesystem. Files are
-//   just blobs of data with a name attached.
-//
-//   So the browser version is a FILENAME TRANSFORMER:
-//     1. Take a file's current name (e.g., "IMG_1234.jpg")
-//     2. Apply transformation rules (pattern, prefix, suffix, find/replace, case)
-//     3. Return the same file data with the new name (e.g., "vacation-1234.jpg")
-//
-//   The Web Worker handles the "file" part (reading bytes, creating downloads).
-//   We just handle the "rename" part (transforming the filename string).
-//
-// TRANSFORMATION ORDER:
-//   When multiple transformations are specified, they apply in this order:
-//     1. find/replace — modify specific parts of the filename
-//     2. case — transform the entire stem to lower/upper/title case
-//     3. prefix — prepend a string to the stem
-//     4. suffix — append a string to the stem (before the extension)
-//     5. pattern — if provided, replaces the ENTIRE filename using a template
-//
-//   This order means pattern has "final say" — it can reference the original
-//   name/ext, but prefix/suffix/case are applied before pattern evaluation.
-//   If you use a pattern, it overrides everything else.
+// Transformation order: find/replace -> case -> prefix -> suffix -> pattern.
+// Pattern has "final say" — it overrides everything using template variables.
 
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use regex::Regex;
 
-// =============================================================================
-// The RenameFiles Struct
-// =============================================================================
-//
-// RUST CONCEPT: Unit Struct
-// `struct RenameFiles;` is a "unit struct" — it has no fields. It's like
-// an empty class in JavaScript: `class RenameFiles {}`. We use it because
-// the NodeProcessor trait needs a type to implement on, but rename-files
-// doesn't need any persistent state. Each call to `process()` is stateless.
-
-/// The rename-files node processor. Transforms filenames using patterns,
-/// prefixes, suffixes, find/replace, and case transformations.
-///
-/// The file data passes through UNCHANGED — only the filename is modified.
+/// The rename-files node processor. Stateless — config comes from `NodeInput.params`.
+/// File data passes through unchanged; only the filename is modified.
 pub struct RenameFiles;
 
 impl RenameFiles {
-    /// Create a new RenameFiles processor.
-    ///
-    /// RUST CONCEPT: `Self`
-    /// `Self` is shorthand for the type we're implementing — `RenameFiles`.
-    /// `Self` and `RenameFiles` are interchangeable here.
     pub fn new() -> Self {
         Self
     }
 }
 
-// RUST CONCEPT: `Default` trait
-// The `Default` trait provides a `default()` method that creates a
-// "default" instance of a type. For our unit struct, the default IS
-// the only possible instance. Implementing Default is a Rust convention
-// that lets callers write `RenameFiles::default()` instead of `RenameFiles::new()`.
 impl Default for RenameFiles {
     fn default() -> Self {
         Self::new()
     }
 }
 
-// =============================================================================
-// NodeProcessor Implementation
-// =============================================================================
+// --- NodeProcessor Implementation ---
 
 impl NodeProcessor for RenameFiles {
-    /// Returns the node type name — used for logging and progress reporting.
     fn name(&self) -> &str {
         "rename-files"
     }
 
-    /// Return self-describing metadata for the rename-files processor.
-    ///
-    /// Parameters: find, replace, case (enum), prefix, suffix, pattern — all
-    /// optional strings/enums. Accepts any file type (empty accepts = wildcard).
+    /// Self-describing metadata: find, replace, case (enum), prefix, suffix, pattern.
+    /// Accepts any file type (empty accepts = wildcard).
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
@@ -98,416 +46,254 @@ impl NodeProcessor for RenameFiles {
             description: "Transform filenames using patterns, find/replace, and case rules"
                 .to_string(),
             category: NodeCategory::File,
-            // Empty accepts = any file type. Rename-files doesn't care about
-            // the file's content — it only transforms the filename string.
             accepts: vec![],
             platforms: vec!["browser".to_string()],
-            parameters: vec![
-                ParameterDef {
-                    name: "find".to_string(),
-                    label: "Find".to_string(),
-                    description: "Text or regex pattern to search for in the filename".to_string(),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "replace".to_string(),
-                    label: "Replace".to_string(),
-                    description: "Replacement text (used with Find)".to_string(),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "case".to_string(),
-                    label: "Case".to_string(),
-                    description: "Transform the filename to a specific case".to_string(),
-                    param_type: ParameterType::Enum {
-                        options: vec![
-                            "lower".to_string(),
-                            "upper".to_string(),
-                            "title".to_string(),
-                        ],
-                    },
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "prefix".to_string(),
-                    label: "Prefix".to_string(),
-                    description: "Text to prepend to the filename".to_string(),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "suffix".to_string(),
-                    label: "Suffix".to_string(),
-                    description: "Text to append before the file extension".to_string(),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "pattern".to_string(),
-                    label: "Pattern".to_string(),
-                    description:
-                        "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})"
-                            .to_string(),
-                    placeholder: Some("{{name}}-compressed.{{ext}}".to_string()),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-            ],
+            parameters: build_rename_parameters(),
         }
     }
 
-    /// Process a single file: transform its filename according to the params.
-    ///
-    /// The file data (bytes) passes through UNCHANGED. Only the filename
-    /// is transformed based on the configuration parameters.
-    ///
-    /// PARAMETERS (from the `params` map):
-    ///   - `pattern` (string): Template for the output filename.
-    ///     Supports: {{name}}, {{ext}}, {{index}}, {{date}}
-    ///   - `prefix` (string): Prepend this to the filename stem
-    ///   - `suffix` (string): Append this to the stem (before extension)
-    ///   - `find` (string): Regex or literal to search for in the stem
-    ///   - `replace` (string): Replacement text (used with `find`)
-    ///   - `case` (string): "lower", "upper", or "title"
-    ///   - `index` (string or number): File index for {{index}} in patterns
-    ///
-    /// RETURNS:
-    ///   - `Ok(NodeOutput)` with one file (same data, new filename)
-    ///   - `Err(BntoError)` if the filename is empty or processing fails
+    /// Transform a file's name according to the params. Data passes through unchanged.
     fn process(
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
     ) -> Result<NodeOutput, BntoError> {
-        // --- Step 1: Validate the input ---
-        //
-        // An empty filename is invalid — we can't rename something with no name.
-        // We check this first to give a clear error message.
         if input.filename.is_empty() {
             return Err(BntoError::InvalidInput(
                 "Filename cannot be empty".to_string(),
             ));
         }
 
-        // Report that we're starting.
         progress.report(10, "Parsing filename...");
-
-        // --- Step 2: Split the filename into stem and extension ---
-        //
-        // "photo.jpg" -> stem = "photo", ext = "jpg"
-        // "archive.tar.gz" -> stem = "archive.tar", ext = "gz"
-        // "README" -> stem = "README", ext = "" (no extension)
-        //
-        // We split on the LAST dot, because files can have multiple dots
-        // (like "archive.tar.gz" — the extension is "gz", not "tar.gz").
         let (original_stem, original_ext) = split_filename(&input.filename);
 
         progress.report(30, "Applying transformations...");
-
-        // --- Step 3: Start with the original stem and apply transformations ---
-        //
-        // We clone the stem into a mutable String so we can modify it
-        // as we apply each transformation step.
-        //
-        // RUST CONCEPT: `.to_string()`
-        // `original_stem` is a `&str` (a borrowed string slice — read-only).
-        // `.to_string()` creates an owned `String` (like copying a string
-        // in JavaScript). We need an owned String because we're going to
-        // modify it with each transformation step.
-        let mut stem = original_stem.to_string();
-
-        // --- Step 3a: Find/Replace ---
-        //
-        // If `find` is provided, search for it in the stem and replace with
-        // the `replace` value (or empty string if `replace` is not provided).
-        //
-        // We try to compile `find` as a regex first. If it's not valid regex,
-        // we treat it as a literal string (exact match replacement).
-        if let Some(find_str) = get_string_param(&input.params, "find") {
-            let replace_str = get_string_param(&input.params, "replace").unwrap_or_default();
-            stem = apply_find_replace(&stem, &find_str, &replace_str);
-        }
-
-        // --- Step 3b: Case Transformation ---
-        //
-        // If `case` is provided, transform the entire stem to the specified case.
-        // Supported values: "lower", "upper", "title"
-        if let Some(case_str) = get_string_param(&input.params, "case") {
-            stem = apply_case_transform(&stem, &case_str);
-        }
-
-        // --- Step 3c: Prefix ---
-        //
-        // If `prefix` is provided, prepend it to the stem.
-        // Example: prefix = "new-" → "photo" becomes "new-photo"
-        if let Some(prefix) = get_string_param(&input.params, "prefix") {
-            stem = format!("{prefix}{stem}");
-        }
-
-        // --- Step 3d: Suffix ---
-        //
-        // If `suffix` is provided, append it to the stem (before extension).
-        // Example: suffix = "-final" → "photo" becomes "photo-final"
-        if let Some(suffix) = get_string_param(&input.params, "suffix") {
-            stem = format!("{stem}{suffix}");
-        }
+        let stem = apply_all_transformations(original_stem, &input.params);
 
         progress.report(60, "Building new filename...");
-
-        // --- Step 3e: Pattern (overrides everything) ---
-        //
-        // If `pattern` is provided, it replaces the ENTIRE filename using
-        // template variables. The stem we've been building so far is
-        // discarded — the pattern uses the ORIGINAL stem/ext plus
-        // special variables like {{index}} and {{date}}.
-        //
-        // Template variables:
-        //   {{name}}  — original filename without extension
-        //   {{ext}}   — original extension without dot
-        //   {{index}} — 1-based file index (from params or default "1")
-        //   {{date}}  — current date as YYYY-MM-DD
-        let new_filename = if let Some(pattern) = get_string_param(&input.params, "pattern") {
-            let index = get_string_param(&input.params, "index").unwrap_or_else(|| "1".to_string());
-            let date = get_current_date();
-            apply_pattern(&pattern, original_stem, original_ext, &index, &date)
-        } else {
-            // No pattern — reconstruct filename from the transformed stem + original extension.
-            // If the file had no extension, just use the stem.
-            if original_ext.is_empty() {
-                stem
-            } else {
-                format!("{stem}.{original_ext}")
-            }
-        };
+        let new_filename = build_final_filename(&stem, original_stem, original_ext, &input.params);
 
         progress.report(90, "Preparing output...");
-
-        // --- Step 4: Build the output ---
-        //
-        // The file data passes through UNCHANGED. We just wrap it with
-        // the new filename and a generic MIME type.
-        //
-        // We also include metadata about what was done — the original
-        // filename, the new filename, and which transformations were applied.
-        // The UI uses this to show a summary to the user.
-        let mut metadata = serde_json::Map::new();
-        metadata.insert(
-            "originalFilename".to_string(),
-            serde_json::Value::String(input.filename.clone()),
-        );
-        metadata.insert(
-            "newFilename".to_string(),
-            serde_json::Value::String(new_filename.clone()),
-        );
-
-        // Build a list of which transformations were applied.
-        let transforms = build_transforms_list(&input.params);
-        metadata.insert(
-            "transformsApplied".to_string(),
-            serde_json::Value::Array(
-                transforms
-                    .into_iter()
-                    .map(serde_json::Value::String)
-                    .collect(),
-            ),
-        );
+        let metadata = build_rename_metadata(&input.filename, &new_filename, &input.params);
 
         progress.report(100, "Done!");
-
-        // Return the output — same data, new filename.
-        //
-        // RUST CONCEPT: `Ok(...)`
-        // `Ok` wraps the successful result in a `Result`. The caller
-        // will get `Ok(NodeOutput { ... })` and can unwrap it to get
-        // the NodeOutput inside.
-        Ok(NodeOutput {
-            files: vec![OutputFile {
-                data: input.data,
-                filename: new_filename,
-                // We use application/octet-stream as a generic binary MIME type
-                // because rename-files doesn't know or care about the file's actual
-                // content type — it only transforms the filename.
-                mime_type: "application/octet-stream".to_string(),
-            }],
-            metadata,
-        })
+        Ok(build_rename_output(input.data, new_filename, metadata))
     }
 }
 
-// =============================================================================
-// Helper Functions — Pure Rust, no WASM boundary concerns
-// =============================================================================
-//
-// These are all pure functions: they take input, return output, no side effects.
-// They're easy to test independently and don't depend on the WASM runtime.
+fn build_rename_output(
+    data: Vec<u8>,
+    filename: String,
+    metadata: serde_json::Map<String, serde_json::Value>,
+) -> NodeOutput {
+    NodeOutput {
+        files: vec![OutputFile {
+            data,
+            filename,
+            mime_type: "application/octet-stream".to_string(),
+        }],
+        metadata,
+    }
+}
 
-/// Split a filename into its stem (name without extension) and extension.
-///
-/// Examples:
-///   "photo.jpg"       → ("photo", "jpg")
-///   "archive.tar.gz"  → ("archive.tar", "gz")
-///   "README"           → ("README", "")
-///   ".gitignore"       → (".gitignore", "")
-///
-/// We split on the LAST dot. If there's no dot, or the filename starts
-/// with a dot and has no other dots (like ".gitignore"), the extension
-/// is empty and the entire filename is the stem.
-///
-/// RUST CONCEPT: `(&str, &str)` return type
-/// This returns a tuple (pair) of two string slices. The slices borrow
-/// from the input string — no allocation needed. The `'_` lifetime is
-/// elided (the compiler figures it out automatically).
+// --- Metadata Parameter Definitions ---
+
+fn build_rename_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
+    vec![
+        rename_string_param(
+            "find",
+            "Find",
+            "Text or regex pattern to search for in the filename",
+        ),
+        rename_string_param("replace", "Replace", "Replacement text (used with Find)"),
+        rename_case_param(),
+        rename_string_param("prefix", "Prefix", "Text to prepend to the filename"),
+        rename_string_param(
+            "suffix",
+            "Suffix",
+            "Text to append before the file extension",
+        ),
+        rename_pattern_param(),
+    ]
+}
+
+/// Condition: visible when operation == "rename".
+fn rename_condition() -> Option<bnto_core::metadata::ParamCondition> {
+    use bnto_core::metadata::*;
+    Some(ParamCondition::Single(ParamConditionEntry {
+        param: "operation".to_string(),
+        equals: "rename".to_string(),
+    }))
+}
+
+/// A simple string parameter for the rename node.
+fn rename_string_param(name: &str, label: &str, desc: &str) -> bnto_core::metadata::ParameterDef {
+    bnto_core::metadata::ParameterDef {
+        name: name.to_string(),
+        label: label.to_string(),
+        description: desc.to_string(),
+        visible_when: rename_condition(),
+        ..Default::default()
+    }
+}
+
+fn rename_case_param() -> bnto_core::metadata::ParameterDef {
+    use bnto_core::metadata::*;
+    ParameterDef {
+        name: "case".to_string(),
+        label: "Case".to_string(),
+        description: "Transform the filename to a specific case".to_string(),
+        param_type: ParameterType::Enum {
+            options: vec![
+                "lower".to_string(),
+                "upper".to_string(),
+                "title".to_string(),
+            ],
+        },
+        visible_when: rename_condition(),
+        ..Default::default()
+    }
+}
+
+fn rename_pattern_param() -> bnto_core::metadata::ParameterDef {
+    bnto_core::metadata::ParameterDef {
+        name: "pattern".to_string(),
+        label: "Pattern".to_string(),
+        description:
+            "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})"
+                .to_string(),
+        placeholder: Some("{{name}}-compressed.{{ext}}".to_string()),
+        visible_when: rename_condition(),
+        ..Default::default()
+    }
+}
+
+// --- Transformation Pipeline ---
+
+/// Apply all transformations in order: find/replace -> case -> prefix -> suffix.
+fn apply_all_transformations(
+    original_stem: &str,
+    params: &serde_json::Map<String, serde_json::Value>,
+) -> String {
+    let mut stem = original_stem.to_string();
+
+    if let Some(find_str) = get_string_param(params, "find") {
+        let replace_str = get_string_param(params, "replace").unwrap_or_default();
+        stem = apply_find_replace(&stem, &find_str, &replace_str);
+    }
+
+    if let Some(case_str) = get_string_param(params, "case") {
+        stem = apply_case_transform(&stem, &case_str);
+    }
+
+    if let Some(prefix) = get_string_param(params, "prefix") {
+        stem = format!("{prefix}{stem}");
+    }
+
+    if let Some(suffix) = get_string_param(params, "suffix") {
+        stem = format!("{stem}{suffix}");
+    }
+
+    stem
+}
+
+/// If a pattern is provided, apply it (overriding the transformed stem).
+/// Otherwise reconstruct from transformed stem + original extension.
+fn build_final_filename(
+    stem: &str,
+    original_stem: &str,
+    original_ext: &str,
+    params: &serde_json::Map<String, serde_json::Value>,
+) -> String {
+    if let Some(pattern) = get_string_param(params, "pattern") {
+        let index = get_string_param(params, "index").unwrap_or_else(|| "1".to_string());
+        let date = get_current_date();
+        apply_pattern(&pattern, original_stem, original_ext, &index, &date)
+    } else if original_ext.is_empty() {
+        stem.to_string()
+    } else {
+        format!("{stem}.{original_ext}")
+    }
+}
+
+// --- Result Metadata ---
+
+fn build_rename_metadata(
+    original_filename: &str,
+    new_filename: &str,
+    params: &serde_json::Map<String, serde_json::Value>,
+) -> serde_json::Map<String, serde_json::Value> {
+    let mut metadata = serde_json::Map::new();
+    metadata.insert(
+        "originalFilename".to_string(),
+        serde_json::Value::String(original_filename.to_string()),
+    );
+    metadata.insert(
+        "newFilename".to_string(),
+        serde_json::Value::String(new_filename.to_string()),
+    );
+
+    let transforms = build_transforms_list(params);
+    metadata.insert(
+        "transformsApplied".to_string(),
+        serde_json::Value::Array(
+            transforms
+                .into_iter()
+                .map(serde_json::Value::String)
+                .collect(),
+        ),
+    );
+
+    metadata
+}
+
+// --- Helper Functions ---
+
+/// Split a filename into stem and extension on the last dot.
+/// ".gitignore" and "README" have no extension (empty string).
 fn split_filename(filename: &str) -> (&str, &str) {
-    // RUST CONCEPT: `rfind()`
-    // `.rfind('.')` searches for the LAST occurrence of '.' in the string.
-    // It returns `Option<usize>` — either `Some(position)` or `None`.
-    //
-    // We look for the last dot because "archive.tar.gz" should split as
-    // stem="archive.tar" ext="gz", not stem="archive" ext="tar.gz".
     match filename.rfind('.') {
-        // Found a dot at position `pos`.
-        // If pos is 0, the filename starts with a dot (like ".gitignore")
-        // and we treat the whole thing as the stem with no extension.
-        Some(pos) if pos > 0 => {
-            // RUST CONCEPT: String slicing with `&str[..pos]`
-            // `&filename[..pos]` takes a slice from the start up to (but
-            // not including) position `pos`. `&filename[pos + 1..]` takes
-            // a slice from one past the dot to the end. This is like
-            // `filename.substring(0, pos)` and `filename.substring(pos + 1)`
-            // in JavaScript.
-            let stem = &filename[..pos];
-            let ext = &filename[pos + 1..];
-            (stem, ext)
-        }
-        // No dot found, or dot is at position 0 — no extension.
+        Some(pos) if pos > 0 => (&filename[..pos], &filename[pos + 1..]),
         _ => (filename, ""),
     }
 }
 
-/// Extract a string parameter from the params map.
-///
-/// Params can be either JSON strings or numbers. We handle both:
-///   - `"prefix": "new-"` → Some("new-")
-///   - `"index": 3` → Some("3")
-///   - key not present → None
-///
-/// RUST CONCEPT: `Option<String>`
-/// Returns `Some(string)` if the key exists with a value we can convert,
-/// or `None` if the key doesn't exist or the value is null.
+/// Extract a string param from the JSON map. Handles both string and number values.
 fn get_string_param(
     params: &serde_json::Map<String, serde_json::Value>,
     key: &str,
 ) -> Option<String> {
-    // RUST CONCEPT: `match` expression
-    // `match` is Rust's pattern matching — like a super-powered `switch`
-    // statement in JavaScript. It checks the value against each pattern
-    // and runs the code for the first match. Unlike `switch`, `match`
-    // is exhaustive — the compiler makes sure you handle every case.
     params.get(key).and_then(|v| match v {
-        // If it's a JSON string, return the string value.
         serde_json::Value::String(s) => Some(s.clone()),
-        // If it's a JSON number, convert it to a string.
-        // This handles the case where `index` is passed as `3` instead of `"3"`.
         serde_json::Value::Number(n) => Some(n.to_string()),
-        // Anything else (null, bool, array, object) → None.
         _ => None,
     })
 }
 
-/// Apply find/replace to a string. Tries regex first, falls back to literal.
-///
-/// If `find` is a valid regex pattern, it uses regex replacement.
-/// If `find` is NOT valid regex, it treats it as a literal string and
-/// replaces all occurrences.
-///
-/// RUST CONCEPT: `Regex::new()` returns `Result`
-/// Compiling a regex can fail (if the pattern is invalid). `Regex::new()`
-/// returns `Result<Regex, Error>`. We use `.ok()` to convert the error to
-/// `None`, and then handle both cases.
+/// Apply find/replace. Tries regex first; falls back to literal if invalid regex.
 fn apply_find_replace(stem: &str, find: &str, replace: &str) -> String {
-    // Try to compile the `find` string as a regex pattern.
     match Regex::new(find) {
-        // It's valid regex! Use `replace_all` for regex-powered replacement.
-        //
-        // RUST CONCEPT: `Regex::replace_all()`
-        // Returns a `Cow<str>` — either a borrowed reference to the original
-        // string (if no replacements were made) or a new owned String.
-        // `.to_string()` converts either case to an owned String.
         Ok(re) => re.replace_all(stem, replace).to_string(),
-
-        // Not valid regex — fall back to literal string replacement.
-        // `.replace()` does an exact string match and replaces ALL occurrences.
         Err(_) => stem.replace(find, replace),
     }
 }
 
-/// Apply a case transformation to a string.
-///
-/// Supported case values:
-///   - "lower" → all lowercase ("PHOTO" → "photo")
-///   - "upper" → all uppercase ("photo" → "PHOTO")
-///   - "title" → first letter uppercase, rest lowercase ("pHoTo" → "Photo")
-///   - anything else → no change (returns the input unchanged)
+/// Apply case transformation: "lower", "upper", "title". Unknown values pass through.
 fn apply_case_transform(stem: &str, case: &str) -> String {
     match case {
         "lower" => stem.to_lowercase(),
         "upper" => stem.to_uppercase(),
         "title" => to_title_case(stem),
-        // Unknown case value — return unchanged.
-        // We don't error here because it's a user config mistake, not a
-        // processing failure. The file still gets renamed with other rules.
         _ => stem.to_string(),
     }
 }
 
-/// Convert a string to title case (first letter uppercase, rest lowercase).
-///
-/// "hello world" → "Hello world"
-/// "PHOTO" → "Photo"
-/// "" → ""
-///
-/// RUST CONCEPT: `.chars()` and iterators
-/// Strings in Rust are UTF-8 encoded bytes. `.chars()` gives us an iterator
-/// over the individual characters. We take the first character, uppercase it,
-/// then lowercase the rest. This handles Unicode correctly — `'ü'.to_uppercase()`
-/// gives `'Ü'`, not some ASCII-only hack.
+/// Title case: first character uppercase, rest lowercase. Handles Unicode.
 fn to_title_case(s: &str) -> String {
-    // RUST CONCEPT: `let mut` — mutable variable
-    // By default, variables in Rust are immutable (can't be changed).
-    // `let mut chars` means "I want to be able to advance this iterator."
     let mut chars = s.chars();
-
-    // RUST CONCEPT: `match` on `Option`
-    // `chars.next()` returns `Option<char>` — either `Some('h')` (the first
-    // character) or `None` (empty string). We handle both cases.
     match chars.next() {
         None => String::new(),
         Some(first) => {
-            // `.to_uppercase()` returns an iterator of chars (because some
-            // characters uppercase to multiple characters, like 'ß' → "SS").
-            // `.collect::<String>()` joins those chars into a String.
-            // Then we append the rest of the string in lowercase.
             let upper_first: String = first.to_uppercase().collect();
             let lower_rest: String = chars.as_str().to_lowercase();
             format!("{upper_first}{lower_rest}")
@@ -515,23 +301,8 @@ fn to_title_case(s: &str) -> String {
     }
 }
 
-/// Apply a template pattern to generate a new filename.
-///
-/// Template variables:
-///   {{name}}  — original filename stem (without extension)
-///   {{ext}}   — original file extension (without dot)
-///   {{index}} — file index (for batch processing)
-///   {{date}}  — current date as YYYY-MM-DD
-///
-/// Example:
-///   pattern = "{{date}}-{{name}}-v2.{{ext}}"
-///   name = "photo", ext = "jpg", index = "1", date = "2026-02-25"
-///   result = "2026-02-25-photo-v2.jpg"
+/// Apply a template pattern: {{name}}, {{ext}}, {{index}}, {{date}}.
 fn apply_pattern(pattern: &str, name: &str, ext: &str, index: &str, date: &str) -> String {
-    // RUST CONCEPT: Method chaining with `.replace()`
-    // Each `.replace()` call returns a new String with the substitution made.
-    // We chain them together to apply all substitutions in sequence.
-    // This is like doing `pattern.replaceAll("{{name}}", name)` in JavaScript.
     pattern
         .replace("{{name}}", name)
         .replace("{{ext}}", ext)
@@ -539,52 +310,26 @@ fn apply_pattern(pattern: &str, name: &str, ext: &str, index: &str, date: &str) 
         .replace("{{date}}", date)
 }
 
-/// Get the current date as a YYYY-MM-DD string.
-///
-/// In a WASM environment, we use `js_sys::Date` to get the current date
-/// from the browser's JavaScript runtime. In native Rust tests, we also
-/// use `js_sys::Date` if available, but our tests mock this or accept
-/// any valid date format.
-///
-/// For unit tests (native Rust, no JS runtime), we return a placeholder
-/// date. The WASM integration tests verify the real JS Date path.
+/// Get current date as YYYY-MM-DD. Uses js_sys::Date in WASM, fixed date in native tests.
 fn get_current_date() -> String {
-    // In a WASM environment, we'd use js_sys::Date. But since this function
-    // is also called from native unit tests (no JS runtime), we use cfg to
-    // switch between implementations.
-    //
-    // RUST CONCEPT: `#[cfg(target_arch = "wasm32")]`
-    // This is conditional compilation. The compiler only includes this code
-    // when building for the wasm32 target (browser). For native builds
-    // (unit tests), it uses the other branch.
     #[cfg(target_arch = "wasm32")]
     {
-        // Use JavaScript's Date object to get the current date.
         let date = js_sys::Date::new_0();
         let year = date.get_full_year();
-        let month = date.get_month() + 1; // JS months are 0-indexed (Jan=0)
+        let month = date.get_month() + 1;
         let day = date.get_date();
         format!("{year:04}-{month:02}-{day:02}")
     }
 
-    // For native Rust tests, return a fixed date so tests are deterministic.
     #[cfg(not(target_arch = "wasm32"))]
     {
         "2026-02-25".to_string()
     }
 }
 
-/// Build a list of which transformations were applied based on the params.
-///
-/// This is used for metadata — the UI shows "Applied: prefix, case, suffix"
-/// so the user knows what happened to their filename.
+/// Build a list of which transformations were applied, for metadata display.
 fn build_transforms_list(params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
-    // RUST CONCEPT: `Vec::new()` and `.push()`
-    // We start with an empty vector (dynamic array) and add items to it
-    // as we discover which params are present. This is like building an
-    // array with `const arr = []; arr.push(...)` in JavaScript.
     let mut transforms = Vec::new();
-
     if params.contains_key("find") {
         transforms.push("find/replace".to_string());
     }
@@ -600,18 +345,12 @@ fn build_transforms_list(params: &serde_json::Map<String, serde_json::Value>) ->
     if params.contains_key("pattern") {
         transforms.push("pattern".to_string());
     }
-
     transforms
 }
 
 // =============================================================================
 // Unit Tests — Pure Rust, no WASM boundary needed
 // =============================================================================
-//
-// RUST CONCEPT: `#[cfg(test)]`
-// This attribute means "only compile this module when running tests".
-// It's completely removed from the production WASM binary — zero overhead.
-// Unit tests run natively with `cargo test` — no browser or Node.js needed.
 
 #[cfg(test)]
 mod tests {
@@ -952,14 +691,7 @@ mod tests {
 
         let result = processor.process(input, &progress);
 
-        // RUST CONCEPT: `assert!(result.is_err())`
-        // We check that the result is an error, not success.
         assert!(result.is_err());
-
-        // RUST CONCEPT: `if let Err(e) = result`
-        // Pattern matching to extract the error without needing Debug on NodeOutput.
-        // `unwrap_err()` requires the Ok type to implement Debug, but NodeOutput
-        // doesn't. Using `if let` avoids that requirement.
         if let Err(e) = result {
             assert!(
                 e.to_string().contains("empty"),

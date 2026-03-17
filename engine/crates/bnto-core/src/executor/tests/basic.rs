@@ -17,7 +17,6 @@ fn test_empty_definition_no_files() {
 
 #[test]
 fn test_io_only_pipeline_is_passthrough() {
-    // A pipeline with ONLY input + output nodes = passthrough.
     let def = parse_def(
         r#"{
         "nodes": [
@@ -32,7 +31,6 @@ fn test_io_only_pipeline_is_passthrough() {
     let files = vec![make_file("test.txt", b"hello")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // Files pass through unchanged.
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "test.txt");
     assert_eq!(result.files[0].data, b"hello");
@@ -88,7 +86,6 @@ fn test_single_node_multiple_files() {
 
 #[test]
 fn test_two_sequential_nodes() {
-    // uppercase then echo — verify chaining works.
     let def = parse_def(
         r#"{
         "nodes": [
@@ -105,7 +102,6 @@ fn test_two_sequential_nodes() {
     let files = vec![make_file("test.txt", b"hello")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // Filename should be uppercased by the first node, then echoed by the second.
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "TEST.TXT");
 }
@@ -127,7 +123,6 @@ fn test_double_processor_increases_file_count() {
     let files = vec![make_file("test.txt", b"data")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // DoubleProcessor returns 2 files per input.
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].name, "test.txt-a");
     assert_eq!(result.files[1].name, "test.txt-b");

@@ -1,42 +1,6 @@
-// =============================================================================
-// Image Orientation — EXIF Orientation Extraction and Application
-// =============================================================================
-//
-// WHAT IS THIS FILE?
-// When you take a photo with your smartphone, the camera sensor always captures
-// pixels in the same physical orientation (landscape). But if you hold the phone
-// upright (portrait), the camera stores the photo with the pixels sideways and
-// adds a tiny tag in the EXIF metadata that says "rotate 90° to view correctly."
-//
-// This tag is called the EXIF Orientation tag (tag 0x0112). It has 8 possible
-// values, but the most common ones are:
-//   - 1 (Normal): no rotation needed
-//   - 6 (Rotate 90° CW): phone was held upright (portrait)
-//   - 3 (Rotate 180°): phone was upside down
-//   - 8 (Rotate 270° CW): phone was rotated left (portrait, other way)
-//
-// WHY DOES THIS MATTER?
-// The `image` crate's `decode()` method reads pixels as-stored in the file,
-// without applying the EXIF orientation tag. If we don't read and apply the
-// tag ourselves, a portrait photo will come out sideways in the output file.
-//
-// The browser shows the ORIGINAL file correctly because browsers read EXIF
-// orientation automatically — but our re-encoded output has no EXIF tag
-// (the `image` crate strips all metadata when re-encoding), so the output
-// displays with whatever pixel orientation we gave it.
-//
-// THE FIX:
-// Before processing, we:
-//   1. Read the EXIF orientation tag from the original file bytes
-//   2. Decode the image to pixels (standard decode)
-//   3. Physically rotate/flip the pixels to match the intended display
-//
-// The output file has correctly-oriented pixels and doesn't need an EXIF
-// tag to display correctly — it looks right in every viewer, on every platform.
-//
-// PIPELINE:
-//   Raw bytes → extract orientation → decode pixels → apply rotation → process
-//
+// EXIF orientation — reads the orientation tag from image bytes and physically
+// rotates/flips pixels before processing. Without this, portrait photos from
+// smartphones come out sideways (the `image` crate strips EXIF on re-encode).
 // PERFORMANCE NOTE:
 // We create two cursors over the same in-memory data — one to extract
 // orientation (reads only the file header), one to decode pixels (reads
@@ -56,11 +20,6 @@ use image::ImageReader;
 // We need it in scope to call `.orientation()` on the decoder returned by
 // `ImageReader::into_decoder()`. Without this import, Rust can't find the
 // method even though the concrete type implements it.
-//
-// RUST CONCEPT: Trait methods require the trait to be in scope
-// In Rust, even if a type implements a trait, you can't call the trait's
-// methods unless the trait itself is imported. This is to prevent ambiguity
-// when multiple traits define methods with the same name.
 use image::ImageDecoder;
 
 // `Orientation` represents the 8 possible EXIF orientation transforms.
@@ -90,11 +49,6 @@ use image::metadata::Orientation;
 ///     images come from — smartphone cameras)
 ///   - PNG: No EXIF in PNG files — always returns unmodified
 ///   - WebP: EXIF support varies — the `image` crate may or may not parse it
-///
-/// RUST CONCEPT: `image::DynamicImage`
-/// A `DynamicImage` is an in-memory image as a grid of pixels. It's format-
-/// agnostic — whether the source was JPEG, PNG, or WebP, the pixels are
-/// the same once decoded. We can then re-encode to any format.
 pub fn decode_with_orientation(data: &[u8]) -> Result<image::DynamicImage, BntoError> {
     // --- Step 1: Extract EXIF orientation from the raw bytes ---
     //
@@ -125,11 +79,6 @@ pub fn decode_with_orientation(data: &[u8]) -> Result<image::DynamicImage, BntoE
     //
     // For `Orientation::Rotate90` (the most common smartphone case), this
     // rotates the pixel grid 90° clockwise. A 100×50 image becomes 50×100.
-    //
-    // RUST CONCEPT: `&mut self` method
-    // `apply_orientation` takes `&mut self` — it modifies the image in place
-    // rather than creating a copy. This is more memory-efficient since we
-    // don't need two copies of the full pixel grid in memory at once.
     img.apply_orientation(orientation);
 
     Ok(img)
@@ -151,11 +100,6 @@ pub fn decode_with_orientation(data: &[u8]) -> Result<image::DynamicImage, BntoE
 ///   1. Most images don't need rotation (EXIF orientation = 1 or absent)
 ///   2. Failing to read orientation should not block image processing
 ///   3. The worst case is a slightly rotated output, not a crash
-///
-/// RUST CONCEPT: Defensive programming with fallbacks
-/// Rather than returning `Result<Orientation, Error>` and forcing callers
-/// to handle errors, we use a "best effort" approach. The function always
-/// succeeds. If something goes wrong, we default to "no transform."
 fn extract_orientation(data: &[u8]) -> Orientation {
     // --- Create a reader and get the underlying decoder ---
     //
@@ -165,11 +109,6 @@ fn extract_orientation(data: &[u8]) -> Orientation {
     // dimensions, color type, and orientation.
     let cursor = Cursor::new(data);
 
-    // RUST CONCEPT: `let ... else` (let-else pattern, stabilized in Rust 1.65)
-    // If the pattern doesn't match (i.e., the Result is Err), execute the
-    // `else` block. This is like an early return for error cases — much
-    // cleaner than nested `match` statements when you just want to bail
-    // out on any error.
     let Ok(reader) = ImageReader::new(cursor).with_guessed_format() else {
         return Orientation::NoTransforms;
     };

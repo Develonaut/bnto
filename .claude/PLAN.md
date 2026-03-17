@@ -262,7 +262,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 - [x] `apps/web` — **Replace competitor comparison with bnto-first benchmarks**: Rewrite the "How It Works" section's BragLayout to showcase bnto's own capabilities (50ms local WASM, zero uploads, unlimited runs, open source) instead of the TinyPNG/iLoveIMG comparison chart and feature table. Focus on the landscape of problems bnto solves.
 - [x] `apps/web` — **Delete button on My Recipe cards**: Add delete action to saved recipe cards on `/my-recipes`. Wire `core.recipes.remove()` to a confirmation dialog on RecipeCard.
 - [ ] **CLAIMED** `packages/editor` + `@bnto/core` — **Auto-save recipes**: Replace manual Save with transparent persistence — localStorage if unauthed, Convex if authed. Download/Export remains the one manual action. Remove Save from file menu and keyboard shortcut. If limiting unauthed saves, pop a dialog when unauthed users hit 3 recipes (prompt to delete one or sign in). Debounced write of editor store to localStorage; hydrate on mount; clear on "New" or "Open". _(Auto-save debounce/hydrate already in PR #204. Core infrastructure `listAllDrafts` + `localRecipeService` added in `feat/auto-save-local-recipes`. Remaining: remove Save from menu/shortcuts, 3-recipe limit dialog for unauthed users.)_
-- [ ] **CLAIMED** `engine` — **Thin Rust comment density**: Reduce inline comment noise — keep file-level headers and comments on genuinely complex logic, remove obvious per-line explanations. Update CLAUDE.md Rust standards section. _(PR #211 open)_
+- [x] `engine` — **Thin Rust comment density**: Reduce inline comment noise — keep file-level headers and comments on genuinely complex logic, remove obvious per-line explanations. Update CLAUDE.md Rust standards section.
 - [x] Cross-cutting — **Inline handler audit**: Extract inline `onClick={() => ...}` handlers to named `handleOnX` functions across `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 - [x] Cross-cutting — **CSS-first interaction audit**: Identify JS `useState`/ternary className patterns for visual states that CSS pseudo-classes or `data-*` attributes could handle. Fix violations in `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 - [x] Cross-cutting — **Test naming unification**: Audit all test suites for naming consistency — clear action-oriented descriptions, consistent prefixing, logical grouping. Remove duplicate or vague test names.
@@ -1017,6 +1017,12 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 ### Triage: Dumb components pass — extract logic from heavy component files
 
 **Priority: Triage.** Components like `packages/editor/src/components/NodePaletteDialog/NodePaletteDialogRoot.tsx` carry too much inline logic. Audit for opportunities to 1) extract reusable utils/patterns and 2) keep components dumb (data in, render out).
+
+---
+
+### Triage: Engine documentation — auto-generated docs for Rust engine
+
+**Priority: Triage.** Set up auto-generated documentation for the Rust engine. Explore `cargo doc`, GitHub wiki integration, or a `docs/` directory at engine root that documents the engine architecture, crate responsibilities, and API surface. Goal: replace the tutorial-style comments removed in `chore/thin-rust-comments` with proper external documentation.
 
 ---
 

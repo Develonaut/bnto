@@ -1,31 +1,6 @@
-// =============================================================================
-// Node Registry — Maps Node Types to Processors
-// =============================================================================
-//
-// WHAT IS THIS FILE?
-// When the executor encounters a node like `{ type: "image", params: { operation: "compress" } }`,
-// it needs to find the right Rust processor to handle it. The registry is the
-// lookup table that maps compound keys (like "image:compress") to processor
-// instances (like `CompressImages`).
-//
-// WHY A REGISTRY (instead of a big match statement)?
-// 1. The executor doesn't need to know about specific node types — it just
-//    asks the registry "do you have a processor for this?" Loose coupling.
-// 2. Different consumers can register different processors. The browser WASM
-//    module registers all 6 processors. A CLI tool might only register image
-//    processors. A test can register mock processors.
-// 3. New node types can be added without modifying the executor code.
-//
-// HOW COMPOUND KEYS WORK:
-// The registry uses `nodeType:operation` compound keys for dispatch:
-//   - "image:compress"        → CompressImages processor
-//   - "image:resize"          → ResizeImages processor
-//   - "spreadsheet:clean"     → CleanCsv processor
-//   - "file-system:rename"    → RenameFiles processor
-//
-// This matches the pattern already used in the JS-side `wasmLoader.ts`.
-// The `resolve()` method extracts the `operation` field from the node's
-// params to build the compound key automatically.
+// Node registry — maps `nodeType:operation` compound keys to NodeProcessor
+// instances. Decouples the executor from specific node types; consumers
+// register only the processors they need (all 6 for WASM, subset for CLI/tests).
 
 use std::collections::HashMap;
 use std::fmt::Write as FmtWrite;
@@ -37,17 +12,10 @@ use crate::processor::NodeProcessor;
 // Node Registry
 // =============================================================================
 
-/// A registry that maps compound keys to node processors.
+/// A registry that maps compound keys (e.g., "image:compress") to node processors.
 ///
-/// RUST CONCEPT: `HashMap<String, Box<dyn NodeProcessor>>`
-/// - `HashMap` is Rust's hash map (like JavaScript's `Map`).
-/// - `Box<dyn NodeProcessor>` is a heap-allocated trait object — it can
-///   hold ANY type that implements `NodeProcessor`. We don't know the
-///   concrete type at compile time (it could be `CompressImages`,
-///   `CleanCsv`, etc.), so we use dynamic dispatch via `dyn`.
-/// - The `Box` is needed because trait objects are "unsized" — the
-///   compiler doesn't know how much memory they need. `Box` puts them
-///   on the heap with a fixed-size pointer.
+/// Uses `Box<dyn NodeProcessor>` for dynamic dispatch -- the registry
+/// holds heterogeneous processor types behind a single trait object.
 pub struct NodeRegistry {
     /// Maps compound keys (e.g., "image:compress") to processor instances.
     processors: HashMap<String, Box<dyn NodeProcessor>>,
@@ -88,11 +56,6 @@ impl NodeRegistry {
     /// # Returns
     /// - `Some(&dyn NodeProcessor)` — if a matching processor was found
     /// - `None` — if no processor matches the compound key
-    ///
-    /// RUST CONCEPT: `Option<&dyn NodeProcessor>`
-    /// Returns a reference to the processor (borrowed, not moved).
-    /// The registry keeps ownership — the caller can USE the processor
-    /// but can't take it out of the registry.
     pub fn resolve(
         &self,
         node_type: &str,
@@ -138,11 +101,6 @@ impl NodeRegistry {
     /// The order is determined by the HashMap's iteration order (not guaranteed,
     /// but deterministic for a given build). The `node_catalog()` WASM function
     /// sorts the output by compound key for stable snapshots.
-    ///
-    /// RUST CONCEPT: `.values()` and `.map()`
-    /// `.values()` returns an iterator over the HashMap's values (the processors).
-    /// `.map(|p| p.metadata())` calls `metadata()` on each processor.
-    /// `.collect()` gathers the results into a Vec.
     pub fn catalog(&self) -> Vec<NodeMetadata> {
         self.processors.values().map(|p| p.metadata()).collect()
     }

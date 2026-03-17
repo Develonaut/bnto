@@ -1,23 +1,6 @@
-// =============================================================================
-// Shared Test Utilities for bnto-image
-// =============================================================================
-//
-// WHAT IS THIS FILE?
-// Test helper functions used across multiple test modules in bnto-image.
-// These functions create test fixtures (images with specific properties)
-// that would be tedious and error-prone to duplicate in each test file.
-//
-// WHY NOT USE STATIC FIXTURE FILES?
-// For orientation testing, we need JPEG files with specific EXIF orientation
-// tags. Creating these programmatically is more reliable than storing binary
-// fixtures because:
-//   1. The test code documents exactly what the fixture contains
-//   2. We can create any orientation without maintaining 8+ fixture files
-//   3. Non-square dimensions prove rotation by checking width/height swap
-//
-// NOTE: This module is gated behind `#[cfg(test)]` in lib.rs, so there's
-// no need for a `#![cfg(test)]` attribute here — it's already test-only.
-// This file is completely invisible to production code.
+// Shared test utilities for bnto-image — programmatic fixture generation.
+// Creates JPEG/PNG images with specific EXIF orientation tags, dimensions,
+// and pixel patterns for orientation and format testing.
 
 /// Create a JPEG image with known dimensions and a gradient pixel pattern.
 ///
@@ -34,11 +17,6 @@
 /// This pattern lets us verify pixel positions after rotation. For example,
 /// if the top-left pixel was (0, 0, 0) and after 90° CW rotation it should
 /// be at a different position.
-///
-/// RUST CONCEPT: `image::RgbImage`
-/// An alias for `ImageBuffer<Rgb<u8>, Vec<u8>>` — a 2D grid of RGB pixels
-/// stored as a flat Vec of bytes (R, G, B, R, G, B, ...). Each pixel is
-/// 3 bytes. A 60×40 image uses 60 × 40 × 3 = 7,200 bytes.
 pub fn create_test_jpeg(width: u32, height: u32) -> Vec<u8> {
     // Create an RGB image with a gradient pattern.
     let mut img = image::RgbImage::new(width, height);
@@ -60,10 +38,6 @@ pub fn create_test_jpeg(width: u32, height: u32) -> Vec<u8> {
     let mut buffer = Vec::new();
     let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buffer, 95);
 
-    // RUST CONCEPT: `.unwrap()`
-    // In test code, `.unwrap()` is fine because a test failure (panic) is
-    // exactly what we want if encoding fails. In production code, we'd
-    // use `?` or `.map_err()` to handle errors gracefully.
     dyn_img.write_with_encoder(encoder).unwrap();
 
     buffer

@@ -1,51 +1,15 @@
-// =============================================================================
-// Node Metadata — Self-Describing Processor Definitions
-// =============================================================================
+// Node Metadata — Self-describing processor definitions.
 //
-// WHAT IS THIS FILE?
-// This defines the types that let each node processor describe ITSELF — what
-// it's called, what category it belongs to, what parameters it accepts, what
-// file types it can handle, and whether it runs in the browser.
-//
-// WHY DO WE NEED THIS?
-// Currently, node metadata lives in TWO uncoordinated places:
-//   - `@bnto/nodes` (TypeScript) — defines names, labels, categories, schemas
-//   - Rust processors — implicitly know their parameters but don't declare them
-//
-// By adding a `metadata()` method to every processor, the engine becomes the
-// single source of truth for node definitions. The TypeScript side can validate
-// against the engine's output, and eventually consume it directly.
-//
-// HOW IT WORKS:
 // Each processor implements `metadata()` on the `NodeProcessor` trait. The
-// registry collects all metadata into a "catalog" — a JSON-serializable list
-// of every processor's self-description. The `node_catalog()` WASM function
-// exports this catalog to JavaScript.
+// registry collects all metadata into a catalog exported via `node_catalog()`
+// WASM function, making the engine the single source of truth for node defs.
 
 use serde::Serialize;
 
-// =============================================================================
-// ParamCondition — Conditional Visibility / Requirement Rules
-// =============================================================================
+// --- ParamCondition — Conditional Visibility / Requirement Rules ---
 //
-// WHY DO WE NEED THIS?
-// Some parameters only make sense in certain contexts. For example, the "width"
-// and "height" parameters in the image node only matter when the operation is
-// "resize" — they're meaningless for "compress" or "convert". Rather than
-// hardcoding this logic in the UI, we let the engine DECLARE these conditions
-// as metadata. The UI reads the condition and hides/shows parameters accordingly.
-//
-// HOW IT WORKS:
-//   - `ParamCondition::Single` = "show this param when <param> equals <value>"
-//   - `ParamCondition::Any`    = "show this param when ANY of these conditions match" (OR logic)
-//
-// RUST CONCEPT: `#[serde(untagged)]`
-// Normally serde adds a "type" tag to distinguish enum variants in JSON.
-// `untagged` tells serde to try each variant in order and use the first one
-// that matches the JSON shape. This lets us serialize:
-//   - Single as: `{"param": "operation", "equals": "resize"}`
-//   - Any as:    `[{"param": "...", "equals": "..."}, ...]`
-// The consumer just checks: is it an object? → Single. Is it an array? → Any.
+// Declares when a parameter should be shown/required based on other param values.
+// `Single` = one condition, `Any` = OR logic across multiple conditions.
 
 /// A single condition entry: "when `param` has the value `equals`".
 ///
@@ -66,13 +30,8 @@ pub struct ParamConditionEntry {
 /// Conditional visibility/requirement rule for a parameter.
 ///
 /// Tells the UI when to show a parameter or when to make it required.
-///
-/// RUST CONCEPT: `#[serde(untagged)]`
-/// `untagged` means serde figures out which variant to use based on the
-/// JSON shape, without adding a type discriminator field. This produces
-/// cleaner JSON:
-///   - `Single` serializes as a plain object: `{"param": "operation", "equals": "resize"}`
-///   - `Any` serializes as an array: `[{"param": "...", "equals": "..."}, ...]`
+/// Uses `#[serde(untagged)]` so Single serializes as a plain object and
+/// Any serializes as an array — no type discriminator field needed.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum ParamCondition {
@@ -85,24 +44,10 @@ pub enum ParamCondition {
     Any(Vec<ParamConditionEntry>),
 }
 
-// =============================================================================
-// NodeCategory — What kind of node is this?
-// =============================================================================
+// --- NodeCategory ---
 
-/// The broad category a node belongs to. Used for grouping in the UI
-/// (e.g., "Image" tools, "Spreadsheet" tools) and for filtering.
-///
-/// RUST CONCEPT: `#[derive(...)]`
-/// `derive` automatically generates implementations of common traits:
-///   - `Debug` — lets you print the value with `{:?}` (for logging)
-///   - `Clone` — lets you make copies with `.clone()`
-///   - `Serialize` — lets serde convert this to JSON
-///   - `PartialEq` — lets you compare with `==`
-///
-/// RUST CONCEPT: `#[serde(rename_all = "kebab-case")]`
-/// When serialized to JSON, variant names are converted to kebab-case:
-///   `Image` → `"image"`, `Spreadsheet` → `"spreadsheet"`, `FileSystem` → `"file-system"`
-/// This matches the naming convention used in `@bnto/nodes`.
+/// The broad category a node belongs to. Used for UI grouping and filtering.
+/// Serialized as kebab-case to match `@bnto/nodes` convention.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum NodeCategory {
@@ -124,21 +69,10 @@ pub enum NodeCategory {
     Io,
 }
 
-// =============================================================================
-// ParameterType — What kind of value does a parameter accept?
-// =============================================================================
+// --- ParameterType ---
 
-/// The type of a node parameter. This tells the UI what kind of input
-/// control to render (number slider, text field, checkbox, dropdown).
-///
-/// RUST CONCEPT: `#[serde(tag = "type", rename_all = "camelCase")]`
-/// `tag = "type"` means the JSON output includes a `"type"` field that
-/// identifies the variant. `rename_all = "camelCase"` converts variant
-/// names to camelCase in JSON.
-///
-/// Examples of serialized output:
-///   `ParameterType::Number`              → `{"type": "number"}`
-///   `ParameterType::Enum { options: .. }` → `{"type": "enum", "options": ["jpeg", "png"]}`
+/// The type of a node parameter. Determines what UI control to render.
+/// Tagged with `"type"` in JSON (e.g., `{"type": "number"}`).
 #[derive(Debug, Clone, Serialize, PartialEq, Default)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum ParameterType {
@@ -160,76 +94,45 @@ pub enum ParameterType {
     Object,
 }
 
-// =============================================================================
-// Constraints — Validation rules for a parameter
-// =============================================================================
+// --- Constraints ---
 
-/// Optional constraints on a parameter's value. These are used for
-/// validation (rejecting out-of-range values) and for UI hints (setting
-/// slider min/max, marking required fields).
-///
-/// RUST CONCEPT: `#[serde(skip_serializing_if = "Option::is_none")]`
-/// When serializing to JSON, fields that are `None` are omitted entirely.
-/// So `Constraints { min: Some(1.0), max: None, required: false }` becomes
-/// `{"min": 1.0, "required": false}` — no `"max"` key at all. This keeps
-/// the JSON output clean and compact.
+/// Optional constraints on a parameter's value (min/max range, required flag).
+/// Used for validation and UI hints (slider bounds, required markers).
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Constraints {
-    /// The minimum allowed value (for numeric parameters).
-    /// Example: `min: 1.0` for image quality (can't be less than 1).
+    /// Minimum allowed value (for numeric parameters).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub min: Option<f64>,
 
-    /// The maximum allowed value (for numeric parameters).
-    /// Example: `max: 100.0` for image quality (can't exceed 100).
+    /// Maximum allowed value (for numeric parameters).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max: Option<f64>,
 
-    /// Whether this parameter MUST be provided (can't be omitted).
-    /// Most parameters have defaults and are optional (`required: false`).
+    /// Whether this parameter must be provided.
     pub required: bool,
 }
 
-// =============================================================================
-// ParameterDef — A single parameter's full definition
-// =============================================================================
+// --- ParameterDef ---
 
-/// A complete definition of one parameter a node accepts. This tells both
-/// the engine (for validation) and the UI (for rendering controls) everything
-/// they need to know about the parameter.
-///
-/// RUST CONCEPT: `#[serde(rename_all = "camelCase")]`
-/// Rust uses `snake_case` for field names (`param_type`), but JavaScript
-/// uses `camelCase` (`paramType`). This attribute automatically converts
-/// field names when serializing to JSON: `param_type` → `"paramType"`.
+/// A complete definition of one parameter a node accepts. Provides
+/// everything the engine (validation) and UI (control rendering) need.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ParameterDef {
-    /// The parameter's key name, as it appears in the config JSON.
-    /// Example: `"quality"`, `"trimWhitespace"`, `"format"`
+    /// The parameter's key name in config JSON (e.g., `"quality"`).
     pub name: std::string::String,
 
-    /// A human-readable label for the UI.
-    /// Example: `"Quality"`, `"Trim Whitespace"`, `"Output Format"`
+    /// Human-readable label for the UI.
     pub label: std::string::String,
 
-    /// A longer description explaining what this parameter does.
-    /// Shown as a tooltip or help text in the UI.
+    /// Description shown as tooltip or help text.
     pub description: std::string::String,
 
-    /// The type of value this parameter accepts (number, string, boolean, etc.).
-    /// Determines what kind of UI control to render.
+    /// Value type — determines what UI control to render.
     pub param_type: ParameterType,
 
-    /// The default value for this parameter, if any.
-    /// When the user doesn't provide a value, this is what the processor uses.
-    ///
-    /// RUST CONCEPT: `serde_json::Value`
-    /// This is Rust's equivalent of JavaScript's `any` for JSON values.
-    /// It can hold numbers, strings, booleans, arrays, objects, or null.
-    /// We use it here because different parameters have different default
-    /// types (80 for quality, true for trimWhitespace, "jpeg" for format).
+    /// Default value (heterogeneous type via `serde_json::Value`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default: Option<serde_json::Value>,
 
@@ -237,86 +140,36 @@ pub struct ParameterDef {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub constraints: Option<Constraints>,
 
-    // ----- UI Metadata Fields -----
-    // These fields enrich the parameter definition with hints that the UI
-    // config panel uses to render smarter controls. They're all `Option`
-    // so existing processors (which don't set them) keep working — `None`
-    // values are omitted from the JSON output via `skip_serializing_if`.
-    /// Placeholder text for string/number inputs in the UI.
-    ///
-    /// Example: `"compressed-{{name}}"` for a filename template field.
-    /// The UI shows this as grayed-out hint text inside the input control.
+    // --- UI Metadata Fields ---
+    /// Placeholder text for input controls.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub placeholder: Option<String>,
 
-    /// Whether this parameter is hidden from the config panel.
-    ///
-    /// Hidden parameters are engine wiring fields (e.g., input/output path
-    /// templates) that the editor handles implicitly — the user never sees
-    /// them, but the engine needs them in the definition.
-    ///
-    /// `None` or `Some(false)` = visible (default). `Some(true)` = hidden.
+    /// Hidden parameters are engine wiring fields the user never sees.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hidden: Option<bool>,
 
-    /// Conditional visibility — show this parameter only when another
-    /// parameter has a specific value.
-    ///
-    /// Example: The "width" parameter in image:resize should only appear
-    /// when `operation` is `"resize"`. Setting `visible_when` tells the UI
-    /// to hide this parameter until the condition is met.
-    ///
-    /// RUST CONCEPT: `#[serde(skip_serializing_if = "Option::is_none")]`
-    /// When this field is `None`, it won't appear in the JSON output at all.
-    /// This keeps the serialized catalog compact for parameters that are
-    /// always visible (which is the common case).
+    /// Show this parameter only when another parameter matches a value.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub visible_when: Option<ParamCondition>,
 
-    /// Conditional requirement — this parameter is required only when
-    /// another parameter has a specific value.
-    ///
-    /// Example: A "columns" mapping might only be required when the
-    /// operation is "rename". Setting `required_when` tells the UI to
-    /// show the parameter as required only under that condition.
+    /// Require this parameter only when another parameter matches a value.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub required_when: Option<ParamCondition>,
 
-    /// Whether this parameter is eligible for surfacing in container config panels.
-    ///
-    /// When a user clicks a composite group node (e.g., "Batch Compress"), the
-    /// editor auto-detects leaf node params and surfaces them in the group's
-    /// config panel. `surfaceable: true` (the default) means the param can be
-    /// surfaced. `surfaceable: false` means it's internal wiring (loop `items`,
-    /// template expressions) and should never appear in surfaced views.
-    ///
-    /// This defaults to `true` — most params are user-facing. Only set to
-    /// `false` for internal engine wiring parameters.
+    /// Whether this param can be surfaced in container config panels.
+    /// Defaults to `true`. Set `false` for internal wiring params.
     #[serde(default = "default_true")]
     pub surfaceable: bool,
 }
 
-/// Helper function that returns `true` — used as the default value for
-/// `surfaceable` via `#[serde(default = "default_true")]`. Serde requires
-/// a named function for default values (can't use inline `true`).
-/// The `allow(dead_code)` is needed because serde only calls this during
-/// deserialization, and we currently only serialize (engine → JSON).
+/// Serde default for `surfaceable` field during deserialization.
 #[allow(dead_code)]
 fn default_true() -> bool {
     true
 }
 
-/// Manual `Default` implementation for `ParameterDef`.
-///
-/// WHY NOT `#[derive(Default)]`?
-/// Rust's derived `Default` sets `bool` fields to `false`. But `surfaceable`
-/// should default to `true` — most parameters ARE user-facing. The derived
-/// `Default` would give us `surfaceable: false`, which is the opposite of
-/// what we want. So we implement `Default` by hand and set `surfaceable: true`.
-///
-/// NOTE: `#[serde(default = "default_true")]` only applies during JSON
-/// deserialization. It does NOT affect `Default::default()`. They are
-/// completely separate mechanisms in Rust.
+/// Manual Default because `surfaceable` must default to `true`, not `false`.
 impl Default for ParameterDef {
     fn default() -> Self {
         Self {
@@ -335,244 +188,232 @@ impl Default for ParameterDef {
     }
 }
 
-// =============================================================================
-// NodeTypeInfo — Node-type-level metadata (all 12 types)
-// =============================================================================
+// --- NodeTypeInfo — Node-type-level metadata (all 12 types) ---
 //
-// WHY IS THIS SEPARATE FROM NodeMetadata?
-// NodeMetadata describes a PROCESSOR (one specific operation, like "image:compress").
-// NodeTypeInfo describes a NODE TYPE (like "image") — the umbrella that may have
-// multiple processors underneath it.
-//
-// The TypeScript side needs to know about ALL 12 node types (including ones the
-// engine doesn't have processors for yet, like "http-request" and "shell-command").
-// This struct is the engine's definition of every node type — its label, icon,
-// category, whether it's a container, and what platforms it can run on.
-//
-// The codegen script reads this from the catalog snapshot and generates the
-// TypeScript `NODE_TYPE_INFO` map, so adding a new node type is:
-//   1. Add it to `all_node_types()` below
-//   2. Run `task wasm:build` → `task nodes:generate`
-//   3. Done — TypeScript picks it up automatically
+// Separate from NodeMetadata because NodeMetadata describes a PROCESSOR
+// (e.g., "image:compress") while NodeTypeInfo describes a NODE TYPE
+// (e.g., "image") — the umbrella for multiple processors.
+// Includes types the engine doesn't have processors for yet (http-request,
+// shell-command). Codegen generates TS `NODE_TYPE_INFO` from this.
 
-/// Everything the UI needs to know about a node type — independent of any
-/// specific processor/operation.
-///
-/// This is the engine's authoritative definition of each node type.
-/// The codegen script generates the TypeScript `NODE_TYPE_INFO` from this.
+/// Everything the UI needs to know about a node type, independent of any
+/// specific processor/operation. The engine's authoritative type registry.
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct NodeTypeInfo {
-    /// The node type name as used in `.bnto.json` definitions.
-    /// e.g., `"image"`, `"spreadsheet"`, `"file-system"`, `"input"`
+    /// Type name as used in `.bnto.json` (e.g., `"image"`, `"file-system"`).
     pub name: String,
-
     /// Human-readable display label.
-    /// e.g., `"Image"`, `"Spreadsheet"`, `"File System"`, `"Input"`
     pub label: String,
-
-    /// One-sentence description of what the node type does.
+    /// One-sentence description.
     pub description: String,
-
     /// Category for UI grouping/filtering.
     pub category: NodeCategory,
-
-    /// Whether this node can contain child nodes (group, loop, parallel).
+    /// Whether this node can contain child nodes.
     pub is_container: bool,
-
-    /// Platforms this node type can run on.
-    /// Derived from processor registration — if any processor for this type
-    /// runs on "browser", the node type has "browser" in its platforms.
-    /// For types without processors yet (http-request, shell-command), this
-    /// is set to the expected platforms when implemented.
+    /// Platforms this type runs on (e.g., `["browser"]`, `["server"]`).
     pub platforms: Vec<String>,
-
-    /// Lucide icon name for visual consumers.
-    /// Pure string metadata — consumers resolve to their own icon component.
-    /// e.g., `"image"` → ImageIcon, `"table"` → TableIcon
+    /// Lucide icon name — consumers resolve to their own icon component.
     pub icon: String,
+}
+
+/// Constructs a `NodeTypeInfo` from positional fields. Reduces per-entry
+/// boilerplate in `all_node_types()` — keeps the table scannable.
+macro_rules! node_type {
+    ($name:expr, $label:expr, $desc:expr, $cat:expr, $container:expr, $platform:expr, $icon:expr) => {
+        NodeTypeInfo {
+            name: $name.to_string(),
+            label: $label.to_string(),
+            description: $desc.to_string(),
+            category: $cat,
+            is_container: $container,
+            platforms: vec![$platform.to_string()],
+            icon: $icon.to_string(),
+        }
+    };
 }
 
 /// Return metadata for all 12 registered node types.
 ///
-/// This is the engine's single source of truth for what node types exist,
-/// what they're called, what category they belong to, and where they run.
-/// The `node_catalog()` WASM export includes this in the catalog snapshot,
-/// and the codegen script generates TypeScript's `NODE_TYPE_INFO` from it.
-///
-/// Node types are listed in alphabetical order by name for stable output.
+/// Single source of truth for the engine's node type registry.
+/// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
+    let mut types = Vec::with_capacity(12);
+    types.extend(control_node_types());
+    types.extend(data_node_types());
+    types.extend(file_system_node_types());
+    types.extend(image_node_types());
+    types.extend(io_node_types());
+    types.extend(network_node_types());
+    types.extend(spreadsheet_node_types());
+    types.extend(system_node_types());
+    types.sort_by(|a, b| a.name.cmp(&b.name));
+    types
+}
+
+fn control_node_types() -> Vec<NodeTypeInfo> {
     vec![
-        NodeTypeInfo {
-            name: "edit-fields".to_string(),
-            label: "Edit Fields".to_string(),
-            description: "Set field values from static values or template expressions.".to_string(),
-            category: NodeCategory::Data,
-            is_container: false,
-            platforms: vec!["browser".to_string()],
-            icon: "pen-line".to_string(),
-        },
-        NodeTypeInfo {
-            name: "file-system".to_string(),
-            label: "File System".to_string(),
-            description: "File operations: rename files with find/replace, case transforms, and patterns.".to_string(),
-            category: NodeCategory::File,
-            is_container: false,
-            platforms: vec!["browser".to_string()],
-            icon: "folder-open".to_string(),
-        },
-        NodeTypeInfo {
-            name: "group".to_string(),
-            label: "Group".to_string(),
-            description: "Container for child nodes. Orchestrates sequential or parallel execution.".to_string(),
-            category: NodeCategory::Control,
-            is_container: true,
-            platforms: vec!["browser".to_string()],
-            icon: "box".to_string(),
-        },
-        NodeTypeInfo {
-            name: "http-request".to_string(),
-            label: "HTTP Request".to_string(),
-            description: "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).".to_string(),
-            category: NodeCategory::Network,
-            is_container: false,
-            platforms: vec!["server".to_string()],
-            icon: "globe".to_string(),
-        },
-        NodeTypeInfo {
-            name: "image".to_string(),
-            label: "Image".to_string(),
-            description: "Image processing: compress, resize, and convert formats.".to_string(),
-            category: NodeCategory::Image,
-            is_container: false,
-            platforms: vec!["browser".to_string()],
-            icon: "image".to_string(),
-        },
-        NodeTypeInfo {
-            name: "input".to_string(),
-            label: "Input".to_string(),
-            description: "Declares how data enters the recipe. Read by the environment to render the appropriate input widget.".to_string(),
-            category: NodeCategory::Io,
-            is_container: false,
-            platforms: vec!["browser".to_string()],
-            icon: "file-up".to_string(),
-        },
-        NodeTypeInfo {
-            name: "loop".to_string(),
-            label: "Loop".to_string(),
-            description: "Iterate over arrays (forEach), repeat N times, or loop while condition.".to_string(),
-            category: NodeCategory::Control,
-            is_container: true,
-            platforms: vec!["browser".to_string()],
-            icon: "repeat".to_string(),
-        },
-        NodeTypeInfo {
-            name: "output".to_string(),
-            label: "Output".to_string(),
-            description: "Declares how results are delivered. Read by the environment to render the appropriate output widget.".to_string(),
-            category: NodeCategory::Io,
-            is_container: false,
-            platforms: vec!["browser".to_string()],
-            icon: "download".to_string(),
-        },
-        NodeTypeInfo {
-            name: "parallel".to_string(),
-            label: "Parallel".to_string(),
-            description: "Execute tasks concurrently with configurable worker pool and error strategy.".to_string(),
-            category: NodeCategory::Control,
-            is_container: true,
-            platforms: vec!["browser".to_string()],
-            icon: "git-fork".to_string(),
-        },
-        NodeTypeInfo {
-            name: "shell-command".to_string(),
-            label: "Shell Command".to_string(),
-            description: "Execute shell commands with stall detection, retry, and streaming output.".to_string(),
-            category: NodeCategory::System,
-            is_container: false,
-            platforms: vec!["server".to_string()],
-            icon: "terminal".to_string(),
-        },
-        NodeTypeInfo {
-            name: "spreadsheet".to_string(),
-            label: "Spreadsheet".to_string(),
-            description: "Spreadsheet operations: clean data and rename columns.".to_string(),
-            category: NodeCategory::Spreadsheet,
-            is_container: false,
-            platforms: vec!["browser".to_string()],
-            icon: "sheet".to_string(),
-        },
-        NodeTypeInfo {
-            name: "transform".to_string(),
-            label: "Transform".to_string(),
-            description: "Transform data using expressions (single value) or field mappings.".to_string(),
-            category: NodeCategory::Data,
-            is_container: false,
-            platforms: vec!["browser".to_string()],
-            icon: "arrow-left-right".to_string(),
-        },
+        node_type!(
+            "group",
+            "Group",
+            "Container for child nodes. Orchestrates sequential or parallel execution.",
+            NodeCategory::Control,
+            true,
+            "browser",
+            "box"
+        ),
+        node_type!(
+            "loop",
+            "Loop",
+            "Iterate over arrays (forEach), repeat N times, or loop while condition.",
+            NodeCategory::Control,
+            true,
+            "browser",
+            "repeat"
+        ),
+        node_type!(
+            "parallel",
+            "Parallel",
+            "Execute tasks concurrently with configurable worker pool and error strategy.",
+            NodeCategory::Control,
+            true,
+            "browser",
+            "git-fork"
+        ),
     ]
 }
 
-// =============================================================================
-// NodeMetadata — The complete self-description of a processor
-// =============================================================================
+fn data_node_types() -> Vec<NodeTypeInfo> {
+    vec![
+        node_type!(
+            "edit-fields",
+            "Edit Fields",
+            "Set field values from static values or template expressions.",
+            NodeCategory::Data,
+            false,
+            "browser",
+            "pen-line"
+        ),
+        node_type!(
+            "transform",
+            "Transform",
+            "Transform data using expressions (single value) or field mappings.",
+            NodeCategory::Data,
+            false,
+            "browser",
+            "arrow-left-right"
+        ),
+    ]
+}
 
-/// Everything a consumer needs to know about a node processor — what it does,
-/// what files it accepts, what parameters it takes, and where it can run.
-/// This is the return type of `NodeProcessor::metadata()`.
-///
-/// The `node_type` + `operation` pair forms the compound key used by the
-/// registry for dispatch (e.g., `"image:compress"`, `"spreadsheet:clean"`).
+fn file_system_node_types() -> Vec<NodeTypeInfo> {
+    vec![node_type!(
+        "file-system",
+        "File System",
+        "File operations: rename files with find/replace, case transforms, and patterns.",
+        NodeCategory::File,
+        false,
+        "browser",
+        "folder-open"
+    )]
+}
+
+fn image_node_types() -> Vec<NodeTypeInfo> {
+    vec![node_type!(
+        "image",
+        "Image",
+        "Image processing: compress, resize, and convert formats.",
+        NodeCategory::Image,
+        false,
+        "browser",
+        "image"
+    )]
+}
+
+fn io_node_types() -> Vec<NodeTypeInfo> {
+    vec![
+        node_type!(
+            "input",
+            "Input",
+            "Declares how data enters the recipe.",
+            NodeCategory::Io,
+            false,
+            "browser",
+            "file-up"
+        ),
+        node_type!(
+            "output",
+            "Output",
+            "Declares how results are delivered.",
+            NodeCategory::Io,
+            false,
+            "browser",
+            "download"
+        ),
+    ]
+}
+
+fn network_node_types() -> Vec<NodeTypeInfo> {
+    vec![node_type!(
+        "http-request",
+        "HTTP Request",
+        "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).",
+        NodeCategory::Network,
+        false,
+        "server",
+        "globe"
+    )]
+}
+
+fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
+    vec![node_type!(
+        "spreadsheet",
+        "Spreadsheet",
+        "Spreadsheet operations: clean data and rename columns.",
+        NodeCategory::Spreadsheet,
+        false,
+        "browser",
+        "sheet"
+    )]
+}
+
+fn system_node_types() -> Vec<NodeTypeInfo> {
+    vec![node_type!(
+        "shell-command",
+        "Shell Command",
+        "Execute shell commands with stall detection, retry, and streaming output.",
+        NodeCategory::System,
+        false,
+        "server",
+        "terminal"
+    )]
+}
+
+// --- NodeMetadata ---
+
+/// Complete self-description of a processor. Return type of
+/// `NodeProcessor::metadata()`. The `node_type` + `operation` pair
+/// forms the compound dispatch key (e.g., `"image:compress"`).
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct NodeMetadata {
-    /// The node type group (e.g., `"image"`, `"spreadsheet"`, `"file-system"`).
-    /// Combined with `operation` to form the registry dispatch key.
+    /// Node type group (e.g., `"image"`, `"spreadsheet"`).
     pub node_type: std::string::String,
-
-    /// The specific operation within the node type (e.g., `"compress"`, `"clean"`).
-    /// Combined with `node_type` to form the registry dispatch key.
+    /// Specific operation (e.g., `"compress"`, `"clean"`).
     pub operation: std::string::String,
-
-    /// A human-readable name for the processor (e.g., `"Compress Images"`).
-    /// Shown in the UI as the node's title.
+    /// Human-readable processor name.
     pub name: std::string::String,
-
-    /// A description of what this processor does.
-    /// Shown in the UI as the node's subtitle or tooltip.
+    /// Description of what this processor does.
     pub description: std::string::String,
-
-    /// The category this processor belongs to (for UI grouping/filtering).
+    /// Category for UI grouping/filtering.
     pub category: NodeCategory,
-
-    /// MIME types this processor can handle (e.g., `["image/jpeg", "image/png"]`).
-    /// The UI uses this to filter which files the user can drop on this node.
-    /// An empty list means "accepts any file type" (like rename-files).
+    /// Accepted MIME types. Empty means "any file type".
     pub accepts: Vec<std::string::String>,
-
-    /// The platforms this processor can run on.
-    ///
-    /// Current platform values:
-    ///   - `"browser"` — runs in the browser via WASM (free tier)
-    ///   - `"server"` — runs on a server via Cloud API (Pro tier, M4)
-    ///   - `"desktop"` — runs natively on desktop via Tauri (M3)
-    ///
-    /// All 6 current processors support `["browser"]`. Future processors
-    /// (like AI-powered nodes) might only support `["server"]`. Some nodes
-    /// may support multiple platforms (e.g., image compress runs everywhere).
-    ///
-    /// This replaces the old `browserCapable: bool` field with a more
-    /// flexible list that can grow as bnto adds new execution targets.
+    /// Platforms this processor runs on (`"browser"`, `"server"`, `"desktop"`).
     pub platforms: Vec<std::string::String>,
-
-    /// The parameters this processor accepts, with types, defaults, and constraints.
+    /// Parameters with types, defaults, and constraints.
     pub parameters: Vec<ParameterDef>,
 }
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 #[cfg(test)]
 mod tests {

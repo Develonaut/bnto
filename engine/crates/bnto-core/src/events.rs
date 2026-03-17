@@ -1,31 +1,6 @@
-// =============================================================================
-// Pipeline Events — Structured Progress Reporting for Multi-Node Pipelines
-// =============================================================================
-//
-// WHAT IS THIS FILE?
-// When the engine runs a pipeline (multiple nodes processing multiple files),
-// the UI needs rich, structured progress updates — not just "50% done" but
-// "Node 2 of 5 started", "File 3/10 at 75%", "Node failed with error X".
-//
-// This module defines the event types and the reporter that emits them.
-// It's the pipeline-level equivalent of `progress.rs` (which handles
-// per-file progress within a single node).
-//
-// HOW IT RELATES TO ProgressReporter:
-// - `ProgressReporter` (progress.rs) = per-file, within ONE node
-//   → "Compressing image... 50%"
-// - `PipelineReporter` (this file) = pipeline-level, across ALL nodes
-//   → "Node 2 started", "File 3/10 at 75%", "Pipeline completed in 1.2s"
-//
-// The executor wraps PipelineReporter around ProgressReporter — when a
-// node's ProgressReporter fires, the executor converts it into a
-// FileProgress event and emits it through the PipelineReporter.
-//
-// WHY STRUCTURED EVENTS (not just strings)?
-// The editor needs to know WHICH node is active (to highlight it on the
-// canvas), WHICH file is being processed (for progress bars), and WHETHER
-// a node succeeded or failed (for status icons). A flat "50% done" string
-// can't carry that information. Structured events can.
+// Pipeline events — structured progress reporting for multi-node pipelines.
+// Complements `progress.rs` (per-file within one node) with pipeline-level
+// events (node started/completed, file progress, pipeline result).
 
 use serde::Serialize;
 
@@ -35,17 +10,8 @@ use serde::Serialize;
 
 /// Every event the pipeline executor can emit during execution.
 ///
-/// RUST CONCEPT: `#[serde(tag = "type")]`
-/// This tells serde to serialize the enum as a JSON object with a `type`
-/// field that identifies which variant it is. So `PipelineStarted { ... }`
-/// becomes `{ "type": "PipelineStarted", "total_nodes": 3, ... }`.
-/// This matches the TypeScript discriminated union pattern exactly.
-///
-/// RUST CONCEPT: `#[serde(rename_all = "camelCase")]`
-/// Converts Rust's `snake_case` field names to JavaScript's `camelCase`
-/// in the serialized JSON. So `total_nodes` becomes `totalNodes`.
-/// This means the JSON output matches TypeScript conventions without
-/// any manual renaming.
+/// Serialized as a tagged union with `"type"` discriminant and camelCase
+/// field names, matching the TypeScript `PipelineEvent` discriminated union.
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
 pub enum PipelineEvent {
@@ -140,11 +106,6 @@ pub enum PipelineEvent {
 /// The callback receives a `PipelineEvent` which can be serialized
 /// to JSON and sent to the UI (via Web Worker postMessage, CLI stdout,
 /// or any other transport).
-///
-/// RUST CONCEPT: `Box<dyn Fn(PipelineEvent)>`
-/// Same pattern as `ProgressReporter` — a boxed closure that can hold
-/// any function matching the signature. The `Option` wrapper allows
-/// a no-op mode for tests where we don't care about events.
 pub struct PipelineReporter {
     /// The callback that receives events. `None` = no-op mode.
     callback: Option<Box<dyn Fn(PipelineEvent)>>,
@@ -189,12 +150,6 @@ impl PipelineReporter {
 /// A reporter that records all events in a thread-safe Vec.
 /// Used in tests to verify the executor emits the right events
 /// in the right order.
-///
-/// RUST CONCEPT: `Arc<Mutex<Vec<...>>>`
-/// - `Arc` (Atomic Reference Count) lets multiple owners share data
-/// - `Mutex` ensures only one owner accesses the data at a time
-/// - Together they let both the reporter callback AND the test body
-///   access the same Vec safely
 #[cfg(test)]
 pub struct RecordingReporter {
     /// The shared, thread-safe event log.
