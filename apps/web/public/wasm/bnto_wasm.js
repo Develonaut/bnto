@@ -1,9 +1,29 @@
 /* @ts-self-types="./bnto_wasm.d.ts" */
 
 /**
- * Clean a CSV file and return both metadata and bytes in one call.
+ * Clean a CSV file and return BOTH metadata and bytes in one call.
  *
- * Returns a JS object: `{ metadata: string, data: Uint8Array, filename: string, mimeType: string }`
+ * The CSV is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
+ *
+ * ARGUMENTS (from JavaScript):
+ *   - `data` (Uint8Array): The raw CSV file bytes
+ *   - `filename` (string): The original filename (e.g., "data.csv")
+ *   - `params_json` (string): JSON string with cleaning config
+ *     (e.g., '{"removeDuplicates": true}'). Pass '{}' for defaults.
+ *   - `progress_callback` (Function): Called with (percent: number, message: string)
+ *     to report progress. The Web Worker forwards this to the main thread.
+ *
+ * RETURNS:
+ *   A JavaScript object with four properties:
+ *   ```js
+ *   {
+ *     metadata: '{"originalRows":100,"cleanedRows":85,...}',  // JSON string
+ *     data: Uint8Array([...]),                                // raw cleaned CSV bytes
+ *     filename: "data-cleaned.csv",                           // output filename
+ *     mimeType: "text/csv"                                    // MIME type
+ *   }
+ *   ```
  * @param {Uint8Array} data
  * @param {string} filename
  * @param {string} params_json
@@ -42,7 +62,29 @@ export function clean_csv_combined(data, filename, params_json, progress_callbac
 }
 
 /**
- * Compress a single image. Returns { metadata, data, filename, mimeType }.
+ * Compress a single image and return BOTH metadata and bytes in one call.
+ *
+ * The image is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
+ *
+ * ARGUMENTS (from JavaScript):
+ *   - `data` (Uint8Array): The raw image file bytes
+ *   - `filename` (string): The original filename (e.g., "photo.jpg")
+ *   - `params_json` (string): JSON string with compression config
+ *     (e.g., '{"quality": 80}'). Pass '{}' for defaults.
+ *   - `progress_callback` (Function): Called with (percent: number, message: string)
+ *     to report progress. The Web Worker forwards this to the main thread.
+ *
+ * RETURNS:
+ *   A JavaScript object with four properties:
+ *   ```js
+ *   {
+ *     metadata: '{"originalSize":102400,"compressedSize":51200,...}',  // JSON string
+ *     data: Uint8Array([...]),                       // raw compressed bytes
+ *     filename: "photo-compressed.jpg",              // output filename
+ *     mimeType: "image/jpeg"                         // MIME type
+ *   }
+ *   ```
  * @param {Uint8Array} data
  * @param {string} filename
  * @param {string} params_json
@@ -81,7 +123,34 @@ export function compress_image_combined(data, filename, params_json, progress_ca
 }
 
 /**
- * Convert a single image to a different format. Returns { metadata, data, filename, mimeType }.
+ * Convert a single image to a different format and return BOTH metadata and
+ * bytes in one call.
+ *
+ * The image is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
+ *
+ * ARGUMENTS (from JavaScript):
+ *   - `data` (Uint8Array): The raw image file bytes
+ *   - `filename` (string): The original filename (e.g., "photo.jpg")
+ *   - `params_json` (string): JSON string with conversion config:
+ *     ```json
+ *     {
+ *       "format": "png",     // Target format: "jpeg", "png", or "webp" (REQUIRED)
+ *       "quality": 80        // Quality 1-100 (optional, default 80, WebP capped at 85)
+ *     }
+ *     ```
+ *   - `progress_callback` (Function): Called with (percent, message)
+ *
+ * RETURNS:
+ *   A JavaScript object with four properties:
+ *   ```js
+ *   {
+ *     metadata: '{"originalSize":102400,"compressedSize":51200,...}',  // JSON string
+ *     data: Uint8Array([...]),                       // raw converted bytes
+ *     filename: "photo.png",                         // output filename
+ *     mimeType: "image/png"                          // MIME type
+ *   }
+ *   ```
  * @param {Uint8Array} data
  * @param {string} filename
  * @param {string} params_json
@@ -120,15 +189,10 @@ export function convert_image_format_combined(data, filename, params_json, progr
 }
 
 /**
- * Execute a complete pipeline in WASM.
+ * Execute a complete pipeline in WASM. Main entry point for the browser.
  *
- * # Arguments
- * - `definition_json` -- JSON string of the pipeline definition
- * - `files_js` -- JS array of `{name, data: Uint8Array, mimeType}`
- * - `progress_callback` -- JS function receiving PipelineEvent JSON strings
- *
- * # Returns
- * A JS object: `{ files: [{name, data: Uint8Array, mimeType, metadata?}], durationMs }`
+ * Takes a JSON definition string, a JS array of file objects, and a progress
+ * callback. Returns a JS object with `files` array and `durationMs`.
  * @param {string} definition_json
  * @param {any} files_js
  * @param {Function} progress_callback
@@ -163,8 +227,18 @@ export function execute_pipeline(definition_json, files_js, progress_callback) {
 }
 
 /**
- * Health check — proves the WASM module loaded and string data crosses
- * the Rust/JS boundary correctly.
+ * Health check — proves the WASM module is loaded and working.
+ *
+ * Takes a name and returns a greeting. The Web Worker can call this
+ * after init() to verify:
+ *   1. WASM binary loaded correctly
+ *   2. String data crosses the Rust ↔ JS boundary properly
+ *   3. wasm-bindgen's type conversion works
+ *
+ * EXAMPLE:
+ * ```js
+ * const msg = greet("Ryan");  // "Hello from Bnto WASM engine, Ryan! v0.1.0"
+ * ```
  * @param {string} name
  * @returns {string}
  */
@@ -188,7 +262,7 @@ export function greet(name) {
 }
 
 /**
- * Return a pretty-printed JSON string describing every registered processor.
+ * Return a pretty-printed JSON string of the engine's full catalog.
  * @returns {string}
  */
 export function node_catalog() {
@@ -218,9 +292,30 @@ export function node_catalog() {
 }
 
 /**
- * Rename columns in a CSV file and return both metadata and bytes in one call.
+ * Rename columns in a CSV file and return BOTH metadata and bytes in one call.
  *
- * Returns a JS object: `{ metadata: string, data: Uint8Array, filename: string, mimeType: string }`
+ * The CSV is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
+ *
+ * ARGUMENTS (from JavaScript):
+ *   - `data` (Uint8Array): The raw CSV file bytes
+ *   - `filename` (string): The original filename (e.g., "data.csv")
+ *   - `params_json` (string): JSON string with rename config
+ *     (e.g., '{"columns": {"First Name": "first_name"}}').
+ *     Pass '{}' for no renames (passthrough).
+ *   - `progress_callback` (Function): Called with (percent: number, message: string)
+ *     to report progress. The Web Worker forwards this to the main thread.
+ *
+ * RETURNS:
+ *   A JavaScript object with four properties:
+ *   ```js
+ *   {
+ *     metadata: '{"columnsRenamed":2,"totalColumns":5,...}',  // JSON string
+ *     data: Uint8Array([...]),                                // raw modified CSV bytes
+ *     filename: "data-renamed.csv",                           // output filename
+ *     mimeType: "text/csv"                                    // MIME type
+ *   }
+ *   ```
  * @param {Uint8Array} data
  * @param {string} filename
  * @param {string} params_json
@@ -259,9 +354,29 @@ export function rename_csv_columns_combined(data, filename, params_json, progres
 }
 
 /**
- * Rename a single file and return both metadata and bytes in one call.
+ * Rename a single file and return BOTH metadata and bytes in one call.
  *
- * Returns a JS object: `{ metadata: string, data: Uint8Array, filename: string, mimeType: string }`
+ * The file is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
+ *
+ * ARGUMENTS (from JavaScript):
+ *   - `data` (Uint8Array): The raw file bytes — passed through UNCHANGED
+ *   - `filename` (string): The original filename (e.g., "IMG_1234.jpg")
+ *   - `params_json` (string): JSON string with rename config
+ *     (e.g., '{"prefix": "new-", "case": "lower"}'). Pass '{}' for no changes.
+ *   - `progress_callback` (Function): Called with (percent: number, message: string)
+ *     to report progress. The Web Worker forwards this to the main thread.
+ *
+ * RETURNS:
+ *   A JavaScript object with four properties:
+ *   ```js
+ *   {
+ *     metadata: '{"originalFilename":"IMG_1234.jpg",...}',  // JSON string
+ *     data: Uint8Array([...]),                              // raw file bytes (unchanged)
+ *     filename: "vacation-1234.jpg",                        // new filename
+ *     mimeType: "application/octet-stream"                  // MIME type
+ *   }
+ *   ```
  * @param {Uint8Array} data
  * @param {string} filename
  * @param {string} params_json
@@ -300,7 +415,35 @@ export function rename_file_combined(data, filename, params_json, progress_callb
 }
 
 /**
- * Resize a single image. Returns { metadata, data, filename, mimeType }.
+ * Resize a single image and return BOTH metadata and bytes in one call.
+ *
+ * The image is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
+ *
+ * ARGUMENTS (from JavaScript):
+ *   - `data` (Uint8Array): The raw image file bytes
+ *   - `filename` (string): The original filename (e.g., "photo.jpg")
+ *   - `params_json` (string): JSON string with resize config:
+ *     ```json
+ *     {
+ *       "width": 800,                // Target width in pixels
+ *       "height": 600,               // Target height (optional if maintainAspect)
+ *       "maintainAspect": true,      // Preserve aspect ratio (default: true)
+ *       "quality": 80                // JPEG quality 1-100 (default: 80)
+ *     }
+ *     ```
+ *   - `progress_callback` (Function): Called with (percent, message)
+ *
+ * RETURNS:
+ *   A JavaScript object with four properties:
+ *   ```js
+ *   {
+ *     metadata: '{"originalSize":102400,"compressedSize":51200,...}',  // JSON string
+ *     data: Uint8Array([...]),                       // raw resized bytes
+ *     filename: "photo-resized.jpg",                 // output filename
+ *     mimeType: "image/jpeg"                         // MIME type
+ *   }
+ *   ```
  * @param {Uint8Array} data
  * @param {string} filename
  * @param {string} params_json
@@ -339,16 +482,31 @@ export function resize_image_combined(data, filename, params_json, progress_call
 }
 
 /**
- * Initialize the WASM module. Call once when the Web Worker starts.
- * Installs the panic hook for readable error messages in the browser console.
- * Safe to call multiple times (idempotent).
+ * Initialize the WASM module. Call this ONCE when the Web Worker starts,
+ * before calling any processing functions.
+ *
+ * WHAT IT DOES:
+ * Installs a "panic hook" so when Rust code crashes, the browser console
+ * shows the real error message instead of the useless "unreachable" error.
+ *
+ * SAFE TO CALL MULTIPLE TIMES — set_once() is idempotent.
+ *
+ * USAGE FROM WEB WORKER:
+ * ```js
+ * import init, { setup } from './bnto_wasm.js';
+ * await init('/wasm/bnto_wasm_bg.wasm');
+ * setup();  // Call once, then process files
+ * ```
  */
 export function setup() {
   wasm.setup();
 }
 
 /**
- * Returns the WASM engine version (from Cargo.toml at compile time).
+ * Returns the version of the Bnto WASM engine.
+ *
+ * Useful for the web app to verify the correct WASM version is loaded
+ * and for debugging ("which engine version is this?").
  * @returns {string}
  */
 export function version() {

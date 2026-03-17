@@ -1,15 +1,7 @@
-// =============================================================================
-// Convert Image Format Node — Change Between JPEG, PNG, and WebP
-// =============================================================================
+// Convert Image Format Node — re-encode images between JPEG, PNG, and WebP.
 //
-// Convert-image-format node: decode any supported format → re-encode to the
-// target format. All formats share the same intermediate pixel representation,
-// so conversion is: decode(source) → encode(target).
-//
-// Format semantics:
-//   JPEG→PNG: lossless capture of remaining quality (won't restore lost detail)
-//   PNG→JPEG: significant size reduction, transparency becomes opaque
-//   Any→WebP: lossless only (Rust `image` crate limitation, lossy needs libwebp)
+// WebP output is lossless-only (Rust `image` crate limitation).
+// Lossy WebP planned via jSquash JS fallback.
 
 use std::io::Cursor;
 
@@ -20,27 +12,18 @@ use bnto_core::progress::ProgressReporter;
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 
+use crate::common::{image_accepts, quality_param_def};
 use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
 
-// =============================================================================
-// Configuration Constants
-// =============================================================================
-
 use bnto_core::DEFAULT_JPEG_QUALITY as DEFAULT_QUALITY;
 
-/// Rust `image` crate WebP encoder is lossless-only; values above 85 produce
-/// much larger files without meaningful quality improvement.
+/// WebP quality cap — lossless encoder produces bloat above 85.
 const MAX_WEBP_QUALITY: u8 = 85;
-
 const MIN_QUALITY: u8 = 1;
 const MAX_QUALITY: u8 = 100;
 
-// =============================================================================
-// The ConvertImageFormat Processor
-// =============================================================================
-
-/// Convert-image-format node processor.
+/// The convert-image-format node processor.
 pub struct ConvertImageFormat;
 
 impl Default for ConvertImageFormat {
@@ -54,13 +37,7 @@ impl ConvertImageFormat {
         Self
     }
 
-    // =========================================================================
-    // Internal Methods
-    // =========================================================================
-
-    /// Decode any supported format into pixels, applying EXIF orientation.
-    /// Smartphone photos with EXIF rotation are physically rotated so the
-    /// converted output displays correctly without needing an EXIF tag.
+    /// Decode image with EXIF orientation applied.
     fn decode_image(
         data: &[u8],
         progress: &ProgressReporter,
@@ -77,14 +54,11 @@ impl ConvertImageFormat {
         progress.report(60, &format!("Encoding as JPEG (quality: {quality})..."));
         let mut output = Vec::new();
         let encoder = JpegEncoder::new_with_quality(&mut output, quality);
-        // write_with_encoder handles RGBA→RGB conversion internally
-        // (JPEG doesn't support transparency).
         img.write_with_encoder(encoder)
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to encode JPEG: {e}")))?;
         Ok(output)
     }
 
-    /// PNG is always lossless — compression level only affects speed vs size.
     fn encode_png(
         img: &image::DynamicImage,
         progress: &ProgressReporter,
@@ -98,27 +72,22 @@ impl ConvertImageFormat {
         Ok(output)
     }
 
-    /// Lossless-only in the Rust `image` crate. Lossy WebP requires
-    /// Google's libwebp (C library) which doesn't compile to our WASM target.
+    /// Lossless-only. WebP encoder needs Cursor for Seek (header backfill).
     fn encode_webp(
         img: &image::DynamicImage,
         progress: &ProgressReporter,
     ) -> Result<Vec<u8>, BntoError> {
         progress.report(60, "Encoding as WebP (lossless)...");
         let mut output = Vec::new();
-        // Cursor needed because WebP encoder requires Seek to backfill
-        // header fields (like total file size) after encoding.
         let mut cursor_out = Cursor::new(&mut output);
         img.write_to(&mut cursor_out, image::ImageFormat::WebP)
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to encode WebP: {e}")))?;
         Ok(output)
     }
 
-    /// Parse target format from string. Accepts "jpeg", "jpg", "png", "webp"
-    /// (case-insensitive).
+    /// Parse "jpeg"/"jpg"/"png"/"webp" (case-insensitive).
     fn parse_target_format(format_str: &str) -> Result<ImageFormat, BntoError> {
-        let lower = format_str.to_lowercase();
-        match lower.as_str() {
+        match format_str.to_lowercase().as_str() {
             "jpeg" | "jpg" => Ok(ImageFormat::Jpeg),
             "png" => Ok(ImageFormat::Png),
             "webp" => Ok(ImageFormat::WebP),
@@ -129,29 +98,25 @@ impl ConvertImageFormat {
         }
     }
 
-    /// Extract quality, capping WebP at MAX_WEBP_QUALITY to prevent bloat
-    /// (lossless encoder + high quality = large files with no quality gain).
+    /// Quality extraction with WebP cap at MAX_WEBP_QUALITY.
     fn get_quality(
         params: &serde_json::Map<String, serde_json::Value>,
         target_format: ImageFormat,
     ) -> u8 {
-        let raw_quality = params
+        let raw = params
             .get("quality")
             .and_then(|v| v.as_u64())
             .map(|q| q as u8)
             .unwrap_or(DEFAULT_QUALITY)
             .clamp(MIN_QUALITY, MAX_QUALITY);
-
         match target_format {
-            ImageFormat::WebP => raw_quality.min(MAX_WEBP_QUALITY),
-            _ => raw_quality,
+            ImageFormat::WebP => raw.min(MAX_WEBP_QUALITY),
+            _ => raw,
         }
     }
 
-    /// Replace the original extension with the target format's extension.
-    /// "photo.jpg" + target=PNG -> "photo.png"
+    /// Replace extension: "photo.jpg" + PNG -> "photo.png"
     fn output_filename(input_filename: &str, target_format: ImageFormat) -> String {
-        // rfind('.') handles filenames with multiple dots like "my.photo.jpg"
         if let Some(dot_pos) = input_filename.rfind('.') {
             let stem = &input_filename[..dot_pos];
             format!("{stem}.{}", target_format.extension())
@@ -160,10 +125,6 @@ impl ConvertImageFormat {
         }
     }
 }
-
-// =============================================================================
-// NodeProcessor Trait Implementation
-// =============================================================================
 
 impl NodeProcessor for ConvertImageFormat {
     fn name(&self) -> &str {
@@ -178,57 +139,9 @@ impl NodeProcessor for ConvertImageFormat {
             name: "Convert Image Format".to_string(),
             description: "Convert images between JPEG, PNG, and WebP formats".to_string(),
             category: NodeCategory::Image,
-            accepts: vec![
-                "image/jpeg".to_string(),
-                "image/png".to_string(),
-                "image/webp".to_string(),
-            ],
+            accepts: image_accepts(),
             platforms: vec!["browser".to_string()],
-            parameters: vec![
-                ParameterDef {
-                    name: "format".to_string(),
-                    label: "Output Format".to_string(),
-                    description: "The target image format to convert to".to_string(),
-                    param_type: ParameterType::Enum {
-                        options: vec!["jpeg".to_string(), "png".to_string(), "webp".to_string()],
-                    },
-                    constraints: Some(Constraints {
-                        min: None,
-                        max: None,
-                        required: true,
-                    }),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "convert".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "quality".to_string(),
-                    label: "Quality".to_string(),
-                    description: "Output quality for lossy formats (1-100)".to_string(),
-                    param_type: ParameterType::Number,
-                    default: Some(serde_json::json!(80)),
-                    constraints: Some(Constraints {
-                        min: Some(1.0),
-                        max: Some(100.0),
-                        required: false,
-                    }),
-                    // Quality applies to resize and convert — compress has its
-                    // own "compression" param with inverted semantics.
-                    visible_when: Some(ParamCondition::Any(vec![
-                        ParamConditionEntry {
-                            param: "operation".to_string(),
-                            equals: "resize".to_string(),
-                        },
-                        ParamConditionEntry {
-                            param: "operation".to_string(),
-                            equals: "convert".to_string(),
-                        },
-                    ])),
-                    ..Default::default()
-                },
-            ],
+            parameters: vec![format_param_def(), quality_param_def()],
         }
     }
 
@@ -237,124 +150,182 @@ impl NodeProcessor for ConvertImageFormat {
         input: NodeInput,
         progress: &ProgressReporter,
     ) -> Result<NodeOutput, BntoError> {
-        // Parse required "format" param.
-        let format_str = input
-            .params
-            .get("format")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| {
-                BntoError::InvalidInput(
-                    "Missing required 'format' parameter. Specify 'jpeg', 'png', or 'webp'."
-                        .to_string(),
-                )
-            })?;
+        let target_format = extract_target_format(&input)?;
+        let input_format = detect_input_format(&input)?;
 
-        let target_format = Self::parse_target_format(format_str)?;
-
-        let input_format = ImageFormat::detect(&input.data, &input.filename).ok_or_else(|| {
-            BntoError::UnsupportedFormat(format!(
-                "Could not determine image format for '{}'",
-                input.filename
-            ))
-        })?;
-
-        let original_size = input.data.len();
         progress.report(
             5,
-            &format!("Converting {:?} → {:?}...", input_format, target_format),
+            &format!("Converting {:?} -> {:?}...", input_format, target_format),
         );
         let img = Self::decode_image(&input.data, progress)?;
 
-        let quality = Self::get_quality(&input.params, target_format);
-        let converted_data = match target_format {
-            ImageFormat::Jpeg => Self::encode_jpeg(&img, quality, progress)?,
-            ImageFormat::Png => Self::encode_png(&img, progress)?,
-            ImageFormat::WebP => Self::encode_webp(&img, progress)?,
-        };
-
-        let converted_size = converted_data.len();
-        let output_filename = Self::output_filename(&input.filename, target_format);
-
-        progress.report(90, "Building output...");
-
-        let mut metadata = serde_json::Map::new();
-        metadata.insert(
-            "originalFormat".to_string(),
-            serde_json::Value::String(format!("{:?}", input_format)),
-        );
-        metadata.insert(
-            "targetFormat".to_string(),
-            serde_json::Value::String(format!("{:?}", target_format)),
-        );
-        metadata.insert(
-            "originalSize".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(original_size as u64)),
-        );
-        metadata.insert(
-            "newSize".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(converted_size as u64)),
+        let converted_data = encode_to_target(&img, target_format, &input.params, progress)?;
+        let metadata = build_convert_metadata(
+            input_format,
+            target_format,
+            input.data.len(),
+            converted_data.len(),
         );
 
         progress.report(100, "Conversion complete");
-
-        Ok(NodeOutput {
-            files: vec![OutputFile {
-                data: converted_data,
-                filename: output_filename,
-                mime_type: target_format.mime_type().to_string(),
-            }],
+        Ok(build_convert_output(
+            converted_data,
+            &input.filename,
+            target_format,
             metadata,
-        })
+        ))
     }
 
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
         let mut errors = Vec::new();
-
-        match params.get("format") {
-            None => {
-                errors.push(
-                    "Missing required 'format' parameter. Specify 'jpeg', 'png', or 'webp'."
-                        .to_string(),
-                );
-            }
-            Some(format_val) => match format_val.as_str() {
-                None => {
-                    errors.push(format!(
-                        "Format must be a string ('jpeg', 'png', or 'webp'), got: {format_val}"
-                    ));
-                }
-                Some(format_str) => {
-                    if Self::parse_target_format(format_str).is_err() {
-                        errors.push(format!(
-                            "Unsupported format: '{}'. Supported: jpeg, png, webp",
-                            format_str
-                        ));
-                    }
-                }
-            },
-        }
-
-        if let Some(quality_val) = params.get("quality") {
-            match quality_val.as_u64() {
-                Some(q) if q >= MIN_QUALITY as u64 && q <= MAX_QUALITY as u64 => {}
-                Some(q) => {
-                    errors.push(format!(
-                        "Quality must be between {MIN_QUALITY} and {MAX_QUALITY}, got {q}"
-                    ));
-                }
-                None => {
-                    errors.push(format!("Quality must be a number, got: {quality_val}"));
-                }
-            }
-        }
-
+        validate_format_param(params, &mut errors);
+        validate_quality(params, &mut errors);
         errors
     }
 }
 
-// =============================================================================
-// Tests
-// =============================================================================
+// --- Private helpers ---
+
+fn extract_target_format(input: &NodeInput) -> Result<ImageFormat, BntoError> {
+    let format_str = input
+        .params
+        .get("format")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| {
+            BntoError::InvalidInput(
+                "Missing required 'format' parameter. Specify 'jpeg', 'png', or 'webp'."
+                    .to_string(),
+            )
+        })?;
+    ConvertImageFormat::parse_target_format(format_str)
+}
+
+fn detect_input_format(input: &NodeInput) -> Result<ImageFormat, BntoError> {
+    ImageFormat::detect(&input.data, &input.filename).ok_or_else(|| {
+        BntoError::UnsupportedFormat(format!(
+            "Could not determine image format for '{}'",
+            input.filename
+        ))
+    })
+}
+
+fn encode_to_target(
+    img: &image::DynamicImage,
+    target: ImageFormat,
+    params: &serde_json::Map<String, serde_json::Value>,
+    progress: &ProgressReporter,
+) -> Result<Vec<u8>, BntoError> {
+    let quality = ConvertImageFormat::get_quality(params, target);
+    match target {
+        ImageFormat::Jpeg => ConvertImageFormat::encode_jpeg(img, quality, progress),
+        ImageFormat::Png => ConvertImageFormat::encode_png(img, progress),
+        ImageFormat::WebP => ConvertImageFormat::encode_webp(img, progress),
+    }
+}
+
+fn build_convert_output(
+    data: Vec<u8>,
+    input_filename: &str,
+    target_format: ImageFormat,
+    metadata: serde_json::Map<String, serde_json::Value>,
+) -> NodeOutput {
+    NodeOutput {
+        files: vec![OutputFile {
+            data,
+            filename: ConvertImageFormat::output_filename(input_filename, target_format),
+            mime_type: target_format.mime_type().to_string(),
+        }],
+        metadata,
+    }
+}
+
+fn build_convert_metadata(
+    input_format: ImageFormat,
+    target_format: ImageFormat,
+    original_size: usize,
+    converted_size: usize,
+) -> serde_json::Map<String, serde_json::Value> {
+    let mut m = serde_json::Map::new();
+    m.insert(
+        "originalFormat".to_string(),
+        serde_json::Value::String(format!("{:?}", input_format)),
+    );
+    m.insert(
+        "targetFormat".to_string(),
+        serde_json::Value::String(format!("{:?}", target_format)),
+    );
+    m.insert(
+        "originalSize".to_string(),
+        serde_json::Value::Number((original_size as u64).into()),
+    );
+    m.insert(
+        "newSize".to_string(),
+        serde_json::Value::Number((converted_size as u64).into()),
+    );
+    m
+}
+
+fn validate_format_param(
+    params: &serde_json::Map<String, serde_json::Value>,
+    errors: &mut Vec<String>,
+) {
+    match params.get("format") {
+        None => {
+            errors.push(
+                "Missing required 'format' parameter. Specify 'jpeg', 'png', or 'webp'."
+                    .to_string(),
+            );
+        }
+        Some(format_val) => match format_val.as_str() {
+            None => errors.push(format!(
+                "Format must be a string ('jpeg', 'png', or 'webp'), got: {format_val}"
+            )),
+            Some(s) if ConvertImageFormat::parse_target_format(s).is_err() => {
+                errors.push(format!(
+                    "Unsupported format: '{}'. Supported: jpeg, png, webp",
+                    s
+                ));
+            }
+            _ => {}
+        },
+    }
+}
+
+fn validate_quality(params: &serde_json::Map<String, serde_json::Value>, errors: &mut Vec<String>) {
+    if let Some(quality_val) = params.get("quality") {
+        match quality_val.as_u64() {
+            Some(q) if q >= MIN_QUALITY as u64 && q <= MAX_QUALITY as u64 => {}
+            Some(q) => errors.push(format!(
+                "Quality must be between {MIN_QUALITY} and {MAX_QUALITY}, got {q}"
+            )),
+            None => errors.push(format!("Quality must be a number, got: {quality_val}")),
+        }
+    }
+}
+
+fn format_param_def() -> bnto_core::metadata::ParameterDef {
+    use bnto_core::metadata::*;
+    ParameterDef {
+        name: "format".to_string(),
+        label: "Output Format".to_string(),
+        description: "The target image format to convert to".to_string(),
+        param_type: ParameterType::Enum {
+            options: vec!["jpeg".to_string(), "png".to_string(), "webp".to_string()],
+        },
+        constraints: Some(Constraints {
+            min: None,
+            max: None,
+            required: true,
+        }),
+        visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+            param: "operation".to_string(),
+            equals: "convert".to_string(),
+        })),
+        ..Default::default()
+    }
+}
+
+// --- Tests ---
 
 #[cfg(test)]
 mod tests {
@@ -364,6 +335,7 @@ mod tests {
     // Test Helpers
     // =========================================================================
 
+    /// Create a NodeInput with the given data, filename, and params.
     fn make_input(
         data: &[u8],
         filename: &str,
@@ -377,6 +349,7 @@ mod tests {
         }
     }
 
+    /// Build a params map with just a "format" key.
     fn format_params(format: &str) -> serde_json::Map<String, serde_json::Value> {
         let mut params = serde_json::Map::new();
         params.insert(
@@ -386,6 +359,7 @@ mod tests {
         params
     }
 
+    /// Build a params map with "format" and "quality" keys.
     fn format_quality_params(
         format: &str,
         quality: u64,
@@ -404,6 +378,7 @@ mod tests {
 
     #[test]
     fn test_parse_jpeg_format() {
+        // "jpeg" should parse to ImageFormat::Jpeg
         let result = ConvertImageFormat::parse_target_format("jpeg");
         assert_eq!(result.unwrap(), ImageFormat::Jpeg);
     }
@@ -429,6 +404,7 @@ mod tests {
 
     #[test]
     fn test_parse_format_case_insensitive() {
+        // Users might type "JPEG", "Png", "WEBP" — all should work.
         assert_eq!(
             ConvertImageFormat::parse_target_format("JPEG").unwrap(),
             ImageFormat::Jpeg
@@ -445,8 +421,11 @@ mod tests {
 
     #[test]
     fn test_parse_invalid_format_returns_error() {
+        // "bmp" is not supported — should return an error.
         let result = ConvertImageFormat::parse_target_format("bmp");
         assert!(result.is_err());
+
+        // Check the error message mentions the unsupported format.
         let error_msg = result.unwrap_err().to_string();
         assert!(
             error_msg.contains("bmp"),
@@ -466,6 +445,7 @@ mod tests {
 
     #[test]
     fn test_quality_default_when_not_specified() {
+        // No quality param → use DEFAULT_QUALITY (80).
         let params = serde_json::Map::new();
         let quality = ConvertImageFormat::get_quality(&params, ImageFormat::Jpeg);
         assert_eq!(quality, DEFAULT_QUALITY);
@@ -473,6 +453,7 @@ mod tests {
 
     #[test]
     fn test_quality_respected_for_jpeg() {
+        // Quality param should be used as-is for JPEG.
         let params = format_quality_params("jpeg", 50);
         let quality = ConvertImageFormat::get_quality(&params, ImageFormat::Jpeg);
         assert_eq!(quality, 50);
@@ -488,6 +469,7 @@ mod tests {
 
     #[test]
     fn test_quality_not_capped_for_webp_when_below_max() {
+        // Quality <= 85 for WebP should pass through unchanged.
         let params = format_quality_params("webp", 70);
         let quality = ConvertImageFormat::get_quality(&params, ImageFormat::WebP);
         assert_eq!(quality, 70);
@@ -495,6 +477,7 @@ mod tests {
 
     #[test]
     fn test_quality_clamped_to_valid_range() {
+        // Quality of 0 should clamp to MIN_QUALITY (1).
         let params = format_quality_params("jpeg", 0);
         let quality = ConvertImageFormat::get_quality(&params, ImageFormat::Jpeg);
         assert_eq!(quality, MIN_QUALITY);
@@ -530,6 +513,7 @@ mod tests {
 
     #[test]
     fn test_output_filename_no_extension() {
+        // If the input has no extension, just append the new one.
         let name = ConvertImageFormat::output_filename("myfile", ImageFormat::Jpeg);
         assert_eq!(name, "myfile.jpg");
     }
@@ -581,6 +565,7 @@ mod tests {
     fn test_validate_format_not_a_string_returns_error() {
         let processor = ConvertImageFormat::new();
         let mut params = serde_json::Map::new();
+        // Pass a number instead of a string.
         params.insert(
             "format".to_string(),
             serde_json::Value::Number(serde_json::Number::from(42)),
@@ -611,7 +596,13 @@ mod tests {
     // =========================================================================
     // Conversion Tests — Using Real Test Fixture Images
     // =========================================================================
+    //
+    // These tests use real images from the test-fixtures directory. They
+    // verify that the full conversion pipeline works end-to-end: decode the
+    // source format, re-encode to the target format, and produce valid output.
 
+    /// Load the small JPEG test fixture (100x100 pixels, ~3.5 KB).
+    /// `include_bytes!()` embeds the file at compile time.
     const TEST_JPEG: &[u8] = include_bytes!("../../../../test-fixtures/images/small.jpg");
     const TEST_PNG: &[u8] = include_bytes!("../../../../test-fixtures/images/small.png");
     const TEST_WEBP: &[u8] = include_bytes!("../../../../test-fixtures/images/small.webp");
@@ -626,19 +617,24 @@ mod tests {
         assert!(result.is_ok(), "JPEG → PNG should succeed");
 
         let output = result.unwrap();
+        // Should produce exactly one output file.
         assert_eq!(output.files.len(), 1);
 
         let file = &output.files[0];
+        // Filename should have .png extension.
         assert_eq!(file.filename, "photo.png");
+        // MIME type should be image/png.
         assert_eq!(file.mime_type, "image/png");
 
-        // Verify PNG magic bytes: 89 50 4E 47 (".PNG")
+        // Verify the output is actually PNG by checking magic bytes.
+        // PNG starts with: 89 50 4E 47 (which is ".PNG" in ASCII).
         assert!(file.data.len() > 8, "PNG output should have data");
         assert_eq!(file.data[0], 0x89, "PNG should start with 0x89");
         assert_eq!(file.data[1], 0x50, "PNG byte 2 should be 'P'");
         assert_eq!(file.data[2], 0x4E, "PNG byte 3 should be 'N'");
         assert_eq!(file.data[3], 0x47, "PNG byte 4 should be 'G'");
 
+        // Check metadata reports the conversion.
         assert_eq!(
             output
                 .metadata
@@ -668,7 +664,7 @@ mod tests {
         assert_eq!(file.filename, "screenshot.jpg");
         assert_eq!(file.mime_type, "image/jpeg");
 
-        // Verify JPEG magic bytes: FF D8 FF
+        // Verify JPEG magic bytes: FF D8 FF.
         assert!(file.data.len() > 3, "JPEG output should have data");
         assert_eq!(file.data[0], 0xFF);
         assert_eq!(file.data[1], 0xD8);
@@ -717,13 +713,15 @@ mod tests {
         assert_eq!(file.filename, "image.png");
         assert_eq!(file.mime_type, "image/png");
 
+        // Verify PNG magic bytes.
         assert_eq!(file.data[0], 0x89);
         assert_eq!(file.data[1], 0x50);
     }
 
     #[test]
     fn test_convert_same_format_jpeg_to_jpeg() {
-        // Re-encoding JPEG→JPEG is valid (may change file size based on quality).
+        // Converting JPEG → JPEG should still work. It re-encodes the image,
+        // which might change the file size depending on quality settings.
         let processor = ConvertImageFormat::new();
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_JPEG, "photo.jpg", format_params("jpeg"));
@@ -736,12 +734,14 @@ mod tests {
         assert_eq!(file.filename, "photo.jpg");
         assert_eq!(file.mime_type, "image/jpeg");
 
+        // Should still be valid JPEG.
         assert_eq!(file.data[0], 0xFF);
         assert_eq!(file.data[1], 0xD8);
     }
 
     #[test]
     fn test_convert_missing_format_param_returns_error() {
+        // No "format" param at all — should fail with a clear error.
         let processor = ConvertImageFormat::new();
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_JPEG, "photo.jpg", serde_json::Map::new());
@@ -749,7 +749,6 @@ mod tests {
         let result = processor.process(input, &progress);
         assert!(result.is_err(), "Missing format should return an error");
 
-        // Can't use unwrap_err() because NodeOutput doesn't implement Debug.
         if let Err(e) = result {
             let error_msg = e.to_string();
             assert!(
@@ -761,6 +760,7 @@ mod tests {
 
     #[test]
     fn test_convert_invalid_format_param_returns_error() {
+        // Invalid format value — should fail with a clear error.
         let processor = ConvertImageFormat::new();
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_JPEG, "photo.jpg", format_params("gif"));
@@ -768,6 +768,8 @@ mod tests {
         let result = processor.process(input, &progress);
         assert!(result.is_err(), "Invalid format should return an error");
 
+        // Use pattern matching instead of `.unwrap_err()` because
+        // `NodeOutput` doesn't implement `Debug`.
         if let Err(e) = result {
             let error_msg = e.to_string();
             assert!(
@@ -784,14 +786,17 @@ mod tests {
         let processor = ConvertImageFormat::new();
         let progress = ProgressReporter::new_noop();
 
+        // Low quality (50).
         let input_low = make_input(TEST_PNG, "img.png", format_quality_params("jpeg", 50));
         let output_low = processor.process(input_low, &progress).unwrap();
         let size_low = output_low.files[0].data.len();
 
+        // High quality (100).
         let input_high = make_input(TEST_PNG, "img.png", format_quality_params("jpeg", 100));
         let output_high = processor.process(input_high, &progress).unwrap();
         let size_high = output_high.files[0].data.len();
 
+        // Higher quality should produce a larger (or equal) file.
         assert!(
             size_high >= size_low,
             "Quality 100 ({size_high} bytes) should be >= quality 50 ({size_low} bytes)"
@@ -800,6 +805,7 @@ mod tests {
 
     #[test]
     fn test_convert_corrupt_data_returns_error() {
+        // Random bytes that aren't a valid image — should fail gracefully.
         let processor = ConvertImageFormat::new();
         let progress = ProgressReporter::new_noop();
         let input = make_input(b"this is not an image", "corrupt.jpg", format_params("png"));
@@ -820,6 +826,9 @@ mod tests {
 
     #[test]
     fn test_default_creates_instance() {
+        // The Default trait should work just like new().
+        // Note: For unit structs (structs with no fields), Rust/clippy prefers
+        // just using the struct name directly instead of calling ::default().
         let processor = ConvertImageFormat;
         assert_eq!(processor.name(), "convert-image-format");
     }
@@ -848,6 +857,7 @@ mod tests {
         let result = processor.process(input, &progress).unwrap();
         let output_data = &result.files[0].data;
 
+        // Decode the PNG output and check dimensions.
         let output_img = decode_with_orientation(output_data).unwrap();
         assert_eq!(output_img.width(), 40, "Converted PNG should be 40 wide");
         assert_eq!(output_img.height(), 60, "Converted PNG should be 60 tall");
@@ -855,6 +865,7 @@ mod tests {
 
     #[test]
     fn test_convert_exif_rotated_jpeg_to_webp() {
+        // JPEG with orientation=6 → WebP. Output should be 40×60.
         let jpeg = create_test_jpeg(60, 40);
         let exif_jpeg = inject_exif_orientation(&jpeg, 6);
 
@@ -872,6 +883,7 @@ mod tests {
 
     #[test]
     fn test_convert_no_exif_jpeg_to_png_preserves_dimensions() {
+        // A normal JPEG (no EXIF) converted to PNG should keep dimensions.
         let jpeg = create_test_jpeg(60, 40);
 
         let processor = ConvertImageFormat::new();

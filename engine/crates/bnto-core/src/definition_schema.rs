@@ -1,14 +1,13 @@
-// Definition JSON Schema — validates `.bnto.json` files.
-// Generates a JSON Schema (Draft 2020-12) describing the Definition structure
-// so any consumer can validate recipe files without reimplementing TS types.
+// Definition JSON Schema — Validates `.bnto.json` files.
+//
+// Generates a JSON Schema (Draft 2020-12) describing the Definition format.
+// Built by hand with `serde_json::json!()` — simpler than a codegen library
+// since the Definition shape is stable. Makes the engine the single source
+// of truth for both execution and validation.
 
 use serde_json::Value;
 
-// =============================================================================
-// Port Schema
-// =============================================================================
-
-/// JSON Schema for a Port (input or output connection point on a node).
+/// Build the JSON Schema for a `Port` object (connection point on a node).
 fn port_schema() -> Value {
     serde_json::json!({
         "type": "object",
@@ -32,11 +31,7 @@ fn port_schema() -> Value {
     })
 }
 
-// =============================================================================
-// Edge Schema
-// =============================================================================
-
-/// JSON Schema for an Edge (connection between two nodes).
+/// Build the JSON Schema for an `Edge` (connection between two nodes).
 fn edge_schema() -> Value {
     serde_json::json!({
         "type": "object",
@@ -68,11 +63,7 @@ fn edge_schema() -> Value {
     })
 }
 
-// =============================================================================
-// Metadata Schema
-// =============================================================================
-
-/// JSON Schema for the metadata block inside a Definition.
+/// Build the JSON Schema for the `metadata` object (description, timestamps, tags).
 fn metadata_schema() -> Value {
     serde_json::json!({
         "type": "object",
@@ -105,11 +96,7 @@ fn metadata_schema() -> Value {
     })
 }
 
-// =============================================================================
-// Fields Schema
-// =============================================================================
-
-/// JSON Schema for the optional `fields` block (edit-fields nodes).
+/// Build the JSON Schema for the optional `fields` block (edit-fields nodes).
 fn fields_schema() -> Value {
     serde_json::json!({
         "type": "object",
@@ -130,105 +117,65 @@ fn fields_schema() -> Value {
     })
 }
 
-// =============================================================================
-// Definition Schema
-// =============================================================================
+// --- Definition Schema ---
+
+/// Build the JSON Schema for a canvas position (`{ x, y }`).
+fn position_schema() -> Value {
+    serde_json::json!({
+        "type": "object",
+        "description": "The node's position on the visual editor canvas.",
+        "required": ["x", "y"],
+        "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" }
+        },
+        "additionalProperties": false
+    })
+}
+
+/// Build the properties map for the Definition schema.
+fn definition_properties() -> Value {
+    serde_json::json!({
+        "id":         { "type": "string", "description": "Unique identifier for this node within the recipe." },
+        "type":       { "type": "string", "description": "The node type (e.g., 'image', 'spreadsheet', 'file-system')." },
+        "version":    { "type": "string", "description": "Format version (semver, e.g., '1.0.0')." },
+        "parentId":   { "type": "string", "description": "Optional parent node id (for nested nodes)." },
+        "name":       { "type": "string", "description": "Human-readable name for this node." },
+        "position":   position_schema(),
+        "metadata":   { "$ref": "#/$defs/Metadata" },
+        "parameters": { "type": "object", "description": "Configuration parameters (key-value pairs).", "additionalProperties": true },
+        "fields":     { "$ref": "#/$defs/Fields" },
+        "inputPorts": { "type": "array", "description": "Input connection ports.", "items": { "$ref": "#/$defs/Port" } },
+        "outputPorts":{ "type": "array", "description": "Output connection ports.", "items": { "$ref": "#/$defs/Port" } },
+        "nodes":      { "type": "array", "description": "Child nodes (recursive).", "items": { "$ref": "#/$defs/Definition" } },
+        "edges":      { "type": "array", "description": "Connections between child nodes.", "items": { "$ref": "#/$defs/Edge" } }
+    })
+}
 
 /// Generate a JSON Schema (Draft 2020-12) for the `.bnto.json` Definition format.
 ///
-/// The Definition is recursive — child `nodes` are themselves Definitions.
-/// Uses `$ref` + `$defs` to handle the recursion.
+/// The Definition is recursive — child `nodes` reference the same schema via `$ref`.
 pub fn definition_json_schema() -> Value {
     serde_json::json!({
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "title": "Bnto Definition",
         "description": "A .bnto.json recipe definition. Describes a pipeline of nodes that process data.",
-
         "$ref": "#/$defs/Definition",
-
         "$defs": {
             "Port": port_schema(),
             "Edge": edge_schema(),
             "Metadata": metadata_schema(),
             "Fields": fields_schema(),
-
             "Definition": {
                 "type": "object",
                 "description": "A single node in a .bnto.json recipe. Can contain child nodes (recursive).",
                 "required": ["id", "type", "version", "name", "position", "metadata", "parameters", "inputPorts", "outputPorts"],
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "description": "Unique identifier for this node within the recipe."
-                    },
-                    "type": {
-                        "type": "string",
-                        "description": "The node type (e.g., 'image', 'spreadsheet', 'file-system', 'input', 'output')."
-                    },
-                    "version": {
-                        "type": "string",
-                        "description": "The format version of this definition (semver, e.g., '1.0.0')."
-                    },
-                    "parentId": {
-                        "type": "string",
-                        "description": "Optional: the id of the parent node (for nested nodes inside groups/loops)."
-                    },
-                    "name": {
-                        "type": "string",
-                        "description": "Human-readable name for this node."
-                    },
-                    "position": {
-                        "type": "object",
-                        "description": "The node's position on the visual editor canvas.",
-                        "required": ["x", "y"],
-                        "properties": {
-                            "x": { "type": "number" },
-                            "y": { "type": "number" }
-                        },
-                        "additionalProperties": false
-                    },
-                    "metadata": {
-                        "$ref": "#/$defs/Metadata"
-                    },
-                    "parameters": {
-                        "type": "object",
-                        "description": "Configuration parameters for this node (key-value pairs).",
-                        "additionalProperties": true
-                    },
-                    "fields": {
-                        "$ref": "#/$defs/Fields"
-                    },
-                    "inputPorts": {
-                        "type": "array",
-                        "description": "Input connection ports for this node.",
-                        "items": { "$ref": "#/$defs/Port" }
-                    },
-                    "outputPorts": {
-                        "type": "array",
-                        "description": "Output connection ports for this node.",
-                        "items": { "$ref": "#/$defs/Port" }
-                    },
-                    "nodes": {
-                        "type": "array",
-                        "description": "Child nodes (for container nodes like group, loop, parallel). Recursive.",
-                        "items": { "$ref": "#/$defs/Definition" }
-                    },
-                    "edges": {
-                        "type": "array",
-                        "description": "Connections between child nodes.",
-                        "items": { "$ref": "#/$defs/Edge" }
-                    }
-                },
-                // Allow additional properties for forward compatibility.
+                "properties": definition_properties(),
                 "additionalProperties": true
             }
         }
     })
 }
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 #[cfg(test)]
 mod tests {
@@ -236,12 +183,14 @@ mod tests {
 
     #[test]
     fn test_definition_schema_is_valid_json_object() {
+        // The schema should be a valid JSON object (not null, not an array).
         let schema = definition_json_schema();
         assert!(schema.is_object(), "Schema should be a JSON object");
     }
 
     #[test]
     fn test_definition_schema_has_correct_meta_fields() {
+        // Verify the schema metadata fields are present and correct.
         let schema = definition_json_schema();
         assert_eq!(
             schema["$schema"],
@@ -253,12 +202,14 @@ mod tests {
 
     #[test]
     fn test_definition_schema_uses_ref_to_defs() {
+        // The top-level schema should reference $defs/Definition.
         let schema = definition_json_schema();
         assert_eq!(schema["$ref"], "#/$defs/Definition");
     }
 
     #[test]
     fn test_definition_schema_has_all_defs() {
+        // The $defs block should contain all 5 type definitions.
         let schema = definition_json_schema();
         let defs = schema["$defs"]
             .as_object()
@@ -275,12 +226,14 @@ mod tests {
 
     #[test]
     fn test_definition_has_required_properties() {
+        // The Definition schema should list the correct required fields.
         let schema = definition_json_schema();
         let def = &schema["$defs"]["Definition"];
         let required = def["required"]
             .as_array()
             .expect("required should be an array");
 
+        // Convert to strings for comparison.
         let required_strs: Vec<&str> = required.iter().map(|v| v.as_str().unwrap()).collect();
 
         assert!(required_strs.contains(&"id"));
@@ -296,6 +249,7 @@ mod tests {
 
     #[test]
     fn test_definition_has_recursive_nodes() {
+        // The `nodes` field should reference $defs/Definition (recursive).
         let schema = definition_json_schema();
         let nodes_items = &schema["$defs"]["Definition"]["properties"]["nodes"]["items"];
         assert_eq!(
@@ -306,6 +260,7 @@ mod tests {
 
     #[test]
     fn test_port_schema_has_required_fields() {
+        // Port should require id and name.
         let schema = definition_json_schema();
         let port = &schema["$defs"]["Port"];
         let required = port["required"]
@@ -318,6 +273,7 @@ mod tests {
 
     #[test]
     fn test_edge_schema_has_required_fields() {
+        // Edge should require id, source, and target.
         let schema = definition_json_schema();
         let edge = &schema["$defs"]["Edge"];
         let required = edge["required"]

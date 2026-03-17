@@ -1,25 +1,24 @@
-// bnto-image — Image processing nodes for browser-side execution (WASM).
-// Provides compress, resize, and convert nodes. Each implements `NodeProcessor`.
+// bnto-image — Image processing nodes for the browser (compress, resize, convert).
+//
+// Each node implements `NodeProcessor` from bnto-core. Files flow as raw bytes
+// through decode -> transform -> re-encode, never leaving the user's machine.
+
+/// Shared helpers for image processors (accepts list, quality param def).
+mod common;
 
 pub mod compress;
 pub mod convert;
 pub mod format;
 pub mod orientation;
-pub mod resize;
-
-/// PNG color quantization — lossy palette reduction (24-bit to 8-bit indexed)
-/// using quantizr (median cut + Floyd-Steinberg dithering). Same technique as
-/// TinyPNG: ~57% reduction on photographic PNGs.
 pub mod quantize;
-
-/// WASM bridge — JS-callable functions the Web Worker uses to invoke processing.
+pub mod resize;
 pub mod wasm_bridge;
 
-/// Shared test utilities for creating fixtures with specific properties.
 #[cfg(test)]
 mod test_utils;
 
 // --- Re-exports ---
+// So consumers can write `use bnto_image::CompressImages` directly.
 
 pub use compress::CompressImages;
 pub use convert::ConvertImageFormat;

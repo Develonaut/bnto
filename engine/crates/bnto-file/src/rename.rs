@@ -1,28 +1,19 @@
-// =============================================================================
-// Rename Files Node — Transform Filenames in the Browser
-// =============================================================================
+// Rename Files Node — transform filenames in the browser.
 //
-// A filename transformer (no filesystem in the browser). File data passes
-// through unchanged — only the name is transformed.
+// Browser version is a filename transformer: takes a file's current name,
+// applies transformation rules (find/replace, case, prefix, suffix, pattern),
+// and returns the same file data with the new name.
 //
-// Transformation order (when multiple are specified):
-//   1. find/replace — modify specific parts of the filename
-//   2. case — transform the entire stem to lower/upper/title
-//   3. prefix — prepend a string to the stem
-//   4. suffix — append a string to the stem (before extension)
-//   5. pattern — if provided, replaces the ENTIRE filename using a template
+// Transformation order: find/replace -> case -> prefix -> suffix -> pattern.
+// Pattern has "final say" — it overrides everything using template variables.
 
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use regex::Regex;
 
-// =============================================================================
-// The RenameFiles Struct
-// =============================================================================
-
-/// Stateless rename-files node processor.
-/// File data passes through UNCHANGED — only the filename is modified.
+/// The rename-files node processor. Stateless — config comes from `NodeInput.params`.
+/// File data passes through unchanged; only the filename is modified.
 pub struct RenameFiles;
 
 impl RenameFiles {
@@ -37,15 +28,15 @@ impl Default for RenameFiles {
     }
 }
 
-// =============================================================================
-// NodeProcessor Implementation
-// =============================================================================
+// --- NodeProcessor Implementation ---
 
 impl NodeProcessor for RenameFiles {
     fn name(&self) -> &str {
         "rename-files"
     }
 
+    /// Self-describing metadata: find, replace, case (enum), prefix, suffix, pattern.
+    /// Accepts any file type (empty accepts = wildcard).
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
@@ -55,86 +46,13 @@ impl NodeProcessor for RenameFiles {
             description: "Transform filenames using patterns, find/replace, and case rules"
                 .to_string(),
             category: NodeCategory::File,
-            // Empty accepts = any file type (we only transform the filename string).
             accepts: vec![],
             platforms: vec!["browser".to_string()],
-            parameters: vec![
-                ParameterDef {
-                    name: "find".to_string(),
-                    label: "Find".to_string(),
-                    description: "Text or regex pattern to search for in the filename".to_string(),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "replace".to_string(),
-                    label: "Replace".to_string(),
-                    description: "Replacement text (used with Find)".to_string(),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "case".to_string(),
-                    label: "Case".to_string(),
-                    description: "Transform the filename to a specific case".to_string(),
-                    param_type: ParameterType::Enum {
-                        options: vec![
-                            "lower".to_string(),
-                            "upper".to_string(),
-                            "title".to_string(),
-                        ],
-                    },
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "prefix".to_string(),
-                    label: "Prefix".to_string(),
-                    description: "Text to prepend to the filename".to_string(),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "suffix".to_string(),
-                    label: "Suffix".to_string(),
-                    description: "Text to append before the file extension".to_string(),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "pattern".to_string(),
-                    label: "Pattern".to_string(),
-                    description:
-                        "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})"
-                            .to_string(),
-                    placeholder: Some("{{name}}-compressed.{{ext}}".to_string()),
-                    visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                        param: "operation".to_string(),
-                        equals: "rename".to_string(),
-                    })),
-                    ..Default::default()
-                },
-            ],
+            parameters: build_rename_parameters(),
         }
     }
 
-    /// Transform a file's name according to the configured parameters.
-    /// File data (bytes) passes through unchanged.
+    /// Transform a file's name according to the params. Data passes through unchanged.
     fn process(
         &self,
         input: NodeInput,
@@ -147,109 +65,200 @@ impl NodeProcessor for RenameFiles {
         }
 
         progress.report(10, "Parsing filename...");
-
-        // Split "photo.jpg" -> stem="photo", ext="jpg"
         let (original_stem, original_ext) = split_filename(&input.filename);
 
         progress.report(30, "Applying transformations...");
-
-        let mut stem = original_stem.to_string();
-
-        // --- Find/Replace ---
-        // Tries regex first; falls back to literal string match if invalid regex.
-        if let Some(find_str) = get_string_param(&input.params, "find") {
-            let replace_str = get_string_param(&input.params, "replace").unwrap_or_default();
-            stem = apply_find_replace(&stem, &find_str, &replace_str);
-        }
-
-        // --- Case Transformation ---
-        if let Some(case_str) = get_string_param(&input.params, "case") {
-            stem = apply_case_transform(&stem, &case_str);
-        }
-
-        // --- Prefix ---
-        if let Some(prefix) = get_string_param(&input.params, "prefix") {
-            stem = format!("{prefix}{stem}");
-        }
-
-        // --- Suffix ---
-        if let Some(suffix) = get_string_param(&input.params, "suffix") {
-            stem = format!("{stem}{suffix}");
-        }
+        let stem = apply_all_transformations(original_stem, &input.params);
 
         progress.report(60, "Building new filename...");
-
-        // --- Pattern (overrides everything) ---
-        // Uses template variables: {{name}}, {{ext}}, {{index}}, {{date}}
-        let new_filename = if let Some(pattern) = get_string_param(&input.params, "pattern") {
-            let index = get_string_param(&input.params, "index").unwrap_or_else(|| "1".to_string());
-            let date = get_current_date();
-            apply_pattern(&pattern, original_stem, original_ext, &index, &date)
-        } else if original_ext.is_empty() {
-            stem
-        } else {
-            format!("{stem}.{original_ext}")
-        };
+        let new_filename = build_final_filename(&stem, original_stem, original_ext, &input.params);
 
         progress.report(90, "Preparing output...");
-
-        // --- Build output (same data, new filename) ---
-        let mut metadata = serde_json::Map::new();
-        metadata.insert(
-            "originalFilename".to_string(),
-            serde_json::Value::String(input.filename.clone()),
-        );
-        metadata.insert(
-            "newFilename".to_string(),
-            serde_json::Value::String(new_filename.clone()),
-        );
-
-        let transforms = build_transforms_list(&input.params);
-        metadata.insert(
-            "transformsApplied".to_string(),
-            serde_json::Value::Array(
-                transforms
-                    .into_iter()
-                    .map(serde_json::Value::String)
-                    .collect(),
-            ),
-        );
+        let metadata = build_rename_metadata(&input.filename, &new_filename, &input.params);
 
         progress.report(100, "Done!");
-
-        Ok(NodeOutput {
-            files: vec![OutputFile {
-                data: input.data,
-                filename: new_filename,
-                // Generic MIME type — we only transform the filename, not the content.
-                mime_type: "application/octet-stream".to_string(),
-            }],
-            metadata,
-        })
+        Ok(build_rename_output(input.data, new_filename, metadata))
     }
 }
 
-// =============================================================================
-// Helper Functions
-// =============================================================================
+fn build_rename_output(
+    data: Vec<u8>,
+    filename: String,
+    metadata: serde_json::Map<String, serde_json::Value>,
+) -> NodeOutput {
+    NodeOutput {
+        files: vec![OutputFile {
+            data,
+            filename,
+            mime_type: "application/octet-stream".to_string(),
+        }],
+        metadata,
+    }
+}
 
-/// Split a filename into stem and extension (on the LAST dot).
-///
-/// ".gitignore" -> (".gitignore", ""), "archive.tar.gz" -> ("archive.tar", "gz")
+// --- Metadata Parameter Definitions ---
+
+fn build_rename_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
+    vec![
+        rename_string_param(
+            "find",
+            "Find",
+            "Text or regex pattern to search for in the filename",
+        ),
+        rename_string_param("replace", "Replace", "Replacement text (used with Find)"),
+        rename_case_param(),
+        rename_string_param("prefix", "Prefix", "Text to prepend to the filename"),
+        rename_string_param(
+            "suffix",
+            "Suffix",
+            "Text to append before the file extension",
+        ),
+        rename_pattern_param(),
+    ]
+}
+
+/// Condition: visible when operation == "rename".
+fn rename_condition() -> Option<bnto_core::metadata::ParamCondition> {
+    use bnto_core::metadata::*;
+    Some(ParamCondition::Single(ParamConditionEntry {
+        param: "operation".to_string(),
+        equals: "rename".to_string(),
+    }))
+}
+
+/// A simple string parameter for the rename node.
+fn rename_string_param(name: &str, label: &str, desc: &str) -> bnto_core::metadata::ParameterDef {
+    bnto_core::metadata::ParameterDef {
+        name: name.to_string(),
+        label: label.to_string(),
+        description: desc.to_string(),
+        visible_when: rename_condition(),
+        ..Default::default()
+    }
+}
+
+fn rename_case_param() -> bnto_core::metadata::ParameterDef {
+    use bnto_core::metadata::*;
+    ParameterDef {
+        name: "case".to_string(),
+        label: "Case".to_string(),
+        description: "Transform the filename to a specific case".to_string(),
+        param_type: ParameterType::Enum {
+            options: vec![
+                "lower".to_string(),
+                "upper".to_string(),
+                "title".to_string(),
+            ],
+        },
+        visible_when: rename_condition(),
+        ..Default::default()
+    }
+}
+
+fn rename_pattern_param() -> bnto_core::metadata::ParameterDef {
+    bnto_core::metadata::ParameterDef {
+        name: "pattern".to_string(),
+        label: "Pattern".to_string(),
+        description:
+            "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})"
+                .to_string(),
+        placeholder: Some("{{name}}-compressed.{{ext}}".to_string()),
+        visible_when: rename_condition(),
+        ..Default::default()
+    }
+}
+
+// --- Transformation Pipeline ---
+
+/// Apply all transformations in order: find/replace -> case -> prefix -> suffix.
+fn apply_all_transformations(
+    original_stem: &str,
+    params: &serde_json::Map<String, serde_json::Value>,
+) -> String {
+    let mut stem = original_stem.to_string();
+
+    if let Some(find_str) = get_string_param(params, "find") {
+        let replace_str = get_string_param(params, "replace").unwrap_or_default();
+        stem = apply_find_replace(&stem, &find_str, &replace_str);
+    }
+
+    if let Some(case_str) = get_string_param(params, "case") {
+        stem = apply_case_transform(&stem, &case_str);
+    }
+
+    if let Some(prefix) = get_string_param(params, "prefix") {
+        stem = format!("{prefix}{stem}");
+    }
+
+    if let Some(suffix) = get_string_param(params, "suffix") {
+        stem = format!("{stem}{suffix}");
+    }
+
+    stem
+}
+
+/// If a pattern is provided, apply it (overriding the transformed stem).
+/// Otherwise reconstruct from transformed stem + original extension.
+fn build_final_filename(
+    stem: &str,
+    original_stem: &str,
+    original_ext: &str,
+    params: &serde_json::Map<String, serde_json::Value>,
+) -> String {
+    if let Some(pattern) = get_string_param(params, "pattern") {
+        let index = get_string_param(params, "index").unwrap_or_else(|| "1".to_string());
+        let date = get_current_date();
+        apply_pattern(&pattern, original_stem, original_ext, &index, &date)
+    } else if original_ext.is_empty() {
+        stem.to_string()
+    } else {
+        format!("{stem}.{original_ext}")
+    }
+}
+
+// --- Result Metadata ---
+
+fn build_rename_metadata(
+    original_filename: &str,
+    new_filename: &str,
+    params: &serde_json::Map<String, serde_json::Value>,
+) -> serde_json::Map<String, serde_json::Value> {
+    let mut metadata = serde_json::Map::new();
+    metadata.insert(
+        "originalFilename".to_string(),
+        serde_json::Value::String(original_filename.to_string()),
+    );
+    metadata.insert(
+        "newFilename".to_string(),
+        serde_json::Value::String(new_filename.to_string()),
+    );
+
+    let transforms = build_transforms_list(params);
+    metadata.insert(
+        "transformsApplied".to_string(),
+        serde_json::Value::Array(
+            transforms
+                .into_iter()
+                .map(serde_json::Value::String)
+                .collect(),
+        ),
+    );
+
+    metadata
+}
+
+// --- Helper Functions ---
+
+/// Split a filename into stem and extension on the last dot.
+/// ".gitignore" and "README" have no extension (empty string).
 fn split_filename(filename: &str) -> (&str, &str) {
     match filename.rfind('.') {
-        // Dot at pos 0 means dotfile (e.g. ".gitignore") — treat as stem only.
-        Some(pos) if pos > 0 => {
-            let stem = &filename[..pos];
-            let ext = &filename[pos + 1..];
-            (stem, ext)
-        }
+        Some(pos) if pos > 0 => (&filename[..pos], &filename[pos + 1..]),
         _ => (filename, ""),
     }
 }
 
-/// Extract a string parameter from the params map.
-/// Handles both JSON strings and numbers (e.g. `"index": 3` -> Some("3")).
+/// Extract a string param from the JSON map. Handles both string and number values.
 fn get_string_param(
     params: &serde_json::Map<String, serde_json::Value>,
     key: &str,
@@ -261,7 +270,7 @@ fn get_string_param(
     })
 }
 
-/// Apply find/replace to a string. Tries regex first, falls back to literal.
+/// Apply find/replace. Tries regex first; falls back to literal if invalid regex.
 fn apply_find_replace(stem: &str, find: &str, replace: &str) -> String {
     match Regex::new(find) {
         Ok(re) => re.replace_all(stem, replace).to_string(),
@@ -269,8 +278,7 @@ fn apply_find_replace(stem: &str, find: &str, replace: &str) -> String {
     }
 }
 
-/// Apply a case transformation: "lower", "upper", or "title".
-/// Unknown values pass through unchanged.
+/// Apply case transformation: "lower", "upper", "title". Unknown values pass through.
 fn apply_case_transform(stem: &str, case: &str) -> String {
     match case {
         "lower" => stem.to_lowercase(),
@@ -280,13 +288,12 @@ fn apply_case_transform(stem: &str, case: &str) -> String {
     }
 }
 
-/// Convert to title case (first letter uppercase, rest lowercase).
+/// Title case: first character uppercase, rest lowercase. Handles Unicode.
 fn to_title_case(s: &str) -> String {
     let mut chars = s.chars();
     match chars.next() {
         None => String::new(),
         Some(first) => {
-            // to_uppercase() returns an iterator because some chars expand (e.g. 'ß' -> "SS").
             let upper_first: String = first.to_uppercase().collect();
             let lower_rest: String = chars.as_str().to_lowercase();
             format!("{upper_first}{lower_rest}")
@@ -294,9 +301,7 @@ fn to_title_case(s: &str) -> String {
     }
 }
 
-/// Apply a template pattern to generate a new filename.
-///
-/// Template variables: {{name}}, {{ext}}, {{index}}, {{date}}
+/// Apply a template pattern: {{name}}, {{ext}}, {{index}}, {{date}}.
 fn apply_pattern(pattern: &str, name: &str, ext: &str, index: &str, date: &str) -> String {
     pattern
         .replace("{{name}}", name)
@@ -305,16 +310,13 @@ fn apply_pattern(pattern: &str, name: &str, ext: &str, index: &str, date: &str) 
         .replace("{{date}}", date)
 }
 
-/// Get the current date as YYYY-MM-DD.
-///
-/// Uses js_sys::Date in WASM; returns a fixed date in native tests
-/// for determinism.
+/// Get current date as YYYY-MM-DD. Uses js_sys::Date in WASM, fixed date in native tests.
 fn get_current_date() -> String {
     #[cfg(target_arch = "wasm32")]
     {
         let date = js_sys::Date::new_0();
         let year = date.get_full_year();
-        let month = date.get_month() + 1; // JS months are 0-indexed
+        let month = date.get_month() + 1;
         let day = date.get_date();
         format!("{year:04}-{month:02}-{day:02}")
     }
@@ -325,10 +327,9 @@ fn get_current_date() -> String {
     }
 }
 
-/// Build a list of which transformations were applied (for metadata).
+/// Build a list of which transformations were applied, for metadata display.
 fn build_transforms_list(params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
     let mut transforms = Vec::new();
-
     if params.contains_key("find") {
         transforms.push("find/replace".to_string());
     }
@@ -344,12 +345,11 @@ fn build_transforms_list(params: &serde_json::Map<String, serde_json::Value>) ->
     if params.contains_key("pattern") {
         transforms.push("pattern".to_string());
     }
-
     transforms
 }
 
 // =============================================================================
-// Tests
+// Unit Tests — Pure Rust, no WASM boundary needed
 // =============================================================================
 
 #[cfg(test)]
@@ -598,7 +598,8 @@ mod tests {
 
         let output = processor.process(input, &progress).unwrap();
 
-        // Case transforms the STEM only, not the extension.
+        // Note: case transforms the STEM only, not the extension.
+        // The extension comes from the original filename's extension.
         assert_eq!(output.files[0].filename, "photo.JPG");
     }
 
@@ -691,8 +692,6 @@ mod tests {
         let result = processor.process(input, &progress);
 
         assert!(result.is_err());
-
-        // NodeOutput doesn't impl Debug, so use `if let` instead of `unwrap_err()`.
         if let Err(e) = result {
             assert!(
                 e.to_string().contains("empty"),
@@ -707,9 +706,12 @@ mod tests {
 
     #[test]
     fn test_combined_prefix_case_suffix() {
-        // Order: find/replace -> case -> prefix -> suffix
-        // Starting stem: "Photo" -> case="lower": "photo"
-        // -> prefix="v2-": "v2-photo" -> suffix="-edited": "v2-photo-edited"
+        // Order: find/replace → case → prefix → suffix
+        // Starting stem: "Photo" (from "Photo.jpg")
+        // After case="lower": "photo"
+        // After prefix="v2-": "v2-photo"
+        // After suffix="-edited": "v2-photo-edited"
+        // Final: "v2-photo-edited.jpg"
         let processor = RenameFiles::new();
         let progress = noop_progress();
         let params = string_params(&[("prefix", "v2-"), ("suffix", "-edited"), ("case", "lower")]);
@@ -722,8 +724,11 @@ mod tests {
 
     #[test]
     fn test_find_replace_with_case() {
-        // Order: find/replace -> case
-        // "IMG_1234" -> find/replace: "photo_1234" -> case="upper": "PHOTO_1234"
+        // Order: find/replace → case
+        // Starting stem: "IMG_1234" (from "IMG_1234.jpg")
+        // After find/replace (IMG→photo): "photo_1234"
+        // After case="upper": "PHOTO_1234"
+        // Final: "PHOTO_1234.jpg"
         let processor = RenameFiles::new();
         let progress = noop_progress();
         let params = string_params(&[("find", "IMG"), ("replace", "photo"), ("case", "upper")]);

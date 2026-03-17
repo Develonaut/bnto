@@ -1,69 +1,55 @@
-// Container node execution — recurses into child sub-pipelines.
-//
-// Container types:
-//   - loop     — run children once PER file (for-each)
-//   - group    — run children once on ALL files (batch)
-//   - parallel — same as group for now (concurrent execution is future work)
+// Container Node Execution — handles loop, group, and parallel containers.
+// Containers organize child nodes rather than processing files directly.
+// Loop runs children per-file; group/parallel run on the full batch.
 
 use crate::errors::BntoError;
 use crate::pipeline::{PipelineDefinition, PipelineFile, PipelineNode, is_io_node};
 
-use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef, execute_node};
+use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef, run_node_chain};
 
-// =============================================================================
-// Public (to parent module) API
-// =============================================================================
+/// Passthrough result — returns input files unchanged with zero processing.
+fn passthrough(files: Vec<PipelineFile>) -> NodeExecutionResult {
+    NodeExecutionResult {
+        files_processed: 0,
+        output_files: files,
+    }
+}
 
-/// Execute a container node by recursing into its children.
+/// Extract and clone children into a sub-pipeline definition.
+/// Returns `None` if children are absent or empty (caller should passthrough).
+fn clone_children_definitions(node: PipelineNodeRef) -> Option<PipelineDefinition> {
+    let children = node.children.as_ref()?;
+    if children.is_empty() {
+        return None;
+    }
+    Some(PipelineDefinition {
+        nodes: children.clone(),
+    })
+}
+
+/// Execute a container node (loop, group, parallel) by recursing into children.
+///
+/// - **loop**: children get ONE file at a time (per-file iteration)
+/// - **group/parallel**: children get ALL files as a batch
 pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node: PipelineNodeRef,
     files: Vec<PipelineFile>,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
-    let children = match &node.children {
-        Some(c) => c,
-        None => {
-            // Container with no children = passthrough.
-            return Ok(NodeExecutionResult {
-                files_processed: 0,
-                output_files: files,
-            });
-        }
-    };
-
-    if children.is_empty() {
-        return Ok(NodeExecutionResult {
-            files_processed: 0,
-            output_files: files,
-        });
-    }
-
-    // Build a sub-pipeline from children. Clone needed because we still
-    // borrow `node` through `children`.
-    let sub_definition = PipelineDefinition {
-        nodes: children.clone(),
+    let sub_definition = match clone_children_definitions(node) {
+        Some(def) => def,
+        None => return Ok(passthrough(files)),
     };
 
     match node.node_type.as_str() {
         "loop" => execute_loop(ctx, &sub_definition, files, file_offset),
-        // "parallel" is identical to "group" for now.
         "group" | "parallel" => execute_group(ctx, &sub_definition, files, file_offset),
-        _ => {
-            // Unknown container type — passthrough (defensive).
-            Ok(NodeExecutionResult {
-                files_processed: 0,
-                output_files: files,
-            })
-        }
+        _ => Ok(passthrough(files)),
     }
 }
 
-// =============================================================================
-// Internal: Loop Container
-// =============================================================================
-
-/// Run the sub-pipeline once PER file. Results collected into one output Vec.
+/// Run the sub-pipeline once per file, collecting all outputs.
 fn execute_loop<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     sub_definition: &PipelineDefinition,
@@ -74,10 +60,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
     let mut total_processed: usize = 0;
 
     for (i, file) in files.into_iter().enumerate() {
-        let single_file_batch = vec![file];
-
-        let result = execute_sub_pipeline(ctx, sub_definition, single_file_batch, file_offset + i)?;
-
+        let result = execute_sub_pipeline(ctx, sub_definition, vec![file], file_offset + i)?;
         total_processed += result.files_processed;
         all_output_files.extend(result.output_files);
     }
@@ -88,11 +71,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
     })
 }
 
-// =============================================================================
-// Internal: Group / Parallel Container
-// =============================================================================
-
-/// Run the sub-pipeline once on the FULL batch of files.
+/// Run the sub-pipeline once on the full batch of files.
 fn execute_group<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     sub_definition: &PipelineDefinition,
@@ -106,13 +85,8 @@ fn execute_group<F: Fn() -> u64 + Copy>(
     })
 }
 
-// =============================================================================
-// Internal: Sub-Pipeline Execution
-// =============================================================================
-
-/// Execute a sub-pipeline (children of a container).
-/// Same as execute_pipeline but WITHOUT PipelineStarted/PipelineCompleted events
-/// — those belong to the outer pipeline only.
+/// Execute a sub-pipeline (container children). Same as `execute_pipeline`
+/// but without PipelineStarted/PipelineCompleted events.
 fn execute_sub_pipeline<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     definition: &PipelineDefinition,
@@ -125,25 +99,11 @@ fn execute_sub_pipeline<F: Fn() -> u64 + Copy>(
         .filter(|n| !is_io_node(&n.node_type))
         .collect();
 
-    let total_nodes = processing_nodes.len();
-    let mut current_files = files;
-    let mut total_files_processed: usize = 0;
-
-    for (node_index, node) in processing_nodes.iter().enumerate() {
-        let result = execute_node(
-            ctx,
-            node,
-            current_files,
-            node_index,
-            total_nodes,
-            file_offset,
-        )?;
-        total_files_processed += result.files_processed;
-        current_files = result.output_files;
-    }
+    let (output_files, files_processed) =
+        run_node_chain(ctx, &processing_nodes, files, file_offset)?;
 
     Ok(NodeExecutionResult {
-        files_processed: total_files_processed,
-        output_files: current_files,
+        files_processed,
+        output_files,
     })
 }

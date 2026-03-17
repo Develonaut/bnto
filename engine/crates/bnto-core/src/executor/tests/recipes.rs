@@ -1,18 +1,9 @@
+// Recipe JSON helpers and basic execution tests (image, CSV, file recipes).
 use super::*;
 
-// =========================================================================
-// Real Recipe Structure Tests
-// =========================================================================
-//
-// These tests use EXACT JSON shapes from the TypeScript recipe definitions
-// (with "parameters", "version", "position", "metadata", "inputPorts",
-// "outputPorts", "edges" — all the fields Rust silently ignores).
-//
-// Mock processors verify orchestration — the actual image/CSV/file
-// processing is tested in each node crate's own test suite.
-
-/// compress-images: Group -> Loop -> [image:compress]
-fn compress_images_json() -> &'static str {
+/// Helper: JSON for compress-images recipe structure.
+/// Shared across recipe test modules via `super::recipes::compress_images_json`.
+pub(super) fn compress_images_json() -> &'static str {
     r#"{
         "nodes": [
             {
@@ -65,8 +56,9 @@ fn compress_images_json() -> &'static str {
     }"#
 }
 
-/// clean-csv: Group -> [spreadsheet:clean] (no loop — whole-file operation)
-fn clean_csv_json() -> &'static str {
+/// Helper: JSON for clean-csv recipe structure.
+/// Shared across recipe test modules via `super::recipes::clean_csv_json`.
+pub(super) fn clean_csv_json() -> &'static str {
     r#"{
         "nodes": [
             {
@@ -115,8 +107,9 @@ fn clean_csv_json() -> &'static str {
     }"#
 }
 
-/// rename-files: Group -> Loop -> [file-system:rename]
-fn rename_files_json() -> &'static str {
+/// Helper: JSON for rename-files recipe structure.
+/// Shared across recipe test modules via `super::recipes::rename_files_json`.
+pub(super) fn rename_files_json() -> &'static str {
     r#"{
         "nodes": [
             {
@@ -180,6 +173,7 @@ fn test_recipe_compress_images_single_file() {
     let files = vec![make_file("photo.jpg", b"jpeg-data")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
+    // Loop runs once (1 file), EchoProcessor passes it through.
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "photo.jpg");
     assert_eq!(result.files[0].data, b"jpeg-data");
@@ -200,6 +194,7 @@ fn test_recipe_compress_images_multiple_files() {
     ];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
+    // Loop runs 5 times (once per file).
     assert_eq!(result.files.len(), 5);
     assert_eq!(result.files[0].name, "photo1.jpg");
     assert_eq!(result.files[4].name, "photo5.png");
@@ -207,6 +202,7 @@ fn test_recipe_compress_images_multiple_files() {
 
 #[test]
 fn test_recipe_resize_images() {
+    // Compositional: Input → Group("Batch Resize") → Loop → [image:resize] → Output
     let json = r#"{
         "nodes": [
             { "id": "input", "type": "input", "parameters": {} },
@@ -245,6 +241,7 @@ fn test_recipe_resize_images() {
 
 #[test]
 fn test_recipe_convert_image_format() {
+    // Compositional: Input → Group("Batch Convert") → Loop → [image:convert] → Output
     let json = r#"{
         "nodes": [
             { "id": "input", "type": "input", "parameters": {} },
@@ -291,12 +288,14 @@ fn test_recipe_clean_csv_single_file() {
     let files = vec![make_file("data.csv", b"name,age\nAlice,30\n")];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
+    // Flat pipeline: one processor node, file passes through.
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "data.csv");
 }
 
 #[test]
 fn test_recipe_rename_csv_columns() {
+    // Compositional: Input → Group("Column Renamer") → [spreadsheet:rename] → Output
     let json = r#"{
         "nodes": [
             { "id": "input", "type": "input", "parameters": {} },
@@ -339,518 +338,10 @@ fn test_recipe_rename_files() {
     ];
     let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
 
-    // UpperCaseProcessor uppercases filenames.
+    // Loop runs 4 times, UpperCaseProcessor uppercases filenames.
     assert_eq!(result.files.len(), 4);
     assert_eq!(result.files[0].name, "REPORT.PDF");
     assert_eq!(result.files[1].name, "NOTES.TXT");
     assert_eq!(result.files[2].name, "PHOTO.JPG");
     assert_eq!(result.files[3].name, "DATA.CSV");
-}
-
-// --- Nested Container Tests (Synthetic Recipes) ---
-
-#[test]
-fn test_group_containing_group_containing_loop() {
-    // 3 levels deep: Group -> Group -> Loop -> EchoProcessor.
-    let json = r#"{
-        "nodes": [
-            {
-                "id": "outer", "type": "group",
-                "parameters": {},
-                "nodes": [
-                    {
-                        "id": "inner", "type": "group",
-                        "parameters": {},
-                        "nodes": [
-                            {
-                                "id": "the-loop", "type": "loop",
-                                "parameters": { "mode": "forEach" },
-                                "nodes": [
-                                    {
-                                        "id": "proc", "type": "image",
-                                        "parameters": { "operation": "compress" }
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }"#;
-
-    let def = parse_def(json);
-    let registry = recipe_registry();
-    let reporter = PipelineReporter::new_noop();
-
-    let files = vec![
-        make_file("a.jpg", b"aaa"),
-        make_file("b.jpg", b"bbb"),
-        make_file("c.jpg", b"ccc"),
-    ];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
-
-    assert_eq!(result.files.len(), 3);
-    assert_eq!(result.files[0].name, "a.jpg");
-}
-
-#[test]
-fn test_multiple_processors_inside_loop() {
-    // Loop -> [echo, then uppercase]. Two sequential processors per iteration.
-    let json = r#"{
-        "nodes": [
-            {
-                "id": "the-loop", "type": "loop",
-                "parameters": { "mode": "forEach" },
-                "nodes": [
-                    { "id": "step1", "type": "test", "params": { "operation": "echo" } },
-                    { "id": "step2", "type": "test", "params": { "operation": "uppercase" } }
-                ]
-            }
-        ]
-    }"#;
-
-    let def = parse_def(json);
-    let registry = mock_registry();
-    let reporter = PipelineReporter::new_noop();
-
-    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
-
-    assert_eq!(result.files.len(), 2);
-    assert_eq!(result.files[0].name, "A.TXT");
-    assert_eq!(result.files[1].name, "B.TXT");
-}
-
-#[test]
-fn test_sequential_loops_in_pipeline() {
-    // Loop1(echo) -> Loop2(uppercase). Two loops in sequence.
-    let json = r#"{
-        "nodes": [
-            {
-                "id": "loop1", "type": "loop",
-                "params": { "mode": "forEach" },
-                "children": [
-                    { "id": "echo", "type": "test", "params": { "operation": "echo" } }
-                ]
-            },
-            {
-                "id": "loop2", "type": "loop",
-                "params": { "mode": "forEach" },
-                "children": [
-                    { "id": "upper", "type": "test", "params": { "operation": "uppercase" } }
-                ]
-            }
-        ]
-    }"#;
-
-    let def = parse_def(json);
-    let registry = mock_registry();
-    let reporter = PipelineReporter::new_noop();
-
-    let files = vec![make_file("file.txt", b"data")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
-
-    assert_eq!(result.files.len(), 1);
-    assert_eq!(result.files[0].name, "FILE.TXT");
-}
-
-#[test]
-fn test_four_levels_deep_nesting() {
-    // Group -> Group -> Group -> Loop -> uppercase. Maximum nesting.
-    let json = r#"{
-        "nodes": [
-            {
-                "id": "g1", "type": "group", "parameters": {},
-                "nodes": [
-                    {
-                        "id": "g2", "type": "group", "parameters": {},
-                        "nodes": [
-                            {
-                                "id": "g3", "type": "group", "parameters": {},
-                                "nodes": [
-                                    {
-                                        "id": "the-loop", "type": "loop",
-                                        "parameters": { "mode": "forEach" },
-                                        "nodes": [
-                                            {
-                                                "id": "proc", "type": "test",
-                                                "params": { "operation": "uppercase" }
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }"#;
-
-    let def = parse_def(json);
-    let registry = mock_registry();
-    let reporter = PipelineReporter::new_noop();
-
-    let files = vec![make_file("deep.txt", b"deep")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
-
-    assert_eq!(result.files.len(), 1);
-    assert_eq!(result.files[0].name, "DEEP.TXT");
-}
-
-// --- Edge Cases with Recipe Structures ---
-
-#[test]
-fn test_recipe_with_only_io_nodes_passthrough() {
-    let json = r#"{
-        "nodes": [
-            {
-                "id": "input", "type": "input", "version": "1.0.0",
-                "name": "Input", "position": {"x": 0, "y": 0}, "metadata": {},
-                "parameters": {}, "inputPorts": [], "outputPorts": []
-            },
-            {
-                "id": "output", "type": "output", "version": "1.0.0",
-                "name": "Output", "position": {"x": 0, "y": 0}, "metadata": {},
-                "parameters": {}, "inputPorts": [], "outputPorts": []
-            }
-        ]
-    }"#;
-
-    let def = parse_def(json);
-    let registry = recipe_registry();
-    let reporter = PipelineReporter::new_noop();
-
-    let files = vec![make_file("test.txt", b"hello")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
-
-    assert_eq!(result.files.len(), 1);
-    assert_eq!(result.files[0].data, b"hello");
-}
-
-#[test]
-fn test_recipe_empty_files_no_error() {
-    let def = parse_def(compress_images_json());
-    let registry = recipe_registry();
-    let reporter = PipelineReporter::new_noop();
-
-    let result = execute_pipeline(&def, vec![], &registry, &reporter, fake_now).unwrap();
-    assert!(result.files.is_empty());
-}
-
-#[test]
-fn test_recipe_container_io_children_skipped() {
-    // I/O children inside a loop should be skipped.
-    let json = r#"{
-        "nodes": [
-            {
-                "id": "the-loop", "type": "loop",
-                "parameters": { "mode": "forEach" },
-                "nodes": [
-                    { "id": "inner-input", "type": "input", "parameters": {} },
-                    {
-                        "id": "proc", "type": "image",
-                        "parameters": { "operation": "compress" }
-                    },
-                    { "id": "inner-output", "type": "output", "parameters": {} }
-                ]
-            }
-        ]
-    }"#;
-
-    let def = parse_def(json);
-    let registry = recipe_registry();
-    let reporter = PipelineReporter::new_noop();
-
-    let files = vec![make_file("photo.jpg", b"data")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
-
-    assert_eq!(result.files.len(), 1);
-}
-
-// --- Error Cases with Recipe Structures ---
-
-#[test]
-fn test_recipe_unregistered_operation_inside_loop() {
-    let json = r#"{
-        "nodes": [
-            {
-                "id": "the-loop", "type": "loop",
-                "parameters": { "mode": "forEach" },
-                "nodes": [
-                    {
-                        "id": "bad-node", "type": "spreadsheet",
-                        "parameters": { "operation": "pivot" }
-                    }
-                ]
-            }
-        ]
-    }"#;
-
-    let def = parse_def(json);
-    let registry = recipe_registry();
-    let reporter = PipelineReporter::new_noop();
-
-    let files = vec![make_file("data.csv", b"csv-data")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now);
-
-    assert!(result.is_err());
-    let err = result.unwrap_err().to_string();
-    assert!(
-        err.contains("spreadsheet:pivot"),
-        "Error should name the missing key: {}",
-        err
-    );
-}
-
-#[test]
-fn test_recipe_failure_inside_nested_container() {
-    // Group -> Loop -> FailProcessor. Error should propagate up.
-    let json = r#"{
-        "nodes": [
-            {
-                "id": "group-1", "type": "group",
-                "parameters": {},
-                "nodes": [
-                    {
-                        "id": "the-loop", "type": "loop",
-                        "parameters": { "mode": "forEach" },
-                        "nodes": [
-                            {
-                                "id": "fail-proc", "type": "test",
-                                "params": { "operation": "fail" }
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }"#;
-
-    let def = parse_def(json);
-    let registry = mock_registry();
-    let recorder = RecordingReporter::new();
-    let reporter = recorder.reporter();
-
-    let files = vec![make_file("test.txt", b"data")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now);
-
-    assert!(result.is_err());
-
-    let events = recorder.events();
-    let has_pipeline_failed = events
-        .iter()
-        .any(|e| matches!(e, PipelineEvent::PipelineFailed { .. }));
-    assert!(
-        has_pipeline_failed,
-        "Should emit PipelineFailed for nested failure"
-    );
-}
-
-// --- Progress Events with Recipe Structures ---
-
-#[test]
-fn test_recipe_compress_images_event_sequence() {
-    let def = parse_def(compress_images_json());
-    let registry = recipe_registry();
-    let recorder = RecordingReporter::new();
-    let reporter = recorder.reporter();
-
-    let files = vec![make_file("a.jpg", b"aaa"), make_file("b.jpg", b"bbb")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
-
-    let events = recorder.events();
-
-    assert!(matches!(events[0], PipelineEvent::PipelineStarted { .. }));
-    assert!(matches!(
-        events.last().unwrap(),
-        PipelineEvent::PipelineCompleted { .. }
-    ));
-
-    let group_started = events.iter().any(
-        |e| matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "batch-compress"),
-    );
-    assert!(
-        group_started,
-        "Should emit NodeStarted for sub-recipe group"
-    );
-
-    let loop_started = events.iter().any(
-        |e| matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "compress-loop"),
-    );
-    assert!(
-        loop_started,
-        "Should emit NodeStarted for loop inside sub-recipe"
-    );
-
-    // Child processor starts once per file.
-    let child_started_count = events
-        .iter()
-        .filter(|e| {
-            matches!(e, PipelineEvent::NodeStarted { node_id, .. } if node_id == "compress-image")
-        })
-        .count();
-    assert_eq!(
-        child_started_count, 2,
-        "Child processor should start once per file"
-    );
-
-    let child_completed_count = events
-        .iter()
-        .filter(|e| {
-            matches!(e, PipelineEvent::NodeCompleted { node_id, .. } if node_id == "compress-image")
-        })
-        .count();
-    assert_eq!(
-        child_completed_count, 2,
-        "Child processor should complete once per file"
-    );
-}
-
-#[test]
-fn test_recipe_clean_csv_event_sequence() {
-    let def = parse_def(clean_csv_json());
-    let registry = recipe_registry();
-    let recorder = RecordingReporter::new();
-    let reporter = recorder.reporter();
-
-    let files = vec![make_file("data.csv", b"csv-content")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
-
-    let events = recorder.events();
-
-    // PipelineStarted: 1 top-level processing node (csv-cleaner group), I/O excluded.
-    if let PipelineEvent::PipelineStarted {
-        total_nodes,
-        total_files,
-    } = &events[0]
-    {
-        assert_eq!(*total_nodes, 1, "1 top-level processing node, I/O excluded");
-        assert_eq!(*total_files, 1);
-    } else {
-        panic!("First event should be PipelineStarted");
-    }
-
-    // Group + processor inside = 2 NodeStarted events.
-    let node_started_count = events
-        .iter()
-        .filter(|e| matches!(e, PipelineEvent::NodeStarted { .. }))
-        .count();
-    assert_eq!(
-        node_started_count, 2,
-        "Group + processor = 2 NodeStarted events"
-    );
-}
-
-// --- Smoke Tests: All 6 Recipes Deserialize ---
-
-#[test]
-fn test_all_six_recipe_structures_deserialize() {
-    let recipes = [
-        compress_images_json(),
-        clean_csv_json(),
-        rename_files_json(),
-        r#"{
-            "nodes": [
-                { "id": "in", "type": "input", "parameters": {} },
-                { "id": "batch-resize", "type": "group", "parameters": {}, "nodes": [
-                    { "id": "loop", "type": "loop", "parameters": { "mode": "forEach" }, "nodes": [
-                        { "id": "proc", "type": "image", "parameters": { "operation": "resize", "width": 200 } }
-                    ]}
-                ]},
-                { "id": "out", "type": "output", "parameters": {} }
-            ]
-        }"#,
-        r#"{
-            "nodes": [
-                { "id": "in", "type": "input", "parameters": {} },
-                { "id": "batch-convert", "type": "group", "parameters": {}, "nodes": [
-                    { "id": "loop", "type": "loop", "parameters": { "mode": "forEach" }, "nodes": [
-                        { "id": "proc", "type": "image", "parameters": { "operation": "convert", "format": "webp" } }
-                    ]}
-                ]},
-                { "id": "out", "type": "output", "parameters": {} }
-            ]
-        }"#,
-        r#"{
-            "nodes": [
-                { "id": "in", "type": "input", "parameters": {} },
-                { "id": "col-renamer", "type": "group", "parameters": {}, "nodes": [
-                    { "id": "proc", "type": "spreadsheet", "parameters": { "operation": "rename", "columns": {} } }
-                ]},
-                { "id": "out", "type": "output", "parameters": {} }
-            ]
-        }"#,
-    ];
-
-    for (i, json) in recipes.iter().enumerate() {
-        let result: Result<PipelineDefinition, _> = serde_json::from_str(json);
-        assert!(
-            result.is_ok(),
-            "Recipe {} failed to deserialize: {:?}",
-            i,
-            result.err()
-        );
-    }
-}
-
-#[test]
-fn test_all_six_recipes_execute_with_mocks() {
-    let recipes = [
-        compress_images_json(),
-        clean_csv_json(),
-        rename_files_json(),
-        r#"{
-            "nodes": [
-                { "id": "in", "type": "input", "parameters": {} },
-                { "id": "batch-resize", "type": "group", "parameters": {}, "nodes": [
-                    { "id": "loop", "type": "loop", "parameters": {}, "nodes": [
-                        { "id": "proc", "type": "image", "parameters": { "operation": "resize" } }
-                    ]}
-                ]},
-                { "id": "out", "type": "output", "parameters": {} }
-            ]
-        }"#,
-        r#"{
-            "nodes": [
-                { "id": "in", "type": "input", "parameters": {} },
-                { "id": "batch-convert", "type": "group", "parameters": {}, "nodes": [
-                    { "id": "loop", "type": "loop", "parameters": {}, "nodes": [
-                        { "id": "proc", "type": "image", "parameters": { "operation": "convert" } }
-                    ]}
-                ]},
-                { "id": "out", "type": "output", "parameters": {} }
-            ]
-        }"#,
-        r#"{
-            "nodes": [
-                { "id": "in", "type": "input", "parameters": {} },
-                { "id": "col-renamer", "type": "group", "parameters": {}, "nodes": [
-                    { "id": "proc", "type": "spreadsheet", "parameters": { "operation": "rename" } }
-                ]},
-                { "id": "out", "type": "output", "parameters": {} }
-            ]
-        }"#,
-    ];
-
-    let registry = recipe_registry();
-    let files = vec![make_file("test-file.dat", b"test-data")];
-
-    for (i, json) in recipes.iter().enumerate() {
-        let def = parse_def(json);
-        let reporter = PipelineReporter::new_noop();
-        let result = execute_pipeline(&def, files.clone(), &registry, &reporter, fake_now);
-        assert!(
-            result.is_ok(),
-            "Recipe {} failed to execute: {:?}",
-            i,
-            result.err()
-        );
-        assert!(
-            !result.unwrap().files.is_empty(),
-            "Recipe {} produced no output files",
-            i
-        );
-    }
 }

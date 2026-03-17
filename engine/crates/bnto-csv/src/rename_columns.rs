@@ -1,10 +1,5 @@
-// =============================================================================
-// RenameCsvColumns — Rename Column Headers in a CSV File
-// =============================================================================
-//
-// Renames column headers based on a user-provided mapping.
-// Data rows are left completely unchanged — only the header row is modified.
-// Columns not in the mapping stay as-is.
+// Rename CSV Columns — rename column headers based on a user-provided mapping.
+// Data rows are preserved unchanged; only the header row is modified.
 
 use std::collections::HashMap;
 
@@ -12,12 +7,7 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-// =============================================================================
-// The RenameCsvColumns Struct
-// =============================================================================
-
-/// Stateless rename-csv-columns node processor.
-/// Configuration (which columns to rename) comes from `NodeInput.params`.
+/// The rename-csv-columns node processor. Stateless — config comes from `NodeInput.params`.
 pub struct RenameCsvColumns;
 
 impl RenameCsvColumns {
@@ -32,15 +22,14 @@ impl Default for RenameCsvColumns {
     }
 }
 
-// =============================================================================
-// NodeProcessor Implementation
-// =============================================================================
+// --- NodeProcessor Implementation ---
 
 impl NodeProcessor for RenameCsvColumns {
     fn name(&self) -> &str {
         "rename-csv-columns"
     }
 
+    /// Self-describing metadata. Parameters: columns (object mapping old->new names).
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
@@ -67,135 +56,179 @@ impl NodeProcessor for RenameCsvColumns {
         }
     }
 
-    /// Rename column headers based on the `columns` param mapping.
-    /// Missing or empty mapping = passthrough. Unmapped columns stay as-is.
+    /// Rename column headers based on the `columns` parameter mapping.
+    /// Missing or non-matching columns are silently preserved.
     fn process(
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Starting column rename...");
-
-        // --- Convert bytes to UTF-8 ---
-        let csv_text = std::str::from_utf8(&input.data)
-            .map_err(|e| BntoError::InvalidInput(format!("CSV is not valid UTF-8: {e}")))?;
-
-        // --- Extract column mapping from params ---
+        let csv_text = parse_utf8(&input.data)?;
         let column_mapping = extract_column_mapping(&input.params);
 
         progress.report(20, "Parsed parameters...");
-
-        // --- Parse CSV ---
-        // flexible(true) allows ragged rows (different field counts per row).
-        let mut reader = csv::ReaderBuilder::new()
-            .flexible(true)
-            .from_reader(csv_text.as_bytes());
-
-        let headers = reader
-            .headers()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read CSV headers: {e}")))?
-            .clone();
+        let (headers, mut reader) = read_headers(csv_text)?;
 
         progress.report(40, "Read headers...");
-
-        // --- Apply column mapping to headers ---
-        // Preserves column order; only names in the mapping are changed.
-        let mut columns_renamed: u64 = 0;
-
-        let new_headers: Vec<String> = headers
-            .iter()
-            .map(|header| {
-                if let Some(new_name) = column_mapping.get(header) {
-                    columns_renamed += 1;
-                    new_name.clone()
-                } else {
-                    header.to_string()
-                }
-            })
-            .collect();
+        let (new_headers, columns_renamed) = apply_column_mapping(&headers, &column_mapping);
 
         progress.report(60, "Renamed headers...");
-
-        // --- Write output CSV ---
-        // flexible(true) matches reader behavior for ragged rows.
-        let mut writer = csv::WriterBuilder::new()
-            .flexible(true)
-            .from_writer(Vec::new());
-
-        writer
-            .write_record(&new_headers)
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to write headers: {e}")))?;
-
-        // Copy all data rows unchanged.
-        let mut row_count: u64 = 0;
-        for record in reader.records() {
-            let record = record
-                .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read CSV row: {e}")))?;
-            writer.write_record(record.iter()).map_err(|e| {
-                BntoError::ProcessingFailed(format!("Failed to write CSV row: {e}"))
-            })?;
-            row_count += 1;
-        }
+        let (output_bytes, row_count) = write_renamed_csv(&new_headers, &mut reader)?;
 
         progress.report(90, "Wrote output CSV...");
-
-        let output_bytes = writer
-            .into_inner()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to finalize CSV: {e}")))?;
-
-        let output_filename = build_output_filename(&input.filename);
-
-        // --- Build metadata for the UI ---
-        let mut metadata = serde_json::Map::new();
-        metadata.insert(
-            "columnsRenamed".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(columns_renamed)),
-        );
-        metadata.insert(
-            "totalColumns".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(new_headers.len() as u64)),
-        );
-        metadata.insert(
-            "dataRows".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(row_count)),
-        );
-
-        // Include only the mappings that actually applied (column existed in CSV).
-        let applied_mapping: serde_json::Map<String, serde_json::Value> = column_mapping
-            .iter()
-            .filter(|(old_name, _)| headers.iter().any(|h| h == old_name.as_str()))
-            .map(|(old_name, new_name)| {
-                (
-                    old_name.clone(),
-                    serde_json::Value::String(new_name.clone()),
-                )
-            })
-            .collect();
-        metadata.insert(
-            "mapping".to_string(),
-            serde_json::Value::Object(applied_mapping),
+        let metadata = build_rename_metadata(
+            columns_renamed,
+            &new_headers,
+            row_count,
+            &column_mapping,
+            &headers,
         );
 
         progress.report(100, "Done!");
-
-        Ok(NodeOutput {
-            files: vec![OutputFile {
-                data: output_bytes,
-                filename: output_filename,
-                mime_type: "text/csv".to_string(),
-            }],
-            metadata,
-        })
+        Ok(build_rename_output(output_bytes, &input.filename, metadata))
     }
 }
 
-// =============================================================================
-// Helper Functions
-// =============================================================================
+fn build_rename_output(
+    data: Vec<u8>,
+    input_filename: &str,
+    metadata: serde_json::Map<String, serde_json::Value>,
+) -> NodeOutput {
+    NodeOutput {
+        files: vec![OutputFile {
+            data,
+            filename: build_output_filename(input_filename),
+            mime_type: "text/csv".to_string(),
+        }],
+        metadata,
+    }
+}
 
-/// Extract the column mapping from the `columns` parameter.
-/// Returns an empty map if the key is missing or not a JSON object.
-/// Only string values are included (numbers, bools, etc. are ignored).
+// --- CSV Parsing ---
+
+/// Validate and convert raw bytes to a UTF-8 string.
+fn parse_utf8(data: &[u8]) -> Result<&str, BntoError> {
+    std::str::from_utf8(data)
+        .map_err(|e| BntoError::InvalidInput(format!("CSV is not valid UTF-8: {e}")))
+}
+
+/// Parse CSV text and return the header record plus a positioned reader.
+fn read_headers(csv_text: &str) -> Result<(csv::StringRecord, csv::Reader<&[u8]>), BntoError> {
+    let mut reader = csv::ReaderBuilder::new()
+        .flexible(true)
+        .from_reader(csv_text.as_bytes());
+
+    let headers = reader
+        .headers()
+        .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read CSV headers: {e}")))?
+        .clone();
+
+    Ok((headers, reader))
+}
+
+// --- Column Mapping ---
+
+/// Apply the rename mapping to headers. Returns (new_headers, count_renamed).
+fn apply_column_mapping(
+    headers: &csv::StringRecord,
+    mapping: &HashMap<String, String>,
+) -> (Vec<String>, u64) {
+    let mut count: u64 = 0;
+
+    let new_headers: Vec<String> = headers
+        .iter()
+        .map(|header| {
+            if let Some(new_name) = mapping.get(header) {
+                count += 1;
+                new_name.clone()
+            } else {
+                header.to_string()
+            }
+        })
+        .collect();
+
+    (new_headers, count)
+}
+
+// --- CSV Output ---
+
+/// Write renamed headers followed by all data rows unchanged.
+/// Returns (output_bytes, row_count).
+fn write_renamed_csv(
+    new_headers: &[String],
+    reader: &mut csv::Reader<&[u8]>,
+) -> Result<(Vec<u8>, u64), BntoError> {
+    let mut writer = csv::WriterBuilder::new()
+        .flexible(true)
+        .from_writer(Vec::new());
+
+    writer
+        .write_record(new_headers)
+        .map_err(|e| BntoError::ProcessingFailed(format!("Failed to write headers: {e}")))?;
+
+    let mut row_count: u64 = 0;
+    for record in reader.records() {
+        let record = record
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read CSV row: {e}")))?;
+        writer
+            .write_record(record.iter())
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to write CSV row: {e}")))?;
+        row_count += 1;
+    }
+
+    let output_bytes = writer
+        .into_inner()
+        .map_err(|e| BntoError::ProcessingFailed(format!("Failed to finalize CSV: {e}")))?;
+
+    Ok((output_bytes, row_count))
+}
+
+// --- Result Metadata ---
+
+/// Filter mapping to only columns that exist in the original headers.
+fn applied_mapping(
+    column_mapping: &HashMap<String, String>,
+    headers: &csv::StringRecord,
+) -> serde_json::Map<String, serde_json::Value> {
+    column_mapping
+        .iter()
+        .filter(|(old, _)| headers.iter().any(|h| h == old.as_str()))
+        .map(|(old, new)| (old.clone(), serde_json::Value::String(new.clone())))
+        .collect()
+}
+
+/// Build metadata including rename counts and the applied mapping.
+fn build_rename_metadata(
+    columns_renamed: u64,
+    new_headers: &[String],
+    row_count: u64,
+    column_mapping: &HashMap<String, String>,
+    headers: &csv::StringRecord,
+) -> serde_json::Map<String, serde_json::Value> {
+    let mut m = serde_json::Map::new();
+    m.insert(
+        "columnsRenamed".to_string(),
+        serde_json::Value::Number(columns_renamed.into()),
+    );
+    m.insert(
+        "totalColumns".to_string(),
+        serde_json::Value::Number((new_headers.len() as u64).into()),
+    );
+    m.insert(
+        "dataRows".to_string(),
+        serde_json::Value::Number(row_count.into()),
+    );
+    m.insert(
+        "mapping".to_string(),
+        serde_json::Value::Object(applied_mapping(column_mapping, headers)),
+    );
+    m
+}
+
+// --- Helper Functions ---
+
+/// Extract `columns` param as a HashMap. Returns empty map if missing or invalid.
 fn extract_column_mapping(
     params: &serde_json::Map<String, serde_json::Value>,
 ) -> HashMap<String, String> {
@@ -204,10 +237,9 @@ fn extract_column_mapping(
         None => return HashMap::new(),
     };
 
-    let obj = if let serde_json::Value::Object(obj) = columns_value {
-        obj
-    } else {
-        return HashMap::new();
+    let obj = match columns_value {
+        serde_json::Value::Object(obj) => obj,
+        _ => return HashMap::new(),
     };
 
     obj.iter()
@@ -221,16 +253,14 @@ fn extract_column_mapping(
         .collect()
 }
 
-/// Build the output filename by inserting "-renamed" before the extension.
+/// Add "-renamed" before the file extension: "data.csv" -> "data-renamed.csv"
 fn build_output_filename(input_filename: &str) -> String {
     match input_filename.rfind('.') {
         Some(dot_pos) => {
             let (name, ext) = input_filename.split_at(dot_pos);
             format!("{name}-renamed{ext}")
         }
-        None => {
-            format!("{input_filename}-renamed")
-        }
+        None => format!("{input_filename}-renamed"),
     }
 }
 
@@ -495,7 +525,8 @@ mod tests {
         // Should be an error, not a panic.
         assert!(result.is_err());
 
-        // NodeOutput doesn't impl Debug, so use `if let` instead of `unwrap_err()`.
+        // The error message should mention UTF-8.
+        //
         if let Err(e) = result {
             let error_msg = e.to_string();
             assert!(

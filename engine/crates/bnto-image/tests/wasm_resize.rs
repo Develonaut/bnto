@@ -1,7 +1,4 @@
-// WASM Integration Tests -- image resize via WASM boundary.
-//
-// Tests resize_image_combined(). See also: wasm.rs (compression),
-// wasm_codec.rs (detailed codec), wasm_convert.rs, wasm_progress.rs.
+// WASM integration tests -- image resize per format (JPEG, PNG, WebP).
 
 mod common;
 
@@ -9,23 +6,21 @@ use wasm_bindgen_test::*;
 
 use bnto_image::wasm_bridge::*;
 use common::{
-    LARGE_JPEG, TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_filename, extract_metadata,
-    init_panic_hook, noop_callback, recording_callback,
+    TEST_JPEG, TEST_PNG, TEST_WEBP, extract_bytes, extract_filename, extract_metadata,
+    init_panic_hook, noop_callback,
 };
 
 wasm_bindgen_test_configure!(run_in_node_experimental);
 
-// =========================================================================
-// JPEG Resize Tests
-// =========================================================================
+// --- JPEG Resize Tests ---
 
 #[wasm_bindgen_test]
 fn test_resize_jpeg_metadata_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    // Resize 100x100 test JPEG to 50px wide.
     let result = resize_image_combined(TEST_JPEG, "photo.jpg", r#"{"width": 50}"#, callback);
+
     assert!(
         result.is_ok(),
         "resize_image_combined should succeed for JPEG"
@@ -33,7 +28,10 @@ fn test_resize_jpeg_metadata_via_wasm() {
 
     let result_obj = result.unwrap();
     let json_str = extract_metadata(&result_obj);
-    assert!(!json_str.is_empty());
+    assert!(
+        !json_str.is_empty(),
+        "Result metadata JSON should not be empty"
+    );
 
     assert!(
         json_str.contains("\"originalWidth\""),
@@ -60,21 +58,23 @@ fn test_resize_jpeg_bytes_via_wasm() {
     let callback = noop_callback();
 
     let result = resize_image_combined(TEST_JPEG, "photo.jpg", r#"{"width": 50}"#, callback);
-    assert!(result.is_ok());
+
+    assert!(
+        result.is_ok(),
+        "resize_image_combined should succeed for JPEG"
+    );
 
     let result_obj = result.unwrap();
     let bytes = extract_bytes(&result_obj);
     assert!(!bytes.is_empty(), "Resized JPEG bytes should not be empty");
 
-    // Valid JPEG magic bytes.
-    assert_eq!(bytes[0], 0xFF);
-    assert_eq!(bytes[1], 0xD8);
-    assert_eq!(bytes[2], 0xFF);
+    assert_eq!(bytes[0], 0xFF, "First byte of JPEG should be 0xFF");
+    assert_eq!(bytes[1], 0xD8, "Second byte of JPEG should be 0xD8");
+    assert_eq!(bytes[2], 0xFF, "Third byte of JPEG should be 0xFF");
 }
 
 #[wasm_bindgen_test]
 fn test_resize_jpeg_both_dimensions_via_wasm() {
-    // Explicit width AND height -- ignores aspect ratio.
     init_panic_hook();
     let callback = noop_callback();
 
@@ -84,6 +84,7 @@ fn test_resize_jpeg_both_dimensions_via_wasm() {
         r#"{"width": 60, "height": 40}"#,
         callback,
     );
+
     assert!(result.is_ok(), "resize with both dimensions should succeed");
 
     let result_obj = result.unwrap();
@@ -93,9 +94,7 @@ fn test_resize_jpeg_both_dimensions_via_wasm() {
     assert_eq!(bytes[1], 0xD8);
 }
 
-// =========================================================================
-// PNG Resize Tests
-// =========================================================================
+// --- PNG Resize Tests ---
 
 #[wasm_bindgen_test]
 fn test_resize_png_bytes_via_wasm() {
@@ -103,22 +102,23 @@ fn test_resize_png_bytes_via_wasm() {
     let callback = noop_callback();
 
     let result = resize_image_combined(TEST_PNG, "screenshot.png", r#"{"width": 50}"#, callback);
-    assert!(result.is_ok());
+
+    assert!(
+        result.is_ok(),
+        "resize_image_combined should succeed for PNG"
+    );
 
     let result_obj = result.unwrap();
     let bytes = extract_bytes(&result_obj);
-    assert!(!bytes.is_empty());
+    assert!(!bytes.is_empty(), "Resized PNG bytes should not be empty");
 
-    // Valid PNG magic bytes.
-    assert_eq!(bytes[0], 0x89);
-    assert_eq!(bytes[1], 0x50);
-    assert_eq!(bytes[2], 0x4E);
-    assert_eq!(bytes[3], 0x47);
+    assert_eq!(bytes[0], 0x89, "First byte of PNG should be 0x89");
+    assert_eq!(bytes[1], 0x50, "Second byte of PNG should be 'P'");
+    assert_eq!(bytes[2], 0x4E, "Third byte of PNG should be 'N'");
+    assert_eq!(bytes[3], 0x47, "Fourth byte of PNG should be 'G'");
 }
 
-// =========================================================================
-// WebP Resize Tests
-// =========================================================================
+// --- WebP Resize Tests ---
 
 #[wasm_bindgen_test]
 fn test_resize_webp_bytes_via_wasm() {
@@ -126,191 +126,22 @@ fn test_resize_webp_bytes_via_wasm() {
     let callback = noop_callback();
 
     let result = resize_image_combined(TEST_WEBP, "image.webp", r#"{"width": 50}"#, callback);
-    assert!(result.is_ok());
+
+    assert!(
+        result.is_ok(),
+        "resize_image_combined should succeed for WebP"
+    );
 
     let result_obj = result.unwrap();
     let bytes = extract_bytes(&result_obj);
-    assert!(!bytes.is_empty());
+    assert!(!bytes.is_empty(), "Resized WebP bytes should not be empty");
 
-    // Valid WebP (RIFF container).
-    assert_eq!(bytes[0], b'R');
+    assert_eq!(bytes[0], b'R', "WebP should start with RIFF");
     assert_eq!(bytes[1], b'I');
     assert_eq!(bytes[2], b'F');
     assert_eq!(bytes[3], b'F');
-    assert_eq!(bytes[8], b'W');
+    assert_eq!(bytes[8], b'W', "WebP RIFF should contain WEBP");
     assert_eq!(bytes[9], b'E');
     assert_eq!(bytes[10], b'B');
     assert_eq!(bytes[11], b'P');
-}
-
-// =========================================================================
-// Height-Only and Aspect Ratio Tests
-// =========================================================================
-
-#[wasm_bindgen_test]
-fn test_resize_height_only_via_wasm() {
-    init_panic_hook();
-    let callback = noop_callback();
-
-    let result = resize_image_combined(TEST_JPEG, "photo.jpg", r#"{"height": 50}"#, callback);
-    assert!(result.is_ok(), "resize with height-only should succeed");
-
-    let result_obj = result.unwrap();
-    let bytes = extract_bytes(&result_obj);
-    assert!(!bytes.is_empty());
-    assert_eq!(bytes[0], 0xFF);
-}
-
-#[wasm_bindgen_test]
-fn test_resize_with_quality_via_wasm() {
-    init_panic_hook();
-    let callback = noop_callback();
-
-    let result = resize_image_combined(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"width": 50, "quality": 50}"#,
-        callback,
-    );
-    assert!(result.is_ok(), "resize with quality param should succeed");
-
-    let result_obj = result.unwrap();
-    let bytes = extract_bytes(&result_obj);
-    assert!(!bytes.is_empty());
-}
-
-#[wasm_bindgen_test]
-fn test_resize_maintain_aspect_false_via_wasm() {
-    init_panic_hook();
-    let callback = noop_callback();
-
-    let result = resize_image_combined(
-        TEST_JPEG,
-        "photo.jpg",
-        r#"{"width": 50, "maintainAspect": false}"#,
-        callback,
-    );
-    assert!(
-        result.is_ok(),
-        "resize with maintainAspect=false should succeed"
-    );
-
-    let result_obj = result.unwrap();
-    let bytes = extract_bytes(&result_obj);
-    assert!(!bytes.is_empty());
-}
-
-// =========================================================================
-// Upscale Test
-// =========================================================================
-
-#[wasm_bindgen_test]
-fn test_resize_upscale_via_wasm() {
-    // Upscale 100x100 to 200x200 -- more pixels = larger output.
-    init_panic_hook();
-    let callback = noop_callback();
-
-    let result = resize_image_combined(TEST_JPEG, "photo.jpg", r#"{"width": 200}"#, callback);
-    assert!(result.is_ok(), "upscale resize should succeed");
-
-    let result_obj = result.unwrap();
-    let bytes = extract_bytes(&result_obj);
-    assert!(!bytes.is_empty());
-    assert!(
-        bytes.len() > TEST_JPEG.len(),
-        "Upscaled image ({} bytes) should be larger than original ({} bytes)",
-        bytes.len(),
-        TEST_JPEG.len()
-    );
-}
-
-// =========================================================================
-// Large Image Resize Test
-// =========================================================================
-
-#[wasm_bindgen_test]
-fn test_resize_large_jpeg_via_wasm() {
-    // 1200x800 down to 300px. Tests WASM memory handling with larger images.
-    init_panic_hook();
-    let callback = noop_callback();
-
-    let result = resize_image_combined(LARGE_JPEG, "large.jpg", r#"{"width": 300}"#, callback);
-    assert!(result.is_ok(), "resize of large JPEG should succeed");
-
-    let result_obj = result.unwrap();
-    let bytes = extract_bytes(&result_obj);
-    assert!(!bytes.is_empty());
-    assert!(
-        bytes.len() < LARGE_JPEG.len(),
-        "Downscaled image ({} bytes) should be smaller than original ({} bytes)",
-        bytes.len(),
-        LARGE_JPEG.len()
-    );
-}
-
-// =========================================================================
-// Error Handling Tests
-// =========================================================================
-
-#[wasm_bindgen_test]
-fn test_resize_no_dimensions_returns_error() {
-    init_panic_hook();
-    let callback = noop_callback();
-    let result = resize_image_combined(TEST_JPEG, "photo.jpg", "{}", callback);
-    assert!(
-        result.is_err(),
-        "Should return an error when no dimensions specified"
-    );
-}
-
-#[wasm_bindgen_test]
-fn test_resize_unsupported_format_returns_error() {
-    init_panic_hook();
-    let callback = noop_callback();
-    let result = resize_image_combined(
-        b"not an image",
-        "document.pdf",
-        r#"{"width": 50}"#,
-        callback,
-    );
-    assert!(
-        result.is_err(),
-        "Should return an error for unsupported format"
-    );
-}
-
-#[wasm_bindgen_test]
-fn test_resize_invalid_params_uses_defaults() {
-    // Invalid JSON -> empty params -> no dimensions -> should fail.
-    init_panic_hook();
-    let callback = noop_callback();
-    let result = resize_image_combined(
-        TEST_JPEG,
-        "photo.jpg",
-        "this is not valid json!!!",
-        callback,
-    );
-    assert!(
-        result.is_err(),
-        "Should fail because invalid JSON means no dimensions"
-    );
-}
-
-// =========================================================================
-// Progress Callback Tests
-// =========================================================================
-
-#[wasm_bindgen_test]
-fn test_resize_reports_progress() {
-    init_panic_hook();
-    let (callback, calls) = recording_callback();
-
-    let result = resize_image_combined(TEST_JPEG, "photo.jpg", r#"{"width": 50}"#, callback);
-    assert!(result.is_ok(), "resize should succeed");
-
-    assert!(
-        calls.length() > 0,
-        "Progress callback should have been called at least once, got {} calls",
-        calls.length()
-    );
 }

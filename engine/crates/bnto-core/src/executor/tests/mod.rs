@@ -1,3 +1,4 @@
+// Mock processors and shared test helpers for executor tests.
 use super::*;
 use crate::events::RecordingReporter;
 use crate::processor::{NodeOutput, OutputFile};
@@ -248,4 +249,9 @@ mod errors;
 mod metadata;
 mod progress;
 mod recipes;
+mod recipes_containers;
+mod recipes_errors;
+mod recipes_events;
 mod sub_pipelines;
+mod sub_pipelines_containers;
+mod sub_pipelines_edge_cases;

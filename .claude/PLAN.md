@@ -1020,6 +1020,12 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
 ---
 
+### Triage: Engine documentation — auto-generated docs for Rust engine
+
+**Priority: Triage.** Set up auto-generated documentation for the Rust engine. Explore `cargo doc`, GitHub wiki integration, or a `docs/` directory at engine root that documents the engine architecture, crate responsibilities, and API surface. Goal: replace the tutorial-style comments removed in `chore/thin-rust-comments` with proper external documentation.
+
+---
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |

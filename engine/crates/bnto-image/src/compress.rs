@@ -1,9 +1,9 @@
-// compress.rs — Reduce image file size by re-encoding with optimized settings.
+// Compress Images Node — reduce image file size via lossy/lossless re-encoding.
 //
 // Compression strategies by format:
-//   JPEG: Lossy re-encode at a lower quality level (DCT + quantization).
-//   PNG: Lossy color quantization (24-bit to 8-bit palette via quantizr).
-//   WebP: Lossless re-encode only (lossy WebP needs libwebp, not available in WASM).
+//   JPEG: re-encode at lower quality (lossy, DCT-based)
+//   PNG: color quantization to 8-bit indexed palette (lossy, via quantize.rs)
+//   WebP: lossless re-encoding only (lossy requires libwebp, planned via jSquash)
 
 use std::io::Cursor;
 
@@ -15,24 +15,23 @@ use image::codecs::jpeg::JpegEncoder;
 #[cfg(test)]
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 
+use crate::common::image_accepts;
+use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
 
-use crate::format::ImageFormat;
-
-// =============================================================================
-// Configuration Constants
-// =============================================================================
+// --- Configuration Constants ---
 
 use bnto_core::DEFAULT_COMPRESSION;
 
+/// Minimum compression level. 1 = barely any compression at all.
 const MIN_COMPRESSION: u8 = 1;
+
+/// Maximum compression level. 100 = most aggressive compression.
 const MAX_COMPRESSION: u8 = 100;
 
-// =============================================================================
-// The CompressImages Processor
-// =============================================================================
+// --- The CompressImages Processor ---
 
-/// The compress-images node processor. Implements `NodeProcessor` for the engine.
+/// The compress-images node processor.
 pub struct CompressImages;
 
 impl Default for CompressImages {
@@ -46,11 +45,7 @@ impl CompressImages {
         Self
     }
 
-    // =========================================================================
-    // Internal Methods
-    // =========================================================================
-
-    /// Compress a JPEG by re-encoding at a specific quality level.
+    /// Compress a JPEG image by re-encoding at a specific quality level.
     fn compress_jpeg(
         &self,
         data: &[u8],
@@ -58,13 +53,9 @@ impl CompressImages {
         progress: &ProgressReporter,
     ) -> Result<Vec<u8>, BntoError> {
         progress.report(10, "Decoding JPEG...");
-
-        // Decode with EXIF orientation applied so smartphone photos
-        // come out correctly oriented after compression.
         let img = decode_with_orientation(data)?;
 
         progress.report(50, "Compressing JPEG...");
-
         let mut output = Vec::new();
         let encoder = JpegEncoder::new_with_quality(&mut output, quality);
         img.write_with_encoder(encoder)
@@ -74,20 +65,18 @@ impl CompressImages {
         Ok(output)
     }
 
-    /// Compress a PNG using lossy color quantization.
+    /// Compress a PNG image using lossy color quantization.
     ///
-    /// Reduces 24-bit truecolor to 8-bit indexed palette (256 colors max)
-    /// via quantizr (median cut + Floyd-Steinberg dithering).
-    /// Performance: 1051 KB to 447 KB (57% reduction) in ~144 ms.
+    /// Reduces 24-bit truecolor to an 8-bit indexed palette (256 colors max)
+    /// using quantizr (median cut + Floyd-Steinberg dithering).
     fn compress_png(&self, data: &[u8], progress: &ProgressReporter) -> Result<Vec<u8>, BntoError> {
         crate::quantize::compress_png_quantized(data, progress)
     }
 
     /// Re-encode a WebP image with lossless compression.
     ///
-    /// The `image` crate's WebP encoder only supports lossless mode, so files
-    /// may get LARGER if the original was lossy-compressed. Lossy WebP will be
-    /// added later via jSquash JS fallback.
+    /// NOTE: The `image` crate's WebP encoder only supports LOSSLESS mode.
+    /// Lossy WebP will be added later via jSquash JS fallback.
     fn compress_webp(
         &self,
         data: &[u8],
@@ -97,7 +86,6 @@ impl CompressImages {
         let img = decode_with_orientation(data)?;
 
         progress.report(50, "Compressing WebP (lossless)...");
-
         let mut output = Vec::new();
         let mut cursor_out = Cursor::new(&mut output);
         img.write_to(&mut cursor_out, image::ImageFormat::WebP)
@@ -107,14 +95,10 @@ impl CompressImages {
         Ok(output)
     }
 
-    /// Extract compression level from params and convert to JPEG quality.
+    /// Extract the compression level from params and clamp to valid range.
     ///
     /// User-facing semantics are INVERTED from JPEG quality:
-    ///   compression=1   -> quality=100 (minimal compression)
-    ///   compression=20  -> quality=81  (default)
-    ///   compression=100 -> quality=1   (most aggressive)
-    ///
-    /// Formula: `jpeg_quality = 101 - compression` (clamped to 1..100)
+    ///   compression=1 -> quality~100, compression=100 -> quality=1
     fn get_compression(params: &serde_json::Map<String, serde_json::Value>) -> u8 {
         params
             .get("compression")
@@ -124,8 +108,8 @@ impl CompressImages {
             .clamp(MIN_COMPRESSION, MAX_COMPRESSION)
     }
 
-    /// Convert compression level (1-100) to JPEG quality (100-1).
-    /// Uses `saturating_sub` to avoid underflow on u8 arithmetic.
+    /// Convert a compression level (1-100) to JPEG quality (100-1).
+    /// Formula: `jpeg_quality = 101 - compression` (clamped to 1..100)
     fn compression_to_quality(compression: u8) -> u8 {
         101u8.saturating_sub(compression).max(1)
     }
@@ -141,20 +125,13 @@ impl CompressImages {
     }
 }
 
-// =============================================================================
-// NodeProcessor Trait Implementation
-// =============================================================================
+// --- NodeProcessor Trait Implementation ---
 
 impl NodeProcessor for CompressImages {
     fn name(&self) -> &str {
         "compress-images"
     }
 
-    /// Self-describing metadata for this processor.
-    ///
-    /// The `compression` parameter uses inverted semantics from JPEG quality:
-    /// higher compression = smaller file = lower visual quality. This matches
-    /// user expectations -- "more compression" should mean smaller files.
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
@@ -163,29 +140,9 @@ impl NodeProcessor for CompressImages {
             name: "Compress Images".to_string(),
             description: "Reduce image file size while maintaining quality".to_string(),
             category: NodeCategory::Image,
-            accepts: vec![
-                "image/jpeg".to_string(),
-                "image/png".to_string(),
-                "image/webp".to_string(),
-            ],
+            accepts: image_accepts(),
             platforms: vec!["browser".to_string()],
-            parameters: vec![ParameterDef {
-                name: "compression".to_string(),
-                label: "Compression".to_string(),
-                description: "How much to compress (1 = minimal, 100 = maximum)".to_string(),
-                param_type: ParameterType::Number,
-                default: Some(serde_json::json!(20)),
-                constraints: Some(Constraints {
-                    min: Some(1.0),
-                    max: Some(100.0),
-                    required: false,
-                }),
-                visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                    param: "operation".to_string(),
-                    equals: "compress".to_string(),
-                })),
-                ..Default::default()
-            }],
+            parameters: vec![compression_param_def()],
         }
     }
 
@@ -203,58 +160,10 @@ impl NodeProcessor for CompressImages {
         })?;
 
         let original_size = input.data.len();
-
-        let compressed_data = match format {
-            ImageFormat::Jpeg => {
-                let compression = Self::get_compression(&input.params);
-                let quality = Self::compression_to_quality(compression);
-                progress.report(
-                    5,
-                    &format!(
-                        "Compressing JPEG (compression: {compression}, quality: {quality})..."
-                    ),
-                );
-                self.compress_jpeg(&input.data, quality, progress)?
-            }
-            ImageFormat::Png => {
-                progress.report(5, "Optimizing PNG...");
-                self.compress_png(&input.data, progress)?
-            }
-            ImageFormat::WebP => {
-                progress.report(5, "Compressing WebP (lossless)...");
-                self.compress_webp(&input.data, progress)?
-            }
-        };
-
+        let compressed_data = self.compress_by_format(&input, format, progress)?;
         let compressed_size = compressed_data.len();
         let output_filename = Self::output_filename(&input.filename, format);
-
-        let ratio = if original_size > 0 {
-            (1.0 - (compressed_size as f64 / original_size as f64)) * 100.0
-        } else {
-            0.0
-        };
-
-        let mut metadata = serde_json::Map::new();
-        metadata.insert(
-            "originalSize".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(original_size as u64)),
-        );
-        metadata.insert(
-            "compressedSize".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(compressed_size as u64)),
-        );
-        // from_f64 returns None for NaN/Infinity, but our ratio is always finite.
-        if let Some(ratio_num) = serde_json::Number::from_f64(ratio) {
-            metadata.insert(
-                "compressionRatio".to_string(),
-                serde_json::Value::Number(ratio_num),
-            );
-        }
-        metadata.insert(
-            "format".to_string(),
-            serde_json::Value::String(format!("{:?}", format)),
-        );
+        let metadata = build_compression_metadata(original_size, compressed_size, format);
 
         Ok(NodeOutput {
             files: vec![OutputFile {
@@ -290,6 +199,119 @@ impl NodeProcessor for CompressImages {
     }
 }
 
+// --- Private helpers ---
+
+impl CompressImages {
+    /// Dispatch compression to the format-specific method.
+    fn compress_by_format(
+        &self,
+        input: &NodeInput,
+        format: ImageFormat,
+        progress: &ProgressReporter,
+    ) -> Result<Vec<u8>, BntoError> {
+        match format {
+            ImageFormat::Jpeg => {
+                self.compress_jpeg_with_params(&input.data, &input.params, progress)
+            }
+            ImageFormat::Png => {
+                progress.report(5, "Optimizing PNG...");
+                self.compress_png(&input.data, progress)
+            }
+            ImageFormat::WebP => {
+                progress.report(5, "Compressing WebP (lossless)...");
+                self.compress_webp(&input.data, progress)
+            }
+        }
+    }
+
+    /// Extract compression param, convert to JPEG quality, and compress.
+    fn compress_jpeg_with_params(
+        &self,
+        data: &[u8],
+        params: &serde_json::Map<String, serde_json::Value>,
+        progress: &ProgressReporter,
+    ) -> Result<Vec<u8>, BntoError> {
+        let compression = Self::get_compression(params);
+        let quality = Self::compression_to_quality(compression);
+        progress.report(
+            5,
+            &format!("Compressing JPEG (compression: {compression}, quality: {quality})..."),
+        );
+        self.compress_jpeg(data, quality, progress)
+    }
+}
+
+/// Build the metadata map with compression stats for the UI results panel.
+fn build_compression_metadata(
+    original_size: usize,
+    compressed_size: usize,
+    format: ImageFormat,
+) -> serde_json::Map<String, serde_json::Value> {
+    let mut metadata = serde_json::Map::new();
+    insert_size_metadata(&mut metadata, original_size, compressed_size);
+    insert_compression_ratio(&mut metadata, original_size, compressed_size);
+    metadata.insert(
+        "format".to_string(),
+        serde_json::Value::String(format!("{:?}", format)),
+    );
+    metadata
+}
+
+fn insert_size_metadata(
+    metadata: &mut serde_json::Map<String, serde_json::Value>,
+    original_size: usize,
+    compressed_size: usize,
+) {
+    metadata.insert(
+        "originalSize".to_string(),
+        serde_json::Value::Number(serde_json::Number::from(original_size as u64)),
+    );
+    metadata.insert(
+        "compressedSize".to_string(),
+        serde_json::Value::Number(serde_json::Number::from(compressed_size as u64)),
+    );
+}
+
+fn insert_compression_ratio(
+    metadata: &mut serde_json::Map<String, serde_json::Value>,
+    original_size: usize,
+    compressed_size: usize,
+) {
+    let ratio = if original_size > 0 {
+        (1.0 - (compressed_size as f64 / original_size as f64)) * 100.0
+    } else {
+        0.0
+    };
+    if let Some(ratio_num) = serde_json::Number::from_f64(ratio) {
+        metadata.insert(
+            "compressionRatio".to_string(),
+            serde_json::Value::Number(ratio_num),
+        );
+    }
+}
+
+/// Compression parameter definition (1-100, default 20).
+fn compression_param_def() -> bnto_core::metadata::ParameterDef {
+    use bnto_core::metadata::*;
+    ParameterDef {
+        name: "compression".to_string(),
+        label: "Compression".to_string(),
+        description: "How much to compress (1 = minimal, 100 = maximum)".to_string(),
+        param_type: ParameterType::Number,
+        default: Some(serde_json::json!(20)),
+        constraints: Some(Constraints {
+            min: Some(1.0),
+            max: Some(100.0),
+            required: false,
+        }),
+        visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+            param: "operation".to_string(),
+            equals: "compress".to_string(),
+        })),
+        ..Default::default()
+    }
+}
+
 // =============================================================================
 // Tests
 // =============================================================================
@@ -301,7 +323,7 @@ mod tests {
     use bnto_core::progress::ProgressReporter;
 
     // =========================================================================
-    // Test Fixtures
+    // Test Fixtures — Real images from our shared test-fixtures directory
     // =========================================================================
 
     /// A small JPEG image (100x100, ~2.7 KB)
@@ -639,7 +661,6 @@ mod tests {
 
     #[test]
     fn test_output_filename_preserves_format_extension() {
-        // If input is "image.png", output should use the correct extension.
         let name = CompressImages::output_filename("image.png", ImageFormat::Png);
         assert_eq!(name, "image-compressed.png");
     }
@@ -652,7 +673,6 @@ mod tests {
 
     #[test]
     fn test_output_filename_with_multiple_dots() {
-        // "my.vacation.photo.jpg" → "my.vacation.photo-compressed.jpg"
         let name = CompressImages::output_filename("my.vacation.photo.jpg", ImageFormat::Jpeg);
         assert_eq!(name, "my.vacation.photo-compressed.jpg");
     }
@@ -719,15 +739,10 @@ mod tests {
 
     #[test]
     fn test_compression_to_quality_inversion() {
-        // compression=1 → quality=100 (minimal compression)
         assert_eq!(CompressImages::compression_to_quality(1), 100);
-        // compression=20 → quality=81 (light, default)
         assert_eq!(CompressImages::compression_to_quality(20), 81);
-        // compression=50 → quality=51 (balanced)
         assert_eq!(CompressImages::compression_to_quality(50), 51);
-        // compression=80 → quality=21 (maximum)
         assert_eq!(CompressImages::compression_to_quality(80), 21);
-        // compression=100 → quality=1 (most aggressive)
         assert_eq!(CompressImages::compression_to_quality(100), 1);
     }
 
@@ -740,7 +755,6 @@ mod tests {
         let processor = CompressImages::new();
         let progress = noop_progress();
 
-        // Random bytes that aren't a valid image, with an unsupported extension
         let input = make_input(b"not an image at all", "document.pdf");
         let result = processor.process(input, &progress);
 
@@ -764,9 +778,7 @@ mod tests {
         let processor = CompressImages::new();
         let progress = noop_progress();
 
-        // Start with valid JPEG magic bytes but garbage data after.
-        // The decoder should fail gracefully, not panic.
-        let mut corrupt_data = vec![0xFF, 0xD8, 0xFF, 0xE0]; // JPEG header
+        let mut corrupt_data = vec![0xFF, 0xD8, 0xFF, 0xE0];
         corrupt_data.extend_from_slice(b"this is not real JPEG data!!!!");
 
         let input = make_input(&corrupt_data, "corrupt.jpg");
@@ -780,7 +792,6 @@ mod tests {
         let processor = CompressImages::new();
         let progress = noop_progress();
 
-        // Valid PNG header but garbage data after
         let mut corrupt_data = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
         corrupt_data.extend_from_slice(b"this is not real PNG data!!!!");
 
@@ -795,7 +806,6 @@ mod tests {
         let processor = CompressImages::new();
         let progress = noop_progress();
 
-        // Empty file — should fail at format detection
         let input = make_input(b"", "empty.jpg");
         let result = processor.process(input, &progress);
 
@@ -805,15 +815,9 @@ mod tests {
     // =========================================================================
     // Edge Case Tests — Truncated, Corrupt, and Zero-Byte Inputs
     // =========================================================================
-    //
-    // These tests verify that the compression pipeline handles degenerate
-    // inputs gracefully. In the browser, users can drop ANY file — partially
-    // downloaded images, renamed text files, zero-byte placeholders, etc.
-    // We need clean error messages, not panics or hangs.
 
     #[test]
     fn test_zero_byte_file_with_no_extension_returns_unsupported_format() {
-        // Zero bytes AND no extension — both detection strategies fail.
         let processor = CompressImages::new();
         let progress = noop_progress();
 
@@ -833,9 +837,6 @@ mod tests {
 
     #[test]
     fn test_zero_byte_file_with_jpg_extension_returns_processing_error() {
-        // Zero bytes with a .jpg extension — format detection succeeds
-        // (via extension fallback), but decoding fails because there's
-        // no actual image data to decode.
         let processor = CompressImages::new();
         let progress = noop_progress();
 
@@ -855,8 +856,6 @@ mod tests {
             );
         }
     }
-
-    // --- Single-Byte File ---
 
     #[test]
     fn test_single_byte_file_returns_error() {
@@ -882,8 +881,6 @@ mod tests {
             "Single-byte file with .jpg extension should fail at decode"
         );
     }
-
-    // --- Truncated JPEG (valid header, missing image data) ---
 
     #[test]
     fn test_truncated_jpeg_4_bytes_header_only() {
@@ -915,7 +912,7 @@ mod tests {
         let progress = noop_progress();
 
         let mut data = vec![0xFF, 0xD8, 0xFF, 0xE0];
-        data.extend_from_slice(&[0x00, 0x10, 0x4A, 0x46, 0x49, 0x46]); // partial APP0 header
+        data.extend_from_slice(&[0x00, 0x10, 0x4A, 0x46, 0x49, 0x46]);
         let input = make_input(&data, "truncated10.jpg");
         let result = processor.process(input, &progress);
 
@@ -924,8 +921,6 @@ mod tests {
             "10-byte truncated JPEG should fail at decode"
         );
     }
-
-    // --- Truncated PNG (valid header, missing chunks) ---
 
     #[test]
     fn test_truncated_png_8_bytes_header_only() {
@@ -956,10 +951,10 @@ mod tests {
         let processor = CompressImages::new();
         let progress = noop_progress();
 
-        let mut data = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]; // PNG sig
-        data.extend_from_slice(&[0x00, 0x00, 0x00, 0x0D]); // IHDR length (13)
-        data.extend_from_slice(b"IHDR"); // chunk type
-        data.extend_from_slice(&[0x00, 0x00, 0x00, 0x01]); // partial: width = 1
+        let mut data = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        data.extend_from_slice(&[0x00, 0x00, 0x00, 0x0D]);
+        data.extend_from_slice(b"IHDR");
+        data.extend_from_slice(&[0x00, 0x00, 0x00, 0x01]);
 
         let input = make_input(&data, "truncated20.png");
         let result = processor.process(input, &progress);
@@ -970,17 +965,13 @@ mod tests {
         );
     }
 
-    // --- Truncated WebP (valid RIFF container, missing image data) ---
-
     #[test]
     fn test_truncated_webp_12_bytes_header_only() {
         let processor = CompressImages::new();
         let progress = noop_progress();
 
         let data = vec![
-            b'R', b'I', b'F', b'F', // RIFF marker
-            0x04, 0x00, 0x00, 0x00, // file size (4 = just "WEBP" after this)
-            b'W', b'E', b'B', b'P', // WEBP marker
+            b'R', b'I', b'F', b'F', 0x04, 0x00, 0x00, 0x00, b'W', b'E', b'B', b'P',
         ];
         let input = make_input(&data, "truncated.webp");
         let result = processor.process(input, &progress);
@@ -1006,8 +997,7 @@ mod tests {
         let progress = noop_progress();
 
         let mut data = vec![
-            b'R', b'I', b'F', b'F', 0x20, 0x00, 0x00, 0x00, // file size (32 bytes after this)
-            b'W', b'E', b'B', b'P',
+            b'R', b'I', b'F', b'F', 0x20, 0x00, 0x00, 0x00, b'W', b'E', b'B', b'P',
         ];
         data.extend_from_slice(b"this is not a VP8 bitstream!!!!");
 
@@ -1016,8 +1006,6 @@ mod tests {
 
         assert!(result.is_err(), "Corrupt WebP should return an error");
     }
-
-    // --- Corrupt Magic Bytes (look like one format but aren't) ---
 
     #[test]
     fn test_corrupt_jpeg_valid_header_garbage_body() {
@@ -1044,9 +1032,9 @@ mod tests {
         let progress = noop_progress();
 
         let mut data = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-        data.extend_from_slice(&[0xFF, 0xFF, 0xFF, 0xFF]); // absurd chunk length
-        data.extend_from_slice(b"FAKE"); // fake chunk type
-        data.extend_from_slice(&[0x00; 20]); // some zero bytes
+        data.extend_from_slice(&[0xFF, 0xFF, 0xFF, 0xFF]);
+        data.extend_from_slice(b"FAKE");
+        data.extend_from_slice(&[0x00; 20]);
 
         let input = make_input(&data, "corrupt_chunks.png");
         let result = processor.process(input, &progress);
@@ -1056,8 +1044,6 @@ mod tests {
             "PNG with valid header but garbage chunks should fail at decode"
         );
     }
-
-    // --- Extension-Only Detection with Undecodable Data ---
 
     #[test]
     fn test_random_bytes_with_jpg_extension_returns_error() {
@@ -1113,8 +1099,6 @@ mod tests {
         );
     }
 
-    // --- Mixed Corruption Scenarios ---
-
     #[test]
     fn test_5_byte_file_no_known_extension_returns_error() {
         let processor = CompressImages::new();
@@ -1158,8 +1142,6 @@ mod tests {
 
     #[test]
     fn test_all_ff_bytes_with_jpg_extension_returns_error() {
-        // FF FF FF is NOT a valid JPEG signature (needs FF D8 FF).
-        // Extension-based detection kicks in, then decoder fails.
         let processor = CompressImages::new();
         let progress = noop_progress();
 
@@ -1175,8 +1157,6 @@ mod tests {
     // =========================================================================
     // Compression Parameter Boundary Tests
     // =========================================================================
-
-    // --- get_compression() boundary tests ---
 
     #[test]
     fn test_get_compression_at_exact_min_boundary() {
@@ -1219,8 +1199,6 @@ mod tests {
             "Compression 101 should be clamped to 100 (just above max)"
         );
     }
-
-    // --- validate() boundary tests ---
 
     #[test]
     fn test_validate_compression_0_fails() {
@@ -1296,8 +1274,6 @@ mod tests {
         );
     }
 
-    // --- Actual compression at boundaries ---
-
     #[test]
     fn test_compress_jpeg_at_compression_100_produces_valid_output() {
         let processor = CompressImages::new();
@@ -1348,7 +1324,6 @@ mod tests {
 
     #[test]
     fn test_compression_100_smaller_than_compression_1() {
-        // The core contract: higher compression = smaller file.
         let processor = CompressImages::new();
 
         let input_c100 = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 100);
@@ -1370,7 +1345,6 @@ mod tests {
 
     #[test]
     fn test_compression_monotonically_affects_file_size() {
-        // Verify the full ordering: c100 <= c50 <= c1 (file size).
         let processor = CompressImages::new();
 
         let input_c100 = make_input_with_compression(TEST_MEDIUM_JPEG, "photo.jpg", 100);
@@ -1406,7 +1380,6 @@ mod tests {
             size_c1
         );
 
-        // Log sizes for manual inspection during development
         eprintln!(
             "Compression ordering: c100={} bytes, c50={} bytes, c1={} bytes",
             size_c100, size_c50, size_c1
@@ -1416,10 +1389,8 @@ mod tests {
     // =========================================================================
     // 1x1 Pixel Image Tests — Minimum Viable Image
     // =========================================================================
-    //
-    // Image codecs sometimes have edge cases with very small images — JPEG's
-    // 8x8 block DCT needs padding, PNG row filters need at least one pixel, etc.
 
+    /// Helper: create a 1x1 pixel JPEG image (a single red pixel).
     fn create_1x1_jpeg() -> Vec<u8> {
         use image::{DynamicImage, Rgb, RgbImage};
 
@@ -1435,6 +1406,7 @@ mod tests {
         buf
     }
 
+    /// Helper: create a 1x1 pixel PNG image (a single green pixel).
     fn create_1x1_png() -> Vec<u8> {
         use image::{DynamicImage, Rgb, RgbImage};
 
@@ -1451,6 +1423,7 @@ mod tests {
         buf
     }
 
+    /// Helper: create a 1x1 pixel WebP image (a single blue pixel).
     fn create_1x1_webp() -> Vec<u8> {
         use image::{DynamicImage, Rgb, RgbImage};
 
@@ -1562,7 +1535,6 @@ mod tests {
 
     #[test]
     fn test_1x1_jpeg_with_compression_100_produces_valid_output() {
-        // Extreme combo: smallest possible image + maximum compression.
         let processor = CompressImages::new();
         let progress = noop_progress();
 
@@ -1609,7 +1581,6 @@ mod tests {
 
     #[test]
     fn test_compress_jpeg_applies_exif_orientation_rotate90() {
-        // 60x40 stored with EXIF orientation=6 (rotate 90 CW) -> output 40x60.
         let jpeg = create_test_jpeg(60, 40);
         let exif_jpeg = inject_exif_orientation(&jpeg, 6);
 
@@ -1636,7 +1607,6 @@ mod tests {
 
     #[test]
     fn test_compress_jpeg_applies_exif_orientation_rotate180() {
-        // Orientation=3: 180 rotation, dimensions stay 60x40.
         let jpeg = create_test_jpeg(60, 40);
         let exif_jpeg = inject_exif_orientation(&jpeg, 3);
 
@@ -1671,11 +1641,6 @@ mod tests {
     // =========================================================================
     // EXIF Orientation — Extended Coverage
     // =========================================================================
-    //
-    // Dimension expectations:
-    //   Orientations 2, 4 (flips only) -> 60x40 (no swap)
-    //   Orientations 5, 7 (90/270 + flip) -> 40x60 (swap)
-    //   Orientation 8 (rotate 270 CW) -> 40x60 (swap)
 
     #[test]
     fn test_compress_jpeg_exif_flip_horizontal() {

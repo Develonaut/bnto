@@ -1,45 +1,25 @@
-// =============================================================================
-// node_catalog — WASM export for the engine's self-describing node catalog
-// =============================================================================
-//
-// Returns JSON describing every registered processor (params, MIME types,
-// platforms). Used to validate TS @bnto/nodes definitions against the engine
-// and to generate JSON Schema for .bnto.json files.
+// Node Catalog — WASM export returning a JSON string describing every
+// registered processor, node type, and the Definition JSON Schema.
+// Used by codegen to generate TypeScript `NODE_TYPE_INFO` and schemas.
 
 use wasm_bindgen::prelude::*;
 
 use serde::Serialize;
 
-// =============================================================================
-// Catalog Envelope
-// =============================================================================
-
-/// Top-level catalog structure. Version must stay in sync with
-/// `FORMAT_VERSION` in bnto-core and `CURRENT_FORMAT_VERSION` in @bnto/nodes.
+/// Top-level catalog envelope with version, node types, processors, and schema.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct CatalogEnvelope {
     version: String,
-
-    /// All registered node types (sorted alphabetically).
     node_types: Vec<bnto_core::NodeTypeInfo>,
-
-    /// All implemented processor operations (sorted by nodeType:operation).
     processors: Vec<bnto_core::NodeMetadata>,
-
-    /// JSON Schema (Draft 2020-12) for the `.bnto.json` Definition format.
     definition_schema: serde_json::Value,
 }
 
-// =============================================================================
-// WASM Export: node_catalog
-// =============================================================================
-
-/// Return a pretty-printed JSON string describing every registered processor.
+/// Return a pretty-printed JSON string of the engine's full catalog.
 #[wasm_bindgen]
 pub fn node_catalog() -> Result<String, JsValue> {
     let registry = super::execute::create_default_registry();
-
     let mut catalog = registry.catalog();
 
     // Sort by compound key for deterministic output across builds.
@@ -49,23 +29,16 @@ pub fn node_catalog() -> Result<String, JsValue> {
         key_a.cmp(&key_b)
     });
 
-    let node_types = bnto_core::all_node_types();
-    let definition_schema = bnto_core::definition_json_schema();
-
     let envelope = CatalogEnvelope {
         version: bnto_core::FORMAT_VERSION.to_string(),
-        node_types,
+        node_types: bnto_core::all_node_types(),
         processors: catalog,
-        definition_schema,
+        definition_schema: bnto_core::definition_json_schema(),
     };
 
     serde_json::to_string_pretty(&envelope)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize catalog: {}", e)))
 }
-
-// =============================================================================
-// Tests
-// =============================================================================
 
 #[cfg(test)]
 mod tests {

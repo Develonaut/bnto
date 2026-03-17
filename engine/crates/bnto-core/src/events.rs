@@ -1,11 +1,6 @@
 // Pipeline events — structured progress reporting for multi-node pipelines.
-//
-// Relationship to ProgressReporter:
-// - ProgressReporter (progress.rs) = per-file, within ONE node
-// - PipelineReporter (this file) = pipeline-level, across ALL nodes
-//
-// The executor wraps PipelineReporter around ProgressReporter — converting
-// per-file progress into structured FileProgress events.
+// Complements `progress.rs` (per-file within one node) with pipeline-level
+// events (node started/completed, file progress, pipeline result).
 
 use serde::Serialize;
 
@@ -14,58 +9,91 @@ use serde::Serialize;
 // =============================================================================
 
 /// Every event the pipeline executor can emit during execution.
-/// Serialized with `type` tag and camelCase fields to match TS discriminated unions.
+///
+/// Serialized as a tagged union with `"type"` discriminant and camelCase
+/// field names, matching the TypeScript `PipelineEvent` discriminated union.
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
 pub enum PipelineEvent {
-    /// Pipeline execution starting. Reports total nodes and files.
+    /// Emitted once at the very start of pipeline execution.
+    /// Tells the UI how many nodes and files to expect.
     #[serde(rename_all = "camelCase")]
     PipelineStarted {
+        /// How many processing nodes will run (excludes I/O markers).
         total_nodes: usize,
+        /// How many input files were provided.
         total_files: usize,
     },
 
-    /// A processing node began execution.
+    /// Emitted when a processing node begins execution.
+    /// The editor uses this to highlight the active node on the canvas.
     #[serde(rename_all = "camelCase")]
     NodeStarted {
+        /// The unique ID of the node (from the recipe definition).
         node_id: String,
+        /// Zero-based index of this node in the processing sequence.
         node_index: usize,
+        /// Total number of processing nodes in the pipeline.
         total_nodes: usize,
+        /// The type of node (e.g., "image:compress", "spreadsheet:clean").
         node_type: String,
     },
 
-    /// Per-file progress within a node.
+    /// Emitted during file processing within a node.
+    /// Powers progress bars and per-file status indicators.
     #[serde(rename_all = "camelCase")]
     FileProgress {
+        /// Which node is processing this file.
         node_id: String,
+        /// Zero-based index of the current file within this node's batch.
         file_index: usize,
+        /// Total files this node will process.
         total_files: usize,
+        /// Processing progress for this specific file (0-100).
         percent: u32,
+        /// Human-readable status message (e.g., "Compressing photo.jpg...").
         message: String,
     },
 
-    /// A node finished successfully.
+    /// Emitted when a node finishes successfully.
+    /// The editor uses this to mark the node as "completed" with a checkmark.
     #[serde(rename_all = "camelCase")]
     NodeCompleted {
+        /// Which node completed.
         node_id: String,
+        /// How long this node took, in milliseconds.
         duration_ms: u64,
+        /// How many files this node processed.
         files_processed: usize,
     },
 
-    /// A node failed.
+    /// Emitted when a node fails.
+    /// The editor uses this to mark the node as "failed" with an error icon.
     #[serde(rename_all = "camelCase")]
-    NodeFailed { node_id: String, error: String },
+    NodeFailed {
+        /// Which node failed.
+        node_id: String,
+        /// Human-readable error message.
+        error: String,
+    },
 
-    /// Entire pipeline finished successfully.
+    /// Emitted once when the entire pipeline finishes successfully.
     #[serde(rename_all = "camelCase")]
     PipelineCompleted {
+        /// Total wall-clock time for the entire pipeline, in milliseconds.
         duration_ms: u64,
+        /// Total number of files processed across all nodes.
         total_files_processed: usize,
     },
 
-    /// Pipeline failed (a node error stopped execution).
+    /// Emitted when the pipeline fails (a node error stops execution).
     #[serde(rename_all = "camelCase")]
-    PipelineFailed { node_id: String, error: String },
+    PipelineFailed {
+        /// Which node caused the pipeline to fail.
+        node_id: String,
+        /// Human-readable error message.
+        error: String,
+    },
 }
 
 // =============================================================================
@@ -73,24 +101,41 @@ pub enum PipelineEvent {
 // =============================================================================
 
 /// Emits structured pipeline events to a callback.
-/// The callback can serialize events to JSON and send them via
-/// Web Worker postMessage, CLI stdout, or any other transport.
+///
+/// This is the pipeline-level equivalent of `ProgressReporter`.
+/// The callback receives a `PipelineEvent` which can be serialized
+/// to JSON and sent to the UI (via Web Worker postMessage, CLI stdout,
+/// or any other transport).
 pub struct PipelineReporter {
+    /// The callback that receives events. `None` = no-op mode.
     callback: Option<Box<dyn Fn(PipelineEvent)>>,
 }
 
 impl PipelineReporter {
+    /// Create a new reporter with a callback that receives pipeline events.
+    ///
+    /// USAGE:
+    /// ```rust
+    /// use bnto_core::PipelineReporter;
+    ///
+    /// let reporter = PipelineReporter::new(|event| {
+    ///     println!("Pipeline event: {:?}", event);
+    /// });
+    /// ```
     pub fn new(callback: impl Fn(PipelineEvent) + 'static) -> Self {
         Self {
             callback: Some(Box::new(callback)),
         }
     }
 
-    /// No-op reporter that discards all events. Used in tests.
+    /// Create a no-op reporter that discards all events.
+    /// Used in tests where we don't need event tracking.
     pub fn new_noop() -> Self {
         Self { callback: None }
     }
 
+    /// Emit a pipeline event. If no callback is set (no-op mode),
+    /// the event is silently discarded.
     pub fn emit(&self, event: PipelineEvent) {
         if let Some(cb) = &self.callback {
             cb(event);
@@ -99,12 +144,15 @@ impl PipelineReporter {
 }
 
 // =============================================================================
-// Recording Reporter (test-only)
+// Recording Reporter (for tests)
 // =============================================================================
 
-/// Records all events in a thread-safe Vec for test assertions.
+/// A reporter that records all events in a thread-safe Vec.
+/// Used in tests to verify the executor emits the right events
+/// in the right order.
 #[cfg(test)]
 pub struct RecordingReporter {
+    /// The shared, thread-safe event log.
     events: std::sync::Arc<std::sync::Mutex<Vec<PipelineEvent>>>,
 }
 
@@ -117,12 +165,14 @@ impl Default for RecordingReporter {
 
 #[cfg(test)]
 impl RecordingReporter {
+    /// Create a new recording reporter.
     pub fn new() -> Self {
         Self {
             events: std::sync::Arc::new(std::sync::Mutex::new(Vec::new())),
         }
     }
 
+    /// Build a `PipelineReporter` that records events into this recorder.
     pub fn reporter(&self) -> PipelineReporter {
         let events = std::sync::Arc::clone(&self.events);
         PipelineReporter::new(move |event| {
@@ -130,6 +180,7 @@ impl RecordingReporter {
         })
     }
 
+    /// Get a snapshot of all recorded events.
     pub fn events(&self) -> Vec<PipelineEvent> {
         self.events.lock().unwrap().clone()
     }
@@ -144,16 +195,19 @@ mod tests {
     use super::*;
 
     // --- Serialization Tests ---
-    // Verify JSON shape matches what the TypeScript side expects.
+    // Verify the JSON shape matches what the TypeScript side expects.
 
     #[test]
     fn test_pipeline_started_serializes_correctly() {
+        // Create an event and serialize it to JSON.
         let event = PipelineEvent::PipelineStarted {
             total_nodes: 3,
             total_files: 10,
         };
         let json = serde_json::to_value(&event).unwrap();
 
+        // Check the JSON has the right shape:
+        // { "type": "PipelineStarted", "totalNodes": 3, "totalFiles": 10 }
         assert_eq!(json["type"], "PipelineStarted");
         assert_eq!(json["totalNodes"], 3);
         assert_eq!(json["totalFiles"], 10);
@@ -253,6 +307,7 @@ mod tests {
 
     #[test]
     fn test_noop_reporter_doesnt_panic() {
+        // No-op reporter should silently discard all events.
         let reporter = PipelineReporter::new_noop();
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
@@ -262,10 +317,12 @@ mod tests {
             duration_ms: 100,
             total_files_processed: 1,
         });
+        // No panic = success.
     }
 
     #[test]
     fn test_recording_reporter_captures_events() {
+        // Create a recording reporter and emit some events.
         let recorder = RecordingReporter::new();
         let reporter = recorder.reporter();
 
@@ -284,9 +341,11 @@ mod tests {
             total_files_processed: 3,
         });
 
+        // Verify all 3 events were captured in order.
         let events = recorder.events();
         assert_eq!(events.len(), 3);
 
+        // Check types using pattern matching.
         assert!(matches!(events[0], PipelineEvent::PipelineStarted { .. }));
         assert!(matches!(events[1], PipelineEvent::NodeStarted { .. }));
         assert!(matches!(events[2], PipelineEvent::PipelineCompleted { .. }));
@@ -294,6 +353,7 @@ mod tests {
 
     #[test]
     fn test_reporter_calls_callback() {
+        // Verify the callback receives the exact event we emit.
         let received = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
         let received_clone = std::sync::Arc::clone(&received);
 
