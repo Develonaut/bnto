@@ -21,8 +21,8 @@ import { useEditor } from "../../context";
  * Non-interactive to RF (not selectable, not draggable). The plus
  * button is pointer-events-auto inside a pointer-events-none shell.
  *
- * CSS-first hover: the button is invisible by default and revealed
- * via group-hover / group-focus-within on the parent container.
+ * CSS-first hover: the button uses the `dormant` prop to start
+ * grounded + muted, waking on ancestor .group hover via CSS.
  */
 
 export const AddDividerNode = memo(function AddDividerNode({ data }: NodeProps<BentoNode>) {
@@ -59,10 +59,11 @@ export const AddDividerNode = memo(function AddDividerNode({ data }: NodeProps<B
         icon={<Plus />}
         size="sm"
         variant="primary"
+        dormant
         onClick={handleClick}
         aria-label="Add node"
         data-testid="add-divider"
-        className="nopan nodrag nowheel pointer-events-none z-canvas size-5 opacity-0 transition-opacity duration-fast group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 [&_svg]:size-3"
+        className="nopan nodrag nowheel z-canvas"
       />
     </div>
   );
