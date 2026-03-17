@@ -5,20 +5,20 @@ import { core } from "../core";
 import type { RecipeListItem } from "../types";
 
 /**
- * List all locally-saved recipes (localStorage drafts).
+ * List all device-local draft recipes.
  *
  * Returns the same RecipeListItem[] shape as cloud recipes.
  * Provides a `refresh` callback for re-reading after mutations.
  */
-export function useLocalRecipes() {
+export function useDraftRecipes() {
   const [recipes, setRecipes] = useState<RecipeListItem[]>([]);
 
   useEffect(() => {
-    setRecipes(core.localRecipes.list());
+    setRecipes(core.recipes.listDrafts());
   }, []);
 
   const refresh = useCallback(() => {
-    setRecipes(core.localRecipes.list());
+    setRecipes(core.recipes.listDrafts());
   }, []);
 
   return { data: recipes, refresh };

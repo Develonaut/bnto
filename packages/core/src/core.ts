@@ -13,7 +13,7 @@
  */
 
 import { createRecipeService } from "./services/recipeService";
-import { createLocalRecipeService } from "./services/localRecipeService";
+import { createDraftRecipeService } from "./services/localRecipeService";
 import { createExecutionService } from "./services/executionService";
 import { createHistoryService } from "./services/historyService";
 import { createUserService } from "./services/userService";
@@ -33,7 +33,7 @@ import { createDownloadService } from "./services/downloadService";
 
 // ── Services (single-domain, internal) ────────────────────────────────────
 const recipeService = createRecipeService();
-const localRecipeService = createLocalRecipeService();
+const draftRecipeService = createDraftRecipeService();
 const executionService = createExecutionService();
 const historyService = createHistoryService();
 const userService = createUserService();
@@ -46,7 +46,7 @@ const uploadService = createUploadService();
 const downloadService = createDownloadService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
-const recipeClient = createRecipeClient(recipeService, executionService);
+const recipeClient = createRecipeClient(recipeService, executionService, draftRecipeService);
 const executionClient = createExecutionClient(
   executionService,
   browserExecutionService,
@@ -65,8 +65,6 @@ export const core = {
   telemetry: telemetryClient,
 
   // ── Internal (used by hooks, not top-level public domains) ──────────
-  /** @internal Local recipe storage — localStorage-backed drafts for unauthed users. */
-  localRecipes: localRecipeService,
   /** @internal Cloud upload service — will be absorbed into executions for M4. */
   uploads: uploadService,
   /** @internal Cloud download service — will be absorbed into executions for M4. */

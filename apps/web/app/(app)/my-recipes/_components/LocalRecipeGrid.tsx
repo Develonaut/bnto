@@ -29,8 +29,8 @@ import { LocalRecipeUpsell } from "./LocalRecipeUpsell";
  * only handles rendering and delegates mutations to core hooks.
  */
 export function LocalRecipeGrid() {
-  const { data: recipes, refresh } = core.recipes.useLocalRecipes();
-  const { mutate: removeLocal } = core.recipes.useRemoveLocalRecipe();
+  const { data: recipes, refresh } = core.recipes.useDraftRecipes();
+  const { mutate: removeLocal } = core.recipes.useRemoveDraftRecipe();
 
   if (recipes.length === 0) {
     return (

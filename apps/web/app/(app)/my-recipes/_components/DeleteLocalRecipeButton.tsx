@@ -14,8 +14,14 @@ import {
   TrashIcon,
 } from "@bnto/ui";
 
+type Props = {
+  recipeId: string;
+  recipeName: string;
+  onDelete: (recipeId: string) => void;
+};
+
 /**
- * Delete button for a localStorage-backed recipe draft.
+ * Delete button for a device-local recipe draft.
  *
  * Same UI as DeleteRecipeButton (Convex variant) — trash icon with
  * confirmation dialog using the dormant pattern.
@@ -71,9 +77,3 @@ export function DeleteLocalRecipeButton({ recipeId, recipeName, onDelete }: Prop
     </>
   );
 }
-
-type Props = {
-  recipeId: string;
-  recipeName: string;
-  onDelete: (recipeId: string) => void;
-};

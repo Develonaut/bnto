@@ -21,8 +21,8 @@ import { useRecipe } from "./hooks/useRecipe";
 import { useSaveRecipe } from "./hooks/useSaveRecipe";
 import { useRemoveRecipe } from "./hooks/useRemoveRecipe";
 import { useRunRecipe } from "./hooks/useRunRecipe";
-import { useLocalRecipes } from "./hooks/useLocalRecipes";
-import { useRemoveLocalRecipe } from "./hooks/useRemoveLocalRecipe";
+import { useDraftRecipes } from "./hooks/useLocalRecipes";
+import { useRemoveDraftRecipe } from "./hooks/useRemoveLocalRecipe";
 
 // Execution hooks
 import { useExecution } from "./hooks/useExecution";
@@ -60,8 +60,8 @@ export const core = {
     useSaveRecipe,
     useRemoveRecipe,
     useRunRecipe,
-    useLocalRecipes,
-    useRemoveLocalRecipe,
+    useDraftRecipes,
+    useRemoveDraftRecipe,
   },
 
   executions: {
