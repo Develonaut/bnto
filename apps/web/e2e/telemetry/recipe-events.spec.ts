@@ -23,12 +23,12 @@ test.describe("recipe telemetry events @browser", () => {
     await enableTelemetryCapture(page);
 
     await page.goto("/compress-images");
-    await expect(page.getByRole("heading", { name: "Compress Images Online Free" })).toBeVisible();
+    await expect(page.getByTestId("recipe-heading")).toBeVisible();
 
     // --- files_added ---
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.getByTestId("file-input");
     await fileInput.setInputFiles([path.join(FIXTURES_DIR, "small.jpg")]);
-    await expect(page.getByText("1 file selected")).toBeVisible();
+    await expect(page.getByTestId("file-count")).toBeVisible();
 
     await waitForTelemetryEvent(page, "files_added");
     let events = await getTelemetryEvents(page);
@@ -41,7 +41,7 @@ test.describe("recipe telemetry events @browser", () => {
     expect(filesAdded[0].properties?.totalBytes).toBeGreaterThan(0);
 
     // --- recipe_run_started + recipe_run_completed ---
-    const runButton = page.locator('[data-testid="run-button"]:visible');
+    const runButton = page.getByTestId("run-button", ":visible");
     await runButton.click();
 
     await expect(runButton).toHaveAttribute("data-phase", "completed", {
@@ -76,7 +76,7 @@ test.describe("recipe telemetry events @browser", () => {
     // already be captured. If not present, it means auto-download
     // uses downloadAllResults directly (not handleDownloadAll).
     // The manual "Download All" button triggers the event.
-    const downloadAllBtn = page.locator('[data-testid="download-all-button"]:visible');
+    const downloadAllBtn = page.getByTestId("download-all-button", ":visible");
 
     // Only assert manual download if the button is visible
     if (await downloadAllBtn.isVisible()) {

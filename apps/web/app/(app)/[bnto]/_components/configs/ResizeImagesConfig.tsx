@@ -1,5 +1,7 @@
 "use client";
 
+import type { ChangeEvent } from "react";
+import { useCallback } from "react";
 import { Input, Label, Switch } from "@bnto/ui";
 import type { ResizeImagesConfig as Config } from "./types";
 
@@ -8,14 +10,29 @@ interface ResizeImagesConfigProps {
   onChange: (config: Config) => void;
 }
 
-export function ResizeImagesConfig({
-  value,
-  onChange,
-}: ResizeImagesConfigProps) {
+export function ResizeImagesConfig({ value, onChange }: ResizeImagesConfigProps) {
+  const handleWidthChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const width = parseInt(e.target.value, 10);
+      if (!isNaN(width) && width > 0) {
+        onChange({ ...value, width });
+      }
+    },
+    [onChange, value],
+  );
+
+  const handleAspectRatioChange = useCallback(
+    (maintainAspectRatio: boolean) =>
+      onChange({ ...value, maintainAspectRatio: !!maintainAspectRatio }),
+    [onChange, value],
+  );
+
   return (
     <div className="flex w-full items-end gap-4">
       <div className="flex shrink-0 flex-col gap-1">
-        <Label htmlFor="resize-width" className="text-muted-foreground text-xs">Width (px)</Label>
+        <Label htmlFor="resize-width" className="text-muted-foreground text-xs">
+          Width (px)
+        </Label>
         <Input
           id="resize-width"
           type="number"
@@ -24,26 +41,25 @@ export function ResizeImagesConfig({
           aria-describedby="resize-width-help"
           value={value.width}
           wrapperClassName="w-24"
-          onChange={(e) => {
-            const width = parseInt(e.target.value, 10);
-            if (!isNaN(width) && width > 0) {
-              onChange({ ...value, width });
-            }
-          }}
+          onChange={handleWidthChange}
         />
-        <p id="resize-width-help" className="text-muted-foreground text-xs">Target width in pixels</p>
+        <p id="resize-width-help" className="text-muted-foreground text-xs">
+          Target width in pixels
+        </p>
       </div>
       <div className="flex shrink-0 flex-col gap-1">
-        <Label htmlFor="resize-aspect-ratio" className="text-muted-foreground text-xs">Aspect ratio</Label>
+        <Label htmlFor="resize-aspect-ratio" className="text-muted-foreground text-xs">
+          Aspect ratio
+        </Label>
         <Switch
           id="resize-aspect-ratio"
           aria-describedby="resize-aspect-ratio-help"
           checked={value.maintainAspectRatio}
-          onCheckedChange={(maintainAspectRatio) =>
-            onChange({ ...value, maintainAspectRatio: !!maintainAspectRatio })
-          }
+          onCheckedChange={handleAspectRatioChange}
         />
-        <p id="resize-aspect-ratio-help" className="text-muted-foreground text-xs">Keep proportions</p>
+        <p id="resize-aspect-ratio-help" className="text-muted-foreground text-xs">
+          Keep proportions
+        </p>
       </div>
     </div>
   );

@@ -32,16 +32,18 @@ export function DeleteRecipeButton({ recipeId, recipeName }: DeleteRecipeButtonP
     });
   }, [mutate, recipeId]);
 
+  const handleOpen = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpen(true);
+  }, []);
+
   return (
     <>
       <Button
         icon={<TrashIcon />}
         variant="destructive"
         dormant
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen(true);
-        }}
+        onClick={handleOpen}
         aria-label={`Delete ${recipeName}`}
         data-testid="delete-recipe"
       />

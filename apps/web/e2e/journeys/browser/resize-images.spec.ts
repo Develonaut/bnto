@@ -30,7 +30,7 @@ test.describe("resize-images — browser execution @browser", () => {
 
     await runAndComplete(page);
 
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
     await downloadAndVerify(page, {
@@ -49,7 +49,7 @@ test.describe("resize-images — browser execution @browser", () => {
 
     await runAndComplete(page);
 
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(2);
-    await expect(page.locator('[data-testid="download-all-button"]:visible')).toBeVisible();
+    await expect(page.getByTestId("output-file")).toHaveCount(2);
+    await expect(page.getByTestId("download-all-button", ":visible")).toBeVisible();
   });
 });

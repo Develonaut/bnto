@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Button,
   Row,
@@ -96,22 +96,44 @@ function DevTab() {
 }
 
 function PhaseControls({ onForce }: { onForce: (p: ExecutionPhase) => void }) {
+  const handleForce = useCallback((phase: ExecutionPhase) => () => onForce(phase), [onForce]);
+
   return (
     <Stack className="gap-1.5">
       <Text size="xs" color="muted" weight="medium">
         Force Phase
       </Text>
       <Row gap="xs" className="flex-wrap">
-        <Button variant="outline" size="sm" onClick={() => onForce("idle")}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleForce("idle")}
+          data-testid="dev-phase-idle"
+        >
           Idle
         </Button>
-        <Button variant="outline" size="sm" onClick={() => onForce("running")}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleForce("running")}
+          data-testid="dev-phase-running"
+        >
           Running
         </Button>
-        <Button variant="outline" size="sm" onClick={() => onForce("completed")}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleForce("completed")}
+          data-testid="dev-phase-completed"
+        >
           Completed
         </Button>
-        <Button variant="destructive" size="sm" onClick={() => onForce("failed")}>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleForce("failed")}
+          data-testid="dev-phase-failed"
+        >
           Failed
         </Button>
       </Row>
@@ -126,6 +148,9 @@ function ProgressControl({
   progress: number;
   onForce: (p: number) => void;
 }) {
+  const handleValueChange = useCallback(([v]: number[]) => onForce(v), [onForce]);
+  const progressValue = useMemo(() => [progress], [progress]);
+
   return (
     <Stack className="gap-1.5">
       <Row className="justify-between">
@@ -136,7 +161,7 @@ function ProgressControl({
           {progress}%
         </Text>
       </Row>
-      <Slider value={[progress]} onValueChange={([v]) => onForce(v)} min={0} max={100} step={1} />
+      <Slider value={progressValue} onValueChange={handleValueChange} min={0} max={100} step={1} />
     </Stack>
   );
 }
@@ -162,7 +187,11 @@ function RecipeSelect() {
         </SelectTrigger>
         <SelectContent>
           {RECIPES.map((recipe) => (
-            <SelectItem key={recipe.slug} value={recipe.slug}>
+            <SelectItem
+              key={recipe.slug}
+              value={recipe.slug}
+              data-testid={`recipe-option-${recipe.slug}`}
+            >
               {recipe.name}
             </SelectItem>
           ))}

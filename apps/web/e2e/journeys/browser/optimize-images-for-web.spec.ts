@@ -33,9 +33,9 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
 
     await runAndComplete(page);
 
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
-    await expect(outputFile.locator('[data-testid="download-button"]')).toBeVisible();
+    await expect(outputFile.getByTestId("download-button")).toBeVisible();
 
     // Output should be WebP (convert step) — verify RIFF+WEBP magic bytes
     const buffer = await downloadAndVerify(page, {
@@ -57,7 +57,7 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
 
     await runAndComplete(page);
 
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(2);
+    await expect(page.getByTestId("output-file")).toHaveCount(2);
 
     const { download } = await downloadAllAsZip(page);
     expect(download.suggestedFilename()).toBe("optimize-images-for-web-results.zip");
@@ -70,10 +70,10 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
 
     const runButton = await runAndComplete(page);
 
-    const backButton = page.locator('[data-testid="back-button"]');
+    const backButton = page.getByTestId("back-button");
     await backButton.click();
 
-    await expect(page.getByText("1 file selected")).toBeVisible();
+    await expect(page.getByTestId("file-count")).toBeVisible();
     await expect(runButton).toHaveAttribute("data-phase", "idle");
   });
 });

@@ -344,7 +344,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **Persona ownership:**
 | Package | Persona |
-|---------|---------|
+| -------------- | -------------------- |
 | `apps/desktop` | `/frontend-engineer` |
 | `@bnto/core` | `/core-architect` |
 | `engine` | `/rust-expert` |
@@ -409,7 +409,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **Persona ownership:**
 | Package | Persona |
-|---------|---------|
+| ---------------- | ---------------------------------- |
 | `apps/web` | `/frontend-engineer` |
 | `@bnto/backend` | `/backend-engineer` |
 | M4 cloud service | TBD (per M4 architecture decision) |
@@ -1062,6 +1062,24 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 ### Triage: Adopt a form state management library
 
 **Priority: Triage.** Evaluate and adopt a hook-based or agnostic form library to replace scattered `useState` patterns for form state. Must be actively maintained, performant, and composable via hooks. Formik is the spiritual predecessor but unmaintained — candidates include React Hook Form, TanStack Form, or similar. Goal: standardized form state management with validation, error handling, and field composition that fits the project's hook-first architecture.
+
+---
+
+### Triage: Audit and consolidate E2E journey tests
+
+**Priority: Triage.** Review all journey E2E specs (`e2e/journeys/browser/`, `e2e/journeys/editor/`, `e2e/editor/`) for overlap and redundancy after recent development. Consolidate tests that cover the same flows, remove duplicated assertions, and ensure each spec is testing a distinct user journey rather than repeating similar steps across multiple files. Aim for clear, high-level journey tests that cover critical paths without excessive duplication. For example, if multiple specs test the auth flow, consider centralizing that in a single `auth.spec.ts` and referencing it from other journey tests. Evaluate any cases that are better suited as unit/integration tests rather than E2E, and migrate accordingly.
+
+---
+
+### Triage: Revisit skipped auth E2E tests in editor-save.spec.ts
+
+**Priority: Triage.** Two tests in `e2e/journeys/editor/editor-save.spec.ts` are unconditionally skipped — SV1 (save recipe) and SV3 (load saved recipe). They require auth infrastructure (signed-in user + Convex) and the Save menu item was removed from the toolbar. Revisit when auth test helpers exist and Save is re-introduced. `editor-save.spec.ts:70`
+
+---
+
+### Triage: Dumb components pass — extract logic from heavy component files
+
+**Priority: Triage.** Components like `packages/editor/src/components/NodePaletteDialog/NodePaletteDialogRoot.tsx` carry too much inline logic. Audit for opportunities to 1) extract reusable utils/patterns and 2) keep components dumb (data in, render out).
 
 ---
 

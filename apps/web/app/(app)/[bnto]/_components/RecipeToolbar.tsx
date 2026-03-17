@@ -52,7 +52,7 @@ export function RecipeToolbar({
         >
           <ArrowLeftIcon className="size-4" />
         </Button>
-        <p className="shrink-0 text-sm font-medium text-foreground">
+        <p className="shrink-0 text-sm font-medium text-foreground" data-testid="file-count">
           {fileCount} {fileCount === 1 ? "file" : "files"} selected
         </p>
         <Row gap="xs" className="ml-auto shrink-0 md:hidden">

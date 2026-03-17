@@ -1,5 +1,7 @@
 "use client";
 
+import type { ChangeEvent } from "react";
+import { useCallback, useMemo } from "react";
 import {
   Input,
   Label,
@@ -29,10 +31,30 @@ interface OptimizeImagesForWebConfigProps {
   onChange: (config: Config) => void;
 }
 
-export function OptimizeImagesForWebConfig({
-  value,
-  onChange,
-}: OptimizeImagesForWebConfigProps) {
+export function OptimizeImagesForWebConfig({ value, onChange }: OptimizeImagesForWebConfigProps) {
+  const handleWidthChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const width = parseInt(e.target.value, 10);
+      if (!isNaN(width) && width > 0) {
+        onChange({ ...value, width });
+      }
+    },
+    [onChange, value],
+  );
+
+  const handleFormatChange = useCallback(
+    (format: string) => onChange({ ...value, format: format as Config["format"] }),
+    [onChange, value],
+  );
+
+  const compressionValue = useMemo(() => [value.compression], [value.compression]);
+
+  const handleCompressionChange = useCallback(
+    ([compression]: number[]) =>
+      onChange({ ...value, compression: compression ?? value.compression }),
+    [onChange, value],
+  );
+
   return (
     <div className="flex w-full flex-col gap-3">
       <div className="flex w-full items-end gap-4">
@@ -47,28 +69,28 @@ export function OptimizeImagesForWebConfig({
             max={10000}
             value={value.width}
             wrapperClassName="w-24"
-            onChange={(e) => {
-              const width = parseInt(e.target.value, 10);
-              if (!isNaN(width) && width > 0) {
-                onChange({ ...value, width });
-              }
-            }}
+            onChange={handleWidthChange}
           />
         </div>
         <div className="flex shrink-0 flex-col gap-1">
           <Label id="optimize-format-label" className="text-muted-foreground text-xs">
             Format
           </Label>
-          <Select
-            value={value.format}
-            onValueChange={(format) => onChange({ ...value, format: format as Config["format"] })}
-          >
-            <SelectTrigger className="w-24" aria-labelledby="optimize-format-label">
+          <Select value={value.format} onValueChange={handleFormatChange}>
+            <SelectTrigger
+              className="w-24"
+              aria-labelledby="optimize-format-label"
+              data-testid="format-select"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {FORMAT_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
+                <SelectItem
+                  key={opt.value}
+                  value={opt.value}
+                  data-testid={`format-option-${opt.value}`}
+                >
                   {opt.label}
                 </SelectItem>
               ))}
@@ -78,10 +100,8 @@ export function OptimizeImagesForWebConfig({
       </div>
       <Slider
         label="Compression"
-        value={[value.compression]}
-        onValueChange={([compression]: number[]) =>
-          onChange({ ...value, compression: compression ?? value.compression })
-        }
+        value={compressionValue}
+        onValueChange={handleCompressionChange}
         min={1}
         max={100}
         presets={COMPRESSION_PRESETS}

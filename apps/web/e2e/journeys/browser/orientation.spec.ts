@@ -58,12 +58,12 @@ test.describe("EXIF orientation — all image bntos @browser", () => {
 
     await runAndComplete(page);
 
-    const outputFileCard = page.locator('[data-testid="output-file"]');
+    const outputFileCard = page.getByTestId("output-file");
     await expect(outputFileCard).toHaveCount(1);
 
     // Download and verify dimensions
     const downloadPromise = page.waitForEvent("download");
-    await outputFileCard.locator('[data-testid="download-button"]').click();
+    await outputFileCard.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -88,11 +88,11 @@ test.describe("EXIF orientation — all image bntos @browser", () => {
 
     await runAndComplete(page);
 
-    const outputFileCard = page.locator('[data-testid="output-file"]');
+    const outputFileCard = page.getByTestId("output-file");
     await expect(outputFileCard).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFileCard.locator('[data-testid="download-button"]').click();
+    await outputFileCard.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -114,19 +114,17 @@ test.describe("EXIF orientation — all image bntos @browser", () => {
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg")]);
 
     // Change target format to PNG
-    const formatSelect = page
-      .locator('[data-testid="format-select"]')
-      .or(page.getByRole("combobox"));
+    const formatSelect = page.getByTestId("format-select");
     await formatSelect.click();
-    await page.getByRole("option", { name: /png/i }).click();
+    await page.getByTestId("format-option-png").click();
 
     await runAndComplete(page);
 
-    const outputFileCard = page.locator('[data-testid="output-file"]');
+    const outputFileCard = page.getByTestId("output-file");
     await expect(outputFileCard).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFileCard.locator('[data-testid="download-button"]').click();
+    await outputFileCard.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();

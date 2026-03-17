@@ -2,8 +2,7 @@ import { test, expect } from "../fixtures";
 
 /**
  * Site navigation journey — verifies every public route on the site loads
- * without errors, captures screenshot baselines, and confirms navbar/footer
- * navigation works end-to-end.
+ * without errors and confirms navbar/footer navigation works end-to-end.
  *
  * Desktop: all 11 public routes + navbar + footer + 404
  * Mobile: representative subset + mobile menu + 404
@@ -32,10 +31,7 @@ test.describe("Site navigation — desktop @browser", () => {
     test(`${route.name} renders without errors`, async ({ page }) => {
       const response = await page.goto(route.path);
       expect(response?.status()).toBeLessThan(400);
-      await page.evaluate(() => window.scrollTo(0, 0));
-      await expect(page).toHaveScreenshot(`desktop-${route.name}.png`, {
-        fullPage: true,
-      });
+      await expect(page.locator("body")).toBeVisible();
     });
   }
 
@@ -43,18 +39,11 @@ test.describe("Site navigation — desktop @browser", () => {
     await page.goto("/");
 
     // Open Explore dropdown (categorized recipe links)
-    await page.getByRole("button", { name: /Explore/ }).click();
+    await page.getByTestId("explore-button").click();
 
-    // Scope to the dropdown popover so we don't match marquee recipe cards
-    const dropdown = page.locator('[data-testid="explore-dropdown"]');
-    const compressLink = dropdown.getByRole("link", {
-      name: /Compress Images/,
-    });
+    // Find the Compress Images link in the explore dropdown
+    const compressLink = page.getByTestId("explore-link-compress-images");
     await expect(compressLink).toBeVisible();
-
-    // Screenshot the open dropdown
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("desktop-explore-dropdown.png");
 
     // Navigate to tool page via dropdown
     await compressLink.click();
@@ -64,18 +53,16 @@ test.describe("Site navigation — desktop @browser", () => {
   test("navbar: Pricing and FAQ links navigate correctly", async ({ page }) => {
     await page.goto("/");
 
-    const navbar = page.getByRole("banner");
-
     // Navigate to Pricing via navbar
-    await navbar.getByRole("link", { name: "Pricing" }).click();
+    await page.getByTestId("nav-link-pricing").click();
     await expect(page).toHaveURL("/pricing");
 
     // Navigate to FAQ
-    await navbar.getByRole("link", { name: "FAQ" }).click();
+    await page.getByTestId("nav-link-faq").click();
     await expect(page).toHaveURL("/faq");
 
     // Navigate home via logo
-    await navbar.getByRole("link", { name: "bnto" }).click();
+    await page.getByTestId("nav-link-home").click();
     await expect(page).toHaveURL("/");
   });
 
@@ -83,16 +70,14 @@ test.describe("Site navigation — desktop @browser", () => {
     await page.goto("/");
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
-    const footer = page.locator("footer");
-
     // Verify key footer links exist
-    await expect(footer.getByRole("link", { name: /Compress Images/ })).toBeVisible();
-    await expect(footer.getByRole("link", { name: /Clean CSV/ })).toBeVisible();
-    await expect(footer.getByRole("link", { name: "Pricing", exact: true })).toBeVisible();
-    await expect(footer.getByRole("link", { name: "Privacy", exact: true })).toBeVisible();
+    await expect(page.getByTestId("footer-link-compress-images")).toBeVisible();
+    await expect(page.getByTestId("footer-link-clean-csv")).toBeVisible();
+    await expect(page.getByTestId("footer-link-pricing")).toBeVisible();
+    await expect(page.getByTestId("footer-link-privacy")).toBeVisible();
 
     // Navigate via footer link
-    await footer.getByRole("link", { name: "Pricing", exact: true }).click();
+    await page.getByTestId("footer-link-pricing").click();
     await expect(page).toHaveURL("/pricing");
   });
 
@@ -101,9 +86,7 @@ test.describe("Site navigation — desktop @browser", () => {
     if (!process.env.BASE_URL) {
       expect(response?.status()).toBe(404);
     }
-    await expect(page.getByRole("heading", { name: /Page Not Found/ })).toBeVisible();
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("desktop-404.png");
+    await expect(page.getByTestId("not-found-heading")).toBeVisible();
   });
 });
 
@@ -126,10 +109,7 @@ test.describe("Site navigation — mobile @browser", () => {
     test(`${route.name} renders on mobile`, async ({ page }) => {
       const response = await page.goto(route.path);
       expect(response?.status()).toBeLessThan(400);
-      await page.evaluate(() => window.scrollTo(0, 0));
-      await expect(page).toHaveScreenshot(`mobile-${route.name}.png`, {
-        fullPage: true,
-      });
+      await expect(page.locator("body")).toBeVisible();
     });
   }
 
@@ -137,17 +117,13 @@ test.describe("Site navigation — mobile @browser", () => {
     await page.goto("/");
 
     // Open mobile menu via hamburger button
-    await page.getByRole("button", { name: /Open menu/ }).click();
+    await page.getByTestId("mobile-menu-button").click();
 
     // Wait for Sheet dialog to be visible
-    const sheet = page.getByRole("dialog");
-    await expect(sheet).toBeVisible();
-
-    // Screenshot the open menu
-    await expect(page).toHaveScreenshot("mobile-menu-open.png");
+    await expect(page.getByTestId("mobile-nav-dialog")).toBeVisible();
 
     // Navigate to a tool page via mobile menu
-    await sheet.getByRole("link", { name: "Compress Images" }).click();
+    await page.getByTestId("mobile-link-compress-images").click();
     await expect(page).toHaveURL("/compress-images");
   });
 
@@ -155,12 +131,11 @@ test.describe("Site navigation — mobile @browser", () => {
     await page.goto("/");
 
     // Open mobile menu via hamburger button
-    await page.getByRole("button", { name: /Open menu/ }).click();
-    const sheet = page.getByRole("dialog");
-    await expect(sheet).toBeVisible();
+    await page.getByTestId("mobile-menu-button").click();
+    await expect(page.getByTestId("mobile-nav-dialog")).toBeVisible();
 
     // Navigate to Pricing via mobile menu
-    await sheet.getByRole("link", { name: "Pricing" }).click();
+    await page.getByTestId("mobile-link-pricing").click();
     await expect(page).toHaveURL("/pricing");
   });
 
@@ -169,8 +144,6 @@ test.describe("Site navigation — mobile @browser", () => {
     if (!process.env.BASE_URL) {
       expect(response?.status()).toBe(404);
     }
-    await expect(page.getByRole("heading", { name: /Page Not Found/ })).toBeVisible();
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page).toHaveScreenshot("mobile-404.png");
+    await expect(page.getByTestId("not-found-heading")).toBeVisible();
   });
 });

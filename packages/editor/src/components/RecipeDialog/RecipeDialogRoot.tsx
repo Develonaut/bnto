@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import {
   Button,
   Dialog,
@@ -32,6 +33,11 @@ function RecipeDialogRoot({ open, onOpenChange }: RecipeDialogProps) {
     onOpenChange,
   });
 
+  const handleNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value),
+    [setName],
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm">
@@ -46,7 +52,7 @@ function RecipeDialogRoot({ open, onOpenChange }: RecipeDialogProps) {
               <Input
                 id="recipe-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={handleNameChange}
                 placeholder="Recipe name"
                 autoFocus
               />

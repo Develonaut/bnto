@@ -1,3 +1,6 @@
+# MCP server config (local env paths)
+.mcp.json
+
 # Binaries for programs and plugins
 *.exe
 *.exe~

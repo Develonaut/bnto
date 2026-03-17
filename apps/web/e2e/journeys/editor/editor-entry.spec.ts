@@ -16,7 +16,7 @@ test.describe("editor entry & navigation @browser", () => {
     await navigateToEditor(page);
 
     // Blank editor should show input and output I/O nodes
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(2);
 
     // Verify I/O node labels are present
@@ -24,7 +24,7 @@ test.describe("editor entry & navigation @browser", () => {
     await expect(nodeCards.filter({ hasText: "Output" })).toHaveCount(1);
 
     // Placeholder or divider should be present for adding nodes
-    const addButton = page.getByRole("button", { name: "Add node" });
+    const addButton = page.getByTestId("placeholder-node");
     await expect(addButton.first()).toBeVisible();
   });
 
@@ -33,7 +33,7 @@ test.describe("editor entry & navigation @browser", () => {
 
     // compress-images has: Input, For Each (loop containing Compress), Output
     // Top-level nodes visible on canvas: Input, For Each, Output
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards.filter({ hasText: "Input" })).toHaveCount(1);
     await expect(nodeCards.filter({ hasText: "Output" })).toHaveCount(1);
 
@@ -45,7 +45,7 @@ test.describe("editor entry & navigation @browser", () => {
     await navigateToEditor(page, "clean-csv");
 
     // clean-csv has: Input, Clean, Output (no loop)
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards.filter({ hasText: "Input" })).toHaveCount(1);
     await expect(nodeCards.filter({ hasText: "Output" })).toHaveCount(1);
     await expect(nodeCards.filter({ hasText: "Clean" })).toHaveCount(1);
@@ -55,7 +55,7 @@ test.describe("editor entry & navigation @browser", () => {
     await navigateToEditor(page, "nonexistent-recipe");
 
     // Should fall back to blank editor with just I/O nodes
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(2);
     await expect(nodeCards.filter({ hasText: "Input" })).toHaveCount(1);
     await expect(nodeCards.filter({ hasText: "Output" })).toHaveCount(1);
@@ -65,12 +65,12 @@ test.describe("editor entry & navigation @browser", () => {
     await page.goto("/editor");
 
     // Dialog should be visible on first visit
-    const dialog = page.locator('[data-testid="editor-beta-dialog"]');
+    const dialog = page.getByTestId("editor-beta-dialog");
     await expect(dialog).toBeVisible();
     await expect(dialog).toContainText("recipe editor is in beta");
 
     // Dismiss via "Get started" button
-    await dialog.getByRole("button", { name: "Get started" }).click();
+    await dialog.getByTestId("beta-get-started").click();
     await expect(dialog).not.toBeVisible();
 
     // Reload — dialog should stay dismissed (localStorage)
@@ -85,7 +85,7 @@ test.describe("editor entry & navigation @browser", () => {
     });
     await page.goto("/editor");
 
-    const dialog = page.locator('[data-testid="editor-beta-dialog"]');
+    const dialog = page.getByTestId("editor-beta-dialog");
     await expect(dialog).not.toBeVisible();
   });
 });

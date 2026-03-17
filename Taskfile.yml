@@ -49,18 +49,23 @@ tasks:
     cmds:
       - npx tsx packages/@bnto/nodes/scripts/generate-from-catalog.ts
 
-  # E2E tests
+  # E2E tests (two-stage: browser parallel, then editor serial)
   e2e:
-    desc: Run Playwright E2E tests (requires task dev running — Next.js + Convex)
+    desc: Run all E2E tests (browser parallel, then editor serial)
     dir: ./apps/web
-    cmds: [pnpm exec playwright test]
+    cmds:
+      - pnpm exec playwright test --project=browser
+      - pnpm exec playwright test --project=editor --workers=1
 
-  e2e:isolated:
-    desc: Run E2E tests on an isolated port (won't collide with task dev on 4000)
+  e2e:browser:
+    desc: Run non-editor E2E tests in parallel
     dir: ./apps/web
-    env:
-      E2E_PORT: '{{.E2E_PORT | default "4001"}}'
-    cmds: [pnpm exec playwright test]
+    cmds: [pnpm exec playwright test --project=browser]
+
+  e2e:editor:
+    desc: Run editor E2E tests serially (avoids ReactFlow render contention)
+    dir: ./apps/web
+    cmds: [pnpm exec playwright test --project=editor --workers=1]
 
   # SEO audit
   seo:audit:
@@ -177,7 +182,6 @@ tasks:
     cmds:
       - rm -rf .turbo
       - rm -rf apps/web/.next
-      - rm -rf apps/web/.next-e2e
       - rm -rf node_modules/.cache
       - rm -rf ~/Library/Caches/.wasm-pack
       - echo "All caches cleared"

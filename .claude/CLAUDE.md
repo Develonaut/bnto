@@ -112,18 +112,17 @@ task ui:lint            # Lint all TS packages
 task dev                # Start web + Convex dev servers (Next.js on port 4000 + Convex)
 
 # E2E tests
-# IMPORTANT: E2E tests need a running dev server. Check if one is running first:
+# IMPORTANT: E2E tests need a running dev server on port 4000.
 #   lsof -ti:4000  (if output, dev server is running — use task e2e directly)
 #   If nothing running, start one: task dev (background it, wait ~10s for startup)
-task e2e                # Run Playwright E2E tests against port 4000 (reuses running dev server)
-task e2e:isolated       # Starts own Next.js on port 4001 (slower — only if port 4000 is unavailable)
+task e2e                # Run all E2E tests (browser parallel, then editor serial)
+task e2e:browser        # Run non-editor tests in parallel
+task e2e:editor         # Run editor tests serially (avoids ReactFlow flakiness)
 
 # Updating screenshots (run from apps/web/):
 #   cd apps/web && pnpm exec playwright test --update-snapshots   # regenerate
 #   cd apps/web && pnpm exec playwright test                      # verify stable
-# Both runs required. If using isolated port:
-#   E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
-#   E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
+# Both runs required.
 
 # Everything
 task build:all          # Build Rust + TypeScript

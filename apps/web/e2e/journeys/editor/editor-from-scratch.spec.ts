@@ -30,7 +30,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     // BUILD — add compress node
     await addNodeFromPalette(page, "Compress Images");
 
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(3); // Input + Compress + Output
 
     // EXECUTE — upload and run
@@ -41,11 +41,11 @@ test.describe("editor from-scratch journeys @browser", () => {
     // VERIFY — check output
     await openRunPanel(page);
 
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.locator('[data-testid="download-button"]').click();
+    await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -67,7 +67,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     // BUILD — add resize node
     await addNodeFromPalette(page, "Resize Images");
 
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(3); // Input + Resize + Output
 
     // VERIFY — export and check structure (execution requires width/height
@@ -94,11 +94,11 @@ test.describe("editor from-scratch journeys @browser", () => {
     // VERIFY
     await openRunPanel(page);
 
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
     const downloadPromise = page.waitForEvent("download");
-    await outputFile.locator('[data-testid="download-button"]').click();
+    await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     const downloadPath = await download.path();
@@ -116,7 +116,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     // BUILD — add rename node
     await addNodeFromPalette(page, "Rename Files");
 
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(3); // Input + Rename + Output
 
     // VERIFY — export and check structure (execution requires rename config,
@@ -137,7 +137,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     // BUILD — add convert node
     await addNodeFromPalette(page, "Convert Image Format");
 
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(3); // Input + Convert + Output
 
     // VERIFY — export and check structure (execution requires format selection,
@@ -183,7 +183,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     // First run
     await runEditorWithFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
-    const runButton = page.locator('[data-testid="run-button"]');
+    const runButton = page.getByTestId("run-button");
     await expect(runButton).toHaveAttribute("data-phase", "completed");
 
     // Run again (should reuse the same files)
@@ -194,7 +194,7 @@ test.describe("editor from-scratch journeys @browser", () => {
 
     // Still shows results
     await openRunPanel(page);
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
   });
 });

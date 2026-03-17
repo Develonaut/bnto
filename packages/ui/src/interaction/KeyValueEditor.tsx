@@ -83,6 +83,20 @@ function KeyValueEditor({
     // onChange fires when the user fills in the key.
   }, [pairs, max]);
 
+  const handleUpdateKey = useCallback(
+    (index: number) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      updatePair(index, "key", e.target.value),
+    [updatePair],
+  );
+
+  const handleUpdateValue = useCallback(
+    (index: number) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      updatePair(index, "value", e.target.value),
+    [updatePair],
+  );
+
+  const handleRemovePair = useCallback((index: number) => () => removePair(index), [removePair]);
+
   const atMax = max !== undefined && pairs.length >= max;
 
   return (
@@ -96,7 +110,7 @@ function KeyValueEditor({
         <div key={i} className="flex items-center gap-2">
           <Input
             value={pair.key}
-            onChange={(e) => updatePair(i, "key", e.target.value)}
+            onChange={handleUpdateKey(i)}
             placeholder={keyPlaceholder}
             disabled={disabled}
             wrapperClassName="flex-1"
@@ -104,7 +118,7 @@ function KeyValueEditor({
           <span className="text-muted-foreground text-xs shrink-0">→</span>
           <Input
             value={pair.value}
-            onChange={(e) => updatePair(i, "value", e.target.value)}
+            onChange={handleUpdateValue(i)}
             placeholder={valuePlaceholder}
             disabled={disabled}
             wrapperClassName="flex-1"
@@ -114,7 +128,7 @@ function KeyValueEditor({
               type="button"
               variant="outline"
               icon={<XIcon />}
-              onClick={() => removePair(i)}
+              onClick={handleRemovePair(i)}
               aria-label={`Remove ${pair.key || "row"}`}
             />
           )}
