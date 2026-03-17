@@ -34,6 +34,8 @@ Identify which packages the changed files belong to and invoke the relevant pers
 
 **If changes touch `apps/web/`**, always invoke `/nextjs-expert` alongside `/frontend-engineer` — the Next.js expert catches framework-level performance issues, server/client boundary violations, and rendering strategy mistakes that the frontend engineer's component-level review won't cover.
 
+**If changes affect package structure, public API, directory layout, exports, commands, or README files**, also invoke `/technical-writer` — the technical writer owns all human-facing `README.md` files and will check whether any READMEs need updating to reflect the changes.
+
 **Invoke the matching persona skill(s) now.** Each persona is a domain expert with specialized quality standards, gotchas, and performance patterns that inform a deeper review. If changes span multiple packages, invoke all relevant personas.
 
 ## Step 1: Identify Changed Files
@@ -148,7 +150,15 @@ Quick coverage check — flag if missing:
 
 Flag any missing test coverage.
 
-## Step 11: Stale Artifact & Dead Code Check
+## Step 11: Documentation Check
+
+If `/technical-writer` was activated in Step 0b, it will have already reviewed the READMEs for affected packages. Otherwise, do a quick manual check:
+
+- [ ] **README accuracy** — if the change added/removed/renamed exports, directories, commands, or key types, verify the package's `README.md` still matches reality
+- [ ] **New packages/crates** — any new package or crate must have a `README.md`
+- [ ] **No `.claude/` links in READMEs** — READMEs are for humans, `.claude/` is for agents
+
+## Step 12: Stale Artifact & Dead Code Check
 
 Verify the changes didn't leave stale artifacts or dead code behind:
 
@@ -165,9 +175,9 @@ Search the codebase for references to anything that was changed (class names, pr
 
 For shared packages (`@bnto/ui`, `@bnto/core`, `@bnto/nodes`, `@bnto/editor`), grep for each exported symbol across the monorepo excluding the package's own `src/` directory. If a symbol appears only in its own barrel export and source file — it's dead. **Exception:** compound component sub-exports (e.g., `SelectScrollUpButton`) that are used internally by a sibling export AND exported for external composition are acceptable even without current external consumers.
 
-## Step 12: Fix Violations & Warnings
+## Step 13: Fix Violations & Warnings
 
-**Do not just report issues — fix them.** For every violation or warning found in Steps 2-11, apply the fix immediately. This includes editing files, updating imports, refactoring code, and cleaning up stale artifacts.
+**Do not just report issues — fix them.** For every violation or warning found in Steps 2-12, apply the fix immediately. This includes editing files, updating imports, refactoring code, and cleaning up stale artifacts.
 
 ### Fixing workflow
 
@@ -180,7 +190,7 @@ For shared packages (`@bnto/ui`, `@bnto/core`, `@bnto/nodes`, `@bnto/editor`), g
 - **Notes** — observations or suggestions that aren't violations. Present these to the user for consideration
 - **Architectural questions** — if a fix would require significant restructuring or a design decision, present the issue and recommendation to the user instead of acting unilaterally
 
-## Step 13: Review Summary
+## Step 14: Review Summary
 
 After fixing all issues, present a summary:
 
@@ -210,6 +220,7 @@ Gotchas:                  PASS / FAIL (count)
 Code Quality:             PASS / FAIL (count)
 Test Coverage:            PASS / FAIL (count)
 Stale Artifacts:          PASS / FAIL (count)
+Documentation:            PASS / FAIL / SKIPPED (no structural changes)
 Unit/Integration Tests:   PASS / FAIL — NEVER skip without explicit user permission
 E2E Tests:                PASS / FAIL — NEVER skip without explicit user permission
 ```
