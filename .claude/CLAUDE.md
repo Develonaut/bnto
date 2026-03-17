@@ -256,7 +256,8 @@ Persona skills are domain experts that can be activated to adopt specialized kno
 | Security Engineer  | Cross-cutting — trust boundaries, attack surfaces, defense-in-depth                                               | `/security-engineer`  |
 | Quality Engineer   | `apps/web/e2e/`, `.claude/journeys/` — E2E testing, journey design, screenshot regression, test infrastructure    | `/quality-engineer`   |
 | Workflow Expert    | Recipe design, competitive analysis, multi-node compositions, custom recipe journey tests                         | `/workflow-expert`    |
+| Technical Writer   | Package READMEs — accuracy audits, structural documentation, staleness prevention                                 | `/technical-writer`   |
 
 | Project Manager | `.claude/PLAN.md`, `.claude/ROADMAP.md` — roadmap alignment, sprint planning | `/project-manager` |
 
-The `/groom` workflow skill invokes `/project-manager` automatically to run a full plan review.
+The `/groom` workflow skill invokes `/project-manager` automatically to run a full plan review. The `/code-review` and `/pre-commit` skills invoke `/technical-writer` when changes affect package structure or public API.

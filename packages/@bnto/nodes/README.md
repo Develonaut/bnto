@@ -1,0 +1,116 @@
+# @bnto/nodes
+
+Engine-agnostic node definitions — the TypeScript mirror of what the Rust engine knows.
+
+## Overview
+
+`@bnto/nodes` bridges the Rust engine and TypeScript consumers. Most of its code is **generated** from the engine's self-describing catalog. Hand-written code is limited to type interfaces, predefined recipe compositions, and schema helpers.
+
+Consumed by `@bnto/core`, `@bnto/editor`, and `apps/web/`. Never imports from those packages — it's a leaf dependency.
+
+## Directory Structure
+
+```
+src/
+├── generated/                  # Auto-generated from engine catalog (DO NOT EDIT)
+│   ├── catalog.ts              # NODE_TYPES, NODE_TYPE_INFO, PROCESSORS, PROCESSOR_MAP
+│   ├── schemas.ts              # Zod schemas + NodeSchemaDefinition per node type
+│   └── definitionSchema.ts     # JSON Schema for .bnto.json validation
+├── recipes/                    # Predefined recipe compositions (hand-written)
+│   ├── compressImages.ts
+│   ├── resizeImages.ts
+│   ├── convertImageFormat.ts
+│   ├── generateThumbnails.ts
+│   ├── optimizeImagesForWeb.ts
+│   ├── cleanCsv.ts
+│   ├── renameCsvColumns.ts
+│   ├── renameFiles.ts
+│   ├── defaultInputNode.ts
+│   └── defaultOutputNode.ts
+├── schemas/                    # Schema registry + helpers (hand-written)
+│   ├── registry.ts             # NODE_SCHEMA_DEFS lookup
+│   ├── getNodeSchema.ts
+│   ├── getRequiredParams.ts
+│   ├── getVisibleParams.ts
+│   └── inferFieldType.ts
+├── definition.ts               # Definition, Edge, Port, Metadata interfaces
+├── recipe.ts                   # Recipe, AcceptSpec, SEOSpec interfaces
+├── validate.ts                 # Structural validation
+└── index.ts                    # Public exports
+scripts/
+└── generate-from-catalog.ts    # Codegen script
+```
+
+## Generated vs Hand-Written
+
+| Source                   | Files                                                                           | How It Gets There                                   |
+| ------------------------ | ------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **Generated**            | `generated/catalog.ts`, `generated/schemas.ts`, `generated/definitionSchema.ts` | Codegen from `engine/catalog.snapshot.json`         |
+| **Hand-written types**   | `definition.ts`, `recipe.ts`, `execution.ts`                                    | Core interfaces shared across TS consumers          |
+| **Hand-written recipes** | `recipes/*.ts`                                                                  | Predefined compositions referencing generated types |
+| **Hand-written helpers** | `schemas/*.ts`, `validate*.ts`, node CRUD ops                                   | Logic that reads from generated data                |
+
+## Codegen Pipeline
+
+```
+Rust engine (NodeProcessor::metadata())
+    ↓ (registry self-describes at build time)
+engine/catalog.snapshot.json
+    ↓ (scripts/generate-from-catalog.ts)
+src/generated/*.ts
+```
+
+The engine's `NodeRegistry` iterates all registered processors, serializes their metadata, and writes `catalog.snapshot.json`. The codegen script transforms that into TypeScript constants, Zod schemas, and JSON Schema.
+
+## Key Types
+
+- **`Definition`** — recursive tree structure representing a `.bnto.json` recipe. Nodes contain children (for containers), edges, and metadata
+- **`Recipe`** — a `Definition` plus display metadata (name, slug, description, accept spec, SEO)
+- **`NodeTypeName`** — union of all engine-backed node type strings (e.g. `"image"`, `"spreadsheet"`, `"file-system"`)
+- **`NODE_TYPE_INFO`** — per-type metadata: label, category, isContainer, icon
+- **`PROCESSORS`** — flat list of all processor metadata (type + operation + parameters)
+
+## Predefined Recipes
+
+10 recipes ship with bnto, each composing engine nodes into a ready-to-use pipeline:
+
+| Recipe               | Slug                      | Nodes                                          |
+| -------------------- | ------------------------- | ---------------------------------------------- |
+| Compress Images      | `compress-images`         | input → image:compress → output                |
+| Resize Images        | `resize-images`           | input → image:resize → output                  |
+| Convert Image Format | `convert-image-format`    | input → image:convert → output                 |
+| Generate Thumbnails  | `generate-thumbnails`     | input → image:resize → output                  |
+| Optimize for Web     | `optimize-images-for-web` | input → image:resize → image:compress → output |
+| Clean CSV            | `clean-csv`               | input → spreadsheet:clean → output             |
+| Rename CSV Columns   | `rename-csv-columns`      | input → spreadsheet:rename-columns → output    |
+| Rename Files         | `rename-files`            | input → file-system:rename → output            |
+
+Access via `RECIPES` array or `getRecipeBySlug(slug)`.
+
+## Development
+
+```bash
+task ui:build       # TypeScript compilation
+task ui:test        # Run tests (Vitest)
+```
+
+To regenerate from the engine catalog:
+
+```bash
+npx tsx packages/@bnto/nodes/scripts/generate-from-catalog.ts
+```
+
+## Usage
+
+```tsx
+import { RECIPES, getRecipeBySlug, NODE_TYPE_INFO, isContainerNodeType } from "@bnto/nodes";
+
+// Look up a predefined recipe
+const recipe = getRecipeBySlug("compress-images");
+
+// Check node type metadata
+const info = NODE_TYPE_INFO["image"]; // { label, category, isContainer, icon }
+
+// Type guards
+isContainerNodeType("loop"); // true — reads from generated NODE_TYPE_INFO
+```
