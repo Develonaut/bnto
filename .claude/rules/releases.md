@@ -37,7 +37,7 @@ Tag pushed (v*.*.*)
   │
   ├─ Release Gate (quality check — all jobs must pass)
   │
-  ├─ Promote Vercel (preview → production) — stable only
+  ├─ Deploy Vercel Production (separate build with prod env vars) — stable only
   │
   ├─ Deploy Convex (functions → production) — stable only
   │
@@ -75,7 +75,7 @@ Pre-1.0 (`v0.x.y`): minor = features, patch = fixes. Breaking changes are expect
 
 ## Promoting to Production
 
-For **stable tags**, promotion is automatic — the release pipeline promotes the Vercel preview to production and deploys Convex functions after the release gate passes.
+For **stable tags**, deployment is automatic — the release pipeline builds a separate production deployment (with production env vars from Vercel Dashboard) and deploys Convex functions after the release gate passes.
 
 For **pre-release tags** (beta/rc), no production deploy happens. If you need to manually promote a preview:
 
@@ -136,6 +136,21 @@ Artifacts uploaded on every release:
 - `e2e-report-<tag>` — Full Playwright HTML report (14-day retention)
 - `e2e-results-<tag>` — Test result traces (14-day retention)
 - Lighthouse results — Uploaded to temporary public storage
+
+---
+
+## Environment Variables
+
+`NEXT_PUBLIC_*` values are managed in the **Vercel Dashboard** (Project Settings > Environment Variables), scoped per environment:
+
+| Variable                      | Preview                    | Production                     |
+| ----------------------------- | -------------------------- | ------------------------------ |
+| `NEXT_PUBLIC_CONVEX_URL`      | `zealous-canary-422` (dev) | `gregarious-donkey-712` (prod) |
+| `NEXT_PUBLIC_CONVEX_SITE_URL` | `zealous-canary-422` (dev) | `gregarious-donkey-712` (prod) |
+
+The release workflow uses `vercel pull --environment=preview` and `vercel pull --environment=production` to fetch the correct values at build time. No Convex URLs are hardcoded in the workflow file.
+
+To update: Vercel Dashboard > bnto-web > Settings > Environment Variables.
 
 ---
 

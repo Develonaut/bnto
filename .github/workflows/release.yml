@@ -13,10 +13,6 @@ concurrency:
   group: release-${{ github.ref_name }}
   cancel-in-progress: false # Never cancel a release in progress
 
-env:
-  NEXT_PUBLIC_CONVEX_URL: https://zealous-canary-422.convex.cloud
-  NEXT_PUBLIC_CONVEX_SITE_URL: https://zealous-canary-422.convex.site
-
 jobs:
   # ── Job 1a: Rust CI (fmt + lint + unit + WASM) ──
   rust:
@@ -162,9 +158,6 @@ jobs:
 
       - name: Build with Vercel
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          NEXT_PUBLIC_CONVEX_URL: ${{ env.NEXT_PUBLIC_CONVEX_URL }}
-          NEXT_PUBLIC_CONVEX_SITE_URL: ${{ env.NEXT_PUBLIC_CONVEX_SITE_URL }}
 
       - name: Deploy preview
         id: deploy
@@ -289,29 +282,48 @@ jobs:
           fi
           echo "All release checks passed."
 
-  # ── Job 6: Promote Vercel Preview to Production (stable only) ──
-  promote-production:
-    name: Promote to Production (Vercel)
+  # ── Job 6: Deploy to Production (Vercel) ──
+  # Separate build with production env vars from Vercel Dashboard.
+  # Preview uses dev Convex; production uses prod Convex.
+  # Env vars are managed in Vercel Dashboard (per-environment), not hardcoded.
+  deploy-production:
+    name: Deploy to Production (Vercel)
     runs-on: ubuntu-latest
-    needs: [release-gate, deploy-preview]
+    needs: [release-gate]
     if: needs.release-gate.result == 'success' && !contains(github.ref_name, '-')
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
-      - name: Install Vercel CLI
-        run: npm i -g vercel
+      - uses: actions/checkout@v4
 
-      - name: Promote preview to production
-        run: |
-          vercel promote ${{ needs.deploy-preview.outputs.preview-url }} \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=${{ secrets.VERCEL_ORG_ID }} \
-            --yes
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel
+
+      - name: Pull Vercel environment (production)
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build for production
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to production
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
   # ── Job 7: Deploy Convex to Production (stable only, after Vercel) ──
   convex-deploy:
     name: Convex Deploy (prod)
     runs-on: ubuntu-latest
-    needs: [promote-production]
-    if: needs.promote-production.result == 'success'
+    needs: [deploy-production]
+    if: needs.deploy-production.result == 'success'
     defaults:
       run:
         working-directory: packages/@bnto/backend
@@ -338,13 +350,13 @@ jobs:
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [release-gate, deploy-preview, promote-production, convex-deploy]
+    needs: [release-gate, deploy-preview, deploy-production, convex-deploy]
     if: |
       always() &&
       needs.release-gate.result == 'success' &&
       (
-        (needs.promote-production.result == 'success' && needs.convex-deploy.result == 'success') ||
-        (needs.promote-production.result == 'skipped' && needs.convex-deploy.result == 'skipped')
+        (needs.deploy-production.result == 'success' && needs.convex-deploy.result == 'success') ||
+        (needs.deploy-production.result == 'skipped' && needs.convex-deploy.result == 'skipped')
       )
     steps:
       - uses: actions/checkout@v4
@@ -359,7 +371,7 @@ jobs:
           body: |
             ## Deployed
 
-            - Vercel: ${{ needs.promote-production.result == 'success' && 'Production promoted' || 'Skipped (pre-release)' }}
+            - Vercel: ${{ needs.deploy-production.result == 'success' && 'Production deployed' || 'Skipped (pre-release)' }}
             - Convex: ${{ needs.convex-deploy.result == 'success' && 'Production deployed' || 'Skipped (pre-release)' }}
             - Preview URL: ${{ needs.deploy-preview.outputs.preview-url }}
 
