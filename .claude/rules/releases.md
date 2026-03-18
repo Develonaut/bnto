@@ -35,12 +35,19 @@ Tag pushed (v*.*.*)
   │
   ├─ Lighthouse (performance/a11y/best-practices + SEO as warn on preview)
   │
-  ├─ Release Gate
-  │    ├─ All jobs must pass
-  │    └─ Creates GitHub Release (pre-release if tag contains `-`)
+  ├─ Release Gate (quality check — all jobs must pass)
   │
-  └─ Convex Deploy (prod) — stable releases only, skipped for beta/rc
+  ├─ Promote Vercel (preview → production) — stable only
+  │
+  ├─ Deploy Convex (functions → production) — stable only
+  │
+  └─ Create GitHub Release (after production is live)
+       └─ Pre-release if tag contains `-`
 ```
+
+**Stable tags** deploy to production automatically — Vercel first, then Convex. The GitHub Release is created only after both deploys succeed, so "released" means "actually live."
+
+**Pre-release tags** (beta/rc) skip production deploys. The GitHub Release is created after the release gate passes, marked as pre-release.
 
 **Workflow file:** `.github/workflows/release.yml`
 
@@ -68,12 +75,12 @@ Pre-1.0 (`v0.x.y`): minor = features, patch = fixes. Breaking changes are expect
 
 ## Promoting to Production
 
-Promotion is manual. After the release gate passes:
+For **stable tags**, promotion is automatic — the release pipeline promotes the Vercel preview to production and deploys Convex functions after the release gate passes.
+
+For **pre-release tags** (beta/rc), no production deploy happens. If you need to manually promote a preview:
 
 1. **Vercel Dashboard** — Find the preview deployment, click "Promote to Production"
 2. **Or via CLI** — `vercel promote <preview-url> --token=... --scope=<org>`
-
-Convex production deploys happen as part of this pipeline (stable tags only — skipped for beta/rc).
 
 ---
 
@@ -99,8 +106,7 @@ cd packages/@bnto/backend && npx convex deploy --yes
 
 1. Fix the bug on `main` via normal PR flow
 2. After merge, tag the fix: `task release:tag -- v1.0.1`
-3. Pipeline runs — preview + E2E + Lighthouse
-4. Promote to production when green
+3. Pipeline runs — preview + E2E + Lighthouse + auto-deploy to production
 
 No cherry-picking or release branches needed. `main` is always the source of truth.
 
@@ -137,5 +143,5 @@ Artifacts uploaded on every release:
 
 1. **Only tag `main`.** Never tag a feature branch.
 2. **Tags are immutable.** Once pushed, don't delete and recreate. If a release is broken, fix forward with a new patch tag.
-3. **CI must pass before promotion.** The release gate is the quality bar.
-4. **Convex deploys with the release.** Convex production functions deploy after the release gate passes (stable tags only — skipped for beta/rc). Pre-release tags verify against dev Convex.
+3. **CI must pass before deploy.** The release gate is the quality bar — production deploys only happen after it passes.
+4. **Deploy first, release second.** Stable tags auto-deploy Vercel + Convex to production. The GitHub Release is created only after both succeed. Pre-release tags skip production deploys.
