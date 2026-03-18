@@ -50,14 +50,6 @@ describe("createDefinitionService", () => {
     expect(service.updateParams("fake", { quality: 90 })).toBe(false);
   });
 
-  it("markDirty and resetDirty toggle dirty flag", () => {
-    expect(storeApi.getState().isDirty).toBe(false);
-    service.markDirty();
-    expect(storeApi.getState().isDirty).toBe(true);
-    service.resetDirty();
-    expect(storeApi.getState().isDirty).toBe(false);
-  });
-
   it("setRecipeMetadata updates metadata", () => {
     service.setRecipeMetadata({
       id: "custom",

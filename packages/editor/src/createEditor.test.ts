@@ -75,9 +75,9 @@ describe("createEditor", () => {
 
   it("returns false when removing an I/O node", () => {
     const editor = createEditor();
-    const inputNode = editor.getState().nodes.find(
-      (n) => editor.getState().configs[n.id]?.nodeType === "input",
-    );
+    const inputNode = editor
+      .getState()
+      .nodes.find((n) => editor.getState().configs[n.id]?.nodeType === "input");
     const removed = editor.nodes.removeNode(inputNode!.id);
     expect(removed).toBe(false);
   });
@@ -122,15 +122,6 @@ describe("createEditor", () => {
     // May have validation errors for incomplete recipe — that's ok
     expect(result).toBeDefined();
     expect(result.errors).toBeDefined();
-  });
-
-  it("marks and resets dirty flag via definition client", () => {
-    const editor = createEditor();
-    expect(editor.getState().isDirty).toBe(false);
-    editor.definition.markDirty();
-    expect(editor.getState().isDirty).toBe(true);
-    editor.definition.resetDirty();
-    expect(editor.getState().isDirty).toBe(false);
   });
 
   // --- history client ---

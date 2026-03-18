@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useStore } from "zustand";
 import { recipesStore } from "../stores/recipesStore";
-import { storedRecipeToListItem } from "../transforms/localRecipe";
+import { recipeToListItem } from "../transforms/recipe";
 
 /**
  * List all recipes — reactive, store-backed.
@@ -16,7 +16,7 @@ export function useRecipes() {
   const data = useMemo(
     () =>
       Object.values(recipes)
-        .map(storedRecipeToListItem)
+        .map(recipeToListItem)
         .sort((a, b) => b.updatedAt - a.updatedAt),
     [recipes],
   );

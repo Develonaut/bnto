@@ -1,9 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { storedRecipeToListItem } from "./localRecipe";
-import type { StoredRecipe } from "../types";
+import { recipeToListItem } from "./recipe";
+import type { Recipe } from "../types";
 
-describe("storedRecipeToListItem", () => {
-  const recipe: StoredRecipe = {
+describe("recipeToListItem", () => {
+  const recipe: Recipe = {
+    id: "recipe-1",
+    name: "My Recipe",
+    type: "group",
+    version: "0.1.0",
     definition: {
       id: "root",
       type: "group",
@@ -61,40 +65,39 @@ describe("storedRecipeToListItem", () => {
         },
       ],
     },
-    metadata: { id: "recipe-1", name: "My Recipe", type: "group", version: "0.1.0" },
     savedAt: 1710000000000,
     syncedAt: null,
   };
 
   it("maps id from metadata", () => {
-    expect(storedRecipeToListItem(recipe).id).toBe("recipe-1");
+    expect(recipeToListItem(recipe).id).toBe("recipe-1");
   });
 
   it("maps name from metadata", () => {
-    expect(storedRecipeToListItem(recipe).name).toBe("My Recipe");
+    expect(recipeToListItem(recipe).name).toBe("My Recipe");
   });
 
   it("counts nodes from definition", () => {
-    expect(storedRecipeToListItem(recipe).nodeCount).toBe(4);
+    expect(recipeToListItem(recipe).nodeCount).toBe(4);
   });
 
   it("maps savedAt to updatedAt", () => {
-    expect(storedRecipeToListItem(recipe).updatedAt).toBe(1710000000000);
+    expect(recipeToListItem(recipe).updatedAt).toBe(1710000000000);
   });
 
   it("includes syncedAt", () => {
-    expect(storedRecipeToListItem(recipe).syncedAt).toBeNull();
+    expect(recipeToListItem(recipe).syncedAt).toBeNull();
 
     const synced = { ...recipe, syncedAt: 1710000001000 };
-    expect(storedRecipeToListItem(synced).syncedAt).toBe(1710000001000);
+    expect(recipeToListItem(synced).syncedAt).toBe(1710000001000);
   });
 
   it("extracts processing node type labels (excludes I/O)", () => {
-    expect(storedRecipeToListItem(recipe).nodeTypes).toEqual(["Image", "File System"]);
+    expect(recipeToListItem(recipe).nodeTypes).toEqual(["Image", "File System"]);
   });
 
   it("deduplicates node types", () => {
-    const dupes: StoredRecipe = {
+    const dupes: Recipe = {
       ...recipe,
       definition: {
         ...recipe.definition,
@@ -135,15 +138,15 @@ describe("storedRecipeToListItem", () => {
         ],
       },
     };
-    expect(storedRecipeToListItem(dupes).nodeTypes).toEqual(["Image", "File System"]);
+    expect(recipeToListItem(dupes).nodeTypes).toEqual(["Image", "File System"]);
   });
 
   it("handles missing nodes array", () => {
-    const noNodes: StoredRecipe = {
+    const noNodes: Recipe = {
       ...recipe,
       definition: { ...recipe.definition, nodes: undefined },
     };
-    expect(storedRecipeToListItem(noNodes).nodeCount).toBe(0);
-    expect(storedRecipeToListItem(noNodes).nodeTypes).toEqual([]);
+    expect(recipeToListItem(noNodes).nodeCount).toBe(0);
+    expect(recipeToListItem(noNodes).nodeTypes).toEqual([]);
   });
 });

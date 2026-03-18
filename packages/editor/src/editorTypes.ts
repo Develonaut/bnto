@@ -57,11 +57,6 @@ interface DefinitionService {
   createBlank(): void;
   updateParams(nodeId: string, params: Record<string, unknown>): boolean;
   setRecipeMetadata(metadata: RecipeMetadata): void;
-  markDirty(): void;
-  resetDirty(): void;
-  setLastSavedAt(ts: number | null): void;
-  setSyncedAt(ts: number | null): void;
-  setIsSyncing(syncing: boolean): void;
   revalidate(): void;
   exportAsDefinition(): Definition;
 }

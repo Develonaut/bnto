@@ -70,7 +70,7 @@ function useEditorShortcuts() {
     if (result.deselect) editor.nodes.selectNode(null);
   }, [escapePressed, editor]);
 
-  // --- Cmd+S / Ctrl+S: block browser "Save Page As" (autosave handles persistence) ---
+  // --- Cmd+S / Ctrl+S: block browser "Save Page As" ---
   // --- Export: Cmd+D / Ctrl+D (preventDefault to block browser Bookmark) ---
   // --- Help: Cmd+/ / Ctrl+/ (toggle help dialog via panel system) ---
   const handleDocumentKeys = useCallback(

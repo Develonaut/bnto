@@ -99,7 +99,7 @@ describe("createEditorStore — history", () => {
 
     it("marks dirty after undo", () => {
       addNodeViaStore(store, "image");
-      state(store).resetDirty();
+      store.setState({ isDirty: false });
 
       state(store).undo();
       expect(state(store).isDirty).toBe(true);

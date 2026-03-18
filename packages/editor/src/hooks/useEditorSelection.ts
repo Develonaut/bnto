@@ -9,7 +9,7 @@
  * useEditorCanvas). All other consumers should read `selectedNodeId`
  * via `editor.nodes.useNodes()` or `useEditorStoreApi()`.
  *
- * Must be used inside a ReactFlowProvider + EditorRoot.
+ * Must be used inside an EditorProvider.
  */
 
 "use client";

@@ -95,28 +95,6 @@ describe("createEditorStore", () => {
     });
   });
 
-  // --- markDirty ---
-
-  describe("markDirty", () => {
-    it("sets isDirty to true", () => {
-      expect(state(store).isDirty).toBe(false);
-      state(store).markDirty();
-      expect(state(store).isDirty).toBe(true);
-    });
-  });
-
-  // --- resetDirty ---
-
-  describe("resetDirty", () => {
-    it("marks as clean", () => {
-      state(store).markDirty();
-      expect(state(store).isDirty).toBe(true);
-
-      state(store).resetDirty();
-      expect(state(store).isDirty).toBe(false);
-    });
-  });
-
   // --- Execution state ---
 
   describe("execution state", () => {
