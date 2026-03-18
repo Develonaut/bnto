@@ -1113,6 +1113,10 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
 **Priority: Low.** Lighthouse CI currently runs on every PR via `.github/workflows/lighthouse.yml`. It's valuable for release verification but adds latency to the normal dev loop without catching issues that change frequently. Move Lighthouse to release-only: keep it in `release.yml` (already there), remove the standalone `lighthouse.yml` workflow (or make it `workflow_dispatch` only so it can be triggered manually). The `task seo:audit` local command remains for on-demand developer use.
 
+### Triage: TS2353 errors on `reducedMotion` in custom Playwright fixtures
+
+**Priority: Triage.** Files using `test.use({ reducedMotion: "reduce" })` with the custom `test` from `e2e/fixtures.ts` produce TS2353 errors — `reducedMotion` isn't in the extended fixture type. Build passes because Turbopack doesn't typecheck `e2e/` files. Fix: remove per-file `test.use` calls (already set globally in `playwright.config.ts` via `contextOptions`) or widen the fixture type. Affected: `e2e/editor/node-progress.spec.ts`, `e2e/journeys/auth/auth-behavior.spec.ts`, `e2e/journeys/auth/auth-lifecycle.spec.ts`, `e2e/pages/site-navigation.spec.ts`.
+
 ---
 
 ## Reference
