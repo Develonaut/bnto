@@ -1,8 +1,7 @@
 name: Lighthouse CI
 
 on:
-  pull_request:
-    branches: [main]
+  workflow_dispatch: # Manual trigger only — Lighthouse runs automatically in release.yml
 
 # Cancel in-progress runs for the same PR
 concurrency:
