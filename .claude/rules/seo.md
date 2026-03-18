@@ -58,7 +58,7 @@ Each tool page includes `WebApplication` JSON-LD with `price: "0"` and `featureL
 
 ## LLM & AI Search Discovery
 
-Tool pages include a factual description section (what/accepts/outputs/costs) using semantic HTML (`<dl>`, `<dt>`, `<dd>`). `llms.txt` and `llms-full.txt` in `public/` describe the site for AI crawlers. `robots.txt` explicitly allows all AI crawlers (GPTBot, ClaudeBot, PerplexityBot, etc.).
+Tool pages include a factual description section (what/accepts/outputs/costs) using semantic HTML (`<dl>`, `<dt>`, `<dd>`). `/llms.txt` and `/llms-full.txt` are auto-generated route handlers (`app/llms.txt/route.ts`, `app/llms-full.txt/route.ts`) that read from the `RECIPES` registry in `@bnto/nodes` — no manual editing needed when adding new recipes. `robots.txt` explicitly allows all AI crawlers (GPTBot, ClaudeBot, PerplexityBot, etc.).
 
 ---
 
@@ -89,8 +89,7 @@ Tool pages include a factual description section (what/accepts/outputs/costs) us
 7. h1 matches exact target query from `seo-monetization.md` (private business docs, see `BNTO_PRIVATE_DOCS_PATH`)
 8. Page has plain-language description section (what/accepts/outputs/costs)
 9. JSON-LD `featureList` populated
-10. Entry added to `public/llms.txt`
-11. Run `pnpm build` — static page generates without errors
+10. Verify `pnpm build` succeeds — `llms.txt` and `llms-full.txt` auto-generate from `RECIPES`
 
 ### Runtime
 

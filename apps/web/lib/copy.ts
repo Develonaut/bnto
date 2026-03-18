@@ -5,8 +5,8 @@
  * Every consumer of marketing copy (layout metadata, footer, gallery,
  * JSON-LD, llms.txt) should reference or match these strings.
  *
- * When updating copy here, also update `public/llms.txt` (static file,
- * can't import JS).
+ * The `/llms.txt` and `/llms-full.txt` routes auto-generate from `RECIPES`
+ * in `@bnto/nodes` — no manual sync needed.
  */
 
 /** Site title shown in browser tab and SERP. */
