@@ -47,11 +47,11 @@ Use these terms consistently across all code, docs, and UI copy.
 
 ## Recipe Classification
 
-| Type                                   | Access                                                                                                                                              |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Predefined recipes** (browser nodes) | Always free. No account needed. Run on tool pages.                                                                                                  |
-| **Custom recipes** (browser nodes)     | Requires free account to create (editor is AccountGated for unauth). Free to create, run, export. Save up to 3. Pro for unlimited saves or sharing. |
-| **Any recipe with server nodes**       | Pro required for execution.                                                                                                                         |
+| Type                                   | Access                                                                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Predefined recipes** (browser nodes) | Always free. No account needed. Run on tool pages.                                                                             |
+| **Custom recipes** (browser nodes)     | Free for all users. No account needed. Create, run, export, auto-save locally (unlimited). Sign in for cloud sync and sharing. |
+| **Any recipe with server nodes**       | Pro required for execution.                                                                                                    |
 
 ---
 
@@ -62,12 +62,13 @@ Use these terms consistently across all code, docs, and UI copy.
 | Action                            | Unauth                                | Free Account                               | Pro                             |
 | --------------------------------- | ------------------------------------- | ------------------------------------------ | ------------------------------- |
 | Run predefined recipes (browser)  | Unlimited                             | Unlimited                                  | Unlimited                       |
-| Recipe editor (create custom)     | No (AccountGated)                     | Yes                                        | Yes                             |
+| Recipe editor (create custom)     | Yes (auto-saves locally)              | Yes                                        | Yes                             |
 | Export `.bnto.json`               | Yes (from tool page)                  | Yes                                        | Yes                             |
-| Save recipes to account           | No                                    | **3 recipes**                              | Unlimited                       |
+| Save recipes locally              | Unlimited (localStorage)              | Unlimited (localStorage)                   | Unlimited (localStorage)        |
+| Save recipes to cloud             | No                                    | Unlimited                                  | Unlimited                       |
 | Execution history (browser-local) | **10 entries** (read-only, no re-run) | 10 entries (plus server-synced)            | 10 entries (plus server-synced) |
 | Execution history (server-synced) | No                                    | **7-day retention** (re-run, cross-device) | **30-day retention**            |
-| `/my-recipes` dashboard           | Bare-bones (read-only history list)   | Full (re-run, save, create)                | Full + sharing, cloud export    |
+| `/my-recipes` dashboard           | Local recipes + upsell banner         | Full (local + cloud-synced)                | Full + sharing, cloud export    |
 | File size limit                   | 25 MB                                 | 25 MB                                      | 500 MB                          |
 | Server-node execution             | No                                    | No                                         | Usage-based                     |
 | Team sharing                      | No                                    | No                                         | Yes (up to 5 members)           |
@@ -107,11 +108,12 @@ Upgrade prompts trigger at natural value moments — never on artificial browser
 ## Unauthenticated Users
 
 - Run all predefined browser recipes, unlimited
-- **No recipe editor access** — custom recipe creation requires a free account (AccountGated)
+- **Full recipe editor access** — create custom recipes, auto-saved to localStorage
+- **Unlimited local recipe saves** — localStorage is the user's machine, costs us $0
 - Export `.bnto.json` from tool page results
-- **Browser-local execution history** — last 10 runs tracked in IndexedDB. Read-only list on `/my-recipes` (no re-run, no details). Deliberately minimal to create upgrade pressure
-- `/my-recipes` accessible but bare-bones — read-only history list, AccountGated Saved tab, conversion banner
-- No server-side persistence — Convex-backed history, saved recipes, and cross-device sync require an account
+- **Browser-local execution history** — last 10 runs tracked in IndexedDB
+- `/my-recipes` accessible — local recipes with upsell banner ("Sign in to sync across devices")
+- No server-side persistence — cloud sync, cross-device access, and shared recipes require an account
 - No server-side session — browser execution is 100% client-side
 
 ---

@@ -2,6 +2,32 @@ import { ConvexError, v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAppUserId } from "./_helpers/auth";
 
+/** Node types excluded from recipe tags (I/O declarations + control containers). */
+const EXCLUDED_NODE_TYPES = new Set(["input", "output", "group", "loop", "parallel"]);
+
+/** Node type name → display label. Kept in sync with @bnto/nodes NODE_TYPE_INFO. */
+const NODE_TYPE_LABELS: Record<string, string> = {
+  image: "Image",
+  spreadsheet: "Spreadsheet",
+  "file-system": "File System",
+  transform: "Transform",
+  "http-request": "HTTP Request",
+  "shell-command": "Shell Command",
+  "edit-fields": "Edit Fields",
+};
+
+/** Extract unique processing node type labels from a definition's nodes. */
+function extractNodeTypeLabels(nodes: Array<{ type?: string }>): string[] {
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  for (const node of nodes) {
+    if (!node.type || seen.has(node.type) || EXCLUDED_NODE_TYPES.has(node.type)) continue;
+    seen.add(node.type);
+    labels.push(NODE_TYPE_LABELS[node.type] ?? node.type);
+  }
+  return labels;
+}
+
 /** List all recipes for the current user. */
 export const list = query({
   args: {},
@@ -12,10 +38,13 @@ export const list = query({
       .query("recipes")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
+    const nodes = (r: (typeof recipes)[number]) =>
+      Array.isArray(r.definition?.nodes) ? r.definition.nodes : [];
     return recipes.map((r) => ({
       _id: r._id,
       name: r.name,
-      nodeCount: Array.isArray(r.definition?.nodes) ? r.definition.nodes.length : 0,
+      nodeCount: nodes(r).length,
+      nodeTypes: extractNodeTypeLabels(nodes(r)),
       updatedAt: r.updatedAt,
     }));
   },
