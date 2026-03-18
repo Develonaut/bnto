@@ -65,6 +65,8 @@ const RECIPES = [
   },
 ] as const;
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("pipeline smoke — all 6 bntos @browser", () => {
   for (const recipe of RECIPES) {
     test(`${recipe.slug}: upload → run → download`, async ({ page }) => {

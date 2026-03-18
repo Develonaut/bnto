@@ -15,6 +15,8 @@ import {
  * Tests CSV column renaming running 100% client-side via Rust→WASM.
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("rename-csv-columns — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
     await navigateToRecipe(page, "rename-csv-columns", "Rename CSV Columns Online Free");

@@ -16,6 +16,8 @@ const FIXTURES_DIR = path.resolve(__dirname, "../../../../test-fixtures/images")
  * Events are captured via window.__bnto_telemetry__ (no PostHog needed).
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("recipe telemetry events @browser", () => {
   test("full lifecycle fires files_added, run_started, run_completed, result_downloaded", async ({
     page,

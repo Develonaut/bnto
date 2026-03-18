@@ -47,6 +47,8 @@ async function compressAtPreset(page: Page, presetIndex: number): Promise<number
   return fs.readFileSync(dlPath!).length;
 }
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("compress-images — configuration @browser", () => {
   test("compression presets: Maximum produces smaller output than Light", async ({ page }) => {
     const sizeLight = await compressAtPreset(page, 0); // Light (compression=20)

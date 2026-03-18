@@ -26,6 +26,8 @@ const PUBLIC_ROUTES = [
 
 /* ── Desktop ─────────────────────────────────────────────────── */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("Site navigation — desktop @browser", () => {
   for (const route of PUBLIC_ROUTES) {
     test(`${route.name} renders without errors`, async ({ page }) => {

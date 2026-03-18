@@ -56,6 +56,8 @@ const TIER_1_SLUGS = [
   },
 ] as const;
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("SEO metadata — all Tier 1 slugs @browser", () => {
   for (const entry of TIER_1_SLUGS) {
     test(`/${entry.slug}: correct title and meta description`, async ({ page }) => {

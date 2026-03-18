@@ -1,11 +1,17 @@
 import { test as base, expect } from "@playwright/test";
 import { setupEnhancedPage } from "./fixtures/enhancedPage";
-import { setupErrorCapture, hideDevToolbars, checkErrorOverlay } from "./fixtures/errorCapture";
+import {
+  setupErrorCapture,
+  hideDevToolbars,
+  checkErrorOverlay,
+  KNOWN_ERROR_PATTERNS,
+  type KnownErrorPattern,
+} from "./fixtures/errorCapture";
 
 /**
  * Shared E2E test fixture with automatic error capture and selector enforcement.
  *
- * Four automatic behaviors:
+ * Five automatic behaviors:
  *
  * 1. **Enhanced getByTestId** -- supports modifier args (`:visible`, `[data-phase="..."]`).
  *    Other locator methods emit a deprecation warning once per method per test.
@@ -16,17 +22,29 @@ import { setupErrorCapture, hideDevToolbars, checkErrorOverlay } from "./fixture
  *
  * 4. **Next.js error overlay detection** -- fails the test if real errors occurred.
  *
- * Usage: import { test, expect } from "./fixtures" instead of "@playwright/test"
+ * 5. **Expected error silencing** -- tests opt into silencing known error patterns:
+ *
+ *    ```ts
+ *    test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+ *    ```
+ *
+ *    Without this, ALL console errors are captured and logged. Strict by default.
  */
-export const test = base.extend<{ errors: string[] }>({
+export const test = base.extend<{
+  errors: string[];
+  expectedErrors: KnownErrorPattern[];
+}>({
+  expectedErrors: [[], { option: true }],
+
   page: async ({ page }, use) => {
     setupEnhancedPage(page);
     await use(page);
   },
 
   errors: [
-    async ({ page }, use) => {
-      const errors = setupErrorCapture(page);
+    async ({ page, expectedErrors }, use) => {
+      const silenced = expectedErrors.map((key) => KNOWN_ERROR_PATTERNS[key]);
+      const errors = setupErrorCapture(page, silenced);
       await hideDevToolbars(page);
 
       await use(errors);
@@ -38,3 +56,4 @@ export const test = base.extend<{ errors: string[] }>({
 });
 
 export { expect };
+export type { KnownErrorPattern };

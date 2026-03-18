@@ -8,6 +8,8 @@ import { navigateToRecipe } from "../../helpers";
  * messages without crashing, and that the "Try Again" reset works.
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("compress-images — error handling @browser", () => {
   test("unsupported file: shows error, no crash", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");

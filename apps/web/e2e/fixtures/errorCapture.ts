@@ -2,15 +2,41 @@ import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
 /**
+ * Named error patterns that tests can opt into silencing.
+ *
+ * Tests silence specific patterns via the `expectedErrors` fixture:
+ *
+ *   test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+ *
+ * This keeps error capture strict by default — only tests that
+ * explicitly declare expected errors will have them filtered.
+ */
+export const KNOWN_ERROR_PATTERNS = {
+  /** Convex auth endpoints return 400 for unauthenticated sessions. */
+  CONVEX_UNAUTH: /Failed to load resource: the server responded with a status of 400/,
+
+  /** Convex client network errors when backend isn't reachable. */
+  CONVEX_NETWORK: /Failed to fetch/,
+} as const;
+
+export type KnownErrorPattern = keyof typeof KNOWN_ERROR_PATTERNS;
+
+/**
  * Wire up console and page error listeners on the page object.
  * Returns the shared errors array that both listeners push into.
+ *
+ * When `silenced` patterns are provided, matching console errors
+ * are dropped instead of collected.
  */
-export function setupErrorCapture(page: Page): string[] {
+export function setupErrorCapture(page: Page, silenced: RegExp[]): string[] {
   const errors: string[] = [];
 
   page.on("console", (msg) => {
     if (msg.type() === "error") {
-      errors.push(`[console] ${msg.text()}`);
+      const text = msg.text();
+      if (!silenced.some((pattern) => pattern.test(text))) {
+        errors.push(`[console] ${text}`);
+      }
     }
   });
 
