@@ -17,7 +17,7 @@ export function LocalRecipeUpsell() {
           Your recipes are saved locally on this device. Sign in to sync across devices.
         </Text>
       </Row>
-      <Button href="/signin" size="sm" variant="primary" className="shrink-0">
+      <Button href="/signin" variant="primary" className="shrink-0">
         Sign in
       </Button>
     </Row>

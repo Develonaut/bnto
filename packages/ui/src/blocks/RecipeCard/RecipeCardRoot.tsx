@@ -17,8 +17,10 @@ import { cn } from "../../utils/cn";
 /* ── Root ────────────────────────────────────────────────────── */
 
 type RecipeCardRootProps = PropsWithChildren<{
-  /** Destination link — recipe cards are always navigable. */
-  href: string;
+  /** Destination link — renders as a Next.js Link. */
+  href?: string;
+  /** Click handler — renders as a button when no href is provided. */
+  onClick?: () => void;
   className?: string;
   /** Color variant forwarded to Card surface. */
   color?: SurfaceVariant;
@@ -30,6 +32,7 @@ type RecipeCardRootProps = PropsWithChildren<{
 
 export function RecipeCardRoot({
   href,
+  onClick,
   className,
   color,
   loading,
@@ -40,11 +43,23 @@ export function RecipeCardRoot({
     ? "flex flex-1 flex-row items-center gap-3 p-3"
     : "flex h-full flex-col justify-between p-5";
 
+  const cardCn = cn("pressable", baseCn, className);
+
+  if (href) {
+    return (
+      <Card asChild loading={loading} color={color} className={cardCn}>
+        <Link href={href} className="group text-left">
+          {children}
+        </Link>
+      </Card>
+    );
+  }
+
   return (
-    <Card asChild loading={loading} color={color} className={cn("pressable", baseCn, className)}>
-      <Link href={href} className="group text-left">
+    <Card asChild loading={loading} color={color} className={cardCn}>
+      <button type="button" onClick={onClick} className="group text-left">
         {children}
-      </Link>
+      </button>
     </Card>
   );
 }

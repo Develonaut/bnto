@@ -5,8 +5,6 @@ import { core } from "@bnto/core";
 import {
   BouncyStagger,
   Button,
-  CloudIcon,
-  CloudOffIcon,
   EmptyState,
   EmptyStateIcon,
   EmptyStateTitle,
@@ -24,6 +22,7 @@ import {
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import { DeleteRecipeButton } from "./DeleteRecipeButton";
 import { LocalRecipeUpsell } from "./LocalRecipeUpsell";
+import { SyncIcon } from "./SyncIcon";
 
 /**
  * Unified recipe grid — store-backed, reactive.
@@ -98,12 +97,4 @@ export function RecipeGrid() {
       </BouncyStagger>
     </>
   );
-}
-
-/** Sync status icon — cloud if synced, cloud-off if local-only. */
-function SyncIcon({ syncedAt }: { syncedAt?: number | null }) {
-  if (syncedAt === undefined || (syncedAt !== null && syncedAt > 0)) {
-    return <CloudIcon className="size-3 text-muted-foreground" />;
-  }
-  return <CloudOffIcon className="size-3 text-muted-foreground" />;
 }

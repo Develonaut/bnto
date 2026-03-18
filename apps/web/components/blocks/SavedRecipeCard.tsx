@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import type { Execution, RecipeListItem } from "@bnto/core";
 
 import {
@@ -13,12 +14,11 @@ import {
 import { StatusBadge } from "@/components/blocks/StatusBadge";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
-interface SavedRecipeCardProps {
+interface SavedRecipeCardProps extends Pick<ComponentProps<typeof RecipeCard>, "loading"> {
   recipe: RecipeListItem;
   lastStatus?: Execution["status"];
+  /** Destination link — required for saved recipe navigation. */
   href: string;
-  /** Grounded loading state — card springs up when loading clears. */
-  loading?: boolean;
 }
 
 export function SavedRecipeCard({ recipe, lastStatus, href, loading }: SavedRecipeCardProps) {
