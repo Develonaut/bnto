@@ -20,6 +20,7 @@ export function toRecipeListItem(doc: RawRecipeListProjection): RecipeListItem {
     id: String(doc._id),
     name: doc.name,
     nodeCount: doc.nodeCount,
+    nodeTypes: doc.nodeTypes ?? [],
     updatedAt: doc.updatedAt,
   };
 }

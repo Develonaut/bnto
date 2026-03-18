@@ -103,6 +103,14 @@ export function MobileNavMenu({
               <Stack className="gap-6">
                 <Row className="gap-4">
                   <NewRecipeMobileButton onClick={handleClose} />
+                  <Button
+                    variant="outline"
+                    href="/my-recipes"
+                    onClick={handleClose}
+                    data-testid="mobile-link-my-recipes"
+                  >
+                    My Recipes
+                  </Button>
                   {PAGE_LINKS.map((link) => (
                     <Button
                       key={link.href}

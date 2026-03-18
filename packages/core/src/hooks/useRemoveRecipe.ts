@@ -1,11 +1,19 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { core } from "../core";
 
-/** Delete a recipe by ID. */
+/**
+ * Remove a recipe — deletes from store (reactive) + background Convex delete.
+ *
+ * Returns a mutate function with the same API shape as the old React Query
+ * mutation to minimize consumer changes.
+ */
 export function useRemoveRecipe() {
-  return useMutation({
-    mutationFn: (id: string) => core.recipes.remove(id),
-  });
+  const mutate = useCallback((id: string, options?: { onSuccess?: () => void }) => {
+    core.recipes.remove(id);
+    options?.onSuccess?.();
+  }, []);
+
+  return { mutate, isPending: false };
 }

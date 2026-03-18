@@ -22,6 +22,7 @@ export {
   ChevronUp as ChevronUpIcon,
   CircleMinus as CircleMinusIcon,
   Cloud as CloudIcon,
+  CloudOff as CloudOffIcon,
   Clock as ClockIcon,
   Columns3 as Columns3Icon,
   Download as DownloadIcon,

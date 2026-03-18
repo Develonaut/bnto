@@ -1,6 +1,7 @@
 export type {
   Recipe,
   RecipeListItem,
+  StoredRecipe,
   SaveRecipeInput,
   RecipeDefinition,
   Position,

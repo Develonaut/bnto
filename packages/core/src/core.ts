@@ -13,7 +13,6 @@
  */
 
 import { createRecipeService } from "./services/recipeService";
-import { createDraftRecipeService } from "./services/localRecipeService";
 import { createExecutionService } from "./services/executionService";
 import { createHistoryService } from "./services/historyService";
 import { createUserService } from "./services/userService";
@@ -33,7 +32,6 @@ import { createDownloadService } from "./services/downloadService";
 
 // ── Services (single-domain, internal) ────────────────────────────────────
 const recipeService = createRecipeService();
-const draftRecipeService = createDraftRecipeService();
 const executionService = createExecutionService();
 const historyService = createHistoryService();
 const userService = createUserService();
@@ -46,7 +44,7 @@ const uploadService = createUploadService();
 const downloadService = createDownloadService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
-const recipeClient = createRecipeClient(recipeService, executionService, draftRecipeService);
+const recipeClient = createRecipeClient(recipeService, executionService);
 const executionClient = createExecutionClient(
   executionService,
   browserExecutionService,

@@ -21,7 +21,20 @@ export interface RecipeListItem {
   id: string;
   name: string;
   nodeCount: number;
+  /** Human-readable labels for the distinct processing node types (excludes I/O and containers). */
+  nodeTypes: string[];
   updatedAt: number;
+  /** When last synced to Convex. null = never synced, undefined = cloud recipe (always synced). */
+  syncedAt?: number | null;
+}
+
+/** A recipe stored locally in the Zustand recipes store. */
+export interface StoredRecipe {
+  definition: RecipeDefinition;
+  metadata: { id: string; name: string; cloudId?: string; type: string; version: string };
+  savedAt: number;
+  /** When last synced to Convex. null = never synced. */
+  syncedAt: number | null;
 }
 
 /** Input for creating or updating a recipe. */

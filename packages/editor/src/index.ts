@@ -63,24 +63,12 @@ export { usePanels } from "./hooks/usePanels";
 export { useUnsavedWarning } from "./hooks/useUnsavedWarning";
 export { useEditorShortcuts } from "./hooks/useEditorShortcuts";
 export { useAutosave } from "./hooks/useAutosave";
-export { useDraftHydration } from "./hooks/useDraftHydration";
 export type { UseAutosaveOptions } from "./hooks/useAutosave";
 
-// --- Draft persistence ---
+// --- Draft types ---
 
 export type { Draft } from "./draft/draftTypes";
-export { deserializeDraft } from "./draft/deserializeDraft";
 export { serializeDraft } from "./draft/serializeDraft";
-export {
-  DRAFT_KEY_PREFIX,
-  draftKey,
-  saveDraft,
-  loadDraft,
-  clearDraft,
-  listAllDrafts,
-} from "./draft/draftStorage";
-export { formatLastSaved } from "./draft/formatLastSaved";
-export type { FormatLastSavedOptions } from "./draft/formatLastSaved";
 
 // --- Internal hooks (rendering pipeline) ---
 

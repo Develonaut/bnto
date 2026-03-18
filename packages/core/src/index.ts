@@ -11,6 +11,7 @@ export { TelemetryProvider } from "./providers/TelemetryProvider";
 export type {
   Recipe,
   RecipeListItem,
+  StoredRecipe,
   SaveRecipeInput,
   RecipeDefinition,
   Position,

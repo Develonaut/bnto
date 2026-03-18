@@ -1,51 +1,55 @@
 "use client";
 
+import { recipesStore } from "../stores/recipesStore";
 import type { RecipeService } from "../services/recipeService";
-import type { DraftRecipeService } from "../services/localRecipeService";
 import type { ExecutionService } from "../services/executionService";
 import type { StartExecutionInput } from "../types";
+import type { StoredRecipe } from "../types/recipe";
 
-/**
- * Recipe client — public API for recipe operations.
- *
- * Composes recipe, draft, and execution services for cross-domain orchestration.
- * Running a recipe creates an execution (cross-domain side effect).
- * Draft operations read/remove localStorage-backed editor drafts.
- */
-export function createRecipeClient(
-  recipes: RecipeService,
-  executions: ExecutionService,
-  drafts: DraftRecipeService,
-) {
+/** Recipe client — store-backed CRUD with cloud sync on top. */
+export function createRecipeClient(recipes: RecipeService, executions: ExecutionService) {
   return {
-    // ── Query Options ─────────────────────────────────────────────
+    get: (id: string): StoredRecipe | undefined => recipesStore.getState().recipes[id],
+
+    upsert: (recipe: StoredRecipe) => recipesStore.getState().upsert(recipe),
+
+    remove: (id: string) => {
+      const recipe = recipesStore.getState().recipes[id];
+      recipesStore.getState().remove(id);
+
+      if (recipe?.metadata.cloudId) {
+        recipes.remove(recipe.metadata.cloudId).catch(() => {});
+      }
+    },
+
+    count: () => Object.keys(recipesStore.getState().recipes).length,
+
+    syncToCloud: async (recipe: StoredRecipe) => {
+      return recipes.save({
+        id: recipe.metadata.cloudId,
+        name: recipe.metadata.name,
+        definition: recipe.definition,
+      });
+    },
+
+    hydrateFromCloud: (cloudRecipes: StoredRecipe[]) => {
+      recipesStore.getState().hydrateFromCloud(cloudRecipes);
+    },
+
     listQueryOptions: () => recipes.listQueryOptions(),
     getQueryOptions: (id: string) => recipes.getQueryOptions(id),
 
-    // ── Mutations ─────────────────────────────────────────────────
     save: (args: { id?: string; name: string; definition: unknown; isPublic?: boolean }) =>
       recipes.save(args),
 
-    remove: (id: string) => recipes.remove(id),
-
-    /** Cross-domain: starts execution and invalidates both caches. */
     run: async (input: StartExecutionInput) => {
       const executionId = await executions.start(input);
       executions.invalidateExecutions(input.recipeId);
       return executionId;
     },
 
-    // ── Cache Invalidation ────────────────────────────────────────
     invalidateList: () => recipes.invalidateList(),
     invalidateRecipe: (id: string) => recipes.invalidateRecipe(id),
-
-    // ── Draft Operations (localStorage-backed) ───────────────────
-    /** List all device-local draft recipes as RecipeListItem[]. */
-    listDrafts: () => drafts.list(),
-    /** Remove a device-local draft by recipe ID. */
-    removeDraft: (recipeId: string) => drafts.remove(recipeId),
-    /** Count device-local drafts. */
-    countDrafts: () => drafts.count(),
   } as const;
 }
 

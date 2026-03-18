@@ -16,14 +16,14 @@ import { formatTimeAgo } from "@/lib/formatTimeAgo";
 interface SavedRecipeCardProps {
   recipe: RecipeListItem;
   lastStatus?: Execution["status"];
-  onClick?: () => void;
+  href: string;
   /** Grounded loading state — card springs up when loading clears. */
   loading?: boolean;
 }
 
-export function SavedRecipeCard({ recipe, lastStatus, onClick, loading }: SavedRecipeCardProps) {
+export function SavedRecipeCard({ recipe, lastStatus, href, loading }: SavedRecipeCardProps) {
   return (
-    <RecipeCard onClick={onClick} loading={loading}>
+    <RecipeCard href={href} loading={loading}>
       {loading ? (
         <>
           <RecipeCardHeader>

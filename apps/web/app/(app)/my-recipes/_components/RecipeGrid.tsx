@@ -2,10 +2,11 @@
 
 import { core } from "@bnto/core";
 
-import { useDelayedLoading } from "../_hooks/useDelayedLoading";
 import {
   BouncyStagger,
   Button,
+  CloudIcon,
+  CloudOffIcon,
   EmptyState,
   EmptyStateIcon,
   EmptyStateTitle,
@@ -13,52 +14,29 @@ import {
   FolderOpenIcon,
   PenLineIcon,
   PlusIcon,
-  List,
-  ListItem,
-  ListItemContent,
-  ListItemActions,
+  RecipeCard,
   RecipeCardIcon,
+  RecipeCardTags,
   Row,
+  Stack,
   Text,
-  Skeleton,
 } from "@bnto/ui";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import { DeleteRecipeButton } from "./DeleteRecipeButton";
-import { LocalRecipeGrid } from "./LocalRecipeGrid";
+import { LocalRecipeUpsell } from "./LocalRecipeUpsell";
 
 /**
- * Saved recipes list — self-fetching.
+ * Unified recipe grid — store-backed, reactive.
  *
- * When authenticated: shows Convex-backed recipes with cloud sync.
- * When unauthenticated: delegates to LocalRecipeGrid for localStorage drafts.
+ * Reads from the Zustand recipesStore via core.recipes.useRecipes().
+ * No auth branching for storage — all recipes come from one source.
+ * Shows a sync upsell banner for unauthenticated users.
  */
 export function RecipeGrid() {
   const { isAuthenticated } = core.auth.useAuth();
-  const { data: recipes, isLoading } = core.recipes.useRecipes();
-  const showSkeleton = useDelayedLoading(isLoading && isAuthenticated);
+  const { data: recipes } = core.recipes.useRecipes();
 
-  if (!isAuthenticated) {
-    return <LocalRecipeGrid />;
-  }
-
-  if (showSkeleton) {
-    return (
-      <List>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <ListItem key={i} loading>
-            <Skeleton className="size-10 rounded-lg" />
-            <ListItemContent>
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/3" />
-            </ListItemContent>
-          </ListItem>
-        ))}
-      </List>
-    );
-  }
-  if (isLoading) return null;
-
-  if (!recipes || recipes.length === 0) {
+  if (recipes.length === 0) {
     return (
       <div className="min-h-[240px]">
         <EmptyState>
@@ -67,7 +45,7 @@ export function RecipeGrid() {
           </EmptyStateIcon>
           <EmptyStateTitle>No saved recipes yet</EmptyStateTitle>
           <EmptyStateDescription>
-            Create a recipe in the editor and save it to find it here.
+            Create a recipe in the editor — it will auto-save here.
           </EmptyStateDescription>
           <Button href="/editor" variant="primary" elevation="sm" className="mt-2">
             <PlusIcon />
@@ -79,36 +57,53 @@ export function RecipeGrid() {
   }
 
   return (
-    <BouncyStagger className="flex flex-col gap-3" from={0.85}>
-      {recipes.map((recipe) => (
-        <ListItem key={recipe.id} className="group">
-          <RecipeCardIcon />
-          <ListItemContent>
-            <Text weight="medium">{recipe.name}</Text>
-            <Row className="gap-2">
-              <Text as="span" size="xs" color="muted">
-                {recipe.nodeCount === 1 ? "1 node" : `${recipe.nodeCount} nodes`}
-              </Text>
-              <Text as="span" size="xs" color="muted">
-                &middot;
-              </Text>
-              <Text as="span" size="xs" color="muted">
-                {formatTimeAgo(recipe.updatedAt)}
-              </Text>
-            </Row>
-          </ListItemContent>
-          <ListItemActions>
-            <Button
-              icon={<PenLineIcon />}
-              variant="primary"
-              dormant
-              href={`/editor?recipe=${recipe.id}`}
-              aria-label={`Edit ${recipe.name}`}
-            />
-            <DeleteRecipeButton recipeId={recipe.id} recipeName={recipe.name} />
-          </ListItemActions>
-        </ListItem>
-      ))}
-    </BouncyStagger>
+    <>
+      {!isAuthenticated && <LocalRecipeUpsell />}
+      <BouncyStagger className="flex flex-col gap-3" from={0.85}>
+        {recipes.map((recipe) => (
+          <Row key={recipe.id} align="stretch" className="gap-2 group">
+            <RecipeCard compact href={`/editor?recipe=${recipe.id}`} className="flex-1">
+              <RecipeCardIcon />
+              <Stack className="flex-1 gap-0.5">
+                <Text weight="medium">{recipe.name}</Text>
+                <Row className="gap-2 items-center">
+                  <SyncIcon syncedAt={recipe.syncedAt} />
+                  <Text as="span" size="xs" color="muted">
+                    {recipe.nodeCount === 1 ? "1 node" : `${recipe.nodeCount} nodes`}
+                  </Text>
+                  <Text as="span" size="xs" color="muted">
+                    &middot;
+                  </Text>
+                  <Text as="span" size="xs" color="muted">
+                    {formatTimeAgo(recipe.updatedAt)}
+                  </Text>
+                </Row>
+                {recipe.nodeTypes.length > 0 && (
+                  <RecipeCardTags tags={recipe.nodeTypes} limit={3} />
+                )}
+              </Stack>
+            </RecipeCard>
+            <Stack className="gap-2">
+              <Button
+                icon={<PenLineIcon />}
+                variant="primary"
+                dormant
+                href={`/editor?recipe=${recipe.id}`}
+                aria-label={`Edit ${recipe.name}`}
+              />
+              <DeleteRecipeButton recipeId={recipe.id} recipeName={recipe.name} />
+            </Stack>
+          </Row>
+        ))}
+      </BouncyStagger>
+    </>
   );
+}
+
+/** Sync status icon — cloud if synced, cloud-off if local-only. */
+function SyncIcon({ syncedAt }: { syncedAt?: number | null }) {
+  if (syncedAt === undefined || (syncedAt !== null && syncedAt > 0)) {
+    return <CloudIcon className="size-3 text-muted-foreground" />;
+  }
+  return <CloudOffIcon className="size-3 text-muted-foreground" />;
 }

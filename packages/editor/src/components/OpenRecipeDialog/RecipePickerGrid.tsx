@@ -4,11 +4,12 @@ import { useCallback } from "react";
 import { RECIPES } from "@bnto/nodes";
 import type { Definition } from "@bnto/nodes";
 import {
-  RecipeCard,
+  Card,
   RecipeCardIcon,
   RecipeCardTitle,
   RecipeCardCategory,
   RecipeCardTags,
+  Button,
   Stack,
   Text,
   type LucideIcon,
@@ -17,8 +18,8 @@ import {
 /**
  * RecipePickerGrid — compact list of predefined recipes.
  *
- * Uses RecipeCard compact mode for horizontal row layout:
- * icon | title + tags | category. Scrolls independently within the dialog.
+ * Uses Card directly (not RecipeCard) because selecting a recipe
+ * is an inline action, not a navigation. RecipeCard is for links.
  */
 
 interface RecipePickerGridProps {
@@ -35,14 +36,21 @@ function RecipePickerGrid({ onSelect, getIcon }: RecipePickerGridProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-1">
       {RECIPES.map((recipe) => (
-        <RecipeCard key={recipe.slug} compact onClick={handleSelect(recipe.definition)}>
-          <RecipeCardIcon icon={getIcon?.(recipe.slug)} />
-          <Stack className="min-w-0 flex-1 gap-1">
-            <RecipeCardTitle>{recipe.name}</RecipeCardTitle>
-            <RecipeCardTags tags={recipe.features} limit={3} />
-          </Stack>
-          <RecipeCardCategory>{recipe.category}</RecipeCardCategory>
-        </RecipeCard>
+        <Button
+          key={recipe.slug}
+          asChild
+          className="flex-1 text-left"
+          onClick={handleSelect(recipe.definition)}
+        >
+          <Card className="flex flex-1 flex-row items-center gap-3 p-3">
+            <RecipeCardIcon icon={getIcon?.(recipe.slug)} />
+            <Stack className="min-w-0 flex-1 gap-1">
+              <RecipeCardTitle>{recipe.name}</RecipeCardTitle>
+              <RecipeCardTags tags={recipe.features} limit={3} />
+            </Stack>
+            <RecipeCardCategory>{recipe.category}</RecipeCardCategory>
+          </Card>
+        </Button>
       ))}
       {RECIPES.length === 0 && (
         <Text size="sm" className="py-4 text-center text-muted-foreground">
