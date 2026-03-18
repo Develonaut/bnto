@@ -86,10 +86,9 @@ describe("proxy", () => {
       expect(response.status).toBe(200);
     });
 
-    it("redirects to /signin on /my-recipes (protected)", async () => {
+    it("passes through on /my-recipes (public for local recipes)", async () => {
       const response = await callProxy(createRequest("/my-recipes"));
-      expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe("/signin");
+      expect(response.status).toBe(200);
     });
 
     it("redirects to /signin on private route /executions", async () => {

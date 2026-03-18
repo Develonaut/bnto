@@ -27,7 +27,6 @@ import {
 } from "@bnto/ui";
 import { useEditor } from "../context";
 import { downloadDefinition } from "../actions/downloadDefinition";
-import { formatLastSaved } from "../draft/formatLastSaved";
 import { RunButton } from "./RunButton";
 import { OpenRecipeDialog } from "./OpenRecipeDialog";
 import { NodePaletteDialog } from "./NodePaletteDialog";
@@ -50,8 +49,7 @@ function EditorToolbar() {
   const { toggle: toggleRunPanel } = editor.panels.usePanels("run");
   const { isOpen: helpOpen, open: openHelp, close: closeHelp } = editor.panels.usePanels("help");
   const { canUndo, canRedo } = editor.history.useHistory();
-  const { isDirty, validationErrors, lastSavedAt, recipeMetadata, syncedAt, isSyncing } =
-    editor.definition.useDefinition();
+  const { isDirty, validationErrors, recipeMetadata } = editor.definition.useDefinition();
   const { phase } = editor.execution.useExecution();
   const { nodes } = editor.nodes.useNodes();
 
@@ -61,12 +59,6 @@ function EditorToolbar() {
 
   const settingsDialog = useDialog();
   const openRecipeDialog = useDialog();
-  const lastSavedLabel = formatLastSaved({
-    lastSavedAt,
-    isSyncing,
-    cloudId: recipeMetadata.cloudId,
-    syncedAt,
-  });
 
   const handleReset = useCallback(() => {
     const { definition } = editor.getState();
@@ -123,23 +115,20 @@ function EditorToolbar() {
                   <Text weight="medium" size="sm" className="truncate">
                     {recipeMetadata.name}
                   </Text>
-                  <Text size="xs" className="text-muted-foreground">
-                    {lastSavedLabel}
-                  </Text>
                 </div>
                 <MenuSeparator />
                 <MenuItem onClick={settingsDialog.openDialog} data-testid="menu-rename">
                   <PenLineIcon /> Rename
                 </MenuItem>
                 <MenuItem onClick={handleNew} data-testid="menu-new">
-                  <PlusIcon /> New
-                </MenuItem>
-                <MenuItem onClick={openRecipeDialog.openDialog} data-testid="menu-open">
-                  <FileUpIcon /> Open
+                  <PlusIcon /> New Recipe
                 </MenuItem>
                 <MenuSeparator />
                 <MenuItem onClick={download} disabled={!canDownload} data-testid="menu-export">
                   <DownloadIcon /> Export <ShortcutHint shortcutId="export" />
+                </MenuItem>
+                <MenuItem onClick={openRecipeDialog.openDialog} data-testid="menu-import">
+                  <FileUpIcon /> Import
                 </MenuItem>
               </MenuContent>
             </Menu>

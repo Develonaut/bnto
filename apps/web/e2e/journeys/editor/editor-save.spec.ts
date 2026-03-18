@@ -1,63 +1,16 @@
 /**
- * Editor Save journey tests — SV1-SV4 from editor.md journey matrix.
+ * Editor Save journey tests — SV1-SV3 from editor.md journey matrix.
  *
  * SV1-SV3: Require authentication (Convex backend + signed-in user).
- *          Tagged @auth — skipped unless auth infrastructure is available.
- * SV4:     Client-side only (beforeunload) — tagged @editor.
+ *          Tagged @auth — skipped until auth infrastructure is available.
+ *
+ * SV4 (beforeunload warning) was removed: the auto-save system persists
+ * changes within 1 second, so "unsaved changes" no longer applies.
+ * Reload survival is covered by recipe-persistence.spec.ts.
  */
 
 import { test, expect } from "../../fixtures";
 import { navigateToEditor, addNodeFromPalette } from "../../helpers/editor";
-
-// ---------------------------------------------------------------------------
-// SV4: Unsaved changes warning on navigation @editor
-// ---------------------------------------------------------------------------
-
-test.describe("Unsaved changes warning @editor", () => {
-  test("SV4: beforeunload fires when editor has unsaved changes", async ({ page }) => {
-    // SETUP: Navigate to blank editor
-    await navigateToEditor(page);
-
-    // BUILD: Add a node to make the editor dirty
-    await addNodeFromPalette(page, "Compress Images");
-
-    // VERIFY: The beforeunload handler is registered.
-    // Playwright detects beforeunload dialogs via page.on("dialog").
-    // We trigger a reload and verify the dialog fires.
-    let dialogFired = false;
-    page.on("dialog", async (dialog) => {
-      dialogFired = true;
-      await dialog.dismiss();
-    });
-
-    try {
-      await page.reload({ timeout: 5_000 });
-    } catch {
-      // Reload may fail if dialog is dismissed — that's expected
-    }
-
-    // The beforeunload dialog should have fired
-    expect(dialogFired).toBe(true);
-  });
-
-  test("SV4: no warning when editor is clean (no changes)", async ({ page }) => {
-    // SETUP: Navigate to predefined recipe (clean state)
-    await navigateToEditor(page, "compress-images");
-
-    // VERIFY: Reload without any changes — no dialog should fire
-    let dialogFired = false;
-    page.on("dialog", async (dialog) => {
-      dialogFired = true;
-      await dialog.dismiss();
-    });
-
-    await page.reload();
-    // Wait a tick to ensure no dialog fires
-    await page.waitForTimeout(500);
-
-    expect(dialogFired).toBe(false);
-  });
-});
 
 // ---------------------------------------------------------------------------
 // SV1-SV3: Save & Load (require auth) @auth

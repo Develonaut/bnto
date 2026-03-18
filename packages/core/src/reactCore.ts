@@ -18,7 +18,6 @@ import { core as baseCore } from "./core";
 // Recipe hooks
 import { useRecipes } from "./hooks/useRecipes";
 import { useRecipe } from "./hooks/useRecipe";
-import { useSaveRecipe } from "./hooks/useSaveRecipe";
 import { useRemoveRecipe } from "./hooks/useRemoveRecipe";
 import { useRunRecipe } from "./hooks/useRunRecipe";
 
@@ -55,7 +54,6 @@ export const core = {
     ...baseCore.recipes,
     useRecipes,
     useRecipe,
-    useSaveRecipe,
     useRemoveRecipe,
     useRunRecipe,
   },

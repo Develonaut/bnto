@@ -51,9 +51,6 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
       run: false,
       help: false,
     },
-    lastSavedAt: null,
-    syncedAt: null,
-    isSyncing: false,
     executionPhase: "idle",
     executionResults: [],
     executionErrors: [],
@@ -250,20 +247,6 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
       set({ insertIntoContainerId: id });
     },
 
-    // --- Auto-save ---
-
-    setLastSavedAt: (ts) => {
-      set({ lastSavedAt: ts });
-    },
-
-    setSyncedAt: (ts) => {
-      set({ syncedAt: ts });
-    },
-
-    setIsSyncing: (syncing) => {
-      set({ isSyncing: syncing });
-    },
-
     // --- Execution lifecycle ---
 
     runExecution: async (files) => {
@@ -295,19 +278,11 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
 
     // --- Utility ---
 
-    markDirty: () => {
-      set({ isDirty: true });
-    },
-
     revalidate: () => {
       const state = get();
       set({
         validationErrors: revalidateState(state.nodes, state.configs, state.recipeMetadata),
       });
-    },
-
-    resetDirty: () => {
-      set({ isDirty: false });
     },
 
     setExecutionState: (executionState) => {

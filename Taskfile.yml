@@ -49,18 +49,24 @@ tasks:
     cmds:
       - npx tsx packages/@bnto/nodes/scripts/generate-from-catalog.ts
 
-  # E2E tests (two-stage: browser parallel, then editor serial)
+  # E2E tests (three-stage: browser parallel, auth serial, editor serial)
   e2e:
-    desc: Run all E2E tests (browser parallel, then editor serial)
+    desc: Run all E2E tests (browser parallel, then auth serial, then editor serial)
     dir: ./apps/web
     cmds:
       - pnpm exec playwright test --project=browser
+      - pnpm exec playwright test --project=auth --workers=1
       - pnpm exec playwright test --project=editor --workers=1
 
   e2e:browser:
-    desc: Run non-editor E2E tests in parallel
+    desc: Run non-auth non-editor E2E tests in parallel
     dir: ./apps/web
     cmds: [pnpm exec playwright test --project=browser]
+
+  e2e:auth:
+    desc: Run auth E2E tests serially (avoids Convex connection contention)
+    dir: ./apps/web
+    cmds: [pnpm exec playwright test --project=auth --workers=1]
 
   e2e:editor:
     desc: Run editor E2E tests serially (avoids ReactFlow render contention)

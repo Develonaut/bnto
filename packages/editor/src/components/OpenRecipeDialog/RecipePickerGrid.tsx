@@ -17,8 +17,8 @@ import {
 /**
  * RecipePickerGrid — compact list of predefined recipes.
  *
- * Uses RecipeCard compact mode for horizontal row layout:
- * icon | title + tags | category. Scrolls independently within the dialog.
+ * Uses RecipeCard with onClick (action mode) since selecting a recipe
+ * is an inline action, not a navigation.
  */
 
 interface RecipePickerGridProps {

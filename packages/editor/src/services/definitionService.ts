@@ -35,26 +35,6 @@ function createDefinitionService(storeApi: StoreApi<EditorStore>): DefinitionSer
       storeApi.getState().setRecipeMetadata(metadata);
     },
 
-    markDirty() {
-      storeApi.getState().markDirty();
-    },
-
-    resetDirty() {
-      storeApi.getState().resetDirty();
-    },
-
-    setLastSavedAt(ts: number | null) {
-      storeApi.getState().setLastSavedAt(ts);
-    },
-
-    setSyncedAt(ts: number | null) {
-      storeApi.getState().setSyncedAt(ts);
-    },
-
-    setIsSyncing(syncing: boolean) {
-      storeApi.getState().setIsSyncing(syncing);
-    },
-
     revalidate() {
       storeApi.getState().revalidate();
     },

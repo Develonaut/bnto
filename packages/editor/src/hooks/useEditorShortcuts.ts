@@ -3,7 +3,7 @@
  *
  * Uses ReactFlow's `useKeyPress` for canvas-scoped shortcuts (undo, redo,
  * delete, run) and `useKeyDown` from `@bnto/ui` for shortcuts that must
- * preventDefault at document level (Cmd+S, Cmd+/).
+ * preventDefault at document level (Cmd+S blocks browser save, Cmd+D, Cmd+/).
  *
  * Input field safety: `useKeyPress` has built-in input exclusion —
  * single keys (Delete/Backspace) are suppressed when an input is focused.
@@ -70,10 +70,14 @@ function useEditorShortcuts() {
     if (result.deselect) editor.nodes.selectNode(null);
   }, [escapePressed, editor]);
 
+  // --- Cmd+S / Ctrl+S: block browser "Save Page As" ---
   // --- Export: Cmd+D / Ctrl+D (preventDefault to block browser Bookmark) ---
   // --- Help: Cmd+/ / Ctrl+/ (toggle help dialog via panel system) ---
   const handleDocumentKeys = useCallback(
     (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s" && !e.shiftKey) {
+        e.preventDefault();
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === "d" && !e.shiftKey) {
         e.preventDefault();
         downloadDefinition(editor.definition);

@@ -20,17 +20,16 @@ import {
  *
  * Uses `dormant` prop: grounded + muted by default, wakes to
  * variant="destructive" with elevation on ancestor .group hover.
- * The CSS transition in surface.css handles the elevation animation.
+ * Calls core.recipes.remove() which deletes from store (reactive)
+ * and fires background Convex delete if the recipe was synced.
  */
 export function DeleteRecipeButton({ recipeId, recipeName }: DeleteRecipeButtonProps) {
   const [open, setOpen] = useState(false);
-  const { mutate, isPending } = core.recipes.useRemoveRecipe();
 
   const handleConfirm = useCallback(() => {
-    mutate(recipeId, {
-      onSuccess: () => setOpen(false),
-    });
-  }, [mutate, recipeId]);
+    core.recipes.remove(recipeId);
+    setOpen(false);
+  }, [recipeId]);
 
   const handleOpen = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -60,17 +59,14 @@ export function DeleteRecipeButton({ recipeId, recipeName }: DeleteRecipeButtonP
           </DialogBody>
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="ghost" disabled={isPending}>
-                Cancel
-              </Button>
+              <Button variant="ghost">Cancel</Button>
             </DialogClose>
             <Button
               variant="destructive"
               onClick={handleConfirm}
-              disabled={isPending}
               data-testid="confirm-delete-recipe"
             >
-              {isPending ? "Deleting…" : "Delete"}
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

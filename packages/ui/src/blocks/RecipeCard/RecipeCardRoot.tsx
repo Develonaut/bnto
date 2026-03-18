@@ -4,7 +4,6 @@ import Link from "next/link";
 
 import type { LucideIcon } from "../../icons";
 import { BlocksIcon } from "../../icons";
-import { Button } from "../../interaction/Button";
 import { Row } from "../../layout/Row";
 import { Stack } from "../../layout/Stack";
 import { Card } from "../../surface/Card";
@@ -18,9 +17,10 @@ import { cn } from "../../utils/cn";
 /* ── Root ────────────────────────────────────────────────────── */
 
 type RecipeCardRootProps = PropsWithChildren<{
-  onClick?: () => void;
-  /** Internal link — renders the card as a Next.js Link. */
+  /** Destination link — renders as a Next.js Link. */
   href?: string;
+  /** Click handler — renders as a button when no href is provided. */
+  onClick?: () => void;
   className?: string;
   /** Color variant forwarded to Card surface. */
   color?: SurfaceVariant;
@@ -31,8 +31,8 @@ type RecipeCardRootProps = PropsWithChildren<{
 }>;
 
 export function RecipeCardRoot({
-  onClick,
   href,
+  onClick,
   className,
   color,
   loading,
@@ -40,32 +40,28 @@ export function RecipeCardRoot({
   children,
 }: RecipeCardRootProps) {
   const baseCn = compact
-    ? "flex flex-row items-center gap-3 p-3"
+    ? "flex flex-1 flex-row items-center gap-3 p-3"
     : "flex h-full flex-col justify-between p-5";
 
-  const card = (
-    <Card loading={loading} color={color} className={cn(baseCn, className)}>
-      {children}
-    </Card>
-  );
-
-  if (!href && !onClick) return card;
-
-  const interactive = (
-    <Button asChild className={cn(compact ? "" : "h-full", "text-left")} onClick={onClick}>
-      {card}
-    </Button>
-  );
+  const cardCn = cn("pressable", baseCn, className);
 
   if (href) {
     return (
-      <Link href={href} className={cn(compact ? "" : "h-full", "group")}>
-        {interactive}
-      </Link>
+      <Card asChild loading={loading} color={color} className={cardCn}>
+        <Link href={href} className="group text-left">
+          {children}
+        </Link>
+      </Card>
     );
   }
 
-  return interactive;
+  return (
+    <Card asChild loading={loading} color={color} className={cardCn}>
+      <button type="button" onClick={onClick} className="group text-left">
+        {children}
+      </button>
+    </Card>
+  );
 }
 
 /* ── Structural sub-components ───────────────────────────────── */

@@ -21,20 +21,28 @@ export const Card = forwardRef<
     dashed?: boolean;
     /** Sugar for spring="bounciest" + grounded={loading}. */
     loading?: boolean;
+    /** Merge onto child element instead of wrapping in a div. */
+    asChild?: boolean;
   }
->(({ className, elevation = "md", color, spring, grounded, dashed, loading, ...props }, ref) => (
-  <Surface
-    ref={ref}
-    elevation={elevation}
-    variant={color}
-    spring={spring ?? (loading !== undefined ? "bounciest" : undefined)}
-    grounded={grounded ?? loading}
-    dashed={dashed}
-    rounded="xl"
-    className={cn(color ? undefined : "bg-card text-card-foreground", className)}
-    {...props}
-  />
-));
+>(
+  (
+    { className, elevation = "md", color, spring, grounded, dashed, loading, asChild, ...props },
+    ref,
+  ) => (
+    <Surface
+      ref={ref}
+      elevation={elevation}
+      variant={color}
+      spring={spring ?? (loading !== undefined ? "bounciest" : undefined)}
+      grounded={grounded ?? loading}
+      dashed={dashed}
+      asChild={asChild}
+      rounded="xl"
+      className={cn(color ? undefined : "bg-card text-card-foreground", className)}
+      {...props}
+    />
+  ),
+);
 Card.displayName = "Card";
 
 export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(

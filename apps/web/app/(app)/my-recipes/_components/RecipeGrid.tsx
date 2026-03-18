@@ -2,79 +2,43 @@
 
 import { core } from "@bnto/core";
 
-import { useDelayedLoading } from "../_hooks/useDelayedLoading";
 import {
+  BlocksIcon,
   BouncyStagger,
   Button,
+  ClockIcon,
+  CloudIcon,
+  CloudOffIcon,
   EmptyState,
   EmptyStateIcon,
   EmptyStateTitle,
   EmptyStateDescription,
   FolderOpenIcon,
-  PenLineIcon,
   PlusIcon,
-  List,
-  ListItem,
-  ListItemContent,
-  ListItemActions,
-  RecipeCardIcon,
+  RecipeCard,
+  RecipeCardTags,
   Row,
+  Stack,
   Text,
-  Skeleton,
 } from "@bnto/ui";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import { DeleteRecipeButton } from "./DeleteRecipeButton";
+import { LocalRecipeUpsell } from "./LocalRecipeUpsell";
+import { RecipeInfoButton } from "./RecipeInfoButton";
+import { SyncStatus } from "./SyncStatus";
 
 /**
- * Saved recipes list — self-fetching.
- * Shows ListItems for saved recipes, or an EmptyState when empty.
+ * Unified recipe grid — store-backed, reactive.
  *
- * Each row has an icon, name + metadata, and Edit/Delete action buttons.
- * Edit navigates via href (no nested click targets). Delete uses
- * the dormant pattern — muted by default, wakes on row hover.
+ * Reads from the Zustand recipesStore via core.recipes.useRecipes().
+ * No auth branching for storage — all recipes come from one source.
+ * Shows a sync upsell banner for unauthenticated users.
  */
 export function RecipeGrid() {
   const { isAuthenticated } = core.auth.useAuth();
-  const { data: recipes, isLoading } = core.recipes.useRecipes();
-  const showSkeleton = useDelayedLoading(isLoading && isAuthenticated);
+  const { data: recipes } = core.recipes.useRecipes();
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[240px]">
-        <EmptyState>
-          <EmptyStateIcon>
-            <FolderOpenIcon />
-          </EmptyStateIcon>
-          <EmptyStateTitle>Save your recipes</EmptyStateTitle>
-          <EmptyStateDescription>
-            Sign in to save recipes, build custom workflows, and pick up where you left off.
-          </EmptyStateDescription>
-          <Button href="/signin" variant="primary" elevation="sm" className="mt-2">
-            Sign in
-          </Button>
-        </EmptyState>
-      </div>
-    );
-  }
-
-  if (showSkeleton) {
-    return (
-      <List>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <ListItem key={i} loading>
-            <Skeleton className="size-10 rounded-lg" />
-            <ListItemContent>
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/3" />
-            </ListItemContent>
-          </ListItem>
-        ))}
-      </List>
-    );
-  }
-  if (isLoading) return null;
-
-  if (!recipes || recipes.length === 0) {
+  if (recipes.length === 0) {
     return (
       <div className="min-h-[240px]">
         <EmptyState>
@@ -83,7 +47,7 @@ export function RecipeGrid() {
           </EmptyStateIcon>
           <EmptyStateTitle>No saved recipes yet</EmptyStateTitle>
           <EmptyStateDescription>
-            Create a recipe in the editor and save it to find it here.
+            Create a recipe in the editor — it will auto-save here.
           </EmptyStateDescription>
           <Button href="/editor" variant="primary" elevation="sm" className="mt-2">
             <PlusIcon />
@@ -95,36 +59,51 @@ export function RecipeGrid() {
   }
 
   return (
-    <BouncyStagger className="flex flex-col gap-3" from={0.85}>
-      {recipes.map((recipe) => (
-        <ListItem key={recipe.id} className="group">
-          <RecipeCardIcon />
-          <ListItemContent>
-            <Text weight="medium">{recipe.name}</Text>
-            <Row className="gap-2">
-              <Text as="span" size="xs" color="muted">
-                {recipe.nodeCount === 1 ? "1 node" : `${recipe.nodeCount} nodes`}
-              </Text>
-              <Text as="span" size="xs" color="muted">
-                &middot;
-              </Text>
-              <Text as="span" size="xs" color="muted">
-                {formatTimeAgo(recipe.updatedAt)}
-              </Text>
-            </Row>
-          </ListItemContent>
-          <ListItemActions>
-            <Button
-              icon={<PenLineIcon />}
-              variant="primary"
-              dormant
-              href={`/editor?recipe=${recipe.id}`}
-              aria-label={`Edit ${recipe.name}`}
-            />
-            <DeleteRecipeButton recipeId={recipe.id} recipeName={recipe.name} />
-          </ListItemActions>
-        </ListItem>
-      ))}
-    </BouncyStagger>
+    <>
+      {!isAuthenticated && <LocalRecipeUpsell />}
+      <BouncyStagger className="flex flex-col gap-3" from={0.85}>
+        {recipes.map((recipe) => (
+          <Row key={recipe.id} align="stretch" className="gap-2 group" data-testid="recipe-card">
+            <RecipeCard compact href={`/editor?recipe=${recipe.id}`} className="flex-1">
+              <SyncStatus syncedAt={recipe.syncedAt} />
+              <Stack className="flex-1 gap-0.5">
+                <Text weight="medium">{recipe.name}</Text>
+                <Row className="gap-3 items-center">
+                  <Row className="gap-1 items-center">
+                    {recipe.syncedAt ? (
+                      <CloudIcon className="size-3 text-muted-foreground" />
+                    ) : (
+                      <CloudOffIcon className="size-3 text-muted-foreground" />
+                    )}
+                    <Text as="span" size="xs" color="muted">
+                      {recipe.syncedAt ? formatTimeAgo(recipe.syncedAt) : "Not synced"}
+                    </Text>
+                  </Row>
+                  <Row className="gap-1 items-center">
+                    <ClockIcon className="size-3 text-muted-foreground" />
+                    <Text as="span" size="xs" color="muted">
+                      {formatTimeAgo(recipe.updatedAt)}
+                    </Text>
+                  </Row>
+                  <Row className="gap-1 items-center">
+                    <BlocksIcon className="size-3 text-muted-foreground" />
+                    <Text as="span" size="xs" color="muted">
+                      {recipe.nodeCount === 1 ? "1 node" : `${recipe.nodeCount} nodes`}
+                    </Text>
+                  </Row>
+                </Row>
+                {recipe.nodeTypes.length > 0 && (
+                  <RecipeCardTags tags={recipe.nodeTypes} limit={3} />
+                )}
+              </Stack>
+            </RecipeCard>
+            <Stack className="gap-2">
+              <RecipeInfoButton recipeId={recipe.id} recipeName={recipe.name} />
+              <DeleteRecipeButton recipeId={recipe.id} recipeName={recipe.name} />
+            </Stack>
+          </Row>
+        ))}
+      </BouncyStagger>
+    </>
   );
 }

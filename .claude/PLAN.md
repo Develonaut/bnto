@@ -1026,6 +1026,30 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
 ---
 
+### Triage: Centralize URL creation utils in routes.ts
+
+**Priority: Triage.** Hardcoded URL strings like `/editor?recipe=${id}` are scattered across the codebase (RecipeGrid, RecipeCardShowcase, etc.). Add URL builder utilities (e.g. `editorUrl(recipeId)`) co-located in `apps/web/lib/routes.ts` so URL patterns are maintained in one place. Flagged on PR #212.
+
+---
+
+### Triage: Type inheritance audit for wrapper components
+
+**Priority: Triage.** Wrapper components (e.g. SavedRecipeCard) redefine props like `loading`, `href`, `className` that already exist on the underlying primitive (Card, RecipeCard). Audit all wrapper components to use `Pick<ComponentProps<typeof Base>, ...>` or `extends` instead of manual redefinition. Flagged on PR #212 SavedRecipeCard.tsx.
+
+---
+
+### Triage: Consolidate Recipe types across the app
+
+**Priority: Triage.** There are 3+ Recipe-like types: `Recipe` (core store), `RecipeListItem` (core transform), `CloudRecipeDetail` (core transform), plus raw Convex projections. Review whether `CloudRecipeDetail` can be eliminated and whether the app can standardize on fewer shapes. Flagged on PR #212 `packages/core/src/transforms/recipe.ts`.
+
+---
+
+### Triage: E2E tests for editor keyboard shortcuts
+
+**Priority: Triage.** The 7 editor shortcuts (undo, redo, delete, run, export, escape, help) have unit test coverage for guard logic but zero E2E tests using `page.keyboard.press()`. The existing undo test uses the toolbar button, not the keyboard. Add Playwright tests that verify actual keyboard presses trigger expected actions.
+
+---
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |

@@ -3,9 +3,9 @@
  *
  * Components (flat exports for RSC compatibility):
  *
- *   <EditorRoot definition={recipe.definition}>
+ *   <EditorProvider definition={recipe.definition}>
  *     <EditorCanvas />
- *   </EditorRoot>
+ *   </EditorProvider>
  *
  * Factory (headless, no React):
  *
@@ -16,7 +16,7 @@
 
 // --- Compound components ---
 
-export { EditorRoot, EditorCanvas, EditorToolbar, EditorRightToolbar } from "./Editor";
+export { EditorCanvas, EditorToolbar, EditorRightToolbar } from "./Editor";
 
 // --- Editor factory + context ---
 
@@ -60,20 +60,7 @@ export { useDefinition } from "./hooks/useDefinition";
 export { useExecution } from "./hooks/useExecution";
 export { useHistory } from "./hooks/useHistory";
 export { usePanels } from "./hooks/usePanels";
-export { useUnsavedWarning } from "./hooks/useUnsavedWarning";
 export { useEditorShortcuts } from "./hooks/useEditorShortcuts";
-export { useAutosave } from "./hooks/useAutosave";
-export { useDraftHydration } from "./hooks/useDraftHydration";
-export type { UseAutosaveOptions } from "./hooks/useAutosave";
-
-// --- Draft persistence ---
-
-export type { Draft } from "./draft/draftTypes";
-export { deserializeDraft } from "./draft/deserializeDraft";
-export { serializeDraft } from "./draft/serializeDraft";
-export { DRAFT_KEY_PREFIX, draftKey, saveDraft, loadDraft, clearDraft } from "./draft/draftStorage";
-export { formatLastSaved } from "./draft/formatLastSaved";
-export type { FormatLastSavedOptions } from "./draft/formatLastSaved";
 
 // --- Internal hooks (rendering pipeline) ---
 

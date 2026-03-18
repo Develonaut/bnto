@@ -22,8 +22,6 @@ function useDefinition() {
     exportAsDefinition: editor.definition.exportAsDefinition,
     exportAsRecipe: editor.definition.exportAsRecipe,
     setRecipeMetadata: editor.definition.setRecipeMetadata,
-    markDirty: editor.definition.markDirty,
-    resetDirty: editor.definition.resetDirty,
     revalidate: editor.definition.revalidate,
   };
 }
