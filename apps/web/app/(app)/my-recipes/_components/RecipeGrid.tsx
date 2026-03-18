@@ -61,7 +61,7 @@ export function RecipeGrid() {
       {!isAuthenticated && <LocalRecipeUpsell />}
       <BouncyStagger className="flex flex-col gap-3" from={0.85}>
         {recipes.map((recipe) => (
-          <Row key={recipe.id} align="stretch" className="gap-2 group">
+          <Row key={recipe.id} align="stretch" className="gap-2 group" data-testid="recipe-card">
             <RecipeCard compact href={`/editor?recipe=${recipe.id}`} className="flex-1">
               <RecipeCardIcon />
               <Stack className="flex-1 gap-0.5">
