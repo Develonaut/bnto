@@ -2,6 +2,25 @@ import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
 /**
+ * Console error patterns that are expected and should not pollute test output.
+ *
+ * - "Failed to load resource: the server responded with a status of 400"
+ *   Convex auth/session endpoints return 400 when E2E tests run without
+ *   an authenticated session. Expected for all @browser (unauthenticated) tests.
+ *
+ * - "Failed to fetch" — network errors from Convex client when the dev
+ *   backend isn't reachable (preview deployments pointing at staging).
+ */
+const IGNORED_CONSOLE_PATTERNS = [
+  /Failed to load resource: the server responded with a status of 400/,
+  /Failed to fetch/,
+];
+
+function isIgnoredConsoleError(text: string): boolean {
+  return IGNORED_CONSOLE_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+/**
  * Wire up console and page error listeners on the page object.
  * Returns the shared errors array that both listeners push into.
  */
@@ -9,7 +28,7 @@ export function setupErrorCapture(page: Page): string[] {
   const errors: string[] = [];
 
   page.on("console", (msg) => {
-    if (msg.type() === "error") {
+    if (msg.type() === "error" && !isIgnoredConsoleError(msg.text())) {
       errors.push(`[console] ${msg.text()}`);
     }
   });
