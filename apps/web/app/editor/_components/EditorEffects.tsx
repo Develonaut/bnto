@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef } from "react";
 import { useUnsavedWarning, useAutosave, useEditor, draftToStoredRecipe } from "@bnto/editor";
 import type { Draft } from "@bnto/editor";
 import { core } from "@bnto/core";
-import { useStaleDraftSync } from "./useStaleDraftSync";
 
 /**
  * EditorEffects — side-effect hooks that run inside EditorRoot context.
@@ -16,7 +15,6 @@ import { useStaleDraftSync } from "./useStaleDraftSync";
  */
 export function EditorEffects() {
   useUnsavedWarning();
-  useStaleDraftSync();
 
   const editor = useEditor();
   const { isAuthenticated } = core.auth.useAuth();
