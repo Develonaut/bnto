@@ -809,6 +809,17 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 
 - [ ] `apps/web` — Verify auth flow on Vercel preview deployment (cookie behavior, proxy redirects, sign-in/sign-out)
 
+### Infra: Convex Preview Deployments for Release Verification
+
+**Priority: Low.** The release pipeline tests E2E against a Vercel preview + dev Convex, then promotes to production Vercel + prod Convex — that exact combination is never verified together. Convex supports [preview deployments](https://docs.convex.dev/production/hosting/preview-deployments) that could pair with Vercel previews for full-stack verification.
+
+- [ ] `infra` — Evaluate Convex preview deployments for the release pipeline
+- [ ] `infra` — Wire `npx convex deploy --preview-name <tag>` into `release.yml` before E2E step
+- [ ] `infra` — Pass preview Convex URL as `NEXT_PUBLIC_CONVEX_URL` to the Vercel preview build
+- [ ] `infra` — Clean up preview deployments after release (or let them auto-expire)
+
+---
+
 ### UX: Conversion Hook Messaging Audit — M2/M5
 
 **M2 (Sprint 3) for hook UX, M5 (Sprint 9) for Stripe.** Value-driven conversion hooks (Save, History, Premium Bntos, Team) — no "limit reached" messaging for browser bntos.
@@ -1031,6 +1042,22 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
 - [ ] `apps/web` — Add `NEXT_PUBLIC_APP_VERSION` env var, populated from `${{ github.ref_name }}` in release workflow
 - [ ] `apps/web` — Display version in error boundary report and footer (dev mode)
+
+### Chore: Upgrade Convex 1.31.7 → 1.33.1
+
+**Priority: Low.** Minor Convex JS SDK update. [Changelog](https://github.com/get-convex/convex-js/blob/main/CHANGELOG.md#changelog). Update `convex` in `packages/@bnto/backend/`, verify schema/function compatibility, run full test suite.
+
+- [ ] `packages/@bnto/backend` — Bump `convex` to `1.33.1`
+- [ ] Run `task check` — full quality gate (lint + test + build)
+
+---
+
+### Infra: Upgrade GitHub Actions to Node.js 24
+
+**Priority: Low (deadline: June 2, 2026).** `actions/checkout@v4` runs on Node.js 20, which GitHub is deprecating. After June 2, 2026, actions will be forced to Node.js 24. Upgrade to `actions/checkout@v5` (or set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`) when v5 is available. Also audit other action dependencies (`actions/setup-node@v4`, `actions/upload-artifact@v4`, etc.).
+
+- [ ] `infra` — Upgrade `actions/checkout` to v5 in `ci.yml`, `release.yml`, `lighthouse.yml` when available
+- [ ] `infra` — Audit all GitHub Actions dependencies for Node.js 24 compatibility
 
 ---
 
