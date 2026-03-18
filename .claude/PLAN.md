@@ -302,26 +302,30 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 #### Wave 1 (parallel — audit + cleanup + URL unification)
 
-- [ ] `@bnto/nodes` + `apps/web` — **Audit all listing surfaces**: Map every component/hook that lists recipes or nodes. Document data source, transform, filtering, and output shape for each. Identify divergences (missing recipes, different categories, stale hardcoded lists). Produce a comparison table.
-- [ ] `@bnto/core` — **Design unified recipe/node query API**: Propose how `@bnto/core` exposes a single query that all surfaces consume. Consider: should this be a core client (`core.catalog` or `core.explore`), or a query-only API? What filtering/grouping capabilities does it need? Write a brief design doc or add to `core-api.md`.
+- [x] `@bnto/nodes` + `apps/web` — **Audit all listing surfaces**: Map every component/hook that lists recipes or nodes. Document data source, transform, filtering, and output shape for each. Identify divergences (missing recipes, different categories, stale hardcoded lists). Produce a comparison table. _(Results: 15 surfaces audited, README.md stale (6/8 recipes), all dynamic surfaces trace to `@bnto/nodes` RECIPES. See `strategy/unified-recipe-model.md`)_
+- [x] `@bnto/core` — **Design unified recipe/node query API**: Propose how `@bnto/core` exposes a single query that all surfaces consume. Consider: should this be a core client (`core.catalog` or `core.explore`), or a query-only API? What filtering/grouping capabilities does it need? Write a brief design doc or add to `core-api.md`. _(Decision: a Recipe IS a Definition. Eliminate both `Recipe` wrapper types, delete `RecipeDefinition` duplicate. Persist `Definition` objects directly. Publishing metadata in web registry, persistence in thin store envelope. `core.catalog` client for unified surface access. Full design in `strategy/unified-recipe-model.md`)_
 - [ ] `apps/web` — **Unify editor URL slug pattern**: Replace dual `?from={slug}` / `?recipe={id}` params with a single `?recipe={identifier}` param. The editor page resolves the identifier to either a predefined recipe (by slug) or a saved recipe (by ID). Centralise URL construction in `lib/routes.ts` (e.g. `editorUrl(id)`). Update all consumers: RecipeGrid, RecipeCardShowcase, Open dialog, nav links.
-- [ ] `apps/web` — **Consolidate Recipe types**: Review `Recipe`, `RecipeListItem`, `CloudRecipeDetail`, and raw Convex projections. Eliminate `CloudRecipeDetail` if possible, standardize on fewer shapes across the app.
+- [ ] `apps/web` — **Consolidate Recipe types**: Superseded by unified recipe model — see `strategy/unified-recipe-model.md`. Implementation moves to Wave 2 as part of the type migration.
 
-#### Wave 2 (parallel — build unified layer)
+#### Wave 2 (parallel — unified recipe model: type migration)
 
-- [ ] `@bnto/nodes` — **Enrich recipe metadata**: Ensure every predefined recipe in `@bnto/nodes` has enough metadata for all surfaces (category, description, icon, tier, features list). Eliminate the need for `bntoRegistry.ts` to wrap/augment `@bnto/nodes` data with hardcoded SEO fields — move that metadata to the source.
-- [ ] `@bnto/core` — **Implement unified catalog query**: Build the API designed in Wave 1. Single source that provides recipes and node types with filtering by category, tier, search keyword. All surfaces consume this.
-- [ ] `apps/web` — **Migrate home RecipeGrid**: Replace `BNTO_REGISTRY` with the unified catalog query. Home page shows all available recipes.
+Design doc: `strategy/unified-recipe-model.md`
 
-#### Wave 3 (parallel — Explore page + surface migration)
+- [ ] `@bnto/nodes` — **Refactor predefined recipes to `Definition`**: Delete `Recipe`, `AcceptSpec`, `SEOSpec` types from `recipe.ts`. Update all 8 recipe files to export `Definition` directly (remove slug/seo/accept/features/category wrapper). Update `RECIPES` to `readonly Definition[]`. Rename `getRecipeBySlug()` → `getDefinitionBySlug()`. Add `deriveAcceptSpec(definition)` and `deriveCategory(definition)` pure functions. Update all downstream imports.
+- [ ] `@bnto/core` — **Delete `RecipeDefinition`, simplify persistence**: Delete the `RecipeDefinition`/`Position`/`Metadata`/`Port`/`Edge`/`FieldsConfig` duplicate types from `types/recipe.ts`. Import `Definition` from `@bnto/nodes`. Replace `Recipe` with `SavedRecipe` (thin persistence envelope: `{ definition: Definition; savedAt; syncedAt; cloudId? }`). Update `recipesStore`, `recipeClient`, `recipeService`, transforms, hooks. Keep `RecipeListItem` as a projection derived from `Definition`.
+- [ ] `apps/web` — **Replace `BntoEntry` with `PublishedRecipe`**: Refactor `bntoRegistry.ts` — new `PublishedRecipe` type pairs a `Definition` with publishing metadata (slug, seo, features). Derive `accept` from input node via `deriveAcceptSpec()`. Derive `category` via `deriveCategory()`. Update all consumers (RecipeMarquee, RecipeGrid, tool pages, sitemap, navData, BntoJsonLd). Delete dead `RecipeGrid` component in `components/blocks/` if confirmed unused.
+- [ ] `@bnto/core` — **Build `core.catalog` client**: New domain client on the `core` singleton. Read-only access to predefined Definitions and node type info. Methods: `getRecipes()`, `getRecipeBySlug()`, `getNodeTypes()`, `getCategories()`, `getProcessors()`. Filtering helpers: `getRecipesByCategory()`, `getBrowserNodeTypes()`. React hooks via `useMemo` (static data). All surfaces import from `core.catalog` instead of `@bnto/nodes` directly.
 
-- [ ] `apps/web` — **Build `/explore` page**: Full-page searchable/filterable recipe & node browser. Categories, search, metadata cards. Server component page with client interactive leaves.
+#### Wave 3 (parallel — surface migration + Explore page)
+
+- [ ] `apps/web` — **Migrate all surfaces to `core.catalog`**: Update home RecipeMarquee, navData.ts, RecipeCardShowcase, tool pages, sitemap, llms.txt, llms-full.txt to consume `core.catalog` instead of direct `@bnto/nodes`/`BNTO_REGISTRY` imports.
+- [ ] `packages/editor` — **Migrate editor surfaces to `core.catalog`**: Update `useNodePalette` and `RecipePickerGrid` (open dialog) to consume `core.catalog` instead of direct `@bnto/nodes` imports.
+- [ ] `apps/web` — **Build `/explore` page**: Full-page searchable/filterable recipe & node browser. Categories, search, metadata cards. Server component page with client interactive leaves. Uses `core.catalog`.
 - [ ] `apps/web` — **Migrate navbar Explore**: Replace dropdown with a link to `/explore`. Keep a compact "quick access" subset if desired, but primary action is navigating to the Explore page.
-- [ ] `apps/web` — **Migrate editor surfaces**: Update `useNodePalette` and `RecipePickerGrid` (open dialog) to consume the unified catalog query instead of direct `@bnto/nodes` imports.
 
 #### Wave 4 (sequential — verify + auto-generation)
 
-- [ ] `apps/web` — **SEO verification**: Ensure `generateStaticParams`, `generateMetadata`, sitemap, and `llms.txt` all derive from the unified source. Adding a recipe to `@bnto/nodes` = it appears everywhere.
+- [ ] `apps/web` — **SEO verification**: Ensure `generateStaticParams`, `generateMetadata`, sitemap, and `llms.txt` all derive from `core.catalog`. Adding a Definition to `@bnto/nodes` = it appears everywhere.
 - [ ] `apps/web` — **E2E tests**: Verify Explore page renders, search/filter works, recipe cards link to tool pages. Verify editor palette and open dialog still show correct items. Page-level screenshots for `/explore`.
 - [ ] Repo root — **Auto-generate README recipe list**: The predefined recipe table in `README.md` should be generated from `@bnto/nodes` RECIPES registry (like `llms.txt`). Add a script or codegen step so the README stays current as recipes grow.
 
