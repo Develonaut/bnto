@@ -47,6 +47,9 @@ jobs:
       - name: "Build: @bnto/web"
         run: pnpm --filter @bnto/web run build
 
+      - name: Generate Lighthouse config
+        run: npx tsx scripts/generate-lighthouserc.ts --with-server
+
       - name: Lighthouse CI
         id: lhci
         uses: treosh/lighthouse-ci-action@v12

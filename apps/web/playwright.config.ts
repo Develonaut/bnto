@@ -3,6 +3,11 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Playwright E2E test configuration.
  *
+ * Three modes:
+ * 1. Remote (CI against Vercel preview): set PLAYWRIGHT_BASE_URL — no local server started
+ * 2. Isolated (agents): set E2E_PORT=4001 — starts own Next.js on that port
+ * 3. Default: port 4000 — reuses your local `task dev`
+ *
  * Three-stage execution for stability:
  *   - "browser" project: pages, browser journeys, telemetry — fully parallel
  *   - "auth" project: auth lifecycle + behavior tests — serial (--workers=1)
@@ -24,7 +29,10 @@ import { defineConfig, devices } from "@playwright/test";
  *   task e2e:editor       # editor tests only (serial)
  */
 
-const port = 4000;
+const remoteUrl = process.env.PLAYWRIGHT_BASE_URL;
+const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+const port = Number(process.env.E2E_PORT ?? 4000);
+const isolated = port !== 4000;
 
 export default defineConfig({
   globalTeardown: "./e2e/global-teardown.ts",
@@ -41,9 +49,11 @@ export default defineConfig({
     },
   },
   use: {
-    baseURL: `http://localhost:${port}`,
+    baseURL: remoteUrl || `http://localhost:${port}`,
     trace: "on-first-retry",
     contextOptions: { reducedMotion: "reduce" },
+    // Bypass Vercel Deployment Protection when testing against preview URLs
+    ...(bypassSecret ? { extraHTTPHeaders: { "x-vercel-protection-bypass": bypassSecret } } : {}),
   },
   projects: [
     {
@@ -65,10 +75,17 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  webServer: {
-    command: `pnpm turbo run dev`,
-    url: `http://localhost:${port}`,
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  // Disable webServer when testing against a remote URL (e.g. Vercel preview in CI)
+  ...(remoteUrl
+    ? {}
+    : {
+        webServer: {
+          command: isolated
+            ? `NEXT_DIST_DIR=.next-e2e npx next dev --port ${port}`
+            : `pnpm turbo run dev`,
+          url: `http://localhost:${port}`,
+          reuseExistingServer: true,
+          timeout: 120_000,
+        },
+      }),
 });

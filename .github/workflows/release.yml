@@ -1,0 +1,338 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+" # v1.0.0, v2.3.1
+      - "v[0-9]+.[0-9]+.[0-9]+-*" # v1.0.0-beta.1, v1.0.0-rc.1
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false # Never cancel a release in progress
+
+env:
+  NEXT_PUBLIC_CONVEX_URL: https://zealous-canary-422.convex.cloud
+  NEXT_PUBLIC_CONVEX_SITE_URL: https://zealous-canary-422.convex.site
+
+jobs:
+  # ── Job 1a: Rust CI (fmt + lint + unit + WASM) ──
+  rust:
+    name: Rust Engine (fmt + lint + unit + WASM)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Unit tests (native)
+        run: cargo test --workspace
+
+      - name: WASM integration tests (bnto-wasm)
+        run: wasm-pack test --node crates/bnto-wasm
+
+      - name: WASM integration tests (bnto-csv)
+        run: wasm-pack test --node crates/bnto-csv
+
+      - name: WASM integration tests (bnto-file)
+        run: wasm-pack test --node crates/bnto-file
+
+      - name: WASM integration tests (bnto-image)
+        run: wasm-pack test --node crates/bnto-image
+
+  # ── Job 1b: TypeScript CI (build + lint + test) ──
+  typescript:
+    name: TypeScript (build + lint + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: "Build: @bnto/nodes"
+        run: pnpm --filter @bnto/nodes run build
+
+      - name: "Build: @bnto/auth"
+        run: pnpm --filter @bnto/auth run build
+
+      - name: "Build: @bnto/backend"
+        run: pnpm --filter @bnto/backend run build
+
+      - name: "Build: @bnto/core"
+        run: pnpm --filter @bnto/core run build
+
+      - name: "Build: @bnto/web"
+        run: pnpm --filter @bnto/web run build
+
+      - name: "Lint: @bnto/core"
+        run: pnpm --filter @bnto/core run lint
+
+      - name: "Lint: @bnto/backend"
+        run: pnpm --filter @bnto/backend run lint
+
+      - name: "Lint: @bnto/web"
+        run: pnpm --filter @bnto/web run lint
+
+      - name: "Test: @bnto/nodes"
+        run: pnpm --filter @bnto/nodes run test
+
+      - name: "Test: @bnto/backend"
+        run: pnpm --filter @bnto/backend run test
+
+      - name: "Test: @bnto/core"
+        run: pnpm --filter @bnto/core run test
+
+      - name: "Test: @bnto/web"
+        run: pnpm --filter @bnto/web run test
+
+  # ── Gate: all CI checks must pass ──
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    needs: [rust, typescript]
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          if [ "${{ needs.rust.result }}" != "success" ] || \
+             [ "${{ needs.typescript.result }}" != "success" ]; then
+            echo "One or more CI jobs failed:"
+            echo "  Rust Engine: ${{ needs.rust.result }}"
+            echo "  TypeScript:  ${{ needs.typescript.result }}"
+            exit 1
+          fi
+          echo "All CI jobs passed."
+
+  # ── Job 2: Deploy Vercel Preview ──
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    needs: [ci-gate]
+    outputs:
+      preview-url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel
+
+      - name: Pull Vercel project config
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build with Vercel
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          NEXT_PUBLIC_CONVEX_URL: ${{ env.NEXT_PUBLIC_CONVEX_URL }}
+          NEXT_PUBLIC_CONVEX_SITE_URL: ${{ env.NEXT_PUBLIC_CONVEX_SITE_URL }}
+
+      - name: Deploy preview
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### Preview deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "URL: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Wait for preview to be ready
+        run: |
+          url="${{ steps.deploy.outputs.url }}"
+          for i in $(seq 1 30); do
+            status=$(curl -s -o /dev/null -w '%{http_code}' \
+              -H "x-vercel-protection-bypass: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}" \
+              "$url")
+            if [ "$status" = "200" ]; then
+              echo "Preview is ready at $url"
+              exit 0
+            fi
+            echo "Attempt $i: status $status, waiting..."
+            sleep 5
+          done
+          echo "Preview not ready after 150 seconds"
+          exit 1
+
+  # ── Job 3: E2E Tests against Preview ──
+  e2e-tests:
+    name: E2E Tests (Preview)
+    runs-on: ubuntu-latest
+    needs: [deploy-preview]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+        working-directory: apps/web
+
+      - name: Run E2E tests against preview
+        run: pnpm exec playwright test
+        working-directory: apps/web
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ needs.deploy-preview.outputs.preview-url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          CI: true
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-report-${{ github.ref_name }}
+          path: apps/web/playwright-report/
+          retention-days: 14
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results-${{ github.ref_name }}
+          path: apps/web/test-results/
+          retention-days: 14
+
+  # ── Job 4: Lighthouse audit against Preview ──
+  lighthouse:
+    name: Lighthouse (Preview)
+    runs-on: ubuntu-latest
+    needs: [deploy-preview]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Generate Lighthouse config for preview
+        run: npx tsx scripts/generate-lighthouserc.ts --base-url ${{ needs.deploy-preview.outputs.preview-url }}
+        env:
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: ./lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+        env:
+          LHCI_BUILD_CONTEXT__EXTERNAL_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+  # ── Job 5: Release Gate ──
+  release-gate:
+    name: Release Gate
+    runs-on: ubuntu-latest
+    needs: [ci-gate, deploy-preview, e2e-tests, lighthouse]
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [ "${{ needs.ci-gate.result }}" != "success" ] || \
+             [ "${{ needs.deploy-preview.result }}" != "success" ] || \
+             [ "${{ needs.e2e-tests.result }}" != "success" ] || \
+             [ "${{ needs.lighthouse.result }}" != "success" ]; then
+            echo "Release gate FAILED:"
+            echo "  CI Gate:      ${{ needs.ci-gate.result }}"
+            echo "  Preview:      ${{ needs.deploy-preview.result }}"
+            echo "  E2E Tests:    ${{ needs.e2e-tests.result }}"
+            echo "  Lighthouse:   ${{ needs.lighthouse.result }}"
+            exit 1
+          fi
+          echo "All release checks passed."
+
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          body: |
+            ## Verification
+
+            - CI Gate: Rust + TypeScript checks passed
+            - E2E Tests: Full Playwright suite passed against Vercel preview
+            - Lighthouse: Performance/accessibility/SEO audits passed
+            - Convex: ${{ contains(github.ref_name, '-') && 'Skipped (pre-release)' || 'Production functions deployed' }}
+            - Preview URL: ${{ needs.deploy-preview.outputs.preview-url }}
+
+            ---
+            Auto-generated from tag `${{ github.ref_name }}`
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ── Job 6: Deploy Convex to Production ──
+  convex-deploy:
+    name: Convex Deploy (prod)
+    runs-on: ubuntu-latest
+    needs: [release-gate]
+    if: needs.release-gate.result == 'success' && !contains(github.ref_name, '-')
+    defaults:
+      run:
+        working-directory: packages/@bnto/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Deploy Convex functions to production
+        run: npx convex deploy --yes
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
