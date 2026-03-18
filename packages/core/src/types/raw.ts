@@ -30,6 +30,7 @@ export interface RawRecipeListProjection {
   _id: string;
   name: string;
   nodeCount: number;
+  nodeTypes?: string[];
   updatedAt: number;
 }
 

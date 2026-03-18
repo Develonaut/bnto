@@ -48,11 +48,23 @@ function DevNodeControls() {
     [editor],
   );
 
+  const handleSetNodeStatus = useCallback(
+    (nodeId: string, s: NodeExecutionStatus) => () => setNodeStatus(nodeId, s),
+    [setNodeStatus],
+  );
+
   const setNodeProgress = useCallback(
     (nodeId: string, percent: number) => {
       editor.execution.setNodeProgress(nodeId, percent);
     },
     [editor],
+  );
+
+  const handleSetNodeProgress = useCallback(
+    (nodeId: string) =>
+      ([v]: number[]) =>
+        setNodeProgress(nodeId, v),
+    [setNodeProgress],
   );
 
   const [simulating, setSimulating] = useState(false);
@@ -151,7 +163,8 @@ function DevNodeControls() {
                   variant={status === s ? "primary" : "outline"}
                   size="sm"
                   className="h-6 px-1.5 text-[10px]"
-                  onClick={() => setNodeStatus(node.id, s)}
+                  onClick={handleSetNodeStatus(node.id, s)}
+                  data-testid={`node-status-${s}`}
                 >
                   {s}
                 </Button>
@@ -163,7 +176,7 @@ function DevNodeControls() {
               </Text>
               <Slider
                 value={[progress]}
-                onValueChange={([v]) => setNodeProgress(node.id, v)}
+                onValueChange={handleSetNodeProgress(node.id)}
                 min={0}
                 max={100}
                 step={1}

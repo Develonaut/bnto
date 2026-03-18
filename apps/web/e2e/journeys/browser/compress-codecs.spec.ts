@@ -26,7 +26,7 @@ test.describe("compress-images — codec coverage @browser", () => {
 
     await runAndComplete(page);
 
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
+    await expect(page.getByTestId("output-file")).toHaveCount(1);
 
     const inputSize = fs.statSync(path.join(IMAGE_FIXTURES_DIR, "large.jpg")).size;
 
@@ -43,11 +43,11 @@ test.describe("compress-images — codec coverage @browser", () => {
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "large.png")]);
 
     // Click run manually — we want to observe progress
-    const runButton = page.locator('[data-testid="run-button"]:visible');
+    const runButton = page.getByTestId("run-button", ":visible");
     await runButton.click();
 
     // 1MB PNG should take long enough to observe progress
-    const progressEl = page.getByRole("progressbar");
+    const progressEl = page.getByTestId("status-progressbar");
     await expect(progressEl).toBeVisible({ timeout: 10000 });
 
     // Wait for completion
@@ -55,7 +55,7 @@ test.describe("compress-images — codec coverage @browser", () => {
       timeout: 60000,
     });
 
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
+    await expect(page.getByTestId("output-file")).toHaveCount(1);
 
     const inputSize = fs.statSync(path.join(IMAGE_FIXTURES_DIR, "large.png")).size;
 
@@ -73,7 +73,7 @@ test.describe("compress-images — codec coverage @browser", () => {
 
     await runAndComplete(page);
 
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(1);
+    await expect(page.getByTestId("output-file")).toHaveCount(1);
 
     // WebP encoding is lossless-only in the Rust image crate.
     // Re-encoding a lossy WebP as lossless can produce a LARGER file.

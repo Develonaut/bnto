@@ -67,15 +67,24 @@ These are enforced in detail by the [rules/](.claude/rules/) files. This section
 
 ## Rust Code Standards
 
-**All Rust code must be heavily commented for learning purposes.** Ryan is learning Rust — every `.rs` file should be written as if the comments will be read by a five-year-old. This means:
+**Comment what's non-obvious, not what's routine.** Rust code should be well-commented but not tutorial-style. The reader is assumed to know basic Rust syntax — don't explain `match`, `unwrap()`, `Vec`, `Option`, `Result`, `impl`, or standard library patterns.
 
-- Explain what every function does in plain English before the function
-- Explain WHY each line exists, not just WHAT it does
-- Explain Rust-specific concepts inline (ownership, borrowing, lifetimes, traits, etc.)
-- Use analogies and simple language in comments
-- Don't assume the reader knows Rust idioms — explain `unwrap()`, `?` operator, `impl`, `match`, etc.
-- Comment density should be high — aim for a comment every 2-3 lines of code minimum
-- Group related logic with section comments (e.g., `// --- Step 1: Read the input file ---`)
+**What to comment:**
+
+- File-level purpose header (1-3 lines explaining what this module does and why it exists)
+- Section separators for logical groupings (`// --- Progress Events ---`)
+- Non-obvious design decisions and trade-offs ("why this approach, not that one")
+- Domain-specific knowledge (business rules, format specs, algorithm choices)
+- Genuinely tricky Rust patterns (lifetime tricks, unsafe blocks, complex trait bounds, macro internals)
+- `///` doc comments on all public items (structs, enums, traits, functions)
+
+**What NOT to comment:**
+
+- Standard Rust patterns (`match`, `?` operator, `Option`/`Result` handling, iterators)
+- What a line of code does when the code is self-evident
+- "RUST CONCEPT:" tutorial blocks explaining language fundamentals
+- Verbose "WHAT IS THIS FILE?" / "WHY IS THIS A SEPARATE FILE?" headers — use a concise 1-3 line module doc instead
+- Serde attributes (`#[serde(rename_all)]`, `#[derive(Deserialize)]`) — these are standard and self-documenting
 
 This applies to all code in `engine/` (Rust WASM) and any other `.rs` files in the repo.
 
@@ -113,18 +122,17 @@ task ui:lint            # Lint all TS packages
 task dev                # Start web + Convex dev servers (Next.js on port 4000 + Convex)
 
 # E2E tests
-# IMPORTANT: E2E tests need a running dev server. Check if one is running first:
+# IMPORTANT: E2E tests need a running dev server on port 4000.
 #   lsof -ti:4000  (if output, dev server is running — use task e2e directly)
 #   If nothing running, start one: task dev (background it, wait ~10s for startup)
-task e2e                # Run Playwright E2E tests against port 4000 (reuses running dev server)
-task e2e:isolated       # Starts own Next.js on port 4001 (slower — only if port 4000 is unavailable)
+task e2e                # Run all E2E tests (browser parallel, then editor serial)
+task e2e:browser        # Run non-editor tests in parallel
+task e2e:editor         # Run editor tests serially (avoids ReactFlow flakiness)
 
 # Updating screenshots (run from apps/web/):
 #   cd apps/web && pnpm exec playwright test --update-snapshots   # regenerate
 #   cd apps/web && pnpm exec playwright test                      # verify stable
-# Both runs required. If using isolated port:
-#   E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test --update-snapshots
-#   E2E_PORT=4001 pnpm --filter @bnto/web exec playwright test
+# Both runs required.
 
 # Everything
 task build:all          # Build Rust + TypeScript
@@ -249,7 +257,8 @@ Persona skills are domain experts that can be activated to adopt specialized kno
 | Security Engineer  | Cross-cutting — trust boundaries, attack surfaces, defense-in-depth                                               | `/security-engineer`  |
 | Quality Engineer   | `apps/web/e2e/`, `.claude/journeys/` — E2E testing, journey design, screenshot regression, test infrastructure    | `/quality-engineer`   |
 | Workflow Expert    | Recipe design, competitive analysis, multi-node compositions, custom recipe journey tests                         | `/workflow-expert`    |
+| Technical Writer   | Package READMEs — accuracy audits, structural documentation, staleness prevention                                 | `/technical-writer`   |
 
 | Project Manager | `.claude/PLAN.md`, `.claude/ROADMAP.md` — roadmap alignment, sprint planning | `/project-manager` |
 
-The `/groom` workflow skill invokes `/project-manager` automatically to run a full plan review.
+The `/groom` workflow skill invokes `/project-manager` automatically to run a full plan review. The `/code-review` and `/pre-commit` skills invoke `/technical-writer` when changes affect package structure or public API.

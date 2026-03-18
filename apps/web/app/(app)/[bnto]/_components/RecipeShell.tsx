@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import type { ReactNode } from "react";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { SlideUp, BouncyStagger, FileUpload, FileUploadDropzone, Grid, Stack } from "@bnto/ui";
@@ -47,6 +48,13 @@ export function RecipeShell({ entry, children }: { entry: BntoEntry; children?: 
     handleResetExecution,
   } = useRecipeFlow({ entry });
 
+  const handleClearFiles = useCallback(() => setFiles([]), [setFiles]);
+
+  const handleDeleteFile = useCallback(
+    (index: number) => () => setFiles(files.filter((_, j) => j !== index)),
+    [setFiles, files],
+  );
+
   const activePhase = deriveActivePhase(resolvedPhase, files.length);
 
   return (
@@ -86,7 +94,7 @@ export function RecipeShell({ entry, children }: { entry: BntoEntry; children?: 
               resolvedPhase={resolvedPhase}
               isProcessing={isProcessing}
               fileCount={files.length}
-              onBack={activePhase === 3 ? handleResetExecution : () => setFiles([])}
+              onBack={activePhase === 3 ? handleResetExecution : handleClearFiles}
               onRun={handleRun}
               onDownloadAll={downloadAll}
               centerContent={
@@ -155,7 +163,7 @@ export function RecipeShell({ entry, children }: { entry: BntoEntry; children?: 
                       result={result}
                       isProcessing={isFileProcessing}
                       isExecuting={activePhase === 3}
-                      onDelete={() => setFiles(files.filter((_, j) => j !== i))}
+                      onDelete={handleDeleteFile(i)}
                       onDownload={downloadResult}
                     />
                   );

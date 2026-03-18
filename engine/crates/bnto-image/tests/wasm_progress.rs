@@ -75,12 +75,6 @@ fn test_progress_callback_fires_for_jpeg() {
     //
     // Each call is a JS array [percent, message]. We iterate through
     // them and check that percent never goes backwards.
-    //
-    // RUST CONCEPT: `dyn_into::<js_sys::Array>()`
-    // `dyn_into` tries to cast a JsValue to a specific JS type.
-    // It returns `Result<T, JsValue>` — Ok if the cast succeeds,
-    // Err if the JS value isn't the expected type. `.unwrap()` panics
-    // if the cast fails, which is fine in tests.
     let mut last_percent: f64 = -1.0;
     for i in 0..call_count {
         let pair = calls

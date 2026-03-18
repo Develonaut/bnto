@@ -65,7 +65,7 @@ test.describe("SEO metadata — all Tier 1 slugs @browser", () => {
       // Tool page titles already include the "-- bnto" brand suffix.
       await expect(page).toHaveTitle(entry.title);
 
-      // Meta description present and correct
+      // structural: meta tags don't support data-testid
       const metaDesc = page.locator('meta[name="description"]');
       await expect(metaDesc).toHaveAttribute("content", entry.description);
     });
@@ -73,9 +73,11 @@ test.describe("SEO metadata — all Tier 1 slugs @browser", () => {
     test(`/${entry.slug}: OG tags present`, async ({ page }) => {
       await page.goto(`/${entry.slug}`);
 
+      // structural: meta tags don't support data-testid
       const ogTitle = page.locator('meta[property="og:title"]');
       await expect(ogTitle).toHaveAttribute("content", entry.title);
 
+      // structural: meta tags don't support data-testid
       const ogDesc = page.locator('meta[property="og:description"]');
       await expect(ogDesc).toHaveAttribute("content", entry.description);
     });
@@ -83,7 +85,9 @@ test.describe("SEO metadata — all Tier 1 slugs @browser", () => {
     test(`/${entry.slug}: h1 matches target query`, async ({ page }) => {
       await page.goto(`/${entry.slug}`);
 
-      await expect(page.getByRole("heading", { level: 1, name: entry.h1 })).toBeVisible();
+      const h1 = page.getByTestId("recipe-heading");
+      await expect(h1).toBeVisible();
+      await expect(h1).toHaveText(entry.h1);
     });
 
     test(`/${entry.slug}: JSON-LD structured data`, async ({ page }) => {
@@ -119,7 +123,7 @@ test.describe("SEO — 404 for unknown slugs @browser", () => {
     }
 
     // 404 page content renders
-    await expect(page.getByRole("heading", { name: /Page Not Found/i })).toBeVisible();
+    await expect(page.getByTestId("not-found-heading")).toBeVisible();
   });
 });
 

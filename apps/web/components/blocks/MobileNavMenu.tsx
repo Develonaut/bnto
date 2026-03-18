@@ -46,6 +46,7 @@ export function MobileNavMenu({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
+        data-testid="mobile-nav-dialog"
         aria-describedby={undefined}
         side="top"
         className="inset-0 h-dvh w-full bg-primary text-primary-foreground [&>button]:hidden"
@@ -85,6 +86,7 @@ export function MobileNavMenu({
                             <Link
                               href={link.url}
                               onClick={handleClose}
+                              data-testid={`mobile-link-${link.url.replace("/", "")}`}
                               className="text-lg leading-normal font-medium text-primary-foreground"
                             >
                               {link.label}
@@ -101,12 +103,21 @@ export function MobileNavMenu({
               <Stack className="gap-6">
                 <Row className="gap-4">
                   <NewRecipeMobileButton onClick={handleClose} />
+                  <Button
+                    variant="outline"
+                    href="/my-recipes"
+                    onClick={handleClose}
+                    data-testid="mobile-link-my-recipes"
+                  >
+                    My Recipes
+                  </Button>
                   {PAGE_LINKS.map((link) => (
                     <Button
                       key={link.href}
                       variant="outline"
                       href={link.href}
                       onClick={handleClose}
+                      data-testid={`mobile-link-${link.href.replace("/", "")}`}
                     >
                       {link.label}
                     </Button>

@@ -6,7 +6,7 @@
  * Kept as a thin re-export for backward compatibility with existing
  * consumers that import from `useEditorNode` directly.
  *
- * Must be inside an EditorRoot.
+ * Must be inside an EditorProvider.
  */
 
 "use client";

@@ -40,7 +40,7 @@ const TOOL_SECTIONS = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border">
+    <footer className="border-t border-border" data-testid="footer">
       <Container>
         <div className="flex flex-col gap-10 py-12 lg:flex-row lg:gap-20 lg:py-16">
           {/* Left column: brand + description */}
@@ -93,6 +93,7 @@ export function Footer() {
                     <li key={link.href}>
                       <Link
                         href={link.href}
+                        data-testid={`footer-link-${link.href.replace("/", "")}`}
                         className="text-sm font-medium transition-colors hover:text-primary"
                         {...("external" in link && link.external
                           ? { target: "_blank", rel: "noopener noreferrer" }

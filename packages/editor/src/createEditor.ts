@@ -4,6 +4,10 @@
  * Creates a Zustand store, wraps it with services, composes clients,
  * and returns an EditorInstance with domain-namespaced access.
  *
+ * Auto-persist: subscribes to store changes and saves the recipe
+ * to core on every dirty mutation (debounced). No React effects —
+ * this is a plain store subscription created at construction time.
+ *
  * Usage:
  *   const editor = createEditor(definition);
  *   editor.nodes.addNode("image-compress");
@@ -11,6 +15,7 @@
  *   const def = editor.definition.exportAsDefinition();
  */
 
+import { core } from "@bnto/core";
 import type { Definition } from "@bnto/nodes";
 import type { EditorState } from "./store/types";
 import type { EditorInstance } from "./editorTypes";
@@ -25,6 +30,10 @@ import { createDefinitionClient } from "./clients/definitionClient";
 import { createExecutionClient } from "./clients/executionClient";
 import { createHistoryClient } from "./clients/historyClient";
 import { createPanelClient } from "./clients/panelClient";
+import { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
+import { debounce } from "./draft/debounce";
+
+const PERSIST_DELAY_MS = 1000;
 
 function createEditor(definition?: Definition, cloudId?: string): EditorInstance {
   const storeApi = createEditorStore(definition, cloudId);
@@ -43,6 +52,17 @@ function createEditor(definition?: Definition, cloudId?: string): EditorInstance
   const history = createHistoryClient(historyService);
   const panels = createPanelClient(panelService);
 
+  // --- Auto-persist: save recipe to core on dirty mutations ---
+  const persistDebounced = debounce(PERSIST_DELAY_MS);
+  const unsubscribePersist = storeApi.subscribe((state) => {
+    if (!state.isDirty) return;
+    persistDebounced.schedule(() => {
+      const s = storeApi.getState();
+      const exported = rfNodesToDefinition(s.nodes, s.recipeMetadata, s.configs, s.definition);
+      core.recipes.save(exported, s.recipeMetadata);
+    });
+  });
+
   return {
     nodes,
     definition: def,
@@ -59,7 +79,9 @@ function createEditor(definition?: Definition, cloudId?: string): EditorInstance
     },
 
     destroy() {
-      // No-op for now. Future: cleanup subscriptions, dispose resources.
+      persistDebounced.flush();
+      persistDebounced.destroy();
+      unsubscribePersist();
     },
 
     _storeApi: storeApi,

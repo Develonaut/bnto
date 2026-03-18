@@ -1,47 +1,12 @@
 // =============================================================================
-// Error Types — Everything That Can Go Wrong
+// Error Types
 // =============================================================================
 //
-// WHAT IS THIS FILE?
-// This defines all the error types for the Bnto WASM engine. When something
-// goes wrong during node execution (bad input, unsupported format, etc.),
-// we return one of these errors instead of crashing.
-//
-// RUST CONCEPT: Error Handling
-// Rust doesn't have exceptions (no try/catch like JavaScript). Instead,
-// functions that can fail return `Result<T, E>`:
-//   - `Ok(value)` = everything worked, here's the result
-//   - `Err(error)` = something went wrong, here's what happened
-//
-// This forces you to handle errors explicitly — you can't accidentally
-// ignore them like you can with uncaught exceptions in JS.
-//
-// WHY A CUSTOM ERROR TYPE?
-// We could use `String` for errors, but a custom enum lets us:
-//   1. Match on specific error kinds (is it an IO error? A format error?)
-//   2. Provide structured information (which file failed? What format?)
-//   3. Convert to user-friendly messages for the UI
-//
-// RUST CONCEPT: `enum`
-// An `enum` in Rust is like a TypeScript discriminated union:
-//   type BntoError =
-//     | { kind: "InvalidInput", message: string }
-//     | { kind: "UnsupportedFormat", format: string }
-//     | ...
-// Each variant can carry different data. The compiler ensures you
-// handle every possible variant when matching.
+// All error types for the Bnto WASM engine. When something goes wrong during
+// node execution (bad input, unsupported format, etc.), we return one of
+// these errors instead of crashing.
 
 use thiserror::Error;
-
-// RUST CONCEPT: `#[derive(...)]`
-// `derive` is an attribute that tells the compiler to automatically
-// generate code for standard traits (interfaces). Here:
-//   - `Debug` — lets us print the error with `{:?}` format (like console.dir in JS)
-//   - `Error` — from thiserror, generates the `std::error::Error` trait implementation
-//
-// RUST CONCEPT: `#[error("...")]`
-// This attribute (from thiserror) defines the human-readable error message
-// for each variant. `{0}` is a placeholder for the first field.
 
 /// All possible errors from Bnto WASM node operations.
 ///
@@ -74,13 +39,8 @@ pub enum BntoError {
 
     // --- Resource Errors ---
     /// A file is too large for browser processing.
-    /// The u64 is the file size in bytes. Browser memory is limited (~2GB),
-    /// so we check file sizes before trying to process them.
-    ///
-    /// RUST CONCEPT: `u64`
-    /// `u64` is an unsigned 64-bit integer. "Unsigned" means it can only
-    /// be positive (0 or greater). 64 bits means it can hold values up to
-    /// about 18 quintillion — plenty for file sizes.
+    /// Browser memory is limited (~2GB), so we check file sizes before
+    /// trying to process them.
     #[error("File too large: {0} bytes")]
     FileTooLarge(u64),
 

@@ -75,12 +75,12 @@ test.describe("pipeline smoke — all 6 bntos @browser", () => {
       await runAndComplete(page);
 
       // At least one output file produced
-      const outputFile = page.locator('[data-testid="output-file"]');
+      const outputFile = page.getByTestId("output-file");
       await expect(outputFile).toHaveCount(1);
 
       // Download and verify filename pattern
       const downloadPromise = page.waitForEvent("download");
-      await outputFile.locator('[data-testid="download-button"]').click();
+      await outputFile.getByTestId("download-button").click();
       const download = await downloadPromise;
 
       expect(download.suggestedFilename()).toMatch(recipe.filenamePattern);

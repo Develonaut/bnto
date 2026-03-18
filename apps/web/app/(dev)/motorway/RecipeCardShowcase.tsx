@@ -39,19 +39,43 @@ const MOCK_RECIPES: Array<{
   lastStatus?: "pending" | "running" | "completed" | "failed";
 }> = [
   {
-    recipe: { id: "1", name: "Compress & Resize", nodeCount: 3, updatedAt: NOW - 2 * HOUR },
+    recipe: {
+      id: "1",
+      name: "Compress & Resize",
+      nodeCount: 3,
+      nodeTypes: ["compress", "resize"],
+      updatedAt: NOW - 2 * HOUR,
+    },
     lastStatus: "completed",
   },
   {
-    recipe: { id: "2", name: "Clean CSV Pipeline", nodeCount: 5, updatedAt: NOW - 3 * DAY },
+    recipe: {
+      id: "2",
+      name: "Clean CSV Pipeline",
+      nodeCount: 5,
+      nodeTypes: ["clean-csv"],
+      updatedAt: NOW - 3 * DAY,
+    },
     lastStatus: "failed",
   },
   {
-    recipe: { id: "3", name: "Batch Rename", nodeCount: 2, updatedAt: NOW - 15 * DAY },
+    recipe: {
+      id: "3",
+      name: "Batch Rename",
+      nodeCount: 2,
+      nodeTypes: ["rename"],
+      updatedAt: NOW - 15 * DAY,
+    },
     lastStatus: "running",
   },
   {
-    recipe: { id: "4", name: "Image Format Converter", nodeCount: 4, updatedAt: NOW - 45 * DAY },
+    recipe: {
+      id: "4",
+      name: "Image Format Converter",
+      nodeCount: 4,
+      nodeTypes: ["convert"],
+      updatedAt: NOW - 45 * DAY,
+    },
   },
 ];
 
@@ -92,6 +116,7 @@ export function RecipeCardShowcase() {
                   <SavedRecipeCard
                     recipe={item.recipe}
                     lastStatus={item.lastStatus}
+                    href={`/editor?recipe=${item.recipe.id}`}
                     loading={loading}
                   />
                 </ScaleIn>

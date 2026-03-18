@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { Button, DownloadIcon, ResultFileCard } from "@bnto/ui";
 import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
 import { useFileResultProps } from "@bnto/core";
@@ -44,6 +45,7 @@ function BrowserFileRow({
   onDownload: (result: BrowserFileResult) => void;
 }) {
   const props = useFileResultProps(result);
+  const handleDownload = useCallback(() => onDownload(result), [onDownload, result]);
 
   return (
     <ResultFileCard
@@ -57,7 +59,7 @@ function BrowserFileRow({
           variant="outline"
           size="icon"
           elevation="sm"
-          onClick={() => onDownload(result)}
+          onClick={handleDownload}
           aria-label={`Download ${result.filename}`}
           data-testid="download-button"
         >

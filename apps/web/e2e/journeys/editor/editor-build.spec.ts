@@ -22,7 +22,7 @@ test.describe("editor build & configure @browser", () => {
 
   test("BC1: add node from palette", async ({ page }) => {
     // Blank canvas starts with 2 I/O nodes
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(2);
 
     // Add an image compress node
@@ -36,14 +36,14 @@ test.describe("editor build & configure @browser", () => {
   test("BC2: remove processing node", async ({ page }) => {
     // Add a node first
     await addNodeFromPalette(page, "Compress Images");
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(3);
 
     // Select the processing node
     await selectNode(page, "Compress");
 
     // Click delete button (appears on hover/selection)
-    const deleteBtn = page.locator('[data-testid="delete-node"]');
+    const deleteBtn = page.getByTestId("delete-node");
     await deleteBtn.click();
 
     // Should be back to 2 I/O nodes
@@ -58,7 +58,7 @@ test.describe("editor build & configure @browser", () => {
     await ensureConfigPanelOpen(page);
 
     // Config panel should show schema fields (operation is hidden, check compression instead)
-    const compressionField = page.locator('[data-testid="schema-field-compression"]');
+    const compressionField = page.getByTestId("schema-field-compression");
     await expect(compressionField).toBeVisible({ timeout: 5000 });
   });
 
@@ -69,11 +69,11 @@ test.describe("editor build & configure @browser", () => {
     await ensureConfigPanelOpen(page);
 
     // Width field should be visible for resize operation
-    const widthField = page.locator('[data-testid="schema-field-width"]');
+    const widthField = page.getByTestId("schema-field-width");
     await expect(widthField).toBeVisible();
 
     // Verify it has a number input control
-    await expect(widthField.locator('[data-testid^="control-number"]')).toBeVisible();
+    await expect(widthField.getByTestId("control-number*")).toBeVisible();
   });
 
   test("BC8: I/O nodes cannot be deleted", async ({ page }) => {
@@ -81,7 +81,7 @@ test.describe("editor build & configure @browser", () => {
     await selectNode(page, "Input");
 
     // Delete button should NOT be present for I/O nodes
-    const deleteBtn = page.locator('[data-testid="delete-node"]');
+    const deleteBtn = page.getByTestId("delete-node");
     await expect(deleteBtn).toHaveCount(0);
 
     // Click the Output node
@@ -93,7 +93,7 @@ test.describe("editor build & configure @browser", () => {
     await addNodeFromPalette(page, "Compress Images");
     await addNodeFromPalette(page, "Rename Files");
 
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     // I/O (2) + Compress + Rename = 4
     await expect(nodeCards).toHaveCount(4);
     await expect(nodeCards.filter({ hasText: /Compress/i })).toHaveCount(1);
@@ -102,16 +102,16 @@ test.describe("editor build & configure @browser", () => {
 
   test("BC6: undo restores deleted node", async ({ page }) => {
     await addNodeFromPalette(page, "Compress Images");
-    const nodeCards = page.locator('[data-testid="node-card"]');
+    const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(3);
 
     // Delete the processing node
     await selectNode(page, "Compress");
-    await page.locator('[data-testid="delete-node"]').click();
+    await page.getByTestId("delete-node").click();
     await expect(nodeCards).toHaveCount(2);
 
     // Undo
-    await page.getByRole("button", { name: "Undo" }).click();
+    await page.getByTestId("toolbar-undo").click();
     await expect(nodeCards).toHaveCount(3);
   });
 });

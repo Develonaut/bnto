@@ -2,27 +2,10 @@
 // bnto-core — The Foundation WASM Library
 // =============================================================================
 //
-// WHAT IS THIS FILE?
-// This is the "entry point" for the bnto-core crate. In Rust, `lib.rs` is
-// like `index.ts` in TypeScript — it's the main file that defines what the
-// crate exports (makes available to other code).
-//
-// WHAT DOES THIS CRATE DO?
-// It provides the shared foundation that all Bnto WASM node crates use:
-//   1. Error types — a standard way to report problems
-//   2. The NodeProcessor trait — the interface every node type must implement
-//   3. Progress reporting — so the UI can show "50% done..."
-//
-// This crate is an "rlib" (Rust library). It does NOT produce a .wasm file
-// itself — that's the job of the bnto-wasm entry point crate, which depends
-// on this crate and all node crates to build the unified .wasm binary.
-//
-// RUST CONCEPT: `mod` AND `pub mod`
-// In Rust, code is organized into "modules" (like folders/files in a project).
-// - `mod errors;` means "there's a file called errors.rs, include it here"
-// - `pub mod errors;` means "include it AND make it visible to outside code"
-// - `pub use errors::*;` means "re-export everything from errors so users
-//   can write `use bnto_core::BntoError` instead of `use bnto_core::errors::BntoError`"
+// Shared foundation for all Bnto WASM node crates: error types,
+// the NodeProcessor trait, progress reporting, pipeline execution,
+// and the node registry. This is an rlib -- it doesn't produce a
+// .wasm file itself. That's the job of the bnto-wasm entry point.
 
 // --- Public Modules ---
 // These are the building blocks that node crates and the web app will use.
@@ -129,10 +112,6 @@ pub const DEFAULT_COMPRESSION: u8 = 20;
 // by other crates in the workspace and for testing.
 
 /// Returns the version of the bnto-core crate.
-///
-/// RUST CONCEPT: `env!("CARGO_PKG_VERSION")`
-/// This macro reads the `version` field from Cargo.toml at compile time.
-/// The value is baked into the binary — no runtime config needed.
 pub fn version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
@@ -140,10 +119,6 @@ pub fn version() -> String {
 // =============================================================================
 // Tests
 // =============================================================================
-//
-// RUST CONCEPT: `#[cfg(test)]`
-// This attribute says "only compile this code when running tests".
-// It's completely removed from the production WASM binary — zero overhead.
 
 #[cfg(test)]
 mod tests {

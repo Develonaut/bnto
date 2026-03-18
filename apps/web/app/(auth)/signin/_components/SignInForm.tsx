@@ -1,7 +1,7 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
+import type { ChangeEvent, CSSProperties } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 import { NavButton } from "@/components/blocks/NavButton";
@@ -48,6 +48,19 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
   const [loading, setLoading] = useState(false);
 
   const isSignUp = mode === "signup";
+
+  const handleNameChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => setName(e.target.value),
+    [],
+  );
+  const handleEmailChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value),
+    [],
+  );
+  const handlePasswordChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value),
+    [],
+  );
 
   function toggleMode() {
     const next = isSignUp ? "signin" : "signup";
@@ -103,7 +116,7 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
             >
               bnto
             </NavButton>
-            <Heading level={1} size="sm">
+            <Heading level={1} size="sm" data-testid="auth-heading">
               {isSignUp ? "Create an account" : "Welcome back"}
             </Heading>
             <Text color="muted">
@@ -120,9 +133,10 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
                   type="text"
                   placeholder="Your name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={handleNameChange}
                   required
                   autoComplete="name"
+                  data-testid="auth-name-input"
                 />
               )}
               <Input
@@ -131,28 +145,35 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 required
                 autoComplete="email"
+                data-testid="auth-email-input"
               />
               <PasswordInput
                 id="password"
                 name="password"
                 placeholder="Enter your password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 required
                 minLength={8}
                 autoComplete={isSignUp ? "new-password" : "current-password"}
+                data-testid="auth-password-input"
               />
 
               {error && (
-                <p className="text-sm text-destructive" role="alert">
+                <p className="text-sm text-destructive" role="alert" data-testid="auth-error">
                   {error}
                 </p>
               )}
 
-              <Button type="submit" disabled={loading} className="mt-2 w-full">
+              <Button
+                type="submit"
+                disabled={loading}
+                data-testid="auth-submit"
+                className="mt-2 w-full"
+              >
                 {loading && <LoaderIcon className="size-4 motion-safe:animate-spin" />}
                 {loading
                   ? isSignUp
@@ -167,7 +188,12 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
 
           <Text size="sm" color="muted" className="text-center">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-            <button type="button" onClick={toggleMode} className="text-primary font-medium">
+            <button
+              type="button"
+              onClick={toggleMode}
+              data-testid="auth-mode-toggle"
+              className="text-primary font-medium"
+            >
               {isSignUp ? "Sign in" : "Sign up"}
             </button>
           </Text>

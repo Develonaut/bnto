@@ -1,25 +1,4 @@
-// =============================================================================
-// Shared Test Helpers — Used by All WASM Integration Test Files
-// =============================================================================
-//
-// WHAT IS THIS FILE?
-// Common fixtures, helpers, and constants shared across WASM integration
-// test files. In Rust, integration tests (files in `tests/`) are each
-// compiled as separate crates. This `common/mod.rs` module is imported
-// by each test file to avoid duplicating setup code.
-//
-// RUST CONCEPT: `tests/common/mod.rs`
-// Rust's test runner treats each file in `tests/` as an independent
-// test crate. To share code, you put it in `tests/common/mod.rs` and
-// import it with `mod common;` in each test file. The `common` module
-// is NOT itself compiled as a test — it's just a library for tests.
-//
-// RUST CONCEPT: `#![allow(dead_code)]`
-// Each test file imports this module but only uses a subset of the
-// fixtures and helpers. Rust's compiler warns about the unused ones
-// (it checks per-crate, and each test file is its own crate). We
-// silence these warnings because the items ARE used — just by
-// different test files.
+// Shared fixtures and helpers for WASM integration tests.
 #![allow(dead_code)]
 
 use wasm_bindgen::JsCast;
@@ -89,14 +68,8 @@ pub fn noop_callback() -> js_sys::Function {
 
 /// Create a JavaScript callback that records every (percent, message) call.
 ///
-/// Returns a tuple of (callback_function, calls_array). After processing,
-/// inspect `calls_array` to verify progress was reported correctly.
-///
-/// HOW IT WORKS:
-/// We use `js_sys::eval()` to create a JS closure that captures an array.
-/// Every time the callback is called, it pushes [percent, message] into
-/// the array. After the WASM function returns, we read the array to see
-/// what progress updates were reported.
+/// Returns `(callback_function, calls_array)`. Inspect `calls_array`
+/// after processing to verify progress updates.
 pub fn recording_callback() -> (js_sys::Function, js_sys::Array) {
     // --- Step 1: Create a JS object with a callback and an array ---
     let obj = js_sys::eval(
@@ -154,13 +127,6 @@ pub fn extract_metadata(result: &JsValue) -> String {
 /// The data property is a Uint8Array in JS land. We convert it to a
 /// Vec<u8> so Rust tests can work with it as normal bytes — parsing
 /// as UTF-8, checking content, etc.
-///
-/// RUST CONCEPT: `dyn_into()`
-/// This is wasm-bindgen's way of doing a runtime type check + cast
-/// on a JsValue. It's like a safe downcast — if the JS value isn't
-/// actually a Uint8Array, this returns Err instead of panicking.
-/// We use `.expect()` here because in tests we WANT it to panic
-/// with a clear message if the type is wrong.
 pub fn extract_bytes(result: &JsValue) -> Vec<u8> {
     let data =
         js_sys::Reflect::get(result, &"data".into()).expect("result should have data property");

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { Label, Switch } from "@bnto/ui";
 import type { CleanCsvConfig as Config } from "./types";
 
@@ -27,20 +28,30 @@ const OPTIONS = [
 ];
 
 export function CleanCsvConfig({ value, onChange }: CleanCsvConfigProps) {
+  const handleCheckedChange = useCallback(
+    (id: keyof Config) => (checked: boolean) => onChange({ ...value, [id]: !!checked }),
+    [onChange, value],
+  );
+
   return (
     <div className="flex w-full items-end gap-6">
       {OPTIONS.map((opt) => (
         <div key={opt.id} className="flex shrink-0 flex-col gap-1">
-          <Label htmlFor={`clean-${opt.id}`} className="text-muted-foreground text-xs">{opt.label}</Label>
+          <Label htmlFor={`clean-${opt.id}`} className="text-muted-foreground text-xs">
+            {opt.label}
+          </Label>
           <Switch
             id={`clean-${opt.id}`}
             aria-describedby={`clean-${opt.id}-help`}
             checked={value[opt.id]}
-            onCheckedChange={(checked) =>
-              onChange({ ...value, [opt.id]: !!checked })
-            }
+            onCheckedChange={handleCheckedChange(opt.id)}
           />
-          <p id={`clean-${opt.id}-help`} className="text-muted-foreground max-w-24 text-xs leading-tight">{opt.description}</p>
+          <p
+            id={`clean-${opt.id}-help`}
+            className="text-muted-foreground max-w-24 text-xs leading-tight"
+          >
+            {opt.description}
+          </p>
         </div>
       ))}
     </div>

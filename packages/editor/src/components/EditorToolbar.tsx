@@ -27,7 +27,6 @@ import {
 } from "@bnto/ui";
 import { useEditor } from "../context";
 import { downloadDefinition } from "../actions/downloadDefinition";
-import { formatLastSaved } from "../draft/formatLastSaved";
 import { RunButton } from "./RunButton";
 import { OpenRecipeDialog } from "./OpenRecipeDialog";
 import { NodePaletteDialog } from "./NodePaletteDialog";
@@ -50,8 +49,7 @@ function EditorToolbar() {
   const { toggle: toggleRunPanel } = editor.panels.usePanels("run");
   const { isOpen: helpOpen, open: openHelp, close: closeHelp } = editor.panels.usePanels("help");
   const { canUndo, canRedo } = editor.history.useHistory();
-  const { isDirty, validationErrors, lastSavedAt, recipeMetadata, syncedAt, isSyncing } =
-    editor.definition.useDefinition();
+  const { isDirty, validationErrors, recipeMetadata } = editor.definition.useDefinition();
   const { phase } = editor.execution.useExecution();
   const { nodes } = editor.nodes.useNodes();
 
@@ -61,12 +59,6 @@ function EditorToolbar() {
 
   const settingsDialog = useDialog();
   const openRecipeDialog = useDialog();
-  const lastSavedLabel = formatLastSaved({
-    lastSavedAt,
-    isSyncing,
-    cloudId: recipeMetadata.cloudId,
-    syncedAt,
-  });
 
   const handleReset = useCallback(() => {
     const { definition } = editor.getState();
@@ -85,6 +77,20 @@ function EditorToolbar() {
     downloadDefinition(editor.definition);
   }, [editor]);
 
+  const handlePaletteOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) closePalette();
+    },
+    [closePalette],
+  );
+
+  const handleHelpOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) closeHelp();
+    },
+    [closeHelp],
+  );
+
   const canDownload = canExport && hasNodes;
 
   return (
@@ -102,29 +108,27 @@ function EditorToolbar() {
                 variant="ghost"
                 elevation="sm"
                 aria-label="File menu"
+                data-testid="toolbar-file-menu"
               />
               <MenuContent side="top" className="w-52 p-1">
                 <div className="px-3 py-2">
                   <Text weight="medium" size="sm" className="truncate">
                     {recipeMetadata.name}
                   </Text>
-                  <Text size="xs" className="text-muted-foreground">
-                    {lastSavedLabel}
-                  </Text>
                 </div>
                 <MenuSeparator />
-                <MenuItem onClick={settingsDialog.openDialog}>
+                <MenuItem onClick={settingsDialog.openDialog} data-testid="menu-rename">
                   <PenLineIcon /> Rename
                 </MenuItem>
-                <MenuItem onClick={handleNew}>
-                  <PlusIcon /> New
-                </MenuItem>
-                <MenuItem onClick={openRecipeDialog.openDialog}>
-                  <FileUpIcon /> Open
+                <MenuItem onClick={handleNew} data-testid="menu-new">
+                  <PlusIcon /> New Recipe
                 </MenuItem>
                 <MenuSeparator />
-                <MenuItem onClick={download} disabled={!canDownload}>
+                <MenuItem onClick={download} disabled={!canDownload} data-testid="menu-export">
                   <DownloadIcon /> Export <ShortcutHint shortcutId="export" />
+                </MenuItem>
+                <MenuItem onClick={openRecipeDialog.openDialog} data-testid="menu-import">
+                  <FileUpIcon /> Import
                 </MenuItem>
               </MenuContent>
             </Menu>
@@ -141,6 +145,7 @@ function EditorToolbar() {
               elevation="sm"
               onClick={toggleRunPanel}
               aria-label="Run panel"
+              data-testid="toolbar-run-panel"
             />
           </ToolbarGroup>
 
@@ -155,6 +160,7 @@ function EditorToolbar() {
               onClick={editor.history.undo}
               disabled={!canUndo}
               aria-label="Undo"
+              data-testid="toolbar-undo"
             />
             <Button
               icon={<Redo2Icon />}
@@ -163,6 +169,7 @@ function EditorToolbar() {
               onClick={editor.history.redo}
               disabled={!canRedo}
               aria-label="Redo"
+              data-testid="toolbar-redo"
             />
             <Button
               icon={<RotateCcwIcon />}
@@ -184,6 +191,7 @@ function EditorToolbar() {
               elevation="sm"
               onClick={toggleConfig}
               aria-label="Properties"
+              data-testid="toolbar-properties"
             />
           </ToolbarGroup>
 
@@ -197,24 +205,15 @@ function EditorToolbar() {
               elevation="sm"
               onClick={openHelp}
               aria-label="Help"
+              data-testid="toolbar-help"
             />
           </ToolbarGroup>
         </Toolbar>
       </div>
       <RecipeDialog open={settingsDialog.open} onOpenChange={settingsDialog.onOpenChange} />
       <OpenRecipeDialog open={openRecipeDialog.open} onOpenChange={openRecipeDialog.onOpenChange} />
-      <NodePaletteDialog
-        open={paletteOpen}
-        onOpenChange={(open) => {
-          if (!open) closePalette();
-        }}
-      />
-      <HelpDialog
-        open={helpOpen}
-        onOpenChange={(open) => {
-          if (!open) closeHelp();
-        }}
-      />
+      <NodePaletteDialog open={paletteOpen} onOpenChange={handlePaletteOpenChange} />
+      <HelpDialog open={helpOpen} onOpenChange={handleHelpOpenChange} />
     </>
   );
 }

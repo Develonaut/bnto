@@ -127,13 +127,6 @@ interface EditorState {
   // --- Container expansion ---
   expandedContainerIds: Set<string>;
 
-  // --- Auto-save ---
-  lastSavedAt: number | null;
-  /** When last synced to Convex. null = never synced. */
-  syncedAt: number | null;
-  /** Whether a Convex sync is currently in flight. */
-  isSyncing: boolean;
-
   // --- Insertion context ---
   /** When set, the next addNode inserts after this node ID instead of at the end. */
   insertAfterNodeId: string | null;
@@ -199,15 +192,8 @@ interface EditorActions {
   setInsertAfterNodeId: (id: string | null) => void;
   setInsertIntoContainerId: (id: string | null) => void;
 
-  // --- Auto-save ---
-  setLastSavedAt: (ts: number | null) => void;
-  setSyncedAt: (ts: number | null) => void;
-  setIsSyncing: (syncing: boolean) => void;
-
   // --- Utility ---
-  markDirty: () => void;
   revalidate: () => void;
-  resetDirty: () => void;
   setExecutionState: (state: ExecutionState) => void;
   /** Reset per-node execution statuses only (not the full run lifecycle). */
   resetNodeStatuses: () => void;

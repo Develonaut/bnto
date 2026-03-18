@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import {
   Button,
@@ -33,21 +33,26 @@ export function EditorBetaDialog() {
     setOpen(false);
   }
 
+  const handleOpenChange = useCallback((v: boolean) => {
+    if (!v) handleDismiss();
+  }, []);
+
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && handleDismiss()}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent data-testid="editor-beta-dialog" size="sm">
         <DialogHeader>
           <DialogTitle>Welcome to the Recipe Editor</DialogTitle>
           <DialogClose />
         </DialogHeader>
         <DialogDescription>
-          The recipe editor is in beta. We&apos;re actively experimenting and
-          testing functionality here, so things may change as we refine the
-          experience.
+          The recipe editor is in beta. We&apos;re actively experimenting and testing functionality
+          here, so things may change as we refine the experience.
         </DialogDescription>
         <DialogFooter>
           <DialogClose asChild>
-            <Button onClick={handleDismiss}>Get started</Button>
+            <Button onClick={handleDismiss} data-testid="beta-get-started">
+              Get started
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

@@ -45,7 +45,11 @@ const downloadService = createDownloadService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
 const recipeClient = createRecipeClient(recipeService, executionService);
-const executionClient = createExecutionClient(executionService, browserExecutionService, historyService);
+const executionClient = createExecutionClient(
+  executionService,
+  browserExecutionService,
+  historyService,
+);
 const userClient = createUserClient(userService, analyticsService);
 const authClient = createAuthClient();
 const telemetryClient = createTelemetryClient();

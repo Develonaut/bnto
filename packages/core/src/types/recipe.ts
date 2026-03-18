@@ -2,18 +2,18 @@
 // Recipe types (transport-agnostic — no Convex imports)
 // ---------------------------------------------------------------------------
 
-/** Full recipe as returned by detail queries. */
+/** A recipe — unified persistence shape for local and cloud recipes. */
 export interface Recipe {
   id: string;
-  userId: string;
   name: string;
   definition: RecipeDefinition;
-  version: number;
-  /** Definition format version (semver) — tracks which format spec the definition uses. */
-  formatVersion?: string;
-  isPublic: boolean;
-  createdAt: number;
-  updatedAt: number;
+  type: string;
+  version: string;
+  /** Convex document _id. Undefined if local-only (not yet saved to cloud). */
+  cloudId?: string;
+  savedAt: number;
+  /** When last synced to Convex. null = never synced. */
+  syncedAt: number | null;
 }
 
 /** Projected recipe for list views. */
@@ -21,14 +21,11 @@ export interface RecipeListItem {
   id: string;
   name: string;
   nodeCount: number;
+  /** Human-readable labels for the distinct processing node types (excludes I/O and containers). */
+  nodeTypes: string[];
   updatedAt: number;
-}
-
-/** Input for creating or updating a recipe. */
-export interface SaveRecipeInput {
-  name: string;
-  definition: RecipeDefinition;
-  isPublic?: boolean;
+  /** When last synced to Convex. null = never synced, undefined = cloud recipe (always synced). */
+  syncedAt?: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -80,22 +77,4 @@ export interface Edge {
 export interface FieldsConfig {
   values: Record<string, unknown>;
   keepOnlySet?: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// API response types (matches Go JSON responses)
-// ---------------------------------------------------------------------------
-
-export interface RecipeSummary {
-  name: string;
-  nodeCount: number;
-}
-
-export interface ValidationResult {
-  valid: boolean;
-  errors?: string[];
-}
-
-export interface RunResponse {
-  id: string;
 }

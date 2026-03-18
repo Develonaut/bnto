@@ -1,9 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useCallback } from "react";
 import { cn, Menu, MenuContent, MenuTrigger, XIcon } from "@bnto/ui";
 import { usePanels } from "../hooks/usePanels";
 import type { PanelId } from "../store/types";
+
+/** Module-level event preventer -- no hook needed. */
+const preventEvent = (e: { preventDefault: () => void }) => e.preventDefault();
 
 /**
  * EditorMenuPanel — reusable menu-as-panel primitive.
@@ -50,13 +53,15 @@ function EditorMenuPanel({
 }: EditorMenuPanelProps) {
   const { isOpen, toggle } = usePanels(panelId);
 
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (open !== isOpen) toggle();
+    },
+    [isOpen, toggle],
+  );
+
   return (
-    <Menu
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (open !== isOpen) toggle();
-      }}
-    >
+    <Menu open={isOpen} onOpenChange={handleOpenChange}>
       <MenuTrigger
         size="icon"
         variant={isOpen ? "muted" : "ghost"}
@@ -69,8 +74,8 @@ function EditorMenuPanel({
         side={side}
         offset="lg"
         boundaryPadding={boundaryPadding}
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onFocusOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={preventEvent}
+        onFocusOutside={preventEvent}
         className={cn(width, "min-w-[290px] h-[calc(100vh-8rem)] flex flex-col p-0", className)}
       >
         {children}

@@ -24,11 +24,11 @@ export async function runEditorWithFiles(
   options?: { timeout?: number },
 ) {
   const { timeout = 30_000 } = options ?? {};
-  const fileInput = page.locator('[data-testid="run-file-input"]');
+  const fileInput = page.getByTestId("run-file-input");
   await fileInput.setInputFiles(filePaths);
 
   // Wait for execution to complete
-  const runButton = page.locator('[data-testid="run-button"]');
+  const runButton = page.getByTestId("run-button");
   await expect(runButton).toHaveAttribute("data-phase", "completed", {
     timeout,
   });
@@ -43,18 +43,17 @@ export async function runEditorWithFiles(
  * before clicking.
  */
 export async function openRunPanel(page: Page) {
-  const logsTab = page.getByRole("tab", { name: /Logs/i });
+  const logsTab = page.getByTestId("tab-logs");
   const alreadyOpen = await logsTab.isVisible().catch(() => false);
   if (!alreadyOpen) {
-    await page.getByRole("button", { name: /run panel/i }).click();
+    await page.getByTestId("toolbar-run-panel").click();
     await expect(logsTab).toBeVisible({ timeout: 3_000 });
   }
 }
 
 /** Count the number of result files in the run panel. */
 export async function getResultCount(page: Page) {
-  const resultRows = page.getByRole("button", { name: /^download /i });
-  return resultRows.count();
+  return page.getByTestId("output-file").count();
 }
 
 // ---------------------------------------------------------------------------
@@ -64,17 +63,11 @@ export async function getResultCount(page: Page) {
 /** Export the recipe via File > Export, returns the downloaded JSON buffer. */
 export async function exportRecipe(page: Page) {
   // Open file menu
-  await page
-    .locator('[data-testid="editor-toolbar"]')
-    .getByRole("button", { name: /file menu/i })
-    .click();
+  await page.getByTestId("toolbar-file-menu").click();
 
-  // Click Export — MenuItem renders as <button>, not <menuitem>.
-  // Scope to the file menu dialog to avoid matching other Export buttons.
-  // Name regex allows trailing shortcut hint text (e.g. "Export ⌘D").
+  // Click Export menu item
   const downloadPromise = page.waitForEvent("download");
-  const fileMenuDialog = page.getByRole("dialog").filter({ hasText: "Export" });
-  await fileMenuDialog.getByRole("button", { name: /^Export/i }).click();
+  await page.getByTestId("menu-export").click();
   const download = await downloadPromise;
 
   const downloadPath = await download.path();

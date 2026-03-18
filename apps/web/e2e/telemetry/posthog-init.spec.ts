@@ -20,7 +20,7 @@ test.describe("PostHog telemetry @browser", () => {
     await enableTelemetryCapture(page);
 
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Pick a tool/ })).toBeVisible();
+    await expect(page.getByTestId("gallery-heading")).toBeVisible();
 
     // Wait for TelemetryProvider's useEffect to fire the initial $pageview
     await waitForTelemetryEvent(page, "$pageview");
@@ -34,7 +34,7 @@ test.describe("PostHog telemetry @browser", () => {
     await enableTelemetryCapture(page);
 
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Pick a tool/ })).toBeVisible();
+    await expect(page.getByTestId("gallery-heading")).toBeVisible();
 
     // Wait for initial pageview from TelemetryProvider
     await waitForTelemetryEvent(page, "$pageview");
@@ -43,11 +43,8 @@ test.describe("PostHog telemetry @browser", () => {
     // does a full navigation and resets the __bnto_telemetry__ array).
     // Use footer link — always visible after scrolling to bottom.
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await page
-      .getByRole("contentinfo")
-      .getByRole("link", { name: /Compress Images/ })
-      .click();
-    await expect(page.getByRole("heading", { name: "Compress Images Online Free" })).toBeVisible();
+    await page.getByTestId("footer-link-compress-images").click();
+    await expect(page.getByTestId("recipe-heading")).toBeVisible();
 
     // Wait for at least 2 pageviews: initial load + SPA navigation
     await waitForTelemetryEvent(page, "$pageview", 2);

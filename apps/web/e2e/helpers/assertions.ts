@@ -21,11 +21,11 @@ import { MAGIC } from "../helpers";
  * Requires the run panel to be open with at least one output file.
  */
 export async function downloadFirstOutput(page: Page) {
-  const outputFile = page.locator('[data-testid="output-file"]');
+  const outputFile = page.getByTestId("output-file");
   await expect(outputFile).toHaveCount(1);
 
   const downloadPromise = page.waitForEvent("download");
-  await outputFile.locator('[data-testid="download-button"]').click();
+  await outputFile.getByTestId("download-button").click();
   const download = await downloadPromise;
 
   const downloadPath = await download.path();

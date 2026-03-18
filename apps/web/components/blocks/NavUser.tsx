@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 
-import { BookOpenIcon, CircleUserIcon, LogInIcon, LogOutIcon } from "@bnto/ui";
+import { CircleUserIcon, LogInIcon, LogOutIcon } from "@bnto/ui";
 import {
   Menu,
   MenuTrigger,
@@ -64,19 +64,10 @@ export function NavUser() {
                     {user.name}
                   </Text>
                 )}
-                <Text size="xs" color="muted">
+                <Text size="xs" color="muted" data-testid="nav-user-email">
                   {user?.email}
                 </Text>
               </div>
-
-              <MenuSeparator />
-
-              <MenuItem asChild data-testid="nav-my-recipes">
-                <Link href="/my-recipes">
-                  <BookOpenIcon />
-                  My Recipes
-                </Link>
-              </MenuItem>
 
               <MenuSeparator />
 

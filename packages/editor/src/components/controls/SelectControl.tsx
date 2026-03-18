@@ -20,7 +20,7 @@ function SelectControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
       </SelectTrigger>
       <SelectContent>
         {enumValues.map((enumVal) => (
-          <SelectItem key={enumVal} value={enumVal}>
+          <SelectItem key={enumVal} value={enumVal} data-testid={`select-option-${enumVal}`}>
             {labelMap?.get(enumVal) ?? enumVal}
           </SelectItem>
         ))}

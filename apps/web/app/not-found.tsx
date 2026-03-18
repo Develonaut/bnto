@@ -35,7 +35,9 @@ export default function NotFound() {
               <Text size="sm" mono color="muted" className="uppercase tracking-wider">
                 404
               </Text>
-              <Heading level={1}>Page Not Found</Heading>
+              <Heading level={1} data-testid="not-found-heading">
+                Page Not Found
+              </Heading>
               <Text color="muted" size="lg" balance>
                 Sorry, we couldn&apos;t find the page you&apos;re looking for. The page might have
                 been removed or the URL might be incorrect.

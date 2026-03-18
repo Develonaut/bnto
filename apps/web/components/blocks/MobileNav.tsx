@@ -8,7 +8,7 @@
  * Only rendered below the `lg` breakpoint (hidden via CSS).
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button, MenuIcon } from "@bnto/ui";
 
@@ -22,6 +22,8 @@ const LG_BREAKPOINT = 1024;
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+
+  const handleToggle = useCallback(() => setOpen((prev) => !prev), []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -44,7 +46,13 @@ export function MobileNav() {
   return (
     <>
       <div className="lg:hidden">
-        <Button variant="secondary" size="icon" elevation="sm" onClick={() => setOpen(!open)}>
+        <Button
+          variant="secondary"
+          size="icon"
+          elevation="sm"
+          onClick={handleToggle}
+          data-testid="mobile-menu-button"
+        >
           <MenuIcon />
           <span className="sr-only">Open menu</span>
         </Button>

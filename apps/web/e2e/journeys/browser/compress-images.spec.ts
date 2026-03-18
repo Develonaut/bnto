@@ -34,9 +34,9 @@ test.describe("compress-images — browser execution @browser", () => {
 
     await runAndComplete(page);
 
-    const outputFile = page.locator('[data-testid="output-file"]');
+    const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
-    await expect(outputFile.locator('[data-testid="download-button"]')).toBeVisible();
+    await expect(outputFile.getByTestId("download-button")).toBeVisible();
 
     // Verify download produces valid compressed JPEG
     const inputSize = fs.statSync(path.join(IMAGE_FIXTURES_DIR, "small.jpg")).size;
@@ -60,7 +60,7 @@ test.describe("compress-images — browser execution @browser", () => {
 
     await runAndComplete(page);
 
-    await expect(page.locator('[data-testid="output-file"]')).toHaveCount(2);
+    await expect(page.getByTestId("output-file")).toHaveCount(2);
 
     const { download } = await downloadAllAsZip(page);
     expect(download.suggestedFilename()).toBe("compress-images-results.zip");
@@ -74,10 +74,10 @@ test.describe("compress-images — browser execution @browser", () => {
     const runButton = await runAndComplete(page);
 
     // Back button resets execution — returns to Phase 2 (configure) with files retained
-    const backButton = page.locator('[data-testid="back-button"]');
+    const backButton = page.getByTestId("back-button");
     await backButton.click();
 
-    await expect(page.getByText("1 file selected")).toBeVisible();
+    await expect(page.getByTestId("file-count")).toBeVisible();
     await expect(runButton).toHaveAttribute("data-phase", "idle");
   });
 

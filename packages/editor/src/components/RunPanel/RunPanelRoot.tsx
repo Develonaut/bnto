@@ -36,14 +36,14 @@ function RunPanelRoot() {
       <Tabs defaultValue="results" className="flex h-full flex-col">
         <div className="flex shrink-0 items-center gap-2 px-3 pt-3 pb-2">
           <TabsList>
-            <TabsTrigger value="results">
+            <TabsTrigger value="results" data-testid="tab-run">
               <Text size="xs">Run{results.length > 0 ? ` (${results.length})` : ""}</Text>
             </TabsTrigger>
-            <TabsTrigger value="logs">
+            <TabsTrigger value="logs" data-testid="tab-logs">
               <Text size="xs">Logs{logs.length > 0 ? ` (${logs.length})` : ""}</Text>
             </TabsTrigger>
             {DevTab && (
-              <TabsTrigger value="dev">
+              <TabsTrigger value="dev" data-testid="tab-dev">
                 <Text size="xs">Dev</Text>
               </TabsTrigger>
             )}
