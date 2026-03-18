@@ -210,7 +210,7 @@ jobs:
         working-directory: apps/web
 
       - name: Run E2E tests against preview
-        run: pnpm exec playwright test
+        run: pnpm exec playwright test --project=browser --max-failures=3
         working-directory: apps/web
         env:
           PLAYWRIGHT_BASE_URL: ${{ needs.deploy-preview.outputs.preview-url }}

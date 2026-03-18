@@ -24,6 +24,7 @@ function getArg(flag: string): string | undefined {
 const baseUrl = getArg("--base-url") ?? "http://localhost:3000";
 const outPath = getArg("--output") ?? "lighthouserc.json";
 const withServer = process.argv.includes("--with-server");
+const isPreview = baseUrl.includes(".vercel.app");
 
 const STATIC_PAGES = ["/", "/pricing", "/faq", "/privacy"];
 
@@ -64,7 +65,8 @@ const config = {
         "categories:performance": ["warn", { minScore: 0.9 }],
         "categories:accessibility": ["error", { minScore: 0.9 }],
         "categories:best-practices": ["error", { minScore: 0.9 }],
-        "categories:seo": ["error", { minScore: 0.9 }],
+        // Vercel previews send x-robots-tag: noindex, tanking SEO score
+        "categories:seo": [isPreview ? "warn" : "error", { minScore: 0.9 }],
       },
     },
     upload: { target: "temporary-public-storage" },

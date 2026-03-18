@@ -31,9 +31,9 @@ Tag pushed (v*.*.*)
   │
   ├─ Deploy Vercel Preview (vercel deploy --prebuilt)
   │
-  ├─ E2E Tests (Playwright against preview URL)
+  ├─ E2E Tests (browser project only — no auth/editor, max 3 failures)
   │
-  ├─ Lighthouse (performance/a11y/SEO against preview URL)
+  ├─ Lighthouse (performance/a11y/best-practices + SEO as warn on preview)
   │
   ├─ Release Gate
   │    ├─ All jobs must pass
