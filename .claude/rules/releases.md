@@ -73,7 +73,7 @@ Promotion is manual. After the release gate passes:
 1. **Vercel Dashboard** — Find the preview deployment, click "Promote to Production"
 2. **Or via CLI** — `vercel promote <preview-url> --token=... --scope=<org>`
 
-Convex production deploys happen automatically on merge to `main` (separate from this pipeline).
+Convex production deploys happen as part of this pipeline (stable tags only — skipped for beta/rc).
 
 ---
 

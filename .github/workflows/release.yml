@@ -301,7 +301,7 @@ jobs:
             - CI Gate: Rust + TypeScript checks passed
             - E2E Tests: Full Playwright suite passed against Vercel preview
             - Lighthouse: Performance/accessibility/SEO audits passed
-            - Convex: Production functions deployed
+            - Convex: ${{ contains(github.ref_name, '-') && 'Skipped (pre-release)' || 'Production functions deployed' }}
             - Preview URL: ${{ needs.deploy-preview.outputs.preview-url }}
 
             ---
