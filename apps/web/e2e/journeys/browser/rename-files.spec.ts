@@ -16,6 +16,8 @@ import {
  * determines the output filename. File contents are preserved as-is.
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("rename-files — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
     await navigateToRecipe(page, "rename-files", "Rename Files Online Free");

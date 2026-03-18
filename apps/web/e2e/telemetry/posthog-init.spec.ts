@@ -15,6 +15,8 @@ import {
  * to window.__bnto_telemetry__ (set up by enableTelemetryCapture).
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("PostHog telemetry @browser", () => {
   test("initializes and captures initial pageview on load", async ({ page }) => {
     await enableTelemetryCapture(page);

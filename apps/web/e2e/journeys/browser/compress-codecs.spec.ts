@@ -18,6 +18,8 @@ import {
  * and verifies the file header (magic bytes) matches the expected codec.
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("compress-images — codec coverage @browser", () => {
   test("JPEG: select, compress, download, verify magic bytes", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");

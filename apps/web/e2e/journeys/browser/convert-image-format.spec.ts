@@ -19,6 +19,8 @@ import {
  * confirms the output is a genuinely re-encoded file, not a pass-through.
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("convert-image-format — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
     await navigateToRecipe(page, "convert-image-format", "Convert Image Format Online Free");

@@ -16,6 +16,8 @@ import {
  * Default config: trim whitespace + remove empty rows (duplicates off).
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("clean-csv — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
     await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");

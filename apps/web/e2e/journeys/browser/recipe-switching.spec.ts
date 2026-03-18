@@ -17,6 +17,8 @@ import {
  * would trigger auto-download when mounting recipe B.
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("recipe switching — state isolation @browser", () => {
   test("navigating after completion starts fresh (no stale phase)", async ({ page }) => {
     // --- Recipe A: compress-images → run to completion ---

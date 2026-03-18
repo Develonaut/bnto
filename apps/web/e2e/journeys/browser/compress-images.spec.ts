@@ -21,6 +21,8 @@ import {
  * Verified programmatically: magic bytes, file sizes, data attributes.
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("compress-images — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");

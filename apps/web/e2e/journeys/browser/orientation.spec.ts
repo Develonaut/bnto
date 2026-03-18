@@ -50,6 +50,8 @@ function getJpegDimensions(data: Buffer): { width: number; height: number } {
   throw new Error("No SOF marker found in JPEG data");
 }
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("EXIF orientation — all image bntos @browser", () => {
   test("compress: portrait JPEG preserves orientation-corrected dimensions", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");

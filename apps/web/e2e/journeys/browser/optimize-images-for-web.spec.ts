@@ -20,6 +20,8 @@ import {
  * WebP magic bytes (proves convert step ran), file sizes, data attributes.
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("optimize-images-for-web — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
     await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");

@@ -19,6 +19,8 @@ import {
  * Verified programmatically: WebP magic bytes, thumb_ filename prefix, data attributes.
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("generate-thumbnails — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
     await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");

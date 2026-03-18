@@ -17,6 +17,8 @@ import {
  * Resizes images to a target width while optionally maintaining aspect ratio.
  */
 
+test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+
 test.describe("resize-images — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {
     await navigateToRecipe(page, "resize-images", "Resize Images Online Free");

@@ -2,34 +2,41 @@ import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
 /**
- * Console error patterns that are expected and should not pollute test output.
+ * Named error patterns that tests can opt into silencing.
  *
- * - "Failed to load resource: the server responded with a status of 400"
- *   Convex auth/session endpoints return 400 when E2E tests run without
- *   an authenticated session. Expected for all @browser (unauthenticated) tests.
+ * Tests silence specific patterns via the `expectedErrors` fixture:
  *
- * - "Failed to fetch" — network errors from Convex client when the dev
- *   backend isn't reachable (preview deployments pointing at staging).
+ *   test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
+ *
+ * This keeps error capture strict by default — only tests that
+ * explicitly declare expected errors will have them filtered.
  */
-const IGNORED_CONSOLE_PATTERNS = [
-  /Failed to load resource: the server responded with a status of 400/,
-  /Failed to fetch/,
-];
+export const KNOWN_ERROR_PATTERNS = {
+  /** Convex auth endpoints return 400 for unauthenticated sessions. */
+  CONVEX_UNAUTH: /Failed to load resource: the server responded with a status of 400/,
 
-function isIgnoredConsoleError(text: string): boolean {
-  return IGNORED_CONSOLE_PATTERNS.some((pattern) => pattern.test(text));
-}
+  /** Convex client network errors when backend isn't reachable. */
+  CONVEX_NETWORK: /Failed to fetch/,
+} as const;
+
+export type KnownErrorPattern = keyof typeof KNOWN_ERROR_PATTERNS;
 
 /**
  * Wire up console and page error listeners on the page object.
  * Returns the shared errors array that both listeners push into.
+ *
+ * When `silenced` patterns are provided, matching console errors
+ * are dropped instead of collected.
  */
-export function setupErrorCapture(page: Page): string[] {
+export function setupErrorCapture(page: Page, silenced: RegExp[]): string[] {
   const errors: string[] = [];
 
   page.on("console", (msg) => {
-    if (msg.type() === "error" && !isIgnoredConsoleError(msg.text())) {
-      errors.push(`[console] ${msg.text()}`);
+    if (msg.type() === "error") {
+      const text = msg.text();
+      if (!silenced.some((pattern) => pattern.test(text))) {
+        errors.push(`[console] ${text}`);
+      }
     }
   });
 
