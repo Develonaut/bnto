@@ -13,7 +13,6 @@ import {
   PenLineIcon,
   PlusIcon,
   RecipeCard,
-  RecipeCardIcon,
   RecipeCardTags,
   Row,
   Stack,
@@ -62,7 +61,7 @@ export function RecipeGrid() {
         {recipes.map((recipe) => (
           <Row key={recipe.id} align="stretch" className="gap-2 group" data-testid="recipe-card">
             <RecipeCard compact href={`/editor?recipe=${recipe.id}`} className="flex-1">
-              <RecipeCardIcon />
+              <SyncStatus syncedAt={recipe.syncedAt} />
               <Stack className="flex-1 gap-0.5">
                 <Text weight="medium">{recipe.name}</Text>
                 <Row className="gap-2 items-center">
@@ -75,10 +74,6 @@ export function RecipeGrid() {
                   <Text as="span" size="xs" color="muted">
                     {formatTimeAgo(recipe.updatedAt)}
                   </Text>
-                  <Text as="span" size="xs" color="muted">
-                    &middot;
-                  </Text>
-                  <SyncStatus syncedAt={recipe.syncedAt} />
                 </Row>
                 {recipe.nodeTypes.length > 0 && (
                   <RecipeCardTags tags={recipe.nodeTypes} limit={3} />
