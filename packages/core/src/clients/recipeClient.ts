@@ -32,7 +32,10 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
      *
      * Core owns the Recipe shape — callers pass definition + metadata.
      * Layer 1: upsert into recipesStore (auto-persists to localStorage).
-     * Layer 2: save to Convex if recipe has a cloudId (auth validated server-side).
+     * Layer 2: attempt cloud sync (Convex validates auth server-side).
+     *   - Existing cloud recipe (cloudId): ID-based update.
+     *   - New recipe (no cloudId): name-based upsert. Stamps cloudId on success.
+     *   - Unauthenticated: fails silently, recipe remains local-only.
      */
     save: (definition: Definition, metadata: SaveInput) => {
       const cloudId = metadata.cloudId ?? undefined;
@@ -50,16 +53,53 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
       // Layer 1: local store (always, synchronous)
       upsert(recipe);
 
-      // Layer 2: cloud sync (async, cloudId only — Convex validates auth server-side)
-      if (!cloudId) return;
-
+      // Layer 2: cloud sync (async — Convex validates auth server-side)
+      // If cloudId exists: ID-based update. Otherwise: name-based upsert.
+      // Fails silently for unauthenticated users.
       recipes
-        .save({ id: cloudId, name: metadata.name, definition })
-        .then(() => {
-          upsert({ ...recipe, syncedAt: Date.now() });
+        .save({
+          ...(cloudId ? { id: cloudId } : {}),
+          name: metadata.name,
+          definition,
+        })
+        .then((resultId) => {
+          upsert({
+            ...recipe,
+            cloudId: String(resultId),
+            syncedAt: Date.now(),
+          });
           recipes.invalidateList();
         })
         .catch(() => {});
+    },
+
+    /**
+     * Sync all local-only recipes to cloud.
+     *
+     * Called on unauth→auth transition (sign-in / sign-up).
+     * For each recipe without a cloudId: save to Convex (name-based upsert),
+     * then stamp cloudId + syncedAt back onto the local recipe.
+     */
+    syncToCloud: async () => {
+      const allRecipes = Object.values(recipesStore.getState().recipes);
+      const unsynced = allRecipes.filter((r) => !r.cloudId);
+      if (unsynced.length === 0) return;
+
+      await Promise.allSettled(
+        unsynced.map(async (recipe) => {
+          const cloudId = await recipes.save({
+            name: recipe.name,
+            definition: recipe.definition,
+          });
+          upsert({
+            ...recipe,
+            cloudId: String(cloudId),
+            syncedAt: Date.now(),
+          });
+        }),
+      );
+
+      recipes.invalidateList();
     },
 
     remove: (id: string) => {

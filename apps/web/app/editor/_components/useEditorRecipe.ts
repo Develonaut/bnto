@@ -48,11 +48,11 @@ export function useEditorRecipe(): EditorRecipeResult {
     needsCloudFetch ? recipeId : "",
   );
 
-  // Local recipe found — use it directly
+  // Local recipe found — use it directly (preserve cloudId for cloud sync)
   if (recipeId && localRecipe) {
     return {
       definition: localRecipe.definition,
-      cloudId: undefined,
+      cloudId: localRecipe.cloudId,
       isLoading: false,
       notFound: false,
     };

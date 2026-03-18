@@ -6,7 +6,7 @@
  *   Layer 2: Cloud sync to Convex (auth-gated, tested as @auth)
  *
  * Tests 1-2, 5: Unauthed, browser-only (@browser). No Convex needed.
- * Tests 3-4:    Auth-gated (@auth). Skipped until auth infrastructure is ready.
+ * Tests 3-4:    Auth-gated (@auth). Require Convex backend running.
  */
 
 import { test, expect } from "../../fixtures";
@@ -19,6 +19,7 @@ import {
   dismissBetaDialog,
 } from "../../helpers/editor";
 import { navigateToMyRecipes } from "../../helpers/editor-save";
+import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
 
 /** Autosave debounce is 1s. Wait 2s to be safe. */
 const AUTOSAVE_WAIT = 2_000;
@@ -158,39 +159,103 @@ test.describe("recipe persistence — reload survival @browser", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Auth helpers (local to this spec — mirrors auth-lifecycle.spec.ts)
+// ---------------------------------------------------------------------------
+
+async function signUp(page: import("@playwright/test").Page, email: string) {
+  await page.goto("/signin");
+  const authHeading = page.getByTestId("auth-heading");
+  await expect(authHeading).toBeVisible();
+  // Fresh context → signup mode; if returning user → toggle to signup
+  const headingText = await authHeading.textContent();
+  if (headingText?.includes("Welcome back")) {
+    await page.getByTestId("auth-mode-toggle").click();
+  }
+  await page.getByTestId("auth-name-input").fill(TEST_NAME);
+  await page.getByTestId("auth-email-input").fill(email);
+  await page.getByTestId("auth-password-input").fill(TEST_PASSWORD);
+  await page.getByTestId("auth-submit").click();
+  await page.waitForURL("/", { timeout: 15_000 });
+}
+
+async function signOut(page: import("@playwright/test").Page) {
+  const userMenu = page.getByTestId("nav-user-menu");
+  await expect(userMenu).toBeVisible({ timeout: 10_000 });
+  await userMenu.click();
+  await page.getByTestId("nav-sign-out").click();
+  await page.waitForURL("/signin", { timeout: 10_000 });
+}
+
+// ---------------------------------------------------------------------------
 // 3. Authed: local + cloud sync @auth
 // ---------------------------------------------------------------------------
 
 test.describe("recipe persistence — cloud sync @auth", () => {
-  test.skip(true, "Requires auth infrastructure — enable when sign-in helpers are available");
-
   test("save syncs to Convex, syncedAt becomes non-null", async ({ page }) => {
-    // TODO: Sign in → open editor → add node → wait for save →
-    // verify syncedAt is non-null in localStorage
+    // SETUP: Sign up a fresh user (triggers useRecipeSync on auth transition)
+    const email = testEmail();
+    await signUp(page, email);
+
+    // BUILD: Open editor → add a node → wait for autosave + cloud sync
     await navigateToEditor(page);
     await addNodeFromPalette(page, "Compress Images");
-    await page.waitForTimeout(AUTOSAVE_WAIT);
 
-    const recipes = await getStoredRecipes(page);
-    expect(recipes).not.toBeNull();
-    const first = Object.values(recipes!)[0] as Record<string, unknown>;
-    // After cloud sync, syncedAt should be a number (not null)
-    expect(first.syncedAt).not.toBeNull();
+    // WAIT: Autosave debounce (1s) + cloud sync round-trip
+    // Poll localStorage until syncedAt is non-null (cloud sync completed)
+    await expect(async () => {
+      const recipes = await getStoredRecipes(page);
+      expect(recipes).not.toBeNull();
+      const first = Object.values(recipes!)[0] as Record<string, unknown>;
+      expect(first.syncedAt).not.toBeNull();
+      expect(typeof first.syncedAt).toBe("number");
+      expect(first.cloudId).toBeDefined();
+      expect(typeof first.cloudId).toBe("string");
+    }).toPass({ timeout: 15_000, intervals: [1_000, 1_000, 2_000, 2_000, 3_000] });
   });
 });
 
 // ---------------------------------------------------------------------------
-// 4. Authed: cloud-only hydration @auth
+// 4. Authed: cloud hydration after local clear @auth
 // ---------------------------------------------------------------------------
 
 test.describe("recipe persistence — cloud hydration @auth", () => {
-  test.skip(true, "Requires auth infrastructure — enable when sign-in helpers are available");
+  test("recipe survives localStorage clear via cloud sync round-trip", async ({ page }) => {
+    // SETUP: Sign up → create recipe → wait for cloud sync
+    const email = testEmail();
+    await signUp(page, email);
 
-  test("hydrateFromCloud populates empty local store", async ({ page }) => {
-    // TODO: Clear localStorage → sign in → verify hydrateFromCloud
-    // pulls recipes from Convex into the local store →
-    // verify they appear in /my-recipes
+    await navigateToEditor(page);
+    await addNodeFromPalette(page, "Compress Images");
+
+    // Wait for cloud sync to complete (syncedAt becomes non-null)
+    await expect(async () => {
+      const recipes = await getStoredRecipes(page);
+      expect(recipes).not.toBeNull();
+      const first = Object.values(recipes!)[0] as Record<string, unknown>;
+      expect(first.syncedAt).not.toBeNull();
+    }).toPass({ timeout: 15_000, intervals: [1_000, 1_000, 2_000, 2_000, 3_000] });
+
+    // CLEAR: Wipe local recipes (simulates new device / cleared storage)
     await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);
+
+    // Verify localStorage is empty
+    const afterClear = await getStoredRecipes(page);
+    expect(afterClear).toBeNull();
+
+    // SIGN OUT then SIGN BACK IN — triggers useRecipeSync on auth transition
+    await signOut(page);
+    await page.waitForTimeout(2_000); // let session cleanup complete
+
+    // Sign back in with same credentials
+    await page.getByTestId("auth-email-input").fill(email);
+    await page.getByTestId("auth-password-input").fill(TEST_PASSWORD);
+    await page.getByTestId("auth-submit").click();
+    await page.waitForURL("/", { timeout: 15_000 });
+
+    // NAVIGATE: Go to My Recipes — recipe should still appear
+    // The recipe exists in Convex from the initial sync. After sign-in,
+    // useRecipeSync fires but finds no local-only recipes to push.
+    // The cloud recipe list query loads recipes directly from Convex.
     await navigateToMyRecipes(page);
     const recipeCard = page.getByTestId("recipe-card");
     await expect(recipeCard.first()).toBeVisible({ timeout: 10_000 });

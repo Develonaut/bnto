@@ -32,8 +32,17 @@ export const recipesStore: import("zustand/vanilla").StoreApi<RecipesStoreState>
     hydrateFromCloud: (recipes) =>
       set((state) => {
         for (const r of recipes) {
-          if (!state.recipes[r.id]) {
+          const existing = state.recipes[r.id];
+          if (!existing) {
+            // New recipe — add to local store
             state.recipes[r.id] = r;
+          } else if (!existing.cloudId && r.cloudId) {
+            // Local-only recipe matched by ID — merge cloud link
+            state.recipes[r.id] = {
+              ...existing,
+              cloudId: r.cloudId,
+              syncedAt: r.syncedAt ?? Date.now(),
+            };
           }
         }
       }),
