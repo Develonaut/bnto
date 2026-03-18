@@ -1109,6 +1109,12 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
 ---
 
+### Triage: Remove Lighthouse CI from normal PR pipeline
+
+**Priority: Low.** Lighthouse CI currently runs on every PR via `.github/workflows/lighthouse.yml`. It's valuable for release verification but adds latency to the normal dev loop without catching issues that change frequently. Move Lighthouse to release-only: keep it in `release.yml` (already there), remove the standalone `lighthouse.yml` workflow (or make it `workflow_dispatch` only so it can be triggered manually). The `task seo:audit` local command remains for on-demand developer use.
+
+---
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |

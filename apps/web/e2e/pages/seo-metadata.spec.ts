@@ -118,7 +118,7 @@ test.describe("SEO — 404 for unknown slugs @browser", () => {
 
     // Vercel deployment protection may intercept unknown routes and return 200.
     // Only assert 404 status when running against a local dev server.
-    if (!process.env.BASE_URL) {
+    if (!process.env.PLAYWRIGHT_BASE_URL) {
       expect(response?.status()).toBe(404);
     }
 
