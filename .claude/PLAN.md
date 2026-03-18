@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 17, 2026 (groomed — reconciled Wave 5 against merged PRs, marked CLAIMED tasks, cleaned stale backlog)
+**Last Updated:** March 18, 2026 (groomed — Sprint 6 complete, Sprint 7 active, backlog cleaned: 34 archived items removed, recipe tags bug fixed)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -29,12 +29,12 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos + 2 Tier 1B multi-node compositions run 100% client-side via Rust→WASM
 - **M2 delivered (March 2026):** Editor v1 shipped — schema-driven config controls, save/My Recipes, keyboard shortcuts, accessibility audit. Accounts, execution history, PostHog telemetry all live.
-- **Sprint 6 (Quality & Cleanup) is active.** Lock in quality after M2 — error boundaries, dead code removal, Server Component audit, triage batch.
+- **Sprint 6 (Quality & Cleanup) complete.** Error boundaries, dead code removal, Server Component audit, auto-save, Button simplification, triage batch — all done.
 - **Tabled (deep backlog):** Code Editor (CM6), Edit/Run Mode, Sprint 5B W2-4 (LayerPanel polish, processing node accents).
 - **Cloud infrastructure:** R2 file transit — ready for M4 (server technology TBD)
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
-- **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), automatic Convex production deploy on merge to main, Lighthouse CI on PRs, tag-triggered release pipeline (Vercel preview → E2E → Lighthouse → GitHub Release), PostHog telemetry wired
+- **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), tag-triggered release pipeline (CI gate → Vercel preview → E2E → Lighthouse → auto-deploy Vercel + Convex to production on stable tags → GitHub Release), PostHog telemetry wired
 - **Packages:** `@bnto/core`, `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/ui`, `@bnto/editor`
 
 ---
@@ -201,15 +201,15 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 ## What's Next
 
-**M2 is delivered.** Direction decided: **Tier 2 (Explore & Discovery Infrastructure)** → then **Tier 3 (Near-Term Recipes)**. Unify how recipes/nodes are listed before expanding the recipe catalog. See `bntos.md` for the full tier breakdown.
+**M2 is delivered. Sprint 6 (Quality & Cleanup) is complete.** Direction decided: **Tier 2 (Explore & Discovery Infrastructure)** → then **Tier 3 (Near-Term Recipes)**. Unify how recipes/nodes are listed before expanding the recipe catalog. See `bntos.md` for the full tier breakdown.
 
-**Next up:** Sprint 6 (Quality & Cleanup) → Sprint 7 (Explore & Discovery, Tier 2) → Sprint 8 (Near-Term Recipes, Tier 3).
+**Next up:** Sprint 7 (Explore & Discovery, Tier 2) → Sprint 8 (Near-Term Recipes, Tier 3).
 
 ---
 
-## Active Sprint
+## Completed Sprint
 
-### Sprint 6: Quality & Cleanup
+### Sprint 6: Quality & Cleanup — COMPLETE
 
 **Goal:** Lock in quality after M2. Clean up dead code, add error boundaries, audit performance, resolve triage items. No new features — stabilize what's built before expanding.
 
@@ -261,7 +261,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 - [x] `apps/web` — **Replace competitor comparison with bnto-first benchmarks**: Rewrite the "How It Works" section's BragLayout to showcase bnto's own capabilities (50ms local WASM, zero uploads, unlimited runs, open source) instead of the TinyPNG/iLoveIMG comparison chart and feature table. Focus on the landscape of problems bnto solves.
 - [x] `apps/web` — **Delete button on My Recipe cards**: Add delete action to saved recipe cards on `/my-recipes`. Wire `core.recipes.remove()` to a confirmation dialog on RecipeCard.
-- [ ] **CLAIMED** `packages/editor` + `@bnto/core` — **Auto-save recipes**: Replace manual Save with transparent persistence — localStorage if unauthed, Convex if authed. Download/Export remains the one manual action. Remove Save from file menu and keyboard shortcut. If limiting unauthed saves, pop a dialog when unauthed users hit 3 recipes (prompt to delete one or sign in). Debounced write of editor store to localStorage; hydrate on mount; clear on "New" or "Open". _(Auto-save debounce/hydrate already in PR #204. Core infrastructure `listAllDrafts` + `localRecipeService` added in `feat/auto-save-local-recipes`. Remaining: remove Save from menu/shortcuts, 3-recipe limit dialog for unauthed users.)_
+- [x] `packages/editor` + `@bnto/core` — **Auto-save recipes**: Replace manual Save with transparent persistence — localStorage if unauthed, Convex if authed. Download/Export remains the one manual action. Save removed from file menu and keyboard shortcut. Debounced auto-save to localStorage (PR #204, #205). Local recipe browsing for unauthed users on `/my-recipes` (PR #212).
 - [x] `engine` — **Thin Rust comment density**: Reduce inline comment noise — keep file-level headers and comments on genuinely complex logic, remove obvious per-line explanations. Update CLAUDE.md Rust standards section.
 - [x] Cross-cutting — **Inline handler audit**: Extract inline `onClick={() => ...}` handlers to named `handleOnX` functions across `packages/ui/`, `packages/editor/`, `apps/web/components/`.
 - [x] Cross-cutting — **CSS-first interaction audit**: Identify JS `useState`/ternary className patterns for visual states that CSS pseudo-classes or `data-*` attributes could handle. Fix violations in `packages/ui/`, `packages/editor/`, `apps/web/components/`.
@@ -271,14 +271,16 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 #### Wave 6 (parallel — Button simplification + polish)
 
-- [ ] `packages/ui` — **Simplify Button behavioral props — CSS-first with data attributes**: Remove `pressed` and `hovered` JS props from Button. Replace with CSS-driven data-state attributes (like `dormant` already is). Specific changes: remove `hovered` prop (use CSS `:hover` or `data-hover`), remove `pressed` prop (replace with `data-active` driven by `:active`/`aria-pressed`/`aria-current`), evaluate `muted` vs `variant="muted"`, keep `dormant` and `toggle` (already CSS-first), audit NodeRoot (biggest consumer), swap dormant/disabled visuals (dormant darkens → should be subtler; disabled should use opacity). Remove `sm` and `lg` size variants — keep only `md`. Emphasis/hierarchy controlled through elevation, not size. Review in ButtonShowcase.
-- [ ] `apps/web` — **Theme menu lighting direction control**: Add a half-radial slider to the Theme menu for setting surface lighting direction (shadow/highlight angle). Wire to `--light-elevation` CSS variable and surface shadow system.
+- [x] `packages/ui` — **Simplify Button behavioral props — CSS-first with data attributes**: Remove `pressed` and `hovered` JS props from Button. Replace with CSS-driven data-state attributes (like `dormant` already is). Specific changes: remove `hovered` prop (use CSS `:hover` or `data-hover`), remove `pressed` prop (replace with `data-active` driven by `:active`/`aria-pressed`/`aria-current`), evaluate `muted` vs `variant="muted"`, keep `dormant` and `toggle` (already CSS-first), audit NodeRoot (biggest consumer), swap dormant/disabled visuals (dormant darkens → should be subtler; disabled should use opacity). Remove `sm` and `lg` size variants — keep only `md`. Emphasis/hierarchy controlled through elevation, not size. Review in ButtonShowcase.
+- [x] `apps/web` — **Theme menu lighting direction control**: RadialSlider (135°–225°) in NavThemeMenu, Zustand store with localStorage persistence, `--light-angle` CSS variable driving surface shadow system via sin/cos. FOUC prevention via blocking script.
 
 ---
 
+## Active Sprint
+
 ### Sprint 7: Explore & Discovery Infrastructure (Tier 2)
 
-**Goal:** Unify how recipes and nodes are listed across all surfaces, then build a dedicated Explore page. When this sprint is done, adding a recipe to `@bnto/nodes` automatically appears on every surface (home, Explore page, editor palette, sitemap). This is a prerequisite for Tier 3 recipe expansion.
+**Goal:** Unify how recipes and nodes are listed across all surfaces, then build a dedicated Explore page. When this sprint is done, adding a recipe to `@bnto/nodes` automatically appears on every surface (home, Explore page, editor palette, sitemap, README). This is a prerequisite for Tier 3 recipe expansion.
 
 **Problem:** Currently 5+ surfaces list recipes/nodes using different data sources and transforms:
 
@@ -287,6 +289,8 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 - Editor palette: `useNodePalette` → `NODE_TYPE_INFO` + `CATEGORIES` + `PROCESSORS` (12 node types)
 - Editor open dialog: `RecipePickerGrid` → `RECIPES` from `@bnto/nodes` (all predefined)
 - Tool pages + sitemap: `bntoRegistry.ts` → `generateStaticParams`
+- README: Hardcoded recipe list — will drift as recipes grow
+- Editor URL: `?from={slug}` (predefined) vs `?recipe={id}` (saved) — two params for the same concept
 
 **Persona ownership:**
 
@@ -296,10 +300,12 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 | `@bnto/nodes` | `/core-architect`                       |
 | `apps/web`    | `/frontend-engineer` + `/nextjs-expert` |
 
-#### Wave 1 (parallel — audit + design)
+#### Wave 1 (parallel — audit + cleanup + URL unification)
 
 - [ ] `@bnto/nodes` + `apps/web` — **Audit all listing surfaces**: Map every component/hook that lists recipes or nodes. Document data source, transform, filtering, and output shape for each. Identify divergences (missing recipes, different categories, stale hardcoded lists). Produce a comparison table.
 - [ ] `@bnto/core` — **Design unified recipe/node query API**: Propose how `@bnto/core` exposes a single query that all surfaces consume. Consider: should this be a core client (`core.catalog` or `core.explore`), or a query-only API? What filtering/grouping capabilities does it need? Write a brief design doc or add to `core-api.md`.
+- [ ] `apps/web` — **Unify editor URL slug pattern**: Replace dual `?from={slug}` / `?recipe={id}` params with a single `?recipe={identifier}` param. The editor page resolves the identifier to either a predefined recipe (by slug) or a saved recipe (by ID). Centralise URL construction in `lib/routes.ts` (e.g. `editorUrl(id)`). Update all consumers: RecipeGrid, RecipeCardShowcase, Open dialog, nav links.
+- [ ] `apps/web` — **Consolidate Recipe types**: Review `Recipe`, `RecipeListItem`, `CloudRecipeDetail`, and raw Convex projections. Eliminate `CloudRecipeDetail` if possible, standardize on fewer shapes across the app.
 
 #### Wave 2 (parallel — build unified layer)
 
@@ -313,10 +319,11 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 - [ ] `apps/web` — **Migrate navbar Explore**: Replace dropdown with a link to `/explore`. Keep a compact "quick access" subset if desired, but primary action is navigating to the Explore page.
 - [ ] `apps/web` — **Migrate editor surfaces**: Update `useNodePalette` and `RecipePickerGrid` (open dialog) to consume the unified catalog query instead of direct `@bnto/nodes` imports.
 
-#### Wave 4 (sequential — verify)
+#### Wave 4 (sequential — verify + auto-generation)
 
 - [ ] `apps/web` — **SEO verification**: Ensure `generateStaticParams`, `generateMetadata`, sitemap, and `llms.txt` all derive from the unified source. Adding a recipe to `@bnto/nodes` = it appears everywhere.
 - [ ] `apps/web` — **E2E tests**: Verify Explore page renders, search/filter works, recipe cards link to tool pages. Verify editor palette and open dialog still show correct items. Page-level screenshots for `/explore`.
+- [ ] Repo root — **Auto-generate README recipe list**: The predefined recipe table in `README.md` should be generated from `@bnto/nodes` RECIPES registry (like `llms.txt`). Add a script or codegen step so the README stays current as recipes grow.
 
 ---
 
@@ -453,150 +460,6 @@ When a recipe has multi-file input and a processing node (e.g., Image compress),
 
 ## Backlog
 
-### ~~Codebase Audit: Go-Era Artifacts & Migration Debt~~ — DONE (Sprint 6)
-
-Delivered in Sprint 6 Waves 1-3. Go archives deleted, executor split, stale references swept, schemas verified as auto-generated from Rust catalog.
-
----
-
-### ~~UX: Compartment Node Visual Redesign — Phases 2-3~~ — REMOVED
-
-Phase 1 delivered (Sprint 5 W1). Phases 2-3 (elevation execution states, bento grid layout) and expandable container nodes removed from backlog — direction has evolved past these designs.
-
----
-
-### ~~UX: Global Error Boundary with GitHub Issue Reporter~~ — DONE (Sprint 6 W1, PR #185)
-
-**Promoted to Sprint 6 (Quality & Cleanup), Wave 1.** Add a global error boundary that catches unhandled React errors and presents a branded error dialog with enough context to file a GitHub issue. Currently there are zero error boundaries — any unhandled throw crashes the page with a white screen. No `error.tsx`, `global-error.tsx`, or React ErrorBoundary exists.
-
-**Goal:** When an unhandled error occurs, the user sees a helpful dialog (not a white screen) with a "Report this issue" button that opens a pre-filled GitHub issue on `Develonaut/bnto`.
-
-**Current state (as of research):**
-
-- No error boundaries or error pages exist (only `not-found.tsx` for 404)
-- PostHog captures product events but NOT unhandled exceptions
-- Auth session loss is handled (`SessionProvider.onSessionLost` → redirect to `/signin`)
-- Scattered `try/catch` in auth forms and recipe execution — no centralized error handling
-
-**Architecture — Next.js App Router error files:**
-
-Next.js App Router has built-in error boundary support via convention files. These are React Error Boundaries under the hood. The implementing agent should create:
-
-1. **`app/global-error.tsx`** — Catches errors in the root layout itself. Must be `"use client"` and must render its own `<html>` and `<body>` tags (replaces the entire document). This is the last-resort catch-all.
-2. **`app/(app)/error.tsx`** — Catches errors within the authenticated app shell (dashboard, settings, etc.). Can use the app's design system since the root layout is still intact.
-3. **`app/[bnto]/error.tsx`** — Catches errors on recipe/tool pages. Same approach — branded error UI with report button.
-
-**Error dialog UX requirements:**
-
-- Show a branded, friendly error message (not a stack trace dump)
-- "Report this issue" button that opens a GitHub issue via URL pre-fill
-- "Try again" button that calls `reset()` (the Next.js error boundary reset function)
-- "Go home" link as fallback navigation
-- Use existing design system components (`Card`, `Button`, `Heading`, `Stack`) where available (not in `global-error.tsx` which replaces the document)
-
-**GitHub issue pre-fill approach:**
-
-URL pattern: `https://github.com/Develonaut/bnto/issues/new?labels[]=bug&title=...&body=...`
-
-The body should include (as Markdown):
-
-- **Error message** — `error.message` (first 200 chars)
-- **Route** — `window.location.pathname`
-- **Component stack** — from `error.digest` or React's `errorInfo.componentStack` (truncated to 5 frames)
-- **Browser/OS** — `navigator.userAgent`
-- **App version** — read from env var (set at build time, e.g., `NEXT_PUBLIC_APP_VERSION` or `process.env.npm_package_version`)
-- **JS stack trace** — `error.stack` (first 5 frames, inside a `<details>` block to collapse it)
-- **Timestamp** — `new Date().toISOString()`
-
-**CRITICAL: URL length limit.** GitHub returns 414 for URLs over ~8,000 chars. The `body` must be truncated. Strategy: truncate stack traces to first 5 frames, cap total body at ~4,000 chars (leaves room for encoding overhead). Use `encodeURIComponent()` on all values.
-
-**Helper function for building the issue URL:**
-
-```typescript
-// Pure function — no React dependency, testable in isolation
-function buildGitHubIssueUrl(error: Error, route: string): string {
-  const title = `[Bug] ${error.message.slice(0, 80)}`;
-  const body = [
-    `## Error\n\`${error.message.slice(0, 200)}\``,
-    `## Route\n\`${route}\``,
-    `## Environment`,
-    `- **Browser:** \`${navigator.userAgent}\``,
-    `- **Timestamp:** ${new Date().toISOString()}`,
-    `- **Version:** \`${process.env.NEXT_PUBLIC_APP_VERSION ?? "unknown"}\``,
-    error.stack
-      ? `\n<details><summary>Stack trace</summary>\n\n\`\`\`\n${error.stack.split("\n").slice(0, 8).join("\n")}\n\`\`\`\n</details>`
-      : "",
-  ].join("\n\n");
-
-  const params = new URLSearchParams({
-    title,
-    body: body.slice(0, 4000),
-    "labels[]": "bug",
-  });
-  return `https://github.com/Develonaut/bnto/issues/new?${params}`;
-}
-```
-
-**PostHog integration (optional enhancement):**
-
-- Capture `app_error` event via `core.telemetry.capture()` with error message, route, and digest
-- This gives the dev team server-side visibility even if users don't file issues
-- Only if PostHog is already initialized — never block error UI on telemetry
-
-**Testing strategy:**
-
-- Unit test `buildGitHubIssueUrl()` — verify URL structure, encoding, truncation
-- Unit test that the URL stays under 8,000 chars even with long stack traces
-- E2E test: trigger an error (e.g., render a component that throws), verify the error dialog appears with "Report" and "Try again" buttons
-- E2E test: verify "Try again" calls `reset()` and re-renders
-
-**Files to create/modify:**
-
-- `apps/web/app/global-error.tsx` — Root-level catch-all (standalone `<html>`)
-- `apps/web/app/(app)/error.tsx` — App shell error boundary (uses design system)
-- `apps/web/app/[bnto]/error.tsx` — Recipe page error boundary (uses design system)
-- `apps/web/lib/buildGitHubIssueUrl.ts` — Pure function for issue URL construction
-- `apps/web/components/ErrorReport.tsx` — Shared error dialog UI (Card + buttons + error details)
-
-**Design system compliance:**
-
-- Use `Card elevation="md"` for the error dialog container
-- Use `Heading`, `Text`, `Button`, `Stack` for layout
-- Use `font-mono` for error message and stack trace display
-- Use `Animate.FadeIn` for the error dialog entrance
-- Use `destructive` color for the error icon/accent
-- The `global-error.tsx` file cannot use the design system (it replaces `<html>`) — use minimal inline styles matching the theme tokens
-
-**Scope boundaries:**
-
-- This is error REPORTING, not error RECOVERY. Don't add retry logic to individual components
-- Don't add Sentry or a third-party error tracking service — keep it simple with GitHub issues + PostHog events
-- Don't change existing `try/catch` patterns in auth forms or execution — those handle expected errors with user-friendly messages. This boundary catches UNEXPECTED errors only
-
-**Tasks:**
-
-- [ ] `apps/web` — Create `buildGitHubIssueUrl()` pure function in `lib/` with unit tests (URL construction, encoding, truncation, length limit)
-- [ ] `apps/web` — Create `ErrorReport` component — branded error dialog with "Report this issue" (GitHub link), "Try again" (reset), and "Go home" (navigation)
-- [ ] `apps/web` — Create `app/global-error.tsx` — root catch-all with minimal inline-styled error UI + GitHub issue link
-- [ ] `apps/web` — Create `app/(app)/error.tsx` — app shell error boundary using `ErrorReport` component
-- [ ] `apps/web` — Create `app/[bnto]/error.tsx` — recipe page error boundary using `ErrorReport` component
-- [ ] `apps/web` — (Optional) Capture `app_error` PostHog event on boundary trigger via `core.telemetry.capture()`
-- [ ] `apps/web` — Add `NEXT_PUBLIC_APP_VERSION` to build env (Vercel env var or `package.json` read)
-- [ ] `apps/web` — E2E test: trigger error, verify dialog renders with Report/Try Again/Go Home buttons
-
-### ~~Infra: Tag-Based Release Pipeline (GitHub Actions + Vercel)~~ — DONE
-
-Delivered via `infra/release-pipeline` branch. Tag-triggered workflow (`release.yml`): CI gate → Vercel preview → E2E tests → Lighthouse → GitHub Release. Playwright config parameterized for remote URLs. Lighthouse config now auto-generated from recipe registry. See [releases.md](rules/releases.md).
-
-- [x] `infra` — Create GitHub Actions workflow triggered by git tags (`v*.*.*`)
-- [x] `infra` — Workflow step: build Vercel preview deployment via CLI, capture preview URL
-- [x] `infra` — Workflow step: run Playwright E2E tests against the preview URL (`baseURL` override)
-- [x] `infra` — Workflow step: run unit/integration tests (full CI gate — Rust + TypeScript)
-- [x] `infra` — Workflow step: run Lighthouse CI against preview URL
-- [x] `infra` — On all-green: create GitHub Release (pre-release for beta/rc tags)
-- [x] `infra` — Add `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` to GitHub repo secrets (documented)
-- [x] `infra` — Dynamic Lighthouse config generator (`scripts/generate-lighthouserc.ts`) — replaces hardcoded `lighthouserc.json`
-
 ### UX: Unified Popup/FloatingSurface Primitive
 
 **Priority: Medium.** Dialog.Content, Menu.Content, and AccountGate all repeat the same floating surface pattern: `Card elevation="lg"` + `Animate.ScaleIn from={0.6} easing="spring-bouncier"` + pointer-events/z-index management. Extract a shared composition primitive so consumers compose it instead of duplicating the Card/animation/z-index logic.
@@ -631,14 +494,6 @@ Delivered via `infra/release-pipeline` branch. Tag-triggered workflow (`release.
 - [ ] `apps/web` — UI performance audit at scale (FileCard grid, BouncyStagger, responsive layout)
 - [ ] `@bnto/core` — Profile `createZipBlob` memory limits for large batches
 - [ ] `.claude/strategy/` — Write `file-limits.md` with results and decisions
-
-### ~~Chore: Remove Remaining Go References from Codebase~~ — DONE (Sprint 6)
-
-Delivered in Sprint 6 Wave 3 (Go reference sweep). Migration reference preserved in `go-engine-migration.md`.
-
-### ~~Chore: Go Engine Archival & Node Migration Reference~~ — DONE (Sprint 6)
-
-Delivered in Sprint 6 Wave 2 (PRs #186, #188). Go archives deleted, Taskfile cleaned, CI cleaned, docs updated.
 
 ### Engine: Unmigrated Node Operations (Rust WASM)
 
@@ -687,19 +542,17 @@ Convex dev (`zealous-canary-422`) has stale Better Auth records and test artifac
 
 - [ ] `infra` — Configure R2 lifecycle rules in Cloudflare dashboard (prod + dev buckets)
 
-### Infra: Domain Setup (bnto.io Custom Domains)
+### Infra: Domain Setup — API Domain (M4)
 
-Web app domain (`bnto.io`) delivered in Sprint 2C. API domain (`api.bnto.io`) deferred to M4.
+`bnto.io` delivered in Sprint 2C. API domain deferred to M4.
 
-- [x] `infra` — Connect `bnto.io` to Vercel + Cloudflare DNS, verify auth redirects — Delivered in Sprint 2C
 - [ ] `infra` — (M4) Configure `api.bnto.io` for M4 cloud service (technology and hosting TBD)
 
 ### Infra: Graduate SEO Validation from E2E to Unit Tests
 
-**Priority: Medium.** Graduate SEO validation from slow E2E to unit tests (metadata, registry↔sitemap sync). Keep thin E2E for noindex/redirect/404. Lighthouse CI already delivered (Sprint 3 Wave 1 — GitHub Actions workflow + `task seo:audit`).
+**Priority: Medium.** Graduate SEO validation from slow E2E to unit tests (metadata, registry↔sitemap sync). Keep thin E2E for noindex/redirect/404. Lighthouse CI already delivered.
 
 - [ ] `apps/web` — Move metadata validation to unit tests (`bntoRegistry.test.ts`)
-- [x] `apps/web` — ~~Add Lighthouse CI with `seo: 90` threshold~~ — Delivered in Sprint 3 Wave 1: `.github/workflows/lighthouse.yml` + `lighthouserc.json` + `task seo:audit`
 - [ ] `apps/web` — Slim E2E to redirects + 404 + noindex only
 
 ### Testing: Sprint 3 Deferred E2E Tests
@@ -709,8 +562,6 @@ Web app domain (`bnto.io`) delivered in Sprint 2C. API domain (`api.bnto.io`) de
 - [ ] `apps/web` — Playwright E2E: AuthGate conversion flow
 - [ ] `apps/web` — Playwright E2E: browser-local execution history
 - [ ] `@bnto/backend` — Unit tests for execution analytics queries
-
-### ~~Testing: Standardize E2E Selectors on data-testid~~ — PROMOTED to Sprint 6 W5
 
 ### Testing: Concurrent Quota Race Condition — M4/M5 (server-side quotas)
 
@@ -742,14 +593,6 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 - [ ] `@bnto/backend` — `referrals` table + `applyReferral` mutation
 - [ ] `@bnto/core` — Referral service/hooks
 - [ ] `apps/web` — Referral link generation UI + landing page `?ref=CODE` capture
-
-### Showcase: Radial Light Source Controls
-
-**Priority: Low (fun polish).** Replace linear slider on `/showcase` with radial + elevation controls for light source direction/height.
-
-- [ ] `apps/web` — `RadialSlider` generic UI component (circular drag input, configurable labels)
-- [ ] `apps/web` — Light elevation control → `--light-elevation` CSS variable
-- [ ] `apps/web` — Wire into surface shadow system, replace `LightSourceSlider` on showcase
 
 ### UX: Expression Input — Pill Tokens & Variable Picker
 
@@ -786,22 +629,13 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 - [ ] `engine` — Profile bundle size per crate, evaluate code splitting vs single bundle
 - [ ] `apps/web` — Processing speed + memory benchmarks per node type
 
-### Performance: Next.js Server Component Audit — PROMOTED TO SPRINT 6
+### Performance: Next.js Server Component Audit (follow-up)
 
-**Promoted to Sprint 6 (Quality & Cleanup), Wave 3.** Audit `"use client"` directives — push boundaries down to smallest leaf, convert parents to Server Components, lazy load modals/below-fold with `next/dynamic`.
+**Initial audit delivered in Sprint 6 W3.** Pushed client boundaries to leaves, lazy-loaded configs, extracted server-rendered static headers. Remaining follow-ups:
 
-**Known issues from dashboard page work (Sprint 3):**
-
-- `app/(app)/my-recipes/page.tsx` uses `dynamic()` with `ssr: false` for all data-dependent components (UsageStats, WorkflowGrid, RecentExecutions). This is an anti-pattern — it means null render during SSR → loading fallback after hydration → skeleton → data (triple-jump). The page should be restructured: page.tsx as a Server Component composing small client leaves that each handle their own loading states. Only the Convex-dependent leaf components need `"use client"`.
-- Skeleton dimensions were manually aligned to prevent layout shift but the root cause is the SSR gap from `ssr: false`. With proper Server Component structure, static parts (heading, tab list) render immediately in HTML, and only data-fetching leaves show skeletons.
-- `AppShell.Content` needed `min-h-[80svh]` as a band-aid to prevent footer visibility during the SSR→hydration gap. This should become unnecessary once pages use proper Server Component composition.
-- Same pattern likely exists on other `(app)` routes — audit all `dynamic({ ssr: false })` usage.
-
-- [ ] `apps/web` — Inventory `"use client"` files, refactor candidates to Server Components
 - [ ] `apps/web` — Restructure `my-recipes/page.tsx` — Server Component page with client leaf islands (eliminate `ssr: false` anti-pattern)
-- [ ] `apps/web` — Audit all `dynamic({ ssr: false })` usage, replace with proper server/client composition
+- [ ] `apps/web` — Audit remaining `dynamic({ ssr: false })` usage, replace with proper server/client composition
 - [ ] `apps/web` — Eliminate barrel imports in client components, lazy load heavy components
-- [ ] `apps/web` — Run Lighthouse / bundle analyzer before and after, confirm no regression
 
 ### Infra: Vercel Preview Deployment Verification
 
@@ -852,44 +686,6 @@ The engine supports recursive `Definition.Nodes`. The web app must preserve this
 - JSON editor must represent recursive structure faithfully
 - Visual editor (Sprint 4) must support drill-down into group nodes
 
-### ~~Home Page Marquee for Recipe Cards~~ — DONE (Sprint 6 W4)
-
-### ~~Full Codebase Quality Audit Post-Editor v1~~ — DONE (Sprint 6)
-
-### ~~Triage: SelectTrigger missing press animation~~ — DONE (Sprint 6 W4)
-
-### ~~Triage: PopupTrigger shared component~~ — DONE (Sprint 6 W4)
-
-### ~~Triage: Remove sm/lg button sizes~~ — Promoted to Sprint 6 W6 (bundled with Button simplification)
-
-Bundled with Button behavioral props cleanup in Sprint 6 Wave 6.
-
-### ~~Triage: Show mode labels on Input/Output nodes~~ — DONE (Sprint 6 W4)
-
-### ~~Triage: Fix reducedMotion type errors in E2E specs~~ — DONE (Sprint 6 W4)
-
-### ~~Triage: Next.js performance audit — leaf-level component boundaries~~ — DONE (Sprint 6 W3)
-
-Delivered as "Server Component audit" — pushed client boundaries to leaves, lazy-loaded configs, extracted server-rendered static headers.
-
-### ~~Triage: File menu transform origin~~ — DONE (Sprint 6 W4)
-
-### ~~Triage: Remove Redundant Default Props~~ — DONE (Sprint 6 W4)
-
-### ~~Triage: Simplify My Recipes Page~~ — DONE (Sprint 6 W4, PR #191)
-
-### ~~Triage: Pre-populate File Extension TagPicker~~ — DONE (Sprint 6 W4)
-
-### ~~Triage: Lighthouse Audit & Fixes~~ — DONE (Sprint 6 W3, PR #190)
-
-### ~~Triage: Add Icons to File Menu Items~~ — DONE (Sprint 6 W4)
-
-### ~~Triage: Kbd Component & Keyboard Shortcuts Dialog~~ — DONE
-
-Delivered in Sprint 6 Wave 4. `<Kbd>` primitive in `@bnto/ui`, `<ShortcutHint>` for menu items, `<HelpDialog>` (⌘/), I/O delete guard at handler level.
-
-### ~~Triage: Audit Raw useStore Selectors in Editor Components~~ — DONE (Sprint 6 W4, PR #196)
-
 ### Triage: Test Naming & Description Unification Pass
 
 **Priority: Triage.** Audit all test suites (Vitest unit + Playwright E2E) for naming consistency and organization. Ensure `describe` blocks, `test`/`it` statements, and test IDs follow a unified convention — clear action-oriented descriptions, consistent prefixing (e.g., FA1, PR1), and logical grouping. Remove duplicate or vague test names.
@@ -910,33 +706,9 @@ Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `package
 
 **Priority: Triage.** Rust code is now readable without every-line explanations. Keep file-level header comments (purpose, how it fits) but remove most inline comments — only keep them for unorthodox patterns or genuinely complex logic. Update CLAUDE.md "Rust Code Standards" section to reflect the new lighter standard. Applies to all files in `engine/crates/`.
 
-### ~~Triage: Delete button on My Recipe cards~~ — DONE (Sprint 6 W5)
-
-### ~~Triage: Auto-save recipes instead of manual Save~~ — Promoted to Sprint 6 W5
-
-Promoted to Sprint 6 Wave 5 as the consolidated auto-save task (subsumes localStorage persistence).
-
 ### Triage: iLovePNG recipe parity — next wave candidates
 
 **Priority: Triage.** When planning the next recipe wave, evaluate iLovePNG's offerings for feasibility in Rust WASM: Resize IMAGE, Crop IMAGE, Rotate IMAGE, Watermark IMAGE, Blur face, Upscale, Convert to/from JPG, HTML to IMAGE, Meme generator. Several (resize, crop, rotate, watermark) are likely doable with our existing `image` crate. Others (upscale, blur face, HTML to IMAGE) may need server-side or new deps.
-
-### ~~Triage: Inline handler audit — extract to named handlers~~ — DONE (Sprint 6 W5, PR #201)
-
-Delivered in Sprint 6 Wave 5. Inline handlers extracted to named `handleOnX` functions across `packages/ui/`, `packages/editor/`, `apps/web/components/`.
-
----
-
-### ~~Triage: Release branch pipeline with Vercel preview E2E gate~~ — DONE (subsumed by Tag-Based Release Pipeline)
-
-Replaced by tag-triggered approach (no release branches needed). See "Infra: Tag-Based Release Pipeline" above.
-
----
-
-### ~~Triage: Persist editor state in localStorage~~ — Promoted to Sprint 6 W5 (subsumed by auto-save)
-
-Subsumed by the auto-save task in Sprint 6 Wave 5, which covers localStorage persistence for unauthed + Convex persistence for authed users.
-
----
 
 ### Triage: AuthGate & ProGate badge/wrapper components
 
@@ -954,24 +726,6 @@ Files: `packages/editor/src/components/EditorToolbar.tsx` (palette), `packages/e
 
 ---
 
-### ~~Triage: Theme menu lighting direction control via half-radial slider~~ — Promoted to Sprint 6 W6
-
-Promoted to Sprint 6 Wave 6.
-
----
-
-### ~~Triage: Data-state / CSS-first interaction audit (Radix/shadcn patterns)~~ — DONE (Sprint 6 W5, PR #201)
-
-Delivered in Sprint 6 Wave 5. JS `useState`/ternary className patterns for visual states replaced with CSS pseudo-classes and `data-*` attributes across `packages/ui/`, `packages/editor/`, `apps/web/components/`.
-
----
-
-### ~~Triage: Registry consumption via @bnto/core async pattern~~ — Covered by Sprint 7 W2
-
-Subsumed by Sprint 7 Wave 2 "Implement unified catalog query" task.
-
----
-
 ### Triage: Surface-aware typography and icon color system
 
 **Priority: Triage.** Research how design systems (shadcn/Radix, Chakra, Mantine, Ark UI) handle text/icon color when components sit on colored surfaces (e.g. a Card with `color="primary"`). Currently `Text`, `Heading`, `Badge`, and `IconBadge` use hardcoded color tokens (`text-muted-foreground`, `bg-primary/10 text-primary`) that don't adapt when the parent surface changes. This forces consumers to manually pass `onSurface` props to every sub-component.
@@ -981,18 +735,6 @@ Subsumed by Sprint 7 Wave 2 "Implement unified catalog query" task.
 Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `packages/editor/src/components/nodes/Node/NodeIcon.tsx`, `apps/web/app/surface.css`
 
 ---
-
-### ~~Triage: Replace competitor comparison with bnto-first benchmarks~~ — Promoted to Sprint 6 W5
-
----
-
-### ~~Triage: Simplify Button behavioral props — CSS-first with data attributes~~ — Promoted to Sprint 6 W6
-
-Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
-
-### Triage: Simplify editor URL slug patterns — unify `?from` and `?recipe` params
-
-**Priority: Triage.** Currently the editor opens with either `?from=[recipe_name]` (predefined) or `?recipe=[recipeId]` (user-saved). Opening from a predefined recipe is effectively creating a new recipe — consider standardizing to a single `?recipe=[id]` param for all cases. Affects `apps/web/app/editor/` page + `EditorShell.tsx` hydration logic.
 
 ### Triage: Audit and remove useEditorStoreApi — migrate to client/service API
 
@@ -1007,19 +749,6 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 **Priority: Triage.** `useDialog` has been added to `@bnto/ui` (standardized open/close state for dialogs). Adopt it in all existing dialog consumers — OpenRecipeDialog, HelpDialog, and any other components that manually manage dialog open/close with `useState`. Replace manual `useState(false)` + `setOpen` patterns with the standardized `useDialog()` hook for consistent props and state management.
 
 ---
-
-### Triage: Adopt a form state management library
-
-**Priority: Triage.** Evaluate and adopt a hook-based or agnostic form library to replace scattered `useState` patterns for form state. Must be actively maintained, performant, and composable via hooks. Formik is the spiritual predecessor but unmaintained — candidates include React Hook Form, TanStack Form, or similar. Goal: standardized form state management with validation, error handling, and field composition that fits the project's hook-first architecture.
-
----
-
-### Infra: Auto-Promote Release to Production
-
-**Priority: Low.** After release-gate passes, auto-run `vercel promote` to make the preview URL production. Currently promotion is manual (Vercel dashboard or `vercel --prod`). Requires `VERCEL_TOKEN` secret (already set up).
-
-- [ ] `infra` — Add optional `promote-production` job gated by environment protection rule
-- [ ] `infra` — `vercel promote <deployment-url> --token=...` to shift production traffic
 
 ### Infra: Conventional Commits + Auto-Changelog
 
@@ -1085,21 +814,9 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
 ---
 
-### Triage: Centralize URL creation utils in routes.ts
-
-**Priority: Triage.** Hardcoded URL strings like `/editor?recipe=${id}` are scattered across the codebase (RecipeGrid, RecipeCardShowcase, etc.). Add URL builder utilities (e.g. `editorUrl(recipeId)`) co-located in `apps/web/lib/routes.ts` so URL patterns are maintained in one place. Flagged on PR #212.
-
----
-
 ### Triage: Type inheritance audit for wrapper components
 
 **Priority: Triage.** Wrapper components (e.g. SavedRecipeCard) redefine props like `loading`, `href`, `className` that already exist on the underlying primitive (Card, RecipeCard). Audit all wrapper components to use `Pick<ComponentProps<typeof Base>, ...>` or `extends` instead of manual redefinition. Flagged on PR #212 SavedRecipeCard.tsx.
-
----
-
-### Triage: Consolidate Recipe types across the app
-
-**Priority: Triage.** There are 3+ Recipe-like types: `Recipe` (core store), `RecipeListItem` (core transform), `CloudRecipeDetail` (core transform), plus raw Convex projections. Review whether `CloudRecipeDetail` can be eliminated and whether the app can standardize on fewer shapes. Flagged on PR #212 `packages/core/src/transforms/recipe.ts`.
 
 ---
 
@@ -1117,7 +834,21 @@ Promoted to Sprint 6 Wave 6 (bundled with sm/lg size removal).
 
 **Priority: Triage.** Files using `test.use({ reducedMotion: "reduce" })` with the custom `test` from `e2e/fixtures.ts` produce TS2353 errors — `reducedMotion` isn't in the extended fixture type. Build passes because Turbopack doesn't typecheck `e2e/` files. Fix: remove per-file `test.use` calls (already set globally in `playwright.config.ts` via `contextOptions`) or widen the fixture type. Affected: `e2e/editor/node-progress.spec.ts`, `e2e/journeys/auth/auth-behavior.spec.ts`, `e2e/journeys/auth/auth-lifecycle.spec.ts`, `e2e/pages/site-navigation.spec.ts`.
 
----
+### Triage: E2E teardown cleanup fails in release pipeline (missing CONVEX_DEPLOYMENT)
+
+**Priority: Triage.** E2E teardown logs `cleanup failed — test accounts may persist` because `npx convex run _dev_cleanup:cleanTestAccounts` requires `CONVEX_DEPLOYMENT` which isn't set in the release pipeline runner. Either pass the env var to the E2E job or skip cleanup when running against a Vercel preview.
+
+Files: `apps/web/e2e/`, `.github/workflows/release.yml`
+
+### Triage: Investigate proper Convex auth error handling
+
+**Priority: Triage.** We're catching Convex auth errors broadly and risk missing real Convex errors (query failures, mutation errors, schema validation). Need to differentiate auth errors from operational errors so real issues aren't silently swallowed.
+
+### Triage: Add forgot password / password reset flow
+
+**Priority: Triage.** Users have no way to reset their password. Need a forgot password link on sign-in, email-based reset flow, and reset confirmation screen. Check what `@convex-dev/auth` provides out of the box.
+
+Files: `app/(auth)/`, `packages/@bnto/auth/`
 
 ## Reference
 
