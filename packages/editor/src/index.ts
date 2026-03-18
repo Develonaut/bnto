@@ -68,6 +68,7 @@ export type { UseAutosaveOptions } from "./hooks/useAutosave";
 // --- Draft types ---
 
 export type { Draft } from "./draft/draftTypes";
+export { draftToStoredRecipe } from "./draft/draftToStoredRecipe";
 export { serializeDraft } from "./draft/serializeDraft";
 
 // --- Internal hooks (rendering pipeline) ---

@@ -1,27 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
-import { useUnsavedWarning, useAutosave, useEditor } from "@bnto/editor";
+import { useUnsavedWarning, useAutosave, useEditor, draftToStoredRecipe } from "@bnto/editor";
 import type { Draft } from "@bnto/editor";
 import { core } from "@bnto/core";
-import type { StoredRecipe } from "@bnto/core";
 import { useStaleDraftSync } from "./useStaleDraftSync";
-
-/** Convert an editor Draft to a StoredRecipe for the recipes store. */
-function draftToStoredRecipe(draft: Draft): StoredRecipe {
-  return {
-    definition: draft.definition,
-    metadata: {
-      id: draft.metadata.id,
-      name: draft.metadata.name,
-      cloudId: draft.metadata.cloudId ?? undefined,
-      type: draft.metadata.type,
-      version: draft.metadata.version,
-    },
-    savedAt: draft.savedAt,
-    syncedAt: draft.syncedAt,
-  };
-}
 
 /**
  * EditorEffects — side-effect hooks that run inside EditorRoot context.
