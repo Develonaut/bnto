@@ -62,7 +62,7 @@ export function Footer() {
             <Text size="sm" color="muted" leading="relaxed">
               {TAGLINE} {TRUST_LINE}
             </Text>
-            <Row className="gap-4">
+            <Stack gap="sm">
               <a
                 href={GITHUB_URL}
                 target="_blank"
@@ -78,26 +78,18 @@ export function Footer() {
                 href={BUYMEACOFFEE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                variant="ghost"
-                size="sm"
-                elevation="sm"
-                style={
-                  {
-                    "--face-bg": "#ffdc03",
-                    "--face-fg": "#0d0c22",
-                  } as CSSProperties
-                }
+                variant="outline"
                 aria-label="Support bnto — Buy Me a Coffee"
               >
                 <Image
                   src="/bmc-logo.svg"
                   alt="Buy me a coffee"
-                  width={120}
-                  height={26}
-                  className="h-3.5 w-auto"
+                  width={160}
+                  height={60}
+                  className="h-8 w-auto"
                 />
               </Button>
-            </Row>
+            </Stack>
           </Stack>
 
           {/* Right columns: tool links by category */}
