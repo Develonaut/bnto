@@ -34,7 +34,7 @@ src/
 │   ├── getVisibleParams.ts
 │   └── inferFieldType.ts
 ├── definition.ts               # Definition, Edge, Port, Metadata interfaces
-├── recipe.ts                   # Recipe, AcceptSpec, SEOSpec interfaces
+├── recipe.ts                   # Recipe, AcceptSpec interfaces
 ├── validate.ts                 # Structural validation
 └── index.ts                    # Public exports
 scripts/
