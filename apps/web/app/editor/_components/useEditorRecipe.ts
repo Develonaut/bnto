@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { getRecipeBySlug } from "@bnto/nodes";
 import type { Definition } from "@bnto/nodes";
 import { core } from "@bnto/core";
 
@@ -20,20 +19,13 @@ interface EditorRecipeResult {
 /**
  * Resolves the recipe definition for the editor from search params.
  *
- * Resolution order:
- *   1. ?recipe=[id] → local recipesStore, then Convex cloud
- *   2. ?from=[slug] → predefined recipe from catalog
- *   3. No params   → blank canvas (undefined definition)
+ * Resolution:
+ *   ?recipe=[id] → local recipesStore, then Convex cloud
+ *   No params    → blank canvas (undefined definition)
  */
 export function useEditorRecipe(): EditorRecipeResult {
   const searchParams = useSearchParams();
-  const from = searchParams.get("from") ?? undefined;
   const recipeId = searchParams.get("recipe") ?? undefined;
-
-  const predefinedDefinition = useMemo(() => {
-    if (!from) return undefined;
-    return getRecipeBySlug(from)?.definition;
-  }, [from]);
 
   // Synchronous store read — Zustand persist middleware hydrates from
   // localStorage synchronously on first access.
@@ -68,9 +60,9 @@ export function useEditorRecipe(): EditorRecipeResult {
     };
   }
 
-  // Predefined or blank canvas
+  // Blank canvas
   return {
-    definition: predefinedDefinition,
+    definition: undefined,
     cloudId: undefined,
     isLoading: false,
     notFound: false,

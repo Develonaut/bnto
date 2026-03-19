@@ -34,6 +34,11 @@ export const AUTH_PATHS = [ROUTES.signin, ROUTES.signup] as const;
  */
 export const PROTECTED_PATHS = [ROUTES.executions, ROUTES.settings] as const;
 
+/** Returns the editor URL for a saved recipe. */
+export function editorUrl(recipeId: string): string {
+  return `/editor?recipe=${recipeId}`;
+}
+
 type AuthPath = (typeof AUTH_PATHS)[number];
 type ProtectedPath = (typeof PROTECTED_PATHS)[number];
 

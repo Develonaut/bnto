@@ -21,6 +21,7 @@ import {
   Stack,
   Text,
 } from "@bnto/ui";
+import { editorUrl } from "@/lib/routes";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import { DeleteRecipeButton } from "./DeleteRecipeButton";
 import { LocalRecipeUpsell } from "./LocalRecipeUpsell";
@@ -64,7 +65,7 @@ export function RecipeGrid() {
       <BouncyStagger className="flex flex-col gap-3" from={0.85}>
         {recipes.map((recipe) => (
           <Row key={recipe.id} align="stretch" className="gap-2 group" data-testid="recipe-card">
-            <RecipeCard compact href={`/editor?recipe=${recipe.id}`} className="flex-1">
+            <RecipeCard compact href={editorUrl(recipe.id)} className="flex-1">
               <SyncStatus syncedAt={recipe.syncedAt} />
               <Stack className="flex-1 gap-0.5">
                 <Text weight="medium">{recipe.name}</Text>

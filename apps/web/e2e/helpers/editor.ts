@@ -16,13 +16,27 @@ import { expect } from "../fixtures";
  * Navigate to the editor page and wait for it to stabilize.
  *
  * For predefined recipes, pass the slug (e.g. "compress-images").
+ * This navigates to the tool page and clicks "Open in Editor",
+ * which creates a personal recipe from the definition and navigates
+ * to `/editor?recipe={id}`.
+ *
+ * Without a slug, navigates directly to `/editor` (blank canvas).
  *
  * Waits for the editor to render at least two node cards (I/O nodes)
  * and the render pipeline to complete (placeholder or divider visible).
  */
 export async function navigateToEditor(page: Page, slug?: string) {
-  const url = slug ? `/editor?from=${slug}` : "/editor";
-  await page.goto(url);
+  if (slug) {
+    // Navigate to the tool page and clone via "Open in Editor"
+    await page.goto(`/${slug}`);
+    const openButton = page.getByRole("button", { name: /Open in Editor/i });
+    await openButton.waitFor({ timeout: 5_000 });
+    await openButton.click();
+    // Wait for navigation to /editor?recipe=...
+    await page.waitForURL(/\/editor\?recipe=/, { timeout: 10_000 });
+  } else {
+    await page.goto("/editor");
+  }
 
   // Dismiss the beta dialog if it appears — it's a modal overlay that
   // blocks canvas interaction. Tests that explicitly verify the dialog

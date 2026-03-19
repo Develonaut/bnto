@@ -28,6 +28,29 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
     upsert,
 
     /**
+     * Create a personal recipe from any Definition.
+     *
+     * Stamps a fresh UUID, derives display metadata (name, slug, category,
+     * accept spec) from the definition, persists to localStorage.
+     * Returns the new recipe ID for navigation.
+     */
+    createFromDefinition: (definition: Definition): string => {
+      const id = crypto.randomUUID();
+      const cloned: Definition = { ...definition, id };
+      const recipe = definitionToRecipe(cloned, { id });
+
+      const userRecipe: UserRecipe = {
+        ...recipe,
+        cloudId: null,
+        savedAt: Date.now(),
+        syncedAt: null,
+      };
+
+      upsert(userRecipe);
+      return id;
+    },
+
+    /**
      * Save a recipe: build UserRecipe, persist locally, sync to cloud.
      *
      * Core owns the UserRecipe shape — callers pass definition + metadata.
