@@ -1,6 +1,6 @@
 "use client";
 
-import type { Definition, Recipe } from "@bnto/nodes";
+import type { Definition } from "@bnto/nodes";
 import { definitionToRecipe } from "@bnto/nodes";
 import { recipesStore } from "../stores/recipesStore";
 import type { RecipeService } from "../services/recipeService";
@@ -28,22 +28,19 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
     upsert,
 
     /**
-     * Clone a predefined recipe into the personal store.
+     * Create a personal recipe from any Definition.
      *
-     * Creates a new UserRecipe with a fresh UUID, persists locally.
+     * Stamps a fresh UUID, derives display metadata (name, slug, category,
+     * accept spec) from the definition, persists to localStorage.
      * Returns the new recipe ID for navigation.
      */
-    createFromTemplate: (recipe: Recipe): string => {
+    createFromDefinition: (definition: Definition): string => {
       const id = crypto.randomUUID();
-      const clonedDefinition: Definition = { ...recipe.definition, id };
-      const clonedRecipe = definitionToRecipe(clonedDefinition, {
-        id,
-        slug: recipe.slug,
-        name: recipe.name,
-      });
+      const cloned: Definition = { ...definition, id };
+      const recipe = definitionToRecipe(cloned, { id });
 
       const userRecipe: UserRecipe = {
-        ...clonedRecipe,
+        ...recipe,
         cloudId: null,
         savedAt: Date.now(),
         syncedAt: null,

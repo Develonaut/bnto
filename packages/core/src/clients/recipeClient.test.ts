@@ -5,7 +5,7 @@ import { RECIPES, NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/nodes";
 import { createRecipeClient } from "./recipeClient";
 import { createRegistryClient } from "./registryClient";
 
-// Minimal stubs — createFromTemplate only uses upsert (store-backed), no services.
+// Minimal stubs — createFromDefinition only uses upsert (store-backed), no services.
 const mockRecipeService = {
   save: async () => "mock-cloud-id",
   remove: async () => {},
@@ -20,7 +20,7 @@ const mockExecutionService = {
   invalidateExecutions: () => {},
 } as unknown as Parameters<typeof createRecipeClient>[1];
 
-describe("recipeClient.createFromTemplate", () => {
+describe("recipeClient.createFromDefinition", () => {
   beforeEach(() => {
     // Clear all recipes from store
     for (const id of Object.keys(recipesStore.getState().recipes)) {
@@ -37,47 +37,47 @@ describe("recipeClient.createFromTemplate", () => {
     });
   });
 
-  it("clones a predefined recipe into the personal store and returns the new ID", () => {
+  it("creates a personal recipe from a definition and returns the new ID", () => {
     const client = createRecipeClient(mockRecipeService, mockExecutionService);
     const registry = createRegistryClient();
 
-    const compressRecipe = registry.getRecipes().find((r) => r.slug === "compress-images")!;
-    const newId = client.createFromTemplate(compressRecipe);
+    const compress = registry.getRecipes().find((r) => r.slug === "compress-images")!;
+    const newId = client.createFromDefinition(compress.definition);
 
     expect(newId).toBeTruthy();
 
     const saved = client.get(newId)!;
-    expect(saved.name).toBe(compressRecipe.name);
-    expect(saved.definition.nodes?.length).toBe(compressRecipe.definition.nodes?.length);
+    expect(saved.name).toBe(compress.definition.name);
+    expect(saved.definition.nodes?.length).toBe(compress.definition.nodes?.length);
   });
 
-  it("generates a new unique ID — not the original recipe ID", () => {
+  it("generates a new unique ID — not the original definition ID", () => {
     const client = createRecipeClient(mockRecipeService, mockExecutionService);
     const registry = createRegistryClient();
     const original = registry.getRecipes()[0]!;
 
-    const newId = client.createFromTemplate(original);
-    expect(newId).not.toBe(original.id);
+    const newId = client.createFromDefinition(original.definition);
+    expect(newId).not.toBe(original.definition.id);
   });
 
-  it("does not modify the original recipe in the registry", () => {
+  it("does not modify the original definition in the registry", () => {
     const client = createRecipeClient(mockRecipeService, mockExecutionService);
     const registry = createRegistryClient();
     const original = registry.getRecipes()[0]!;
-    const originalId = original.id;
+    const originalId = original.definition.id;
 
-    client.createFromTemplate(original);
+    client.createFromDefinition(original.definition);
 
     const stillOriginal = registry.getRecipes()[0]!;
-    expect(stillOriginal.id).toBe(originalId);
+    expect(stillOriginal.definition.id).toBe(originalId);
   });
 
-  it("sets persistence fields on the cloned UserRecipe", () => {
+  it("sets persistence fields on the new UserRecipe", () => {
     const client = createRecipeClient(mockRecipeService, mockExecutionService);
     const registry = createRegistryClient();
     const original = registry.getRecipes()[0]!;
 
-    const newId = client.createFromTemplate(original);
+    const newId = client.createFromDefinition(original.definition);
     const saved = client.get(newId)!;
 
     expect(saved.cloudId).toBeNull();
@@ -85,15 +85,28 @@ describe("recipeClient.createFromTemplate", () => {
     expect(saved.syncedAt).toBeNull();
   });
 
-  it("clones the definition with a new ID", () => {
+  it("stamps the new ID onto the cloned definition", () => {
     const client = createRecipeClient(mockRecipeService, mockExecutionService);
     const registry = createRegistryClient();
     const original = registry.getRecipes()[0]!;
 
-    const newId = client.createFromTemplate(original);
+    const newId = client.createFromDefinition(original.definition);
     const saved = client.get(newId)!;
 
     expect(saved.definition.id).toBe(newId);
     expect(saved.definition.id).not.toBe(original.definition.id);
+  });
+
+  it("derives display metadata from the definition", () => {
+    const client = createRecipeClient(mockRecipeService, mockExecutionService);
+    const registry = createRegistryClient();
+    const compress = registry.getRecipes().find((r) => r.slug === "compress-images")!;
+
+    const newId = client.createFromDefinition(compress.definition);
+    const saved = client.get(newId)!;
+
+    expect(saved.name).toBe(compress.definition.name);
+    expect(saved.slug).toBeTruthy();
+    expect(saved.accept).toBeDefined();
   });
 });

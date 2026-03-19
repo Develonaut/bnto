@@ -17,7 +17,7 @@ import { expect } from "../fixtures";
  *
  * For predefined recipes, pass the slug (e.g. "compress-images").
  * This navigates to the tool page and clicks "Open in Editor",
- * which clones the template into the personal store and navigates
+ * which creates a personal recipe from the definition and navigates
  * to `/editor?recipe={id}`.
  *
  * Without a slug, navigates directly to `/editor` (blank canvas).

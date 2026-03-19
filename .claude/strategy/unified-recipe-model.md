@@ -128,7 +128,7 @@ Both live in `@bnto/nodes` as pure functions.
 ### PR 3: URL Unification
 
 - Eliminate `?from={slug}` — "Open in Editor" clones template to personal store, navigates by ID
-- `createFromTemplate(definition)` in recipe client
+- `createFromDefinition(definition)` in recipe client
 - Simplify `useEditorRecipe` — only `?recipe={id}` or blank canvas
 
 ### PR 4: Surface Migration
