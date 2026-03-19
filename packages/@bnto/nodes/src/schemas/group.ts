@@ -1,7 +1,7 @@
 /** Group node schema — parameters for the container node. */
 
 import { z } from "zod";
-import type { NodeSchemaDefinition } from "./types";
+import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
 
 /** Valid group execution modes. */
 export const GROUP_MODES = ["sequential", "parallel"] as const;
@@ -27,3 +27,6 @@ export const groupNodeSchema: NodeSchemaDefinition = {
     },
   },
 };
+
+/** UI presentation metadata for group node fields. */
+export const groupFields: FieldConfigMap = {};

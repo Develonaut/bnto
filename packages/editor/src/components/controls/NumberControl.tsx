@@ -4,8 +4,8 @@ import { useCallback } from "react";
 import { Input } from "@bnto/ui";
 import type { ControlProps } from "./types";
 
-function NumberControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
-  const suffix = meta.suffix;
+function NumberControl({ id, fieldInfo, meta, fieldConfig, value, onChange }: ControlProps) {
+  const suffix = fieldConfig?.suffix;
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

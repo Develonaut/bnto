@@ -109,6 +109,8 @@ export type {
   ParamCondition,
   FieldTypeInfo,
   FieldControl,
+  FieldConfig,
+  FieldConfigMap,
   DefinitionResult,
   ValidationError,
 } from "@bnto/registry";
@@ -119,6 +121,7 @@ export {
   NODE_TYPE_INFO,
   NODE_TYPE_NAMES,
   NODE_SCHEMA_DEFS,
+  NODE_FIELD_CONFIGS,
   CURRENT_FORMAT_VERSION,
   CATEGORIES,
   PROCESSORS,
@@ -154,6 +157,7 @@ export {
   getRequiredParams,
   getConditionallyRequired,
   getNodeSchema,
+  getNodeFields,
 } from "@bnto/registry";
 
 // Recipe lookup

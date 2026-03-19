@@ -15,23 +15,21 @@ import {
   spreadsheetParamsSchema,
   spreadsheetNodeSchema as generated,
 } from "../generated/schemas";
-import type { NodeSchemaDefinition } from "./types";
+import type { FieldConfigMap } from "./types";
 
 export { SPREADSHEET_OPERATIONS, spreadsheetParamsSchema };
 export type { SpreadsheetParams } from "../generated/schemas";
 
-/** Spreadsheet schema with operation hidden (pre-set from palette). */
-export const spreadsheetNodeSchema: NodeSchemaDefinition = {
-  ...generated,
-  params: {
-    ...generated.params,
-    operation: {
-      ...generated.params.operation,
-      hidden: true,
-      options: [
-        { value: "clean", label: "Clean" },
-        { value: "rename", label: "Rename Columns" },
-      ],
-    },
+/** Spreadsheet schema — uses engine-generated params directly. */
+export const spreadsheetNodeSchema = generated;
+
+/** UI presentation metadata for spreadsheet node fields. */
+export const spreadsheetFields: FieldConfigMap = {
+  operation: {
+    hidden: true,
+    options: [
+      { value: "clean", label: "Clean" },
+      { value: "rename", label: "Rename Columns" },
+    ],
   },
 };

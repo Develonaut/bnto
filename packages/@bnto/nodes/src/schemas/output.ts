@@ -7,7 +7,7 @@
  */
 
 import { z } from "zod";
-import type { NodeSchemaDefinition } from "./types";
+import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
 
 /** Valid output modes — determines which UI widget the environment renders. */
 export const OUTPUT_MODES = ["download", "display", "preview"] as const;
@@ -33,11 +33,6 @@ export const outputNodeSchema: NodeSchemaDefinition = {
     mode: {
       label: "Mode",
       description: "How results are delivered to the user.",
-      options: [
-        { value: "download", label: "Download" },
-        { value: "display", label: "Display" },
-        { value: "preview", label: "Preview" },
-      ],
     },
     filename: {
       label: "Filename Template",
@@ -54,7 +49,6 @@ export const outputNodeSchema: NodeSchemaDefinition = {
       label: "Label",
       description: "Label for the download button or display section.",
       placeholder: "Compressed Images",
-      hidden: true,
     },
     autoDownload: {
       label: "Auto-Download",
@@ -62,4 +56,16 @@ export const outputNodeSchema: NodeSchemaDefinition = {
       visibleWhen: { param: "mode", equals: "download" },
     },
   },
+};
+
+/** UI presentation metadata for output node fields. */
+export const outputFields: FieldConfigMap = {
+  mode: {
+    options: [
+      { value: "download", label: "Download" },
+      { value: "display", label: "Display" },
+      { value: "preview", label: "Preview" },
+    ],
+  },
+  label: { hidden: true },
 };

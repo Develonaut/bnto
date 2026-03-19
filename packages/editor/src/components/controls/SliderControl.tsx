@@ -10,24 +10,25 @@ function invertValue(value: number, min: number, max: number): number {
   return min + max - value;
 }
 
-function SliderControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
+function SliderControl({ id, fieldInfo, meta, fieldConfig, value, onChange }: ControlProps) {
   const min = fieldInfo.min ?? 0;
   const max = fieldInfo.max ?? 100;
   const storedValue = typeof value === "number" ? value : min;
-  const inverted = meta.displayInverted ?? false;
+  const inverted = fieldConfig?.inverted ?? false;
 
   // Display value: invert if needed so the slider matches user mental model
   const displayValue = inverted ? invertValue(storedValue, min, max) : storedValue;
 
   // Convert presets from stored-value space to display-value space,
   // sorted ascending by display value so justify-between aligns correctly
+  const presets = fieldConfig?.presets;
   const displayPresets = useMemo((): SliderPreset[] | undefined => {
-    if (!meta.presets) return undefined;
-    if (!inverted) return [...meta.presets].sort((a, b) => a.value - b.value);
-    return meta.presets
+    if (!presets) return undefined;
+    if (!inverted) return [...presets].sort((a, b) => a.value - b.value);
+    return presets
       .map((p) => ({ ...p, value: invertValue(p.value, min, max) }))
       .sort((a, b) => a.value - b.value);
-  }, [meta.presets, inverted, min, max]);
+  }, [presets, inverted, min, max]);
 
   const sliderValue = useMemo(() => [displayValue], [displayValue]);
 
@@ -43,7 +44,7 @@ function SliderControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
 
   const sliderLabel = (
     <Label htmlFor={id} title={meta.description}>
-      {meta.displayLabel ?? meta.label}
+      {fieldConfig?.label ?? meta.label}
       {fieldInfo.required && <span className="ml-0.5 text-destructive">*</span>}
     </Label>
   );

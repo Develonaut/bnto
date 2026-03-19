@@ -4,18 +4,19 @@ import { useMemo } from "react";
 import { Combobox } from "@bnto/ui";
 import type { ControlProps } from "./types";
 
-function TagPickerControl({ id, meta, value, onChange }: ControlProps) {
+function TagPickerControl({ id, meta, fieldConfig, value, onChange }: ControlProps) {
   const values = Array.isArray(value) ? (value as string[]) : [];
+  const configOptions = fieldConfig?.options;
 
-  // Build options from meta.options if provided, otherwise use current values
+  // Build options from fieldConfig.options if provided, otherwise use current values
   const options = useMemo(() => {
-    if (meta.options) {
-      return meta.options;
+    if (configOptions) {
+      return configOptions;
     }
     // When no predefined options, show current values as selectable
     return values.map((v) => ({ value: v, label: v }));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- values is derived from value prop
-  }, [meta.options, value]);
+  }, [configOptions, value]);
 
   return (
     <Combobox

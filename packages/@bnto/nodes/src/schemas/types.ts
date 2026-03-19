@@ -1,9 +1,17 @@
 /**
  * Schema types — describe the parameters each node type accepts.
  *
- * Zod schemas are the single source of truth for validation.
- * NodeParamMeta provides UI metadata (labels, descriptions, visibility rules)
- * that pairs with each Zod field.
+ * Two distinct type families:
+ *
+ * - **NodeParamMeta** — Engine metadata generated from the Rust catalog.
+ *   Labels, descriptions, conditional visibility/requirement rules.
+ *   Lives in `NodeSchemaDefinition.params`.
+ *
+ * - **FieldConfig / FieldConfigMap** — UI presentation metadata.
+ *   Hidden flags, layout grouping, presets, option labels, control overrides.
+ *   Lives in `NODE_FIELD_CONFIGS` alongside the schema registry.
+ *
+ * Zod schemas remain the single source of truth for validation.
  */
 
 import type { z } from "zod";
@@ -14,10 +22,12 @@ export type ParamCondition =
   | Array<{ param: string; equals: string }>;
 
 /**
- * UI metadata for a single parameter.
+ * Engine metadata for a single parameter.
  *
- * This is the information the config panel UI needs that Zod can't express:
- * labels, descriptions, placeholders, conditional visibility/requirement.
+ * Describes what the engine knows about a parameter: its label, description,
+ * conditional visibility, and conditional requirement rules. Generated from
+ * the Rust engine catalog. Does NOT include UI presentation concerns — those
+ * live in `FieldConfig`.
  */
 export interface NodeParamMeta {
   /** Human-readable label for the config panel. */
@@ -42,10 +52,28 @@ export interface NodeParamMeta {
   requiredWhen?: ParamCondition;
 
   /**
-   * Hidden from the config panel entirely. Used for engine wiring
-   * fields (e.g., input/output path templates) that the editor
-   * handles implicitly via node placement.
+   * Whether this param is eligible for surfacing in container config panels.
+   * Defaults to true — only set to false for params that make no sense
+   * when promoted to a parent container.
    */
+  surfaceable?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// FieldConfig — UI presentation metadata (separate from engine concerns)
+// ---------------------------------------------------------------------------
+
+/**
+ * UI presentation config for a single parameter field.
+ *
+ * This is what the editor config panel needs to render a field correctly:
+ * whether to hide it, how to group it, what presets to show, etc.
+ *
+ * Defined per-node-type in augmentation files (e.g., `image.ts`), keyed by
+ * parameter name. Consumed by SchemaForm, SchemaField, and control components.
+ */
+export interface FieldConfig {
+  /** Hide this parameter from the config panel entirely. */
   hidden?: boolean;
 
   /**
@@ -58,27 +86,24 @@ export interface NodeParamMeta {
   /** Unit suffix displayed inside the input (e.g., "px", "%", "ms"). */
   suffix?: string;
 
+  /** Override the label shown in the config panel. */
+  label?: string;
+
+  /**
+   * Display the slider with inverted semantics — the UI shows
+   * (max + min - value) while the stored value stays as-is.
+   */
+  inverted?: boolean;
+
   /**
    * Slider presets — clickable named positions along the slider track.
    * Each preset maps a value to a label (e.g., { value: 80, label: "High" }).
-   * When presets are present, the numeric value display is replaced by preset labels.
    */
   presets?: Array<{ value: number; label: string }>;
 
   /**
-   * Display the slider with inverted semantics — the UI shows (max + min - value)
-   * while the stored value stays as-is. Used when the engine param and user
-   * mental model are inverted.
-   */
-  displayInverted?: boolean;
-
-  /** Override the label shown in the config panel. */
-  displayLabel?: string;
-
-  /**
    * Display labels for enum options. Each entry maps a stored value to a
    * human-readable label (e.g., { value: "compress", label: "Compress" }).
-   * When present, SelectControl uses these labels instead of raw enum values.
    */
   options?: Array<{ value: string; label: string }>;
 
@@ -89,6 +114,9 @@ export interface NodeParamMeta {
    */
   control?: "textarea";
 }
+
+/** Field configs for all parameters of a node type. */
+export type FieldConfigMap = Record<string, FieldConfig>;
 
 /**
  * Complete schema definition for a node type.
@@ -109,6 +137,6 @@ export interface NodeSchemaDefinition {
   /** Zod schema for runtime validation of node parameters. */
   schema: z.ZodObject<z.ZodRawShape>;
 
-  /** UI metadata keyed by parameter name — drives the config panel. */
+  /** Engine metadata keyed by parameter name. */
   params: Record<string, NodeParamMeta>;
 }

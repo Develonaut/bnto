@@ -1,7 +1,7 @@
 /** Loop node schema — parameters for iteration (forEach, times, while). */
 
 import { z } from "zod";
-import type { NodeSchemaDefinition } from "./types";
+import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
 
 /** Valid loop execution modes. */
 export const LOOP_MODES = ["forEach", "times", "while"] as const;
@@ -27,11 +27,6 @@ export const loopNodeSchema: NodeSchemaDefinition = {
     mode: {
       label: "Mode",
       description: "How the loop iterates: over items, N times, or while a condition holds.",
-      options: [
-        { value: "forEach", label: "For Each" },
-        { value: "times", label: "N Times" },
-        { value: "while", label: "While" },
-      ],
     },
     items: {
       label: "Items",
@@ -60,5 +55,16 @@ export const loopNodeSchema: NodeSchemaDefinition = {
       description: "Optional expr expression — breaks out of the loop early when true.",
       placeholder: "item.status == 'done'",
     },
+  },
+};
+
+/** UI presentation metadata for loop node fields. */
+export const loopFields: FieldConfigMap = {
+  mode: {
+    options: [
+      { value: "forEach", label: "For Each" },
+      { value: "times", label: "N Times" },
+      { value: "while", label: "While" },
+    ],
   },
 };

@@ -1,7 +1,7 @@
 /** Transform node schema — parameters for data transformations via expr. */
 
 import { z } from "zod";
-import type { NodeSchemaDefinition } from "./types";
+import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
 
 /** Zod schema for transform node parameters. */
 export const transformParamsSchema = z.object({
@@ -30,3 +30,6 @@ export const transformNodeSchema: NodeSchemaDefinition = {
     },
   },
 };
+
+/** UI presentation metadata for transform node fields. */
+export const transformFields: FieldConfigMap = {};

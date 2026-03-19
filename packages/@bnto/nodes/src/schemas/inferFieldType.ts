@@ -13,7 +13,7 @@
  * | `z.boolean()`             | —                 | switch     | Switch           |
  * | `z.number()`              | min AND max       | slider     | Slider           |
  * | `z.number()`              | unbounded / one   | number     | Input[num]       |
- * | `z.string()`              | meta.control=textarea | textarea | Textarea     |
+ * | `z.string()`              | fieldConfig.control=textarea | textarea | Textarea     |
  * | `z.string()`              | —                 | text       | Input[text]      |
  * | `z.array(z.string())`     | —                 | tagPicker  | Combobox         |
  * | `z.record(z.string())`    | —                 | keyValue   | KeyValueEditor   |
@@ -25,7 +25,7 @@
  */
 
 import type { z } from "zod";
-import type { NodeParamMeta } from "./types";
+import type { FieldConfig } from "./types";
 
 /**
  * UI control type — maps directly to a `@bnto/ui` component.
@@ -35,7 +35,7 @@ import type { NodeParamMeta } from "./types";
  * - slider:    `<Slider>` range (for bounded numbers with both min AND max)
  * - number:    `<Input type="number">` (for unbounded numbers)
  * - text:      `<Input type="text">` (for strings, fallback)
- * - textarea:  `<Textarea>` multiline (for strings with meta.control = "textarea")
+ * - textarea:  `<Textarea>` multiline (for strings with fieldConfig.control = "textarea")
  * - tagPicker: `<Combobox>` multi-select (for z.array(z.string()))
  * - keyValue:  `<KeyValueEditor>` key→value pairs (for z.record())
  */
@@ -125,10 +125,11 @@ function isKeyValueRecord(zodType: z.ZodTypeAny): boolean {
  * Returns the effective type, UI control, enum values, and numeric constraints
  * that the config panel needs to render the correct form component.
  *
- * An optional `meta` parameter allows overriding the inferred control type
- * via `meta.control` (e.g., setting `control: "textarea"` on a string field).
+ * An optional `fieldConfig` parameter allows overriding the inferred control
+ * type via `fieldConfig.control` (e.g., setting `control: "textarea"` on a
+ * string field).
  */
-function inferFieldType(zodField: z.ZodTypeAny, meta?: NodeParamMeta): FieldTypeInfo {
+function inferFieldType(zodField: z.ZodTypeAny, fieldConfig?: FieldConfig): FieldTypeInfo {
   const outerTypeName = (zodField._def.typeName ?? "") as string;
   const required = outerTypeName !== "ZodOptional" && outerTypeName !== "ZodDefault";
   const inner = unwrap(zodField);
@@ -167,8 +168,8 @@ function inferFieldType(zodField: z.ZodTypeAny, meta?: NodeParamMeta): FieldType
     return { type: "record", control: "keyValue", required };
   }
 
-  // String fields can be overridden to textarea via meta.control
-  const control = meta?.control === "textarea" ? "textarea" : "text";
+  // String fields can be overridden to textarea via fieldConfig.control
+  const control = fieldConfig?.control === "textarea" ? "textarea" : "text";
   return { type: "string", control, required };
 }
 

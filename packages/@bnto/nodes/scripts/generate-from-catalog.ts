@@ -540,9 +540,7 @@ function generateNodeParamMeta(param: RawParameter): string {
   if (param.placeholder !== undefined) {
     lines.push(`      placeholder: ${JSON.stringify(param.placeholder)},`);
   }
-  if (param.hidden !== undefined) {
-    lines.push(`      hidden: ${param.hidden},`);
-  }
+  // hidden is a UI concern — lives in FieldConfig, not NodeParamMeta
   if (param.visibleWhen !== undefined) {
     lines.push(`      visibleWhen: ${serializeCondition(param.visibleWhen)},`);
   }
