@@ -35,7 +35,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
 - **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), tag-triggered release pipeline (CI gate → Vercel preview → E2E → Lighthouse → auto-deploy Vercel + Convex to production on stable tags → GitHub Release), PostHog telemetry wired
-- **Packages:** `@bnto/core`, `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/ui`, `@bnto/editor`
+- **Packages:** `@bnto/core` (6 domains: recipes, executions, user, auth, telemetry, registry), `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/ui`, `@bnto/editor`
 
 ---
 
@@ -60,7 +60,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] GitHub Actions CI: Rust (fmt + clippy + unit + WASM) + TypeScript (build + lint + test) + CI Gate
 - [x] convexQuery skip guards: All adapter functions use `"skip"` for falsy IDs (PR #23)
 - [x] Format versioning + Zod node validation (Sprint 4G): `.bnto.json` format version constant, schema versioning, Zod parameter schemas for all 12 node types, schema-driven config panel with registry-based controls
-- [x] Editor production route (Sprint 5 W1-W2): `/editor` route, `?from={slug}` recipe loading, compartment node redesign (icons + category colors), "Open in Editor" nav integration
+- [x] Editor production route (Sprint 5 W1-W2): `/editor` route, recipe loading by ID (`?recipe={id}`), compartment node redesign (icons + category colors), "Open in Editor" clone-on-click nav integration
 - [x] Pipeline executor extraction (Sprint 4H): Runtime-agnostic `executePipeline()` in `@bnto/core`, `NodeRunner` contract, `processFiles()` removed from browser adapter, comprehensive TDD test suite
 - [x] Editor API layer (Sprint 5D): `createEditor()` factory, 5 domain clients (nodes, definition, execution, history, panels), 5 services, React binding layer (`EditorProvider`, `useEditor`, domain hooks), full component migration, deprecated hooks deleted
 - [x] Multi-node recipes (Tier 1B): optimize-images-for-web, generate-thumbnails — first multi-node predefined recipes with 3-operation pipelines inside forEach loops
@@ -75,6 +75,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Alternating layout direction for nested containers (#162), fitView selected node priority (#161), container node layout + divider-based add nodes (#160)
 - [x] Sprint 5 Editor v1: Auto-download default, config panel controls (Textarea, Combobox, KeyValueEditor), Motorway showcase, control registry wiring, inferFieldType updates, schema metadata cleanup, DRY recipe I/O nodes, save button + My Recipes integration, unsaved changes warning, E2E verification, keyboard shortcuts, accessibility audit
 - [x] Input node file extension filter fix: `deriveFileInputAccept` pure function, store selector in RunButton, unit tests, E2E verification
+- [x] Unified recipe model (Sprint 7): Layered types (`Recipe` in `@bnto/nodes`, `UserRecipe` in `@bnto/core`), deleted `RecipeDefinition` duplicates, `BntoEntry` derived from `Recipe`. `core.registry` as 6th domain (Zustand store, client API, React hooks). `?from={slug}` eliminated — "Open in Editor" clones template, navigates by ID. Runtime surfaces consume `core.registry`, build-time surfaces keep direct imports
 
 ---
 
@@ -284,13 +285,13 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **Problem:** Currently 5+ surfaces list recipes/nodes using different data sources and transforms:
 
-- Home: `RecipeGrid` → `BNTO_REGISTRY` (8 recipes, web-specific SEO wrapper)
-- Navbar: `RecipesMenu` → `navData.ts` `buildRecipeCategories()` (6 Tier 1 recipes, categorized)
-- Editor palette: `useNodePalette` → `NODE_TYPE_INFO` + `CATEGORIES` + `PROCESSORS` (12 node types)
-- Editor open dialog: `RecipePickerGrid` → `RECIPES` from `@bnto/nodes` (all predefined)
-- Tool pages + sitemap: `bntoRegistry.ts` → `generateStaticParams`
+- ~~Home: `RecipeGrid` → `BNTO_REGISTRY`~~ — **RESOLVED**: `RecipeMarquee` → `core.registry.useRecipes()`
+- Navbar: `RecipesMenu` → `navData.ts` `buildRecipeCategories()` (build-time, keeps direct `@bnto/nodes` import)
+- ~~Editor palette: `useNodePalette` → `NODE_TYPE_INFO` + `CATEGORIES` + `PROCESSORS`~~ — **RESOLVED**: `core.registry` hooks
+- ~~Editor open dialog: `RecipePickerGrid` → `RECIPES` from `@bnto/nodes`~~ — **RESOLVED**: `core.registry.useRecipes()`
+- Tool pages + sitemap: `bntoRegistry.ts` → `generateStaticParams` (build-time, keeps direct imports)
 - README: Hardcoded recipe list — will drift as recipes grow
-- Editor URL: `?from={slug}` (predefined) vs `?recipe={id}` (saved) — two params for the same concept
+- ~~Editor URL: `?from={slug}` (predefined) vs `?recipe={id}` (saved)~~ — **RESOLVED**: unified to `?recipe={id}` via clone-on-click
 
 **Persona ownership:**
 
@@ -304,22 +305,22 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 - [x] `@bnto/nodes` + `apps/web` — **Audit all listing surfaces**: Map every component/hook that lists recipes or nodes. Document data source, transform, filtering, and output shape for each. Identify divergences (missing recipes, different categories, stale hardcoded lists). Produce a comparison table. _(Results: 15 surfaces audited, README.md stale (6/8 recipes), all dynamic surfaces trace to `@bnto/nodes` RECIPES. See `strategy/unified-recipe-model.md`)_
 - [x] `@bnto/core` — **Design unified recipe/node query API**: Propose how `@bnto/core` exposes a single query that all surfaces consume. Consider: should this be a core client (`core.catalog` or `core.explore`), or a query-only API? What filtering/grouping capabilities does it need? Write a brief design doc or add to `core-api.md`. _(Decision: a Recipe IS a Definition. Eliminate both `Recipe` wrapper types, delete `RecipeDefinition` duplicate. Persist `Definition` objects directly. Publishing metadata in web registry, persistence in thin store envelope. `core.catalog` client for unified surface access. Full design in `strategy/unified-recipe-model.md`)_
-- [ ] `apps/web` — **Unify editor URL slug pattern**: Replace dual `?from={slug}` / `?recipe={id}` params with a single `?recipe={identifier}` param. The editor page resolves the identifier to either a predefined recipe (by slug) or a saved recipe (by ID). Centralise URL construction in `lib/routes.ts` (e.g. `editorUrl(id)`). Update all consumers: RecipeGrid, RecipeCardShowcase, Open dialog, nav links.
-- [ ] `apps/web` — **Consolidate Recipe types**: Superseded by unified recipe model — see `strategy/unified-recipe-model.md`. Implementation moves to Wave 2 as part of the type migration.
+- [x] `apps/web` — **Unify editor URL pattern**: Eliminated `?from={slug}`. "Open in Editor" clones template into personal store via `core.recipes.createFromTemplate()`, navigates to `/editor?recipe={id}`. `editorUrl(id)` centralised in `lib/routes.ts`. All consumers updated. _(PR #228)_
+- [x] `apps/web` — **Consolidate Recipe types**: Unified recipe model implemented — `Recipe` layered type in `@bnto/nodes`, `UserRecipe extends Recipe` in `@bnto/core`. `BntoEntry` preserved as thin wrapper derived from `Recipe`. _(PR #226)_
 
 #### Wave 2 (parallel — unified recipe model: type migration)
 
 Design doc: `strategy/unified-recipe-model.md`
 
-- [ ] `@bnto/nodes` — **Refactor predefined recipes to `Definition`**: Delete `Recipe`, `AcceptSpec`, `SEOSpec` types from `recipe.ts`. Update all 8 recipe files to export `Definition` directly (remove slug/seo/accept/features/category wrapper). Update `RECIPES` to `readonly Definition[]`. Rename `getRecipeBySlug()` → `getDefinitionBySlug()`. Add `deriveAcceptSpec(definition)` and `deriveCategory(definition)` pure functions. Update all downstream imports.
-- [ ] `@bnto/core` — **Delete `RecipeDefinition`, simplify persistence**: Delete the `RecipeDefinition`/`Position`/`Metadata`/`Port`/`Edge`/`FieldsConfig` duplicate types from `types/recipe.ts`. Import `Definition` from `@bnto/nodes`. Replace `Recipe` with `SavedRecipe` (thin persistence envelope: `{ definition: Definition; savedAt; syncedAt; cloudId? }`). Update `recipesStore`, `recipeClient`, `recipeService`, transforms, hooks. Keep `RecipeListItem` as a projection derived from `Definition`.
-- [ ] `apps/web` — **Replace `BntoEntry` with `PublishedRecipe`**: Refactor `bntoRegistry.ts` — new `PublishedRecipe` type pairs a `Definition` with publishing metadata (slug, seo, features). Derive `accept` from input node via `deriveAcceptSpec()`. Derive `category` via `deriveCategory()`. Update all consumers (RecipeMarquee, RecipeGrid, tool pages, sitemap, navData, BntoJsonLd). Delete dead `RecipeGrid` component in `components/blocks/` if confirmed unused.
-- [ ] `@bnto/core` — **Build `core.catalog` client**: New domain client on the `core` singleton. Read-only access to predefined Definitions and node type info. Methods: `getRecipes()`, `getRecipeBySlug()`, `getNodeTypes()`, `getCategories()`, `getProcessors()`. Filtering helpers: `getRecipesByCategory()`, `getBrowserNodeTypes()`. React hooks via `useMemo` (static data). All surfaces import from `core.catalog` instead of `@bnto/nodes` directly.
+- [x] `@bnto/nodes` — **Layered Recipe type**: `Recipe` wraps `Definition` with display metadata (id, slug, name, description, category, accept, features). All 8 predefined recipes use UUID ids. `deriveCategory()` added. No `SEOSpec` — web layer derives SEO from `recipe.name`. _(PR #226)_
+- [x] `@bnto/core` — **Delete `RecipeDefinition`, simplify persistence**: Deleted duplicate types. `UserRecipe extends Recipe` adds persistence fields (`cloudId`, `savedAt`, `syncedAt`). `recipesStore`, `recipeClient`, `recipeService`, transforms all updated. `RecipeListItem` derived from `UserRecipe`. _(PR #226)_
+- [x] `apps/web` — **Refactor `bntoRegistry.ts`**: `BntoEntry` preserved as thin wrapper, now derived from `Recipe` (not standalone). SEO derived from `recipe.name`. All consumers updated (RecipeMarquee, tool pages, sitemap, navData, BntoJsonLd). _(PR #226)_
+- [x] `@bnto/core` — **Build `core.registry` client**: 6th domain on the `core` singleton. Zustand store with `populate()`. Client API: `getRecipes()`, `getNodeTypes()`, `getCategories()`, `getProcessors()`, `getRecipesByCategory()`, `getBrowserNodeTypes()`. React hooks: `useRecipes()`, `useNodeTypes()`, `useCategories()`, `useProcessors()`. _(PR #227)_
 
 #### Wave 3 (parallel — surface migration + Explore page)
 
-- [ ] `apps/web` — **Migrate all surfaces to `core.catalog`**: Update home RecipeMarquee, navData.ts, RecipeCardShowcase, tool pages, sitemap, llms.txt, llms-full.txt to consume `core.catalog` instead of direct `@bnto/nodes`/`BNTO_REGISTRY` imports.
-- [ ] `packages/editor` — **Migrate editor surfaces to `core.catalog`**: Update `useNodePalette` and `RecipePickerGrid` (open dialog) to consume `core.catalog` instead of direct `@bnto/nodes` imports.
+- [x] `apps/web` — **Migrate runtime surfaces to `core.registry`**: RecipeMarquee, RecipeCardShowcase consume `core.registry` hooks. Build-time surfaces (navData, sitemap, llms.txt) keep direct `@bnto/nodes` imports (SSG can't use Zustand). _(PR #229)_
+- [x] `packages/editor` — **Migrate editor surfaces to `core.registry`**: `useNodePalette` and `RecipePickerGrid` consume `core.registry` hooks instead of direct `@bnto/nodes` imports. _(PR #229)_
 - [ ] `apps/web` — **Build `/explore` page**: Full-page searchable/filterable recipe & node browser. Categories, search, metadata cards. Server component page with client interactive leaves. Uses `core.catalog`.
 - [ ] `apps/web` — **Migrate navbar Explore**: Replace dropdown with a link to `/explore`. Keep a compact "quick access" subset if desired, but primary action is navigating to the Explore page.
 

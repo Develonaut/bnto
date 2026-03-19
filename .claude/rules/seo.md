@@ -14,7 +14,7 @@ Slugs live at the root: `/compress-images`, `/clean-csv`, `/rename-files`. Route
 
 ## Slug Registry
 
-Single source of truth: `apps/web/lib/bntoRegistry.ts`. Drives `generateStaticParams`, `generateMetadata`, middleware pass-through, and sitemap from one place. See the file for the `BntoEntry` interface and helper functions.
+Single source of truth: `apps/web/lib/bntoRegistry.ts`. Drives `generateStaticParams`, `generateMetadata`, middleware pass-through, and sitemap from one place. See the file for the `BntoEntry` type (derived from `Recipe` in `@bnto/nodes`) and helper functions.
 
 When adding a bnto to `strategy/bntos.md`, add it to the registry too.
 

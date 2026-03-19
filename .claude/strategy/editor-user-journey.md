@@ -11,6 +11,7 @@
 The complete user journey for the bnto recipe editor — from discovery to export/save. This is the "home base" for all editor work. Agents reference it when picking up tasks. Each implementation wave links back to journey stages. E2E tests map to journey flows.
 
 **Relationship to other docs:**
+
 - [editor-architecture.md](editor-architecture.md) — HOW the editor is built (layers, store, hooks, components)
 - [visual-editor.md](visual-editor.md) — HOW the bento box canvas looks and behaves
 - [io-nodes.md](io-nodes.md) — HOW input/output nodes make recipes self-describing
@@ -20,15 +21,15 @@ The complete user journey for the bnto recipe editor — from discovery to expor
 
 ## Journey Stages
 
-| Stage | Name | Entry Condition | Exit Condition | Key Interaction |
-|-------|------|----------------|----------------|-----------------|
-| 1 | **Discover** | User is on a recipe page or navigates to `/editor` | Editor route loads | Recipe page bridge button, nav link, direct URL |
-| 2 | **Enter** | Editor route loaded | Canvas rendered with initial state | Auto-scaffold I/O nodes (blank) or load predefined recipe (`?from={slug}`) |
-| 3 | **Build** | Canvas has nodes | User has configured at least one processing node | Add nodes from palette, configure via config panel, remove/rearrange |
-| 4 | **Test** | Recipe has input + processing + output nodes | Execution completes with results | Drop files into input node, click Run, see progress, receive output |
-| 5 | **Refine** | First execution complete | User is satisfied with results | Adjust parameters, re-run, compare output |
-| 6 | **Export** | Recipe is valid | `.bnto.json` downloaded | Click Export, file saves to disk |
-| 7 | **Save** | User is authenticated (Free Account+) | Recipe persisted to Convex | Click Save, recipe appears in My Recipes |
+| Stage | Name         | Entry Condition                                    | Exit Condition                                   | Key Interaction                                                              |
+| ----- | ------------ | -------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| 1     | **Discover** | User is on a recipe page or navigates to `/editor` | Editor route loads                               | Recipe page bridge button, nav link, direct URL                              |
+| 2     | **Enter**    | Editor route loaded                                | Canvas rendered with initial state               | Auto-scaffold I/O nodes (blank) or load cloned recipe by ID (`?recipe={id}`) |
+| 3     | **Build**    | Canvas has nodes                                   | User has configured at least one processing node | Add nodes from palette, configure via config panel, remove/rearrange         |
+| 4     | **Test**     | Recipe has input + processing + output nodes       | Execution completes with results                 | Drop files into input node, click Run, see progress, receive output          |
+| 5     | **Refine**   | First execution complete                           | User is satisfied with results                   | Adjust parameters, re-run, compare output                                    |
+| 6     | **Export**   | Recipe is valid                                    | `.bnto.json` downloaded                          | Click Export, file saves to disk                                             |
+| 7     | **Save**     | User is authenticated (Free Account+)              | Recipe persisted to Convex                       | Click Save, recipe appears in My Recipes                                     |
 
 ---
 
@@ -38,13 +39,14 @@ The complete user journey for the bnto recipe editor — from discovery to expor
 
 - **Access:** AccountGated — unauthenticated users see sign-in prompt (Free Account+)
 - **Blank canvas:** Auto-scaffolds Input + Output compartments. User fills the middle.
-- **From recipe:** `/editor?from={slug}` loads a predefined recipe's definition into the editor. All nodes pre-populated, fully configured, ready to run or customize.
+- **From recipe:** "Open in Editor" on a tool page clones the template into the user's personal store and navigates to `/editor?recipe={id}`. All nodes pre-populated, fully configured, ready to run or customize.
 
 ### "Open in Editor" bridge button
 
-Recipe pages (`/compress-images`, etc.) get an "Open in Editor" button that navigates to `/editor?from={slug}`. This bridges the casual experience (recipe pages) with the power-user experience (editor).
+Recipe pages (`/compress-images`, etc.) have an "Open in Editor" button that clones the predefined recipe into the user's personal store and navigates to `/editor?recipe={id}`. This bridges the casual experience (recipe pages) with the power-user experience (editor).
 
 **The two experiences are complementary:**
+
 - Recipe pages = casual, single-purpose, zero learning curve
 - Editor = power user, compose anything, full control
 
@@ -73,12 +75,12 @@ The config panel (right sidebar) is the primary interaction surface for ALL node
 
 The bento box IS the progress indicator. Compartments physically rise as they execute:
 
-| Execution State | Elevation | Visual Effect |
-|----------------|-----------|---------------|
-| `idle` | `sm` | Resting in the bento box |
-| `pending` | `sm` | Slight lift, muted appearance — waiting in queue |
-| `active` | `md` | Rising up — node is processing |
-| `completed` | `lg` | Full pop with spring bounce — done |
+| Execution State | Elevation | Visual Effect                                    |
+| --------------- | --------- | ------------------------------------------------ |
+| `idle`          | `sm`      | Resting in the bento box                         |
+| `pending`       | `sm`      | Slight lift, muted appearance — waiting in queue |
+| `active`        | `md`      | Rising up — node is processing                   |
+| `completed`     | `lg`      | Full pop with spring bounce — done               |
 
 No separate progress bar needed. The canvas communicates state through the Motorway elevation system, with springy Card animations creating the Mini Motorways "building materializing" feel.
 
@@ -95,7 +97,7 @@ Execution order = compartment position (array order in the definition). No wires
 ```
 1. User is on /compress-images, has used it before
 2. Notices "Open in Editor" button
-3. Clicks it → navigates to /editor?from=compress-images
+3. Clicks it → clones template, navigates to /editor?recipe={id}
 4. Editor loads with Input (file-upload) + Image Compress + Output (download) pre-configured
 5. User drops 3 JPEGs into the Input node's config panel dropzone
 6. Clicks Run → compartments pop up in sequence (idle → active → completed)
@@ -139,6 +141,7 @@ Execution order = compartment position (array order in the definition). No wires
 **Test:** Build a compress-images recipe from scratch (blank canvas), run it with 3 test images, download results. Must complete in under 5 minutes by a user who has never seen the editor before.
 
 **Acceptance:**
+
 - Blank canvas auto-scaffolds Input + Output
 - Adding a processing node takes < 3 clicks
 - Config panel renders appropriate controls for each node type
@@ -150,6 +153,7 @@ Execution order = compartment position (array order in the definition). No wires
 **Test:** Export a recipe as `.bnto.json`, re-import it into the editor. The loaded state must be identical to the exported state.
 
 **Acceptance:**
+
 - All nodes present with correct types and positions
 - All parameters preserved (values, not just keys)
 - Validation passes on the re-imported recipe
@@ -157,9 +161,10 @@ Execution order = compartment position (array order in the definition). No wires
 
 ### 3. Predefined Recipe Parity
 
-**Test:** Every predefined recipe that runs on its recipe page must also run correctly when loaded in the editor via `?from={slug}`.
+**Test:** Every predefined recipe that runs on its recipe page must also run correctly when cloned via "Open in Editor" and loaded in the editor by ID.
 
 **Acceptance:**
+
 - All 6 Tier 1 recipes load correctly in the editor
 - File input works via the Input node's config panel dropzone
 - Execution produces the same output as the recipe page
@@ -180,7 +185,7 @@ See [journeys/editor.md](../journeys/editor.md) for the full test matrix.
 Get the editor accessible as a real route with proper entry points.
 
 - `/editor` route with AccountGate (sign-in prompt for unauthenticated users)
-- `?from={slug}` query param loads predefined recipe from `@bnto/nodes` registry
+- "Open in Editor" clones predefined recipe to personal store, navigates by `?recipe={id}`
 - Auto-scaffold Input + Output compartments for blank canvas
 - Navigation link in app nav (authenticated users only)
 - "Open in Editor" bridge button on recipe pages
@@ -221,7 +226,7 @@ Persistence for authenticated users and the recipe page bridge.
 
 - Save recipe to Convex (authenticated users)
 - Tier limits: Free = 3 saved recipes, Pro = unlimited
-- "Open in Editor" button on all 6 recipe pages → `/editor?from={slug}`
+- "Open in Editor" button on all 6 recipe pages → clone template, navigate `/editor?recipe={id}`
 - My Recipes integration (load saved recipes into editor)
 - Dirty state tracking (unsaved changes warning)
 
@@ -257,6 +262,7 @@ Future:
 ```
 
 Two modes, one rendering engine. The recipe page is a RecipeEditor with:
+
 - Definition pre-loaded and locked (no add/remove nodes)
 - Config panel open by default for the Input node
 - "Open in Editor" button unlocks full editing
@@ -268,6 +274,7 @@ Two modes, one rendering engine. The recipe page is a RecipeEditor with:
 When community recipes ship, predefined root-level slugs (`bnto.io/compress-images`) can't serve all recipes — uniqueness is per-author, not global. The URL namespace needs a strategy:
 
 **Options under consideration:**
+
 - `/@user/slug` — Twitter-style author namespace
 - `/r/{id}` — Short ID, author shown on page
 - `/recipes/{user}/{slug}` — Explicit namespace
