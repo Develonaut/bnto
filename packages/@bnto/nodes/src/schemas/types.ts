@@ -68,11 +68,11 @@ export interface NodeParamMeta {
   /**
    * Display the slider with inverted semantics — the UI shows (max + min - value)
    * while the stored value stays as-is. Used when the engine param and user
-   * mental model are inverted (e.g., compression 1-100 displayed as quality).
+   * mental model are inverted.
    */
   displayInverted?: boolean;
 
-  /** Override the label shown in the config panel (e.g., show "Quality" for "compression"). */
+  /** Override the label shown in the config panel. */
   displayLabel?: string;
 
   /**

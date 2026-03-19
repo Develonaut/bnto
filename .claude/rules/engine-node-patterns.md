@@ -51,11 +51,10 @@ Format-specific behavior:
 
 Reusable params live in `common.rs`, not duplicated per-processor:
 
-| Param           | Location                            | Used by              |
-| --------------- | ----------------------------------- | -------------------- |
-| `quality`       | `common::quality_param_def()`       | resize, convert      |
-| `compression`   | `compress::compression_param_def()` | compress             |
-| `image_accepts` | `common::image_accepts()`           | all image processors |
+| Param           | Location                      | Used by                   |
+| --------------- | ----------------------------- | ------------------------- |
+| `quality`       | `common::quality_param_def()` | compress, resize, convert |
+| `image_accepts` | `common::image_accepts()`     | all image processors      |
 
 When adding a new shared param, put it in `common.rs` and reference it from each processor's `metadata()`.
 
@@ -90,9 +89,9 @@ Steps: get -> and_then (type coerce) -> unwrap_or (default) -> clamp (bounds).
 
 ## Common Violations
 
-| Violation                                                               | Fix                                                             |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Param defined in `metadata()` but not read in some `process()` branches | Wire the param through all branches, or use shared encode       |
-| Duplicated encode functions across processors                           | Delete them, use `encode::encode_image()`                       |
-| Default value in code differs from `metadata()` default                 | Use the constant from `bnto-core` (e.g., `DEFAULT_COMPRESSION`) |
-| Test only checks output validity, not param sensitivity                 | Add a test comparing outputs at two different param values      |
+| Violation                                                               | Fix                                                              |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Param defined in `metadata()` but not read in some `process()` branches | Wire the param through all branches, or use shared encode        |
+| Duplicated encode functions across processors                           | Delete them, use `encode::encode_image()`                        |
+| Default value in code differs from `metadata()` default                 | Use the constant from `bnto-core` (e.g., `DEFAULT_JPEG_QUALITY`) |
+| Test only checks output validity, not param sensitivity                 | Add a test comparing outputs at two different param values       |

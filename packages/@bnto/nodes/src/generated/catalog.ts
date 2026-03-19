@@ -293,14 +293,17 @@ export const PROCESSORS: readonly ProcessorDef[] = [
     platforms: ["browser"] as const,
     parameters: [
       {
-        name: "compression",
-        label: "Compression",
-        description:
-          "How much to compress (1 = minimal, 100 = maximum). Affects all formats: JPEG quality, PNG palette size, WebP re-encoding",
+        name: "quality",
+        label: "Quality",
+        description: "Output quality (1 = lowest, 100 = highest)",
         type: "number" as const,
-        default: 50,
+        default: 80,
         constraints: { min: 1, max: 100, required: false },
-        visibleWhen: { param: "operation", equals: "compress" },
+        visibleWhen: [
+          { param: "operation", equals: "compress" },
+          { param: "operation", equals: "resize" },
+          { param: "operation", equals: "convert" },
+        ],
       },
     ],
   },
@@ -325,11 +328,12 @@ export const PROCESSORS: readonly ProcessorDef[] = [
       {
         name: "quality",
         label: "Quality",
-        description: "Output quality for lossy formats (1-100)",
+        description: "Output quality (1 = lowest, 100 = highest)",
         type: "number" as const,
         default: 80,
         constraints: { min: 1, max: 100, required: false },
         visibleWhen: [
+          { param: "operation", equals: "compress" },
           { param: "operation", equals: "resize" },
           { param: "operation", equals: "convert" },
         ],
@@ -372,11 +376,12 @@ export const PROCESSORS: readonly ProcessorDef[] = [
       {
         name: "quality",
         label: "Quality",
-        description: "Output quality for lossy formats (1-100)",
+        description: "Output quality (1 = lowest, 100 = highest)",
         type: "number" as const,
         default: 80,
         constraints: { min: 1, max: 100, required: false },
         visibleWhen: [
+          { param: "operation", equals: "compress" },
           { param: "operation", equals: "resize" },
           { param: "operation", equals: "convert" },
         ],

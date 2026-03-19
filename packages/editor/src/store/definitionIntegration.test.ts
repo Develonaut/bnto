@@ -225,7 +225,7 @@ describe("store — export adapter round-trip", () => {
     const loopId = addNodeViaStore(store, "loop")!;
     const childResult = addNode(state(store), "image", null, loopId);
     store.setState(childResult!.nextState);
-    updateParamsViaStore(store, childResult!.nodeId, { operation: "compress", compression: 20 });
+    updateParamsViaStore(store, childResult!.nodeId, { operation: "compress", quality: 80 });
 
     const exported = exportDefinition(store);
 

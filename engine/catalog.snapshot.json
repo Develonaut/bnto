@@ -212,22 +212,32 @@
       "platforms": ["browser"],
       "parameters": [
         {
-          "name": "compression",
-          "label": "Compression",
-          "description": "How much to compress (1 = minimal, 100 = maximum). Affects all formats: JPEG quality, PNG palette size, WebP re-encoding",
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest)",
           "paramType": {
             "type": "number"
           },
-          "default": 50,
+          "default": 80,
           "constraints": {
             "min": 1.0,
             "max": 100.0,
             "required": false
           },
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "compress"
-          },
+          "visibleWhen": [
+            {
+              "param": "operation",
+              "equals": "compress"
+            },
+            {
+              "param": "operation",
+              "equals": "resize"
+            },
+            {
+              "param": "operation",
+              "equals": "convert"
+            }
+          ],
           "surfaceable": true
         }
       ]
@@ -261,7 +271,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality for lossy formats (1-100)",
+          "description": "Output quality (1 = lowest, 100 = highest)",
           "paramType": {
             "type": "number"
           },
@@ -272,6 +282,10 @@
             "required": false
           },
           "visibleWhen": [
+            {
+              "param": "operation",
+              "equals": "compress"
+            },
             {
               "param": "operation",
               "equals": "resize"
@@ -345,7 +359,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality for lossy formats (1-100)",
+          "description": "Output quality (1 = lowest, 100 = highest)",
           "paramType": {
             "type": "number"
           },
@@ -356,6 +370,10 @@
             "required": false
           },
           "visibleWhen": [
+            {
+              "param": "operation",
+              "equals": "compress"
+            },
             {
               "param": "operation",
               "equals": "resize"

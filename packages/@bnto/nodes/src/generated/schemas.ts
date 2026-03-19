@@ -78,9 +78,8 @@ export const IMAGE_OPERATIONS = ["compress", "convert", "resize"] as const;
 /** Zod schema for image node parameters (auto-generated from engine). */
 export const imageParamsSchema = z.object({
   operation: z.enum(IMAGE_OPERATIONS as unknown as [string, ...string[]]),
-  compression: z.number().min(1).max(100).optional().default(50),
-  format: z.enum(["jpeg", "png", "webp"] as const).optional(),
   quality: z.number().min(1).max(100).optional().default(80),
+  format: z.enum(["jpeg", "png", "webp"] as const).optional(),
   width: z.number().min(1).optional(),
   height: z.number().min(1).optional(),
   maintainAspect: z.boolean().optional().default(true),
@@ -99,24 +98,19 @@ export const imageNodeSchema: NodeSchemaDefinition = {
       label: "Operation",
       description: "The image operation to perform.",
     },
-    compression: {
-      label: "Compression",
-      description:
-        "How much to compress (1 = minimal, 100 = maximum). Affects all formats: JPEG quality, PNG palette size, WebP re-encoding",
-      visibleWhen: { param: "operation", equals: "compress" },
+    quality: {
+      label: "Quality",
+      description: "Output quality (1 = lowest, 100 = highest)",
+      visibleWhen: [
+        { param: "operation", equals: "compress" },
+        { param: "operation", equals: "resize" },
+        { param: "operation", equals: "convert" },
+      ],
     },
     format: {
       label: "Output Format",
       description: "The target image format to convert to",
       visibleWhen: { param: "operation", equals: "convert" },
-    },
-    quality: {
-      label: "Quality",
-      description: "Output quality for lossy formats (1-100)",
-      visibleWhen: [
-        { param: "operation", equals: "resize" },
-        { param: "operation", equals: "convert" },
-      ],
     },
     width: {
       label: "Width",

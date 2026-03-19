@@ -64,7 +64,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Pipeline executor extraction (Sprint 4H): Runtime-agnostic `executePipeline()` in `@bnto/core`, `NodeRunner` contract, `processFiles()` removed from browser adapter, comprehensive TDD test suite
 - [x] Editor API layer (Sprint 5D): `createEditor()` factory, 5 domain clients (nodes, definition, execution, history, panels), 5 services, React binding layer (`EditorProvider`, `useEditor`, domain hooks), full component migration, deprecated hooks deleted
 - [x] Multi-node recipes (Tier 1B): optimize-images-for-web, generate-thumbnails — first multi-node predefined recipes with 3-operation pipelines inside forEach loops
-- [x] Slider presets + select labels: Quality→compression rename, slider preset system, select option labels
+- [x] Slider presets + select labels: Unified `quality` parameter (compression→quality rename with direct semantics), slider preset system, select option labels
 - [x] Definition round-trip fidelity: `captureDefinition()` snapshot, `loadDefinition()` restore, fidelity test suite proving lossless round-trips
 - [x] Editor execution wiring: RunButton → runExecution → core.executions.runPipeline(), ResultsTab/ResultRow in RunPanel, reset/re-run flow, per-node execution state tracking
 - [x] Recipe save backend: Convex save mutation in recipes.ts, core.recipes.save() in recipeClient.ts, useSaveRecipe.ts hook
@@ -870,6 +870,12 @@ Files: `apps/web/app/(app)/my-recipes/`, `packages/core/src/clients/recipeClient
 **Priority: Triage.** Current feature flags are dashboard-driven (PostHog UI only), which doesn't scale to self-hosters (no PostHog access) or open-source contributors (can't test flag-gated features). Evaluate defining flag keys, variants, and defaults in the repo with PostHog as a runtime override layer. Options: local defaults file, Vercel Flags SDK, Convex flags table.
 
 Files: `.claude/rules/feature-flags.md` (open source consideration section), `.claude/decisions/feature-flags.md`
+
+### Triage: Definition/recipe version migration tool
+
+**Priority: Triage.** When breaking changes occur to node parameters (e.g., `compression`→`quality` unification with value inversion), users with existing `.bnto.json` recipes need a migration path. Build a versioned migration system that detects definition version, applies sequential transforms (v1→v2→v3), handles value conversions (not just renames), and reports what changed. Could be CLI (`bnto migrate`) and/or automatic migration on recipe load. The `version` field already exists in the `Definition` type.
+
+Files: `packages/@bnto/nodes/src/definition.ts` (Definition type with version field), `engine/crates/bnto-core/` (engine-side validation)
 
 ## Reference
 

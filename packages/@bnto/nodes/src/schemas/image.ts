@@ -26,7 +26,7 @@ const convertProc = PROCESSOR_MAP.get("image:convert");
 const formatParam = convertProc?.parameters.find((p) => p.name === "format");
 export const IMAGE_FORMATS = (formatParam?.options ?? ["jpeg", "png", "webp"]) as readonly string[];
 
-/** Image schema with dimension group annotations and compression presets. */
+/** Image schema with dimension group annotations and quality presets. */
 export const imageNodeSchema: NodeSchemaDefinition = {
   ...generated,
   params: {
@@ -46,15 +46,6 @@ export const imageNodeSchema: NodeSchemaDefinition = {
         { value: "jpeg", label: "JPEG" },
         { value: "png", label: "PNG" },
         { value: "webp", label: "WebP" },
-      ],
-    },
-    compression: {
-      ...generated.params.compression,
-      displayInverted: true,
-      presets: [
-        { value: 20, label: "Maximum" },
-        { value: 50, label: "Balanced" },
-        { value: 80, label: "Light" },
       ],
     },
     quality: {

@@ -63,14 +63,13 @@ Zod schema (definition) → inferFieldType() → CONTROL_REGISTRY → renders UI
 | Parameter        | Zod Type                                  | Current | Ideal  | Status |
 | ---------------- | ----------------------------------------- | ------- | ------ | ------ |
 | `operation`      | `z.enum(["compress","convert","resize"])` | hidden  | hidden | ✅     |
-| `compression`    | `z.number().min(1).max(100)`              | slider  | slider | ✅     |
-| `format`         | `z.enum(["jpeg","png","webp"])`           | select  | select | ✅     |
 | `quality`        | `z.number().min(1).max(100)`              | slider  | slider | ✅     |
+| `format`         | `z.enum(["jpeg","png","webp"])`           | select  | select | ✅     |
 | `width`          | `z.number().min(1)`                       | number  | number | ✅     |
 | `height`         | `z.number().min(1)`                       | number  | number | ✅     |
 | `maintainAspect` | `z.boolean()`                             | switch  | switch | ✅     |
 
-**Status: 7/7 correct.** Image node is the gold standard.
+**Status: 6/6 correct.** Image node is the gold standard.
 
 ---
 

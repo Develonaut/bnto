@@ -32,7 +32,7 @@ const SIMPLE_DEF: Definition = {
       name: "Compress",
       position: { x: 200, y: 0 },
       metadata: {},
-      parameters: { operation: "compress", compression: 20 },
+      parameters: { operation: "compress", quality: 80 },
       inputPorts: [{ id: "in-1", name: "files" }],
       outputPorts: [{ id: "out-1", name: "files" }],
     },
@@ -136,7 +136,7 @@ describe("definitionToPipeline", () => {
     expect(pipeline.nodes[1]).toEqual({
       id: "compress",
       type: "image",
-      params: { operation: "compress", compression: 20 },
+      params: { operation: "compress", quality: 80 },
     });
   });
 
@@ -153,16 +153,16 @@ describe("definitionToPipeline", () => {
   });
 
   it("merges config overrides into leaf processing nodes", () => {
-    const pipeline = definitionToPipeline(SIMPLE_DEF, { compression: 50 });
+    const pipeline = definitionToPipeline(SIMPLE_DEF, { quality: 50 });
 
     expect(pipeline.nodes[1]!.params).toEqual({
       operation: "compress",
-      compression: 50,
+      quality: 50,
     });
   });
 
   it("does NOT merge config into I/O nodes", () => {
-    const pipeline = definitionToPipeline(SIMPLE_DEF, { compression: 50 });
+    const pipeline = definitionToPipeline(SIMPLE_DEF, { quality: 50 });
 
     expect(pipeline.nodes[0]!.params).toEqual({ mode: "file-upload" });
     expect(pipeline.nodes[2]!.params).toEqual({ mode: "download" });
@@ -202,11 +202,11 @@ describe("definitionToPipeline", () => {
     expect(pipeline.nodes[1]!.children![0]!.params).toEqual({ mode: "forEach" });
   });
 
-  it("merges compression override into real compress-images recipe", () => {
+  it("merges quality override into real compress-images recipe", () => {
     const recipe = getRecipeBySlug("compress-images");
     expect(recipe).toBeDefined();
 
-    const pipeline = definitionToPipeline(recipe!.definition, { compression: 80 });
+    const pipeline = definitionToPipeline(recipe!.definition, { quality: 60 });
 
     // The compress-image node is inside a loop container
     const loop = pipeline.nodes.find((n) => n.type === "loop");
@@ -215,7 +215,7 @@ describe("definitionToPipeline", () => {
 
     const compressNode = loop!.children!.find((n) => n.type === "image");
     expect(compressNode).toBeDefined();
-    expect(compressNode!.params).toHaveProperty("compression", 80);
+    expect(compressNode!.params).toHaveProperty("quality", 60);
     expect(compressNode!.params).toHaveProperty("operation", "compress");
   });
 
@@ -227,7 +227,7 @@ describe("definitionToPipeline", () => {
 
     const loop = pipeline.nodes.find((n) => n.type === "loop");
     const compressNode = loop!.children!.find((n) => n.type === "image");
-    expect(compressNode!.params).toHaveProperty("compression", 50);
+    expect(compressNode!.params).toHaveProperty("quality", 80);
   });
 
   it("handles definition with no children", () => {
