@@ -2,9 +2,16 @@ import type { CSSProperties } from "react";
 
 import Link from "next/link";
 
-import Image from "next/image";
-
-import { ArrowUpRightIcon, Button, Container, GithubIcon, Row, Stack, Text } from "@bnto/ui";
+import {
+  ArrowUpRightIcon,
+  Button,
+  CoffeeIcon,
+  Container,
+  GithubIcon,
+  Row,
+  Stack,
+  Text,
+} from "@bnto/ui";
 
 import { BUYMEACOFFEE_URL, GITHUB_URL, LICENSE_LINE, TAGLINE, TRUST_LINE } from "@/lib/copy";
 
@@ -79,16 +86,11 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 variant="outline"
-                className="w-fit px-6 py-5"
+                className="w-fit"
                 aria-label="Support bnto — Buy Me a Coffee"
               >
-                <Image
-                  src="/bmc-logo.svg"
-                  alt="Buy me a coffee"
-                  width={240}
-                  height={50}
-                  className="h-7 w-auto"
-                />
+                <CoffeeIcon className="size-4" />
+                Buy me a coffee
               </Button>
             </Stack>
           </Stack>
