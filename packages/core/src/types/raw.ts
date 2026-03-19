@@ -6,7 +6,7 @@
 // Only adapters know about Convex — transforms just accept plain objects.
 // ---------------------------------------------------------------------------
 
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/registry";
 import type { NodeProgress, OutputFile, RunResult } from "./execution";
 
 // ── Recipe ─────────────────────────────────────────────────────────────────

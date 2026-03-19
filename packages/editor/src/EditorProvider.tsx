@@ -9,7 +9,7 @@
 
 import { useState, type ReactNode } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import { createReactEditor } from "./createReactEditor";
 import { EditorContext } from "./context";
 import type { EditorContextValue } from "./context";

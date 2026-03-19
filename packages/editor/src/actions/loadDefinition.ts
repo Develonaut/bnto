@@ -8,8 +8,8 @@
  * Containers are always expanded — children are materialized on load.
  */
 
-import { validateDefinition, isContainerNodeType } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import { validateDefinition, isContainerNodeType } from "@bnto/core";
+import type { Definition } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import { definitionToGraph } from "../adapters/definitionToGraph";
 import { metadataFromDefinition } from "../store/resolveInitialState";

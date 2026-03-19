@@ -5,8 +5,8 @@
 import { describe, it, expect } from "vitest";
 import { definitionToGraph } from "./definitionToGraph";
 import { CELL, SLOTS, IO_CARD_SIZE } from "./bentoSlots";
-import { createBlankDefinition, addNode } from "@bnto/nodes";
-import { NODE_TYPE_INFO, NODE_TYPE_NAMES } from "@bnto/nodes";
+import { createBlankDefinition, addNode } from "@bnto/core";
+import { NODE_TYPE_INFO, NODE_TYPE_NAMES } from "@bnto/core";
 
 describe("definitionToGraph", () => {
   it("returns I/O nodes for a blank definition", () => {

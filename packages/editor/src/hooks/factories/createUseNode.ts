@@ -11,8 +11,8 @@
 import { useMemo } from "react";
 import type { StoreApi } from "zustand";
 import { useStore } from "zustand";
-import type { NodeTypeName, NodeSchemaDefinition } from "@bnto/nodes";
-import { NODE_TYPE_INFO, getNodeSchema, getVisibleParams } from "@bnto/nodes";
+import type { NodeTypeName, NodeSchemaDefinition } from "@bnto/core";
+import { NODE_TYPE_INFO, getNodeSchema, getVisibleParams } from "@bnto/core";
 import type { EditorStore } from "../../store/types";
 import type { CompartmentNodeData, NodeConfig } from "../../adapters/types";
 

@@ -332,9 +332,6 @@ importers:
       '@bnto/backend':
         specifier: workspace:*
         version: link:../@bnto/backend
-      '@bnto/nodes':
-        specifier: workspace:*
-        version: link:../@bnto/nodes
       '@bnto/registry':
         specifier: workspace:*
         version: link:../@bnto/registry
@@ -396,9 +393,6 @@ importers:
       '@bnto/core':
         specifier: workspace:*
         version: link:../core
-      '@bnto/nodes':
-        specifier: workspace:*
-        version: link:../@bnto/nodes
       '@bnto/ui':
         specifier: workspace:*
         version: link:../ui

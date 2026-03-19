@@ -6,7 +6,7 @@
  * actions to keep `state.definition` in sync with graph changes.
  */
 
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 
 /** Immutably add a child Definition to a container node in the tree. */
 function addChildToContainer(
@@ -33,7 +33,9 @@ function addChildToContainer(
 
   return {
     ...root,
-    nodes: root.nodes.map((child) => addChildToContainer(child, containerId, childDef, afterChildId)),
+    nodes: root.nodes.map((child) =>
+      addChildToContainer(child, containerId, childDef, afterChildId),
+    ),
   };
 }
 

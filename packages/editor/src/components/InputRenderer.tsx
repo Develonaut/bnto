@@ -1,6 +1,6 @@
 "use client";
 
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import { deriveAcceptedTypes } from "@bnto/core";
 import { FileUpload, FileUploadDropzone, toDropzoneAccept } from "@bnto/ui";
 import { DropzoneContent } from "./DropzoneContent";

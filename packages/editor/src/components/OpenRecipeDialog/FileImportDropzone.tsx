@@ -1,15 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { validateDefinition } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
-import {
-  FileUpload,
-  FileUploadDropzone,
-  FileIcon,
-  Text,
-  UploadIcon,
-} from "@bnto/ui";
+import { validateDefinition } from "@bnto/core";
+import type { Definition } from "@bnto/core";
+import { FileUpload, FileUploadDropzone, FileIcon, Text, UploadIcon } from "@bnto/ui";
 
 /**
  * FileImportDropzone — drop or pick a `.bnto.json` file to import.

@@ -1,7 +1,7 @@
 "use client";
 
-import type { Definition } from "@bnto/nodes";
-import { definitionToRecipe } from "@bnto/nodes";
+import type { Definition } from "@bnto/registry";
+import { definitionToRecipe } from "@bnto/registry";
 import { recipesStore } from "../stores/recipesStore";
 import type { RecipeService } from "../services/recipeService";
 import type { ExecutionService } from "../services/executionService";

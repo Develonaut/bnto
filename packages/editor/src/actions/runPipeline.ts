@@ -7,8 +7,8 @@
  * validates, returning a ready-to-execute definition or validation errors.
  */
 
-import { validateDefinition } from "@bnto/nodes";
-import type { Definition, ValidationError } from "@bnto/nodes";
+import { validateDefinition } from "@bnto/core";
+import type { Definition, ValidationError } from "@bnto/core";
 import { definitionToPipeline } from "@bnto/core";
 import type { PipelineDefinition, PipelineNode } from "@bnto/core";
 import type { BentoNode, NodeConfigs } from "../adapters/types";

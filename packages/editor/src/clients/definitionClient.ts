@@ -5,8 +5,8 @@
  * definitionToRecipe() for the full export pipeline.
  */
 
-import { definitionToRecipe, validateDefinition } from "@bnto/nodes";
-import type { RecipeMetadata as NodeRecipeMetadata } from "@bnto/nodes";
+import { definitionToRecipe, validateDefinition } from "@bnto/core";
+import type { NodeRecipeMetadata } from "@bnto/core";
 import type { DefinitionService, DefinitionClient, ExportResult } from "../editorTypes";
 
 function createDefinitionClient(definitionService: DefinitionService): DefinitionClient {

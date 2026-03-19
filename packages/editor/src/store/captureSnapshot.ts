@@ -5,7 +5,7 @@
  * tree so mutations to the current state don't retroactively alter saved history.
  */
 
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 import type { EditorSnapshot } from "./types";
 

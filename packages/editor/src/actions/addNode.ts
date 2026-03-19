@@ -16,8 +16,8 @@
  * Returns null if the add is blocked (unknown type or duplicate I/O).
  */
 
-import type { NodeTypeName } from "@bnto/nodes";
-import { isIoNodeType, isContainerNodeType } from "@bnto/nodes";
+import type { NodeTypeName } from "@bnto/core";
+import { isIoNodeType, isContainerNodeType } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
 import { createCompartmentNode } from "../adapters/createCompartmentNode";
@@ -71,9 +71,7 @@ export function addNode(
     const afterIndex = sameLevelNodes.findIndex((n) => n.id === afterNodeId);
     insertIndex = afterIndex >= 0 ? afterIndex + 1 : sameLevelNodes.length;
   } else {
-    const outputIndex = sameLevelNodes.findIndex(
-      (n) => state.configs[n.id]?.nodeType === "output",
-    );
+    const outputIndex = sameLevelNodes.findIndex((n) => state.configs[n.id]?.nodeType === "output");
     insertIndex = outputIndex >= 0 ? outputIndex : sameLevelNodes.length;
   }
 
@@ -94,5 +92,13 @@ export function addNode(
     return addTopLevel(state, result, newNode, deselected, afterNodeId, isContainer);
   }
 
-  return addSiblingChild(state, result, newNode, deselected, parentContainerId, afterNodeId, isContainer);
+  return addSiblingChild(
+    state,
+    result,
+    newNode,
+    deselected,
+    parentContainerId,
+    afterNodeId,
+    isContainer,
+  );
 }

@@ -1,4 +1,4 @@
-import type { FieldTypeInfo, NodeParamMeta } from "@bnto/nodes";
+import type { FieldTypeInfo, NodeParamMeta } from "@bnto/core";
 
 /**
  * Props shared by all field control components.

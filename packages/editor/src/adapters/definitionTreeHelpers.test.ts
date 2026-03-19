@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import {
   addChildToContainer,
   removeChildFromContainer,

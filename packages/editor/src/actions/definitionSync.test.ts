@@ -18,8 +18,8 @@ import { updateParams } from "./updateParams";
 import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
 import { findDefinitionById } from "../adapters/findDefinitionById";
 import type { EditorState } from "../store/types";
-import type { Definition } from "@bnto/nodes";
-import { CURRENT_FORMAT_VERSION } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
+import { CURRENT_FORMAT_VERSION } from "@bnto/core";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */

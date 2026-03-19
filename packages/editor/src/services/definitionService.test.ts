@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { getRecipeBySlug } from "@bnto/nodes";
+import { getRecipeBySlug } from "@bnto/core";
 import { createEditorStore } from "../store/createEditorStore";
 import { createDefinitionService } from "./definitionService";
 import { createNodeService } from "./nodeService";

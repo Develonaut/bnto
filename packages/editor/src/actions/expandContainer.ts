@@ -9,8 +9,14 @@
  * or exceeds max nesting depth.
  */
 
-import type { Definition, NodeTypeName } from "@bnto/nodes";
-import { NODE_TYPE_INFO, getNodeIcon, getNodeSublabel, isIoNodeType, isContainerNodeType } from "@bnto/nodes";
+import type { Definition, NodeTypeName } from "@bnto/core";
+import {
+  NODE_TYPE_INFO,
+  getNodeIcon,
+  getNodeSublabel,
+  isIoNodeType,
+  isContainerNodeType,
+} from "@bnto/core";
 import type { EditorState } from "../store/types";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 import { CELL, IO_CARD_SIZE, MAX_CONTAINER_DEPTH } from "../adapters/bentoSlots";
@@ -19,11 +25,7 @@ import { findDefinitionById } from "../adapters/findDefinitionById";
 import { withUndo } from "../store/withUndo";
 
 /** Create a BentoNode from a child Definition for display in the graph. */
-function childDefToNode(
-  child: Definition,
-  parentId: string,
-  depth: number,
-): BentoNode {
+function childDefToNode(child: Definition, parentId: string, depth: number): BentoNode {
   const nodeType = child.type as NodeTypeName;
   const info = NODE_TYPE_INFO[nodeType];
   const variant = info ? (CATEGORY_VARIANT[info.category] ?? "muted") : "muted";
@@ -57,10 +59,7 @@ function childDefToNode(
   };
 }
 
-export function expandContainer(
-  state: EditorState,
-  nodeId: string,
-): Partial<EditorState> | null {
+export function expandContainer(state: EditorState, nodeId: string): Partial<EditorState> | null {
   if (!state.definition) return null;
   if (state.expandedContainerIds.has(nodeId)) return null;
 
@@ -95,9 +94,7 @@ export function expandContainer(
 
   // Update parent node to show expanded state
   const nextNodes = state.nodes.map((n) =>
-    n.id === nodeId
-      ? { ...n, data: { ...n.data, isExpanded: true } }
-      : n,
+    n.id === nodeId ? { ...n, data: { ...n.data, isExpanded: true } } : n,
   );
 
   const nextExpandedIds = new Set(state.expandedContainerIds);

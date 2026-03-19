@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { getRecipeBySlug } from "@bnto/nodes";
+import { getRecipeBySlug } from "@bnto/core";
 import { createEditorStore } from "./createEditorStore";
 
 describe("panel state", () => {

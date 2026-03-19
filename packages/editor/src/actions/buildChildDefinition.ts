@@ -6,14 +6,10 @@
  * duplicating the Definition construction.
  */
 
-import type { Definition, NodeTypeName } from "@bnto/nodes";
+import type { Definition, NodeTypeName } from "@bnto/core";
 import type { NodeConfig } from "../adapters/types";
 
-function buildChildDefinition(
-  nodeId: string,
-  type: NodeTypeName,
-  config: NodeConfig,
-): Definition {
+function buildChildDefinition(nodeId: string, type: NodeTypeName, config: NodeConfig): Definition {
   return {
     id: nodeId,
     type,

@@ -11,6 +11,8 @@ clients (public API)  ->  queries (read-path)  +  services (write-path)  ->  ada
 - **Services** -- Single-domain write-path logic. Mutations, cache invalidation, infrastructure lifecycle (e.g., lazy engine init). **Services do NOT call other services.** Cross-domain orchestration lives in clients only
 - **Adapters** -- Backend-specific bridge. Currently Convex (web) + browser (WASM engine, Web Worker), Tauri adapter planned (desktop). The only layer that imports from `@bnto/backend`. **Every adapter function that accepts an ID must use `"skip"` when the ID is falsy** -- see [convex.md](convex.md#convexquery-skip-guard-critical)
 
+**Node system re-exports:** Core re-exports all node system types, constants, and functions from `@bnto/registry` (which in turn re-exports from `@bnto/nodes`). This allows the editor and apps to import everything from `@bnto/core` — one import source for all runtime needs. See [architecture.md](architecture.md#import-boundary-rules).
+
 ### Dependency Rules
 
 ```

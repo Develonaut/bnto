@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import { core } from "@bnto/core";
 import {
   RecipeCard,

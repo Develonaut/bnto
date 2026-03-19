@@ -1,6 +1,6 @@
 "use client";
 
-import type { FieldTypeInfo, NodeParamMeta } from "@bnto/nodes";
+import type { FieldTypeInfo, NodeParamMeta } from "@bnto/core";
 import { SchemaField } from "./SchemaField";
 
 /**

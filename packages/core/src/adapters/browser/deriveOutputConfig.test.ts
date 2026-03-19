@@ -4,8 +4,8 @@
 
 import { describe, it, expect } from "vitest";
 import { deriveOutputConfig } from "./deriveOutputConfig";
-import { createBlankDefinition } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import { createBlankDefinition } from "@bnto/registry";
+import type { Definition } from "@bnto/registry";
 
 describe("deriveOutputConfig", () => {
   it("returns defaults for a blank definition", () => {

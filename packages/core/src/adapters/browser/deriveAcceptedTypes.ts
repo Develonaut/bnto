@@ -6,8 +6,8 @@
  * Falls back to wildcard when no input node is found.
  */
 
-import { getInputNode } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import { getInputNode } from "@bnto/registry";
+import type { Definition } from "@bnto/registry";
 
 interface AcceptedTypes {
   /** Value for the HTML <input accept="..."> attribute. */

@@ -7,8 +7,8 @@
  * into leaf processing nodes.
  */
 
-import type { Definition } from "@bnto/nodes";
-import { isIoNodeType, isContainerNodeType } from "@bnto/nodes";
+import type { Definition } from "@bnto/registry";
+import { isIoNodeType, isContainerNodeType } from "@bnto/registry";
 import type { PipelineDefinition, PipelineNode } from "../types/pipeline";
 
 // ---------------------------------------------------------------------------

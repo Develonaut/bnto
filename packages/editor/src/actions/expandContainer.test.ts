@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { expandContainer } from "./expandContainer";
 import type { EditorState } from "../store/types";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import type { BentoNode } from "../adapters/types";
 
 function makeDefinition(): Definition {

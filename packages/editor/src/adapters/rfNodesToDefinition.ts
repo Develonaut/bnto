@@ -11,7 +11,7 @@
  * Pure function — no React, no DOM, fully testable.
  */
 
-import { type Definition, CURRENT_FORMAT_VERSION } from "@bnto/nodes";
+import { type Definition, CURRENT_FORMAT_VERSION } from "@bnto/core";
 import type { RecipeMetadata } from "../store/types";
 import type { BentoNode, NodeConfigs } from "./types";
 import { findDefinitionById } from "./findDefinitionById";

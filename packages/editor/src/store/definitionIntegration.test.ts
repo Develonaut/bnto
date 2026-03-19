@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import type { StoreApi } from "zustand";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import { createEditorStore } from "./createEditorStore";
 import type { EditorStore } from "./types";
 import { state, addNodeViaStore, removeNodeViaStore, updateParamsViaStore } from "./test-helpers";

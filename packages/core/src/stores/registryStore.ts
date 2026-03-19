@@ -1,7 +1,7 @@
 /** registryStore — read-only Zustand store for predefined recipes and node type metadata. */
 
 import { createEnhancedStore } from "./createEnhancedStore";
-import type { NodeTypeInfo, NodeTypeName } from "@bnto/nodes";
+import type { NodeTypeInfo, NodeTypeName } from "@bnto/registry";
 import type { RegistryData } from "@bnto/registry";
 
 interface RegistryStoreState extends RegistryData {

@@ -16,7 +16,7 @@
  */
 
 import { core } from "@bnto/core";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import type { EditorState } from "./store/types";
 import type { EditorInstance } from "./editorTypes";
 import { createEditorStore } from "./store/createEditorStore";

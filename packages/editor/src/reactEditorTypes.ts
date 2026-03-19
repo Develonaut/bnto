@@ -6,7 +6,7 @@
  */
 
 import type { Edge } from "@xyflow/react";
-import type { Definition, ValidationError } from "@bnto/nodes";
+import type { Definition, ValidationError } from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
 import type {
   NodeClient,

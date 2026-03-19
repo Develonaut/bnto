@@ -5,8 +5,8 @@
  * as expanded, updates the definition tree, and captures undo state.
  */
 
-import type { NodeTypeName } from "@bnto/nodes";
-import { isContainerNodeType } from "@bnto/nodes";
+import type { NodeTypeName } from "@bnto/core";
+import { isContainerNodeType } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
 import { createCompartmentNode } from "../adapters/createCompartmentNode";
@@ -59,7 +59,7 @@ function addChildIntoContainer(
 
   // Insert after a specific child, or right after the container (first child)
   const insertAt = afterNodeId
-    ? (deselected.findIndex((n) => n.id === afterNodeId) + 1) || deselected.length
+    ? deselected.findIndex((n) => n.id === afterNodeId) + 1 || deselected.length
     : deselected.findIndex((n) => n.id === containerId) + 1;
 
   const nextNodes = [...deselected.slice(0, insertAt), newNode, ...deselected.slice(insertAt)];
@@ -68,7 +68,12 @@ function addChildIntoContainer(
   const childDef = buildChildDefinition(result.node.id, type, result.config);
   let nextDefinition = state.definition;
   if (nextDefinition) {
-    nextDefinition = addChildToContainer(nextDefinition, containerId, childDef, afterNodeId ?? undefined);
+    nextDefinition = addChildToContainer(
+      nextDefinition,
+      containerId,
+      childDef,
+      afterNodeId ?? undefined,
+    );
   }
 
   const nextExpandedIds = new Set(state.expandedContainerIds);

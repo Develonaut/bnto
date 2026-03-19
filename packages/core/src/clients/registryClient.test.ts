@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { registryStore } from "../stores/registryStore";
 import { createRegistryClient } from "./registryClient";
-import { RECIPES, NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/nodes";
+import { RECIPES, NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/registry";
 
 describe("registryClient", () => {
   const client = createRegistryClient();

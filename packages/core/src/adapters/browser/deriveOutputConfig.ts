@@ -6,8 +6,8 @@
  * when no output node is found.
  */
 
-import { getOutputNode } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import { getOutputNode } from "@bnto/registry";
+import type { Definition } from "@bnto/registry";
 
 interface OutputConfig {
   /** How results are delivered. */

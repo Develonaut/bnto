@@ -7,7 +7,7 @@
  * without React or ReactFlow context.
  */
 
-import { isIoNodeType } from "@bnto/nodes";
+import { isIoNodeType } from "@bnto/core";
 import type { ExecutionPhase, PanelState } from "../store/types";
 
 /** Returns the node ID to delete, or null if nothing should happen. */

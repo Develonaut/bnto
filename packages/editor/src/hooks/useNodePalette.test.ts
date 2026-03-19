@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/nodes";
+import { NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/core";
 import { computePalette } from "./useNodePalette";
 import type { PaletteItem } from "./useNodePalette";
 

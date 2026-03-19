@@ -4,8 +4,8 @@
 
 import { describe, it, expect } from "vitest";
 import { deriveAcceptedTypes } from "./deriveAcceptedTypes";
-import { createBlankDefinition, addNode } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import { createBlankDefinition, addNode } from "@bnto/registry";
+import type { Definition } from "@bnto/registry";
 
 describe("deriveAcceptedTypes", () => {
   it("returns wildcard for a blank definition", () => {
