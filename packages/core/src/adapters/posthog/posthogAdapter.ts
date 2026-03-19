@@ -19,7 +19,11 @@
 
 import posthog from "posthog-js";
 import type { PostHog } from "posthog-js";
-import type { TelemetryConfig, TelemetryProperties, TelemetryUserTraits } from "../../types/telemetry";
+import type {
+  TelemetryConfig,
+  TelemetryProperties,
+  TelemetryUserTraits,
+} from "../../types/telemetry";
 
 /** Window-level key for the initialized PostHog instance. */
 const PH_KEY = "__bnto_ph__" as const;
@@ -50,6 +54,9 @@ export function initPostHog(config: TelemetryConfig) {
 
   posthog.init(config.apiKey, {
     api_host: config.host,
+    // When api_host is a relative proxy path (e.g. "/ingest"), the PostHog
+    // toolbar and other dashboard features need to know the real PostHog URL.
+    ui_host: "https://us.posthog.com",
     // Cookieless mode — no cookie consent banner needed
     persistence: "localStorage",
     // Disable automatic pageview capture — Next.js App Router uses pushState
@@ -84,7 +91,10 @@ export function captureEvent(event: string, properties?: TelemetryProperties) {
   // is not initialized so tests verify the pipeline, not PostHog itself.
   const w = window as unknown as Record<string, unknown>;
   if (Array.isArray(w.__bnto_telemetry__)) {
-    (w.__bnto_telemetry__ as Array<{ event: string; properties?: TelemetryProperties }>).push({ event, properties });
+    (w.__bnto_telemetry__ as Array<{ event: string; properties?: TelemetryProperties }>).push({
+      event,
+      properties,
+    });
   }
 
   const ph = getSharedInstance();

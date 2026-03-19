@@ -1,14 +1,9 @@
 import { NextResponse } from "next/server";
-import {
-  convexAuthNextjsMiddleware,
-  nextjsMiddlewareRedirect,
-} from "@bnto/auth/server";
+import { convexAuthNextjsMiddleware, nextjsMiddlewareRedirect } from "@bnto/auth/server";
 import { isAuthPath, isProtectedPath } from "@/lib/routes";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
-function hasSignoutSignal(
-  request: Request & { cookies: { has(name: string): boolean } },
-) {
+function hasSignoutSignal(request: Request & { cookies: { has(name: string): boolean } }) {
   return request.cookies.has(SIGNOUT_COOKIE);
 }
 
@@ -33,8 +28,7 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   const { pathname } = request.nextUrl;
 
   // Canonical URL normalization — lowercase, underscores to hyphens, no trailing slash
-  const normalized =
-    pathname.toLowerCase().replace(/_/g, "-").replace(/\/$/, "") || "/";
+  const normalized = pathname.toLowerCase().replace(/_/g, "-").replace(/\/$/, "") || "/";
   if (pathname !== normalized) {
     const url = request.nextUrl.clone();
     url.pathname = normalized;
@@ -69,8 +63,8 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
  */
 export const config = {
   matcher: [
-    // Page routes — skip static assets, other API routes, and files
-    "/((?!_next|api|favicon.ico|.*\\..*).*)",
+    // Page routes — skip static assets, API routes, PostHog proxy, and files
+    "/((?!_next|api|ingest|favicon.ico|.*\\..*).*)",
     // Auth proxy — @convex-dev/auth proxies signIn/signOut through middleware
     "/api/auth",
   ],
