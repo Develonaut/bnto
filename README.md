@@ -5,8 +5,6 @@
 [![Rust](https://img.shields.io/badge/Rust-WASM-black?logo=rust)](https://www.rust-lang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/develonaut)
-
 **Compress images, clean CSVs, rename files, and convert formats — online, free, no sign-up.**
 
 Everything runs client-side via Rust compiled to WebAssembly. Your files never leave your browser. No uploads, no accounts, no limits.
@@ -140,6 +138,12 @@ Contributions are welcome. To get started:
 5. Run `task check` before submitting a pull request
 
 Please follow the existing code patterns and the [Bento Box Principle](.claude/rules/code-standards.md) -- small, focused files and functions with clear boundaries.
+
+## Support
+
+If bnto saves you time, consider buying me a coffee.
+
+<a href="https://buymeacoffee.com/develonaut"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="60"></a>
 
 ## License
 
