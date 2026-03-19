@@ -49,6 +49,7 @@ import { useSignUp } from "./hooks/useSignUp";
 import { useRegistryRecipes } from "./hooks/useRegistryRecipes";
 import { useRegistryNodeTypes } from "./hooks/useRegistryNodeTypes";
 import { useRegistryCategories } from "./hooks/useRegistryCategories";
+import { useRegistryProcessors } from "./hooks/useRegistryProcessors";
 
 // Upload/Download hooks
 import { useUploadFiles } from "./hooks/useUploadFiles";
@@ -100,6 +101,7 @@ export const core = {
     useRecipes: useRegistryRecipes,
     useNodeTypes: useRegistryNodeTypes,
     useCategories: useRegistryCategories,
+    useProcessors: useRegistryProcessors,
   },
 
   // ── Internal (not public API, kept for consumer migration) ─────────

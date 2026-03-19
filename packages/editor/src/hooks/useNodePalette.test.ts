@@ -6,11 +6,14 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/nodes";
 import { computePalette } from "./useNodePalette";
 import type { PaletteItem } from "./useNodePalette";
 
 function allItems(browserOnly = false): PaletteItem[] {
-  return computePalette(browserOnly).groups.flatMap((g) => g.items);
+  return computePalette(NODE_TYPE_INFO, CATEGORIES, PROCESSORS, browserOnly).groups.flatMap(
+    (g) => g.items,
+  );
 }
 
 describe("computePalette", () => {
@@ -83,7 +86,7 @@ describe("computePalette", () => {
   });
 
   it("groups items by category in CATEGORIES display order", () => {
-    const { groups } = computePalette(false);
+    const { groups } = computePalette(NODE_TYPE_INFO, CATEGORIES, PROCESSORS, false);
     const categoryNames = groups.map((g) => g.category.name);
     // CATEGORIES order: io (excluded), image, spreadsheet, file, ...
     expect(categoryNames.indexOf("image")).toBeLessThan(categoryNames.indexOf("file"));

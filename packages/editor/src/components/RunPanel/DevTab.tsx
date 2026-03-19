@@ -13,7 +13,7 @@ import {
   Stack,
   Text,
 } from "@bnto/ui";
-import { RECIPES, getRecipeBySlug } from "@bnto/nodes";
+import { core } from "@bnto/core";
 import { useEditor } from "../../context";
 import type { ExecutionPhase, FileProgress } from "../../store/types";
 import { MOCK_RESULTS } from "./devMockData";
@@ -168,12 +168,13 @@ function ProgressControl({
 
 function RecipeSelect() {
   const editor = useEditor();
+  const recipes = core.registry.useRecipes();
   const handleLoadRecipe = useCallback(
     (slug: string) => {
-      const recipe = getRecipeBySlug(slug);
+      const recipe = recipes.find((r) => r.slug === slug);
       if (recipe) editor.definition.loadDefinition(recipe.definition);
     },
-    [editor],
+    [editor, recipes],
   );
 
   return (
@@ -186,7 +187,7 @@ function RecipeSelect() {
           <SelectValue placeholder="Select recipe..." />
         </SelectTrigger>
         <SelectContent>
-          {RECIPES.map((recipe) => (
+          {recipes.map((recipe) => (
             <SelectItem
               key={recipe.slug}
               value={recipe.slug}
