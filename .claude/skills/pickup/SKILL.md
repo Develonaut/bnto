@@ -77,9 +77,9 @@ Present a clear summary to the user with:
 2. **Sprint / Wave:** Which sprint and wave it belongs to
 3. **Package scope:** Which packages/directories will be touched
 4. **Persona(s):** Which domain expert persona(s) will be activated
-5. **Approach:** 3-5 bullet points describing what you plan to do
+5. **Approach:** 3-5 bullet points describing what you plan to do. **One bullet MUST describe your TDD approach** — which tests you'll write first and how they define the acceptance criteria before any implementation begins
 6. **Files to modify:** List of files you expect to create or change
-7. **Tests:** What tests you'll write (unit, integration, E2E, screenshots)
+7. **Tests (TDD):** What tests you'll write FIRST to define acceptance criteria — describe the test cases that will prove the feature works before writing any implementation code. Include unit, integration, and E2E tests as appropriate.
 8. **Risks / Open questions:** Anything unclear or potentially tricky
 9. **Scope estimate:** Small (< 1 hour), Medium (1-3 hours), Large (3+ hours)
 
@@ -175,9 +175,75 @@ Before writing any code, confirm your boundaries:
 - **Building a user-facing flow?** — Conversion hooks should trigger on value moments (save, history, server nodes, team) — never on browser execution limits.
 - **Touching the recipe editor?** — The editor is free. Create, run, export = free. Save, share, server nodes = Pro. Don't gate editor access.
 
-### Step 5: Implement
+### Step 5: Write Tests First (TDD)
 
-Write the code for your task. Follow the rules in `CLAUDE.md` and `.claude/rules/`:
+**Tests define acceptance criteria.** Before writing any implementation code, write the tests that prove the feature works. This is the most important step — it forces you to think about the API, edge cases, and expected behavior before getting lost in implementation details.
+
+#### The TDD Cycle
+
+```
+1. Write a failing test  →  defines WHAT the code should do
+2. Write minimal code    →  makes the test pass (and nothing more)
+3. Refactor              →  clean up while tests stay green
+4. Repeat                →  next test case, next behavior
+```
+
+#### What to Test First (by layer)
+
+| Layer                        | Write these tests FIRST                                                                  | Tool                               |
+| ---------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------- |
+| **Pure functions / actions** | Input → output assertions. Edge cases. Guard conditions. Error paths.                    | Vitest unit tests                  |
+| **Rust engine logic**        | Native Rust unit tests in `#[cfg(test)]` blocks. WASM integration tests for JS boundary. | `cargo test` + `wasm-bindgen-test` |
+| **Core hooks / services**    | Service method behavior. Query option construction. Cache invalidation.                  | Vitest unit tests                  |
+| **Backend (Convex)**         | Mutation validation. Auth guards. Query correctness.                                     | `convex-test`                      |
+| **UI components**            | Render with expected props. User interactions trigger correct callbacks.                 | Vitest + testing-library (light)   |
+| **User flows**               | Full journeys through the UI.                                                            | Playwright E2E                     |
+
+#### How This Changes Your Workflow
+
+**Instead of:** Write code → hope it works → write tests to verify → discover edge cases → go back and fix
+
+**Do this:** Think about behavior → write test that asserts it → write code to pass the test → move to next behavior
+
+```typescript
+// EXAMPLE: Building an addNode action
+
+// Step 1: Write the test FIRST — this IS your acceptance criteria
+describe("addNode", () => {
+  it("returns null if IO node already exists", () => {
+    const state = makeState({ nodes: [inputNode] });
+    expect(addNode(state, "input")).toBeNull();
+  });
+
+  it("creates node with unique ID", () => {
+    const state = makeState({ nodes: [] });
+    const result = addNode(state, "image");
+    expect(result?.nextState.nodes).toHaveLength(1);
+    expect(result?.nodeId).toBeDefined();
+  });
+
+  it("captures undo snapshot before mutation", () => {
+    const state = makeState({ nodes: [] });
+    const result = addNode(state, "image");
+    expect(result?.nextState.undoStack).toHaveLength(1);
+  });
+});
+
+// Step 2: NOW write the addNode function to make these pass
+// Step 3: Refactor (extract helpers, simplify) while tests stay green
+```
+
+#### Rules
+
+1. **Tests are not optional and not an afterthought.** They come BEFORE implementation. If you find yourself writing code without a failing test, stop and write the test first.
+2. **Test the contract, not the implementation.** Assert on inputs/outputs and observable behavior. Don't test private methods or internal state unless there's no other way to verify correctness.
+3. **Each test case is an acceptance criterion.** When you're done, the test suite IS the specification. Someone reading your tests should understand exactly what the feature does without reading the implementation.
+4. **Start with the happy path, then edge cases.** First test: "it does the main thing correctly." Then: "it handles empty input," "it rejects invalid args," "it doesn't duplicate," etc.
+5. **Run tests frequently.** After writing each test, run the suite to confirm it fails for the right reason. After writing implementation, run again to confirm it passes. Green → move on. Red → fix before adding more.
+
+### Step 6: Implement
+
+Write the code to make your tests pass. Follow the rules in `CLAUDE.md` and `.claude/rules/`:
 
 #### Component Philosophy (CRITICAL)
 
@@ -216,13 +282,13 @@ Write the code for your task. Follow the rules in `CLAUDE.md` and `.claude/rules
 
 **Don't copy blindly** — adapt the layout, structure, and interaction patterns to fit our design system. The value is in the _composition patterns_, not the exact styling.
 
-### Step 6: Verify — Code Review + Automated Checks
+### Step 7: Verify — Code Review + Automated Checks
 
-#### 6a: Code Review
+#### 7a: Code Review
 
 Run `/code-review` to audit all your changes against the project's coding standards, architecture rules, and known gotchas. Fix any violations before proceeding. This is a critical quality gate — do not skip it.
 
-#### 6b: Automated Checks
+#### 7b: Automated Checks
 
 Run ALL checks. Do not skip any even if you think your changes are safe:
 
@@ -247,11 +313,11 @@ Or run `task check` to execute all of the above in one command.
 
 **Critical rule:** You are NOT allowed to ignore failures as "pre-existing." If a check fails, report ALL failures to the user and let them decide. Only the user can determine if an issue predates your work.
 
-### Step 7: Verify — Test Coverage
+### Step 8: Verify — Test Coverage
 
 **If your task involves E2E tests, screenshot updates, or test infrastructure changes**, invoke `/quality-engineer` now. The quality persona owns the correct way to run tests, write selectors, capture screenshots, and handle known issues like "01 Issue" hydration mismatches.
 
-Your work MUST include tests. Determine which type based on what you built:
+**By this point, your tests from Step 5 should already be passing.** This step verifies completeness — did you cover all the layers? Are there gaps?
 
 - **Rust engine logic** (node crates, WASM bindings) -> **Unit tests** in `#[cfg(test)]` blocks + WASM integration tests via `wasm-bindgen-test`
 - **Core hooks/adapters** (`@bnto/core`) -> **Unit tests** using Vitest in `packages/core/`
@@ -307,7 +373,7 @@ If screenshots already exist and the change modifies visual output, run with `--
 
 **Do not skip this.** Leaving stale artifacts behind breaks CI, confuses other developers, and wastes everyone's time debugging phantom failures.
 
-### Step 8: Update PLAN.md (MANDATORY — do this BEFORE the PR)
+### Step 9: Update PLAN.md (MANDATORY — do this BEFORE the PR)
 
 **You MUST update PLAN.md now.** This is the #1 thing agents forget, and it causes real problems — other agents pick up work that's already done, or miss unblocked waves.
 
@@ -320,7 +386,7 @@ If screenshots already exist and the change modifies visual output, run with `--
 
 **Do NOT skip this step.** PLAN.md changes MUST be included in your commit and PR. The `/pre-commit` and `/merge-pr` skills will verify this.
 
-### Step 8b: Proof of Work
+### Step 9b: Proof of Work
 
 After all checks pass, provide a summary:
 
@@ -333,7 +399,7 @@ After all checks pass, provide a summary:
 7. **Checks result** — confirm `task check` (or individual checks) passed clean. List which checks ran.
 8. **Files changed** — files created/modified, with brief description of each
 
-### Step 8c: Create the PR
+### Step 9c: Create the PR
 
 **PRs always target `main`.** Use `--base main` when creating the PR.
 
