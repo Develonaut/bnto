@@ -14,6 +14,7 @@ const CSV_INPUT = {
 } as const;
 
 export const renameCsvColumns: Recipe = {
+  id: "5be92d39-fa8e-49ce-a0f3-c55d01a48c7b",
   slug: "rename-csv-columns",
   name: "Rename CSV Columns",
   description: "Rename CSV column headers in bulk. Free, no signup required.",
@@ -24,10 +25,6 @@ export const renameCsvColumns: Recipe = {
     label: "CSV files",
   },
   features: ["CSV", "Column rename", "Bulk edit", "Browser-based"],
-  seo: {
-    title: "Rename CSV Columns Online Free -- bnto",
-    h1: "Rename CSV Columns Online Free",
-  },
   definition: {
     id: "rename-csv-columns",
     type: "group",

@@ -7,6 +7,7 @@ import { defaultInputNode } from "./defaultInputNode";
 import { defaultOutputNode } from "./defaultOutputNode";
 
 export const convertImageFormat: Recipe = {
+  id: "9cf4fa85-9145-49f7-b838-dae759261ba2",
   slug: "convert-image-format",
   name: "Convert Image Format",
   description: "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
@@ -18,10 +19,6 @@ export const convertImageFormat: Recipe = {
     mimePrefix: "image/",
   },
   features: ["PNG", "JPEG", "WebP", "GIF", "Browser-based"],
-  seo: {
-    title: "Convert Image Format Online Free -- bnto",
-    h1: "Convert Image Format Online Free",
-  },
   definition: {
     id: "convert-image-format",
     type: "group",

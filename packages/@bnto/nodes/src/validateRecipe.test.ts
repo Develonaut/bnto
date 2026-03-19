@@ -9,13 +9,13 @@ import { validateRecipe } from "./validateRecipe";
 /** Creates a minimal valid recipe for testing. */
 function validRecipe(overrides: Partial<Recipe> = {}): Recipe {
   return {
+    id: "00000000-0000-0000-0000-000000000001",
     slug: "test-recipe",
     name: "Test Recipe",
     description: "A test recipe.",
     category: "image",
     accept: { mimeTypes: ["image/png"], extensions: [".png"], label: "PNG images" },
     features: ["PNG"],
-    seo: { title: "Test -- bnto", h1: "Test" },
     definition: {
       id: "test-recipe",
       type: "group",

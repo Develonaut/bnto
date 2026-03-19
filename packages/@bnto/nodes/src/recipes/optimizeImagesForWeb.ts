@@ -13,6 +13,7 @@ const IMAGE_INPUT = {
 } as const;
 
 export const optimizeImagesForWeb: Recipe = {
+  id: "e8c3a3ad-1e7e-40f6-ab60-00f405514f6f",
   slug: "optimize-images-for-web",
   name: "Optimize Images for Web",
   description:
@@ -25,10 +26,6 @@ export const optimizeImagesForWeb: Recipe = {
     mimePrefix: "image/",
   },
   features: ["Resize", "WebP", "Compress", "Multi-step", "Browser-based"],
-  seo: {
-    title: "Optimize Images for Web Online Free -- bnto",
-    h1: "Optimize Images for Web Online Free",
-  },
   definition: {
     id: "optimize-images-for-web",
     type: "group",

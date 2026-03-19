@@ -47,8 +47,7 @@ function blankState(overrides?: Partial<EditorState>): EditorState {
     recipeMetadata: {
       id: "root",
       name: "Test Recipe",
-      type: "group",
-      version: CURRENT_FORMAT_VERSION,
+      slug: "test-recipe",
       cloudId: null,
     },
     isDirty: false,

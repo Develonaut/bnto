@@ -6,7 +6,7 @@
 // Only adapters know about Convex — transforms just accept plain objects.
 // ---------------------------------------------------------------------------
 
-import type { RecipeDefinition } from "./recipe";
+import type { Definition } from "@bnto/nodes";
 import type { NodeProgress, OutputFile, RunResult } from "./execution";
 
 // ── Recipe ─────────────────────────────────────────────────────────────────
@@ -16,7 +16,7 @@ export interface RawRecipeDoc {
   _id: string;
   userId: string;
   name: string;
-  definition: RecipeDefinition;
+  definition: Definition;
   version: number;
   /** Definition format version (semver) — tracks which format spec the definition uses. */
   formatVersion?: string;

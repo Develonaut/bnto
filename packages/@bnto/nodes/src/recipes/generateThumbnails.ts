@@ -13,6 +13,7 @@ const IMAGE_INPUT = {
 } as const;
 
 export const generateThumbnails: Recipe = {
+  id: "4cf63f58-327a-4e6a-a03c-caa9679c7152",
   slug: "generate-thumbnails",
   name: "Generate Thumbnails",
   description:
@@ -25,10 +26,6 @@ export const generateThumbnails: Recipe = {
     mimePrefix: "image/",
   },
   features: ["Thumbnails", "Resize", "WebP", "Multi-step", "Browser-based"],
-  seo: {
-    title: "Generate Thumbnails Online Free -- bnto",
-    h1: "Generate Thumbnails Online Free",
-  },
   definition: {
     id: "generate-thumbnails",
     type: "group",

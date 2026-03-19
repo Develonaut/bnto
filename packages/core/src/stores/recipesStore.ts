@@ -1,13 +1,13 @@
 /** recipesStore — Zustand store with localStorage persistence. */
 
 import { createEnhancedStore } from "./createEnhancedStore";
-import type { Recipe } from "../types/recipe";
+import type { UserRecipe } from "../types/recipe";
 
 interface RecipesStoreState {
-  recipes: Record<string, Recipe>;
-  upsert: (recipe: Recipe) => void;
+  recipes: Record<string, UserRecipe>;
+  upsert: (recipe: UserRecipe) => void;
   remove: (id: string) => void;
-  hydrateFromCloud: (recipes: Recipe[]) => void;
+  hydrateFromCloud: (recipes: UserRecipe[]) => void;
 }
 
 export const recipesStore: import("zustand/vanilla").StoreApi<RecipesStoreState> =

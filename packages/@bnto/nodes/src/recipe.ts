@@ -1,22 +1,26 @@
 /**
- * Recipe types — predefined bnto definitions with metadata.
+ * Recipe types — definition + display metadata.
  *
- * A recipe bundles SEO metadata, file acceptance rules, and a full
- * definition into a single JSON blob. Consumers (web, desktop, CLI)
- * read them.
+ * A Recipe is a Definition bundled with catalog metadata (name, slug,
+ * category, accept spec, features). Persistence fields (cloudId, savedAt,
+ * syncedAt) live on UserRecipe in @bnto/core — not here.
  */
 
 import type { Definition } from "./definition";
 
 /**
- * A predefined bnto recipe — metadata + acceptance rules + definition.
+ * A bnto recipe — definition + display metadata.
  *
- * Recipes are the "pre-assembled bento boxes" in the catalog. Each one
- * maps to a public URL at `/{slug}` and drives static generation,
- * metadata, and the file drop zone.
+ * Predefined catalog recipes have curated slugs and hand-set metadata.
+ * User-created recipes have UUID ids and slugs derived from the name.
+ * Persistence state is NOT part of the recipe — it lives on UserRecipe
+ * in @bnto/core, which extends this type.
  */
 export interface Recipe {
-  /** URL slug (e.g., "compress-images", "clean-csv"). */
+  /** Unique identifier (UUID). */
+  id: string;
+
+  /** URL-safe slug (e.g., "compress-images"). Derived from name for user-created recipes. */
   slug: string;
 
   /** Display name (e.g., "Compress Images"). */
@@ -28,17 +32,14 @@ export interface Recipe {
   /** Category for grouping (e.g., "image", "spreadsheet", "file"). */
   category: string;
 
+  /** The full definition ready for execution. */
+  definition: Definition;
+
   /** File types this recipe accepts as input. */
   accept: AcceptSpec;
 
   /** Feature tags for JSON-LD and display (e.g., ["PNG", "JPEG", "Browser-based"]). */
   features: string[];
-
-  /** Search engine optimization metadata. */
-  seo: SEOSpec;
-
-  /** The full definition ready for execution. */
-  definition: Definition;
 }
 
 /**
@@ -59,15 +60,4 @@ export interface AcceptSpec {
 
   /** MIME type prefix for wildcard matching (e.g., "image/"). */
   mimePrefix?: string;
-}
-
-/**
- * Search engine metadata for the recipe's public page.
- */
-export interface SEOSpec {
-  /** Page title — "[Action] Online Free -- bnto". */
-  title: string;
-
-  /** H1 heading — exact target search query. */
-  h1: string;
 }

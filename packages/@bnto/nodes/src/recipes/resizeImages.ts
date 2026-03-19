@@ -13,6 +13,7 @@ const IMAGE_INPUT = {
 } as const;
 
 export const resizeImages: Recipe = {
+  id: "ea8bec03-b732-4bc6-aeec-1097f75c0b87",
   slug: "resize-images",
   name: "Resize Images",
   description: "Resize images to exact dimensions or percentages. Free, no signup required.",
@@ -24,10 +25,6 @@ export const resizeImages: Recipe = {
     mimePrefix: "image/",
   },
   features: ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"],
-  seo: {
-    title: "Resize Images Online Free -- bnto",
-    h1: "Resize Images Online Free",
-  },
   definition: {
     id: "resize-images",
     type: "group",

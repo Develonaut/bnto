@@ -36,7 +36,7 @@ describe("createEditor", () => {
     const state = editor.getState();
     expect(state.nodes.length).toBe(2); // input + output
     expect(state.isDirty).toBe(false);
-    expect(state.recipeMetadata.type).toBe("group");
+    expect(state.recipeMetadata.slug).toBe("new-recipe");
   });
 
   it("initializes from a definition with recipe nodes", () => {

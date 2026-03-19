@@ -19,14 +19,14 @@ import { findDefinitionById } from "./findDefinitionById";
 /**
  * Build a Definition from the current RF node state + configs.
  *
- * Accepts lightweight RecipeMetadata (id, name, type, version) instead of
+ * Accepts lightweight RecipeMetadata (id, name, slug) instead of
  * a full Definition — callers don't need to construct fake objects with
  * empty ports/position/metadata just to satisfy the type.
  *
  * @param rfNodes - Compartment nodes (visual-only data)
- * @param metadata - Root-level recipe metadata (id, name, type, version)
+ * @param metadata - Root-level recipe metadata (id, name, slug)
  * @param configs - Domain data keyed by node ID
- * @param definition - Full nested definition for preserving container children
+ * @param definition - Full nested definition for preserving container children and type/version
  * @returns Full Definition with child nodes
  */
 function rfNodesToDefinition(
@@ -63,9 +63,11 @@ function rfNodesToDefinition(
     };
   });
 
-  const { cloudId: _, ...rootMeta } = metadata;
+  const { cloudId: _, slug: __, ...rootMeta } = metadata;
   return {
     ...rootMeta,
+    type: definition?.type ?? "group",
+    version: definition?.version ?? CURRENT_FORMAT_VERSION,
     position: { x: 0, y: 0 },
     metadata: definition?.metadata ?? {},
     parameters: definition?.parameters ?? {},

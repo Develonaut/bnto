@@ -88,7 +88,7 @@ function makeExpandedState(): EditorState {
       child1: { nodeType: "image", name: "Image", parameters: { quality: 95 } },
     },
     definition: makeDefinition(),
-    recipeMetadata: { id: "root", name: "Root", type: "group", version: "1.0.0", cloudId: null },
+    recipeMetadata: { id: "root", name: "Root", slug: "root", cloudId: null },
     isDirty: false,
     validationErrors: [],
     executionState: {},

@@ -10,13 +10,8 @@ export { TelemetryProvider } from "./providers/TelemetryProvider";
 // ── Types (transport-agnostic) ────────────────────────────────────────────
 export type {
   Recipe,
+  UserRecipe,
   RecipeListItem,
-  RecipeDefinition,
-  Position,
-  Metadata,
-  Port,
-  Edge,
-  FieldsConfig,
   Execution,
   ExecutionLog,
   NodeProgress,

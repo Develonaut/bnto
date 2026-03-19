@@ -7,6 +7,7 @@ import { defaultInputNode } from "./defaultInputNode";
 import { defaultOutputNode } from "./defaultOutputNode";
 
 export const renameFiles: Recipe = {
+  id: "404cea0b-ea2c-4d81-bd89-47f5eb3b8389",
   slug: "rename-files",
   name: "Rename Files",
   description: "Batch rename files with patterns. Free, no signup required.",
@@ -17,10 +18,6 @@ export const renameFiles: Recipe = {
     label: "any files",
   },
   features: ["Batch rename", "Pattern matching", "Browser-based"],
-  seo: {
-    title: "Rename Files Online Free -- bnto",
-    h1: "Rename Files Online Free",
-  },
   definition: {
     id: "rename-files",
     type: "group",

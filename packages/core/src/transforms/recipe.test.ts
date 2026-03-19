@@ -1,13 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { recipeToListItem } from "./recipe";
-import type { Recipe } from "../types";
+import type { UserRecipe } from "../types";
 
 describe("recipeToListItem", () => {
-  const recipe: Recipe = {
+  const recipe: UserRecipe = {
     id: "recipe-1",
+    slug: "my-recipe",
     name: "My Recipe",
-    type: "group",
-    version: "0.1.0",
+    description: "Test recipe",
+    category: "custom",
+    accept: { mimeTypes: [], extensions: [], label: "Any files" },
+    features: [],
     definition: {
       id: "root",
       type: "group",
@@ -65,6 +68,7 @@ describe("recipeToListItem", () => {
         },
       ],
     },
+    cloudId: null,
     savedAt: 1710000000000,
     syncedAt: null,
   };
@@ -97,7 +101,7 @@ describe("recipeToListItem", () => {
   });
 
   it("deduplicates node types", () => {
-    const dupes: Recipe = {
+    const dupes: UserRecipe = {
       ...recipe,
       definition: {
         ...recipe.definition,
@@ -142,7 +146,7 @@ describe("recipeToListItem", () => {
   });
 
   it("handles missing nodes array", () => {
-    const noNodes: Recipe = {
+    const noNodes: UserRecipe = {
       ...recipe,
       definition: { ...recipe.definition, nodes: undefined },
     };

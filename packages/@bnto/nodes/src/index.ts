@@ -15,20 +15,13 @@
  */
 
 // Recipe definition types
-export type {
-  Definition,
-  Position,
-  Metadata,
-  Port,
-  Edge,
-  FieldsConfig,
-} from "./definition";
+export type { Definition, Position, Metadata, Port, Edge, FieldsConfig } from "./definition";
 
 // Execution types
 export type { ExecutionContext, NodeResult } from "./execution";
 
 // Recipe types
-export type { Recipe, AcceptSpec, SEOSpec } from "./recipe";
+export type { Recipe, AcceptSpec } from "./recipe";
 
 // Node type registry (generated from engine catalog)
 export { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./generated/catalog";
@@ -105,6 +98,7 @@ export { inferFieldType } from "./schemas";
 export { getInputNode } from "./getInputNode";
 export { getOutputNode } from "./getOutputNode";
 export { deriveAcceptSpec } from "./deriveAcceptSpec";
+export { deriveCategory } from "./deriveCategory";
 
 // Definition CRUD operations (Sprint 4 Wave 1 — editor foundation)
 export { createBlankDefinition } from "./createBlankDefinition";
