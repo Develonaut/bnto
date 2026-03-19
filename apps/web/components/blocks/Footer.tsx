@@ -62,7 +62,7 @@ export function Footer() {
             <Text size="sm" color="muted" leading="relaxed">
               {TAGLINE} {TRUST_LINE}
             </Text>
-            <Stack gap="sm">
+            <Stack gap="lg">
               <a
                 href={GITHUB_URL}
                 target="_blank"
@@ -79,14 +79,15 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 variant="outline"
+                className="w-fit px-6 py-5"
                 aria-label="Support bnto — Buy Me a Coffee"
               >
                 <Image
                   src="/bmc-logo.svg"
                   alt="Buy me a coffee"
-                  width={160}
-                  height={60}
-                  className="h-8 w-auto"
+                  width={240}
+                  height={50}
+                  className="h-7 w-auto"
                 />
               </Button>
             </Stack>
