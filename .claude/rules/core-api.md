@@ -136,9 +136,9 @@ core.executions.startPredefined({ slug: "compress-images", definition, sessionId
 
 ---
 
-## 5-Domain Public API
+## 6-Domain Public API
 
-The `core` singleton exposes exactly 5 top-level domains:
+The `core` singleton exposes exactly 6 top-level domains:
 
 | Domain            | Responsibility                                                | Key methods                                                                                    |
 | ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -147,6 +147,7 @@ The `core` singleton exposes exactly 5 top-level domains:
 | `core.user`       | Profile + usage stats (absorbed analytics)                    | `meQueryOptions()`, `usageQueryOptions()`, `useCurrentUser()`                                  |
 | `core.auth`       | Session state + auth actions (absorbed session)               | `useReady()`, `useIsAuthenticated()`, `useAuth()`, `useSignOut()`                              |
 | `core.telemetry`  | Product event tracking (PostHog)                              | `capture()`, `identify()`, `reset()`                                                           |
+| `core.registry`   | Predefined recipes + node type metadata (read-only)           | `getRecipes()`, `getNodeTypes()`, `getCategories()`, `useRecipes()`, `useNodeTypes()`          |
 
 **Removed from public API:** `core.wasm` (→ executions), `core.recipe` (→ app layer), `core.analytics` (→ user), `core.session` (→ auth)
 
