@@ -14,6 +14,7 @@ const CSV_INPUT = {
 } as const;
 
 export const cleanCsv: Recipe = {
+  id: "5beec7db-f553-4e99-90f3-07be1d419db8",
   slug: "clean-csv",
   name: "Clean CSV",
   description: "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
@@ -24,10 +25,6 @@ export const cleanCsv: Recipe = {
     label: "CSV files",
   },
   features: ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"],
-  seo: {
-    title: "Clean CSV Online Free -- bnto",
-    h1: "Clean CSV Online Free",
-  },
   definition: {
     id: "clean-csv",
     type: "group",

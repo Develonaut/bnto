@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  BNTO_REGISTRY,
-  RESERVED_PATHS,
-  getBntoBySlug,
-  isValidBntoSlug,
-} from "../bntoRegistry";
+import { BNTO_REGISTRY, RESERVED_PATHS, getBntoBySlug, isValidBntoSlug } from "../bntoRegistry";
 
 describe("BNTO_REGISTRY", () => {
   it("has all Tier 1 bntos", () => {
@@ -69,7 +64,8 @@ describe("getBntoBySlug", () => {
   it("returns entry for valid slug", () => {
     const entry = getBntoBySlug("compress-images");
     expect(entry).toBeDefined();
-    expect(entry!.h1).toBe("Compress Images Online Free");
+    expect(entry!.h1).toBe("Compress Images");
+    expect(entry!.title).toBe("Compress Images Online Free -- bnto");
   });
 
   it("returns undefined for invalid slug", () => {

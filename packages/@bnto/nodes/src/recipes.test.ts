@@ -48,11 +48,16 @@ describe("RECIPES", () => {
     }
   });
 
-  it("every recipe has valid SEO metadata", () => {
+  it("every recipe has a UUID id", () => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
     for (const recipe of RECIPES) {
-      expect(recipe.seo.title).toContain("-- bnto");
-      expect(recipe.seo.h1).toBeTruthy();
+      expect(recipe.id).toMatch(uuidRegex);
     }
+  });
+
+  it("every recipe has unique ids", () => {
+    const ids = RECIPES.map((r) => r.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
 

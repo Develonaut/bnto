@@ -19,20 +19,28 @@ import type { RecipeMetadata } from "./types";
 // Metadata helpers
 // ---------------------------------------------------------------------------
 
+/** Converts a name to a URL-safe slug (lowercase, hyphenated). */
+function toSlug(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return slug || "untitled";
+}
+
 function metadataFromBlank(): RecipeMetadata {
   const def = createBlankDefinition();
-  return { id: def.id, name: def.name, type: def.type, version: def.version, cloudId: null };
+  return { id: def.id, name: def.name, slug: toSlug(def.name), cloudId: null };
 }
 
 function metadataFromDefinition(
-  def: { id: string; name: string; type: string; version: string },
+  def: { id: string; name: string },
   cloudId?: string,
 ): RecipeMetadata {
   return {
     id: def.id,
     name: def.name,
-    type: def.type,
-    version: def.version,
+    slug: toSlug(def.name),
     cloudId: cloudId ?? null,
   };
 }

@@ -34,7 +34,7 @@ src/
 │   ├── getVisibleParams.ts
 │   └── inferFieldType.ts
 ├── definition.ts               # Definition, Edge, Port, Metadata interfaces
-├── recipe.ts                   # Recipe, AcceptSpec, SEOSpec interfaces
+├── recipe.ts                   # Recipe, AcceptSpec interfaces
 ├── validate.ts                 # Structural validation
 └── index.ts                    # Public exports
 scripts/
@@ -72,7 +72,7 @@ The engine's `NodeRegistry` iterates all registered processors, serializes their
 
 ## Predefined Recipes
 
-10 recipes ship with bnto, each composing engine nodes into a ready-to-use pipeline:
+8 recipes ship with bnto, each composing engine nodes into a ready-to-use pipeline:
 
 | Recipe               | Slug                      | Nodes                                          |
 | -------------------- | ------------------------- | ---------------------------------------------- |

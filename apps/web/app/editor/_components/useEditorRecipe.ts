@@ -52,7 +52,7 @@ export function useEditorRecipe(): EditorRecipeResult {
   if (recipeId && localRecipe) {
     return {
       definition: localRecipe.definition,
-      cloudId: localRecipe.cloudId,
+      cloudId: localRecipe.cloudId ?? undefined,
       isLoading: false,
       notFound: false,
     };

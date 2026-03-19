@@ -33,11 +33,6 @@ describe("recipeShape — uniform structure", () => {
         expect(recipe.accept.label).toBeTruthy();
       });
 
-      it("has seo spec", () => {
-        expect(recipe.seo.title).toBeTruthy();
-        expect(recipe.seo.h1).toBeTruthy();
-      });
-
       it("has a valid definition", () => {
         expect(recipe.definition).toBeDefined();
         expect(recipe.definition.type).toBe("group");

@@ -45,9 +45,8 @@ export function RecipeInfoButton({ recipeId, recipeName }: RecipeInfoButtonProps
       core.recipes.save(recipe.definition, {
         id: recipe.id,
         name: name.trim(),
-        type: recipe.type,
-        version: recipe.version,
-        cloudId: recipe.cloudId,
+        slug: recipe.slug,
+        cloudId: recipe.cloudId ?? null,
       });
       setOpen(false);
     },

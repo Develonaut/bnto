@@ -54,7 +54,7 @@ Three layers own different concerns of the node system. This document is the dec
 **Hand-written** (pure types and compositions):
 
 - `definition.ts` — `Definition`, `Edge`, `Port`, `Metadata` interfaces
-- `recipe.ts` — `Recipe`, `AcceptSpec`, `SEOSpec`
+- `recipe.ts` — `Recipe`, `AcceptSpec`
 - `recipes/` — predefined recipe compositions (reference generated types/defaults)
 - `isContainerNodeType.ts`, `isIoNodeType.ts` — helpers that READ from generated `NODE_TYPE_INFO`
 - `validate.ts` — structural validation (future: migrate to engine-generated JSON Schema via ajv)

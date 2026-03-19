@@ -2,17 +2,29 @@
 // Recipe types (transport-agnostic — no Convex imports)
 // ---------------------------------------------------------------------------
 
-/** A recipe — unified persistence shape for local and cloud recipes. */
-export interface Recipe {
-  id: string;
-  name: string;
-  definition: RecipeDefinition;
-  type: string;
-  version: string;
-  /** Convex document _id. Undefined if local-only (not yet saved to cloud). */
-  cloudId?: string;
-  savedAt: number;
-  /** When last synced to Convex. null = never synced. */
+import type { Recipe } from "@bnto/nodes";
+
+// Re-export the base Recipe type from @bnto/nodes
+export type { Recipe } from "@bnto/nodes";
+
+/**
+ * A user's recipe — Recipe + persistence state.
+ *
+ * Extends the base Recipe (display metadata only) with fields that track
+ * where and when the recipe was saved and synced. This type lives in
+ * @bnto/core because persistence is a core concern, not a node concern.
+ *
+ * The layered type chain: Definition (@bnto/nodes) → Recipe (@bnto/nodes)
+ * → UserRecipe (@bnto/core).
+ */
+export interface UserRecipe extends Recipe {
+  /** Convex document _id. Null if not synced to cloud. */
+  cloudId: string | null;
+
+  /** Timestamp when last saved locally. Null if never saved. */
+  savedAt: number | null;
+
+  /** Timestamp when last synced to cloud. Null if never synced. */
   syncedAt: number | null;
 }
 
@@ -26,55 +38,4 @@ export interface RecipeListItem {
   updatedAt: number;
   /** When last synced to Convex. null = never synced, undefined = cloud recipe (always synced). */
   syncedAt?: number | null;
-}
-
-// ---------------------------------------------------------------------------
-// Recipe definition types (matches Go node.Definition JSON)
-// ---------------------------------------------------------------------------
-
-export interface RecipeDefinition {
-  id: string;
-  type: string;
-  version: string;
-  parentId?: string;
-  name: string;
-  position: Position;
-  metadata: Metadata;
-  parameters: Record<string, unknown>;
-  fields?: FieldsConfig;
-  inputPorts: Port[];
-  outputPorts: Port[];
-  nodes?: RecipeDefinition[];
-  edges?: Edge[];
-}
-
-export interface Position {
-  x: number;
-  y: number;
-}
-
-export interface Metadata {
-  createdAt?: string;
-  updatedAt?: string;
-  tags?: string[];
-  customData?: Record<string, string>;
-}
-
-export interface Port {
-  id: string;
-  name: string;
-  handle?: string;
-}
-
-export interface Edge {
-  id: string;
-  source: string;
-  target: string;
-  sourceHandle?: string;
-  targetHandle?: string;
-}
-
-export interface FieldsConfig {
-  values: Record<string, unknown>;
-  keepOnlySet?: boolean;
 }

@@ -15,7 +15,6 @@ describe("definitionToRecipe", () => {
     expect(recipe.category).toBeTruthy();
     expect(recipe.accept).toBeTruthy();
     expect(recipe.features).toEqual([]);
-    expect(recipe.seo).toBeTruthy();
     expect(recipe.definition).toBe(def);
   });
 
@@ -69,27 +68,6 @@ describe("definitionToRecipe", () => {
 
     expect(recipe.accept.mimeTypes).toEqual(["image/jpeg", "image/png"]);
     expect(recipe.accept.label).toBe("JPEG or PNG images");
-  });
-
-  it("uses custom SEO spec when provided", () => {
-    const def = createBlankDefinition();
-    const recipe = definitionToRecipe(def, {
-      seo: {
-        title: "Custom Title -- bnto",
-        h1: "Custom H1",
-      },
-    });
-
-    expect(recipe.seo.title).toBe("Custom Title -- bnto");
-    expect(recipe.seo.h1).toBe("Custom H1");
-  });
-
-  it("generates default SEO from the name", () => {
-    const def = { ...createBlankDefinition(), name: "Compress Images" };
-    const recipe = definitionToRecipe(def);
-
-    expect(recipe.seo.title).toBe("Compress Images -- bnto");
-    expect(recipe.seo.h1).toBe("Compress Images");
   });
 
   it("defaults to 'custom' category", () => {

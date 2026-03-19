@@ -1,7 +1,7 @@
 import { NODE_TYPE_INFO, isIoNodeType, isContainerNodeType } from "@bnto/nodes";
 import type { NodeTypeName } from "@bnto/nodes";
 import type { RawRecipeDoc, RawRecipeListProjection } from "../types/raw";
-import type { Recipe, RecipeListItem } from "../types";
+import type { UserRecipe, RecipeListItem } from "../types";
 
 /** Cloud recipe detail — internal shape for Convex detail queries. */
 export interface CloudRecipeDetail {
@@ -54,15 +54,15 @@ export function extractNodeTypeLabels(nodes: Array<{ type?: string }>): string[]
   return labels;
 }
 
-/** Convert a Recipe to the RecipeListItem shape for list views. */
-export function recipeToListItem(recipe: Recipe): RecipeListItem {
+/** Convert a UserRecipe to the RecipeListItem shape for list views. */
+export function recipeToListItem(recipe: UserRecipe): RecipeListItem {
   const nodes = recipe.definition.nodes ?? [];
   return {
     id: recipe.id,
     name: recipe.name,
     nodeCount: nodes.length,
     nodeTypes: extractNodeTypeLabels(nodes),
-    updatedAt: recipe.savedAt,
+    updatedAt: recipe.savedAt ?? 0,
     syncedAt: recipe.syncedAt,
   };
 }

@@ -1,36 +1,36 @@
 "use client";
 
 import type { Definition } from "@bnto/nodes";
+import { definitionToRecipe } from "@bnto/nodes";
 import { recipesStore } from "../stores/recipesStore";
 import type { RecipeService } from "../services/recipeService";
 import type { ExecutionService } from "../services/executionService";
 import type { StartExecutionInput } from "../types";
-import type { Recipe } from "../types/recipe";
+import type { UserRecipe } from "../types/recipe";
 
 /** Input shape for save — definition + recipe metadata. */
 export interface SaveInput {
   id: string;
   name: string;
-  type: string;
-  version: string;
+  slug: string;
   cloudId?: string | null;
 }
 
 /** Recipe client — store-backed CRUD with cloud sync on top. */
 export function createRecipeClient(recipes: RecipeService, executions: ExecutionService) {
-  function upsert(recipe: Recipe) {
+  function upsert(recipe: UserRecipe) {
     recipesStore.getState().upsert(recipe);
   }
 
   return {
-    get: (id: string): Recipe | undefined => recipesStore.getState().recipes[id],
+    get: (id: string): UserRecipe | undefined => recipesStore.getState().recipes[id],
 
     upsert,
 
     /**
-     * Save a recipe: build Recipe, persist locally, sync to cloud.
+     * Save a recipe: build UserRecipe, persist locally, sync to cloud.
      *
-     * Core owns the Recipe shape — callers pass definition + metadata.
+     * Core owns the UserRecipe shape — callers pass definition + metadata.
      * Layer 1: upsert into recipesStore (auto-persists to localStorage).
      * Layer 2: attempt cloud sync (Convex validates auth server-side).
      *   - Existing cloud recipe (cloudId): ID-based update.
@@ -39,19 +39,22 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
      */
     save: (definition: Definition, metadata: SaveInput) => {
       const cloudId = metadata.cloudId ?? undefined;
-      const recipe: Recipe = {
+      const recipe = definitionToRecipe(definition, {
         id: metadata.id,
+        slug: metadata.slug,
         name: metadata.name,
-        definition,
-        type: metadata.type,
-        version: metadata.version,
-        cloudId,
+      });
+
+      // Wrap Recipe into UserRecipe with persistence fields
+      const userRecipe: UserRecipe = {
+        ...recipe,
+        cloudId: cloudId ?? null,
         savedAt: Date.now(),
         syncedAt: null,
       };
 
       // Layer 1: local store (always, synchronous)
-      upsert(recipe);
+      upsert(userRecipe);
 
       // Layer 2: cloud sync (async — Convex validates auth server-side)
       // If cloudId exists: ID-based update. Otherwise: name-based upsert.
@@ -64,7 +67,7 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
         })
         .then((resultId) => {
           upsert({
-            ...recipe,
+            ...userRecipe,
             cloudId: String(resultId),
             syncedAt: Date.now(),
           });
@@ -113,7 +116,7 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
 
     count: () => Object.keys(recipesStore.getState().recipes).length,
 
-    hydrateFromCloud: (cloudRecipes: Recipe[]) => {
+    hydrateFromCloud: (cloudRecipes: UserRecipe[]) => {
       recipesStore.getState().hydrateFromCloud(cloudRecipes);
     },
 

@@ -35,7 +35,7 @@ describe("createEditorStore", () => {
   describe("initialization", () => {
     it("starts with blank recipe metadata and I/O nodes", () => {
       const s = state(store);
-      expect(s.recipeMetadata.type).toBe("group");
+      expect(s.recipeMetadata.slug).toBe("new-recipe");
       expect(s.isDirty).toBe(false);
       expect(s.nodes.length).toBe(2); // input + output
       expect(Object.keys(s.configs).length).toBe(2);
@@ -86,7 +86,7 @@ describe("createEditorStore", () => {
     it("resets to blank metadata and empty nodes/configs", () => {
       state(store).loadDefinition(compressImagesDefinition());
       state(store).createBlank();
-      expect(state(store).recipeMetadata.type).toBe("group");
+      expect(state(store).recipeMetadata.slug).toBe("new-recipe");
       expect(state(store).isDirty).toBe(false);
       // createBlank loads I/O nodes from createBlankDefinition()
       expect(state(store).nodes.length).toBe(2); // input + output
@@ -124,8 +124,7 @@ describe("createEditorStore", () => {
       state(store).setRecipeMetadata({
         id: "new-id",
         name: "New Name",
-        type: "group",
-        version: "2.0.0",
+        slug: "new-name",
         cloudId: null,
       });
       expect(state(store).recipeMetadata.name).toBe("New Name");

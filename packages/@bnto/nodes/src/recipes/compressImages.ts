@@ -13,6 +13,7 @@ const IMAGE_INPUT = {
 } as const;
 
 export const compressImages: Recipe = {
+  id: "04ad520d-3afe-470b-8225-6cae2b14c402",
   slug: "compress-images",
   name: "Compress Images",
   description:
@@ -25,10 +26,6 @@ export const compressImages: Recipe = {
     mimePrefix: "image/",
   },
   features: ["PNG", "JPEG", "WebP", "No upload", "Browser-based"],
-  seo: {
-    title: "Compress Images Online Free -- bnto",
-    h1: "Compress Images Online Free",
-  },
   definition: {
     id: "compress-images",
     type: "group",

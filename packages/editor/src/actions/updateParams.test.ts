@@ -34,8 +34,7 @@ function stateWithNode(): EditorState {
     recipeMetadata: {
       id: "test",
       name: "Test",
-      type: "group",
-      version: "1.0.0",
+      slug: "test",
       cloudId: null,
     },
     isDirty: false,

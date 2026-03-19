@@ -22,9 +22,9 @@ export interface BntoEntry {
 function toBntoEntry(r: Recipe): BntoEntry {
   return {
     slug: r.slug,
-    title: r.seo.title,
+    title: `${r.name} Online Free -- bnto`,
     description: r.description,
-    h1: r.seo.h1,
+    h1: r.name,
     fixture: `${r.slug}.bnto.json`,
     features: r.features,
   };

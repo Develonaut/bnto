@@ -10,7 +10,11 @@ import type { Definition } from "@bnto/nodes";
 import type { RecipeMetadata } from "../store/types";
 
 function metaOf(def: Definition): RecipeMetadata {
-  return { id: def.id, name: def.name, type: def.type, version: def.version, cloudId: null };
+  const slug = def.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return { id: def.id, name: def.name, slug: slug || "untitled", cloudId: null };
 }
 
 describe("rfNodesToDefinition", () => {

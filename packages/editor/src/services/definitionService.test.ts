@@ -34,7 +34,7 @@ describe("createDefinitionService", () => {
     const def = compressImagesDefinition();
     service.loadDefinition(def);
     service.createBlank();
-    expect(storeApi.getState().recipeMetadata.type).toBe("group");
+    expect(storeApi.getState().recipeMetadata.slug).toBe("new-recipe");
     expect(storeApi.getState().nodes.length).toBe(2);
   });
 
@@ -54,8 +54,7 @@ describe("createDefinitionService", () => {
     service.setRecipeMetadata({
       id: "custom",
       name: "Custom",
-      type: "group",
-      version: "2.0",
+      slug: "custom",
       cloudId: null,
     });
     expect(storeApi.getState().recipeMetadata.name).toBe("Custom");
