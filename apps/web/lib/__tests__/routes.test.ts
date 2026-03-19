@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { AUTH_PATHS, isAuthPath, isProtectedPath, PROTECTED_PATHS, ROUTES } from "../routes";
+import {
+  AUTH_PATHS,
+  editorUrl,
+  isAuthPath,
+  isProtectedPath,
+  PROTECTED_PATHS,
+  ROUTES,
+} from "../routes";
 
 describe("ROUTES", () => {
   it("contains all expected route paths", () => {
@@ -10,6 +17,12 @@ describe("ROUTES", () => {
     expect(ROUTES.myRecipes).toBe("/my-recipes");
     expect(ROUTES.executions).toBe("/executions");
     expect(ROUTES.settings).toBe("/settings");
+  });
+});
+
+describe("editorUrl", () => {
+  it("returns /editor?recipe={id}", () => {
+    expect(editorUrl("abc-123")).toBe("/editor?recipe=abc-123");
   });
 });
 

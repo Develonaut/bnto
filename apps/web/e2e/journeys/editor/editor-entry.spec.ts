@@ -51,14 +51,11 @@ test.describe("editor entry & navigation @browser", () => {
     await expect(nodeCards.filter({ hasText: "Clean" })).toHaveCount(1);
   });
 
-  test("EN3: invalid slug falls back to blank canvas", async ({ page }) => {
-    await navigateToEditor(page, "nonexistent-recipe");
-
-    // Should fall back to blank editor with just I/O nodes
-    const nodeCards = page.getByTestId("node-card");
-    await expect(nodeCards).toHaveCount(2);
-    await expect(nodeCards.filter({ hasText: "Input" })).toHaveCount(1);
-    await expect(nodeCards.filter({ hasText: "Output" })).toHaveCount(1);
+  test("EN3: invalid slug shows 404 on tool page", async ({ page }) => {
+    // Invalid slugs never reach the editor — the tool page returns 404.
+    // The editor only accepts ?recipe={id} (from personal store or cloud).
+    const response = await page.goto("/nonexistent-recipe");
+    expect(response?.status()).toBe(404);
   });
 
   test("BN1: beta dialog renders and can be dismissed", async ({ page }) => {

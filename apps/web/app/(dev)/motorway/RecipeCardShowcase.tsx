@@ -27,6 +27,7 @@ import {
 import { SavedRecipeCard } from "@/components/blocks/SavedRecipeCard";
 import { getBntoIcon } from "@/lib/bntoIcons";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
+import { editorUrl } from "@/lib/routes";
 
 /* ── Mock recipe data ──────────────────────────────────────── */
 
@@ -116,7 +117,7 @@ export function RecipeCardShowcase() {
                   <SavedRecipeCard
                     recipe={item.recipe}
                     lastStatus={item.lastStatus}
-                    href={`/editor?recipe=${item.recipe.id}`}
+                    href={editorUrl(item.recipe.id)}
                     loading={loading}
                   />
                 </ScaleIn>
