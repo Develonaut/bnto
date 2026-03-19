@@ -1,6 +1,6 @@
 # Unified Recipe Model — Stacked PRs
 
-**Status:** PR 1 in progress
+**Status:** Complete (PRs #226–#229)
 **Created:** 2026-03-18
 **Updated:** 2026-03-18
 
@@ -103,7 +103,7 @@ Both live in `@bnto/nodes` as pure functions.
 
 ## PR Stack
 
-### PR 1: Type Unification (current — in progress)
+### PR 1: Type Unification — COMPLETE (PR #226, merged)
 
 **Branch:** `feat/1-type-unification`
 
@@ -118,26 +118,28 @@ Both live in `@bnto/nodes` as pure functions.
 - Web: `bntoRegistry.ts` derives title/h1 from name
 - All tests updated — build + tests green
 
-### PR 2: core.registry + @bnto/registry package
+### PR 2: core.registry — COMPLETE (PR #227, merged)
 
-- `@bnto/registry` package houses predefined recipes (open source friendly)
-- `core.registry` Zustand store with localStorage persistence
-- Client API: `core.registry.getRecipes()`, `.getNodeTypes()`, etc.
-- React hooks for reactive access
+- `core.registry` as 6th domain on the `core` singleton
+- Zustand store with `populate()`, initialized from `@bnto/nodes` static data
+- Client API: `core.registry.getRecipes()`, `.getNodeTypes()`, `.getCategories()`, `.getProcessors()`
+- React hooks: `useRecipes()`, `useNodeTypes()`, `useCategories()`, `useProcessors()`
 
-### PR 3: URL Unification
+### PR 3: URL Unification — COMPLETE (PR #228)
 
-- Eliminate `?from={slug}` — "Open in Editor" clones template to personal store, navigates by ID
+- Eliminated `?from={slug}` — "Open in Editor" clones template to personal store, navigates by ID
 - `createFromDefinition(definition)` in recipe client
-- Simplify `useEditorRecipe` — only `?recipe={id}` or blank canvas
+- `editorUrl(id)` centralised in `lib/routes.ts`
+- Simplified `useEditorRecipe` — only `?recipe={id}` or blank canvas
 
-### PR 4: Surface Migration
+### PR 4: Surface Migration — COMPLETE (PR #229)
 
-- Runtime surfaces read from `core.registry` instead of direct `@bnto/nodes` imports
-- Build-time surfaces (sitemap, llms.txt) keep direct imports
+- Runtime surfaces (`useNodePalette`, `RecipePickerGrid`, `DevTab`) consume `core.registry` hooks
+- Build-time surfaces (navData, sitemap, llms.txt) keep direct `@bnto/nodes` imports (SSG can't use Zustand)
 
-### PR 5: Documentation + Test Audit
+### PR 5: Documentation + Test Audit — COMPLETE
 
-- Update journey matrices, PLAN.md, CLAUDE.md
-- Document core.registry as 6th domain
-- Final test coverage sweep
+- Updated editor journey matrix (EN2, EN3, EN4 — clone-on-click, no `?from=`)
+- Updated PLAN.md (Sprint 7 Wave 1-3 tasks marked complete, "What's Built" updated)
+- Updated strategy doc status
+- `core.registry` documented as 6th domain in core-api.md

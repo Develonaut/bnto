@@ -64,9 +64,11 @@ See [core-api.md](core-api.md) for the full API design rules.
 
 ### `packages/core/` (`@bnto/core`) -- Transport-agnostic API layer
 
-- React hooks for all data operations (recipes, executions, user, auth)
+- 6 domains: `core.recipes`, `core.executions`, `core.user`, `core.auth`, `core.telemetry`, `core.registry`
+- React hooks for all data operations (recipes, executions, user, auth, registry)
 - TypeScript types and interfaces shared across the app
 - Zustand stores for domain state (opaque to consumers -- accessed via `use*State()` hooks)
+- Registry domain (`core.registry`) -- runtime source of truth for predefined recipes + node type metadata
 - Query layer (`queries/`) for read-path option construction with select transforms
 - Service layer (`services/`) for mutations, cache invalidation, infrastructure lifecycle
 - Transport adapters: Convex (web data), browser (WASM engine + Web Worker), Tauri (desktop, planned)
