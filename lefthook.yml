@@ -3,7 +3,7 @@ pre-commit:
   commands:
     wasm-codegen:
       glob: "engine/**/*.{rs,toml}"
-      run: task wasm:codegen
+      run: task wasm:codegen && git add apps/web/public/wasm/bnto_wasm.js apps/web/public/wasm/bnto_wasm_bg.wasm engine/catalog.snapshot.json packages/@bnto/nodes/src/generated/
       stage_fixed: true
 
     prettier:
