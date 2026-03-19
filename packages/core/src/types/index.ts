@@ -37,3 +37,5 @@ export type {
 } from "./browser";
 
 export type { TelemetryConfig, TelemetryProperties, TelemetryUserTraits } from "./telemetry";
+
+export type { FlagResult, FlagSubscriber } from "./flags";

@@ -36,7 +36,7 @@ src/
 └── utils/                     # Pure utility functions
 ```
 
-## 6-Domain Public API
+## 7-Domain Public API
 
 All access goes through the `core` singleton:
 
@@ -48,6 +48,7 @@ All access goes through the `core` singleton:
 | `core.auth`       | Session state + auth actions                               | `core.auth.useIsAuthenticated()`       |
 | `core.telemetry`  | Product event tracking                                     | `core.telemetry.capture("recipe_run")` |
 | `core.registry`   | Predefined recipes + node type metadata                    | `core.registry.useRecipes()`           |
+| `core.flags`      | Feature flags + A/B testing                                | `core.flags.useFlag("pro-save")`       |
 
 ## Key Concepts
 

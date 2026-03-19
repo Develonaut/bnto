@@ -35,7 +35,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
 - **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), tag-triggered release pipeline (CI gate → Vercel preview → E2E → Lighthouse → auto-deploy Vercel + Convex to production on stable tags → GitHub Release), PostHog telemetry wired
-- **Packages:** `@bnto/core` (6 domains: recipes, executions, user, auth, telemetry, registry), `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/ui`, `@bnto/editor`
+- **Packages:** `@bnto/core` (7 domains: recipes, executions, user, auth, telemetry, registry, flags), `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/ui`, `@bnto/editor`
 
 ---
 
@@ -864,6 +864,12 @@ Files: `app/(auth)/`, `packages/@bnto/auth/`
 **Priority: Triage.** On mount of the my-recipes page, kick off `core.recipes.syncToCloud()` so previously unsynced local recipes get pushed to the cloud. Users should see non-synced recipes transition to synced status in real time.
 
 Files: `apps/web/app/(app)/my-recipes/`, `packages/core/src/clients/recipeClient.ts` (`syncToCloud`)
+
+### Triage: Code-driven feature flag definitions for self-hosters and contributors
+
+**Priority: Triage.** Current feature flags are dashboard-driven (PostHog UI only), which doesn't scale to self-hosters (no PostHog access) or open-source contributors (can't test flag-gated features). Evaluate defining flag keys, variants, and defaults in the repo with PostHog as a runtime override layer. Options: local defaults file, Vercel Flags SDK, Convex flags table.
+
+Files: `.claude/rules/feature-flags.md` (open source consideration section), `.claude/decisions/feature-flags.md`
 
 ## Reference
 
