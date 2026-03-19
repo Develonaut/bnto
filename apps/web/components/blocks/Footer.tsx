@@ -2,9 +2,11 @@ import type { CSSProperties } from "react";
 
 import Link from "next/link";
 
-import { ArrowUpRightIcon, Container, GithubIcon, Row, Stack, Text } from "@bnto/ui";
+import Image from "next/image";
 
-import { GITHUB_URL, LICENSE_LINE, TAGLINE, TRUST_LINE } from "@/lib/copy";
+import { ArrowUpRightIcon, Button, Container, GithubIcon, Row, Stack, Text } from "@bnto/ui";
+
+import { BUYMEACOFFEE_URL, GITHUB_URL, LICENSE_LINE, TAGLINE, TRUST_LINE } from "@/lib/copy";
 
 import { NavButton } from "./NavButton";
 
@@ -72,6 +74,29 @@ export function Footer() {
                 Open source
                 <ArrowUpRightIcon className="size-3" />
               </a>
+              <Button
+                href={BUYMEACOFFEE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="ghost"
+                size="sm"
+                elevation="sm"
+                style={
+                  {
+                    "--face-bg": "#ffdc03",
+                    "--face-fg": "#0d0c22",
+                  } as CSSProperties
+                }
+                aria-label="Support bnto — Buy Me a Coffee"
+              >
+                <Image
+                  src="/bmc-logo.svg"
+                  alt="Buy me a coffee"
+                  width={120}
+                  height={26}
+                  className="h-3.5 w-auto"
+                />
+              </Button>
             </Row>
           </Stack>
 
