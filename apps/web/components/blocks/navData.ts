@@ -1,7 +1,7 @@
 /**
  * Shared navigation data for desktop and mobile navbars.
  *
- * Recipe links are derived from @bnto/nodes RECIPES — no duplicate
+ * Recipe links are derived from @bnto/registry — no duplicate
  * data to maintain. Short nav descriptions override the longer SEO copy.
  * Both Navbar (desktop) and MobileNavMenu (mobile) consume these.
  */

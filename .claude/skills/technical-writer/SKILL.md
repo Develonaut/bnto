@@ -148,6 +148,7 @@ The following READMEs exist in the repo:
 | `packages/editor/README.md`          | @bnto/editor            |
 | `packages/ui/README.md`              | @bnto/ui                |
 | `packages/@bnto/nodes/README.md`     | @bnto/nodes             |
+| `packages/@bnto/registry/README.md`  | @bnto/registry          |
 | `packages/@bnto/backend/README.md`   | @bnto/backend           |
 | `packages/@bnto/auth/README.md`      | @bnto/auth              |
 | `apps/web/README.md`                 | Next.js web app         |
