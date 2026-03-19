@@ -865,6 +865,12 @@ Files: `app/(auth)/`, `packages/@bnto/auth/`
 
 Files: `apps/web/app/(app)/my-recipes/`, `packages/core/src/clients/recipeClient.ts` (`syncToCloud`)
 
+### Triage: Code-driven feature flag definitions for self-hosters and contributors
+
+**Priority: Triage.** Current feature flags are dashboard-driven (PostHog UI only), which doesn't scale to self-hosters (no PostHog access) or open-source contributors (can't test flag-gated features). Evaluate defining flag keys, variants, and defaults in the repo with PostHog as a runtime override layer. Options: local defaults file, Vercel Flags SDK, Convex flags table.
+
+Files: `.claude/rules/feature-flags.md` (open source consideration section), `.claude/decisions/feature-flags.md`
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |

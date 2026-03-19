@@ -4,7 +4,7 @@
 **Updated:** March 2026
 **Status:** Foundational — applies to every decision, always
 
-These are not guidelines. They are the DNA of Bnto. Every line of code, every UI decision, every API design gets evaluated against these four. If something conflicts, go back to the drawing board.
+These are not guidelines. They are the DNA of Bnto. Every line of code, every UI decision, every API design gets evaluated against these five. If something conflicts, go back to the drawing board.
 
 ---
 
@@ -38,11 +38,24 @@ The user should never see complexity they didn't ask for. The developer should n
 
 **For developers:** Multi-tiered APIs where each layer is a clean abstraction over the one below. If changing one layer requires changing another, the abstraction is leaking -- fix the boundary. Can a new developer understand a layer without reading the layer below it?
 
+## 5. Config as Code
+
+Bnto is open source. Every piece of configuration — feature flags, recipe definitions, node schemas, rollout rules — should be representable in the repo. External dashboards (PostHog, Vercel, Convex) are runtime overrides, not the source of truth.
+
+**Why this matters:**
+
+- **Self-hosters can fork and run.** If config lives in a third-party dashboard, a fork is broken on day one. If it lives in the repo, `git clone` gives you a working product.
+- **Contributors can see the full surface.** A contributor can't review, test, or modify what they can't see. Code-defined config is reviewable in PRs.
+- **Git is the audit log.** Who changed what, when, and why — for free.
+- **No vendor lock-in on configuration.** The repo works without any specific SaaS. External services enhance (targeting, analytics, rollout) but never gatekeep.
+
+**The test:** If a new developer clones the repo, can they understand and modify every behavior without access to any external dashboard? If not, the config needs a code-defined default.
+
 ---
 
 ## How They Reinforce Each Other
 
-Modularity makes testing easy. Going with the grain produces natural abstractions. Good abstractions enable composition. TDD validates all of it continuously.
+Modularity makes testing easy. Going with the grain produces natural abstractions. Good abstractions enable composition. Config as code keeps the repo self-contained and forkable. TDD validates all of it continuously.
 
 ---
 
@@ -54,6 +67,7 @@ Modularity makes testing easy. Going with the grain produces natural abstraction
 - Every API boundary should be a clean abstraction -- callers shouldn't need to know what's below
 - When something feels awkward to build, that's a signal the design needs revisiting
 - "Did we make the UX/DX easier?" is always a valid question to stop and ask
+- Prefer code-defined defaults over dashboard-only config — the repo should be self-contained for self-hosters and contributors
 
 ---
 

@@ -34,6 +34,7 @@
 | Environment variables          | [environment-variables.md](.claude/environment-variables.md)            |
 | Expression input UX            | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)       |
 | Config panel controls          | [config-controls.md](.claude/strategy/config-controls.md)               |
+| Feature flags & A/B testing    | [feature-flags.md](.claude/rules/feature-flags.md)                      |
 | Releases & versioning          | [releases.md](.claude/rules/releases.md)                                |
 
 ---
@@ -194,8 +195,9 @@ bnto/
 2. **Go with the grain** — Work with tools the way they want to be used
 3. **Modularity is our bread and butter** — Think small, build small, compose big
 4. **Abstraction is the goal** — "Did we make this easier?" If no, go back
-5. **Engine is the stable API** — Rust WASM for browser, Tauri native for desktop
-6. **Open source core** — Cloud sells convenience, not proprietary features
+5. **Config as code** — The repo is the source of truth. Dashboards override, never gatekeep
+6. **Engine is the stable API** — Rust WASM for browser, Tauri native for desktop
+7. **Open source core** — Cloud sells convenience, not proprietary features
 
 See [core-principles.md](.claude/strategy/core-principles.md) for the full treatment.
 
@@ -218,6 +220,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [auth-routing.md](.claude/rules/auth-routing.md)                   | Proxy route protection, auth flow                           |
 | [convex.md](.claude/rules/convex.md)                               | Query patterns, validators, N+1 prevention                  |
 | [node-responsibilities.md](.claude/rules/node-responsibilities.md) | Engine / @bnto/nodes / Editor responsibility matrix         |
+| [feature-flags.md](.claude/rules/feature-flags.md)                 | Feature flags & A/B testing via PostHog + `core.flags` API  |
 | [gotchas.md](.claude/rules/gotchas.md)                             | Known pitfalls and fixes                                    |
 
 ### Strategy & Reference (read on demand)
