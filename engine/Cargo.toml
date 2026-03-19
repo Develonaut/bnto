@@ -30,6 +30,7 @@
 # When we add new crates (like bnto-image for image processing),
 # we add them here.
 members = [
+    "crates/bnto-cli",
     "crates/bnto-core",
     "crates/bnto-csv",
     "crates/bnto-file",

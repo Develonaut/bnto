@@ -1,32 +1,13 @@
 {
-  "description": "CR1: Web-ready image pipeline — resize → convert → compress",
-  "expectedNodeCount": 5,
   "nodes": [
+    { "id": "input", "type": "input" },
+    { "id": "resize", "type": "image", "parameters": { "operation": "resize", "width": 200 } },
     {
-      "type": "input",
-      "operation": null
-    },
-    {
+      "id": "convert",
       "type": "image",
-      "operation": "resize",
-      "parameters": {
-        "width": 200
-      }
+      "parameters": { "operation": "convert", "format": "webp" }
     },
-    {
-      "type": "image",
-      "operation": "convert",
-      "parameters": {
-        "format": "webp"
-      }
-    },
-    {
-      "type": "image",
-      "operation": "compress"
-    },
-    {
-      "type": "output",
-      "operation": null
-    }
+    { "id": "compress", "type": "image", "parameters": { "operation": "compress" } },
+    { "id": "output", "type": "output" }
   ]
 }

@@ -1,0 +1,21 @@
+[package]
+name = "bnto-cli"
+version = "0.1.0"
+edition = "2021"
+description = "CLI binary for running .bnto.json recipes against local files"
+
+[[bin]]
+name = "bnto"
+path = "src/main.rs"
+
+[dependencies]
+bnto-core = { path = "../bnto-core" }
+bnto-image = { path = "../bnto-image" }
+bnto-csv = { path = "../bnto-csv" }
+bnto-file = { path = "../bnto-file" }
+
+clap = { version = "4", features = ["derive"] }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"

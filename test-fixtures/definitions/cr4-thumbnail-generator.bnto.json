@@ -1,35 +1,17 @@
 {
-  "description": "CR4: Thumbnail generator — resize → convert → rename",
-  "expectedNodeCount": 5,
   "nodes": [
+    { "id": "input", "type": "input" },
+    { "id": "resize", "type": "image", "parameters": { "operation": "resize", "width": 100 } },
     {
-      "type": "input",
-      "operation": null
-    },
-    {
+      "id": "convert",
       "type": "image",
-      "operation": "resize",
-      "parameters": {
-        "width": 100
-      }
+      "parameters": { "operation": "convert", "format": "webp" }
     },
     {
-      "type": "image",
-      "operation": "convert",
-      "parameters": {
-        "format": "webp"
-      }
-    },
-    {
+      "id": "rename",
       "type": "file-system",
-      "operation": "rename",
-      "parameters": {
-        "prefix": "thumb_"
-      }
+      "parameters": { "operation": "rename", "prefix": "thumb_" }
     },
-    {
-      "type": "output",
-      "operation": null
-    }
+    { "id": "output", "type": "output" }
   ]
 }

@@ -1,25 +1,12 @@
 {
-  "description": "CR2: Compress + organize — compress → rename with suffix",
-  "expectedNodeCount": 4,
   "nodes": [
+    { "id": "input", "type": "input" },
+    { "id": "compress", "type": "image", "parameters": { "operation": "compress" } },
     {
-      "type": "input",
-      "operation": null
-    },
-    {
-      "type": "image",
-      "operation": "compress"
-    },
-    {
+      "id": "rename",
       "type": "file-system",
-      "operation": "rename",
-      "parameters": {
-        "suffix": "-min"
-      }
+      "parameters": { "operation": "rename", "suffix": "-min" }
     },
-    {
-      "type": "output",
-      "operation": null
-    }
+    { "id": "output", "type": "output" }
   ]
 }

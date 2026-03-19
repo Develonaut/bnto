@@ -35,6 +35,8 @@ tasks:
       - task: wasm:lint
       - echo "=== rust tests (unit + WASM integration) ==="
       - task: wasm:test
+      - echo "=== cli tests ==="
+      - task: cli:test
       - echo "=== typescript build ==="
       - task: ui:build
       - echo "=== typescript tests ==="
@@ -94,6 +96,27 @@ tasks:
     dir: ./packages/@bnto/backend
     cmds:
       - npx convex run cleanup:purgeAll '{}'
+
+  # CLI tasks (native binary)
+  cli:build:
+    desc: Build CLI binary (release)
+    dir: ./engine
+    cmds: [cargo build --release -p bnto-cli]
+
+  cli:build:dev:
+    desc: Build CLI binary (dev, faster)
+    dir: ./engine
+    cmds: [cargo build -p bnto-cli]
+
+  cli:test:
+    desc: Run CLI integration tests (native)
+    dir: ./engine
+    cmds: [cargo test -p bnto-cli]
+
+  cli:run:
+    desc: "Run a recipe via CLI (e.g., task cli:run -- run recipe.bnto.json files...)"
+    dir: ./engine
+    cmds: ["cargo run -p bnto-cli -- {{.CLI_ARGS}}"]
 
   # WASM tasks (engine/)
   wasm:build:
@@ -224,7 +247,8 @@ tasks:
       - task: ui:build
 
   test:all:
-    desc: Test everything (Rust + TypeScript)
+    desc: Test everything (Rust + TypeScript + CLI)
     cmds:
       - task: wasm:test
+      - task: cli:test
       - task: ui:test
