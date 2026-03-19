@@ -3,6 +3,7 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import type { BentoNode } from "../../adapters/types";
+import { NodeHandles } from "./NodeHandles";
 
 /**
  * ContainerGroupNode — dashed boundary overlay for expanded containers.
@@ -25,6 +26,7 @@ export const ContainerGroupNode = memo(function ContainerGroupNode({ data }: Nod
       role="group"
       aria-label={data.label ? `${data.label} group` : "Node group"}
     >
+      <NodeHandles />
       <div className="absolute inset-0 rounded-xl bg-muted/40" />
       <svg className="absolute inset-0 text-muted-foreground/40" width={w} height={h}>
         <rect

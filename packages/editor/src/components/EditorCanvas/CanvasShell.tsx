@@ -10,6 +10,7 @@ import { useExecutionNodes } from "../../hooks/useExecutionNodes";
 import { usePlaceholderNodes } from "../../hooks/usePlaceholderNodes";
 import { useAddDividerNodes } from "../../hooks/useAddDividerNodes";
 import { useEditorShortcuts } from "../../hooks/useEditorShortcuts";
+import { usePipelineEdges } from "../../hooks/usePipelineEdges";
 
 /**
  * CanvasShell — the canvas surface with floating overlay children.
@@ -32,6 +33,7 @@ function CanvasShell({ children }: CanvasShellProps) {
   const statusNodes = useExecutionNodes(layoutedNodes);
   const { displayNodes, handleNodesChange } = usePlaceholderNodes(statusNodes, onNodesChange);
   const nodesWithDividers = useAddDividerNodes(displayNodes);
+  const pipelineEdges = usePipelineEdges(nodesWithDividers);
   const editor = useEditor();
   useEditorShortcuts();
 
@@ -56,7 +58,7 @@ function CanvasShell({ children }: CanvasShellProps) {
       <Canvas
         nodes={nodesWithDividers}
         onNodesChange={handleNodesChange}
-        edges={edges}
+        edges={pipelineEdges}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         onPaneClick={handlePaneClick}

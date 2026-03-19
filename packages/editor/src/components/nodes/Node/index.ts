@@ -13,3 +13,4 @@ export { NodeIcon } from "./NodeIcon";
 export { NodeLabel } from "./NodeLabel";
 export { NodeSublabel } from "./NodeSublabel";
 export { NodeDeleteButton } from "./NodeDeleteButton";
+export { NodeHandles } from "../NodeHandles";

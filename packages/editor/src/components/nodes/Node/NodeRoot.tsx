@@ -49,6 +49,8 @@ interface NodeRootProps {
   selected?: boolean;
   /** Current execution status. Drives elevation, variant overrides, interaction. */
   status?: string;
+  /** Whether the node is dormant (execution pending, not yet reached). */
+  dormant?: boolean;
   /** Accessible label describing this node (e.g. "Compress Images node"). */
   "aria-label"?: string;
   /** Composed content — NodeHeader, NodeBody. */
@@ -62,6 +64,7 @@ function NodeRoot({
   align,
   selected = false,
   status,
+  dormant,
   "aria-label": ariaLabel,
   children,
 }: NodeRootProps) {
@@ -83,6 +86,7 @@ function NodeRoot({
           pressed={presentation.pressed}
           hovered={presentation.hovered}
           muted={presentation.muted}
+          dormant={dormant}
           role="button"
           aria-label={ariaLabel}
           aria-selected={selected}

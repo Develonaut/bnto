@@ -9,6 +9,7 @@ import {
   NodeLabel,
   NodeSublabel,
   NodeDeleteButton,
+  NodeHandles,
 } from "./Node";
 
 /**
@@ -29,14 +30,18 @@ export const CompartmentNode = memo(function CompartmentNode({
   const status = data.status ?? "idle";
   const isFailed = status === "failed";
 
+  const isTopLevel = !data.parentContainerId;
+
   return (
     <NodeRoot
       width={data.width}
       height={data.height}
       selected={selected}
       status={status}
+      dormant={data.dormant}
       aria-label={`${data.label} node`}
     >
+      {isTopLevel && <NodeHandles />}
       <NodeHeader visible={selected}>
         <NodeDeleteButton nodeId={id} selected={selected} />
       </NodeHeader>

@@ -32,7 +32,11 @@ function useExecutionNodes(nodes: BentoNode[]): BentoNode[] {
       const statusChanged = status && status !== node.data.status;
       const progressChanged = progress !== undefined && progress !== node.data.progress;
 
-      if (!statusChanged && !progressChanged) return node;
+      // During execution, nodes are dormant until they start (pending = dormant).
+      const dormant = hasState && (status === "pending" || !status);
+      const dormantChanged = dormant !== (node.data.dormant ?? false);
+
+      if (!statusChanged && !progressChanged && !dormantChanged) return node;
 
       return {
         ...node,
@@ -40,6 +44,7 @@ function useExecutionNodes(nodes: BentoNode[]): BentoNode[] {
           ...node.data,
           ...(statusChanged ? { status } : {}),
           ...(progressChanged ? { progress } : {}),
+          ...(dormantChanged ? { dormant } : {}),
         },
       };
     });

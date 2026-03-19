@@ -44,6 +44,8 @@ type CompartmentNodeData = {
   status: "idle" | "pending" | "active" | "completed" | "failed";
   /** Per-node execution progress (0–100). Undefined when idle. */
   progress?: number;
+  /** Whether the node is dormant (execution pending, not yet reached by the wave). */
+  dormant?: boolean;
   /** Icon identifier string (from NodeTypeInfo.icon) — resolved to a component by the renderer. */
   icon?: string;
   /** True for input/output nodes — protects them from deletion and reordering. */
@@ -86,7 +88,10 @@ type NodeConfigs = Record<string, NodeConfig>;
 // ReactFlow-compatible node — extends RF's Node with typed data
 // ---------------------------------------------------------------------------
 
-type BentoNode = Node<CompartmentNodeData, "compartment" | "io" | "containerGroup" | "addDivider" | "placeholder">;
+type BentoNode = Node<
+  CompartmentNodeData,
+  "compartment" | "io" | "containerGroup" | "addDivider" | "placeholder"
+>;
 
 type BentoLayout = {
   nodes: BentoNode[];

@@ -1,7 +1,7 @@
 import { memo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import type { BentoNode } from "../../adapters/types";
-import { NodeRoot, NodeBody, NodeIcon, NodeLabel, NodeSublabel } from "./Node";
+import { NodeRoot, NodeBody, NodeIcon, NodeLabel, NodeSublabel, NodeHandles } from "./Node";
 
 /**
  * IoNode — Input/Output node on the bento grid.
@@ -12,16 +12,19 @@ import { NodeRoot, NodeBody, NodeIcon, NodeLabel, NodeSublabel } from "./Node";
  */
 
 export const IoNode = memo(function IoNode({ id, data, selected }: NodeProps<BentoNode>) {
+  const isInput = id === "input";
   return (
     <NodeRoot
       width={data.width}
       height={data.height}
       variant="muted"
-      align={id === "input" ? "end" : "start"}
+      align={isInput ? "end" : "start"}
       selected={selected}
       status={data.status}
+      dormant={data.dormant}
       aria-label={`${data.label} node`}
     >
+      <NodeHandles sourceOnly={isInput} targetOnly={!isInput} />
       <NodeBody>
         <NodeIcon icon={data.icon} variant={data.variant} />
         <NodeLabel>{data.label}</NodeLabel>
