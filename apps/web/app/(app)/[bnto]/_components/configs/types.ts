@@ -64,7 +64,7 @@ export type BntoSlug = keyof BntoConfigMap;
 
 /** Default configs for each bnto — matches fixture defaults. */
 export const DEFAULT_CONFIGS: BntoConfigMap = {
-  "compress-images": { compression: 20 },
+  "compress-images": { compression: 50 },
   "resize-images": { width: 800, maintainAspectRatio: true },
   "convert-image-format": { format: "webp", quality: 80 },
   "rename-files": { pattern: "renamed-{{name}}" },
@@ -74,6 +74,6 @@ export const DEFAULT_CONFIGS: BntoConfigMap = {
     removeDuplicates: false,
   },
   "rename-csv-columns": {},
-  "optimize-images-for-web": { width: 800, format: "webp", compression: 20 },
+  "optimize-images-for-web": { width: 800, format: "webp", compression: 50 },
   "generate-thumbnails": { width: 150, format: "webp", prefix: "thumb_" },
 };

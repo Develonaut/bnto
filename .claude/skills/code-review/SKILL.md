@@ -83,6 +83,9 @@ Skip if no Rust files changed. Otherwise:
 - [ ] **Comments**: Heavily commented for learning purposes. Explain what every function does, WHY each line exists, and Rust-specific concepts inline (ownership, borrowing, lifetimes, traits)
 - [ ] **Crate boundaries**: `bnto-core` (types/traits/progress), node crates (`bnto-image`, `bnto-csv`, `bnto-file`) implement traits, `bnto-wasm` is the single cdylib entry point
 - [ ] **Tests**: Unit tests in `#[cfg(test)]` blocks, WASM integration tests in `tests/` directory. TDD-first — every function has tests
+- [ ] **Parameter usage completeness**: Every parameter defined in `metadata()` is read and used in ALL code paths of `process()`. If a param is format-specific, it's documented in the description and has format-aware test coverage
+- [ ] **Shared encoding**: Image processors use `encode::encode_image()` for final encoding, not duplicated per-processor encode functions
+- [ ] **Parameterized tests**: New or modified node params have tests verifying different values produce different outputs
 
 ## Step 5: TypeScript Compliance
 

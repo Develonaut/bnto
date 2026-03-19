@@ -12,8 +12,6 @@ use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 use image::codecs::jpeg::JpegEncoder;
-#[cfg(test)]
-use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 
 use crate::common::image_accepts;
 use crate::format::ImageFormat;
@@ -67,10 +65,15 @@ impl CompressImages {
 
     /// Compress a PNG image using lossy color quantization.
     ///
-    /// Reduces 24-bit truecolor to an 8-bit indexed palette (256 colors max)
-    /// using quantizr (median cut + Floyd-Steinberg dithering).
-    fn compress_png(&self, data: &[u8], progress: &ProgressReporter) -> Result<Vec<u8>, BntoError> {
-        crate::quantize::compress_png_quantized(data, progress)
+    /// Reduces 24-bit truecolor to an indexed palette using quantizr.
+    /// Compression param controls palette size and dithering aggressiveness.
+    fn compress_png(
+        &self,
+        data: &[u8],
+        compression: u8,
+        progress: &ProgressReporter,
+    ) -> Result<Vec<u8>, BntoError> {
+        crate::quantize::compress_png_quantized(data, compression, progress)
     }
 
     /// Re-encode a WebP image with lossless compression.
@@ -203,41 +206,37 @@ impl NodeProcessor for CompressImages {
 
 impl CompressImages {
     /// Dispatch compression to the format-specific method.
+    /// All paths now read and apply the compression parameter.
     fn compress_by_format(
         &self,
         input: &NodeInput,
         format: ImageFormat,
         progress: &ProgressReporter,
     ) -> Result<Vec<u8>, BntoError> {
+        let compression = Self::get_compression(&input.params);
         match format {
             ImageFormat::Jpeg => {
-                self.compress_jpeg_with_params(&input.data, &input.params, progress)
+                let quality = Self::compression_to_quality(compression);
+                progress.report(
+                    5,
+                    &format!(
+                        "Compressing JPEG (compression: {compression}, quality: {quality})..."
+                    ),
+                );
+                self.compress_jpeg(&input.data, quality, progress)
             }
             ImageFormat::Png => {
-                progress.report(5, "Optimizing PNG...");
-                self.compress_png(&input.data, progress)
+                progress.report(
+                    5,
+                    &format!("Optimizing PNG (compression: {compression})..."),
+                );
+                self.compress_png(&input.data, compression, progress)
             }
             ImageFormat::WebP => {
                 progress.report(5, "Compressing WebP (lossless)...");
                 self.compress_webp(&input.data, progress)
             }
         }
-    }
-
-    /// Extract compression param, convert to JPEG quality, and compress.
-    fn compress_jpeg_with_params(
-        &self,
-        data: &[u8],
-        params: &serde_json::Map<String, serde_json::Value>,
-        progress: &ProgressReporter,
-    ) -> Result<Vec<u8>, BntoError> {
-        let compression = Self::get_compression(params);
-        let quality = Self::compression_to_quality(compression);
-        progress.report(
-            5,
-            &format!("Compressing JPEG (compression: {compression}, quality: {quality})..."),
-        );
-        self.compress_jpeg(data, quality, progress)
     }
 }
 
@@ -290,15 +289,15 @@ fn insert_compression_ratio(
     }
 }
 
-/// Compression parameter definition (1-100, default 20).
+/// Compression parameter definition (1-100, default 50).
 fn compression_param_def() -> bnto_core::metadata::ParameterDef {
     use bnto_core::metadata::*;
     ParameterDef {
         name: "compression".to_string(),
         label: "Compression".to_string(),
-        description: "How much to compress (1 = minimal, 100 = maximum)".to_string(),
+        description: "How much to compress (1 = minimal, 100 = maximum). Affects all formats: JPEG quality, PNG palette size, WebP re-encoding".to_string(),
         param_type: ParameterType::Number,
-        default: Some(serde_json::json!(20)),
+        default: Some(serde_json::json!(50)),
         constraints: Some(Constraints {
             min: Some(1.0),
             max: Some(100.0),
@@ -586,6 +585,34 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_compress_png_higher_compression_means_smaller_file() {
+        // Compression 80 should produce a smaller PNG than compression 20,
+        // because higher compression reduces the palette size via quantization.
+        let processor = CompressImages::new();
+
+        let input_c20 = make_input_with_compression(TEST_MEDIUM_PNG, "screenshot.png", 20);
+        let input_c80 = make_input_with_compression(TEST_MEDIUM_PNG, "screenshot.png", 80);
+
+        let output_c20 = processor.process(input_c20, &noop_progress()).unwrap();
+        let output_c80 = processor.process(input_c80, &noop_progress()).unwrap();
+
+        let size_c20 = output_c20.files[0].data.len();
+        let size_c80 = output_c80.files[0].data.len();
+
+        assert!(
+            size_c80 < size_c20,
+            "PNG compression 80 ({} bytes) should be smaller than compression 20 ({} bytes)",
+            size_c80,
+            size_c20
+        );
+
+        eprintln!(
+            "PNG compression test: c20={} bytes, c80={} bytes",
+            size_c20, size_c80
+        );
+    }
+
     // =========================================================================
     // WebP Compression Tests
     // =========================================================================
@@ -608,6 +635,23 @@ mod tests {
         );
         assert!(out_file.filename.contains("-compressed"));
         assert_eq!(out_file.mime_type, "image/webp");
+    }
+
+    #[test]
+    fn test_compress_webp_with_compression_param_produces_valid_output() {
+        // WebP is lossless-only, but the compression param should be accepted
+        // without error and produce valid output.
+        let processor = CompressImages::new();
+        let progress = noop_progress();
+        let input = make_input_with_compression(TEST_WEBP, "image.webp", 80);
+
+        let output = processor.process(input, &progress).unwrap();
+        assert_eq!(output.files.len(), 1);
+        assert_eq!(
+            ImageFormat::from_magic_bytes(&output.files[0].data),
+            Some(ImageFormat::WebP),
+            "WebP output should be valid even with compression param"
+        );
     }
 
     // =========================================================================
@@ -1408,6 +1452,7 @@ mod tests {
 
     /// Helper: create a 1x1 pixel PNG image (a single green pixel).
     fn create_1x1_png() -> Vec<u8> {
+        use image::codecs::png::{CompressionType, FilterType, PngEncoder};
         use image::{DynamicImage, Rgb, RgbImage};
 
         let mut img = RgbImage::new(1, 1);

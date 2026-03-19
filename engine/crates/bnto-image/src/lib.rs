@@ -8,6 +8,7 @@ mod common;
 
 pub mod compress;
 pub mod convert;
+pub mod encode;
 pub mod format;
 pub mod orientation;
 pub mod quantize;

@@ -10,10 +10,15 @@ use bnto_core::progress::ProgressReporter;
 
 use crate::orientation::decode_with_orientation;
 
-/// Compress a PNG via lossy color quantization (truecolor -> 256-color palette).
+/// Compress a PNG via lossy color quantization (truecolor -> indexed palette).
 /// Called by `CompressImages::compress_png()`.
+///
+/// `compression` (1-100) controls aggressiveness:
+///   - max_colors: 256 (compression=1) → 32 (compression=100)
+///   - dithering: 0.3 (compression<33) → 0.5 (<66) → 0.8 (>=66)
 pub fn compress_png_quantized(
     data: &[u8],
+    compression: u8,
     progress: &ProgressReporter,
 ) -> Result<Vec<u8>, BntoError> {
     progress.report(10, "Decoding PNG...");
@@ -22,7 +27,8 @@ pub fn compress_png_quantized(
     let (width, height) = rgba.dimensions();
 
     progress.report(30, "Quantizing colors (median cut)...");
-    let (qz_image, mut result) = run_quantization(rgba.as_raw(), width, height)?;
+    let settings = QuantizeSettings::from_compression(compression);
+    let (qz_image, mut result) = run_quantization(rgba.as_raw(), width, height, &settings)?;
 
     progress.report(50, "Remapping pixels to palette...");
     let indices = remap_pixels(&qz_image, &mut result, width, height)?;
@@ -35,24 +41,51 @@ pub fn compress_png_quantized(
     Ok(output)
 }
 
-/// Run median cut quantization: find the best 256-color palette.
-fn run_quantization(
-    raw: &[u8],
+/// Quantization settings derived from the compression parameter.
+struct QuantizeSettings {
+    max_colors: u16,
+    dithering: f32,
+}
+
+impl QuantizeSettings {
+    /// Map compression (1-100) to quantization aggressiveness.
+    /// Higher compression → fewer colors + more dithering → smaller file.
+    fn from_compression(compression: u8) -> Self {
+        let c = compression.clamp(1, 100) as u16;
+        // Linear interpolation: 256 (compression=1) → 32 (compression=100)
+        let max_colors = (256 - ((c - 1) * 224 / 99)).max(32);
+        let dithering = if compression < 33 {
+            0.3
+        } else if compression < 66 {
+            0.5
+        } else {
+            0.8
+        };
+        Self {
+            max_colors,
+            dithering,
+        }
+    }
+}
+
+/// Run median cut quantization with configurable settings.
+fn run_quantization<'a>(
+    raw: &'a [u8],
     width: u32,
     height: u32,
-) -> Result<(quantizr::Image<'_>, quantizr::QuantizeResult), BntoError> {
+    settings: &QuantizeSettings,
+) -> Result<(quantizr::Image<'a>, quantizr::QuantizeResult), BntoError> {
     let qz_image = quantizr::Image::new(raw, width as usize, height as usize)
         .map_err(|e| BntoError::ProcessingFailed(format!("Quantization setup failed: {e}")))?;
 
     let mut opts = quantizr::Options::default();
-    opts.set_max_colors(256)
+    opts.set_max_colors(settings.max_colors as i32)
         .map_err(|e| BntoError::ProcessingFailed(format!("Invalid color count: {e}")))?;
 
     let mut result = quantizr::QuantizeResult::quantize(&qz_image, &opts);
 
-    // 0.5 dithering: balances banding (0.0) vs noise (1.0) for photos.
     result
-        .set_dithering_level(0.5)
+        .set_dithering_level(settings.dithering)
         .map_err(|e| BntoError::ProcessingFailed(format!("Invalid dither level: {e}")))?;
 
     Ok((qz_image, result))
@@ -171,14 +204,14 @@ mod tests {
     #[test]
     fn quantized_png_is_valid() {
         let progress = ProgressReporter::new_noop();
-        let result = compress_png_quantized(MEDIUM_PNG, &progress).unwrap();
+        let result = compress_png_quantized(MEDIUM_PNG, 50, &progress).unwrap();
         assert!(is_valid_png(&result), "Output should be a valid PNG");
     }
 
     #[test]
     fn quantized_png_reduces_size_significantly() {
         let progress = ProgressReporter::new_noop();
-        let result = compress_png_quantized(MEDIUM_PNG, &progress).unwrap();
+        let result = compress_png_quantized(MEDIUM_PNG, 50, &progress).unwrap();
 
         let original_kb = MEDIUM_PNG.len() / 1024;
         let output_kb = result.len() / 1024;
@@ -200,7 +233,7 @@ mod tests {
     #[test]
     fn quantized_png_handles_large_image() {
         let progress = ProgressReporter::new_noop();
-        let result = compress_png_quantized(LARGE_PNG, &progress).unwrap();
+        let result = compress_png_quantized(LARGE_PNG, 50, &progress).unwrap();
 
         let original_kb = LARGE_PNG.len() / 1024;
         let output_kb = result.len() / 1024;
@@ -216,6 +249,35 @@ mod tests {
             reduction_pct > 30.0,
             "Expected >30% reduction on large PNG, got {reduction_pct:.1}%"
         );
+    }
+
+    #[test]
+    fn higher_compression_produces_smaller_png() {
+        let progress = ProgressReporter::new_noop();
+        let light = compress_png_quantized(MEDIUM_PNG, 20, &progress).unwrap();
+        let heavy = compress_png_quantized(MEDIUM_PNG, 80, &progress).unwrap();
+
+        assert!(
+            heavy.len() < light.len(),
+            "Compression 80 ({} bytes) should be smaller than compression 20 ({} bytes)",
+            heavy.len(),
+            light.len()
+        );
+    }
+
+    #[test]
+    fn quantize_settings_boundary_values() {
+        let low = QuantizeSettings::from_compression(1);
+        assert_eq!(low.max_colors, 256);
+        assert!((low.dithering - 0.3).abs() < f32::EPSILON);
+
+        let high = QuantizeSettings::from_compression(100);
+        assert_eq!(high.max_colors, 32);
+        assert!((high.dithering - 0.8).abs() < f32::EPSILON);
+
+        let mid = QuantizeSettings::from_compression(50);
+        assert!(mid.max_colors > 32 && mid.max_colors < 256);
+        assert!((mid.dithering - 0.5).abs() < f32::EPSILON);
     }
 
     #[test]

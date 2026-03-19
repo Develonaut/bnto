@@ -214,11 +214,11 @@
         {
           "name": "compression",
           "label": "Compression",
-          "description": "How much to compress (1 = minimal, 100 = maximum)",
+          "description": "How much to compress (1 = minimal, 100 = maximum). Affects all formats: JPEG quality, PNG palette size, WebP re-encoding",
           "paramType": {
             "type": "number"
           },
-          "default": 20,
+          "default": 50,
           "constraints": {
             "min": 1.0,
             "max": 100.0,

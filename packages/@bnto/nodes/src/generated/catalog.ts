@@ -295,9 +295,10 @@ export const PROCESSORS: readonly ProcessorDef[] = [
       {
         name: "compression",
         label: "Compression",
-        description: "How much to compress (1 = minimal, 100 = maximum)",
+        description:
+          "How much to compress (1 = minimal, 100 = maximum). Affects all formats: JPEG quality, PNG palette size, WebP re-encoding",
         type: "number" as const,
-        default: 20,
+        default: 50,
         constraints: { min: 1, max: 100, required: false },
         visibleWhen: { param: "operation", equals: "compress" },
       },
