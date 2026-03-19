@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { definitionToPipeline } from "./definitionToPipeline";
-import type { Definition } from "@bnto/nodes";
-import { getRecipeBySlug } from "@bnto/nodes";
+import type { Definition } from "@bnto/registry";
+import { getRecipeBySlug } from "@bnto/registry";
 
 const SIMPLE_DEF: Definition = {
   id: "root",

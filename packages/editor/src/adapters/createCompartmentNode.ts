@@ -8,7 +8,7 @@
  * Pure function — no React, no DOM, fully testable.
  */
 
-import type { NodeTypeName } from "@bnto/nodes";
+import type { NodeTypeName } from "@bnto/core";
 import {
   NODE_TYPE_INFO,
   NODE_SCHEMA_DEFS,
@@ -16,7 +16,7 @@ import {
   getNodeSublabel,
   isIoNodeType,
   isContainerNodeType,
-} from "@bnto/nodes";
+} from "@bnto/core";
 import type { BentoNode, NodeConfig } from "./types";
 import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";

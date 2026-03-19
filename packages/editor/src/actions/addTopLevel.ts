@@ -6,8 +6,8 @@
  * definition tree, and captures undo state.
  */
 
-import type { NodeTypeName } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import type { NodeTypeName } from "@bnto/core";
+import type { Definition } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
 import type { CompartmentNodeResult } from "../adapters/createCompartmentNode";
@@ -30,11 +30,13 @@ function addTopLevel(
 ): AddNodeResult {
   const globalInsertIndex = findInsertIndex(deselected, state, afterNodeId);
 
-  const shifted = deselected.slice(globalInsertIndex).map((n) =>
-    !n.data.parentContainerId
-      ? { ...n, position: { x: n.position.x + STRIDE, y: n.position.y } }
-      : n,
-  );
+  const shifted = deselected
+    .slice(globalInsertIndex)
+    .map((n) =>
+      !n.data.parentContainerId
+        ? { ...n, position: { x: n.position.x + STRIDE, y: n.position.y } }
+        : n,
+    );
 
   const nextNodes = [...deselected.slice(0, globalInsertIndex), newNode, ...shifted];
   const nextConfigs = { ...state.configs, [result.node.id]: result.config };

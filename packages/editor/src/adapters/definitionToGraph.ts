@@ -9,8 +9,14 @@
  * RF's change pipeline and re-rendering CompartmentNode.
  */
 
-import type { Definition, NodeTypeName } from "@bnto/nodes";
-import { NODE_TYPE_INFO, getNodeIcon, getNodeSublabel, isIoNodeType, isContainerNodeType } from "@bnto/nodes";
+import type { Definition, NodeTypeName } from "@bnto/core";
+import {
+  NODE_TYPE_INFO,
+  getNodeIcon,
+  getNodeSublabel,
+  isIoNodeType,
+  isContainerNodeType,
+} from "@bnto/core";
 import type { BentoNode, BentoLayout, NodeConfigs } from "./types";
 import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";

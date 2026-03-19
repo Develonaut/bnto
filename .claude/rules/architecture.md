@@ -14,13 +14,13 @@ Each layer only depends on layers below it. Never skip layers.
 
 **Package naming convention:** Internal packages are named by **role**, not by technology. This ensures any technology can be swapped by rewriting the package internals without changing consumers.
 
-| Package          | Role                                                    | Current Implementation |
-| ---------------- | ------------------------------------------------------- | ---------------------- |
-| `@bnto/backend`  | Data layer -- schema, functions, business logic         | Convex                 |
-| `@bnto/auth`     | Auth client -- sign in, sign up, session                | `@convex-dev/auth`     |
-| `@bnto/core`     | Transport-agnostic API -- hooks, types, adapters        | React Query + adapters |
-| `@bnto/registry` | Curation + discovery -- recipes, node types, categories | Stateless lookups      |
-| `@bnto/nodes`    | Engine-generated catalog -- types, schemas, validation  | Codegen + Zod          |
+| Package          | Role                                                                          | Current Implementation |
+| ---------------- | ----------------------------------------------------------------------------- | ---------------------- |
+| `@bnto/backend`  | Data layer -- schema, functions, business logic                               | Convex                 |
+| `@bnto/auth`     | Auth client -- sign in, sign up, session                                      | `@convex-dev/auth`     |
+| `@bnto/core`     | Transport-agnostic API -- hooks, types, adapters                              | React Query + adapters |
+| `@bnto/registry` | Node system facade -- re-exports all of @bnto/nodes + curation functions      | Stateless lookups      |
+| `@bnto/nodes`    | Engine-generated catalog -- types, schemas, validation (INTERNAL to registry) | Codegen + Zod          |
 
 **State management:** Zustand handles client-only state (editor content, UI preferences). Server state uses a hybrid strategy -- see [data-fetching-strategy.md](../strategy/data-fetching-strategy.md) for the full decision record:
 
@@ -56,29 +56,25 @@ See [core-api.md](core-api.md) for the full API design rules.
 
 ## Import Boundary Rules
 
+The dependency chain is strictly linear:
+
 ```
+@bnto/editor   → @bnto/core, @bnto/ui
+@bnto/core     → @bnto/registry, @bnto/auth, @bnto/backend
+@bnto/registry → @bnto/nodes
+@bnto/ui       → (leaf — no @bnto/* imports)
+@bnto/nodes    → (leaf — engine-generated catalog)
+
 Apps (apps/web, apps/desktop)
   → @bnto/core (runtime — hooks, state, API)
   → @bnto/registry (build-time SSG only — where Zustand doesn't exist)
-
-@bnto/core
-  → @bnto/registry (curation layer — recipes, node types, lookup)
-  → @bnto/nodes (types only — re-exported for consumers)
-  → @bnto/backend, @bnto/auth (adapters)
-
-@bnto/registry
-  → @bnto/nodes (engine catalog data + types)
-
-@bnto/editor
-  → @bnto/nodes (types + pure functions — editor operates on Definition objects)
-  → @bnto/core (runtime API — core.registry for catalog data)
-
-@bnto/ui → no @bnto/* imports
 ```
 
-**Runtime code** in apps MUST go through `core.registry.*` (e.g., `core.registry.getRecipeBySlug(slug)`). **Build-time SSG** surfaces (generateStaticParams, route handlers) can import from `@bnto/registry` directly since there's no React context at build time.
+**`@bnto/nodes` is internal.** Only `@bnto/registry` imports from it. The registry re-exports everything consumers need (types, constants, helpers, validation). `@bnto/core` re-exports from `@bnto/registry` for convenience so the editor and apps import from `@bnto/core`.
 
-**Apps NEVER import from `@bnto/nodes` directly.** Types flow through `@bnto/core` re-exports; data flows through `@bnto/registry` (SSG) or `core.registry` (runtime).
+**One rule:** "Import from `@bnto/core`." Editor, apps, and all runtime code import node system types, constants, and functions from `@bnto/core`. Build-time SSG code can import from `@bnto/registry` directly (no React context at build time).
+
+**NEVER import from `@bnto/nodes` directly** — not in core, not in editor, not in apps. If you need something from the node system, import from `@bnto/core` (runtime) or `@bnto/registry` (SSG).
 
 ## Cost-First Architecture
 
@@ -104,16 +100,16 @@ Apps (apps/web, apps/desktop)
 - Runtime detection to swap adapters transparently
 - NO backend, storage, or state management technology imports in public API -- only in internal adapters/services
 
-### `packages/@bnto/registry/` (`@bnto/registry`) -- Curation + discovery layer
+### `packages/@bnto/registry/` (`@bnto/registry`) -- Node system facade + curation
 
-- Stateless lookup functions over the engine-generated catalog
-- `getAllRecipes()`, `getRecipeBySlug()`, `getRecipesByCategory()`
-- `getAllNodeTypes()`, `getBrowserNodeTypes()`
-- `getAllCategories()`, `getAllProcessors()`
+- **Public facade for the entire node system.** Re-exports all types, constants, helpers, validation, and schema introspection from `@bnto/nodes`. `@bnto/nodes` is internal -- only registry imports from it
+- Curation functions: `getAllRecipes()`, `getRecipeBySlug()`, `getRecipesByCategory()`
+- Node type lookups: `getAllNodeTypes()`, `getBrowserNodeTypes()`
+- Category + processor lookups: `getAllCategories()`, `getAllProcessors()`
 - No React, no Zustand -- purely stateless
 - Depends on `@bnto/nodes` only
+- Consumed by `@bnto/core` (re-exports for runtime consumers) and `apps/web` (SSG build-time)
 - Future: community recipes (DB-backed), search/exploration API
-- Consumed by `@bnto/core` (reactive store wrapper) and `apps/web` (SSG build-time)
 
 ### `packages/@bnto/backend/` (`@bnto/backend`) -- Data layer
 

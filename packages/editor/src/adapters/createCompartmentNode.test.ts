@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { createCompartmentNode } from "./createCompartmentNode";
 import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
-import { NODE_TYPE_NAMES, NODE_SCHEMA_DEFS } from "@bnto/nodes";
+import { NODE_TYPE_NAMES, NODE_SCHEMA_DEFS } from "@bnto/core";
 
 describe("createCompartmentNode", () => {
   it("creates a BentoNode + NodeConfig from a node type and slot index", () => {

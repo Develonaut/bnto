@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import type { StoreApi } from "zustand";
-import { getRecipeBySlug } from "@bnto/nodes";
+import { getRecipeBySlug } from "@bnto/core";
 import { createEditorStore } from "./createEditorStore";
 import type { EditorStore } from "./types";
 import { state } from "./test-helpers";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import {
   Dialog,
   DialogClose,
@@ -31,11 +31,7 @@ interface OpenRecipeDialogProps {
   getIcon?: (slug: string) => LucideIcon;
 }
 
-function OpenRecipeDialogRoot({
-  open,
-  onOpenChange,
-  getIcon,
-}: OpenRecipeDialogProps) {
+function OpenRecipeDialogRoot({ open, onOpenChange, getIcon }: OpenRecipeDialogProps) {
   const editor = useEditor();
 
   const handleLoad = useCallback(

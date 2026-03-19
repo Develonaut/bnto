@@ -5,8 +5,8 @@
 import { describe, it, expect } from "vitest";
 import { rfNodesToDefinition } from "./rfNodesToDefinition";
 import { definitionToGraph } from "./definitionToGraph";
-import { createBlankDefinition, addNode } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import { createBlankDefinition, addNode } from "@bnto/core";
+import type { Definition } from "@bnto/core";
 import type { RecipeMetadata } from "../store/types";
 
 function metaOf(def: Definition): RecipeMetadata {

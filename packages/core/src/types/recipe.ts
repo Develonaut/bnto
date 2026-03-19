@@ -2,10 +2,10 @@
 // Recipe types (transport-agnostic — no Convex imports)
 // ---------------------------------------------------------------------------
 
-import type { Recipe } from "@bnto/nodes";
+import type { Recipe } from "@bnto/registry";
 
-// Re-export the base Recipe type from @bnto/nodes
-export type { Recipe } from "@bnto/nodes";
+// Re-export the base Recipe type from @bnto/registry
+export type { Recipe } from "@bnto/registry";
 
 /**
  * A user's recipe — Recipe + persistence state.

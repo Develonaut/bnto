@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { getRecipeBySlug } from "@bnto/nodes";
+import { getRecipeBySlug } from "@bnto/core";
 import { createEditor } from "./createEditor";
 
 function compressImagesDefinition() {

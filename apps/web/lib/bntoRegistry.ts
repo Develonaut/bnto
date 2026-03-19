@@ -25,7 +25,7 @@ function toBntoEntry(r: Recipe): BntoEntry {
     slug: r.slug,
     title: `${r.name} Online Free -- bnto`,
     description: r.description,
-    h1: r.name,
+    h1: `${r.name} Online Free`,
     fixture: `${r.slug}.bnto.json`,
     features: r.features,
   };

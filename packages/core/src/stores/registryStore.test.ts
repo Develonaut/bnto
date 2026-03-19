@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { registryStore } from "./registryStore";
-import { RECIPES, NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/nodes";
+import { RECIPES, NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/registry";
 
 describe("registryStore", () => {
   beforeEach(() => {

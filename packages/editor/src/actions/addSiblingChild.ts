@@ -5,8 +5,8 @@
  * so the new node inherits its parentContainerId and depth.
  */
 
-import type { NodeTypeName } from "@bnto/nodes";
-import { isContainerNodeType } from "@bnto/nodes";
+import type { NodeTypeName } from "@bnto/core";
+import { isContainerNodeType } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
 import type { CompartmentNodeResult } from "../adapters/createCompartmentNode";
@@ -33,10 +33,19 @@ function addSiblingChild(
   const nextNodes = [...deselected.slice(0, insertAt), newNode, ...deselected.slice(insertAt)];
   const nextConfigs = { ...state.configs, [result.node.id]: result.config };
 
-  const childDef = buildChildDefinition(result.node.id, result.config.nodeType as NodeTypeName, result.config);
+  const childDef = buildChildDefinition(
+    result.node.id,
+    result.config.nodeType as NodeTypeName,
+    result.config,
+  );
   let nextDefinition = state.definition;
   if (nextDefinition) {
-    nextDefinition = addChildToContainer(nextDefinition, parentContainerId, childDef, afterNodeId ?? undefined);
+    nextDefinition = addChildToContainer(
+      nextDefinition,
+      parentContainerId,
+      childDef,
+      afterNodeId ?? undefined,
+    );
   }
 
   const nextExpandedIds = isContainer

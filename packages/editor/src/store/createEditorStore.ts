@@ -9,7 +9,7 @@
 
 import { createEnhancedStore, core } from "@bnto/core";
 import { applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import type { EditorStore, PanelId } from "./types";
 import { captureSnapshot } from "./captureSnapshot";
 import { pushToStack } from "./pushToStack";

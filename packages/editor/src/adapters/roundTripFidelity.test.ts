@@ -14,15 +14,12 @@
 import { describe, it, expect } from "vitest";
 import { definitionToGraph } from "./definitionToGraph";
 import { rfNodesToDefinition } from "./rfNodesToDefinition";
-import {
-  createBlankDefinition,
-  addNode,
-  compressImages,
-  cleanCsv,
-  renameFiles,
-  RECIPES,
-} from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import { createBlankDefinition, addNode, getRecipeBySlug, RECIPES } from "@bnto/core";
+import type { Definition } from "@bnto/core";
+
+const compressImages = getRecipeBySlug("compress-images")!;
+const cleanCsv = getRecipeBySlug("clean-csv")!;
+const renameFiles = getRecipeBySlug("rename-files")!;
 import type { RecipeMetadata } from "../store/types";
 
 function metaOf(def: Definition): RecipeMetadata {

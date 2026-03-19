@@ -1,5 +1,5 @@
-import { NODE_TYPE_INFO, isIoNodeType, isContainerNodeType } from "@bnto/nodes";
-import type { NodeTypeName } from "@bnto/nodes";
+import { NODE_TYPE_INFO, isIoNodeType, isContainerNodeType } from "@bnto/registry";
+import type { NodeTypeName } from "@bnto/registry";
 import type { RawRecipeDoc, RawRecipeListProjection } from "../types/raw";
 import type { UserRecipe, RecipeListItem } from "../types";
 

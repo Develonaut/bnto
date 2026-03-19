@@ -5,7 +5,7 @@
  * update params, undo/redo).
  */
 
-import { validateDefinition } from "@bnto/nodes";
+import { validateDefinition } from "@bnto/core";
 import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 import type { RecipeMetadata } from "./types";

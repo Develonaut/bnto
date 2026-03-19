@@ -9,10 +9,10 @@ import type { StoreApi } from "zustand";
 import type {
   NodeTypeName,
   Definition,
-  RecipeMetadata as NodeRecipeMetadata,
+  NodeRecipeMetadata,
   Recipe,
   ValidationError,
-} from "@bnto/nodes";
+} from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
 import type {
   EditorStore,

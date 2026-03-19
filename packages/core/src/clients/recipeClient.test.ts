@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { recipesStore } from "../stores/recipesStore";
 import { registryStore } from "../stores/registryStore";
-import { RECIPES, NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/nodes";
+import { RECIPES, NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/registry";
 import { createRecipeClient } from "./recipeClient";
 import { createRegistryClient } from "./registryClient";
 

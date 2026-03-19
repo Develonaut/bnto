@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { FieldTypeInfo, NodeParamMeta } from "@bnto/nodes";
+import type { FieldTypeInfo, NodeParamMeta } from "@bnto/core";
 import { Label } from "@bnto/ui";
 import { CONTROL_REGISTRY } from "./controls";
 
@@ -53,19 +53,12 @@ function SchemaField({ name, meta, fieldInfo, value, onChange }: SchemaFieldProp
   );
 
   if (selfLabeled) {
-    return (
-      <div data-testid={`schema-field-${name}`}>
-        {control}
-      </div>
-    );
+    return <div data-testid={`schema-field-${name}`}>{control}</div>;
   }
 
   if (inline) {
     return (
-      <div
-        className="flex items-center justify-between gap-2"
-        data-testid={`schema-field-${name}`}
-      >
+      <div className="flex items-center justify-between gap-2" data-testid={`schema-field-${name}`}>
         {label}
         {control}
       </div>

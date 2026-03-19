@@ -6,7 +6,7 @@
  */
 
 import type { ComponentType } from "react";
-import type { FieldControl } from "@bnto/nodes";
+import type { FieldControl } from "@bnto/core";
 import type { ControlProps } from "./types";
 import { SelectControl } from "./SelectControl";
 import { SwitchControl } from "./SwitchControl";

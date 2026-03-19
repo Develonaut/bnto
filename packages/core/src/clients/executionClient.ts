@@ -8,7 +8,7 @@ import type { StartPredefinedInput } from "../types";
 import type { LocalHistoryEntry } from "../types/localHistory";
 import type { BrowserRunResult } from "../types/browser";
 import type { PipelineDefinition } from "../types/pipeline";
-import { isIoNodeType } from "@bnto/nodes";
+import { isIoNodeType } from "@bnto/registry";
 
 /** Build a history entry from a completed/failed execution result. */
 function buildHistoryEntry(

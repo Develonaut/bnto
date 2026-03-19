@@ -15,7 +15,7 @@
  */
 
 import type { StoreApi } from "zustand";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import type { EditorStore } from "./store/types";
 import type { ReactEditorInstance } from "./reactEditorTypes";
 import { createEditor } from "./createEditor";

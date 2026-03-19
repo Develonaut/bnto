@@ -15,7 +15,7 @@ import type {
   NodeTypeInfo,
   CategoryInfo,
   ProcessorDef,
-} from "@bnto/nodes";
+} from "@bnto/core";
 import { core } from "@bnto/core";
 
 // ---------------------------------------------------------------------------

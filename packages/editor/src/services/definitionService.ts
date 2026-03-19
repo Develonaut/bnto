@@ -8,7 +8,7 @@
  */
 
 import type { StoreApi } from "zustand";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import type { EditorStore, RecipeMetadata } from "../store/types";
 import type { DefinitionService } from "../editorTypes";
 import { updateParams } from "../actions/updateParams";

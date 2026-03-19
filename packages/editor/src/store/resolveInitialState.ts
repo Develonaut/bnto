@@ -10,7 +10,7 @@
  * passing the definition here).
  */
 
-import { type Definition, createBlankDefinition, isIoNodeType } from "@bnto/nodes";
+import { type Definition, createBlankDefinition, isIoNodeType } from "@bnto/core";
 import { definitionToGraph } from "../adapters/definitionToGraph";
 import type { NodeConfigs } from "../adapters/types";
 import type { RecipeMetadata } from "./types";

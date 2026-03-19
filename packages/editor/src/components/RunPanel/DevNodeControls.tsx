@@ -12,7 +12,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { Badge, Button, Row, Slider, Stack, Text } from "@bnto/ui";
-import { isIoNodeType } from "@bnto/nodes";
+import { isIoNodeType } from "@bnto/core";
 import { useEditor } from "../../context";
 import type { NodeExecutionStatus } from "../../store/types";
 

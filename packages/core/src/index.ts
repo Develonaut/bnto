@@ -83,6 +83,76 @@ export { deriveAcceptedTypes } from "./adapters/browser/deriveAcceptedTypes";
 export { deriveOutputConfig } from "./adapters/browser/deriveOutputConfig";
 export { createZipBlob } from "./adapters/browser/createZipBlob";
 
-// ── Node/Registry types (re-exported for app consumers) ──────────────────
-export type { Definition, ValidationError } from "@bnto/nodes";
+// ── Node system (re-exported from @bnto/registry for consumers) ──────────
+
+// Types
 export type { RegistryData } from "@bnto/registry";
+export type {
+  Definition,
+  Position,
+  Metadata,
+  Port,
+  Edge,
+  FieldsConfig,
+  NodeTypeName,
+  NodeCategory,
+  NodeTypeInfo,
+  CategoryInfo,
+  AcceptSpec,
+  ProcessorDef,
+  ProcessorParam,
+  ParamType,
+  NodeSchemaDefinition,
+  NodeParamMeta,
+  ParamCondition,
+  FieldTypeInfo,
+  FieldControl,
+  DefinitionResult,
+  ValidationError,
+} from "@bnto/registry";
+export type { RecipeMetadata as NodeRecipeMetadata } from "@bnto/registry";
+
+// Catalog constants
+export {
+  NODE_TYPE_INFO,
+  NODE_TYPE_NAMES,
+  NODE_SCHEMA_DEFS,
+  CURRENT_FORMAT_VERSION,
+  CATEGORIES,
+  PROCESSORS,
+  RECIPES,
+} from "@bnto/registry";
+
+// Classification & helpers
+export {
+  isIoNodeType,
+  isContainerNodeType,
+  isNodeType,
+  getNodeIcon,
+  getNodeSublabel,
+  getNodeTypeInfo,
+} from "@bnto/registry";
+
+// Definition CRUD
+export {
+  createBlankDefinition,
+  addNode,
+  removeNode,
+  isValid,
+  definitionToRecipe,
+} from "@bnto/registry";
+
+// Validation
+export { validateDefinition } from "@bnto/registry";
+
+// Schema introspection
+export {
+  inferFieldType,
+  getVisibleParams,
+  getRequiredParams,
+  getConditionallyRequired,
+  getNodeSchema,
+} from "@bnto/registry";
+
+// Recipe lookup
+export { getRecipeBySlug, getAllRecipes } from "@bnto/registry";

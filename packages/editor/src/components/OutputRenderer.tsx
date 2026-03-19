@@ -1,6 +1,6 @@
 "use client";
 
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
 import { deriveOutputConfig } from "@bnto/core";
 import { OutputFileCard } from "./OutputFileCard";
@@ -18,11 +18,7 @@ interface OutputRendererProps {
  * Phase 1: Only `download` mode is implemented. `display` and `preview` modes
  * render placeholder UI for forward compatibility.
  */
-export function OutputRenderer({
-  definition,
-  results,
-  onDownload,
-}: OutputRendererProps) {
+export function OutputRenderer({ definition, results, onDownload }: OutputRendererProps) {
   const outputConfig = deriveOutputConfig(definition);
 
   if (outputConfig.mode === "display") {

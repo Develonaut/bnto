@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import type { NodeSchemaDefinition } from "@bnto/nodes";
-import { inferFieldType } from "@bnto/nodes";
+import type { NodeSchemaDefinition } from "@bnto/core";
+import { inferFieldType } from "@bnto/core";
 import { Stack, Text } from "@bnto/ui";
 import { SchemaField } from "./SchemaField";
 import { FieldGroup } from "./FieldGroup";

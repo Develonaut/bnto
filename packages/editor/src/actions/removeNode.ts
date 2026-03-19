@@ -15,9 +15,9 @@
 
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
-import type { Definition } from "@bnto/nodes";
+import type { Definition } from "@bnto/core";
 import { withUndo } from "../store/withUndo";
-import { isIoNodeType } from "@bnto/nodes";
+import { isIoNodeType } from "@bnto/core";
 import { STRIDE } from "../adapters/bentoSlots";
 import { removeChildFromContainer } from "../adapters/definitionTreeHelpers";
 
@@ -31,7 +31,11 @@ export function removeNode(state: EditorState, id: string): Partial<EditorState>
   collectDescendants(state, id, idsToRemove);
 
   const removedIndex = state.nodes.findIndex((n) => n.id === id);
-  const { nodes: reflowed, configs: nextConfigs } = removeAndReflow(state, idsToRemove, parentContainerId);
+  const { nodes: reflowed, configs: nextConfigs } = removeAndReflow(
+    state,
+    idsToRemove,
+    parentContainerId,
+  );
   autoSelectNearest(reflowed, parentContainerId, removedIndex);
 
   const nextDefinition = removeFromDefinition(state.definition, id, parentContainerId);

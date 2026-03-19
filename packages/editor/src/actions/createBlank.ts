@@ -6,7 +6,7 @@
  * and resets all transient state (history, execution, dirty flag).
  */
 
-import { createBlankDefinition } from "@bnto/nodes";
+import { createBlankDefinition } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import { definitionToGraph } from "../adapters/definitionToGraph";
 import { metadataFromBlank } from "../store/resolveInitialState";

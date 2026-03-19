@@ -2,7 +2,7 @@
 
 import { registryStore } from "../stores/registryStore";
 import { getRecipeBySlug as registryGetBySlug } from "@bnto/registry";
-import type { Recipe, NodeTypeInfo } from "@bnto/nodes";
+import type { Recipe, NodeTypeInfo } from "@bnto/registry";
 
 export function createRegistryClient() {
   return {

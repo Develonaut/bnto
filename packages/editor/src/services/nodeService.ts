@@ -9,7 +9,7 @@
  */
 
 import type { StoreApi } from "zustand";
-import type { NodeTypeName } from "@bnto/nodes";
+import type { NodeTypeName } from "@bnto/core";
 import type { EditorStore } from "../store/types";
 import type { NodeService } from "../editorTypes";
 import type { BentoNode, NodeConfig, NodeConfigs } from "../adapters/types";
@@ -19,8 +19,19 @@ import { removeNode } from "../actions/removeNode";
 
 function createNodeService(storeApi: StoreApi<EditorStore>): NodeService {
   return {
-    addNode(type: NodeTypeName, afterNodeId?: string | null, intoContainerId?: string | null, defaultParams?: Record<string, unknown>) {
-      const result = addNode(storeApi.getState(), type, afterNodeId, intoContainerId, defaultParams);
+    addNode(
+      type: NodeTypeName,
+      afterNodeId?: string | null,
+      intoContainerId?: string | null,
+      defaultParams?: Record<string, unknown>,
+    ) {
+      const result = addNode(
+        storeApi.getState(),
+        type,
+        afterNodeId,
+        intoContainerId,
+        defaultParams,
+      );
       if (!result) return null;
       storeApi.setState(result.nextState);
       return result.nodeId;

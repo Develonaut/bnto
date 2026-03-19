@@ -64,7 +64,7 @@ describe("getBntoBySlug", () => {
   it("returns entry for valid slug", () => {
     const entry = getBntoBySlug("compress-images");
     expect(entry).toBeDefined();
-    expect(entry!.h1).toBe("Compress Images");
+    expect(entry!.h1).toBe("Compress Images Online Free");
     expect(entry!.title).toBe("Compress Images Online Free -- bnto");
   });
 
