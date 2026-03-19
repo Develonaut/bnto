@@ -5,7 +5,7 @@ import { Label, Slider } from "@bnto/ui";
 import type { SliderPreset } from "@bnto/ui";
 import type { ControlProps } from "./types";
 
-/** Convert between stored and display values when displayInverted is set. */
+/** Convert between stored and display values when inverted is set. */
 function invertValue(value: number, min: number, max: number): number {
   return min + max - value;
 }
