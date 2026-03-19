@@ -50,7 +50,6 @@ export const imageNodeSchema: NodeSchemaDefinition = {
     },
     compression: {
       ...generated.params.compression,
-      displayLabel: "Quality",
       displayInverted: true,
       presets: [
         { value: 20, label: "Maximum" },

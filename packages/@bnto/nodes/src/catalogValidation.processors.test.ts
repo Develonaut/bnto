@@ -19,10 +19,10 @@ describe("image:compress", () => {
     expect(proc.accepts).toEqual(expect.arrayContaining(["image/jpeg", "image/png", "image/webp"]));
   });
 
-  it("has compression param: number, default 20, min 1, max 100", () => {
+  it("has compression param: number, default 50, min 1, max 100", () => {
     const compression = proc.parameters.find((p) => p.name === "compression")!;
     expect(compression.type).toBe("number");
-    expect(compression.default).toBe(20);
+    expect(compression.default).toBe(50);
     expect(compression.constraints?.min).toBe(1);
     expect(compression.constraints?.max).toBe(100);
   });

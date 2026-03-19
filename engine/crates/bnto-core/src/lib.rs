@@ -93,11 +93,11 @@ pub const FORMAT_VERSION: &str = "1.0.0";
 pub const DEFAULT_JPEG_QUALITY: u8 = 80;
 
 /// Default compression level for the compress-images node (1-100 scale).
-/// 20 ≈ "Light" compression — preserves most visual quality while still
-/// noticeably reducing file size. The user-facing semantics are inverted
-/// from JPEG quality: compression=1 is minimal, compression=100 is maximum.
-/// Internally: `jpeg_quality = 101 - compression` (so compression=20 → quality=81).
-pub const DEFAULT_COMPRESSION: u8 = 20;
+/// 50 ≈ "Balanced" compression — meaningful file size reduction with
+/// acceptable quality. The user-facing semantics are inverted from JPEG
+/// quality: compression=1 is minimal, compression=100 is maximum.
+/// Internally: `jpeg_quality = 101 - compression` (so compression=50 → quality=51).
+pub const DEFAULT_COMPRESSION: u8 = 50;
 
 // =============================================================================
 // Utility Functions (Pure Rust — no WASM boundary)

@@ -3,17 +3,14 @@
 // Filter selection: Lanczos3 for downscaling (sharp, 6x6 neighborhood),
 // CatmullRom for upscaling (smooth cubic interpolation, avoids ringing).
 
-use std::io::Cursor;
-
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-use image::codecs::jpeg::JpegEncoder;
-use image::codecs::png::{CompressionType, FilterType as PngFilterType, PngEncoder};
 use image::imageops::FilterType;
 
 use crate::common::{image_accepts, quality_param_def};
+use crate::encode;
 use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
 
@@ -116,34 +113,6 @@ impl ResizeImages {
         } else {
             FilterType::CatmullRom
         }
-    }
-
-    fn encode_jpeg(img: &image::DynamicImage, quality: u8) -> Result<Vec<u8>, BntoError> {
-        let mut output = Vec::new();
-        let encoder = JpegEncoder::new_with_quality(&mut output, quality);
-        img.write_with_encoder(encoder)
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to encode JPEG: {e}")))?;
-        Ok(output)
-    }
-
-    fn encode_png(img: &image::DynamicImage) -> Result<Vec<u8>, BntoError> {
-        let mut output = Vec::new();
-        let encoder = PngEncoder::new_with_quality(
-            &mut output,
-            CompressionType::Best,
-            PngFilterType::Adaptive,
-        );
-        img.write_with_encoder(encoder)
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to encode PNG: {e}")))?;
-        Ok(output)
-    }
-
-    fn encode_webp(img: &image::DynamicImage) -> Result<Vec<u8>, BntoError> {
-        let mut output = Vec::new();
-        let mut cursor_out = Cursor::new(&mut output);
-        img.write_to(&mut cursor_out, image::ImageFormat::WebP)
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to encode WebP: {e}")))?;
-        Ok(output)
     }
 
     /// "photo.jpg" -> "photo-resized.jpg"
@@ -311,11 +280,7 @@ fn encode_resized(
     format: ImageFormat,
     quality: u8,
 ) -> Result<Vec<u8>, BntoError> {
-    match format {
-        ImageFormat::Jpeg => ResizeImages::encode_jpeg(img, quality),
-        ImageFormat::Png => ResizeImages::encode_png(img),
-        ImageFormat::WebP => ResizeImages::encode_webp(img),
-    }
+    encode::encode_image(img, format, quality)
 }
 
 fn build_resize_output(
@@ -1042,6 +1007,42 @@ mod tests {
         let (w, h) = get_image_dimensions(&output.files[0].data);
         assert_eq!(w, 1);
         assert_eq!(h, 1);
+    }
+
+    // =========================================================================
+    // Quality Parameter Verification — Different values produce different sizes
+    // =========================================================================
+
+    #[test]
+    fn test_resize_jpeg_quality_affects_output_size() {
+        // Resizing with quality 30 vs 90 should produce measurably different
+        // JPEG file sizes. This verifies quality is actually applied.
+        let processor = ResizeImages::new();
+
+        let mut params_q30 = width_params(200);
+        params_q30.insert("quality".to_string(), serde_json::Value::from(30));
+        let input_q30 = make_input(TEST_MEDIUM_JPEG, "photo.jpg", params_q30);
+
+        let mut params_q90 = width_params(200);
+        params_q90.insert("quality".to_string(), serde_json::Value::from(90));
+        let input_q90 = make_input(TEST_MEDIUM_JPEG, "photo.jpg", params_q90);
+
+        let output_q30 = processor
+            .process(input_q30, &ProgressReporter::new_noop())
+            .unwrap();
+        let output_q90 = processor
+            .process(input_q90, &ProgressReporter::new_noop())
+            .unwrap();
+
+        let size_q30 = output_q30.files[0].data.len();
+        let size_q90 = output_q90.files[0].data.len();
+
+        assert!(
+            size_q30 < size_q90,
+            "Quality 30 ({} bytes) should be smaller than quality 90 ({} bytes)",
+            size_q30,
+            size_q90
+        );
     }
 
     // =========================================================================

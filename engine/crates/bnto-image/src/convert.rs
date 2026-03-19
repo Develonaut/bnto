@@ -3,16 +3,12 @@
 // WebP output is lossless-only (Rust `image` crate limitation).
 // Lossy WebP planned via jSquash JS fallback.
 
-use std::io::Cursor;
-
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-use image::codecs::jpeg::JpegEncoder;
-use image::codecs::png::{CompressionType, FilterType, PngEncoder};
-
 use crate::common::{image_accepts, quality_param_def};
+use crate::encode;
 use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
 
@@ -44,45 +40,6 @@ impl ConvertImageFormat {
     ) -> Result<image::DynamicImage, BntoError> {
         progress.report(10, "Decoding image...");
         decode_with_orientation(data)
-    }
-
-    fn encode_jpeg(
-        img: &image::DynamicImage,
-        quality: u8,
-        progress: &ProgressReporter,
-    ) -> Result<Vec<u8>, BntoError> {
-        progress.report(60, &format!("Encoding as JPEG (quality: {quality})..."));
-        let mut output = Vec::new();
-        let encoder = JpegEncoder::new_with_quality(&mut output, quality);
-        img.write_with_encoder(encoder)
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to encode JPEG: {e}")))?;
-        Ok(output)
-    }
-
-    fn encode_png(
-        img: &image::DynamicImage,
-        progress: &ProgressReporter,
-    ) -> Result<Vec<u8>, BntoError> {
-        progress.report(60, "Encoding as PNG (lossless)...");
-        let mut output = Vec::new();
-        let encoder =
-            PngEncoder::new_with_quality(&mut output, CompressionType::Best, FilterType::Adaptive);
-        img.write_with_encoder(encoder)
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to encode PNG: {e}")))?;
-        Ok(output)
-    }
-
-    /// Lossless-only. WebP encoder needs Cursor for Seek (header backfill).
-    fn encode_webp(
-        img: &image::DynamicImage,
-        progress: &ProgressReporter,
-    ) -> Result<Vec<u8>, BntoError> {
-        progress.report(60, "Encoding as WebP (lossless)...");
-        let mut output = Vec::new();
-        let mut cursor_out = Cursor::new(&mut output);
-        img.write_to(&mut cursor_out, image::ImageFormat::WebP)
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to encode WebP: {e}")))?;
-        Ok(output)
     }
 
     /// Parse "jpeg"/"jpg"/"png"/"webp" (case-insensitive).
@@ -216,11 +173,11 @@ fn encode_to_target(
     progress: &ProgressReporter,
 ) -> Result<Vec<u8>, BntoError> {
     let quality = ConvertImageFormat::get_quality(params, target);
-    match target {
-        ImageFormat::Jpeg => ConvertImageFormat::encode_jpeg(img, quality, progress),
-        ImageFormat::Png => ConvertImageFormat::encode_png(img, progress),
-        ImageFormat::WebP => ConvertImageFormat::encode_webp(img, progress),
-    }
+    progress.report(
+        60,
+        &format!("Encoding as {:?} (quality: {quality})...", target),
+    );
+    encode::encode_image(img, target, quality)
 }
 
 fn build_convert_output(
@@ -831,6 +788,34 @@ mod tests {
         // just using the struct name directly instead of calling ::default().
         let processor = ConvertImageFormat;
         assert_eq!(processor.name(), "convert-image-format");
+    }
+
+    // =========================================================================
+    // Quality Parameter Verification — Different values produce different sizes
+    // =========================================================================
+
+    #[test]
+    fn test_convert_to_jpeg_quality_affects_output_size() {
+        // Converting PNG → JPEG at quality 30 vs 90 should produce measurably
+        // different file sizes. This verifies quality param is applied.
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+
+        let input_q30 = make_input(TEST_PNG, "img.png", format_quality_params("jpeg", 30));
+        let input_q90 = make_input(TEST_PNG, "img.png", format_quality_params("jpeg", 90));
+
+        let output_q30 = processor.process(input_q30, &progress).unwrap();
+        let output_q90 = processor.process(input_q90, &progress).unwrap();
+
+        let size_q30 = output_q30.files[0].data.len();
+        let size_q90 = output_q90.files[0].data.len();
+
+        assert!(
+            size_q30 < size_q90,
+            "Quality 30 ({} bytes) should be smaller than quality 90 ({} bytes)",
+            size_q30,
+            size_q90
+        );
     }
 
     // =========================================================================

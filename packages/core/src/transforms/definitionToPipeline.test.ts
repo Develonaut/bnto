@@ -227,7 +227,7 @@ describe("definitionToPipeline", () => {
 
     const loop = pipeline.nodes.find((n) => n.type === "loop");
     const compressNode = loop!.children!.find((n) => n.type === "image");
-    expect(compressNode!.params).toHaveProperty("compression", 20);
+    expect(compressNode!.params).toHaveProperty("compression", 50);
   });
 
   it("handles definition with no children", () => {

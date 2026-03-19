@@ -34,6 +34,10 @@ Three layers own different concerns of the node system. This document is the dec
 
 **Import boundary:** `@bnto/nodes` is consumed ONLY by `@bnto/registry`. Editor and core never import from `@bnto/nodes` directly — they import from `@bnto/core` (which re-exports from `@bnto/registry`, which re-exports from `@bnto/nodes`). See [architecture.md](architecture.md#import-boundary-rules).
 
+## Engine Node Processor Patterns
+
+For detailed patterns on creating and extending Rust node processors — parameter contracts, shared encoding, testing requirements — see [engine-node-patterns.md](engine-node-patterns.md).
+
 ## What Each Layer Contains
 
 ### Engine (`engine/crates/`)
