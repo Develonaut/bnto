@@ -854,6 +854,10 @@ Files: `apps/web/e2e/`, `.github/workflows/release.yml`
 
 Files: `app/(auth)/`, `packages/@bnto/auth/`
 
+### Triage: Verify PostHog reverse proxy after production deploy
+
+**Priority: Triage.** After PR #225 is merged and deployed, run curl checks against `bnto.io/ingest/*` endpoints, confirm trailing slash behavior on `/ingest/e/`, and verify events appear in PostHog Live Events. Can only be tested in production.
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |
