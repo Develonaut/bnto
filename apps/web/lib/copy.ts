@@ -40,3 +40,6 @@ export const GALLERY_SUBHEADING =
 
 /** GitHub repo URL. */
 export const GITHUB_URL = "https://github.com/Develonaut/bnto";
+
+/** Buy Me a Coffee URL. Update username after creating account at buymeacoffee.com. */
+export const BUYMEACOFFEE_URL = "https://buymeacoffee.com/develonaut";
