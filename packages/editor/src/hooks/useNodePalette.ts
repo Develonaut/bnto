@@ -9,8 +9,14 @@
 "use client";
 
 import { useMemo } from "react";
-import type { NodeCategory, NodeTypeName, CategoryInfo } from "@bnto/nodes";
-import { NODE_TYPE_INFO, NODE_TYPE_NAMES, CATEGORIES, PROCESSORS } from "@bnto/nodes";
+import type {
+  NodeCategory,
+  NodeTypeName,
+  NodeTypeInfo,
+  CategoryInfo,
+  ProcessorDef,
+} from "@bnto/nodes";
+import { core } from "@bnto/core";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -52,21 +58,10 @@ interface NodePaletteResult {
 }
 
 // ---------------------------------------------------------------------------
-// Processor lookup — keyed by node type for O(1) grouping
+// Pure computation
 // ---------------------------------------------------------------------------
 
-const processorsByType = new Map<string, typeof PROCESSORS[number][]>();
-for (const proc of PROCESSORS) {
-  const existing = processorsByType.get(proc.nodeType) ?? [];
-  existing.push(proc);
-  processorsByType.set(proc.nodeType, existing);
-}
-
-// ---------------------------------------------------------------------------
-// Pure computation (operates on module-level constants)
-// ---------------------------------------------------------------------------
-
-function nodeTypeToItem(info: typeof NODE_TYPE_INFO[NodeTypeName]): PaletteItem {
+function nodeTypeToItem(info: NodeTypeInfo): PaletteItem {
   return {
     type: info.name,
     label: info.label,
@@ -78,11 +73,22 @@ function nodeTypeToItem(info: typeof NODE_TYPE_INFO[NodeTypeName]): PaletteItem 
   };
 }
 
-function computePalette(browserOnly: boolean): NodePaletteResult {
+function computePalette(
+  nodeTypes: Record<NodeTypeName, NodeTypeInfo>,
+  categories: readonly CategoryInfo[],
+  processors: readonly ProcessorDef[],
+  browserOnly: boolean,
+): NodePaletteResult {
+  // Build processor lookup — keyed by node type for O(1) grouping
+  const processorsByType = new Map<string, ProcessorDef[]>();
+  for (const proc of processors) {
+    const existing = processorsByType.get(proc.nodeType) ?? [];
+    existing.push(proc);
+    processorsByType.set(proc.nodeType, existing);
+  }
+
   // I/O nodes are structural (always present) — never shown in the palette.
-  const nonIoTypes = NODE_TYPE_NAMES.map((name) => NODE_TYPE_INFO[name]).filter(
-    (t) => t.category !== "io",
-  );
+  const nonIoTypes = Object.values(nodeTypes).filter((t) => t.category !== "io");
 
   const allItems: PaletteItem[] = [];
   for (const info of nonIoTypes) {
@@ -110,7 +116,7 @@ function computePalette(browserOnly: boolean): NodePaletteResult {
   const browserItems = allItems.filter((t) => t.browserCapable);
   const displayItems = browserOnly ? browserItems : allItems;
 
-  // Group by category in CATEGORIES display order
+  // Group by category in display order
   const categoryMap = new Map<NodeCategory, PaletteItem[]>();
   for (const item of displayItems) {
     const existing = categoryMap.get(item.category) ?? [];
@@ -118,12 +124,12 @@ function computePalette(browserOnly: boolean): NodePaletteResult {
     categoryMap.set(item.category, existing);
   }
 
-  const groups: PaletteGroup[] = CATEGORIES.filter((cat) => categoryMap.has(cat.name)).map(
-    (cat) => ({
+  const groups: PaletteGroup[] = categories
+    .filter((cat) => categoryMap.has(cat.name))
+    .map((cat) => ({
       category: cat,
       items: categoryMap.get(cat.name)!,
-    }),
-  );
+    }));
 
   return { groups, allItems, browserItems };
 }
@@ -139,7 +145,14 @@ function computePalette(browserOnly: boolean): NodePaletteResult {
  *                      Default: false (show all, flag server-only).
  */
 function useNodePalette(browserOnly = false): NodePaletteResult {
-  return useMemo(() => computePalette(browserOnly), [browserOnly]);
+  const nodeTypes = core.registry.useNodeTypes();
+  const categories = core.registry.useCategories();
+  const processors = core.registry.useProcessors();
+
+  return useMemo(
+    () => computePalette(nodeTypes, categories, processors, browserOnly),
+    [nodeTypes, categories, processors, browserOnly],
+  );
 }
 
 export { useNodePalette, computePalette };
