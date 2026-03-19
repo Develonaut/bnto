@@ -88,7 +88,7 @@ Apps (apps/web, apps/desktop)
 
 ### `packages/core/` (`@bnto/core`) -- Transport-agnostic API layer
 
-- 6 domains: `core.recipes`, `core.executions`, `core.user`, `core.auth`, `core.telemetry`, `core.registry`
+- 7 domains: `core.recipes`, `core.executions`, `core.user`, `core.auth`, `core.telemetry`, `core.registry`, `core.flags`
 - React hooks for all data operations (recipes, executions, user, auth, registry)
 - TypeScript types and interfaces shared across the app
 - Zustand stores for domain state (opaque to consumers -- accessed via `use*State()` hooks)

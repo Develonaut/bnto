@@ -6,7 +6,7 @@
  * Merges imperative clients from core.ts with React hooks for the final
  * public API. Consumers import `core` from this module (via index.ts).
  *
- * 6 domains: recipes, executions, user, auth, telemetry, registry.
+ * 7 domains: recipes, executions, user, auth, telemetry, registry, flags.
  *
  * Usage:
  *   import { core } from "@bnto/core";
@@ -50,6 +50,11 @@ import { useRegistryRecipes } from "./hooks/useRegistryRecipes";
 import { useRegistryNodeTypes } from "./hooks/useRegistryNodeTypes";
 import { useRegistryCategories } from "./hooks/useRegistryCategories";
 import { useRegistryProcessors } from "./hooks/useRegistryProcessors";
+
+// Flags hooks
+import { useFlag } from "./hooks/useFlag";
+import { useVariant } from "./hooks/useVariant";
+import { useFlagResult } from "./hooks/useFlagResult";
 
 // Upload/Download hooks
 import { useUploadFiles } from "./hooks/useUploadFiles";
@@ -102,6 +107,13 @@ export const core = {
     useNodeTypes: useRegistryNodeTypes,
     useCategories: useRegistryCategories,
     useProcessors: useRegistryProcessors,
+  },
+
+  flags: {
+    ...baseCore.flags,
+    useFlag,
+    useVariant,
+    useFlagResult,
   },
 
   // ── Internal (not public API, kept for consumer migration) ─────────

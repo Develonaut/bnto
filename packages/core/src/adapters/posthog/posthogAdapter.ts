@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * PostHog adapter — the ONLY file that imports posthog-js.
+ * PostHog telemetry adapter — owns initialization and event tracking.
  *
  * Wraps the PostHog SDK with SSR-safe guards and DNT respect.
  * When running on the server (typeof window === "undefined") or
@@ -18,21 +18,12 @@
  */
 
 import posthog from "posthog-js";
-import type { PostHog } from "posthog-js";
 import type {
   TelemetryConfig,
   TelemetryProperties,
   TelemetryUserTraits,
 } from "../../types/telemetry";
-
-/** Window-level key for the initialized PostHog instance. */
-const PH_KEY = "__bnto_ph__" as const;
-
-/** Type-safe accessor for the shared PostHog instance on window. */
-function getSharedInstance(): PostHog | undefined {
-  if (typeof window === "undefined") return undefined;
-  return (window as unknown as Record<string, unknown>)[PH_KEY] as PostHog | undefined;
-}
+import { PH_KEY, getSharedInstance } from "./shared";
 
 /**
  * Check if the user has Do Not Track enabled.

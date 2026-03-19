@@ -38,6 +38,8 @@ export type {
   TelemetryConfig,
   TelemetryProperties,
   TelemetryUserTraits,
+  FlagResult,
+  FlagSubscriber,
 } from "./types";
 
 // ── Auth types ────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@
  * Wires services into clients. This is the base layer that reactCore.ts
  * enhances with React hooks for the final public `core` export.
  *
- * 6 domains: recipes, executions, user, auth, telemetry, registry.
+ * 7 domains: recipes, executions, user, auth, telemetry, registry, flags.
  *
  * Dependency flow:
  *   core.ts -> clients -> services -> adapters -> @bnto/backend
@@ -24,6 +24,7 @@ import { createUserClient } from "./clients/userClient";
 import { createAuthClient } from "./clients/authClient";
 import { createTelemetryClient } from "./clients/telemetryClient";
 import { createRegistryClient } from "./clients/registryClient";
+import { createFlagsClient } from "./clients/flagsClient";
 import { createRegistryService } from "./services/registryService";
 
 // Services still created internally — uploads, downloads, analytics stay
@@ -60,6 +61,7 @@ const userClient = createUserClient(userService, analyticsService);
 const authClient = createAuthClient();
 const telemetryClient = createTelemetryClient();
 const registryClient = createRegistryClient();
+const flagsClient = createFlagsClient();
 
 // ── Core Singleton ────────────────────────────────────────────────────────
 export const core = {
@@ -69,6 +71,7 @@ export const core = {
   auth: authClient,
   telemetry: telemetryClient,
   registry: registryClient,
+  flags: flagsClient,
 
   // ── Internal (used by hooks, not top-level public domains) ──────────
   /** @internal Cloud upload service — will be absorbed into executions for M4. */
