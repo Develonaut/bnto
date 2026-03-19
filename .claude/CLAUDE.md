@@ -48,7 +48,7 @@ Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M
 - **Web**: Next.js on Vercel + Convex Cloud + `@convex-dev/auth`
 - **Cloud (M4, planned)**: Server-side execution for premium recipes (technology TBD)
 - **Desktop (M3)**: Tauri (Rust-native) — free local execution
-- **Shared Packages**: `@bnto/core` (transport-agnostic API), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-agnostic node definitions)
+- **Shared Packages**: `@bnto/core` (transport-agnostic API), `@bnto/registry` (curation + discovery), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-agnostic node definitions)
 - **Open Source**: MIT licensed
 
 ---
@@ -156,7 +156,8 @@ bnto/
 │   └── @bnto/
 │       ├── auth/                # @bnto/auth — Cloud auth (web only)
 │       ├── backend/             # @bnto/backend — Convex schema + functions
-│       └── nodes/               # @bnto/nodes — Engine-agnostic node definitions
+│       ├── nodes/               # @bnto/nodes — Engine-agnostic node definitions
+│       └── registry/            # @bnto/registry — Curation + discovery layer
 ├── engine/                      # Rust WASM engine (browser execution)
 │   └── crates/
 │       ├── bnto-core/           # Core WASM library (types, traits, progress)

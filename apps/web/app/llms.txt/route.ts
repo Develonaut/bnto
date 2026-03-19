@@ -1,12 +1,12 @@
-import { RECIPES } from "@bnto/nodes";
+import { getAllRecipes } from "@bnto/registry";
 import { BASE_URL } from "@/lib/constants";
 
 export const dynamic = "force-static";
 
 function generateLlmsTxt() {
-  const tools = RECIPES.map((r) => `- [${r.name}](${BASE_URL}/${r.slug}): ${r.description}`).join(
-    "\n",
-  );
+  const tools = getAllRecipes()
+    .map((r) => `- [${r.name}](${BASE_URL}/${r.slug}): ${r.description}`)
+    .join("\n");
 
   return [
     "# bnto",

@@ -82,3 +82,7 @@ export { downloadBlob } from "./adapters/browser/downloadBlob";
 export { deriveAcceptedTypes } from "./adapters/browser/deriveAcceptedTypes";
 export { deriveOutputConfig } from "./adapters/browser/deriveOutputConfig";
 export { createZipBlob } from "./adapters/browser/createZipBlob";
+
+// ── Node/Registry types (re-exported for app consumers) ──────────────────
+export type { Definition, ValidationError } from "@bnto/nodes";
+export type { RegistryData } from "@bnto/registry";

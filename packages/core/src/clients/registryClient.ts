@@ -1,6 +1,7 @@
 /** Registry client — read-only public API for predefined recipes and node types. */
 
 import { registryStore } from "../stores/registryStore";
+import { getRecipeBySlug as registryGetBySlug } from "@bnto/registry";
 import type { Recipe, NodeTypeInfo } from "@bnto/nodes";
 
 export function createRegistryClient() {
@@ -9,6 +10,9 @@ export function createRegistryClient() {
 
     getRecipesByCategory: (category: string): Recipe[] =>
       registryStore.getState().recipes.filter((r) => r.category === category),
+
+    /** Stateless slug lookup — delegates to @bnto/registry (no store needed). */
+    getRecipeBySlug: registryGetBySlug,
 
     getNodeTypes: () => registryStore.getState().nodeTypes,
 

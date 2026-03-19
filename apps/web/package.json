@@ -14,7 +14,7 @@
     "@bnto/auth": "workspace:*",
     "@bnto/core": "workspace:*",
     "@bnto/editor": "workspace:*",
-    "@bnto/nodes": "workspace:*",
+    "@bnto/registry": "workspace:*",
     "@bnto/ui": "workspace:*",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",

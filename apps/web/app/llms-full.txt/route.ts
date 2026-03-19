@@ -1,24 +1,26 @@
-import { RECIPES } from "@bnto/nodes";
+import { getAllRecipes } from "@bnto/registry";
 import { BASE_URL } from "@/lib/constants";
 
 export const dynamic = "force-static";
 
-function formatAccepts(r: (typeof RECIPES)[number]) {
+function formatAccepts(r: ReturnType<typeof getAllRecipes>[number]) {
   return r.accept.extensions.map((e) => e.replace(".", "").toUpperCase()).join(", ");
 }
 
 function generateLlmsFullTxt() {
-  const sections = RECIPES.map((r) =>
-    [
-      `### ${r.name}`,
-      `- URL: ${BASE_URL}/${r.slug}`,
-      `- Description: ${r.description}`,
-      `- Category: ${r.category}`,
-      `- Accepts: ${formatAccepts(r)}`,
-      `- Features: ${r.features.join(", ")}`,
-      "- Cost: Free",
-    ].join("\n"),
-  ).join("\n\n");
+  const sections = getAllRecipes()
+    .map((r) =>
+      [
+        `### ${r.name}`,
+        `- URL: ${BASE_URL}/${r.slug}`,
+        `- Description: ${r.description}`,
+        `- Category: ${r.category}`,
+        `- Accepts: ${formatAccepts(r)}`,
+        `- Features: ${r.features.join(", ")}`,
+        "- Cost: Free",
+      ].join("\n"),
+    )
+    .join("\n\n");
 
   return [
     "# bnto",
