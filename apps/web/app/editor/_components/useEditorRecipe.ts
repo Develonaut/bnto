@@ -2,8 +2,8 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import type { Definition } from "@bnto/nodes";
 import { core } from "@bnto/core";
+import type { Definition } from "@bnto/core";
 
 interface EditorRecipeResult {
   /** Resolved definition (undefined while loading or if not found). */

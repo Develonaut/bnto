@@ -1,14 +1,15 @@
 /**
- * Bnto slug registry — thin wrapper over @bnto/nodes recipes.
+ * Bnto slug registry — thin wrapper over @bnto/registry recipes.
  *
  * Drives generateStaticParams, generateMetadata, sitemap, gallery,
  * llms.txt, and middleware slug validation from one place.
  *
- * All recipe data lives in @bnto/nodes (the single source of truth).
+ * All recipe data flows through @bnto/registry (the curation layer).
  * This module maps Recipe → BntoEntry to preserve the existing consumer API.
  */
 
-import { RECIPES, getRecipeBySlug, type Recipe } from "@bnto/nodes";
+import { getAllRecipes, getRecipeBySlug } from "@bnto/registry";
+import type { Recipe } from "@bnto/core";
 
 export interface BntoEntry {
   slug: string;
@@ -33,7 +34,7 @@ function toBntoEntry(r: Recipe): BntoEntry {
 /**
  * All registered bntos. Each entry maps to a public URL at /{slug}.
  */
-export const BNTO_REGISTRY: readonly BntoEntry[] = RECIPES.map(toBntoEntry);
+export const BNTO_REGISTRY: readonly BntoEntry[] = getAllRecipes().map(toBntoEntry);
 
 /** Returns true if the slug maps to a registered bnto. */
 export function isValidBntoSlug(slug: string): boolean {

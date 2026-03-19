@@ -55,6 +55,7 @@ All access goes through the `core` singleton:
 - **Queries** — pure read-path. Query option construction with `select` transforms. No side effects
 - **Services** — single-domain write-path. Mutations, cache invalidation, infrastructure lifecycle. Services never call other services
 - **Adapters** — backend-specific bridge. The only layer that imports `@bnto/backend`. Swappable per runtime
+- **Registry** — `@bnto/registry` provides stateless lookups over the engine catalog. Core wraps it in a Zustand store for reactive access
 - **Stores** — Zustand, opaque to consumers. Accessed via `core.<domain>.use*State()` hooks, never raw `useStore()`
 
 ## Development

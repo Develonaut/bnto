@@ -14,11 +14,13 @@ Each layer only depends on layers below it. Never skip layers.
 
 **Package naming convention:** Internal packages are named by **role**, not by technology. This ensures any technology can be swapped by rewriting the package internals without changing consumers.
 
-| Package         | Role                                             | Current Implementation |
-| --------------- | ------------------------------------------------ | ---------------------- |
-| `@bnto/backend` | Data layer -- schema, functions, business logic  | Convex                 |
-| `@bnto/auth`    | Auth client -- sign in, sign up, session         | `@convex-dev/auth`     |
-| `@bnto/core`    | Transport-agnostic API -- hooks, types, adapters | React Query + adapters |
+| Package          | Role                                                    | Current Implementation |
+| ---------------- | ------------------------------------------------------- | ---------------------- |
+| `@bnto/backend`  | Data layer -- schema, functions, business logic         | Convex                 |
+| `@bnto/auth`     | Auth client -- sign in, sign up, session                | `@convex-dev/auth`     |
+| `@bnto/core`     | Transport-agnostic API -- hooks, types, adapters        | React Query + adapters |
+| `@bnto/registry` | Curation + discovery -- recipes, node types, categories | Stateless lookups      |
+| `@bnto/nodes`    | Engine-generated catalog -- types, schemas, validation  | Codegen + Zod          |
 
 **State management:** Zustand handles client-only state (editor content, UI preferences). Server state uses a hybrid strategy -- see [data-fetching-strategy.md](../strategy/data-fetching-strategy.md) for the full decision record:
 
@@ -52,6 +54,32 @@ const state = useStore(instance.store, useShallow(s => ({ ... })));
 
 See [core-api.md](core-api.md) for the full API design rules.
 
+## Import Boundary Rules
+
+```
+Apps (apps/web, apps/desktop)
+  → @bnto/core (runtime — hooks, state, API)
+  → @bnto/registry (build-time SSG only — where Zustand doesn't exist)
+
+@bnto/core
+  → @bnto/registry (curation layer — recipes, node types, lookup)
+  → @bnto/nodes (types only — re-exported for consumers)
+  → @bnto/backend, @bnto/auth (adapters)
+
+@bnto/registry
+  → @bnto/nodes (engine catalog data + types)
+
+@bnto/editor
+  → @bnto/nodes (types + pure functions — editor operates on Definition objects)
+  → @bnto/core (runtime API — core.registry for catalog data)
+
+@bnto/ui → no @bnto/* imports
+```
+
+**Runtime code** in apps MUST go through `core.registry.*` (e.g., `core.registry.getRecipeBySlug(slug)`). **Build-time SSG** surfaces (generateStaticParams, route handlers) can import from `@bnto/registry` directly since there's no React context at build time.
+
+**Apps NEVER import from `@bnto/nodes` directly.** Types flow through `@bnto/core` re-exports; data flows through `@bnto/registry` (SSG) or `core.registry` (runtime).
+
 ## Cost-First Architecture
 
 **The user's browser is a powerful computer. Use it.**
@@ -75,6 +103,17 @@ See [core-api.md](core-api.md) for the full API design rules.
 - Browser execution infrastructure (Web Worker, WASM engine) with lazy initialization
 - Runtime detection to swap adapters transparently
 - NO backend, storage, or state management technology imports in public API -- only in internal adapters/services
+
+### `packages/@bnto/registry/` (`@bnto/registry`) -- Curation + discovery layer
+
+- Stateless lookup functions over the engine-generated catalog
+- `getAllRecipes()`, `getRecipeBySlug()`, `getRecipesByCategory()`
+- `getAllNodeTypes()`, `getBrowserNodeTypes()`
+- `getAllCategories()`, `getAllProcessors()`
+- No React, no Zustand -- purely stateless
+- Depends on `@bnto/nodes` only
+- Future: community recipes (DB-backed), search/exploration API
+- Consumed by `@bnto/core` (reactive store wrapper) and `apps/web` (SSG build-time)
 
 ### `packages/@bnto/backend/` (`@bnto/backend`) -- Data layer
 

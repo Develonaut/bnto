@@ -87,6 +87,18 @@ describe("registryClient", () => {
     });
   });
 
+  describe("getRecipeBySlug", () => {
+    it("returns a recipe for a known slug", () => {
+      const recipe = client.getRecipeBySlug("compress-images");
+      expect(recipe).toBeDefined();
+      expect(recipe!.slug).toBe("compress-images");
+    });
+
+    it("returns undefined for an unknown slug", () => {
+      expect(client.getRecipeBySlug("nonexistent")).toBeUndefined();
+    });
+  });
+
   describe("isInitialized", () => {
     it("returns true after populate", () => {
       expect(client.isInitialized()).toBe(true);

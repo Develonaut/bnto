@@ -859,6 +859,12 @@ Files: `app/(auth)/`, `packages/@bnto/auth/`
 
 **Priority: Triage.** After PR #225 is merged and deployed, run curl checks against `bnto.io/ingest/*` endpoints, confirm trailing slash behavior on `/ingest/e/`, and verify events appear in PostHog Live Events. Can only be tested in production.
 
+### Triage: Sync recipes on my-recipes page mount
+
+**Priority: Triage.** On mount of the my-recipes page, kick off `core.recipes.syncToCloud()` so previously unsynced local recipes get pushed to the cloud. Users should see non-synced recipes transition to synced status in real time.
+
+Files: `apps/web/app/(app)/my-recipes/`, `packages/core/src/clients/recipeClient.ts` (`syncToCloud`)
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |

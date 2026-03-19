@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Badge, Button, PenLineIcon } from "@bnto/ui";
 import { core } from "@bnto/core";
 import { editorUrl } from "@/lib/routes";
-import { getRecipeBySlug } from "@bnto/nodes";
 
 /**
  * "Open in Editor" — creates a personal recipe from the predefined
@@ -18,7 +17,7 @@ export function OpenInEditorLink({ slug }: { slug: string }) {
   const router = useRouter();
 
   const handleClick = useCallback(() => {
-    const recipe = getRecipeBySlug(slug);
+    const recipe = core.registry.getRecipeBySlug(slug);
     if (!recipe) return;
 
     const id = core.recipes.createFromDefinition(recipe.definition);
