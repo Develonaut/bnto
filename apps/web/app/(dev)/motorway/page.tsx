@@ -28,6 +28,7 @@ import { SwitchShowcase } from "./SwitchShowcase";
 import { ComboboxShowcase } from "./ComboboxShowcase";
 import { TextareaShowcase } from "./TextareaShowcase";
 import { LoadingCardShowcase } from "./LoadingCardShowcase";
+import { SchemaFormPlayground } from "./SchemaFormPlayground";
 import { SpringableShowcase } from "./SpringableShowcase";
 import { TypographyShowcase } from "./TypographyShowcase";
 
@@ -57,6 +58,7 @@ export default function MotorwayPage() {
           <TabsTrigger value="grids">Grids</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
           <TabsTrigger value="features">Features</TabsTrigger>
+          <TabsTrigger value="schemas">Schemas</TabsTrigger>
         </TabsList>
 
         {/* ── Surfaces ────────────────────────────────────────── */}
@@ -313,6 +315,16 @@ export default function MotorwayPage() {
               <PhaseFlowShowcase />
             </ShowcaseSection>
           </Stack>
+        </TabsContent>
+        {/* ── Schemas ─────────────────────────────────────────── */}
+        <TabsContent value="schemas">
+          <ShowcaseSection
+            id="schema-form"
+            title="Schema Form Inspector"
+            description="Browse every engine-backed node type. See the live form, engine schema metadata, UI field configs, and inferred controls side by side."
+          >
+            <SchemaFormPlayground />
+          </ShowcaseSection>
         </TabsContent>
       </Tabs>
     </div>
