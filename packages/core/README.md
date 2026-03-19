@@ -14,10 +14,11 @@ Consumed by `apps/web/` (and eventually `apps/desktop/`). No UI code — just da
 src/
 ├── core.ts                    # Singleton — wires services into clients
 ├── reactCore.ts               # React binding — merges hooks onto imperative clients
-├── clients/                   # Public API (5 domain clients)
+├── clients/                   # Public API (6 domain clients)
 │   ├── authClient.ts          # Session state + auth actions
 │   ├── executionClient.ts     # Unified execution (browser WASM + cloud)
 │   ├── recipeClient.ts        # Recipe definitions (list, save, run)
+│   ├── registryClient.ts      # Predefined recipes + node type metadata
 │   ├── telemetryClient.ts     # Product event tracking (PostHog)
 │   └── userClient.ts          # Profile + usage stats
 ├── queries/                   # Read-path — query option construction + select transforms
@@ -35,7 +36,7 @@ src/
 └── utils/                     # Pure utility functions
 ```
 
-## 5-Domain Public API
+## 6-Domain Public API
 
 All access goes through the `core` singleton:
 
@@ -46,6 +47,7 @@ All access goes through the `core` singleton:
 | `core.user`       | Profile + usage stats                                      | `core.user.useCurrentUser()`           |
 | `core.auth`       | Session state + auth actions                               | `core.auth.useIsAuthenticated()`       |
 | `core.telemetry`  | Product event tracking                                     | `core.telemetry.capture("recipe_run")` |
+| `core.registry`   | Predefined recipes + node type metadata                    | `core.registry.useRecipes()`           |
 
 ## Key Concepts
 

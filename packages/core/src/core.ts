@@ -6,7 +6,7 @@
  * Wires services into clients. This is the base layer that reactCore.ts
  * enhances with React hooks for the final public `core` export.
  *
- * 5 domains: recipes, executions, user, auth, telemetry.
+ * 6 domains: recipes, executions, user, auth, telemetry, registry.
  *
  * Dependency flow:
  *   core.ts -> clients -> services -> adapters -> @bnto/backend
@@ -23,6 +23,8 @@ import { createExecutionClient } from "./clients/executionClient";
 import { createUserClient } from "./clients/userClient";
 import { createAuthClient } from "./clients/authClient";
 import { createTelemetryClient } from "./clients/telemetryClient";
+import { createRegistryClient } from "./clients/registryClient";
+import { createRegistryService } from "./services/registryService";
 
 // Services still created internally — uploads, downloads, analytics stay
 // as services for when M4 cloud execution activates. They're just not
@@ -37,6 +39,10 @@ const historyService = createHistoryService();
 const userService = createUserService();
 const analyticsService = createAnalyticsService();
 const browserExecutionService = createBrowserExecutionService();
+
+// Registry — predefined recipes and node type metadata.
+const registryService = createRegistryService();
+registryService.initialize();
 
 // Cloud execution infrastructure — used internally by hooks, not exposed
 // as top-level domains on the public API (reactCore.ts).
@@ -53,6 +59,7 @@ const executionClient = createExecutionClient(
 const userClient = createUserClient(userService, analyticsService);
 const authClient = createAuthClient();
 const telemetryClient = createTelemetryClient();
+const registryClient = createRegistryClient();
 
 // ── Core Singleton ────────────────────────────────────────────────────────
 export const core = {
@@ -61,6 +68,7 @@ export const core = {
   user: userClient,
   auth: authClient,
   telemetry: telemetryClient,
+  registry: registryClient,
 
   // ── Internal (used by hooks, not top-level public domains) ──────────
   /** @internal Cloud upload service — will be absorbed into executions for M4. */
