@@ -92,7 +92,7 @@ export type {
   FieldTypeInfo,
   FieldControl,
 } from "./schemas";
-export { inferFieldType } from "./schemas";
+export { inferFieldType, extractSchemaDefaults } from "./schemas";
 
 // I/O node helpers (Sprint 4C — self-describing recipes)
 export { getInputNode } from "./getInputNode";

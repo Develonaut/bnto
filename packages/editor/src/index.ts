@@ -95,12 +95,12 @@ export { CompartmentNode } from "./components/nodes/CompartmentNode";
 export { IoNode } from "./components/nodes/IoNode";
 export { PlaceholderNode } from "./components/nodes/PlaceholderNode";
 
-// --- Schema-driven forms ---
+// --- Schema-driven forms (re-exported from @bnto/form) ---
 
-export { SchemaForm } from "./components/SchemaForm";
-export type { SchemaFormProps } from "./components/SchemaForm";
-export { SchemaField } from "./components/SchemaField";
-export type { SchemaFieldProps } from "./components/SchemaField";
+export { SchemaForm } from "@bnto/form";
+export type { SchemaFormProps } from "@bnto/form";
+export { SchemaField } from "@bnto/form";
+export type { SchemaFieldProps } from "@bnto/form";
 
 // --- Dialogs ---
 

@@ -19,6 +19,7 @@ Each layer only depends on layers below it. Never skip layers.
 | `@bnto/backend`  | Data layer -- schema, functions, business logic                               | Convex                 |
 | `@bnto/auth`     | Auth client -- sign in, sign up, session                                      | `@convex-dev/auth`     |
 | `@bnto/core`     | Transport-agnostic API -- hooks, types, adapters                              | React Query + adapters |
+| `@bnto/form`     | Schema-driven form rendering -- controls, field types, form composition       | Zod → control mapping  |
 | `@bnto/registry` | Node system facade -- re-exports all of @bnto/nodes + curation functions      | Stateless lookups      |
 | `@bnto/nodes`    | Engine-generated catalog -- types, schemas, validation (INTERNAL to registry) | Codegen + Zod          |
 
@@ -59,7 +60,8 @@ See [core-api.md](core-api.md) for the full API design rules.
 The dependency chain is strictly linear:
 
 ```
-@bnto/editor   → @bnto/core, @bnto/ui
+@bnto/editor   → @bnto/core, @bnto/ui, @bnto/form
+@bnto/form     → @bnto/core, @bnto/ui
 @bnto/core     → @bnto/registry, @bnto/auth, @bnto/backend
 @bnto/registry → @bnto/nodes
 @bnto/ui       → (leaf — no @bnto/* imports)
@@ -67,6 +69,7 @@ The dependency chain is strictly linear:
 
 Apps (apps/web, apps/desktop)
   → @bnto/core (runtime — hooks, state, API)
+  → @bnto/form (schema-driven forms — no store dependency)
   → @bnto/registry (build-time SSG only — where Zustand doesn't exist)
 ```
 

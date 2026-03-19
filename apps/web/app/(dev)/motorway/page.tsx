@@ -28,6 +28,7 @@ import { SwitchShowcase } from "./SwitchShowcase";
 import { ComboboxShowcase } from "./ComboboxShowcase";
 import { TextareaShowcase } from "./TextareaShowcase";
 import { LoadingCardShowcase } from "./LoadingCardShowcase";
+import { SchemaFormPlayground } from "./SchemaFormPlayground";
 import { SpringableShowcase } from "./SpringableShowcase";
 import { TypographyShowcase } from "./TypographyShowcase";
 
@@ -54,6 +55,7 @@ export default function MotorwayPage() {
           <TabsTrigger value="motion">Motion</TabsTrigger>
           <TabsTrigger value="overlays">Overlays</TabsTrigger>
           <TabsTrigger value="forms">Forms</TabsTrigger>
+          <TabsTrigger value="schema-forms">Schema Forms</TabsTrigger>
           <TabsTrigger value="grids">Grids</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
           <TabsTrigger value="features">Features</TabsTrigger>
@@ -278,6 +280,17 @@ export default function MotorwayPage() {
               <FileListShowcase />
             </ShowcaseSection>
           </Stack>
+        </TabsContent>
+
+        {/* ── Schema Forms ────────────────────────────────────── */}
+        <TabsContent value="schema-forms">
+          <ShowcaseSection
+            id="schema-forms"
+            title="Schema-Driven Forms"
+            description="Pick a node type to generate its config form from the engine schema. Values, visibility, and controls are all derived from Zod + UI metadata."
+          >
+            <SchemaFormPlayground />
+          </ShowcaseSection>
         </TabsContent>
 
         {/* ── Grids ───────────────────────────────────────────── */}

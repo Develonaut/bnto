@@ -152,6 +152,7 @@ export {
   getRequiredParams,
   getConditionallyRequired,
   getNodeSchema,
+  extractSchemaDefaults,
 } from "@bnto/registry";
 
 // Recipe lookup

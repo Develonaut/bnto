@@ -83,6 +83,7 @@ export {
   getVisibleParams,
   getEngineOperations,
   inferFieldType,
+  extractSchemaDefaults,
   getProcessorDefaults,
   getParamConstraints,
   getProcessorAccepts,

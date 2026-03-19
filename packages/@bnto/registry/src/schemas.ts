@@ -8,6 +8,7 @@ export {
   getVisibleParams,
   getEngineOperations,
   inferFieldType,
+  extractSchemaDefaults,
 } from "@bnto/nodes";
 export { getProcessorDefaults, getParamConstraints, getProcessorAccepts } from "@bnto/nodes";
 export type {

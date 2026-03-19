@@ -14,6 +14,7 @@ export { getRequiredParams } from "./getRequiredParams";
 export { getConditionallyRequired } from "./getConditionallyRequired";
 export { getVisibleParams } from "./getVisibleParams";
 export { inferFieldType } from "./inferFieldType";
+export { extractSchemaDefaults } from "./extractSchemaDefaults";
 export type { FieldTypeInfo, FieldControl } from "./inferFieldType";
 
 // Engine operations helper

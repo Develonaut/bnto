@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@bnto/core": "workspace:*",
+    "@bnto/form": "workspace:*",
     "@bnto/ui": "workspace:*",
     "@xyflow/react": "^12.10.1",
     "lucide-react": "^0.577.0",
