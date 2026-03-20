@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import type { NodeParamField, NodeParamFieldInfo, NodeParam } from "@bnto/core";
 import { Label } from "@bnto/ui";
 import { CONTROL_REGISTRY } from "./controls";
+import { getFieldLayout } from "./fieldLayout";
 
 /**
  * SchemaField — renders the correct UI control via registry lookup.
@@ -25,12 +26,6 @@ interface SchemaFieldProps {
   onChange: (name: string, value: unknown) => void;
 }
 
-/** Controls that render inline (label left, control right). */
-const INLINE_CONTROLS = new Set(["switch", "select"]);
-
-/** Controls that render their own label (Slider owns its header row). */
-const SELF_LABELED_CONTROLS = new Set(["slider"]);
-
 function SchemaField({ name, meta, fieldConfig, fieldInfo, value, onChange }: SchemaFieldProps) {
   const handleChange = useCallback(
     (newValue: unknown) => onChange(name, newValue),
@@ -39,8 +34,7 @@ function SchemaField({ name, meta, fieldConfig, fieldInfo, value, onChange }: Sc
 
   const id = `param-${name}`;
   const Control = CONTROL_REGISTRY[fieldInfo.control];
-  const inline = INLINE_CONTROLS.has(fieldInfo.control);
-  const selfLabeled = SELF_LABELED_CONTROLS.has(fieldInfo.control);
+  const layout = getFieldLayout(fieldInfo.control);
 
   const label = (
     <Label htmlFor={id} title={meta.description}>
@@ -60,11 +54,11 @@ function SchemaField({ name, meta, fieldConfig, fieldInfo, value, onChange }: Sc
     />
   );
 
-  if (selfLabeled) {
+  if (layout === "self-labeled") {
     return <div data-testid={`schema-field-${name}`}>{control}</div>;
   }
 
-  if (inline) {
+  if (layout === "inline") {
     return (
       <div className="flex items-center justify-between gap-2" data-testid={`schema-field-${name}`}>
         {label}

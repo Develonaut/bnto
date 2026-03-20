@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { Badge, Divider, Heading, SlidersHorizontalIcon, Text, usePrevious } from "@bnto/ui";
 import { useEditor } from "../../context";
 import { useEditorNode } from "../../hooks/useEditorNode";
-import { SchemaForm } from "../SchemaForm";
+import { SchemaForm } from "@bnto/form";
 import { EditorMenuPanel } from "../EditorMenuPanel";
 
 /**

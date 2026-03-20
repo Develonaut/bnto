@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @source "../../../packages/ui/src";
 @source "../../../packages/editor/src";
+@source "../../../packages/@bnto/form/src";
 @import "./theme.css";
 @import "./animations.css";
 @import "./surface.css";

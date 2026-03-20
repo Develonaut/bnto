@@ -2,6 +2,7 @@
 
 import type { NodeParamField, NodeParamFieldInfo, NodeParam } from "@bnto/core";
 import { SchemaField } from "./SchemaField";
+import { partitionGroupFields } from "./partitionGroupFields";
 
 /**
  * FieldGroup — renders related parameters in a compact layout.
@@ -10,9 +11,6 @@ import { SchemaField } from "./SchemaField";
  * Number/text fields render side-by-side in a 2-column grid below.
  * This matches design tools like Figma's dimension controls.
  */
-
-/** Controls that render inline (label left, control right). */
-const INLINE_CONTROLS = new Set(["switch", "select"]);
 
 interface GroupField {
   paramName: string;
@@ -28,8 +26,7 @@ interface FieldGroupProps {
 }
 
 function FieldGroup({ fields, values, onChange }: FieldGroupProps) {
-  const inlineFields = fields.filter((f) => INLINE_CONTROLS.has(f.fieldInfo.control));
-  const gridFields = fields.filter((f) => !INLINE_CONTROLS.has(f.fieldInfo.control));
+  const { inlineFields, gridFields } = partitionGroupFields(fields);
 
   return (
     <div className="flex flex-col gap-3">

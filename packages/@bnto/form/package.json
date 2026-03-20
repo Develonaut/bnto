@@ -1,15 +1,18 @@
 {
-  "name": "@bnto/editor",
+  "name": "@bnto/form",
   "version": "0.0.1",
   "private": true,
-  "description": "Recipe editor — visual canvas, store, adapters, and hooks",
+  "description": "Schema-driven form system — auto-generates UI controls from node schemas",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
   "scripts": {
     "build": "tsc --noEmit",
     "test": "vitest run"
-  },
-  "exports": {
-    ".": "./src/index.ts"
   },
   "peerDependencies": {
     "react": "^19.0.0",
@@ -17,17 +20,13 @@
   },
   "dependencies": {
     "@bnto/core": "workspace:*",
-    "@bnto/form": "workspace:*",
-    "@bnto/ui": "workspace:*",
-    "@xyflow/react": "^12.10.1",
-    "lucide-react": "^0.577.0",
-    "zustand": "^5.0.0"
+    "@bnto/ui": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "@types/react-dom": "^19.0.0",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "zod": "^3.25.76"
   }
 }
