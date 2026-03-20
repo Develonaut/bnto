@@ -19,7 +19,7 @@ struct CatalogEnvelope {
 /// Return a pretty-printed JSON string of the engine's full catalog.
 #[wasm_bindgen]
 pub fn node_catalog() -> Result<String, JsValue> {
-    let registry = super::execute::create_default_registry();
+    let registry = bnto_engine::create_default_registry();
     let mut catalog = registry.catalog();
 
     // Sort by node type for deterministic output across builds.
@@ -43,7 +43,7 @@ mod tests {
     #[test]
     fn test_catalog_envelope_has_correct_version() {
         // The catalog version should match bnto-core's FORMAT_VERSION.
-        let registry = crate::execute::create_default_registry();
+        let registry = bnto_engine::create_default_registry();
         let catalog = registry.catalog();
 
         let envelope = CatalogEnvelope {
@@ -59,7 +59,7 @@ mod tests {
     #[test]
     fn test_catalog_has_all_six_processors() {
         // The default registry has 6 processors, so the catalog should too.
-        let registry = crate::execute::create_default_registry();
+        let registry = bnto_engine::create_default_registry();
         let catalog = registry.catalog();
 
         assert_eq!(catalog.len(), 6, "Catalog should have exactly 6 processors");
@@ -68,7 +68,7 @@ mod tests {
     #[test]
     fn test_catalog_contains_expected_node_types() {
         // Verify all 6 expected node type keys are present.
-        let registry = crate::execute::create_default_registry();
+        let registry = bnto_engine::create_default_registry();
         let catalog = registry.catalog();
 
         let keys: Vec<&str> = catalog.iter().map(|m| m.node_type.as_str()).collect();
@@ -96,7 +96,7 @@ mod tests {
     fn test_all_processors_support_browser_platform() {
         // Every processor in the default registry should include "browser"
         // in its platforms list (all 6 current processors run via WASM).
-        let registry = crate::execute::create_default_registry();
+        let registry = bnto_engine::create_default_registry();
         let catalog = registry.catalog();
 
         for entry in &catalog {
@@ -111,7 +111,7 @@ mod tests {
     #[test]
     fn test_catalog_serializes_to_valid_json() {
         // The full catalog should serialize to valid, parseable JSON.
-        let registry = crate::execute::create_default_registry();
+        let registry = bnto_engine::create_default_registry();
         let mut catalog = registry.catalog();
         catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
@@ -155,7 +155,7 @@ mod tests {
     #[test]
     #[ignore]
     fn generate_catalog_snapshot() {
-        let registry = crate::execute::create_default_registry();
+        let registry = bnto_engine::create_default_registry();
         let mut catalog = registry.catalog();
         catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
@@ -184,11 +184,11 @@ mod tests {
     #[test]
     fn test_catalog_sort_order_is_deterministic() {
         // Running catalog() twice should produce the same sorted order.
-        let registry = crate::execute::create_default_registry();
+        let registry = bnto_engine::create_default_registry();
         let mut catalog1 = registry.catalog();
         catalog1.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
-        let registry2 = crate::execute::create_default_registry();
+        let registry2 = bnto_engine::create_default_registry();
         let mut catalog2 = registry2.catalog();
         catalog2.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 

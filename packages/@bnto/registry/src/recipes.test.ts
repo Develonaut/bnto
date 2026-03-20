@@ -3,8 +3,8 @@ import { getAllRecipes, getRecipeBySlug, getRecipesByCategory } from "./recipes"
 
 describe("recipes", () => {
   describe("getAllRecipes", () => {
-    it("returns all 8 predefined recipes", () => {
-      expect(getAllRecipes()).toHaveLength(8);
+    it("returns all 10 predefined recipes", () => {
+      expect(getAllRecipes()).toHaveLength(10);
     });
 
     it("every recipe has required fields", () => {

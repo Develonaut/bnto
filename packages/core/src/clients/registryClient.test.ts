@@ -17,7 +17,7 @@ describe("registryClient", () => {
 
   describe("getRecipes", () => {
     it("returns all predefined recipes", () => {
-      expect(client.getRecipes()).toHaveLength(8);
+      expect(client.getRecipes()).toHaveLength(10);
     });
 
     it("every recipe has required fields", () => {

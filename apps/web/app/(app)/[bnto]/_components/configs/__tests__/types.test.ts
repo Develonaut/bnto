@@ -3,10 +3,17 @@ import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 import { DEFAULT_CONFIGS, type BntoSlug } from "../types";
 
 describe("BntoConfigMap defaults", () => {
-  it("provides a default config for every registered bnto slug", () => {
-    for (const entry of BNTO_REGISTRY) {
-      const config = DEFAULT_CONFIGS[entry.slug as BntoSlug];
-      expect(config).toBeDefined();
+  it("every BntoConfigMap slug has a default config", () => {
+    const configSlugs = Object.keys(DEFAULT_CONFIGS) as BntoSlug[];
+    for (const slug of configSlugs) {
+      expect(DEFAULT_CONFIGS[slug]).toBeDefined();
+    }
+  });
+
+  it("every config slug is a registered bnto", () => {
+    const registrySlugs = new Set(BNTO_REGISTRY.map((e) => e.slug));
+    for (const slug of Object.keys(DEFAULT_CONFIGS)) {
+      expect(registrySlugs.has(slug)).toBe(true);
     }
   });
 

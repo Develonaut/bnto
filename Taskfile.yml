@@ -35,6 +35,8 @@ tasks:
       - task: wasm:lint
       - echo "=== rust tests (unit + WASM integration) ==="
       - task: wasm:test
+      - echo "=== cli tests ==="
+      - task: cli:test
       - echo "=== typescript build ==="
       - task: ui:build
       - echo "=== typescript tests ==="
@@ -42,6 +44,25 @@ tasks:
       - echo "=== typescript lint ==="
       - task: ui:lint
       - echo "=== all checks passed ==="
+
+  # CLI tasks (engine/crates/bnto-cli)
+  cli:build:
+    desc: Build the native CLI binary (release)
+    dir: ./engine
+    cmds:
+      - cargo build --release --package bnto-cli
+
+  cli:test:
+    desc: Run CLI unit + integration tests
+    dir: ./engine
+    cmds:
+      - cargo test --package bnto-cli
+
+  # Recipe fixture codegen (TypeScript → engine JSON)
+  recipes:generate:
+    desc: Generate recipe JSON fixtures from TypeScript recipe definitions
+    cmds:
+      - npx tsx packages/@bnto/registry/scripts/generate-recipe-fixtures.ts
 
   # Node codegen (engine → TypeScript)
   nodes:generate:
@@ -218,13 +239,15 @@ tasks:
 
   # Cross-cutting
   build:all:
-    desc: Build everything (Rust + TypeScript)
+    desc: Build everything (Rust + TypeScript + CLI)
     cmds:
       - task: wasm:build
+      - task: cli:build
       - task: ui:build
 
   test:all:
-    desc: Test everything (Rust + TypeScript)
+    desc: Test everything (Rust + TypeScript + CLI)
     cmds:
       - task: wasm:test
+      - task: cli:test
       - task: ui:test

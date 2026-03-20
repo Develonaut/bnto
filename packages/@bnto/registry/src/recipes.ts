@@ -1,7 +1,7 @@
-/** Recipe lookup functions — stateless, reads from @bnto/nodes static exports. */
+/** Recipe lookup functions — reads from local predefined recipes. */
 
-import { RECIPES } from "@bnto/nodes";
-import type { Recipe } from "@bnto/nodes";
+import { RECIPES } from "./recipesCatalog";
+import type { Recipe } from "./recipe";
 
 /** Returns all predefined recipes. */
 export function getAllRecipes(): readonly Recipe[] {

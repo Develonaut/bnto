@@ -30,8 +30,10 @@
 # When we add new crates (like bnto-image for image processing),
 # we add them here.
 members = [
+    "crates/bnto-cli",
     "crates/bnto-core",
     "crates/bnto-csv",
+    "crates/bnto-engine",
     "crates/bnto-file",
     "crates/bnto-image",
     "crates/bnto-wasm",
@@ -111,6 +113,14 @@ serde_json = "1.0"
 # Rust structs directly to JS objects (and back) without the
 # intermediate JSON string. Much faster for large data.
 serde-wasm-bindgen = "0.6"
+
+# --- CLI Dependencies ---
+
+# clap: Command-line argument parser for bnto-cli.
+clap = { version = "4", features = ["derive"] }
+
+# tempfile: Creates temporary files and directories for tests.
+tempfile = "3"
 
 # --- Node-Specific Dependencies ---
 

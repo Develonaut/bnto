@@ -22,7 +22,7 @@ import { downloadFirstOutput, assertWebP, assertJpeg } from "../../helpers/asser
  * Convention: SETUP → BUILD → CONFIGURE → EXECUTE → VERIFY → DRIFT CHECK.
  *
  * The DRIFT CHECK phase exports the recipe and compares its structure against
- * a reference fixture in test-fixtures/definitions/.
+ * a reference fixture in @bnto/nodes/src/recipes/generated/ (codegen from TS recipes).
  *
  * @browser — no Convex backend needed.
  */
@@ -38,10 +38,10 @@ test.describe("editor custom recipes @browser", () => {
     await addNodeFromPalette(page, "Compress Images");
     await expect(nodeCards).toHaveCount(5); // Input + 3 ops + Output
 
-    // CONFIGURE — set resize width
+    // CONFIGURE — set resize width (matches optimize-images-for-web predefined recipe)
     await selectNode(page, "Resize");
     await ensureConfigPanelOpen(page);
-    await setNumberParam(page, "width", 200);
+    await setNumberParam(page, "width", 800);
 
     // CONFIGURE — set convert format to webp
     await selectNode(page, "Convert");
@@ -62,7 +62,7 @@ test.describe("editor custom recipes @browser", () => {
     // DRIFT CHECK
     const { buffer: exportBuffer } = await exportRecipe(page);
     const exported = JSON.parse(exportBuffer.toString("utf-8"));
-    assertDefinitionMatchesFixture(exported, "cr1-web-ready-image-pipeline.bnto.json");
+    assertDefinitionMatchesFixture(exported, "optimize-images-for-web.bnto.json");
   });
 
   test("CR2: compress + organize — compress → rename with suffix", async ({ page }) => {
@@ -92,7 +92,7 @@ test.describe("editor custom recipes @browser", () => {
     // DRIFT CHECK
     const { buffer: exportBuffer } = await exportRecipe(page);
     const exported = JSON.parse(exportBuffer.toString("utf-8"));
-    assertDefinitionMatchesFixture(exported, "cr2-compress-organize.bnto.json");
+    assertDefinitionMatchesFixture(exported, "compress-and-rename.bnto.json");
   });
 
   test("CR3: clean & standardize CSV — clean → rename columns", async ({ page }) => {
@@ -136,7 +136,7 @@ test.describe("editor custom recipes @browser", () => {
     // DRIFT CHECK
     const { buffer: exportBuffer } = await exportRecipe(page);
     const exported = JSON.parse(exportBuffer.toString("utf-8"));
-    assertDefinitionMatchesFixture(exported, "cr3-clean-standardize-csv.bnto.json");
+    assertDefinitionMatchesFixture(exported, "standardize-csv.bnto.json");
   });
 
   test("CR4: thumbnail generator — resize → convert → rename", async ({ page }) => {
@@ -149,10 +149,10 @@ test.describe("editor custom recipes @browser", () => {
     await addNodeFromPalette(page, "Rename Files");
     await expect(nodeCards).toHaveCount(5); // Input + 3 ops + Output
 
-    // CONFIGURE — resize to thumbnail size
+    // CONFIGURE — resize to thumbnail size (matches generate-thumbnails predefined recipe)
     await selectNode(page, "Resize");
     await ensureConfigPanelOpen(page);
-    await setNumberParam(page, "width", 100);
+    await setNumberParam(page, "width", 150);
 
     // CONFIGURE — convert to WebP
     await selectNode(page, "Convert");
@@ -178,7 +178,7 @@ test.describe("editor custom recipes @browser", () => {
     // DRIFT CHECK
     const { buffer: exportBuffer } = await exportRecipe(page);
     const exported = JSON.parse(exportBuffer.toString("utf-8"));
-    assertDefinitionMatchesFixture(exported, "cr4-thumbnail-generator.bnto.json");
+    assertDefinitionMatchesFixture(exported, "generate-thumbnails.bnto.json");
   });
 
   test("CR5: all 6 operations — add each from palette, verify structure", async ({ page }) => {
@@ -208,6 +208,6 @@ test.describe("editor custom recipes @browser", () => {
     expect(json.nodes.length).toBe(8);
 
     // DRIFT CHECK
-    assertDefinitionMatchesFixture(json, "cr5-all-operations.bnto.json");
+    assertDefinitionMatchesFixture(json, "testing/all-operations.bnto.json");
   });
 });

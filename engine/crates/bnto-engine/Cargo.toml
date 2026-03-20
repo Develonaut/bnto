@@ -1,0 +1,23 @@
+# bnto-engine — Shared engine layer for CLI + WASM consumers.
+#
+# Provides `create_default_registry()` and `run_pipeline()` so both
+# bnto-wasm (browser) and bnto-cli (native) share the same processor
+# wiring without duplicating registration code.
+
+[package]
+name = "bnto-engine"
+version = "0.1.0"
+edition = "2024"
+description = "Shared engine — registry creation and pipeline convenience for all consumers"
+license = "MIT"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+bnto-core = { path = "../bnto-core" }
+bnto-csv = { path = "../bnto-csv" }
+bnto-file = { path = "../bnto-file" }
+bnto-image = { path = "../bnto-image" }
+
+serde_json = { workspace = true }
