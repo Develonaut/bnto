@@ -84,6 +84,20 @@ fn load_input_files(paths: &[String]) -> Vec<PipelineFile> {
     files
 }
 
+/// Write pipeline results to disk, exit on failure.
+fn write_output(result: &bnto_core::PipelineResult, output_dir: &str) {
+    if let Err(e) = io::write_results(result, output_dir) {
+        eprintln!("Error writing output: {e}");
+        process::exit(1);
+    }
+    let n = result.files.len();
+    eprintln!(
+        "Done. {n} file{} written to {output_dir}/ in {}ms",
+        if n == 1 { "" } else { "s" },
+        result.duration_ms
+    );
+}
+
 fn run_recipe(recipe_path: &str, input_paths: &[String], output_dir: &str) {
     let definition_json = read_recipe(recipe_path);
     let files = load_input_files(input_paths);
@@ -96,18 +110,7 @@ fn run_recipe(recipe_path: &str, input_paths: &[String], output_dir: &str) {
 
     let reporter = progress::stderr_reporter();
     match bnto_engine::run_pipeline(&definition_json, files, &reporter) {
-        Ok(result) => {
-            if let Err(e) = io::write_results(&result, output_dir) {
-                eprintln!("Error writing output: {e}");
-                process::exit(1);
-            }
-            let n = result.files.len();
-            eprintln!(
-                "Done. {n} file{} written to {output_dir}/ in {}ms",
-                if n == 1 { "" } else { "s" },
-                result.duration_ms
-            );
-        }
+        Ok(result) => write_output(&result, output_dir),
         Err(e) => {
             eprintln!("Pipeline failed: {e}");
             process::exit(1);

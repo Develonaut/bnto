@@ -7,107 +7,67 @@
 
 import { validateDefinition, isIoNodeType } from "@bnto/nodes";
 import type { ValidationError } from "@bnto/nodes";
+import type { Definition } from "@bnto/nodes";
 import type { Recipe } from "./recipe";
 
-/** Validates that the root definition has the expected shape for a recipe. */
-function validateRootShape(recipe: Recipe): ValidationError[] {
-  const errors: ValidationError[] = [];
-  const def = recipe.definition;
+function err(nodeId: string, field: string, message: string): ValidationError {
+  return { nodeId, field, message };
+}
 
+function validateRootType(recipe: Recipe): ValidationError | null {
+  const { definition: def, slug } = recipe;
   if (def.type !== "group") {
-    errors.push({
-      nodeId: def.id,
-      field: "type",
-      message: `recipe '${recipe.slug}' root definition must be type 'group', got '${def.type}'`,
-    });
+    return err(def.id, "type", `recipe '${slug}' root must be type 'group', got '${def.type}'`);
   }
+  return null;
+}
 
+function validateRootNodes(recipe: Recipe): ValidationError | null {
+  const { definition: def, slug } = recipe;
   if (!def.nodes?.length) {
-    errors.push({
-      nodeId: def.id,
-      field: "nodes",
-      message: `recipe '${recipe.slug}' root definition must have a nodes array`,
-    });
+    return err(def.id, "nodes", `recipe '${slug}' root must have a nodes array`);
   }
-
-  if (def.id !== recipe.slug) {
-    errors.push({
-      nodeId: def.id,
-      field: "id",
-      message: `recipe '${recipe.slug}' definition ID '${def.id}' must match recipe slug`,
-    });
-  }
-
-  return errors;
+  return null;
 }
 
-/** Validates that exactly one input node exists and has outputPorts. */
-function validateInputNode(recipe: Recipe): ValidationError[] {
-  const nodes = recipe.definition.nodes ?? [];
-  const inputNodes = nodes.filter((n) => n.type === "input");
-
-  if (inputNodes.length === 0) {
-    return [
-      {
-        nodeId: recipe.definition.id,
-        field: "nodes",
-        message: `recipe '${recipe.slug}' must have exactly one input node`,
-      },
-    ];
+function validateRootId(recipe: Recipe): ValidationError | null {
+  const { definition: def, slug } = recipe;
+  if (def.id !== slug) {
+    return err(def.id, "id", `recipe '${slug}' definition ID '${def.id}' must match recipe slug`);
   }
-  if (inputNodes.length > 1) {
-    return [
-      {
-        nodeId: recipe.definition.id,
-        field: "nodes",
-        message: `recipe '${recipe.slug}' has ${inputNodes.length} input nodes (expected 1)`,
-      },
-    ];
-  }
-  const input = inputNodes[0]!;
-  if (!input.outputPorts?.length) {
-    return [
-      {
-        nodeId: input.id,
-        field: "outputPorts",
-        message: `input node '${input.id}' must have at least one outputPort`,
-      },
-    ];
-  }
-  return [];
+  return null;
 }
 
-/** Validates that exactly one output node exists and has inputPorts. */
-function validateOutputNode(recipe: Recipe): ValidationError[] {
-  const nodes = recipe.definition.nodes ?? [];
-  const outputNodes = nodes.filter((n) => n.type === "output");
+function validateRootShape(recipe: Recipe): ValidationError[] {
+  return [validateRootType(recipe), validateRootNodes(recipe), validateRootId(recipe)].filter(
+    (e): e is ValidationError => e !== null,
+  );
+}
 
-  if (outputNodes.length === 0) {
-    return [
-      {
-        nodeId: recipe.definition.id,
-        field: "nodes",
-        message: `recipe '${recipe.slug}' must have exactly one output node`,
-      },
-    ];
+/** Validates that exactly one node of the given type exists with the required ports. */
+function validateIoNode(recipe: Recipe, ioType: "input" | "output"): ValidationError[] {
+  const nodes = recipe.definition.nodes ?? [];
+  const matches = nodes.filter((n) => n.type === ioType);
+  const rootId = recipe.definition.id;
+
+  if (matches.length !== 1) {
+    const msg =
+      matches.length === 0
+        ? `recipe '${recipe.slug}' must have exactly one ${ioType} node`
+        : `recipe '${recipe.slug}' has ${matches.length} ${ioType} nodes (expected 1)`;
+    return [err(rootId, "nodes", msg)];
   }
-  if (outputNodes.length > 1) {
+
+  const node = matches[0]!;
+  const portField = ioType === "input" ? "outputPorts" : "inputPorts";
+  const ports = ioType === "input" ? node.outputPorts : node.inputPorts;
+  if (!ports?.length) {
     return [
-      {
-        nodeId: recipe.definition.id,
-        field: "nodes",
-        message: `recipe '${recipe.slug}' has ${outputNodes.length} output nodes (expected 1)`,
-      },
-    ];
-  }
-  const output = outputNodes[0]!;
-  if (!output.inputPorts?.length) {
-    return [
-      {
-        nodeId: output.id,
-        field: "inputPorts",
-        message: `output node '${output.id}' must have at least one inputPort`,
-      },
+      err(
+        node.id,
+        portField,
+        `${ioType} node '${node.id}' must have at least one ${portField.slice(0, -1)}`,
+      ),
     ];
   }
   return [];
@@ -115,8 +75,8 @@ function validateOutputNode(recipe: Recipe): ValidationError[] {
 
 /** Builds an undirected adjacency map from edges for reachability checks. */
 function buildAdjacency(
-  nodes: Recipe["definition"]["nodes"],
-  edges: Recipe["definition"]["edges"],
+  nodes: Definition["nodes"],
+  edges: Definition["edges"],
 ): Map<string, Set<string>> {
   const adjacency = new Map<string, Set<string>>();
   for (const node of nodes ?? []) {
@@ -131,7 +91,7 @@ function buildAdjacency(
 
 /** BFS from the input node, returning all reachable node IDs. */
 function reachableFromInput(
-  nodes: Recipe["definition"]["nodes"],
+  nodes: Definition["nodes"],
   adjacency: Map<string, Set<string>>,
 ): Set<string> {
   const inputNode = (nodes ?? []).find((n) => n.type === "input");
@@ -150,6 +110,27 @@ function reachableFromInput(
   return visited;
 }
 
+/** Finds disconnected non-IO nodes unreachable from input. */
+function findDisconnectedNodes(
+  nodes: Definition["nodes"],
+  visited: Set<string>,
+): ValidationError[] {
+  return (nodes ?? [])
+    .filter((n) => !isIoNodeType(n.type) && !visited.has(n.id))
+    .map((n) => err(n.id, "edges", `node '${n.id}' is disconnected (no edge path from input)`));
+}
+
+/** Checks if the output node is reachable from input. */
+function checkOutputReachable(nodes: Definition["nodes"], visited: Set<string>): ValidationError[] {
+  const outputNode = (nodes ?? []).find((n) => n.type === "output");
+  if (outputNode && !visited.has(outputNode.id)) {
+    return [
+      err(outputNode.id, "edges", `output node '${outputNode.id}' is not reachable from input`),
+    ];
+  }
+  return [];
+}
+
 /** Validates that edges form a path from input to output (no disconnected nodes). */
 function validateConnectivity(recipe: Recipe): ValidationError[] {
   const nodes = recipe.definition.nodes ?? [];
@@ -159,44 +140,20 @@ function validateConnectivity(recipe: Recipe): ValidationError[] {
   const adjacency = buildAdjacency(nodes, edges);
   const visited = reachableFromInput(nodes, adjacency);
 
-  const errors: ValidationError[] = [];
-  for (const node of nodes) {
-    if (!isIoNodeType(node.type) && !visited.has(node.id)) {
-      errors.push({
-        nodeId: node.id,
-        field: "edges",
-        message: `node '${node.id}' is disconnected (no edge path from input)`,
-      });
-    }
-  }
-  const outputNode = nodes.find((n) => n.type === "output");
-  if (outputNode && !visited.has(outputNode.id)) {
-    errors.push({
-      nodeId: outputNode.id,
-      field: "edges",
-      message: `output node '${outputNode.id}' is not reachable from input`,
-    });
-  }
-  return errors;
+  return [...findDisconnectedNodes(nodes, visited), ...checkOutputReachable(nodes, visited)];
 }
 
 /**
  * Validates a recipe — structural definition checks + recipe-level business rules.
  *
- * Checks:
- * - Root definition must be type "group" with a nodes array
- * - Definition ID must match recipe slug
- * - Exactly one input node with outputPorts
- * - Exactly one output node with inputPorts
- * - All nodes must be connected (reachable from input)
- * - Plus all structural validation from `validateDefinition()`
+ * Checks root shape, I/O nodes, connectivity, plus structural validation.
  */
 export function validateRecipe(recipe: Recipe): ValidationError[] {
   return [
     ...validateDefinition(recipe.definition),
     ...validateRootShape(recipe),
-    ...validateInputNode(recipe),
-    ...validateOutputNode(recipe),
+    ...validateIoNode(recipe, "input"),
+    ...validateIoNode(recipe, "output"),
     ...validateConnectivity(recipe),
   ];
 }
