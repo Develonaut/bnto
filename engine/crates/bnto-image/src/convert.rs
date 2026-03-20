@@ -92,7 +92,6 @@ impl NodeProcessor for ConvertImageFormat {
         use bnto_core::metadata::*;
         NodeMetadata {
             node_type: "image-convert".to_string(),
-            operation: "default".to_string(),
             name: "Convert Image Format".to_string(),
             description: "Convert images between JPEG, PNG, and WebP formats".to_string(),
             category: NodeCategory::Image,

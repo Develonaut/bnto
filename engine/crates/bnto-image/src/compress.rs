@@ -138,7 +138,6 @@ impl NodeProcessor for CompressImages {
         use bnto_core::metadata::*;
         NodeMetadata {
             node_type: "image-compress".to_string(),
-            operation: "default".to_string(),
             name: "Compress Images".to_string(),
             description: "Reduce image file size while maintaining quality".to_string(),
             category: NodeCategory::Image,

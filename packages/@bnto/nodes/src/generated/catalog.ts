@@ -207,7 +207,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;
 
 // =============================================================================
-// Processors — 6 implemented operations
+// Processors — 6 per-operation node types
 // =============================================================================
 
 export type ParamType = "number" | "string" | "boolean" | "enum" | "object";

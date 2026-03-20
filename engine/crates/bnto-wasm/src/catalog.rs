@@ -186,19 +186,11 @@ mod tests {
         // Running catalog() twice should produce the same sorted order.
         let registry = crate::execute::create_default_registry();
         let mut catalog1 = registry.catalog();
-        catalog1.sort_by(|a, b| {
-            let key_a = format!("{}:{}", a.node_type, a.operation);
-            let key_b = format!("{}:{}", b.node_type, b.operation);
-            key_a.cmp(&key_b)
-        });
+        catalog1.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
         let registry2 = crate::execute::create_default_registry();
         let mut catalog2 = registry2.catalog();
-        catalog2.sort_by(|a, b| {
-            let key_a = format!("{}:{}", a.node_type, a.operation);
-            let key_b = format!("{}:{}", b.node_type, b.operation);
-            key_a.cmp(&key_b)
-        });
+        catalog2.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
         // Both should produce the same node type keys in the same order.
         let keys1: Vec<&str> = catalog1.iter().map(|m| m.node_type.as_str()).collect();

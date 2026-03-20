@@ -35,7 +35,6 @@ impl NodeProcessor for CleanCsv {
         use bnto_core::metadata::*;
         NodeMetadata {
             node_type: "spreadsheet-clean".to_string(),
-            operation: "default".to_string(),
             name: "Clean CSV".to_string(),
             description: "Remove empty rows, trim whitespace, and deduplicate CSV data".to_string(),
             category: NodeCategory::Spreadsheet,

@@ -34,7 +34,6 @@ impl NodeProcessor for RenameCsvColumns {
         use bnto_core::metadata::*;
         NodeMetadata {
             node_type: "spreadsheet-rename".to_string(),
-            operation: "default".to_string(),
             name: "Rename CSV Columns".to_string(),
             description: "Rename column headers in a CSV file".to_string(),
             category: NodeCategory::Spreadsheet,

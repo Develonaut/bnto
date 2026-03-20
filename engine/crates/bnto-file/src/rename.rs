@@ -41,7 +41,6 @@ impl NodeProcessor for RenameFiles {
         use bnto_core::metadata::*;
         NodeMetadata {
             node_type: "file-rename".to_string(),
-            operation: "default".to_string(),
             name: "Rename Files".to_string(),
             description: "Transform filenames using patterns, find/replace, and case rules"
                 .to_string(),

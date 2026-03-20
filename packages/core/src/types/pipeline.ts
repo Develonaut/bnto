@@ -10,7 +10,7 @@
 export interface PipelineNode {
   /** Unique node ID within this pipeline. */
   id: string;
-  /** Node type name (e.g., "compress-images", "input", "output"). */
+  /** Node type name (e.g., "image-compress", "input", "output"). */
   type: string;
   /** Parameters for this node (quality, format, pattern, etc.). */
   params: Record<string, unknown>;

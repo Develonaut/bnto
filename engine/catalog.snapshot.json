@@ -170,7 +170,6 @@
   "processors": [
     {
       "nodeType": "file-rename",
-      "operation": "default",
       "name": "Rename Files",
       "description": "Transform filenames using patterns, find/replace, and case rules",
       "category": "file",
@@ -243,7 +242,6 @@
     },
     {
       "nodeType": "image-compress",
-      "operation": "default",
       "name": "Compress Images",
       "description": "Reduce image file size while maintaining quality",
       "category": "image",
@@ -275,7 +273,6 @@
     },
     {
       "nodeType": "image-convert",
-      "operation": "default",
       "name": "Convert Image Format",
       "description": "Convert images between JPEG, PNG, and WebP formats",
       "category": "image",
@@ -325,7 +322,6 @@
     },
     {
       "nodeType": "image-resize",
-      "operation": "default",
       "name": "Resize Images",
       "description": "Change image dimensions while maintaining quality",
       "category": "image",
@@ -393,7 +389,6 @@
     },
     {
       "nodeType": "spreadsheet-clean",
-      "operation": "default",
       "name": "Clean CSV",
       "description": "Remove empty rows, trim whitespace, and deduplicate CSV data",
       "category": "spreadsheet",
@@ -438,7 +433,6 @@
     },
     {
       "nodeType": "spreadsheet-rename",
-      "operation": "default",
       "name": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file",
       "category": "spreadsheet",

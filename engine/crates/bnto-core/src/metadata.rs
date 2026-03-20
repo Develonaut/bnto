@@ -423,10 +423,8 @@ fn system_node_types() -> Vec<NodeTypeInfo> {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct NodeMetadata {
-    /// Node type group (e.g., `"image"`, `"spreadsheet"`).
+    /// Per-operation node type (e.g., `"image-compress"`, `"spreadsheet-clean"`).
     pub node_type: std::string::String,
-    /// Specific operation (e.g., `"compress"`, `"clean"`).
-    pub operation: std::string::String,
     /// Human-readable processor name.
     pub name: std::string::String,
     /// Description of what this processor does.
@@ -677,8 +675,7 @@ mod tests {
     fn test_node_metadata_serializes_camel_case() {
         // NodeMetadata fields should be camelCase in JSON.
         let metadata = NodeMetadata {
-            node_type: "image".to_string(),
-            operation: "compress".to_string(),
+            node_type: "image-compress".to_string(),
             name: "Compress Images".to_string(),
             description: "Reduce image file size".to_string(),
             category: NodeCategory::Image,
@@ -692,7 +689,7 @@ mod tests {
         };
         let json = serde_json::to_string(&metadata).unwrap();
         // Should use camelCase field names.
-        assert!(json.contains(r#""nodeType":"image""#));
+        assert!(json.contains(r#""nodeType":"image-compress""#));
         assert!(json.contains(r#""platforms":["browser"]"#));
         assert!(!json.contains("node_type"));
     }
@@ -702,8 +699,7 @@ mod tests {
         // Build a complete NodeMetadata and verify it serializes to valid JSON
         // that can be parsed back.
         let metadata = NodeMetadata {
-            node_type: "image".to_string(),
-            operation: "compress".to_string(),
+            node_type: "image-compress".to_string(),
             name: "Compress Images".to_string(),
             description: "Reduce image file size while maintaining quality".to_string(),
             category: NodeCategory::Image,
@@ -735,8 +731,7 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
 
         // Verify key fields are present and correct.
-        assert_eq!(parsed["nodeType"], "image");
-        assert_eq!(parsed["operation"], "compress");
+        assert_eq!(parsed["nodeType"], "image-compress");
         assert_eq!(parsed["category"], "image");
         assert_eq!(parsed["platforms"][0], "browser");
         assert_eq!(parsed["accepts"].as_array().unwrap().len(), 3);

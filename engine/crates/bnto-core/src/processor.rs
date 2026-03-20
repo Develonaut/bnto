@@ -111,7 +111,6 @@ pub trait NodeProcessor {
     fn metadata(&self) -> NodeMetadata {
         NodeMetadata {
             node_type: "unknown".to_string(),
-            operation: "default".to_string(),
             name: self.name().to_string(),
             description: String::new(),
             category: NodeCategory::Data,

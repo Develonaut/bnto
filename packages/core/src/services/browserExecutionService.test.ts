@@ -11,7 +11,7 @@ import type { PipelineDefinition } from "../types/pipeline";
 const COMPRESS_DEFINITION: PipelineDefinition = {
   nodes: [
     { id: "input", type: "input", params: {} },
-    { id: "process", type: "compress-images", params: {} },
+    { id: "process", type: "image-compress", params: {} },
     { id: "output", type: "output", params: {} },
   ],
 };

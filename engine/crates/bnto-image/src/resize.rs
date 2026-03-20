@@ -173,7 +173,6 @@ impl NodeProcessor for ResizeImages {
         use bnto_core::metadata::*;
         NodeMetadata {
             node_type: "image-resize".to_string(),
-            operation: "default".to_string(),
             name: "Resize Images".to_string(),
             description: "Change image dimensions while maintaining quality".to_string(),
             category: NodeCategory::Image,

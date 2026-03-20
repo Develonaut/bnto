@@ -48,7 +48,6 @@ interface RawNodeType {
 
 interface RawProcessor {
   nodeType: string;
-  operation: string;
   name: string;
   description: string;
   category: string;
@@ -237,7 +236,7 @@ function generateProcessorsSection(): string {
   const processorsCode = sorted.map((p) => indent(generateProcessor(p), 1)).join(",\n");
 
   return `// =============================================================================
-// Processors — ${sorted.length} implemented operations
+// Processors — ${sorted.length} per-operation node types
 // =============================================================================
 
 export type ParamType = "number" | "string" | "boolean" | "enum" | "object";
