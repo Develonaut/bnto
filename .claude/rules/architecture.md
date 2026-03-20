@@ -20,6 +20,7 @@ Each layer only depends on layers below it. Never skip layers.
 | `@bnto/auth`     | Auth client -- sign in, sign up, session                                      | `@convex-dev/auth`     |
 | `@bnto/core`     | Transport-agnostic API -- hooks, types, adapters                              | React Query + adapters |
 | `@bnto/registry` | Node system facade -- re-exports all of @bnto/nodes + curation functions      | Stateless lookups      |
+| `@bnto/form`     | Schema-driven forms -- auto-generates UI controls from node schemas           | React + Zod            |
 | `@bnto/nodes`    | Engine-generated catalog -- types, schemas, validation (INTERNAL to registry) | Codegen + Zod          |
 
 **State management:** Zustand handles client-only state (editor content, UI preferences). Server state uses a hybrid strategy -- see [data-fetching-strategy.md](../strategy/data-fetching-strategy.md) for the full decision record:
@@ -59,7 +60,8 @@ See [core-api.md](core-api.md) for the full API design rules.
 The dependency chain is strictly linear:
 
 ```
-@bnto/editor   → @bnto/core, @bnto/ui
+@bnto/editor   → @bnto/form, @bnto/core, @bnto/ui
+@bnto/form     → @bnto/core, @bnto/ui    (leaf — schema-driven forms)
 @bnto/core     → @bnto/registry, @bnto/auth, @bnto/backend
 @bnto/registry → @bnto/nodes
 @bnto/ui       → (leaf — no @bnto/* imports)
@@ -67,6 +69,7 @@ The dependency chain is strictly linear:
 
 Apps (apps/web, apps/desktop)
   → @bnto/core (runtime — hooks, state, API)
+  → @bnto/form (schema-driven forms — standalone, no editor dependency)
   → @bnto/registry (build-time SSG only — where Zustand doesn't exist)
 ```
 

@@ -11,7 +11,7 @@ import {
   type NodeSchema,
   type NodeParamFields,
 } from "@bnto/core";
-import { SchemaForm } from "@bnto/editor";
+import { SchemaForm } from "@bnto/form";
 import { Heading, Stack, Text } from "@bnto/ui";
 
 // ─── Helpers ──────────────────────────────────────────────────────────

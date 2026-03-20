@@ -114,6 +114,9 @@ importers:
       '@bnto/editor':
         specifier: workspace:*
         version: link:../../packages/editor
+      '@bnto/form':
+        specifier: workspace:*
+        version: link:../../packages/@bnto/form
       '@bnto/registry':
         specifier: workspace:*
         version: link:../../packages/@bnto/registry
@@ -298,6 +301,37 @@ importers:
         specifier: 'catalog:'
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@22.19.9)(jiti@2.6.1)(lightningcss@1.30.2)
 
+  packages/@bnto/form:
+    dependencies:
+      '@bnto/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@bnto/ui':
+        specifier: workspace:*
+        version: link:../../ui
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.9
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.13
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@22.19.9)(jiti@2.6.1)(lightningcss@1.30.2)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+
   packages/@bnto/nodes:
     dependencies:
       zod:
@@ -393,6 +427,9 @@ importers:
       '@bnto/core':
         specifier: workspace:*
         version: link:../core
+      '@bnto/form':
+        specifier: workspace:*
+        version: link:../@bnto/form
       '@bnto/ui':
         specifier: workspace:*
         version: link:../ui
@@ -9181,8 +9218,8 @@ snapshots:
       '@babel/parser': 7.29.0
       eslint: 9.39.3(jiti@2.6.1)
       hermes-parser: 0.25.1
-      zod: 4.3.6
-      zod-validation-error: 4.0.2(zod@4.3.6)
+      zod: 3.25.76
+      zod-validation-error: 4.0.2(zod@3.25.76)
     transitivePeerDependencies:
       - supports-color
 
@@ -11955,9 +11992,9 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-validation-error@4.0.2(zod@4.3.6):
+  zod-validation-error@4.0.2(zod@3.25.76):
     dependencies:
-      zod: 4.3.6
+      zod: 3.25.76
 
   zod@3.25.76: {}
 
