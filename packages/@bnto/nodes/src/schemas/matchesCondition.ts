@@ -16,8 +16,6 @@ export function matchesCondition(
   paramValue: string,
 ): boolean {
   if (!condition) return false;
-  if (Array.isArray(condition)) {
-    return condition.some((c) => c.param === paramName && c.equals === paramValue);
-  }
-  return condition.param === paramName && condition.equals === paramValue;
+  const conditions = Array.isArray(condition) ? condition : [condition];
+  return conditions.some((c) => c.param === paramName && c.equals === paramValue);
 }

@@ -1,7 +1,7 @@
 /** Parallel node schema — parameters for concurrent task execution. */
 
 import { z } from "zod";
-import type { NodeSchemaDefinition } from "./types";
+import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
 
 /** Valid error handling strategies for parallel execution. */
 export const ERROR_STRATEGIES = ["failFast", "collectAll"] as const;
@@ -25,7 +25,6 @@ export const parallelNodeSchema: NodeSchemaDefinition = {
     tasks: {
       label: "Tasks",
       description: "Array of task definitions to execute concurrently.",
-      hidden: true,
     },
     maxWorkers: {
       label: "Max Workers",
@@ -34,10 +33,17 @@ export const parallelNodeSchema: NodeSchemaDefinition = {
     errorStrategy: {
       label: "Error Strategy",
       description: "How to handle task errors — fail immediately or collect all results.",
-      options: [
-        { value: "failFast", label: "Fail Fast" },
-        { value: "collectAll", label: "Collect All" },
-      ],
     },
+  },
+};
+
+/** UI presentation metadata for parallel node fields. */
+export const parallelFields: FieldConfigMap = {
+  tasks: { hidden: true },
+  errorStrategy: {
+    options: [
+      { value: "failFast", label: "Fail Fast" },
+      { value: "collectAll", label: "Collect All" },
+    ],
   },
 };

@@ -86,18 +86,11 @@ pub use registry::NodeRegistry;
 /// A definition at "1.3.0" works fine on an engine that supports "1.0.0".
 pub const FORMAT_VERSION: &str = "1.0.0";
 
-/// Default JPEG quality when not specified by the user (0-100 scale).
+/// Default quality when not specified by the user (1-100 scale).
 /// 80 is the industry sweet spot: significant file size savings with barely
-/// noticeable quality loss for most photos. Used by resize and convert
-/// operations (which genuinely control output encoding quality).
-pub const DEFAULT_JPEG_QUALITY: u8 = 80;
-
-/// Default compression level for the compress-images node (1-100 scale).
-/// 50 ≈ "Balanced" compression — meaningful file size reduction with
-/// acceptable quality. The user-facing semantics are inverted from JPEG
-/// quality: compression=1 is minimal, compression=100 is maximum.
-/// Internally: `jpeg_quality = 101 - compression` (so compression=50 → quality=51).
-pub const DEFAULT_COMPRESSION: u8 = 50;
+/// noticeable quality loss for most photos. Used by all image operations
+/// (compress, resize, convert).
+pub const DEFAULT_QUALITY: u8 = 80;
 
 // =============================================================================
 // Utility Functions (Pure Rust — no WASM boundary)

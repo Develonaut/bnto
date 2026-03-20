@@ -98,8 +98,7 @@ fn test_jpeg_metadata_has_compression_ratio() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result =
-        compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"compression": 40}"#, callback);
+    let result = compress_image_combined(TEST_JPEG, "photo.jpg", r#"{"quality": 60}"#, callback);
     assert!(result.is_ok(), "compress_image_combined should succeed");
 
     let result_obj = result.unwrap();
@@ -128,12 +127,7 @@ fn test_jpeg_output_filename_has_compressed_suffix() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = compress_image_combined(
-        TEST_JPEG,
-        "my-photo.jpg",
-        r#"{"compression": 20}"#,
-        callback,
-    );
+    let result = compress_image_combined(TEST_JPEG, "my-photo.jpg", r#"{"quality": 80}"#, callback);
     assert!(result.is_ok());
 
     let result_obj = result.unwrap();
@@ -168,38 +162,38 @@ fn test_webp_output_filename_has_compressed_suffix() {
 }
 
 // =========================================================================
-// Compression Parameter -- Affects Output Size Across WASM
+// Quality Parameter -- Affects Output Size Across WASM
 // =========================================================================
 
 #[wasm_bindgen_test]
-fn test_jpeg_higher_compression_produces_smaller_output() {
-    // Verifies compression param actually makes it through JSON -> Rust -> JPEG encoder.
-    // compression 80 -> quality 21 (aggressive), compression 5 -> quality 96 (minimal).
+fn test_jpeg_lower_quality_produces_smaller_output() {
+    // Verifies quality param actually makes it through JSON -> Rust -> JPEG encoder.
+    // quality 20 (aggressive compression), quality 95 (minimal compression).
     // If params_json parsing broke, both would use defaults and produce identical sizes.
     init_panic_hook();
 
-    let result_c80 = compress_image_combined(
+    let result_q20 = compress_image_combined(
         TEST_JPEG,
         "photo.jpg",
-        r#"{"compression": 80}"#,
+        r#"{"quality": 20}"#,
         noop_callback(),
     );
-    assert!(result_c80.is_ok(), "Compression 80 should succeed");
-    let bytes_c80 = extract_bytes(&result_c80.unwrap());
+    assert!(result_q20.is_ok(), "Quality 20 should succeed");
+    let bytes_q20 = extract_bytes(&result_q20.unwrap());
 
-    let result_c5 = compress_image_combined(
+    let result_q95 = compress_image_combined(
         TEST_JPEG,
         "photo.jpg",
-        r#"{"compression": 5}"#,
+        r#"{"quality": 95}"#,
         noop_callback(),
     );
-    assert!(result_c5.is_ok(), "Compression 5 should succeed");
-    let bytes_c5 = extract_bytes(&result_c5.unwrap());
+    assert!(result_q95.is_ok(), "Quality 95 should succeed");
+    let bytes_q95 = extract_bytes(&result_q95.unwrap());
 
     assert!(
-        bytes_c80.len() < bytes_c5.len(),
-        "Compression 80 ({} bytes) should produce smaller output than compression 5 ({} bytes)",
-        bytes_c80.len(),
-        bytes_c5.len()
+        bytes_q20.len() < bytes_q95.len(),
+        "Quality 20 ({} bytes) should produce smaller output than quality 95 ({} bytes)",
+        bytes_q20.len(),
+        bytes_q95.len()
     );
 }

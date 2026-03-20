@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { NodeSchemaDefinition } from "@bnto/core";
+import type { FieldConfigMap, NodeSchemaDefinition } from "@bnto/core";
 import { inferFieldType } from "@bnto/core";
 import { Stack, Text } from "@bnto/ui";
 import { SchemaField } from "./SchemaField";
@@ -23,8 +23,10 @@ const FIELD_GAP = "md" as const;
  */
 
 interface SchemaFormProps {
-  /** Full schema definition (Zod schema + UI metadata). */
+  /** Full schema definition (Zod schema + engine metadata). */
   schema: NodeSchemaDefinition;
+  /** UI presentation metadata per field. */
+  fields?: FieldConfigMap;
   /** Current parameter values. */
   values: Record<string, unknown>;
   /** Parameter names currently visible (after visibleWhen filtering). */
@@ -38,6 +40,7 @@ interface SingleEntry {
   kind: "single";
   paramName: string;
   meta: GroupField["meta"];
+  fieldConfig: GroupField["fieldConfig"];
   fieldInfo: GroupField["fieldInfo"];
 }
 
@@ -50,7 +53,7 @@ interface GroupEntry {
 
 type FormEntry = SingleEntry | GroupEntry;
 
-function SchemaForm({ schema, values, visibleParams, onChange }: SchemaFormProps) {
+function SchemaForm({ schema, fields, values, visibleParams, onChange }: SchemaFormProps) {
   const entries = useMemo(() => {
     const result: FormEntry[] = [];
     let currentGroup: GroupEntry | null = null;
@@ -58,29 +61,30 @@ function SchemaForm({ schema, values, visibleParams, onChange }: SchemaFormProps
     for (const paramName of visibleParams) {
       const meta = schema.params[paramName];
       if (!meta) continue;
+      const fieldConfig = fields?.[paramName];
       const zodField = schema.schema.shape[paramName];
       const fieldInfo = zodField
-        ? inferFieldType(zodField, meta)
+        ? inferFieldType(zodField, fieldConfig)
         : { type: "string" as const, control: "text" as const, required: true };
-      const group = meta.group;
+      const group = fieldConfig?.group;
 
       if (group && currentGroup?.groupName === group) {
-        currentGroup.fields.push({ paramName, meta, fieldInfo });
+        currentGroup.fields.push({ paramName, meta, fieldConfig, fieldInfo });
       } else if (group) {
         currentGroup = {
           kind: "group",
           groupName: group,
-          fields: [{ paramName, meta, fieldInfo }],
+          fields: [{ paramName, meta, fieldConfig, fieldInfo }],
         };
         result.push(currentGroup);
       } else {
         currentGroup = null;
-        result.push({ kind: "single", paramName, meta, fieldInfo });
+        result.push({ kind: "single", paramName, meta, fieldConfig, fieldInfo });
       }
     }
 
     return result;
-  }, [schema, visibleParams]);
+  }, [schema, fields, visibleParams]);
 
   if (entries.length === 0) {
     return (
@@ -108,6 +112,7 @@ function SchemaForm({ schema, values, visibleParams, onChange }: SchemaFormProps
             key={entry.paramName}
             name={entry.paramName}
             meta={entry.meta}
+            fieldConfig={entry.fieldConfig}
             fieldInfo={entry.fieldInfo}
             value={values[entry.paramName]}
             onChange={onChange}

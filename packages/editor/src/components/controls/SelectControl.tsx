@@ -4,14 +4,15 @@ import { useMemo } from "react";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@bnto/ui";
 import type { ControlProps } from "./types";
 
-function SelectControl({ id, fieldInfo, meta, value, onChange }: ControlProps) {
+function SelectControl({ id, fieldInfo, meta, fieldConfig, value, onChange }: ControlProps) {
   const enumValues = fieldInfo.enumValues ?? [];
 
-  // Build a value→label map from meta.options when display labels are provided
+  // Build a value→label map from fieldConfig.options when display labels are provided
+  const options = fieldConfig?.options;
   const labelMap = useMemo(() => {
-    if (!meta.options) return null;
-    return new Map(meta.options.map((o) => [o.value, o.label]));
-  }, [meta.options]);
+    if (!options) return null;
+    return new Map(options.map((o) => [o.value, o.label]));
+  }, [options]);
 
   return (
     <Select value={String(value ?? "")} onValueChange={onChange}>

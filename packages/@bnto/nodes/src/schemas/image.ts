@@ -15,7 +15,7 @@ import {
   imageParamsSchema,
   imageNodeSchema as generated,
 } from "../generated/schemas";
-import type { NodeSchemaDefinition } from "./types";
+import type { FieldConfigMap } from "./types";
 
 export { IMAGE_OPERATIONS, imageParamsSchema };
 export type { ImageParams } from "../generated/schemas";
@@ -26,47 +26,34 @@ const convertProc = PROCESSOR_MAP.get("image:convert");
 const formatParam = convertProc?.parameters.find((p) => p.name === "format");
 export const IMAGE_FORMATS = (formatParam?.options ?? ["jpeg", "png", "webp"]) as readonly string[];
 
-/** Image schema with dimension group annotations and compression presets. */
-export const imageNodeSchema: NodeSchemaDefinition = {
-  ...generated,
-  params: {
-    ...generated.params,
-    operation: {
-      ...generated.params.operation,
-      hidden: true,
-      options: [
-        { value: "compress", label: "Compress" },
-        { value: "convert", label: "Convert" },
-        { value: "resize", label: "Resize" },
-      ],
-    },
-    format: {
-      ...generated.params.format,
-      options: [
-        { value: "jpeg", label: "JPEG" },
-        { value: "png", label: "PNG" },
-        { value: "webp", label: "WebP" },
-      ],
-    },
-    compression: {
-      ...generated.params.compression,
-      displayInverted: true,
-      presets: [
-        { value: 20, label: "Maximum" },
-        { value: 50, label: "Balanced" },
-        { value: 80, label: "Light" },
-      ],
-    },
-    quality: {
-      ...generated.params.quality,
-      presets: [
-        { value: 60, label: "Draft" },
-        { value: 80, label: "Balanced" },
-        { value: 100, label: "Maximum" },
-      ],
-    },
-    width: { ...generated.params.width, group: "dimensions", suffix: "px" },
-    height: { ...generated.params.height, group: "dimensions", suffix: "px" },
-    maintainAspect: { ...generated.params.maintainAspect, group: "dimensions" },
+/** Image schema — uses engine-generated params directly. */
+export const imageNodeSchema = generated;
+
+/** UI presentation metadata for image node fields. */
+export const imageFields: FieldConfigMap = {
+  operation: {
+    hidden: true,
+    options: [
+      { value: "compress", label: "Compress" },
+      { value: "convert", label: "Convert" },
+      { value: "resize", label: "Resize" },
+    ],
   },
+  format: {
+    options: [
+      { value: "jpeg", label: "JPEG" },
+      { value: "png", label: "PNG" },
+      { value: "webp", label: "WebP" },
+    ],
+  },
+  quality: {
+    presets: [
+      { value: 60, label: "Draft" },
+      { value: 80, label: "Balanced" },
+      { value: 100, label: "Maximum" },
+    ],
+  },
+  width: { group: "dimensions", suffix: "px" },
+  height: { group: "dimensions", suffix: "px" },
+  maintainAspect: { group: "dimensions" },
 };

@@ -15,20 +15,18 @@ import {
   fileSystemParamsSchema,
   fileSystemNodeSchema as generated,
 } from "../generated/schemas";
-import type { NodeSchemaDefinition } from "./types";
+import type { FieldConfigMap } from "./types";
 
 export { FILE_SYSTEM_OPERATIONS as FILE_OPERATIONS, fileSystemParamsSchema };
 export type { FileSystemParams } from "../generated/schemas";
 
-/** File system schema with operation hidden (pre-set from palette). */
-export const fileSystemNodeSchema: NodeSchemaDefinition = {
-  ...generated,
-  params: {
-    ...generated.params,
-    operation: {
-      ...generated.params.operation,
-      hidden: true,
-      options: [{ value: "rename", label: "Rename" }],
-    },
+/** File system schema — uses engine-generated params directly. */
+export const fileSystemNodeSchema = generated;
+
+/** UI presentation metadata for file system node fields. */
+export const fileSystemFields: FieldConfigMap = {
+  operation: {
+    hidden: true,
+    options: [{ value: "rename", label: "Rename" }],
   },
 };

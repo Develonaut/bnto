@@ -7,7 +7,7 @@
  */
 
 import { z } from "zod";
-import type { NodeSchemaDefinition } from "./types";
+import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
 
 /** Valid input modes — determines which UI widget the environment renders. */
 export const INPUT_MODES = ["file-upload", "text", "url"] as const;
@@ -36,47 +36,23 @@ export const inputNodeSchema: NodeSchemaDefinition = {
     mode: {
       label: "Mode",
       description: "How data is provided to the recipe.",
-      options: [
-        { value: "file-upload", label: "File Upload" },
-        { value: "text", label: "Text" },
-        { value: "url", label: "URL" },
-      ],
     },
     accept: {
       label: "Accepted MIME Types",
       description:
         'MIME types accepted (e.g., "image/jpeg", "image/png"). Derived from extensions.',
       visibleWhen: { param: "mode", equals: "file-upload" },
-      hidden: true,
     },
     extensions: {
       label: "File Extensions",
       description: 'File extensions accepted (e.g., ".jpg", ".png").',
       visibleWhen: { param: "mode", equals: "file-upload" },
-      options: [
-        { value: ".jpg", label: ".jpg" },
-        { value: ".jpeg", label: ".jpeg" },
-        { value: ".png", label: ".png" },
-        { value: ".webp", label: ".webp" },
-        { value: ".gif", label: ".gif" },
-        { value: ".svg", label: ".svg" },
-        { value: ".csv", label: ".csv" },
-        { value: ".json", label: ".json" },
-        { value: ".txt", label: ".txt" },
-        { value: ".pdf", label: ".pdf" },
-        { value: ".xml", label: ".xml" },
-        { value: ".zip", label: ".zip" },
-        { value: ".mp3", label: ".mp3" },
-        { value: ".mp4", label: ".mp4" },
-        { value: ".wav", label: ".wav" },
-      ],
     },
     label: {
       label: "Label",
       description: "Human-readable label for the input control.",
       placeholder: "JPEG, PNG, or WebP images",
       visibleWhen: { param: "mode", equals: "file-upload" },
-      hidden: true,
     },
     multiple: {
       label: "Multiple",
@@ -87,13 +63,11 @@ export const inputNodeSchema: NodeSchemaDefinition = {
       label: "Max File Size",
       description: "Maximum file size in bytes. 0 = no limit.",
       visibleWhen: { param: "mode", equals: "file-upload" },
-      hidden: true,
     },
     maxFiles: {
       label: "Max Files",
       description: "Maximum number of files. 0 = no limit.",
       visibleWhen: { param: "mode", equals: "file-upload" },
-      hidden: true,
     },
     placeholder: {
       label: "Placeholder",
@@ -104,4 +78,38 @@ export const inputNodeSchema: NodeSchemaDefinition = {
       ],
     },
   },
+};
+
+/** UI presentation metadata for input node fields. */
+export const inputFields: FieldConfigMap = {
+  mode: {
+    options: [
+      { value: "file-upload", label: "File Upload" },
+      { value: "text", label: "Text" },
+      { value: "url", label: "URL" },
+    ],
+  },
+  accept: { hidden: true },
+  extensions: {
+    options: [
+      { value: ".jpg", label: ".jpg" },
+      { value: ".jpeg", label: ".jpeg" },
+      { value: ".png", label: ".png" },
+      { value: ".webp", label: ".webp" },
+      { value: ".gif", label: ".gif" },
+      { value: ".svg", label: ".svg" },
+      { value: ".csv", label: ".csv" },
+      { value: ".json", label: ".json" },
+      { value: ".txt", label: ".txt" },
+      { value: ".pdf", label: ".pdf" },
+      { value: ".xml", label: ".xml" },
+      { value: ".zip", label: ".zip" },
+      { value: ".mp3", label: ".mp3" },
+      { value: ".mp4", label: ".mp4" },
+      { value: ".wav", label: ".wav" },
+    ],
+  },
+  label: { hidden: true },
+  maxFileSize: { hidden: true },
+  maxFiles: { hidden: true },
 };

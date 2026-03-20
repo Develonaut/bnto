@@ -13,8 +13,8 @@ describe("updateNodeParams", () => {
     const { definition: withNode } = addNode(blank, "image");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
-    const result = updateNodeParams(withNode, nodeId, { compression: 50 });
-    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.compression).toBe(50);
+    const result = updateNodeParams(withNode, nodeId, { quality: 80 });
+    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.quality).toBe(80);
   });
 
   it("preserves existing parameters not in the update", () => {
@@ -23,26 +23,26 @@ describe("updateNodeParams", () => {
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     // Image defaults include maintainAspect: true
-    const result = updateNodeParams(withNode, nodeId, { compression: 50 });
+    const result = updateNodeParams(withNode, nodeId, { quality: 80 });
     expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.maintainAspect).toBe(true);
-    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.compression).toBe(50);
+    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.quality).toBe(80);
   });
 
   it("does not mutate the original definition", () => {
     const blank = createBlankDefinition();
     const { definition: withNode } = addNode(blank, "image");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
-    const originalCompression = withNode.nodes![IO_NODE_COUNT]!.parameters.compression;
+    const originalQuality = withNode.nodes![IO_NODE_COUNT]!.parameters.quality;
 
-    updateNodeParams(withNode, nodeId, { compression: 10 });
-    expect(withNode.nodes![IO_NODE_COUNT]!.parameters.compression).toBe(originalCompression);
+    updateNodeParams(withNode, nodeId, { quality: 90 });
+    expect(withNode.nodes![IO_NODE_COUNT]!.parameters.quality).toBe(originalQuality);
   });
 
   it("returns the same definition if node ID not found", () => {
     const blank = createBlankDefinition();
     const { definition: withNode } = addNode(blank, "image");
 
-    const result = updateNodeParams(withNode, "nonexistent", { compression: 50 });
+    const result = updateNodeParams(withNode, "nonexistent", { quality: 80 });
     expect(result.definition).toBe(withNode);
   });
 
@@ -81,9 +81,9 @@ describe("updateNodeParams", () => {
     const { definition: withNode } = addNode(blank, "image");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
-    // Compression defaults to 20, overwrite it
-    const result = updateNodeParams(withNode, nodeId, { compression: 50 });
-    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.compression).toBe(50);
+    // Quality defaults to 80, overwrite it
+    const result = updateNodeParams(withNode, nodeId, { quality: 80 });
+    expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.quality).toBe(80);
   });
 
   it("updates the correct node when multiple nodes exist", () => {
@@ -117,7 +117,7 @@ describe("updateNodeParams", () => {
       name: "Nested Image",
       position: { x: 0, y: 0 },
       metadata: {},
-      parameters: { compression: 20 },
+      parameters: { quality: 80 },
       inputPorts: [],
       outputPorts: [{ id: "out-1", name: "output" }],
     };
@@ -127,7 +127,7 @@ describe("updateNodeParams", () => {
       nodes: [...withLoop.nodes!.slice(0, IO_NODE_COUNT), { ...loopNode, nodes: [childNode] }],
     };
 
-    const result = updateNodeParams(withChild, "child-1", { compression: 50 });
-    expect(result.definition.nodes![IO_NODE_COUNT]!.nodes![0]!.parameters.compression).toBe(50);
+    const result = updateNodeParams(withChild, "child-1", { quality: 80 });
+    expect(result.definition.nodes![IO_NODE_COUNT]!.nodes![0]!.parameters.quality).toBe(80);
   });
 });

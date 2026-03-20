@@ -83,7 +83,7 @@ First multi-node predefined recipes. Each runs a pipeline of 3 operations inside
 | Optimize Images for Web | `/optimize-images-for-web` | Casual  | `image`                | Resize → Convert (WebP) → Compress         | N/A (multi-node) |
 | Generate Thumbnails     | `/generate-thumbnails`     | Casual  | `image`, `file-system` | Resize → Convert (WebP) → Rename (thumb\_) | N/A (multi-node) |
 
-**Key insight:** `definitionToPipeline` merges flat `configOverrides` into ALL leaf processing nodes. For multi-node recipes this works because each processor ignores unknown keys — `width` (resize), `format` (convert), `compression`/`prefix` (compress/rename) don't conflict.
+**Key insight:** `definitionToPipeline` merges flat `configOverrides` into ALL leaf processing nodes. For multi-node recipes this works because each processor ignores unknown keys — `width` (resize), `format` (convert), `quality`/`prefix` (compress/rename) don't conflict.
 
 ---
 

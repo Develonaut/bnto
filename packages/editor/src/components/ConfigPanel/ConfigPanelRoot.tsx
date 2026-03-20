@@ -21,7 +21,7 @@ function ConfigPanelRoot() {
   const prevSelectedNodeId = usePrevious(selectedNodeId);
   const configNodeId = selectedNodeId ?? prevSelectedNodeId ?? null;
 
-  const { node, config, typeInfo, schemaDef, visibleParams } =
+  const { node, config, typeInfo, schemaDef, fieldConfigs, visibleParams } =
     useEditorNode(configNodeId);
 
   const handleParamChange = useCallback(
@@ -81,6 +81,7 @@ function ConfigPanelRoot() {
               {schemaDef ? (
                 <SchemaForm
                   schema={schemaDef}
+                  fields={fieldConfigs}
                   values={config.parameters}
                   visibleParams={visibleParams}
                   onChange={handleParamChange}

@@ -61,18 +61,8 @@ describe("image schema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("compression defaults to 50 with 1-100 range", () => {
-    const result = def.schema.safeParse({ operation: "compress" });
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.compression).toBe(50);
-
-    const info = inferFieldType(def.schema.shape.compression);
-    expect(info.min).toBe(1);
-    expect(info.max).toBe(100);
-  });
-
   it("quality defaults to 80 with 1-100 range", () => {
-    const result = def.schema.safeParse({ operation: "resize" });
+    const result = def.schema.safeParse({ operation: "compress" });
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.quality).toBe(80);
 

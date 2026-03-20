@@ -7,7 +7,7 @@
  *   z.number().min().max()  → slider (bounded)
  *   z.number()              → number (unbounded)
  *   z.string()              → text
- *   z.string() + meta.control=textarea → textarea
+ *   z.string() + fieldConfig.control=textarea → textarea
  *   z.array(z.string())     → tagPicker
  *   z.record(z.string())    → keyValue
  *   z.record(z.unknown())   → keyValue
@@ -63,18 +63,16 @@ describe("inferFieldType", () => {
     expect(info.control).toBe("text");
   });
 
-  it("maps z.string() with meta.control=textarea → textarea", () => {
+  it("maps z.string() with fieldConfig.control=textarea → textarea", () => {
     const info = inferFieldType(z.string(), {
-      label: "Notes",
-      description: "...",
       control: "textarea",
     });
     expect(info.type).toBe("string");
     expect(info.control).toBe("textarea");
   });
 
-  it("maps z.string() without textarea meta → text", () => {
-    const info = inferFieldType(z.string(), { label: "Name", description: "..." });
+  it("maps z.string() without textarea fieldConfig → text", () => {
+    const info = inferFieldType(z.string(), {});
     expect(info.type).toBe("string");
     expect(info.control).toBe("text");
   });

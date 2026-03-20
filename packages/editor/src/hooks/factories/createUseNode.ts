@@ -11,8 +11,8 @@
 import { useMemo } from "react";
 import type { StoreApi } from "zustand";
 import { useStore } from "zustand";
-import type { NodeTypeName, NodeSchemaDefinition } from "@bnto/core";
-import { NODE_TYPE_INFO, getNodeSchema, getVisibleParams } from "@bnto/core";
+import type { FieldConfigMap, NodeTypeName, NodeSchemaDefinition } from "@bnto/core";
+import { NODE_TYPE_INFO, getNodeSchema, getNodeFields, getVisibleParams } from "@bnto/core";
 import type { EditorStore } from "../../store/types";
 import type { CompartmentNodeData, NodeConfig } from "../../adapters/types";
 
@@ -25,6 +25,8 @@ interface NodeHookResult {
   typeInfo: (typeof NODE_TYPE_INFO)[NodeTypeName] | null;
   /** Full schema definition for the node type. */
   schemaDef: NodeSchemaDefinition | null;
+  /** UI field config map for the node type. */
+  fieldConfigs: FieldConfigMap | undefined;
   /** Parameter names visible given current parameter values. */
   visibleParams: string[];
 }
@@ -34,6 +36,7 @@ const EMPTY_RESULT: NodeHookResult = {
   config: null,
   typeInfo: null,
   schemaDef: null,
+  fieldConfigs: undefined,
   visibleParams: [],
 };
 
@@ -54,9 +57,10 @@ function createUseNode(storeApi: StoreApi<EditorStore>) {
 
       const typeInfo = NODE_TYPE_INFO[config.nodeType as NodeTypeName] ?? null;
       const schemaDef = getNodeSchema(config.nodeType) ?? null;
+      const fieldConfigs = getNodeFields(config.nodeType);
       const visibleParams = schemaDef ? getVisibleParams(config.nodeType, config.parameters) : [];
 
-      return { node: nodeData, config, typeInfo, schemaDef, visibleParams };
+      return { node: nodeData, config, typeInfo, schemaDef, fieldConfigs, visibleParams };
     }, [nodeData, config]);
   };
 }

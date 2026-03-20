@@ -22,6 +22,7 @@ const GENERATED_DIR = resolve(ROOT, "packages/@bnto/nodes/src/generated");
 const CATALOG_OUTPUT = resolve(GENERATED_DIR, "catalog.ts");
 const SCHEMAS_OUTPUT = resolve(GENERATED_DIR, "schemas.ts");
 const DEF_SCHEMA_OUTPUT = resolve(GENERATED_DIR, "definitionSchema.ts");
+const DOCS_DIR = resolve(ROOT, "packages/@bnto/nodes/docs");
 
 // Clean up old separate nodeTypes.ts if it exists
 const OLD_NODE_TYPES = resolve(GENERATED_DIR, "nodeTypes.ts");
@@ -273,10 +274,8 @@ function generateProcessorsSection(): string {
 // Processors — ${sorted.length} implemented operations
 // =============================================================================
 
-/** Condition for visibleWhen/requiredWhen rules — single or OR array. */
-export type ParamCondition =
-  | { readonly param: string; readonly equals: string }
-  | ReadonlyArray<{ readonly param: string; readonly equals: string }>;
+import type { ParamCondition } from "../schemas/types";
+export type { ParamCondition };
 
 export type ParamType = "number" | "string" | "boolean" | "enum" | "object";
 
@@ -540,9 +539,6 @@ function generateNodeParamMeta(param: RawParameter): string {
   if (param.placeholder !== undefined) {
     lines.push(`      placeholder: ${JSON.stringify(param.placeholder)},`);
   }
-  if (param.hidden !== undefined) {
-    lines.push(`      hidden: ${param.hidden},`);
-  }
   if (param.visibleWhen !== undefined) {
     lines.push(`      visibleWhen: ${serializeCondition(param.visibleWhen)},`);
   }
@@ -588,6 +584,172 @@ export const DEFINITION_JSON_SCHEMA = ${JSON.stringify(catalog.definitionSchema,
 }
 
 // =============================================================================
+// Node README generation (docs/*.md)
+// =============================================================================
+
+function formatConstraints(p: RawParameter): string {
+  const parts: string[] = [];
+  if (p.constraints?.min !== undefined) parts.push(`min: ${p.constraints.min}`);
+  if (p.constraints?.max !== undefined) parts.push(`max: ${p.constraints.max}`);
+  if (parts.length === 0) return "—";
+  return parts.join(", ");
+}
+
+function formatRange(p: RawParameter): string {
+  if (p.constraints?.min !== undefined && p.constraints?.max !== undefined) {
+    return `${p.constraints.min}–${p.constraints.max}`;
+  }
+  if (p.constraints?.min !== undefined) return `≥ ${p.constraints.min}`;
+  if (p.constraints?.max !== undefined) return `≤ ${p.constraints.max}`;
+  return "—";
+}
+
+function formatVisibleWhen(p: RawParameter): string {
+  if (!p.visibleWhen) return "always";
+  const conds = Array.isArray(p.visibleWhen) ? p.visibleWhen : [p.visibleWhen];
+  if (conds.length === 1) return conds[0].equals;
+  return conds.map((c) => c.equals).join(", ");
+}
+
+function formatDefault(p: RawParameter): string {
+  if (p.default === undefined) return "—";
+  return String(p.default);
+}
+
+function generateNodeReadme(nodeType: RawNodeType, processors: RawProcessor[]): string {
+  const lines: string[] = [];
+  const browserCapable = nodeType.platforms.includes("browser");
+  const platforms = nodeType.platforms.join(", ") || "none";
+
+  lines.push(`# ${nodeType.label} Node`);
+  lines.push("");
+  lines.push(`> ${nodeType.description}`);
+  lines.push("");
+  lines.push(
+    `**Category:** ${nodeType.category} | **Platforms:** ${platforms} | **Container:** ${nodeType.isContainer ? "yes" : "no"}`,
+  );
+  lines.push("");
+
+  // Operations section (multi-operation nodes only)
+  if (processors.length > 0) {
+    const allAccepts = [...new Set(processors.flatMap((p) => p.accepts))].sort();
+
+    if (allAccepts.length > 0) {
+      lines.push("## Accepts");
+      lines.push("");
+      for (const mime of allAccepts) {
+        lines.push(`- \`${mime}\``);
+      }
+      lines.push("");
+    }
+
+    lines.push("## Operations");
+    lines.push("");
+    for (const proc of processors) {
+      lines.push(`### ${proc.operation}`);
+      lines.push("");
+      lines.push(proc.description);
+      if (proc.accepts.length > 0) {
+        lines.push("");
+        lines.push(`Accepts: ${proc.accepts.map((a) => `\`${a}\``).join(", ")}`);
+      }
+      lines.push("");
+    }
+
+    // Merged parameter table
+    const paramMap = new Map<string, RawParameter>();
+    for (const proc of processors) {
+      for (const param of proc.parameters) {
+        if (!paramMap.has(param.name)) {
+          paramMap.set(param.name, param);
+        }
+      }
+    }
+
+    if (paramMap.size > 0) {
+      lines.push("## Parameters");
+      lines.push("");
+      lines.push("| Parameter | Type | Default | Range | Visible When | Description |");
+      lines.push("|-----------|------|---------|-------|--------------|-------------|");
+
+      // Operation param first (synthetic)
+      const operations = processors.map((p) => p.operation).sort();
+      lines.push(
+        `| operation | enum | — | ${operations.join(", ")} | always | Processing operation |`,
+      );
+
+      for (const [, param] of paramMap) {
+        const type = param.paramType.options ? "enum" : param.paramType.type;
+        const range = param.paramType.options
+          ? param.paramType.options.join(", ")
+          : formatRange(param);
+        lines.push(
+          `| ${param.name} | ${type} | ${formatDefault(param)} | ${range} | ${formatVisibleWhen(param)} | ${param.description} |`,
+        );
+      }
+      lines.push("");
+    }
+  }
+
+  // Configuration example
+  if (processors.length > 0) {
+    const firstProc = processors[0];
+    const exampleParams: Record<string, unknown> = { operation: firstProc.operation };
+    for (const param of firstProc.parameters) {
+      if (param.default !== undefined) {
+        exampleParams[param.name] = param.default;
+      } else if (param.constraints?.required) {
+        exampleParams[param.name] = param.paramType.options?.[0] ?? `<${param.paramType.type}>`;
+      }
+    }
+
+    lines.push("## Configuration Example");
+    lines.push("");
+    lines.push("```json");
+    lines.push(`{`);
+    lines.push(`  "type": ${JSON.stringify(nodeType.name)},`);
+    lines.push(
+      `  "parameters": ${JSON.stringify(exampleParams, null, 4)
+        .split("\n")
+        .map((l, i) => (i === 0 ? l : "  " + l))
+        .join("\n")}`,
+    );
+    lines.push(`}`);
+    lines.push("```");
+    lines.push("");
+  }
+
+  lines.push("---");
+  lines.push("");
+  lines.push(
+    `*Auto-generated from engine catalog v${catalog.version}. Run \`task nodes:generate\` to regenerate.*`,
+  );
+  lines.push("");
+
+  return lines.join("\n");
+}
+
+function generateAllNodeReadmes(): void {
+  mkdirSync(DOCS_DIR, { recursive: true });
+
+  const processorsByType = new Map<string, RawProcessor[]>();
+  for (const p of catalog.processors) {
+    const existing = processorsByType.get(p.nodeType) ?? [];
+    existing.push(p);
+    processorsByType.set(p.nodeType, existing);
+  }
+
+  for (const nodeType of catalog.nodeTypes) {
+    const processors = processorsByType.get(nodeType.name) ?? [];
+    const readme = generateNodeReadme(nodeType, processors);
+    const filename = resolve(DOCS_DIR, `${nodeType.name}.md`);
+    writeFileSync(filename, readme, "utf-8");
+  }
+
+  console.log(`Generated ${catalog.nodeTypes.length} node READMEs in ${DOCS_DIR}`);
+}
+
+// =============================================================================
 // Assemble and write
 // =============================================================================
 
@@ -616,6 +778,7 @@ mkdirSync(GENERATED_DIR, { recursive: true });
 writeFileSync(CATALOG_OUTPUT, catalogOutput, "utf-8");
 writeFileSync(SCHEMAS_OUTPUT, schemasOutput, "utf-8");
 writeFileSync(DEF_SCHEMA_OUTPUT, defSchemaOutput, "utf-8");
+generateAllNodeReadmes();
 
 // Clean up old separate file
 try {

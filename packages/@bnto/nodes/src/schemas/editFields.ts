@@ -1,7 +1,7 @@
 /** Edit Fields node schema — parameters for setting field values. */
 
 import { z } from "zod";
-import type { NodeSchemaDefinition } from "./types";
+import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
 
 /** Zod schema for edit-fields node parameters. */
 export const editFieldsParamsSchema = z.object({
@@ -29,3 +29,6 @@ export const editFieldsNodeSchema: NodeSchemaDefinition = {
     },
   },
 };
+
+/** UI presentation metadata for edit-fields node fields. */
+export const editFieldsFields: FieldConfigMap = {};

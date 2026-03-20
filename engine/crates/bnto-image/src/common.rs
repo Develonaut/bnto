@@ -9,13 +9,13 @@ pub(crate) fn image_accepts() -> Vec<String> {
     ]
 }
 
-/// Quality parameter definition shared by resize and convert operations.
+/// Quality parameter definition shared by all image operations.
 pub(crate) fn quality_param_def() -> bnto_core::metadata::ParameterDef {
     use bnto_core::metadata::*;
     ParameterDef {
         name: "quality".to_string(),
         label: "Quality".to_string(),
-        description: "Output quality for lossy formats (1-100)".to_string(),
+        description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.".to_string(),
         param_type: ParameterType::Number,
         default: Some(serde_json::json!(80)),
         constraints: Some(Constraints {
@@ -24,6 +24,10 @@ pub(crate) fn quality_param_def() -> bnto_core::metadata::ParameterDef {
             required: false,
         }),
         visible_when: Some(ParamCondition::Any(vec![
+            ParamConditionEntry {
+                param: "operation".to_string(),
+                equals: "compress".to_string(),
+            },
             ParamConditionEntry {
                 param: "operation".to_string(),
                 equals: "resize".to_string(),

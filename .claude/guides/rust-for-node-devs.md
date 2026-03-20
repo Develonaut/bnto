@@ -6,18 +6,18 @@ A reference guide for understanding Rust through the lens of Node/npm/React. Wri
 
 ## The Big Picture: npm world vs Rust world
 
-| Concept | Node/npm | Rust |
-|---|---|---|
-| **Package manager** | `pnpm` | `cargo` (built into Rust — no separate install) |
-| **Package config** | `package.json` | `Cargo.toml` |
-| **Lock file** | `pnpm-lock.yaml` | `Cargo.lock` |
-| **A package** | A folder with `package.json` | A "crate" — a folder with `Cargo.toml` |
-| **Scripts** | `"scripts"` in package.json | Built-in: `cargo build`, `cargo test`, `cargo run` |
-| **node_modules** | Downloaded deps folder | `~/.cargo/registry` (global cache, invisible) |
-| **Imports** | `import { thing } from "@bnto/core"` | `use image::DynamicImage;` |
-| **Build output** | Still JS files, needs Node to run | Native binary (or `.wasm` for browser) |
-| **Workspace** | `pnpm-workspace.yaml` | `[workspace]` in root `Cargo.toml` |
-| **npmjs.com** | Package registry | [crates.io](https://crates.io) |
+| Concept             | Node/npm                             | Rust                                               |
+| ------------------- | ------------------------------------ | -------------------------------------------------- |
+| **Package manager** | `pnpm`                               | `cargo` (built into Rust — no separate install)    |
+| **Package config**  | `package.json`                       | `Cargo.toml`                                       |
+| **Lock file**       | `pnpm-lock.yaml`                     | `Cargo.lock`                                       |
+| **A package**       | A folder with `package.json`         | A "crate" — a folder with `Cargo.toml`             |
+| **Scripts**         | `"scripts"` in package.json          | Built-in: `cargo build`, `cargo test`, `cargo run` |
+| **node_modules**    | Downloaded deps folder               | `~/.cargo/registry` (global cache, invisible)      |
+| **Imports**         | `import { thing } from "@bnto/core"` | `use image::DynamicImage;`                         |
+| **Build output**    | Still JS files, needs Node to run    | Native binary (or `.wasm` for browser)             |
+| **Workspace**       | `pnpm-workspace.yaml`                | `[workspace]` in root `Cargo.toml`                 |
+| **npmjs.com**       | Package registry                     | [crates.io](https://crates.io)                     |
 
 **The biggest shift:** Node runs your code as-is. Rust compiles it first. You write code, then `cargo build` turns it into a binary (or WASM). Compilation catches most bugs before your code ever runs — the compiler is your strictest code reviewer.
 
@@ -41,6 +41,7 @@ engine/                          <- Rust WASM engine (primary)
 ```
 
 Build for WASM:
+
 ```bash
 wasm-pack build --target web      # like: pnpm build, but outputs .wasm + JS glue
 ```
@@ -120,6 +121,7 @@ mod internal;                      // Private module
 ```
 
 TS equivalent:
+
 ```typescript
 export class Engine { ... }        // pub struct
 class InternalState { ... }        // no pub
@@ -129,12 +131,14 @@ function validate() { }            // no pub
 ```
 
 Go equivalent:
+
 ```go
 type Engine struct { ... }         // PascalCase = exported
 type internalState struct { ... }  // camelCase = unexported
 ```
 
 **Struct fields are private by default too.** Each field needs its own `pub`:
+
 ```rust
 pub struct Options {
     pub quality: u8,       // accessible from outside
@@ -162,18 +166,19 @@ fn main() {
 ```
 
 TS equivalent (conceptually):
+
 ```typescript
 // Imagine if JavaScript did this:
 let name = "bnto";
-let other = name;     // In JS, both variables point to the same string. Fine.
-console.log(name);    // In JS, this works. In Rust, it wouldn't.
+let other = name; // In JS, both variables point to the same string. Fine.
+console.log(name); // In JS, this works. In Rust, it wouldn't.
 ```
 
 **Why?** No garbage collector. Rust needs to know exactly when to free memory. One owner = one clear moment to free it. This is what makes Rust fast and safe without a GC.
 
 ### Borrowing: The Escape Hatch
 
-You usually don't want to *move* values around. You want to *lend* them temporarily. That's borrowing.
+You usually don't want to _move_ values around. You want to _lend_ them temporarily. That's borrowing.
 
 ```rust
 fn count_bytes(data: &[u8]) -> usize {
@@ -190,20 +195,22 @@ fn main() {
 ```
 
 TS equivalent:
+
 ```typescript
 // In TS, everything is always "borrowed" (passed by reference for objects).
 // Rust makes you be explicit about it:
-function countBytes(data: Uint8Array): number {  // TS: always a reference
-    return data.length;
+function countBytes(data: Uint8Array): number {
+  // TS: always a reference
+  return data.length;
 }
 ```
 
 ### Two Kinds of Borrowing
 
-| Kind | Syntax | TS Equivalent | Rule |
-|---|---|---|---|
-| **Shared borrow** | `&data` | `readonly` / `Readonly<T>` | Many readers allowed, no writing |
-| **Mutable borrow** | `&mut data` | Normal reference | Only ONE writer, no other readers |
+| Kind               | Syntax      | TS Equivalent              | Rule                              |
+| ------------------ | ----------- | -------------------------- | --------------------------------- |
+| **Shared borrow**  | `&data`     | `readonly` / `Readonly<T>` | Many readers allowed, no writing  |
+| **Mutable borrow** | `&mut data` | Normal reference           | Only ONE writer, no other readers |
 
 ```rust
 let mut scores = vec![100, 200, 300];
@@ -222,6 +229,7 @@ scores.push(400);        // OK — no other borrows active
 ### When You'll Actually Hit This
 
 In WASM node code, ownership matters most when:
+
 1. **Passing data to functions** — use `&` to borrow instead of moving
 2. **Returning data** — return owned values (`Vec<u8>`, `String`), not borrows
 3. **Working with buffers** — `&[u8]` (borrowed slice) for input, `Vec<u8>` (owned) for output
@@ -270,18 +278,19 @@ fn main() {
 ```
 
 TS equivalent:
+
 ```typescript
 function parseQuality(input: string): number {
-    const num = parseInt(input);
-    if (isNaN(num)) throw new Error(`'${input}' is not a valid quality`);
-    if (num > 100) throw new Error(`quality ${num} is out of range`);
-    return num;
+  const num = parseInt(input);
+  if (isNaN(num)) throw new Error(`'${input}' is not a valid quality`);
+  if (num > 100) throw new Error(`quality ${num} is out of range`);
+  return num;
 }
 
 try {
-    const q = parseQuality("85");
+  const q = parseQuality("85");
 } catch (err) {
-    console.error(err.message);
+  console.error(err.message);
 }
 ```
 
@@ -312,6 +321,7 @@ fn process(data: &[u8]) -> Result<Vec<u8>, Error> {
 ```
 
 Compare to Go:
+
 ```go
 func process(data []byte) ([]byte, error) {
     img, err := loadFromMemory(data)
@@ -336,34 +346,34 @@ let num: u8 = "85".parse().unwrap();    // panics (crashes) if it fails
 
 ## Types: Rust vs TypeScript vs Go
 
-| Concept | TypeScript | Go | Rust |
-|---|---|---|---|
-| **String (owned)** | `string` | `string` | `String` |
-| **String (borrowed)** | `string` | `string` | `&str` |
-| **Array (owned)** | `number[]` | `[]int` | `Vec<i32>` |
-| **Array (borrowed)** | `readonly number[]` | `[]int` | `&[i32]` |
-| **Byte array** | `Uint8Array` | `[]byte` | `Vec<u8>` / `&[u8]` |
-| **Object/struct** | `interface Foo {}` | `type Foo struct {}` | `struct Foo {}` |
-| **Enum** | `enum` or union types | `const` + `iota` | `enum` (much more powerful) |
-| **Nullable** | `T \| null` | pointer (`*T`) | `Option<T>` |
-| **Error result** | `throw` / `Promise` | `(T, error)` | `Result<T, E>` |
-| **Void** | `void` | (no return) | `()` (unit type) |
-| **Any** | `any` | `interface{}` | Doesn't exist. Use generics or trait objects |
-| **Map** | `Map<K, V>` | `map[K]V` | `HashMap<K, V>` |
+| Concept               | TypeScript            | Go                   | Rust                                         |
+| --------------------- | --------------------- | -------------------- | -------------------------------------------- |
+| **String (owned)**    | `string`              | `string`             | `String`                                     |
+| **String (borrowed)** | `string`              | `string`             | `&str`                                       |
+| **Array (owned)**     | `number[]`            | `[]int`              | `Vec<i32>`                                   |
+| **Array (borrowed)**  | `readonly number[]`   | `[]int`              | `&[i32]`                                     |
+| **Byte array**        | `Uint8Array`          | `[]byte`             | `Vec<u8>` / `&[u8]`                          |
+| **Object/struct**     | `interface Foo {}`    | `type Foo struct {}` | `struct Foo {}`                              |
+| **Enum**              | `enum` or union types | `const` + `iota`     | `enum` (much more powerful)                  |
+| **Nullable**          | `T \| null`           | pointer (`*T`)       | `Option<T>`                                  |
+| **Error result**      | `throw` / `Promise`   | `(T, error)`         | `Result<T, E>`                               |
+| **Void**              | `void`                | (no return)          | `()` (unit type)                             |
+| **Any**               | `any`                 | `interface{}`        | Doesn't exist. Use generics or trait objects |
+| **Map**               | `Map<K, V>`           | `map[K]V`            | `HashMap<K, V>`                              |
 
 ### Number Types (Rust Is Specific)
 
 TS has `number` for everything. Rust makes you choose:
 
-| Rust type | What it is | Range | When to use |
-|---|---|---|---|
-| `u8` | Unsigned 8-bit | 0 to 255 | Byte data, quality percentages |
-| `u32` | Unsigned 32-bit | 0 to ~4 billion | Image dimensions, counts |
-| `u64` | Unsigned 64-bit | 0 to very big | File sizes |
-| `i32` | Signed 32-bit | -2B to +2B | General integers |
-| `f32` | 32-bit float | Decimal | Ratios, scaling factors |
-| `f64` | 64-bit float | Decimal (precise) | Math-heavy operations |
-| `usize` | Pointer-sized | Platform-dependent | Array indexing, lengths |
+| Rust type | What it is      | Range              | When to use                    |
+| --------- | --------------- | ------------------ | ------------------------------ |
+| `u8`      | Unsigned 8-bit  | 0 to 255           | Byte data, quality percentages |
+| `u32`     | Unsigned 32-bit | 0 to ~4 billion    | Image dimensions, counts       |
+| `u64`     | Unsigned 64-bit | 0 to very big      | File sizes                     |
+| `i32`     | Signed 32-bit   | -2B to +2B         | General integers               |
+| `f32`     | 32-bit float    | Decimal            | Ratios, scaling factors        |
+| `f64`     | 64-bit float    | Decimal (precise)  | Math-heavy operations          |
+| `usize`   | Pointer-sized   | Platform-dependent | Array indexing, lengths        |
 
 **Rule of thumb:** `u8` for bytes, `u32` for dimensions/counts, `f32` for ratios, `usize` for lengths/indexes.
 
@@ -377,7 +387,7 @@ Rust enums can carry data. They're more like TypeScript discriminated unions.
 // Rust enum with data — like a TS discriminated union
 enum ImageFormat {
     Jpeg { quality: u8 },           // variant with named fields
-    Png { compression: u8 },
+    Png { quality: u8 },
     WebP { lossless: bool },
 }
 
@@ -392,18 +402,22 @@ fn extension(format: &ImageFormat) -> &str {
 ```
 
 TS equivalent:
+
 ```typescript
 type ImageFormat =
-    | { type: "jpeg"; quality: number }
-    | { type: "png"; compression: number }
-    | { type: "webp"; lossless: boolean };
+  | { type: "jpeg"; quality: number }
+  | { type: "png"; quality: number }
+  | { type: "webp"; lossless: boolean };
 
 function extension(format: ImageFormat): string {
-    switch (format.type) {
-        case "jpeg": return "jpg";
-        case "png":  return "png";
-        case "webp": return "webp";
-    }
+  switch (format.type) {
+    case "jpeg":
+      return "jpg";
+    case "png":
+      return "png";
+    case "webp":
+      return "webp";
+  }
 }
 ```
 
@@ -470,6 +484,7 @@ impl Node for CompressImage {
 ```
 
 TS equivalent:
+
 ```typescript
 interface Node {
     execute(input: Uint8Array): Uint8Array;
@@ -483,6 +498,7 @@ class CompressImage implements Node {
 ```
 
 Go equivalent:
+
 ```go
 type Node interface {
     Execute(ctx context.Context, input []byte) ([]byte, error)
@@ -524,6 +540,7 @@ impl Engine {
 ```
 
 TS equivalent:
+
 ```typescript
 class Engine {
     constructor(private quality: number) {}
@@ -548,12 +565,13 @@ pub fn process_image(data: &[u8], quality: u8) -> Result<Vec<u8>, String> {
 ```
 
 TS equivalent:
+
 ```typescript
 async function processImage(data: Uint8Array, quality: number): Promise<Uint8Array> {
-    const img = await loadImage(data);        // throw on fail
-    const resized = await resize(img, 800);   // throw on fail
-    const compressed = await compress(resized, quality);
-    return compressed;
+  const img = await loadImage(data); // throw on fail
+  const resized = await resize(img, 800); // throw on fail
+  const compressed = await compress(resized, quality);
+  return compressed;
 }
 ```
 
@@ -570,12 +588,18 @@ match format {
 ```
 
 TS equivalent:
+
 ```typescript
 switch (format) {
-    case "jpg": case "jpeg": return compressJpeg(data, quality);
-    case "png":              return compressPng(data);
-    case "webp":             return compressWebp(data, quality);
-    default:                 throw new Error(`unsupported format: ${format}`);
+  case "jpg":
+  case "jpeg":
+    return compressJpeg(data, quality);
+  case "png":
+    return compressPng(data);
+  case "webp":
+    return compressWebp(data, quality);
+  default:
+    throw new Error(`unsupported format: ${format}`);
 }
 ```
 
@@ -592,11 +616,10 @@ let sizes: Vec<u32> = files
 ```
 
 TS equivalent:
+
 ```typescript
-const sizes: number[] = files
-    .filter(f => f.size > 0)
-    .map(f => f.size);
-    // no .collect() needed — JS arrays are eager
+const sizes: number[] = files.filter((f) => f.size > 0).map((f) => f.size);
+// no .collect() needed — JS arrays are eager
 ```
 
 **Key difference:** Rust iterators are lazy (like generators). Nothing executes until `.collect()`, `.for_each()`, or another terminal method is called. TS array methods are eager — `.filter()` immediately produces a new array.
@@ -623,46 +646,47 @@ pub fn compress_image(data: &[u8], quality: u8) -> Result<Vec<u8>, JsValue> {
 ```
 
 JS side:
+
 ```typescript
 import init, { compress_image } from "../engine/pkg";
 
-await init();  // load the .wasm file (one-time)
+await init(); // load the .wasm file (one-time)
 
 const input = new Uint8Array(fileBuffer);
-const output = compress_image(input, 85);  // calls Rust, gets Uint8Array back
+const output = compress_image(input, 85); // calls Rust, gets Uint8Array back
 ```
 
 **What crosses the WASM boundary:**
 
-| Type in Rust | Type in JS | Notes |
-|---|---|---|
-| `&[u8]` / `Vec<u8>` | `Uint8Array` | Zero-copy for borrows, copy for owned |
-| `String` / `&str` | `string` | Always copied (UTF-8 ↔ UTF-16) |
-| `bool` | `boolean` | Trivial |
-| `u8`, `u32`, `f64` etc. | `number` | Trivial |
-| `Result<T, JsValue>` | Return or throw | `Err` becomes a JS exception |
-| `JsValue` | `any` | Escape hatch for complex JS objects |
+| Type in Rust            | Type in JS      | Notes                                 |
+| ----------------------- | --------------- | ------------------------------------- |
+| `&[u8]` / `Vec<u8>`     | `Uint8Array`    | Zero-copy for borrows, copy for owned |
+| `String` / `&str`       | `string`        | Always copied (UTF-8 ↔ UTF-16)        |
+| `bool`                  | `boolean`       | Trivial                               |
+| `u8`, `u32`, `f64` etc. | `number`        | Trivial                               |
+| `Result<T, JsValue>`    | Return or throw | `Err` becomes a JS exception          |
+| `JsValue`               | `any`           | Escape hatch for complex JS objects   |
 
 ---
 
 ## Symbols Cheat Sheet
 
-| Symbol | Meaning | TS Equivalent |
-|---|---|---|
-| `&` | Borrow (reference) | Passing an object (JS always borrows) |
-| `&mut` | Mutable borrow | Normal JS reference (can modify) |
-| `*` | Dereference (follow reference to value) | Not needed in JS |
-| `::` | Path separator / associated function | `.` (like `Array.from()`) |
-| `.` | Method call / field access | `.` (same as JS) |
-| `?` | Propagate error (early return on Err) | `await` (kind of) + `throw` |
-| `!` suffix | Macro invocation | No equivalent — think "special function" |
-| `'a` | Lifetime annotation | No equivalent — tells compiler how long borrows live |
-| `<T>` | Generic type parameter | `<T>` (same concept) |
-| `_` | Ignore/discard | `_` in destructuring |
-| `..` | Range OR struct spread | `...` (spread) |
-| `=>` | Match arm result | `:` in switch case (sort of) |
-| `\|x\|` | Closure parameter | `(x) =>` arrow function |
-| `::<Type>` | Turbofish (explicit generic) | `fn<Type>()` |
+| Symbol     | Meaning                                 | TS Equivalent                                        |
+| ---------- | --------------------------------------- | ---------------------------------------------------- |
+| `&`        | Borrow (reference)                      | Passing an object (JS always borrows)                |
+| `&mut`     | Mutable borrow                          | Normal JS reference (can modify)                     |
+| `*`        | Dereference (follow reference to value) | Not needed in JS                                     |
+| `::`       | Path separator / associated function    | `.` (like `Array.from()`)                            |
+| `.`        | Method call / field access              | `.` (same as JS)                                     |
+| `?`        | Propagate error (early return on Err)   | `await` (kind of) + `throw`                          |
+| `!` suffix | Macro invocation                        | No equivalent — think "special function"             |
+| `'a`       | Lifetime annotation                     | No equivalent — tells compiler how long borrows live |
+| `<T>`      | Generic type parameter                  | `<T>` (same concept)                                 |
+| `_`        | Ignore/discard                          | `_` in destructuring                                 |
+| `..`       | Range OR struct spread                  | `...` (spread)                                       |
+| `=>`       | Match arm result                        | `:` in switch case (sort of)                         |
+| `\|x\|`    | Closure parameter                       | `(x) =>` arrow function                              |
+| `::<Type>` | Turbofish (explicit generic)            | `fn<Type>()`                                         |
 
 ---
 
@@ -688,10 +712,10 @@ vec.push(2);
 
 ## Strings: The Two Types You Need to Know
 
-| Type | Ownership | TS Equivalent | When to Use |
-|---|---|---|---|
-| `String` | Owned (heap-allocated, growable) | `string` (that you built) | Return values, struct fields |
-| `&str` | Borrowed (slice/view into a String) | `string` (that you received) | Function parameters, string literals |
+| Type     | Ownership                           | TS Equivalent                | When to Use                          |
+| -------- | ----------------------------------- | ---------------------------- | ------------------------------------ |
+| `String` | Owned (heap-allocated, growable)    | `string` (that you built)    | Return values, struct fields         |
+| `&str`   | Borrowed (slice/view into a String) | `string` (that you received) | Function parameters, string literals |
 
 ```rust
 let owned: String = String::from("hello");     // you own this
@@ -728,8 +752,11 @@ let multiply = |x| x * factor;    // captures `factor` from surrounding scope
 ```
 
 TS equivalent:
+
 ```typescript
-function add(a: number, b: number): number { return a + b; }
+function add(a: number, b: number): number {
+  return a + b;
+}
 const add = (a: number, b: number): number => a + b;
 const double = (x: number) => x * 2;
 const factor = 3;
@@ -772,6 +799,7 @@ pub fn compress_image(data: &[u8]) -> Result<Vec<u8>, String> {
 ```
 
 TS equivalent of the module tree:
+
 ```typescript
 // src/index.ts
 export { compressImage } from "./image";
@@ -809,6 +837,7 @@ mod tests {
 ```
 
 Run:
+
 ```bash
 cargo test                     # run all tests
 cargo test compress            # run tests with "compress" in the name
@@ -822,15 +851,17 @@ cargo test -- --nocapture      # show println! output during tests
 **Task:** Compress a list of images, skip failures, return successes.
 
 ### TypeScript
+
 ```typescript
 function compressAll(images: Uint8Array[], quality: number): Uint8Array[] {
-    return images
-        .map(img => compress(img, quality))
-        .filter((result): result is Uint8Array => result !== null);
+  return images
+    .map((img) => compress(img, quality))
+    .filter((result): result is Uint8Array => result !== null);
 }
 ```
 
 ### Go
+
 ```go
 func CompressAll(images [][]byte, quality int) [][]byte {
     var results [][]byte
@@ -846,6 +877,7 @@ func CompressAll(images [][]byte, quality int) [][]byte {
 ```
 
 ### Rust
+
 ```rust
 fn compress_all(images: &[Vec<u8>], quality: u8) -> Vec<Vec<u8>> {
     images
@@ -859,21 +891,21 @@ fn compress_all(images: &[Vec<u8>], quality: u8) -> Vec<Vec<u8>> {
 
 ## Common Rust-isms Explained
 
-| You'll see this | What it means | TS comparison |
-|---|---|---|
-| `let x = 5;` | Immutable binding | `const x = 5;` |
-| `let mut x = 5;` | Mutable binding | `let x = 5;` |
-| `vec![1, 2, 3]` | Create a Vec (array) | `[1, 2, 3]` |
-| `format!("hi {}", name)` | String interpolation | `` `hi ${name}` `` |
-| `println!("debug: {:?}", val)` | Debug print | `console.log("debug:", val)` |
-| `.clone()` | Deep copy | `structuredClone(obj)` |
-| `.to_string()` | Convert to String | `.toString()` |
-| `.into()` | Type conversion (inferred) | Implicit coercion |
-| `.as_ref()` | Borrow from owned type | No equivalent (JS always borrows) |
-| `impl From<A> for B` | Conversion trait | No equivalent (custom `fromA()` methods) |
-| `#[derive(Debug, Clone)]` | Auto-generate trait impls | No equivalent (built-in in JS) |
-| `todo!()` | Placeholder (compiles, panics at runtime) | `throw new Error("TODO")` |
-| `unimplemented!()` | Same as todo! but for known-missing code | Same |
+| You'll see this                | What it means                             | TS comparison                            |
+| ------------------------------ | ----------------------------------------- | ---------------------------------------- |
+| `let x = 5;`                   | Immutable binding                         | `const x = 5;`                           |
+| `let mut x = 5;`               | Mutable binding                           | `let x = 5;`                             |
+| `vec![1, 2, 3]`                | Create a Vec (array)                      | `[1, 2, 3]`                              |
+| `format!("hi {}", name)`       | String interpolation                      | `` `hi ${name}` ``                       |
+| `println!("debug: {:?}", val)` | Debug print                               | `console.log("debug:", val)`             |
+| `.clone()`                     | Deep copy                                 | `structuredClone(obj)`                   |
+| `.to_string()`                 | Convert to String                         | `.toString()`                            |
+| `.into()`                      | Type conversion (inferred)                | Implicit coercion                        |
+| `.as_ref()`                    | Borrow from owned type                    | No equivalent (JS always borrows)        |
+| `impl From<A> for B`           | Conversion trait                          | No equivalent (custom `fromA()` methods) |
+| `#[derive(Debug, Clone)]`      | Auto-generate trait impls                 | No equivalent (built-in in JS)           |
+| `todo!()`                      | Placeholder (compiles, panics at runtime) | `throw new Error("TODO")`                |
+| `unimplemented!()`             | Same as todo! but for known-missing code  | Same                                     |
 
 ---
 

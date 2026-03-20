@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { FieldTypeInfo, NodeParamMeta } from "@bnto/core";
+import type { FieldConfig, FieldTypeInfo, NodeParamMeta } from "@bnto/core";
 import { Label } from "@bnto/ui";
 import { CONTROL_REGISTRY } from "./controls";
 
@@ -19,6 +19,7 @@ import { CONTROL_REGISTRY } from "./controls";
 interface SchemaFieldProps {
   name: string;
   meta: NodeParamMeta;
+  fieldConfig?: FieldConfig;
   fieldInfo: FieldTypeInfo;
   value: unknown;
   onChange: (name: string, value: unknown) => void;
@@ -30,7 +31,7 @@ const INLINE_CONTROLS = new Set(["switch", "select"]);
 /** Controls that render their own label (Slider owns its header row). */
 const SELF_LABELED_CONTROLS = new Set(["slider"]);
 
-function SchemaField({ name, meta, fieldInfo, value, onChange }: SchemaFieldProps) {
+function SchemaField({ name, meta, fieldConfig, fieldInfo, value, onChange }: SchemaFieldProps) {
   const handleChange = useCallback(
     (newValue: unknown) => onChange(name, newValue),
     [name, onChange],
@@ -43,13 +44,20 @@ function SchemaField({ name, meta, fieldInfo, value, onChange }: SchemaFieldProp
 
   const label = (
     <Label htmlFor={id} title={meta.description}>
-      {meta.displayLabel ?? meta.label}
+      {fieldConfig?.label ?? meta.label}
       {fieldInfo.required && <span className="ml-0.5 text-destructive">*</span>}
     </Label>
   );
 
   const control = (
-    <Control id={id} fieldInfo={fieldInfo} meta={meta} value={value} onChange={handleChange} />
+    <Control
+      id={id}
+      fieldInfo={fieldInfo}
+      meta={meta}
+      fieldConfig={fieldConfig}
+      value={value}
+      onChange={handleChange}
+    />
   );
 
   if (selfLabeled) {

@@ -1,10 +1,14 @@
 /**
  * Returns parameter names that are visible for a given condition.
+ *
+ * Hidden filtering uses FieldConfigMap (UI concern) when provided.
+ * Falls back to looking up NODE_FIELD_CONFIGS automatically.
  */
 
 import { getNodeSchema } from "./getNodeSchema";
+import { getNodeFields } from "./getNodeFields";
 import { matchesCondition } from "./matchesCondition";
-import type { NodeSchemaDefinition, ParamCondition } from "./types";
+import type { FieldConfigMap, NodeSchemaDefinition, ParamCondition } from "./types";
 
 /**
  * Returns parameter names that are visible when a specific parameter
@@ -34,29 +38,32 @@ export function getVisibleParams(
   const schemaDef = getNodeSchema(typeName);
   if (!schemaDef) return [];
 
+  const fields = getNodeFields(typeName);
+
   // Single param/value check (original API)
   if (typeof paramNameOrValues === "string") {
-    return resolveVisible(schemaDef, (cond) =>
+    return resolveVisible(schemaDef, fields, (cond) =>
       matchesCondition(cond, paramNameOrValues, paramValue!),
     );
   }
 
   // Full parameters map check
   const parameters = paramNameOrValues;
-  return resolveVisible(schemaDef, (cond) => {
+  return resolveVisible(schemaDef, fields, (cond) => {
     const conditions = Array.isArray(cond) ? cond : [cond];
     return conditions.some((c) => String(parameters[c.param] ?? "") === c.equals);
   });
 }
 
-/** Shared filter logic — hidden first, then visibleWhen via matcher. */
+/** Shared filter logic — hidden via fields, then visibleWhen via matcher. */
 function resolveVisible(
   schemaDef: NodeSchemaDefinition,
+  fields: FieldConfigMap | undefined,
   matches: (cond: ParamCondition) => boolean,
 ): string[] {
   return Object.entries(schemaDef.params)
-    .filter(([, meta]) => {
-      if (meta.hidden) return false;
+    .filter(([name, meta]) => {
+      if (fields?.[name]?.hidden) return false;
       if (!meta.visibleWhen) return true;
       return matches(meta.visibleWhen);
     })

@@ -156,7 +156,7 @@ describe("BntoWorker", () => {
       const defJson = JSON.stringify({
         nodes: [
           { id: "in", type: "input", params: {} },
-          { id: "proc", type: "compress-images", params: { compression: 20 } },
+          { id: "proc", type: "compress-images", params: { quality: 80 } },
           { id: "out", type: "output", params: {} },
         ],
       });

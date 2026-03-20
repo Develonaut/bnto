@@ -13,7 +13,7 @@
  * | `z.boolean()`             | —                 | switch     | Switch           |
  * | `z.number()`              | min AND max       | slider     | Slider           |
  * | `z.number()`              | unbounded / one   | number     | Input[num]       |
- * | `z.string()`              | meta.control=textarea | textarea | Textarea     |
+ * | `z.string()`              | fieldConfig.control=textarea | textarea | Textarea     |
  * | `z.string()`              | —                 | text       | Input[text]      |
  * | `z.array(z.string())`     | —                 | tagPicker  | Combobox         |
  * | `z.record(z.string())`    | —                 | keyValue   | KeyValueEditor   |
@@ -25,7 +25,28 @@
  */
 
 import type { z } from "zod";
-import type { NodeParamMeta } from "./types";
+import type { FieldConfig } from "./types";
+
+// ---------------------------------------------------------------------------
+// Zod internal helpers — typed accessors for _def properties.
+//
+// Zod's _def is untyped in the public API. These helpers centralize the
+// trust-boundary casts so the rest of the file stays cast-free. If a Zod
+// major version changes _def internals, only these functions need updating.
+// ---------------------------------------------------------------------------
+
+interface ZodDef {
+  typeName?: string;
+  innerType?: z.ZodTypeAny;
+  type?: z.ZodTypeAny;
+  valueType?: z.ZodTypeAny;
+  values?: readonly string[];
+  checks?: ReadonlyArray<{ kind: string; value: number }>;
+}
+
+function zodDef(zodType: z.ZodTypeAny): ZodDef {
+  return zodType._def as ZodDef;
+}
 
 /**
  * UI control type — maps directly to a `@bnto/ui` component.
@@ -35,7 +56,7 @@ import type { NodeParamMeta } from "./types";
  * - slider:    `<Slider>` range (for bounded numbers with both min AND max)
  * - number:    `<Input type="number">` (for unbounded numbers)
  * - text:      `<Input type="text">` (for strings, fallback)
- * - textarea:  `<Textarea>` multiline (for strings with meta.control = "textarea")
+ * - textarea:  `<Textarea>` multiline (for strings with fieldConfig.control = "textarea")
  * - tagPicker: `<Combobox>` multi-select (for z.array(z.string()))
  * - keyValue:  `<KeyValueEditor>` key→value pairs (for z.record())
  */
@@ -71,13 +92,13 @@ interface FieldTypeInfo {
  * We peel those off to find the core type.
  */
 function unwrap(zodType: z.ZodTypeAny): z.ZodTypeAny {
-  const def = zodType._def;
+  const def = zodDef(zodType);
   if (
     def.typeName === "ZodDefault" ||
     def.typeName === "ZodOptional" ||
     def.typeName === "ZodNullable"
   ) {
-    return unwrap(def.innerType);
+    return unwrap(def.innerType!);
   }
   return zodType;
 }
@@ -86,7 +107,7 @@ function unwrap(zodType: z.ZodTypeAny): z.ZodTypeAny {
  * Extract min/max constraints from a ZodNumber's checks array.
  */
 function extractNumberChecks(zodType: z.ZodTypeAny): { min?: number; max?: number } {
-  const checks = zodType._def.checks as Array<{ kind: string; value: number }> | undefined;
+  const { checks } = zodDef(zodType);
   if (!checks) return {};
   let min: number | undefined;
   let max: number | undefined;
@@ -101,10 +122,10 @@ function extractNumberChecks(zodType: z.ZodTypeAny): { min?: number; max?: numbe
  * Check if a ZodArray contains string elements (z.array(z.string())).
  */
 function isStringArray(zodType: z.ZodTypeAny): boolean {
-  const elementType = zodType._def.type;
+  const { type: elementType } = zodDef(zodType);
   if (!elementType) return false;
   const innerElement = unwrap(elementType);
-  return (innerElement._def.typeName as string) === "ZodString";
+  return zodDef(innerElement).typeName === "ZodString";
 }
 
 /**
@@ -112,10 +133,10 @@ function isStringArray(zodType: z.ZodTypeAny): boolean {
  * Also matches z.record(z.unknown()) for generic key-value editing.
  */
 function isKeyValueRecord(zodType: z.ZodTypeAny): boolean {
-  const valueType = zodType._def.valueType;
+  const { valueType } = zodDef(zodType);
   if (!valueType) return false;
   const innerValue = unwrap(valueType);
-  const typeName = innerValue._def.typeName as string;
+  const typeName = zodDef(innerValue).typeName;
   return typeName === "ZodString" || typeName === "ZodUnknown";
 }
 
@@ -125,21 +146,23 @@ function isKeyValueRecord(zodType: z.ZodTypeAny): boolean {
  * Returns the effective type, UI control, enum values, and numeric constraints
  * that the config panel needs to render the correct form component.
  *
- * An optional `meta` parameter allows overriding the inferred control type
- * via `meta.control` (e.g., setting `control: "textarea"` on a string field).
+ * An optional `fieldConfig` parameter allows overriding the inferred control
+ * type via `fieldConfig.control` (e.g., setting `control: "textarea"` on a
+ * string field).
  */
-function inferFieldType(zodField: z.ZodTypeAny, meta?: NodeParamMeta): FieldTypeInfo {
-  const outerTypeName = (zodField._def.typeName ?? "") as string;
+function inferFieldType(zodField: z.ZodTypeAny, fieldConfig?: FieldConfig): FieldTypeInfo {
+  const outerTypeName = zodDef(zodField).typeName ?? "";
   const required = outerTypeName !== "ZodOptional" && outerTypeName !== "ZodDefault";
   const inner = unwrap(zodField);
-  const typeName = inner._def.typeName as string;
+  const innerDef = zodDef(inner);
+  const typeName = innerDef.typeName;
 
   if (typeName === "ZodEnum") {
     return {
       type: "enum",
       control: "select",
       required,
-      enumValues: inner._def.values as readonly string[],
+      enumValues: innerDef.values,
     };
   }
 
@@ -167,8 +190,8 @@ function inferFieldType(zodField: z.ZodTypeAny, meta?: NodeParamMeta): FieldType
     return { type: "record", control: "keyValue", required };
   }
 
-  // String fields can be overridden to textarea via meta.control
-  const control = meta?.control === "textarea" ? "textarea" : "text";
+  // String fields can be overridden to textarea via fieldConfig.control
+  const control = fieldConfig?.control === "textarea" ? "textarea" : "text";
   return { type: "string", control, required };
 }
 
