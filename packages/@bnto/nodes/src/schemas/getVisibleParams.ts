@@ -1,14 +1,14 @@
 /**
  * Returns parameter names that are visible for a given condition.
  *
- * Visibility rules live in FieldConfigMap (UI concern). Falls back to
- * looking up NODE_FIELD_CONFIGS automatically via getNodeFields().
+ * Visibility rules live in NodeParamFields (UI concern). Falls back to
+ * looking up NODE_PARAM_FIELDS automatically via getNodeParamFields().
  */
 
 import { getNodeSchema } from "./getNodeSchema";
-import { getNodeFields } from "./getNodeFields";
+import { getNodeParamFields } from "./getNodeParamFields";
 import { matchesCondition } from "./matchesCondition";
-import type { FieldConfigMap, ParamCondition } from "./types";
+import type { NodeParamFields, ParamCondition } from "./types";
 
 /**
  * Returns parameter names that are visible when a specific parameter
@@ -38,7 +38,7 @@ export function getVisibleParams(
   const schemaDef = getNodeSchema(typeName);
   if (!schemaDef) return [];
 
-  const fields = getNodeFields(typeName);
+  const fields = getNodeParamFields(typeName);
 
   // Single param/value check (original API)
   if (typeof paramNameOrValues === "string") {
@@ -55,10 +55,10 @@ export function getVisibleParams(
   });
 }
 
-/** Shared filter logic — reads visibleWhen from FieldConfig. */
+/** Shared filter logic — reads visibleWhen from NodeParamField. */
 function resolveVisible(
   params: Record<string, { label: string }>,
-  fields: FieldConfigMap | undefined,
+  fields: NodeParamFields | undefined,
   matches: (cond: ParamCondition) => boolean,
 ): string[] {
   return Object.keys(params).filter((name) => {

@@ -6,7 +6,7 @@ import { isValid } from "./definitionResult";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 import { NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./nodeTypes";
 import type { NodeTypeName } from "./nodeTypes";
-import { NODE_SCHEMA_DEFS } from "./schemas/registry";
+import { NODE_SCHEMAS } from "./schemas/registry";
 
 // Blank definition now has 2 I/O nodes (input + output).
 // Newly added nodes appear after them.
@@ -143,7 +143,7 @@ describe("addNode", () => {
 
   describe("default parameters match schema", () => {
     for (const typeName of NODE_TYPE_NAMES) {
-      const schemaDef = NODE_SCHEMA_DEFS[typeName];
+      const schemaDef = NODE_SCHEMAS[typeName];
       if (!schemaDef) continue;
       // Parse empty object to discover Zod defaults
       const parsed = schemaDef.schema.safeParse({});

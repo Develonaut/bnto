@@ -1,7 +1,7 @@
 /** Transform node schema — parameters for data transformations via expr. */
 
 import { z } from "zod";
-import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
+import type { NodeParamFields, NodeSchema } from "./types";
 
 /** Zod schema for transform node parameters. */
 export const transformParamsSchema = z.object({
@@ -13,7 +13,7 @@ export const transformParamsSchema = z.object({
 export type TransformParams = z.infer<typeof transformParamsSchema>;
 
 /** Full schema definition for the transform node type. */
-export const transformNodeSchema: NodeSchemaDefinition = {
+export const transformNodeSchema: NodeSchema = {
   nodeType: "transform",
   schemaVersion: 1,
   schema: transformParamsSchema,
@@ -32,4 +32,4 @@ export const transformNodeSchema: NodeSchemaDefinition = {
 };
 
 /** UI presentation metadata for transform node fields. */
-export const transformFields: FieldConfigMap = {};
+export const transformFields: NodeParamFields = {};

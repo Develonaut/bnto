@@ -1,7 +1,7 @@
 /** Edit Fields node schema — parameters for setting field values. */
 
 import { z } from "zod";
-import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
+import type { NodeParamFields, NodeSchema } from "./types";
 
 /** Zod schema for edit-fields node parameters. */
 export const editFieldsParamsSchema = z.object({
@@ -13,7 +13,7 @@ export const editFieldsParamsSchema = z.object({
 export type EditFieldsParams = z.infer<typeof editFieldsParamsSchema>;
 
 /** Full schema definition for the edit-fields node type. */
-export const editFieldsNodeSchema: NodeSchemaDefinition = {
+export const editFieldsNodeSchema: NodeSchema = {
   nodeType: "edit-fields",
   schemaVersion: 1,
   schema: editFieldsParamsSchema,
@@ -31,4 +31,4 @@ export const editFieldsNodeSchema: NodeSchemaDefinition = {
 };
 
 /** UI presentation metadata for edit-fields node fields. */
-export const editFieldsFields: FieldConfigMap = {};
+export const editFieldsFields: NodeParamFields = {};

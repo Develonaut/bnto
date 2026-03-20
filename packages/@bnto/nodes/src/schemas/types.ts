@@ -3,13 +3,13 @@
  *
  * Two distinct type families:
  *
- * - **NodeParamMeta** — Engine metadata generated from the Rust catalog.
+ * - **NodeParam** — Engine metadata generated from the Rust catalog.
  *   Labels, descriptions, conditional visibility/requirement rules.
- *   Lives in `NodeSchemaDefinition.params`.
+ *   Lives in `NodeSchema.params`.
  *
- * - **FieldConfig / FieldConfigMap** — UI presentation metadata.
+ * - **NodeParamField / NodeParamFields** — UI presentation metadata.
  *   Hidden flags, layout grouping, presets, option labels, control overrides.
- *   Lives in `NODE_FIELD_CONFIGS` alongside the schema registry.
+ *   Lives in `NODE_PARAM_FIELDS` alongside the schema registry.
  *
  * Zod schemas remain the single source of truth for validation.
  */
@@ -26,12 +26,12 @@ export type ParamCondition =
  *
  * Describes what the engine knows about a parameter: its label, description,
  * and surfaceability. Generated from the Rust engine catalog. Does NOT include
- * UI presentation concerns — those live in `FieldConfig`.
+ * UI presentation concerns — those live in `NodeParamField`.
  *
- * Conditional visibility and requirement rules live in `FieldConfig` so
+ * Conditional visibility and requirement rules live in `NodeParamField` so
  * that all UI-facing conditional logic is in one place.
  */
-export interface NodeParamMeta {
+export interface NodeParam {
   /** Human-readable label for the config panel. */
   label: string;
 
@@ -50,7 +50,7 @@ export interface NodeParamMeta {
 }
 
 // ---------------------------------------------------------------------------
-// FieldConfig — UI presentation metadata (separate from engine concerns)
+// NodeParamField — UI presentation metadata (separate from engine concerns)
 // ---------------------------------------------------------------------------
 
 /**
@@ -62,7 +62,7 @@ export interface NodeParamMeta {
  * Defined per-node-type in augmentation files (e.g., `image.ts`), keyed by
  * parameter name. Consumed by SchemaForm, SchemaField, and control components.
  */
-export interface FieldConfig {
+export interface NodeParamField {
   /**
    * Layout group name — consecutive params with the same group
    * are rendered together in a compact FieldGroup (e.g., "dimensions"
@@ -119,14 +119,14 @@ export interface FieldConfig {
 }
 
 /** Field configs for all parameters of a node type. */
-export type FieldConfigMap = Record<string, FieldConfig>;
+export type NodeParamFields = Record<string, NodeParamField>;
 
 /**
  * Complete schema definition for a node type.
  *
  * Combines Zod validation schema with UI metadata and versioning.
  */
-export interface NodeSchemaDefinition {
+export interface NodeSchema {
   /** The node type name (e.g., "http-request", "image-compress"). */
   nodeType: string;
 
@@ -141,5 +141,5 @@ export interface NodeSchemaDefinition {
   schema: z.ZodObject<z.ZodRawShape>;
 
   /** Engine metadata keyed by parameter name. */
-  params: Record<string, NodeParamMeta>;
+  params: Record<string, NodeParam>;
 }

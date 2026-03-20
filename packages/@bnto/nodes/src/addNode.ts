@@ -15,7 +15,7 @@ import type { DefinitionResult } from "./definitionResult";
 import type { NodeTypeName } from "./nodeTypes";
 import { NODE_TYPE_INFO } from "./nodeTypes";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
-import { NODE_SCHEMA_DEFS } from "./schemas/registry";
+import { NODE_SCHEMAS } from "./schemas/registry";
 import { validateDefinition } from "./validate";
 
 /** Unwrap Zod wrappers (ZodDefault, ZodOptional) to find the inner type. */
@@ -39,7 +39,7 @@ function unwrapZod(field: unknown): {
 
 /** Builds default parameters from the Zod schema for a node type. */
 function buildDefaultParams(nodeType: NodeTypeName): Record<string, unknown> {
-  const schemaDef = NODE_SCHEMA_DEFS[nodeType];
+  const schemaDef = NODE_SCHEMAS[nodeType];
   if (!schemaDef) return {};
   const result = schemaDef.schema.safeParse({});
   if (result.success) return { ...result.data };

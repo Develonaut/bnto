@@ -2,13 +2,13 @@
  * Tests for input and output node schemas — visibility rules,
  * parameter structure, and conditional behavior.
  *
- * visibleWhen conditions now live in FieldConfig (inputFields/outputFields),
- * not in NodeParamMeta (inputNodeSchema.params).
+ * visibleWhen conditions now live in NodeParamField (inputFields/outputFields),
+ * not in NodeParam (inputNodeSchema.params).
  */
 
 import { describe, expect, it } from "vitest";
 
-import { getVisibleParams, getNodeSchema, getRequiredParams, getNodeFields } from "./index";
+import { getVisibleParams, getNodeSchema, getRequiredParams, getNodeParamFields } from "./index";
 import { inputNodeSchema, INPUT_MODES } from "./input";
 import { outputNodeSchema, OUTPUT_MODES } from "./output";
 
@@ -27,8 +27,8 @@ describe("inputNodeSchema", () => {
     }
   });
 
-  it("has file-upload-specific params with visibleWhen in FieldConfig", () => {
-    const fields = getNodeFields("input")!;
+  it("has file-upload-specific params with visibleWhen in NodeParamField", () => {
+    const fields = getNodeParamFields("input")!;
     const fileUploadParams = [
       "accept",
       "extensions",
@@ -43,8 +43,8 @@ describe("inputNodeSchema", () => {
     }
   });
 
-  it("placeholder is visible for text and url modes (OR condition in FieldConfig)", () => {
-    const fields = getNodeFields("input")!;
+  it("placeholder is visible for text and url modes (OR condition in NodeParamField)", () => {
+    const fields = getNodeParamFields("input")!;
     expect(fields.placeholder).toBeDefined();
     expect(Array.isArray(fields.placeholder?.visibleWhen)).toBe(true);
   });
@@ -65,8 +65,8 @@ describe("outputNodeSchema", () => {
     }
   });
 
-  it("has download-specific params with visibleWhen in FieldConfig", () => {
-    const fields = getNodeFields("output")!;
+  it("has download-specific params with visibleWhen in NodeParamField", () => {
+    const fields = getNodeParamFields("output")!;
     const downloadParams = ["filename", "zip", "autoDownload"];
     for (const name of downloadParams) {
       expect(outputNodeSchema.params[name]).toBeDefined();
@@ -75,7 +75,7 @@ describe("outputNodeSchema", () => {
   });
 
   it("label has no visibleWhen (always visible)", () => {
-    const fields = getNodeFields("output")!;
+    const fields = getNodeParamFields("output")!;
     expect(outputNodeSchema.params.label).toBeDefined();
     expect(fields.label?.visibleWhen).toBeUndefined();
   });

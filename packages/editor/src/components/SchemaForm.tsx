@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { FieldConfigMap, NodeSchemaDefinition } from "@bnto/core";
+import type { NodeParamFields, NodeSchema } from "@bnto/core";
 import { inferFieldType } from "@bnto/core";
 import { Stack, Text } from "@bnto/ui";
 import { SchemaField } from "./SchemaField";
@@ -12,7 +12,7 @@ import type { GroupField } from "./FieldGroup";
 const FIELD_GAP = "md" as const;
 
 /**
- * SchemaForm — auto-generates a form from a NodeSchemaDefinition.
+ * SchemaForm — auto-generates a form from a NodeSchema.
  *
  * Takes a schema definition, current parameter values, and a list of visible
  * parameter names. Renders the correct UI control for each visible parameter
@@ -24,9 +24,9 @@ const FIELD_GAP = "md" as const;
 
 interface SchemaFormProps {
   /** Full schema definition (Zod schema + engine metadata). */
-  schema: NodeSchemaDefinition;
+  schema: NodeSchema;
   /** UI presentation metadata per field. */
-  fields?: FieldConfigMap;
+  fields?: NodeParamFields;
   /** Current parameter values. */
   values: Record<string, unknown>;
   /** Parameter names currently visible (after visibleWhen filtering). */

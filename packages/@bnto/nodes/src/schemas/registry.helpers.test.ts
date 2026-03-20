@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  NODE_SCHEMA_DEFS,
+  NODE_SCHEMAS,
   getNodeSchema,
   getRequiredParams,
   getConditionallyRequired,
@@ -175,14 +175,14 @@ describe("getVisibleParams", () => {
 
 describe("inferFieldType", () => {
   it("detects enum type from Zod enum", () => {
-    const shape = NODE_SCHEMA_DEFS["image-convert"]!.schema.shape;
+    const shape = NODE_SCHEMAS["image-convert"]!.schema.shape;
     const info = inferFieldType(shape.format);
     expect(info.type).toBe("enum");
     expect(info.enumValues).toEqual(["jpeg", "png", "webp"]);
   });
 
   it("detects number type with min/max", () => {
-    const shape = NODE_SCHEMA_DEFS["image-compress"]!.schema.shape;
+    const shape = NODE_SCHEMAS["image-compress"]!.schema.shape;
     const info = inferFieldType(shape.quality);
     expect(info.type).toBe("number");
     expect(info.min).toBe(1);
@@ -190,20 +190,20 @@ describe("inferFieldType", () => {
   });
 
   it("detects boolean type", () => {
-    const shape = NODE_SCHEMA_DEFS["image-resize"]!.schema.shape;
+    const shape = NODE_SCHEMAS["image-resize"]!.schema.shape;
     const info = inferFieldType(shape.maintainAspect);
     expect(info.type).toBe("boolean");
   });
 
   it("detects string type for plain strings", () => {
-    const shape = NODE_SCHEMA_DEFS["file-rename"]!.schema.shape;
+    const shape = NODE_SCHEMAS["file-rename"]!.schema.shape;
     const info = inferFieldType(shape.find);
     expect(info.type).toBe("string");
   });
 
   it("unwraps optional/default wrappers", () => {
     // quality is z.number().min(1).max(100).optional().default(80)
-    const shape = NODE_SCHEMA_DEFS["image-compress"]!.schema.shape;
+    const shape = NODE_SCHEMAS["image-compress"]!.schema.shape;
     const info = inferFieldType(shape.quality);
     expect(info.type).toBe("number");
     expect(info.min).toBe(1);
@@ -212,7 +212,7 @@ describe("inferFieldType", () => {
 
   it("detects enum inside default wrapper", () => {
     // mode is z.enum(GROUP_MODES).default("sequential")
-    const shape = NODE_SCHEMA_DEFS["group"]!.schema.shape;
+    const shape = NODE_SCHEMAS["group"]!.schema.shape;
     const info = inferFieldType(shape.mode);
     expect(info.type).toBe("enum");
     expect(info.enumValues).toEqual(GROUP_MODES);

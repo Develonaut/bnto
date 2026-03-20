@@ -76,10 +76,10 @@ export {
 
 // ── Schema introspection ────────────────────────────────────────────────
 export {
-  NODE_SCHEMA_DEFS,
-  NODE_FIELD_CONFIGS,
+  NODE_SCHEMAS,
+  NODE_PARAM_FIELDS,
   getNodeSchema,
-  getNodeFields,
+  getNodeParamFields,
   getRequiredParams,
   getConditionallyRequired,
   getVisibleParams,
@@ -89,13 +89,13 @@ export {
   getProcessorAccepts,
 } from "./schemas";
 export type {
-  NodeSchemaDefinition,
-  NodeParamMeta,
+  NodeSchema,
+  NodeParam,
   ParamCondition,
-  FieldTypeInfo,
-  FieldControl,
-  FieldConfig,
-  FieldConfigMap,
+  NodeParamFieldInfo,
+  NodeParamControl,
+  NodeParamField,
+  NodeParamFields,
 } from "./schemas";
 
 // ── Catalog constants ───────────────────────────────────────────────────

@@ -8,10 +8,10 @@
  * `engine/crates/bnto-csv/src/`, then run `task nodes:generate`.
  */
 
-import type { FieldConfigMap } from "./types";
+import type { NodeParamFields } from "./types";
 
 export { spreadsheetRenameParamsSchema, spreadsheetRenameNodeSchema } from "../generated/schemas";
 export type { SpreadsheetRenameParams } from "../generated/schemas";
 
 /** UI presentation metadata for spreadsheet-rename node fields. */
-export const spreadsheetRenameFields: FieldConfigMap = {};
+export const spreadsheetRenameFields: NodeParamFields = {};

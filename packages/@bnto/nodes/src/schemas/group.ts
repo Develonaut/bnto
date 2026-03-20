@@ -1,7 +1,7 @@
 /** Group node schema — parameters for the container node. */
 
 import { z } from "zod";
-import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
+import type { NodeParamFields, NodeSchema } from "./types";
 
 /** Valid group execution modes. */
 export const GROUP_MODES = ["sequential", "parallel"] as const;
@@ -15,7 +15,7 @@ export const groupParamsSchema = z.object({
 export type GroupParams = z.infer<typeof groupParamsSchema>;
 
 /** Full schema definition for the group node type. */
-export const groupNodeSchema: NodeSchemaDefinition = {
+export const groupNodeSchema: NodeSchema = {
   nodeType: "group",
   schemaVersion: 1,
   schema: groupParamsSchema,
@@ -29,4 +29,4 @@ export const groupNodeSchema: NodeSchemaDefinition = {
 };
 
 /** UI presentation metadata for group node fields. */
-export const groupFields: FieldConfigMap = {};
+export const groupFields: NodeParamFields = {};

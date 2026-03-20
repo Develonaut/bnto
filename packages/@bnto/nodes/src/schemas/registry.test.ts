@@ -1,12 +1,12 @@
 /**
- * Tests for the NODE_SCHEMA_DEFS registry — completeness, structural invariants,
+ * Tests for the NODE_SCHEMAS registry — completeness, structural invariants,
  * Zod schema parsing, and enum constant exports.
  */
 
 import { describe, expect, it } from "vitest";
 
 import {
-  NODE_SCHEMA_DEFS,
+  NODE_SCHEMAS,
   inferFieldType,
   LOOP_MODES,
   IMAGE_FORMATS,
@@ -18,28 +18,28 @@ import {
 
 // ---------- Registry completeness ----------
 
-describe("NODE_SCHEMA_DEFS", () => {
+describe("NODE_SCHEMAS", () => {
   it("has a schema for every node type that has one", () => {
     // 13 types have schemas (all except http-request and shell-command)
-    expect(Object.keys(NODE_SCHEMA_DEFS)).toHaveLength(13);
+    expect(Object.keys(NODE_SCHEMAS)).toHaveLength(13);
   });
 
   it("every schema entry matches its nodeType key", () => {
-    for (const [name, def] of Object.entries(NODE_SCHEMA_DEFS)) {
+    for (const [name, def] of Object.entries(NODE_SCHEMAS)) {
       expect(def!.nodeType).toBe(name);
     }
   });
 
   it("http-request and shell-command have no schema (no engine processor)", () => {
-    expect(NODE_SCHEMA_DEFS["http-request"]).toBeUndefined();
-    expect(NODE_SCHEMA_DEFS["shell-command"]).toBeUndefined();
+    expect(NODE_SCHEMAS["http-request"]).toBeUndefined();
+    expect(NODE_SCHEMAS["shell-command"]).toBeUndefined();
   });
 });
 
 // ---------- Structural invariants ----------
 
 describe("every schema definition", () => {
-  const allDefs = Object.values(NODE_SCHEMA_DEFS).filter(Boolean);
+  const allDefs = Object.values(NODE_SCHEMAS).filter(Boolean);
 
   it("has a non-empty nodeType", () => {
     for (const def of allDefs) {
@@ -108,33 +108,33 @@ describe("every schema definition", () => {
 
 describe("Zod schemas parse correctly", () => {
   it("image-compress accepts empty object (quality defaults)", () => {
-    const result = NODE_SCHEMA_DEFS["image-compress"]!.schema.safeParse({});
+    const result = NODE_SCHEMAS["image-compress"]!.schema.safeParse({});
     expect(result.success).toBe(true);
   });
 
   it("image-resize accepts empty object (all optional/defaulted)", () => {
-    const result = NODE_SCHEMA_DEFS["image-resize"]!.schema.safeParse({});
+    const result = NODE_SCHEMAS["image-resize"]!.schema.safeParse({});
     expect(result.success).toBe(true);
   });
 
   it("image-convert defaults format to jpeg when omitted", () => {
-    const result = NODE_SCHEMA_DEFS["image-convert"]!.schema.safeParse({});
+    const result = NODE_SCHEMAS["image-convert"]!.schema.safeParse({});
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.format).toBe("jpeg");
   });
 
   it("image-convert accepts valid format", () => {
-    const result = NODE_SCHEMA_DEFS["image-convert"]!.schema.safeParse({ format: "webp" });
+    const result = NODE_SCHEMAS["image-convert"]!.schema.safeParse({ format: "webp" });
     expect(result.success).toBe(true);
   });
 
   it("loop requires mode", () => {
-    const result = NODE_SCHEMA_DEFS["loop"]!.schema.safeParse({});
+    const result = NODE_SCHEMAS["loop"]!.schema.safeParse({});
     expect(result.success).toBe(false);
   });
 
   it("group defaults mode to sequential", () => {
-    const result = NODE_SCHEMA_DEFS["group"]!.schema.safeParse({});
+    const result = NODE_SCHEMAS["group"]!.schema.safeParse({});
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.mode).toBe("sequential");
@@ -142,12 +142,12 @@ describe("Zod schemas parse correctly", () => {
   });
 
   it("edit-fields requires values", () => {
-    const result = NODE_SCHEMA_DEFS["edit-fields"]!.schema.safeParse({});
+    const result = NODE_SCHEMAS["edit-fields"]!.schema.safeParse({});
     expect(result.success).toBe(false);
   });
 
   it("input defaults mode to file-upload", () => {
-    const result = NODE_SCHEMA_DEFS["input"]!.schema.safeParse({});
+    const result = NODE_SCHEMAS["input"]!.schema.safeParse({});
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.mode).toBe("file-upload");
@@ -155,7 +155,7 @@ describe("Zod schemas parse correctly", () => {
   });
 
   it("output defaults mode to download", () => {
-    const result = NODE_SCHEMA_DEFS["output"]!.schema.safeParse({});
+    const result = NODE_SCHEMAS["output"]!.schema.safeParse({});
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.mode).toBe("download");

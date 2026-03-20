@@ -1,6 +1,6 @@
 "use client";
 
-import type { FieldConfig, FieldTypeInfo, NodeParamMeta } from "@bnto/core";
+import type { NodeParamField, NodeParamFieldInfo, NodeParam } from "@bnto/core";
 import { SchemaField } from "./SchemaField";
 
 /**
@@ -16,9 +16,9 @@ const INLINE_CONTROLS = new Set(["switch", "select"]);
 
 interface GroupField {
   paramName: string;
-  meta: NodeParamMeta;
-  fieldConfig?: FieldConfig;
-  fieldInfo: FieldTypeInfo;
+  meta: NodeParam;
+  fieldConfig?: NodeParamField;
+  fieldInfo: NodeParamFieldInfo;
 }
 
 interface FieldGroupProps {

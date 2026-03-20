@@ -8,13 +8,13 @@
  * `engine/crates/bnto-file/src/rename.rs`, then run `task nodes:generate`.
  */
 
-import type { FieldConfigMap } from "./types";
+import type { NodeParamFields } from "./types";
 
 export { fileRenameParamsSchema, fileRenameNodeSchema } from "../generated/schemas";
 export type { FileRenameParams } from "../generated/schemas";
 
 /** UI presentation metadata for file-rename node fields. */
-export const fileRenameFields: FieldConfigMap = {
+export const fileRenameFields: NodeParamFields = {
   case: {
     options: [
       { value: "lower", label: "lowercase" },

@@ -8,13 +8,13 @@
  * `engine/crates/bnto-image/src/`, then run `task nodes:generate`.
  */
 
-import type { FieldConfigMap } from "./types";
+import type { NodeParamFields } from "./types";
 
 export { imageResizeParamsSchema, imageResizeNodeSchema } from "../generated/schemas";
 export type { ImageResizeParams } from "../generated/schemas";
 
 /** UI presentation metadata for image-resize node fields. */
-export const imageResizeFields: FieldConfigMap = {
+export const imageResizeFields: NodeParamFields = {
   width: { group: "dimensions", suffix: "px" },
   height: { group: "dimensions", suffix: "px" },
   maintainAspect: { group: "dimensions", label: "Maintain Aspect Ratio" },

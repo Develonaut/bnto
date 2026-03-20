@@ -69,10 +69,10 @@ export { validateNodeParams } from "./validateNodeParams";
 
 // Parameter schemas — Zod-based registry + helpers
 export {
-  NODE_SCHEMA_DEFS,
-  NODE_FIELD_CONFIGS,
+  NODE_SCHEMAS,
+  NODE_PARAM_FIELDS,
   getNodeSchema,
-  getNodeFields,
+  getNodeParamFields,
   getRequiredParams,
   getConditionallyRequired,
   getVisibleParams,
@@ -84,13 +84,13 @@ export {
   ERROR_STRATEGIES,
 } from "./schemas";
 export type {
-  NodeSchemaDefinition,
-  NodeParamMeta,
+  NodeSchema,
+  NodeParam,
   ParamCondition,
-  FieldTypeInfo,
-  FieldControl,
-  FieldConfig,
-  FieldConfigMap,
+  NodeParamFieldInfo,
+  NodeParamControl,
+  NodeParamField,
+  NodeParamFields,
 } from "./schemas";
 export { inferFieldType } from "./schemas";
 

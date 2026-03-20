@@ -8,13 +8,13 @@
  * `engine/crates/bnto-image/src/`, then run `task nodes:generate`.
  */
 
-import type { FieldConfigMap } from "./types";
+import type { NodeParamFields } from "./types";
 
 export { imageCompressParamsSchema, imageCompressNodeSchema } from "../generated/schemas";
 export type { ImageCompressParams } from "../generated/schemas";
 
 /** UI presentation metadata for image-compress node fields. */
-export const imageCompressFields: FieldConfigMap = {
+export const imageCompressFields: NodeParamFields = {
   quality: {
     suffix: "%",
     label: "Quality",

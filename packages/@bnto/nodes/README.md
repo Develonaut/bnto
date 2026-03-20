@@ -14,7 +14,7 @@ Consumed by `@bnto/core`, `@bnto/editor`, and `apps/web/`. Never imports from th
 src/
 ├── generated/                  # Auto-generated from engine catalog (DO NOT EDIT)
 │   ├── catalog.ts              # NODE_TYPES, NODE_TYPE_INFO, PROCESSORS, PROCESSOR_MAP
-│   ├── schemas.ts              # Zod schemas + NodeSchemaDefinition per node type
+│   ├── schemas.ts              # Zod schemas + NodeSchema per node type
 │   └── definitionSchema.ts     # JSON Schema for .bnto.json validation
 ├── recipes/                    # Predefined recipe compositions (hand-written)
 │   ├── compressImages.ts
@@ -28,7 +28,7 @@ src/
 │   ├── defaultInputNode.ts
 │   └── defaultOutputNode.ts
 ├── schemas/                    # Schema registry + per-operation configs (hand-written)
-│   ├── registry.ts             # NODE_SCHEMA_DEFS + NODE_FIELD_CONFIGS lookup
+│   ├── registry.ts             # NODE_SCHEMAS + NODE_PARAM_FIELDS lookup
 │   ├── imageCompress.ts        # Image compress field configs
 │   ├── imageConvert.ts         # Image convert field configs
 │   ├── imageResize.ts          # Image resize field configs

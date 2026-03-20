@@ -10,7 +10,7 @@
  */
 
 import { PROCESSOR_MAP } from "../generated/catalog";
-import type { FieldConfigMap } from "./types";
+import type { NodeParamFields } from "./types";
 
 export { imageConvertParamsSchema, imageConvertNodeSchema } from "../generated/schemas";
 export type { ImageConvertParams } from "../generated/schemas";
@@ -21,7 +21,7 @@ const formatParam = convertProc?.parameters.find((p) => p.name === "format");
 export const IMAGE_FORMATS = (formatParam?.options ?? ["jpeg", "png", "webp"]) as readonly string[];
 
 /** UI presentation metadata for image-convert node fields. */
-export const imageConvertFields: FieldConfigMap = {
+export const imageConvertFields: NodeParamFields = {
   format: {
     options: [
       { value: "jpeg", label: "JPEG" },
