@@ -8,9 +8,9 @@ File operation nodes — filename transformation.
 
 ## Processors
 
-| Processor     | Operation            | What It Does                                                                         |
-| ------------- | -------------------- | ------------------------------------------------------------------------------------ |
-| `RenameFiles` | `file-system:rename` | Transform filenames via find/replace, case changes, prefix/suffix, pattern templates |
+| Processor     | Node Type     | What It Does                                                                         |
+| ------------- | ------------- | ------------------------------------------------------------------------------------ |
+| `RenameFiles` | `file-rename` | Transform filenames via find/replace, case changes, prefix/suffix, pattern templates |
 
 ## Directory Structure
 

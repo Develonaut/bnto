@@ -8,10 +8,10 @@ CSV processing nodes — clean and rename columns.
 
 ## Processors
 
-| Processor          | Operation                    | What It Does                                                             |
-| ------------------ | ---------------------------- | ------------------------------------------------------------------------ |
-| `CleanCsv`         | `spreadsheet:clean`          | Remove empty rows, trim whitespace, deduplicate rows (each configurable) |
-| `RenameCsvColumns` | `spreadsheet:rename-columns` | Rename columns via a map of `oldName → newName`                          |
+| Processor          | Node Type            | What It Does                                                             |
+| ------------------ | -------------------- | ------------------------------------------------------------------------ |
+| `CleanCsv`         | `spreadsheet-clean`  | Remove empty rows, trim whitespace, deduplicate rows (each configurable) |
+| `RenameCsvColumns` | `spreadsheet-rename` | Rename columns via a map of `oldName → newName`                          |
 
 ## Directory Structure
 

@@ -183,11 +183,11 @@ impl Default for ParameterDef {
     }
 }
 
-// --- NodeTypeInfo — Node-type-level metadata (all 12 types) ---
+// --- NodeTypeInfo — Node-type-level metadata (all 15 types) ---
 //
 // Separate from NodeMetadata because NodeMetadata describes a PROCESSOR
 // (e.g., "image-compress") while NodeTypeInfo describes a NODE TYPE
-// (e.g., "image-compress") — one per processor operation.
+// (e.g., "image-compress") — one per node type.
 // Includes types the engine doesn't have processors for yet (http-request,
 // shell-command). Codegen generates TS `NODE_TYPE_INFO` from this.
 
@@ -196,7 +196,7 @@ impl Default for ParameterDef {
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct NodeTypeInfo {
-    /// Type name as used in `.bnto.json` (e.g., `"image"`, `"file-system"`).
+    /// Type name as used in `.bnto.json` (e.g., `"image-compress"`, `"file-rename"`).
     pub name: String,
     /// Human-readable display label.
     pub label: String,

@@ -137,7 +137,7 @@ fn position_schema() -> Value {
 fn definition_properties() -> Value {
     serde_json::json!({
         "id":         { "type": "string", "description": "Unique identifier for this node within the recipe." },
-        "type":       { "type": "string", "description": "The node type (e.g., 'image', 'spreadsheet', 'file-system')." },
+        "type":       { "type": "string", "description": "The node type (e.g., 'image-compress', 'spreadsheet-clean', 'file-rename')." },
         "version":    { "type": "string", "description": "Format version (semver, e.g., '1.0.0')." },
         "parentId":   { "type": "string", "description": "Optional parent node id (for nested nodes)." },
         "name":       { "type": "string", "description": "Human-readable name for this node." },

@@ -182,7 +182,7 @@ describe("validateRecipe — edge connectivity", () => {
   });
 });
 
-describe("validateRecipe — all 12 recipes pass", () => {
+describe("validateRecipe — all 8 recipes pass", () => {
   for (const recipe of RECIPES) {
     it(`${recipe.slug} passes validation`, () => {
       const errors = validateRecipe(recipe);

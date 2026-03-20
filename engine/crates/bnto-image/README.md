@@ -8,11 +8,11 @@ Image processing nodes — compress, resize, and convert images in the browser v
 
 ## Processors
 
-| Processor            | Operation        | What It Does                                                                                                        |
+| Processor            | Node Type        | What It Does                                                                                                        |
 | -------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `CompressImages`     | `image:compress` | Re-encodes at a target compression level (1-100). PNG uses quantization (median cut + dithering) for ~57% reduction |
-| `ResizeImages`       | `image:resize`   | Scales to target dimensions with aspect ratio control. Lanczos3 filter                                              |
-| `ConvertImageFormat` | `image:convert`  | Converts between JPEG, PNG, and WebP with quality control                                                           |
+| `CompressImages`     | `image-compress` | Re-encodes at a target compression level (1-100). PNG uses quantization (median cut + dithering) for ~57% reduction |
+| `ResizeImages`       | `image-resize`   | Scales to target dimensions with aspect ratio control. Lanczos3 filter                                              |
+| `ConvertImageFormat` | `image-convert`  | Converts between JPEG, PNG, and WebP with quality control                                                           |
 
 ## Directory Structure
 
