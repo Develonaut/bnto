@@ -113,6 +113,11 @@ task wasm:fmt:check     # Check Rust formatting (CI)
 task wasm:bench         # Run Criterion benchmarks (results in engine/target/criterion/)
 task wasm:clean         # Clean Rust build artifacts
 
+# Native CLI (via Taskfile)
+task cli:build          # Build native CLI binary (release)
+task cli:test           # Run CLI unit + integration tests
+task recipes:generate   # Generate recipe JSON fixtures from TypeScript recipes
+
 # Frontend (via Turborepo)
 task ui:build           # Build all TS packages (with Turbo caching)
 task ui:test            # Run all TS tests
@@ -159,13 +164,15 @@ bnto/
 │       ├── backend/             # @bnto/backend — Convex schema + functions
 │       ├── nodes/               # @bnto/nodes — Engine-agnostic node definitions
 │       └── registry/            # @bnto/registry — Curation + discovery layer
-├── engine/                      # Rust WASM engine (browser execution)
-│   └── crates/
-│       ├── bnto-core/           # Core WASM library (types, traits, progress)
-│       ├── bnto-image/          # Image compression/resize/convert
-│       ├── bnto-csv/            # CSV clean/rename columns
-│       ├── bnto-file/           # File rename
-│       └── bnto-wasm/           # cdylib entry point (single WASM binary)
+├── engine/                      # Rust engine (WASM + native CLI)
+│   ├── crates/
+│   │   ├── bnto-core/           # Core library (types, traits, progress)
+│   │   ├── bnto-image/          # Image compression/resize/convert
+│   │   ├── bnto-csv/            # CSV clean/rename columns
+│   │   ├── bnto-file/           # File rename
+│   │   ├── bnto-engine/         # Shared registry + pipeline runner
+│   │   ├── bnto-wasm/           # cdylib entry point (WASM binary)
+│   │   └── bnto-cli/            # Native CLI binary (`bnto`)
 ├── test-fixtures/               # Shared test assets (images, CSVs)
 └── .claude/                     # Strategy docs, decisions, plan, rules
 ```

@@ -12,12 +12,12 @@ import type { NodeSchema } from "../schemas/types";
 
 /** Zod schema for file-rename node parameters (auto-generated from engine). */
 export const fileRenameParamsSchema = z.object({
-  find: z.string().optional(),
-  replace: z.string().optional(),
-  case: z.enum(["lower", "upper", "title"] as const).optional(),
-  prefix: z.string().optional(),
-  suffix: z.string().optional(),
-  pattern: z.string().optional(),
+    find: z.string().optional(),
+    replace: z.string().optional(),
+    case: z.enum(["lower","upper","title"] as const).optional(),
+    prefix: z.string().optional(),
+    suffix: z.string().optional(),
+    pattern: z.string().optional(),
 });
 
 /** Inferred TypeScript type for file-rename node parameters. */
@@ -51,8 +51,7 @@ export const fileRenameNodeSchema: NodeSchema = {
     },
     pattern: {
       label: "Pattern",
-      description:
-        "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
+      description: "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
       placeholder: "{{name}}-compressed.{{ext}}",
     },
   },
@@ -60,7 +59,7 @@ export const fileRenameNodeSchema: NodeSchema = {
 
 /** Zod schema for image-compress node parameters (auto-generated from engine). */
 export const imageCompressParamsSchema = z.object({
-  quality: z.number().min(1).max(100).optional().default(80),
+    quality: z.number().min(1).max(100).optional().default(80),
 });
 
 /** Inferred TypeScript type for image-compress node parameters. */
@@ -74,16 +73,15 @@ export const imageCompressNodeSchema: NodeSchema = {
   params: {
     quality: {
       label: "Quality",
-      description:
-        "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+      description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
     },
   },
 };
 
 /** Zod schema for image-convert node parameters (auto-generated from engine). */
 export const imageConvertParamsSchema = z.object({
-  format: z.enum(["jpeg", "png", "webp"] as const).default("jpeg"),
-  quality: z.number().min(1).max(100).optional().default(80),
+    format: z.enum(["jpeg","png","webp"] as const).default("jpeg"),
+    quality: z.number().min(1).max(100).optional().default(80),
 });
 
 /** Inferred TypeScript type for image-convert node parameters. */
@@ -101,18 +99,17 @@ export const imageConvertNodeSchema: NodeSchema = {
     },
     quality: {
       label: "Quality",
-      description:
-        "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+      description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
     },
   },
 };
 
 /** Zod schema for image-resize node parameters (auto-generated from engine). */
 export const imageResizeParamsSchema = z.object({
-  width: z.number().min(1).optional(),
-  height: z.number().min(1).optional(),
-  maintainAspect: z.boolean().optional().default(true),
-  quality: z.number().min(1).max(100).optional().default(80),
+    width: z.number().min(1).optional(),
+    height: z.number().min(1).optional(),
+    maintainAspect: z.boolean().optional().default(true),
+    quality: z.number().min(1).max(100).optional().default(80),
 });
 
 /** Inferred TypeScript type for image-resize node parameters. */
@@ -138,17 +135,16 @@ export const imageResizeNodeSchema: NodeSchema = {
     },
     quality: {
       label: "Quality",
-      description:
-        "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+      description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
     },
   },
 };
 
 /** Zod schema for spreadsheet-clean node parameters (auto-generated from engine). */
 export const spreadsheetCleanParamsSchema = z.object({
-  trimWhitespace: z.boolean().optional().default(true),
-  removeEmptyRows: z.boolean().optional().default(true),
-  removeDuplicates: z.boolean().optional().default(true),
+    trimWhitespace: z.boolean().optional().default(true),
+    removeEmptyRows: z.boolean().optional().default(true),
+    removeDuplicates: z.boolean().optional().default(true),
 });
 
 /** Inferred TypeScript type for spreadsheet-clean node parameters. */
@@ -177,7 +173,7 @@ export const spreadsheetCleanNodeSchema: NodeSchema = {
 
 /** Zod schema for spreadsheet-rename node parameters (auto-generated from engine). */
 export const spreadsheetRenameParamsSchema = z.object({
-  columns: z.record(z.string()).optional(),
+    columns: z.record(z.string()).optional(),
 });
 
 /** Inferred TypeScript type for spreadsheet-rename node parameters. */
@@ -191,7 +187,7 @@ export const spreadsheetRenameNodeSchema: NodeSchema = {
   params: {
     columns: {
       label: "Column Mapping",
-      description: 'Map of old column names to new names (e.g., {"Name": "full_name"})',
+      description: "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
     },
   },
 };

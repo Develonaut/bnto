@@ -1,6 +1,7 @@
 /** Shared types for registry data structures. */
 
-import type { Recipe, NodeTypeInfo, NodeTypeName, CategoryInfo, ProcessorDef } from "@bnto/nodes";
+import type { NodeTypeInfo, NodeTypeName, CategoryInfo, ProcessorDef } from "@bnto/nodes";
+import type { Recipe } from "./recipe";
 
 /** Shape of the complete registry dataset. */
 export interface RegistryData {
@@ -14,7 +15,6 @@ export interface RegistryData {
 
 export type { Definition, Position, Metadata, Port, Edge, FieldsConfig } from "@bnto/nodes";
 export type { ExecutionContext, NodeResult } from "@bnto/nodes";
-export type { Recipe, AcceptSpec } from "@bnto/nodes";
 export type { NodeTypeName, NodeCategory, NodeTypeInfo } from "@bnto/nodes";
 export type { CategoryInfo } from "@bnto/nodes";
 export type { ProcessorDef, ProcessorParam, ParamType } from "@bnto/nodes";

@@ -14,7 +14,7 @@
  */
 
 import { writeFileSync } from "fs";
-import { RECIPES } from "../packages/@bnto/nodes/src/recipes";
+import { RECIPES } from "../packages/@bnto/registry/src/recipesCatalog";
 
 function getArg(flag: string): string | undefined {
   const idx = process.argv.indexOf(flag);

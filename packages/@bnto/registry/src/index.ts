@@ -19,8 +19,6 @@ export type {
   FieldsConfig,
   ExecutionContext,
   NodeResult,
-  Recipe,
-  AcceptSpec,
   NodeTypeName,
   NodeCategory,
   NodeTypeInfo,
@@ -29,6 +27,7 @@ export type {
   ProcessorParam,
   ParamType,
 } from "./types";
+export type { Recipe, AcceptSpec } from "./recipe";
 
 // ── Curation functions ──────────────────────────────────────────────────
 export { getAllRecipes, getRecipeBySlug, getRecipesByCategory } from "./recipes";
@@ -43,19 +42,16 @@ export {
   removeNode,
   updateNodeParams,
   moveNode,
-  definitionToRecipe,
   isValid,
 } from "./definition";
-export type { DefinitionResult, RecipeMetadata } from "./definition";
+export type { DefinitionResult } from "./definition";
+export { definitionToRecipe } from "./definitionToRecipe";
+export type { RecipeMetadata } from "./definitionToRecipe";
 
 // ── Validation ──────────────────────────────────────────────────────────
-export {
-  validateDefinition,
-  validateEdges,
-  validateRecipe,
-  validateNodeParams,
-} from "./validation";
+export { validateDefinition, validateEdges, validateNodeParams } from "./validation";
 export type { ValidationError } from "./validation";
+export { validateRecipe } from "./validateRecipe";
 
 // ── Classification & helpers ────────────────────────────────────────────
 export {
@@ -68,11 +64,11 @@ export {
   getCategoryInfo,
   getInputNode,
   getOutputNode,
-  deriveAcceptSpec,
   deriveCategory,
   isSupportedVersion,
   isCompatibleVersion,
 } from "./helpers";
+export { deriveAcceptSpec } from "./deriveAcceptSpec";
 
 // ── Schema introspection ────────────────────────────────────────────────
 export {
@@ -121,9 +117,13 @@ export {
 export {
   RECIPES,
   cleanCsv,
+  compressAndRename,
   compressImages,
   convertImageFormat,
+  generateThumbnails,
+  optimizeImagesForWeb,
   renameCsvColumns,
   renameFiles,
   resizeImages,
-} from "@bnto/nodes";
+  standardizeCsv,
+} from "./recipesCatalog";

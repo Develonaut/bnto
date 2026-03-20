@@ -14,14 +14,11 @@
  * Zero runtime dependencies except Zod (for schema validation).
  */
 
-// Recipe definition types
+// Definition types
 export type { Definition, Position, Metadata, Port, Edge, FieldsConfig } from "./definition";
 
 // Execution types
 export type { ExecutionContext, NodeResult } from "./execution";
-
-// Recipe types
-export type { Recipe, AcceptSpec } from "./recipe";
 
 // Node type registry (generated from engine catalog)
 export { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./generated/catalog";
@@ -37,18 +34,6 @@ export { isContainerNodeType } from "./isContainerNodeType";
 export { CATEGORIES, getCategoryInfo } from "./categories";
 export type { CategoryInfo } from "./categories";
 
-// Predefined recipes (all uniform shape with I/O nodes)
-export {
-  RECIPES,
-  getRecipeBySlug,
-  cleanCsv,
-  compressImages,
-  convertImageFormat,
-  renameCsvColumns,
-  renameFiles,
-  resizeImages,
-} from "./recipes";
-
 // Format versioning
 export {
   CURRENT_FORMAT_VERSION,
@@ -60,9 +45,6 @@ export {
 // Definition validation
 export { validateDefinition, validateEdges } from "./validate";
 export type { ValidationError } from "./validate";
-
-// Recipe validation (I/O checks, structural checks, connectivity)
-export { validateRecipe } from "./validateRecipe";
 
 // Node parameter validation (Zod-based)
 export { validateNodeParams } from "./validateNodeParams";
@@ -94,20 +76,17 @@ export type {
 } from "./schemas";
 export { inferFieldType } from "./schemas";
 
-// I/O node helpers (Sprint 4C — self-describing recipes)
+// I/O node helpers
 export { getInputNode } from "./getInputNode";
 export { getOutputNode } from "./getOutputNode";
-export { deriveAcceptSpec } from "./deriveAcceptSpec";
 export { deriveCategory } from "./deriveCategory";
 
-// Definition CRUD operations (Sprint 4 Wave 1 — editor foundation)
+// Definition CRUD operations
 export { createBlankDefinition } from "./createBlankDefinition";
 export { addNode } from "./addNode";
 export { removeNode } from "./removeNode";
 export { updateNodeParams } from "./updateNodeParams";
 export { moveNode } from "./moveNode";
-export { definitionToRecipe } from "./definitionToRecipe";
-export type { RecipeMetadata } from "./definitionToRecipe";
 
 // Definition result type (mutation return shape)
 export { isValid } from "./definitionResult";

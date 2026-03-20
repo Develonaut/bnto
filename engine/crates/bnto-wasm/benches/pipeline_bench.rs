@@ -2,9 +2,7 @@
 
 use criterion::{Criterion, criterion_group, criterion_main};
 
-use bnto_core::{
-    NodeRegistry, PipelineDefinition, PipelineFile, PipelineReporter, execute_pipeline,
-};
+use bnto_core::{PipelineDefinition, PipelineFile, PipelineReporter, execute_pipeline};
 
 // --- Test fixtures ---
 static SMALL_JPEG: &[u8] = include_bytes!("../../../../test-fixtures/images/small.jpg");
@@ -12,24 +10,8 @@ static MESSY_CSV: &[u8] = include_bytes!("../../../../test-fixtures/csv/messy.cs
 
 // --- Helpers ---
 
-fn real_registry() -> NodeRegistry {
-    let mut registry = NodeRegistry::new();
-    registry.register(
-        "image-compress",
-        Box::new(bnto_image::CompressImages::new()),
-    );
-    registry.register("image-resize", Box::new(bnto_image::ResizeImages::new()));
-    registry.register(
-        "image-convert",
-        Box::new(bnto_image::ConvertImageFormat::new()),
-    );
-    registry.register("spreadsheet-clean", Box::new(bnto_csv::CleanCsv::new()));
-    registry.register(
-        "spreadsheet-rename",
-        Box::new(bnto_csv::RenameCsvColumns::new()),
-    );
-    registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
-    registry
+fn real_registry() -> bnto_core::NodeRegistry {
+    bnto_engine::create_default_registry()
 }
 
 fn parse(json: &str) -> PipelineDefinition {

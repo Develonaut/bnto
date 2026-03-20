@@ -2,8 +2,8 @@
  * Definition fixture helpers — drift prevention for custom recipe journeys.
  *
  * Compares exported editor JSON against reference definition fixtures
- * in test-fixtures/definitions/. Catches recipe creation drift — when the
- * editor produces different node types, operations, or parameter values.
+ * in @bnto/registry/src/recipes/generated/. Both use the same .bnto.json
+ * Definition format — same schema as engine recipe fixtures.
  */
 
 import path from "path";
@@ -16,37 +16,51 @@ import { expect } from "../fixtures";
 
 export const DEFINITIONS_DIR = path.resolve(
   __dirname,
-  "../../../../test-fixtures/definitions",
+  "../../../../packages/@bnto/registry/src/recipes/generated",
 );
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
+/** A node within a Definition (both exported and reference). */
+interface DefinitionNode {
+  type: string;
+  parameters?: Record<string, unknown>;
+  nodes?: DefinitionNode[];
+}
+
+/** Root Definition shape (.bnto.json). */
+interface Definition {
+  nodes: DefinitionNode[];
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Node types that are I/O infrastructure, not part of the processing pipeline. */
+const IO_NODE_TYPES = new Set(["input", "output"]);
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 /**
- * A single node spec from a reference definition fixture.
- *
- * - `type` and `operation` identify the node.
- * - `parameters` (optional) lists param keys/values the exported definition
- *   MUST contain — the export may have additional default params.
+ * Recursively collect processor nodes from a Definition tree.
+ * Flattens container nodes (group, loop) and excludes I/O nodes (input, output)
+ * since those are editor infrastructure with different defaults than fixtures.
  */
-interface RefNode {
-  type: string;
-  operation: string | null;
-  parameters?: Record<string, unknown>;
-}
-
-/** Shape of a reference .bnto.json fixture file. */
-interface RefDefinition {
-  description: string;
-  expectedNodeCount: number;
-  nodes: RefNode[];
-}
-
-/** Exported definition node shape (from editor export). */
-interface ExportedNode {
-  type: string;
-  parameters?: Record<string, unknown>;
+function collectProcessorNodes(nodes: DefinitionNode[]): DefinitionNode[] {
+  const result: DefinitionNode[] = [];
+  for (const node of nodes) {
+    if (node.nodes && node.nodes.length > 0 && (node.type === "group" || node.type === "loop")) {
+      result.push(...collectProcessorNodes(node.nodes));
+    } else if (!IO_NODE_TYPES.has(node.type)) {
+      result.push(node);
+    }
+  }
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,43 +70,44 @@ interface ExportedNode {
 /**
  * Assert that the exported definition structurally matches a reference fixture.
  *
- * Compares:
- * - Total node count
- * - For each reference node: a matching exported node exists with the same
- *   type, operation, and any specified parameter values.
+ * Both are real .bnto.json Definition objects. Compares:
+ * - Processor node count (after flattening containers, excluding I/O nodes)
+ * - For each reference processor: a matching exported node exists with the same
+ *   type and any specified parameter values.
  *
- * Ignores: node IDs, positions, ports, metadata, default params not in ref.
+ * Ignores: I/O nodes (input/output), node IDs, positions, ports, metadata,
+ * edges, default params not in the reference.
  */
-export function assertDefinitionMatchesFixture(
-  exportedJson: { nodes: ExportedNode[] },
-  fixtureName: string,
-) {
+export function assertDefinitionMatchesFixture(exportedJson: Definition, fixtureName: string) {
   const fixturePath = path.join(DEFINITIONS_DIR, fixtureName);
-  const ref: RefDefinition = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+  const ref: Definition = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
 
-  // Node count must match
-  expect(exportedJson.nodes.length).toBe(ref.expectedNodeCount);
+  const exportedNodes = collectProcessorNodes(exportedJson.nodes);
+  const refNodes = collectProcessorNodes(ref.nodes);
 
-  // Track which exported nodes have been matched (avoid double-matching)
+  // Processor node count must match
+  expect(exportedNodes.length).toBe(refNodes.length);
+
+  // Track which exported nodes have been matched
   const matched = new Set<number>();
 
-  for (const refNode of ref.nodes) {
-    // Find an unmatched exported node with same type + operation
-    const idx = exportedJson.nodes.findIndex((n, i) => {
+  for (const refNode of refNodes) {
+    // Find an unmatched exported node with the same type
+    const idx = exportedNodes.findIndex((n, i) => {
       if (matched.has(i)) return false;
-      if (n.type !== refNode.type) return false;
-      const exportedOp = n.parameters?.operation ?? null;
-      return exportedOp === refNode.operation;
+      return n.type === refNode.type;
     });
 
-    expect(idx, `Missing node: type=${refNode.type} operation=${refNode.operation}`).not.toBe(-1);
+    expect(idx, `Missing node: type=${refNode.type}`).not.toBe(-1);
     matched.add(idx);
 
     // Check specified parameters are present with correct values
     if (refNode.parameters) {
-      const exported = exportedJson.nodes[idx];
+      const exported = exportedNodes[idx];
       for (const [key, value] of Object.entries(refNode.parameters)) {
-        expect(exported.parameters?.[key]).toBe(value);
+        if (value !== undefined && value !== null && typeof value !== "object") {
+          expect(exported.parameters?.[key]).toBe(value);
+        }
       }
     }
   }

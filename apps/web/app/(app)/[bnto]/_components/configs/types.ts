@@ -48,7 +48,7 @@ export interface GenerateThumbnailsConfig {
  */
 export type RenameCsvColumnsConfig = Record<string, never>;
 
-/** Union of all bnto config types, keyed by slug. */
+/** Config types for recipes that have custom config UI, keyed by slug. */
 export type BntoConfigMap = {
   "compress-images": CompressImagesConfig;
   "resize-images": ResizeImagesConfig;
@@ -62,7 +62,7 @@ export type BntoConfigMap = {
 
 export type BntoSlug = keyof BntoConfigMap;
 
-/** Default configs for each bnto — matches fixture defaults. */
+/** Default configs for recipes with custom config UI. */
 export const DEFAULT_CONFIGS: BntoConfigMap = {
   "compress-images": { quality: 80 },
   "resize-images": { width: 800, maintainAspectRatio: true },

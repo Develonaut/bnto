@@ -51,7 +51,10 @@ crate-type = ["cdylib", "rlib"]
 # Foundation crate — provides setup(), version(), and shared types
 bnto-core = { path = "../bnto-core" }
 
-# Node crates — each implements specific processing logic
+# Shared engine — default registry + pipeline convenience
+bnto-engine = { path = "../bnto-engine" }
+
+# Node crates — still needed for wasm_bridge re-exports (direct WASM bindings)
 bnto-csv = { path = "../bnto-csv" }
 bnto-file = { path = "../bnto-file" }
 bnto-image = { path = "../bnto-image" }

@@ -26,7 +26,7 @@ describe("registryStore", () => {
 
     const state = registryStore.getState();
     expect(state.initialized).toBe(true);
-    expect(state.recipes).toHaveLength(8);
+    expect(state.recipes).toHaveLength(10);
     expect(Object.keys(state.nodeTypes)).toHaveLength(15);
     expect(state.categories).toHaveLength(8);
     expect(state.processors).toHaveLength(6);
@@ -45,7 +45,7 @@ describe("registryStore", () => {
 
     const state = registryStore.getState();
     expect(state.initialized).toBe(true);
-    expect(state.recipes).toHaveLength(8);
+    expect(state.recipes).toHaveLength(10);
   });
 
   it("reset() clears all data and marks uninitialized", () => {
