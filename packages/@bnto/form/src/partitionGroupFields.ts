@@ -1,8 +1,5 @@
-import type { NodeParamControl } from "@bnto/core";
 import type { GroupField } from "./FieldGroup";
-
-/** Controls that render inline (label left, control right). */
-const INLINE_CONTROLS = new Set<NodeParamControl>(["switch", "select"]);
+import { INLINE_CONTROLS } from "./controlCategories";
 
 /**
  * Split grouped fields into inline (switch/select) and grid (everything else).
