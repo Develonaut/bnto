@@ -27,10 +27,14 @@ src/
 │   ├── renameFiles.ts
 │   ├── defaultInputNode.ts
 │   └── defaultOutputNode.ts
-├── schemas/                    # Schema registry + helpers (hand-written)
-│   ├── registry.ts             # NODE_SCHEMA_DEFS lookup
-│   ├── getNodeSchema.ts
-│   ├── getRequiredParams.ts
+├── schemas/                    # Schema registry + per-operation configs (hand-written)
+│   ├── registry.ts             # NODE_SCHEMA_DEFS + NODE_FIELD_CONFIGS lookup
+│   ├── imageCompress.ts        # Image compress field configs
+│   ├── imageConvert.ts         # Image convert field configs
+│   ├── imageResize.ts          # Image resize field configs
+│   ├── fileRename.ts           # File rename field configs
+│   ├── spreadsheetClean.ts     # Spreadsheet clean field configs
+│   ├── spreadsheetRename.ts    # Spreadsheet rename field configs
 │   ├── getVisibleParams.ts
 │   └── inferFieldType.ts
 ├── definition.ts               # Definition, Edge, Port, Metadata interfaces
@@ -66,9 +70,9 @@ The engine's `NodeRegistry` iterates all registered processors, serializes their
 
 - **`Definition`** — recursive tree structure representing a `.bnto.json` recipe. Nodes contain children (for containers), edges, and metadata
 - **`Recipe`** — a `Definition` plus display metadata (name, slug, description, accept spec, SEO)
-- **`NodeTypeName`** — union of all engine-backed node type strings (e.g. `"image"`, `"spreadsheet"`, `"file-system"`)
+- **`NodeTypeName`** — union of all engine-backed node type strings (e.g. `"image-compress"`, `"spreadsheet-clean"`, `"file-rename"`)
 - **`NODE_TYPE_INFO`** — per-type metadata: label, category, isContainer, icon
-- **`PROCESSORS`** — flat list of all processor metadata (type + operation + parameters)
+- **`PROCESSORS`** — flat list of all processor metadata (type + parameters)
 
 ## Predefined Recipes
 
@@ -76,14 +80,14 @@ The engine's `NodeRegistry` iterates all registered processors, serializes their
 
 | Recipe               | Slug                      | Nodes                                          |
 | -------------------- | ------------------------- | ---------------------------------------------- |
-| Compress Images      | `compress-images`         | input → image:compress → output                |
-| Resize Images        | `resize-images`           | input → image:resize → output                  |
-| Convert Image Format | `convert-image-format`    | input → image:convert → output                 |
-| Generate Thumbnails  | `generate-thumbnails`     | input → image:resize → output                  |
-| Optimize for Web     | `optimize-images-for-web` | input → image:resize → image:compress → output |
-| Clean CSV            | `clean-csv`               | input → spreadsheet:clean → output             |
-| Rename CSV Columns   | `rename-csv-columns`      | input → spreadsheet:rename-columns → output    |
-| Rename Files         | `rename-files`            | input → file-system:rename → output            |
+| Compress Images      | `compress-images`         | input → image-compress → output                |
+| Resize Images        | `resize-images`           | input → image-resize → output                  |
+| Convert Image Format | `convert-image-format`    | input → image-convert → output                 |
+| Generate Thumbnails  | `generate-thumbnails`     | input → image-resize → output                  |
+| Optimize for Web     | `optimize-images-for-web` | input → image-resize → image-compress → output |
+| Clean CSV            | `clean-csv`               | input → spreadsheet-clean → output             |
+| Rename CSV Columns   | `rename-csv-columns`      | input → spreadsheet-rename → output            |
+| Rename Files         | `rename-files`            | input → file-rename → output                   |
 
 Access via `RECIPES` array or `getRecipeBySlug(slug)`.
 
@@ -109,7 +113,7 @@ import { RECIPES, getRecipeBySlug, NODE_TYPE_INFO, isContainerNodeType } from "@
 const recipe = getRecipeBySlug("compress-images");
 
 // Check node type metadata
-const info = NODE_TYPE_INFO["image"]; // { label, category, isContainer, icon }
+const info = NODE_TYPE_INFO["image-compress"]; // { label, category, isContainer, icon }
 
 // Type guards
 isContainerNodeType("loop"); // true — reads from generated NODE_TYPE_INFO

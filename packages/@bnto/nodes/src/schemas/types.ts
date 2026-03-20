@@ -127,7 +127,7 @@ export type FieldConfigMap = Record<string, FieldConfig>;
  * Combines Zod validation schema with UI metadata and versioning.
  */
 export interface NodeSchemaDefinition {
-  /** The node type name (e.g., "http-request", "image"). */
+  /** The node type name (e.g., "http-request", "image-compress"). */
   nodeType: string;
 
   /**

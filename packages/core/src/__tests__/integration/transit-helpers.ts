@@ -21,7 +21,7 @@ export const COMPRESS_IMAGES_DEFINITION = {
   name: "Compress Images",
   position: { x: 0, y: 0 },
   metadata: {},
-  parameters: { operation: "compress" },
+  parameters: {},
   inputPorts: [],
   outputPorts: [],
   nodes: [],
