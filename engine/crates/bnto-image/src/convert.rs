@@ -12,7 +12,7 @@ use crate::encode;
 use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
 
-use bnto_core::DEFAULT_JPEG_QUALITY as DEFAULT_QUALITY;
+use bnto_core::DEFAULT_QUALITY;
 
 /// WebP quality cap — lossless encoder produces bloat above 85.
 const MAX_WEBP_QUALITY: u8 = 85;

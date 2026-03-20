@@ -90,7 +90,7 @@ pub const FORMAT_VERSION: &str = "1.0.0";
 /// 80 is the industry sweet spot: significant file size savings with barely
 /// noticeable quality loss for most photos. Used by all image operations
 /// (compress, resize, convert).
-pub const DEFAULT_JPEG_QUALITY: u8 = 80;
+pub const DEFAULT_QUALITY: u8 = 80;
 
 // =============================================================================
 // Utility Functions (Pure Rust — no WASM boundary)

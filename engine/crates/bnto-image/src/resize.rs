@@ -14,7 +14,7 @@ use crate::encode;
 use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
 
-use bnto_core::DEFAULT_JPEG_QUALITY;
+use bnto_core::DEFAULT_QUALITY;
 
 /// Max dimension — 16384px is the practical limit for WASM memory.
 const MAX_DIMENSION: u32 = 16384;
@@ -63,7 +63,7 @@ impl ResizeImages {
             .get("quality")
             .and_then(|v| v.as_u64())
             .map(|q| q as u8)
-            .unwrap_or(DEFAULT_JPEG_QUALITY)
+            .unwrap_or(DEFAULT_QUALITY)
             .clamp(1, 100)
     }
 

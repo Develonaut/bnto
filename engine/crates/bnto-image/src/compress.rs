@@ -19,7 +19,7 @@ use crate::orientation::decode_with_orientation;
 
 // --- Configuration Constants ---
 
-use bnto_core::DEFAULT_JPEG_QUALITY;
+use bnto_core::DEFAULT_QUALITY;
 
 /// Minimum quality level. 1 = lowest quality, most compression.
 const MIN_QUALITY: u8 = 1;
@@ -106,7 +106,7 @@ impl CompressImages {
             .get("quality")
             .and_then(|v| v.as_u64())
             .map(|q| q as u8)
-            .unwrap_or(DEFAULT_JPEG_QUALITY)
+            .unwrap_or(DEFAULT_QUALITY)
             .clamp(MIN_QUALITY, MAX_QUALITY)
     }
 
@@ -676,7 +676,7 @@ mod tests {
     #[test]
     fn test_get_quality_default() {
         let params = serde_json::Map::new();
-        assert_eq!(CompressImages::get_quality(&params), DEFAULT_JPEG_QUALITY);
+        assert_eq!(CompressImages::get_quality(&params), DEFAULT_QUALITY);
     }
 
     #[test]
@@ -716,7 +716,7 @@ mod tests {
             "quality".to_string(),
             serde_json::Value::String("high".to_string()),
         );
-        assert_eq!(CompressImages::get_quality(&params), DEFAULT_JPEG_QUALITY);
+        assert_eq!(CompressImages::get_quality(&params), DEFAULT_QUALITY);
     }
 
     // =========================================================================

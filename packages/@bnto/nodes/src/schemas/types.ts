@@ -18,8 +18,8 @@ import type { z } from "zod";
 
 /** Condition for visibleWhen/requiredWhen rules — single or OR array. */
 export type ParamCondition =
-  | { param: string; equals: string }
-  | Array<{ param: string; equals: string }>;
+  | { readonly param: string; readonly equals: string }
+  | ReadonlyArray<{ readonly param: string; readonly equals: string }>;
 
 /**
  * Engine metadata for a single parameter.

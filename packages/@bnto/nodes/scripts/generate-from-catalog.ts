@@ -274,10 +274,8 @@ function generateProcessorsSection(): string {
 // Processors — ${sorted.length} implemented operations
 // =============================================================================
 
-/** Condition for visibleWhen/requiredWhen rules — single or OR array. */
-export type ParamCondition =
-  | { readonly param: string; readonly equals: string }
-  | ReadonlyArray<{ readonly param: string; readonly equals: string }>;
+import type { ParamCondition } from "../schemas/types";
+export type { ParamCondition };
 
 export type ParamType = "number" | "string" | "boolean" | "enum" | "object";
 
@@ -541,7 +539,6 @@ function generateNodeParamMeta(param: RawParameter): string {
   if (param.placeholder !== undefined) {
     lines.push(`      placeholder: ${JSON.stringify(param.placeholder)},`);
   }
-  // hidden is a UI concern — lives in FieldConfig, not NodeParamMeta
   if (param.visibleWhen !== undefined) {
     lines.push(`      visibleWhen: ${serializeCondition(param.visibleWhen)},`);
   }
