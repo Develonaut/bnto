@@ -8,7 +8,7 @@
 
 ## Problem
 
-Recipes are not self-describing. The `.bnto.json` definition says *what to do* but not *what it needs* or *what it produces*. Input and output are implicit — hardcoded into the UI per recipe slug.
+Recipes are not self-describing. The `.bnto.json` definition says _what to do_ but not _what it needs_ or _what it produces_. Input and output are implicit — hardcoded into the UI per recipe slug.
 
 ### Today's I/O model
 
@@ -135,10 +135,18 @@ Input and output nodes are the **first and last** nodes in every recipe. They're
   "id": "compress-images",
   "type": "group",
   "nodes": [
-    { "id": "list-images", "type": "file-system", "parameters": { "operation": "list", "path": "{{.INPUT_DIR}}/*" } },
-    { "id": "compress-loop", "type": "loop", "nodes": [
-      { "id": "compress-image", "type": "image", "parameters": { "operation": "optimize", "quality": 80, "output": "{{.OUTPUT_DIR}}/..." } }
-    ] }
+    { "id": "list-images", "type": "file-rename", "parameters": { "path": "{{.INPUT_DIR}}/*" } },
+    {
+      "id": "compress-loop",
+      "type": "loop",
+      "nodes": [
+        {
+          "id": "compress-image",
+          "type": "image-compress",
+          "parameters": { "quality": 80, "output": "{{.OUTPUT_DIR}}/..." }
+        }
+      ]
+    }
   ]
 }
 ```
@@ -162,9 +170,13 @@ Input and output nodes are the **first and last** nodes in every recipe. They're
         "multiple": true
       }
     },
-    { "id": "compress-loop", "type": "loop", "nodes": [
-      { "id": "compress-image", "type": "image", "parameters": { "operation": "optimize", "quality": 80 } }
-    ] },
+    {
+      "id": "compress-loop",
+      "type": "loop",
+      "nodes": [
+        { "id": "compress-image", "type": "image-compress", "parameters": { "quality": 80 } }
+      ]
+    },
     {
       "id": "output",
       "type": "output",
@@ -246,6 +258,7 @@ These DON'T go away immediately. The per-recipe configs (`CompressImagesConfig`,
 ### Editor integration
 
 I/O nodes appear as compartments in the bento grid and as JSON blocks in the code editor. In the visual editor:
+
 - Input node = first compartment (top-left position, distinct variant color)
 - Output node = last compartment (bottom-right position, distinct variant color)
 - Both are always present — users can configure them but not delete them
@@ -258,14 +271,14 @@ I/O nodes appear as compartments in the bento grid and as JSON blocks in the cod
 
 All 6 predefined recipes get updated definitions with explicit input/output nodes:
 
-| Recipe | Input mode | Input accept | Output mode |
-|--------|-----------|-------------|-------------|
-| compress-images | file-upload | image/jpeg, image/png, image/webp | download |
-| resize-images | file-upload | image/jpeg, image/png, image/webp | download |
-| convert-image-format | file-upload | image/jpeg, image/png, image/webp | download |
-| clean-csv | file-upload | text/csv | download |
-| rename-csv-columns | file-upload | text/csv | download |
-| rename-files | file-upload | * (any) | download |
+| Recipe               | Input mode  | Input accept                      | Output mode |
+| -------------------- | ----------- | --------------------------------- | ----------- |
+| compress-images      | file-upload | image/jpeg, image/png, image/webp | download    |
+| resize-images        | file-upload | image/jpeg, image/png, image/webp | download    |
+| convert-image-format | file-upload | image/jpeg, image/png, image/webp | download    |
+| clean-csv            | file-upload | text/csv                          | download    |
+| rename-csv-columns   | file-upload | text/csv                          | download    |
+| rename-files         | file-upload | \* (any)                          | download    |
 
 ### `file-system "list"` node removal
 

@@ -35,20 +35,15 @@ export const loopNodeSchema: NodeSchemaDefinition = {
         "iterates over the incoming file batch by default — this is only " +
         "needed for custom data sources.",
       placeholder: '{{index . "list-files" "files"}}',
-      visibleWhen: { param: "mode", equals: "forEach" },
     },
     count: {
       label: "Count",
       description: "Number of times to repeat.",
-      visibleWhen: { param: "mode", equals: "times" },
-      requiredWhen: { param: "mode", equals: "times" },
     },
     condition: {
       label: "Condition",
       description: "Expr expression that must evaluate to true to continue looping.",
       placeholder: "counter < 10",
-      visibleWhen: { param: "mode", equals: "while" },
-      requiredWhen: { param: "mode", equals: "while" },
     },
     breakCondition: {
       label: "Break Condition",
@@ -66,5 +61,16 @@ export const loopFields: FieldConfigMap = {
       { value: "times", label: "N Times" },
       { value: "while", label: "While" },
     ],
+  },
+  items: {
+    visibleWhen: { param: "mode", equals: "forEach" },
+  },
+  count: {
+    visibleWhen: { param: "mode", equals: "times" },
+    requiredWhen: { param: "mode", equals: "times" },
+  },
+  condition: {
+    visibleWhen: { param: "mode", equals: "while" },
+    requiredWhen: { param: "mode", equals: "while" },
   },
 };

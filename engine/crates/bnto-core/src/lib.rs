@@ -44,7 +44,7 @@ pub mod processor;
 /// Uses target-agnostic closures (no WASM dependency).
 pub mod progress;
 
-/// Node registry — maps compound keys (e.g., "image:compress") to processors.
+/// Node registry — maps node type keys (e.g., "image-compress") to processors.
 /// Replaces the JS-side `wasmLoader.ts` registry.
 pub mod registry;
 

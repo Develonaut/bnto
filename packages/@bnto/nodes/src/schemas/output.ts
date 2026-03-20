@@ -38,12 +38,10 @@ export const outputNodeSchema: NodeSchemaDefinition = {
       label: "Filename Template",
       description: "Filename template for output files.",
       placeholder: "compressed-{{name}}",
-      visibleWhen: { param: "mode", equals: "download" },
     },
     zip: {
       label: "ZIP Multiple",
       description: "Auto-zip when there are multiple output files.",
-      visibleWhen: { param: "mode", equals: "download" },
     },
     label: {
       label: "Label",
@@ -53,7 +51,6 @@ export const outputNodeSchema: NodeSchemaDefinition = {
     autoDownload: {
       label: "Auto-Download",
       description: "Automatically download results on completion.",
-      visibleWhen: { param: "mode", equals: "download" },
     },
   },
 };
@@ -67,5 +64,13 @@ export const outputFields: FieldConfigMap = {
       { value: "preview", label: "Preview" },
     ],
   },
-  label: { hidden: true },
+  filename: {
+    visibleWhen: { param: "mode", equals: "download" },
+  },
+  zip: {
+    visibleWhen: { param: "mode", equals: "download" },
+  },
+  autoDownload: {
+    visibleWhen: { param: "mode", equals: "download" },
+  },
 };

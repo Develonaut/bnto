@@ -48,18 +48,12 @@ interface RawNodeType {
 
 interface RawProcessor {
   nodeType: string;
-  operation: string;
   name: string;
   description: string;
   category: string;
   accepts: string[];
   platforms: string[];
   parameters: RawParameter[];
-}
-
-interface ParamConditionEntry {
-  param: string;
-  equals: string;
 }
 
 interface RawParameter {
@@ -70,9 +64,6 @@ interface RawParameter {
   default?: unknown;
   constraints?: { min?: number; max?: number; required?: boolean };
   placeholder?: string;
-  hidden?: boolean;
-  visibleWhen?: ParamConditionEntry | ParamConditionEntry[];
-  requiredWhen?: ParamConditionEntry | ParamConditionEntry[];
   surfaceable?: boolean;
 }
 
@@ -107,17 +98,6 @@ function toCamelCase(s: string): string {
 function toPascalCase(s: string): string {
   const camel = toCamelCase(s);
   return camel.charAt(0).toUpperCase() + camel.slice(1);
-}
-
-/** Serialize a ParamCondition to TypeScript code. */
-function serializeCondition(cond: ParamConditionEntry | ParamConditionEntry[]): string {
-  if (Array.isArray(cond)) {
-    const entries = cond
-      .map((c) => `{ param: ${JSON.stringify(c.param)}, equals: ${JSON.stringify(c.equals)} }`)
-      .join(", ");
-    return `[${entries}]`;
-  }
-  return `{ param: ${JSON.stringify(cond.param)}, equals: ${JSON.stringify(cond.equals)} }`;
 }
 
 // =============================================================================
@@ -228,16 +208,6 @@ function generateParam(p: RawParameter): string {
   if (p.placeholder !== undefined) {
     lines.push(`  placeholder: ${JSON.stringify(p.placeholder)},`);
   }
-  if (p.hidden !== undefined) {
-    lines.push(`  hidden: ${p.hidden},`);
-  }
-  if (p.visibleWhen !== undefined) {
-    lines.push(`  visibleWhen: ${serializeCondition(p.visibleWhen)},`);
-  }
-  if (p.requiredWhen !== undefined) {
-    lines.push(`  requiredWhen: ${serializeCondition(p.requiredWhen)},`);
-  }
-  // surfaceable defaults to true — only emit when false to keep output compact
   if (p.surfaceable === false) {
     lines.push(`  surfaceable: false,`);
   }
@@ -249,7 +219,6 @@ function generateProcessor(p: RawProcessor): string {
   const params = p.parameters.map((param) => indent(generateParam(param), 2)).join(",\n");
   return `{
   nodeType: ${JSON.stringify(p.nodeType)},
-  operation: ${JSON.stringify(p.operation)},
   name: ${JSON.stringify(p.name)},
   description: ${JSON.stringify(p.description)},
   category: ${JSON.stringify(p.category)},
@@ -262,20 +231,13 @@ ${params},
 }
 
 function generateProcessorsSection(): string {
-  const sorted = [...catalog.processors].sort((a, b) => {
-    const ka = `${a.nodeType}:${a.operation}`;
-    const kb = `${b.nodeType}:${b.operation}`;
-    return ka.localeCompare(kb);
-  });
+  const sorted = [...catalog.processors].sort((a, b) => a.nodeType.localeCompare(b.nodeType));
 
   const processorsCode = sorted.map((p) => indent(generateProcessor(p), 1)).join(",\n");
 
   return `// =============================================================================
-// Processors — ${sorted.length} implemented operations
+// Processors — ${sorted.length} per-operation node types
 // =============================================================================
-
-import type { ParamCondition } from "../schemas/types";
-export type { ParamCondition };
 
 export type ParamType = "number" | "string" | "boolean" | "enum" | "object";
 
@@ -292,16 +254,12 @@ export interface ProcessorParam {
     readonly required?: boolean;
   };
   readonly placeholder?: string;
-  readonly hidden?: boolean;
-  readonly visibleWhen?: ParamCondition;
-  readonly requiredWhen?: ParamCondition;
   /** Whether this param is eligible for surfacing in container config panels. Defaults to true. */
   readonly surfaceable?: boolean;
 }
 
 export interface ProcessorDef {
   readonly nodeType: string;
-  readonly operation: string;
   readonly name: string;
   readonly description: string;
   readonly category: string;
@@ -316,17 +274,16 @@ ${processorsCode},
 
 // --- Lookup helpers ---
 
-/** Map keyed by "nodeType:operation" for O(1) lookup. */
+/** Map keyed by nodeType for O(1) lookup. */
 export const PROCESSOR_MAP = new Map<string, ProcessorDef>(
-  PROCESSORS.map((p) => [\`\${p.nodeType}:\${p.operation}\`, p]),
+  PROCESSORS.map((p) => [p.nodeType, p]),
 );
 
-/** Get the engine defaults for a specific processor. */
+/** Get the engine defaults for a node type. */
 export function getProcessorDefaults(
   nodeType: string,
-  operation: string,
 ): Record<string, unknown> {
-  const proc = PROCESSOR_MAP.get(\`\${nodeType}:\${operation}\`);
+  const proc = PROCESSOR_MAP.get(nodeType);
   if (!proc) return {};
   const defaults: Record<string, unknown> = {};
   for (const param of proc.parameters) {
@@ -340,21 +297,19 @@ export function getProcessorDefaults(
 /** Get the engine constraints for a specific parameter. */
 export function getParamConstraints(
   nodeType: string,
-  operation: string,
   paramName: string,
 ): ProcessorParam["constraints"] | undefined {
-  const proc = PROCESSOR_MAP.get(\`\${nodeType}:\${operation}\`);
+  const proc = PROCESSOR_MAP.get(nodeType);
   if (!proc) return undefined;
   const param = proc.parameters.find((p) => p.name === paramName);
   return param?.constraints;
 }
 
-/** Get the accepted MIME types for a specific processor. */
+/** Get the accepted MIME types for a node type. */
 export function getProcessorAccepts(
   nodeType: string,
-  operation: string,
 ): readonly string[] {
-  const proc = PROCESSOR_MAP.get(\`\${nodeType}:\${operation}\`);
+  const proc = PROCESSOR_MAP.get(nodeType);
   return proc?.accepts ?? [];
 }`;
 }
@@ -364,54 +319,20 @@ export function getProcessorAccepts(
 // =============================================================================
 
 /**
- * Group processors by nodeType and merge their parameters into a single
- * Zod schema per node type. Also derive the operations enum from processors.
+ * Generate one Zod schema per processor (1:1 mapping).
+ * No operation enum — each node type IS an operation.
  */
 function generateSchemasFile(): string {
-  // Group processors by nodeType
-  const byNodeType = new Map<string, RawProcessor[]>();
-  for (const p of catalog.processors) {
-    const existing = byNodeType.get(p.nodeType) ?? [];
-    existing.push(p);
-    byNodeType.set(p.nodeType, existing);
-  }
-
   const sections: string[] = [];
 
-  // Sort by node type for deterministic output
-  const sortedNodeTypes = [...byNodeType.keys()].sort();
+  const sorted = [...catalog.processors].sort((a, b) => a.nodeType.localeCompare(b.nodeType));
 
-  for (const nodeType of sortedNodeTypes) {
-    const processors = byNodeType.get(nodeType)!;
+  for (const proc of sorted) {
+    const nodeType = proc.nodeType;
     const pascalName = toPascalCase(nodeType);
 
-    // Derive operations list from processors
-    const operations = processors.map((p) => p.operation).sort();
-
-    // Merge all parameters from all processors, deduplicating by name
-    // If the same param appears in multiple processors, take the first one
-    const paramMap = new Map<string, RawParameter>();
-    for (const proc of processors) {
-      for (const param of proc.parameters) {
-        if (!paramMap.has(param.name)) {
-          paramMap.set(param.name, param);
-        }
-      }
-    }
-
-    // Build the operation enum constant
-    const opsConst = `${nodeType.toUpperCase().replace(/-/g, "_")}_OPERATIONS`;
-    sections.push(
-      `/** Valid ${nodeType} operations — derived from engine processors. */`,
-      `export const ${opsConst} = ${JSON.stringify(operations)} as const;`,
-      "",
-    );
-
-    // Build per-type Zod schema
     const zodFields: string[] = [];
-    zodFields.push(`  operation: z.enum(${opsConst} as unknown as [string, ...string[]]),`);
-
-    for (const [, param] of paramMap) {
+    for (const param of proc.parameters) {
       zodFields.push(`  ${generateZodField(param)},`);
     }
 
@@ -429,16 +350,8 @@ function generateSchemasFile(): string {
       "",
     );
 
-    // Build NodeSchemaDefinition with UI metadata from engine
     const uiMetaEntries: string[] = [];
-    uiMetaEntries.push(
-      `    operation: {`,
-      `      label: "Operation",`,
-      `      description: "The ${nodeType} operation to perform.",`,
-      `    },`,
-    );
-
-    for (const [, param] of paramMap) {
+    for (const param of proc.parameters) {
       uiMetaEntries.push(generateNodeParamMeta(param));
     }
 
@@ -510,13 +423,7 @@ function generateZodField(param: RawParameter): string {
     }
   }
 
-  // Add optional + default.
-  // When a param has visibleWhen, it's only relevant for one operation —
-  // at the merged node-type schema level it must be optional even if the
-  // processor marks it required (the requiredWhen handles conditional req).
-  const isConditional = param.visibleWhen !== undefined;
-  if (param.constraints?.required && !isConditional) {
-    // Truly required across all operations — no .optional()
+  if (param.constraints?.required) {
     if (param.default !== undefined) {
       zodChain += `.default(${serializeValue(param.default)})`;
     }
@@ -539,13 +446,6 @@ function generateNodeParamMeta(param: RawParameter): string {
   if (param.placeholder !== undefined) {
     lines.push(`      placeholder: ${JSON.stringify(param.placeholder)},`);
   }
-  if (param.visibleWhen !== undefined) {
-    lines.push(`      visibleWhen: ${serializeCondition(param.visibleWhen)},`);
-  }
-  if (param.requiredWhen !== undefined) {
-    lines.push(`      requiredWhen: ${serializeCondition(param.requiredWhen)},`);
-  }
-  // surfaceable defaults to true — only emit when false
   if (param.surfaceable === false) {
     lines.push(`      surfaceable: false,`);
   }
@@ -587,14 +487,6 @@ export const DEFINITION_JSON_SCHEMA = ${JSON.stringify(catalog.definitionSchema,
 // Node README generation (docs/*.md)
 // =============================================================================
 
-function formatConstraints(p: RawParameter): string {
-  const parts: string[] = [];
-  if (p.constraints?.min !== undefined) parts.push(`min: ${p.constraints.min}`);
-  if (p.constraints?.max !== undefined) parts.push(`max: ${p.constraints.max}`);
-  if (parts.length === 0) return "—";
-  return parts.join(", ");
-}
-
 function formatRange(p: RawParameter): string {
   if (p.constraints?.min !== undefined && p.constraints?.max !== undefined) {
     return `${p.constraints.min}–${p.constraints.max}`;
@@ -604,21 +496,13 @@ function formatRange(p: RawParameter): string {
   return "—";
 }
 
-function formatVisibleWhen(p: RawParameter): string {
-  if (!p.visibleWhen) return "always";
-  const conds = Array.isArray(p.visibleWhen) ? p.visibleWhen : [p.visibleWhen];
-  if (conds.length === 1) return conds[0].equals;
-  return conds.map((c) => c.equals).join(", ");
-}
-
 function formatDefault(p: RawParameter): string {
   if (p.default === undefined) return "—";
   return String(p.default);
 }
 
-function generateNodeReadme(nodeType: RawNodeType, processors: RawProcessor[]): string {
+function generateNodeReadme(nodeType: RawNodeType, processor: RawProcessor | undefined): string {
   const lines: string[] = [];
-  const browserCapable = nodeType.platforms.includes("browser");
   const platforms = nodeType.platforms.join(", ") || "none";
 
   lines.push(`# ${nodeType.label} Node`);
@@ -630,72 +514,36 @@ function generateNodeReadme(nodeType: RawNodeType, processors: RawProcessor[]): 
   );
   lines.push("");
 
-  // Operations section (multi-operation nodes only)
-  if (processors.length > 0) {
-    const allAccepts = [...new Set(processors.flatMap((p) => p.accepts))].sort();
-
-    if (allAccepts.length > 0) {
+  if (processor) {
+    if (processor.accepts.length > 0) {
       lines.push("## Accepts");
       lines.push("");
-      for (const mime of allAccepts) {
+      for (const mime of processor.accepts) {
         lines.push(`- \`${mime}\``);
       }
       lines.push("");
     }
 
-    lines.push("## Operations");
-    lines.push("");
-    for (const proc of processors) {
-      lines.push(`### ${proc.operation}`);
-      lines.push("");
-      lines.push(proc.description);
-      if (proc.accepts.length > 0) {
-        lines.push("");
-        lines.push(`Accepts: ${proc.accepts.map((a) => `\`${a}\``).join(", ")}`);
-      }
-      lines.push("");
-    }
-
-    // Merged parameter table
-    const paramMap = new Map<string, RawParameter>();
-    for (const proc of processors) {
-      for (const param of proc.parameters) {
-        if (!paramMap.has(param.name)) {
-          paramMap.set(param.name, param);
-        }
-      }
-    }
-
-    if (paramMap.size > 0) {
+    if (processor.parameters.length > 0) {
       lines.push("## Parameters");
       lines.push("");
-      lines.push("| Parameter | Type | Default | Range | Visible When | Description |");
-      lines.push("|-----------|------|---------|-------|--------------|-------------|");
+      lines.push("| Parameter | Type | Default | Range | Description |");
+      lines.push("|-----------|------|---------|-------|-------------|");
 
-      // Operation param first (synthetic)
-      const operations = processors.map((p) => p.operation).sort();
-      lines.push(
-        `| operation | enum | — | ${operations.join(", ")} | always | Processing operation |`,
-      );
-
-      for (const [, param] of paramMap) {
+      for (const param of processor.parameters) {
         const type = param.paramType.options ? "enum" : param.paramType.type;
         const range = param.paramType.options
           ? param.paramType.options.join(", ")
           : formatRange(param);
         lines.push(
-          `| ${param.name} | ${type} | ${formatDefault(param)} | ${range} | ${formatVisibleWhen(param)} | ${param.description} |`,
+          `| ${param.name} | ${type} | ${formatDefault(param)} | ${range} | ${param.description} |`,
         );
       }
       lines.push("");
     }
-  }
 
-  // Configuration example
-  if (processors.length > 0) {
-    const firstProc = processors[0];
-    const exampleParams: Record<string, unknown> = { operation: firstProc.operation };
-    for (const param of firstProc.parameters) {
+    const exampleParams: Record<string, unknown> = {};
+    for (const param of processor.parameters) {
       if (param.default !== undefined) {
         exampleParams[param.name] = param.default;
       } else if (param.constraints?.required) {
@@ -732,16 +580,14 @@ function generateNodeReadme(nodeType: RawNodeType, processors: RawProcessor[]): 
 function generateAllNodeReadmes(): void {
   mkdirSync(DOCS_DIR, { recursive: true });
 
-  const processorsByType = new Map<string, RawProcessor[]>();
+  const processorByType = new Map<string, RawProcessor>();
   for (const p of catalog.processors) {
-    const existing = processorsByType.get(p.nodeType) ?? [];
-    existing.push(p);
-    processorsByType.set(p.nodeType, existing);
+    processorByType.set(p.nodeType, p);
   }
 
   for (const nodeType of catalog.nodeTypes) {
-    const processors = processorsByType.get(nodeType.name) ?? [];
-    const readme = generateNodeReadme(nodeType, processors);
+    const processor = processorByType.get(nodeType.name);
+    const readme = generateNodeReadme(nodeType, processor);
     const filename = resolve(DOCS_DIR, `${nodeType.name}.md`);
     writeFileSync(filename, readme, "utf-8");
   }

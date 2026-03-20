@@ -17,33 +17,60 @@ describe("validateNodeParams", () => {
     expect(validateNodeParams("banana", "n1", { foo: "bar" })).toEqual([]);
   });
 
-  // ---------- image ----------
+  // ---------- image-compress ----------
 
-  describe("image", () => {
+  describe("image-compress", () => {
     it("passes with valid params", () => {
-      const errors = validateNodeParams("image", "n1", { operation: "resize", quality: 80 });
+      const errors = validateNodeParams("image-compress", "n1", { quality: 80 });
       expect(errors).toHaveLength(0);
     });
 
-    it("fails when operation is missing", () => {
-      const errors = validateNodeParams("image", "n1", {});
-      expect(errors.length).toBeGreaterThan(0);
-      expect(errors.some((e) => e.field === "operation")).toBe(true);
-    });
-
-    it("fails when operation is invalid", () => {
-      const errors = validateNodeParams("image", "n1", { operation: "explode" });
-      expect(errors.length).toBeGreaterThan(0);
+    it("passes with empty params (quality defaults)", () => {
+      const errors = validateNodeParams("image-compress", "n1", {});
+      expect(errors).toHaveLength(0);
     });
 
     it("fails when quality is out of range", () => {
-      const errors = validateNodeParams("image", "n1", { operation: "resize", quality: 200 });
+      const errors = validateNodeParams("image-compress", "n1", { quality: 200 });
       expect(errors.some((e) => e.field === "quality")).toBe(true);
     });
 
     it("fails when quality is below minimum", () => {
-      const errors = validateNodeParams("image", "n1", { operation: "resize", quality: 0 });
+      const errors = validateNodeParams("image-compress", "n1", { quality: 0 });
       expect(errors.some((e) => e.field === "quality")).toBe(true);
+    });
+  });
+
+  // ---------- image-resize ----------
+
+  describe("image-resize", () => {
+    it("passes with valid params", () => {
+      const errors = validateNodeParams("image-resize", "n1", { width: 200, quality: 80 });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("passes with empty params (all optional/defaulted)", () => {
+      const errors = validateNodeParams("image-resize", "n1", {});
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  // ---------- image-convert ----------
+
+  describe("image-convert", () => {
+    it("passes with valid format", () => {
+      const errors = validateNodeParams("image-convert", "n1", { format: "webp" });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("passes when format is missing (defaults to jpeg)", () => {
+      const errors = validateNodeParams("image-convert", "n1", {});
+      expect(errors).toHaveLength(0);
+    });
+
+    it("fails when format is invalid", () => {
+      const errors = validateNodeParams("image-convert", "n1", { format: "gif" });
+      expect(errors.length).toBeGreaterThan(0);
     });
   });
 
@@ -64,27 +91,17 @@ describe("validateNodeParams", () => {
     });
   });
 
-  // ---------- file-system ----------
+  // ---------- file-rename ----------
 
-  describe("file-system", () => {
-    it("passes with engine-backed rename operation", () => {
-      const errors = validateNodeParams("file-system", "n1", { operation: "rename" });
+  describe("file-rename", () => {
+    it("passes with empty params (all optional)", () => {
+      const errors = validateNodeParams("file-rename", "n1", {});
       expect(errors).toHaveLength(0);
     });
 
-    it("fails when operation is missing", () => {
-      const errors = validateNodeParams("file-system", "n1", {});
-      expect(errors.some((e) => e.field === "operation")).toBe(true);
-    });
-
-    it("fails when operation is invalid", () => {
-      const errors = validateNodeParams("file-system", "n1", { operation: "format-c" });
-      expect(errors.length).toBeGreaterThan(0);
-    });
-
-    it("fails for removed legacy operations", () => {
-      const errors = validateNodeParams("file-system", "n1", { operation: "read" });
-      expect(errors.length).toBeGreaterThan(0);
+    it("passes with prefix param", () => {
+      const errors = validateNodeParams("file-rename", "n1", { prefix: "renamed-" });
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -145,28 +162,36 @@ describe("validateNodeParams", () => {
     });
   });
 
-  // ---------- spreadsheet ----------
+  // ---------- spreadsheet-clean ----------
 
-  describe("spreadsheet", () => {
-    it("passes with engine operation clean", () => {
-      const errors = validateNodeParams("spreadsheet", "n1", { operation: "clean" });
+  describe("spreadsheet-clean", () => {
+    it("passes with empty params (all defaulted)", () => {
+      const errors = validateNodeParams("spreadsheet-clean", "n1", {});
       expect(errors).toHaveLength(0);
     });
 
-    it("passes with engine operation rename", () => {
-      const errors = validateNodeParams("spreadsheet", "n1", { operation: "rename" });
+    it("passes with explicit boolean params", () => {
+      const errors = validateNodeParams("spreadsheet-clean", "n1", {
+        trimWhitespace: true,
+        removeEmptyRows: false,
+      });
+      expect(errors).toHaveLength(0);
+    });
+  });
+
+  // ---------- spreadsheet-rename ----------
+
+  describe("spreadsheet-rename", () => {
+    it("passes with empty params (columns optional)", () => {
+      const errors = validateNodeParams("spreadsheet-rename", "n1", {});
       expect(errors).toHaveLength(0);
     });
 
-    it("fails when operation is missing", () => {
-      const errors = validateNodeParams("spreadsheet", "n1", {});
-      expect(errors.length).toBeGreaterThanOrEqual(1);
-      expect(errors.some((e) => e.message.includes("operation"))).toBe(true);
-    });
-
-    it("fails for removed legacy operation read", () => {
-      const errors = validateNodeParams("spreadsheet", "n1", { operation: "read" });
-      expect(errors.length).toBeGreaterThan(0);
+    it("passes with columns mapping", () => {
+      const errors = validateNodeParams("spreadsheet-rename", "n1", {
+        columns: { Name: "full_name" },
+      });
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -239,7 +264,7 @@ describe("validateNodeParams", () => {
 
   describe("error messages", () => {
     it("includes nodeId in error messages", () => {
-      const errors = validateNodeParams("image", "my-node", {});
+      const errors = validateNodeParams("image-convert", "my-node", { format: "gif" });
       for (const error of errors) {
         expect(error.nodeId).toBe("my-node");
         expect(error.message).toContain("my-node");
@@ -247,10 +272,10 @@ describe("validateNodeParams", () => {
     });
 
     it("includes field path in error messages", () => {
-      const errors = validateNodeParams("image", "n1", {});
-      const opError = errors.find((e) => e.field === "operation");
-      expect(opError).toBeDefined();
-      expect(opError!.message).toContain("operation");
+      const errors = validateNodeParams("image-convert", "n1", { format: "gif" });
+      const formatError = errors.find((e) => e.field === "format");
+      expect(formatError).toBeDefined();
+      expect(formatError!.message).toContain("format");
     });
   });
 });

@@ -52,14 +52,13 @@ export const resizeImages: Recipe = {
         nodes: [
           {
             id: "resize-image",
-            type: "image",
+            type: "image-resize",
             version: CURRENT_FORMAT_VERSION,
             name: "Resize",
             position: { x: 0, y: 0 },
             metadata: {},
             parameters: {
-              operation: "resize",
-              ...getProcessorDefaults("image", "resize"),
+              ...getProcessorDefaults("image-resize"),
               width: 200,
             },
             inputPorts: [],

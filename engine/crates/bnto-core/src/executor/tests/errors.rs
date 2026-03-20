@@ -10,7 +10,7 @@ fn test_unknown_node_type_returns_error() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "unknown", "params": { "operation": "magic" } },
+            { "id": "proc", "type": "unknown-magic" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -24,8 +24,8 @@ fn test_unknown_node_type_returns_error() {
     assert!(result.is_err());
     let err = result.unwrap_err().to_string();
     assert!(
-        err.contains("unknown:magic"),
-        "Error should include the compound key: {}",
+        err.contains("unknown-magic"),
+        "Error should include the type key: {}",
         err
     );
 }
@@ -36,7 +36,7 @@ fn test_processor_failure_emits_node_failed() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "fail" } },
+            { "id": "proc", "type": "test-fail" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -70,9 +70,9 @@ fn test_error_mid_pipeline_stops_execution() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "n1", "type": "test", "params": { "operation": "echo" } },
-            { "id": "n2", "type": "test", "params": { "operation": "fail" } },
-            { "id": "n3", "type": "test", "params": { "operation": "echo" } },
+            { "id": "n1", "type": "test-echo" },
+            { "id": "n2", "type": "test-fail" },
+            { "id": "n3", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,

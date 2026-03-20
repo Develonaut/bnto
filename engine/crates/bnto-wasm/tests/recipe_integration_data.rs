@@ -16,9 +16,8 @@ fn clean_csv_recipe_produces_cleaned_output() {
             {
                 "id": "csv-cleaner", "type": "group",
                 "nodes": [{
-                    "id": "clean", "type": "spreadsheet",
+                    "id": "clean", "type": "spreadsheet-clean",
                     "parameters": {
-                        "operation": "clean",
                         "trimWhitespace": true,
                         "removeEmptyRows": true,
                         "removeDuplicates": true
@@ -66,9 +65,8 @@ fn rename_csv_columns_recipe_produces_output() {
             {
                 "id": "column-renamer", "type": "group",
                 "nodes": [{
-                    "id": "rename-columns", "type": "spreadsheet",
+                    "id": "rename-columns", "type": "spreadsheet-rename",
                     "parameters": {
-                        "operation": "rename",
                         "columns": { "name": "full_name" }
                     }
                 }]
@@ -112,8 +110,8 @@ fn rename_files_recipe_applies_prefix() {
                     "id": "rename-loop", "type": "loop",
                     "parameters": { "mode": "forEach" },
                     "nodes": [{
-                        "id": "rename-file", "type": "file-system",
-                        "parameters": { "operation": "rename", "prefix": "renamed-" }
+                        "id": "rename-file", "type": "file-rename",
+                        "parameters": { "prefix": "renamed-" }
                     }]
                 }]
             },

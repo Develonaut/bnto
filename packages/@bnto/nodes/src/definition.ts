@@ -8,7 +8,7 @@
 /**
  * A single node in a bnto recipe definition.
  *
- * Each node has a unique ID, a type (e.g., "http-request", "image"),
+ * Each node has a unique ID, a type (e.g., "http-request", "image-compress"),
  * type-specific parameters, and input/output ports for connecting to
  * other nodes.
  *
@@ -54,7 +54,6 @@ export interface Definition {
 
   /** Connections between child nodes. */
   edges?: Edge[];
-
 }
 
 /** Visual location of a node in the editor canvas. */

@@ -28,7 +28,7 @@ function makeContainer(id: string, children: Definition[] = []): Definition {
 function makeLeaf(id: string, params: Record<string, unknown> = {}): Definition {
   return {
     id,
-    type: "image",
+    type: "image-compress",
     version: "1.0.0",
     name: `Leaf ${id}`,
     position: { x: 0, y: 0 },

@@ -13,7 +13,7 @@ fn test_loop_node_runs_children_per_file() {
             {
                 "id": "loop-1", "type": "loop",
                 "children": [
-                    { "id": "child", "type": "test", "params": { "operation": "uppercase" } }
+                    { "id": "child", "type": "test-uppercase" }
                 ]
             },
             { "id": "out", "type": "output" }
@@ -40,7 +40,7 @@ fn test_group_node_runs_children_on_full_batch() {
             {
                 "id": "group-1", "type": "group",
                 "children": [
-                    { "id": "child", "type": "test", "params": { "operation": "uppercase" } }
+                    { "id": "child", "type": "test-uppercase" }
                 ]
             },
             { "id": "out", "type": "output" }
@@ -70,7 +70,7 @@ fn test_nested_loop_inside_group() {
                     {
                         "id": "loop-1", "type": "loop",
                         "children": [
-                            { "id": "proc", "type": "test", "params": { "operation": "echo" } }
+                            { "id": "proc", "type": "test-echo" }
                         ]
                     }
                 ]

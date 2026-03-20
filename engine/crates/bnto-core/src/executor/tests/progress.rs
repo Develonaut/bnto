@@ -10,7 +10,7 @@ fn test_single_node_emits_correct_event_sequence() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -43,8 +43,8 @@ fn test_multi_node_events_in_order() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "n1", "type": "test", "params": { "operation": "echo" } },
-            { "id": "n2", "type": "test", "params": { "operation": "uppercase" } },
+            { "id": "n1", "type": "test-echo" },
+            { "id": "n2", "type": "test-uppercase" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -92,7 +92,7 @@ fn test_file_progress_includes_correct_indices() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -142,7 +142,7 @@ fn test_loop_container_reports_global_file_count() {
                 "type": "loop",
                 "params": { "mode": "forEach" },
                 "children": [
-                    { "id": "proc", "type": "test", "params": { "operation": "echo" } }
+                    { "id": "proc", "type": "test-echo" }
                 ]
             },
             { "id": "out", "type": "output" }
@@ -208,7 +208,7 @@ fn test_nested_group_loop_reports_global_file_count() {
                         "type": "loop",
                         "params": { "mode": "forEach" },
                         "children": [
-                            { "id": "compress", "type": "test", "params": { "operation": "echo" } }
+                            { "id": "compress", "type": "test-echo" }
                         ]
                     }
                 ]

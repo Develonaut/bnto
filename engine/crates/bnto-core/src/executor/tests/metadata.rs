@@ -10,7 +10,7 @@ fn test_processor_metadata_appears_in_final_result() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "metadata" } },
+            { "id": "proc", "type": "test-metadata" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -41,7 +41,7 @@ fn test_metadata_preserved_through_loop_container() {
             {
                 "id": "loop-1", "type": "loop",
                 "children": [
-                    { "id": "proc", "type": "test", "params": { "operation": "metadata" } }
+                    { "id": "proc", "type": "test-metadata" }
                 ]
             },
             { "id": "out", "type": "output" }
@@ -73,7 +73,7 @@ fn test_metadata_preserved_through_group_container() {
             {
                 "id": "group-1", "type": "group",
                 "children": [
-                    { "id": "proc", "type": "test", "params": { "operation": "metadata" } }
+                    { "id": "proc", "type": "test-metadata" }
                 ]
             },
             { "id": "out", "type": "output" }
@@ -99,8 +99,8 @@ fn test_metadata_from_last_processor_wins_in_chain() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "first", "type": "test", "params": { "operation": "metadata" } },
-            { "id": "second", "type": "test", "params": { "operation": "metadata" } },
+            { "id": "first", "type": "test-metadata" },
+            { "id": "second", "type": "test-metadata" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -126,7 +126,7 @@ fn test_echo_processor_preserves_empty_metadata() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,

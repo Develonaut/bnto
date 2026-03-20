@@ -20,21 +20,14 @@ import { SLOTS } from "../../adapters/bentoSlots";
 /**
  * NodePaletteDialog — dialog-based node palette.
  *
- * Shows a searchable categorized grid of palette items. Multi-operation
- * node types (image, spreadsheet, file-system) appear as separate entries
- * with the operation pre-set. Clicking an item adds the node to the canvas
+ * Shows a searchable categorized grid of palette items. Each node type
+ * maps to one entry. Clicking an item adds the node to the canvas
  * and closes the dialog.
  */
 
 interface NodePaletteDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-/** Unique key for a palette item — disambiguates split operations. */
-function itemKey(item: PaletteItem): string {
-  const op = item.defaultParams?.operation;
-  return op ? `${item.type}:${op}` : item.type;
 }
 
 function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
@@ -74,7 +67,7 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
 
   const handleAdd = useCallback(
     (item: PaletteItem) => {
-      editor.nodes.addNode(item.type, insertAfterNodeId, insertIntoContainerId, item.defaultParams);
+      editor.nodes.addNode(item.type, insertAfterNodeId, insertIntoContainerId);
       handleClose(false);
     },
     [editor, insertAfterNodeId, insertIntoContainerId, handleClose],
@@ -136,11 +129,11 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
                     const disabled = isFull || isServerOnly;
                     return (
                       <button
-                        key={itemKey(item)}
+                        key={item.type}
                         type="button"
                         onClick={handleAddItem(item)}
                         disabled={disabled}
-                        data-testid={`palette-item-${itemKey(item)}`}
+                        data-testid={`palette-item-${item.type}`}
                         className="flex flex-col items-start gap-1 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
                       >
                         <span className="flex w-full items-center gap-2">

@@ -15,23 +15,20 @@ static MESSY_CSV: &[u8] = include_bytes!("../../../../test-fixtures/csv/messy.cs
 fn real_registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
     registry.register(
-        "image:compress",
+        "image-compress",
         Box::new(bnto_image::CompressImages::new()),
     );
-    registry.register("image:resize", Box::new(bnto_image::ResizeImages::new()));
+    registry.register("image-resize", Box::new(bnto_image::ResizeImages::new()));
     registry.register(
-        "image:convert",
+        "image-convert",
         Box::new(bnto_image::ConvertImageFormat::new()),
     );
-    registry.register("spreadsheet:clean", Box::new(bnto_csv::CleanCsv::new()));
+    registry.register("spreadsheet-clean", Box::new(bnto_csv::CleanCsv::new()));
     registry.register(
-        "spreadsheet:rename",
+        "spreadsheet-rename",
         Box::new(bnto_csv::RenameCsvColumns::new()),
     );
-    registry.register(
-        "file-system:rename",
-        Box::new(bnto_file::RenameFiles::new()),
-    );
+    registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry
 }
 
@@ -62,13 +59,13 @@ fn bench_individual_nodes(c: &mut Criterion) {
         r#"{
         "nodes": [
             { "id": "input", "type": "input" },
-            { "id": "compress", "type": "image", "parameters": { "operation": "compress", "quality": 80 } },
+            { "id": "compress", "type": "image-compress", "parameters": { "quality": 80 } },
             { "id": "output", "type": "output" }
         ]
     }"#,
     );
 
-    c.bench_function("node/image:compress/jpeg", |b| {
+    c.bench_function("node/image-compress/jpeg", |b| {
         b.iter(|| {
             let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
             execute_pipeline(&compress_def, files, &registry, &reporter, fake_now).unwrap();
@@ -79,7 +76,7 @@ fn bench_individual_nodes(c: &mut Criterion) {
         r#"{
         "nodes": [
             { "id": "input", "type": "input" },
-            { "id": "resize", "type": "image", "parameters": { "operation": "resize", "width": 100 } },
+            { "id": "resize", "type": "image-resize", "parameters": { "width": 100 } },
             { "id": "output", "type": "output" }
         ]
     }"#,
@@ -96,7 +93,7 @@ fn bench_individual_nodes(c: &mut Criterion) {
         r#"{
         "nodes": [
             { "id": "input", "type": "input" },
-            { "id": "convert", "type": "image", "parameters": { "operation": "convert", "format": "png", "quality": 80 } },
+            { "id": "convert", "type": "image-convert", "parameters": { "format": "png", "quality": 80 } },
             { "id": "output", "type": "output" }
         ]
     }"#,
@@ -113,13 +110,13 @@ fn bench_individual_nodes(c: &mut Criterion) {
         r#"{
         "nodes": [
             { "id": "input", "type": "input" },
-            { "id": "clean", "type": "spreadsheet", "parameters": { "operation": "clean", "trimWhitespace": true, "removeEmptyRows": true, "removeDuplicates": true } },
+            { "id": "clean", "type": "spreadsheet-clean", "parameters": { "trimWhitespace": true, "removeEmptyRows": true, "removeDuplicates": true } },
             { "id": "output", "type": "output" }
         ]
     }"#,
     );
 
-    c.bench_function("node/spreadsheet:clean/csv", |b| {
+    c.bench_function("node/spreadsheet-clean/csv", |b| {
         b.iter(|| {
             let files = vec![file("data.csv", MESSY_CSV, "text/csv")];
             execute_pipeline(&clean_def, files, &registry, &reporter, fake_now).unwrap();
@@ -130,13 +127,13 @@ fn bench_individual_nodes(c: &mut Criterion) {
         r#"{
         "nodes": [
             { "id": "input", "type": "input" },
-            { "id": "rename", "type": "file-system", "parameters": { "operation": "rename", "prefix": "renamed-" } },
+            { "id": "rename", "type": "file-rename", "parameters": { "prefix": "renamed-" } },
             { "id": "output", "type": "output" }
         ]
     }"#,
     );
 
-    c.bench_function("node/file-system:rename/txt", |b| {
+    c.bench_function("node/file-rename/txt", |b| {
         b.iter(|| {
             let files = vec![file("document.txt", b"hello world", "text/plain")];
             execute_pipeline(&rename_def, files, &registry, &reporter, fake_now).unwrap();
@@ -149,15 +146,11 @@ fn bench_individual_nodes(c: &mut Criterion) {
 fn bench_registry(c: &mut Criterion) {
     let registry = real_registry();
 
-    let mut params = serde_json::Map::new();
-    params.insert(
-        "operation".to_string(),
-        serde_json::Value::String("compress".to_string()),
-    );
+    let params = serde_json::Map::new();
 
     c.bench_function("registry/resolve", |b| {
         b.iter(|| {
-            registry.resolve("image", &params).unwrap();
+            registry.resolve("image-compress", &params).unwrap();
         })
     });
 }

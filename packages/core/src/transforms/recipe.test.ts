@@ -35,9 +35,9 @@ describe("recipeToListItem", () => {
         },
         {
           id: "2",
-          type: "image",
+          type: "image-compress",
           version: "0.1.0",
-          name: "Image",
+          name: "Compress Images",
           position: { x: 0, y: 0 },
           metadata: {},
           parameters: {},
@@ -46,9 +46,9 @@ describe("recipeToListItem", () => {
         },
         {
           id: "3",
-          type: "file-system",
+          type: "file-rename",
           version: "0.1.0",
-          name: "File System",
+          name: "Rename Files",
           position: { x: 0, y: 0 },
           metadata: {},
           parameters: {},
@@ -97,7 +97,7 @@ describe("recipeToListItem", () => {
   });
 
   it("extracts processing node type labels (excludes I/O)", () => {
-    expect(recipeToListItem(recipe).nodeTypes).toEqual(["Image", "File System"]);
+    expect(recipeToListItem(recipe).nodeTypes).toEqual(["Compress Images", "Rename Files"]);
   });
 
   it("deduplicates node types", () => {
@@ -108,7 +108,7 @@ describe("recipeToListItem", () => {
         nodes: [
           {
             id: "1",
-            type: "image",
+            type: "image-compress",
             version: "0.1.0",
             name: "A",
             position: { x: 0, y: 0 },
@@ -119,7 +119,7 @@ describe("recipeToListItem", () => {
           },
           {
             id: "2",
-            type: "image",
+            type: "image-compress",
             version: "0.1.0",
             name: "B",
             position: { x: 0, y: 0 },
@@ -130,7 +130,7 @@ describe("recipeToListItem", () => {
           },
           {
             id: "3",
-            type: "file-system",
+            type: "file-rename",
             version: "0.1.0",
             name: "C",
             position: { x: 0, y: 0 },
@@ -142,7 +142,7 @@ describe("recipeToListItem", () => {
         ],
       },
     };
-    expect(recipeToListItem(dupes).nodeTypes).toEqual(["Image", "File System"]);
+    expect(recipeToListItem(dupes).nodeTypes).toEqual(["Compress Images", "Rename Files"]);
   });
 
   it("handles missing nodes array", () => {

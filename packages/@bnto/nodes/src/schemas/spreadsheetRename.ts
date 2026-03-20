@@ -1,0 +1,17 @@
+/**
+ * Spreadsheet rename field configs — augments engine-generated schema with UI hints.
+ *
+ * The Rust engine is the single source of truth for spreadsheet-rename parameters.
+ * This file adds UI presentation metadata for the editor.
+ *
+ * To change parameters, edit the processor `metadata()` in
+ * `engine/crates/bnto-csv/src/`, then run `task nodes:generate`.
+ */
+
+import type { FieldConfigMap } from "./types";
+
+export { spreadsheetRenameParamsSchema, spreadsheetRenameNodeSchema } from "../generated/schemas";
+export type { SpreadsheetRenameParams } from "../generated/schemas";
+
+/** UI presentation metadata for spreadsheet-rename node fields. */
+export const spreadsheetRenameFields: FieldConfigMap = {};

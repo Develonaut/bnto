@@ -86,7 +86,7 @@ export const DEFINITION_JSON_SCHEMA = {
           "type": "object"
         },
         "type": {
-          "description": "The node type (e.g., 'image', 'spreadsheet', 'file-system').",
+          "description": "The node type (e.g., 'image-compress', 'spreadsheet-clean', 'file-rename').",
           "type": "string"
         },
         "version": {

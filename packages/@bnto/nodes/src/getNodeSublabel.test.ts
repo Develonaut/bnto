@@ -43,13 +43,22 @@ describe("getNodeSublabel", () => {
   });
 
   // --- Processing nodes use category label ---
-  it("returns category label for processing nodes", () => {
-    expect(getNodeSublabel("image")).toBe("Image");
-    expect(getNodeSublabel("spreadsheet")).toBe("Spreadsheet");
+  it("returns category label for per-operation image nodes", () => {
+    expect(getNodeSublabel("image-compress")).toBe("Image");
+    expect(getNodeSublabel("image-resize")).toBe("Image");
+    expect(getNodeSublabel("image-convert")).toBe("Image");
+  });
+
+  it("returns category label for per-operation spreadsheet nodes", () => {
+    expect(getNodeSublabel("spreadsheet-clean")).toBe("Spreadsheet");
+    expect(getNodeSublabel("spreadsheet-rename")).toBe("Spreadsheet");
+  });
+
+  it("returns category label for other processing nodes", () => {
     expect(getNodeSublabel("transform")).toBe("Data");
     expect(getNodeSublabel("shell-command")).toBe("System");
     expect(getNodeSublabel("http-request")).toBe("Network");
-    expect(getNodeSublabel("file-system")).toBe("File");
+    expect(getNodeSublabel("file-rename")).toBe("File");
   });
 
   // --- Control flow nodes use their own label, not "Control Flow" ---

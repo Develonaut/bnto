@@ -18,14 +18,9 @@ fn resolve_processor<'a, F: Fn() -> u64 + Copy>(
     ctx.registry
         .resolve(&node.node_type, &node.params)
         .ok_or_else(|| {
-            let operation = node
-                .params
-                .get("operation")
-                .and_then(|v| v.as_str())
-                .unwrap_or("default");
             BntoError::InvalidInput(format!(
-                "No processor registered for '{}:{}' (node '{}')",
-                node.node_type, operation, node.id
+                "No processor registered for '{}' (node '{}')",
+                node.node_type, node.id
             ))
         })
 }

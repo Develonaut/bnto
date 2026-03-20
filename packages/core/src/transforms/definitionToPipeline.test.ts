@@ -27,12 +27,12 @@ const SIMPLE_DEF: Definition = {
     },
     {
       id: "compress",
-      type: "image",
+      type: "image-compress",
       version: "1.0.0",
       name: "Compress",
       position: { x: 200, y: 0 },
       metadata: {},
-      parameters: { operation: "compress", quality: 80 },
+      parameters: { quality: 80 },
       inputPorts: [{ id: "in-1", name: "files" }],
       outputPorts: [{ id: "out-1", name: "files" }],
     },
@@ -96,12 +96,12 @@ const NESTED_DEF: Definition = {
           nodes: [
             {
               id: "rename-file",
-              type: "file-system",
+              type: "file-rename",
               version: "1.0.0",
               name: "Rename File",
               position: { x: 0, y: 0 },
               metadata: {},
-              parameters: { operation: "rename", prefix: "default-" },
+              parameters: { prefix: "default-" },
               inputPorts: [],
               outputPorts: [],
             },
@@ -135,8 +135,8 @@ describe("definitionToPipeline", () => {
     });
     expect(pipeline.nodes[1]).toEqual({
       id: "compress",
-      type: "image",
-      params: { operation: "compress", quality: 80 },
+      type: "image-compress",
+      params: { quality: 80 },
     });
   });
 
@@ -156,7 +156,6 @@ describe("definitionToPipeline", () => {
     const pipeline = definitionToPipeline(SIMPLE_DEF, { quality: 50 });
 
     expect(pipeline.nodes[1]!.params).toEqual({
-      operation: "compress",
       quality: 50,
     });
   });
@@ -180,8 +179,8 @@ describe("definitionToPipeline", () => {
     expect(loop.children).toHaveLength(1);
 
     const renameFile = loop.children![0]!;
-    expect(renameFile.type).toBe("file-system");
-    expect(renameFile.params).toEqual({ operation: "rename", prefix: "default-" });
+    expect(renameFile.type).toBe("file-rename");
+    expect(renameFile.params).toEqual({ prefix: "default-" });
     expect(renameFile.children).toBeUndefined();
   });
 
@@ -190,7 +189,6 @@ describe("definitionToPipeline", () => {
 
     const renameFile = pipeline.nodes[1]!.children![0]!.children![0]!;
     expect(renameFile.params).toEqual({
-      operation: "rename",
       prefix: "custom-",
     });
   });
@@ -213,10 +211,9 @@ describe("definitionToPipeline", () => {
     expect(loop).toBeDefined();
     expect(loop!.children).toBeDefined();
 
-    const compressNode = loop!.children!.find((n) => n.type === "image");
+    const compressNode = loop!.children!.find((n) => n.type === "image-compress");
     expect(compressNode).toBeDefined();
     expect(compressNode!.params).toHaveProperty("quality", 60);
-    expect(compressNode!.params).toHaveProperty("operation", "compress");
   });
 
   it("uses engine defaults when no override provided for compress-images", () => {
@@ -226,7 +223,7 @@ describe("definitionToPipeline", () => {
     const pipeline = definitionToPipeline(recipe!.definition);
 
     const loop = pipeline.nodes.find((n) => n.type === "loop");
-    const compressNode = loop!.children!.find((n) => n.type === "image");
+    const compressNode = loop!.children!.find((n) => n.type === "image-compress");
     expect(compressNode!.params).toHaveProperty("quality", 80);
   });
 

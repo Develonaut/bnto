@@ -41,14 +41,13 @@ export const renameCsvColumns: Recipe = {
       defaultInputNode(CSV_INPUT),
       {
         id: "rename-columns",
-        type: "spreadsheet",
+        type: "spreadsheet-rename",
         version: CURRENT_FORMAT_VERSION,
         name: "Rename",
         position: { x: 250, y: 100 },
         metadata: {},
         parameters: {
-          operation: "rename",
-          ...getProcessorDefaults("spreadsheet", "rename"),
+          ...getProcessorDefaults("spreadsheet-rename"),
           columns: {},
         },
         inputPorts: [{ id: "in-1", name: "files" }],

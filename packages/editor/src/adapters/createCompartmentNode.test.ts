@@ -5,38 +5,38 @@
 import { describe, it, expect } from "vitest";
 import { createCompartmentNode } from "./createCompartmentNode";
 import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
-import { NODE_TYPE_NAMES, NODE_SCHEMA_DEFS } from "@bnto/core";
+import { NODE_TYPE_NAMES, NODE_SCHEMA_DEFS, NODE_TYPE_INFO } from "@bnto/core";
 
 describe("createCompartmentNode", () => {
   it("creates a BentoNode + NodeConfig from a node type and slot index", () => {
-    const result = createCompartmentNode("image", 0);
+    const result = createCompartmentNode("image-compress", 0);
     expect(result).not.toBeNull();
-    expect(result!.node.type).toBe("compartment"); // processing → "compartment"
-    expect(result!.config.nodeType).toBe("image");
+    expect(result!.node.type).toBe("compartment");
+    expect(result!.config.nodeType).toBe("image-compress");
   });
 
   it("returns null when slot index exceeds available slots", () => {
-    const result = createCompartmentNode("image", SLOTS.length + 5);
+    const result = createCompartmentNode("image-compress", SLOTS.length + 5);
     expect(result).toBeNull();
   });
 
   it("uses slot position by default", () => {
-    const result = createCompartmentNode("image", 2);
+    const result = createCompartmentNode("image-compress", 2);
     expect(result!.node.position).toEqual({ x: SLOTS[2]!.x, y: SLOTS[2]!.y });
   });
 
   it("uses custom position when provided", () => {
-    const result = createCompartmentNode("image", 0, { x: 42, y: 99 });
+    const result = createCompartmentNode("image-compress", 0, { x: 42, y: 99 });
     expect(result!.node.position).toEqual({ x: 42, y: 99 });
   });
 
   it("maps category to variant color", () => {
-    const result = createCompartmentNode("image", 0);
+    const result = createCompartmentNode("image-compress", 0);
     expect(result!.node.data.variant).toBe("primary");
   });
 
   it("sets slot dimensions for processing nodes", () => {
-    const result = createCompartmentNode("image", 0);
+    const result = createCompartmentNode("image-compress", 0);
     expect(result!.node.data.width).toBe(SLOTS[0]!.w);
     expect(result!.node.data.height).toBe(SLOTS[0]!.h);
   });
@@ -54,14 +54,14 @@ describe("createCompartmentNode", () => {
   });
 
   it("generates a UUID for node id", () => {
-    const result = createCompartmentNode("image", 0);
+    const result = createCompartmentNode("image-compress", 0);
     expect(result!.node.id).toBeTruthy();
     expect(result!.node.id.length).toBeGreaterThan(0);
   });
 
   it("keeps domain data in config, not in node.data", () => {
-    const result = createCompartmentNode("image", 0);
-    expect(result!.config.nodeType).toBe("image");
+    const result = createCompartmentNode("image-compress", 0);
+    expect(result!.config.nodeType).toBe("image-compress");
     expect(result!.config.parameters).toBeDefined();
 
     const data = result!.node.data;
@@ -70,8 +70,8 @@ describe("createCompartmentNode", () => {
   });
 
   it("builds default parameters from schema in config", () => {
-    const result = createCompartmentNode("image", 0);
-    const schemaDef = NODE_SCHEMA_DEFS["image"]!;
+    const result = createCompartmentNode("image-compress", 0);
+    const schemaDef = NODE_SCHEMA_DEFS["image-compress"]!;
     // Extract defaults from Zod schema
     const shape = schemaDef.schema.shape as Record<
       string,
@@ -87,16 +87,14 @@ describe("createCompartmentNode", () => {
   });
 
   it("sets static icon for processing nodes via getNodeIcon", () => {
-    const result = createCompartmentNode("image", 0);
+    const result = createCompartmentNode("image-compress", 0);
     expect(result!.node.data.icon).toBe("image");
   });
 
   it("sets contextual icon for I/O nodes via getNodeIcon", () => {
-    // Input defaults to file-upload mode → "file-up"
     const inputResult = createCompartmentNode("input", 0);
     expect(inputResult!.node.data.icon).toBe("file-up");
 
-    // Output defaults to download mode → "download"
     const outputResult = createCompartmentNode("output", 0);
     expect(outputResult!.node.data.icon).toBe("download");
   });
@@ -105,8 +103,8 @@ describe("createCompartmentNode", () => {
     const inputResult = createCompartmentNode("input", 0);
     expect(inputResult!.node.data.sublabel).toBe("File Upload");
 
-    const imageResult = createCompartmentNode("image", 0);
-    expect(imageResult!.node.data.sublabel).toBe("Image");
+    const compressResult = createCompartmentNode("image-compress", 0);
+    expect(compressResult!.node.data.sublabel).toBe("Image");
   });
 
   it("sets isIoNode true for input nodes", () => {
@@ -120,11 +118,11 @@ describe("createCompartmentNode", () => {
   });
 
   it("sets isIoNode false for processing nodes", () => {
-    const result = createCompartmentNode("image", 0);
+    const result = createCompartmentNode("image-compress", 0);
     expect(result!.node.data.isIoNode).toBe(false);
   });
 
-  it("works with all 12 node types", () => {
+  it("works with all node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       const result = createCompartmentNode(typeName, 0);
       expect(result).not.toBeNull();
@@ -134,32 +132,25 @@ describe("createCompartmentNode", () => {
   });
 
   it("merges defaultParams into config parameters", () => {
-    const result = createCompartmentNode("image", 0, undefined, { operation: "resize" });
-    expect(result!.config.parameters.operation).toBe("resize");
+    const result = createCompartmentNode("image-resize", 0, undefined, { width: 800 });
+    expect(result!.config.parameters.width).toBe(800);
   });
 
-  it("uses short operation name as label when operation is pre-set", () => {
-    const compress = createCompartmentNode("image", 0, undefined, { operation: "compress" });
-    expect(compress!.node.data.label).toBe("Compress");
-    expect(compress!.config.name).toBe("Compress");
+  it("uses NODE_TYPE_INFO label as card label", () => {
+    const compress = createCompartmentNode("image-compress", 0);
+    expect(compress!.node.data.label).toBe("Compress Images");
+    expect(compress!.config.name).toBe("Compress Images");
 
-    const convert = createCompartmentNode("image", 0, undefined, { operation: "convert" });
-    expect(convert!.node.data.label).toBe("Convert");
+    const convert = createCompartmentNode("image-convert", 0);
+    expect(convert!.node.data.label).toBe("Convert Image Format");
 
-    const renameFiles = createCompartmentNode("file-system", 0, undefined, { operation: "rename" });
-    expect(renameFiles!.node.data.label).toBe("Rename");
-  });
-
-  it("falls back to NODE_TYPE_INFO label without defaultParams", () => {
-    const result = createCompartmentNode("image", 0);
-    expect(result!.node.data.label).toBe("Image");
-    expect(result!.config.name).toBe("Image");
+    const rename = createCompartmentNode("file-rename", 0);
+    expect(rename!.node.data.label).toBe("Rename Files");
   });
 
   it("defaultParams override schema defaults", () => {
-    // Image schema defaults operation to "compress" — override with "resize"
-    const result = createCompartmentNode("image", 0, undefined, { operation: "resize" });
-    expect(result!.config.parameters.operation).toBe("resize");
+    const result = createCompartmentNode("image-compress", 0, undefined, { quality: 50 });
+    expect(result!.config.parameters.quality).toBe(50);
   });
 
   it("uses mode-based label for loop nodes", () => {

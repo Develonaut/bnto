@@ -11,8 +11,8 @@ import type { ExecutionState } from "../store/types";
 const mockDefinition: PipelineDefinition = {
   nodes: [
     { id: "input-1", type: "input", params: {} },
-    { id: "compress-1", type: "compress-image", params: { quality: 80 } },
-    { id: "resize-1", type: "resize-image", params: { width: 800 } },
+    { id: "compress-1", type: "image-compress", params: { quality: 80 } },
+    { id: "resize-1", type: "image-resize", params: { width: 800 } },
     { id: "output-1", type: "output", params: {} },
   ],
 };
@@ -23,7 +23,7 @@ describe("applyPipelineEvent", () => {
     const next = applyPipelineEvent(current, {
       type: "NodeStarted",
       nodeId: "compress-1",
-      nodeType: "compress-image",
+      nodeType: "image-compress",
       nodeIndex: 0,
       totalNodes: 2,
     });
@@ -69,7 +69,7 @@ describe("applyPipelineEvent", () => {
     applyPipelineEvent(current, {
       type: "NodeStarted",
       nodeId: "compress-1",
-      nodeType: "compress-image",
+      nodeType: "image-compress",
       nodeIndex: 0,
       totalNodes: 1,
     });

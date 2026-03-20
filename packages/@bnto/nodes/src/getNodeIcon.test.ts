@@ -70,22 +70,31 @@ describe("getNodeIcon", () => {
     }
   });
 
-  it("returns correct updated icons for processing nodes", () => {
-    expect(getNodeIcon("image")).toBe("image");
-    expect(getNodeIcon("spreadsheet")).toBe("sheet");
+  it("returns correct icons for per-operation image nodes", () => {
+    expect(getNodeIcon("image-compress")).toBe("image");
+    expect(getNodeIcon("image-resize")).toBe("image");
+    expect(getNodeIcon("image-convert")).toBe("image");
+  });
+
+  it("returns correct icons for per-operation spreadsheet nodes", () => {
+    expect(getNodeIcon("spreadsheet-clean")).toBe("sheet");
+    expect(getNodeIcon("spreadsheet-rename")).toBe("sheet");
+  });
+
+  it("returns correct icons for other processing nodes", () => {
     expect(getNodeIcon("transform")).toBe("arrow-left-right");
     expect(getNodeIcon("edit-fields")).toBe("pen-line");
     expect(getNodeIcon("loop")).toBe("repeat");
     expect(getNodeIcon("parallel")).toBe("git-fork");
     expect(getNodeIcon("group")).toBe("box");
     expect(getNodeIcon("http-request")).toBe("globe");
-    expect(getNodeIcon("file-system")).toBe("folder-open");
+    expect(getNodeIcon("file-rename")).toBe("folder-open");
     expect(getNodeIcon("shell-command")).toBe("terminal");
   });
 
-  // --- All 12 node types return a non-empty string ---
+  // --- All 15 node types return a non-empty string ---
 
-  it("returns a non-empty string for all 12 node types", () => {
+  it("returns a non-empty string for all 15 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       const icon = getNodeIcon(typeName);
       expect(icon).toBeTruthy();

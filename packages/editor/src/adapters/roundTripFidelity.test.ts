@@ -99,9 +99,9 @@ describe("round-trip fidelity", () => {
   describe("with processing nodes", () => {
     it("preserves all domain fields for added nodes", () => {
       let def = createBlankDefinition();
-      def = addNode(def, "image").definition;
-      def = addNode(def, "spreadsheet").definition;
-      def = addNode(def, "file-system").definition;
+      def = addNode(def, "image-compress").definition;
+      def = addNode(def, "spreadsheet-clean").definition;
+      def = addNode(def, "file-rename").definition;
 
       const graph = definitionToGraph(def);
       const exported = rfNodesToDefinition(graph.nodes, metaOf(def), graph.configs, def);
@@ -121,9 +121,9 @@ describe("round-trip fidelity", () => {
 
     it("preserves node order through round-trip", () => {
       let def = createBlankDefinition();
-      def = addNode(def, "image").definition;
+      def = addNode(def, "image-compress").definition;
       def = addNode(def, "transform").definition;
-      def = addNode(def, "file-system").definition;
+      def = addNode(def, "file-rename").definition;
 
       const graph = definitionToGraph(def);
       const exported = rfNodesToDefinition(graph.nodes, metaOf(def), graph.configs, def);
@@ -223,7 +223,7 @@ describe("round-trip fidelity", () => {
 
     it("preserves child node input and output ports", () => {
       const original = cleanCsv.definition;
-      const cleanNode = original.nodes!.find((n) => n.type === "spreadsheet")!;
+      const cleanNode = original.nodes!.find((n) => n.type === "spreadsheet-clean")!;
       expect(cleanNode.inputPorts.length).toBeGreaterThan(0);
       expect(cleanNode.outputPorts.length).toBeGreaterThan(0);
 
@@ -237,8 +237,8 @@ describe("round-trip fidelity", () => {
 
     it("preserves displayName in metadata.customData", () => {
       let def = createBlankDefinition();
-      def = addNode(def, "image").definition;
-      const imageNode = def.nodes!.find((n) => n.type === "image")!;
+      def = addNode(def, "image-compress").definition;
+      const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
       // Inject displayName into metadata
       const withDisplayName: Definition = {

@@ -7,12 +7,12 @@
       "operation": null
     },
     {
-      "type": "image",
-      "operation": "compress"
+      "type": "image-compress",
+      "operation": null
     },
     {
-      "type": "file-system",
-      "operation": "rename",
+      "type": "file-rename",
+      "operation": null,
       "parameters": {
         "suffix": "-min"
       }

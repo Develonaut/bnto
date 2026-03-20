@@ -53,14 +53,13 @@ export const optimizeImagesForWeb: Recipe = {
         nodes: [
           {
             id: "resize",
-            type: "image",
+            type: "image-resize",
             version: CURRENT_FORMAT_VERSION,
             name: "Resize",
             position: { x: 0, y: 0 },
             metadata: {},
             parameters: {
-              operation: "resize",
-              ...getProcessorDefaults("image", "resize"),
+              ...getProcessorDefaults("image-resize"),
               width: 800,
             },
             inputPorts: [],
@@ -68,14 +67,13 @@ export const optimizeImagesForWeb: Recipe = {
           },
           {
             id: "convert",
-            type: "image",
+            type: "image-convert",
             version: CURRENT_FORMAT_VERSION,
             name: "Convert",
             position: { x: 250, y: 0 },
             metadata: {},
             parameters: {
-              operation: "convert",
-              ...getProcessorDefaults("image", "convert"),
+              ...getProcessorDefaults("image-convert"),
               format: "webp",
             },
             inputPorts: [],
@@ -83,14 +81,13 @@ export const optimizeImagesForWeb: Recipe = {
           },
           {
             id: "compress",
-            type: "image",
+            type: "image-compress",
             version: CURRENT_FORMAT_VERSION,
             name: "Compress",
             position: { x: 500, y: 0 },
             metadata: {},
             parameters: {
-              operation: "compress",
-              ...getProcessorDefaults("image", "compress"),
+              ...getProcessorDefaults("image-compress"),
             },
             inputPorts: [],
             outputPorts: [],

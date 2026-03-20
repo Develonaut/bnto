@@ -34,8 +34,7 @@ impl NodeProcessor for CleanCsv {
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
-            node_type: "spreadsheet".to_string(),
-            operation: "clean".to_string(),
+            node_type: "spreadsheet-clean".to_string(),
             name: "Clean CSV".to_string(),
             description: "Remove empty rows, trim whitespace, and deduplicate CSV data".to_string(),
             category: NodeCategory::Spreadsheet,
@@ -120,7 +119,7 @@ fn build_clean_output(
 
 // --- Metadata Parameter Definitions ---
 
-/// Boolean cleaning parameter, visible when operation=clean.
+/// Boolean cleaning parameter.
 fn clean_bool_param(
     name: &str,
     label: &str,
@@ -133,10 +132,6 @@ fn clean_bool_param(
         description: description.to_string(),
         param_type: ParameterType::Boolean,
         default: Some(serde_json::json!(true)),
-        visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-            param: "operation".to_string(),
-            equals: "clean".to_string(),
-        })),
         ..Default::default()
     }
 }

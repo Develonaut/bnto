@@ -5,29 +5,32 @@ import { isNodeType } from "./isNodeType";
 import { getNodeTypeInfo } from "./getNodeTypeInfo";
 
 describe("NODE_TYPES", () => {
-  it("contains all 12 registered node types", () => {
-    expect(Object.keys(NODE_TYPES)).toHaveLength(12);
+  it("contains all 15 registered node types", () => {
+    expect(Object.keys(NODE_TYPES)).toHaveLength(15);
   });
 
   it("maps camelCase keys to kebab-case type names", () => {
     expect(NODE_TYPES.editFields).toBe("edit-fields");
-    expect(NODE_TYPES.fileSystem).toBe("file-system");
+    expect(NODE_TYPES.fileRename).toBe("file-rename");
     expect(NODE_TYPES.httpRequest).toBe("http-request");
     expect(NODE_TYPES.shellCommand).toBe("shell-command");
     expect(NODE_TYPES.group).toBe("group");
-    expect(NODE_TYPES.image).toBe("image");
+    expect(NODE_TYPES.imageCompress).toBe("image-compress");
+    expect(NODE_TYPES.imageResize).toBe("image-resize");
+    expect(NODE_TYPES.imageConvert).toBe("image-convert");
     expect(NODE_TYPES.input).toBe("input");
     expect(NODE_TYPES.loop).toBe("loop");
     expect(NODE_TYPES.output).toBe("output");
     expect(NODE_TYPES.parallel).toBe("parallel");
-    expect(NODE_TYPES.spreadsheet).toBe("spreadsheet");
+    expect(NODE_TYPES.spreadsheetClean).toBe("spreadsheet-clean");
+    expect(NODE_TYPES.spreadsheetRename).toBe("spreadsheet-rename");
     expect(NODE_TYPES.transform).toBe("transform");
   });
 });
 
 describe("NODE_TYPE_NAMES", () => {
-  it("contains all 12 node type name strings", () => {
-    expect(NODE_TYPE_NAMES).toHaveLength(12);
+  it("contains all 15 node type name strings", () => {
+    expect(NODE_TYPE_NAMES).toHaveLength(15);
   });
 
   it("matches the values of NODE_TYPES", () => {
@@ -64,7 +67,7 @@ describe("NODE_TYPE_INFO", () => {
     expect(names).toEqual(["group", "loop", "parallel"]);
   });
 
-  it("server-only types are file-system, http-request, and shell-command", () => {
+  it("server-only types are http-request and shell-command", () => {
     const serverOnly = Object.values(NODE_TYPE_INFO).filter((i) => !i.browserCapable);
     const names = serverOnly.map((s) => s.name).sort();
     expect(names).toEqual(["http-request", "shell-command"]);
@@ -95,7 +98,7 @@ describe("IO node types", () => {
 
 describe("isNodeType", () => {
   it("returns true for valid node type names", () => {
-    expect(isNodeType("image")).toBe(true);
+    expect(isNodeType("image-compress")).toBe(true);
     expect(isNodeType("http-request")).toBe(true);
     expect(isNodeType("shell-command")).toBe(true);
     expect(isNodeType("input")).toBe(true);
@@ -107,14 +110,20 @@ describe("isNodeType", () => {
     expect(isNodeType("unknown")).toBe(false);
     expect(isNodeType("Image")).toBe(false);
   });
+
+  it("returns false for old multi-operation type names", () => {
+    expect(isNodeType("image")).toBe(false);
+    expect(isNodeType("spreadsheet")).toBe(false);
+    expect(isNodeType("file-system")).toBe(false);
+  });
 });
 
 describe("getNodeTypeInfo", () => {
   it("returns info for a valid type", () => {
-    const info = getNodeTypeInfo("image");
+    const info = getNodeTypeInfo("image-compress");
     expect(info).toBeDefined();
-    expect(info!.name).toBe("image");
-    expect(info!.label).toBe("Image");
+    expect(info!.name).toBe("image-compress");
+    expect(info!.label).toBe("Compress Images");
     expect(info!.category).toBe("image");
   });
 

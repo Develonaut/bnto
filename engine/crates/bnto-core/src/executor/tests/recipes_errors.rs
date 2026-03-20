@@ -52,8 +52,7 @@ fn test_recipe_container_io_children_skipped() {
                 "nodes": [
                     { "id": "inner-input", "type": "input", "parameters": {} },
                     {
-                        "id": "proc", "type": "image",
-                        "parameters": { "operation": "compress" }
+                        "id": "proc", "type": "image-compress"
                     },
                     { "id": "inner-output", "type": "output", "parameters": {} }
                 ]
@@ -82,8 +81,7 @@ fn test_recipe_unregistered_operation_inside_loop() {
                 "parameters": { "mode": "forEach" },
                 "nodes": [
                     {
-                        "id": "bad-node", "type": "spreadsheet",
-                        "parameters": { "operation": "pivot" }
+                        "id": "bad-node", "type": "spreadsheet-pivot"
                     }
                 ]
             }
@@ -100,7 +98,7 @@ fn test_recipe_unregistered_operation_inside_loop() {
     assert!(result.is_err());
     let err = result.unwrap_err().to_string();
     assert!(
-        err.contains("spreadsheet:pivot"),
+        err.contains("spreadsheet-pivot"),
         "Error should name the missing key: {}",
         err
     );
@@ -120,8 +118,7 @@ fn test_recipe_failure_inside_nested_container() {
                         "parameters": { "mode": "forEach" },
                         "nodes": [
                             {
-                                "id": "fail-proc", "type": "test",
-                                "params": { "operation": "fail" }
+                                "id": "fail-proc", "type": "test-fail"
                             }
                         ]
                     }

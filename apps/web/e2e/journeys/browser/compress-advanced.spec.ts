@@ -13,11 +13,11 @@ import { IMAGE_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } fro
  */
 
 /** Preset names by index. */
-const PRESET_LABELS = ["Light", "Balanced", "Maximum"] as const;
+const PRESET_LABELS = ["Draft", "Balanced", "Maximum"] as const;
 
 /**
  * Select a compression preset by clicking its label button.
- * Presets: 0=Light(20), 1=Balanced(50), 2=Maximum(80).
+ * Presets: 0=Draft(60), 1=Balanced(80), 2=Maximum(100).
  */
 async function selectPreset(page: Page, presetIndex: number) {
   const label = PRESET_LABELS[presetIndex];
@@ -26,17 +26,14 @@ async function selectPreset(page: Page, presetIndex: number) {
 
 /**
  * Compress large.jpg at a given preset index, return output size in bytes.
- * Presets: 0=Light(20), 1=Balanced(50), 2=Maximum(80).
- * Default is index 0 (Light).
+ * Presets: 0=Draft(60), 1=Balanced(80), 2=Maximum(100).
  */
 async function compressAtPreset(page: Page, presetIndex: number): Promise<number> {
   await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
   await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "large.jpg")]);
 
-  if (presetIndex !== 0) {
-    await selectPreset(page, presetIndex);
-  }
+  await selectPreset(page, presetIndex);
 
   // Capture the auto-download that fires on completion
   const dlPromise = page.waitForEvent("download");
@@ -50,12 +47,12 @@ async function compressAtPreset(page: Page, presetIndex: number): Promise<number
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("compress-images — configuration @browser", () => {
-  test("compression presets: Maximum produces smaller output than Light", async ({ page }) => {
-    const sizeLight = await compressAtPreset(page, 0); // Light (compression=20)
-    const sizeMax = await compressAtPreset(page, 2); // Maximum (compression=80)
+  test("compression presets: Draft produces smaller output than Maximum", async ({ page }) => {
+    const sizeDraft = await compressAtPreset(page, 0); // Draft (quality=60)
+    const sizeMax = await compressAtPreset(page, 2); // Maximum (quality=100)
 
-    // Higher compression MUST produce smaller output
-    expect(sizeMax).toBeLessThan(sizeLight);
+    // Lower quality (Draft) MUST produce smaller output than higher quality (Maximum)
+    expect(sizeDraft).toBeLessThan(sizeMax);
   });
 });
 

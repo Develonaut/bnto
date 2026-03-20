@@ -204,29 +204,29 @@ fn make_file(name: &str, data: &[u8]) -> PipelineFile {
     }
 }
 
-/// Build a registry with mock processors under test compound keys.
+/// Build a registry with mock processors under test type keys.
 fn mock_registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
-    registry.register("test:echo", Box::new(EchoProcessor));
-    registry.register("test:uppercase", Box::new(UpperCaseProcessor));
-    registry.register("test:fail", Box::new(FailProcessor));
-    registry.register("test:slow", Box::new(SlowProcessor));
-    registry.register("test:double", Box::new(DoubleProcessor));
-    registry.register("test:metadata", Box::new(MetadataProcessor));
+    registry.register("test-echo", Box::new(EchoProcessor));
+    registry.register("test-uppercase", Box::new(UpperCaseProcessor));
+    registry.register("test-fail", Box::new(FailProcessor));
+    registry.register("test-slow", Box::new(SlowProcessor));
+    registry.register("test-double", Box::new(DoubleProcessor));
+    registry.register("test-metadata", Box::new(MetadataProcessor));
     registry
 }
 
-/// Maps real recipe operation keys to mock processors so we can test
+/// Maps real recipe node type keys to mock processors so we can test
 /// recipe orchestration without needing actual image/CSV/file processors.
 fn recipe_registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
-    registry.register("image:compress", Box::new(EchoProcessor));
-    registry.register("image:resize", Box::new(EchoProcessor));
-    registry.register("image:convert", Box::new(EchoProcessor));
-    registry.register("spreadsheet:clean", Box::new(EchoProcessor));
-    registry.register("spreadsheet:rename", Box::new(EchoProcessor));
+    registry.register("image-compress", Box::new(EchoProcessor));
+    registry.register("image-resize", Box::new(EchoProcessor));
+    registry.register("image-convert", Box::new(EchoProcessor));
+    registry.register("spreadsheet-clean", Box::new(EchoProcessor));
+    registry.register("spreadsheet-rename", Box::new(EchoProcessor));
     // UpperCase verifies transformation happened.
-    registry.register("file-system:rename", Box::new(UpperCaseProcessor));
+    registry.register("file-rename", Box::new(UpperCaseProcessor));
     registry
 }
 

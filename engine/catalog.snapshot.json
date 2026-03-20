@@ -13,9 +13,9 @@
       "icon": "pen-line"
     },
     {
-      "name": "file-system",
-      "label": "File System",
-      "description": "File operations: rename files with find/replace, case transforms, and patterns.",
+      "name": "file-rename",
+      "label": "Rename Files",
+      "description": "Transform filenames using patterns, find/replace, and case rules.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -46,9 +46,31 @@
       "icon": "globe"
     },
     {
-      "name": "image",
-      "label": "Image",
-      "description": "Image processing: compress, resize, and convert formats.",
+      "name": "image-compress",
+      "label": "Compress Images",
+      "description": "Reduce image file size while maintaining quality.",
+      "category": "image",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "image"
+    },
+    {
+      "name": "image-convert",
+      "label": "Convert Image Format",
+      "description": "Convert images between JPEG, PNG, and WebP formats.",
+      "category": "image",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "image"
+    },
+    {
+      "name": "image-resize",
+      "label": "Resize Images",
+      "description": "Change image dimensions while maintaining quality.",
       "category": "image",
       "isContainer": false,
       "platforms": [
@@ -112,9 +134,20 @@
       "icon": "terminal"
     },
     {
-      "name": "spreadsheet",
-      "label": "Spreadsheet",
-      "description": "Spreadsheet operations: clean data and rename columns.",
+      "name": "spreadsheet-clean",
+      "label": "Clean CSV",
+      "description": "Remove empty rows, trim whitespace, and deduplicate CSV data.",
+      "category": "spreadsheet",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "sheet"
+    },
+    {
+      "name": "spreadsheet-rename",
+      "label": "Rename CSV Columns",
+      "description": "Rename column headers in a CSV file.",
       "category": "spreadsheet",
       "isContainer": false,
       "platforms": [
@@ -136,8 +169,7 @@
   ],
   "processors": [
     {
-      "nodeType": "file-system",
-      "operation": "rename",
+      "nodeType": "file-rename",
       "name": "Rename Files",
       "description": "Transform filenames using patterns, find/replace, and case rules",
       "category": "file",
@@ -153,10 +185,6 @@
           "paramType": {
             "type": "string"
           },
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "rename"
-          },
           "surfaceable": true
         },
         {
@@ -165,10 +193,6 @@
           "description": "Replacement text (used with Find)",
           "paramType": {
             "type": "string"
-          },
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "rename"
           },
           "surfaceable": true
         },
@@ -184,10 +208,6 @@
               "title"
             ]
           },
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "rename"
-          },
           "surfaceable": true
         },
         {
@@ -197,10 +217,6 @@
           "paramType": {
             "type": "string"
           },
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "rename"
-          },
           "surfaceable": true
         },
         {
@@ -209,10 +225,6 @@
           "description": "Text to append before the file extension",
           "paramType": {
             "type": "string"
-          },
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "rename"
           },
           "surfaceable": true
         },
@@ -224,17 +236,12 @@
             "type": "string"
           },
           "placeholder": "{{name}}-compressed.{{ext}}",
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "rename"
-          },
           "surfaceable": true
         }
       ]
     },
     {
-      "nodeType": "image",
-      "operation": "compress",
+      "nodeType": "image-compress",
       "name": "Compress Images",
       "description": "Reduce image file size while maintaining quality",
       "category": "image",
@@ -260,27 +267,12 @@
             "max": 100.0,
             "required": false
           },
-          "visibleWhen": [
-            {
-              "param": "operation",
-              "equals": "compress"
-            },
-            {
-              "param": "operation",
-              "equals": "resize"
-            },
-            {
-              "param": "operation",
-              "equals": "convert"
-            }
-          ],
           "surfaceable": true
         }
       ]
     },
     {
-      "nodeType": "image",
-      "operation": "convert",
+      "nodeType": "image-convert",
       "name": "Convert Image Format",
       "description": "Convert images between JPEG, PNG, and WebP formats",
       "category": "image",
@@ -305,12 +297,9 @@
               "webp"
             ]
           },
+          "default": "jpeg",
           "constraints": {
             "required": true
-          },
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "convert"
           },
           "surfaceable": true
         },
@@ -327,27 +316,12 @@
             "max": 100.0,
             "required": false
           },
-          "visibleWhen": [
-            {
-              "param": "operation",
-              "equals": "compress"
-            },
-            {
-              "param": "operation",
-              "equals": "resize"
-            },
-            {
-              "param": "operation",
-              "equals": "convert"
-            }
-          ],
           "surfaceable": true
         }
       ]
     },
     {
-      "nodeType": "image",
-      "operation": "resize",
+      "nodeType": "image-resize",
       "name": "Resize Images",
       "description": "Change image dimensions while maintaining quality",
       "category": "image",
@@ -371,10 +345,6 @@
             "min": 1.0,
             "required": false
           },
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "resize"
-          },
           "surfaceable": true
         },
         {
@@ -388,10 +358,6 @@
             "min": 1.0,
             "required": false
           },
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "resize"
-          },
           "surfaceable": true
         },
         {
@@ -402,10 +368,6 @@
             "type": "boolean"
           },
           "default": true,
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "resize"
-          },
           "surfaceable": true
         },
         {
@@ -421,27 +383,12 @@
             "max": 100.0,
             "required": false
           },
-          "visibleWhen": [
-            {
-              "param": "operation",
-              "equals": "compress"
-            },
-            {
-              "param": "operation",
-              "equals": "resize"
-            },
-            {
-              "param": "operation",
-              "equals": "convert"
-            }
-          ],
           "surfaceable": true
         }
       ]
     },
     {
-      "nodeType": "spreadsheet",
-      "operation": "clean",
+      "nodeType": "spreadsheet-clean",
       "name": "Clean CSV",
       "description": "Remove empty rows, trim whitespace, and deduplicate CSV data",
       "category": "spreadsheet",
@@ -460,10 +407,6 @@
             "type": "boolean"
           },
           "default": true,
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "clean"
-          },
           "surfaceable": true
         },
         {
@@ -474,10 +417,6 @@
             "type": "boolean"
           },
           "default": true,
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "clean"
-          },
           "surfaceable": true
         },
         {
@@ -488,17 +427,12 @@
             "type": "boolean"
           },
           "default": true,
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "clean"
-          },
           "surfaceable": true
         }
       ]
     },
     {
-      "nodeType": "spreadsheet",
-      "operation": "rename",
+      "nodeType": "spreadsheet-rename",
       "name": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file",
       "category": "spreadsheet",
@@ -515,10 +449,6 @@
           "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
           "paramType": {
             "type": "object"
-          },
-          "visibleWhen": {
-            "param": "operation",
-            "equals": "rename"
           },
           "surfaceable": true
         }
@@ -600,7 +530,7 @@
             "type": "object"
           },
           "type": {
-            "description": "The node type (e.g., 'image', 'spreadsheet', 'file-system').",
+            "description": "The node type (e.g., 'image-compress', 'spreadsheet-clean', 'file-rename').",
             "type": "string"
           },
           "version": {

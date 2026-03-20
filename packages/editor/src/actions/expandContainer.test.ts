@@ -33,9 +33,9 @@ function makeDefinition(): Definition {
         nodes: [
           {
             id: "child1",
-            type: "image",
+            type: "image-compress",
             version: "1.0.0",
-            name: "Image",
+            name: "Compress Images",
             position: { x: 0, y: 0 },
             metadata: {},
             parameters: { quality: 80 },
@@ -109,7 +109,7 @@ describe("expandContainer", () => {
     const result = expandContainer(makeState(), "loop1");
     const configs = result!.configs!;
     expect(configs.child1).toBeDefined();
-    expect(configs.child1!.nodeType).toBe("image");
+    expect(configs.child1!.nodeType).toBe("image-compress");
     expect(configs.child1!.parameters.quality).toBe(80);
   });
 

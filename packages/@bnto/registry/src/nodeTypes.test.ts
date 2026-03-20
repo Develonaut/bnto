@@ -3,8 +3,8 @@ import { getAllNodeTypes, getBrowserNodeTypes } from "./nodeTypes";
 
 describe("nodeTypes", () => {
   describe("getAllNodeTypes", () => {
-    it("returns all 12 node types", () => {
-      expect(Object.keys(getAllNodeTypes())).toHaveLength(12);
+    it("returns all 15 node types", () => {
+      expect(Object.keys(getAllNodeTypes())).toHaveLength(15);
     });
 
     it("every node type has required fields", () => {

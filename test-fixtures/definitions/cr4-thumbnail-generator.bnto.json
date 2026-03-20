@@ -7,22 +7,22 @@
       "operation": null
     },
     {
-      "type": "image",
-      "operation": "resize",
+      "type": "image-resize",
+      "operation": null,
       "parameters": {
         "width": 100
       }
     },
     {
-      "type": "image",
-      "operation": "convert",
+      "type": "image-convert",
+      "operation": null,
       "parameters": {
         "format": "webp"
       }
     },
     {
-      "type": "file-system",
-      "operation": "rename",
+      "type": "file-rename",
+      "operation": null,
       "parameters": {
         "prefix": "thumb_"
       }

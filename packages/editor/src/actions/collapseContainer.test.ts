@@ -33,9 +33,9 @@ function makeDefinition(): Definition {
         nodes: [
           {
             id: "child1",
-            type: "image",
+            type: "image-compress",
             version: "1.0.0",
-            name: "Image",
+            name: "Compress Images",
             position: { x: 0, y: 0 },
             metadata: {},
             parameters: { quality: 80 },
@@ -85,7 +85,7 @@ function makeExpandedState(): EditorState {
     edges: [],
     configs: {
       loop1: { nodeType: "loop", name: "Loop", parameters: {} },
-      child1: { nodeType: "image", name: "Image", parameters: { quality: 95 } },
+      child1: { nodeType: "image-compress", name: "Compress Images", parameters: { quality: 95 } },
     },
     definition: makeDefinition(),
     recipeMetadata: { id: "root", name: "Root", slug: "root", cloudId: null },

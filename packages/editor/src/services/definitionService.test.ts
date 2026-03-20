@@ -40,7 +40,7 @@ describe("createDefinitionService", () => {
 
   it("updateParams merges params into node config", () => {
     const nodeSvc = createNodeService(storeApi);
-    const id = nodeSvc.addNode("image")!;
+    const id = nodeSvc.addNode("image-compress")!;
     const ok = service.updateParams(id, { quality: 90 });
     expect(ok).toBe(true);
     expect(storeApi.getState().configs[id]?.parameters.quality).toBe(90);
@@ -62,7 +62,7 @@ describe("createDefinitionService", () => {
 
   it("exportAsDefinition returns a valid Definition", () => {
     const nodeSvc = createNodeService(storeApi);
-    nodeSvc.addNode("image");
+    nodeSvc.addNode("image-compress");
     const def = service.exportAsDefinition();
     expect(def.nodes).toBeDefined();
     expect(def.nodes!.length).toBeGreaterThan(0);

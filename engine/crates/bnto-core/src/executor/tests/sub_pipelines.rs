@@ -17,7 +17,7 @@ fn test_single_file_full_event_sequence() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -62,7 +62,7 @@ fn test_single_file_full_event_sequence() {
         assert_eq!(node_id, "proc");
         assert_eq!(*node_index, 0);
         assert_eq!(*total_nodes, 1);
-        assert_eq!(node_type, "test");
+        assert_eq!(node_type, "test-echo");
     } else {
         panic!("Event 1 should be NodeStarted, got {:?}", events[1]);
     }
@@ -141,7 +141,7 @@ fn test_multi_file_progress_tracking() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,

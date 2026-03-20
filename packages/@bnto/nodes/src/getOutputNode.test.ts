@@ -37,9 +37,9 @@ describe("getOutputNode", () => {
       nodes: [
         {
           id: "img",
-          type: "image",
+          type: "image-compress",
           version: "1.0.0",
-          name: "Image",
+          name: "Image Compress",
           position: { x: 0, y: 0 },
           metadata: {},
           parameters: {},

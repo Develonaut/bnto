@@ -49,14 +49,13 @@ export const renameFiles: Recipe = {
         nodes: [
           {
             id: "rename-file",
-            type: "file-system",
+            type: "file-rename",
             version: CURRENT_FORMAT_VERSION,
             name: "Rename",
             position: { x: 0, y: 0 },
             metadata: {},
             parameters: {
-              operation: "rename",
-              ...getProcessorDefaults("file-system", "rename"),
+              ...getProcessorDefaults("file-rename"),
               prefix: "renamed-",
             },
             inputPorts: [],

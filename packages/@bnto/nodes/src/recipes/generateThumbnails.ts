@@ -54,14 +54,13 @@ export const generateThumbnails: Recipe = {
         nodes: [
           {
             id: "resize",
-            type: "image",
+            type: "image-resize",
             version: CURRENT_FORMAT_VERSION,
             name: "Resize",
             position: { x: 0, y: 0 },
             metadata: {},
             parameters: {
-              operation: "resize",
-              ...getProcessorDefaults("image", "resize"),
+              ...getProcessorDefaults("image-resize"),
               width: 150,
             },
             inputPorts: [],
@@ -69,14 +68,13 @@ export const generateThumbnails: Recipe = {
           },
           {
             id: "convert",
-            type: "image",
+            type: "image-convert",
             version: CURRENT_FORMAT_VERSION,
             name: "Convert",
             position: { x: 250, y: 0 },
             metadata: {},
             parameters: {
-              operation: "convert",
-              ...getProcessorDefaults("image", "convert"),
+              ...getProcessorDefaults("image-convert"),
               format: "webp",
             },
             inputPorts: [],
@@ -84,14 +82,13 @@ export const generateThumbnails: Recipe = {
           },
           {
             id: "rename",
-            type: "file-system",
+            type: "file-rename",
             version: CURRENT_FORMAT_VERSION,
             name: "Rename",
             position: { x: 500, y: 0 },
             metadata: {},
             parameters: {
-              operation: "rename",
-              ...getProcessorDefaults("file-system", "rename"),
+              ...getProcessorDefaults("file-rename"),
               prefix: "thumb_",
             },
             inputPorts: [],

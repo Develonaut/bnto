@@ -8,11 +8,8 @@ import { describe, expect, it } from "vitest";
 import {
   NODE_SCHEMA_DEFS,
   inferFieldType,
-  FILE_OPERATIONS,
   LOOP_MODES,
-  IMAGE_OPERATIONS,
   IMAGE_FORMATS,
-  SPREADSHEET_OPERATIONS,
   GROUP_MODES,
   ERROR_STRATEGIES,
   INPUT_MODES,
@@ -23,8 +20,8 @@ import {
 
 describe("NODE_SCHEMA_DEFS", () => {
   it("has a schema for every node type that has one", () => {
-    // 10 types have schemas (all except http-request and shell-command)
-    expect(Object.keys(NODE_SCHEMA_DEFS)).toHaveLength(10);
+    // 13 types have schemas (all except http-request and shell-command)
+    expect(Object.keys(NODE_SCHEMA_DEFS)).toHaveLength(13);
   });
 
   it("every schema entry matches its nodeType key", () => {
@@ -110,14 +107,25 @@ describe("every schema definition", () => {
 // ---------- Zod schema parsing ----------
 
 describe("Zod schemas parse correctly", () => {
-  it("image accepts empty object (all optional except operation via enum)", () => {
-    const result = NODE_SCHEMA_DEFS["image"]!.schema.safeParse({ operation: "resize" });
+  it("image-compress accepts empty object (quality defaults)", () => {
+    const result = NODE_SCHEMA_DEFS["image-compress"]!.schema.safeParse({});
     expect(result.success).toBe(true);
   });
 
-  it("image rejects invalid operation", () => {
-    const result = NODE_SCHEMA_DEFS["image"]!.schema.safeParse({ operation: "explode" });
-    expect(result.success).toBe(false);
+  it("image-resize accepts empty object (all optional/defaulted)", () => {
+    const result = NODE_SCHEMA_DEFS["image-resize"]!.schema.safeParse({});
+    expect(result.success).toBe(true);
+  });
+
+  it("image-convert defaults format to jpeg when omitted", () => {
+    const result = NODE_SCHEMA_DEFS["image-convert"]!.schema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.format).toBe("jpeg");
+  });
+
+  it("image-convert accepts valid format", () => {
+    const result = NODE_SCHEMA_DEFS["image-convert"]!.schema.safeParse({ format: "webp" });
+    expect(result.success).toBe(true);
   });
 
   it("loop requires mode", () => {
@@ -158,30 +166,12 @@ describe("Zod schemas parse correctly", () => {
 // ---------- Enum constant exports ----------
 
 describe("enum constants", () => {
-  it("FILE_OPERATIONS has 1 operation (engine-only)", () => {
-    expect(FILE_OPERATIONS).toHaveLength(1);
-    expect(FILE_OPERATIONS).toContain("rename");
-  });
-
   it("LOOP_MODES has 3 modes", () => {
     expect(LOOP_MODES).toHaveLength(3);
   });
 
-  it("IMAGE_OPERATIONS has 3 operations (engine-only)", () => {
-    expect(IMAGE_OPERATIONS).toHaveLength(3);
-    expect(IMAGE_OPERATIONS).toContain("compress");
-    expect(IMAGE_OPERATIONS).toContain("convert");
-    expect(IMAGE_OPERATIONS).toContain("resize");
-  });
-
   it("IMAGE_FORMATS has 3 formats", () => {
     expect(IMAGE_FORMATS).toHaveLength(3);
-  });
-
-  it("SPREADSHEET_OPERATIONS has 2 operations (engine-only)", () => {
-    expect(SPREADSHEET_OPERATIONS).toHaveLength(2);
-    expect(SPREADSHEET_OPERATIONS).toContain("clean");
-    expect(SPREADSHEET_OPERATIONS).toContain("rename");
   });
 
   it("GROUP_MODES has 2 modes", () => {

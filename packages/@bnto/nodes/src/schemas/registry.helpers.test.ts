@@ -13,17 +13,28 @@ import {
   getConditionallyRequired,
   getVisibleParams,
   inferFieldType,
-  IMAGE_OPERATIONS,
   GROUP_MODES,
 } from "./index";
 
 // ---------- getNodeSchema ----------
 
 describe("getNodeSchema", () => {
-  it("returns schema for valid type", () => {
-    const schema = getNodeSchema("image");
+  it("returns schema for valid per-operation type", () => {
+    const schema = getNodeSchema("image-compress");
     expect(schema).toBeDefined();
-    expect(schema!.nodeType).toBe("image");
+    expect(schema!.nodeType).toBe("image-compress");
+  });
+
+  it("returns schema for image-resize", () => {
+    const schema = getNodeSchema("image-resize");
+    expect(schema).toBeDefined();
+    expect(schema!.nodeType).toBe("image-resize");
+  });
+
+  it("returns schema for image-convert", () => {
+    const schema = getNodeSchema("image-convert");
+    expect(schema).toBeDefined();
+    expect(schema!.nodeType).toBe("image-convert");
   });
 
   it("returns undefined for unknown type", () => {
@@ -33,6 +44,12 @@ describe("getNodeSchema", () => {
   it("returns undefined for types without schemas", () => {
     expect(getNodeSchema("http-request")).toBeUndefined();
     expect(getNodeSchema("shell-command")).toBeUndefined();
+  });
+
+  it("returns undefined for old multi-operation type names", () => {
+    expect(getNodeSchema("image")).toBeUndefined();
+    expect(getNodeSchema("file-system")).toBeUndefined();
+    expect(getNodeSchema("spreadsheet")).toBeUndefined();
   });
 });
 
@@ -75,38 +92,53 @@ describe("getConditionallyRequired", () => {
 // ---------- getVisibleParams ----------
 
 describe("getVisibleParams", () => {
-  it("returns resize-specific params for image resize", () => {
-    const names = getVisibleParams("image", "operation", "resize");
+  it("returns all params for image-resize (no visibleWhen on per-operation types)", () => {
+    const names = getVisibleParams("image-resize", "unused", "unused");
     expect(names).toContain("width");
     expect(names).toContain("height");
     expect(names).toContain("maintainAspect");
+    expect(names).toContain("quality");
   });
 
-  it("excludes resize params when operation is convert", () => {
-    const names = getVisibleParams("image", "operation", "convert");
-    expect(names).not.toContain("width");
-    expect(names).not.toContain("height");
-    expect(names).not.toContain("maintainAspect");
+  it("returns quality for image-compress", () => {
+    const names = getVisibleParams("image-compress", "unused", "unused");
+    expect(names).toContain("quality");
   });
 
-  it("shows quality for all operations (operation hidden)", () => {
-    const resize = getVisibleParams("image", "operation", "resize");
-    expect(resize).not.toContain("operation"); // hidden: pre-set from palette
-    expect(resize).toContain("quality");
-
-    const compress = getVisibleParams("image", "operation", "compress");
-    expect(compress).not.toContain("operation"); // hidden: pre-set from palette
-    expect(compress).toContain("quality");
-
-    const convert = getVisibleParams("image", "operation", "convert");
-    expect(convert).not.toContain("operation"); // hidden: pre-set from palette
-    expect(convert).toContain("quality");
+  it("returns format and quality for image-convert", () => {
+    const names = getVisibleParams("image-convert", "unused", "unused");
+    expect(names).toContain("format");
+    expect(names).toContain("quality");
   });
 
-  it("excludes hidden params (engine wiring fields)", () => {
-    const names = getVisibleParams("image", "operation", "resize");
-    expect(names).not.toContain("input");
-    expect(names).not.toContain("output");
+  it("evaluates visibleWhen on input node (file-upload mode)", () => {
+    const names = getVisibleParams("input", "mode", "file-upload");
+    expect(names).toContain("accept");
+    expect(names).toContain("extensions");
+    expect(names).toContain("label");
+    expect(names).toContain("multiple");
+    expect(names).not.toContain("placeholder");
+  });
+
+  it("evaluates visibleWhen on input node (text mode)", () => {
+    const names = getVisibleParams("input", "mode", "text");
+    expect(names).toContain("placeholder");
+    expect(names).not.toContain("accept");
+    expect(names).not.toContain("extensions");
+  });
+
+  it("evaluates visibleWhen on output node (download mode)", () => {
+    const names = getVisibleParams("output", "mode", "download");
+    expect(names).toContain("filename");
+    expect(names).toContain("zip");
+    expect(names).toContain("autoDownload");
+  });
+
+  it("excludes download-only params for output display mode", () => {
+    const names = getVisibleParams("output", "mode", "display");
+    expect(names).not.toContain("filename");
+    expect(names).not.toContain("zip");
+    expect(names).not.toContain("autoDownload");
   });
 
   it("returns empty for unknown type", () => {
@@ -115,33 +147,23 @@ describe("getVisibleParams", () => {
 
   // --- parameters-map overload (used by editor config panel) ---
 
-  it("parameters-map: returns visible params for current values", () => {
-    const resize = getVisibleParams("image", { operation: "resize", quality: 80 });
-    expect(resize).toContain("width");
-    expect(resize).toContain("height");
-    expect(resize).toContain("maintainAspect");
-    expect(resize).not.toContain("operation"); // hidden: pre-set from palette
-    expect(resize).toContain("quality");
-
-    const compress = getVisibleParams("image", { operation: "compress", quality: 80 });
-    expect(compress).not.toContain("operation"); // hidden: pre-set from palette
-    expect(compress).toContain("quality");
+  it("parameters-map: returns all params for image-resize", () => {
+    const names = getVisibleParams("image-resize", { quality: 80 });
+    expect(names).toContain("width");
+    expect(names).toContain("height");
+    expect(names).toContain("maintainAspect");
+    expect(names).toContain("quality");
   });
 
-  it("parameters-map: excludes hidden params", () => {
-    const names = getVisibleParams("image", { operation: "compress" });
-    expect(names).not.toContain("input");
-    expect(names).not.toContain("output");
-  });
+  it("parameters-map: evaluates input visibleWhen against current values", () => {
+    const fileUpload = getVisibleParams("input", { mode: "file-upload" });
+    expect(fileUpload).toContain("accept");
+    expect(fileUpload).toContain("extensions");
+    expect(fileUpload).not.toContain("placeholder");
 
-  it("parameters-map: evaluates visibleWhen against current values", () => {
-    const convert = getVisibleParams("image", { operation: "convert" });
-    expect(convert).toContain("format");
-    expect(convert).not.toContain("width");
-
-    const resize = getVisibleParams("image", { operation: "resize" });
-    expect(resize).toContain("width");
-    expect(resize).not.toContain("format");
+    const text = getVisibleParams("input", { mode: "text" });
+    expect(text).toContain("placeholder");
+    expect(text).not.toContain("accept");
   });
 
   it("parameters-map: returns empty for unknown type", () => {
@@ -153,14 +175,14 @@ describe("getVisibleParams", () => {
 
 describe("inferFieldType", () => {
   it("detects enum type from Zod enum", () => {
-    const shape = NODE_SCHEMA_DEFS["image"]!.schema.shape;
-    const info = inferFieldType(shape.operation);
+    const shape = NODE_SCHEMA_DEFS["image-convert"]!.schema.shape;
+    const info = inferFieldType(shape.format);
     expect(info.type).toBe("enum");
-    expect(info.enumValues).toEqual(IMAGE_OPERATIONS);
+    expect(info.enumValues).toEqual(["jpeg", "png", "webp"]);
   });
 
   it("detects number type with min/max", () => {
-    const shape = NODE_SCHEMA_DEFS["image"]!.schema.shape;
+    const shape = NODE_SCHEMA_DEFS["image-compress"]!.schema.shape;
     const info = inferFieldType(shape.quality);
     expect(info.type).toBe("number");
     expect(info.min).toBe(1);
@@ -168,20 +190,20 @@ describe("inferFieldType", () => {
   });
 
   it("detects boolean type", () => {
-    const shape = NODE_SCHEMA_DEFS["image"]!.schema.shape;
+    const shape = NODE_SCHEMA_DEFS["image-resize"]!.schema.shape;
     const info = inferFieldType(shape.maintainAspect);
     expect(info.type).toBe("boolean");
   });
 
   it("detects string type for plain strings", () => {
-    const shape = NODE_SCHEMA_DEFS["file-system"]!.schema.shape;
+    const shape = NODE_SCHEMA_DEFS["file-rename"]!.schema.shape;
     const info = inferFieldType(shape.find);
     expect(info.type).toBe("string");
   });
 
   it("unwraps optional/default wrappers", () => {
     // quality is z.number().min(1).max(100).optional().default(80)
-    const shape = NODE_SCHEMA_DEFS["image"]!.schema.shape;
+    const shape = NODE_SCHEMA_DEFS["image-compress"]!.schema.shape;
     const info = inferFieldType(shape.quality);
     expect(info.type).toBe("number");
     expect(info.min).toBe(1);

@@ -29,10 +29,10 @@ pub(super) fn compress_images_json() -> &'static str {
                         "inputPorts": [{"id": "in-1", "name": "items"}], "outputPorts": [],
                         "nodes": [
                             {
-                                "id": "compress-image", "type": "image", "version": "1.0.0",
+                                "id": "compress-image", "type": "image-compress", "version": "1.0.0",
                                 "name": "Compress Image", "position": {"x": 0, "y": 0},
                                 "metadata": {},
-                                "parameters": { "operation": "compress", "quality": 80 },
+                                "parameters": { "quality": 80 },
                                 "inputPorts": [], "outputPorts": []
                             }
                         ],
@@ -77,11 +77,10 @@ pub(super) fn clean_csv_json() -> &'static str {
                 "outputPorts": [{"id": "out-1", "name": "files"}],
                 "nodes": [
                     {
-                        "id": "clean", "type": "spreadsheet", "version": "1.0.0",
+                        "id": "clean", "type": "spreadsheet-clean", "version": "1.0.0",
                         "name": "Clean CSV", "position": {"x": 0, "y": 0},
                         "metadata": {},
                         "parameters": {
-                            "operation": "clean",
                             "trimWhitespace": true,
                             "removeEmptyRows": true,
                             "removeDuplicates": true
@@ -135,10 +134,10 @@ pub(super) fn rename_files_json() -> &'static str {
                         "inputPorts": [{"id": "in-1", "name": "items"}], "outputPorts": [],
                         "nodes": [
                             {
-                                "id": "rename-file", "type": "file-system", "version": "1.0.0",
+                                "id": "rename-file", "type": "file-rename", "version": "1.0.0",
                                 "name": "Rename File", "position": {"x": 0, "y": 0},
                                 "metadata": {},
-                                "parameters": { "operation": "rename", "prefix": "renamed-" },
+                                "parameters": { "prefix": "renamed-" },
                                 "inputPorts": [], "outputPorts": []
                             }
                         ],
@@ -202,7 +201,7 @@ fn test_recipe_compress_images_multiple_files() {
 
 #[test]
 fn test_recipe_resize_images() {
-    // Compositional: Input → Group("Batch Resize") → Loop → [image:resize] → Output
+    // Compositional: Input → Group("Batch Resize") → Loop → [image-resize] → Output
     let json = r#"{
         "nodes": [
             { "id": "input", "type": "input", "parameters": {} },
@@ -214,8 +213,8 @@ fn test_recipe_resize_images() {
                         "parameters": { "mode": "forEach" },
                         "nodes": [
                             {
-                                "id": "resize-image", "type": "image",
-                                "parameters": { "operation": "resize", "width": 200 }
+                                "id": "resize-image", "type": "image-resize",
+                                "parameters": { "width": 200 }
                             }
                         ]
                     }
@@ -241,7 +240,7 @@ fn test_recipe_resize_images() {
 
 #[test]
 fn test_recipe_convert_image_format() {
-    // Compositional: Input → Group("Batch Convert") → Loop → [image:convert] → Output
+    // Compositional: Input → Group("Batch Convert") → Loop → [image-convert] → Output
     let json = r#"{
         "nodes": [
             { "id": "input", "type": "input", "parameters": {} },
@@ -253,8 +252,8 @@ fn test_recipe_convert_image_format() {
                         "parameters": { "mode": "forEach" },
                         "nodes": [
                             {
-                                "id": "convert-image", "type": "image",
-                                "parameters": { "operation": "convert", "format": "webp" }
+                                "id": "convert-image", "type": "image-convert",
+                                "parameters": { "format": "webp" }
                             }
                         ]
                     }
@@ -295,7 +294,7 @@ fn test_recipe_clean_csv_single_file() {
 
 #[test]
 fn test_recipe_rename_csv_columns() {
-    // Compositional: Input → Group("Column Renamer") → [spreadsheet:rename] → Output
+    // Compositional: Input → Group("Column Renamer") → [spreadsheet-rename] → Output
     let json = r#"{
         "nodes": [
             { "id": "input", "type": "input", "parameters": {} },
@@ -303,8 +302,8 @@ fn test_recipe_rename_csv_columns() {
                 "id": "column-renamer", "type": "group", "parameters": {},
                 "nodes": [
                     {
-                        "id": "rename-columns", "type": "spreadsheet",
-                        "parameters": { "operation": "rename", "columns": {} }
+                        "id": "rename-columns", "type": "spreadsheet-rename",
+                        "parameters": { "columns": {} }
                     }
                 ]
             },

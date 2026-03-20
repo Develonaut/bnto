@@ -19,8 +19,8 @@ fn compress_images_recipe_produces_smaller_output() {
                     "id": "compress-loop", "type": "loop",
                     "parameters": { "mode": "forEach" },
                     "nodes": [{
-                        "id": "compress-image", "type": "image",
-                        "parameters": { "operation": "compress", "quality": 50 }
+                        "id": "compress-image", "type": "image-compress",
+                        "parameters": { "quality": 50 }
                     }]
                 }]
             },
@@ -66,8 +66,8 @@ fn compress_images_recipe_handles_batch() {
                     "id": "compress-loop", "type": "loop",
                     "parameters": { "mode": "forEach" },
                     "nodes": [{
-                        "id": "compress-image", "type": "image",
-                        "parameters": { "operation": "compress", "quality": 80 }
+                        "id": "compress-image", "type": "image-compress",
+                        "parameters": { "quality": 80 }
                     }]
                 }]
             },
@@ -110,8 +110,8 @@ fn compress_images_metadata_includes_size_stats() {
                     "id": "compress-loop", "type": "loop",
                     "parameters": { "mode": "forEach" },
                     "nodes": [{
-                        "id": "compress-image", "type": "image",
-                        "parameters": { "operation": "compress", "quality": 50 }
+                        "id": "compress-image", "type": "image-compress",
+                        "parameters": { "quality": 50 }
                     }]
                 }]
             },
@@ -166,8 +166,8 @@ fn resize_images_recipe_produces_output() {
                     "id": "resize-loop", "type": "loop",
                     "parameters": { "mode": "forEach" },
                     "nodes": [{
-                        "id": "resize-image", "type": "image",
-                        "parameters": { "operation": "resize", "width": 100 }
+                        "id": "resize-image", "type": "image-resize",
+                        "parameters": { "width": 100 }
                     }]
                 }]
             },
@@ -202,8 +202,8 @@ fn convert_image_format_recipe_produces_png() {
                     "id": "convert-loop", "type": "loop",
                     "parameters": { "mode": "forEach" },
                     "nodes": [{
-                        "id": "convert-image", "type": "image",
-                        "parameters": { "operation": "convert", "format": "png", "quality": 80 }
+                        "id": "convert-image", "type": "image-convert",
+                        "parameters": { "format": "png", "quality": 80 }
                     }]
                 }]
             },

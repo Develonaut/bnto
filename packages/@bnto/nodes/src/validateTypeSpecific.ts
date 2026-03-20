@@ -7,14 +7,10 @@
 
 import type { Definition } from "./definition";
 import { LOOP_MODES } from "./schemas/loop";
-import { FILE_OPERATIONS } from "./schemas/fileSystem";
 import type { ValidationError } from "./validationError";
 
 /** Valid loop modes — derived from the schema's canonical array. */
 const VALID_LOOP_MODES = new Set<string>(LOOP_MODES);
-
-/** Valid file-system operations — derived from the engine catalog. */
-const VALID_FILE_OPERATIONS = new Set<string>(FILE_OPERATIONS);
 
 function err(nodeId: string, field: string, message: string): ValidationError {
   return { nodeId, field, message };
@@ -66,32 +62,6 @@ export function validateLoop(def: Definition): ValidationError[] {
     );
 }
 
-/** Validates file-system node: operation required, must be valid. */
-export function validateFileSystem(def: Definition): ValidationError[] {
-  const errors: ValidationError[] = [];
-
-  const operation = getStringParam(def, "operation");
-  if (!operation) {
-    errors.push(
-      err(
-        def.id,
-        "operation",
-        `file-system node '${def.id}' missing required parameter 'operation'`,
-      ),
-    );
-  } else if (!VALID_FILE_OPERATIONS.has(operation)) {
-    errors.push(
-      err(
-        def.id,
-        "operation",
-        `file-system node '${def.id}' has invalid operation '${operation}' (must be ${FILE_OPERATIONS.join(", ")})`,
-      ),
-    );
-  }
-
-  return errors;
-}
-
 /** Validates edit-fields node: values parameter required. */
 export function validateEditFields(def: Definition): ValidationError[] {
   if (def.parameters["values"] == null) {
@@ -105,19 +75,23 @@ export function validateEditFields(def: Definition): ValidationError[] {
 /**
  * Dispatch map from node type name to its validator function.
  *
- * Types not listed here (group, parallel, spreadsheet, image, transform,
- * http-request, shell-command) have no type-specific validation.
+ * Per-operation node types (image-compress, image-resize, image-convert,
+ * spreadsheet-clean, spreadsheet-rename, file-rename) have no type-specific
+ * validation — their per-operation Zod schemas handle field-level constraints.
  */
 export const TYPE_VALIDATORS: Record<string, ((def: Definition) => ValidationError[]) | undefined> =
   {
-    "file-system": validateFileSystem,
     loop: validateLoop,
     "edit-fields": validateEditFields,
     // These types have no type-specific validation
     group: undefined,
     parallel: undefined,
-    spreadsheet: undefined,
-    image: undefined,
+    "image-compress": undefined,
+    "image-resize": undefined,
+    "image-convert": undefined,
+    "spreadsheet-clean": undefined,
+    "spreadsheet-rename": undefined,
+    "file-rename": undefined,
     transform: undefined,
     "http-request": undefined,
     "shell-command": undefined,

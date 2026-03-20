@@ -140,19 +140,31 @@ export function SchemaFormPlayground() {
 
       {/* ── Right: Inspector panels ─────────────────────── */}
       <div className="flex flex-col gap-4 overflow-y-auto">
-        <InspectorSection title="Form State">
+        <InspectorSection
+          title="Form State"
+          description="Current parameter values as stored in the node config."
+        >
           <pre className="overflow-x-auto text-xs">{JSON.stringify(values, null, 2)}</pre>
         </InspectorSection>
 
-        <InspectorSection title="Schema (NodeParamMeta)">
+        <InspectorSection
+          title="Schema (NodeParamMeta)"
+          description="Engine-generated metadata: labels, descriptions, and visibility rules."
+        >
           <SchemaInspector schema={schema} visibleParams={visibleParams} />
         </InspectorSection>
 
-        <InspectorSection title="Fields (FieldConfig)">
+        <InspectorSection
+          title="Fields (FieldConfig)"
+          description="UI presentation hints: groups, presets, options, and control overrides."
+        >
           <FieldsInspector fields={fields} visibleParams={visibleParams} />
         </InspectorSection>
 
-        <InspectorSection title="Inferred Controls">
+        <InspectorSection
+          title="Inferred Controls"
+          description="Final control type derived from Zod schema shape and field config."
+        >
           <ControlsInspector schema={schema} fields={fields} visibleParams={visibleParams} />
         </InspectorSection>
       </div>
@@ -162,12 +174,25 @@ export function SchemaFormPlayground() {
 
 // ─── Inspector panels ─────────────────────────────────────────────────
 
-function InspectorSection({ title, children }: { title: string; children: React.ReactNode }) {
+function InspectorSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-lg border bg-card p-4">
       <Text size="xs" color="muted" className="mb-2 font-mono uppercase tracking-wider">
         {title}
       </Text>
+      {description && (
+        <Text size="xs" color="muted" className="mb-3">
+          {description}
+        </Text>
+      )}
       {children}
     </div>
   );
@@ -201,11 +226,6 @@ function SchemaInspector({
               <div>
                 {meta.label} — {meta.description}
               </div>
-              {meta.visibleWhen && (
-                <div className="mt-0.5 font-mono text-[10px]">
-                  visibleWhen: {JSON.stringify(meta.visibleWhen)}
-                </div>
-              )}
             </div>
           </div>
         );
@@ -249,7 +269,6 @@ function FieldsInspector({
               className={`font-mono font-medium ${isVisible ? "" : "line-through opacity-50"}`}
             >
               {name}
-              {fc.hidden && <span className="ml-1 text-destructive">(hidden)</span>}
             </Text>
             <div className="ml-2 text-muted-foreground">
               {fc.group && <span className="mr-2">group: {fc.group}</span>}

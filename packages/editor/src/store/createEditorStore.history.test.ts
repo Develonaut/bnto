@@ -23,7 +23,7 @@ describe("createEditorStore — history", () => {
 
   describe("pushUndo", () => {
     it("captures current nodes + configs as snapshot", () => {
-      addNodeViaStore(store, "image");
+      addNodeViaStore(store, "image-compress");
       const undoCount = state(store).undoStack.length;
 
       state(store).pushUndo();
@@ -47,7 +47,7 @@ describe("createEditorStore — history", () => {
 
   describe("undo/redo", () => {
     it("restores nodes and configs on undo", () => {
-      addNodeViaStore(store, "image");
+      addNodeViaStore(store, "image-compress");
       const afterAdd = state(store).nodes.length;
 
       addNodeViaStore(store, "transform");
@@ -58,7 +58,7 @@ describe("createEditorStore — history", () => {
     });
 
     it("restores nodes and configs on redo", () => {
-      addNodeViaStore(store, "image");
+      addNodeViaStore(store, "image-compress");
       addNodeViaStore(store, "transform");
       const twoNodes = state(store).nodes.length;
 
@@ -82,9 +82,9 @@ describe("createEditorStore — history", () => {
     });
 
     it("supports multiple undo levels", () => {
-      addNodeViaStore(store, "image");
+      addNodeViaStore(store, "image-compress");
       addNodeViaStore(store, "transform");
-      addNodeViaStore(store, "spreadsheet");
+      addNodeViaStore(store, "spreadsheet-clean");
       expect(state(store).nodes.length).toBe(5); // input + 3 nodes + output
 
       state(store).undo();
@@ -98,7 +98,7 @@ describe("createEditorStore — history", () => {
     });
 
     it("marks dirty after undo", () => {
-      addNodeViaStore(store, "image");
+      addNodeViaStore(store, "image-compress");
       store.setState({ isDirty: false });
 
       state(store).undo();

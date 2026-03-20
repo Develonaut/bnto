@@ -10,12 +10,8 @@
 import { z } from "zod";
 import type { NodeSchemaDefinition } from "../schemas/types";
 
-/** Valid file-system operations — derived from engine processors. */
-export const FILE_SYSTEM_OPERATIONS = ["rename"] as const;
-
-/** Zod schema for file-system node parameters (auto-generated from engine). */
-export const fileSystemParamsSchema = z.object({
-  operation: z.enum(FILE_SYSTEM_OPERATIONS as unknown as [string, ...string[]]),
+/** Zod schema for file-rename node parameters (auto-generated from engine). */
+export const fileRenameParamsSchema = z.object({
     find: z.string().optional(),
     replace: z.string().optional(),
     case: z.enum(["lower","upper","title"] as const).optional(),
@@ -24,151 +20,174 @@ export const fileSystemParamsSchema = z.object({
     pattern: z.string().optional(),
 });
 
-/** Inferred TypeScript type for file-system node parameters. */
-export type FileSystemParams = z.infer<typeof fileSystemParamsSchema>;
+/** Inferred TypeScript type for file-rename node parameters. */
+export type FileRenameParams = z.infer<typeof fileRenameParamsSchema>;
 
-/** Full schema definition for the file-system node type (auto-generated from engine). */
-export const fileSystemNodeSchema: NodeSchemaDefinition = {
-  nodeType: "file-system",
+/** Full schema definition for the file-rename node type (auto-generated from engine). */
+export const fileRenameNodeSchema: NodeSchemaDefinition = {
+  nodeType: "file-rename",
   schemaVersion: 1,
-  schema: fileSystemParamsSchema,
+  schema: fileRenameParamsSchema,
   params: {
-    operation: {
-      label: "Operation",
-      description: "The file-system operation to perform.",
-    },
     find: {
       label: "Find",
       description: "Text or regex pattern to search for in the filename",
-      visibleWhen: { param: "operation", equals: "rename" },
     },
     replace: {
       label: "Replace",
       description: "Replacement text (used with Find)",
-      visibleWhen: { param: "operation", equals: "rename" },
     },
     case: {
       label: "Case",
       description: "Transform the filename to a specific case",
-      visibleWhen: { param: "operation", equals: "rename" },
     },
     prefix: {
       label: "Prefix",
       description: "Text to prepend to the filename",
-      visibleWhen: { param: "operation", equals: "rename" },
     },
     suffix: {
       label: "Suffix",
       description: "Text to append before the file extension",
-      visibleWhen: { param: "operation", equals: "rename" },
     },
     pattern: {
       label: "Pattern",
       description: "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
       placeholder: "{{name}}-compressed.{{ext}}",
-      visibleWhen: { param: "operation", equals: "rename" },
     },
   },
 };
 
-/** Valid image operations — derived from engine processors. */
-export const IMAGE_OPERATIONS = ["compress","convert","resize"] as const;
-
-/** Zod schema for image node parameters (auto-generated from engine). */
-export const imageParamsSchema = z.object({
-  operation: z.enum(IMAGE_OPERATIONS as unknown as [string, ...string[]]),
+/** Zod schema for image-compress node parameters (auto-generated from engine). */
+export const imageCompressParamsSchema = z.object({
     quality: z.number().min(1).max(100).optional().default(80),
-    format: z.enum(["jpeg","png","webp"] as const).optional(),
-    width: z.number().min(1).optional(),
-    height: z.number().min(1).optional(),
-    maintainAspect: z.boolean().optional().default(true),
 });
 
-/** Inferred TypeScript type for image node parameters. */
-export type ImageParams = z.infer<typeof imageParamsSchema>;
+/** Inferred TypeScript type for image-compress node parameters. */
+export type ImageCompressParams = z.infer<typeof imageCompressParamsSchema>;
 
-/** Full schema definition for the image node type (auto-generated from engine). */
-export const imageNodeSchema: NodeSchemaDefinition = {
-  nodeType: "image",
+/** Full schema definition for the image-compress node type (auto-generated from engine). */
+export const imageCompressNodeSchema: NodeSchemaDefinition = {
+  nodeType: "image-compress",
   schemaVersion: 1,
-  schema: imageParamsSchema,
+  schema: imageCompressParamsSchema,
   params: {
-    operation: {
-      label: "Operation",
-      description: "The image operation to perform.",
+    quality: {
+      label: "Quality",
+      description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+    },
+  },
+};
+
+/** Zod schema for image-convert node parameters (auto-generated from engine). */
+export const imageConvertParamsSchema = z.object({
+    format: z.enum(["jpeg","png","webp"] as const).default("jpeg"),
+    quality: z.number().min(1).max(100).optional().default(80),
+});
+
+/** Inferred TypeScript type for image-convert node parameters. */
+export type ImageConvertParams = z.infer<typeof imageConvertParamsSchema>;
+
+/** Full schema definition for the image-convert node type (auto-generated from engine). */
+export const imageConvertNodeSchema: NodeSchemaDefinition = {
+  nodeType: "image-convert",
+  schemaVersion: 1,
+  schema: imageConvertParamsSchema,
+  params: {
+    format: {
+      label: "Output Format",
+      description: "The target image format to convert to",
     },
     quality: {
       label: "Quality",
       description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
-      visibleWhen: [{ param: "operation", equals: "compress" }, { param: "operation", equals: "resize" }, { param: "operation", equals: "convert" }],
-    },
-    format: {
-      label: "Output Format",
-      description: "The target image format to convert to",
-      visibleWhen: { param: "operation", equals: "convert" },
-    },
-    width: {
-      label: "Width",
-      description: "Target width in pixels",
-      visibleWhen: { param: "operation", equals: "resize" },
-    },
-    height: {
-      label: "Height",
-      description: "Target height in pixels",
-      visibleWhen: { param: "operation", equals: "resize" },
-    },
-    maintainAspect: {
-      label: "Maintain Aspect Ratio",
-      description: "Keep the original width-to-height ratio when resizing",
-      visibleWhen: { param: "operation", equals: "resize" },
     },
   },
 };
 
-/** Valid spreadsheet operations — derived from engine processors. */
-export const SPREADSHEET_OPERATIONS = ["clean","rename"] as const;
+/** Zod schema for image-resize node parameters (auto-generated from engine). */
+export const imageResizeParamsSchema = z.object({
+    width: z.number().min(1).optional(),
+    height: z.number().min(1).optional(),
+    maintainAspect: z.boolean().optional().default(true),
+    quality: z.number().min(1).max(100).optional().default(80),
+});
 
-/** Zod schema for spreadsheet node parameters (auto-generated from engine). */
-export const spreadsheetParamsSchema = z.object({
-  operation: z.enum(SPREADSHEET_OPERATIONS as unknown as [string, ...string[]]),
+/** Inferred TypeScript type for image-resize node parameters. */
+export type ImageResizeParams = z.infer<typeof imageResizeParamsSchema>;
+
+/** Full schema definition for the image-resize node type (auto-generated from engine). */
+export const imageResizeNodeSchema: NodeSchemaDefinition = {
+  nodeType: "image-resize",
+  schemaVersion: 1,
+  schema: imageResizeParamsSchema,
+  params: {
+    width: {
+      label: "Width",
+      description: "Target width in pixels",
+    },
+    height: {
+      label: "Height",
+      description: "Target height in pixels",
+    },
+    maintainAspect: {
+      label: "Maintain Aspect Ratio",
+      description: "Keep the original width-to-height ratio when resizing",
+    },
+    quality: {
+      label: "Quality",
+      description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+    },
+  },
+};
+
+/** Zod schema for spreadsheet-clean node parameters (auto-generated from engine). */
+export const spreadsheetCleanParamsSchema = z.object({
     trimWhitespace: z.boolean().optional().default(true),
     removeEmptyRows: z.boolean().optional().default(true),
     removeDuplicates: z.boolean().optional().default(true),
-    columns: z.record(z.string()).optional(),
 });
 
-/** Inferred TypeScript type for spreadsheet node parameters. */
-export type SpreadsheetParams = z.infer<typeof spreadsheetParamsSchema>;
+/** Inferred TypeScript type for spreadsheet-clean node parameters. */
+export type SpreadsheetCleanParams = z.infer<typeof spreadsheetCleanParamsSchema>;
 
-/** Full schema definition for the spreadsheet node type (auto-generated from engine). */
-export const spreadsheetNodeSchema: NodeSchemaDefinition = {
-  nodeType: "spreadsheet",
+/** Full schema definition for the spreadsheet-clean node type (auto-generated from engine). */
+export const spreadsheetCleanNodeSchema: NodeSchemaDefinition = {
+  nodeType: "spreadsheet-clean",
   schemaVersion: 1,
-  schema: spreadsheetParamsSchema,
+  schema: spreadsheetCleanParamsSchema,
   params: {
-    operation: {
-      label: "Operation",
-      description: "The spreadsheet operation to perform.",
-    },
     trimWhitespace: {
       label: "Trim Whitespace",
       description: "Remove leading and trailing whitespace from every cell",
-      visibleWhen: { param: "operation", equals: "clean" },
     },
     removeEmptyRows: {
       label: "Remove Empty Rows",
       description: "Skip rows where every cell is blank",
-      visibleWhen: { param: "operation", equals: "clean" },
     },
     removeDuplicates: {
       label: "Remove Duplicates",
       description: "Remove duplicate rows, keeping the first occurrence",
-      visibleWhen: { param: "operation", equals: "clean" },
     },
+  },
+};
+
+/** Zod schema for spreadsheet-rename node parameters (auto-generated from engine). */
+export const spreadsheetRenameParamsSchema = z.object({
+    columns: z.record(z.string()).optional(),
+});
+
+/** Inferred TypeScript type for spreadsheet-rename node parameters. */
+export type SpreadsheetRenameParams = z.infer<typeof spreadsheetRenameParamsSchema>;
+
+/** Full schema definition for the spreadsheet-rename node type (auto-generated from engine). */
+export const spreadsheetRenameNodeSchema: NodeSchemaDefinition = {
+  nodeType: "spreadsheet-rename",
+  schemaVersion: 1,
+  schema: spreadsheetRenameParamsSchema,
+  params: {
     columns: {
       label: "Column Mapping",
       description: "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
-      visibleWhen: { param: "operation", equals: "rename" },
     },
   },
 };

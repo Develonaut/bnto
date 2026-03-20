@@ -41,41 +41,31 @@ export const inputNodeSchema: NodeSchemaDefinition = {
       label: "Accepted MIME Types",
       description:
         'MIME types accepted (e.g., "image/jpeg", "image/png"). Derived from extensions.',
-      visibleWhen: { param: "mode", equals: "file-upload" },
     },
     extensions: {
       label: "File Extensions",
       description: 'File extensions accepted (e.g., ".jpg", ".png").',
-      visibleWhen: { param: "mode", equals: "file-upload" },
     },
     label: {
       label: "Label",
       description: "Human-readable label for the input control.",
       placeholder: "JPEG, PNG, or WebP images",
-      visibleWhen: { param: "mode", equals: "file-upload" },
     },
     multiple: {
       label: "Multiple",
       description: "Whether multiple files or items are accepted.",
-      visibleWhen: { param: "mode", equals: "file-upload" },
     },
     maxFileSize: {
       label: "Max File Size",
       description: "Maximum file size in bytes. 0 = no limit.",
-      visibleWhen: { param: "mode", equals: "file-upload" },
     },
     maxFiles: {
       label: "Max Files",
       description: "Maximum number of files. 0 = no limit.",
-      visibleWhen: { param: "mode", equals: "file-upload" },
     },
     placeholder: {
       label: "Placeholder",
       description: "Placeholder text for text or URL input.",
-      visibleWhen: [
-        { param: "mode", equals: "text" },
-        { param: "mode", equals: "url" },
-      ],
     },
   },
 };
@@ -89,8 +79,11 @@ export const inputFields: FieldConfigMap = {
       { value: "url", label: "URL" },
     ],
   },
-  accept: { hidden: true },
+  accept: {
+    visibleWhen: { param: "mode", equals: "file-upload" },
+  },
   extensions: {
+    visibleWhen: { param: "mode", equals: "file-upload" },
     options: [
       { value: ".jpg", label: ".jpg" },
       { value: ".jpeg", label: ".jpeg" },
@@ -109,7 +102,22 @@ export const inputFields: FieldConfigMap = {
       { value: ".wav", label: ".wav" },
     ],
   },
-  label: { hidden: true },
-  maxFileSize: { hidden: true },
-  maxFiles: { hidden: true },
+  label: {
+    visibleWhen: { param: "mode", equals: "file-upload" },
+  },
+  multiple: {
+    visibleWhen: { param: "mode", equals: "file-upload" },
+  },
+  maxFileSize: {
+    visibleWhen: { param: "mode", equals: "file-upload" },
+  },
+  maxFiles: {
+    visibleWhen: { param: "mode", equals: "file-upload" },
+  },
+  placeholder: {
+    visibleWhen: [
+      { param: "mode", equals: "text" },
+      { param: "mode", equals: "url" },
+    ],
+  },
 };

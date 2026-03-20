@@ -4,21 +4,23 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { NODE_SCHEMA_DEFS, inferFieldType } from "./index";
+import { NODE_SCHEMA_DEFS, NODE_FIELD_CONFIGS, inferFieldType } from "./index";
 
-describe("file-system schema", () => {
-  const def = NODE_SCHEMA_DEFS["file-system"]!;
+describe("file-rename schema", () => {
+  const def = NODE_SCHEMA_DEFS["file-rename"]!;
 
-  it("operation is required", () => {
+  it("accepts empty object (all optional)", () => {
     const result = def.schema.safeParse({});
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it("operation enum has 1 value (engine-only: rename)", () => {
-    const info = inferFieldType(def.schema.shape.operation);
+  it("case enum has 3 values", () => {
+    const info = inferFieldType(def.schema.shape.case);
     expect(info.type).toBe("enum");
-    expect(info.enumValues).toHaveLength(1);
-    expect(info.enumValues).toContain("rename");
+    expect(info.enumValues).toHaveLength(3);
+    expect(info.enumValues).toContain("lower");
+    expect(info.enumValues).toContain("upper");
+    expect(info.enumValues).toContain("title");
   });
 });
 
@@ -30,11 +32,12 @@ describe("loop schema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("mode-specific params are conditionally required (items is optional)", () => {
+  it("mode-specific params are conditionally required via FieldConfig (items is optional)", () => {
+    const fields = NODE_FIELD_CONFIGS["loop"]!;
     // items is optional — the Rust engine iterates files directly
-    expect(def.params.items.requiredWhen).toBeUndefined();
-    expect(def.params.count.requiredWhen).toEqual({ param: "mode", equals: "times" });
-    expect(def.params.condition.requiredWhen).toEqual({ param: "mode", equals: "while" });
+    expect(fields.items?.requiredWhen).toBeUndefined();
+    expect(fields.count?.requiredWhen).toEqual({ param: "mode", equals: "times" });
+    expect(fields.condition?.requiredWhen).toEqual({ param: "mode", equals: "while" });
   });
 });
 
@@ -53,16 +56,11 @@ describe("edit-fields schema", () => {
   });
 });
 
-describe("image schema", () => {
-  const def = NODE_SCHEMA_DEFS["image"]!;
-
-  it("operation is required", () => {
-    const result = def.schema.safeParse({});
-    expect(result.success).toBe(false);
-  });
+describe("image-compress schema", () => {
+  const def = NODE_SCHEMA_DEFS["image-compress"]!;
 
   it("quality defaults to 80 with 1-100 range", () => {
-    const result = def.schema.safeParse({ operation: "compress" });
+    const result = def.schema.safeParse({});
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.quality).toBe(80);
 
@@ -70,43 +68,70 @@ describe("image schema", () => {
     expect(info.min).toBe(1);
     expect(info.max).toBe(100);
   });
+});
 
-  it("resize params visible only for resize", () => {
-    for (const name of ["width", "height", "maintainAspect"]) {
-      expect(def.params[name].visibleWhen).toEqual({
-        param: "operation",
-        equals: "resize",
-      });
-    }
+describe("image-resize schema", () => {
+  const def = NODE_SCHEMA_DEFS["image-resize"]!;
+
+  it("accepts empty object (all optional/defaulted)", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(true);
   });
 
-  it("rejects composite (removed — no engine processor)", () => {
-    const result = def.schema.safeParse({ operation: "composite" });
+  it("maintainAspect defaults to true", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.maintainAspect).toBe(true);
+  });
+
+  it("quality defaults to 80", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.quality).toBe(80);
+  });
+});
+
+describe("image-convert schema", () => {
+  const def = NODE_SCHEMA_DEFS["image-convert"]!;
+
+  it("defaults format to jpeg when omitted", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.format).toBe("jpeg");
+  });
+
+  it("accepts valid format", () => {
+    const result = def.schema.safeParse({ format: "webp" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid format", () => {
+    const result = def.schema.safeParse({ format: "gif" });
     expect(result.success).toBe(false);
   });
 });
 
-describe("spreadsheet schema", () => {
-  const def = NODE_SCHEMA_DEFS["spreadsheet"]!;
+describe("spreadsheet-clean schema", () => {
+  const def = NODE_SCHEMA_DEFS["spreadsheet-clean"]!;
 
-  it("requires operation", () => {
+  it("accepts empty object (all defaulted)", () => {
     const result = def.schema.safeParse({});
-    expect(result.success).toBe(false);
-  });
-
-  it("passes with engine operation clean", () => {
-    const result = def.schema.safeParse({ operation: "clean" });
     expect(result.success).toBe(true);
   });
 
-  it("passes with engine operation rename", () => {
-    const result = def.schema.safeParse({ operation: "rename" });
+  it("defaults trimWhitespace to true", () => {
+    const result = def.schema.safeParse({});
     expect(result.success).toBe(true);
+    if (result.success) expect(result.data.trimWhitespace).toBe(true);
   });
+});
 
-  it("rejects removed legacy operation read", () => {
-    const result = def.schema.safeParse({ operation: "read" });
-    expect(result.success).toBe(false);
+describe("spreadsheet-rename schema", () => {
+  const def = NODE_SCHEMA_DEFS["spreadsheet-rename"]!;
+
+  it("accepts empty object (columns optional)", () => {
+    const result = def.schema.safeParse({});
+    expect(result.success).toBe(true);
   });
 });
 

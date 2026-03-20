@@ -27,24 +27,24 @@ describe("createEditorStore — actions", () => {
 
   describe("addNode", () => {
     it("adds a node and its config", () => {
-      const id = addNodeViaStore(store, "image");
+      const id = addNodeViaStore(store, "image-compress");
       expect(id).toBeTruthy();
       expect(state(store).nodes.length).toBe(3); // input + image + output
       expect(state(store).configs[id!]).toBeDefined();
-      expect(state(store).configs[id!]!.nodeType).toBe("image");
+      expect(state(store).configs[id!]!.nodeType).toBe("image-compress");
     });
 
     it("marks dirty and pushes undo", () => {
-      addNodeViaStore(store, "image");
+      addNodeViaStore(store, "image-compress");
       expect(state(store).isDirty).toBe(true);
       expect(state(store).undoStack.length).toBe(1);
     });
 
     it("returns null when canvas is full", () => {
       for (let i = 0; i < 10; i++) {
-        addNodeViaStore(store, "image");
+        addNodeViaStore(store, "image-compress");
       }
-      const id = addNodeViaStore(store, "image");
+      const id = addNodeViaStore(store, "image-compress");
       expect(id).toBeNull();
     });
   });
@@ -53,7 +53,7 @@ describe("createEditorStore — actions", () => {
 
   describe("removeNode", () => {
     it("removes node and its config", () => {
-      const id = addNodeViaStore(store, "image")!;
+      const id = addNodeViaStore(store, "image-compress")!;
       removeNodeViaStore(store, id);
       // After remove: input + output = 2
       expect(state(store).nodes.length).toBe(2);
@@ -61,7 +61,7 @@ describe("createEditorStore — actions", () => {
     });
 
     it("pushes undo snapshot before removal", () => {
-      const id = addNodeViaStore(store, "image")!;
+      const id = addNodeViaStore(store, "image-compress")!;
       // addNode pushes one undo, removeNode pushes another
       removeNodeViaStore(store, id);
       expect(state(store).undoStack.length).toBe(2);
@@ -99,7 +99,7 @@ describe("createEditorStore — actions", () => {
 
     it("allows deleting non-I/O nodes", () => {
       state(store).createBlank();
-      const id = addNodeViaStore(store, "image")!;
+      const id = addNodeViaStore(store, "image-compress")!;
       const before = state(store).nodes.length;
       removeNodeViaStore(store, id);
       expect(state(store).nodes.length).toBe(before - 1);
@@ -110,13 +110,13 @@ describe("createEditorStore — actions", () => {
 
   describe("updateConfigParams", () => {
     it("merges params into config", () => {
-      const id = addNodeViaStore(store, "image")!;
+      const id = addNodeViaStore(store, "image-compress")!;
       updateParamsViaStore(store, id, { quality: 80 });
       expect(state(store).configs[id]!.parameters.quality).toBe(80);
     });
 
     it("does not modify nodes array", () => {
-      const id = addNodeViaStore(store, "image")!;
+      const id = addNodeViaStore(store, "image-compress")!;
       const nodesBefore = state(store).nodes;
       updateParamsViaStore(store, id, { quality: 80 });
       // nodes reference should be the same — no RF re-render needed
@@ -124,7 +124,7 @@ describe("createEditorStore — actions", () => {
     });
 
     it("pushes undo and marks dirty", () => {
-      const id = addNodeViaStore(store, "image")!;
+      const id = addNodeViaStore(store, "image-compress")!;
       const undoBefore = state(store).undoStack.length;
       updateParamsViaStore(store, id, { quality: 80 });
       expect(state(store).undoStack.length).toBe(undoBefore + 1);

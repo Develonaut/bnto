@@ -1,23 +1,21 @@
-// Node registry — maps `nodeType:operation` compound keys to NodeProcessor
+// Node registry — maps node type keys (e.g., "image-compress") to NodeProcessor
 // instances. Decouples the executor from specific node types; consumers
 // register only the processors they need (all 6 for WASM, subset for CLI/tests).
 
-use std::collections::HashMap;
-use std::fmt::Write as FmtWrite;
-
 use crate::metadata::NodeMetadata;
 use crate::processor::NodeProcessor;
+use std::collections::HashMap;
 
 // =============================================================================
 // Node Registry
 // =============================================================================
 
-/// A registry that maps compound keys (e.g., "image:compress") to node processors.
+/// A registry that maps node type keys (e.g., "image-compress") to node processors.
 ///
 /// Uses `Box<dyn NodeProcessor>` for dynamic dispatch -- the registry
 /// holds heterogeneous processor types behind a single trait object.
 pub struct NodeRegistry {
-    /// Maps compound keys (e.g., "image:compress") to processor instances.
+    /// Maps node type keys (e.g., "image-compress") to processor instances.
     processors: HashMap<String, Box<dyn NodeProcessor>>,
 }
 
@@ -29,60 +27,38 @@ impl NodeRegistry {
         }
     }
 
-    /// Register a processor under a compound key.
+    /// Register a processor under a node type key.
     ///
-    /// The key should be in the format "nodeType:operation"
-    /// (e.g., "image:compress", "spreadsheet:clean").
+    /// The key should be the node type name
+    /// (e.g., "image-compress", "spreadsheet-clean").
     ///
     /// If a processor is already registered under this key, it will
     /// be replaced (last registration wins).
     ///
     /// # Arguments
-    /// - `key` — the compound dispatch key (e.g., "image:compress")
+    /// - `key` — the node type key (e.g., "image-compress")
     /// - `processor` — the processor instance to register
     pub fn register(&mut self, key: &str, processor: Box<dyn NodeProcessor>) {
         self.processors.insert(key.to_string(), processor);
     }
 
-    /// Look up the processor for a given node type and params.
+    /// Look up the processor for a given node type.
     ///
-    /// Builds the compound key from `node_type` + `params.operation`,
-    /// then looks it up in the registry.
+    /// Does a direct lookup by `node_type` key (e.g., "image-compress").
     ///
     /// # Arguments
-    /// - `node_type` — the node's type field (e.g., "image", "spreadsheet")
-    /// - `params` — the node's params map (must contain an "operation" field)
+    /// - `node_type` — the node's type field (e.g., "image-compress", "spreadsheet-clean")
+    /// - `_params` — the node's params map (reserved for future use)
     ///
     /// # Returns
     /// - `Some(&dyn NodeProcessor)` — if a matching processor was found
-    /// - `None` — if no processor matches the compound key
+    /// - `None` — if no processor matches the key
     pub fn resolve(
         &self,
         node_type: &str,
-        params: &serde_json::Map<String, serde_json::Value>,
+        _params: &serde_json::Map<String, serde_json::Value>,
     ) -> Option<&dyn NodeProcessor> {
-        // --- Step 1: Extract the operation from params ---
-        // The `operation` field tells us which specific processor to use.
-        // For example, node_type="image" + operation="compress" → "image:compress".
-        let operation = params
-            .get("operation")
-            .and_then(|v| v.as_str())
-            .unwrap_or("default");
-
-        // --- Step 2: Build the compound key on the stack ---
-        // PERFORMANCE: `format!()` allocates a new String on the heap every
-        // call. Since `resolve()` is called once per node per file, that's
-        // thousands of allocations for large batches. Instead, we use a
-        // stack-allocated buffer (128 bytes is plenty for "node-type:operation"
-        // keys) and only allocate if the key is unusually long.
-        let mut key_buf = String::with_capacity(128);
-        let _ = write!(key_buf, "{}:{}", node_type, operation);
-
-        // --- Step 3: Look up in the registry ---
-        // `.get()` returns `Option<&Box<dyn NodeProcessor>>`.
-        // `.map(|b| b.as_ref())` converts `&Box<dyn NodeProcessor>` to
-        // `&dyn NodeProcessor` (removes the Box layer for the caller).
-        self.processors.get(&key_buf).map(|b| b.as_ref())
+        self.processors.get(node_type).map(|b| b.as_ref())
     }
 
     /// Check how many processors are registered (useful for tests).
@@ -100,7 +76,7 @@ impl NodeRegistry {
     /// This returns a `Vec<NodeMetadata>` — one entry per registered processor.
     /// The order is determined by the HashMap's iteration order (not guaranteed,
     /// but deterministic for a given build). The `node_catalog()` WASM function
-    /// sorts the output by compound key for stable snapshots.
+    /// sorts the output by node type for stable snapshots.
     pub fn catalog(&self) -> Vec<NodeMetadata> {
         self.processors.values().map(|p| p.metadata()).collect()
     }
@@ -174,17 +150,12 @@ mod tests {
     #[test]
     fn test_register_and_resolve() {
         let mut registry = NodeRegistry::new();
-        registry.register("image:compress", Box::new(MockProcessor::new("compress")));
+        registry.register("image-compress", Box::new(MockProcessor::new("compress")));
 
-        // Build params with the operation field.
-        let mut params = serde_json::Map::new();
-        params.insert(
-            "operation".to_string(),
-            serde_json::Value::String("compress".to_string()),
-        );
+        let params = serde_json::Map::new();
 
-        // Resolve should find the processor.
-        let processor = registry.resolve("image", &params);
+        // Resolve should find the processor by node type key.
+        let processor = registry.resolve("image-compress", &params);
         assert!(processor.is_some());
         assert_eq!(processor.unwrap().name(), "compress");
     }
@@ -192,96 +163,57 @@ mod tests {
     #[test]
     fn test_resolve_unknown_type_returns_none() {
         let registry = NodeRegistry::new();
-
-        let mut params = serde_json::Map::new();
-        params.insert(
-            "operation".to_string(),
-            serde_json::Value::String("compress".to_string()),
-        );
-
-        // Empty registry → None.
-        let processor = registry.resolve("image", &params);
-        assert!(processor.is_none());
-    }
-
-    #[test]
-    fn test_resolve_unknown_operation_returns_none() {
-        let mut registry = NodeRegistry::new();
-        registry.register("image:compress", Box::new(MockProcessor::new("compress")));
-
-        // Ask for an operation that wasn't registered.
-        let mut params = serde_json::Map::new();
-        params.insert(
-            "operation".to_string(),
-            serde_json::Value::String("sharpen".to_string()),
-        );
-
-        let processor = registry.resolve("image", &params);
-        assert!(processor.is_none());
-    }
-
-    #[test]
-    fn test_resolve_missing_operation_uses_default() {
-        let mut registry = NodeRegistry::new();
-        registry.register(
-            "custom:default",
-            Box::new(MockProcessor::new("custom-default")),
-        );
-
-        // Params with no "operation" field → uses "default".
         let params = serde_json::Map::new();
 
-        let processor = registry.resolve("custom", &params);
-        assert!(processor.is_some());
-        assert_eq!(processor.unwrap().name(), "custom-default");
+        // Empty registry → None.
+        let processor = registry.resolve("unknown-type", &params);
+        assert!(processor.is_none());
     }
 
     #[test]
     fn test_register_multiple_processors() {
         let mut registry = NodeRegistry::new();
-        registry.register("image:compress", Box::new(MockProcessor::new("compress")));
-        registry.register("image:resize", Box::new(MockProcessor::new("resize")));
+        registry.register("image-compress", Box::new(MockProcessor::new("compress")));
+        registry.register("image-resize", Box::new(MockProcessor::new("resize")));
         registry.register(
-            "spreadsheet:clean",
+            "spreadsheet-clean",
             Box::new(MockProcessor::new("clean-csv")),
         );
 
         assert_eq!(registry.len(), 3);
 
-        // Each resolves to the correct processor.
-        let mut compress_params = serde_json::Map::new();
-        compress_params.insert(
-            "operation".to_string(),
-            serde_json::Value::String("compress".to_string()),
-        );
+        let params = serde_json::Map::new();
+
+        // Each resolves to the correct processor by type key.
         assert_eq!(
-            registry.resolve("image", &compress_params).unwrap().name(),
+            registry.resolve("image-compress", &params).unwrap().name(),
             "compress"
         );
-
-        let mut resize_params = serde_json::Map::new();
-        resize_params.insert(
-            "operation".to_string(),
-            serde_json::Value::String("resize".to_string()),
+        assert_eq!(
+            registry.resolve("image-resize", &params).unwrap().name(),
+            "resize"
         );
         assert_eq!(
-            registry.resolve("image", &resize_params).unwrap().name(),
-            "resize"
+            registry
+                .resolve("spreadsheet-clean", &params)
+                .unwrap()
+                .name(),
+            "clean-csv"
         );
     }
 
     #[test]
     fn test_register_overwrites_existing() {
         let mut registry = NodeRegistry::new();
-        registry.register("image:compress", Box::new(MockProcessor::new("old")));
-        registry.register("image:compress", Box::new(MockProcessor::new("new")));
+        registry.register("image-compress", Box::new(MockProcessor::new("old")));
+        registry.register("image-compress", Box::new(MockProcessor::new("new")));
+
+        let params = serde_json::Map::new();
 
         // Last registration wins.
-        let mut params = serde_json::Map::new();
-        params.insert(
-            "operation".to_string(),
-            serde_json::Value::String("compress".to_string()),
+        assert_eq!(
+            registry.resolve("image-compress", &params).unwrap().name(),
+            "new"
         );
-        assert_eq!(registry.resolve("image", &params).unwrap().name(), "new");
     }
 }

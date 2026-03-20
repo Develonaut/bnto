@@ -31,7 +31,7 @@ describe("validateDefinition — full tree", () => {
       type: "group",
       nodes: [
         validDef({ id: "child-1" }),
-        validDef({ id: "", type: "image" }), // missing id
+        validDef({ id: "", type: "image-compress" }), // missing id
       ],
       edges: [],
     });
@@ -90,19 +90,22 @@ describe("validateDefinition — unknown type", () => {
     expect(errors[0].message).toContain("unknown type 'banana'");
   });
 
-  it("accepts all 12 registered types with valid params", () => {
+  it("accepts all 15 registered types with valid params", () => {
     const typeParams: Record<string, Record<string, unknown>> = {
       "edit-fields": { values: { name: "test" } },
-      "file-system": { operation: "rename" },
+      "file-rename": {},
       group: {},
       "http-request": { url: "https://example.com", method: "GET" },
-      image: { operation: "resize" },
+      "image-compress": {},
+      "image-convert": { format: "webp" },
+      "image-resize": {},
       input: {},
       loop: { mode: "times", count: 3 },
       output: {},
       parallel: { tasks: [{ a: 1 }] },
       "shell-command": { command: "echo hello" },
-      spreadsheet: { operation: "clean" },
+      "spreadsheet-clean": {},
+      "spreadsheet-rename": {},
       transform: {},
     };
     for (const [type, params] of Object.entries(typeParams)) {
@@ -181,31 +184,17 @@ describe("validateDefinition — loop", () => {
   });
 });
 
-describe("validateDefinition — file-system", () => {
-  it("requires operation parameter", () => {
-    const def = validDef({ type: "file-system", parameters: {} });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.field === "operation")).toBe(true);
-  });
-
-  it("rejects invalid operation", () => {
-    const def = validDef({ type: "file-system", parameters: { operation: "format-c" } });
-    const errors = validateDefinition(def);
-    expect(errors.some((e) => e.message.includes("invalid operation 'format-c'"))).toBe(true);
-  });
-
-  it("accepts engine-backed rename operation", () => {
-    const def = validDef({ type: "file-system", parameters: { operation: "rename" } });
+describe("validateDefinition — file-rename", () => {
+  it("passes with empty params (all optional)", () => {
+    const def = validDef({ type: "file-rename", parameters: {} });
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);
   });
 
-  it("rejects legacy operations no longer in engine", () => {
-    for (const op of ["read", "write", "copy", "move", "delete"]) {
-      const def = validDef({ type: "file-system", parameters: { operation: op } });
-      const errors = validateDefinition(def);
-      expect(errors.some((e) => e.field === "operation")).toBe(true);
-    }
+  it("passes with prefix param", () => {
+    const def = validDef({ type: "file-rename", parameters: { prefix: "renamed-" } });
+    const errors = validateDefinition(def);
+    expect(errors).toHaveLength(0);
   });
 });
 
@@ -265,10 +254,10 @@ describe("validateDefinition — container types via isContainerNodeType", () =>
 
   it("does NOT validate children for non-container types", () => {
     const def = validDef({
-      type: "image",
-      parameters: { operation: "compress" },
+      type: "image-compress",
+      parameters: {},
       nodes: [
-        validDef({ id: "" }), // invalid child — but image is not a container
+        validDef({ id: "" }), // invalid child — but image-compress is not a container
       ],
       edges: [],
     });
@@ -291,17 +280,22 @@ describe("validateDefinition — minimal validation types", () => {
     expect(errors.some((e) => e.field === "tasks")).toBe(true);
   });
 
-  it("spreadsheet requires operation (Zod, engine-only)", () => {
-    const def = validDef({ type: "spreadsheet" });
+  it("spreadsheet-clean passes with empty params (all defaulted)", () => {
+    const def = validDef({ type: "spreadsheet-clean" });
     const errors = validateDefinition(def);
-    expect(errors.length).toBeGreaterThanOrEqual(1);
-    expect(errors.some((e) => e.field === "operation")).toBe(true);
+    expect(errors).toHaveLength(0);
   });
 
-  it("image requires operation (Zod)", () => {
-    const def = validDef({ type: "image" });
+  it("image-compress passes with empty params (quality defaults)", () => {
+    const def = validDef({ type: "image-compress" });
     const errors = validateDefinition(def);
-    expect(errors.some((e) => e.field === "operation")).toBe(true);
+    expect(errors).toHaveLength(0);
+  });
+
+  it("image-convert passes with empty params (format defaults to jpeg)", () => {
+    const def = validDef({ type: "image-convert" });
+    const errors = validateDefinition(def);
+    expect(errors).toHaveLength(0);
   });
 
   it("transform with no params passes", () => {

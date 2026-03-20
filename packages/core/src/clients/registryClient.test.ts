@@ -45,8 +45,8 @@ describe("registryClient", () => {
   });
 
   describe("getNodeTypes", () => {
-    it("returns all 12 node types", () => {
-      expect(Object.keys(client.getNodeTypes())).toHaveLength(12);
+    it("returns all 15 node types", () => {
+      expect(Object.keys(client.getNodeTypes())).toHaveLength(15);
     });
 
     it("every node type has required fields", () => {

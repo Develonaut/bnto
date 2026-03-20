@@ -13,7 +13,7 @@ import type { PipelineDefinition } from "../types/pipeline";
 const COMPRESS_DEFINITION: PipelineDefinition = {
   nodes: [
     { id: "input", type: "input", params: {} },
-    { id: "process", type: "compress-images", params: {} },
+    { id: "process", type: "image-compress", params: {} },
     { id: "output", type: "output", params: {} },
   ],
 };
@@ -108,7 +108,7 @@ describe("createExecutionClient — auto-recording", () => {
       expect(historyService.record).toHaveBeenCalledWith(
         expect.objectContaining({
           id: "test-uuid",
-          slug: "compress-images",
+          slug: "image-compress",
           status: "completed",
           durationMs: 150,
           inputFileCount: 2,
@@ -209,8 +209,8 @@ describe("createExecutionClient — auto-recording", () => {
       const multiNodeDef: PipelineDefinition = {
         nodes: [
           { id: "in", type: "input", params: {} },
-          { id: "resize", type: "resize-images", params: {} },
-          { id: "compress", type: "compress-images", params: {} },
+          { id: "resize", type: "image-resize", params: {} },
+          { id: "compress", type: "image-compress", params: {} },
           { id: "out", type: "output", params: {} },
         ],
       };
@@ -223,7 +223,7 @@ describe("createExecutionClient — auto-recording", () => {
       await wrapped.run(multiNodeDef, [new File(["a"], "a.jpg")]);
 
       expect(historyService.record).toHaveBeenCalledWith(
-        expect.objectContaining({ slug: "resize-images" }),
+        expect.objectContaining({ slug: "image-resize" }),
       );
     });
   });

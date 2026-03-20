@@ -109,7 +109,7 @@ function applyResult(state: EditorState, partial: Partial<EditorState>): EditorS
 describe("definition sync — top-level nodes", () => {
   it("adds a top-level node to the definition tree", () => {
     const state = stateWithIoPipeline();
-    const result = addNode(state, "image");
+    const result = addNode(state, "image-compress");
     expect(result).not.toBeNull();
 
     const def = result!.nextState.definition as Definition;
@@ -118,12 +118,12 @@ describe("definition sync — top-level nodes", () => {
     expect(def.nodes).toHaveLength(3);
     const imageNode = def.nodes!.find((n) => n.id === result!.nodeId);
     expect(imageNode).toBeDefined();
-    expect(imageNode!.type).toBe("image");
+    expect(imageNode!.type).toBe("image-compress");
   });
 
   it("inserts before the output node by default", () => {
     const state = stateWithIoPipeline();
-    const result = addNode(state, "image");
+    const result = addNode(state, "image-compress");
     const def = result!.nextState.definition as Definition;
     // Order: input, image, output
     expect(def.nodes![0]!.type).toBe("input");
@@ -135,7 +135,7 @@ describe("definition sync — top-level nodes", () => {
     const state = stateWithIoPipeline();
 
     // First add an image node (inserted before output)
-    const first = addNode(state, "image");
+    const first = addNode(state, "image-compress");
     const state2 = applyResult(state, first!.nextState);
 
     // Then add a transform node after the image
@@ -153,7 +153,7 @@ describe("definition sync — top-level nodes", () => {
     const state = stateWithIoPipeline();
 
     // Add a node
-    const added = addNode(state, "image");
+    const added = addNode(state, "image-compress");
     const state2 = applyResult(state, added!.nextState);
 
     // Remove it
@@ -170,7 +170,7 @@ describe("definition sync — top-level nodes", () => {
     const state = stateWithIoPipeline();
 
     // Add an image node
-    const added = addNode(state, "image");
+    const added = addNode(state, "image-compress");
     const state2 = applyResult(state, added!.nextState);
 
     // Update its params
@@ -205,7 +205,7 @@ describe("definition sync — container nodes", () => {
     const state2 = applyResult(state, loopResult!.nextState);
 
     // Add an image child inside the loop
-    const childResult = addNode(state2, "image", null, loopResult!.nodeId);
+    const childResult = addNode(state2, "image-compress", null, loopResult!.nodeId);
     expect(childResult).not.toBeNull();
 
     const def = childResult!.nextState.definition as Definition;
@@ -221,7 +221,7 @@ describe("definition sync — container nodes", () => {
     // Add loop + image child
     const loopResult = addNode(state, "loop");
     const state2 = applyResult(state, loopResult!.nextState);
-    const childResult = addNode(state2, "image", null, loopResult!.nodeId);
+    const childResult = addNode(state2, "image-compress", null, loopResult!.nodeId);
     const state3 = applyResult(state2, childResult!.nextState);
 
     // Export via rfNodesToDefinition — this is what the engine receives
@@ -237,7 +237,7 @@ describe("definition sync — container nodes", () => {
     expect(loopExported).toBeDefined();
     expect(loopExported!.nodes).toHaveLength(1);
     expect(loopExported!.nodes![0]!.id).toBe(childResult!.nodeId);
-    expect(loopExported!.nodes![0]!.type).toBe("image");
+    expect(loopExported!.nodes![0]!.type).toBe("image-compress");
   });
 
   it("removes a container and its definition from the tree", () => {
@@ -260,7 +260,7 @@ describe("definition sync — container nodes", () => {
     // Add loop + image child
     const loopResult = addNode(state, "loop");
     const state2 = applyResult(state, loopResult!.nextState);
-    const childResult = addNode(state2, "image", null, loopResult!.nodeId);
+    const childResult = addNode(state2, "image-compress", null, loopResult!.nodeId);
     const state3 = applyResult(state2, childResult!.nextState);
 
     // Update child params
@@ -282,15 +282,12 @@ describe("definition sync — full pipeline scenarios", () => {
     const loopResult = addNode(state, "loop");
     state = applyResult(state, loopResult!.nextState);
 
-    // Add image child inside loop
-    const imageResult = addNode(state, "image", null, loopResult!.nodeId);
+    // Add image-compress child inside loop
+    const imageResult = addNode(state, "image-compress", null, loopResult!.nodeId);
     state = applyResult(state, imageResult!.nextState);
 
     // Update image params (this is what the user does in the config panel)
-    const paramResult = updateParams(state, imageResult!.nodeId, {
-      operation: "compress",
-      quality: 80,
-    });
+    const paramResult = updateParams(state, imageResult!.nodeId, { quality: 80 });
     state = applyResult(state, paramResult!);
 
     // Export
@@ -311,10 +308,9 @@ describe("definition sync — full pipeline scenarios", () => {
     expect(loopDef.type).toBe("loop");
     expect(outputDef.type).toBe("output");
 
-    // Loop has image child with correct params
+    // Loop has image-compress child with correct params
     expect(loopDef.nodes).toHaveLength(1);
-    expect(loopDef.nodes![0]!.type).toBe("image");
-    expect(loopDef.nodes![0]!.parameters?.operation).toBe("compress");
+    expect(loopDef.nodes![0]!.type).toBe("image-compress");
     expect(loopDef.nodes![0]!.parameters?.quality).toBe(80);
   });
 
@@ -322,7 +318,7 @@ describe("definition sync — full pipeline scenarios", () => {
     let state = stateWithIoPipeline();
 
     // Add an image node
-    const first = addNode(state, "image");
+    const first = addNode(state, "image-compress");
     state = applyResult(state, first!.nextState);
     expect(state.definition!.nodes).toHaveLength(3);
 
@@ -344,7 +340,7 @@ describe("definition sync — full pipeline scenarios", () => {
 
   it("definition stays null when no definition exists", () => {
     const state = blankState();
-    const result = addNode(state, "image");
+    const result = addNode(state, "image-compress");
     // No definition was set, so it should stay null
     expect(result!.nextState.definition).toBeUndefined();
   });
@@ -353,7 +349,7 @@ describe("definition sync — full pipeline scenarios", () => {
     let state = stateWithIoPipeline();
 
     // Add nodes in sequence: image, then edit-fields after image, then transform
-    const img = addNode(state, "image");
+    const img = addNode(state, "image-compress");
     state = applyResult(state, img!.nextState);
     const edit = addNode(state, "edit-fields", img!.nodeId);
     state = applyResult(state, edit!.nextState);

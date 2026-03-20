@@ -11,7 +11,7 @@
  *   const { instance, storeApi } = createReactEditor(definition);
  *   // In a React component:
  *   const { nodes, selectedNodeId } = instance.nodes.useNodes();
- *   instance.nodes.addNode("image");
+ *   instance.nodes.addNode("image-compress");
  */
 
 import type { StoreApi } from "zustand";
