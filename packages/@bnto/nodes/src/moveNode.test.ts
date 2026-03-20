@@ -11,7 +11,7 @@ const IO_NODE_COUNT = 2;
 describe("moveNode", () => {
   it("updates a node's position", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = moveNode(withNode, nodeId, { x: 300, y: 400 });
@@ -21,7 +21,7 @@ describe("moveNode", () => {
 
   it("does not mutate the original definition", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     moveNode(withNode, nodeId, { x: 300, y: 400 });
@@ -30,7 +30,7 @@ describe("moveNode", () => {
 
   it("returns the same definition if node ID not found", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
 
     const result = moveNode(withNode, "nonexistent", { x: 100, y: 100 });
     expect(result.definition).toBe(withNode);
@@ -38,7 +38,7 @@ describe("moveNode", () => {
 
   it("moves the correct node when multiple nodes exist", () => {
     const blank = createBlankDefinition();
-    const r1 = addNode(blank, "image", { x: 0, y: 0 });
+    const r1 = addNode(blank, "image-compress", { x: 0, y: 0 });
     const r2 = addNode(r1.definition, "transform", { x: 100, y: 0 });
     const secondNodeId = r2.definition.nodes![IO_NODE_COUNT + 1]!.id;
 
@@ -57,7 +57,7 @@ describe("moveNode", () => {
 
     const childNode = {
       id: "child-1",
-      type: "image" as const,
+      type: "image-compress" as const,
       version: "1.0.0",
       name: "Nested Image",
       position: { x: 0, y: 0 },

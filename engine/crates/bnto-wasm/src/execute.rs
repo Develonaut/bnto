@@ -12,30 +12,25 @@ use bnto_core::{
 };
 
 /// Create a registry pre-loaded with all browser-capable node processors.
-/// Maps compound keys (nodeType:operation) to Rust processor instances.
+/// Maps node type keys (e.g., "image-compress") to Rust processor instances.
 pub(crate) fn create_default_registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
 
     registry.register(
-        "image:compress",
+        "image-compress",
         Box::new(bnto_image::CompressImages::new()),
     );
-    registry.register("image:resize", Box::new(bnto_image::ResizeImages::new()));
+    registry.register("image-resize", Box::new(bnto_image::ResizeImages::new()));
     registry.register(
-        "image:convert",
+        "image-convert",
         Box::new(bnto_image::ConvertImageFormat::new()),
     );
-
-    registry.register("spreadsheet:clean", Box::new(bnto_csv::CleanCsv::new()));
+    registry.register("spreadsheet-clean", Box::new(bnto_csv::CleanCsv::new()));
     registry.register(
-        "spreadsheet:rename",
+        "spreadsheet-rename",
         Box::new(bnto_csv::RenameCsvColumns::new()),
     );
-
-    registry.register(
-        "file-system:rename",
-        Box::new(bnto_file::RenameFiles::new()),
-    );
+    registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
 
     registry
 }
@@ -163,33 +158,24 @@ mod tests {
     #[test]
     fn test_create_default_registry_has_all_processors() {
         let registry = create_default_registry();
-
-        // We registered 6 processors.
         assert_eq!(registry.len(), 6);
 
-        // Verify each compound key resolves to a processor.
-        let keys = [
-            ("image", "compress"),
-            ("image", "resize"),
-            ("image", "convert"),
-            ("spreadsheet", "clean"),
-            ("spreadsheet", "rename"),
-            ("file-system", "rename"),
+        let types = [
+            "image-compress",
+            "image-resize",
+            "image-convert",
+            "spreadsheet-clean",
+            "spreadsheet-rename",
+            "file-rename",
         ];
 
-        for (node_type, operation) in &keys {
-            let mut params = serde_json::Map::new();
-            params.insert(
-                "operation".to_string(),
-                serde_json::Value::String(operation.to_string()),
-            );
-
+        for node_type in &types {
+            let params = serde_json::Map::new();
             let processor = registry.resolve(node_type, &params);
             assert!(
                 processor.is_some(),
-                "Should resolve processor for {}:{}",
-                node_type,
-                operation
+                "Should resolve processor for {}",
+                node_type
             );
         }
     }

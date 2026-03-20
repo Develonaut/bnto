@@ -25,7 +25,7 @@ function stateWithNode(): EditorState {
     },
   ];
   const configs: NodeConfigs = {
-    a: { nodeType: "image", name: "A", parameters: { quality: 80 } },
+    a: { nodeType: "image-compress", name: "A", parameters: { quality: 80 } },
   };
   return {
     nodes,
@@ -128,12 +128,12 @@ describe("updateParams", () => {
           nodes: [
             {
               id: "child",
-              type: "image",
+              type: "image-compress",
               version: CURRENT_FORMAT_VERSION,
-              name: "Image",
+              name: "Compress Images",
               position: { x: 0, y: 0 },
               metadata: {},
-              parameters: { operation: "compress", quality: 80 },
+              parameters: { quality: 80 },
               inputPorts: [],
               outputPorts: [],
             },
@@ -146,9 +146,9 @@ describe("updateParams", () => {
       configs: {
         loop: { nodeType: "loop", name: "Loop", parameters: { mode: "forEach" } },
         child: {
-          nodeType: "image",
-          name: "Image",
-          parameters: { operation: "compress", quality: 80 },
+          nodeType: "image-compress",
+          name: "Compress Images",
+          parameters: { quality: 80 },
         },
       },
       definition: def,

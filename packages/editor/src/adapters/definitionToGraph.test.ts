@@ -19,8 +19,8 @@ describe("definitionToGraph", () => {
 
   it("maps child nodes to compartment nodes", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    def = addNode(def, "spreadsheet").definition;
+    def = addNode(def, "image-compress").definition;
+    def = addNode(def, "spreadsheet-clean").definition;
 
     const result = definitionToGraph(def);
     // 2 I/O nodes + 2 added = 4
@@ -29,8 +29,8 @@ describe("definitionToGraph", () => {
 
   it("stores domain fields in configs map, not in node.data", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const childNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress").definition;
+    const childNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const result = definitionToGraph(def);
     const config = result.configs[childNode.id]!;
@@ -46,8 +46,8 @@ describe("definitionToGraph", () => {
 
   it("assigns computed positions, not definition positions", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image", { x: 999, y: 888 }).definition;
-    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress", { x: 999, y: 888 }).definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
@@ -57,8 +57,8 @@ describe("definitionToGraph", () => {
 
   it("assigns slot dimensions to processing nodes", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
@@ -104,8 +104,8 @@ describe("definitionToGraph", () => {
 
   it("maps node category to compartment variant color", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
@@ -124,9 +124,9 @@ describe("definitionToGraph", () => {
 
   it("uses node name as label for processing nodes", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const expected = NODE_TYPE_INFO["image"].label;
-    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress").definition;
+    const expected = NODE_TYPE_INFO["image-compress"].label;
+    const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
@@ -145,8 +145,8 @@ describe("definitionToGraph", () => {
 
   it("RF node id matches definition node id", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
@@ -155,7 +155,7 @@ describe("definitionToGraph", () => {
 
   it("configs map keys match RF node ids", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
+    def = addNode(def, "image-compress").definition;
     def = addNode(def, "transform").definition;
 
     const result = definitionToGraph(def);
@@ -176,8 +176,8 @@ describe("definitionToGraph", () => {
 
   it("sets all compartments to idle status", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    def = addNode(def, "spreadsheet").definition;
+    def = addNode(def, "image-compress").definition;
+    def = addNode(def, "spreadsheet-clean").definition;
 
     const result = definitionToGraph(def);
     for (const node of result.nodes) {
@@ -199,11 +199,11 @@ describe("definitionToGraph", () => {
 
   it("sets static icon for processing nodes via getNodeIcon", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
+    def = addNode(def, "image-compress").definition;
 
     const result = definitionToGraph(def);
-    const imageNode = result.nodes.find((n) => n.data.label === "Image")!;
-    expect(imageNode.data.icon).toBe("image");
+    const compressNode = result.nodes.find((n) => n.data.label === "Compress Images")!;
+    expect(compressNode.data.icon).toBe("image");
   });
 
   it("sets human-readable sublabel for I/O nodes", () => {
@@ -218,8 +218,8 @@ describe("definitionToGraph", () => {
 
   it("sets category sublabel for processing nodes", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;
@@ -237,8 +237,8 @@ describe("definitionToGraph", () => {
 
   it("sets isIoNode false for processing nodes", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const result = definitionToGraph(def);
     const rfNode = result.nodes.find((n) => n.id === imageNode.id)!;

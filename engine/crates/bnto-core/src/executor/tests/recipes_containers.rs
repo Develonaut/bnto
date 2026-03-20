@@ -19,8 +19,7 @@ fn test_group_containing_group_containing_loop() {
                                 "parameters": { "mode": "forEach" },
                                 "nodes": [
                                     {
-                                        "id": "proc", "type": "image",
-                                        "parameters": { "operation": "compress" }
+                                        "id": "proc", "type": "image-compress"
                                     }
                                 ]
                             }
@@ -56,8 +55,8 @@ fn test_multiple_processors_inside_loop() {
                 "id": "the-loop", "type": "loop",
                 "parameters": { "mode": "forEach" },
                 "nodes": [
-                    { "id": "step1", "type": "test", "params": { "operation": "echo" } },
-                    { "id": "step2", "type": "test", "params": { "operation": "uppercase" } }
+                    { "id": "step1", "type": "test-echo" },
+                    { "id": "step2", "type": "test-uppercase" }
                 ]
             }
         ]
@@ -85,14 +84,14 @@ fn test_sequential_loops_in_pipeline() {
                 "id": "loop1", "type": "loop",
                 "params": { "mode": "forEach" },
                 "children": [
-                    { "id": "echo", "type": "test", "params": { "operation": "echo" } }
+                    { "id": "echo", "type": "test-echo" }
                 ]
             },
             {
                 "id": "loop2", "type": "loop",
                 "params": { "mode": "forEach" },
                 "children": [
-                    { "id": "upper", "type": "test", "params": { "operation": "uppercase" } }
+                    { "id": "upper", "type": "test-uppercase" }
                 ]
             }
         ]
@@ -129,8 +128,7 @@ fn test_four_levels_deep_nesting() {
                                         "parameters": { "mode": "forEach" },
                                         "nodes": [
                                             {
-                                                "id": "proc", "type": "test",
-                                                "params": { "operation": "uppercase" }
+                                                "id": "proc", "type": "test-uppercase"
                                             }
                                         ]
                                     }

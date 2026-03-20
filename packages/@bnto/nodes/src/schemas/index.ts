@@ -17,9 +17,6 @@ export { getVisibleParams } from "./getVisibleParams";
 export { inferFieldType } from "./inferFieldType";
 export type { FieldTypeInfo, FieldControl } from "./inferFieldType";
 
-// Engine operations helper
-export { getEngineOperations } from "./deriveOperations";
-
 // Types
 export type {
   NodeSchemaDefinition,
@@ -30,26 +27,32 @@ export type {
 } from "./types";
 
 // Per-type enum constants
-export { FILE_OPERATIONS } from "./fileSystem";
 export { INPUT_MODES } from "./input";
 export { LOOP_MODES } from "./loop";
 export { OUTPUT_MODES } from "./output";
-export { IMAGE_OPERATIONS, IMAGE_FORMATS } from "./image";
-export { SPREADSHEET_OPERATIONS } from "./spreadsheet";
+export { IMAGE_FORMATS } from "./imageConvert";
 export { GROUP_MODES } from "./group";
 export { ERROR_STRATEGIES } from "./parallel";
 
-// Per-type Zod schemas and inferred types
-export { imageParamsSchema, imageNodeSchema } from "./image";
-export type { ImageParams } from "./image";
+// Per-type Zod schemas and inferred types (per-operation)
+export { imageCompressParamsSchema, imageCompressNodeSchema } from "./imageCompress";
+export type { ImageCompressParams } from "./imageCompress";
+export { imageResizeParamsSchema, imageResizeNodeSchema } from "./imageResize";
+export type { ImageResizeParams } from "./imageResize";
+export { imageConvertParamsSchema, imageConvertNodeSchema } from "./imageConvert";
+export type { ImageConvertParams } from "./imageConvert";
+export { spreadsheetCleanParamsSchema, spreadsheetCleanNodeSchema } from "./spreadsheetClean";
+export type { SpreadsheetCleanParams } from "./spreadsheetClean";
+export { spreadsheetRenameParamsSchema, spreadsheetRenameNodeSchema } from "./spreadsheetRename";
+export type { SpreadsheetRenameParams } from "./spreadsheetRename";
+export { fileRenameParamsSchema, fileRenameNodeSchema } from "./fileRename";
+export type { FileRenameParams } from "./fileRename";
+
+// Non-engine schema types (hand-written, not per-operation)
 export { inputParamsSchema, inputNodeSchema } from "./input";
 export type { InputParams } from "./input";
 export { outputParamsSchema, outputNodeSchema } from "./output";
 export type { OutputParams } from "./output";
-export { fileSystemParamsSchema, fileSystemNodeSchema } from "./fileSystem";
-export type { FileSystemParams } from "./fileSystem";
-export { spreadsheetParamsSchema, spreadsheetNodeSchema } from "./spreadsheet";
-export type { SpreadsheetParams } from "./spreadsheet";
 export { transformParamsSchema, transformNodeSchema } from "./transform";
 export type { TransformParams } from "./transform";
 export { editFieldsParamsSchema, editFieldsNodeSchema } from "./editFields";

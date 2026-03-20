@@ -91,8 +91,8 @@ impl NodeProcessor for ConvertImageFormat {
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
-            node_type: "image".to_string(),
-            operation: "convert".to_string(),
+            node_type: "image-convert".to_string(),
+            operation: "default".to_string(),
             name: "Convert Image Format".to_string(),
             description: "Convert images between JPEG, PNG, and WebP formats".to_string(),
             category: NodeCategory::Image,
@@ -269,15 +269,12 @@ fn format_param_def() -> bnto_core::metadata::ParameterDef {
         param_type: ParameterType::Enum {
             options: vec!["jpeg".to_string(), "png".to_string(), "webp".to_string()],
         },
+        default: Some(serde_json::json!("jpeg")),
         constraints: Some(Constraints {
             min: None,
             max: None,
             required: true,
         }),
-        visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-            param: "operation".to_string(),
-            equals: "convert".to_string(),
-        })),
         ..Default::default()
     }
 }

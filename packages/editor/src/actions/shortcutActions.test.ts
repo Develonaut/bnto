@@ -4,7 +4,7 @@ import type { PanelState } from "../store/types";
 
 describe("resolveDelete", () => {
   it("returns the selected node ID for a regular node", () => {
-    expect(resolveDelete("node-1", "image")).toBe("node-1");
+    expect(resolveDelete("node-1", "image-compress")).toBe("node-1");
   });
 
   it("returns null when no node is selected", () => {

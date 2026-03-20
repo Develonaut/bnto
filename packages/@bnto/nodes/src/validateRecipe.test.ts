@@ -46,12 +46,12 @@ function validRecipe(overrides: Partial<Recipe> = {}): Recipe {
         },
         {
           id: "process",
-          type: "image",
+          type: "image-compress",
           version: CURRENT_FORMAT_VERSION,
           name: "Process",
           position: { x: 250, y: 0 },
           metadata: {},
-          parameters: { operation: "compress" },
+          parameters: {},
           inputPorts: [{ id: "in-1", name: "files" }],
           outputPorts: [{ id: "out-1", name: "files" }],
         },
@@ -142,7 +142,7 @@ describe("validateRecipe — I/O checks", () => {
 
 describe("validateRecipe — structural checks", () => {
   it("root type not group → error", () => {
-    const recipe = withDef(validRecipe(), { type: "image" });
+    const recipe = withDef(validRecipe(), { type: "image-compress" });
     const errors = validateRecipe(recipe);
     expect(errors.some((e) => e.message.includes("must be type 'group'"))).toBe(true);
   });
@@ -165,12 +165,12 @@ describe("validateRecipe — edge connectivity", () => {
     const recipe = validRecipe();
     const disconnected: Definition = {
       id: "disconnected",
-      type: "image",
+      type: "image-compress",
       version: CURRENT_FORMAT_VERSION,
       name: "Disconnected",
       position: { x: 300, y: 300 },
       metadata: {},
-      parameters: { operation: "compress" },
+      parameters: {},
       inputPorts: [],
       outputPorts: [],
     };

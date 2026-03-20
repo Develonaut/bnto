@@ -16,7 +16,7 @@ describe("createNodeService", () => {
   });
 
   it("addNode returns a node ID on success", () => {
-    const id = service.addNode("image");
+    const id = service.addNode("image-compress");
     expect(id).toBeTruthy();
   });
 
@@ -26,7 +26,7 @@ describe("createNodeService", () => {
   });
 
   it("removeNode returns true on success", () => {
-    const id = service.addNode("image")!;
+    const id = service.addNode("image-compress")!;
     expect(service.removeNode(id)).toBe(true);
   });
 
@@ -34,16 +34,16 @@ describe("createNodeService", () => {
     // Need to find the input node ID from the store
     const storeApi = createEditorStore();
     const svc = createNodeService(storeApi);
-    const inputNode = storeApi.getState().nodes.find(
-      (n) => storeApi.getState().configs[n.id]?.nodeType === "input",
-    );
+    const inputNode = storeApi
+      .getState()
+      .nodes.find((n) => storeApi.getState().configs[n.id]?.nodeType === "input");
     expect(svc.removeNode(inputNode!.id)).toBe(false);
   });
 
   it("selectNode changes selection", () => {
     const storeApi = createEditorStore();
     const svc = createNodeService(storeApi);
-    const id = svc.addNode("image")!;
+    const id = svc.addNode("image-compress")!;
     svc.selectNode(null);
     svc.selectNode(id);
     const node = storeApi.getState().nodes.find((n) => n.id === id);

@@ -15,8 +15,7 @@ fn test_container_node_event_nesting() {
                     "id": "loop1", "type": "loop",
                     "parameters": { "mode": "forEach" },
                     "nodes": [{
-                        "id": "leaf", "type": "test",
-                        "params": { "operation": "echo" }
+                        "id": "leaf", "type": "test-echo"
                     }]
                 }]
             },
@@ -93,9 +92,9 @@ fn test_pipeline_started_excludes_io_nodes() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "n1", "type": "test", "params": { "operation": "echo" } },
-            { "id": "n2", "type": "test", "params": { "operation": "uppercase" } },
-            { "id": "n3", "type": "test", "params": { "operation": "echo" } },
+            { "id": "n1", "type": "test-echo" },
+            { "id": "n2", "type": "test-uppercase" },
+            { "id": "n3", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,

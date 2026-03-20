@@ -145,10 +145,6 @@ pub struct ParameterDef {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub placeholder: Option<String>,
 
-    /// Hidden parameters are engine wiring fields the user never sees.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub hidden: Option<bool>,
-
     /// Show this parameter only when another parameter matches a value.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub visible_when: Option<ParamCondition>,
@@ -180,7 +176,6 @@ impl Default for ParameterDef {
             default: None,
             constraints: None,
             placeholder: None,
-            hidden: None,
             visible_when: None,
             required_when: None,
             surfaceable: true,
@@ -191,8 +186,8 @@ impl Default for ParameterDef {
 // --- NodeTypeInfo — Node-type-level metadata (all 12 types) ---
 //
 // Separate from NodeMetadata because NodeMetadata describes a PROCESSOR
-// (e.g., "image:compress") while NodeTypeInfo describes a NODE TYPE
-// (e.g., "image") — the umbrella for multiple processors.
+// (e.g., "image-compress") while NodeTypeInfo describes a NODE TYPE
+// (e.g., "image-compress") — one per processor operation.
 // Includes types the engine doesn't have processors for yet (http-request,
 // shell-command). Codegen generates TS `NODE_TYPE_INFO` from this.
 
@@ -233,15 +228,15 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 12 registered node types.
+/// Return metadata for all 15 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
-    let mut types = Vec::with_capacity(12);
+    let mut types = Vec::with_capacity(15);
     types.extend(control_node_types());
     types.extend(data_node_types());
-    types.extend(file_system_node_types());
+    types.extend(file_node_types());
     types.extend(image_node_types());
     types.extend(io_node_types());
     types.extend(network_node_types());
@@ -306,11 +301,11 @@ fn data_node_types() -> Vec<NodeTypeInfo> {
     ]
 }
 
-fn file_system_node_types() -> Vec<NodeTypeInfo> {
+fn file_node_types() -> Vec<NodeTypeInfo> {
     vec![node_type!(
-        "file-system",
-        "File System",
-        "File operations: rename files with find/replace, case transforms, and patterns.",
+        "file-rename",
+        "Rename Files",
+        "Transform filenames using patterns, find/replace, and case rules.",
         NodeCategory::File,
         false,
         "browser",
@@ -319,15 +314,35 @@ fn file_system_node_types() -> Vec<NodeTypeInfo> {
 }
 
 fn image_node_types() -> Vec<NodeTypeInfo> {
-    vec![node_type!(
-        "image",
-        "Image",
-        "Image processing: compress, resize, and convert formats.",
-        NodeCategory::Image,
-        false,
-        "browser",
-        "image"
-    )]
+    vec![
+        node_type!(
+            "image-compress",
+            "Compress Images",
+            "Reduce image file size while maintaining quality.",
+            NodeCategory::Image,
+            false,
+            "browser",
+            "image"
+        ),
+        node_type!(
+            "image-convert",
+            "Convert Image Format",
+            "Convert images between JPEG, PNG, and WebP formats.",
+            NodeCategory::Image,
+            false,
+            "browser",
+            "image"
+        ),
+        node_type!(
+            "image-resize",
+            "Resize Images",
+            "Change image dimensions while maintaining quality.",
+            NodeCategory::Image,
+            false,
+            "browser",
+            "image"
+        ),
+    ]
 }
 
 fn io_node_types() -> Vec<NodeTypeInfo> {
@@ -366,15 +381,26 @@ fn network_node_types() -> Vec<NodeTypeInfo> {
 }
 
 fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
-    vec![node_type!(
-        "spreadsheet",
-        "Spreadsheet",
-        "Spreadsheet operations: clean data and rename columns.",
-        NodeCategory::Spreadsheet,
-        false,
-        "browser",
-        "sheet"
-    )]
+    vec![
+        node_type!(
+            "spreadsheet-clean",
+            "Clean CSV",
+            "Remove empty rows, trim whitespace, and deduplicate CSV data.",
+            NodeCategory::Spreadsheet,
+            false,
+            "browser",
+            "sheet"
+        ),
+        node_type!(
+            "spreadsheet-rename",
+            "Rename CSV Columns",
+            "Rename column headers in a CSV file.",
+            NodeCategory::Spreadsheet,
+            false,
+            "browser",
+            "sheet"
+        ),
+    ]
 }
 
 fn system_node_types() -> Vec<NodeTypeInfo> {
@@ -392,8 +418,8 @@ fn system_node_types() -> Vec<NodeTypeInfo> {
 // --- NodeMetadata ---
 
 /// Complete self-description of a processor. Return type of
-/// `NodeProcessor::metadata()`. The `node_type` + `operation` pair
-/// forms the compound dispatch key (e.g., `"image:compress"`).
+/// `NodeProcessor::metadata()`. The `node_type` is the direct dispatch
+/// key (e.g., `"image-compress"`).
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct NodeMetadata {
@@ -422,10 +448,10 @@ mod tests {
     // --- NodeTypeInfo Tests ---
 
     #[test]
-    fn test_all_node_types_returns_12_entries() {
-        // The engine defines all 12 node types.
+    fn test_all_node_types_returns_15_entries() {
+        // The engine defines all 15 node types.
         let types = all_node_types();
-        assert_eq!(types.len(), 12, "Should have exactly 12 node types");
+        assert_eq!(types.len(), 15, "Should have exactly 15 node types");
     }
 
     #[test]
@@ -445,7 +471,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 12, "All node type names should be unique");
+        assert_eq!(names.len(), 15, "All node type names should be unique");
     }
 
     #[test]
@@ -608,7 +634,6 @@ mod tests {
         assert!(!json.contains("constraints"));
         // UI metadata fields should also be omitted when None.
         assert!(!json.contains("placeholder"));
-        assert!(!json.contains("hidden"));
         assert!(!json.contains("visibleWhen"));
         assert!(!json.contains("requiredWhen"));
     }
@@ -783,25 +808,7 @@ mod tests {
         assert!(!json.contains("visible_when"));
         // "placeholder" should be present.
         assert!(json.contains(r#""placeholder":"e.g. 800""#));
-        // "hidden" and "requiredWhen" should be omitted (they're None).
-        assert!(!json.contains("hidden"));
+        // "requiredWhen" should be omitted (it's None).
         assert!(!json.contains("requiredWhen"));
-    }
-
-    #[test]
-    fn test_parameter_def_hidden_field_serialization() {
-        // When hidden is Some(true), it should appear in JSON.
-        let param = ParameterDef {
-            name: "inputPath".to_string(),
-            label: "Input Path".to_string(),
-            description: "Internal path template".to_string(),
-            param_type: ParameterType::String,
-            default: None,
-            constraints: None,
-            hidden: Some(true),
-            ..Default::default()
-        };
-        let json = serde_json::to_string(&param).unwrap();
-        assert!(json.contains(r#""hidden":true"#));
     }
 }

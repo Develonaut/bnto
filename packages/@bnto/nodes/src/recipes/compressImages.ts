@@ -53,14 +53,13 @@ export const compressImages: Recipe = {
         nodes: [
           {
             id: "compress-image",
-            type: "image",
+            type: "image-compress",
             version: CURRENT_FORMAT_VERSION,
             name: "Compress",
             position: { x: 0, y: 0 },
             metadata: {},
             parameters: {
-              operation: "compress",
-              ...getProcessorDefaults("image", "compress"),
+              ...getProcessorDefaults("image-compress"),
             },
             inputPorts: [],
             outputPorts: [],

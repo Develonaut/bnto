@@ -23,20 +23,6 @@ pub(crate) fn quality_param_def() -> bnto_core::metadata::ParameterDef {
             max: Some(100.0),
             required: false,
         }),
-        visible_when: Some(ParamCondition::Any(vec![
-            ParamConditionEntry {
-                param: "operation".to_string(),
-                equals: "compress".to_string(),
-            },
-            ParamConditionEntry {
-                param: "operation".to_string(),
-                equals: "resize".to_string(),
-            },
-            ParamConditionEntry {
-                param: "operation".to_string(),
-                equals: "convert".to_string(),
-            },
-        ])),
         ..Default::default()
     }
 }

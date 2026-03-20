@@ -36,7 +36,7 @@ function stateWithNodes(): EditorState {
     },
   ];
   const configs: NodeConfigs = {
-    a: { nodeType: "image", name: "A", parameters: {} },
+    a: { nodeType: "image-compress", name: "A", parameters: {} },
     b: { nodeType: "transform", name: "B", parameters: {} },
   };
   return {

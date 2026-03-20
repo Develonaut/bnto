@@ -10,7 +10,7 @@
  * Factory (headless, no React):
  *
  *   const editor = createEditor(definition);
- *   editor.nodes.addNode("image");
+ *   editor.nodes.addNode("image-compress");
  *   editor.definition.exportAsRecipe();
  */
 

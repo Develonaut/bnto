@@ -10,7 +10,7 @@ const IO_NODE_COUNT = 2;
 describe("updateNodeParams", () => {
   it("merges new parameters into an existing node", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = updateNodeParams(withNode, nodeId, { quality: 80 });
@@ -19,10 +19,10 @@ describe("updateNodeParams", () => {
 
   it("preserves existing parameters not in the update", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-resize");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
-    // Image defaults include maintainAspect: true
+    // image-resize defaults include maintainAspect: true
     const result = updateNodeParams(withNode, nodeId, { quality: 80 });
     expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.maintainAspect).toBe(true);
     expect(result.definition.nodes![IO_NODE_COUNT]!.parameters.quality).toBe(80);
@@ -30,7 +30,7 @@ describe("updateNodeParams", () => {
 
   it("does not mutate the original definition", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
     const originalQuality = withNode.nodes![IO_NODE_COUNT]!.parameters.quality;
 
@@ -40,7 +40,7 @@ describe("updateNodeParams", () => {
 
   it("returns the same definition if node ID not found", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
 
     const result = updateNodeParams(withNode, "nonexistent", { quality: 80 });
     expect(result.definition).toBe(withNode);
@@ -48,28 +48,25 @@ describe("updateNodeParams", () => {
 
   it("can set multiple parameters at once", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-resize");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = updateNodeParams(withNode, nodeId, {
-      operation: "resize",
       width: 800,
       height: 600,
     });
 
     const params = result.definition.nodes![IO_NODE_COUNT]!.parameters;
-    expect(params.operation).toBe("resize");
     expect(params.width).toBe(800);
     expect(params.height).toBe(600);
   });
 
   it("can add new parameters that didn't exist before", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = updateNodeParams(withNode, nodeId, {
-      operation: "compress",
       input: "{{.item}}",
     });
 
@@ -78,7 +75,7 @@ describe("updateNodeParams", () => {
 
   it("can overwrite existing parameter values", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     // Quality defaults to 80, overwrite it
@@ -88,7 +85,7 @@ describe("updateNodeParams", () => {
 
   it("updates the correct node when multiple nodes exist", () => {
     const blank = createBlankDefinition();
-    const r1 = addNode(blank, "image");
+    const r1 = addNode(blank, "image-compress");
     const r2 = addNode(r1.definition, "transform");
     const secondNodeId = r2.definition.nodes![IO_NODE_COUNT + 1]!.id;
 
@@ -112,7 +109,7 @@ describe("updateNodeParams", () => {
     // Manually add a child node inside the loop
     const childNode = {
       id: "child-1",
-      type: "image" as const,
+      type: "image-compress" as const,
       version: "1.0.0",
       name: "Nested Image",
       position: { x: 0, y: 0 },

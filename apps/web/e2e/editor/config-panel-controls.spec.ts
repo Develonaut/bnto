@@ -13,8 +13,8 @@ import {
  * parameter type via the CONTROL_REGISTRY lookup (select, switch,
  * slider, number, text, tagPicker, keyValue).
  *
- * Note: `operation` is hidden on image/spreadsheet/file-system nodes
- * (pre-set from palette). Tests verify the surfaced params instead.
+ * Each per-operation node type has its own schema.
+ * Tests verify the surfaced params for each type.
  *
  * @browser — no Convex backend needed.
  */
@@ -24,15 +24,15 @@ test.describe("config panel controls @browser", () => {
     await navigateToEditor(page);
   });
 
-  test("image node: slider for compression", async ({ page }) => {
+  test("image node: slider for quality", async ({ page }) => {
     await addNodeFromPalette(page, "Compress Images");
     await selectNode(page, "Compress");
     await ensureConfigPanelOpen(page);
 
-    // Compression = slider (bounded number 1-100, visible when operation=compress)
-    const compressionField = page.getByTestId("schema-field-compression");
-    await compressionField.waitFor({ timeout: 5000 });
-    await expect(compressionField.getByTestId("control-slider*")).toBeVisible();
+    // Quality = slider (bounded number 1-100)
+    const qualityField = page.getByTestId("schema-field-quality");
+    await qualityField.waitFor({ timeout: 5000 });
+    await expect(qualityField.getByTestId("control-slider*")).toBeVisible();
   });
 
   test("image node: visibleWhen shows width/height for resize", async ({ page }) => {

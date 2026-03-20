@@ -11,7 +11,7 @@ const IO_NODE_COUNT = 2;
 describe("removeNode", () => {
   it("removes a node by ID", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = removeNode(withNode, nodeId);
@@ -21,7 +21,7 @@ describe("removeNode", () => {
 
   it("does not mutate the original definition", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     removeNode(withNode, nodeId);
@@ -30,7 +30,7 @@ describe("removeNode", () => {
 
   it("returns the same definition if node ID not found", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
 
     const result = removeNode(withNode, "nonexistent-id");
     expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT + 1);
@@ -39,7 +39,7 @@ describe("removeNode", () => {
 
   it("removes edges connected to the removed node", () => {
     const blank = createBlankDefinition();
-    const r1 = addNode(blank, "image");
+    const r1 = addNode(blank, "image-compress");
     const r2 = addNode(r1.definition, "transform");
     const node1Id = r2.definition.nodes![IO_NODE_COUNT]!.id;
     const node2Id = r2.definition.nodes![IO_NODE_COUNT + 1]!.id;
@@ -58,9 +58,9 @@ describe("removeNode", () => {
 
   it("only removes edges connected to the removed node", () => {
     const blank = createBlankDefinition();
-    const r1 = addNode(blank, "image");
+    const r1 = addNode(blank, "image-compress");
     const r2 = addNode(r1.definition, "transform");
-    const r3 = addNode(r2.definition, "spreadsheet");
+    const r3 = addNode(r2.definition, "spreadsheet-clean");
     const node1Id = r3.definition.nodes![IO_NODE_COUNT]!.id;
     const node2Id = r3.definition.nodes![IO_NODE_COUNT + 1]!.id;
     const node3Id = r3.definition.nodes![IO_NODE_COUNT + 2]!.id;
@@ -82,15 +82,15 @@ describe("removeNode", () => {
 
   it("removes the correct node from a definition with multiple nodes", () => {
     const blank = createBlankDefinition();
-    const r1 = addNode(blank, "image");
+    const r1 = addNode(blank, "image-compress");
     const r2 = addNode(r1.definition, "transform");
-    const r3 = addNode(r2.definition, "spreadsheet");
+    const r3 = addNode(r2.definition, "spreadsheet-clean");
     const middleNodeId = r3.definition.nodes![IO_NODE_COUNT + 1]!.id;
 
     const result = removeNode(r3.definition, middleNodeId);
     expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT + 2);
-    expect(result.definition.nodes![IO_NODE_COUNT]!.type).toBe("image");
-    expect(result.definition.nodes![IO_NODE_COUNT + 1]!.type).toBe("spreadsheet");
+    expect(result.definition.nodes![IO_NODE_COUNT]!.type).toBe("image-compress");
+    expect(result.definition.nodes![IO_NODE_COUNT + 1]!.type).toBe("spreadsheet-clean");
   });
 
   it("handles removing from a definition with only I/O nodes", () => {
@@ -120,7 +120,7 @@ describe("removeNode", () => {
 
   it("allows removing non-I/O nodes normally", () => {
     const blank = createBlankDefinition();
-    const { definition: withNode } = addNode(blank, "image");
+    const { definition: withNode } = addNode(blank, "image-compress");
     const nodeId = withNode.nodes![IO_NODE_COUNT]!.id;
 
     const result = removeNode(withNode, nodeId);
@@ -135,7 +135,7 @@ describe("removeNode", () => {
 
     const childNode = {
       id: "child-1",
-      type: "image" as const,
+      type: "image-compress" as const,
       version: "1.0.0",
       name: "Nested Image",
       position: { x: 0, y: 0 },
@@ -163,7 +163,7 @@ describe("removeNode", () => {
 
     const child1 = {
       id: "child-1",
-      type: "image" as const,
+      type: "image-compress" as const,
       version: "1.0.0",
       name: "Image",
       position: { x: 0, y: 0 },
@@ -207,7 +207,7 @@ describe("removeNode", () => {
   it("does not affect root edges when removing a nested node", () => {
     const blank = createBlankDefinition();
     const { definition: withLoop } = addNode(blank, "loop");
-    const { definition: withImage } = addNode(withLoop, "image");
+    const { definition: withImage } = addNode(withLoop, "image-compress");
     const loopNode = withImage.nodes![IO_NODE_COUNT]!;
     const imageNode = withImage.nodes![IO_NODE_COUNT + 1]!;
 

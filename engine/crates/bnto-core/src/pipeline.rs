@@ -25,15 +25,13 @@ pub struct PipelineNode {
     /// Used in progress events so the UI knows which node to highlight.
     pub id: String,
 
-    /// The node type identifier (e.g., "image", "spreadsheet", "file-system").
-    /// Combined with `params.operation` to form the compound dispatch key
-    /// (e.g., "image:compress"). I/O types ("input", "output") are skipped.
+    /// The per-operation type key (e.g., "image-compress", "spreadsheet-clean").
+    /// I/O types ("input", "output") are skipped by the executor.
     #[serde(rename = "type")]
     pub node_type: String,
 
     /// Configuration parameters for this node.
-    /// Contains the `operation` field (e.g., "compress", "resize") plus
-    /// any operation-specific settings (quality, dimensions, format, etc.).
+    /// Operation-specific settings (quality, dimensions, format, etc.).
     /// Defaults to an empty Map when absent (I/O nodes often have no params).
     /// Accepts both `params` (Rust convention) and `parameters` (TypeScript
     /// convention) via serde alias.
@@ -142,7 +140,7 @@ mod tests {
         let json = r#"{
             "nodes": [
                 { "id": "n1", "type": "input" },
-                { "id": "n2", "type": "image", "params": { "operation": "compress", "quality": 80 } },
+                { "id": "n2", "type": "image-compress", "params": { "quality": 80 } },
                 { "id": "n3", "type": "output" }
             ]
         }"#;
@@ -153,7 +151,7 @@ mod tests {
         assert_eq!(def.nodes[0].id, "n1");
         assert_eq!(def.nodes[0].node_type, "input");
         assert_eq!(def.nodes[1].id, "n2");
-        assert_eq!(def.nodes[1].node_type, "image");
+        assert_eq!(def.nodes[1].node_type, "image-compress");
         assert_eq!(def.nodes[2].id, "n3");
         assert_eq!(def.nodes[2].node_type, "output");
     }
@@ -164,9 +162,8 @@ mod tests {
             "nodes": [
                 {
                     "id": "n1",
-                    "type": "image",
+                    "type": "image-compress",
                     "params": {
-                        "operation": "compress",
                         "quality": 80,
                         "preserveExif": true
                     }
@@ -177,7 +174,6 @@ mod tests {
         let def: PipelineDefinition = serde_json::from_str(json).unwrap();
         let params = &def.nodes[0].params;
 
-        assert_eq!(params["operation"], "compress");
         assert_eq!(params["quality"], 80);
         assert_eq!(params["preserveExif"], true);
     }
@@ -204,7 +200,7 @@ mod tests {
                     "id": "loop-1",
                     "type": "loop",
                     "children": [
-                        { "id": "child-1", "type": "image", "params": { "operation": "compress" } }
+                        { "id": "child-1", "type": "image-compress" }
                     ]
                 }
             ]
@@ -216,14 +212,14 @@ mod tests {
         assert_eq!(loop_node.node_type, "loop");
         let children = loop_node.children.as_ref().unwrap();
         assert_eq!(children.len(), 1);
-        assert_eq!(children[0].node_type, "image");
+        assert_eq!(children[0].node_type, "image-compress");
     }
 
     #[test]
     fn test_no_children_is_none() {
         let json = r#"{
             "nodes": [
-                { "id": "n1", "type": "image", "params": { "operation": "compress" } }
+                { "id": "n1", "type": "image-compress" }
             ]
         }"#;
 
@@ -244,7 +240,7 @@ mod tests {
                             "id": "loop-1",
                             "type": "loop",
                             "children": [
-                                { "id": "proc-1", "type": "image", "params": { "operation": "compress" } }
+                                { "id": "proc-1", "type": "image-compress" }
                             ]
                         }
                     ]
@@ -259,7 +255,7 @@ mod tests {
 
         assert_eq!(group.node_type, "group");
         assert_eq!(loop_node.node_type, "loop");
-        assert_eq!(proc_node.node_type, "image");
+        assert_eq!(proc_node.node_type, "image-compress");
     }
 
     // --- Serde Alias Tests ---
@@ -276,7 +272,7 @@ mod tests {
                     "id": "loop-1",
                     "type": "loop",
                     "nodes": [
-                        { "id": "child-1", "type": "image", "params": { "operation": "compress" } }
+                        { "id": "child-1", "type": "image-compress" }
                     ]
                 }
             ]
@@ -288,7 +284,7 @@ mod tests {
 
         assert_eq!(children.len(), 1);
         assert_eq!(children[0].id, "child-1");
-        assert_eq!(children[0].node_type, "image");
+        assert_eq!(children[0].node_type, "image-compress");
     }
 
     #[test]
@@ -299,11 +295,8 @@ mod tests {
             "nodes": [
                 {
                     "id": "n1",
-                    "type": "image",
-                    "parameters": {
-                        "operation": "compress",
-                        "quality": 80
-                    }
+                    "type": "image-compress",
+                    "parameters": { "quality": 80 }
                 }
             ]
         }"#;
@@ -311,7 +304,6 @@ mod tests {
         let def: PipelineDefinition = serde_json::from_str(json).unwrap();
         let params = &def.nodes[0].params;
 
-        assert_eq!(params["operation"], "compress");
         assert_eq!(params["quality"], 80);
     }
 
@@ -327,8 +319,8 @@ mod tests {
                     "nodes": [
                         {
                             "id": "child-1",
-                            "type": "image",
-                            "parameters": { "operation": "compress", "quality": 75 }
+                            "type": "image-compress",
+                            "parameters": { "quality": 75 }
                         }
                     ]
                 }
@@ -344,7 +336,6 @@ mod tests {
         // "nodes" → children
         let children = loop_node.children.as_ref().unwrap();
         assert_eq!(children.len(), 1);
-        assert_eq!(children[0].params["operation"], "compress");
         assert_eq!(children[0].params["quality"], 75);
     }
 
@@ -358,7 +349,7 @@ mod tests {
                     "type": "loop",
                     "params": { "mode": "forEach" },
                     "children": [
-                        { "id": "child-1", "type": "image", "params": { "operation": "compress" } }
+                        { "id": "child-1", "type": "image-compress" }
                     ]
                 }
             ]
@@ -380,12 +371,12 @@ mod tests {
             "nodes": [
                 {
                     "id": "compress-image",
-                    "type": "image",
+                    "type": "image-compress",
                     "version": "1.0.0",
                     "name": "Compress Image",
                     "position": { "x": 100, "y": 100 },
                     "metadata": { "description": "Compresses images" },
-                    "parameters": { "operation": "compress", "quality": 80 },
+                    "parameters": { "quality": 80 },
                     "inputPorts": [{ "id": "in-1", "name": "files" }],
                     "outputPorts": [{ "id": "out-1", "name": "files" }]
                 }
@@ -396,7 +387,6 @@ mod tests {
         let def: PipelineDefinition = serde_json::from_str(json).unwrap();
         assert_eq!(def.nodes.len(), 1);
         assert_eq!(def.nodes[0].id, "compress-image");
-        assert_eq!(def.nodes[0].params["operation"], "compress");
         assert_eq!(def.nodes[0].params["quality"], 80);
     }
 
@@ -406,7 +396,7 @@ mod tests {
 
     #[test]
     fn test_compress_images_recipe_deserializes() {
-        // Compositional: Input → Group("Batch Compress") → Loop → [image:compress] → Output
+        // Compositional: Input → Group("Batch Compress") → Loop → [image-compress] → Output
         let json = r#"{
             "nodes": [
                 {
@@ -432,10 +422,10 @@ mod tests {
                             "inputPorts": [{"id": "in-1", "name": "items"}], "outputPorts": [],
                             "nodes": [
                                 {
-                                    "id": "compress-image", "type": "image", "version": "1.0.0",
+                                    "id": "compress-image", "type": "image-compress", "version": "1.0.0",
                                     "name": "Compress Image", "position": {"x": 0, "y": 0},
                                     "metadata": {},
-                                    "parameters": { "operation": "compress", "quality": 80 },
+                                    "parameters": { "quality": 80 },
                                     "inputPorts": [], "outputPorts": []
                                 }
                             ],
@@ -476,14 +466,13 @@ mod tests {
         let loop_children = group_children[0].children.as_ref().unwrap();
         assert_eq!(loop_children.len(), 1);
         assert_eq!(loop_children[0].id, "compress-image");
-        assert_eq!(loop_children[0].node_type, "image");
-        assert_eq!(loop_children[0].params["operation"], "compress");
+        assert_eq!(loop_children[0].node_type, "image-compress");
         assert_eq!(loop_children[0].params["quality"], 80);
     }
 
     #[test]
     fn test_clean_csv_recipe_deserializes() {
-        // Compositional: Input → Group("CSV Cleaner") → [spreadsheet:clean] → Output
+        // Compositional: Input → Group("CSV Cleaner") → [spreadsheet-clean] → Output
         let json = r#"{
             "nodes": [
                 {
@@ -502,11 +491,10 @@ mod tests {
                     "outputPorts": [{"id": "out-1", "name": "files"}],
                     "nodes": [
                         {
-                            "id": "clean", "type": "spreadsheet", "version": "1.0.0",
+                            "id": "clean", "type": "spreadsheet-clean", "version": "1.0.0",
                             "name": "Clean CSV", "position": {"x": 0, "y": 0},
                             "metadata": {},
                             "parameters": {
-                                "operation": "clean",
                                 "trimWhitespace": true,
                                 "removeEmptyRows": true,
                                 "removeDuplicates": true
@@ -541,13 +529,12 @@ mod tests {
         // Group has 1 child (the clean processor).
         let group_children = def.nodes[1].children.as_ref().unwrap();
         assert_eq!(group_children.len(), 1);
-        assert_eq!(group_children[0].node_type, "spreadsheet");
-        assert_eq!(group_children[0].params["operation"], "clean");
+        assert_eq!(group_children[0].node_type, "spreadsheet-clean");
     }
 
     #[test]
     fn test_rename_files_recipe_deserializes() {
-        // Compositional: Input → Group("Batch Rename") → Loop → [file-system:rename] → Output
+        // Compositional: Input → Group("Batch Rename") → Loop → [file-rename] → Output
         let json = r#"{
             "nodes": [
                 { "id": "input", "type": "input", "version": "1.0.0",
@@ -568,10 +555,10 @@ mod tests {
                             "inputPorts": [], "outputPorts": [],
                             "nodes": [
                                 {
-                                    "id": "rename-file", "type": "file-system", "version": "1.0.0",
+                                    "id": "rename-file", "type": "file-rename", "version": "1.0.0",
                                     "name": "Rename File", "position": {"x": 0, "y": 0},
                                     "metadata": {},
-                                    "parameters": { "operation": "rename", "prefix": "renamed-" },
+                                    "parameters": { "prefix": "renamed-" },
                                     "inputPorts": [], "outputPorts": []
                                 }
                             ],
@@ -602,8 +589,7 @@ mod tests {
         // Loop has 1 child (rename-file processor).
         let loop_children = group_children[0].children.as_ref().unwrap();
         assert_eq!(loop_children.len(), 1);
-        assert_eq!(loop_children[0].node_type, "file-system");
-        assert_eq!(loop_children[0].params["operation"], "rename");
+        assert_eq!(loop_children[0].node_type, "file-rename");
         assert_eq!(loop_children[0].params["prefix"], "renamed-");
     }
 
@@ -626,8 +612,8 @@ mod tests {
                                     "parameters": { "mode": "forEach" },
                                     "nodes": [
                                         {
-                                            "id": "processor", "type": "image",
-                                            "parameters": { "operation": "compress", "quality": 50 }
+                                            "id": "processor", "type": "image-compress",
+                                            "parameters": { "quality": 50 }
                                         }
                                     ]
                                 }
@@ -651,8 +637,7 @@ mod tests {
         assert_eq!(loop_node.node_type, "loop");
 
         let processor = &loop_node.children.as_ref().unwrap()[0];
-        assert_eq!(processor.node_type, "image");
-        assert_eq!(processor.params["operation"], "compress");
+        assert_eq!(processor.node_type, "image-compress");
         assert_eq!(processor.params["quality"], 50);
     }
 
@@ -662,8 +647,8 @@ mod tests {
     fn test_is_io_node() {
         assert!(is_io_node("input"));
         assert!(is_io_node("output"));
-        assert!(!is_io_node("image"));
-        assert!(!is_io_node("spreadsheet"));
+        assert!(!is_io_node("image-compress"));
+        assert!(!is_io_node("spreadsheet-clean"));
         assert!(!is_io_node("loop"));
     }
 
@@ -672,7 +657,7 @@ mod tests {
         assert!(is_container_node("loop"));
         assert!(is_container_node("group"));
         assert!(is_container_node("parallel"));
-        assert!(!is_container_node("image"));
+        assert!(!is_container_node("image-compress"));
         assert!(!is_container_node("input"));
         assert!(!is_container_node("output"));
     }

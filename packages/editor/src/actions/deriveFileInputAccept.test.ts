@@ -5,7 +5,7 @@ import type { NodeConfigs } from "../adapters/types";
 describe("deriveFileInputAccept", () => {
   it("returns undefined when configs has no input node", () => {
     const configs: NodeConfigs = {
-      "node-1": { nodeType: "image", name: "compress", parameters: {} },
+      "node-1": { nodeType: "image-compress", name: "Compress Images", parameters: {} },
     };
     expect(deriveFileInputAccept(configs)).toBeUndefined();
   });
@@ -77,7 +77,7 @@ describe("deriveFileInputAccept", () => {
 
   it("finds input node among other nodes", () => {
     const configs: NodeConfigs = {
-      "node-1": { nodeType: "image", name: "compress", parameters: {} },
+      "node-1": { nodeType: "image-compress", name: "Compress Images", parameters: {} },
       "input-1": {
         nodeType: "input",
         name: "Input",

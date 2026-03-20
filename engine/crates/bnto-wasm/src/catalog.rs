@@ -22,12 +22,8 @@ pub fn node_catalog() -> Result<String, JsValue> {
     let registry = super::execute::create_default_registry();
     let mut catalog = registry.catalog();
 
-    // Sort by compound key for deterministic output across builds.
-    catalog.sort_by(|a, b| {
-        let key_a = format!("{}:{}", a.node_type, a.operation);
-        let key_b = format!("{}:{}", b.node_type, b.operation);
-        key_a.cmp(&key_b)
-    });
+    // Sort by node type for deterministic output across builds.
+    catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
     let envelope = CatalogEnvelope {
         version: bnto_core::FORMAT_VERSION.to_string(),
@@ -70,28 +66,25 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_contains_expected_compound_keys() {
-        // Verify all 6 expected compound keys are present.
+    fn test_catalog_contains_expected_node_types() {
+        // Verify all 6 expected node type keys are present.
         let registry = crate::execute::create_default_registry();
         let catalog = registry.catalog();
 
-        let keys: Vec<String> = catalog
-            .iter()
-            .map(|m| format!("{}:{}", m.node_type, m.operation))
-            .collect();
+        let keys: Vec<&str> = catalog.iter().map(|m| m.node_type.as_str()).collect();
 
         let expected = [
-            "image:compress",
-            "image:resize",
-            "image:convert",
-            "spreadsheet:clean",
-            "spreadsheet:rename",
-            "file-system:rename",
+            "image-compress",
+            "image-resize",
+            "image-convert",
+            "spreadsheet-clean",
+            "spreadsheet-rename",
+            "file-rename",
         ];
 
         for key in &expected {
             assert!(
-                keys.contains(&key.to_string()),
+                keys.contains(key),
                 "Catalog should contain '{}', got: {:?}",
                 key,
                 keys
@@ -109,9 +102,8 @@ mod tests {
         for entry in &catalog {
             assert!(
                 entry.platforms.contains(&"browser".to_string()),
-                "{}:{} should include 'browser' platform",
-                entry.node_type,
-                entry.operation
+                "{} should include 'browser' platform",
+                entry.node_type
             );
         }
     }
@@ -121,11 +113,7 @@ mod tests {
         // The full catalog should serialize to valid, parseable JSON.
         let registry = crate::execute::create_default_registry();
         let mut catalog = registry.catalog();
-        catalog.sort_by(|a, b| {
-            let key_a = format!("{}:{}", a.node_type, a.operation);
-            let key_b = format!("{}:{}", b.node_type, b.operation);
-            key_a.cmp(&key_b)
-        });
+        catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
         let envelope = CatalogEnvelope {
             version: bnto_core::FORMAT_VERSION.to_string(),
@@ -142,7 +130,7 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 12);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 15);
         assert!(parsed["processors"].is_array());
         assert_eq!(parsed["processors"].as_array().unwrap().len(), 6);
         // The definitionSchema should be present as a JSON object.
@@ -169,11 +157,7 @@ mod tests {
     fn generate_catalog_snapshot() {
         let registry = crate::execute::create_default_registry();
         let mut catalog = registry.catalog();
-        catalog.sort_by(|a, b| {
-            let key_a = format!("{}:{}", a.node_type, a.operation);
-            let key_b = format!("{}:{}", b.node_type, b.operation);
-            key_a.cmp(&key_b)
-        });
+        catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
         let envelope = CatalogEnvelope {
             version: bnto_core::FORMAT_VERSION.to_string(),
@@ -216,15 +200,9 @@ mod tests {
             key_a.cmp(&key_b)
         });
 
-        // Both should produce the same compound keys in the same order.
-        let keys1: Vec<String> = catalog1
-            .iter()
-            .map(|m| format!("{}:{}", m.node_type, m.operation))
-            .collect();
-        let keys2: Vec<String> = catalog2
-            .iter()
-            .map(|m| format!("{}:{}", m.node_type, m.operation))
-            .collect();
+        // Both should produce the same node type keys in the same order.
+        let keys1: Vec<&str> = catalog1.iter().map(|m| m.node_type.as_str()).collect();
+        let keys2: Vec<&str> = catalog2.iter().map(|m| m.node_type.as_str()).collect();
 
         assert_eq!(keys1, keys2);
     }

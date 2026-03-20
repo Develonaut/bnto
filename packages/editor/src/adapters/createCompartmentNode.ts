@@ -47,16 +47,12 @@ const LOOP_MODE_LABELS: Record<string, string> = {
   while: "While",
 };
 
-/** Derive a short card label from the node's operation or mode parameter. */
+/** Derive a short card label from the node's mode parameter or type info. */
 function deriveLabel(
   type: NodeTypeName,
   parameters: Record<string, unknown>,
   fallback: string,
 ): string {
-  // Processing nodes: use operation name ("Compress", "Resize", "Convert")
-  const operation = parameters.operation as string | undefined;
-  if (operation) return operation[0]!.toUpperCase() + operation.slice(1);
-
   // Container nodes: use mode label for loops ("For Each", "While", "Times")
   if (isContainerNodeType(type)) {
     const mode = parameters.mode as string | undefined;
@@ -90,9 +86,8 @@ function createCompartmentNode(
   const id = crypto.randomUUID();
   const parameters = { ...buildDefaultParams(type), ...defaultParams };
 
-  // Short label derived from the node's active mode or operation.
-  // The sublabel already shows the node type ("Image", "Loop", etc.)
-  // so cards read as "Compress / Image", "For Each / Loop", etc.
+  // Short label derived from mode (loops) or type info.
+  // The sublabel shows the category ("Image", "Loop", etc.).
   const label = deriveLabel(type, parameters, info?.label ?? type);
 
   const isIo = isIoNodeType(type);

@@ -19,8 +19,8 @@ fn compress_recipe_emits_expected_events() {
                     "id": "compress-loop", "type": "loop",
                     "parameters": { "mode": "forEach" },
                     "nodes": [{
-                        "id": "compress-image", "type": "image",
-                        "parameters": { "operation": "compress", "quality": 80 }
+                        "id": "compress-image", "type": "image-compress",
+                        "parameters": { "quality": 80 }
                     }]
                 }]
             },

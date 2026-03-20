@@ -20,7 +20,7 @@ describe("createHistoryService", () => {
   it("undo reverses the last change", () => {
     const nodeSvc = createNodeService(storeApi);
     const before = storeApi.getState().nodes.length;
-    nodeSvc.addNode("image");
+    nodeSvc.addNode("image-compress");
     expect(storeApi.getState().nodes.length).toBe(before + 1);
     service.undo();
     expect(storeApi.getState().nodes.length).toBe(before);
@@ -29,7 +29,7 @@ describe("createHistoryService", () => {
   it("redo restores an undone change", () => {
     const nodeSvc = createNodeService(storeApi);
     const before = storeApi.getState().nodes.length;
-    nodeSvc.addNode("image");
+    nodeSvc.addNode("image-compress");
     service.undo();
     service.redo();
     expect(storeApi.getState().nodes.length).toBe(before + 1);
@@ -49,7 +49,7 @@ describe("createHistoryService", () => {
 
   it("resetHistory clears both stacks", () => {
     const nodeSvc = createNodeService(storeApi);
-    nodeSvc.addNode("image");
+    nodeSvc.addNode("image-compress");
     expect(storeApi.getState().undoStack.length).toBeGreaterThan(0);
     service.resetHistory();
     expect(storeApi.getState().undoStack.length).toBe(0);

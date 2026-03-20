@@ -39,7 +39,6 @@ export const parallelNodeSchema: NodeSchemaDefinition = {
 
 /** UI presentation metadata for parallel node fields. */
 export const parallelFields: FieldConfigMap = {
-  tasks: { hidden: true },
   errorStrategy: {
     options: [
       { value: "failFast", label: "Fail Fast" },

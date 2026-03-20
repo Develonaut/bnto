@@ -40,8 +40,8 @@ impl NodeProcessor for RenameFiles {
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
-            node_type: "file-system".to_string(),
-            operation: "rename".to_string(),
+            node_type: "file-rename".to_string(),
+            operation: "default".to_string(),
             name: "Rename Files".to_string(),
             description: "Transform filenames using patterns, find/replace, and case rules"
                 .to_string(),
@@ -117,22 +117,12 @@ fn build_rename_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
     ]
 }
 
-/// Condition: visible when operation == "rename".
-fn rename_condition() -> Option<bnto_core::metadata::ParamCondition> {
-    use bnto_core::metadata::*;
-    Some(ParamCondition::Single(ParamConditionEntry {
-        param: "operation".to_string(),
-        equals: "rename".to_string(),
-    }))
-}
-
 /// A simple string parameter for the rename node.
 fn rename_string_param(name: &str, label: &str, desc: &str) -> bnto_core::metadata::ParameterDef {
     bnto_core::metadata::ParameterDef {
         name: name.to_string(),
         label: label.to_string(),
         description: desc.to_string(),
-        visible_when: rename_condition(),
         ..Default::default()
     }
 }
@@ -150,7 +140,6 @@ fn rename_case_param() -> bnto_core::metadata::ParameterDef {
                 "title".to_string(),
             ],
         },
-        visible_when: rename_condition(),
         ..Default::default()
     }
 }
@@ -163,7 +152,6 @@ fn rename_pattern_param() -> bnto_core::metadata::ParameterDef {
             "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})"
                 .to_string(),
         placeholder: Some("{{name}}-compressed.{{ext}}".to_string()),
-        visible_when: rename_condition(),
         ..Default::default()
     }
 }

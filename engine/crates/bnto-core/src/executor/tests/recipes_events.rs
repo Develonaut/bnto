@@ -116,36 +116,36 @@ fn test_all_six_recipe_structures_deserialize() {
         compress_images_json(),
         clean_csv_json(),
         rename_files_json(),
-        // Resize: Input → Group → Loop → [image:resize] → Output
+        // Resize: Input → Group → Loop → [image-resize] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
                 { "id": "batch-resize", "type": "group", "parameters": {}, "nodes": [
                     { "id": "loop", "type": "loop", "parameters": { "mode": "forEach" }, "nodes": [
-                        { "id": "proc", "type": "image", "parameters": { "operation": "resize", "width": 200 } }
+                        { "id": "proc", "type": "image-resize", "parameters": { "width": 200 } }
                     ]}
                 ]},
                 { "id": "out", "type": "output", "parameters": {} }
             ]
         }"#,
-        // Convert: Input → Group → Loop → [image:convert] → Output
+        // Convert: Input → Group → Loop → [image-convert] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
                 { "id": "batch-convert", "type": "group", "parameters": {}, "nodes": [
                     { "id": "loop", "type": "loop", "parameters": { "mode": "forEach" }, "nodes": [
-                        { "id": "proc", "type": "image", "parameters": { "operation": "convert", "format": "webp" } }
+                        { "id": "proc", "type": "image-convert", "parameters": { "format": "webp" } }
                     ]}
                 ]},
                 { "id": "out", "type": "output", "parameters": {} }
             ]
         }"#,
-        // Rename CSV columns: Input → Group → [spreadsheet:rename] → Output
+        // Rename CSV columns: Input → Group → [spreadsheet-rename] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
                 { "id": "col-renamer", "type": "group", "parameters": {}, "nodes": [
-                    { "id": "proc", "type": "spreadsheet", "parameters": { "operation": "rename", "columns": {} } }
+                    { "id": "proc", "type": "spreadsheet-rename", "parameters": { "columns": {} } }
                 ]},
                 { "id": "out", "type": "output", "parameters": {} }
             ]
@@ -170,36 +170,36 @@ fn test_all_six_recipes_execute_with_mocks() {
         compress_images_json(),
         clean_csv_json(),
         rename_files_json(),
-        // Resize: Input → Group → Loop → [image:resize] → Output
+        // Resize: Input → Group → Loop → [image-resize] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
                 { "id": "batch-resize", "type": "group", "parameters": {}, "nodes": [
                     { "id": "loop", "type": "loop", "parameters": {}, "nodes": [
-                        { "id": "proc", "type": "image", "parameters": { "operation": "resize" } }
+                        { "id": "proc", "type": "image-resize" }
                     ]}
                 ]},
                 { "id": "out", "type": "output", "parameters": {} }
             ]
         }"#,
-        // Convert: Input → Group → Loop → [image:convert] → Output
+        // Convert: Input → Group → Loop → [image-convert] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
                 { "id": "batch-convert", "type": "group", "parameters": {}, "nodes": [
                     { "id": "loop", "type": "loop", "parameters": {}, "nodes": [
-                        { "id": "proc", "type": "image", "parameters": { "operation": "convert" } }
+                        { "id": "proc", "type": "image-convert" }
                     ]}
                 ]},
                 { "id": "out", "type": "output", "parameters": {} }
             ]
         }"#,
-        // Rename CSV columns: Input → Group → [spreadsheet:rename] → Output
+        // Rename CSV columns: Input → Group → [spreadsheet-rename] → Output
         r#"{
             "nodes": [
                 { "id": "in", "type": "input", "parameters": {} },
                 { "id": "col-renamer", "type": "group", "parameters": {}, "nodes": [
-                    { "id": "proc", "type": "spreadsheet", "parameters": { "operation": "rename" } }
+                    { "id": "proc", "type": "spreadsheet-rename" }
                 ]},
                 { "id": "out", "type": "output", "parameters": {} }
             ]

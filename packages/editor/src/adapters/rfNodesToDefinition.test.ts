@@ -20,8 +20,8 @@ function metaOf(def: Definition): RecipeMetadata {
 describe("rfNodesToDefinition", () => {
   it("converts RF nodes + configs back to Definition child nodes", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    def = addNode(def, "spreadsheet").definition;
+    def = addNode(def, "image-compress").definition;
+    def = addNode(def, "spreadsheet-clean").definition;
 
     const bento = definitionToGraph(def);
     const result = rfNodesToDefinition(bento.nodes, metaOf(def), bento.configs);
@@ -29,25 +29,25 @@ describe("rfNodesToDefinition", () => {
     // 2 I/O nodes + 2 added = 4
     expect(result.nodes!.length).toBe(4);
     const nonIo = result.nodes!.filter((n) => n.type !== "input" && n.type !== "output");
-    expect(nonIo[0]!.type).toBe("image");
-    expect(nonIo[1]!.type).toBe("spreadsheet");
+    expect(nonIo[0]!.type).toBe("image-compress");
+    expect(nonIo[1]!.type).toBe("spreadsheet-clean");
   });
 
   it("preserves node IDs through the round-trip", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const bento = definitionToGraph(def);
     const result = rfNodesToDefinition(bento.nodes, metaOf(def), bento.configs);
 
-    const resultImage = result.nodes!.find((n) => n.type === "image")!;
+    const resultImage = result.nodes!.find((n) => n.type === "image-compress")!;
     expect(resultImage.id).toBe(imageNode.id);
   });
 
   it("preserves node positions from RF state", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
+    def = addNode(def, "image-compress").definition;
 
     const bento = definitionToGraph(def);
     const movedNodes = bento.nodes.map((n) => ({
@@ -56,25 +56,25 @@ describe("rfNodesToDefinition", () => {
     }));
     const result = rfNodesToDefinition(movedNodes, metaOf(def), bento.configs);
 
-    const resultImage = result.nodes!.find((n) => n.type === "image")!;
+    const resultImage = result.nodes!.find((n) => n.type === "image-compress")!;
     expect(resultImage.position).toEqual({ x: 777, y: 333 });
   });
 
   it("preserves node parameters through the round-trip", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const bento = definitionToGraph(def);
     const result = rfNodesToDefinition(bento.nodes, metaOf(def), bento.configs);
 
-    const resultImage = result.nodes!.find((n) => n.type === "image")!;
+    const resultImage = result.nodes!.find((n) => n.type === "image-compress")!;
     expect(resultImage.parameters).toEqual(imageNode.parameters);
   });
 
   it("preserves root definition metadata", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
+    def = addNode(def, "image-compress").definition;
 
     const bento = definitionToGraph(def);
     const result = rfNodesToDefinition(bento.nodes, metaOf(def), bento.configs);
@@ -95,9 +95,9 @@ describe("rfNodesToDefinition", () => {
 
   it("round-trips definition → bento → definition preserving domain data", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
+    def = addNode(def, "image-compress").definition;
     def = addNode(def, "transform").definition;
-    def = addNode(def, "file-system").definition;
+    def = addNode(def, "file-rename").definition;
 
     const bento = definitionToGraph(def);
     const roundTripped = rfNodesToDefinition(bento.nodes, metaOf(def), bento.configs);
@@ -114,8 +114,8 @@ describe("rfNodesToDefinition", () => {
 
   it("uses label as fallback name when config is missing", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
-    const imageNode = def.nodes!.find((n) => n.type === "image")!;
+    def = addNode(def, "image-compress").definition;
+    const imageNode = def.nodes!.find((n) => n.type === "image-compress")!;
 
     const bento = definitionToGraph(def);
     const rfImage = bento.nodes.find((n) => n.id === imageNode.id)!;

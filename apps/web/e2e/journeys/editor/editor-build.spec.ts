@@ -57,9 +57,9 @@ test.describe("editor build & configure @browser", () => {
     await selectNode(page, "Compress");
     await ensureConfigPanelOpen(page);
 
-    // Config panel should show schema fields (operation is hidden, check compression instead)
-    const compressionField = page.getByTestId("schema-field-compression");
-    await expect(compressionField).toBeVisible({ timeout: 5000 });
+    // Config panel should show schema fields for image-compress
+    const qualityField = page.getByTestId("schema-field-quality");
+    await expect(qualityField).toBeVisible({ timeout: 5000 });
   });
 
   test("BC4: update params via config panel", async ({ page }) => {

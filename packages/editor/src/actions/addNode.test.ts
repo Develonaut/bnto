@@ -76,7 +76,7 @@ function stateWithIoNodes(): EditorState {
 
 describe("addNode", () => {
   it("returns next state and nodeId on success", () => {
-    const result = addNode(blankState(), "image");
+    const result = addNode(blankState(), "image-compress");
     expect(result).not.toBeNull();
     expect(result!.nodeId).toBeTruthy();
     expect(result!.nextState.nodes).toBeDefined();
@@ -94,18 +94,18 @@ describe("addNode", () => {
   });
 
   it("allows adding non-I/O node when I/O nodes exist", () => {
-    const result = addNode(stateWithIoNodes(), "image");
+    const result = addNode(stateWithIoNodes(), "image-compress");
     expect(result).not.toBeNull();
   });
 
   it("auto-selects the new node", () => {
-    const result = addNode(blankState(), "image");
+    const result = addNode(blankState(), "image-compress");
     const newNode = result!.nextState.nodes!.find((n) => n.id === result!.nodeId);
     expect(newNode!.selected).toBe(true);
   });
 
   it("pushes undo snapshot", () => {
-    const result = addNode(blankState(), "image");
+    const result = addNode(blankState(), "image-compress");
     expect(result!.nextState.undoStack!.length).toBe(1);
   });
 
@@ -113,21 +113,21 @@ describe("addNode", () => {
     const state = blankState({
       redoStack: [{ nodes: [], configs: {}, definition: null, expandedContainerIds: new Set() }],
     });
-    const result = addNode(state, "image");
+    const result = addNode(state, "image-compress");
     expect(result!.nextState.redoStack).toEqual([]);
   });
 
-  it("pre-sets operation via defaultParams", () => {
-    const result = addNode(blankState(), "image", null, null, { operation: "resize" });
+  it("merges defaultParams into config parameters", () => {
+    const result = addNode(blankState(), "image-resize", null, null, { width: 800 });
     expect(result).not.toBeNull();
     const config = result!.nextState.configs![result!.nodeId];
-    expect(config!.parameters.operation).toBe("resize");
+    expect(config!.parameters.width).toBe(800);
   });
 
-  it("uses short operation name as node label when operation pre-set", () => {
-    const result = addNode(blankState(), "image", null, null, { operation: "compress" });
+  it("uses NODE_TYPE_INFO label as node name", () => {
+    const result = addNode(blankState(), "image-compress");
     const config = result!.nextState.configs![result!.nodeId];
-    expect(config!.name).toBe("Compress");
+    expect(config!.name).toBe("Compress Images");
   });
 });
 
@@ -174,7 +174,7 @@ function stateWithContainer(): EditorState {
 
 describe("addNode — child insertion (Mode 1)", () => {
   it("adds a child into a container", () => {
-    const result = addNode(stateWithContainer(), "image", null, "loop1");
+    const result = addNode(stateWithContainer(), "image-compress", null, "loop1");
     expect(result).not.toBeNull();
     const child = result!.nextState.nodes!.find((n) => n.id === result!.nodeId);
     expect(child).toBeDefined();
@@ -183,19 +183,19 @@ describe("addNode — child insertion (Mode 1)", () => {
   });
 
   it("auto-expands the container", () => {
-    const result = addNode(stateWithContainer(), "image", null, "loop1");
+    const result = addNode(stateWithContainer(), "image-compress", null, "loop1");
     const expandedIds = result!.nextState.expandedContainerIds as Set<string>;
     expect(expandedIds.has("loop1")).toBe(true);
   });
 
   it("marks container as expanded in node data", () => {
-    const result = addNode(stateWithContainer(), "image", null, "loop1");
+    const result = addNode(stateWithContainer(), "image-compress", null, "loop1");
     const container = result!.nextState.nodes!.find((n) => n.id === "loop1");
     expect(container!.data.isExpanded).toBe(true);
   });
 
   it("adds child to definition tree", () => {
-    const result = addNode(stateWithContainer(), "image", null, "loop1");
+    const result = addNode(stateWithContainer(), "image-compress", null, "loop1");
     const def = result!.nextState.definition as Definition;
     const loopDef = def.nodes![0]!;
     expect(loopDef.nodes).toHaveLength(1);
@@ -203,7 +203,7 @@ describe("addNode — child insertion (Mode 1)", () => {
   });
 
   it("inserts child right after container in flat array", () => {
-    const result = addNode(stateWithContainer(), "image", null, "loop1");
+    const result = addNode(stateWithContainer(), "image-compress", null, "loop1");
     const nodes = result!.nextState.nodes!;
     const containerIdx = nodes.findIndex((n) => n.id === "loop1");
     const childIdx = nodes.findIndex((n) => n.id === result!.nodeId);
@@ -211,17 +211,17 @@ describe("addNode — child insertion (Mode 1)", () => {
   });
 
   it("returns null for unknown container", () => {
-    const result = addNode(stateWithContainer(), "image", null, "nonexistent");
+    const result = addNode(stateWithContainer(), "image-compress", null, "nonexistent");
     expect(result).toBeNull();
   });
 
-  it("pre-sets operation via defaultParams in child-into-container path", () => {
-    const result = addNode(stateWithContainer(), "spreadsheet", null, "loop1", {
-      operation: "clean",
+  it("merges defaultParams in child-into-container path", () => {
+    const result = addNode(stateWithContainer(), "spreadsheet-clean", null, "loop1", {
+      trimWhitespace: false,
     });
     expect(result).not.toBeNull();
     const config = result!.nextState.configs![result!.nodeId];
-    expect(config!.parameters.operation).toBe("clean");
-    expect(config!.name).toBe("Clean");
+    expect(config!.parameters.trimWhitespace).toBe(false);
+    expect(config!.name).toBe("Clean CSV");
   });
 });

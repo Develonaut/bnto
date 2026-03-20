@@ -42,7 +42,7 @@ fn test_single_node_single_file() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -63,7 +63,7 @@ fn test_single_node_multiple_files() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -90,8 +90,8 @@ fn test_two_sequential_nodes() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "upper", "type": "test", "params": { "operation": "uppercase" } },
-            { "id": "echo", "type": "test", "params": { "operation": "echo" } },
+            { "id": "upper", "type": "test-uppercase" },
+            { "id": "echo", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -112,7 +112,7 @@ fn test_double_processor_increases_file_count() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "dbl", "type": "test", "params": { "operation": "double" } },
+            { "id": "dbl", "type": "test-double" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -134,7 +134,7 @@ fn test_empty_files_array() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -152,7 +152,7 @@ fn test_100_files_batch() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,

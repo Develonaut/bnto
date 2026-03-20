@@ -21,9 +21,9 @@ const FORMAT_OPTIONS = [
 ] as const;
 
 const COMPRESSION_PRESETS = [
-  { value: 20, label: "Light" },
-  { value: 50, label: "Balanced" },
-  { value: 80, label: "Maximum" },
+  { value: 60, label: "Draft" },
+  { value: 80, label: "Balanced" },
+  { value: 100, label: "Maximum" },
 ];
 
 interface OptimizeImagesForWebConfigProps {
@@ -47,11 +47,10 @@ export function OptimizeImagesForWebConfig({ value, onChange }: OptimizeImagesFo
     [onChange, value],
   );
 
-  const compressionValue = useMemo(() => [value.compression], [value.compression]);
+  const qualityValue = useMemo(() => [value.quality], [value.quality]);
 
-  const handleCompressionChange = useCallback(
-    ([compression]: number[]) =>
-      onChange({ ...value, compression: compression ?? value.compression }),
+  const handleQualityChange = useCallback(
+    ([quality]: number[]) => onChange({ ...value, quality: quality ?? value.quality }),
     [onChange, value],
   );
 
@@ -100,8 +99,8 @@ export function OptimizeImagesForWebConfig({ value, onChange }: OptimizeImagesFo
       </div>
       <Slider
         label="Compression"
-        value={compressionValue}
-        onValueChange={handleCompressionChange}
+        value={qualityValue}
+        onValueChange={handleQualityChange}
         min={1}
         max={100}
         presets={COMPRESSION_PRESETS}

@@ -52,7 +52,7 @@ describe("createEditor", () => {
   it("adds a node via nodes client", () => {
     const editor = createEditor();
     const before = editor.getState().nodes.length;
-    const id = editor.nodes.addNode("image");
+    const id = editor.nodes.addNode("image-compress");
     expect(id).toBeTruthy();
     expect(editor.getState().nodes.length).toBe(before + 1);
   });
@@ -66,7 +66,7 @@ describe("createEditor", () => {
 
   it("removes a node via nodes client", () => {
     const editor = createEditor();
-    const nodeId = editor.nodes.addNode("image")!;
+    const nodeId = editor.nodes.addNode("image-compress")!;
     const before = editor.getState().nodes.length;
     const removed = editor.nodes.removeNode(nodeId);
     expect(removed).toBe(true);
@@ -84,7 +84,7 @@ describe("createEditor", () => {
 
   it("selects a node via nodes client", () => {
     const editor = createEditor();
-    const nodeId = editor.nodes.addNode("image")!;
+    const nodeId = editor.nodes.addNode("image-compress")!;
     editor.nodes.selectNode(null);
     editor.nodes.selectNode(nodeId);
     const selected = editor.getState().nodes.find((n) => n.id === nodeId);
@@ -95,7 +95,7 @@ describe("createEditor", () => {
 
   it("updates params via definition client", () => {
     const editor = createEditor();
-    const nodeId = editor.nodes.addNode("image")!;
+    const nodeId = editor.nodes.addNode("image-compress")!;
     const ok = editor.definition.updateParams(nodeId, { quality: 80 });
     expect(ok).toBe(true);
     expect(editor.getState().configs[nodeId]?.parameters.quality).toBe(80);
@@ -109,7 +109,7 @@ describe("createEditor", () => {
 
   it("exports as definition via definition client", () => {
     const editor = createEditor();
-    editor.nodes.addNode("image");
+    editor.nodes.addNode("image-compress");
     const def = editor.definition.exportAsDefinition();
     expect(def.nodes).toBeDefined();
     expect(def.nodes!.length).toBeGreaterThan(0);
@@ -117,7 +117,7 @@ describe("createEditor", () => {
 
   it("exports as recipe via definition client", () => {
     const editor = createEditor();
-    editor.nodes.addNode("image");
+    editor.nodes.addNode("image-compress");
     const result = editor.definition.exportAsRecipe();
     // May have validation errors for incomplete recipe — that's ok
     expect(result).toBeDefined();
@@ -129,7 +129,7 @@ describe("createEditor", () => {
   it("undo reverses addNode", () => {
     const editor = createEditor();
     const before = editor.getState().nodes.length;
-    editor.nodes.addNode("image");
+    editor.nodes.addNode("image-compress");
     expect(editor.getState().nodes.length).toBe(before + 1);
     editor.history.undo();
     expect(editor.getState().nodes.length).toBe(before);
@@ -138,7 +138,7 @@ describe("createEditor", () => {
   it("redo restores undone addNode", () => {
     const editor = createEditor();
     const before = editor.getState().nodes.length;
-    editor.nodes.addNode("image");
+    editor.nodes.addNode("image-compress");
     editor.history.undo();
     expect(editor.getState().nodes.length).toBe(before);
     editor.history.redo();
@@ -154,7 +154,7 @@ describe("createEditor", () => {
 
   it("resetHistory clears both stacks", () => {
     const editor = createEditor();
-    editor.nodes.addNode("image");
+    editor.nodes.addNode("image-compress");
     expect(editor.getState().undoStack.length).toBeGreaterThan(0);
     editor.history.resetHistory();
     expect(editor.getState().undoStack.length).toBe(0);
@@ -193,7 +193,7 @@ describe("createEditor", () => {
     const editor = createEditor();
     const listener = vi.fn();
     const unsub = editor.subscribe(listener);
-    editor.nodes.addNode("image");
+    editor.nodes.addNode("image-compress");
     expect(listener).toHaveBeenCalled();
     unsub();
   });
@@ -203,7 +203,7 @@ describe("createEditor", () => {
     const listener = vi.fn();
     const unsub = editor.subscribe(listener);
     unsub();
-    editor.nodes.addNode("image");
+    editor.nodes.addNode("image-compress");
     expect(listener).not.toHaveBeenCalled();
   });
 

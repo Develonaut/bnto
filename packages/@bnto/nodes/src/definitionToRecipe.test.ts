@@ -98,12 +98,12 @@ describe("definitionToRecipe", () => {
 
   it("preserves the full definition tree including nodes", () => {
     const blank = createBlankDefinition();
-    const { definition: withNodes } = addNode(blank, "image");
+    const { definition: withNodes } = addNode(blank, "image-compress");
     const recipe = definitionToRecipe(withNodes);
 
-    // 2 I/O nodes + 1 added image node = 3
+    // 2 I/O nodes + 1 added image-compress node = 3
     expect(recipe.definition.nodes).toHaveLength(3);
-    expect(recipe.definition.nodes![2]!.type).toBe("image");
+    expect(recipe.definition.nodes![2]!.type).toBe("image-compress");
   });
 
   it("partial overrides don't affect unset fields", () => {

@@ -35,7 +35,7 @@ pub enum PipelineEvent {
         node_index: usize,
         /// Total number of processing nodes in the pipeline.
         total_nodes: usize,
-        /// The type of node (e.g., "image:compress", "spreadsheet:clean").
+        /// The type of node (e.g., "image-compress", "spreadsheet-clean").
         node_type: String,
     },
 
@@ -219,7 +219,7 @@ mod tests {
             node_id: "node-1".to_string(),
             node_index: 0,
             total_nodes: 3,
-            node_type: "image:compress".to_string(),
+            node_type: "image-compress".to_string(),
         };
         let json = serde_json::to_value(&event).unwrap();
 
@@ -227,7 +227,7 @@ mod tests {
         assert_eq!(json["nodeId"], "node-1");
         assert_eq!(json["nodeIndex"], 0);
         assert_eq!(json["totalNodes"], 3);
-        assert_eq!(json["nodeType"], "image:compress");
+        assert_eq!(json["nodeType"], "image-compress");
     }
 
     #[test]
@@ -334,7 +334,7 @@ mod tests {
             node_id: "n1".to_string(),
             node_index: 0,
             total_nodes: 2,
-            node_type: "image:compress".to_string(),
+            node_type: "image-compress".to_string(),
         });
         reporter.emit(PipelineEvent::PipelineCompleted {
             duration_ms: 500,

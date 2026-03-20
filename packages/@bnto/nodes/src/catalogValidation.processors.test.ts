@@ -9,11 +9,11 @@ import { describe, expect, it } from "vitest";
 import { PROCESSOR_MAP } from "./generated/catalog";
 
 // =============================================================================
-// image:compress
+// image-compress
 // =============================================================================
 
-describe("image:compress", () => {
-  const proc = PROCESSOR_MAP.get("image:compress")!;
+describe("image-compress", () => {
+  const proc = PROCESSOR_MAP.get("image-compress")!;
 
   it("accepts image/jpeg, image/png, image/webp", () => {
     expect(proc.accepts).toEqual(expect.arrayContaining(["image/jpeg", "image/png", "image/webp"]));
@@ -29,11 +29,11 @@ describe("image:compress", () => {
 });
 
 // =============================================================================
-// image:resize
+// image-resize
 // =============================================================================
 
-describe("image:resize", () => {
-  const proc = PROCESSOR_MAP.get("image:resize")!;
+describe("image-resize", () => {
+  const proc = PROCESSOR_MAP.get("image-resize")!;
 
   it("has width: number, min 1", () => {
     const width = proc.parameters.find((p) => p.name === "width")!;
@@ -55,17 +55,18 @@ describe("image:resize", () => {
 });
 
 // =============================================================================
-// image:convert
+// image-convert
 // =============================================================================
 
-describe("image:convert", () => {
-  const proc = PROCESSOR_MAP.get("image:convert")!;
+describe("image-convert", () => {
+  const proc = PROCESSOR_MAP.get("image-convert")!;
 
-  it("has format: enum with jpeg/png/webp, required", () => {
+  it("has format: enum with jpeg/png/webp, required, default jpeg", () => {
     const format = proc.parameters.find((p) => p.name === "format")!;
     expect(format.type).toBe("enum");
     expect(format.options).toEqual(expect.arrayContaining(["jpeg", "png", "webp"]));
     expect(format.constraints?.required).toBe(true);
+    expect(format.default).toBe("jpeg");
   });
 
   it("has quality: number, default 80", () => {
@@ -76,11 +77,11 @@ describe("image:convert", () => {
 });
 
 // =============================================================================
-// spreadsheet:clean
+// spreadsheet-clean
 // =============================================================================
 
-describe("spreadsheet:clean", () => {
-  const proc = PROCESSOR_MAP.get("spreadsheet:clean")!;
+describe("spreadsheet-clean", () => {
+  const proc = PROCESSOR_MAP.get("spreadsheet-clean")!;
 
   it("accepts text/csv", () => {
     expect(proc.accepts).toContain("text/csv");
@@ -102,11 +103,11 @@ describe("spreadsheet:clean", () => {
 });
 
 // =============================================================================
-// spreadsheet:rename
+// spreadsheet-rename
 // =============================================================================
 
-describe("spreadsheet:rename", () => {
-  const proc = PROCESSOR_MAP.get("spreadsheet:rename")!;
+describe("spreadsheet-rename", () => {
+  const proc = PROCESSOR_MAP.get("spreadsheet-rename")!;
 
   it("has columns param: object", () => {
     const columns = proc.parameters.find((p) => p.name === "columns")!;
@@ -115,11 +116,11 @@ describe("spreadsheet:rename", () => {
 });
 
 // =============================================================================
-// file-system:rename
+// file-rename
 // =============================================================================
 
-describe("file-system:rename", () => {
-  const proc = PROCESSOR_MAP.get("file-system:rename")!;
+describe("file-rename", () => {
+  const proc = PROCESSOR_MAP.get("file-rename")!;
 
   it("accepts any file type (empty accepts)", () => {
     expect(proc.accepts).toEqual([]);

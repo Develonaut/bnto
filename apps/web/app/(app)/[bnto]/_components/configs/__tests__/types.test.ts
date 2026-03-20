@@ -10,8 +10,8 @@ describe("BntoConfigMap defaults", () => {
     }
   });
 
-  it("compress-images defaults to compression 50", () => {
-    expect(DEFAULT_CONFIGS["compress-images"]).toEqual({ compression: 50 });
+  it("compress-images defaults to quality 80", () => {
+    expect(DEFAULT_CONFIGS["compress-images"]).toEqual({ quality: 80 });
   });
 
   it("resize-images defaults to width 800 with aspect ratio", () => {

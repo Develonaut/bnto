@@ -5,9 +5,9 @@ import { Slider } from "@bnto/ui";
 import type { CompressImagesConfig as Config } from "./types";
 
 const COMPRESSION_PRESETS = [
-  { value: 20, label: "Light" },
-  { value: 50, label: "Balanced" },
-  { value: 80, label: "Maximum" },
+  { value: 60, label: "Draft" },
+  { value: 80, label: "Balanced" },
+  { value: 100, label: "Maximum" },
 ];
 
 interface CompressImagesConfigProps {
@@ -16,11 +16,10 @@ interface CompressImagesConfigProps {
 }
 
 export function CompressImagesConfig({ value, onChange }: CompressImagesConfigProps) {
-  const compressionValue = useMemo(() => [value.compression], [value.compression]);
+  const qualityValue = useMemo(() => [value.quality], [value.quality]);
 
-  const handleCompressionChange = useCallback(
-    ([compression]: number[]) =>
-      onChange({ ...value, compression: compression ?? value.compression }),
+  const handleQualityChange = useCallback(
+    ([quality]: number[]) => onChange({ ...value, quality: quality ?? value.quality }),
     [onChange, value],
   );
 
@@ -28,8 +27,8 @@ export function CompressImagesConfig({ value, onChange }: CompressImagesConfigPr
     <Slider
       label="Compression"
       aria-describedby="compress-help"
-      value={compressionValue}
-      onValueChange={handleCompressionChange}
+      value={qualityValue}
+      onValueChange={handleQualityChange}
       min={1}
       max={100}
       presets={COMPRESSION_PRESETS}

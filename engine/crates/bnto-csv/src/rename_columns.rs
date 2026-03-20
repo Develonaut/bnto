@@ -33,8 +33,8 @@ impl NodeProcessor for RenameCsvColumns {
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
-            node_type: "spreadsheet".to_string(),
-            operation: "rename".to_string(),
+            node_type: "spreadsheet-rename".to_string(),
+            operation: "default".to_string(),
             name: "Rename CSV Columns".to_string(),
             description: "Rename column headers in a CSV file".to_string(),
             category: NodeCategory::Spreadsheet,
@@ -47,10 +47,6 @@ impl NodeProcessor for RenameCsvColumns {
                     "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
                         .to_string(),
                 param_type: ParameterType::Object,
-                visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-                    param: "operation".to_string(),
-                    equals: "rename".to_string(),
-                })),
                 ..Default::default()
             }],
         }

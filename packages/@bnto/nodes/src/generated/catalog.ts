@@ -12,7 +12,7 @@
  */
 
 // =============================================================================
-// Node Types — All 12 registered node types
+// Node Types — All 15 registered node types
 // =============================================================================
 
 /**
@@ -21,16 +21,19 @@
  */
 export const NODE_TYPES = {
   editFields: "edit-fields",
-  fileSystem: "file-system",
+  fileRename: "file-rename",
   group: "group",
   httpRequest: "http-request",
-  image: "image",
+  imageCompress: "image-compress",
+  imageConvert: "image-convert",
+  imageResize: "image-resize",
   input: "input",
   loop: "loop",
   output: "output",
   parallel: "parallel",
   shellCommand: "shell-command",
-  spreadsheet: "spreadsheet",
+  spreadsheetClean: "spreadsheet-clean",
+  spreadsheetRename: "spreadsheet-rename",
   transform: "transform",
 } as const;
 
@@ -62,7 +65,7 @@ export interface NodeTypeInfo {
 }
 
 /**
- * Metadata for all 12 registered node types.
+ * Metadata for all 15 registered node types.
  * Maps node type name → info.
  */
 export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
@@ -75,10 +78,10 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     browserCapable: true,
     icon: "pen-line",
   },
-  "file-system": {
-    name: "file-system",
-    label: "File System",
-    description: "File operations: rename files with find/replace, case transforms, and patterns.",
+  "file-rename": {
+    name: "file-rename",
+    label: "Rename Files",
+    description: "Transform filenames using patterns, find/replace, and case rules.",
     category: "file",
     isContainer: false,
     browserCapable: true,
@@ -102,10 +105,28 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     browserCapable: false,
     icon: "globe",
   },
-  "image": {
-    name: "image",
-    label: "Image",
-    description: "Image processing: compress, resize, and convert formats.",
+  "image-compress": {
+    name: "image-compress",
+    label: "Compress Images",
+    description: "Reduce image file size while maintaining quality.",
+    category: "image",
+    isContainer: false,
+    browserCapable: true,
+    icon: "image",
+  },
+  "image-convert": {
+    name: "image-convert",
+    label: "Convert Image Format",
+    description: "Convert images between JPEG, PNG, and WebP formats.",
+    category: "image",
+    isContainer: false,
+    browserCapable: true,
+    icon: "image",
+  },
+  "image-resize": {
+    name: "image-resize",
+    label: "Resize Images",
+    description: "Change image dimensions while maintaining quality.",
     category: "image",
     isContainer: false,
     browserCapable: true,
@@ -156,10 +177,19 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     browserCapable: false,
     icon: "terminal",
   },
-  "spreadsheet": {
-    name: "spreadsheet",
-    label: "Spreadsheet",
-    description: "Spreadsheet operations: clean data and rename columns.",
+  "spreadsheet-clean": {
+    name: "spreadsheet-clean",
+    label: "Clean CSV",
+    description: "Remove empty rows, trim whitespace, and deduplicate CSV data.",
+    category: "spreadsheet",
+    isContainer: false,
+    browserCapable: true,
+    icon: "sheet",
+  },
+  "spreadsheet-rename": {
+    name: "spreadsheet-rename",
+    label: "Rename CSV Columns",
+    description: "Rename column headers in a CSV file.",
     category: "spreadsheet",
     isContainer: false,
     browserCapable: true,
@@ -180,9 +210,6 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
 // Processors — 6 implemented operations
 // =============================================================================
 
-import type { ParamCondition } from "../schemas/types";
-export type { ParamCondition };
-
 export type ParamType = "number" | "string" | "boolean" | "enum" | "object";
 
 export interface ProcessorParam {
@@ -198,16 +225,12 @@ export interface ProcessorParam {
     readonly required?: boolean;
   };
   readonly placeholder?: string;
-  readonly hidden?: boolean;
-  readonly visibleWhen?: ParamCondition;
-  readonly requiredWhen?: ParamCondition;
   /** Whether this param is eligible for surfacing in container config panels. Defaults to true. */
   readonly surfaceable?: boolean;
 }
 
 export interface ProcessorDef {
   readonly nodeType: string;
-  readonly operation: string;
   readonly name: string;
   readonly description: string;
   readonly category: string;
@@ -218,8 +241,7 @@ export interface ProcessorDef {
 
 export const PROCESSORS: readonly ProcessorDef[] = [
   {
-    nodeType: "file-system",
-    operation: "rename",
+    nodeType: "file-rename",
     name: "Rename Files",
     description: "Transform filenames using patterns, find/replace, and case rules",
     category: "file",
@@ -231,14 +253,12 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         label: "Find",
         description: "Text or regex pattern to search for in the filename",
         type: "string" as const,
-        visibleWhen: { param: "operation", equals: "rename" },
       },
       {
         name: "replace",
         label: "Replace",
         description: "Replacement text (used with Find)",
         type: "string" as const,
-        visibleWhen: { param: "operation", equals: "rename" },
       },
       {
         name: "case",
@@ -246,21 +266,18 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Transform the filename to a specific case",
         type: "enum" as const,
         options: ["lower","upper","title"] as const,
-        visibleWhen: { param: "operation", equals: "rename" },
       },
       {
         name: "prefix",
         label: "Prefix",
         description: "Text to prepend to the filename",
         type: "string" as const,
-        visibleWhen: { param: "operation", equals: "rename" },
       },
       {
         name: "suffix",
         label: "Suffix",
         description: "Text to append before the file extension",
         type: "string" as const,
-        visibleWhen: { param: "operation", equals: "rename" },
       },
       {
         name: "pattern",
@@ -268,13 +285,11 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
         type: "string" as const,
         placeholder: "{{name}}-compressed.{{ext}}",
-        visibleWhen: { param: "operation", equals: "rename" },
       },
     ],
   },
   {
-    nodeType: "image",
-    operation: "compress",
+    nodeType: "image-compress",
     name: "Compress Images",
     description: "Reduce image file size while maintaining quality",
     category: "image",
@@ -288,13 +303,11 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         type: "number" as const,
         default: 80,
         constraints: { min: 1, max: 100, required: false },
-        visibleWhen: [{ param: "operation", equals: "compress" }, { param: "operation", equals: "resize" }, { param: "operation", equals: "convert" }],
       },
     ],
   },
   {
-    nodeType: "image",
-    operation: "convert",
+    nodeType: "image-convert",
     name: "Convert Image Format",
     description: "Convert images between JPEG, PNG, and WebP formats",
     category: "image",
@@ -307,8 +320,8 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "The target image format to convert to",
         type: "enum" as const,
         options: ["jpeg","png","webp"] as const,
+        default: "jpeg",
         constraints: { required: true },
-        visibleWhen: { param: "operation", equals: "convert" },
       },
       {
         name: "quality",
@@ -317,13 +330,11 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         type: "number" as const,
         default: 80,
         constraints: { min: 1, max: 100, required: false },
-        visibleWhen: [{ param: "operation", equals: "compress" }, { param: "operation", equals: "resize" }, { param: "operation", equals: "convert" }],
       },
     ],
   },
   {
-    nodeType: "image",
-    operation: "resize",
+    nodeType: "image-resize",
     name: "Resize Images",
     description: "Change image dimensions while maintaining quality",
     category: "image",
@@ -336,7 +347,6 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Target width in pixels",
         type: "number" as const,
         constraints: { min: 1, required: false },
-        visibleWhen: { param: "operation", equals: "resize" },
       },
       {
         name: "height",
@@ -344,7 +354,6 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Target height in pixels",
         type: "number" as const,
         constraints: { min: 1, required: false },
-        visibleWhen: { param: "operation", equals: "resize" },
       },
       {
         name: "maintainAspect",
@@ -352,7 +361,6 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Keep the original width-to-height ratio when resizing",
         type: "boolean" as const,
         default: true,
-        visibleWhen: { param: "operation", equals: "resize" },
       },
       {
         name: "quality",
@@ -361,13 +369,11 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         type: "number" as const,
         default: 80,
         constraints: { min: 1, max: 100, required: false },
-        visibleWhen: [{ param: "operation", equals: "compress" }, { param: "operation", equals: "resize" }, { param: "operation", equals: "convert" }],
       },
     ],
   },
   {
-    nodeType: "spreadsheet",
-    operation: "clean",
+    nodeType: "spreadsheet-clean",
     name: "Clean CSV",
     description: "Remove empty rows, trim whitespace, and deduplicate CSV data",
     category: "spreadsheet",
@@ -380,7 +386,6 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Remove leading and trailing whitespace from every cell",
         type: "boolean" as const,
         default: true,
-        visibleWhen: { param: "operation", equals: "clean" },
       },
       {
         name: "removeEmptyRows",
@@ -388,7 +393,6 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Skip rows where every cell is blank",
         type: "boolean" as const,
         default: true,
-        visibleWhen: { param: "operation", equals: "clean" },
       },
       {
         name: "removeDuplicates",
@@ -396,13 +400,11 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         description: "Remove duplicate rows, keeping the first occurrence",
         type: "boolean" as const,
         default: true,
-        visibleWhen: { param: "operation", equals: "clean" },
       },
     ],
   },
   {
-    nodeType: "spreadsheet",
-    operation: "rename",
+    nodeType: "spreadsheet-rename",
     name: "Rename CSV Columns",
     description: "Rename column headers in a CSV file",
     category: "spreadsheet",
@@ -414,7 +416,6 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         label: "Column Mapping",
         description: "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
         type: "object" as const,
-        visibleWhen: { param: "operation", equals: "rename" },
       },
     ],
   },
@@ -422,17 +423,16 @@ export const PROCESSORS: readonly ProcessorDef[] = [
 
 // --- Lookup helpers ---
 
-/** Map keyed by "nodeType:operation" for O(1) lookup. */
+/** Map keyed by nodeType for O(1) lookup. */
 export const PROCESSOR_MAP = new Map<string, ProcessorDef>(
-  PROCESSORS.map((p) => [`${p.nodeType}:${p.operation}`, p]),
+  PROCESSORS.map((p) => [p.nodeType, p]),
 );
 
-/** Get the engine defaults for a specific processor. */
+/** Get the engine defaults for a node type. */
 export function getProcessorDefaults(
   nodeType: string,
-  operation: string,
 ): Record<string, unknown> {
-  const proc = PROCESSOR_MAP.get(`${nodeType}:${operation}`);
+  const proc = PROCESSOR_MAP.get(nodeType);
   if (!proc) return {};
   const defaults: Record<string, unknown> = {};
   for (const param of proc.parameters) {
@@ -446,20 +446,18 @@ export function getProcessorDefaults(
 /** Get the engine constraints for a specific parameter. */
 export function getParamConstraints(
   nodeType: string,
-  operation: string,
   paramName: string,
 ): ProcessorParam["constraints"] | undefined {
-  const proc = PROCESSOR_MAP.get(`${nodeType}:${operation}`);
+  const proc = PROCESSOR_MAP.get(nodeType);
   if (!proc) return undefined;
   const param = proc.parameters.find((p) => p.name === paramName);
   return param?.constraints;
 }
 
-/** Get the accepted MIME types for a specific processor. */
+/** Get the accepted MIME types for a node type. */
 export function getProcessorAccepts(
   nodeType: string,
-  operation: string,
 ): readonly string[] {
-  const proc = PROCESSOR_MAP.get(`${nodeType}:${operation}`);
+  const proc = PROCESSOR_MAP.get(nodeType);
   return proc?.accepts ?? [];
 }

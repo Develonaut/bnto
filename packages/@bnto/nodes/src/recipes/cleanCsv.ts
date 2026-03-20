@@ -41,14 +41,13 @@ export const cleanCsv: Recipe = {
       defaultInputNode(CSV_INPUT),
       {
         id: "clean",
-        type: "spreadsheet",
+        type: "spreadsheet-clean",
         version: CURRENT_FORMAT_VERSION,
         name: "Clean",
         position: { x: 250, y: 100 },
         metadata: {},
         parameters: {
-          operation: "clean",
-          ...getProcessorDefaults("spreadsheet", "clean"),
+          ...getProcessorDefaults("spreadsheet-clean"),
         },
         inputPorts: [{ id: "in-1", name: "files" }],
         outputPorts: [{ id: "out-1", name: "files" }],

@@ -5,6 +5,9 @@ import { IMAGE_FIXTURES_DIR, CSV_FIXTURES_DIR, MAGIC } from "../../helpers";
 import {
   navigateToEditor,
   addNodeFromPalette,
+  selectNode,
+  ensureConfigPanelOpen,
+  setSelectParam,
   runEditorWithFiles,
   openRunPanel,
   exportRecipe,
@@ -79,7 +82,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     const types = json.nodes.map((n: { type: string }) => n.type);
     expect(types).toContain("input");
     expect(types).toContain("output");
-    expect(types).toContain("image");
+    expect(types).toContain("image-resize");
   });
 
   test("build CSV clean recipe from scratch", async ({ page }) => {
@@ -128,7 +131,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     const types = json.nodes.map((n: { type: string }) => n.type);
     expect(types).toContain("input");
     expect(types).toContain("output");
-    expect(types).toContain("file-system");
+    expect(types).toContain("file-rename");
   });
 
   test("build convert-to-webp recipe from scratch — verify structure", async ({ page }) => {
@@ -140,8 +143,12 @@ test.describe("editor from-scratch journeys @browser", () => {
     const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(3); // Input + Convert + Output
 
-    // VERIFY — export and check structure (execution requires format selection,
-    // which is tested via PR5 predefined recipe)
+    // CONFIGURE — format is required before export is enabled
+    await selectNode(page, "Convert");
+    await ensureConfigPanelOpen(page);
+    await setSelectParam(page, "format", "webp");
+
+    // VERIFY — export and check structure
     const { buffer, filename } = await exportRecipe(page);
     expect(filename).toMatch(/\.bnto\.json$/);
 
@@ -149,7 +156,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     const types = json.nodes.map((n: { type: string }) => n.type);
     expect(types).toContain("input");
     expect(types).toContain("output");
-    expect(types).toContain("image");
+    expect(types).toContain("image-convert");
   });
 
   test("build recipe from scratch and export as JSON", async ({ page }) => {
@@ -173,7 +180,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     const types = json.nodes.map((n: { type: string }) => n.type);
     expect(types).toContain("input");
     expect(types).toContain("output");
-    expect(types).toContain("image");
+    expect(types).toContain("image-compress");
   });
 
   test("run again after completion reuses files", async ({ page }) => {

@@ -25,9 +25,11 @@ export type ParamCondition =
  * Engine metadata for a single parameter.
  *
  * Describes what the engine knows about a parameter: its label, description,
- * conditional visibility, and conditional requirement rules. Generated from
- * the Rust engine catalog. Does NOT include UI presentation concerns — those
- * live in `FieldConfig`.
+ * and surfaceability. Generated from the Rust engine catalog. Does NOT include
+ * UI presentation concerns — those live in `FieldConfig`.
+ *
+ * Conditional visibility and requirement rules live in `FieldConfig` so
+ * that all UI-facing conditional logic is in one place.
  */
 export interface NodeParamMeta {
   /** Human-readable label for the config panel. */
@@ -38,18 +40,6 @@ export interface NodeParamMeta {
 
   /** Placeholder text for string/number inputs. */
   placeholder?: string;
-
-  /**
-   * Conditional visibility — parameter is shown only when
-   * another parameter matches a specific value.
-   */
-  visibleWhen?: ParamCondition;
-
-  /**
-   * Conditional requirement — parameter is required only when
-   * another parameter matches a specific value.
-   */
-  requiredWhen?: ParamCondition;
 
   /**
    * Whether this param is eligible for surfacing in container config panels.
@@ -73,9 +63,6 @@ export interface NodeParamMeta {
  * parameter name. Consumed by SchemaForm, SchemaField, and control components.
  */
 export interface FieldConfig {
-  /** Hide this parameter from the config panel entirely. */
-  hidden?: boolean;
-
   /**
    * Layout group name — consecutive params with the same group
    * are rendered together in a compact FieldGroup (e.g., "dimensions"
@@ -113,6 +100,22 @@ export interface FieldConfig {
    * should render as a textarea instead of a single-line input).
    */
   control?: "textarea";
+
+  /**
+   * Conditional visibility — parameter is shown only when
+   * another parameter matches a specific value.
+   *
+   * Single condition or array of conditions (OR logic).
+   */
+  visibleWhen?: ParamCondition;
+
+  /**
+   * Conditional requirement — parameter is required only when
+   * another parameter matches a specific value.
+   *
+   * Single condition or array of conditions (OR logic).
+   */
+  requiredWhen?: ParamCondition;
 }
 
 /** Field configs for all parameters of a node type. */

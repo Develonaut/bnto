@@ -7,22 +7,22 @@
       "operation": null
     },
     {
-      "type": "image",
-      "operation": "resize",
+      "type": "image-resize",
+      "operation": null,
       "parameters": {
         "width": 200
       }
     },
     {
-      "type": "image",
-      "operation": "convert",
+      "type": "image-convert",
+      "operation": null,
       "parameters": {
         "format": "webp"
       }
     },
     {
-      "type": "image",
-      "operation": "compress"
+      "type": "image-compress",
+      "operation": null
     },
     {
       "type": "output",

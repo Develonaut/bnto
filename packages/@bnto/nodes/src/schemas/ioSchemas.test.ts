@@ -1,11 +1,14 @@
 /**
  * Tests for input and output node schemas — visibility rules,
  * parameter structure, and conditional behavior.
+ *
+ * visibleWhen conditions now live in FieldConfig (inputFields/outputFields),
+ * not in NodeParamMeta (inputNodeSchema.params).
  */
 
 import { describe, expect, it } from "vitest";
 
-import { getVisibleParams, getNodeSchema, getRequiredParams } from "./index";
+import { getVisibleParams, getNodeSchema, getRequiredParams, getNodeFields } from "./index";
 import { inputNodeSchema, INPUT_MODES } from "./input";
 import { outputNodeSchema, OUTPUT_MODES } from "./output";
 
@@ -24,7 +27,8 @@ describe("inputNodeSchema", () => {
     }
   });
 
-  it("has file-upload-specific params with visibleWhen", () => {
+  it("has file-upload-specific params with visibleWhen in FieldConfig", () => {
+    const fields = getNodeFields("input")!;
     const fileUploadParams = [
       "accept",
       "extensions",
@@ -35,14 +39,14 @@ describe("inputNodeSchema", () => {
     ];
     for (const name of fileUploadParams) {
       expect(inputNodeSchema.params[name]).toBeDefined();
-      expect(inputNodeSchema.params[name].visibleWhen).toBeDefined();
+      expect(fields[name]?.visibleWhen).toBeDefined();
     }
   });
 
-  it("placeholder is visible for text and url modes (OR condition)", () => {
-    const meta = inputNodeSchema.params.placeholder;
-    expect(meta).toBeDefined();
-    expect(Array.isArray(meta.visibleWhen)).toBe(true);
+  it("placeholder is visible for text and url modes (OR condition in FieldConfig)", () => {
+    const fields = getNodeFields("input")!;
+    expect(fields.placeholder).toBeDefined();
+    expect(Array.isArray(fields.placeholder?.visibleWhen)).toBe(true);
   });
 });
 
@@ -61,17 +65,19 @@ describe("outputNodeSchema", () => {
     }
   });
 
-  it("has download-specific params with visibleWhen", () => {
+  it("has download-specific params with visibleWhen in FieldConfig", () => {
+    const fields = getNodeFields("output")!;
     const downloadParams = ["filename", "zip", "autoDownload"];
     for (const name of downloadParams) {
       expect(outputNodeSchema.params[name]).toBeDefined();
-      expect(outputNodeSchema.params[name].visibleWhen).toBeDefined();
+      expect(fields[name]?.visibleWhen).toBeDefined();
     }
   });
 
-  it("label is always visible (no visibleWhen)", () => {
+  it("label has no visibleWhen (always visible)", () => {
+    const fields = getNodeFields("output")!;
     expect(outputNodeSchema.params.label).toBeDefined();
-    expect(outputNodeSchema.params.label.visibleWhen).toBeUndefined();
+    expect(fields.label?.visibleWhen).toBeUndefined();
   });
 });
 
@@ -81,12 +87,12 @@ describe("input visibility rules", () => {
   it("shows file-upload params in file-upload mode", () => {
     const names = getVisibleParams("input", "mode", "file-upload");
     expect(names).toContain("mode");
-    expect(names).not.toContain("accept"); // hidden: engine wiring field
+    expect(names).toContain("accept");
     expect(names).toContain("extensions");
-    expect(names).not.toContain("label"); // hidden
+    expect(names).toContain("label");
     expect(names).toContain("multiple");
-    expect(names).not.toContain("maxFileSize"); // hidden: not needed currently
-    expect(names).not.toContain("maxFiles"); // hidden: not needed currently
+    expect(names).toContain("maxFileSize");
+    expect(names).toContain("maxFiles");
     expect(names).not.toContain("placeholder");
   });
 
@@ -113,13 +119,13 @@ describe("output visibility rules", () => {
     expect(names).toContain("filename");
     expect(names).toContain("zip");
     expect(names).toContain("autoDownload");
-    expect(names).not.toContain("label"); // hidden // always visible
+    expect(names).toContain("label"); // always visible — no visibleWhen
   });
 
   it("hides download-specific params in display mode", () => {
     const names = getVisibleParams("output", "mode", "display");
     expect(names).toContain("mode");
-    expect(names).not.toContain("label"); // hidden // always visible
+    expect(names).toContain("label"); // always visible
     expect(names).not.toContain("filename");
     expect(names).not.toContain("zip");
     expect(names).not.toContain("autoDownload");
@@ -128,7 +134,7 @@ describe("output visibility rules", () => {
   it("hides download-specific params in preview mode", () => {
     const names = getVisibleParams("output", "mode", "preview");
     expect(names).toContain("mode");
-    expect(names).not.toContain("label"); // hidden
+    expect(names).toContain("label"); // always visible
     expect(names).not.toContain("zip");
   });
 });

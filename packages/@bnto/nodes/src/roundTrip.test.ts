@@ -16,8 +16,8 @@ describe("round-trip: full editor lifecycle", () => {
     const blank = createBlankDefinition();
     expect(validateDefinition(blank)).toHaveLength(0);
 
-    // 2. Add an image node (blank starts with 2 I/O nodes)
-    const r1 = addNode(blank, "image", { x: 100, y: 100 });
+    // 2. Add an image-compress node (blank starts with 2 I/O nodes)
+    const r1 = addNode(blank, "image-compress", { x: 100, y: 100 });
     expect(isValid(r1)).toBe(true);
     expect(r1.definition.nodes).toHaveLength(3);
 
@@ -26,13 +26,11 @@ describe("round-trip: full editor lifecycle", () => {
     expect(isValid(r2)).toBe(true);
     expect(r2.definition.nodes).toHaveLength(4);
 
-    // 4. Configure the image node (index 2, after input & output)
+    // 4. Configure the image-compress node (index 2, after input & output)
     const imageNodeId = r2.definition.nodes![2]!.id;
     const r3 = updateNodeParams(r2.definition, imageNodeId, {
-      operation: "compress",
       quality: 75,
     });
-    expect(r3.definition.nodes![2]!.parameters.operation).toBe("compress");
     expect(r3.definition.nodes![2]!.parameters.quality).toBe(75);
 
     // 5. Move the transform node (index 3)
@@ -61,7 +59,7 @@ describe("round-trip: full editor lifecycle", () => {
 
     // Add three nodes (blank starts with 2 I/O nodes)
     // Use types that produce valid defaults (no required string fields)
-    const r1 = addNode(blank, "image", { x: 100, y: 0 });
+    const r1 = addNode(blank, "image-compress", { x: 100, y: 0 });
     const r2 = addNode(r1.definition, "transform", { x: 200, y: 0 });
     const r3 = addNode(r2.definition, "group", { x: 300, y: 0 });
     expect(r3.definition.nodes).toHaveLength(5); // 2 I/O + 3 added
@@ -113,7 +111,7 @@ describe("round-trip: full editor lifecycle", () => {
     const originalJson = JSON.stringify(original);
 
     // Perform various operations (blank has 2 I/O nodes, image is at index 2)
-    const r1 = addNode(original, "image");
+    const r1 = addNode(original, "image-compress");
     const nodeId = r1.definition.nodes![2]!.id;
     updateNodeParams(r1.definition, nodeId, { quality: 50 });
     moveNode(r1.definition, nodeId, { x: 999, y: 999 });

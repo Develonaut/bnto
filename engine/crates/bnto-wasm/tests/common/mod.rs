@@ -19,23 +19,20 @@ pub static SIMPLE_CSV: &[u8] = include_bytes!("../../../../../test-fixtures/csv/
 pub fn real_registry() -> bnto_core::NodeRegistry {
     let mut registry = bnto_core::NodeRegistry::new();
     registry.register(
-        "image:compress",
+        "image-compress",
         Box::new(bnto_image::CompressImages::new()),
     );
-    registry.register("image:resize", Box::new(bnto_image::ResizeImages::new()));
+    registry.register("image-resize", Box::new(bnto_image::ResizeImages::new()));
     registry.register(
-        "image:convert",
+        "image-convert",
         Box::new(bnto_image::ConvertImageFormat::new()),
     );
-    registry.register("spreadsheet:clean", Box::new(bnto_csv::CleanCsv::new()));
+    registry.register("spreadsheet-clean", Box::new(bnto_csv::CleanCsv::new()));
     registry.register(
-        "spreadsheet:rename",
+        "spreadsheet-rename",
         Box::new(bnto_csv::RenameCsvColumns::new()),
     );
-    registry.register(
-        "file-system:rename",
-        Box::new(bnto_file::RenameFiles::new()),
-    );
+    registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry
 }
 

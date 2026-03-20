@@ -9,8 +9,8 @@ fn test_multi_node_multi_file_progress() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "n1", "type": "test", "params": { "operation": "echo" } },
-            { "id": "n2", "type": "test", "params": { "operation": "uppercase" } },
+            { "id": "n1", "type": "test-echo" },
+            { "id": "n2", "type": "test-uppercase" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -90,7 +90,7 @@ fn test_node_completed_fields_are_correct() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -135,7 +135,7 @@ fn test_error_events_contain_useful_information() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "broken", "type": "test", "params": { "operation": "fail" } },
+            { "id": "broken", "type": "test-fail" },
             { "id": "out", "type": "output" }
         ]
     }"#,
@@ -190,7 +190,7 @@ fn test_empty_files_emit_pipeline_events() {
         r#"{
         "nodes": [
             { "id": "in", "type": "input" },
-            { "id": "proc", "type": "test", "params": { "operation": "echo" } },
+            { "id": "proc", "type": "test-echo" },
             { "id": "out", "type": "output" }
         ]
     }"#,

@@ -194,6 +194,11 @@ test.describe("editor custom recipes @browser", () => {
     await addNodeFromPalette(page, "Rename CSV Columns");
     await expect(nodeCards).toHaveCount(8); // 2 I/O + 6 processing
 
+    // CONFIGURE — image-convert requires format before export is enabled
+    await selectNode(page, "Convert");
+    await ensureConfigPanelOpen(page);
+    await setSelectParam(page, "format", "webp");
+
     // VERIFY — export and check all node types present
     const { buffer, filename } = await exportRecipe(page);
     expect(filename).toMatch(/\.bnto\.json$/);

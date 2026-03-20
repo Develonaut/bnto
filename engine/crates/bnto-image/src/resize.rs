@@ -172,8 +172,8 @@ impl NodeProcessor for ResizeImages {
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
-            node_type: "image".to_string(),
-            operation: "resize".to_string(),
+            node_type: "image-resize".to_string(),
+            operation: "default".to_string(),
             name: "Resize Images".to_string(),
             description: "Change image dimensions while maintaining quality".to_string(),
             category: NodeCategory::Image,
@@ -385,10 +385,6 @@ fn dimension_param(name: &str, label: &str, desc: &str) -> bnto_core::metadata::
             max: None,
             required: false,
         }),
-        visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-            param: "operation".to_string(),
-            equals: "resize".to_string(),
-        })),
         ..Default::default()
     }
 }
@@ -401,10 +397,6 @@ fn maintain_aspect_param() -> bnto_core::metadata::ParameterDef {
         description: "Keep the original width-to-height ratio when resizing".to_string(),
         param_type: ParameterType::Boolean,
         default: Some(serde_json::json!(true)),
-        visible_when: Some(ParamCondition::Single(ParamConditionEntry {
-            param: "operation".to_string(),
-            equals: "resize".to_string(),
-        })),
         ..Default::default()
     }
 }

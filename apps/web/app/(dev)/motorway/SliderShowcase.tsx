@@ -5,9 +5,9 @@ import { useState } from "react";
 import { Label, RadialSlider, Slider, Stack, Text } from "@bnto/ui";
 
 const compressionPresets = [
-  { value: 20, label: "Light" },
-  { value: 50, label: "Balanced" },
-  { value: 80, label: "Maximum" },
+  { value: 60, label: "Draft" },
+  { value: 80, label: "Balanced" },
+  { value: 100, label: "Maximum" },
 ];
 
 export function SliderShowcase() {

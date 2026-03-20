@@ -50,18 +50,18 @@ describe("store — definition sync through undo/redo", () => {
   });
 
   it("adding a top-level node updates the definition", () => {
-    const nodeId = addNodeViaStore(store, "image");
+    const nodeId = addNodeViaStore(store, "image-compress");
     expect(nodeId).not.toBeNull();
 
     const def = state(store).definition!;
     expect(def.nodes).toHaveLength(3); // input + image + output
     const imageDef = def.nodes!.find((n) => n.id === nodeId);
     expect(imageDef).toBeDefined();
-    expect(imageDef!.type).toBe("image");
+    expect(imageDef!.type).toBe("image-compress");
   });
 
   it("undo restores the definition to the previous state", () => {
-    addNodeViaStore(store, "image");
+    addNodeViaStore(store, "image-compress");
     expect(state(store).definition!.nodes).toHaveLength(3);
 
     state(store).undo();
@@ -69,7 +69,7 @@ describe("store — definition sync through undo/redo", () => {
   });
 
   it("redo restores the definition to the forward state", () => {
-    const nodeId = addNodeViaStore(store, "image");
+    const nodeId = addNodeViaStore(store, "image-compress");
     state(store).undo();
     expect(state(store).definition!.nodes).toHaveLength(2);
 
@@ -79,7 +79,7 @@ describe("store — definition sync through undo/redo", () => {
   });
 
   it("multiple undo/redo cycles preserve definition integrity", () => {
-    addNodeViaStore(store, "image");
+    addNodeViaStore(store, "image-compress");
     addNodeViaStore(store, "transform");
     expect(state(store).definition!.nodes).toHaveLength(4); // input + image + transform + output
 
@@ -97,7 +97,7 @@ describe("store — definition sync through undo/redo", () => {
   });
 
   it("removing a node updates the definition and undo restores it", () => {
-    const nodeId = addNodeViaStore(store, "image")!;
+    const nodeId = addNodeViaStore(store, "image-compress")!;
     expect(state(store).definition!.nodes).toHaveLength(3);
 
     removeNodeViaStore(store, nodeId);
@@ -109,7 +109,7 @@ describe("store — definition sync through undo/redo", () => {
   });
 
   it("param updates flow through to definition and undo restores old params", () => {
-    const nodeId = addNodeViaStore(store, "image")!;
+    const nodeId = addNodeViaStore(store, "image-compress")!;
     const originalQuality = state(store).configs[nodeId]!.parameters.quality;
     updateParamsViaStore(store, nodeId, { quality: 50 });
 
@@ -145,7 +145,7 @@ describe("store — container definition sync through undo/redo", () => {
     const loopId = addNodeViaStore(store, "loop")!;
 
     // Add child using the addNode action with intoContainerId
-    const childResult = addNode(state(store), "image", null, loopId);
+    const childResult = addNode(state(store), "image-compress", null, loopId);
     expect(childResult).not.toBeNull();
     store.setState(childResult!.nextState);
 
@@ -177,31 +177,31 @@ describe("store — export adapter round-trip", () => {
   });
 
   it("exported definition includes all top-level nodes in order", () => {
-    addNodeViaStore(store, "image");
+    addNodeViaStore(store, "image-compress");
     addNodeViaStore(store, "transform");
 
     const exported = exportDefinition(store);
     expect(exported.nodes).toHaveLength(4);
     expect(exported.nodes![0]!.type).toBe("input");
-    expect(exported.nodes![1]!.type).toBe("image");
+    expect(exported.nodes![1]!.type).toBe("image-compress");
     expect(exported.nodes![2]!.type).toBe("transform");
     expect(exported.nodes![3]!.type).toBe("output");
   });
 
   it("exported definition includes container children", () => {
     const loopId = addNodeViaStore(store, "loop")!;
-    const childResult = addNode(state(store), "image", null, loopId);
+    const childResult = addNode(state(store), "image-compress", null, loopId);
     store.setState(childResult!.nextState);
 
     const exported = exportDefinition(store);
     const loopExported = exported.nodes!.find((n) => n.id === loopId);
     expect(loopExported).toBeDefined();
     expect(loopExported!.nodes).toHaveLength(1);
-    expect(loopExported!.nodes![0]!.type).toBe("image");
+    expect(loopExported!.nodes![0]!.type).toBe("image-compress");
   });
 
   it("exported definition reflects latest param values", () => {
-    const nodeId = addNodeViaStore(store, "image")!;
+    const nodeId = addNodeViaStore(store, "image-compress")!;
     updateParamsViaStore(store, nodeId, { quality: 90, format: "webp" });
 
     const exported = exportDefinition(store);
@@ -211,7 +211,7 @@ describe("store — export adapter round-trip", () => {
   });
 
   it("exported definition after undo matches the previous state", () => {
-    addNodeViaStore(store, "image");
+    addNodeViaStore(store, "image-compress");
     const beforeTransform = exportDefinition(store);
 
     addNodeViaStore(store, "transform");
@@ -221,11 +221,11 @@ describe("store — export adapter round-trip", () => {
     expect(afterUndo.nodes).toHaveLength(beforeTransform.nodes!.length);
   });
 
-  it("full pipeline: Input → Loop(Image(compress)) → Output exports correctly", () => {
+  it("full pipeline: Input → Loop(ImageCompress) → Output exports correctly", () => {
     const loopId = addNodeViaStore(store, "loop")!;
-    const childResult = addNode(state(store), "image", null, loopId);
+    const childResult = addNode(state(store), "image-compress", null, loopId);
     store.setState(childResult!.nextState);
-    updateParamsViaStore(store, childResult!.nodeId, { operation: "compress", quality: 80 });
+    updateParamsViaStore(store, childResult!.nodeId, { quality: 80 });
 
     const exported = exportDefinition(store);
 
@@ -236,8 +236,7 @@ describe("store — export adapter round-trip", () => {
     expect(loopExported.nodes).toHaveLength(1);
 
     const imageChild = loopExported.nodes![0]!;
-    expect(imageChild.type).toBe("image");
-    expect(imageChild.parameters?.operation).toBe("compress");
+    expect(imageChild.type).toBe("image-compress");
     expect(imageChild.parameters?.quality).toBe(80);
   });
 });
@@ -250,7 +249,7 @@ describe("store — createBlank resets definition", () => {
   });
 
   it("createBlank resets definition to blank with I/O nodes", () => {
-    addNodeViaStore(store, "image");
+    addNodeViaStore(store, "image-compress");
     addNodeViaStore(store, "loop");
     expect(state(store).definition!.nodes!.length).toBeGreaterThan(2);
 
@@ -263,7 +262,7 @@ describe("store — createBlank resets definition", () => {
   });
 
   it("createBlank clears undo/redo history", () => {
-    addNodeViaStore(store, "image");
+    addNodeViaStore(store, "image-compress");
     expect(state(store).undoStack.length).toBeGreaterThan(0);
 
     state(store).createBlank();

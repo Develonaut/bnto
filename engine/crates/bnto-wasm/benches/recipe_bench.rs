@@ -16,23 +16,20 @@ static MESSY_CSV: &[u8] = include_bytes!("../../../../test-fixtures/csv/messy.cs
 fn real_registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
     registry.register(
-        "image:compress",
+        "image-compress",
         Box::new(bnto_image::CompressImages::new()),
     );
-    registry.register("image:resize", Box::new(bnto_image::ResizeImages::new()));
+    registry.register("image-resize", Box::new(bnto_image::ResizeImages::new()));
     registry.register(
-        "image:convert",
+        "image-convert",
         Box::new(bnto_image::ConvertImageFormat::new()),
     );
-    registry.register("spreadsheet:clean", Box::new(bnto_csv::CleanCsv::new()));
+    registry.register("spreadsheet-clean", Box::new(bnto_csv::CleanCsv::new()));
     registry.register(
-        "spreadsheet:rename",
+        "spreadsheet-rename",
         Box::new(bnto_csv::RenameCsvColumns::new()),
     );
-    registry.register(
-        "file-system:rename",
-        Box::new(bnto_file::RenameFiles::new()),
-    );
+    registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry
 }
 
@@ -69,8 +66,8 @@ fn bench_recipes(c: &mut Criterion) {
                     "id": "compress-loop", "type": "loop",
                     "parameters": { "mode": "forEach" },
                     "nodes": [{
-                        "id": "compress-image", "type": "image",
-                        "parameters": { "operation": "compress", "quality": 80 }
+                        "id": "compress-image", "type": "image-compress",
+                        "parameters": { "quality": 80 }
                     }]
                 }]
             },
@@ -108,8 +105,8 @@ fn bench_recipes(c: &mut Criterion) {
             {
                 "id": "csv-cleaner", "type": "group",
                 "nodes": [{
-                    "id": "clean", "type": "spreadsheet",
-                    "parameters": { "operation": "clean", "trimWhitespace": true, "removeEmptyRows": true, "removeDuplicates": true }
+                    "id": "clean", "type": "spreadsheet-clean",
+                    "parameters": { "trimWhitespace": true, "removeEmptyRows": true, "removeDuplicates": true }
                 }]
             },
             { "id": "output", "type": "output" }
@@ -134,8 +131,8 @@ fn bench_recipes(c: &mut Criterion) {
                     "id": "rename-loop", "type": "loop",
                     "parameters": { "mode": "forEach" },
                     "nodes": [{
-                        "id": "rename-file", "type": "file-system",
-                        "parameters": { "operation": "rename", "prefix": "renamed-" }
+                        "id": "rename-file", "type": "file-rename",
+                        "parameters": { "prefix": "renamed-" }
                     }]
                 }]
             },
@@ -166,13 +163,13 @@ fn bench_png_compression(c: &mut Criterion) {
         r#"{
         "nodes": [
             { "id": "input", "type": "input" },
-            { "id": "compress", "type": "image", "parameters": { "operation": "compress" } },
+            { "id": "compress", "type": "image-compress" },
             { "id": "output", "type": "output" }
         ]
     }"#,
     );
 
-    c.bench_function("node/image:compress/png/large", |b| {
+    c.bench_function("node/image-compress/png/large", |b| {
         b.iter(|| {
             let files = vec![file("photo.png", LARGE_PNG, "image/png")];
             execute_pipeline(&compress_def, files, &registry, &reporter, fake_now).unwrap()

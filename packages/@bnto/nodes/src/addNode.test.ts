@@ -15,17 +15,17 @@ const IO_NODE_COUNT = 2;
 describe("addNode", () => {
   it("adds a node to a definition with I/O nodes", () => {
     const blank = createBlankDefinition();
-    const result = addNode(blank, "image");
+    const result = addNode(blank, "image-compress");
 
     expect(result.definition.nodes).toHaveLength(IO_NODE_COUNT + 1);
-    expect(result.definition.nodes![IO_NODE_COUNT]!.type).toBe("image");
+    expect(result.definition.nodes![IO_NODE_COUNT]!.type).toBe("image-compress");
     expect(isValid(result)).toBe(true);
   });
 
   it("does not mutate the original definition", () => {
     const blank = createBlankDefinition();
     const originalNodes = blank.nodes;
-    addNode(blank, "image");
+    addNode(blank, "image-compress");
 
     expect(blank.nodes).toBe(originalNodes);
     expect(blank.nodes).toHaveLength(IO_NODE_COUNT);
@@ -33,8 +33,8 @@ describe("addNode", () => {
 
   it("generates a unique UUID for each node", () => {
     const blank = createBlankDefinition();
-    const r1 = addNode(blank, "image");
-    const r2 = addNode(blank, "image");
+    const r1 = addNode(blank, "image-compress");
+    const r2 = addNode(blank, "image-compress");
 
     const n1 = r1.definition.nodes![IO_NODE_COUNT]!;
     const n2 = r2.definition.nodes![IO_NODE_COUNT]!;
@@ -45,48 +45,46 @@ describe("addNode", () => {
 
   it("uses the provided position", () => {
     const blank = createBlankDefinition();
-    const result = addNode(blank, "image", { x: 100, y: 200 });
+    const result = addNode(blank, "image-compress", { x: 100, y: 200 });
 
     expect(result.definition.nodes![IO_NODE_COUNT]!.position).toEqual({ x: 100, y: 200 });
   });
 
   it("defaults to position {x: 0, y: 0} when no position given", () => {
     const blank = createBlankDefinition();
-    const result = addNode(blank, "image");
+    const result = addNode(blank, "image-compress");
 
     expect(result.definition.nodes![IO_NODE_COUNT]!.position).toEqual({ x: 0, y: 0 });
   });
 
   it("sets the node name from NODE_TYPE_INFO label", () => {
     const blank = createBlankDefinition();
-    const result = addNode(blank, "image");
+    const result = addNode(blank, "image-compress");
 
-    expect(result.definition.nodes![IO_NODE_COUNT]!.name).toBe("Image");
+    expect(result.definition.nodes![IO_NODE_COUNT]!.name).toBe("Compress Images");
   });
 
   it("populates default parameters from schema", () => {
     const blank = createBlankDefinition();
-    const result = addNode(blank, "image");
+    const result = addNode(blank, "image-compress");
     const params = result.definition.nodes![IO_NODE_COUNT]!.parameters;
 
-    // Image schema has quality: 80 as default (for compress operation)
+    // image-compress schema has quality: 80 as default
     expect(params.quality).toBe(80);
-    // Image schema has maintainAspect: true as default
-    expect(params.maintainAspect).toBe(true);
   });
 
   it("adds multiple nodes sequentially", () => {
     const blank = createBlankDefinition();
-    const r1 = addNode(blank, "image");
+    const r1 = addNode(blank, "image-compress");
     const r2 = addNode(r1.definition, "transform");
 
     expect(r2.definition.nodes).toHaveLength(IO_NODE_COUNT + 2);
-    expect(r2.definition.nodes![IO_NODE_COUNT]!.type).toBe("image");
+    expect(r2.definition.nodes![IO_NODE_COUNT]!.type).toBe("image-compress");
     expect(r2.definition.nodes![IO_NODE_COUNT + 1]!.type).toBe("transform");
   });
 
   // Test every node type can be added
-  describe("works for all 12 node types", () => {
+  describe("works for all 15 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       it(`adds ${typeName} node`, () => {
         const blank = createBlankDefinition();

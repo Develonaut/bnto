@@ -1,14 +1,14 @@
 /**
  * Returns parameter names that are visible for a given condition.
  *
- * Hidden filtering uses FieldConfigMap (UI concern) when provided.
- * Falls back to looking up NODE_FIELD_CONFIGS automatically.
+ * Visibility rules live in FieldConfigMap (UI concern). Falls back to
+ * looking up NODE_FIELD_CONFIGS automatically via getNodeFields().
  */
 
 import { getNodeSchema } from "./getNodeSchema";
 import { getNodeFields } from "./getNodeFields";
 import { matchesCondition } from "./matchesCondition";
-import type { FieldConfigMap, NodeSchemaDefinition, ParamCondition } from "./types";
+import type { FieldConfigMap, ParamCondition } from "./types";
 
 /**
  * Returns parameter names that are visible when a specific parameter
@@ -16,8 +16,8 @@ import type { FieldConfigMap, NodeSchemaDefinition, ParamCondition } from "./typ
  *
  * Parameters without a visibleWhen condition are always visible.
  *
- * Example: `getVisibleParams("image", "operation", "resize")`
- * returns names including width, height, and maintainAspect.
+ * Example: `getVisibleParams("input", "mode", "file-upload")`
+ * returns names including accept, extensions, label, etc.
  */
 export function getVisibleParams(typeName: string, paramName: string, paramValue: string): string[];
 
@@ -26,7 +26,7 @@ export function getVisibleParams(typeName: string, paramName: string, paramValue
  * parameter values. Evaluates each param's visibleWhen against all
  * current values (OR logic for array conditions).
  *
- * Example: `getVisibleParams("image", { operation: "resize", quality: 80 })`
+ * Example: `getVisibleParams("input", { mode: "file-upload" })`
  */
 export function getVisibleParams(typeName: string, parameters: Record<string, unknown>): string[];
 
@@ -42,30 +42,28 @@ export function getVisibleParams(
 
   // Single param/value check (original API)
   if (typeof paramNameOrValues === "string") {
-    return resolveVisible(schemaDef, fields, (cond) =>
+    return resolveVisible(schemaDef.params, fields, (cond) =>
       matchesCondition(cond, paramNameOrValues, paramValue!),
     );
   }
 
   // Full parameters map check
   const parameters = paramNameOrValues;
-  return resolveVisible(schemaDef, fields, (cond) => {
+  return resolveVisible(schemaDef.params, fields, (cond) => {
     const conditions = Array.isArray(cond) ? cond : [cond];
     return conditions.some((c) => String(parameters[c.param] ?? "") === c.equals);
   });
 }
 
-/** Shared filter logic — hidden via fields, then visibleWhen via matcher. */
+/** Shared filter logic — reads visibleWhen from FieldConfig. */
 function resolveVisible(
-  schemaDef: NodeSchemaDefinition,
+  params: Record<string, { label: string }>,
   fields: FieldConfigMap | undefined,
   matches: (cond: ParamCondition) => boolean,
 ): string[] {
-  return Object.entries(schemaDef.params)
-    .filter(([name, meta]) => {
-      if (fields?.[name]?.hidden) return false;
-      if (!meta.visibleWhen) return true;
-      return matches(meta.visibleWhen);
-    })
-    .map(([name]) => name);
+  return Object.keys(params).filter((name) => {
+    const fieldVisibleWhen = fields?.[name]?.visibleWhen;
+    if (!fieldVisibleWhen) return true;
+    return matches(fieldVisibleWhen);
+  });
 }

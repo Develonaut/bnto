@@ -50,14 +50,13 @@ export const convertImageFormat: Recipe = {
         nodes: [
           {
             id: "convert-image",
-            type: "image",
+            type: "image-convert",
             version: CURRENT_FORMAT_VERSION,
             name: "Convert",
             position: { x: 0, y: 0 },
             metadata: {},
             parameters: {
-              operation: "convert",
-              ...getProcessorDefaults("image", "convert"),
+              ...getProcessorDefaults("image-convert"),
               format: "webp",
             },
             inputPorts: [],

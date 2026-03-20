@@ -7,28 +7,31 @@
       "operation": null
     },
     {
-      "type": "image",
-      "operation": "compress"
+      "type": "image-compress",
+      "operation": null
     },
     {
-      "type": "image",
-      "operation": "resize"
+      "type": "image-resize",
+      "operation": null
     },
     {
-      "type": "image",
-      "operation": "convert"
+      "type": "image-convert",
+      "operation": null,
+      "parameters": {
+        "format": "webp"
+      }
     },
     {
-      "type": "file-system",
-      "operation": "rename"
+      "type": "file-rename",
+      "operation": null
     },
     {
-      "type": "spreadsheet",
-      "operation": "clean"
+      "type": "spreadsheet-clean",
+      "operation": null
     },
     {
-      "type": "spreadsheet",
-      "operation": "rename"
+      "type": "spreadsheet-rename",
+      "operation": null
     },
     {
       "type": "output",

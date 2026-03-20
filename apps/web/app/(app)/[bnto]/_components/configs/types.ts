@@ -7,7 +7,7 @@
  */
 
 export interface CompressImagesConfig {
-  compression: number;
+  quality: number;
 }
 
 export interface ResizeImagesConfig {
@@ -33,7 +33,7 @@ export interface CleanCsvConfig {
 export interface OptimizeImagesForWebConfig {
   width: number;
   format: "webp" | "jpeg" | "png";
-  compression: number;
+  quality: number;
 }
 
 export interface GenerateThumbnailsConfig {
@@ -64,7 +64,7 @@ export type BntoSlug = keyof BntoConfigMap;
 
 /** Default configs for each bnto — matches fixture defaults. */
 export const DEFAULT_CONFIGS: BntoConfigMap = {
-  "compress-images": { compression: 50 },
+  "compress-images": { quality: 80 },
   "resize-images": { width: 800, maintainAspectRatio: true },
   "convert-image-format": { format: "webp", quality: 80 },
   "rename-files": { pattern: "renamed-{{name}}" },
@@ -74,6 +74,6 @@ export const DEFAULT_CONFIGS: BntoConfigMap = {
     removeDuplicates: false,
   },
   "rename-csv-columns": {},
-  "optimize-images-for-web": { width: 800, format: "webp", compression: 50 },
+  "optimize-images-for-web": { width: 800, format: "webp", quality: 80 },
   "generate-thumbnails": { width: 150, format: "webp", prefix: "thumb_" },
 };

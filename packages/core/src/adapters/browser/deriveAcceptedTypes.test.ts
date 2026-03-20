@@ -96,7 +96,7 @@ describe("deriveAcceptedTypes", () => {
 
   it("works with definitions that have non-IO nodes too", () => {
     let def = createBlankDefinition();
-    def = addNode(def, "image").definition;
+    def = addNode(def, "image-compress").definition;
     const inputNode = def.nodes!.find((n) => n.type === "input")!;
     inputNode.parameters = {
       mode: "file-upload",

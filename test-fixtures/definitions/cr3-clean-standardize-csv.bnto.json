@@ -7,12 +7,12 @@
       "operation": null
     },
     {
-      "type": "spreadsheet",
-      "operation": "clean"
+      "type": "spreadsheet-clean",
+      "operation": null
     },
     {
-      "type": "spreadsheet",
-      "operation": "rename"
+      "type": "spreadsheet-rename",
+      "operation": null
     },
     {
       "type": "output",
