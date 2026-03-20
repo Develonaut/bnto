@@ -3,13 +3,13 @@
 import { useState, useMemo, useCallback } from "react";
 import {
   getNodeSchema,
-  getNodeFields,
+  getNodeParamFields,
   getVisibleParams,
   inferFieldType,
   NODE_TYPE_INFO,
-  NODE_SCHEMA_DEFS,
-  type NodeSchemaDefinition,
-  type FieldConfigMap,
+  NODE_SCHEMAS,
+  type NodeSchema,
+  type NodeParamFields,
 } from "@bnto/core";
 import { SchemaForm } from "@bnto/editor";
 import { Heading, Stack, Text } from "@bnto/ui";
@@ -22,7 +22,7 @@ type NodeCategory = (typeof NODE_TYPE_INFO)[keyof typeof NODE_TYPE_INFO]["catego
 function groupByCategory() {
   const groups = new Map<NodeCategory, Array<{ name: string; label: string }>>();
   for (const info of Object.values(NODE_TYPE_INFO)) {
-    if (!NODE_SCHEMA_DEFS[info.name as keyof typeof NODE_SCHEMA_DEFS]) continue;
+    if (!NODE_SCHEMAS[info.name as keyof typeof NODE_SCHEMAS]) continue;
     const list = groups.get(info.category) ?? [];
     list.push({ name: info.name, label: info.label });
     groups.set(info.category, list);
@@ -31,7 +31,7 @@ function groupByCategory() {
 }
 
 /** Extract Zod schema defaults by parsing an empty object. */
-function getDefaults(schema: NodeSchemaDefinition): Record<string, unknown> {
+function getDefaults(schema: NodeSchema): Record<string, unknown> {
   try {
     return schema.schema.parse({}) as Record<string, unknown>;
   } catch {
@@ -66,7 +66,7 @@ export function SchemaFormPlayground() {
   const [selected, setSelected] = useState("image");
 
   const schema = getNodeSchema(selected);
-  const fields = getNodeFields(selected);
+  const fields = getNodeParamFields(selected);
 
   const [values, setValues] = useState<Record<string, unknown>>(() =>
     schema ? getDefaults(schema) : {},
@@ -148,14 +148,14 @@ export function SchemaFormPlayground() {
         </InspectorSection>
 
         <InspectorSection
-          title="Schema (NodeParamMeta)"
+          title="Parameters (NodeParam)"
           description="Engine-generated metadata: labels, descriptions, and visibility rules."
         >
           <SchemaInspector schema={schema} visibleParams={visibleParams} />
         </InspectorSection>
 
         <InspectorSection
-          title="Fields (FieldConfig)"
+          title="Fields (NodeParamField)"
           description="UI presentation hints: groups, presets, options, and control overrides."
         >
           <FieldsInspector fields={fields} visibleParams={visibleParams} />
@@ -202,7 +202,7 @@ function SchemaInspector({
   schema,
   visibleParams,
 }: {
-  schema: NodeSchemaDefinition | undefined;
+  schema: NodeSchema | undefined;
   visibleParams: string[];
 }) {
   if (!schema)
@@ -238,7 +238,7 @@ function FieldsInspector({
   fields,
   visibleParams,
 }: {
-  fields: FieldConfigMap | undefined;
+  fields: NodeParamFields | undefined;
   visibleParams: string[];
 }) {
   if (!fields)
@@ -297,8 +297,8 @@ function ControlsInspector({
   fields,
   visibleParams,
 }: {
-  schema: NodeSchemaDefinition | undefined;
-  fields: FieldConfigMap | undefined;
+  schema: NodeSchema | undefined;
+  fields: NodeParamFields | undefined;
   visibleParams: string[];
 }) {
   if (!schema)

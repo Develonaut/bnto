@@ -1,10 +1,10 @@
 /** Schema introspection re-exports from @bnto/nodes. */
 
 export {
-  NODE_SCHEMA_DEFS,
-  NODE_FIELD_CONFIGS,
+  NODE_SCHEMAS,
+  NODE_PARAM_FIELDS,
   getNodeSchema,
-  getNodeFields,
+  getNodeParamFields,
   getRequiredParams,
   getConditionallyRequired,
   getVisibleParams,
@@ -12,11 +12,11 @@ export {
 } from "@bnto/nodes";
 export { getProcessorDefaults, getParamConstraints, getProcessorAccepts } from "@bnto/nodes";
 export type {
-  NodeSchemaDefinition,
-  NodeParamMeta,
+  NodeSchema,
+  NodeParam,
   ParamCondition,
-  FieldTypeInfo,
-  FieldControl,
-  FieldConfig,
-  FieldConfigMap,
+  NodeParamFieldInfo,
+  NodeParamControl,
+  NodeParamField,
+  NodeParamFields,
 } from "@bnto/nodes";

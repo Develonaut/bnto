@@ -7,7 +7,7 @@
  */
 
 import { z } from "zod";
-import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
+import type { NodeParamFields, NodeSchema } from "./types";
 
 /** Valid input modes — determines which UI widget the environment renders. */
 export const INPUT_MODES = ["file-upload", "text", "url"] as const;
@@ -28,7 +28,7 @@ export const inputParamsSchema = z.object({
 export type InputParams = z.infer<typeof inputParamsSchema>;
 
 /** Full schema definition for the input node type. */
-export const inputNodeSchema: NodeSchemaDefinition = {
+export const inputNodeSchema: NodeSchema = {
   nodeType: "input",
   schemaVersion: 1,
   schema: inputParamsSchema,
@@ -71,7 +71,7 @@ export const inputNodeSchema: NodeSchemaDefinition = {
 };
 
 /** UI presentation metadata for input node fields. */
-export const inputFields: FieldConfigMap = {
+export const inputFields: NodeParamFields = {
   mode: {
     options: [
       { value: "file-upload", label: "File Upload" },

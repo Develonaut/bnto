@@ -1,7 +1,7 @@
 /** Parallel node schema — parameters for concurrent task execution. */
 
 import { z } from "zod";
-import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
+import type { NodeParamFields, NodeSchema } from "./types";
 
 /** Valid error handling strategies for parallel execution. */
 export const ERROR_STRATEGIES = ["failFast", "collectAll"] as const;
@@ -17,7 +17,7 @@ export const parallelParamsSchema = z.object({
 export type ParallelParams = z.infer<typeof parallelParamsSchema>;
 
 /** Full schema definition for the parallel node type. */
-export const parallelNodeSchema: NodeSchemaDefinition = {
+export const parallelNodeSchema: NodeSchema = {
   nodeType: "parallel",
   schemaVersion: 1,
   schema: parallelParamsSchema,
@@ -38,7 +38,7 @@ export const parallelNodeSchema: NodeSchemaDefinition = {
 };
 
 /** UI presentation metadata for parallel node fields. */
-export const parallelFields: FieldConfigMap = {
+export const parallelFields: NodeParamFields = {
   errorStrategy: {
     options: [
       { value: "failFast", label: "Fail Fast" },

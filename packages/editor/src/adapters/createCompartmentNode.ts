@@ -11,7 +11,7 @@
 import type { NodeTypeName } from "@bnto/core";
 import {
   NODE_TYPE_INFO,
-  NODE_SCHEMA_DEFS,
+  NODE_SCHEMAS,
   getNodeIcon,
   getNodeSublabel,
   isIoNodeType,
@@ -23,7 +23,7 @@ import { CATEGORY_VARIANT } from "./categoryVariant";
 
 /** Builds default parameters from the Zod schema for a node type. */
 function buildDefaultParams(nodeType: NodeTypeName): Record<string, unknown> {
-  const schemaDef = NODE_SCHEMA_DEFS[nodeType];
+  const schemaDef = NODE_SCHEMAS[nodeType];
   if (!schemaDef) return {};
   // Parse an empty object through the schema to get Zod defaults
   const result = schemaDef.schema.safeParse({});

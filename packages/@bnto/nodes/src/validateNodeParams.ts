@@ -7,7 +7,7 @@
 
 import type { NodeTypeName } from "./nodeTypes";
 import type { ValidationError } from "./validationError";
-import { NODE_SCHEMA_DEFS } from "./schemas/registry";
+import { NODE_SCHEMAS } from "./schemas/registry";
 
 /**
  * Validates parameters for a specific node type using Zod.
@@ -22,7 +22,7 @@ export function validateNodeParams(
   nodeId: string,
   params: Record<string, unknown>,
 ): ValidationError[] {
-  const schemaDef = NODE_SCHEMA_DEFS[nodeType as NodeTypeName];
+  const schemaDef = NODE_SCHEMAS[nodeType as NodeTypeName];
   if (!schemaDef) return [];
 
   const result = schemaDef.schema.safeParse(params);

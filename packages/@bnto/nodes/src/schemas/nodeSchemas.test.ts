@@ -4,10 +4,10 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { NODE_SCHEMA_DEFS, NODE_FIELD_CONFIGS, inferFieldType } from "./index";
+import { NODE_SCHEMAS, NODE_PARAM_FIELDS, inferFieldType } from "./index";
 
 describe("file-rename schema", () => {
-  const def = NODE_SCHEMA_DEFS["file-rename"]!;
+  const def = NODE_SCHEMAS["file-rename"]!;
 
   it("accepts empty object (all optional)", () => {
     const result = def.schema.safeParse({});
@@ -25,15 +25,15 @@ describe("file-rename schema", () => {
 });
 
 describe("loop schema", () => {
-  const def = NODE_SCHEMA_DEFS["loop"]!;
+  const def = NODE_SCHEMAS["loop"]!;
 
   it("mode is required", () => {
     const result = def.schema.safeParse({});
     expect(result.success).toBe(false);
   });
 
-  it("mode-specific params are conditionally required via FieldConfig (items is optional)", () => {
-    const fields = NODE_FIELD_CONFIGS["loop"]!;
+  it("mode-specific params are conditionally required via NodeParamField (items is optional)", () => {
+    const fields = NODE_PARAM_FIELDS["loop"]!;
     // items is optional — the Rust engine iterates files directly
     expect(fields.items?.requiredWhen).toBeUndefined();
     expect(fields.count?.requiredWhen).toEqual({ param: "mode", equals: "times" });
@@ -42,7 +42,7 @@ describe("loop schema", () => {
 });
 
 describe("edit-fields schema", () => {
-  const def = NODE_SCHEMA_DEFS["edit-fields"]!;
+  const def = NODE_SCHEMAS["edit-fields"]!;
 
   it("values is required", () => {
     const result = def.schema.safeParse({});
@@ -57,7 +57,7 @@ describe("edit-fields schema", () => {
 });
 
 describe("image-compress schema", () => {
-  const def = NODE_SCHEMA_DEFS["image-compress"]!;
+  const def = NODE_SCHEMAS["image-compress"]!;
 
   it("quality defaults to 80 with 1-100 range", () => {
     const result = def.schema.safeParse({});
@@ -71,7 +71,7 @@ describe("image-compress schema", () => {
 });
 
 describe("image-resize schema", () => {
-  const def = NODE_SCHEMA_DEFS["image-resize"]!;
+  const def = NODE_SCHEMAS["image-resize"]!;
 
   it("accepts empty object (all optional/defaulted)", () => {
     const result = def.schema.safeParse({});
@@ -92,7 +92,7 @@ describe("image-resize schema", () => {
 });
 
 describe("image-convert schema", () => {
-  const def = NODE_SCHEMA_DEFS["image-convert"]!;
+  const def = NODE_SCHEMAS["image-convert"]!;
 
   it("defaults format to jpeg when omitted", () => {
     const result = def.schema.safeParse({});
@@ -112,7 +112,7 @@ describe("image-convert schema", () => {
 });
 
 describe("spreadsheet-clean schema", () => {
-  const def = NODE_SCHEMA_DEFS["spreadsheet-clean"]!;
+  const def = NODE_SCHEMAS["spreadsheet-clean"]!;
 
   it("accepts empty object (all defaulted)", () => {
     const result = def.schema.safeParse({});
@@ -127,7 +127,7 @@ describe("spreadsheet-clean schema", () => {
 });
 
 describe("spreadsheet-rename schema", () => {
-  const def = NODE_SCHEMA_DEFS["spreadsheet-rename"]!;
+  const def = NODE_SCHEMAS["spreadsheet-rename"]!;
 
   it("accepts empty object (columns optional)", () => {
     const result = def.schema.safeParse({});
@@ -136,7 +136,7 @@ describe("spreadsheet-rename schema", () => {
 });
 
 describe("transform schema", () => {
-  const def = NODE_SCHEMA_DEFS["transform"]!;
+  const def = NODE_SCHEMAS["transform"]!;
 
   it("has no required parameters", () => {
     const result = def.schema.safeParse({});
@@ -145,7 +145,7 @@ describe("transform schema", () => {
 });
 
 describe("group schema", () => {
-  const def = NODE_SCHEMA_DEFS["group"]!;
+  const def = NODE_SCHEMAS["group"]!;
 
   it("has no required parameters", () => {
     const result = def.schema.safeParse({});
@@ -160,7 +160,7 @@ describe("group schema", () => {
 });
 
 describe("parallel schema", () => {
-  const def = NODE_SCHEMA_DEFS["parallel"]!;
+  const def = NODE_SCHEMAS["parallel"]!;
 
   it("requires tasks", () => {
     const result = def.schema.safeParse({});

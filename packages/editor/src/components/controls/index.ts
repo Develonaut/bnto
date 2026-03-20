@@ -1,12 +1,12 @@
 /**
- * Field control registry — maps FieldControl type to React component.
+ * Field control registry — maps NodeParamControl type to React component.
  *
  * This is the single lookup table that drives SchemaField rendering.
  * Adding a new control type = add a component file + add an entry here.
  */
 
 import type { ComponentType } from "react";
-import type { FieldControl } from "@bnto/core";
+import type { NodeParamControl } from "@bnto/core";
 import type { ControlProps } from "./types";
 import { SelectControl } from "./SelectControl";
 import { SwitchControl } from "./SwitchControl";
@@ -18,7 +18,7 @@ import { TagPickerControl } from "./TagPickerControl";
 import { KeyValueEditorControl } from "./KeyValueEditorControl";
 
 /**
- * Registry: FieldControl → React component.
+ * Registry: NodeParamControl → React component.
  *
  * | Control    | Component             | Renders                              |
  * |------------|-----------------------|--------------------------------------|
@@ -31,7 +31,7 @@ import { KeyValueEditorControl } from "./KeyValueEditorControl";
  * | tagPicker  | TagPickerControl      | Multi-select combobox (string arrays)|
  * | keyValue   | KeyValueEditorControl | Key→value pairs (records)            |
  */
-export const CONTROL_REGISTRY: Record<FieldControl, ComponentType<ControlProps>> = {
+export const CONTROL_REGISTRY: Record<NodeParamControl, ComponentType<ControlProps>> = {
   select: SelectControl,
   switch: SwitchControl,
   slider: SliderControl,

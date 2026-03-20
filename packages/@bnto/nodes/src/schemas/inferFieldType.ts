@@ -25,7 +25,7 @@
  */
 
 import type { z } from "zod";
-import type { FieldConfig } from "./types";
+import type { NodeParamField } from "./types";
 
 // ---------------------------------------------------------------------------
 // Zod internal helpers — typed accessors for _def properties.
@@ -60,7 +60,7 @@ function zodDef(zodType: z.ZodTypeAny): ZodDef {
  * - tagPicker: `<Combobox>` multi-select (for z.array(z.string()))
  * - keyValue:  `<KeyValueEditor>` key→value pairs (for z.record())
  */
-type FieldControl =
+type NodeParamControl =
   | "select"
   | "switch"
   | "slider"
@@ -70,11 +70,11 @@ type FieldControl =
   | "tagPicker"
   | "keyValue";
 
-interface FieldTypeInfo {
+interface NodeParamFieldInfo {
   /** Effective type for rendering the correct form control. */
   type: "string" | "number" | "boolean" | "enum" | "array" | "record";
   /** UI control to render — determined by type + constraints. */
-  control: FieldControl;
+  control: NodeParamControl;
   /** Whether the field is required (not wrapped in ZodOptional or ZodDefault). */
   required: boolean;
   /** Enum values if the field is an enum. */
@@ -150,7 +150,7 @@ function isKeyValueRecord(zodType: z.ZodTypeAny): boolean {
  * type via `fieldConfig.control` (e.g., setting `control: "textarea"` on a
  * string field).
  */
-function inferFieldType(zodField: z.ZodTypeAny, fieldConfig?: FieldConfig): FieldTypeInfo {
+function inferFieldType(zodField: z.ZodTypeAny, fieldConfig?: NodeParamField): NodeParamFieldInfo {
   const outerTypeName = zodDef(zodField).typeName ?? "";
   const required = outerTypeName !== "ZodOptional" && outerTypeName !== "ZodDefault";
   const inner = unwrap(zodField);
@@ -196,4 +196,4 @@ function inferFieldType(zodField: z.ZodTypeAny, fieldConfig?: FieldConfig): Fiel
 }
 
 export { inferFieldType };
-export type { FieldTypeInfo, FieldControl };
+export type { NodeParamFieldInfo, NodeParamControl };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { FieldConfig, FieldTypeInfo, NodeParamMeta } from "@bnto/core";
+import type { NodeParamField, NodeParamFieldInfo, NodeParam } from "@bnto/core";
 import { Label } from "@bnto/ui";
 import { CONTROL_REGISTRY } from "./controls";
 
@@ -18,9 +18,9 @@ import { CONTROL_REGISTRY } from "./controls";
 
 interface SchemaFieldProps {
   name: string;
-  meta: NodeParamMeta;
-  fieldConfig?: FieldConfig;
-  fieldInfo: FieldTypeInfo;
+  meta: NodeParam;
+  fieldConfig?: NodeParamField;
+  fieldInfo: NodeParamFieldInfo;
   value: unknown;
   onChange: (name: string, value: unknown) => void;
 }

@@ -1,12 +1,12 @@
 /**
  * Returns parameter names that are conditionally required.
  *
- * Reads requiredWhen from FieldConfig (UI concern). Falls back to
- * looking up NODE_FIELD_CONFIGS automatically via getNodeFields().
+ * Reads requiredWhen from NodeParamField (UI concern). Falls back to
+ * looking up NODE_PARAM_FIELDS automatically via getNodeParamFields().
  */
 
 import { getNodeSchema } from "./getNodeSchema";
-import { getNodeFields } from "./getNodeFields";
+import { getNodeParamFields } from "./getNodeParamFields";
 import { matchesCondition } from "./matchesCondition";
 
 /**
@@ -24,7 +24,7 @@ export function getConditionallyRequired(
   const schemaDef = getNodeSchema(typeName);
   if (!schemaDef) return [];
 
-  const fields = getNodeFields(typeName);
+  const fields = getNodeParamFields(typeName);
 
   return Object.keys(schemaDef.params).filter((name) => {
     const fieldRequiredWhen = fields?.[name]?.requiredWhen;

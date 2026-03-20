@@ -352,13 +352,13 @@ function generateSchemasFile(): string {
 
     const uiMetaEntries: string[] = [];
     for (const param of proc.parameters) {
-      uiMetaEntries.push(generateNodeParamMeta(param));
+      uiMetaEntries.push(generateNodeParam(param));
     }
 
     const nodeSchemaName = `${toCamelCase(nodeType)}NodeSchema`;
     sections.push(
       `/** Full schema definition for the ${nodeType} node type (auto-generated from engine). */`,
-      `export const ${nodeSchemaName}: NodeSchemaDefinition = {`,
+      `export const ${nodeSchemaName}: NodeSchema = {`,
       `  nodeType: ${JSON.stringify(nodeType)},`,
       `  schemaVersion: 1,`,
       `  schema: ${schemaName},`,
@@ -380,7 +380,7 @@ function generateSchemasFile(): string {
  */
 
 import { z } from "zod";
-import type { NodeSchemaDefinition } from "../schemas/types";
+import type { NodeSchema } from "../schemas/types";
 
 ${sections.join("\n")}`;
 }
@@ -437,8 +437,8 @@ function generateZodField(param: RawParameter): string {
   return `  ${name}: ${zodChain}`;
 }
 
-/** Generate NodeParamMeta entry for a parameter. */
-function generateNodeParamMeta(param: RawParameter): string {
+/** Generate NodeParam entry for a parameter. */
+function generateNodeParam(param: RawParameter): string {
   const lines: string[] = [];
   lines.push(`    ${param.name}: {`);
   lines.push(`      label: ${JSON.stringify(param.label)},`);

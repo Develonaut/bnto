@@ -7,7 +7,7 @@
  */
 
 import { z } from "zod";
-import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
+import type { NodeParamFields, NodeSchema } from "./types";
 
 /** Valid output modes — determines which UI widget the environment renders. */
 export const OUTPUT_MODES = ["download", "display", "preview"] as const;
@@ -25,7 +25,7 @@ export const outputParamsSchema = z.object({
 export type OutputParams = z.infer<typeof outputParamsSchema>;
 
 /** Full schema definition for the output node type. */
-export const outputNodeSchema: NodeSchemaDefinition = {
+export const outputNodeSchema: NodeSchema = {
   nodeType: "output",
   schemaVersion: 1,
   schema: outputParamsSchema,
@@ -56,7 +56,7 @@ export const outputNodeSchema: NodeSchemaDefinition = {
 };
 
 /** UI presentation metadata for output node fields. */
-export const outputFields: FieldConfigMap = {
+export const outputFields: NodeParamFields = {
   mode: {
     options: [
       { value: "download", label: "Download" },

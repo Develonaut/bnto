@@ -6,24 +6,24 @@
  */
 
 // Registry
-export { NODE_SCHEMA_DEFS, NODE_FIELD_CONFIGS } from "./registry";
+export { NODE_SCHEMAS, NODE_PARAM_FIELDS } from "./registry";
 
 // Helper functions
 export { getNodeSchema } from "./getNodeSchema";
-export { getNodeFields } from "./getNodeFields";
+export { getNodeParamFields } from "./getNodeParamFields";
 export { getRequiredParams } from "./getRequiredParams";
 export { getConditionallyRequired } from "./getConditionallyRequired";
 export { getVisibleParams } from "./getVisibleParams";
 export { inferFieldType } from "./inferFieldType";
-export type { FieldTypeInfo, FieldControl } from "./inferFieldType";
+export type { NodeParamFieldInfo, NodeParamControl } from "./inferFieldType";
 
 // Types
 export type {
-  NodeSchemaDefinition,
-  NodeParamMeta,
+  NodeSchema,
+  NodeParam,
   ParamCondition,
-  FieldConfig,
-  FieldConfigMap,
+  NodeParamField,
+  NodeParamFields,
 } from "./types";
 
 // Per-type enum constants

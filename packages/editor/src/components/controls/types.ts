@@ -1,4 +1,4 @@
-import type { FieldConfig, FieldTypeInfo, NodeParamMeta } from "@bnto/core";
+import type { NodeParamField, NodeParamFieldInfo, NodeParam } from "@bnto/core";
 
 /**
  * Props shared by all field control components.
@@ -11,9 +11,9 @@ import type { FieldConfig, FieldTypeInfo, NodeParamMeta } from "@bnto/core";
  */
 export interface ControlProps {
   id: string;
-  fieldInfo: FieldTypeInfo;
-  meta: NodeParamMeta;
-  fieldConfig?: FieldConfig;
+  fieldInfo: NodeParamFieldInfo;
+  meta: NodeParam;
+  fieldConfig?: NodeParamField;
   value: unknown;
   onChange: (value: unknown) => void;
 }

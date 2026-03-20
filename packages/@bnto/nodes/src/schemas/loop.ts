@@ -1,7 +1,7 @@
 /** Loop node schema — parameters for iteration (forEach, times, while). */
 
 import { z } from "zod";
-import type { FieldConfigMap, NodeSchemaDefinition } from "./types";
+import type { NodeParamFields, NodeSchema } from "./types";
 
 /** Valid loop execution modes. */
 export const LOOP_MODES = ["forEach", "times", "while"] as const;
@@ -19,7 +19,7 @@ export const loopParamsSchema = z.object({
 export type LoopParams = z.infer<typeof loopParamsSchema>;
 
 /** Full schema definition for the loop node type. */
-export const loopNodeSchema: NodeSchemaDefinition = {
+export const loopNodeSchema: NodeSchema = {
   nodeType: "loop",
   schemaVersion: 1,
   schema: loopParamsSchema,
@@ -54,7 +54,7 @@ export const loopNodeSchema: NodeSchemaDefinition = {
 };
 
 /** UI presentation metadata for loop node fields. */
-export const loopFields: FieldConfigMap = {
+export const loopFields: NodeParamFields = {
   mode: {
     options: [
       { value: "forEach", label: "For Each" },

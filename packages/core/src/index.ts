@@ -104,13 +104,13 @@ export type {
   ProcessorDef,
   ProcessorParam,
   ParamType,
-  NodeSchemaDefinition,
-  NodeParamMeta,
+  NodeSchema,
+  NodeParam,
   ParamCondition,
-  FieldTypeInfo,
-  FieldControl,
-  FieldConfig,
-  FieldConfigMap,
+  NodeParamFieldInfo,
+  NodeParamControl,
+  NodeParamField,
+  NodeParamFields,
   DefinitionResult,
   ValidationError,
 } from "@bnto/registry";
@@ -120,8 +120,8 @@ export type { RecipeMetadata as NodeRecipeMetadata } from "@bnto/registry";
 export {
   NODE_TYPE_INFO,
   NODE_TYPE_NAMES,
-  NODE_SCHEMA_DEFS,
-  NODE_FIELD_CONFIGS,
+  NODE_SCHEMAS,
+  NODE_PARAM_FIELDS,
   CURRENT_FORMAT_VERSION,
   CATEGORIES,
   PROCESSORS,
@@ -157,7 +157,7 @@ export {
   getRequiredParams,
   getConditionallyRequired,
   getNodeSchema,
-  getNodeFields,
+  getNodeParamFields,
 } from "@bnto/registry";
 
 // Recipe lookup

@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { createCompartmentNode } from "./createCompartmentNode";
 import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
-import { NODE_TYPE_NAMES, NODE_SCHEMA_DEFS, NODE_TYPE_INFO } from "@bnto/core";
+import { NODE_TYPE_NAMES, NODE_SCHEMAS, NODE_TYPE_INFO } from "@bnto/core";
 
 describe("createCompartmentNode", () => {
   it("creates a BentoNode + NodeConfig from a node type and slot index", () => {
@@ -71,7 +71,7 @@ describe("createCompartmentNode", () => {
 
   it("builds default parameters from schema in config", () => {
     const result = createCompartmentNode("image-compress", 0);
-    const schemaDef = NODE_SCHEMA_DEFS["image-compress"]!;
+    const schemaDef = NODE_SCHEMAS["image-compress"]!;
     // Extract defaults from Zod schema
     const shape = schemaDef.schema.shape as Record<
       string,
