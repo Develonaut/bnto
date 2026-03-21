@@ -10,6 +10,7 @@
 
 import type * as _dev_cleanup from "../_dev_cleanup.js";
 import type * as _helpers_auth from "../_helpers/auth.js";
+import type * as _helpers_nodeTypeLabels from "../_helpers/nodeTypeLabels.js";
 import type * as _helpers_r2_client from "../_helpers/r2_client.js";
 import type * as _helpers_start_execution from "../_helpers/start_execution.js";
 import type * as _helpers_upload_validation from "../_helpers/upload_validation.js";
@@ -30,15 +31,12 @@ import type * as recipes from "../recipes.js";
 import type * as uploads from "../uploads.js";
 import type * as users from "../users.js";
 
-import type {
-  ApiFromModules,
-  FilterApi,
-  FunctionReference,
-} from "convex/server";
+import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   _dev_cleanup: typeof _dev_cleanup;
   "_helpers/auth": typeof _helpers_auth;
+  "_helpers/nodeTypeLabels": typeof _helpers_nodeTypeLabels;
   "_helpers/r2_client": typeof _helpers_r2_client;
   "_helpers/start_execution": typeof _helpers_start_execution;
   "_helpers/upload_validation": typeof _helpers_upload_validation;
@@ -68,10 +66,7 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "public">
->;
+export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -81,9 +76,6 @@ export declare const api: FilterApi<
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<
-  typeof fullApi,
-  FunctionReference<any, "internal">
->;
+export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
 
 export declare const components: {};

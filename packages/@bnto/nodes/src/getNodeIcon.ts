@@ -29,5 +29,5 @@ export function getNodeIcon(nodeType: NodeTypeName, params?: Record<string, unkn
   if (nodeType === "output" && params?.mode) {
     return OUTPUT_MODES[params.mode as OutputParams["mode"]]?.icon ?? "download";
   }
-  return NODE_TYPE_INFO[nodeType].icon;
+  return NODE_TYPE_INFO[nodeType]?.icon ?? "box";
 }

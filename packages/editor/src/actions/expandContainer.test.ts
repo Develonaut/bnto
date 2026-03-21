@@ -151,4 +151,20 @@ describe("expandContainer", () => {
     const result = expandContainer(makeState(), "loop1");
     expect(result!.isDirty).toBe(true);
   });
+
+  it("handles unknown node types in children gracefully", () => {
+    const def = makeDefinition();
+    // Simulate stale localStorage data with an old node type
+    def.nodes![0].nodes![0].type = "image";
+
+    const state = makeState({ definition: def });
+    const result = expandContainer(state, "loop1");
+
+    expect(result).not.toBeNull();
+    const child = result!.nodes!.find((n) => n.id === "child1");
+    expect(child).toBeDefined();
+    expect(child!.data.icon).toBe("box");
+    expect(child!.data.variant).toBe("muted");
+    expect(child!.data.sublabel).toBe("image");
+  });
 });

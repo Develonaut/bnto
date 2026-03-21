@@ -124,6 +124,8 @@ export function createRecipeClient(
             name: recipe.name,
             definition: recipe.definition,
           });
+          // Recipe may have been deleted while the save was in-flight
+          if (!recipesStore.getState().recipes[recipe.id]) return;
           upsert({
             ...recipe,
             cloudId: String(cloudId),
