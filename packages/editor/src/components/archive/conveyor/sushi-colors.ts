@@ -30,5 +30,3 @@ export const FILLING_EGG = "#f0c850";        /* golden yellow — tamago maki */
 export const FILLING_CUCUMBER = "#7ecf7a";   /* green — kappa maki */
 export const FILLING_CUCUMBER_DARK = "#52c64e"; /* darker green for texture */
 
-/** Default filling — used by the basic "maki" type */
-export const FILLING_GREEN = "#7ecf7a";

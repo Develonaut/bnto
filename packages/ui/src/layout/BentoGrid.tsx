@@ -7,12 +7,6 @@ import { Grid, GridItem } from "./Grid";
 import { partitionBentoChildren } from "./partitionBentoChildren";
 import type { GapSize } from "../utils/layoutTypes";
 
-/* ── Re-exports ──────────────────────────────────────────────── */
-
-export { assignCellLayouts } from "./assignCellLayouts";
-export { useBentoItem } from "./useBentoItem";
-export type { CellLayout } from "./bentoGridContext";
-
 /* ── Pinned marker ──────────────────────────────────────────── */
 
 interface PinnedProps {

@@ -1,6 +1,7 @@
 import { forwardRef, type ReactNode } from "react";
 import { createCn } from "../utils/createCn";
 import { cn } from "../utils/cn";
+import { clamp } from "../utils/clamp";
 
 /* ── Variant types ────────────────────────────────────────────── */
 
@@ -116,7 +117,7 @@ function StatusBannerProgress({
   variant = "processing",
   className,
 }: StatusBannerProgressProps) {
-  const clamped = Math.min(100, Math.max(0, value));
+  const clamped = clamp(value, 0, 100);
 
   return (
     <div

@@ -9,6 +9,7 @@
 
 import { zipSync } from "fflate";
 import type { BrowserFileResult } from "../../types/browser";
+import { parseFilename } from "../../utils/parseFilename";
 
 /**
  * Bundle multiple file results into a single ZIP blob.
@@ -16,9 +17,7 @@ import type { BrowserFileResult } from "../../types/browser";
  * @param results - Processed files from browser execution.
  * @returns A Blob containing the ZIP archive.
  */
-export async function createZipBlob(
-  results: BrowserFileResult[],
-): Promise<Blob> {
+export async function createZipBlob(results: BrowserFileResult[]): Promise<Blob> {
   // Build a filename → Uint8Array map for fflate.
   // Deduplicate filenames to prevent zip entry collisions.
   const entries: Record<string, Uint8Array> = {};
@@ -30,10 +29,8 @@ export async function createZipBlob(
     // Handle duplicate filenames
     const count = seen.get(name) ?? 0;
     if (count > 0) {
-      const dot = name.lastIndexOf(".");
-      const base = dot > 0 ? name.slice(0, dot) : name;
-      const ext = dot > 0 ? name.slice(dot) : "";
-      name = `${base} (${count + 1})${ext}`;
+      const { base, dotExtension } = parseFilename(name);
+      name = `${base} (${count + 1})${dotExtension}`;
     }
     seen.set(result.filename, count + 1);
 

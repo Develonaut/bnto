@@ -20,16 +20,12 @@ import type { NodeTypeName } from "@bnto/core";
 import { isIoNodeType, isContainerNodeType } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
+import type { AddNodeResult } from "./types";
 import { createCompartmentNode } from "../adapters/createCompartmentNode";
 import { STRIDE } from "../adapters/bentoSlots";
 import { addChildIntoContainer } from "./addChildIntoContainer";
 import { addSiblingChild } from "./addSiblingChild";
 import { addTopLevel } from "./addTopLevel";
-
-interface AddNodeResult {
-  nextState: Partial<EditorState>;
-  nodeId: string;
-}
 
 export function addNode(
   state: EditorState,

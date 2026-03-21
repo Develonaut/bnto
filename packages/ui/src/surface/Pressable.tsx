@@ -44,7 +44,7 @@ type PressableProps = ComponentProps<"button"> & {
   asChild?: boolean;
 };
 
-export function Pressable({
+function Pressable({
   spring = "bounciest",
   toggle,
   active,

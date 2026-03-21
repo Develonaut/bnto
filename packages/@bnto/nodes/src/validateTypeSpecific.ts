@@ -35,7 +35,7 @@ const LOOP_MODE_REQUIRED_PARAMS: Record<string, string[]> = {
 };
 
 /** Validates loop node: mode required, mode-specific params required. */
-export function validateLoop(def: Definition): ValidationError[] {
+function validateLoop(def: Definition): ValidationError[] {
   const mode = getStringParam(def, "mode");
   if (!mode) {
     return [err(def.id, "mode", `loop node '${def.id}' missing required parameter 'mode'`)];
@@ -63,7 +63,7 @@ export function validateLoop(def: Definition): ValidationError[] {
 }
 
 /** Validates edit-fields node: values parameter required. */
-export function validateEditFields(def: Definition): ValidationError[] {
+function validateEditFields(def: Definition): ValidationError[] {
   if (def.parameters["values"] == null) {
     return [
       err(def.id, "values", `edit-fields node '${def.id}' missing required parameter 'values'`),

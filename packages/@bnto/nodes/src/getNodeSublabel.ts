@@ -12,18 +12,7 @@
 import type { NodeTypeName } from "./nodeTypes";
 import { NODE_TYPE_INFO } from "./nodeTypes";
 import { getCategoryInfo } from "./categories";
-
-const INPUT_MODE_LABELS: Record<string, string> = {
-  "file-upload": "File Upload",
-  text: "Text Input",
-  url: "URL",
-};
-
-const OUTPUT_MODE_LABELS: Record<string, string> = {
-  download: "Download",
-  display: "Display",
-  preview: "Preview",
-};
+import { INPUT_MODES, OUTPUT_MODES } from "./ioModes";
 
 /**
  * Returns the sublabel for a node given its type and params.
@@ -40,10 +29,10 @@ export function getNodeSublabel(
   metadata?: { customData?: Record<string, string> },
 ): string {
   if (nodeType === "input") {
-    return INPUT_MODE_LABELS[params?.mode as string] ?? "Input";
+    return INPUT_MODES[params?.mode as keyof typeof INPUT_MODES]?.label ?? "Input";
   }
   if (nodeType === "output") {
-    return OUTPUT_MODE_LABELS[params?.mode as string] ?? "Output";
+    return OUTPUT_MODES[params?.mode as keyof typeof OUTPUT_MODES]?.label ?? "Output";
   }
 
   const info = NODE_TYPE_INFO[nodeType];

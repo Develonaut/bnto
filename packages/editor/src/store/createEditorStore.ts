@@ -11,16 +11,16 @@ import { createEnhancedStore, core } from "@bnto/core";
 import { applyNodeChanges, applyEdgeChanges } from "@xyflow/react";
 import type { Definition } from "@bnto/core";
 import type { EditorStore, PanelId } from "./types";
-import { captureSnapshot } from "./captureSnapshot";
-import { pushToStack } from "./pushToStack";
-import { revalidateState } from "./revalidateState";
 import { resolveInitialState } from "./resolveInitialState";
+import { revalidateState } from "./revalidateState";
 import { loadDefinition } from "../actions/loadDefinition";
 import { createBlank } from "../actions/createBlank";
 import { runExecution } from "../actions/runExecution";
 import { expandContainer } from "../actions/expandContainer";
 import { collapseContainer } from "../actions/collapseContainer";
 import { autoOpenConfig, autoCloseConfig, closeSameSideSiblings } from "./panelHelpers";
+import { pushUndoAction, undoAction, redoAction } from "./historyActions";
+import { EXECUTION_DEFAULTS } from "./executionDefaults";
 
 // ---------------------------------------------------------------------------
 // Store factory
@@ -40,8 +40,7 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
     recipeMetadata: initial.metadata,
     isDirty: false,
     validationErrors: [],
-    executionState: {},
-    nodeProgress: {},
+    ...EXECUTION_DEFAULTS,
     undoStack: [],
     redoStack: [],
     selectedNodeId: initial.selectedNodeId,
@@ -51,12 +50,6 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
       run: false,
       help: false,
     },
-    executionPhase: "idle",
-    executionResults: [],
-    executionErrors: [],
-    executionLogs: [],
-    executionFileProgress: null,
-    executionInputFiles: [],
     insertAfterNodeId: null,
     insertIntoContainerId: null,
     expandedContainerIds: new Set(),
@@ -74,15 +67,11 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
     // --- RF controlled-mode change handlers ---
 
     onNodesChange: (changes) => {
-      set((s) => ({
-        nodes: applyNodeChanges(changes, s.nodes),
-      }));
+      set((s) => ({ nodes: applyNodeChanges(changes, s.nodes) }));
     },
 
     onEdgesChange: (changes) => {
-      set((s) => ({
-        edges: applyEdgeChanges(changes, s.edges),
-      }));
+      set((s) => ({ edges: applyEdgeChanges(changes, s.edges) }));
     },
 
     // --- Graph setters ---
@@ -113,9 +102,7 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
     },
 
     setConfig: (nodeId, config) => {
-      set((s) => ({
-        configs: { ...s.configs, [nodeId]: config },
-      }));
+      set((s) => ({ configs: { ...s.configs, [nodeId]: config } }));
     },
 
     removeConfig: (nodeId) => {
@@ -129,61 +116,17 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
     // --- History ---
 
     pushUndo: () => {
-      const state = get();
-      const snapshot = captureSnapshot(
-        state.nodes,
-        state.configs,
-        state.definition,
-        state.expandedContainerIds,
-      );
-      set({
-        undoStack: pushToStack(state.undoStack, snapshot),
-        redoStack: [],
-      });
+      set(pushUndoAction(get()));
     },
 
     undo: () => {
-      const state = get();
-      if (state.undoStack.length === 0) return;
-      const snapshot = state.undoStack[state.undoStack.length - 1]!;
-      const current = captureSnapshot(
-        state.nodes,
-        state.configs,
-        state.definition,
-        state.expandedContainerIds,
-      );
-      set({
-        nodes: snapshot.nodes,
-        configs: snapshot.configs,
-        definition: snapshot.definition,
-        expandedContainerIds: snapshot.expandedContainerIds,
-        isDirty: true,
-        undoStack: state.undoStack.slice(0, -1),
-        redoStack: [...state.redoStack, current],
-        validationErrors: revalidateState(snapshot.nodes, snapshot.configs, state.recipeMetadata),
-      });
+      const result = undoAction(get());
+      if (result) set(result);
     },
 
     redo: () => {
-      const state = get();
-      if (state.redoStack.length === 0) return;
-      const snapshot = state.redoStack[state.redoStack.length - 1]!;
-      const current = captureSnapshot(
-        state.nodes,
-        state.configs,
-        state.definition,
-        state.expandedContainerIds,
-      );
-      set({
-        nodes: snapshot.nodes,
-        configs: snapshot.configs,
-        definition: snapshot.definition,
-        expandedContainerIds: snapshot.expandedContainerIds,
-        isDirty: true,
-        undoStack: [...state.undoStack, current],
-        redoStack: state.redoStack.slice(0, -1),
-        validationErrors: revalidateState(snapshot.nodes, snapshot.configs, state.recipeMetadata),
-      });
+      const result = redoAction(get());
+      if (result) set(result);
     },
 
     // --- Selection ---
@@ -215,26 +158,20 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
     // --- Container expansion ---
 
     expandContainer: (nodeId) => {
-      const state = get();
-      const result = expandContainer(state, nodeId);
+      const result = expandContainer(get(), nodeId);
       if (result) set(result);
     },
 
     collapseContainer: (nodeId) => {
-      const state = get();
-      const result = collapseContainer(state, nodeId);
+      const result = collapseContainer(get(), nodeId);
       if (result) set(result);
     },
 
     toggleContainerExpanded: (nodeId) => {
       const state = get();
-      if (state.expandedContainerIds.has(nodeId)) {
-        const result = collapseContainer(state, nodeId);
-        if (result) set(result);
-      } else {
-        const result = expandContainer(state, nodeId);
-        if (result) set(result);
-      }
+      const action = state.expandedContainerIds.has(nodeId) ? collapseContainer : expandContainer;
+      const result = action(state, nodeId);
+      if (result) set(result);
     },
 
     // --- Insertion context ---
@@ -254,16 +191,7 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
     },
 
     resetRun: () => {
-      set({
-        executionState: {},
-        nodeProgress: {},
-        executionPhase: "idle",
-        executionResults: [],
-        executionErrors: [],
-        executionLogs: [],
-        executionFileProgress: null,
-        executionInputFiles: [],
-      });
+      set(EXECUTION_DEFAULTS);
     },
 
     downloadResult: (file) => {

@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from "react";
 import type { BrowserFileResult } from "../types/browser";
 import { core } from "../core";
+import { parseFilename } from "../utils/parseFilename";
 
 interface FileResultDisplayProps {
   filename: string;
@@ -35,7 +36,7 @@ function useFileResultProps(result: BrowserFileResult): FileResultDisplayProps {
 
     return {
       filename: result.filename,
-      extension: extractExtension(result.filename),
+      extension: parseFilename(result.filename).extension,
       outputSize: formatFileSize(outputBytes),
       originalSize: hasOriginal ? formatFileSize(origBytes) : undefined,
       savings: savingsPercent != null && savingsPercent > 0 ? `-${savingsPercent}%` : undefined,
@@ -44,14 +45,13 @@ function useFileResultProps(result: BrowserFileResult): FileResultDisplayProps {
   }, [result, download]);
 }
 
-/** Extract file extension from filename (e.g., "photo.jpg" -> "jpg"). */
-function extractExtension(filename: string): string | null {
-  const dot = filename.lastIndexOf(".");
-  if (dot === -1 || dot === filename.length - 1) return null;
-  return filename.slice(dot + 1).toLowerCase();
-}
-
-/** Format bytes to human-readable string. Mirrors @bnto/ui's formatFileSize. */
+/**
+ * Format bytes to human-readable string.
+ *
+ * Intentional duplication of @bnto/ui's formatFileSize — core and ui are
+ * independent leaf packages that cannot depend on each other. Keep in sync
+ * with packages/ui/src/utils/formatFileSize.ts.
+ */
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
