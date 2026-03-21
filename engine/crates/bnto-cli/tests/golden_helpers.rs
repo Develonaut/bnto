@@ -74,29 +74,34 @@ fn compare_golden_files(
     recipe_slug: &str,
 ) {
     for entry in actual_files {
-        let name = entry.file_name();
-        let actual_bytes = std::fs::read(entry.path()).unwrap();
-        let golden_path = recipe_golden.join(&name);
-
-        assert!(
-            golden_path.exists(),
-            "[{recipe_slug}] Golden file missing: {}. Run BLESS=1 to generate.",
-            golden_path.display()
-        );
-
-        let golden_bytes = std::fs::read(&golden_path).unwrap();
-        let actual_hash = sha256_hex(&actual_bytes);
-        let golden_hash = sha256_hex(&golden_bytes);
-
-        assert_eq!(
-            actual_hash,
-            golden_hash,
-            "[{recipe_slug}/{}] Hash mismatch.\n  expected: {golden_hash} ({} bytes)\n  actual:   {actual_hash} ({} bytes)\n  Run BLESS=1 to update.",
-            name.to_string_lossy(),
-            golden_bytes.len(),
-            actual_bytes.len(),
-        );
+        compare_single_file(recipe_golden, entry, recipe_slug);
     }
+}
+
+/// Compare one output file against its golden counterpart.
+fn compare_single_file(recipe_golden: &Path, entry: &std::fs::DirEntry, recipe_slug: &str) {
+    let name = entry.file_name();
+    let actual_bytes = std::fs::read(entry.path()).unwrap();
+    let golden_path = recipe_golden.join(&name);
+
+    assert!(
+        golden_path.exists(),
+        "[{recipe_slug}] Golden file missing: {}. Run BLESS=1 to generate.",
+        golden_path.display()
+    );
+
+    let golden_bytes = std::fs::read(&golden_path).unwrap();
+    let actual_hash = sha256_hex(&actual_bytes);
+    let golden_hash = sha256_hex(&golden_bytes);
+
+    assert_eq!(
+        actual_hash,
+        golden_hash,
+        "[{recipe_slug}/{}] Hash mismatch.\n  expected: {golden_hash} ({} bytes)\n  actual:   {actual_hash} ({} bytes)\n  Run BLESS=1 to update.",
+        name.to_string_lossy(),
+        golden_bytes.len(),
+        actual_bytes.len(),
+    );
 }
 
 /// Check that every golden file was also produced as output.
