@@ -54,7 +54,11 @@ const IO_NODE_TYPES = new Set(["input", "output"]);
 function collectProcessorNodes(nodes: DefinitionNode[]): DefinitionNode[] {
   const result: DefinitionNode[] = [];
   for (const node of nodes) {
-    if (node.nodes && node.nodes.length > 0 && (node.type === "group" || node.type === "loop")) {
+    if (
+      node.nodes &&
+      node.nodes.length > 0 &&
+      (node.type === "group" || node.type === "loop" || node.type === "parallel")
+    ) {
       result.push(...collectProcessorNodes(node.nodes));
     } else if (!IO_NODE_TYPES.has(node.type)) {
       result.push(node);
