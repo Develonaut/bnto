@@ -5,7 +5,7 @@ import { setSignoutSignal } from "../lib/setSignoutSignal";
 import { clearSignoutSignal } from "../lib/clearSignoutSignal";
 import { onAuthError } from "../authError";
 import { authStore } from "../stores/authStore";
-import type { AuthUser } from "../types/auth";
+import type { AuthUser, AuthStatus } from "../types/auth";
 
 /**
  * Auth client — public API for authentication operations.
@@ -18,6 +18,14 @@ export function createAuthClient() {
   return {
     /** The persisted auth store. Hooks subscribe to this for reactive state. */
     store: authStore,
+
+    /** Whether the user is currently authenticated (imperative check). */
+    isAuthenticated: () => authStore.getState().sessionStatus === "authenticated",
+
+    /** Update session status. Called by SessionProvider to keep store in sync. */
+    setSessionStatus: (status: AuthStatus) => {
+      authStore.getState().setSessionStatus(status);
+    },
 
     /** Persist user profile to localStorage (auto-sets hasAccount). */
     rememberUser: (user: AuthUser) => {

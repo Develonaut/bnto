@@ -51,14 +51,16 @@ const uploadService = createUploadService();
 const downloadService = createDownloadService();
 
 // ── Clients (cross-domain, public API) ────────────────────────────────────
-const recipeClient = createRecipeClient(recipeService, executionService);
+// Auth client first — other clients depend on it for imperative auth checks.
+const authClient = createAuthClient();
+const recipeClient = createRecipeClient(recipeService, executionService, authClient);
 const executionClient = createExecutionClient(
   executionService,
   browserExecutionService,
   historyService,
+  authClient,
 );
 const userClient = createUserClient(userService, analyticsService);
-const authClient = createAuthClient();
 const telemetryClient = createTelemetryClient();
 const registryClient = createRegistryClient();
 const flagsClient = createFlagsClient();

@@ -3,6 +3,7 @@
 import type { ExecutionService } from "../services/executionService";
 import type { BrowserExecutionService } from "../services/browserExecutionService";
 import type { HistoryService } from "../services/historyService";
+import type { AuthClient } from "./authClient";
 import type { ExecutionInstance } from "../services/executionInstance";
 import type { StartPredefinedInput } from "../types";
 import type { LocalHistoryEntry } from "../types/localHistory";
@@ -28,9 +29,6 @@ function buildHistoryEntry(
   };
 }
 
-/** Auth status getter injected from the React layer. */
-type AuthStatusGetter = () => boolean;
-
 /**
  * Execution client — unified public API for execution operations.
  *
@@ -41,9 +39,8 @@ export function createExecutionClient(
   executions: ExecutionService,
   browser: BrowserExecutionService,
   history: HistoryService,
+  auth: AuthClient,
 ) {
-  let getIsAuthenticated: AuthStatusGetter = () => false;
-
   /** Record execution to local + server history (fire-and-forget). */
   function recordToHistory(
     slug: string,
@@ -77,7 +74,7 @@ export function createExecutionClient(
         const processingNode = definition.nodes.find((n) => !isIoNodeType(n.type));
         const historySlug = processingNode?.type ?? "unknown";
 
-        const serverEventId = getIsAuthenticated()
+        const serverEventId = auth.isAuthenticated()
           ? await history.recordServerStart(historySlug).catch(() => null)
           : null;
 
@@ -101,12 +98,6 @@ export function createExecutionClient(
     historyQueryOptions: () => history.localQueryOptions(),
     clearHistory: () => history.clear(),
     migrateHistory: () => history.migrateToServer(),
-
-    // ── Auth Status ──────────────────────────────────────────────
-    /** Inject auth status getter from the React layer. */
-    setAuthStatusGetter: (getter: AuthStatusGetter) => {
-      getIsAuthenticated = getter;
-    },
 
     // ── Mutations ─────────────────────────────────────────────────
     startPredefined: (input: StartPredefinedInput) => executions.startPredefined(input),

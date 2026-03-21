@@ -5,6 +5,7 @@ import { definitionToRecipe } from "@bnto/registry";
 import { recipesStore } from "../stores/recipesStore";
 import type { RecipeService } from "../services/recipeService";
 import type { ExecutionService } from "../services/executionService";
+import type { AuthClient } from "./authClient";
 import type { StartExecutionInput } from "../types";
 import type { UserRecipe } from "../types/recipe";
 
@@ -17,7 +18,11 @@ export interface SaveInput {
 }
 
 /** Recipe client — store-backed CRUD with cloud sync on top. */
-export function createRecipeClient(recipes: RecipeService, executions: ExecutionService) {
+export function createRecipeClient(
+  recipes: RecipeService,
+  executions: ExecutionService,
+  auth: AuthClient,
+) {
   function upsert(recipe: UserRecipe) {
     recipesStore.getState().upsert(recipe);
   }
@@ -58,7 +63,7 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
      * Layer 2: attempt cloud sync (Convex validates auth server-side).
      *   - Existing cloud recipe (cloudId): ID-based update.
      *   - New recipe (no cloudId): name-based upsert. Stamps cloudId on success.
-     *   - Unauthenticated: fails silently, recipe remains local-only.
+     *   - Unauthenticated: skipped, recipe remains local-only.
      */
     save: (definition: Definition, metadata: SaveInput) => {
       const cloudId = metadata.cloudId ?? undefined;
@@ -79,9 +84,9 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
       // Layer 1: local store (always, synchronous)
       upsert(userRecipe);
 
-      // Layer 2: cloud sync (async — Convex validates auth server-side)
-      // If cloudId exists: ID-based update. Otherwise: name-based upsert.
-      // Fails silently for unauthenticated users.
+      // Layer 2: cloud sync (skip entirely if not authenticated)
+      if (!auth.isAuthenticated()) return;
+
       recipes
         .save({
           ...(cloudId ? { id: cloudId } : {}),
@@ -107,6 +112,8 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
      * then stamp cloudId + syncedAt back onto the local recipe.
      */
     syncToCloud: async () => {
+      if (!auth.isAuthenticated()) return;
+
       const allRecipes = Object.values(recipesStore.getState().recipes);
       const unsynced = allRecipes.filter((r) => !r.cloudId);
       if (unsynced.length === 0) return;
@@ -132,7 +139,7 @@ export function createRecipeClient(recipes: RecipeService, executions: Execution
       const recipe = recipesStore.getState().recipes[id];
       recipesStore.getState().remove(id);
 
-      if (recipe?.cloudId) {
+      if (recipe?.cloudId && auth.isAuthenticated()) {
         recipes.remove(recipe.cloudId).catch(() => {});
       }
     },

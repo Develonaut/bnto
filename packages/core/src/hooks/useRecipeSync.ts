@@ -7,8 +7,8 @@ import { useIsAuthenticated } from "./useIsAuthenticated";
 /**
  * Syncs local-only recipes to cloud on auth state change (unauth→auth).
  *
- * Mirrors useHistorySync — watches for sign-in / sign-up transition,
- * then calls core.recipes.syncToCloud() once per session.
+ * Watches for sign-in / sign-up transition, then calls
+ * core.recipes.syncToCloud() once per session.
  *
  * Must be rendered once inside BntoCoreProvider.
  */
