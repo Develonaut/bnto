@@ -88,4 +88,3 @@ function addChildIntoContainer(
 }
 
 export { addChildIntoContainer };
-export type { AddNodeResult };
