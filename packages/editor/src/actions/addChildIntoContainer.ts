@@ -9,15 +9,11 @@ import type { NodeTypeName } from "@bnto/core";
 import { isContainerNodeType } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
+import type { AddNodeResult } from "./types";
 import { createCompartmentNode } from "../adapters/createCompartmentNode";
 import { withUndo } from "../store/withUndo";
 import { addChildToContainer } from "../adapters/definitionTreeHelpers";
 import { buildChildDefinition } from "./buildChildDefinition";
-
-interface AddNodeResult {
-  nextState: Partial<EditorState>;
-  nodeId: string;
-}
 
 function addChildIntoContainer(
   state: EditorState,

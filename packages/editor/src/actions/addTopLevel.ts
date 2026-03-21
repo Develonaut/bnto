@@ -10,15 +10,11 @@ import type { NodeTypeName } from "@bnto/core";
 import type { Definition } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
+import type { AddNodeResult } from "./types";
 import type { CompartmentNodeResult } from "../adapters/createCompartmentNode";
 import { STRIDE } from "../adapters/bentoSlots";
 import { withUndo } from "../store/withUndo";
 import { buildChildDefinition } from "./buildChildDefinition";
-
-interface AddNodeResult {
-  nextState: Partial<EditorState>;
-  nodeId: string;
-}
 
 function addTopLevel(
   state: EditorState,

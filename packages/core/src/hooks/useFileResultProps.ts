@@ -51,7 +51,13 @@ function extractExtension(filename: string): string | null {
   return filename.slice(dot + 1).toLowerCase();
 }
 
-/** Format bytes to human-readable string. Mirrors @bnto/ui's formatFileSize. */
+/**
+ * Format bytes to human-readable string.
+ *
+ * Intentional duplication of @bnto/ui's formatFileSize — core and ui are
+ * independent leaf packages that cannot depend on each other. Keep in sync
+ * with packages/ui/src/utils/formatFileSize.ts.
+ */
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;

@@ -5,15 +5,27 @@ import { getAppUserId } from "./_helpers/auth";
 /** Node types excluded from recipe tags (I/O declarations + control containers). */
 const EXCLUDED_NODE_TYPES = new Set(["input", "output", "group", "loop", "parallel"]);
 
-/** Node type name → display label. Kept in sync with @bnto/nodes NODE_TYPE_INFO. */
+/**
+ * Per-operation node type → display label.
+ *
+ * Keep in sync with NODE_TYPE_INFO in packages/@bnto/nodes/src/generated/catalog.ts.
+ * Backend can't import from @bnto/nodes (Convex bundling constraint), so this map
+ * is maintained manually. The canonical source is the Rust engine's metadata.
+ *
+ * Duplicated in: packages/core/src/transforms/recipe.ts (extractNodeTypeLabels)
+ * which uses NODE_TYPE_INFO directly for the same purpose.
+ */
 const NODE_TYPE_LABELS: Record<string, string> = {
-  image: "Image",
-  spreadsheet: "Spreadsheet",
-  "file-system": "File System",
-  transform: "Transform",
-  "http-request": "HTTP Request",
-  "shell-command": "Shell Command",
   "edit-fields": "Edit Fields",
+  "file-rename": "Rename Files",
+  "http-request": "HTTP Request",
+  "image-compress": "Compress Images",
+  "image-convert": "Convert Image Format",
+  "image-resize": "Resize Images",
+  "shell-command": "Shell Command",
+  "spreadsheet-clean": "Clean CSV",
+  "spreadsheet-rename": "Rename CSV Columns",
+  transform: "Transform",
 };
 
 /** Extract unique processing node type labels from a definition's nodes. */
