@@ -128,15 +128,16 @@ export const save = mutation({
   },
 });
 
-/** Delete a recipe. Verifies ownership. */
+/** Delete a recipe. Idempotent — already-deleted is a no-op. */
 export const remove = mutation({
   args: { id: v.id("recipes") },
   handler: async (ctx, args) => {
     const userId = await getAppUserId(ctx);
     if (userId === null) throw new ConvexError("Not authenticated");
     const recipe = await ctx.db.get(args.id);
-    if (recipe === null || recipe.userId !== userId) {
-      throw new ConvexError("Recipe not found");
+    if (recipe === null) return; // Already deleted — idempotent
+    if (recipe.userId !== userId) {
+      throw new ConvexError("Not authorized");
     }
     await ctx.db.delete(args.id);
   },

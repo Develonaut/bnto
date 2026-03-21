@@ -36,6 +36,7 @@ export function getNodeSublabel(
   }
 
   const info = NODE_TYPE_INFO[nodeType];
+  if (!info) return nodeType;
 
   // Pre-composed sub-recipes (containers with displayName) show "Recipe".
   // Bare control flow nodes show their own label ("Loop", "Group", "Parallel").

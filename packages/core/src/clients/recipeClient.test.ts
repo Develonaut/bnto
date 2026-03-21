@@ -221,5 +221,29 @@ describe("recipeClient — auth guards", () => {
       await client.syncToCloud();
       expect(mockRecipeService.save).toHaveBeenCalled();
     });
+
+    it("does not resurrect a recipe deleted during sync", async () => {
+      let resolveCloudSave: (id: string) => void;
+      const delayedService = {
+        ...mockRecipeService,
+        save: vi.fn().mockReturnValue(new Promise<string>((r) => (resolveCloudSave = r))),
+      } as unknown as Parameters<typeof createRecipeClient>[0];
+
+      const client = createRecipeClient(delayedService, mockExecutionService, authedClient);
+      const id = client.createFromDefinition(getDefinition());
+
+      // Start sync — save is now in-flight
+      const syncPromise = client.syncToCloud();
+
+      // User deletes the recipe while sync is pending
+      client.remove(id);
+      expect(client.get(id)).toBeUndefined();
+
+      // Cloud save resolves — should NOT re-add the deleted recipe
+      resolveCloudSave!("cloud-abc");
+      await syncPromise;
+
+      expect(client.get(id)).toBeUndefined();
+    });
   });
 });

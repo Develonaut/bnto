@@ -28,6 +28,9 @@ import { withUndo } from "../store/withUndo";
 function childDefToNode(child: Definition, parentId: string, depth: number): BentoNode {
   const nodeType = child.type as NodeTypeName;
   const info = NODE_TYPE_INFO[nodeType];
+  if (!info) {
+    console.warn(`[expandContainer] Unknown node type "${child.type}" (id: ${child.id})`);
+  }
   const variant = info ? (CATEGORY_VARIANT[info.category] ?? "muted") : "muted";
   const isIo = isIoNodeType(child.type);
   const isContainer = isContainerNodeType(child.type);

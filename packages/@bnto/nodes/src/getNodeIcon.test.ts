@@ -92,6 +92,16 @@ describe("getNodeIcon", () => {
     expect(getNodeIcon("shell-command")).toBe("terminal");
   });
 
+  // --- Unknown node types fall back gracefully ---
+
+  it("returns 'box' for an unknown node type", () => {
+    expect(getNodeIcon("nonexistent" as any)).toBe("box");
+  });
+
+  it("returns 'box' for a stale node type like 'image'", () => {
+    expect(getNodeIcon("image" as any)).toBe("box");
+  });
+
   // --- All 15 node types return a non-empty string ---
 
   it("returns a non-empty string for all 15 node types", () => {

@@ -81,6 +81,16 @@ describe("getNodeSublabel", () => {
     expect(getNodeSublabel("group", {}, { customData: undefined })).toBe("Group");
   });
 
+  // --- Unknown node types fall back gracefully ---
+
+  it("returns the raw type string for an unknown node type", () => {
+    expect(getNodeSublabel("nonexistent" as any)).toBe("nonexistent");
+  });
+
+  it("returns the raw type string for a stale type like 'image'", () => {
+    expect(getNodeSublabel("image" as any)).toBe("image");
+  });
+
   // --- Edit Fields uses category label "Data", not "Edit Fields" ---
   it("returns category label for non-control processing nodes", () => {
     expect(getNodeSublabel("edit-fields")).toBe("Data");
