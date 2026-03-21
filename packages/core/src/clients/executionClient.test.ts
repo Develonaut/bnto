@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createExecutionClient } from "./executionClient";
 import { EXECUTION_STORE } from "../services/executionInstance";
+import type { AuthClient } from "./authClient";
 import type { ExecutionService } from "../services/executionService";
 import type { BrowserExecutionService } from "../services/browserExecutionService";
 import type { HistoryService } from "../services/historyService";
@@ -37,10 +38,20 @@ function mockHistoryService(): HistoryService {
     serverRef: vi.fn(),
     localQueryOptions: vi.fn(),
     record: vi.fn().mockResolvedValue(undefined),
+    recordServerStart: vi.fn().mockResolvedValue("server-event-1"),
+    recordServerComplete: vi.fn().mockResolvedValue(undefined),
     clear: vi.fn(),
     queryKey: ["local-history", "executions"],
   } as unknown as HistoryService;
 }
+
+const mockAuthClient = {
+  isAuthenticated: () => false,
+} as unknown as AuthClient;
+
+const authedAuthClient = {
+  isAuthenticated: () => true,
+} as unknown as AuthClient;
 
 const fakeStore = {} as ReturnType<
   typeof import("../stores/executionInstanceStore").createExecutionInstanceStore
@@ -99,7 +110,7 @@ describe("createExecutionClient — auto-recording", () => {
     it("records to history with correct fields", async () => {
       const instance = mockInstance(completedResult);
       const browser = mockBrowserService(instance);
-      const client = createExecutionClient(execService, browser, historyService);
+      const client = createExecutionClient(execService, browser, historyService, mockAuthClient);
       const wrapped = client.createExecution();
 
       const files = [new File(["a"], "a.jpg"), new File(["b"], "b.jpg")];
@@ -120,7 +131,7 @@ describe("createExecutionClient — auto-recording", () => {
     it("returns the original result unchanged", async () => {
       const instance = mockInstance(completedResult);
       const browser = mockBrowserService(instance);
-      const client = createExecutionClient(execService, browser, historyService);
+      const client = createExecutionClient(execService, browser, historyService, mockAuthClient);
       const wrapped = client.createExecution();
 
       const result = await wrapped.run(COMPRESS_DEFINITION, []);
@@ -132,7 +143,7 @@ describe("createExecutionClient — auto-recording", () => {
     it("records to history with error field", async () => {
       const instance = mockInstance(failedResult);
       const browser = mockBrowserService(instance);
-      const client = createExecutionClient(execService, browser, historyService);
+      const client = createExecutionClient(execService, browser, historyService, mockAuthClient);
       const wrapped = client.createExecution();
 
       await wrapped.run(COMPRESS_DEFINITION, []);
@@ -152,7 +163,7 @@ describe("createExecutionClient — auto-recording", () => {
     it("does NOT record to history", async () => {
       const instance = mockInstance(abortedResult);
       const browser = mockBrowserService(instance);
-      const client = createExecutionClient(execService, browser, historyService);
+      const client = createExecutionClient(execService, browser, historyService, mockAuthClient);
       const wrapped = client.createExecution();
 
       await wrapped.run(COMPRESS_DEFINITION, []);
@@ -162,7 +173,7 @@ describe("createExecutionClient — auto-recording", () => {
     it("returns the aborted result unchanged", async () => {
       const instance = mockInstance(abortedResult);
       const browser = mockBrowserService(instance);
-      const client = createExecutionClient(execService, browser, historyService);
+      const client = createExecutionClient(execService, browser, historyService, mockAuthClient);
       const wrapped = client.createExecution();
 
       const result = await wrapped.run(COMPRESS_DEFINITION, []);
@@ -175,7 +186,7 @@ describe("createExecutionClient — auto-recording", () => {
       const instance = mockInstance(completedResult);
       const browser = mockBrowserService(instance);
       vi.mocked(historyService.record).mockRejectedValue(new Error("IndexedDB full"));
-      const client = createExecutionClient(execService, browser, historyService);
+      const client = createExecutionClient(execService, browser, historyService, mockAuthClient);
       const wrapped = client.createExecution();
 
       const result = await wrapped.run(COMPRESS_DEFINITION, []);
@@ -187,7 +198,7 @@ describe("createExecutionClient — auto-recording", () => {
     it("preserves reset method", () => {
       const instance = mockInstance(completedResult);
       const browser = mockBrowserService(instance);
-      const client = createExecutionClient(execService, browser, historyService);
+      const client = createExecutionClient(execService, browser, historyService, mockAuthClient);
       const wrapped = client.createExecution();
 
       wrapped.reset();
@@ -197,7 +208,7 @@ describe("createExecutionClient — auto-recording", () => {
     it("preserves EXECUTION_STORE symbol", () => {
       const instance = mockInstance(completedResult);
       const browser = mockBrowserService(instance);
-      const client = createExecutionClient(execService, browser, historyService);
+      const client = createExecutionClient(execService, browser, historyService, mockAuthClient);
       const wrapped = client.createExecution();
 
       expect(wrapped[EXECUTION_STORE]).toBe(fakeStore);
@@ -217,7 +228,7 @@ describe("createExecutionClient — auto-recording", () => {
 
       const instance = mockInstance(completedResult);
       const browser = mockBrowserService(instance);
-      const client = createExecutionClient(execService, browser, historyService);
+      const client = createExecutionClient(execService, browser, historyService, mockAuthClient);
       const wrapped = client.createExecution();
 
       await wrapped.run(multiNodeDef, [new File(["a"], "a.jpg")]);
@@ -225,6 +236,31 @@ describe("createExecutionClient — auto-recording", () => {
       expect(historyService.record).toHaveBeenCalledWith(
         expect.objectContaining({ slug: "image-resize" }),
       );
+    });
+  });
+
+  describe("server history — auth guard", () => {
+    it("skips server history when unauthenticated", async () => {
+      const instance = mockInstance(completedResult);
+      const browser = mockBrowserService(instance);
+      const client = createExecutionClient(execService, browser, historyService, mockAuthClient);
+      const wrapped = client.createExecution();
+
+      await wrapped.run(COMPRESS_DEFINITION, [new File(["a"], "a.jpg")]);
+
+      expect(historyService.recordServerStart).not.toHaveBeenCalled();
+    });
+
+    it("records server history when authenticated", async () => {
+      const instance = mockInstance(completedResult);
+      const browser = mockBrowserService(instance);
+      const client = createExecutionClient(execService, browser, historyService, authedAuthClient);
+      const wrapped = client.createExecution();
+
+      await wrapped.run(COMPRESS_DEFINITION, [new File(["a"], "a.jpg")]);
+
+      expect(historyService.recordServerStart).toHaveBeenCalledWith("image-compress");
+      expect(historyService.recordServerComplete).toHaveBeenCalled();
     });
   });
 });

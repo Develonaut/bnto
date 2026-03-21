@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 // This is the adapter boundary for auth state — not a leak.
 import { useConvexAuth } from "convex/react";
 import { SessionContext } from "./SessionContext";
+import { authStore } from "../stores/authStore";
 import type { AuthStatus } from "../types/auth";
 
 interface SessionProviderProps {
@@ -33,11 +34,13 @@ export function SessionProvider({ children, onSessionLost }: SessionProviderProp
     setMounted(true);
   }, []);
 
-  const status: AuthStatus = isLoading || !mounted
-    ? "loading"
-    : isAuthenticated
-      ? "authenticated"
-      : "unauthenticated";
+  const status: AuthStatus =
+    isLoading || !mounted ? "loading" : isAuthenticated ? "authenticated" : "unauthenticated";
+
+  // Keep the auth store's session status in sync (imperative reads use this)
+  useEffect(() => {
+    authStore.getState().setSessionStatus(status);
+  }, [status]);
 
   // Track previous status to detect auth -> unauth transitions.
   const prevStatusRef = useRef(status);
@@ -53,14 +56,7 @@ export function SessionProvider({ children, onSessionLost }: SessionProviderProp
 
   const ready = mounted && !isLoading;
 
-  const value = useMemo(
-    () => ({ status, ready }),
-    [status, ready],
-  );
+  const value = useMemo(() => ({ status, ready }), [status, ready]);
 
-  return (
-    <SessionContext value={value}>
-      {children}
-    </SessionContext>
-  );
+  return <SessionContext value={value}>{children}</SessionContext>;
 }
