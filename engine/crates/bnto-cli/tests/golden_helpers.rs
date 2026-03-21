@@ -98,23 +98,16 @@ fn compare_single_file(recipe_golden: &Path, entry: &std::fs::DirEntry, recipe_s
 }
 
 /// Check that every golden file was also produced as output.
-fn verify_no_stale_goldens(
-    golden_dir: &Path,
-    actual_files: &[std::fs::DirEntry],
-    recipe_slug: &str,
-) {
+fn verify_no_stale_goldens(golden_dir: &Path, actual_files: &[std::fs::DirEntry], slug: &str) {
     if !golden_dir.exists() {
         return;
     }
     let actual_names: Vec<_> = actual_files.iter().map(|e| e.file_name()).collect();
-    for entry in std::fs::read_dir(golden_dir)
-        .unwrap()
-        .filter_map(|e| e.ok())
-    {
+    for entry in std::fs::read_dir(golden_dir).unwrap().flatten() {
         let name = entry.file_name();
         assert!(
             actual_names.contains(&name),
-            "[{recipe_slug}] Stale golden file: {}. CLI no longer produces this output.",
+            "[{slug}] Stale golden file: {}. CLI no longer produces this output.",
             name.to_string_lossy()
         );
     }
