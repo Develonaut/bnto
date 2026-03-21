@@ -18,48 +18,66 @@ fn sha256_hex(data: &[u8]) -> String {
     format!("{:x}", hasher.finalize())
 }
 
+/// Collect and sort output files from a directory.
+fn collect_output_files(dir: &Path) -> Vec<std::fs::DirEntry> {
+    let mut files: Vec<_> = std::fs::read_dir(dir)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .collect();
+    files.sort_by_key(|e| e.file_name());
+    files
+}
+
 /// Assert that every output file in `actual_dir` matches its golden counterpart.
 ///
 /// In bless mode (`BLESS=1`), writes actual output to the golden directory instead.
 pub fn assert_golden(recipe_slug: &str, actual_dir: &tempfile::TempDir) {
     let recipe_golden = golden_dir().join(recipe_slug);
-    let bless = std::env::var("BLESS").is_ok();
-
-    if bless {
-        // Recreate the golden directory for this recipe
-        if recipe_golden.exists() {
-            std::fs::remove_dir_all(&recipe_golden).unwrap();
-        }
-        std::fs::create_dir_all(&recipe_golden).unwrap();
-    }
-
-    let mut actual_files: Vec<_> = std::fs::read_dir(actual_dir.path())
-        .unwrap()
-        .filter_map(|e| e.ok())
-        .collect();
-    actual_files.sort_by_key(|e| e.file_name());
+    let actual_files = collect_output_files(actual_dir.path());
 
     assert!(
         !actual_files.is_empty(),
         "[{recipe_slug}] No output files produced"
     );
 
-    for entry in &actual_files {
+    if std::env::var("BLESS").is_ok() {
+        bless_golden_files(&recipe_golden, &actual_files, recipe_slug);
+    } else {
+        compare_golden_files(&recipe_golden, &actual_files, recipe_slug);
+        verify_no_stale_goldens(&recipe_golden, &actual_files, recipe_slug);
+    }
+}
+
+/// Overwrite golden files with current output (bless mode).
+fn bless_golden_files(recipe_golden: &Path, actual_files: &[std::fs::DirEntry], recipe_slug: &str) {
+    if recipe_golden.exists() {
+        std::fs::remove_dir_all(recipe_golden).unwrap();
+    }
+    std::fs::create_dir_all(recipe_golden).unwrap();
+
+    for entry in actual_files {
+        let name = entry.file_name();
+        let bytes = std::fs::read(entry.path()).unwrap();
+        std::fs::write(recipe_golden.join(&name), &bytes).unwrap();
+        eprintln!(
+            "[bless] {recipe_slug}/{} ({} bytes)",
+            name.to_string_lossy(),
+            bytes.len()
+        );
+    }
+}
+
+/// Compare each output file against its golden counterpart via SHA-256.
+fn compare_golden_files(
+    recipe_golden: &Path,
+    actual_files: &[std::fs::DirEntry],
+    recipe_slug: &str,
+) {
+    for entry in actual_files {
         let name = entry.file_name();
         let actual_bytes = std::fs::read(entry.path()).unwrap();
-
-        if bless {
-            let dest = recipe_golden.join(&name);
-            std::fs::write(&dest, &actual_bytes).unwrap();
-            eprintln!(
-                "[bless] {recipe_slug}/{} ({} bytes)",
-                name.to_string_lossy(),
-                actual_bytes.len()
-            );
-            continue;
-        }
-
         let golden_path = recipe_golden.join(&name);
+
         assert!(
             golden_path.exists(),
             "[{recipe_slug}] Golden file missing: {}. Run BLESS=1 to generate.",
@@ -78,11 +96,6 @@ pub fn assert_golden(recipe_slug: &str, actual_dir: &tempfile::TempDir) {
             golden_bytes.len(),
             actual_bytes.len(),
         );
-    }
-
-    // In compare mode, verify no extra golden files exist that weren't produced
-    if !bless {
-        verify_no_stale_goldens(&recipe_golden, &actual_files, recipe_slug);
     }
 }
 
