@@ -6,6 +6,10 @@ pre-commit:
       run: task wasm:codegen && git add apps/web/public/wasm/bnto_wasm.js apps/web/public/wasm/bnto_wasm_bg.wasm engine/catalog.snapshot.json packages/@bnto/nodes/src/generated/
       stage_fixed: true
 
+    rust-test:
+      glob: "engine/**/*.{rs,toml}"
+      run: cd engine && cargo test --workspace
+
     prettier:
       glob: "*.{ts,tsx,js,mjs,json,css,md,yml,yaml}"
       run: pnpm prettier --write {staged_files}

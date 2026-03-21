@@ -86,6 +86,7 @@ Skip if no Rust files changed. Otherwise:
 - [ ] **Parameter usage completeness**: Every parameter defined in `metadata()` is read and used in ALL code paths of `process()`. If a param is format-specific, it's documented in the description and has format-aware test coverage
 - [ ] **Shared encoding**: Image processors use `encode::encode_image()` for final encoding, not duplicated per-processor encode functions
 - [ ] **Parameterized tests**: New or modified node params have tests verifying different values produce different outputs
+- [ ] **Golden tests**: If processor output changed (params, encoding, transforms), golden files updated via `BLESS=1 cargo test -p bnto-cli -- golden` and diff reviewed
 
 ## Step 5: TypeScript Compliance
 

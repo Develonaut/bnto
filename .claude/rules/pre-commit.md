@@ -10,6 +10,7 @@
 # Rust checks (if engine/ files changed)
 task wasm:lint          # clippy (Rust linter) -- must pass clean
 task wasm:test          # Rust unit tests + WASM integration tests -- must pass
+task cli:test           # CLI integration + golden tests -- must pass
 
 # Frontend checks
 task ui:build           # TypeScript compilation -- must pass

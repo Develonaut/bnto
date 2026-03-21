@@ -81,6 +81,7 @@ Run these sequentially — stop on first failure:
 ```bash
 task wasm:lint          # clippy (Rust linter) — must pass clean
 task wasm:test          # Rust unit tests + WASM integration tests — must pass
+task cli:test           # CLI integration + golden tests — must pass
 ```
 
 ### TypeScript checks
