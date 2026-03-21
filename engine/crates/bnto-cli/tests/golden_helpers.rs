@@ -81,24 +81,17 @@ fn compare_golden_files(
 /// Compare one output file against its golden counterpart.
 fn compare_single_file(recipe_golden: &Path, entry: &std::fs::DirEntry, recipe_slug: &str) {
     let name = entry.file_name();
+    let fname = name.to_string_lossy();
     let actual_bytes = std::fs::read(entry.path()).unwrap();
     let golden_path = recipe_golden.join(&name);
-
-    assert!(
-        golden_path.exists(),
-        "[{recipe_slug}] Golden file missing: {}. Run BLESS=1 to generate.",
-        golden_path.display()
-    );
-
-    let golden_bytes = std::fs::read(&golden_path).unwrap();
-    let actual_hash = sha256_hex(&actual_bytes);
-    let golden_hash = sha256_hex(&golden_bytes);
+    let golden_bytes = std::fs::read(&golden_path)
+        .unwrap_or_else(|_| panic!("[{recipe_slug}] Missing: {fname}. Run BLESS=1."));
+    let (actual_hash, golden_hash) = (sha256_hex(&actual_bytes), sha256_hex(&golden_bytes));
 
     assert_eq!(
         actual_hash,
         golden_hash,
-        "[{recipe_slug}/{}] Hash mismatch.\n  expected: {golden_hash} ({} bytes)\n  actual:   {actual_hash} ({} bytes)\n  Run BLESS=1 to update.",
-        name.to_string_lossy(),
+        "[{recipe_slug}/{fname}] Hash mismatch.\n  expected: {golden_hash} ({} B)\n  actual:   {actual_hash} ({} B)\n  Run BLESS=1 to update.",
         golden_bytes.len(),
         actual_bytes.len(),
     );
