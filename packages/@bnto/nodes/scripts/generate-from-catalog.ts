@@ -6,6 +6,7 @@
  *   - `src/generated/catalog.ts` — node type definitions + processor metadata
  *   - `src/generated/schemas.ts` — Zod schemas for engine-backed node types
  *   - `src/generated/definitionSchema.ts` — JSON Schema for `.bnto.json` files
+ *   - `packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts` — label map for Convex
  *
  * The Rust engine is the single source of truth for ALL node metadata.
  * Run via: `task nodes:generate` or `npx tsx scripts/generate-from-catalog.ts`
@@ -23,6 +24,10 @@ const CATALOG_OUTPUT = resolve(GENERATED_DIR, "catalog.ts");
 const SCHEMAS_OUTPUT = resolve(GENERATED_DIR, "schemas.ts");
 const DEF_SCHEMA_OUTPUT = resolve(GENERATED_DIR, "definitionSchema.ts");
 const DOCS_DIR = resolve(ROOT, "packages/@bnto/nodes/docs");
+const CONVEX_LABELS_OUTPUT = resolve(
+  ROOT,
+  "packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts",
+);
 
 // Clean up old separate nodeTypes.ts if it exists
 const OLD_NODE_TYPES = resolve(GENERATED_DIR, "nodeTypes.ts");
@@ -596,6 +601,34 @@ function generateAllNodeReadmes(): void {
 }
 
 // =============================================================================
+// Convex node type labels (nodeTypeLabels.ts)
+// =============================================================================
+
+/** Generate a standalone label map for Convex (can't import from @bnto/nodes). */
+function generateConvexLabelsFile(): string {
+  const entries = catalog.nodeTypes
+    .filter((t) => !t.isContainer && t.category !== "io")
+    .map((t) => `  ${JSON.stringify(t.name)}: ${JSON.stringify(t.label)},`)
+    .join("\n");
+
+  return `/**
+ * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
+ *
+ * Convex can't import from @bnto/nodes (bundling constraint), so this
+ * file is generated alongside the main catalog. Run \`task nodes:generate\`
+ * to regenerate after engine changes.
+ *
+ * Engine catalog v${catalog.version}
+ */
+
+/** Node type name → display label for processing nodes (excludes I/O and containers). */
+export const NODE_TYPE_LABELS: Record<string, string> = {
+${entries}
+};
+`;
+}
+
+// =============================================================================
 // Assemble and write
 // =============================================================================
 
@@ -620,10 +653,13 @@ ${generateProcessorsSection()}
 const schemasOutput = generateSchemasFile();
 const defSchemaOutput = generateDefinitionSchemaFile();
 
+const convexLabelsOutput = generateConvexLabelsFile();
+
 mkdirSync(GENERATED_DIR, { recursive: true });
 writeFileSync(CATALOG_OUTPUT, catalogOutput, "utf-8");
 writeFileSync(SCHEMAS_OUTPUT, schemasOutput, "utf-8");
 writeFileSync(DEF_SCHEMA_OUTPUT, defSchemaOutput, "utf-8");
+writeFileSync(CONVEX_LABELS_OUTPUT, convexLabelsOutput, "utf-8");
 generateAllNodeReadmes();
 
 // Clean up old separate file
@@ -645,4 +681,8 @@ console.log(
 console.log(`Generated ${DEF_SCHEMA_OUTPUT}`);
 console.log(
   `  Definition JSON Schema ${catalog.definitionSchema ? "included" : "NOT included (engine didn't provide it)"}`,
+);
+console.log(`Generated ${CONVEX_LABELS_OUTPUT}`);
+console.log(
+  `  ${catalog.nodeTypes.filter((t) => !t.isContainer && t.category !== "io").length} processing node labels for Convex`,
 );

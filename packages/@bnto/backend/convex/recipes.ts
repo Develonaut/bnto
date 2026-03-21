@@ -1,41 +1,17 @@
 import { ConvexError, v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAppUserId } from "./_helpers/auth";
-
-/** Node types excluded from recipe tags (I/O declarations + control containers). */
-const EXCLUDED_NODE_TYPES = new Set(["input", "output", "group", "loop", "parallel"]);
-
-/**
- * Per-operation node type → display label.
- *
- * Keep in sync with NODE_TYPE_INFO in packages/@bnto/nodes/src/generated/catalog.ts.
- * Backend can't import from @bnto/nodes (Convex bundling constraint), so this map
- * is maintained manually. The canonical source is the Rust engine's metadata.
- *
- * Duplicated in: packages/core/src/transforms/recipe.ts (extractNodeTypeLabels)
- * which uses NODE_TYPE_INFO directly for the same purpose.
- */
-const NODE_TYPE_LABELS: Record<string, string> = {
-  "edit-fields": "Edit Fields",
-  "file-rename": "Rename Files",
-  "http-request": "HTTP Request",
-  "image-compress": "Compress Images",
-  "image-convert": "Convert Image Format",
-  "image-resize": "Resize Images",
-  "shell-command": "Shell Command",
-  "spreadsheet-clean": "Clean CSV",
-  "spreadsheet-rename": "Rename CSV Columns",
-  transform: "Transform",
-};
+import { NODE_TYPE_LABELS } from "./_helpers/nodeTypeLabels";
 
 /** Extract unique processing node type labels from a definition's nodes. */
 function extractNodeTypeLabels(nodes: Array<{ type?: string }>): string[] {
   const seen = new Set<string>();
   const labels: string[] = [];
   for (const node of nodes) {
-    if (!node.type || seen.has(node.type) || EXCLUDED_NODE_TYPES.has(node.type)) continue;
-    seen.add(node.type);
-    labels.push(NODE_TYPE_LABELS[node.type] ?? node.type);
+    const label = node.type ? NODE_TYPE_LABELS[node.type] : undefined;
+    if (!label || seen.has(node.type!)) continue;
+    seen.add(node.type!);
+    labels.push(label);
   }
   return labels;
 }
