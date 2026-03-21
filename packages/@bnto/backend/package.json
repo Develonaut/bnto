@@ -18,7 +18,6 @@
   "devDependencies": {
     "convex-test": "^0.0.41",
     "eslint": "catalog:",
-    "typescript-eslint": "catalog:",
     "vitest": "catalog:"
   }
 }
