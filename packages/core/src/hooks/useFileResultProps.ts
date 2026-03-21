@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from "react";
 import type { BrowserFileResult } from "../types/browser";
 import { core } from "../core";
+import { parseFilename } from "../utils/parseFilename";
 
 interface FileResultDisplayProps {
   filename: string;
@@ -35,20 +36,13 @@ function useFileResultProps(result: BrowserFileResult): FileResultDisplayProps {
 
     return {
       filename: result.filename,
-      extension: extractExtension(result.filename),
+      extension: parseFilename(result.filename).extension,
       outputSize: formatFileSize(outputBytes),
       originalSize: hasOriginal ? formatFileSize(origBytes) : undefined,
       savings: savingsPercent != null && savingsPercent > 0 ? `-${savingsPercent}%` : undefined,
       download,
     };
   }, [result, download]);
-}
-
-/** Extract file extension from filename (e.g., "photo.jpg" -> "jpg"). */
-function extractExtension(filename: string): string | null {
-  const dot = filename.lastIndexOf(".");
-  if (dot === -1 || dot === filename.length - 1) return null;
-  return filename.slice(dot + 1).toLowerCase();
 }
 
 /**
