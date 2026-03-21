@@ -13,18 +13,7 @@ import type { NodeTypeName } from "./nodeTypes";
 import type { InputParams } from "./schemas/input";
 import type { OutputParams } from "./schemas/output";
 import { NODE_TYPE_INFO } from "./nodeTypes";
-
-const INPUT_MODE_ICONS: Record<InputParams["mode"], string> = {
-  "file-upload": "file-up",
-  text: "text-cursor-input",
-  url: "link",
-};
-
-const OUTPUT_MODE_ICONS: Record<OutputParams["mode"], string> = {
-  download: "download",
-  display: "monitor",
-  preview: "eye",
-};
+import { INPUT_MODES, OUTPUT_MODES } from "./ioModes";
 
 /**
  * Returns the Lucide icon name for a node given its type and params.
@@ -35,10 +24,10 @@ const OUTPUT_MODE_ICONS: Record<OutputParams["mode"], string> = {
  */
 export function getNodeIcon(nodeType: NodeTypeName, params?: Record<string, unknown>): string {
   if (nodeType === "input" && params?.mode) {
-    return INPUT_MODE_ICONS[params.mode as InputParams["mode"]] ?? "file-up";
+    return INPUT_MODES[params.mode as InputParams["mode"]]?.icon ?? "file-up";
   }
   if (nodeType === "output" && params?.mode) {
-    return OUTPUT_MODE_ICONS[params.mode as OutputParams["mode"]] ?? "download";
+    return OUTPUT_MODES[params.mode as OutputParams["mode"]]?.icon ?? "download";
   }
   return NODE_TYPE_INFO[nodeType].icon;
 }

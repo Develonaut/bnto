@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "../utils/cn";
+import { clamp } from "../utils/clamp";
 
 interface LinearProgressProps {
   /** Current value (0–100). */
@@ -31,7 +32,7 @@ export function LinearProgress({
   helperText,
   className,
 }: LinearProgressProps) {
-  const clamped = Math.min(100, Math.max(0, value));
+  const clamped = clamp(value, 0, 100);
 
   return (
     <div className={cn("flex w-full flex-col gap-3", className)}>
