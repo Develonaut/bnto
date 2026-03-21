@@ -1,0 +1,6 @@
+name,age,city,email,active
+Alice,30,New York,alice@example.com,true
+Bob,25,Los Angeles,bob@example.com,false
+Charlie,35,Chicago,charlie@example.com,true
+Diana,28,Houston,diana@example.com,true
+Eve,32,Phoenix,eve@example.com,false

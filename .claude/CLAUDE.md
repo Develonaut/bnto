@@ -115,7 +115,9 @@ task wasm:clean         # Clean Rust build artifacts
 
 # Native CLI (via Taskfile)
 task cli:build          # Build native CLI binary (release)
-task cli:test           # Run CLI unit + integration tests
+task cli:test           # Run CLI unit + integration + golden tests
+task cli:golden         # Run golden tests only (byte-exact output verification)
+task cli:golden:bless   # Regenerate golden files from current CLI output
 task recipes:generate   # Generate recipe JSON fixtures from TypeScript recipes
 
 # Frontend (via Turborepo)

@@ -53,10 +53,22 @@ tasks:
       - cargo build --release --package bnto-cli
 
   cli:test:
-    desc: Run CLI unit + integration tests
+    desc: Run CLI unit + integration + golden tests
     dir: ./engine
     cmds:
       - cargo test --package bnto-cli
+
+  cli:golden:
+    desc: Run CLI golden tests only (byte-exact output verification)
+    dir: ./engine
+    cmds:
+      - cargo test --package bnto-cli -- golden
+
+  cli:golden:bless:
+    desc: Regenerate golden files from current CLI output
+    dir: ./engine
+    cmds:
+      - BLESS=1 cargo test --package bnto-cli -- golden
 
   # Recipe fixture codegen (TypeScript → engine JSON)
   recipes:generate:
