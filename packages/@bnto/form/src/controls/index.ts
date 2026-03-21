@@ -41,5 +41,3 @@ export const CONTROL_REGISTRY: Record<NodeParamControl, ComponentType<ControlPro
   tagPicker: TagPickerControl,
   keyValue: KeyValueEditorControl,
 };
-
-export type { ControlProps } from "./types";

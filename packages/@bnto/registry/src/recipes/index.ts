@@ -14,9 +14,3 @@ export { renameCsvColumns } from "./renameCsvColumns";
 export { renameFiles } from "./renameFiles";
 export { resizeImages } from "./resizeImages";
 export { standardizeCsv } from "./standardizeCsv";
-
-// I/O node factory functions
-export { defaultInputNode } from "./defaultInputNode";
-export type { InputNodeOptions } from "./defaultInputNode";
-export { defaultOutputNode } from "./defaultOutputNode";
-export type { OutputNodeOptions } from "./defaultOutputNode";

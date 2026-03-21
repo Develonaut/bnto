@@ -41,7 +41,7 @@ export function toRecipeListItem(doc: RawRecipeListProjection): RecipeListItem {
 }
 
 /** Extract unique processing node type labels (excludes I/O and container nodes). */
-export function extractNodeTypeLabels(nodes: Array<{ type?: string }>): string[] {
+function extractNodeTypeLabels(nodes: Array<{ type?: string }>): string[] {
   const seen = new Set<string>();
   const labels: string[] = [];
   for (const node of nodes) {
