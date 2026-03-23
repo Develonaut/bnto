@@ -28,7 +28,7 @@ function RunPanelRoot() {
     <EditorMenuPanel
       panelId="run"
       side="left"
-      width="w-80"
+      width="w-72"
       boundaryPadding={16}
       label="Run panel"
       icon={<TerminalIcon className="size-4" />}

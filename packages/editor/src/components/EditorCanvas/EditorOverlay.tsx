@@ -8,19 +8,9 @@ import { cn } from "@bnto/ui";
  * Children (panels, toolbar) position themselves within this layer.
  */
 
-function EditorOverlay({
-  className,
-  children,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
+function EditorOverlay({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn(
-        "pointer-events-none absolute inset-4 top-[6rem] z-canvas",
-        className,
-      )}
-      {...props}
-    >
+    <div className={cn("pointer-events-none absolute inset-4 z-canvas", className)} {...props}>
       {children}
     </div>
   );

@@ -40,6 +40,8 @@ export { Row } from "./layout/Row";
 export { Spacer } from "./layout/Spacer";
 export { Stack } from "./layout/Stack";
 export { List, ListItem, ListItemContent, ListItemActions } from "./layout/List";
+export { SidebarShell, SIDEBAR_WIDTH } from "./layout/SidebarShell";
+export type { SidebarShellProps } from "./layout/SidebarShell";
 
 /* Typography */
 export { Badge } from "./typography/Badge";

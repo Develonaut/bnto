@@ -1,28 +1,30 @@
 "use client";
 
-import { Fragment, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
-  Badge,
+  Accordion,
   Dialog,
   DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Divider,
+  Input,
   SearchIcon,
   Text,
 } from "@bnto/ui";
+import type { NodeTypeName } from "@bnto/core";
 import { useEditor } from "../../context";
 import { useNodePalette } from "../../hooks/useNodePalette";
-import type { PaletteItem } from "../../hooks/useNodePalette";
 import { SLOTS } from "../../adapters/bentoSlots";
+import { PaletteCategoryGroup } from "../EditorLeftPanel/PaletteCategoryGroup";
 
 /**
  * NodePaletteDialog — dialog-based node palette.
  *
- * Shows a searchable categorized grid of palette items. Each node type
- * maps to one entry. Clicking an item adds the node to the canvas
- * and closes the dialog.
+ * Shows a searchable categorized list of palette items using the same
+ * Accordion + PaletteCategoryGroup + PaletteItem components as the
+ * PaletteTab in the left panel. Clicking an item adds the node to
+ * the canvas and closes the dialog.
  */
 
 interface NodePaletteDialogProps {
@@ -54,6 +56,8 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
       .filter((group) => group.items.length > 0);
   }, [groups, search]);
 
+  const defaultExpanded = groups.map((g) => g.category.name);
+
   const handleClose = useCallback(
     (nextOpen: boolean) => {
       if (!nextOpen) {
@@ -66,18 +70,11 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
   );
 
   const handleAdd = useCallback(
-    (item: PaletteItem) => {
-      editor.nodes.addNode(item.type, insertAfterNodeId, insertIntoContainerId);
+    (type: string) => {
+      editor.nodes.addNode(type as NodeTypeName, insertAfterNodeId, insertIntoContainerId);
       handleClose(false);
     },
     [editor, insertAfterNodeId, insertIntoContainerId, handleClose],
-  );
-
-  const handleAddItem = useCallback((item: PaletteItem) => () => handleAdd(item), [handleAdd]);
-
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value),
-    [],
   );
 
   const hasResults = filteredGroups.length > 0;
@@ -93,15 +90,14 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
         <div className="flex h-[28rem] flex-col">
           {/* Search */}
           <div className="shrink-0 pb-3">
-            <div className="flex items-center gap-2 rounded-md bg-input px-2.5 py-1.5">
-              <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
-              <input
-                type="text"
+            <div className="relative">
+              <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
                 placeholder="Search nodes..."
                 aria-label="Search node types"
                 value={search}
-                onChange={handleSearchChange}
-                className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-8 pl-8 text-sm"
                 autoFocus
               />
             </div>
@@ -113,53 +109,29 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
             </Text>
           )}
 
-          <Divider />
+          {/* Node list — same Accordion + PaletteCategoryGroup as PaletteTab.
+              Negative right margin pulls the scrollbar flush with the dialog edge;
+              padding-right keeps content properly inset. */}
+          <Accordion
+            type="multiple"
+            defaultValue={defaultExpanded}
+            className="-mr-8 min-h-0 flex-1 overflow-x-hidden overflow-y-auto border-t border-border pr-8 pt-3"
+          >
+            {filteredGroups.map((group) => (
+              <PaletteCategoryGroup
+                key={group.category.name}
+                group={group}
+                isFull={isFull}
+                onAdd={handleAdd}
+              />
+            ))}
+          </Accordion>
 
-          {/* Node grid */}
-          <div className="min-h-0 flex-1 overflow-y-auto pt-3">
-            <div className="grid grid-cols-2 gap-1">
-              {filteredGroups.map((group, i) => (
-                <Fragment key={group.category.name}>
-                  {i > 0 && <hr className="col-span-2 my-1 border-border" />}
-                  <h3 className="col-span-2 px-2 pt-1 pb-0.5 text-xs font-medium text-muted-foreground">
-                    {group.category.label}
-                  </h3>
-                  {group.items.map((item) => {
-                    const isServerOnly = !item.browserCapable;
-                    const disabled = isFull || isServerOnly;
-                    return (
-                      <button
-                        key={item.type}
-                        type="button"
-                        onClick={handleAddItem(item)}
-                        disabled={disabled}
-                        data-testid={`palette-item-${item.type}`}
-                        className="flex flex-col items-start gap-1 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
-                      >
-                        <span className="flex w-full items-center gap-2">
-                          <span className="text-sm leading-normal font-medium">{item.label}</span>
-                          {isServerOnly && (
-                            <Badge variant="outline" className="shrink-0 text-xs">
-                              Pro
-                            </Badge>
-                          )}
-                        </span>
-                        <span className="text-xs leading-normal text-muted-foreground text-wrap">
-                          {item.description}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </Fragment>
-              ))}
-
-              {!hasResults && search.trim() && (
-                <Text size="xs" color="muted" className="col-span-2 px-3 py-4 text-center">
-                  No nodes match &ldquo;{search}&rdquo;
-                </Text>
-              )}
-            </div>
-          </div>
+          {!hasResults && search.trim() && (
+            <Text size="xs" color="muted" className="px-3 py-4 text-center">
+              No nodes match &ldquo;{search}&rdquo;
+            </Text>
+          )}
         </div>
       </DialogContent>
     </Dialog>

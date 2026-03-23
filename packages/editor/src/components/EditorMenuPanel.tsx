@@ -76,7 +76,7 @@ function EditorMenuPanel({
         boundaryPadding={boundaryPadding}
         onPointerDownOutside={preventEvent}
         onFocusOutside={preventEvent}
-        className={cn(width, "min-w-[290px] h-[calc(100vh-8rem)] flex flex-col p-0", className)}
+        className={cn(width, "min-w-[290px] h-[calc(100dvh-2rem)] flex flex-col p-0", className)}
       >
         {children}
       </MenuContent>

@@ -1,8 +1,16 @@
 "use client";
 
-import { EditorProvider, EditorCanvas, EditorToolbar, EditorRightToolbar } from "@bnto/editor";
+import {
+  EditorProvider,
+  EditorCanvas,
+  EditorLeftPanel,
+  EditorToolbar,
+  EditorRightToolbar,
+} from "@bnto/editor";
 import { Stack, Text } from "@bnto/ui";
 
+import { NavUser } from "@/components/blocks/NavUser";
+import { SidebarLogo } from "@/components/blocks/SidebarLogo";
 import { EditorBetaDialog } from "./_components/EditorBetaDialog";
 import { EditorLoadingSkeleton } from "./_components/EditorLoadingSkeleton";
 import { useEditorRecipe } from "./_components/useEditorRecipe";
@@ -32,7 +40,8 @@ export default function EditorPage() {
       <EditorBetaDialog />
       <EditorProvider definition={definition} cloudId={cloudId}>
         <EditorCanvas>
-          <EditorToolbar />
+          <EditorLeftPanel header={<SidebarLogo />} />
+          <EditorToolbar trailing={<NavUser />} />
           <EditorRightToolbar />
         </EditorCanvas>
       </EditorProvider>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useContext, createContext, useCallback, forwardRef } from "react";
-import type { ElementRef, ComponentPropsWithoutRef, ComponentProps } from "react";
+import type { CSSProperties, ElementRef, ComponentPropsWithoutRef, ComponentProps } from "react";
 
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 
@@ -69,6 +69,7 @@ export const TabsTrigger = forwardRef<
         ref={ref}
         value={value}
         className={cn(buttonCn({ variant }), className)}
+        style={isActive ? ({ "--variant-fg": "var(--foreground)" } as CSSProperties) : undefined}
         {...props}
       />
     </Button>

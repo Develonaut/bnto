@@ -1,23 +1,12 @@
 import type { ReactNode } from "react";
 
-import { AppShellHeader } from "@bnto/ui";
-import { Navbar } from "@/components/blocks/Navbar";
-
 /**
- * Editor layout — full viewport, no footer.
+ * Editor layout — full viewport, no chrome.
  *
  * Lives outside `(app)` to avoid the default Navbar + Footer shell.
- * The editor needs maximum vertical space — navbar stays for navigation
- * but footer is omitted. `pt-20` clears the fixed navbar (same as
- * AppShell.Main default clearance).
+ * The editor owns all its own chrome (left panel, bottom toolbar,
+ * right panels) — no site Navbar needed.
  */
 export default function EditorLayout({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex h-dvh flex-col">
-      <AppShellHeader>
-        <Navbar />
-      </AppShellHeader>
-      <main className="relative z-0 flex-1 overflow-hidden">{children}</main>
-    </div>
-  );
+  return <main className="h-dvh overflow-hidden">{children}</main>;
 }

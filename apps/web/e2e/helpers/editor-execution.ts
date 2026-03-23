@@ -62,12 +62,12 @@ export async function getResultCount(page: Page) {
 
 /** Export the recipe via File > Export, returns the downloaded JSON buffer. */
 export async function exportRecipe(page: Page) {
-  // Open file menu
-  await page.getByTestId("toolbar-file-menu").click();
+  // Open file menu in left panel
+  await page.getByTestId("panel-file-menu").click();
 
   // Click Export menu item
   const downloadPromise = page.waitForEvent("download");
-  await page.getByTestId("menu-export").click();
+  await page.getByTestId("panel-menu-export").click();
   const download = await downloadPromise;
 
   const downloadPath = await download.path();

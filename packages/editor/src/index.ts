@@ -16,7 +16,7 @@
 
 // --- Compound components ---
 
-export { EditorCanvas, EditorToolbar, EditorRightToolbar } from "./Editor";
+export { EditorCanvas, EditorLeftPanel, EditorToolbar, EditorRightToolbar } from "./Editor";
 
 // --- Editor factory + context ---
 

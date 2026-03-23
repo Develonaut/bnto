@@ -3,21 +3,24 @@
  *
  * Usage:
  *
- *   import { EditorProvider, EditorCanvas, EditorToolbar, EditorRightToolbar } from "@bnto/editor";
+ *   import { EditorProvider, EditorCanvas, EditorToolbar, EditorRightToolbar, EditorLeftPanel } from "@bnto/editor";
  *
  *   <EditorProvider definition={recipe.definition}>
  *     <EditorCanvas>
+ *       <EditorLeftPanel />
  *       <EditorToolbar />
  *       <EditorRightToolbar />
  *     </EditorCanvas>
  *   </EditorProvider>
  *
- * The node palette opens as a dialog from the bottom toolbar's + button.
- * Right-side panels (config, run) open from the right toolbar triggers.
+ * Left panel: recipe file menu, node list, palette.
+ * Bottom toolbar: run, undo/redo, config toggle, help.
+ * Right panels (config, run) open from the toolbar triggers.
  */
 
 import { CanvasShell } from "./components/EditorCanvas/CanvasShell";
+import { EditorLeftPanel } from "./components/EditorLeftPanel";
 import { EditorToolbar } from "./components/EditorToolbar";
 import { EditorRightToolbar } from "./components/EditorRightToolbar";
 
-export { CanvasShell as EditorCanvas, EditorToolbar, EditorRightToolbar };
+export { CanvasShell as EditorCanvas, EditorLeftPanel, EditorToolbar, EditorRightToolbar };

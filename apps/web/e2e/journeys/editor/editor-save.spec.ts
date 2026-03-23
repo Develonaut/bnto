@@ -28,7 +28,7 @@ test.describe("Save recipe to account @auth", () => {
     await addNodeFromPalette(page, "Compress Images");
 
     // SAVE: Open File > Save, name it, confirm
-    await page.getByTestId("toolbar-file-menu").click();
+    await page.getByTestId("panel-file-menu").click();
     // TODO: Save menu item removed from toolbar — add testid when Save is re-introduced
     // await page.getByTestId("toolbar-save-item").click();
 
@@ -51,7 +51,7 @@ test.describe("Save recipe to account @auth", () => {
     await navigateToEditor(page);
     await addNodeFromPalette(page, "Compress Images");
 
-    await page.getByTestId("toolbar-file-menu").click();
+    await page.getByTestId("panel-file-menu").click();
     // TODO: Save menu item removed from toolbar — add testid when Save is re-introduced
     // await page.getByTestId("toolbar-save-item").click();
     await page.getByTestId("save-recipe-name").fill("SV3 Recipe");

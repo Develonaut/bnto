@@ -1,46 +1,22 @@
 /**
- * Sidebar navigation content — used by AppSidebar (desktop).
+ * Sidebar navigation content — middle section of the app sidebar.
  *
- * Top: Explore (menu opens right), My Recipes section.
- * Bottom: Pricing, FAQ, GitHub, Beer.
+ * Explore menu + My Recipes. No logo or footer — those are composed
+ * by AppSidebar via SidebarShell slots.
  */
 
 "use client";
 
 import Link from "next/link";
 
-import {
-  BeerIcon,
-  BookOpenIcon,
-  Button,
-  GithubIcon,
-  Label,
-  Menu,
-  MenuContent,
-  MenuItem,
-  MenuLabel,
-  MenuTrigger,
-  Row,
-  Spacer,
-} from "@bnto/ui";
-
-import { BUYMEACOFFEE_URL, GITHUB_URL } from "@/lib/copy";
+import { BookOpenIcon, Label, Menu, MenuContent, MenuItem, MenuLabel, MenuTrigger } from "@bnto/ui";
 
 import { NavButton } from "./NavButton";
-import { PAGE_LINKS, RECIPES } from "./navData";
+import { RECIPES } from "./navData";
 
 export function SidebarNav() {
   return (
     <>
-      {/* Logo */}
-      <NavButton
-        href="/"
-        className="mb-4 w-fit text-xl font-display font-black tracking-tighter"
-        data-testid="nav-link-home"
-      >
-        bnto
-      </NavButton>
-
       {/* Explore — menu opens to the right */}
       <nav className="flex flex-col gap-2">
         <Menu>
@@ -95,44 +71,6 @@ export function SidebarNav() {
           My Recipes
         </NavButton>
       </div>
-
-      <Spacer />
-
-      {/* Bottom — secondary nav + external links */}
-      <nav className="flex flex-col gap-2 border-t border-border pt-3">
-        {PAGE_LINKS.map((link) => (
-          <NavButton
-            key={link.href}
-            href={link.href}
-            className="w-full"
-            data-testid={`nav-link-${link.href.replace("/", "")}`}
-          >
-            {link.label}
-          </NavButton>
-        ))}
-        <Row className="gap-2 mt-1">
-          <Button
-            variant="secondary"
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1"
-          >
-            <GithubIcon />
-            GitHub
-          </Button>
-          <Button
-            variant="warning"
-            href={BUYMEACOFFEE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1"
-          >
-            <BeerIcon />
-            Beer
-          </Button>
-        </Row>
-      </nav>
     </>
   );
 }
