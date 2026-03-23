@@ -99,7 +99,7 @@ export function SidebarNav() {
       <Spacer />
 
       {/* Bottom — secondary nav + external links */}
-      <nav className="flex flex-col gap-1 border-t border-border pt-3">
+      <nav className="flex flex-col gap-2 border-t border-border pt-3">
         {PAGE_LINKS.map((link) => (
           <NavButton
             key={link.href}
@@ -110,7 +110,7 @@ export function SidebarNav() {
             {link.label}
           </NavButton>
         ))}
-        <Row className="gap-1 mt-1">
+        <Row className="gap-2 mt-1">
           <Button
             variant="secondary"
             href={GITHUB_URL}

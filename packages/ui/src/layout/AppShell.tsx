@@ -68,7 +68,9 @@ export function AppShellContent({ className, children, ...props }: ComponentProp
   return (
     <div className={cn("min-h-[80svh] flex-1 py-12", className)} {...props}>
       <Container>
-        <div className="flex flex-col gap-20">{children}</div>
+        <div className="flex flex-col gap-20 [&>*:first-child]:min-h-[calc(100svh-20rem)]">
+          {children}
+        </div>
       </Container>
     </div>
   );
