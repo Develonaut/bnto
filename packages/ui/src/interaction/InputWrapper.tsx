@@ -4,26 +4,26 @@ import { cn } from "../utils/cn";
 import { Surface } from "../surface/Surface";
 
 type InputWrapperProps = ComponentProps<"div"> & {
-  /** When true, renders with muted variant and no elevation. */
+  /** When true, renders with reduced opacity. */
   disabled?: boolean;
 };
 
 /**
- * Shared surface wrapper for form field elements.
+ * Shared wrapper for form field elements.
  *
- * Builds on `<Surface>` with outline variant and focus ring / disabled /
- * invalid states. Input, Textarea, and compound inputs (Combobox,
- * KeyValueEditor) inherit a consistent look and feel.
+ * Muted surface with no elevation — flat background with subtle border.
+ * Focus ring and disabled/invalid states built in.
  */
 function InputWrapper({ disabled, className, ...props }: InputWrapperProps) {
   return (
     <Surface
-      variant={disabled ? "muted" : "outline"}
-      elevation={disabled ? "none" : undefined}
+      variant="muted"
+      elevation="none"
       data-slot="input-wrapper"
       className={cn(
-        "has-[:focus-visible]:border-ring has-[:focus-visible]:ring-ring/50 has-[:focus-visible]:ring-[3px]",
+        "has-[:focus-visible]:ring-ring/50 has-[:focus-visible]:ring-[3px]",
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+        disabled && "opacity-50 pointer-events-none",
         className,
       )}
       {...props}

@@ -17,7 +17,8 @@ type SurfaceVariant =
   | "success"
   | "warning"
   | "outline"
-  | "ghost";
+  | "ghost"
+  | "transparent";
 
 type SurfaceElevation = "none" | "sm" | "md" | "lg";
 type SurfaceRounded = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
@@ -61,19 +62,29 @@ export function Surface({
   ...props
 }: SurfaceProps) {
   const Comp = asChild ? Slot : "div";
+  const isTransparent = variant === "transparent";
+  const variantClass = variant !== "default" && !isTransparent ? `surface-${variant}` : undefined;
+  const transparentStyle = isTransparent
+    ? { "--face-bg": "transparent", "--face-fg": "inherit" }
+    : undefined;
+  const mergedStyle = {
+    ...(spring ? SPRING_STYLES[spring] : undefined),
+    ...transparentStyle,
+    ...style,
+  };
   return (
     <Comp
       data-grounded={spring && grounded ? "" : undefined}
       className={cn(
         "surface",
         `elevation-${elevation}`,
-        variant !== "default" && `surface-${variant}`,
+        variantClass,
         spring && "springable",
         dashed && "surface-dashed",
         roundedMap[rounded],
         className,
       )}
-      style={spring ? { ...SPRING_STYLES[spring], ...style } : style}
+      style={Object.keys(mergedStyle).length > 0 ? mergedStyle : undefined}
       {...props}
     />
   );

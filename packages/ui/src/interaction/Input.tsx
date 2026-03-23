@@ -4,10 +4,9 @@ import { cn } from "../utils/cn";
 import { InputWrapper } from "./InputWrapper";
 
 /**
- * Text input with Motorway surface treatment.
+ * Text input with flat muted background.
  *
- * Uses InputWrapper for the surface/focus/disabled states. The wrapper
- * is needed because `<input>` is a void element (no ::before/::after).
+ * Uses InputWrapper for the background/focus/disabled states.
  */
 function Input({
   className,

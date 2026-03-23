@@ -25,10 +25,16 @@ function CmdEditorShell({ children, commandSlot }: CmdEditorShellProps) {
       aria-label="Recipe editor"
     >
       <div className="flex w-full max-w-2xl flex-col gap-4 px-4">
-        <Surface elevation="sm" className="max-h-[60vh] p-2">
-          <div className="h-full overflow-y-auto">{children}</div>
+        <Surface
+          variant="transparent"
+          elevation="none"
+          dashed
+          className="max-h-[60vh] p-3"
+          data-testid="cmd-editor-node-tree"
+        >
+          <div className="h-full overflow-y-auto overflow-x-hidden">{children}</div>
         </Surface>
-        <Surface elevation="sm" className="shrink-0 p-2">
+        <Surface className="shrink-0 p-2" data-testid="cmd-editor-command-slot">
           {commandSlot}
         </Surface>
       </div>

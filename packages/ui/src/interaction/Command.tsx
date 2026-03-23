@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 
 import { Command as CommandPrimitive } from "cmdk";
 import { SearchIcon } from "../icons";
+import { Surface } from "../surface/Surface";
 import { cn } from "../utils/cn";
 
 function Command({ className, ...props }: ComponentProps<typeof CommandPrimitive>) {
@@ -18,8 +19,10 @@ function Command({ className, ...props }: ComponentProps<typeof CommandPrimitive
 
 function CommandInput({ className, ...props }: ComponentProps<typeof CommandPrimitive.Input>) {
   return (
-    <div
-      className="flex items-center gap-2 border-b border-border px-3"
+    <Surface
+      variant="muted"
+      elevation="none"
+      className="flex items-center gap-2 px-3"
       data-slot="command-input-wrapper"
     >
       <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
@@ -31,7 +34,7 @@ function CommandInput({ className, ...props }: ComponentProps<typeof CommandPrim
         )}
         {...props}
       />
-    </div>
+    </Surface>
   );
 }
 

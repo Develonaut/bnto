@@ -1,5 +1,6 @@
 "use client";
 
+import { Surface } from "@bnto/ui";
 import type { CompartmentVariant } from "../../adapters/types";
 import { CATEGORY_VARIANT } from "../../adapters/categoryVariant";
 import { NodeTreeItem } from "./NodeTreeItem";
@@ -27,17 +28,19 @@ function NodeTreeGroup({ entry, selectedNodeId, expandedContainerIds }: NodeTree
   const showChildren = isExpanded && children.length > 0;
 
   return (
-    <div className="rounded-lg p-1 outline outline-2 outline-dashed outline-border -outline-offset-2">
-      <NodeTreeItem
-        nodeId={node.id}
-        label={config.displayName ?? config.name}
-        icon={node.data.icon}
-        variant={variant}
-        selected={selectedNodeId === node.id}
-        isIoNode={false}
-      />
+    <Surface variant="muted" elevation="none" dashed className="p-1">
+      <Surface className="p-1">
+        <NodeTreeItem
+          nodeId={node.id}
+          label={config.displayName ?? config.name}
+          icon={node.data.icon}
+          variant={variant}
+          selected={selectedNodeId === node.id}
+          isIoNode={false}
+        />
+      </Surface>
       {showChildren && (
-        <div className="ml-4 flex flex-col gap-0.5 pt-0.5">
+        <div className="flex flex-col gap-0.5 pt-0.5">
           {children.map((child) =>
             child.isContainer ? (
               <NodeTreeGroup
@@ -47,24 +50,25 @@ function NodeTreeGroup({ entry, selectedNodeId, expandedContainerIds }: NodeTree
                 expandedContainerIds={expandedContainerIds}
               />
             ) : (
-              <NodeTreeItem
-                key={child.node.id}
-                nodeId={child.node.id}
-                label={child.config.displayName ?? child.config.name}
-                icon={child.node.data.icon}
-                variant={
-                  child.node.data.variant ??
-                  (CATEGORY_VARIANT["muted"] as CompartmentVariant) ??
-                  "muted"
-                }
-                selected={selectedNodeId === child.node.id}
-                isIoNode={false}
-              />
+              <Surface key={child.node.id} className="p-1">
+                <NodeTreeItem
+                  nodeId={child.node.id}
+                  label={child.config.displayName ?? child.config.name}
+                  icon={child.node.data.icon}
+                  variant={
+                    child.node.data.variant ??
+                    (CATEGORY_VARIANT["muted"] as CompartmentVariant) ??
+                    "muted"
+                  }
+                  selected={selectedNodeId === child.node.id}
+                  isIoNode={false}
+                />
+              </Surface>
             ),
           )}
         </div>
       )}
-    </div>
+    </Surface>
   );
 }
 

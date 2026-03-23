@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Text, PlusIcon } from "@bnto/ui";
+import { Text, PlusIcon, Surface } from "@bnto/ui";
 import { useEditor } from "../../context";
 import { CATEGORY_VARIANT } from "../../adapters/categoryVariant";
 import type { CompartmentVariant } from "../../adapters/types";
@@ -71,12 +71,12 @@ function NodeTree() {
 /** Dashed-border placeholder shown when no processing nodes exist. */
 function NodeTreePlaceholder() {
   return (
-    <div className="flex items-center gap-2 rounded-md px-3 py-3 outline outline-2 outline-dashed outline-border -outline-offset-2">
+    <Surface variant="muted" dashed elevation="none" className="flex items-center gap-2 px-3 py-3">
       <PlusIcon className="size-4 shrink-0 text-muted-foreground" />
       <Text size="xs" color="muted">
         Add a node from the command input
       </Text>
-    </div>
+    </Surface>
   );
 }
 
