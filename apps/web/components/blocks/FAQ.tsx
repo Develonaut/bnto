@@ -49,7 +49,7 @@ const faqs = [
 
 export function FAQ({ headerTag = "h2" }: { headerTag?: "h1" | "h2" }) {
   return (
-    <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+    <div className="grid gap-12 xl:grid-cols-2 xl:gap-16">
       <Stack gap="md">
         <Heading level={headerTag === "h1" ? 1 : 2}>Frequently asked questions</Heading>
         <Text color="muted" leading="snug" className="max-w-md">
