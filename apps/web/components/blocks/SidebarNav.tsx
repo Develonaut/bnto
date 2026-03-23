@@ -2,7 +2,7 @@
  * Sidebar navigation content — used by AppSidebar (desktop).
  *
  * Top: Explore (menu opens right), My Recipes section.
- * Bottom: Pricing, FAQ.
+ * Bottom: Pricing, FAQ, GitHub, Beer.
  */
 
 "use client";
@@ -10,15 +10,21 @@
 import Link from "next/link";
 
 import {
+  BeerIcon,
   BookOpenIcon,
+  Button,
+  GithubIcon,
   Label,
   Menu,
   MenuContent,
   MenuItem,
   MenuLabel,
   MenuTrigger,
+  Row,
   Spacer,
 } from "@bnto/ui";
+
+import { BUYMEACOFFEE_URL, GITHUB_URL } from "@/lib/copy";
 
 import { NavButton } from "./NavButton";
 import { PAGE_LINKS, RECIPES } from "./navData";
@@ -92,7 +98,7 @@ export function SidebarNav() {
 
       <Spacer />
 
-      {/* Bottom — secondary nav */}
+      {/* Bottom — secondary nav + external links */}
       <nav className="flex flex-col gap-1 border-t border-border pt-3">
         {PAGE_LINKS.map((link) => (
           <NavButton
@@ -104,6 +110,28 @@ export function SidebarNav() {
             {link.label}
           </NavButton>
         ))}
+        <Row className="gap-1 mt-1">
+          <Button
+            variant="ghost"
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1"
+          >
+            <GithubIcon />
+            GitHub
+          </Button>
+          <Button
+            variant="ghost"
+            href={BUYMEACOFFEE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1"
+          >
+            <BeerIcon />
+            Beer
+          </Button>
+        </Row>
       </nav>
     </>
   );

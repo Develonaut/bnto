@@ -2,14 +2,12 @@
  * Content header — sits above the main scrollable area.
  *
  * Left side: hamburger toggle (mobile only).
- * Right side: GitHub, theme menu, user menu.
+ * Right side: Create button, theme menu, user menu.
  */
 
 "use client";
 
-import { Badge, Button, GithubIcon, MenuIcon } from "@bnto/ui";
-
-import { GITHUB_URL } from "@/lib/copy";
+import { Badge, Button, MenuIcon } from "@bnto/ui";
 
 import { NavThemeMenu } from "./NavThemeMenu";
 import { NavUser } from "./NavUser";
@@ -41,17 +39,6 @@ export function ContentHeader({ onToggleMobileMenu }: ContentHeaderProps) {
       <div className="flex items-center gap-2">
         <Button variant="primary" elevation="sm" href="/editor">
           Create <Badge variant="secondary">Beta</Badge>
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          elevation="sm"
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="GitHub"
-        >
-          <GithubIcon />
         </Button>
         <NavThemeMenu />
         <NavUser />

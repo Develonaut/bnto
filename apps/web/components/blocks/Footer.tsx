@@ -2,18 +2,9 @@ import type { CSSProperties } from "react";
 
 import Link from "next/link";
 
-import {
-  ArrowUpRightIcon,
-  Button,
-  CoffeeIcon,
-  Container,
-  GithubIcon,
-  Row,
-  Stack,
-  Text,
-} from "@bnto/ui";
+import { Container, Row, Stack, Text } from "@bnto/ui";
 
-import { BUYMEACOFFEE_URL, GITHUB_URL, LICENSE_LINE, TAGLINE, TRUST_LINE } from "@/lib/copy";
+import { GITHUB_URL, LICENSE_LINE, TAGLINE, TRUST_LINE } from "@/lib/copy";
 
 import { NavButton } from "./NavButton";
 
@@ -69,30 +60,6 @@ export function Footer() {
             <Text size="sm" color="muted" leading="relaxed">
               {TAGLINE} {TRUST_LINE}
             </Text>
-            <Stack gap="lg">
-              <a
-                href={GITHUB_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Open source — GitHub repository"
-              >
-                <GithubIcon className="size-4" />
-                Open source
-                <ArrowUpRightIcon className="size-3" />
-              </a>
-              <Button
-                href={BUYMEACOFFEE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="outline"
-                className="w-fit"
-                aria-label="Support bnto — Buy Me a Coffee"
-              >
-                <CoffeeIcon className="size-4" />
-                Buy me a coffee
-              </Button>
-            </Stack>
           </Stack>
 
           {/* Right columns: tool links by category */}
