@@ -37,6 +37,7 @@ export { Container } from "./layout/Container";
 export { Grid, GridItem } from "./layout/Grid";
 export { Inset } from "./layout/Inset";
 export { Row } from "./layout/Row";
+export { Spacer } from "./layout/Spacer";
 export { Stack } from "./layout/Stack";
 export { List, ListItem, ListItemContent, ListItemActions } from "./layout/List";
 
