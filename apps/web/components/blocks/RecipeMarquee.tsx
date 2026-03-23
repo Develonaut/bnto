@@ -1,8 +1,6 @@
 import {
-  PlusIcon,
   RecipeCard,
   RecipeCardContent,
-  RecipeCardDescription,
   RecipeCardHeader,
   RecipeCardIcon,
   RecipeCardCategory,
@@ -25,17 +23,16 @@ const col2 = BNTO_REGISTRY.slice(half);
 
 export function RecipeMarquee() {
   return (
-    <div className="relative flex h-[500px] w-full flex-row items-center justify-center gap-4 overflow-hidden">
+    <div className="relative flex h-[300px] w-full flex-row items-center justify-center gap-4 overflow-hidden sm:h-[360px] xl:h-[440px]">
       <Marquee pauseOnHover vertical className="[--duration:22s]">
         {col1.map((entry) => (
           <MarqueeRecipeCard key={entry.slug} slug={entry.slug} />
         ))}
       </Marquee>
-      <Marquee reverse pauseOnHover vertical className="[--duration:28s]">
+      <Marquee reverse pauseOnHover vertical className="hidden sm:flex [--duration:28s]">
         {col2.map((entry) => (
           <MarqueeRecipeCard key={entry.slug} slug={entry.slug} />
         ))}
-        <CtaCard />
       </Marquee>
 
       {/* Top + bottom gradient fade */}
@@ -60,23 +57,6 @@ function MarqueeRecipeCard({ slug }: { slug: string }) {
       <RecipeCardContent>
         <RecipeCardTitle>{entry.h1.replace(/ Online Free$/, "")}</RecipeCardTitle>
         <RecipeCardTags tags={entry.features} limit={3} />
-      </RecipeCardContent>
-    </RecipeCard>
-  );
-}
-
-/* ── CTA card ─────────────────────────────────────────────────── */
-
-function CtaCard() {
-  return (
-    <RecipeCard href="/editor" color="primary" className="w-64">
-      <RecipeCardHeader>
-        <RecipeCardIcon icon={PlusIcon} onSurface />
-        <RecipeCardCategory onSurface>Custom</RecipeCardCategory>
-      </RecipeCardHeader>
-      <RecipeCardContent>
-        <RecipeCardTitle>Create your own</RecipeCardTitle>
-        <RecipeCardDescription onSurface>Combine tools into custom workflows</RecipeCardDescription>
       </RecipeCardContent>
     </RecipeCard>
   );

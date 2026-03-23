@@ -1,5 +1,6 @@
 import {
   AppShellContent,
+  Badge,
   Button,
   Divider,
   GithubIcon,
@@ -22,16 +23,24 @@ export default function Home() {
   return (
     <AppShellContent>
       {/* Hero — sidebar + recipe marquee */}
-      <div className="grid items-start gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20">
+      <div className="grid items-start gap-12 xl:grid-cols-[2fr_3fr] xl:gap-20">
         <HeroSidebar showCta={false} />
-        <RecipeMarquee />
+        <Stack gap="lg">
+          <RecipeMarquee />
+          <Divider label="Or" />
+          <div className="flex justify-center">
+            <Button variant="primary" size="lg" elevation="sm" href="/editor">
+              Create your own <Badge variant="secondary">Beta</Badge>
+            </Button>
+          </div>
+        </Stack>
       </div>
 
       <Divider label="Free. No signup." />
 
       {/* How it works — copy + brag cards */}
       <InView>
-        <div className="grid items-center gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20">
+        <div className="grid items-center gap-12 xl:grid-cols-[2fr_3fr] xl:gap-20">
           <Stack gap="md">
             <Text size="sm" mono color="muted" className="uppercase tracking-wider">
               How it works
@@ -54,7 +63,7 @@ export default function Home() {
 
       {/* No catch — copy + trust card */}
       <InView>
-        <div className="grid items-center gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20">
+        <div className="grid items-center gap-12 xl:grid-cols-[2fr_3fr] xl:gap-20">
           <Stack gap="md">
             <Text size="sm" mono color="muted" className="uppercase tracking-wider">
               No catch
