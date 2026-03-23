@@ -34,6 +34,17 @@
   --shadow-x: calc(var(--elevation-shadow-mag) * sin(var(--light-angle)) * 1px);
   --shadow-y: calc(var(--elevation-shadow-mag) * cos(var(--light-angle)) * -1px);
 
+  /* Pixel-snapped face offsets — prevents sub-pixel blur on text.
+   * Wall magnitudes (4.47, 7.81, 11.31) × 0.5 produce fractional px values.
+   * Hover/toggle multipliers (0.66, 0.33) make it worse. round() snaps
+   * the face to the nearest pixel grid line so text stays crisp. */
+  --face-rest-x: round(nearest, calc(var(--elevation-x) * -1), 1px);
+  --face-rest-y: round(nearest, calc(var(--elevation-y) * -1), 1px);
+  --face-hover-x: round(nearest, calc(var(--elevation-x) * -0.66), 1px);
+  --face-hover-y: round(nearest, calc(var(--elevation-y) * -0.66), 1px);
+  --face-sink-x: round(nearest, calc(var(--elevation-x) * -0.33), 1px);
+  --face-sink-y: round(nearest, calc(var(--elevation-y) * -0.33), 1px);
+
   /* Face color computation — driven by color variant's --variant-bg/--variant-fg.
    * Default falls back to card surface colors for elements without a color variant.
    * [data-muted] overrides --face-bg/--face-fg with color-mix() blends. */
@@ -42,7 +53,7 @@
 
   position: relative;
   transform-style: preserve-3d;
-  transform: translate(calc(var(--elevation-x) * -1), calc(var(--elevation-y) * -1));
+  transform: translate(var(--face-rest-x), var(--face-rest-y));
   border: 1px solid var(--surface-wall);
   background-color: var(--face-bg);
   color: var(--face-fg);
@@ -317,7 +328,7 @@
 .pressable:focus-visible,
 .pressable[data-hover],
 .pressable[data-state="open"] {
-  transform: translate(calc(var(--elevation-x) * -0.66), calc(var(--elevation-y) * -0.66));
+  transform: translate(var(--face-hover-x), var(--face-hover-y));
 }
 
 .pressable:hover::before,
@@ -371,7 +382,7 @@
 /* Toggle ON resting — same depth as normal hover (33% sunk toward ground).
  * Clearly visible as "pressed in" without needing to hover to see it. */
 .pressable[data-toggle][data-active] {
-  transform: translate(calc(var(--elevation-x) * -0.66), calc(var(--elevation-y) * -0.66));
+  transform: translate(var(--face-hover-x), var(--face-hover-y));
   transition-duration: var(--pressable-dur, 150ms);
 }
 
@@ -390,7 +401,7 @@
  * A clear extra dip to give feedback before flush on press. */
 .pressable[data-toggle][data-active]:hover,
 .pressable[data-toggle][data-active]:focus-visible {
-  transform: translate(calc(var(--elevation-x) * -0.33), calc(var(--elevation-y) * -0.33));
+  transform: translate(var(--face-sink-x), var(--face-sink-y));
 }
 
 .pressable[data-toggle][data-active]:hover::before,
@@ -481,7 +492,7 @@
 :is(.group:hover, .group:focus-within) > .pressable[data-dormant],
 :is(.group:hover, .group:focus-within) .pressable[data-dormant] {
   pointer-events: auto;
-  transform: translate(calc(var(--elevation-x) * -1), calc(var(--elevation-y) * -1));
+  transform: translate(var(--face-rest-x), var(--face-rest-y));
   --face-bg: var(--variant-bg, var(--card));
   --face-fg: var(--variant-fg, var(--card-foreground));
   border-color: var(--surface-wall);
@@ -501,7 +512,7 @@
 /* Woken hover — sink like normal .pressable:hover */
 :is(.group:hover, .group:focus-within) .pressable[data-dormant]:hover,
 :is(.group:hover, .group:focus-within) .pressable[data-dormant]:focus-visible {
-  transform: translate(calc(var(--elevation-x) * -0.66), calc(var(--elevation-y) * -0.66));
+  transform: translate(var(--face-hover-x), var(--face-hover-y));
 }
 
 :is(.group:hover, .group:focus-within) .pressable[data-dormant]:hover::before,
