@@ -4,25 +4,25 @@ import { useState } from "react";
 import type { RecipeListItem } from "@bnto/core";
 
 import {
-  Stagger,
-  ScaleIn,
   Button,
+  CardActionArea,
+  EllipsisVerticalIcon,
   Grid,
   GridItem,
   Heading,
+  RecipeCard,
+  RecipeCardCategory,
+  RecipeCardContent,
+  RecipeCardHeader,
+  RecipeCardIcon,
+  RecipeCardTags,
+  RecipeCardTitle,
   Row,
+  ScaleIn,
   Skeleton,
   Stack,
+  Stagger,
   Text,
-} from "@bnto/ui";
-import {
-  RecipeCard,
-  RecipeCardHeader,
-  RecipeCardContent,
-  RecipeCardIcon,
-  RecipeCardCategory,
-  RecipeCardTitle,
-  RecipeCardTags,
 } from "@bnto/ui";
 import { SavedRecipeCard } from "@/components/blocks/SavedRecipeCard";
 import { getBntoIcon } from "@/lib/bntoIcons";
@@ -125,6 +125,42 @@ export function RecipeCardShowcase() {
             ))}
           </Grid>
         </Stagger>
+      </Stack>
+
+      {/* CardActionArea — nested controls in clickable cards */}
+      <Stack gap="sm">
+        <div>
+          <Heading level={3} size="xs">
+            CardActionArea + Dormant Ellipsis
+          </Heading>
+          <Text size="sm" color="muted">
+            Clickable card with a dormant ellipsis button inside CardActionArea. Click the button —
+            card navigation is blocked. Click elsewhere — card navigates.
+          </Text>
+        </div>
+        <Grid cols={4} gap="md">
+          <GridItem>
+            <RecipeCard href="#card-action-demo">
+              <RecipeCardHeader>
+                <RecipeCardIcon />
+                <CardActionArea>
+                  <Button
+                    icon={<EllipsisVerticalIcon />}
+                    dormant
+                    aria-label="Actions"
+                    onClick={() => alert("Menu clicked — card did NOT navigate")}
+                  />
+                </CardActionArea>
+              </RecipeCardHeader>
+              <RecipeCardContent>
+                <RecipeCardTitle>Card with nested controls</RecipeCardTitle>
+                <Text size="xs" color="muted">
+                  Hover to wake the ellipsis. Click it safely.
+                </Text>
+              </RecipeCardContent>
+            </RecipeCard>
+          </GridItem>
+        </Grid>
       </Stack>
 
       {/* RecipeCard — direct composition pattern */}

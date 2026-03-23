@@ -5,29 +5,32 @@ import { core, NODE_TYPE_INFO } from "@bnto/core";
 
 import {
   BlocksIcon,
-  BouncyStagger,
   Button,
+  CardActionArea,
   ClockIcon,
-  CloudIcon,
-  CloudOffIcon,
   EmptyState,
   EmptyStateIcon,
   EmptyStateTitle,
   EmptyStateDescription,
   FolderOpenIcon,
+  Grid,
+  GridItem,
   PlusIcon,
   RecipeCard,
+  RecipeCardContent,
+  RecipeCardHeader,
+  RecipeCardIcon,
   RecipeCardTags,
+  RecipeCardTitle,
   Row,
-  Stack,
+  ScaleIn,
+  Stagger,
   Text,
 } from "@bnto/ui";
 import { editorUrl } from "@/lib/routes";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
-import { DeleteRecipeButton } from "./DeleteRecipeButton";
 import { LocalRecipeUpsell } from "./LocalRecipeUpsell";
-import { RecipeInfoButton } from "./RecipeInfoButton";
-import { SyncStatus } from "./SyncStatus";
+import { RecipeCardMenu } from "./RecipeCardMenu";
 
 import type { RecipeCategory, RecipeSortOrder } from "./RecipeFilterMenu";
 
@@ -43,7 +46,7 @@ interface RecipeGridProps {
 }
 
 /**
- * Unified recipe grid — store-backed, reactive.
+ * Recipe card grid — store-backed, reactive.
  *
  * Reads from the Zustand recipesStore via core.recipes.useRecipes().
  * Applies category filter and sort order from the parent.
@@ -97,49 +100,50 @@ export function RecipeGrid({ category, sort }: RecipeGridProps) {
   return (
     <>
       {!isAuthenticated && <LocalRecipeUpsell />}
-      <BouncyStagger className="flex flex-col gap-3" from={0.85}>
-        {filtered.map((recipe) => (
-          <Row key={recipe.id} align="stretch" className="gap-2 group" data-testid="recipe-card">
-            <RecipeCard compact href={editorUrl(recipe.id)} className="flex-1">
-              <SyncStatus syncedAt={recipe.syncedAt} />
-              <Stack className="flex-1 gap-0.5">
-                <Text weight="medium">{recipe.name}</Text>
-                <Row className="gap-3 items-center">
-                  <Row className="gap-1 items-center">
-                    {recipe.syncedAt ? (
-                      <CloudIcon className="size-3 text-muted-foreground" />
-                    ) : (
-                      <CloudOffIcon className="size-3 text-muted-foreground" />
+      <Stagger asChild>
+        <Grid cols={{ mobile: 1, tablet: 2, desktop: 3 }} gap="md" animated>
+          {filtered.map((recipe, i) => (
+            <GridItem key={recipe.id}>
+              <ScaleIn
+                index={i}
+                from={0.85}
+                easing="spring-bouncy"
+                className="h-full"
+                data-testid="recipe-card"
+              >
+                <RecipeCard href={editorUrl(recipe.id)}>
+                  <RecipeCardHeader>
+                    <RecipeCardIcon />
+                    <CardActionArea>
+                      <RecipeCardMenu recipeId={recipe.id} recipeName={recipe.name} />
+                    </CardActionArea>
+                  </RecipeCardHeader>
+                  <RecipeCardContent>
+                    <RecipeCardTitle>{recipe.name}</RecipeCardTitle>
+                    <Row className="gap-3 items-center">
+                      <Row className="gap-1 items-center">
+                        <BlocksIcon className="size-3 text-muted-foreground" />
+                        <Text as="span" size="xs" color="muted">
+                          {recipe.nodeCount === 1 ? "1 node" : `${recipe.nodeCount} nodes`}
+                        </Text>
+                      </Row>
+                      <Row className="gap-1 items-center">
+                        <ClockIcon className="size-3 text-muted-foreground" />
+                        <Text as="span" size="xs" color="muted">
+                          {formatTimeAgo(recipe.updatedAt)}
+                        </Text>
+                      </Row>
+                    </Row>
+                    {recipe.nodeTypes.length > 0 && (
+                      <RecipeCardTags tags={recipe.nodeTypes} limit={3} />
                     )}
-                    <Text as="span" size="xs" color="muted">
-                      {recipe.syncedAt ? formatTimeAgo(recipe.syncedAt) : "Not synced"}
-                    </Text>
-                  </Row>
-                  <Row className="gap-1 items-center">
-                    <ClockIcon className="size-3 text-muted-foreground" />
-                    <Text as="span" size="xs" color="muted">
-                      {formatTimeAgo(recipe.updatedAt)}
-                    </Text>
-                  </Row>
-                  <Row className="gap-1 items-center">
-                    <BlocksIcon className="size-3 text-muted-foreground" />
-                    <Text as="span" size="xs" color="muted">
-                      {recipe.nodeCount === 1 ? "1 node" : `${recipe.nodeCount} nodes`}
-                    </Text>
-                  </Row>
-                </Row>
-                {recipe.nodeTypes.length > 0 && (
-                  <RecipeCardTags tags={recipe.nodeTypes} limit={3} />
-                )}
-              </Stack>
-            </RecipeCard>
-            <Stack className="gap-2">
-              <RecipeInfoButton recipeId={recipe.id} recipeName={recipe.name} />
-              <DeleteRecipeButton recipeId={recipe.id} recipeName={recipe.name} />
-            </Stack>
-          </Row>
-        ))}
-      </BouncyStagger>
+                  </RecipeCardContent>
+                </RecipeCard>
+              </ScaleIn>
+            </GridItem>
+          ))}
+        </Grid>
+      </Stagger>
     </>
   );
 }

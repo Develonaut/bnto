@@ -74,6 +74,7 @@ export {
 export type { StatusBannerProps, StatusBannerVariant } from "./feedback/StatusBanner";
 
 /* Surface */
+export { CardActionArea } from "./surface/CardActionArea";
 export {
   Card,
   CardHeader,
