@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import { core } from "@bnto/core";
 import {
   Button,
@@ -36,6 +36,7 @@ interface RecipeCardMenuProps {
  * `<CardActionArea>` to block propagation from the trigger.
  */
 export function RecipeCardMenu({ recipeId, recipeName }: RecipeCardMenuProps) {
+  const nameInputId = useId();
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [name, setName] = useState(recipeName);
@@ -103,9 +104,9 @@ export function RecipeCardMenu({ recipeId, recipeName }: RecipeCardMenuProps) {
           <form onSubmit={handleSave}>
             <DialogBody>
               <fieldset className="space-y-1.5">
-                <Label htmlFor="recipe-name">Name</Label>
+                <Label htmlFor={nameInputId}>Name</Label>
                 <Input
-                  id="recipe-name"
+                  id={nameInputId}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Recipe name"
