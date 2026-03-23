@@ -1,5 +1,6 @@
 "use client";
 
+import { Surface } from "@bnto/ui";
 import { NodeTreeItem } from "./NodeTreeItem";
 import type { NodeListEntry } from "../../helpers/buildNodeListTree";
 
@@ -24,10 +25,7 @@ function NodeTreeGroup({ entry, selectedNodeId, expandedContainerIds }: NodeTree
   const showChildren = isExpanded && children.length > 0;
 
   return (
-    <div
-      className="rounded-lg bg-muted p-3 pl-4 pt-4"
-      style={{ outline: "2px dashed var(--surface-wall)", outlineOffset: "-3px" }}
-    >
+    <Surface variant="muted" elevation="none" dashed className="p-3 pl-4 pt-4">
       <NodeTreeItem
         nodeId={node.id}
         label={config.displayName ?? config.name}
@@ -37,7 +35,7 @@ function NodeTreeGroup({ entry, selectedNodeId, expandedContainerIds }: NodeTree
         isIoNode={false}
       />
       {showChildren && (
-        <div className="ml-3 flex flex-col gap-2 pt-2">
+        <div className="ml-3 flex flex-col gap-2 pt-2" role="group">
           {children.map((child) =>
             child.isContainer ? (
               <NodeTreeGroup
@@ -60,7 +58,7 @@ function NodeTreeGroup({ entry, selectedNodeId, expandedContainerIds }: NodeTree
           )}
         </div>
       )}
-    </div>
+    </Surface>
   );
 }
 

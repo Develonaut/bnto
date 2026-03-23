@@ -29,7 +29,7 @@ DONE   → complete
 
 ## Phase 1: Archive RF + Shell
 
-### Status: DOING
+### Status: DONE
 
 Archive RF-specific components. Stand up the CmdEditor shell with a static tree and stub command input.
 
@@ -38,7 +38,7 @@ Archive RF-specific components. Stand up the CmdEditor shell with a static tree 
 - [DONE] 1.3 — NodeTree + NodeTreeItem + NodeTreeGroup components
 - [DONE] 1.4 — Static command input stub (cmdk shell, no logic)
 - [DONE] 1.5 — Wire into editor page (replace EditorCanvas, update imports)
-- [TODO] 1.6 — Code review gate (x3)
+- [DONE] 1.6 — Code review gate (x3)
 
 ---
 
