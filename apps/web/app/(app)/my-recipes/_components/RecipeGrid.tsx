@@ -144,24 +144,27 @@ export function RecipeGrid({ category, sort }: RecipeGridProps) {
                   </RecipeCardHeader>
                   <RecipeCardContent>
                     <RecipeCardTitle>{recipe.name}</RecipeCardTitle>
-                    <Row className="gap-3 items-center">
+                    <Row wrap className="gap-3 items-center">
                       <Row className="gap-1 items-center">
-                        <BlocksIcon className="size-3 text-muted-foreground" />
+                        <BlocksIcon className="size-3 text-muted-foreground" aria-hidden="true" />
                         <Text as="span" size="xs" color="muted">
                           {recipe.nodeCount === 1 ? "1 node" : `${recipe.nodeCount} nodes`}
                         </Text>
                       </Row>
                       <Row className="gap-1 items-center">
-                        <ClockIcon className="size-3 text-muted-foreground" />
+                        <ClockIcon className="size-3 text-muted-foreground" aria-hidden="true" />
                         <Text as="span" size="xs" color="muted">
                           {formatTimeAgo(recipe.updatedAt)}
                         </Text>
                       </Row>
                       <Row className="gap-1 items-center">
                         {recipe.syncedAt !== null ? (
-                          <CloudIcon className="size-3 text-muted-foreground" />
+                          <CloudIcon className="size-3 text-muted-foreground" aria-hidden="true" />
                         ) : (
-                          <CloudOffIcon className="size-3 text-muted-foreground" />
+                          <CloudOffIcon
+                            className="size-3 text-muted-foreground"
+                            aria-hidden="true"
+                          />
                         )}
                         <Text as="span" size="xs" color="muted">
                           {recipe.syncedAt !== null ? "Synced" : "Local"}
