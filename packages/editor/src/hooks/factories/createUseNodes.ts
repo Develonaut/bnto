@@ -20,6 +20,7 @@ function createUseNodes(storeApi: StoreApi<EditorStore>) {
     const selectedNodeId = useStore(storeApi, (s) => s.selectedNodeId);
     const insertAfterNodeId = useStore(storeApi, (s) => s.insertAfterNodeId);
     const insertIntoContainerId = useStore(storeApi, (s) => s.insertIntoContainerId);
+    const expandedContainerIds = useStore(storeApi, (s) => s.expandedContainerIds);
 
     return {
       nodes,
@@ -28,6 +29,7 @@ function createUseNodes(storeApi: StoreApi<EditorStore>) {
       selectedNodeId,
       insertAfterNodeId,
       insertIntoContainerId,
+      expandedContainerIds,
     };
   };
 }

@@ -5,31 +5,54 @@ import { Text, Input, SearchIcon } from "@bnto/ui";
 import { useEditor } from "../../context";
 import { CATEGORY_VARIANT } from "../../adapters/categoryVariant";
 import type { CompartmentVariant } from "../../adapters/types";
+import { buildNodeListTree } from "../../helpers/buildNodeListTree";
+import type { NodeListEntry } from "../../helpers/buildNodeListTree";
 import { NodeListItem } from "./NodeListItem";
+import { NodeListGroup } from "./NodeListGroup";
+import { NodeListPlaceholder } from "./NodeListPlaceholder";
 
 /**
- * NodeListTab — vertical list of nodes currently on the canvas.
+ * NodeListTab — hierarchical list of nodes currently on the canvas.
  *
- * Reads from the editor store (not the display pipeline) so synthetic
- * nodes (placeholder, containerGroup, addDivider) are excluded.
- * Click selects the node on the canvas + opens config panel.
- * Search input at the bottom filters by node name.
+ * Preserves the exact array order from the store (1:1 with the canvas).
+ * Container nodes render with a dashed border wrapping their children,
+ * matching the visual language of groups on the canvas.
+ * Search filters recursively — matching children reveal their parent.
  */
 function NodeListTab() {
   const editor = useEditor();
-  const { nodes, configs, selectedNodeId } = editor.nodes.useNodes();
+  const { nodes, configs, selectedNodeId, expandedContainerIds } = editor.nodes.useNodes();
   const [query, setQuery] = useState("");
 
-  const filteredNodes = useMemo(() => {
+  const tree = useMemo(() => buildNodeListTree(nodes, configs), [nodes, configs]);
+
+  /** Recursively filter entries — keep parent if any child matches. */
+  const filterEntries = useCallback((entries: NodeListEntry[], q: string): NodeListEntry[] => {
+    return entries.reduce<NodeListEntry[]>((acc, entry) => {
+      const label = entry.config.displayName ?? entry.config.name;
+      const selfMatches = label.toLowerCase().includes(q);
+      const filteredChildren = filterEntries(entry.children, q);
+
+      if (selfMatches || filteredChildren.length > 0) {
+        acc.push({
+          ...entry,
+          children: selfMatches ? entry.children : filteredChildren,
+        });
+      }
+      return acc;
+    }, []);
+  }, []);
+
+  const { entries, hasResults } = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return nodes;
-    return nodes.filter((node) => {
-      const config = configs[node.id];
-      if (!config) return false;
-      const label = config.displayName ?? config.name;
-      return label.toLowerCase().includes(q);
-    });
-  }, [nodes, configs, query]);
+    if (!q) {
+      return { entries: tree.entries, hasResults: tree.entries.length > 0 };
+    }
+    const filtered = filterEntries(tree.entries, q);
+    return { entries: filtered, hasResults: filtered.length > 0 };
+  }, [tree, query, filterEntries]);
+
+  const isSearching = query.trim().length > 0;
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -45,38 +68,54 @@ function NodeListTab() {
     [editor],
   );
 
+  const noNodes = nodes.length === 0;
+
   return (
     <div className="flex h-full flex-col">
       <div className="-mr-4 min-h-0 flex-1 overflow-y-auto pr-4">
-        {filteredNodes.length === 0 && nodes.length === 0 ? (
+        {noNodes ? (
           <Text size="xs" color="muted" className="px-4 py-6 text-center">
             No nodes yet. Add one from the Palette tab.
           </Text>
-        ) : filteredNodes.length === 0 ? (
+        ) : !hasResults ? (
           <Text size="xs" color="muted" className="px-4 py-6 text-center">
             No matching nodes.
           </Text>
         ) : (
           <div className="flex flex-col gap-0.5 p-2">
-            {filteredNodes.map((node) => {
-              const config = configs[node.id];
-              if (!config) return null;
-              const variant: CompartmentVariant =
-                node.data.variant ?? (CATEGORY_VARIANT["muted"] as CompartmentVariant) ?? "muted";
+            {entries.map((entry, i) => {
+              const showPlaceholder = !isSearching && tree.placeholderIndex === i;
               return (
-                <NodeListItem
-                  key={node.id}
-                  nodeId={node.id}
-                  label={config.displayName ?? config.name}
-                  icon={node.data.icon}
-                  variant={variant}
-                  selected={selectedNodeId === node.id}
-                  isIoNode={node.data.isIoNode ?? false}
-                  onSelect={handleSelect}
-                  onRemove={handleRemove}
-                />
+                <div key={entry.node.id} className="flex flex-col gap-0.5">
+                  {showPlaceholder && <NodeListPlaceholder />}
+                  {entry.isContainer ? (
+                    <NodeListGroup
+                      entry={entry}
+                      selectedNodeId={selectedNodeId}
+                      expandedContainerIds={expandedContainerIds}
+                      onSelect={handleSelect}
+                      onRemove={handleRemove}
+                    />
+                  ) : (
+                    <NodeListItem
+                      nodeId={entry.node.id}
+                      label={entry.config.displayName ?? entry.config.name}
+                      icon={entry.node.data.icon}
+                      variant={
+                        entry.node.data.variant ??
+                        (CATEGORY_VARIANT["muted"] as CompartmentVariant) ??
+                        "muted"
+                      }
+                      selected={selectedNodeId === entry.node.id}
+                      isIoNode={entry.node.data.isIoNode ?? false}
+                      onSelect={handleSelect}
+                      onRemove={handleRemove}
+                    />
+                  )}
+                </div>
               );
             })}
+            {!isSearching && tree.placeholderIndex === entries.length && <NodeListPlaceholder />}
           </div>
         )}
       </div>
