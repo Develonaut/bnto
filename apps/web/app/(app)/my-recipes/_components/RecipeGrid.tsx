@@ -8,13 +8,18 @@ import {
   Button,
   CardActionArea,
   ClockIcon,
+  CloudIcon,
+  CloudOffIcon,
   EmptyState,
   EmptyStateIcon,
   EmptyStateTitle,
   EmptyStateDescription,
+  FileIcon,
   FolderOpenIcon,
+  GlobeIcon,
   Grid,
   GridItem,
+  ImageIcon,
   PlusIcon,
   RecipeCard,
   RecipeCardContent,
@@ -24,9 +29,11 @@ import {
   RecipeCardTitle,
   Row,
   ScaleIn,
+  SheetIcon,
   Stagger,
   Text,
 } from "@bnto/ui";
+import type { LucideIcon } from "@bnto/ui";
 import { editorUrl } from "@/lib/routes";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import { LocalRecipeUpsell } from "./LocalRecipeUpsell";
@@ -38,6 +45,23 @@ import type { RecipeCategory, RecipeSortOrder } from "./RecipeFilterMenu";
 const LABEL_TO_CATEGORY: Record<string, string> = {};
 for (const info of Object.values(NODE_TYPE_INFO)) {
   LABEL_TO_CATEGORY[info.label] = info.category;
+}
+
+/** Map category → card icon. Fallback to BlocksIcon (RecipeCardIcon default). */
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  image: ImageIcon,
+  file: FileIcon,
+  spreadsheet: SheetIcon,
+  network: GlobeIcon,
+};
+
+/** Find the dominant domain category icon from a recipe's node type labels. */
+function getCategoryIcon(nodeTypes: string[]): LucideIcon | undefined {
+  for (const label of nodeTypes) {
+    const icon = CATEGORY_ICON[LABEL_TO_CATEGORY[label]];
+    if (icon) return icon;
+  }
+  return undefined;
 }
 
 interface RecipeGridProps {
@@ -113,7 +137,7 @@ export function RecipeGrid({ category, sort }: RecipeGridProps) {
               >
                 <RecipeCard href={editorUrl(recipe.id)}>
                   <RecipeCardHeader>
-                    <RecipeCardIcon />
+                    <RecipeCardIcon icon={getCategoryIcon(recipe.nodeTypes)} />
                     <CardActionArea>
                       <RecipeCardMenu recipeId={recipe.id} recipeName={recipe.name} />
                     </CardActionArea>
@@ -131,6 +155,16 @@ export function RecipeGrid({ category, sort }: RecipeGridProps) {
                         <ClockIcon className="size-3 text-muted-foreground" />
                         <Text as="span" size="xs" color="muted">
                           {formatTimeAgo(recipe.updatedAt)}
+                        </Text>
+                      </Row>
+                      <Row className="gap-1 items-center">
+                        {recipe.syncedAt !== null ? (
+                          <CloudIcon className="size-3 text-muted-foreground" />
+                        ) : (
+                          <CloudOffIcon className="size-3 text-muted-foreground" />
+                        )}
+                        <Text as="span" size="xs" color="muted">
+                          {recipe.syncedAt !== null ? "Synced" : "Local"}
                         </Text>
                       </Row>
                     </Row>
