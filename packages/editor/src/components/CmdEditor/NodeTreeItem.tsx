@@ -1,6 +1,6 @@
 "use client";
 
-import { Text, IconBadge } from "@bnto/ui";
+import { Text, IconBadge, Surface } from "@bnto/ui";
 import { ICON_COMPONENTS } from "../../adapters/nodeIcons";
 import type { CompartmentVariant } from "../../adapters/types";
 
@@ -25,26 +25,29 @@ function NodeTreeItem({ nodeId, label, icon, variant, selected, isIoNode }: Node
   const Icon = icon ? ICON_COMPONENTS[icon] : undefined;
 
   return (
-    <div
-      data-active={selected}
-      className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 data-[active=true]:bg-muted"
+    <Surface
+      elevation={isIoNode ? "none" : selected ? "lg" : "md"}
+      variant={isIoNode ? "muted" : "default"}
+      className="p-1"
       data-testid={`node-tree-item-${nodeId}`}
       aria-current={selected ? "true" : undefined}
     >
-      {Icon && (
-        <IconBadge variant={variant} size="sm" className="size-7 shrink-0">
-          <Icon className="size-3.5" />
-        </IconBadge>
-      )}
-      <Text
-        size="sm"
-        weight={selected ? "medium" : "normal"}
-        color={isIoNode ? "muted" : "default"}
-        className="min-w-0 flex-1 truncate"
-      >
-        {label}
-      </Text>
-    </div>
+      <div className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5">
+        {Icon && (
+          <IconBadge variant={variant} size="sm" className="size-7 shrink-0">
+            <Icon className="size-3.5" />
+          </IconBadge>
+        )}
+        <Text
+          size="sm"
+          weight={selected ? "medium" : "normal"}
+          color={isIoNode ? "muted" : "default"}
+          className="min-w-0 flex-1 truncate"
+        >
+          {label}
+        </Text>
+      </div>
+    </Surface>
   );
 }
 

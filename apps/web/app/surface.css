@@ -109,16 +109,14 @@
 
 .surface-dashed {
   border-color: transparent;
-  outline: 3px dashed var(--border);
-  outline-offset: -4px;
+  outline: 2px dashed var(--surface-wall);
+  outline-offset: -3px;
 }
 
 /* ── Reset ──────────────────────────────────────────────────────── */
 
 .elevation-none {
-  --elevation: 0px;
-  --elevation-wall-mag: 0;
-  --elevation-shadow-mag: 0;
+  transform: none;
 }
 .elevation-none::before,
 .elevation-none::after {

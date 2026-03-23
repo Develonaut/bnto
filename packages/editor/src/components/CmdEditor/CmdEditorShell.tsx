@@ -29,10 +29,10 @@ function CmdEditorShell({ children, commandSlot }: CmdEditorShellProps) {
           variant="transparent"
           elevation="none"
           dashed
-          className="max-h-[60vh] p-3"
+          className="max-h-[60vh] p-4"
           data-testid="cmd-editor-node-tree"
         >
-          <div className="h-full overflow-y-auto overflow-x-hidden">{children}</div>
+          <div className="h-full overflow-y-auto overflow-x-hidden pb-1 pl-1 pr-1">{children}</div>
         </Surface>
         <Surface className="shrink-0 p-2" data-testid="cmd-editor-command-slot">
           {commandSlot}

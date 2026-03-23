@@ -3,8 +3,6 @@
 import { useMemo } from "react";
 import { Text, PlusIcon, Surface } from "@bnto/ui";
 import { useEditor } from "../../context";
-import { CATEGORY_VARIANT } from "../../adapters/categoryVariant";
-import type { CompartmentVariant } from "../../adapters/types";
 import { buildNodeListTree } from "../../helpers/buildNodeListTree";
 import { NodeTreeItem } from "./NodeTreeItem";
 import { NodeTreeGroup } from "./NodeTreeGroup";
@@ -34,11 +32,11 @@ function NodeTree() {
   }
 
   return (
-    <div className="flex flex-col gap-0.5" role="tree" aria-label="Recipe nodes">
+    <div className="flex flex-col gap-2" role="tree" aria-label="Recipe nodes">
       {tree.entries.map((entry, i) => {
         const showPlaceholder = tree.placeholderIndex === i;
         return (
-          <div key={entry.node.id} className="flex flex-col gap-0.5">
+          <div key={entry.node.id} className="flex flex-col gap-2">
             {showPlaceholder && <NodeTreePlaceholder />}
             {entry.isContainer ? (
               <NodeTreeGroup
@@ -51,11 +49,7 @@ function NodeTree() {
                 nodeId={entry.node.id}
                 label={entry.config.displayName ?? entry.config.name}
                 icon={entry.node.data.icon}
-                variant={
-                  entry.node.data.variant ??
-                  (CATEGORY_VARIANT["muted"] as CompartmentVariant) ??
-                  "muted"
-                }
+                variant={entry.node.data.variant ?? "muted"}
                 selected={selectedNodeId === entry.node.id}
                 isIoNode={entry.node.data.isIoNode ?? false}
               />
