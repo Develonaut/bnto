@@ -11,12 +11,9 @@
  *       <EditorRightToolbar />
  *     </EditorCanvas>
  *   </EditorProvider>
- *
- * The node palette opens as a dialog from the bottom toolbar's + button.
- * Right-side panels (config, run) open from the right toolbar triggers.
  */
 
-import { CanvasShell } from "./components/EditorCanvas/CanvasShell";
+import { CanvasShell } from "./components/archive/rf/EditorCanvas/CanvasShell";
 import { EditorToolbar } from "./components/EditorToolbar";
 import { EditorRightToolbar } from "./components/EditorRightToolbar";
 

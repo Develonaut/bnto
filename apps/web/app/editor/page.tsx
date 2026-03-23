@@ -1,6 +1,6 @@
 "use client";
 
-import { EditorProvider, EditorCanvas, EditorToolbar, EditorRightToolbar } from "@bnto/editor";
+import { EditorProvider, CmdEditorShell, NodeTree, CmdInput } from "@bnto/editor";
 import { Stack, Text } from "@bnto/ui";
 
 import { EditorBetaDialog } from "./_components/EditorBetaDialog";
@@ -8,11 +8,11 @@ import { EditorLoadingSkeleton } from "./_components/EditorLoadingSkeleton";
 import { useEditorRecipe } from "./_components/useEditorRecipe";
 
 /**
- * /editor — full-viewport recipe editor.
+ * /editor — full-viewport recipe editor (CmdEditor mode).
  *
- * Resolves recipe definition from search params (local store → Convex →
- * predefined catalog), then mounts the provider + canvas. loading.tsx
- * provides the Suspense boundary for useSearchParams().
+ * Resolves recipe definition from search params (local store -> Convex ->
+ * predefined catalog), then mounts the provider + CmdEditor shell.
+ * loading.tsx provides the Suspense boundary for useSearchParams().
  */
 export default function EditorPage() {
   const { definition, cloudId, isLoading, notFound } = useEditorRecipe();
@@ -31,10 +31,9 @@ export default function EditorPage() {
     <>
       <EditorBetaDialog />
       <EditorProvider definition={definition} cloudId={cloudId}>
-        <EditorCanvas>
-          <EditorToolbar />
-          <EditorRightToolbar />
-        </EditorCanvas>
+        <CmdEditorShell commandSlot={<CmdInput />}>
+          <NodeTree />
+        </CmdEditorShell>
       </EditorProvider>
     </>
   );

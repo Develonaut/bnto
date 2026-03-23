@@ -38,6 +38,7 @@ interface NodesHookResult {
   selectedNodeId: string | null;
   insertAfterNodeId: string | null;
   insertIntoContainerId: string | null;
+  expandedContainerIds: Set<string>;
 }
 
 interface DefinitionHookResult {

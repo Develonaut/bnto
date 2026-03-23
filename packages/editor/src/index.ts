@@ -62,9 +62,8 @@ export { useHistory } from "./hooks/useHistory";
 export { usePanels } from "./hooks/usePanels";
 export { useEditorShortcuts } from "./hooks/useEditorShortcuts";
 
-// --- Internal hooks (rendering pipeline) ---
+// --- Internal hooks ---
 
-export { useAutoSelect } from "./hooks/useAutoSelect";
 export { useEditorNode } from "./hooks/useEditorNode";
 export type { EditorNodeResult } from "./hooks/useEditorNode";
 export { useEditorSelection } from "./hooks/useEditorSelection";
@@ -88,19 +87,28 @@ export type {
   RunLogEntry,
 } from "./store/types";
 
-// --- Canvas ---
-
-export { Canvas } from "./components/EditorCanvas/Canvas";
-export { CompartmentNode } from "./components/nodes/CompartmentNode";
-export { IoNode } from "./components/nodes/IoNode";
-export { PlaceholderNode } from "./components/nodes/PlaceholderNode";
-
 // --- Schema-driven forms ---
 
 export { SchemaForm } from "@bnto/form";
 export type { SchemaFormProps } from "@bnto/form";
 export { SchemaField } from "@bnto/form";
 export type { SchemaFieldProps } from "@bnto/form";
+
+// --- CmdEditor ---
+
+export {
+  CmdEditorShell,
+  CmdInput,
+  NodeTree,
+  NodeTreeItem,
+  NodeTreeGroup,
+} from "./components/CmdEditor";
+export type { NodeTreeItemProps } from "./components/CmdEditor";
+
+// --- Helpers ---
+
+export { buildNodeListTree } from "./helpers/buildNodeListTree";
+export type { NodeListEntry, NodeListTree } from "./helpers/buildNodeListTree";
 
 // --- Dialogs ---
 
@@ -113,6 +121,31 @@ export { HelpDialog } from "./components/HelpDialog";
 
 export { InputRenderer } from "./components/InputRenderer";
 export { OutputRenderer } from "./components/OutputRenderer";
+
+// --- Adapters ---
+
+export { definitionToGraph } from "./adapters/definitionToGraph";
+export { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
+export { createCompartmentNode } from "./adapters/createCompartmentNode";
+export {
+  SLOTS,
+  CELL,
+  GAP_X,
+  GAP_Y,
+  STRIDE,
+  ROW_OFFSET,
+  MAX_CONTAINER_DEPTH,
+} from "./adapters/bentoSlots";
+export { ICON_COMPONENTS } from "./adapters/nodeIcons";
+export { CATEGORY_VARIANT } from "./adapters/categoryVariant";
+export type {
+  BentoNode,
+  BentoLayout,
+  CompartmentNodeData,
+  CompartmentVariant,
+  NodeConfig,
+  NodeConfigs,
+} from "./adapters/types";
 
 // --- Archive: Conveyor ---
 
@@ -133,28 +166,10 @@ export type {
   PieceType,
 } from "./components/archive/conveyor";
 
-// --- Adapters ---
+// --- Archive: RF Canvas ---
 
-export { definitionToGraph } from "./adapters/definitionToGraph";
-export { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
-export { createCompartmentNode } from "./adapters/createCompartmentNode";
-export {
-  SLOTS,
-  CELL,
-  GAP_X,
-  GAP_Y,
-  STRIDE,
-  ROW_OFFSET,
-  MAX_CONTAINER_DEPTH,
-} from "./adapters/bentoSlots";
-export { layoutNodes } from "./adapters/layoutNodes";
-export { ICON_COMPONENTS } from "./adapters/nodeIcons";
-export { CATEGORY_VARIANT } from "./adapters/categoryVariant";
-export type {
-  BentoNode,
-  BentoLayout,
-  CompartmentNodeData,
-  CompartmentVariant,
-  NodeConfig,
-  NodeConfigs,
-} from "./adapters/types";
+export { Canvas } from "./components/archive/rf/EditorCanvas/Canvas";
+export { CompartmentNode } from "./components/archive/rf/nodes/CompartmentNode";
+export { IoNode } from "./components/archive/rf/nodes/IoNode";
+export { PlaceholderNode } from "./components/archive/rf/nodes/PlaceholderNode";
+export { layoutNodes } from "./adapters/archive/rf/layoutNodes";
