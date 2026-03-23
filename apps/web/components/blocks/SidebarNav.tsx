@@ -112,7 +112,7 @@ export function SidebarNav() {
         ))}
         <Row className="gap-1 mt-1">
           <Button
-            variant="ghost"
+            variant="secondary"
             href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
@@ -122,7 +122,7 @@ export function SidebarNav() {
             GitHub
           </Button>
           <Button
-            variant="ghost"
+            variant="warning"
             href={BUYMEACOFFEE_URL}
             target="_blank"
             rel="noopener noreferrer"
