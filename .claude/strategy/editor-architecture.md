@@ -1,28 +1,29 @@
 # Editor Architecture
 
 **Last Updated:** March 2026
-**Status:** Architecture defined — informing Sprint 4 + 4B implementation
+**Status:** Architecture defined — CmdEditor is the default editor (MVP)
 
 ---
 
 ## What This Is
 
-The recipe editor lets users create, customize, and export `.bnto.json` recipes. There are **two editors** — a visual bento box grid and a code editor — but they share the same foundation. Users can switch between them on the fly. Both are free (see [pricing-model.md](pricing-model.md)).
+The recipe editor lets users create, customize, and export `.bnto.json` recipes. There are **three editor modes** — a command-based editor (default), a visual bento box grid (archived), and a code editor (deep backlog) — all sharing the same foundation. All are free (see [pricing-model.md](pricing-model.md)).
 
-This document defines the **shared editor layer** — the architecture that makes both editors work from the same state, the package boundaries, and the layering rules.
+This document defines the **shared editor layer** — the architecture that makes all editors work from the same state, the package boundaries, and the layering rules.
 
 ---
 
-## Two Editors, One Foundation
+## Three Editors, One Foundation
 
-| Editor                 | What It Is                                                           | Who It's For                  | Technology                   |
-| ---------------------- | -------------------------------------------------------------------- | ----------------------------- | ---------------------------- |
-| **Bento Box** (visual) | Spatial grid of compartments — add, remove, arrange, configure nodes | Visual thinkers, casual users | React Flow (`@xyflow/react`) |
-| **Code Editor** (JSON) | Schema-aware `.bnto.json` text editor with slash commands            | Power users, developers       | CodeMirror 6                 |
+| Editor                           | What It Is                                                    | Who It's For    | Technology              | Status                            |
+| -------------------------------- | ------------------------------------------------------------- | --------------- | ----------------------- | --------------------------------- |
+| **CmdEditor** (default)          | Node tree + command input — keyboard-first, TUI-inspired      | All users (MVP) | cmdk + hand-rolled tree | Active — default editor           |
+| **Bento Box** (visual, archived) | Spatial grid of compartments — drag, arrange, configure nodes | Visual thinkers | React Flow              | Archived — future "Advanced View" |
+| **Code Editor** (JSON)           | Schema-aware `.bnto.json` text editor with slash commands     | Power users     | CodeMirror 6            | Deep backlog                      |
 
-Both editors are **dumb views of the same store.** Switching between them is instant — render a different component, same state. No data migration, no serialization delay, no loss.
+All editors are **dumb views of the same store.** The four-layer architecture (pure functions → store → hooks → components) applies to every editor mode. Switching between them is instant — render a different component, same state.
 
-The visual editor shows a bento box where each compartment is a node. The code editor shows the same recipe as formatted JSON. Edit in either, see the change in both.
+See [cmd-editor.md](cmd-editor.md) for the CmdEditor's full design — command registry, keyboard navigation, inline param editing, and composability strategy.
 
 ---
 
@@ -42,9 +43,9 @@ Thin wrapper hooks (useAddNode, useRemoveNode, useUpdateParams)
 Consumer hooks (useEditorActions, useEditorUndoRedo, useEditorExport)
          ↓
 Dumb components (render only — zero business logic)
-    ↓                    ↓
-BentoCanvas          CodeEditor
-(visual grid)        (JSON text)
+    ↓              ↓                    ↓
+CmdEditor      BentoCanvas          CodeEditor
+(tree+cmd)     (visual grid)        (JSON text)
 ```
 
 ### Layer 1: Pure Functions (`@bnto/nodes`)

@@ -15,8 +15,9 @@
 | Data fetching / hooks          | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md) |
 | Architecture decisions         | [rules/architecture.md](.claude/rules/architecture.md)                  |
 | Editor architecture            | [editor-architecture.md](.claude/strategy/editor-architecture.md)       |
+| CmdEditor (default editor)     | [cmd-editor.md](.claude/strategy/cmd-editor.md)                         |
 | Editor API layer (Sprint 5D)   | [editor-api.md](.claude/strategy/editor-api.md)                         |
-| Visual editor                  | [visual-editor.md](.claude/strategy/visual-editor.md)                   |
+| Visual editor (archived)       | [visual-editor.md](.claude/strategy/visual-editor.md)                   |
 | Input/output nodes             | [io-nodes.md](.claude/strategy/io-nodes.md)                             |
 | Node system responsibilities   | [node-responsibilities.md](.claude/rules/node-responsibilities.md)      |
 | Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)             |
