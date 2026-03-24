@@ -187,6 +187,9 @@ export {
   PopoverContent,
   PopoverContentUnstyled,
 } from "./overlay/Popover";
+export { PopupContent } from "./overlay/PopupContent";
+export { PopupTrigger } from "./overlay/PopupTrigger";
+export type { PopupOffset } from "./overlay/popupOffset";
 export {
   Sheet,
   SheetTrigger,

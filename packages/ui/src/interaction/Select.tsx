@@ -6,6 +6,8 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "../icons";
 import { Popup } from "../overlay/Popup";
 import { PopupTriggerButton } from "./PopupTriggerButton";
+import { POPUP_OFFSET_PX, type PopupOffset } from "../overlay/popupOffset";
+import type { SurfaceElevation } from "../surface/Surface";
 
 import { cn } from "../utils/cn";
 
@@ -44,22 +46,36 @@ export function SelectContent({
   children,
   position = "popper",
   align = "center",
+  offset = "md",
+  elevation = "lg",
+  boundary,
+  boundaryPadding = 16,
   ...props
-}: ComponentProps<typeof SelectPrimitive.Content>) {
+}: ComponentProps<typeof SelectPrimitive.Content> & {
+  /** Offset from trigger edge. Default "md" (16px). */
+  offset?: PopupOffset;
+  /** Card elevation. Default "lg". */
+  elevation?: SurfaceElevation;
+  /** Collision boundary element. */
+  boundary?: Element | null;
+  /** Padding from collision boundary. Default 16. */
+  boundaryPadding?: number;
+}) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         data-slot="select-content"
-        className={cn(
-          "z-dropdown max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) outline-hidden",
-          position === "popper" &&
-            "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
-        )}
+        className="z-dropdown max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) outline-hidden"
         position={position}
         align={align}
+        sideOffset={POPUP_OFFSET_PX[offset]}
         {...props}
       >
-        <Popup originStyle="var(--radix-select-content-transform-origin)" className={className}>
+        <Popup
+          originStyle="var(--radix-select-content-transform-origin)"
+          elevation={elevation}
+          className={className}
+        >
           <div className="overflow-x-hidden overflow-y-auto">
             <SelectScrollUpButton />
             <SelectPrimitive.Viewport

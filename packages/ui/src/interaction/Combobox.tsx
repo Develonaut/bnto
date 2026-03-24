@@ -5,8 +5,9 @@ import { useState, useCallback, type ComponentProps } from "react";
 import { CheckIcon, ChevronsUpDownIcon, XIcon } from "../icons";
 import { cn } from "../utils/cn";
 import { Badge } from "../typography/Badge";
-import { PopupTriggerButton } from "./PopupTriggerButton";
-import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "../overlay/Popover";
+import { Popover } from "../overlay/Popover";
+import { PopupTrigger } from "../overlay/PopupTrigger";
+import { PopupContent } from "../overlay/PopupContent";
 import {
   Command,
   CommandEmpty,
@@ -110,53 +111,50 @@ function Combobox({
   return (
     <div data-slot="combobox" className={className} {...props}>
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverAnchor className="inline-flex w-full">
-          <PopoverTrigger asChild>
-            <PopupTriggerButton
-              open={open}
-              role="combobox"
-              aria-expanded={open}
-              disabled={disabled}
-              className="w-full justify-between font-normal"
-            >
-              <div className="flex flex-1 flex-wrap items-center gap-1 overflow-hidden">
-                {value.length > 0 ? (
-                  <>
-                    {value.slice(0, maxVisible).map((v) => {
-                      const label = options.find((o) => o.value === v)?.label ?? v;
-                      return (
-                        <Badge key={v} variant="secondary" size="sm">
-                          {label}
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            data-value={v}
-                            className="ml-0.5 cursor-pointer rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            onMouseDown={handleRemoveMouseDown}
-                            onClick={handleRemoveClick}
-                            onKeyDown={handleRemoveKeyDown}
-                            aria-label={`Remove ${label}`}
-                          >
-                            <XIcon className="size-3 text-muted-foreground hover:text-foreground" />
-                          </span>
-                        </Badge>
-                      );
-                    })}
-                    {value.length > maxVisible && (
-                      <span className="text-xs text-muted-foreground">
-                        +{value.length - maxVisible} more
+        <PopupTrigger
+          open={open}
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled}
+          anchorClassName="w-full"
+          className="w-full justify-between font-normal"
+        >
+          <div className="flex flex-1 flex-wrap items-center gap-1 overflow-hidden">
+            {value.length > 0 ? (
+              <>
+                {value.slice(0, maxVisible).map((v) => {
+                  const label = options.find((o) => o.value === v)?.label ?? v;
+                  return (
+                    <Badge key={v} variant="secondary" size="sm">
+                      {label}
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        data-value={v}
+                        className="ml-0.5 cursor-pointer rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        onMouseDown={handleRemoveMouseDown}
+                        onClick={handleRemoveClick}
+                        onKeyDown={handleRemoveKeyDown}
+                        aria-label={`Remove ${label}`}
+                      >
+                        <XIcon className="size-3 text-muted-foreground hover:text-foreground" />
                       </span>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-muted-foreground">{placeholder}</span>
+                    </Badge>
+                  );
+                })}
+                {value.length > maxVisible && (
+                  <span className="text-xs text-muted-foreground">
+                    +{value.length - maxVisible} more
+                  </span>
                 )}
-              </div>
-              <ChevronsUpDownIcon className="size-4 shrink-0 opacity-50" />
-            </PopupTriggerButton>
-          </PopoverTrigger>
-        </PopoverAnchor>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+              </>
+            ) : (
+              <span className="text-muted-foreground">{placeholder}</span>
+            )}
+          </div>
+          <ChevronsUpDownIcon className="size-4 shrink-0 opacity-50" />
+        </PopupTrigger>
+        <PopupContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command>
             <CommandInput placeholder={searchPlaceholder} />
             <CommandList>
@@ -180,7 +178,7 @@ function Combobox({
               </CommandGroup>
             </CommandList>
           </Command>
-        </PopoverContent>
+        </PopupContent>
       </Popover>
     </div>
   );
