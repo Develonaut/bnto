@@ -70,41 +70,29 @@ function VariantGrid({ state }: { state: ButtonState }) {
   const disabled = state === "disabled";
   const dormant = state === "dormant";
 
+  const shared = { hovered, pressed, disabled, dormant } as const;
+
   return (
     <Stack gap="md">
       {VARIANTS.map(({ value, iconLabel }) => {
         const iconEntry = iconLabel ? ICON_LABELS[iconLabel] : null;
         return (
           <Row key={value} className="items-center gap-3">
-            <Button
-              variant={value}
-              size="md"
-              hovered={hovered}
-              pressed={pressed}
-              disabled={disabled}
-              dormant={dormant}
-            >
+            {/* sm */}
+            <Button variant={value} size="sm" {...shared}>
               Label
             </Button>
-            <Button
-              variant={value}
-              size="icon"
-              hovered={hovered}
-              pressed={pressed}
-              disabled={disabled}
-              dormant={dormant}
-            >
+            <Button variant={value} size="sm" icon={<ZapIcon />} {...shared} />
+
+            {/* md (default) */}
+            <Button variant={value} {...shared}>
+              Label
+            </Button>
+            <Button variant={value} size="icon" {...shared}>
               <ZapIcon />
             </Button>
             {iconEntry && (
-              <Button
-                variant={value}
-                size="md"
-                hovered={hovered}
-                pressed={pressed}
-                disabled={disabled}
-                dormant={dormant}
-              >
+              <Button variant={value} {...shared}>
                 {iconEntry.trailing ? (
                   <>
                     {iconLabel} {iconEntry.icon}
@@ -176,13 +164,7 @@ function ToggleDemo() {
         >
           <StarIcon />
         </Button>
-        <Button
-          variant="success"
-          size="md"
-          toggle
-          pressed={pinned}
-          onClick={() => setPinned(!pinned)}
-        >
+        <Button variant="success" toggle pressed={pinned} onClick={() => setPinned(!pinned)}>
           <PinIcon /> {pinned ? "Pinned" : "Pin"}
         </Button>
       </Row>
@@ -222,7 +204,6 @@ export function ButtonShowcase() {
           <Button
             key={value}
             variant={state === value ? "secondary" : "outline"}
-            size="md"
             onClick={() => setState(value)}
           >
             {label}

@@ -34,6 +34,17 @@
   --shadow-x: calc(var(--elevation-shadow-mag) * sin(var(--light-angle)) * 1px);
   --shadow-y: calc(var(--elevation-shadow-mag) * cos(var(--light-angle)) * -1px);
 
+  /* Pixel-snapped face offsets — prevents sub-pixel blur on text.
+   * Wall magnitudes (4.47, 7.81, 11.31) × 0.5 produce fractional px values.
+   * Hover/toggle multipliers (0.66, 0.33) make it worse. round() snaps
+   * the face to the nearest pixel grid line so text stays crisp. */
+  --face-rest-x: round(nearest, calc(var(--elevation-x) * -1), 1px);
+  --face-rest-y: round(nearest, calc(var(--elevation-y) * -1), 1px);
+  --face-hover-x: round(nearest, calc(var(--elevation-x) * -0.66), 1px);
+  --face-hover-y: round(nearest, calc(var(--elevation-y) * -0.66), 1px);
+  --face-sink-x: round(nearest, calc(var(--elevation-x) * -0.33), 1px);
+  --face-sink-y: round(nearest, calc(var(--elevation-y) * -0.33), 1px);
+
   /* Face color computation — driven by color variant's --variant-bg/--variant-fg.
    * Default falls back to card surface colors for elements without a color variant.
    * [data-muted] overrides --face-bg/--face-fg with color-mix() blends. */
@@ -42,7 +53,7 @@
 
   position: relative;
   transform-style: preserve-3d;
-  transform: translate(calc(var(--elevation-x) * -1), calc(var(--elevation-y) * -1));
+  transform: translate(var(--face-rest-x), var(--face-rest-y));
   border: 1px solid var(--surface-wall);
   background-color: var(--face-bg);
   color: var(--face-fg);
@@ -59,6 +70,9 @@
   background: var(--surface-wall);
   transform: translate3d(var(--elevation-x), var(--elevation-y), -1px);
   pointer-events: none;
+  -webkit-font-smoothing: antialiased;
+  -webkit-backface-visibility: hidden; /* Chrome, Safari, Opera */
+  backface-visibility: hidden;
 }
 
 /* Ground shadow — cast in the --light-angle direction.
@@ -79,11 +93,17 @@
  * All tiers share the same light direction (--light-angle).
  * Only magnitude differs — taller buildings cast longer shadows.
  *
+ *   elevation-xs: shed     — tiny offset, subtle shadow (small icon buttons)
  *   elevation-sm: house    — small offset, short shadow
  *   elevation-md: building — medium offset (current default)
  *   elevation-lg: tower    — large offset, long shadow
  * ────────────────────────────────────────────────────────────── */
 
+.elevation-xs {
+  --elevation: 2px;
+  --elevation-wall-mag: 2.24;
+  --elevation-shadow-mag: 4;
+}
 .elevation-sm {
   --elevation: 4px;
   --elevation-wall-mag: 4.47;
@@ -316,21 +336,24 @@
 .pressable:hover,
 .pressable:focus-visible,
 .pressable[data-hover],
-.pressable[data-state="open"] {
-  transform: translate(calc(var(--elevation-x) * -0.66), calc(var(--elevation-y) * -0.66));
+.pressable[data-state="open"],
+.pressable:has([data-state="open"]) {
+  transform: translate(var(--face-hover-x), var(--face-hover-y));
 }
 
 .pressable:hover::before,
 .pressable:focus-visible::before,
 .pressable[data-hover]::before,
-.pressable[data-state="open"]::before {
+.pressable[data-state="open"]::before,
+.pressable:has([data-state="open"])::before {
   transform: translate3d(calc(var(--elevation-x) * 0.66), calc(var(--elevation-y) * 0.66), -1px);
 }
 
 .pressable:hover::after,
 .pressable:focus-visible::after,
 .pressable[data-hover]::after,
-.pressable[data-state="open"]::after {
+.pressable[data-state="open"]::after,
+.pressable:has([data-state="open"])::after {
   transform: translate3d(calc(var(--shadow-x) * 0.66), calc(var(--shadow-y) * 0.66), -2px);
 }
 
@@ -355,6 +378,25 @@
   transition-duration: var(--pressable-press-dur, 34ms);
 }
 
+/* ── CardActions override ───────────────────────────────────────
+ * CSS :active propagates up the DOM — pressing a child inside
+ * [data-card-actions] also activates the parent .pressable card.
+ * JS stopPropagation can't prevent this (it's a rendering-engine
+ * behavior, not a JS event). Override back to hover depth so the
+ * card doesn't press flush when clicking nested controls. */
+.pressable:active:has([data-card-actions]:active) {
+  transform: translate(var(--face-hover-x), var(--face-hover-y));
+}
+
+.pressable:active:has([data-card-actions]:active)::before {
+  transform: translate3d(calc(var(--elevation-x) * 0.66), calc(var(--elevation-y) * 0.66), -1px);
+}
+
+.pressable:active:has([data-card-actions]:active)::after {
+  transform: translate3d(calc(var(--shadow-x) * 0.66), calc(var(--shadow-y) * 0.66), -2px);
+  opacity: 1;
+}
+
 /* ── Toggle mode ────────────────────────────────────────────────────
  *
  * Push-button metaphor: toggled ON = depressed near ground.
@@ -371,7 +413,7 @@
 /* Toggle ON resting — same depth as normal hover (33% sunk toward ground).
  * Clearly visible as "pressed in" without needing to hover to see it. */
 .pressable[data-toggle][data-active] {
-  transform: translate(calc(var(--elevation-x) * -0.66), calc(var(--elevation-y) * -0.66));
+  transform: translate(var(--face-hover-x), var(--face-hover-y));
   transition-duration: var(--pressable-dur, 150ms);
 }
 
@@ -390,7 +432,7 @@
  * A clear extra dip to give feedback before flush on press. */
 .pressable[data-toggle][data-active]:hover,
 .pressable[data-toggle][data-active]:focus-visible {
-  transform: translate(calc(var(--elevation-x) * -0.33), calc(var(--elevation-y) * -0.33));
+  transform: translate(var(--face-sink-x), var(--face-sink-y));
 }
 
 .pressable[data-toggle][data-active]:hover::before,
@@ -477,31 +519,40 @@
 
 /* Wake — restore the element's own elevation and variant colors.
  * --elevation-x/y come from the element's elevation-* class.
- * --variant-bg/fg and --surface-wall come from its surface-* class. */
-:is(.group:hover, .group:focus-within) > .pressable[data-dormant],
-:is(.group:hover, .group:focus-within) .pressable[data-dormant] {
+ * --variant-bg/fg and --surface-wall come from its surface-* class.
+ *
+ * Also wakes when an ancestor .group contains a [data-state="open"]
+ * descendant (portaled popover trigger). When the cursor moves from
+ * the card to a portaled dropdown, :hover is lost but the trigger
+ * retains data-state="open" — this keeps the dormant button visible. */
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"])) > .pressable[data-dormant],
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"])) .pressable[data-dormant] {
   pointer-events: auto;
-  transform: translate(calc(var(--elevation-x) * -1), calc(var(--elevation-y) * -1));
+  transform: translate(var(--face-rest-x), var(--face-rest-y));
   --face-bg: var(--variant-bg, var(--card));
   --face-fg: var(--variant-fg, var(--card-foreground));
   border-color: var(--surface-wall);
 }
 
-:is(.group:hover, .group:focus-within) > .pressable[data-dormant]::before,
-:is(.group:hover, .group:focus-within) .pressable[data-dormant]::before {
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  > .pressable[data-dormant]::before,
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  .pressable[data-dormant]::before {
   transform: translate3d(var(--elevation-x), var(--elevation-y), -1px);
   background: var(--surface-wall);
 }
 
-:is(.group:hover, .group:focus-within) > .pressable[data-dormant]::after,
-:is(.group:hover, .group:focus-within) .pressable[data-dormant]::after {
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  > .pressable[data-dormant]::after,
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  .pressable[data-dormant]::after {
   opacity: 1;
 }
 
 /* Woken hover — sink like normal .pressable:hover */
 :is(.group:hover, .group:focus-within) .pressable[data-dormant]:hover,
 :is(.group:hover, .group:focus-within) .pressable[data-dormant]:focus-visible {
-  transform: translate(calc(var(--elevation-x) * -0.66), calc(var(--elevation-y) * -0.66));
+  transform: translate(var(--face-hover-x), var(--face-hover-y));
 }
 
 :is(.group:hover, .group:focus-within) .pressable[data-dormant]:hover::before,
@@ -511,6 +562,24 @@
 
 :is(.group:hover, .group:focus-within) .pressable[data-dormant]:hover::after,
 :is(.group:hover, .group:focus-within) .pressable[data-dormant]:focus-visible::after {
+  opacity: 0.66;
+}
+
+/* Woken open — dormant trigger stays at hover depth while its popup is open.
+ * When the cursor moves to a portaled dropdown, .group:hover is lost but
+ * data-state="open" persists on the trigger. Keep it sunk so it looks active. */
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  .pressable[data-dormant][data-state="open"] {
+  transform: translate(var(--face-hover-x), var(--face-hover-y));
+}
+
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  .pressable[data-dormant][data-state="open"]::before {
+  transform: translate3d(calc(var(--elevation-x) * 0.66), calc(var(--elevation-y) * 0.66), -1px);
+}
+
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  .pressable[data-dormant][data-state="open"]::after {
   opacity: 0.66;
 }
 

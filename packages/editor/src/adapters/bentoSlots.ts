@@ -13,11 +13,11 @@
 /** Cell size in pixels — room for grid zones (header, body, footer, edges). */
 const CELL = 170;
 
-/** Horizontal gap between cells in pixels — room for divider + add button. */
-const GAP_X = 36;
+/** Horizontal gap between cells in pixels — room for divider + add button (sm = 28px). */
+const GAP_X = 40;
 
-/** Vertical gap below cells in pixels — room for divider + add button. */
-const GAP_Y = 22;
+/** Vertical gap below cells in pixels — room for divider + add button (sm = 28px). */
+const GAP_Y = 40;
 
 /** Stride — one cell + horizontal gap. */
 const STRIDE = CELL + GAP_X;

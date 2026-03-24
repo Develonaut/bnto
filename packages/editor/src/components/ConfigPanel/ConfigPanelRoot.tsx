@@ -6,6 +6,7 @@ import { useEditor } from "../../context";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { SchemaForm } from "@bnto/form";
 import { EditorMenuPanel } from "../EditorMenuPanel";
+import { ConfigPanelNodeMenu } from "./ConfigPanelNodeMenu";
 
 /**
  * ConfigPanel — Menu-based config panel.
@@ -51,11 +52,22 @@ function ConfigPanelRoot() {
         </div>
       ) : (
         <>
-          <div className="flex shrink-0 items-center gap-2 px-3 pt-3 pb-2">
-            <Heading level={3} size="xs" className="min-w-0 flex-1 truncate">
-              {config.displayName || config.name || typeInfo.label}
-            </Heading>
-            <div className="flex gap-1.5">
+          <div className="shrink-0 px-3 pt-3 pb-2">
+            <div className="flex items-center gap-2">
+              <Heading level={3} size="xs" className="min-w-0 flex-1 truncate">
+                {config.displayName || config.name || typeInfo.label}
+              </Heading>
+              <ConfigPanelNodeMenu
+                nodeId={configNodeId}
+                nodeName={config.displayName || config.name || typeInfo.label}
+              />
+            </div>
+            {typeInfo.description && (
+              <Text size="xs" color="muted" className="mt-1">
+                {typeInfo.description}
+              </Text>
+            )}
+            <div className="mt-2 flex items-center gap-1.5">
               <Badge variant="secondary" className="text-xs">
                 {typeInfo.category}
               </Badge>
@@ -70,11 +82,6 @@ function ConfigPanelRoot() {
               )}
             </div>
           </div>
-          {typeInfo.description && (
-            <Text size="xs" color="muted" className="px-3 pb-1">
-              {typeInfo.description}
-            </Text>
-          )}
           <Divider />
           <div className="flex-1 overflow-y-auto">
             <div className="p-3">

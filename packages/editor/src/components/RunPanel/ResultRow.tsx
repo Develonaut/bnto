@@ -25,7 +25,7 @@ function ResultRow({ result }: { result: BrowserFileResult }) {
       action={
         <Button
           variant="outline"
-          size="sm"
+          size="icon"
           icon={<DownloadIcon />}
           onClick={handleDownload}
           aria-label={`Download ${result.filename}`}

@@ -132,8 +132,6 @@ function DevNodeControls() {
         </Text>
         <Button
           variant={simulating ? "destructive" : "outline"}
-          size="sm"
-          className="h-6 px-2 text-[10px]"
           onClick={simulating ? cancelSimulation : simulate}
         >
           {simulating ? "Stop" : "Simulate"}
@@ -161,8 +159,6 @@ function DevNodeControls() {
                 <Button
                   key={s}
                   variant={status === s ? "primary" : "outline"}
-                  size="sm"
-                  className="h-6 px-1.5 text-[10px]"
                   onClick={handleSetNodeStatus(node.id, s)}
                   data-testid={`node-status-${s}`}
                 >

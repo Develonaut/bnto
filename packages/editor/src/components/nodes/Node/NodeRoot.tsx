@@ -51,7 +51,7 @@ interface NodeRootProps {
   status?: string;
   /** Accessible label describing this node (e.g. "Compress Images node"). */
   "aria-label"?: string;
-  /** Composed content — NodeHeader, NodeBody. */
+  /** Composed content — NodeBody, NodeIcon, NodeLabel, etc. */
   children: ReactNode;
 }
 
