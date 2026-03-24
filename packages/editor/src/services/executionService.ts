@@ -8,7 +8,7 @@
 
 import type { StoreApi } from "zustand";
 import type { BrowserFileResult } from "@bnto/core";
-import type { EditorStore, EditorState, ExecutionState, NodeExecutionStatus } from "../store/types";
+import type { EditorStore, ExecutionState } from "../store/types";
 import type { ExecutionService } from "../editorTypes";
 
 function createExecutionService(storeApi: StoreApi<EditorStore>): ExecutionService {
@@ -35,22 +35,6 @@ function createExecutionService(storeApi: StoreApi<EditorStore>): ExecutionServi
 
     resetNodeStatuses() {
       storeApi.getState().resetNodeStatuses();
-    },
-
-    setNodeStatus(nodeId: string, status: NodeExecutionStatus) {
-      storeApi.setState((s) => ({
-        executionState: { ...s.executionState, [nodeId]: status },
-      }));
-    },
-
-    setNodeProgress(nodeId: string, percent: number) {
-      storeApi.setState((s) => ({
-        nodeProgress: { ...s.nodeProgress, [nodeId]: percent },
-      }));
-    },
-
-    forceExecutionState(partial: Partial<EditorState>) {
-      storeApi.setState(partial);
     },
   };
 }

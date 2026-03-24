@@ -18,7 +18,6 @@ import type {
   EditorStore,
   EditorState,
   ExecutionState,
-  NodeExecutionStatus,
   PanelId,
   RecipeMetadata,
 } from "./store/types";
@@ -68,12 +67,6 @@ interface ExecutionService {
   downloadAllResults(): Promise<void>;
   setExecutionState(state: ExecutionState): void;
   resetNodeStatuses(): void;
-  /** Force per-node execution status (dev tooling). */
-  setNodeStatus(nodeId: string, status: NodeExecutionStatus): void;
-  /** Force per-node progress percentage (dev tooling). */
-  setNodeProgress(nodeId: string, percent: number): void;
-  /** Force arbitrary execution state fields (dev tooling). */
-  forceExecutionState(partial: Partial<EditorState>): void;
 }
 
 interface HistoryService {
