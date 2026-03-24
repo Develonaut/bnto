@@ -107,7 +107,7 @@ export default function MotorwayPage() {
             <ShowcaseSection
               id="buttons"
               title="Buttons"
-              description="Every variant, size, icon layout, and press state. Buttons sit on the ground plane and sink when pressed."
+              description="Three-span pushable DOM for blur-free spring animations. All variants, sizes, toggle mode, and dormant reveal."
             >
               <ButtonShowcase />
             </ShowcaseSection>

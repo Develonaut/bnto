@@ -33,11 +33,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   muted: "surface-muted",
 };
 
-/* ── Size classes ───────────────────────────────────────────── */
+/* ── Size classes (asChild path — elevation baked in) ──────── */
 
-type ButtonSize = "sm" | "md" | "lg" | "icon";
-
-/* ── Text button sizes ─────────────────────────────────────── */
 const textCn = createCn({
   base: "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium shrink-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   variants: {
@@ -55,7 +52,6 @@ const textCn = createCn({
   },
 });
 
-/* ── Icon button sizes ─────────────────────────────────────── */
 const iconCn = createCn({
   base: "inline-flex items-center justify-center shrink-0 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   variants: {
@@ -73,15 +69,51 @@ const iconCn = createCn({
   },
 });
 
+/* ── Face size classes (pushable path — no elevation) ──────── */
+
+const textFaceCn = createCn({
+  base: "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium shrink-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  variants: {
+    size: {
+      sm: "h-7 px-3 text-xs rounded-sm [&_svg:not([class*='size-'])]:size-3",
+      md: "h-9 px-4 py-2 text-sm has-[>svg]:px-3 rounded-md [&_svg:not([class*='size-'])]:size-4",
+      lg: "h-11 px-6 text-base rounded-lg [&_svg:not([class*='size-'])]:size-5",
+      icon: "h-9 px-4 py-2 text-sm has-[>svg]:px-3 rounded-md [&_svg:not([class*='size-'])]:size-4",
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+const iconFaceCn = createCn({
+  base: "inline-flex items-center justify-center shrink-0 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  variants: {
+    size: {
+      sm: "size-6 rounded-sm [&_svg]:size-3",
+      md: "size-9 rounded-md [&_svg]:size-4",
+      lg: "size-11 rounded-lg [&_svg]:size-5",
+      icon: "size-9 rounded-md [&_svg]:size-4",
+    },
+  },
+  defaultVariants: { size: "md" },
+});
+
+/* ── Radius for pushable container (must match face) ───────── */
+
+const RADIUS_BY_SIZE: Record<string, string> = {
+  sm: "rounded-sm",
+  md: "rounded-md",
+  lg: "rounded-lg",
+};
+
 /* ── Button ─────────────────────────────────────────────────── */
+
+type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 type ButtonProps = Omit<ComponentProps<"button">, "ref"> &
   Omit<ComponentProps<"a">, "ref"> & {
     variant?: ButtonVariant;
     size?: ButtonSize;
-    /** Pass an icon element to render as a square icon button. */
     icon?: ReactNode;
-    /** Render as a different element type (e.g. "div"). Priority: asChild > as > href > "button". */
     as?: ElementType;
     asChild?: boolean;
     elevation?: ElevationOverride;
@@ -89,8 +121,6 @@ type ButtonProps = Omit<ComponentProps<"button">, "ref"> &
     muted?: boolean;
     hovered?: boolean;
     pressed?: boolean;
-    /** Dormant — grounded + muted by default, wakes on ancestor .group hover via CSS.
-     * Use for action buttons that reveal on card hover. */
     dormant?: boolean;
     toggle?: boolean;
     href?: string;
@@ -122,44 +152,74 @@ function Button({
   const isIcon = icon !== undefined || size === "icon";
   const resolvedSize = size === "icon" ? "md" : (size ?? "md");
 
-  // Disabled buttons use muted variant + no elevation for consistent look with inputs
   const resolvedVariant = disabled ? "muted" : variant;
   const resolvedElevation = disabled ? false : elevation;
 
-  // Pressable + surface behavior
   const elevationClass = resolveElevationClass(resolvedElevation);
   const variantClass = resolvedVariant ? VARIANT_CLASSES[resolvedVariant] : undefined;
-  const behaviorCn = cn("pressable outline-none surface", variantClass, elevationClass);
 
-  // Size classes — skipped when asChild or as (consumer owns layout), unless size is explicitly set
-  const applySize = size !== undefined || (!asChild && !as);
-  const sizeClasses = applySize
-    ? isIcon
-      ? iconCn({ variant: resolvedVariant, size: resolvedSize })
-      : textCn({ variant: resolvedVariant, size: resolvedSize })
-    : "";
-  const resolvedSizeClasses = behaviorCn.includes("elevation-")
-    ? stripSizeElevation(sizeClasses)
-    : sizeClasses;
+  const dataAttrs = {
+    "data-slot": "button",
+    "data-muted": muted ? "" : undefined,
+    "data-hover": hovered && !pressed ? "" : undefined,
+    "data-active": pressed ? "" : undefined,
+    "data-dormant": dormant ? "" : undefined,
+    "data-toggle": toggle ? "" : undefined,
+  };
 
-  return (
-    <Comp
-      ref={ref}
-      data-slot="button"
-      data-muted={muted ? "" : undefined}
-      data-hover={hovered && !pressed ? "" : undefined}
-      data-active={pressed ? "" : undefined}
-      data-dormant={dormant ? "" : undefined}
-      data-toggle={toggle ? "" : undefined}
-      disabled={disabled}
-      {...(!!href ? { href } : {})}
-      className={cn(behaviorCn, resolvedSizeClasses, className)}
-      style={{ ...SPRING_STYLES[spring], ...style }}
-      {...props}
-    >
-      {isIcon ? (icon ?? children) : children}
+  const sharedProps = {
+    ref,
+    disabled,
+    ...(!!href ? { href } : {}),
+    style: { ...SPRING_STYLES[spring], ...style },
+    ...dataAttrs,
+    ...props,
+  };
+
+  const content = isIcon ? (icon ?? children) : children;
+
+  // asChild / as — single-element rendering (Slot requires single child)
+  if (asChild || as) {
+    const behaviorCn = cn("pressable outline-none surface", variantClass, elevationClass);
+    const applySize = size !== undefined || (!asChild && !as);
+    const sizeClasses = applySize
+      ? isIcon
+        ? iconCn({ variant: resolvedVariant, size: resolvedSize })
+        : textCn({ variant: resolvedVariant, size: resolvedSize })
+      : "";
+    const resolvedSizeClasses = behaviorCn.includes("elevation-")
+      ? stripSizeElevation(sizeClasses)
+      : sizeClasses;
+
+    return (
+      <Comp {...sharedProps} className={cn(behaviorCn, resolvedSizeClasses, className)}>
+        {content}
+      </Comp>
+    );
+  }
+
+  // Standard — three-span pushable DOM (blur-free animations)
+  const containerClasses = cn("pushable inline-flex", variantClass, elevationClass);
+  const radiusClass = RADIUS_BY_SIZE[resolvedSize] ?? "rounded-md";
+  const faceClasses = isIcon
+    ? iconFaceCn({ size: resolvedSize })
+    : cn("flex-1 min-w-0", textFaceCn({ size: resolvedSize }));
+
+  const button = (
+    <Comp {...sharedProps} className={cn(containerClasses, radiusClass, className)}>
+      <span className="pushable-shadow" aria-hidden="true" />
+      <span className="pushable-edge" aria-hidden="true" />
+      <span className={cn("pushable-face", faceClasses, className)}>{content}</span>
     </Comp>
   );
+
+  // Dormant buttons self-manage their group wrapper so consumers
+  // don't need to add `group` to an ancestor element.
+  if (dormant) {
+    return <span className="group inline-flex">{button}</span>;
+  }
+
+  return button;
 }
 
 function resolveComponent(

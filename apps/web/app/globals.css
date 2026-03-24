@@ -5,6 +5,7 @@
 @import "./theme.css";
 @import "./animations.css";
 @import "./surface.css";
+@import "./pushable.css";
 @import "./conveyor.css";
 
 @custom-variant dark (&:is(.tokyo *));
