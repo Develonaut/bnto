@@ -32,11 +32,7 @@ export function RadioGroupItem({
         size="icon"
         disabled={disabled}
         spring="bounciest"
-        className={cn(
-          "peer size-6 shrink-0 rounded-full",
-          "focus-visible:outline-2 focus-visible:outline-ring/50 focus-visible:outline-offset-2",
-          className,
-        )}
+        className={cn("peer size-6 shrink-0 rounded-full", "focus-ring", className)}
       >
         <RadioGroupPrimitive.Indicator
           data-slot="radio-group-indicator"

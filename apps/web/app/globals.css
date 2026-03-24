@@ -4,6 +4,7 @@
 @source "../../../packages/@bnto/form/src";
 @import "./theme.css";
 @import "./animations.css";
+@import "./focus-ring.css";
 @import "./surface.css";
 @import "./pushable.css";
 @import "./conveyor.css";
@@ -112,7 +113,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;

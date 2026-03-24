@@ -131,7 +131,7 @@ function Combobox({
                         role="button"
                         tabIndex={0}
                         data-value={v}
-                        className="ml-0.5 cursor-pointer rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className="ml-0.5 cursor-pointer rounded-full focus-ring focus-visible:outline-offset-0"
                         onMouseDown={handleRemoveMouseDown}
                         onClick={handleRemoveClick}
                         onKeyDown={handleRemoveKeyDown}

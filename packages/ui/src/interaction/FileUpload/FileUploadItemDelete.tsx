@@ -3,6 +3,7 @@
 import { useCallback, type ComponentProps, type MouseEvent } from "react";
 import { Slot } from "@radix-ui/react-slot";
 
+import { cn } from "../../utils/cn";
 import { useFileUploadContext, useFileUploadItemContext } from "./context";
 
 interface FileUploadItemDeleteProps extends ComponentProps<"button"> {
@@ -11,6 +12,7 @@ interface FileUploadItemDeleteProps extends ComponentProps<"button"> {
 
 export function FileUploadItemDelete({
   asChild,
+  className,
   onClick: onClickProp,
   ...props
 }: FileUploadItemDeleteProps) {
@@ -31,6 +33,7 @@ export function FileUploadItemDelete({
     <Comp
       type="button"
       data-slot="file-upload-item-delete"
+      className={cn("focus-ring rounded-sm", className)}
       {...props}
       onClick={onClick}
     />

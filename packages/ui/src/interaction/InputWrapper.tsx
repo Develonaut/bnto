@@ -29,7 +29,7 @@ function InputWrapper({ disabled, className, style, ...props }: InputWrapperProp
       data-slot="input-wrapper"
       style={{ ...inputFgOverride, ...style }}
       className={cn(
-        "has-[:focus-visible]:border-ring has-[:focus-visible]:ring-ring/50 has-[:focus-visible]:ring-[3px]",
+        "focus-ring-within",
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         disabled && "opacity-50",
         className,
