@@ -5,7 +5,7 @@ import { cn } from "../utils/cn";
 
 import type { SpringMode } from "./Pressable";
 import { Surface } from "./Surface";
-import type { SurfaceElevation, SurfaceVariant } from "./Surface";
+import type { SurfaceBorder, SurfaceElevation, SurfaceVariant } from "./Surface";
 
 export const Card = forwardRef<
   HTMLDivElement,
@@ -17,8 +17,8 @@ export const Card = forwardRef<
     spring?: SpringMode;
     /** Flush with ground plane. Explicit value overrides `loading` default. */
     grounded?: boolean;
-    /** Render with a dashed border instead of a solid one. */
-    dashed?: boolean;
+    /** Border style. Default `"solid"`. */
+    border?: SurfaceBorder;
     /** Sugar for spring="bounciest" + grounded={loading}. */
     loading?: boolean;
     /** Merge onto child element instead of wrapping in a div. */
@@ -26,7 +26,7 @@ export const Card = forwardRef<
   }
 >(
   (
-    { className, elevation = "md", color, spring, grounded, dashed, loading, asChild, ...props },
+    { className, elevation = "md", color, spring, grounded, border, loading, asChild, ...props },
     ref,
   ) => (
     <Surface
@@ -35,7 +35,7 @@ export const Card = forwardRef<
       variant={color}
       spring={spring ?? (loading !== undefined ? "bounciest" : undefined)}
       grounded={grounded ?? loading}
-      dashed={dashed}
+      border={border}
       asChild={asChild}
       rounded="xl"
       className={cn(color ? undefined : "bg-card text-card-foreground", className)}

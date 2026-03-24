@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "../icons";
+import { ITEM_CN } from "../layout/List";
 import { Popup } from "../overlay/Popup";
 import { PopupTriggerButton } from "./PopupTriggerButton";
 import { POPUP_OFFSET_PX, type PopupOffset } from "../overlay/popupOffset";
@@ -114,7 +115,8 @@ export function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "flex w-full cursor-default items-center gap-2 rounded-lg px-4 py-2.5 text-sm outline-hidden transition-colors select-none hover:bg-muted focus:bg-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        ITEM_CN,
+        "cursor-default rounded-lg hover:bg-muted focus:bg-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
       )}
       {...props}

@@ -38,7 +38,14 @@ export { Grid, GridItem } from "./layout/Grid";
 export { Inset } from "./layout/Inset";
 export { Row } from "./layout/Row";
 export { Stack } from "./layout/Stack";
-export { List, ListItem, ListItemContent, ListItemActions } from "./layout/List";
+export {
+  List,
+  ListItem,
+  ListItemContent,
+  ListItemActions,
+  ListSeparator,
+  ListSubheader,
+} from "./layout/List";
 
 /* Typography */
 export { Badge } from "./typography/Badge";
@@ -91,7 +98,12 @@ export {
   PanelFooter,
 } from "./surface/Panel";
 export { Surface } from "./surface/Surface";
-export type { SurfaceVariant, SurfaceElevation, SurfaceRounded } from "./surface/Surface";
+export type {
+  SurfaceVariant,
+  SurfaceElevation,
+  SurfaceRounded,
+  SurfaceBorder,
+} from "./surface/Surface";
 export { CardActions } from "./surface/CardActions";
 export { Toolbar, ToolbarGroup, ToolbarDivider } from "./surface/Toolbar";
 

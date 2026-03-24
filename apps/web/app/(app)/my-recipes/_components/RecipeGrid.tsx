@@ -112,7 +112,7 @@ export function RecipeGrid({ category, sort }: RecipeGridProps) {
               ? "Try a different filter or create a new recipe."
               : "Create a recipe in the editor — it will auto-save here."}
           </EmptyStateDescription>
-          <Button href="/editor" variant="primary" elevation="sm" className="mt-2">
+          <Button href="/editor" variant="primary" elevation="sm">
             <PlusIcon />
             New Recipe
           </Button>

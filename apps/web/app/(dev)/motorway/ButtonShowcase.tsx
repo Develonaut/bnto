@@ -74,10 +74,18 @@ function VariantGrid({ state }: { state: ButtonState }) {
 
   return (
     <Stack gap="md">
-      {VARIANTS.map(({ value, iconLabel }) => {
+      {VARIANTS.map(({ value, label, iconLabel }) => {
         const iconEntry = iconLabel ? ICON_LABELS[iconLabel] : null;
         return (
           <Row key={value} className={cn("items-center gap-3", dormant && "group")}>
+            <Text
+              size="xs"
+              color="muted"
+              className="w-20 shrink-0 font-mono uppercase tracking-wider"
+            >
+              {label}
+            </Text>
+
             {/* sm */}
             <Button variant={value} size="sm" {...shared}>
               Label

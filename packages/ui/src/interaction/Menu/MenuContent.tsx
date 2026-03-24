@@ -10,7 +10,7 @@ export const MenuContent = forwardRef<
   ElementRef<typeof PopupContent>,
   ComponentProps<typeof PopupContent>
 >(({ className, children, ...props }, ref) => (
-  <PopupContent ref={ref} className={cn("p-2", className)} {...props}>
+  <PopupContent ref={ref} className={cn("p-1.5", className)} {...props}>
     {children}
   </PopupContent>
 ));

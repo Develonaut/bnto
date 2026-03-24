@@ -1,4 +1,5 @@
-import { cn, Card, Grid, GridItem } from "@bnto/ui";
+import { cn, Card, Grid, GridItem, Surface } from "@bnto/ui";
+import type { SurfaceVariant } from "@bnto/ui";
 
 function Swatch({
   name,
@@ -17,6 +18,18 @@ function Swatch({
     >
       <span className="text-sm font-semibold">{name}</span>
     </Card>
+  );
+}
+
+function VariantSwatch({ name, variant }: { name: string; variant: SurfaceVariant }) {
+  return (
+    <Surface
+      variant={variant}
+      rounded="xl"
+      className="flex h-full min-h-20 items-center justify-center"
+    >
+      <span className="text-sm font-semibold">{name}</span>
+    </Surface>
   );
 }
 
@@ -69,8 +82,11 @@ export function ColorSwatches() {
           surface="surface-warning"
         />
       </GridItem>
-      <GridItem colSpan={2} rowSpan={2} colStart={5} rowStart={3}>
-        <Swatch name="Card" bg="bg-card" fg="text-card-foreground" surface="surface-outline" />
+      <GridItem colSpan={1} rowSpan={2} colStart={5} rowStart={3}>
+        <VariantSwatch name="Card" variant="outline" />
+      </GridItem>
+      <GridItem colSpan={1} rowSpan={2} colStart={6} rowStart={3}>
+        <VariantSwatch name="Ghost" variant="ghost" />
       </GridItem>
     </Grid>
   );

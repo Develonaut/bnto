@@ -24,7 +24,7 @@ const PlaceholderNode = memo(function PlaceholderNode() {
 
   return (
     <Card
-      dashed
+      border="dashed"
       elevation="none"
       className="pointer-events-auto flex items-center justify-center rounded-xl"
       style={
