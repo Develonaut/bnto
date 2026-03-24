@@ -31,6 +31,7 @@ export function FileUploadDropzone({ className, children, ...props }: ComponentP
           className={cn(
             "flex h-auto w-full flex-col items-center justify-center rounded-xl",
             "outline-border [outline-style:dashed] [outline-width:3px] [outline-offset:-8px]",
+            "focus-visible:[outline-style:solid] focus-visible:[outline-color:var(--focus-ring)] focus-visible:[outline-width:2px]",
             "data-disabled:pointer-events-none",
             className,
           )}

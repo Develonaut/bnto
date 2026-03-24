@@ -116,7 +116,7 @@ export function SelectItem({
       data-slot="select-item"
       className={cn(
         ITEM_CN,
-        "cursor-default rounded-lg hover:bg-muted focus:bg-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "cursor-default rounded-lg hover:bg-muted focus-visible:bg-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
       )}
       {...props}

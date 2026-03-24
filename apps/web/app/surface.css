@@ -475,16 +475,10 @@
   transition-duration: var(--pressable-press-dur, 34ms);
 }
 
-/* Focus — outline hugs the face border using the wall color */
+/* Focus — unified focus ring, outset from the face */
 .pressable:focus-visible {
-  outline: 2px solid var(--surface-wall);
-  outline-offset: -5px;
-}
-
-/* Dropzone — focus fills in the dashed outline at the same position */
-.pressable[data-slot="file-upload-dropzone"]:focus-visible {
-  outline: 3px solid var(--border);
-  outline-offset: -8px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 /* Disabled — stuck flush with the ground, monochromatic.

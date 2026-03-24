@@ -3,6 +3,7 @@
 import { useCallback, type ComponentProps, type MouseEvent } from "react";
 import { Slot } from "@radix-ui/react-slot";
 
+import { cn } from "../../utils/cn";
 import { useFileUploadContext } from "./context";
 
 interface FileUploadClearProps extends ComponentProps<"button"> {
@@ -11,6 +12,7 @@ interface FileUploadClearProps extends ComponentProps<"button"> {
 
 export function FileUploadClear({
   asChild,
+  className,
   onClick: onClickProp,
   ...props
 }: FileUploadClearProps) {
@@ -31,6 +33,7 @@ export function FileUploadClear({
       type="button"
       data-slot="file-upload-clear"
       data-disabled={disabled ? "" : undefined}
+      className={cn("focus-ring rounded-sm", className)}
       {...props}
       disabled={disabled}
       onClick={onClick}

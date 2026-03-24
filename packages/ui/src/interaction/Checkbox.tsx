@@ -20,11 +20,7 @@ function Checkbox({
         size="icon"
         disabled={disabled}
         spring="bounciest"
-        className={cn(
-          "peer size-6 shrink-0 rounded-[5px] translate-y-px",
-          "focus-visible:outline-2 focus-visible:outline-ring/50 focus-visible:outline-offset-2",
-          className,
-        )}
+        className={cn("peer size-6 shrink-0 rounded-[5px] translate-y-px", "focus-ring", className)}
       >
         <CheckboxPrimitive.Indicator
           data-slot="checkbox-indicator"

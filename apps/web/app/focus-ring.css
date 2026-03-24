@@ -1,0 +1,17 @@
+/* Unified focus ring — 2px solid blue outline, outset by default.
+ * Components override offset with Tailwind's outline-offset-* utility.
+ * Color is theme-aware via --focus-ring (browser-default blue). */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* For wrapper elements that detect child focus (InputWrapper, etc.) */
+@utility focus-ring-within {
+  &:has(:focus-visible) {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+}

@@ -165,7 +165,7 @@ function Slider({
                 data-testid="slider-preset"
                 data-preset-label={preset.label}
                 className={cn(
-                  "absolute text-xs cursor-pointer transition-colors duration-fast",
+                  "absolute text-xs cursor-pointer transition-colors duration-fast focus-ring rounded-sm",
                   isFirst ? "translate-x-0" : isLast ? "-translate-x-full" : "-translate-x-1/2",
                   isActive ? "text-foreground font-medium" : "text-muted-foreground",
                 )}

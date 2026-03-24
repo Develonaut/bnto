@@ -269,10 +269,10 @@
   transition-duration: var(--pressable-press-dur, 34ms);
 }
 
-/* ── Focus ────────────────────────────────────────────────────── */
+/* ── Focus — unified focus ring on the face ──────────────────── */
 .pushable:focus-visible .pushable-face {
-  outline: 2px solid var(--surface-wall);
-  outline-offset: -5px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
 }
 
 /* ── Muted modifier ───────────────────────────────────────────── */

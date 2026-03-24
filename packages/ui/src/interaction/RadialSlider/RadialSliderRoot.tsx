@@ -82,7 +82,15 @@ export function RadialSliderRoot({
   const onKeyDown = useRadialKeyboard({ min, max, value, step, onChange });
 
   const defaultThumb = (
-    <Button asChild variant="primary" elevation="sm" spring="bouncy" pressed={isDragging} hovered={isHovering} className="rounded-full">
+    <Button
+      asChild
+      variant="primary"
+      elevation="sm"
+      spring="bouncy"
+      pressed={isDragging}
+      hovered={isHovering}
+      className="rounded-full"
+    >
       <div ref={thumbRef} className="flex items-center justify-center size-8 ring-0">
         <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />
       </div>
@@ -92,7 +100,7 @@ export function RadialSliderRoot({
   return (
     <div
       ref={containerRef}
-      className={cn("relative touch-none select-none outline-none", className)}
+      className={cn("relative touch-none select-none focus-ring rounded-full", className)}
       style={{ width: size, height: size }}
       role="slider"
       tabIndex={0}
