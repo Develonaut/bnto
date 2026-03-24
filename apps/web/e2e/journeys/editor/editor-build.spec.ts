@@ -110,8 +110,8 @@ test.describe("editor build & configure @browser", () => {
     await page.getByTestId("delete-node").click();
     await expect(nodeCards).toHaveCount(2);
 
-    // Undo
-    await page.getByTestId("toolbar-undo").click();
+    // Undo via keyboard shortcut (Cmd+Z on macOS / Ctrl+Z on Linux)
+    await page.keyboard.press("ControlOrMeta+z");
     await expect(nodeCards).toHaveCount(3);
   });
 });

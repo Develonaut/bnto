@@ -10,9 +10,6 @@ import {
   MenuTrigger,
   MenuContent,
   MenuItem,
-  RotateCcwIcon,
-  Undo2Icon,
-  Redo2Icon,
   FolderOpenIcon,
   SlidersHorizontalIcon,
   TerminalIcon,
@@ -48,26 +45,14 @@ function EditorToolbar() {
   const { toggle: toggleConfig } = editor.panels.usePanels("config");
   const { toggle: toggleRunPanel } = editor.panels.usePanels("run");
   const { isOpen: helpOpen, open: openHelp, close: closeHelp } = editor.panels.usePanels("help");
-  const { canUndo, canRedo } = editor.history.useHistory();
-  const { isDirty, validationErrors, recipeMetadata } = editor.definition.useDefinition();
-  const { phase } = editor.execution.useExecution();
+  const { validationErrors, recipeMetadata } = editor.definition.useDefinition();
   const { nodes } = editor.nodes.useNodes();
 
-  const hasRun = phase !== "idle";
   const hasNodes = nodes.length > 0;
   const canExport = validationErrors.length === 0;
 
   const settingsDialog = useDialog();
   const openRecipeDialog = useDialog();
-
-  const handleReset = useCallback(() => {
-    const { definition } = editor.getState();
-    if (definition) {
-      editor.definition.loadDefinition(definition);
-    } else {
-      editor.definition.createBlank();
-    }
-  }, [editor]);
 
   const handleNew = useCallback(() => {
     editor.definition.createBlank();
@@ -146,38 +131,6 @@ function EditorToolbar() {
               onClick={toggleRunPanel}
               aria-label="Run panel"
               data-testid="toolbar-run-panel"
-            />
-          </ToolbarGroup>
-
-          <ToolbarDivider />
-
-          {/* Undo / Redo / Reset */}
-          <ToolbarGroup>
-            <Button
-              icon={<Undo2Icon />}
-              variant="ghost"
-              elevation="sm"
-              onClick={editor.history.undo}
-              disabled={!canUndo}
-              aria-label="Undo"
-              data-testid="toolbar-undo"
-            />
-            <Button
-              icon={<Redo2Icon />}
-              variant="ghost"
-              elevation="sm"
-              onClick={editor.history.redo}
-              disabled={!canRedo}
-              aria-label="Redo"
-              data-testid="toolbar-redo"
-            />
-            <Button
-              icon={<RotateCcwIcon />}
-              variant="ghost"
-              elevation="sm"
-              onClick={handleReset}
-              disabled={!isDirty && !hasRun}
-              aria-label="Reset"
             />
           </ToolbarGroup>
 
