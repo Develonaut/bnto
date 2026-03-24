@@ -264,5 +264,5 @@ function resolveComponent(
   return "a";
 }
 
-export { Button, textCn as buttonCn };
+export { Button };
 export type { ButtonVariant, SpringMode };
