@@ -64,6 +64,8 @@ type CompartmentNodeData = {
   dividerAfterNodeId?: string | null;
   /** The container ID to insert into (null = top-level insertion). */
   dividerIntoContainerId?: string | null;
+  /** Hide the dashed line — edge dividers overlap with the group border. */
+  dividerHideLine?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -86,7 +88,10 @@ type NodeConfigs = Record<string, NodeConfig>;
 // ReactFlow-compatible node — extends RF's Node with typed data
 // ---------------------------------------------------------------------------
 
-type BentoNode = Node<CompartmentNodeData, "compartment" | "io" | "containerGroup" | "addDivider" | "placeholder">;
+type BentoNode = Node<
+  CompartmentNodeData,
+  "compartment" | "io" | "containerGroup" | "addDivider" | "placeholder"
+>;
 
 type BentoLayout = {
   nodes: BentoNode[];

@@ -29,13 +29,7 @@ function makeNode(
   };
 }
 
-function makeChild(
-  id: string,
-  parentId: string,
-  x: number,
-  y: number,
-  depth = 1,
-): BentoNode {
+function makeChild(id: string, parentId: string, x: number, y: number, depth = 1): BentoNode {
   return {
     id,
     type: "compartment",
@@ -75,6 +69,8 @@ describe("injectAddDividers", () => {
     expect(divs[0]!.data.width).toBe(DIVIDER_THIN);
     expect(divs[0]!.data.height).toBe(CELL);
     expect(divs[0]!.data.dividerDirection).toBe("horizontal");
+    // Top-level dividers show the dashed line
+    expect(divs[0]!.data.dividerHideLine).toBeFalsy();
   });
 
   it("positions top-level divider centered in the gap", () => {
@@ -100,6 +96,8 @@ describe("injectAddDividers", () => {
       expect(divs[0]!.data.height).toBe(DIVIDER_THIN);
       expect(divs[0]!.data.dividerIntoContainerId).toBe("p");
       expect(divs[0]!.data.dividerAfterNodeId).toBeNull();
+      // Edge divider hides line (overlaps group border)
+      expect(divs[0]!.data.dividerHideLine).toBe(true);
     });
 
     it("injects 3 dividers for a container with 2 children", () => {
@@ -125,18 +123,21 @@ describe("injectAddDividers", () => {
       const result = injectAddDividers([parent, c1, c2], new Set(["p"]));
       const divs = dividers(result);
 
-      // before-first: afterNodeId=null
+      // before-first: afterNodeId=null, shows line (between parent and child)
       const beforeFirst = divs.find((d) => d.id.includes("first__"))!;
       expect(beforeFirst.data.dividerAfterNodeId).toBeNull();
       expect(beforeFirst.data.dividerIntoContainerId).toBe("p");
+      expect(beforeFirst.data.dividerHideLine).toBeFalsy();
 
-      // between: afterNodeId=c1
+      // between: afterNodeId=c1, shows line (between children)
       const between = divs.find((d) => d.id === `${ADD_DIVIDER_PREFIX}c1`)!;
       expect(between.data.dividerAfterNodeId).toBe("c1");
+      expect(between.data.dividerHideLine).toBeFalsy();
 
-      // after-last: afterNodeId=c2
+      // after-last: afterNodeId=c2, hides line (edge of group)
       const afterLast = divs.find((d) => d.id.includes("last__"))!;
       expect(afterLast.data.dividerAfterNodeId).toBe("c2");
+      expect(afterLast.data.dividerHideLine).toBe(true);
     });
   });
 
@@ -179,6 +180,30 @@ describe("injectAddDividers", () => {
         expect(d.position.y).toBe(100);
       });
     });
+  });
+
+  it("hides line on top-level dividers adjacent to expanded containers", () => {
+    const a = makeNode("a", 0, 0);
+    const container = makeNode("p", STRIDE, 0, { isContainer: true, isExpanded: true, depth: 0 });
+    const b = makeNode("b", STRIDE * 2, 0);
+    const result = injectAddDividers([a, container, b], new Set(["p"]));
+    const divs = dividers(result).filter((d) => !d.data.dividerIntoContainerId);
+
+    expect(divs).toHaveLength(2);
+    // Both dividers adjacent to the container hide their line
+    divs.forEach((d) => {
+      expect(d.data.dividerHideLine).toBe(true);
+    });
+  });
+
+  it("shows line on top-level dividers between non-container nodes", () => {
+    const a = makeNode("a", 0, 0);
+    const b = makeNode("b", STRIDE, 0);
+    const result = injectAddDividers([a, b], new Set());
+    const divs = dividers(result);
+
+    expect(divs).toHaveLength(1);
+    expect(divs[0]!.data.dividerHideLine).toBeFalsy();
   });
 
   it("skips divider injection when placeholder is present", () => {
