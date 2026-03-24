@@ -13,7 +13,13 @@ import type { NodeChange, EdgeChange, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { cn } from "@bnto/ui";
 
-import { CompartmentNode, IoNode, PlaceholderNode, ContainerGroupNode, AddDividerNode } from "../nodes";
+import {
+  CompartmentNode,
+  IoNode,
+  PlaceholderNode,
+  ContainerGroupNode,
+  AddDividerNode,
+} from "../nodes";
 import type { BentoNode } from "../../adapters/types";
 import { FIT_VIEW_OPTIONS } from "../../constants";
 import { PLACEHOLDER_ID } from "../../helpers/injectPlaceholder";
@@ -146,7 +152,12 @@ function CanvasInner({
   const handleNodeClick = useCallback(
     (_event: React.MouseEvent, node: { id: string; type?: string }) => {
       if (!onNodeClick) return;
-      if (node.type === "placeholder" || node.type === "containerGroup" || node.type === "addDivider") return;
+      if (
+        node.type === "placeholder" ||
+        node.type === "containerGroup" ||
+        node.type === "addDivider"
+      )
+        return;
       const target = _event.target as HTMLElement;
       if (target.closest("button, a, input, select, textarea")) return;
       onNodeClick(node.id);
@@ -166,10 +177,10 @@ function CanvasInner({
       nodesConnectable={false}
       elementsSelectable={interactive && !disable?.select}
       panOnDrag={interactive && !disable?.pan}
-      zoomOnScroll={false}
-      zoomOnPinch={false}
+      zoomOnScroll={interactive}
+      zoomOnPinch={interactive}
       zoomOnDoubleClick={false}
-      minZoom={FIT_VIEW_OPTIONS.maxZoom}
+      minZoom={interactive ? FIT_VIEW_OPTIONS.minZoom : FIT_VIEW_OPTIONS.maxZoom}
       maxZoom={FIT_VIEW_OPTIONS.maxZoom}
       preventScrolling={interactive}
       proOptions={PRO_OPTIONS}
