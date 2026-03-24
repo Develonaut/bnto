@@ -21,15 +21,12 @@ import { directionConfigFor, type DirectionConfig } from "./directionConfig";
 /** Prefix for divider node IDs — filtered by change handlers. */
 const ADD_DIVIDER_PREFIX = "__add_divider__";
 
-function injectAddDividers(
-  nodes: BentoNode[],
-  expandedIds: Set<string>,
-): BentoNode[] {
+function injectAddDividers(nodes: BentoNode[], expandedIds: Set<string>): BentoNode[] {
   const { topLevel, childrenByParent, hasPlaceholder } = partitionNodes(nodes);
   const dividers: BentoNode[] = [];
 
   if (!hasPlaceholder) {
-    injectTopLevelDividers(topLevel, dividers);
+    injectTopLevelDividers(topLevel, expandedIds, dividers);
   }
 
   for (const parentId of expandedIds) {
@@ -49,7 +46,10 @@ function partitionNodes(nodes: BentoNode[]) {
 
   for (const node of nodes) {
     if (node.type === "containerGroup" || node.type === "addDivider") continue;
-    if (node.type === "placeholder") { hasPlaceholder = true; continue; }
+    if (node.type === "placeholder") {
+      hasPlaceholder = true;
+      continue;
+    }
     const parentId = node.data.parentContainerId;
     if (parentId) {
       const siblings = childrenByParent.get(parentId) ?? [];
@@ -65,19 +65,24 @@ function partitionNodes(nodes: BentoNode[]) {
 }
 
 /** Inject horizontal dividers between consecutive top-level nodes. */
-function injectTopLevelDividers(topLevel: BentoNode[], out: BentoNode[]) {
+function injectTopLevelDividers(topLevel: BentoNode[], expandedIds: Set<string>, out: BentoNode[]) {
   for (let i = 0; i < topLevel.length - 1; i++) {
     const left = topLevel[i]!;
-    out.push(createDivider({
-      id: `${ADD_DIVIDER_PREFIX}${left.id}`,
-      x: left.position.x + CELL + (GAP_X - DIVIDER_THIN) / 2,
-      y: left.position.y,
-      width: DIVIDER_THIN,
-      height: CELL,
-      direction: "horizontal",
-      afterNodeId: left.id,
-      intoContainerId: null,
-    }));
+    const right = topLevel[i + 1]!;
+    const adjacentToGroup = expandedIds.has(left.id) || expandedIds.has(right.id);
+    out.push(
+      createDivider({
+        id: `${ADD_DIVIDER_PREFIX}${left.id}`,
+        x: left.position.x + CELL + (GAP_X - DIVIDER_THIN) / 2,
+        y: left.position.y,
+        width: DIVIDER_THIN,
+        height: CELL,
+        direction: "horizontal",
+        afterNodeId: left.id,
+        intoContainerId: null,
+        hideLine: adjacentToGroup,
+      }),
+    );
   }
 }
 
@@ -103,57 +108,90 @@ function injectContainerDividers(
 /** Single divider next to an empty container to add the first child. */
 function injectEmptyContainerDivider(parent: BentoNode, cfg: DirectionConfig, out: BentoNode[]) {
   const p = cfg.primary(parent) + CELL + (cfg.gap - CELL - DIVIDER_THIN) / 2;
-  out.push(createDivider({
-    id: `${ADD_DIVIDER_PREFIX}empty__${parent.id}`,
-    ...cfg.pos(p, parent),
-    width: cfg.width, height: cfg.height,
-    direction: cfg.direction,
-    afterNodeId: null,
-    intoContainerId: parent.id,
-  }));
+  out.push(
+    createDivider({
+      id: `${ADD_DIVIDER_PREFIX}empty__${parent.id}`,
+      ...cfg.pos(p, parent),
+      width: cfg.width,
+      height: cfg.height,
+      direction: cfg.direction,
+      afterNodeId: null,
+      intoContainerId: parent.id,
+      hideLine: true,
+    }),
+  );
 }
 
 /** Divider between parent and first child. */
-function injectBeforeFirstChild(parent: BentoNode, first: BentoNode, cfg: DirectionConfig, out: BentoNode[]) {
-  const p = cfg.primary(parent) + CELL + (cfg.primary(first) - cfg.primary(parent) - CELL - DIVIDER_THIN) / 2;
-  out.push(createDivider({
-    id: `${ADD_DIVIDER_PREFIX}first__${parent.id}`,
-    ...cfg.pos(p, parent),
-    width: cfg.width, height: cfg.height,
-    direction: cfg.direction,
-    afterNodeId: null,
-    intoContainerId: parent.id,
-  }));
+function injectBeforeFirstChild(
+  parent: BentoNode,
+  first: BentoNode,
+  cfg: DirectionConfig,
+  out: BentoNode[],
+) {
+  const p =
+    cfg.primary(parent) +
+    CELL +
+    (cfg.primary(first) - cfg.primary(parent) - CELL - DIVIDER_THIN) / 2;
+  out.push(
+    createDivider({
+      id: `${ADD_DIVIDER_PREFIX}first__${parent.id}`,
+      ...cfg.pos(p, parent),
+      width: cfg.width,
+      height: cfg.height,
+      direction: cfg.direction,
+      afterNodeId: null,
+      intoContainerId: parent.id,
+    }),
+  );
 }
 
 /** Dividers between consecutive children. */
-function injectBetweenChildren(children: BentoNode[], parent: BentoNode, cfg: DirectionConfig, out: BentoNode[]) {
+function injectBetweenChildren(
+  children: BentoNode[],
+  parent: BentoNode,
+  cfg: DirectionConfig,
+  out: BentoNode[],
+) {
   for (let i = 0; i < children.length - 1; i++) {
     const prev = children[i]!;
     const next = children[i + 1]!;
-    const p = cfg.primary(prev) + CELL + (cfg.primary(next) - cfg.primary(prev) - CELL - DIVIDER_THIN) / 2;
-    out.push(createDivider({
-      id: `${ADD_DIVIDER_PREFIX}${prev.id}`,
-      ...cfg.pos(p, parent),
-      width: cfg.width, height: cfg.height,
-      direction: cfg.direction,
-      afterNodeId: prev.id,
-      intoContainerId: parent.id,
-    }));
+    const p =
+      cfg.primary(prev) + CELL + (cfg.primary(next) - cfg.primary(prev) - CELL - DIVIDER_THIN) / 2;
+    out.push(
+      createDivider({
+        id: `${ADD_DIVIDER_PREFIX}${prev.id}`,
+        ...cfg.pos(p, parent),
+        width: cfg.width,
+        height: cfg.height,
+        direction: cfg.direction,
+        afterNodeId: prev.id,
+        intoContainerId: parent.id,
+      }),
+    );
   }
 }
 
 /** Divider after the last child. */
-function injectAfterLastChild(last: BentoNode, parent: BentoNode, cfg: DirectionConfig, out: BentoNode[]) {
+function injectAfterLastChild(
+  last: BentoNode,
+  parent: BentoNode,
+  cfg: DirectionConfig,
+  out: BentoNode[],
+) {
   const p = cfg.primary(last) + CELL + (cfg.gap - CELL - DIVIDER_THIN) / 2;
-  out.push(createDivider({
-    id: `${ADD_DIVIDER_PREFIX}last__${parent.id}`,
-    ...cfg.pos(p, parent),
-    width: cfg.width, height: cfg.height,
-    direction: cfg.direction,
-    afterNodeId: last.id,
-    intoContainerId: parent.id,
-  }));
+  out.push(
+    createDivider({
+      id: `${ADD_DIVIDER_PREFIX}last__${parent.id}`,
+      ...cfg.pos(p, parent),
+      width: cfg.width,
+      height: cfg.height,
+      direction: cfg.direction,
+      afterNodeId: last.id,
+      intoContainerId: parent.id,
+      hideLine: true,
+    }),
+  );
 }
 
 /** Divider data stored in node.data for the AddDividerNode renderer. */
@@ -166,6 +204,8 @@ interface DividerParams {
   direction: "horizontal" | "vertical";
   afterNodeId: string | null;
   intoContainerId: string | null;
+  /** Hide the dashed line — edge dividers overlap with the group border. */
+  hideLine?: boolean;
 }
 
 function createDivider(params: DividerParams): BentoNode {
@@ -185,6 +225,7 @@ function createDivider(params: DividerParams): BentoNode {
       dividerDirection: params.direction,
       dividerAfterNodeId: params.afterNodeId,
       dividerIntoContainerId: params.intoContainerId,
+      dividerHideLine: params.hideLine,
     },
   } as BentoNode;
 }

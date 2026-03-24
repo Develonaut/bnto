@@ -31,6 +31,7 @@ export const AddDividerNode = memo(function AddDividerNode({ data }: NodeProps<B
   const direction = data.dividerDirection ?? "horizontal";
   const afterNodeId = data.dividerAfterNodeId ?? null;
   const intoContainerId = data.dividerIntoContainerId ?? null;
+  const hideLine = data.dividerHideLine ?? false;
 
   const handleClick = useCallback(
     (e: MouseEvent) => {
@@ -51,10 +52,12 @@ export const AddDividerNode = memo(function AddDividerNode({ data }: NodeProps<B
       className="group flex items-center justify-center"
       style={{ width: data.width, height: data.height }}
     >
-      <Divider
-        orientation={dividerOrientation}
-        className={dividerOrientation === "vertical" ? "absolute h-[60%]" : "absolute w-[60%]"}
-      />
+      {!hideLine && (
+        <Divider
+          orientation={dividerOrientation}
+          className={dividerOrientation === "vertical" ? "absolute h-[60%]" : "absolute w-[60%]"}
+        />
+      )}
       <Button
         icon={<Plus />}
         size="sm"
