@@ -326,6 +326,17 @@
   opacity: 0;
 }
 
+/* Ghost dormant — text only, no surface */
+.pushable.surface-ghost[data-dormant] .pushable-face {
+  --face-bg: transparent;
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.pushable.surface-ghost[data-dormant] .pushable-edge {
+  background: transparent;
+}
+
 /* Wake on group hover/focus-within/has-open.
  *
  * Also wakes when an ancestor .group contains a [data-state="open"]

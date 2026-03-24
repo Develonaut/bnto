@@ -5,7 +5,7 @@ import type { ElementRef, ComponentPropsWithoutRef, ComponentProps } from "react
 
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 
-import { Button, buttonCn } from "./Button";
+import { Button } from "./Button";
 import { cn } from "../utils/cn";
 
 /* ── Context (surfaces active value to Triggers) ───────────── */
@@ -46,7 +46,10 @@ export const TabsList = forwardRef<
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
-    className={cn("inline-flex items-center gap-1", className)}
+    className={cn(
+      "inline-flex items-center gap-1 rounded-full bg-input border border-border p-1",
+      className,
+    )}
     {...props}
   />
 ));
@@ -57,22 +60,29 @@ TabsList.displayName = "Tabs.List";
 export const TabsTrigger = forwardRef<
   ElementRef<typeof TabsPrimitive.Trigger>,
   ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, value, ...props }, ref) => {
+>(({ value, children, ...props }, ref) => {
   const activeValue = useContext(TabsValueContext);
   const isActive = activeValue === value;
 
-  const variant = isActive ? "muted" : "outline";
-
-  return (
-    <Button asChild toggle pressed={isActive} variant={variant}>
-      <TabsPrimitive.Trigger
-        ref={ref}
-        value={value}
-        className={cn(buttonCn({ variant }), className)}
-        {...props}
-      />
-    </Button>
+  const trigger = (
+    <TabsPrimitive.Trigger ref={ref} value={value} asChild {...props}>
+      <Button
+        toggle
+        pressed={isActive}
+        variant={isActive ? "outline" : "ghost"}
+        data-dormant={!isActive ? "" : undefined}
+        className="rounded-full"
+      >
+        {children}
+      </Button>
+    </TabsPrimitive.Trigger>
   );
+
+  if (!isActive) {
+    return <span className="group inline-flex">{trigger}</span>;
+  }
+
+  return trigger;
 });
 TabsTrigger.displayName = "Tabs.Trigger";
 
