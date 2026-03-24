@@ -125,6 +125,7 @@ type ButtonProps = Omit<ComponentProps<"button">, "ref"> &
     asChild?: boolean;
     elevation?: ElevationOverride;
     spring?: SpringMode;
+    fullWidth?: boolean;
     muted?: boolean;
     hovered?: boolean;
     pressed?: boolean;
@@ -142,6 +143,7 @@ function Button({
   as,
   elevation = true,
   spring = "bounciest",
+  fullWidth = false,
   muted = false,
   hovered = false,
   pressed = false,
@@ -187,7 +189,12 @@ function Button({
 
   // asChild / as — single-element rendering (Slot requires single child)
   if (asChild || as) {
-    const behaviorCn = cn("pressable outline-none surface", variantClass, elevationClass);
+    const behaviorCn = cn(
+      "pressable outline-none surface",
+      variantClass,
+      elevationClass,
+      fullWidth && "flex w-full",
+    );
     const applySize = size !== undefined || (!asChild && !as);
     const sizeClasses = applySize
       ? isIcon
@@ -210,7 +217,8 @@ function Button({
     ? ICON_ELEVATION_BY_SIZE[resolvedSize]
     : TEXT_ELEVATION_BY_SIZE[resolvedSize];
   const containerClasses = cn(
-    "pushable inline-flex",
+    "pushable",
+    fullWidth ? "flex w-full" : "inline-flex",
     variantClass,
     elevationClass ?? sizeElevation,
   );
@@ -231,8 +239,13 @@ function Button({
   // don't need to add `group` to an ancestor element.
   // Padding extends the hover zone so the button wakes before the
   // cursor is directly on it; negative margin cancels layout shift.
+  // Disabled dormant buttons skip the group wrapper — no wake behavior,
+  // just opacity + pointer-events-none to match InputWrapper disabled.
   if (dormant) {
-    return <span className="group inline-flex p-2 -m-2">{button}</span>;
+    if (disabled) {
+      return <span className="inline-flex opacity-50 pointer-events-none">{button}</span>;
+    }
+    return <span className="group inline-flex p-4 -m-4">{button}</span>;
   }
 
   return button;

@@ -877,6 +877,12 @@ Files: `.claude/rules/feature-flags.md` (open source consideration section), `.c
 
 Files: `packages/@bnto/nodes/src/definition.ts` (Definition type with version field), `engine/crates/bnto-core/` (engine-side validation)
 
+### Triage: Remove DevTab and all dev-only execution controls
+
+**Priority: Triage.** Rip out DevTab, DevNodeControls, devMockData, and the node-progress E2E spec (~500 lines of dead code). Also remove `setNodeStatus`, `setNodeProgress`, and `forceExecutionState` from ExecutionService interface and implementation — these are dev-only methods with no production consumers.
+
+Files to delete: `DevTab.tsx`, `DevNodeControls.tsx`, `devMockData.ts`, `node-progress.spec.ts`. Files to modify: `RunPanelRoot.tsx`, `editorTypes.ts`, `executionService.ts`, `createEditorStore.test.ts`.
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |

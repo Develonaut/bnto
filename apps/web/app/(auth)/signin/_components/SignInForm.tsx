@@ -100,7 +100,7 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
   }
 
   return (
-    <section className="py-20 lg:py-28">
+    <section className="flex flex-1 items-center justify-center py-8">
       <Container>
         <Stack gap="md" className="mx-auto w-full max-w-sm">
           <Stack gap="sm" align="center" className="text-center">
@@ -112,7 +112,7 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
                   "--face-fg": "var(--foreground)",
                 } as CSSProperties
               }
-              className="mb-4 text-xl font-display font-black tracking-tighter"
+              className="w-fit text-xl font-display font-black tracking-tighter"
             >
               bnto
             </NavButton>
@@ -168,12 +168,7 @@ export function SignInForm({ defaultMode }: SignInFormProps) {
                 </p>
               )}
 
-              <Button
-                type="submit"
-                disabled={loading}
-                data-testid="auth-submit"
-                className="mt-2 w-full"
-              >
+              <Button type="submit" fullWidth disabled={loading} data-testid="auth-submit">
                 {loading && <LoaderIcon className="size-4 motion-safe:animate-spin" />}
                 {loading
                   ? isSignUp

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps } from "react";
+import type { ComponentProps, MouseEvent } from "react";
 import { useState, useCallback } from "react";
 
 import { cn } from "../utils/cn";
@@ -9,10 +9,15 @@ import { Input } from "./Input";
 import { Row } from "../layout/Row";
 import { EyeIcon, EyeOffIcon } from "../icons";
 
+/** Prevent mousedown from stealing focus — keeps focus on the text input. */
+function preventFocus(e: MouseEvent) {
+  e.preventDefault();
+}
+
 /**
- * Password input with a toggle button beside it to reveal/hide the password.
+ * Password input with an outline eye icon button beside the field.
  *
- * Renders an Input paired with an icon-sized toggle Button in a row.
+ * The reveal button toggles between password/text visibility.
  */
 function PasswordInput({
   className,
@@ -37,15 +42,13 @@ function PasswordInput({
         type="button"
         variant="outline"
         size="icon"
-        toggle
-        pressed={visible}
         disabled={disabled}
         tabIndex={-1}
+        onMouseDown={preventFocus}
         onClick={toggleVisible}
         aria-label={visible ? "Hide password" : "Show password"}
-        aria-pressed={visible}
       >
-        {visible ? <EyeIcon className="size-4" /> : <EyeOffIcon className="size-4" />}
+        {visible ? <EyeOffIcon /> : <EyeIcon />}
       </Button>
     </Row>
   );
