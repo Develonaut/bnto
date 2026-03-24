@@ -8,6 +8,7 @@ public/wasm
 engine/target
 archive
 pnpm-lock.yaml
+**/convex/_generated
 *.wasm
 *.png
 *.jpg
