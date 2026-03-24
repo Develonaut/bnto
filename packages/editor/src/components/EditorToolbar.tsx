@@ -12,7 +12,6 @@ import {
   MenuItem,
   FolderOpenIcon,
   SlidersHorizontalIcon,
-  TerminalIcon,
   PlusIcon,
   DownloadIcon,
   FileUpIcon,
@@ -25,6 +24,7 @@ import {
 import { useEditor } from "../context";
 import { downloadDefinition } from "../actions/downloadDefinition";
 import { RunButton } from "./RunButton";
+import { RunPanel } from "./RunPanel";
 import { OpenRecipeDialog } from "./OpenRecipeDialog";
 import { NodePaletteDialog } from "./NodePaletteDialog";
 import { HelpDialog } from "./HelpDialog";
@@ -43,7 +43,6 @@ function EditorToolbar() {
   const editor = useEditor();
   const { isOpen: paletteOpen, close: closePalette } = editor.panels.usePanels("palette");
   const { toggle: toggleConfig } = editor.panels.usePanels("config");
-  const { toggle: toggleRunPanel } = editor.panels.usePanels("run");
   const { isOpen: helpOpen, open: openHelp, close: closeHelp } = editor.panels.usePanels("help");
   const { validationErrors, recipeMetadata } = editor.definition.useDefinition();
   const { nodes } = editor.nodes.useNodes();
@@ -124,14 +123,7 @@ function EditorToolbar() {
           {/* Run / Run panel */}
           <ToolbarGroup>
             <RunButton />
-            <Button
-              icon={<TerminalIcon />}
-              variant="ghost"
-              elevation="sm"
-              onClick={toggleRunPanel}
-              aria-label="Run panel"
-              data-testid="toolbar-run-panel"
-            />
+            <RunPanel />
           </ToolbarGroup>
 
           <ToolbarDivider />

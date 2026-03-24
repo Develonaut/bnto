@@ -68,33 +68,36 @@ export function NavThemeMenu() {
               <ThemeName />
             </Text>
           </div>
-          {/* Light direction dial */}
-          <RadialSlider
-            min={135}
-            max={225}
-            value={lightAngle}
-            onChange={setLightAngle}
-            startAngle={270}
-            endAngle={90}
-            size={128}
-            strokeWidth={5}
-            aria-label="Light direction"
-            renderThumb={({ isDragging }) => (
-              <Button
-                variant="warning"
-                size="icon"
-                elevation="sm"
-                pressed={isDragging}
-                className="pointer-events-none size-7"
-              >
-                <SunIcon className="size-3.5" />
-              </Button>
-            )}
-          >
-            <span className="text-xs font-mono font-medium text-muted-foreground">
-              {angleToCardinal(lightAngle)}
-            </span>
-          </RadialSlider>
+          {/* Light direction dial — collapse empty bottom half */}
+          <div style={{ height: 80, clipPath: "inset(-12px -32px 0 -32px)" }}>
+            <RadialSlider
+              min={135}
+              max={225}
+              value={lightAngle}
+              onChange={setLightAngle}
+              startAngle={270}
+              endAngle={90}
+              size={128}
+              strokeWidth={5}
+              hideRing
+              aria-label="Light direction"
+              renderThumb={({ isDragging }) => (
+                <Button
+                  variant="warning"
+                  size="icon"
+                  elevation="sm"
+                  pressed={isDragging}
+                  className="pointer-events-none size-7"
+                >
+                  <SunIcon className="size-3.5" />
+                </Button>
+              )}
+            >
+              <span className="text-xs font-mono font-medium text-muted-foreground">
+                {angleToCardinal(lightAngle)}
+              </span>
+            </RadialSlider>
+          </div>
           {/* Reset — always visible, disabled when at default */}
           <Button variant="muted" onClick={handleReset} disabled={isDefault} className="w-full">
             <RotateCcwIcon />

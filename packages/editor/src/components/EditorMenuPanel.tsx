@@ -27,7 +27,7 @@ interface EditorMenuPanelProps {
   /** Panel ID for store-controlled open/close. */
   panelId: PanelId;
   /** Which side the menu content opens toward. */
-  side: "left" | "right";
+  side: "top" | "bottom" | "left" | "right";
   /** Trigger icon element (shown when closed). */
   icon: ReactNode;
   /** Accessible label for the trigger button. */
@@ -36,6 +36,8 @@ interface EditorMenuPanelProps {
   width?: string;
   /** Pixel distance from viewport edge before content repositions. */
   boundaryPadding?: number;
+  /** Allow closing when clicking outside the panel. Default false. */
+  dismissOnOutsideClick?: boolean;
   /** Extra classes on MenuContent. */
   className?: string;
   children: ReactNode;
@@ -48,6 +50,7 @@ function EditorMenuPanel({
   label,
   width = "w-72",
   boundaryPadding = 96,
+  dismissOnOutsideClick = false,
   className,
   children,
 }: EditorMenuPanelProps) {
@@ -74,8 +77,8 @@ function EditorMenuPanel({
         side={side}
         offset="lg"
         boundaryPadding={boundaryPadding}
-        onPointerDownOutside={preventEvent}
-        onFocusOutside={preventEvent}
+        onPointerDownOutside={dismissOnOutsideClick ? undefined : preventEvent}
+        onFocusOutside={dismissOnOutsideClick ? undefined : preventEvent}
         className={cn(width, "min-w-[290px] h-[calc(100vh-8rem)] flex flex-col p-0", className)}
       >
         {children}

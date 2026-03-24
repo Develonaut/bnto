@@ -92,7 +92,6 @@ type PanelSide = "left" | "right";
 /** Which side each panel lives on. Panels sharing a side are exclusive. */
 const PANEL_SIDES: Partial<Record<PanelId, PanelSide>> = {
   config: "right",
-  run: "right",
 };
 
 // ---------------------------------------------------------------------------
