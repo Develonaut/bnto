@@ -92,6 +92,7 @@ export {
 } from "./surface/Panel";
 export { Surface } from "./surface/Surface";
 export type { SurfaceVariant, SurfaceElevation, SurfaceRounded } from "./surface/Surface";
+export { CardActions } from "./surface/CardActions";
 export { Toolbar, ToolbarGroup, ToolbarDivider } from "./surface/Toolbar";
 
 /* Interaction */

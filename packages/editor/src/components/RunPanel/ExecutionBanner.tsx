@@ -119,7 +119,7 @@ function ExecutionBanner() {
         )}
         <Button
           variant="outline"
-          size="sm"
+          size="icon"
           icon={<DownloadIcon />}
           onClick={handleDownloadAll}
           aria-label={`Download all ${results.length} files`}

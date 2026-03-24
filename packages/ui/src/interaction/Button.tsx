@@ -40,9 +40,8 @@ const textCn = createCn({
   variants: {
     variant: VARIANT_CLASSES,
     size: {
-      sm: "h-7 px-3 text-xs rounded-sm elevation-sm [&_svg:not([class*='size-'])]:size-3",
+      sm: "h-7 px-3 py-1 text-xs rounded-sm has-[>svg]:px-2 elevation-xs [&_svg:not([class*='size-'])]:size-3.5",
       md: "h-9 px-4 py-2 text-sm rounded-md has-[>svg]:px-3 elevation-md [&_svg:not([class*='size-'])]:size-4",
-      lg: "h-11 px-6 text-base rounded-lg elevation-lg [&_svg:not([class*='size-'])]:size-5",
       icon: "h-9 px-4 py-2 text-sm rounded-md has-[>svg]:px-3 elevation-md [&_svg:not([class*='size-'])]:size-4",
     },
   },
@@ -57,10 +56,9 @@ const iconCn = createCn({
   variants: {
     variant: VARIANT_CLASSES,
     size: {
-      sm: "size-6 rounded-sm elevation-sm [&_svg]:size-3",
-      md: "size-9 rounded-md elevation-md [&_svg]:size-4",
-      lg: "size-11 rounded-lg elevation-lg [&_svg]:size-5",
-      icon: "size-9 rounded-md elevation-md [&_svg]:size-4",
+      sm: "size-7 rounded-sm elevation-xs [&_svg]:size-3.5",
+      md: "size-9 rounded-md elevation-sm [&_svg]:size-4",
+      icon: "size-9 rounded-md elevation-sm [&_svg]:size-4",
     },
   },
   defaultVariants: {
@@ -75,9 +73,8 @@ const textFaceCn = createCn({
   base: "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium shrink-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   variants: {
     size: {
-      sm: "h-7 px-3 text-xs rounded-sm [&_svg:not([class*='size-'])]:size-3",
+      sm: "h-7 px-3 py-1 text-xs has-[>svg]:px-2 rounded-sm [&_svg:not([class*='size-'])]:size-3.5",
       md: "h-9 px-4 py-2 text-sm has-[>svg]:px-3 rounded-md [&_svg:not([class*='size-'])]:size-4",
-      lg: "h-11 px-6 text-base rounded-lg [&_svg:not([class*='size-'])]:size-5",
       icon: "h-9 px-4 py-2 text-sm has-[>svg]:px-3 rounded-md [&_svg:not([class*='size-'])]:size-4",
     },
   },
@@ -88,9 +85,8 @@ const iconFaceCn = createCn({
   base: "inline-flex items-center justify-center shrink-0 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   variants: {
     size: {
-      sm: "size-6 rounded-sm [&_svg]:size-3",
+      sm: "size-7 rounded-sm [&_svg]:size-3.5",
       md: "size-9 rounded-md [&_svg]:size-4",
-      lg: "size-11 rounded-lg [&_svg]:size-5",
       icon: "size-9 rounded-md [&_svg]:size-4",
     },
   },
@@ -102,12 +98,11 @@ const iconFaceCn = createCn({
 const RADIUS_BY_SIZE: Record<string, string> = {
   sm: "rounded-sm",
   md: "rounded-md",
-  lg: "rounded-lg",
 };
 
 /* ── Button ─────────────────────────────────────────────────── */
 
-type ButtonSize = "sm" | "md" | "lg" | "icon";
+type ButtonSize = "sm" | "icon";
 
 type ButtonProps = Omit<ComponentProps<"button">, "ref"> &
   Omit<ComponentProps<"a">, "ref"> & {

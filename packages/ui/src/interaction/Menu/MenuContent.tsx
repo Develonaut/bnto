@@ -5,6 +5,7 @@ import type { ComponentPropsWithoutRef, ElementRef } from "react";
 
 import { Popup } from "../../overlay/Popup";
 import { PopoverContentUnstyled, PopoverPortal } from "../../overlay/Popover";
+import { cn } from "../../utils/cn";
 
 type MenuOffset = "sm" | "md" | "lg" | "xl";
 
@@ -47,7 +48,7 @@ export const MenuContent = forwardRef<
         className="z-dropdown outline-hidden"
         {...props}
       >
-        <Popup side={side} elevation={elevation} className={className}>
+        <Popup side={side} elevation={elevation} className={cn("p-2", className)}>
           {children}
         </Popup>
       </PopoverContentUnstyled>

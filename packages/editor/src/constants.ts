@@ -2,8 +2,8 @@
 
 const FIT_VIEW_OPTIONS = {
   padding: 0.35,
-  minZoom: 1.0,
-  maxZoom: 1.3,
+  minZoom: 1.2,
+  maxZoom: 1.2,
 } as const;
 
 export { FIT_VIEW_OPTIONS };

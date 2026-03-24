@@ -104,25 +104,14 @@ function PhaseControls({ onForce }: { onForce: (p: ExecutionPhase) => void }) {
         Force Phase
       </Text>
       <Row gap="xs" className="flex-wrap">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleForce("idle")}
-          data-testid="dev-phase-idle"
-        >
+        <Button variant="outline" onClick={handleForce("idle")} data-testid="dev-phase-idle">
           Idle
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleForce("running")}
-          data-testid="dev-phase-running"
-        >
+        <Button variant="outline" onClick={handleForce("running")} data-testid="dev-phase-running">
           Running
         </Button>
         <Button
           variant="outline"
-          size="sm"
           onClick={handleForce("completed")}
           data-testid="dev-phase-completed"
         >
@@ -130,7 +119,6 @@ function PhaseControls({ onForce }: { onForce: (p: ExecutionPhase) => void }) {
         </Button>
         <Button
           variant="destructive"
-          size="sm"
           onClick={handleForce("failed")}
           data-testid="dev-phase-failed"
         >

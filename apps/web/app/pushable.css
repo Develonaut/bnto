@@ -65,6 +65,11 @@
 }
 
 /* ── Elevation modifiers ────────────────────────────────────────── */
+.pushable.elevation-xs {
+  --elevation: 2px;
+  --elevation-wall-mag: 2.24;
+  --elevation-shadow-mag: 4;
+}
 .pushable.elevation-sm {
   --elevation: 4px;
   --elevation-wall-mag: 4.47;
@@ -321,14 +326,24 @@
   opacity: 0;
 }
 
-/* Wake on group hover/focus-within */
-:is(.group:hover, .group:focus-within) > .pushable[data-dormant],
-:is(.group:hover, .group:focus-within) .pushable[data-dormant] {
+/* Wake on group hover/focus-within/has-open.
+ *
+ * Also wakes when an ancestor .group contains a [data-state="open"]
+ * descendant (portaled popover trigger). When the cursor moves from
+ * the card to a portaled dropdown, :hover is lost but the trigger's
+ * self-wrap span retains data-state="open" — this keeps the dormant
+ * button visible. */
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"])) > .pushable[data-dormant],
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"])) .pushable[data-dormant] {
   pointer-events: auto;
 }
 
-:is(.group:hover, .group:focus-within) > .pushable[data-dormant] .pushable-face,
-:is(.group:hover, .group:focus-within) .pushable[data-dormant] .pushable-face {
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  > .pushable[data-dormant]
+  .pushable-face,
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  .pushable[data-dormant]
+  .pushable-face {
   transform: translate3d(calc(var(--face-x) * -1), calc(var(--face-y) * -1), 0);
   --face-bg: var(--variant-bg, var(--card));
   --face-fg: var(--variant-fg, var(--card-foreground));
@@ -337,13 +352,21 @@
   color: var(--face-fg);
 }
 
-:is(.group:hover, .group:focus-within) > .pushable[data-dormant] .pushable-edge,
-:is(.group:hover, .group:focus-within) .pushable[data-dormant] .pushable-edge {
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  > .pushable[data-dormant]
+  .pushable-edge,
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  .pushable[data-dormant]
+  .pushable-edge {
   background: var(--surface-wall);
 }
 
-:is(.group:hover, .group:focus-within) > .pushable[data-dormant] .pushable-shadow,
-:is(.group:hover, .group:focus-within) .pushable[data-dormant] .pushable-shadow {
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  > .pushable[data-dormant]
+  .pushable-shadow,
+:is(.group:hover, .group:focus-within, .group:has([data-state="open"]))
+  .pushable[data-dormant]
+  .pushable-shadow {
   opacity: 1;
 }
 
@@ -359,6 +382,22 @@
 
 :is(.group:hover, .group:focus-within) .pushable[data-dormant]:hover .pushable-shadow,
 :is(.group:hover, .group:focus-within) .pushable[data-dormant]:focus-visible .pushable-shadow {
+  opacity: 0.66;
+}
+
+/* Woken open — dormant trigger stays at hover depth while its popup is open.
+ * Radix PopoverTrigger asChild merges data-state="open" onto the dormant
+ * button's self-wrap <span class="group"> — so we target the parent .group
+ * with data-state="open" directly, keeping the child .pushable at sink depth. */
+.group[data-state="open"] > .pushable[data-dormant] .pushable-face {
+  transform: translate3d(
+    round(nearest, calc(var(--face-x) * -0.66), 1px),
+    round(nearest, calc(var(--face-y) * -0.66), 1px),
+    0
+  );
+}
+
+.group[data-state="open"] > .pushable[data-dormant] .pushable-shadow {
   opacity: 0.66;
 }
 

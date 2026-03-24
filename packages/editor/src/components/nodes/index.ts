@@ -1,7 +1,7 @@
 /**
  * Node components — RF node types for the visual editor canvas.
  *
- * Composition primitives (NodeRoot, NodeHeader, etc.) live in Node/
+ * Composition primitives (NodeRoot, NodeBody, etc.) live in Node/
  * and are imported directly by the RF node types below.
  */
 
