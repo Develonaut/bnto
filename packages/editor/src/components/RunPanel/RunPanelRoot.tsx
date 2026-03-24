@@ -1,24 +1,16 @@
 "use client";
 
-import { lazy, Suspense } from "react";
 import { Divider, Tabs, TabsList, TabsTrigger, TabsContent, TerminalIcon, Text } from "@bnto/ui";
 import { useEditor } from "../../context";
 import { ResultsTab } from "./ResultsTab";
 import { LogsTab } from "./LogsTab";
 import { EditorMenuPanel } from "../EditorMenuPanel";
 
-const isDev = process.env.NODE_ENV === "development";
-
-const DevTab = isDev ? lazy(() => import("./DevTab").then((m) => ({ default: m.DevTab }))) : null;
-
 /**
  * RunPanel — Menu-based results/logs panel.
  *
  * Opens to the left from the right toolbar trigger. Children
  * consume execution state directly from the editor store.
- *
- * In development, a "Dev" tab provides controls to force
- * execution phases, progress, and recipe loading.
  */
 function RunPanelRoot() {
   const editor = useEditor();
@@ -42,11 +34,6 @@ function RunPanelRoot() {
             <TabsTrigger value="logs" data-testid="tab-logs">
               <Text size="xs">Logs{logs.length > 0 ? ` (${logs.length})` : ""}</Text>
             </TabsTrigger>
-            {DevTab && (
-              <TabsTrigger value="dev" data-testid="tab-dev">
-                <Text size="xs">Dev</Text>
-              </TabsTrigger>
-            )}
           </TabsList>
         </div>
         <Divider />
@@ -56,13 +43,6 @@ function RunPanelRoot() {
         <TabsContent value="logs" className="mt-0 min-h-0 flex-1">
           <LogsTab />
         </TabsContent>
-        {DevTab && (
-          <TabsContent value="dev" className="mt-0 min-h-0 flex-1">
-            <Suspense>
-              <DevTab />
-            </Suspense>
-          </TabsContent>
-        )}
       </Tabs>
     </EditorMenuPanel>
   );
