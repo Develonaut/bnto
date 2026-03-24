@@ -1,0 +1,395 @@
+/* ── Pushable — Blur-Free 3D Buttons via DOM Separation ──────────
+ *
+ * Three real child nodes instead of single element + pseudo-elements:
+ *
+ *   <button class="pushable surface-primary elevation-md">
+ *     <span class="pushable-shadow" />   ← ground shadow
+ *     <span class="pushable-edge" />     ← wall / darker side
+ *     <span class="pushable-face" />     ← text-bearing surface
+ *   </button>
+ *
+ * Ground-plane model (must match surface.css):
+ *   - Edge is PINNED at ground level (0, 0) — never transforms
+ *   - Face floats above, translating up-left to reveal the edge behind it
+ *   - Shadow sits on the ground, offset by light angle minus face offset
+ *   - As the face sinks toward ground (hover/active), less edge is visible
+ *
+ * Anti-blur strategy (layered):
+ *   1. No transform-style: preserve-3d on face — avoids 3D re-rasterization
+ *   2. translate3d(x, y, 0) — forces GPU compositing path
+ *   3. round() on all face positions — start/end on pixel grid
+ *   4. will-change: transform — promotes to own compositor layer
+ *
+ * Removed (counter-productive — prevented re-rasterization at final position):
+ *   - filter: blur(0) — creates a rasterization boundary, text stays as stale bitmap
+ *   - backface-visibility: hidden — unnecessary for 2D transforms, same issue
+ *
+ * Edge and shadow keep sub-pixel precision (no text to blur).
+ * ────────────────────────────────────────────────────────────────── */
+
+/* ── Container ──────────────────────────────────────────────────── */
+.pushable {
+  --elevation: 6px;
+  --elevation-wall-mag: 7.81;
+  --elevation-shadow-mag: 10;
+
+  /* Wall offset — sub-pixel precision for edge/shadow */
+  --elevation-x: calc(var(--elevation-wall-mag) * 0.5px);
+  --elevation-y: calc(var(--elevation-wall-mag) * 0.5px);
+
+  /* Face offset — rounded to whole pixels for crisp text */
+  --face-x: round(nearest, var(--elevation-x), 1px);
+  --face-y: round(nearest, var(--elevation-y), 1px);
+
+  /* Ground shadow — follows --light-angle, offset from face position.
+   * In surface.css the shadow pseudo is relative to the face element,
+   * so its absolute position = face + shadow_offset.
+   * Here shadow is a sibling, so we pre-subtract the face offset. */
+  --shadow-x: calc(var(--elevation-shadow-mag) * sin(var(--light-angle)) * 1px);
+  --shadow-y: calc(var(--elevation-shadow-mag) * cos(var(--light-angle)) * -1px);
+  --shadow-base-x: calc(var(--shadow-x) - var(--face-x));
+  --shadow-base-y: calc(var(--shadow-y) - var(--face-y));
+
+  /* Face color — same computation as .surface */
+  --face-bg: var(--variant-bg, var(--card));
+  --face-fg: var(--variant-fg, var(--card-foreground));
+
+  position: relative;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  outline: none;
+}
+
+/* ── Elevation modifiers ────────────────────────────────────────── */
+.pushable.elevation-sm {
+  --elevation: 4px;
+  --elevation-wall-mag: 4.47;
+  --elevation-shadow-mag: 7;
+}
+.pushable.elevation-md {
+  --elevation: 6px;
+  --elevation-wall-mag: 7.81;
+  --elevation-shadow-mag: 10;
+}
+.pushable.elevation-lg {
+  --elevation: 10px;
+  --elevation-wall-mag: 11.31;
+  --elevation-shadow-mag: 14;
+}
+.pushable.elevation-none {
+  --elevation: 0px;
+  --elevation-wall-mag: 0;
+  --elevation-shadow-mag: 0;
+}
+.pushable.elevation-none .pushable-shadow,
+.pushable.elevation-none .pushable-edge {
+  display: none;
+}
+
+/* ── Ground shadow ──────────────────────────────────────────────── */
+.pushable-shadow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--surface-shadow);
+  transform: translate(var(--shadow-base-x), var(--shadow-base-y));
+  transition:
+    transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
+    opacity var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+  pointer-events: none;
+}
+
+/* ── Edge (wall) — PINNED at ground level ────────────────────────
+ * The edge never transforms. It sits at the container origin (ground
+ * level). The face floating above it is what reveals the wall.
+ * This matches surface.css where ::before is always at absolute (0, 0). */
+.pushable-edge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--surface-wall);
+  pointer-events: none;
+}
+
+/* ── Face (text-bearing surface) ─────────────────────────────────
+ * All transforms use translate3d with z=0 for GPU compositing.
+ * All x/y values rounded to whole pixels via --face-x/--face-y
+ * or inline round() for multiplied state values. */
+.pushable-face {
+  position: relative;
+  will-change: transform;
+  transform: translate3d(calc(var(--face-x) * -1), calc(var(--face-y) * -1), 0);
+  border: 1px solid var(--surface-wall);
+  border-radius: inherit;
+  background-color: var(--face-bg);
+  color: var(--face-fg);
+  transition: transform var(--pressable-dur, 150ms)
+    var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+}
+
+/* ── Color variants ─────────────────────────────────────────────── */
+.pushable.surface-primary {
+  --surface-wall: var(--surface-primary-wall);
+  --surface-shadow: var(--surface-primary-shadow);
+  --variant-bg: var(--primary);
+  --variant-fg: var(--primary-foreground);
+}
+.pushable.surface-secondary {
+  --surface-wall: var(--surface-secondary-wall);
+  --surface-shadow: var(--surface-secondary-shadow);
+  --variant-bg: var(--secondary);
+  --variant-fg: var(--secondary-foreground);
+}
+.pushable.surface-muted {
+  --surface-wall: var(--surface-muted-wall);
+  --surface-shadow: var(--surface-muted-shadow);
+  --variant-bg: var(--muted);
+  --variant-fg: var(--muted-foreground);
+}
+.pushable.surface-destructive {
+  --surface-wall: var(--surface-destructive-wall);
+  --surface-shadow: var(--surface-destructive-shadow);
+  --variant-bg: var(--destructive);
+  --variant-fg: var(--destructive-foreground);
+}
+.pushable.surface-success {
+  --surface-wall: var(--surface-success-wall);
+  --surface-shadow: var(--surface-success-shadow);
+  --variant-bg: var(--success);
+  --variant-fg: var(--success-foreground);
+}
+.pushable.surface-warning {
+  --surface-wall: var(--surface-warning-wall);
+  --surface-shadow: var(--surface-warning-shadow);
+  --variant-bg: var(--warning);
+  --variant-fg: var(--warning-foreground);
+}
+.pushable.surface-outline {
+  --surface-wall: var(--surface-outline-wall);
+  --surface-shadow: var(--surface-outline-shadow);
+  --variant-bg: var(--card);
+  --variant-fg: var(--card-foreground);
+}
+.pushable.surface-ghost {
+  --surface-wall: var(--surface-outline-wall);
+  --surface-shadow: var(--surface-outline-shadow);
+  --variant-bg: var(--card);
+  --variant-fg: var(--card-foreground);
+}
+
+/* ── Hover / focus-visible — face sinks 33% ─────────────────────── */
+.pushable:hover .pushable-face,
+.pushable:focus-visible .pushable-face,
+.pushable[data-hover] .pushable-face,
+.pushable[data-state="open"] .pushable-face {
+  transform: translate3d(
+    round(nearest, calc(var(--face-x) * -0.66), 1px),
+    round(nearest, calc(var(--face-y) * -0.66), 1px),
+    0
+  );
+}
+
+/* Edge stays pinned — no transform override needed */
+
+.pushable:hover .pushable-shadow,
+.pushable:focus-visible .pushable-shadow,
+.pushable[data-hover] .pushable-shadow,
+.pushable[data-state="open"] .pushable-shadow {
+  transform: translate(calc(var(--shadow-base-x) * 0.66), calc(var(--shadow-base-y) * 0.66));
+}
+
+/* ── Active — face flush with ground ──────────────────────────── */
+.pushable:active .pushable-face,
+.pushable[data-active] .pushable-face {
+  transform: translate3d(0, 0, 0);
+  transition-duration: var(--pressable-press-dur, 34ms);
+}
+
+/* Edge stays pinned — no transform override needed */
+
+.pushable:active .pushable-shadow,
+.pushable[data-active] .pushable-shadow {
+  transform: translate(0, 0);
+  opacity: 0;
+  transition-duration: var(--pressable-press-dur, 34ms);
+}
+
+/* ── Toggle mode ──────────────────────────────────────────────── */
+
+/* Toggle ON resting — 33% sunk (same as hover depth) */
+.pushable[data-toggle][data-active] .pushable-face {
+  transform: translate3d(
+    round(nearest, calc(var(--face-x) * -0.66), 1px),
+    round(nearest, calc(var(--face-y) * -0.66), 1px),
+    0
+  );
+  transition-duration: var(--pressable-dur, 150ms);
+}
+
+.pushable[data-toggle][data-active] .pushable-shadow {
+  transform: translate(calc(var(--shadow-base-x) * 0.66), calc(var(--shadow-base-y) * 0.66));
+  opacity: 0.66;
+  transition-duration: var(--pressable-dur, 150ms);
+}
+
+/* Toggle ON hover — 66% sunk */
+.pushable[data-toggle][data-active]:hover .pushable-face,
+.pushable[data-toggle][data-active]:focus-visible .pushable-face {
+  transform: translate3d(
+    round(nearest, calc(var(--face-x) * -0.33), 1px),
+    round(nearest, calc(var(--face-y) * -0.33), 1px),
+    0
+  );
+}
+
+.pushable[data-toggle][data-active]:hover .pushable-shadow,
+.pushable[data-toggle][data-active]:focus-visible .pushable-shadow {
+  transform: translate(calc(var(--shadow-base-x) * 0.33), calc(var(--shadow-base-y) * 0.33));
+  opacity: 0.33;
+}
+
+/* Toggle ON press — flush */
+.pushable[data-toggle][data-active]:active .pushable-face {
+  transform: translate3d(0, 0, 0);
+  transition-duration: var(--pressable-press-dur, 34ms);
+}
+
+.pushable[data-toggle][data-active]:active .pushable-shadow {
+  transform: translate(0, 0);
+  opacity: 0;
+  transition-duration: var(--pressable-press-dur, 34ms);
+}
+
+/* ── Focus ────────────────────────────────────────────────────── */
+.pushable:focus-visible .pushable-face {
+  outline: 2px solid var(--surface-wall);
+  outline-offset: -5px;
+}
+
+/* ── Muted modifier ───────────────────────────────────────────── */
+.pushable[data-muted] {
+  --face-bg: color-mix(in oklch, var(--variant-bg, var(--card)) 60%, var(--muted));
+  --face-fg: var(--muted-foreground);
+}
+
+/* ── Ghost active — border vanishes when flush ──────────────────── */
+.pushable.surface-ghost:active .pushable-face,
+.pushable.surface-ghost[data-active] .pushable-face {
+  border-color: transparent;
+  transition:
+    border-color var(--pressable-press-dur, 34ms) ease-out var(--pressable-press-dur, 34ms),
+    transform var(--pressable-press-dur, 34ms);
+}
+
+/* ── Disabled — flush, monochromatic, no interaction ──────────── */
+.pushable:disabled .pushable-face,
+.pushable[aria-disabled="true"] .pushable-face {
+  transform: translate3d(0, 0, 0);
+}
+.pushable:disabled .pushable-shadow,
+.pushable[aria-disabled="true"] .pushable-shadow {
+  display: none;
+}
+.pushable:disabled,
+.pushable[aria-disabled="true"] {
+  pointer-events: none;
+}
+
+/* ── Dormant — grounded + muted, wakes on ancestor .group hover ── */
+.pushable[data-dormant] {
+  pointer-events: none;
+}
+
+.pushable[data-dormant] .pushable-face {
+  transform: translate3d(0, 0, 0);
+  --face-bg: var(--border);
+  --face-fg: var(--muted-foreground);
+  border-color: var(--surface-muted-wall);
+  background-color: var(--face-bg);
+  color: var(--face-fg);
+}
+
+.pushable[data-dormant] .pushable-edge {
+  background: var(--surface-muted-wall);
+}
+
+.pushable[data-dormant] .pushable-shadow {
+  opacity: 0;
+}
+
+/* Wake on group hover/focus-within */
+:is(.group:hover, .group:focus-within) > .pushable[data-dormant],
+:is(.group:hover, .group:focus-within) .pushable[data-dormant] {
+  pointer-events: auto;
+}
+
+:is(.group:hover, .group:focus-within) > .pushable[data-dormant] .pushable-face,
+:is(.group:hover, .group:focus-within) .pushable[data-dormant] .pushable-face {
+  transform: translate3d(calc(var(--face-x) * -1), calc(var(--face-y) * -1), 0);
+  --face-bg: var(--variant-bg, var(--card));
+  --face-fg: var(--variant-fg, var(--card-foreground));
+  border-color: var(--surface-wall);
+  background-color: var(--face-bg);
+  color: var(--face-fg);
+}
+
+:is(.group:hover, .group:focus-within) > .pushable[data-dormant] .pushable-edge,
+:is(.group:hover, .group:focus-within) .pushable[data-dormant] .pushable-edge {
+  background: var(--surface-wall);
+}
+
+:is(.group:hover, .group:focus-within) > .pushable[data-dormant] .pushable-shadow,
+:is(.group:hover, .group:focus-within) .pushable[data-dormant] .pushable-shadow {
+  opacity: 1;
+}
+
+/* Woken hover — sink */
+:is(.group:hover, .group:focus-within) .pushable[data-dormant]:hover .pushable-face,
+:is(.group:hover, .group:focus-within) .pushable[data-dormant]:focus-visible .pushable-face {
+  transform: translate3d(
+    round(nearest, calc(var(--face-x) * -0.66), 1px),
+    round(nearest, calc(var(--face-y) * -0.66), 1px),
+    0
+  );
+}
+
+:is(.group:hover, .group:focus-within) .pushable[data-dormant]:hover .pushable-shadow,
+:is(.group:hover, .group:focus-within) .pushable[data-dormant]:focus-visible .pushable-shadow {
+  opacity: 0.66;
+}
+
+/* Woken active — flush */
+:is(.group:hover, .group:focus-within) .pushable[data-dormant]:active .pushable-face {
+  transform: translate3d(0, 0, 0);
+  transition-duration: var(--pressable-press-dur, 34ms);
+}
+
+:is(.group:hover, .group:focus-within) .pushable[data-dormant]:active .pushable-shadow {
+  opacity: 0;
+  transition-duration: var(--pressable-press-dur, 34ms);
+}
+
+/* ── Reduced motion ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .pushable-face,
+  .pushable-shadow {
+    transition: none !important;
+    will-change: auto !important;
+  }
+
+  .pushable:hover .pushable-face,
+  .pushable:focus-visible .pushable-face,
+  .pushable:active .pushable-face {
+    transform: translate3d(calc(var(--face-x) * -1), calc(var(--face-y) * -1), 0);
+  }
+
+  .pushable:hover .pushable-shadow,
+  .pushable:focus-visible .pushable-shadow,
+  .pushable:active .pushable-shadow {
+    transform: translate(var(--shadow-base-x), var(--shadow-base-y));
+  }
+}
