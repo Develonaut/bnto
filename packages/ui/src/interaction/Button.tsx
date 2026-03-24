@@ -100,6 +100,18 @@ const RADIUS_BY_SIZE: Record<string, string> = {
   md: "rounded-md",
 };
 
+/* ── Elevation for pushable container (must match iconCn / textCn) ── */
+
+const ICON_ELEVATION_BY_SIZE: Record<string, string> = {
+  sm: "elevation-sm",
+  md: "elevation-sm",
+};
+
+const TEXT_ELEVATION_BY_SIZE: Record<string, string> = {
+  sm: "elevation-sm",
+  md: "elevation-md",
+};
+
 /* ── Button ─────────────────────────────────────────────────── */
 
 type ButtonSize = "sm" | "icon";
@@ -113,6 +125,7 @@ type ButtonProps = Omit<ComponentProps<"button">, "ref"> &
     asChild?: boolean;
     elevation?: ElevationOverride;
     spring?: SpringMode;
+    fullWidth?: boolean;
     muted?: boolean;
     hovered?: boolean;
     pressed?: boolean;
@@ -130,6 +143,7 @@ function Button({
   as,
   elevation = true,
   spring = "bounciest",
+  fullWidth = false,
   muted = false,
   hovered = false,
   pressed = false,
@@ -175,7 +189,12 @@ function Button({
 
   // asChild / as — single-element rendering (Slot requires single child)
   if (asChild || as) {
-    const behaviorCn = cn("pressable outline-none surface", variantClass, elevationClass);
+    const behaviorCn = cn(
+      "pressable outline-none surface",
+      variantClass,
+      elevationClass,
+      fullWidth && "flex w-full",
+    );
     const applySize = size !== undefined || (!asChild && !as);
     const sizeClasses = applySize
       ? isIcon
@@ -194,7 +213,15 @@ function Button({
   }
 
   // Standard — three-span pushable DOM (blur-free animations)
-  const containerClasses = cn("pushable inline-flex", variantClass, elevationClass);
+  const sizeElevation = isIcon
+    ? ICON_ELEVATION_BY_SIZE[resolvedSize]
+    : TEXT_ELEVATION_BY_SIZE[resolvedSize];
+  const containerClasses = cn(
+    "pushable",
+    fullWidth ? "flex w-full" : "inline-flex",
+    variantClass,
+    elevationClass ?? sizeElevation,
+  );
   const radiusClass = RADIUS_BY_SIZE[resolvedSize] ?? "rounded-md";
   const faceClasses = isIcon
     ? iconFaceCn({ size: resolvedSize })
@@ -210,8 +237,15 @@ function Button({
 
   // Dormant buttons self-manage their group wrapper so consumers
   // don't need to add `group` to an ancestor element.
+  // Padding extends the hover zone so the button wakes before the
+  // cursor is directly on it; negative margin cancels layout shift.
+  // Disabled dormant buttons skip the group wrapper — no wake behavior,
+  // just opacity + pointer-events-none to match InputWrapper disabled.
   if (dormant) {
-    return <span className="group inline-flex">{button}</span>;
+    if (disabled) {
+      return <span className="inline-flex opacity-50 pointer-events-none">{button}</span>;
+    }
+    return <span className="group inline-flex p-4 -m-4">{button}</span>;
   }
 
   return button;

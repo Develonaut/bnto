@@ -2,11 +2,12 @@
 
 import { useCallback } from "react";
 import { Badge, Divider, Heading, SlidersHorizontalIcon, Text, usePrevious } from "@bnto/ui";
+import { isIoNodeType } from "@bnto/core";
 import { useEditor } from "../../context";
 import { useEditorNode } from "../../hooks/useEditorNode";
 import { SchemaForm } from "@bnto/form";
 import { EditorMenuPanel } from "../EditorMenuPanel";
-import { ConfigPanelNodeMenu } from "./ConfigPanelNodeMenu";
+import { ConfigPanelDeleteButton } from "./ConfigPanelDeleteButton";
 
 /**
  * ConfigPanel — Menu-based config panel.
@@ -57,10 +58,12 @@ function ConfigPanelRoot() {
               <Heading level={3} size="xs" className="min-w-0 flex-1 truncate">
                 {config.displayName || config.name || typeInfo.label}
               </Heading>
-              <ConfigPanelNodeMenu
-                nodeId={configNodeId}
-                nodeName={config.displayName || config.name || typeInfo.label}
-              />
+              {!isIoNodeType(config.nodeType) && (
+                <ConfigPanelDeleteButton
+                  nodeId={configNodeId}
+                  nodeName={config.displayName || config.name || typeInfo.label}
+                />
+              )}
             </div>
             {typeInfo.description && (
               <Text size="xs" color="muted" className="mt-1">
