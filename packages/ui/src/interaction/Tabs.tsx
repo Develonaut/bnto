@@ -64,25 +64,19 @@ export const TabsTrigger = forwardRef<
   const activeValue = useContext(TabsValueContext);
   const isActive = activeValue === value;
 
-  const trigger = (
-    <TabsPrimitive.Trigger ref={ref} value={value} asChild {...props}>
-      <Button
-        toggle
-        pressed={isActive}
-        variant={isActive ? "outline" : "ghost"}
-        data-dormant={!isActive ? "" : undefined}
-        className="rounded-full"
-      >
-        {children}
-      </Button>
-    </TabsPrimitive.Trigger>
+  return (
+    <span className={isActive ? "inline-flex" : "group inline-flex p-1 -m-0.5"}>
+      <TabsPrimitive.Trigger ref={ref} value={value} asChild {...props}>
+        <Button
+          variant={isActive ? "outline" : "ghost"}
+          data-dormant={!isActive ? "" : undefined}
+          className="rounded-full"
+        >
+          {children}
+        </Button>
+      </TabsPrimitive.Trigger>
+    </span>
   );
-
-  if (!isActive) {
-    return <span className="group inline-flex">{trigger}</span>;
-  }
-
-  return trigger;
 });
 TabsTrigger.displayName = "Tabs.Trigger";
 

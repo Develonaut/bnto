@@ -31,6 +31,8 @@ const roundedMap: Record<SurfaceRounded, string> = {
   full: "rounded-full",
 };
 
+type SurfaceBorder = "solid" | "dashed" | "none";
+
 type SurfaceProps = ComponentProps<"div"> & {
   /** Color variant. `"default"` uses the card surface (no color class). */
   variant?: SurfaceVariant;
@@ -42,8 +44,8 @@ type SurfaceProps = ComponentProps<"div"> & {
   spring?: SpringMode;
   /** Flush with the ground plane, muted appearance. Requires `spring`. */
   grounded?: boolean;
-  /** Render with a dashed border instead of a solid one. */
-  dashed?: boolean;
+  /** Border style. Default `"solid"`. */
+  border?: SurfaceBorder;
   /** Merge onto child element instead of wrapping in a `<div>`. */
   asChild?: boolean;
 };
@@ -54,22 +56,26 @@ export function Surface({
   rounded = "lg",
   spring,
   grounded,
-  dashed,
+  border = "solid",
   asChild,
   className,
   style,
   ...props
 }: SurfaceProps) {
+  const isGhost = variant === "ghost";
+  const resolvedElevation = isGhost ? "none" : elevation;
+
   const Comp = asChild ? Slot : "div";
   return (
     <Comp
       data-grounded={spring && grounded ? "" : undefined}
       className={cn(
         "surface",
-        `elevation-${elevation}`,
+        `elevation-${resolvedElevation}`,
         variant !== "default" && `surface-${variant}`,
         spring && "springable",
-        dashed && "surface-dashed",
+        border === "dashed" && "surface-dashed",
+        border === "none" && "surface-border-none",
         roundedMap[rounded],
         className,
       )}
@@ -79,4 +85,4 @@ export function Surface({
   );
 }
 
-export type { SurfaceVariant, SurfaceElevation, SurfaceRounded };
+export type { SurfaceVariant, SurfaceElevation, SurfaceRounded, SurfaceBorder };

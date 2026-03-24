@@ -133,6 +133,11 @@
   outline-offset: -4px;
 }
 
+/* Border none — transparent border preserves layout (no shift when toggling). */
+.surface-border-none {
+  border-color: transparent;
+}
+
 /* ── Reset ──────────────────────────────────────────────────────── */
 
 .elevation-none {
@@ -216,15 +221,20 @@
   --variant-fg: var(--card-foreground);
 }
 
-/* Ghost — same as outline when raised, invisible when pressed.
- * Border disappears on active so the face blends flush into its
- * surrounding surface. Small delay lets the button sink flush
- * before the border vanishes. Used for nav/logo buttons. */
+/* Ghost — transparent face, no elevation.
+ * Non-pushable ghost surfaces (ListItem, etc.) blend into their parent.
+ * Pushable ghost (Button) overrides --variant-bg back to card in pushable.css
+ * so the 3D face illusion still works. */
 .surface-ghost {
   --surface-wall: var(--surface-outline-wall);
   --surface-shadow: var(--surface-outline-shadow);
-  --variant-bg: var(--card);
+  --variant-bg: transparent;
   --variant-fg: var(--card-foreground);
+}
+.surface-ghost[data-selectable]:hover,
+.surface-ghost[data-selectable]:focus-visible {
+  background-color: var(--muted);
+  cursor: pointer;
 }
 .pressable.surface-ghost:active,
 .pressable.surface-ghost[data-active] {

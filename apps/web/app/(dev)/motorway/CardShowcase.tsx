@@ -1,4 +1,4 @@
-import { Card, Surface, Grid, GridItem, Text, PlusIcon } from "@bnto/ui";
+import { Card, Grid, GridItem, Text } from "@bnto/ui";
 
 export function CardShowcase() {
   return (
@@ -40,18 +40,15 @@ export function CardShowcase() {
         </Card>
       </GridItem>
       <GridItem colSpan={2} rowSpan={1} colStart={3} rowStart={3}>
-        <Surface
-          elevation="none"
-          dashed
-          rounded="xl"
-          className="flex h-full min-h-24 flex-col items-center justify-center gap-1.5"
-          data-testid="surface-dashed"
+        <Card
+          elevation="sm"
+          className="flex h-full min-h-24 items-center justify-center rounded-xl font-display font-semibold text-muted-foreground"
+          data-testid="elevation-card-sm-alt"
         >
-          <PlusIcon className="size-6 text-muted-foreground/40" />
           <Text size="sm" color="muted" className="font-display font-medium">
-            dashed
+            sm
           </Text>
-        </Surface>
+        </Card>
       </GridItem>
     </Grid>
   );

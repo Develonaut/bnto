@@ -281,13 +281,22 @@
   --face-fg: var(--muted-foreground);
 }
 
-/* ── Ghost active — border vanishes when flush ──────────────────── */
+/* ── Ghost active — face goes transparent when flush ────────────── *
+ * Delay matches the press duration so the button sinks flush first,
+ * THEN the face and border fade out. */
 .pushable.surface-ghost:active .pushable-face,
 .pushable.surface-ghost[data-active] .pushable-face {
+  --face-bg: transparent;
   border-color: transparent;
+  background-color: transparent;
   transition:
     border-color var(--pressable-press-dur, 34ms) ease-out var(--pressable-press-dur, 34ms),
+    background-color var(--pressable-press-dur, 34ms) ease-out var(--pressable-press-dur, 34ms),
     transform var(--pressable-press-dur, 34ms);
+}
+.pushable.surface-ghost:active .pushable-edge,
+.pushable.surface-ghost[data-active] .pushable-edge {
+  background: transparent;
 }
 
 /* ── Disabled — flush, monochromatic, no interaction ──────────── */

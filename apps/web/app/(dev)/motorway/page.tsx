@@ -3,6 +3,7 @@
 import { Heading, Stack, Tabs, TabsList, TabsTrigger, TabsContent, Text } from "@bnto/ui";
 
 import { AnimationShowcase } from "./AnimationShowcase";
+import { BorderShowcase } from "./BorderShowcase";
 import { EmptyStateShowcase } from "./EmptyStateShowcase";
 import { ButtonShowcase } from "./ButtonShowcase";
 import { CheckboxShowcase } from "./CheckboxShowcase";
@@ -16,7 +17,7 @@ import { FormShowcase } from "./FormShowcase";
 import { InputShowcase } from "./InputShowcase";
 import { KeyValueEditorShowcase } from "./KeyValueEditorShowcase";
 import { MenuShowcase } from "./MenuShowcase";
-import { NotificationCards } from "./NotificationCards";
+import { ListShowcase } from "./ListShowcase";
 import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
 import { ProgressShowcase } from "./ProgressShowcase";
 import { RadioGroupShowcase } from "./RadioGroupShowcase";
@@ -78,6 +79,14 @@ export default function MotorwayPage() {
               description="Cards cast directional shadows that follow the light source. Four elevation tiers from flush to floating."
             >
               <CardShowcase />
+            </ShowcaseSection>
+
+            <ShowcaseSection
+              id="border"
+              title="Border"
+              description="Three border modes for surfaces. Solid is the default, dashed for placeholder slots, none for borderless rows like list items."
+            >
+              <BorderShowcase />
             </ShowcaseSection>
 
             <ShowcaseSection
@@ -206,11 +215,11 @@ export default function MotorwayPage() {
             </ShowcaseSection>
 
             <ShowcaseSection
-              id="notifications"
+              id="lists"
               title="Lists"
-              description="List items with static card surface."
+              description="Flat rows with Surface foundation. Notifications, grouped items with subheaders, selectable rows with border state, and action menus."
             >
-              <NotificationCards />
+              <ListShowcase />
             </ShowcaseSection>
 
             <ShowcaseSection
