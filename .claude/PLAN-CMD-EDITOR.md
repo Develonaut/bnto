@@ -44,13 +44,13 @@ Archive RF-specific components. Stand up the CmdEditor shell with a static tree 
 
 ## Phase 2: Keyboard Navigation
 
-### Status: TODO
+### Status: DONE
 
 Arrow keys navigate the tree. Focus flows between tree and command input.
 
-- [TODO] 2.1 — Arrow key navigation in tree (`useTreeKeyboard` hook)
-- [TODO] 2.2 — Focus management between tree and command (`useFocusZones` hook)
-- [TODO] 2.3 — Code review gate (x3)
+- [DONE] 2.1 — Arrow key navigation in tree (`useTreeKeyboard` hook)
+- [DONE] 2.2 — Focus management between tree and command (`useFocusZones` hook)
+- [DONE] 2.3 — Code review gate (x3)
 
 ---
 

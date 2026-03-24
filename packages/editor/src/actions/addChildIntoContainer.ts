@@ -80,6 +80,7 @@ function addChildIntoContainer(
     nextState: withUndo(state, {
       nodes: nextNodes,
       configs: nextConfigs,
+      selectedNodeId: result.node.id,
       expandedContainerIds: nextExpandedIds,
       ...(nextDefinition !== state.definition ? { definition: nextDefinition } : {}),
     }),

@@ -98,17 +98,36 @@ export type { SchemaFieldProps } from "@bnto/form";
 
 export {
   CmdEditorShell,
+  CmdEditorTree,
+  CmdEditorCommand,
   CmdInput,
   NodeTree,
-  NodeTreeItem,
-  NodeTreeGroup,
 } from "./components/CmdEditor";
-export type { NodeTreeItemProps } from "./components/CmdEditor";
+
+// --- Hooks ---
+
+export { useFocusZones } from "./hooks/useFocusZones";
+export { useCommands } from "./hooks/useCommands";
+export { useCmdEditorShortcuts } from "./hooks/useCmdEditorShortcuts";
+
+// --- Helpers ---
+
+// --- Commands ---
+
+export type { Command, CommandGroup } from "./commands/types";
+export { resolveCommands, groupCommands } from "./commands/resolveCommands";
+export { buildGlobalCommands } from "./commands/globalCommands";
+export {
+  buildAddNodeEntry,
+  buildCategoryCommands,
+  buildProcessorCommands,
+} from "./commands/addNodeCommands";
 
 // --- Helpers ---
 
 export { buildNodeListTree } from "./helpers/buildNodeListTree";
 export type { NodeListEntry, NodeListTree } from "./helpers/buildNodeListTree";
+export { flattenTreeEntries } from "./helpers/flattenTreeEntries";
 
 // --- Dialogs ---
 

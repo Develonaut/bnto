@@ -91,6 +91,7 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
               ? { ...n, selected: false }
               : n,
         ),
+        selectedNodeId: id,
         panels: id ? autoOpenConfig(s.panels) : autoCloseConfig(s.panels),
       }));
     },
@@ -134,6 +135,15 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
     setSelectedNodeId: (id) => {
       set((s) => ({
         selectedNodeId: id,
+        nodes: s.nodes.map((n) =>
+          n.id === id
+            ? n.selected
+              ? n
+              : { ...n, selected: true }
+            : n.selected
+              ? { ...n, selected: false }
+              : n,
+        ),
         panels: id ? autoOpenConfig(s.panels) : autoCloseConfig(s.panels),
       }));
     },

@@ -1,19 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
-import { Text, PlusIcon, Surface } from "@bnto/ui";
+import { Text } from "@bnto/ui";
 import { useEditor } from "../../context";
 import { buildNodeListTree } from "../../helpers/buildNodeListTree";
-import { NodeTreeItem } from "./NodeTreeItem";
-import { NodeTreeGroup } from "./NodeTreeGroup";
+import type { NodeListEntry } from "../../helpers/buildNodeListTree";
 
 /**
- * NodeTree — read-only tree rendering of the recipe node hierarchy.
+ * NodeTree — minimal text display of the recipe node list.
  *
- * Uses buildNodeListTree for proper parent/child nesting. Container
- * nodes render with dashed borders wrapping their children.
- * Selection will be driven by keyboard navigation (Phase 2).
- * All mutation goes through the command palette.
+ * Read-only overview. All interaction goes through the command input.
  */
 function NodeTree() {
   const editor = useEditor();
@@ -23,55 +19,92 @@ function NodeTree() {
 
   if (tree.entries.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Text color="muted" size="sm">
-          No nodes yet. Use the command input to add one.
-        </Text>
-      </div>
+      <Text size="sm" color="muted" className="py-4 text-center">
+        Empty recipe. Type /add to get started.
+      </Text>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2" role="tree" aria-label="Recipe nodes">
-      {tree.entries.map((entry, i) => {
-        const showPlaceholder = tree.placeholderIndex === i;
-        return (
-          <div key={entry.node.id} className="flex flex-col gap-2">
-            {showPlaceholder && <NodeTreePlaceholder />}
-            {entry.isContainer ? (
-              <NodeTreeGroup
-                entry={entry}
-                selectedNodeId={selectedNodeId}
-                expandedContainerIds={expandedContainerIds}
-              />
-            ) : (
-              <NodeTreeItem
-                nodeId={entry.node.id}
-                label={entry.config.displayName ?? entry.config.name}
-                icon={entry.node.data.icon}
-                variant={entry.node.data.variant ?? "muted"}
-                selected={selectedNodeId === entry.node.id}
-                isIoNode={entry.node.data.isIoNode ?? false}
-              />
-            )}
-          </div>
-        );
-      })}
-      {tree.placeholderIndex === tree.entries.length && <NodeTreePlaceholder />}
+    <div className="flex flex-col gap-0.5" role="tree" aria-label="Recipe nodes">
+      {tree.entries.map((entry, i) => (
+        <div key={entry.node.id}>
+          {tree.placeholderIndex === i && <PlaceholderRow />}
+          <EntryRows
+            entry={entry}
+            selectedNodeId={selectedNodeId}
+            expandedIds={expandedContainerIds}
+            depth={0}
+          />
+        </div>
+      ))}
+      {tree.placeholderIndex === tree.entries.length && <PlaceholderRow />}
     </div>
   );
 }
 
-/** Dashed-border placeholder shown when no processing nodes exist. */
-function NodeTreePlaceholder() {
+/** Recursively renders a node and its expanded children. */
+function EntryRows({
+  entry,
+  selectedNodeId,
+  expandedIds,
+  depth,
+}: {
+  entry: NodeListEntry;
+  selectedNodeId: string | null;
+  expandedIds: Set<string>;
+  depth: number;
+}) {
   return (
-    <Surface variant="muted" dashed elevation="none" className="flex items-center gap-2 px-3 py-3">
-      <PlusIcon className="size-4 shrink-0 text-muted-foreground" />
-      <Text size="xs" color="muted">
-        Add a node from the command input
-      </Text>
-    </Surface>
+    <>
+      <NodeRow entry={entry} selected={selectedNodeId === entry.node.id} depth={depth} />
+      {entry.isContainer &&
+        expandedIds.has(entry.node.id) &&
+        entry.children.map((child) => (
+          <EntryRows
+            key={child.node.id}
+            entry={child}
+            selectedNodeId={selectedNodeId}
+            expandedIds={expandedIds}
+            depth={depth + 1}
+          />
+        ))}
+    </>
   );
+}
+
+function NodeRow({
+  entry,
+  selected,
+  depth,
+}: {
+  entry: NodeListEntry;
+  selected: boolean;
+  depth: number;
+}) {
+  const editor = useEditor();
+  const label = entry.config.displayName ?? entry.config.name;
+  const isIo = entry.node.data.isIoNode ?? false;
+
+  return (
+    <button
+      type="button"
+      className={`flex w-full items-center gap-1 rounded-md px-2 py-1 text-left text-sm outline-none ${
+        selected ? "bg-accent/40 font-medium" : "hover:bg-muted/50"
+      }`}
+      style={depth > 0 ? { paddingLeft: `${depth * 16 + 8}px` } : undefined}
+      role="treeitem"
+      aria-selected={selected}
+      onClick={() => editor.nodes.selectNode(entry.node.id)}
+    >
+      <span className="w-3 shrink-0 text-muted-foreground">{selected ? ">" : ""}</span>
+      <span className={isIo ? "text-muted-foreground" : ""}>{label}</span>
+    </button>
+  );
+}
+
+function PlaceholderRow() {
+  return <div className="px-2 py-1 text-sm text-muted-foreground">+ add a node</div>;
 }
 
 export { NodeTree };

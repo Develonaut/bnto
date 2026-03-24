@@ -6,7 +6,6 @@
  */
 
 export {
-  ArrowDown as ArrowDownIcon,
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
   ArrowRightLeft as ArrowRightLeftIcon,

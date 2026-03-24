@@ -1,6 +1,13 @@
 "use client";
 
-import { EditorProvider, CmdEditorShell, NodeTree, CmdInput } from "@bnto/editor";
+import {
+  EditorProvider,
+  CmdEditorShell,
+  CmdEditorTree,
+  CmdEditorCommand,
+  NodeTree,
+  CmdInput,
+} from "@bnto/editor";
 import { Stack, Text } from "@bnto/ui";
 
 import { EditorBetaDialog } from "./_components/EditorBetaDialog";
@@ -31,8 +38,13 @@ export default function EditorPage() {
     <>
       <EditorBetaDialog />
       <EditorProvider definition={definition} cloudId={cloudId}>
-        <CmdEditorShell commandSlot={<CmdInput />}>
-          <NodeTree />
+        <CmdEditorShell>
+          <CmdEditorTree>
+            <NodeTree />
+          </CmdEditorTree>
+          <CmdEditorCommand>
+            <CmdInput />
+          </CmdEditorCommand>
         </CmdEditorShell>
       </EditorProvider>
     </>

@@ -109,8 +109,12 @@
 
 .surface-dashed {
   border-color: transparent;
-  outline: 2px dashed var(--surface-wall);
-  outline-offset: -3px;
+  outline: 1px dashed var(--surface-wall);
+  outline-offset: -2px;
+}
+
+.surface-dashed:focus-within {
+  outline-color: var(--primary);
 }
 
 /* ── Reset ──────────────────────────────────────────────────────── */
@@ -425,6 +429,14 @@
 .pressable:focus-visible {
   outline: 2px solid var(--surface-wall);
   outline-offset: -5px;
+}
+
+/* Tree item focus — solid primary outline on the face */
+.surface[role="treeitem"]:focus-visible {
+  outline-width: 2px;
+  outline-style: solid;
+  outline-color: var(--primary);
+  outline-offset: -2px;
 }
 
 /* Dropzone — focus fills in the dashed outline at the same position */

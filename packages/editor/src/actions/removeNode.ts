@@ -36,7 +36,7 @@ export function removeNode(state: EditorState, id: string): Partial<EditorState>
     idsToRemove,
     parentContainerId,
   );
-  autoSelectNearest(reflowed, parentContainerId, removedIndex);
+  const nextSelectedId = autoSelectNearest(reflowed, parentContainerId, removedIndex);
 
   const nextDefinition = removeFromDefinition(state.definition, id, parentContainerId);
   const nextExpandedIds = cleanExpandedIds(state.expandedContainerIds, idsToRemove);
@@ -44,6 +44,7 @@ export function removeNode(state: EditorState, id: string): Partial<EditorState>
   return withUndo(state, {
     nodes: reflowed,
     configs: nextConfigs,
+    selectedNodeId: nextSelectedId,
     ...(nextDefinition !== state.definition ? { definition: nextDefinition } : {}),
     ...(nextExpandedIds.size !== state.expandedContainerIds.size
       ? { expandedContainerIds: nextExpandedIds }
@@ -86,14 +87,14 @@ function removeAndReflow(
   return { nodes: [...sameLevel, ...otherLevel], configs };
 }
 
-/** Auto-select the nearest remaining same-level node after removal. */
+/** Auto-select the nearest remaining same-level node after removal. Returns selected ID or null. */
 function autoSelectNearest(
   nodes: BentoNode[],
   parentContainerId: string | undefined,
   removedIndex: number,
-): void {
+): string | null {
   const sameLevelNodes = nodes.filter((n) => n.data.parentContainerId === parentContainerId);
-  if (sameLevelNodes.length === 0) return;
+  if (sameLevelNodes.length === 0) return null;
 
   const selectIdx = Math.min(removedIndex > 0 ? removedIndex - 1 : 0, sameLevelNodes.length - 1);
   const selectId = sameLevelNodes[selectIdx]!.id;
@@ -101,6 +102,7 @@ function autoSelectNearest(
   if (nodeIdx >= 0) {
     nodes[nodeIdx] = { ...nodes[nodeIdx]!, selected: true };
   }
+  return selectId;
 }
 
 /** Remove node from the definition tree (root or container child). */

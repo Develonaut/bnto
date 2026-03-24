@@ -52,6 +52,7 @@ function addSiblingChild(
     nextState: withUndo(state, {
       nodes: nextNodes,
       configs: nextConfigs,
+      selectedNodeId: result.node.id,
       ...(nextDefinition !== state.definition ? { definition: nextDefinition } : {}),
       ...(nextExpandedIds ? { expandedContainerIds: nextExpandedIds } : {}),
     }),
