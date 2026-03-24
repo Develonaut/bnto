@@ -19,7 +19,7 @@ import {
   ZapIcon,
 } from "@bnto/ui";
 
-import { Button, Card, Heading, Row, Stack, Text } from "@bnto/ui";
+import { Button, Card, Heading, Row, Stack, Text, cn } from "@bnto/ui";
 
 type Variant =
   | "primary"
@@ -77,7 +77,7 @@ function VariantGrid({ state }: { state: ButtonState }) {
       {VARIANTS.map(({ value, iconLabel }) => {
         const iconEntry = iconLabel ? ICON_LABELS[iconLabel] : null;
         return (
-          <Row key={value} className="items-center gap-3">
+          <Row key={value} className={cn("items-center gap-3", dormant && "group")}>
             {/* sm */}
             <Button variant={value} size="sm" {...shared}>
               Label

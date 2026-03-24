@@ -100,6 +100,18 @@ const RADIUS_BY_SIZE: Record<string, string> = {
   md: "rounded-md",
 };
 
+/* ── Elevation for pushable container (must match iconCn / textCn) ── */
+
+const ICON_ELEVATION_BY_SIZE: Record<string, string> = {
+  sm: "elevation-sm",
+  md: "elevation-sm",
+};
+
+const TEXT_ELEVATION_BY_SIZE: Record<string, string> = {
+  sm: "elevation-sm",
+  md: "elevation-md",
+};
+
 /* ── Button ─────────────────────────────────────────────────── */
 
 type ButtonSize = "sm" | "icon";
@@ -194,7 +206,14 @@ function Button({
   }
 
   // Standard — three-span pushable DOM (blur-free animations)
-  const containerClasses = cn("pushable inline-flex", variantClass, elevationClass);
+  const sizeElevation = isIcon
+    ? ICON_ELEVATION_BY_SIZE[resolvedSize]
+    : TEXT_ELEVATION_BY_SIZE[resolvedSize];
+  const containerClasses = cn(
+    "pushable inline-flex",
+    variantClass,
+    elevationClass ?? sizeElevation,
+  );
   const radiusClass = RADIUS_BY_SIZE[resolvedSize] ?? "rounded-md";
   const faceClasses = isIcon
     ? iconFaceCn({ size: resolvedSize })
@@ -210,8 +229,10 @@ function Button({
 
   // Dormant buttons self-manage their group wrapper so consumers
   // don't need to add `group` to an ancestor element.
+  // Padding extends the hover zone so the button wakes before the
+  // cursor is directly on it; negative margin cancels layout shift.
   if (dormant) {
-    return <span className="group inline-flex">{button}</span>;
+    return <span className="group inline-flex p-2 -m-2">{button}</span>;
   }
 
   return button;

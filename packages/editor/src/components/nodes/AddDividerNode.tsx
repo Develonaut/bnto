@@ -49,7 +49,7 @@ export const AddDividerNode = memo(function AddDividerNode({ data }: NodeProps<B
 
   return (
     <div
-      className="group flex items-center justify-center"
+      className="flex items-center justify-center"
       style={{ width: data.width, height: data.height }}
     >
       {!hideLine && (
