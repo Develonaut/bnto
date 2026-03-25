@@ -85,6 +85,9 @@ export const DEFINITION_JSON_SCHEMA = {
           ],
           "type": "object"
         },
+        "settings": {
+          "$ref": "#/$defs/PipelineSettings"
+        },
         "type": {
           "description": "The node type (e.g., 'image-compress', 'spreadsheet-clean', 'file-rename').",
           "type": "string"
@@ -186,6 +189,22 @@ export const DEFINITION_JSON_SCHEMA = {
         },
         "updatedAt": {
           "description": "ISO 8601 timestamp of the last modification.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "PipelineSettings": {
+      "additionalProperties": false,
+      "description": "Recipe-level settings that control execution behavior.",
+      "properties": {
+        "iteration": {
+          "default": "explicit",
+          "description": "How the executor handles iteration over multiple input files. 'auto' wraps primitive sequences in implicit per-file loops; 'explicit' (default) executes exactly what's defined.",
+          "enum": [
+            "auto",
+            "explicit"
+          ],
           "type": "string"
         }
       },

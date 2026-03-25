@@ -48,6 +48,7 @@ impl NodeProcessor for RenameCsvColumns {
                 param_type: ParameterType::Object,
                 ..Default::default()
             }],
+            input_cardinality: InputCardinality::PerFile,
         }
     }
 

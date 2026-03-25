@@ -5,6 +5,29 @@
  * against these types.
  */
 
+// =============================================================================
+// Pipeline Settings — Recipe-Level Configuration
+// =============================================================================
+
+/** How the executor handles iteration over multiple input files. */
+export type IterationMode = "auto" | "explicit";
+
+/**
+ * Recipe-level settings on the root Definition. Extensible — new fields
+ * can be added without changing the schema shape.
+ */
+export interface PipelineSettings {
+  /** How the executor iterates over multiple input files. Defaults to "explicit". */
+  iteration?: IterationMode;
+}
+
+// =============================================================================
+// Input Cardinality — Processor-Level Metadata
+// =============================================================================
+
+/** How a processor expects to receive input files. */
+export type InputCardinality = "perFile" | "batch";
+
 /**
  * A single node in a bnto recipe definition.
  *
@@ -54,6 +77,9 @@ export interface Definition {
 
   /** Connections between child nodes. */
   edges?: Edge[];
+
+  /** Recipe-level settings (iteration mode, etc.). Optional for backward compat. */
+  settings?: PipelineSettings;
 }
 
 /** Visual location of a node in the editor canvas. */

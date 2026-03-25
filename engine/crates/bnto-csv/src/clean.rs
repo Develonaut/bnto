@@ -41,6 +41,7 @@ impl NodeProcessor for CleanCsv {
             accepts: vec!["text/csv".to_string()],
             platforms: vec!["browser".to_string()],
             parameters: build_clean_parameters(),
+            input_cardinality: InputCardinality::PerFile,
         }
     }
 

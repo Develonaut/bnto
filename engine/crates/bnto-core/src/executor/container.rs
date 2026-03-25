@@ -24,6 +24,7 @@ fn clone_children_definitions(node: PipelineNodeRef) -> Option<PipelineDefinitio
     }
     Some(PipelineDefinition {
         nodes: children.clone(),
+        settings: None,
     })
 }
 

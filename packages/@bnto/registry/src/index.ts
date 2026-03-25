@@ -17,6 +17,8 @@ export type {
   Port,
   Edge,
   FieldsConfig,
+  PipelineSettings,
+  IterationMode,
   ExecutionContext,
   NodeResult,
   NodeTypeName,

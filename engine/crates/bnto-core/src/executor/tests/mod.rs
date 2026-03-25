@@ -243,6 +243,7 @@ fn fake_now() -> u64 {
 // Test Submodules
 // =========================================================================
 
+mod auto_iteration;
 mod basic;
 mod containers;
 mod errors;

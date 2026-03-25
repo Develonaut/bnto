@@ -44,6 +44,23 @@ pub enum ParamCondition {
     Any(Vec<ParamConditionEntry>),
 }
 
+// --- InputCardinality ---
+
+/// Declares how a processor expects to receive files for smart iteration.
+/// Used by the auto-iteration executor to partition flat node sequences
+/// into implicit per-file loops.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum InputCardinality {
+    /// Processes one file at a time. Contiguous perFile nodes get wrapped
+    /// in an implicit per-file loop in auto mode.
+    #[default]
+    PerFile,
+    /// Needs the full batch of files at once (e.g., zip, concat, merge).
+    /// Acts as an iteration barrier in auto mode.
+    Batch,
+}
+
 // --- NodeCategory ---
 
 /// The broad category a node belongs to. Used for UI grouping and filtering.
@@ -437,11 +454,67 @@ pub struct NodeMetadata {
     pub platforms: Vec<std::string::String>,
     /// Parameters with types, defaults, and constraints.
     pub parameters: Vec<ParameterDef>,
+    /// How this processor expects to receive files: one at a time or as a batch.
+    /// Defaults to `PerFile`. Used by the auto-iteration executor.
+    #[serde(default)]
+    pub input_cardinality: InputCardinality,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // --- InputCardinality Tests ---
+
+    #[test]
+    fn test_input_cardinality_defaults_to_per_file() {
+        let cardinality = InputCardinality::default();
+        assert_eq!(cardinality, InputCardinality::PerFile);
+    }
+
+    #[test]
+    fn test_input_cardinality_serializes_camel_case() {
+        let per_file = serde_json::to_string(&InputCardinality::PerFile).unwrap();
+        assert_eq!(per_file, r#""perFile""#);
+
+        let batch = serde_json::to_string(&InputCardinality::Batch).unwrap();
+        assert_eq!(batch, r#""batch""#);
+    }
+
+    #[test]
+    fn test_metadata_with_input_cardinality_round_trip() {
+        let metadata = NodeMetadata {
+            node_type: "image-compress".to_string(),
+            name: "Compress Images".to_string(),
+            description: "Reduce image file size".to_string(),
+            category: NodeCategory::Image,
+            accepts: vec!["image/jpeg".to_string()],
+            platforms: vec!["browser".to_string()],
+            parameters: vec![],
+            input_cardinality: InputCardinality::PerFile,
+        };
+        let json = serde_json::to_string(&metadata).unwrap();
+        assert!(json.contains(r#""inputCardinality":"perFile""#));
+
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed["inputCardinality"], "perFile");
+    }
+
+    #[test]
+    fn test_metadata_with_batch_cardinality() {
+        let metadata = NodeMetadata {
+            node_type: "zip-files".to_string(),
+            name: "Zip Files".to_string(),
+            description: "Bundle files into a zip archive".to_string(),
+            category: NodeCategory::File,
+            accepts: vec![],
+            platforms: vec!["browser".to_string()],
+            parameters: vec![],
+            input_cardinality: InputCardinality::Batch,
+        };
+        let json = serde_json::to_string(&metadata).unwrap();
+        assert!(json.contains(r#""inputCardinality":"batch""#));
+    }
 
     // --- NodeTypeInfo Tests ---
 
@@ -686,6 +759,7 @@ mod tests {
             ],
             platforms: vec!["browser".to_string()],
             parameters: vec![],
+            input_cardinality: InputCardinality::PerFile,
         };
         let json = serde_json::to_string(&metadata).unwrap();
         // Should use camelCase field names.
@@ -722,6 +796,7 @@ mod tests {
                 }),
                 ..Default::default()
             }],
+            input_cardinality: InputCardinality::PerFile,
         };
 
         // Serialize to JSON string.

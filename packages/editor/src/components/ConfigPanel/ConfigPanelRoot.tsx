@@ -8,6 +8,7 @@ import { useEditorNode } from "../../hooks/useEditorNode";
 import { SchemaForm } from "@bnto/form";
 import { EditorMenuPanel } from "../EditorMenuPanel";
 import { ConfigPanelDeleteButton } from "./ConfigPanelDeleteButton";
+import { RecipeSettingsPanel } from "./RecipeSettingsPanel";
 
 /**
  * ConfigPanel — Menu-based config panel.
@@ -46,11 +47,7 @@ function ConfigPanelRoot() {
       icon={<SlidersHorizontalIcon className="size-4" />}
     >
       {!hasContent ? (
-        <div className="p-4">
-          <Text size="sm" color="muted" className="text-center">
-            Select a node to configure
-          </Text>
-        </div>
+        <RecipeSettingsPanel />
       ) : (
         <>
           <div className="shrink-0 px-3 pt-3 pb-2">

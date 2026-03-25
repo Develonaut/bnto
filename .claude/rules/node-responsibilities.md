@@ -43,8 +43,9 @@ For detailed patterns on creating and extending Rust node processors — paramet
 ### Engine (`engine/crates/`)
 
 - `ParameterDef` — parameter names, types, constraints, defaults, conditional visibility, surfaceability
-- `NodeMetadata` — processor self-description (type, accepts, platforms, parameters)
+- `NodeMetadata` — processor self-description (type, accepts, platforms, parameters, inputCardinality)
 - `NodeTypeInfo` — type-level metadata (label, category, isContainer, icon)
+- `InputCardinality` — per-processor declaration: `perFile` (processes one file at a time) or `batch` (needs all files)
 - `NodeProcessor` trait — execution logic per node type
 - `PipelineExecutor` — graph walking, topological ordering, progress events
 - `definition_json_schema()` — JSON Schema for `.bnto.json` validation

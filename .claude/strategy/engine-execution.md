@@ -152,6 +152,19 @@ The JS side is deliberately thin:
 
 ---
 
+## Smart Iteration
+
+The executor supports two iteration modes, controlled by `settings.iteration` on the `PipelineDefinition`:
+
+- **`explicit` (default):** Execute exactly what's defined. Containers control iteration. This is the existing behavior — zero change.
+- **`auto`:** Wrap contiguous per-file processor sequences in implicit per-file loops. Flat recipes (`input → compress → output`) produce identical output to explicit-loop recipes (`input → loop → [compress] → output`).
+
+Auto mode partitions the flat node sequence using `inputCardinality` metadata on each processor. Contiguous `perFile` nodes become an implicit per-file loop; container nodes and future `batch` nodes act as partition barriers.
+
+See [smart-iteration.md](smart-iteration.md) for the full design, golden test equivalence proof, and editor UX.
+
+---
+
 ## Testing Strategy
 
 The engine executor is tested at three layers:

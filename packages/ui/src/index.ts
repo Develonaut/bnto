@@ -46,6 +46,15 @@ export {
   ListSeparator,
   ListSubheader,
 } from "./layout/List";
+export {
+  FileList,
+  FileListItem,
+  FileListIcon,
+  FileListContent,
+  FileListName,
+  FileListMeta,
+  FileListActions,
+} from "./layout/FileList";
 
 /* Typography */
 export { Badge } from "./typography/Badge";
@@ -66,8 +75,6 @@ export {
   EmptyStateSkeleton,
 } from "./feedback/EmptyState";
 export { LinearProgress } from "./feedback/LinearProgress";
-export { ResultFileCard } from "./feedback/ResultFileCard";
-export type { ResultFileCardProps } from "./feedback/ResultFileCard";
 export { Skeleton } from "./feedback/Skeleton";
 export {
   StatusBanner,

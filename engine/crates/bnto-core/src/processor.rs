@@ -117,6 +117,7 @@ pub trait NodeProcessor {
             accepts: vec![],
             platforms: vec![],
             parameters: vec![],
+            input_cardinality: Default::default(),
         }
     }
 }

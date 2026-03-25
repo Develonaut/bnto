@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback } from "react";
-import { Button, DownloadIcon, ResultFileCard } from "@bnto/ui";
+import { FileList } from "@bnto/ui";
 import type { BrowserExecution, BrowserFileResult } from "@bnto/core";
-import { useFileResultProps } from "@bnto/core";
+import { CompletedFileRow } from "./CompletedFileRow";
 
 interface BrowserExecutionResultsProps {
   execution: BrowserExecution;
@@ -16,56 +15,23 @@ export function BrowserExecutionResults({ execution, onDownload }: BrowserExecut
   if (results.length === 0) return null;
 
   return (
-    <div
+    <FileList
       className={
-        results.length === 1
-          ? "grid grid-cols-1"
+        results.length > 2
+          ? "sm:grid-cols-2 lg:grid-cols-3"
           : results.length === 2
-            ? "grid grid-cols-1 gap-2 sm:grid-cols-2"
-            : "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3"
+            ? "sm:grid-cols-2"
+            : undefined
       }
       data-testid="browser-execution-results"
     >
       {results.map((result, index) => (
-        <BrowserFileRow
+        <CompletedFileRow
           key={`${result.filename}-${index}`}
           result={result}
           onDownload={onDownload}
         />
       ))}
-    </div>
-  );
-}
-
-function BrowserFileRow({
-  result,
-  onDownload,
-}: {
-  result: BrowserFileResult;
-  onDownload: (result: BrowserFileResult) => void;
-}) {
-  const props = useFileResultProps(result);
-  const handleDownload = useCallback(() => onDownload(result), [onDownload, result]);
-
-  return (
-    <ResultFileCard
-      filename={props.filename}
-      extension={props.extension}
-      outputSize={props.outputSize}
-      originalSize={props.originalSize}
-      savings={props.savings}
-      action={
-        <Button
-          variant="outline"
-          size="icon"
-          elevation="sm"
-          onClick={handleDownload}
-          aria-label={`Download ${result.filename}`}
-          data-testid="download-button"
-        >
-          <DownloadIcon className="size-4" />
-        </Button>
-      }
-    />
+    </FileList>
   );
 }

@@ -50,89 +50,126 @@ Determine what needs review:
 
 !`git branch --show-current`
 
-Read every changed file in full. You cannot review code you haven't read.
+**Read every changed file in full.** You cannot review code you haven't read. If there are more than 15 changed files, batch your reads but you MUST read ALL of them before proceeding to Step 2.
 
-## Step 2: Architecture & Layer Compliance
+## Step 1b: Per-File Audit Table (MANDATORY)
 
-For EACH changed file, verify:
+**Before ANY analysis, produce this table for EVERY changed file.** This is not optional. Skip no files. Measure, don't estimate.
 
-- [ ] **Layer discipline**: `apps/web` or `apps/desktop` -> `@bnto/core` -> Rust WASM Engine. No layer skipping. UI and editor co-located in `apps/web/`
-- [ ] **API abstraction**: No direct Convex queries/mutations in components. No direct Wails bindings in components. All data access via `@bnto/core` hooks
-- [ ] **Package boundaries**: Internal packages (`@bnto/backend`, `@bnto/auth`) consumed only by `@bnto/core` internals. `apps/web` and `apps/desktop` NEVER import from them directly
-- [ ] **Import discipline**: UI from local `@/components/`, data/actions from `@bnto/core`. Types flow down from core
+For each changed file, read it and record:
 
-## Step 3: Bento Box Compliance
+| File | Lines | Exported Components | Exported Functions/Hooks | Largest Function (lines) | Status |
+| ---- | ----- | ------------------- | ------------------------ | ------------------------ | ------ |
 
-For EACH changed file, verify:
+Fill in every row. Use actual line counts from the file, not guesses.
 
-- [ ] **Single responsibility**: Rust files < 250 lines, Rust functions < 20 lines. TS files < 250 lines, TS functions < 20 lines, hooks < 30 lines
-- [ ] **One export per file**: Every exported component, hook, or function gets its own file. No `hooks.ts` grab bags, no `utils.ts` grab bags, no multi-component files. Only exception: shadcn primitives (thin `forwardRef` wrappers)
-- [ ] **Folder organization**: Components (PascalCase `.tsx`) at folder root, hooks in `hooks/` subdirectory (`use-kebab-case.ts`), pure functions in `utils/` subdirectory (`kebab-case.ts`). Test files co-located next to implementation
-- [ ] **Components are render shells**: No `useState`, `useEffect`, handlers, or business logic in the component body. All logic lives in a `use<Component>Props` hook or pure functions. Components call one props hook and spread onto JSX
-- [ ] **Compose, don't configure**: Consumers compose which parts appear via JSX children, not boolean/config props. Multi-part components use flat prefixed exports (`CardHeader`, `DialogContent`), NOT `Object.assign` dot-notation (breaks RSC)
-- [ ] **Pure functions -> logic hooks -> props hooks -> components**: Business rules in pure testable functions, logic hooks compose them reactively, props hooks build the complete props object, components are render shells
-- [ ] **Hook decomposition**: Hooks doing multiple things split into focused sub-hooks. Signs it's too big: >30 lines, multiple unrelated state, hard to name without "and"
-- [ ] **Primitives vs business components**: Generic in `primitives/` (no domain knowledge), domain-specific in `components/`
+**Status column values:**
 
-## Step 4: Rust Code Compliance
+- `OK` — all metrics within limits
+- `VIOLATION` — any metric exceeds limits (file > 250 lines, function > 20 lines, multiple exported components, etc.)
+- `WARNING` — near limits or has code quality concerns
+- `DELETED` — file was removed (verify no stale references)
 
-Skip if no Rust files changed. Otherwise:
+**Hard limits to check per file:**
 
-- [ ] **Bento Box Principle**: One concept per file/module, one purpose per function
-- [ ] **Error handling**: `Result<T, E>` used consistently. No bare `.unwrap()` in library code — use `?` operator or descriptive `.expect("reason")`
-- [ ] **Comments**: Heavily commented for learning purposes. Explain what every function does, WHY each line exists, and Rust-specific concepts inline (ownership, borrowing, lifetimes, traits)
-- [ ] **Crate boundaries**: `bnto-core` (types/traits/progress), node crates (`bnto-image`, `bnto-csv`, `bnto-file`) implement traits, `bnto-wasm` is the single cdylib entry point
-- [ ] **Tests**: Unit tests in `#[cfg(test)]` blocks, WASM integration tests in `tests/` directory. TDD-first — every function has tests
-- [ ] **Parameter usage completeness**: Every parameter defined in `metadata()` is read and used in ALL code paths of `process()`. If a param is format-specific, it's documented in the description and has format-aware test coverage
-- [ ] **Shared encoding**: Image processors use `encode::encode_image()` for final encoding, not duplicated per-processor encode functions
-- [ ] **Parameterized tests**: New or modified node params have tests verifying different values produce different outputs
-- [ ] **Golden tests**: If processor output changed (params, encoding, transforms), golden files updated via `BLESS=1 cargo test -p bnto-cli -- golden` and diff reviewed
+- File length: **> 250 lines = VIOLATION** (hard cap, no exceptions)
+- Function/component length: **> 20 lines = VIOLATION** (hooks get 30 lines)
+- Exported components per file: **> 1 = VIOLATION** (exception: shadcn primitives)
+- Exported hooks per file: **> 1 = VIOLATION**
 
-## Step 5: TypeScript Compliance
+**This table is the foundation of the review.** Every violation found in later steps should trace back to a row in this table. If a file has `VIOLATION` status, it MUST be fixed in Step 13.
 
-Skip if no TypeScript files changed. Otherwise:
+## Step 2: Standards Audit — Per-File Checklist
 
-- [ ] Types inferred where possible (no redundant annotations like `const x: Foo = getFoo()`)
-- [ ] No `any` without eslint-disable + justification comment
-- [ ] No `Record<string, unknown>` for domain data — use typed interfaces
-- [ ] No gratuitous `as` type assertions — only at trust boundaries (JSON.parse, external API)
-- [ ] `as const` + `satisfies` used where appropriate (literal preservation, shape validation without widening)
-- [ ] Return types inferred on internal functions, only annotated at public API boundaries
+For EACH changed file, run it through every applicable standard below. Produce a per-file findings list noting PASS, FAIL, or N/A for each standard category.
 
-## Step 6: Data Fetching & State Management
+### 2a. Architecture & Layers ([architecture.md](../../rules/architecture.md))
 
-Skip if no data fetching or state management files changed. Otherwise:
+- [ ] **Layer discipline**: `apps/web` -> `@bnto/core` -> Rust WASM Engine. No layer skipping
+- [ ] **API abstraction**: No direct Convex queries/mutations in components. All data via `@bnto/core` hooks
+- [ ] **Package boundaries**: `@bnto/backend`, `@bnto/auth` consumed only by `@bnto/core` internals
+- [ ] **Import discipline**: UI from local `@/components/`, data from `@bnto/core`. Types flow down
 
-- [ ] **Co-located queries (self-fetching components)**: Components fetch their own data by ID. Query, skeleton, and render co-located in the same file. No parent fetching + passing data props to children. See [data-fetching-strategy.md](../../strategy/data-fetching-strategy.md)
-- [ ] **No prop drilling for server data**: If a parent fetches data and passes it as props, flag it. Children should self-fetch by ID -- React Query deduplicates
-- [ ] **Co-located skeletons**: Skeleton lives in the same file as the loaded render, not in a separate `*Skeleton.tsx` (unless complex and shared). Skeleton dimensions match the loaded layout
-- [ ] **`select` for transforms**: Every `useQuery` that transforms data (`.map()`, `toFoo()`, spread) does it inside `select`, NOT in the hook body
-- [ ] **No transforms outside `select`**: No `.map()` / `.filter()` on query data outside `select`
-- [ ] **No spread of query data**: `{ ...data, isLoading }` creates a new object. Destructure explicitly
-- [ ] **Pagination uses Convex native**: Paginated lists use `usePaginatedQuery` with `useReady()` guard, not React Query `useInfiniteQuery`
-- [ ] **Zustand selectors**: `useStore(s => s.field)`, not `useStore()` (selecting entire store)
-- [ ] **Right tool for the job**: Server state -> React Query, client app state -> Zustand, local UI state -> `useState`, URL state -> router params
+### 2b. Bento Box Principle ([code-standards.md](../../rules/code-standards.md))
 
-## Step 7: Performance
+Use the audit table from Step 1b. Every file with `VIOLATION` status must be addressed.
 
-Skip if no frontend files changed. Otherwise:
+- [ ] **File size**: > 250 lines = FAIL. Flag exact count
+- [ ] **Function size**: > 20 lines = FAIL (hooks: 30). List every oversized function by name and line count
+- [ ] **One export per file**: > 1 exported component = FAIL. > 1 exported hook = FAIL
+- [ ] **No multi-component files**: Multiple `function` returning JSX in same file = FAIL. Extract to own files
+- [ ] **Folder organization**: Components at folder root (PascalCase), hooks in `hooks/`, utils in `utils/`
+- [ ] **Code duplication**: Near-identical logic across files = WARNING. Extract shared functions/components
+- [ ] **No grab bags**: No `utils.ts`, `helpers.ts`, `hooks.ts` files with multiple unrelated exports
 
-- [ ] **Minimal `"use client"`** — only on leaf components that need interactivity, not pages or layouts
-- [ ] **Server Components first** — data fetched on server where possible, not everything client-side
-- [ ] **No barrel imports in client components** — import from specific files, not `index.ts`
-- [ ] **Heavy components lazy loaded** — modals, dialogs, below-fold content use `next/dynamic`
-- [ ] **Images use `next/image`** — proper lazy loading, sizing, format optimization
+### 2c. Component Standards ([components.md](../../rules/components.md))
 
-## Step 8: Known Gotchas Check
+Skip if no `.tsx` component files changed.
 
-Scan changed files for these specific pitfalls:
+- [ ] **Start inline, extract when earned**: Logic inline is fine. Hooks only when > 80 lines or reuse needed
+- [ ] **Self-fetching**: Components fetch own data by ID. Pass IDs, not data
+- [ ] **CSS-first states**: Hover/focus/active via pseudo-classes, not `useState`. Data attributes over ternary classes
+- [ ] **Flat named exports**: No `Object.assign` dot-notation. All compound components use prefixed flat exports
+- [ ] **Size `md` default**: T-shirt-sized props default to `md`. Consumers rarely specify
+- [ ] **Hover/focus parity**: Every `group-hover:` has `group-focus-within:` for keyboard users
 
-- [ ] **Tailwind dynamic classes**: No template literals or string concatenation for class names. All tokens must use static string literals
-- [ ] **Tailwind monorepo**: Classes in shared packages need `@source` directive in `globals.css`
-- [ ] **Stale symlinks**: After moving packages, `node_modules` cleaned up
-- [ ] **Transport-agnostic API**: Components never call Convex or Wails directly — all data flows through `@bnto/core` hooks
+### 2d. TypeScript Standards ([typescript.md](../../rules/typescript.md))
 
-## Step 9: Code Quality
+Skip if no TypeScript files changed.
+
+- [ ] **Inference preferred**: No redundant annotations (`const x: Foo = getFoo()` → `const x = getFoo()`)
+- [ ] **No `any`**: Must have eslint-disable + justification. Use `unknown` with type guards
+- [ ] **No `Record<string, unknown>`**: Use typed interfaces for domain data
+- [ ] **No gratuitous `as`**: Only at trust boundaries (JSON.parse, external API, `Id<T>`)
+- [ ] **`as const` + `satisfies`**: Used for literal preservation and shape validation
+- [ ] **Return types inferred**: Only annotate at public API boundaries
+
+### 2e. Data Fetching & State ([core-api.md](../../rules/core-api.md), [data-fetching-strategy.md](../../strategy/data-fetching-strategy.md))
+
+Skip if no data fetching or state management files changed.
+
+- [ ] **`select` for transforms**: Every `useQuery` transform inside `select`, not hook body
+- [ ] **No prop drilling server data**: Children self-fetch by ID
+- [ ] **Zustand selectors**: `useStore(s => s.field)`, not `useStore()` (whole store)
+- [ ] **Right tool**: Server state → React Query, client state → Zustand, UI state → `useState`
+- [ ] **`convexQuery` skip guard**: Every `convexQuery()` with ID param uses `"skip"` when falsy
+
+### 2f. Performance ([performance.md](../../rules/performance.md))
+
+Skip if no frontend files changed.
+
+- [ ] **Minimal `"use client"`**: Only on leaf components needing interactivity
+- [ ] **Server Components first**: Data fetched on server where possible
+- [ ] **No barrel imports in client**: Import specific files, not `index.ts`
+- [ ] **Heavy components lazy loaded**: Modals/dialogs use `next/dynamic`
+
+### 2g. Theming & Animation ([theming.md](../../rules/theming.md), [animation.md](../../rules/animation.md))
+
+Skip if no styling/animation changes.
+
+- [ ] **Semantic tokens only**: No hardcoded colors, radii, shadows, or fonts
+- [ ] **Animation components**: Use `<ScaleIn>`, `<SlideUp>`, etc. — never raw `animate-*` classes
+- [ ] **`motion-safe:` guard**: Every animation respects `prefers-reduced-motion`
+- [ ] **Compositor-only**: Animate `opacity`, `scale`, `translate`, `rotate` only
+
+### 2h. Known Gotchas ([gotchas.md](../../rules/gotchas.md))
+
+- [ ] **Tailwind dynamic classes**: No template literals or string concatenation for class names
+- [ ] **Tailwind monorepo**: Classes in shared packages need `@source` in `globals.css`
+- [ ] **Transport-agnostic**: Components never call Convex or Wails directly
+
+### 2i. Rust Code ([engine-node-patterns.md](../../rules/engine-node-patterns.md))
+
+Skip if no Rust files changed.
+
+- [ ] **Bento Box**: One concept per file/module, one purpose per function
+- [ ] **Error handling**: `Result<T, E>` used. No bare `.unwrap()` — use `?` or descriptive `.expect()`
+- [ ] **Parameter contract**: Every param in `metadata()` read and used in ALL `process()` code paths
+- [ ] **Shared encoding**: Image processors use `encode::encode_image()`, not custom encode functions
+- [ ] **Parameterized tests**: Different param values produce measurably different outputs
+- [ ] **Golden tests**: If output changed, golden files updated and diff reviewed
+
+## Step 3: Code Quality
 
 - [ ] No secrets, API keys, or passwords in code
 - [ ] No magic numbers/strings — use constants and theme tokens
@@ -140,48 +177,37 @@ Scan changed files for these specific pitfalls:
 - [ ] Consistent style with existing patterns in sibling files
 - [ ] No unnecessary complexity — YAGNI applies
 
-## Step 10: Test Coverage Check
+## Step 4: Test Coverage Check
 
-Verify tests exist for the changes. For detailed test quality evaluation (are tests testing behavior or implementation? are they at the right level?), use `/test-review`.
+Verify tests exist for the changes. For detailed quality evaluation, use `/test-review`.
 
-Quick coverage check — flag if missing:
-
-- **Rust engine logic** (node crates, WASM bridge) -> Unit tests in `#[cfg(test)]` blocks + WASM integration tests in `tests/`
-- **Core hooks/adapters** (`@bnto/core`) -> Unit tests in `packages/@bnto/core/`
-- **Backend functions** (`@bnto/backend`) -> Tests in `packages/@bnto/backend/convex/`
-- **Pure utils/functions** -> Co-located `.test.ts` or `_test.go` files next to the source
-- **Headless hooks** with non-trivial logic -> Co-located tests
+- **Rust engine logic** → Unit tests in `#[cfg(test)]` + WASM integration tests
+- **Core hooks/adapters** → Unit tests in `packages/core/`
+- **Backend functions** → Tests in `packages/@bnto/backend/convex/`
+- **Pure utils/functions** → Co-located `.test.ts` files
+- **Headless hooks** with non-trivial logic → Co-located tests
 
 Flag any missing test coverage.
 
-## Step 11: Documentation Check
-
-If `/technical-writer` was activated in Step 0b, it will have already reviewed the READMEs for affected packages. Otherwise, do a quick manual check:
-
-- [ ] **README accuracy** — if the change added/removed/renamed exports, directories, commands, or key types, verify the package's `README.md` still matches reality
-- [ ] **New packages/crates** — any new package or crate must have a `README.md`
-- [ ] **No `.claude/` links in READMEs** — READMEs are for humans, `.claude/` is for agents
-
-## Step 12: Stale Artifact & Dead Code Check
-
-Verify the changes didn't leave stale artifacts or dead code behind:
+## Step 5: Stale Artifact & Dead Code Check
 
 - [ ] **Test assertions** updated for changed behavior, props, APIs, DOM structure
-- [ ] **Code references** updated for renamed/removed/changed exports, props, interfaces
-- [ ] **Documentation** updated for changed behavior documented in comments, JSDoc, or markdown
+- [ ] **Code references** updated for renamed/removed/changed exports
 - [ ] **Imports** — no broken imports from renames or moves
-- [ ] **Dead exports** — no barrel exports (`index.ts`) re-exporting symbols that have zero consumers outside their own package. When files are deleted, refactored, or consolidated, their barrel exports often survive. For each new or modified file created by the changeset, verify that every symbol exported from its package barrel actually has at least one external consumer. Delete dead exports and their source files if the source file has no other consumers either
-- [ ] **Orphaned files** — no source files left behind after deletes or renames (trigger files, sub-components, hooks) that are no longer imported by anything
+- [ ] **Dead exports** — no barrel exports re-exporting symbols with zero external consumers. For each exported symbol, grep across the monorepo excluding its own package. If only referenced in its own barrel + source = dead
+- [ ] **Orphaned files** — no source files left behind after deletes or renames
 
-Search the codebase for references to anything that was changed (class names, prop names, component names, function signatures, selectors, text strings). Flag anything that still references the old version.
+## Step 6: Documentation Check
 
-### Dead export detection method
+If `/technical-writer` was activated, it handles this. Otherwise:
 
-For shared packages (`@bnto/ui`, `@bnto/core`, `@bnto/nodes`, `@bnto/editor`), grep for each exported symbol across the monorepo excluding the package's own `src/` directory. If a symbol appears only in its own barrel export and source file — it's dead. **Exception:** compound component sub-exports (e.g., `SelectScrollUpButton`) that are used internally by a sibling export AND exported for external composition are acceptable even without current external consumers.
+- [ ] **README accuracy** — exports, directories, commands, types still match reality
+- [ ] **New packages/crates** must have a `README.md`
+- [ ] **No `.claude/` links in READMEs**
 
-## Step 13: Fix Violations & Warnings
+## Step 7: Fix Violations & Warnings
 
-**Do not just report issues — fix them.** For every violation or warning found in Steps 2-12, apply the fix immediately. This includes editing files, updating imports, refactoring code, and cleaning up stale artifacts.
+**Do not just report issues — fix them.** For every file marked `VIOLATION` in the Step 1b audit table, and for every FAIL in the Step 2 checklist, apply the fix immediately.
 
 ### Fixing workflow
 
@@ -191,19 +217,32 @@ For shared packages (`@bnto/ui`, `@bnto/core`, `@bnto/nodes`, `@bnto/editor`), g
 
 ### What NOT to fix automatically
 
-- **Notes** — observations or suggestions that aren't violations. Present these to the user for consideration
-- **Architectural questions** — if a fix would require significant restructuring or a design decision, present the issue and recommendation to the user instead of acting unilaterally
+- **Notes** — observations or suggestions that aren't violations. Present these to the user
+- **Architectural questions** — significant restructuring or design decisions need user approval
 
-## Step 14: Review Summary
+## Step 8: Review Summary
 
-After fixing all issues, present a summary:
+After fixing all issues, present a summary with these sections:
+
+### Per-File Audit Table (Final)
+
+Reproduce the completed audit table from Step 1b showing final state of every file (with updated line counts after fixes).
+
+### Standards Matrix
+
+Produce a summary matrix showing PASS/FAIL/N-A for each standard category per file:
+
+| File | Arch | Bento | Component | TS  | Data | Perf | Theme | Gotchas | Quality | Tests | Stale |
+| ---- | ---- | ----- | --------- | --- | ---- | ---- | ----- | ------- | ------- | ----- | ----- |
+
+Each cell: `PASS`, `FAIL` (with count), or `-` (not applicable).
 
 ### Fixes Applied
 
 List each fix with:
 
 - **File**: path and line number
-- **Rule**: which standard was violated
+- **Rule**: which standard was violated (link to rule document section)
 - **What was wrong**: brief description
 - **What was fixed**: what you changed
 
@@ -211,16 +250,18 @@ List each fix with:
 
 Observations, questions, or suggestions that aren't violations — presented for the user's consideration.
 
-### Checklist Summary
+### Overall Verdict
 
 ```
 Architecture & Layers:    PASS / FAIL (count)
 Bento Box:                PASS / FAIL (count)
-Rust Code:                PASS / FAIL (count) / SKIPPED (no Rust changes)
+Component Standards:      PASS / FAIL (count) / SKIPPED
 TypeScript:               PASS / FAIL (count)
-React Query / State:      PASS / FAIL (count) / SKIPPED
+Data Fetching / State:    PASS / FAIL (count) / SKIPPED
 Performance:              PASS / FAIL (count) / SKIPPED
+Theming & Animation:      PASS / FAIL (count) / SKIPPED
 Gotchas:                  PASS / FAIL (count)
+Rust Code:                PASS / FAIL (count) / SKIPPED (no Rust changes)
 Code Quality:             PASS / FAIL (count)
 Test Coverage:            PASS / FAIL (count)
 Stale Artifacts:          PASS / FAIL (count)

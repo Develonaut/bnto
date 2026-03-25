@@ -75,6 +75,7 @@ function rfNodesToDefinition(
     outputPorts: definition?.outputPorts ?? [],
     nodes: children,
     ...(definition?.edges ? { edges: definition.edges } : {}),
+    ...(definition?.settings ? { settings: definition.settings } : {}),
   };
 }
 

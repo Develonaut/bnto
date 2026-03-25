@@ -8,14 +8,15 @@
 // Pure Rust — no WASM deps. Works with `cargo test` natively.
 // The WASM bridge (`bnto-wasm/src/execute.rs`) handles JS type conversions.
 
+mod auto_iteration;
 mod container;
 mod primitive;
 
 use crate::errors::BntoError;
 use crate::events::{PipelineEvent, PipelineReporter};
 use crate::pipeline::{
-    PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode, PipelineResult,
-    is_container_node, is_io_node,
+    IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,
+    PipelineResult, is_container_node, is_io_node,
 };
 use crate::registry::NodeRegistry;
 
@@ -99,7 +100,10 @@ pub fn execute_pipeline(
         total_files: files.len(),
     });
 
-    let (current_files, total_files_processed) = run_node_chain(&ctx, &processing_nodes, files, 0)?;
+    let (current_files, total_files_processed) = match definition.resolved_iteration() {
+        IterationMode::Explicit => run_node_chain(&ctx, &processing_nodes, files, 0)?,
+        IterationMode::Auto => auto_iteration::run_auto_iteration(&ctx, &processing_nodes, files)?,
+    };
 
     let duration_ms = (ctx.now_ms)() - start_ms;
     ctx.reporter.emit(PipelineEvent::PipelineCompleted {

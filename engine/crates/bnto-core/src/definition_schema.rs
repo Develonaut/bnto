@@ -117,6 +117,23 @@ fn fields_schema() -> Value {
     })
 }
 
+/// Build the JSON Schema for `PipelineSettings` (recipe-level configuration).
+fn pipeline_settings_schema() -> Value {
+    serde_json::json!({
+        "type": "object",
+        "description": "Recipe-level settings that control execution behavior.",
+        "properties": {
+            "iteration": {
+                "type": "string",
+                "description": "How the executor handles iteration over multiple input files. 'auto' wraps primitive sequences in implicit per-file loops; 'explicit' (default) executes exactly what's defined.",
+                "enum": ["auto", "explicit"],
+                "default": "explicit"
+            }
+        },
+        "additionalProperties": false
+    })
+}
+
 // --- Definition Schema ---
 
 /// Build the JSON Schema for a canvas position (`{ x, y }`).
@@ -147,6 +164,7 @@ fn definition_properties() -> Value {
         "fields":     { "$ref": "#/$defs/Fields" },
         "inputPorts": { "type": "array", "description": "Input connection ports.", "items": { "$ref": "#/$defs/Port" } },
         "outputPorts":{ "type": "array", "description": "Output connection ports.", "items": { "$ref": "#/$defs/Port" } },
+        "settings":   { "$ref": "#/$defs/PipelineSettings" },
         "nodes":      { "type": "array", "description": "Child nodes (recursive).", "items": { "$ref": "#/$defs/Definition" } },
         "edges":      { "type": "array", "description": "Connections between child nodes.", "items": { "$ref": "#/$defs/Edge" } }
     })
@@ -166,6 +184,7 @@ pub fn definition_json_schema() -> Value {
             "Edge": edge_schema(),
             "Metadata": metadata_schema(),
             "Fields": fields_schema(),
+            "PipelineSettings": pipeline_settings_schema(),
             "Definition": {
                 "type": "object",
                 "description": "A single node in a .bnto.json recipe. Can contain child nodes (recursive).",
@@ -209,7 +228,7 @@ mod tests {
 
     #[test]
     fn test_definition_schema_has_all_defs() {
-        // The $defs block should contain all 5 type definitions.
+        // The $defs block should contain all 6 type definitions.
         let schema = definition_json_schema();
         let defs = schema["$defs"]
             .as_object()
@@ -222,6 +241,10 @@ mod tests {
         assert!(defs.contains_key("Edge"), "Missing Edge in $defs");
         assert!(defs.contains_key("Metadata"), "Missing Metadata in $defs");
         assert!(defs.contains_key("Fields"), "Missing Fields in $defs");
+        assert!(
+            defs.contains_key("PipelineSettings"),
+            "Missing PipelineSettings in $defs"
+        );
     }
 
     #[test]
@@ -283,5 +306,51 @@ mod tests {
         assert!(required_strs.contains(&"id"));
         assert!(required_strs.contains(&"source"));
         assert!(required_strs.contains(&"target"));
+    }
+
+    #[test]
+    fn test_definition_schema_has_settings_property() {
+        let schema = definition_json_schema();
+        let props = schema["$defs"]["Definition"]["properties"]
+            .as_object()
+            .expect("Definition properties should be an object");
+        assert!(
+            props.contains_key("settings"),
+            "Definition should have a settings property"
+        );
+        assert_eq!(
+            props["settings"]["$ref"], "#/$defs/PipelineSettings",
+            "settings should reference PipelineSettings"
+        );
+    }
+
+    #[test]
+    fn test_settings_schema_has_iteration_enum() {
+        let schema = definition_json_schema();
+        let settings = &schema["$defs"]["PipelineSettings"];
+        let iteration = &settings["properties"]["iteration"];
+        let enum_values = iteration["enum"]
+            .as_array()
+            .expect("iteration should have an enum");
+        let values: Vec<&str> = enum_values.iter().map(|v| v.as_str().unwrap()).collect();
+        assert!(values.contains(&"auto"));
+        assert!(values.contains(&"explicit"));
+        assert_eq!(iteration["default"], "explicit");
+    }
+
+    #[test]
+    fn test_definition_schema_has_pipeline_settings_def() {
+        let schema = definition_json_schema();
+        let defs = schema["$defs"]
+            .as_object()
+            .expect("$defs should be an object");
+        let settings = defs
+            .get("PipelineSettings")
+            .expect("PipelineSettings should exist in $defs");
+        assert_eq!(settings["type"], "object");
+        assert!(
+            settings["properties"]["iteration"].is_object(),
+            "PipelineSettings should have an iteration property"
+        );
     }
 }

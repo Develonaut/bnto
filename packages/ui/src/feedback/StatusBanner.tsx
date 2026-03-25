@@ -5,33 +5,49 @@ import { clamp } from "../utils/clamp";
 
 /* ── Variant types ────────────────────────────────────────────── */
 
-type StatusBannerVariant = "success" | "warning" | "error" | "processing";
+type StatusBannerVariant = "success" | "warning" | "error" | "processing" | "secondary";
 
 /* ── Root ─────────────────────────────────────────────────────── */
 
 interface StatusBannerProps {
   /** Visual variant controlling border/bg tint. */
   variant?: StatusBannerVariant;
+  /** Compact padding for tight spaces (px-2 py-1 instead of p-3). */
+  dense?: boolean;
   children: ReactNode;
   className?: string;
 }
 
 const rootCn = createCn({
-  base: "flex w-full flex-col gap-2 rounded-lg border p-3",
+  base: "flex w-full flex-col gap-2 rounded-lg border",
   variants: {
     variant: {
       success: "border-success/30 bg-success/5",
       warning: "border-warning/30 bg-warning/10",
       error: "border-destructive/50 bg-destructive/5",
       processing: "border-border bg-card",
+      secondary: "border-secondary bg-secondary/30",
+    },
+    dense: {
+      true: "px-2 py-1",
+      false: "p-3",
     },
   },
-  defaultVariants: { variant: "processing" },
+  defaultVariants: { variant: "processing", dense: "false" },
 });
 
-function StatusBanner({ variant = "processing", children, className }: StatusBannerProps) {
+function StatusBanner({
+  variant = "processing",
+  dense = false,
+  children,
+  className,
+}: StatusBannerProps) {
   return (
-    <div className={rootCn({ variant }, className)} role="status" data-testid="status-banner">
+    <div
+      className={rootCn({ variant, dense: dense ? "true" : "false" }, className)}
+      role="status"
+      data-testid="status-banner"
+    >
       {children}
     </div>
   );
@@ -107,6 +123,7 @@ const barFillCn = createCn({
       warning: "bg-warning",
       error: "bg-destructive",
       processing: "bg-primary",
+      secondary: "bg-secondary-foreground",
     },
   },
   defaultVariants: { variant: "processing" },

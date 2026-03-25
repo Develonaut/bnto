@@ -9,6 +9,7 @@ import type { StoreApi } from "zustand";
 import type {
   NodeTypeName,
   Definition,
+  PipelineSettings,
   NodeRecipeMetadata,
   Recipe,
   ValidationError,
@@ -56,6 +57,7 @@ interface DefinitionService {
   createBlank(): void;
   updateParams(nodeId: string, params: Record<string, unknown>): boolean;
   setRecipeMetadata(metadata: RecipeMetadata): void;
+  setSettings(settings: PipelineSettings): void;
   revalidate(): void;
   exportAsDefinition(): Definition;
 }
@@ -63,6 +65,7 @@ interface DefinitionService {
 interface ExecutionService {
   runExecution(files: File[]): Promise<void>;
   resetRun(): void;
+  setInputFiles(files: File[]): void;
   downloadResult(file: BrowserFileResult): void;
   downloadAllResults(): Promise<void>;
   setExecutionState(state: ExecutionState): void;

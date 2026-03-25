@@ -21,6 +21,7 @@ import { collapseContainer } from "../actions/collapseContainer";
 import { autoOpenConfig, autoCloseConfig, closeSameSideSiblings } from "./panelHelpers";
 import { pushUndoAction, undoAction, redoAction } from "./historyActions";
 import { EXECUTION_DEFAULTS } from "./executionDefaults";
+import { autoExpandContainers } from "./autoExpandContainers";
 
 // ---------------------------------------------------------------------------
 // Store factory
@@ -194,6 +195,10 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
       set(EXECUTION_DEFAULTS);
     },
 
+    setInputFiles: (files) => {
+      set({ executionInputFiles: files });
+    },
+
     downloadResult: (file) => {
       core.executions.downloadResult(file);
     },
@@ -230,16 +235,7 @@ function createEditorStore(definition?: Definition, cloudId?: string) {
     },
   }));
 
-  // Auto-expand all containers so children are always visible on init
-  if (definition) {
-    const containerNodes = store.getState().nodes.filter((n) => n.data.isContainer);
-    for (const node of containerNodes) {
-      store.getState().expandContainer(node.id);
-    }
-    // Clear undo/redo — initial expansion isn't undoable
-    store.setState({ undoStack: [], redoStack: [], isDirty: false });
-  }
-
+  if (definition) autoExpandContainers(store);
   return store;
 }
 
