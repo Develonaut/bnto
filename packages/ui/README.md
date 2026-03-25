@@ -40,10 +40,10 @@ src/
 | Category    | Count | Examples                                                                           |
 | ----------- | ----- | ---------------------------------------------------------------------------------- |
 | Interaction | 20+   | Button, Input, Select, Slider, Checkbox, Combobox, FileUpload, Tabs                |
-| Layout      | 10    | AppShell, Container, Grid, Row, Stack, List, BentoGrid, Center, Inset              |
+| Layout      | 11    | AppShell, Container, Grid, Row, Stack, List, FileList, BentoGrid, Center, Inset    |
 | Typography  | 6     | Heading, Text, Label, Badge, Kbd, IconBadge                                        |
 | Surface     | 7     | Card, Panel, Surface, Toolbar, Divider, Pressable                                  |
-| Feedback    | 6     | Skeleton, LinearProgress, ComparisonBar, EmptyState, ResultFileCard, StatusBanner  |
+| Feedback    | 5     | Skeleton, LinearProgress, ComparisonBar, EmptyState, StatusBanner                  |
 | Overlay     | 3     | Dialog, Popover, Sheet                                                             |
 | Animation   | 13    | ScaleIn, FadeIn, SlideUp, SlideDown, Stagger, PulseSoft, Breathe, Presence, InView |
 | Blocks      | 1     | RecipeCard (compound)                                                              |
