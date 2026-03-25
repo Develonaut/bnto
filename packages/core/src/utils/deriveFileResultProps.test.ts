@@ -27,8 +27,8 @@ describe("deriveFileResultProps", () => {
     expect(result.extension).toBeNull();
   });
 
-  it("formats output size", () => {
-    const result = deriveFileResultProps(mockResult({ blobSize: 1024 }));
+  it("formats output size (decimal, k=1000)", () => {
+    const result = deriveFileResultProps(mockResult({ blobSize: 1000 }));
     expect(result.outputSize).toBe("1 KB");
   });
 
@@ -39,7 +39,7 @@ describe("deriveFileResultProps", () => {
         metadata: { originalSize: 1000 },
       }),
     );
-    expect(result.originalSize).toBe("1000 B");
+    expect(result.originalSize).toBe("1 KB");
     expect(result.savings).toBe("-50%");
   });
 

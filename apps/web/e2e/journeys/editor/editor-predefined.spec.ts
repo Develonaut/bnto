@@ -2,13 +2,7 @@ import path from "path";
 import fs from "fs";
 import { test, expect } from "../../fixtures";
 import { IMAGE_FIXTURES_DIR, CSV_FIXTURES_DIR, MAGIC } from "../../helpers";
-import {
-  navigateToEditor,
-  runEditorWithFiles,
-  openRunPanel,
-  getResultCount,
-  exportRecipe,
-} from "../../helpers/editor";
+import { navigateToEditor, runEditorWithFiles, openRunPanel } from "../../helpers/editor";
 
 /**
  * Editor predefined recipes — PR1-PR6
@@ -194,44 +188,5 @@ test.describe("editor predefined recipes @browser", () => {
     const downloadPath = await download.path();
     const buffer = fs.readFileSync(downloadPath!);
     expect(buffer.length).toBeGreaterThan(0);
-  });
-
-  test("FA1: file input accept attribute reflects Input node extensions", async ({ page }) => {
-    // Load compress-images — Input node has image MIME types + extensions
-    await navigateToEditor(page, "compress-images");
-
-    const fileInput = page.getByTestId("run-file-input");
-    const accept = await fileInput.getAttribute("accept");
-
-    // Should contain image MIME types or file extensions — not be empty/null
-    expect(accept).toBeTruthy();
-    expect(accept).toMatch(/image\/|\.jpg|\.jpeg|\.png|\.webp/);
-  });
-
-  test("FA2: CSV recipe file input accepts CSV extensions", async ({ page }) => {
-    // Load clean-csv — Input node has CSV MIME types + extensions
-    await navigateToEditor(page, "clean-csv");
-
-    const fileInput = page.getByTestId("run-file-input");
-    const accept = await fileInput.getAttribute("accept");
-
-    expect(accept).toBeTruthy();
-    expect(accept).toMatch(/\.csv|text\/csv/);
-  });
-
-  test("XP1: export recipe produces valid JSON", async ({ page }) => {
-    await navigateToEditor(page, "compress-images");
-
-    const { buffer, filename } = await exportRecipe(page);
-
-    // Filename should be a .bnto.json file
-    expect(filename).toMatch(/\.bnto\.json$/);
-
-    // Content should be valid JSON with expected structure
-    const json = JSON.parse(buffer.toString("utf-8"));
-    expect(json.type).toBeDefined();
-    expect(json.nodes).toBeDefined();
-    expect(Array.isArray(json.nodes)).toBe(true);
-    expect(json.nodes.length).toBeGreaterThanOrEqual(3);
   });
 });

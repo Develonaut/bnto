@@ -32,14 +32,15 @@ function deriveFileResultProps(result: BrowserFileResult): FileResultDisplay {
 }
 
 /**
- * Format bytes to human-readable string.
+ * Format bytes to human-readable string (decimal / SI).
  *
+ * Uses k=1000 (SI / decimal) to match macOS Finder and most OS file managers.
  * Intentional duplication of @bnto/ui's formatFileSize — core and ui are
  * independent leaf packages that cannot depend on each other.
  */
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
-  const k = 1024;
+  const k = 1000;
   const units = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   const value = bytes / Math.pow(k, i);
