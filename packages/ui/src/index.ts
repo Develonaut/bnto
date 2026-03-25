@@ -7,15 +7,12 @@ export { resolveResponsive } from "./utils/responsive";
 export { toDropzoneAccept } from "./utils/toDropzoneAccept";
 export { formatFileSize } from "./utils/formatFileSize";
 export type { Breakpoints, ResponsiveProp } from "./utils/responsive";
-export {
-  resolveGap,
-  alignMap,
-  justifyMap,
-  paddingMap,
-  paddingXMap,
-  paddingYMap,
-} from "./utils/layoutTypes";
-export type { GapSize, ResponsiveGap, Align, Justify, LayoutElement } from "./utils/layoutTypes";
+export { type Align, alignMap } from "./utils/alignMap";
+export { type Justify, justifyMap } from "./utils/justifyMap";
+export type { LayoutElement } from "./utils/layoutElement";
+export { paddingMap, paddingXMap, paddingYMap } from "./utils/paddingMaps";
+export { resolveGap } from "./utils/resolveGap";
+export type { GapSize, ResponsiveGap } from "./utils/resolveGap";
 
 /* Icons */
 export * from "./icons";

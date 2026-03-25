@@ -2,15 +2,10 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "../utils/cn";
 
-import {
-  type Align,
-  type Justify,
-  type LayoutElement,
-  type ResponsiveGap,
-  alignMap,
-  justifyMap,
-  resolveGap,
-} from "../utils/layoutTypes";
+import { type Align, alignMap } from "../utils/alignMap";
+import { type Justify, justifyMap } from "../utils/justifyMap";
+import type { LayoutElement } from "../utils/layoutElement";
+import { type ResponsiveGap, resolveGap } from "../utils/resolveGap";
 
 type StackProps = HTMLAttributes<HTMLElement> & {
   /** Spacing between children. T-shirt size or responsive object. Default `"md"`. */

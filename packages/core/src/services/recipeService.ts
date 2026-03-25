@@ -6,7 +6,8 @@ import {
   saveRecipe,
   removeRecipe,
 } from "../adapters/convex/recipeAdapter";
-import { toRecipe, toRecipeListItem } from "../transforms/recipe";
+import { toRecipe } from "../transforms/toRecipe";
+import { toRecipeListItem } from "../transforms/toRecipeListItem";
 import { getQueryClient } from "../client";
 import type { RawRecipeDoc, RawRecipeListProjection } from "../types/raw";
 

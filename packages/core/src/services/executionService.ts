@@ -7,13 +7,11 @@ import {
   startExecution,
   startPredefinedExecution,
 } from "../adapters/convex/executionAdapter";
-import { toExecution, toExecutionLog } from "../transforms/execution";
+import { toExecution } from "../transforms/toExecution";
+import { toExecutionLog } from "../transforms/toExecutionLog";
 import { getQueryClient } from "../client";
 import type { StartExecutionInput, StartPredefinedInput } from "../types";
-import type {
-  RawExecutionDoc,
-  RawExecutionLogDoc,
-} from "../types/raw";
+import type { RawExecutionDoc, RawExecutionLogDoc } from "../types/raw";
 
 export function createExecutionService() {
   function invalidateExecution(id: string) {
@@ -35,26 +33,22 @@ export function createExecutionService() {
     // raw type definitions by construction (derived from the same schema).
     getQueryOptions: (id: string) => ({
       ...getExecutionQuery(id),
-      select: (data: unknown) =>
-        data ? toExecution(data as RawExecutionDoc) : null,
+      select: (data: unknown) => (data ? toExecution(data as RawExecutionDoc) : null),
     }),
 
     listQueryOptions: (recipeId: string) => ({
       ...getExecutionsQuery(recipeId),
-      select: (data: unknown) =>
-        (data as RawExecutionDoc[]).map(toExecution),
+      select: (data: unknown) => (data as RawExecutionDoc[]).map(toExecution),
     }),
 
     logsQueryOptions: (executionId: string) => ({
       ...getExecutionLogsQuery(executionId),
-      select: (data: unknown) =>
-        (data as RawExecutionLogDoc[]).map(toExecutionLog),
+      select: (data: unknown) => (data as RawExecutionLogDoc[]).map(toExecutionLog),
     }),
 
     // ── Mutations ─────────────────────────────────────────────────
     start: (input: StartExecutionInput) => startExecution(input),
-    startPredefined: (input: StartPredefinedInput) =>
-      startPredefinedExecution(input),
+    startPredefined: (input: StartPredefinedInput) => startPredefinedExecution(input),
 
     // ── Cache Invalidation ────────────────────────────────────────
     invalidateExecution,

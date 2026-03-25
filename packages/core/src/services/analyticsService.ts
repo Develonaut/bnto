@@ -1,13 +1,8 @@
 "use client";
 
-import {
-  getAnalyticsQuery,
-  getSlugAggregatesQuery,
-} from "../adapters/convex/analyticsAdapter";
-import {
-  toUsageAnalytics,
-  toSlugAggregate,
-} from "../transforms/analytics";
+import { getAnalyticsQuery, getSlugAggregatesQuery } from "../adapters/convex/analyticsAdapter";
+import { toUsageAnalytics } from "../transforms/toUsageAnalytics";
+import { toSlugAggregate } from "../transforms/toSlugAggregate";
 import { getQueryClient } from "../client";
 import type { RawAnalyticsDoc, RawSlugAggregateDoc } from "../types/raw";
 
@@ -20,16 +15,13 @@ export function createAnalyticsService() {
 
     analyticsQueryOptions: () => ({
       ...getAnalyticsQuery(),
-      select: (data: unknown) =>
-        data ? toUsageAnalytics(data as RawAnalyticsDoc) : null,
+      select: (data: unknown) => (data ? toUsageAnalytics(data as RawAnalyticsDoc) : null),
     }),
 
     slugAggregatesQueryOptions: () => ({
       ...getSlugAggregatesQuery(),
       select: (data: unknown) =>
-        Array.isArray(data)
-          ? data.map((d) => toSlugAggregate(d as RawSlugAggregateDoc))
-          : [],
+        Array.isArray(data) ? data.map((d) => toSlugAggregate(d as RawSlugAggregateDoc)) : [],
     }),
 
     // ── Cache Invalidation ────────────────────────────────────────

@@ -1,5 +1,6 @@
-import type { RawExecutionDoc, RawExecutionLogDoc } from "../types/raw";
-import type { Execution, ExecutionLog } from "../types";
+/** Transform a raw Convex execution doc into the public Execution shape. */
+import type { RawExecutionDoc } from "../types/raw";
+import type { Execution } from "../types";
 
 export function toExecution(doc: RawExecutionDoc): Execution {
   return {
@@ -14,16 +15,5 @@ export function toExecution(doc: RawExecutionDoc): Execution {
     sessionId: doc.sessionId ?? undefined,
     startedAt: doc.startedAt,
     completedAt: doc.completedAt ?? undefined,
-  };
-}
-
-export function toExecutionLog(doc: RawExecutionLogDoc): ExecutionLog {
-  return {
-    id: String(doc._id),
-    executionId: String(doc.executionId),
-    nodeId: doc.nodeId,
-    level: doc.level,
-    message: doc.message,
-    timestamp: doc.timestamp,
   };
 }

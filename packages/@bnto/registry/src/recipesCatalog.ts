@@ -39,11 +39,6 @@ export const RECIPES: readonly Recipe[] = [
   standardizeCsv,
 ];
 
-/** Returns the recipe matching a URL slug, or undefined if not found. */
-export function getRecipeBySlug(slug: string): Recipe | undefined {
-  return RECIPES.find((r) => r.slug === slug);
-}
-
 // Re-export all recipes for direct access
 export {
   cleanCsv,

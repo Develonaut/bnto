@@ -1,8 +1,7 @@
 /**
- * Shared navigation data for desktop and mobile navbars.
+ * Recipe navigation data derived from @bnto/registry.
  *
- * Recipe links are derived from @bnto/registry — no duplicate
- * data to maintain. Short nav descriptions override the longer SEO copy.
+ * Short nav descriptions override the longer SEO copy.
  * Both Navbar (desktop) and MobileNavMenu (mobile) consume these.
  */
 
@@ -60,13 +59,3 @@ function buildRecipeCategories(): RecipeCategory[] {
     links: grouped.get(cat)!,
   }));
 }
-
-export interface PageLink {
-  label: string;
-  href: string;
-}
-
-export const PAGE_LINKS: PageLink[] = [
-  { label: "Pricing", href: "/pricing" },
-  { label: "FAQ", href: "/faq" },
-];

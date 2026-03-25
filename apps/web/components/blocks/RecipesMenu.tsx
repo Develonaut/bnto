@@ -8,7 +8,7 @@ import Link from "next/link";
 
 import { BookOpenIcon, Menu, MenuTrigger, MenuContent, MenuLabel, MenuItem } from "@bnto/ui";
 
-import { RECIPES } from "./navData";
+import { RECIPES } from "./nav";
 
 export function RecipesMenu() {
   return (

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { getAllNodeTypes, getBrowserNodeTypes } from "./nodeTypes";
+import { getAllNodeTypes } from "./getAllNodeTypes";
+import { getBrowserNodeTypes } from "./getBrowserNodeTypes";
 
 describe("nodeTypes", () => {
   describe("getAllNodeTypes", () => {

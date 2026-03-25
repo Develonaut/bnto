@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { recipeToListItem } from "./recipe";
+import { recipeToListItem } from "./recipeToListItem";
 import type { UserRecipe } from "../types";
 
 describe("recipeToListItem", () => {

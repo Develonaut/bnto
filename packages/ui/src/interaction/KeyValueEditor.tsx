@@ -6,7 +6,8 @@ import { PlusIcon, XIcon } from "../icons";
 import { cn } from "../utils/cn";
 import { Button } from "./Button";
 import { Input } from "./Input";
-import { toPairs, toRecord, type KeyValuePair } from "./keyValueHelpers";
+import { toPairs, type KeyValuePair } from "./toPairs";
+import { toRecord } from "./toRecord";
 
 type KeyValueEditorProps = Omit<ComponentProps<"div">, "onChange"> & {
   /** Current key-value pairs as a record. */

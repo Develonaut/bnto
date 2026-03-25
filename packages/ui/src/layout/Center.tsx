@@ -2,7 +2,7 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "../utils/cn";
 
-import type { LayoutElement } from "../utils/layoutTypes";
+import type { LayoutElement } from "../utils/layoutElement";
 
 type CenterProps = HTMLAttributes<HTMLElement> & {
   /** Use inline-flex instead of flex. */
@@ -11,19 +11,10 @@ type CenterProps = HTMLAttributes<HTMLElement> & {
   as?: LayoutElement;
 };
 
-export function Center({
-  inline,
-  as: Tag = "div",
-  className,
-  ...props
-}: CenterProps) {
+export function Center({ inline, as: Tag = "div", className, ...props }: CenterProps) {
   return (
     <Tag
-      className={cn(
-        inline ? "inline-flex" : "flex",
-        "items-center justify-center",
-        className,
-      )}
+      className={cn(inline ? "inline-flex" : "flex", "items-center justify-center", className)}
       {...props}
     />
   );

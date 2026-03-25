@@ -14,7 +14,9 @@ import {
   Stack,
   Text,
 } from "@bnto/ui";
-import { SHORTCUTS, isMacPlatform, getShortcutKeys } from "../../utils/shortcuts";
+import { SHORTCUTS } from "../../utils/shortcuts";
+import { isMacPlatform } from "../../utils/isMacPlatform";
+import { getShortcutKeys } from "../../utils/getShortcutKeys";
 
 interface HelpDialogProps {
   open: boolean;

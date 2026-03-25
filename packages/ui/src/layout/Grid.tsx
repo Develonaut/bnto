@@ -4,14 +4,10 @@ import { forwardRef } from "react";
 import { cn } from "../utils/cn";
 
 import { BouncyStagger } from "../animation/Animate";
-import {
-  type Align,
-  type GapSize,
-  type Justify,
-  type LayoutElement,
-  alignMap,
-  justifyMap,
-} from "../utils/layoutTypes";
+import { type Align, alignMap } from "../utils/alignMap";
+import { type Justify, justifyMap } from "../utils/justifyMap";
+import type { LayoutElement } from "../utils/layoutElement";
+import type { GapSize } from "../utils/resolveGap";
 import { type ResponsiveProp, resolveResponsive } from "../utils/responsive";
 
 /* ── Types ───────────────────────────────────────────────────── */

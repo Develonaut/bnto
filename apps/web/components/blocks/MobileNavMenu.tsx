@@ -20,7 +20,7 @@ import {
 } from "@bnto/ui";
 import { GITHUB_URL } from "@/lib/copy";
 import { NewRecipeMobileButton } from "./NewRecipeMobileButton";
-import { RECIPES, PAGE_LINKS } from "./navData";
+import { RECIPES, PAGE_LINKS } from "./nav";
 
 export function MobileNavMenu({
   open,
