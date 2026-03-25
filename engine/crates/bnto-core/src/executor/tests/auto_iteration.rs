@@ -182,8 +182,7 @@ fn test_auto_matches_explicit_loop_single_processor() {
     let files_a = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
     let files_b = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
 
-    let auto_result =
-        execute_pipeline(&auto_def, files_a, &registry, &reporter, fake_now).unwrap();
+    let auto_result = execute_pipeline(&auto_def, files_a, &registry, &reporter, fake_now).unwrap();
     let explicit_result =
         execute_pipeline(&explicit_def, files_b, &registry, &reporter, fake_now).unwrap();
 
@@ -239,8 +238,7 @@ fn test_auto_matches_explicit_loop_multi_processor() {
         make_file("c.txt", b"ccc"),
     ];
 
-    let auto_result =
-        execute_pipeline(&auto_def, files_a, &registry, &reporter, fake_now).unwrap();
+    let auto_result = execute_pipeline(&auto_def, files_a, &registry, &reporter, fake_now).unwrap();
     let explicit_result =
         execute_pipeline(&explicit_def, files_b, &registry, &reporter, fake_now).unwrap();
 
