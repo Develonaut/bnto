@@ -102,6 +102,9 @@ export function RecipeCardMenu({ recipeId, recipeName }: RecipeCardMenuProps) {
             <DialogTitle>Rename recipe</DialogTitle>
             <DialogClose />
           </DialogHeader>
+          <DialogDescription className="sr-only">
+            Enter a new name for this recipe.
+          </DialogDescription>
           <form onSubmit={handleSave}>
             <DialogBody>
               <fieldset className="space-y-1.5">

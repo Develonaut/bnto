@@ -7,6 +7,7 @@ import {
   DialogBody,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -45,6 +46,7 @@ function RecipeDialogRoot({ open, onOpenChange }: RecipeDialogProps) {
           <DialogTitle>Recipe Settings</DialogTitle>
           <DialogClose />
         </DialogHeader>
+        <DialogDescription className="sr-only">Edit recipe name and metadata.</DialogDescription>
         <form onSubmit={handleSubmit}>
           <DialogBody>
             <fieldset className="space-y-1.5">
