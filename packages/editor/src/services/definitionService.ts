@@ -8,7 +8,7 @@
  */
 
 import type { StoreApi } from "zustand";
-import type { Definition } from "@bnto/core";
+import type { Definition, PipelineSettings } from "@bnto/core";
 import type { EditorStore, RecipeMetadata } from "../store/types";
 import type { DefinitionService } from "../editorTypes";
 import { updateParams } from "../actions/updateParams";
@@ -33,6 +33,15 @@ function createDefinitionService(storeApi: StoreApi<EditorStore>): DefinitionSer
 
     setRecipeMetadata(metadata: RecipeMetadata) {
       storeApi.getState().setRecipeMetadata(metadata);
+    },
+
+    setSettings(settings: PipelineSettings) {
+      const { definition } = storeApi.getState();
+      if (!definition) return;
+      storeApi.setState({
+        definition: { ...definition, settings },
+        isDirty: true,
+      });
     },
 
     revalidate() {

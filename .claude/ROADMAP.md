@@ -208,21 +208,22 @@ Users convert when they want something the browser can't provide alone. These ar
 
 ## Architecture Decisions
 
-| Decision                             | Status                  | Rationale                                                                                               |
-| ------------------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Rust WASM for browser nodes**      | Delivered (M1 complete) | All 6 Tier 1 nodes built in Rust, compiled to WASM. Unified engine vision proven. 606KB gzipped bundle. |
-| **JS adapters as fallback**          | Not needed              | Rust succeeded. JS libraries available for Tier 2+ if specific nodes warrant it.                        |
-| **Go engine paused for web**         | Paused                  | 28k lines of proven code. Ready for M4 (premium server-side). Desktop will use Tauri (Rust-native).     |
-| **`@bnto/nodes` is engine-agnostic** | Approved                | Schemas, recipes, validation in TS. Survives any engine choice. The safety net.                         |
-| **Railway deprioritized**            | Backlog (M4)            | Only needed for premium server-side bntos.                                                              |
-| **R2 deprioritized**                 | Backlog (M4)            | Not needed for browser execution. File transit only for cloud path.                                     |
-| **No-account browser execution**     | Approved                | Zero backend friction. Convex logs when accounts exist.                                                 |
-| **Convex execution logging**         | Approved                | Records who ran what. Ties to history when user signs up.                                               |
-| **Web Workers mandatory**            | Approved                | All WASM processing off main thread. Progress via postMessage.                                          |
-| **Zip + individual downloads**       | Approved                | Both options for multi-file result retrieval.                                                           |
-| **`@bnto/ui` extracted**             | Delivered (March 2026)  | Motorway design system as independent package. Primitives, layout, animation, surface system.           |
-| **`@bnto/editor` extracted**         | Delivered (March 2026)  | Headless-first editor package. ReactFlow canvas, schema-driven config, editor API layer.                |
-| **Code Editor (CM6) tabled**         | Deep backlog            | Power-user luxury. Visual editor is the product. May revisit post-M5.                                   |
+| Decision                             | Status                  | Rationale                                                                                                                                    |
+| ------------------------------------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rust WASM for browser nodes**      | Delivered (M1 complete) | All 6 Tier 1 nodes built in Rust, compiled to WASM. Unified engine vision proven. 606KB gzipped bundle.                                      |
+| **JS adapters as fallback**          | Not needed              | Rust succeeded. JS libraries available for Tier 2+ if specific nodes warrant it.                                                             |
+| **Go engine paused for web**         | Paused                  | 28k lines of proven code. Ready for M4 (premium server-side). Desktop will use Tauri (Rust-native).                                          |
+| **`@bnto/nodes` is engine-agnostic** | Approved                | Schemas, recipes, validation in TS. Survives any engine choice. The safety net.                                                              |
+| **Railway deprioritized**            | Backlog (M4)            | Only needed for premium server-side bntos.                                                                                                   |
+| **R2 deprioritized**                 | Backlog (M4)            | Not needed for browser execution. File transit only for cloud path.                                                                          |
+| **No-account browser execution**     | Approved                | Zero backend friction. Convex logs when accounts exist.                                                                                      |
+| **Convex execution logging**         | Approved                | Records who ran what. Ties to history when user signs up.                                                                                    |
+| **Web Workers mandatory**            | Approved                | All WASM processing off main thread. Progress via postMessage.                                                                               |
+| **Zip + individual downloads**       | Approved                | Both options for multi-file result retrieval.                                                                                                |
+| **`@bnto/ui` extracted**             | Delivered (March 2026)  | Motorway design system as independent package. Primitives, layout, animation, surface system.                                                |
+| **`@bnto/editor` extracted**         | Delivered (March 2026)  | Headless-first editor package. ReactFlow canvas, schema-driven config, editor API layer.                                                     |
+| **Smart Iteration**                  | Delivered (March 2026)  | `settings.iteration: "auto"\|"explicit"` on Definition. Auto wraps per-file processors in implicit loops. 20 golden tests prove equivalence. |
+| **Code Editor (CM6) tabled**         | Deep backlog            | Power-user luxury. Visual editor is the product. May revisit post-M5.                                                                        |
 
 ### Engine Decision: Rust Won (Feb 2026)
 

@@ -79,11 +79,12 @@ Steps: get -> and_then (type coerce) -> unwrap_or (default) -> clamp (bounds).
 ## Checklist for Adding a New Node
 
 1. **metadata()** — Define all parameters with types, defaults, constraints, descriptions
-2. **process()** — Read and use EVERY parameter in ALL code paths
-3. **validate()** — Validate param combinations that metadata constraints can't express
-4. **shared encode** — Image processors use `encode::encode_image()`, never custom encode functions
-5. **parameterized tests** — Test that different param values produce different outputs
-6. **codegen** — Run `task wasm:codegen` to regenerate TypeScript from updated catalog
+2. **metadata().input_cardinality** — Declare `PerFile` (default) or `Batch`. See [smart-iteration.md](../strategy/smart-iteration.md)
+3. **process()** — Read and use EVERY parameter in ALL code paths
+4. **validate()** — Validate param combinations that metadata constraints can't express
+5. **shared encode** — Image processors use `encode::encode_image()`, never custom encode functions
+6. **parameterized tests** — Test that different param values produce different outputs
+7. **codegen** — Run `task wasm:codegen` to regenerate TypeScript from updated catalog
 
 ---
 

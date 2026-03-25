@@ -3,7 +3,34 @@
 // I/O nodes are structural markers (skipped by executor); container nodes
 // (loop, group, parallel) hold child nodes for nested execution.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+// =============================================================================
+// Pipeline Settings — Recipe-Level Configuration
+// =============================================================================
+
+/// How the executor handles iteration over multiple input files.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum IterationMode {
+    /// Execute exactly what's defined — containers control iteration.
+    /// This is the existing behavior and the default for backward compatibility.
+    #[default]
+    Explicit,
+    /// Wrap contiguous per-file processor sequences in implicit per-file loops.
+    /// Flat recipes produce identical output to explicit-loop recipes.
+    Auto,
+}
+
+/// Recipe-level settings on the root Definition. Extensible — new fields
+/// can be added without changing the schema shape.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct PipelineSettings {
+    /// How the executor iterates over multiple input files.
+    #[serde(default)]
+    pub iteration: IterationMode,
+}
 
 // =============================================================================
 // Pipeline Definition
@@ -15,6 +42,22 @@ pub struct PipelineDefinition {
     /// The ordered list of nodes in this pipeline.
     /// Nodes execute sequentially — output from node N feeds into node N+1.
     pub nodes: Vec<PipelineNode>,
+
+    /// Recipe-level settings (iteration mode, etc.).
+    /// Optional for backward compatibility — missing defaults to explicit iteration.
+    #[serde(default)]
+    pub settings: Option<PipelineSettings>,
+}
+
+impl PipelineDefinition {
+    /// Returns the resolved iteration mode, defaulting to `Explicit`
+    /// when settings are absent.
+    pub fn resolved_iteration(&self) -> IterationMode {
+        self.settings
+            .as_ref()
+            .map(|s| s.iteration)
+            .unwrap_or_default()
+    }
 }
 
 /// A single node in the pipeline.
@@ -639,6 +682,109 @@ mod tests {
         let processor = &loop_node.children.as_ref().unwrap()[0];
         assert_eq!(processor.node_type, "image-compress");
         assert_eq!(processor.params["quality"], 50);
+    }
+
+    // --- Helper Function Tests ---
+
+    // --- PipelineSettings & IterationMode Tests ---
+
+    #[test]
+    fn test_definition_without_settings_deserializes() {
+        let json = r#"{
+            "nodes": [
+                { "id": "n1", "type": "input" },
+                { "id": "n2", "type": "image-compress" },
+                { "id": "n3", "type": "output" }
+            ]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        assert!(def.settings.is_none());
+    }
+
+    #[test]
+    fn test_definition_with_auto_iteration_deserializes() {
+        let json = r#"{
+            "settings": { "iteration": "auto" },
+            "nodes": [
+                { "id": "n1", "type": "input" },
+                { "id": "n2", "type": "image-compress" },
+                { "id": "n3", "type": "output" }
+            ]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let settings = def.settings.as_ref().unwrap();
+        assert_eq!(settings.iteration, IterationMode::Auto);
+    }
+
+    #[test]
+    fn test_definition_with_explicit_iteration_deserializes() {
+        let json = r#"{
+            "settings": { "iteration": "explicit" },
+            "nodes": [
+                { "id": "n1", "type": "image-compress" }
+            ]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let settings = def.settings.as_ref().unwrap();
+        assert_eq!(settings.iteration, IterationMode::Explicit);
+    }
+
+    #[test]
+    fn test_definition_with_unknown_iteration_fails() {
+        let json = r#"{
+            "settings": { "iteration": "garbage" },
+            "nodes": [{ "id": "n1", "type": "input" }]
+        }"#;
+        let result = serde_json::from_str::<PipelineDefinition>(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_resolved_iteration_defaults_explicit() {
+        let json = r#"{ "nodes": [] }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        assert_eq!(def.resolved_iteration(), IterationMode::Explicit);
+    }
+
+    #[test]
+    fn test_resolved_iteration_returns_auto() {
+        let json = r#"{
+            "settings": { "iteration": "auto" },
+            "nodes": []
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        assert_eq!(def.resolved_iteration(), IterationMode::Auto);
+    }
+
+    #[test]
+    fn test_settings_with_default_iteration_field() {
+        // Settings object present but iteration field absent — defaults to explicit.
+        let json = r#"{
+            "settings": {},
+            "nodes": []
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let settings = def.settings.as_ref().unwrap();
+        assert_eq!(settings.iteration, IterationMode::Explicit);
+        assert_eq!(def.resolved_iteration(), IterationMode::Explicit);
+    }
+
+    #[test]
+    fn test_iteration_mode_serializes_camel_case() {
+        let auto_json = serde_json::to_string(&IterationMode::Auto).unwrap();
+        assert_eq!(auto_json, r#""auto""#);
+
+        let explicit_json = serde_json::to_string(&IterationMode::Explicit).unwrap();
+        assert_eq!(explicit_json, r#""explicit""#);
+    }
+
+    #[test]
+    fn test_pipeline_settings_serializes() {
+        let settings = PipelineSettings {
+            iteration: IterationMode::Auto,
+        };
+        let json = serde_json::to_string(&settings).unwrap();
+        assert!(json.contains(r#""iteration":"auto""#));
     }
 
     // --- Helper Function Tests ---

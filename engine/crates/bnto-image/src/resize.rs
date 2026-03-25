@@ -179,6 +179,7 @@ impl NodeProcessor for ResizeImages {
             accepts: image_accepts(),
             platforms: vec!["browser".to_string()],
             parameters: resize_param_defs(),
+            input_cardinality: InputCardinality::PerFile,
         }
     }
 

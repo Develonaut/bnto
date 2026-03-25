@@ -237,6 +237,7 @@ export interface ProcessorDef {
   readonly accepts: readonly string[];
   readonly platforms: readonly string[];
   readonly parameters: readonly ProcessorParam[];
+  readonly inputCardinality: "perFile" | "batch";
 }
 
 export const PROCESSORS: readonly ProcessorDef[] = [
@@ -287,6 +288,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         placeholder: "{{name}}-compressed.{{ext}}",
       },
     ],
+    inputCardinality: "perFile" as const,
   },
   {
     nodeType: "image-compress",
@@ -305,6 +307,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         constraints: { min: 1, max: 100, required: false },
       },
     ],
+    inputCardinality: "perFile" as const,
   },
   {
     nodeType: "image-convert",
@@ -332,6 +335,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         constraints: { min: 1, max: 100, required: false },
       },
     ],
+    inputCardinality: "perFile" as const,
   },
   {
     nodeType: "image-resize",
@@ -371,6 +375,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         constraints: { min: 1, max: 100, required: false },
       },
     ],
+    inputCardinality: "perFile" as const,
   },
   {
     nodeType: "spreadsheet-clean",
@@ -402,6 +407,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         default: true,
       },
     ],
+    inputCardinality: "perFile" as const,
   },
   {
     nodeType: "spreadsheet-rename",
@@ -418,6 +424,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         type: "object" as const,
       },
     ],
+    inputCardinality: "perFile" as const,
   },
 ] as const;
 

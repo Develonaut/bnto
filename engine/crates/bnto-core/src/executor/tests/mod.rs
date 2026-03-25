@@ -253,5 +253,6 @@ mod recipes_containers;
 mod recipes_errors;
 mod recipes_events;
 mod sub_pipelines;
+mod auto_iteration;
 mod sub_pipelines_containers;
 mod sub_pipelines_edge_cases;

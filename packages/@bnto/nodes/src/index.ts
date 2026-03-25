@@ -15,7 +15,17 @@
  */
 
 // Definition types
-export type { Definition, Position, Metadata, Port, Edge, FieldsConfig } from "./definition";
+export type {
+  Definition,
+  Position,
+  Metadata,
+  Port,
+  Edge,
+  FieldsConfig,
+  IterationMode,
+  PipelineSettings,
+  InputCardinality,
+} from "./definition";
 
 // Execution types
 export type { ExecutionContext, NodeResult } from "./execution";

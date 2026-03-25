@@ -35,6 +35,29 @@ pub fn recipe_path(slug: &str) -> String {
         .to_string()
 }
 
+/// Path to a flat (auto-iteration) recipe fixture.
+pub fn flat_recipe_path(slug: &str) -> String {
+    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("tests/fixtures/flat/{slug}.bnto.json"))
+        .to_string_lossy()
+        .to_string()
+}
+
+/// Run a flat recipe fixture and assert it succeeds, returning stderr output.
+pub fn run_flat_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &flat_recipe_path(slug)])
+        .arg(fixture)
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(output.status.success(), "[flat/{slug}] stderr: {stderr}");
+    (out, stderr)
+}
+
 pub fn fixture_image(name: &str) -> String {
     repo_root()
         .join(format!("test-fixtures/images/{name}"))

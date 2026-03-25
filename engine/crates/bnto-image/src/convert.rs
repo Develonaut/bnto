@@ -98,6 +98,7 @@ impl NodeProcessor for ConvertImageFormat {
             accepts: image_accepts(),
             platforms: vec!["browser".to_string()],
             parameters: vec![format_param_def(), quality_param_def()],
+            input_cardinality: InputCardinality::PerFile,
         }
     }
 

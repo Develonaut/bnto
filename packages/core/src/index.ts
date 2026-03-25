@@ -56,6 +56,8 @@ export type { FileResultDisplayProps } from "./hooks/useFileResultProps";
 
 // ── Utils (pure functions) ────────────────────────────────────────────────
 export { computeTotalSaved } from "./utils/computeTotalSaved";
+export { deriveFileResultProps } from "./utils/deriveFileResultProps";
+export type { FileResultDisplay } from "./utils/deriveFileResultProps";
 
 // ── Store factories (for app-layer orchestration) ─────────────────────────
 export { createEnhancedStore } from "./stores/createEnhancedStore";
@@ -96,6 +98,8 @@ export type {
   Port,
   Edge,
   FieldsConfig,
+  PipelineSettings,
+  IterationMode,
   NodeTypeName,
   NodeCategory,
   NodeTypeInfo,

@@ -59,6 +59,7 @@ interface RawProcessor {
   accepts: string[];
   platforms: string[];
   parameters: RawParameter[];
+  inputCardinality?: string;
 }
 
 interface RawParameter {
@@ -222,6 +223,7 @@ function generateParam(p: RawParameter): string {
 
 function generateProcessor(p: RawProcessor): string {
   const params = p.parameters.map((param) => indent(generateParam(param), 2)).join(",\n");
+  const cardinality = p.inputCardinality ?? "perFile";
   return `{
   nodeType: ${JSON.stringify(p.nodeType)},
   name: ${JSON.stringify(p.name)},
@@ -232,6 +234,7 @@ function generateProcessor(p: RawProcessor): string {
   parameters: [
 ${params},
   ],
+  inputCardinality: ${JSON.stringify(cardinality)} as const,
 }`;
 }
 
@@ -271,6 +274,7 @@ export interface ProcessorDef {
   readonly accepts: readonly string[];
   readonly platforms: readonly string[];
   readonly parameters: readonly ProcessorParam[];
+  readonly inputCardinality: "perFile" | "batch";
 }
 
 export const PROCESSORS: readonly ProcessorDef[] = [

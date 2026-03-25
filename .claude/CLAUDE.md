@@ -20,6 +20,7 @@
 | Input/output nodes             | [io-nodes.md](.claude/strategy/io-nodes.md)                             |
 | Node system responsibilities   | [node-responsibilities.md](.claude/rules/node-responsibilities.md)      |
 | Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)             |
+| Smart iteration / auto-looping | [smart-iteration.md](.claude/strategy/smart-iteration.md)               |
 | Editor user journey            | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)       |
 | Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                        |
 | Implementation task            | [PLAN.md](.claude/PLAN.md)                                              |
