@@ -17,7 +17,7 @@ function EditorRightToolbar() {
   return (
     <div
       className="pointer-events-none absolute -right-12 top-1/2 -translate-y-1/2 opacity-0"
-      aria-hidden="true"
+      inert
     >
       <ConfigPanel />
     </div>

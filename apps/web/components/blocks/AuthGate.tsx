@@ -9,6 +9,7 @@ import {
   Button,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogClose,
@@ -142,7 +143,7 @@ function AuthGateAction({
               <DialogClose />
             </DialogHeader>
             <DialogBody>
-              <Text color="muted">{description}</Text>
+              <DialogDescription>{description}</DialogDescription>
             </DialogBody>
             <DialogFooter>
               <AuthGateCTA />

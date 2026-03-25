@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   Input,
@@ -84,6 +85,9 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
           <DialogTitle>Add Node</DialogTitle>
           <DialogClose />
         </DialogHeader>
+        <DialogDescription className="sr-only">
+          Search and select a node type to add to the canvas.
+        </DialogDescription>
 
         <div className="flex h-[28rem] flex-col">
           {/* Search */}

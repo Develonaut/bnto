@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   Kbd,
@@ -36,6 +37,9 @@ function HelpDialogRoot({ open, onOpenChange }: HelpDialogProps) {
           <DialogTitle>Help</DialogTitle>
           <DialogClose />
         </DialogHeader>
+        <DialogDescription className="sr-only">
+          Keyboard shortcuts for the recipe editor.
+        </DialogDescription>
 
         <Stack className="gap-1 py-2">
           <Text size="xs" className="px-4 pb-1 text-muted-foreground uppercase tracking-wider">

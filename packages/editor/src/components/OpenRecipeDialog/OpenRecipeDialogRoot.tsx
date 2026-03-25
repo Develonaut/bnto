@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   Divider,
@@ -49,6 +50,9 @@ function OpenRecipeDialogRoot({ open, onOpenChange, getIcon }: OpenRecipeDialogP
           <DialogTitle>Open Recipe</DialogTitle>
           <DialogClose />
         </DialogHeader>
+        <DialogDescription className="sr-only">
+          Choose a predefined recipe or import a .bnto.json file.
+        </DialogDescription>
         <div className="flex h-[34rem] flex-col">
           <RecipePickerGrid onSelect={handleLoad} getIcon={getIcon} />
           <Divider label="or import a file" className="my-4 shrink-0" />
