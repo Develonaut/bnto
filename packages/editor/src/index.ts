@@ -38,6 +38,7 @@ export type {
   PanelClient,
   ExportResult,
 } from "./editorTypes";
+export type { EditorDebugApi } from "./debug";
 export type {
   ReactEditorInstance,
   ReactNodeClient,
