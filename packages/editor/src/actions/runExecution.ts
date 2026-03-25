@@ -136,6 +136,12 @@ async function runExecution(set: SetState, get: GetState, files: File[]): Promis
       executionResults: browserResults,
       executionPhase: "completed",
     });
+
+    // Auto-download if the output node has autoDownload enabled (default: true).
+    // Fire-and-forget — execution is complete regardless of download outcome.
+    if (browserResults.length > 0 && shouldAutoDownload(get())) {
+      core.executions.downloadAllResults(browserResults, "editor-results").catch(() => {});
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Pipeline execution failed";
     set((s) => ({
@@ -150,4 +156,17 @@ async function runExecution(set: SetState, get: GetState, files: File[]): Promis
   }
 }
 
-export { runExecution };
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Check the output node's autoDownload param (defaults to true). */
+function shouldAutoDownload(state: EditorStore): boolean {
+  const outputEntry = Object.entries(state.configs).find(
+    ([, config]) => config.nodeType === "output",
+  );
+  if (!outputEntry) return true;
+  return outputEntry[1].parameters.autoDownload !== false;
+}
+
+export { runExecution, shouldAutoDownload };

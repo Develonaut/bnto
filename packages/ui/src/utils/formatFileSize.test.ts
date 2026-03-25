@@ -10,21 +10,21 @@ describe("formatFileSize", () => {
     expect(formatFileSize(512)).toBe("512 B");
   });
 
-  it("formats kilobytes", () => {
-    expect(formatFileSize(1024)).toBe("1 KB");
-    expect(formatFileSize(1536)).toBe("1.5 KB");
+  it("formats kilobytes (decimal, k=1000)", () => {
+    expect(formatFileSize(1000)).toBe("1 KB");
+    expect(formatFileSize(1500)).toBe("1.5 KB");
   });
 
   it("formats megabytes", () => {
-    expect(formatFileSize(1048576)).toBe("1 MB");
-    expect(formatFileSize(2621440)).toBe("2.5 MB");
+    expect(formatFileSize(1000000)).toBe("1 MB");
+    expect(formatFileSize(2500000)).toBe("2.5 MB");
   });
 
   it("formats gigabytes", () => {
-    expect(formatFileSize(1073741824)).toBe("1 GB");
+    expect(formatFileSize(1000000000)).toBe("1 GB");
   });
 
   it("rounds to one decimal place", () => {
-    expect(formatFileSize(1234567)).toBe("1.2 MB");
+    expect(formatFileSize(1200000)).toBe("1.2 MB");
   });
 });

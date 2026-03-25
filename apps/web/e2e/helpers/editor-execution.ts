@@ -38,16 +38,15 @@ export async function runEditorWithFiles(
  * Ensure the run panel is open (idempotent).
  *
  * The run panel auto-opens when execution starts. Clicking the toolbar
- * toggle button again would CLOSE it. Check if the panel is already open
- * (look for the "Logs" tab which only exists inside the run panel content)
- * before clicking.
+ * toggle button again would CLOSE it. Check if the panel content is
+ * already visible before clicking.
  */
 export async function openRunPanel(page: Page) {
-  const logsTab = page.getByTestId("tab-logs");
-  const alreadyOpen = await logsTab.isVisible().catch(() => false);
+  const panel = page.getByTestId("panel-run");
+  const alreadyOpen = await panel.isVisible().catch(() => false);
   if (!alreadyOpen) {
-    await page.getByTestId("toolbar-run-panel").click();
-    await expect(logsTab).toBeVisible({ timeout: 3_000 });
+    await page.getByTestId("toolbar-run").click();
+    await expect(panel).toBeVisible({ timeout: 3_000 });
   }
 }
 

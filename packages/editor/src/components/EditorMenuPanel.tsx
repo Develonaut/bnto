@@ -70,6 +70,7 @@ function EditorMenuPanel({
         variant={isOpen ? "muted" : "ghost"}
         elevation="sm"
         aria-label={label}
+        data-testid={`toolbar-${panelId}`}
       >
         {isOpen ? <XIcon className="size-4" /> : icon}
       </MenuTrigger>
@@ -80,6 +81,7 @@ function EditorMenuPanel({
         onPointerDownOutside={dismissOnOutsideClick ? undefined : preventEvent}
         onFocusOutside={dismissOnOutsideClick ? undefined : preventEvent}
         className={cn(width, "min-w-[290px] h-[calc(100vh-8rem)] flex flex-col p-0", className)}
+        data-testid={`panel-${panelId}`}
       >
         {children}
       </MenuContent>
