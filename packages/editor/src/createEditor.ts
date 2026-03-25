@@ -63,7 +63,7 @@ function createEditor(definition?: Definition, cloudId?: string): EditorInstance
     });
   });
 
-  return {
+  const instance: EditorInstance = {
     nodes,
     definition: def,
     execution,
@@ -86,6 +86,8 @@ function createEditor(definition?: Definition, cloudId?: string): EditorInstance
 
     _storeApi: storeApi,
   };
+
+  return instance;
 }
 
 export { createEditor };

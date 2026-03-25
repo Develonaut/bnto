@@ -8,9 +8,10 @@ import { useExecution } from "../hooks/useExecution";
  * RunButton — run/rerun button with hidden file input for selecting files.
  *
  * Phase-dependent:
- * - idle (no files) → play icon → opens file picker → runs
+ * - idle (no files staged) → play icon → opens file picker → runs
+ * - idle (files staged via RunTab) → play icon → runs staged files
  * - running → spinner (disabled)
- * - completed/failed → play icon → reruns with same files (no re-upload)
+ * - completed/failed → play icon → reruns with same files
  *
  * Full reset (clear files + results) is handled by the toolbar reset button
  * near undo/redo — not duplicated here.
@@ -23,12 +24,12 @@ function RunButton() {
   const isDone = phase === "completed" || phase === "failed";
 
   const handleClick = useCallback(() => {
-    if (isDone && hasFiles) {
+    if (hasFiles) {
       run(inputFiles);
       return;
     }
     fileInputRef.current?.click();
-  }, [isDone, hasFiles, inputFiles, run]);
+  }, [hasFiles, inputFiles, run]);
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

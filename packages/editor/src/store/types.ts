@@ -178,6 +178,7 @@ interface EditorActions {
   // --- Execution lifecycle ---
   runExecution: (files: File[]) => Promise<void>;
   resetRun: () => void;
+  setInputFiles: (files: File[]) => void;
   downloadResult: (file: BrowserFileResult) => void;
   downloadAllResults: () => Promise<void>;
 

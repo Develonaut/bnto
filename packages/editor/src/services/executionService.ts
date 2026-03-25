@@ -21,6 +21,10 @@ function createExecutionService(storeApi: StoreApi<EditorStore>): ExecutionServi
       storeApi.getState().resetRun();
     },
 
+    setInputFiles(files: File[]) {
+      storeApi.getState().setInputFiles(files);
+    },
+
     downloadResult(file: BrowserFileResult) {
       storeApi.getState().downloadResult(file);
     },
