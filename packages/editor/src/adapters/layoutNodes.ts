@@ -44,11 +44,13 @@ function positionChildren(
   const { x: px, y: py } = parent.position;
 
   for (let i = 0; i < children.length; i++) {
+    const original = children[i];
+    if (!original) continue;
     const position =
       direction === "vertical"
         ? { x: px, y: py + ROW_OFFSET + i * ROW_OFFSET }
         : { x: px + STRIDE + i * STRIDE, y: py };
-    const child: BentoNode = { ...children[i]!, position };
+    const child: BentoNode = { ...original, position };
     result.push(child);
     if (expandedIds.has(child.id)) queue.push(child);
   }
@@ -62,7 +64,8 @@ function layoutNodes(nodes: BentoNode[], expandedIds: Set<string>): BentoNode[] 
   const queue = [...result.filter((n) => expandedIds.has(n.id))];
 
   while (queue.length > 0) {
-    const parent = queue.shift()!;
+    const parent = queue.shift();
+    if (!parent) continue;
     const children = childrenByParent.get(parent.id);
 
     if (!children?.length) {

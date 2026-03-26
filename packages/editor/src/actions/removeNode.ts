@@ -77,9 +77,11 @@ function removeAndReflow(
   const otherLevel = nextNodes.filter((n) => n.data.parentContainerId !== parentContainerId);
 
   for (let i = 0; i < sameLevel.length; i++) {
+    const node = sameLevel[i];
+    if (!node) continue;
     const expectedX = i * STRIDE;
-    if (sameLevel[i]!.position.x !== expectedX) {
-      sameLevel[i] = { ...sameLevel[i]!, position: { ...sameLevel[i]!.position, x: expectedX } };
+    if (node.position.x !== expectedX) {
+      sameLevel[i] = { ...node, position: { ...node.position, x: expectedX } };
     }
   }
 
@@ -96,10 +98,12 @@ function autoSelectNearest(
   if (sameLevelNodes.length === 0) return;
 
   const selectIdx = Math.min(removedIndex > 0 ? removedIndex - 1 : 0, sameLevelNodes.length - 1);
-  const selectId = sameLevelNodes[selectIdx]!.id;
-  const nodeIdx = nodes.findIndex((n) => n.id === selectId);
-  if (nodeIdx >= 0) {
-    nodes[nodeIdx] = { ...nodes[nodeIdx]!, selected: true };
+  const selectTarget = sameLevelNodes[selectIdx];
+  if (!selectTarget) return;
+  const nodeIdx = nodes.findIndex((n) => n.id === selectTarget.id);
+  const nodeAtIdx = nodes[nodeIdx];
+  if (nodeIdx >= 0 && nodeAtIdx) {
+    nodes[nodeIdx] = { ...nodeAtIdx, selected: true };
   }
 }
 

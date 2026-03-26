@@ -27,7 +27,7 @@ function useEditorSelection(): { selectedNodeId: string | null } {
 
   const onChange = useCallback(
     ({ nodes }: { nodes: Node[] }) => {
-      setSelectedNodeId(nodes.length === 1 ? nodes[0]!.id : null);
+      setSelectedNodeId(nodes.length === 1 ? (nodes[0]?.id ?? null) : null);
     },
     [setSelectedNodeId],
   );

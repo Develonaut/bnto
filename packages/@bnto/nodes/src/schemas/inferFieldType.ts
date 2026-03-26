@@ -98,7 +98,8 @@ function unwrap(zodType: z.ZodTypeAny): z.ZodTypeAny {
     def.typeName === "ZodOptional" ||
     def.typeName === "ZodNullable"
   ) {
-    return unwrap(def.innerType!);
+    if (def.innerType) return unwrap(def.innerType);
+    return zodType;
   }
   return zodType;
 }

@@ -21,7 +21,10 @@ function useSliderState({ min, max, inverted, value, presets, onChange }: Slider
   );
   const sliderValue = useMemo(() => [display], [display]);
   const handleChange = useCallback(
-    (vs: number[]) => onChange(inverted ? invertValue(vs[0]!, min, max) : vs[0]!),
+    (vs: number[]) => {
+      const v = vs[0] ?? min;
+      onChange(inverted ? invertValue(v, min, max) : v);
+    },
     [onChange, inverted, min, max],
   );
   return { sliderValue, displayPresets, handleChange };

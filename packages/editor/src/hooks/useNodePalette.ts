@@ -76,7 +76,7 @@ function groupByCategory(
   }
   return categories
     .filter((cat) => categoryMap.has(cat.name))
-    .map((cat) => ({ category: cat, items: categoryMap.get(cat.name)! }));
+    .map((cat) => ({ category: cat, items: categoryMap.get(cat.name) ?? [] }));
 }
 
 function computePalette(

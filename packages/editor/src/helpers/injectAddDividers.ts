@@ -67,8 +67,9 @@ function partitionNodes(nodes: BentoNode[]) {
 /** Inject horizontal dividers between consecutive top-level nodes. */
 function injectTopLevelDividers(topLevel: BentoNode[], expandedIds: Set<string>, out: BentoNode[]) {
   for (let i = 0; i < topLevel.length - 1; i++) {
-    const left = topLevel[i]!;
-    const right = topLevel[i + 1]!;
+    const left = topLevel[i];
+    const right = topLevel[i + 1];
+    if (!left || !right) continue;
     const adjacentToGroup = expandedIds.has(left.id) || expandedIds.has(right.id);
     out.push(
       createDivider({
@@ -100,9 +101,12 @@ function injectContainerDividers(
   }
 
   children.sort(cfg.sort);
-  injectBeforeFirstChild(parent, children[0]!, cfg, out);
+  const first = children[0];
+  const last = children[children.length - 1];
+  if (!first || !last) return;
+  injectBeforeFirstChild(parent, first, cfg, out);
   injectBetweenChildren(children, parent, cfg, out);
-  injectAfterLastChild(children[children.length - 1]!, parent, cfg, out);
+  injectAfterLastChild(last, parent, cfg, out);
 }
 
 /** Single divider next to an empty container to add the first child. */
@@ -154,8 +158,9 @@ function injectBetweenChildren(
   out: BentoNode[],
 ) {
   for (let i = 0; i < children.length - 1; i++) {
-    const prev = children[i]!;
-    const next = children[i + 1]!;
+    const prev = children[i];
+    const next = children[i + 1];
+    if (!prev || !next) continue;
     const p =
       cfg.primary(prev) + CELL + (cfg.primary(next) - cfg.primary(prev) - CELL - DIVIDER_THIN) / 2;
     out.push(

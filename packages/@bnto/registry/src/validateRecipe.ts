@@ -57,7 +57,8 @@ function validateIoNode(recipe: Recipe, ioType: "input" | "output"): ValidationE
     return [err(rootId, "nodes", msg)];
   }
 
-  const node = matches[0]!;
+  const node = matches[0];
+  if (!node) return [];
   const portField = ioType === "input" ? "outputPorts" : "inputPorts";
   const ports = ioType === "input" ? node.outputPorts : node.inputPorts;
   if (!ports?.length) {
@@ -99,7 +100,8 @@ function reachableFromInput(
   const visited = new Set<string>();
   const queue = [inputNode.id];
   while (queue.length > 0) {
-    const current = queue.shift()!;
+    const current = queue.shift();
+    if (!current) continue;
     if (visited.has(current)) continue;
     visited.add(current);
     for (const neighbor of adjacency.get(current) ?? []) {

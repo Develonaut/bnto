@@ -25,7 +25,7 @@ function moveInTree(
     moveInTree(child, nodeId, position),
   );
 
-  const changed = updatedChildren.some((c, i) => c !== node.nodes![i]);
+  const changed = updatedChildren.some((c, i) => c !== node.nodes?.[i]);
   if (!changed) return node;
 
   return { ...node, nodes: updatedChildren };

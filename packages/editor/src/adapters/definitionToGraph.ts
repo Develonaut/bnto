@@ -73,10 +73,11 @@ function definitionToGraph(definition: Definition): BentoLayout {
   const children = definition.nodes ?? [];
   const configs: NodeConfigs = {};
 
-  const nodes: BentoNode[] = children.slice(0, SLOTS.length).map((node, i) => {
-    const slot = SLOTS[i]!;
+  const nodes: BentoNode[] = children.slice(0, SLOTS.length).flatMap((node, i) => {
+    const slot = SLOTS[i];
+    if (!slot) return [];
     configs[node.id] = buildConfig(node);
-    return mapDefinitionChild(node, slot);
+    return [mapDefinitionChild(node, slot)];
   });
 
   return { nodes, configs };

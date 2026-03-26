@@ -104,7 +104,7 @@ export class BntoWorker {
   // ==========================================================================
 
   private async doInit(): Promise<string> {
-    const onMessage = (r: WorkerResponse) => this.handleMessage(r);
+    const onMessage = this.handleMessage.bind(this);
     return new Promise<string>((resolve, reject) => {
       this.worker = createWorkerInstance(onMessage, reject);
       attachInitListener(this.worker, resolve, reject, onMessage);

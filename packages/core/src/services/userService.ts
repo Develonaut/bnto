@@ -5,13 +5,13 @@ import { toUser } from "../transforms/user";
 import { getQueryClient } from "../client";
 import type { RawUserDoc } from "../types/raw";
 
-export function createUserService() {
-  function invalidateCurrentUser() {
-    getQueryClient().invalidateQueries({
-      queryKey: getCurrentUserQuery().queryKey,
-    });
-  }
+function invalidateCurrentUser() {
+  getQueryClient().invalidateQueries({
+    queryKey: getCurrentUserQuery().queryKey,
+  });
+}
 
+export function createUserService() {
   return {
     // ── Query Options ─────────────────────────────────────────────
     // Note: convexQuery returns opaque types, so select receives `unknown`.
