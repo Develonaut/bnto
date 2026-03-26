@@ -2,9 +2,8 @@
  * Single virtualized row in the explore grid.
  */
 
-import type { VirtualItem } from "@tanstack/react-virtual";
 import type { Recipe } from "@bnto/core";
-import type { LucideIcon } from "@bnto/ui";
+import type { LucideIcon, VirtualItem } from "@bnto/ui";
 import { ScaleIn } from "@bnto/ui";
 import { ExploreRecipeCard } from "./ExploreRecipeCard";
 import { ExploreCtaCard } from "./ExploreCtaCard";

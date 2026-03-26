@@ -6,7 +6,7 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { useWindowVirtualizer } from "@bnto/ui";
 import { useColumnCount } from "./useColumnCount";
 import { filterRecipes } from "./filterRecipes";
 
