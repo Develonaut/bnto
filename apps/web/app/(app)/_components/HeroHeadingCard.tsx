@@ -1,12 +1,9 @@
-import { Heading, Stack, Text } from "@bnto/ui";
+import { Card, Heading, Text } from "@bnto/ui";
 import { GALLERY_HEADING, GALLERY_SUBHEADING, TRUST_LINE } from "@/lib/copy";
 
-import { HeroCTA } from "./HeroCTA";
-import { HeroPitchPoints } from "./HeroPitchPoints";
-
-export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
+export function HeroHeadingCard() {
   return (
-    <Stack className="gap-6">
+    <Card className="flex h-full flex-col justify-center gap-4 p-8">
       <Text size="xs" color="muted" mono className="uppercase tracking-wider">
         {TRUST_LINE}
       </Text>
@@ -16,8 +13,6 @@ export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
       <Text color="muted" leading="snug">
         {GALLERY_SUBHEADING}
       </Text>
-      {showCta && <HeroCTA />}
-      <HeroPitchPoints />
-    </Stack>
+    </Card>
   );
 }

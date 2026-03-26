@@ -132,32 +132,6 @@
  * toast    (400) — notification toasts
  * tooltip  (500) — tooltip overlays (topmost)
  * ──────────────────────────────────────────────────────────────── */
-/* ── Marquee Animations ────────────────────────────────────────
- * Plain CSS classes — NOT @utility — because:
- *   1. They reference component-level --duration (not a theme var)
- *   2. @utility collapses longhands into animation shorthand,
- *      which resets animation-direction and breaks reverse
- * Reduced-motion handled via @media below.
- * ──────────────────────────────────────────────────────────── */
-.animate-marquee {
-  animation-name: marquee;
-  animation-duration: var(--duration, 40s);
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-.animate-marquee-vertical {
-  animation-name: marquee-vertical;
-  animation-duration: var(--duration, 40s);
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .animate-marquee,
-  .animate-marquee-vertical {
-    animation-play-state: paused;
-  }
-}
-
 @utility z-canvas {
   z-index: 10;
 }
