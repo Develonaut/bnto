@@ -3,21 +3,26 @@
   "type": "group",
   "version": "1.0.0",
   "name": "Rename CSV Columns",
-  "position": { "x": 0, "y": 0 },
+  "position": {
+    "x": 0,
+    "y": 0
+  },
   "metadata": {
     "description": "Accepts a CSV file and renames its column headers."
   },
   "parameters": {},
   "inputPorts": [],
   "outputPorts": [],
-  "settings": { "iteration": "auto" },
   "nodes": [
     {
       "id": "input",
       "type": "input",
       "version": "1.0.0",
       "name": "Input",
-      "position": { "x": 0, "y": 100 },
+      "position": {
+        "x": 0,
+        "y": 100
+      },
       "metadata": {},
       "parameters": {
         "mode": "file-upload",
@@ -27,25 +32,48 @@
         "multiple": false
       },
       "inputPorts": [],
-      "outputPorts": [{ "id": "out-1", "name": "files" }]
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
     },
     {
       "id": "rename-columns",
       "type": "spreadsheet-rename",
       "version": "1.0.0",
       "name": "Rename",
-      "position": { "x": 250, "y": 100 },
+      "position": {
+        "x": 250,
+        "y": 100
+      },
       "metadata": {},
-      "parameters": { "columns": {} },
-      "inputPorts": [{ "id": "in-1", "name": "files" }],
-      "outputPorts": [{ "id": "out-1", "name": "files" }]
+      "parameters": {
+        "columns": {}
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
     },
     {
       "id": "output",
       "type": "output",
       "version": "1.0.0",
       "name": "Output",
-      "position": { "x": 500, "y": 100 },
+      "position": {
+        "x": 500,
+        "y": 100
+      },
       "metadata": {},
       "parameters": {
         "mode": "download",
@@ -53,12 +81,25 @@
         "zip": false,
         "autoDownload": true
       },
-      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
       "outputPorts": []
     }
   ],
   "edges": [
-    { "id": "e1", "source": "input", "target": "rename-columns" },
-    { "id": "e2", "source": "rename-columns", "target": "output" }
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "rename-columns"
+    },
+    {
+      "id": "e2",
+      "source": "rename-columns",
+      "target": "output"
+    }
   ]
 }

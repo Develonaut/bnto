@@ -13,6 +13,9 @@
   "parameters": {},
   "inputPorts": [],
   "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
   "nodes": [
     {
       "id": "input",
@@ -40,46 +43,22 @@
       ]
     },
     {
-      "id": "resize-loop",
-      "type": "loop",
+      "id": "resize-image",
+      "type": "image-resize",
       "version": "1.0.0",
-      "name": "For Each",
+      "name": "Resize",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "mode": "forEach"
+        "maintainAspect": true,
+        "quality": 80,
+        "width": 200
       },
-      "inputPorts": [
-        {
-          "id": "in-1",
-          "name": "items"
-        }
-      ],
-      "outputPorts": [],
-      "nodes": [
-        {
-          "id": "resize-image",
-          "type": "image-resize",
-          "version": "1.0.0",
-          "name": "Resize",
-          "position": {
-            "x": 0,
-            "y": 0
-          },
-          "metadata": {},
-          "parameters": {
-            "maintainAspect": true,
-            "quality": 80,
-            "width": 200
-          },
-          "inputPorts": [],
-          "outputPorts": []
-        }
-      ],
-      "edges": []
+      "inputPorts": [],
+      "outputPorts": []
     },
     {
       "id": "output",
@@ -110,11 +89,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "resize-loop"
+      "target": "resize-image"
     },
     {
       "id": "e2",
-      "source": "resize-loop",
+      "source": "resize-image",
       "target": "output"
     }
   ]

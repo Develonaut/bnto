@@ -176,8 +176,73 @@ describe("round-trip fidelity", () => {
   });
 
   describe("container children preservation", () => {
+    const LOOP_DEF: Definition = {
+      id: "loop-test",
+      type: "group",
+      version: "1.0.0",
+      name: "Loop Test",
+      position: { x: 0, y: 0 },
+      metadata: {},
+      parameters: {},
+      inputPorts: [],
+      outputPorts: [],
+      nodes: [
+        {
+          id: "input",
+          type: "input",
+          version: "1.0.0",
+          name: "Input",
+          position: { x: 0, y: 100 },
+          metadata: {},
+          parameters: { mode: "file-upload" },
+          inputPorts: [],
+          outputPorts: [{ id: "out-1", name: "files" }],
+        },
+        {
+          id: "process-loop",
+          type: "loop",
+          version: "1.0.0",
+          name: "For Each",
+          position: { x: 250, y: 100 },
+          metadata: {},
+          parameters: { mode: "forEach" },
+          inputPorts: [{ id: "in-1", name: "items" }],
+          outputPorts: [],
+          nodes: [
+            {
+              id: "compress",
+              type: "image-compress",
+              version: "1.0.0",
+              name: "Compress",
+              position: { x: 0, y: 0 },
+              metadata: {},
+              parameters: { quality: 80 },
+              inputPorts: [],
+              outputPorts: [],
+            },
+          ],
+          edges: [],
+        },
+        {
+          id: "output",
+          type: "output",
+          version: "1.0.0",
+          name: "Output",
+          position: { x: 500, y: 100 },
+          metadata: {},
+          parameters: { mode: "download" },
+          inputPorts: [{ id: "in-1", name: "files" }],
+          outputPorts: [],
+        },
+      ],
+      edges: [
+        { id: "e1", source: "input", target: "process-loop" },
+        { id: "e2", source: "process-loop", target: "output" },
+      ],
+    };
+
     it("preserves nested children inside loop nodes", () => {
-      const original = compressImages.definition;
+      const original = LOOP_DEF;
       const loopNode = original.nodes!.find((n) => n.type === "loop")!;
       expect(loopNode.nodes!.length).toBeGreaterThan(0);
 
@@ -189,7 +254,7 @@ describe("round-trip fidelity", () => {
     });
 
     it("preserves edges inside container nodes", () => {
-      const original = compressImages.definition;
+      const original = LOOP_DEF;
       const loopNode = original.nodes!.find((n) => n.type === "loop")!;
 
       const graph = definitionToGraph(original);

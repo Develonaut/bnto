@@ -13,6 +13,9 @@
   "parameters": {},
   "inputPorts": [],
   "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
   "nodes": [
     {
       "id": "input",

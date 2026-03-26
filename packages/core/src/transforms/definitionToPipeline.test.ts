@@ -206,12 +206,8 @@ describe("definitionToPipeline", () => {
 
     const pipeline = definitionToPipeline(recipe!.definition, { quality: 60 });
 
-    // The compress-image node is inside a loop container
-    const loop = pipeline.nodes.find((n) => n.type === "loop");
-    expect(loop).toBeDefined();
-    expect(loop!.children).toBeDefined();
-
-    const compressNode = loop!.children!.find((n) => n.type === "image-compress");
+    // The compress-image node is a flat top-level processor (auto-iteration)
+    const compressNode = pipeline.nodes.find((n) => n.type === "image-compress");
     expect(compressNode).toBeDefined();
     expect(compressNode!.params).toHaveProperty("quality", 60);
   });
@@ -222,8 +218,7 @@ describe("definitionToPipeline", () => {
 
     const pipeline = definitionToPipeline(recipe!.definition);
 
-    const loop = pipeline.nodes.find((n) => n.type === "loop");
-    const compressNode = loop!.children!.find((n) => n.type === "image-compress");
+    const compressNode = pipeline.nodes.find((n) => n.type === "image-compress");
     expect(compressNode!.params).toHaveProperty("quality", 80);
   });
 

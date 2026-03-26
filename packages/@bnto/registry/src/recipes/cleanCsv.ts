@@ -36,6 +36,7 @@ export const cleanCsv: Recipe = {
     parameters: {},
     inputPorts: [],
     outputPorts: [],
+    settings: { iteration: "auto" },
     nodes: [
       defaultInputNode(CSV_INPUT),
       {
