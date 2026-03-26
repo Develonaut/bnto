@@ -45,6 +45,22 @@ const eslintConfig = defineConfig([
       "@next/next/no-img-element": "off",
     },
   },
+  // Dev showcase pages are long by design (showing multiple component variants)
+  {
+    files: ["app/(dev)/**"],
+    rules: {
+      "max-lines-per-function": "off",
+      "max-lines": "off",
+    },
+  },
+  // Test files naturally have long describe blocks
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"],
+    rules: {
+      "max-lines-per-function": "off",
+      "max-lines": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

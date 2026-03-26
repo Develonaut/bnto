@@ -7,10 +7,7 @@ import type { Id } from "./_generated/dataModel";
  * These are stable identities for tests that need auth without the signup flow.
  * Must match the emails in apps/web/e2e/accounts.ts.
  */
-const PREDEFINED_EMAILS = new Set([
-  "e2e-basic@test.bnto.dev",
-  "e2e-pro@test.bnto.dev",
-]);
+const PREDEFINED_EMAILS = new Set(["e2e-basic@test.bnto.dev", "e2e-pro@test.bnto.dev"]);
 
 const TEST_DOMAIN = "@test.bnto.dev";
 
@@ -70,23 +67,23 @@ async function deleteAuthAccounts(ctx: MutationCtx, userId: Id<"users">) {
   return deleted;
 }
 
-/** Delete app-level data for a user (recipes, executions, logs, events). */
-async function deleteAppData(ctx: MutationCtx, userId: Id<"users">) {
-  let deleted = 0;
-
+/** Delete all recipes for a user. */
+async function deleteUserRecipes(ctx: MutationCtx, userId: Id<"users">) {
   const recipes = await ctx.db
     .query("recipes")
     .withIndex("by_user", (q) => q.eq("userId", userId))
     .collect();
-  for (const recipe of recipes) {
-    await ctx.db.delete(recipe._id);
-    deleted++;
-  }
+  for (const recipe of recipes) await ctx.db.delete(recipe._id);
+  return recipes.length;
+}
 
+/** Delete all executions and their logs for a user. */
+async function deleteUserExecutions(ctx: MutationCtx, userId: Id<"users">) {
   const executions = await ctx.db
     .query("executions")
     .withIndex("by_user", (q) => q.eq("userId", userId))
     .collect();
+  let deleted = 0;
   for (const exec of executions) {
     const logs = await ctx.db
       .query("executionLogs")
@@ -99,17 +96,25 @@ async function deleteAppData(ctx: MutationCtx, userId: Id<"users">) {
     await ctx.db.delete(exec._id);
     deleted++;
   }
+  return deleted;
+}
 
+/** Delete all execution events for a user. */
+async function deleteUserEvents(ctx: MutationCtx, userId: Id<"users">) {
   const events = await ctx.db
     .query("executionEvents")
     .withIndex("by_userId", (q) => q.eq("userId", userId))
     .collect();
-  for (const event of events) {
-    await ctx.db.delete(event._id);
-    deleted++;
-  }
+  for (const event of events) await ctx.db.delete(event._id);
+  return events.length;
+}
 
-  return deleted;
+/** Delete app-level data for a user (recipes, executions, logs, events). */
+async function deleteAppData(ctx: MutationCtx, userId: Id<"users">) {
+  const recipes = await deleteUserRecipes(ctx, userId);
+  const executions = await deleteUserExecutions(ctx, userId);
+  const events = await deleteUserEvents(ctx, userId);
+  return recipes + executions + events;
 }
 
 /** Delete ephemeral rate limit entries for test emails. */
@@ -117,10 +122,7 @@ async function deleteEphemeralRateLimits(ctx: MutationCtx) {
   const rateLimits = await ctx.db.query("authRateLimits").collect();
   let deleted = 0;
   for (const rl of rateLimits) {
-    if (
-      rl.identifier.endsWith(TEST_DOMAIN) &&
-      !PREDEFINED_EMAILS.has(rl.identifier)
-    ) {
+    if (rl.identifier.endsWith(TEST_DOMAIN) && !PREDEFINED_EMAILS.has(rl.identifier)) {
       await ctx.db.delete(rl._id);
       deleted++;
     }
@@ -149,10 +151,7 @@ export const cleanTestAccounts = internalMutation({
 
     const allUsers = await ctx.db.query("users").collect();
     const testUsers = allUsers.filter(
-      (u) =>
-        u.email &&
-        u.email.endsWith(TEST_DOMAIN) &&
-        !PREDEFINED_EMAILS.has(u.email),
+      (u) => u.email && u.email.endsWith(TEST_DOMAIN) && !PREDEFINED_EMAILS.has(u.email),
     );
 
     for (const user of testUsers) {

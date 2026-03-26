@@ -95,36 +95,46 @@ type PollArgs = {
   sessionId?: string;
 };
 
+type PollResult = {
+  status: string;
+  result?: unknown;
+  outputFiles?: unknown;
+  error?: string;
+  progress?: unknown[];
+};
+
+/** Mark execution as completed with results. */
+async function completeExecution(
+  ctx: RunCtx,
+  args: PollArgs,
+  execution: PollResult,
+  startTime: number,
+) {
+  await ctx.runMutation(internal.executions.complete, {
+    executionId: args.executionId,
+    result: execution.result ?? null,
+    outputFiles: execution.outputFiles,
+    eventId: args.eventId,
+    startTime,
+  });
+}
+
 /** Handle a single poll response — complete, fail, or update progress. */
 async function handlePollResult(
   ctx: RunCtx,
   args: PollArgs,
-  execution: {
-    status: string;
-    result?: unknown;
-    outputFiles?: unknown;
-    error?: string;
-    progress?: unknown[];
-  },
+  execution: PollResult,
   goExecutionId: string,
   startTime: number,
 ): Promise<boolean> {
   if (execution.status === "completed") {
-    await ctx.runMutation(internal.executions.complete, {
-      executionId: args.executionId,
-      result: execution.result ?? null,
-      outputFiles: execution.outputFiles,
-      eventId: args.eventId,
-      startTime,
-    });
+    await completeExecution(ctx, args, execution, startTime);
     return true;
   }
-
   if (execution.status === "failed") {
     await failExecution(ctx, args, execution.error ?? "Execution failed", startTime);
     return true;
   }
-
   await ctx.runMutation(internal.executions.updateProgress, {
     executionId: args.executionId,
     status: "running",

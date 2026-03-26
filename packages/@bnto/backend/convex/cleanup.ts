@@ -2,55 +2,49 @@
 
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
-import {
-  DeleteObjectsCommand,
-  ListObjectsV2Command,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { createR2Client } from "./_helpers/r2_client";
 
-/**
- * Delete all R2 objects under a given prefix, handling pagination.
- * Loops with ContinuationToken until all objects are deleted.
- *
- * Returns the total number of objects deleted.
- */
-async function deleteAllUnderPrefix(
+/** List one page of objects and delete them. Returns the continuation token if more pages remain. */
+async function deleteOnePage(
+  client: ReturnType<typeof createR2Client>,
+  bucket: string,
   prefix: string,
-): Promise<{ deleted: number; bucket: string }> {
-  const client = createR2Client();
-  const bucket = process.env.R2_BUCKET_NAME ?? "bnto-transit";
-
-  let deleted = 0;
-  let continuationToken: string | undefined;
-
-  do {
-    const listResponse = await client.send(
-      new ListObjectsV2Command({
+  continuationToken?: string,
+): Promise<{ deleted: number; nextToken?: string }> {
+  const listResponse = await client.send(
+    new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: prefix,
+      ContinuationToken: continuationToken,
+    }),
+  );
+  const objects = listResponse.Contents ?? [];
+  if (objects.length > 0) {
+    await client.send(
+      new DeleteObjectsCommand({
         Bucket: bucket,
-        Prefix: prefix,
-        ContinuationToken: continuationToken,
+        Delete: { Objects: objects.map((obj) => ({ Key: obj.Key })), Quiet: true },
       }),
     );
+  }
+  return {
+    deleted: objects.length,
+    nextToken: listResponse.IsTruncated ? listResponse.NextContinuationToken : undefined,
+  };
+}
 
-    const objects = listResponse.Contents ?? [];
-    if (objects.length > 0) {
-      await client.send(
-        new DeleteObjectsCommand({
-          Bucket: bucket,
-          Delete: {
-            Objects: objects.map((obj) => ({ Key: obj.Key })),
-            Quiet: true,
-          },
-        }),
-      );
-      deleted += objects.length;
-    }
-
-    continuationToken = listResponse.IsTruncated
-      ? listResponse.NextContinuationToken
-      : undefined;
-  } while (continuationToken);
-
+/** Delete all R2 objects under a given prefix, handling pagination. */
+async function deleteAllUnderPrefix(prefix: string): Promise<{ deleted: number; bucket: string }> {
+  const client = createR2Client();
+  const bucket = process.env.R2_BUCKET_NAME ?? "bnto-transit";
+  let deleted = 0;
+  let token: string | undefined;
+  do {
+    const page = await deleteOnePage(client, bucket, prefix, token);
+    deleted += page.deleted;
+    token = page.nextToken;
+  } while (token);
   return { deleted, bucket };
 }
 
