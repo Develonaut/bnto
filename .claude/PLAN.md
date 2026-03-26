@@ -884,6 +884,10 @@ Files: `packages/@bnto/nodes/src/definition.ts` (Definition type with version fi
 
 Files to delete: `DevTab.tsx`, `DevNodeControls.tsx`, `devMockData.ts`, `node-progress.spec.ts`. Files to modify: `RunPanelRoot.tsx`, `editorTypes.ts`, `executionService.ts`, `createEditorStore.test.ts`.
 
+### ~~Triage: Lefthook Quality Gates — knip + sonarjs enforcement~~ DONE
+
+Completed in PR on `chore/lefthook-quality-gates`. Triaged ~130 knip findings to 0: deleted 8 dead config wrappers, removed 14 dead type exports from `@bnto/core` + `@bnto/nodes`, configured knip to ignore generated code + intentional public API + binaries. Re-enabled lefthook `dead-code` pre-commit hook. sonarjs complexity rules already enforced as warnings via `task ui:lint` (3 pre-existing warnings in core services — tracked separately).
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |

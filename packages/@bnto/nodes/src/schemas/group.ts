@@ -11,9 +11,6 @@ export const groupParamsSchema = z.object({
   mode: z.enum(GROUP_MODES).optional().default("sequential"),
 });
 
-/** Inferred TypeScript type for group node parameters. */
-export type GroupParams = z.infer<typeof groupParamsSchema>;
-
 /** Full schema definition for the group node type. */
 export const groupNodeSchema: NodeSchema = {
   nodeType: "group",

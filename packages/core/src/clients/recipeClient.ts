@@ -116,5 +116,3 @@ export function createRecipeClient(
     invalidateRecipe: (id: string) => recipes.invalidateRecipe(id),
   } as const;
 }
-
-export type RecipeClient = ReturnType<typeof createRecipeClient>;

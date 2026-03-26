@@ -9,9 +9,6 @@ export const editFieldsParamsSchema = z.object({
   keepOnlySet: z.boolean().optional().default(false),
 });
 
-/** Inferred TypeScript type for edit-fields node parameters. */
-export type EditFieldsParams = z.infer<typeof editFieldsParamsSchema>;
-
 /** Full schema definition for the edit-fields node type. */
 export const editFieldsNodeSchema: NodeSchema = {
   nodeType: "edit-fields",

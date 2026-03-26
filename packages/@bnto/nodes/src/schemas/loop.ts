@@ -15,9 +15,6 @@ export const loopParamsSchema = z.object({
   breakCondition: z.string().optional(),
 });
 
-/** Inferred TypeScript type for loop node parameters. */
-export type LoopParams = z.infer<typeof loopParamsSchema>;
-
 /** Full schema definition for the loop node type. */
 export const loopNodeSchema: NodeSchema = {
   nodeType: "loop",

@@ -23,5 +23,3 @@ export function createTelemetryClient() {
     isInitialized,
   } as const;
 }
-
-export type TelemetryClient = ReturnType<typeof createTelemetryClient>;

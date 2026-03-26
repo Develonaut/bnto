@@ -29,5 +29,3 @@ export function createDownloadService() {
     },
   } as const;
 }
-
-export type DownloadService = ReturnType<typeof createDownloadService>;

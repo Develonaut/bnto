@@ -8,10 +8,7 @@ import type { AnalyticsService } from "../services/analyticsService";
  *
  * Usage stats are user-scoped data — one namespace for profile + analytics.
  */
-export function createUserClient(
-  user: UserService,
-  analytics: AnalyticsService,
-) {
+export function createUserClient(user: UserService, analytics: AnalyticsService) {
   return {
     // ── Query Options ─────────────────────────────────────────────
     meQueryOptions: () => user.meQueryOptions(),
@@ -27,5 +24,3 @@ export function createUserClient(
     invalidateSlugAggregates: () => analytics.invalidateSlugAggregates(),
   } as const;
 }
-
-export type UserClient = ReturnType<typeof createUserClient>;

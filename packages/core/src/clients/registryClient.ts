@@ -26,5 +26,3 @@ export function createRegistryClient() {
     isInitialized: () => registryStore.getState().initialized,
   } as const;
 }
-
-export type RegistryClient = ReturnType<typeof createRegistryClient>;

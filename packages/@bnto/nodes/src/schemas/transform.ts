@@ -9,9 +9,6 @@ export const transformParamsSchema = z.object({
   mappings: z.record(z.string()).optional(),
 });
 
-/** Inferred TypeScript type for transform node parameters. */
-export type TransformParams = z.infer<typeof transformParamsSchema>;
-
 /** Full schema definition for the transform node type. */
 export const transformNodeSchema: NodeSchema = {
   nodeType: "transform",

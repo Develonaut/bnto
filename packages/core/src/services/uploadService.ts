@@ -1,11 +1,7 @@
 "use client";
 
 import { generateUploadUrls } from "../adapters/convex/uploadAdapter";
-import type {
-  UploadFileInput,
-  UploadSession,
-  FileUploadProgress,
-} from "../types/upload";
+import type { UploadFileInput, UploadSession, FileUploadProgress } from "../types/upload";
 
 /** Callback invoked whenever a file's upload progress changes. */
 export type OnUploadProgress = (files: FileUploadProgress[]) => void;
@@ -102,10 +98,7 @@ export function createUploadService() {
      * Upload files to R2 via presigned URLs with progress tracking.
      * Returns the sessionId on success.
      */
-    uploadFiles: async (
-      files: File[],
-      onProgress?: OnUploadProgress,
-    ): Promise<UploadSession> => {
+    uploadFiles: async (files: File[], onProgress?: OnUploadProgress): Promise<UploadSession> => {
       const session = await generateUploadUrls(toUploadInputs(files));
       const progress = initProgress(files);
       onProgress?.(progress);
@@ -120,5 +113,3 @@ export function createUploadService() {
     },
   } as const;
 }
-
-export type UploadService = ReturnType<typeof createUploadService>;
