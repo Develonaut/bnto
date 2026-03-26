@@ -13,9 +13,6 @@ export const parallelParamsSchema = z.object({
   errorStrategy: z.enum(ERROR_STRATEGIES).optional().default("failFast"),
 });
 
-/** Inferred TypeScript type for parallel node parameters. */
-export type ParallelParams = z.infer<typeof parallelParamsSchema>;
-
 /** Full schema definition for the parallel node type. */
 export const parallelNodeSchema: NodeSchema = {
   nodeType: "parallel",

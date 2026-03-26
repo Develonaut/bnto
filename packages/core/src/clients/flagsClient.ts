@@ -23,5 +23,3 @@ export function createFlagsClient() {
     reload: reloadFlags,
   } as const;
 }
-
-export type FlagsClient = ReturnType<typeof createFlagsClient>;

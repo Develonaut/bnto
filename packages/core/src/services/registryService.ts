@@ -22,5 +22,3 @@ export function createRegistryService() {
     },
   } as const;
 }
-
-export type RegistryService = ReturnType<typeof createRegistryService>;

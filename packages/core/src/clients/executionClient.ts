@@ -105,5 +105,3 @@ export function createExecutionClient(
     invalidateExecutions: (recipeId: string) => executions.invalidateExecutions(recipeId),
   } as const;
 }
-
-export type ExecutionClient = ReturnType<typeof createExecutionClient>;

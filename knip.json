@@ -1,5 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "ignoreBinaries": ["lefthook", "tsx", "playwright", "convex"],
   "workspaces": {
     ".": {
       "ignoreDependencies": ["@auth/core", "@convex-dev/auth"]
@@ -10,35 +12,29 @@
         "app/**/layout.tsx",
         "app/**/not-found.tsx",
         "app/providers/**/*.{ts,tsx}",
-        "e2e/**/*.ts",
-        "lib/wasm/bnto.worker.ts"
+        "e2e/**/*.ts"
       ],
       "project": ["**/*.{ts,tsx}"],
       "ignoreDependencies": [
         "@tailwindcss/typography",
-        "tw-animate-css",
         "@types/mdx",
+        "@lhci/cli",
         "eslint-plugin-import"
       ]
     },
     "packages/core": {
-      "project": ["src/**/*.{ts,tsx}"],
-      "ignore": ["src/__tests__/**"]
+      "project": ["src/**/*.{ts,tsx}"]
     },
     "packages/ui": {
-      "entry": ["src/index.ts"],
       "project": ["src/**/*.{ts,tsx}"]
     },
     "packages/editor": {
-      "entry": ["src/index.ts"],
       "project": ["src/**/*.{ts,tsx}"]
     },
     "packages/@bnto/form": {
-      "entry": ["src/index.ts"],
       "project": ["src/**/*.{ts,tsx}"]
     },
     "packages/@bnto/registry": {
-      "entry": ["src/index.ts"],
       "project": ["src/**/*.ts"]
     },
     "packages/@bnto/auth": {
@@ -50,7 +46,8 @@
       "project": ["convex/**/*.ts"]
     },
     "packages/@bnto/nodes": {
-      "project": ["src/**/*.ts"]
+      "project": ["src/**/*.ts"],
+      "ignore": ["src/generated/**"]
     }
   },
   "ignore": ["test-fixtures/**", "apps/desktop/**"]
