@@ -1,7 +1,8 @@
 import { ConvexError, v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery, action } from "./_generated/server";
+import { internal } from "./_generated/api";
 import type { MutationCtx } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { getAppUserId } from "./_helpers/auth";
 import { NODE_TYPE_LABELS } from "./_helpers/nodeTypeLabels";
 
@@ -179,5 +180,28 @@ export const remove = mutation({
       throw new ConvexError("Not authorized");
     }
     await ctx.db.delete(args.id);
+  },
+});
+
+/** List full recipe documents for the authenticated user. Internal — not client-callable. */
+export const listFull = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAppUserId(ctx);
+    if (userId === null) return [];
+    return ctx.db
+      .query("recipes")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .take(500);
+  },
+});
+
+/** Pull all recipes for the authenticated user. Action wrapper for imperative one-shot calls. */
+export const pullAll = action({
+  args: {},
+  handler: async (ctx): Promise<Doc<"recipes">[]> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError("Not authenticated");
+    return ctx.runQuery(internal.recipes.listFull, {});
   },
 });

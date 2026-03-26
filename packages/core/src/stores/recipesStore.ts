@@ -2,6 +2,7 @@
 
 import type { StoreApi } from "zustand/vanilla";
 import { createEnhancedStore } from "./createEnhancedStore";
+import { mergeCloudRecipes } from "./mergeCloudRecipes";
 import type { UserRecipe } from "../types/recipe";
 
 interface RecipesStoreState {
@@ -31,20 +32,7 @@ export const recipesStore: StoreApi<RecipesStoreState> = createEnhancedStore<Rec
 
   hydrateFromCloud: (recipes) =>
     set((state) => {
-      for (const r of recipes) {
-        const existing = state.recipes[r.id];
-        if (!existing) {
-          // New recipe — add to local store
-          state.recipes[r.id] = r;
-        } else if (!existing.cloudId && r.cloudId) {
-          // Local-only recipe matched by ID — merge cloud link
-          state.recipes[r.id] = {
-            ...existing,
-            cloudId: r.cloudId,
-            syncedAt: r.syncedAt ?? Date.now(),
-          };
-        }
-      }
+      mergeCloudRecipes(state.recipes, recipes);
     }),
 }));
 
