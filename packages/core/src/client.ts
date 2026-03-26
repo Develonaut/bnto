@@ -20,14 +20,15 @@ let convexClient: ConvexReactClient;
 let convexQueryClient: ConvexQueryClient;
 let queryClient: QueryClient;
 
+function handleQueryError(error: Error) {
+  if (isAuthError(error)) emitAuthError();
+}
+
 /** Create QueryClient wired with auth error handling and Convex bridge. */
 function createWiredQueryClient(cqc: ConvexQueryClient): QueryClient {
-  const handleError = (error: Error) => {
-    if (isAuthError(error)) emitAuthError();
-  };
   return new QueryClient({
-    queryCache: new QueryCache({ onError: handleError }),
-    mutationCache: new MutationCache({ onError: handleError }),
+    queryCache: new QueryCache({ onError: handleQueryError }),
+    mutationCache: new MutationCache({ onError: handleQueryError }),
     defaultOptions: {
       queries: {
         queryKeyHashFn: cqc.hashFn(),

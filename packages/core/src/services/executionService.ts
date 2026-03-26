@@ -13,19 +13,19 @@ import { getQueryClient } from "../client";
 import type { StartExecutionInput, StartPredefinedInput } from "../types";
 import type { RawExecutionDoc, RawExecutionLogDoc } from "../types/raw";
 
+function invalidateExecution(id: string) {
+  getQueryClient().invalidateQueries({
+    queryKey: getExecutionQuery(id).queryKey,
+  });
+}
+
+function invalidateExecutions(recipeId: string) {
+  getQueryClient().invalidateQueries({
+    queryKey: getExecutionsQuery(recipeId).queryKey,
+  });
+}
+
 export function createExecutionService() {
-  function invalidateExecution(id: string) {
-    getQueryClient().invalidateQueries({
-      queryKey: getExecutionQuery(id).queryKey,
-    });
-  }
-
-  function invalidateExecutions(recipeId: string) {
-    getQueryClient().invalidateQueries({
-      queryKey: getExecutionsQuery(recipeId).queryKey,
-    });
-  }
-
   return {
     // ── Query Options ─────────────────────────────────────────────
     // Note: convexQuery returns opaque types, so select receives `unknown`.

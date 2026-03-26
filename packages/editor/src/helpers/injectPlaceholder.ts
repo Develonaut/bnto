@@ -19,12 +19,15 @@ function injectPlaceholder(nodes: BentoNode[]): BentoNode[] {
   const placeholderSlot = nodes.length - 1;
   const outputSlot = nodes.length;
 
-  if (!SLOTS[placeholderSlot] || !SLOTS[outputSlot]) return nodes;
+  const pSlot = SLOTS[placeholderSlot];
+  const oSlot = SLOTS[outputSlot];
+  const lastNode = nodes[nodes.length - 1];
+  if (!pSlot || !oSlot || !lastNode) return nodes;
 
   const placeholder: Node = {
     id: PLACEHOLDER_ID,
     type: "placeholder",
-    position: { x: SLOTS[placeholderSlot]!.x, y: SLOTS[placeholderSlot]!.y },
+    position: { x: pSlot.x, y: pSlot.y },
     selectable: false,
     draggable: false,
     data: {},
@@ -32,8 +35,8 @@ function injectPlaceholder(nodes: BentoNode[]): BentoNode[] {
 
   const before = nodes.slice(0, -1);
   const output = {
-    ...nodes[nodes.length - 1]!,
-    position: { x: SLOTS[outputSlot]!.x, y: SLOTS[outputSlot]!.y },
+    ...lastNode,
+    position: { x: oSlot.x, y: oSlot.y },
   };
 
   return [...before, placeholder as BentoNode, output];

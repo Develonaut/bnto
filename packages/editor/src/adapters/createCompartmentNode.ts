@@ -57,7 +57,8 @@ function deriveLabel(
 ): string {
   if (isContainerNodeType(type)) {
     const mode = parameters.mode as string | undefined;
-    if (mode && LOOP_MODE_LABELS[mode]) return LOOP_MODE_LABELS[mode]!;
+    const modeLabel = mode ? LOOP_MODE_LABELS[mode] : undefined;
+    if (modeLabel) return modeLabel;
   }
   return fallback;
 }

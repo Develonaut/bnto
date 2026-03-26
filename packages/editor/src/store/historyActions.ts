@@ -26,8 +26,8 @@ function pushUndoAction(state: EditorState): Partial<EditorState> {
 
 /** Pop the most recent undo snapshot and apply it, pushing current state to redo. */
 function undoAction(state: EditorState): Partial<EditorState> | null {
-  if (state.undoStack.length === 0) return null;
-  const snapshot = state.undoStack[state.undoStack.length - 1]!;
+  const snapshot = state.undoStack[state.undoStack.length - 1];
+  if (!snapshot) return null;
   const current = captureSnapshot(
     state.nodes,
     state.configs,
@@ -48,8 +48,8 @@ function undoAction(state: EditorState): Partial<EditorState> | null {
 
 /** Pop the most recent redo snapshot and apply it, pushing current state to undo. */
 function redoAction(state: EditorState): Partial<EditorState> | null {
-  if (state.redoStack.length === 0) return null;
-  const snapshot = state.redoStack[state.redoStack.length - 1]!;
+  const snapshot = state.redoStack[state.redoStack.length - 1];
+  if (!snapshot) return null;
   const current = captureSnapshot(
     state.nodes,
     state.configs,

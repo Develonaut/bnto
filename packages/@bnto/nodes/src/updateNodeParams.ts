@@ -35,7 +35,7 @@ function updateParamsInTree(
   );
 
   // Only create new object if something actually changed
-  const changed = updatedChildren.some((c, i) => c !== node.nodes![i]);
+  const changed = updatedChildren.some((c, i) => c !== node.nodes?.[i]);
   if (!changed) return node;
 
   return { ...node, nodes: updatedChildren };

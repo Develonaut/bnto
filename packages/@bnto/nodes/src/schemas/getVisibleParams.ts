@@ -43,7 +43,7 @@ export function getVisibleParams(
   // Single param/value check (original API)
   if (typeof paramNameOrValues === "string") {
     return resolveVisible(schemaDef.params, fields, (cond) =>
-      matchesCondition(cond, paramNameOrValues, paramValue!),
+      matchesCondition(cond, paramNameOrValues, paramValue ?? ""),
     );
   }
 
