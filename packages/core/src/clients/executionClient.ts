@@ -35,93 +35,72 @@ function buildHistoryEntry(
  * Consumers use `core.executions` for everything — instance creation,
  * downloads, history, and auto-recording.
  */
+/** Record execution to local + server history (fire-and-forget). */
+function recordToHistory(
+  history: HistoryService,
+  slug: string,
+  files: File[],
+  result: BrowserRunResult,
+  serverEventId: string | null,
+): void {
+  history.record(buildHistoryEntry(slug, files, result)).catch(() => {});
+  if (serverEventId) {
+    history
+      .recordServerComplete(
+        serverEventId,
+        result.durationMs,
+        result.status as "completed" | "failed",
+      )
+      .catch(() => {});
+  }
+}
+
+/** Derive the history slug from a definition (first processing node's type). */
+function deriveSlug(definition: PipelineDefinition): string {
+  return definition.nodes.find((n) => !isIoNodeType(n.type))?.type ?? "unknown";
+}
+
+/** Wrap an instance's run() to auto-record to history. */
+function wrapInstance(
+  instance: ExecutionInstance,
+  history: HistoryService,
+  auth: AuthClient,
+): ExecutionInstance {
+  const originalRun = instance.run;
+  return {
+    ...instance,
+    run: async (definition: PipelineDefinition, files: File[]): Promise<BrowserRunResult> => {
+      const slug = deriveSlug(definition);
+      const serverEventId = auth.isAuthenticated()
+        ? await history.recordServerStart(slug).catch(() => null)
+        : null;
+      const result = await originalRun(definition, files);
+      if (result.status !== "aborted") recordToHistory(history, slug, files, result, serverEventId);
+      return result;
+    },
+  };
+}
+
 export function createExecutionClient(
   executions: ExecutionService,
   browser: BrowserExecutionService,
   history: HistoryService,
   auth: AuthClient,
 ) {
-  /** Record execution to local + server history (fire-and-forget). */
-  function recordToHistory(
-    slug: string,
-    files: File[],
-    result: BrowserRunResult,
-    serverEventId: string | null,
-  ): void {
-    history.record(buildHistoryEntry(slug, files, result)).catch(() => {});
-    if (serverEventId) {
-      history
-        .recordServerComplete(
-          serverEventId,
-          result.durationMs,
-          result.status as "completed" | "failed",
-        )
-        .catch(() => {});
-    }
-  }
-
-  /**
-   * Wrap an instance's run() to auto-record to history.
-   * Always writes to IndexedDB. Also writes to Convex for authenticated users.
-   */
-  function wrapInstance(instance: ExecutionInstance): ExecutionInstance {
-    const originalRun = instance.run;
-
-    return {
-      ...instance,
-      run: async (definition: PipelineDefinition, files: File[]): Promise<BrowserRunResult> => {
-        // Derive slug from definition for history — use the first processing node's type
-        const processingNode = definition.nodes.find((n) => !isIoNodeType(n.type));
-        const historySlug = processingNode?.type ?? "unknown";
-
-        const serverEventId = auth.isAuthenticated()
-          ? await history.recordServerStart(historySlug).catch(() => null)
-          : null;
-
-        const result = await originalRun(definition, files);
-        if (result.status !== "aborted") {
-          recordToHistory(historySlug, files, result, serverEventId);
-        }
-        return result;
-      },
-    };
-  }
-
   return {
-    // ── Query Options ─────────────────────────────────────────────
     getQueryOptions: (id: string) => executions.getQueryOptions(id),
     listQueryOptions: (recipeId: string) => executions.listQueryOptions(recipeId),
     logsQueryOptions: (executionId: string) => executions.logsQueryOptions(executionId),
-
-    // ── History ───────────────────────────────────────────────────
     historyRefMethod: () => history.serverRef(),
     historyQueryOptions: () => history.localQueryOptions(),
     clearHistory: () => history.clear(),
     migrateHistory: () => history.migrateToServer(),
-
-    // ── Mutations ─────────────────────────────────────────────────
     startPredefined: (input: StartPredefinedInput) => executions.startPredefined(input),
-
-    // ── Browser Execution ─────────────────────────────────────────
-
-    /**
-     * Create an isolated execution instance with its own store.
-     * Results are automatically recorded to history (local + server when authed).
-     *
-     * Each instance has independent state — no cross-page leaks.
-     * Usage: `const [instance] = useState(() => core.executions.createExecution())`
-     */
-    createExecution: (): ExecutionInstance => wrapInstance(browser.createExecution()),
-
-    /** Execute a PipelineDefinition directly with File[]. */
+    createExecution: (): ExecutionInstance =>
+      wrapInstance(browser.createExecution(), history, auth),
     runPipeline: browser.runPipeline,
-
-    /** Download a single browser execution result. */
     downloadResult: browser.downloadResult,
-    /** Download all browser execution results as a ZIP. */
     downloadAllResults: browser.downloadAllResults,
-
-    // ── Cache Invalidation ────────────────────────────────────────
     invalidateExecution: (id: string) => executions.invalidateExecution(id),
     invalidateExecutions: (recipeId: string) => executions.invalidateExecutions(recipeId),
   } as const;

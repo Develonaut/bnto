@@ -22,90 +22,80 @@ import type { PipelineEvent } from "../types/pipelineEvents";
 // Service factory
 // ---------------------------------------------------------------------------
 
+/** Bridge PipelineEvents to the BrowserFileProgressInput shape the execution store expects. */
+function createEventHandler(
+  onProgress?: (progress: BrowserFileProgressInput) => void,
+  onEvent?: (event: PipelineEvent) => void,
+) {
+  return (event: PipelineEvent) => {
+    onEvent?.(event);
+    if (onProgress && event.type === "FileProgress") {
+      onProgress({
+        fileIndex: event.fileIndex,
+        totalFiles: event.totalFiles,
+        percent: event.percent,
+        message: event.message,
+      });
+    }
+  };
+}
+
+/** Convert raw WASM result files to BrowserFileResult[]. */
+function toFileResults(
+  files: Array<{ name: string; data: ArrayBuffer; mimeType: string; metadata?: string }>,
+): BrowserFileResult[] {
+  return files.map((f) => ({
+    blob: new Blob([f.data], { type: f.mimeType }),
+    filename: f.name,
+    mimeType: f.mimeType,
+    metadata: f.metadata ? JSON.parse(f.metadata) : {},
+  }));
+}
+
+/** Download results — single file direct, multiple as ZIP. */
+async function downloadAll(results: BrowserFileResult[], slug?: string): Promise<void> {
+  if (results.length === 1) {
+    downloadBlob(results[0].blob, results[0].filename);
+    return;
+  }
+  const zipBlob = await createZipBlob(results);
+  downloadBlob(zipBlob, slug ? `${slug}-results.zip` : "bnto-results.zip");
+}
+
 export function createBrowserExecutionService() {
-  /** Lazy-initialized worker. Created on first use, persists for page lifetime. */
   let workerInstance: BntoWorker | null = null;
 
-  /** Ensure the WASM worker is ready. Creates it lazily if needed. */
   async function ensureWorker(): Promise<BntoWorker> {
     if (!workerInstance) {
-      if (typeof window === "undefined") {
+      if (typeof window === "undefined")
         throw new Error("Browser execution requires a browser environment.");
-      }
       workerInstance = new BntoWorker();
     }
     await workerInstance.init();
     return workerInstance;
   }
 
-  /**
-   * Execute a PipelineDefinition with File[] via the WASM pipeline executor.
-   *
-   * The entire pipeline runs inside WASM — the Rust executor handles
-   * node walking, file iteration, and output chaining. Structured
-   * PipelineEvents are forwarded via the optional onEvent callback.
-   */
   const runPipeline = async (
     definition: PipelineDefinition,
     files: File[],
     onProgress?: (progress: BrowserFileProgressInput) => void,
     onEvent?: (event: PipelineEvent) => void,
   ): Promise<BrowserFileResult[]> => {
-    const worker = await ensureWorker();
-
     if (files.length === 0) return [];
-
-    // Bridge WASM PipelineEvents to the progress callback.
-    // The engine emits FileProgress events with percent, fileIndex, etc.
-    // We translate those into the BrowserFileProgressInput shape that
-    // the execution store expects.
-    const eventHandler = (event: PipelineEvent) => {
-      onEvent?.(event);
-      if (onProgress && event.type === "FileProgress") {
-        onProgress({
-          fileIndex: event.fileIndex,
-          totalFiles: event.totalFiles,
-          percent: event.percent,
-          message: event.message,
-        });
-      }
-    };
-
-    const definitionJson = JSON.stringify(definition);
-    const result = await worker.executePipeline(definitionJson, files, eventHandler);
-
-    return result.files.map((f) => ({
-      blob: new Blob([f.data], { type: f.mimeType }),
-      filename: f.name,
-      mimeType: f.mimeType,
-      metadata: f.metadata ? JSON.parse(f.metadata) : {},
-    }));
+    const worker = await ensureWorker();
+    const result = await worker.executePipeline(
+      JSON.stringify(definition),
+      files,
+      createEventHandler(onProgress, onEvent),
+    );
+    return toFileResults(result.files);
   };
 
   return {
-    /**
-     * Create an isolated execution instance with its own store.
-     * Usage: `const [instance] = useState(() => core.executions.createExecution())`
-     */
     createExecution: (): ExecutionInstance => createExecutionInstance(runPipeline),
-
-    /** Execute a PipelineDefinition directly with File[]. */
     runPipeline,
-
-    downloadResult: (result: BrowserFileResult) => {
-      downloadBlob(result.blob, result.filename);
-    },
-
-    downloadAllResults: async (results: BrowserFileResult[], slug?: string) => {
-      // Single file: download directly (no zip wrapper needed)
-      if (results.length === 1) {
-        downloadBlob(results[0].blob, results[0].filename);
-        return;
-      }
-      const zipBlob = await createZipBlob(results);
-      const name = slug ? `${slug}-results.zip` : "bnto-results.zip";
-      downloadBlob(zipBlob, name);
-    },
+    downloadResult: (result: BrowserFileResult) => downloadBlob(result.blob, result.filename),
+    downloadAllResults: downloadAll,
   } as const;
 }
 

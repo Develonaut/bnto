@@ -84,6 +84,35 @@ async function handleInit(baseUrl: string): Promise<void> {
 // Execute Pipeline — Run a full pipeline through the WASM executor
 // =============================================================================
 
+/** Convert input files from ArrayBuffer to Uint8Array for WASM. */
+function toWasmFiles(files: Array<{ name: string; data: ArrayBuffer; mimeType: string }>) {
+  return files.map((f) => ({
+    name: f.name,
+    data: new Uint8Array(f.data),
+    mimeType: f.mimeType,
+  }));
+}
+
+interface WasmResultFile {
+  name: string;
+  data: Uint8Array;
+  mimeType: string;
+  metadata?: string;
+}
+
+/** Convert WASM result files: Uint8Array → ArrayBuffer for postMessage transfer. */
+function fromWasmResults(files: Iterable<WasmResultFile>) {
+  return Array.from(files).map((f) => ({
+    name: f.name as string,
+    data: f.data.buffer.slice(
+      f.data.byteOffset,
+      f.data.byteOffset + f.data.byteLength,
+    ) as ArrayBuffer,
+    mimeType: f.mimeType as string,
+    metadata: f.metadata,
+  }));
+}
+
 function handleExecutePipeline(request: {
   id: string;
   definitionJson: string;
@@ -97,43 +126,17 @@ function handleExecutePipeline(request: {
   }
 
   try {
-    // Build the files array in the format WASM expects:
-    // [{name: string, data: Uint8Array, mimeType: string}]
-    const wasmFiles = files.map((f) => ({
-      name: f.name,
-      data: new Uint8Array(f.data),
-      mimeType: f.mimeType,
-    }));
-
-    // Progress callback — forwards each PipelineEvent JSON string
-    // from the Rust executor to the main thread.
-    const progressCallback = (eventJson: string) => {
-      sendPipelineProgress(id, eventJson);
-    };
-
-    // Call the WASM execute_pipeline export.
-    // Returns { files: [{name, data, mimeType, metadata?}], durationMs }
-    const result = wasmModule.execute_pipeline(definitionJson, wasmFiles, progressCallback);
-
-    // Convert result files: Uint8Array → ArrayBuffer for transfer.
-    const resultFiles = Array.from(
-      result.files as Iterable<{
-        name: string;
-        data: Uint8Array;
-        mimeType: string;
-        metadata?: string;
-      }>,
-    ).map((f) => ({
-      name: f.name as string,
-      data: (f.data as Uint8Array).buffer.slice(
-        (f.data as Uint8Array).byteOffset,
-        (f.data as Uint8Array).byteOffset + (f.data as Uint8Array).byteLength,
-      ) as ArrayBuffer,
-      mimeType: f.mimeType as string,
-      metadata: f.metadata,
-    }));
-
-    sendPipelineResult(id, resultFiles, result.durationMs as number);
+    const progressCallback = (eventJson: string) => sendPipelineProgress(id, eventJson);
+    const result = wasmModule.execute_pipeline(
+      definitionJson,
+      toWasmFiles(files),
+      progressCallback,
+    );
+    sendPipelineResult(
+      id,
+      fromWasmResults(result.files as Iterable<WasmResultFile>),
+      result.durationMs as number,
+    );
   } catch (err) {
     sendPipelineError(id, err instanceof Error ? err.message : String(err));
   }

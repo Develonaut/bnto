@@ -37,6 +37,23 @@ const INITIAL_STATE: BrowserExecution = {
 // Store factory
 // ---------------------------------------------------------------------------
 
+/** Apply a progress update with monotonic guard and overall percent computation. */
+function applyProgress(
+  state: Pick<BrowserExecution, "fileProgress">,
+  fileProgress: BrowserFileProgressInput,
+): void {
+  const prev = state.fileProgress;
+
+  // Monotonic guard: reject backwards progress for the same file.
+  if (prev && fileProgress.fileIndex === prev.fileIndex && fileProgress.percent < prev.percent) {
+    return;
+  }
+
+  const total = fileProgress.totalFiles || 1;
+  const overallPercent = Math.round((fileProgress.fileIndex * 100 + fileProgress.percent) / total);
+  state.fileProgress = { ...fileProgress, overallPercent };
+}
+
 export function createExecutionInstanceStore() {
   return createEnhancedStore<ExecutionInstanceState>()((set) => ({
     ...INITIAL_STATE,
@@ -52,54 +69,16 @@ export function createExecutionInstanceStore() {
         completedAt: undefined,
       }),
 
-    progress: (fileProgress) =>
-      set((state) => {
-        const prev = state.fileProgress;
-
-        // Monotonic guard: reject backwards progress for the same file.
-        // This prevents progress bar regression (e.g., 50→30) caused by
-        // duplicate WASM calls or out-of-order callbacks.
-        if (
-          prev &&
-          fileProgress.fileIndex === prev.fileIndex &&
-          fileProgress.percent < prev.percent
-        ) {
-          return;
-        }
-
-        // Compute overall batch progress: how far through ALL files.
-        // Formula: ((completedFiles * 100) + currentFilePercent) / totalFiles
-        const total = fileProgress.totalFiles || 1;
-        const overallPercent = Math.round(
-          ((fileProgress.fileIndex * 100) + fileProgress.percent) / total,
-        );
-
-        state.fileProgress = { ...fileProgress, overallPercent };
-      }),
+    progress: (fileProgress) => set((state) => applyProgress(state, fileProgress)),
 
     complete: (results, completedAt) =>
-      set({
-        status: "completed",
-        fileProgress: null,
-        results,
-        completedAt,
-      }),
+      set({ status: "completed", fileProgress: null, results, completedAt }),
 
     fail: (message, completedAt) =>
-      set({
-        status: "failed",
-        fileProgress: null,
-        error: message,
-        completedAt,
-      }),
+      set({ status: "failed", fileProgress: null, error: message, completedAt }),
 
     reset: () =>
-      set({
-        ...INITIAL_STATE,
-        error: undefined,
-        startedAt: undefined,
-        completedAt: undefined,
-      }),
+      set({ ...INITIAL_STATE, error: undefined, startedAt: undefined, completedAt: undefined }),
   }));
 }
 
