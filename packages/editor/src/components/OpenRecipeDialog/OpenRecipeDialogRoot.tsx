@@ -2,16 +2,7 @@
 
 import { useCallback } from "react";
 import type { Definition } from "@bnto/core";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  Divider,
-  type LucideIcon,
-} from "@bnto/ui";
+import { DialogShell, Divider, type LucideIcon } from "@bnto/ui";
 import { useEditor } from "../../context";
 import { RecipePickerGrid } from "./RecipePickerGrid";
 import { FileImportDropzone } from "./FileImportDropzone";
@@ -44,24 +35,22 @@ function OpenRecipeDialogRoot({ open, onOpenChange, getIcon }: OpenRecipeDialogP
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="lg">
-        <DialogHeader className="pb-4">
-          <DialogTitle>Open Recipe</DialogTitle>
-          <DialogClose />
-        </DialogHeader>
-        <DialogDescription className="sr-only">
-          Choose a predefined recipe or import a .bnto.json file.
-        </DialogDescription>
-        <div className="flex h-[34rem] flex-col">
-          <RecipePickerGrid onSelect={handleLoad} getIcon={getIcon} />
-          <Divider label="or import a file" className="my-4 shrink-0" />
-          <div className="shrink-0 px-1">
-            <FileImportDropzone onImport={handleLoad} />
-          </div>
+    <DialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Open Recipe"
+      description="Choose a predefined recipe or import a .bnto.json file."
+      size="lg"
+      headerClassName="pb-4"
+    >
+      <div className="flex h-[34rem] flex-col">
+        <RecipePickerGrid onSelect={handleLoad} getIcon={getIcon} />
+        <Divider label="or import a file" className="my-4 shrink-0" />
+        <div className="shrink-0 px-1">
+          <FileImportDropzone onImport={handleLoad} />
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </DialogShell>
   );
 }
 

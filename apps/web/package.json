@@ -38,6 +38,8 @@
     "@types/react-dom": "^19.0.0",
     "eslint": "catalog:",
     "eslint-config-next": "catalog:",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
     "postcss": "^8.5.0",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",

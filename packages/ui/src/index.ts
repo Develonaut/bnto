@@ -59,6 +59,7 @@ export { Heading } from "./typography/Heading";
 export { IconBadge } from "./typography/IconBadge";
 export { Kbd, KbdGroup } from "./typography/Kbd";
 export { Label } from "./typography/Label";
+export { MetaItem } from "./typography/MetaItem";
 export { Text } from "./typography/Text";
 
 /* Feedback */
@@ -82,6 +83,8 @@ export {
   StatusBannerProgress,
 } from "./feedback/StatusBanner";
 export type { StatusBannerProps, StatusBannerVariant } from "./feedback/StatusBanner";
+export { StatusIcon } from "./feedback/StatusIcon";
+export type { StatusIconStatus, StatusIconProps } from "./feedback/StatusIcon";
 
 /* Surface */
 export {
@@ -133,6 +136,7 @@ export {
   FileUploadClear,
 } from "./interaction/FileUpload";
 export type { FileUploadProps } from "./interaction/FileUpload";
+export { FormControl, FormLabel, FormHelperText } from "./interaction/FormControl";
 export { Input } from "./interaction/Input";
 export { InputWrapper } from "./interaction/InputWrapper";
 export {
@@ -194,6 +198,8 @@ export {
   DialogTitle,
   DialogDescription,
 } from "./overlay/Dialog";
+export { DialogShell } from "./overlay/DialogShell";
+export type { DialogShellProps } from "./overlay/DialogShell";
 export {
   Popover,
   PopoverTrigger,

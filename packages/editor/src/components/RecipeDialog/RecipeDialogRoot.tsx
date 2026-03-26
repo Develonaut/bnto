@@ -1,19 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import {
-  Button,
-  Dialog,
-  DialogBody,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Input,
-  Label,
-} from "@bnto/ui";
+import { Button, DialogBody, DialogFooter, DialogShell, Input, Label } from "@bnto/ui";
 import { useRecipeDialogForm } from "./useRecipeDialogForm";
 
 /**
@@ -40,34 +28,33 @@ function RecipeDialogRoot({ open, onOpenChange }: RecipeDialogProps) {
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="sm">
-        <DialogHeader>
-          <DialogTitle>Recipe Settings</DialogTitle>
-          <DialogClose />
-        </DialogHeader>
-        <DialogDescription className="sr-only">Edit recipe name and metadata.</DialogDescription>
-        <form onSubmit={handleSubmit}>
-          <DialogBody>
-            <fieldset className="space-y-1.5">
-              <Label htmlFor="recipe-name">Name</Label>
-              <Input
-                id="recipe-name"
-                value={name}
-                onChange={handleNameChange}
-                placeholder="Recipe name"
-                autoFocus
-              />
-            </fieldset>
-          </DialogBody>
-          <DialogFooter>
-            <Button type="submit" disabled={!hasChanges}>
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <DialogShell
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Recipe Settings"
+      description="Edit recipe name and metadata."
+      size="sm"
+    >
+      <form onSubmit={handleSubmit}>
+        <DialogBody>
+          <fieldset className="space-y-1.5">
+            <Label htmlFor="recipe-name">Name</Label>
+            <Input
+              id="recipe-name"
+              value={name}
+              onChange={handleNameChange}
+              placeholder="Recipe name"
+              autoFocus
+            />
+          </fieldset>
+        </DialogBody>
+        <DialogFooter>
+          <Button type="submit" disabled={!hasChanges}>
+            Save
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogShell>
   );
 }
 

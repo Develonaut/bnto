@@ -1,18 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import {
-  Accordion,
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  Input,
-  SearchIcon,
-  Text,
-} from "@bnto/ui";
+import { Accordion, DialogShell, Input, SearchIcon, Text } from "@bnto/ui";
 import type { NodeTypeName } from "@bnto/core";
 import { useEditor } from "../../context";
 import { useNodePalette } from "../../hooks/useNodePalette";
@@ -79,62 +68,60 @@ function NodePaletteDialogRoot({ open, onOpenChange }: NodePaletteDialogProps) {
   const hasResults = filteredGroups.length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent size="lg" data-testid="node-palette-dialog">
-        <DialogHeader className="pb-2">
-          <DialogTitle>Add Node</DialogTitle>
-          <DialogClose />
-        </DialogHeader>
-        <DialogDescription className="sr-only">
-          Search and select a node type to add to the canvas.
-        </DialogDescription>
-
-        <div className="flex h-[28rem] flex-col">
-          {/* Search */}
-          <div className="shrink-0 pb-3">
-            <div className="relative">
-              <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search nodes..."
-                aria-label="Search node types"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-8 pl-8 text-sm"
-                autoFocus
-              />
-            </div>
+    <DialogShell
+      open={open}
+      onOpenChange={handleClose}
+      title="Add Node"
+      description="Search and select a node type to add to the canvas."
+      size="lg"
+      contentProps={{ "data-testid": "node-palette-dialog" }}
+      headerClassName="pb-2"
+    >
+      <div className="flex h-[28rem] flex-col">
+        {/* Search */}
+        <div className="shrink-0 pb-3">
+          <div className="relative">
+            <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search nodes..."
+              aria-label="Search node types"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 pl-8 text-sm"
+              autoFocus
+            />
           </div>
-
-          {isFull && (
-            <Text size="xs" color="muted" className="pb-2">
-              Canvas is full ({SLOTS.length} nodes max).
-            </Text>
-          )}
-
-          {/* Node list — Accordion sections per category */}
-          <Accordion
-            type="multiple"
-            defaultValue={defaultExpanded}
-            className="-mr-8 min-h-0 flex-1 overflow-x-hidden overflow-y-auto border-t border-border pr-8 pt-3"
-          >
-            {filteredGroups.map((group) => (
-              <PaletteCategoryGroup
-                key={group.category.name}
-                group={group}
-                isFull={isFull}
-                onAdd={handleAdd}
-              />
-            ))}
-          </Accordion>
-
-          {!hasResults && search.trim() && (
-            <Text size="xs" color="muted" className="px-3 py-4 text-center">
-              No nodes match &ldquo;{search}&rdquo;
-            </Text>
-          )}
         </div>
-      </DialogContent>
-    </Dialog>
+
+        {isFull && (
+          <Text size="xs" color="muted" className="pb-2">
+            Canvas is full ({SLOTS.length} nodes max).
+          </Text>
+        )}
+
+        {/* Node list — Accordion sections per category */}
+        <Accordion
+          type="multiple"
+          defaultValue={defaultExpanded}
+          className="-mr-8 min-h-0 flex-1 overflow-x-hidden overflow-y-auto border-t border-border pr-8 pt-3"
+        >
+          {filteredGroups.map((group) => (
+            <PaletteCategoryGroup
+              key={group.category.name}
+              group={group}
+              isFull={isFull}
+              onAdd={handleAdd}
+            />
+          ))}
+        </Accordion>
+
+        {!hasResults && search.trim() && (
+          <Text size="xs" color="muted" className="px-3 py-4 text-center">
+            No nodes match &ldquo;{search}&rdquo;
+          </Text>
+        )}
+      </div>
+    </DialogShell>
   );
 }
 

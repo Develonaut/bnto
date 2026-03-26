@@ -2,10 +2,7 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "workspaces": {
     ".": {
-      "ignoreDependencies": [
-        "@auth/core",
-        "@convex-dev/auth"
-      ]
+      "ignoreDependencies": ["@auth/core", "@convex-dev/auth"]
     },
     "apps/web": {
       "entry": [
@@ -20,12 +17,29 @@
       "ignoreDependencies": [
         "@tailwindcss/typography",
         "tw-animate-css",
-        "@types/mdx"
+        "@types/mdx",
+        "eslint-plugin-import"
       ]
     },
     "packages/core": {
       "project": ["src/**/*.{ts,tsx}"],
       "ignore": ["src/__tests__/**"]
+    },
+    "packages/ui": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/editor": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/@bnto/form": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/@bnto/registry": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
     },
     "packages/@bnto/auth": {
       "project": ["src/**/*.{ts,tsx}"],
@@ -39,8 +53,5 @@
       "project": ["src/**/*.ts"]
     }
   },
-  "ignore": [
-    "test-fixtures/**",
-    "apps/desktop/**"
-  ]
+  "ignore": ["test-fixtures/**", "apps/desktop/**"]
 }
