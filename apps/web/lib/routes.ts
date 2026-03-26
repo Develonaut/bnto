@@ -12,6 +12,7 @@
 
 export const ROUTES = {
   home: "/",
+  explore: "/explore",
   editor: "/editor",
   signin: "/signin",
   signup: "/signup",

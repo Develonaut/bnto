@@ -102,6 +102,8 @@ export {
   Terminal as TerminalIcon,
   CircleAlert as CircleAlertIcon,
   CircleHelp as CircleHelpIcon,
+  Crop as CropIcon,
+  ListChecks as ListChecksIcon,
 } from "lucide-react";
 
 export type { LucideIcon } from "lucide-react";

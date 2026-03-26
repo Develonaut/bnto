@@ -1,6 +1,6 @@
 import { NODE_TYPE_INFO } from "@bnto/core";
 import type { LucideIcon } from "@bnto/ui";
-import { FileIcon, GlobeIcon, ImageIcon, SheetIcon } from "@bnto/ui";
+import { CATEGORY_ICON } from "@/lib/categoryIcons";
 import type { RecipeCategory, RecipeSortOrder } from "./RecipeFilterMenu";
 
 /** Reverse map: node type label -> category. */
@@ -8,14 +8,6 @@ const LABEL_TO_CATEGORY: Record<string, string> = {};
 for (const info of Object.values(NODE_TYPE_INFO)) {
   LABEL_TO_CATEGORY[info.label] = info.category;
 }
-
-/** Map category -> card icon. */
-const CATEGORY_ICON: Record<string, LucideIcon> = {
-  image: ImageIcon,
-  file: FileIcon,
-  spreadsheet: SheetIcon,
-  network: GlobeIcon,
-};
 
 /** Find the dominant domain category icon from a recipe's node type labels. */
 export function getCategoryIcon(nodeTypes: string[]): LucideIcon | undefined {
