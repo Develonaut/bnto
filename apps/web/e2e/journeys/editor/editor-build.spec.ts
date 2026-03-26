@@ -42,8 +42,8 @@ test.describe("editor build & configure @browser", () => {
     // Select the processing node
     await selectNode(page, "Compress");
 
-    // Click delete button (appears on hover/selection)
-    const deleteBtn = page.getByTestId("delete-node");
+    // Click delete button in the config panel
+    const deleteBtn = page.getByTestId("config-node-delete");
     await deleteBtn.click();
 
     // Should be back to 2 I/O nodes
@@ -81,7 +81,7 @@ test.describe("editor build & configure @browser", () => {
     await selectNode(page, "Input");
 
     // Delete button should NOT be present for I/O nodes
-    const deleteBtn = page.getByTestId("delete-node");
+    const deleteBtn = page.getByTestId("config-node-delete");
     await expect(deleteBtn).toHaveCount(0);
 
     // Click the Output node
@@ -105,9 +105,9 @@ test.describe("editor build & configure @browser", () => {
     const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(3);
 
-    // Delete the processing node
+    // Delete the processing node via config panel
     await selectNode(page, "Compress");
-    await page.getByTestId("delete-node").click();
+    await page.getByTestId("config-node-delete").click();
     await expect(nodeCards).toHaveCount(2);
 
     // Undo via keyboard shortcut (Cmd+Z on macOS / Ctrl+Z on Linux)

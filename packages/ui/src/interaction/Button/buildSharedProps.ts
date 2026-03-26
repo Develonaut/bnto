@@ -18,6 +18,22 @@ interface SharedPropsInput {
   rest: Record<string, unknown>;
 }
 
+/** Custom Button props that must NOT leak to the DOM via rest spread. */
+const CONSUMED_PROPS = new Set([
+  "muted",
+  "hovered",
+  "pressed",
+  "dormant",
+  "toggle",
+  "spring",
+  "asChild",
+  "elevation",
+  "fullWidth",
+  "icon",
+  "size",
+  "children",
+]);
+
 /** Assemble the prop bag shared by both rendering paths. */
 export function buildSharedProps({
   ref,
@@ -32,12 +48,17 @@ export function buildSharedProps({
   toggle,
   rest,
 }: SharedPropsInput): Record<string, unknown> {
+  const domProps: Record<string, unknown> = {};
+  for (const key of Object.keys(rest)) {
+    if (!CONSUMED_PROPS.has(key)) domProps[key] = rest[key];
+  }
+
   return {
     ref,
     disabled,
     ...(href ? { href } : {}),
     style: { ...SPRING_STYLES[spring], ...style },
     ...buildDataAttrs(muted, hovered, pressed, dormant, toggle),
-    ...rest,
+    ...domProps,
   };
 }
