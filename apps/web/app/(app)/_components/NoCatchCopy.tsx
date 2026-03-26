@@ -9,7 +9,7 @@ export function NoCatchCopy() {
         No catch
       </Text>
       <Heading level={2} size="xl" className="whitespace-pre-line">
-        {"Free tools that stay free.\nOpen source you can verify."}
+        {"Free recipes that stay free.\nOpen source you can verify."}
       </Heading>
       <Text color="muted" leading="snug">
         No signup. No watermarks. No daily caps. No &apos;20 free compressions per month.&apos; Your

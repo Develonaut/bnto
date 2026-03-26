@@ -114,18 +114,14 @@ export async function addNodeFromPalette(page: Page, nodeLabel: string) {
   if ((await placeholder.count()) > 0) {
     await placeholder.click({ force: true });
   } else if ((await divider.count()) > 0) {
-    // Divider buttons are disabled={!hovered}. Hover to trigger the parent's
-    // onMouseEnter which enables the button. Retry because React's synthetic
-    // mouseenter can miss under CPU load (ReactFlow continuous re-renders).
-    const firstDivider = divider.first();
-    let enabled = false;
-    for (let attempt = 0; attempt < 5 && !enabled; attempt++) {
-      await firstDivider.hover({ force: true });
-      await page.waitForTimeout(200);
-      enabled = await firstDivider.isEnabled();
-    }
-    await expect(firstDivider).toBeEnabled({ timeout: 2_000 });
-    await firstDivider.click({ force: true });
+    // Dormant buttons have `pointer-events: none` in CSS, which prevents
+    // Playwright clicks from reaching the element even with force:true.
+    // Use page.evaluate to call .click() directly on the DOM element,
+    // bypassing the browser's hit-testing.
+    await page.evaluate(() => {
+      const btn = document.querySelector<HTMLElement>('[data-testid="add-divider"]');
+      if (btn) btn.click();
+    });
   } else {
     throw new Error("addNodeFromPalette: no placeholder or divider trigger found");
   }

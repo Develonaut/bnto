@@ -76,7 +76,7 @@ function CtaCard() {
       </RecipeCardHeader>
       <RecipeCardContent>
         <RecipeCardTitle>Create your own</RecipeCardTitle>
-        <RecipeCardDescription onSurface>Combine tools into custom workflows</RecipeCardDescription>
+        <RecipeCardDescription onSurface>Compose your own multi-step recipes</RecipeCardDescription>
       </RecipeCardContent>
     </RecipeCard>
   );

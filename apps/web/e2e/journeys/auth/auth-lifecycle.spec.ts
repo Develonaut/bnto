@@ -105,9 +105,11 @@ test.describe("New user journey @auth", () => {
 
 test.describe("Returning user journey @auth", () => {
   test("returning user sees signin form (persisted auth store)", async ({ page }) => {
-    // Simulate a returning user by seeding the persisted auth store
-    await page.goto("/signin");
-    await page.evaluate(() => {
+    // Seed localStorage via addInitScript so it runs BEFORE page scripts.
+    // This avoids race conditions with Zustand persist: if we seed after
+    // page load, async state changes (e.g. SessionProvider) trigger persist
+    // writes that can overwrite the seeded value before the next navigation.
+    await page.addInitScript(() => {
       const state = {
         state: {
           user: { id: "seed", name: "Test User", email: "test@example.com", image: null },

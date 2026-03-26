@@ -215,9 +215,12 @@ test.describe("Session cookie lifecycle @auth", () => {
     await expect(authHeading).toBeVisible();
     await expect(authHeading).toContainText("Create an account");
 
-    // Verify no auth store exists
+    // Verify auth store has default state (Zustand persist writes defaults on init)
     const storeData = await page.evaluate(() => localStorage.getItem("bnto-auth"));
-    expect(storeData).toBeNull();
+    expect(storeData).not.toBeNull();
+    const parsed = JSON.parse(storeData!);
+    expect(parsed.state.hasAccount).toBe(false);
+    expect(parsed.state.user).toBeNull();
   });
 });
 
