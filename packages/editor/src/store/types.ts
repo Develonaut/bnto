@@ -80,7 +80,7 @@ interface EditorSnapshot {
 // ---------------------------------------------------------------------------
 
 /** All panel identifiers. Add new panels here — one place to extend. */
-type PanelId = "config" | "palette" | "run" | "help" | "recipe";
+type PanelId = "config" | "palette" | "run" | "help" | "settings";
 
 /** Map of panel IDs to their open/closed state. */
 type PanelState = Record<PanelId, boolean>;
@@ -91,7 +91,7 @@ type PanelSide = "left" | "right";
 /** Which side each panel lives on. Panels sharing a side are exclusive. */
 const PANEL_SIDES: Partial<Record<PanelId, PanelSide>> = {
   config: "right",
-  recipe: "left",
+  settings: "left",
 };
 
 // ---------------------------------------------------------------------------

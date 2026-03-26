@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { BookOpenIcon, useDialog } from "@bnto/ui";
+import { FileCogIcon, useDialog } from "@bnto/ui";
 import { useEditor } from "../../context";
 import { downloadDefinition } from "../../actions/downloadDefinition";
 import { EditorMenuPanel } from "../EditorMenuPanel";
@@ -12,10 +12,10 @@ import { RecipeActionsSection } from "./RecipeActionsSection";
 import type { RecipeActionsProps } from "./RecipeActionsSection";
 
 /**
- * RecipePanel — dedicated left-side panel for recipe-level controls.
+ * SettingsPanel — dedicated left-side panel for recipe-level controls.
  *
  * Shows recipe settings (name, iteration mode) and recipe actions
- * (rename, new, export, import). Opened via the toolbar recipe button.
+ * (rename, new, export, import). Opened via the toolbar settings button.
  */
 
 interface DialogHandle {
@@ -44,7 +44,7 @@ function useRecipeActions(
   };
 }
 
-function RecipePanelRoot() {
+function SettingsPanelRoot() {
   const renameDialog = useDialog();
   const importDialog = useDialog();
   const actions = useRecipeActions(renameDialog, importDialog);
@@ -52,12 +52,12 @@ function RecipePanelRoot() {
   return (
     <>
       <EditorMenuPanel
-        panelId="recipe"
+        panelId="settings"
         side="right"
         width="w-72"
         boundaryPadding={16}
-        label="Recipe"
-        icon={<BookOpenIcon className="size-4" />}
+        label="Settings"
+        icon={<FileCogIcon className="size-4" />}
       >
         <RecipeSettingsPanel />
         <RecipeActionsSection {...actions} />
@@ -68,4 +68,4 @@ function RecipePanelRoot() {
   );
 }
 
-export { RecipePanelRoot };
+export { SettingsPanelRoot };

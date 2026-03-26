@@ -14,7 +14,7 @@
  *   </EditorProvider>
  *
  * The node palette opens as a dialog from the bottom toolbar's + button.
- * Left-side panel (recipe) opens from the left toolbar trigger.
+ * Left-side panel (settings) opens from the left toolbar trigger.
  * Right-side panels (config, run) open from the right toolbar triggers.
  */
 

@@ -57,7 +57,7 @@ function stateWithNodes(): EditorState {
     redoStack: [],
     definition: null,
     selectedNodeId: null,
-    panels: { config: false, palette: false, run: false, help: false, recipe: false },
+    panels: { config: false, palette: false, run: false, help: false, settings: false },
     executionPhase: "idle",
     executionResults: [],
     executionErrors: [],

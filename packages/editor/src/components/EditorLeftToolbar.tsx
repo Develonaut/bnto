@@ -1,6 +1,6 @@
 "use client";
 
-import { RecipePanel } from "./RecipePanel";
+import { SettingsPanel } from "./SettingsPanel";
 
 /**
  * EditorLeftToolbar — offscreen anchor for Radix Menu positioning.
@@ -17,7 +17,7 @@ import { RecipePanel } from "./RecipePanel";
 function EditorLeftToolbar() {
   return (
     <div className="pointer-events-none absolute -left-12 top-1/2 -translate-y-1/2 opacity-0" inert>
-      <RecipePanel />
+      <SettingsPanel />
     </div>
   );
 }

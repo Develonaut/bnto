@@ -96,7 +96,7 @@ function makeExpandedState(): EditorState {
     undoStack: [],
     redoStack: [],
     selectedNodeId: null,
-    panels: { config: false, palette: false, run: false, help: false, recipe: false },
+    panels: { config: false, palette: false, run: false, help: false, settings: false },
     expandedContainerIds: new Set(["loop1"]),
     executionPhase: "idle",
     executionResults: [],

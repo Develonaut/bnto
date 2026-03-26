@@ -59,13 +59,13 @@ export async function getResultCount(page: Page) {
 // Export
 // ---------------------------------------------------------------------------
 
-/** Export the recipe via Recipe panel > Export, returns the downloaded JSON buffer. */
+/** Export the recipe via Settings panel > Export, returns the downloaded JSON buffer. */
 export async function exportRecipe(page: Page) {
-  // Open recipe panel — has export action regardless of node selection
-  const panel = page.getByTestId("panel-recipe");
+  // Open settings panel — has export action regardless of node selection
+  const panel = page.getByTestId("panel-settings");
   const panelVisible = await panel.isVisible().catch(() => false);
   if (!panelVisible) {
-    await page.getByTestId("toolbar-recipe").click();
+    await page.getByTestId("toolbar-settings").click();
     await expect(panel).toBeVisible({ timeout: 3_000 });
   }
 

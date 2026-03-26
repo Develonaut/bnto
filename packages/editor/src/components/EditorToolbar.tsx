@@ -6,8 +6,8 @@ import {
   Toolbar,
   ToolbarGroup,
   ToolbarDivider,
-  BookOpenIcon,
   CircleHelpIcon,
+  FileCogIcon,
   SlidersHorizontalIcon,
 } from "@bnto/ui";
 import { useEditor } from "../context";
@@ -20,8 +20,8 @@ import { HelpDialog } from "./HelpDialog";
  * EditorToolbar — self-contained bottom-center toolbar.
  *
  * Recipe actions (rename, new, export, import) and recipe-level
- * settings live in the dedicated Recipe panel — opened via the
- * Recipe button (BookOpen icon).
+ * settings live in the dedicated Settings panel — opened via the
+ * Settings button (FileCog icon).
  */
 
 /** Close-only open change handler factory. */
@@ -39,14 +39,14 @@ function useToolbarState() {
   const editor = useEditor();
   const { isOpen: paletteOpen, close: closePalette } = editor.panels.usePanels("palette");
   const { toggle: toggleConfig } = editor.panels.usePanels("config");
-  const { toggle: toggleRecipe } = editor.panels.usePanels("recipe");
+  const { toggle: toggleSettings } = editor.panels.usePanels("settings");
   const { isOpen: helpOpen, open: openHelp, close: closeHelp } = editor.panels.usePanels("help");
   const handlePaletteOpenChange = useCloseHandler(closePalette);
   const handleHelpOpenChange = useCloseHandler(closeHelp);
 
   return {
     toggleConfig,
-    toggleRecipe,
+    toggleSettings,
     openHelp,
     paletteOpen,
     handlePaletteOpenChange,
@@ -91,13 +91,13 @@ function ToolbarActions({
   );
 }
 
-/** Toolbar button strip (recipe, run, config, help). */
+/** Toolbar button strip (settings, run, config, help). */
 function ToolbarStrip({
-  toggleRecipe,
+  toggleSettings,
   toggleConfig,
   openHelp,
 }: {
-  toggleRecipe: () => void;
+  toggleSettings: () => void;
   toggleConfig: () => void;
   openHelp: () => void;
 }) {
@@ -105,12 +105,12 @@ function ToolbarStrip({
     <Toolbar elevation="md" aria-label="Editor toolbar">
       <ToolbarGroup>
         <Button
-          icon={<BookOpenIcon />}
+          icon={<FileCogIcon />}
           variant="ghost"
           elevation="sm"
-          onClick={toggleRecipe}
-          aria-label="Recipe"
-          data-testid="toolbar-recipe"
+          onClick={toggleSettings}
+          aria-label="Settings"
+          data-testid="toolbar-settings"
         />
       </ToolbarGroup>
       <ToolbarDivider />
@@ -133,7 +133,7 @@ function EditorToolbar() {
         data-testid="editor-toolbar"
       >
         <ToolbarStrip
-          toggleRecipe={state.toggleRecipe}
+          toggleSettings={state.toggleSettings}
           toggleConfig={state.toggleConfig}
           openHelp={state.openHelp}
         />

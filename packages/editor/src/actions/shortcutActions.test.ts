@@ -56,28 +56,28 @@ describe("resolveEscape", () => {
     palette: false,
     run: false,
     help: false,
-    recipe: false,
+    settings: false,
   };
   const openConfig: PanelState = {
     config: true,
     palette: false,
     run: false,
     help: false,
-    recipe: false,
+    settings: false,
   };
   const openRun: PanelState = {
     config: false,
     palette: false,
     run: true,
     help: false,
-    recipe: false,
+    settings: false,
   };
   const bothOpen: PanelState = {
     config: true,
     palette: false,
     run: true,
     help: false,
-    recipe: false,
+    settings: false,
   };
 
   it("closes config panel when open", () => {
