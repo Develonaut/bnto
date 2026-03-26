@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback } from "react";
+
 import { core } from "@bnto/core";
 import { useRouter } from "next/navigation";
 import { Button } from "@bnto/ui";
@@ -14,11 +16,11 @@ export function MobileNavAuth({ onClose }: MobileNavAuthProps) {
   const signOut = core.auth.useSignOut();
   const router = useRouter();
 
-  function handleSignOut() {
+  const handleSignOut = useCallback(() => {
     signOut();
     onClose();
     router.replace("/signin");
-  }
+  }, [signOut, onClose, router]);
 
   if (!isAuthenticated || !user?.email) {
     return (

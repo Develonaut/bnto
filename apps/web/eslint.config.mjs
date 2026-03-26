@@ -3,6 +3,7 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import prettierConfig from "eslint-config-prettier";
 import sonarjs from "eslint-plugin-sonarjs";
+import react from "eslint-plugin-react";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -20,7 +21,7 @@ const eslintConfig = defineConfig([
     "test-results/**",
   ]),
   {
-    plugins: { sonarjs },
+    plugins: { sonarjs, react },
     rules: {
       // --- Complexity & size enforcement (code-standards.md) ---
       complexity: ["error", { max: 10 }],
@@ -35,6 +36,18 @@ const eslintConfig = defineConfig([
       "sonarjs/no-identical-conditions": "error",
       "sonarjs/no-collapsible-if": "error",
       "sonarjs/no-duplicated-branches": "error",
+
+      // --- JSX cleanliness — no inline functions in JSX props ---
+      "react/jsx-no-bind": [
+        "error",
+        {
+          ignoreDOMComponents: false,
+          ignoreRefs: true,
+          allowArrowFunctions: false,
+          allowFunctions: false,
+          allowBind: false,
+        },
+      ],
     },
   },
   {
@@ -51,6 +64,7 @@ const eslintConfig = defineConfig([
     rules: {
       "max-lines-per-function": "off",
       "max-lines": "off",
+      "react/jsx-no-bind": "off",
     },
   },
   // Test files naturally have long describe blocks

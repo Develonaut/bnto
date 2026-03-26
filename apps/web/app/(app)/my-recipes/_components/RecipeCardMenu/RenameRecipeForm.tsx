@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { Button, DialogBody, DialogClose, DialogFooter, Input, Label } from "@bnto/ui";
 
 interface RenameRecipeFormProps {
@@ -31,6 +32,11 @@ export function RenameRecipeForm({
   hasChanges,
   onSubmit,
 }: RenameRecipeFormProps) {
+  const handleNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => onNameChange(e.target.value),
+    [onNameChange],
+  );
+
   return (
     <form onSubmit={onSubmit}>
       <DialogBody>
@@ -39,7 +45,7 @@ export function RenameRecipeForm({
           <Input
             id={nameInputId}
             value={name}
-            onChange={(e) => onNameChange(e.target.value)}
+            onChange={handleNameChange}
             placeholder="Recipe name"
             autoFocus
           />

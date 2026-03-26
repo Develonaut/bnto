@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback } from "react";
+
 import { Sheet, SheetContent } from "@bnto/ui";
 import { MobileNavSheetContent } from "./MobileNavSheetContent";
 
@@ -9,9 +11,9 @@ interface MobileNavMenuProps {
 }
 
 export function MobileNavMenuRoot({ open, onOpenChange }: MobileNavMenuProps) {
-  function handleClose() {
+  const handleClose = useCallback(() => {
     onOpenChange(false);
-  }
+  }, [onOpenChange]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

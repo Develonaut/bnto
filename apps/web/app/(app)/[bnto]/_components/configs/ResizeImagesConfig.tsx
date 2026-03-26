@@ -37,14 +37,15 @@ function WidthInput({
 }
 
 function AspectRatioToggle({ checked, change }: { checked: boolean; change: ChangeField }) {
+  const handleCheckedChange = useCallback(
+    (v: boolean) => change("maintainAspectRatio", !!v),
+    [change],
+  );
+
   return (
     <FormControl className="shrink-0">
       <FormLabel htmlFor="resize-aspect-ratio">Aspect ratio</FormLabel>
-      <Switch
-        id="resize-aspect-ratio"
-        checked={checked}
-        onCheckedChange={(v) => change("maintainAspectRatio", !!v)}
-      />
+      <Switch id="resize-aspect-ratio" checked={checked} onCheckedChange={handleCheckedChange} />
       <FormHelperText>Keep proportions</FormHelperText>
     </FormControl>
   );

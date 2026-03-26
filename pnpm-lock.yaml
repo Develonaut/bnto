@@ -81,6 +81,9 @@ importers:
       eslint-config-prettier:
         specifier: ^10.1.8
         version: 10.1.8(eslint@9.39.3(jiti@2.6.1))
+      eslint-plugin-react:
+        specifier: ^7.37.5
+        version: 7.37.5(eslint@9.39.3(jiti@2.6.1))
       eslint-plugin-sonarjs:
         specifier: ^4.0.2
         version: 4.0.2(eslint@9.39.3(jiti@2.6.1))

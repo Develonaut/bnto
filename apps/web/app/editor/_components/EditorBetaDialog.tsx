@@ -21,14 +21,17 @@ function wasDismissed(): boolean {
 export function EditorBetaDialog() {
   const [open, setOpen] = useState(() => !wasDismissed());
 
-  function handleDismiss() {
+  const handleDismiss = useCallback(() => {
     localStorage.setItem(STORAGE_KEY, "true");
     setOpen(false);
-  }
-
-  const handleOpenChange = useCallback((v: boolean) => {
-    if (!v) handleDismiss();
   }, []);
+
+  const handleOpenChange = useCallback(
+    (v: boolean) => {
+      if (!v) handleDismiss();
+    },
+    [handleDismiss],
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

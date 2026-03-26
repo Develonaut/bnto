@@ -52,11 +52,17 @@ function WidthInput({
   );
 }
 
-function FormatSelect({ value, change }: { value: Config; change: ChangeField }) {
+function FormatSelect({
+  value,
+  onFormatChange,
+}: {
+  value: Config;
+  onFormatChange: (f: string) => void;
+}) {
   return (
     <FormControl className="shrink-0">
       <FormLabel id="optimize-format-label">Format</FormLabel>
-      <Select value={value.format} onValueChange={(f) => change("format", f as Config["format"])}>
+      <Select value={value.format} onValueChange={onFormatChange}>
         <SelectTrigger
           className="w-24"
           aria-labelledby="optimize-format-label"
@@ -82,12 +88,16 @@ function FormatSelect({ value, change }: { value: Config; change: ChangeField })
 
 function CompressionSlider({ value, change }: { value: Config; change: ChangeField }) {
   const qualityValue = useMemo(() => [value.quality], [value.quality]);
+  const handleQualityChange = useCallback(
+    ([q]: number[]) => change("quality", q ?? value.quality),
+    [change, value.quality],
+  );
 
   return (
     <Slider
       label="Compression"
       value={qualityValue}
-      onValueChange={([q]: number[]) => change("quality", q ?? value.quality)}
+      onValueChange={handleQualityChange}
       min={1}
       max={100}
       presets={COMPRESSION_PRESETS}
@@ -97,7 +107,6 @@ function CompressionSlider({ value, change }: { value: Config; change: ChangeFie
 
 export function OptimizeImagesForWebConfig({ value, onChange }: OptimizeImagesForWebConfigProps) {
   const change = useConfigChange(value, onChange);
-
   const handleWidthChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const width = parseInt(e.target.value, 10);
@@ -105,12 +114,16 @@ export function OptimizeImagesForWebConfig({ value, onChange }: OptimizeImagesFo
     },
     [change],
   );
+  const handleFormatChange = useCallback(
+    (f: string) => change("format", f as Config["format"]),
+    [change],
+  );
 
   return (
     <div className="flex w-full flex-col gap-3">
       <div className="flex w-full items-end gap-4">
         <WidthInput value={value.width} onChange={handleWidthChange} />
-        <FormatSelect value={value} change={change} />
+        <FormatSelect value={value} onFormatChange={handleFormatChange} />
       </div>
       <CompressionSlider value={value} change={change} />
     </div>

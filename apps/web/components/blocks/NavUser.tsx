@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 
@@ -28,10 +29,10 @@ export function NavUser() {
   const signOut = core.auth.useSignOut();
   const router = useRouter();
 
-  const handleSignOut = () => {
+  const handleSignOut = useCallback(() => {
     signOut();
     router.replace("/signin");
-  };
+  }, [signOut, router]);
 
   return (
     <Menu>

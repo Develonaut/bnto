@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import {
   FormControl,
   FormHelperText,
@@ -22,13 +22,23 @@ interface ConvertFormatConfigProps {
   onChange: (config: Config) => void;
 }
 
-type ChangeField = ReturnType<typeof useConfigChange<Config>>;
+interface QualitySliderProps {
+  value: Config;
+  qualityValue: number[];
+  onQualityChange: (v: number[]) => void;
+}
 
-function FormatSelect({ value, change }: { value: Config; change: ChangeField }) {
+function FormatSelect({
+  value,
+  onFormatChange,
+}: {
+  value: Config;
+  onFormatChange: (f: string) => void;
+}) {
   return (
     <FormControl className="shrink-0">
       <FormLabel id="convert-format-label">Format</FormLabel>
-      <Select value={value.format} onValueChange={(f) => change("format", f as Config["format"])}>
+      <Select value={value.format} onValueChange={onFormatChange}>
         <SelectTrigger
           className="w-24"
           aria-labelledby="convert-format-label"
@@ -54,9 +64,7 @@ function FormatSelect({ value, change }: { value: Config; change: ChangeField })
   );
 }
 
-function QualitySlider({ value, change }: { value: Config; change: ChangeField }) {
-  const qualityValue = useMemo(() => [value.quality], [value.quality]);
-
+function QualitySlider({ value, qualityValue, onQualityChange }: QualitySliderProps) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
       <Label id="convert-quality-label" className="text-muted-foreground text-xs">
@@ -69,7 +77,7 @@ function QualitySlider({ value, change }: { value: Config; change: ChangeField }
           aria-describedby="convert-quality-help"
           aria-valuetext={`${value.quality} percent`}
           value={qualityValue}
-          onValueChange={([q]: number[]) => change("quality", q ?? value.quality)}
+          onValueChange={onQualityChange}
           min={1}
           max={100}
           step={1}
@@ -87,11 +95,24 @@ function QualitySlider({ value, change }: { value: Config; change: ChangeField }
 
 export function ConvertFormatConfig({ value, onChange }: ConvertFormatConfigProps) {
   const change = useConfigChange(value, onChange);
+  const qualityValue = useMemo(() => [value.quality], [value.quality]);
+  const handleFormatChange = useCallback(
+    (f: string) => change("format", f as Config["format"]),
+    [change],
+  );
+  const handleQualityChange = useCallback(
+    ([q]: number[]) => change("quality", q ?? value.quality),
+    [change, value.quality],
+  );
 
   return (
     <div className="flex w-full items-end gap-4">
-      <FormatSelect value={value} change={change} />
-      <QualitySlider value={value} change={change} />
+      <FormatSelect value={value} onFormatChange={handleFormatChange} />
+      <QualitySlider
+        value={value}
+        qualityValue={qualityValue}
+        onQualityChange={handleQualityChange}
+      />
     </div>
   );
 }

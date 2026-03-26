@@ -13,13 +13,14 @@ import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import prettierConfig from "eslint-config-prettier";
 import sonarjs from "eslint-plugin-sonarjs";
+import react from "eslint-plugin-react";
 
 export const baseConfig = tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   prettierConfig,
   {
-    plugins: { sonarjs },
+    plugins: { sonarjs, react },
     rules: {
       // --- Complexity & size enforcement (code-standards.md) ---
 
@@ -63,6 +64,22 @@ export const baseConfig = tseslint.config(
 
       // Allow non-null assertions sparingly (Convex patterns use them)
       "@typescript-eslint/no-non-null-assertion": "warn",
+    },
+  },
+  // JSX cleanliness — no inline arrow functions or .bind() in JSX props
+  {
+    files: ["**/*.tsx"],
+    rules: {
+      "react/jsx-no-bind": [
+        "error",
+        {
+          ignoreDOMComponents: false,
+          ignoreRefs: true,
+          allowArrowFunctions: false,
+          allowFunctions: false,
+          allowBind: false,
+        },
+      ],
     },
   },
   {

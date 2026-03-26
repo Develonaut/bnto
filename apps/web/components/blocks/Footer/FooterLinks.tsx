@@ -32,6 +32,14 @@ const TOOL_SECTIONS = [
   },
 ] as const;
 
+type FooterLink = (typeof TOOL_SECTIONS)[number]["links"][number];
+
+function externalProps(link: FooterLink) {
+  return "external" in link && link.external
+    ? { target: "_blank" as const, rel: "noopener noreferrer" }
+    : {};
+}
+
 function FooterSection({ section }: { section: (typeof TOOL_SECTIONS)[number] }) {
   return (
     <div>
@@ -51,9 +59,7 @@ function FooterSection({ section }: { section: (typeof TOOL_SECTIONS)[number] })
               href={link.href}
               data-testid={`footer-link-${link.href.replace("/", "")}`}
               className="text-sm font-medium transition-colors hover:text-primary"
-              {...("external" in link && link.external
-                ? { target: "_blank", rel: "noopener noreferrer" }
-                : {})}
+              {...externalProps(link)}
             >
               {link.name}
             </Link>

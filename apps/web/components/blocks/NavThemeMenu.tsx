@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback } from "react";
+
 import { useTheme } from "@/components/useTheme";
 
 import { Menu, MenuTrigger, MenuContent, SunIcon } from "@bnto/ui";
@@ -25,10 +27,10 @@ export function NavThemeMenu() {
   const isDefault = lightAngle === THEME_STORE_DEFAULT_ANGLE && resolvedTheme === "light";
   const themeName = THEME_NAMES[resolvedTheme ?? "light"] ?? "Los Angeles";
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setLightAngle(THEME_STORE_DEFAULT_ANGLE);
     setTheme("light");
-  };
+  }, [setLightAngle, setTheme]);
 
   return (
     <Menu>

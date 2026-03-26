@@ -26,6 +26,7 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
     (url: OutputFileUrl) => () => downloadFile(url),
     [downloadFile],
   );
+  const handleDownloadSingle = useCallback(() => downloadFile(urls[0]), [downloadFile, urls]);
 
   useEffect(() => {
     if (isCompleted && outputFiles.length > 0) fetchUrls(executionId);
@@ -41,7 +42,7 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
       isReady={isReady}
       isLoading={isLoading}
       onDownloadFile={handleDownloadFile}
-      onDownloadSingle={() => downloadFile(urls[0])}
+      onDownloadSingle={handleDownloadSingle}
       onDownloadAll={downloadAll}
     />
   );

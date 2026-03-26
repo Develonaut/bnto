@@ -45,11 +45,17 @@ function WidthInput({
   );
 }
 
-function FormatSelect({ value, change }: { value: Config; change: ChangeField }) {
+function FormatSelect({
+  value,
+  onFormatChange,
+}: {
+  value: Config;
+  onFormatChange: (f: string) => void;
+}) {
   return (
     <FormControl className="shrink-0">
       <FormLabel id="thumb-format-label">Format</FormLabel>
-      <Select value={value.format} onValueChange={(f) => change("format", f as Config["format"])}>
+      <Select value={value.format} onValueChange={onFormatChange}>
         <SelectTrigger
           className="w-24"
           aria-labelledby="thumb-format-label"
@@ -74,6 +80,11 @@ function FormatSelect({ value, change }: { value: Config; change: ChangeField })
 }
 
 function PrefixInput({ value, change }: { value: string; change: ChangeField }) {
+  const handlePrefixChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => change("prefix", e.target.value),
+    [change],
+  );
+
   return (
     <FormControl className="shrink-0">
       <FormLabel>Prefix</FormLabel>
@@ -81,7 +92,7 @@ function PrefixInput({ value, change }: { value: string; change: ChangeField }) 
         type="text"
         wrapperClassName="w-28"
         value={value}
-        onChange={(e) => change("prefix", e.target.value)}
+        onChange={handlePrefixChange}
         placeholder="thumb_"
       />
     </FormControl>
@@ -90,7 +101,6 @@ function PrefixInput({ value, change }: { value: string; change: ChangeField }) 
 
 export function GenerateThumbnailsConfig({ value, onChange }: GenerateThumbnailsConfigProps) {
   const change = useConfigChange(value, onChange);
-
   const handleWidthChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const width = parseInt(e.target.value, 10);
@@ -98,11 +108,15 @@ export function GenerateThumbnailsConfig({ value, onChange }: GenerateThumbnails
     },
     [change],
   );
+  const handleFormatChange = useCallback(
+    (f: string) => change("format", f as Config["format"]),
+    [change],
+  );
 
   return (
     <div className="flex w-full items-end gap-4">
       <WidthInput value={value.width} onChange={handleWidthChange} />
-      <FormatSelect value={value} change={change} />
+      <FormatSelect value={value} onFormatChange={handleFormatChange} />
       <PrefixInput value={value.prefix} change={change} />
     </div>
   );
