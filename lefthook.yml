@@ -23,3 +23,7 @@ pre-commit:
     typecheck:
       glob: "*.{ts,tsx}"
       run: pnpm turbo run build
+
+    # dead-code: disabled until pre-existing knip findings are resolved
+    # glob: "*.{ts,tsx}"
+    # run: pnpm knip --no-progress

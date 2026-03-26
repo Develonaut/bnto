@@ -2,12 +2,16 @@ import type { ComponentProps } from "react";
 
 import { cn } from "../utils/cn";
 import { InputWrapper } from "./InputWrapper";
+import { useFormControlContext } from "./FormControl/context";
 
 /**
  * Text input with Motorway surface treatment.
  *
  * Uses InputWrapper for the surface/focus/disabled states. The wrapper
  * is needed because `<input>` is a void element (no ::before/::after).
+ *
+ * When inside a `<FormControl>`, auto-receives `id` and `aria-describedby`
+ * from context. Explicit props override context values.
  */
 function Input({
   className,
@@ -15,12 +19,20 @@ function Input({
   type,
   suffix,
   disabled,
+  id,
+  "aria-describedby": ariaDescribedBy,
   ...props
 }: ComponentProps<"input"> & { wrapperClassName?: string; suffix?: string }) {
+  const formCtx = useFormControlContext();
+  const resolvedId = id ?? formCtx?.id;
+  const resolvedDescribedBy = ariaDescribedBy ?? formCtx?.helpTextId;
+
   return (
     <InputWrapper disabled={disabled} className={cn(suffix && "relative", wrapperClassName)}>
       <input
         type={type}
+        id={resolvedId}
+        aria-describedby={resolvedDescribedBy}
         data-slot="input"
         className={cn(
           "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground h-9 w-full min-w-0 rounded-md bg-transparent px-3 py-1 text-base outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed md:text-sm",

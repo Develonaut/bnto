@@ -31,7 +31,7 @@ const eslintConfig = defineConfig([
       ],
       "max-lines": ["warn", { max: 250, skipBlankLines: true, skipComments: true }],
 
-      // --- Structural quality (cherry-picked sonarjs rules) ---
+      // --- Structural quality ---
       "sonarjs/no-identical-conditions": "error",
       "sonarjs/no-collapsible-if": "warn",
       "sonarjs/no-duplicated-branches": "warn",
