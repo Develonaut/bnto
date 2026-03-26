@@ -4,7 +4,7 @@ import { memo, useCallback, type MouseEvent } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { Plus } from "lucide-react";
 import { Button, Divider } from "@bnto/ui";
-import type { BentoNode } from "../../adapters/types";
+import type { BentoNode, CompartmentNodeData } from "../../adapters/types";
 import { usePanels } from "../../hooks/usePanels";
 import { useEditor } from "../../context";
 
@@ -28,10 +28,8 @@ import { useEditor } from "../../context";
 export const AddDividerNode = memo(function AddDividerNode({ data }: NodeProps<BentoNode>) {
   const { open: openPalette } = usePanels("palette");
   const editor = useEditor();
-  const direction = data.dividerDirection ?? "horizontal";
   const afterNodeId = data.dividerAfterNodeId ?? null;
   const intoContainerId = data.dividerIntoContainerId ?? null;
-  const hideLine = data.dividerHideLine ?? false;
 
   const handleClick = useCallback(
     (e: MouseEvent) => {
@@ -43,8 +41,17 @@ export const AddDividerNode = memo(function AddDividerNode({ data }: NodeProps<B
     [afterNodeId, intoContainerId, editor, openPalette],
   );
 
-  // "horizontal" direction = gap between top-level nodes = vertical divider line
-  // "vertical" direction = gap between children = horizontal divider line
+  return <AddDividerLayout data={data} onClick={handleClick} />;
+});
+
+interface AddDividerLayoutProps {
+  data: CompartmentNodeData;
+  onClick: (e: MouseEvent) => void;
+}
+
+function AddDividerLayout({ data, onClick }: AddDividerLayoutProps) {
+  const direction = data.dividerDirection ?? "horizontal";
+  const hideLine = data.dividerHideLine ?? false;
   const dividerOrientation = direction === "horizontal" ? "vertical" : "horizontal";
 
   return (
@@ -63,11 +70,11 @@ export const AddDividerNode = memo(function AddDividerNode({ data }: NodeProps<B
         size="sm"
         variant="primary"
         dormant
-        onClick={handleClick}
+        onClick={onClick}
         aria-label="Add node"
         data-testid="add-divider"
         className="nopan nodrag nowheel z-canvas"
       />
     </div>
   );
-});
+}

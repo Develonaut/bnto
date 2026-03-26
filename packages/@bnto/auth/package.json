@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "test": "echo \"No tests yet\"",
-    "lint": "tsc --noEmit"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@convex-dev/auth": "catalog:",
@@ -29,6 +29,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "eslint": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

@@ -11,34 +11,28 @@ interface UseRadialKeyboardOptions {
   onChange: (value: number) => void;
 }
 
-export function useRadialKeyboard({
-  min,
-  max,
-  value,
-  step,
-  onChange,
-}: UseRadialKeyboardOptions) {
+function resolveKeyValue(key: string, value: number, min: number, max: number, step: number) {
+  switch (key) {
+    case "ArrowRight":
+    case "ArrowUp":
+      return Math.min(max, value + step);
+    case "ArrowLeft":
+    case "ArrowDown":
+      return Math.max(min, value - step);
+    case "Home":
+      return min;
+    case "End":
+      return max;
+    default:
+      return null;
+  }
+}
+
+export function useRadialKeyboard({ min, max, value, step, onChange }: UseRadialKeyboardOptions) {
   return useCallback(
     (e: KeyboardEvent) => {
-      let next: number | null = null;
-      switch (e.key) {
-        case "ArrowRight":
-        case "ArrowUp":
-          next = Math.min(max, value + step);
-          break;
-        case "ArrowLeft":
-        case "ArrowDown":
-          next = Math.max(min, value - step);
-          break;
-        case "Home":
-          next = min;
-          break;
-        case "End":
-          next = max;
-          break;
-        default:
-          return;
-      }
+      const next = resolveKeyValue(e.key, value, min, max, step);
+      if (next === null) return;
       e.preventDefault();
       onChange(next);
     },

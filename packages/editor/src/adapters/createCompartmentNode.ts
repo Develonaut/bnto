@@ -17,7 +17,7 @@ import {
   isIoNodeType,
   isContainerNodeType,
 } from "@bnto/core";
-import type { BentoNode, NodeConfig } from "./types";
+import type { BentoNode, CompartmentVariant, NodeConfig } from "./types";
 import { SLOTS, IO_CARD_SIZE } from "./bentoSlots";
 import { CATEGORY_VARIANT } from "./categoryVariant";
 
@@ -25,11 +25,13 @@ import { CATEGORY_VARIANT } from "./categoryVariant";
 function buildDefaultParams(nodeType: NodeTypeName): Record<string, unknown> {
   const schemaDef = NODE_SCHEMAS[nodeType];
   if (!schemaDef) return {};
-  // Parse an empty object through the schema to get Zod defaults
   const result = schemaDef.schema.safeParse({});
   if (result.success) return { ...result.data };
-  // If parsing fails (required fields missing), extract defaults manually
-  const shape = schemaDef.schema.shape as Record<string, unknown>;
+  return extractZodDefaults(schemaDef.schema.shape as Record<string, unknown>);
+}
+
+/** Extract defaults from Zod schema shape when safeParse fails. */
+function extractZodDefaults(shape: Record<string, unknown>): Record<string, unknown> {
   const params: Record<string, unknown> = {};
   for (const [name, field] of Object.entries(shape)) {
     const def = (field as { _def?: { typeName?: string; defaultValue?: () => unknown } })?._def;
@@ -53,12 +55,10 @@ function deriveLabel(
   parameters: Record<string, unknown>,
   fallback: string,
 ): string {
-  // Container nodes: use mode label for loops ("For Each", "While", "Times")
   if (isContainerNodeType(type)) {
     const mode = parameters.mode as string | undefined;
     if (mode && LOOP_MODE_LABELS[mode]) return LOOP_MODE_LABELS[mode]!;
   }
-
   return fallback;
 }
 
@@ -69,7 +69,6 @@ interface CompartmentNodeResult {
 
 /**
  * Create a BentoNode + NodeConfig from a node type and slot index.
- *
  * Returns null if the slot index is out of range (canvas full).
  */
 function createCompartmentNode(
@@ -85,42 +84,39 @@ function createCompartmentNode(
   const variant = info ? (CATEGORY_VARIANT[info.category] ?? "muted") : "muted";
   const id = crypto.randomUUID();
   const parameters = { ...buildDefaultParams(type), ...defaultParams };
-
-  // Short label derived from mode (loops) or type info.
-  // The sublabel shows the category ("Image", "Loop", etc.).
   const label = deriveLabel(type, parameters, info?.label ?? type);
-
   const isIo = isIoNodeType(type);
-  // Icon via getNodeIcon — single source of truth from @bnto/nodes.
-  const icon = getNodeIcon(type, parameters);
-  const sublabel = getNodeSublabel(type, parameters);
-  // All nodes use uniform CELL×CELL slots — no y-offset math.
-  // I/O visual size is handled by the renderer.
-  const defaultPos = { x: slot.x, y: slot.y };
 
+  return buildResult(id, type, label, isIo, variant, parameters, slot, position);
+}
+
+/** Assemble the BentoNode + NodeConfig result object. */
+function buildResult(
+  id: string,
+  type: NodeTypeName,
+  label: string,
+  isIo: boolean,
+  variant: CompartmentVariant,
+  parameters: Record<string, unknown>,
+  slot: (typeof SLOTS)[number],
+  position?: { x: number; y: number },
+): CompartmentNodeResult {
   const node: BentoNode = {
     id,
     type: isIo ? ("io" as const) : ("compartment" as const),
-    position: position ?? defaultPos,
+    position: position ?? { x: slot.x, y: slot.y },
     data: {
       label,
-      sublabel,
+      sublabel: getNodeSublabel(type, parameters),
       variant,
       width: isIo ? IO_CARD_SIZE : slot.w,
       height: isIo ? IO_CARD_SIZE : slot.h,
       status: "idle" as const,
-      icon,
+      icon: getNodeIcon(type, parameters),
       isIoNode: isIo,
     },
   };
-
-  const config: NodeConfig = {
-    nodeType: type,
-    name: label,
-    parameters,
-  };
-
-  return { node, config };
+  return { node, config: { nodeType: type, name: label, parameters } };
 }
 
 export { createCompartmentNode };

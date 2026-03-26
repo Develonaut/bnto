@@ -13,6 +13,7 @@ import type { EditorStore, RecipeMetadata } from "../store/types";
 import type { DefinitionService } from "../editorTypes";
 import { updateParams } from "../actions/updateParams";
 import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
+import { applySettings } from "./applySettings";
 
 function createDefinitionService(storeApi: StoreApi<EditorStore>): DefinitionService {
   return {
@@ -36,12 +37,7 @@ function createDefinitionService(storeApi: StoreApi<EditorStore>): DefinitionSer
     },
 
     setSettings(settings: PipelineSettings) {
-      const { definition } = storeApi.getState();
-      if (!definition) return;
-      storeApi.setState({
-        definition: { ...definition, settings },
-        isDirty: true,
-      });
+      applySettings(storeApi, settings);
     },
 
     revalidate() {

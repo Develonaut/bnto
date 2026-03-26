@@ -13,14 +13,14 @@ import { resolveNodePresentation } from "../resolveNodePresentation";
  * The card interior uses a single-cell CSS Grid overlay where all
  * child zones share the same cell and self-align to their edges:
  *
- *   ┌──────────────────┐
- *   │ ┄ ┄ header ┄ ┄ ┄│  ← self-start (top overlay)
- *   │                  │
- *   │      body        │  ← place-self-center
- *   │                  │
- *   └──────────────────┘
+ *   +------------------+
+ *   |   header         |  <- self-start (top overlay)
+ *   |                  |
+ *   |      body        |  <- place-self-center
+ *   |                  |
+ *   +------------------+
  *
- * Zones overlay without displacing body content — the body stays
+ * Zones overlay without displacing body content -- the body stays
  * perfectly centered regardless of which zones are present.
  *
  * NodeRoot owns interaction state: `selected` and `status` drive
@@ -43,7 +43,7 @@ interface NodeRootProps {
   height?: number;
   /** Default surface color variant (e.g. "muted" for I/O nodes). */
   variant?: NodeVariant;
-  /** Horizontal alignment of a smaller card inside the CELL×CELL slot. */
+  /** Horizontal alignment of a smaller card inside the CELL x CELL slot. */
   align?: "start" | "center" | "end";
   /** Whether the node is selected in ReactFlow. Drives pressed state. */
   selected?: boolean;
@@ -51,53 +51,90 @@ interface NodeRootProps {
   status?: string;
   /** Accessible label describing this node (e.g. "Compress Images node"). */
   "aria-label"?: string;
-  /** Composed content — NodeBody, NodeIcon, NodeLabel, etc. */
+  /** Composed content -- NodeBody, NodeIcon, NodeLabel, etc. */
   children: ReactNode;
 }
 
-function NodeRoot({
-  width = CELL,
-  height = CELL,
-  variant,
-  align,
-  selected = false,
-  status,
-  "aria-label": ariaLabel,
-  children,
-}: NodeRootProps) {
+/** Resolve alignment class for the CELL x CELL slot container. */
+function slotClassName(align: NodeRootProps["align"]) {
+  return align ? `pointer-events-none flex items-center ${JUSTIFY_MAP[align]}` : "";
+}
+
+function NodeRoot(props: NodeRootProps) {
+  const { variant, align, children, status } = props;
+  const { width = CELL, height = CELL, selected = false, "aria-label": ariaLabel } = props;
   const presentation = resolveNodePresentation(status, selected);
-  const resolvedVariant = presentation.variant ?? variant;
-  const alignClass = align ? `pointer-events-none flex items-center ${JUSTIFY_MAP[align]}` : "";
 
   return (
     <div
       style={{ width: CELL, height: CELL }}
-      className={cn("group relative", alignClass)}
+      className={cn("group relative", slotClassName(align))}
       data-testid="node-slot"
     >
-      <ScaleIn from={0.7} easing="spring-bouncy">
-        <Button
-          as="div"
-          variant={resolvedVariant}
-          elevation={presentation.elevation}
-          pressed={presentation.pressed}
-          hovered={presentation.hovered}
-          muted={presentation.muted}
-          role="button"
-          aria-label={ariaLabel}
-          aria-selected={selected}
-          data-testid="node-card"
-          data-state={status}
-          className={cn(
-            !resolvedVariant && "bg-card text-card-foreground",
-            "relative grid grid-cols-1 grid-rows-1 rounded-xl pointer-events-auto",
-          )}
-          style={{ width, height }}
-        >
-          {children}
-        </Button>
-      </ScaleIn>
+      <NodeCard
+        width={width}
+        height={height}
+        variant={presentation.variant ?? variant}
+        presentation={presentation}
+        ariaLabel={ariaLabel}
+        selected={selected}
+        status={status}
+      >
+        {children}
+      </NodeCard>
     </div>
+  );
+}
+
+interface NodeCardProps {
+  width: number;
+  height: number;
+  variant: NodeVariant | undefined;
+  presentation: ReturnType<typeof resolveNodePresentation>;
+  ariaLabel: string | undefined;
+  selected: boolean;
+  status: string | undefined;
+  children: ReactNode;
+}
+
+/** Resolve card className based on variant presence. */
+function cardClassName(variant: NodeVariant | undefined) {
+  return cn(
+    !variant && "bg-card text-card-foreground",
+    "relative grid grid-cols-1 grid-rows-1 rounded-xl pointer-events-auto",
+  );
+}
+
+function NodeCard({
+  width,
+  height,
+  variant,
+  presentation,
+  ariaLabel,
+  selected,
+  status,
+  children,
+}: NodeCardProps) {
+  return (
+    <ScaleIn from={0.7} easing="spring-bouncy">
+      <Button
+        as="div"
+        variant={variant}
+        elevation={presentation.elevation}
+        pressed={presentation.pressed}
+        hovered={presentation.hovered}
+        muted={presentation.muted}
+        role="button"
+        aria-label={ariaLabel}
+        aria-selected={selected}
+        data-testid="node-card"
+        data-state={status}
+        className={cardClassName(variant)}
+        style={{ width, height }}
+      >
+        {children}
+      </Button>
+    </ScaleIn>
   );
 }
 

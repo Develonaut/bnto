@@ -19,13 +19,91 @@
 import type { NodeTypeName } from "@bnto/core";
 import { isIoNodeType, isContainerNodeType } from "@bnto/core";
 import type { EditorState } from "../store/types";
-import type { BentoNode } from "../adapters/types";
 import type { AddNodeResult } from "./types";
 import { createCompartmentNode } from "../adapters/createCompartmentNode";
 import { STRIDE } from "../adapters/bentoSlots";
 import { addChildIntoContainer } from "./addChildIntoContainer";
 import { addSiblingChild } from "./addSiblingChild";
 import { addTopLevel } from "./addTopLevel";
+import { buildNewNode } from "./buildNewNode";
+
+/** Check if an I/O node of this type already exists. */
+function isDuplicateIoNode(state: EditorState, type: NodeTypeName): boolean {
+  if (!isIoNodeType(type)) return false;
+  return Object.values(state.configs).some((c) => c.nodeType === type);
+}
+
+/** Determine insert index within same-level peers. */
+function resolveInsertIndex(
+  state: EditorState,
+  sameLevelNodes: { id: string }[],
+  afterNodeId?: string | null,
+): number {
+  if (afterNodeId) {
+    const afterIndex = sameLevelNodes.findIndex((n) => n.id === afterNodeId);
+    return afterIndex >= 0 ? afterIndex + 1 : sameLevelNodes.length;
+  }
+  const outputIndex = sameLevelNodes.findIndex((n) => state.configs[n.id]?.nodeType === "output");
+  return outputIndex >= 0 ? outputIndex : sameLevelNodes.length;
+}
+
+/** Prepare common state for a non-container insertion. */
+function prepareInsertion(
+  state: EditorState,
+  type: NodeTypeName,
+  afterNodeId?: string | null,
+  defaultParams?: Record<string, unknown>,
+) {
+  const afterNode = afterNodeId ? state.nodes.find((n) => n.id === afterNodeId) : null;
+  const parentContainerId = afterNode?.data.parentContainerId;
+  const result = createCompartmentNode(type, state.nodes.length, undefined, defaultParams);
+  if (!result) return null;
+
+  const deselected = state.nodes.map((n) => (n.selected ? { ...n, selected: false } : n));
+  const sameLevelNodes = parentContainerId
+    ? deselected.filter((n) => n.data.parentContainerId === parentContainerId)
+    : deselected.filter((n) => !n.data.parentContainerId);
+
+  const insertIndex = resolveInsertIndex(state, sameLevelNodes, afterNodeId);
+  const target = sameLevelNodes[insertIndex];
+  const isContainer = isContainerNodeType(type);
+
+  const newNode = buildNewNode(result.node, {
+    parentContainerId,
+    depth: afterNode?.data.depth ?? 0,
+    isContainer,
+    fallbackPosition: target ? { ...target.position } : { x: state.nodes.length * STRIDE, y: 0 },
+  });
+
+  return { result, deselected, parentContainerId, newNode, isContainer };
+}
+
+/** Dispatch to top-level or sibling-child insertion based on parent. */
+function dispatchInsertion(
+  state: EditorState,
+  prep: NonNullable<ReturnType<typeof prepareInsertion>>,
+  afterNodeId?: string | null,
+): AddNodeResult {
+  if (!prep.parentContainerId) {
+    return addTopLevel(
+      state,
+      prep.result,
+      prep.newNode,
+      prep.deselected,
+      afterNodeId,
+      prep.isContainer,
+    );
+  }
+  return addSiblingChild(
+    state,
+    prep.result,
+    prep.newNode,
+    prep.deselected,
+    prep.parentContainerId,
+    afterNodeId,
+    prep.isContainer,
+  );
+}
 
 export function addNode(
   state: EditorState,
@@ -34,67 +112,11 @@ export function addNode(
   intoContainerId?: string | null,
   defaultParams?: Record<string, unknown>,
 ): AddNodeResult | null {
-  // Only one input and one output node allowed per recipe.
-  if (isIoNodeType(type)) {
-    const alreadyExists = Object.values(state.configs).some((c) => c.nodeType === type);
-    if (alreadyExists) return null;
-  }
-
-  // --- Mode 1: Add as child inside a container ---
-  if (intoContainerId) {
+  if (isDuplicateIoNode(state, type)) return null;
+  if (intoContainerId)
     return addChildIntoContainer(state, type, intoContainerId, afterNodeId, defaultParams);
-  }
 
-  // Check if afterNodeId is a child node (inherits its container context)
-  const afterNode = afterNodeId ? state.nodes.find((n) => n.id === afterNodeId) : null;
-  const parentContainerId = afterNode?.data.parentContainerId;
-  const depth = afterNode?.data.depth ?? 0;
-
-  const slotIndex = state.nodes.length;
-  const result = createCompartmentNode(type, slotIndex, undefined, defaultParams);
-  if (!result) return null;
-
-  // Auto-select the new node, deselect all others
-  const deselected = state.nodes.map((n) => (n.selected ? { ...n, selected: false } : n));
-
-  // Build the new node with parent context if it's a child
-  const sameLevelNodes = parentContainerId
-    ? deselected.filter((n) => n.data.parentContainerId === parentContainerId)
-    : deselected.filter((n) => !n.data.parentContainerId);
-
-  let insertIndex: number;
-  if (afterNodeId) {
-    const afterIndex = sameLevelNodes.findIndex((n) => n.id === afterNodeId);
-    insertIndex = afterIndex >= 0 ? afterIndex + 1 : sameLevelNodes.length;
-  } else {
-    const outputIndex = sameLevelNodes.findIndex((n) => state.configs[n.id]?.nodeType === "output");
-    insertIndex = outputIndex >= 0 ? outputIndex : sameLevelNodes.length;
-  }
-
-  const target = sameLevelNodes[insertIndex];
-  const isContainer = isContainerNodeType(type);
-  const newNode: BentoNode = {
-    ...result.node,
-    selected: true,
-    position: target ? { ...target.position } : { x: slotIndex * STRIDE, y: 0 },
-    data: {
-      ...result.node.data,
-      ...(parentContainerId ? { parentContainerId, depth } : { depth: 0 }),
-      ...(isContainer ? { isContainer: true, isExpanded: true } : {}),
-    },
-  };
-
-  if (!parentContainerId) {
-    return addTopLevel(state, result, newNode, deselected, afterNodeId, isContainer);
-  }
-
-  return addSiblingChild(
-    state,
-    result,
-    newNode,
-    deselected,
-    parentContainerId,
-    afterNodeId,
-    isContainer,
-  );
+  const prep = prepareInsertion(state, type, afterNodeId, defaultParams);
+  if (!prep) return null;
+  return dispatchInsertion(state, prep, afterNodeId);
 }

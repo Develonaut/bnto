@@ -17,7 +17,6 @@ import type {
   PanelClient,
 } from "../editorTypes";
 import type { EditorStore, EditorState } from "../store/types";
-import type { EditorDebugApi } from "./editorDebugApi";
 import { buildDebugApi } from "./buildDebugApi";
 
 /** What registerEditorDebug needs — satisfied by both EditorInstance and ReactEditorInstance. */

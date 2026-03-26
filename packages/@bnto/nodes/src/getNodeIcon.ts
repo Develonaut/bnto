@@ -10,10 +10,19 @@
  */
 
 import type { NodeTypeName } from "./nodeTypes";
-import type { InputParams } from "./schemas/input";
-import type { OutputParams } from "./schemas/output";
 import { NODE_TYPE_INFO } from "./nodeTypes";
 import { INPUT_MODES, OUTPUT_MODES } from "./ioModes";
+
+const IO_ICON_LOOKUP: Record<string, { modes: Record<string, string>; fallback: string }> = {
+  input: { modes: toIconMap(INPUT_MODES), fallback: "file-up" },
+  output: { modes: toIconMap(OUTPUT_MODES), fallback: "download" },
+};
+
+function toIconMap(modes: Record<string, { icon: string }>): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const [key, val] of Object.entries(modes)) map[key] = val.icon;
+  return map;
+}
 
 /**
  * Returns the Lucide icon name for a node given its type and params.
@@ -23,11 +32,10 @@ import { INPUT_MODES, OUTPUT_MODES } from "./ioModes";
  * icon is the static value from NODE_TYPE_INFO.
  */
 export function getNodeIcon(nodeType: NodeTypeName, params?: Record<string, unknown>): string {
-  if (nodeType === "input" && params?.mode) {
-    return INPUT_MODES[params.mode as InputParams["mode"]]?.icon ?? "file-up";
-  }
-  if (nodeType === "output" && params?.mode) {
-    return OUTPUT_MODES[params.mode as OutputParams["mode"]]?.icon ?? "download";
+  const io = IO_ICON_LOOKUP[nodeType];
+  if (io) {
+    const mode = params?.mode as string | undefined;
+    return (mode && io.modes[mode]) || io.fallback;
   }
   return NODE_TYPE_INFO[nodeType]?.icon ?? "box";
 }

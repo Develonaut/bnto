@@ -1,3 +1,5 @@
+import type { PipelineEvent } from "../../types/pipelineEvents";
+
 /** Result of executing a full pipeline through the WASM executor. */
 export interface PipelineExecutionResult {
   files: Array<{
@@ -13,5 +15,5 @@ export interface PipelineExecutionResult {
 export interface PendingPipelineRequest {
   resolve: (result: PipelineExecutionResult) => void;
   reject: (error: Error) => void;
-  onEvent?: (event: import("../../types/pipelineEvents").PipelineEvent) => void;
+  onEvent?: (event: PipelineEvent) => void;
 }

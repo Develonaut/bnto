@@ -11,12 +11,13 @@
   "scripts": {
     "build": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "tsc --noEmit"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@bnto/nodes": "workspace:*"
   },
   "devDependencies": {
+    "eslint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

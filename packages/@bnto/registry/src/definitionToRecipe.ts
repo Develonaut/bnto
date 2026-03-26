@@ -30,6 +30,29 @@ function toSlug(name: string): string {
   return slug || "untitled";
 }
 
+const FALLBACK_ACCEPT: AcceptSpec = {
+  mimeTypes: [],
+  extensions: [],
+  label: "Any files",
+};
+
+/** Resolves name, slug, and id from metadata or definition defaults. */
+function resolveIdentity(definition: Definition, metadata?: RecipeMetadata) {
+  const name = metadata?.name ?? definition.name;
+  const slug = metadata?.slug ?? toSlug(name);
+  const id = metadata?.id ?? crypto.randomUUID();
+  return { id, slug, name };
+}
+
+/** Resolves description, category, accept, and features from metadata or defaults. */
+function resolveContent(definition: Definition, name: string, metadata?: RecipeMetadata) {
+  const description = metadata?.description ?? `Custom recipe: ${name}`;
+  const category = metadata?.category ?? "custom";
+  const accept = metadata?.accept ?? deriveAcceptSpec(definition) ?? FALLBACK_ACCEPT;
+  const features = metadata?.features ?? [];
+  return { description, category, accept, features };
+}
+
 /**
  * Wraps a Definition into a Recipe with metadata.
  *
@@ -37,22 +60,7 @@ function toSlug(name: string): string {
  * from the definition's name and type.
  */
 export function definitionToRecipe(definition: Definition, metadata?: RecipeMetadata): Recipe {
-  const name = metadata?.name ?? definition.name;
-  const slug = metadata?.slug ?? toSlug(name);
-
-  return {
-    id: metadata?.id ?? crypto.randomUUID(),
-    slug,
-    name,
-    description: metadata?.description ?? `Custom recipe: ${name}`,
-    category: metadata?.category ?? "custom",
-    accept: metadata?.accept ??
-      deriveAcceptSpec(definition) ?? {
-        mimeTypes: [],
-        extensions: [],
-        label: "Any files",
-      },
-    features: metadata?.features ?? [],
-    definition,
-  };
+  const { id, slug, name } = resolveIdentity(definition, metadata);
+  const { description, category, accept, features } = resolveContent(definition, name, metadata);
+  return { id, slug, name, description, category, accept, features, definition };
 }

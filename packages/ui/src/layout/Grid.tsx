@@ -69,6 +69,27 @@ type GridRootProps = HTMLAttributes<HTMLElement> & {
   animated?: boolean;
 };
 
+function useGridClassName(
+  cols: ResponsiveProp<Cols>,
+  rows: Rows | undefined,
+  gap: GapSize,
+  flow: Flow | undefined,
+  align: Align | undefined,
+  justify: Justify | undefined,
+  className: string | undefined,
+) {
+  return cn(
+    "grid",
+    ...resolveResponsive(cols, colsMap),
+    rows && rowsMap[rows],
+    gap && gapMap[gap],
+    flow && flowMap[flow],
+    align && alignMap[align],
+    justify && justifyMap[justify],
+    className,
+  );
+}
+
 export function Grid({
   cols = 1,
   rows,
@@ -82,28 +103,13 @@ export function Grid({
   children,
   ...props
 }: GridRootProps) {
+  const gridCn = useGridClassName(cols, rows, gap, flow, align, justify, className);
   const grid = (
-    <Tag
-      className={cn(
-        "grid",
-        ...resolveResponsive(cols, colsMap),
-        rows && rowsMap[rows],
-        gap && gapMap[gap],
-        flow && flowMap[flow],
-        align && alignMap[align],
-        justify && justifyMap[justify],
-        className,
-      )}
-      {...props}
-    >
+    <Tag className={gridCn} {...props}>
       {children}
     </Tag>
   );
-
-  if (animated) {
-    return <BouncyStagger asChild>{grid}</BouncyStagger>;
-  }
-
+  if (animated) return <BouncyStagger asChild>{grid}</BouncyStagger>;
   return grid;
 }
 

@@ -14,6 +14,25 @@ import { NODE_TYPE_INFO } from "./nodeTypes";
 import { getCategoryInfo } from "./categories";
 import { INPUT_MODES, OUTPUT_MODES } from "./ioModes";
 
+const IO_LABEL_LOOKUP: Record<string, { modes: Record<string, string>; fallback: string }> = {
+  input: { modes: toLabelMap(INPUT_MODES), fallback: "Input" },
+  output: { modes: toLabelMap(OUTPUT_MODES), fallback: "Output" },
+};
+
+function toLabelMap(modes: Record<string, { label: string }>): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const [key, val] of Object.entries(modes)) map[key] = val.label;
+  return map;
+}
+
+function resolveControlSublabel(
+  label: string,
+  metadata?: { customData?: Record<string, string> },
+): string {
+  if (metadata?.customData?.displayName) return "Recipe";
+  return label;
+}
+
 /**
  * Returns the sublabel for a node given its type and params.
  *
@@ -28,22 +47,15 @@ export function getNodeSublabel(
   params?: Record<string, unknown>,
   metadata?: { customData?: Record<string, string> },
 ): string {
-  if (nodeType === "input") {
-    return INPUT_MODES[params?.mode as keyof typeof INPUT_MODES]?.label ?? "Input";
-  }
-  if (nodeType === "output") {
-    return OUTPUT_MODES[params?.mode as keyof typeof OUTPUT_MODES]?.label ?? "Output";
+  const io = IO_LABEL_LOOKUP[nodeType];
+  if (io) {
+    const mode = params?.mode as string | undefined;
+    return (mode && io.modes[mode]) || io.fallback;
   }
 
   const info = NODE_TYPE_INFO[nodeType];
   if (!info) return nodeType;
 
-  // Pre-composed sub-recipes (containers with displayName) show "Recipe".
-  // Bare control flow nodes show their own label ("Loop", "Group", "Parallel").
-  if (info.category === "control") {
-    if (metadata?.customData?.displayName) return "Recipe";
-    return info.label;
-  }
-
+  if (info.category === "control") return resolveControlSublabel(info.label, metadata);
   return getCategoryInfo(info.category)?.label ?? nodeType;
 }

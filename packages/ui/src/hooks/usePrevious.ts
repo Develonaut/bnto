@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from "react";
  * can cascade into infinite loops with external store updates.
  */
 function usePrevious<T>(value: T): T | undefined {
-  const [previous, setPrevious] = useState<T | undefined>(undefined);
+  const [previous, setPrevious] = useState<T | undefined>();
   const currentRef = useRef(value);
 
   useEffect(() => {

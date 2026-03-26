@@ -1,8 +1,7 @@
 "use node";
 
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { action } from "./_generated/server";
-import { ConvexError } from "convex/values";
 import { api } from "./_generated/api";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -69,9 +68,7 @@ export const generateDownloadUrls = action({
 
     const client = createR2Client();
     const bucket = process.env.R2_BUCKET_NAME ?? "bnto-transit";
-    const urls = await Promise.all(
-      outputFiles.map((file) => signOutputFile(client, bucket, file)),
-    );
+    const urls = await Promise.all(outputFiles.map((file) => signOutputFile(client, bucket, file)));
 
     return {
       urls,

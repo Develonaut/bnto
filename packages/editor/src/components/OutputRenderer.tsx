@@ -1,7 +1,6 @@
 "use client";
 
-import type { Definition } from "@bnto/core";
-import type { BrowserFileResult } from "@bnto/core";
+import type { Definition, BrowserFileResult } from "@bnto/core";
 import { deriveOutputConfig } from "@bnto/core";
 import { OutputFileCard } from "./OutputFileCard";
 
@@ -21,23 +20,29 @@ interface OutputRendererProps {
 export function OutputRenderer({ definition, results, onDownload }: OutputRendererProps) {
   const outputConfig = deriveOutputConfig(definition);
 
-  if (outputConfig.mode === "display") {
-    return (
-      <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
-        Display output mode coming soon
-      </div>
-    );
-  }
-
-  if (outputConfig.mode === "preview") {
-    return (
-      <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
-        Preview output mode coming soon
-      </div>
-    );
+  if (outputConfig.mode === "display" || outputConfig.mode === "preview") {
+    return <PlaceholderMode mode={outputConfig.mode} />;
   }
 
   // download mode (default)
+  return <DownloadGrid results={results} onDownload={onDownload} />;
+}
+
+function PlaceholderMode({ mode }: { mode: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
+      {mode === "display" ? "Display" : "Preview"} output mode coming soon
+    </div>
+  );
+}
+
+function DownloadGrid({
+  results,
+  onDownload,
+}: {
+  results: BrowserFileResult[];
+  onDownload: (r: BrowserFileResult) => void;
+}) {
   if (results.length === 0) return null;
 
   const gridClass =

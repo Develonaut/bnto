@@ -6,8 +6,7 @@
  * definition tree, and captures undo state.
  */
 
-import type { NodeTypeName } from "@bnto/core";
-import type { Definition } from "@bnto/core";
+import type { NodeTypeName, Definition } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
 import type { AddNodeResult } from "./types";
@@ -15,6 +14,17 @@ import type { CompartmentNodeResult } from "../adapters/createCompartmentNode";
 import { STRIDE } from "../adapters/bentoSlots";
 import { withUndo } from "../store/withUndo";
 import { buildChildDefinition } from "./buildChildDefinition";
+
+/** Shift top-level nodes after the insertion point right by STRIDE. */
+function shiftNodesRight(nodes: BentoNode[], fromIndex: number): BentoNode[] {
+  return nodes
+    .slice(fromIndex)
+    .map((n) =>
+      !n.data.parentContainerId
+        ? { ...n, position: { x: n.position.x + STRIDE, y: n.position.y } }
+        : n,
+    );
+}
 
 function addTopLevel(
   state: EditorState,
@@ -24,30 +34,19 @@ function addTopLevel(
   afterNodeId?: string | null,
   isContainer?: boolean,
 ): AddNodeResult {
-  const globalInsertIndex = findInsertIndex(deselected, state, afterNodeId);
-
-  const shifted = deselected
-    .slice(globalInsertIndex)
-    .map((n) =>
-      !n.data.parentContainerId
-        ? { ...n, position: { x: n.position.x + STRIDE, y: n.position.y } }
-        : n,
-    );
-
-  const nextNodes = [...deselected.slice(0, globalInsertIndex), newNode, ...shifted];
-  const nextConfigs = { ...state.configs, [result.node.id]: result.config };
-  const nextDefinition = insertIntoDefinition(state.definition, result, afterNodeId);
-
-  const nextExpandedIds = isContainer
+  const idx = findInsertIndex(deselected, state, afterNodeId);
+  const nextNodes = [...deselected.slice(0, idx), newNode, ...shiftNodesRight(deselected, idx)];
+  const nextDef = insertIntoDefinition(state.definition, result, afterNodeId);
+  const nextExpanded = isContainer
     ? new Set([...state.expandedContainerIds, result.node.id])
     : undefined;
 
   return {
     nextState: withUndo(state, {
       nodes: nextNodes,
-      configs: nextConfigs,
-      ...(nextDefinition !== state.definition ? { definition: nextDefinition } : {}),
-      ...(nextExpandedIds ? { expandedContainerIds: nextExpandedIds } : {}),
+      configs: { ...state.configs, [result.node.id]: result.config },
+      ...(nextDef !== state.definition ? { definition: nextDef } : {}),
+      ...(nextExpanded ? { expandedContainerIds: nextExpanded } : {}),
     }),
     nodeId: result.node.id,
   };

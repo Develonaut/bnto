@@ -6,8 +6,7 @@
  */
 
 import { validateDefinition, isIoNodeType } from "@bnto/nodes";
-import type { ValidationError } from "@bnto/nodes";
-import type { Definition } from "@bnto/nodes";
+import type { ValidationError, Definition } from "@bnto/nodes";
 import type { Recipe } from "./recipe";
 
 function err(nodeId: string, field: string, message: string): ValidationError {

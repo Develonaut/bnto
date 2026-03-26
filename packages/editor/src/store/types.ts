@@ -11,8 +11,7 @@
  */
 
 import type { Edge, NodeChange, EdgeChange } from "@xyflow/react";
-import type { Definition, ValidationError } from "@bnto/core";
-import type { PipelineEvent, BrowserFileResult } from "@bnto/core";
+import type { Definition, ValidationError, PipelineEvent, BrowserFileResult } from "@bnto/core";
 import type { BentoNode, NodeConfig, NodeConfigs } from "../adapters/types";
 
 // ---------------------------------------------------------------------------

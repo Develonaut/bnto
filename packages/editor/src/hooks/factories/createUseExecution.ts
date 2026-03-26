@@ -13,6 +13,7 @@ import { useStore } from "zustand";
 import type { EditorStore } from "../../store/types";
 import type { ExecutionHookResult } from "../../reactEditorTypes";
 import { deriveFileInputAccept } from "../../actions/deriveFileInputAccept";
+import { selectCanRun } from "./selectCanRun";
 
 function createUseExecution(storeApi: StoreApi<EditorStore>) {
   return function useExecution(): ExecutionHookResult {
@@ -24,15 +25,7 @@ function createUseExecution(storeApi: StoreApi<EditorStore>) {
     const inputFiles = useStore(storeApi, (s) => s.executionInputFiles);
     const executionState = useStore(storeApi, (s) => s.executionState);
     const nodeProgress = useStore(storeApi, (s) => s.nodeProgress);
-
-    const canRun = useStore(storeApi, (s) => {
-      if (s.executionPhase === "running") return false;
-      return s.nodes.some((n) => {
-        const config = s.configs[n.id];
-        return config && config.nodeType !== "input" && config.nodeType !== "output";
-      });
-    });
-
+    const canRun = useStore(storeApi, selectCanRun);
     const fileAccept = useStore(storeApi, (s) => deriveFileInputAccept(s.configs));
 
     return {

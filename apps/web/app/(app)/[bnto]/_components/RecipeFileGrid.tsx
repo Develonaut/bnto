@@ -52,5 +52,5 @@ export function RecipeFileGrid(props: RecipeFileGridProps) {
 function gridColsClass(count: number) {
   if (count >= 3) return "md:grid-cols-2 lg:grid-cols-3";
   if (count === 2) return "md:grid-cols-2";
-  return undefined;
+  return;
 }

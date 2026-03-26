@@ -4,10 +4,6 @@
  * Reads RF nodes (visual-only data) plus the configs map (domain data)
  * and reconstructs a Definition tree. Used at export boundaries only.
  *
- * When a stored `definition` is provided, container nodes preserve their
- * nested children. This ensures the full recursive structure round-trips
- * through export.
- *
  * Pure function — no React, no DOM, fully testable.
  */
 
@@ -16,67 +12,111 @@ import type { RecipeMetadata } from "../store/types";
 import type { BentoNode, NodeConfigs } from "./types";
 import { findDefinitionById } from "./findDefinitionById";
 
-/**
- * Build a Definition from the current RF node state + configs.
- *
- * Accepts lightweight RecipeMetadata (id, name, slug) instead of
- * a full Definition — callers don't need to construct fake objects with
- * empty ports/position/metadata just to satisfy the type.
- *
- * @param rfNodes - Compartment nodes (visual-only data)
- * @param metadata - Root-level recipe metadata (id, name, slug)
- * @param configs - Domain data keyed by node ID
- * @param definition - Full nested definition for preserving container children and type/version
- * @returns Full Definition with child nodes
- */
+/** Filter to only top-level nodes (no parent, depth 0 or undefined). */
+function filterTopLevelNodes(rfNodes: BentoNode[]): BentoNode[] {
+  return rfNodes.filter(
+    (n) => !n.data.parentContainerId && (n.data.depth === undefined || n.data.depth === 0),
+  );
+}
+
+/** Carry over optional Definition fields that exist on the original. */
+function carryOverOptionalFields(originalDef: Definition | null): Partial<Definition> {
+  if (!originalDef) return {};
+  return {
+    ...(originalDef.nodes ? { nodes: originalDef.nodes } : {}),
+    ...(originalDef.edges ? { edges: originalDef.edges } : {}),
+    ...(originalDef.fields ? { fields: originalDef.fields } : {}),
+    ...(originalDef.parentId ? { parentId: originalDef.parentId } : {}),
+  };
+}
+
+/** Resolve config-driven fields for a child node definition. */
+function resolveConfigFields(
+  config: NodeConfigs[string] | undefined,
+  label: string,
+): Pick<Definition, "type" | "name" | "parameters"> {
+  return {
+    type: config?.nodeType ?? "unknown",
+    name: config?.name ?? label,
+    parameters: config?.parameters ?? {},
+  };
+}
+
+/** Resolve fields that come from the original definition (ports, metadata). */
+function resolveOriginalFields(
+  originalDef: Definition | null,
+): Pick<Definition, "metadata" | "inputPorts" | "outputPorts"> {
+  return {
+    metadata: originalDef?.metadata ?? {},
+    inputPorts: originalDef?.inputPorts ?? [],
+    outputPorts: originalDef?.outputPorts ?? [],
+  };
+}
+
+/** Convert a single RF node + config into a child Definition. */
+function mapNodeToDefinition(
+  rfNode: BentoNode,
+  configs: NodeConfigs,
+  definition: Definition | null,
+): Definition {
+  const originalDef = definition ? findDefinitionById(definition, rfNode.id) : null;
+
+  return {
+    id: rfNode.id,
+    version: CURRENT_FORMAT_VERSION,
+    position: rfNode.position,
+    ...resolveConfigFields(configs[rfNode.id], rfNode.data.label),
+    ...resolveOriginalFields(originalDef),
+    ...carryOverOptionalFields(originalDef),
+  };
+}
+
+/** Carry over optional root-level Definition fields. */
+function carryOverRootFields(definition: Definition | null): Partial<Definition> {
+  if (!definition) return {};
+  return {
+    ...(definition.edges ? { edges: definition.edges } : {}),
+    ...(definition.settings ? { settings: definition.settings } : {}),
+  };
+}
+
+/** Resolve root type and version from existing definition or defaults. */
+function resolveRootTypeAndVersion(
+  definition: Definition | null,
+): Pick<Definition, "type" | "version" | "parameters"> {
+  return {
+    type: definition?.type ?? "group",
+    version: definition?.version ?? CURRENT_FORMAT_VERSION,
+    parameters: definition?.parameters ?? {},
+  };
+}
+
+/** Build the root Definition shell from metadata + optional existing definition. */
+function buildRootDefinition(
+  metadata: RecipeMetadata,
+  children: Definition[],
+  definition: Definition | null,
+): Definition {
+  const { cloudId: _, slug: __, ...rootMeta } = metadata;
+  return {
+    ...rootMeta,
+    ...resolveRootTypeAndVersion(definition),
+    ...resolveOriginalFields(definition),
+    position: { x: 0, y: 0 },
+    nodes: children,
+    ...carryOverRootFields(definition),
+  };
+}
+
 function rfNodesToDefinition(
   rfNodes: BentoNode[],
   metadata: RecipeMetadata,
   configs: NodeConfigs = {},
   definition: Definition | null = null,
 ): Definition {
-  // Only include top-level nodes in the export — child nodes are already
-  // in the definition tree from write-through operations.
-  const topLevelNodes = rfNodes.filter(
-    (n) => !n.data.parentContainerId && (n.data.depth === undefined || n.data.depth === 0),
-  );
-  const children: Definition[] = topLevelNodes.map((rfNode) => {
-    const config = configs[rfNode.id];
-
-    // For container nodes, preserve nested children from definition
-    const originalDef = definition ? findDefinitionById(definition, rfNode.id) : null;
-
-    return {
-      id: rfNode.id,
-      type: config?.nodeType ?? "unknown",
-      version: CURRENT_FORMAT_VERSION,
-      name: config?.name ?? rfNode.data.label,
-      position: rfNode.position,
-      parameters: config?.parameters ?? {},
-      metadata: originalDef?.metadata ?? {},
-      inputPorts: originalDef?.inputPorts ?? [],
-      outputPorts: originalDef?.outputPorts ?? [],
-      ...(originalDef?.nodes ? { nodes: originalDef.nodes } : {}),
-      ...(originalDef?.edges ? { edges: originalDef.edges } : {}),
-      ...(originalDef?.fields ? { fields: originalDef.fields } : {}),
-      ...(originalDef?.parentId ? { parentId: originalDef.parentId } : {}),
-    };
-  });
-
-  const { cloudId: _, slug: __, ...rootMeta } = metadata;
-  return {
-    ...rootMeta,
-    type: definition?.type ?? "group",
-    version: definition?.version ?? CURRENT_FORMAT_VERSION,
-    position: { x: 0, y: 0 },
-    metadata: definition?.metadata ?? {},
-    parameters: definition?.parameters ?? {},
-    inputPorts: definition?.inputPorts ?? [],
-    outputPorts: definition?.outputPorts ?? [],
-    nodes: children,
-    ...(definition?.edges ? { edges: definition.edges } : {}),
-    ...(definition?.settings ? { settings: definition.settings } : {}),
-  };
+  const topLevelNodes = filterTopLevelNodes(rfNodes);
+  const children = topLevelNodes.map((n) => mapNodeToDefinition(n, configs, definition));
+  return buildRootDefinition(metadata, children, definition);
 }
 
 export { rfNodesToDefinition };

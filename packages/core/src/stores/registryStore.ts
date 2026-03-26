@@ -1,8 +1,8 @@
 /** registryStore — read-only Zustand store for predefined recipes and node type metadata. */
 
+import type { StoreApi } from "zustand/vanilla";
 import { createEnhancedStore } from "./createEnhancedStore";
-import type { NodeTypeInfo, NodeTypeName } from "@bnto/registry";
-import type { RegistryData } from "@bnto/registry";
+import type { NodeTypeInfo, NodeTypeName, RegistryData } from "@bnto/registry";
 
 interface RegistryStoreState extends RegistryData {
   initialized: boolean;
@@ -17,7 +17,7 @@ const EMPTY: RegistryData = {
   processors: [],
 };
 
-export const registryStore: import("zustand/vanilla").StoreApi<RegistryStoreState> =
+export const registryStore: StoreApi<RegistryStoreState> =
   createEnhancedStore<RegistryStoreState>()((set) => ({
     ...EMPTY,
     initialized: false,

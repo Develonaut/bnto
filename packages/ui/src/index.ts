@@ -21,6 +21,7 @@ export * from "./icons";
 export { useDialog } from "./hooks/useDialog";
 export type { UseDialogReturn } from "./hooks/useDialog";
 export { useKeyDown } from "./hooks/useKeyDown";
+export { useMounted } from "./hooks/useMounted";
 export { usePrevious } from "./hooks/usePrevious";
 
 /* Layout */

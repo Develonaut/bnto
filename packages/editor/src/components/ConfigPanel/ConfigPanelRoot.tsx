@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback } from "react";
-import { Badge, Divider, Heading, SlidersHorizontalIcon, Text, usePrevious } from "@bnto/ui";
-import { isIoNodeType } from "@bnto/core";
+import { SlidersHorizontalIcon, usePrevious } from "@bnto/ui";
 import { useEditor } from "../../context";
 import { useEditorNode } from "../../hooks/useEditorNode";
-import { SchemaForm } from "@bnto/form";
 import { EditorMenuPanel } from "../EditorMenuPanel";
 import { ConfigPanelDeleteButton } from "./ConfigPanelDeleteButton";
 import { RecipeSettingsPanel } from "./RecipeSettingsPanel";
+import { NodeConfigContent } from "./NodeConfigContent";
 
 /**
  * ConfigPanel — Menu-based config panel.
@@ -18,23 +17,36 @@ import { RecipeSettingsPanel } from "./RecipeSettingsPanel";
  * rendered by SchemaForm — fully schema-driven.
  */
 
-function ConfigPanelRoot() {
+/** Resolve the current config node ID (persists across deselection transitions). */
+function useConfigNodeId() {
   const editor = useEditor();
   const { selectedNodeId } = editor.nodes.useNodes();
-  const prevSelectedNodeId = usePrevious(selectedNodeId);
-  const configNodeId = selectedNodeId ?? prevSelectedNodeId ?? null;
+  const prev = usePrevious(selectedNodeId);
+  return selectedNodeId ?? prev ?? null;
+}
 
-  const { node, config, typeInfo, schemaDef, fieldConfigs, visibleParams } =
-    useEditorNode(configNodeId);
+/** Resolves param change handler + derived display data for the config panel. */
+function useConfigPanel() {
+  const editor = useEditor();
+  const configNodeId = useConfigNodeId();
+  const nodeData = useEditorNode(configNodeId);
 
   const handleParamChange = useCallback(
     (paramName: string, value: unknown) => {
-      if (!configNodeId) return;
-      editor.definition.updateParams(configNodeId, { [paramName]: value });
+      if (configNodeId) editor.definition.updateParams(configNodeId, { [paramName]: value });
     },
     [configNodeId, editor],
   );
 
+  const { config, typeInfo } = nodeData;
+  const nodeName = config && typeInfo ? config.displayName || config.name || typeInfo.label : "";
+
+  return { configNodeId, nodeData, handleParamChange, nodeName };
+}
+
+function ConfigPanelRoot() {
+  const { configNodeId, nodeData, handleParamChange, nodeName } = useConfigPanel();
+  const { config, typeInfo, node } = nodeData;
   const hasContent = configNodeId && node && config && typeInfo;
 
   return (
@@ -49,58 +61,12 @@ function ConfigPanelRoot() {
       {!hasContent ? (
         <RecipeSettingsPanel />
       ) : (
-        <>
-          <div className="shrink-0 px-3 pt-3 pb-2">
-            <div className="flex items-center gap-2">
-              <Heading level={3} size="xs" className="min-w-0 flex-1 truncate">
-                {config.displayName || config.name || typeInfo.label}
-              </Heading>
-              {!isIoNodeType(config.nodeType) && (
-                <ConfigPanelDeleteButton
-                  nodeId={configNodeId}
-                  nodeName={config.displayName || config.name || typeInfo.label}
-                />
-              )}
-            </div>
-            {typeInfo.description && (
-              <Text size="xs" color="muted" className="mt-1">
-                {typeInfo.description}
-              </Text>
-            )}
-            <div className="mt-2 flex items-center gap-1.5">
-              <Badge variant="secondary" className="text-xs">
-                {typeInfo.category}
-              </Badge>
-              {typeInfo.browserCapable ? (
-                <Badge variant="secondary" className="text-xs">
-                  Browser
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-xs">
-                  Pro
-                </Badge>
-              )}
-            </div>
-          </div>
-          <Divider />
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-3">
-              {schemaDef ? (
-                <SchemaForm
-                  schema={schemaDef}
-                  fields={fieldConfigs}
-                  values={config.parameters}
-                  visibleParams={visibleParams}
-                  onChange={handleParamChange}
-                />
-              ) : (
-                <Text size="xs" color="muted">
-                  No configurable parameters.
-                </Text>
-              )}
-            </div>
-          </div>
-        </>
+        <NodeConfigContent
+          configNodeId={configNodeId}
+          nodeData={nodeData}
+          onParamChange={handleParamChange}
+          deleteButton={<ConfigPanelDeleteButton nodeId={configNodeId} nodeName={nodeName} />}
+        />
       )}
     </EditorMenuPanel>
   );

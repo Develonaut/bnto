@@ -8,7 +8,7 @@
  *   4. Nori band across the middle
  */
 
-import { NORI, RICE, SALMON, SALMON_LINE } from "../sushi-colors";
+import { NORI, RICE, SALMON, SALMON_LINE } from "../sushiColors";
 import { S } from "./constants";
 
 export function NigiriShape() {

@@ -5,7 +5,7 @@
  * yellow egg block topping and subtle grill/fold lines.
  */
 
-import { NORI, RICE, TAMAGO, TAMAGO_GRILL } from "../sushi-colors";
+import { NORI, RICE, TAMAGO, TAMAGO_GRILL } from "../sushiColors";
 import { S } from "./constants";
 
 export function TamagoNigiriShape() {

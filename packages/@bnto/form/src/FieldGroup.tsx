@@ -1,8 +1,8 @@
 "use client";
 
 import type { NodeParamField, NodeParamFieldInfo, NodeParam } from "@bnto/core";
-import { SchemaField } from "./SchemaField";
 import { partitionGroupFields } from "./partitionGroupFields";
+import { FieldGroupList } from "./FieldGroupList";
 
 /**
  * FieldGroup — renders related parameters in a compact layout.
@@ -30,30 +30,10 @@ function FieldGroup({ fields, values, onChange }: FieldGroupProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {inlineFields.map((field) => (
-        <SchemaField
-          key={field.paramName}
-          name={field.paramName}
-          meta={field.meta}
-          fieldConfig={field.fieldConfig}
-          fieldInfo={field.fieldInfo}
-          value={values[field.paramName]}
-          onChange={onChange}
-        />
-      ))}
+      <FieldGroupList fields={inlineFields} values={values} onChange={onChange} />
       {gridFields.length > 0 && (
         <div className="grid grid-cols-2 gap-3">
-          {gridFields.map((field) => (
-            <SchemaField
-              key={field.paramName}
-              name={field.paramName}
-              meta={field.meta}
-              fieldConfig={field.fieldConfig}
-              fieldInfo={field.fieldInfo}
-              value={values[field.paramName]}
-              onChange={onChange}
-            />
-          ))}
+          <FieldGroupList fields={gridFields} values={values} onChange={onChange} />
         </div>
       )}
     </div>

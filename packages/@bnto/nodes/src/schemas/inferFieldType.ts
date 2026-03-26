@@ -140,6 +140,21 @@ function isKeyValueRecord(zodType: z.ZodTypeAny): boolean {
   return typeName === "ZodString" || typeName === "ZodUnknown";
 }
 
+function inferEnum(innerDef: ZodDef, required: boolean): NodeParamFieldInfo {
+  return { type: "enum", control: "select", required, enumValues: innerDef.values };
+}
+
+function inferNumber(inner: z.ZodTypeAny, required: boolean): NodeParamFieldInfo {
+  const { min, max } = extractNumberChecks(inner);
+  const isBounded = min !== undefined && max !== undefined;
+  return { type: "number", control: isBounded ? "slider" : "number", required, min, max };
+}
+
+function inferString(required: boolean, fieldConfig?: NodeParamField): NodeParamFieldInfo {
+  const control = fieldConfig?.control === "textarea" ? "textarea" : "text";
+  return { type: "string", control, required };
+}
+
 /**
  * Infer the field type info from a Zod schema shape entry.
  *
@@ -157,42 +172,14 @@ function inferFieldType(zodField: z.ZodTypeAny, fieldConfig?: NodeParamField): N
   const innerDef = zodDef(inner);
   const typeName = innerDef.typeName;
 
-  if (typeName === "ZodEnum") {
-    return {
-      type: "enum",
-      control: "select",
-      required,
-      enumValues: innerDef.values,
-    };
-  }
-
-  if (typeName === "ZodNumber") {
-    const { min, max } = extractNumberChecks(inner);
-    const isBounded = min !== undefined && max !== undefined;
-    return {
-      type: "number",
-      control: isBounded ? "slider" : "number",
-      required,
-      min,
-      max,
-    };
-  }
-
-  if (typeName === "ZodBoolean") {
-    return { type: "boolean", control: "switch", required };
-  }
-
-  if (typeName === "ZodArray" && isStringArray(inner)) {
+  if (typeName === "ZodEnum") return inferEnum(innerDef, required);
+  if (typeName === "ZodNumber") return inferNumber(inner, required);
+  if (typeName === "ZodBoolean") return { type: "boolean", control: "switch", required };
+  if (typeName === "ZodArray" && isStringArray(inner))
     return { type: "array", control: "tagPicker", required };
-  }
-
-  if (typeName === "ZodRecord" && isKeyValueRecord(inner)) {
+  if (typeName === "ZodRecord" && isKeyValueRecord(inner))
     return { type: "record", control: "keyValue", required };
-  }
-
-  // String fields can be overridden to textarea via fieldConfig.control
-  const control = fieldConfig?.control === "textarea" ? "textarea" : "text";
-  return { type: "string", control, required };
+  return inferString(required, fieldConfig);
 }
 
 export { inferFieldType };

@@ -1,6 +1,15 @@
-import type { HTMLAttributes } from "react";
+import type { HTMLAttributes, MouseEvent, PointerEvent } from "react";
 
 import { cn } from "../utils/cn";
+
+function stopClickPropagation(e: MouseEvent) {
+  e.stopPropagation();
+  e.preventDefault();
+}
+
+function stopPropagation(e: MouseEvent | PointerEvent) {
+  e.stopPropagation();
+}
 
 /**
  * Blocks click/pointer propagation from nested controls inside clickable cards.
@@ -13,12 +22,9 @@ export function CardActions({ className, ...props }: HTMLAttributes<HTMLDivEleme
     <div
       data-card-actions=""
       className={cn("relative z-10", className)}
-      onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
+      onClick={stopClickPropagation}
+      onPointerDown={stopPropagation}
+      onMouseDown={stopPropagation}
       {...props}
     />
   );

@@ -3,14 +3,16 @@
 import type { ComponentProps } from "react";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "../icons";
-import { ITEM_CN } from "../layout/List";
-import { Popup } from "../overlay/Popup";
-import { PopupTriggerButton } from "./PopupTriggerButton";
-import { POPUP_OFFSET_PX, type PopupOffset } from "../overlay/popupOffset";
-import type { SurfaceElevation } from "../surface/Surface";
+import { CheckIcon, ChevronDownIcon } from "../../icons";
+import { ITEM_CN } from "../../layout/List";
+import { PopupTriggerButton } from "../PopupTriggerButton";
+import { POPUP_OFFSET_PX, type PopupOffset } from "../../overlay/popupOffset";
+import type { SurfaceElevation } from "../../surface/Surface";
+import { SelectContentInner } from "./SelectContentInner";
 
-import { cn } from "../utils/cn";
+import { cn } from "../../utils/cn";
+
+export { SelectScrollUpButton, SelectScrollDownButton } from "./SelectScrollButtons";
 
 export function SelectGroup({ ...props }: ComponentProps<typeof SelectPrimitive.Group>) {
   return <SelectPrimitive.Group data-slot="select-group" {...props} />;
@@ -42,6 +44,13 @@ export function SelectTrigger({
   );
 }
 
+type SelectContentProps = ComponentProps<typeof SelectPrimitive.Content> & {
+  /** Offset from trigger edge. Default "md" (16px). */
+  offset?: PopupOffset;
+  /** Card elevation. Default "lg". */
+  elevation?: SurfaceElevation;
+};
+
 export function SelectContent({
   className,
   children,
@@ -49,19 +58,8 @@ export function SelectContent({
   align = "center",
   offset = "md",
   elevation = "lg",
-  boundary,
-  boundaryPadding = 16,
   ...props
-}: ComponentProps<typeof SelectPrimitive.Content> & {
-  /** Offset from trigger edge. Default "md" (16px). */
-  offset?: PopupOffset;
-  /** Card elevation. Default "lg". */
-  elevation?: SurfaceElevation;
-  /** Collision boundary element. */
-  boundary?: Element | null;
-  /** Padding from collision boundary. Default 16. */
-  boundaryPadding?: number;
-}) {
+}: SelectContentProps) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -72,25 +70,9 @@ export function SelectContent({
         sideOffset={POPUP_OFFSET_PX[offset]}
         {...props}
       >
-        <Popup
-          originStyle="var(--radix-select-content-transform-origin)"
-          elevation={elevation}
-          className={className}
-        >
-          <div className="overflow-x-hidden overflow-y-auto">
-            <SelectScrollUpButton />
-            <SelectPrimitive.Viewport
-              className={cn(
-                "p-1",
-                position === "popper" &&
-                  "w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
-              )}
-            >
-              {children}
-            </SelectPrimitive.Viewport>
-            <SelectScrollDownButton />
-          </div>
-        </Popup>
+        <SelectContentInner position={position} elevation={elevation} className={className}>
+          {children}
+        </SelectContentInner>
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );
@@ -141,36 +123,6 @@ export function SelectSeparator({
       className={cn("bg-border pointer-events-none -mx-1 my-1 h-px", className)}
       {...props}
     />
-  );
-}
-
-export function SelectScrollUpButton({
-  className,
-  ...props
-}: ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
-  return (
-    <SelectPrimitive.ScrollUpButton
-      data-slot="select-scroll-up-button"
-      className={cn("flex cursor-default items-center justify-center py-1", className)}
-      {...props}
-    >
-      <ChevronUpIcon className="size-4" />
-    </SelectPrimitive.ScrollUpButton>
-  );
-}
-
-export function SelectScrollDownButton({
-  className,
-  ...props
-}: ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
-  return (
-    <SelectPrimitive.ScrollDownButton
-      data-slot="select-scroll-down-button"
-      className={cn("flex cursor-default items-center justify-center py-1", className)}
-      {...props}
-    >
-      <ChevronDownIcon className="size-4" />
-    </SelectPrimitive.ScrollDownButton>
   );
 }
 

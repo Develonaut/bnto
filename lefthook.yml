@@ -27,3 +27,27 @@ pre-commit:
     dead-code:
       glob: "*.{ts,tsx}"
       run: pnpm knip --no-progress
+
+    sherif:
+      glob: "**/package.json"
+      run: pnpm sherif -p @bnto/package.json
+
+    check-object-assign:
+      glob: "*.tsx"
+      run: |
+        if grep -rn 'Object\.assign' {staged_files} 2>/dev/null; then
+          echo "ERROR: Object.assign compound patterns break RSC. Use flat named exports."
+          exit 1
+        fi
+
+    check-grab-bags:
+      glob: "*.{ts,tsx}"
+      exclude: "^(node_modules/|engine/|\\.next|e2e/)"
+      run: |
+        for f in {staged_files}; do
+          base=$(basename "$f")
+          if echo "$base" | grep -qE '^(utils|helpers|hooks)\.(ts|tsx)$'; then
+            echo "ERROR: Grab-bag filename detected: $f"
+            exit 1
+          fi
+        done

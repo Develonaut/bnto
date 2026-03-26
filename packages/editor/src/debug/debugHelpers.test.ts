@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from "vitest";
 import { createEditorStore } from "../store/createEditorStore";
-import { state, addNodeViaStore } from "../store/test-helpers";
+import { state, addNodeViaStore } from "../store/testHelpers";
 import {
   setPhase,
   setNodeStatus,

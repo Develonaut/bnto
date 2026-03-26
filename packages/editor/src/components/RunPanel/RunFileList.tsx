@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { FileList } from "@bnto/ui";
 import type { BrowserFileResult } from "@bnto/core";
 import { deriveFileResultProps } from "@bnto/core";
@@ -38,7 +39,73 @@ function RunFileList({
   return <IdleFileList inputFiles={inputFiles} onRemove={onRemove} />;
 }
 
-/* ── Phase-specific lists ────────────────────────────────────── */
+/* -- Per-item row wrappers (avoid inline arrow in JSX) ---------- */
+
+function CompletedResultItem({
+  result,
+  index,
+  onDownload,
+}: {
+  result: BrowserFileResult;
+  index: number;
+  onDownload: (r: BrowserFileResult) => void;
+}) {
+  const d = deriveFileResultProps(result);
+  const handleDownload = useCallback(() => onDownload(result), [onDownload, result]);
+  return (
+    <ResultRow
+      key={`${d.filename}-${index}`}
+      filename={d.filename}
+      extension={d.extension}
+      outputSize={d.outputSize}
+      originalSize={d.originalSize}
+      savings={d.savings}
+      onDownload={handleDownload}
+    />
+  );
+}
+
+function RunningRow({
+  file,
+  index,
+  result,
+  fileProgress,
+  onDownload,
+}: {
+  file: File;
+  index: number;
+  result: BrowserFileResult | undefined;
+  fileProgress: FileProgress | null;
+  onDownload: (r: BrowserFileResult) => void;
+}) {
+  if (result) {
+    return <CompletedResultItem result={result} index={index} onDownload={onDownload} />;
+  }
+  return (
+    <InputRow
+      key={`${file.name}-${file.size}-${index}`}
+      file={file}
+      processing={fileProgress?.fileIndex === index}
+    />
+  );
+}
+
+function IdleRow({
+  file,
+  index,
+  onRemove,
+}: {
+  file: File;
+  index: number;
+  onRemove: (i: number) => void;
+}) {
+  const handleRemove = useCallback(() => onRemove(index), [onRemove, index]);
+  return (
+    <InputRow key={`${file.name}-${file.size}-${index}`} file={file} onRemove={handleRemove} />
+  );
+}
+
+/* -- Phase-specific lists --------------------------------------- */
 
 function CompletedFileList({
   results,
@@ -49,20 +116,14 @@ function CompletedFileList({
 }) {
   return (
     <FileList as="ul" className="px-4 py-3">
-      {results.map((r, i) => {
-        const d = deriveFileResultProps(r);
-        return (
-          <ResultRow
-            key={`${d.filename}-${i}`}
-            filename={d.filename}
-            extension={d.extension}
-            outputSize={d.outputSize}
-            originalSize={d.originalSize}
-            savings={d.savings}
-            onDownload={() => onDownload(r)}
-          />
-        );
-      })}
+      {results.map((r, i) => (
+        <CompletedResultItem
+          key={`${r.filename}-${i}`}
+          result={r}
+          index={i}
+          onDownload={onDownload}
+        />
+      ))}
     </FileList>
   );
 }
@@ -80,30 +141,16 @@ function RunningFileList({
 }) {
   return (
     <FileList as="ul" className="px-4 py-3">
-      {inputFiles.map((file, i) => {
-        const result = results[i];
-        if (result) {
-          const d = deriveFileResultProps(result);
-          return (
-            <ResultRow
-              key={`${d.filename}-${i}`}
-              filename={d.filename}
-              extension={d.extension}
-              outputSize={d.outputSize}
-              originalSize={d.originalSize}
-              savings={d.savings}
-              onDownload={() => onDownload(result)}
-            />
-          );
-        }
-        return (
-          <InputRow
-            key={`${file.name}-${file.size}-${i}`}
-            file={file}
-            processing={fileProgress?.fileIndex === i}
-          />
-        );
-      })}
+      {inputFiles.map((file, i) => (
+        <RunningRow
+          key={`${file.name}-${file.size}-${i}`}
+          file={file}
+          index={i}
+          result={results[i]}
+          fileProgress={fileProgress}
+          onDownload={onDownload}
+        />
+      ))}
     </FileList>
   );
 }
@@ -118,7 +165,7 @@ function IdleFileList({
   return (
     <FileList as="ul" className="px-4 py-3">
       {inputFiles.map((file, i) => (
-        <InputRow key={`${file.name}-${file.size}-${i}`} file={file} onRemove={() => onRemove(i)} />
+        <IdleRow key={`${file.name}-${file.size}-${i}`} file={file} index={i} onRemove={onRemove} />
       ))}
     </FileList>
   );

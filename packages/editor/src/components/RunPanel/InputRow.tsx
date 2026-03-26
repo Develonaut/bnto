@@ -13,6 +13,36 @@ import {
   formatFileSize,
 } from "@bnto/ui";
 
+function InputRowIcon({ processing }: { processing?: boolean }) {
+  return (
+    <FileListIcon>
+      <IconBadge variant="primary" size="lg" aria-hidden="true">
+        {processing ? (
+          <LoaderIcon className="size-5 motion-safe:animate-spin" />
+        ) : (
+          <FileIcon className="size-5" />
+        )}
+      </IconBadge>
+    </FileListIcon>
+  );
+}
+
+function InputRowRemove({ filename, onRemove }: { filename: string; onRemove: () => void }) {
+  return (
+    <FileListActions>
+      <Button
+        variant="outline"
+        size="icon"
+        elevation="sm"
+        onClick={onRemove}
+        aria-label={`Remove ${filename}`}
+      >
+        <XIcon className="size-4" />
+      </Button>
+    </FileListActions>
+  );
+}
+
 function InputRow({
   file,
   processing,
@@ -24,32 +54,12 @@ function InputRow({
 }) {
   return (
     <FileListItem data-testid="input-file" aria-busy={processing}>
-      <FileListIcon>
-        <IconBadge variant="primary" size="lg" aria-hidden="true">
-          {processing ? (
-            <LoaderIcon className="size-5 motion-safe:animate-spin" />
-          ) : (
-            <FileIcon className="size-5" />
-          )}
-        </IconBadge>
-      </FileListIcon>
+      <InputRowIcon processing={processing} />
       <FileListContent>
         <FileListName>{file.name}</FileListName>
         <FileListMeta>{formatFileSize(file.size)}</FileListMeta>
       </FileListContent>
-      {onRemove && (
-        <FileListActions>
-          <Button
-            variant="outline"
-            size="icon"
-            elevation="sm"
-            onClick={onRemove}
-            aria-label={`Remove ${file.name}`}
-          >
-            <XIcon className="size-4" />
-          </Button>
-        </FileListActions>
-      )}
+      {onRemove && <InputRowRemove filename={file.name} onRemove={onRemove} />}
     </FileListItem>
   );
 }

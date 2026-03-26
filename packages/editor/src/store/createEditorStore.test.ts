@@ -10,7 +10,7 @@ import type { StoreApi } from "zustand";
 import { getRecipeBySlug } from "@bnto/core";
 import { createEditorStore } from "./createEditorStore";
 import type { EditorStore } from "./types";
-import { state } from "./test-helpers";
+import { state } from "./testHelpers";
 
 // ---------------------------------------------------------------------------
 // Tests

@@ -15,7 +15,7 @@ import {
   FILLING_EGG,
   FILLING_CUCUMBER,
   FILLING_CUCUMBER_DARK,
-} from "./sushi-colors";
+} from "./sushiColors";
 import { MakiShape } from "./sushi-pieces/MakiShape";
 import { NigiriShape } from "./sushi-pieces/NigiriShape";
 import { TamagoNigiriShape } from "./sushi-pieces/TamagoNigiriShape";

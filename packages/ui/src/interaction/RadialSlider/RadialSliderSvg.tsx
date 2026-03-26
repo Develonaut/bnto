@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 
-import { arcPath } from "./geometry";
+import { computeArcPaths } from "./computeArcPaths";
+import { RingPaths } from "./RingPaths";
+import { TrackPaths } from "./TrackPaths";
+import { ActivePath } from "./ActivePath";
 
 interface RadialSliderSvgProps {
   size: number;
@@ -18,29 +21,10 @@ interface RadialSliderSvgProps {
   activePath: string;
 }
 
-export function RadialSliderSvg({
-  size,
-  radius,
-  svgCenter,
-  strokeWidth,
-  startAngle,
-  endAngle,
-  trackClassName,
-  activeClassName,
-  hideRing,
-  svgDefs,
-  trackStroke,
-  activeStroke,
-  activePath,
-}: RadialSliderSvgProps) {
-  let arcSpan = endAngle - startAngle;
-  if (arcSpan < 0) arcSpan += 360;
-  const isPartialArc = arcSpan < 360;
-
-  const ringPath = isPartialArc
-    ? arcPath(0, 360, radius, svgCenter, svgCenter)
-    : "";
-  const trackPath = arcPath(startAngle, endAngle, radius, svgCenter, svgCenter);
+export function RadialSliderSvg(props: RadialSliderSvgProps) {
+  const { size, radius, svgCenter, strokeWidth, startAngle, endAngle } = props;
+  const { ringPath, trackPath } = computeArcPaths(startAngle, endAngle, radius, svgCenter);
+  const showRing = !!ringPath && !props.trackStroke && !props.hideRing;
 
   return (
     <svg
@@ -49,31 +33,28 @@ export function RadialSliderSvg({
       viewBox={`0 0 ${size} ${size}`}
       className="pointer-events-none absolute inset-0"
     >
-      {svgDefs && <defs>{svgDefs}</defs>}
-      {ringPath && !trackStroke && !hideRing && (
-        <>
-          <path d={ringPath} fill="none" stroke="currentColor" className="text-border" strokeWidth={strokeWidth + 2} strokeLinecap="round" opacity={0.3} />
-          <path d={ringPath} fill="none" stroke="currentColor" className={trackClassName} strokeWidth={strokeWidth} strokeLinecap="round" opacity={0.3} />
-        </>
-      )}
-      {trackPath && (
-        <>
-          {!trackStroke && (
-            <path d={trackPath} fill="none" stroke="currentColor" className="text-border" strokeWidth={strokeWidth + 2} strokeLinecap="round" />
-          )}
-          <path d={trackPath} fill="none" stroke={trackStroke ?? "currentColor"} className={trackStroke ? undefined : trackClassName} strokeWidth={strokeWidth} strokeLinecap="round" />
-        </>
-      )}
-      {activePath && (
-        <path
-          d={activePath}
-          fill="none"
-          stroke={activeStroke ?? "currentColor"}
-          className={activeStroke ? undefined : activeClassName}
+      {props.svgDefs && <defs>{props.svgDefs}</defs>}
+      {showRing && (
+        <RingPaths
+          ringPath={ringPath}
+          trackClassName={props.trackClassName}
           strokeWidth={strokeWidth}
-          strokeLinecap="round"
         />
       )}
+      {trackPath && (
+        <TrackPaths
+          trackPath={trackPath}
+          trackStroke={props.trackStroke}
+          trackClassName={props.trackClassName}
+          strokeWidth={strokeWidth}
+        />
+      )}
+      <ActivePath
+        activePath={props.activePath}
+        activeStroke={props.activeStroke}
+        activeClassName={props.activeClassName}
+        strokeWidth={strokeWidth}
+      />
     </svg>
   );
 }

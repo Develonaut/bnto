@@ -11,9 +11,10 @@
   "scripts": {
     "build": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "tsc --noEmit"
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "eslint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
