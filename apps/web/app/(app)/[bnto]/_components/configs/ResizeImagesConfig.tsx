@@ -11,6 +11,46 @@ interface ResizeImagesConfigProps {
   onChange: (config: Config) => void;
 }
 
+type ChangeField = ReturnType<typeof useConfigChange<Config>>;
+
+function WidthInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <FormControl className="shrink-0">
+      <FormLabel>Width (px)</FormLabel>
+      <Input
+        type="number"
+        min={1}
+        max={10000}
+        value={value}
+        wrapperClassName="w-24"
+        onChange={onChange}
+      />
+      <FormHelperText>Target width in pixels</FormHelperText>
+    </FormControl>
+  );
+}
+
+function AspectRatioToggle({ checked, change }: { checked: boolean; change: ChangeField }) {
+  const handleCheckedChange = useCallback(
+    (v: boolean) => change("maintainAspectRatio", !!v),
+    [change],
+  );
+
+  return (
+    <FormControl className="shrink-0">
+      <FormLabel htmlFor="resize-aspect-ratio">Aspect ratio</FormLabel>
+      <Switch id="resize-aspect-ratio" checked={checked} onCheckedChange={handleCheckedChange} />
+      <FormHelperText>Keep proportions</FormHelperText>
+    </FormControl>
+  );
+}
+
 export function ResizeImagesConfig({ value, onChange }: ResizeImagesConfigProps) {
   const change = useConfigChange(value, onChange);
 
@@ -24,27 +64,8 @@ export function ResizeImagesConfig({ value, onChange }: ResizeImagesConfigProps)
 
   return (
     <div className="flex w-full items-end gap-4">
-      <FormControl className="shrink-0">
-        <FormLabel>Width (px)</FormLabel>
-        <Input
-          type="number"
-          min={1}
-          max={10000}
-          value={value.width}
-          wrapperClassName="w-24"
-          onChange={handleWidthChange}
-        />
-        <FormHelperText>Target width in pixels</FormHelperText>
-      </FormControl>
-      <FormControl className="shrink-0">
-        <FormLabel htmlFor="resize-aspect-ratio">Aspect ratio</FormLabel>
-        <Switch
-          id="resize-aspect-ratio"
-          checked={value.maintainAspectRatio}
-          onCheckedChange={(v) => change("maintainAspectRatio", !!v)}
-        />
-        <FormHelperText>Keep proportions</FormHelperText>
-      </FormControl>
+      <WidthInput value={value.width} onChange={handleWidthChange} />
+      <AspectRatioToggle checked={value.maintainAspectRatio} change={change} />
     </div>
   );
 }

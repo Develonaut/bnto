@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { CheckIcon, MenuItem } from "@bnto/ui";
 
 interface FilterMenuItemsProps<T extends string> {
@@ -7,6 +8,31 @@ interface FilterMenuItemsProps<T extends string> {
   selected: T;
   onSelect: (value: T) => void;
   testIdPrefix: string;
+}
+
+function FilterMenuItem<T extends string>({
+  opt,
+  selected,
+  onSelect,
+  testIdPrefix,
+}: {
+  opt: { value: T; label: string };
+  selected: T;
+  onSelect: (value: T) => void;
+  testIdPrefix: string;
+}) {
+  const handleClick = useCallback(() => onSelect(opt.value), [onSelect, opt.value]);
+
+  return (
+    <MenuItem onClick={handleClick} data-testid={`${testIdPrefix}-${opt.value}`}>
+      {selected === opt.value ? (
+        <CheckIcon className="size-4 text-primary" />
+      ) : (
+        <span className="size-4" />
+      )}
+      {opt.label}
+    </MenuItem>
+  );
 }
 
 export function FilterMenuItems<T extends string>({
@@ -18,18 +44,13 @@ export function FilterMenuItems<T extends string>({
   return (
     <>
       {options.map((opt) => (
-        <MenuItem
+        <FilterMenuItem
           key={opt.value}
-          onClick={() => onSelect(opt.value)}
-          data-testid={`${testIdPrefix}-${opt.value}`}
-        >
-          {selected === opt.value ? (
-            <CheckIcon className="size-4 text-primary" />
-          ) : (
-            <span className="size-4" />
-          )}
-          {opt.label}
-        </MenuItem>
+          opt={opt}
+          selected={selected}
+          onSelect={onSelect}
+          testIdPrefix={testIdPrefix}
+        />
       ))}
     </>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useCallback } from "react";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
 import { PhaseIndicator } from "./PhaseIndicator";
@@ -19,9 +19,11 @@ import { deriveActivePhase } from "./phaseMapping";
 export function RecipeShell({ entry, children }: { entry: BntoEntry; children?: ReactNode }) {
   const flow = useRecipeFlow({ entry });
   const activePhase = deriveActivePhase(flow.resolvedPhase, flow.files.length);
-  const handleClearFiles = () => flow.setFiles([]);
-  const handleDeleteFile = (index: number) => () =>
-    flow.setFiles(flow.files.filter((_, j) => j !== index));
+  const handleClearFiles = useCallback(() => flow.setFiles([]), [flow]);
+  const handleDeleteFile = useCallback(
+    (index: number) => () => flow.setFiles(flow.files.filter((_, j) => j !== index)),
+    [flow],
+  );
 
   return (
     <div

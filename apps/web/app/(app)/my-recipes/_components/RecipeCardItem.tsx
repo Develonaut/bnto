@@ -29,6 +29,31 @@ interface RecipeCardItemProps {
   categoryIcon?: LucideIcon;
 }
 
+function RecipeCardBody({
+  recipe,
+  categoryIcon,
+}: Pick<RecipeCardItemProps, "recipe" | "categoryIcon">) {
+  return (
+    <RecipeCard href={editorUrl(recipe.id)}>
+      <RecipeCardHeader>
+        <RecipeCardIcon icon={categoryIcon} />
+        <CardActions>
+          <RecipeCardMenu recipeId={recipe.id} recipeName={recipe.name} />
+        </CardActions>
+      </RecipeCardHeader>
+      <RecipeCardContent>
+        <RecipeCardTitle>{recipe.name}</RecipeCardTitle>
+        <RecipeCardMeta
+          nodeCount={recipe.nodeCount}
+          updatedAt={recipe.updatedAt}
+          syncedAt={recipe.syncedAt}
+        />
+        {recipe.nodeTypes.length > 0 && <RecipeCardTags tags={recipe.nodeTypes} limit={3} />}
+      </RecipeCardContent>
+    </RecipeCard>
+  );
+}
+
 /** Individual recipe card in the grid. */
 export function RecipeCardItem({ recipe, index, categoryIcon }: RecipeCardItemProps) {
   return (
@@ -40,23 +65,7 @@ export function RecipeCardItem({ recipe, index, categoryIcon }: RecipeCardItemPr
         className="h-full"
         data-testid="recipe-card"
       >
-        <RecipeCard href={editorUrl(recipe.id)}>
-          <RecipeCardHeader>
-            <RecipeCardIcon icon={categoryIcon} />
-            <CardActions>
-              <RecipeCardMenu recipeId={recipe.id} recipeName={recipe.name} />
-            </CardActions>
-          </RecipeCardHeader>
-          <RecipeCardContent>
-            <RecipeCardTitle>{recipe.name}</RecipeCardTitle>
-            <RecipeCardMeta
-              nodeCount={recipe.nodeCount}
-              updatedAt={recipe.updatedAt}
-              syncedAt={recipe.syncedAt}
-            />
-            {recipe.nodeTypes.length > 0 && <RecipeCardTags tags={recipe.nodeTypes} limit={3} />}
-          </RecipeCardContent>
-        </RecipeCard>
+        <RecipeCardBody recipe={recipe} categoryIcon={categoryIcon} />
       </ScaleIn>
     </GridItem>
   );
