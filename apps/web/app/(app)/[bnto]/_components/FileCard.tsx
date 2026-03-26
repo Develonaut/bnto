@@ -1,19 +1,8 @@
 "use client";
 
 import type { BrowserFileResult } from "@bnto/core";
-import {
-  Button,
-  FileListActions,
-  FileListContent,
-  FileListIcon,
-  FileListItem,
-  FileListMeta,
-  FileListName,
-  IconBadge,
-} from "@bnto/ui";
-import { FileIcon, LoaderIcon, XIcon } from "@bnto/ui";
-import { formatFileSize } from "@bnto/ui";
 import { CompletedFileRow } from "./CompletedFileRow";
+import { PendingFileRow } from "./PendingFileRow";
 
 interface FileCardProps {
   file: File;
@@ -50,41 +39,12 @@ export function FileCard({
     return <CompletedFileRow result={result} onDownload={onDownload} />;
   }
 
-  const icon = isProcessing ? (
-    <LoaderIcon className="size-5 motion-safe:animate-spin" />
-  ) : (
-    <FileIcon className="size-5" />
-  );
-
   return (
-    <FileListItem aria-busy={isProcessing} data-testid="input-file">
-      <FileListIcon>
-        <IconBadge variant="primary" size="lg" aria-hidden="true">
-          {icon}
-        </IconBadge>
-      </FileListIcon>
-      <FileListContent>
-        <FileListName>{file.name}</FileListName>
-        <FileListMeta>{formatFileSize(file.size)}</FileListMeta>
-        {isProcessing && (
-          <span className="sr-only" role="status">
-            Processing
-          </span>
-        )}
-      </FileListContent>
-      {!isExecuting && (
-        <FileListActions>
-          <Button
-            variant="outline"
-            size="icon"
-            elevation="sm"
-            onClick={onDelete}
-            aria-label={`Remove ${file.name}`}
-          >
-            <XIcon className="size-4" />
-          </Button>
-        </FileListActions>
-      )}
-    </FileListItem>
+    <PendingFileRow
+      file={file}
+      isProcessing={isProcessing}
+      isExecuting={isExecuting}
+      onDelete={onDelete}
+    />
   );
 }

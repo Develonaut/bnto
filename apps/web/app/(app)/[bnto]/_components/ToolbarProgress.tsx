@@ -2,17 +2,8 @@
 
 import type { BrowserExecution } from "@bnto/core";
 import { computeTotalSaved } from "@bnto/core";
-import {
-  CheckCircle2Icon,
-  LoaderIcon,
-  StatusBanner,
-  StatusBannerIcon,
-  StatusBannerLabel,
-  StatusBannerProgress,
-  StatusBannerRow,
-  StatusBannerSpacer,
-  formatFileSize,
-} from "@bnto/ui";
+import { CompletedToolbarBanner } from "./CompletedToolbarBanner";
+import { ProcessingToolbarBanner } from "./ProcessingToolbarBanner";
 
 interface ToolbarProgressProps {
   execution: BrowserExecution;
@@ -21,7 +12,7 @@ interface ToolbarProgressProps {
 /**
  * Persistent progress/status banner for the recipe toolbar.
  *
- * One StatusBanner stays mounted — props change across phases, no layout shift.
+ * One StatusBanner stays mounted -- props change across phases, no layout shift.
  */
 export function ToolbarProgress({ execution }: ToolbarProgressProps) {
   if (execution.status === "completed") {
@@ -35,50 +26,20 @@ export function ToolbarProgress({ execution }: ToolbarProgressProps) {
         data-total-saved={saved}
         data-files-count={count}
       >
-        <StatusBanner variant="success">
-          <StatusBannerRow>
-            <StatusBannerIcon>
-              <CheckCircle2Icon />
-            </StatusBannerIcon>
-            <StatusBannerLabel>
-              {count} {count === 1 ? "file" : "files"} processed
-            </StatusBannerLabel>
-            <StatusBannerSpacer />
-            {saved > 0 && (
-              <StatusBannerLabel muted mono>
-                {formatFileSize(saved)} saved
-              </StatusBannerLabel>
-            )}
-          </StatusBannerRow>
-          <StatusBannerProgress value={100} variant="success" />
-        </StatusBanner>
+        <CompletedToolbarBanner count={count} saved={saved} />
       </div>
     );
   }
-
-  const { fileProgress } = execution;
-  const percent = fileProgress?.overallPercent ?? 0;
-  const label = fileProgress
-    ? `Processing file ${fileProgress.fileIndex + 1} of ${fileProgress.totalFiles}...`
-    : "Initializing...";
 
   return (
     <div
       data-testid="toolbar-progress"
       data-status="processing"
-      data-file-index={fileProgress?.fileIndex}
-      data-total-files={fileProgress?.totalFiles}
-      data-overall-percent={percent}
+      data-file-index={execution.fileProgress?.fileIndex}
+      data-total-files={execution.fileProgress?.totalFiles}
+      data-overall-percent={execution.fileProgress?.overallPercent ?? 0}
     >
-      <StatusBanner>
-        <StatusBannerRow>
-          <StatusBannerIcon>
-            <LoaderIcon className="motion-safe:animate-spin" />
-          </StatusBannerIcon>
-          <StatusBannerLabel muted>{label}</StatusBannerLabel>
-        </StatusBannerRow>
-        <StatusBannerProgress value={percent} />
-      </StatusBanner>
+      <ProcessingToolbarBanner fileProgress={execution.fileProgress} />
     </div>
   );
 }

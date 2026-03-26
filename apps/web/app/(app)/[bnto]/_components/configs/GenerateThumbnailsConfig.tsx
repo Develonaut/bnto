@@ -1,23 +1,10 @@
 "use client";
 
-import type { ChangeEvent } from "react";
-import { useCallback } from "react";
-import {
-  Input,
-  Label,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@bnto/ui";
 import type { GenerateThumbnailsConfig as Config } from "./types";
-
-const FORMAT_OPTIONS = [
-  { value: "webp", label: "WebP" },
-  { value: "jpeg", label: "JPEG" },
-  { value: "png", label: "PNG" },
-] as const;
+import { useGenerateThumbnailsHandlers } from "./useGenerateThumbnailsHandlers";
+import { FormatSelect } from "./FormatSelect";
+import { WidthInput } from "./WidthInput";
+import { PrefixInput } from "./PrefixInput";
 
 interface GenerateThumbnailsConfigProps {
   value: Config;
@@ -25,80 +12,19 @@ interface GenerateThumbnailsConfigProps {
 }
 
 export function GenerateThumbnailsConfig({ value, onChange }: GenerateThumbnailsConfigProps) {
-  const handleWidthChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const width = parseInt(e.target.value, 10);
-      if (!isNaN(width) && width > 0) {
-        onChange({ ...value, width });
-      }
-    },
-    [onChange, value],
-  );
-
-  const handleFormatChange = useCallback(
-    (format: string) => onChange({ ...value, format: format as Config["format"] }),
-    [onChange, value],
-  );
-
-  const handlePrefixChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => onChange({ ...value, prefix: e.target.value }),
-    [onChange, value],
-  );
+  const { handleWidthChange, handleFormatChange, handlePrefixChange } =
+    useGenerateThumbnailsHandlers(value, onChange);
 
   return (
     <div className="flex w-full items-end gap-4">
-      <div className="flex shrink-0 flex-col gap-1">
-        <Label htmlFor="thumb-width" className="text-muted-foreground text-xs">
-          Width (px)
-        </Label>
-        <Input
-          id="thumb-width"
-          type="number"
-          min={1}
-          max={10000}
-          value={value.width}
-          wrapperClassName="w-24"
-          onChange={handleWidthChange}
-        />
-      </div>
-      <div className="flex shrink-0 flex-col gap-1">
-        <Label id="thumb-format-label" className="text-muted-foreground text-xs">
-          Format
-        </Label>
-        <Select value={value.format} onValueChange={handleFormatChange}>
-          <SelectTrigger
-            className="w-24"
-            aria-labelledby="thumb-format-label"
-            data-testid="format-select"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FORMAT_OPTIONS.map((opt) => (
-              <SelectItem
-                key={opt.value}
-                value={opt.value}
-                data-testid={`format-option-${opt.value}`}
-              >
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex shrink-0 flex-col gap-1">
-        <Label htmlFor="thumb-prefix" className="text-muted-foreground text-xs">
-          Prefix
-        </Label>
-        <Input
-          id="thumb-prefix"
-          type="text"
-          wrapperClassName="w-28"
-          value={value.prefix}
-          onChange={handlePrefixChange}
-          placeholder="thumb_"
-        />
-      </div>
+      <WidthInput id="thumb-width" value={value.width} onChange={handleWidthChange} />
+      <FormatSelect id="thumb-format" value={value.format} onChange={handleFormatChange} />
+      <PrefixInput
+        id="thumb-prefix"
+        value={value.prefix}
+        onChange={handlePrefixChange}
+        placeholder="thumb_"
+      />
     </div>
   );
 }

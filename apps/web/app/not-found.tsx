@@ -1,18 +1,8 @@
-import {
-  AppShellHeader,
-  AppShellMain,
-  AppShellContent,
-  ArrowLeftIcon,
-  Button,
-  Heading,
-  Row,
-  Stack,
-  Text,
-} from "@bnto/ui";
+import { AppShellHeader, AppShellMain, AppShellContent } from "@bnto/ui";
 
 import { Navbar } from "@/components/blocks/Navbar";
 import { Footer } from "@/components/blocks/Footer";
-import { GITHUB_URL } from "@/lib/copy";
+import { NotFoundContent } from "./NotFoundContent";
 
 /**
  * Root 404 page — self-contained with Navbar + Footer.
@@ -30,35 +20,7 @@ export default function NotFound() {
       </AppShellHeader>
       <AppShellMain>
         <AppShellContent>
-          <Stack align="center" justify="center" className="min-h-[60vh] text-center">
-            <Stack gap="md" align="center" className="max-w-lg">
-              <Text size="sm" mono color="muted" className="uppercase tracking-wider">
-                404
-              </Text>
-              <Heading level={1} data-testid="not-found-heading">
-                Page Not Found
-              </Heading>
-              <Text color="muted" size="lg" balance>
-                Sorry, we couldn&apos;t find the page you&apos;re looking for. The page might have
-                been removed or the URL might be incorrect.
-              </Text>
-            </Stack>
-
-            <Row gap="sm" className="pt-4">
-              <Button href="/" className="gap-2">
-                <ArrowLeftIcon className="size-4" />
-                Back to Home
-              </Button>
-              <Button
-                variant="outline"
-                href={`${GITHUB_URL}/issues`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Report Issue
-              </Button>
-            </Row>
-          </Stack>
+          <NotFoundContent />
         </AppShellContent>
       </AppShellMain>
       <Footer />

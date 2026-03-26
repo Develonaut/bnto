@@ -4,7 +4,6 @@ import { useCallback } from "react";
 import type { BrowserFileResult } from "@bnto/core";
 import { useFileResultProps } from "@bnto/core";
 import {
-  Badge,
   Button,
   CheckCircle2Icon,
   DownloadIcon,
@@ -12,18 +11,15 @@ import {
   FileListContent,
   FileListIcon,
   FileListItem,
-  FileListMeta,
-  FileListName,
   IconBadge,
 } from "@bnto/ui";
+import { CompletedFileMeta } from "./CompletedFileMeta";
 
 /**
- * Completed file result row — renders filename, extension badge,
+ * Completed file result row -- renders filename, extension badge,
  * size stats with savings, and a download button.
- *
- * Used by both BrowserExecutionResults (bnto page) and FileCard (bnto page).
  */
-function CompletedFileRow({
+export function CompletedFileRow({
   result,
   onDownload,
 }: {
@@ -32,7 +28,6 @@ function CompletedFileRow({
 }) {
   const props = useFileResultProps(result);
   const handleDownload = useCallback(() => onDownload(result), [onDownload, result]);
-  const hasSavings = props.originalSize != null && props.savings != null;
 
   return (
     <FileListItem data-testid="output-file">
@@ -42,39 +37,26 @@ function CompletedFileRow({
         </IconBadge>
       </FileListIcon>
       <FileListContent>
-        <span className="flex items-center gap-1.5">
-          <FileListName>{props.filename}</FileListName>
-          {props.extension && (
-            <Badge variant="outline" size="sm" className="shrink-0 uppercase">
-              {props.extension}
-            </Badge>
-          )}
-        </span>
-        <FileListMeta>
-          {hasSavings ? (
-            <>
-              <span className="line-through">{props.originalSize}</span>{" "}
-              <span className="font-semibold text-primary">{props.savings}</span> {props.outputSize}
-            </>
-          ) : (
-            props.outputSize
-          )}
-        </FileListMeta>
+        <CompletedFileMeta {...props} />
       </FileListContent>
       <FileListActions>
-        <Button
-          variant="outline"
-          size="icon"
-          elevation="sm"
-          onClick={handleDownload}
-          aria-label={`Download ${result.filename}`}
-          data-testid="download-button"
-        >
-          <DownloadIcon className="size-4" />
-        </Button>
+        <DownloadButton filename={result.filename} onClick={handleDownload} />
       </FileListActions>
     </FileListItem>
   );
 }
 
-export { CompletedFileRow };
+function DownloadButton({ filename, onClick }: { filename: string; onClick: () => void }) {
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      elevation="sm"
+      onClick={onClick}
+      aria-label={`Download ${filename}`}
+      data-testid="download-button"
+    >
+      <DownloadIcon className="size-4" />
+    </Button>
+  );
+}

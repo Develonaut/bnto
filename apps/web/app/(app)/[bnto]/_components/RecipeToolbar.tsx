@@ -1,10 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Button, FileUploadClear, Row } from "@bnto/ui";
-import { ArrowLeftIcon, DownloadIcon, TrashIcon } from "@bnto/ui";
-import { RunButton } from "./RunButton";
 import type { RunPhase } from "./RunButton";
+import { ToolbarActions } from "./ToolbarActions";
+import { ToolbarBackSection } from "./ToolbarBackSection";
 
 interface RecipeToolbarProps {
   activePhase: 2 | 3;
@@ -18,99 +17,34 @@ interface RecipeToolbarProps {
 }
 
 /**
- * Responsive toolbar for recipe Phases 2–3.
+ * Responsive toolbar for recipe Phases 2-3.
  *
  * Left: back + file count. Center: config or progress slot.
  * Right: action buttons. Stacks vertically on mobile, inline on desktop.
  */
-export function RecipeToolbar({
-  activePhase,
-  resolvedPhase,
-  isProcessing,
-  fileCount,
-  onBack,
-  onRun,
-  onDownloadAll,
-  centerContent,
-}: RecipeToolbarProps) {
+export function RecipeToolbar(props: RecipeToolbarProps) {
+  const { activePhase, resolvedPhase, fileCount, centerContent, onRun, onDownloadAll } = props;
+
   return (
     <div
       role="toolbar"
       aria-label="Recipe actions"
       className="flex min-h-10 flex-col gap-3 md:flex-row md:items-center md:gap-4"
     >
-      {/* Left: back button + file count + mobile actions */}
-      <Row gap="xs">
-        <Button
-          variant="ghost"
-          size="icon"
-          elevation="sm"
-          disabled={isProcessing}
-          onClick={onBack}
-          aria-label={activePhase === 3 ? "Back to configure" : "Back to file selection"}
-          data-testid="back-button"
-        >
-          <ArrowLeftIcon className="size-4" />
-        </Button>
-        <p className="shrink-0 text-sm font-medium text-foreground" data-testid="file-count">
-          {fileCount} {fileCount === 1 ? "file" : "files"} selected
-        </p>
-        <Row gap="xs" className="ml-auto shrink-0 md:hidden">
-          {activePhase === 3 && (
-            <Button
-              variant="outline"
-              size="icon"
-              elevation="sm"
-              disabled={resolvedPhase !== "completed"}
-              onClick={onDownloadAll}
-              aria-label="Download all"
-              data-testid="download-all-button"
-            >
-              <DownloadIcon className="size-4" />
-            </Button>
-          )}
-          {activePhase === 2 && (
-            <FileUploadClear asChild>
-              <Button variant="outline" size="icon" aria-label="Clear all files">
-                <TrashIcon className="size-4" />
-              </Button>
-            </FileUploadClear>
-          )}
-          <RunButton phase={resolvedPhase} hasFiles={fileCount > 0} onRun={onRun} />
-        </Row>
-      </Row>
-
-      {/* Center: config (Phase 2) or progress (Phase 3) */}
+      <ToolbarBackSection {...props} />
       {centerContent && (
         <div className="min-w-0 flex-1 border-border md:mx-4 md:border-l md:border-r md:px-4">
           {centerContent}
         </div>
       )}
-
-      {/* Right: desktop actions (hidden on mobile) */}
-      <Row gap="xs" className="ml-auto hidden shrink-0 md:flex">
-        {activePhase === 3 && (
-          <Button
-            variant="outline"
-            size="icon"
-            elevation="sm"
-            disabled={resolvedPhase !== "completed"}
-            onClick={onDownloadAll}
-            aria-label="Download all"
-            data-testid="download-all-button"
-          >
-            <DownloadIcon className="size-4" />
-          </Button>
-        )}
-        {activePhase === 2 && (
-          <FileUploadClear asChild>
-            <Button variant="outline" size="icon" aria-label="Clear all files">
-              <TrashIcon className="size-4" />
-            </Button>
-          </FileUploadClear>
-        )}
-        <RunButton phase={resolvedPhase} hasFiles={fileCount > 0} onRun={onRun} />
-      </Row>
+      <ToolbarActions
+        activePhase={activePhase}
+        resolvedPhase={resolvedPhase}
+        fileCount={fileCount}
+        onRun={onRun}
+        onDownloadAll={onDownloadAll}
+        className="ml-auto hidden shrink-0 md:flex"
+      />
     </div>
   );
 }

@@ -2,16 +2,9 @@
 
 import { useCallback, useState } from "react";
 
-import {
-  Button,
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@bnto/ui";
+import { Dialog } from "@bnto/ui";
+
+import { EditorBetaDialogContent } from "./EditorBetaDialogContent";
 
 const STORAGE_KEY = "bnto-editor-beta-dismissed";
 
@@ -39,23 +32,7 @@ export function EditorBetaDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent data-testid="editor-beta-dialog" size="sm">
-        <DialogHeader>
-          <DialogTitle>Welcome to the Recipe Editor</DialogTitle>
-          <DialogClose />
-        </DialogHeader>
-        <DialogDescription>
-          The recipe editor is in beta. We&apos;re actively experimenting and testing functionality
-          here, so things may change as we refine the experience.
-        </DialogDescription>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button onClick={handleDismiss} data-testid="beta-get-started">
-              Get started
-            </Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
+      <EditorBetaDialogContent onDismiss={handleDismiss} />
     </Dialog>
   );
 }

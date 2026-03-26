@@ -1,24 +1,13 @@
 /**
  * Filter dropdown for My Recipes — category filter + sort order.
- *
- * Two sections separated by a divider:
- *   Top:    Category (All, Image, Data, File)
- *   Bottom: Sort (Newest first, Oldest first)
  */
 
 "use client";
 
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  Menu,
-  MenuContent,
-  MenuItem,
-  MenuLabel,
-  MenuSeparator,
-  MenuTrigger,
-  SlidersHorizontalIcon,
-} from "@bnto/ui";
+import { Menu, MenuContent, MenuLabel, MenuSeparator } from "@bnto/ui";
+
+import { FilterMenuItems } from "./RecipeFilterMenuItems";
+import { RecipeFilterTrigger } from "./RecipeFilterTrigger";
 
 export type RecipeCategory = "all" | "image" | "spreadsheet" | "file";
 export type RecipeSortOrder = "newest" | "oldest";
@@ -52,43 +41,23 @@ export function RecipeFilterMenu({
 
   return (
     <Menu>
-      <MenuTrigger variant="outline" elevation="sm" data-testid="recipe-filter-trigger">
-        <SlidersHorizontalIcon />
-        {activeLabel}
-        <ChevronDownIcon />
-      </MenuTrigger>
+      <RecipeFilterTrigger activeLabel={activeLabel} />
       <MenuContent align="end" className="w-48" data-testid="recipe-filter-menu">
         <MenuLabel>Category</MenuLabel>
-        {CATEGORIES.map((cat) => (
-          <MenuItem
-            key={cat.value}
-            onClick={() => onCategoryChange(cat.value)}
-            data-testid={`filter-category-${cat.value}`}
-          >
-            {category === cat.value ? (
-              <CheckIcon className="size-4 text-primary" />
-            ) : (
-              <span className="size-4" />
-            )}
-            {cat.label}
-          </MenuItem>
-        ))}
+        <FilterMenuItems
+          options={CATEGORIES}
+          selected={category}
+          onSelect={onCategoryChange}
+          testIdPrefix="filter-category"
+        />
         <MenuSeparator />
         <MenuLabel>Sort</MenuLabel>
-        {SORT_OPTIONS.map((opt) => (
-          <MenuItem
-            key={opt.value}
-            onClick={() => onSortChange(opt.value)}
-            data-testid={`filter-sort-${opt.value}`}
-          >
-            {sort === opt.value ? (
-              <CheckIcon className="size-4 text-primary" />
-            ) : (
-              <span className="size-4" />
-            )}
-            {opt.label}
-          </MenuItem>
-        ))}
+        <FilterMenuItems
+          options={SORT_OPTIONS}
+          selected={sort}
+          onSelect={onSortChange}
+          testIdPrefix="filter-sort"
+        />
       </MenuContent>
     </Menu>
   );

@@ -2,6 +2,8 @@ import type { ComponentPropsWithoutRef } from "react";
 
 import { cn } from "@bnto/ui";
 
+import { MarqueeTrack } from "./MarqueeTrack";
+
 interface MarqueeProps extends ComponentPropsWithoutRef<"div"> {
   /** Whether to reverse the animation direction. */
   reverse?: boolean;
@@ -36,17 +38,9 @@ export function Marquee({
       {Array(repeat)
         .fill(0)
         .map((_, i) => (
-          <div
-            key={i}
-            className={cn("flex shrink-0 justify-around gap-(--gap)", {
-              "animate-marquee flex-row": !vertical,
-              "animate-marquee-vertical flex-col": vertical,
-              "group-hover:[animation-play-state:paused]": pauseOnHover,
-              "[animation-direction:reverse]": reverse,
-            })}
-          >
+          <MarqueeTrack key={i} vertical={vertical} reverse={reverse} pauseOnHover={pauseOnHover}>
             {children}
-          </div>
+          </MarqueeTrack>
         ))}
     </div>
   );
