@@ -3,11 +3,14 @@
 import type { Definition } from "@bnto/registry";
 import { definitionToRecipe } from "@bnto/registry";
 import { recipesStore } from "../stores/recipesStore";
+import { fetchCloudRecipes } from "../adapters/convex/recipeAdapter";
+import { cloudRecipeToUserRecipe } from "../transforms/cloudRecipeToUserRecipe";
 import type { RecipeService } from "../services/recipeService";
 import type { ExecutionService } from "../services/executionService";
 import type { AuthClient } from "./authClient";
 import type { StartExecutionInput } from "../types";
 import type { UserRecipe } from "../types/recipe";
+import type { RawRecipeDoc } from "../types/raw";
 
 /** Input shape for save — definition + recipe metadata. */
 export interface SaveInput {
@@ -64,6 +67,14 @@ function saveRecipeLocally(
     .catch(() => {});
 }
 
+/** Pull all recipes from cloud into local store. Called on sign-in. */
+async function pullFromCloud(): Promise<void> {
+  const docs = (await fetchCloudRecipes()) as RawRecipeDoc[];
+  if (docs.length === 0) return;
+  const userRecipes = docs.map(cloudRecipeToUserRecipe);
+  recipesStore.getState().hydrateFromCloud(userRecipes);
+}
+
 /** Sync all local-only recipes to cloud. Called on sign-in. */
 async function syncToCloud(recipes: RecipeService, auth: AuthClient): Promise<void> {
   if (!auth.isAuthenticated()) return;
@@ -100,6 +111,7 @@ export function createRecipeClient(
     createFromDefinition,
     save: (definition: Definition, metadata: SaveInput) =>
       saveRecipeLocally(recipes, auth, definition, metadata),
+    pullFromCloud: () => pullFromCloud(),
     syncToCloud: () => syncToCloud(recipes, auth),
     remove: (id: string) => removeRecipe(recipes, auth, id),
     count: () => Object.keys(recipesStore.getState().recipes).length,

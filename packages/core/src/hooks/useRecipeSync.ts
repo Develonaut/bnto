@@ -5,26 +5,33 @@ import { core } from "../core";
 import { useIsAuthenticated } from "./useIsAuthenticated";
 
 /**
- * Syncs local-only recipes to cloud on auth state change (unauth→auth).
+ * Syncs recipes between local and cloud on auth state change.
  *
- * Watches for sign-in / sign-up transition, then calls
- * core.recipes.syncToCloud() once per session.
+ * Triggers on:
+ * 1. unauth→auth transition (sign-in)
+ * 2. Mount while already authenticated (page reload with empty local store)
+ *
+ * Pull-first strategy: pull cloud recipes into local store (so cloudId dedup
+ * prevents re-upload), then push any remaining local-only recipes to cloud.
  *
  * Must be rendered once inside BntoCoreProvider.
  */
 export function useRecipeSync() {
   const isAuthenticated = useIsAuthenticated();
-  const prevAuthRef = useRef(isAuthenticated);
   const syncedRef = useRef(false);
 
   useEffect(() => {
-    const wasUnauth = !prevAuthRef.current;
-    const isNowAuth = isAuthenticated;
-    prevAuthRef.current = isAuthenticated;
-
-    if (wasUnauth && isNowAuth && !syncedRef.current) {
-      syncedRef.current = true;
-      core.recipes.syncToCloud().catch(() => {});
+    if (!isAuthenticated) {
+      syncedRef.current = false;
+      return;
     }
+
+    if (syncedRef.current) return;
+    syncedRef.current = true;
+
+    core.recipes
+      .pullFromCloud()
+      .then(() => core.recipes.syncToCloud())
+      .catch(() => {});
   }, [isAuthenticated]);
 }
